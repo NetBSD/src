@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.80 2008/12/20 20:36:44 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.81 2008/12/21 17:15:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.80 2008/12/20 20:36:44 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.81 2008/12/21 17:15:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,10 +493,21 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 	int c = 0;
 	int saveherefd = herefd;
 	struct nodelist *saveargbackq = argbackq;
-	int amount;
+	int amount, how;
 
 	herefd = -1;
-	argstr(p, EXP_CASE);
+	switch (subtype) {
+	case VSTRIMLEFT:
+	case VSTRIMLEFTMAX:
+	case VSTRIMRIGHT:
+	case VSTRIMRIGHTMAX:
+		how = (varflags & VSQUOTE) ? 0 : EXP_CASE;
+		break;
+	default:
+		how = 0;
+		break;
+	}
+	argstr(p, how);
 	STACKSTRNUL(expdest);
 	herefd = saveherefd;
 	argbackq = saveargbackq;
