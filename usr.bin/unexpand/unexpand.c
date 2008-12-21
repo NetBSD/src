@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.13 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.14 2008/12/21 02:33:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,126 +39,180 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.13 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.14 2008/12/21 02:33:13 christos Exp $");
 #endif /* not lint */
 
 /*
  * unexpand - put tabs into a file replacing blanks
  */
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <err.h>
+#include <util.h>
 
-char	genbuf[BUFSIZ];
-char	linebuf[BUFSIZ];
 
-int	main(int, char **);
-void	tabify(int, uint);
+#define DSTOP	8
+static int	all;
+static size_t	nstops;
+static size_t	maxstops;
+static size_t	*tabstops;
+
+static void	tabify(const char *, size_t);
+static void	usage(void) __attribute__((__noreturn__));
+
+static void
+usage(void)
+{
+    (void)fprintf(stderr, "Usage: %s [-a] [-t tabstop] [file ...]\n",
+	getprogname());
+    exit(EXIT_FAILURE);
+}
 
 int
 main(int argc, char **argv)
 {
-	int all, c;
-	uint tabsize;
-	ulong l;
-	char *ep;
+	int c;
+	char *ep, *tab;
+	char *line;
+	size_t len;
+	unsigned long i;
 
 	setprogname(argv[0]);
 
-	all = 0;
-	tabsize = 8;
 	while ((c = getopt(argc, argv, "at:")) != -1) {
 		switch (c) {
 		case 'a':
+			if (nstops)
+				usage();
 			all++;
 			break;
 		case 't':
-			errno = 0;
-			l = strtoul(optarg, &ep, 0);
-			/*
-			 * If every input char is a tab, the line length
-			 * must not exceed maxuint.
-			 */
-			tabsize = (int)l * BUFSIZ;
-			tabsize /= BUFSIZ;
-			if (*ep != 0 || errno != 0 || (ulong)tabsize != l)
-				errx(EXIT_FAILURE, "Invalid tabstop \"%s\"",
-				    optarg);
+			if (all)
+				usage();
+			while ((tab = strsep(&optarg, ", \t")) != NULL) {
+				if (*tab == '\0')
+					continue;
+				errno = 0;
+				i = strtoul(tab, &ep, 0);
+				if (*ep || (errno == ERANGE && i == ULONG_MAX))
+					errx(EXIT_FAILURE,
+					    "Invalid tabstop `%s'", tab);
+				if (nstops >= maxstops) {
+					maxstops += 20;
+					tabstops = erealloc(tabstops, maxstops);
+				}
+				if (nstops && tabstops[nstops - 1] >= (size_t)i)
+					errx(EXIT_FAILURE,
+					    "Bad tabstop spec `%s', must be "
+					    "greater than the previous `%zu'",
+					    tab, tabstops[nstops - 1]);
+				tabstops[nstops++] = i;
+			}
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: %s [-a] [-t tabstop] [file ...]\n",
-				getprogname());
-			exit(EXIT_FAILURE);
-			/* NOTREACHED */
+			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
+	for (i = 0; i < nstops; i++)
+		fprintf(stderr, "%lu %zu\n", i, tabstops[i]);
+
 	do {
 		if (argc > 0) {
-			if (freopen(argv[0], "r", stdin) == NULL) {
-				perror(argv[0]);
-				exit(EXIT_FAILURE);
-			}
+			if (freopen(argv[0], "r", stdin) == NULL)
+				err(EXIT_FAILURE, "Cannot open `%s'", argv[0]);
 			argc--, argv++;
 		}
-		while (fgets(genbuf, BUFSIZ, stdin) != NULL) {
-			tabify(all, tabsize);
-			printf("%s", linebuf);
-		}
+		while ((line = fgetln(stdin, &len)) != NULL)
+			tabify(line, len);
 	} while (argc > 0);
-	exit(EXIT_SUCCESS);
-	/* NOTREACHED */
+	return EXIT_SUCCESS;
 }
 
-void
-tabify(int all, uint tabsize)
+static void
+tabify(const char *line, size_t len)
 {
-	char *cp, *dp;
-	uint dcol;
-	uint ocol;
-	uint tcol;
+	const char *e, *p;
+	size_t dcol, ocol, limit, n;
 
-	ocol = 0;
-	dcol = 0;
-	cp = genbuf, dp = linebuf;
-	for (;;) {
-		switch (*cp) {
-
-		case ' ':
+	dcol = ocol = 0;
+	limit = nstops == 0 ? UINT_MAX : tabstops[nstops - 1] - 1;
+	e = line + len;
+	for (p = line; p < e; p++) {
+		if (*p == ' ') {
 			dcol++;
-			break;
-
-		case '\t':
-			dcol = (dcol + tabsize) / tabsize * tabsize;
-			break;
-
-		default:
-			if (dcol > ocol + 1) {
-				tcol = (ocol + tabsize) / tabsize * tabsize;
-				while (tcol <= dcol) {
-					*dp++ = '\t';
-					ocol = tcol;
-					tcol += tabsize;
+			continue;
+		} else if (*p == '\t') {
+			if (nstops == 0) {
+				dcol = (1 + dcol / DSTOP) * DSTOP;
+				continue;
+			} else {
+				for (n = 0; tabstops[n] - 1 < dcol &&
+				    n < nstops; n++)
+					continue;
+				if (n < nstops - 1 && tabstops[n] - 1 < limit) {
+					dcol = tabstops[n];
+					continue;
 				}
 			}
-			while (ocol < dcol) {
-				*dp++ = ' ';
-				ocol++;
-			}
-			if (*cp == 0 || all == 0) {
-				strlcpy(dp, cp,
-				    sizeof(linebuf) - (dp - linebuf));
-				return;
-			}
-			*dp++ = *cp;
-			dcol = ++ocol;
 		}
-		cp++;
+
+		/* Output our tabs */
+		if (nstops == 0) {
+			while (((ocol + DSTOP) / DSTOP) <= (dcol / DSTOP)) {
+				if (dcol - ocol < 2)
+					break;
+				if (putchar('\t') == EOF)
+					goto out;
+				ocol = (1 + ocol / DSTOP) * DSTOP;
+			}
+		} else {
+			for (n = 0; tabstops[n] <= ocol && n < nstops; n++)
+				continue;
+			while (tabstops[n] <= dcol && ocol < dcol &&
+			    n < nstops && ocol < limit) {
+				if (putchar('\t') == EOF)
+					goto out;
+				ocol = tabstops[n++];
+			}
+		}
+
+		/* Output remaining spaces */
+		while (ocol < dcol && ocol < limit) {
+			if (putchar(' ') == EOF)
+				goto out;
+			ocol++;
+		}
+
+		/* Output our char */
+		if (putchar(*p) == EOF)
+			goto out;
+		if (*p == '\b') {
+			if (ocol > 0) {
+				ocol--;
+				dcol--;
+			}
+		} else {
+			ocol++;
+			dcol++;
+		}
+
+		/* Output remainder of line */
+		if (!all || dcol >= limit) {
+			for (p++; p < e; p++)
+				if (putchar(*p) == EOF)
+					goto out;
+			return;
+		}
 	}
+	return;
+out:
+	err(EXIT_FAILURE, "write failed");
 }
