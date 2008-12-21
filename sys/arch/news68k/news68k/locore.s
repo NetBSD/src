@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46 2008/12/10 14:19:02 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.47 2008/12/21 17:43:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -680,8 +680,8 @@ ENTRY_NOPROFILE(trap0)
 	movl	%d0,%sp@-		| push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall arg
-	tstl	_C_LABEL(astpending)
-	jne	Lrei2
+	tstl	_C_LABEL(astpending)	| AST pending?
+	jne	Lrei			| yes, handle it via trap
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -939,36 +939,35 @@ ENTRY_NOPROFILE(intrhand_vectored)
 /*
  * Emulation of VAX REI instruction.
  *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling) and software interrupts (network, softclock).
- * We check for ASTs first, just like the VAX.  To avoid excess overhead
- * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifing that we need an AST we
- * drop the IPL to allow device interrupts.
+ * This code deals with checking for and servicing
+ * ASTs (profiling, scheduling).
+ * After identifing that we need an AST we drop the IPL
+ * to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
  */
 /*
- * news68k has hardware support for AST and software interrupt.
- * We just use it rather than VAX REI emulation.
+ * news68k has hardware support for AST,
+ * so only traps (including system call) and
+ * the AST interrupt use this REI function.
  */
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
-	jne	Lrei1			| no, done
-	rte
-Lrei1:
-	btst	#5,%sp@			| yes, are we returning to user mode?
-	jeq	1f			| no, done
+	jne	1f			| no, done
 	rte
 1:
+	btst	#5,%sp@			| yes, are we returning to user mode?
+	jeq	2f			| no, done
+	rte
+2:
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lrei2:
+Lrei:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_ASTFLT,%sp@-		| type == async system trap
