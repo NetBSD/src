@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.140 2008/12/20 18:08:24 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.141 2008/12/21 10:44:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.140 2008/12/20 18:08:24 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.141 2008/12/21 10:44:10 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.140 2008/12/20 18:08:24 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.141 2008/12/21 10:44:10 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3284,7 +3284,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     Boolean 	    haveModifier;/* TRUE if have modifiers for the variable */
     char	    endc;    	/* Ending character when variable in parens
 				 * or braces */
-    char	    startc=0;	/* Starting character when variable in parens
+    char	    startc;	/* Starting character when variable in parens
 				 * or braces */
     int		    vlen;	/* Length of variable name */
     const char 	   *start;	/* Points to original start of str */
@@ -3294,6 +3294,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 				 * is done to support dynamic sources. The
 				 * result is just the invocation, unaltered */
     Var_Parse_State parsestate; /* Flags passed to helper functions */
+    char	  name[2];
 
     *freePtr = NULL;
     dynamic = FALSE;
@@ -3301,15 +3302,20 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     parsestate.oneBigWord = FALSE;
     parsestate.varSpace = ' ';	/* word separator */
 
-    if (str[1] != PROPEN && str[1] != BROPEN) {
+    startc = str[1];
+    if (startc != PROPEN && startc != BROPEN) {
 	/*
 	 * If it's not bounded by braces of some sort, life is much simpler.
 	 * We just need to check for the first character and return the
 	 * value if it exists.
 	 */
-	char	  name[2];
 
-	name[0] = str[1];
+	/* Error out some really stupid names */
+	if (startc == '\0' || strchr(")}:$", startc)) {
+	    *lengthPtr = 1;
+	    return var_Error;
+	}
+	name[0] = startc;
 	name[1] = '\0';
 
 	v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
@@ -3346,13 +3352,9 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	    tstr = &str[1];
 	    endc = str[1];
 	}
-    } else if (str[1] == '\0') {
-	*lengthPtr = 1;
-	return (errnum ? var_Error : varNoError);
     } else {
 	Buffer buf;	/* Holds the variable name */
 
-	startc = str[1];
 	endc = startc == PROPEN ? PRCLOSE : BRCLOSE;
 	buf = Buf_Init(0);
 
@@ -3410,65 +3412,50 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	 */
 
 	v = VarFind(str, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	/*
+	 * Check also for bogus D and F forms of local variables since we're
+	 * in a local context and the name is the right length.
+	 */
 	if ((v == NULL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
-	    (vlen == 2) && (str[1] == 'F' || str[1] == 'D'))
-	{
+		(vlen == 2) && (str[1] == 'F' || str[1] == 'D') &&
+		strchr("@%*!<>", str[0]) != NULL) {
 	    /*
-	     * Check for bogus D and F forms of local variables since we're
-	     * in a local context and the name is the right length.
+	     * Well, it's local -- go look for it.
 	     */
-	    switch(*str) {
-		case '@':
-		case '%':
-		case '*':
-		case '!':
-		case '>':
-		case '<':
-		{
-		    char    vname[2];
-		    char    *val;
+	    name[0] = *str;
+	    name[1] = '\0';
+	    v = VarFind(name, ctxt, 0);
 
-		    /*
-		     * Well, it's local -- go look for it.
-		     */
-		    vname[0] = *str;
-		    vname[1] = '\0';
-		    v = VarFind(vname, ctxt, 0);
+	    if (v != NULL) {
+		/*
+		 * No need for nested expansion or anything, as we're
+		 * the only one who sets these things and we sure don't
+		 * but nested invocations in them...
+		 */
+		nstr = (char *)Buf_GetAll(v->val, NULL);
 
-		    if (v != NULL) {
-			/*
-			 * No need for nested expansion or anything, as we're
-			 * the only one who sets these things and we sure don't
-			 * but nested invocations in them...
-			 */
-			val = (char *)Buf_GetAll(v->val, NULL);
-
-			if (str[1] == 'D') {
-			    val = VarModify(ctxt, &parsestate, val, VarHead,
-					    NULL);
-			} else {
-			    val = VarModify(ctxt, &parsestate, val, VarTail,
-					    NULL);
-			}
-			/*
-			 * Resulting string is dynamically allocated, so
-			 * tell caller to free it.
-			 */
-			*freePtr = val;
-			*lengthPtr = tstr-start+1;
-			Buf_Destroy(buf, TRUE);
-			VarFreeEnv(v, TRUE);
-			return(val);
-		    }
-		    break;
+		if (str[1] == 'D') {
+		    nstr = VarModify(ctxt, &parsestate, nstr, VarHead,
+				    NULL);
+		} else {
+		    nstr = VarModify(ctxt, &parsestate, nstr, VarTail,
+				    NULL);
 		}
+		/*
+		 * Resulting string is dynamically allocated, so
+		 * tell caller to free it.
+		 */
+		*freePtr = nstr;
+		*lengthPtr = tstr-start+1;
+		Buf_Destroy(buf, TRUE);
+		VarFreeEnv(v, TRUE);
+		return nstr;
 	    }
 	}
 
 	if (v == NULL) {
 	    if (((vlen == 1) ||
-		 (((vlen == 2) && (str[1] == 'F' ||
-					 str[1] == 'D')))) &&
+		 (((vlen == 2) && (str[1] == 'F' || str[1] == 'D')))) &&
 		((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
 	    {
 		/*
