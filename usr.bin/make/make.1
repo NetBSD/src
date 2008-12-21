@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.148 2008/12/07 16:10:34 christos Exp $
+.\"	$NetBSD: make.1,v 1.149 2008/12/21 19:32:16 dsl Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd December 6, 2008
+.Dd December 21, 2008
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -506,6 +506,14 @@ a dollar sign
 If the variable name contains only a single letter, the surrounding
 braces or parentheses are not required.
 This shorter form is not recommended.
+.Pp
+If the variable name contains a dollar, then the name itself is expanded first.
+This allows almost arbitrary variable names, however names containing dollar,
+braces, parenthesis, or whitespace are really best avoided!
+.Pp
+If the result of expanding a variable contains a dollar sign
+.Pq Ql \&$
+the string is expanded again.
 .Pp
 Variable substitution occurs at two distinct times, depending on where
 the variable is being used.
@@ -1136,25 +1144,14 @@ The variable is assigned the value
 .Ar str
 after substitution.
 This modifier and its variations are useful in
-obscure situations such as wanting to apply modifiers to
-.Cm \&.for
-loop iteration variables which won't work due to the way
-.Cm \&.for
-loops are implemented.
+obscure situations such as wanting to set a variable when shell commands
+are being parsed.
 These assignment modifiers always expand to
 nothing, so if appearing in a rule line by themselves should be
 preceded with something to keep
 .Nm
 happy.
-As in:
-.Bd -literal
-use_foo: \&.USE
-\&.for i in ${\&.TARGET} ${\&.TARGET:R}\&.gz
-	@: ${t::=$i}
-	@echo t:R:T=${t:R:T}
-\&.endfor
-
-.Ed
+.Pp
 The
 .Ql Cm \&::
 helps avoid false matches with the
