@@ -1,0 +1,8 @@
+#!/bin/sh
+
+line='/foo/bar/*/baz'
+if [ "/foo/bar/" != ${line%%\**}"" ]
+then
+	echo broken
+	exit 1
+fi
