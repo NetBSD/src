@@ -1,7 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.6 2006/06/02 19:45:56 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.7 2008/12/21 11:48:30 ad Exp $
 
-# Standard kernel compile flags
-CFLAGS += -G 0 -mno-abicalls
+CFLAGS+=	-G 0 -mno-abicalls -ffixed-23
 
-# Needed so modules loaded in KSEG2 can make calls to KSEG0
-CFLAGS += -mlong-calls
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+CFLAGS+=	-msym32
+.endif
+
+AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
