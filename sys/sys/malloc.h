@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.101 2008/12/19 21:22:01 cegger Exp $	*/
+/*	$NetBSD: malloc.h,v 1.102 2008/12/21 17:49:56 cegger Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,14 +46,11 @@
 /*
  * flags to malloc
  */
-typedef enum malloc_flag {
-	M_WAITOK	= 0x0000, /* can wait for resources */
-	M_NOWAIT	= 0x0001, /* do not wait for resources */
-	M_ZERO		= 0x0002, /* zero the allocation */
-	M_CANFAIL	= 0x0004, /* can fail if requested memory can't ever
-				   * be allocated */
-} malloc_flag_t;
-
+#define	M_WAITOK	0x0000	/* can wait for resources */
+#define	M_NOWAIT	0x0001	/* do not wait for resources */
+#define	M_ZERO		0x0002	/* zero the allocation */
+#define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
+				 * be allocated */
 #include <sys/mallocvar.h>
 /*
  * The following are standard, built-in malloc types that are
@@ -94,15 +91,14 @@ struct kmembuckets {
 
 #ifdef _KERNEL
 #ifdef MALLOCLOG
-void	*_malloc(unsigned long, struct malloc_type *, malloc_flag_t,
-		const char *, long);
+void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);
 void	_free(void *, struct malloc_type *, const char *, long);
 #define	malloc(size, type, flags) \
 	    _malloc((size), (type), (flags), __FILE__, __LINE__)
 #define	free(addr, type) \
 	    _free((addr), (type), __FILE__, __LINE__)
 #else
-void	*malloc(unsigned long, struct malloc_type *, malloc_flag_t);
+void	*malloc(unsigned long, struct malloc_type *, int);
 void	free(void *, struct malloc_type *);
 #endif /* MALLOCLOG */
 
