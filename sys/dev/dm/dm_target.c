@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.3 2008/12/19 16:30:41 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.4 2008/12/21 00:59:39 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
-static dm_target_t* dm_target_alloc(const char *);
 static dm_target_t* dm_target_lookup_name(const char *);
 
 TAILQ_HEAD(dm_target_head, dm_target);
@@ -189,6 +188,8 @@ dm_target_destroy(void)
 	}
 	mutex_exit(&dm_target_mutex);
 	
+	mutex_destroy(&dm_target_mutex);
+	
 	return 0;
 }
 
@@ -243,7 +244,7 @@ dm_target_prop_list(void)
 int
 dm_target_init(void)
 {
-	dm_target_t *dmt,*dmt1,*dmt2,*dmt3,*dmt4,*dmt5,*dmt6;
+	dm_target_t *dmt,*dmt3,*dmt4;
 	int r;
 
 	r = 0;
@@ -251,12 +252,8 @@ dm_target_init(void)
 	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
 	
 	dmt = dm_target_alloc("linear");
-	dmt1 = dm_target_alloc("zero");
-	dmt2 = dm_target_alloc("error");
 	dmt3 = dm_target_alloc("striped");
 	dmt4 = dm_target_alloc("mirror");
-	dmt5 = dm_target_alloc("snapshot");
-	dmt6 = dm_target_alloc("snapshot-origin");
 	
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
@@ -271,7 +268,7 @@ dm_target_init(void)
 	
 	r = dm_target_insert(dmt);
 		
-	dmt1->version[0] = 1;
+/*	dmt1->version[0] = 1;
 	dmt1->version[1] = 0;
 	dmt1->version[2] = 0;
 	strlcpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
@@ -295,7 +292,7 @@ dm_target_init(void)
 	dmt2->destroy = &dm_target_error_destroy; 
 	dmt2->upcall = &dm_target_error_upcall;
 	
-	r = dm_target_insert(dmt2);
+	r = dm_target_insert(dmt2);*/
 	
 	dmt3->version[0] = 1;
 	dmt3->version[1] = 0;
@@ -323,7 +320,7 @@ dm_target_init(void)
 	
 	r = dm_target_insert(dmt4);
 
-	dmt5->version[0] = 1;
+/*	dmt5->version[0] = 1;
 	dmt5->version[1] = 0;
 	dmt5->version[2] = 5;
 	strlcpy(dmt5->name, "snapshot", DM_MAX_TYPE_NAME);
@@ -347,7 +344,7 @@ dm_target_init(void)
 	dmt6->destroy = &dm_target_snapshot_orig_destroy;
 	dmt6->upcall = &dm_target_snapshot_orig_upcall;
 
-	r = dm_target_insert(dmt6);
+	r = dm_target_insert(dmt6);*/
 	
 	return r;
 }

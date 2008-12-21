@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.3 2008/12/19 16:30:41 haad Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.4 2008/12/21 00:59:39 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,6 +38,64 @@
 #include <sys/buf.h>
 
 #include "dm.h"
+
+#ifdef DM_TARGET_MODULE
+/*
+ * Every target can be compiled directly to dm driver or as a
+ * separate module this part of target is used for loading targets
+ * to dm driver.
+ * Target can be unloaded from kernel only if there are no users of
+ * it e.g. there are no devices which uses that target.
+ */
+#include <sys/kernel.h>
+#include <sys/module.h>
+
+MODULE(MODULE_CLASS_MISC, dm_target_error, NULL);
+
+static int
+dm_target_error_modcmd(modcmd_t cmd, void *arg)
+{
+	dm_target_t *dmt;
+	int r;
+	dmt = NULL;
+	
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		if ((dmt = dm_target_lookup("error")) != NULL)
+			return EEXIST;
+
+		dmt = dm_target_alloc("error");
+		
+		dmt->version[0] = 1;
+		dmt->version[1] = 0;
+		dmt->version[2] = 0;
+		strlcpy(dmt->name, "error", DM_MAX_TYPE_NAME);
+		dmt->init = &dm_target_error_init;
+		dmt->status = &dm_target_error_status;
+		dmt->strategy = &dm_target_error_strategy;
+		dmt->deps = &dm_target_error_deps;
+		dmt->destroy = &dm_target_error_destroy;
+		dmt->upcall = &dm_target_error_upcall;
+
+		r = dm_target_insert(dmt);
+		
+		break;
+
+	case MODULE_CMD_FINI:
+		r = dm_target_rem("error");
+		break;
+
+	case MODULE_CMD_STAT:
+		return ENOTTY;
+
+	default:
+		return ENOTTY;
+	}
+
+	return r;
+}
+
+#endif
 
 /* Init function called from dm_table_load_ioctl. */
 int
