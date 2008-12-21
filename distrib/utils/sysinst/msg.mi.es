@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.22 2008/11/05 22:58:37 christos Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.23 2008/12/21 11:02:42 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,6 +44,9 @@ message usage
 
 message sysinst_message_language
 {Mensajes de instalación en castellano}
+
+message sysinst_message_locale
+{es_ES.ISO8859-15}
 
 message Yes {Sí}
 message No {No}
