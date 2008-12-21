@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.38 2008/12/20 22:41:53 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.39 2008/12/21 18:06:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.38 2008/12/20 22:41:53 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.39 2008/12/21 18:06:53 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.38 2008/12/20 22:41:53 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.39 2008/12/21 18:06:53 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -130,6 +130,8 @@ For_Eval(char *line)
 {
     char *ptr = line, *sub;
     int len;
+    int i;
+    int escapes;
 
     /* Forget anything we previously knew about - it cannot be useful */
     memset(&accumFor, 0, sizeof accumFor);
@@ -182,6 +184,8 @@ For_Eval(char *line)
 
     /*
      * Make a list with the remaining words
+     * The values are substituted as ${:U<value>... so we must \ escape
+     * characters that break that syntax - particularly ':', maybe $ and \.
      */
     sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
@@ -190,9 +194,22 @@ For_Eval(char *line)
 	    ptr++;
 	if (*ptr == 0)
 	    break;
-	for (len = 1; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
-	    continue;
-	strlist_add_str(&accumFor.items, make_str(ptr, len));
+	escapes = 0;
+	for (len = 0; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
+	    if (ptr[len] == ':')
+		escapes++;
+	if (escapes == 0)
+	    strlist_add_str(&accumFor.items, make_str(ptr, len));
+	else {
+	    char *item = bmake_malloc(len + escapes + 1);
+	    strlist_add_str(&accumFor.items, item);
+	    for (i = 0; i < len; i++) {
+		if (ptr[i] == ':')
+		    *item++ = '\\';
+		*item++ = ptr[i];
+	    }
+	    *item = 0;
+	}
     }
 
     free(sub);
@@ -265,45 +282,103 @@ For_Run(int lineno)
 {
     For arg;
     int i, len;
-    unsigned int item_no;
-    char *guy, *orig_guy, *old_guy;
+    unsigned int num_items;
+    char *for_body;
     char *var, *item;
+    char *cp;
+    char *cmd_cp;
+    char *body_end;
+    char ch;
+    Buffer cmds;
+    int short_var;
 
     arg = accumFor;
     memset(&accumFor, 0, sizeof accumFor);
 
-    item_no = strlist_num(&arg.items);
-    if (item_no % strlist_num(&arg.vars))
+    num_items = strlist_num(&arg.items);
+    if (num_items % strlist_num(&arg.vars))
 	/* Error message already printed */
 	goto out;
 
-    while (item_no != 0) {
-	/*
-	 * Hack, hack, kludge.
-	 * This is really ugly, but to do it any better way would require
-	 * making major changes to var.c, which I don't want to get into
-	 * yet. There is no mechanism for expanding some variables, only
-	 * for expanding a single variable. That should be corrected, but
-	 * not right away. (XXX)
-	 */
-	guy = (char *)Buf_GetAll(arg.buf, &len);
-	orig_guy = guy;
-	item_no -= strlist_num(&arg.vars);
-	STRLIST_FOREACH(var, &arg.vars, i) {
-	    item = strlist_str(&arg.items, item_no + i);
-	    if (DEBUG(FOR))
-		(void)fprintf(debug_file, "--- %s = %s\n", var, item);
-	    Var_Set(var, item, VAR_GLOBAL, 0);
-	    old_guy = guy;
-	    guy = Var_Subst(var, guy, VAR_GLOBAL, FALSE);
-	    if (old_guy != orig_guy)
-		free(old_guy);
+    short_var = 0;
+    STRLIST_FOREACH(var, &arg.vars, i) {
+	if (var[1] == 0) {
+	    short_var = 1;
+	    break;
 	}
-	Parse_SetInput(NULL, lineno, -1, guy);
     }
 
-    STRLIST_FOREACH(var, &arg.vars, i)
-	Var_Delete(var, VAR_GLOBAL);
+    /*
+     * Scan the for loop body and replace references to the loop variables
+     * with variable references that expand to the required text.
+     * Using variable expansions ensures that the .for loop can't generate
+     * syntax, and that the later parsing will still see a variable.
+     * We assume that the null variable will never be defined.
+     *
+     * The detection of substitions of the loop control variable is naive.
+     * Many of the modifiers use \ to escape $ (not $) so it is possible
+     * to contrive a makefile where an unwanted substitution happens.
+     *
+     * Each loop expansion is fed back into the parser as if it were an
+     * include file.  This means we have to generate the last iteration first.
+     */
+    while (num_items != 0) {
+	num_items -= strlist_num(&arg.vars);
+	for_body = (char *)Buf_GetAll(arg.buf, &len);
+	body_end = for_body + len;
+	cmds = Buf_Init(len + 256);
+	cmd_cp = for_body;
+	for (cp = for_body; (cp = strchr(cp, '$')) != NULL;) {
+	    ch = *++cp;
+	    if (ch == '(' || ch == '{') {
+		char ech = ch == '(' ? ')' : '}';
+		cp++;
+		/* Check variable name against the .for loop varoables */
+		STRLIST_FOREACH(var, &arg.vars, i) {
+		    len = strlen(var);
+		    if (memcmp(cp, var, len) != 0)
+			continue;
+		    if (cp[len] != ':' && cp[len] != ech)
+			continue;
+		    /* Found a variable match. Replace with ${:U<value> */
+		    Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
+		    Buf_AddBytes(cmds, 2, ":U");
+		    cp += len;
+		    cmd_cp = cp;
+		    item = strlist_str(&arg.items, num_items + i);
+		    Buf_AddBytes(cmds, strlen(item), item);
+		    break;
+		}
+		continue;
+	    }
+	    if (ch == 0)
+		break;
+	    /* Probably a single character name, ignore $$ and stupid ones. */
+	    if (!short_var || strchr("}):$", ch) != NULL) {
+		cp++;
+		continue;
+	    }
+	    STRLIST_FOREACH(var, &arg.vars, i) {
+		if (var[0] != ch || var[1] != 0)
+		    continue;
+		/* Found a variable match. Replace with ${:U<value>} */
+		Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
+		Buf_AddBytes(cmds, 3, "{:U");
+		cmd_cp = ++cp;
+		item = strlist_str(&arg.items, num_items + i);
+		Buf_AddBytes(cmds, strlen(item), item);
+		Buf_AddBytes(cmds, 1, "}");
+		break;
+	    }
+	}
+	Buf_AddBytes(cmds, body_end - cmd_cp, cmd_cp);
+
+	cp = Buf_GetAll(cmds, NULL);
+	if (DEBUG(FOR))
+	    (void)fprintf(debug_file, "For: loop body:\n%s", cp);
+	Parse_SetInput(NULL, lineno, -1, cp);
+	Buf_Destroy(cmds, FALSE);
+    }
 
   out:
     strlist_clean(&arg.vars);
