@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31 2008/06/22 17:35:14 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.32 2008/12/21 17:42:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -92,12 +92,20 @@ splraiseipl(ipl_cookie_t icookie)
 	return _splraise(icookie._psl);
 }
 
+static inline void
+splx(int sr)
+{
+
+	__asm volatile("movew %0,%%sr" : : "di" (sr));
+}
+
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splhil()	splraise1()
 #define	splkbd()	splhil()
 
 /* These spl calls are used by machine-independent code. */
-/* spl0 requires checking for software interrupts */
+#define	spl0()		_spl0()
+
 #define	splsoftbio()	splraise1()
 #define	splsoftclock()	splraise1()
 #define	splsoftnet()	splraise1()
@@ -105,9 +113,6 @@ splraiseipl(ipl_cookie_t icookie)
 #define	splvm()		splraise5()
 #define	splsched()	spl6()
 #define	splhigh()	spl7()
-
-/* watch out for side effects */
-#define	splx(s)		((s) & PSL_IPL ? _spl((s)) : spl0())
 
 struct hp300_intrhand {
 	LIST_ENTRY(hp300_intrhand) ih_q;
@@ -121,9 +126,6 @@ struct hp300_intr {
 	LIST_HEAD(, hp300_intrhand) hi_q;
 	struct evcnt hi_evcnt;
 };
-
-/* locore.s */
-int	spl0(void);
 
 /* intr.c */
 void	intr_init(void);
