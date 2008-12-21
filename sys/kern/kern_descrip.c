@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.184 2008/11/18 13:01:41 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.185 2008/12/21 09:58:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.184 2008/11/18 13:01:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.185 2008/12/21 09:58:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.184 2008/11/18 13:01:41 pooka Exp
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
@@ -108,8 +107,6 @@ u_int		nfiles;		/* actual number of open files */
 static pool_cache_t filedesc_cache;
 static pool_cache_t file_cache;
 static pool_cache_t fdfile_cache;
-
-MALLOC_DEFINE(M_FILEDESC, "file desc", "Open file descriptor table");
 
 const struct cdevsw filedesc_cdevsw = {
 	filedescopen, noclose, noread, nowrite, noioctl,
@@ -821,6 +818,73 @@ fd_alloc(proc_t *p, int want, int *result)
 }
 
 /*
+ * Allocate memory for the open files array.
+ */
+static fdfile_t **
+fd_ofile_alloc(int n)
+{
+	uintptr_t *ptr, sz;
+
+	KASSERT(n > NDFILE);
+
+	sz = (n + 2) * sizeof(uintptr_t);
+	ptr = kmem_alloc((size_t)sz, KM_SLEEP);
+	ptr[1] = sz;
+
+	return (fdfile_t **)(ptr + 2);
+}
+
+/*
+ * Free an open files array.
+ */
+static void
+fd_ofile_free(int n, fdfile_t **of)
+{
+	uintptr_t *ptr, sz;
+
+	KASSERT(n > NDFILE);
+
+	sz = (n + 2) * sizeof(uintptr_t);
+	ptr = (uintptr_t *)of - 2;
+	KASSERT(ptr[1] == sz);
+	kmem_free(ptr, sz);
+}
+
+/*
+ * Allocate descriptor bitmap.
+ */
+static void
+fd_map_alloc(int n, uint32_t **lo, uint32_t **hi)
+{
+	uint8_t *ptr;
+	size_t szlo, szhi;
+
+	KASSERT(n > NDENTRIES);
+
+	szlo = NDLOSLOTS(n) * sizeof(uint32_t);
+	szhi = NDHISLOTS(n) * sizeof(uint32_t);
+	ptr = kmem_alloc(szlo + szhi, KM_SLEEP);
+	*lo = (uint32_t *)ptr;
+	*hi = (uint32_t *)(ptr + szlo);
+}
+
+/*
+ * Free descriptor bitmap.
+ */
+static void
+fd_map_free(int n, uint32_t *lo, uint32_t *hi)
+{
+	size_t szlo, szhi;
+
+	KASSERT(n > NDENTRIES);
+
+	szlo = NDLOSLOTS(n) * sizeof(uint32_t);
+	szhi = NDHISLOTS(n) * sizeof(uint32_t);
+	KASSERT(hi == (uint32_t *)((uint8_t *)lo + szlo));
+	kmem_free(lo, szlo + szhi);
+}
+
+/*
  * Expand a process' descriptor table.
  */
 void
@@ -843,12 +907,9 @@ fd_tryexpand(proc_t *p)
 	else
 		numfiles = 2 * oldnfiles;
 
-	newofile = malloc(numfiles * sizeof(fdfile_t *), M_FILEDESC, M_WAITOK);
+	newofile = fd_ofile_alloc(numfiles);
 	if (NDHISLOTS(numfiles) > NDHISLOTS(oldnfiles)) {
-		newhimap = malloc(NDHISLOTS(numfiles) *
-		    sizeof(uint32_t), M_FILEDESC, M_WAITOK);
-		newlomap = malloc(NDLOSLOTS(numfiles) *
-		    sizeof(uint32_t), M_FILEDESC, M_WAITOK);
+		fd_map_alloc(numfiles, &newlomap, &newhimap);
 	}
 
 	mutex_enter(&fdp->fd_lock);
@@ -856,11 +917,10 @@ fd_tryexpand(proc_t *p)
 	if (fdp->fd_nfiles != oldnfiles) {
 		/* fdp changed; caller must retry */
 		mutex_exit(&fdp->fd_lock);
-		free(newofile, M_FILEDESC);
-		if (newhimap != NULL)
-			free(newhimap, M_FILEDESC);
-		if (newlomap != NULL)
-			free(newlomap, M_FILEDESC);
+		fd_ofile_free(numfiles, newofile);
+		if (NDHISLOTS(numfiles) > NDHISLOTS(oldnfiles)) {
+			fd_map_free(numfiles, newlomap, newhimap);
+		}
 		return;
 	}
 
@@ -876,10 +936,10 @@ fd_tryexpand(proc_t *p)
 	 */
 	if (oldnfiles > NDFILE) {
 		if ((fdp->fd_refcnt | p->p_nlwps) > 1) {
-			*(void **)fdp->fd_ofiles = fdp->fd_discard;
-			fdp->fd_discard = fdp->fd_ofiles;
+			fdp->fd_ofiles[-2] = (void *)fdp->fd_discard;
+			fdp->fd_discard = fdp->fd_ofiles - 2;
 		} else {
-			free(fdp->fd_ofiles, M_FILEDESC);
+			fd_ofile_free(oldnfiles, fdp->fd_ofiles);
 		}
 	}
 
@@ -895,8 +955,7 @@ fd_tryexpand(proc_t *p)
 		    NDLOSLOTS(numfiles) * sizeof(uint32_t) - i);
 
 		if (NDHISLOTS(oldnfiles) > NDHISLOTS(NDFILE)) {
-			free(fdp->fd_himap, M_FILEDESC);
-			free(fdp->fd_lomap, M_FILEDESC);
+			fd_map_free(oldnfiles, fdp->fd_lomap, fdp->fd_himap);
 		}
 		fdp->fd_himap = newhimap;
 		fdp->fd_lomap = newlomap;
@@ -1224,18 +1283,15 @@ fd_copy(void)
 			while (i >= 2 * NDEXTENT && i > lastfile * 2) {
 				i /= 2;
 			}
-			newfdp->fd_ofiles = malloc(i * sizeof(fdfile_t *),
-			    M_FILEDESC, M_WAITOK);
+			newfdp->fd_ofiles = fd_ofile_alloc(i);
 			KASSERT(i >= NDFILE);
 		}
 		if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
 			newfdp->fd_himap = newfdp->fd_dhimap;
 			newfdp->fd_lomap = newfdp->fd_dlomap;
 		} else {
-			newfdp->fd_himap = malloc(NDHISLOTS(i) *
-			    sizeof(uint32_t), M_FILEDESC, M_WAITOK);
-			newfdp->fd_lomap = malloc(NDLOSLOTS(i) *
-			    sizeof(uint32_t), M_FILEDESC, M_WAITOK);
+			fd_map_alloc(i, &newfdp->fd_lomap,
+			    &newfdp->fd_himap);
 		}
 
 		/*
@@ -1258,11 +1314,10 @@ fd_copy(void)
 		}
 		mutex_exit(&fdp->fd_lock);
 		if (i >= NDFILE) {
-			free(newfdp->fd_ofiles, M_FILEDESC);
+			fd_ofile_free(i, newfdp->fd_ofiles);
 		}
 		if (NDHISLOTS(i) > NDHISLOTS(NDFILE)) {
-			free(newfdp->fd_himap, M_FILEDESC);
-			free(newfdp->fd_lomap, M_FILEDESC);
+			fd_map_free(i, newfdp->fd_lomap, newfdp->fd_himap);
 		}
 		while (fflist != NULL) {
 			ff = fflist;
@@ -1368,7 +1423,7 @@ fd_free(void)
 	fdfile_t *ff;
 	file_t *fp;
 	int fd, lastfd;
-	void *discard;
+	void **discard;
 
 	fdp = curlwp->l_fd;
 
@@ -1408,19 +1463,17 @@ fd_free(void)
 	 * to the cache.
 	 */
 	while ((discard = fdp->fd_discard) != NULL) {
-		KASSERT(discard != fdp->fd_ofiles);
-		fdp->fd_discard = *(void **)discard;
-		free(discard, M_FILEDESC);
+		fdp->fd_discard = discard[0];
+		kmem_free(discard, (uintptr_t)discard[1]);
 	}
 	if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
 		KASSERT(fdp->fd_himap != fdp->fd_dhimap);
 		KASSERT(fdp->fd_lomap != fdp->fd_dlomap);
-		free(fdp->fd_himap, M_FILEDESC);
-		free(fdp->fd_lomap, M_FILEDESC);
+		fd_map_free(fdp->fd_nfiles, fdp->fd_lomap, fdp->fd_himap);
 	}
 	if (fdp->fd_nfiles > NDFILE) {
 		KASSERT(fdp->fd_ofiles != fdp->fd_dfiles);
-		free(fdp->fd_ofiles, M_FILEDESC);
+		fd_ofile_free(fdp->fd_nfiles, fdp->fd_ofiles);
 	}
 	if (fdp->fd_knhash != NULL) {
 		hashdone(fdp->fd_knhash, HASH_LIST, fdp->fd_knhashmask);
