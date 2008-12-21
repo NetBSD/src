@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.62 2008/12/20 09:17:55 cegger Exp $	*/
+/*	$NetBSD: emul.c,v 1.63 2008/12/21 17:49:55 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.62 2008/12/20 09:17:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.63 2008/12/21 17:49:55 cegger Exp $");
 
 #define malloc(a,b,c) __wrap_malloc(a,b,c)
 
@@ -319,7 +319,7 @@ malloc_type_detach(struct malloc_type *type)
 }
 
 void *
-__wrap_malloc(unsigned long size, struct malloc_type *type, malloc_flag_t flags)
+__wrap_malloc(unsigned long size, struct malloc_type *type, int flags)
 {
 	void *rv;
 
