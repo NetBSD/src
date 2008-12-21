@@ -1,4 +1,4 @@
-/*	$NetBSD: sramvar.h,v 1.2 1999/06/23 15:20:36 minoura Exp $	*/
+/*	$NetBSD: sramvar.h,v 1.3 2008/12/21 09:01:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,17 +31,12 @@
  */
 
 struct sram_softc {
-	int flags;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
+	int sc_flags;
 };
 
-enum sram_unit_flag_bits {
-	SRB_OPEN,
-	SRB_READ,
-	SRB_WRITE
-};
-
-enum sram_unit_flags {
-	SRF_OPEN = 1<<SRB_OPEN,
-	SRF_READ = 1<<SRB_READ,
-	SRF_WRITE = 1<<SRB_WRITE
-};
+#define SRF_OPEN	(0x0001)
+#define SRF_READ	(0x0002)
+#define SRF_WRITE	(0x0004)
