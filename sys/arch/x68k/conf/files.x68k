@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.68 2008/12/21 09:01:19 isaki Exp $
+#	$NetBSD: files.x68k,v 1.69 2008/12/21 09:20:40 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -21,6 +21,7 @@ attach	mainbus at root
 
 device	cpu
 attach	cpu at mainbus
+file	arch/x68k/x68k/mainbus.c
 
 define	event {}
 file	arch/x68k/dev/event.c		event
