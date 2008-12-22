@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.63 2008/11/12 12:36:06 ad Exp $
+#	$NetBSD: INSTALL,v 1.64 2008/12/22 23:47:16 macallan Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -46,6 +46,16 @@ options 	SUN4_MMU3L	# 3-level MMU on sun4/400
 #options 	FONT_BOLD8x16		# a somewhat smaller font
 #options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
+
+# wscons stuff
+options		WSEMUL_SUN
+#options		WSEMUL_VT100
+options		WSDISPLAY_COMPAT_RAWKBD
+options		WSDISPLAY_CUSTOM_OUTPUT
+options		WS_DEFAULT_FG=WSCOL_BLACK
+options		WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options		WS_KERNEL_FG=WSCOL_GREEN
+options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
 
 #### System options that are the same for all ports
 
@@ -269,20 +279,21 @@ zs0	at mainbus0					# sun4c
 zs0	at obio0					# sun4m
 zs0	at obio0 addr 0xf1000000 level 12 flags 0x103	# sun4/200 and sun4/300
 zs0	at obio0 addr 0x01000000 level 12 flags 0x103	# sun4/100
-zstty0	at zs0 channel 0	# ttya
-zstty1	at zs0 channel 1	# ttyb
 
 zs1	at mainbus0					# sun4c
 zs1	at obio0					# sun4m
 zs1	at obio0 addr 0xf0000000 level 12 flags 0x103	# sun4/200 and sun4/300
 zs1	at obio0 addr 0x00000000 level 12 flags 0x103	# sun4/100
-kbd0	at zs1 channel 0	# keyboard
-ms0	at zs1 channel 1	# mouse
 
-zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
-zstty2	at zs2 channel 0	# ttyc
-zstty3	at zs2 channel 1	# ttyd
+zs2	at obio0 addr 0xe0000000 level 12		# sun4/300
 
+zstty*	at zs?
+
+# these are for wscons
+kbd0	at zstty?
+ms0	at zstty?
+wskbd*	at wskbddev?
+wsmouse* 	at wsmousedev?
 
 ## Magma Serial/Parallel driver
 #magma*	at sbus? slot ? offset ?
@@ -544,12 +555,28 @@ cgsix*		at sbus? slot ? offset ?
 #cgeight0	at obio0 addr 0x0b300000 level 4	# sun4/100 P4
 
 ## Sun "tcx" accelerated color framebuffer.
-tcx0		at sbus? slot ? offset ?
-tcx*		at sbus? slot ? offset ?
+#tcx0		at sbus? slot ? offset ?
+#tcx*		at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
-cgfourteen0	at obio0			# sun4m
+cgfourteen*	at obio0			# sun4m
 
+# P9100-based display on Tadpole SPARCbook 3.
+pnozz0		at sbus? slot ? offset ?
+
+# Sun ZX/Leo 24-bit framebuffer
+# XXX no wsdisplay support
+#zx*		at sbus? slot ? offset ?
+
+# Fujitsu AG-10e accelerated graphics 8/24-bit board
+agten*	at sbus? slot ? offset ?
+
+# generic framebuffer console
+genfb*	at sbus? slot ? offset ?
+
+# make sure wsdisplay0 is the console
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
 
 #### Other device configuration
 
@@ -562,3 +589,6 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 pseudo-device	rnd
 #pseudo-device	fss		4	# file system snapshot device
+
+pseudo-device	wsmux			# mouse and keyboard multiplexor
+pseudo-device	wsfont
