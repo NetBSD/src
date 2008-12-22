@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.10 2008/12/12 18:39:55 macallan Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.11 2008/12/22 23:46:22 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@ struct cgsix_softc {
 	int sc_mode;
 	uint32_t sc_bg;
 	struct vcons_data vd;
-#endif
 	uint8_t sc_default_cmap[768];
+#endif
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
