@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.785 2008/12/11 11:14:36 roy Exp $
+# $NetBSD: mi,v 1.786 2008/12/22 20:18:36 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -186,6 +186,7 @@
 ./sbin/dkctl					base-sysutil-root
 ./sbin/dkscan_bsdlabel				base-sysutil-root
 ./sbin/dmesg					base-sysutil-root
+./sbin/dmsetup					base-lvm-root		lvm
 ./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
 ./sbin/dump_lfs					base-sysutil-root
@@ -209,6 +210,7 @@
 ./sbin/ipppctl					base-netutil-root
 ./sbin/ispppcontrol				base-obsolete		obsolete
 ./sbin/lmcctl					base-obsolete		obsolete
+./sbin/lvm					base-lvm-root
 ./sbin/mbrlabel					base-sysutil-root
 ./sbin/mknod					base-sysutil-root
 ./sbin/modload					base-sysutil-root
