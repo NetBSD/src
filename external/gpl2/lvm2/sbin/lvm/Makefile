@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2008/12/22 00:57:58 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2008/12/22 01:51:44 haad Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
 
 .include "../../lvm2tools.mk"
 
-.PATH:	${LVM2TOOLS_DISTDIR}/man
+.PATH:	${LVM2_DISTDIR}/man
 
 PROG=		lvm
 
@@ -24,8 +24,8 @@ SRCS=		dumpconfig.c formats.c lvchange.c lvconvert.c lvcreate.c \
 
 CFLAGS+= 	-fno-inline
 
-CPPFLAGS+=	-I${LVM2TOOLS_DISTDIR}/lib -I${LVM2TOOLS_DISTDIR}/include \
-		-I. -I${LIBDM_INCLUDE} -I${LVM2TOOLS_DISTDIR}/tools \
+CPPFLAGS+=	-I${LVM2_DISTDIR}/lib -I${LVM2_DISTDIR}/include \
+		-I. -I${LIBDM_INCLUDE} -I${LVM2_DISTDIR}/tools \
 		-I${LIBDM_DISTDIR}
 
 CPPFLAGS+=	-DLVM_SHARED_PATH=\"$(BINDIR)/lvm\"
@@ -86,7 +86,7 @@ MKLINKS+=	lvchange.8 lvchange.1 \
                 vgscan.8 vgscan.1 \
                 vgsplit.8 vgsplit.1
 
-LIBLVM_OBJDIR!= cd ${LVM2TOOLS_SRCDIR}/lib/liblvm && ${PRINTOBJDIR}
+LIBLVM_OBJDIR!= cd ${LVM2_SRCDIR}/lib/liblvm && ${PRINTOBJDIR}
 LDADD+=         -L${LIBLVM_OBJDIR} -llvm
 DPADD+=         ${LIBLVM_OBJDIR}/liblvm.a
 
@@ -97,7 +97,7 @@ DPADD+=         ${LIBDM_OBJDIR}/libdevmapper.a
 LDADD+=		-lprop
 
 
-.PATH:	${LVM2TOOLS_DISTDIR}/tools
+.PATH:	${LVM2_DISTDIR}/tools
 
 
 .include <bsd.prog.mk>
