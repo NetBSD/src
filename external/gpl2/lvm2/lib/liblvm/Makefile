@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/12/22 00:57:58 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2008/12/22 01:48:58 haad Exp $
 
 LIBISPRIVATE=	yes
 
@@ -9,7 +9,7 @@ NOLINT=		#defined
 
 LIB=		lvm
 
-CPPFLAGS+=	-I${LVM2TOOLS_DISTDIR}/lib -I${LVM2TOOLS_DISTDIR}/include \
+CPPFLAGS+=	-I${LVM2_DISTDIR}/lib -I${LVM2_DISTDIR}/include \
 		-I. 
 
 SRCS+=		activate.c lvmcache.c toolcontext.c config.c btree.c \
@@ -31,33 +31,33 @@ SRCS+=		activate.c lvmcache.c toolcontext.c config.c btree.c \
 
 LDADD+=		-lprop
 
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/activate
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/cache
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/commands
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/config
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/datastruct
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/device
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/display
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/error
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/filters
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/format1
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/format_pool
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/format_text
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/freeseg
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/label
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/locking
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/log
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/metadata
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/mirror
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/misc
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/mm
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/report
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/snapshot
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/striped
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/uuid
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/zero
-.PATH:	${LVM2TOOLS_DISTDIR}/lib/netbsd
+.PATH:	${LVM2_DISTDIR}/lib/
+.PATH:	${LVM2_DISTDIR}/lib/activate
+.PATH:	${LVM2_DISTDIR}/lib/cache
+.PATH:	${LVM2_DISTDIR}/lib/commands
+.PATH:	${LVM2_DISTDIR}/lib/config
+.PATH:	${LVM2_DISTDIR}/lib/datastruct
+.PATH:	${LVM2_DISTDIR}/lib/device
+.PATH:	${LVM2_DISTDIR}/lib/display
+.PATH:	${LVM2_DISTDIR}/lib/error
+.PATH:	${LVM2_DISTDIR}/lib/filters
+.PATH:	${LVM2_DISTDIR}/lib/format1
+.PATH:	${LVM2_DISTDIR}/lib/format_pool
+.PATH:	${LVM2_DISTDIR}/lib/format_text
+.PATH:	${LVM2_DISTDIR}/lib/freeseg
+.PATH:	${LVM2_DISTDIR}/lib/label
+.PATH:	${LVM2_DISTDIR}/lib/locking
+.PATH:	${LVM2_DISTDIR}/lib/log
+.PATH:	${LVM2_DISTDIR}/lib/metadata
+.PATH:	${LVM2_DISTDIR}/lib/mirror
+.PATH:	${LVM2_DISTDIR}/lib/misc
+.PATH:	${LVM2_DISTDIR}/lib/mm
+.PATH:	${LVM2_DISTDIR}/lib/report
+.PATH:	${LVM2_DISTDIR}/lib/snapshot
+.PATH:	${LVM2_DISTDIR}/lib/striped
+.PATH:	${LVM2_DISTDIR}/lib/uuid
+.PATH:	${LVM2_DISTDIR}/lib/zero
+.PATH:	${LVM2_DISTDIR}/lib/netbsd
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
