@@ -1,4 +1,4 @@
-.\"	$NetBSD: dm.4,v 1.1 2008/12/22 02:28:28 haad Exp $
+.\"	$NetBSD: dm.4,v 1.2 2008/12/22 08:52:37 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,81 +38,104 @@
 The
 .Nm
 driver provides the capability of creating one or more virtual disks
-based on target mapping.
+based on the target mapping.
 .Pp
-This document assumes that you're familiar with how to generate kernels,
-how to properly configure disks and pseudo-devices in a kernel configuration file, 
-and how to partition disks. This driver is used by linux lvm2tools to create/manage
-lvm in NetBSD. 
+This document assumes that you're familiar with how to generate
+kernels, how to properly configure disks and pseudo-devices in a
+kernel configuration file, and how to partition disks.
+This driver is used by the Linux lvm2tools to create and manage
+lvm in
+.Nx .
 .Pp
-Note that there are 
-.Pa linear, zero, error 
-targets implemented now.
-Each component partition should be offset at least 2 sectors 
+Currently, the
+.Pa linear , zero ,
+and
+.Pa error
+targets are implemented.
+Each component partition should be offset at least 2 sectors
 from the beginning of the component disk.
 This avoids potential conflicts between the component disk's
-disklabel and the
-.Nm Ns 's
+disklabel and
+.Nm Ap s
 disklabel.
-In i386 it is offset 65s. Where 63 sectors are initial boot 
-sectors and 2 sectors are used for disklabel which is set to 
-be read-only.
+In i386 it is offset by 65 sectors, where 63 sectors are the initial
+boot sectors and 2 sectors are used for the disklabel which is set
+to be read-only.
 .Pp
-In order to compile in support for the
+In order to compile in support for
 .Nm ,
-you must add a line similar
-to the following to your kernel configuration file:
+you must add a line similar to the following to your kernel
+configuration file:
 .Bd -unfilled -offset indent
 pseudo-device	dm	 #device-mapper disk device
 .Ed
 .Pp
-A
 .Nm
-may create linear mapped devices, zero and error block devices. Zero 
-and error block devices are used mostly for testing. 
-.Pa Linear 
-devices are used to create Virtual disks with lineary mapped virtual blocks
-to blocks on real disk. 
+may create linear mapped devices, zero, and error block devices.
+Zero and error block devices are used mostly for testing.
+.Pa Linear
+devices are used to create virtual disks with linearly mapped virtual
+blocks to blocks on real disk.
 .Nm
-Device-mapper devices are controlled throught /dev/mapper/control device. For 
-controlling this device Ioctl calls are used. For implementation of communication 
-channel proplib library is used. Protocol channel is defined as on proplib 
-dictionary with needed values. For more reference look at sys/dev/dm/netbsd-dm.h.
-.Nm
-Before any device can be used every device-mapper disk device must be initialized. 
-For initialization is needed to pass one line to kernel driver in a form of proplib
-dictionary. Every device can have more than one tables active.
+Device-mapper devices are controlled through the
+.Pa /dev/mapper/control
+device.
+For controlling this device
+.Xr ioctl 2
+calls are used.
+For the implementation of the communication channel,
+the
+.Xr proplib 3
+library is used.
+The protocol channel is defined as a proplib dictionary with needed
+values.
+For more details, look at
+.Pa sys/dev/dm/netbsd-dm.h .
+Before any device can be used, every device-mapper disk device must
+be initialized.
+For initialization one line must be passed to the kernel driver in
+the form of a proplib dictionary.
+Every device can have more than one table active.
+An example for such a line is:
 .Bd -unfilled -offset indent
 0 10240 linear /dev/wd1a 384
 .Ed
 .Pp
 .Nm
-The first parameter is start sector for table defined with this line, the second is length in 
-sectors which is described with this table. The third parameter is target name. All other parts
-of this line depends on choosen target. 
+The first parameter is the start sector for the table defined with
+this line, the second is the length in sectors which is described
+with this table.
+The third parameter is the target name.
+All other parts of this line depend on the chosen target.
 .Nm
-For linear target there are two additional parameters the first parameter describes disk device
-on which device-mapper disk is mapped. The second parameter is offset on this disk from start of 
-disk/partition.
-.Sh WARNINGS
- This driver is still work-in-progress there can be bugs.
-.Sh AUTHORS
-.An Adam Hamsik Aq haad@NetBSD.org
-implemented the device-mapper driver
-.Nx .
-.Pp
-.An Brett Blymn Aq blymn@NetBSD.org , 
-.An Reinoud Zandijk Aq reinoud@netbsd.org and 
-.An Bill Stouder-Studenmund Aq wrstuden@netbsd.org 
-provided guidance and answered questions about NetBSD implementation.
+For the linear target, there are two additional parameters:
+The first parameter describes the disk device to which the
+device-mapper disk is mapped.
+The second parameter is the offset on this disk from the start of
+the disk/partition.
 .Sh SEE ALSO
 .Xr config 1 ,
+.Xr proplib 3 ,
 .Xr MAKEDEV 8 ,
-.Xr lvm 8 ,
 .Xr dmsetup 8 ,
 .Xr fsck 8 ,
+.Xr lvm 8 ,
 .Xr mount 8 ,
-.Xr newfs 8 ,
-.Xr proplib 3
+.Xr newfs 8
 .Sh HISTORY
-The device-mapper disk driver first appeared in NetBSD 6.0.
+The device-mapper disk driver first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Adam Hamsik Aq haad@NetBSD.org
+implemented the device-mapper driver for
+.Nx .
+.Pp
+.An Brett Blymn Aq blymn@NetBSD.org ,
+.An Reinoud Zandijk Aq reinoud@NetBSD.org ,
+and
+.An Bill Stouder-Studenmund Aq wrstuden@NetBSD.org
+provided guidance and answered questions about the
+.Nx
+implementation.
+.Sh BUGS
+This driver is still work-in-progress\(emthere can be bugs.
