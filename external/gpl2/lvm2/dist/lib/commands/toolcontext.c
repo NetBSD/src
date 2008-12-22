@@ -1,4 +1,4 @@
-/*	$NetBSD: toolcontext.c,v 1.1.1.1 2008/12/22 00:17:53 haad Exp $	*/
+/*	$NetBSD: toolcontext.c,v 1.2 2008/12/22 00:56:58 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -220,6 +220,8 @@ static int _process_config(struct cmd_context *cmd)
 #ifdef DEVMAPPER_SUPPORT
 	dm_set_dev_dir(cmd->dev_dir);
 #endif
+#ifndef __NetBSD__
+
 
 	/* proc dir */
 	if (dm_snprintf(cmd->proc_dir, sizeof(cmd->proc_dir), "%s",
@@ -228,11 +230,11 @@ static int _process_config(struct cmd_context *cmd)
 		log_error("Device directory given in config file too long");
 		return 0;
 	}
-
+#endif
 	if (*cmd->proc_dir && !dir_exists(cmd->proc_dir)) {
 		log_error("WARNING: proc dir %s not found - some checks will be bypassed",
 			  cmd->proc_dir);
-		cmd->proc_dir[0] = '\0';
+		*cmd->proc_dir = '\0';
 	}
 
 	_get_sysfs_dir(cmd);
