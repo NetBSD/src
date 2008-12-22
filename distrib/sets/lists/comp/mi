@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1219 2008/12/16 22:54:36 christos Exp $
+#	$NetBSD: mi,v 1.1220 2008/12/22 20:18:37 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2287,6 +2287,9 @@
 ./usr/lib/libdes.a				comp-c-lib		crypto
 ./usr/lib/libdes_g.a		-unknown-	debuglib
 ./usr/lib/libdes_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libdevmapper.a			comp-lvm-lib		lvm
+./usr/lib/libdevmapper_g.a	-unknown-	debuglib
+./usr/lib/libdevmapper_p.a			comp-lvm-proflib	lvm
 ./usr/lib/libdns.a				comp-bind-lib
 ./usr/lib/libdns_g.a		-unknown-	debuglib
 ./usr/lib/libdns_p.a				comp-bind-proflib	profile

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.453 2008/11/20 23:50:09 matt Exp $
+# $NetBSD: shl.mi,v 1.454 2008/12/22 20:18:36 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -16,6 +16,7 @@
 ./lib/libc.so.12.164				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.0.2				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so.4.1				base-crypto-shlib	crypto,dynamicroot
+./lib/libdevmapper.so.0.0			base-lvm-shlib		lvm,dynamicroot
 ./lib/libedit.so.2.11				base-sys-shlib		dynamicroot
 ./lib/libevent.so.2.0				base-sys-shlib		dynamicroot
 ./lib/libipsec.so.2.2				base-net-shlib		dynamicroot
@@ -64,6 +65,7 @@
 ./usr/lib/libcrypto.so.4.1			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.6.4			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
+./usr/lib/libdevmapper.so.0.0			base-lvm-shlib		lvm
 ./usr/lib/libdns.so.1.1				base-bind-shlib
 ./usr/lib/libedit.so.2.11			base-sys-shlib
 ./usr/lib/libevent.so.2.0			base-sys-shlib
