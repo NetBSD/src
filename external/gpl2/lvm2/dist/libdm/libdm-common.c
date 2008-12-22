@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-common.c,v 1.1.1.1 2008/12/22 00:18:32 haad Exp $	*/
+/*	$NetBSD: libdm-common.c,v 1.2 2008/12/22 00:56:59 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -18,7 +18,9 @@
 #include "dmlib.h"
 #include "libdm-targets.h"
 #include "libdm-common.h"
+#ifdef linux
 #include "kdev_t.h"
+#endif
 #include "dm-ioctl.h"
 
 #include <stdarg.h>
@@ -32,6 +34,10 @@
 
 #ifdef HAVE_SELINUX
 #  include <selinux/selinux.h>
+#endif
+
+#ifdef __NetBSD__
+#include <netbsd-dm.h>
 #endif
 
 #define DEV_DIR "/dev/"
@@ -268,6 +274,45 @@ static int _add_dev_node(const char *dev_name, uint32_t major, uint32_t minor,
 	dev_t dev = MKDEV(major, minor);
 	mode_t old_mask;
 
+	#ifdef __NetBSD__
+	char rpath[PATH_MAX];
+	uint32_t raw_major;
+	dev_t rdev;
+	char raw_devname[DM_NAME_LEN+1]; /* r + other device name */
+
+	nbsd_get_dm_major(&raw_major,DM_CHAR_MAJOR);
+	rdev = MKDEV(raw_major,minor);
+
+	snprintf(raw_devname,sizeof(raw_devname),"r%s",dev_name);
+
+	_build_dev_path(rpath, sizeof(rpath), raw_devname);
+
+	if (stat(rpath, &info) >= 0) {
+		if (!S_ISCHR(info.st_mode)) {
+			log_error("A non-raw device file at '%s' "
+			    "is already present", rpath);
+			return 0;
+		}
+
+		/* If right inode already exists we don't touch uid etc. */
+		if (info.st_rdev == rdev)
+			return 1;
+
+		if (unlink(rpath) < 0) {
+			log_error("Unable to unlink device node for '%s'",
+			    raw_devname);
+			return 0;
+		}
+	}
+
+	old_mask = umask(0);
+
+	if (mknod(rpath, S_IFCHR | mode, rdev) < 0) {
+		log_error("Unable to make device node for '%s'", raw_devname);
+		return 0;
+	}
+#endif
+	
 	_build_dev_path(path, sizeof(path), dev_name);
 
 	if (stat(path, &info) >= 0) {
@@ -316,6 +361,42 @@ static int _rename_dev_node(const char *old_name, const char *new_name)
 	char newpath[PATH_MAX];
 	struct stat info;
 
+#ifdef __NetBSD__
+	char rpath[PATH_MAX];
+	char nrpath[PATH_MAX];
+	char raw_devname[DM_NAME_LEN+1]; /* r + other device name */
+	char nraw_devname[DM_NAME_LEN+1]; /* r + other device name */
+
+	snprintf(nraw_devname,sizeof(raw_devname),"r%s",new_name);
+	snprintf(raw_devname,sizeof(raw_devname),"r%s",old_name);
+
+	_build_dev_path(nrpath, sizeof(nrpath), nraw_devname);
+	_build_dev_path(rpath, sizeof(rpath), raw_devname);
+
+	if (stat(nrpath, &info) == 0) {
+		if (S_ISBLK(info.st_mode)) {
+			log_error("A block device file at '%s' "
+			    "is present where raw device should be.", newpath);
+			return 0;
+		}
+
+		if (unlink(nrpath) < 0) {
+			log_error("Unable to unlink device node for '%s'",
+			    nraw_devname);
+			return 0;
+		}
+	}
+
+	if (rename(rpath, nrpath) < 0) {
+		log_error("Unable to rename device node from '%s' to '%s'",
+		    raw_devname, nraw_devname);
+		return 0;
+	}
+
+	log_debug("Renamed %s to %s", rpath, nrpath);
+
+#endif
+	
 	_build_dev_path(oldpath, sizeof(oldpath), old_name);
 	_build_dev_path(newpath, sizeof(newpath), new_name);
 
@@ -353,6 +434,25 @@ static int _rm_dev_node(const char *dev_name)
 	char path[PATH_MAX];
 	struct stat info;
 
+#ifdef __NetBSD__
+	char rpath[PATH_MAX];
+	char raw_devname[DM_NAME_LEN+1]; /* r + other device name */
+
+	snprintf(raw_devname,sizeof(raw_devname),"r%s",dev_name);
+
+	_build_dev_path(rpath, sizeof(rpath), raw_devname);
+
+	if (stat(rpath, &info) < 0)
+		return 1;
+
+	if (unlink(rpath) < 0) {
+		log_error("Unable to unlink device node for '%s'", raw_devname);
+		return 0;
+	}
+
+	log_debug("Removed %s", rpath);
+#endif
+	
 	_build_dev_path(path, sizeof(path), dev_name);
 
 	if (stat(path, &info) < 0)
