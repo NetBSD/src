@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.55 2008/12/18 01:15:43 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.56 2008/12/22 03:13:41 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1638,4 +1638,12 @@ sys/fs/udf/udf_vfsops.c				1.54
 
 	Fix a panic and some endless loops.
 	[reinoud, ticket #192]
+
+sys/fs/udf/udf_subr.c				1.81, 1.82
+
+	Fix panic that could occur when mounting a CD-R/DVD*R disc.
+
+	Implement auto-track repair on tracks marked damaged when
+	searching for writable tracks on session opening.
+	[reinoud, ticket #194]
 
