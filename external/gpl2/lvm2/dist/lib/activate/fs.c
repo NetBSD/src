@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.1.1.1 2008/12/22 00:18:01 haad Exp $	*/
+/*	$NetBSD: fs.c,v 1.2 2008/12/22 00:56:58 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -101,6 +101,20 @@ static void _rm_blks(const char *dir)
 			if (unlink(path) < 0)
 				log_sys_error("unlink", path);
 		}
+#ifdef __NetBSD__
+		if (dm_snprintf(path, sizeof(path), "%s/r%s", dir, name) == -1) {
+			log_error("Couldn't create path for r%s", name);
+			continue;
+		}
+
+		if (!lstat(path, &buf)) {
+			if (!S_ISCHR(buf.st_mode))
+				continue;
+			log_very_verbose("Removing %s", path);
+			if (unlink(path) < 0)
+				log_sys_error("unlink", path);
+		}
+#endif		
 	}
 }
 
@@ -111,6 +125,11 @@ static int _mk_link(const char *dev_dir, const char *vg_name,
 	char vg_path[PATH_MAX];
 	struct stat buf;
 
+#ifdef __NetBSD__
+	/* Add support for creating links to BSD raw devices */
+	char raw_lv_path[PATH_MAX], raw_link_path[PATH_MAX];
+#endif	
+
 	if (dm_snprintf(vg_path, sizeof(vg_path), "%s%s",
 			 dev_dir, vg_name) == -1) {
 		log_error("Couldn't create path for volume group dir %s",
@@ -118,6 +137,42 @@ static int _mk_link(const char *dev_dir, const char *vg_name,
 		return 0;
 	}
 
+#ifdef __NetBSD__
+	if (dm_snprintf(raw_lv_path, sizeof(raw_lv_path), "%s/r%s", vg_path,
+		lv_name) == -1) {
+		log_error("Couldn't create source pathname for "
+		    "logical volume link r%s", lv_name);
+		return 0;
+	}
+
+	if (dm_snprintf(raw_link_path, sizeof(raw_link_path), "%s/r%s",
+		dm_dir(), dev) == -1) {
+		log_error("Couldn't create destination pathname for "
+		    "logical volume link for %s", lv_name);
+		return 0;
+	}
+
+	if (!lstat(raw_lv_path, &buf)) {
+		if (!S_ISLNK(buf.st_mode) && !S_ISCHR(buf.st_mode)) {
+			log_error("Symbolic link %s not created: file exists",
+				  raw_link_path);
+			return 0;
+		}
+
+		log_very_verbose("Removing %s", raw_lv_path);
+		if (unlink(raw_lv_path) < 0) {
+			log_sys_error("unlink", raw_lv_path);
+			return 0;
+		}
+	}
+
+	log_very_verbose("Linking %s -> %s", raw_lv_path, raw_link_path);
+	if (symlink(raw_link_path, raw_lv_path) < 0) {
+		log_sys_error("symlink", raw_lv_path);
+		return 0;
+	}
+	
+#endif	
 	if (dm_snprintf(lv_path, sizeof(lv_path), "%s/%s", vg_path,
 			 lv_name) == -1) {
 		log_error("Couldn't create source pathname for "
@@ -190,6 +245,29 @@ static int _rm_link(const char *dev_dir, const char *vg_name,
 	struct stat buf;
 	char lv_path[PATH_MAX];
 
+#ifdef __NetBSD__
+	/* Add support for removing links to BSD raw devices */
+	char raw_lv_path[PATH_MAX];
+
+	if (dm_snprintf(raw_lv_path, sizeof(raw_lv_path), "%s%s/r%s",
+			 dev_dir, vg_name, lv_name) == -1) {
+		log_error("Couldn't determine link pathname.");
+		return 0;
+	}
+
+	if (lstat(raw_lv_path, &buf) || !S_ISLNK(buf.st_mode)) {
+		if (errno == ENOENT)
+			return 1;
+		log_error("%s not symbolic link - not removing", raw_lv_path);
+		return 0;
+	}
+
+	log_very_verbose("Removing link %s", raw_lv_path);
+	if (unlink(raw_lv_path) < 0) {
+		log_sys_error("unlink", raw_lv_path);
+		return 0;
+	}
+#endif
 	if (dm_snprintf(lv_path, sizeof(lv_path), "%s%s/%s",
 			 dev_dir, vg_name, lv_name) == -1) {
 		log_error("Couldn't determine link pathname.");

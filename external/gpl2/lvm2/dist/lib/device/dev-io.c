@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.1.1.1 2008/12/22 00:17:55 haad Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.2 2008/12/22 00:56:58 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -38,6 +38,10 @@
 #  ifndef BLKGETSIZE64		/* fs.h out-of-date */
 #    define BLKGETSIZE64 _IOR(0x12, 114, size_t)
 #  endif /* BLKGETSIZE64 */
+#elif __NetBSD__
+#  include <sys/disk.h>
+#  include <sys/disklabel.h>
+#  include <sys/param.h>
 #else
 #  include <sys/disk.h>
 #  define BLKBSZGET DKIOCGETBLOCKSIZE
@@ -127,12 +131,22 @@ static int _io(struct device_area *where, void *buffer, int should_write)
 static int _get_block_size(struct device *dev, unsigned int *size)
 {
 	const char *name = dev_name(dev);
+#ifdef __NetBSD__
+	struct disklabel	lab;
+#endif
 
 	if ((dev->block_size == -1)) {
+#ifdef __NetBSD__
+		if (ioctl(dev_fd(dev), DIOCGDINFO, &lab) < 0) {
+			dev->block_size = DEV_BSIZE;
+		} else
+			dev->block_size = lab.d_secsize;
+#else
 		if (ioctl(dev_fd(dev), BLKBSZGET, &dev->block_size) < 0) {
 			log_sys_error("ioctl BLKBSZGET", name);
 			return 0;
 		}
+#endif
 		log_debug("%s: block size is %u bytes", name, dev->block_size);
 	}
 
@@ -242,12 +256,35 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 {
 	int fd;
 	const char *name = dev_name(dev);
+#ifdef __NetBSD__
+	struct disklabel	lab;
+	struct dkwedge_info     dkw;
+#endif
 
 	if ((fd = open(name, O_RDONLY)) < 0) {
 		log_sys_error("open", name);
 		return 0;
+		}
+
+#ifdef __NetBSD__
+	if ((*size = lseek (fd, 0, SEEK_END)) < 0) {
+		log_sys_error("lseek SEEK_END", name);
+		close(fd);
+		return 0;
 	}
 
+	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
+		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) < 0) {
+			log_sys_error("ioctl DIOCGWEDGEINFO", name);
+			close(fd);
+			return 0;
+		} else
+			if (dkw.dkw_size)
+				*size = dkw.dkw_size;
+	} else 
+		if (lab.d_secsize)
+			*size /= lab.d_secsize;
+#else
 	if (ioctl(fd, BLKGETSIZE64, size) < 0) {
 		log_sys_error("ioctl BLKGETSIZE64", name);
 		if (close(fd))
@@ -256,6 +293,7 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 	}
 
 	*size >>= BLKSIZE_SHIFT;	/* Convert to sectors */
+#endif
 	if (close(fd))
 		log_sys_error("close", name);
 
@@ -308,8 +346,10 @@ int dev_get_sectsize(struct device *dev, uint32_t *size)
 
 void dev_flush(struct device *dev)
 {
+#ifdef __linux__
 	if (!(dev->flags & DEV_REGULAR) && ioctl(dev->fd, BLKFLSBUF, 0) >= 0)
 		return;
+#endif
 
 	if (fsync(dev->fd) >= 0)
 		return;
