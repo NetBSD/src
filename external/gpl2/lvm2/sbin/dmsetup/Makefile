@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/12/22 01:56:22 haad Exp $
+#	$NetBSD: Makefile,v 1.4 2008/12/22 18:13:30 agc Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -10,7 +10,6 @@ NOLINT=		#defined
 PROG=		dmsetup
 
 MAN=		dmsetup.8
-MLINKS=		dmsetup.8 dmsetup.1
 
 BINDIR=		/sbin
 
