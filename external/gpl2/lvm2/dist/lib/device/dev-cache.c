@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-cache.c,v 1.1.1.1 2008/12/22 00:17:54 haad Exp $	*/
+/*	$NetBSD: dev-cache.c,v 1.2 2008/12/22 00:56:58 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -26,6 +26,10 @@
 #include <unistd.h>
 #include <sys/param.h>
 #include <dirent.h>
+
+#ifdef __NetBSD__
+#include "netbsd.h"
+#endif
 
 struct dev_iter {
 	struct btree_iter *current;
@@ -423,14 +427,26 @@ static int _insert(const char *path, int rec)
 		if (rec)
 			r = _insert_dir(path);
 
-	} else {		/* add a device */
-		if (!S_ISBLK(info.st_mode)) {
-			log_debug("%s: Not a block device", path);
-			return 0;
+	} else {
+		/* add a device */
+#ifdef __NetBSD__		
+		/*
+		 * In NetBSD we have two different types of devices
+		 * raw and block. I can insert only  existing
+		 * raw and block device.
+		 */
+		if (nbsd_check_dev(MAJOR(info.st_rdev),path) < 0) {
+			log_debug("%s: Not a block device.", path);
+			return_0;
 		}
 
-		if (!_insert_dev(path, info.st_rdev))
+#else
+		if (!S_ISBLK(info.st_mode))
+			log_debug("%s: Not a block device", path);
+#endif
+		if (!_insert_dev(path, info.st_rdev)) {
 			return_0;
+		}
 
 		r = 1;
 	}
