@@ -1,3 +1,4 @@
+#	$NetBSD: termcap.mini,v 1.5 2008/12/22 18:46:41 tsutsui Exp $
 wsvt25m|NetBSD wscons in 25 line DEC VT220 mode with Meta:km:\
 	:tc=wsvt25:
 
