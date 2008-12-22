@@ -1,0 +1,36 @@
+#	$NetBSD: Makefile,v 1.1 2008/12/22 00:57:58 haad Exp $
+
+USE_SHLIBDIR=	yes
+USE_FORT?=	no
+NOLINT=		#defined
+
+.include "../../lvm2tools.mk"
+
+LIB=		devmapper
+
+NETBSD_DM_PATH= ${NETBSDSRCDIR}/sys/dev/dm
+
+CFLAGS+= -fno-inline
+
+CPPFLAGS+=	-I${LIBDM_DISTDIR} -I${LIBDM_DISTDIR}/misc -I${LIBDM_DISTDIR}/mm \
+		-I${LIBDM_DISTDIR}/datastruct -I${LIBDM_DISTDIR}/ioctl \
+		-I${LVM2TOOLS_DISTDIR}/include -I${NETBSD_DM_PATH} -D__NetBSD__
+
+
+CPPFLAGS+=	-D__LIB_DEVMAPPER__ -DDM_DEVICE_UID=0 \
+		-DDM_DEVICE_GID=0 -DDM_DEVICE_MODE=0600
+
+LDADD+=		-lprop
+
+SRCS+=		bitset.c hash.c list.c libdm-common.c libdm-file.c \
+		libdm-deptree.c	libdm-string.c libdm-report.c \
+		dbg_malloc.c pool.c matcher.c parse_rx.c ttree.c \
+		libdm-nbsd-iface.c libdm_netbsd.c
+
+.PATH: ${LIBDM_DISTDIR}/
+.PATH: ${LIBDM_DISTDIR}/datastruct
+.PATH: ${LIBDM_DISTDIR}/mm
+.PATH: ${LIBDM_DISTDIR}/regex
+.PATH: ${LIBDM_DISTDIR}/ioctl
+
+.include <bsd.lib.mk>
