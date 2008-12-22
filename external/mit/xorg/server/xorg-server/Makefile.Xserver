@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.7 2008/09/25 12:30:04 rtr Exp $
+#	$NetBSD: Makefile.Xserver,v 1.8 2008/12/22 01:04:27 jmcneill Exp $
 
 # XXX old list
 .if 0
@@ -36,6 +36,7 @@
 	miext/cw \
 	Xi \
 	xkb \
+	xkbstubs \
 	composite \
 	dix/xpstubs \
 	os \
