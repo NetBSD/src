@@ -1,11 +1,11 @@
 #!/bin/sh
-#	$NetBSD: mktermcap,v 1.3 2008/12/22 18:46:02 tsutsui Exp $
+#	$NetBSD: mktermcap,v 1.4 2008/12/22 18:58:22 christos Exp $
 
 TARGET=termcap.mini
 
 echo "#	\$NetBSD\$" > ${TARGET}
 for t in wsvt25m vt100 vt220 xterm ansi
 do
-	getent termcap -rp $t >> ${TARGET}
-	echo >> ${TARGET}
-done
+	getent termcap -rp $t
+	echo
+done >> ${TARGET}
