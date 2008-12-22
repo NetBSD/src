@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnvar.h,v 1.4 2008/08/18 21:19:22 cube Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.5 2008/12/22 11:32:04 blymn Exp $	*/
 /*	OpenBSD: if_iwnvar.h,v 1.2 2007/11/19 19:34:25 damien Exp	*/
 
 /*-
@@ -215,4 +215,5 @@ struct iwn_softc {
 #endif
 
 	bool		is_scanning;
+	bool		sc_radio;
 };
