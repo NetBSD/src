@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.106 2008/12/22 11:46:33 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.107 2008/12/22 12:18:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.106 2008/12/22 11:46:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.107 2008/12/22 12:18:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -393,7 +393,9 @@ out:
 }
 
 /*
- * Synch an open file.
+ * Synch an open file.  Called for VOP_FSYNC() and VFS_FSYNC().
+ *
+ * BEWARE: THIS ROUTINE ACCEPTS BOTH FFS AND NON-FFS VNODES.
  */
 /* ARGSUSED */
 int
