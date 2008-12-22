@@ -1,4 +1,4 @@
-/*        $NetBSD: netbsd-dm.h,v 1.2 2008/12/19 15:24:03 haad Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.3 2008/12/22 02:20:04 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -184,6 +184,7 @@
   *
   */ 
 
+
 #define DM_IOCTL_COMMAND      "command"
 #define DM_IOCTL_VERSION      "version"
 #define DM_IOCTL_OPEN         "open_count"
@@ -207,8 +208,9 @@
 #define DM_TABLE_STAT         "status"
 #define DM_TABLE_LENGTH       "length"
 #define DM_TABLE_PARAMS       "params"
-#define DM_TABLE_DEPS         "deps"
-
+//#ifndef __LIB_DEVMAPPER__
+//#define DM_TABLE_DEPS         "deps"
+//#endif
 
 /* Status bits */
 /* IO mode of device */
@@ -253,7 +255,6 @@
  */
 #define DM_NOFLUSH_FLAG		(1 << 11) /* In */
 
-
 #ifdef __LIB_DEVMAPPER__
 
 #  define MAJOR(x) major((x))
@@ -268,8 +269,7 @@
 #define DM_BLOCK_MAJOR 2	
 
 /* libdm_netbsd.c */
-/* Get dm device major/minor numbers */
-int nbsd_get_dm_major(uint32_t *, uint32_t *, int); 
+int nbsd_get_dm_major(uint32_t *, int); /* Get dm device major numbers */
 
 int nbsd_dmi_add_cmd(const char *, prop_dictionary_t);
 int nbsd_dmi_add_version(const int [3], prop_dictionary_t);
