@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.73.4.6 2008/12/22 03:05:00 snj Exp $ */
+/* $NetBSD: udf_subr.c,v 1.73.4.7 2008/12/22 03:07:31 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.6 2008/12/22 03:05:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.7 2008/12/22 03:07:31 snj Exp $");
 #endif /* not lint */
 
 
@@ -489,7 +489,9 @@ udf_check_track_metadata_overlap(struct udf_mount *ump,
 int
 udf_search_writing_tracks(struct udf_mount *ump)
 {
+	struct vnode *devvp = ump->devvp;
 	struct mmc_trackinfo trackinfo;
+	struct mmc_op        op;
 	struct part_desc *part;
 	uint32_t tracknr, start_track, num_tracks;
 	uint32_t track_start, track_end, part_start, part_end;
@@ -528,6 +530,26 @@ udf_search_writing_tracks(struct udf_mount *ump)
 		if (error)
 			return error;
 
+		/*
+		 * If this track is marked damaged, ask for repair. This is an
+		 * optional command, so ignore its error but report warning.
+		 */
+		if (trackinfo.flags & MMC_TRACKINFO_DAMAGED) {
+			memset(&op, 0, sizeof(op));
+			op.operation   = MMC_OP_REPAIRTRACK;
+			op.mmc_profile = ump->discinfo.mmc_profile;
+			op.tracknr     = tracknr;
+			error = VOP_IOCTL(devvp, MMCOP, &op, FKIOCTL, NOCRED);
+			if (error)
+				(void)printf("Drive can't explicitly repair "
+					"damaged track %d, but it might "
+					"autorepair\n", tracknr);
+
+			/* reget track info */
+			error = udf_update_trackinfo(ump, &trackinfo);
+			if (error)
+				return error;
+		}
 		if ((trackinfo.flags & MMC_TRACKINFO_NWA_VALID) == 0)
 			continue;
 	
