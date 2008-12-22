@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.271 2008/12/11 02:25:26 snj Exp $
+#	$NetBSD: BRANCHES,v 1.272 2008/12/22 02:07:39 haad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -321,18 +321,6 @@ Base Tag:	gmcgarry_ucred_base
 Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
 Scope:		kernel
 Notes:		merge pcred and ucred and poolify
-
-Branch:         haad-dm
-Description:    Add support for LVM to NetBSD
-Status:         Active
-Start Date:     7 July 2008
-End Date:
-Base Tag:       haad-dm-base
-Maintainer:     Adam Hamsik <haad@NetBSD.org>
-Scope:          kernel
-Notes:          LVM support is based on Linux lvm2tools, 
-                libdevmapper library and NetBSD device-mapper
-                driver. 
 
 Branch:		hpcarm-cleanup
 Description:	Fix build problems for hpcarm
@@ -820,6 +808,18 @@ Scope:		syssrc
 Notes:		The goal is to get rid of the existing device switch tables in
 		port-dependent conf.c and to generate them dynamically by
 		config(8).
+
+Branch:         haad-dm
+Description:    Add support for LVM to NetBSD
+Status:         Terminated; merged with -current
+Start Date:     7 July 2008
+End Date:	19 December 2008
+Base Tag:       haad-dm-base
+Maintainer:     Adam Hamsik <haad@NetBSD.org>
+Scope:          kernel
+Notes:          LVM support is based on Linux lvm2tools, 
+                libdevmapper library and NetBSD device-mapper
+                driver. 
 
 Branch:		is-newarp
 Description:	ARP for non-Ethernet
