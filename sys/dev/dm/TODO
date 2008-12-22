@@ -6,7 +6,7 @@ Important unimplemented features in current device-mapper implementation
 
 * snapshot target, there is some code in repository already
 
-* enable dynamically loadable targets
+* integrate LVM with sysinst, so we can configure LVM during installation
 
 			Pain in the sky tasks
 
