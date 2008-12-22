@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.40 2008/12/13 05:54:57 mrg Exp $ */
+/*	$NetBSD: cgsix.c,v 1.41 2008/12/22 23:46:22 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.40 2008/12/13 05:54:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.41 2008/12/22 23:46:22 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -566,7 +566,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		sc->sc_fhcrev=-1;
 	printf(", rev %d", sc->sc_fhcrev);
 
-	memcpy(sc->sc_default_cmap, rasops_cmap, 768);
 	/* reset cursor & frame buffer controls */
 	cg6_reset(sc);
 
@@ -609,6 +608,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 
 #if NWSDISPLAY
 	/* setup rasops and so on for wsdisplay */
+	memcpy(sc->sc_default_cmap, rasops_cmap, 768);
 	wsfont_init();
 	cg6_ras_init(sc);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
