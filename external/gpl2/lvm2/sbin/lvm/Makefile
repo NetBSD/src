@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/12/22 01:51:44 haad Exp $
+#	$NetBSD: Makefile,v 1.3 2008/12/22 01:56:22 haad Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -90,7 +90,7 @@ LIBLVM_OBJDIR!= cd ${LVM2_SRCDIR}/lib/liblvm && ${PRINTOBJDIR}
 LDADD+=         -L${LIBLVM_OBJDIR} -llvm
 DPADD+=         ${LIBLVM_OBJDIR}/liblvm.a
 
-LIBDM_OBJDIR!=  cd ${LIBDM_SRCDIR}/lib/libdevmapper && ${PRINTOBJDIR}
+LIBDM_OBJDIR!=  cd ${LIBDM_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBDM_OBJDIR} -ldevmapper
 DPADD+=         ${LIBDM_OBJDIR}/libdevmapper.a
 
