@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/12/22 00:57:58 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2008/12/22 01:48:10 haad Exp $
 
 USE_SHLIBDIR=	yes
 USE_FORT?=	no
@@ -8,13 +8,11 @@ NOLINT=		#defined
 
 LIB=		devmapper
 
-NETBSD_DM_PATH= ${NETBSDSRCDIR}/sys/dev/dm
-
 CFLAGS+= -fno-inline
 
 CPPFLAGS+=	-I${LIBDM_DISTDIR} -I${LIBDM_DISTDIR}/misc -I${LIBDM_DISTDIR}/mm \
 		-I${LIBDM_DISTDIR}/datastruct -I${LIBDM_DISTDIR}/ioctl \
-		-I${LVM2TOOLS_DISTDIR}/include -I${NETBSD_DM_PATH} -D__NetBSD__
+		-I${LVM2_DISTDIR}/include -I${LIBDM_SRCDIR} -D__NetBSD__
 
 
 CPPFLAGS+=	-D__LIB_DEVMAPPER__ -DDM_DEVICE_UID=0 \
