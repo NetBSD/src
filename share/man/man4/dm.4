@@ -1,0 +1,118 @@
+.\"	$NetBSD: dm.4,v 1.1 2008/12/22 02:28:28 haad Exp $
+.\"
+.\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Adam Hamsik
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.Dd August 30, 2008
+.Dt DM 4
+.Os
+.Sh NAME
+.Nm dm
+.Nd Device-mapper disk driver
+.Sh SYNOPSIS
+.Cd "pseudo-device dm"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides the capability of creating one or more virtual disks
+based on target mapping.
+.Pp
+This document assumes that you're familiar with how to generate kernels,
+how to properly configure disks and pseudo-devices in a kernel configuration file, 
+and how to partition disks. This driver is used by linux lvm2tools to create/manage
+lvm in NetBSD. 
+.Pp
+Note that there are 
+.Pa linear, zero, error 
+targets implemented now.
+Each component partition should be offset at least 2 sectors 
+from the beginning of the component disk.
+This avoids potential conflicts between the component disk's
+disklabel and the
+.Nm Ns 's
+disklabel.
+In i386 it is offset 65s. Where 63 sectors are initial boot 
+sectors and 2 sectors are used for disklabel which is set to 
+be read-only.
+.Pp
+In order to compile in support for the
+.Nm ,
+you must add a line similar
+to the following to your kernel configuration file:
+.Bd -unfilled -offset indent
+pseudo-device	dm	 #device-mapper disk device
+.Ed
+.Pp
+A
+.Nm
+may create linear mapped devices, zero and error block devices. Zero 
+and error block devices are used mostly for testing. 
+.Pa Linear 
+devices are used to create Virtual disks with lineary mapped virtual blocks
+to blocks on real disk. 
+.Nm
+Device-mapper devices are controlled throught /dev/mapper/control device. For 
+controlling this device Ioctl calls are used. For implementation of communication 
+channel proplib library is used. Protocol channel is defined as on proplib 
+dictionary with needed values. For more reference look at sys/dev/dm/netbsd-dm.h.
+.Nm
+Before any device can be used every device-mapper disk device must be initialized. 
+For initialization is needed to pass one line to kernel driver in a form of proplib
+dictionary. Every device can have more than one tables active.
+.Bd -unfilled -offset indent
+0 10240 linear /dev/wd1a 384
+.Ed
+.Pp
+.Nm
+The first parameter is start sector for table defined with this line, the second is length in 
+sectors which is described with this table. The third parameter is target name. All other parts
+of this line depends on choosen target. 
+.Nm
+For linear target there are two additional parameters the first parameter describes disk device
+on which device-mapper disk is mapped. The second parameter is offset on this disk from start of 
+disk/partition.
+.Sh WARNINGS
+ This driver is still work-in-progress there can be bugs.
+.Sh AUTHORS
+.An Adam Hamsik Aq haad@NetBSD.org
+implemented the device-mapper driver
+.Nx .
+.Pp
+.An Brett Blymn Aq blymn@NetBSD.org , 
+.An Reinoud Zandijk Aq reinoud@netbsd.org and 
+.An Bill Stouder-Studenmund Aq wrstuden@netbsd.org 
+provided guidance and answered questions about NetBSD implementation.
+.Sh SEE ALSO
+.Xr config 1 ,
+.Xr MAKEDEV 8 ,
+.Xr lvm 8 ,
+.Xr dmsetup 8 ,
+.Xr fsck 8 ,
+.Xr mount 8 ,
+.Xr newfs 8 ,
+.Xr proplib 3
+.Sh HISTORY
+The device-mapper disk driver first appeared in NetBSD 6.0.
