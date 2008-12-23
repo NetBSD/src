@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.h,v 1.1 2008/05/05 17:54:14 ad Exp $	*/
+/*	$NetBSD: cpuctl.h,v 1.1.8.1 2008/12/23 03:36:43 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,5 @@ int	aprint_error(const char *, ...);
 int	aprint_normal_dev(const char *, const char *, ...);
 int	aprint_verbose_dev(const char *, const char *, ...);
 int	aprint_error_dev(const char *, const char *, ...);
-
-char	*bitmask_snprintf(uint64_t, const char *, char *, size_t);
 
 void	identifycpu(const char *);

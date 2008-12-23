@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.13 2008/10/14 15:49:04 cegger Exp $	*/
+/*	$NetBSD: i386.c,v 1.13.2.1 2008/12/23 03:36:43 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.13 2008/10/14 15:49:04 cegger Exp $");
+__RCSID("$NetBSD: i386.c,v 1.13.2.1 2008/12/23 03:36:43 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: i386.c,v 1.13 2008/10/14 15:49:04 cegger Exp $");
 #include <err.h>
 #include <assert.h>
 #include <math.h>
+#include <util.h>
 
 #include <machine/specialreg.h>
 #include <machine/cpu.h>
@@ -1185,12 +1186,12 @@ identifycpu(const char *cpuname)
 	int modif, family, model;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
-	char *buf;
 	const char *feature_str[5];
 	struct cpu_info *ci, cistore;
 	extern int cpu;
 	extern int cpu_info_level;
 	size_t sz;
+	char buf[256];
 
 	ci = &cistore;
 	memset(ci, 0, sizeof(*ci));
@@ -1200,7 +1201,6 @@ identifycpu(const char *cpuname)
 	ci->ci_cpuid_level = cpu_info_level;
 	cpu_probe_features(ci);
 
-	buf = malloc(MAXPATHLEN);
 	if (ci->ci_cpuid_level == -1) {
 		if (cpu < 0 || cpu >= __arraycount(i386_nocpuid_cpus))
 			errx(1, "unknown cpu type %d", cpu);
@@ -1343,47 +1343,44 @@ identifycpu(const char *cpuname)
 	
 	if (ci->ci_feature_flags) {
 		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags,
-			    feature_str[0], buf, MAXPATHLEN);
+			snprintb(buf, sizeof(buf), feature_str[0],
+			    ci->ci_feature_flags);
 			aprint_verbose("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags,
-			    feature_str[1], buf, MAXPATHLEN);
+			snprintb(buf, sizeof(buf), feature_str[1],
+			    ci->ci_feature_flags);
 			aprint_verbose("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags,
-			    feature_str[2], buf, MAXPATHLEN);
+			snprintb(buf, sizeof(buf), feature_str[2],
+			    ci->ci_feature_flags);
 			aprint_verbose("%s: features %s\n", cpuname, buf);
 		}
 	}
 
 	if (ci->ci_feature2_flags) {
-		bitmask_snprintf(ci->ci_feature2_flags,
-		    CPUID2_FLAGS, buf, MAXPATHLEN);
+		snprintb(buf, sizeof(buf), CPUID2_FLAGS, ci->ci_feature2_flags);
 		aprint_verbose("%s: features2 %s\n", cpuname, buf);
 	}
 
 	if (ci->ci_feature3_flags) {
-		bitmask_snprintf(ci->ci_feature3_flags,
-			feature_str[3], buf, MAXPATHLEN);
+		snprintb(buf, sizeof(buf), feature_str[3],
+		    ci->ci_feature3_flags);
 		aprint_verbose("%s: features3 %s\n", cpuname, buf);
 	}
 
 	if (ci->ci_feature4_flags) {
-		bitmask_snprintf(ci->ci_feature4_flags,
-			feature_str[4], buf, MAXPATHLEN);
+		snprintb(buf, sizeof(buf), feature_str[4],
+		    ci->ci_feature4_flags);
 		aprint_verbose("%s: features4 %s\n", cpuname, buf);
 	}
 
 	if (ci->ci_padlock_flags) {
-		bitmask_snprintf(ci->ci_padlock_flags,
-			CPUID_FLAGS_PADLOCK, buf, MAXPATHLEN);
+		snprintb(buf, sizeof(buf), CPUID_FLAGS_PADLOCK,
+		    ci->ci_padlock_flags);
 		aprint_verbose("%s: padlock features %s\n", cpuname, buf);
 	}
-
-	free(buf);
 
 	if (*cpu_brand_string != '\0')
 		aprint_normal("%s: \"%s\"\n", cpuname, cpu_brand_string);
@@ -1778,7 +1775,7 @@ static void
 powernow_probe(struct cpu_info *ci)
 {
 	uint32_t regs[4];
-	char line[256];
+	char buf[256];
 
 	x86_cpuid(0x80000000, regs);
 
@@ -1787,7 +1784,7 @@ powernow_probe(struct cpu_info *ci)
 		return;
 	x86_cpuid(0x80000007, regs);
 
-	bitmask_snprintf(regs[3], CPUID_APM_FLAGS, line, sizeof(line));
+	snprintb(buf, sizeof(buf), CPUID_APM_FLAGS, regs[3]);
 	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
-	    line);
+	    buf);
 }
