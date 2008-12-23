@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.33 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.34 2008/12/23 14:04:42 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -186,8 +186,6 @@ static int fix_lifebyte __P((u_long));
 %token INCLUDE
 	/* PFKEY_BUFFER */
 %token PFKEY_BUFFER
-	/* self information */
-%token IDENTIFIER VENDORID
 	/* logging */
 %token LOGGING LOGLEV
 	/* padding */
@@ -271,7 +269,6 @@ statement
 	|	include_statement
 	|	pfkey_statement
 	|	gssenc_statement
-	|	identifier_statement
 	|	logging_statement
 	|	padding_statement
 	|	listen_statement
@@ -377,30 +374,6 @@ gssenc_statement
 			}
 			lcconf->gss_id_enc = $2;
 		}
-	;
-
-	/* self information */
-identifier_statement
-	:	IDENTIFIER identifier_stmt
-	;
-identifier_stmt
-	:	VENDORID
-		{
-			/*XXX to be deleted */
-		}
-		QUOTEDSTRING EOS
-	|	IDENTIFIERTYPE QUOTEDSTRING
-		{
-			/*XXX to be deleted */
-			$2->l--;	/* nuke '\0' */
-			lcconf->ident[$1] = $2;
-			if (lcconf->ident[$1] == NULL) {
-				yyerror("failed to set my ident: %s",
-					strerror(errno));
-				return -1;
-			}
-		}
-		EOS
 	;
 
 	/* logging */
@@ -1558,16 +1531,6 @@ sainfo_spec
 			cur_algclass = $1;
 		}
 		algorithms EOS
-	|	IDENTIFIER IDENTIFIERTYPE
-		{
-			yyerror("it's deprecated to specify a identifier in phase 2");
-		}
-		EOS
-	|	MY_IDENTIFIER IDENTIFIERTYPE QUOTEDSTRING
-		{
-			yyerror("it's deprecated to specify a identifier in phase 2");
-		}
-		EOS
 	;
 
 algorithms

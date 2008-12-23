@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.17 2008/11/27 10:53:48 tteras Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.18 2008/12/23 14:04:42 tteras Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -132,7 +132,7 @@ addrstring	[a-fA-F0-9:]([a-fA-F0-9:\.]*|[a-fA-F0-9:\.]*%[a-zA-Z0-9]*)
 decstring	{digit}+
 hexstring	0x{hexdigit}+
 
-%s S_INI S_PRIV S_PTH S_INF S_LOG S_PAD S_LST S_RTRY S_CFG S_LDAP
+%s S_INI S_PRIV S_PTH S_LOG S_PAD S_LST S_RTRY S_CFG S_LDAP
 %s S_ALGST S_ALGCL
 %s S_SAINF S_SAINFS
 %s S_RMT S_RMTS S_RMTP
@@ -176,10 +176,6 @@ hexstring	0x{hexdigit}+
 
     /* pfkey_buffer */
 <S_INI>pfkey_buffer { YYDB; return(PFKEY_BUFFER); }
-
-	/* self information */
-<S_INI>identifier	{ BEGIN S_INF; YYDB; yywarn("it is obsoleted.  use \"my_identifier\" in each remote directives."); return(IDENTIFIER); }
-<S_INF>{semi}		{ BEGIN S_INI; return(EOS); }
 
 	/* special */
 <S_INI>complex_bundle	{ YYDB; return(COMPLEX_BUNDLE); }
@@ -300,7 +296,6 @@ hexstring	0x{hexdigit}+
 <S_SAINFS>{ecl}		{ BEGIN S_INI; return(EOC); }
 <S_SAINFS>pfs_group	{ YYD; return(PFS_GROUP); }
 <S_SAINFS>remoteid	{ YYD; return(REMOTEID); }
-<S_SAINFS>identifier	{ YYD; yywarn("it is obsoleted.  use \"my_identifier\"."); return(IDENTIFIER); }
 <S_SAINFS>my_identifier	{ YYD; return(MY_IDENTIFIER); }
 <S_SAINFS>lifetime	{ YYD; return(LIFETIME); }
 <S_SAINFS>time		{ YYD; return(LIFETYPE_TIME); }
@@ -328,7 +323,6 @@ hexstring	0x{hexdigit}+
 <S_RMTS>identity_only	{ YYD; yylval.num = IPSECDOI_SIT_IDENTITY_ONLY; return(SITUATIONTYPE); }
 <S_RMTS>secrecy		{ YYD; yylval.num = IPSECDOI_SIT_SECRECY; return(SITUATIONTYPE); }
 <S_RMTS>integrity	{ YYD; yylval.num = IPSECDOI_SIT_INTEGRITY; return(SITUATIONTYPE); }
-<S_RMTS>identifier	{ YYD; yywarn("it is obsoleted.  use \"my_identifier\"."); return(IDENTIFIER); }
 <S_RMTS>my_identifier	{ YYD; return(MY_IDENTIFIER); }
 <S_RMTS>xauth_login	{ YYD; return(XAUTH_LOGIN); /* formerly identifier type login */ }
 <S_RMTS>peers_identifier	{ YYD; return(PEERS_IDENTIFIER); }
@@ -557,7 +551,6 @@ xauth_rsa_client {
 
 
 	/* identifier type */
-vendor_id	{ YYD; yywarn("it is obsoleted."); return(VENDORID); }
 user_fqdn	{ YYD; yylval.num = IDTYPE_USERFQDN; return(IDENTIFIERTYPE); }
 fqdn		{ YYD; yylval.num = IDTYPE_FQDN; return(IDENTIFIERTYPE); }
 keyid		{ YYD; yylval.num = IDTYPE_KEYID; return(IDENTIFIERTYPE); }

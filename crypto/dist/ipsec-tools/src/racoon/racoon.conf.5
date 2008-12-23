@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.48 2008/11/28 22:37:44 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.49 2008/12/23 14:04:42 tteras Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -237,12 +237,6 @@ Default is
 Specifies other configuration files to be included.
 .El
 .\"
-.Ss Identifier Specification
-is obsolete.
-It must be defined at each
-.Ic remote
-directive.
-.\"
 .Ss Timer Specification
 .Bl -tag -width Ds -compact
 .It Ic timer { Ar statements Ic }
@@ -426,11 +420,6 @@ You can omit this statement.
 .It Ic situation Ic identity_only ;
 Means to use SIT_IDENTITY_ONLY as specified in RFC 2407.
 You can omit this statement.
-.\"
-.It Ic identifier Ar idtype ;
-This statement is obsolete.
-Instead, use
-.Ic my_identifier .
 .\"
 .It Xo
 .Ic my_identifier Bq Ar qualifier
@@ -1032,11 +1021,6 @@ directive.
 Sainfos will only be used if their remoteid matches the ph1id of the
 remote section used for phase 1.
 Defaults to 0, which is also the default for ph1id.
-.\"
-.It Ic my_identifier Ar idtype ... ;
-is obsolete.
-It does not make sense to specify an identifier in the phase 2.
-.El
 .\"
 .Pp
 .Xr racoon 8

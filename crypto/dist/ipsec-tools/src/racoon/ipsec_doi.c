@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.38 2008/12/05 06:02:20 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.39 2008/12/23 14:04:42 tteras Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -157,8 +157,6 @@ static int setph1trns __P((struct isakmpsa *, caddr_t));
 static int setph1attr __P((struct isakmpsa *, caddr_t));
 static vchar_t *setph2proposal0 __P((const struct ph2handle *,
 	const struct saprop *, const struct saproto *));
-
-static vchar_t *getidval __P((int, vchar_t *));
 
 #ifdef HAVE_GSSAPI
 static struct isakmpsa *fixup_initiator_sa __P((struct isakmpsa *,
@@ -3762,7 +3760,6 @@ ipsecdoi_checkid1(iph1)
 
 	/* compare with the ID if specified. */
 	if (genlist_next(iph1->rmconf->idvl_p, 0)) {
-		vchar_t *ident0 = NULL;
 		vchar_t ident;
 		struct idspec *id;
 		struct genlist_entry *gpb;
@@ -3775,19 +3772,15 @@ ipsecdoi_checkid1(iph1)
 				goto matched;
 
 			/* compare defined ID with the ID sent by peer. */
-			if (ident0 != NULL)
-				vfree(ident0);
-			ident0 = getidval(id->idtype, id->id);
-
 			switch (id->idtype) {
 			case IDTYPE_ASN1DN:
 				ident.v = iph1->id_p->v + sizeof(*id_b);
 				ident.l = iph1->id_p->l - sizeof(*id_b);
-				if (eay_cmp_asn1dn(ident0, &ident) == 0)
+				if (eay_cmp_asn1dn(id->id, &ident) == 0)
 					goto matched;
 				break;
 			case IDTYPE_ADDRESS:
-				sa = (struct sockaddr *)ident0->v;
+				sa = (struct sockaddr *)id->id->v;
 				sa2 = (caddr_t)(id_b + 1);
 				switch (sa->sa_family) {
 				case AF_INET:
@@ -3811,23 +3804,17 @@ ipsecdoi_checkid1(iph1)
 				}
 				break;
 			default:
-				if (memcmp(ident0->v, id_b + 1, ident0->l) == 0)
+				if (memcmp(id->id->v, id_b + 1, id->id->l) == 0)
 					goto matched;
 				break;
 			}
 		}
-		if (ident0 != NULL) {
-			vfree(ident0);
-			ident0 = NULL;
-		}
 		plog(LLV_WARNING, LOCATION, NULL, "No ID match.\n");
 		if (iph1->rmconf->verify_identifier)
 			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
-matched: /* ID value match */
-		if (ident0 != NULL)
-			vfree(ident0);
 	}
 
+matched: /* ID value match */
 	return 0;
 }
 
@@ -3853,15 +3840,15 @@ ipsecdoi_setid1(iph1)
 	switch (iph1->rmconf->idvtype) {
 	case IDTYPE_FQDN:
 		id_b.type = IPSECDOI_ID_FQDN;
-		ident = getidval(iph1->rmconf->idvtype, iph1->rmconf->idv);
+		ident = vdup(iph1->rmconf->idv);
 		break;
 	case IDTYPE_USERFQDN:
 		id_b.type = IPSECDOI_ID_USER_FQDN;
-		ident = getidval(iph1->rmconf->idvtype, iph1->rmconf->idv);
+		ident = vdup(iph1->rmconf->idv);
 		break;
 	case IDTYPE_KEYID:
 		id_b.type = IPSECDOI_ID_KEY_ID;
-		ident = getidval(iph1->rmconf->idvtype, iph1->rmconf->idv);
+		ident = vdup(iph1->rmconf->idv);
 		break;
 	case IDTYPE_ASN1DN:
 		id_b.type = IPSECDOI_ID_DER_ASN1_DN;
@@ -3953,21 +3940,6 @@ err:
 		vfree(ident);
 	plog(LLV_ERROR, LOCATION, NULL, "failed get my ID\n");
 	return -1;
-}
-
-static vchar_t *
-getidval(type, val)
-	int type;
-	vchar_t *val;
-{
-	vchar_t *new = NULL;
-
-	if (val)
-		new = vdup(val);
-	else if (lcconf->ident[type])
-		new = vdup(lcconf->ident[type]);
-
-	return new;
 }
 
 /* it's only called by cfparse.y. */

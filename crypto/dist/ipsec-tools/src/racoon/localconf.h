@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.h,v 1.6 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: localconf.h,v 1.7 2008/12/23 14:04:42 tteras Exp $	*/
 
 /* Id: localconf.h,v 1.13 2005/11/06 18:13:18 monas Exp */
 
@@ -61,8 +61,6 @@
 
 #define LC_DEFAULT_SECRETSIZE	16	/* 128 bits */
 
-#define LC_IDENTTYPE_MAX	5	/* XXX */
-
 #define	LC_GSSENC_UTF16LE	0	/* GSS ID in UTF-16LE */
 #define	LC_GSSENC_LATIN1	1	/* GSS ID in ISO-Latin-1 */
 #define	LC_GSSENC_MAX		2
@@ -82,7 +80,6 @@ struct localconf {
 	int rtsock;			/* routing socket */
 
 	char *pathinfo[LC_PATHTYPE_MAX];
-	vchar_t *ident[LC_IDENTTYPE_MAX]; /* base of Identifier payload. */
 
 	int pad_random;
 	int pad_randomlen;

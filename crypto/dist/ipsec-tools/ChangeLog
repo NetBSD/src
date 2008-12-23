@@ -6,6 +6,9 @@
 	  local address detection, make some functions static that are
 	  not needed global, rework how fd_set is construction for the
 	  main loop select()
+	* src/racoon/{cfparse.y|cftoken.l|localconf.h|localconf.c|
+	  ipsec_doi.c|racoon.conf.5}: remove the obsoleted global identity
+	  configuration option
 
 2008-12-18  Timo Teras  <timo.teras@iki.fi>
 	From Arnaud Ebalard <arno@natisbad.org>:
