@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.6 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: localconf.c,v 1.7 2008/12/23 14:04:42 tteras Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -92,11 +92,6 @@ flushlcconf()
 			racoon_free(lcconf->pathinfo[i]);
 			lcconf->pathinfo[i] = NULL;
 		}
-	}
-	for (i = 0; i < LC_IDENTTYPE_MAX; i++) {
-		if (lcconf->ident[i])
-			vfree(lcconf->ident[i]);
-		lcconf->ident[i] = NULL;
 	}
 }
 
