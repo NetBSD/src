@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.36 2008/04/30 13:10:59 martin Exp $
+.\"     $NetBSD: vfsops.9,v 1.37 2008/12/23 09:11:59 stacktic Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,7 @@ corresponding invocation macro, and a description of the element.
 .sp 5p
 int  (*vfs_mount)()	VFS_MOUNT	Mount a file system
 int  (*vfs_start)()	VFS_START	Make operational
-int  (*vfs_unmount)()	VFS_UMOUNT	Unmount a file system
+int  (*vfs_unmount)()	VFS_UNMOUNT	Unmount a file system
 int  (*vfs_root)()	VFS_ROOT	Get the file system root vnode
 int  (*vfs_quotactl)()	VFS_QUOTACTL	Query/modify space quotas
 int  (*vfs_statvfs)()	VFS_STATVFS	Get file system statistics
