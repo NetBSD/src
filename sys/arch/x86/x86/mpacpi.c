@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.72 2008/12/16 22:35:28 christos Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.73 2008/12/23 15:31:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.72 2008/12/16 22:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.73 2008/12/23 15:31:20 cegger Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.72 2008/12/16 22:35:28 christos Exp $")
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>
@@ -559,8 +559,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 		if ((devinfo->Valid & ACPI_VALID_STA) == 0 ||
 		    (devinfo->CurrentStatus & ACPI_STA_OK) == ACPI_STA_OK) {
 			AcpiOsFree(buf.Pointer);
-			dev = malloc(sizeof(struct ac_dev), M_TEMP,
-			    M_WAITOK|M_ZERO);
+			dev = kmem_zalloc(sizeof(struct ac_dev), KM_SLEEP);
 			if (dev == NULL)
 				return -1;
 			dev->handle = current;
@@ -623,7 +622,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 	while (!TAILQ_EMPTY(&dev_list)) {
 		dev = TAILQ_FIRST(&dev_list);
 		TAILQ_REMOVE(&dev_list, dev, list);
-		free(dev, M_TEMP);
+		kmem_free(dev, sizeof(struct ac_dev));
 	}
 
 	return bus;
@@ -658,7 +657,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 	    (devinfo->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 		goto out;
 
-	mpr = malloc(sizeof (struct mpacpi_pcibus), M_TEMP, M_WAITOK|M_ZERO);
+	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);
 	if (mpr == NULL) {
 		AcpiOsFree(buf.Pointer);
 		return AE_NO_MEMORY;
@@ -667,7 +666,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 	/* try get _PRT. if this fails, we're not interested in it */
 	rv = acpi_get(handle, &mpr->mpr_buf, AcpiGetIrqRoutingTable);
 	if (ACPI_FAILURE(rv)) {
-		free(mpr, M_TEMP);
+		kmem_free(mpr, sizeof(struct mpacpi_pcibus));
 		goto out;
 	}
 
@@ -695,7 +694,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 		if (mpr->mpr_bus < 0) {
 			if (mp_verbose)
 				printf("mpacpi: failed to derive bus number, ignoring\n");
-			free(mpr, M_TEMP);
+			kmem_free(mpr, sizeof(struct mpacpi_pcibus));
 			goto out;
 		}
 		if (mp_verbose)
@@ -893,13 +892,12 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 	mp_nbus = mp_isa_bus + 1;
 	mp_nintr = nintr;
 
-	mp_busses = malloc(sizeof(struct mp_bus) * mp_nbus, M_DEVBUF,
-	    M_NOWAIT|M_ZERO);
+	mp_busses = kmem_zalloc(sizeof(struct mp_bus) * mp_nbus, KM_NOSLEEP);
 	if (mp_busses == NULL)
 		panic("can't allocate mp_busses");
 
-	mp_intrs = malloc(sizeof(struct mp_intr_map) * mp_nintr, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	mp_intrs = kmem_zalloc(sizeof(struct mp_intr_map) * mp_nintr,
+		KM_NOSLEEP);
 	if (mp_intrs == NULL)
 		panic("can't allocate mp_intrs");
 
