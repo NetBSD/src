@@ -1,7 +1,7 @@
 #
 # Non MODULAR, used mostly as a reference as to what we modularized.
 #
-include "GENERIC"
+include "arch/i386/conf/GENERIC"
 
 no options	MODULAR
 
