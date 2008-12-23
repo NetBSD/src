@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: debug.h,v 1.5 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: debug.h,v 1.3 2004/06/11 16:00:16 ludvigm Exp */
 
@@ -37,5 +37,6 @@
 /* define by main.c */
 extern int f_local;
 extern int vflag;
+extern int dump_config;
 
 #endif /* _DEBUG_H */

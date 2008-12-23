@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.46 2008/12/11 15:33:59 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.47 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -72,6 +72,7 @@
 #include "plog.h"
 #include "sockmisc.h"
 #include "schedule.h"
+#include "session.h"
 #include "debug.h"
 
 #include "remoteconf.h"
@@ -193,8 +194,9 @@ static int frag_handler(struct ph1handle *,
 /*
  * isakmp packet handler
  */
-int
-isakmp_handler(so_isakmp)
+static int
+isakmp_handler(ctx, so_isakmp)
+        void *ctx;
 	int so_isakmp;
 {
 	struct isakmp isakmp;
@@ -386,8 +388,7 @@ end:
 		vfree(tmpbuf);
 	if (buf != NULL)
 		vfree(buf);
-
-	return(error);
+	return error;
 }
 
 /*
@@ -1542,14 +1543,7 @@ isakmp_init()
 	initctdtree();
 	init_recvdpkt();
 
-	if (isakmp_open() < 0)
-		goto err;
-
-	return(0);
-
-err:
-	isakmp_close();
-	return(-1);
+	return 0;
 }
 
 /*
@@ -1588,227 +1582,172 @@ isakmp_pindex(index, msgid)
 
 /* open ISAKMP sockets. */
 int
-isakmp_open()
+isakmp_open(struct sockaddr *addr, int udp_encap)
 {
 	const int yes = 1;
-	int ifnum = 0, encap_ifnum = 0;
+	int ifnum = 0, encap_ifnum = 0, fd;
+	struct sockaddr_in *sin = (struct sockaddr_in *) addr;
 #ifdef INET6
+	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) addr;
 	int pktinfo;
 #endif
-	struct myaddrs *p;
-
-	for (p = lcconf->myaddrs; p; p = p->next) {
-		if (!p->addr)
-			continue;
-
-		/* warn if wildcard address - should we forbid this? */
-		switch (p->addr->sa_family) {
-		case AF_INET:
-			if (((struct sockaddr_in *)p->addr)->sin_addr.s_addr == 0)
-				plog(LLV_WARNING, LOCATION, NULL,
-					"listening to wildcard address,"
-					"broadcast IKE packet may kill you\n");
-			break;
-#ifdef INET6
-		case AF_INET6:
-			if (IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)p->addr)->sin6_addr))
-				plog(LLV_WARNING, LOCATION, NULL,
-					"listening to wildcard address, "
-					"broadcast IKE packet may kill you\n");
-			break;
-#endif
-		default:
-			plog(LLV_ERROR, LOCATION, NULL,
-				"unsupported address family %d\n",
-				lcconf->default_af);
-			goto err_and_next;
-		}
-
-#ifdef INET6
-		if (p->addr->sa_family == AF_INET6 &&
-		    IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)
-					    p->addr)->sin6_addr))
-		{
-			plog(LLV_DEBUG, LOCATION, NULL, 
-				"Ignoring multicast address %s\n",
-				saddr2str(p->addr));
-				racoon_free(p->addr);
-				p->addr = NULL;
-			continue;
-		}
-#endif
-
-		if ((p->sock = privsep_socket(p->addr->sa_family,
-					      SOCK_DGRAM, 0)) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"socket (%s)\n", strerror(errno));
-			goto err_and_next;
-		}
-		close_on_exec(p->sock);
-
-		if (fcntl(p->sock, F_SETFL, O_NONBLOCK) == -1)
-			plog(LLV_WARNING, LOCATION, NULL,
-				"failed to put socket in non-blocking mode\n");
-
-		/* receive my interface address on inbound packets. */
-		switch (p->addr->sa_family) {
-		case AF_INET:
-			if (setsockopt(p->sock, IPPROTO_IP,
-#ifdef __linux__
-				       IP_PKTINFO,
-#else
-				       IP_RECVDSTADDR,
-#endif
-					(const void *)&yes, sizeof(yes)) < 0) {
-				plog(LLV_ERROR, LOCATION, NULL,
-					"setsockopt IP_RECVDSTADDR (%s)\n", 
-					strerror(errno));
-				goto err_and_next;
-			}
-			break;
-#ifdef INET6
-		case AF_INET6:
-#ifdef INET6_ADVAPI
-#ifdef IPV6_RECVPKTINFO
-			pktinfo = IPV6_RECVPKTINFO;
-#else  /* old adv. API */
-			pktinfo = IPV6_PKTINFO;
-#endif /* IPV6_RECVPKTINFO */
-#else
-			pktinfo = IPV6_RECVDSTADDR;
-#endif
-			if (setsockopt(p->sock, IPPROTO_IPV6, pktinfo,
-					(const void *)&yes, sizeof(yes)) < 0)
-			{
-				plog(LLV_ERROR, LOCATION, NULL,
-					"setsockopt IPV6_RECVDSTADDR (%d):%s\n",
-					pktinfo, strerror(errno));
-				goto err_and_next;
-			}
-			break;
-#endif
-		}
-
-#ifdef IPV6_USE_MIN_MTU
-		if (p->addr->sa_family == AF_INET6 &&
-		    setsockopt(p->sock, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
-		    (void *)&yes, sizeof(yes)) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-			    "setsockopt IPV6_USE_MIN_MTU (%s)\n", 
-			    strerror(errno));
-			goto err_and_next;
-		}
-#endif
-
-		if (setsockopt(p->sock, SOL_SOCKET,
-#ifdef __linux__
-					 SO_REUSEADDR,
-#else
-					 SO_REUSEPORT,
-#endif
-					 (void *)&yes, sizeof(yes)) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to set REUSE flag on %s (%s).\n",
-				saddr2str(p->addr), strerror(errno));
-			close(p->sock);
-			goto err_and_next;
-		}
-
-		if (setsockopt_bypass(p->sock, p->addr->sa_family) < 0)
-			goto err_and_next;
-
-		if (privsep_bind(p->sock, p->addr, sysdep_sa_len(p->addr)) < 0) {
-			plog(LLV_ERROR, LOCATION, p->addr,
-				"failed to bind to address %s (%s).\n",
-				saddr2str(p->addr), strerror(errno));
-			close(p->sock);
-			p->sock = -1;
-			goto err_and_next;
-		}
-
-		ifnum++;
-
-		plog(LLV_INFO, LOCATION, NULL,
-			"%s used as isakmp port (fd=%d)\n",
-			saddr2str(p->addr), p->sock);
-
 #ifdef ENABLE_NATT
-		if (p->addr->sa_family == AF_INET) {
-			int option = -1;
-
-
-			if(p->udp_encap)
-				option = UDP_ENCAP_ESPINUDP;
-#if defined(ENABLE_NATT_00) || defined(ENABLE_NATT_01)
-			else
-				option = UDP_ENCAP_ESPINUDP_NON_IKE;
+	int option = -1;
 #endif
-			if(option != -1){
-				if (setsockopt (p->sock, SOL_UDP, 
-				    UDP_ENCAP, &option, sizeof (option)) < 0) {
-					plog(LLV_WARNING, LOCATION, NULL,
-					    "setsockopt(%s): UDP_ENCAP %s\n",
-					    option == UDP_ENCAP_ESPINUDP ? "UDP_ENCAP_ESPINUDP" : "UDP_ENCAP_ESPINUDP_NON_IKE",
-						 strerror(errno));
-					goto skip_encap;
-				}
-				else {
-					plog(LLV_INFO, LOCATION, NULL,
-						 "%s used for NAT-T\n",
-						 saddr2str(p->addr));
-					encap_ifnum++;
-				}
-			}
-		}
-skip_encap:
-#endif
-		continue;
 
-	err_and_next:
-		racoon_free(p->addr);
-		p->addr = NULL;
-		if (! lcconf->autograbaddr && lcconf->strict_address)
+	/* warn if wildcard address - should we forbid this? */
+	switch (addr->sa_family) {
+	case AF_INET:
+		if (sin->sin_addr.s_addr == 0)
+			plog(LLV_WARNING, LOCATION, NULL,
+			     "listening to wildcard address,"
+			     "broadcast IKE packet may kill you\n");
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+			plog(LLV_DEBUG, LOCATION, NULL,
+			     "ignoring multicast address %s\n",
+			     saddr2str(addr));
 			return -1;
-		continue;
-	}
+		}
 
-	if (!ifnum) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr))
+			plog(LLV_WARNING, LOCATION, NULL,
+			     "listening to wildcard address, "
+			     "broadcast IKE packet may kill you\n");
+		break;
+#endif
+	default:
 		plog(LLV_ERROR, LOCATION, NULL,
-			"no address could be bound.\n");
+		     "unsupported address family %d\n",
+		     addr->sa_family);
 		return -1;
 	}
 
-#ifdef ENABLE_NATT
-	if (natt_enabled_in_rmconf() && !encap_ifnum) {
-		plog(LLV_WARNING, LOCATION, NULL, 
-			"NAT-T is enabled in at least one remote{} section,\n");
-		plog(LLV_WARNING, LOCATION, NULL, 
-			"but no 'isakmp_natt' address was specified!\n");
+	if ((fd = privsep_socket(addr->sa_family, SOCK_DGRAM, 0)) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "socket(%s)\n", strerror(errno));
+		return -1;
 	}
-#endif
+	close_on_exec(fd);
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "failed to put socket in non-blocking mode\n");
 
-	return 0;
+	/* receive my interface address on inbound packets. */
+	switch (addr->sa_family) {
+	case AF_INET:
+		if (setsockopt(fd, IPPROTO_IP,
+#ifdef __linux__
+			       IP_PKTINFO,
+#else
+			       IP_RECVDSTADDR,
+#endif
+			       (const void *) &yes, sizeof(yes)) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "setsockopt IP_RECVDSTADDR (%s)\n",
+			     strerror(errno));
+			goto err;
+		}
+
+#ifdef ENABLE_NATT
+		if (udp_encap)
+			option = UDP_ENCAP_ESPINUDP;
+#if defined(ENABLE_NATT_00) || defined(ENABLE_NATT_01)
+		else
+			option = UDP_ENCAP_ESPINUDP_NON_IKE;
+#endif
+		if (option == -1)
+			break;
+
+		if (setsockopt(fd, SOL_UDP,
+			       UDP_ENCAP, &option,
+			       sizeof(option)) < 0) {
+			plog(LLV_WARNING, LOCATION, NULL,
+			     "setsockopt(%s): UDP_ENCAP %s\n",
+			     option == UDP_ENCAP_ESPINUDP ? "UDP_ENCAP_ESPINUDP" : "UDP_ENCAP_ESPINUDP_NON_IKE",
+			     strerror(errno));
+		} else {
+			plog(LLV_INFO, LOCATION, NULL,
+			     "%s used for NAT-T\n",
+			     saddr2str(addr));
+		}
+#endif
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+#if defined(INET6_ADVAPI)
+#ifdef IPV6_RECVPKTINFO
+		pktinfo = IPV6_RECVPKTINFO;
+#else  /* old adv. API */
+		pktinfo = IPV6_PKTINFO;
+#endif /* IPV6_RECVPKTINFO */
+#else
+		pktinfo = IPV6_RECVDSTADDR;
+#endif
+		if (setsockopt(fd, IPPROTO_IPV6, pktinfo,
+			       (const void *) &yes, sizeof(yes)) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "setsockopt IPV6_RECVDSTADDR (%d):%s\n",
+			     pktinfo, strerror(errno));
+			goto err;
+		}
+
+#ifdef IPV6_USE_MIN_MTU
+		if (setsockopt(fd, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
+			       (void *) &yes, sizeof(yes)) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "setsockopt IPV6_USE_MIN_MTU (%s)\n",
+			     strerror(errno));
+			goto err;
+		}
+#endif
+		break;
+#endif
+	}
+
+	if (setsockopt(fd, SOL_SOCKET,
+#ifdef __linux__
+		       SO_REUSEADDR,
+#else
+		       SO_REUSEPORT,
+#endif
+		       (void *) &yes, sizeof(yes)) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "failed to set REUSE flag on %s (%s).\n",
+		     saddr2str(addr), strerror(errno));
+		goto err;
+	}
+
+	if (setsockopt_bypass(fd, addr->sa_family) < 0)
+		goto err;
+
+	if (privsep_bind(fd, addr, sysdep_sa_len(addr)) < 0) {
+		plog(LLV_ERROR, LOCATION, addr,
+		     "failed to bind to address %s (%s).\n",
+		     saddr2str(addr), strerror(errno));
+		goto err;
+	}
+
+	plog(LLV_INFO, LOCATION, NULL,
+	     "%s used as isakmp port (fd=%d)\n",
+	     saddr2str(addr), fd);
+
+	monitor_fd(fd, FALSE, isakmp_handler, NULL);
+	return fd;
+
+err:
+	close(fd);
+	return -1;
 }
 
 void
-isakmp_close()
+isakmp_close(int fd)
 {
-	struct myaddrs *p, *next;
-
-	for (p = lcconf->myaddrs; p; p = next) {
-		next = p->next;
-
-		if (!p->addr) {
-			racoon_free(p);
-			continue;
-		}
-		close(p->sock);
-		p->sock = -1;
-		racoon_free(p->addr);
-		racoon_free(p);
-	}
-
-	lcconf->myaddrs = NULL;
+	unmonitor_fd(fd);
+	close(fd);
 }
 
 int
@@ -1863,10 +1802,9 @@ isakmp_send(iph1, sbuf)
 #endif
 
 	/* select the socket to be sent */
-	s = getsockmyaddr(iph1->local);
-	if (s == -1){
+	s = myaddr_getfd(iph1->local);
+	if (s == -1)
 		return -1;
-	}
 
 	plog (LLV_DEBUG, LOCATION, NULL, "%zu bytes %s\n", sbuf->l, 
 	      saddr2str_fromto("from %s to %s", iph1->local, iph1->remote));

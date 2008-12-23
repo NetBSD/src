@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.h,v 1.6 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: pfkey.h,v 1.7 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: pfkey.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -42,7 +42,6 @@ struct pfkey_satype {
 extern const struct pfkey_satype pfkey_satypes[];
 extern const int pfkey_nsatypes;
 
-extern int pfkey_handler __P((void));
 extern vchar_t *pfkey_dump_sadb __P((int));
 extern void pfkey_flush_sadb __P((u_int));
 extern int pfkey_init __P((void));

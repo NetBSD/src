@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.41 2008/12/18 07:20:25 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.42 2008/12/23 14:03:12 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.41 2008/12/18 07:20:25 tteras Exp $ */
+/* $Id: pfkey.c,v 1.42 2008/12/23 14:03:12 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,6 +75,7 @@
 #include "vmbuf.h"
 #include "plog.h"
 #include "sockmisc.h"
+#include "session.h"
 #include "debug.h"
 
 #include "schedule.h"
@@ -198,8 +199,10 @@ static int addnewsp __P((caddr_t *, struct sockaddr *, struct sockaddr *));
  *	0: success
  *	-1: fail
  */
-int
-pfkey_handler()
+static int
+pfkey_handler(ctx, fd)
+	void *ctx;
+	int fd;
 {
 	struct sadb_msg *msg;
 	int len;
@@ -208,7 +211,7 @@ pfkey_handler()
 
 	/* receive pfkey message. */
 	len = 0;
-	msg = (struct sadb_msg *)pk_recv(lcconf->sock_pfkey, &len);
+	msg = (struct sadb_msg *) pk_recv(fd, &len);
 	if (msg == NULL) {
 		if (len < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -477,6 +480,7 @@ pfkey_init()
 		return -1;
 	}
 #endif
+	monitor_fd(lcconf->sock_pfkey, TRUE, pfkey_handler, NULL);
 	return 0;
 }
 
@@ -492,7 +496,7 @@ pfkey_reload()
 		return -1;
 	}
 
-	while (pfkey_handler() > 0)
+	while (pfkey_handler(NULL, lcconf->sock_pfkey) > 0)
 		continue;
 
 	return 0;
@@ -1838,22 +1842,11 @@ pk_recvacquire(mhp)
 	}
 
 	/* Check we are listening on source address. If not, ignore. */
-	{
-		struct myaddrs *p;
-		int do_listen = 0;
-		for (p = lcconf->myaddrs; p; p = p->next) {
-			if (!cmpsaddrwop(p->addr, src)) {
-				do_listen = 1;
-				break;
-			}
-		}
-
-		if (!do_listen) {
-			plog(LLV_DEBUG, LOCATION, NULL,
-			     "Not listening on source address %s. Ignoring ACQUIRE.\n",
-			     saddrwop2str(src));
-			return 0;
-		}
+	if (myaddr_getsport(src) == -1) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+		     "Not listening on source address %s. Ignoring ACQUIRE.\n",
+		     saddrwop2str(src));
+		return 0;
 	}
 
 	/* get inbound policy */
