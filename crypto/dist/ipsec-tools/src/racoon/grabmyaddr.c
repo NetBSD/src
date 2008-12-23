@@ -1,9 +1,7 @@
-/*	$NetBSD: grabmyaddr.c,v 1.16 2008/12/11 15:45:24 vanhu Exp $	*/
-
-/* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
-
+/*	$NetBSD: grabmyaddr.c,v 1.17 2008/12/23 14:03:12 tteras Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -33,36 +31,24 @@
 
 #include "config.h"
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-
-#include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif
-#if defined(__NetBSD__) || defined(__FreeBSD__) ||	\
-  (defined(__APPLE__) && defined(__MACH__))
-#include <netinet/in.h>
-#include <netinet6/in6_var.h>
-#endif
-#include <net/route.h>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
+#include <fcntl.h>
 #include <unistd.h>
-#endif
-#include <netdb.h>
-#ifdef HAVE_GETIFADDRS
-#include <ifaddrs.h>
-#include <net/if.h>
-#endif 
-#if defined(__FreeBSD__)
+#include <string.h>
+#include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/socket.h>
+
+#ifdef __linux__
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#define USE_NETLINK
+#else
 #include <net/route.h>
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <sys/sysctl.h>
+#define USE_ROUTE
 #endif
 
 #include "var.h"
@@ -70,6 +56,7 @@
 #include "vmbuf.h"
 #include "plog.h"
 #include "sockmisc.h"
+#include "session.h"
 #include "debug.h"
 
 #include "localconf.h"
@@ -80,871 +67,638 @@
 #include "gcmalloc.h"
 #include "nattraversal.h"
 
-#ifdef __linux__
-#include <linux/types.h>
-#include <linux/rtnetlink.h>
-#ifndef HAVE_GETIFADDRS
-#define HAVE_GETIFADDRS
-#define NEED_LINUX_GETIFADDRS
-#endif
-#endif
+static int kernel_receive __P((void *ctx, int fd));
+static int kernel_open_socket __P((void));
+static void kernel_sync __P((void));
 
-#ifndef HAVE_GETIFADDRS
-static unsigned int if_maxindex __P((void));
-#endif
-static struct myaddrs *find_myaddr __P((struct myaddrs *, struct myaddrs *));
-static int suitable_ifaddr __P((const char *, const struct sockaddr *));
-#ifdef INET6
-static int suitable_ifaddr6 __P((const char *, const struct sockaddr *));
-#endif
-
-#ifdef NEED_LINUX_GETIFADDRS
-
-/* We could do this _much_ better. kame racoon in its current form
- * will esentially die at frequent changes of address configuration.
- */
-
-struct ifaddrs
-{
-	struct ifaddrs *ifa_next;
-	char		ifa_name[16];
-	int		ifa_ifindex;
-	struct sockaddr *ifa_addr;
-	struct sockaddr_storage ifa_addrbuf;
+struct myaddr {
+	LIST_ENTRY(myaddr) chain;
+	struct sockaddr_storage addr;
+	int fd;
+	int udp_encap;
 };
 
-static int parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
+static LIST_HEAD(_myaddr_list_, myaddr) configured, opened;
+
+static void
+myaddr_delete(my)
+	struct myaddr *my;
 {
-	while (RTA_OK(rta, len)) {
-		if (rta->rta_type <= max)
-			tb[rta->rta_type] = rta;
-		rta = RTA_NEXT(rta,len);
-	}
-	return 0;
+	if (my->fd != -1)
+		isakmp_close(my->fd);
+	LIST_REMOVE(my, chain);
+	racoon_free(my);
 }
 
-static void recvaddrs(int fd, struct ifaddrs **ifa, __u32 seq)
+static int
+myaddr_configured(addr)
+	struct sockaddr *addr;
 {
-	char	buf[8192];
-	struct sockaddr_nl nladdr;
-	struct iovec iov = { buf, sizeof(buf) };
-	struct ifaddrmsg *m;
-	struct rtattr * rta_tb[IFA_MAX+1];
-	struct ifaddrs *I;
+	struct myaddr *cfg;
 
-	while (1) {
-		int status;
-		struct nlmsghdr *h;
+	if (LIST_EMPTY(&configured))
+		return TRUE;
 
-		struct msghdr msg = {
-			(void*)&nladdr, sizeof(nladdr),
-			&iov,	1,
-			NULL,	0,
-			0
-		};
-
-		status = recvmsg(fd, &msg, 0);
-
-		if (status < 0)
-			continue;
-
-		if (status == 0)
-			return;
-
-		if (nladdr.nl_pid) /* Message not from kernel */
-			continue;
-
-		h = (struct nlmsghdr*)buf;
-		while (NLMSG_OK(h, status)) {
-			if (h->nlmsg_seq != seq)
-				goto skip_it;
-
-			if (h->nlmsg_type == NLMSG_DONE)
-				return;
-
-			if (h->nlmsg_type == NLMSG_ERROR)
-				return;
-
-			if (h->nlmsg_type != RTM_NEWADDR)
-				goto skip_it;
-
-			m = NLMSG_DATA(h);
-
-			if (m->ifa_family != AF_INET &&
-			    m->ifa_family != AF_INET6)
-				goto skip_it;
-
-			if (m->ifa_flags&IFA_F_TENTATIVE)
-				goto skip_it;
-
-			memset(rta_tb, 0, sizeof(rta_tb));
-			parse_rtattr(rta_tb, IFA_MAX, IFA_RTA(m), h->nlmsg_len - NLMSG_LENGTH(sizeof(*m)));
-
-			if (rta_tb[IFA_LOCAL] == NULL)
-				rta_tb[IFA_LOCAL] = rta_tb[IFA_ADDRESS];
-			if (rta_tb[IFA_LOCAL] == NULL)
-				goto skip_it;
-			
-			I = malloc(sizeof(struct ifaddrs));
-			if (!I)
-				return;
-			memset(I, 0, sizeof(*I));
-
-			I->ifa_ifindex = m->ifa_index;
-			I->ifa_addr = (struct sockaddr*)&I->ifa_addrbuf;
-			I->ifa_addr->sa_family = m->ifa_family;
-			if (m->ifa_family == AF_INET) {
-				struct sockaddr_in *sin = (void*)I->ifa_addr;
-				memcpy(&sin->sin_addr, RTA_DATA(rta_tb[IFA_LOCAL]), 4);
-			} else {
-				struct sockaddr_in6 *sin = (void*)I->ifa_addr;
-				memcpy(&sin->sin6_addr, RTA_DATA(rta_tb[IFA_LOCAL]), 16);
-				if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr))
-					sin->sin6_scope_id = I->ifa_ifindex;
-			}
-			I->ifa_next = *ifa;
-			*ifa = I;
-
-skip_it:
-			h = NLMSG_NEXT(h, status);
-		}
-		if (msg.msg_flags & MSG_TRUNC)
-			continue;
+	LIST_FOREACH(cfg, &configured, chain) {
+		if (cmpsaddrstrict(addr, (struct sockaddr *) &cfg->addr) == 0)
+			return TRUE;
 	}
-	return;
+
+	return FALSE;
 }
 
-static int getifaddrs(struct ifaddrs **ifa0)
+static int
+myaddr_open(addr, udp_encap)
+	struct sockaddr *addr;
+	int udp_encap;
 {
-	struct {
-		struct nlmsghdr nlh;
-		struct rtgenmsg g;
-	} req;
-	struct sockaddr_nl nladdr;
-	static __u32 seq;
-	struct ifaddrs *i;
-	int fd;
+	struct myaddr *my;
 
-	fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-	if (fd < 0)
-		return -1;
-
-	memset(&nladdr, 0, sizeof(nladdr));
-	nladdr.nl_family = AF_NETLINK;
-
-	req.nlh.nlmsg_len = sizeof(req);
-	req.nlh.nlmsg_type = RTM_GETADDR;
-	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST;
-	req.nlh.nlmsg_pid = 0;
-	req.nlh.nlmsg_seq = ++seq;
-	req.g.rtgen_family = AF_UNSPEC;
-
-	if (sendto(fd, (void*)&req, sizeof(req), 0, (struct sockaddr*)&nladdr, sizeof(nladdr)) < 0) {
-		close(fd);
-		return -1;
+	/* Already open? */
+	LIST_FOREACH(my, &opened, chain) {
+		if (cmpsaddrstrict(addr, (struct sockaddr *) &my->addr) == 0)
+			return TRUE;
 	}
 
-	*ifa0 = NULL;
+	my = racoon_calloc(1, sizeof(struct myaddr));
+	if (my == NULL)
+		return FALSE;
 
-	recvaddrs(fd, ifa0, seq);
-
-	close(fd);
-
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-
-	for (i=*ifa0; i; i = i->ifa_next) {
-		struct ifreq ifr;
-		ifr.ifr_ifindex = i->ifa_ifindex;
-		ioctl(fd, SIOCGIFNAME, (void*)&ifr);
-		memcpy(i->ifa_name, ifr.ifr_name, 16);
+	memcpy(&my->addr, addr, sysdep_sa_len(addr));
+	my->fd = isakmp_open(addr, udp_encap);
+	if (my->fd < 0) {
+		racoon_free(my);
+		return FALSE;
 	}
-	close(fd);
-
-	return 0;
+	my->udp_encap = udp_encap;
+	LIST_INSERT_HEAD(&opened, my, chain);
+	return TRUE;
 }
 
-static void freeifaddrs(struct ifaddrs *ifa0)
+static int
+myaddr_open_all_configured(addr)
+	struct sockaddr *addr;
 {
-        struct ifaddrs *i;
+	/* create all configured, not already opened addresses */
+	struct myaddr *cfg, *my;
 
-        while (ifa0) {
-                i = ifa0;
-                ifa0 = i->ifa_next;
-                free(i);
-        }
-}
-
-#endif
-
-#ifndef HAVE_GETIFADDRS
-static unsigned int
-if_maxindex()
-{
-	struct if_nameindex *p, *p0;
-	unsigned int max = 0;
-
-	p0 = if_nameindex();
-	for (p = p0; p && p->if_index && p->if_name; p++) {
-		if (max < p->if_index)
-			max = p->if_index;
-	}
-	if_freenameindex(p0);
-	return max;
-}
-#endif
-
-void
-clear_myaddr(db)
-	struct myaddrs **db;
-{
-	struct myaddrs *p;
-
-	while (*db) {
-		p = (*db)->next;
-		delmyaddr(*db);
-		*db = p;
-	}
-}
-  
-static struct myaddrs *
-find_myaddr(db, p)
-	struct myaddrs *db;
-	struct myaddrs *p;
-{
-	struct myaddrs *q;
-	char h1[NI_MAXHOST], h2[NI_MAXHOST];
-
-	if (getnameinfo(p->addr, sysdep_sa_len(p->addr), h1, sizeof(h1), NULL, 0,
-	    NI_NUMERICHOST | niflags) != 0)
-		return NULL;
-
-	for (q = db; q; q = q->next) {
-		if (p->addr->sa_family != q->addr->sa_family)
-			continue;
-		if (getnameinfo(q->addr, sysdep_sa_len(q->addr), h2, sizeof(h2),
-		    NULL, 0, NI_NUMERICHOST | niflags) != 0)
-			return NULL;
-		if (strcmp(h1, h2) == 0)
-			return q;
-	}
-
-	return NULL;
-}
-
-void
-grab_myaddrs()
-{
-#ifdef HAVE_GETIFADDRS
-	struct myaddrs *p, *q, *old;
-	struct ifaddrs *ifa0, *ifap;
-#ifdef INET6
-	struct sockaddr_in6 *sin6;
-#endif
-
-	char addr1[NI_MAXHOST];
-
-	if (getifaddrs(&ifa0)) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"getifaddrs failed: %s\n", strerror(errno));
-		exit(1);
-		/*NOTREACHED*/
-	}
-
-	old = lcconf->myaddrs;
-
-	for (ifap = ifa0; ifap; ifap = ifap->ifa_next) {
-		if (! ifap->ifa_addr)
-			continue;
-
-		if (ifap->ifa_addr->sa_family != AF_INET
-#ifdef INET6
-		 && ifap->ifa_addr->sa_family != AF_INET6
-#endif
-		)
-			continue;
-
-		if (!suitable_ifaddr(ifap->ifa_name, ifap->ifa_addr)) {
-			plog(LLV_INFO, LOCATION, NULL,
-				"unsuitable address: %s %s\n",
-				ifap->ifa_name,
-				saddrwop2str(ifap->ifa_addr));
-			continue;
-		}
-
-		p = newmyaddr();
-		if (p == NULL) {
-			exit(1);
-			/*NOTREACHED*/
-		}
-		p->addr = dupsaddr(ifap->ifa_addr);
-		if (p->addr == NULL) {
-			exit(1);
-			/*NOTREACHED*/
-		}
-#ifdef INET6
-#ifdef __KAME__
-		if (ifap->ifa_addr->sa_family == AF_INET6) {
-			sin6 = (struct sockaddr_in6 *)p->addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)
-			 || IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr)) {
-				sin6->sin6_scope_id =
-					ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
-				sin6->sin6_addr.s6_addr[2] = 0;
-				sin6->sin6_addr.s6_addr[3] = 0;
-			}
-		}
-#else /* !__KAME__ */
-		if (ifap->ifa_addr->sa_family == AF_INET6) {
-			sin6 = (struct sockaddr_in6 *)p->addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)
-			 || IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr)) {
-				sin6->sin6_scope_id =
-					if_nametoindex(ifap->ifa_name);
-			}
-		}
-				
-#endif
-#endif
-		if (getnameinfo(p->addr, sysdep_sa_len(p->addr),
-				addr1, sizeof(addr1), NULL, 0,
-				NI_NUMERICHOST | niflags))
-			strlcpy(addr1, "(invalid)", sizeof(addr1));
-
-		plog(LLV_DEBUG, LOCATION, NULL,
-			"my interface: %s (%s)\n",
-			addr1, ifap->ifa_name);
-		q = find_myaddr(old, p);
-		if (q)
-			p->sock = q->sock;
-		else
-			p->sock = -1;
-		insmyaddr(p, &lcconf->myaddrs);
-	}
-
-	freeifaddrs(ifa0);
-
-	clear_myaddr(&old);
-
-#else /*!HAVE_GETIFADDRS*/
-	int s;
-	unsigned int maxif;
-	int len;
-	struct ifreq *iflist;
-	struct ifconf ifconf;
-	struct ifreq *ifr, *ifr_end;
-	struct myaddrs *p, *q, *old;
-#ifdef INET6
-#ifdef __KAME__
-	struct sockaddr_in6 *sin6;
-#endif
-#endif
-
-	char addr1[NI_MAXHOST];
-
-	maxif = if_maxindex() + 1;
-	len = maxif * sizeof(struct sockaddr_storage) * 4; /* guess guess */
-
-	iflist = (struct ifreq *)racoon_malloc(len);
-	if (!iflist) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to allocate buffer\n");
-		exit(1);
-		/*NOTREACHED*/
-	}
-
-	if ((s = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"socket(SOCK_DGRAM) failed: %s\n",
-			strerror(errno));
-		exit(1);
-		/*NOTREACHED*/
-	}
-	memset(&ifconf, 0, sizeof(ifconf));
-	ifconf.ifc_req = iflist;
-	ifconf.ifc_len = len;
-	if (ioctl(s, SIOCGIFCONF, &ifconf) < 0) {
-		close(s);
-		plog(LLV_ERROR, LOCATION, NULL,
-			"ioctl(SIOCGIFCONF) failed: %s\n",
-			strerror(errno));
-		exit(1);
-		/*NOTREACHED*/
-	}
-	close(s);
-
-	old = lcconf->myaddrs;
-
-	/* Look for this interface in the list */
-	ifr_end = (struct ifreq *) (ifconf.ifc_buf + ifconf.ifc_len);
-
-#define _IFREQ_LEN(p) \
-  (sizeof((p)->ifr_name) + sysdep_sa_len(&(p)->ifr_addr) > sizeof(struct ifreq) \
-    ? sizeof((p)->ifr_name) + sysdep_sa_len(&(p)->ifr_addr) : sizeof(struct ifreq))
-
-	for (ifr = ifconf.ifc_req;
-	     ifr < ifr_end;
-	     ifr = (struct ifreq *)((caddr_t)ifr + _IFREQ_LEN(ifr))) {
-
-		switch (ifr->ifr_addr.sa_family) {
+	if (addr != NULL) {
+		switch (addr->sa_family) {
 		case AF_INET:
 #ifdef INET6
 		case AF_INET6:
 #endif
-			if (!suitable_ifaddr(ifr->ifr_name, &ifr->ifr_addr)) {
-				plog(LLV_INFO, LOCATION, NULL,
-					"unsuitable address: %s %s\n",
-					ifr->ifr_name,
-					saddrwop2str(&ifr->ifr_addr));
-				continue;
-			}
-
-			p = newmyaddr();
-			if (p == NULL) {
-				exit(1);
-				/*NOTREACHED*/
-			}
-			p->addr = dupsaddr(&ifr->ifr_addr);
-			if (p->addr == NULL) {
-				exit(1);
-				/*NOTREACHED*/
-			}
-#ifdef INET6
-#ifdef __KAME__
-			sin6 = (struct sockaddr_in6 *)p->addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)
-			 || IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr)) {
-				sin6->sin6_scope_id =
-					ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
-				sin6->sin6_addr.s6_addr[2] = 0;
-				sin6->sin6_addr.s6_addr[3] = 0;
-			}
-#endif
-#endif
-			if (getnameinfo(p->addr, sysdep_sa_len(p->addr),
-					addr1, sizeof(addr1), NULL, 0,
-					NI_NUMERICHOST | niflags))
-				strlcpy(addr1, "(invalid)", sizeof(addr1));
-
-			plog(LLV_DEBUG, LOCATION, NULL,
-				"my interface: %s (%s)\n",
-				addr1, ifr->ifr_name);
-			q = find_myaddr(old, p);
-			if (q)
-				p->sock = q->sock;
-			else
-				p->sock = -1;
-			insmyaddr(p, &lcconf->myaddrs);
 			break;
 		default:
-			break;
+			return FALSE;
 		}
 	}
 
-	clear_myaddr(&old);
-
-	racoon_free(iflist);
-#endif /*HAVE_GETIFADDRS*/
-}
-
-/*
- * check the interface is suitable or not
- */
-static int
-suitable_ifaddr(ifname, ifaddr)
-	const char *ifname;
-	const struct sockaddr *ifaddr;
-{
+	LIST_FOREACH(cfg, &configured, chain) {
+		if (addr != NULL &&
+		    cmpsaddrwop(addr, (struct sockaddr *) &cfg->addr) != 0)
+			continue;
+		if (!myaddr_open((struct sockaddr *) &cfg->addr, cfg->udp_encap))
+			return FALSE;
+	}
+	if (LIST_EMPTY(&configured)) {
 #ifdef ENABLE_HYBRID
-	/* Exclude any address we got through ISAKMP mode config */
-	if (exclude_cfg_addr(ifaddr) == 0)
-		return 0;
+		/* Exclude any address we got through ISAKMP mode config */
+		if (exclude_cfg_addr(addr) == 0)
+			return FALSE;
 #endif
-	switch(ifaddr->sa_family) {
-	case AF_INET:
-		if (((struct sockaddr_in *)ifaddr)->sin_addr.s_addr ==
-		    htonl(INADDR_ANY)) {
-			plog(LLV_DEBUG, LOCATION, NULL,
-			     "discarding unsuitable wildcard address\n");
-			return 0;
-		}
-		else if (((struct sockaddr_in *)ifaddr)->sin_addr.s_addr ==
-			 htonl(INADDR_LOOPBACK)) {
-			plog(LLV_DEBUG, LOCATION, NULL,
-			     "discarding unsuitable loopback address\n");
-			return 0;
-		}
-		return 1;
-#ifdef INET6
-	case AF_INET6:
-		return suitable_ifaddr6(ifname, ifaddr);
-#endif
-	default:
-		return 0;
-	}
-	/*NOTREACHED*/
-}
-
-#ifdef INET6
-static int
-suitable_ifaddr6(ifname, ifaddr)
-	const char *ifname;
-	const struct sockaddr *ifaddr;
-{
-#ifndef __linux__
-	struct in6_ifreq ifr6;
-	int s;
-#endif
-
-	if (ifaddr->sa_family != AF_INET6)
-		return 0;
-
-	if (IN6_IS_ADDR_UNSPECIFIED(&((const struct sockaddr_in6 *)ifaddr)->sin6_addr)) {
-		plog(LLV_DEBUG, LOCATION, NULL,
-		     "discarding unsuitable unspecified v6 address\n");
-		return 0;
-	}
-
-	if (IN6_IS_ADDR_LOOPBACK(&((const struct sockaddr_in6 *)ifaddr)->sin6_addr)) {
-		plog(LLV_DEBUG, LOCATION, NULL,
-		     "discarding unsuitable loopback v6 address\n");
-		return 0;
-	}
-
-#ifndef __linux__
-	s = socket(PF_INET6, SOCK_DGRAM, 0);
-	if (s == -1) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"socket(SOCK_DGRAM) failed:%s\n", strerror(errno));
-		return 0;
-	}
-
-	memset(&ifr6, 0, sizeof(ifr6));
-	strncpy(ifr6.ifr_name, ifname, strlen(ifname));
-
-	ifr6.ifr_addr = *(const struct sockaddr_in6 *)ifaddr;
-
-	if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) < 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"ioctl(SIOCGIFAFLAG_IN6) failed:%s\n", strerror(errno));
-		close(s);
-		return 0;
-	}
-
-	close(s);
-
-	if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DUPLICATED
-	 || ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DETACHED
-	 || ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_ANYCAST)
-		return 0;
-#endif
-
-	/* suitable */
-	return 1;
-}
-#endif
-
-int
-update_myaddrs()
-{
-#ifdef __linux__
-	char msg[BUFSIZ];
-	int len;
-	struct nlmsghdr *h = (void*)msg;
-	len = read(lcconf->rtsock, msg, sizeof(msg));
-	if (len < 0)
-		return errno == ENOBUFS;
-	if (len < sizeof(*h))
-		return 0;
-	if (h->nlmsg_pid) /* not from kernel! */
-		return 0;
-	if (h->nlmsg_type == RTM_NEWLINK)
-		return 0;
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"netlink signals update interface address list\n");
-	return 1;
-#else
-	char msg[BUFSIZ];
-	int len;
-	struct rt_msghdr *rtm;
-
-	len = read(lcconf->rtsock, msg, sizeof(msg));
-	if (len < 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"read(PF_ROUTE) failed: %s\n",
-			strerror(errno));
-		return 0;
-	}
-	rtm = (struct rt_msghdr *)msg;
-	if (len < rtm->rtm_msglen) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"read(PF_ROUTE) short read\n");
-		return 0;
-	}
-	if (rtm->rtm_version != RTM_VERSION) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"routing socket version mismatch\n");
-		close(lcconf->rtsock);
-		lcconf->rtsock = -1;
-		return 0;
-	}
-	switch (rtm->rtm_type) {
-	case RTM_NEWADDR:
-	case RTM_DELADDR:
-#ifdef RTM_IFANNOUNCE
-	case RTM_IFANNOUNCE:
-#endif
-		break;
-	case RTM_DELETE:
-	case RTM_IFINFO:
-#ifdef RTM_OIFINFO
-	case RTM_OIFINFO:
-#endif
-	case RTM_MISS:
-		/* ignore this message silently */
-		return 0;
-	default:
-		plog(LLV_DEBUG, LOCATION, NULL,
-			"rtm msg %d not interesting\n", rtm->rtm_type);
-		return 0;
-	}
-	/* XXX more filters here? */
-
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"caught rtm:%d, need update interface address list\n",
-		rtm->rtm_type);
-	return 1;
-#endif /* __linux__ */
-}
-
-/*
- * initialize default port for ISAKMP to send, if no "listen"
- * directive is specified in config file.
- *
- * DO NOT listen to wildcard addresses.  if you receive packets to
- * wildcard address, you'll be in trouble (DoS attack possible by
- * broadcast storm).
- */
-int
-autoconf_myaddrsport()
-{
-	struct myaddrs *p;
-	int n;
-
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"configuring default isakmp port.\n");
-
+		set_port(addr, lcconf->port_isakmp);
+		myaddr_open(addr, FALSE);
 #ifdef ENABLE_NATT
-	if (natt_enabled_in_rmconf ()) {
-		plog(LLV_NOTIFY, LOCATION, NULL, "NAT-T is enabled, autoconfiguring ports\n");
-		for (p = lcconf->myaddrs; p; p = p->next) {
-			struct myaddrs *new;
-			if (! p->udp_encap) {
-				new = dupmyaddr(p);
-				new->udp_encap = 1;
-			}
-		}
-	}
+		set_port(addr, lcconf->port_isakmp_natt);
+		myaddr_open(addr, TRUE);
 #endif
-
-	for (p = lcconf->myaddrs, n = 0; p; p = p->next, n++) {
-		set_port (p->addr, p->udp_encap ? lcconf->port_isakmp_natt : lcconf->port_isakmp);
 	}
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"%d addrs are configured successfully\n", n);
+	return TRUE;
+}
+
+static void
+myaddr_close_all_open(addr)
+	struct sockaddr *addr;
+{
+	/* delete all matching open sockets */
+	struct myaddr *my, *next;
+
+	for (my = LIST_FIRST(&opened); my; my = next) {
+		next = LIST_NEXT(my, chain);
+
+		if (!cmpsaddrwop((struct sockaddr *) &addr,
+				 (struct sockaddr *) &my->addr))
+			myaddr_delete(my);
+	}
+}
+
+static void
+myaddr_flush_list(list)
+	struct _myaddr_list_ *list;
+{
+	struct myaddr *my, *next;
+
+	for (my = LIST_FIRST(list); my; my = next) {
+		next = LIST_NEXT(my, chain);
+		myaddr_delete(my);
+	}
+}
+
+void
+myaddr_flush()
+{
+	myaddr_flush_list(&configured);
+}
+
+int
+myaddr_listen(addr, udp_encap)
+	struct sockaddr *addr;
+	int udp_encap;
+{
+	struct myaddr *my;
+
+	if (sysdep_sa_len(addr) > sizeof(my->addr)) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "sockaddr size larger than sockaddr_storage\n");
+		return -1;
+	}
+
+	my = racoon_calloc(1, sizeof(struct myaddr));
+	if (my == NULL)
+		return -1;
+
+	memcpy(&my->addr, addr, sysdep_sa_len(addr));
+	my->udp_encap = udp_encap;
+	my->fd = -1;
+	LIST_INSERT_HEAD(&configured, my, chain);
 
 	return 0;
 }
 
-/*
- * get a port number to which racoon binded.
- */
-u_short
-getmyaddrsport(local)
-	struct sockaddr *local;
+void
+myaddr_sync()
 {
-	struct myaddrs *p, *bestmatch = NULL;
-	u_short bestmatch_port = PORT_ISAKMP;
+	struct myaddr *my, *next;
 
-	/* get a relative port */
-	for (p = lcconf->myaddrs; p; p = p->next) {
-		if (!p->addr)
-			continue;
-		if (cmpsaddrwop(local, p->addr))
-			continue;
+	if (!lcconf->strict_address) {
+		kernel_sync();
 
-		/* use first matching address regardless of port */
-		if (!bestmatch) {
-			bestmatch = p;
-			continue;
+		/* delete all existing listeners which are not configured */
+		for (my = LIST_FIRST(&opened); my; my = next) {
+			next = LIST_NEXT(my, chain);
+
+			if (!myaddr_configured((struct sockaddr *) &my->addr))
+				myaddr_delete(my);
 		}
+	}
+}
 
-		/* matching address with port PORT_ISAKMP */
-		if (extract_port(p->addr) == PORT_ISAKMP) {
-			bestmatch = p;
-			bestmatch_port = PORT_ISAKMP;
-		}
+int
+myaddr_getfd(addr)
+        struct sockaddr *addr;
+{
+	struct myaddr *my;
+
+	LIST_FOREACH(my, &opened, chain) {
+		if (cmpsaddrstrict((struct sockaddr *) &my->addr, addr) == 0)
+			return my->fd;
+	}
+
+	return -1;
+}
+
+int
+myaddr_getsport(addr)
+	struct sockaddr *addr;
+{
+	struct myaddr *my;
+	int bestmatch_port = -1;
+
+	LIST_FOREACH(my, &opened, chain) {
+		if (cmpsaddrstrict((struct sockaddr *) &my->addr, addr) == 0)
+			return extract_port((struct sockaddr *) &my->addr);
+		if (cmpsaddrwop((struct sockaddr *) &my->addr, addr) != 0)
+			continue;
+		if (bestmatch_port == -1 ||
+		    extract_port((struct sockaddr *) &my->addr) == PORT_ISAKMP)
+			bestmatch_port = extract_port((struct sockaddr *) &my->addr);
 	}
 
 	return bestmatch_port;
 }
 
-struct myaddrs *
-newmyaddr()
-{
-	struct myaddrs *new;
-
-	new = racoon_calloc(1, sizeof(*new));
-	if (new == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to allocate buffer for myaddrs.\n");
-		return NULL;
-	}
-
-	new->next = NULL;
-	new->addr = NULL;
-	new->sock = -1;
-
-	return new;
-}
-
-struct myaddrs *
-dupmyaddr(struct myaddrs *old)
-{
-	struct myaddrs *new;
-
-	new = racoon_calloc(1, sizeof(*new));
-	if (new == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to allocate buffer for myaddrs.\n");
-		return NULL;
-	}
-
-	/* Copy the whole structure and set the differences.  */
-	memcpy (new, old, sizeof (*new));
-	new->addr = dupsaddr (old->addr);
-	if (new->addr == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to allocate buffer for myaddrs.\n");
-		racoon_free(new);
-		return NULL;
-	}
-	new->next = old->next;
-	old->next = new;
-
-	return new;
-}
-
-void
-insmyaddr(new, head)
-	struct myaddrs *new;
-	struct myaddrs **head;
-{
-	new->next = *head;
-	*head = new;
-}
-
-void
-delmyaddr(myaddr)
-	struct myaddrs *myaddr;
-{
-	if (myaddr->addr)
-		racoon_free(myaddr->addr);
-	racoon_free(myaddr);
-}
-
 int
-initmyaddr()
+myaddr_init()
 {
-	/* initialize routing socket */
-	lcconf->rtsock = socket(PF_ROUTE, SOCK_RAW, PF_UNSPEC);
-	if (lcconf->rtsock < 0) {
+	LIST_INIT(&configured);
+	LIST_INIT(&opened);
+
+	if (!lcconf->strict_address) {
+		lcconf->rtsock = kernel_open_socket();
+		if (lcconf->rtsock < 0)
+			return -1;
+		monitor_fd(lcconf->rtsock, TRUE, kernel_receive, NULL);
+	} else {
+		lcconf->rtsock = -1;
+		if (!myaddr_open_all_configured(NULL))
+			return -1;
+	}
+	return 0;
+}
+
+void
+myaddr_close()
+{
+	myaddr_flush_list(&configured);
+	myaddr_flush_list(&opened);
+	if (lcconf->rtsock != -1) {
+		unmonitor_fd(lcconf->rtsock);
+		close(lcconf->rtsock);
+	}
+}
+
+#if defined(USE_NETLINK)
+
+static void
+parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
+{
+	memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+	while (RTA_OK(rta, len)) {
+		if (rta->rta_type <= max)
+			tb[rta->rta_type] = rta;
+		rta = RTA_NEXT(rta,len);
+	}
+}
+
+static int
+netlink_enumerate(fd, family, type)
+	int fd;
+	int family;
+	int type;
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct rtgenmsg g;
+	} req;
+	struct sockaddr_nl addr;
+	static __u32 seq = 0;
+
+	memset(&addr, 0, sizeof(addr));
+	addr.nl_family = AF_NETLINK;
+
+	memset(&req, 0, sizeof(req));
+	req.nlh.nlmsg_len = sizeof(req);
+	req.nlh.nlmsg_type = type;
+	req.nlh.nlmsg_flags = NLM_F_ROOT | NLM_F_MATCH | NLM_F_REQUEST;
+	req.nlh.nlmsg_pid = 0;
+	req.nlh.nlmsg_seq = ++seq;
+	req.g.rtgen_family = family;
+
+	return sendto(fd, (void *) &req, sizeof(req), 0,
+		      (struct sockaddr *) &addr, sizeof(addr)) >= 0;
+}
+
+static int
+netlink_process(struct nlmsghdr *h)
+{
+	struct sockaddr_storage addr;
+	struct ifaddrmsg *ifa;
+	struct rtattr *rta[IFA_MAX+1];
+	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+#endif
+
+	/* is this message interesting? */
+	if (h->nlmsg_type != RTM_NEWADDR &&
+	    h->nlmsg_type != RTM_DELADDR)
+		return 0;
+
+	ifa = NLMSG_DATA(h);
+	parse_rtattr(rta, IFA_MAX, IFA_RTA(ifa), IFA_PAYLOAD(h));
+
+	if (ifa->ifa_flags & IFA_F_TENTATIVE)
+		return 0;
+
+	if (rta[IFA_LOCAL] == NULL)
+		rta[IFA_LOCAL] = rta[IFA_ADDRESS];
+	if (rta[IFA_LOCAL] == NULL)
+		return 0;
+
+	/* setup the socket address */
+	memset(&addr, 0, sizeof(addr));
+	addr.ss_family = ifa->ifa_family;
+	switch (ifa->ifa_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *) &addr;
+		memcpy(&sin->sin_addr, RTA_DATA(rta[IFA_LOCAL]),
+			sizeof(sin->sin_addr));
+		break;
+#ifdef INET6
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *) &addr;
+		memcpy(&sin6->sin6_addr, RTA_DATA(rta[IFA_LOCAL]),
+			sizeof(sin6->sin6_addr));
+		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+			sin6->sin6_scope_id = ifa->ifa_index;
+		break;
+#endif
+	default:
+		return 0;
+	}
+
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "Netlink: address %s %s\n",
+	     saddrwop2str((struct sockaddr *) &addr),
+	     h->nlmsg_type == RTM_NEWADDR ? "added" : "deleted");
+
+	if (h->nlmsg_type == RTM_NEWADDR)
+		myaddr_open_all_configured((struct sockaddr *) &addr);
+	else
+		myaddr_close_all_open((struct sockaddr *) &addr);
+
+	return 0;
+}
+
+static int
+kernel_receive(ctx, fd)
+	void *ctx;
+	int fd;
+{
+	struct sockaddr_nl nladdr;
+	struct iovec iov;
+	struct msghdr msg = {
+		.msg_name = &nladdr,
+		.msg_namelen = sizeof(nladdr),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+	};
+	struct nlmsghdr *h;
+	int len, status;
+	char buf[16*1024];
+
+	iov.iov_base = buf;
+	while (1) {
+		iov.iov_len = sizeof(buf);
+		status = recvmsg(fd, &msg, MSG_DONTWAIT);
+		if (status < 0) {
+			if (errno == EINTR)
+				continue;
+			if (errno == EAGAIN)
+				return FALSE;
+			continue;
+		}
+		if (status == 0)
+			return FALSE;
+
+		h = (struct nlmsghdr *) buf;
+		while (NLMSG_OK(h, status)) {
+			netlink_process(h);
+			h = NLMSG_NEXT(h, status);
+		}
+	}
+
+	return TRUE;
+}
+
+static int
+kernel_open_socket()
+{
+	struct sockaddr_nl nl;
+	int fd;
+
+	fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	if (fd < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"socket(PF_NETLINK) failed: %s",
+			strerror(errno));
+		return -1;
+	}
+	close_on_exec(fd);
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "failed to put socket in non-blocking mode\n");
+
+	memset(&nl, 0, sizeof(nl));
+	nl.nl_family = AF_NETLINK;
+	nl.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
+	if (bind(fd, (struct sockaddr*) &nl, sizeof(nl)) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "bind(PF_NETLINK) failed: %s\n",
+		     strerror(errno));
+		close(fd);
+		return -1;
+	}
+	return fd;
+}
+
+static void
+kernel_sync()
+{
+	int fd = lcconf->rtsock;
+
+	/* refresh addresses */
+	if (!netlink_enumerate(fd, PF_UNSPEC, RTM_GETADDR)) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "unable to enumerate addresses: %s\n",
+		     strerror(errno));
+		return;
+	}
+
+	/* receive replies */
+	while (kernel_receive(NULL, fd) == TRUE);
+}
+
+#elif defined(USE_ROUTE)
+
+#define ROUNDUP(a) \
+  ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+
+#define SAROUNDUP(X)   ROUNDUP(((struct sockaddr *)(X))->sa_len)
+
+static size_t
+parse_address(start, end, dest)
+	caddr_t start;
+	caddr_t end;
+	struct sockaddr_storage *dest;
+{
+	int len;
+
+	if (start >= end)
+		return 0;
+
+	len = SAROUNDUP(start);
+	if (start + len > end)
+		return end - start;
+
+	if (dest != NULL && len <= sizeof(struct sockaddr_storage))
+		memcpy(dest, start, len);
+
+	return len;
+}
+
+static void
+parse_addresses(start, end, flags, addr)
+	caddr_t start;
+	caddr_t end;
+	int flags;
+	struct sockaddr_storage *addr;
+{
+	addr.sa_len = 0;
+	addr.sa_family = 0;
+
+	if (flags & RTA_DST)
+		start += parse_address(start, end, NULL);
+	if (flags & RTA_GATEWAY)
+		start += parse_address(start, end, NULL);
+	if (flags & RTA_NETMASK)
+		start += parse_address(start, end, NULL);
+	if (flags & RTA_GENMASK)
+		start += parse_address(start, end, NULL);
+	if (flags & RTA_IFP)
+		start += parse_address(start, end, NULL);
+	if (flags & RTA_IFA)
+		start += parse_address(start, end, addr);
+	if (flags & RTA_AUTHOR)
+		start += parse_address(start, end, NULL);
+	if (flags & RTA_BRD)
+		start += parse_address(start, end, NULL);
+}
+
+static void
+kernel_handle_message(msg)
+	caddr_t msg;
+{
+	struct rt_msghdr *rtm = (struct rt_msghdr *) msg;
+	struct ifa_msghdr *ifa = (struct ifa_msghdr *) msg;
+	struct sockaddr_storage addr;
+
+	switch (rtm->rtm_type) {
+	case RTM_NEWADDR:
+		parse_addresses(ifa + 1, msg + ifa->ifam_msglen,
+				ifa->ifam_addrs, &addr);
+		myaddr_open_all_configured((struct sockaddr *) &addr);
+		break;
+	case RTM_DELADDR:
+		parse_addresses(ifa + 1, msg + ifa->ifam_msglen,
+				ifa->ifam_addrs, &addr);
+		myaddr_close_all_open((struct sockaddr *) &addr);
+		break;
+	case RTM_ADD:
+	case RTM_DELETE:
+	case RTM_CHANGE:
+	case RTM_MISS:
+	case RTM_IFINFO:
+#ifdef RTM_OIFINFO
+	case RTM_OIFINFO:
+#endif
+#ifdef RTM_NEWMADDR
+	case RTM_NEWMADDR:
+	case RTM_DELMADDR:
+#endif
+#ifdef RTM_IFANNOUNCE
+	case RTM_IFANNOUNCE:
+#endif
+		break;
+	default:
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "unrecognized route message with rtm_type: %d",
+		     rtm->rtm_type);
+		break;
+	}
+}
+
+static int
+kernel_receive(ctx, fd)
+	void *ctx;
+	int fd;
+{
+	char buf[16*1024];
+	struct rt_msghdr *rtm = (struct rt_msghdr *) buf;
+	int len;
+
+	len = read(fd, &buf, sizeof(buf));
+	if (len <= 0) {
+		if (len < 0 && errno != EWOULDBLOCK && errno != EAGAIN)
+			plog(LLV_WARNING, LOCATION, NULL,
+			     "routing socket error: %s", strerror(errno));
+		return FALSE;
+	}
+
+	if (rtm->rtm_msglen != len) {
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "kernel_receive: rtm->rtm_msglen %d, len %d, type %d\n",
+		     rtm->rtm_msglen, len, rtm->rtm_type);
+		return FALSE;
+	}
+
+	kernel_handle_message(buf);
+	return TRUE;
+}
+
+static int
+kernel_open_socket()
+{
+	int fd;
+
+	fd = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (fd < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"socket(PF_ROUTE) failed: %s",
 			strerror(errno));
 		return -1;
 	}
-	close_on_exec(lcconf->rtsock);
+	close_on_exec(fd);
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "failed to put socket in non-blocking mode\n");
 
-#ifdef __linux__
-   {
-	struct sockaddr_nl nl;
-	u_int addr_len;
-
-	memset(&nl, 0, sizeof(nl));
-	nl.nl_family = AF_NETLINK;
-	nl.nl_groups = RTMGRP_IPV4_IFADDR|RTMGRP_LINK|RTMGRP_IPV6_IFADDR;
-
-	if (bind(lcconf->rtsock, (struct sockaddr*)&nl, sizeof(nl)) < 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "bind(PF_NETLINK) failed: %s\n",
-		     strerror(errno));
-		return -1;
-	}
-	addr_len = sizeof(nl);
-	if (getsockname(lcconf->rtsock, (struct sockaddr*)&nl, &addr_len) < 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "getsockname(PF_NETLINK) failed: %s\n",
-		     strerror(errno));
-		return -1;
-	}
-   }
-#endif
-
-	if (lcconf->myaddrs == NULL && lcconf->autograbaddr == 1) {
-		grab_myaddrs();
-
-		if (autoconf_myaddrsport() < 0)
-			return -1;
-	}
-
-	return 0;
+	return fd;
 }
 
-/* select the socket to be sent */
-/* should implement other method. */
-int
-getsockmyaddr(my)
-	struct sockaddr *my;
+static void
+kernel_sync()
 {
-	struct myaddrs *p, *lastresort = NULL;
-#if defined(INET6) && defined(__linux__)
-	struct myaddrs *match_wo_scope_id = NULL;
-	int check_wo_scope_id = (my->sa_family == AF_INET6) && 
-		IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)my)->sin6_addr);
-#endif
+	caddr_t ref, buf, end;
+	size_t bufsiz;
+	struct if_msghdr *ifm;
+	struct interface *ifp;
 
-	for (p = lcconf->myaddrs; p; p = p->next) {
-		if (p->addr == NULL)
-			continue;
-		if (my->sa_family == p->addr->sa_family) {
-			lastresort = p;
-		} else continue;
-		if (sysdep_sa_len(my) == sysdep_sa_len(p->addr)
-		 && memcmp(my, p->addr, sysdep_sa_len(my)) == 0) {
-			break;
-		}
-#if defined(INET6) && defined(__linux__)
-		if (check_wo_scope_id && IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)p->addr)->sin6_addr) &&
-			/* XXX: this depends on sin6_scope_id to be last
-			 * item in struct sockaddr_in6 */
-			memcmp(my, p->addr, 
-				sysdep_sa_len(my) - sizeof(uint32_t)) == 0) {
-			match_wo_scope_id = p;
-		}
-#endif
-	}
-#if defined(INET6) && defined(__linux__)
-	if (!p)
-		p = match_wo_scope_id;
-#endif
-	if (!p)
-		p = lastresort;
-	if (!p) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"no socket matches address family %d\n",
-			my->sa_family);
-		return -1;
+#define MIBSIZ 6
+	int mib[MIBSIZ] = {
+		CTL_NET,
+		PF_ROUTE,
+		0,
+		0, /*  AF_INET & AF_INET6 */
+		NET_RT_IFLIST,
+		0
+	};
+
+	if (sysctl(mib, MIBSIZ, NULL, &bufsiz, NULL, 0) < 0) {
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "sysctl() error: %s", strerror(errno));
+		return;
 	}
 
-	return p->sock;
+	ref = buf = racoon_malloc(bufsiz);
+
+	if (sysctl(mib, MIBSIZ, buf, &bufsiz, NULL, 0) >= 0) {
+		/* Parse both interfaces and addresses. */
+		for (end = buf + bufsiz; buf < end; buf += ifm->ifm_msglen) {
+			ifm = (struct if_msghdr *) buf;
+			kernel_handle_message(buf);
+		}
+	} else {
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "sysctl() error: %s", strerror(errno));
+	}
+
+	racoon_free(ref);
 }
+
+#else
+
+#error No supported interface to monitor local addresses.
+
+#endif

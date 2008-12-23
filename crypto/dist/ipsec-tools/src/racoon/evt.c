@@ -1,4 +1,4 @@
-/*	$NetBSD: evt.c,v 1.7 2008/11/25 22:38:31 bad Exp $	*/
+/*	$NetBSD: evt.c,v 1.8 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: evt.c,v 1.5 2006/06/22 20:11:35 manubsd Exp */
 
@@ -48,13 +48,14 @@
 #include "misc.h"
 #include "admin.h"
 #include "handler.h"
+#include "session.h"
 #include "gcmalloc.h"
 #include "evt.h"
+#include "var.h"
 
 #ifdef ENABLE_ADMINPORT
 
 static EVT_LISTENER_LIST(evt_listeners);
-static EVT_LISTENER_LIST(evt_fds);
 
 struct evt_message {
 	struct admin_com adm;
@@ -253,9 +254,18 @@ evt_unsubscribe(l)
 	     "[%d] admin connection released\n", l->fd);
 
 	LIST_REMOVE(l, ll_chain);
-	LIST_REMOVE(l, fd_chain);
+	unmonitor_fd(l->fd);
 	close(l->fd);
 	racoon_free(l);
+}
+
+static int
+evt_unsubscribe_cb(ctx, fd)
+	void *ctx;
+	int fd;
+{
+	evt_unsubscribe((struct evt_listener *) ctx);
+	return 0;
 }
 
 static void
@@ -362,8 +372,8 @@ evt_subscribe(list, fd)
 		list = &evt_listeners;
 
 	LIST_INSERT_HEAD(list, l, ll_chain);
-	LIST_INSERT_HEAD(&evt_fds, l, fd_chain);
 	l->fd = fd;
+	monitor_fd(l->fd, FALSE, evt_unsubscribe_cb, l);
 
 	plog(LLV_DEBUG, LOCATION, NULL,
 	     "[%d] admin connection is polling events\n", fd);
@@ -385,36 +395,5 @@ evt_list_cleanup(list)
 	while (!LIST_EMPTY(list))
 		evt_unsubscribe(LIST_FIRST(list));
 }
-
-int
-evt_get_fdmask(nfds, fdset)
-	int nfds;
-	fd_set *fdset;
-{
-	struct evt_listener *l;
-
-	LIST_FOREACH(l, &evt_fds, fd_chain) {
-		FD_SET(l->fd, fdset);
-		if (l->fd + 1 > nfds)
-			nfds = l->fd + 1;
-	}
-
-	return nfds;
-}
-
-void
-evt_handle_fdmask(fdset)
-	fd_set *fdset;
-{
-	struct evt_listener *l, *nl;
-
-	for (l = LIST_FIRST(&evt_fds); l != NULL; l = nl) {
-		nl = LIST_NEXT(l, ll_chain);
-
-		if (FD_ISSET(l->fd, fdset))
-			evt_unsubscribe(l);
-	}
-}
-
 
 #endif /* ENABLE_ADMINPORT */

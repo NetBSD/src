@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.7 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.8 2008/12/23 14:03:12 tteras Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -332,7 +332,7 @@ natt_keepalive_send (struct sched *param)
   for (ka = TAILQ_FIRST(&ka_tree); ka; ka = next) {
     next = TAILQ_NEXT(ka, chain);
     
-    s = getsockmyaddr(ka->src);
+    s = myaddr_getfd(ka->src);
     if (s == -1) {
       TAILQ_REMOVE (&ka_tree, ka, chain);
       racoon_free (ka);
