@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmacvar.h,v 1.2 2008/12/15 04:44:27 matt Exp $ */
+/* $NetBSD: gemini_gmacvar.h,v 1.3 2008/12/23 02:15:10 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,10 +46,10 @@ typedef struct gmac_mapcache gmac_mapcache_t;
 
 #define	MAX_TXMAPS	256
 #define	MIN_TXMAPS	16
-#define	MAX_RXMAPS	256
-#define	MIN_RXMAPS	32
+#define	MAX_RXMAPS	128
+#define	MIN_RXMAPS	8
 
-#define	RXQ_NDESCS	128
+#define	RXQ_NDESCS	256
 #define	TXQ_NDESCS	128
 
 struct gmac_mapcache {
@@ -174,7 +174,7 @@ gmac_hwqueue_t *
 gmac_desc_t *
 	gmac_hwqueue_desc(gmac_hwqueue_t *, size_t);
 void	gmac_hwqueue_sync(gmac_hwqueue_t *);
-void	gmac_hwqueue_consume(gmac_hwqueue_t *);
+size_t	gmac_hwqueue_consume(gmac_hwqueue_t *, size_t);
 void	gmac_hwqueue_produce(gmac_hwqueue_t *, size_t);
 
 gmac_mapcache_t *
@@ -185,6 +185,8 @@ bus_dmamap_t
 	gmac_mapcache_get(gmac_mapcache_t *);
 void	gmac_mapcache_put(gmac_mapcache_t *, bus_dmamap_t);
 
+size_t	gmac_rxproduce(gmac_hwqueue_t *, size_t);
+void	gmac_swfree_min_update(struct gmac_softc *);
 void	gmac_intr_update(struct gmac_softc *);
 #endif
 

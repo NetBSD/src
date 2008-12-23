@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmacreg.h,v 1.2 2008/12/15 04:44:27 matt Exp $ */
+/* $NetBSD: gemini_gmacreg.h,v 1.3 2008/12/23 02:15:10 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -205,6 +205,20 @@
 #define	INT4_GMAC0		__BITS(16,23)
 #define	INT4_GMAC1		(__BITS(24,31)|INT4_HW_FREEQ_EMPTY)
 
+#define	GMAC_QFE_THRESHOLD	0x0070
+#define	QFE_TOEQ_THRESHOLD_MASK	__BITS(24,31)
+#define	QFE_TOEQ_THRESHOLD_GET(x) (((x) >> 24) & 0xff)
+#define	QFE_TOEQ_THRESHOLD(x)	 (((x) & 0xff) << 24)
+#define	QFE_INTQ_THRESHOLD_MASK	__BITS(16,23)
+#define	QFE_INTQ_THRESHOLD_GET(x) (((x) >> 16) & 0xff)
+#define	QFE_INTQ_THRESHOLD(x)	 (((x) & 0xff) << 16)
+#define	QFE_HWFQ_THRESHOLD_MASK	__BITS(8,15)
+#define	QFE_HWFQ_THRESHOLD_GET(x) (((x) >> 8) & 0xff)
+#define	QFE_HWFQ_THRESHOLD(x)	 (((x) & 0xff) << 8)
+#define	QFE_SWFQ_THRESHOLD_MASK	__BITS(0,7)
+#define	QFE_SWFQ_THRESHOLD_GET(x) (((x) >> 0) & 0xff)
+#define	QFE_SWFQ_THRESHOLD(x)	 (((x) & 0xff) << 0)
+
 #define	GMAC_NONTOE_QH_OFFSET	0x2000
 #define	GMAC_NONTOE_QH_SIZE	0x1000
 
@@ -234,19 +248,19 @@
 #define	DMAVR_DROP_SMALL_ACK	__BIT(28)
 #define	DMAVR_EXTRABYTES_MASK	__BITS(16,17)
 #define	DMAVR_EXTRABYTES_GET(x)	(((x) >> 16) & DMAR_EXTRABYTES_MASK)
-#define	DMAVR_EXTRABYTES(x)	(((x) & DMAVR_EXTRABYTES_MASK) << 16)
+#define	DMAVR_EXTRABYTES(x)	(((x) & 3) << 16)
 #define	DMAVR_RXBURSTSIZE_MASK	__BITS(10,11)
 #define	DMAVR_RXBURSTSIZE_GET(x) (((x) >> 10) & DMAR_BURSTSIZE_MASK)
-#define	DMAVR_RXBURSTSIZE(x)	(((x) & DMAVR_BURSTSIZE_MASK) << 10)
+#define	DMAVR_RXBURSTSIZE(x)	(((x) & 3) << 10)
 #define	DMAVR_RXBUSWIDTH_MASK	__BITS(8,9)
 #define	DMAVR_RXBUSWIDTH_GET(x)	(((x) >> 8) & DMAVR_BUSWIDTH_MASK)
-#define	DMAVR_RXBUSWIDTH(x)	(((x) & DMAVR_BUSWIDTH_MASK) << 8)
+#define	DMAVR_RXBUSWIDTH(x)	(((x) & 3) << 8)
 #define	DMAVR_TXBURSTSIZE_MASK	__BITS(2,3)
 #define	DMAVR_TXBURSTSIZE_GET(x) (((x) >> 2) & DMAR_BURSTSIZE_MASK)
-#define	DMAVR_TXBURSTSIZE(x)	(((x) & DMAVR_BURSTSIZE_MASK) << 2)
+#define	DMAVR_TXBURSTSIZE(x)	(((x) & 3) << 2)
 #define	DMAVR_TXBUSWIDTH_MASK	__BITS(0,1)
 #define	DMAVR_TXBUSWIDTH_GET(x)	(((x) >> 0) & DMAVR_BUSWIDTH_MASK)
-#define	DMAVR_TXBUSWIDTH(x)	(((x) & DMAVR_BUSWIDTH_MASK) << 0)
+#define	DMAVR_TXBUSWIDTH(x)	(((x) & 3) << 0)
 #define	DMAVR_BURSTSIZE_4W	0
 #define	DMAVR_BURSTSIZE_8W	1
 #define	DMAVR_BURSTSIZE_16W	2
