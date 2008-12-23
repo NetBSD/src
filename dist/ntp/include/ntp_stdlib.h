@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.5 2007/01/06 19:45:22 kardel Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.6 2008/12/23 20:49:39 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -54,9 +54,9 @@ extern	const char *clockname	P((int));
 extern	int	clocktime	P((int, int, int, int, int, u_long, u_long *, u_int32 *));
 #if defined SYS_WINNT && defined DEBUG
 # define emalloc(_c) debug_emalloc(_c, __FILE__, __LINE__)
-extern	void *	debug_emalloc		P((u_int, char *, int));
+extern	void *	debug_emalloc		P((size_t, char *, int));
 #else
-extern	void *	emalloc		P((u_int));
+extern	void *	emalloc		P((size_t));
 #endif
 extern	int	ntp_getopt	P((int, char **, const char *));
 extern	void	init_auth	P((void));
