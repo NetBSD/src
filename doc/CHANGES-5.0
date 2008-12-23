@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.56 2008/12/22 03:13:41 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.57 2008/12/23 04:09:59 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1646,4 +1646,47 @@ sys/fs/udf/udf_subr.c				1.81, 1.82
 	Implement auto-track repair on tracks marked damaged when
 	searching for writable tracks on session opening.
 	[reinoud, ticket #194]
+
+usr.sbin/cpuctl/Makefile			1.3
+usr.sbin/cpuctl/arch/i386.c			1.14
+usr.sbin/cpuctl/bitmask.c			delete
+usr.sbin/cpuctl/cpuctl.h			1.2
+
+	Remove 3rd buggy copy of this function; use snprintb(3).
+	[christos, ticket #193]
+
+sys/dev/i2c/dbcool.c				1.7
+sys/dev/i2c/dbcool_reg.h			1.3
+
+	Add i2c bus address checking.
+	[pgoyette, ticket #195]
+
+sys/arch/x86/x86/ipmi.c				1.28
+
+	Change max retry time to 90 seconds from 5 seconds.
+	Allows ML115 G1 to detect ipmi.
+	[taca, ticket #197]
+
+usr.bin/cut/cut.1				1.15
+
+	Fix PR 40214: field delimiter is not always <TAB>.
+	[wiz, ticket #198]
+
+lib/libc/stdio/fread.3				1.13
+
+	Document fread/fwrite mixing behavior.  Addresses PR 8359.
+	[christos, ticket #201]
+
+sys/net/rtsock.c				1.117
+
+	RTAX_GENMASK and RTAX_AUTHOR could cause kernel memory corruption.
+	[christos, ticket #202]
+
+sys/dev/raidframe/rf_driver.c			1.120
+sys/dev/raidframe/rf_reconstruct.c		1.106
+
+	When unconfiguring an array where a reconstruct is in progress,
+	abort the reconstruct and wait for IOs to drain before pulling
+	the plug.
+	[oster, ticket #203]
 
