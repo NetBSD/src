@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.22 2008/12/05 06:02:20 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.23 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -1003,7 +1003,7 @@ check_recvdpkt(remote, local, rbuf)
 	}
 
 	/* select the socket to be sent */
-	s = getsockmyaddr(r->local);
+	s = myaddr_getfd(r->local);
 	if (s == -1)
 		return -1;
 
