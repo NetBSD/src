@@ -1,4 +1,4 @@
-/*	$NetBSD: emalloc.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: emalloc.c,v 1.3 2008/12/23 20:49:39 christos Exp $	*/
 
 /*
  * emalloc - return new memory obtained from the system.  Belch if none.
@@ -16,7 +16,7 @@
 
 void *
 debug_emalloc(
-	u_int size,
+	size_t size,
 	char *filename,
 	int line
 	)
@@ -34,7 +34,7 @@ debug_emalloc(
 
 void *
 emalloc(
-	u_int size
+	size_t size
 	)
 {
 	char *mem;
