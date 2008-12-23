@@ -1,4 +1,4 @@
-/*	$NetBSD: evt.h,v 1.6 2008/08/29 00:31:00 gmcgarry Exp $	*/
+/*	$NetBSD: evt.h,v 1.7 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: evt.h,v 1.5 2006/01/19 10:24:09 fredsen Exp */
 
@@ -113,7 +113,6 @@ struct ph2handle;
 
 struct evt_listener {
 	LIST_ENTRY(evt_listener) ll_chain;
-	LIST_ENTRY(evt_listener) fd_chain;
 	int fd;
 };
 LIST_HEAD(evt_listener_list, evt_listener);
@@ -127,8 +126,6 @@ vchar_t *evt_dump __P((void));
 int  evt_subscribe __P((struct evt_listener_list *list, int fd));
 void evt_list_init __P((struct evt_listener_list *list));
 void evt_list_cleanup __P((struct evt_listener_list *list));
-int  evt_get_fdmask __P((int nfds, fd_set *fdset));
-void evt_handle_fdmask __P((fd_set *fdset));
 
 #else
 

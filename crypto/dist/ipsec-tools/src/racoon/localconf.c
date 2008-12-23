@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.5 2008/11/27 10:53:48 tteras Exp $	*/
+/*	$NetBSD: localconf.c,v 1.6 2008/12/23 14:03:12 tteras Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -85,7 +85,8 @@ flushlcconf()
 	int i;
 
 	setdefault();
-	clear_myaddr(&lcconf->myaddrs);
+	myaddr_flush();
+
 	for (i = 0; i < LC_PATHTYPE_MAX; i++) {
 		if (lcconf->pathinfo[i]) {
 			racoon_free(lcconf->pathinfo[i]);
@@ -105,7 +106,6 @@ setdefault()
 	lcconf->uid = 0;
 	lcconf->gid = 0;
 	lcconf->chroot = NULL;
-	lcconf->autograbaddr = 1;
 	lcconf->port_isakmp = PORT_ISAKMP;
 	lcconf->port_isakmp_natt = PORT_ISAKMP_NATT;
 	lcconf->default_af = AF_INET;
@@ -341,21 +341,12 @@ saverestore_params(f)
 	int f;
 {
 	static u_int16_t s_port_isakmp;
-#ifdef ENABLE_ADMINPORT
-	static u_int16_t s_port_admin;
-#endif
 
 	/* 0: save, 1: restore */
 	if (f) {
 		lcconf->port_isakmp = s_port_isakmp;
-#ifdef ENABLE_ADMINPORT
-		lcconf->port_admin = s_port_admin;
-#endif
 	} else {
 		s_port_isakmp = lcconf->port_isakmp;
-#ifdef ENABLE_ADMINPORT
-		s_port_admin = lcconf->port_admin;
-#endif
 	}
 }
 

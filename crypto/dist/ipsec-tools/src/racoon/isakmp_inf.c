@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.34 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.35 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -169,7 +169,7 @@ isakmp_info_recv(iph1, msg0)
 		plog(LLV_ERROR, LOCATION, NULL, 
 			"ignore information because the "
 			"message is way too short - %zu byte(s).\n",
-			(int)msg->l);
+			msg->l);
 		goto end;
 	}
 
@@ -198,7 +198,7 @@ isakmp_info_recv(iph1, msg0)
 			plog(LLV_ERROR, LOCATION, NULL, 
 				"ignore information because the "
 				"message is too short - %zu byte(s).\n",
-				(int)msg->l);
+				msg->l);
 			goto end;
 		}
 

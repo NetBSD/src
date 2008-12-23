@@ -1,3 +1,12 @@
+2008-12-23  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/{admin.c|admin_var.h|cfparse.y|debug.h|evt.c|evt.h|
+	  grabmyaddr.c|grabmyaddr.h|handler.h|isakmp.c|isakmp_inf.c|
+	  isakmp_var.h|localconf.c|localconf.h|main.c|nattraversal.c|
+	  pfkey.c|pfkey.h|privsep.c|session.c|session.h}: rewrite
+	  local address detection, make some functions static that are
+	  not needed global, rework how fd_set is construction for the
+	  main loop select()
+
 2008-12-18  Timo Teras  <timo.teras@iki.fi>
 	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/racoon/pfkey.c: delete larval ph2handles when expire

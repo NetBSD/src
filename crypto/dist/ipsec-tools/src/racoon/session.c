@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.20 2008/12/02 07:41:43 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.21 2008/12/23 14:03:12 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -59,6 +59,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <paths.h>
+#include <err.h>
 
 #include <netinet/in.h>
 #include <resolv.h>
@@ -77,7 +78,8 @@
 #include "evt.h"
 #include "cfparse_proto.h"
 #include "isakmp_var.h"
-#include "isakmp_xauth.h"
+#include "isakmp.h"
+#include "isakmp_var.h"
 #include "isakmp_xauth.h"
 #include "isakmp_cfg.h"
 #include "admin_var.h"
@@ -89,17 +91,21 @@
 #include "localconf.h"
 #include "remoteconf.h"
 #include "backupsa.h"
+#include "remoteconf.h"
 #ifdef ENABLE_NATT
 #include "nattraversal.h"
 #endif
-
 
 #include "algorithm.h" /* XXX ??? */
 
 #include "sainfo.h"
 
+struct fd_monitor {
+	int (*callback)(void *ctx, int fd);
+	void *ctx;
+};
+
 static void close_session __P((void));
-static void check_rtsock __P((void *));
 static void initfds __P((void));
 static void init_signal __P((void));
 static int set_signal __P((int sig, RETSIGTYPE (*func) __P((int))));
@@ -110,10 +116,45 @@ static int close_sockets __P((void));
 
 static fd_set mask0;
 static fd_set maskdying;
+static struct fd_monitor fd_monitors[FD_SETSIZE];
 static int nfds = 0;
+
 static volatile sig_atomic_t sigreq[NSIG + 1];
 static int dying = 0;
 static struct sched scflushsa = SCHED_INITIALIZER();
+
+void
+monitor_fd(int fd, int when_dying, int (*callback)(void *, int), void *ctx)
+{
+	if (fd < 0 || fd >= FD_SETSIZE) {
+		plog(LLV_ERROR, LOCATION, NULL, "fd_set overrun");
+		exit(1);
+	}
+
+	FD_SET(fd, &mask0);
+	if (when_dying)
+		FD_SET(fd, &maskdying);
+
+	if (fd > nfds)
+		nfds = fd;
+
+	fd_monitors[fd].callback = callback;
+	fd_monitors[fd].ctx = ctx;
+}
+
+void
+unmonitor_fd(int fd)
+{
+	if (fd < 0 || fd >= FD_SETSIZE) {
+		plog(LLV_ERROR, LOCATION, NULL, "fd_set overrun");
+		exit(1);
+	}
+
+	FD_CLR(fd, &mask0);
+	FD_CLR(fd, &maskdying);
+	fd_monitors[fd].callback = NULL;
+	fd_monitors[fd].ctx = NULL;
+}
 
 int
 session(void)
@@ -121,28 +162,71 @@ session(void)
 	fd_set rfds;
 	struct timeval *timeout;
 	int error;
-	struct myaddrs *p;
 	char pid_file[MAXPATHLEN];
 	FILE *fp;
 	pid_t racoon_pid = 0;
 	int i;
 
+	nfds = 0;
+	FD_ZERO(&mask0);
+	FD_ZERO(&maskdying);
+
 	/* initialize schedular */
 	sched_init();
-
 	init_signal();
+
+	if (pfkey_init() < 0)
+		errx(1, "failed to initialize pfkey socket");
 
 #ifdef ENABLE_ADMINPORT
 	if (admin_init() < 0)
-		exit(1);
+		errx(1, "failed to initialize admin port socket");
 #endif
 
-	initmyaddr();
-
 	if (isakmp_init() < 0)
-		exit(1);
+		errx(1, "failed to initialize ISAKMP structures");
 
-	initfds();
+#ifdef ENABLE_HYBRID
+	if (isakmp_cfg_init(ISAKMP_CFG_INIT_COLD))
+		errx(1, "could not initialize ISAKMP mode config structures");
+#endif
+
+#ifdef HAVE_LIBLDAP
+	if (xauth_ldap_init_conf() != 0)
+		errx(1, "could not initialize ldap config");
+#endif
+
+#ifdef HAVE_LIBRADIUS
+	if (xauth_radius_init_conf(0) != 0)
+		errx(1, "could not initialize radius config");
+#endif
+
+	/*
+	 * in order to prefer the parameters by command line,
+	 * saving some parameters before parsing configuration file.
+	 */
+	save_params();
+	if (cfparse() != 0)
+		errx(1, "failed to parse configuration file.");
+	restore_params();
+
+#ifdef ENABLE_HYBRID
+	if(isakmp_cfg_config.network4 && isakmp_cfg_config.pool_size == 0)
+		if ((error = isakmp_cfg_resize_pool(ISAKMP_CFG_MAX_CNX)) != 0)
+			return error;
+#endif
+
+	if (dump_config)
+		dumprmconf();
+
+#ifdef HAVE_LIBRADIUS
+	if (xauth_radius_init() != 0)
+		errx(1, "could not initialize libradius");
+#endif
+
+	if (myaddr_init() != 0)
+		errx(1, "failed to listen to configured addresses");
+	myaddr_sync();
 
 #ifdef ENABLE_NATT
 	natt_keepalive_init ();
@@ -198,9 +282,7 @@ session(void)
 
 		/* scheduling */
 		timeout = schedular();
-
-		nfds = evt_get_fdmask(nfds, &rfds);
-		error = select(nfds, &rfds, (fd_set *)0, (fd_set *)0, timeout);
+		error = select(nfds + 1, &rfds, NULL, NULL, timeout);
 		if (error < 0) {
 			switch (errno) {
 			case EINTR:
@@ -214,26 +296,9 @@ session(void)
 			/*NOTREACHED*/
 		}
 
-#ifdef ENABLE_ADMINPORT
-		if ((lcconf->sock_admin != -1) &&
-		    (FD_ISSET(lcconf->sock_admin, &rfds)))
-			admin_handler();
-#endif
-		evt_handle_fdmask(&rfds);
-
-		for (p = lcconf->myaddrs; p; p = p->next) {
-			if (!p->addr)
-				continue;
-			if (FD_ISSET(p->sock, &rfds))
-				isakmp_handler(p->sock);
-		}
-
-		if (FD_ISSET(lcconf->sock_pfkey, &rfds))
-			pfkey_handler();
-
-		if (lcconf->rtsock >= 0 && FD_ISSET(lcconf->rtsock, &rfds)) {
-			if (update_myaddrs() && lcconf->autograbaddr)
-				check_rtsock(NULL);
+		for (i = 0; i <= nfds; i++) {
+			if (FD_ISSET(i, &rfds))
+				fd_monitors[i].callback(fd_monitors[i].ctx, i);
 		}
 	}
 }
@@ -252,73 +317,6 @@ close_session()
 	plog(LLV_INFO, LOCATION, NULL, "racoon process %d shutdown\n", getpid());
 
 	exit(0);
-}
-
-static void
-check_rtsock(unused)
-	void *unused;
-{
-	isakmp_close();
-	grab_myaddrs();
-	autoconf_myaddrsport();
-	isakmp_open();
-
-	/* initialize socket list again */
-	initfds();
-}
-
-static void
-initfds()
-{
-	struct myaddrs *p;
-
-	nfds = 0;
-
-	FD_ZERO(&mask0);
-	FD_ZERO(&maskdying);
-
-#ifdef ENABLE_ADMINPORT
-	if (lcconf->sock_admin != -1) {
-		if (lcconf->sock_admin >= FD_SETSIZE) {
-			plog(LLV_ERROR, LOCATION, NULL, "fd_set overrun\n");
-			exit(1);
-		}
-		FD_SET(lcconf->sock_admin, &mask0);
-		/* XXX should we listen on admin socket when dying ?
-		 */
-#if 0
-		FD_SET(lcconf->sock_admin, &maskdying);
-#endif
-		nfds = (nfds > lcconf->sock_admin ? nfds : lcconf->sock_admin);
-	}
-#endif
-	if (lcconf->sock_pfkey >= FD_SETSIZE) {
-		plog(LLV_ERROR, LOCATION, NULL, "fd_set overrun\n");
-		exit(1);
-	}
-	FD_SET(lcconf->sock_pfkey, &mask0);
-	FD_SET(lcconf->sock_pfkey, &maskdying);
-	nfds = (nfds > lcconf->sock_pfkey ? nfds : lcconf->sock_pfkey);
-	if (lcconf->rtsock >= 0) {
-		if (lcconf->rtsock >= FD_SETSIZE) {
-			plog(LLV_ERROR, LOCATION, NULL, "fd_set overrun\n");
-			exit(1);
-		}
-		FD_SET(lcconf->rtsock, &mask0);
-		nfds = (nfds > lcconf->rtsock ? nfds : lcconf->rtsock);
-	}
-
-	for (p = lcconf->myaddrs; p; p = p->next) {
-		if (!p->addr)
-			continue;
-		if (p->sock >= FD_SETSIZE) {
-			plog(LLV_ERROR, LOCATION, NULL, "fd_set overrun\n");
-			exit(1);
-		}
-		FD_SET(p->sock, &mask0);
-		nfds = (nfds > p->sock ? nfds : p->sock);
-	}
-	nfds++;
 }
 
 static int signals[] = {
@@ -364,8 +362,6 @@ static void reload_conf(){
 
 	/* TODO: save / restore / flush old lcconf (?) / rmtree
 	 */
-/*	initlcconf();*/ /* racoon_conf ? ! */
-
 	save_rmconf();
 	initrmconf();
 
@@ -377,6 +373,7 @@ static void reload_conf(){
 	pfkey_reload();
 
 	save_params();
+	flushlcconf();
 	error = cfparse();
 	if (error != 0){
 		plog(LLV_ERROR, LOCATION, NULL, "config reload failed\n");
@@ -390,19 +387,12 @@ static void reload_conf(){
 		dumprmconf ();
 #endif
 
+	myaddr_sync();
+
 #ifdef HAVE_LIBRADIUS
 	/* re-initialize radius state */
 	xauth_radius_init();
 #endif
-
-	/* 
-	 * init_myaddr() ?
-	 * If running in privilege separation, do not reinitialize
-	 * the IKE listener, as we will not have the right to 
-	 * setsockopt(IP_IPSEC_POLICY). 
-	 */
-	if (geteuid() == 0)
-		check_rtsock(NULL);
 
 	/* Revalidate ph1 / ph2tree !!!
 	 * update ctdtree if removing some ph1 !
@@ -604,7 +594,7 @@ set_signal(sig, func)
 static int
 close_sockets()
 {
-	isakmp_close();
+	myaddr_close();
 	pfkey_close(lcconf->sock_pfkey);
 #ifdef ENABLE_ADMINPORT
 	(void)admin_close();

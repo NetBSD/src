@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.18 2008/12/08 06:00:53 tteras Exp $	*/
+/*	$NetBSD: privsep.c,v 1.19 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -1177,12 +1177,11 @@ privsep_bind(s, addr, addrlen)
 	struct bind_args bind_args;
 	int err, saved_errno = 0;
 
-	if ((err = bind(s, addr, addrlen) == 0) || 
-	    (saved_errno = errno) != EACCES ||
-	    geteuid() == 0) {
+	err = bind(s, addr, addrlen);
+	if ((err == 0) || (saved_errno = errno) != EACCES || geteuid() == 0) {
 		if (saved_errno)
 			plog(LLV_ERROR, LOCATION, NULL,
-			     "privsep_bind (%s)\n", strerror(saved_errno));
+			     "privsep_bind (%s) = %d\n", strerror(saved_errno), err);
 		errno = saved_errno;
 		return err;
 	}

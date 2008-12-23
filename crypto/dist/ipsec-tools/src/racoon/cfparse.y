@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.32 2008/11/27 10:53:48 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.33 2008/12/23 14:03:12 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -162,7 +162,6 @@ static int set_isakmp_proposal
 static void clean_tmpalgtype __P((void));
 static int expand_isakmpspec __P((int, int, int *,
 	int, int, time_t, int, int, int, char *, struct remoteconf *));
-static int listen_addr __P((struct sockaddr *addr, int udp_encap));
 
 void freeetypes (struct etypes **etypes);
 
@@ -457,13 +456,13 @@ listen_stmts
 listen_stmt
 	:	X_ISAKMP ike_addrinfo_port
 		{
-			listen_addr ($2, 0);
+			myaddr_listen($2, FALSE);
 		}
 		EOS
 	|	X_ISAKMP_NATT ike_addrinfo_port
 		{
 #ifdef ENABLE_NATT
-			listen_addr ($2, 1);
+			myaddr_listen($2, TRUE);
 #else
 			yyerror("NAT-T support not compiled in.");
 #endif
@@ -2583,30 +2582,6 @@ expand_isakmpspec(prop_no, trns_no, types,
 	insisakmpsa(new, rmconf);
 
 	return trns_no;
-}
-
-static int
-listen_addr (struct sockaddr *addr, int udp_encap)
-{
-	struct myaddrs *p;
-
-	p = newmyaddr();
-	if (p == NULL) {
-		yyerror("failed to allocate myaddrs");
-		return -1;
-	}
-	p->addr = addr;
-	if (p->addr == NULL) {
-		yyerror("failed to copy sockaddr ");
-		delmyaddr(p);
-		return -1;
-	}
-	p->udp_encap = udp_encap;
-
-	insmyaddr(p, &lcconf->myaddrs);
-
-	lcconf->autograbaddr = 0;
-	return 0;
 }
 
 #if 0
