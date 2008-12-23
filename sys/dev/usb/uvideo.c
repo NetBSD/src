@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.23 2008/11/28 23:31:11 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.24 2008/12/23 03:22:29 jmorse Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.23 2008/11/28 23:31:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.24 2008/12/23 03:22:29 jmorse Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1569,6 +1569,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		vframe_len = vs->vs_current_format.sample_size;
 		uframe_len = alt->max_packet_size;
 		nframes = (vframe_len + uframe_len - 1) / uframe_len;
+		nframes = (nframes + 7) & ~7; /*round up for ehci inefficiency*/
 		DPRINTF(("uvideo_stream_start_xfer: nframes=%d\n", nframes));
 		
 		ix->ix_nframes = nframes;
@@ -1830,7 +1831,6 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 	}
 
 next:
-	memset(isoc->i_buf, 0x41, ix->ix_nframes * ix->ix_uframe_len);
 	uvideo_stream_recv_isoc_start1(isoc);
 }
 
