@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.141 2008/12/21 10:44:10 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.142 2008/12/23 21:56:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.141 2008/12/21 10:44:10 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.142 2008/12/23 21:56:38 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.141 2008/12/21 10:44:10 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.142 2008/12/23 21:56:38 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -246,9 +246,9 @@ typedef struct {
 typedef struct {
     GNode	*ctxt;		/* variable context */
     char	*tvar;		/* name of temp var */
-    int		tvarLen;	
+    int		tvarLen;
     char	*str;		/* string to expand */
-    int		strLen;		
+    int		strLen;
     int		errnum;		/* errnum for not defined */
 } VarLoop_t;
 
@@ -642,7 +642,7 @@ Var_ExportVars(void)
 	char *as;
 	int ac;
 	int i;
-	
+
 	val = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
 	av = brk_string(val, &ac, FALSE, &as);
 	for (i = 0; i < ac; i++) {
@@ -739,7 +739,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 {
     Var   *v;
     char *expanded_name = NULL;
-    
+
     /*
      * We only look for a variable in the given context since anything set
      * here will override anything in a lower context, so there's not much
@@ -859,7 +859,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	}
 	name = expanded_name;
     }
-    
+
     v = VarFind(name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
     if (v == NULL) {
@@ -1679,7 +1679,7 @@ VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
     char *as;			    /* word list memory */
     int ac, i;
     int start, end, step;
-    
+
     buf = Buf_Init(0);
     addSpace = FALSE;
 
@@ -2050,6 +2050,8 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
 	rstr = (char *)Buf_GetAll(buf, length);
 	*length -= 1;	/* Don't count the NULL */
 	Buf_Destroy(buf, FALSE);
+	if (DEBUG(VAR))
+	    fprintf(debug_file, "Modifier pattern: \"%s\"\n", rstr);
 	return rstr;
     }
 }
@@ -2207,13 +2209,13 @@ VarChangeCase(char *str, int upper)
  * nothing.  In a target rule that would otherwise expand to an
  * empty line they can be preceded with @: to keep make happy.
  * Eg.
- * 
+ *
  * foo:	.USE
  * .for i in ${.TARGET} ${.TARGET:R}.gz
  * 	@: ${t::=$i}
  *	@echo blah ${t:T}
  * .endfor
- * 
+ *
  *	  ::=<str>	Assigns <str> as the new value of variable.
  *	  ::?=<str>	Assigns <str> as value of variable if
  *			it was not already set.
@@ -2244,11 +2246,11 @@ ApplyModifiers(char *nstr, const char *tstr,
     parsestate.varSpace = ' ';	/* word separator */
 
     start = cp = tstr;
-    
+
     while (*tstr && *tstr != endc) {
 
 	if (*tstr == '$') {
-	    /* 
+	    /*
 	     * We have some complex modifiers in a variable.
 	     */
 	    void *freeIt;
@@ -2327,7 +2329,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			else
 			    VarFreeEnv(gv, TRUE);
 		    }
-			
+
 		    switch ((how = *tstr)) {
 		    case '+':
 		    case '?':
@@ -2487,7 +2489,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'P':
 	    {
 		GNode *gn;
-		    
+
 		if ((v->flags & VAR_JUNK) != 0)
 		    v->flags |= VAR_KEEP;
 		gn = Targ_FindNode(v->name, TARG_NOCREATE);
@@ -2540,7 +2542,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		 * which we must free().
 		 */
 		char *estr;
-		    
+
 		cp = tstr+1; /* point to char after '[' */
 		delim = ']'; /* look for closing ']' */
 		estr = VarGetPattern(ctxt, &parsestate,
@@ -2703,7 +2705,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			    default:
 				if (isdigit((unsigned char)tstr[3])) {
 				    char *ep;
-					
+
 				    parsestate.varSpace =
 					strtoul(&tstr[3], &ep, 0);
 				    if (*ep != ':' && *ep != endc)
@@ -2931,7 +2933,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		free(UNCONST(pattern.rhs));
 		delim = '\0';
 		break;
-	    }	
+	    }
 	case '?':
 	    {
 		VarPattern 	pattern;
@@ -3132,7 +3134,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 #endif
 	default:
-	default_case: 
+	default_case:
 	{
 #ifdef SYSVVARSUB
 	    /*
@@ -3171,7 +3173,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		 */
 		delim='=';
 		cp = tstr;
-		if ((pattern.lhs = VarGetPattern(ctxt, &parsestate, 
+		if ((pattern.lhs = VarGetPattern(ctxt, &parsestate,
 						 errnum, &cp, delim, &pattern.flags,
 						 &pattern.leftLen, NULL)) == NULL)
 		    goto cleanup;
