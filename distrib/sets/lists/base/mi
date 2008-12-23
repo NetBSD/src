@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.786 2008/12/22 20:18:36 agc Exp $
+# $NetBSD: mi,v 1.787 2008/12/23 04:22:55 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -210,7 +210,7 @@
 ./sbin/ipppctl					base-netutil-root
 ./sbin/ispppcontrol				base-obsolete		obsolete
 ./sbin/lmcctl					base-obsolete		obsolete
-./sbin/lvm					base-lvm-root
+./sbin/lvm					base-lvm-root		lvm
 ./sbin/mbrlabel					base-sysutil-root
 ./sbin/mknod					base-sysutil-root
 ./sbin/modload					base-sysutil-root
