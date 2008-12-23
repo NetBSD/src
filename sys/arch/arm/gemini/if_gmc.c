@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.2 2008/12/15 04:44:27 matt Exp $ */
+/* $NetBSD: if_gmc.c,v 1.3 2008/12/23 02:15:11 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.2 2008/12/15 04:44:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.3 2008/12/23 02:15:11 matt Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -64,6 +64,7 @@ struct gmc_softc {
 	struct mii_data sc_mii;
 	void *sc_ih;
 	bool sc_port1;
+	uint8_t sc_phy;
 	gmac_hwqueue_t *sc_rxq;
 	gmac_hwqueue_t *sc_txq[6];
 	callout_t sc_mii_ch;
@@ -85,7 +86,7 @@ static bool
 gmc_txqueue(struct gmc_softc *sc, gmac_hwqueue_t *hwq, struct mbuf *m)
 {
 	bus_dmamap_t map;
-	uint32_t desc1, desc3;
+	uint32_t desc0, desc1, desc3;
 	struct mbuf *last_m, *m0;
 	size_t count, i;
 	int error;
@@ -147,20 +148,23 @@ gmc_txqueue(struct gmc_softc *sc, gmac_hwqueue_t *hwq, struct mbuf *m)
 	/*
 	 * Now we need to load the descriptors...
 	 */
+	desc0 = map->dm_nsegs << 16;
 	desc1 = m->m_pkthdr.len;
 	desc3 = DESC3_SOF;
 	i = 0;
 	d = NULL;
 	do {
+#if 0
 		if (i > 0)
-			aprint_normal_dev(sc->sc_dev,
+			aprint_debug_dev(sc->sc_dev,
 			    "gmac_txqueue: %zu@%p=%#x/%#x/%#x/%#x\n",
 			    i-1, d, d->d_desc0, d->d_desc1,
 			    d->d_bufaddr, d->d_desc3);
+#endif
 		d = gmac_hwqueue_desc(hwq, i);
 		KASSERT(map->dm_segs[i].ds_len > 0);
 		KASSERT((map->dm_segs[i].ds_addr & 1) == 0);
-		d->d_desc0 = htole32(map->dm_segs[i].ds_len);
+		d->d_desc0 = htole32(map->dm_segs[i].ds_len | desc0);
 		d->d_desc1 = htole32(desc1);
 		d->d_bufaddr = htole32(map->dm_segs[i].ds_addr);
 		d->d_desc3 = htole32(desc3);
@@ -168,9 +172,11 @@ gmc_txqueue(struct gmc_softc *sc, gmac_hwqueue_t *hwq, struct mbuf *m)
 	} while (++i < map->dm_nsegs);
 
 	d->d_desc3 |= htole32(DESC3_EOF|DESC3_EOFIE);
-	aprint_normal_dev(sc->sc_dev,
+#if 0
+	aprint_debug_dev(sc->sc_dev,
 	    "gmac_txqueue: %zu@%p=%#x/%#x/%#x/%#x\n",
 	    i-1, d, d->d_desc0, d->d_desc1, d->d_bufaddr, d->d_desc3);
+#endif
 	M_SETCTX(m, map);
 	IF_ENQUEUE(&hwq->hwq_ifq, m);
 	/*
@@ -178,71 +184,12 @@ gmc_txqueue(struct gmc_softc *sc, gmac_hwqueue_t *hwq, struct mbuf *m)
 	 * This will sync for us.
 	 */
 	gmac_hwqueue_produce(hwq, map->dm_nsegs);
-	aprint_normal_dev(sc->sc_dev,
+#if 0
+	aprint_debug_dev(sc->sc_dev,
 	    "gmac_txqueue: *%zu@%p=%#x/%#x/%#x/%#x\n",
 	    i-1, d, d->d_desc0, d->d_desc1, d->d_bufaddr, d->d_desc3);
+#endif
 	return true;
-}
-
-static void
-gmc_rxproduce(struct gmc_softc *sc)
-{
-	struct gmac_softc * const psc = sc->sc_psc;
-	gmac_hwqueue_t * const hwq = psc->sc_swfreeq;
-	gmac_hwqmem_t * const hqm = hwq->hwq_hqm;
-	size_t i;
-
-	for (i = 0;
-	     hwq->hwq_size - hwq->hwq_free - 1 + i < psc->sc_swfree_min; i++) {
-		bus_dmamap_t map;
-		gmac_desc_t *d;
-		struct mbuf *m;
-		int error;
-
-		map = gmac_mapcache_get(hqm->hqm_mc);
-		if (map == NULL)
-			break;
-
-		KASSERT(map->dm_mapsize == 0);
-
-		m = m_get(MT_DATA, M_DONTWAIT);
-		if (m == NULL) {
-			gmac_mapcache_put(hqm->hqm_mc, map);
-			break;
-		}
-
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_free(m);
-			gmac_mapcache_put(hqm->hqm_mc, map);
-			break;
-		}
-		error = bus_dmamap_load(hqm->hqm_dmat, map, m->m_data,
-		    MCLBYTES, NULL, BUS_DMA_READ|BUS_DMA_NOWAIT);
-		if (error) {
-			m_free(m);
-			gmac_mapcache_put(hqm->hqm_mc, map);
-			aprint_error_dev(sc->sc_dev,
-			    "map %p(%zu): can't map rx mbuf(%p) wptr=%zu: %d\n",
-			    map, map->_dm_size, m,
-			    (hwq->hwq_wptr + i) & (hwq->hwq_size - 1),
-			    error);
-			Debugger();
-			break;
-		}
-		bus_dmamap_sync(hqm->hqm_dmat, map, 0, map->dm_mapsize,
-		    BUS_DMASYNC_PREREAD);
-		m->m_len = 0;
-		M_SETCTX(m, map);
-		d = gmac_hwqueue_desc(hwq, i);
-		d->d_desc0   = htole32(map->dm_segs->ds_len);
-		d->d_bufaddr = htole32(map->dm_segs->ds_addr);
-		IF_ENQUEUE(&hwq->hwq_ifq, m);
-		sc->sc_psc->sc_rxpkts_per_sec++;
-	}
-
-	if (i)
-		gmac_hwqueue_produce(hwq, i);
 }
 
 static void
@@ -321,8 +268,10 @@ gmc_mii_tick(void *arg)
 	 * swfree_min until it returns to MIN_RXMAPS.
 	 */
 	if (psc->sc_rxpkts_per_sec <= MIN_RXMAPS
-	    && psc->sc_swfree_min > MIN_RXMAPS)
+	    && psc->sc_swfree_min > MIN_RXMAPS) {
 		psc->sc_swfree_min--;
+		gmac_swfree_min_update(psc);
+	}
 	/*
 	 * If only one GMAC is running or this is port0, reset the count.
 	 */
@@ -364,8 +313,10 @@ gmc_mii_statchg(device_t self)
 	uint32_t gmac_status;
 	
 	gmac_status = sc->sc_gmac_status;
+
 	gmac_status &= ~STATUS_PHYMODE_MASK;
-	gmac_status |= STATUS_PHYMODE_GMII;
+	gmac_status |= STATUS_PHYMODE_RGMII_A;
+
 	gmac_status &= ~STATUS_SPEED_MASK;
 	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_T) {
 		gmac_status |= STATUS_SPEED_1000M;
@@ -380,15 +331,13 @@ gmc_mii_statchg(device_t self)
 	else
 		gmac_status &= ~STATUS_DUPLEX_FULL;
 
-        if (sc->sc_mii.mii_media_active & IFM_ACTIVE)
+        if (sc->sc_mii.mii_media_status & IFM_ACTIVE)
 		gmac_status |= STATUS_LINK_ON;
 	else
 		gmac_status &= ~STATUS_LINK_ON;
 
-	gmac_status |= STATUS_LINK_ON; /* XXX */
-
 	if (sc->sc_gmac_status != gmac_status) {
-		aprint_normal_dev(sc->sc_dev,
+		aprint_debug_dev(sc->sc_dev,
 		    "status change old=%#x new=%#x active=%#x\n",
 		    sc->sc_gmac_status, gmac_status,
 		    sc->sc_mii.mii_media_active);
@@ -396,6 +345,8 @@ gmc_mii_statchg(device_t self)
 		bus_space_write_4(sc->sc_iot, sc->sc_gmac_ioh, GMAC_STATUS,
 		    sc->sc_gmac_status);
 	}
+
+	(*sc->sc_mii.mii_writereg)(sc->sc_dev, sc->sc_phy, 0x0018, 0x0041);
 }
 
 static int
@@ -435,8 +386,11 @@ gmc_ifstart(struct ifnet *ifp)
 {
 	struct gmc_softc * const sc = ifp->if_softc;
 
-	if ((sc->sc_gmac_status & STATUS_LINK_ON) == 0
-	    || (ifp->if_flags & IFF_RUNNING) == 0)
+#if 0
+	if ((sc->sc_gmac_status & STATUS_LINK_ON) == 0)
+		return;
+#endif
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	for (;;) {
@@ -493,16 +447,14 @@ gmc_ifinit(struct ifnet *ifp)
 {
 	struct gmc_softc * const sc = ifp->if_softc;
 	struct gmac_softc * const psc = sc->sc_psc;
-#if 1
 	uint32_t new, mask;
-#endif
 
 	gmac_mapcache_fill(psc->sc_rxmaps, MIN_RXMAPS);
 	gmac_mapcache_fill(psc->sc_txmaps, MIN_TXMAPS);
 
 	if (sc->sc_rxq == NULL) {
 		gmac_hwqmem_t *hqm;
-		hqm = gmac_hwqmem_create(psc->sc_rxmaps, RXQ_NDESCS, 1,
+		hqm = gmac_hwqmem_create(psc->sc_rxmaps, 16, /*RXQ_NDESCS,*/ 1,
 		   HQM_CONSUMER|HQM_RX);
 		sc->sc_rxq = gmac_hwqueue_create(hqm, sc->sc_iot,
 		    sc->sc_ioh, GMAC_DEF_RXQn_RWPTR(sc->sc_port1),
@@ -553,11 +505,10 @@ gmc_ifinit(struct ifnet *ifp)
 
 	gmc_filter_change(sc);
 
-#if 1
 	mask = DMAVR_LOOPBACK|DMAVR_DROP_SMALL_ACK|DMAVR_EXTRABYTES_MASK
 	    |DMAVR_RXBURSTSIZE_MASK|DMAVR_RXBUSWIDTH_MASK
 	    |DMAVR_TXBURSTSIZE_MASK|DMAVR_TXBUSWIDTH_MASK;
-	new = /* DMAVR_RXDMA_ENABLE| */ DMAVR_TXDMA_ENABLE
+	new = DMAVR_RXDMA_ENABLE|DMAVR_TXDMA_ENABLE
 	    |DMAVR_EXTRABYTES(2)
 	    |DMAVR_RXBURSTSIZE(DMAVR_BURSTSIZE_32W)
 	    |DMAVR_RXBUSWIDTH(DMAVR_BUSWIDTH_32BITS)
@@ -568,26 +519,27 @@ gmc_ifinit(struct ifnet *ifp)
 		sc->sc_dmavr = new;
 		bus_space_write_4(sc->sc_iot, sc->sc_dma_ioh, GMAC_DMAVR,
 		    sc->sc_dmavr);
-		aprint_normal_dev(sc->sc_dev, "gmc_ifinit: dmavr=%#x/%#x\n",
+		aprint_debug_dev(sc->sc_dev, "gmc_ifinit: dmavr=%#x/%#x\n",
 		    sc->sc_dmavr,
 		    bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh, GMAC_DMAVR));
 	}
 
-	mask = CONFIG0_MAXLEN_MASK|CONFIG0_TX_DISABLE/*|CONFIG0_RX_DISABLE*/
-	    |CONFIG0_LOOPBACK|CONFIG0_SIM_TEST|CONFIG0_INVERSE_RXC_RGMII
-	    |CONFIG0_R_LATCHED_MMII|CONFIG0_RGMII_INBAND_STATUS_ENABLE;
-	new = CONFIG0_MAXLEN(CONFIG0_MAXLEN_1536);
+	mask = CONFIG0_MAXLEN_MASK|CONFIG0_TX_DISABLE|CONFIG0_RX_DISABLE
+	    |CONFIG0_LOOPBACK|/*CONFIG0_SIM_TEST|*/CONFIG0_INVERSE_RXC_RGMII
+	    |CONFIG0_RGMII_INBAND_STATUS_ENABLE;
+	new = CONFIG0_MAXLEN(CONFIG0_MAXLEN_1536)|CONFIG0_R_LATCHED_MMII;
 	new |= (sc->sc_gmac_config[0] & ~mask);
 	if (sc->sc_gmac_config[0] != new) {
 		sc->sc_gmac_config[0] = new;
 		bus_space_write_4(sc->sc_iot, sc->sc_gmac_ioh, GMAC_CONFIG0,
 		    sc->sc_gmac_config[0]);
-		aprint_normal_dev(sc->sc_dev, "gmc_ifinit: config0=%#x/%#x\n",
+		aprint_debug_dev(sc->sc_dev, "gmc_ifinit: config0=%#x/%#x\n",
 		    sc->sc_gmac_config[0],
 		    bus_space_read_4(sc->sc_iot, sc->sc_gmac_ioh, GMAC_CONFIG0));
 	}
 
-	gmc_rxproduce(sc);
+	psc->sc_rxpkts_per_sec +=
+	    gmac_rxproduce(psc->sc_swfreeq, psc->sc_swfree_min);
 
 	/*
 	 * If we will be the only active interface, make sure the sw freeq
@@ -611,7 +563,6 @@ gmc_ifinit(struct ifnet *ifp)
 	psc->sc_int_enabled[4] |= sc->sc_int_enabled[4];
 
 	gmac_intr_update(psc);
-#endif
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		mii_tick(&sc->sc_mii);
@@ -637,6 +588,8 @@ gmc_intr(void *arg)
 	bool do_ifstart = false;
 	int rv = 0;
 
+	aprint_debug_dev(sc->sc_dev, "gmac_intr: entry\n");
+
 	int0_status = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    GMAC_INT0_STATUS);
 	int1_status = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
@@ -644,25 +597,20 @@ gmc_intr(void *arg)
 	int4_status = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    GMAC_INT4_STATUS);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_STATUS,
-	    int0_status & sc->sc_int_enabled[0]);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT1_STATUS,
-	    int1_status & sc->sc_int_enabled[1]);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_STATUS,
-	    int4_status & sc->sc_int_enabled[4]);
-
-	aprint_normal_dev(sc->sc_dev, "gmac_intr: sts=%#x/%#x/%#x/%#x/%#x\n",
+	aprint_debug_dev(sc->sc_dev, "gmac_intr: sts=%#x/%#x/%#x/%#x/%#x\n",
 	    int0_status, int1_status,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT2_STATUS),
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT3_STATUS),
 	    int4_status);
 
-	aprint_normal_dev(sc->sc_dev, "gmac_intr: mask=%#x/%#x/%#x/%#x/%#x\n",
+#if 0
+	aprint_debug_dev(sc->sc_dev, "gmac_intr: mask=%#x/%#x/%#x/%#x/%#x\n",
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_MASK),
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT1_MASK),
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT2_MASK),
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT3_MASK),
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_MASK));
+#endif
 
 	status = int0_status & sc->sc_int_mask[0];
 	if (status & (INT0_TXDERR|INT0_TXPERR)) {
@@ -670,25 +618,35 @@ gmc_intr(void *arg)
 		    "transmit%s%s error: %#x %08x bufaddr %#x\n",
 		    status & INT0_TXDERR ? " data" : "",
 		    status & INT0_TXPERR ? " protocol" : "",
-		    bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
-			GMAC_DMA_TX_CUR_DESC),
-		    bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
-			GMAC_SW_TX_Q0_RWPTR),
-		    bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
-			GMAC_DMA_TX_DESC2));
-		    Debugger();
+		bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
+		    GMAC_DMA_TX_CUR_DESC),
+		bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
+		    GMAC_SW_TX_Q0_RWPTR),
+		bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
+		    GMAC_DMA_TX_DESC2));
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_STATUS,
+		    status & (INT0_TXDERR|INT0_TXPERR));
+		Debugger();
 	}
 	if (status & (INT0_RXDERR|INT0_RXPERR)) {
 		aprint_error_dev(sc->sc_dev,
-		    "receive%s%s error: %#x %#x bufaddr %#x\n",
-		    status & INT0_TXDERR ? " data" : "",
-		    status & INT0_TXPERR ? " protocol" : "",
-		    bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
-			GMAC_DMA_RX_CUR_DESC),
-		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			GMAC_DEF_RXQn_RWPTR(sc->sc_port1)),
-		    bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
-			GMAC_DMA_RX_DESC2));
+		    "receive%s%s error: %#x %#x=%#x/%#x/%#x/%#x\n",
+		    status & INT0_RXDERR ? " data" : "",
+		    status & INT0_RXPERR ? " protocol" : "",
+		bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
+		    GMAC_DMA_RX_CUR_DESC),
+		bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    GMAC_SWFREEQ_RWPTR),
+		bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
+		    GMAC_DMA_RX_DESC0),
+		bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
+		    GMAC_DMA_RX_DESC1),
+		bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
+		    GMAC_DMA_RX_DESC2),
+		bus_space_read_4(sc->sc_iot, sc->sc_dma_ioh,
+		    GMAC_DMA_RX_DESC3));
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_STATUS,
+		    status & (INT0_RXDERR|INT0_RXPERR));
 		    Debugger();
 	}
 	if (status & INT0_SWTXQ_EOF) {
@@ -696,28 +654,32 @@ gmc_intr(void *arg)
 		for (int i = 0; status && i < __arraycount(sc->sc_txq); i++) {
 			if (status & INT0_SWTXQn_EOF(i)) {
 				gmac_hwqueue_sync(sc->sc_txq[i]);
+				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				    GMAC_INT0_STATUS,
+				    sc->sc_int_mask[0] & (INT0_SWTXQn_EOF(i)|INT0_SWTXQn_FIN(i)));
 				status &= ~INT0_SWTXQn_EOF(i);
 			}
 		}
-#if 0
-		/*
-		 * If we got an EOF, that means someting wound up in the
-		 * hardware freeq, so go reclaim it.
-		 */
-//		gmac_hwqueue_consume(sc->sc_psc->sc_hwfreeq);
-#endif
 		do_ifstart = true;
+		rv = 1;
+	}
+
+	if (int4_status & INT4_SW_FREEQ_EMPTY) {
+		struct gmac_softc * const psc = sc->sc_psc;
+		psc->sc_rxpkts_per_sec +=
+		    gmac_rxproduce(psc->sc_swfreeq, psc->sc_swfree_min);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_STATUS,
+		    status & INT4_SW_FREEQ_EMPTY);
 		rv = 1;
 	}
 
 	status = int1_status & sc->sc_int_mask[1];
 	if (status & INT1_DEF_RXQ_EOF) {
-		gmac_hwqueue_consume(sc->sc_rxq);
-		rv = 1;
-	}
-
-	if (int4_status & INT4_SW_FREEQ_EMPTY) {
-		gmc_rxproduce(sc);
+		struct gmac_softc * const psc = sc->sc_psc;
+		psc->sc_rxpkts_per_sec +=
+		    gmac_hwqueue_consume(sc->sc_rxq, psc->sc_swfree_min);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT1_STATUS,
+		    status & INT1_DEF_RXQ_EOF);
 		rv = 1;
 	}
 
@@ -735,18 +697,29 @@ gmc_intr(void *arg)
 	if (status & INT4_TX_XOFF) {
 	}
 	if (status & INT4_RX_FIFO_OVRN) {
-		if (sc->sc_psc->sc_swfree_min < MAX_RXMAPS)
+#if 0
+		if (sc->sc_psc->sc_swfree_min < MAX_RXMAPS) {
 			sc->sc_psc->sc_swfree_min++;
+			gmac_swfree_min_update(psc);
+		}
+#endif
 		sc->sc_if.if_ierrors++;
 	}
 	if (status & INT4_RGMII_STSCHG) {
 		mii_tick(&sc->sc_mii);
 	}
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_STATUS, status);
 
 	if (do_ifstart)
 		gmc_ifstart(&sc->sc_if);
 
-	aprint_normal_dev(sc->sc_dev, "gmac_intr: done\n");
+	aprint_debug_dev(sc->sc_dev, "gmac_intr: sts=%#x/%#x/%#x/%#x/%#x\n",
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_STATUS),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT1_STATUS),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT2_STATUS),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT3_STATUS),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_STATUS));
+	aprint_debug_dev(sc->sc_dev, "gmac_intr: exit rv=%d\n", rv);
 	return rv;
 }
 
@@ -783,6 +756,7 @@ gmc_attach(device_t parent, device_t self, void *aux)
 
 	psc->sc_ports |= 1 << gma->gma_port;
 	sc->sc_port1 = (gma->gma_port == 1);
+	sc->sc_phy = gma->gma_phy;
 
 	sc->sc_dev = self;
 	sc->sc_psc = psc;
@@ -829,7 +803,8 @@ gmc_attach(device_t parent, device_t self, void *aux)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|IFM_FDX);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+//		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|IFM_FDX);
 	}
 
 	sc->sc_gmac_status = bus_space_read_4(sc->sc_iot, sc->sc_gmac_ioh,
