@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.57 2008/12/23 04:09:59 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.58 2008/12/24 16:51:43 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1689,4 +1689,20 @@ sys/dev/raidframe/rf_reconstruct.c		1.106
 	abort the reconstruct and wait for IOs to drain before pulling
 	the plug.
 	[oster, ticket #203]
+
+external/mit/xorg/server/drivers/xf86-input-keyboard/Makefile 1.8
+
+	Fix vt switching when Xkb is disabled.
+	[jmcneill, ticket #199]
+
+external/mit/xorg/server/xorg-server/Makefile	1.18
+external/mit/xorg/server/xorg-server/Makefile.Xserver 1.8
+external/mit/xorg/server/xorg-server/hw/vfb/Makefile 1.5
+external/mit/xorg/server/xorg-server/hw/xfree86/Makefile 1.23
+external/mit/xorg/server/xorg-server/hw/xnest/Makefile 1.7
+external/mit/xorg/server/xorg-server/xkb/Makefile 1.4
+external/mit/xorg/server/xorg-server/xkbstubs/Makefile 1.1
+
+	Make display switching work.  Addresses PR xsrc/40150.
+	[jmcneill, ticket #200]
 
