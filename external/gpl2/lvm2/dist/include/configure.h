@@ -101,7 +101,7 @@
 /* #undef HAVE_LIBINTL_H */
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
-/* #undef HAVE_LIBREADLINE */
+#define HAVE_LIBREADLINE 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -160,10 +160,10 @@
 /* #undef HAVE_PTHREAD_H */
 
 /* Define to 1 if you have the <readline/history.h> header file. */
-/* #undef HAVE_READLINE_HISTORY_H */
+#define HAVE_READLINE_HISTORY_H 1
 
 /* Define to 1 if you have the <readline/readline.h> header file. */
-/* #undef HAVE_READLINE_READLINE_H */
+#define HAVE_READLINE_READLINE_H 1
 
 /* Define to 1 to include support for realtime clock. */
 /* #undef HAVE_REALTIME */
@@ -384,7 +384,7 @@
 #define POOL_INTERNAL 1
 
 /* Define to 1 to include the LVM readline shell. */
-/* #undef READLINE_SUPPORT */
+#define READLINE_SUPPORT 1
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
