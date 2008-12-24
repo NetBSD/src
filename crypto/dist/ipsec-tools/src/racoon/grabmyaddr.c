@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.18 2008/12/24 15:25:44 christos Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.19 2008/12/24 19:05:48 christos Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -576,13 +576,11 @@ kernel_handle_message(msg)
 
 	switch (rtm->rtm_type) {
 	case RTM_NEWADDR:
-		/* XXX: The code below is a no-op */
 		parse_addresses(ifa + 1, msg + ifa->ifam_msglen,
 				ifa->ifam_addrs, &addr);
 		myaddr_open_all_configured((struct sockaddr *) &addr);
 		break;
 	case RTM_DELADDR:
-		/* XXX: The code below is a no-op */
 		parse_addresses(ifa + 1, msg + ifa->ifam_msglen,
 				ifa->ifam_addrs, &addr);
 		myaddr_close_all_open((struct sockaddr *) &addr);
