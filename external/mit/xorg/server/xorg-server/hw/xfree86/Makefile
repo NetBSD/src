@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2008/09/22 16:11:48 cube Exp $
+#	$NetBSD: Makefile,v 1.22.6.1 2008/12/24 16:48:25 snj Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
 		xf86modes exa \
@@ -66,8 +66,8 @@ LDADD+=	${LDADD.xkb}
 LDADD+=	${LDADD.dix/xpstubs}
 LDADD+=	${LDADD.os}
 LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
+LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
 LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
-#LDADD+=	${LDADD.dixmods/xorgxkb}
 LDADD+=	-Wl,--no-whole-archive
 
 .if ${MACHINE} == "i386"

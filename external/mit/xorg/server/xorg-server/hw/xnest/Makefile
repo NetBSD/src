@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2008/12/24 16:48:25 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -62,6 +62,7 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.miext/shadow} \
 	${LDADD.Xi} \
 	${LDADD.xkb} \
+	${LDADD.xkbstubs} \
 	${LDADD.composite} \
 	${LDADD.dix/xpstubs} \
 	${LDADD.os} \
