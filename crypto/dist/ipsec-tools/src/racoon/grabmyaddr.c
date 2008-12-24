@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.19 2008/12/24 19:05:48 christos Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.20 2008/12/24 20:20:52 christos Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -392,14 +392,12 @@ netlink_process(struct nlmsghdr *h)
 	switch (ifa->ifa_family) {
 	case AF_INET:
 		sin = (struct sockaddr_in *) &addr;
-		sin.sin_len = sizeof(*sin);
 		memcpy(&sin->sin_addr, RTA_DATA(rta[IFA_LOCAL]),
 			sizeof(sin->sin_addr));
 		break;
 #ifdef INET6
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *) &addr;
-		sin6.sin6_len = sizeof(*sin6);
 		memcpy(&sin6->sin6_addr, RTA_DATA(rta[IFA_LOCAL]),
 			sizeof(sin6->sin6_addr));
 		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
