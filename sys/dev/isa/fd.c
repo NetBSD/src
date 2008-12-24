@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.88 2008/12/16 22:35:31 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.89 2008/12/24 16:56:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.88 2008/12/16 22:35:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.89 2008/12/24 16:56:28 tsutsui Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1405,9 +1405,13 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 		memset(&buffer, 0, sizeof(buffer));
 
-		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
+		buffer.d_nsectors = fd->sc_type->sectrac;
+		buffer.d_ntracks = fd->sc_type->heads;
+		buffer.d_ncylinders = fd->sc_type->cyls;
+		buffer.d_secpercyl = fd->sc_type->seccyl;
+		buffer.d_secperunit = fd->sc_type->size;
 
 		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
 			return EINVAL;
