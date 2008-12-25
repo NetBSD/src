@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.12 2008/11/24 07:51:51 rtr Exp $
+# $NetBSD: md.netwinder,v 1.13 2008/12/25 12:45:56 jmmv Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xvfb					-unknown-	x11
@@ -382,6 +382,7 @@
 ./usr/X11R7/bin/pcitweak				-unknown-	xorg
 ./usr/X11R7/bin/scanpci					-unknown-	xorg
 ./usr/X11R7/bin/xorgconfig				-unknown-	xorg
+./usr/X11R7/lib/X11/Cards				-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
