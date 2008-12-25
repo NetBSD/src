@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.69 2008/10/05 18:32:40 cube Exp $
+# $NetBSD: mi,v 1.70 2008/12/25 12:12:17 ghen Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1685,6 +1685,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/ca			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ca_enhanced		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/capslock		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/colemak			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/compose			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ctrl			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/cz			-unknown-	xorg
@@ -1781,6 +1782,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/pc/by			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/pc/ca			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/pc/ch			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/pc/colemak		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/pc/cz			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/pc/de			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/pc/dk			-unknown-	xorg
