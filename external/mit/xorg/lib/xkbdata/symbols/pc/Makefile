@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/12/25 12:12:17 ghen Exp $
 
 .include <bsd.own.mk>
 
 FILESDIR=	${X11LIBDIR}/xkb/symbols/pc
 FILES=		al am ara az \
 		ba bd be bg br bt by \
-		ca ch cz \
+		ca ch colemak cz \
 		de dk \
 		ee es \
 		fi fr fo \
