@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.60 2008/02/16 17:58:01 matt Exp $	*/
+/*	$NetBSD: tape.c,v 1.61 2008/12/26 19:26:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.60 2008/02/16 17:58:01 matt Exp $");
+__RCSID("$NetBSD: tape.c,v 1.61 2008/12/26 19:26:04 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -895,6 +895,12 @@ loop:
 	}
 	if (curblk > 0)
 		(*fill)((char *)buf, (long)((curblk * TP_BSIZE) + size));
+	/* Skip over Linux extended attributes. */
+	if (spcl.c_type == TS_INODE && (spcl.c_flags & DR_EXTATTRIBUTES)) {
+		for (i = 0; i < spcl.c_count; i++)
+			readtape(junk);
+		(void)gethead(&spcl);
+	}
 	findinode(&spcl);
 	gettingfile = 0;
 }
