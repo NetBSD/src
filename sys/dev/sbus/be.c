@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.60 2008/11/07 00:20:12 dyoung Exp $	*/
+/*	$NetBSD: be.c,v 1.61 2008/12/26 18:51:19 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.60 2008/11/07 00:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.61 2008/12/26 18:51:19 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -281,6 +281,8 @@ beattach(parent, self, aux)
 	sc->sc_rev = prom_getpropint(node, "board-version", -1);
 	printf(" rev %x", sc->sc_rev);
 
+	callout_init(&sc->sc_tick_ch, 0);
+
 	bestop(sc);
 
 	sc->sc_channel = prom_getpropint(node, "channel#", -1);
@@ -361,8 +363,6 @@ beattach(parent, self, aux)
 	mii->mii_statchg = be_mii_statchg;
 
 	ifmedia_init(&mii->mii_media, 0, be_ifmedia_upd, be_ifmedia_sts);
-
-	callout_init(&sc->sc_tick_ch, 0);
 
 	/*
 	 * Initialize transceiver and determine which PHY connection to use.
