@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1220 2008/12/22 20:18:37 agc Exp $
+#	$NetBSD: mi,v 1.1221 2008/12/26 00:52:45 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7106,6 +7106,7 @@
 ./usr/share/man/cat3/pw_error.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_getconf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pw_getprefix.0		comp-c-catman		.cat
+./usr/share/man/cat3/pw_getpwconf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pw_init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_lock.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_mkdb.0			comp-c-catman		.cat
@@ -12380,6 +12381,7 @@
 ./usr/share/man/html3/pw_error.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_getconf.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_getprefix.html		comp-c-htmlman		html
+./usr/share/man/html3/pw_getpwconf.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_lock.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_mkdb.html		comp-c-htmlman		html
@@ -17655,6 +17657,7 @@
 ./usr/share/man/man3/pw_error.3			comp-c-man		.man
 ./usr/share/man/man3/pw_getconf.3		comp-c-man		.man
 ./usr/share/man/man3/pw_getprefix.3		comp-c-man		.man
+./usr/share/man/man3/pw_getpwconf.3		comp-c-man		.man
 ./usr/share/man/man3/pw_init.3			comp-c-man		.man
 ./usr/share/man/man3/pw_lock.3			comp-c-man		.man
 ./usr/share/man/man3/pw_mkdb.3			comp-c-man		.man
