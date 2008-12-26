@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2008/12/16 22:34:40 christos Exp $
+#	$NetBSD: Makefile,v 1.58 2008/12/26 00:49:28 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -49,6 +49,7 @@ MLINKS+=login_cap.3 setusercontext.3
 MLINKS+=loginx.3 logoutx.3 loginx.3 logwtmpx.3
 MLINKS+=openpty.3 login_tty.3
 MLINKS+=openpty.3 forkpty.3
+MLINKS+=pw_getconf.3 pw_getpwconf.3
 MLINKS+=pw_init.3 pw_edit.3
 MLINKS+=pw_init.3 pw_prompt.3
 MLINKS+=pw_init.3 pw_copy.3
