@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.14 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.15 2008/12/26 19:26:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -150,6 +150,7 @@ union u_spcl {
  */
 #define DR_NEWHEADER	0x0001	/* new format tape header */
 #define DR_NEWINODEFMT	0x0002	/* new format inodes on tape */
+#define DR_EXTATTRIBUTES 0x8000	/* linux: extended attributes */
 
 #define	DUMPOUTFMT	"%-16s %c %s"		/* for printf */
 						/* name, level, ctime(date) */
