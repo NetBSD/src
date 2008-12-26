@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.69 2008/12/16 16:18:25 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.70 2008/12/26 03:38:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.69 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.70 2008/12/26 03:38:52 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -583,11 +583,11 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
 		/* XXX - We should probably check more values here */
     		if (!pmp->pm_BytesPerSec || !SecPerClust
-	    		|| pmp->pm_Heads > 255 || pmp->pm_SecPerTrack > 63) {
+	    		|| pmp->pm_SecPerTrack > 63) {
 			DPRINTF(("bytespersec %d secperclust %d "
-			    "heads %d secpertrack %d\n", 
+			    "secpertrack %d\n", 
 			    pmp->pm_BytesPerSec, SecPerClust,
-			    pmp->pm_Heads, pmp->pm_SecPerTrack));
+			    pmp->pm_SecPerTrack));
 			error = EINVAL;
 			goto error_exit;
 		}
