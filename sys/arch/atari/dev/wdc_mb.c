@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.32 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.33 2008/12/27 16:14:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.32 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.33 2008/12/27 16:14:13 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -277,9 +277,9 @@ read_multi_2_swap(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int16_t		*a;
 {
-	u_int16_t	*ba;
+	volatile u_int16_t	*ba;
 
-	ba = (u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	ba = (volatile u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
 	for (; c; a++, c--)
 		*a = bswap16(*ba);
 }
@@ -291,9 +291,9 @@ write_multi_2_swap(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int16_t		*a;
 {
-	u_int16_t	*ba;
+	volatile u_int16_t	*ba;
 
-	ba = (u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	ba = (volatile u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
 	for (; c; a++, c--)
 		*ba = bswap16(*a);
 }
