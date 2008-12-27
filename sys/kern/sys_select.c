@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.3.2.3 2008/11/01 21:22:27 christos Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.3.2.4 2008/12/27 23:14:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.3.2.3 2008/11/01 21:22:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.3.2.4 2008/12/27 23:14:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,9 +426,9 @@ pollcommon(lwp_t *l, register_t *retval,
 	struct pollfd *u_fds, u_int nfds,
 	struct timeval *tv, sigset_t *mask)
 {
-	char		smallbits[32 * sizeof(struct pollfd)];
+	struct pollfd	smallfds[32];
+	struct pollfd	*fds;
 	proc_t		* const p = l->l_proc;
-	void *		bits;
 	sigset_t	oldmask;
 	int		ncoll, error, timo;
 	size_t		ni;
@@ -440,14 +440,14 @@ pollcommon(lwp_t *l, register_t *retval,
 		nfds = p->p_fd->fd_nfiles;
 	}
 	ni = nfds * sizeof(struct pollfd);
-	if (ni > sizeof(smallbits)) {
-		bits = kmem_alloc(ni, KM_SLEEP);
-		if (bits == NULL)
+	if (ni > sizeof(smallfds)) {
+		fds = kmem_alloc(ni, KM_SLEEP);
+		if (fds == NULL)
 			return ENOMEM;
 	} else
-		bits = smallbits;
+		fds = smallfds;
 
-	error = copyin(u_fds, bits, ni);
+	error = copyin(u_fds, fds, ni);
 	if (error)
 		goto done;
 
@@ -481,7 +481,7 @@ pollcommon(lwp_t *l, register_t *retval,
 		ncoll = sc->sc_ncoll;
 		l->l_selflag = SEL_SCANNING;
 
-		error = pollscan(l, (struct pollfd *)bits, nfds, retval);
+		error = pollscan(l, fds, nfds, retval);
 
 		if (error || *retval)
 			break;
@@ -514,9 +514,9 @@ pollcommon(lwp_t *l, register_t *retval,
 	if (error == EWOULDBLOCK)
 		error = 0;
 	if (error == 0)
-		error = copyout(bits, u_fds, ni);
-	if (bits != smallbits)
-		kmem_free(bits, ni);
+		error = copyout(fds, u_fds, ni);
+	if (fds != smallfds)
+		kmem_free(fds, ni);
 	return (error);
 }
 

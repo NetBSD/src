@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.347.2.3 2008/11/20 20:45:38 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.347.2.4 2008/12/27 23:14:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347.2.3 2008/11/20 20:45:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347.2.4 2008/12/27 23:14:24 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347.2.3 2008/11/20 20:45:38 christos
 #include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
 
+#include "ksyms.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
@@ -341,6 +342,10 @@ main(void)
 
 	uvm_init();
 
+#if ((NKSYMS > 0) || (NDDB > 0) || (NMODULAR > 0))
+	ksyms_init();
+#endif
+
 	percpu_init();
 
 	/* Initialize lock caches. */
@@ -351,6 +356,9 @@ main(void)
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
+
+	/* Initialize the sysctl subsystem. */
+	sysctl_init();
 
 	/* Initialize callouts, part 1. */
 	callout_startup();
@@ -423,9 +431,6 @@ main(void)
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
-
-	/* Initialize the sysctl subsystem. */
-	sysctl_init();
 
 	/* Initialize I/O statistics. */
 	iostat_init();

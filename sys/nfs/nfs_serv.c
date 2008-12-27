@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.138.2.2 2008/11/20 20:45:39 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.138.2.3 2008/12/27 23:14:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138.2.2 2008/11/20 20:45:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138.2.3 2008/12/27 23:14:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ extern struct nfsstats nfsstats;
 extern const nfstype nfsv2_type[9];
 extern const nfstype nfsv3_type[9];
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
-int nfsd_use_loan = 1;	/* use page-loan for READ OP */
+bool nfsd_use_loan = true;	/* use page-loan for READ OP */
 
 #define	nqsrv_getl(vp, rw)	/* nothing */
 
@@ -2562,9 +2562,10 @@ out:
 struct flrep {
 	nfsuint64 fl_off;
 	u_int32_t fl_postopok;
-	u_int32_t fl_fattr[NFSX_V3FATTR / sizeof (u_int32_t)];
+	struct nfs_fattr fl_fattr; /* XXX: must be of fattr3 size */
 	u_int32_t fl_fhok;
 	u_int32_t fl_fhsize;
+	/* handle comes here, filled in dynamically */
 };
 
 int
