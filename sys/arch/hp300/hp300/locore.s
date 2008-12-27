@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.143 2008/01/28 16:21:19 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.143.20.1 2008/12/27 03:57:43 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1061,17 +1061,19 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
+	addql	#1,_C_LABEL(idepth)	| entering interrupt
 	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		| push exception vector info
 	clrw	%sp@-
 	jbsr	_C_LABEL(intr_dispatch)	| call dispatch routine
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)	| exiting from interrupt
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev6intr)	/* level 6: clock */
-	INTERRUPT_SAVEREG
 	addql	#1,_C_LABEL(idepth)	| entering interrupt
+	INTERRUPT_SAVEREG
 	CLKADDR(%a0)
 	movb	%a0@(CLKSR),%d0		| read clock status
 Lclkagain:
@@ -1133,8 +1135,8 @@ Lrecheck:
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
 	movb	%a0@(CLKSR),%d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
-	subql	#1,_C_LABEL(idepth)	| exiting from interrupt
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)	| exiting from interrupt
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
