@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs_data.h,v 1.71 2008/09/28 18:30:47 bouyer Exp $	*/
+/*	$NetBSD: miidevs_data.h,v 1.72 2008/12/27 08:56:50 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.78 2008/09/28 18:30:11 bouyer Exp
+ *	NetBSD: miidevs,v 1.79 2008/12/27 08:55:35 jnemeth Exp
  */
 
 /*-
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 struct mii_knowndev mii_knowndevs[] = {
+ { MII_OUI_AGERE, MII_MODEL_AGERE_ET1011, MII_STR_AGERE_ET1011 },
  { MII_OUI_ALTIMA, MII_MODEL_ALTIMA_ACXXX, MII_STR_ALTIMA_ACXXX },
  { MII_OUI_ALTIMA, MII_MODEL_ALTIMA_AC101, MII_STR_ALTIMA_AC101 },
  { MII_OUI_ALTIMA, MII_MODEL_ALTIMA_AC101L, MII_STR_ALTIMA_AC101L },
