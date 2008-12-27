@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.117 2008/12/13 21:04:57 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.118 2008/12/27 19:33:54 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2536,4 +2536,12 @@ sys/dev/ic/mc146818.c				1.17 via patch
 
 	Fix possible 1 second spin on reading/updating clock.
 	[tsutsui, ticket #1248]
+
+sys/dev/raidframe/rf_driver.c			1.120
+sys/dev/raidframe/rf_reconstruct.c		1.106
+
+	When unconfiguring an array where a reconstruct is in progress, abort
+	the reconstruct and wait for IOs to drain before pulling the plug.
+	Should fix the panic reported by der Mouse on tech-kern.
+	[oster, ticket #1249]
 
