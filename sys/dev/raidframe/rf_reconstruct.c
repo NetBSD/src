@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.95.2.3 2008/05/25 19:09:24 bouyer Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.95.2.4 2008/12/27 19:32:58 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.95.2.3 2008/05/25 19:09:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.95.2.4 2008/12/27 19:32:58 bouyer Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -632,6 +632,12 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	done = 0;
 	while (!done) {
 		
+		if (raidPtr->waitShutdown) {
+			/* someone is unconfiguring this array... bail on the reconstruct.. */
+			recon_error = 1;
+			break;
+		}
+
 		num_writes = 0;
 		
 		/* issue a read for each surviving disk */
