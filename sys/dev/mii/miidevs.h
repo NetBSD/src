@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.82 2008/12/27 08:56:50 jnemeth Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.83 2008/12/27 10:39:04 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.79 2008/12/27 08:55:35 jnemeth Exp
+ *	NetBSD: miidevs,v 1.80 2008/12/27 10:38:15 tsutsui Exp
  */
 
 /*-
@@ -110,7 +110,7 @@
  */
 
 /*
- * Agere PHYs */
+ * Agere PHYs
  */
 #define	MII_MODEL_AGERE_ET1011	0x0004
 #define	MII_STR_AGERE_ET1011	"Agere ET1011 10/100/1000baseT PHY"
