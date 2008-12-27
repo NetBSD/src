@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.181.6.3 2008/11/20 20:45:39 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.181.6.4 2008/12/27 23:14:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.196.2.6 2008/11/20 22:21:56 christos Exp $
+	$NetBSD: syscalls.master,v 1.196.2.7 2008/12/27 23:14:24 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -11,8 +11,9 @@
 ;		the compatibility options defined in syscalls.conf.
 ;
 ; Optional fields are specified after the type field
-; (NOTE! they must be specified in this order):
-;     RUMP:	the system call can be called directly from rumps
+; (NOTE! they *must* be specified in this order):
+;	MODULAR:attempt to autoload system call if not present
+;	RUMP:	the system call can be called directly from rumps
 ;
 ; types:
 ;	STD	always included
@@ -103,7 +104,7 @@
 29	STD 		{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
 			    int flags, struct sockaddr *from, \
 			    unsigned int *fromlenaddr); }
-30	STD		{ int sys_accept(int s, struct sockaddr *name, \
+30	STD	RUMP	{ int sys_accept(int s, struct sockaddr *name, \
 			    unsigned int *anamelen); }
 31	STD		{ int sys_getpeername(int fdes, struct sockaddr *asa, \
 			    unsigned int *alen); }
@@ -212,11 +213,11 @@
 			    int flags); } orecv
 103	COMPAT_13 MODULAR { int sys_sigreturn(struct sigcontext13 *sigcntxp); } \
 			    sigreturn13
-104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
+104	STD	RUMP	{ int sys_bind(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 105	STD	RUMP	{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, unsigned int valsize); }
-106	STD		{ int sys_listen(int s, int backlog); }
+106	STD	RUMP	{ int sys_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43 MODULAR { int sys_sigvec(int signum, struct sigvec *nsv, \
 			    struct sigvec *osv); } osigvec
@@ -292,7 +293,7 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-155	STD MODULAR	{ int sys_nfssvc(int flag, void *argp); }
+155	STD MODULAR RUMP  { int sys_nfssvc(int flag, void *argp); }
 156	COMPAT_43 MODULAR { int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 157	COMPAT_20 MODULAR { int sys_statfs(const char *path, \
@@ -674,7 +675,7 @@
 355	STD 		{ int sys_uuidgen(struct uuid *store, int count); }
 356	STD 		{ int sys_getvfsstat(struct statvfs *buf, \
 			    size_t bufsize, int flags); }
-357	STD 		{ int sys_statvfs1(const char *path, \
+357	STD 	RUMP	{ int sys_statvfs1(const char *path, \
 			    struct statvfs *buf, int flags); }
 358	STD 		{ int sys_fstatvfs1(int fd, struct statvfs *buf, \
 			    int flags); }
@@ -754,7 +755,7 @@
 			    *fhp, struct stat30 *sb); }
 393	COMPAT_50 MODULAR { int sys___ntp_gettime30(struct ntptimeval50 *ntvp); }
 394	STD	 RUMP	{ int sys___socket30(int domain, int type, int protocol); }
-395	STD 		{ int sys___getfh30(const char *fname, void *fhp, \
+395	STD 	 RUMP	{ int sys___getfh30(const char *fname, void *fhp, \
 			    size_t *fh_size); }
 396	STD 		{ int sys___fhopen40(const void *fhp, size_t fh_size,\
 			    int flags); }

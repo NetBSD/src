@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.52.10.3 2008/11/20 20:45:38 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.52.10.4 2008/12/27 23:14:24 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.52.10.3 2008/11/20 20:45:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.52.10.4 2008/12/27 23:14:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,13 +453,12 @@ msdosfs_read(v)
 		int a_ioflag;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	int error = 0, flags;
+	int error = 0;
 	int64_t diff;
 	int blsize;
 	long n;
 	long on;
 	daddr_t lbn;
-	void *win;
 	vsize_t bytelen;
 	struct buf *bp;
 	struct vnode *vp = ap->a_vp;
@@ -487,11 +486,8 @@ msdosfs_read(v)
 
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, advice, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-			ubc_release(win, flags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
+			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 			if (error)
 				break;
 		}
@@ -551,12 +547,11 @@ msdosfs_write(v)
 		int a_ioflag;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	int resid, flags, extended = 0;
+	int resid, extended = 0;
 	int error = 0;
 	int ioflag = ap->a_ioflag;
 	u_long osize;
 	u_long count;
-	void *win;
 	vsize_t bytelen;
 	off_t oldoff;
 	struct uio *uio = ap->a_uio;
@@ -644,11 +639,8 @@ msdosfs_write(v)
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
 
-		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UVM_ADV_NORMAL,
-		    UBC_WRITE);
-		error = uiomove(win, bytelen, uio);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, flags);
+		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
+		    IO_ADV_DECODE(ioflag), UBC_WRITE | UBC_UNMAP_FLAG(vp));
 		if (error)
 			break;
 

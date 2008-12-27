@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.183.2.4 2008/11/20 20:45:39 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.183.2.5 2008/12/27 23:14:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.183.2.4 2008/11/20 20:45:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.183.2.5 2008/12/27 23:14:24 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -785,8 +785,8 @@ setroot(struct device *bootdv, int bootpartition)
 	 * a DV_DISK boot device (or no boot device at all), then
 	 * find a reasonable network interface for "rootspec".
 	 */
-	vops = vfs_getopsbyname("nfs");
-	if (vops != NULL && vops->vfs_mountroot == mountroot &&
+	vops = vfs_getopsbyname(MOUNT_NFS);
+	if (vops != NULL && strcmp(rootfstype, MOUNT_NFS) == 0 &&
 	    rootspec == NULL &&
 	    (bootdv == NULL || device_class(bootdv) != DV_IFNET)) {
 		IFNET_FOREACH(ifp) {
@@ -897,12 +897,11 @@ setroot(struct device *bootdv, int bootpartition)
 		for (vops = LIST_FIRST(&vfs_list); vops != NULL;
 		     vops = LIST_NEXT(vops, vfs_list)) {
 			if (vops->vfs_mountroot != NULL &&
-			    vops->vfs_mountroot == mountroot)
+			    strcmp(rootfstype, vops->vfs_name) == 0)
 			break;
 		}
 
 		if (vops == NULL) {
-			mountroot = NULL;
 			deffsname = "generic";
 		} else
 			deffsname = vops->vfs_name;
@@ -910,8 +909,11 @@ setroot(struct device *bootdv, int bootpartition)
 		for (;;) {
 			printf("file system (default %s): ", deffsname);
 			len = cngetsn(buf, sizeof(buf));
-			if (len == 0)
+			if (len == 0) {
+				if (strcmp(deffsname, "generic") == 0)
+					rootfstype = ROOT_FSTYPE_ANY;
 				break;
+			}
 			if (len == 4 && strcmp(buf, "halt") == 0)
 				cpu_reboot(RB_HALT, NULL);
 			else if (len == 6 && strcmp(buf, "reboot") == 0)
@@ -922,7 +924,7 @@ setroot(struct device *bootdv, int bootpartition)
 			}
 #endif
 			else if (len == 7 && strcmp(buf, "generic") == 0) {
-				mountroot = NULL;
+				rootfstype = ROOT_FSTYPE_ANY;
 				break;
 			}
 			vops = vfs_getopsbyname(buf);
@@ -934,12 +936,20 @@ setroot(struct device *bootdv, int bootpartition)
 					if (vops->vfs_mountroot != NULL)
 						printf(" %s", vops->vfs_name);
 				}
+				if (vops != NULL)
+					vfs_delref(vops);
 #if defined(DDB)
 				printf(" ddb");
 #endif
 				printf(" halt reboot\n");
 			} else {
-				mountroot = vops->vfs_mountroot;
+				/*
+				 * XXX If *vops gets freed between here and
+				 * the call to mountroot(), rootfstype will
+				 * point to something unexpected.  But in
+				 * this case the system will fail anyway.
+				 */
+				rootfstype = vops->vfs_name;
 				vfs_delref(vops);
 				break;
 			}
@@ -1364,6 +1374,9 @@ syscall_establish(const struct emul *em, const struct syscall_package *sp)
 	 */
 	for (i = 0; sp[i].sp_call != NULL; i++) {
 		if (sy[sp[i].sp_code].sy_call != sys_nomodule) {
+#ifdef DIAGNOSTIC
+			printf("syscall %d is busy\n", sp[i].sp_code);
+#endif
 			return EBUSY;
 		}
 	}
