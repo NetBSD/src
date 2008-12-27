@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.16 2008/12/20 12:50:24 cegger Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.17 2008/12/27 16:26:06 cegger Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16 2008/12/20 12:50:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.17 2008/12/27 16:26:06 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -441,6 +441,16 @@ setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 
 	return sp;
 };
+
+void
+sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+#error Implement sendsig_sigcontext
+#if 0	/* This is the amd64 implementation */
+	printf("sendsig_sigcontext: illegal\n");
+	sigexit(curlwp, SIGILL);
+#endif
+}
 
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
