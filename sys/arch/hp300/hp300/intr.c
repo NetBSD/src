@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37.6.1 2008/12/27 03:57:43 snj Exp $	*/
+/*	$NetBSD: intr.c,v 1.37.6.2 2008/12/27 04:00:19 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37.6.1 2008/12/27 03:57:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37.6.2 2008/12/27 04:00:19 snj Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -76,7 +76,6 @@ const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_SCHED]      = PSL_S|PSL_IPL6,
 	[IPL_HIGH]       = PSL_S|PSL_IPL7,
 };
-volatile uint8_t ssir;
 int idepth;
 
 void	netintr(void);
