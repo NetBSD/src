@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.58 2008/12/24 16:51:43 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.59 2008/12/27 04:07:15 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1705,4 +1705,39 @@ external/mit/xorg/server/xorg-server/xkbstubs/Makefile 1.1
 
 	Make display switching work.  Addresses PR xsrc/40150.
 	[jmcneill, ticket #200]
+
+sys/dev/usb/uvideo.c				1.24
+sys/dev/video.c					1.18
+
+	Fix UVC webcam output by:
+	- Storing updated video format after user changes format
+	- Round up number of xfers queued to multiple of 8, due to ehci
+	inefficiencies
+	- Remove random debugging
+	[jmorse, ticket #204]
+
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.79
+
+	Add pseudo-device drvctl.
+	[jmcneill, ticket #205]
+
+distrib/hp300/ramdisk/termcap.mini		1.2
+
+	Add a missing xterm entry to termcap file for hp300 installer
+	and update vt100 entry.
+	[tsutsui, ticket #206]
+
+sys/arch/hp300/hp300/intr.c			1.38, 1.39
+sys/arch/hp300/hp300/locore.s			1.144, 1.145
+sys/arch/hp300/include/intr.h			1.32
+
+	Account interrupt depth in locore.s functions and remove
+	obsolete code for old software interrupt emulation.
+	[tsutsui, ticket #207]
+
+sys/arch/dreamcast/conf/GENERIC			1.89
+sys/arch/evbarm/conf/MPCSA_GENERIC		1.8
+
+	Remove obsolete "options SYSTRACE"
+	[tsutsui, ticket #208]
 
