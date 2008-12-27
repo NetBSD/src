@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.79 2008/12/27 08:55:35 jnemeth Exp $
+$NetBSD: miidevs,v 1.80 2008/12/27 10:38:15 tsutsui Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ oui yyREALTEK			0x000004	Realtek
  */
 
 /*
- * Agere PHYs */
+ * Agere PHYs
  */
 model AGERE ET1011		0x0004 Agere ET1011 10/100/1000baseT PHY
 
