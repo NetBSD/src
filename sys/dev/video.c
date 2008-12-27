@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.17 2008/09/21 19:29:50 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.17.8.1 2008/12/27 03:47:55 snj Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.17 2008/09/21 19:29:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.17.8.1 2008/12/27 03:47:55 snj Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -770,6 +770,7 @@ video_set_format(struct video_softc *sc, struct v4l2_format *fmt)
 		return err;
 
 	video_format_to_v4l2_format(&vfmt, fmt);
+	sc->sc_stream_in.vs_format = vfmt;
 	
 	return 0;
 }
