@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.143.20.1 2008/12/27 03:57:43 snj Exp $	*/
+/*	$NetBSD: locore.s,v 1.143.20.2 2008/12/27 04:00:19 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -896,16 +896,10 @@ ENTRY_NOPROFILE(trap0)
 	movl	%d0,%sp@-		| push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall arg
-	tstl	_C_LABEL(astpending)
-	jne	Lrei2
-	tstb	_C_LABEL(ssir)
-	jeq	Ltrap1
-	movw	#SPL1,%sr
-	tstb	_C_LABEL(ssir)
-	jne	Lsir1
-Ltrap1:
+	tstl	_C_LABEL(astpending)	| AST pending?
+	jne	Lrei			| yes, handle it via trap
 	movl	%sp@(FR_SP),%a0		| grab and restore
-	movl	%a0,%usp			|   user SP
+	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most registers
 	addql	#8,%sp			| pop SP and stack adjust
 	rte
@@ -1155,10 +1149,10 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 /*
  * Emulation of VAX REI instruction.
  *
- * This code deals with checking for and servicing ASTs (profiling,
- * scheduling) and software interrupts.  We check for ASTs first, just
- * like the VAX.  After identifing that we need an AST we
- * drop the IPL to allow device interrupts.
+ * This code deals with checking for and servicing
+ * ASTs (profiling, scheduling).
+ * After identifing that we need an AST we drop the IPL
+ * to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
@@ -1166,16 +1160,19 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
-	jeq	Lchksir			| no, go check for SIR
-Lrei1:
+	jne	1f			| no, done
+	rte
+1:
 	btst	#5,%sp@			| yes, are we returning to user mode?
-	jne	Lchksir			| no, go check for SIR
+	jeq	2f			| no, done
+	rte
+2:
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lrei2:
+Lrei:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_ASTFLT,%sp@-		| type == async system trap
@@ -1200,38 +1197,6 @@ Laststkadj:
 	moveml	%sp@+,#0x7FFF		| restore user registers
 	movl	%sp@,%sp		| and our SP
 	rte				| and do real RTE
-Lchksir:
-	tstb	_C_LABEL(ssir)		| SIR pending?
-	jeq	Ldorte			| no, all done
-	movl	%d0,%sp@-		| need a scratch register
-	movw	%sp@(4),%d0		| get SR
-	andw	#PSL_IPL7,%d0		| mask all but IPL
-	jne	Lnosir			| came from interrupt, no can do
-	movl	%sp@+,%d0		| restore scratch register
-Lgotsir:
-	movw	#SPL1,%sr		| prevent others from servicing int
-	tstb	_C_LABEL(ssir)		| too late?
-	jeq	Ldorte			| yes, oh well...
-	clrl	%sp@-			| stack adjust
-	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1		| including
-	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lsir1:
-	clrl	%sp@-			| VA == none
-	clrl	%sp@-			| code == none
-	movl	#T_SSIR,%sp@-		| type == software interrupt
-	pea	%sp@(12)		| fp == address of trap frame
-	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(16),%sp		| pop value args
-	movl	%sp@(FR_SP),%a0		| restore
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| and all remaining registers
-	addql	#8,%sp			| pop SP and stack adjust
-	rte
-Lnosir:
-	movl	%sp@+,%d0		| restore scratch register
-Ldorte:
-	rte				| real return
 
 /*
  * Use common m68k sigcode.
@@ -1367,26 +1332,6 @@ ENTRY(ploadw)
 	ploadw	#1,%a0@			| pre-load translation
 Lploadwskp:
 #endif
-	rts
-
-/*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, spl0 requires special handling
- * as we need to check for our emulated software interrupts.
- */
-
-ENTRY(spl0)
-	moveq	#0,%d0
-	movw	%sr,%d0			| get old SR for return
-	movw	#PSL_LOWIPL,%sr		| restore new SR
-	tstb	_C_LABEL(ssir)		| software interrupt pending?
-	jeq	Lspldone		| no, all done
-	subql	#4,%sp			| make room for RTE frame
-	movl	%sp@(4),%sp@(2)		| position return address
-	clrw	%sp@(6)			| set frame type 0
-	movw	#PSL_LOWIPL,%sp@	| and new SR
-	jra	Lgotsir			| go handle it
-Lspldone:
 	rts
 
 /*
