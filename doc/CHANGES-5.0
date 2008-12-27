@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.59 2008/12/27 04:07:15 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.60 2008/12/27 18:29:28 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1740,4 +1740,13 @@ sys/arch/evbarm/conf/MPCSA_GENERIC		1.8
 
 	Remove obsolete "options SYSTRACE"
 	[tsutsui, ticket #208]
+
+sys/uvm/uvm_swap.c				1.141
+sys/uvm/uvm_pdaemon.c				1.97
+sys/uvm/uvm_km.c				1.103
+sys/uvm/uvm_map.c				1.265
+sys/uvm/uvm_page.c				1.141
+
+	Fix PR kern/40027: pagedaemon loops on memory shortage.
+	[bouyer, ticket #211]
 
