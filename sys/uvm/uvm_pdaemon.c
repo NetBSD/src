@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93 2008/09/23 08:55:52 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.1 2008/12/27 18:24:49 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93 2008/09/23 08:55:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.1 2008/12/27 18:24:49 snj Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -290,20 +290,20 @@ uvm_pageout(void *arg)
 
 		needsfree = uvmexp.free + uvmexp.paging < uvmexp.freetarg;
 		needsscan = needsfree || uvmpdpol_needsscan_p();
-		mutex_spin_exit(&uvm_fpageqlock);
 
 		/*
 		 * scan if needed
 		 */
-		if (needsscan)
+		if (needsscan) {
+			mutex_spin_exit(&uvm_fpageqlock);
 			uvmpd_scan();
+			mutex_spin_enter(&uvm_fpageqlock);
+		}
 
 		/*
 		 * if there's any free memory to be had,
 		 * wake up any waiters.
 		 */
-
-		mutex_spin_enter(&uvm_fpageqlock);
 		if (uvmexp.free > uvmexp.reserve_kernel ||
 		    uvmexp.paging == 0) {
 			wakeup(&uvmexp.free);
@@ -846,27 +846,17 @@ uvmpd_scan_queue(void)
 		uvmpd_dropswap(p);
 
 		/*
-		 * if all pages in swap are only in swap,
-		 * the swap space is full and we can't page out
-		 * any more swap-backed pages.  reactivate this page
-		 * so that we eventually cycle all pages through
-		 * the inactive queue.
-		 */
-
-		if (uvm_swapisfull()) {
-			dirtyreacts++;
-			uvm_pageactivate(p);
-			mutex_exit(slock);
-			continue;
-		}
-
-		/*
 		 * start new swap pageout cluster (if necessary).
+		 *
+		 * if swap is full reactivate this page so that
+		 * we eventually cycle all pages through the
+		 * inactive queue.
 		 */
 
 		if (swapcluster_allocslots(&swc)) {
+			dirtyreacts++;
+			uvm_pageactivate(p);
 			mutex_exit(slock);
-			dirtyreacts++; /* XXX */
 			continue;
 		}
 
