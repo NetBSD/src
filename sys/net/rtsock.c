@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.100.2.4 2008/11/09 23:57:23 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.100.2.5 2008/12/27 23:14:25 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100.2.4 2008/11/09 23:57:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100.2.5 2008/12/27 23:14:25 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -159,7 +159,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	if (req == PRU_ATTACH) {
 		sosetlock(so);
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
+		rp = malloc(sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
 		so->so_pcb = rp;
 	}
 	if (req == PRU_DETACH && rp)
@@ -215,12 +215,13 @@ route_output(struct mbuf *m, ...)
 {
 	struct sockproto proto = { .sp_family = PF_ROUTE, };
 	struct rt_msghdr *rtm = NULL;
+	struct rt_msghdr *old_rtm = NULL;
 	struct rtentry *rt = NULL;
 	struct rtentry *saved_nrt = NULL;
 	struct rt_addrinfo info;
-	int len, error = 0;
+	int len, error = 0, ifa_route = 0;
 	struct ifnet *ifp = NULL;
-	struct ifaddr *ifa = NULL;
+	struct ifaddr *ifa = NULL, *oifa;
 	struct socket *so;
 	va_list ap;
 	sa_family_t family;
@@ -297,6 +298,12 @@ route_output(struct mbuf *m, ...)
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			(rt = saved_nrt)->rt_refcnt++;
+			ifa = rt_get_ifa(rt);
+			/*
+			 * If deleting an automatic route, scrub the flag.
+			 */
+			if (ifa->ifa_flags & IFA_ROUTE)
+				ifa->ifa_flags &= ~IFA_ROUTE;
 			goto report;
 		}
 		break;
@@ -374,12 +381,11 @@ route_output(struct mbuf *m, ...)
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, NULL, NULL, &len);
 			if (len > rtm->rtm_msglen) {
-				struct rt_msghdr *new_rtm;
-				R_Malloc(new_rtm, struct rt_msghdr *, len);
-				if (new_rtm == NULL)
+				old_rtm = rtm;
+				R_Malloc(rtm, struct rt_msghdr *, len);
+				if (rtm == NULL)
 					senderr(ENOBUFS);
-				(void)memcpy(new_rtm, rtm, rtm->rtm_msglen);
-				Free(rtm); rtm = new_rtm;
+				(void)memcpy(rtm, old_rtm, old_rtm->rtm_msglen);
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, rtm, NULL, 0);
 			rtm->rtm_flags = rt->rt_flags;
@@ -415,13 +421,28 @@ route_output(struct mbuf *m, ...)
 			    rt_getkey(rt), info.rti_info[RTAX_GATEWAY])))) {
 				ifp = ifa->ifa_ifp;
 			}
+			oifa = rt->rt_ifa;
+			if (oifa && oifa->ifa_flags & IFA_ROUTE) {
+				/*
+				 * If changing an automatically added route,
+				 * remove the flag and store the fact.
+				 */
+				oifa->ifa_flags &= ~IFA_ROUTE;
+				ifa_route = 1;
+			}
 			if (ifa) {
-				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
 					if (oifa && oifa->ifa_rtrequest) {
 						oifa->ifa_rtrequest(RTM_DELETE,
 						    rt, &info);
 					}
+					/*
+					 * If changing an automatically added
+					 * route, store this if not static.
+					 */
+					if (ifa_route &&
+					    !(rt->rt_flags & RTF_STATIC))
+						ifa->ifa_flags |= IFA_ROUTE;
 					rt_replace_ifa(rt, ifa);
 					rt->rt_ifp = ifp;
 				}
@@ -452,6 +473,12 @@ flush:
 	}
 	family = info.rti_info[RTAX_DST] ? info.rti_info[RTAX_DST]->sa_family :
 	    0;
+	/* We cannot free old_rtm until we have stopped using the
+	 * pointers in info, some of which may point to sockaddrs
+	 * in old_rtm.
+	 */
+	if (old_rtm != NULL)
+		Free(old_rtm);
 	if (rt)
 		rtfree(rt);
     {
@@ -517,20 +544,10 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
 	const struct sockaddr *sa = NULL;	/* Quell compiler warning */
 	int i;
 
-#ifdef DIAGNOSTIC
-	if (rtinfo->rti_addrs & (1 << RTAX_GENMASK)) {
-		struct proc *p = curproc;
-		if (p != NULL)
-			printf("rt_xaddrs: process %d (%s) tried to alter "
-			    "the route table with RTAX_GENMASK\n",
-			    p->p_pid, p->p_comm);
-	}
-#endif
 	for (i = 0; i < RTAX_MAX && cp < cplim; i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
-		if (i != RTAX_GENMASK)
-			rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
+		rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
 		ADVANCE(cp, sa);
 	}
 

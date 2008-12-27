@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.4.12.2 2008/11/09 02:04:19 christos Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.4.12.3 2008/12/27 23:14:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.4.12.2 2008/11/09 02:04:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.4.12.3 2008/12/27 23:14:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -656,7 +656,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 	for (i = 0; i < bytes; i += n, dump_totalbytesleft -= n) {
 		/* Print out how many MBs we have left to go. */
 		if ((dump_totalbytesleft % (1024*1024)) == 0)
-			printf("%lu ", (unsigned long)
+			printf_nolog("%lu ", (unsigned long)
 			    (dump_totalbytesleft / (1024 * 1024)));
 
 		/* Limit size for next transfer. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.335.2.3 2008/11/09 01:54:31 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.335.2.4 2008/12/27 23:14:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335.2.3 2008/11/09 01:54:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335.2.4 2008/12/27 23:14:24 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -137,9 +137,6 @@ const int	vttoif_tab[9] = {
 
 int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
-
-extern int dovfsusermount;	/* 1 => permit any user to mount filesystems */
-extern int vfs_magiclinks;	/* 1 => expand "magic" symlinks */
 
 static vnodelst_t vnode_free_list = TAILQ_HEAD_INITIALIZER(vnode_free_list);
 static vnodelst_t vnode_hold_list = TAILQ_HEAD_INITIALIZER(vnode_hold_list);
@@ -1302,7 +1299,7 @@ vput(vnode_t *vp)
 
 /*
  * Try to drop reference on a vnode.  Abort if we are releasing the
- * last reference.
+ * last reference.  Note: this _must_ succeed if not the last reference.
  */
 static inline bool
 vtryrele(vnode_t *vp)
@@ -1334,7 +1331,8 @@ vrelel(vnode_t *vp, int flags)
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 	KASSERT(vp->v_freelisthd == NULL);
 
-	if (vp->v_op == dead_vnodeop_p && (vp->v_iflag & VI_CLEAN) == 0) {
+	if (__predict_false(vp->v_op == dead_vnodeop_p &&
+	    (vp->v_iflag & (VI_CLEAN|VI_XLOCK)) == 0)) {
 		vpanic(vp, "dead but not clean");
 	}
 
@@ -1348,8 +1346,10 @@ vrelel(vnode_t *vp, int flags)
 		return;
 	}
 	if (vp->v_usecount <= 0 || vp->v_writecount != 0) {
-		vpanic(vp, "vput: bad ref count");
+		vpanic(vp, "vrelel: bad ref count");
 	}
+
+	KASSERT((vp->v_iflag & VI_XLOCK) == 0);
 
 	/*
 	 * If not clean, deactivate the vnode, but preserve
@@ -1841,9 +1841,9 @@ vclean(vnode_t *vp, int flags)
 	cache_purge(vp);
 
 	/* Done with purge, notify sleepers of the grim news. */
+	mutex_enter(&vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
-	mutex_enter(&vp->v_interlock);
 	vp->v_vnlock = &vp->v_lock;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
@@ -2025,7 +2025,7 @@ vrevoke(vnode_t *vp)
 /*
  * sysctl helper routine to return list of supported fstypes
  */
-static int
+int
 sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 {
 	char bf[sizeof(((struct statvfs *)NULL)->f_fstypename)];
@@ -2079,43 +2079,6 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 	sysctl_relock();
 	*oldlenp = needed;
 	return (error);
-}
-
-/*
- * Top level filesystem related information gathering.
- */
-SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
-{
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "generic",
-		       SYSCTL_DESCR("Non-specific vfs related information"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "usermount",
-		       SYSCTL_DESCR("Whether unprivileged users may mount "
-				    "filesystems"),
-		       NULL, 0, &dovfsusermount, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "fstypes",
-		       SYSCTL_DESCR("List of file systems present"),
-		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "magiclinks",
-		       SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
-		       NULL, 0, &vfs_magiclinks, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
 }
 
 
@@ -2383,10 +2346,18 @@ vfs_mountroot(void)
 	}
 
 	/*
-	 * If user specified a file system, use it.
+	 * If user specified a root fs type, use it.  Make sure the
+	 * specified type exists and has a mount_root()
 	 */
-	if (mountroot != NULL) {
-		error = (*mountroot)();
+	if (strcmp(rootfstype, ROOT_FSTYPE_ANY) != 0) {
+		v = vfs_getopsbyname(rootfstype);
+		error = EFTYPE;
+		if (v != NULL) {
+			if (v->vfs_mountroot != NULL) {
+				error = (v->vfs_mountroot)();
+			}
+			v->vfs_refcount--;
+		}
 		goto done;
 	}
 
@@ -2530,7 +2501,7 @@ vprint(const char *label, struct vnode *vp)
 
 	vl = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
 	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
-	bitmask_snprintf(flag, vnode_flagbits, bf, sizeof(bf));
+	snprintb(bf, sizeof(bf), vnode_flagbits, flag);
 
 	if (label != NULL)
 		printf("%s: ", label);
@@ -3091,8 +3062,8 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 	    PRIx64 " dev 0x%x\n",
 	    bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_rawblkno, bp->b_dev);
 
-	bitmask_snprintf(bp->b_flags | bp->b_oflags | bp->b_cflags,
-	    buf_flagbits, bf, sizeof(bf));
+	snprintb(bf, sizeof(bf),
+	    buf_flagbits, bp->b_flags | bp->b_oflags | bp->b_cflags);
 	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);
 
 	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
@@ -3109,8 +3080,8 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	char bf[256];
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
-	bitmask_snprintf(vp->v_iflag | vp->v_vflag | vp->v_uflag,
-	    vnode_flagbits, bf, sizeof(bf));
+	snprintb(bf, sizeof(bf),
+	    vnode_flagbits, vp->v_iflag | vp->v_vflag | vp->v_uflag);
 	(*pr)("\nVNODE flags %s\n", bf);
 	(*pr)("mp %p numoutput %d size 0x%llx writesize 0x%llx\n",
 	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_writesize);
@@ -3153,10 +3124,10 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("fs_bshift %d dev_bshift = %d\n",
 			mp->mnt_fs_bshift,mp->mnt_dev_bshift);
 
-	bitmask_snprintf(mp->mnt_flag, __MNT_FLAG_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), __MNT_FLAG_BITS, mp->mnt_flag);
 	(*pr)("flag = %s\n", sbuf);
 
-	bitmask_snprintf(mp->mnt_iflag, __IMNT_FLAG_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), __IMNT_FLAG_BITS, mp->mnt_iflag);
 	(*pr)("iflag = %s\n", sbuf);
 
 	(*pr)("refcnt = %d unmounting @ %p updating @ %p\n", mp->mnt_refcnt,
@@ -3184,8 +3155,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\towner = %"PRIu32"\n",mp->mnt_stat.f_owner);
 	(*pr)("\tnamemax = %lu\n",mp->mnt_stat.f_namemax);
 
-	bitmask_snprintf(mp->mnt_stat.f_flag, __MNT_FLAG_BITS, sbuf,
-	    sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), __MNT_FLAG_BITS, mp->mnt_stat.f_flag);
+
 	(*pr)("\tflag = %s\n",sbuf);
 	(*pr)("\tsyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_syncwrites);
 	(*pr)("\tasyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_asyncwrites);

@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.41.2.2 2008/11/01 21:22:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.41.2.3 2008/12/27 23:14:25 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1026,9 +1026,7 @@ add_addrsel_policyent(struct in6_addrpolicy *newpolicy)
 		}
 	}
 
-	MALLOC(new, struct addrsel_policyent *, sizeof(*new), M_IFADDR,
-	       M_WAITOK);
-	bzero(new, sizeof(*new));
+	new = malloc(sizeof(*new), M_IFADDR, M_WAITOK|M_ZERO);
 
 	/* XXX: should validate entry */
 	new->ape_policy = *newpolicy;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.348.2.4 2008/11/20 20:45:39 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.348.2.5 2008/12/27 23:14:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.348.2.4 2008/11/20 20:45:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.348.2.5 2008/12/27 23:14:24 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3010,7 +3010,7 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 
 		vanull = false;
 		if (seg != UIO_SYSSPACE) {
-			error = copyin(tptr, &tv, sizeof (tv));
+			error = copyin(tptr, tv, sizeof (tv));
 			if (error != 0)
 				return error;
 			tptr = tv;
@@ -3411,10 +3411,10 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 		char *f1, *f2;
 
 		f1 = malloc(fromnd.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
-		strlcpy(f1, fromnd.ni_cnd.cn_nameptr, fromnd.ni_cnd.cn_namelen);
+		strlcpy(f1, fromnd.ni_cnd.cn_nameptr, fromnd.ni_cnd.cn_namelen + 1);
 
 		f2 = malloc(tond.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
-		strlcpy(f2, tond.ni_cnd.cn_nameptr, tond.ni_cnd.cn_namelen);
+		strlcpy(f2, tond.ni_cnd.cn_nameptr, tond.ni_cnd.cn_namelen + 1);
 
 		error = veriexec_renamechk(l, fvp, f1, tvp, f2);
 
