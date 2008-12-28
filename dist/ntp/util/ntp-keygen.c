@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.11 2007/08/18 05:48:46 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.12 2008/12/28 22:56:57 christos Exp $	*/
 
 /*
  * Program to generate cryptographic keys for NTP clients and servers
@@ -1565,8 +1565,8 @@ gen_mv(
 		PEM_write_PrivateKey(str, pkey1, passwd2 ?
 		    EVP_des_cbc() : NULL, NULL, 0, NULL, passwd2);
 		fclose(str);
-		fprintf(stderr, "ntpkey_%s_%s.%lu\n", ident, trustname,
-		    epoch + JAN_1970);
+		fprintf(stderr, "ntpkey_%s_%s.%lld\n", ident, trustname,
+		    (long long)epoch + JAN_1970);
 		if (debug)
 			DSA_print_fp(stdout, sdsa, 0);
 		EVP_PKEY_free(pkey1);
@@ -1859,7 +1859,7 @@ fheader	(
 {
 	FILE	*str;		/* file handle */
 
-	sprintf(filename, "ntpkey_%s_%s.%lu", id, name, epoch +
+	sprintf(filename, "ntpkey_%s_%s.%lld", id, name, (long long)epoch +
 	    JAN_1970);
 	if ((str = fopen(filename, "w")) == NULL) {
 		perror("Write");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.26 2008/08/23 09:10:31 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.27 2008/12/28 22:56:57 christos Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -2822,7 +2822,7 @@ static l_fp
 			struct timeval *tvp = (struct timeval *)CMSG_DATA(cmsghdr);
 			double dtemp;
 			l_fp nts;
-			DPRINTF(4, ("fetch_timestamp: system network time stamp: %ld.%06ld\n", tvp->tv_sec, tvp->tv_usec));
+			DPRINTF(4, ("fetch_timestamp: system network time stamp: %lld.%06ld\n", (long long)tvp->tv_sec, (long)tvp->tv_usec));
 			nts.l_i = tvp->tv_sec + JAN_1970;
 			dtemp = tvp->tv_usec / 1e6;
 
