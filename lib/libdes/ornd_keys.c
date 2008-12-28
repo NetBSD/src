@@ -1,4 +1,4 @@
-/*	$NetBSD: ornd_keys.c,v 1.2 2005/12/13 12:59:48 martin Exp $	*/
+/*	$NetBSD: ornd_keys.c,v 1.3 2008/12/28 23:20:03 christos Exp $	*/
 
 #include "des_locl.h"
 #include <sys/time.h>
@@ -77,9 +77,9 @@ des_init_random_number_generator(des_cblock *seed)
 
 	memcpy(&seed_q, seed, sizeof(seed_q));
 
-	snprintf(accum, sizeof(accum), "%ld%ld%d%s%d%lld",
-	    when.tv_sec, when.tv_usec, getpid(), hname, getuid(),
-	    (long long) seed_q);
+	snprintf(accum, sizeof(accum), "%lld%ld%d%s%d%lld",
+	    (long long)when.tv_sec, (long)when.tv_usec, getpid(), hname,
+	    getuid(), (long long)seed_q);
 
 	SHA1Update(&sha, (u_char *) accum, strlen(accum));
 
