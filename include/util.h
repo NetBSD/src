@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.49 2007/12/14 16:36:19 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.49.14.1 2008/12/28 01:15:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -72,8 +72,10 @@ off_t		getlabeloffset(void);
 int		getlabelsector(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
-void		login(const struct utmp *);
-void		loginx(const struct utmpx *);
+#ifndef __LIBC12_SOURCE__
+void		login(const struct utmp *) __RENAME(__login50);
+void		loginx(const struct utmpx *) __RENAME(__loginx50);
+#endif
 int		login_tty(int);
 int		logout(const char *);
 int		logoutx(const char *, int, int);
@@ -81,19 +83,27 @@ void		logwtmp(const char *, const char *, const char *);
 void		logwtmpx(const char *, const char *, const char *, int, int);
 int		opendisk(const char *, int, char *, size_t, int);
 int		openpty(int *, int *, char *, struct termios *,
-		    struct winsize *);
-time_t		parsedate(const char *, const time_t *, const int *);
+    struct winsize *);
+#ifndef __LIBC12_SOURCE__
+time_t		parsedate(const char *, const time_t *, const int *)
+    __RENAME(__parsedate50);
+#endif
 int		pidfile(const char *);
 int		pidlock(const char *, int, pid_t *, const char *);
 int		pw_abort(void);
-void		pw_copy(int, int, struct passwd *, struct passwd *);
+#ifndef __LIBC12_SOURCE__
+void		pw_copy(int, int, struct passwd *, struct passwd *)
+    __RENAME(__pw_copy50);
 int		pw_copyx(int, int, struct passwd *, struct passwd *,
-			 char *, size_t);
+    char *, size_t) __RENAME(__pw_copyx50);
+#endif
 void		pw_edit(int, const char *);
 void		pw_error(const char *, int, int);
 void		pw_getconf(char *, size_t, const char *, const char *);
+#ifndef __LIBC12_SOURCE__
 void		pw_getpwconf(char *, size_t, const struct passwd *,
-			     const char *);
+    const char *) __RENAME(__pw_getpwconf50);
+#endif
 const char     *pw_getprefix(void);
 void		pw_init(void);
 int		pw_lock(int);
