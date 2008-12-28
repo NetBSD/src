@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.23 2006/10/10 01:55:45 dbj Exp $	*/
+/*	$NetBSD: walk.c,v 1.24 2008/12/28 21:51:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.23 2006/10/10 01:55:45 dbj Exp $");
+__RCSID("$NetBSD: walk.c,v 1.24 2008/12/28 21:51:46 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -134,8 +134,8 @@ walk_dir(const char *dir, fsnode *parent)
 				cur->inode = curino;
 				cur->inode->nlink++;
 				if (debug & DEBUG_WALK_DIR_LINKCHECK)
-					printf("link_check: found [%u, %llu]\n",
-					    curino->st.st_dev,
+					printf("link_check: found [%llu, %llu]\n",
+					    (unsigned long long)curino->st.st_dev,
 					    (unsigned long long)curino->st.st_ino);
 			}
 		}
@@ -468,8 +468,9 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 	}
 #endif
 	if (specnode->flags & F_DEV) {
-		ASEPRINT("rdev", "%#x",
-		    dirnode->inode->st.st_rdev, specnode->st_rdev);
+		ASEPRINT("rdev", "%#llx",
+		    (unsigned long long)dirnode->inode->st.st_rdev,
+		    (unsigned long long)specnode->st_rdev);
 		dirnode->inode->st.st_rdev = specnode->st_rdev;
 	}
 #undef ASEPRINT
