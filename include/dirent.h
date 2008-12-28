@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.30 2008/01/09 20:55:03 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.30.14.1 2008/12/28 20:29:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -98,6 +98,7 @@ long telldir(DIR *);
 #endif /* defined(_NETBSD_SOURCE) || defined(_XOPEN_SOURCE) */
 #if defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
+DIR *fdopendir(int);
 DIR *__opendir2(const char *, int) __RENAME(__opendir230);
 int scandir(const char *, struct dirent ***,
     int (*)(const struct dirent *), int (*)(const void *, const void *))
