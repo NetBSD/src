@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.25 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.26 2008/12/28 21:39:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.25 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.26 2008/12/28 21:39:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ main(int argc, char **argv)
 	do {
 		(void)gettimeofday(&tv, NULL);
 		(void)snprintf(q, sizeof(dbtmp) - (q - dbtmp), 
-		    "%ld.tmp", tv.tv_usec);
+		    "%ld.tmp", (long)tv.tv_usec);
 		db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
 		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, &openinfo);
 	} while (!db && (errno == EEXIST));
