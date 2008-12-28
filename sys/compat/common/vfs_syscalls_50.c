@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.1.2.3 2008/11/09 01:55:26 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.1.2.4 2008/12/28 22:29:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.2.3 2008/11/09 01:55:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.2.4 2008/12/28 22:29:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,6 +274,7 @@ compat_50_sys_lfs_segwait(struct lwp *l,
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct timeval50 *) tv;
 	} */
+#ifdef notyet
 	struct timeval atv;
 	struct timeval50 atv50;
 	fsid_t fsid;
@@ -296,6 +297,9 @@ compat_50_sys_lfs_segwait(struct lwp *l,
 	} else /* NULL or invalid */
 		atv.tv_sec = atv.tv_usec = 0;
 	return lfs_segwait(&fsid, &atv);
+#else
+	return ENOSYS;
+#endif
 }
 
 int
