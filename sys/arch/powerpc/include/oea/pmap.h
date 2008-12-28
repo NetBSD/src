@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 2008/12/28 10:23:11 he Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,9 @@
 #ifndef	_POWERPC_OEA_PMAP_H_
 #define	_POWERPC_OEA_PMAP_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#endif
 #include <powerpc/oea/pte.h>
 
 #ifndef _LOCORE
