@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.24 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.25 2008/12/28 22:45:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.24 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.25 2008/12/28 22:45:05 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -198,7 +198,8 @@ puffsdump_req(struct puffs_req *preq)
 	PU_LOCK();
 	gettimeofday(&tv_now, NULL);
 	timersub(&tv_now, &tv_prev, &tv);
-	printf("\t\tsince previous call: %ld.%06ld\n", tv.tv_sec, tv.tv_usec);
+	printf("\t\tsince previous call: %lld.%06ld\n",
+	    (long long)tv.tv_sec, (long)tv.tv_usec);
 	gettimeofday(&tv_prev, NULL);
 	PU_UNLOCK();
 }
@@ -269,9 +270,9 @@ puffsdump_lookup_rv(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_lookup *lookup_msg = (void *)preq;
 
-	printf("\t\tnew node %p, type 0x%x,\n\t\tsize 0x%"PRIu64", dev 0x%x\n",
+	printf("\t\tnew node %p, type 0x%x,\n\t\tsize 0x%"PRIu64", dev 0x%llx\n",
 	    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
-	    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev);
+	    lookup_msg->pvnr_size, (unsigned long long)lookup_msg->pvnr_rdev);
 }
 
 void

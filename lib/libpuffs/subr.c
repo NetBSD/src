@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.23 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.24 2008/12/28 22:45:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.23 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.24 2008/12/28 22:45:05 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -160,7 +160,7 @@ puffs_setvattr(struct vattr *vap, const struct vattr *sva)
 	SETIFVAL(va_nlink, nlink_t);
 	SETIFVAL(va_uid, uid_t);
 	SETIFVAL(va_gid, gid_t);
-	SETIFVAL(va_fsid, long);
+	SETIFVAL(va_fsid, dev_t);
 	SETIFVAL(va_size, u_quad_t);
 	SETIFVAL(va_fileid, ino_t);
 	SETIFVAL(va_blocksize, long);
@@ -194,7 +194,7 @@ puffs_vattr_null(struct vattr *vap)
 	vap->va_nlink = (nlink_t)PUFFS_VNOVAL;
 	vap->va_uid = (uid_t)PUFFS_VNOVAL;
 	vap->va_gid = (gid_t)PUFFS_VNOVAL;
-	vap->va_fsid = PUFFS_VNOVAL;
+	vap->va_fsid = (dev_t)PUFFS_VNOVAL;
 	vap->va_fileid = (ino_t)PUFFS_VNOVAL;
 	vap->va_size = (u_quad_t)PUFFS_VNOVAL;
 	vap->va_blocksize = sysconf(_SC_PAGESIZE);
