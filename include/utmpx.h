@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.15.10.3 2008/11/09 19:33:38 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.15.10.4 2008/12/28 01:15:39 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@
 #define ut_user ut_name
 #define ut_xtime ut_tv.tv_sec
 
+#define _UTX_PADSIZE (40 - \
+    (sizeof(struct timeval) - sizeof(struct { long s; long u; })))
 struct utmpx {
 	char ut_name[_UTX_USERSIZE];	/* login name */
 	char ut_id[_UTX_IDSIZE];	/* inittab id */
@@ -102,7 +104,7 @@ struct utmpx {
 	} ut_exit;
 	struct sockaddr_storage ut_ss;	/* address where entry was made from */
 	struct timeval ut_tv;		/* time entry was created */
-	uint32_t ut_pad[10];		/* reserved for future use */
+	uint8_t ut_pad[_UTX_PADSIZE];	/* reserved for future use */
 };
 
 #if defined(_NETBSD_SOURCE)
