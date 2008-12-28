@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.1.2.1 2008/11/08 21:16:56 christos Exp $	*/
+/*	$NetBSD: poll.h,v 1.1.2.2 2008/12/28 21:24:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifdef _NETBSD_SOURCE
 #include <sys/sigtypes.h>	/* for sigset_t */
 struct timespec;
+struct timespec50;
 
 __BEGIN_DECLS
 int	pollts(struct pollfd * __restrict, nfds_t,
