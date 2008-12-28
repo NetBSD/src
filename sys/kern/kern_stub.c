@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.15.2.2 2008/11/20 22:21:56 christos Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.15.2.3 2008/12/28 22:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,12 +62,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.15.2.2 2008/11/20 22:21:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.15.2.3 2008/12/28 22:31:24 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_sa.h"
+#ifdef _KERNEL_OPT
 #include "fs_lfs.h"
+#endif
 
 /* XXX To get syscall prototypes. */
 #define SYSVSHM
