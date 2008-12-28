@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.308 2008/10/30 12:02:14 darran Exp $
+#	$NetBSD: files.pci,v 1.309 2008/12/28 15:16:24 jmcneill Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -480,6 +480,11 @@ device	azalia: audiobus, auconv, mulaw, ac97, aurateconv
 attach	azalia at pci
 file	dev/pci/azalia.c		azalia
 file	dev/pci/azalia_codec.c		azalia
+
+# AMD Geode CS5536 Companion Audio
+device	gcscaudio: audiobus, auconv, mulaw, ac97, aurateconv
+attach	gcscaudio at pci
+file	dev/pci/gcscaudio.c		gcscaudio
 
 # NeoMagic 256 AC'97 Audio
 device	neo: audiobus, auconv, mulaw, ac97
