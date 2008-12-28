@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getpwent.c,v 1.1.2.2 2008/11/08 23:18:21 christos Exp $	*/
+/*	$NetBSD: compat_getpwent.c,v 1.1.2.3 2008/12/28 01:18:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getpwent.c,v 1.1.2.2 2008/11/08 23:18:21 christos Exp $");
+__RCSID("$NetBSD: compat_getpwent.c,v 1.1.2.3 2008/12/28 01:18:38 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -88,36 +88,6 @@ cvt(struct passwd *p)
 	q->pw_shell = p->pw_shell;
 	q->pw_expire = (int32_t)p->pw_expire;
 	return q;
-}
-
-static void
-passwd_to_passwd50(const struct passwd *p, struct passwd50 *q)
-{
-	q->pw_name = p->pw_name;
-	q->pw_passwd = p->pw_passwd;
-	q->pw_uid = p->pw_uid;
-	q->pw_gid = p->pw_gid;
-	q->pw_change = (int32_t)p->pw_change;
-	q->pw_class = p->pw_class;
-	q->pw_gecos = p->pw_gecos;
-	q->pw_dir = p->pw_dir;
-	q->pw_shell = p->pw_shell;
-	q->pw_expire = (int32_t)p->pw_expire;
-}
-
-static void
-passwd50_to_passwd(const struct passwd50 *p, struct passwd *q)
-{
-	q->pw_name = p->pw_name;
-	q->pw_passwd = p->pw_passwd;
-	q->pw_uid = p->pw_uid;
-	q->pw_gid = p->pw_gid;
-	q->pw_change = p->pw_change;
-	q->pw_class = p->pw_class;
-	q->pw_gecos = p->pw_gecos;
-	q->pw_dir = p->pw_dir;
-	q->pw_shell = p->pw_shell;
-	q->pw_expire = p->pw_expire;
 }
 
 struct passwd50	*
