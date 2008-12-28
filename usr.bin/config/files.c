@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.7 2007/11/30 23:19:18 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.8 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -501,7 +501,7 @@ expr_eval(struct nvlist *expr, int (*fn)(const char *, void *), void *context)
 {
 	int lhs, rhs;
 
-	switch (expr->nv_int) {
+	switch (expr->nv_num) {
 
 	case FX_ATOM:
 		return ((*fn)(expr->nv_name, context));
@@ -519,7 +519,7 @@ expr_eval(struct nvlist *expr, int (*fn)(const char *, void *), void *context)
 		rhs = expr_eval(expr->nv_next, fn, context);
 		return (lhs | rhs);
 	}
-	panic("expr_eval %d", expr->nv_int);
+	panic("expr_eval %lld", expr->nv_num);
 	/* NOTREACHED */
 	return (0);
 }
@@ -534,7 +534,7 @@ expr_free(struct nvlist *expr)
 
 	/* This loop traverses down the RHS of each subexpression. */
 	for (; expr != NULL; expr = rhs) {
-		switch (expr->nv_int) {
+		switch (expr->nv_num) {
 
 		/* Atoms and !-exprs have no left hand side. */
 		case FX_ATOM:
@@ -548,7 +548,7 @@ expr_free(struct nvlist *expr)
 			break;
 
 		default:
-			panic("expr_free %d", expr->nv_int);
+			panic("expr_free %lld", expr->nv_num);
 		}
 		rhs = expr->nv_next;
 		nvfree(expr);
@@ -574,7 +574,7 @@ static void
 pr0(struct nvlist *e)
 {
 
-	switch (e->nv_int) {
+	switch (e->nv_num) {
 	case FX_ATOM:
 		printf(" %s", e->nv_name);
 		return;
@@ -588,7 +588,7 @@ pr0(struct nvlist *e)
 		printf(" (|");
 		break;
 	default:
-		printf(" (?%d?", e->nv_int);
+		printf(" (?%lld?", e->nv_num);
 		break;
 	}
 	if (e->nv_ptr)

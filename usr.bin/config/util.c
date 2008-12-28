@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 2007/12/12 00:03:34 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.8 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,7 +136,7 @@ sourcepath(const char *file)
 }
 
 struct nvlist *
-newnv(const char *name, const char *str, void *ptr, int i, struct nvlist *next)
+newnv(const char *name, const char *str, void *ptr, long long i, struct nvlist *next)
 {
 	struct nvlist *nv;
 
@@ -145,7 +145,7 @@ newnv(const char *name, const char *str, void *ptr, int i, struct nvlist *next)
 	nv->nv_name = name;
 	nv->nv_str = str;
 	nv->nv_ptr = ptr;
-	nv->nv_int = i;
+	nv->nv_num = i;
 	return nv;
 }
 

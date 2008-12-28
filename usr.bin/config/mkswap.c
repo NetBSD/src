@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.5 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.6 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,8 +79,8 @@ mkdevstr(dev_t d)
 	if (d == NODEV)
 		(void)snprintf(buf, sizeof(buf), "NODEV");
 	else
-		(void)snprintf(buf, sizeof(buf), "makedev(%d, %d)",
-		    major(d), minor(d));
+		(void)snprintf(buf, sizeof(buf), "makedev(%" PRIi64 ", %"
+		    PRIi64 ")", (int64_t)major(d), (int64_t)minor(d));
 	return buf;
 }
 
@@ -114,7 +114,7 @@ mkoneswap(struct config *cf)
 		    cf->cf_root->nv_str);
 	fprintf(fp, "const char *rootspec = %s;\n", specinfo);
 	fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n\n",
-		mkdevstr(nv->nv_int),
+		mkdevstr(nv->nv_num),
 		nv->nv_str == s_qmark ? "wildcarded" : nv->nv_str);
 
 	/*
@@ -127,7 +127,7 @@ mkoneswap(struct config *cf)
 		snprintf(specinfo, sizeof(specinfo), "\"%s\"", cf->cf_dump->nv_str);
 	fprintf(fp, "const char *dumpspec = %s;\n", specinfo);
 	fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n\n",
-		nv ? mkdevstr(nv->nv_int) : "NODEV",
+		nv ? mkdevstr(nv->nv_num) : "NODEV",
 		nv ? nv->nv_str : "unspecified");
 
 	/*
