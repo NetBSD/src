@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.h,v 1.1.2.1 2008/11/23 21:46:05 christos Exp $	*/
+/*	$NetBSD: utmp.h,v 1.1.2.2 2008/12/28 01:18:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -47,6 +47,20 @@ struct utmp50 {
 };
 
 __BEGIN_DECLS
+static __inline void
+utmp_to_utmp50(const struct utmp *ut, struct utmp50 *ut50)
+{
+	(void)memcpy(ut50, ut, sizeof(*ut50));
+	ut50->ut_time = (int32_t)ut->ut_time;
+}
+
+static __inline void
+utmp50_to_utmp(const struct utmp50 *ut50, struct utmp *ut)
+{
+	(void)memcpy(ut, ut50, sizeof(*ut50));
+	ut->ut_time = ut50->ut_time;
+}
+
 struct utmp50 *getutent(void);
 struct utmp *__getutent50(void);
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.2.8.2 2008/11/08 21:45:38 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.2.8.3 2008/12/28 01:18:38 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 #ifndef	_COMPAT_UTMPX_H_
 #define	_COMPAT_UTMPX_H_
 
+#include <compat/sys/time.h>
+
 struct utmpx50 {
 	char ut_name[_UTX_USERSIZE];	/* login name */
 	char ut_id[_UTX_IDSIZE];	/* inittab id */
@@ -56,6 +58,20 @@ struct lastlogx50 {
 };
 
 __BEGIN_DECLS
+
+static __inline void
+utmpx50_to_utmpx(const struct utmpx50 *ut50, struct utmpx *ut)
+{
+	(void)memcpy(ut, ut50, sizeof(*ut));
+	timeval50_to_timeval(&ut50->ut_tv, &ut->ut_tv);
+}
+
+static __inline void
+utmpx_to_utmpx50(const struct utmpx *ut, struct utmpx50 *ut50)
+{
+	(void)memcpy(ut50, ut, sizeof(*ut50));
+	timeval_to_timeval50(&ut->ut_tv, &ut50->ut_tv);
+}
 
 struct utmpx50 *getutxent(void);
 struct utmpx *__getutxent50(void);

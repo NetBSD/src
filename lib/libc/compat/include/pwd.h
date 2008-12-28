@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $	*/
+/*	$NetBSD: pwd.h,v 1.1.2.2 2008/12/28 01:18:38 christos Exp $	*/
 
 #ifndef _COMPAT_PWD_H_
 #define	_COMPAT_PWD_H_
@@ -22,6 +22,36 @@ struct passwd50 {
 };
 
 __BEGIN_DECLS
+static __inline void
+passwd_to_passwd50(const struct passwd *p, struct passwd50 *q)
+{
+	q->pw_name = p->pw_name;
+	q->pw_passwd = p->pw_passwd;
+	q->pw_uid = p->pw_uid;
+	q->pw_gid = p->pw_gid;
+	q->pw_change = (int32_t)p->pw_change;
+	q->pw_class = p->pw_class;
+	q->pw_gecos = p->pw_gecos;
+	q->pw_dir = p->pw_dir;
+	q->pw_shell = p->pw_shell;
+	q->pw_expire = (int32_t)p->pw_expire;
+}
+
+static __inline void
+passwd50_to_passwd(const struct passwd50 *p, struct passwd *q)
+{
+	q->pw_name = p->pw_name;
+	q->pw_passwd = p->pw_passwd;
+	q->pw_uid = p->pw_uid;
+	q->pw_gid = p->pw_gid;
+	q->pw_change = p->pw_change;
+	q->pw_class = p->pw_class;
+	q->pw_gecos = p->pw_gecos;
+	q->pw_dir = p->pw_dir;
+	q->pw_shell = p->pw_shell;
+	q->pw_expire = p->pw_expire;
+}
+
 struct passwd50	*getpwuid(uid_t);
 struct passwd50	*getpwnam(const char *);
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
@@ -66,4 +96,4 @@ int		 __pwcache_userdb50(int (*)(int), void (*)(void),
 #endif
 __END_DECLS
 
-#endif /* !_PWD_H_ */
+#endif /* !_COMPAT_PWD_H_ */
