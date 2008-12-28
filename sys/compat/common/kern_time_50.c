@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.1.2.3 2008/12/28 01:29:23 christos Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.1.2.4 2008/12/28 22:29:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.2.3 2008/12/28 01:29:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.2.4 2008/12/28 22:29:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -373,6 +373,7 @@ compat_50_sys_aio_suspend(struct lwp *l,
 		syscallarg(int) nent;
 		syscallarg(const struct timespec50 *) timeout;
 	} */
+#ifdef notyet
 	struct aiocb **list;
 	struct timespec ts;
 	struct timespec50 ts50;
@@ -398,6 +399,9 @@ compat_50_sys_aio_suspend(struct lwp *l,
 out:
 	kmem_free(list, nent * sizeof(struct aio_job));
 	return error;
+#else
+	return ENOSYS;
+#endif
 }
 
 int
