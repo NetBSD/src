@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.1.2.2 2008/12/28 01:29:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -70,8 +70,6 @@
 #ifndef _COMPAT_NET_IF_H_
 #define _COMPAT_NET_IF_H_
 
-#if defined(_KERNEL) && defined(COMPAT_14)
-
 #include <compat/sys/time.h>
 
 /* Pre-1.5 if_data struct */
@@ -113,9 +111,6 @@ void compat_14_rt_ifmsg(struct ifnet *, struct if_msghdr *);
 int compat_14_iflist(struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *,
     size_t);
 
-#endif /* _KERNEL && COMPAT_14 */
-
-#if defined(_KERNEL) && defined(COMPAT_50)
 /*
  * Structure defining statistics and other data kept regarding a network
  * interface.
@@ -162,5 +157,4 @@ void compat_50_rt_ifmsg(struct ifnet *, struct if_msghdr *);
 int compat_50_iflist(struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *,
     size_t);
 
-#endif /* _KERNEL && COMPAT_50 */
 #endif /* _COMPAT_NET_IF_H_ */
