@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.104 2008/12/28 18:34:58 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.105 2008/12/28 18:38:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -31,9 +31,6 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
-#ifdef __NetBSD__
-#undef HAVE_FUTIMES
-#endif
 #else
 #define HAVE_FUTIMES 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
@@ -49,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.104 2008/12/28 18:34:58 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.105 2008/12/28 18:38:27 christos Exp $");
 #endif
 #endif /* not lint */
 
