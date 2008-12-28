@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.106.8.5 2008/12/27 23:14:25 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.106.8.6 2008/12/28 01:28:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.8.5 2008/12/27 23:14:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.8.6 2008/12/28 01:28:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -129,9 +129,9 @@ ffs_check_bad_allocation(const char *func, struct fs *fs, daddr_t bno,
 {
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
-		printf("dev = 0x%x, bno = %" PRId64 " bsize = %d, "
-		       "size = %ld, fs = %s\n",
-		    dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
+		printf("dev = 0x%llx, bno = %" PRId64 " bsize = %d, "
+		    "size = %ld, fs = %s\n",
+		    (long long)dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("%s: bad size", func);
 	}
 
@@ -1769,8 +1769,8 @@ ffs_freefile(struct mount *mp, ino_t ino, int mode)
 	cgbno = fsbtodb(fs, cgtod(fs, cg));
 
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
-		    dev, (unsigned long long)ino, fs->fs_fsmnt);
+		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
+		    (long long)dev, (unsigned long long)ino, fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
 	    NOCRED, B_MODIFY, &bp);
 	if (error) {
