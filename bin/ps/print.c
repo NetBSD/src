@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.106 2008/10/19 02:39:08 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.107 2008/12/28 19:50:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.106 2008/10/19 02:39:08 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.107 2008/12/28 19:50:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -718,7 +718,7 @@ tdev(void *arg, VARENT *ve, int mode)
 				v->width = 2;
 	} else {
 		(void)snprintf(buff, sizeof(buff),
-		    "%d/%d", major(dev), minor(dev));
+		    "%lld/%lld", (long long)major(dev), (long long)minor(dev));
 		strprintorsetwidth(v, buff, mode);
 	}
 }
