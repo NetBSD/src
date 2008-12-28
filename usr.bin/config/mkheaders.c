@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.13 2007/11/09 05:21:30 cube Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.14 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,7 +102,7 @@ mkheaders(void)
 }
 
 static void
-fprint_global(FILE *fp, const char *name, unsigned int value)
+fprint_global(FILE *fp, const char *name, long long value)
 {
 	/*
 	 * We have to doubt the founding fathers here.
@@ -116,12 +116,12 @@ fprint_global(FILE *fp, const char *name, unsigned int value)
 	fprintf(fp, "#ifdef _LOCORE\n"
 	    " .ifndef _KERNEL_OPT_%s\n"
 	    " .global _KERNEL_OPT_%s\n"
-	    " .equiv _KERNEL_OPT_%s,0x%x\n"
+	    " .equiv _KERNEL_OPT_%s,0x%llx\n"
 	    " .endif\n"
 	    "#else\n"
 	    "__asm(\" .ifndef _KERNEL_OPT_%s\\n"
 	    " .global _KERNEL_OPT_%s\\n"
-	    " .equiv _KERNEL_OPT_%s,0x%x\\n"
+	    " .equiv _KERNEL_OPT_%s,0x%llx\\n"
 	    " .endif\");\n"
 	    "#endif\n",
 	    name, name, name, value,
@@ -151,8 +151,8 @@ fprintcnt(FILE *fp, struct nvlist *nv)
 {
 	const char *name = cntname(nv->nv_name);
 
-	fprintf(fp, "#define\t%s\t%d\n", name, nv->nv_int);
-	fprint_global(fp, name, nv->nv_int);
+	fprintf(fp, "#define\t%s\t%lld\n", name, nv->nv_num);
+	fprint_global(fp, name, nv->nv_num);
 }
 
 static int
