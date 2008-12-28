@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.100.2.5 2008/12/27 23:14:25 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.100.2.6 2008/12/28 20:13:05 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100.2.5 2008/12/27 23:14:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100.2.6 2008/12/28 20:13:05 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -134,7 +134,7 @@ rt_adjustcount(int af, int cnt)
 	}
 }
 static inline void
-cvtmetrics(struct ort_metrics *ortm, const struct rt_metrics *rtm)
+cvtmetrics(struct rt_metrics *ortm, const struct nrt_metrics *rtm)
 {
 	ortm->rmx_locks = rtm->rmx_locks;
 	ortm->rmx_mtu = rtm->rmx_mtu;
@@ -518,7 +518,7 @@ flush:
 }
 
 void
-rt_setmetrics(u_long which, const struct ort_metrics *in, struct rt_metrics *out)
+rt_setmetrics(u_long which, const struct rt_metrics *in, struct nrt_metrics *out)
 {
 #define metric(f, e) if (which & (f)) out->e = in->e;
 	metric(RTV_RPIPE, rmx_recvpipe);

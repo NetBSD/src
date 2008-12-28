@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.70.2.3 2008/11/10 00:08:25 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.70.2.4 2008/12/28 20:13:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -66,7 +66,7 @@ struct route {
  * These numbers are used by reliable protocols for determining
  * retransmission behavior and are included in the routing structure.
  */
-struct ort_metrics {
+struct rt_metrics {
 	u_long	rmx_locks;	/* Kernel must leave these values alone */
 	u_long	rmx_mtu;	/* MTU for this path */
 	u_long	rmx_hopcount;	/* max hops expected */
@@ -79,7 +79,7 @@ struct ort_metrics {
 	u_long	rmx_pksent;	/* packets sent using this route */
 };
 
-struct rt_metrics {
+struct nrt_metrics {
 	u_long	rmx_locks;	/* Kernel must leave these values alone */
 	u_long	rmx_mtu;	/* MTU for this path */
 	u_long	rmx_hopcount;	/* max hops expected */
@@ -122,7 +122,7 @@ struct rtentry {
 	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
 	uint32_t rt_ifa_seqno;
 	void *	rt_llinfo;		/* pointer to link level info cache */
-	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
+	struct	nrt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	struct	rtentry *rt_parent;	/* parent of cloned route */
@@ -193,7 +193,7 @@ struct rt_msghdr {
 	int	rtm_errno;	/* why failed */
 	int	rtm_use;	/* from rtentry */
 	u_long	rtm_inits;	/* which metrics we are initializing */
-	struct	ort_metrics rtm_rmx; /* metrics themselves */
+	struct	rt_metrics rtm_rmx; /* metrics themselves */
 };
 
 #define RTM_VERSION	3	/* Up the ante and ignore older versions */
@@ -346,7 +346,7 @@ void	 rt_missmsg(int, struct rt_addrinfo *, int, int);
 struct mbuf *rt_msg1(int, struct rt_addrinfo *, void *, int);
 void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
 int	 rt_setgate(struct rtentry *, const struct sockaddr *);
-void	 rt_setmetrics(u_long, const struct ort_metrics *, struct rt_metrics *);
+void	 rt_setmetrics(u_long, const struct rt_metrics *, struct nrt_metrics *);
 int      rt_timer_add(struct rtentry *,
              void(*)(struct rtentry *, struct rttimer *),
 	     struct rttimer_queue *);
