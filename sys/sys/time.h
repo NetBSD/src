@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.61.2.2 2008/11/01 21:22:28 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.61.2.3 2008/12/28 18:38:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -279,7 +279,7 @@ int	setitimer(int, const struct itimerval * __restrict,
 int	utimes(const char *, const struct timeval [2]) __RENAME(__utimes50);
 #endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
-#if defined(_NETBSD_SOURCE)
+#if defined(_NETBSD_SOURCE) || defined(HAVE_NBTOOL_CONFIG_H)
 int	adjtime(const struct timeval *, struct timeval *) __RENAME(__adjtime50);
 int	futimes(int, const struct timeval [2]) __RENAME(__futimes50);
 int	lutimes(const char *, const struct timeval [2]) __RENAME(__lutimes50);
