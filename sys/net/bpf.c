@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.137.2.2 2008/11/01 21:22:28 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.137.2.3 2008/12/28 20:53:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.137.2.2 2008/11/01 21:22:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.137.2.3 2008/12/28 20:53:44 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1533,7 +1533,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 */
 	hp = (struct bpf_hdr *)((char *)d->bd_sbuf + curlen);
 	hp->bh_tstamp.tv_sec = ts->tv_sec;
-	hp->bh_tstamp.tv_nsec = ts->tv_nsec;
+	hp->bh_tstamp.tv_usec = ts->tv_nsec / 1000;
 	hp->bh_datalen = pktlen;
 	hp->bh_hdrlen = hdrlen;
 	/*
