@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.57 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: dir.c,v 1.58 2008/12/28 18:32:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.57 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.58 2008/12/28 18:32:54 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.57 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.58 2008/12/28 18:32:54 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -917,6 +917,8 @@ DirLookupSubdir(Path *p, const char *name)
     }
 
     if (stat(file, &stb) == 0) {
+	if (stb.st_mtime == 0)
+		stb.st_mtime++;
 	/*
 	 * Save the modification time so if it's needed, we don't have
 	 * to fetch it again.
@@ -1300,6 +1302,8 @@ Dir_FindFile(const char *name, Lst path)
 	}
 	return(bmake_strdup(name));
     } else if (stat(name, &stb) == 0) {
+	if (stb.st_mtime == 0)
+		stb.st_mtime++;
 	entry = Hash_CreateEntry(&mtimes, name, NULL);
 	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
@@ -1463,7 +1467,14 @@ Dir_MTime(GNode *gn)
 	} else {
 	    stb.st_mtime = 0;
 	}
+    } else if (stb.st_mtime == 0) {
+	/*
+	 * 0 handled specially by the code, if the time is really 0, return
+	 * something else instead
+	 */
+	stb.st_mtime++;
     }
+	
     if (fullName && gn->path == NULL) {
 	gn->path = fullName;
     }
