@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.77 2008/12/05 21:41:10 ad Exp $	*/
+/*	$NetBSD: savecore.c,v 1.78 2008/12/28 20:17:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.77 2008/12/05 21:41:10 ad Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.78 2008/12/28 20:17:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -853,7 +853,8 @@ find_dev(dev_t dev, int type)
 		}
 	}
 	closedir(dfd);
-	syslog(LOG_ERR, "can't find device %d/%d", major(dev), minor(dev));
+	syslog(LOG_ERR, "can't find device %lld/%lld",
+	    (long long)major(dev), (long long)minor(dev));
 	exit(1);
 }
 
