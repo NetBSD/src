@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.1.2.1 2008/11/27 21:59:25 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.1.2.2 2008/12/28 15:44:54 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -66,8 +66,6 @@ int
 uturnmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
-
-printf("%s: %x/%x vs %x/%x\n", __func__, ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model, HPPA_TYPE_IOA, HPPA_IOA_UTURN);
 
 	/* there will be only one */
 	if (ca->ca_type.iodc_type != HPPA_TYPE_IOA ||
