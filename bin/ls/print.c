@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.43 2008/11/02 02:27:32 ahoka Exp $	*/
+/*	$NetBSD: print.c,v 1.44 2008/12/28 19:30:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.43 2008/11/02 02:27:32 ahoka Exp $");
+__RCSID("$NetBSD: print.c,v 1.44 2008/12/28 19:30:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,9 +128,9 @@ printlong(DISPLAY *dp)
 		if (f_flags)
 			(void)printf("%-*s ", dp->s_flags, np->flags);
 		if (S_ISCHR(sp->st_mode) || S_ISBLK(sp->st_mode))
-			(void)printf("%*u, %*u ",
-			    dp->s_major, major(sp->st_rdev), dp->s_minor,
-			    minor(sp->st_rdev));
+			(void)printf("%*lld, %*lld ",
+			    dp->s_major, (long long)major(sp->st_rdev),
+			    dp->s_minor, (long long)minor(sp->st_rdev));
 		else
 			if (f_humanize) {
 				if ((humanize_number(szbuf, sizeof(szbuf),
