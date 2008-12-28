@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.921 2008/12/14 00:44:29 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.922 2008/12/28 15:18:21 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.921 $"
+#ident 		"GENERIC-$Revision: 1.922 $"
 
 maxusers	64		# estimated number of users
 
@@ -1264,6 +1264,7 @@ esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
+gcscaudio* at pci? dev ? function ?	# AMD Geode CS5536 Companion Audio
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
