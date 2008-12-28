@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.175.2.4 2008/12/27 23:14:25 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.175.2.5 2008/12/28 19:48:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -427,7 +427,7 @@ struct kinfo_proc {
 		pid_t	e_ppid;			/* parent process id */
 		pid_t	e_pgid;			/* process group id */
 		short	e_jobc;			/* job control counter */
-		dev_t	e_tdev;			/* controlling tty dev */
+		uint32_t e_tdev;		/* XXX: controlling tty dev */
 		pid_t	e_tpgid;		/* tty process group id */
 		struct	session *e_tsess;	/* tty session pointer */
 #define	WMESGLEN	8
@@ -507,7 +507,7 @@ struct kinfo_proc2 {
 	int16_t	p_ngroups;		/* SHORT: number of groups */
 
 	int16_t	p_jobc;			/* SHORT: job control counter */
-	uint32_t p_tdev;		/* DEV_T: controlling tty dev */
+	uint32_t p_tdev;		/* XXX: DEV_T: controlling tty dev */
 
 	uint32_t p_estcpu;		/* U_INT: Time averaged value of p_cpticks. */
 	uint32_t p_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
