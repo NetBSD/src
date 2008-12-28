@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.75.8.2 2008/11/23 21:44:07 christos Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.75.8.3 2008/12/28 01:18:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.75.8.2 2008/11/23 21:44:07 christos Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.75.8.3 2008/12/28 01:18:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -215,7 +215,7 @@ _pw_opendb(DB **db, int *version)
 		return NS_UNAVAIL;
 	}
 	key.data = __UNCONST("VERSION");
-	key.size = 8;
+	key.size = strlen((char *)key.data) + 1;
 	switch ((*(*db)->get)(*db, &key, &value, 0)) {
 	case 0:
 		if (sizeof(*version) != value.size)
