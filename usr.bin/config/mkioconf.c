@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.10 2007/12/12 00:03:33 lukem Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.11 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -489,8 +489,8 @@ emitname2blk(FILE *fp)
 		if (dev->d_major == NODEV)
 			continue;
 
-		fprintf(fp, "\t{ \"%s\", %d },\n",
-			    dev->d_name, dev->d_major);
+		fprintf(fp, "\t{ \"%s\", %lld },\n",
+			    dev->d_name, (long long)dev->d_major);
 	}
 	fprintf(fp, "\t{ NULL, 0 }\n};\n");
 }

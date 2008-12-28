@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.30 2008/07/07 16:10:27 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.31 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,9 +83,9 @@ static char *extend(char *, const char *);
 static int split(const char *, size_t, char *, size_t, int *);
 static void selectbase(struct devbase *, struct deva *);
 static const char **fixloc(const char *, struct attr *, struct nvlist *);
-static const char *makedevstr(int, int);
+static const char *makedevstr(dev_t, dev_t);
 static const char *major2name(int);
-static int dev2major(struct devbase *);
+static dev_t dev2major(struct devbase *);
 
 extern const char *yyfile;
 extern int vflag;
@@ -635,8 +635,8 @@ setmajor(struct devbase *d, int n)
 {
 
 	if (d != &errdev && d->d_major != NODEV)
-		cfgerror("device `%s' is already major %d",
-		    d->d_name, d->d_major);
+		cfgerror("device `%s' is already major %lld",
+		    d->d_name, (long long)d->d_major);
 	else
 		d->d_major = n;
 }
@@ -661,7 +661,7 @@ major2name(int maj)
 	return (NULL);
 }
 
-int
+dev_t
 dev2major(struct devbase *dev)
 {
 	struct devm *dm;
@@ -680,17 +680,19 @@ dev2major(struct devbase *dev)
  * Make a string description of the device at maj/min.
  */
 static const char *
-makedevstr(int maj, int min)
+makedevstr(dev_t maj, dev_t min)
 {
 	const char *devicename;
 	char buf[32];
 
 	devicename = major2name(maj);
 	if (devicename == NULL)
-		(void)snprintf(buf, sizeof(buf), "<%d/%d>", maj, min);
+		(void)snprintf(buf, sizeof(buf), "<%lld/%lld>",
+		    (long long)maj, (long long)min);
 	else
-		(void)snprintf(buf, sizeof(buf), "%s%d%c", devicename,
-		    min / maxpartitions, (min % maxpartitions) + 'a');
+		(void)snprintf(buf, sizeof(buf), "%s%lld%c", devicename,
+		    (long long)min / maxpartitions,
+		    (char)(min % maxpartitions) + 'a');
 
 	return (intern(buf));
 }
@@ -707,7 +709,8 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	struct nvlist *nv;
 	struct devbase *dev;
 	const char *cp;
-	int maj, min, i, l;
+	dev_t maj, min;
+	int i, l;
 	int unit;
 	char buf[NAMESIZE];
 
@@ -719,9 +722,9 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 		 * Apply default.  Easiest to do this by number.
 		 * Make sure to retain NODEVness, if this is dflt's disposition.
 		 */
-		if (dflt->nv_int != NODEV) {
-			maj = major(dflt->nv_int);
-			min = ((minor(dflt->nv_int) / maxpartitions) *
+		if (dflt->nv_num != NODEV) {
+			maj = major(dflt->nv_num);
+			min = ((minor(dflt->nv_num) / maxpartitions) *
 			    maxpartitions) + part;
 			d = makedev(maj, min);
 			cp = makedevstr(maj, min);
@@ -729,13 +732,13 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 			cp = NULL;
 		*nvp = nv = newnv(NULL, cp, NULL, d, NULL);
 	}
-	if (nv->nv_int != NODEV) {
+	if (nv->nv_num != NODEV) {
 		/*
 		 * By the numbers.  Find the appropriate major number
 		 * to make a name.
 		 */
-		maj = major(nv->nv_int);
-		min = minor(nv->nv_int);
+		maj = major(nv->nv_num);
+		min = minor(nv->nv_num);
 		nv->nv_str = makedevstr(maj, min);
 		return (0);
 	}
@@ -774,7 +777,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	 * don't bother making a device number.
 	 */
 	if (has_attr(dev->d_attrs, s_ifnet)) {
-		nv->nv_int = NODEV;
+		nv->nv_num = NODEV;
 		nv->nv_ifunit = unit;	/* XXX XXX XXX */
 	} else {
 		maj = dev2major(dev);
@@ -783,7 +786,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 			    name, what, nv->nv_str);
 			return (1);
 		}
-		nv->nv_int = makedev(maj, unit * maxpartitions + part);
+		nv->nv_num = makedev(maj, unit * maxpartitions + part);
 	}
 
 	nv->nv_name = dev->d_name;
@@ -1744,18 +1747,18 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 	else
 		lp = emalloc((attr->a_loclen + 1) * sizeof(const char *));
 	for (n = got; n != NULL; n = n->nv_next)
-		n->nv_int = -1;
+		n->nv_num = -1;
 	nmissing = 0;
 	mp = missing;
 	/* yes, this is O(mn), but m and n should be small */
 	for (ord = 0, m = attr->a_locs; m != NULL; m = m->nv_next, ord++) {
 		for (n = got; n != NULL; n = n->nv_next) {
 			if (n->nv_name == m->nv_name) {
-				n->nv_int = ord;
+				n->nv_num = ord;
 				break;
 			}
 		}
-		if (n == NULL && m->nv_int == 0) {
+		if (n == NULL && m->nv_num == 0) {
 			nmissing++;
 			mp = extend(mp, m->nv_name);
 		}
@@ -1769,10 +1772,10 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 	nnodefault = 0;
 	ndp = nodefault;
 	for (n = got; n != NULL; n = n->nv_next) {
-		if (n->nv_int >= 0) {
+		if (n->nv_num >= 0) {
 			if (n->nv_str != NULL)
-				lp[n->nv_int] = n->nv_str;
-			else if (lp[n->nv_int] == NULL) {
+				lp[n->nv_num] = n->nv_str;
+			else if (lp[n->nv_num] == NULL) {
 				nnodefault++;
 				ndp = extend(ndp, n->nv_name);
 			}

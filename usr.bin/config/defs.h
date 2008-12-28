@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.25 2008/12/21 11:39:56 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.26 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ struct nvlist {
 	const char	*nv_name;
 	const char	*nv_str;
 	void		*nv_ptr;
-	int		nv_int;
+	long long	nv_num;
 	int		nv_ifunit;		/* XXX XXX XXX */
 	int		nv_flags;
 #define	NV_DEPENDED	1
@@ -200,7 +200,7 @@ struct devbase {
 	TAILQ_ENTRY(devbase) d_next;
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
-	int	d_major;		/* used for "root on sd0", e.g. */
+	dev_t	d_major;		/* used for "root on sd0", e.g. */
 	struct	nvlist *d_attrs;	/* attributes, if any */
 	int	d_umax;			/* highest unit number + 1 */
 	struct	devi *d_ihead;		/* first instance, if any */
@@ -287,12 +287,12 @@ struct filetype
  * depending on whether it has names on which to *be* optional.  The
  * options field (fi_optx) is actually an expression tree, with nodes
  * for OR, AND, and NOT, as well as atoms (words) representing some   
- * particular option.  The node type is stored in the nv_int field.
+ * particular option.  The node type is stored in the nv_num field.
  * Subexpressions appear in the `next' field; for the binary operators
  * AND and OR, the left subexpression is first stored in the nv_ptr field.
  * 
  * For any file marked as needs-count or needs-flag, fixfiles() will
- * build fi_optf, a `flat list' of the options with nv_int fields that
+ * build fi_optf, a `flat list' of the options with nv_num fields that
  * contain counts or `need' flags; this is used in mkheaders().
  */
 struct files {
@@ -551,7 +551,7 @@ void	cfgxerror(const char *, int, const char *, ...)	/* delayed errs */
      __attribute__((__format__(__printf__, 3, 4)));
 __dead void panic(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));
-struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
+struct nvlist *newnv(const char *, const char *, void *, long long, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
 struct nvlist *nvcat(struct nvlist *, struct nvlist *);
