@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.205 2008/11/20 23:50:08 matt Exp $
+#	$NetBSD: shlib_version,v 1.206 2008/12/28 10:59:20 ad Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -24,6 +24,12 @@
 # - libc/locale/setlocale{1,32}.c: remove
 # - libc/locale/setrunelocale.c: __MB_LEN_MAX_RUNTIME -> MB_LEN_MAX
 # - remove frexp, ldexp, modf: they belong to libm.
-# - make sure we can support thread local [on arm don't use r9 for example]
+# - make sure we can support thread local [on arm don't use r9 for example,
+#   consider other risc architectures: mips, powerpc, sparc, etc]
+# - rename __libc_mutex_lock and similar back to pthread_mutex_lock.
+#   the functions are used by third party code without prototypes.
+#   for example in assembler code.
+# - kill sigcontext: never request version 0 or 1 signal trampoline.
+#   always request version 2 trampoline. (on vax, 3).
 major=12
 minor=164
