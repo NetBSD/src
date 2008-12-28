@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.40 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: lpr.c,v 1.41 2008/12/28 21:45:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.40 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.41 2008/12/28 21:45:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,7 +348,8 @@ main(int argc, char *argv[])
 
 		if (sflag && (cp = linked(arg)) != NULL) {
 			(void)snprintf(buf, sizeof buf,
-			    "%u %llu", statb.st_dev,
+			    "%llu %llu",
+			    (unsigned long long)statb.st_dev,
 			    (unsigned long long)statb.st_ino);
 			card('S', buf);
 			if (format == 'p')
