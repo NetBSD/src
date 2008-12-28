@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.51 2007/02/04 08:03:18 elad Exp $	*/
+/*	$NetBSD: compare.c,v 1.52 2008/12/28 19:36:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.51 2007/02/04 08:03:18 elad Exp $");
+__RCSID("$NetBSD: compare.c,v 1.52 2008/12/28 19:36:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,8 +191,9 @@ typeerr:		LABEL;
 	    (s->type == F_BLOCK || s->type == F_CHAR) &&
 	    s->st_rdev != p->fts_statp->st_rdev) {
 		LABEL;
-		printf("%sdevice (%#x, %#x",
-		    tab, s->st_rdev, p->fts_statp->st_rdev);
+		printf("%sdevice (%#llx, %#llx",
+		    tab, (long long)s->st_rdev,
+		    (long long)p->fts_statp->st_rdev);
 		if (uflag) {
 			if ((unlink(p->fts_accpath) == -1) ||
 			    (mknod(p->fts_accpath,
