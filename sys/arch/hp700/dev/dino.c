@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.6.2.1 2008/12/18 10:12:42 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.6.2.2 2008/12/28 16:07:54 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.6.2.1 2008/12/18 10:12:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.6.2.2 2008/12/28 16:07:54 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -129,6 +129,7 @@ struct dino_softc {
 
 int	dinomatch(struct device *, struct cfdata *, void *);
 void	dinoattach(struct device *, struct device *, void *);
+static void	dino_callback(struct device *, struct confargs *);
 
 CFATTACH_DECL(dino, sizeof(struct dino_softc), dinomatch, dinoattach, NULL, 
     NULL);
