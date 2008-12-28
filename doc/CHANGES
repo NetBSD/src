@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1158 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1159 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -82,3 +82,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	lvm:	Add LVM functionality to NetBSD; this is done by dm(4) driver
 		in kernel and lvm2 tools made by RedHat. We use the same well
 		known interface as Linux does for managing LVM. [haad 20081222]
+	gcscaudio(4): Add AMD Geode CS5536 audio driver, from SHIMIZU Ryo.
+		[jmcneill 20081228]
