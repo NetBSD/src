@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.110 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: pstat.c,v 1.111 2008/12/28 23:02:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.110 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.111 2008/12/28 23:02:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,6 +285,14 @@ main(int argc, char *argv[])
 						 when pointer is printed
 						 in hexadecimal. */
 
+static void
+devprintf(char *buf, size_t buflen, dev_t dev)
+{
+	(void)snprintf(buf, buflen, "%llu,%llu",
+	    (unsigned long long)major(dev),
+	    (unsigned long long)minor(dev));
+}
+
 void
 vnodemode(void)
 {
@@ -496,8 +504,7 @@ ufs_print(struct vnode *vp, int ovflw)
 	if (S_ISCHR(ip->i_mode) || S_ISBLK(ip->i_mode)) {
 		if (usenumflag ||
 		    (name = devname(rdev, type)) == NULL) {
-			snprintf(dev, sizeof(dev), "%d,%d",
-			    major(rdev), minor(rdev));
+			devprintf(dev, sizeof(dev), rdev);
 			name = dev;
 		}
 		PRWORD(ovflw, " %*s", 8, 1, name);
@@ -531,8 +538,7 @@ ext2fs_print(struct vnode *vp, int ovflw)
 	if (S_ISCHR(dip.e2di_mode) || S_ISBLK(dip.e2di_mode)) {
 		if (usenumflag ||
 		    (name = devname(dip.e2di_rdev, type)) == NULL) {
-			snprintf(dev, sizeof(dev), "%d,%d",
-			    major(dip.e2di_rdev), minor(dip.e2di_rdev));
+			devprintf(dev, sizeof(dev), dip.e2di_rdev);
 			name = dev;
 		}
 		PRWORD(ovflw, " %*s", 8, 1, name);
@@ -584,8 +590,7 @@ nfs_print(struct vnode *vp, int ovflw)
 		type = S_IFBLK;
 	device:
 		if (usenumflag || (name = devname(va.va_rdev, type)) == NULL) {
-			(void)snprintf(dev, sizeof(dev), "%d,%d",
-			    major(va.va_rdev), minor(va.va_rdev));
+			devprintf(dev, sizeof(dev), va.va_rdev);
 			name = dev;
 		}
 		PRWORD(ovflw, " %*s", 8, 1, name);
@@ -788,8 +793,7 @@ ttyprt(struct tty *tp)
 	int n, ovflw;
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL) {
-		(void)snprintf(dev, sizeof(dev), "0x%3x:%x",
-		    major(tp->t_dev), minor(tp->t_dev));
+		devprintf(dev, sizeof(dev), tp->t_dev);
 		name = dev;
 	}
 	ovflw = 0;
