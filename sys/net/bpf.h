@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.48.72.1 2008/03/29 20:47:01 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.48.72.2 2008/12/28 20:53:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -146,7 +146,7 @@ struct bpf_version {
  */
 struct bpf_timespec {
 	int32_t tv_sec;
-	int32_t tv_nsec;
+	int32_t tv_usec;
 };
 struct bpf_hdr {
 	struct bpf_timespec bh_tstamp;	/* time stamp */
