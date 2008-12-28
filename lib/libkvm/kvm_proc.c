@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.80 2008/12/28 19:46:47 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.81 2008/12/28 19:49:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.80 2008/12/28 19:46:47 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.81 2008/12/28 19:49:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -409,7 +409,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 				    "can't read tty at %p", sess.s_ttyp);
 				return (-1);
 			}
-			eproc.e_tdev = (int32_t)tty.t_dev;
+			eproc.e_tdev = (uint32_t)tty.t_dev;
 			eproc.e_tsess = tty.t_session;
 			if (tty.t_pgrp != NULL) {
 				if (KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
@@ -422,7 +422,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			} else
 				eproc.e_tpgid = -1;
 		} else
-			eproc.e_tdev = (int32_t)NODEV;
+			eproc.e_tdev = (uint32_t)NODEV;
 		eproc.e_flag = sess.s_ttyvp ? EPROC_CTTY : 0;
 		eproc.e_sid = sess.s_sid;
 		if (sess.s_leader == p)
