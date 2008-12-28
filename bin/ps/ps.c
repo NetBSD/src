@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.71 2008/09/26 13:02:42 wiz Exp $	*/
+/*	$NetBSD: ps.c,v 1.72 2008/12/28 19:50:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.71 2008/09/26 13:02:42 wiz Exp $");
+__RCSID("$NetBSD: ps.c,v 1.72 2008/12/28 19:50:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,8 @@ main(int argc, char *argv[])
 	struct varent *vent;
 	struct winsize ws;
 	struct kinfo_lwp *kl, *l;
-	int ch, flag, i, j, fmt, lineno, nentries, nlwps;
+	int ch, i, j, fmt, lineno, nentries, nlwps;
+	long long flag;
 	int prtheader, wflag, what, xflg, mode, showlwps;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	char *ttname;
@@ -414,7 +415,7 @@ main(int argc, char *argv[])
 		for (i = 0; i < nentries; i++) {
 			struct kinfo_proc2 *ki = &kinfo[i];
 
-			if (xflg == 0 && (ki->p_tdev == NODEV ||
+			if (xflg == 0 && (ki->p_tdev == (uint32_t)NODEV ||
 			    (ki->p_flag & P_CONTROLT) == 0))
 				continue;
 
@@ -450,7 +451,7 @@ main(int argc, char *argv[])
 	for (i = lineno = 0; i < nentries; i++) {
 		struct kinfo_proc2 *ki = &kinfo[i];
 
-		if (xflg == 0 && (ki->p_tdev == NODEV ||
+		if (xflg == 0 && (ki->p_tdev == (uint32_t)NODEV ||
 		    (ki->p_flag & P_CONTROLT ) == 0))
 			continue;
 		kl = kvm_getlwps(kd, ki->p_pid, (u_long)ki->p_paddr,
