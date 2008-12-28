@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.6 2008/04/29 06:53:03 martin Exp $	*/
+/*	$NetBSD: lint.c,v 1.7 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -130,7 +130,7 @@ do_emit_instances(struct devbase *d, struct attr *at)
 		printf("%s0\tat\t%s?", d->d_name, at->a_name);
 
 		for (nv = at->a_locs; nv != NULL; nv = nv->nv_next) {
-			if (nv->nv_int == 0)
+			if (nv->nv_num == 0)
 				printf(" %s %c", nv->nv_name,
 				    nv->nv_str ? '?' : '0');
 		}

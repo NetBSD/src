@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.17 2008/06/10 18:11:31 drochner Exp $	*/
+/*	$NetBSD: gram.y,v 1.18 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -725,7 +725,7 @@ mk_nsis(const char *name, int count, struct nvlist *adefs, int opt)
 			*p = new_s("0");
 		snprintf(buf, sizeof(buf), "%s%c%d", name, ARRCHR, i);
 		(*p)->nv_name = i == 0 ? name : intern(buf);
-		(*p)->nv_int = i > 0 || opt;
+		(*p)->nv_num = i > 0 || opt;
 		p = &(*p)->nv_next;
 	}
 	*p = 0;

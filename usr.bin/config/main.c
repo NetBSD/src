@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2008/10/20 11:02:18 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2008/12/28 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1086,7 +1086,7 @@ cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 		if (has_attr(dev->d_attrs, s_ifnet))
 			devunit = nv->nv_ifunit;	/* XXX XXX XXX */
 		else
-			devunit = minor((uint32_t)nv->nv_int) / maxpartitions;
+			devunit = (int)(minor(nv->nv_num) / maxpartitions);
 		if (devbase_has_instances(dev, devunit))
 			continue;
 		if (devbase_has_instances(dev, STAR) &&
