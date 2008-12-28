@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.103 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.104 2008/12/28 18:34:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -31,6 +31,9 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
+#ifdef __NetBSD__
+#undef HAVE_FUTIMES
+#endif
 #else
 #define HAVE_FUTIMES 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
@@ -46,7 +49,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.103 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.104 2008/12/28 18:34:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +58,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.103 2008/07/21 14:19:28 lukem Exp $");
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -1098,7 +1102,8 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	if (tags)
 		fprintf(metafp, " tags=%s", tags);
 	if (tv != NULL && dopreserve)
-		fprintf(metafp, " time=%ld.%ld", tv[1].tv_sec, tv[1].tv_usec);
+		fprintf(metafp, " time=%lld.%ld", 
+			(long long)tv[1].tv_sec, (long)tv[1].tv_usec);
 	if (digestresult && digest)
 		fprintf(metafp, " %s=%s", digest, digestresult);
 	fputc('\n', metafp);
