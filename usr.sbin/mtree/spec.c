@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.66 2008/11/04 23:22:48 dbj Exp $	*/
+/*	$NetBSD: spec.c,v 1.67 2008/12/28 19:35:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.66 2008/11/04 23:22:48 dbj Exp $");
+__RCSID("$NetBSD: spec.c,v 1.67 2008/12/28 19:35:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,7 +341,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			printf("mode=%#o ", cur->st_mode);
 		if (MATCHFLAG(F_DEV) &&
 		    (cur->type == F_BLOCK || cur->type == F_CHAR))
-			printf("device=%#x ", cur->st_rdev);
+			printf("device=%#llx ", (long long)cur->st_rdev);
 		if (MATCHFLAG(F_NLINK))
 			printf("nlink=%d ", cur->st_nlink);
 		if (MATCHFLAG(F_SLINK))
@@ -349,7 +349,8 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 		if (MATCHFLAG(F_SIZE))
 			printf("size=%lld ", (long long)cur->st_size);
 		if (MATCHFLAG(F_TIME))
-			printf("time=%ld.%ld ", (long)cur->st_mtimespec.tv_sec,
+			printf("time=%lld.%ld ",
+			    (long long)cur->st_mtimespec.tv_sec,
 			    cur->st_mtimespec.tv_nsec);
 		if (MATCHFLAG(F_CKSUM))
 			printf("cksum=%lu ", cur->cksum);
@@ -598,11 +599,11 @@ set(char *t, NODE *ip)
 			break;
 		case F_TIME:
 			ip->st_mtimespec.tv_sec =
-			    (time_t)strtoul(val, &ep, 10);
+			    (time_t)strtoll(val, &ep, 10);
 			if (*ep != '.')
 				mtree_err("invalid time `%s'", val);
 			val = ep + 1;
-			ip->st_mtimespec.tv_nsec = strtoul(val, &ep, 10);
+			ip->st_mtimespec.tv_nsec = strtol(val, &ep, 10);
 			if (*ep)
 				mtree_err("invalid time `%s'", val);
 			break;
