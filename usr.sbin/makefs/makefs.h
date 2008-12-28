@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.19 2006/10/10 01:55:45 dbj Exp $	*/
+/*	$NetBSD: makefs.h,v 1.20 2008/12/28 21:51:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -219,8 +219,9 @@ extern	struct timespec	start_time;
 		struct timeval end, td;			\
 		gettimeofday(&end, NULL);		\
 		timersub(&end, &(x), &td);		\
-		printf("%s took %ld.%06ld seconds\n",	\
-		    (d), td.tv_sec, td.tv_usec);	\
+		printf("%s took %lld.%06ld seconds\n",	\
+		    (d), (long long)td.tv_sec,		\
+		    (long)td.tv_usec);			\
 	}
 
 
