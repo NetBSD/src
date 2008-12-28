@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.25 2007/10/17 19:56:04 garbled Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.26 2008/12/28 05:15:59 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.25 2007/10/17 19:56:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26 2008/12/28 05:15:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -61,7 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.25 2007/10/17 19:56:04 garbled 
 
 #include <uvm/uvm_extern.h>
 
-#define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
+#define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
+#define RELOCPTR(v, t)	((t)((uintptr_t)RELOC((v), t) + firstpa))
 
 extern char *etext;
 extern int Sysptsize;
@@ -560,7 +561,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * just initialize pointers.
 	 */
 	{
-		struct pmap *kpm = &RELOC(kernel_pmap_store, struct pmap);
+		struct pmap *kpm;
+
+		kpm = RELOCPTR(kernel_pmap_ptr, struct pmap *);
 
 		kpm->pm_stab = RELOC(Sysseg, st_entry_t *);
 		kpm->pm_ptab = RELOC(Sysmap, pt_entry_t *);

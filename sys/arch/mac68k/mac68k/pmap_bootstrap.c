@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.74 2007/10/17 19:55:15 garbled Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.75 2008/12/28 05:15:59 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.74 2007/10/17 19:55:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.75 2008/12/28 05:15:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -504,7 +504,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * just initialize pointers.
 	 */
 	{
-		struct pmap *kpm = (struct pmap *)&kernel_pmap_store;
+		struct pmap *kpm = kernel_pmap_ptr;
 
 		kpm->pm_stab = Sysseg;
 		kpm->pm_ptab = Sysmap;
