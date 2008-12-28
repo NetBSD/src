@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.37 2008/12/05 12:55:09 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.38 2008/12/28 03:21:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.37 2008/12/05 12:55:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.38 2008/12/28 03:21:02 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -230,7 +230,7 @@ module_init_class(modclass_t class)
 			    class != mi->mi_class)
 				continue;
 			module_do_load(mi->mi_name, false, 0, NULL, NULL,
-			    class, true);
+			    class, false);
 			break;
 		}
 	} while (mod != NULL);
@@ -480,6 +480,7 @@ module_do_builtin(const char *name, module_t **modp)
 		}
 	}
 	if (error != 0) {
+		module_error("can't find `%s'", name);
 		return error;
 	}
 
@@ -488,6 +489,7 @@ module_do_builtin(const char *name, module_t **modp)
 	 */
 	mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
 	if (mod == NULL) {
+		module_error("out of memory for `%s'", name);
 		return ENOMEM;
 	}
 	if (modp != NULL) {
@@ -607,6 +609,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		}				
 		mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
 		if (mod == NULL) {
+			module_error("out of memory for `%s'", name);
 			depth--;
 			return ENOMEM;
 		}
