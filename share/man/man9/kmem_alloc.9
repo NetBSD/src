@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_alloc.9,v 1.6 2008/01/03 15:59:57 yamt Exp $
+.\"	$NetBSD: kmem_alloc.9,v 1.7 2008/12/29 12:43:47 ad Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd January 4, 2008
+.Dd December 29, 2008
 .Dt KMEM_ALLOC 9
 .Os
 .\" ------------------------------------------------------------
@@ -49,20 +49,73 @@ It takes the following arguments.
 Specify the size of allocation in bytes.
 .It Fa kmflags
 Either of the following:
-.Bl -tag -width KM_NOSLEEP -compact
+.Bl -tag -width KM_NOSLEEP
 .It KM_SLEEP
-Can sleep until enough memory is available.
+If the allocation cannot be satisfied immediatley, sleep until enough
+memory is available.
 .It KM_NOSLEEP
 Don't sleep.
-Immediately return
-.Dv NULL
+Immediately return NULL
 if there is not enough memory available.
+It should only be used when failure to allocate will not have harmful,
+user-visible effects.
+.Pp
+.Bf -symbolic
+Use of
+.Dv KM_NOSLEEP
+is strongly discouraged as it can create transient, hard to debug failures
+that occur when the system is under memory pressure.
+.Ef
+.Pp
+In situations where it is not possible to sleep, for example because locks
+are held by the caller, the code path should be restructured to allow the
+allocation to be made in another place.
 .El
 .El
 .Pp
 The contents of allocated memory are uninitialized.
 .Pp
 Unlike Solaris, kmem_alloc(0, flags) is illegal.
+.Pp
+Making
+.Dv KM_SLEEP
+allocations while holding mutexes or reader/writer locks is discouraged, as the
+caller can sleep for an unbounded amount of time in order to satisfy the
+allocation.
+This can in turn block other threads that wish to acquire locks held by the
+caller.
+.Pp
+For some locks this is permissible or even unavoidable.
+For others, particularly locks that may be taken from soft interrupt context,
+it is a serious problem.
+As a general rule it is better not to allow this type of situation to develop.
+One way to circumvent the problem is to make allocations speculative and part
+of a retryable sequence.
+For example:
+.Bd -literal
+  retry:
+        /* speculative unlocked check */
+        if (need to allocate) {
+                new_item = kmem_alloc(sizeof(*new_item), KM_SLEEP);
+        } else {
+                new_item = NULL;
+        }
+        mutex_enter(lock);
+        /* check while holding lock for true status */
+        if (need to allocate) {
+                if (new_item == NULL) {
+                        mutex_exit(lock);
+                        goto retry;
+                }
+                consume(new_item);
+                new_item = NULL;
+        }
+        mutex_exit(lock);
+        if (new_item != NULL) {
+                /* did not use it after all */
+                kmem_free(new_item, sizeof(*new_item));
+        }
+.Ed
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 On success,
@@ -80,7 +133,11 @@ Otherwise, it returns
 .\" ------------------------------------------------------------
 .Sh CAVEATS
 .Fn kmem_alloc
-can not be used from interrupt context.
+cannot be used from interrupt context, from a soft interrupt, or from
+a callout.
+Use
+.Xr pool_cache 9
+in these situations.
 .\" ------------------------------------------------------------
 .Sh SECURITY CONSIDERATION
 As the allocated memory is uninitialized, it can contain security-sensitive
