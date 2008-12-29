@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.30 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: lock.c,v 1.31 2008/12/29 01:26:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.30 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: lock.c,v 1.31 2008/12/29 01:26:46 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -337,9 +337,9 @@ hi(dummy)
 		if (gettimeofday(&timval, NULL) == -1)
 			err(1, "gettimeofday failed");
 		(void)printf("lock: type in the unlock key. "
-		    "timeout in %ld:%ld minutes\n",
-		    (nexttime - timval.tv_sec) / 60,
-		    (nexttime - timval.tv_sec) % 60);
+		    "timeout in %lld:%lld minutes\n",
+		    (long long)(nexttime - timval.tv_sec) / 60,
+		    (long long)(nexttime - timval.tv_sec) % 60);
 	}
 }
 
