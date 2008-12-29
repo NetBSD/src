@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.89 2008/12/24 16:56:28 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.90 2008/12/29 12:16:52 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.89 2008/12/24 16:56:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.90 2008/12/29 12:16:52 mlelstv Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -291,7 +291,9 @@ fdcresume(device_t self PMF_FN_ARGS)
 {
 	struct fdc_softc *fdc = device_private(self);
 
+	mutex_enter(&fdc->sc_mtx);
 	(void)fdcintr1(fdc);
+	mutex_exit(&fdc->sc_mtx);
 	return true;
 }
 
