@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.143 2008/12/29 10:12:30 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.144 2008/12/29 10:18:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.143 2008/12/29 10:12:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.144 2008/12/29 10:18:38 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.143 2008/12/29 10:12:30 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.144 2008/12/29 10:18:38 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2840,7 +2840,6 @@ ApplyModifiers(char *nstr, const char *tstr,
 		     * nul-terminated string soon, so construct one now.
 		     */
 		    pattern = bmake_strndup(tstr+1, endpat - (tstr + 1));
-		    copy = TRUE;
 		}
 		if (strchr(pattern, '$') != NULL) {
 		    /*
@@ -2849,23 +2848,19 @@ ApplyModifiers(char *nstr, const char *tstr,
 		     */
 		    cp2 = pattern;
 		    pattern = Var_Subst(NULL, cp2, ctxt, errnum);
-		    if (copy)
-			free(cp2);
-		    copy = TRUE;
+		    free(cp2);
 		}
 		if (DEBUG(VAR))
 		    fprintf(debug_file, "Pattern for [%s] is [%s]\n", nstr,
 			pattern);
-		if (*tstr == 'M' || *tstr == 'm') {
+		if (*tstr == 'M') {
 		    newStr = VarModify(ctxt, &parsestate, nstr, VarMatch,
 				       pattern);
 		} else {
 		    newStr = VarModify(ctxt, &parsestate, nstr, VarNoMatch,
 				       pattern);
 		}
-		if (copy) {
-		    free(pattern);
-		}
+		free(pattern);
 		break;
 	    }
 	case 'S':
