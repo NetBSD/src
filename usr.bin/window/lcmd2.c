@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd2.c,v 1.14 2006/12/18 20:04:55 christos Exp $	*/
+/*	$NetBSD: lcmd2.c,v 1.15 2008/12/29 01:53:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd2.c,v 1.14 2006/12/18 20:04:55 christos Exp $");
+__RCSID("$NetBSD: lcmd2.c,v 1.15 2008/12/29 01:53:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,15 +164,16 @@ strtime(struct timeval *t)
 		fill++;
 	}
 	if (t->tv_sec > 60) {
-		(void) sprintf(p, fill ? "%02ld:" : "%ld:", t->tv_sec / 60);
+		(void) sprintf(p, fill ? "%02lld:" : "%lld:",
+		    (long long)t->tv_sec / 60);
 		while (*p++)
 			;
 		p--;
 		t->tv_sec %= 60;
 		fill++;
 	}
-	(void) sprintf(p, fill ? "%02ld.%02ld" : "%ld.%02ld",
-		t->tv_sec, t->tv_usec / 10000);
+	(void) sprintf(p, fill ? "%02lld.%02ld" : "%lld.%02ld",
+		(long long)t->tv_sec, (long)t->tv_usec / 10000);
 	return buf;
 }
 
