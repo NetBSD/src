@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.55 2008/10/31 20:55:41 christos Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.56 2008/12/29 01:35:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.55 2008/10/31 20:55:41 christos Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.56 2008/12/29 01:35:09 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -710,7 +710,7 @@ log_trimmed(struct conf_entry *log)
 			i = strftime(timestamp, sizeof(timestamp),
 				"%FT%T", tmnow);
 			i += snprintf(timestamp+i, sizeof(timestamp)-i,
-				".%06ld", tv.tv_usec);
+				".%06ld", (long)tv.tv_usec);
 			i += j = strftime(timestamp+i, sizeof(timestamp)-i-1,
 				"%z", tmnow);
 			/* strftime gives eg. "+0200", but we need "+02:00" */
