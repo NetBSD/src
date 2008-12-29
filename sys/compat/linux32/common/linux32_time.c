@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.26 2008/12/29 14:33:40 njoly Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.27 2008/12/29 22:21:49 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.26 2008/12/29 14:33:40 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.27 2008/12/29 22:21:49 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -199,7 +199,7 @@ linux32_sys_stime(struct lwp *l, const struct linux32_sys_stime_args *uap, regis
 	linux32_time_t tt32;
 	int error;
 	
-	if ((error = copyin(&tt32, SCARG_P32(uap, t), sizeof tt32)) != 0)
+	if ((error = copyin(SCARG_P32(uap, t), &tt32, sizeof tt32)) != 0)
 		return error;
 
 	ts.tv_sec = (long)tt32;
