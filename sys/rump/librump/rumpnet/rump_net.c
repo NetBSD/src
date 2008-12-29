@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.5 2008/12/18 00:24:13 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.6 2008/12/29 23:18:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.5 2008/12/18 00:24:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.6 2008/12/29 23:18:35 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -37,16 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.5 2008/12/18 00:24:13 pooka Exp $");
 #include <net/radix.h>
 
 #include "rump_net_private.h"
-
-/* XXX: tempkludge */
-void __rumpnet_unimpl(void);
-void
-__rumpnet_unimpl()
-{
-
-	panic("XXX");
-}
-__weak_alias(ifunit,__rumpnet_unimpl);
 
 void
 rump_net_init()
