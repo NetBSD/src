@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.22 2008/06/08 12:23:18 ad Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.23 2008/12/29 17:41:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.22 2008/06/08 12:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.23 2008/12/29 17:41:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.22 2008/06/08 12:23:18 ad Exp $");
 #include <sys/tty.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -103,12 +101,15 @@ static int bdevsw_attach(const struct bdevsw *, int *);
 static int cdevsw_attach(const struct cdevsw *, int *);
 static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
+kmutex_t device_lock;
+
 void
 devsw_init(void)
 {
 
 	KASSERT(sys_bdevsws < MAXDEVSW - 1);
 	KASSERT(sys_cdevsws < MAXDEVSW - 1);
+	mutex_init(&device_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 int
@@ -122,7 +123,7 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 	if (devname == NULL || cdev == NULL)
 		return (EINVAL);
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 
 	for (i = 0 ; i < max_devsw_convs ; i++) {
 		conv = &devsw_conv[i];
@@ -153,7 +154,7 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 			bdevsw[*bmajor] = bdev;
 		cdevsw[*cmajor] = cdev;
 
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		return (0);
 	}
 
@@ -205,10 +206,10 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 	devsw_conv[i].d_bmajor = *bmajor;
 	devsw_conv[i].d_cmajor = *cmajor;
 
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	return (0);
  fail:
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	return (error);
 }
 
@@ -218,7 +219,7 @@ bdevsw_attach(const struct bdevsw *devsw, int *devmajor)
 	const struct bdevsw **newptr;
 	int bmajor, i;
 
-	KASSERT(mutex_owned(&specfs_lock));
+	KASSERT(mutex_owned(&device_lock));
 
 	if (devsw == NULL)
 		return (0);
@@ -267,7 +268,7 @@ cdevsw_attach(const struct cdevsw *devsw, int *devmajor)
 	const struct cdevsw **newptr;
 	int cmajor, i;
 
-	KASSERT(mutex_owned(&specfs_lock));
+	KASSERT(mutex_owned(&device_lock));
 
 	if (*devmajor < 0) {
 		for (cmajor = sys_cdevsws ; cmajor < max_cdevsws ; cmajor++) {
@@ -312,7 +313,7 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
 	int i;
 
-	KASSERT(mutex_owned(&specfs_lock));
+	KASSERT(mutex_owned(&device_lock));
 
 	if (bdev != NULL) {
 		for (i = 0 ; i < max_bdevsws ; i++) {
@@ -336,9 +337,9 @@ int
 devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	devsw_detach_locked(bdev, cdev);
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	return 0;
 }
 
@@ -433,9 +434,9 @@ devsw_blk2name(int bmajor)
 	name = NULL;
 	cmajor = -1;
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	if (bmajor < 0 || bmajor >= max_bdevsws || bdevsw[bmajor] == NULL) {
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		return (NULL);
 	}
 	for (i = 0 ; i < max_devsw_convs; i++) {
@@ -446,7 +447,7 @@ devsw_blk2name(int bmajor)
 	}
 	if (cmajor >= 0 && cmajor < max_cdevsws && cdevsw[cmajor] != NULL)
 		name = devsw_conv[i].d_name;
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 
 	return (name);
 }
@@ -466,7 +467,7 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 	if (name == NULL)
 		return (-1);
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (i = 0 ; i < max_devsw_convs ; i++) {
 		size_t len;
 
@@ -490,11 +491,11 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';
 		}
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		return (bmajor);
 	}
 
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	return (-1);
 }
 
@@ -513,7 +514,7 @@ devsw_name2chr(const char *name, char *devname, size_t devnamelen)
 	if (name == NULL)
 		return (-1);
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (i = 0 ; i < max_devsw_convs ; i++) {
 		size_t len;
 
@@ -537,11 +538,11 @@ devsw_name2chr(const char *name, char *devname, size_t devnamelen)
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';
 		}
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		return (cmajor);
 	}
 
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	return (-1);
 }
 
@@ -561,9 +562,9 @@ devsw_chr2blk(dev_t cdev)
 	bmajor = -1;
 	rv = NODEV;
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	if (cmajor < 0 || cmajor >= max_cdevsws || cdevsw[cmajor] == NULL) {
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		return (NODEV);
 	}
 	for (i = 0 ; i < max_devsw_convs ; i++) {
@@ -574,7 +575,7 @@ devsw_chr2blk(dev_t cdev)
 	}
 	if (bmajor >= 0 && bmajor < max_bdevsws && bdevsw[bmajor] != NULL)
 		rv = makedev(bmajor, minor(cdev));
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 
 	return (rv);
 }
@@ -595,9 +596,9 @@ devsw_blk2chr(dev_t bdev)
 	cmajor = -1;
 	rv = NODEV;
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	if (bmajor < 0 || bmajor >= max_bdevsws || bdevsw[bmajor] == NULL) {
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		return (NODEV);
 	}
 	for (i = 0 ; i < max_devsw_convs ; i++) {
@@ -608,7 +609,7 @@ devsw_blk2chr(dev_t bdev)
 	}
 	if (cmajor >= 0 && cmajor < max_cdevsws && cdevsw[cmajor] != NULL)
 		rv = makedev(cmajor, minor(bdev));
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 
 	return (rv);
 }
@@ -637,9 +638,9 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	 * For open we need to lock, in order to synchronize
 	 * with attach/detach.
 	 */
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	d = bdevsw_lookup(dev);
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	if (d == NULL)
 		return ENXIO;
 
@@ -737,9 +738,9 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	 * For open we need to lock, in order to synchronize
 	 * with attach/detach.
 	 */
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	d = cdevsw_lookup(dev);
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	if (d == NULL)
 		return ENXIO;
 
