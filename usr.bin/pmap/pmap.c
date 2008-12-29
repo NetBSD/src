@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2008/04/28 20:24:14 martin Exp $ */
+/*	$NetBSD: pmap.c,v 1.42 2008/12/29 01:40:59 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.41 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.42 2008/12/29 01:40:59 christos Exp $");
 #endif
 
 #include <string.h>
@@ -399,7 +399,9 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		       vme->advice);
 		if (verbose) {
 			if (inode)
-				printf(" %u,%u %llu", major(dev), minor(dev),
+				printf(" %llu,%llu %llu",
+				    (unsigned long long)major(dev),
+				    (unsigned long long)minor(dev),
 				    (unsigned long long)inode);
 			if (name[0])
 				printf(" %s", name);
@@ -408,7 +410,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	}
 
 	if (print_maps) {
-		printf("%*s%0*lx-%0*lx %c%c%c%c %0*" PRIx64 " %02x:%02x %llu     %s\n",
+		printf("%*s%0*lx-%0*lx %c%c%c%c %0*" PRIx64 " %02llx:%02llx %llu     %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2, vme->start,
 		       (int)sizeof(void *) * 2, vme->end,
@@ -418,7 +420,9 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		       UVM_ET_ISCOPYONWRITE(vme) ? 'p' : 's',
 		       (int)sizeof(void *) * 2,
 		       vme->offset,
-		       major(dev), minor(dev), (unsigned long long)inode,
+		       (unsigned long long)major(dev),
+		       (unsigned long long)minor(dev),
+		       (unsigned long long)inode,
 		       (name[0] != ' ') || verbose ? name : "");
 	}
 
@@ -439,8 +443,9 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		if (verbose) {
 			printf("\t%*s", indent(2), "");
 			if (inode)
-				printf("(dev=%u,%u ino=%llu [%s] [%p])\n",
-				    major(dev), minor(dev),
+				printf("(dev=%llu,%llu ino=%llu [%s] [%p])\n",
+				    (unsigned long long)major(dev),
+				    (unsigned long long)minor(dev),
 				    (unsigned long long)inode, name, P(vp));
 			else if (name[0] == ' ')
 				printf("(%s)\n", &name[2]);
@@ -475,8 +480,8 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	if (print_all) {
 		sz = (size_t)((vme->end - vme->start) / 1024);
 		printf(A(vp) ?
-		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s [%p]\n" :
-		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s\n",
+		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02llu:%02llu %7llu - %s [%p]\n" :
+		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02llu:%02llu %7llu - %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2,
 		       vme->start,
@@ -496,7 +501,9 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		       vme->inheritance,
 		       vme->wired_count,
 		       vme->advice,
-		       major(dev), minor(dev), (unsigned long long)inode,
+		       (unsigned long long)major(dev),
+		       (unsigned long long)minor(dev),
+		       (unsigned long long)inode,
 		       name, P(vp));
 	}
 
@@ -708,8 +715,9 @@ findname(kvm_t *kd, struct kbit *vmspace,
 			if (name != NULL)
 				snprintf(buf, sizeof(buf), "/dev/%s", name);
 			else
-				snprintf(buf, sizeof(buf), "  [ device %d,%d ]",
-					 major(dev), minor(dev));
+				snprintf(buf, sizeof(buf), "  [ device %llu,%llu ]",
+				     (unsigned long long)major(dev),
+				     (unsigned long long)minor(dev));
 			name = buf;
 		}
 		else if (UVM_OBJ_IS_AOBJ(D(uvm_obj, uvm_object))) 
