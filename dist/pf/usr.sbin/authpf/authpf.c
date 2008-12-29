@@ -1,4 +1,4 @@
-/*	$NetBSD: authpf.c,v 1.6 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: authpf.c,v 1.7 2008/12/29 04:13:28 christos Exp $	*/
 /*	$OpenBSD: authpf.c,v 1.104 2007/02/24 17:35:08 beck Exp $	*/
 
 /*
@@ -714,8 +714,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		syslog(LOG_INFO, "allowing %s, user %s", ipsrc, luser);
 	} else {
 		gettimeofday(&Tend, NULL);
-		syslog(LOG_INFO, "removed %s, user %s - duration %ld seconds",
-		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
+		syslog(LOG_INFO, "removed %s, user %s - duration %lld seconds",
+		    ipsrc, luser, (long long)(Tend.tv_sec - Tstart.tv_sec));
 	}
 	return (0);
 no_mem:
