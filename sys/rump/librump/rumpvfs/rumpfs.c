@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.4 2008/12/29 14:35:05 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.5 2008/12/29 20:39:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.4 2008/12/29 14:35:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.5 2008/12/29 20:39:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -97,7 +97,7 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 static struct mount mnt_dummy;
 
 static struct vnode *
-rump_makevnode(const char *path, size_t size, enum vtype vt, dev_t rdev)
+rump_makevnode(const char *path, size_t size, enum vtype vt)
 {
 	struct vnode *vp;
 	struct rump_specpriv *sp;
@@ -113,7 +113,7 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, dev_t rdev)
 		panic("rump_makevnode: only VBLK/VDIR vnodes supported");
 
 	if (vp->v_type == VBLK) {
-		spec_node_init(vp, rdev);
+		spec_node_init(vp, makedev(RUMPBLK, 0));
 		sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
 		strcpy(sp->rsp_path, path);
 		vp->v_data = sp;
@@ -185,7 +185,7 @@ rump_vop_lookup(void *v)
 		return error;
 
 	*ap->a_vpp = rump_makevnode(cnp->cn_pnbuf, sb_node.st_size,
-	    mode2vt(sb_node.st_mode), sb_node.st_rdev);
+	    mode2vt(sb_node.st_mode));
 	vn_lock(*ap->a_vpp, LK_RETRY | LK_EXCLUSIVE);
 	cnp->cn_consume = strlen(cnp->cn_nameptr + cnp->cn_namelen);
 	cnp->cn_flags &= ~REQUIREDIR;
@@ -198,6 +198,6 @@ rumpfs_init()
 {
 
 	vfs_opv_init(rump_opv_descs);
-	rootvnode = rump_makevnode("/", 0, VDIR, -1);
+	rootvnode = rump_makevnode("/", 0, VDIR);
 	rootvnode->v_vflag |= VV_ROOT;
 }
