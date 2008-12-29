@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.3 2008/12/18 00:24:13 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.4 2008/12/29 14:35:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.3 2008/12/18 00:24:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.4 2008/12/29 14:35:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -94,7 +94,7 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 	NULL
 };
 
-struct mount mnt_dummy;
+static struct mount mnt_dummy;
 
 static struct vnode *
 rump_makevnode(const char *path, size_t size, enum vtype vt, dev_t rdev)
