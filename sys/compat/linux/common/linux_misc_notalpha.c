@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.104 2008/10/03 22:39:36 njoly Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.105 2008/12/29 22:21:49 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.104 2008/10/03 22:39:36 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.105 2008/12/29 22:21:49 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,7 +388,7 @@ linux_sys_stime(struct lwp *l, const struct linux_sys_stime_args *uap, register_
 	linux_time_t tt;
 	int error;
 
-	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)
+	if ((error = copyin(SCARG(uap, t), &tt, sizeof tt)) != 0)
 		return error;
 
 	ats.tv_sec = tt;
