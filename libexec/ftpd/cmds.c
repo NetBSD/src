@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.27 2008/09/13 02:41:52 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.28 2008/12/29 00:33:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.27 2008/09/13 02:41:52 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.28 2008/12/29 00:33:34 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -760,9 +760,10 @@ fact_type(const char *fact, FILE *fd, factelem *fe)
 		break;
 	case S_IFBLK:
 	case S_IFCHR:
-		cprintf(fd, "OS.unix=%s-%d/%d",
+		cprintf(fd, "OS.unix=%s-%llu/%llu",
 		    S_ISBLK(fe->stat->st_mode) ? "blk" : "chr",
-		    major(fe->stat->st_rdev), minor(fe->stat->st_rdev));
+		    (unsigned long long)major(fe->stat->st_rdev),
+		    (unsigned long long)minor(fe->stat->st_rdev));
 		break;
 	default:
 		cprintf(fd, "OS.unix=UNKNOWN(0%o)", fe->stat->st_mode & S_IFMT);
