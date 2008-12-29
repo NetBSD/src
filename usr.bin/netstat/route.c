@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.71 2008/04/23 15:35:37 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.72 2008/12/29 01:33:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.71 2008/04/23 15:35:37 thorpej Exp $");
+__RCSID("$NetBSD: route.c,v 1.72 2008/12/29 01:33:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,9 +286,9 @@ p_krtentry(rt)
 	}
 	putchar('\n');
  	if (vflag) {
- 		printf("\texpire   %10lu%c  recvpipe %10ld%c  "
+ 		printf("\texpire   %10lld%c  recvpipe %10ld%c  "
 		       "sendpipe %10ld%c\n",
- 			rt->rt_rmx.rmx_expire, 
+ 			(long long)rt->rt_rmx.rmx_expire, 
  			(rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ',
  			rt->rt_rmx.rmx_recvpipe,
  			(rt->rt_rmx.rmx_locks & RTV_RPIPE) ? 'L' : ' ',

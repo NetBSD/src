@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.21 2006/05/28 16:51:40 elad Exp $	*/
+/*	$NetBSD: mroute.c,v 1.22 2008/12/29 01:33:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.21 2006/05/28 16:51:40 elad Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.22 2008/12/29 01:33:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,9 +296,9 @@ print_bw_meter(bw_meter, banner_printed)
 		sprintf(s2, "%llu", (unsigned long long)bw_meter->bm_measured.b_bytes);
 	else
 		sprintf(s2, "?");
-	sprintf(s0, "%lu.%lu|%s|%s",
-		bw_meter->bm_start_time.tv_sec,
-		bw_meter->bm_start_time.tv_usec,
+	sprintf(s0, "%lld.%ld|%s|%s",
+		(long long)bw_meter->bm_start_time.tv_sec,
+		(long)bw_meter->bm_start_time.tv_usec,
 		s1, s2);
 	printf("  %-30s", s0);
 
@@ -319,9 +319,9 @@ print_bw_meter(bw_meter, banner_printed)
 		sprintf(s2, "%llu", (unsigned long long)bw_meter->bm_threshold.b_bytes);
 	else
 		sprintf(s2, "?");
-	sprintf(s0, "%lu.%lu|%s|%s",
-		bw_meter->bm_threshold.b_time.tv_sec,
-		bw_meter->bm_threshold.b_time.tv_usec,
+	sprintf(s0, "%lld.%ld|%s|%s",
+		(long long)bw_meter->bm_threshold.b_time.tv_sec,
+		(long)bw_meter->bm_threshold.b_time.tv_usec,
 		s1, s2);
 	printf("  %-30s", s0);
 
@@ -330,11 +330,13 @@ print_bw_meter(bw_meter, banner_printed)
 		 &bw_meter->bm_threshold.b_time, &end);
 	if (timercmp(&now, &end, <=)) {
 		timersub(&end, &now, &delta);
-		sprintf(s3, "%lu.%lu", delta.tv_sec, delta.tv_usec);
+		sprintf(s3, "%lld.%ld",
+		    (long long)delta.tv_sec, (long)delta.tv_usec);
 	} else {
 		/* Negative time */
 		timersub(&now, &end, &delta);
-		sprintf(s3, "-%lu.%lu", delta.tv_sec, delta.tv_usec);
+		sprintf(s3, "-%lld.%ld",
+		    (long long)delta.tv_sec, (long)delta.tv_usec);
 	}
 	printf(" %s", s3);
 
