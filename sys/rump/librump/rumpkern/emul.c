@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.63 2008/12/21 17:49:55 cegger Exp $	*/
+/*	$NetBSD: emul.c,v 1.64 2008/12/29 17:45:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.63 2008/12/21 17:49:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.64 2008/12/29 17:45:55 pooka Exp $");
 
 #define malloc(a,b,c) __wrap_malloc(a,b,c)
 
@@ -95,6 +95,21 @@ const char *domainname;
 int domainnamelen;
 
 const struct filterops seltrue_filtops;
+
+#define DEVSW_SIZE 255
+const struct bdevsw *bdevsw0[DEVSW_SIZE]; /* XXX storage size */
+const struct bdevsw **bdevsw = bdevsw0;
+const int sys_cdevsws = DEVSW_SIZE;
+int max_cdevsws = DEVSW_SIZE;
+
+const struct cdevsw *cdevsw0[DEVSW_SIZE]; /* XXX storage size */
+const struct cdevsw **cdevsw = cdevsw0;
+const int sys_bdevsws = DEVSW_SIZE;
+int max_bdevsws = DEVSW_SIZE;
+
+struct devsw_conv devsw_conv0;
+struct devsw_conv *devsw_conv = &devsw_conv0;
+int max_devsw_convs = 0;
 
 void
 panic(const char *fmt, ...)
@@ -279,13 +294,6 @@ uio_setup_sysspace(struct uio *uio)
 	uio->uio_vmspace = UIO_VMSPACE_SYS;
 }
 
-const struct bdevsw *
-bdevsw_lookup(dev_t dev)
-{
-
-	return (const struct bdevsw *)1;
-}
-
 devclass_t
 device_class(device_t dev)
 {
@@ -362,20 +370,6 @@ getmicrotime(struct timeval *tv)
 	int error;
 
 	rumpuser_gettimeofday(tv, &error);
-}
-
-void
-bdev_strategy(struct buf *bp)
-{
-
-	panic("%s: not supported", __func__);
-}
-
-int
-bdev_type(dev_t dev)
-{
-
-	return D_DISK;
 }
 
 struct kthdesc {
@@ -634,21 +628,6 @@ assert_sleepable(void)
 {
 
 	/* always sleepable, although we should improve this */
-}
-
-int
-devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
-	const struct cdevsw *cdev, int *cmajor)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-int
-devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
-{
-
-	panic("%s: not implemented", __func__);
 }
 
 void
