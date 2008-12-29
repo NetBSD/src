@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.86 2008/09/09 00:56:23 gmcgarry Exp $	*/
+/*	$NetBSD: fstat.c,v 1.87 2008/12/29 00:59:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.86 2008/09/09 00:56:23 gmcgarry Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.87 2008/12/29 00:59:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -510,7 +510,9 @@ vtrans(struct vnode *vp, int i, int flag)
 		return;
 	}
 	if (nflg)
-		(void)printf(" %2d,%-2d", major(fst.fsid), minor(fst.fsid));
+		(void)printf(" %2llu,%-2llu",
+		    (unsigned long long)major(fst.fsid),
+		    (unsigned long long)minor(fst.fsid));
 	else
 		(void)printf(" %-8s", getmnton(vn.v_mount));
 	if (nflg)
@@ -525,8 +527,9 @@ vtrans(struct vnode *vp, int i, int flag)
 
 		if (nflg || ((name = devname(fst.rdev, vn.v_type == VCHR ? 
 		    S_IFCHR : S_IFBLK)) == NULL))
-			(void)printf("  %2d,%-2d", major(fst.rdev),
-			    minor(fst.rdev));
+			(void)printf("  %2llu,%-2llu",
+			    (unsigned long long)major(fst.rdev),
+			    (unsigned long long)minor(fst.rdev));
 		else
 			(void)printf(" %6s", name);
 		break;
