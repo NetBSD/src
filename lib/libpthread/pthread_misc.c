@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.11 2008/12/28 21:33:35 christos Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.12 2008/12/29 15:08:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.11 2008/12/28 21:33:35 christos Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.12 2008/12/29 15:08:04 christos Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -50,10 +50,10 @@ __RCSID("$NetBSD: pthread_misc.c,v 1.11 2008/12/28 21:33:35 christos Exp $");
 int	pthread__sched_yield(void);
 
 int	_sys___sigprocmask14(int, const sigset_t *, sigset_t *);
-int	_sys___nanosleep50(const struct timespec *, struct timespec *);
+int	_sys_nanosleep(const struct timespec *, struct timespec *);
 int	_sys_sched_yield(void);
-int	__nanosleep50(const struct timespec *, struct timespec *);
 
+__strong_alias(_nanosleep, nanosleep)
 __strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
 __strong_alias(__sigprocmask14,pthread_sigmask)
 __strong_alias(__libc_thr_yield,pthread__sched_yield)
@@ -152,14 +152,14 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 
 #ifndef lint
 int
-__nanosleep50(const struct timespec *rqtp, struct timespec *rmtp)
+nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 {
 
 	/*
 	 * For now, just nanosleep.  In the future, maybe pass a ucontext_t
 	 * to _lwp_nanosleep() and allow it to recycle our kernel stack.
 	 */
-	return  _sys___nanosleep50(rqtp, rmtp);
+	return  _sys_nanosleep(rqtp, rmtp);
 }
 #endif
 
