@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.28 2008/12/06 23:14:03 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.29 2008/12/29 14:33:40 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.28 2008/12/06 23:14:03 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.29 2008/12/29 14:33:40 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,11 +90,11 @@ int
 linux32_sys_llseek(struct lwp *l, const struct linux32_sys_llseek_args *uap, register_t *retval)
 {
 	/* {
-		syscallcarg(int) fd;
+		syscallarg(int) fd;
                 syscallarg(u_int32_t) ohigh;
                 syscallarg(u_int32_t) olow;
 		syscallarg(netbsd32_voidp) res;
-		syscallcarg(int) whence;
+		syscallarg(int) whence;
 	} */
 	struct linux_sys_llseek_args ua;
 
