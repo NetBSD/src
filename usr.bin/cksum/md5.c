@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.9 2005/08/24 19:44:45 elad Exp $	*/
+/*	$NetBSD: md5.c,v 1.10 2008/12/29 00:51:29 christos Exp $	*/
 
 /*
  * MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: md5.c,v 1.9 2005/08/24 19:44:45 elad Exp $");
+__RCSID("$NetBSD: md5.c,v 1.10 2008/12/29 00:51:29 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -106,8 +106,8 @@ MD5TimeTrial(void)
 	 * Be careful that endTime-startTime is not zero.
 	 * (Bug fix from Ric * Anderson, ric@Artisoft.COM.)
 	 */
-	printf("Speed = %ld bytes/second\n",
-	    (long) TEST_BLOCK_LEN * (long) TEST_BLOCK_COUNT /
+	printf("Speed = %lld bytes/second\n",
+	    (long long) TEST_BLOCK_LEN * TEST_BLOCK_COUNT /
 	    ((endTime - startTime) != 0 ? (endTime - startTime) : 1));
 }
 
