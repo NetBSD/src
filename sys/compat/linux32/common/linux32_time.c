@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.25 2008/12/12 23:36:18 njoly Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.26 2008/12/29 14:33:40 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.25 2008/12/12 23:36:18 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.26 2008/12/29 14:33:40 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,7 +132,7 @@ int
 linux32_sys_time(struct lwp *l, const struct linux32_sys_time_args *uap, register_t *retval)
 {
 	/* {
-		syscallcarg(linux32_timep_t) t;
+		syscallarg(linux32_timep_t) t;
 	} */
         struct timeval atv;
         linux32_time_t tt;

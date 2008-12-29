@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_fcntl.c,v 1.7 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_fcntl.c,v 1.8 2008/12/29 14:33:40 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.7 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.8 2008/12/29 14:33:40 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,7 +112,7 @@ int
 linux32_sys_fcntl(struct lwp *l, const struct linux32_sys_fcntl_args *uap, register_t *retval)
 {
 	/* {
-		syscallcarg(int) fd;
+		syscallarg(int) fd;
                 syscallarg(int) cmd;
 		syscallarg(netbsd32_voidp) arg;
 	} */
