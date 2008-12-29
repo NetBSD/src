@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.19 2006/10/11 19:51:10 apb Exp $	*/
+/*	$NetBSD: ls.c,v 1.20 2008/12/29 00:53:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.19 2006/10/11 19:51:10 apb Exp $");
+__RCSID("$NetBSD: ls.c,v 1.20 2008/12/29 00:53:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,9 @@ printlong(char *name,			/* filename to print */
 	    group_from_gid(sb->st_gid, 0));
 
 	if (S_ISCHR(sb->st_mode) || S_ISBLK(sb->st_mode))
-		(void)printf("%3d,%5d ", major(sb->st_rdev),
-		    minor(sb->st_rdev));
+		(void)printf("%3llu,%5llu ",
+		    (unsigned long long)major(sb->st_rdev),
+		    (unsigned long long)minor(sb->st_rdev));
 	else
 		(void)printf("%9lld ", (long long)sb->st_size);
 	printtime(sb->st_mtime);
