@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.16 2008/08/08 13:02:10 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.17 2008/12/29 17:47:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.16 2008/08/08 13:02:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.17 2008/12/29 17:47:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -618,7 +618,6 @@ MODULE(MODULE_CLASS_MISC, putter, NULL);
 static int
 putter_modcmd(modcmd_t cmd, void *arg)
 {
-#ifdef _MODULE
 	int bmajor = -1, cmajor = -1;
 
 	switch (cmd) {
@@ -630,9 +629,4 @@ putter_modcmd(modcmd_t cmd, void *arg)
 	default:
 		return ENOTTY;
 	}
-#else
-	if (cmd == MODULE_CMD_INIT)
-		return 0;
-	return ENOTTY;
-#endif
 }
