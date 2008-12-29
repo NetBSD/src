@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_utime.c,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $	*/
+/*	$NetBSD: compat_utime.c,v 1.1.2.2 2008/12/29 06:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utime.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_utime.c,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $");
+__RCSID("$NetBSD: compat_utime.c,v 1.1.2.2 2008/12/29 06:05:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,17 +61,17 @@ __weak_alias(utime, _utime)
 int
 utime(const char *path, const struct utimbuf50 *times50)
 {
-	struct timeval50 tv50[2], *tvp50;
+	struct timeval tv[2], *tvp;
 
 	_DIAGASSERT(path != NULL);
 
 	if (times50 == NULL)
-		tvp50 = NULL;
+		tvp = NULL;
 	else {
-		tv50[0].tv_sec = times50->actime;
-		tv50[1].tv_sec = times50->modtime;
-		tv50[0].tv_usec = tv50[1].tv_usec = 0;
-		tvp50 = tv50;
+		tv[0].tv_sec = times50->actime;
+		tv[1].tv_sec = times50->modtime;
+		tv[0].tv_usec = tv[1].tv_usec = 0;
+		tvp = tv;
 	}
-	return utimes(path, tvp50);
+	return __utimes50(path, tvp);
 }
