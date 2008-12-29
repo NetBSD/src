@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.30 2007/02/17 22:49:57 pavel Exp $  */
+/*      $NetBSD: ps.c,v 1.31 2008/12/29 01:48:19 christos Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.30 2007/02/17 22:49:57 pavel Exp $");
+__RCSID("$NetBSD: ps.c,v 1.31 2008/12/29 01:48:19 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -226,7 +226,7 @@ tty2str(struct kinfo_proc2 *kp)
 	static char ttystr[4];
 	char *tty_name;
 
-	if (kp->p_tdev == NODEV ||
+	if (kp->p_tdev == (uint32_t)NODEV ||
 	    (tty_name = devname(kp->p_tdev, S_IFCHR)) == NULL)
 		strlcpy(ttystr, "??", sizeof(ttystr));
 	else {
