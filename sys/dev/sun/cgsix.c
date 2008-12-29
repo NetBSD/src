@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.38.6.1 2008/12/29 14:36:34 jdc Exp $ */
+/*	$NetBSD: cgsix.c,v 1.38.6.2 2008/12/29 14:38:06 jdc Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.1 2008/12/29 14:36:34 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.2 2008/12/29 14:38:06 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1256,9 +1256,6 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
-	/* Use software for initial screen clear on old revisions */
-	if (sc->sc_fhcrev < 2)
-		ri->ri_flg |= RI_CLEAR;
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 	
