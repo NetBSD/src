@@ -1,7 +1,10 @@
-/*	$NetBSD: percpu.c,v 1.4 2008/12/29 22:16:15 pooka Exp $	*/
+/*	$NetBSD: spl.c,v 1.1 2008/12/29 22:16:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
+ *
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,62 +29,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: percpu.c,v 1.4 2008/12/29 22:16:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.c,v 1.1 2008/12/29 22:16:15 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/kmem.h>
-#include <sys/mutex.h>
-#include <sys/percpu.h>
+
+#include <machine/intr.h>
 
 #include "rump_private.h"
 
-/*
- * A poor-man's userspace percpu emulation.  Since we can't disable
- * preemption currently, use a mutex.  Not the world's most efficient
- * method, but quite enough.  Hence, we can have only one cpu.
- */
-
-static kmutex_t pcmtx;
-
 void
-percpu_init()
+spllower(int s)
 {
 
-	mutex_init(&pcmtx, MUTEX_DEFAULT, IPL_NONE);
+	rump_splx(s);
 }
 
-void *
-percpu_getref(percpu_t *pc)
+int
+splraise(int s)
 {
 
-	mutex_enter(&pcmtx);
-	return pc;
-}
-
-void
-percpu_putref(percpu_t *pc)
-{
-
-	mutex_exit(&pcmtx);
-}
-
-percpu_t *
-percpu_alloc(size_t size)
-{
-
-	return kmem_alloc(size, KM_SLEEP);
-}
-
-void
-percpu_free(percpu_t *pc, size_t size)
-{
-
-	kmem_free(pc, size);
-}
-
-void
-percpu_foreach(percpu_t *pc, percpu_callback_t cb, void *arg)
-{
-
-	cb(pc, arg, &rump_cpu);
+	return rump_splfoo();
 }

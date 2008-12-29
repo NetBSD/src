@@ -1,16 +1,21 @@
-#	$NetBSD: Makefile.rump,v 1.17 2008/12/29 18:53:57 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.18 2008/12/29 22:16:15 pooka Exp $
 #
 
 WARNS?=		4
 NOLINT=		# kernel code
 
+# use kernel ABI instead of rump ABI (needs md code)
+.if ${MACHINE_ARCH} != "i386"
+CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
+.endif
+
 CFLAGS+=	-ffreestanding
 CPPFLAGS+=	-D_RUMPKERNEL	# XXX: this should die
 CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE
 CPPFLAGS+=	-DDIAGNOSTIC
-CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include -I${RUMPTOP}/../arch
+CPPFLAGS+=	-I${RUMPTOP}/include
 CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
 #CPPFLAGS+=	-DDEBUG
 

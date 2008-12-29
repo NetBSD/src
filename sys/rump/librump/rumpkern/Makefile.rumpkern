@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.23 2008/12/29 17:45:55 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.24 2008/12/29 22:16:15 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -67,6 +67,12 @@ SHLIB_MINOR=    0
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt -DMAXUSERS=32
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpnet -I${RUMPTOP}/librump/rumpvfs
 CFLAGS+=	-Wno-pointer-sign
+
+ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MACHINE_ARCH}
+.if exists(${ARCHDIR})
+.include "${ARCHDIR}/Makefile.inc"
+.PATH:	${ARCHDIR}
+.endif
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
