@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.220 2008/12/19 17:28:59 pgoyette Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.221 2008/12/29 15:35:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.220 2008/12/19 17:28:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.221 2008/12/29 15:35:02 pooka Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -101,6 +101,8 @@ static int sysctl_cvt_out(struct lwp *, int, const struct sysctlnode *,
 
 static int sysctl_log_add(struct sysctllog **, const struct sysctlnode *);
 static int sysctl_log_realloc(struct sysctllog *);
+
+typedef void (*sysctl_setup_func)(struct sysctllog **);
 
 struct sysctllog {
 	const struct sysctlnode *log_root;
