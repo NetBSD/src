@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.35 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.36 2008/12/29 03:49:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -258,9 +258,9 @@ main(argc, argv)
 				else if (dev != NULL)
 					printf("%s ", dev);
 				else
-					printf("dev %d,%d ",
-					    major(vnu.vnu_dev),
-					    minor(vnu.vnu_dev));
+					printf("dev %llu,%llu ",
+					    (unsigned long long)major(vnu.vnu_dev),
+					    (unsigned long long)minor(vnu.vnu_dev));
 
 				printf("inode %llu\n",
 				    (unsigned long long)vnu.vnu_ino);
