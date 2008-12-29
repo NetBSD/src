@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.19 2008/12/29 20:39:49 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.20 2008/12/29 22:16:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -90,6 +90,8 @@ typedef void	(*rump_proc_vfs_init_fn)(struct proc *);
 typedef void	(*rump_proc_vfs_release_fn)(struct proc *);
 rump_proc_vfs_init_fn rump_proc_vfs_init;
 rump_proc_vfs_release_fn rump_proc_vfs_release;
+
+extern struct cpu_info rump_cpu;
 
 #define RUMPBLK	254
 
