@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.36 2008/04/28 20:24:08 martin Exp $	*/
+/*	$NetBSD: specdev.h,v 1.37 2008/12/29 17:41:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -99,7 +99,6 @@ typedef struct specdev {
 #endif
 
 extern vnode_t	*specfs_hash[SPECHSZ];
-extern kmutex_t	specfs_lock;
 
 void	spec_node_init(vnode_t *, dev_t);
 void	spec_node_destroy(vnode_t *);
