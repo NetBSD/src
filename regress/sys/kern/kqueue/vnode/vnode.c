@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.c,v 1.4 2008/04/28 20:23:06 martin Exp $	*/
+/*	$NetBSD: vnode.c,v 1.5 2008/12/29 05:56:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,9 +98,9 @@ main(int argc, char **argv)
 		if (gettimeofday(&now, NULL) == -1)
 			err(1, "gettimeofday now");
 		timersub(&now, &then, &diff);
-		printf("vnode '%s': kevent returned %d in %ld.%06ld\n",
+		printf("vnode '%s': kevent returned %d in %lld.%06ld\n",
 			argv[1],
-			n, diff.tv_sec, diff.tv_usec);
+			n, (long long)diff.tv_sec, (long)diff.tv_usec);
 
 		if (n == -1)
 			err(1, "kevent");

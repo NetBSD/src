@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.2 2008/04/28 20:23:06 martin Exp $	*/
+/*	$NetBSD: sig.c,v 1.3 2008/12/29 05:56:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -100,8 +100,8 @@ main(int argc, char **argv)
 		if (gettimeofday(&now, NULL) == -1)
 			err(1, "gettimeofday now");
 		timersub(&now, &then, &diff);
-		printf("sig: kevent returned %d in %ld.%06ld\n", n,
-		    diff.tv_sec, diff.tv_usec);
+		printf("sig: kevent returned %d in %lld.%06ld\n", n,
+		    (long long)diff.tv_sec, (long)diff.tv_usec);
 		if (n == -1)
 			err(1, "kevent(2)");
 		else if (n == 0)
