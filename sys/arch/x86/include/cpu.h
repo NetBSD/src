@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2008/10/25 19:13:40 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2008/12/29 19:59:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -235,7 +235,7 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_STOP(_ci)	        	((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)		((_ci)->ci_func->cleanup(_ci))
 
-#if !defined(__GNUC__) || defined(_LKM)
+#if !defined(__GNUC__) || defined(_MODULE)
 /* For non-GCC and modules */
 struct cpu_info	*x86_curcpu(void);
 void	cpu_set_curpri(int);
