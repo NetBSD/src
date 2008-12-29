@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.28 2007/11/04 23:12:50 christos Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.29 2008/12/29 03:38:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -541,10 +541,11 @@ do_lock(struct file_lock *fl, int block)
 		    fl->client_name);
 	}
 	syslog(LOG_DEBUG, "lock from %s.%" PRIu32 " for file%s%s: "
-	    "dev %u ino %llu (uid %d), flags %d",
+	    "dev %llu ino %llu (uid %d), flags %d",
 	    fl->client_name, fl->client.svid,
 	    fl->client.exclusive ? " (exclusive)":"", block ? " (block)":"",
-	    st.st_dev, (unsigned long long)st.st_ino, st.st_uid, fl->flags);
+	    (unsigned long long)st.st_dev,
+	    (unsigned long long)st.st_ino, st.st_uid, fl->flags);
 	lflags = LOCK_NB;
 	if (fl->client.exclusive == 0)
 		lflags |= LOCK_SH;
