@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.125.2.5 2008/12/27 23:14:24 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.125.2.6 2008/12/29 00:01:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125.2.5 2008/12/27 23:14:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125.2.6 2008/12/29 00:01:28 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -3227,7 +3227,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ep->e_tsess = tp->t_session;
 		} else
-			ep->e_tdev = NODEV;
+			ep->e_tdev = (uint32_t)NODEV;
 		ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
 		if (SESS_LEADER(p))
 			ep->e_flag |= EPROC_SLEADER;
