@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.94 2008/11/27 20:37:21 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.95 2008/12/29 03:45:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.94 2008/11/27 20:37:21 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.95 2008/12/29 03:45:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -4577,7 +4577,7 @@ make_timestamp(time_t *in_now, bool iso)
 	localtime_r(&mytime, &ltime);
 	len += strftime(timestamp, TIMESTAMPBUFSIZE, "%FT%T", &ltime);
 	snprintf(&(timestamp[len]), frac_digits+2, ".%.*ld",
-		frac_digits, tv.tv_usec);
+		frac_digits, (long)tv.tv_usec);
 	len += frac_digits+1;
 	tzlen = strftime(&(timestamp[len]), TIMESTAMPBUFSIZE-len, "%z", &ltime);
 	len += tzlen;
