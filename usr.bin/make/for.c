@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.40 2008/12/21 19:19:55 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.41 2008/12/29 10:12:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.40 2008/12/21 19:19:55 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.41 2008/12/29 10:12:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.40 2008/12/21 19:19:55 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.41 2008/12/29 10:12:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -341,12 +341,12 @@ For_Run(int lineno)
 	    if (ch == '(' || ch == '{') {
 		char ech = ch == '(' ? ')' : '}';
 		cp++;
-		/* Check variable name against the .for loop varoables */
+		/* Check variable name against the .for loop variables */
 		STRLIST_FOREACH(var, &arg.vars, i) {
 		    len = strlen(var);
 		    if (memcmp(cp, var, len) != 0)
 			continue;
-		    if (cp[len] != ':' && cp[len] != ech)
+		    if (cp[len] != ':' && cp[len] != ech && cp[len] != '\\')
 			continue;
 		    /* Found a variable match. Replace with ${:U<value> */
 		    Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
