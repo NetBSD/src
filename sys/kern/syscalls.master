@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.196.2.8 2008/12/28 22:18:11 christos Exp $
+	$NetBSD: syscalls.master,v 1.196.2.9 2008/12/29 00:03:54 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -801,7 +801,7 @@
 			    void *tzp); }
 419	STD 		{ int sys___settimeofday50(const struct timeval *tv, \
 			    const void *tzp); }
-420	STD 		{ int sys___utimes50(const char *path, \
+420	STD  RUMP	{ int sys___utimes50(const char *path, \
 			    const struct timeval *tptr); }
 421	STD		{ int sys___adjtime50(const struct timeval *delta, \
 			    struct timeval *olddelta); }
