@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.29 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: dump.c,v 1.30 2008/12/29 16:05:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.29 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: dump.c,v 1.30 2008/12/29 16:05:01 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -350,38 +350,64 @@ dumpheader(struct ktr_header *kth)
 	union timeholder temp;
 
 	wprintf("%6d ", kth->ktr_pid);
-	if (kth->ktr_version > KTRFACv0)
+	if (kth->ktr_version > KTRFAC_VERSION(KTRFACv0))
 		wprintf("%6d ", kth->ktr_lid);
 	wprintf("%-8.*s ", MAXCOMLEN, kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
-			if (kth->ktr_version == KTRFACv0) {
+			switch (kth->ktr_version) {
+			case KTRFAC_VERSION(KTRFACv0):
 				if (prevtime.tv.tv_sec == 0)
 					temp.tv.tv_sec = temp.tv.tv_usec = 0;
 				else
-					timersub(&kth->ktr_tv,
+					timersub(&kth->ktr_otv,
 					    &prevtime.tv, &temp.tv);
-				prevtime.tv = kth->ktr_tv;
-			} else {
+				prevtime.tv.tv_sec = kth->ktr_otv.tv_sec;
+				prevtime.tv.tv_usec = kth->ktr_otv.tv_usec;
+				break;
+
+			case KTRFAC_VERSION(KTRFACv1):
 				if (prevtime.ts.tv_sec == 0)
 					temp.ts.tv_sec = temp.ts.tv_nsec = 0;
 				else
 					timespecsub(&kth->ktr_time,
 					    &prevtime.ts, &temp.ts);
-				prevtime.ts = kth->ktr_time;
+				prevtime.ts.tv_sec = kth->ktr_ots.tv_sec;
+				prevtime.ts.tv_nsec = kth->ktr_ots.tv_nsec;
+				break;
+
+			case KTRFAC_VERSION(KTRFACv2):
+				if (prevtime.ts.tv_sec == 0)
+					temp.ts.tv_sec = temp.ts.tv_nsec = 0;
+				else
+					timespecsub(&kth->ktr_time,
+					    &prevtime.ts, &temp.ts);
+				prevtime.ts.tv_sec = kth->ktr_ts.tv_sec;
+				prevtime.ts.tv_nsec = kth->ktr_ts.tv_nsec;
+				break;
 			}
 		} else {
-			if (kth->ktr_version == KTRFACv0)
-				temp.tv = kth->ktr_tv;
-			else
-				temp.ts = kth->ktr_time;
+			switch (kth->ktr_version) {
+			case KTRFAC_VERSION(KTRFACv0):
+				temp.tv.tv_sec = kth->ktr_otv.tv_sec;
+				temp.tv.tv_usec = kth->ktr_otv.tv_usec;
+				break;
+			case KTRFAC_VERSION(KTRFACv1):
+				temp.ts.tv_sec = kth->ktr_ots.tv_sec;
+				temp.ts.tv_nsec = kth->ktr_ots.tv_nsec;
+				break;
+			case KTRFAC_VERSION(KTRFACv2):
+				temp.ts.tv_sec = kth->ktr_ts.tv_sec;
+				temp.ts.tv_nsec = kth->ktr_ts.tv_nsec;
+				break;
+			}
 		}
-		if (kth->ktr_version == KTRFACv0)
-			wprintf("%ld.%06ld ",
-			    (long)temp.tv.tv_sec, (long)temp.tv.tv_usec);
+		if (kth->ktr_version == KTRFAC_VERSION(KTRFACv0))
+			wprintf("%lld.%06ld ",
+			    (long long)temp.tv.tv_sec, (long)temp.tv.tv_usec);
 		else
-			wprintf("%ld.%09ld ",
-			    (long)temp.ts.tv_sec, (long)temp.ts.tv_nsec);
+			wprintf("%lld.%09ld ",
+			    (long long)temp.ts.tv_sec, (long)temp.ts.tv_nsec);
 	}
 }
 
@@ -482,7 +508,7 @@ syscallprint(struct ktr_header *kth)
 	case SYS_link:
 	case SYS_unlink:
 	case SYS_chdir:
-	case SYS_mknod:
+	case SYS___mknod50:
 	case SYS_chmod:
 	case SYS_chown:
 	case SYS_unmount:
@@ -498,7 +524,7 @@ syscallprint(struct ktr_header *kth)
 	case SYS_mkfifo:
 	case SYS_mkdir:
 	case SYS_rmdir:
-	case SYS_utimes:
+	case SYS___utimes50:
 	case SYS_quotactl:
 	case SYS_statvfs1:
 	case SYS_compat_30_getfh:
@@ -508,9 +534,9 @@ syscallprint(struct ktr_header *kth)
 	case SYS___posix_rename:
 	case SYS_lchmod:
 	case SYS_lchown:
-	case SYS_lutimes:
-	case SYS___stat30:
-	case SYS___lstat30:
+	case SYS___lutimes50:
+	case SYS___stat50:
+	case SYS___lstat50:
 	case SYS___posix_chown:
 	case SYS___posix_lchown:
 	case SYS_lchflags:
