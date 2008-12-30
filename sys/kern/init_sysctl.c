@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.125.2.6 2008/12/29 00:01:28 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.125.2.7 2008/12/30 18:50:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125.2.6 2008/12/29 00:01:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125.2.7 2008/12/30 18:50:25 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125.2.6 2008/12/29 00:01:28 christ
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
 #include <sys/ksem.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
@@ -1929,7 +1927,7 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	 */
 	error = 0;
 	sysctl_unlock();
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (i = 0; i < max_devsw_convs; i++) {
 		dname = devsw_conv[i].d_name;
 		if (dname == NULL)
@@ -1942,15 +1940,15 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 		kd.d_bmajor = devsw_conv[i].d_bmajor;
 		kd.d_cmajor = devsw_conv[i].d_cmajor;
 		strlcpy(kd.d_name, dname, sizeof kd.d_name);
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		error = dcopyout(l, &kd, where, sizeof kd);
-		mutex_enter(&specfs_lock);
+		mutex_enter(&device_lock);
 		if (error != 0)
 			break;
 		buflen -= sizeof kd;
 		where += sizeof kd;
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	sysctl_relock();
 	*oldlenp = where - start;
 	return error;

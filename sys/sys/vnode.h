@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.197.8.2 2008/12/28 22:00:03 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.197.8.3 2008/12/30 18:50:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
