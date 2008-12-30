@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.48.8.2 2008/11/01 21:22:28 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.48.8.3 2008/12/30 18:50:25 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48.8.2 2008/11/01 21:22:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48.8.3 2008/12/30 18:50:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48.8.2 2008/11/01 21:22:28 christ
 #include <sys/conf.h>
 
 #include <miscfs/procfs/procfs.h>
-#include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_exec.h>
 
@@ -198,7 +197,7 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 	if (offset >= LBFSZ)
 		goto out;
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (i = 0; i < max_devsw_convs; i++) {
 		if ((devsw_conv[i].d_name == NULL) || 
 		    (devsw_conv[i].d_cmajor == -1))
@@ -207,14 +206,14 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 		offset += snprintf(&bf[offset], LBFSZ - offset, 
 		    "%3d %s\n", devsw_conv[i].d_cmajor, devsw_conv[i].d_name);
 		if (offset >= LBFSZ) {
-			mutex_exit(&specfs_lock);
+			mutex_exit(&device_lock);
 			goto out;
 		}
 	}
 
 	offset += snprintf(&bf[offset], LBFSZ - offset, "\nBlock devices:\n");
 	if (offset >= LBFSZ) {
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		goto out;
 	}
 
@@ -226,11 +225,11 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 		offset += snprintf(&bf[offset], LBFSZ - offset, 
 		    "%3d %s\n", devsw_conv[i].d_bmajor, devsw_conv[i].d_name);
 		if (offset >= LBFSZ) {
-			mutex_exit(&specfs_lock);
+			mutex_exit(&device_lock);
 			goto out;
 		}
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 
 	error = uiomove_frombuf(bf, offset, uio);
 out:
