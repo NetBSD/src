@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.24 2008/04/30 13:10:47 martin Exp $
+#	$NetBSD: bind2netbsd,v 1.25 2008/12/30 17:53:47 he Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -79,10 +79,11 @@ cd $r
 pax -rw * $d
 
 ### Remove the $'s around RCS tags
-find $d -type f -print | xargs egrep -l '\$(Id|Created|Header)' | while read f; do
+find $d -type f -print | xargs egrep -l '\$(Id|Created|Header|Revision)' | while read f; do
 	sed -e 's/\$\(Id.*\) \$/\1/' \
 	    -e 's/\$\(Created.*\) \$/\1/' \
 	    -e 's/\$\(Header.*\) \$/\1/' \
+	    -e 's/\$\(Revision.*\) \$/\1/' \
 	    < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
 	echo removed \$RCS tag from $f
 done
