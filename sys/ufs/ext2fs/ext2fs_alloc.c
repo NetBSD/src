@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.35.20.3 2008/12/27 23:14:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.35.20.4 2008/12/30 19:30:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.35.20.3 2008/12/27 23:14:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.35.20.4 2008/12/30 19:30:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,8 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 	bno = dtogd(fs, bno);
 	if (isclr(bbp, bno)) {
 		printf("dev = 0x%llx, block = %lld, fs = %s\n",
-			ip->i_dev, (long long)bno, fs->e2fs_fsmnt);
+		    (unsigned long long)ip->i_dev, (long long)bno,
+		    fs->e2fs_fsmnt);
 		panic("blkfree: freeing free block");
 	}
 	clrbit(bbp, bno);
@@ -559,7 +560,8 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 	fs = pip->i_e2fs;
 	if ((u_int)ino > fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
-			pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
+		    (unsigned long long)pip->i_dev, (unsigned long long)ino,
+		    fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp,
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
@@ -572,7 +574,8 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 	ino = (ino - 1) % fs->e2fs.e2fs_ipg;
 	if (isclr(ibp, ino)) {
 		printf("dev = 0x%llx, ino = %llu, fs = %s\n",
-		    pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
+		    (unsigned long long)pip->i_dev,
+		    (unsigned long long)ino, fs->e2fs_fsmnt);
 		if (fs->e2fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}
