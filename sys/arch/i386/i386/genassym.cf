@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.79 2008/12/03 11:40:17 ad Exp $
+#	$NetBSD: genassym.cf,v 1.80 2008/12/30 13:15:49 pooka Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ include <xen/xen-public/xen.h>
 endif
 endif
 
-if defined(_KERNEL) && !defined(_LKM)
+if defined(_KERNEL) && defined(_KERNEL_OPT)
 include "ioapic.h"
 ifndef XEN
 include "apmbios.h"
@@ -138,7 +138,7 @@ include <machine/i82093reg.h>
 include <machine/i82093var.h>
 endif
 
-if defined(_KERNEL) && !defined(_LKM)
+if defined(_KERNEL) && defined(_KERNEL_OPT)
 include "isa.h"
 endif
 if NISA > 0
