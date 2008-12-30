@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.15 2008/11/24 05:54:39 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.16 2008/12/30 10:31:22 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -256,8 +256,10 @@ ukfs_release(struct ukfs *fs, int flags)
 	rump_mnt_destroy(fs->ukfs_mp);
 
 	pthread_spin_destroy(&fs->ukfs_spin);
-	if (fs->ukfs_devfd != -1)
+	if (fs->ukfs_devfd != -1) {
 		flock(fs->ukfs_devfd, LOCK_UN);
+		close(fs->ukfs_devfd);
+	}
 	free(fs);
 }
 
