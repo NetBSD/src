@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.48.72.2 2008/12/28 20:53:44 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.48.72.3 2008/12/30 19:31:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -125,8 +125,6 @@ struct bpf_version {
 #define BIOCSORTIMEOUT	 _IOW('B',109, struct timeval50)
 #define BIOCGORTIMEOUT	 _IOR('B',110, struct timeval50)
 #endif
-#define BIOCSRTIMEOUT	 _IOW('B',109, struct timeval)
-#define BIOCGRTIMEOUT	 _IOR('B',110, struct timeval)
 #define BIOCGSTATS	 _IOR('B',111, struct bpf_stat)
 #define BIOCGSTATSOLD	 _IOR('B',111, struct bpf_stat_old)
 #define BIOCIMMEDIATE	 _IOW('B',112, u_int)
@@ -139,6 +137,8 @@ struct bpf_version {
 #define BIOCGDLTLIST	_IOWR('B',119, struct bpf_dltlist)
 #define BIOCGSEESENT	 _IOR('B',120, u_int)
 #define BIOCSSEESENT	 _IOW('B',121, u_int)
+#define BIOCSRTIMEOUT	 _IOW('B',122, struct timeval)
+#define BIOCGRTIMEOUT	 _IOR('B',123, struct timeval)
 
 /*
  * Structure prepended to each packet. This is "wire" format, so we
