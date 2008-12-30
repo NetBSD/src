@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.rump,v 1.18 2008/12/29 22:16:15 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.19 2008/12/30 19:05:40 pooka Exp $
 #
 
 WARNS?=		4
 NOLINT=		# kernel code
 
 # use kernel ABI instead of rump ABI (needs md code)
-.if ${MACHINE_ARCH} != "i386"
+.if ${MACHINE_ARCH} != "i386" && \
+    ${MACHINE_ARCH} != "x86_64"
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
 .endif
 
