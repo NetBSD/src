@@ -1,4 +1,4 @@
-/* $NetBSD: elantech.c,v 1.2 2008/12/14 00:53:52 jmcneill Exp $ */
+/* $NetBSD: elantech.c,v 1.3 2008/12/30 10:44:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.2 2008/12/14 00:53:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.3 2008/12/30 10:44:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.2 2008/12/14 00:53:52 jmcneill Exp $"
 #include <dev/pckbport/elantechvar.h>
 #include <dev/pckbport/pmsreg.h>
 #include <dev/pckbport/pmsvar.h>
+
+/* #define ELANTECH_DEBUG */
 
 static int elantech_xy_unprecision_nodenum;
 static int elantech_z_unprecision_nodenum;
@@ -372,9 +374,11 @@ pms_elantech_probe_init(void *opaque)
 		goto doreset;
 
 	if (!ELANTECH_MAGIC(resp)) {
+#ifdef ELANTECH_DEBUG
 		aprint_error_dev(psc->sc_dev,
 		    "bad elantech magic (%X %X %X)\n",
 		    resp[0], resp[1], resp[2]);
+#endif
 		res = 1;
 		goto doreset;
 	}
