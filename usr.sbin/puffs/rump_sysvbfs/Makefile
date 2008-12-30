@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/04 12:21:25 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2008/12/30 22:20:56 pooka Exp $
 #
+
+.include <bsd.own.mk>
+.undef RUMPKMOD
 
 MOUNTNAME=	sysvbfs
 

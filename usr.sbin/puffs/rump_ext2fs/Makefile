@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2008/11/26 19:41:11 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2008/12/30 22:20:56 pooka Exp $
 #
+
+.include <bsd.own.mk>
+.undef RUMPKMOD
 
 MOUNTNAME=	ext2fs
 
