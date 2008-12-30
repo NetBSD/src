@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.32.8.2 2008/11/01 21:22:27 christos Exp $ */
+/* $NetBSD: kern_tc.c,v 1.32.8.3 2008/12/30 19:31:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.32.8.2 2008/11/01 21:22:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.32.8.3 2008/12/30 19:31:51 christos Exp $");
 
 #include "opt_ntp.h"
 
@@ -597,8 +597,8 @@ tc_setclock(const struct timespec *ts)
 	if (timestepwarnings) {
 		bintime2timespec(&bt2, &ts2);
 		log(LOG_INFO, "Time stepped from %lld.%09ld to %lld.%09ld\n",
-		    ts2.tv_sec, ts2.tv_nsec,
-		    ts->tv_sec, ts->tv_nsec);
+		    (long long)ts2.tv_sec, ts2.tv_nsec,
+		    (long long)ts->tv_sec, ts->tv_nsec);
 	}
 }
 
