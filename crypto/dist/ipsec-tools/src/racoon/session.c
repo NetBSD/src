@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.21 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.22 2008/12/30 15:50:25 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -269,11 +269,6 @@ session(void)
 		sigreq[i] = 0;
 
 	while (1) {
-		if (dying)
-			rfds = maskdying;
-		else
-			rfds = mask0;
-
 		/*
 		 * asynchronous requests via signal.
 		 * make sure to reset sigreq to 0.
@@ -282,6 +277,14 @@ session(void)
 
 		/* scheduling */
 		timeout = schedular();
+
+		/* schedular can change select() mask, so we reset
+		 * the working copy here */
+		if (dying)
+			rfds = maskdying;
+		else
+			rfds = mask0;
+
 		error = select(nfds + 1, &rfds, NULL, NULL, timeout);
 		if (error < 0) {
 			switch (errno) {
