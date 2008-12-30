@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.197 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.198 2008/12/30 15:08:09 he Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ struct vattr {
 	nlink_t		va_nlink;	/* number of references to file */
 	uid_t		va_uid;		/* owner user id */
 	gid_t		va_gid;		/* owner group id */
-	long		va_fsid;	/* file system id (dev for now) */
+	u_long		va_fsid;	/* file system id (dev for now) */
 	ino_t		va_fileid;	/* file id */
 	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
