@@ -1,3 +1,8 @@
+2008-12-30  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/session.c: reset working copy of select mask after
+	  call to schedular() as it can change file descriptor mask
+	  (this was broken by my commit on 2008-12-23)
+
 2008-12-23  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/{admin.c|admin_var.h|cfparse.y|debug.h|evt.c|evt.h|
 	  grabmyaddr.c|grabmyaddr.h|handler.h|isakmp.c|isakmp_inf.c|
