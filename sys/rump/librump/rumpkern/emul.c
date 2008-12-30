@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.64 2008/12/29 17:45:55 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.65 2008/12/30 00:36:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.64 2008/12/29 17:45:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.65 2008/12/30 00:36:38 pooka Exp $");
 
 #define malloc(a,b,c) __wrap_malloc(a,b,c)
 
@@ -376,7 +376,6 @@ struct kthdesc {
 	void (*f)(void *);
 	void *arg;
 	struct lwp *mylwp;
-	bool mpsafe;
 };
 
 static void *
@@ -391,7 +390,7 @@ threadbouncer(void *arg)
 	rumpuser_set_curlwp(k->mylwp);
 	kmem_free(k, sizeof(struct kthdesc));
 
-	if (!k->mpsafe)
+	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_LOCK(1, NULL);
 	f(thrarg);
 	panic("unreachable, should kthread_exit()");
@@ -440,7 +439,8 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k->f = func;
 	k->arg = arg;
 	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
-	k->mpsafe = flags & KTHREAD_MPSAFE;
+	if (flags & KTHREAD_MPSAFE)
+		l->l_pflag |= LP_MPSAFE;
 	if (fmt) {
 		va_start(ap, fmt);
 		vsnprintf(thrstore, sizeof(thrname), fmt, ap);
@@ -460,7 +460,9 @@ void
 kthread_exit(int ecode)
 {
 
-	panic("FIXME: kthread_exit() does not support mpsafe locking");
+	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
+		KERNEL_UNLOCK_ONE(NULL);
+	rump_clear_curlwp();
 	rumpuser_thread_exit();
 }
 
