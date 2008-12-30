@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.552 2008/12/23 02:54:11 agc Exp $
+#	$NetBSD: bsd.own.mk,v 1.553 2008/12/30 21:31:10 pooka Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -550,6 +550,14 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf
 .else
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
+.endif
+
+#
+# Determine if arch uses native kernel modules with rump
+#
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+RUMPKMOD=	# defined
 .endif
 
 TARGETS+=	all clean cleandir depend dependall includes \
