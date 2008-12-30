@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2008/12/03 11:40:17 ad Exp $
+#	$NetBSD: genassym.cf,v 1.40 2008/12/30 13:15:49 pooka Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ if defined(COMPAT_LINUX32)
 include <machine/linux32_machdep.h>
 endif
 
-if defined(_KERNEL) && !defined(_LKM)
+if defined(_KERNEL) && defined(_KERNEL_OPT)
 include "isa.h"
 include "ioapic.h"
 endif
