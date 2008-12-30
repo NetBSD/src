@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2008/11/17 08:54:39 pooka Exp $
+#	$NetBSD: Makefile,v 1.75 2008/12/30 22:18:11 pooka Exp $
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net net80211 netatalk netbt netipsec netinet netinet6 \
@@ -7,12 +7,10 @@ SUBDIR=	altq arch compat dev fs miscfs \
 
 # interrupt implementation depends on the kernel within the port
 .if (${MACHINE} != "evbppc")
+.if make(obj) || make(cleandir)
 SUBDIR+=modules
 .endif
-
-# Speedup stubs for some subtrees that don't need to run these rules
-includes-modules:
-	@true
+.endif
 
 .if make(includes) || make(obj) || make(cleandir)
 SUBDIR+= rump
