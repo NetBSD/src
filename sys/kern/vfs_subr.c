@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.335.2.4 2008/12/27 23:14:24 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.335.2.5 2008/12/30 18:50:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335.2.4 2008/12/27 23:14:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335.2.5 2008/12/30 18:50:25 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335.2.4 2008/12/27 23:14:24 christos 
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -223,7 +224,6 @@ vntblinit(void)
 	mutex_init(&mntid_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&specfs_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	mount_specificdata_domain = specificdata_domain_create();
@@ -1902,7 +1902,7 @@ vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 	vnode_t *vp;
 	int rc = 0;
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (vp = specfs_hash[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
 		if (dev != vp->v_rdev || type != vp->v_type)
 			continue;
@@ -1910,7 +1910,7 @@ vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 		rc = 1;
 		break;
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	return (rc);
 }
 
@@ -1927,7 +1927,7 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 
 	vp = NULL;	/* XXX gcc */
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (mn = minl; mn <= minh; mn++) {
 		dev = makedev(maj, mn);
 		vpp = &specfs_hash[SPECHASH(dev)];
@@ -1939,16 +1939,16 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 				vp = vp->v_specnext;
 				continue;
 			}
-			mutex_exit(&specfs_lock);
+			mutex_exit(&device_lock);
 			if (vget(vp, LK_INTERLOCK) == 0) {
 				VOP_REVOKE(vp, REVOKEALL);
 				vrele(vp);
 			}
-			mutex_enter(&specfs_lock);
+			mutex_enter(&device_lock);
 			vp = *vpp;
 		}
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 }
 
 /*
@@ -1959,17 +1959,17 @@ vcount(vnode_t *vp)
 {
 	int count;
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	mutex_enter(&vp->v_interlock);
 	if (vp->v_specnode == NULL) {
 		count = vp->v_usecount - ((vp->v_iflag & VI_INACTPEND) != 0);
 		mutex_exit(&vp->v_interlock);
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		return (count);
 	}
 	mutex_exit(&vp->v_interlock);
 	count = vp->v_specnode->sn_dev->sd_opencnt;
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	return (count);
 }
 
@@ -1997,7 +1997,7 @@ vrevoke(vnode_t *vp)
 	}
 
 	vpp = &specfs_hash[SPECHASH(dev)];
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (vq = *vpp; vq != NULL;) {
 		/* If clean or being cleaned, then ignore it. */
 		mutex_enter(&vq->v_interlock);
@@ -2007,7 +2007,7 @@ vrevoke(vnode_t *vp)
 			vq = vq->v_specnext;
 			continue;
 		}
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		if (vq->v_usecount == 0) {
 			vremfree(vq);
 			vq->v_usecount = 1;
@@ -2016,10 +2016,10 @@ vrevoke(vnode_t *vp)
 		}
 		vclean(vq, DOCLOSE);
 		vrelel(vq, 0);
-		mutex_enter(&specfs_lock);
+		mutex_enter(&device_lock);
 		vq = *vpp;
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 }
 
 /*
@@ -2209,7 +2209,7 @@ vfs_mountedon(vnode_t *vp)
 		return ENOTBLK;
 	if (vp->v_specmountpoint != NULL)
 		return (EBUSY);
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (vq = specfs_hash[SPECHASH(vp->v_rdev)]; vq != NULL;
 	    vq = vq->v_specnext) {
 		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
@@ -2219,7 +2219,7 @@ vfs_mountedon(vnode_t *vp)
 			break;
 		}
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.175.2.5 2008/12/28 19:48:25 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.175.2.6 2008/12/30 18:50:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1096,7 +1096,6 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	__link_set_add_text(sysctl_funcs, name);		\
 	static void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
-typedef void (*sysctl_setup_func)(struct sysctllog **);
 
 #endif /* !_MODULE */
 
