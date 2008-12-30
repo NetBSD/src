@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.15.72.2 2008/11/01 21:22:26 christos Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.15.72.3 2008/12/30 19:34:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ typedef unsigned long linux_ino_t;
 typedef unsigned short linux_mode_t;
 typedef unsigned short linux_nlink_t;
 typedef long linux_time_t;
-typedef long linux_useconds_t;
+typedef long linux_suseconds_t;
 typedef long linux_clock_t;
 typedef long linux_off_t;
 typedef int linux_pid_t;
