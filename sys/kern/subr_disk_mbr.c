@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.31 2008/01/02 11:48:53 ad Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.32 2008/12/30 19:38:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -38,9 +38,9 @@
  * If we don't find a label searching the MBR, we look at the start of the
  * disk, if that fails then a label is faked up from the MBR.
  *
- * If there isn't a disklabel or anything in the MBR then partition a
- * is set to cover the whole disk.
- * Useful for files that contain single filesystems (etc).
+ * If there isn't a disklabel or anything in the MBR then the disc is searched
+ * for ecma-167/iso9660/udf style partition indicators.
+ * Useful for media or files that contain single filesystems (etc).
  *
  * This code will read host endian netbsd labels from little endian MBR.
  *
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.31 2008/01/02 11:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.32 2008/12/30 19:38:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.31 2008/01/02 11:48:53 ad Exp $"
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
+#include <sys/fcntl.h>
+#include <sys/conf.h>
+#include <sys/cdio.h>
+#include <fs/udf/ecma167-udf.h>
+
+#include <sys/kauth.h>
 
 #include "opt_mbr.h"
 
@@ -226,6 +233,142 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 	return SCAN_CONTINUE;
 }
 
+
+static void
+scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
+	int *is_iso9660, int *is_udf)
+{
+	struct vrs_desc *vrsd;
+	uint64_t vrs;
+	int sector_size;
+	int blks;
+
+	sector_size = a->lp->d_secsize;
+	blks = sector_size / DEV_BSIZE;
+
+	/* by definition */
+	vrs = ((32*1024 + sector_size - 1) / sector_size)
+	        + first_sector;
+
+	/* read first vrs sector */
+	if (read_sector(a, vrs * blks, blks))
+		return;
+
+	/* skip all CD001 records */
+	vrsd = a->bp->b_data;
+	while (memcmp(vrsd->identifier, "CD001", 5) == 0) {
+		/* for sure */
+		*is_iso9660 = first_sector;
+
+		vrs++;
+		if (read_sector(a, vrs * blks, blks))
+			return;
+	}
+
+	/* search for BEA01 */
+	vrsd = a->bp->b_data;
+	/* printf("vrsd->identifier = `%s`\n", vrsd->identifier); */
+	if (memcmp(vrsd->identifier, "BEA01", 5))
+		return;
+
+	/* read successor */
+	vrs++;
+	if (read_sector(a, vrs * blks, blks))
+		return;
+
+	/* check for NSR[23] */
+	vrsd = a->bp->b_data;
+	if (memcmp(vrsd->identifier, "NSR0", 4))
+		return;
+
+	*is_udf = first_sector;
+}
+
+
+/*
+ * Scan for ISO Volume Recognition Sequences
+ */
+
+static int
+scan_iso_vrs(mbr_args_t *a)
+{
+	struct mmc_discinfo  di;
+	struct mmc_trackinfo ti;
+	dev_t dev;
+	uint64_t sector;
+	int is_iso9660, is_udf;
+	int tracknr, sessionnr;
+	int new_session, error;
+
+	is_iso9660 = is_udf = -1;
+
+	/* parse all sessions of disc if we're on a SCSI MMC device */
+	if (a->lp->d_flags & D_SCSI_MMC) {
+		/* get disc info */
+		dev = a->bp->b_dev;
+		error = bdev_ioctl(dev, MMCGETDISCINFO, &di, FKIOCTL, curlwp);
+		if (error)
+			return SCAN_CONTINUE;
+
+		/* go trough all (data) tracks */
+		sessionnr = -1;
+		for (tracknr = di.first_track;
+		    tracknr <= di.first_track_last_session; tracknr++)
+		{
+			ti.tracknr = tracknr;
+			error = bdev_ioctl(dev, MMCGETTRACKINFO, &ti,
+					FKIOCTL, curlwp);
+			if (error)
+				return SCAN_CONTINUE;
+			new_session = (ti.sessionnr != sessionnr);
+			sessionnr = ti.sessionnr;
+			if (new_session) {
+				if (ti.flags & MMC_TRACKINFO_BLANK)
+					continue;
+				if (!(ti.flags & MMC_TRACKINFO_DATA))
+					continue;
+				sector = ti.track_start;
+				scan_iso_vrs_session(a, sector,
+					&is_iso9660, &is_udf);
+			}
+		}
+		if (is_udf < 0) {
+			/* defaulting udf on the RAW partition */
+			is_udf = 0;
+		}
+	} else {
+		/* try start of disc */
+		sector = 0;
+		scan_iso_vrs_session(a, sector, &is_iso9660, &is_udf);
+		strncpy(a->lp->d_typename, "iso partition", 16);
+	}
+
+	if ((is_iso9660 < 0) && (is_udf < 0))
+		return SCAN_CONTINUE;
+
+	/* add iso9660 partition if found */
+	if (is_iso9660 >= 0) {
+		/* set 'a' partition to iso9660 */
+		a->lp->d_partitions[0].p_offset = 0;
+		a->lp->d_partitions[0].p_size   = a->lp->d_secperunit;
+		a->lp->d_partitions[0].p_cdsession = is_iso9660;
+		a->lp->d_partitions[0].p_fstype = FS_ISO9660;
+	} else {
+		a->lp->d_partitions[0].p_size   = 0;
+		a->lp->d_partitions[0].p_fstype = FS_UNUSED;
+	}
+
+	/* add udf partition if found */
+	if (is_udf >= 0) {
+		/* set the RAW partion to UDF for CD/USB stick etc */
+		a->lp->d_partitions[RAW_PART].p_fstype = FS_UDF;
+		/* UDF doesn't care about the cd session specified here */
+	}
+
+	return SCAN_FOUND;
+}
+
+
 /*
  * Attempt to read a disk label from a device
  * using the indicated strategy routine.
@@ -278,7 +421,14 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	lp->d_partitions[0].p_fstype = FS_BSDFFS;
 
 	/* get a buffer and initialize it */
-	a.bp = geteblk(2 * (int)lp->d_secsize);
+
+	/*
+	 * XXX somehow memory is getting corrupted on 2048 byte sectors if its
+	 * just 2 times 2048!! It even reads only 2048 bytes max in one go on
+	 * optical media.
+	 */
+
+	a.bp = geteblk(3 * (int)lp->d_secsize);
 	a.bp->b_dev = dev;
 
 	if (osdep)
@@ -296,6 +446,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		rval = validate_label(&a, 0);
 	}
 
+	if (rval == SCAN_CONTINUE) {
+		rval = scan_iso_vrs(&a);
+	}
 #if 0
 	/*
 	 * Save sector where we found the label for the 'don't overwrite
