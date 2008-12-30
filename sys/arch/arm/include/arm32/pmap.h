@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89 2008/12/09 20:45:44 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90 2008/12/30 05:51:19 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -122,6 +122,16 @@
 #define	L2_LOG2		((32 - L1_S_SHIFT) - L2_BUCKET_LOG2)
 #define	L2_SIZE		(1 << L2_LOG2)
 
+/*
+ * tell MI code that the cache is virtually-indexed.
+ * ARMv6 is physically-tagged but all others are virtually-tagged.
+ */
+#if ARM_MMU_V6 > 0
+#define PMAP_CACHE_VIPT
+#else
+#define PMAP_CACHE_VIVT
+#endif
+
 #ifndef _LOCORE
 
 struct l1_ttable;
@@ -230,8 +240,15 @@ extern pv_addr_t kernel_l1pt;
 #define	PVF_WIRED	0x04		/* mapping is wired */
 #define	PVF_WRITE	0x08		/* mapping is writable */
 #define	PVF_EXEC	0x10		/* mapping is executable */
+#ifdef PMAP_CACHE_VIVT
 #define	PVF_UNC		0x20		/* mapping is 'user' non-cacheable */
 #define	PVF_KNC		0x40		/* mapping is 'kernel' non-cacheable */
+#define	PVF_NC		(PVF_UNC|PVF_KNC)
+#endif
+#ifdef PMAP_CACHE_VIPT
+#define	PVF_NC		0x20		/* mapping is 'kernel' non-cacheable */
+#define	PVF_MULTCLR	0x40		/* mapping is multi-colored */
+#endif
 #define	PVF_COLORED	0x80		/* page has or had a color */
 #define	PVF_KENTRY	0x0100		/* page entered via pmap_kenter_pa */
 #define	PVF_KMPAGE	0x0200		/* page is used for kmem */
@@ -239,7 +256,6 @@ extern pv_addr_t kernel_l1pt;
 #define	PVF_KMOD	0x0800		/* unmanaged page is modified  */
 #define	PVF_KWRITE	(PVF_KENTRY|PVF_WRITE)
 #define	PVF_DMOD	(PVF_MOD|PVF_KMOD|PVF_KMPAGE)
-#define	PVF_NC		(PVF_UNC|PVF_KNC)
 
 /*
  * Commonly referenced structures
@@ -495,16 +511,6 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #endif /* !_LOCORE */
 
 /*****************************************************************************/
-
-/*
- * tell MI code that the cache is virtually-indexed.
- * ARMv6 is physically-tagged but all others are virtually-tagged.
- */
-#if ARM_MMU_V6 > 0
-#define PMAP_CACHE_VIPT
-#else
-#define PMAP_CACHE_VIVT
-#endif
 
 /*
  * Definitions for MMU domains
