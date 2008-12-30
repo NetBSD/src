@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.283 2008/09/05 22:25:39 gmcgarry Exp $	*/
+/*	$NetBSD: cd.c,v 1.284 2008/12/30 19:38:36 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283 2008/09/05 22:25:39 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.284 2008/12/30 19:38:36 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1708,12 +1708,12 @@ cdgetdefaultlabel(struct cd_softc *cd, struct cd_formatted_toc *toc,
 	 * We could probe the mode pages to figure out what kind of disc it is.
 	 * Is this worthwhile?
 	 */
-	strncpy(lp->d_typename, "mydisc", 16);
+	strncpy(lp->d_typename, "optical media", 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = cd->params.disksize;
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
-	lp->d_flags = D_REMOVABLE;
+	lp->d_flags = D_REMOVABLE | D_SCSI_MMC;
 
 	if (cdreadmsaddr(cd, toc, &lastsession) != 0)
 		lastsession = 0;
@@ -1722,9 +1722,11 @@ cdgetdefaultlabel(struct cd_softc *cd, struct cd_formatted_toc *toc,
 	lp->d_partitions[0].p_size = lp->d_secperunit;
 	lp->d_partitions[0].p_cdsession = lastsession;
 	lp->d_partitions[0].p_fstype = FS_ISO9660;
+
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UDF;
+
 	lp->d_npartitions = RAW_PART + 1;
 
 	lp->d_magic = DISKMAGIC;
@@ -1745,6 +1747,7 @@ cdgetdisklabel(struct cd_softc *cd)
 	struct disklabel *lp = cd->sc_dk.dk_label;
 	struct cd_formatted_toc toc;
 	const char *errstring;
+	int bmajor;
 
 	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
@@ -1752,9 +1755,13 @@ cdgetdisklabel(struct cd_softc *cd)
 
 	/*
 	 * Call the generic disklabel extraction routine
+	 *
+	 * bmajor follows ata_raid code
 	 */
-	errstring = readdisklabel(MAKECDDEV(0, device_unit(cd->sc_dev),
-	    RAW_PART), cdstrategy, lp, cd->sc_dk.dk_cpulabel);
+	bmajor = devsw_name2blk(device_xname(cd->sc_dev), NULL, 0);
+	errstring = readdisklabel(MAKECDDEV(bmajor,
+	    device_unit(cd->sc_dev), RAW_PART),
+	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
 
 	/* if all went OK, we are passed a NULL error string */
 	if (errstring == NULL)
