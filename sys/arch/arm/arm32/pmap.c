@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.193 2008/12/10 11:10:18 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.194 2008/12/30 05:51:19 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.193 2008/12/10 11:10:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2008/12/30 05:51:19 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -310,6 +310,16 @@ static paddr_t pmap_kernel_l2ptp_phys;
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", name)
 
 #ifdef PMAP_CACHE_VIPT
+static struct evcnt pmap_ev_vac_clean_one =
+   PMAP_EVCNT_INITIALIZER("clean page (1 color)");
+static struct evcnt pmap_ev_vac_flush_one =
+   PMAP_EVCNT_INITIALIZER("flush page (1 color)");
+static struct evcnt pmap_ev_vac_flush_lots =
+   PMAP_EVCNT_INITIALIZER("flush page (2+ colors)");
+EVCNT_ATTACH_STATIC(pmap_ev_vac_clean_one);
+EVCNT_ATTACH_STATIC(pmap_ev_vac_flush_one);
+EVCNT_ATTACH_STATIC(pmap_ev_vac_flush_lots);
+
 static struct evcnt pmap_ev_vac_color_new =
    PMAP_EVCNT_INITIALIZER("new page color");
 static struct evcnt pmap_ev_vac_color_reuse =
@@ -656,7 +666,12 @@ static int		pmap_clean_page(struct pv_entry *, bool);
 #endif
 #ifdef PMAP_CACHE_VIPT
 static void		pmap_syncicache_page(struct vm_page *);
-static void		pmap_flush_page(struct vm_page *, bool);
+enum pmap_flush_op {
+	PMAP_FLUSH_PRIMARY,
+	PMAP_FLUSH_SECONDARY,
+	PMAP_CLEAN_PRIMARY
+};
+static void		pmap_flush_page(struct vm_page *, enum pmap_flush_op);
 #endif
 static void		pmap_page_remove(struct vm_page *);
 
@@ -1005,7 +1020,7 @@ pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va, int skip_wired)
 	 * clear the KMOD attribute from the page.
 	 */
 	if (SLIST_FIRST(&pg->mdpage.pvh_list) == NULL
-	    || (SLIST_FIRST(&pg->mdpage.pvh_list)->pv_flags & PVF_KWRITE) == PVF_KWRITE)
+	    || (SLIST_FIRST(&pg->mdpage.pvh_list)->pv_flags & PVF_KWRITE) != PVF_KWRITE)
 		pg->mdpage.pvh_attrs &= ~PVF_KMOD;
 
 	/*
@@ -1798,36 +1813,6 @@ pmap_vac_me_user(struct vm_page *pg, pmap_t pm, vaddr_t va)
 #endif
 
 #ifdef PMAP_CACHE_VIPT
-/*
- * For virtually indexed / physically tagged caches, what we have to worry
- * about is illegal cache aliases.  To prevent this, we must ensure that
- * virtual addresses that map the physical page use the same bits for those
- * bits masked by "arm_cache_prefer_mask" (bits 12+).  If there is a conflict,
- * all mappings of the page must be non-cached.
- */
-#if 0
-static inline vaddr_t
-pmap_check_sets(paddr_t pa)
-{
-	extern int arm_dcache_l2_nsets;
-	int set, way;
-	vaddr_t mask = 0;
-	int v;
-	pa |= 1;
-	for (set = 0; set < (1 << arm_dcache_l2_nsets); set++) {
-		for (way = 0; way < 4; way++) {
-			v = (way << 30) | (set << 5);
-			asm("mcr	p15, 3, %0, c15, c2, 0" :: "r"(v));
-			asm("mrc	p15, 3, %0, c15, c0, 0" : "=r"(v));
-
-			if ((v & (1 | ~(PAGE_SIZE-1))) == pa) {
-				mask |= 1 << (set >> 7);
-			}
-		}
-	}
-	return mask;
-}
-#endif
 static void
 pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 {
@@ -1846,13 +1831,6 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 
 	NPDEBUG(PDB_VAC, printf("pmap_vac_me_harder: pg=%p, pmap=%p va=%08lx\n",
 	    pg, pm, va));
-
-#define popc4(x) \
-	(((0x94 >> ((x & 3) << 1)) & 3) + ((0x94 >> ((x & 12) >> 1)) & 3))
-#if 0
-	tst_mask = pmap_check_sets(pg->phys_addr);
-	KASSERT(popc4(tst_mask) < 2);
-#endif
 
 	KASSERT(!va || pm);
 	KASSERT((pg->mdpage.pvh_attrs & PVF_DMOD) == 0 || (pg->mdpage.pvh_attrs & (PVF_DIRTY|PVF_NC)));
@@ -1891,8 +1869,28 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 			if (!bad_alias)
 				pg->mdpage.pvh_attrs |= PVF_DIRTY;
 		} else {
+			/*
+			 * We have only read-only mappings.  Let's see if there
+			 * are multiple colors in use or if we mapped a KMPAGE.
+			 * If the latter, we have a bad alias.  If the former,
+			 * we need to remember that.
+			 */
+			for (; pv; pv = SLIST_NEXT(pv, pv_link)) {
+				if (tst_mask != (pv->pv_va & arm_cache_prefer_mask)) {
+					if (pg->mdpage.pvh_attrs & PVF_KMPAGE)
+						bad_alias = true;
+					break;
+				}
+			}
 			pg->mdpage.pvh_attrs &= ~PVF_WRITE;
+			/*
+			 * No KMPAGE and we exited early, so we must have 
+			 * multiple color mappings.
+			 */
+			if (!bad_alias && pv != NULL)
+				pg->mdpage.pvh_attrs |= PVF_MULTCLR;
 		}
+
 		/* If no conflicting colors, set everything back to cached */
 		if (!bad_alias) {
 #ifdef DEBUG
@@ -1901,7 +1899,6 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 				SLIST_FOREACH(pv, &pg->mdpage.pvh_list, pv_link)
 					KDASSERT(((tst_mask ^ pv->pv_va) & arm_cache_prefer_mask) == 0);
 			}
-			
 #endif
 			pg->mdpage.pvh_attrs &= (PAGE_SIZE - 1) & ~PVF_NC;
 			pg->mdpage.pvh_attrs |= tst_mask | PVF_COLORED;
@@ -1921,8 +1918,25 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 		KASSERT(pmap_is_page_colored_p(pg));
 		KASSERT(!(pg->mdpage.pvh_attrs & PVF_WRITE)
 		    || (pg->mdpage.pvh_attrs & PVF_DIRTY));
-		if (rw_mappings == 0)
+		if (rw_mappings == 0) {
 			pg->mdpage.pvh_attrs &= ~PVF_WRITE;
+			if (ro_mappings == 1
+			    && (pg->mdpage.pvh_attrs & PVF_MULTCLR)) {
+				/*
+				 * If this is the last readonly mapping
+				 * but it doesn't match the current color
+				 * for the page, change the current color
+				 * to match this last readonly mapping.
+				 */
+				pv = SLIST_FIRST(&pg->mdpage.pvh_list);
+				tst_mask = (pg->mdpage.pvh_attrs ^ pv->pv_va)
+				    & arm_cache_prefer_mask;
+				if (tst_mask) {
+					pg->mdpage.pvh_attrs ^= tst_mask;
+					PMAPCOUNT(vac_color_change);
+				}
+			}
+		}
 		KASSERT((pg->mdpage.pvh_attrs & PVF_DMOD) == 0 || (pg->mdpage.pvh_attrs & (PVF_DIRTY|PVF_NC)));
 		KASSERT((rw_mappings == 0) == !(pg->mdpage.pvh_attrs & PVF_WRITE));
 		return;
@@ -1941,20 +1955,22 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 		bad_alias = false;
 		if (rw_mappings > 0) {
 			/*
-			 * We now have writeable mappings and more than one
-			 * readonly mapping, verify the colors don't clash
-			 * and mark the page as writeable.
+			 * We now have writeable mappings and if we have
+			 * readonly mappings in more than once color, we have
+			 * an aliasing problem.  Regardless mark the page as
+			 * writeable.
 			 */
-			if (ro_mappings > 1
-			    && (pg->mdpage.pvh_attrs & PVF_WRITE) == 0
-			    && arm_cache_prefer_mask) {
-				tst_mask = pg->mdpage.pvh_attrs & arm_cache_prefer_mask;
-				SLIST_FOREACH(pv, &pg->mdpage.pvh_list, pv_link) {
-					/* if there's a bad alias, stop checking. */
-					if (((tst_mask ^ pv->pv_va) & arm_cache_prefer_mask) == 0) {
-						bad_alias = true;
-						break;
-					}
+			if (pg->mdpage.pvh_attrs & PVF_MULTCLR) {
+				if (ro_mappings < 2) {
+					/*
+					 * If we only have less than two
+					 * read-only mappings, just flush the
+					 * non-primary colors from the cache.
+					 */
+					pmap_flush_page(pg,
+					    PMAP_FLUSH_SECONDARY);
+				} else {
+					bad_alias = true;
 				}
 			}
 			pg->mdpage.pvh_attrs |= PVF_WRITE;
@@ -1984,7 +2000,7 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 
 		/* color conflict.  evict from cache. */
 
-		pmap_flush_page(pg, true);
+		pmap_flush_page(pg, PMAP_FLUSH_PRIMARY);
 		pg->mdpage.pvh_attrs &= ~PVF_COLORED;
 		pg->mdpage.pvh_attrs |= PVF_NC;
 		KASSERT((pg->mdpage.pvh_attrs & PVF_DMOD) == 0 || (pg->mdpage.pvh_attrs & (PVF_DIRTY|PVF_NC)));
@@ -1997,7 +2013,7 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 		 * If the page has dirty cache lines, clean it.
 		 */
 		if (pg->mdpage.pvh_attrs & PVF_DIRTY)
-			pmap_flush_page(pg, false);
+			pmap_flush_page(pg, PMAP_CLEAN_PRIMARY);
 
 		/*
 		 * If this is the first remapping (we know that there are no
@@ -2013,6 +2029,7 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 		} else {
 			PMAPCOUNT(vac_color_blind);
 		}
+		pg->mdpage.pvh_attrs |= PVF_MULTCLR;
 		KASSERT((pg->mdpage.pvh_attrs & PVF_DMOD) == 0 || (pg->mdpage.pvh_attrs & (PVF_DIRTY|PVF_NC)));
 		KASSERT((rw_mappings == 0) == !(pg->mdpage.pvh_attrs & PVF_WRITE));
 		return;
@@ -2021,7 +2038,7 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 			pg->mdpage.pvh_attrs |= PVF_WRITE;
 
 		/* color conflict.  evict from cache. */
-		pmap_flush_page(pg, true);
+		pmap_flush_page(pg, PMAP_FLUSH_PRIMARY);
 
 		/* the list can't be empty because this was a enter/modify */
 		pv = SLIST_FIRST(&pg->mdpage.pvh_list);
@@ -2438,60 +2455,93 @@ pmap_syncicache_page(struct vm_page *pg)
 }
 
 void
-pmap_flush_page(struct vm_page *pg, bool flush)
+pmap_flush_page(struct vm_page *pg, enum pmap_flush_op flush)
 {
-	const vsize_t va_offset = pg->mdpage.pvh_attrs & arm_cache_prefer_mask;
-	const size_t pte_offset = va_offset >> PGSHIFT;
-	pt_entry_t * const ptep = &cdst_pte[pte_offset];
-	const pt_entry_t oldpte = *ptep;
-#if 0
-	vaddr_t mask;
-#endif
+	vsize_t va_offset, end_va;
+	void (*cf)(vaddr_t, vsize_t);
 
-	KASSERT(!(pg->mdpage.pvh_attrs & PVF_NC));
-#if 0
-	mask = pmap_check_sets(pg->phys_addr);
-	KASSERT(popc4(mask) < 2);
-#endif
+	if (arm_cache_prefer_mask == 0)
+		return;
 
-	NPDEBUG(PDB_VAC, printf("pmap_flush_page: pg=%p (attrs=%#x)\n",
-	    pg, pg->mdpage.pvh_attrs));
-	pmap_tlb_flushID_SE(pmap_kernel(), cdstp + va_offset);
-	/*
-	 * Set up a PTE with the right coloring to flush existing cache entries.
-	 */
-	*ptep = L2_S_PROTO
-	    | VM_PAGE_TO_PHYS(pg)
-	    | L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE)
-	    | pte_l2_s_cache_mode;
-	PTE_SYNC(ptep);
-
-	/*
-	 * Flush it.
-	 */
-	if (flush) {
-		cpu_idcache_wbinv_range(cdstp + va_offset, PAGE_SIZE);
+	switch (flush) {
+	case PMAP_FLUSH_PRIMARY:
+		if (pg->mdpage.pvh_attrs & PVF_MULTCLR) {
+			va_offset = 0;
+			end_va = arm_cache_prefer_mask;
+			pg->mdpage.pvh_attrs &= ~PVF_MULTCLR;
+			PMAPCOUNT(vac_flush_lots);
+		} else {
+			va_offset = pg->mdpage.pvh_attrs & arm_cache_prefer_mask;
+			end_va = va_offset;
+			PMAPCOUNT(vac_flush_one);
+		}
+		/*
+		 * Mark that the page is no longer dirty.
+		 */
 		pg->mdpage.pvh_attrs &= ~PVF_DIRTY;
-	} else {
-		cpu_dcache_wb_range(cdstp + va_offset, PAGE_SIZE);
+		cf = cpufuncs.cf_idcache_wbinv_range;
+		break;
+	case PMAP_FLUSH_SECONDARY:
+		va_offset = 0;
+		end_va = arm_cache_prefer_mask;
+		cf = cpufuncs.cf_idcache_wbinv_range;
+		pg->mdpage.pvh_attrs &= ~PVF_MULTCLR;
+		PMAPCOUNT(vac_flush_lots);
+		break;
+	case PMAP_CLEAN_PRIMARY:
+		va_offset = pg->mdpage.pvh_attrs & arm_cache_prefer_mask;
+		end_va = va_offset;
+		cf = cpufuncs.cf_dcache_wb_range;
 		/*
 		 * Mark that the page is no longer dirty.
 		 */
 		if ((pg->mdpage.pvh_attrs & PVF_DMOD) == 0)
 			pg->mdpage.pvh_attrs &= ~PVF_DIRTY;
+		PMAPCOUNT(vac_clean_one);
+		break;
+	default:
+		return;
 	}
 
-	/*
-	 * Restore the page table entry since we might have interrupted
-	 * pmap_zero_page or pmap_copy_page which was already using this pte.
-	 */
-	*ptep = oldpte;
-	PTE_SYNC(ptep);
-	pmap_tlb_flushID_SE(pmap_kernel(), cdstp + va_offset);
-#if 0
-	mask = pmap_check_sets(pg->phys_addr);
-	KASSERT(mask == 0);
-#endif
+	KASSERT(!(pg->mdpage.pvh_attrs & PVF_NC));
+
+	NPDEBUG(PDB_VAC, printf("pmap_flush_page: pg=%p (attrs=%#x)\n",
+	    pg, pg->mdpage.pvh_attrs));
+
+	for (; va_offset <= end_va; va_offset += PAGE_SIZE) {
+		const size_t pte_offset = va_offset >> PGSHIFT;
+		pt_entry_t * const ptep = &cdst_pte[pte_offset];
+		const pt_entry_t oldpte = *ptep;
+
+		if (flush == PMAP_FLUSH_SECONDARY
+		    && va_offset == (pg->mdpage.pvh_attrs & arm_cache_prefer_mask))
+			continue;
+
+		pmap_tlb_flushID_SE(pmap_kernel(), cdstp + va_offset);
+		/*
+		 * Set up a PTE with the right coloring to flush
+		 * existing cache entries.
+		 */
+		*ptep = L2_S_PROTO
+		    | VM_PAGE_TO_PHYS(pg)
+		    | L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE)
+		    | pte_l2_s_cache_mode;
+		PTE_SYNC(ptep);
+
+		/*
+		 * Flush it.
+		 */
+		(*cf)(cdstp + va_offset, PAGE_SIZE);
+
+		/*
+		 * Restore the page table entry since we might have interrupted
+		 * pmap_zero_page or pmap_copy_page which was already using
+		 * this pte.
+		 */
+		*ptep = oldpte;
+		PTE_SYNC(ptep);
+		pmap_tlb_flushID_SE(pmap_kernel(), cdstp + va_offset);
+	}
 }
 #endif /* PMAP_CACHE_VIPT */
 
@@ -3329,7 +3379,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 			if (pmap_is_page_colored_p(pg)
 			    && ((va ^ pg->mdpage.pvh_attrs) & arm_cache_prefer_mask)) {
 				PMAPCOUNT(vac_color_change);
-				pmap_flush_page(pg, true);
+				pmap_flush_page(pg, PMAP_FLUSH_PRIMARY);
 			}
 			pg->mdpage.pvh_attrs &= PAGE_SIZE - 1;
 			pg->mdpage.pvh_attrs |= PVF_KMPAGE
@@ -3687,6 +3737,15 @@ pmap_clear_modify(struct vm_page *pg)
 
 	if (pg->mdpage.pvh_attrs & PVF_MOD) {
 		rv = true;
+#ifdef PMAP_CACHE_VIPT
+		/*
+		 * If we are going to clear the modified bit and there are
+		 * no other modified bits set, flush the page to memory and
+		 * mark it clean.
+		 */
+		if ((pg->mdpage.pvh_attrs & (PVF_DMOD|PVF_NC)) == PVF_MOD)
+			pmap_flush_page(pg, PMAP_CLEAN_PRIMARY);
+#endif
 		pmap_clearbit(pg, PVF_MOD);
 	} else
 		rv = false;
