@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.142 2008/12/31 10:02:30 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.143 2008/12/31 11:34:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2008/12/31 10:02:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2008/12/31 11:34:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ struct kpt_page *kpt_pages;
 st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
-vsize_t	Sysptsize = VM_KERNEL_PT_PAGES;
+vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pv_entry	*pv_table;	/* array of entries, one per page */
 
@@ -324,10 +324,6 @@ void		pmap_collect1(pmap_t, paddr_t, paddr_t);
 #define		PRM_TFLUSH	0x01
 #define		PRM_CFLUSH	0x02
 #define		PRM_KEEPPTPAGE	0x04
-
-
-
-
 
 /*
  * All those kernel PT submaps that BSD is so fond of
@@ -671,7 +667,7 @@ pmap_create()
 		printf("pmap_create\n");
 #endif
 
-	pmap = malloc(sizeof *pmap, M_VMPMAP, M_WAITOK|M_ZERO);
+	pmap = malloc(sizeof(*pmap), M_VMPMAP, M_WAITOK|M_ZERO);
 	pmap_pinit(pmap);
 	return (pmap);
 }
@@ -1219,7 +1215,8 @@ validate:
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel()) {
 		va -= PAGE_SIZE;
-		pmap_check_wiring("enter", trunc_page((vaddr_t) pmap_pte(pmap, va)));
+		pmap_check_wiring("enter",
+		    trunc_page((vaddr_t) pmap_pte(pmap, va)));
 	}
 #endif
 	return 0;
@@ -2369,7 +2366,8 @@ pmap_enter_ptpage(pmap, va, can_fail)
 			    pmap_ste2(pmap, va), ste);
 #endif
 	}
-#endif
+#endif /* defined(M68040) || defined(M68060) */
+
 	va = trunc_page((vaddr_t)pmap_pte(pmap, va));
 
 	/*
