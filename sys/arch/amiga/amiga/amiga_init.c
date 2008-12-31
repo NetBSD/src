@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.100 2008/12/31 09:45:11 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.101 2008/12/31 10:33:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.100 2008/12/31 09:45:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.101 2008/12/31 10:33:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.100 2008/12/31 09:45:11 tsutsui Exp
 
 extern u_int	lowram;
 extern u_int	Sysptsize, Umap, proc0paddr;
-extern pt_entry_t *Sysmap, *Sysptmap;
+extern pt_entry_t *Sysptmap;
 extern st_entry_t *Sysseg;
 extern u_int	Sysseg_pa;
 extern u_int	virtual_avail;
