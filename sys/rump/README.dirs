@@ -1,4 +1,4 @@
-	$NetBSD: README.dirs,v 1.7 2008/11/19 14:10:49 pooka Exp $
+	$NetBSD: README.dirs,v 1.8 2008/12/31 13:18:06 pooka Exp $
 
     Runnable Userspace Meta Programs
 
@@ -12,9 +12,10 @@ sys/rump/librump - kernel runtime emulation
   /rumpvfs  - file system support
 
 sys/rump/include
-  /machine - headers meant to be used for rump compilation when the MD
-	     ones cause too much trouble, e.g. curlwp which is different
-	     from arch to arch
+  /machine - used for architectures where the rump ABI is not yet the
+	     same as the kernel module ABI.  will eventually disappear
+	     completely
+  /rump    - rump headers installed to userspace
 
 sys/rump/fs - file system rumps
   /lib/lib${fs}  - kernel file system code compiled out of /sys with -D_KERNEL
