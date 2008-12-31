@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.39 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: zs.c,v 1.40 2008/12/31 09:50:21 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39 2008/12/18 05:56:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.40 2008/12/31 09:50:21 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ zs_attach(device_t parent, device_t self, void *aux)
 	 * Initialize software state for each channel.
 	 */
 	for (channel = 0; channel < 2; channel++) {
-		struct device *child;
+		device_t child;
 
 		zsc_args.channel = channel;
 		zsc_args.hwflags = 0;

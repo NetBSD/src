@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.16 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: xel.c,v 1.17 2008/12/31 09:50:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.16 2008/12/18 05:56:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.17 2008/12/31 09:50:21 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ xel_probe(paddr_t addr)
 }
 
 static int
-xel_match(struct device *parent, cfdata_t match, void *aux)
+xel_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
