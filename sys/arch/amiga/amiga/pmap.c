@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2008/12/31 09:45:11 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142 2008/12/31 10:02:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2008/12/31 09:45:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2008/12/31 10:02:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +280,8 @@ struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*pt_map;
 struct vm_map_kernel pt_map_store;
 
+paddr_t		avail_start;	/* PA of first available physical page */
+paddr_t		avail_end;	/* PA of last available physical page */
 vsize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
@@ -392,7 +394,8 @@ pmap_init()
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
 		    Sysseg, Sysmap, Sysptmap);
-		printf(" vstart %lx, vend %lx\n", virtual_avail, virtual_end);
+		printf("  pstart %lx, pend %lx, vstart %lx, vend %lx\n",
+		    avail_start, avail_end, virtual_avail, virtual_end);
 	}
 #endif
 
