@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.102 2008/12/31 18:48:14 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.103 2008/12/31 19:54:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.102 2008/12/31 18:48:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.103 2008/12/31 19:54:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,12 +207,18 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	extern char end[];
 	extern u_int protorp[2];
 	struct cfdev *cd;
-	u_int pstart, pend, vstart, vend, avail;
-	u_int ptpa, ptsize, ptextra, kstsize;
-	u_int Sysptmap_pa;
+	paddr_t pstart, pend;
+	vaddr_t vstart, vend;
+	psize_t avail;
+	paddr_t ptpa;
+	psize_t ptsize;
+	u_int ptextra, kstsize;
+	paddr_t Sysptmap_pa;
 	register st_entry_t sg_proto, *sg, *esg;
-	register pt_entry_t pg_proto, *pg;
-	u_int end_loaded, ncd, i;
+	register pt_entry_t pg_proto, *pg, *epg;
+	vaddr_t end_loaded;
+	u_int ncd, i;
+	vaddr_t kva;
 	struct boot_memlist *ml;
 
 #ifdef DEBUG_KERNEL_START
@@ -260,9 +266,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	 * account for kernel symbols if they are present.
 	 */
 	if (esym_addr == NULL)
-		end_loaded = (u_int) &end;
+		end_loaded = (vaddr_t)&end;
 	else
-		end_loaded = (u_int) esym_addr;
+		end_loaded = (vaddr_t)esym_addr;
 	RELOC(ncfdev, int) = *(int *)(&RELOC(*(u_int *)end_loaded, u_int));
 	RELOC(cfdev, struct cfdev *) = (struct cfdev *) ((int)end_loaded + 4);
 	end_loaded += 4 + RELOC(ncfdev, int) * sizeof(struct cfdev);
@@ -270,7 +276,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	RELOC(memlist, struct boot_memlist *) =
 	    (struct boot_memlist *)end_loaded;
 	ml = &RELOC(*(struct boot_memlist *)end_loaded, struct boot_memlist);
-	end_loaded = (u_int) &((RELOC(memlist, struct boot_memlist *))->
+	end_loaded = (vaddr_t)&((RELOC(memlist, struct boot_memlist *))->
 	    m_seg[ml->m_nseg]);
 
 	/*
@@ -340,9 +346,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	 */
 	vend   = fphysize;
 	avail  = vend;
-	vstart = (u_int) end_loaded;
-	vstart = m68k_round_page (vstart);
-	pstart = vstart + fphystart;
+	vstart = end_loaded;
+	vstart = m68k_round_page(vstart);
+	pstart = (paddr_t)vstart + fphystart;
 	pend   = vend   + fphystart;
 	avail -= vstart;
 
@@ -414,7 +420,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 * First invalidate the entire "segment table" pages
 		 * (levels 1 and 2 have the same "invalid" values).
 		 */
-		sg = (u_int *)RELOC(Sysseg_pa, u_int);
+		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
 		esg = &sg[kstsize * NPTEPG];
 		while (sg < esg)
 			*sg++ = SG_NV;
@@ -427,7 +433,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 * now to save the HW the expense of doing it.
 		 */
 		i = (ptsize >> PGSHIFT) * (NPTEPG / SG4_LEV3SIZE);
-		sg = &((u_int *)(RELOC(Sysseg_pa, u_int)))[SG4_LEV1SIZE];
+		sg = &((st_entry_t *)(RELOC(Sysseg_pa, u_int)))[SG4_LEV1SIZE];
 		esg = &sg[i];
 		sg_proto = ptpa | SG_U | SG_RW | SG_V;
 		while (sg < esg) {
@@ -444,16 +450,16 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		/* Include additional level 2 table for Sysmap in protostfree */
 		RELOC(protostfree, u_int) =
 		    (-1 << (i + 2)) /* & ~(-1 << MAXKL2SIZE) */;
-		sg = (u_int *) RELOC(Sysseg_pa, u_int);
+		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
 		esg = &sg[i];
-		sg_proto = (u_int)&sg[SG4_LEV1SIZE] | SG_U | SG_RW |SG_V;
+		sg_proto = (paddr_t)&sg[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
 		while (sg < esg) {
 			*sg++ = sg_proto;
 			sg_proto += (SG4_LEV2SIZE * sizeof(st_entry_t));
 		}
 
 		/* Sysmap is last entry in level 1 */
-		sg = (u_int *) RELOC(Sysseg_pa, u_int);
+		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
 		sg = &sg[SG4_LEV1SIZE - 1];
 		*sg = sg_proto;
 
@@ -462,7 +468,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 */
 		/* XXX fix calculations XXX */
 		i = ((((ptsize >> PGSHIFT) + 3) & -2) - 1) * (NPTEPG / SG4_LEV3SIZE);
-		sg = &((u_int *)(RELOC(Sysseg_pa, u_int)))[SG4_LEV1SIZE + i];
+		sg = &((st_entry_t *)(RELOC(Sysseg_pa, u_int)))[SG4_LEV1SIZE + i];
 		esg = &sg[NPTEPG / SG4_LEV3SIZE];
 		sg_proto = Sysptmap_pa | SG_U | SG_RW | SG_V;
 		while (sg < esg) {
@@ -473,22 +479,22 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		/*
 		 * Initialize Sysptmap
 		 */
-		sg = (u_int *) Sysptmap_pa;
-		esg = &sg[ptsize >> PGSHIFT];
+		pg = (pt_entry_t *)Sysptmap_pa;
+		epg = &pg[ptsize >> PGSHIFT];
 		pg_proto = ptpa | PG_RW | PG_CI | PG_V;
-		while (sg < esg) {
-			*sg++ = pg_proto;
+		while (pg < epg) {
+			*pg++ = pg_proto;
 			pg_proto += PAGE_SIZE;
 		}
 		/*
 		 * Invalidate rest of Sysptmap page
 		 */
-		esg = (u_int *)(Sysptmap_pa + PAGE_SIZE - sizeof(st_entry_t));
-		while (sg < esg)
-			*sg++ = SG_NV;
-		sg = (u_int *) Sysptmap_pa;
-		sg = &sg[256 - 1];		/* XXX */
-		*sg = Sysptmap_pa | PG_RW | PG_CI | PG_V;
+		epg = (pt_entry_t *)(Sysptmap_pa + PAGE_SIZE - sizeof(st_entry_t));
+		while (pg < epg)
+			*pg++ = SG_NV;
+		pg = (pt_entry_t *)Sysptmap_pa;
+		pg = &pg[256 - 1];		/* XXX */
+		*pg = Sysptmap_pa | PG_RW | PG_CI | PG_V;
 	} else
 #endif /* M68040 */
 	{
@@ -496,12 +502,12 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 * Map the page table pages in both the HW segment table
 		 * and the software Sysptmap.
 		 */
-		sg = (u_int *)RELOC(Sysseg_pa, u_int);
-		pg = (u_int *)Sysptmap_pa;
-		esg = &pg[ptsize >> PGSHIFT];
+		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
+		pg = (pt_entry_t *)Sysptmap_pa;
+		epg = &pg[ptsize >> PGSHIFT];
 		sg_proto = ptpa | SG_RW | SG_V;
 		pg_proto = ptpa | PG_RW | PG_CI | PG_V;
-		while (pg < esg) {
+		while (pg < epg) {
 			*sg++ = sg_proto;
 			*pg++ = pg_proto;
 			sg_proto += PAGE_SIZE;
@@ -511,8 +517,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 * invalidate the remainder of each table
 		 */
 		/* XXX PAGE_SIZE dependent constant: 256 or 1024 */
-		esg = (u_int *)(Sysptmap_pa + (256 - 1) * sizeof(st_entry_t));
-		while (pg < esg) {
+		epg = (pt_entry_t *)(Sysptmap_pa + (256 - 1) * sizeof(st_entry_t));
+		while (pg < epg) {
 			*sg++ = SG_NV;
 			*pg++ = PG_NV;
 		}
@@ -525,11 +531,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	 * initialize kernel page table page(s) (assume load at VA 0)
 	 */
 	pg_proto = fphystart | PG_RO | PG_V;	/* text pages are RO */
-	pg       = (u_int *) ptpa;
+	pg       = (pt_entry_t *)ptpa;
 	*pg++ = PG_NV;				/* Make page 0 invalid */
 	pg_proto += PAGE_SIZE;
-	for (i = PAGE_SIZE; i < (u_int) etext;
-	     i += PAGE_SIZE, pg_proto += PAGE_SIZE)
+	for (kva = PAGE_SIZE; kva < (vaddr_t)etext;
+	     kva += PAGE_SIZE, pg_proto += PAGE_SIZE)
 		*pg++ = pg_proto;
 
 	/*
@@ -553,12 +559,12 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 * of the kernel are contiguously allocated, start at
 		 * Sysseg and end at the current value of vstart.
 		 */
-		for (; i<RELOC(Sysseg, u_int);
-		     i+= PAGE_SIZE, pg_proto += PAGE_SIZE)
+		for (; kva < RELOC(Sysseg, u_int);
+		     kva += PAGE_SIZE, pg_proto += PAGE_SIZE)
 			*pg++ = pg_proto;
 
 		pg_proto = (pg_proto & ~PG_CCB) | PG_CI;
-		for (; i < vstart; i += PAGE_SIZE, pg_proto += PAGE_SIZE)
+		for (; kva < vstart; kva += PAGE_SIZE, pg_proto += PAGE_SIZE)
 			*pg++ = pg_proto;
 
 		pg_proto = (pg_proto & ~PG_CI);
@@ -570,7 +576,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	 * go till end of data allocated so far
 	 * plus proc0 u-area (to be allocated)
 	 */
-	for (; i < vstart; i += PAGE_SIZE, pg_proto += PAGE_SIZE)
+	for (; kva < vstart; kva += PAGE_SIZE, pg_proto += PAGE_SIZE)
 		*pg++ = pg_proto;
 	/*
 	 * invalidate remainder of kernel PT
@@ -698,11 +704,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	 * than 128k !
 	 */
 	if (loadbase == 0) {
-		register u_int *lp, *le, *fp;
+		register paddr_t *lp, *le, *fp;
 
-		lp = 0;
-		le = (u_int *)end_loaded;
-		fp = (u_int *)fphystart;
+		lp = (paddr_t *)0;
+		le = (paddr_t *)end_loaded;
+		fp = (paddr_t *)fphystart;
 		while (lp < le)
 			*fp++ = *lp++;
 	}
