@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.6 2008/12/29 20:39:49 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.7 2008/12/31 00:57:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -57,6 +57,8 @@ struct fakeblk {
 static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
 static struct cwdinfo rump_cwdi;
+
+static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
 
 static void
 pvfs_init(struct proc *p)
@@ -141,11 +143,11 @@ rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 
 	/*
 	 * XXX: set a root for lwp0.  This is strictly not correct,
-	 * but makes things works for single fs case without having
+	 * but makes things work for single fs case without having
 	 * to manually call rump_rcvp_set().
 	 */
 	VFS_ROOT(mp, &rvp);
-	rump_rcvp_set(rvp, rvp);
+	rump_rcvp_lwpset(rvp, rvp, &lwp0);
 	vput(rvp);
 
 	return rv;
@@ -154,6 +156,12 @@ rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 void
 rump_mnt_destroy(struct mount *mp)
 {
+
+	/* See rcvp XXX above */
+	rump_cwdi.cwdi_rdir = NULL;
+	vref(rootvnode);
+	rump_cwdi.cwdi_cdir = rootvnode;
+	printf("refcount %d\n", rootvnode->v_uobj.uo_refs);
 
 	mount_finispecific(mp);
 	kmem_free(mp, sizeof(*mp));
@@ -519,10 +527,9 @@ rump_biodone(void *arg, size_t count, int error)
 	rump_intr_exit();
 }
 
-void
-rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
+static void
+rump_rcvp_lwpset(struct vnode *rvp, struct vnode *cvp, struct lwp *l)
 {
-	struct lwp *l = curlwp;
 	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
 
 	KASSERT(cvp);
@@ -538,6 +545,13 @@ rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
 	vref(cvp);
 	cwdi->cwdi_cdir = cvp;
 	rw_exit(&cwdi->cwdi_lock);
+}
+
+void
+rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
+{
+
+	rump_rcvp_lwpset(rvp, cvp, curlwp);
 }
 
 struct vnode *
