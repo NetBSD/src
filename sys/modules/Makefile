@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2008/12/05 13:05:37 ad Exp $
+#	$NetBSD: Makefile,v 1.23 2008/12/31 21:22:02 agc Exp $
 
 # For all platforms
 
@@ -78,6 +78,13 @@ SUBDIR+=	drm
 SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
+.endif
+
+.include <bsd.own.mk>
+
+# we need our device mapper for LVM
+.if (${MKLVM} != "no")
+SUBDIR+= dm
 .endif
 
 .include <bsd.subdir.mk>
