@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 2008/12/19 18:49:38 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.140 2008/12/31 06:54:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2008/12/31 06:54:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +342,7 @@ static inline char *pa_to_attribute(paddr_t pa);
 static inline struct pv_entry *
 pa_to_pvh(paddr_t pa)
 {
-	int bank, pg = 0;	/* gcc4 -Wunitialized */
+	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
 
 	bank = vm_physseg_find(atop((pa)), &pg);
 	return &vm_physmem[bank].pmseg.pvent[pg];
@@ -351,7 +351,7 @@ pa_to_pvh(paddr_t pa)
 static inline char *
 pa_to_attribute(paddr_t pa)
 {
-	int bank, pg = 0;	/* gcc4 -Wuninitialized */
+	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
 
 	bank = vm_physseg_find(atop((pa)), &pg);
 	return &vm_physmem[bank].pmseg.attrs[pg];
