@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.3 2008/12/31 09:45:11 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.4 2008/12/31 10:02:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.3 2008/12/31 09:45:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.4 2008/12/31 10:02:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.3 2008/12/31 09:45:11 tsutsui E
 u_int		Sysseg_pa;
 
 extern st_entry_t	*Sysseg;
+extern paddr_t		avail_start;
+extern paddr_t		avail_end;
 extern vsize_t		mem_size;
 extern vaddr_t		virtual_avail;
 extern vaddr_t		virtual_end;
@@ -193,6 +195,10 @@ pmap_bootstrap(firstaddr, loadaddr)
 	}
 
 	mem_size = physmem << PGSHIFT;
+
+	avail_start = firstaddr;
+	avail_end   = toads;
+
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
