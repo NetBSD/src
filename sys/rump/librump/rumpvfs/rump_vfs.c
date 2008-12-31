@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.7 2008/12/31 00:57:15 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.8 2008/12/31 00:57:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -161,7 +161,6 @@ rump_mnt_destroy(struct mount *mp)
 	rump_cwdi.cwdi_rdir = NULL;
 	vref(rootvnode);
 	rump_cwdi.cwdi_cdir = rootvnode;
-	printf("refcount %d\n", rootvnode->v_uobj.uo_refs);
 
 	mount_finispecific(mp);
 	kmem_free(mp, sizeof(*mp));
