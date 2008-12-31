@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v14.c,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ah_eeprom_v14.c,v 1.3 2008/12/31 07:24:01 phil Exp $
  */
 #include <sys/endian.h>
 #include "opt_ah.h"
@@ -54,6 +54,8 @@ v14EepromGet(struct ath_hal *ah, int param, void *val)
 			HALDEBUG(ah, HAL_DEBUG_ANY, "%s: bad mac address %s\n",
 			    __func__, ath_hal_ether_sprintf(macaddr));
 			return HAL_EEBADMAC;
+		} else {
+                   return HAL_OK;
 		}
         case AR_EEP_REGDMN_0:
 		return pBase->regDmn[0];
