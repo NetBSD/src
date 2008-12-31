@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.2 2008/12/05 13:05:37 ad Exp $
+# $NetBSD: module.mi,v 1.3 2008/12/31 21:22:02 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -27,6 +27,8 @@
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
+./@MODULEDIR@/dm				base-kernel-modules	lvm
+./@MODULEDIR@/dm/dm.kmod			base-kernel-modules	lvm
 ./@MODULEDIR@/efs				base-kernel-modules
 ./@MODULEDIR@/efs/efs.kmod			base-kernel-modules
 ./@MODULEDIR@/exec_script			base-kernel-modules
