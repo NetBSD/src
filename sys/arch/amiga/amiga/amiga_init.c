@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.99 2008/01/06 18:50:29 mhitch Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.100 2008/12/31 09:45:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.99 2008/01/06 18:50:29 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.100 2008/12/31 09:45:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.99 2008/01/06 18:50:29 mhitch Exp $
 #define RELOC(v, t)	*((t*)((u_int)&(v) + loadbase))
 
 extern u_int	lowram;
-extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
+extern u_int	Sysptsize, Umap, proc0paddr;
+extern pt_entry_t *Sysmap, *Sysptmap;
+extern st_entry_t *Sysseg;
 extern u_int	Sysseg_pa;
 extern u_int	virtual_avail;
 #if defined(M68040) || defined(M68060)
