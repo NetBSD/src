@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.101 2008/12/31 10:33:13 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.102 2008/12/31 18:48:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.101 2008/12/31 10:33:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.102 2008/12/31 18:48:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	extern u_int protorp[2];
 	struct cfdev *cd;
 	u_int pstart, pend, vstart, vend, avail;
-	u_int pt, ptpa, ptsize, ptextra, kstsize;
+	u_int ptpa, ptsize, ptextra, kstsize;
 	u_int Sysptmap_pa;
 	register st_entry_t sg_proto, *sg, *esg;
 	register pt_entry_t pg_proto, *pg;
@@ -382,7 +382,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	/*
 	 * allocate initial page table pages
 	 */
-	pt = vstart;
 	ptpa = pstart;
 #ifdef DRACO
 	if ((id>>24)==0x7D) {
@@ -402,12 +401,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	avail -= ptsize;
 
 	/*
-	 * pt maps the first N megs of ram Sysptmap comes directly
-	 * after pt (ptpa) and so it must map >= N meg + Its one
-	 * page and so it must map 8M of space.  Specifically
-	 * Sysptmap holds the pte's that map the kernel page tables.
-	 *
-	 * We want Sysmap to be the first address mapped by Sysptmap.
 	 * Sysmap is now placed at the end of Supervisor virtual address space.
 	 */
 	RELOC(Sysmap, u_int *) = (u_int *)-(NPTEPG * PAGE_SIZE);
