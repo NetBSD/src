@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.143 2008/12/31 11:34:39 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.144 2008/12/31 11:37:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2008/12/31 11:34:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2008/12/31 11:37:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pv_entry	*pv_table;	/* array of entries, one per page */
 
-struct pmap	kernel_pmap_store;
+static struct pmap kernel_pmap_store;
 struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*pt_map;
 struct vm_map_kernel pt_map_store;
