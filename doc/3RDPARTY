@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.656 2008/12/19 15:24:19 haad Exp $
+#	$NetBSD: 3RDPARTY,v 1.657 2008/12/31 13:57:28 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -92,7 +92,7 @@ bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
 Version:	libc/includes: 9.5.0, bind: 9.5.0
-Current Vers:	9.5.0-P2
+Current Vers:	9.5.1/9.6.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
@@ -231,7 +231,7 @@ src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
 Version:	3.0.3
-Current Vers:	3.0.7/3.1.1/4.0.0
+Current Vers:	3.0.7/3.1.2/4.0.1
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/sw/dhcp/
