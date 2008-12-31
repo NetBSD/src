@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.20 2008/12/18 02:27:41 isaki Exp $	*/
+/*	$NetBSD: mfp.c,v 1.21 2008/12/31 08:00:31 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.20 2008/12/18 02:27:41 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.21 2008/12/31 08:00:31 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.20 2008/12/18 02:27:41 isaki Exp $");
 
 static int mfp_match(struct device *, struct cfdata *, void *);
 static void mfp_attach(struct device *, struct device *, void *);
+static int  mfp_search(device_t, cfdata_t, const int *, void *);
 static void mfp_init(void);
 static void mfp_calibrate_delay(void);
 
@@ -115,9 +116,7 @@ mfp_attach(struct device *parent, struct device *self, void *aux)
 			panic("IO map for MFP corruption??");
 #endif
 		bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
-		config_found(self, __UNCONST("kbd"), NULL);
-		config_found(self, __UNCONST("clock"), NULL);
-		config_found(self, __UNCONST("pow"), NULL);
+		config_search_ia(mfp_search, self, "mfp", NULL);
 	} else {
 		/*
 		 * Called from config_console;
@@ -125,6 +124,14 @@ mfp_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		mfp_calibrate_delay();
 	}
+}
+
+static int
+mfp_search(device_t parent, cfdata_t cf, const int *loc, void *aux)
+{
+	if (config_match(parent, cf, __UNCONST(cf->cf_name)) > 0)
+		config_attach(parent, cf, __UNCONST(cf->cf_name), NULL);
+	return 0;
 }
 
 static void
