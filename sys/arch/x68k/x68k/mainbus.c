@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 2008/12/21 09:24:27 isaki Exp $ */
+/* $NetBSD: mainbus.c,v 1.3 2008/12/31 08:33:20 isaki Exp $ */
 
 /*
  * Copyright (c) 2008 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2008/12/21 09:24:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2008/12/31 08:33:20 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,5 +71,4 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	config_found(self, __UNCONST("grfbus") , NULL);
 	config_found(self, __UNCONST("com")    , NULL);
 	config_found(self, __UNCONST("com")    , NULL);
-	config_found(self, __UNCONST("*")      , NULL);
 }
