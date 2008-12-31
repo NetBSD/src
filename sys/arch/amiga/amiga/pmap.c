@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.144 2008/12/31 11:37:20 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.145 2008/12/31 11:43:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2008/12/31 11:37:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2008/12/31 11:43:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,10 +297,6 @@ int		protostfree;	/* prototype (default) free ST map */
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
 pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
 
-extern void *	msgbufaddr;
-extern paddr_t	msgbufpa;
-
-u_long	noncontig_enable;
 extern const vaddr_t amiga_uptbase;
 
 extern paddr_t z2mem_start;
