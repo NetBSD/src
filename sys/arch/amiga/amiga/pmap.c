@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.140 2008/12/31 06:54:33 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.141 2008/12/31 09:45:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2008/12/31 06:54:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2008/12/31 09:45:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ struct kpt_page *kpt_pages;
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
-u_int	*Sysseg, *Sysseg_pa;
+st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
 vsize_t	Sysptsize = VM_KERNEL_PT_PAGES;
