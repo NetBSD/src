@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.42 2008/12/29 14:42:15 jdc Exp $ */
+/*	$NetBSD: cgsix.c,v 1.43 2009/01/01 13:53:53 jdc Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.42 2008/12/29 14:42:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.43 2009/01/01 13:53:53 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1256,12 +1256,13 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
-	/* Use software for initial screen clear on old revisions */
-	if (sc->sc_fhcrev < 2)
-		ri->ri_flg |= RI_CLEAR;
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 	
+	/* We need unaccelerated initial screen clear on old revisions */
+	if (sc->sc_fhcrev < 2)
+		memset(sc->sc_fb.fb_pixels, (*defattr >> 16) & 0xff,
+		    sc->sc_stride * sc->sc_height);
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
