@@ -1,1 +1,1 @@
-/*	$NetBSD: opt_ddb.h,v 1.1 2007/08/08 09:06:13 pooka Exp $	*/
+/*	$NetBSD: opt_ddb.h,v 1.2 2009/01/01 19:43:57 pooka Exp $	*/
