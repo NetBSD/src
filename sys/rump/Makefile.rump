@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.20 2008/12/30 21:31:10 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.21 2009/01/01 19:43:57 pooka Exp $
 #
 
 WARNS?=		4
@@ -14,10 +14,12 @@ CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
 CFLAGS+=	-ffreestanding
 CPPFLAGS+=	-D_RUMPKERNEL	# XXX: this should die
 CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE
+CPPFLAGS+=	-DMAXUSERS=32
 CPPFLAGS+=	-DDIAGNOSTIC
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include -I${RUMPTOP}/../arch
 CPPFLAGS+=	-I${RUMPTOP}/include
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
 CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
 #CPPFLAGS+=	-DDEBUG
 
