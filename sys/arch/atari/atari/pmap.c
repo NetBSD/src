@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2008/12/19 18:49:38 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2009/01/01 03:43:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2009/01/01 03:43:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1706,7 +1706,8 @@ pmap_activate(l)
 		printf("pmap_activate(%p)\n", l);
 #endif
 
-	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
+	PMAP_ACTIVATE(pmap, (curlwp->l_flag & LW_IDLE) != 0 ||
+	    l->l_proc == curproc);
 }
 
 /*
