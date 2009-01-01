@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.2 2008/12/19 00:57:24 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.3 2009/01/01 19:43:57 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -34,7 +34,6 @@ SRCS+=	rumpvnode_if.c
 SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt -DMAXUSERS=32
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 CFLAGS+=	-Wno-pointer-sign
 
