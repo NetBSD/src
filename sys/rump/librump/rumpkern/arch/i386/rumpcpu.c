@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcpu.c,v 1.1 2009/01/01 16:50:30 pooka Exp $	*/
+/*	$NetBSD: rumpcpu.c,v 1.2 2009/01/01 19:07:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.1 2009/01/01 16:50:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.2 2009/01/01 19:07:43 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -51,4 +51,16 @@ x86_curlwp()
 {
 
 	return rump_get_curlwp();
+}
+
+void
+wbinvd()
+{
+
+	/*
+	 * Used by kobj_machdep().
+	 *
+	 * But, we Best not execute this since we're not Ring0 *.
+	 * Honestly, I don't know why it's required even in the kernel.
+	 */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.65 2008/12/30 00:36:38 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.66 2009/01/01 19:07:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.65 2008/12/30 00:36:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.66 2009/01/01 19:07:43 pooka Exp $");
 
 #define malloc(a,b,c) __wrap_malloc(a,b,c)
 
@@ -50,8 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.65 2008/12/30 00:36:38 pooka Exp $");
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
-#include <sys/tprintf.h>
 #include <sys/timetc.h>
+#include <sys/tprintf.h>
+#include <sys/module.h>
 
 #include <machine/bswap.h>
 #include <machine/stdarg.h>
@@ -77,6 +78,9 @@ int hardclock_ticks;
 bool mp_online = false;
 struct vm_map *mb_map;
 struct timeval boottime;
+struct emul emul_netbsd;
+int cold = 1;
+int boothowto;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -679,3 +683,13 @@ bswap32(uint32_t v)
 	return __bswap32(v);
 }
 #endif /* __BSWAP_RENAME */
+
+void
+module_init_md()
+{
+
+	/*
+	 * Nothing for now.  However, we should load the librump
+	 * symbol table.
+	 */
+}
