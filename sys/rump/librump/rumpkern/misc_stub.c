@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.16 2008/12/18 00:24:12 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.17 2009/01/01 19:07:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,16 +28,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.16 2008/12/18 00:24:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.17 2009/01/01 19:07:43 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/event.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/syscallvar.h>
-#include <sys/cpu.h>
-#include <sys/evcnt.h>
+#include <sys/xcall.h>
 
 #ifdef __sparc__
  /* 
@@ -106,4 +107,18 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 {
 
 	return 0;
+}
+
+/* crosscalls not done, no other hardware CPUs */
+uint64_t
+xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
+{
+
+	return -1;
+}
+
+void
+xc_wait(uint64_t where)
+{
+
 }
