@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_stubs.c,v 1.1 2009/01/01 19:11:18 pooka Exp $	*/
+/*	$NetBSD: kobj_stubs.c,v 1.2 2009/01/01 19:33:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_stubs.c,v 1.1 2009/01/01 19:11:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_stubs.c,v 1.2 2009/01/01 19:33:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kobj.h>
@@ -38,12 +38,12 @@ int
 kobj_machdep(kobj_t ko, void *v, size_t s, bool b)
 {
 
-	panic("%s: not supported on this architecture");
+	panic("%s: not supported on this architecture", __func__);
 }
 
 int
 kobj_reloc(kobj_t ko, uintptr_t p, const void *v, bool b1, bool b2)
 {
 
-	panic("%s: not supported on this architecture");
+	panic("%s: not supported on this architecture", __func__);
 }
