@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2008/12/29 22:16:15 pooka Exp $	*/
+/*	$NetBSD: rumpcpu.c,v 1.1 2009/01/01 16:50:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2008/12/29 22:16:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.1 2009/01/01 16:50:30 pooka Exp $");
 
 #include <sys/param.h>
 
