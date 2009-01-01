@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.54 2008/08/12 19:51:55 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.55 2009/01/01 13:41:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.54 2008/08/12 19:51:55 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.55 2009/01/01 13:41:45 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -788,6 +788,7 @@ psshfs_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
 	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn_sf = src;
 	struct puffs_node *pn_td = targ_dir, *pn_tf = targ;
+	struct psshfs_node *psn_src = pn_sf->pn_data;
 	struct psshfs_node *psn_targdir = pn_td->pn_data;
 
 	if (pctx->protover < 2) {
@@ -820,6 +821,7 @@ psshfs_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 		if (opc != targ_dir) {
 			psn_targdir->childcount++;
+			psn_src->parent = pn_td;
 			if (pn_sf->pn_va.va_type == VDIR)
 				pn_td->pn_va.va_nlink++;
 		}
