@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.30 2008/11/16 16:23:58 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.31 2009/01/01 21:35:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.30 2008/11/16 16:23:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.31 2009/01/01 21:35:22 pooka Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -292,7 +292,7 @@ kobj_load(kobj_t ko)
 	/*
 	 * Read the elf header from the file.
 	 */
-	error = kobj_read(ko, (void **)&hdr, sizeof(*hdr), 0);
+	error = kobj_read(ko, (void *)&hdr, sizeof(*hdr), 0);
 	if (error != 0)
 		goto out;
 	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) != 0) {
@@ -338,7 +338,7 @@ kobj_load(kobj_t ko)
 		error = ENOEXEC;
 		goto out;
 	}
-	error = kobj_read(ko, (void **)&shdr, ko->ko_shdrsz, hdr->e_shoff);
+	error = kobj_read(ko, (void *)&shdr, ko->ko_shdrsz, hdr->e_shoff);
 	if (error != 0) {
 		goto out;
 	}
@@ -429,7 +429,7 @@ kobj_load(kobj_t ko)
 		kobj_error("no symbol table");
 		goto out;
 	}
-	error = kobj_read(ko, (void **)&ko->ko_symtab,
+	error = kobj_read(ko, (void *)&ko->ko_symtab,
 	    ko->ko_symcnt * sizeof(Elf_Sym),
 	    shdr[symtabindex].sh_offset);
 	if (error != 0) {
@@ -576,7 +576,7 @@ kobj_load(kobj_t ko)
 				    shdr[i].sh_size / sizeof(Elf_Rel);
 				ko->ko_reltab[rl].sec = shdr[i].sh_info;
 				error = kobj_read(ko,
-				    (void **)&ko->ko_reltab[rl].rel,
+				    (void *)&ko->ko_reltab[rl].rel,
 				    ko->ko_reltab[rl].size,
 				    shdr[i].sh_offset);
 				if (error != 0) {
@@ -594,7 +594,7 @@ kobj_load(kobj_t ko)
 				    shdr[i].sh_size / sizeof(Elf_Rela);
 				ko->ko_relatab[ra].sec = shdr[i].sh_info;
 				error = kobj_read(ko,
-				    (void **)&ko->ko_relatab[ra].rela,
+				    (void *)&ko->ko_relatab[ra].rela,
 				    shdr[i].sh_size,
 				    shdr[i].sh_offset);
 				if (error != 0) {
