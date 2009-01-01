@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/12/29 22:16:15 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2009/01/01 16:50:30 pooka Exp $
 #
 
-SRCS+=	cpu.c spl.c
+SRCS+=	rumpcpu.c rumpspl.c
