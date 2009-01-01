@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.378 2008/12/07 20:58:46 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.379 2009/01/01 15:10:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.378 2008/12/07 20:58:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.379 2009/01/01 15:10:20 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -165,6 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.378 2008/12/07 20:58:46 pooka Exp $"
 #include <sys/once.h>
 #include <sys/ksyms.h>
 #include <sys/uidinfo.h>
+#include <sys/kprintf.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -339,6 +340,7 @@ main(void)
 #if ((NKSYMS > 0) || (NDDB > 0) || (NMODULAR > 0))
 	ksyms_init();
 #endif
+	kprintf_init();
 
 	percpu_init();
 
