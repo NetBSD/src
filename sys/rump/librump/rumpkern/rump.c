@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.79 2008/12/29 17:45:55 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.80 2009/01/01 19:07:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.79 2008/12/29 17:45:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.80 2009/01/01 19:07:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.79 2008/12/29 17:45:55 pooka Exp $");
 #include <sys/filedesc.h>
 #include <sys/iostat.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/once.h>
@@ -111,8 +112,6 @@ rump_proc_vfs_release_fn rump_proc_vfs_release = pvfsrele_nop;
 int
 _rump_init(int rump_version)
 {
-	extern char hostname[];
-	extern size_t hostnamelen;
 	char buf[256];
 	struct proc *p;
 	struct lwp *l;
@@ -178,6 +177,7 @@ _rump_init(int rump_version)
 	module_init();
 	sysctl_init();
 	softint_init(&rump_cpu);
+	cold = 0;
 	devsw_init();
 
 	/* these do nothing if not present */
