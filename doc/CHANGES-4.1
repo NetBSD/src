@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.118 2008/12/27 19:33:54 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.119 2009/01/02 12:03:22 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2354,12 +2354,6 @@ gnu/lib/libobjc4/arch/x86_64/config.h: 1.1 via patch
         objc config.h.  Use this config.h in libobjc4.
 	This should address PR 37966.
 	[mrg, ticket #1230]
-
-sys/arch/atari/dev/md_root.c			1.26 via patch
-
-	Use brelse() to unbusy bp buffer to allow user to swap floppy
-        disks when prompted.
-	[abs, ticket #1226]
 
 sys/arch/atari/conf/GENERIC.in			1.74
 sys/arch/atari/conf/README			1.3
