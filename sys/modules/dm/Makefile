@@ -1,4 +1,4 @@
-$NetBSD: Makefile,v 1.3 2009/01/02 01:06:16 haad Exp $
+$NetBSD: Makefile,v 1.4 2009/01/02 11:03:24 haad Exp $
 
 .include "../Makefile.inc"
 
@@ -13,8 +13,9 @@ MK_DM_TARGETS= no
 
 .if (${MK_DM_TARGETS} != "no")
 SUBDIR+= dm_target_error
-SUBDIR+= dm_target_zero
+SUBDIR+= dm_target_mirror
 SUBDIR+= dm_target_snapshot
+SUBDIR+= dm_target_zero
 .endif
 
 .include <bsd.kmodule.mk>
