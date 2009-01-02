@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.932 2008/12/21 11:40:48 martin Exp $
+#	$NetBSD: files,v 1.933 2009/01/02 02:54:13 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20081219
@@ -1447,7 +1447,6 @@ file	kern/subr_log.c
 file	kern/subr_percpu.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
-file	kern/subr_prf2.c
 file	kern/subr_prof.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c

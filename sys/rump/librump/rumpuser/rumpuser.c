@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.23 2008/12/18 00:21:52 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.24 2009/01/02 02:54:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.23 2008/12/18 00:21:52 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.24 2009/01/02 02:54:13 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -322,6 +322,20 @@ rumpuser_poll(struct pollfd *fds, int nfds, int timeout, int *error)
 {
 
 	DOCALL_KLOCK(int, (poll(fds, (nfds_t)nfds, timeout)));
+}
+
+int
+rumpuser_putchar(int c, int *error)
+{
+
+	DOCALL(int, (putchar_unlocked(c)));
+}
+
+void
+rumpuser_panic()
+{
+
+	abort();
 }
 
 #ifdef __linux__
