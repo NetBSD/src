@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.127 2009/01/02 02:54:13 pooka Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.128 2009/01/02 11:08:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.127 2009/01/02 02:54:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.128 2009/01/02 11:08:32 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.127 2009/01/02 02:54:13 pooka Exp $")
 #include <sys/kprintf.h>
 #include <sys/atomic.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
