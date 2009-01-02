@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.5 2009/01/02 00:42:31 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.6 2009/01/02 11:03:24 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -291,6 +291,14 @@ int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
 
 /* Generic function used to convert char to string */
 uint64_t atoi(const char *); 
+
+/* dm_target_mirror.c */
+int dm_target_mirror_init(dm_dev_t *, void**, char *);
+char * dm_target_mirror_status(void *);
+int dm_target_mirror_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_mirror_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_mirror_destroy(dm_table_entry_t *);
+int dm_target_mirror_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_stripe.c */
 int dm_target_stripe_init(dm_dev_t *, void**, char *);
