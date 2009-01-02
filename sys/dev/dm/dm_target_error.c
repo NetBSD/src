@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.4 2008/12/21 00:59:39 haad Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.5 2009/01/02 11:06:17 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		if ((r = module_hold("dm")) != 0)
+			return r;
+
 		if ((dmt = dm_target_lookup("error")) != NULL)
 			return EEXIST;
 
@@ -83,6 +86,8 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 		r = dm_target_rem("error");
+		module_rele("dm"); /* release usage counter on dm module */
+
 		break;
 
 	case MODULE_CMD_STAT:
