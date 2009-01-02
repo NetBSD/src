@@ -1453,11 +1453,30 @@
 /* Ignore permission bits */
 /* #undef MNT2_CDFS_OPT_DEFPERM */
 
+/* Enable external attributes */
+#define MNT2_CDFS_OPT_EXTATT 0x4
+
+/* Show file generations */
+#define MNT2_CDFS_OPT_GENS 0x2
+
+/* Disable filename case translation */
+#define MNT2_CDFS_OPT_NOCASETRANS 0x10
+
 /* Use on-disk permission bits */
 /* #undef MNT2_CDFS_OPT_NODEFPERM */
 
+/* Disable Joliet extensions */
+#define MNT2_CDFS_OPT_NOJOLIET 0x8
+
+/* Disable Rock Ridge Interchange Protocol (RRIP) extensions */
+#define MNT2_CDFS_OPT_NORRIP 0x1
+
 /* Strip off extension from version string */
 /* #undef MNT2_CDFS_OPT_NOVERSION */
+
+/* Enable Rock Ridge Interchange Protocol (RRIP) case insensitive filename
+   extensions */
+#define MNT2_CDFS_OPT_RRCASEINS 0x20
 
 /* Use Rock Ridge Interchange Protocol (RRIP) extensions */
 /* #undef MNT2_CDFS_OPT_RRIP */
