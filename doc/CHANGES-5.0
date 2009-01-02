@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.60 2008/12/27 18:29:28 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.61 2009/01/02 21:24:30 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1749,4 +1749,18 @@ sys/uvm/uvm_page.c				1.141
 
 	Fix PR kern/40027: pagedaemon loops on memory shortage.
 	[bouyer, ticket #211]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.70
+
+	Remove pm_Heads check in msdosfs_mountfs; this value isn't
+	really used.  Makes an 8GB Memory Stick Pro Duo formatted with
+	a PSP work.
+	[jmcneill, ticket #209]
+
+include/protocols/dumprestore.h			1.15
+sbin/restore/tape.c				1.61
+
+	Make restore work for Linux dump volumes by ignoring extended
+	attribute records on these volumes.
+	[hannken, ticket #210]
 
