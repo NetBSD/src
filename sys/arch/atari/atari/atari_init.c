@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.69 2009/01/01 04:10:25 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.70 2009/01/02 04:38:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.69 2009/01/01 04:10:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.70 2009/01/02 04:38:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -999,7 +999,7 @@ mmu040_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
 	 * follow the level 1 table).
 	 * We need:
 	 *	NPTEPG / SG4_LEV3SIZE
-	 * level 2 descriptors to map each of the nptpages + 1
+	 * level 2 descriptors to map each of the nptpages
 	 * pages of PTEs.  Note that we set the "used" bit
 	 * now to save the HW the expense of doing it.
 	 */
