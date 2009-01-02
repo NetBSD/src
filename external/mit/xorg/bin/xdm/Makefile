@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2009/01/02 23:25:57 spz Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,11 @@ LDADD+=		-lXau -lXdmcp -lXinerama -lXpm -lXmu
 LDADD+=		-lXt -lSM -lICE -lXext -lX11 -lcrypt
 DPADD+=		${LIBXAU} ${LIBXDMCP} ${LIBXINERAMA} ${LIBXPM} ${LIBXMU}
 DPADD+=		${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBCRYPT}
+
+.if (${USE_PAM} != "no")
+LDADD+= -lpam ${PAM_STATIC_LDADD}
+DPADD+= ${LIBPAM} ${PAM_STATIC_DPADD}
+.endif
 
 SUBDIR=		chooser config
 TARGETS+=	configinstall
