@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.14 2009/01/02 00:20:23 tnozaki Exp $	*/
+/*	$NetBSD: lex.l,v 1.15 2009/01/02 22:08:19 tnozaki Exp $	*/
 
 %{
 /*-
@@ -42,11 +42,11 @@
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lex.l,v 1.14 2009/01/02 00:20:23 tnozaki Exp $");
+__RCSID("$NetBSD: lex.l,v 1.15 2009/01/02 22:08:19 tnozaki Exp $");
 #endif
 #endif /* not lint */
 
-#include "locale/runetype.h"
+#include "locale/rune.h"
 #include <stdio.h>
 #include <stdlib.h>
 

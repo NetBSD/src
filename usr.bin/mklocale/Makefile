@@ -1,14 +1,15 @@
-#	$NetBSD: Makefile,v 1.12 2009/01/02 00:20:23 tnozaki Exp $
+#	$NetBSD: Makefile,v 1.13 2009/01/02 22:08:19 tnozaki Exp $
 
 .ifndef HOSTPROG
 .include <bsd.own.mk>
 .endif
 
-.PATH: ${NETBSDSRCDIR}/lib/libc/locale ${NETBSDSRCDIR}/lib/libc/citrus
+.PATH: ${NETBSDSRCDIR}/lib/libc/locale ${NETBSDSRCDIR}/lib/libc/citrus ${NETBSDSRCDIR}/lib/libc/stdio
 
 PROG=		mklocale
 SRCS=		yacc.y lex.l mklocaledb.c fix_grouping.c \
-		citrus_bcs_strtoul.c citrus_db_factory.c citrus_db_hash.c
+		citrus_bcs_strtoul.c citrus_db_factory.c citrus_db_hash.c \
+		fparseln.c
 CPPFLAGS+=	-I. -I${.CURDIR} \
 		-I${NETBSDSRCDIR}/lib/libc \
 		-I${NETBSDSRCDIR}/lib/libc/include \
