@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2009/01/02 16:18:59 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2009/01/02 22:03:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -60,7 +60,5 @@ extern struct cpu_info rump_cpu;
 
 struct lwp *rump_get_curlwp(void); /* XXX */
 #define curlwp rump_get_curlwp()
-
-#undef DELAY
 
 #endif /* _SYS_RUMP_CPU_H_ */
