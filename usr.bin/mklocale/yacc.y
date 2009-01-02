@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.25 2009/01/02 00:20:23 tnozaki Exp $	*/
+/*	$NetBSD: yacc.y,v 1.26 2009/01/02 22:08:19 tnozaki Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.25 2009/01/02 00:20:23 tnozaki Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.26 2009/01/02 22:08:19 tnozaki Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: yacc.y,v 1.25 2009/01/02 00:20:23 tnozaki Exp $");
 #include <arpa/inet.h>	/* Needed for htonl on POSIX systems. */
 
 #include <err.h>
-#include "locale/runetype.h"
+#include "locale/rune.h"
 #include <locale.h>
 #include <stddef.h>
 #include <stdio.h>
