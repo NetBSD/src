@@ -1,18 +1,24 @@
 Important unimplemented features in current device-mapper implementation
 
-* implement dm_dev_event_ioctl and dm_target_msg_ioctl functions
+* Implement dm_dev_event_ioctl and dm_target_msg_ioctl functions
 
-* write more targets mirror, stripe.
+* Write more targets mirror, stripe.
 
-* snapshot target, there is some code in repository already
+* Snapshot target, there is some code in repository already
 
-* integrate LVM with sysinst, so we can configure LVM during installation
+  	    	     	General LVM tasks
+
+* Cleanup resize_ffs to properly resize filesystem on LV
+
+* Integrate LVM with the sysinst, so we can configure LVM during installation
+
 
 			Pain in the sky tasks
 
-* implement multipath target for network attached storage devices.
+* Implement multipath target for network attached storage devices.
 
 * Cluster lvm extension, NetBSD needs Distributed Lock Manager for this.
 
-* write GPL free libdevmapper and lvm2tools.
+* Write GPL free libdevmapper and lvm2tools.
+  See http://mail-index.netbsd.org/tech-kern/2008/09/24/msg002794.html
 	
