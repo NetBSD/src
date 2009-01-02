@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.1.1.2 2008/05/18 14:31:38 aymeric Exp $ */
+/*	$NetBSD: regex2.h,v 1.2 2009/01/02 00:32:11 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -77,36 +77,30 @@
  * In state representations, an operator's bit is on to signify a state
  * immediately *preceding* "execution" of that operator.
  */
-typedef unsigned long sop;	/* strip operator */
+typedef char sop;	/* strip operator */
 typedef int sopno;
-#define	OPRMASK	0xf8000000
-#define	OPDMASK	0x07ffffff
-#define	OPSHIFT	((unsigned)27)
-#define	OP(n)	((n)&OPRMASK)
-#define	OPND(n)	((n)&OPDMASK)
-#define	SOP(op, opnd)	((op)|(opnd))
 /* operators			   meaning	operand			*/
 /*						(back, fwd are offsets)	*/
-#define	OEND	(1UL<<OPSHIFT)	/* endmarker	-			*/
-#define	OCHAR	(2UL<<OPSHIFT)	/* character	unsigned char		*/
-#define	OBOL	(3UL<<OPSHIFT)	/* left anchor	-			*/
-#define	OEOL	(4UL<<OPSHIFT)	/* right anchor	-			*/
-#define	OANY	(5UL<<OPSHIFT)	/* .		-			*/
-#define	OANYOF	(6UL<<OPSHIFT)	/* [...]	set number		*/
-#define	OBACK_	(7UL<<OPSHIFT)	/* begin \d	paren number		*/
-#define	O_BACK	(8UL<<OPSHIFT)	/* end \d	paren number		*/
-#define	OPLUS_	(9UL<<OPSHIFT)	/* + prefix	fwd to suffix		*/
-#define	O_PLUS	(10UL<<OPSHIFT)	/* + suffix	back to prefix		*/
-#define	OQUEST_	(11UL<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
-#define	O_QUEST	(12UL<<OPSHIFT)	/* ? suffix	back to prefix		*/
-#define	OLPAREN	(13UL<<OPSHIFT)	/* (		fwd to )		*/
-#define	ORPAREN	(14UL<<OPSHIFT)	/* )		back to (		*/
-#define	OCH_	(15UL<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
-#define	OOR1	(16UL<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
-#define	OOR2	(17UL<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
-#define	O_CH	(18UL<<OPSHIFT)	/* end choice	back to OOR1		*/
-#define	OBOW	(19UL<<OPSHIFT)	/* begin word	-			*/
-#define	OEOW	(20UL<<OPSHIFT)	/* end word	-			*/
+#define	OEND	(1)		/* endmarker	-			*/
+#define	OCHAR	(2)		/* character	unsigned char		*/
+#define	OBOL	(3)		/* left anchor	-			*/
+#define	OEOL	(4)		/* right anchor	-			*/
+#define	OANY	(5)		/* .		-			*/
+#define	OANYOF	(6)		/* [...]	set number		*/
+#define	OBACK_	(7)		/* begin \d	paren number		*/
+#define	O_BACK	(8)		/* end \d	paren number		*/
+#define	OPLUS_	(9)		/* + prefix	fwd to suffix		*/
+#define	O_PLUS	(10)		/* + suffix	back to prefix		*/
+#define	OQUEST_	(11)		/* ? prefix	fwd to suffix		*/
+#define	O_QUEST	(12)		/* ? suffix	back to prefix		*/
+#define	OLPAREN	(13)		/* (		fwd to )		*/
+#define	ORPAREN	(14)		/* )		back to (		*/
+#define	OCH_	(15)		/* begin choice	fwd to OOR2		*/
+#define	OOR1	(16)		/* | pt. 1	back to OOR1 or OCH_	*/
+#define	OOR2	(17)		/* | pt. 2	fwd to OOR2 or O_CH	*/
+#define	O_CH	(18)		/* end choice	back to OOR1		*/
+#define	OBOW	(19)		/* begin word	-			*/
+#define	OEOW	(20)		/* end word	-			*/
 
 /*
  * Structure for [] character-set representation.  Character sets are
@@ -145,6 +139,7 @@ struct re_guts {
 	int magic;
 #		define	MAGIC2	((('R'^0200)<<8)|'E')
 	sop *strip;		/* malloced area for strip */
+	RCHAR_T *stripdata;	/* malloced area for stripdata */
 	int csetsize;		/* number of bits in a cset vector */
 	int ncsets;		/* number of csets in use */
 	cset *sets;		/* -> cset [ncsets] */
@@ -175,5 +170,5 @@ struct re_guts {
 };
 
 /* misc utilities */
-#define	OUT	(RCHAR_T_MAX+1)	/* a non-character value */
-#define	ISWORD(c)	((c <= 0xFF && isalnum(c)) || (c) == '_')
+#define OUT	WEOF	/* a non-character value */
+#define	ISWORD(c)	(((UCHAR_T)c <= 0xFF && isalnum((unsigned char)c)) || (c) == '_')
