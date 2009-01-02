@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.1 2009/01/02 00:42:31 haad Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.2 2009/01/02 22:33:51 haad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ dm_target_stripe_init(dm_dev_t *dmv, void **target_config, char *argv)
 
 	dmv->dev_type = DM_STRIPE_DEV;
 	
-	return 0;
+	return ENOSYS;
 }
 
 /* Status routine called to get params string. */
