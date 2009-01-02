@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.67 2009/01/02 02:54:13 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.68 2009/01/02 11:39:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.67 2009/01/02 02:54:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.68 2009/01/02 11:39:26 pooka Exp $");
 
 #define malloc(a,b,c) __wrap_malloc(a,b,c)
 
@@ -616,9 +616,15 @@ module_init_md()
 	 */
 }
 
-/* us and them, after all we're only ordinary seconds */
-static void
-rump_delay(unsigned int us)
+/*
+ * Us and them, after all we're only ordinary seconds
+ * However, DELAY is a MD macro, so here we just attempt to
+ * appease all architectures with naming tricks.
+ */
+#undef delay
+void delay(unsigned int);
+void
+delay(unsigned int us)
 {
 	struct timespec ts;
 	int error;
@@ -631,7 +637,8 @@ rump_delay(unsigned int us)
 
 	rumpuser_nanosleep(&ts, NULL, &error);
 }
-void (*delay_func)(unsigned int) = rump_delay;
+void (*delay_func)(unsigned int) = delay;
+__strong_alias(_delay,delay);
 
 void
 kpreempt_disable()
