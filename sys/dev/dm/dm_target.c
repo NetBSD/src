@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.4 2008/12/21 00:59:39 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.5 2009/01/02 00:42:31 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -268,42 +268,16 @@ dm_target_init(void)
 	
 	r = dm_target_insert(dmt);
 		
-/*	dmt1->version[0] = 1;
-	dmt1->version[1] = 0;
-	dmt1->version[2] = 0;
-	strlcpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
-	dmt1->init = &dm_target_zero_init;
-	dmt1->status = &dm_target_zero_status;
-	dmt1->strategy = &dm_target_zero_strategy;
-	dmt1->deps = &dm_target_zero_deps; 
-	dmt1->destroy = &dm_target_zero_destroy; 
-	dmt1->upcall = &dm_target_zero_upcall;
-	
-	r = dm_target_insert(dmt1);
-
-	dmt2->version[0] = 1;
-	dmt2->version[1] = 0;
-	dmt2->version[2] = 0;
-	strlcpy(dmt2->name, "error", DM_MAX_TYPE_NAME);
-	dmt2->init = &dm_target_error_init;
-	dmt2->status = &dm_target_error_status;
-	dmt2->strategy = &dm_target_error_strategy;
-	dmt2->deps = &dm_target_error_deps; 
-	dmt2->destroy = &dm_target_error_destroy; 
-	dmt2->upcall = &dm_target_error_upcall;
-	
-	r = dm_target_insert(dmt2);*/
-	
 	dmt3->version[0] = 1;
 	dmt3->version[1] = 0;
 	dmt3->version[2] = 3;
 	strlcpy(dmt3->name, "striped", DM_MAX_TYPE_NAME);
-	dmt3->init = &dm_target_linear_init;
-	dmt3->status = &dm_target_linear_status;
-	dmt3->strategy = &dm_target_linear_strategy;
-	dmt3->deps = &dm_target_linear_deps;
-	dmt3->destroy = &dm_target_linear_destroy;
-	dmt3->upcall = NULL;
+	dmt3->init = &dm_target_stripe_init;
+	dmt3->status = &dm_target_stripe_status;
+	dmt3->strategy = &dm_target_stripe_strategy;
+	dmt3->deps = &dm_target_stripe_deps;
+	dmt3->destroy = &dm_target_stripe_destroy;
+	dmt3->upcall = &dm_target_stripe_upcall;
 	
 	r = dm_target_insert(dmt3);
 
