@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.4 2008/12/21 00:59:39 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.5 2009/01/02 00:42:31 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,6 +58,19 @@
  * 8. Resume the snapshot and origin devices.
  * dmsetup resume my_data_snap
  * dmsetup resume my_data
+ *
+ * Before snapshot creation
+ *  dev_name; dev table
+ * | my_data; 0 1024 linear /dev/sd1a 384|
+ *
+ * After snapshot creation
+ *                               |my_data_org;0 1024 linear /dev/sd1a 384|
+ *                              /             
+ * |my_data; 0 1024 snapshot-origin /dev/vg00/my_data_org|
+ *                           /
+ * |my_data_snap; 0 1024 snapshot /dev/vg00/my_data /dev/mapper/my_data_cow P 8
+ *                           \
+ *                            |my_data_cow; 0 256 linear /dev/sd1a 1408|
  */
 
 /*
