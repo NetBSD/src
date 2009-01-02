@@ -1,3 +1,7 @@
+2009-01-02  Christos Zoulas <christos@zoulas.com>
+
+	* add nocasetrans, nojoliet, rrcaseins for cd9660 filesystems
+
 2008-09-17  Christos Zoulas <christos@zoulas.com>
 
 	* fix manual page section issues (sorting, non-existant)
