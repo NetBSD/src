@@ -1,21 +1,16 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.52 2008/05/17 03:49:54 ginsbach Exp $
+#	$NetBSD: Makefile.inc,v 1.53 2009/01/02 00:20:19 tnozaki Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
 
 SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
-	ctypeio.c lcmessages.c lcmonetary.c lcnumeric.c lctime.c \
-	localeconv.c localeio.c nl_langinfo.c setlocale.c setlocale1.c \
-	setlocale32.c __mb_cur_max.c wcscoll.c wcsftime.c \
+	setlocale.c setlocale1.c setlocale32.c __mb_cur_max.c \
+	current_locale.c global_locale.c fix_grouping.c \
+	localeconv.c nl_langinfo.c \
+	generic_lc_all.c dummy_lc_collate.c \
 	wcstol.c wcstoll.c wcstoimax.c wcstoul.c wcstoull.c wcstoumax.c \
-	wcsxfrm.c aliasname.c
-MAN+=	nl_langinfo.3 setlocale.3 wcstol.3 wcscoll.3 wcsxfrm.3
-
-SRCS+=	wcstod.c wcstof.c wcstold.c
-MAN+=	wcstod.3
-
-MLINKS+=setlocale.3 localeconv.3
+	wcstod.c wcstof.c wcstold.c wcscoll.c wcsxfrm.c wcsftime.c
 
 .if ${CITRUS} == "no"
 RUNE=		no
@@ -25,19 +20,41 @@ RUNE?=		yes
 
 .if ${RUNE} == "no"
 # singlebyte locale - dummy
-SRCS+=	multibyte_sb.c iswctype_sb.c
-CPPFLAGS+=-UWITH_RUNE
+CPPFLAGS+=	-UWITH_RUNE
+SRCS+=	aliasname.c bsdctype.c localeio.c \
+	multibyte_sb.c iswctype_sb.c \
+	localeio_lc_ctype.c localeio_lc_monetary.c \
+	localeio_lc_numeric.c localeio_lc_time.c
 .else
 # citrus multibyte locale support
 # we have quirk for libc.a - see the last part of lib/libc/Makefile
-CPPFLAGS+=-DWITH_RUNE -I${.CURDIR}
-SRCS+=	___runetype_mb.c _wctrans.c iswctype.c multibyte_c90.c \
-	multibyte_amd1.c rune.c runeglue.c runetable.c setrunelocale.c
+CPPFLAGS+=	-DWITH_RUNE -I${.CURDIR}
+SRCS+=	_wctrans.c _wctype.c rune.c runeglue.c runetable.c \
+	multibyte_c90.c multibyte_amd1.c iswctype_mb.c
+CPPFLAGS.rune.c+=		-I${LIBCDIR}/citrus
+CPPFLAGS.runeglue.c+=		-I${LIBCDIR}/citrus
+CPPFLAGS.runetable.c+=		-I${LIBCDIR}/citrus
+CPPFLAGS.multibyte_c90.c+=	-I${LIBCDIR}/citrus
+CPPFLAGS.multibyte_amd1.c+=	-I${LIBCDIR}/citrus
 .endif
-MAN+=	btowc.3 iswalnum.3 iswctype.3 towlower.3 towctrans.3 mblen.3 mbrlen.3 \
-	mbrtowc.3 mbsinit.3 mbsrtowcs.3 mbstowcs.3 mbtowc.3 wcrtomb.3 wcwidth.3 \
-	wcsftime.3 wcsrtombs.3 wcstombs.3 wctob.3 wctomb.3 wctrans.3 wctype.3
 
+MAN+=	setlocale.3 nl_langinfo.3
+
+MAN+=	mbtowc.3 mbstowcs.3 wctomb.3 wcstombs.3 mblen.3 \
+
+MAN+=	btowc.3 mbrtowc.3 mbsrtowcs.3 \
+	wctob.3 wcrtomb.3 wcsrtombs.3 \
+	mbrlen.3 mbsinit.3
+
+MAN+=	iswalnum.3 wctype.3 iswctype.3 \
+	towlower.3 wctrans.3 towctrans.3 \
+	wcwidth.3
+
+MAN+=	wcstol.3 wcstod.3 \
+	wcscoll.3 wcsxfrm.3 \
+	wcsftime.3
+
+MLINKS+=setlocale.3 localeconv.3
 
 MLINKS+=iswalnum.3 iswalpha.3 iswalnum.3 iswblank.3 \
 	iswalnum.3 iswcntrl.3 iswalnum.3 iswdigit.3 \
@@ -45,7 +62,9 @@ MLINKS+=iswalnum.3 iswalpha.3 iswalnum.3 iswblank.3 \
 	iswalnum.3 iswprint.3 iswalnum.3 iswpunct.3 \
 	iswalnum.3 iswspace.3 iswalnum.3 iswupper.3 \
 	iswalnum.3 iswxdigit.3
+
 MLINKS+=towlower.3 towupper.3
+
 MLINKS+=wcstod.3 wcstof.3 wcstod.3 wcstold.3
 MLINKS+=wcstol.3 wcstoll.3 wcstol.3 wcstoimax.3 \
 	wcstol.3 wcstoul.3 wcstol.3 wcstoull.3 wcstol.3 wcstoumax.3

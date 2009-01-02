@@ -1,13 +1,8 @@
-/*	$NetBSD: isctype.c,v 1.16 2003/08/07 16:42:52 agc Exp $	*/
+/* $NetBSD: isctype.c,v 1.17 2009/01/02 00:20:19 tnozaki Exp $ */
 
-/*
- * Copyright (c) 1989 The Regents of the University of California.
+/*-
+ * Copyright (c)2008 Citrus Project,
  * All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,14 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -36,124 +28,88 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)isctype.c	5.2 (Berkeley) 6/1/90";
-#else
-__RCSID("$NetBSD: isctype.c,v 1.16 2003/08/07 16:42:52 agc Exp $");
-#endif
+__RCSID("$NetBSD: isctype.c,v 1.17 2009/01/02 00:20:19 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#define _ANSI_LIBRARY
+#include "namespace.h"
+#include <sys/types.h>
 #include <ctype.h>
+#include <langinfo.h>
+#define __SETLOCALE_SOURCE__
+#include <locale.h>
+#include <stdio.h>
+#if EOF != -1
+#error "EOF != -1"
+#endif
+
+#include "setlocale_local.h"
+
+#define _CTYPE_TAB(table, i) \
+    (((*_current_locale())->cache.table + 1)[i])
 
 #undef isalnum
-int
-isalnum(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_U|_L|_N));
+#undef isalpha
+#undef iscntrl
+#undef isdigit
+#undef isgraph
+#undef islower
+#undef isprint
+#undef ispunct
+#undef isspace
+#undef isupper
+#undef isxdigit
+
+#define _ISCTYPE_FUNC(name, bit) \
+int \
+is##name(int c) \
+{ \
+	return (int)(_CTYPE_TAB(ctype_tab, c) & (bit)); \
 }
 
-#undef isalpha
-int
-isalpha(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_U|_L));
-}
+_ISCTYPE_FUNC(alnum,  _U|_L|_N      )
+_ISCTYPE_FUNC(alpha,  _U|_L         )
+_ISCTYPE_FUNC(cntrl,  _C            )
+_ISCTYPE_FUNC(digit,  _N            )
+_ISCTYPE_FUNC(graph,  _P|_U|_L|_N   )
+_ISCTYPE_FUNC(lower,  _L            )
+_ISCTYPE_FUNC(print,  _P|_U|_L|_N|_B)
+_ISCTYPE_FUNC(punct,  _P            )
+_ISCTYPE_FUNC(space,  _S            )
+_ISCTYPE_FUNC(upper,  _U            )
+_ISCTYPE_FUNC(xdigit, _N|_X         )
 
 #undef isblank
 int
-isblank(c)
-	int c;
+isblank(int c)
 {
-	return(c == ' ' || c == '\t');
+	/* XXX: FIXME */
+        return c == ' ' || c == '\t';
 }
 
-#undef iscntrl
+#undef toupper
 int
-iscntrl(c)
-	int c;
+toupper(int c)
 {
-	return((_ctype_ + 1)[c] & _C);
+	return (int)_CTYPE_TAB(toupper_tab, c);
 }
 
-#undef isdigit
+#undef tolower
 int
-isdigit(c)
-	int c;
+tolower(int c)
 {
-	return((_ctype_ + 1)[c] & _N);
-}
-
-#undef isgraph
-int
-isgraph(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_P|_U|_L|_N));
-}
-
-#undef islower
-int
-islower(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _L);
-}
-
-#undef isprint
-int
-isprint(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_P|_U|_L|_N|_B));
-}
-
-#undef ispunct
-int
-ispunct(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _P);
-}
-
-#undef isspace
-int
-isspace(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _S);
-}
-
-#undef isupper
-int
-isupper(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & _U);
-}
-
-#undef isxdigit
-int
-isxdigit(c)
-	int c;
-{
-	return((_ctype_ + 1)[c] & (_N|_X));
+	return (int)_CTYPE_TAB(tolower_tab, c);
 }
 
 #undef _toupper
 int
-_toupper(c)
-	int c;
+_toupper(int c)
 {
 	return (c - 'a' + 'A');
 }
 
 #undef _tolower
 int
-_tolower(c)
-	int c;
+_tolower(int c)
 {
 	return (c - 'A' + 'a');
 }

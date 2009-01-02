@@ -1,4 +1,4 @@
-/* $NetBSD: wcstod_test.c,v 1.1 2006/04/13 01:25:13 tnozaki Exp $ */
+/* $NetBSD: wcstod_test.c,v 1.2 2009/01/02 00:20:24 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2005 Citrus Project,
@@ -83,6 +83,7 @@ static const unitcase_t unitcases[] = {
 { L"     -INFINITYX",	14,	ALT_MINUS_HUGE_VAL,	0 },
 
 /* NAN */
+#if defined(__HAVE_NANF)
 { L"NA",		0,	0,			0 },
 { L"+NA",		0,	0,			0 },
 { L"-NA",		0,	0,			0 },
@@ -109,6 +110,7 @@ static const unitcase_t unitcases[] = {
 { L"     NANX",		8,	ALT_NAN,		0 },
 { L"     +NANX",	9,	ALT_NAN,		0 },
 { L"     -NANX",	9,	ALT_NAN,		0 },
+#endif /* !__HAVE_NANF */
 
 { L"0",			1,	0,			0 },
 { L"+0",		2,	0,			0 },
@@ -361,7 +363,7 @@ static const unitcase_t unitcases[] = {
 { L"     -0x1.0P-2",	14,	-0.25,			0 },
 #endif
 
-{ NULL }
+{ NULL, 0, 0, 0 }
 };
 
 int
@@ -380,7 +382,8 @@ main(void)
 		if (buf == NULL)
 			abort();
 		(void)wcstombs(buf, ptr->wcs, n + 1);
-		printf("[%.*s]====================================\n", n, buf);
+		printf("[%.*s]====================================\n",
+		    (int)n, buf);
 		errno = 0;
 		d = wcstod(ptr->wcs, &tail);
 		printf("[errno]\n");
@@ -389,8 +392,8 @@ main(void)
 		assert(errno == ptr->exp_errno);
 		n = (size_t)(tail - ptr->wcs);
 		printf("[endptr - nptr]\n");
-		printf("    real:     %d\n", n);
-		printf("    expected: %d\n", ptr->exp_len);
+		printf("    real:     %zd\n", n);
+		printf("    expected: %zd\n", ptr->exp_len);
 		assert(n == ptr->exp_len);
 		printf("[result]\n");
 		printf("    real:     %F\n", d);
@@ -400,9 +403,11 @@ main(void)
 		} else if (ptr->exp_val == ALT_MINUS_HUGE_VAL) {
 			printf("    expected: %F\n", -HUGE_VAL);
 			assert(isinf(d) && d == -HUGE_VAL);
+#if defined(__HAVE_NANF)
 		} else if (ptr->exp_val == ALT_NAN) {
 			printf("    expected: %F\n", NAN);
 			assert(isnan(d));
+#endif
 		} else {
 			printf("    expected: %F\n", ptr->exp_val);
 			assert(d == ptr->exp_val);

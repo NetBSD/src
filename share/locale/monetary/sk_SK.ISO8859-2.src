@@ -1,4 +1,4 @@
-# $NetBSD: sk_SK.ISO8859-2.src,v 1.1 2008/05/17 04:05:52 ginsbach Exp $
+# $NetBSD: sk_SK.ISO8859-2.src,v 1.2 2009/01/02 00:20:22 tnozaki Exp $
 #
 # Slovak Language Monetary Locale for Slovakia
 #
@@ -44,7 +44,7 @@ Sk
 #
 2
 #
-# Currency Symbol Precedes Positive Value (p_cs_preceds)
+# Currency Symbol Precedes Positive Value (p_cs_precedes)
 #    Must be either 1 or 0.
 #
 1
@@ -55,7 +55,7 @@ Sk
 #
 2
 #
-# Currency Symbol Precedes Negative Value (n_cs_preceds)
+# Currency Symbol Precedes Negative Value (n_cs_precedes)
 #    Must be either 1 or 0.
 #
 1
@@ -75,7 +75,7 @@ Sk
 #
 4
 #
-# International Currency Symbol Precedes	Positive Value (int_p_cs_preceds)
+# International Currency Symbol Precedes	Positive Value (int_p_cs_precedes)
 #    Must be either 1 or 0.
 #
 1
@@ -86,7 +86,7 @@ Sk
 #
 2
 #
-# International Currency Symbol Precedes Negative Value (int_n_cs_preceds)
+# International Currency Symbol Precedes Negative Value (int_n_cs_precedes)
 #    Must be either 1 or 0.
 #
 1
