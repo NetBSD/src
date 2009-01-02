@@ -9,3 +9,4 @@ file        dev/dm/dm_target_error.c    dm
 file        dev/dm/dm_target_linear.c   dm
 file        dev/dm/dm_target_zero.c     dm
 file 	    dev/dm/dm_target_snapshot.c dm
+file 	    dev/dm/dm_target_stripe.c 	dm
