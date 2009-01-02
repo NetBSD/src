@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.29 2009/01/02 02:54:13 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.30 2009/01/02 14:03:15 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -78,7 +78,15 @@ CFLAGS+=	-Wno-pointer-sign
 # 2) ...?
 # 3) PROFIT!
 #
+
+#
+# XXX: THIS IS UGLY, NEEDS BETTER FIX FOR COMPAT LIB
+#
+.ifdef(LD32DIR)
+ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${LD32DIR}
+.else
 ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MACHINE_ARCH}
+.endif
 .if exists(${ARCHDIR})
 .include "${ARCHDIR}/Makefile.inc"
 .PATH:	${ARCHDIR}
