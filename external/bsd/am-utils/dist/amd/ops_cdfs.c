@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_cdfs.c,v 1.1.1.1 2008/09/19 20:07:16 christos Exp $	*/
+/*	$NetBSD: ops_cdfs.c,v 1.2 2009/01/02 16:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Erez Zadok
@@ -150,6 +150,7 @@ mount_cdfs(char *mntdir, char *fs_name, char *opts, int on_autofs)
   if (amu_hasmntopt(&mnt, MNTTAB_OPT_RRIP))
     cdfs_flags |= MNT2_CDFS_OPT_RRIP;
 #endif /* defined(MNT2_CDFS_OPT_RRIP) && defined(MNTTAB_OPT_RRIP) */
+
 #if defined(MNT2_CDFS_OPT_NORRIP) && defined(MNTTAB_OPT_NORRIP)
   if (amu_hasmntopt(&mnt, MNTTAB_OPT_NORRIP))
     cdfs_flags |= MNT2_CDFS_OPT_NORRIP;
@@ -159,10 +160,26 @@ mount_cdfs(char *mntdir, char *fs_name, char *opts, int on_autofs)
   if (amu_hasmntopt(&mnt, MNTTAB_OPT_GENS))
     cdfs_flags |= MNT2_CDFS_OPT_GENS;
 #endif /* defined(MNT2_CDFS_OPT_GENS) && defined(MNTTAB_OPT_GENS) */
+
 #if defined(MNT2_CDFS_OPT_EXTATT) && defined(MNTTAB_OPT_EXTATT)
   if (amu_hasmntopt(&mnt, MNTTAB_OPT_EXTATT))
     cdfs_flags |= MNT2_CDFS_OPT_EXTATT;
 #endif /* defined(MNT2_CDFS_OPT_EXTATT) && defined(MNTTAB_OPT_EXTATT) */
+
+#if defined(MNT2_CDFS_OPT_NOCASETRANS) && defined(MNTTAB_OPT_NOCASETRANS)
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_NOCASETRANS))
+    cdfs_flags |= MNT2_CDFS_OPT_NOCASETRANS;
+#endif /* defined(MNT2_CDFS_OPT_NOCASETRANS) && defined(MNTTAB_OPT_NOCASETRANS) */
+
+#if defined(MNT2_CDFS_OPT_NOJOLIET) && defined(MNTTAB_OPT_NOJOLIET)
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_NOJOLIET))
+    cdfs_flags |= MNT2_CDFS_OPT_NOJOLIET;
+#endif /* defined(MNT2_CDFS_OPT_NOJOLIET) && defined(MNTTAB_OPT_NOJOLIET) */
+
+#if defined(MNT2_CDFS_OPT_RRCASEINS) && defined(MNTTAB_OPT_RRCASEINS)
+  if (amu_hasmntopt(&mnt, MNTTAB_OPT_RRCASEINS))
+    cdfs_flags |= MNT2_CDFS_OPT_RRCASEINS;
+#endif /* defined(MNT2_CDFS_OPT_RRCASEINS) && defined(MNTTAB_OPT_RRCASEINS) */
 
   genflags = compute_mount_flags(&mnt);
 #ifdef HAVE_FS_AUTOFS

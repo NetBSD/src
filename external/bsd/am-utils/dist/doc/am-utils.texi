@@ -1,5 +1,5 @@
 \input texinfo          @c -*-texinfo-*-
-@c $NetBSD: am-utils.texi,v 1.1.1.1 2008/09/19 20:07:20 christos Exp $
+@c $NetBSD: am-utils.texi,v 1.2 2009/01/02 16:00:02 christos Exp $
 @c
 @c Copyright (c) 1997-2007 Erez Zadok
 @c Copyright (c) 1989 Jan-Simon Pendry
@@ -2201,6 +2201,11 @@ is used.
 Do not allow data to be cached from a remote server for this
 mount.
 
+@item nocasetrans
+@cindex Mount flags; nocasetrans
+Don't do case translation. Useful for CD-ROMS formatted as
+ISO-9660.
+
 @item noconn
 @cindex Mount flags; noconn
 Don't make a connection on datagram transports.
@@ -2227,6 +2232,10 @@ Don't allow program execution.
 @item noint
 @cindex Mount flags; noint
 Do not allow keyboard interrupts for this mount
+
+@item nojoliet
+@cindex Mount flags; nojoliet
+Turn off the Joliet extensions.  Useful for CD-ROMS formatted as ISO-9660.
 
 @item nolock
 @cindex Mount flags; nolock
@@ -2321,6 +2330,11 @@ trying}.
 @item retry
 @cindex Mount flags; retry
 Set the NFS retry counter.
+
+@item rrcaseins
+@cindex Mount flags; rrcaseins
+Enable the Rock Ridge Interchange Protocol (RRIP) case insensitive extensions.
+Useful for CD-ROMS formatted as ISO-9660.
 
 @item rrip
 @cindex Mount flags; rrip
