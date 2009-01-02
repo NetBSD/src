@@ -1,4 +1,4 @@
-# $NetBSD: be_BY.CP1251.src,v 1.1 2008/05/17 04:05:51 ginsbach Exp $
+# $NetBSD: be_BY.CP1251.src,v 1.2 2009/01/02 00:20:21 tnozaki Exp $
 #
 # Belarusian Language Monetary Locale for Belarus
 #
@@ -44,7 +44,7 @@ BYR
 #
 2
 #
-# Currency Symbol Precedes Positive Value (p_cs_preceds)
+# Currency Symbol Precedes Positive Value (p_cs_precedes)
 #    Must be either 1 or 0.
 #
 0
@@ -55,7 +55,7 @@ BYR
 #
 1
 #
-# Currency Symbol Precedes Negative Value (n_cs_preceds)
+# Currency Symbol Precedes Negative Value (n_cs_precedes)
 #    Must be either 1 or 0.
 #
 0
@@ -75,7 +75,7 @@ BYR
 #
 1
 #
-# International Currency Symbol Precedes	Positive Value (int_p_cs_preceds)
+# International Currency Symbol Precedes	Positive Value (int_p_cs_precedes)
 #    Must be either 1 or 0.
 #
 0
@@ -86,7 +86,7 @@ BYR
 #
 1
 #
-# International Currency Symbol Precedes Negative Value (int_n_cs_preceds)
+# International Currency Symbol Precedes Negative Value (int_n_cs_precedes)
 #    Must be either 1 or 0.
 #
 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.6 2006/11/03 20:16:28 christos Exp $	*/
+/*	$NetBSD: iconv.c,v 1.7 2009/01/02 00:20:19 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.6 2006/11/03 20:16:28 christos Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.7 2009/01/02 00:20:19 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,13 +45,13 @@ __weak_alias(iconv_open, _iconv_open)
 __weak_alias(iconv_close, _iconv_close)
 #endif
 
-#ifdef CITRUS_ICONV
+#ifdef HAVE_CITRUS
 #include <sys/types.h>
-#include <citrus/citrus_types.h>
-#include <citrus/citrus_module.h>
-#include <citrus/citrus_esdb.h>
-#include <citrus/citrus_hash.h>
-#include <citrus/citrus_iconv.h>
+#include "citrus_types.h"
+#include "citrus_module.h"
+#include "citrus_esdb.h"
+#include "citrus_hash.h"
+#include "citrus_iconv.h"
 
 #define ISBADF(_h_)	(!(_h_) || (_h_) == (iconv_t)-1)
 

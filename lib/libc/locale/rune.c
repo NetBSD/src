@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.30 2007/09/29 07:55:45 tnozaki Exp $	*/
+/*	$NetBSD: rune.c,v 1.31 2009/01/02 00:20:20 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.30 2007/09/29 07:55:45 tnozaki Exp $");
+__RCSID("$NetBSD: rune.c,v 1.31 2009/01/02 00:20:20 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,8 +76,11 @@ __RCSID("$NetBSD: rune.c,v 1.30 2007/09/29 07:55:45 tnozaki Exp $");
 #include <wchar.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <citrus/citrus_module.h>
-#include <citrus/citrus_ctype.h>
+
+#include "citrus_module.h"
+#include "citrus_ctype.h"
+
+#include "bsdctype.h"
 #include "rune.h"
 #include "rune_local.h"
 
