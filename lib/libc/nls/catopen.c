@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.25 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: catopen.c,v 1.26 2009/01/02 00:20:21 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.25 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.26 2009/01/02 00:20:21 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -50,13 +50,14 @@ __RCSID("$NetBSD: catopen.c,v 1.25 2008/04/28 20:23:00 martin Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#ifdef CITRUS
-#include <citrus/citrus_namespace.h>
-#include <citrus/citrus_region.h>
-#include <citrus/citrus_lookup.h>
+#ifdef HAVE_CITRUS
+#include "citrus_namespace.h"
+#include "citrus_bcs.h"
+#include "citrus_region.h"
+#include "citrus_lookup.h"
+#include "citrus_aliasname_local.h"
 #else
-#include <locale/aliasname_local.h>
-#define _lookup_alias(p, a, b, s, c)	__unaliasname((p), (a), (b), (s))
+#include "aliasname_local.h"
 #endif
 
 #define NLS_ALIAS_DB "/usr/share/nls/nls.alias"
@@ -77,7 +78,7 @@ _catopen(name, oflag)
 {
 	char tmppath[PATH_MAX+1];
 	const char *nlspath;
-	const char *lang;
+	const char *lang, *reallang;
 	char *t;
 	const char *s, *u;
 	nl_catd catd;
@@ -101,8 +102,9 @@ _catopen(name, oflag)
 	if (lang == NULL || strchr(lang, '/'))
 		lang = NLS_DEFAULT_LANG;
 
-	lang = _lookup_alias(NLS_ALIAS_DB, lang, langbuf, sizeof(langbuf),
-			     _LOOKUP_CASE_SENSITIVE);
+	reallang = __unaliasname(NLS_ALIAS_DB, lang, langbuf, sizeof(langbuf));
+	if (reallang == NULL)
+		reallang = lang;
 
 	s = nlspath;
 	t = tmppath;
@@ -111,7 +113,7 @@ _catopen(name, oflag)
 			if (*s == '%') {
 				switch (*(++s)) {
 				case 'L':	/* locale */
-					u = lang;
+					u = reallang;
 					while (*u && t < tmppath + PATH_MAX)
 						*t++ = *u++;
 					break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_bcs.h,v 1.4 2008/02/09 14:56:20 junyoung Exp $	*/
+/*	$NetBSD: citrus_bcs.h,v 1.5 2009/01/02 00:20:19 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -87,6 +87,12 @@ const char *_citrus_bcs_skip_nonws_len(const char * __restrict,
 void _citrus_bcs_trunc_rws_len(const char * __restrict, size_t * __restrict);
 void _citrus_bcs_convert_to_lower(char *);
 void _citrus_bcs_convert_to_upper(char *);
+
+long int _citrus_bcs_strtol(
+    const char * __restrict, char ** __restrict, int);
+unsigned long int _citrus_bcs_strtoul(
+    const char * __restrict, char ** __restrict, int);
+
 __END_DECLS
 
 #endif

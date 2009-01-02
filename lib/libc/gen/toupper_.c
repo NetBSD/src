@@ -1,4 +1,4 @@
-/*	$NetBSD: toupper_.c,v 1.9 2003/07/26 19:24:45 salo Exp $	*/
+/*	$NetBSD: toupper_.c,v 1.10 2009/01/02 00:20:19 tnozaki Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: toupper_.c,v 1.9 2003/07/26 19:24:45 salo Exp $");
+__RCSID("$NetBSD: toupper_.c,v 1.10 2009/01/02 00:20:19 tnozaki Exp $");
 #endif /* LIBC_RCS and not lint */
 
 #include <stdio.h>
@@ -54,11 +54,3 @@ const short _C_toupper_[1 + 256] = {
 };
 
 const short *_toupper_tab_ = _C_toupper_;
-
-#undef toupper
-int
-toupper(c)
-	int c;
-{
-	return((_toupper_tab_ + 1)[c]);
-}

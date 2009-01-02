@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_module.c,v 1.7 2008/06/14 16:01:07 tnozaki Exp $	*/
+/*	$NetBSD: citrus_module.c,v 1.8 2009/01/02 00:20:19 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_module.c,v 1.7 2008/06/14 16:01:07 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_module.c,v 1.8 2009/01/02 00:20:19 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -101,6 +101,8 @@ __RCSID("$NetBSD: citrus_module.c,v 1.7 2008/06/14 16:01:07 tnozaki Exp $");
 #include <unistd.h>
 #include <stddef.h>
 #include <paths.h>
+#include "citrus_namespace.h"
+#include "citrus_bcs.h"
 #include "citrus_module.h"
 
 #include <sys/types.h>
@@ -136,7 +138,7 @@ _getdewey(int dewey[], char *cp)
 		if (*cp < '0' || '9' < *cp)
 			return 0;
 
-		dewey[n++] = (int)strtol(cp, &cp, 10);
+		dewey[n++] = (int)_bcs_strtol(cp, &cp, 10);
 	}
 
 	return n;

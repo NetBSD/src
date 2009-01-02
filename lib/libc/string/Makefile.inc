@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.67 2007/02/17 09:32:58 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.68 2009/01/02 00:20:21 tnozaki Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -13,8 +13,10 @@ SRCS+=	bm.c strcasecmp.c strncasecmp.c strcasestr.c strcoll.c strdup.c \
 SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 	wcslen.c wcsncat.c wcscasecmp.c wcsdup.c wcsncasecmp.c \
 	wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c wcsstr.c wcstok.c \
-	wcswcs.c wcswidth.c \
-	wmemchr.c wmemcmp.c wmemcpy.c wmemmove.c wmemset.c 
+	wcswcs.c wmemchr.c wmemcmp.c wmemcpy.c wmemmove.c wmemset.c
+CPPFLAGS.wcscmp.c+=	-I${LIBCDIR}/locale
+CPPFLAGS.wcsncmp.c+=	-I${LIBCDIR}/locale
+CPPFLAGS.wmemcmp.c+=	-I${LIBCDIR}/locale
 
 # namespace protection wrappers
 SRCS+=	_strlcat.c _strlcpy.c _strerror_r.c
