@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2009/01/02 22:08:19 tnozaki Exp $
+#	$NetBSD: Makefile,v 1.14 2009/01/02 22:16:14 tnozaki Exp $
 
 .ifndef HOSTPROG
 .include <bsd.own.mk>
@@ -15,8 +15,11 @@ CPPFLAGS+=	-I. -I${.CURDIR} \
 		-I${NETBSDSRCDIR}/lib/libc/include \
 		-I${NETBSDSRCDIR}/lib/libc/locale \
 		-I${NETBSDSRCDIR}/lib/libc/citrus \
-		-I${NETBSDSRCDIR}/common/lib/libc/stdlib \
 		-DNBCHAR_MAX=127 -DHOSTPROG
+CPPFLAGS.citrus_bcs_strtoul.c+= \
+		-I${NETBSDSRCDIR}/common/lib/libc/stdlib
+CPPFLAGS.fparseln.c+= \
+		-I${NETBSDSRCDIR}/lib/libc/stdio
 YHEADER=	1
 
 .ifndef HOSTPROG
