@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.99 2008/09/12 20:46:42 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.100 2009/01/02 13:57:23 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.99 2008/09/12 20:46:42 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.100 2009/01/02 13:57:23 njoly Exp $");
 #endif
 #endif /* not lint */
 
@@ -884,6 +884,9 @@ ktrpsig(void *v, int len)
 				break;
 			case SI_MESGQ:
 				code = "SI_MESGQ";
+				break;
+			case SI_LWP:
+				code = "SI_LWP";
 				break;
 			default:
 				code = NULL;
