@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.40 2006/09/02 23:27:45 wiz Exp $
+.\"	$NetBSD: cksum.1,v 1.41 2009/01/02 09:42:51 lukem Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd August 25, 2006
+.Dd January 2, 2009
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -40,73 +40,53 @@
 .Nm md2 ,
 .Nm md4 ,
 .Nm md5 ,
-.Nm sha1 ,
 .Nm rmd160 ,
+.Nm sha1 ,
 .Nm sum
 .Nd display file checksums and block counts
 .Sh SYNOPSIS
+.
+.de fileargs
+. Oo
+. Ar
+|
+. Fl c
+. Op Fl w
+. Op Ar sumfile
+. Oc
+..
+.
+.de sumargs
+. Op Fl n
+. Oo
+. Fl a Ar algorithm
+. Op Fl ptx
+. Op Fl s Ar string
+. Oc
+. Op Fl o Ar 1 Ns | Ns Ar 2
+. fileargs
+..
+.
+.de hashargs
+. Op Fl nptx
+. Op Fl s Ar string
+. fileargs
+..
+.
 .Nm
-.Op Fl nw
-.Oo
-.Fl a Ar algorithm |
-.Fl c Oo Ar file Oc |
-.Op Fl o Ar 1 | Ar 2
-.Oc
-.Op Ar
+.sumargs
 .Nm sum
-.Op Fl w
-.Op Fl c Op Ar file
-.Op Ar
+.sumargs
 .Nm md2
-.Op Fl nw
-.Oo
-.Fl c Oo Ar file Oc |
-.Fl p |
-.Fl t |
-.Fl x |
-.Fl s Ar string
-.Oc
-.Op Ar
+.hashargs
 .Nm md4
-.Op Fl nw
-.Oo
-.Fl c Oo Ar file Oc |
-.Fl p |
-.Fl t |
-.Fl x |
-.Fl s Ar string
-.Oc
-.Op Ar
+.hashargs
 .Nm md5
-.Op Fl nw
-.Oo
-.Fl c Oo Ar file Oc |
-.Fl p |
-.Fl t |
-.Fl x |
-.Fl s Ar string
-.Oc
-.Op Ar
-.Nm sha1
-.Op Fl nw
-.Oo
-.Fl c Oo Ar file Oc |
-.Fl p |
-.Fl t |
-.Fl x |
-.Fl s Ar string
-.Oc
-.Op Ar
+.hashargs
 .Nm rmd160
-.Op Fl nw
-.Oo
-.Fl c Oo Ar file Oc |
-.Fl p |
-.Fl t |
-.Fl x |
-.Fl s Ar string
-.Oc
-.Op Ar
+.hashargs
+.Nm sha1
+.hashargs
 .Sh DESCRIPTION
 The
 .Nm
@@ -154,9 +134,9 @@ utilities behave in exactly the same manner as
 but use different algorithms.
 .Pp
 The
-.Nm sha1
-and
 .Nm rmd160
+and
+.Nm sha1
 utilities also produce message digests, however the output from these
 two programs is 160 bits in length, as opposed to 128.
 .Pp
@@ -167,18 +147,25 @@ When invoked as
 .Nm cksum ,
 use the specified
 .Ar algorithm .
-Valid algorithms are MD2, MD4, MD5, SHA1, RMD160, SHA256, SHA384, SHA512,
-CRC, old1, and old2.
-Old1 and old2 are equal to
-.Fl o Ar 1
-and
-.Fl o Ar 2 ,
-respectively.
-The default is CRC.
-.It Fl c Op Ar file
+Valid algorithms are:
+.Bl -column -offset indent ".Sy Algorithm" ".Sy Bits" ".Sy Description"
+.It Sy Algorithm Ta Sy Bits Ta Sy Description
+.It Li CRC Ta 32 Ta Default CRC algorithm
+.It Li MD2 Ta 128 Ta MD2, per Li RFC1319
+.It Li MD4 Ta 128 Ta MD4, per Li RFC1320
+.It Li MD5 Ta 128 Ta MD5, per Li RFC1321
+.It Li RMD160 Ta 160 Ta RIPEMD-160
+.It Li SHA1 Ta 160 Ta SHA-1, per Li FIPS PUB 180-1
+.It Li SHA256 Ta 256 Ta SHA-2
+.It Li SHA384 Ta 384 Ta SHA-2
+.It Li SHA512 Ta 512 Ta SHA-2
+.It Li old1 Ta 16 Ta Algorithm 1, per Fl o Ar 1
+.It Li old2 Ta 16 Ta Algorithm 2, per Fl o Ar 2
+.El
+.It Fl c Op Ar sumfile
 Verify (check) files against a list of checksums.
 The list is read from
-.Ar file ,
+.Ar sumfile ,
 or from stdin if no filename is given.
 E.g. first run
 .Dl Ic md5 *.tgz \*[Gt] MD5
@@ -342,12 +329,15 @@ article.
 The
 .Nm
 utility is expected to conform to
-.St -p1003.2-92 .
+.St -p1003.1-2004 .
 .Sh HISTORY
 The
 .Nm
 utility appeared in
 .Bx 4.4 .
+.Nm md5
+was added in
+.Nx 1.3 .
 The functionality for
 .Nm md2 ,
 .Nm md4 ,
@@ -356,8 +346,13 @@ and
 .Nm rmd160
 was added in
 .Nx 1.6 .
-Support for
-.Nm sha2
+Support for the SHA-2 algorithms
+.Po
+.Li SHA256 ,
+.Li SHA384 ,
+and
+.Li SHA512
+.Pc
 was added in
 .Nx 3.0 .
 The functionality to verify checksum stored in a file
