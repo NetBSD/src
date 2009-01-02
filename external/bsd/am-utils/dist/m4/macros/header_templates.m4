@@ -701,11 +701,29 @@ AH_TEMPLATE([MNT2_NFS_OPT_XLATECOOKIE],
 AH_TEMPLATE([MNT2_CDFS_OPT_DEFPERM],
 [Ignore permission bits])
 
+AH_TEMPLATE([MNT2_CDFS_OPT_EXTATT],
+[Enable external attributes])
+
+AH_TEMPLATE([MNT2_CDFS_OPT_GENS],
+[Show file generations])
+
+AH_TEMPLATE([MNT2_CDFS_OPT_NOCASETRANS],
+[Disable filename case translation])
+
 AH_TEMPLATE([MNT2_CDFS_OPT_NODEFPERM],
 [Use on-disk permission bits])
 
+AH_TEMPLATE([MNT2_CDFS_OPT_NOJOLIET],
+[Disable Joliet extensions])
+
+AH_TEMPLATE([MNT2_CDFS_OPT_NORRIP],
+[Disable Rock Ridge Interchange Protocol (RRIP) extensions])
+
 AH_TEMPLATE([MNT2_CDFS_OPT_NOVERSION],
 [Strip off extension from version string])
+
+AH_TEMPLATE([MNT2_CDFS_OPT_RRCASEINS],
+[Enable Rock Ridge Interchange Protocol (RRIP) case insensitive filename extensions])
 
 AH_TEMPLATE([MNT2_CDFS_OPT_RRIP],
 [Use Rock Ridge Interchange Protocol (RRIP) extensions])
