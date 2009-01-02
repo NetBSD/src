@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2007/11/06 19:27:07 martin Exp $
+# $NetBSD: Makefile,v 1.22 2009/01/02 00:20:18 tnozaki Exp $
 #
 # Stubs to kill off some things from libc:
 # This save space on a boot system.
@@ -7,7 +7,8 @@
 .PATH.c: ${.CURDIR}/../../../lib/libc/gen ${.CURDIR}/../../../lib/libc/locale
 
 CPPFLAGS+=	-DSMALL
-CPPFLAGS.runetable.c+=	-I ${HACKSRC}/../../../lib/libc -DALL_80_TO_FF_SW1
+CPPFLAGS.runetable.c+=	-I${HACKSRC}/../../../lib/libc/citrus \
+			-DALL_80_TO_FF_SW1
 
 LIB=		hack
 SRCS=		getcap.c getgrent.c getnet.c getnetgr.c getpwent.c \
