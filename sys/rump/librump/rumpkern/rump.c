@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.80 2009/01/01 19:07:43 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.81 2009/01/02 02:54:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.80 2009/01/01 19:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.81 2009/01/02 02:54:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.80 2009/01/01 19:07:43 pooka Exp $");
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/kprintf.h>
+#include <sys/msgbuf.h>
 #include <sys/module.h>
 #include <sys/once.h>
 #include <sys/percpu.h>
@@ -57,6 +59,18 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.80 2009/01/01 19:07:43 pooka Exp $");
 #include "rump_vfs_private.h"
 
 struct proc proc0;
+struct session rump_session = {
+	.s_count = 1,
+	.s_flags = 0,
+	.s_leader = &proc0,
+	.s_login = "rumphobo",
+	.s_sid = 0,
+};
+struct pgrp rump_pgrp = {
+	.pg_members = LIST_HEAD_INITIALIZER(pg_members),
+	.pg_session = &rump_session,
+	.pg_jobc = 1,
+};
 struct pstats rump_stats;
 struct plimit rump_limits;
 struct cpu_info rump_cpu;
@@ -144,6 +158,8 @@ _rump_init(int rump_version)
 #ifdef RUMP_USE_REAL_KMEM
 	kmem_init();
 #endif
+	kprintf_init();
+	loginit();
 
 	kauth_init();
 	rump_susercred = rump_cred_create(0, 0, 0, NULL);
@@ -152,6 +168,7 @@ _rump_init(int rump_version)
 	p = &proc0;
 	p->p_stats = &rump_stats;
 	p->p_limit = &rump_limits;
+	p->p_pgrp = &rump_pgrp;
 	p->p_pid = 0;
 	p->p_fd = &rump_filedesc0;
 	p->p_vmspace = &rump_vmspace;

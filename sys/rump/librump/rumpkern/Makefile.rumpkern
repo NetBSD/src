@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.28 2009/01/01 19:43:57 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.29 2009/01/02 02:54:13 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -38,8 +38,8 @@ SRCS+=	kern_auth.c kern_descrip.c kern_ksyms.c kern_malloc_stdtype.c	\
 
 # sys/kern subr (misc)
 SRCS+=	subr_devsw.c subr_callback.c subr_hash.c subr_iostat.c		\
-	subr_kobj.c subr_once.c subr_prf2.c subr_specificdata.c		\
-	subr_time.c subr_workqueue.c
+	subr_kobj.c subr_log.c subr_once.c subr_prf.c			\
+	subr_specificdata.c subr_time.c subr_workqueue.c
 
 # the funny bit.  this doesn't really belong here, but helps with the
 # needs of kern_descrip.c.  And since it's a fully dynamic interface,
