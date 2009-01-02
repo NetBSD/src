@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.69 2009/01/02 12:57:29 ad Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.70 2009/01/02 21:06:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,25 +41,12 @@
 #include <sys/condvar.h>
 #include <sys/mutex.h>
 #include <sys/rb.h>
-#include <sys/workqueue.h>
 
 #ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>
 #endif
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
-
-/*
- * Silly rename structure that hangs off the nfsnode until the name
- * can be removed by nfs_inactive()
- */
-struct sillyrename {
-	struct work	s_work;
-	kauth_cred_t	s_cred;
-	struct	vnode *s_dvp;
-	long	s_namlen;
-	char	s_name[20];
-};
 
 /*
  * Definitions for the directory cache. Because directory cookies
@@ -216,6 +203,19 @@ struct nfsnode {
 #define NFSTOV(np)	((np)->n_vnode)
 
 #ifdef _KERNEL
+
+#include <sys/workqueue.h>
+/*
+ * Silly rename structure that hangs off the nfsnode until the name
+ * can be removed by nfs_inactive()
+ */
+struct sillyrename {
+	struct work	s_work;
+	kauth_cred_t	s_cred;
+	struct	vnode *s_dvp;
+	long	s_namlen;
+	char	s_name[20];
+};
 
 /*
  * Per-nfsiod datas
