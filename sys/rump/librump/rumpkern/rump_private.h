@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.20 2008/12/29 22:16:15 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.21 2009/01/02 02:54:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -72,8 +72,6 @@ struct rump_specpriv {
 #define RUMP_LMUTEX_MAGIC ((kmutex_t *)0x101)
 
 extern int rump_threads;
-
-void abort(void) __dead;
 
 void		rumpvm_init(void);
 void		rump_sleepers_init(void);

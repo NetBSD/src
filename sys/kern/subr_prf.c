@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.126 2009/01/01 15:10:20 pooka Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.127 2009/01/02 02:54:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.126 2009/01/01 15:10:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.127 2009/01/02 02:54:13 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -136,6 +136,9 @@ int	dumponpanic = DUMP_ON_PANIC;
 
 void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
 void (*v_flush)(void) = cnflush;	/* start with cnflush (normal cons) */
+
+const char hexdigits[] = "0123456789abcdef";
+const char HEXDIGITS[] = "0123456789ABCDEF";
 
 
 /*
@@ -424,6 +427,19 @@ putchar(int c, int flags, struct tty *tp)
 	if (flags & TODDB)
 		db_putchar(c);
 #endif
+}
+
+/*
+ * tablefull: warn that a system table is full
+ */
+
+void
+tablefull(const char *tab, const char *hint)
+{
+	if (hint)
+		log(LOG_ERR, "%s: table is full - %s\n", tab, hint);
+	else
+		log(LOG_ERR, "%s: table is full\n", tab);
 }
 
 
