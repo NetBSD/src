@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.119 2009/01/02 12:03:22 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.120 2009/01/02 12:45:47 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2538,4 +2538,29 @@ sys/dev/raidframe/rf_reconstruct.c		1.106
 	the reconstruct and wait for IOs to drain before pulling the plug.
 	Should fix the panic reported by der Mouse on tech-kern.
 	[oster, ticket #1249]
+
+crypto/dist/ipsec-tools/src/setkey/parse.y	1.11
+	Support icmp codes.  Fixes PR#39056.
+	[mlelstv, ticket #1250]
+
+sys/arch/atari/atari/be_bus.c			1.10
+sys/arch/atari/atari/le_bus.c			1.14
+sys/arch/atari/atari/mainbus.c			1.8
+sys/arch/atari/dev/wdc_mb.c			1.33
+	Sprinkle volatile to bus_space(9) access functions.
+	[tsutsui, ticket #1252]
+
+sys/arch/atari/dev/clock.c			1.39
+sys/arch/atari/include/param.h			1.31
+	Simplify delay based on x86 version.
+	[tsutsui, ticket #1253]
+
+lib/libc/stdio/fparseln.c			1.6-1.7
+	Fix a condition so that fparseln() doesn't report spurious empty
+	lines, e.g. after 2 comment lines, or on EOF after a single comment
+	line.  No escape character means no escaped characters.  Modify the
+	fix, so that no pointless realloc()s are done in the case of multiple
+	empty continuation lines Comment the code to make the logic obvious.
+	Fixes PR#40317.
+	[martin, ticket #1254]
 
