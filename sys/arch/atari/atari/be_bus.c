@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.7 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.7.24.1 2009/01/02 12:26:06 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.7 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.7.24.1 2009/01/02 12:26:06 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,15 +168,15 @@ static void		beb_bus_space_set_region_8 __P((bus_space_tag_t,
 /*
  * Don't force a function call overhead on these primitives...
  */
-#define __read_1(h, o)		*((u_int8_t  *)((h) + (o)))
-#define __read_2(h, o)		*((u_int16_t *)((h) + (o)))
-#define __read_4(h, o)		*((u_int32_t *)((h) + (o)))
-#define __read_8(h, o)		*((u_int64_t *)((h) + (o)))
+#define __read_1(h, o)		*((volatile u_int8_t  *)((h) + (o)))
+#define __read_2(h, o)		*((volatile u_int16_t *)((h) + (o)))
+#define __read_4(h, o)		*((volatile u_int32_t *)((h) + (o)))
+#define __read_8(h, o)		*((volatile u_int64_t *)((h) + (o)))
 
-#define __write_1(h, o, v)	*((u_int8_t  *)((h) + (o))) = (v)
-#define __write_2(h, o, v)	*((u_int16_t *)((h) + (o))) = (v)
-#define __write_4(h, o, v)	*((u_int32_t *)((h) + (o))) = (v)
-#define __write_8(h, o, v)	*((u_int64_t *)((h) + (o))) = (v)
+#define __write_1(h, o, v)	*((volatile u_int8_t  *)((h) + (o))) = (v)
+#define __write_2(h, o, v)	*((volatile u_int16_t *)((h) + (o))) = (v)
+#define __write_4(h, o, v)	*((volatile u_int32_t *)((h) + (o))) = (v)
+#define __write_8(h, o, v)	*((volatile u_int64_t *)((h) + (o))) = (v)
 
 bus_space_tag_t
 beb_alloc_bus_space_tag(storage)
