@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.5 2009/01/02 00:42:31 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.6 2009/01/02 11:03:24 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ dm_target_prop_list(void)
 int
 dm_target_init(void)
 {
-	dm_target_t *dmt,*dmt3,*dmt4;
+	dm_target_t *dmt,*dmt3;
 	int r;
 
 	r = 0;
@@ -253,7 +253,6 @@ dm_target_init(void)
 	
 	dmt = dm_target_alloc("linear");
 	dmt3 = dm_target_alloc("striped");
-	dmt4 = dm_target_alloc("mirror");
 	
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
@@ -281,20 +280,8 @@ dm_target_init(void)
 	
 	r = dm_target_insert(dmt3);
 
-	dmt4->version[0] = 1;
-	dmt4->version[1] = 0;
-	dmt4->version[2] = 3;
-	strlcpy(dmt4->name, "mirror", DM_MAX_TYPE_NAME);
-	dmt4->init = NULL;
-	dmt4->status = NULL;
-	dmt4->strategy = NULL;
-	dmt4->deps = NULL;
-	dmt4->destroy = NULL;
-	dmt4->upcall = NULL;
-	
-	r = dm_target_insert(dmt4);
-
-/*	dmt5->version[0] = 1;
+#ifdef notyet	
+	dmt5->version[0] = 1;
 	dmt5->version[1] = 0;
 	dmt5->version[2] = 5;
 	strlcpy(dmt5->name, "snapshot", DM_MAX_TYPE_NAME);
@@ -318,7 +305,8 @@ dm_target_init(void)
 	dmt6->destroy = &dm_target_snapshot_orig_destroy;
 	dmt6->upcall = &dm_target_snapshot_orig_upcall;
 
-	r = dm_target_insert(dmt6);*/
+	r = dm_target_insert(dmt6);
+#endif
 	
 	return r;
 }
