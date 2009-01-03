@@ -1,4 +1,4 @@
-.\" $NetBSD: opl.4,v 1.19 2008/04/30 13:10:54 martin Exp $
+.\" $NetBSD: opl.4,v 1.20 2009/01/03 17:44:20 christos Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2006
+.Dd January 3, 2009
 .Dt OPL 4
 .Os
 .Sh NAME
@@ -35,7 +35,6 @@
 .Nd Yamaha OPL2 and OPL3 FM MIDI synthesizer driver
 .Sh SYNOPSIS
 .Cd "opl*  at cmpci? flags 1"
-.Cd "opl*  at esl?"
 .Cd "opl*  at eso?"
 .Cd "opl*  at ess?"
 .Cd "opl*  at fms?"
@@ -68,7 +67,6 @@ driver handles left and right channels of OPL3 swapped.
 Use this flag if your device has such problem.
 .Sh SEE ALSO
 .Xr cmpci 4 ,
-.Xr esl 4 ,
 .Xr eso 4 ,
 .Xr ess 4 ,
 .Xr fms 4 ,
