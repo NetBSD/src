@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.20 2008/11/30 00:17:07 haad Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.21 2009/01/03 18:31:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -147,8 +147,6 @@ static const struct rb_tree_ops _prop_number_rb_tree_ops = {
 };
 
 static struct rb_tree _prop_number_tree;
-static bool _prop_number_tree_initialized;
-
 _PROP_MUTEX_DECL_STATIC(_prop_number_tree_mutex)
 
 /* ARGSUSED */
@@ -164,9 +162,23 @@ _prop_number_free(prop_stack_t stack, prop_object_t *obj)
 	return (_PROP_OBJECT_FREE_DONE);
 }
 
+_PROP_ONCE_DECL(_prop_number_init_once)
+
+static int
+_prop_number_init(void)
+{
+
+	_PROP_MUTEX_INIT(_prop_number_tree_mutex);
+	_prop_rb_tree_init(&_prop_number_tree,
+	    &_prop_number_rb_tree_ops);
+	return 0;
+}
+
 static void 
 _prop_number_lock()
 {
+	/* XXX: init necessary? */
+	_PROP_ONCE_RUN(_prop_number_init_once, _prop_number_init);
 	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
 }
 
@@ -263,23 +275,19 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 	struct rb_node *n;
 	bool rv;
 
+	_PROP_ONCE_RUN(_prop_number_init_once, _prop_number_init);
+
 	/*
 	 * Check to see if this already exists in the tree.  If it does,
 	 * we just retain it and return it.
 	 */
 	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
-	if (! _prop_number_tree_initialized) {
-		_prop_rb_tree_init(&_prop_number_tree,
-				   &_prop_number_rb_tree_ops);
-		_prop_number_tree_initialized = true;
-	} else {
-		n = _prop_rb_tree_find(&_prop_number_tree, pnv);
-		if (n != NULL) {
-			opn = RBNODE_TO_PN(n);
-			prop_object_retain(opn);
-			_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
-			return (opn);
-		}
+	n = _prop_rb_tree_find(&_prop_number_tree, pnv);
+	if (n != NULL) {
+		opn = RBNODE_TO_PN(n);
+		prop_object_retain(opn);
+		_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
+		return (opn);
 	}
 	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 

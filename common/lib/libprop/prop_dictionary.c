@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.33 2008/11/30 00:17:07 haad Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.34 2009/01/03 18:31:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -201,9 +201,19 @@ static const struct rb_tree_ops _prop_dict_keysym_rb_tree_ops = {
 };
 
 static struct rb_tree _prop_dict_keysym_tree;
-static bool _prop_dict_keysym_tree_initialized;
 
+_PROP_ONCE_DECL(_prop_dict_init_once)
 _PROP_MUTEX_DECL_STATIC(_prop_dict_keysym_tree_mutex)
+
+static int
+_prop_dict_init(void)
+{
+
+	_PROP_MUTEX_INIT(_prop_dict_keysym_tree_mutex);
+	_prop_rb_tree_init(&_prop_dict_keysym_tree,
+			   &_prop_dict_keysym_rb_tree_ops);
+	return 0;
+}
 
 static void
 _prop_dict_keysym_put(prop_dictionary_keysym_t pdk)
@@ -277,23 +287,19 @@ _prop_dict_keysym_alloc(const char *key)
 	size_t size;
 	bool rv;
 
+	_PROP_ONCE_RUN(_prop_dict_init_once, _prop_dict_init);
+
 	/*
 	 * Check to see if this already exists in the tree.  If it does,
 	 * we just retain it and return it.
 	 */
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	if (! _prop_dict_keysym_tree_initialized) {
-		_prop_rb_tree_init(&_prop_dict_keysym_tree,
-				   &_prop_dict_keysym_rb_tree_ops);
-		_prop_dict_keysym_tree_initialized = true;
-	} else {
-		n = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
-		if (n != NULL) {
-			opdk = RBNODE_TO_PDK(n);
-			prop_object_retain(opdk);
-			_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
-			return (opdk);
-		}
+	n = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
+	if (n != NULL) {
+		opdk = RBNODE_TO_PDK(n);
+		prop_object_retain(opdk);
+		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
+		return (opdk);
 	}
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 
@@ -394,6 +400,9 @@ _prop_dictionary_free(prop_stack_t stack, prop_object_t *obj)
 static void
 _prop_dictionary_lock(void)
 {
+
+	/* XXX: once necessary or paranoia? */
+	_PROP_ONCE_RUN(_prop_dict_init_once, _prop_dict_init);
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
 }
 
