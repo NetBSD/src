@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.199 2008/11/13 20:40:11 apb Exp $
+#	$NetBSD: build.sh,v 1.200 2009/01/03 08:23:00 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,6 +43,7 @@
 progname=${0##*/}
 toppid=$$
 results=/dev/null
+tab='	'
 trap "exit 1" 1 2 3 15
 
 bomb()
@@ -113,7 +114,7 @@ set_HOST_SH()
 	# specifying HOST_SH in the environment.
 	#
 	[ -z "${HOST_SH}" ] && HOST_SH="$(
-		(ps -p $$ -o comm | sed -ne '2s/[ \t]*$//p') 2>/dev/null )"
+		(ps -p $$ -o comm | sed -ne "2s/[ ${tab}]*\$//p") 2>/dev/null )"
 
 	# If nothing above worked, use "sh".  We will later find the
 	# first directory in the PATH that has a "sh" program.
@@ -1201,7 +1202,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.199 2008/11/13 20:40:11 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.200 2009/01/03 08:23:00 apb Exp $
 # with these arguments: ${_args}
 #
 
