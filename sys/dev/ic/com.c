@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.286 2008/10/25 17:50:29 matt Exp $ */
+/* $NetBSD: com.c,v 1.287 2009/01/03 03:43:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.286 2008/10/25 17:50:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.287 2009/01/03 03:43:22 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -337,7 +337,7 @@ comprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 	regs.cr_iot = iot;
 	regs.cr_ioh = ioh;
 #ifdef	COM_REGMAP
-	memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));;
+	memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));
 #endif
 
 	return com_probe_subr(&regs);

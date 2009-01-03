@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.22 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: sbp.c,v 1.23 2009/01/03 03:43:22 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.22 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.23 2009/01/03 03:43:22 yamt Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -2276,7 +2276,7 @@ sbp_free_target(struct sbp_target *target)
 	}
 	STAILQ_INIT(&target->xferlist);
 	free(target->luns, M_SBP);
-	target->num_lun = 0;;
+	target->num_lun = 0;
 	target->luns = NULL;
 	target->fwdev = NULL;
 }
@@ -2499,7 +2499,7 @@ sbp_timeout(void *arg)
 		SBP_DETACH_TARGET(target);
 		if (target->luns != NULL)
 			free(target->luns, M_SBP);
-		target->num_lun = 0;;
+		target->num_lun = 0;
 		target->luns = NULL;
 		target->fwdev = NULL;
 #endif

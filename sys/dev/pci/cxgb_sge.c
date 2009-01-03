@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.10 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.11 2009/01/03 03:43:22 yamt Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_sge.c,v 1.30 2007/09/09 04:34:03 kmacy Exp $");
@@ -124,7 +124,7 @@ struct rx_desc {
     uint32_t    len_gen;
     uint32_t    gen2;
     uint32_t    addr_hi;
-} __packed;;
+} __packed;
 
 struct rsp_desc {               /* response queue descriptor */
     struct rss_header   rss_hdr;

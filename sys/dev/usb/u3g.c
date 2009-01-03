@@ -45,7 +45,7 @@
 #define U3G_MAXPORTS           4
 
 struct u3g_softc {
-	device_t                    sc_ucom[U3G_MAXPORTS];;
+	device_t                    sc_ucom[U3G_MAXPORTS];
 	device_t                    sc_dev;
 	usbd_device_handle          sc_udev;
 	u_char                      sc_msr;

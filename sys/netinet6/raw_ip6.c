@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.101 2008/12/17 20:51:37 cegger Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.102 2009/01/03 03:43:23 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.101 2008/12/17 20:51:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.102 2009/01/03 03:43:23 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -305,10 +305,10 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return NULL;;
+		return NULL;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return NULL;;
+		return NULL;
 	if (PRC_IS_REDIRECT(cmd))
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
@@ -316,7 +316,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	else if (cmd == PRC_MSGSIZE)
 		; /* special code is present, see below */
 	else if (inet6ctlerrmap[cmd] == 0)
-		return NULL;;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {

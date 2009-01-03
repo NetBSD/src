@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.121 2008/12/07 10:53:57 mlelstv Exp $	*/
+/*	$NetBSD: acpi.c,v 1.122 2009/01/03 03:43:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.121 2008/12/07 10:53:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.122 2009/01/03 03:43:22 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -176,7 +176,7 @@ static const char * const acpi_ignored_ids[] = {
 
 static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
 static int acpi_sleepstate = ACPI_STATE_S0;
-static char acpi_supported_states[3 * 6 + 1] = "";;
+static char acpi_supported_states[3 * 6 + 1] = "";
 
 /*
  * Prototypes.

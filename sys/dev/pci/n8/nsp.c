@@ -1991,7 +1991,7 @@ n8_kprocess(void *arg, struct cryptkop *krp, int hint)
 		 * where b is the second parties private key
 		 */
 
-		event.usrCallback = n8_kcallback_setup;;
+		event.usrCallback = n8_kcallback_setup;
 		event.usrData = (void *)req;
 
 		req->op.dh.keymaterial.p =

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.24 2008/11/07 00:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.25 2009/01/03 03:43:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.24 2008/11/07 00:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.25 2009/01/03 03:43:22 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -270,7 +270,7 @@ rum_attachhook(void *xsc)
 		printf("%s: failed to allocate firmware memory\n",
 		    USBDEVNAME(sc->sc_dev));
 		firmware_close(fwh);
-		return ENOMEM;;
+		return ENOMEM;
 	}
 	error = firmware_read(fwh, 0, ucode, size);
 	firmware_close(fwh);

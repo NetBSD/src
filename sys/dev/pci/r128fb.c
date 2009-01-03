@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.6 2008/08/25 23:09:23 jmcneill Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.7 2009/01/03 03:43:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.6 2008/08/25 23:09:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.7 2009/01/03 03:43:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,7 +699,7 @@ r128fb_cursor(void *cookie, int on, int row, int col)
 			x = ri->ri_ccol * wi + ri->ri_xorigin;
 			y = ri->ri_crow * he + ri->ri_yorigin;
 			r128fb_bitblt(sc, x, y, x, y, wi, he, R128_ROP3_Dn);
-			ri->ri_flg |= RI_CURSOR;;
+			ri->ri_flg |= RI_CURSOR;
 		}
 	} else {
 		scr->scr_ri.ri_crow = row;
