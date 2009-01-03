@@ -241,9 +241,6 @@ mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?
 
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
-
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
