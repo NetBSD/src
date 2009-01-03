@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.9 2008/12/13 20:58:01 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.10 2009/01/03 11:18:28 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -73,4 +73,9 @@ sys/dev/pci/if_wm.c				1.163
 	as described in
 	  http://mail-index.netbsd.org/current-users/2008/12/02/msg006435.html
 	[sketch, ticket #1246]
+
+sys/arch/atari/dev/clock.c			1.39
+sys/arch/atari/include/param.h			1.31
+	Simplify delay based on x86 version.
+	[tsutsui, ticket #1253]
 
