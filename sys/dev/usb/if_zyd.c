@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.15 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.16 2009/01/03 03:43:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.15 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.16 2009/01/03 03:43:23 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -262,7 +262,7 @@ zyd_attachhook(void *xsc)
 		aprint_error_dev(sc->sc_dev,
 		    "failed to allocate firmware memory\n");
 		firmware_close(fwh);
-		return ENOMEM;;
+		return ENOMEM;
 	}
 	error = firmware_read(fwh, 0, fw, size);
 	firmware_close(fwh);

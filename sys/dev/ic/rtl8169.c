@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.106 2008/12/08 03:24:08 alc Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.107 2009/01/03 03:43:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.106 2008/12/08 03:24:08 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.107 2009/01/03 03:43:22 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1691,7 +1691,7 @@ re_init(struct ifnet *ifp)
 	 *      For 8169S/8110S and above, do not set bit 14.
 	 */
 	if ((sc->sc_quirk & RTKQ_8169NONS) != 0)
-		reg |= (0x1 << 14) | RTK_CPLUSCMD_PCI_MRW;;
+		reg |= (0x1 << 14) | RTK_CPLUSCMD_PCI_MRW;
 
 	if (1)  {/* not for 8169S ? */
 		reg |=
