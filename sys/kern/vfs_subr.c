@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.363 2008/12/29 17:41:18 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.364 2009/01/03 03:31:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.363 2008/12/29 17:41:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.364 2009/01/03 03:31:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -178,7 +178,7 @@ struct device *root_device;			/* root device */
 static void vrele_thread(void *);
 static void insmntque(vnode_t *, struct mount *);
 static int getdevvp(dev_t, vnode_t **, enum vtype);
-static vnode_t *getcleanvnode(void);;
+static vnode_t *getcleanvnode(void);
 void vpanic(vnode_t *, const char *);
 
 #ifdef DEBUG 

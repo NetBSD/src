@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.20 2008/11/23 23:59:41 jmcneill Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.21 2009/01/03 03:31:23 yamt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.20 2008/11/23 23:59:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.21 2009/01/03 03:31:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ drvctl_init(void)
 void
 devmon_insert(const char *event, prop_dictionary_t ev)
 {
-	struct drvctl_event *dce, *odce;;
+	struct drvctl_event *dce, *odce;
 
 	mutex_enter(&drvctl_lock);
 
