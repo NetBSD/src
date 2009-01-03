@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.32 2008/12/30 19:38:36 reinoud Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.33 2009/01/03 14:35:27 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.32 2008/12/30 19:38:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.33 2009/01/03 14:35:27 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,10 +241,11 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 	struct vrs_desc *vrsd;
 	uint64_t vrs;
 	int sector_size;
-	int blks;
+	int blks, inc;
 
 	sector_size = a->lp->d_secsize;
 	blks = sector_size / DEV_BSIZE;
+	inc  = MAX(1, 2048 / sector_size);
 
 	/* by definition */
 	vrs = ((32*1024 + sector_size - 1) / sector_size)
@@ -256,11 +257,12 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 
 	/* skip all CD001 records */
 	vrsd = a->bp->b_data;
+	/* printf("vrsd->identifier = `%s`\n", vrsd->identifier); */
 	while (memcmp(vrsd->identifier, "CD001", 5) == 0) {
 		/* for sure */
 		*is_iso9660 = first_sector;
 
-		vrs++;
+		vrs += inc;
 		if (read_sector(a, vrs * blks, blks))
 			return;
 	}
@@ -272,12 +274,13 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 		return;
 
 	/* read successor */
-	vrs++;
+	vrs += inc;
 	if (read_sector(a, vrs * blks, blks))
 		return;
 
 	/* check for NSR[23] */
 	vrsd = a->bp->b_data;
+	/* printf("vrsd->identifier = `%s`\n", vrsd->identifier); */
 	if (memcmp(vrsd->identifier, "NSR0", 4))
 		return;
 
