@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.70 2009/01/02 04:38:09 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.71 2009/01/03 07:11:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.70 2009/01/02 04:38:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.71 2009/01/03 07:11:02 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -981,7 +981,7 @@ mmu040_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
 	paddr_t		sysptmap_pa;	/* System page table		*/
 	paddr_t		kbase;
 {
-	int		i;
+	int		nl1desc, nl2desc, i;
 	st_entry_t	sg_proto, *sg, *esg;
 	pt_entry_t	pg_proto, *pg, *epg;
 
@@ -1003,10 +1003,10 @@ mmu040_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
 	 * pages of PTEs.  Note that we set the "used" bit
 	 * now to save the HW the expense of doing it.
 	 */
-	i   = (ptsize >> PGSHIFT) * (NPTEPG / SG4_LEV3SIZE);
+	nl2desc = (ptsize >> PGSHIFT) * (NPTEPG / SG4_LEV3SIZE);
 	sg  = (st_entry_t *)sysseg_pa;
 	sg  = &sg[SG4_LEV1SIZE];
-	esg = &sg[i];
+	esg = &sg[nl2desc];
 	sg_proto = (ptpa + kbase) /* relocated PA */ | SG_U | SG_RW | SG_V;
 	while (sg < esg) {
 		*sg++     = sg_proto;
@@ -1015,13 +1015,12 @@ mmu040_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
 
 	/*
 	 * Initialize level 1 descriptors.  We need:
-	 *	roundup(num, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
-	 * level 1 descriptors to map the 'num' level 2's.
+	 *	roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
+	 * level 1 descriptors to map the 'nl2desc' level 2's.
 	 */
-	i   = roundup(i, SG4_LEV2SIZE) / SG4_LEV2SIZE;
-	protostfree = (-1 << (i + 2)) /* & ~(-1 << MAXKL2SIZE) */;
+	nl1desc = roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEV2SIZE;
 	sg  = (st_entry_t *)sysseg_pa;
-	esg = &sg[i];
+	esg = &sg[nl1desc];
 	sg_proto = ((paddr_t)&sg[SG4_LEV1SIZE] + kbase) /* relocated PA */
 	    | SG_U | SG_RW | SG_V;
 	while (sg < esg) {
@@ -1037,10 +1036,9 @@ mmu040_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
 	/*
 	 * Kernel segment table at end of next level 2 table
 	 */
-	/* XXX fix calculations XXX */
-	i = ((((ptsize >> PGSHIFT) + 3) & -2) - 1) * (NPTEPG / SG4_LEV3SIZE);
+	i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
 	sg  = (st_entry_t *)sysseg_pa;
-	sg  = &sg[SG4_LEV1SIZE + i];
+	sg  = &sg[i + SG4_LEV2SIZE - (NPTEPG / SG4_LEV3SIZE)];
 	esg = &sg[NPTEPG / SG4_LEV3SIZE];
 	sg_proto = (sysptmap_pa + kbase) /* relocated PA */
 	    | SG_U | SG_RW | SG_V;
@@ -1048,6 +1046,9 @@ mmu040_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
 		*sg++ = sg_proto;
 		sg_proto += (SG4_LEV3SIZE * sizeof(st_entry_t));
 	}
+
+	/* Include additional level 2 table for Sysmap in protostfree */
+	protostfree = (~0 << (1 + nl1desc + 1)) /* & ~(~0 << MAXKL2SIZE) */;
 
 	/*
 	 * Initialize Sysptmap
