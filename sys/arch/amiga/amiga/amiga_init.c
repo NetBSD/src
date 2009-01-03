@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.103 2008/12/31 19:54:40 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.104 2009/01/03 07:04:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.103 2008/12/31 19:54:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.104 2009/01/03 07:04:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	register pt_entry_t pg_proto, *pg, *epg;
 	vaddr_t end_loaded;
 	u_int ncd, i;
+#if defined(M68040) || defined(M68060)
+	u_int nl1desc, nl2desc;
+#endif
 	vaddr_t kva;
 	struct boot_memlist *ml;
 
@@ -432,9 +435,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 * pages of PTEs.  Note that we set the "used" bit
 		 * now to save the HW the expense of doing it.
 		 */
-		i = (ptsize >> PGSHIFT) * (NPTEPG / SG4_LEV3SIZE);
-		sg = &((st_entry_t *)(RELOC(Sysseg_pa, u_int)))[SG4_LEV1SIZE];
-		esg = &sg[i];
+		nl2desc = (ptsize >> PGSHIFT) * (NPTEPG / SG4_LEV3SIZE);
+		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
+		sg = &sg[SG4_LEV1SIZE];
+		esg = &sg[nl2desc];
 		sg_proto = ptpa | SG_U | SG_RW | SG_V;
 		while (sg < esg) {
 			*sg++ = sg_proto;
@@ -443,15 +447,12 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 
 		/*
 		 * Initialize level 1 descriptors.  We need:
-		 *	roundup(num, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
-		 * level 1 descriptors to map the 'num' level 2's.
+		 *	roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
+		 * level 1 descriptors to map the 'nl2desc' level 2's.
 		 */
-		i = roundup(i, SG4_LEV2SIZE) / SG4_LEV2SIZE;
-		/* Include additional level 2 table for Sysmap in protostfree */
-		RELOC(protostfree, u_int) =
-		    (-1 << (i + 2)) /* & ~(-1 << MAXKL2SIZE) */;
+		nl1desc = roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEV2SIZE;
 		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
-		esg = &sg[i];
+		esg = &sg[nl1desc];
 		sg_proto = (paddr_t)&sg[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
 		while (sg < esg) {
 			*sg++ = sg_proto;
@@ -466,15 +467,19 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		/*
 		 * Kernel segment table at end of next level 2 table
 		 */
-		/* XXX fix calculations XXX */
-		i = ((((ptsize >> PGSHIFT) + 3) & -2) - 1) * (NPTEPG / SG4_LEV3SIZE);
-		sg = &((st_entry_t *)(RELOC(Sysseg_pa, u_int)))[SG4_LEV1SIZE + i];
+		i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
+		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
+		sg = &sg[i + SG4_LEV2SIZE - (NPTEPG / SG4_LEV3SIZE)];
 		esg = &sg[NPTEPG / SG4_LEV3SIZE];
 		sg_proto = Sysptmap_pa | SG_U | SG_RW | SG_V;
 		while (sg < esg) {
 			*sg++ = sg_proto;
 			sg_proto += (SG4_LEV3SIZE * sizeof (st_entry_t));
 		}
+
+		/* Include additional level 2 table for Sysmap in protostfree */
+		RELOC(protostfree, u_int) =
+		    (~0 << (1 + nl1desc + 1)) /* & ~(~0 << MAXKL2SIZE) */;
 
 		/*
 		 * Initialize Sysptmap
