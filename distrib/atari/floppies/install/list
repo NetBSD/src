@@ -1,8 +1,9 @@
-#	$NetBSD: list,v 1.8 2008/11/17 20:14:35 abs Exp $
+#	$NetBSD: list,v 1.9 2009/01/03 18:11:26 tsutsui Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
 PROG	bin/cp
+PROG	bin/df
 PROG	bin/expr
 PROG	bin/ln
 PROG	bin/ls
