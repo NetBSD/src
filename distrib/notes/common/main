@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.431 2008/12/09 00:50:27 roy Exp $
+.\"	$NetBSD: main,v 1.432 2009/01/03 12:01:24 shattered Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1660,6 +1660,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
 .It Ta SUNAGAWA Keiki Ta Mt kei@NetBSD.org
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
+.It Ta Sergey Svishchev Ta Mt shattered@NetBSD.org
 .It Ta Robert Swindells Ta Mt rjs@NetBSD.org
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.org
 .It Ta TAMURA Kent Ta Mt kent@NetBSD.org
