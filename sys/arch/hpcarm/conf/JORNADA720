@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.72 2008/11/24 11:41:11 ad Exp $
+#	$NetBSD: JORNADA720,v 1.73 2009/01/03 17:48:42 christos Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 # estimated number of users
 maxusers	32
@@ -225,14 +225,6 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
-
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?		# ESS 1688 AudioDrive
-# OPL[23] FM synthesizers
-#opl*   at esl?
-
-# Audio support
-#audio*	at audiobus?
 
 # Bluetooth Controller and Device support
 

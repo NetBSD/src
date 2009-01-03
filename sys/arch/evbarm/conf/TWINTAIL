@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.28 2008/12/14 23:07:22 he Exp $
+#	$NetBSD: TWINTAIL,v 1.29 2009/01/03 17:46:05 christos Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -329,9 +329,6 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 wdc*	at pcmcia? function ?
 atabus*	at wdc? channel ?
 wd*		at atabus? drive ? flags 0x0000
-
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
