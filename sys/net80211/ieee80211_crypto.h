@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.h,v 1.10 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: ieee80211_crypto.h,v 1.11 2009/01/03 03:43:23 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -214,7 +214,7 @@ static __inline void
 ieee80211_crypto_resetkey(struct ieee80211com *ic,
 	struct ieee80211_key *k, ieee80211_keyix ix)
 {
-	k->wk_cipher = &ieee80211_cipher_none;;
+	k->wk_cipher = &ieee80211_cipher_none;
 	k->wk_private = k->wk_cipher->ic_attach(ic, k);
 	k->wk_keyix = k->wk_rxkeyix = ix;
 	k->wk_flags = IEEE80211_KEY_XMIT | IEEE80211_KEY_RECV;

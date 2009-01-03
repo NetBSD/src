@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.62 2008/12/17 20:51:37 cegger Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.63 2009/01/03 03:43:23 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.62 2008/12/17 20:51:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.63 2009/01/03 03:43:23 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1763,7 +1763,7 @@ ieee80211_node_delucastkey(struct ieee80211_node *ni)
 	status = ieee80211_crypto_delkey(ic, &ni->ni_ucastkey);
 	if (nt->nt_keyixmap != NULL && keyix < nt->nt_keyixmax) {
 		nikey = nt->nt_keyixmap[keyix];
-		nt->nt_keyixmap[keyix] = NULL;;
+		nt->nt_keyixmap[keyix] = NULL;
 	} else
 		nikey = NULL;
 	if (!isowned)
