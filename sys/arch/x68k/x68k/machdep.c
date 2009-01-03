@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 2008/11/30 18:21:36 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155 2009/01/03 09:32:13 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 2008/11/30 18:21:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2009/01/03 09:32:13 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -262,9 +262,6 @@ cpu_startup(void)
 	int opmapdebug = pmapdebug;
 
 	pmapdebug = 0;
-#endif
-#if 0
-	rtclockinit(); /* XXX */
 #endif
 
 	if (fputype != FPU_NONE)
