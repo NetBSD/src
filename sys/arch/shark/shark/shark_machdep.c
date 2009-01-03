@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.32 2008/11/30 18:21:36 martin Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.33 2009/01/03 20:05:12 jmmv Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.32 2008/11/30 18:21:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.33 2009/01/03 20:05:12 jmmv Exp $");
 
 #include "opt_ddb.h"
 
@@ -300,7 +300,10 @@ initarm(void *arg)
 		panic("Cannot claim FIQ vector.");
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#ifndef __ELF__		/* XXX */
+#ifdef __ELF__
+	/* XXX: Load the symbol table in SYMTAB_SPACE */
+	ksyms_addsyms_elf(0, NULL, NULL);
+#else /* !__ELF__ */
 	{
 		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
