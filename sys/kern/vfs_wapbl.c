@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.16 2008/11/24 16:05:21 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.17 2009/01/03 03:31:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.16 2008/11/24 16:05:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.17 2009/01/03 03:31:23 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -1878,7 +1878,7 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	wc->wc_checksum = 0;
 	wc->wc_version = 1;
 	getnanotime(&ts);
-	wc->wc_time = ts.tv_sec;;
+	wc->wc_time = ts.tv_sec;
 	wc->wc_timensec = ts.tv_nsec;
 
 	WAPBL_PRINTF(WAPBL_PRINT_WRITE,
