@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.28 2008/11/30 00:17:07 haad Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.29 2009/01/03 18:31:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -231,6 +231,15 @@ struct _prop_object_iterator {
 	uint32_t	pi_version;
 };
 
+#define _PROP_NOTHREAD_ONCE_DECL(x)	static bool x = false;
+#define _PROP_NOTHREAD_ONCE_RUN(x,f)					\
+	do {								\
+		if ((x) == false) {					\
+			f();						\
+			x = true;					\
+		}							\
+	} while (/*CONSTCOND*/0)
+
 #if defined(_KERNEL)
 
 /*
@@ -241,8 +250,8 @@ struct _prop_object_iterator {
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/systm.h>
-#include <sys/simplelock.h>
 #include <sys/rwlock.h>
+#include <sys/once.h>
 
 #define	_PROP_ASSERT(x)			KASSERT(x)
 
@@ -260,10 +269,10 @@ struct _prop_object_iterator {
 #define	_PROP_MALLOC_DEFINE(t, s, l)					\
 		MALLOC_DEFINE(t, s, l);
 
-#define	_PROP_MUTEX_DECL_STATIC(x)					\
-		static struct simplelock x = SIMPLELOCK_INITIALIZER;
-#define	_PROP_MUTEX_LOCK(x)		simple_lock(&(x))
-#define	_PROP_MUTEX_UNLOCK(x)		simple_unlock(&(x))
+#define	_PROP_MUTEX_DECL_STATIC(x)	static kmutex_t x;
+#define	_PROP_MUTEX_INIT(x)		mutex_init(&(x),MUTEX_DEFAULT,IPL_NONE)
+#define	_PROP_MUTEX_LOCK(x)		mutex_enter(&(x))
+#define	_PROP_MUTEX_UNLOCK(x)		mutex_exit(&(x))
 
 #define	_PROP_RWLOCK_DECL(x)		krwlock_t x ;
 #define	_PROP_RWLOCK_INIT(x)		rw_init(&(x))
@@ -271,6 +280,9 @@ struct _prop_object_iterator {
 #define	_PROP_RWLOCK_WRLOCK(x)		rw_enter(&(x), RW_WRITER)
 #define	_PROP_RWLOCK_UNLOCK(x)		rw_exit(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)		rw_destroy(&(x))
+
+#define _PROP_ONCE_DECL(x)		static ONCE_DECL(x);
+#define _PROP_ONCE_RUN(x,f)		RUN_ONCE(&(x), f)
 
 #elif defined(_STANDALONE)
 
@@ -298,6 +310,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_MALLOC_DEFINE(t, s, l)	/* nothing */
 
 #define	_PROP_MUTEX_DECL_STATIC(x)	/* nothing */
+#define	_PROP_MUTEX_INIT(x)		/* nothing */
 #define	_PROP_MUTEX_LOCK(x)		/* nothing */
 #define	_PROP_MUTEX_UNLOCK(x)		/* nothing */
 
@@ -307,6 +320,9 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_WRLOCK(x)		/* nothing */
 #define	_PROP_RWLOCK_UNLOCK(x)		/* nothing */
 #define	_PROP_RWLOCK_DESTROY(x)		/* nothing */
+
+#define _PROP_ONCE_DECL(x)		_PROP_NOTHREAD_ONCE_DECL(x)
+#define _PROP_ONCE_RUN(x,f)		_PROP_NOTHREAD_ONCE_RUN(x,f)
 
 #else
 
@@ -340,7 +356,8 @@ void *		_prop_standalone_realloc(void *, size_t);
  * programs and do-nothing stubs for non-threaded programs.
  */
 #include "reentrant.h"
-#define	_PROP_MUTEX_DECL_STATIC(x)	static mutex_t x = MUTEX_INITIALIZER;
+#define	_PROP_MUTEX_DECL_STATIC(x)	static mutex_t x;
+#define	_PROP_MUTEX_INIT(x)		mutex_init(&(x), NULL)
 #define	_PROP_MUTEX_LOCK(x)		mutex_lock(&(x))
 #define	_PROP_MUTEX_UNLOCK(x)		mutex_unlock(&(x))
 
@@ -350,11 +367,17 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_WRLOCK(x)		rwlock_wrlock(&(x))
 #define	_PROP_RWLOCK_UNLOCK(x)		rwlock_unlock(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)		rwlock_destroy(&(x))
+
+#define _PROP_ONCE_DECL(x)						\
+	static pthread_once_t x = PTHREAD_ONCE_INIT;
+#define _PROP_ONCE_RUN(x,f)		thr_once(&(x), (void(*)(void))f);
+
 #elif defined(HAVE_NBTOOL_CONFIG_H)
 /*
  * None of NetBSD's build tools are multi-threaded.
  */
 #define	_PROP_MUTEX_DECL_STATIC(x)	/* nothing */
+#define	_PROP_MUTEX_INIT(x)		/* nothing */
 #define	_PROP_MUTEX_LOCK(x)		/* nothing */
 #define	_PROP_MUTEX_UNLOCK(x)		/* nothing */
 
@@ -364,13 +387,16 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_WRLOCK(x)		/* nothing */
 #define	_PROP_RWLOCK_UNLOCK(x)		/* nothing */
 #define	_PROP_RWLOCK_DESTROY(x)		/* nothing */
+
+#define _PROP_ONCE_DECL(x)		_PROP_NOTHREAD_ONCE_DECL(x)
+#define _PROP_ONCE_RUN(x,f)		_PROP_NOTHREAD_ONCE_RUN(x,f)
 #else
 /*
  * Use pthread mutexes everywhere else.
  */
 #include <pthread.h>
-#define	_PROP_MUTEX_DECL_STATIC(x)					\
-		static pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
+#define	_PROP_MUTEX_DECL_STATIC(x)	static pthread_mutex_t x;
+#define	_PROP_MUTEX_INIT(x)		pthread_mutex_init(&(x), NULL)
 #define	_PROP_MUTEX_LOCK(x)		pthread_mutex_lock(&(x))
 #define	_PROP_MUTEX_UNLOCK(x)		pthread_mutex_unlock(&(x))
 
@@ -380,6 +406,10 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_WRLOCK(x)		pthread_rwlock_wrlock(&(x))
 #define	_PROP_RWLOCK_UNLOCK(x)		pthread_rwlock_unlock(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)		pthread_rwlock_destroy(&(x))
+
+#define _PROP_ONCE_DECL(x)						\
+	static pthread_once_t x = PTHREAD_ONCE_INIT;
+#define _PROP_ONCE_RUN(x,f)		pthread_once(&(x),(void(*)(void))f)
 #endif
 
 #endif /* _KERNEL */
