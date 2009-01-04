@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.104 2009/01/03 07:04:42 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.105 2009/01/04 04:18:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.104 2009/01/03 07:04:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.105 2009/01/04 04:18:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,10 +447,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 
 		/*
 		 * Initialize level 1 descriptors.  We need:
-		 *	roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
+		 *	howmany(nl2desc, SG4_LEV2SIZE)
 		 * level 1 descriptors to map the 'nl2desc' level 2's.
 		 */
-		nl1desc = roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEV2SIZE;
+		nl1desc = howmany(nl2desc, SG4_LEV2SIZE);
 		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
 		esg = &sg[nl1desc];
 		sg_proto = (paddr_t)&sg[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
