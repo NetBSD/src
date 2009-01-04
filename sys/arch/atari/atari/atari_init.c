@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.71 2009/01/03 07:11:02 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.72 2009/01/04 04:18:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.71 2009/01/03 07:11:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.72 2009/01/04 04:18:36 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -1015,10 +1015,10 @@ mmu040_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
 
 	/*
 	 * Initialize level 1 descriptors.  We need:
-	 *	roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
+	 *	howmany(nl2desc, SG4_LEV2SIZE)
 	 * level 1 descriptors to map the 'nl2desc' level 2's.
 	 */
-	nl1desc = roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEV2SIZE;
+	nl1desc = howmany(nl2desc, SG4_LEV2SIZE);
 	sg  = (st_entry_t *)sysseg_pa;
 	esg = &sg[nl1desc];
 	sg_proto = ((paddr_t)&sg[SG4_LEV1SIZE] + kbase) /* relocated PA */
