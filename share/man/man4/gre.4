@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.40 2009/01/04 16:27:48 hubertf Exp $
+.\" $NetBSD: gre.4,v 1.41 2009/01/04 16:30:17 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,7 +224,6 @@ On Router B:
    # ifconfig greN tunnel B A
    # route add -net 192.168.1 -netmask 255.255.255.0 192.168.1.1
 .Ed
-.Pp
 .Ss Example 3: Encapsulating GRE in UDP
 To setup the same tunnel as above, but using GRE in UDP encapsulation
 instead of GRE encapsulation, set flags
@@ -250,7 +249,6 @@ On Router B:
    # ifconfig greN tunnel B,port-B A,port-A
    # route add -net 192.168.1 -netmask 255.255.255.0 192.168.1.1
 .Ed
-.Pp
 .Ss Example 4: Realizing IPv6 connectivity
 Along these lines, you can use GRE tunnels to interconnect two IPv6
 networks over an IPv4 infrastructure, or to hook up to the IPv6 internet
@@ -267,7 +265,7 @@ The example will use the following addressing:
 .It Nx A
 has the IPv4 address A and the IPv6 address 2001:db8:1::1 (connects
 to internal network 2001:db8:1::/64).
-.It Cisco B 
+.It Cisco B
 has external IPv4 address B.
 .It All the IPv6 internet world
 is behind B, so A wants to route 0::0/0
