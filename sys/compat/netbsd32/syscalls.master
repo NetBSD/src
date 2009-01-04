@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.74.4.2 2009/01/04 01:56:02 christos Exp $
+	$NetBSD: syscalls.master,v 1.74.4.3 2009/01/04 02:56:09 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -342,19 +342,19 @@
 166	UNIMPL
 167	UNIMPL
 168	UNIMPL
-#if defined(SYSVSEM) || !defined(_KERNEL)
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 169	COMPAT_10	{ int netbsd32_semsys(int which, int a2, int a3, \
 			    int a4, int a5); } osemsys
 #else
 169	EXCL		netbsd32_semsys
 #endif
-#if defined(SYSVMSG) || !defined(_KERNEL)
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 170	COMPAT_10	{ int netbsd32_msgsys(int which, int a2, int a3, \
 			    int a4, int a5, int a6); } omsgsys
 #else
 170	EXCL		netbsd32_msgsys
 #endif
-#if defined(SYSVSHM) || !defined(_KERNEL)
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 171	COMPAT_10	{ int netbsd32_shmsys(int which, int a2, int a3, \
 			    int a4); } oshmsys
 #else
@@ -379,7 +379,7 @@
 181	STD		{ int netbsd32_setgid(gid_t gid); }
 182	STD		{ int netbsd32_setegid(gid_t egid); }
 183	STD		{ int netbsd32_seteuid(uid_t euid); }
-#if defined(LFS) || !defined(_KERNEL)
+#if defined(LFS) || !defined(_KERNEL_OPT)
 184	STD		{ int netbsd32_lfs_bmapv(netbsd32_fsid_tp_t fsidp, \
 			    netbsd32_block_infop_t blkiov, int blkcnt); }
 185	STD		{ int netbsd32_lfs_markv(netbsd32_fsid_tp_t fsidp, \
@@ -448,7 +448,7 @@
 218	UNIMPL
 219	UNIMPL
 ; System calls 220-300 are reserved for use by NetBSD
-#if defined(SYSVSEM) || !defined(_KERNEL)
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 220	COMPAT_14	{ int netbsd32___semctl(int semid, int semnum, \
 			    int cmd, netbsd32_semunu_t arg); }
 221	STD		{ int netbsd32_semget(netbsd32_key_t key, int nsems, \
@@ -462,7 +462,7 @@
 222	EXCL		netbsd32_semop
 223	EXCL		netbsd32_semconfig
 #endif
-#if defined(SYSVMSG) || !defined(_KERNEL)
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 224	COMPAT_14	{ int netbsd32_msgctl(int msqid, int cmd, \
 			    netbsd32_msqid_ds14p_t buf); }
 225	STD		{ int netbsd32_msgget(netbsd32_key_t key, int msgflg); }
@@ -477,7 +477,7 @@
 226	EXCL		netbsd32_msgsnd
 227	EXCL		netbsd32_msgrcv
 #endif
-#if defined(SYSVSHM) || !defined(_KERNEL)
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 228	STD		{ netbsd32_voidp netbsd32_shmat(int shmid, \
 			    netbsd32_voidp shmaddr, int shmflg); }
 229	COMPAT_14	{ int netbsd32_shmctl(int shmid, int cmd, \
@@ -526,7 +526,7 @@
 			    netbsd32_timespec50p_t timeout); }
 245	UNIMPL
 246	UNIMPL
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
+#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL_OPT) && defined(_LIBC))
 247	STD		{ int netbsd32__ksem_init(unsigned int value, \
 			    netbsd32_semidp_t idp); }
 248	STD		{ int netbsd32__ksem_open(netbsd32_charp name, \
@@ -628,19 +628,19 @@
 			    netbsd32_stat13p_t sb); }
 300	COMPAT_20	{ int netbsd32_fhstatfs(netbsd32_fhandlep_t fhp, \
 			    netbsd32_stat50p_t buf); }
-#if defined(SYSVSEM) || !defined(_KERNEL)
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 301	COMPAT_50	{ int netbsd32___semctl14(int semid, int semnum, \
 			    int cmd, ... netbsd32_semun50p_t arg); }
 #else
 301	EXCL		__semctl14
 #endif
-#if defined(SYSVMSG) || !defined(_KERNEL)
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 302	COMPAT_50	{ int netbsd32___msgctl13(int msqid, int cmd, \
 			    netbsd32_msqid_ds50p_t buf); }
 #else
 302	EXCL		__msgctl13
 #endif
-#if defined(SYSVSHM) || !defined(_KERNEL)
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 303	COMPAT_50	{ int netbsd32___shmctl13(int shmid, int cmd, \
 			    netbsd32_shmid_ds50p_t buf); }
 #else
@@ -890,7 +890,7 @@
 421	STD		{ int netbsd32___adjtime50( \
 			    const netbsd32_timevalp_t delta, \
 			    netbsd32_timevalp_t olddelta); }
-#if defined(LFS) || !defined(_KERNEL)
+#if defined(LFS) || !defined(_KERNEL_OPT)
 422	STD		{ int netbsd32___lfs_segwait50( \
 			    netbsd32_fsid_tp_t fsidp, \
 			    netbsd32_timevalp_t tv); }
