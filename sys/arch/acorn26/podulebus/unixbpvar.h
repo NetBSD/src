@@ -1,4 +1,4 @@
-/*	$NetBSD: unixbpvar.h,v 1.2 2002/03/24 23:37:45 bjh21 Exp $	*/
+/*	$NetBSD: unixbpvar.h,v 1.3 2009/01/04 00:36:00 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -36,6 +36,6 @@
 extern int unixbp_irq_status_full(void);
 extern void unixbp_irq_setmask(int);
 
-extern struct device *the_unixbp;
+device_t the_unixbp;
 
 #endif
