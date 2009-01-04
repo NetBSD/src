@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.204 2008/12/20 13:20:58 isaki Exp $
+# $NetBSD: mi,v 1.205 2009/01/04 23:02:21 he Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -244,6 +244,7 @@
 ./etc/rc.d/raidframeparity			etc-sys-rc
 ./etc/rc.d/rarpd				etc-bootserver-rc
 ./etc/rc.d/rbootd				etc-bootserver-rc
+./etc/rc.d/rndctl				etc-sys-rc
 ./etc/rc.d/root					etc-sys-rc
 ./etc/rc.d/route6d				etc-router-rc
 ./etc/rc.d/routed				etc-router-rc
