@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mqueue.c,v 1.1.2.1 2008/11/09 20:00:20 christos Exp $ */
+/*	$NetBSD: compat_mqueue.c,v 1.1.2.2 2009/01/04 04:22:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_mqueue.c,v 1.1.2.1 2008/11/09 20:00:20 christos Exp $");
+__RCSID("$NetBSD: compat_mqueue.c,v 1.1.2.2 2009/01/04 04:22:53 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -72,7 +72,7 @@ mq_timedreceive(mqd_t mq, char * __restrict name, size_t len,
 	return __mq_timedreceive50(mq, name, len, buf, tsp);
 }
 
-ssize_t
+int
 mq_timedsend(mqd_t mq, const char *name, size_t len,
     unsigned buf, const struct timespec50 *ts50)
 {
