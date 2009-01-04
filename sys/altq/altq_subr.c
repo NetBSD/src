@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.27 2008/11/25 23:10:43 tsutsui Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.28 2009/01/04 18:41:36 pooka Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.27 2008/11/25 23:10:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.28 2009/01/04 18:41:36 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -333,9 +333,9 @@ tbr_set(struct ifaltq *ifq, struct tb_profile *profile)
 	otbr = ifq->altq_tbr;
 	ifq->altq_tbr = tbr;	/* set the new tbr */
 
-	if (otbr != NULL)
+	if (otbr != NULL) {
 		free(otbr, M_DEVBUF);
-	else {
+	} else {
 		if (tbr_timer == 0) {
 			CALLOUT_RESET(&tbr_callout, 1, tbr_timeout, (void *)0);
 			tbr_timer = 1;
