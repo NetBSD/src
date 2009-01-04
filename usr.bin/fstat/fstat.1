@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.24 2006/07/29 14:46:13 hubertf Exp $
+.\"	$NetBSD: fstat.1,v 1.25 2009/01/04 17:19:39 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
-.\"	$NetBSD: fstat.1,v 1.24 2006/07/29 14:46:13 hubertf Exp $
+.\"	$NetBSD: fstat.1,v 1.25 2009/01/04 17:19:39 wiz Exp $
 .\"
-.Dd February 18, 1999
+.Dd January 4, 2009
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -194,9 +194,8 @@ name that the process originally used to open that file.
 .El
 .Sh SOCKETS
 The formatting of open sockets depends on the protocol domain.
-In all cases the first field is the domain name, the second field
-is the socket type (stream, dgram, etc), and the third is the socket
-flags field (in hex).
+In all cases the first field is the domain name and
+the second field is the socket type (stream, dgram, etc.).
 The remaining fields are protocol dependent.
 For TCP, it is the address of the tcpcb, and for UDP, the inpcb (socket pcb).
 For
