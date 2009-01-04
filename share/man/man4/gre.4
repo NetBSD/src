@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.41 2009/01/04 16:30:17 wiz Exp $
+.\" $NetBSD: gre.4,v 1.42 2009/01/04 22:55:02 he Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -262,8 +262,8 @@ via an IPv4 tunnel to a Cisco router.
 .Pp
 The example will use the following addressing:
 .Bl -hang
-.It Nx A
-has the IPv4 address A and the IPv6 address 2001:db8:1::1 (connects
+.It Nx
+A has the IPv4 address A and the IPv6 address 2001:db8:1::1 (connects
 to internal network 2001:db8:1::/64).
 .It Cisco B
 has external IPv4 address B.
@@ -297,7 +297,6 @@ On Router B (Cisco):
      tunnel source B                    ! e.g. address from LAN interface
      tunnel destination A               ! where the tunnel is connected to
    ipv6 route 2001:db8::/64 TunnelX     ! route this network through tunnel
-.Ed
 .Ed
 .Sh NOTES
 The MTU of
