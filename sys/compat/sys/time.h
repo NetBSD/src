@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1.2.3 2008/11/20 20:48:20 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.1.2.4 2009/01/04 04:22:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,7 +72,7 @@ static __inline void timeval50_to_timeval(const struct timeval50 *ts50,
     struct timeval *ts)
 {
 	ts->tv_sec = ts50->tv_sec;
-	ts->tv_usec = ts50->tv_usec;
+	ts->tv_usec = (suseconds_t)ts50->tv_usec;
 }
 
 static __inline void timeval_to_timeval50(const struct timeval *ts,
@@ -92,7 +92,7 @@ static __inline void timespec50_to_timespec(const struct timespec50 *ts50,
 static __inline void timespec_to_timespec50(const struct timespec *ts,
     struct timespec50 *ts50)
 {
-	ts50->tv_sec = (long)ts->tv_sec;
+	ts50->tv_sec = (int32_t)ts->tv_sec;
 	ts50->tv_nsec = ts->tv_nsec;
 }
 
