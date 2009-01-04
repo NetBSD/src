@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.15 2008/03/11 18:04:59 rmind Exp $	*/
+/*	$NetBSD: qsort.c,v 1.15.10.1 2009/01/04 17:02:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.15 2008/03/11 18:04:59 rmind Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.15.10.1 2009/01/04 17:02:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

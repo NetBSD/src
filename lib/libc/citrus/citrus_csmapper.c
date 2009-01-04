@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_csmapper.c,v 1.8 2008/02/09 14:56:20 junyoung Exp $	*/
+/*	$NetBSD: citrus_csmapper.c,v 1.8.12.1 2009/01/04 17:02:18 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_csmapper.c,v 1.8 2008/02/09 14:56:20 junyoung Exp $");
+__RCSID("$NetBSD: citrus_csmapper.c,v 1.8.12.1 2009/01/04 17:02:18 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -208,7 +208,7 @@ parse_line(struct parse_arg *pa, struct _region *r)
 		 "%.*s", (int)(z1.end-z1.begin), z1.begin);
 	snprintf(buf, sizeof(buf),
 		 "%.*s", (int)(z2.end-z2.begin), z2.begin);
-	pa->norm = strtoul(buf, NULL, 0);
+	pa->norm = _bcs_strtoul(buf, NULL, 0);
 
 	return 0;
 }

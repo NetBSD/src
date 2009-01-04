@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.26 2006/05/18 15:30:36 christos Exp $
+.\"	$NetBSD: directory.3,v 1.26.28.1 2009/01/04 17:02:19 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,10 +29,11 @@
 .\"
 .\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 18, 2006
+.Dd December 5, 2008
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
+.Nm fdopendir ,
 .Nm opendir ,
 .Nm readdir ,
 .Nm readdir_r ,
@@ -46,6 +47,8 @@
 .Lb libc
 .Sh SYNOPSIS
 .In dirent.h
+.Ft DIR *
+.Fn fdopendir "int fd"
 .Ft DIR *
 .Fn opendir "const char *filename"
 .Ft struct dirent *
@@ -65,14 +68,23 @@
 .Sh DESCRIPTION
 The
 .Fn opendir
-function
-opens the directory named by
-.Fa filename ,
-associates a
+function opens the directory named by
+.Fa filename
+and associates a
 .Em directory stream
-with it
-and
-returns a pointer to be used to identify the
+with it.
+.Pp
+The
+.Fn fdopendir
+function associates a
+.Em directory stream
+with the directory file descriptor
+.Fa fd .
+The file descriptor
+.Fa fd
+must not be used further by the caller in any way.
+.Pp
+Both functions return a pointer to be used to identify the
 .Em directory stream
 in subsequent operations.
 The pointer
@@ -100,7 +112,8 @@ provides the same functionality as
 .Fn readdir ,
 but the caller must provide a directory
 .Fa entry
-buffer to store the results in.  If the read succeeds,
+buffer to store the results in.
+If the read succeeds,
 .Fa result
 is pointed at the
 .Fa entry ;
