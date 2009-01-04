@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.61.2.3 2008/12/28 18:38:55 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.61.2.4 2009/01/04 04:22:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -183,7 +183,7 @@ bintime2timeval(const struct bintime *bt, struct timeval *tv)
 
 	tv->tv_sec = bt->sec;
 	tv->tv_usec =
-	    (long)(((uint64_t)1000000 * (uint32_t)(bt->frac >> 32)) >> 32);
+	    (suseconds_t)(((uint64_t)1000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
 
 static __inline void
