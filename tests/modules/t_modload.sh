@@ -1,4 +1,4 @@
-# $NetBSD: t_modload.sh,v 1.3 2008/05/02 14:20:50 ad Exp $
+# $NetBSD: t_modload.sh,v 1.4 2009/01/04 17:56:57 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,8 @@ modload: No such file or directory
 EOF
 	atf_check "modload non-existent.o" 1 null experr
 
-	atf_check "modload $(atf_get_srcdir)/k_helper.kmod" 0 null null
+	atf_check "modload $(atf_get_srcdir)/k_helper/k_helper.kmod" \
+	    0 null null
 	check_sysctl vendor.k_helper.present 1
 	check_sysctl vendor.k_helper.prop_int_ok 0
 	check_sysctl vendor.k_helper.prop_str_ok 0
@@ -59,19 +60,19 @@ bflag_head() {
 bflag_body() {
 	echo "Checking error conditions"
 
-	atf_check "modload -b foo k_helper.kmod" 1 null stderr
+	atf_check "modload -b foo k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid parameter.*foo' stderr" 0 ignore null
 
-	atf_check "modload -b foo= k_helper.kmod" 1 null stderr
+	atf_check "modload -b foo= k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid boolean value' stderr" 0 ignore null
 
-	atf_check "modload -b foo=bar k_helper.kmod" 1 null stderr
+	atf_check "modload -b foo=bar k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid boolean value.*bar' stderr" 0 ignore null
 
-	atf_check "modload -b foo=falsea k_helper.kmod" 1 null stderr
+	atf_check "modload -b foo=falsea k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid boolean value.*falsea' stderr" 0 ignore null
 
-	atf_check "modload -b foo=truea k_helper.kmod" 1 null stderr
+	atf_check "modload -b foo=truea k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid boolean value.*truea' stderr" 0 ignore null
 
 	# TODO Once sysctl(8) supports CTLTYPE_BOOL nodes.
@@ -89,23 +90,23 @@ iflag_head() {
 iflag_body() {
 	echo "Checking error conditions"
 
-	atf_check "modload -i foo k_helper.kmod" 1 null stderr
+	atf_check "modload -i foo k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid parameter.*foo' stderr" 0 ignore null
 
-	atf_check "modload -i foo= k_helper.kmod" 1 null stderr
+	atf_check "modload -i foo= k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid integer value' stderr" 0 ignore null
 
-	atf_check "modload -i foo=bar k_helper.kmod" 1 null stderr
+	atf_check "modload -i foo=bar k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid integer value.*bar' stderr" 0 ignore null
 
-	atf_check "modload -i foo=123a k_helper.kmod" 1 null stderr
+	atf_check "modload -i foo=123a k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid integer value.*123a' stderr" 0 ignore null
 
 	echo "Checking valid values"
 
 	for v in 5 10; do
 		atf_check "modload -i prop_int='${v}' \
-			   $(atf_get_srcdir)/k_helper.kmod" 0 null null
+		    $(atf_get_srcdir)/k_helper/k_helper.kmod" 0 null null
 		check_sysctl vendor.k_helper.prop_int_ok 1
 		check_sysctl vendor.k_helper.prop_int_val "${v}"
 		atf_check "modunload k_helper" 0 null null
@@ -123,14 +124,14 @@ sflag_head() {
 sflag_body() {
 	echo "Checking error conditions"
 
-	atf_check "modload -s foo k_helper.kmod" 1 null stderr
+	atf_check "modload -s foo k_helper/k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid parameter.*foo' stderr" 0 ignore null
 
 	echo "Checking valid values"
 
 	for v in '1st string' '2nd string'; do
 		atf_check "modload -s prop_str='${v}' \
-			   $(atf_get_srcdir)/k_helper.kmod" 0 null null
+		    $(atf_get_srcdir)/k_helper/k_helper.kmod" 0 null null
 		check_sysctl vendor.k_helper.prop_str_ok 1
 		check_sysctl vendor.k_helper.prop_str_val "${v}"
 		atf_check "modunload k_helper" 0 null null
