@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.14 2008/12/19 11:21:24 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.15 2009/01/04 18:21:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,11 @@
 
 #include <machine/asm.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_RUMPKERNEL)
+#define _HARDKERNEL
+#endif
+
+#ifdef _HARDKERNEL
 #define	LOCK(n)		.Lpatch/**/n:	lock
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
 #define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
@@ -170,7 +174,7 @@ ENTRY(_membar_sync)
 	ret
 ENDLABEL(membar_sync_end)
 
-#ifdef _KERNEL
+#ifdef _HARDKERNEL
 ENTRY(_atomic_cas_64)
 	pushf
 	cli
@@ -243,7 +247,7 @@ ENTRY(_atomic_cas_64)
 	popl	%ebx
 	popl	%edi
 	ret
-#endif	/* _KERNEL */
+#endif	/* _HARDKERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
 ALIAS(atomic_add_int,_atomic_add_32)
