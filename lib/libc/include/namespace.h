@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.134.2.5 2008/11/10 01:16:34 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.134.2.6 2009/01/04 17:02:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -440,6 +440,7 @@
 #define nsdispatch		_nsdispatch
 #define offtime			_offtime
 #define opendir			_opendir
+#define fdopendir		_fdopendir
 #define openlog			_openlog
 #define openlog_r		_openlog_r
 #define pause			_pause
@@ -456,6 +457,12 @@
 #define pselect			_pselect
 #define psignal			_psignal
 #define pthread_atfork		_pthread_atfork
+#define ptree_init		ptree_init
+#define ptree_insert_node	ptree_insert_node
+#define ptree_insert_mask_node	ptree_insert_mask_node
+#define ptree_find_filtered_node	ptree_find_filtered_node
+#define ptree_remove_node	ptree_remove_node
+#define ptree_iterate		ptree_iterate
 #define putenv			_putenv
 #define pwcache_groupdb		_pwcache_groupdb
 #define pwcache_userdb		_pwcache_userdb
@@ -481,6 +488,7 @@
 #define res_mkquery		_res_mkquery
 #define res_query		_res_query
 #define res_search		_res_search
+#define res_watch		_res_watch
 #define rewinddir		_rewinddir
 #define rpc_broadcast		_rpc_broadcast
 #define rpc_broadcast_exp	_rpc_broadcast_exp

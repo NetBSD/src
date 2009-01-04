@@ -1,8 +1,8 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.11 2004/02/16 02:39:36 lukem Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.11.40.1 2009/01/04 17:02:20 christos Exp $
 .\" Converted to mdoc by Thomas Klausner <wiz@NetBSD.org>
 .\"
-.Dd April 17, 2003
+.Dd December 12, 2008
 .Dt RPC_SOC 3
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@
 .Nm svc_getcaller ,
 .Nm svc_getreg ,
 .Nm svc_getregset ,
+.Nm svc_getrpccaller ,
 .Nm svc_register ,
 .Nm svc_run ,
 .Nm svc_sendreply ,
@@ -166,6 +167,8 @@
 .Fn svc_getreqset "fd_set *rdfds"
 .Ft int
 .Fn svc_getreq "int rdfds"
+.Ft struct netbuf *
+.Fn svc_getrpccaller "SVCXPRT *xprt"
 .Ft int
 .Fn svc_register "SVCXPRT *xprt" "u_long prognum" "u_long versnum" \
 "void (*dispatch)()" "u_long protocol"
@@ -792,9 +795,11 @@ is the address where the arguments will be placed;
 is the XDR routine used to decode the arguments.
 This routine returns one if decoding succeeds, and zero otherwise.
 .It Fn svc_getcaller
-The approved way of getting the network address of the caller
+The obsolete way of getting the network address of the caller
 of a procedure associated with the RPC service transport handle,
-.Fa xprt .
+.Fa xprt ,
+use
+.Fn svc_getrpccaller .
 .It Fn svc_getreqset
 This routine is only of interest if a service implementor
 does not call
@@ -816,6 +821,10 @@ Similar to
 but limited to 32 descriptors.
 This interface is obsoleted by
 .Fn svc_getreqset .
+.It Fn svc_getrpccaller
+The approved way of getting the network address of the caller
+of a procedure associated with the RPC service transport handle,
+.Fa xprt .
 .It Fn svc_register
 Associates
 .Fa prognum

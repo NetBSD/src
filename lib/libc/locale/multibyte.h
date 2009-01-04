@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.3 2003/04/29 14:53:12 scw Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.3.40.1 2009/01/04 17:02:20 christos Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -123,4 +123,4 @@ _fixup_ps(_RuneLocale *rl, mbstate_t *ps, int forceinit)
 	}
 }
 
-#endif
+#endif /*_MULTIBYTE_H_*/

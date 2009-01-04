@@ -1,4 +1,4 @@
-/*	$NetBSD: ctypeio.h,v 1.1 1997/06/02 09:52:48 kleink Exp $	*/
+/*	$NetBSD: ctypeio.h,v 1.1.56.1 2009/01/04 17:02:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,6 +30,5 @@
  */
 
 __BEGIN_DECLS
-int __loadctype __P((const char *));
-int __savectype __P((const char *, unsigned char *, short *, short *));
+int __loadctype(const char * __restrict, _BSDCTypeLocale ** __restrict pdata);
 __END_DECLS
