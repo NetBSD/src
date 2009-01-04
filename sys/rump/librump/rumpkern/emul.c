@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.69 2009/01/02 16:18:59 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.70 2009/01/04 20:30:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.69 2009/01/02 16:18:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.70 2009/01/04 20:30:21 pooka Exp $");
 
 #define malloc(a,b,c) __wrap_malloc(a,b,c)
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.69 2009/01/02 16:18:59 pooka Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/bswap.h>
 #include <machine/stdarg.h>
 
 #include <rump/rumpuser.h>
@@ -578,33 +577,6 @@ proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
 
 	panic("%s: not implemented", __func__);
 }
-
-/*
- * Byteswap is in slightly bad taste linked directly against libc.
- * In case our machine uses namespace-renamed symbols, provide
- * an escape route.  We really should be including libkern, but
- * leave that to a later date.
- */
-#ifdef __BSWAP_RENAME
-#undef bswap16
-#undef bswap32
-uint16_t __bswap16(uint16_t);
-uint32_t __bswap32(uint32_t);
-
-uint16_t
-bswap16(uint16_t v)
-{
-
-	return __bswap16(v);
-}
-
-uint32_t
-bswap32(uint32_t v)
-{
-
-	return __bswap32(v);
-}
-#endif /* __BSWAP_RENAME */
 
 void
 module_init_md()
