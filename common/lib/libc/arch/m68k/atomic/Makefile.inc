@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2008/09/29 08:43:00 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2009/01/04 17:54:29 pooka Exp $
 
 #
 # Note: The atomic operations here in these assembly files are atomic
@@ -9,7 +9,8 @@
 # others are merely single-instruction).
 #
 
-.if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread")
+.if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
+	|| ${LIB} == "rump")
 .if ${MACHINE_ARCH} != "m68000"
 
 SRCS+=	atomic_add.S atomic_and.S atomic_cas.S atomic_dec.S \
