@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.63.2.3 2008/12/30 18:50:25 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.63.2.4 2009/01/04 05:18:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.63.2.3 2008/12/30 18:50:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.63.2.4 2009/01/04 05:18:17 christos Exp $");
 
 #define malloc(a,b,c) __wrap_malloc(a,b,c)
 
@@ -50,8 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.63.2.3 2008/12/30 18:50:25 christos Exp $
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
-#include <sys/tprintf.h>
 #include <sys/timetc.h>
+#include <sys/tprintf.h>
+#include <sys/module.h>
+#include <sys/tty.h>
+#include <sys/reboot.h>
+
+#include <dev/cons.h>
 
 #include <machine/bswap.h>
 #include <machine/stdarg.h>
@@ -77,6 +82,10 @@ int hardclock_ticks;
 bool mp_online = false;
 struct vm_map *mb_map;
 struct timeval boottime;
+struct emul emul_netbsd;
+int cold = 1;
+int boothowto;
+struct tty *constty;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -111,89 +120,6 @@ struct devsw_conv devsw_conv0;
 struct devsw_conv *devsw_conv = &devsw_conv0;
 int max_devsw_convs = 0;
 
-void
-panic(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	printf("panic: ");
-	vprintf(fmt, ap);
-	va_end(ap);
-	printf("\n");
-	abort();
-}
-
-void
-log(int level, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-void
-vlog(int level, const char *fmt, va_list ap)
-{
-
-	vprintf(fmt, ap);
-}
-
-void
-uprintf(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-/* relegate this to regular printf */
-tpr_t
-tprintf_open(struct proc *p)
-{
-
-	return (tpr_t)0x111;
-}
-
-void
-tprintf(tpr_t tpr, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-void
-tprintf_close(tpr_t tpr)
-{
-
-}
-
-void
-printf_nolog(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-void
-aprint_normal(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-}
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
@@ -679,3 +605,90 @@ bswap32(uint32_t v)
 	return __bswap32(v);
 }
 #endif /* __BSWAP_RENAME */
+
+void
+module_init_md()
+{
+
+	/*
+	 * Nothing for now.  However, we should load the librump
+	 * symbol table.
+	 */
+}
+
+/* us and them, after all we're only ordinary seconds */
+static void
+rump_delay(unsigned int us)
+{
+	struct timespec ts;
+	int error;
+
+	ts.tv_sec = us / 1000000;
+	ts.tv_nsec = (us % 1000000) * 1000;
+
+	if (__predict_false(ts.tv_sec != 0))
+		printf("WARNING: over 1s delay\n");
+
+	rumpuser_nanosleep(&ts, NULL, &error);
+}
+void (*delay_func)(unsigned int) = rump_delay;
+
+void
+kpreempt_disable()
+{
+
+	/* XXX: see below */
+	KPREEMPT_DISABLE(curlwp);
+}
+
+void
+kpreempt_enable()
+{
+
+	/* try to make sure kpreempt_disable() is only used from panic() */
+	panic("kpreempt not supported");
+}
+
+void
+sessdelete(struct session *ss)
+{
+
+	panic("sessdelete() impossible, session %p", ss);
+}
+
+int
+ttycheckoutq(struct tty *tp, int wait)
+{
+
+	return 1;
+}
+
+void
+cnputc(int c)
+{
+	int error;
+
+	rumpuser_putchar(c, &error);
+}
+
+void
+cnflush()
+{
+
+	/* done */
+}
+
+int
+tputchar(int c, int flags, struct tty *tp)
+{
+
+	cnputc(c);
+	return 0;
+}
+
+void
+cpu_reboot(int howto, char *bootstr)
+{
+
+	rumpuser_panic();
+}
