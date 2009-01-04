@@ -1,0 +1,11 @@
+# $NetBSD: TESTING,v 1.1 2009/01/04 01:06:26 bjh21 Exp $
+#
+# Test kernel, with extra things turned on, including all consistency checks.
+
+include "arch/acorn26/conf/GENERIC"
+
+options		DIAGNOSTIC
+options 	DEBUG
+options 	DDB_ONPANIC=2		# Stack trace on panic
+
+powerrom*	at podulebus? slot ?
