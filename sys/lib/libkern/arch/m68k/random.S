@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.2 1999/11/11 01:53:46 thorpej Exp $	*/
+/*	$NetBSD: random.S,v 1.3 2009/01/04 17:10:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -48,12 +48,21 @@ ASLOCAL(randseed)
 
 ENTRY(random)
 	movl	#16807, %d0
+#ifdef PIC
+	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC), %a0
+	mulsl	_ASM_LABEL(randseed)@GOT(%a0), %d1:%d0
+#else
 	mulsl	_ASM_LABEL(randseed), %d1:%d0
+#endif
 	lsll	#1, %d0
 	roxll	#2, %d1
 	addl	%d1, %d0
 	moveql	#1, %d1
 	addxl	%d1, %d0
 	lsrl	#1, %d0
+#ifdef PIC
+	movl	%d0, _ASM_LABEL(randseed)@GOT(%a0)
+#else
 	movl	%d0, _ASM_LABEL(randseed)
+#endif
 	rts
