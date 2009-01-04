@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.25 2008/12/17 18:28:22 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.26 2009/01/04 17:10:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -587,10 +587,8 @@ doswitch(int *argc, char ***argv, TREE ** collTp, int *oflagsp, int *aflagsp,
 	*oflagsp &= ~aflags;
 	*aflagsp |= aflags;
 	*aflagsp &= ~oflags;
-	printf("%d %s\n", *argc, **argv);
 	*argc -= optind;
 	*argv += optind;
-	printf("%d %s\n", *argc, **argv);
 }
 
 static char *
