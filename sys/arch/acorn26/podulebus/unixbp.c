@@ -1,4 +1,4 @@
-/* $NetBSD: unixbp.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $ */
+/* $NetBSD: unixbp.c,v 1.6 2009/01/04 00:36:00 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.6 2009/01/04 00:36:00 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -42,21 +42,21 @@ __KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $");
 #include <arch/acorn26/podulebus/unixbpvar.h>
 
 struct unixbp_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
 
-static int unixbp_match(struct device *, struct cfdata *, void *);
-static void unixbp_attach(struct device *, struct device *, void *);
+static int unixbp_match(device_t, cfdata_t, void *);
+static void unixbp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(unixbp, sizeof(struct unixbp_softc),
+CFATTACH_DECL_NEW(unixbp, sizeof(struct unixbp_softc),
     unixbp_match, unixbp_attach, NULL, NULL);
 
-struct device *the_unixbp;
+device_t the_unixbp;
 
 static int
-unixbp_match(struct device *parent, struct cfdata *cf, void *aux)
+unixbp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ioc_attach_args *ioc = aux;
 	bus_space_tag_t bst = ioc->ioc_fast_t;
@@ -72,23 +72,24 @@ unixbp_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-unixbp_attach(struct device *parent, struct device *self, void *aux)
+unixbp_attach(device_t parent, device_t self, void *aux)
 {
 	struct ioc_attach_args *ioc = aux;
-	struct unixbp_softc *sc = (void *)self;
+	struct unixbp_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	if (the_unixbp == NULL)
 		the_unixbp = self;
 	sc->sc_iot = ioc->ioc_fast_t;
 	sc->sc_ioh = ioc->ioc_fast_h;
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 int
 unixbp_irq_status_full()
 {
-	struct unixbp_softc *sc = (void *)the_unixbp;
+	struct unixbp_softc *sc = device_private(the_unixbp);
 
 	if (sc == NULL)
 		return 0;
@@ -99,7 +100,7 @@ unixbp_irq_status_full()
 void
 unixbp_irq_setmask(int mask)
 {
-	struct unixbp_softc *sc = (void *)the_unixbp;
+	struct unixbp_softc *sc = device_private(the_unixbp);
 
 	if (sc == NULL)
 		return;
