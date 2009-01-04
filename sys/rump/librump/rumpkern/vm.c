@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.48 2008/12/18 00:24:12 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.49 2009/01/04 20:30:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.48 2008/12/18 00:24:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.49 2009/01/04 20:30:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -277,6 +277,14 @@ uvm_pageunwire(struct vm_page *pg)
 {
 
 	/* nada */
+}
+
+int
+uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
+	vm_prot_t maxprot, int flags, void *handle, voff_t off, vsize_t locklim)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 vaddr_t

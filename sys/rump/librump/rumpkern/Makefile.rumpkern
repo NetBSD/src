@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.30 2009/01/02 14:03:15 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.31 2009/01/04 20:30:21 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -7,12 +7,9 @@ LIB=		rump
 LDFLAGS+=	-Wl,--wrap=malloc
 
 .PATH:	${RUMPTOP}/librump/rumpkern				\
-	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
-	${RUMPTOP}/../conf ${RUMPTOP}/../dev			\
-	${RUMPTOP}/../../common/lib/libutil			\
-	${RUMPTOP}/../../common/lib/libutil			\
-	${RUMPTOP}/../../common/lib/libc/gen			\
-	${RUMPTOP}/../../common/lib/libc/stdlib
+	${RUMPTOP}/../kern					\
+	${RUMPTOP}/../conf					\
+	${RUMPTOP}/../dev
 
 #
 # Source modules, first the ones specifically implemented for librump.
@@ -49,12 +46,6 @@ SRCS+=	vnode_if.c
 # sys/dev
 SRCS+=	clock_subr.c
 
-# sys/lib/libkern
-SRCS+=	__assert.c scanc.c skpc.c
-
-# src/common
-SRCS+=	snprintb.c rb.c heapsort.c
-
 # uncomment these lines if you want to use the real kmem code
 #CPPFLAGS+=	-DRUMP_USE_REAL_KMEM
 #SRCS+=		subr_kmem.c subr_vmem.c
@@ -84,6 +75,7 @@ CFLAGS+=	-Wno-pointer-sign
 #
 .ifdef(LD32DIR)
 ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${LD32DIR}
+LIBKERN_ARCH=	${LD32DIR}
 .else
 ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MACHINE_ARCH}
 .endif
@@ -93,6 +85,10 @@ ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MACHINE_ARCH}
 .else
 SRCS+=	kobj_stubs.c
 .endif
+
+# include libkern source files
+KERNDIR=${RUMPTOP}/../lib/libkern
+.include "${RUMPTOP}/../lib/libkern/Makefile.libkern"
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
