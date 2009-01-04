@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26.4.2 2008/12/30 19:34:34 christos Exp $
+	$NetBSD: syscalls.master,v 1.26.4.3 2009/01/04 02:21:08 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -36,6 +36,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 
