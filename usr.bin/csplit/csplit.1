@@ -1,4 +1,4 @@
-.\"	$NetBSD: csplit.1,v 1.2 2006/09/27 17:41:30 wiz Exp $
+.\"	$NetBSD: csplit.1,v 1.3 2009/01/04 17:26:24 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/usr.bin/csplit/csplit.1,v 1.11 2005/01/25 22:29:51 tjr Exp $
 .\"
-.Dd January 26, 2005
+.Dd January 4, 2009
 .Dt CSPLIT 1
 .Os
 .Sh NAME
@@ -53,27 +53,39 @@ a dash
 .Nm
 reads from standard input.
 .Pp
+Files are created with a prefix of
+.Dq xx
+and two decimal digits.
+The size of each file is written to standard output
+as it is created.
+If an error occurs whilst files are being created,
+or a
+.Dv HUP ,
+.Dv INT ,
+or
+.Dv TERM
+signal is received,
+all files previously written are removed.
+.Pp
 The options are as follows:
 .Bl -tag -offset indent -width 10n
 .It Fl f Ar prefix
-Give created files names beginning with
-.Ar prefix .
-The default is
+Create file names beginning with
+.Ar prefix ,
+instead of
 .Dq xx .
 .It Fl k
-Do not remove output files if an error occurs or a
+Do not remove previously created files if an error occurs or a
 .Dv HUP ,
 .Dv INT ,
 or
 .Dv TERM
 signal is received.
 .It Fl n Ar number
-Use
+Create file names beginning with
 .Ar number
-of decimal digits after the
-.Ar prefix
-to form the file name.
-The default is 2.
+of decimal digits after the prefix,
+instead of 2.
 .It Fl s
 Do not write the size of each output file to standard output as it is
 created.
