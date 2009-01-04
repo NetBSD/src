@@ -1,24 +1,28 @@
-/*	$NetBSD: powerrom.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $	*/
+/*	$NetBSD: powerrom.c,v 1.5 2009/01/04 01:02:29 bjh21 Exp $	*/
 
 /* Test driver to see if we can talk to PowerROMs */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: powerrom.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerrom.c,v 1.5 2009/01/04 01:02:29 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
 
-int  powerrom_match(struct device *, struct cfdata *, void *);
-void powerrom_attach(struct device *, struct device *, void *);
+struct powerrom_softc {
+	device_t	sc_dev;
+};
 
-CFATTACH_DECL(powerrom, sizeof(struct device),
+int  powerrom_match(device_t, cfdata_t, void *);
+void powerrom_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(powerrom, sizeof(struct powerrom_softc),
     powerrom_match, powerrom_attach, NULL, NULL);
 
 int
-powerrom_match(struct device *parent, struct cfdata *cf, void *aux)
+powerrom_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -26,11 +30,12 @@ powerrom_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-powerrom_attach(struct device *parent, struct device *self, void *aux)
+powerrom_attach(device_t parent, device_t self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
 	if (podulebus_initloader(pa) == 0)
-		printf(": card id = 0x%x", podloader_callloader(pa, 0, 0));
-	printf("\n");
+		aprint_normal_dev(self, "card id = 0x%x",
+		    podloader_callloader(pa, 0, 0));
+	aprint_normal("\n");
 }
