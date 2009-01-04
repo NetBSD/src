@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.61.2.4 2009/01/04 04:22:10 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.61.2.5 2009/01/04 04:33:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,7 +61,7 @@ struct timespec {
 } while (/*CONSTCOND*/0)
 #define	TIMESPEC_TO_TIMEVAL(tv, ts) do {				\
 	(tv)->tv_sec = (ts)->tv_sec;					\
-	(tv)->tv_usec = (ts)->tv_nsec / 1000;				\
+	(tv)->tv_usec = (suseconds_t)(ts)->tv_nsec / 1000;		\
 } while (/*CONSTCOND*/0)
 
 /*
