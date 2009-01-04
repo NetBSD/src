@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.106.8.7 2008/12/30 19:30:31 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.106.8.8 2009/01/04 19:20:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.8.7 2008/12/30 19:30:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.8.8 2009/01/04 19:20:32 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -206,7 +206,8 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 #ifdef DIAGNOSTIC
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
 		printf("dev = 0x%llx, bsize = %d, size = %d, fs = %s\n",
-		    ip->i_dev, fs->fs_bsize, size, fs->fs_fsmnt);
+		    (unsigned long long)ip->i_dev, fs->fs_bsize, size,
+		    fs->fs_fsmnt);
 		panic("ffs_alloc: bad size");
 	}
 	if (cred == NOCRED)
@@ -314,7 +315,8 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	    (u_int)nsize > fs->fs_bsize || fragoff(fs, nsize) != 0) {
 		printf(
 		    "dev = 0x%llx, bsize = %d, osize = %d, nsize = %d, fs = %s\n",
-		    ip->i_dev, fs->fs_bsize, osize, nsize, fs->fs_fsmnt);
+		    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
+		    fs->fs_fsmnt);
 		panic("ffs_realloccg: bad size");
 	}
 	if (cred == NOCRED)
