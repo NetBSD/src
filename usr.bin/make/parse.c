@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.152 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.153 2009/01/04 20:17:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.152 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.153 2009/01/04 20:17:36 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.152 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.153 2009/01/04 20:17:36 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1496,6 +1496,7 @@ Parse_DoVar(char *line, GNode *ctxt)
     Boolean	   freeCp = FALSE; /* TRUE if cp needs to be freed,
 				    * i.e. if any variable expansion was
 				    * performed */
+    int depth;
 
     /*
      * Skip to variable name
@@ -1506,9 +1507,19 @@ Parse_DoVar(char *line, GNode *ctxt)
 
     /*
      * Skip to operator character, nulling out whitespace as we go
+     * XXX Rather than counting () and {} we should look for $ and
+     * then expand the variable.
      */
-    for (cp = line + 1; *cp != '='; cp++) {
-	if (isspace ((unsigned char)*cp)) {
+    for (depth = 0, cp = line + 1; depth != 0 || *cp != '='; cp++) {
+	if (*cp == '(' || *cp == '{') {
+	    depth++;
+	    continue;
+	}
+	if (*cp == ')' || *cp == '}') {
+	    depth--;
+	    continue;
+	}
+	if (depth == 0 && isspace ((unsigned char)*cp)) {
 	    *cp = '\0';
 	}
     }
