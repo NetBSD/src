@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115.2.2 2008/12/30 19:38:39 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115.2.3 2009/01/04 05:18:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115.2.2 2008/12/30 19:38:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115.2.3 2009/01/04 05:18:17 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -895,15 +895,12 @@ dodumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0 || dumpsize == 0) {
-		printf("\ndump to dev %llu,%llu not possible\n",
-		    (unsigned long long)major(dumpdev),
-		    (unsigned long long)minor(dumpdev));
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %llu,%llu offset %ld\n",
-	    (unsigned long long)major(dumpdev),
-	    (unsigned long long)minor(dumpdev),
-	    dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");

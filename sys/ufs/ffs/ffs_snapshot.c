@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.65.8.4 2008/12/27 23:14:26 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.65.8.5 2009/01/04 05:18:17 christos Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.65.8.4 2008/12/27 23:14:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.65.8.5 2009/01/04 05:18:17 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1725,7 +1725,6 @@ ffs_snapshot_unmount(struct mount *mp)
 	mutex_enter(&si->si_lock);
 	while ((xp = TAILQ_FIRST(&si->si_snapshots)) != 0) {
 		vp = ITOV(xp);
-		vp->v_vnlock = &vp->v_lock;
 		TAILQ_REMOVE(&si->si_snapshots, xp, i_nextsnap);
 		xp->i_nextsnap.tqe_prev = 0;
 		if (xp->i_snapblklist == si->si_snapblklist)
