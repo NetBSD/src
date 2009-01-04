@@ -1,4 +1,4 @@
-/*	$NetBSD: tolower_.c,v 1.9 2003/07/26 19:24:45 salo Exp $	*/
+/*	$NetBSD: tolower_.c,v 1.9.40.1 2009/01/04 17:02:19 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: tolower_.c,v 1.9 2003/07/26 19:24:45 salo Exp $");
+__RCSID("$NetBSD: tolower_.c,v 1.9.40.1 2009/01/04 17:02:19 christos Exp $");
 #endif /* LIBC_RCS and not lint */
 
 #include <stdio.h>
@@ -54,11 +54,3 @@ const short _C_tolower_[1 + 256] = {
 };
 
 const short *_tolower_tab_ = _C_tolower_;
-
-#undef tolower
-int
-tolower(c)
-	int c;
-{
-	return((_tolower_tab_ + 1)[c]);
-}

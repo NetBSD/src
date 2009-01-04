@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemcmp.c,v 1.3 2003/04/06 18:33:23 tshiozak Exp $	*/
+/*	$NetBSD: wmemcmp.c,v 1.3.40.1 2009/01/04 17:02:20 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,12 +30,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemcmp.c,v 1.3 2003/04/06 18:33:23 tshiozak Exp $");
+__RCSID("$NetBSD: wmemcmp.c,v 1.3.40.1 2009/01/04 17:02:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <wchar.h>
-#include "locale/runetype.h"
+#include "runetype.h"
 
 int
 wmemcmp(s1, s2, n)

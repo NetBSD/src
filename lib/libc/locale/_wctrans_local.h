@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans_local.h,v 1.2 2003/04/06 18:33:23 tshiozak Exp $	*/
+/*	$NetBSD: _wctrans_local.h,v 1.2.40.1 2009/01/04 17:02:19 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -29,8 +29,10 @@
 #ifndef _WCTRANS_LOCAL_H_
 #define _WCTRANS_LOCAL_H_
 
+__BEGIN_DECLS
 wint_t	_towctrans_ext(wint_t, _WCTransEntry *);
 void	_wctrans_init(_RuneLocale *);
+__END_DECLS
 
 static __inline wint_t
 _towctrans(wint_t c, _WCTransEntry *te)
@@ -55,4 +57,4 @@ _wctrans_upper(_RuneLocale *rl)
 	return (&rl->rl_wctrans[_WCTRANS_INDEX_UPPER]);
 }
 
-#endif
+#endif /*_WCTRANS_LOCAL_H_*/
