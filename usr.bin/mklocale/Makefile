@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/01/02 22:16:14 tnozaki Exp $
+#	$NetBSD: Makefile,v 1.15 2009/01/05 06:11:43 tnozaki Exp $
 
 .ifndef HOSTPROG
 .include <bsd.own.mk>
@@ -8,18 +8,14 @@
 
 PROG=		mklocale
 SRCS=		yacc.y lex.l mklocaledb.c fix_grouping.c \
-		citrus_bcs_strtoul.c citrus_db_factory.c citrus_db_hash.c \
-		fparseln.c
+		citrus_bcs_strtoul.c citrus_db_factory.c citrus_db_hash.c
 CPPFLAGS+=	-I. -I${.CURDIR} \
-		-I${NETBSDSRCDIR}/lib/libc \
 		-I${NETBSDSRCDIR}/lib/libc/include \
 		-I${NETBSDSRCDIR}/lib/libc/locale \
 		-I${NETBSDSRCDIR}/lib/libc/citrus \
 		-DNBCHAR_MAX=127 -DHOSTPROG
 CPPFLAGS.citrus_bcs_strtoul.c+= \
 		-I${NETBSDSRCDIR}/common/lib/libc/stdlib
-CPPFLAGS.fparseln.c+= \
-		-I${NETBSDSRCDIR}/lib/libc/stdio
 YHEADER=	1
 
 .ifndef HOSTPROG
