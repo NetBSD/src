@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.12 2008/12/16 22:35:23 christos Exp $ */
+/*	$NetBSD: apmbios.c,v 1.13 2009/01/05 20:46:22 apb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.12 2008/12/16 22:35:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.13 2009/01/05 20:46:22 apb Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -407,7 +407,7 @@ apm_busprobe(void)
 #endif
 	DPRINTF(APMDEBUG_PROBE, ("apm: bioscall return: %x %x %x %x %s %x %x\n",
 	    regs.AX, regs.BX, regs.CX, regs.DX,
-	    snprintb(bits, sizeof(bits), I386_FLAGBITS, regs.EFLAGS),
+	    (snprintb(bits, sizeof(bits), I386_FLAGBITS, regs.EFLAGS), bits),
 	    regs.ESI, regs.EDI));
 
 	if (regs.FLAGS & PSL_C) {
@@ -460,7 +460,7 @@ apmbiosmatch(struct device *parent, struct cfdata *match,
 		("bioscall return: %x %x %x %x %s %x %x",		\
 		(regs).EAX, (regs).EBX, (regs).ECX, (regs).EDX,		\
 		bits, (regs).ESI, (regs).EDI));				\
-    while (/*CONSTCOND*/0)
+    } while (/*CONSTCOND*/0)
 #else
 #define	DPRINTF_BIOSRETURN(regs, bits)
 #endif
