@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.788 2009/01/02 00:20:18 tnozaki Exp $
+# $NetBSD: mi,v 1.789 2009/01/05 00:18:38 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3805,6 +3805,39 @@
 ./usr/share/misc/usb_hid_usages			base-reference-share	share
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
 ./usr/share/mk					base-util-share
+./usr/share/mk/bsd.README			comp-util-share		share
+./usr/share/mk/bsd.crypto.mk			comp-obsolete		obsolete
+./usr/share/mk/bsd.dep.mk			comp-util-share		share
+./usr/share/mk/bsd.depall.mk			comp-obsolete		obsolete
+./usr/share/mk/bsd.doc.mk			comp-util-share		share
+./usr/share/mk/bsd.endian.mk			comp-util-share		share
+./usr/share/mk/bsd.files.mk			comp-util-share		share
+./usr/share/mk/bsd.gcc.mk			comp-util-share		share
+./usr/share/mk/bsd.hostlib.mk			comp-util-share		share
+./usr/share/mk/bsd.hostprog.mk			comp-util-share		share
+./usr/share/mk/bsd.inc.mk			comp-util-share		share
+./usr/share/mk/bsd.info.mk			comp-util-share		share
+./usr/share/mk/bsd.init.mk			comp-util-share		share
+./usr/share/mk/bsd.kernobj.mk			comp-util-share		share
+./usr/share/mk/bsd.kinc.mk			comp-util-share		share
+./usr/share/mk/bsd.klinks.mk			comp-util-share		share
+./usr/share/mk/bsd.kmod.mk			comp-obsolete		obsolete
+./usr/share/mk/bsd.kmodule.mk			comp-util-share		share
+./usr/share/mk/bsd.lib.mk			comp-util-share		share
+./usr/share/mk/bsd.links.mk			comp-util-share		share
+./usr/share/mk/bsd.man.mk			comp-util-share		share
+./usr/share/mk/bsd.nls.mk			comp-util-share		share
+./usr/share/mk/bsd.obj.mk			comp-util-share		share
+./usr/share/mk/bsd.own.mk			comp-util-share		share
+./usr/share/mk/bsd.port.mk			comp-obsolete		obsolete
+./usr/share/mk/bsd.port.subdir.mk		comp-obsolete		obsolete
+./usr/share/mk/bsd.prog.mk			comp-util-share		share
+./usr/share/mk/bsd.rpc.mk			comp-util-share		share
+./usr/share/mk/bsd.shlib.mk			comp-util-share		share
+./usr/share/mk/bsd.subdir.mk			comp-util-share		share
+./usr/share/mk/bsd.sys.mk			comp-util-share		share
+./usr/share/mk/bsd.test.mk			comp-util-share		share
+./usr/share/mk/bsd.x11.mk			comp-util-share		share
 ./usr/share/mk/sys.mk				base-util-share		share
 ./usr/share/ms					base-groff-share
 ./usr/share/nls					base-locale-share
