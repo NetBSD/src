@@ -1,4 +1,4 @@
-/* $NetBSD: mklocaledb.c,v 1.1 2009/01/02 00:20:23 tnozaki Exp $ */
+/* $NetBSD: mklocaledb.c,v 1.2 2009/01/05 02:55:34 dogcow Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -31,14 +31,14 @@
  * don't waste your time, all we need is localedef(1).
  */
 
-#include <sys/cdefs.h>
-#if !defined(lint)
-__RCSID("$NetBSD: mklocaledb.c,v 1.1 2009/01/02 00:20:23 tnozaki Exp $");
-#endif /* not lint */
-
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: mklocaledb.c,v 1.2 2009/01/05 02:55:34 dogcow Exp $");
+#endif /* not lint */
 
 #include <assert.h>
 #include <err.h>
