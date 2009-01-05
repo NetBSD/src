@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.11 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.12 2009/01/05 09:33:19 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.11 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.12 2009/01/05 09:33:19 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ linux32_sys___sysctl(struct lwp *l, const struct linux32_sys___sysctl_args *uap,
 	 * Sanity check nlen
 	 */
 	if ((ls32.nlen > CTL_MAXNAME) || (ls32.nlen < 1))
-		return EINVAL;
+		return ENOTDIR;
 
 	/*
 	 * Read the sysctl name
