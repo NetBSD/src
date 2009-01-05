@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_login_cap.c,v 1.1.2.1 2008/12/28 01:14:32 christos Exp $	*/
+/*	$NetBSD: compat_login_cap.c,v 1.1.2.2 2009/01/05 22:10:59 christos Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,11 +44,11 @@
 #include <pwd.h>
 #include <compat/include/pwd.h>
 
-__warn_references(setuserenv,
-    "warning: reference to compatibility setuserenv();"
-    " include <login_cap.h> for correct reference")
 __warn_references(login_getpwclass,
     "warning: reference to compatibility login_getpwclass();"
+    " include <login_cap.h> for correct reference")
+__warn_references(setusercontext,
+    "warning: reference to compatibility setusercontext();"
     " include <login_cap.h> for correct reference")
 
 login_cap_t *
