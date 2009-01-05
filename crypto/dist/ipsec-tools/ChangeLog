@@ -3,6 +3,9 @@
 	  as it was unsafe by not using atomic functions (post increment
 	  is not necessarily atomic). instead reap all children on
 	  SIGCHLD as that was the only signal needing signal counting.
+	* src/racoon/{cfparse.y|cftoken.l|racoon.conf.5}: remove obsolete
+	  configuration options, fix radius configuration block and
+	  add GRE as recognized protocol
 
 2008-12-30  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/session.c: reset working copy of select mask after
