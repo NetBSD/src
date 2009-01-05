@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1.28.1 2008/11/08 21:45:38 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.1.28.2 2009/01/05 01:31:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,11 +63,11 @@ int	__sigsuspend14(const sigset_t *);
 int	sigtimedwait(const sigset_t * __restrict,
     siginfo_t * __restrict, const struct timespec50 * __restrict);
 int	__sigtimedwait(const sigset_t * __restrict,
-    siginfo_t * __restrict, const struct timespec50 * __restrict);
+    siginfo_t * __restrict, struct timespec50 * __restrict);
 int	__sigtimedwait50(const sigset_t * __restrict,
     siginfo_t * __restrict, const struct timespec * __restrict);
 int	____sigtimedwait50(const sigset_t * __restrict,
-    siginfo_t * __restrict, const struct timespec * __restrict);
+    siginfo_t * __restrict, struct timespec * __restrict);
 /*
  * X/Open CAE Specification Issue 4 Version 2
  */      
