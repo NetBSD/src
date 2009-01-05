@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.2 2009/01/04 17:10:47 pooka Exp $	*/
+/*	$NetBSD: random.S,v 1.3 2009/01/05 01:16:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -45,14 +45,16 @@
 	.data
 randseed:
 	.long	1
+
 	.text
 ENTRY(random)
 	sethi	%hi(16807), %o1
 	wr	%o1, %lo(16807), %y
 #ifdef PIC
-	PIC_PROLOGUE(%g1, %g2)
-	set	randseed, %g2
-	ld	[%g1 + %g2], %o0
+	PIC_PROLOGUE(%o5, %o2)
+	set	randseed, %g1
+	ldx	[%o5 + %g1], %g1
+	ld	[%g1], %o0
 #else
 	sethi	%hi(randseed), %g1
 	ld	[%g1 + %lo(randseed)], %o0
@@ -86,7 +88,7 @@ ENTRY(random)
 	sethi	%hi(0x7fffffff), %o1
 	retl
 #ifdef PIC
-	st	%o0, [%g1 + %g2]
+	st	%o0, [%g1]
 #else
 	st	%o0, [%g1 + %lo(randseed)]
 #endif
@@ -96,7 +98,7 @@ ENTRY(random)
 	and	%o1, %o0, %o0
 	retl
 #ifdef PIC
-	st	%o0, [%g1 + %g2]
+	st	%o0, [%g1]
 #else
 	st	%o0, [%g1 + %lo(randseed)]
 #endif
