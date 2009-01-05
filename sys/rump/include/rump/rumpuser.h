@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.5 2009/01/02 02:54:13 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.6 2009/01/05 01:51:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -67,10 +67,6 @@ void rumpuser_write_bio(int, const void *, size_t, off_t,rump_biodone_fn,void*);
 
 int rumpuser_gettimeofday(struct timeval *, int *);
 int rumpuser_getenv(const char *, char *, size_t, int *);
-
-uint16_t rumpuser_bswap16(uint16_t);
-uint32_t rumpuser_bswap32(uint32_t);
-uint64_t rumpuser_bswap64(uint64_t);
 
 int rumpuser_gethostname(char *, size_t, int *);
 

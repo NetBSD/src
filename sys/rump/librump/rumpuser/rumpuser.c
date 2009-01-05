@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.24 2009/01/02 02:54:13 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.25 2009/01/05 01:51:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.24 2009/01/02 02:54:13 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.25 2009/01/05 01:51:31 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -41,13 +41,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.24 2009/01/02 02:54:13 pooka Exp $");
 #define _BSD_SOURCE
 #define _FILE_OFFSET_BITS 64
 #include <features.h>
-
-#include <byteswap.h>
-#define bswap16 bswap_16
-#define bswap32 bswap_32
-#define bswap64 bswap_64
 #endif
-
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -280,27 +274,6 @@ rumpuser_gethostname(char *name, size_t namelen, int *error)
 {
 
 	DOCALL(int, (gethostname(name, namelen)));
-}
-
-uint16_t
-rumpuser_bswap16(uint16_t value)
-{
-
-	return bswap16(value);
-}
-
-uint32_t
-rumpuser_bswap32(uint32_t value)
-{
-
-	return bswap32(value);
-}
-
-uint64_t
-rumpuser_bswap64(uint64_t value)
-{
-
-	return bswap64(value);
 }
 
 char *
