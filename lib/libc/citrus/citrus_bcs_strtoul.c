@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_bcs_strtoul.c,v 1.1 2009/01/02 00:20:19 tnozaki Exp $ */
+/* $NetBSD: citrus_bcs_strtoul.c,v 1.2 2009/01/05 03:10:02 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -27,14 +27,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if !defined(lint)
-__RCSID("$NetBSD: citrus_bcs_strtoul.c,v 1.1 2009/01/02 00:20:19 tnozaki Exp $");
-#endif /* not lint */
-
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: citrus_bcs_strtoul.c,v 1.2 2009/01/05 03:10:02 dogcow Exp $");
+#endif /* not lint */
 
 #include <assert.h>
 #include <errno.h>
