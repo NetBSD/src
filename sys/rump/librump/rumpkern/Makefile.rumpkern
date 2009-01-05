@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.31 2009/01/04 20:30:21 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.32 2009/01/05 14:35:47 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -62,6 +62,7 @@ SHLIB_MINOR=    0
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpnet -I${RUMPTOP}/librump/rumpvfs
 CFLAGS+=	-Wno-pointer-sign
+AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
 
 #
 # If archdir exists, it is required to provide:

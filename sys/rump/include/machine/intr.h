@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2009/01/02 10:45:26 pooka Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2009/01/05 14:35:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,10 +30,14 @@
 #ifndef _SYS_RUMP_INTR_H_
 #define _SYS_RUMP_INTR_H_
 
+#ifndef _LOCORE
+
 typedef uint8_t ipl_t;
 typedef struct {
         ipl_t _ipl;
 } ipl_cookie_t;
+
+#endif /* !_LOCORE */
 
 int  rump_splfoo(void);
 void rump_splx(int);
