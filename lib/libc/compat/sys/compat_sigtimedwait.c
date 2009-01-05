@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigtimedwait.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $ */
+/*	$NetBSD: compat_sigtimedwait.c,v 1.1.2.3 2009/01/05 01:30:04 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_sigtimedwait.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $");
+__RCSID("$NetBSD: compat_sigtimedwait.c,v 1.1.2.3 2009/01/05 01:30:04 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -68,7 +68,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 
 int
 __sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
-    const struct timespec50 * __restrict timeout)
+    struct timespec50 * __restrict timeout)
 {
 	return sigtimedwait(set, info, timeout);
 }
