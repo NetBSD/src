@@ -1,3 +1,9 @@
+2009-01-05  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/session.c: do not use counting in signal handling
+	  as it was unsafe by not using atomic functions (post increment
+	  is not necessarily atomic). instead reap all children on
+	  SIGCHLD as that was the only signal needing signal counting.
+
 2008-12-30  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/session.c: reset working copy of select mask after
 	  call to schedular() as it can change file descriptor mask

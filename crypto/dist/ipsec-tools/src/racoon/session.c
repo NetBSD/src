@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.22 2008/12/30 15:50:25 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.23 2009/01/05 06:00:27 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -340,10 +340,7 @@ RETSIGTYPE
 signal_handler(sig)
 	int sig;
 {
-	/* Do not just set it to 1, because we may miss some signals by just setting
-	 * values to 0/1
-	 */
-	sigreq[sig]++;
+	sigreq[sig] = 1;
 }
 
 
@@ -411,33 +408,22 @@ static void reload_conf(){
 static void
 check_sigreq()
 {
-	int sig;
+	int sig, s;
 
-	/* 
-	 * XXX We are not able to tell if we got 
-	 * several time the same signal. This is
-	 * not a problem for the current code, 
-	 * but we shall remember this limitation.
-	 */
 	for (sig = 0; sig <= NSIG; sig++) {
 		if (sigreq[sig] == 0)
 			continue;
+		sigreq[sig] = 0;
 
-		sigreq[sig]--;
 		switch(sig) {
 		case 0:
 			return;
-			
-			/* Catch up childs, mainly scripts.
-			 */
+
 		case SIGCHLD:
-	    {
-			pid_t pid;
-			int s;
-			
-			pid = wait(&s);
-	    }
-		break;
+			/* Reap all pending children */
+			while (waitpid(-1, &s, WNOHANG) > 0)
+				;
+			break;
 
 #ifdef DEBUG_RECORD_MALLOCATION
 		/* 
@@ -457,7 +443,7 @@ check_sigreq()
 			break;
 
 		case SIGINT:
-		case SIGTERM:			
+		case SIGTERM:
 			plog(LLV_INFO, LOCATION, NULL, 
 			    "caught signal %d\n", sig);
 			evt_generic(EVT_RACOON_QUIT, NULL);
