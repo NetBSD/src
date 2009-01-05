@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.102 2008/12/21 17:49:56 cegger Exp $	*/
+/*	$NetBSD: malloc.h,v 1.103 2009/01/05 21:42:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -91,15 +91,17 @@ struct kmembuckets {
 
 #ifdef _KERNEL
 #ifdef MALLOCLOG
-void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);
-void	_free(void *, struct malloc_type *, const char *, long);
+void	*_kern_malloc(unsigned long, struct malloc_type *, int, const char *, long);
+void	_kern_free(void *, struct malloc_type *, const char *, long);
 #define	malloc(size, type, flags) \
-	    _malloc((size), (type), (flags), __FILE__, __LINE__)
+	    _kern_malloc((size), (type), (flags), __FILE__, __LINE__)
 #define	free(addr, type) \
-	    _free((addr), (type), __FILE__, __LINE__)
+	    _kern_free((addr), (type), __FILE__, __LINE__)
 #else
-void	*malloc(unsigned long, struct malloc_type *, int);
-void	free(void *, struct malloc_type *);
+void	*kern_malloc(unsigned long, struct malloc_type *, int);
+void	kern_free(void *, struct malloc_type *);
+#define malloc(size, type, flags) kern_malloc(size, type, flags)
+#define free(addr, type) kern_free(addr, type)
 #endif /* MALLOCLOG */
 
 #ifdef MALLOC_DEBUG
