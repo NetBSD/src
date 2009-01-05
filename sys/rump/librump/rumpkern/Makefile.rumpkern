@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.rumpkern,v 1.32 2009/01/05 14:35:47 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.33 2009/01/05 21:42:37 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
 
 LIB=		rump
-LDFLAGS+=	-Wl,--wrap=malloc
 
 .PATH:	${RUMPTOP}/librump/rumpkern				\
 	${RUMPTOP}/../kern					\

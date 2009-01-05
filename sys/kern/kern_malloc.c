@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.124 2008/12/21 17:49:55 cegger Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.125 2009/01/05 21:42:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.124 2008/12/21 17:49:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.125 2009/01/05 21:42:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -324,11 +324,11 @@ kmutex_t malloc_lock;
  */
 #ifdef MALLOCLOG
 void *
-_malloc(unsigned long size, struct malloc_type *ksp, int flags,
+_kern_malloc(unsigned long size, struct malloc_type *ksp, int flags,
     const char *file, long line)
 #else
 void *
-malloc(unsigned long size, struct malloc_type *ksp, int flags)
+kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif /* MALLOCLOG */
 {
 	struct kmembuckets *kbp;
@@ -539,10 +539,10 @@ out:
  */
 #ifdef MALLOCLOG
 void
-_free(void *addr, struct malloc_type *ksp, const char *file, long line)
+_kern_free(void *addr, struct malloc_type *ksp, const char *file, long line)
 #else
 void
-free(void *addr, struct malloc_type *ksp)
+kern_free(void *addr, struct malloc_type *ksp)
 #endif /* MALLOCLOG */
 {
 	struct kmembuckets *kbp;
