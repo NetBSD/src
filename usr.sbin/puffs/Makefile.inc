@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2008/12/30 22:20:56 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2009/01/05 21:45:35 pooka Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -38,6 +38,4 @@ LDADD+=		-lpthread
 
 DPADD+=		${LIBP2K} ${LIBUKFS} ${LIBRUMPVFS} ${LIBRUMP} ${LIBRUMPUSER}
 DPADD+=		${LIBPUFFS} ${LIBUTIL} ${LIBPTHREAD}
-
-LDFLAGS+=	-Wl,--wrap=malloc
 .endif # ISRUMP
