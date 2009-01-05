@@ -1,4 +1,4 @@
-/* $NetBSD: fix_grouping.c,v 1.1 2009/01/02 00:20:20 tnozaki Exp $ */
+/* $NetBSD: fix_grouping.c,v 1.2 2009/01/05 03:14:30 dogcow Exp $ */
 
 /*
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fix_grouping.c,v 1.1 2009/01/02 00:20:20 tnozaki Exp $");
+__RCSID("$NetBSD: fix_grouping.c,v 1.2 2009/01/05 03:14:30 dogcow Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -42,6 +42,10 @@ __RCSID("$NetBSD: fix_grouping.c,v 1.1 2009/01/02 00:20:20 tnozaki Exp $");
 
 #ifndef NBCHAR_MAX
 #define NBCHAR_MAX	CHAR_MAX
+#endif
+
+#ifndef __UNCONST
+#define __UNCONST(a)    ((void *)(unsigned long)(const void *)(a))
 #endif
 
 static const char nogrouping[] = { NBCHAR_MAX, '\0' };
