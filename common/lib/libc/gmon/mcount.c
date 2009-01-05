@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.7 2006/10/27 22:14:13 uwe Exp $	*/
+/*	$NetBSD: mcount.c,v 1.8 2009/01/05 18:06:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.7 2006/10/27 22:14:13 uwe Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.8 2009/01/05 18:06:57 pooka Exp $");
 #endif
 #endif
 
@@ -98,6 +98,16 @@ _MCOUNT_DECL __P((u_long, u_long))
     __attribute__((__no_instrument_function__))
 #endif
     __used;
+
+/* XXX: make these interfaces */
+#ifdef _RUMPKERNEL
+#undef MCOUNT_ENTER
+#define MCOUNT_ENTER
+#undef MCOUNT_EXIT
+#define MCOUNT_EXIT
+#undef MCOUNT
+#define MCOUNT
+#endif
 
 /*
  * mcount is called on entry to each function compiled with the profiling
@@ -121,7 +131,7 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	struct tostruct *top, *prevtop;
 	struct gmonparam *p;
 	long toindex;
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_RUMPKERNEL)
 	int s;
 #endif
 
