@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq31244,v 1.6 2008/01/27 12:37:11 chris Exp $
+#	$NetBSD: std.iq31244,v 1.7 2009/01/05 05:53:06 briggs Exp $
 #
 # standard NetBSD/evbarm for IQ31244 options
 
@@ -18,6 +18,7 @@ options 	ARM32
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
+options         KERNEL_BASE_EXT=0xc0000000
 makeoptions	BOARDTYPE="iq31244"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80321"
 
