@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2008/12/31 21:22:02 agc Exp $
+#	$NetBSD: Makefile,v 1.24 2009/01/05 15:36:51 pooka Exp $
 
 # For all platforms
 
@@ -40,6 +40,7 @@ SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	miniroot
 SUBDIR+=	smbfs
+SUBDIR+=	sysvbfs
 SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
