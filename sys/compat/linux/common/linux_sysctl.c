@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.38 2008/11/19 18:36:03 ad Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.39 2009/01/05 09:33:19 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.38 2008/11/19 18:36:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.39 2009/01/05 09:33:19 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ linux_sys___sysctl(struct lwp *l, const struct linux_sys___sysctl_args *uap, reg
 	 * we don't care
 	 */
 	if (ls.nlen > CTL_MAXNAME || ls.nlen < 1)
-		return (EINVAL);
+		return (ENOTDIR);
 	error = copyin(ls.name, &name, ls.nlen * sizeof(int));
 	if (error)
 		return (error);
