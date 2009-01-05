@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.67 2008/10/18 16:25:04 tsutsui Exp $
+#	$NetBSD: configure.ac,v 1.68 2009/01/05 06:11:43 tnozaki Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -24,7 +24,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.67 2008/10/18 16:25:04 tsutsui Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.68 2009/01/05 06:11:43 tnozaki Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -145,7 +145,7 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 # Library functions (where a .h check isn't enough).
 AC_FUNC_ALLOCA
 AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
-	esetfunc fgetln flock fparseln futimes getopt getopt_long \
+	esetfunc fgetln flock futimes getopt getopt_long \
 	group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
 	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb pwrite \
@@ -188,5 +188,41 @@ dnl # Cygwin: We *MUST* look at -lregex *before* the "no libs" condition.
 dnl # Thus AC_CHECK_LIB(regex...) comes first, and AC_SEARCHLIBS next.
 AC_CHECK_LIB(regex, regfree)
 AC_SEARCH_LIBS(regfree, rx posix)
+
+AC_CHECK_FUNCS(fparseln, [
+    AC_MSG_CHECKING(if fparseln seems to work)
+    AC_RUN_IFELSE(
+        [AC_LANG_SOURCE([[
+#define _NETBSD_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#define CONFTEST	"conftest.fparseln"
+#define COMMENT		'#'
+int
+main(void)
+{
+	static const char delim[3] = { '\0', '\0', COMMENT };
+	FILE *fp;
+	char *ptr;
+	fp = fopen(CONFTEST, "w+");
+	if (fp != NULL) {
+		unlink(CONFTEST);
+		ungetc(COMMENT, fp);
+		ptr = fparseln(fp, NULL, NULL, delim,
+		    FPARSELN_UNESCALL);
+		fclose(fp);
+		if (ptr == NULL)
+			exit(0);
+	}
+	exit(1);
+}
+        ]])],
+        [AC_MSG_RESULT(yes)],
+        [AC_MSG_RESULT(no)
+         AC_DEFINE(BROKEN_FPARSELN, 1,
+            [Define to 1 if your `fparseln' function is broken.])],
+        [AC_MSG_WARN([cross compiling: not checking farseln])]
+    )
+])
 
 AC_OUTPUT
