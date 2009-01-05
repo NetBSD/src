@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.25 2009/01/05 01:51:31 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.26 2009/01/05 21:42:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,11 +28,9 @@
  * SUCH DAMAGE.
  */
 
-#define malloc(a) __real_malloc(a)
-
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.25 2009/01/05 01:51:31 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.26 2009/01/05 21:42:37 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
