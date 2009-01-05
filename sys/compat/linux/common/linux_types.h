@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.28 2008/04/28 20:23:44 martin Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.29 2009/01/05 09:18:27 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ struct linux___sysctl {
 	size_t       *oldlenp;
 	void         *newval;
 	size_t        newlen;
-	unsigned long0[4];
+	unsigned long __unused0[4];
 };
 
 #include <compat/linux/common/linux_siginfo.h>
