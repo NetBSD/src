@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.18 2008/12/23 14:04:42 tteras Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.19 2009/01/05 06:03:58 tteras Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -132,7 +132,7 @@ addrstring	[a-fA-F0-9:]([a-fA-F0-9:\.]*|[a-fA-F0-9:\.]*%[a-zA-Z0-9]*)
 decstring	{digit}+
 hexstring	0x{hexdigit}+
 
-%s S_INI S_PRIV S_PTH S_LOG S_PAD S_LST S_RTRY S_CFG S_LDAP
+%s S_INI S_PRIV S_PTH S_LOG S_PAD S_LST S_RTRY S_CFG S_LDAP S_RAD
 %s S_ALGST S_ALGCL
 %s S_SAINF S_SAINFS
 %s S_RMT S_RMTS S_RMTP
@@ -188,8 +188,6 @@ hexstring	0x{hexdigit}+
 <S_LOG>info		{ YYD; yylval.num = LLV_INFO; return(LOGLEV); }
 <S_LOG>debug		{ YYD; yylval.num = LLV_DEBUG; return(LOGLEV); }
 <S_LOG>debug2		{ YYD; yylval.num = LLV_DEBUG2; return(LOGLEV); }
-<S_LOG>debug3		{ YYD; yywarn("it is obsoleted.  use \"debug2\""); yylval.num = LLV_DEBUG2; return(LOGLEV); }
-<S_LOG>debug4		{ YYD; yywarn("it is obsoleted.  use \"debug2\""); yylval.num = LLV_DEBUG2; return(LOGLEV); }
 <S_LOG>{semi}		{ BEGIN S_INI; return(EOS); }
 
 	/* padding */
@@ -214,13 +212,13 @@ hexstring	0x{hexdigit}+
 <S_LST>{ecl}		{ BEGIN S_INI; return(EOC); }
 
 	/* radius config */
-<S_INI>radiuscfg	{ BEGIN S_LDAP; YYDB; return(RADCFG); }
-<S_LDAP>{bcl}		{ return(BOC); }
-<S_LDAP>auth		{ YYD; return(RAD_AUTH); }
-<S_LDAP>acct		{ YYD; return(RAD_ACCT); }
-<S_LDAP>timeout		{ YYD; return(RAD_TIMEOUT); }
-<S_LDAP>retries		{ YYD; return(RAD_RETRIES); }
-<S_LDAP>{ecl}		{ BEGIN S_INI; return(EOC); }
+<S_INI>radiuscfg	{ BEGIN S_RAD; YYDB; return(RADCFG); }
+<S_RAD>{bcl}		{ return(BOC); }
+<S_RAD>auth		{ YYD; return(RAD_AUTH); }
+<S_RAD>acct		{ YYD; return(RAD_ACCT); }
+<S_RAD>timeout		{ YYD; return(RAD_TIMEOUT); }
+<S_RAD>retries		{ YYD; return(RAD_RETRIES); }
+<S_RAD>{ecl}		{ BEGIN S_INI; return(EOC); }
 
 	/* ldap config */
 <S_INI>ldapcfg		{ BEGIN S_LDAP; YYDB; return(LDAPCFG); }
@@ -341,7 +339,6 @@ hexstring	0x{hexdigit}+
 <S_RMTS>generate_policy	{ YYD; return(GENERATE_POLICY); }
 <S_RMTS>unique		{ YYD; yylval.num = GENERATE_POLICY_UNIQUE; return(GENERATE_LEVEL); }
 <S_RMTS>require		{ YYD; yylval.num = GENERATE_POLICY_REQUIRE; return(GENERATE_LEVEL); }
-<S_RMTS>support_mip6	{ YYD; yywarn("it is obsoleted.  use \"support_proxy\"."); return(SUPPORT_PROXY); }
 <S_RMTS>support_proxy	{ YYD; return(SUPPORT_PROXY); }
 <S_RMTS>initial_contact	{ YYD; return(INITIAL_CONTACT); }
 <S_RMTS>nat_traversal	{ YYD; return(NAT_TRAVERSAL); }
@@ -435,6 +432,7 @@ icmp		{ YYD; yylval.num = IPPROTO_ICMP; return(UL_PROTO); }
 icmp6		{ YYD; yylval.num = IPPROTO_ICMPV6; return(UL_PROTO); }
 tcp		{ YYD; yylval.num = IPPROTO_TCP; return(UL_PROTO); }
 udp		{ YYD; yylval.num = IPPROTO_UDP; return(UL_PROTO); }
+gre		{ YYD; yylval.num = IPPROTO_GRE; return(UL_PROTO); }
 
 	/* algorithm type */
 des_iv64	{ YYD; yylval.num = algtype_des_iv64;	return(ALGORITHMTYPE); }
@@ -557,7 +555,6 @@ keyid		{ YYD; yylval.num = IDTYPE_KEYID; return(IDENTIFIERTYPE); }
 address		{ YYD; yylval.num = IDTYPE_ADDRESS; return(IDENTIFIERTYPE); }
 subnet		{ YYD; yylval.num = IDTYPE_SUBNET; return(IDENTIFIERTYPE); }
 asn1dn		{ YYD; yylval.num = IDTYPE_ASN1DN; return(IDENTIFIERTYPE); }
-certname	{ YYD; yywarn("certname will be obsoleted in near future."); yylval.num = IDTYPE_ASN1DN; return(IDENTIFIERTYPE); }
 
 	/* identifier qualifier */
 tag		{ YYD; yylval.num = IDQUAL_TAG;  return(IDENTIFIERQUAL); }
