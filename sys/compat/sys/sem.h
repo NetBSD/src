@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.4.30.2 2008/11/09 23:28:36 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.4.30.3 2009/01/05 01:26:30 christos Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -98,12 +98,12 @@ __native_to_semid_ds14(const struct semid_ds *sembuf, struct semid_ds14 *osembuf
 #undef CVTI
 }
 
-int	semctl(int, int, int, union __semun);
+int	semctl(int, int, int, ...);
 int	__semctl(int, int, int, union __semun *);
 int	__semctl13(int, int, int, ...);
 int	__semctl14(int, int, int, ...);
 int	__semctl50(int, int, int, ...);
-int	____semctl50(int, int, int, void *);
+int	____semctl50(int, int, int, ...);
 __END_DECLS
 
 #endif /* !_COMPAT_SYS_SEM_H_ */
