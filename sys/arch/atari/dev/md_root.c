@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.25.20.1 2008/11/06 00:19:51 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.25.20.2 2009/01/06 23:57:18 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,9 @@ struct read_info	*rsp;
 	while(bytes_left > 0) {
 		bp->b_cflags = BC_BUSY;
 		bp->b_flags  = B_PHYS | B_READ;
+		bp->b_oflags &= ~BO_DONE;
 		bp->b_blkno  = btodb(rsp->offset);
-		bp->b_bcount = rsp->chunk;
+		bp->b_bcount = min(rsp->chunk, bytes_left);
 		bp->b_data   = rsp->bufp;
 		bp->b_error  = 0;
 
@@ -247,7 +248,6 @@ struct read_info	*rsp;
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
-		brelse(bp, 0);
 
 		bytes_left   -= done;
 		rsp->offset  += done;
@@ -309,6 +309,7 @@ int			nbyte;
 	while(nbyte > 0) {
 		bp->b_cflags = BC_BUSY;
 		bp->b_flags  = B_PHYS | B_READ;
+		bp->b_oflags &= ~BO_DONE;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = min(rsp->chunk, nbyte);
 		bp->b_data   = buf;
@@ -327,7 +328,6 @@ int			nbyte;
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
-		brelse(bp, 0);
 
 		nbyte        -= done;
 		nread        += done;
