@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.4.2.4 2008/11/02 02:22:26 snj Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.4.2.5 2009/01/06 23:01:49 snj Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.4.2.4 2008/11/02 02:22:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.4.2.5 2009/01/06 23:01:49 snj Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.4.2.4 2008/11/02 02:22:26 snj Exp 
 #if 1
 #	define DPRINTF(a) ;
 #else
-#	define DPRINTF(a) printf(a);
+#	define DPRINTF(a) printf a;
 #endif
 
 /*
@@ -278,6 +278,7 @@ dirhash_enter(struct dirhash *dirh,
 		if (dirh_e->offset == offset) {
 			DPRINTF(("\tremoving free entry\n"));
 			LIST_REMOVE(dirh_e, next);
+			pool_put(&dirhash_entry_pool, dirh_e);
 			break;
 		}
 	}
