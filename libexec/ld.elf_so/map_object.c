@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.36 2008/06/03 19:32:32 ad Exp $	 */
+/*	$NetBSD: map_object.c,v 1.37 2009/01/06 04:01:46 mrg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.36 2008/06/03 19:32:32 ad Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.37 2009/01/06 04:01:46 mrg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -92,7 +92,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 #endif
 
 	if (sb != NULL && sb->st_size < sizeof (Elf_Ehdr)) {
-		_rtld_error("%s: unrecognized file format", path);
+		_rtld_error("%s: unrecognized file format1", path);
 		return NULL;
 	}
 
@@ -114,7 +114,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	/* Make sure the file is valid */
 	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0 ||
 	    ehdr->e_ident[EI_CLASS] != ELFCLASS) {
-		_rtld_error("%s: unrecognized file format", path);
+		_rtld_error("%s: unrecognized file format2 [%x != %x]", path, ehdr->e_ident[EI_CLASS], ELFCLASS);
 		goto bad;
 	}
 	/* Elf_e_ident includes class */
@@ -156,7 +156,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	while (phdr < phlimit) {
 		switch (phdr->p_type) {
 		case PT_INTERP:
-			obj->interp = (void *)phdr->p_vaddr;
+			obj->interp = (void *)(uintptr_t)phdr->p_vaddr;
 			break;
 
 		case PT_LOAD:
@@ -166,13 +166,13 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			break;
 
 		case PT_DYNAMIC:
-			obj->dynamic = (void *)phdr->p_vaddr;
+			obj->dynamic = (void *)(uintptr_t)phdr->p_vaddr;
 			break;
 		}
 
 		++phdr;
 	}
-	obj->entry = (void *)ehdr->e_entry;
+	obj->entry = (void *)(uintptr_t)ehdr->e_entry;
 	if (!obj->dynamic) {
 		_rtld_error("%s: not dynamically linked", path);
 		goto bad;
@@ -288,11 +288,11 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	obj->relocbase = mapbase - base_vaddr;
 
 	if (obj->dynamic)
-		obj->dynamic = (void *)(obj->relocbase + (Elf_Addr)obj->dynamic);
+		obj->dynamic = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->dynamic);
 	if (obj->entry)
-		obj->entry = (void *)(obj->relocbase + (Elf_Addr)obj->entry);
+		obj->entry = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->entry);
 	if (obj->interp)
-		obj->interp = (void *)(obj->relocbase + (Elf_Addr)obj->interp);
+		obj->interp = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->interp);
 
 	return obj;
 
