@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.8 2005/12/11 12:16:04 christos Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.9 2009/01/06 23:51:34 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc_iobus.c,v 1.8 2005/12/11 12:16:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc_iobus.c,v 1.9 2009/01/06 23:51:34 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: upc_iobus.c,v 1.8 2005/12/11 12:16:04 christos Exp $
 #include <arch/acorn26/ioc/ioebvar.h>
 #endif
 
-static int upc_iobus_match(struct device *, struct cfdata *, void *);
-static void upc_iobus_attach(struct device *, struct device *, void *);
+static int upc_iobus_match(device_t , cfdata_t , void *);
+static void upc_iobus_attach(device_t , device_t , void *);
 
 struct upc_iobus_softc {
 	struct upc_softc	sc_upc;
@@ -63,10 +63,10 @@ struct upc_iobus_softc {
 CFATTACH_DECL(upc_iobus, sizeof(struct upc_iobus_softc),
     upc_iobus_match, upc_iobus_attach, NULL, NULL);
 
-static struct device *the_upc_iobus;
+static device_t the_upc_iobus;
 
 static int
-upc_iobus_match(struct device *parent, struct cfdata *cf, void *aux)
+upc_iobus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/*
@@ -82,10 +82,10 @@ upc_iobus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-upc_iobus_attach(struct device *parent, struct device *self, void *aux)
+upc_iobus_attach(device_t parent, device_t self, void *aux)
 {
 	struct iobus_attach_args *ioa = aux;
-	struct upc_iobus_softc *sc = (struct upc_iobus_softc *)self;
+	struct upc_iobus_softc *sc = device_private(self);
 	struct upc_softc *upc = &sc->sc_upc;
 
 	upc->sc_iot = ioa->ioa_tag;
@@ -95,28 +95,28 @@ upc_iobus_attach(struct device *parent, struct device *self, void *aux)
 
 	if (upc->sc_irq4.uih_func != NULL) {
 		evcnt_attach_dynamic(&sc->sc_intrcnt4, EVCNT_TYPE_INTR, NULL,
-		    self->dv_xname, "irq4");
+		    device_xname(self), "irq4");
 		irq_establish(IOC_IRQ_IL2, upc->sc_irq4.uih_level,
 		    upc->sc_irq4.uih_func, upc->sc_irq4.uih_arg,
 		    &sc->sc_intrcnt4);
 	}
 	if (upc->sc_wintr.uih_func != NULL) {
 		evcnt_attach_dynamic(&sc->sc_intrcntw, EVCNT_TYPE_INTR, NULL,
-		    self->dv_xname, "wdc intr");
+		    device_xname(self), "wdc intr");
 		irq_establish(IOC_IRQ_IL3, upc->sc_wintr.uih_level,
 		    upc->sc_wintr.uih_func, upc->sc_wintr.uih_arg,
 		    &sc->sc_intrcntw);
 	}
 	if (upc->sc_fintr.uih_func != NULL) {
 		evcnt_attach_dynamic(&sc->sc_intrcntf, EVCNT_TYPE_INTR, NULL,
-		    self->dv_xname, "fdc intr");
+		    device_xname(self), "fdc intr");
 		irq_establish(IOC_IRQ_IL4, upc->sc_fintr.uih_level,
 		    upc->sc_fintr.uih_func, upc->sc_fintr.uih_arg,
 		    &sc->sc_intrcntf);
 	}
 	if (upc->sc_pintr.uih_func != NULL) {
 		evcnt_attach_dynamic(&sc->sc_intrcntp, EVCNT_TYPE_INTR, NULL,
-		    self->dv_xname, "lpt intr");
+		    device_xname(self), "lpt intr");
 		irq_establish(IOC_IRQ_IL6, upc->sc_pintr.uih_level,
 		    upc->sc_pintr.uih_func, upc->sc_pintr.uih_arg,
 		    &sc->sc_intrcntp);
