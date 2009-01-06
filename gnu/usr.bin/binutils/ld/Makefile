@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2008/10/13 22:36:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2009/01/06 03:08:39 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -74,13 +74,24 @@ ${PROG}.info: configdoc.texi
 DPSRCS+=	.depend.${f} e${f}.c
 CLEANFILES+=	.depend.${f} e${f}.c
 
+# XXX super hack
+. if (${MACHINE_ARCH} == "x86_64" && \
+      (${f} == "elf_i386" || ${f} == "i386nbsd"))
+EMUL_LIB_PATH.${f}=/usr/lib/i386
+. elif (${MACHINE_ARCH} == "sparc64" && \
+      (${f} == "elf32_sparc" || ${f} == "sparcnbsd"))
+EMUL_LIB_PATH.${f}=/usr/lib/sparc
+. else
+EMUL_LIB_PATH.${f}=/usr/lib
+. endif
+
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
 	unset MACHINE || true; \
-	LIB_PATH=/usr/lib
+	LIB_PATH=${EMUL_LIB_PATH.${f}} NATIVE=yes \
 		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} "/usr" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
-		${G_EMUL} ${LIBDIR} no ${f} "${G_target_alias}"
+		${G_EMUL} ${LIBDIR} yes ${f} "${G_target_alias}"
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
