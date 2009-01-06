@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.9 2008/12/17 20:51:31 cegger Exp $ */
+/* $NetBSD: irq.c,v 1.10 2009/01/06 23:35:39 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.9 2008/12/17 20:51:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.10 2009/01/06 23:35:39 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,8 +105,6 @@ struct irq_handler {
 	int	enabled;
 	struct	evcnt *ev;
 };
-
-volatile static int current_spl = IPL_HIGH;
 
 inline int hardsplx(int);
 
@@ -356,7 +354,7 @@ hardsplx(int s)
 #ifdef FLASHYTHING
 	VIDC_WRITE(VIDC_PALETTE_BCOL | iplcolours[s]);
 #endif
-	was = current_spl;
+	was = curcpu()->ci_cpl;
 	mask = irqmask[s];
 #if NFIQ > 0
 	if (fiq_want_downgrade)
@@ -368,7 +366,7 @@ hardsplx(int s)
 #if NUNIXBP > 0
 	unixbp_irq_setmask(mask >> IRQ_UNIXBP_BASE);
 #endif
-	current_spl = s;
+	curcpu()->ci_cpl = s;
 	int_on();
 	return was;
 }
@@ -382,8 +380,8 @@ splhigh(void)
 #ifdef FLASHYTHING
 	VIDC_WRITE(VIDC_PALETTE_BCOL | iplcolours[IPL_HIGH]);
 #endif
-	was = current_spl;
-	current_spl = IPL_HIGH;
+	was = curcpu()->ci_cpl;
+	curcpu()->ci_cpl = IPL_HIGH;
 #ifdef DEBUG
 	/* Make sure that anything that turns off the I flag gets spotted. */
 	if (the_ioc != NULL)
@@ -396,17 +394,17 @@ int
 raisespl(int s)
 {
 
-	if (s > current_spl)
+	if (s > curcpu()->ci_cpl)
 		return hardsplx(s);
 	else
-		return current_spl;
+		return curcpu()->ci_cpl;
 }
 
 void
 lowerspl(int s)
 {
 
-	if (s < current_spl) {
+	if (s < curcpu()->ci_cpl) {
 #if 0
 		dosoftints(s);
 #endif
