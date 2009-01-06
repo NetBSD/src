@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.32 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: ldd.c,v 1.3 2009/01/06 03:59:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.32 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.3 2009/01/06 03:59:56 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: ldd.c,v 1.32 2008/04/28 20:24:14 martin Exp $");
 
 #include "debug.h"
 #include "rtld.h"
+#include "ldd.h"
 
 /*
  * Data declarations.
@@ -99,12 +100,9 @@ Search_Path *_rtld_default_paths;
 Search_Path *_rtld_paths;
 Library_Xform *_rtld_xforms;
 
-static void fmtprint(const char *, Obj_Entry *, const char *, const char *);
-static void print_needed(Obj_Entry *, const char *, const char *);
-static int ldd_aout(char *, char *, char *, int);
 static void usage(void) __dead;
-static char *main_local;
-static char *main_progname;
+char *main_local;
+char *main_progname;
 
 static void
 usage(void)
@@ -117,7 +115,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	struct stat st;
 	char *fmt1 = NULL, *fmt2 = NULL;
 	int c;
 
@@ -147,74 +144,14 @@ main(int argc, char **argv)
 		/*NOTREACHED*/
 	}
 
-	_rtld_pagesz = sysconf(_SC_PAGESIZE);
-	_rtld_add_paths(argv[0], &_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
+	for (; argc != 0; argc--, argv++)
+		if (elf_ldd(*argv, fmt1, fmt2) == -1 &&
+#if defined(_LP64)
+		    elf32_ldd(*argv, fmt1, fmt2) == -1 &&
+#endif
+		    aout_ldd(*argv, fmt1, fmt2) == -1)
+			warnx("%s", error_message);
 
-	for (; argc != 0; argc--, argv++) {
-		int fd = open(*argv, O_RDONLY);
-		if (fd == -1) {
-			warn("%s", *argv);
-			continue;
-		}
-		if (fstat(fd, &st) < 0) {
-			warn("%s", *argv);
-			close(fd);
-			continue;
-		}
-
-		_rtld_paths = NULL;
-		_rtld_trust = (st.st_mode & (S_ISUID | S_ISGID)) == 0;
-		if (_rtld_trust)
-			_rtld_add_paths(argv[0], &_rtld_paths, getenv("LD_LIBRARY_PATH"));
-
-		_rtld_process_hints(argv[0], &_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
-		_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, &st);
-		if (_rtld_objmain == NULL) {
-			if (ldd_aout(*argv, fmt1, fmt2, fd) < 0)
-				warnx("%s", error_message);
-			close(fd);
-			continue;
-		}
-		close(fd);
-
-		_rtld_objmain->path = xstrdup(*argv);
-		_rtld_digest_dynamic(argv[0], _rtld_objmain);
-
-		/* Link the main program into the list of objects. */
-		*_rtld_objtail = _rtld_objmain;
-		_rtld_objtail = &_rtld_objmain->next;
-		++_rtld_objmain->refcount;
-
-		(void) _rtld_load_needed_objects(_rtld_objmain, 0);
-
-		if (fmt1 == NULL)
-			printf("%s:\n", _rtld_objmain->path);
-		main_local = *argv;
-		main_progname = _rtld_objmain->path;
-		print_needed(_rtld_objmain, fmt1, fmt2);
-
-		while (_rtld_objlist != NULL) {
-			Obj_Entry *obj = _rtld_objlist;
-			_rtld_objlist = obj->next;
-			while (obj->rpaths != NULL) {
-				const Search_Path *rpath = obj->rpaths;
-				obj->rpaths = rpath->sp_next;
-				xfree(__UNCONST(rpath->sp_path));
-				xfree(__UNCONST(rpath));
-			}
-			while (obj->needed != NULL) {
-				const Needed_Entry *needed = obj->needed;
-				obj->needed = needed->next;
-				xfree(__UNCONST(needed));
-			}
-			(void) munmap(obj->mapbase, obj->mapsize);
-			xfree(obj->path);
-			xfree(obj);
-		}
-
-		_rtld_objmain = NULL;
-		_rtld_objtail = &_rtld_objlist;
-	}
 	return 0;
 }
 
@@ -242,7 +179,7 @@ dlerror()
 	return msg;
 }
 
-static void
+void
 fmtprint(const char *libname, Obj_Entry *obj, const char *fmt1,
     const char *fmt2)
 {
@@ -327,7 +264,7 @@ fmtprint(const char *libname, Obj_Entry *obj, const char *fmt1,
 	}
 }
 
-static void
+void
 print_needed(Obj_Entry *obj, const char *fmt1, const char *fmt2)
 {
 	const Needed_Entry *needed;
@@ -345,59 +282,4 @@ print_needed(Obj_Entry *obj, const char *fmt1, const char *fmt2)
 			fmtprint(libname, needed->obj, fmt1, fmt2);
 		}
 	}
-}
-
-static int
-ldd_aout(char *file, char *fmt1, char *fmt2, int fd)
-{
-	struct exec hdr;
-	int status, rval;
-
-	lseek(fd, 0, SEEK_SET);
-	if (read(fd, &hdr, sizeof hdr) != sizeof hdr
-	    || (N_GETFLAG(hdr) & EX_DPMASK) != EX_DYNAMIC
-#if 1 /* Compatibility */
-	    || hdr.a_entry < N_PAGSIZ(hdr)
-#endif
-	    ) {
-		/* calling function prints warning */
-		return -1;
-	}
-
-	setenv("LD_TRACE_LOADED_OBJECTS", "", 1);
-	if (fmt1)
-		setenv("LD_TRACE_LOADED_OBJECTS_FMT1", fmt1, 1);
-	if (fmt2)
-		setenv("LD_TRACE_LOADED_OBJECTS_FMT2", fmt2, 1);
-
-	setenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", file, 1);
-	if (fmt1 == NULL && fmt2 == NULL)
-		printf("%s:\n", file);
-	fflush(stdout);
-
-	rval = 0;
-	switch (fork()) {
-	case -1:
-		err(1, "fork");
-		break;
-	default:
-		if (wait(&status) <= 0) {
-			warn("wait");
-			rval |= 1;
-		} else if (WIFSIGNALED(status)) {
-			fprintf(stderr, "%s: signal %d\n",
-					file, WTERMSIG(status));
-			rval |= 1;
-		} else if (WIFEXITED(status) && WEXITSTATUS(status)) {
-			fprintf(stderr, "%s: exit status %d\n",
-					file, WEXITSTATUS(status));
-			rval |= 1;
-		}
-		break;
-	case 0:
-		rval |= execl(file, file, NULL) != 0;
-		perror(file);
-		_exit(1);
-	}
-	return rval;
 }
