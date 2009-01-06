@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.25 2008/11/13 18:44:51 cegger Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.26 2009/01/06 00:57:47 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -74,7 +74,7 @@
 #define XENPRINTF(x)
 #endif
 
-#define NET_TX_RING_SIZE __RING_SIZE((netif_tx_sring_t *)0, PAGE_SIZE)  
+#define NET_TX_RING_SIZE __RING_SIZE((netif_tx_sring_t *)0, PAGE_SIZE)
 #define NET_RX_RING_SIZE __RING_SIZE((netif_rx_sring_t *)0, PAGE_SIZE)
 
 /* linux wants at last 16 bytes free in front of the packet */
@@ -104,7 +104,7 @@ typedef enum {CONNECTED, DISCONNECTING, DISCONNECTED} xnetback_state_t;
 
 /* we keep the xnetback instances in a linked list */
 struct xnetback_instance {
-	SLIST_ENTRY(xnetback_instance) next; 
+	SLIST_ENTRY(xnetback_instance) next;
 	struct xenbus_device *xni_xbusd; /* our xenstore entry */
 	domid_t xni_domid;		/* attached to this domain */
 	uint32_t xni_handle;	/* domain-specific handle */
@@ -160,8 +160,8 @@ static struct xenbus_backend_driver xvif_backend_driver = {
  */
 #define NB_XMIT_PAGES_BATCH 64
 /*
- * We will transfers a mapped page to the remote domain, and remap another
- * page in place immediatly. For this we keep a list of pages available.
+ * We will transfer a mapped page to the remote domain, and remap another
+ * page in place immediately. For this we keep a list of pages available.
  * When the list is empty, we ask the hypervisor to give us
  * NB_XMIT_PAGES_BATCH pages back.
  */
@@ -171,7 +171,7 @@ static int  xennetback_get_mcl_page(paddr_t *);
 static void xennetback_get_new_mcl_pages(void);
 /*
  * If we can't transfer the mbuf directly, we have to copy it to a page which
- * will be transfered to the remote domain. We use a pool_cache
+ * will be transferred to the remote domain. We use a pool_cache
  * for this, or the mbuf cluster pool cache if MCLBYTES == PAGE_SIZE
  */
 #if MCLBYTES != PAGE_SIZE
@@ -207,8 +207,8 @@ xvifattach(int n)
 	XENPRINTF(("xennetback_init\n"));
 
 	/*
-	 * steal some non-managed pages to the VM system, to remplace
-	 * mbuf cluster or xmit_pages_pool pages given to foreing domains.
+	 * steal some non-managed pages to the VM system, to replace
+	 * mbuf cluster or xmit_pages_pool pages given to foreign domains.
 	 */
 	if (uvm_pglistalloc(PAGE_SIZE * NB_XMIT_PAGES_BATCH, 0, 0xffffffff,
 	    0, 0, &mlist, NB_XMIT_PAGES_BATCH, 0) != 0)
@@ -511,7 +511,7 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 	case XenbusStateClosed:
 		/* otherend_changed() should handle it for us */
 		panic("xennetback_frontend_changed: closed\n");
-	case XenbusStateUnknown:      
+	case XenbusStateUnknown:
 	case XenbusStateInitWait:
 	default:
 		aprint_error("%s: invalid frontend state %d\n",
@@ -676,7 +676,7 @@ xennetback_evthandler(void *arg)
 		XENPRINTF(("%s pkt offset %d size %d id %d req_cons %d\n",
 		    xneti->xni_if.if_xname, txreq->offset,
 		    txreq->size, txreq->id, MASK_NETIF_TX_IDX(req_cons)));
-		    
+		
 		pkt = pool_get(&xni_pkt_pool, PR_NOWAIT);
 		if (__predict_false(pkt == NULL)) {
 			static struct timeval lasttime;
@@ -989,7 +989,7 @@ xennetback_ifsoftstart(void *arg)
 			mclp++;
 			/* update the MMU */
 			if (HYPERVISOR_multicall(xstart_mcl, i + 1) != 0) {
-				panic("%s: HYPERVISOR_multicall failed", 
+				panic("%s: HYPERVISOR_multicall failed",
 				    ifp->if_xname);
 			}
 			for (j = 0; j < i + 1; j++) {
@@ -1010,12 +1010,12 @@ xennetback_ifsoftstart(void *arg)
 			}
 			if (HYPERVISOR_grant_table_op(GNTTABOP_transfer,
 			    xstart_gop, i) != 0) {
-				panic("%s: GNTTABOP_transfer failed", 
+				panic("%s: GNTTABOP_transfer failed",
 				    ifp->if_xname);
 			}
 
 			for (j = 0; j < i; j++) {
-				if (xstart_gop[j].status != 0) {
+				if (xstart_gop[j].status != GNTST_okay) {
 					printf("%s GNTTABOP_transfer[%d] %d\n",
 					    ifp->if_xname,
 					    j, xstart_gop[j].status);
@@ -1066,7 +1066,7 @@ xennetback_ifsoftstart(void *arg)
 			xennetback_get_new_mcl_pages();
 			if (mcl_pages_alloc < 0) {
 				/*
-				 * setup the watchdog to try again, because 
+				 * setup the watchdog to try again, because
 				 * xennetback_ifstart() will never be called
 				 * again if queue is full.
 				 */
@@ -1094,7 +1094,7 @@ static void
 xennetback_ifwatchdog(struct ifnet * ifp)
 {
 	/*
-	 * We can get to the following condition: 
+	 * We can get to the following condition:
 	 * transmit stalls because the ring is full when the ifq is full too.
 	 * In this case (as, unfortunably, we don't get an interrupt from xen
 	 * on transmit) noting will ever call xennetback_ifstart() again.
