@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5211_reset.c,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ar5211_reset.c,v 1.3 2009/01/06 06:03:57 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -1523,8 +1523,8 @@ ar5211SetRateTable(struct ath_hal *ah, RD_EDGES_POWER *pRdEdgesPower,
 		{ 0, 3, 6, 9, MAX_RATE_POWER };
 
 	uint16_t	*pRatesPower;
-	uint16_t	lowerChannel, lowerIndex=0, lowerPower=0;
-	uint16_t	upperChannel, upperIndex=0, upperPower=0;
+	uint16_t	lowerChannel = 0, lowerIndex=0, lowerPower=0;
+	uint16_t	upperChannel = 0, upperIndex=0, upperPower=0;
 	uint16_t	twiceMaxEdgePower=63;
 	uint16_t	twicePower = 0;
 	uint16_t	i, numEdges;
@@ -1714,10 +1714,10 @@ uint16_t
 ar5211GetScaledPower(uint16_t channel, uint16_t pcdacValue, const PCDACS_EEPROM *pSrcStruct)
 {
 	uint16_t powerValue;
-	uint16_t lFreq, rFreq;		/* left and right frequency values */
-	uint16_t llPcdac, ulPcdac;	/* lower and upper left pcdac values */
-	uint16_t lrPcdac, urPcdac;	/* lower and upper right pcdac values */
-	uint16_t lPwr, uPwr;		/* lower and upper temp pwr values */
+	uint16_t lFreq = 0, rFreq = 0;		/* left and right frequency values */
+	uint16_t llPcdac = 0, ulPcdac = 0;	/* lower and upper left pcdac values */
+	uint16_t lrPcdac = 0, urPcdac = 0;	/* lower and upper right pcdac values */
+	uint16_t lPwr = 0, uPwr = 0;		/* lower and upper temp pwr values */
 	uint16_t lScaledPwr, rScaledPwr; /* left and right scaled power */
 
 	if (ar5211FindValueInList(channel, pcdacValue, pSrcStruct, &powerValue))
