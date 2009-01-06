@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_reset.c,v 1.1.1.1 2008/12/11 04:46:50 alc Exp $
+ * $Id: ar5416_reset.c,v 1.2 2009/01/06 06:03:57 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -2575,7 +2575,7 @@ ar5416GetGainBoundariesAndPdadcs(struct ath_hal *ah,
 
     int       i, j, k;
     int16_t   ss;         /* potentially -ve index for taking care of pdGainOverlap */
-    uint16_t  idxL, idxR, numPiers; /* Pier indexes */
+    uint16_t  idxL = 0, idxR = 0, numPiers; /* Pier indexes */
 
     /* filled out Vpd table for all pdGains (chanL) */
     static uint8_t   vpdTableL[AR5416_NUM_PD_GAINS][AR5416_MAX_PWR_RANGE_IN_HALF_DB];
@@ -2786,7 +2786,7 @@ ar5416FillVpdTable(uint8_t pwrMin, uint8_t pwrMax, uint8_t *pPwrList,
 {
     uint16_t  i, k;
     uint8_t   currPwr = pwrMin;
-    uint16_t  idxL, idxR;
+    uint16_t  idxL = 0, idxR = 0;
 
     HALASSERT(pwrMax > pwrMin);
     for (i = 0; i <= (pwrMax - pwrMin) / 2; i++) {

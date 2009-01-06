@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5111.c,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ar5111.c,v 1.3 2009/01/06 06:03:57 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -537,7 +537,7 @@ ar5212GetScaledPower(uint16_t channel, uint16_t pcdacValue,
 	uint16_t lFreq, rFreq;		/* left and right frequency values */
 	uint16_t llPcdac, ulPcdac;	/* lower and upper left pcdac values */
 	uint16_t lrPcdac, urPcdac;	/* lower and upper right pcdac values */
-	uint16_t lPwr, uPwr;		/* lower and upper temp pwr values */
+	uint16_t lPwr = 0, uPwr = 0;		/* lower and upper temp pwr values */
 	uint16_t lScaledPwr, rScaledPwr; /* left and right scaled power */
 
 	if (ar5212FindValueInList(channel, pcdacValue, pSrcStruct, &powerValue)) {

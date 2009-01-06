@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_reset.c,v 1.1.1.1 2008/12/11 04:46:42 alc Exp $
+ * $Id: ar5212_reset.c,v 1.2 2009/01/06 06:03:57 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -2362,7 +2362,7 @@ ar5212GetMaxEdgePower(uint16_t channel, const RD_EDGES_POWER *pRdEdgesPower)
 {
 	/* temp array for holding edge channels */
 	uint16_t tempChannelList[NUM_EDGES];
-	uint16_t clo, chi, twiceMaxEdgePower;
+	uint16_t clo = 0, chi = 0, twiceMaxEdgePower;
 	int i, numEdges;
 
 	/* Get the edge power */
@@ -2440,7 +2440,7 @@ ar5212GetTargetPowers(struct ath_hal *ah, HAL_CHANNEL *chan,
 {
 	/* temp array for holding target power channels */
 	uint16_t tempChannelList[NUM_TEST_FREQUENCIES];
-	uint16_t clo, chi, ixlo, ixhi;
+	uint16_t clo = 0, chi = 0, ixlo, ixhi;
 	int i;
 
 	/* Copy the target powers into the temp channel list */

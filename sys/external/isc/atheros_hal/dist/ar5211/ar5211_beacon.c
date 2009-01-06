@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5211_beacon.c,v 1.1.1.1 2008/12/11 04:46:31 alc Exp $
+ * $Id: ar5211_beacon.c,v 1.2 2009/01/06 06:03:57 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -55,6 +55,8 @@ ar5211BeaconInit(struct ath_hal *ah,
 {
 	HAL_BEACON_TIMERS bt;
 
+	bt.bt_nextdba = 0;
+	bt.bt_nextswba = 0;
 	bt.bt_nexttbtt = next_beacon;
 	/* 
 	 * TIMER1: in AP/adhoc mode this controls the DMA beacon

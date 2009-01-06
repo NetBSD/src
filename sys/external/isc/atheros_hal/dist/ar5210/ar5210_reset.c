@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5210_reset.c,v 1.3 2008/12/13 05:16:28 alc Exp $
+ * $Id: ar5210_reset.c,v 1.4 2009/01/06 06:03:57 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -734,7 +734,7 @@ setupPowerSettings(struct ath_hal *ah, HAL_CHANNEL *chan, uint8_t cp[17])
 {
 	const HAL_EEPROM_v1 *ee = AH_PRIVATE(ah)->ah_eeprom;
 	uint8_t gainFRD, gainF36, gainF48, gainF54;
-	uint8_t dBmRD, dBm36, dBm48, dBm54, dontcare;
+	uint8_t dBmRD = 0, dBm36 = 0, dBm48 = 0, dBm54 = 0, dontcare;
 	uint32_t rd, group;
 	const struct tpcMap  *pRD;
 
