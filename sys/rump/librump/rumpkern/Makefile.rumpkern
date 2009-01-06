@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.33 2009/01/05 21:42:37 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.34 2009/01/06 01:00:57 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -71,7 +71,9 @@ AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
 #
 
 #
-# XXX: THIS IS UGLY, NEEDS BETTER FIX FOR COMPAT LIB
+# Check if we are building compat.  In compat mode we need to provide
+# the kernel of our compat target (amd64->i386 & sparc64->sparc), so
+# take MD stuff from the right arch.
 #
 .ifdef(LD32DIR)
 ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${LD32DIR}
