@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.3 2009/01/04 17:10:46 pooka Exp $	*/
+/*	$NetBSD: random.S,v 1.4 2009/01/06 01:24:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -50,7 +50,8 @@ ENTRY(random)
 	movl	#16807, %d0
 #ifdef PIC
 	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC), %a0
-	mulsl	_ASM_LABEL(randseed)@GOT(%a0), %d1:%d0
+	movl	_ASM_LABEL(randseed)@GOT(%a0), %d2
+	mulsl	(%d2), %d1:%d0
 #else
 	mulsl	_ASM_LABEL(randseed), %d1:%d0
 #endif
@@ -61,7 +62,7 @@ ENTRY(random)
 	addxl	%d1, %d0
 	lsrl	#1, %d0
 #ifdef PIC
-	movl	%d0, _ASM_LABEL(randseed)@GOT(%a0)
+	movl	%d0, (%d2)
 #else
 	movl	%d0, _ASM_LABEL(randseed)
 #endif
