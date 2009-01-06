@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.2 2008/12/22 00:56:58 haad Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.3 2009/01/06 23:21:16 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -262,7 +262,9 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 #endif
 
 	if ((fd = open(name, O_RDONLY)) < 0) {
+#ifndef __NetBSD__
 		log_sys_error("open", name);
+#endif		
 		return 0;
 		}
 
@@ -275,7 +277,7 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 
 	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
 		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) < 0) {
-			log_sys_error("ioctl DIOCGWEDGEINFO", name);
+			log_debug("ioctl DIOCGWEDGEINFO", name);
 			close(fd);
 			return 0;
 		} else
@@ -437,6 +439,7 @@ int dev_open_flags(struct device *dev, int flags, int direct, int quiet)
 			log_sys_debug("open", name);
 		else
 			log_sys_error("open", name);
+		
 		return 0;
 	}
 
