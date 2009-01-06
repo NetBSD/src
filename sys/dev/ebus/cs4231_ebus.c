@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.29 2008/12/17 19:35:09 cegger Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.30 2009/01/06 04:04:55 mrg Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.29 2008/12/17 19:35:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.30 2009/01/06 04:04:55 mrg Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_sparc_arch.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,18 +148,22 @@ cs4231_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea;
 	char *compat;
+	int len, total_size;
 
 	ea = aux;
 	if (strcmp(ea->ea_name, AUDIOCS_PROM_NAME) == 0)
 		return 1;
-#ifdef __sparc__		/* XXX: Krups */
-	if (strcmp(ea->ea_name, "sound") == 0)
-		return 1;
-#endif
 
-	compat = prom_getpropstring(ea->ea_node, "compatible");
-	if (compat && strcmp(compat, AUDIOCS_PROM_NAME) == 0)
-		return 1;
+	compat = NULL;
+	if (prom_getprop(ea->ea_node, "compatible", 1, &total_size, &compat) == 0) {
+		do {
+			if (strcmp(compat, AUDIOCS_PROM_NAME) == 0)
+				return 1;
+			len = strlen(compat) + 1;
+			total_size -= len;
+			compat += len;
+		} while (total_size > 0);
+	}
 
 	return 0;
 }
@@ -197,20 +205,36 @@ cs4231_ebus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* XXX: map playback DMA registers (we just know where they are) */
 	if (bus_space_map(ea->ea_bustag,
+#ifdef MSIIEP		/* XXX: Krups */
+			  /*
+			   * XXX: map playback DMA registers
+			   * (we just know where they are)
+			   */
 			  BUS_ADDR(0x14, 0x702000), /* XXX: magic num */
 			  EBUS_DMAC_SIZE,
+#else
+			  EBUS_ADDR_FROM_REG(&ea->ea_reg[1]),
+			  ea->ea_reg[1].size,
+#endif
 			  0, &ebsc->sc_pdmareg) != 0)
 	{
 		printf(": unable to map playback DMA registers\n");
 		return;
 	}
 
-	/* XXX: map capture DMA registers (we just know where they are) */
 	if (bus_space_map(ea->ea_bustag,
+#ifdef MSIIEP		/* XXX: Krups */
+			  /*
+			   * XXX: map capture DMA registers
+			   * (we just know where they are)
+			   */
 			  BUS_ADDR(0x14, 0x704000), /* XXX: magic num */
 			  EBUS_DMAC_SIZE,
+#else
+			  EBUS_ADDR_FROM_REG(&ea->ea_reg[2]),
+			  ea->ea_reg[2].size,
+#endif
 			  0, &ebsc->sc_cdmareg) != 0)
 	{
 		printf(": unable to map capture DMA registers\n");
