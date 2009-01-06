@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar2317.c,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ar2317.c,v 1.3 2009/01/06 06:03:57 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -285,7 +285,7 @@ ar2317FillVpdTable(uint32_t pdGainIdx, int16_t Pmin, int16_t  Pmax,
 	uint16_t ii, jj, kk;
 	int16_t currPwr = (int16_t)(2*Pmin);
 	/* since Pmin is pwr*2 and pwrList is 4*pwr */
-	uint32_t  idxL, idxR;
+	uint32_t  idxL = 0, idxR = 0;
 
 	ii = 0;
 	jj = 0;
@@ -351,7 +351,7 @@ ar2317getGainBoundariesAndPdadcsForPowers(struct ath_hal *ah, uint16_t channel,
 	/* XXX excessive stack usage? */
 	uint32_t ii, jj, kk;
 	int32_t ss;/* potentially -ve index for taking care of pdGainOverlap */
-	uint32_t idxL, idxR;
+	uint32_t idxL = 0, idxR = 0;
 	uint32_t numPdGainsUsed = 0;
 	/* 
 	 * If desired to support -ve power levels in future, just
