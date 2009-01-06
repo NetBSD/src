@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.11 2007/03/04 05:59:04 christos Exp $ */
+/* $NetBSD: arckbd.c,v 1.12 2009/01/06 23:58:00 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.11 2007/03/04 05:59:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.12 2009/01/06 23:58:00 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,31 +87,27 @@ static const char *arckbd_statenames[] = {
 	"hrst", "rak1", "rak2", "idle", "kdda", "kuda", "mdat"
 };
 
-static int arckbd_match(struct device *parent, struct cfdata *cf, void *aux);
-static void arckbd_attach(struct device *parent, struct device *self,
-    void *aux);
+static int arckbd_match(device_t parent, cfdata_t cf, void *aux);
+static void arckbd_attach(device_t parent, device_t self, void *aux);
 #if 0 /* XXX should be used */
 static kbd_t arckbd_pick_layout(int kbid);
 #endif
 #if NARCWSKBD > 0
-static int arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux);
-static void arcwskbd_attach(struct device *parent, struct device *self,
-    void *aux);
+static int arcwskbd_match(device_t parent, cfdata_t cf, void *aux);
+static void arcwskbd_attach(device_t parent, device_t self, void *aux);
 #endif
 #if NARCWSMOUSE > 0
-static int arcwsmouse_match(struct device *parent, struct cfdata *cf,
-    void *aux);
-static void arcwsmouse_attach(struct device *parent, struct device *self,
-    void *aux);
+static int arcwsmouse_match(device_t parent, cfdata_t cf, void *aux);
+static void arcwsmouse_attach(device_t parent, device_t self, void *aux);
 #endif
 
 static int arckbd_rint(void *self);
 static int arckbd_xint(void *self);
 #if NARCWSMOUSE > 0
-static void arckbd_mousemoved(struct device *self, int byte1, int byte2);
+static void arckbd_mousemoved(device_t self, int byte1, int byte2);
 #endif
-static void arckbd_keyupdown(struct device *self, int byte1, int byte2);
-static int arckbd_send(struct device *self, int data,
+static void arckbd_keyupdown(device_t self, int byte1, int byte2);
+static int arckbd_send(device_t self, int data,
     enum arckbd_state newstate, int waitok);
 
 #if NARCWSKBD > 0
@@ -177,12 +173,12 @@ CFATTACH_DECL(arckbd, sizeof(struct arckbd_softc),
  */
 
 #if NARCWSKBD > 0
-CFATTACH_DECL(arcwskbd, sizeof(struct device),
+CFATTACH_DECL_NEW(arcwskbd, 0,
     arcwskbd_match, arcwskbd_attach, NULL, NULL);
 #endif
 
 #if NARCWSMOUSE > 0
-CFATTACH_DECL(arcwsmouse, sizeof(struct device),
+CFATTACH_DECL_NEW(arcwsmouse, 0,
     arcwsmouse_match, arcwsmouse_attach, NULL, NULL);
 #endif
 
@@ -210,7 +206,7 @@ static struct wsmouse_accessops arcmouse_accessops = {
 
 /* ARGSUSED */
 static int
-arckbd_match(struct device *parent, struct cfdata *cf, void *aux)
+arckbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* Assume presence for now */
@@ -218,9 +214,9 @@ arckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-arckbd_attach(struct device *parent, struct device *self, void *aux)
+arckbd_attach(device_t parent, device_t self, void *aux)
 {
-	struct arckbd_softc *sc = (void *)self;
+	struct arckbd_softc *sc = device_private(self);
 	struct ioc_attach_args *ioc = aux;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
@@ -232,20 +228,18 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	bsh = sc->sc_bsh = ioc->ioc_fast_h; 
 
 	evcnt_attach_dynamic(&sc->sc_rev, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "rx intr");
+	    device_xname(&sc->sc_dev), "rx intr");
 	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self,
 	    &sc->sc_rev);
-	if (bootverbose)
-		printf("\n%s: interrupting at %s (rx)", self->dv_xname,
-		    irq_string(sc->sc_rirq));
+	aprint_verbose("\n%s: interrupting at %s (rx)", self->dv_xname,
+	    irq_string(sc->sc_rirq));
 
 	evcnt_attach_dynamic(&sc->sc_xev, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "tx intr");
+	    device_xname(&sc->sc_dev), "tx intr");
 	sc->sc_xirq = irq_establish(IOC_IRQ_STX, IPL_TTY, arckbd_xint, self,
 	    &sc->sc_xev);
 	irq_disable(sc->sc_xirq);
-	if (bootverbose)
-		printf(" and %s (tx)", irq_string(sc->sc_xirq));
+	aprint_verbose(" and %s (tx)", irq_string(sc->sc_xirq));
 
        	/* Initialisation of IOC KART per IOC Data Sheet section 6.2.3. */
 
@@ -269,7 +263,7 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	arckbd_cnattach(self);
 #endif
 
-	printf("\n");
+	aprint_normal("\n");
 
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, self->dv_xname, RND_TYPE_TTY, 0);
@@ -313,7 +307,7 @@ arckbd_pick_layout(int kbid)
 #if NARCWSKBD > 0
 /* ARGSUSED */
 static int
-arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux)
+arcwskbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct arckbd_attach_args *aka = aux;
 
@@ -326,7 +320,7 @@ arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux)
 #if NARCWSMOUSE > 0
 /* ARGSUSED */
 static int
-arcwsmouse_match(struct device *parent, struct cfdata *cf, void *aux)
+arcwsmouse_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct arckbd_attach_args *aka = aux;
 
@@ -338,12 +332,12 @@ arcwsmouse_match(struct device *parent, struct cfdata *cf, void *aux)
 
 #if NARCWSKBD > 0
 static void
-arcwskbd_attach(struct device *parent, struct device *self, void *aux)
+arcwskbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct arckbd_attach_args *aka = aux;
-	struct arckbd_softc *sc = (void *)parent;
+	struct arckbd_softc *sc = device_private(parent);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_wskbddev = config_found(self, &(aka->aka_wskbdargs),
 				       wskbddevprint);
@@ -352,12 +346,12 @@ arcwskbd_attach(struct device *parent, struct device *self, void *aux)
 
 #if NARCWSMOUSE > 0
 static void
-arcwsmouse_attach(struct device *parent, struct device *self, void *aux)
+arcwsmouse_attach(device_t parent, device_t self, void *aux)
 {
 	struct arckbd_attach_args *aka = aux;
-	struct arckbd_softc *sc = (void *)parent;
+	struct arckbd_softc *sc = device_private(parent);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_wsmousedev = config_found(self, &(aka->aka_wsmouseargs),
 					 wsmousedevprint);
@@ -375,9 +369,9 @@ arcwsmouse_attach(struct device *parent, struct device *self, void *aux)
  */
 
 void
-arckbd_cnattach(struct device *self)
+arckbd_cnattach(device_t self)
 {
-	struct arckbd_softc *sc = (void*)self;
+	struct arckbd_softc *sc = device_private(self);
 
 	wskbd_cnattach(&arckbd_consops, sc, &arckbd_mapdata_default);
 }
@@ -390,7 +384,7 @@ arckbd_getc(void *cookie, u_int *typep, int *valuep)
 
 	if (!(sc->sc_flags & AKF_POLLING))
 		panic("%s: arckbd_getc called with polling disabled",
-		      sc->sc_dev.dv_xname);
+		      device_xname(&sc->sc_dev));
 	while (sc->sc_poll_type == 0) {
 		if (ioc_irq_status(IOC_IRQ_STX))
 			arckbd_xint(&sc->sc_dev);
@@ -426,10 +420,10 @@ arckbd_pollc(void *cookie, int poll)
 #endif
 
 static int
-arckbd_send(struct device *self, int data, enum arckbd_state newstate,
+arckbd_send(device_t self, int data, enum arckbd_state newstate,
     int waitok)
 {
-	struct arckbd_softc *sc = (void *)self;
+	struct arckbd_softc *sc = device_private(self);
 	int s, res;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -444,7 +438,7 @@ arckbd_send(struct device *self, int data, enum arckbd_state newstate,
 			}
 	} else if (!ioc_irq_status(IOC_IRQ_STX)) {
 		if (sc->sc_cmdqueued)
-			panic("%s: queue overflow", sc->sc_dev.dv_xname);
+			panic("%s: queue overflow", device_xname(&sc->sc_dev));
 		else {
 			sc->sc_cmdqueue = data;
 			sc->sc_statequeue = newstate;
@@ -456,7 +450,7 @@ arckbd_send(struct device *self, int data, enum arckbd_state newstate,
 	sc->sc_state = newstate;
 #ifdef ARCKBD_DEBUG
 	log(LOG_DEBUG, "%s: sent 0x%02x.  now in state %s\n",
-	    sc->sc_dev.dv_xname, data, arckbd_statenames[newstate]);
+	    device_xname(&sc->sc_dev), data, arckbd_statenames[newstate]);
 #endif
 	wakeup(&sc->sc_state);
 	splx(s);
@@ -468,7 +462,7 @@ arckbd_send(struct device *self, int data, enum arckbd_state newstate,
 static int
 arckbd_xint(void *cookie)
 {
-	struct arckbd_softc *sc = cookie;
+	struct arckbd_softc *sc = device_private(cookie);
 
 	irq_disable(sc->sc_xirq);
 	/* First, process queued commands (acks from the last receive) */
@@ -493,15 +487,15 @@ arckbd_xint(void *cookie)
 static int
 arckbd_rint(void *cookie)
 {
-	struct device *self = cookie;
-	struct arckbd_softc *sc = (void *)self;
+	device_t self = cookie;
+	struct arckbd_softc *sc = device_private(self);
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int data;
 
 	data = bus_space_read_1(bst, bsh, 0);
 #ifdef ARCKBD_DEBUG
-	log(LOG_DEBUG, "%s: got 0x%02x in state %s\n", self->dv_xname, data,
+	log(LOG_DEBUG, "%s: got 0x%02x in state %s\n", device_xname(self), data,
 	    arckbd_statenames[sc->sc_state]);
 #endif
 	/* Reset protocol */
@@ -555,7 +549,7 @@ arckbd_rint(void *cookie)
 		arckbd_send(self, ARCKBD_SMAK, AS_IDLE, 0);
 		if (sc->sc_kbid != data) {
 			printf("%s: layout %d\n",
-			       self->dv_xname, data & ~ARCKBD_KBID);
+			    device_xname(self), data & ~ARCKBD_KBID);
 			sc->sc_kbid = data;
 		}
 	} else if (ARCKBD_IS_PDAT(data))
@@ -563,7 +557,7 @@ arckbd_rint(void *cookie)
 	else {
 		/* Protocol error */
 		log(LOG_WARNING, "%s: protocol error: got 0x%02x in state %s\n",
-		    self->dv_xname, data, arckbd_statenames[sc->sc_state]);
+		    device_xname(self), data, arckbd_statenames[sc->sc_state]);
 		arckbd_send(self, ARCKBD_HRST, AS_HRST, 0);
 	}
 	return IRQ_HANDLED;
@@ -571,9 +565,9 @@ arckbd_rint(void *cookie)
 
 #if NARCWSMOUSE > 0
 static void
-arckbd_mousemoved(struct device *self, int byte1, int byte2)
+arckbd_mousemoved(device_t self, int byte1, int byte2)
 {
-	struct arckbd_softc *sc = (void *)self;
+	struct arckbd_softc *sc = device_private(self);
 	int dx, dy;
 
 #if NRND > 0
@@ -592,10 +586,10 @@ arckbd_mousemoved(struct device *self, int byte1, int byte2)
 #endif
 
 static void
-arckbd_keyupdown(struct device *self, int byte1, int byte2)
+arckbd_keyupdown(device_t self, int byte1, int byte2)
 {
 #if NARCWSKBD > 0 || NARCWSMOUSE > 0 || NRND > 0
-	struct arckbd_softc *sc = (void *)self;
+	struct arckbd_softc *sc = device_private(self);
 #endif
 #if NARCWSKBD > 0
 	u_int type;
