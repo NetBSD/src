@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.12 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.13 2009/01/06 13:35:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -34,7 +34,6 @@
 
 #include <lib/libsa/stand.h>
 #include <atari_stand.h>
-#include <string.h>
 #include <libkern.h>
 #include <tosdefs.h>
 #include <sys/boot_flag.h>
@@ -44,6 +43,7 @@
 
 typedef int      (*bxxx_t)(void *, void *, struct osdsc *);
 
+int	bootxx(void *, void *, int);
 void	boot_BSD(struct kparamb *) __attribute__((noreturn));
 int	bootxxx(void *, void *, struct osdsc *);
 int	load_booter(struct osdsc *);
@@ -61,7 +61,7 @@ bootxx(void *readsector, void *disklabel, int autoboot)
 	setheap(end, (void*)(LOADADDR3 - 4));
 
 	printf("\033v\nNetBSD/atari secondary bootloader"
-						" ($Revision: 1.12 $)\n\n");
+						" ($Revision: 1.13 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return -1;
