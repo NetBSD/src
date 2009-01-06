@@ -1,4 +1,4 @@
-/*	$NetBSD: toolcontext.c,v 1.2 2008/12/22 00:56:58 haad Exp $	*/
+/*	$NetBSD: toolcontext.c,v 1.3 2009/01/06 23:21:16 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -221,8 +221,6 @@ static int _process_config(struct cmd_context *cmd)
 	dm_set_dev_dir(cmd->dev_dir);
 #endif
 #ifndef __NetBSD__
-
-
 	/* proc dir */
 	if (dm_snprintf(cmd->proc_dir, sizeof(cmd->proc_dir), "%s",
 			 find_config_tree_str(cmd, "global/proc",
@@ -972,7 +970,7 @@ static int _init_backup(struct cmd_context *cmd)
 			cmd->sys_dir, DEFAULT_BACKUP_SUBDIR);
 		return 0;
 	}
-
+	
 	dir = find_config_tree_str(cmd, "backup/backup_dir", default_dir);
 
 	if (!backup_init(cmd, dir)) {
