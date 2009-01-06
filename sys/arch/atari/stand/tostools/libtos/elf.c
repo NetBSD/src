@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.8 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: elf.c,v 1.9 2009/01/06 13:35:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 
 #include <lib/libsa/stand.h>
 #include <atari_stand.h>
-#include <string.h>
 #include <libkern.h>
 #include <sys/exec_elf.h>
 
