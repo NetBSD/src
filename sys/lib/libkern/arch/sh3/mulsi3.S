@@ -1,4 +1,4 @@
-/*	$NetBSD: mulsi3.S,v 1.5 2006/05/22 20:56:44 uwe Exp $	*/
+/*	$NetBSD: mulsi3.S,v 1.6 2009/01/07 22:15:18 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,11 @@
  */
 
 #include <machine/asm.h>
+
+
+#ifdef __ELF__
+	.hidden __mulsi3
+#endif
 
 
 NENTRY(__mulsi3)
