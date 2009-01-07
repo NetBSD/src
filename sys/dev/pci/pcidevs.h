@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.973 2008/12/27 10:36:09 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.974 2009/01/07 00:40:51 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.971 2008/12/27 10:35:08 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.972 2009/01/07 00:40:09 jnemeth Exp
  */
 
 /*
@@ -2790,7 +2790,7 @@
 #define	PCI_PRODUCT_LUCENT_EVDO	0x5802		/* Sierra Wireless AirCard 580 */
 #define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_LUCENT_ET1310	0xed00		/* ET1310 10/100/1000 Ethernet */
-#define	PCI_PRODUCT_LUCENT_ET1301	0xed0a		/* ET1301 10/100 Ethernet */
+#define	PCI_PRODUCT_LUCENT_ET1301	0xed01		/* ET1301 10/100 Ethernet */
 
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* MX98713 (PMAC) 10/100 Ethernet */
