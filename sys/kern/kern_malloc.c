@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.125 2009/01/05 21:42:37 pooka Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.126 2009/01/07 21:06:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.125 2009/01/05 21:42:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.126 2009/01/07 21:06:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -680,7 +680,7 @@ kern_free(void *addr, struct malloc_type *ksp)
  * Change the size of a block of memory.
  */
 void *
-realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
+kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
     int flags)
 {
 	struct kmemusage *kup;
