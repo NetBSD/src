@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.26 2009/01/05 21:42:37 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.27 2009/01/07 19:49:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.26 2009/01/05 21:42:37 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.27 2009/01/07 19:49:48 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -83,7 +83,7 @@ rumpuser_nanosleep(const struct timespec *rqtp, struct timespec *rmtp,
 }
 
 void *
-_rumpuser_malloc(size_t howmuch, int canfail, const char *func, int line)
+rumpuser__malloc(size_t howmuch, int canfail, const char *func, int line)
 {
 	void *rv;
 
@@ -100,7 +100,7 @@ _rumpuser_malloc(size_t howmuch, int canfail, const char *func, int line)
 }
 
 void *
-_rumpuser_realloc(void *ptr, size_t howmuch, int canfail,
+rumpuser__realloc(void *ptr, size_t howmuch, int canfail,
 	const char *func, int line)
 {
 	void *rv;
