@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.6 2009/01/07 00:06:59 bjh21 Exp $	*/
+/*	$NetBSD: iociic.c,v 1.7 2009/01/07 22:58:38 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -67,6 +67,8 @@ struct iociic_softc {
 	uint32_t sc_ioc_ctl;
 };
 
+static struct iociic_softc *the_iociic;
+
 static int	iociic_acquire_bus(void *, int);
 static void	iociic_release_bus(void *, int);
 
@@ -126,6 +128,9 @@ iociic_attach(device_t parent, device_t self, void *aux)
 	struct iociic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
+	if (the_iociic == NULL)
+		the_iociic = sc;
+
 	aprint_normal("\n");
 
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
@@ -149,21 +154,10 @@ CFATTACH_DECL(iociic, sizeof(struct iociic_softc),
 i2c_tag_t
 iociic_bootstrap_cookie(void)
 {
-	static struct iociic_softc sc;
 
-	/* XXX Yuck. */
-	strcpy(sc.sc_dev.dv_xname, "iociicboot");
-
-	sc.sc_i2c.ic_cookie = &sc;
-	sc.sc_i2c.ic_acquire_bus = iociic_acquire_bus;
-	sc.sc_i2c.ic_release_bus = iociic_release_bus;
-	sc.sc_i2c.ic_send_start = iociic_send_start;
-	sc.sc_i2c.ic_send_stop = iociic_send_stop;
-	sc.sc_i2c.ic_initiate_xfer = iociic_initiate_xfer;
-	sc.sc_i2c.ic_read_byte = iociic_read_byte;
-	sc.sc_i2c.ic_write_byte = iociic_write_byte;
-
-	return (void *)&sc.sc_i2c;
+	if (the_iociic == NULL)
+		return NULL;
+	return &the_iociic->sc_i2c;
 }
 
 static int
