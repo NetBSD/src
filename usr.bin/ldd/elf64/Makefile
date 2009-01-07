@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/01/07 00:39:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2009/01/07 07:52:28 mrg Exp $
 
 CPPFLAGS+=	-DELFSIZE=64
 LIB=	ldd_elf64
@@ -6,6 +6,7 @@ LIB=	ldd_elf64
 # XXX Force one member
 SRCS=	dummy.c
 
+LIBISPRIVATE=	yes
 .PATH: ${.CURDIR}/..
 
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64") || \

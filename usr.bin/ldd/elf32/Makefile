@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/01/07 00:39:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2009/01/07 07:52:28 mrg Exp $
 
 CPPFLAGS+=	-DELFSIZE=32
 LIB=	ldd_elf32
@@ -6,6 +6,7 @@ LIB=	ldd_elf32
 # XXX Force one member
 SRCS=	dummy.c
 
+LIBISPRIVATE=	yes
 .PATH: ${.CURDIR}/..
 
 # XXX
