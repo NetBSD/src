@@ -1,4 +1,4 @@
-.\"	$NetBSD: sbus.4,v 1.8 2008/04/30 13:10:54 martin Exp $
+.\"	$NetBSD: sbus.4,v 1.9 2009/01/07 09:12:38 jnemeth Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 28, 2007
+.Dd January 7, 2009
 .Dt SBUS 4
 .Os
 .Sh NAME
@@ -49,8 +49,9 @@ ports.
 .Nm
 is a I/O interconnect bus mostly found in
 .Tn SPARC
-workstations and small to medium server class systems. It supports both
-on-board peripherals and extension boards. The
+workstations and small to medium server class systems.
+It supports both on-board peripherals and extension boards.
+The
 .Nm
 specifications define the bus protocol as well as the electrical and
 mechanical properties of the extension slots.
@@ -123,6 +124,11 @@ CS4231 codec.
 .It magma
 Magma Serial/Parallel combo device.
 .El
+.Ss Floppy interfaces
+.Bl -tag -width xxxxxxxx -offset indent
+.It fdc
+Floppy disk controller
+.El
 .Sh SEE ALSO
 .Xr audiocs 4 ,
 .Xr be 4 ,
@@ -131,6 +137,7 @@ Magma Serial/Parallel combo device.
 .Xr cgthree 4 ,
 .Xr en 4 ,
 .Xr esp 4 ,
+.Xr fdc 4 ,
 .Xr hme 4 ,
 .Xr intro 4 ,
 .Xr isp 4 ,
