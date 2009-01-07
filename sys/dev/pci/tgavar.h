@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.16 2005/12/11 12:22:50 christos Exp $ */
+/* $NetBSD: tgavar.h,v 1.17 2009/01/07 01:31:01 ahoka Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -61,6 +61,7 @@ struct tga_devconfig {
 	bus_space_tag_t dc_memt;
 	bus_space_handle_t dc_memh;
 
+	pci_chipset_tag_t dc_pc;	/* PCI chipset tag */
 	pcitag_t   	 dc_pcitag;	/* PCI tag */
 	bus_addr_t	 dc_pcipaddr;	/* PCI phys addr. */
 

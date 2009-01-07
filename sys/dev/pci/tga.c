@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.68 2008/04/10 19:13:38 cegger Exp $ */
+/* $NetBSD: tga.c,v 1.69 2009/01/07 01:31:01 ahoka Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.68 2008/04/10 19:13:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.69 2009/01/07 01:31:01 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.68 2008/04/10 19:13:38 cegger Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciio.h>
 #include <dev/pci/tgareg.h>
 #include <dev/pci/tgavar.h>
 #include <dev/ic/bt485reg.h>
@@ -260,6 +261,7 @@ tga_init(memt, pc, tag, dc)
 	bus_size_t pcisize;
 	int i;
 
+	dc->dc_pc = pc;
 	dc->dc_pcitag = tag;
 	tga_mapaddrs(memt, pc, tag, &pcisize, dc);
 	dc->dc_tga_type = tga_identify(dc);
@@ -603,6 +605,16 @@ tga_ioctl(v, vs, cmd, data, flag, l)
 	case WSDISPLAYIO_SCURSOR:
 		return (*dcrf->ramdac_set_cursor)(dcrc,
 		    (struct wsdisplay_cursor *)data);
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = dc->dc_rowbytes;
+		return (0);
+		
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(dc->dc_pc, dc->dc_pcitag,
+			cmd, data, flag, l));
 	}
 	return (EPASSTHROUGH);
 }
