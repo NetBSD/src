@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.83 2009/01/07 21:12:30 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.84 2009/01/07 22:50:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.83 2009/01/07 21:12:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.84 2009/01/07 22:50:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -151,6 +151,7 @@ rump__init(int rump_version)
 	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
 		rump_threads = *buf != '0';
 	}
+	rumpuser_thrinit(_kernel_lock, _kernel_unlock, rump_threads);
 
 	rumpuser_mutex_recursive_init(&rump_giantlock);
 	ksyms_init();
@@ -184,7 +185,6 @@ rump__init(int rump_version)
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_SBSIZE].rlim_cur = RLIM_INFINITY;
 
-	rumpuser_thrinit();
 	callout_startup();
 	callout_init_cpu(&rump_cpu);
 

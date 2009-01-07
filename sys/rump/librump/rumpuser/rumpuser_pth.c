@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.22 2009/01/07 20:34:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.23 2009/01/07 22:50:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.22 2009/01/07 20:34:32 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.23 2009/01/07 22:50:08 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -84,6 +84,10 @@ struct rumpuser_aio *rumpuser_aios[N_AIOS];
 
 struct rumpuser_rw rumpspl;
 
+kernel_lockfn	rumpuser__klock;
+kernel_unlockfn	rumpuser__kunlock;
+int		rumpuser__wantthreads;
+
 static void *
 /*ARGSUSED*/
 iothread(void *arg)
@@ -114,8 +118,8 @@ iothread(void *arg)
 	}
 }
 
-int
-rumpuser_thrinit()
+void
+rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 {
 
 	pthread_mutex_init(&rumpuser_aio_mtx.pthmtx, NULL);
@@ -125,27 +129,30 @@ rumpuser_thrinit()
 	pthread_key_create(&curlwpkey, NULL);
 	pthread_key_create(&isintr, NULL);
 
-	return 0;
+	rumpuser__klock = lockfn;
+	rumpuser__kunlock = unlockfn;
+	rumpuser__wantthreads = threads;
 }
 
 int
 rumpuser_bioinit(rump_biodone_fn biodone)
 {
-	extern int rump_threads;
 	pthread_t iothr;
 
-	if (rump_threads)
+	if (rumpuser__wantthreads)
 		pthread_create(&iothr, NULL, iothread, biodone);
 
 	return 0;
 }
 
+#if 0
 void
-rumpuser_thrdestroy()
+rumpuser__thrdestroy()
 {
 
 	pthread_key_delete(curlwpkey);
 }
+#endif
 
 int
 rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
