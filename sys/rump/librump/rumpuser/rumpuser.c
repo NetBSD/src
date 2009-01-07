@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.27 2009/01/07 19:49:48 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.28 2009/01/07 20:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.27 2009/01/07 19:49:48 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.28 2009/01/07 20:24:12 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -308,25 +308,3 @@ rumpuser_panic()
 
 	abort();
 }
-
-#ifdef __linux__
-/* eewww */
-size_t strlcpy(char *, const char *, size_t);
-uint32_t arc4random(void);
-size_t
-strlcpy(char *dest, const char *src, size_t size)
-{
-
-	strncpy(dest, src, size-1);
-	dest[size-1] = '\0';
-
-	return strlen(dest);
-}
-
-uint32_t
-arc4random()
-{
-
-	return (uint32_t)random();
-}
-#endif
