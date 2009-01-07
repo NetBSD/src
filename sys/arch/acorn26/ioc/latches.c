@@ -1,4 +1,4 @@
-/* $NetBSD: latches.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $ */
+/* $NetBSD: latches.c,v 1.5 2009/01/07 00:09:24 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.5 2009/01/07 00:09:24 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -44,23 +44,23 @@ __KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $");
 #include "ioeb.h"
 
 struct latches_softc {
-	struct device		sc_dev;
+	device_t	sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	u_int8_t	sc_latcha;
 	u_int8_t	sc_latchb;
 };
 
-static int latches_match(struct device *, struct cfdata *, void *);
-static void latches_attach(struct device *, struct device *, void *);
+static int latches_match(device_t, cfdata_t, void *);
+static void latches_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(latches, sizeof(struct latches_softc),
+CFATTACH_DECL_NEW(latches, sizeof(struct latches_softc),
     latches_match, latches_attach, NULL, NULL);
 
-struct device *the_latches;
+device_t the_latches;
 
 static int
-latches_match(struct device *parent, struct cfdata *cf, void *aux)
+latches_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/*
@@ -76,13 +76,14 @@ latches_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-latches_attach(struct device *parent, struct device *self, void *aux)
+latches_attach(device_t parent, device_t self, void *aux)
 {
-	struct latches_softc *sc = (void *)self;
+	struct latches_softc *sc = device_private(self);
 	struct ioc_attach_args *ioc = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
+	sc->sc_dev = self;
 	if (the_latches == NULL)
 		the_latches = self;
 	iot = sc->sc_iot = ioc->ioc_fast_t;
@@ -94,7 +95,7 @@ latches_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_latchb = LATCHB_NFDCR | LATCHB_NPSTB;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LATCH_A, sc->sc_latcha);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LATCH_B, sc->sc_latchb);
-	printf("\n");
+	aprint_normal("\n");
 }
 
 void
