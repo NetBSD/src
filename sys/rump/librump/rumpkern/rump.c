@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.82 2009/01/07 21:11:19 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.83 2009/01/07 21:12:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.82 2009/01/07 21:11:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.83 2009/01/07 21:12:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -125,7 +125,7 @@ rump_proc_vfs_init_fn rump_proc_vfs_init = pvfsinit_nop;
 rump_proc_vfs_release_fn rump_proc_vfs_release = pvfsrele_nop;
 
 int
-_rump_init(int rump_version)
+rump__init(int rump_version)
 {
 	char buf[256];
 	struct proc *p;
