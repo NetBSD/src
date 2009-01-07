@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.25 2009/01/03 18:15:11 bjh21 Exp $ */
+/* $NetBSD: machdep.c,v 1.26 2009/01/07 22:58:38 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2009/01/03 18:15:11 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2009/01/07 22:58:38 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2009/01/03 18:15:11 bjh21 Exp $");
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8583var.h>
+
+#include <arch/acorn26/ioc/iociicvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -64,9 +66,6 @@ struct cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 #endif
 };
-
-/* For reading NVRAM during bootstrap. */
-i2c_tag_t acorn26_i2c_tag;
 
 struct vm_map *phys_map = NULL;
 struct vm_map *mb_map = NULL; /* and ever more shall be so */
@@ -200,7 +199,8 @@ cmos_read(int location)
 {
 	uint8_t val;
 
-	if (pcfrtc_bootstrap_read(acorn26_i2c_tag, 0x50,
+	KASSERT(iociic_bootstrap_cookie() != NULL);
+	if (pcfrtc_bootstrap_read(iociic_bootstrap_cookie(), 0x50,
 	    location, &val, 1) != 0)
 		return (-1);
 	return (val);
@@ -212,7 +212,8 @@ cmos_write(int location, int value)
 {
 	uint8_t val = value;
 
-	return (pcfrtc_bootstrap_write(acorn26_i2c_tag, 0x50,
+	KASSERT(iociic_bootstrap_cookie() != NULL);
+	return (pcfrtc_bootstrap_write(iociic_bootstrap_cookie(), 0x50,
 	    location, &val, 1));
 }
 
