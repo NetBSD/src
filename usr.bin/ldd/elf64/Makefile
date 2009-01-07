@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile,v 1.1 2009/01/06 03:59:56 mrg Exp $
-
-.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64") || \
-    (${MACHINE_ARCH} == "x86_64") || (${MACHINE_ARCH} == "powerpc64")
+#	$NetBSD: Makefile,v 1.2 2009/01/07 00:39:24 mrg Exp $
 
 CPPFLAGS+=	-DELFSIZE=64
 LIB=	ldd_elf64
+
+# XXX Force one member
+SRCS=	dummy.c
+
+.PATH: ${.CURDIR}/..
+
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64") || \
+    (${MACHINE_ARCH} == "x86_64") || (${MACHINE_ARCH} == "powerpc64")
 
 # XXX we need to make sure that we don't accidentally get the elf32
 # XXX versions of these.
@@ -30,3 +35,5 @@ CPPFLAGS+=	-D${_d}=_elf64_${_d}
 .include "../Makefile.elf"
 
 .endif
+
+.include <bsd.lib.mk>
