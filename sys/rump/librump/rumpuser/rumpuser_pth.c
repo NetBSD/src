@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.21 2008/12/18 00:21:52 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.22 2009/01/07 20:34:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.21 2008/12/18 00:21:52 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.22 2009/01/07 20:34:32 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -77,10 +77,10 @@ struct rumpuser_cv {
 	pthread_cond_t pthcv;
 };
 
-struct rumpuser_mtx rua_mtx;
-struct rumpuser_cv rua_cv;
-int rua_head, rua_tail;
-struct rumpuser_aio *rua_aios[N_AIOS];
+struct rumpuser_mtx rumpuser_aio_mtx;
+struct rumpuser_cv rumpuser_aio_cv;
+int rumpuser_aio_head, rumpuser_aio_tail;
+struct rumpuser_aio *rumpuser_aios[N_AIOS];
 
 struct rumpuser_rw rumpspl;
 
@@ -91,16 +91,16 @@ iothread(void *arg)
 	struct rumpuser_aio *rua;
 	rump_biodone_fn biodone = arg;
 
-	NOFAIL_ERRNO(pthread_mutex_lock(&rua_mtx.pthmtx));
+	NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
 	for (;;) {
-		while (rua_head == rua_tail) {
-			NOFAIL_ERRNO(pthread_cond_wait(&rua_cv.pthcv,
-			    &rua_mtx.pthmtx));
+		while (rumpuser_aio_head == rumpuser_aio_tail) {
+			NOFAIL_ERRNO(pthread_cond_wait(&rumpuser_aio_cv.pthcv,
+			    &rumpuser_aio_mtx.pthmtx));
 		}
 
-		rua = rua_aios[rua_tail];
-		rua_tail = (rua_tail+1) % (N_AIOS-1);
-		pthread_mutex_unlock(&rua_mtx.pthmtx);
+		rua = rumpuser_aios[rumpuser_aio_tail];
+		rumpuser_aio_tail = (rumpuser_aio_tail+1) % (N_AIOS-1);
+		pthread_mutex_unlock(&rumpuser_aio_mtx.pthmtx);
 
 		if (rua->rua_op)
 			rumpuser_read_bio(rua->rua_fd, rua->rua_data,
@@ -110,7 +110,7 @@ iothread(void *arg)
 			    rua->rua_dlen, rua->rua_off, biodone, rua->rua_bp);
 
 		free(rua);
-		NOFAIL_ERRNO(pthread_mutex_lock(&rua_mtx.pthmtx));
+		NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
 	}
 }
 
@@ -118,8 +118,8 @@ int
 rumpuser_thrinit()
 {
 
-	pthread_mutex_init(&rua_mtx.pthmtx, NULL);
-	pthread_cond_init(&rua_cv.pthcv, NULL);
+	pthread_mutex_init(&rumpuser_aio_mtx.pthmtx, NULL);
+	pthread_cond_init(&rumpuser_aio_cv.pthcv, NULL);
 	pthread_rwlock_init(&rumpspl.pthrw, NULL);
 
 	pthread_key_create(&curlwpkey, NULL);
