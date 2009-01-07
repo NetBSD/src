@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.61 2009/01/02 21:24:30 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.62 2009/01/07 00:03:50 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1763,4 +1763,62 @@ sbin/restore/tape.c				1.61
 	Make restore work for Linux dump volumes by ignoring extended
 	attribute records on these volumes.
 	[hannken, ticket #210]
+
+sys/kern/vfs_dirhash.c				1.9
+
+	Fix a memory leak.
+	[reinoud, ticket #212]
+
+distrib/sets/lists/xbase/mi			1.70
+external/mit/xorg/lib/xkbdata/symbols/Makefile	1.2
+external/mit/xorg/lib/xkbdata/symbols/pc/Makefile 1.2
+xsrc/external/mit/xkbdata/dist/symbols/colemak	1.1
+xsrc/external/mit/xkbdata/dist/symbols/pc/colemak 1.1
+
+	Add X.org support for the Colemak keyboard layout.
+	[ghen, ticket #213]
+
+crypto/dist/ipsec-tools/src/setkey/parse.y	1.11
+
+	Support icmp codes. Fixes PR 39056.
+	[mlelstv, ticket #214]
+
+sys/dev/sbus/be.c				1.61
+
+	Move callout_init(sc->sc_tick_ch) before we're trying to  
+	callout_stop() the ticker.  Fixes a panic on attach.
+	[macallan, ticket #215]
+
+sys/fs/efs/efs_vfsops.c				1.17
+sys/fs/efs/efs_vnops.c				1.15-1.17
+sys/fs/efs/efs_vnops.c				patch
+
+	Improve stability of efs by adding specfs/fifofs support.
+	Fixes PR kern/40055.
+	[rumble, ticket #216]
+
+sys/arch/atari/atari/be_bus.c			1.10
+sys/arch/atari/atari/le_bus.c			1.14
+sys/arch/atari/atari/mainbus.c			1.8
+sys/arch/atari/dev/wdc_mb.c			1.33
+
+	Sprinkle volatile to atari bus_space(9) access functions.
+	[tsutsui, ticket #218]
+
+sys/arch/atari/atari/intr.c			1.16
+sys/arch/atari/atari/locore.s			1.102
+sys/arch/atari/include/intr.h			1.19
+
+	Account idepth in all interrupt handlers in locore.s.
+	Fixes PR port-atari/39965.
+	[tsutsui, ticket #219]
+
+sys/arch/atari/dev/md_root.c			1.27, 1.28
+
+	Clear bp->b_oflags (introduced on vmlocking2 merge) before read
+	rather than calling brelse(9) after read.
+
+	Should fix pool panics during installation and actually close
+	PR port-atari/39850.
+	[tsutsui, ticket #220]
 
