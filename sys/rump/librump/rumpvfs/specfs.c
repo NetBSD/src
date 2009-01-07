@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.3 2008/12/29 17:41:19 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.4 2009/01/07 20:34:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: specfs.c,v 1.3 2008/12/29 17:41:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: specfs.c,v 1.4 2009/01/07 20:34:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -266,7 +266,7 @@ rump_specstrategy(void *v)
 		rua->rua_bp = bp;
 		rua->rua_op = BUF_ISREAD(bp);
 
-		rumpuser_mutex_enter(&rua_mtx);
+		rumpuser_mutex_enter(&rumpuser_aio_mtx);
 
 		/*
 		 * Check if our buffer is full.  Doing it this way
@@ -277,17 +277,17 @@ rump_specstrategy(void *v)
 		 * (caller maybe be at splbio() legally for async I/O),
 		 * so for now set N_AIOS high and FIXXXME some day.
 		 */
-		if ((rua_head+1) % N_AIOS == rua_tail) {
+		if ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail) {
 			kmem_free(rua, sizeof(*rua));
-			rumpuser_mutex_exit(&rua_mtx);
+			rumpuser_mutex_exit(&rumpuser_aio_mtx);
 			goto syncfallback;
 		}
 
 		/* insert into queue & signal */
-		rua_aios[rua_head] = rua;
-		rua_head = (rua_head+1) % (N_AIOS-1);
-		rumpuser_cv_signal(&rua_cv);
-		rumpuser_mutex_exit(&rua_mtx);
+		rumpuser_aios[rumpuser_aio_head] = rua;
+		rumpuser_aio_head = (rumpuser_aio_head+1) % (N_AIOS-1);
+		rumpuser_cv_signal(&rumpuser_aio_cv);
+		rumpuser_mutex_exit(&rumpuser_aio_mtx);
 	} else {
  syncfallback:
 		if (BUF_ISREAD(bp)) {
