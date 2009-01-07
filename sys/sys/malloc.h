@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.103 2009/01/05 21:42:37 pooka Exp $	*/
+/*	$NetBSD: malloc.h,v 1.104 2009/01/07 21:06:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -112,7 +112,9 @@ void	debug_malloc_print(void);
 void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
 #endif /* MALLOC_DEBUG */
 
-void	*realloc(void *, unsigned long, struct malloc_type *, int);
+void	*kern_realloc(void *, unsigned long, struct malloc_type *, int);
+#define realloc(ptr, size, type, flags) \
+	    kern_realloc(ptr, size, type, flags)
 unsigned long
 	malloc_roundup(unsigned long);
 #endif /* _KERNEL */
