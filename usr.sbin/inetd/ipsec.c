@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.2 2004/10/29 21:27:34 dsl Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.3 2009/01/08 21:37:20 christos Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -53,10 +53,7 @@
 
 #ifdef IPSEC
 int
-ipsecsetup(af, fd, policy)
-	int af;
-	int fd;
-	const char *policy;
+ipsecsetup(int af, int fd, const char *policy)
 {
 	char *p0, *p;
 	int error;
@@ -67,7 +64,7 @@ ipsecsetup(af, fd, policy)
 		p0 = p = strdup(policy);
 
 	error = 0;
-	while (1) {
+	for (;;) {
 		p = strtok(p, ";");
 		if (p == NULL)
 			break;
@@ -88,8 +85,7 @@ ipsecsetup(af, fd, policy)
 }
 
 int
-ipsecsetup_test(policy)
-	const char *policy;
+ipsecsetup_test(const char *policy)
 {
 	char *p0, *p;
 	char *buf;
@@ -97,10 +93,12 @@ ipsecsetup_test(policy)
 
 	if (!policy)
 		return -1;
-	p0 = p = strdup((char *)policy);
+	p0 = p = strdup(policy);
+	if (p == NULL)
+		return -1;
 
 	error = 0;
-	while (1) {
+	for (;;) {
 		p = strtok(p, ";");
 		if (p == NULL)
 			break;
@@ -110,7 +108,7 @@ ipsecsetup_test(policy)
 			p = NULL;
 			continue;
 		}
-		buf = ipsec_set_policy((char *)p, strlen(p));
+		buf = ipsec_set_policy(p, (int)strlen(p));
 		if (buf == NULL) {
 			error = -1;
 			break;
@@ -124,11 +122,7 @@ ipsecsetup_test(policy)
 }
 
 int
-ipsecsetup0(af, fd, policy, commit)
-	int af;
-	int fd;
-	const char *policy;
-	int commit;
+ipsecsetup0(int af, int fd, const char *policy, int commit)
 {
 	int level;
 	int opt;
@@ -150,11 +144,11 @@ ipsecsetup0(af, fd, policy, commit)
 		return -1;
 	}
 
-	buf = ipsec_set_policy((char *)policy, strlen(policy));
+	buf = ipsec_set_policy(policy, (int)strlen(policy));
 	if (buf != NULL) {
 		error = 0;
 		if (commit && setsockopt(fd, level, opt,
-				buf, ipsec_get_policylen(buf)) < 0) {
+		    buf, (socklen_t)ipsec_get_policylen(buf)) < 0) {
 			error = -1;
 		}
 		free(buf);
