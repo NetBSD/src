@@ -1,6 +1,11 @@
-(4.2.4p5) 2008/08/17 Released by Harlan Stenn <stenn@ntp.org>
 ---
-(4.2.4p5) 2008/08/17 Released by Harlan Stenn <stenn@ntp.org>
+(4.2.4p6) 2009/01/08 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1113] Fixed build errors with recent versions of openSSL. 
+* [Sec 1111] Fix incorrect check of EVP_VerifyFinal()'s return value.
+* Update the copyright year.
+
+---
 (4.2.4p5) 2008/08/17 Released by Harlan Stenn <stenn@ntp.org>
 
 * [BUG 1051] Month off by one in leap second message written to clockstats
