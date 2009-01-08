@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.13 2007/07/06 21:19:33 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.14 2009/01/08 14:50:56 drochner Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -1614,7 +1614,7 @@ crypto_verify(
 	 */
 	EVP_VerifyInit(&ctx, peer->digest);
 	EVP_VerifyUpdate(&ctx, (u_char *)&ep->tstamp, vallen + 12);
-	if (!EVP_VerifyFinal(&ctx, (u_char *)&ep->pkt[i], siglen, pkey))
+	if (EVP_VerifyFinal(&ctx, (u_char *)&ep->pkt[i], siglen, pkey) <= 0)
 		return (XEVNT_SIG);
 
 	if (peer->crypto & CRYPTO_FLAG_VRFY) {
