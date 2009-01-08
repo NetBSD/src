@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.6 2008/11/12 12:36:02 ad Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.7 2009/01/08 01:03:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2008/11/12 12:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2009/01/08 01:03:24 pooka Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -136,6 +136,10 @@ kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 {
 	uint64_t where;
 
+	/*
+	 * Currently we want this to invalidate the Pentium 4 trace cache.
+	 * Other caches are snoopably coherent.
+	 */
 	if (load) {
 		if (cold) {
 			wbinvd();
