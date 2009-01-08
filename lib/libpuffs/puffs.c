@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.97 2008/12/13 11:53:25 dsl Exp $	*/
+/*	$NetBSD: puffs.c,v 1.98 2009/01/08 02:28:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.97 2008/12/13 11:53:25 dsl Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.98 2009/01/08 02:28:08 lukem Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -192,7 +192,7 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 
 	psize = sysconf(_SC_PAGESIZE);
 	minsize = 4*psize;
-	if (ss < minsize || ss == PUFFS_STACKSIZE_MIN) {
+	if (ss < (size_t)minsize || ss == PUFFS_STACKSIZE_MIN) {
 		if (ss != PUFFS_STACKSIZE_MIN)
 			fprintf(stderr, "puffs_setstacksize: adjusting "
 			    "stacksize to minimum %ld\n", minsize);
@@ -533,7 +533,7 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 do {									\
 	ssize_t al_rv;							\
 	al_rv = write(pu->pu_fd, buf, len);				\
-	if (al_rv != len) {						\
+	if ((size_t)al_rv != len) {					\
 		if (al_rv != -1)					\
 			errno = EIO;					\
 		rv = -1;						\
