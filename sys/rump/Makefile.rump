@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.23 2009/01/02 11:13:38 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.24 2009/01/08 18:42:42 pooka Exp $
 #
 
 WARNS?=		4
@@ -32,3 +32,22 @@ CPPFLAGS+=	-DPPC_OEA
 
 # If an options are changed, trigger a rebuild
 ${SRCS:S/.c/.o/g}: ${RUMPTOP}/Makefile.rump
+
+#
+# Rename library symbols before use.  If a symbol does not already belong
+# to a rump namespace ("rump" or "RUMP"), prefix it with "rumpns".  This
+# avoids accidentally linking any kernel symbol against host platform
+# libraries.  The only non-renamed symbols are linkset delimiters and
+# the GOT, which are more a property of the compiler than the kernel.
+#
+__archivebuild: .USE
+	${_MKTARGET_BUILD}
+	rm -f ${.TARGET}
+	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+	${NM} -go ${.TARGET} | ${TOOL_AWK} '	\
+	    $$NF!~/^(rump|RUMP|__(start|stop)_link_set|_GLOBAL_OFFSET_TABLE)/ \
+	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
+	    | sort | uniq  > renametab.${.TARGET}
+	${OBJCOPY} --redefine-syms renametab.${.TARGET} ${.TARGET}
+	rm -f renametab.${.TARGET}
+	${RANLIB} ${.TARGET}
