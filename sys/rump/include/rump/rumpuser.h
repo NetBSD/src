@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.8 2009/01/07 20:34:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.9 2009/01/08 01:30:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -37,6 +37,9 @@ struct iovec;
 struct timespec;
 struct timeval;
 struct sockaddr;
+
+typedef void (*kernel_lockfn)(int);
+typedef void (*kernel_unlockfn)(int, int *);
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
@@ -79,10 +82,8 @@ int rumpuser_putchar(int, int *);
 void rumpuser_panic(void);
 
 /* rumpuser_pth */
-
-int  rumpuser_thrinit(void);
+void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
 int  rumpuser_bioinit(rump_biodone_fn);
-void rumpuser_thrdestroy(void);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *);
 void rumpuser_thread_exit(void);
