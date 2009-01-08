@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.6 2009/01/08 03:27:10 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.7 2009/01/08 18:44:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -56,10 +56,10 @@ main(int argc, char *argv[])
 	int mntflags, rv;
 
 #if 1
-	extern int puffsdebug;
-	extern int putterdebug;
+	extern int rumpns_puffsdebug;
+	extern int rumpns_putterdebug;
 
-	puffsdebug = putterdebug = 1;
+	rumpns_puffsdebug = rumpns_putterdebug = 1;
 #endif
 
 	setprogname(argv[0]);
