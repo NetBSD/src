@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.21 2008/11/23 00:15:13 mrg Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.22 2009/01/08 12:46:23 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.21 2008/11/23 00:15:13 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.22 2009/01/08 12:46:23 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -190,7 +190,7 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		 * We use a minimal timeout of 1/hz. Maybe it would make
 		 * sense to just return ETIMEDOUT without sleeping.
 		 */
-		if (timeout_hz == 0)
+		if (SCARG(uap, timeout) != NULL && timeout_hz == 0)
 			timeout_hz = 1;
 
 		f = futex_get(SCARG(uap, uaddr), FUTEX_UNLOCKED);
