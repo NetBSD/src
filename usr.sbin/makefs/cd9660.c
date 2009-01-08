@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.23 2008/11/21 10:02:12 ad Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.24 2009/01/08 22:26:19 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.23 2008/11/21 10:02:12 ad Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.24 2009/01/08 22:26:19 bjh21 Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -421,8 +421,13 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 		} else {
 			cd9660_eltorito_add_boot_option(var, val);
 		}
-	} else
-		rv = set_option(cd9660_options, var, val);
+	} else {
+		if (val == NULL) {
+			warnx("Option `%s' doesn't contain a value", var);
+			rv = 0;
+		} else
+			rv = set_option(cd9660_options, var, val);
+	}
 
 	if (var)
 		free(var);
