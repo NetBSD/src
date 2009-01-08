@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.16.6.1 2009/01/08 21:42:55 snj Exp $ */
+/*	$NetBSD: cgthree.c,v 1.16.6.2 2009/01/08 21:45:01 snj Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.16.6.1 2009/01/08 21:42:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.16.6.2 2009/01/08 21:45:01 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,7 +583,7 @@ cgthree_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_CLEAR;
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 	
