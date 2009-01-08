@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.62 2009/01/07 00:03:50 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.63 2009/01/08 23:08:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1821,4 +1821,73 @@ sys/arch/atari/dev/md_root.c			1.27, 1.28
 	Should fix pool panics during installation and actually close
 	PR port-atari/39850.
 	[tsutsui, ticket #220]
+
+sys/dev/sun/bwtwo.c				1.19-1.21
+sys/dev/sun/bwtwovar.h				1.7
+sys/dev/sun/cgthree.c				1.17-1.19
+sys/dev/sun/cgthreevar.h			1.6
+sys/dev/sun/files.sun				1.15-1.16
+
+	Add wscons support for bwtwo and cgthree framebuffers.   
+	[jdc, ticket #221]
+
+sys/dev/pci/aac_pci.c				1.26
+
+	Allocate enough space for the aac_pci_softc, not just
+	the aac_softc.  Allows booting a Xen kernel on a system
+	with aac(4).
+	[briggs, ticket #224]
+
+lib/libc/gen/fts.c				1.35
+
+	Ensure fts_close() doesn't spuriously close fd 0, by testing
+	FTS_SYMFOLLOW in fts_flags instead of fts_options.
+	Fixes PR lib/40319
+	[lukem, ticket #226]
+
+sys/arch/atari/stand/installboot/installboot.c	1.21
+distrib/atari/floppies/common/dot.profile	1.3
+distrib/atari/floppies/install/list		1.8
+distrib/atari/floppies/prepare/install.md	1.3
+distrib/atari/floppies/prepare/list		1.5
+distrib/atari/miniroot/Makefile.inc		delete
+distrib/atari/miniroot/disktab.shadow		delete
+distrib/atari/miniroot/dot.profile		delete
+distrib/atari/miniroot/install.md		delete
+distrib/atari/miniroot/list			delete
+distrib/atari/miniroot/termcap.vt		delete
+
+	Fix atari sysinst based miniroot image, and retire old miniroot.
+	[abs, ticket #228]
+
+sys/arch/atari/atari/machdep.c			1.155
+
+	Raise IPL to splsoftnet() before calling callback functions
+	registered via (atari specific) add_sicallback(), as a workaround.
+
+	Fixes lost interrupt problem on Falcon wdc(4).
+	[tsutsui, ticket #229]
+
+sys/arch/atari/atari/atari_init.c		1.68-1.70
+sys/arch/atari/atari/pmap.c			1.106, 1.110, 1.111 via patch
+sys/arch/atari/include/pmap.h			1.37, 1.39 via patch
+sys/arch/atari/atari/genassym.cf		1.28
+sys/arch/atari/include/pcb.h			1.8, 1.9
+sys/arch/atari/atari/pmap_bootstrap.c		1.1
+sys/arch/atari/conf/files.atari			1.113
+sys/arch/atari/include/pte.h			1.8
+sys/arch/atari/include/vmparam.h		1.22
+
+	Numerous fixes to atari pmap, including a sync with amiga.
+	[tsutsui, ticket #230]
+
+sbin/rndctl/rndctl.8				1.16, 1.17
+sbin/rndctl/rndctl.c				1.18
+
+	Instead of silently ignoring extra args, print a usage error.
+	Addresses PR 39862.
+	Update man page and usage to show that -d and -t are mutually
+	exclusive.
+	Add a list of type names (usable with -t) to the man page.
+	[apb, ticket #231]
 
