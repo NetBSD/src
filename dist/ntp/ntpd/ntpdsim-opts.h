@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpdsim-opts.h,v 1.1.1.3 2008/08/23 07:38:53 kardel Exp $	*/
+/*	$NetBSD: ntpdsim-opts.h,v 1.1.1.4 2009/01/08 19:18:38 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpdsim-opts.h)
  *  
- *  It has been AutoGen-ed  Sunday August 17, 2008 at 05:20:13 AM EDT
+ *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:11:59 AM EST
  *  From the definitions    ntpdsim-opts.def
  *  and the template file   options
  *
@@ -100,8 +100,8 @@ typedef enum {
 } teOptIndex;
 
 #define OPTION_CT    43
-#define NTPDSIM_VERSION       "4.2.4p5"
-#define NTPDSIM_FULL_VERSION  "ntpdsim - NTP daemon simulation program - Ver. 4.2.4p5"
+#define NTPDSIM_VERSION       "4.2.4p6"
+#define NTPDSIM_FULL_VERSION  "ntpdsim - NTP daemon simulation program - Ver. 4.2.4p6"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
