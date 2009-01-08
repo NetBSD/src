@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.84 2009/01/07 22:50:08 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.85 2009/01/08 03:27:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.84 2009/01/07 22:50:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.85 2009/01/08 03:27:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -442,4 +442,4 @@ _syspuffs_stub(int fd, int *newfd)
 
 	return ENODEV;
 }
-__weak_alias(syspuffs_glueinit,_syspuffs_stub);
+__weak_alias(rump_syspuffs_glueinit,_syspuffs_stub);
