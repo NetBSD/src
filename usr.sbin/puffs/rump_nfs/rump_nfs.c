@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_nfs.c,v 1.4 2008/12/12 19:59:00 pooka Exp $	*/
+/*	$NetBSD: rump_nfs.c,v 1.5 2009/01/08 18:44:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -46,7 +46,7 @@ main(int argc, char *argv[])
 	struct nfs_args args;
 	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 	int rv, mntflags;
-	extern int nfs_niothreads; /* XXX */
+	extern int rumpns_nfs_niothreads; /* XXX */
 	char *thr;
 
 	/*
@@ -55,7 +55,7 @@ main(int argc, char *argv[])
 	 */
 	thr = getenv("RUMP_THREADS");
 	if (!thr || !*thr)
-		nfs_niothreads = 0;
+		rumpns_nfs_niothreads = 0;
 
 	setprogname(argv[0]);
 	mount_nfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
