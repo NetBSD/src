@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2009/01/05 21:45:35 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2009/01/08 18:43:28 pooka Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -22,6 +22,7 @@ SRCS+=		mount_${MOUNTNAME}.c rump_${MOUNTNAME}.c pathadj.c fattr.c
 
 # on select archs use the kernel module directly, otherwise fallback
 # to the rump library
+.undef RUMPKMOD
 .ifdef(RUMPKMOD)
 OSRELEASE!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 KMODULEDIR=	${DESTDIR}/stand/${MACHINE}/${OSRELEASE}/modules/${MOUNTNAME}
