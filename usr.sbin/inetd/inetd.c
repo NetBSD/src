@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.107 2008/08/04 03:55:48 tls Exp $	*/
+/*	$NetBSD: inetd.c,v 1.108 2009/01/08 18:08:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.107 2008/08/04 03:55:48 tls Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.108 2009/01/08 18:08:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2229,7 +2229,7 @@ dolog(struct servtab *sep, int ctrl)
 	struct sockaddr_storage	ss;
 	struct sockaddr		*sa = (struct sockaddr *)&ss;
 	socklen_t		len = sizeof(ss);
-	char			*host, *dp, buf[BUFSIZ];
+	char			*host, *dp, buf[BUFSIZ], abuf[BUFSIZ];
 	int			connected = 1;
 
 	switch (sep->se_family) {
@@ -2290,12 +2290,13 @@ dolog(struct servtab *sep, int ctrl)
 
 	openlog("", LOG_NOWAIT, MULOG);
 
+	sockaddr_snprintf(abuf, sizeof(abuf), "%a", sa);
 	if (connected && (sep->se_log & MULOG_RFC931))
-		syslog(LOG_INFO, "%s@%s wants %s",
-		    rfc931_name(sa, ctrl), host, sep->se_service);
+		syslog(LOG_INFO, "%s@%s(%s) wants %s",
+		    rfc931_name(sa, ctrl), host, abuf, sep->se_service);
 	else
-		syslog(LOG_INFO, "%s wants %s",
-		    host, sep->se_service);
+		syslog(LOG_INFO, "%s(%s) wants %s",
+		    host, abuf, sep->se_service);
 }
 
 /*
