@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.8 2007/01/30 01:46:33 dogcow Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.9 2009/01/08 22:28:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.8 2007/01/30 01:46:33 dogcow Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.9 2009/01/08 22:28:45 bjh21 Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -125,7 +125,7 @@ debug_print_tree(cd9660node *node, int level)
 	TAILQ_FOREACH(cn, &node->cn_children, cn_next_child)
 		debug_print_tree(cn, level + 1);
 #else
-	printf("Sorry, debuging is not supported in host-tools mode.\n");
+	printf("Sorry, debugging is not supported in host-tools mode.\n");
 #endif
 }
 
