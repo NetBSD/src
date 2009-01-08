@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2009/01/08 06:40:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2009/01/08 06:40:44 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -157,16 +157,18 @@ landisk_startup(int howto, void *bi)
 	extern char edata[], end[];
 	vaddr_t kernend;
 	size_t symbolsize;
-	int i;
 
 	/* Clear bss */
 	memset(edata, 0, end - edata);
 
 	/* Symbol table size */
 	symbolsize = 0;
+#if NKSYMS || defined(MODULAR) || defined(DDB)
 	if (memcmp(&end, ELFMAG, SELFMAG) == 0) {
 		Elf_Ehdr *eh = (void *)end;
 		Elf_Shdr *sh = (void *)(end + eh->e_shoff);
+		int i;
+
 		for (i = 0; i < eh->e_shnum; i++, sh++) {
 			if (sh->sh_offset > 0 &&
 			    (sh->sh_offset + sh->sh_size) > symbolsize) {
@@ -174,6 +176,7 @@ landisk_startup(int howto, void *bi)
 			}
 		}
 	}
+#endif
 
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
@@ -228,7 +231,7 @@ landisk_startup(int howto, void *bi)
 	pmap_bootstrap();
 
 	/* Debugger. */
-#if NKSYMS || defined(DDB) || defined(MODULAR)
+#if NKSYMS || defined(MODULAR) || defined(DDB)
 	if (symbolsize != 0) {
 		ksyms_addsyms_elf(symbolsize, &end, end + symbolsize);
 	}
