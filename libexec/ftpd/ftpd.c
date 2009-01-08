@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.190 2008/12/29 00:33:34 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.191 2009/01/08 18:47:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.190 2008/12/29 00:33:34 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.191 2009/01/08 18:47:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -911,7 +911,7 @@ user(const char *name)
 			if (logging)
 				syslog(LOG_NOTICE,
 				    "ANONYMOUS FTP LOGIN REFUSED FROM %s",
-				    remotehost);
+				    remoteloghost);
 			end_login();
 			goto cleanup_user;
 		}
@@ -983,7 +983,7 @@ user(const char *name)
 		reply(530, "User %s may not use FTP.", curname);
 		if (logging)
 			syslog(LOG_NOTICE, "FTP LOGIN REFUSED FROM %s, %s",
-			    remotehost, curname);
+			    remoteloghost, curname);
 		end_login();
 		goto cleanup_user;
 	}
@@ -1402,16 +1402,16 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 			    "Login incorrect.");
 			if (logging) {
 				syslog(LOG_NOTICE,
-				    "FTP LOGIN FAILED FROM %s", remotehost);
+				    "FTP LOGIN FAILED FROM %s", remoteloghost);
 				syslog(LOG_AUTHPRIV | LOG_NOTICE,
 				    "FTP LOGIN FAILED FROM %s, %s",
-				    remotehost, curname);
+				    remoteloghost, curname);
 			}
 			pw = NULL;
 			if (login_attempts++ >= 5) {
 				syslog(LOG_NOTICE,
 				    "repeated login failures from %s",
-				    remotehost);
+				    remoteloghost);
 				exit(0);
 			}
 			return;
@@ -1423,7 +1423,7 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 		reply(530, "User %s may not use FTP.", pw->pw_name);
 		if (logging)
 			syslog(LOG_NOTICE, "FTP LOGIN REFUSED FROM %s, %s",
-			    remotehost, pw->pw_name);
+			    remoteloghost, pw->pw_name);
 		goto bad;
 	}
 
@@ -1641,7 +1641,7 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 		if (logging)
 			syslog(LOG_INFO,
 			"ANONYMOUS FTP LOGIN FROM %s, %s (class: %s, type: %s)",
-			    remotehost, passwd,
+			    remoteloghost, passwd,
 			    curclass.classname, CURCLASSTYPE);
 			/* store guest password reply into pw_passwd */
 		REASSIGN(pw->pw_passwd, ftpd_strdup(passwd));
@@ -1658,7 +1658,7 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 		if (logging)
 			syslog(LOG_INFO,
 			    "FTP LOGIN FROM %s as %s (class: %s, type: %s)",
-			    remotehost, pw->pw_name,
+			    remoteloghost, pw->pw_name,
 			    curclass.classname, CURCLASSTYPE);
 	}
 	(void) umask(curclass.umask);
@@ -2846,18 +2846,29 @@ static void
 logremotehost(struct sockinet *who)
 {
 
-	if (getnameinfo((struct sockaddr *)&who->si_su,
-	    who->su_len, remotehost, sizeof(remotehost), NULL, 0, 
-	    getnameopts))
-		strlcpy(remotehost, "?", sizeof(remotehost));
+#if defined(HAVE_SOCKADDR_SNPRINTF)
+	char abuf[BUFSIZ];
+#endif
 
+	struct sockaddr *sa = (struct sockaddr *)&who->si_su;
+	if (getnameinfo(sa, who->su_len, remotehost, sizeof(remotehost), NULL,
+	    0, getnameopts))
+		strlcpy(remotehost, "?", sizeof(remotehost));
+#if defined(HAVE_SOCKADDR_SNPRINTF)
+	sockaddr_snprintf(abuf, sizeof(abuf), "%a", sa);
+	snprintf(remoteloghost, sizeof(remoteloghost), "%s(%s)", remotehost,
+	    abuf);
+#else
+	strlcpy(remoteloghost, remotehost, sizeof(remoteloghost));
+#endif
+	
 #if defined(HAVE_SETPROCTITLE)
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle("%s", proctitle);
 #endif /* defined(HAVE_SETPROCTITLE) */
 	if (logging)
 		syslog(LOG_INFO, "connection from %s to %s",
-		    remotehost, hostname);
+		    remoteloghost, hostname);
 }
 
 /*
