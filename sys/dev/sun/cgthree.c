@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.16.6.2 2009/01/08 21:45:01 snj Exp $ */
+/*	$NetBSD: cgthree.c,v 1.16.6.3 2009/01/08 21:46:02 snj Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.16.6.2 2009/01/08 21:45:01 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.16.6.3 2009/01/08 21:46:02 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,13 +227,13 @@ cgthreeattach(sc, name, isconsole)
 		vcons_init_screen(&sc->vd, &cg3_console_screen, 1,
 		    &defattr);
 		cg3_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
-		
+
 		cgthree_defaultscreen.textops = &ri->ri_ops;
 		cgthree_defaultscreen.capabilities = ri->ri_caps;
 		cgthree_defaultscreen.nrows = ri->ri_rows;
 		cgthree_defaultscreen.ncols = ri->ri_cols;
 		sc->vd.active = &cg3_console_screen;
-		wsdisplay_cnattach(&cgthree_defaultscreen, ri, 0, 0, defattr);	
+		wsdisplay_cnattach(&cgthree_defaultscreen, ri, 0, 0, defattr);
 	} else {
 		/* 
 		 * we're not the console so we just clear the screen and don't 
@@ -257,7 +257,7 @@ cgthreeattach(sc, name, isconsole)
 
 	/* Initialize the default color map. */
 	cg3_setup_palette(sc);
-	
+
 	aa.scrdata = &cgthree_screenlist;
 	aa.console = isconsole;
 	aa.accessops = &cgthree_accessops;
@@ -447,7 +447,7 @@ static void
 cg3_setup_palette(struct cgthree_softc *sc)
 {
 	int i, j;
-	
+
 	j = 0;
 	for (i = 0; i < 256; i++) {
 		sc->sc_cmap.cm_map[i][0] = rasops_cmap[j];
@@ -583,10 +583,12 @@ cgthree_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_CLEAR;
+	ri->ri_flg = RI_CENTER;
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
-	
+
+	memset(sc->sc_fb.fb_pixels, (*defattr >> 16) & 0xff,
+	    sc->sc_stride * sc->sc_height);
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,

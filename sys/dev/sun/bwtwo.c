@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.18.6.2 2009/01/08 21:45:01 snj Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.18.6.3 2009/01/08 21:46:02 snj Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.18.6.2 2009/01/08 21:45:01 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.18.6.3 2009/01/08 21:46:02 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,13 +286,13 @@ bwtwoattach(sc, name, isconsole)
 		vcons_init_screen(&sc->vd, &bw2_console_screen, 1,
 		    &defattr);
 		bw2_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
-		
+
 		bwtwo_defaultscreen.textops = &ri->ri_ops;
 		bwtwo_defaultscreen.capabilities = ri->ri_caps;
 		bwtwo_defaultscreen.nrows = ri->ri_rows;
 		bwtwo_defaultscreen.ncols = ri->ri_cols;
 		sc->vd.active = &bw2_console_screen;
-		wsdisplay_cnattach(&bwtwo_defaultscreen, ri, 0, 0, defattr);	
+		wsdisplay_cnattach(&bwtwo_defaultscreen, ri, 0, 0, defattr);
 	} else {
 		/* 
 		 * we're not the console so we just clear the screen and don't 
@@ -465,10 +465,12 @@ bwtwo_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_CLEAR;
+	ri->ri_flg = RI_CENTER;
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
-	
+
+	memset(sc->sc_fb.fb_pixels, (*defattr >> 16) & 0xff,
+	    sc->sc_stride * sc->sc_height);
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
 	ri->ri_caps = 0;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
