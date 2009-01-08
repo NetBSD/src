@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.33 2009/01/03 14:35:27 reinoud Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.34 2009/01/08 14:06:50 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.33 2009/01/03 14:35:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.34 2009/01/08 14:06:50 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 	        + first_sector;
 
 	/* read first vrs sector */
-	if (read_sector(a, vrs * blks, blks))
+	if (read_sector(a, vrs * blks, 1))
 		return;
 
 	/* skip all CD001 records */
@@ -263,7 +263,7 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 		*is_iso9660 = first_sector;
 
 		vrs += inc;
-		if (read_sector(a, vrs * blks, blks))
+		if (read_sector(a, vrs * blks, 1))
 			return;
 	}
 
@@ -275,7 +275,7 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 
 	/* read successor */
 	vrs += inc;
-	if (read_sector(a, vrs * blks, blks))
+	if (read_sector(a, vrs * blks, 1))
 		return;
 
 	/* check for NSR[23] */
@@ -423,15 +423,12 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	lp->d_partitions[0].p_size = lp->d_partitions[RAW_PART].p_size;
 	lp->d_partitions[0].p_fstype = FS_BSDFFS;
 
-	/* get a buffer and initialize it */
-
 	/*
-	 * XXX somehow memory is getting corrupted on 2048 byte sectors if its
-	 * just 2 times 2048!! It even reads only 2048 bytes max in one go on
-	 * optical media.
+	 * Get a buffer big enough to read a disklabel in and initialize it
+	 * make it two sectors long for the validate_label(); see comment at
+	 * start of file.
 	 */
-
-	a.bp = geteblk(3 * (int)lp->d_secsize);
+	a.bp = geteblk(2 * (int)lp->d_secsize);
 	a.bp->b_dev = dev;
 
 	if (osdep)
