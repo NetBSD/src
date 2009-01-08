@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.26 2008/11/26 14:02:23 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.27 2009/01/08 02:19:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.26 2008/11/26 14:02:23 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.27 2009/01/08 02:19:48 lukem Exp $");
 #endif /* !lint */
 
 /*
@@ -67,8 +67,8 @@ processvattr(const char *path, const struct vattr *va, int regular)
 			return errno;
 
 	/* sloppy */
-	if (va->va_atime.tv_sec != (unsigned)PUFFS_VNOVAL
-	    || va->va_mtime.tv_sec != (unsigned)PUFFS_VNOVAL) {
+	if (va->va_atime.tv_sec != (time_t)PUFFS_VNOVAL
+	    || va->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) {
 		TIMESPEC_TO_TIMEVAL(&tv[0], &va->va_atime);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &va->va_mtime);
 
