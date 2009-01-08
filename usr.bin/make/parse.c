@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.153 2009/01/04 20:17:36 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.154 2009/01/08 21:12:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.153 2009/01/04 20:17:36 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.154 2009/01/08 21:12:09 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.153 2009/01/04 20:17:36 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.154 2009/01/08 21:12:09 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1382,7 +1382,7 @@ Boolean
 Parse_IsVar(char *line)
 {
     Boolean wasSpace = FALSE;	/* set TRUE if found a space */
-    Boolean haveName = FALSE;	/* Set TRUE if have a variable name */
+    char ch;
     int level = 0;
 #define ISEQOPERATOR(c) \
 	(((c) == '+') || ((c) == ':') || ((c) == '?') || ((c) == '!'))
@@ -1393,70 +1393,31 @@ Parse_IsVar(char *line)
     for (;(*line == ' ') || (*line == '\t'); line++)
 	continue;
 
-    for (; *line != '=' || level != 0; line++)
-	switch (*line) {
-	case '\0':
-	    /*
-	     * end-of-line -- can't be a variable assignment.
-	     */
-	    return FALSE;
-
-	case ' ':
-	case '\t':
-	    /*
-	     * there can be as much white space as desired so long as there is
-	     * only one word before the operator
-	     */
-	    wasSpace = TRUE;
-	    break;
-
-	case LPAREN:
-	case '{':
+    /* Scan for one of the assignment operators outside a variable expansion */
+    while ((ch = *line++) != 0) {
+	if (ch == '(' || ch == '{') {
 	    level++;
-	    break;
-
-	case '}':
-	case RPAREN:
-	    level--;
-	    break;
-
-	default:
-	    if (wasSpace && haveName) {
-		    if (ISEQOPERATOR(*line)) {
-			/*
-			 * We must have a finished word
-			 */
-			if (level != 0)
-			    return FALSE;
-
-			/*
-			 * When an = operator [+?!:] is found, the next
-			 * character must be an = or it ain't a valid
-			 * assignment.
-			 */
-			if (line[1] == '=')
-			    return haveName;
-#ifdef SUNSHCMD
-			/*
-			 * This is a shell command
-			 */
-			if (strncmp(line, ":sh", 3) == 0)
-			    return haveName;
-#endif
-		    }
-		    /*
-		     * This is the start of another word, so not assignment.
-		     */
-		    return FALSE;
-	    }
-	    else {
-		haveName = TRUE;
-		wasSpace = FALSE;
-	    }
-	    break;
+	    continue;
 	}
+	if (ch == ')' || ch == '}') {
+	    level--;
+	    continue;
+	}
+	if (level != 0)
+	    continue;
+	while (ch == ' ' || ch == '\t') {
+	    ch = *line++;
+	    wasSpace = TRUE;
+	}
+	if (ch == '=')
+	    return TRUE;
+	if (*line == '=' && ISEQOPERATOR(ch))
+	    return TRUE;
+	if (wasSpace)
+	    return FALSE;
+    }
 
-    return haveName;
+    return FALSE;
 }
 
 /*-
