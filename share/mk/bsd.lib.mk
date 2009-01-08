@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.292 2008/12/08 13:10:21 pooka Exp $
+#	$NetBSD: bsd.lib.mk,v 1.293 2009/01/08 20:03:59 pooka Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -436,6 +436,8 @@ _YLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
+# If you change this, please consider reflecting the change in
+# the override in sys/rump/Makefile.rump.
 .if !target(__archivebuild)
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
