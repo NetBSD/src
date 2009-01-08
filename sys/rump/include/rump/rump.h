@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.5 2009/01/07 21:12:30 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.6 2009/01/08 03:27:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -142,6 +142,6 @@ int	rump_splfoo(void);
 void	rump_splx(int);
 
 /* I picked the wrong header to stop sniffin' glue */
-int syspuffs_glueinit(int, int *);
+int rump_syspuffs_glueinit(int, int *);
 
 #endif /* _RUMP_RUMP_H_ */
