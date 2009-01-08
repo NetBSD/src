@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.108 2009/01/08 18:08:10 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.109 2009/01/08 18:29:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.108 2009/01/08 18:08:10 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.109 2009/01/08 18:29:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -649,6 +649,7 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 	char buf[NI_MAXSERV];
 	struct servtab *s;
 #ifdef LIBWRAP
+	char abuf[BUFSIZ];
 	struct request_info req;
 	int denied;
 	char *service = NULL;	/* XXX gcc */
@@ -672,17 +673,19 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 				    ntohs(sep->se_ctrladdr_in.sin_port));
 			}
 			service = buf;
+			sockaddr_snprintf(abuf, sizeof(abuf), "%a",
+			    &sep->se_ctrladdr);
 		}
 		if (denied) {
 			syslog(deny_severity,
-			    "refused connection from %.500s, service %s (%s)",
-			    eval_client(&req), service, sep->se_proto);
+			    "refused connection from %.500s(%s), service %s (%s)",
+			    eval_client(&req), abuf, service, sep->se_proto);
 			goto reject;
 		}
 		if (lflag) {
 			syslog(allow_severity,
-			    "connection from %.500s, service %s (%s)",
-			    eval_client(&req), service, sep->se_proto);
+			    "connection from %.500s(%s), service %s (%s)",
+			    eval_client(&req), abuf, service, sep->se_proto);
 		}
 	}
 #endif /* LIBWRAP */
