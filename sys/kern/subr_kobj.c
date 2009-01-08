@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.32 2009/01/01 22:17:55 pooka Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.33 2009/01/08 01:03:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.32 2009/01/01 22:17:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.33 2009/01/08 01:03:24 pooka Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -745,7 +745,11 @@ kobj_affix(kobj_t ko, const char *name)
 	/* Jettison unneeded memory post-link. */
 	kobj_jettison(ko);
 
-	/* Notify MD code that a module has been loaded. */
+	/*
+	 * Notify MD code that a module has been loaded.
+	 *
+	 * Most architectures use this opportunity to flush their caches.
+	 */
 	if (error == 0) {
 		error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size,
 		    true);
