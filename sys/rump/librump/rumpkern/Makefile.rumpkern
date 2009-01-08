@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.34 2009/01/06 01:00:57 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.35 2009/01/08 19:14:37 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -48,11 +48,6 @@ SRCS+=	clock_subr.c
 # uncomment these lines if you want to use the real kmem code
 #CPPFLAGS+=	-DRUMP_USE_REAL_KMEM
 #SRCS+=		subr_kmem.c subr_vmem.c
-
-.if ${MACHINE_ARCH} == "vax"
-.PATH:	${RUMPTOP}/../lib/libkern/arch/vax
-SRCS+=	blkset.S
-.endif
 
 # no shlib_version because this is automatically in sync with lib/librump
 SHLIB_MAJOR=    0
