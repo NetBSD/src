@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpdsim-opts.c,v 1.1.1.3 2008/08/23 07:38:52 kardel Exp $	*/
+/*	$NetBSD: ntpdsim-opts.c,v 1.1.1.4 2009/01/08 19:18:38 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpdsim-opts.c)
  *  
- *  It has been AutoGen-ed  Sunday August 17, 2008 at 05:20:14 AM EDT
+ *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:12:00 AM EST
  *  From the definitions    ntpdsim-opts.def
  *  and the template file   options
  *
@@ -1074,7 +1074,7 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  */
 tSCC   zPROGNAME[]   = "NTPDSIM";
 tSCC   zUsageTitle[] =
-"ntpdsim - NTP daemon simulation program - Ver. 4.2.4p5\n\
+"ntpdsim - NTP daemon simulation program - Ver. 4.2.4p6\n\
 USAGE:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]...\n";
 tSCC   zRcName[]     = ".ntprc";
 tSCC*  apzHomeList[] = {
