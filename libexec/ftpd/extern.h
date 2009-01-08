@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.58 2008/09/13 03:30:35 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.59 2009/01/08 18:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -195,6 +195,7 @@ int	ftpd_logoutx(const char *, int, int);
 #if defined(__NetBSD__)
 # define HAVE_SETPROCTITLE		1
 # define HAVE_STRUCT_SOCKADDR_SA_LEN	1
+# define HAVE_SOCKADDR_SNPRINTF		1
 #endif
 
 struct sockinet {
@@ -331,6 +332,7 @@ GLOBAL	char		proctitle[BUFSIZ];	/* initial part of title */
 GLOBAL	struct passwd  *pw;
 GLOBAL	int		quietmessages;
 GLOBAL	char		remotehost[MAXHOSTNAMELEN+1];
+GLOBAL	char		remoteloghost[2 * MAXHOSTNAMELEN+1];
 GLOBAL	off_t		restart_point;
 GLOBAL	char		tmpline[FTP_BUFLEN];
 GLOBAL	int		type;
