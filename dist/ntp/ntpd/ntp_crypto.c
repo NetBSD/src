@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.1.1.4 2007/01/06 16:06:32 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.1.1.5 2009/01/08 19:18:28 kardel Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -1614,7 +1614,7 @@ crypto_verify(
 	 */
 	EVP_VerifyInit(&ctx, peer->digest);
 	EVP_VerifyUpdate(&ctx, (u_char *)&ep->tstamp, vallen + 12);
-	if (!EVP_VerifyFinal(&ctx, (u_char *)&ep->pkt[i], siglen, pkey))
+	if (EVP_VerifyFinal(&ctx, (u_char *)&ep->pkt[i], siglen, pkey) <= 0)
 		return (XEVNT_SIG);
 
 	if (peer->crypto & CRYPTO_FLAG_VRFY) {
@@ -3615,7 +3615,7 @@ crypto_key(
 	if (debug)
 		printf("crypto_key: %s\n", statstr);
 	if (debug > 1) {
-		if (EVP_MD_type(pkey) == EVP_PKEY_DSA)
+		if (pkey->type == EVP_PKEY_DSA)
 			DSA_print_fp(stdout, pkey->pkey.dsa, 0);
 		else
 			RSA_print_fp(stdout, pkey->pkey.rsa, 0);
@@ -3943,7 +3943,7 @@ crypto_setup(void)
 	sign_pkey = pkey;
 	sstamp = fstamp;
 	hostval.fstamp = htonl(fstamp);
-	if (EVP_MD_type(host_pkey) != EVP_PKEY_RSA) {
+	if (host_pkey->type != EVP_PKEY_RSA) {
 		msyslog(LOG_ERR,
 		    "crypto_setup: host key is not RSA key type");
 		exit (-1);
