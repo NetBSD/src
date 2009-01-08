@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.124 2008/12/20 13:20:58 isaki Exp $
+#	$NetBSD: special,v 1.125 2009/01/08 12:12:38 apb Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -252,6 +252,7 @@
 ./etc/rc.d/raidframeparity	type=file mode=0555
 ./etc/rc.d/rarpd		type=file mode=0555
 ./etc/rc.d/rbootd		type=file mode=0555
+./etc/rc.d/rndctl		type=file mode=0555
 ./etc/rc.d/root			type=file mode=0555
 ./etc/rc.d/route6d		type=file mode=0555
 ./etc/rc.d/routed		type=file mode=0555
