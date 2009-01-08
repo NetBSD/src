@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.24 2009/01/08 18:42:42 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.25 2009/01/08 20:00:12 pooka Exp $
 #
 
 WARNS?=		4
@@ -30,8 +30,8 @@ RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 CPPFLAGS+=	-DPPC_OEA
 .endif
 
-# If an options are changed, trigger a rebuild
-${SRCS:S/.c/.o/g}: ${RUMPTOP}/Makefile.rump
+# If this file changes, we need a full rebuild
+DPSRCS+=	${RUMPTOP}/Makefile.rump
 
 #
 # Rename library symbols before use.  If a symbol does not already belong
