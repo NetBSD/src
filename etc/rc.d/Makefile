@@ -1,11 +1,15 @@
-# $NetBSD: Makefile,v 1.73 2009/01/04 12:10:30 apb Exp $
+# $NetBSD: Makefile,v 1.74 2009/01/08 02:07:28 lukem Exp $
 
 .include <bsd.own.mk>
 
-# if you're adding new scripts, don't forget to update followings.
+#
+# NOTE:
+#
+# If you're adding new scripts, don't forget to update following:
 #	src/distrib/sets/lists/etc/mi
 #	src/etc/mtree/special
 #	src/usr.sbin/postinstall/postinstall
+#
 
 CONFIGFILES=\
 		DAEMON LOGIN NETWORKING SERVERS \
