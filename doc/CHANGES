@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1161 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1162 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -89,3 +89,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bwi:	Add a driver for Broadcom AirForce / Apple Airport Extreme
 		wireless network controllers. From Taylor Campbell.
 		[macallan 20090109]
+	rgephy(4): Support for RTL8211C(L) phy. From FreeBSD. [cegger 20090109]
+	rgephy(4): Support for flow control. From OpenBSD. [cegger 20090109]
