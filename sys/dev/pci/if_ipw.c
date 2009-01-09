@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.44 2008/11/07 14:58:27 joerg Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.45 2009/01/09 21:14:36 jmcneill Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.44 2008/11/07 14:58:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.45 2009/01/09 21:14:36 jmcneill Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1879,7 +1879,7 @@ ipw_cache_firmware(struct ipw_softc *sc)
 
 	if (ipw_accept_eula == 0) {
 		aprint_error_dev(&sc->sc_dev,
-		    "EULA not accepted, see hw.ipw.accept_eula\n");
+		    "EULA not accepted; please see the ipw(4) man page.\n");
 		return EPERM;
 	}
 
