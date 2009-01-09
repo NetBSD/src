@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.127 2008/09/25 15:48:57 pooka Exp $	*/
+/*	$NetBSD: in.c,v 1.127.4.1 2009/01/09 02:57:34 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.127 2008/09/25 15:48:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.127.4.1 2009/01/09 02:57:34 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -1013,6 +1013,12 @@ in_addprefix(struct in_ifaddr *target, int flags)
 	error = rtinit(&target->ia_ifa, RTM_ADD, flags);
 	if (error == 0)
 		target->ia_flags |= IFA_ROUTE;
+	else if (error == EEXIST) {
+		/* 
+		 * the fact the route already exists is not an error.
+		 */ 
+		error = 0;
+	}
 	return error;
 }
 
