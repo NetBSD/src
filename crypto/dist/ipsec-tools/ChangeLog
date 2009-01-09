@@ -1,3 +1,6 @@
+2009-01-09  Timo Teras  <timo.teras@iki.fi>
+	* configure.ac: fix a CPPLAGS typo
+
 2009-01-05  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/session.c: do not use counting in signal handling
 	  as it was unsafe by not using atomic functions (post increment
