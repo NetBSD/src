@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.63 2009/01/08 23:08:51 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.64 2009/01/09 03:50:31 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1890,4 +1890,124 @@ sbin/rndctl/rndctl.c				1.18
 	exclusive.
 	Add a list of type names (usable with -t) to the man page.
 	[apb, ticket #231]
+
+build.sh					1.200
+
+	"\t" does not represent a tab in sed regular expressions,
+	so use a ${tab} variable instead.
+	[apb, ticket #232]
+
+distrib/atari/floppies/install/list		1.9
+distrib/atari/floppies/prepare/list		1.6
+
+	Add df(1) to installation md_root files for atari.  Works around
+	PR port-atari/40316.
+	[tsutsui, ticket #233]
+
+tests/modules/t_modctl.c			1.3
+tests/modules/t_modload.sh			1.4
+
+	Kernel modules (kmod files) are now installed in a subdirectory
+	per module.  Make these tests aware of this so that they work again.
+	[jmmv, ticket #234]
+
+sys/arch/acorn26/acorn26/machdep.c		1.25
+
+	Initialise cpu_info_store so that we start up with a valid curlwp.
+	[bjh21, ticket #235]
+
+distrib/sets/lists/base/mi			1.789 via patch
+distrib/sets/lists/comp/mi			1.1222 via patch
+
+	Move usr/share/mk/* from comp to base.  Fixes PR 5865, PR 22126
+	[lukem, ticket #236]
+
+sys/arch/arm/xscale/i80321_aau.c		1.14
+sys/arch/arm/xscale/i80321_icu.c		1.19
+sys/arch/evbarm/conf/std.cp3100			1.3
+sys/arch/evbarm/conf/std.iq31244		1.7
+sys/arch/evbarm/conf/std.iq80321		1.13
+sys/arch/evbarm/conf/std.npwr_fc		1.4
+
+	- Don't try to use iopaau_desc_4/8_cache before they're initialized.
+	- i80321-based systems use a virtual base of 0xc0000000 so specify
+	  KERNEL_BASE_EXT.
+	- Ifdef out and comment a KASSERT() that's a bit too aggressive.
+
+	These changes get i80321-based boards booting.
+	[briggs, ticket #237]
+
+external/mit/xorg/bin/xdm/Makefile		1.4
+external/mit/xorg/bin/xdm/Makefile.xdm		1.2
+xsrc/external/mit/xdm/dist/greeter/greet.c	1.2
+
+	Make xdm (able to) use PAM.  Fixes PR 39851.
+	[spz, ticket #238]
+
+sys/netinet/in.c				1.130
+sys/net/rtsock.c				1.119
+
+	The automatic addition of a subnet route should not error if
+	a manually added route already exists. Fixes PR kern/40133.
+
+	When removing automatically added routes, remove the flag from the
+	associated address.  When changing automatically addded routes,
+	move the flag to the new assoicated address.
+	[roy, ticket #239]
+
+        sys/net/rtsock.c: revision 1.119
+
+doc/3RDPARTY					1.654
+external/bsd/dhcpcd/dist/README			dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/client.c		dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/common.c		dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/config.h		dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/configure.c		dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/dhcp.c			dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in	dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/dhdpcd.8.in		dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/dhcpcd.c		dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/dhcpcd.conf.5.in	dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/if-bsd.c		dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/net.c			dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/net.h			dhcpcd-4-0-7
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ntp.conf dhcpcd-4-0-7
+
+	Update to dhcpcd-4.0.7.
+	[roy, ticket #240]
+
+sys/ddb/db_command.c				1.126
+sys/ddb/db_command.h				1.34
+
+	Fix bug introduced in rev 1.98 of db_command.c where command prefix
+	not ambiguous in one table was chosen even if it was ambiguous in  
+	another table in same list. Also apply more KNF rules.
+	[haad, ticket #241]
+
+external/mit/xorg/lib/libGLU/Makefile		1.3
+share/mk/bsd.README				1.244
+share/mk/bsd.lib.mk				1.291
+
+	Add LIBISCXX.  If it is != "no", use ${CXX} instead of ${CC} to
+	link shared libraries.  Use it for libGLU.
+	Fixes PR#39936.
+	[mrg, ticket #242]
+
+share/man/man4/pci.4				1.89
+sys/dev/DEVNAMES				1.243
+
+	Add siisata(4) to the lists.
+	[jakllsch, ticket #243]
+
+sys/dev/pci/siisata_pci.c			1.2
+
+	In case the PCI command bits aren't already set, do so before
+	performing an access that requires them to be.
+	[jakllsch, ticket #244]
+
+sys/dev/usb/uslsa.c				1.9
+
+	Correct license.  Also, use UT_*_VENDOR_INTERFACE instead of local
+	defines of the same thing.  No functional change.
+	[jakllsch, ticket #245]
 
