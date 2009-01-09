@@ -1,4 +1,4 @@
-/*	$NetBSD: openssldsa_link.c,v 1.2 2009/01/08 14:49:46 drochner Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.3 2009/01/09 17:44:20 drochner Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -148,7 +148,7 @@ openssldsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 	status = DSA_do_verify(digest, ISC_SHA1_DIGESTLENGTH, dsasig, dsa);
 	DSA_SIG_free(dsasig);
-	if (status <= 0)
+	if (status != 1)
 		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
 
 	return (ISC_R_SUCCESS);
