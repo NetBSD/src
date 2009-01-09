@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.22 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.23 2009/01/09 21:56:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.22 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.23 2009/01/09 21:56:35 cegger Exp $");
 
 
 /*
@@ -483,7 +483,12 @@ rgephy_loop(struct mii_softc *sc)
 static void
 rgephy_load_dspcode(struct mii_softc *sc)
 {
+	struct rgephy_softc *rsc;
 	int val;
+
+	rsc = (struct rgephy_softc *)sc;
+	if (rsc->mii_revision >= 2)
+		return;
 
 #if 1
 	PHY_WRITE(sc, 31, 0x0001);
@@ -578,14 +583,22 @@ static void
 rgephy_reset(struct mii_softc *sc)
 {
 	struct rgephy_softc *rsc;
+	uint16_t ssr;
 
 	mii_phy_reset(sc);
 	DELAY(1000);
 
 	rsc = (struct rgephy_softc *)sc;
-	if (rsc->mii_revision < 2)
+	if (rsc->mii_revision < 2) {
 		rgephy_load_dspcode(sc);
-	else {
+	} else if (rsc->mii_revision == 3) {
+		/* RTL8211C(L) */
+		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
+		if ((ssr & RGEPHY_SSR_ALDPS) != 0) {
+			ssr &= ~RGEPHY_SSR_ALDPS;
+			PHY_WRITE(sc, RGEPHY_MII_SSR, ssr);
+		}
+	} else {
 		PHY_WRITE(sc, 0x1F, 0x0001);
 		PHY_WRITE(sc, 0x09, 0x273a);
 		PHY_WRITE(sc, 0x0e, 0x7bfb);
