@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/02/01 14:25:58 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2009/01/09 10:05:27 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,7 +8,7 @@ IMAGESIZE=	1440k
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
-DBG=		-O1	# XXX -Os might cause compiler bugs on sh3
+DBG=		-Os -freorder-blocks
 
 CRUNCHBIN=	ramdiskbin
 CRUNCHGEN_FLAGS= -d "${DBG}"
