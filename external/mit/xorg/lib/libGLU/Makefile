@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2009/01/09 03:35:50 snj Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
 .include <bsd.own.mk>
 
 LIB=		GLU
+LIBISCXX=	yes
 
 GLUDIR=		${X11SRCDIR.MesaLib}/src/glu/sgi
 
