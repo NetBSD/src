@@ -1,15 +1,13 @@
-/* $NetBSD: uslsa.c,v 1.8 2008/05/24 16:40:58 cube Exp $ */
+/* $NetBSD: uslsa.c,v 1.8.8.1 2009/01/09 03:46:54 snj Exp $ */
+
+/* from ugensa.c */
 
 /*
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jonathan A. Kollasch <jakllsch@kollasch.net>.  Craig Shelley's Linux
- * driver provided invaluable documentation.
- *
- * This code is derived from ugensa.c, software contributed to
- * The NetBSD Foundation by Roland C. Dowdeswell <elric@netbsd.org>.
+ * by Roland C. Dowdeswell <elric@netbsd.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +31,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 2007, 2009 Jonathan A. Kollasch.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/*
+ * Craig Shelley's Linux driver was used for documentation.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.8 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.8.8.1 2009/01/09 03:46:54 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +91,6 @@ int uslsadebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define USLSA_REQUEST_SET	0x41
-#define USLSA_REQUEST_GET	0xc1
 
 #define USLSA_REQ_SET_STATE	0x00
 
@@ -358,7 +383,7 @@ uslsa_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF(("uslsa_get_status:\n"));
 
-	req.bmRequestType = USLSA_REQUEST_GET;
+	req.bmRequestType = UT_READ_VENDOR_INTERFACE;
 	req.bRequest = USLSA_REQ_GET_FLOW;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
@@ -539,7 +564,7 @@ uslsa_request_set(struct uslsa_softc * sc, uint8_t request, uint16_t value)
 	usb_device_request_t req;
 	usbd_status err;
 
-	req.bmRequestType = USLSA_REQUEST_SET;
+	req.bmRequestType = UT_WRITE_VENDOR_INTERFACE;
 	req.bRequest = request;
 	USETW(req.wValue, value);
 	USETW(req.wIndex, 0);
@@ -565,7 +590,7 @@ uslsa_set_flow(struct uslsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 	DPRINTF(("uslsa_set_flow: cflag = 0x%x, iflag = 0x%x\n",
 	         cflag, iflag));
 
-	req.bmRequestType = USLSA_REQUEST_GET;
+	req.bmRequestType = UT_READ_VENDOR_INTERFACE;
 	req.bRequest = USLSA_REQ_GET_MODEM;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
@@ -586,7 +611,7 @@ uslsa_set_flow(struct uslsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 		mysterydata[4] = 0x40;
 	}
 
-	req.bmRequestType = USLSA_REQUEST_SET;
+	req.bmRequestType = UT_WRITE_VENDOR_INTERFACE;
 	req.bRequest = USLSA_REQ_SET_MODEM;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
