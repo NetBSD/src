@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.23 2009/01/09 21:56:35 cegger Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.24 2009/01/09 22:03:13 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.23 2009/01/09 21:56:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.24 2009/01/09 22:03:13 cegger Exp $");
 
 
 /*
@@ -129,7 +129,7 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	sc->mii_funcs = &rgephy_funcs;
 
@@ -404,7 +404,8 @@ rgephy_status(struct mii_softc *sc)
 			break;
 		}
 		if (ssr & RGEPHY_SSR_FDX)
-			mii->mii_media_active |= IFM_FDX;
+			mii->mii_media_active |= mii_phy_flowstatus(sc) |
+			    IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
 	} else {
@@ -418,7 +419,10 @@ rgephy_status(struct mii_softc *sc)
 		else
 			mii->mii_media_active |= IFM_NONE;
 		if ((gstat & RTK_GMEDIASTAT_FDX) != 0)
-			mii->mii_media_active |= IFM_FDX;
+			mii->mii_media_active |= mii_phy_flowstatus(sc) |
+			    IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	}
 }
 
@@ -426,12 +430,16 @@ rgephy_status(struct mii_softc *sc)
 static int
 rgephy_mii_phy_auto(struct mii_softc *mii)
 {
+	int anar;
 
 	rgephy_loop(mii);
 	PHY_RESET(mii);
 
-	PHY_WRITE(mii, RGEPHY_MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA);
+	anar = BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA;
+	if (mii->mii_flags & MIIF_DOPAUSE)
+		anar |= RGEPHY_ANAR_PC | RGEPHY_ANAR_ASP;
+
+	PHY_WRITE(mii, RGEPHY_MII_ANAR, anar);
 	DELAY(1000);
 	PHY_WRITE(mii, RGEPHY_MII_1000CTL,
 	    RGEPHY_1000CTL_AHD | RGEPHY_1000CTL_AFD);
