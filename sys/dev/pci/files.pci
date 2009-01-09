@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.309 2008/12/28 15:16:24 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.310 2009/01/09 19:53:24 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -959,3 +959,8 @@ file	dev/pci/alipm.c				alipm
 #
 include "dev/pci/n8/files.n8"
 
+#
+# Broadcom AirForce / Apple Airport Extreme
+#
+attach	bwi at pci with bwi_pci
+file	dev/pci/if_bwi_pci.c		bwi_pci
