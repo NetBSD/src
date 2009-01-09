@@ -200,7 +200,7 @@ AC_MSG_RESULT(${crypto_dir-default})
 
 if test "x$crypto_dir" != "x"; then
 	LIBS="$LIBS -L${crypto_dir}/lib"
-	CPPFLAGS="-I${crypto_dir}/include $CPPLAGS"
+	CPPFLAGS="-I${crypto_dir}/include $CPPFLAGS"
 fi
 AC_MSG_CHECKING(openssl version)
 
