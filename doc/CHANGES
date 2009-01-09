@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1159 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1160 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -84,3 +84,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		known interface as Linux does for managing LVM. [haad 20081222]
 	gcscaudio(4): Add AMD Geode CS5536 audio driver, from SHIMIZU Ryo.
 		[jmcneill 20081228]
+	ntp:	import ntp 4.2.4p6
+		openssl API related security fix. [kardel 20090108]
