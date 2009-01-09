@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.23 2008/07/02 17:28:54 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.23.6.1 2009/01/09 02:15:40 snj Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/07/02 17:28:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.6.1 2009/01/09 02:15:40 snj Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -57,7 +57,12 @@ char machine_arch[] = MACHINE_ARCH;
 char cpu_model[] = "Archimedes";
 
 /* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
+struct cpu_info cpu_info_store = {
+	.ci_cpl = IPL_HIGH,
+#ifndef PROCESS_ID_IS_CURLWP
+	.ci_curlwp = &lwp0,
+#endif
+};
 
 /* For reading NVRAM during bootstrap. */
 i2c_tag_t acorn26_i2c_tag;
