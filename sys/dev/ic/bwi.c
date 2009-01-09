@@ -1,4 +1,5 @@
-/*	$OpenBSD: bwi.c,v 1.75 2008/04/16 18:32:15 damien Exp $	*/
+/*	$NetBSD: bwi.c,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -36,49 +37,71 @@
  * $DragonFly: src/sys/dev/netif/bwi/bwimac.c,v 1.1 2007/09/08 06:15:54 sephe Exp $
  */
 
+/*
+ * Broadcom AirForce BCM43xx IEEE 802.11b/g wireless network driver
+ * Generic back end
+ */
+
+/* [TRC: XXX Names beginning with `bwi_ieee80211_*' are those that I
+   think should be in NetBSD's generic 802.11 code, not in this
+   driver.] */
+
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-#include <sys/param.h>
-#include <sys/types.h>
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.2 2009/01/09 20:49:42 macallan Exp $");
 
+#include <sys/param.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+
+#include <dev/firmload.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_ether.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-
 #include <net80211/ieee80211_var.h>
+/* [TRC: XXX amrr] */
 #include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/bwireg.h>
 #include <dev/ic/bwivar.h>
 
+#define BWI_DEBUG 1
 #ifdef BWI_DEBUG
-int bwi_debug = 1;
-#define DPRINTF(l, x...)	do { if ((l) <= bwi_debug) printf(x); } while (0)
-#else
-#define DPRINTF(l, x...)
-#endif
+
+int bwi_debug = ~BWI_DBG_INTR;
+
+/* [TRC: XXX I think this is wrong.] */
+
+#define DPRINTF(sc, dbg, fmt, ...)					\
+do {									\
+	if ((sc)->sc_debug & (dbg))					\
+		aprint_debug_dev(&(sc)->sc_dev, fmt, ##__VA_ARGS__);	\
+} while (0)
+
+#else	/* !BWI_DEBUG */
+
+#define DPRINTF(sc, dbg, fmt, ...)	((void)0)
+
+#endif	/* BWI_DEBUG */
 
 /* XXX temporary porting goop */
 #include <dev/pci/pcireg.h>
@@ -90,11 +113,18 @@ int bwi_debug = 1;
 #define IEEE80211_OFDM_PLCP_LEN_MASK	0x0001ffe0
 
 /*
- * Contention window (slots).
+ * Contention window (slots).  [TRC: dfly/net80211/80211.h]
  */
 #define IEEE80211_CW_MAX	1023	/* aCWmax */
 #define IEEE80211_CW_MIN_0	31	/* DS/CCK aCWmin, ERP aCWmin(0) */
 #define IEEE80211_CW_MIN_1	15	/* OFDM aCWmin, ERP aCWmin(1) */
+
+/*
+ * Slot time (microseconds).  [TRC: dfly/net80211/80211.h]
+ */
+#define IEEE80211_DUR_SLOT      20      /* DS/CCK slottime, ERP long slottime */
+#define IEEE80211_DUR_SHSLOT    9       /* ERP short slottime */
+#define IEEE80211_DUR_OFDM_SLOT 9       /* OFDM slottime */
 
 #define __unused __attribute__((__unused__))
 
@@ -121,256 +151,265 @@ struct ieee80211_ds_plcp_hdr {
 	uint16_t	i_crc;
 } __packed;
 
+static void	 bwi_sysctlattach(struct bwi_softc *);
+
 /* MAC */
-void		 bwi_tmplt_write_4(struct bwi_mac *, uint32_t, uint32_t);
-void		 bwi_hostflags_write(struct bwi_mac *, uint64_t);
-uint64_t	 bwi_hostflags_read(struct bwi_mac *);
-uint16_t	 bwi_memobj_read_2(struct bwi_mac *, uint16_t, uint16_t);
-uint32_t	 bwi_memobj_read_4(struct bwi_mac *, uint16_t, uint16_t);
-void		 bwi_memobj_write_2(struct bwi_mac *, uint16_t, uint16_t,
+static void	 bwi_tmplt_write_4(struct bwi_mac *, uint32_t, uint32_t);
+static void	 bwi_hostflags_write(struct bwi_mac *, uint64_t);
+static uint64_t	 bwi_hostflags_read(struct bwi_mac *);
+static uint16_t	 bwi_memobj_read_2(struct bwi_mac *, uint16_t, uint16_t);
+static uint32_t	 bwi_memobj_read_4(struct bwi_mac *, uint16_t, uint16_t);
+static void	 bwi_memobj_write_2(struct bwi_mac *, uint16_t, uint16_t,
 		     uint16_t);
-void		 bwi_memobj_write_4(struct bwi_mac *, uint16_t, uint16_t,
+static void	 bwi_memobj_write_4(struct bwi_mac *, uint16_t, uint16_t,
 		     uint32_t);
-int		 bwi_mac_lateattach(struct bwi_mac *);
-int		 bwi_mac_init(struct bwi_mac *);
-void		 bwi_mac_reset(struct bwi_mac *, int);
-void		 bwi_mac_set_tpctl_11bg(struct bwi_mac *,
+static int	 bwi_mac_lateattach(struct bwi_mac *);
+static int	 bwi_mac_init(struct bwi_mac *);
+static void	 bwi_mac_reset(struct bwi_mac *, int);
+static void	 bwi_mac_set_tpctl_11bg(struct bwi_mac *,
 		     const struct bwi_tpctl *);
-int		 bwi_mac_test(struct bwi_mac *);
-void		 bwi_mac_setup_tpctl(struct bwi_mac *);
-void		 bwi_mac_dummy_xmit(struct bwi_mac *);
-void		 bwi_mac_init_tpctl_11bg(struct bwi_mac *);
-void		 bwi_mac_detach(struct bwi_mac *);
-int		 bwi_get_firmware(const char *, const uint8_t *, size_t,
-		     size_t *, size_t *);
-int		 bwi_fwimage_is_valid(struct bwi_softc *, uint8_t *,
-		     size_t, char *, uint8_t);
-int		 bwi_mac_fw_alloc(struct bwi_mac *);
-void		 bwi_mac_fw_free(struct bwi_mac *);
-int		 bwi_mac_fw_load(struct bwi_mac *);
-int		 bwi_mac_gpio_init(struct bwi_mac *);
-int		 bwi_mac_gpio_fini(struct bwi_mac *);
-int		 bwi_mac_fw_load_iv(struct bwi_mac *, uint8_t *, size_t);
-int		 bwi_mac_fw_init(struct bwi_mac *);
-void		 bwi_mac_opmode_init(struct bwi_mac *);
-void		 bwi_mac_hostflags_init(struct bwi_mac *);
-void		 bwi_mac_bss_param_init(struct bwi_mac *);
-void		 bwi_mac_set_retry_lim(struct bwi_mac *,
+static int	 bwi_mac_test(struct bwi_mac *);
+static void	 bwi_mac_setup_tpctl(struct bwi_mac *);
+static void	 bwi_mac_dummy_xmit(struct bwi_mac *);
+static void	 bwi_mac_init_tpctl_11bg(struct bwi_mac *);
+static void	 bwi_mac_detach(struct bwi_mac *);
+static int	 bwi_mac_fw_alloc(struct bwi_mac *);
+static void	 bwi_mac_fw_free(struct bwi_mac *);
+static int	 bwi_mac_fw_image_alloc(struct bwi_mac *, const char *,
+    		     int idx, struct bwi_fw_image *, uint8_t);
+static void	 bwi_mac_fw_image_free(struct bwi_mac *, struct bwi_fw_image *);
+static int	 bwi_mac_fw_load(struct bwi_mac *);
+static int	 bwi_mac_gpio_init(struct bwi_mac *);
+static int	 bwi_mac_gpio_fini(struct bwi_mac *);
+static int	 bwi_mac_fw_load_iv(struct bwi_mac *,
+		     const struct bwi_fw_image *);
+static int	 bwi_mac_fw_init(struct bwi_mac *);
+static void	 bwi_mac_opmode_init(struct bwi_mac *);
+static void	 bwi_mac_hostflags_init(struct bwi_mac *);
+static void	 bwi_mac_bss_param_init(struct bwi_mac *);
+static void	 bwi_mac_set_retry_lim(struct bwi_mac *,
 		     const struct bwi_retry_lim *);
-void		 bwi_mac_set_ackrates(struct bwi_mac *,
+static void	 bwi_mac_set_ackrates(struct bwi_mac *,
 		     const struct ieee80211_rateset *);
-int		 bwi_mac_start(struct bwi_mac *);
-int		 bwi_mac_stop(struct bwi_mac *);
-int		 bwi_mac_config_ps(struct bwi_mac *);
-void		 bwi_mac_reset_hwkeys(struct bwi_mac *);
-void		 bwi_mac_shutdown(struct bwi_mac *);
-int		 bwi_mac_get_property(struct bwi_mac *);
-void		 bwi_mac_updateslot(struct bwi_mac *, int);
-int		 bwi_mac_attach(struct bwi_softc *, int, uint8_t);
-void		 bwi_mac_balance_atten(int *, int *);
-void		 bwi_mac_adjust_tpctl(struct bwi_mac *, int, int);
-void		 bwi_mac_calibrate_txpower(struct bwi_mac *,
+static int	 bwi_mac_start(struct bwi_mac *);
+static int	 bwi_mac_stop(struct bwi_mac *);
+static int	 bwi_mac_config_ps(struct bwi_mac *);
+static void	 bwi_mac_reset_hwkeys(struct bwi_mac *);
+static void	 bwi_mac_shutdown(struct bwi_mac *);
+static int	 bwi_mac_get_property(struct bwi_mac *);
+static void	 bwi_mac_updateslot(struct bwi_mac *, int);
+static int	 bwi_mac_attach(struct bwi_softc *, int, uint8_t);
+static void	 bwi_mac_balance_atten(int *, int *);
+static void	 bwi_mac_adjust_tpctl(struct bwi_mac *, int, int);
+static void	 bwi_mac_calibrate_txpower(struct bwi_mac *,
 		     enum bwi_txpwrcb_type);
-void		 bwi_mac_lock(struct bwi_mac *);
-void		 bwi_mac_unlock(struct bwi_mac *);
-void		 bwi_mac_set_promisc(struct bwi_mac *, int);
+static void	 bwi_mac_lock(struct bwi_mac *);
+static void	 bwi_mac_unlock(struct bwi_mac *);
+static void	 bwi_mac_set_promisc(struct bwi_mac *, int);
 
 /* PHY */
-void		 bwi_phy_write(struct bwi_mac *, uint16_t, uint16_t);
-uint16_t	 bwi_phy_read(struct bwi_mac *, uint16_t);
-int		 bwi_phy_attach(struct bwi_mac *);
-void		 bwi_phy_set_bbp_atten(struct bwi_mac *, uint16_t);
-int		 bwi_phy_calibrate(struct bwi_mac *);
-void		 bwi_tbl_write_2(struct bwi_mac *mac, uint16_t, uint16_t);
-void		 bwi_tbl_write_4(struct bwi_mac *mac, uint16_t, uint32_t);
-void		 bwi_nrssi_write(struct bwi_mac *, uint16_t, int16_t);
-int16_t		 bwi_nrssi_read(struct bwi_mac *, uint16_t);
-void		 bwi_phy_init_11a(struct bwi_mac *);
-void		 bwi_phy_init_11g(struct bwi_mac *);
-void		 bwi_phy_init_11b_rev2(struct bwi_mac *);
-void		 bwi_phy_init_11b_rev4(struct bwi_mac *);
-void		 bwi_phy_init_11b_rev5(struct bwi_mac *);
-void		 bwi_phy_init_11b_rev6(struct bwi_mac *);
-void		 bwi_phy_config_11g(struct bwi_mac *);
-void		 bwi_phy_config_agc(struct bwi_mac *);
-void		 bwi_set_gains(struct bwi_mac *, const struct bwi_gains *);
-void		 bwi_phy_clear_state(struct bwi_phy *);
+static void	 bwi_phy_write(struct bwi_mac *, uint16_t, uint16_t);
+static uint16_t	 bwi_phy_read(struct bwi_mac *, uint16_t);
+static int	 bwi_phy_attach(struct bwi_mac *);
+static void	 bwi_phy_set_bbp_atten(struct bwi_mac *, uint16_t);
+static int	 bwi_phy_calibrate(struct bwi_mac *);
+static void	 bwi_tbl_write_2(struct bwi_mac *mac, uint16_t, uint16_t);
+static void	 bwi_tbl_write_4(struct bwi_mac *mac, uint16_t, uint32_t);
+static void	 bwi_nrssi_write(struct bwi_mac *, uint16_t, int16_t);
+static int16_t	 bwi_nrssi_read(struct bwi_mac *, uint16_t);
+static void	 bwi_phy_init_11a(struct bwi_mac *);
+static void	 bwi_phy_init_11g(struct bwi_mac *);
+static void	 bwi_phy_init_11b_rev2(struct bwi_mac *);
+static void	 bwi_phy_init_11b_rev4(struct bwi_mac *);
+static void	 bwi_phy_init_11b_rev5(struct bwi_mac *);
+static void	 bwi_phy_init_11b_rev6(struct bwi_mac *);
+static void	 bwi_phy_config_11g(struct bwi_mac *);
+static void	 bwi_phy_config_agc(struct bwi_mac *);
+static void	 bwi_set_gains(struct bwi_mac *, const struct bwi_gains *);
+static void	 bwi_phy_clear_state(struct bwi_phy *);
 
 /* RF */
-int16_t		 bwi_nrssi_11g(struct bwi_mac *);
-struct bwi_rf_lo
+static int16_t	 bwi_nrssi_11g(struct bwi_mac *);
+static struct bwi_rf_lo
 		*bwi_get_rf_lo(struct bwi_mac *, uint16_t, uint16_t);
-int		 bwi_rf_lo_isused(struct bwi_mac *, const struct bwi_rf_lo *);
-void		 bwi_rf_write(struct bwi_mac *, uint16_t, uint16_t);
-uint16_t	 bwi_rf_read(struct bwi_mac *, uint16_t);
-int		 bwi_rf_attach(struct bwi_mac *);
-void		 bwi_rf_set_chan(struct bwi_mac *, uint, int);
-void		 bwi_rf_get_gains(struct bwi_mac *);
-void		 bwi_rf_init(struct bwi_mac *);
-void		 bwi_rf_off_11a(struct bwi_mac *);
-void		 bwi_rf_off_11bg(struct bwi_mac *);
-void		 bwi_rf_off_11g_rev5(struct bwi_mac *);
-void		 bwi_rf_workaround(struct bwi_mac *, uint);
-struct bwi_rf_lo
+static int	 bwi_rf_lo_isused(struct bwi_mac *, const struct bwi_rf_lo *);
+static void	 bwi_rf_write(struct bwi_mac *, uint16_t, uint16_t);
+static uint16_t	 bwi_rf_read(struct bwi_mac *, uint16_t);
+static int	 bwi_rf_attach(struct bwi_mac *);
+static void	 bwi_rf_set_chan(struct bwi_mac *, uint, int);
+static void	 bwi_rf_get_gains(struct bwi_mac *);
+static void	 bwi_rf_init(struct bwi_mac *);
+static void	 bwi_rf_off_11a(struct bwi_mac *);
+static void	 bwi_rf_off_11bg(struct bwi_mac *);
+static void	 bwi_rf_off_11g_rev5(struct bwi_mac *);
+static void	 bwi_rf_workaround(struct bwi_mac *, uint);
+static struct bwi_rf_lo
 		*bwi_rf_lo_find(struct bwi_mac *, const struct bwi_tpctl *);
-void		 bwi_rf_lo_adjust(struct bwi_mac *, const struct bwi_tpctl *);
-void		 bwi_rf_lo_write(struct bwi_mac *, const struct bwi_rf_lo *);
-int		 bwi_rf_gain_max_reached(struct bwi_mac *, int);
-uint16_t	 bwi_bitswap4(uint16_t);
-uint16_t	 bwi_phy812_value(struct bwi_mac *, uint16_t);
-void		 bwi_rf_init_bcm2050(struct bwi_mac *);
-uint16_t	 bwi_rf_calibval(struct bwi_mac *);
-int32_t		 _bwi_adjust_devide(int32_t, int32_t);
-int		 bwi_rf_calc_txpower(int8_t *, uint8_t, const int16_t[]);
-int		 bwi_rf_map_txpower(struct bwi_mac *);
-void		 bwi_rf_lo_update_11g(struct bwi_mac *);
-uint32_t	 bwi_rf_lo_devi_measure(struct bwi_mac *, uint16_t);
-uint16_t	 bwi_rf_get_tp_ctrl2(struct bwi_mac *);
-uint8_t		 _bwi_rf_lo_update_11g(struct bwi_mac *, uint16_t);
-void		 bwi_rf_lo_measure_11g(struct bwi_mac *,
+static void	 bwi_rf_lo_adjust(struct bwi_mac *, const struct bwi_tpctl *);
+static void	 bwi_rf_lo_write(struct bwi_mac *, const struct bwi_rf_lo *);
+static int	 bwi_rf_gain_max_reached(struct bwi_mac *, int);
+static uint16_t	 bwi_bitswap4(uint16_t);
+static uint16_t	 bwi_phy812_value(struct bwi_mac *, uint16_t);
+static void	 bwi_rf_init_bcm2050(struct bwi_mac *);
+static uint16_t	 bwi_rf_calibval(struct bwi_mac *);
+static int32_t	 _bwi_adjust_devide(int32_t, int32_t);
+static int	 bwi_rf_calc_txpower(int8_t *, uint8_t, const int16_t[]);
+static int	 bwi_rf_map_txpower(struct bwi_mac *);
+static void	 bwi_rf_lo_update_11g(struct bwi_mac *);
+static uint32_t	 bwi_rf_lo_devi_measure(struct bwi_mac *, uint16_t);
+static uint16_t	 bwi_rf_get_tp_ctrl2(struct bwi_mac *);
+static uint8_t	 _bwi_rf_lo_update_11g(struct bwi_mac *, uint16_t);
+static void	 bwi_rf_lo_measure_11g(struct bwi_mac *,
 		     const struct bwi_rf_lo *, struct bwi_rf_lo *, uint8_t);
-void		 bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *);
-void		 bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *);
-void		 bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *);
-void		 bwi_rf_init_sw_nrssi_table(struct bwi_mac *);
-void		 bwi_rf_init_hw_nrssi_table(struct bwi_mac *, uint16_t);
-void		 bwi_rf_set_nrssi_thr_11b(struct bwi_mac *);
-int32_t		 _nrssi_threshold(const struct bwi_rf *, int32_t);
-void		 bwi_rf_set_nrssi_thr_11g(struct bwi_mac *);
-void		 bwi_rf_clear_tssi(struct bwi_mac *);
-void		 bwi_rf_clear_state(struct bwi_rf *);
-void		 bwi_rf_on_11a(struct bwi_mac *);
-void		 bwi_rf_on_11bg(struct bwi_mac *);
-void		 bwi_rf_set_ant_mode(struct bwi_mac *, int);
-int		 bwi_rf_get_latest_tssi(struct bwi_mac *, int8_t[], uint16_t);
-int		 bwi_rf_tssi2dbm(struct bwi_mac *, int8_t, int8_t *);
-int		 bwi_rf_calc_rssi_bcm2050(struct bwi_mac *,
+static void	 bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *);
+static void	 bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *);
+static void	 bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *);
+static void	 bwi_rf_init_sw_nrssi_table(struct bwi_mac *);
+static void	 bwi_rf_init_hw_nrssi_table(struct bwi_mac *, uint16_t);
+static void	 bwi_rf_set_nrssi_thr_11b(struct bwi_mac *);
+static int32_t	 _nrssi_threshold(const struct bwi_rf *, int32_t);
+static void	 bwi_rf_set_nrssi_thr_11g(struct bwi_mac *);
+static void	 bwi_rf_clear_tssi(struct bwi_mac *);
+static void	 bwi_rf_clear_state(struct bwi_rf *);
+static void	 bwi_rf_on_11a(struct bwi_mac *);
+static void	 bwi_rf_on_11bg(struct bwi_mac *);
+static void	 bwi_rf_set_ant_mode(struct bwi_mac *, int);
+static int	 bwi_rf_get_latest_tssi(struct bwi_mac *, int8_t[], uint16_t);
+static int	 bwi_rf_tssi2dbm(struct bwi_mac *, int8_t, int8_t *);
+static int	 bwi_rf_calc_rssi_bcm2050(struct bwi_mac *,
 		     const struct bwi_rxbuf_hdr *);
-int		 bwi_rf_calc_rssi_bcm2053(struct bwi_mac *,
+static int	 bwi_rf_calc_rssi_bcm2053(struct bwi_mac *,
 		     const struct bwi_rxbuf_hdr *);
-int		 bwi_rf_calc_rssi_bcm2060(struct bwi_mac *,
+static int	 bwi_rf_calc_rssi_bcm2060(struct bwi_mac *,
 		     const struct bwi_rxbuf_hdr *);
-uint16_t	 bwi_rf_lo_measure_11b(struct bwi_mac *);
-void		 bwi_rf_lo_update_11b(struct bwi_mac *);
+static uint16_t	 bwi_rf_lo_measure_11b(struct bwi_mac *);
+static void	 bwi_rf_lo_update_11b(struct bwi_mac *);
 
 /* INTERFACE */
-uint16_t	 bwi_read_sprom(struct bwi_softc *, uint16_t);
-void		 bwi_setup_desc32(struct bwi_softc *, struct bwi_desc32 *, int,
+static uint16_t	 bwi_read_sprom(struct bwi_softc *, uint16_t);
+static void	 bwi_setup_desc32(struct bwi_softc *, struct bwi_desc32 *, int,
 		     int, bus_addr_t, int, int);
-void		 bwi_power_on(struct bwi_softc *, int);
-int		 bwi_power_off(struct bwi_softc *, int);
-int		 bwi_regwin_switch(struct bwi_softc *, struct bwi_regwin *,
+static void	 bwi_power_on(struct bwi_softc *, int);
+static int	 bwi_power_off(struct bwi_softc *, int);
+static int	 bwi_regwin_switch(struct bwi_softc *, struct bwi_regwin *,
 		     struct bwi_regwin **);
-int		 bwi_regwin_select(struct bwi_softc *, int);
-void		 bwi_regwin_info(struct bwi_softc *, uint16_t *, uint8_t *);
-void		 bwi_led_attach(struct bwi_softc *);
-void		 bwi_led_newstate(struct bwi_softc *, enum ieee80211_state);
-uint16_t	 bwi_led_onoff(struct bwi_led *, uint16_t, int);
-void		 bwi_led_event(struct bwi_softc *, int);
-void		 bwi_led_blink_start(struct bwi_softc *, int, int);
-void		 bwi_led_blink_next(void *);
-void		 bwi_led_blink_end(void *);
-int		 bwi_bbp_attach(struct bwi_softc *);
-int		 bwi_bus_init(struct bwi_softc *, struct bwi_mac *);
-void		 bwi_get_card_flags(struct bwi_softc *);
-void		 bwi_get_eaddr(struct bwi_softc *, uint16_t, uint8_t *);
-void		 bwi_get_clock_freq(struct bwi_softc *,
+static int	 bwi_regwin_select(struct bwi_softc *, int);
+static void	 bwi_regwin_info(struct bwi_softc *, uint16_t *, uint8_t *);
+static void	 bwi_led_attach(struct bwi_softc *);
+static void	 bwi_led_newstate(struct bwi_softc *, enum ieee80211_state);
+static uint16_t	 bwi_led_onoff(const struct bwi_led *, uint16_t, int);
+static void	 bwi_led_event(struct bwi_softc *, int);
+static void	 bwi_led_blink_start(struct bwi_softc *, int, int);
+static void	 bwi_led_blink_next(void *);
+static void	 bwi_led_blink_end(void *);
+static int	 bwi_bbp_attach(struct bwi_softc *);
+static int	 bwi_bus_init(struct bwi_softc *, struct bwi_mac *);
+static void	 bwi_get_card_flags(struct bwi_softc *);
+static void	 bwi_get_eaddr(struct bwi_softc *, uint16_t, uint8_t *);
+static void	 bwi_get_clock_freq(struct bwi_softc *,
 		     struct bwi_clock_freq *);
-int		 bwi_set_clock_mode(struct bwi_softc *, enum bwi_clock_mode);
-int		 bwi_set_clock_delay(struct bwi_softc *);
-int		 bwi_init(struct ifnet *);
-int		 bwi_ioctl(struct ifnet *, u_long, void *);
-void		 bwi_start(struct ifnet *);
-void		 bwi_watchdog(struct ifnet *);
-void		 bwi_newstate_begin(struct bwi_softc *, enum ieee80211_state);
-void		 bwi_init_statechg(struct bwi_softc *, int);
-int		 bwi_stop(struct bwi_softc *, int);
-int		 bwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
-int		 bwi_media_change(struct ifnet *);
-void		 bwi_iter_func(void *, struct ieee80211_node *);
-void		 bwi_amrr_timeout(void *);
-void		 bwi_newassoc(struct ieee80211com *, struct ieee80211_node *,
-		     int);
-int		 bwi_dma_alloc(struct bwi_softc *);
-void		 bwi_dma_free(struct bwi_softc *);
-int		 bwi_dma_ring_alloc(struct bwi_softc *,
+static int	 bwi_set_clock_mode(struct bwi_softc *, enum bwi_clock_mode);
+static int	 bwi_set_clock_delay(struct bwi_softc *);
+static int	 bwi_init(struct ifnet *);
+static void	 bwi_init_statechg(struct bwi_softc *, int);
+static int	 bwi_ioctl(struct ifnet *, u_long, void *);
+static void	 bwi_start(struct ifnet *);
+static void	 bwi_watchdog(struct ifnet *);
+static void	 bwi_stop(struct ifnet *, int);
+static void	 bwi_newstate_begin(struct bwi_softc *, enum ieee80211_state);
+static int	 bwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
+static int	 bwi_media_change(struct ifnet *);
+/* [TRC: XXX amrr] */
+static void	 bwi_iter_func(void *, struct ieee80211_node *);
+static void	 bwi_amrr_timeout(void *);
+static void	 bwi_newassoc(struct ieee80211_node *, int);
+static struct ieee80211_node *
+		 bwi_node_alloc(struct ieee80211_node_table *);
+static int	 bwi_dma_alloc(struct bwi_softc *);
+static void	 bwi_dma_free(struct bwi_softc *);
+static void	 bwi_ring_data_free(struct bwi_ring_data *, struct bwi_softc *);
+static int	 bwi_dma_ring_alloc(struct bwi_softc *,
 		     struct bwi_ring_data *, bus_size_t, uint32_t);
-int		 bwi_dma_txstats_alloc(struct bwi_softc *, uint32_t,
+static int	 bwi_dma_txstats_alloc(struct bwi_softc *, uint32_t,
 		     bus_size_t);
-void		 bwi_dma_txstats_free(struct bwi_softc *);
-int		 bwi_dma_mbuf_create(struct bwi_softc *);
-void		 bwi_dma_mbuf_destroy(struct bwi_softc *, int, int);
-void		 bwi_enable_intrs(struct bwi_softc *, uint32_t);
-void		 bwi_disable_intrs(struct bwi_softc *, uint32_t);
-int		 bwi_init_tx_ring32(struct bwi_softc *, int);
-void		 bwi_init_rxdesc_ring32(struct bwi_softc *, uint32_t,
+static void	 bwi_dma_txstats_free(struct bwi_softc *);
+static int	 bwi_dma_mbuf_create(struct bwi_softc *);
+static void	 bwi_dma_mbuf_destroy(struct bwi_softc *, int, int);
+static void	 bwi_enable_intrs(struct bwi_softc *, uint32_t);
+static void	 bwi_disable_intrs(struct bwi_softc *, uint32_t);
+static int	 bwi_init_tx_ring32(struct bwi_softc *, int);
+static void	 bwi_init_rxdesc_ring32(struct bwi_softc *, uint32_t,
 		     bus_addr_t, int, int);
-int		 bwi_init_rx_ring32(struct bwi_softc *);
-int		 bwi_init_txstats32(struct bwi_softc *);
-void		 bwi_setup_rx_desc32(struct bwi_softc *, int, bus_addr_t, int);
-void		 bwi_setup_tx_desc32(struct bwi_softc *, struct bwi_ring_data *,
+static int	 bwi_init_rx_ring32(struct bwi_softc *);
+static int	 bwi_init_txstats32(struct bwi_softc *);
+static void	 bwi_setup_rx_desc32(struct bwi_softc *, int, bus_addr_t, int);
+static void	 bwi_setup_tx_desc32(struct bwi_softc *, struct bwi_ring_data *,
 		     int, bus_addr_t, int);
-int		 bwi_init_tx_ring64(struct bwi_softc *, int);
-int		 bwi_init_rx_ring64(struct bwi_softc *);
-int		 bwi_init_txstats64(struct bwi_softc *);
-void		 bwi_setup_rx_desc64(struct bwi_softc *, int, bus_addr_t, int);
-void		 bwi_setup_tx_desc64(struct bwi_softc *, struct bwi_ring_data *,
+static int	 bwi_init_tx_ring64(struct bwi_softc *, int);
+static int	 bwi_init_rx_ring64(struct bwi_softc *);
+static int	 bwi_init_txstats64(struct bwi_softc *);
+static void	 bwi_setup_rx_desc64(struct bwi_softc *, int, bus_addr_t, int);
+static void	 bwi_setup_tx_desc64(struct bwi_softc *, struct bwi_ring_data *,
 		     int, bus_addr_t, int);
-int		 bwi_newbuf(struct bwi_softc *, int, int);
-void		 bwi_set_addr_filter(struct bwi_softc *, uint16_t,
+static int	 bwi_newbuf(struct bwi_softc *, int, int);
+static void	 bwi_set_addr_filter(struct bwi_softc *, uint16_t,
 		     const uint8_t *);
-int		 bwi_set_chan(struct bwi_softc *, uint8_t);
-void		 bwi_next_scan(void *);
-int		 bwi_rxeof(struct bwi_softc *, int);
-int		 bwi_rxeof32(struct bwi_softc *);
-int		 bwi_rxeof64(struct bwi_softc *);
-void		 bwi_reset_rx_ring32(struct bwi_softc *, uint32_t);
-void		 bwi_free_txstats32(struct bwi_softc *);
-void		 bwi_free_rx_ring32(struct bwi_softc *);
-void		 bwi_free_tx_ring32(struct bwi_softc *, int);
-void		 bwi_free_txstats64(struct bwi_softc *);
-void		 bwi_free_rx_ring64(struct bwi_softc *);
-void		 bwi_free_tx_ring64(struct bwi_softc *, int);
-uint8_t		 bwi_ofdm_plcp2rate(uint32_t *);
-uint8_t		 bwi_ds_plcp2rate(struct ieee80211_ds_plcp_hdr *);
-void		 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
-void		 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
+static int	 bwi_set_chan(struct bwi_softc *, struct ieee80211_channel *);
+static void	 bwi_next_scan(void *);
+static int	 bwi_rxeof(struct bwi_softc *, int);
+static int	 bwi_rxeof32(struct bwi_softc *);
+static int	 bwi_rxeof64(struct bwi_softc *);
+static void	 bwi_reset_rx_ring32(struct bwi_softc *, uint32_t);
+static void	 bwi_free_txstats32(struct bwi_softc *);
+static void	 bwi_free_rx_ring32(struct bwi_softc *);
+static void	 bwi_free_tx_ring32(struct bwi_softc *, int);
+static void	 bwi_free_txstats64(struct bwi_softc *);
+static void	 bwi_free_rx_ring64(struct bwi_softc *);
+static void	 bwi_free_tx_ring64(struct bwi_softc *, int);
+static uint8_t	 bwi_ieee80211_rate2plcp(uint8_t rate, enum ieee80211_phymode);
+static uint8_t	 bwi_ieee80211_plcp2rate(uint8_t rate, enum ieee80211_phymode);
+static enum bwi_ieee80211_modtype
+		 bwi_ieee80211_rate2modtype(uint8_t rate);
+static uint8_t	 bwi_ofdm_plcp2rate(const uint32_t *);
+static uint8_t	 bwi_ds_plcp2rate(const struct ieee80211_ds_plcp_hdr *);
+static void	 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
+static void	 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
 		     uint8_t);
-void		 bwi_plcp_header(void *, int, uint8_t);
-int		 bwi_encap(struct bwi_softc *, int, struct mbuf *,
-		     struct ieee80211_node *);
-void		 bwi_start_tx32(struct bwi_softc *, uint32_t, int);
-void		 bwi_start_tx64(struct bwi_softc *, uint32_t, int);
-void		 bwi_txeof_status32(struct bwi_softc *);
-void		 bwi_txeof_status64(struct bwi_softc *);
-void		 _bwi_txeof(struct bwi_softc *, uint16_t);
-void		 bwi_txeof_status(struct bwi_softc *, int);
-void		 bwi_txeof(struct bwi_softc *);
-int		 bwi_bbp_power_on(struct bwi_softc *, enum bwi_clock_mode);
-void		 bwi_bbp_power_off(struct bwi_softc *);
-int		 bwi_get_pwron_delay(struct bwi_softc *sc);
-int		 bwi_bus_attach(struct bwi_softc *);
-const char 	*bwi_regwin_name(const struct bwi_regwin *);
-int		 bwi_regwin_is_enabled(struct bwi_softc *, struct bwi_regwin *);
-uint32_t	 bwi_regwin_disable_bits(struct bwi_softc *);
-void		 bwi_regwin_enable(struct bwi_softc *, struct bwi_regwin *,
+static void	 bwi_plcp_header(void *, int, uint8_t);
+static int	 bwi_encap(struct bwi_softc *, int, struct mbuf *,
+		     struct ieee80211_node **, int);
+static void	 bwi_start_tx32(struct bwi_softc *, uint32_t, int);
+static void	 bwi_start_tx64(struct bwi_softc *, uint32_t, int);
+static void	 bwi_txeof_status32(struct bwi_softc *);
+static void	 bwi_txeof_status64(struct bwi_softc *);
+static void	 _bwi_txeof(struct bwi_softc *, uint16_t);
+static void	 bwi_txeof_status(struct bwi_softc *, int);
+static void	 bwi_txeof(struct bwi_softc *);
+static int	 bwi_bbp_power_on(struct bwi_softc *, enum bwi_clock_mode);
+static void	 bwi_bbp_power_off(struct bwi_softc *);
+static int	 bwi_get_pwron_delay(struct bwi_softc *sc);
+static int	 bwi_bus_attach(struct bwi_softc *);
+static const char
+		*bwi_regwin_name(const struct bwi_regwin *);
+static int	 bwi_regwin_is_enabled(struct bwi_softc *, struct bwi_regwin *);
+static uint32_t	 bwi_regwin_disable_bits(struct bwi_softc *);
+static void	 bwi_regwin_enable(struct bwi_softc *, struct bwi_regwin *,
 		     uint32_t);
-void		 bwi_regwin_disable(struct bwi_softc *, struct bwi_regwin *,
+static void	 bwi_regwin_disable(struct bwi_softc *, struct bwi_regwin *,
 		     uint32_t);
-void		 bwi_set_bssid(struct bwi_softc *, const uint8_t *);
-void		 bwi_updateslot(struct ieee80211com *);
-void		 bwi_calibrate(void *);
-int		 bwi_calc_rssi(struct bwi_softc *,
+static void	 bwi_set_bssid(struct bwi_softc *, const uint8_t *);
+static void	 bwi_updateslot(struct ifnet *);
+static void	 bwi_calibrate(void *);
+static int	 bwi_calc_rssi(struct bwi_softc *,
 		     const struct bwi_rxbuf_hdr *);
-uint8_t		 bwi_ack_rate(struct ieee80211_node *, uint8_t);
-uint16_t	 bwi_txtime(struct ieee80211com *, struct ieee80211_node *,
-		     uint, uint8_t, uint32_t);
-enum bwi_modtype
-		 bwi_rate2modtype(uint8_t);
+static uint8_t	 bwi_ieee80211_ack_rate(struct ieee80211_node *, uint8_t);
+static uint16_t	 bwi_ieee80211_txtime(struct ieee80211com *,
+		     struct ieee80211_node *, uint, uint8_t, uint32_t);
 
-
+/* MAC */
 static const uint8_t bwi_sup_macrev[] = { 2, 4, 5, 6, 7, 9, 10 };
 
+/* PHY */
 #define SUP_BPHY(num)	{ .rev = num, .init = bwi_phy_init_11b_rev##num }
 
 static const struct {
@@ -456,22 +495,20 @@ static const int8_t	bwi_txpower_map_11b[BWI_TSSI_MAX] =
 static const int8_t	bwi_txpower_map_11g[BWI_TSSI_MAX] =
 	{ BWI_TXPOWER_MAP_11G };
 
-/* IF_BWI */
+/* INTERFACE */
 
 struct bwi_myaddr_bssid {
 	uint8_t		myaddr[IEEE80211_ADDR_LEN];
 	uint8_t		bssid[IEEE80211_ADDR_LEN];
 } __packed;
 
+/* [TRC: XXX What are these about?] */
+
 #define IEEE80211_DS_PLCP_SERVICE_LOCKED	0x04
 #define IEEE80211_DS_PLCL_SERVICE_PBCC		0x08
 #define IEEE80211_DS_PLCP_SERVICE_LENEXT5	0x20
 #define IEEE80211_DS_PLCP_SERVICE_LENEXT6	0x40
 #define IEEE80211_DS_PLCP_SERVICE_LENEXT7	0x80
-
-struct cfdriver bwi_cd = {
-	NULL, "bwi", DV_IFNET
-};
 
 static const struct {
 	uint16_t	did_min;
@@ -525,7 +562,7 @@ static const struct {
 	.led_act = { BWI_VENDOR_LED_ACT_##vendor }	\
 }
 
-const struct {
+static const struct {
 	uint16_t	vid;
 	uint8_t		led_act[BWI_LED_MAX];
 } bwi_vendor_led_act[] = {
@@ -533,62 +570,163 @@ const struct {
 	VENDOR_LED_ACT(LINKSYS)
 };
 
-const uint8_t bwi_default_led_act[BWI_LED_MAX] =
+static const uint8_t bwi_default_led_act[BWI_LED_MAX] =
 	{ BWI_VENDOR_LED_ACT_DEFAULT };
 
 #undef VENDOR_LED_ACT
 
-const struct {
+static const struct {
 	int	on_dur;
 	int	off_dur;
 } bwi_led_duration[109] = {
-	{ 400, 100 }, {   0,   0 }, { 150 ,  75 }, {   0,   0 }, {  90,  45 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {  66,  34 }, {  53,   26 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {  42,  21 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {  35,   17 }, {   0,   0 }, {  32,  16 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {  21,  10 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {  16,   8 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {  11,    5 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   9,   4 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   0,   0 }, {   0,   0 },
-	{   0,   0 }, {   0,   0 }, {   0,    0 }, {   7,   3 }
+	[0]	= { 400, 100 },
+	[2]	= { 150, 75 },
+	[4]	= { 90, 45 },
+	[11]	= { 66, 34 },
+	[12]	= { 53, 26 },
+	[18]	= { 42, 21 },
+	[22]	= { 35, 17 },
+	[24]	= { 32, 16 },
+	[36]	= { 21, 10 },
+	[48]	= { 16, 8 },
+	[72]	= { 11, 5 },
+	[96]	= { 9, 4 },
+	[108]	= { 7, 3 }
 };
+
+/* [TRC: XXX Should this be zeroed?] */
 
 static const uint8_t bwi_zero_addr[IEEE80211_ADDR_LEN];
 
+/* [TRC: Why is this not in net80211/ieee80211.c, as in OpenBSD?] */
 
-enum bwi_modtype {
+static const struct ieee80211_rateset bwi_ieee80211_rateset_11b =
+	{ 4, { 2, 4, 11, 22 } };
+static const struct ieee80211_rateset bwi_ieee80211_rateset_11g =
+	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
+
+/* [TRC: Derived from DragonFly's src/sys/netproto/802_11/_ieee80211.h */
+
+enum bwi_ieee80211_modtype {
 	IEEE80211_MODTYPE_DS	= 0,	/* DS/CCK modulation */
 	IEEE80211_MODTYPE_PBCC	= 1,	/* PBCC modulation */
 	IEEE80211_MODTYPE_OFDM	= 2	/* OFDM modulation */
 };
 #define IEEE80211_MODTYPE_CCK   IEEE80211_MODTYPE_DS
 
+/*
+ * Setup sysctl(3) MIB, hw.bwi.* and hw.bwiN.*
+ */
+
+#ifdef BWI_DEBUG
+SYSCTL_SETUP(sysctl_bwi, "sysctl bwi(4) subtree setup")
+{
+	int rc;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "bwi",
+	    SYSCTL_DESCR("bwi global controls"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("default debug flags"),
+	    NULL, 0, &bwi_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+
+err:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+#endif	/* BWI_DEBUG */
+
+static void
+bwi_sysctlattach(struct bwi_softc *sc)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	struct sysctllog **clog = &sc->sc_sysctllog;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, sc->sc_dev.dv_xname,
+	    SYSCTL_DESCR("bwi controls and statistics"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "fw_version", SYSCTL_DESCR("firmware version"),
+	    NULL, 0, &sc->sc_fw_version, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "dwell_time", SYSCTL_DESCR("channel dwell time during scan (msec)"),
+	    NULL, 0, &sc->sc_dwell_time, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "led_idle", SYSCTL_DESCR("# ticks before LED enters idle state"),
+	    NULL, 0, &sc->sc_led_idle, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "led_blink", SYSCTL_DESCR("allow LED to blink"),
+	    NULL, 0, &sc->sc_led_blink, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "txpwr_calib", SYSCTL_DESCR("enable software TX power calibration"),
+	    NULL, 0, &sc->sc_txpwr_calib, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+#ifdef BWI_DEBUG
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("debug flags"),
+	    NULL, 0, &sc->sc_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif
+
+	return;
+
+err:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
 /* CODE */
 
 int
-bwi_intr(void *xsc)
+bwi_intr(void *arg)
 {
-	struct bwi_softc *sc = xsc;
+	struct bwi_softc *sc = arg;
 	struct bwi_mac *mac;
-	struct ifnet *ifp = sc->sc_ic->ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	uint32_t intr_status;
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
 	int i, txrx_error, tx = 0, rx_data = -1;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if (!device_is_active(&sc->sc_dev) ||
+	    (ifp->if_flags & IFF_RUNNING) == 0)
 		return (0);
 
 	/*
@@ -602,8 +740,7 @@ bwi_intr(void *xsc)
 	if (intr_status == 0)		/* Nothing is interesting */
 		return (0);
 
-	DPRINTF(2, "%s: intr status 0x%08x\n",
-	    sc->sc_dev.dv_xname, intr_status);
+	DPRINTF(sc, BWI_DBG_INTR, "intr status 0x%08x\n", intr_status);
 
 	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
@@ -622,8 +759,9 @@ bwi_intr(void *xsc)
 		    CSR_READ_4(sc, BWI_TXRX_INTR_STATUS(i)) & mask;
 
 		if (txrx_intr_status[i] & BWI_TXRX_INTR_ERROR) {
-			printf("%s: intr fatal TX/RX (%d) error 0x%08x\n",
-			    sc->sc_dev.dv_xname, i, txrx_intr_status[i]);
+			aprint_error_dev(&sc->sc_dev,
+			    "intr fatal TX/RX (%d) error 0x%08x\n",
+			    i, txrx_intr_status[i]);
 			txrx_error = 1;
 		}
 	}
@@ -641,7 +779,7 @@ bwi_intr(void *xsc)
 
 	if (intr_status & BWI_INTR_PHY_TXERR) {
 		if (mac->mac_flags & BWI_MAC_F_PHYE_RESET) {
-			printf("intr PHY TX error\n");
+			aprint_error_dev(&sc->sc_dev, "intr PHY TX error\n");
 			/* XXX to netisr0? */
 			bwi_init_statechg(sc, 0);
 			return (0);
@@ -656,7 +794,7 @@ bwi_intr(void *xsc)
 		bwi_mac_config_ps(mac);
 
 	if (intr_status & BWI_INTR_EO_ATIM)
-		printf("%s: EO_ATIM\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "EO_ATIM\n");
 
 	if (intr_status & BWI_INTR_PMQ) {
 		for (;;) {
@@ -667,13 +805,13 @@ bwi_intr(void *xsc)
 	}
 
 	if (intr_status & BWI_INTR_NOISE)
-		printf("%s: intr noise\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "intr noise\n");
 
 	if (txrx_intr_status[0] & BWI_TXRX_INTR_RX)
-		rx_data = sc->sc_rxeof(sc);
+		rx_data = (sc->sc_rxeof)(sc);
 
 	if (txrx_intr_status[3] & BWI_TXRX_INTR_RX) {
-		sc->sc_txeof_status(sc);
+		(sc->sc_txeof_status)(sc);
 		tx = 1;
 	}
 
@@ -712,24 +850,41 @@ int
 bwi_attach(struct bwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = ic->ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	struct bwi_mac *mac;
 	struct bwi_phy *phy;
-	int i, error;
+	int s, i, error;
 
-	DPRINTF(1, "\n");
+	/* [TRC: XXX Is this necessary?] */
+	s = splnet();
 
-	/* Initialize LED vars */
+	/*
+	 * Initialize sysctl variables
+	 */
+	sc->sc_fw_version = BWI_FW_VERSION3;
+	sc->sc_dwell_time = 200;
 	sc->sc_led_idle = (2350 * hz) / 1000;
 	sc->sc_led_blink = 1;
+	sc->sc_txpwr_calib = 1;
+#ifdef BWI_DEBUG
+	sc->sc_debug = bwi_debug;
+#endif
 
+	DPRINTF(sc, BWI_DBG_ATTACH, "%s\n", __func__);
+
+	/* [TRC: XXX amrr] */
 	/* AMRR rate control */
 	sc->sc_amrr.amrr_min_success_threshold = 1;
 	sc->sc_amrr.amrr_max_success_threshold = 15;
-	timeout_set(&sc->sc_amrr_ch, bwi_amrr_timeout, sc);
+	callout_init(&sc->sc_amrr_ch, 0);
+	callout_setfunc(&sc->sc_amrr_ch, bwi_amrr_timeout, sc);
 
-	timeout_set(&sc->sc_scan_ch, bwi_next_scan, sc);
-	timeout_set(&sc->sc_calib_ch, bwi_calibrate, sc);
+	callout_init(&sc->sc_scan_ch, 0);
+	callout_setfunc(&sc->sc_scan_ch, bwi_next_scan, sc);
+	callout_init(&sc->sc_calib_ch, 0);
+	callout_setfunc(&sc->sc_calib_ch, bwi_calibrate, sc);
+
+	bwi_sysctlattach(sc);
 
 	bwi_power_on(sc, 1);
 
@@ -799,25 +954,25 @@ bwi_attach(struct bwi_softc *sc)
 	ifp->if_ioctl = bwi_ioctl;
 	ifp->if_start = bwi_start;
 	ifp->if_watchdog = bwi_watchdog;
+	ifp->if_stop = bwi_stop;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Get locale */
 	sc->sc_locale = __SHIFTOUT(bwi_read_sprom(sc, BWI_SPROM_CARD_INFO),
 	    BWI_SPROM_CARD_INFO_LOCALE);
-	DPRINTF(1, "%s: locale: %d\n", sc->sc_dev.dv_xname, sc->sc_locale);
+	DPRINTF(sc, BWI_DBG_ATTACH, "locale: %d\n", sc->sc_locale);
 
 	/*
 	 * Setup ratesets, phytype, channels and get MAC address
 	 */
 	if (phy->phy_mode == IEEE80211_MODE_11B ||
 	    phy->phy_mode == IEEE80211_MODE_11G) {
-	    	uint16_t chan_flags;
+		uint16_t chan_flags;
 
 		ic->ic_sup_rates[IEEE80211_MODE_11B] =
-		    ieee80211_std_rateset_11b;
+		    bwi_ieee80211_rateset_11b;
 
 		if (phy->phy_mode == IEEE80211_MODE_11B) {
 			chan_flags = IEEE80211_CHAN_B;
@@ -829,24 +984,23 @@ bwi_attach(struct bwi_softc *sc)
 			    IEEE80211_CHAN_2GHZ;
 			ic->ic_phytype = IEEE80211_T_OFDM;
 			ic->ic_sup_rates[IEEE80211_MODE_11G] =
-			    ieee80211_std_rateset_11g;
+			    bwi_ieee80211_rateset_11g;
 		}
 
 		/* XXX depend on locale */
 		for (i = 1; i <= 14; ++i) {
 			ic->ic_channels[i].ic_freq =
-				ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
+			    ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
 			ic->ic_channels[i].ic_flags = chan_flags;
 		}
 
 		bwi_get_eaddr(sc, BWI_SPROM_11BG_EADDR, ic->ic_myaddr);
 		if (IEEE80211_IS_MULTICAST(ic->ic_myaddr)) {
 			bwi_get_eaddr(sc, BWI_SPROM_11A_EADDR, ic->ic_myaddr);
-			if (IEEE80211_IS_MULTICAST(ic->ic_myaddr)) {
-				printf("%s: invalid MAC address: %s\n",
-				    sc->sc_dev.dv_xname,
+			if (IEEE80211_IS_MULTICAST(ic->ic_myaddr))
+				aprint_error_dev(&sc->sc_dev,
+				    "invalid MAC address: %s\n",
 				    ether_sprintf(ic->ic_myaddr));
-			}
 		}
 	} else if (phy->phy_mode == IEEE80211_MODE_11A) {
 		/* TODO: 11A */
@@ -855,15 +1009,11 @@ bwi_attach(struct bwi_softc *sc)
 	} else
 		panic("unknown phymode %d\n", phy->phy_mode);
 
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
-
-	sc->sc_fw_version = BWI_FW_VERSION3;
-	sc->sc_dwell_time = 200;
-
+	ic->ic_ifp = ifp;
 	ic->ic_caps = IEEE80211_C_SHSLOT |
 	    IEEE80211_C_SHPREAMBLE |
-	    IEEE80211_C_WEP |
-	    IEEE80211_C_RSN |
+	    IEEE80211_C_IBSS |
+	    IEEE80211_C_HOSTAP |
 	    IEEE80211_C_MONITOR;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_opmode = IEEE80211_M_STA;
@@ -871,23 +1021,26 @@ bwi_attach(struct bwi_softc *sc)
 	ic->ic_updateslot = bwi_updateslot;
 
 	if_attach(ifp);
-	ieee80211_ifattach(ifp);
+	ieee80211_ifattach(ic);
+
+	/* [TRC: XXX Not supported on NetBSD?] */
+	/* ic->ic_flags_ext |= IEEE80211_FEXT_SWBMISS; */
 
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bwi_newstate;
+	/* [TRC: XXX amrr] */
 	ic->ic_newassoc = bwi_newassoc;
+	ic->ic_node_alloc = bwi_node_alloc;
 
-	ieee80211_media_init(ifp, bwi_media_change, ieee80211_media_status);
-
-	if (error) {
-		ieee80211_ifdetach(ifp);
-		goto fail;
-	}
+	ieee80211_media_init(ic, bwi_media_change, ieee80211_media_status);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
-	    sizeof(struct ieee80211_frame) + 64);
+	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
+	    &sc->sc_drvbpf);
 
+	/* [TRC: XXX DragonFlyBSD rounds this up to a multiple of
+	   sizeof(uint32_t).  Should we?] */
 	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
 	sc->sc_rxtap.wr_ihdr.it_present = htole32(BWI_RX_RADIOTAP_PRESENT);
@@ -897,45 +1050,56 @@ bwi_attach(struct bwi_softc *sc)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(BWI_TX_RADIOTAP_PRESENT);
 #endif
 
+	splx(s);
+	ieee80211_announce(ic);
 	return (0);
 fail:
+	/* [TRC: XXX DragonFlyBSD detaches the device here.  Should we?] */
 	return (error);
 }
 
-int
-bwi_detach(void *arg)
+void
+bwi_detach(struct bwi_softc *sc)
 {
-	struct bwi_softc *sc = arg;
-	struct ifnet *ifp = sc->sc_ic->ic_ifp;
-	int i;
+	struct ifnet *ifp = &sc->sc_if;
+	int i, s;
 
-	bwi_stop(sc, 1);
-	ieee80211_ifdetach(ifp);
+	s = splnet();
+
+	bwi_stop(ifp, 1);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+
+	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
 
 	for (i = 0; i < sc->sc_nmac; ++i)
 		bwi_mac_detach(&sc->sc_mac[i]);
 
-	bwi_dma_free(sc);
+	sysctl_teardown(&sc->sc_sysctllog);
 
-	return (0);
+	splx(s);
+
+	bwi_dma_free(sc);
 }
 
 /* MAC */
 
-void
+static void
 bwi_tmplt_write_4(struct bwi_mac *mac, uint32_t ofs, uint32_t val)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 
 	if (mac->mac_flags & BWI_MAC_F_BSWAP)
-		val = swap32(val);
+		val = bswap32(val);
 
 	CSR_WRITE_4(sc, BWI_MAC_TMPLT_CTRL, ofs);
 	CSR_WRITE_4(sc, BWI_MAC_TMPLT_DATA, val);
 }
 
-void
+static void
 bwi_hostflags_write(struct bwi_mac *mac, uint64_t flags)
 {
 	uint64_t val;
@@ -949,7 +1113,7 @@ bwi_hostflags_write(struct bwi_mac *mac, uint64_t flags)
 	/* HI has unclear meaning, so leave it as it is */
 }
 
-uint64_t
+static uint64_t
 bwi_hostflags_read(struct bwi_mac *mac)
 {
 	uint64_t flags, val;
@@ -966,7 +1130,7 @@ bwi_hostflags_read(struct bwi_mac *mac)
 	return (flags);
 }
 
-uint16_t
+static uint16_t
 bwi_memobj_read_2(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -983,7 +1147,7 @@ bwi_memobj_read_2(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0)
 	return (CSR_READ_2(sc, data_reg));
 }
 
-uint32_t
+static uint32_t
 bwi_memobj_read_4(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -1008,7 +1172,7 @@ bwi_memobj_read_4(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0)
 	}
 }
 
-void
+static void
 bwi_memobj_write_2(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0,
     uint16_t v)
 {
@@ -1026,7 +1190,7 @@ bwi_memobj_write_2(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0,
 	CSR_WRITE_2(sc, data_reg, v);
 }
 
-void
+static void
 bwi_memobj_write_4(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0,
     uint32_t v)
 {
@@ -1046,7 +1210,7 @@ bwi_memobj_write_4(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0,
 	}
 }
 
-int
+static int
 bwi_mac_lateattach(struct bwi_mac *mac)
 {
 	int error;
@@ -1089,7 +1253,7 @@ bwi_mac_lateattach(struct bwi_mac *mac)
 	return (0);
 }
 
-int
+static int
 bwi_mac_init(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -1120,7 +1284,7 @@ bwi_mac_init(struct bwi_mac *mac)
 	/* Calibrate PHY */
 	error = bwi_phy_calibrate(mac);
 	if (error) {
-		printf("%s: PHY calibrate failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "PHY calibrate failed\n");
 		return (error);
 	}
 
@@ -1221,10 +1385,10 @@ bwi_mac_init(struct bwi_mac *mac)
 	 * Initialize TX rings
 	 */
 	for (i = 0; i < BWI_TX_NRING; ++i) {
-		error = sc->sc_init_tx_ring(sc, i);
+		error = (sc->sc_init_tx_ring)(sc, i);
 		if (error) {
-			printf("%s: can't initialize %dth TX ring\n",
-			    sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't initialize %dth TX ring\n", i);
 			return (error);
 		}
 	}
@@ -1232,9 +1396,9 @@ bwi_mac_init(struct bwi_mac *mac)
 	/*
 	 * Initialize RX ring
 	 */
-	error = sc->sc_init_rx_ring(sc);
+	error = (sc->sc_init_rx_ring)(sc);
 	if (error) {
-		printf("%s: can't initialize RX ring\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't initialize RX ring\n");
 		return (error);
 	}
 
@@ -1242,10 +1406,10 @@ bwi_mac_init(struct bwi_mac *mac)
 	 * Initialize TX stats if the current MAC uses that
 	 */
 	if (mac->mac_flags & BWI_MAC_F_HAS_TXSTATS) {
-		error = sc->sc_init_txstats(sc);
+		error = (sc->sc_init_txstats)(sc);
 		if (error) {
-			printf("%s: can't initialize TX stats ring\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't initialize TX stats ring\n");
 			return (error);
 		}
 	}
@@ -1260,7 +1424,7 @@ bwi_mac_init(struct bwi_mac *mac)
 	return (0);
 }
 
-void
+static void
 bwi_mac_reset(struct bwi_mac *mac, int link_phy)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -1298,15 +1462,17 @@ bwi_mac_reset(struct bwi_mac *mac, int link_phy)
 	CSR_WRITE_4(sc, BWI_MAC_STATUS, status);
 
 	if (link_phy) {
-		DPRINTF(1, "%s: PHY is linked\n", sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_ATTACH | BWI_DBG_INIT,
+		    "%s\n", "PHY is linked");
 		mac->mac_phy.phy_flags |= BWI_PHY_F_LINKED;
 	} else {
-		DPRINTF(1, "%s: PHY is unlinked\n", sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_ATTACH | BWI_DBG_INIT,
+		    "%s\n", "PHY is unlinked");
 		mac->mac_phy.phy_flags &= ~BWI_PHY_F_LINKED;
 	}
 }
 
-void
+static void
 bwi_mac_set_tpctl_11bg(struct bwi_mac *mac, const struct bwi_tpctl *new_tpctl)
 {
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -1343,7 +1509,7 @@ bwi_mac_set_tpctl_11bg(struct bwi_mac *mac, const struct bwi_tpctl *new_tpctl)
 		bwi_rf_lo_adjust(mac, tpctl);
 }
 
-int
+static int
 bwi_mac_test(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -1358,7 +1524,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	MOBJ_WRITE_4(mac, BWI_COMM_MOBJ, 0, TEST_VAL1);
 	val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 	if (val != TEST_VAL1) {
-		printf("%s: TEST1 failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "TEST1 failed\n");
 		return (ENXIO);
 	}
 
@@ -1366,7 +1532,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	MOBJ_WRITE_4(mac, BWI_COMM_MOBJ, 0, TEST_VAL2);
 	val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 	if (val != TEST_VAL2) {
-		printf("%s: TEST2 failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "TEST2 failed\n");
 		return (ENXIO);
 	}
 
@@ -1375,15 +1541,15 @@ bwi_mac_test(struct bwi_mac *mac)
 
 	val = CSR_READ_4(sc, BWI_MAC_STATUS);
 	if ((val & ~BWI_MAC_STATUS_PHYLNK) != BWI_MAC_STATUS_IHREN) {
-		printf("%s: %s failed, MAC status 0x%08x\n",
-		    sc->sc_dev.dv_xname, __func__, val);
+		aprint_error_dev(&sc->sc_dev, "%s failed, MAC status 0x%08x\n",
+		    __func__, val);
 		return (ENXIO);
 	}
 
 	val = CSR_READ_4(sc, BWI_MAC_INTR_STATUS);
 	if (val != 0) {
-		printf("%s: %s failed, intr status %08x\n",
-		    sc->sc_dev.dv_xname, __func__, val);
+		aprint_error_dev(&sc->sc_dev, "%s failed, intr status %08x\n",
+		    __func__, val);
 		return (ENXIO);
 	}
 #undef TEST_VAL2
@@ -1392,7 +1558,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	return (0);
 }
 
-void
+static void
 bwi_mac_setup_tpctl(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -1487,25 +1653,26 @@ bwi_mac_setup_tpctl(struct bwi_mac *mac)
 		break;
 	}
 back:
-	DPRINTF(1, "%s: bbp atten: %u, rf atten: %u, ctrl1: %u, ctrl2: %u\n",
-	    sc->sc_dev.dv_xname, tpctl->bbp_atten, tpctl->rf_atten,
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_TXPOWER,
+	    "bbp atten: %u, rf atten: %u, ctrl1: %u, ctrl2: %u\n",
+	    tpctl->bbp_atten, tpctl->rf_atten,
 	    tpctl->tp_ctrl1, tpctl->tp_ctrl2);
 }
 
-void
+static void
 bwi_mac_dummy_xmit(struct bwi_mac *mac)
 {
 #define PACKET_LEN	5
+	static const uint32_t	packet_11a[PACKET_LEN] =
+	    { 0x000201cc, 0x00d40000, 0x00000000, 0x01000000, 0x00000000 };
+	static const uint32_t	packet_11bg[PACKET_LEN] =
+	    { 0x000b846e, 0x00d40000, 0x00000000, 0x01000000, 0x00000000 };
+
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
 	const uint32_t *packet;
 	uint16_t val_50c;
 	int wait_max, i;
-
-	static const uint32_t	packet_11a[PACKET_LEN] =
-	    { 0x000201cc, 0x00d40000, 0x00000000, 0x01000000, 0x00000000 };
-	static const uint32_t	packet_11bg[PACKET_LEN] =
-	    { 0x000b846e, 0x00d40000, 0x00000000, 0x01000000, 0x00000000 };
 
 	if (mac->mac_phy.phy_mode == IEEE80211_MODE_11A) {
 		wait_max = 30;
@@ -1557,7 +1724,7 @@ bwi_mac_dummy_xmit(struct bwi_mac *mac)
 #undef PACKET_LEN
 }
 
-void
+static void
 bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -1609,10 +1776,11 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 
 	mac->mac_flags |= BWI_MAC_F_TPCTL_INITED;
 	rf->rf_base_tssi = PHY_READ(mac, 0x29);
-	DPRINTF(1, "%s: base tssi %d\n", sc->sc_dev.dv_xname, rf->rf_base_tssi);
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_TXPOWER,
+	    "base tssi %d\n", rf->rf_base_tssi);
 
 	if (abs(rf->rf_base_tssi - rf->rf_idle_tssi) >= 20) {
-		printf("%s: base tssi measure failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "base tssi measure failed\n");
 		mac->mac_flags |= BWI_MAC_F_TPCTL_ERROR;
 	}
 
@@ -1624,241 +1792,225 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 	bwi_rf_clear_tssi(mac);
 }
 
-void
+static void
 bwi_mac_detach(struct bwi_mac *mac)
 {
 	bwi_mac_fw_free(mac);
 }
 
-int
-bwi_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,
-    size_t *size, size_t *offset)
+static int
+bwi_mac_fw_alloc(struct bwi_mac *mac)
 {
-	int i, nfiles, off = 0, ret = 1;
-	struct fwheader *h;
+	struct bwi_softc *sc = mac->mac_sc;
+	int idx, error;
 
-	if ((h = malloc(sizeof(struct fwheader), M_DEVBUF, M_NOWAIT)) == NULL)
-		return (ret);
+	error = bwi_mac_fw_image_alloc(mac, BWI_FW_UCODE_PREFIX,
+	    mac->mac_rev >= 5 ? 5 : mac->mac_rev, &mac->mac_ucode_fwi,
+	    BWI_FW_T_UCODE);
+	if (error)
+		goto fail_ucode;
 
-	/* get number of firmware files */
-	bcopy(ucode, &nfiles, sizeof(nfiles));
-	nfiles = ntohl(nfiles);
-	off += sizeof(nfiles);
+	error = bwi_mac_fw_image_alloc(mac, BWI_FW_PCM_PREFIX,
+	    mac->mac_rev >= 5 ? 5 : mac->mac_rev, &mac->mac_pcm_fwi,
+	    BWI_FW_T_PCM);
+	if (error)
+		goto fail_pcm;
 
-	/* parse header and search the firmware */
-	for (i = 0; i < nfiles && off < size_ucode; i++) {
-		bzero(h, sizeof(struct fwheader));
-		bcopy(ucode + off, h, sizeof(struct fwheader));
-		off += sizeof(struct fwheader);
-
-		if (strcmp(name, h->filename) == 0) {
-			ret = 0;
-			*size = ntohl(h->filesize);
-			*offset = ntohl(h->fileoffset);
-			break;
-		}
+	/* TODO: 11A */
+	if (mac->mac_rev == 2 || mac->mac_rev == 4)
+		idx = 2;
+	else if (mac->mac_rev >= 5 && mac->mac_rev <= 20)
+		idx = 5;
+	else {
+		aprint_error_dev(&sc->sc_dev,
+		    "no suitable IV for MAC rev %d\n", mac->mac_rev);
+		error = ENODEV;
+		goto fail_iv;
 	}
 
-	free(h, M_DEVBUF);
+	error = bwi_mac_fw_image_alloc(mac, BWI_FW_IV_PREFIX, idx,
+	    &mac->mac_iv_fwi, BWI_FW_T_IV);
+	if (error)
+		goto fail_iv;
 
-	return (ret);
+	/* TODO: 11A */
+	if (mac->mac_rev == 2 || mac->mac_rev == 4 ||
+	    mac->mac_rev >= 11)
+		/* No extended IV */
+		goto back;
+	else if (mac->mac_rev >= 5 && mac->mac_rev <= 10)
+		idx = 5;
+	else {
+		aprint_error_dev(&sc->sc_dev,
+		    "no suitable ExtIV for MAC rev %d\n", mac->mac_rev);
+		error = ENODEV;
+		goto fail_iv_ext;
+	}
+
+	error = bwi_mac_fw_image_alloc(mac, BWI_FW_IV_EXT_PREFIX, idx,
+	    &mac->mac_iv_ext_fwi, BWI_FW_T_IV);
+	if (error)
+		goto fail_iv_ext;
+
+back:	return (0);
+
+fail_iv_ext:
+	bwi_mac_fw_image_free(mac, &mac->mac_iv_fwi);
+
+fail_iv:
+	bwi_mac_fw_image_free(mac, &mac->mac_pcm_fwi);
+
+fail_pcm:
+	bwi_mac_fw_image_free(mac, &mac->mac_ucode_fwi);
+
+fail_ucode:
+	return (error);
 }
 
-int
-bwi_fwimage_is_valid(struct bwi_softc *sc, uint8_t *fw, size_t fw_len,
-    char *fw_name, uint8_t fw_type)
+static void
+bwi_mac_fw_free(struct bwi_mac *mac)
 {
-	const struct bwi_fwhdr *hdr;
+	bwi_mac_fw_image_free(mac, &mac->mac_ucode_fwi);
+	bwi_mac_fw_image_free(mac, &mac->mac_pcm_fwi);
+	bwi_mac_fw_image_free(mac, &mac->mac_iv_fwi);
+	bwi_mac_fw_image_free(mac, &mac->mac_iv_ext_fwi);
+}
 
-	if (fw_len < sizeof(*hdr)) {
-		printf("%s: invalid firmware (%s): invalid size %u\n",
-		    sc->sc_dev.dv_xname, fw_name, fw_len);
-		return (1);
+static int
+bwi_mac_fw_image_alloc(struct bwi_mac *mac, const char *prefix, int idx,
+    struct bwi_fw_image *fwi, uint8_t fw_type)
+{
+	struct bwi_softc *sc = mac->mac_sc;
+	char *fw_name = fwi->fwi_name;
+	size_t fw_name_size = sizeof(fwi->fwi_name);
+	firmware_handle_t fwh;
+	const struct bwi_fwhdr *hdr;
+	int error;
+
+	/* [TRC: XXX ???] */
+	if (fwi->fwi_data != NULL)
+		return (0);
+
+	snprintf(fw_name, fw_name_size, BWI_FW_NAME_FORMAT, sc->sc_fw_version,
+	    prefix, idx);
+
+	DPRINTF(sc, BWI_DBG_FIRMWARE, "opening firmware %s\n", fw_name);
+
+	error = firmware_open("bwi", fw_name, &fwh);
+	if (error) {
+		aprint_error_dev(&sc->sc_dev, "firmware_open failed on %s\n",
+		    fw_name);
+		goto fail;
 	}
 
-	hdr = (const struct bwi_fwhdr *)fw;
+	fwi->fwi_size = firmware_get_size(fwh);
+	if (fwi->fwi_size < sizeof(struct bwi_fwhdr)) {
+		aprint_error_dev(&sc->sc_dev,
+		    "firmware image %s has no header\n",
+		    fw_name);
+		error = EIO;
+		goto fail;
+	}
+
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_FIRMWARE,
+	    "firmware image %s, size %zx\n", fw_name, fwi->fwi_size);
+
+	fwi->fwi_data = firmware_malloc(fwi->fwi_size);
+	if (fwi->fwi_data == NULL) {
+		error = ENOMEM;
+		firmware_close(fwh);
+		goto fail;
+	}
+
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_FIRMWARE,
+	    "firmware image %s loaded at %p\n", fw_name, fwi->fwi_data);
+
+	fwi->fwi_data = firmware_malloc(fwi->fwi_size);
+	error = firmware_read(fwh, 0, fwi->fwi_data, fwi->fwi_size);
+	firmware_close(fwh);
+	if (error)
+		goto free_and_fail;
+
+	hdr = (const struct bwi_fwhdr *)fwi->fwi_data;
 
 	if (fw_type != BWI_FW_T_IV) {
 		/*
 		 * Don't verify IV's size, it has different meaning
 		 */
-		if (betoh32(hdr->fw_size) != fw_len - sizeof(*hdr)) {
-			printf("%s: invalid firmware (%s): size mismatch, "
-			    "fw %u, real %u\n",
-			    sc->sc_dev.dv_xname,
-			    fw_name,
-			    betoh32(hdr->fw_size),
-			    fw_len - sizeof(*hdr));
-			return (1);
+		size_t fw_size = (size_t)be32toh(hdr->fw_size);
+		if (fw_size != fwi->fwi_size - sizeof(*hdr)) {
+			aprint_error_dev(&sc->sc_dev, "firmware image %s"
+			    " size mismatch, fw %zx, real %zx\n", fw_name,
+			    fw_size, fwi->fwi_size - sizeof(*hdr));
+			goto invalid;
 		}
 	}
 
 	if (hdr->fw_type != fw_type) {
-		printf("%s: invalid firmware (%s): type mismatch, "
-		    "fw \'%c\', target \'%c\'\n",
-		    sc->sc_dev.dv_xname, fw_name, hdr->fw_type, fw_type);
-		return (1);
+		aprint_error_dev(&sc->sc_dev, "firmware image %s"
+		    " type mismatch, fw `%c', target `%c'\n", fw_name,
+		    hdr->fw_type, fw_type);
+		goto invalid;
 	}
 
 	if (hdr->fw_gen != BWI_FW_GEN_1) {
-		printf("%s: invalid firmware (%s): wrong generation, "
-		    "fw %d, target %d\n",
-		    sc->sc_dev.dv_xname, fw_name, hdr->fw_gen, BWI_FW_GEN_1);
-		return (1);
+		aprint_error_dev(&sc->sc_dev, "firmware image %s"
+		    " generation mismatch, fw %d, target %d\n", fw_name,
+		    hdr->fw_gen, BWI_FW_GEN_1);
+		goto invalid;
 	}
+
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_FIRMWARE,
+	    "firmware image %s loaded successfully\n", fw_name);
 
 	return (0);
+
+invalid:
+	error = EINVAL;
+
+free_and_fail:
+	firmware_free(fwi->fwi_data, 0);
+	fwi->fwi_data = NULL;
+	fwi->fwi_size = 0;
+
+fail:
+	return (error);
 }
 
-int
-bwi_mac_fw_alloc(struct bwi_mac *mac)
+static void
+bwi_mac_fw_image_free(struct bwi_mac *mac, struct bwi_fw_image *fwi)
 {
-	struct bwi_softc *sc = mac->mac_sc;
-	char *name = "bwi-airforce";
-	size_t offset;
-	char fwname[64];
-	int idx, error;
-
-	error = loadfirmware(name, &mac->mac_fw, &mac->mac_fw_size);
-	if (error != 0) {
-		printf("%s: error %d, could not read firmware %s\n",
-		    sc->sc_dev.dv_xname, error, name);
-		return (EIO);
-	}
-
-	if (mac->mac_ucode == NULL) {
-		snprintf(fwname, sizeof(fwname), "ucode%d.fw",
-		    mac->mac_rev >= 5 ? 5 : mac->mac_rev);
-
-		error = bwi_get_firmware(fwname, mac->mac_fw, mac->mac_fw_size,
-		    &mac->mac_ucode_size, &offset);
-		if (error != 0) {
-			printf("%s: error %d, could not read firmware %s!\n",
-			    sc->sc_dev.dv_xname, error, fwname);
-			return (ENOMEM);
-		}
-		mac->mac_ucode = (mac->mac_fw + offset);
-		DPRINTF(1, "%s: loaded firmware file %s\n",
-		    sc->sc_dev.dv_xname, fwname);
-
-		if (bwi_fwimage_is_valid(sc, mac->mac_ucode,
-		    mac->mac_ucode_size, fwname, BWI_FW_T_UCODE))
-			return (EINVAL);
-	}
-
-	if (mac->mac_pcm == NULL) {
-		snprintf(fwname, sizeof(fwname), "pcm%d.fw",
-		    mac->mac_rev < 5 ? 4 : 5);
-
-		error = bwi_get_firmware(fwname, mac->mac_fw, mac->mac_fw_size,
-		    &mac->mac_pcm_size, &offset);
-		if (error != 0) {
-			printf("%s: error %d, could not read firmware %s!\n",
-			    sc->sc_dev.dv_xname, error, fwname);
-			return (ENOMEM);
-		}
-		mac->mac_pcm = (mac->mac_fw + offset);
-		DPRINTF(1, "%s: loaded firmware file %s\n",
-		    sc->sc_dev.dv_xname, fwname);
-
-		if (bwi_fwimage_is_valid(sc, mac->mac_pcm,
-		    mac->mac_pcm_size, fwname, BWI_FW_T_PCM))
-			return (EINVAL);
-	}
-
-	if (mac->mac_iv == NULL) {
-		/* TODO: 11A */
-		if (mac->mac_rev == 2 || mac->mac_rev == 4) {
-			idx = 2;
-		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
-			idx = 5;
-		} else {
-			printf("%s: no suitable IV for MAC rev %d\n",
-			    sc->sc_dev.dv_xname, mac->mac_rev);
-			return (ENODEV);
-		}
-
-		snprintf(fwname, sizeof(fwname), "b0g0initvals%d.fw", idx);
-
-		error = bwi_get_firmware(fwname, mac->mac_fw, mac->mac_fw_size,
-		    &mac->mac_iv_size, &offset);
-		if (error != 0) {
-			printf("%s: error %d, could not read firmware %s!\n",
-			    sc->sc_dev.dv_xname, error, fwname);
-			return (ENOMEM);
-		}
-		mac->mac_iv = (mac->mac_fw + offset);
-		DPRINTF(1, "%s: loaded firmware file %s\n",
-		    sc->sc_dev.dv_xname, fwname);
-
-		if (bwi_fwimage_is_valid(sc, mac->mac_iv,
-		    mac->mac_iv_size, fwname, BWI_FW_T_IV))
-			return (EINVAL);
-	}
-
-	if (mac->mac_iv_ext == NULL) {
-		/* TODO: 11A */
-		if (mac->mac_rev == 2 || mac->mac_rev == 4 ||
-		    mac->mac_rev >= 11) {
-			/* No extended IV */
-			goto back;
-		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
-			idx = 5;
-		} else {
-			printf("%s: no suitable ExtIV for MAC rev %d\n",
-			    sc->sc_dev.dv_xname, mac->mac_rev);
-			return (ENODEV);
-		}
-
-		snprintf(fwname, sizeof(fwname), "b0g0bsinitvals%d.fw", idx);
-
-		error = bwi_get_firmware(fwname, mac->mac_fw, mac->mac_fw_size,
-		    &mac->mac_iv_ext_size, &offset);
-		if (error != 0) {
-			printf("%s: error %d, could not read firmware %s!\n",
-			    sc->sc_dev.dv_xname, error, fwname);
-			return (ENOMEM);
-		}
-		mac->mac_iv_ext = (mac->mac_fw + offset);
-		DPRINTF(1, "%s: loaded firmware file %s\n",
-		    sc->sc_dev.dv_xname, fwname);
-
-		if (bwi_fwimage_is_valid(sc, mac->mac_iv_ext,
-		    mac->mac_iv_ext_size, fwname, BWI_FW_T_IV))
-			return (EINVAL);
-	}
-
-back:
-	return (0);
-}
-
-void
-bwi_mac_fw_free(struct bwi_mac *mac)
-{
-	if (mac->mac_fw != NULL) {
-		free(mac->mac_fw, M_DEVBUF);
-		mac->mac_fw = NULL;
+	if (fwi->fwi_data != NULL) {
+		DPRINTF(mac->mac_sc, BWI_DBG_FIRMWARE, "freeing firmware %s\n",
+		    fwi->fwi_name);
+		firmware_free(fwi->fwi_data, 0);
+		fwi->fwi_data = NULL;
+		fwi->fwi_size = 0;
 	}
 }
 
-int
+static int
 bwi_mac_fw_load(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
-	uint16_t fw_rev;
 	const uint32_t *fw;
-	int fw_len, i, error = 0;
+	uint16_t fw_rev;
+	size_t fw_len, i;
 
-	/*
-	 * Load FW image
+	/* 
+	 * Load ucode image
 	 */
 	fw = (const uint32_t *)(mac->mac_ucode + BWI_FWHDR_SZ);
 	fw_len = (mac->mac_ucode_size - BWI_FWHDR_SZ) / sizeof(uint32_t);
 
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_FIRMWARE,
+	    "loading ucode image at %p, length %zx\n",
+	    fw, fw_len);
+
 	CSR_WRITE_4(sc, BWI_MOBJ_CTRL,
 	    BWI_MOBJ_CTRL_VAL(BWI_FW_UCODE_MOBJ | BWI_WR_MOBJ_AUTOINC, 0));
 	for (i = 0; i < fw_len; ++i) {
-		CSR_WRITE_4(sc, BWI_MOBJ_DATA, betoh32(fw[i]));
+		CSR_WRITE_4(sc, BWI_MOBJ_DATA, be32toh(fw[i]));
 		DELAY(10);
 	}
 
@@ -1868,6 +2020,10 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	fw = (const uint32_t *)(mac->mac_pcm + BWI_FWHDR_SZ);
 	fw_len = (mac->mac_pcm_size - BWI_FWHDR_SZ) / sizeof(uint32_t);
 
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_FIRMWARE,
+	    "loading PCM image at %p, length %zx\n",
+	    fw, fw_len);
+
 	CSR_WRITE_4(sc, BWI_MOBJ_CTRL,
 	    BWI_MOBJ_CTRL_VAL(BWI_FW_PCM_MOBJ, 0x01ea));
 	CSR_WRITE_4(sc, BWI_MOBJ_DATA, 0x4000);
@@ -1875,7 +2031,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	CSR_WRITE_4(sc, BWI_MOBJ_CTRL,
 	    BWI_MOBJ_CTRL_VAL(BWI_FW_PCM_MOBJ, 0x01eb));
 	for (i = 0; i < fw_len; ++i) {
-		CSR_WRITE_4(sc, BWI_MOBJ_DATA, betoh32(fw[i]));
+		CSR_WRITE_4(sc, BWI_MOBJ_DATA, be32toh(fw[i]));
 		DELAY(10);
 	}
 
@@ -1884,7 +2040,6 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	    BWI_MAC_STATUS_UCODE_START |
 	    BWI_MAC_STATUS_IHREN |
 	    BWI_MAC_STATUS_INFRA);
-
 #define NRETRY	200
 	for (i = 0; i < NRETRY; ++i) {
 		uint32_t intr_status;
@@ -1895,10 +2050,9 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		printf("%s: firmware (fw & pcm) loading timed out\n",
-		    sc->sc_dev.dv_xname);
-		error = ETIMEDOUT;
-		goto out;
+		aprint_error_dev(&sc->sc_dev,
+		    "timeout loading ucode & pcm firmware\n");
+		return (ETIMEDOUT);
 	}
 #undef NRETRY
 
@@ -1906,21 +2060,19 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 
 	fw_rev = MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWREV);
 	if (fw_rev > BWI_FW_VERSION3_REVMAX) {
-		printf("%s: firmware version 4 is not supported yet\n",
-		    sc->sc_dev.dv_xname);
-		error = ENODEV;
-		goto out;
+		aprint_error_dev(&sc->sc_dev,
+		    "firmware version 4 is not supported yet\n");
+		return (ENODEV);
 	}
 
-	DPRINTF(1, "%s: firmware rev 0x%04x, patch level 0x%04x\n",
-	    sc->sc_dev.dv_xname, fw_rev,
+	aprint_normal_dev(&sc->sc_dev, "firmware rev 0x%04x,"
+	    " patch level 0x%04x\n", fw_rev,
 	    MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWPATCHLV));
 
-out:
-	return (error);
+	return (0);
 }
 
-int
+static int
 bwi_mac_gpio_init(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -1955,7 +2107,7 @@ bwi_mac_gpio_init(struct bwi_mac *mac)
 	return (bwi_regwin_switch(sc, old, NULL));
 }
 
-int
+static int
 bwi_mac_gpio_fini(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -1972,43 +2124,48 @@ bwi_mac_gpio_fini(struct bwi_mac *mac)
 	return (bwi_regwin_switch(sc, old, NULL));
 }
 
-int
-bwi_mac_fw_load_iv(struct bwi_mac *mac, uint8_t *fw, size_t fw_len)
+static int
+bwi_mac_fw_load_iv(struct bwi_mac *mac, const struct bwi_fw_image *fwi)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 	const struct bwi_fwhdr *hdr;
 	const struct bwi_fw_iv *iv;
-	int n, i, iv_img_size;
+	size_t iv_img_size;
+	int n, i;
+
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_FIRMWARE,
+	    "loading %s at %p\n", fwi->fwi_name, fwi->fwi_data);
 
 	/* Get the number of IVs in the IV image */
-	hdr = (const struct bwi_fwhdr *)fw;
-	n = betoh32(hdr->fw_iv_cnt);
-	DPRINTF(1, "%s: IV count %d\n", sc->sc_dev.dv_xname, n);
+	hdr = (const struct bwi_fwhdr *)fwi->fwi_data;
+	n = be32toh(hdr->fw_iv_cnt);
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_INIT | BWI_DBG_FIRMWARE,
+	    "IV count %d\n", n);
 
 	/* Calculate the IV image size, for later sanity check */
-	iv_img_size = fw_len - sizeof(*hdr);
+	iv_img_size = fwi->fwi_size - sizeof(*hdr);
 
 	/* Locate the first IV */
-	iv = (const struct bwi_fw_iv *)(fw + sizeof(*hdr));
+	iv = (const struct bwi_fw_iv *)(fwi->fwi_data + sizeof(*hdr));
 
 	for (i = 0; i < n; ++i) {
 		uint16_t iv_ofs, ofs;
 		int sz = 0;
 
 		if (iv_img_size < sizeof(iv->iv_ofs)) {
-			printf("%s: invalid IV image, ofs\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "invalid IV image, ofs\n");
 			return (EINVAL);
 		}
 		iv_img_size -= sizeof(iv->iv_ofs);
 		sz += sizeof(iv->iv_ofs);
 
-		iv_ofs = betoh16(iv->iv_ofs);
+		iv_ofs = be16toh(iv->iv_ofs);
 
 		ofs = __SHIFTOUT(iv_ofs, BWI_FW_IV_OFS_MASK);
 		if (ofs >= 0x1000) {
-			printf("%s: invalid ofs (0x%04x) for %dth iv\n",
-			    sc->sc_dev.dv_xname, ofs, i);
+			aprint_error_dev(&sc->sc_dev, "invalid ofs (0x%04x) "
+			    "for %dth iv\n", ofs, i);
 			return (EINVAL);
 		}
 
@@ -2016,27 +2173,27 @@ bwi_mac_fw_load_iv(struct bwi_mac *mac, uint8_t *fw, size_t fw_len)
 			uint32_t val32;
 
 			if (iv_img_size < sizeof(iv->iv_val.val32)) {
-				printf("%s: invalid IV image, val32\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev,
+				    "invalid IV image, val32\n");
 				return (EINVAL);
 			}
 			iv_img_size -= sizeof(iv->iv_val.val32);
 			sz += sizeof(iv->iv_val.val32);
 
-			val32 = betoh32(iv->iv_val.val32);
+			val32 = be32toh(iv->iv_val.val32);
 			CSR_WRITE_4(sc, ofs, val32);
 		} else {
 			uint16_t val16;
 
 			if (iv_img_size < sizeof(iv->iv_val.val16)) {
-				printf("%s: invalid IV image, val16\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev,
+				    "invalid IV image, val16\n");
 				return (EINVAL);
 			}
 			iv_img_size -= sizeof(iv->iv_val.val16);
 			sz += sizeof(iv->iv_val.val16);
 
-			val16 = betoh16(iv->iv_val.val16);
+			val16 = be16toh(iv->iv_val.val16);
 			CSR_WRITE_2(sc, ofs, val16);
 		}
 
@@ -2044,37 +2201,36 @@ bwi_mac_fw_load_iv(struct bwi_mac *mac, uint8_t *fw, size_t fw_len)
 	}
 
 	if (iv_img_size != 0) {
-		printf("%s: invalid IV image, size left %d\n",
-		    sc->sc_dev.dv_xname, iv_img_size);
+		aprint_error_dev(&sc->sc_dev,
+		    "invalid IV image, size left %zx\n", iv_img_size);
 		return (EINVAL);
 	}
 
 	return (0);
 }
 
-int
+static int
 bwi_mac_fw_init(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 	int error;
 
-	error = bwi_mac_fw_load_iv(mac, mac->mac_iv, mac->mac_iv_size);
+	error = bwi_mac_fw_load_iv(mac, &mac->mac_iv_fwi);
 	if (error) {
-		printf("%s: load IV failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "load IV failed\n");
 		return (error);
 	}
 
 	if (mac->mac_iv_ext != NULL) {
-		error = bwi_mac_fw_load_iv(mac, mac->mac_iv_ext,
-		    mac->mac_iv_ext_size);
+		error = bwi_mac_fw_load_iv(mac, &mac->mac_iv_ext_fwi);
 		if (error)
-			printf("%s: load ExtIV failed\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "load ExtIV failed\n");
 	}
 
 	return (error);
 }
 
-void
+static void
 bwi_mac_opmode_init(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2127,7 +2283,7 @@ bwi_mac_opmode_init(struct bwi_mac *mac)
 		break;
 	}
 
-	if (ic->ic_ifp->if_flags & IFF_PROMISC)
+	if (sc->sc_if.if_flags & IFF_PROMISC)
 		mac_status |= BWI_MAC_STATUS_PROMISC;
 
 	CSR_WRITE_4(sc, BWI_MAC_STATUS, mac_status);
@@ -2143,7 +2299,7 @@ bwi_mac_opmode_init(struct bwi_mac *mac)
 	CSR_WRITE_2(sc, BWI_MAC_PRE_TBTT, pre_tbtt);
 }
 
-void
+static void
 bwi_mac_hostflags_init(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2172,7 +2328,7 @@ bwi_mac_hostflags_init(struct bwi_mac *mac)
 	HFLAGS_WRITE(mac, host_flags);
 }
 
-void
+static void
 bwi_mac_bss_param_init(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2222,7 +2378,7 @@ bwi_mac_bss_param_init(struct bwi_mac *mac)
 	    IEEE80211_CW_MAX);
 }
 
-void
+static void
 bwi_mac_set_retry_lim(struct bwi_mac *mac, const struct bwi_retry_lim *lim)
 {
 	/* Short/Long retry limit */
@@ -2238,31 +2394,26 @@ bwi_mac_set_retry_lim(struct bwi_mac *mac, const struct bwi_retry_lim *lim)
 	    lim->lgretry_fb);
 }
 
-void
+static void
 bwi_mac_set_ackrates(struct bwi_mac *mac, const struct ieee80211_rateset *rs)
 {
-	struct bwi_softc *sc;
 	int i;
-
-	sc = mac->mac_sc;
-
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	/* XXX not standard conforming */
 	for (i = 0; i < rs->rs_nrates; ++i) {
-		enum bwi_modtype modtype;
+		enum bwi_ieee80211_modtype modtype;
 		uint16_t ofs;
 
-		modtype = bwi_rate2modtype(rs->rs_rates[i]);
+		modtype = bwi_ieee80211_rate2modtype(rs->rs_rates[i]);
 		switch (modtype) {
 		case IEEE80211_MODTYPE_DS:
 			ofs = 0x4c0;
-			ofs += (ieee80211_rate2plcp(rs->rs_rates[i],
+			ofs += (bwi_ieee80211_rate2plcp(rs->rs_rates[i],
 			    IEEE80211_MODE_11B) & 0xf) * 2;
 			break;
 		case IEEE80211_MODTYPE_OFDM:
 			ofs = 0x480;
-			ofs += (ieee80211_rate2plcp(rs->rs_rates[i],
+			ofs += (bwi_ieee80211_rate2plcp(rs->rs_rates[i],
 			    IEEE80211_MODE_11G) & 0xf) * 2;
 			break;
 		default:
@@ -2274,7 +2425,7 @@ bwi_mac_set_ackrates(struct bwi_mac *mac, const struct ieee80211_rateset *rs)
 	}
 }
 
-int
+static int
 bwi_mac_start(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2289,7 +2440,7 @@ bwi_mac_start(struct bwi_mac *mac)
 	return (bwi_mac_config_ps(mac));
 }
 
-int
+static int
 bwi_mac_stop(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2311,7 +2462,7 @@ bwi_mac_stop(struct bwi_mac *mac)
 		DELAY(1);
 	}
 	if (i == NRETRY) {
-		printf("%s: can't stop MAC\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't stop MAC\n");
 		return (ETIMEDOUT);
 	}
 #undef NRETRY
@@ -2319,7 +2470,7 @@ bwi_mac_stop(struct bwi_mac *mac)
 	return (0);
 }
 
-int
+static int
 bwi_mac_config_ps(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2345,7 +2496,7 @@ bwi_mac_config_ps(struct bwi_mac *mac)
 			DELAY(10);
 		}
 		if (i == NRETRY) {
-			printf("%s: config PS failed\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "config PS failed\n");
 			return (ETIMEDOUT);
 		}
 #undef NRETRY
@@ -2353,26 +2504,26 @@ bwi_mac_config_ps(struct bwi_mac *mac)
 	return (0);
 }
 
-void
+static void
 bwi_mac_reset_hwkeys(struct bwi_mac *mac)
 {
 	/* TODO: firmware crypto */
 	MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_KEYTABLE_OFS);
 }
 
-void
+static void
 bwi_mac_shutdown(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 	int i;
 
 	if (mac->mac_flags & BWI_MAC_F_HAS_TXSTATS)
-		sc->sc_free_txstats(sc);
+		(sc->sc_free_txstats)(sc);
 
-	sc->sc_free_rx_ring(sc);
+	(sc->sc_free_rx_ring)(sc);
 
 	for (i = 0; i < BWI_TX_NRING; ++i)
-		sc->sc_free_tx_ring(sc, i);
+		(sc->sc_free_tx_ring)(sc, i);
 
 	bwi_rf_off(mac);
 
@@ -2387,7 +2538,7 @@ bwi_mac_shutdown(struct bwi_mac *mac)
 	mac->mac_flags &= ~BWI_MAC_F_INITED;
 }
 
-int
+static int
 bwi_mac_get_property(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2399,7 +2550,7 @@ bwi_mac_get_property(struct bwi_mac *mac)
 	 */
 	val = CSR_READ_4(sc, BWI_MAC_STATUS);
 	if (val & BWI_MAC_STATUS_BSWAP) {
-		DPRINTF(1, "%s: need byte swap\n", sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_ATTACH, "need byte swap\n");
 		mac->mac_flags |= BWI_MAC_F_BSWAP;
 	}
 
@@ -2413,7 +2564,7 @@ bwi_mac_get_property(struct bwi_mac *mac)
 	    BWI_STATE_HI_FLAG_64BIT) {
 		/* 64bit address */
 		sc->sc_bus_space = BWI_BUS_SPACE_64BIT;
-		DPRINTF(1, "%s: 64bit bus space\n", sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_ATTACH, "64bit bus space\n");
 	} else {
 		uint32_t txrx_reg = BWI_TXRX_CTRL_BASE + BWI_TX32_CTRL;
 
@@ -2421,36 +2572,28 @@ bwi_mac_get_property(struct bwi_mac *mac)
 		if (CSR_READ_4(sc, txrx_reg) & BWI_TXRX32_CTRL_ADDRHI_MASK) {
 			/* 32bit address */
 			sc->sc_bus_space = BWI_BUS_SPACE_32BIT;
-			DPRINTF(1, "%s: 32bit bus space\n",
-			    sc->sc_dev.dv_xname);
+			DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_ATTACH,
+			    "32bit bus space\n");
 		} else {
 			/* 30bit address */
 			sc->sc_bus_space = BWI_BUS_SPACE_30BIT;
-			DPRINTF(1, "%s: 30bit bus space\n",
-			    sc->sc_dev.dv_xname);
+			DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_ATTACH,
+			    "30bit bus space\n");
 		}
 	}
 
 	if (old_bus_space != 0 && old_bus_space != sc->sc_bus_space) {
-		printf("%s: MACs bus space mismatch!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "MACs bus space mismatch!\n");
 		return (ENXIO);
 	}
 
 	return (0);
 }
 
-#define IEEE80211_DUR_SLOT	20	/* DS/CCK slottime, ERP long slottime */
-#define IEEE80211_DUR_SHSLOT	9	/* ERP short slottime */
-
-void
+static void
 bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 {
-	struct bwi_softc *sc;
 	uint16_t slot_time;
-
-	sc = mac->mac_sc;
-
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	if (mac->mac_phy.phy_mode == IEEE80211_MODE_11B)
 		return;
@@ -2465,7 +2608,7 @@ bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 	MOBJ_WRITE_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_SLOTTIME, slot_time);
 }
 
-int
+static int
 bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 {
 	struct bwi_mac *mac;
@@ -2474,7 +2617,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 	KASSERT(sc->sc_nmac <= BWI_MAC_MAX && sc->sc_nmac >= 0);
 
 	if (sc->sc_nmac == BWI_MAC_MAX) {
-		printf("%s: too many MACs\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "too many MACs\n");
 		return (0);
 	}
 
@@ -2483,7 +2626,8 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 	 */
 	if (sc->sc_nmac != 0 &&
 	    sc->sc_pci_did != PCI_PRODUCT_BROADCOM_BCM4309) {
-		DPRINTF(1, "%s: ignore second MAC\n", sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_ATTACH,
+		    "ignore %dth MAC\n", sc->sc_nmac);
 		return (0);
 	}
 
@@ -2491,8 +2635,8 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 
 	/* XXX will this happen? */
 	if (BWI_REGWIN_EXIST(&mac->mac_regwin)) {
-		printf("%s: %dth MAC already attached\n",
-		    sc->sc_dev.dv_xname, sc->sc_nmac);
+		aprint_error_dev(&sc->sc_dev, "%dth MAC already attached\n",
+		    sc->sc_nmac);
 		return (0);
 	}
 
@@ -2505,8 +2649,8 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 			break;
 	}
 	if (i == N(bwi_sup_macrev)) {
-		printf("%s: MAC rev %u is not supported\n",
-		    sc->sc_dev.dv_xname, rev);
+		aprint_error_dev(&sc->sc_dev, "MAC rev %u is not supported\n",
+		    rev);
 		return (ENXIO);
 	}
 #undef N
@@ -2516,15 +2660,16 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 
 	if (mac->mac_rev < 5) {
 		mac->mac_flags |= BWI_MAC_F_HAS_TXSTATS;
-		DPRINTF(1, "%s: has TX stats\n", sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_ATTACH, "has TX stats\n");
 	} else {
 		mac->mac_flags |= BWI_MAC_F_PHYE_RESET;
 	}
 
+	aprint_normal_dev(&sc->sc_dev, "MAC: rev %u\n", rev);
 	return (0);
 }
 
-void
+static void
 bwi_mac_balance_atten(int *bbp_atten0, int *rf_atten0)
 {
 	int bbp_atten, rf_atten, rf_atten_lim = -1;
@@ -2582,7 +2727,7 @@ bwi_mac_balance_atten(int *bbp_atten0, int *rf_atten0)
 	*bbp_atten0 = bbp_atten;
 }
 
-void
+static void
 bwi_mac_adjust_tpctl(struct bwi_mac *mac, int rf_atten_adj, int bbp_atten_adj)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2638,7 +2783,7 @@ bwi_mac_adjust_tpctl(struct bwi_mac *mac, int rf_atten_adj, int bbp_atten_adj)
 /*
  * http://bcm-specs.sipsolutions.net/RecalculateTransmissionPower
  */
-void
+static void
 bwi_mac_calibrate_txpower(struct bwi_mac *mac, enum bwi_txpwrcb_type type)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2647,15 +2792,18 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac, enum bwi_txpwrcb_type type)
 	int error, i, ofdm_tssi;
 	int txpwr_diff, rf_atten_adj, bbp_atten_adj;
 
+	if (!sc->sc_txpwr_calib)
+		return;
+
 	if (mac->mac_flags & BWI_MAC_F_TPCTL_ERROR) {
-		DPRINTF(1, "%s: tpctl error happened, can't set txpower\n",
-		    sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER,
+		    "tpctl error happened, can't set txpower\n");
 		return;
 	}
 
 	if (BWI_IS_BRCM_BU4306(sc)) {
-		DPRINTF(1, "%s: BU4306, can't set txpower\n",
-		    sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER,
+		    "BU4306, can't set txpower\n");
 		return;
 	}
 
@@ -2665,7 +2813,7 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac, enum bwi_txpwrcb_type type)
 	ofdm_tssi = 0;
 	error = bwi_rf_get_latest_tssi(mac, tssi, BWI_COMM_MOBJ_TSSI_DS);
 	if (error) {
-		DPRINTF(1, "%s: no DS tssi\n", sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER, "no DS tssi\n");
 
 		if (mac->mac_phy.phy_mode == IEEE80211_MODE_11B) {
 			if (type == BWI_TXPWR_FORCE) {
@@ -2680,7 +2828,8 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac, enum bwi_txpwrcb_type type)
 		error = bwi_rf_get_latest_tssi(mac, tssi,
 		    BWI_COMM_MOBJ_TSSI_OFDM);
 		if (error) {
-			DPRINTF(1, "%s: no OFDM tssi\n", sc->sc_dev.dv_xname);
+			DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER,
+			    "no OFDM tssi\n");
 			if (type == BWI_TXPWR_FORCE) {
 				rf_atten_adj = 0;
 				bbp_atten_adj = 1;
@@ -2698,8 +2847,9 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac, enum bwi_txpwrcb_type type)
 	}
 	bwi_rf_clear_tssi(mac);
 
-	DPRINTF(1, "%s: tssi0 %d, tssi1 %d, tssi2 %d, tssi3 %d\n",
-	    sc->sc_dev.dv_xname, tssi[0], tssi[1], tssi[2], tssi[3]);
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER,
+	    "tssi0 %d, tssi1 %d, tssi2 %d, tssi3 %d\n",
+	    tssi[0], tssi[1], tssi[2], tssi[3]);
 
 	/*
 	 * Calculate RF/BBP attenuation adjustment based on
@@ -2711,12 +2861,13 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac, enum bwi_txpwrcb_type type)
 	if (ofdm_tssi && (HFLAGS_READ(mac) & BWI_HFLAG_PWR_BOOST_DS))
 		tssi_avg -= 13;
 
-	DPRINTF(1, "%s: tssi avg %d\n", sc->sc_dev.dv_xname, tssi_avg);
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER, "tssi avg %d\n", tssi_avg);
 
 	error = bwi_rf_tssi2dbm(mac, tssi_avg, &cur_txpwr);
 	if (error)
 		return;
-	DPRINTF(1, "%s: current txpower %d\n", sc->sc_dev.dv_xname, cur_txpwr);
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER, "current txpower %d\n",
+	    cur_txpwr);
 
 	txpwr_diff = rf->rf_txpower_max - cur_txpwr; /* XXX ni_txpower */
 
@@ -2733,20 +2884,21 @@ bwi_mac_calibrate_txpower(struct bwi_mac *mac, enum bwi_txpwrcb_type type)
 	bbp_atten_adj -= (BWI_RF_ATTEN_FACTOR * rf_atten_adj);
 
 	if (rf_atten_adj == 0 && bbp_atten_adj == 0) {
-		DPRINTF(1, "%s: no need to adjust RF/BBP attenuation\n",
-		    sc->sc_dev.dv_xname);
+		DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER, "%s\n",
+		    "no need to adjust RF/BBP attenuation");
 		/* TODO: LO */
 		return;
 	}
 
 calib:
-	DPRINTF(1, "%s: rf atten adjust %d, bbp atten adjust %d\n",
-	    sc->sc_dev.dv_xname, rf_atten_adj, bbp_atten_adj);
+	DPRINTF(sc, BWI_DBG_MAC | BWI_DBG_TXPOWER,
+	    "rf atten adjust %d, bbp atten adjust %d\n",
+	    rf_atten_adj, bbp_atten_adj);
 	bwi_mac_adjust_tpctl(mac, rf_atten_adj, bbp_atten_adj);
 	/* TODO: LO */
 }
 
-void
+static void
 bwi_mac_lock(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2768,7 +2920,7 @@ bwi_mac_lock(struct bwi_mac *mac)
 	mac->mac_flags |= BWI_MAC_F_LOCKED;
 }
 
-void
+static void
 bwi_mac_unlock(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2788,7 +2940,7 @@ bwi_mac_unlock(struct bwi_mac *mac)
 	mac->mac_flags &= ~BWI_MAC_F_LOCKED;
 }
 
-void
+static void
 bwi_mac_set_promisc(struct bwi_mac *mac, int promisc)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2804,7 +2956,7 @@ bwi_mac_set_promisc(struct bwi_mac *mac, int promisc)
 
 /* PHY */
 
-void
+static void
 bwi_phy_write(struct bwi_mac *mac, uint16_t ctrl, uint16_t data)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2814,7 +2966,7 @@ bwi_phy_write(struct bwi_mac *mac, uint16_t ctrl, uint16_t data)
 	CSR_WRITE_2(sc, BWI_PHY_DATA, data);
 }
 
-uint16_t
+static uint16_t
 bwi_phy_read(struct bwi_mac *mac, uint16_t ctrl)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2824,7 +2976,7 @@ bwi_phy_read(struct bwi_mac *mac, uint16_t ctrl)
 	return (CSR_READ_2(sc, BWI_PHY_DATA));
 }
 
-int
+static int
 bwi_phy_attach(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -2838,8 +2990,8 @@ bwi_phy_attach(struct bwi_mac *mac)
 	phyrev = __SHIFTOUT(val, BWI_PHYINFO_REV_MASK);
 	phytype = __SHIFTOUT(val, BWI_PHYINFO_TYPE_MASK);
 	phyver = __SHIFTOUT(val, BWI_PHYINFO_VER_MASK);
-	DPRINTF(1, "%s: PHY type %d, rev %d, ver %d\n",
-	    sc->sc_dev.dv_xname, phytype, phyrev, phyver);
+	aprint_normal_dev(&sc->sc_dev, "PHY type %d, rev %d, ver %d\n",
+	    phytype, phyrev, phyver);
 
 	/*
 	 * Verify whether the revision of the PHY type is supported
@@ -2848,8 +3000,9 @@ bwi_phy_attach(struct bwi_mac *mac)
 	switch (phytype) {
 	case BWI_PHYINFO_TYPE_11A:
 		if (phyrev >= 4) {
-			printf("%s: unsupported 11A PHY, rev %u\n",
-			    sc->sc_dev.dv_xname, phyrev);
+			aprint_error_dev(&sc->sc_dev,
+			    "unsupported 11A PHY, rev %u\n",
+			    phyrev);
 			return (ENXIO);
 		}
 		phy->phy_init = bwi_phy_init_11a;
@@ -2867,8 +3020,9 @@ bwi_phy_attach(struct bwi_mac *mac)
 			}
 		}
 		if (i == N(bwi_sup_bphy)) {
-			printf("%s: unsupported 11B PHY, rev %u\n",
-			    sc->sc_dev.dv_xname, phyrev);
+			aprint_error_dev(&sc->sc_dev,
+			    "unsupported 11B PHY, rev %u\n",
+			    phyrev);
 			return (ENXIO);
 		}
 #undef N
@@ -2876,8 +3030,9 @@ bwi_phy_attach(struct bwi_mac *mac)
 		break;
 	case BWI_PHYINFO_TYPE_11G:
 		if (phyrev > 8) {
-			printf("%s: unsupported 11G PHY, rev %u\n",
-			    sc->sc_dev.dv_xname, phyrev);
+			aprint_error_dev(&sc->sc_dev,
+			    "unsupported 11G PHY, rev %u\n",
+			    phyrev);
 			return (ENXIO);
 		}
 		phy->phy_init = bwi_phy_init_11g;
@@ -2887,8 +3042,8 @@ bwi_phy_attach(struct bwi_mac *mac)
 		phy->phy_tbl_data_hi = BWI_PHYR_TBL_DATA_HI_11G;
 		break;
 	default:
-		printf("%s: unsupported PHY type %d\n",
-		    sc->sc_dev.dv_xname, phytype);
+		aprint_error_dev(&sc->sc_dev, "unsupported PHY type %d\n",
+		    phytype);
 		return (ENXIO);
 	}
 	phy->phy_rev = phyrev;
@@ -2897,7 +3052,7 @@ bwi_phy_attach(struct bwi_mac *mac)
 	return (0);
 }
 
-void
+static void
 bwi_phy_set_bbp_atten(struct bwi_mac *mac, uint16_t bbp_atten)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -2916,7 +3071,7 @@ bwi_phy_set_bbp_atten(struct bwi_mac *mac, uint16_t bbp_atten)
 	}
 }
 
-int
+static int
 bwi_phy_calibrate(struct bwi_mac *mac)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -2939,7 +3094,7 @@ bwi_phy_calibrate(struct bwi_mac *mac)
 	return (0);
 }
 
-void
+static void
 bwi_tbl_write_2(struct bwi_mac *mac, uint16_t ofs, uint16_t data)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -2949,7 +3104,7 @@ bwi_tbl_write_2(struct bwi_mac *mac, uint16_t ofs, uint16_t data)
 	PHY_WRITE(mac, phy->phy_tbl_data_lo, data);
 }
 
-void
+static void
 bwi_tbl_write_4(struct bwi_mac *mac, uint16_t ofs, uint32_t data)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -2962,27 +3117,27 @@ bwi_tbl_write_4(struct bwi_mac *mac, uint16_t ofs, uint32_t data)
 	PHY_WRITE(mac, phy->phy_tbl_data_lo, data & 0xffff);
 }
 
-void
+static void
 bwi_nrssi_write(struct bwi_mac *mac, uint16_t ofs, int16_t data)
 {
 	PHY_WRITE(mac, BWI_PHYR_NRSSI_CTRL, ofs);
 	PHY_WRITE(mac, BWI_PHYR_NRSSI_DATA, (uint16_t)data);
 }
 
-int16_t
+static int16_t
 bwi_nrssi_read(struct bwi_mac *mac, uint16_t ofs)
 {
 	PHY_WRITE(mac, BWI_PHYR_NRSSI_CTRL, ofs);
 	return ((int16_t)PHY_READ(mac, BWI_PHYR_NRSSI_DATA));
 }
 
-void
+static void
 bwi_phy_init_11a(struct bwi_mac *mac)
 {
 	/* TODO: 11A */
 }
 
-void
+static void
 bwi_phy_init_11g(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -3095,7 +3250,7 @@ bwi_phy_init_11g(struct bwi_mac *mac)
 	}
 }
 
-void
+static void
 bwi_phy_init_11b_rev2(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc;
@@ -3103,17 +3258,16 @@ bwi_phy_init_11b_rev2(struct bwi_mac *mac)
 	sc = mac->mac_sc;
 
 	/* TODO: 11B */
-	printf("%s: %s is not implemented yet\n",
-	    sc->sc_dev.dv_xname, __func__);
+	aprint_error_dev(&sc->sc_dev, "%s is not implemented yet\n", __func__);
 }
 
-void
+static void
 bwi_phy_init_11b_rev4(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
 	uint16_t val, ofs;
-	u_int chan;
+	uint chan;
 
 	CSR_WRITE_2(sc, BWI_BPHY_CTRL, BWI_BPHY_CTRL_INIT);
 
@@ -3176,7 +3330,7 @@ bwi_phy_init_11b_rev4(struct bwi_mac *mac)
 	bwi_mac_init_tpctl_11bg(mac);
 }
 
-void
+static void
 bwi_phy_init_11b_rev5(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -3277,7 +3431,7 @@ bwi_phy_init_11b_rev5(struct bwi_mac *mac)
 	CSR_FILT_SETBITS_2(sc, BWI_PHY_MAGIC_REG1, 0xffc0, 0x4);
 }
 
-void
+static void
 bwi_phy_init_11b_rev6(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -3415,7 +3569,7 @@ bwi_phy_init_11b_rev6(struct bwi_mac *mac)
 }
 
 #define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
-void
+static void
 bwi_phy_config_11g(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -3549,7 +3703,7 @@ bwi_phy_config_11g(struct bwi_mac *mac)
 /*
  * Configure Automatic Gain Controller
  */
-void
+static void
 bwi_phy_config_agc(struct bwi_mac *mac)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -3630,7 +3784,7 @@ bwi_phy_config_agc(struct bwi_mac *mac)
 	}
 }
 
-void
+static void
 bwi_set_gains(struct bwi_mac *mac, const struct bwi_gains *gains)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -3683,7 +3837,7 @@ bwi_set_gains(struct bwi_mac *mac, const struct bwi_gains *gains)
 	bwi_mac_dummy_xmit(mac);
 }
 
-void
+static void
 bwi_phy_clear_state(struct bwi_phy *phy)
 {
 	phy->phy_flags &= ~BWI_CLEAR_PHY_FLAGS;
@@ -3691,7 +3845,7 @@ bwi_phy_clear_state(struct bwi_phy *phy)
 
 /* RF */
 
-int16_t
+static int16_t
 bwi_nrssi_11g(struct bwi_mac *mac)
 {
 	int16_t val;
@@ -3705,7 +3859,7 @@ bwi_nrssi_11g(struct bwi_mac *mac)
 #undef NRSSI_11G_MASK
 }
 
-struct bwi_rf_lo *
+static struct bwi_rf_lo *
 bwi_get_rf_lo(struct bwi_mac *mac, uint16_t rf_atten, uint16_t bbp_atten)
 {
 	int n;
@@ -3716,7 +3870,7 @@ bwi_get_rf_lo(struct bwi_mac *mac, uint16_t rf_atten, uint16_t bbp_atten)
 	return (&mac->mac_rf.rf_lo[n]);
 }
 
-int
+static int
 bwi_rf_lo_isused(struct bwi_mac *mac, const struct bwi_rf_lo *lo)
 {
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -3728,7 +3882,7 @@ bwi_rf_lo_isused(struct bwi_mac *mac, const struct bwi_rf_lo *lo)
 	return (isset(rf->rf_lo_used, idx));
 }
 
-void
+static void
 bwi_rf_write(struct bwi_mac *mac, uint16_t ctrl, uint16_t data)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -3737,7 +3891,7 @@ bwi_rf_write(struct bwi_mac *mac, uint16_t ctrl, uint16_t data)
 	CSR_WRITE_2(sc, BWI_RF_DATA_LO, data);
 }
 
-uint16_t
+static uint16_t
 bwi_rf_read(struct bwi_mac *mac, uint16_t ctrl)
 {
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -3756,7 +3910,7 @@ bwi_rf_read(struct bwi_mac *mac, uint16_t ctrl)
 	return (CSR_READ_2(sc, BWI_RF_DATA_LO));
 }
 
-int
+static int
 bwi_rf_attach(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -3794,8 +3948,8 @@ bwi_rf_attach(struct bwi_mac *mac)
 		type = __SHIFTOUT(val, BWI_RFINFO_TYPE_MASK);
 		rev = __SHIFTOUT(val, BWI_RFINFO_REV_MASK);
 	}
-	DPRINTF(1, "%s: RF manu 0x%03x, type 0x%04x, rev %u\n",
-	    sc->sc_dev.dv_xname, manu, type, rev);
+	aprint_normal_dev(&sc->sc_dev, "RF manu 0x%03x, type 0x%04x, rev %u\n",
+	    manu, type, rev);
 
 	/*
 	 * Verify whether the RF is supported
@@ -3807,8 +3961,9 @@ bwi_rf_attach(struct bwi_mac *mac)
 		if (manu != BWI_RF_MANUFACT_BCM ||
 		    type != BWI_RF_T_BCM2060 ||
 		    rev != 1) {
-			printf("%s: only BCM2060 rev 1 RF is supported for "
-			    "11A PHY\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "only BCM2060 rev 1 RF is supported for"
+			    " 11A PHY\n");
 			return (ENXIO);
 		}
 		rf->rf_ctrl_rd = BWI_RF_CTRL_RD_11A;
@@ -3824,8 +3979,9 @@ bwi_rf_attach(struct bwi_mac *mac)
 			rf->rf_ctrl_adj = 1;
 			rf->rf_calc_rssi = bwi_rf_calc_rssi_bcm2053;
 		} else {
-			printf("%s: only BCM2050/BCM2053 RF is supported "
-			    "for supported for 11B PHY\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "only BCM2050/BCM2053 RF is supported for"
+			    " 11B phy\n");
 			return (ENXIO);
 		}
 		rf->rf_on = bwi_rf_on_11bg;
@@ -3839,8 +3995,9 @@ bwi_rf_attach(struct bwi_mac *mac)
 		break;
 	case IEEE80211_MODE_11G:
 		if (type != BWI_RF_T_BCM2050) {
-			printf("%s: only BCM2050 RF is supported for 11G "
-			    "PHY\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "only BCM2050 RF is supported for"
+			    " 11G PHY\n");
 			return (ENXIO);
 		}
 		rf->rf_ctrl_rd = BWI_RF_CTRL_RD_11BG;
@@ -3855,7 +4012,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 		rf->rf_lo_update = bwi_rf_lo_update_11g;
 		break;
 	default:
-		printf("%s: unsupported PHY mode\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unsupported PHY mode\n");
 		return (ENXIO);
 	}
 
@@ -3868,7 +4025,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 	return (0);
 }
 
-void
+static void
 bwi_rf_set_chan(struct bwi_mac *mac, uint chan, int work_around)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -3899,19 +4056,11 @@ bwi_rf_set_chan(struct bwi_mac *mac, uint chan, int work_around)
 	mac->mac_rf.rf_curchan = chan;
 }
 
-void
+static void
 bwi_rf_get_gains(struct bwi_mac *mac)
 {
 #define SAVE_PHY_MAX	15
 #define SAVE_RF_MAX	3
-	struct bwi_softc *sc;
-	struct bwi_phy *phy = &mac->mac_phy;
-	struct bwi_rf *rf = &mac->mac_rf;
-	uint16_t save_phy[SAVE_PHY_MAX];
-	uint16_t save_rf[SAVE_RF_MAX];
-	uint16_t trsw;
-	int i, j, loop1_max, loop1, loop2;
-
 	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
 	    { 0x52, 0x43, 0x7a };
 	static const uint16_t save_phy_regs[SAVE_PHY_MAX] = {
@@ -3921,7 +4070,12 @@ bwi_rf_get_gains(struct bwi_mac *mac)
 	    0x0810, 0x002b, 0x0015
 	};
 
-	sc = mac->mac_sc;
+	struct bwi_phy *phy = &mac->mac_phy;
+	struct bwi_rf *rf = &mac->mac_rf;
+	uint16_t save_phy[SAVE_PHY_MAX];
+	uint16_t save_rf[SAVE_RF_MAX];
+	uint16_t trsw;
+	int i, j, loop1_max, loop1, loop2;
 
 	/*
 	 * Save PHY/RF registers for later restoration
@@ -4047,14 +4201,15 @@ loop1_exit:
 	 */
 	rf->rf_lo_gain = (loop2 * 6) - (loop1 * 4) - 11;
 	rf->rf_rx_gain = trsw * 2;
-	DPRINTF(1, "%s: lo gain: %u, rx gain: %u\n",
-	    sc->sc_dev.dv_xname, rf->rf_lo_gain, rf->rf_rx_gain);
+	DPRINTF(mac->mac_sc, BWI_DBG_RF | BWI_DBG_INIT,
+	    "lo gain: %u, rx gain: %u\n",
+	    rf->rf_lo_gain, rf->rf_rx_gain);
 
 #undef SAVE_RF_MAX
 #undef SAVE_PHY_MAX
 }
 
-void
+static void
 bwi_rf_init(struct bwi_mac *mac)
 {
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -4069,7 +4224,7 @@ bwi_rf_init(struct bwi_mac *mac)
 	}
 }
 
-void
+static void
 bwi_rf_off_11a(struct bwi_mac *mac)
 {
 	RF_WRITE(mac, 0x4, 0xff);
@@ -4081,28 +4236,28 @@ bwi_rf_off_11a(struct bwi_mac *mac)
 	PHY_WRITE(mac, 0x15, 0xaa00);
 }
 
-void
+static void
 bwi_rf_off_11bg(struct bwi_mac *mac)
 {
 	PHY_WRITE(mac, 0x15, 0xaa00);
 }
 
-void
+static void
 bwi_rf_off_11g_rev5(struct bwi_mac *mac)
 {
 	PHY_SETBITS(mac, 0x811, 0x8c);
 	PHY_CLRBITS(mac, 0x812, 0x8c);
 }
 
-void
+static void
 bwi_rf_workaround(struct bwi_mac *mac, uint chan)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
 
 	if (chan == IEEE80211_CHAN_ANY) {
-		printf("%s: %s invalid channel!\n",
-		    sc->sc_dev.dv_xname, __func__);
+		aprint_error_dev(&sc->sc_dev, "%s invalid channel!\n",
+		    __func__);
 		return;
 	}
 
@@ -4117,7 +4272,7 @@ bwi_rf_workaround(struct bwi_mac *mac, uint chan)
 	CSR_WRITE_2(sc, BWI_RF_CHAN, BWI_RF_2GHZ_CHAN(chan));
 }
 
-struct bwi_rf_lo *
+static struct bwi_rf_lo *
 bwi_rf_lo_find(struct bwi_mac *mac, const struct bwi_tpctl *tpctl)
 {
 	uint16_t rf_atten, bbp_atten;
@@ -4141,7 +4296,7 @@ bwi_rf_lo_find(struct bwi_mac *mac, const struct bwi_tpctl *tpctl)
 	if (remap_rf_atten) {
 #define MAP_MAX	10
 		static const uint16_t map[MAP_MAX] =
-		{ 11, 10, 11, 12, 13, 12, 13, 12, 13, 12 };
+		    { 11, 10, 11, 12, 13, 12, 13, 12, 13, 12 };
 #if 0
 		KASSERT(rf_atten < MAP_MAX);
 		rf_atten = map[rf_atten];
@@ -4158,7 +4313,7 @@ bwi_rf_lo_find(struct bwi_mac *mac, const struct bwi_tpctl *tpctl)
 	return (bwi_get_rf_lo(mac, rf_atten, bbp_atten));
 }
 
-void
+static void
 bwi_rf_lo_adjust(struct bwi_mac *mac, const struct bwi_tpctl *tpctl)
 {
 	const struct bwi_rf_lo *lo;
@@ -4167,7 +4322,7 @@ bwi_rf_lo_adjust(struct bwi_mac *mac, const struct bwi_tpctl *tpctl)
 	RF_LO_WRITE(mac, lo);
 }
 
-void
+static void
 bwi_rf_lo_write(struct bwi_mac *mac, const struct bwi_rf_lo *lo)
 {
 	uint16_t val;
@@ -4178,7 +4333,7 @@ bwi_rf_lo_write(struct bwi_mac *mac, const struct bwi_rf_lo *lo)
 	PHY_WRITE(mac, BWI_PHYR_RF_LO, val);
 }
 
-int
+static int
 bwi_rf_gain_max_reached(struct bwi_mac *mac, int idx)
 {
 	PHY_FILT_SETBITS(mac, 0x812, 0xf0ff, idx << 8);
@@ -4191,7 +4346,7 @@ bwi_rf_gain_max_reached(struct bwi_mac *mac, int idx)
 }
 
 /* XXX use bitmap array */
-uint16_t
+static uint16_t
 bwi_bitswap4(uint16_t val)
 {
 	uint16_t ret;
@@ -4204,7 +4359,7 @@ bwi_bitswap4(uint16_t val)
 	return (ret);
 }
 
-uint16_t
+static uint16_t
 bwi_phy812_value(struct bwi_mac *mac, uint16_t lpd)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -4249,11 +4404,11 @@ bwi_phy812_value(struct bwi_mac *mac, uint16_t lpd)
 		case 0x011:
 			return (0x8f92);
 		case 0x001:
-			return ((0x8092 | ext_lna));
+			return (0x8092 | ext_lna);
 		case 0x101:
-			return ((0x2092 | ext_lna));
+			return (0x2092 | ext_lna);
 		case 0x100:
-			return ((0x2093 | ext_lna));
+			return (0x2093 | ext_lna);
 		default:
 			panic("unsupported lpd\n");
 		}
@@ -4264,25 +4419,31 @@ bwi_phy812_value(struct bwi_mac *mac, uint16_t lpd)
 			return (0xf92);
 		case 0x001:
 		case 0x101:
-			return ((0x92 | ext_lna));
+			return (0x92 | ext_lna);
 		case 0x100:
-			return ((0x93 | ext_lna));
+			return (0x93 | ext_lna);
 		default:
 			panic("unsupported lpd\n");
 		}
 	}
 
 	panic("never reached\n");
-
 	return (0);
 }
 
-void
+static void
 bwi_rf_init_bcm2050(struct bwi_mac *mac)
 {
 #define SAVE_RF_MAX		3
 #define SAVE_PHY_COMM_MAX	4
 #define SAVE_PHY_11G_MAX	6
+	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
+	    { 0x0043, 0x0051, 0x0052 };
+	static const uint16_t save_phy_regs_comm[SAVE_PHY_COMM_MAX] =
+	    { 0x0015, 0x005a, 0x0059, 0x0058 };
+	static const uint16_t save_phy_regs_11g[SAVE_PHY_11G_MAX] =
+	    { 0x0811, 0x0812, 0x0814, 0x0815, 0x0429, 0x0802 };
+
 	uint16_t save_rf[SAVE_RF_MAX];
 	uint16_t save_phy_comm[SAVE_PHY_COMM_MAX];
 	uint16_t save_phy_11g[SAVE_PHY_11G_MAX];
@@ -4295,13 +4456,6 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 	struct bwi_phy *phy = &mac->mac_phy;
 	struct bwi_rf *rf = &mac->mac_rf;
 	int i;
-
-	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
-	    { 0x0043, 0x0051, 0x0052 };
-	static const uint16_t save_phy_regs_comm[SAVE_PHY_COMM_MAX] =
-	    { 0x0015, 0x005a, 0x0059, 0x0058 };
-	static const uint16_t save_phy_regs_11g[SAVE_PHY_11G_MAX] =
-	    { 0x0811, 0x0812, 0x0814, 0x0815, 0x0429, 0x0802 };
 
 	/*
 	 * Save registers for later restoring
@@ -4319,8 +4473,7 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 		CSR_WRITE_2(sc, BWI_BPHY_CTRL, 0x3f3f);
 	} else if ((phy->phy_flags & BWI_PHY_F_LINKED) || phy->phy_rev >= 2) {
 		for (i = 0; i < SAVE_PHY_11G_MAX; ++i) {
-			save_phy_11g[i] =
-			    PHY_READ(mac, save_phy_regs_11g[i]);
+			save_phy_11g[i] = PHY_READ(mac, save_phy_regs_11g[i]);
 		}
 
 		PHY_SETBITS(mac, 0x814, 0x3);
@@ -4492,8 +4645,8 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 	else
 		rf->rf_calib = calib;
 	if (rf->rf_calib != 0xffff) {
-		DPRINTF(1, "%s: RF calibration value: 0x%04x\n",
-		    sc->sc_dev.dv_xname, rf->rf_calib);
+		DPRINTF(sc, BWI_DBG_RF | BWI_DBG_INIT,
+		    "RF calibration value: 0x%04x\n", rf->rf_calib);
 		rf->rf_flags |= BWI_RF_F_INITED;
 	}
 
@@ -4526,7 +4679,7 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 
 		for (i = 0; i < SAVE_PHY_11G_MAX; ++i) {
 			PHY_WRITE(mac, save_phy_regs_11g[i],
-				  save_phy_11g[i]);
+			    save_phy_11g[i]);
 		}
 
 		PHY_WRITE(mac, 0x80f, phyr_80f);
@@ -4538,17 +4691,17 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 #undef SAVE_RF_MAX
 }
 
-uint16_t
+static uint16_t
 bwi_rf_calibval(struct bwi_mac *mac)
 {
-	uint16_t val, calib;
-	int idx;
-
 	/* http://bcm-specs.sipsolutions.net/RCCTable */
 	static const uint16_t rf_calibvals[] = {
-		0x2, 0x3, 0x1, 0xf, 0x6, 0x7, 0x5, 0xf,
-		0xa, 0xb, 0x9, 0xf, 0xe, 0xf, 0xd, 0xf
+	    0x2, 0x3, 0x1, 0xf, 0x6, 0x7, 0x5, 0xf,
+	    0xa, 0xb, 0x9, 0xf, 0xe, 0xf, 0xd, 0xf
 	};
+
+	uint16_t val, calib;
+	int idx;
 
 	val = RF_READ(mac, BWI_RFR_BBP_ATTEN);
 	idx = __SHIFTOUT(val, BWI_RFR_BBP_ATTEN_CALIB_IDX);
@@ -4562,11 +4715,11 @@ bwi_rf_calibval(struct bwi_mac *mac)
 	return (calib);
 }
 
-int32_t
+static int32_t
 _bwi_adjust_devide(int32_t num, int32_t den)
 {
 	if (num < 0)
-		return ((num / den));
+		return (num / den);
 	else
 		return ((num + den / 2) / den);
 }
@@ -4575,7 +4728,7 @@ _bwi_adjust_devide(int32_t num, int32_t den)
  * http://bcm-specs.sipsolutions.net/TSSI_to_DBM_Table
  * "calculating table entries"
  */
-int
+static int
 bwi_rf_calc_txpower(int8_t *txpwr, uint8_t idx, const int16_t pa_params[])
 {
 	int32_t m1, m2, f, dbm;
@@ -4612,7 +4765,7 @@ bwi_rf_calc_txpower(int8_t *txpwr, uint8_t idx, const int16_t pa_params[])
 	return (0);
 }
 
-int
+static int
 bwi_rf_map_txpower(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -4621,6 +4774,10 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	uint16_t sprom_ofs, val, mask;
 	int16_t pa_params[3];
 	int error = 0, i, ant_gain, reg_txpower_max;
+#ifdef BWI_DEBUG
+	int debug = sc->sc_debug & 
+	    (BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH);
+#endif
 
 	/*
 	 * Find out max TX power
@@ -4638,12 +4795,12 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			rf->rf_txpower_max -= 3;
 	}
 	if (rf->rf_txpower_max <= 0) {
-		printf("%s: invalid max txpower in sprom\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "invalid max txpower in sprom\n");
 		rf->rf_txpower_max = 74;
 	}
-	DPRINTF(1, "%s: max txpower from sprom: %d dBm\n",
-	    sc->sc_dev.dv_xname, rf->rf_txpower_max);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH,
+	    "max txpower from sprom: %d dBm\n", rf->rf_txpower_max);
 
 	/*
 	 * Find out region/domain max TX power, which is adjusted
@@ -4657,24 +4814,25 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 		ant_gain = __SHIFTOUT(val, BWI_SPROM_ANT_GAIN_MASK_11BG);
 	if (ant_gain == 0xff) {
 		/* XXX why this always invalid? */
-		DPRINTF(1, "%s: invalid antenna gain in sprom\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "invalid antenna gain in sprom\n");
 		ant_gain = 2;
 	}
 	ant_gain *= 4;
-	DPRINTF(1, "%s: ant gain %d dBm\n", sc->sc_dev.dv_xname, ant_gain);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH,
+	    "ant gain %d dBm\n", ant_gain);
 
 	reg_txpower_max = 90 - ant_gain - 6;	/* XXX magic number */
-	DPRINTF(1, "%s: region/domain max txpower %d dBm\n",
-	    sc->sc_dev.dv_xname, reg_txpower_max);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH,
+	    "region/domain max txpower %d dBm\n", reg_txpower_max);
 
 	/*
 	 * Force max TX power within region/domain TX power limit
 	 */
 	if (rf->rf_txpower_max > reg_txpower_max)
 		rf->rf_txpower_max = reg_txpower_max;
-	DPRINTF(1, "%s: max txpower %d dBm\n",
-	    sc->sc_dev.dv_xname, rf->rf_txpower_max);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH,
+	    "max txpower %d dBm\n", rf->rf_txpower_max);
 
 	/*
 	 * Create TSSI to TX power mapping
@@ -4709,16 +4867,22 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			const int8_t *txpower_map;
 
 			if (phy->phy_mode == IEEE80211_MODE_11A) {
-				printf("%s: no tssi2dbm table for 11a PHY\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev,
+				    "no tssi2dbm table for 11a PHY\n");
 				return (ENXIO);
 			}
 
 			if (phy->phy_mode == IEEE80211_MODE_11G) {
-				DPRINTF(1, "%s: use default 11g TSSI map\n",
-				    sc->sc_dev.dv_xname);
+				DPRINTF(sc,
+				    BWI_DBG_RF | BWI_DBG_TXPOWER |
+					BWI_DBG_ATTACH,
+				    "use default 11g TSSI map\n");
 				txpower_map = bwi_txpower_map_11g;
 			} else {
+				DPRINTF(sc,
+				    BWI_DBG_RF | BWI_DBG_TXPOWER |
+					BWI_DBG_ATTACH,
+				    "use default 11b TSSI map\n");
 				txpower_map = bwi_txpower_map_11b;
 			}
 
@@ -4738,7 +4902,8 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	 * Extract idle TSSI from SPROM.
 	 */
 	val = bwi_read_sprom(sc, BWI_SPROM_IDLE_TSSI);
-	DPRINTF(1, "%s: sprom idle tssi: 0x%04x\n", sc->sc_dev.dv_xname, val);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH,
+	    "sprom idle tssi: 0x%04x\n", val);
 
 	if (phy->phy_mode == IEEE80211_MODE_11A)
 		mask = BWI_SPROM_IDLE_TSSI_MASK_11A;
@@ -4754,32 +4919,43 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	/*
 	 * Calculate TX power map, which is indexed by TSSI
 	 */
-	DPRINTF(1, "%s: TSSI-TX power map:\n", sc->sc_dev.dv_xname);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH,
+	    "TSSI-TX power map:\n");
 	for (i = 0; i < BWI_TSSI_MAX; ++i) {
 		error = bwi_rf_calc_txpower(&rf->rf_txpower_map0[i], i,
 					    pa_params);
 		if (error) {
-			printf("%s: bwi_rf_calc_txpower failed\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "bwi_rf_calc_txpower failed\n");
 			break;
 		}
-		if (i != 0 && i % 8 == 0)
-			DPRINTF(1, "\n");
-		DPRINTF(1, "%d ", rf->rf_txpower_map0[i]);
+#ifdef BWI_DEBUG
+		if (debug) {
+			if (i % 8 == 0) {
+				if (i != 0)
+					aprint_debug("\n");
+				aprint_debug_dev(&sc->sc_dev, "");
+			}
+			aprint_debug(" %d", rf->rf_txpower_map0[i]);
+		}
+#endif
 	}
-	DPRINTF(1, "\n");
+#ifdef BWI_DEBUG
+	if (debug)
+		aprint_debug("\n");
+#endif
 back:
-	DPRINTF(1, "%s: idle tssi0: %d\n",
-	    sc->sc_dev.dv_xname, rf->rf_idle_tssi0);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH,
+	    "idle tssi0: %d\n", rf->rf_idle_tssi0);
 
 	return (error);
 }
 
-void
+static void
 bwi_rf_lo_update_11g(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	struct bwi_rf *rf = &mac->mac_rf;
 	struct bwi_phy *phy = &mac->mac_phy;
 	struct bwi_tpctl *tpctl = &mac->mac_tpctl;
@@ -4788,7 +4964,7 @@ bwi_rf_lo_update_11g(struct bwi_mac *mac)
 	uint8_t devi_ctrl;
 	uint orig_chan;
 
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_INIT, "%s enter\n", __func__);
 
 	/*
 	 * Save RF/PHY registers for later restoration
@@ -4910,7 +5086,7 @@ bwi_rf_lo_update_11g(struct bwi_mac *mac)
 	bwi_rf_set_chan(mac, orig_chan, 1);
 }
 
-uint32_t
+static uint32_t
 bwi_rf_lo_devi_measure(struct bwi_mac *mac, uint16_t ctrl)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -4944,7 +5120,7 @@ bwi_rf_lo_devi_measure(struct bwi_mac *mac, uint16_t ctrl)
 	return (devi);
 }
 
-uint16_t
+static uint16_t
 bwi_rf_get_tp_ctrl2(struct bwi_mac *mac)
 {
 	uint32_t devi_min;
@@ -4971,22 +5147,22 @@ bwi_rf_get_tp_ctrl2(struct bwi_mac *mac)
 	return (tp_ctrl2);
 }
 
-uint8_t
+static uint8_t
 _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 {
 #define RF_ATTEN_LISTSZ	14
 #define BBP_ATTEN_MAX	4	/* half */
-	struct ifnet *ifp = &mac->mac_sc->sc_ic.ic_ifp;
-	struct bwi_rf_lo lo_save, *lo;
-	uint8_t devi_ctrl = 0;
-	int idx, adj_rf7a = 0;
-
 	static const int rf_atten_list[RF_ATTEN_LISTSZ] =
 	    { 3, 1, 5, 7, 9, 2, 0, 4, 6, 8, 1, 2, 3, 4 };
 	static const int rf_atten_init_list[RF_ATTEN_LISTSZ] =
             { 0, 3, 1, 5, 7, 3, 2, 0, 4, 6, -1, -1, -1, -1 };
 	static const int rf_lo_measure_order[RF_ATTEN_LISTSZ] =
 	    { 3, 1, 5, 7, 9, 2, 0, 4, 6, 8, 10, 11, 12, 13 };
+
+	struct ifnet *ifp = &mac->mac_sc->sc_if;
+	struct bwi_rf_lo lo_save, *lo;
+	uint8_t devi_ctrl = 0;
+	int idx, adj_rf7a = 0;
 
 	bzero(&lo_save, sizeof(lo_save));
 	for (idx = 0; idx < RF_ATTEN_LISTSZ; ++idx) {
@@ -5068,7 +5244,7 @@ _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 #undef BBP_ATTEN_MAX
 }
 
-void
+static void
 bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
     struct bwi_rf_lo *dst_lo, uint8_t devi_ctrl)
 {
@@ -5157,11 +5333,16 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 #undef LO_ADJUST_MAX
 }
 
-void
+static void
 bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *mac)
 {
 #define SAVE_RF_MAX	3
 #define SAVE_PHY_MAX	8
+	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
+	    { 0x7a, 0x52, 0x43 };
+	static const uint16_t save_phy_regs[SAVE_PHY_MAX] =
+	    { 0x30, 0x26, 0x15, 0x2a, 0x20, 0x5a, 0x59, 0x58 };
+
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -5170,11 +5351,6 @@ bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *mac)
 	uint16_t ant_div, bbp_atten, chan_ex;
 	int16_t nrssi[2];
 	int i;
-
-	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
-	    { 0x7a, 0x52, 0x43 };
-	static const uint16_t save_phy_regs[SAVE_PHY_MAX] =
-	    { 0x30, 0x26, 0x15, 0x2a, 0x20, 0x5a, 0x59, 0x58 };
 
 	/*
 	 * Save RF/PHY registers for later restoration
@@ -5269,20 +5445,12 @@ bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *mac)
 #undef SAVE_PHY_MAX
 }
 
-void
+static void
 bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 {
 #define SAVE_RF_MAX		2
 #define SAVE_PHY_COMM_MAX	10
 #define SAVE_PHY6_MAX		8
-	struct bwi_phy *phy = &mac->mac_phy;
-	uint16_t save_rf[SAVE_RF_MAX];
-	uint16_t save_phy_comm[SAVE_PHY_COMM_MAX];
-	uint16_t save_phy6[SAVE_PHY6_MAX];
-	uint16_t rf7b = 0xffff;
-	int16_t nrssi;
-	int i, phy6_idx = 0;
-
 	static const uint16_t save_rf_regs[SAVE_RF_MAX] = { 0x7a, 0x43 };
 	static const uint16_t save_phy_comm_regs[SAVE_PHY_COMM_MAX] = {
 		0x0001, 0x0811, 0x0812, 0x0814,
@@ -5293,6 +5461,14 @@ bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 		0x002e, 0x002f, 0x080f, 0x0810,
 		0x0801, 0x0060, 0x0014, 0x0478
 	};
+
+	struct bwi_phy *phy = &mac->mac_phy;
+	uint16_t save_rf[SAVE_RF_MAX];
+	uint16_t save_phy_comm[SAVE_PHY_COMM_MAX];
+	uint16_t save_phy6[SAVE_PHY6_MAX];
+	uint16_t rf7b = 0xffff;
+	int16_t nrssi;
+	int i, phy6_idx = 0;
 
 	for (i = 0; i < SAVE_PHY_COMM_MAX; ++i)
 		save_phy_comm[i] = PHY_READ(mac, save_phy_comm_regs[i]);
@@ -5422,12 +5598,21 @@ bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 #undef SAVE_PHY6_MAX
 }
 
-void
+static void
 bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 {
 #define SAVE_RF_MAX		3
 #define SAVE_PHY_COMM_MAX	4
 #define SAVE_PHY3_MAX		8
+	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
+	    { 0x7a, 0x52, 0x43 };
+	static const uint16_t save_phy_comm_regs[SAVE_PHY_COMM_MAX] =
+	    { 0x15, 0x5a, 0x59, 0x58 };
+	static const uint16_t save_phy3_regs[SAVE_PHY3_MAX] = {
+		0x002e, 0x002f, 0x080f, 0x0810,
+		0x0801, 0x0060, 0x0014, 0x0478
+	};
+
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_phy *phy = &mac->mac_phy;
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -5438,15 +5623,6 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 	struct bwi_gains gains;
 	int16_t nrssi[2];
 	int i, phy3_idx = 0;
-
-	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
-	    { 0x7a, 0x52, 0x43 };
-	static const uint16_t save_phy_comm_regs[SAVE_PHY_COMM_MAX] =
-	    { 0x15, 0x5a, 0x59, 0x58 };
-	static const uint16_t save_phy3_regs[SAVE_PHY3_MAX] = {
-		0x002e, 0x002f, 0x080f, 0x0810,
-		0x0801, 0x0060, 0x0014, 0x0478
-	};
 
 	if (rf->rf_rev >= 9)
 		return;
@@ -5599,7 +5775,7 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 #undef SAVE_PHY3_MAX
 }
 
-void
+static void
 bwi_rf_init_sw_nrssi_table(struct bwi_mac *mac)
 {
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -5619,7 +5795,7 @@ bwi_rf_init_sw_nrssi_table(struct bwi_mac *mac)
 	}
 }
 
-void
+static void
 bwi_rf_init_hw_nrssi_table(struct bwi_mac *mac, uint16_t adjust)
 {
 	int i;
@@ -5632,14 +5808,14 @@ bwi_rf_init_hw_nrssi_table(struct bwi_mac *mac, uint16_t adjust)
 		val -= adjust;
 		if (val < -32)
 			val = -32;
-		else if (val > 31);
+		else if (val > 31)
 			val = 31;
 
 		bwi_nrssi_write(mac, i, val);
 	}
 }
 
-void
+static void
 bwi_rf_set_nrssi_thr_11b(struct bwi_mac *mac)
 {
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -5679,7 +5855,7 @@ bwi_rf_set_nrssi_thr_11b(struct bwi_mac *mac)
 	}
 }
 
-int32_t
+static int32_t
 _nrssi_threshold(const struct bwi_rf *rf, int32_t val)
 {
 	val *= (rf->rf_nrssi[1] - rf->rf_nrssi[0]);
@@ -5697,7 +5873,7 @@ _nrssi_threshold(const struct bwi_rf *rf, int32_t val)
 	return (val);
 }
 
-void
+static void
 bwi_rf_set_nrssi_thr_11g(struct bwi_mac *mac)
 {
 	int32_t thr1, thr2;
@@ -5736,7 +5912,7 @@ bwi_rf_set_nrssi_thr_11g(struct bwi_mac *mac)
 #undef NRSSI_THR2_MASK
 }
 
-void
+static void
 bwi_rf_clear_tssi(struct bwi_mac *mac)
 {
 	/* XXX use function pointer */
@@ -5761,7 +5937,7 @@ bwi_rf_clear_tssi(struct bwi_mac *mac)
 	}
 }
 
-void
+static void
 bwi_rf_clear_state(struct bwi_rf *rf)
 {
 	int i;
@@ -5785,13 +5961,13 @@ bwi_rf_clear_state(struct bwi_rf *rf)
 	rf->rf_idle_tssi = rf->rf_idle_tssi0;
 }
 
-void
+static void
 bwi_rf_on_11a(struct bwi_mac *mac)
 {
 	/* TODO: 11A */
 }
 
-void
+static void
 bwi_rf_on_11bg(struct bwi_mac *mac)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -5806,7 +5982,7 @@ bwi_rf_on_11bg(struct bwi_mac *mac)
 	bwi_rf_set_chan(mac, 6 /* XXX */, 1);
 }
 
-void
+static void
 bwi_rf_set_ant_mode(struct bwi_mac *mac, int ant_mode)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -5882,7 +6058,7 @@ bwi_rf_set_ant_mode(struct bwi_mac *mac, int ant_mode)
 	mac->mac_rf.rf_ant_mode = ant_mode;
 }
 
-int
+static int
 bwi_rf_get_latest_tssi(struct bwi_mac *mac, int8_t tssi[], uint16_t ofs)
 {
 	int i;
@@ -5903,7 +6079,7 @@ bwi_rf_get_latest_tssi(struct bwi_mac *mac, int8_t tssi[], uint16_t ofs)
 	return (0);
 }
 
-int
+static int
 bwi_rf_tssi2dbm(struct bwi_mac *mac, int8_t tssi, int8_t *txpwr)
 {
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -5912,7 +6088,7 @@ bwi_rf_tssi2dbm(struct bwi_mac *mac, int8_t tssi, int8_t *txpwr)
 	pwr_idx = rf->rf_idle_tssi + (int)tssi - rf->rf_base_tssi;
 #if 0
 	if (pwr_idx < 0 || pwr_idx >= BWI_TSSI_MAX)
-		return EINVAL;
+		return (EINVAL);
 #else
 	if (pwr_idx < 0)
 		pwr_idx = 0;
@@ -5924,15 +6100,15 @@ bwi_rf_tssi2dbm(struct bwi_mac *mac, int8_t tssi, int8_t *txpwr)
 	return (0);
 }
 
-int
+static int
 bwi_rf_calc_rssi_bcm2050(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 {
 	uint16_t flags1, flags3;
 	int rssi, lna_gain;
 
 	rssi = hdr->rxh_rssi;
-	flags1 = letoh16(hdr->rxh_flags1);
-	flags3 = letoh16(hdr->rxh_flags3);
+	flags1 = le16toh(hdr->rxh_flags1);
+	flags3 = le16toh(hdr->rxh_flags3);
 
 #define NEW_BCM2050_RSSI
 #ifdef NEW_BCM2050_RSSI
@@ -5965,10 +6141,15 @@ bwi_rf_calc_rssi_bcm2050(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 	if (flags3 & BWI_RXH_F3_BCM2050_RSSI)
 		rssi += 20;
 
-	lna_gain = __SHIFTOUT(letoh16(hdr->rxh_phyinfo),
+	lna_gain = __SHIFTOUT(le16toh(hdr->rxh_phyinfo),
 	    BWI_RXH_PHYINFO_LNAGAIN);
-	DPRINTF(3, "lna_gain %d, phyinfo 0x%04x\n",
-	    lna_gain, letoh16(hdr->rxh_phyinfo));
+/*	[TRC: XXX This causes some seriously verbose output.  I hope it
+	just verbose and not actually a symptom of a problem.]
+
+	DPRINTF(mac->mac_sc, BWI_DBG_RF | BWI_DBG_RX,
+	    "lna_gain %d, phyinfo 0x%04x\n",
+	    lna_gain, le16toh(hdr->rxh_phyinfo));
+*/
 	switch (lna_gain) {
 	case 0:
 		rssi += 27;
@@ -6029,7 +6210,7 @@ bwi_rf_calc_rssi_bcm2050(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 	return (rssi);
 }
 
-int
+static int
 bwi_rf_calc_rssi_bcm2053(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 {
 	uint16_t flags1;
@@ -6037,7 +6218,7 @@ bwi_rf_calc_rssi_bcm2053(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 
 	rssi = (((int)hdr->rxh_rssi - 11) * 103) / 64;
 
-	flags1 = letoh16(hdr->rxh_flags1);
+	flags1 = le16toh(hdr->rxh_flags1);
 	if (flags1 & BWI_RXH_F1_BCM2053_RSSI)
 		rssi -= 109;
 	else
@@ -6046,7 +6227,7 @@ bwi_rf_calc_rssi_bcm2053(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 	return (rssi);
 }
 
-int
+static int
 bwi_rf_calc_rssi_bcm2060(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 {
 	int rssi;
@@ -6058,7 +6239,7 @@ bwi_rf_calc_rssi_bcm2060(struct bwi_mac *mac, const struct bwi_rxbuf_hdr *hdr)
 	return (rssi);
 }
 
-uint16_t
+static uint16_t
 bwi_rf_lo_measure_11b(struct bwi_mac *mac)
 {
 	uint16_t val;
@@ -6079,7 +6260,7 @@ bwi_rf_lo_measure_11b(struct bwi_mac *mac)
 	return (val);
 }
 
-void
+static void
 bwi_rf_lo_update_11b(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
@@ -6089,7 +6270,7 @@ bwi_rf_lo_update_11b(struct bwi_mac *mac)
 	uint16_t rf52, bphy_ctrl;
 	int i;
 
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_INIT, "%s enter\n", __func__);
 
 	bzero(&regs, sizeof(regs));
 	bphy_ctrl = 0;
@@ -6125,8 +6306,8 @@ bwi_rf_lo_update_11b(struct bwi_mac *mac)
 
 	if (rf->rf_type == BWI_RF_T_BCM2050) {
 		PHY_WRITE(mac, 0x2b, 0x203);
- 		PHY_WRITE(mac, 0x2a, 0x8a3);
- 	} else {
+		PHY_WRITE(mac, 0x2a, 0x8a3);
+	} else {
 		PHY_WRITE(mac, 0x2b, 0x1402);
 	}
 
@@ -6134,16 +6315,16 @@ bwi_rf_lo_update_11b(struct bwi_mac *mac)
 	 * Setup RF signal
 	 */
 	rf_val = 0;
-	min_val = 65535;
+	min_val = UINT16_MAX;
 
 	for (i = 0; i < 4; ++i) {
 		RF_WRITE(mac, 0x52, rf52 | i);
 		bwi_rf_lo_measure_11b(mac);	/* Ignore return value */
 	}
 	for (i = 0; i < 10; ++i) {
- 		RF_WRITE(mac, 0x52, rf52 | i);
+		RF_WRITE(mac, 0x52, rf52 | i);
 
-  		val = bwi_rf_lo_measure_11b(mac) / 10;
+		val = bwi_rf_lo_measure_11b(mac) / 10;
 		if (val < min_val) {
 			min_val = val;
 			rf_val = i;
@@ -6153,9 +6334,9 @@ bwi_rf_lo_update_11b(struct bwi_mac *mac)
 
 	/*
 	 * Setup PHY signal
-	*/
+	 */
 	phy_val = 0;
-	min_val = 65535;
+	min_val = UINT16_MAX;
 
 	for (i = -4; i < 5; i += 2) {
 		int j;
@@ -6202,13 +6383,13 @@ bwi_rf_lo_update_11b(struct bwi_mac *mac)
 
 /* INTERFACE */
 
-uint16_t
+static uint16_t
 bwi_read_sprom(struct bwi_softc *sc, uint16_t ofs)
 {
 	return (CSR_READ_2(sc, ofs + BWI_SPROM_START));
 }
 
-void
+static void
 bwi_setup_desc32(struct bwi_softc *sc, struct bwi_desc32 *desc_array,
     int ndesc, int desc_idx, bus_addr_t paddr, int buf_len, int tx)
 {
@@ -6236,12 +6417,12 @@ bwi_setup_desc32(struct bwi_softc *sc, struct bwi_desc32 *desc_array,
 	desc->ctrl = htole32(ctrl);
 }
 
-void
+static void
 bwi_power_on(struct bwi_softc *sc, int with_pll)
 {
 	uint32_t gpio_in, gpio_out, gpio_en, status;
 
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	DPRINTF(sc, BWI_DBG_MISC, "%s\n", __func__);
 
 	gpio_in = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_IN);
 	if (gpio_in & BWI_PCIM_GPIO_PWR_ON)
@@ -6270,18 +6451,19 @@ bwi_power_on(struct bwi_softc *sc, int with_pll)
 	}
 
 back:
+	/* [TRC: XXX This looks totally wrong -- what's PCI doing in here?] */
 	/* Clear "Signaled Target Abort" */
 	status = (sc->sc_conf_read)(sc, PCI_COMMAND_STATUS_REG);
 	status &= ~PCI_STATUS_TARGET_TARGET_ABORT;
 	(sc->sc_conf_write)(sc, PCI_COMMAND_STATUS_REG, status);
 }
 
-int
+static int
 bwi_power_off(struct bwi_softc *sc, int with_pll)
 {
 	uint32_t gpio_out, gpio_en;
 
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	DPRINTF(sc, BWI_DBG_MISC, "%s\n", __func__);
 
 	(sc->sc_conf_read)(sc, BWI_PCIR_GPIO_IN); /* dummy read */
 	gpio_out = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_OUT);
@@ -6300,7 +6482,7 @@ bwi_power_off(struct bwi_softc *sc, int with_pll)
 	return (0);
 }
 
-int
+static int
 bwi_regwin_switch(struct bwi_softc *sc, struct bwi_regwin *rw,
     struct bwi_regwin **old_rw)
 {
@@ -6315,8 +6497,8 @@ bwi_regwin_switch(struct bwi_softc *sc, struct bwi_regwin *rw,
 	if (sc->sc_cur_regwin != rw) {
 		error = bwi_regwin_select(sc, rw->rw_id);
 		if (error) {
-			printf("%s: can't select regwin %d\n",
-			    sc->sc_dev.dv_xname, rw->rw_id);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't select regwin %d\n", rw->rw_id);
 			return (error);
 		}
 	}
@@ -6328,7 +6510,7 @@ bwi_regwin_switch(struct bwi_softc *sc, struct bwi_regwin *rw,
 	return (0);
 }
 
-int
+static int
 bwi_regwin_select(struct bwi_softc *sc, int id)
 {
 	uint32_t win = BWI_PCIM_REGWIN(id);
@@ -6346,7 +6528,7 @@ bwi_regwin_select(struct bwi_softc *sc, int id)
 	return (ENXIO);
 }
 
-void
+static void
 bwi_regwin_info(struct bwi_softc *sc, uint16_t *type, uint8_t *rev)
 {
 	uint32_t val;
@@ -6355,29 +6537,27 @@ bwi_regwin_info(struct bwi_softc *sc, uint16_t *type, uint8_t *rev)
 	*type = BWI_ID_HI_REGWIN_TYPE(val);
 	*rev = BWI_ID_HI_REGWIN_REV(val);
 
-	DPRINTF(1, "%s: regwin: type 0x%03x, rev %d, vendor 0x%04x\n",
-	    sc->sc_dev.dv_xname,
-	    *type, *rev, __SHIFTOUT(val, BWI_ID_HI_REGWIN_VENDOR_MASK));
+	DPRINTF(sc, BWI_DBG_ATTACH, "regwin: type 0x%03x, rev %d,"
+	    " vendor 0x%04x\n", *type, *rev,
+	    __SHIFTOUT(val, BWI_ID_HI_REGWIN_VENDOR_MASK));
 }
 
-void
+static void
 bwi_led_attach(struct bwi_softc *sc)
 {
 	const uint8_t *led_act = NULL;
 	uint16_t gpio, val[BWI_LED_MAX];
 	int i;
 
-#define N(arr) (int)(sizeof(arr) / sizeof(arr[0]))
-
+#define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
 	for (i = 0; i < N(bwi_vendor_led_act); ++i) {
 		if (sc->sc_pci_subvid == bwi_vendor_led_act[i].vid) {
 			led_act = bwi_vendor_led_act[i].led_act;
-				break;
+			break;
 		}
 	}
 	if (led_act == NULL)
 		led_act = bwi_default_led_act;
-
 #undef N
 
 	gpio = bwi_read_sprom(sc, BWI_SPROM_GPIO01);
@@ -6403,7 +6583,7 @@ bwi_led_attach(struct bwi_softc *sc)
 		if (led->l_act == BWI_LED_ACT_BLINK_SLOW ||
 		    led->l_act == BWI_LED_ACT_BLINK_POLL ||
 		    led->l_act == BWI_LED_ACT_BLINK) {
-		    led->l_flags |= BWI_LED_F_BLINK;
+			led->l_flags |= BWI_LED_F_BLINK;
 			if (led->l_act == BWI_LED_ACT_BLINK_POLL)
 				led->l_flags |= BWI_LED_F_POLLABLE;
 			else if (led->l_act == BWI_LED_ACT_BLINK_SLOW)
@@ -6416,16 +6596,15 @@ bwi_led_attach(struct bwi_softc *sc)
 			}
 		}
 
-		DPRINTF(1, "%s: %dth led, act %d, lowact %d\n",
-		    sc->sc_dev.dv_xname, i, led->l_act,
+		DPRINTF(sc, BWI_DBG_LED | BWI_DBG_ATTACH,
+		    "%dth led, act %d, lowact %d\n", i, led->l_act,
 		    led->l_flags & BWI_LED_F_ACTLOW);
 	}
-	timeout_set(&sc->sc_led_blink_next_ch, bwi_led_blink_next, sc);
-	timeout_set(&sc->sc_led_blink_end_ch, bwi_led_blink_end, sc);
+	callout_init(&sc->sc_led_blink_ch, 0);
 }
 
-uint16_t
-bwi_led_onoff(struct bwi_led *led, uint16_t val, int on)
+static uint16_t
+bwi_led_onoff(const struct bwi_led *led, uint16_t val, int on)
 {
 	if (led->l_flags & BWI_LED_F_ACTLOW)
 		on = !on;
@@ -6437,20 +6616,20 @@ bwi_led_onoff(struct bwi_led *led, uint16_t val, int on)
 	return (val);
 }
 
-void
+static void
 bwi_led_newstate(struct bwi_softc *sc, enum ieee80211_state nstate)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &sc->sc_if;
 	uint16_t val;
 	int i;
 
 	if (nstate == IEEE80211_S_INIT) {
-		timeout_del(&sc->sc_led_blink_next_ch);
-		timeout_del(&sc->sc_led_blink_end_ch);
+		callout_stop(&sc->sc_led_blink_ch);
 		sc->sc_led_blinking = 0;
 	}
 
-	if ((ic->ic_ifp.if_flags & IFF_RUNNING) == 0)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	val = CSR_READ_2(sc, BWI_MAC_GPIO_CTRL);
@@ -6463,7 +6642,7 @@ bwi_led_newstate(struct bwi_softc *sc, enum ieee80211_state nstate)
 			continue;
 
 		if ((led->l_flags & BWI_LED_F_BLINK) &&
-			nstate != IEEE80211_S_INIT)
+		    nstate != IEEE80211_S_INIT)
 			continue;
 
 		switch (led->l_act) {
@@ -6498,7 +6677,7 @@ bwi_led_newstate(struct bwi_softc *sc, enum ieee80211_state nstate)
 	CSR_WRITE_2(sc, BWI_MAC_GPIO_CTRL, val);
 }
 
-void
+static void
 bwi_led_event(struct bwi_softc *sc, int event)
 {
 	struct bwi_led *led = sc->sc_blink_led;
@@ -6533,7 +6712,7 @@ bwi_led_event(struct bwi_softc *sc, int event)
 	    bwi_led_duration[rate].off_dur);
 }
 
-void
+static void
 bwi_led_blink_start(struct bwi_softc *sc, int on_dur, int off_dur)
 {
 	struct bwi_led *led = sc->sc_blink_led;
@@ -6551,10 +6730,10 @@ bwi_led_blink_start(struct bwi_softc *sc, int on_dur, int off_dur)
 	sc->sc_led_blinking = 1;
 	sc->sc_led_blink_offdur = off_dur;
 
-	timeout_add(&sc->sc_led_blink_next_ch, on_dur);
+	callout_reset(&sc->sc_led_blink_ch, on_dur, bwi_led_blink_next, sc);
 }
 
-void
+static void
 bwi_led_blink_next(void *xsc)
 {
 	struct bwi_softc *sc = xsc;
@@ -6564,10 +6743,11 @@ bwi_led_blink_next(void *xsc)
 	val = bwi_led_onoff(sc->sc_blink_led, val, 0);
 	CSR_WRITE_2(sc, BWI_MAC_GPIO_CTRL, val);
 
-	timeout_add(&sc->sc_led_blink_end_ch, sc->sc_led_blink_offdur);
+	callout_reset(&sc->sc_led_blink_ch, sc->sc_led_blink_offdur,
+	    bwi_led_blink_end, sc);
 }
 
-void
+static void
 bwi_led_blink_end(void *xsc)
 {
 	struct bwi_softc *sc = xsc;
@@ -6575,7 +6755,7 @@ bwi_led_blink_end(void *xsc)
 	sc->sc_led_blinking = 0;
 }
 
-int
+static int
 bwi_bbp_attach(struct bwi_softc *sc)
 {
 #define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
@@ -6590,7 +6770,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	 */
 	error = bwi_regwin_select(sc, 0);
 	if (error) {
-		printf("%s: can't select regwin 0\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't select regwin 0\n");
 		return (error);
 	}
 	bwi_regwin_info(sc, &rw_type, &rw_rev);
@@ -6619,8 +6799,8 @@ bwi_bbp_attach(struct bwi_softc *sc)
 			}
 		}
 		if (bbp_id == 0) {
-			printf("%s: no BBP id for device id 0x%04x\n",
-			    sc->sc_dev.dv_xname, did);
+			aprint_error_dev(&sc->sc_dev, "no BBP id for device id"
+			    " 0x%04x\n", did);
 			return (ENXIO);
 		}
 
@@ -6642,8 +6822,8 @@ bwi_bbp_attach(struct bwi_softc *sc)
 			}
 		}
 		if (nregwin == 0) {
-			printf("%s: no number of win for BBP id 0x%04x\n",
-			    sc->sc_dev.dv_xname, bbp_id);
+			aprint_error_dev(&sc->sc_dev, "no number of win for"
+			    " BBP id 0x%04x\n", bbp_id);
 			return (ENXIO);
 		}
 	}
@@ -6652,10 +6832,11 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	sc->sc_bbp_id = bbp_id;
 	sc->sc_bbp_rev = __SHIFTOUT(info, BWI_INFO_BBPREV_MASK);
 	sc->sc_bbp_pkg = __SHIFTOUT(info, BWI_INFO_BBPPKG_MASK);
-	DPRINTF(1, "%s: BBP id 0x%04x, BBP rev 0x%x, BBP pkg %d\n",
-	    sc->sc_dev.dv_xname, sc->sc_bbp_id, sc->sc_bbp_rev, sc->sc_bbp_pkg);
-	DPRINTF(1, "%s: nregwin %d, cap 0x%08x\n",
-	    sc->sc_dev.dv_xname, nregwin, sc->sc_cap);
+	aprint_normal_dev(&sc->sc_dev,
+	    "BBP id 0x%04x, BBP rev 0x%x, BBP pkg %d\n",
+	    sc->sc_bbp_id, sc->sc_bbp_rev, sc->sc_bbp_pkg);
+	DPRINTF(sc, BWI_DBG_ATTACH, "nregwin %d, cap 0x%08x\n",
+	    nregwin, sc->sc_cap);
 
 	/*
 	 * Create rest of the regwins
@@ -6670,8 +6851,8 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		 */
 		error = bwi_regwin_select(sc, i);
 		if (error) {
-			printf("%s: can't select regwin %d\n",
-			    sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev, "can't select regwin"
+			    " %d\n", i);
 			return (error);
 		}
 		bwi_regwin_info(sc, &rw_type, &rw_rev);
@@ -6685,8 +6866,8 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		if (rw_type == BWI_REGWIN_T_BUSPCI ||
 		    rw_type == BWI_REGWIN_T_BUSPCIE) {
 			if (BWI_REGWIN_EXIST(&sc->sc_bus_regwin)) {
-				printf("%s: bus regwin already exists\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev,
+				    "bus regwin already exists\n");
 			} else {
 				BWI_CREATE_REGWIN(&sc->sc_bus_regwin, i,
 				    rw_type, rw_rev);
@@ -6699,14 +6880,14 @@ bwi_bbp_attach(struct bwi_softc *sc)
 
 	/* At least one MAC shold exist */
 	if (!BWI_REGWIN_EXIST(&sc->sc_mac[0].mac_regwin)) {
-		printf("%s: no MAC was found\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "no MAC was found\n");
 		return (ENXIO);
 	}
 	KASSERT(sc->sc_nmac > 0);
 
 	/* Bus regwin must exist */
 	if (!BWI_REGWIN_EXIST(&sc->sc_bus_regwin)) {
-		printf("%s: no bus regwin was found\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "no bus regwin was found\n");
 		return (ENXIO);
 	}
 
@@ -6719,7 +6900,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 #undef N
 }
 
-int
+static int
 bwi_bus_init(struct bwi_softc *sc, struct bwi_mac *mac)
 {
 	struct bwi_regwin *old, *bus;
@@ -6779,9 +6960,9 @@ bwi_bus_init(struct bwi_softc *sc, struct bwi_mac *mac)
 			 */
 			CSR_SETBITS_4(sc, BWI_CONF_LO,
 			    __SHIFTIN(BWI_CONF_LO_SERVTO,
-			    BWI_CONF_LO_SERVTO_MASK) |
+				BWI_CONF_LO_SERVTO_MASK) |
 			    __SHIFTIN(BWI_CONF_LO_REQTO,
-			    BWI_CONF_LO_REQTO_MASK));
+				BWI_CONF_LO_REQTO_MASK));
 
 			/*
 			 * If there is common regwin, we switch to that regwin
@@ -6819,7 +7000,7 @@ back:
 	return (bwi_regwin_switch(sc, old, NULL));
 }
 
-void
+static void
 bwi_get_card_flags(struct bwi_softc *sc)
 {
 	sc->sc_card_flags = bwi_read_sprom(sc, BWI_SPROM_CARD_FLAGS);
@@ -6831,11 +7012,10 @@ bwi_get_card_flags(struct bwi_softc *sc)
 	    sc->sc_pci_revid > 0x40)
 		sc->sc_card_flags |= BWI_CARD_F_PA_GPIO9;
 
-	DPRINTF(1, "%s: card flags 0x%04x\n",
-	    sc->sc_dev.dv_xname, sc->sc_card_flags);
+	DPRINTF(sc, BWI_DBG_ATTACH, "card flags 0x%04x\n", sc->sc_card_flags);
 }
 
-void
+static void
 bwi_get_eaddr(struct bwi_softc *sc, uint16_t eaddr_ofs, uint8_t *eaddr)
 {
 	int i;
@@ -6846,7 +7026,7 @@ bwi_get_eaddr(struct bwi_softc *sc, uint16_t eaddr_ofs, uint8_t *eaddr)
 	}
 }
 
-void
+static void
 bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 {
 	struct bwi_regwin *com;
@@ -6898,19 +7078,18 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 	KASSERT(src >= 0 && src < BWI_CLKSRC_MAX);
 	KASSERT(div != 0);
 
-	DPRINTF(1, "%s: clksrc %s\n",
-	    sc->sc_dev.dv_xname,
+	DPRINTF(sc, BWI_DBG_ATTACH, "clksrc %s\n",
 	    src == BWI_CLKSRC_PCI ? "PCI" :
 	    (src == BWI_CLKSRC_LP_OSC ? "LP_OSC" : "CS_OSC"));
 
 	freq->clkfreq_min = bwi_clkfreq[src].freq_min / div;
 	freq->clkfreq_max = bwi_clkfreq[src].freq_max / div;
 
-	DPRINTF(1, "%s: clkfreq min %u, max %u\n",
-	    sc->sc_dev.dv_xname, freq->clkfreq_min, freq->clkfreq_max);
+	DPRINTF(sc, BWI_DBG_ATTACH, "clkfreq min %u, max %u\n",
+	    freq->clkfreq_min, freq->clkfreq_max);
 }
 
-int
+static int
 bwi_set_clock_mode(struct bwi_softc *sc, enum bwi_clock_mode clk_mode)
 {
 	struct bwi_regwin *old, *com;
@@ -6967,7 +7146,7 @@ bwi_set_clock_mode(struct bwi_softc *sc, enum bwi_clock_mode clk_mode)
 	return (bwi_regwin_switch(sc, old, NULL));
 }
 
-int
+static int
 bwi_set_clock_delay(struct bwi_softc *sc)
 {
 	struct bwi_regwin *old, *com;
@@ -7005,7 +7184,7 @@ bwi_set_clock_delay(struct bwi_softc *sc)
 	return (bwi_regwin_switch(sc, old, NULL));
 }
 
-int
+static int
 bwi_init(struct ifnet *ifp)
 {
 	struct bwi_softc *sc = ifp->if_softc;
@@ -7015,25 +7194,21 @@ bwi_init(struct ifnet *ifp)
 	return (0);
 }
 
-void
+static void
 bwi_init_statechg(struct bwi_softc *sc, int statechg)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	struct bwi_mac *mac;
 	int error;
 
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	DPRINTF(sc, BWI_DBG_MISC, "%s\n", __func__);
 
-	error = bwi_stop(sc, statechg);
-	if (error) {
-		DPRINTF(1, "%s: can't stop\n", sc->sc_dev.dv_xname);
-		return;
-	}
+	bwi_stop(ifp, statechg);
 
 	/* power on cardbus socket */
 	if (sc->sc_enable != NULL)
-		(*sc->sc_enable)(sc);
+		(sc->sc_enable)(sc);
 
 	bwi_bbp_power_on(sc, BWI_CLOCK_MODE_FAST);
 
@@ -7050,7 +7225,7 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 
 	bwi_bbp_power_on(sc, BWI_CLOCK_MODE_DYN);
 	
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 
 	bwi_set_bssid(sc, bwi_zero_addr);	/* Clear BSSID */
 	bwi_set_addr_filter(sc, BWI_ADDR_FILTER_MYADDR, ic->ic_myaddr);
@@ -7071,8 +7246,8 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 			CSR_READ_4(sc, BWI_TXSTATUS_1);
 		}
 		if (i == NRETRY)
-			printf("%s: can't drain TX status\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't drain TX status\n");
 #undef NRETRY
 	}
 
@@ -7092,7 +7267,9 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 
 	if (statechg) {
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+			/* [TRC: XXX OpenBSD omits this conditional.] */
+			if (ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
+				ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		} else {
 			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 		}
@@ -7102,74 +7279,97 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 
 back:
 	if (error)
-		bwi_stop(sc, 1);
+		bwi_stop(ifp, 1);
 	else
+		/* [TRC: XXX DragonFlyBD uses ifp->if_start(ifp).] */
 		bwi_start(ifp);
 }
 
-int
+static int
 bwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct bwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
-	struct ifreq *ifr;
 	int s, error = 0;
-	uint8_t chan;
+
+	/* [TRC: XXX Superstitiously cargo-culted from wi(4).] */
+	if (!device_is_active(&sc->sc_dev))
+		return (ENXIO);
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
-		ifp->if_flags |= IFF_UP;
-#ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&ic->ic_ac, ifa);
-#endif
-		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+		    (IFF_UP | IFF_RUNNING)) {
+			struct bwi_mac *mac;
+			int promisc = -1;
+
+			KASSERT(sc->sc_cur_regwin->rw_type ==
+			    BWI_REGWIN_T_MAC);
+			mac = (struct bwi_mac *)sc->sc_cur_regwin;
+
+			if ((ifp->if_flags & IFF_PROMISC) &&
+			    (sc->sc_flags & BWI_F_PROMISC) == 0) {
+				promisc = 1;
+				sc->sc_flags |= BWI_F_PROMISC;
+			} else if ((ifp->if_flags & IFF_PROMISC) == 0 &&
+				   (sc->sc_flags & BWI_F_PROMISC)) {
+				promisc = 0;
+				sc->sc_flags &= ~BWI_F_PROMISC;
+			}
+
+			if (promisc >= 0)
+				bwi_mac_set_promisc(mac, promisc);
+		}
+
 		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) == 0)
+			if (!(ifp->if_flags & IFF_RUNNING))
 				bwi_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				bwi_stop(sc, 1);
+				bwi_stop(ifp, 1);
 		}
 		break;
-        case SIOCADDMULTI:
-        case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
 
-		if (error == ENETRESET)
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/* [TRC: Several other drivers appear to have this
+		   copied & pasted, so I'm following suit.] */
+		/* XXX no h/w multicast filter? --dyoung */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+			/* setup multicast filter, etc */
 			error = 0;
+		}
 		break;
+
 	case SIOCS80211CHANNEL:
+		/* [TRC: Pilfered from OpenBSD.  No clue whether it works.] */
 		/* allow fast channel switching in monitor mode */
-		error = ieee80211_ioctl(ifp, cmd, data);
+		error = ieee80211_ioctl(ic, cmd, data);
 		if (error == ENETRESET &&
 		    ic->ic_opmode == IEEE80211_M_MONITOR) {
 			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 			    (IFF_UP | IFF_RUNNING)) {
+				/* [TRC: XXX ????] */
 				ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-				chan = ieee80211_chan2ieee(ic,
-				    ic->ic_bss->ni_chan);
-				bwi_set_chan(sc, chan);
+				ic->ic_curchan = ic->ic_ibss_chan;
+				bwi_set_chan(sc, ic->ic_bss->ni_chan);
 			}
 			error = 0;
 		}
 		break;
+
 	default:
-		error = ieee80211_ioctl(ifp, cmd, data);
+		error = ieee80211_ioctl(ic, cmd, data);
 		break;
 	}
 
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
+		    (IFF_UP | IFF_RUNNING) &&
+		    /* [TRC: XXX Superstitiously cargo-culted from iwi(4). */
+		    (ic->ic_roaming != IEEE80211_ROAMING_MANUAL))
 			bwi_init(ifp);
 		error = 0;
 	}
@@ -7179,7 +7379,7 @@ bwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return (error);
 }
 
-void
+static void
 bwi_start(struct ifnet *ifp)
 {
 	struct bwi_softc *sc = ifp->if_softc;
@@ -7187,7 +7387,11 @@ bwi_start(struct ifnet *ifp)
 	struct bwi_txbuf_data *tbd = &sc->sc_tx_bdata[BWI_TX_DATA_RING];
 	int trans, idx;
 
-	if ((ifp->if_flags & IFF_OACTIVE) || (ifp->if_flags & IFF_RUNNING) == 0)
+	/* [TRC: XXX I'm not sure under which conditions we're actually
+	   supposed to refuse to start, so I'm copying what OpenBSD and
+	   DragonFlyBSD do, even if no one else on NetBSD does it. */
+	if ((ifp->if_flags & IFF_OACTIVE) ||
+	    (ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	trans = 0;
@@ -7196,14 +7400,11 @@ bwi_start(struct ifnet *ifp)
 	while (tbd->tbd_buf[idx].tb_mbuf == NULL) {
 		struct ieee80211_frame *wh;
 		struct ieee80211_node *ni;
-		struct ieee80211_key *k;
 		struct mbuf *m;
 		int mgt_pkt = 0;
 
-		IF_POLL(&ic->ic_mgtq, m);
+		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			IF_DEQUEUE(&ic->ic_mgtq, m);
-
 			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
 			m->m_pkthdr.rcvif = NULL;
 
@@ -7214,11 +7415,9 @@ bwi_start(struct ifnet *ifp)
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
 
-			IFQ_POLL(&ifp->if_snd, m);
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			if (m == NULL)
 				break;
-
-			IFQ_DEQUEUE(&ifp->if_snd, m);
 
 			if (m->m_len < sizeof(*eh)) {
 				m = m_pullup(m, sizeof(*eh));
@@ -7231,42 +7430,75 @@ bwi_start(struct ifnet *ifp)
 
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 			if (ni == NULL) {
-				m_freem(m);
 				ifp->if_oerrors++;
+				m_freem(m);
 				continue;
 			}
 
+			/* [TRC: XXX Superstitiously cargo-culted from
+			   ath(4) and wi(4).] */
+			if ((ni->ni_flags & IEEE80211_NODE_PWR_MGT) &&
+			    (m->m_flags & M_PWR_SAV) == 0) {
+				ieee80211_pwrsave(ic, ni, m);
+				ieee80211_free_node(ni);
+				continue;
+			}
+
+			/* [TRC: XXX I *think* we're supposed to do
+			   this, but honestly I have no clue.  We don't
+			   use M_WME_GETAC, so...] */
+			if (ieee80211_classify(ic, m, ni)) {
+				/* [TRC: XXX What debug flag?] */
+				DPRINTF(sc, BWI_DBG_MISC,
+				    "%s: discard, classification failure\n",
+				    __func__);
+				ifp->if_oerrors++;
+				m_freem(m);
+				ieee80211_free_node(ni);
+				continue;
+			}
+
+			/* [TRC: XXX wi(4) and awi(4) do this; iwi(4)
+			   doesn't.] */
+			ifp->if_opackets++;
+
+			/* [TRC: XXX When should the packet be
+			   filtered?  Different drivers appear to do it
+			   at different times.] */
 			/* TODO: PS */
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+				bpf_mtap(ifp->if_bpf, m);
 #endif
-			m = ieee80211_encap(ifp, m, &ni);
-			if (m == NULL)
+			m = ieee80211_encap(ic, m, ni);
+			if (m == NULL) {
+				ifp->if_oerrors++;
+				ieee80211_free_node(ni);
 				continue;
+			}
 		}
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
+			bpf_mtap(ic->ic_rawbpf, m);
 #endif
+
 		wh = mtod(m, struct ieee80211_frame *);
-		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
-			k = ieee80211_get_txkey(ic, wh, ni);
-			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
-				return;
+		/* [TRC: XXX What about ic->ic_flags & IEEE80211_F_PRIVACY?] */
+		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+			if (ieee80211_crypto_encap(ic, ni, m) == NULL) {
+				ifp->if_oerrors++;
+				m_freem(m);
+				ieee80211_free_node(ni);
+				continue;
+			}
 		}
-		wh = NULL;	/* Catch any invalid use */
+		wh = NULL;	/* [TRC: XXX Huh?] */
 
-		if (mgt_pkt) {
-			ieee80211_release_node(ic, ni);
-			ni = NULL;
-		}
-
-		if (bwi_encap(sc, idx, m, ni) != 0) {
+		if (bwi_encap(sc, idx, m, &ni, mgt_pkt) != 0) {
 			/* 'm' is freed in bwi_encap() if we reach here */
-			if (ni != NULL)
-				ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
+			if (ni != NULL)
+				ieee80211_free_node(ni);
 			continue;
 		}
 
@@ -7286,50 +7518,40 @@ bwi_start(struct ifnet *ifp)
 	ifp->if_timer = 1;
 }
 
-void
+static void
 bwi_watchdog(struct ifnet *ifp)
 {
 	struct bwi_softc *sc = ifp->if_softc;
 
 	ifp->if_timer = 0;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
+	    !device_is_active(&sc->sc_dev))
 		return;
 
 	if (sc->sc_tx_timer) {
 		if (--sc->sc_tx_timer == 0) {
-			printf("%s: watchdog timeout\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "device timeout\n");
 			ifp->if_oerrors++;
 			/* TODO */
+			/* [TRC: XXX TODO what?  Stop the device?
+			   Bring it down?  iwi(4) does this.] */
 		} else
 			ifp->if_timer = 1;
 	}
 
-	ieee80211_watchdog(ifp);
+	ieee80211_watchdog(&sc->sc_ic);
 }
 
-void
-bwi_newstate_begin(struct bwi_softc *sc, enum ieee80211_state nstate)
+static void
+bwi_stop(struct ifnet *ifp, int state_chg)
 {
-	timeout_del(&sc->sc_scan_ch);
-	timeout_del(&sc->sc_calib_ch);
-
-	bwi_led_newstate(sc, nstate);
-
-	if (nstate == IEEE80211_S_INIT)
-		sc->sc_txpwrcb_type = BWI_TXPWR_INIT;
-}
-
-int
-bwi_stop(struct bwi_softc *sc, int state_chg)
-{
+	struct bwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_ifp;
 	struct bwi_mac *mac;
 	int i, error, pwr_off = 0;
 
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	DPRINTF(sc, BWI_DBG_MISC, "%s\n", __func__);
 
 	if (state_chg)
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
@@ -7371,32 +7593,43 @@ bwi_stop(struct bwi_softc *sc, int state_chg)
 
 	/* power off cardbus socket */
 	if (sc->sc_disable)
-		sc->sc_disable(sc);
+		(sc->sc_disable)(sc);
 
-	return (0);
+	return;
 }
 
-int
+static void
+bwi_newstate_begin(struct bwi_softc *sc, enum ieee80211_state nstate)
+{
+	callout_stop(&sc->sc_scan_ch);
+	callout_stop(&sc->sc_calib_ch);
+
+	bwi_led_newstate(sc, nstate);
+
+	if (nstate == IEEE80211_S_INIT)
+		sc->sc_txpwrcb_type = BWI_TXPWR_INIT;
+}
+
+static int
 bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct bwi_softc *sc = ic->ic_ifp->if_softc;
 	struct ieee80211_node *ni;
 	int error;
-	uint8_t chan;
 
-	timeout_del(&sc->sc_amrr_ch);
+	/* [TRC: XXX amrr] */
+	callout_stop(&sc->sc_amrr_ch);
 
 	bwi_newstate_begin(sc, nstate);
 
 	if (nstate == IEEE80211_S_INIT)
 		goto back;
 
-	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-	error = bwi_set_chan(sc, chan);
+	/* [TRC: XXX What channel do we set this to? */
+	error = bwi_set_chan(sc, ic->ic_curchan);
 	if (error) {
-		printf("%s: can't set channel to %u\n",
-		    sc->sc_dev.dv_xname,
-		    ieee80211_chan2ieee(ic, ic->ic_des_chan));
+		aprint_error_dev(&sc->sc_dev, "can't set channel to %u\n",
+		    ieee80211_chan2ieee(ic, ic->ic_curchan));
 		return (error);
 	}
 
@@ -7419,33 +7652,35 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #else
 		sc->sc_txpwrcb_type = BWI_TXPWR_CALIB;
 #endif
+		/* [TRC: XXX amrr] */
 		if (ic->ic_opmode == IEEE80211_M_STA) {
 			/* fake a join to init the tx rate */
-			bwi_newassoc(ic, ni, 1);
+			bwi_newassoc(ni, 1);
 		}
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			/* start automatic rate control timer */
 			if (ic->ic_fixed_rate == -1)
-				timeout_add(&sc->sc_amrr_ch, hz / 2);
+				callout_schedule(&sc->sc_amrr_ch, hz / 2);
 		}
 	} else
 		bwi_set_bssid(sc, bwi_zero_addr);
 
 back:
-	error = sc->sc_newstate(ic, nstate, arg);
+	error = (sc->sc_newstate)(ic, nstate, arg);
 
 	if (nstate == IEEE80211_S_SCAN) {
-		timeout_add(&sc->sc_scan_ch, (sc->sc_dwell_time * hz) / 1000);
+		callout_schedule(&sc->sc_scan_ch,
+		    (sc->sc_dwell_time * hz) / 1000);
 	} else if (nstate == IEEE80211_S_RUN) {
 		/* XXX 15 seconds */
-		timeout_add(&sc->sc_calib_ch, hz);
+		callout_schedule(&sc->sc_calib_ch, hz);
 	}
 
 	return (error);
 }
 
-int
+static int
 bwi_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -7460,7 +7695,8 @@ bwi_media_change(struct ifnet *ifp)
 	return (0);
 }
 
-void
+/* [TRC: XXX amrr] */
+static void
 bwi_iter_func(void *arg, struct ieee80211_node *ni)
 {
 	struct bwi_softc *sc = arg;
@@ -7469,7 +7705,7 @@ bwi_iter_func(void *arg, struct ieee80211_node *ni)
 	ieee80211_amrr_choose(&sc->sc_amrr, ni, &bn->amn);
 }
 
-void
+static void
 bwi_amrr_timeout(void *arg)
 {
 	struct bwi_softc *sc = arg;
@@ -7478,18 +7714,21 @@ bwi_amrr_timeout(void *arg)
 	if (ic->ic_opmode == IEEE80211_M_STA)
 		bwi_iter_func(sc, ic->ic_bss);
 	else
-		ieee80211_iterate_nodes(ic, bwi_iter_func, sc);
+		/* [TRC: XXX I'm making a wild guess about what to
+		   supply for the node table.] */
+		ieee80211_iterate_nodes(&ic->ic_sta, bwi_iter_func, sc);
 
-	timeout_add(&sc->sc_amrr_ch, hz / 2);
+	callout_schedule(&sc->sc_amrr_ch, hz / 2);
 }
 
-void
-bwi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+static void
+bwi_newassoc(struct ieee80211_node *ni, int isnew)
 {
-	struct bwi_softc *sc = ic->ic_ifp.if_softc;
+	struct ieee80211com *ic = ni->ni_ic;
+	struct bwi_softc *sc = ic->ic_ifp->if_softc;
 	int i;
 
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	DPRINTF(sc, BWI_DBG_STATION, "%s\n", __func__);
 
 	ieee80211_amrr_node_init(&sc->sc_amrr, &((struct bwi_node *)ni)->amn);
 
@@ -7501,10 +7740,23 @@ bwi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	ni->ni_txrate = i;
 }
 
-int
+static struct ieee80211_node *
+bwi_node_alloc(struct ieee80211_node_table *nt)
+{
+	struct bwi_node *bn;
+
+	bn = malloc(sizeof(struct bwi_node), M_80211_NODE, M_NOWAIT | M_ZERO);
+
+	return ((struct ieee80211_node *)bn);
+}
+/* [TRC: XXX amrr end] */
+
+static int
 bwi_dma_alloc(struct bwi_softc *sc)
 {
 	int error, i, has_txstats;
+	/* [TRC: XXX DragonFlyBSD adjusts the low address for different
+	   bus spaces.  Should we?] */
 	bus_size_t tx_ring_sz, rx_ring_sz, desc_sz = 0;
 	uint32_t txrx_ctrl_step = 0;
 
@@ -7563,6 +7815,8 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	tx_ring_sz = roundup(desc_sz * BWI_TX_NDESC, BWI_RING_ALIGN);
 	rx_ring_sz = roundup(desc_sz * BWI_RX_NDESC, BWI_RING_ALIGN);
 
+	/* [TRC: XXX Using OpenBSD's code, which is rather different
+	   from DragonFlyBSD's.] */
 #define TXRX_CTRL(idx)	(BWI_TXRX_CTRL_BASE + (idx) * txrx_ctrl_step)
 	/*
 	 * Create TX ring DMA stuffs
@@ -7572,15 +7826,15 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		    tx_ring_sz, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_tx_rdata[i].rdata_dmap);
 		if (error) {
-			printf("%s: %dth TX ring DMA create failed\n",
-			    sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev,
+			    "%dth TX ring DMA create failed\n", i);
 			return (error);
 		}
 		error = bwi_dma_ring_alloc(sc,
 		    &sc->sc_tx_rdata[i], tx_ring_sz, TXRX_CTRL(i));
 		if (error) {
-			printf("%s: %dth TX ring DMA alloc failed\n",
-			    sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev,
+			    "%dth TX ring DMA alloc failed\n", i);
 			return (error);
 		}
 	}
@@ -7592,22 +7846,22 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	    rx_ring_sz, 0, BUS_DMA_NOWAIT,
 	    &sc->sc_rx_rdata.rdata_dmap);
 	if (error) {
-		printf("%s: RX ring DMA create failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "RX ring DMA create failed\n");
 		return (error);
 	}
 
 	error = bwi_dma_ring_alloc(sc, &sc->sc_rx_rdata,
 	    rx_ring_sz, TXRX_CTRL(0));
 	if (error) {
-		printf("%s: RX ring DMA alloc failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "RX ring DMA alloc failed\n");
 		return (error);
 	}
 
 	if (has_txstats) {
 		error = bwi_dma_txstats_alloc(sc, TXRX_CTRL(3), desc_sz);
 		if (error) {
-			printf("%s: TX stats DMA alloc failed\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "TX stats DMA alloc failed\n");
 			return (error);
 		}
 	}
@@ -7616,34 +7870,29 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	return (bwi_dma_mbuf_create(sc));
 }
 
-void
+static void
 bwi_dma_free(struct bwi_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < BWI_TX_NRING; ++i) {
-		struct bwi_ring_data *rd = &sc->sc_tx_rdata[i];
+	for (i = 0; i < BWI_TX_NRING; ++i)
+		bwi_ring_data_free(&sc->sc_tx_rdata[i], sc);
 
-		if (rd->rdata_desc != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    rd->rdata_dmap);
-			bus_dmamem_free(sc->sc_dmat,
-			    &rd->rdata_seg, 1);
-		}
-	}
-
-	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
-
-	if (rd->rdata_desc != NULL) {
-		bus_dmamap_unload(sc->sc_dmat, rd->rdata_dmap);
-		bus_dmamem_free(sc->sc_dmat, &rd->rdata_seg, 1);
-	}
-
+	bwi_ring_data_free(&sc->sc_rx_rdata, sc);
 	bwi_dma_txstats_free(sc);
 	bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 1);
 }
 
-int
+static void
+bwi_ring_data_free(struct bwi_ring_data *rd, struct bwi_softc *sc)
+{
+	if (rd->rdata_desc != NULL) {
+		bus_dmamap_unload(sc->sc_dmat, rd->rdata_dmap);
+		bus_dmamem_free(sc->sc_dmat, &rd->rdata_seg, 1);
+	}
+}
+
+static int
 bwi_dma_ring_alloc(struct bwi_softc *sc,
     struct bwi_ring_data *rd, bus_size_t size, uint32_t txrx_ctrl)
 {
@@ -7652,21 +7901,21 @@ bwi_dma_ring_alloc(struct bwi_softc *sc,
 	error = bus_dmamem_alloc(sc->sc_dmat, size, BWI_ALIGN, 0,
 	    &rd->rdata_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't allocate DMA mem\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't allocate DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &rd->rdata_seg, nsegs,
 	    size, (void **)&rd->rdata_desc, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't map DMA mem\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, rd->rdata_dmap, rd->rdata_desc,
 	    size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: can't load DMA mem\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't load DMA mem\n");
 		bus_dmamem_free(sc->sc_dmat, &rd->rdata_seg, nsegs);
 		rd->rdata_desc = NULL;
 		return (error);
@@ -7678,7 +7927,7 @@ bwi_dma_ring_alloc(struct bwi_softc *sc,
 	return (0);
 }
 
-int
+static int
 bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
     bus_size_t desc_sz)
 {
@@ -7697,37 +7946,50 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
 	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
 	if (error) {
-		printf("%s: can't create txstats ring DMA mem\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't create txstats ring DMA mem\n");
+		return (error);
+	}
+
+	/*
+	 * Create TX stats descriptor DMA stuffs
+	 */
+	dma_size = roundup(desc_sz * BWI_TXSTATS_NDESC, BWI_RING_ALIGN);
+
+	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
+	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
+	if (error) {
+		aprint_error_dev(&sc->sc_dev,
+		    "can't create txstats ring DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_RING_ALIGN, 0,
 	     &st->stats_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't allocate txstats ring DMA mem\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't allocate txstats ring DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &st->stats_ring_seg, nsegs,
 	    dma_size, (void **)&st->stats_ring, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't map txstats ring DMA mem\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't map txstats ring DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, st->stats_ring_dmap,
 	    st->stats_ring, dma_size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: can't load txstats ring DMA mem\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't load txstats ring DMA mem\n");
 		bus_dmamem_free(sc->sc_dmat, &st->stats_ring_seg, nsegs);
 		return (error);
 	}
 
-	bzero(&st->stats_ring, dma_size);
+	bzero(st->stats_ring, dma_size);
 	st->stats_ring_paddr = st->stats_ring_dmap->dm_segs[0].ds_addr;
 
 	/*
@@ -7739,41 +8001,42 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
 	    BUS_DMA_NOWAIT, &st->stats_dmap);
 	if (error) {
-		printf("%s: can't create txstats ring DMA mem\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't create txstats ring DMA mem\n");
 		return (error);
 	}
+
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_ALIGN, 0,
 	    &st->stats_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't allocate txstats DMA mem\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't allocate txstats DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &st->stats_seg, nsegs,
 	    dma_size, (void **)&st->stats, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't map txstats DMA mem\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map txstats DMA mem\n");
 		return (error);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, st->stats_dmap, st->stats,
 	    dma_size, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: can't load txstats DMA mem\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't load txstats DMA mem\n");
 		bus_dmamem_free(sc->sc_dmat, &st->stats_seg, nsegs);
 		return (error);
 	}
 
-	bzero(&st->stats, dma_size);
+	bzero(st->stats, dma_size);
 	st->stats_paddr = st->stats_dmap->dm_segs[0].ds_addr;
 	st->stats_ctrl_base = ctrl_base;
 
 	return (0);
 }
 
-void
+static void
 bwi_dma_txstats_free(struct bwi_softc *sc)
 {
 	struct bwi_txstats_data *st;
@@ -7791,7 +8054,7 @@ bwi_dma_txstats_free(struct bwi_softc *sc)
 	free(st, M_DEVBUF);
 }
 
-int
+static int
 bwi_dma_mbuf_create(struct bwi_softc *sc)
 {
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
@@ -7809,9 +8072,9 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 			error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 			    0, BUS_DMA_NOWAIT, &tbd->tbd_buf[j].tb_dmap);
 			if (error) {
-				printf(
-				    "%s: can't create %dth tbd, %dth DMA map\n",
-				    sc->sc_dev.dv_xname, i, j);
+				aprint_error_dev(&sc->sc_dev,
+				    "can't create %dth tbd, %dth DMA map\n",
+				    i, j);
 				ntx = i;
 				for (k = 0; k < j; ++k) {
 					bus_dmamap_destroy(sc->sc_dmat,
@@ -7829,8 +8092,8 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 	    BUS_DMA_NOWAIT, &rbd->rbd_tmp_dmap);
 	if (error) {
-		printf("%s: can't create spare RX buf DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't create spare RX buf DMA map\n");
 		goto fail;
 	}
 
@@ -7838,8 +8101,8 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 		    BUS_DMA_NOWAIT, &rbd->rbd_buf[j].rb_dmap);
 		if (error) {
-			printf("%s: can't create %dth RX buf DMA map\n",
-			    sc->sc_dev.dv_xname, j);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't create %dth RX buf DMA map\n", j);
 
 			for (k = 0; k < j; ++k) {
 				bus_dmamap_destroy(sc->sc_dmat,
@@ -7851,17 +8114,16 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 		}
 	}
 
-	return 0;
+	return (0);
 fail:
 	bwi_dma_mbuf_destroy(sc, ntx, 0);
 
 	return (error);
 }
 
-void
+static void
 bwi_dma_mbuf_destroy(struct bwi_softc *sc, int ntx, int nrx)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	int i, j;
 
 	for (i = 0; i < ntx; ++i) {
@@ -7876,7 +8138,7 @@ bwi_dma_mbuf_destroy(struct bwi_softc *sc, int ntx, int nrx)
 				m_freem(tb->tb_mbuf);
 			}
 			if (tb->tb_ni != NULL)
-				ieee80211_release_node(ic, tb->tb_ni);
+				ieee80211_free_node(tb->tb_ni);
 			bus_dmamap_destroy(sc->sc_dmat, tb->tb_dmap);
 		}
 	}
@@ -7898,19 +8160,19 @@ bwi_dma_mbuf_destroy(struct bwi_softc *sc, int ntx, int nrx)
 	}
 }
 
-void
+static void
 bwi_enable_intrs(struct bwi_softc *sc, uint32_t enable_intrs)
 {
 	CSR_SETBITS_4(sc, BWI_MAC_INTR_MASK, enable_intrs);
 }
 
-void
+static void
 bwi_disable_intrs(struct bwi_softc *sc, uint32_t disable_intrs)
 {
 	CSR_CLRBITS_4(sc, BWI_MAC_INTR_MASK, disable_intrs);
 }
 
-int
+static int
 bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 {
 	struct bwi_ring_data *rd;
@@ -7943,7 +8205,7 @@ bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	return (0);
 }
 
-void
+static void
 bwi_init_rxdesc_ring32(struct bwi_softc *sc, uint32_t ctrl_base,
     bus_addr_t paddr, int hdr_size, int ndesc)
 {
@@ -7966,7 +8228,7 @@ bwi_init_rxdesc_ring32(struct bwi_softc *sc, uint32_t ctrl_base,
 	    (ndesc - 1) * sizeof(struct bwi_desc32));
 }
 
-int
+static int
 bwi_init_rx_ring32(struct bwi_softc *sc)
 {
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
@@ -7977,8 +8239,8 @@ bwi_init_rx_ring32(struct bwi_softc *sc)
 	for (i = 0; i < BWI_RX_NDESC; ++i) {
 		error = bwi_newbuf(sc, i, 1);
 		if (error) {
-			printf("%s: can't allocate %dth RX buffer\n",
-			    sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't allocate %dth RX buffer\n", i);
 			return (error);
 		}
 	}
@@ -7990,7 +8252,7 @@ bwi_init_rx_ring32(struct bwi_softc *sc)
 	return (0);
 }
 
-int
+static int
 bwi_init_txstats32(struct bwi_softc *sc)
 {
 	struct bwi_txstats_data *st = sc->sc_txstats;
@@ -8018,7 +8280,7 @@ bwi_init_txstats32(struct bwi_softc *sc)
 	return (0);
 }
 
-void
+static void
 bwi_setup_rx_desc32(struct bwi_softc *sc, int buf_idx, bus_addr_t paddr,
     int buf_len)
 {
@@ -8029,7 +8291,7 @@ bwi_setup_rx_desc32(struct bwi_softc *sc, int buf_idx, bus_addr_t paddr,
 	    paddr, buf_len, 0);
 }
 
-void
+static void
 bwi_setup_tx_desc32(struct bwi_softc *sc, struct bwi_ring_data *rd,
     int buf_idx, bus_addr_t paddr, int buf_len)
 {
@@ -8037,43 +8299,42 @@ bwi_setup_tx_desc32(struct bwi_softc *sc, struct bwi_ring_data *rd,
 	bwi_setup_desc32(sc, rd->rdata_desc, BWI_TX_NDESC, buf_idx,
 	    paddr, buf_len, 1);
 }
-
-int
+static int
 bwi_init_tx_ring64(struct bwi_softc *sc, int ring_idx)
 {
 	/* TODO: 64 */
 	return (EOPNOTSUPP);
 }
 
-int
+static int
 bwi_init_rx_ring64(struct bwi_softc *sc)
 {
 	/* TODO: 64 */
 	return (EOPNOTSUPP);
 }
 
-int
+static int
 bwi_init_txstats64(struct bwi_softc *sc)
 {
 	/* TODO: 64 */
 	return (EOPNOTSUPP);
 }
 
-void
+static void
 bwi_setup_rx_desc64(struct bwi_softc *sc, int buf_idx, bus_addr_t paddr,
     int buf_len)
 {
 	/* TODO: 64 */
 }
 
-void
+static void
 bwi_setup_tx_desc64(struct bwi_softc *sc, struct bwi_ring_data *rd,
     int buf_idx, bus_addr_t paddr, int buf_len)
 {
 	/* TODO: 64 */
 }
 
-int
+static int
 bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 {
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
@@ -8147,12 +8408,12 @@ back:
 	/*
 	 * Setup RX buf descriptor
 	 */
-	sc->sc_setup_rxdesc(sc, buf_idx, rxbuf->rb_paddr,
+	(sc->sc_setup_rxdesc)(sc, buf_idx, rxbuf->rb_paddr,
 	    rxbuf->rb_mbuf->m_len - sizeof(*hdr));
 	return error;
 }
 
-void
+static void
 bwi_set_addr_filter(struct bwi_softc *sc, uint16_t addr_ofs,
     const uint8_t *addr)
 {
@@ -8170,52 +8431,60 @@ bwi_set_addr_filter(struct bwi_softc *sc, uint16_t addr_ofs,
 	}
 }
 
-int
-bwi_set_chan(struct bwi_softc *sc, uint8_t chan)
+static int
+bwi_set_chan(struct bwi_softc *sc, struct ieee80211_channel *c)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct bwi_mac *mac;
+	/* uint16_t flags; */ /* [TRC: XXX See below.] */
+	uint chan;
 
 	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
+	chan = ieee80211_chan2ieee(ic, c);
+
 	bwi_rf_set_chan(mac, chan, 0);
+
+	/* [TRC: XXX DragonFlyBSD sets up radio tap channel frequency
+	   and flags here.  OpenBSD does not, and appears to do so
+	   later (in bwi_rxeof and bwi_encap).] */
 
 	return (0);
 }
 
-void
+static void
 bwi_next_scan(void *xsc)
 {
 	struct bwi_softc *sc = xsc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = ic->ic_ifp;
 	int s;
 
 	s = splnet();
 
 	if (ic->ic_state == IEEE80211_S_SCAN)
-		ieee80211_next_scan(ifp);
+		ieee80211_next_scan(ic);
 
 	splx(s);
 }
 
-int
+static int
 bwi_rxeof(struct bwi_softc *sc, int end_idx)
 {
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	int idx, rx_data = 0;
 
 	idx = rbd->rbd_idx;
 	while (idx != end_idx) {
 		struct bwi_rxbuf *rb = &rbd->rbd_buf[idx];
 		struct bwi_rxbuf_hdr *hdr;
-		struct ieee80211_frame *wh;
+		struct ieee80211_frame_min *wh;
 		struct ieee80211_node *ni;
 		struct mbuf *m;
-		void *plcp;
+		const void *plcp;
 		uint16_t flags2;
 		int buflen, wh_ofs, hdr_extra, rssi, type, rate;
 
@@ -8229,23 +8498,23 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		}
 
 		hdr = mtod(m, struct bwi_rxbuf_hdr *);
-		flags2 = letoh16(hdr->rxh_flags2);
+		flags2 = le16toh(hdr->rxh_flags2);
 
 		hdr_extra = 0;
 		if (flags2 & BWI_RXH_F2_TYPE2FRAME)
 			hdr_extra = 2;
-		wh_ofs = hdr_extra + 6;
+		wh_ofs = hdr_extra + 6; /* XXX magic number */
 
-		buflen = letoh16(hdr->rxh_buflen);
-		if (buflen <= wh_ofs) {
-			printf("%s: zero length data, hdr_extra %d\n",
-			    sc->sc_dev.dv_xname, hdr_extra);
+		buflen = le16toh(hdr->rxh_buflen);
+		if (buflen < BWI_FRAME_MIN_LEN(wh_ofs)) {
+			aprint_error_dev(&sc->sc_dev, "short frame %d,"
+			    " hdr_extra %d\n", buflen, hdr_extra);
 			ifp->if_ierrors++;
 			m_freem(m);
 			goto next;
 		}
 
-		plcp = ((uint8_t *)(hdr + 1) + hdr_extra);
+		plcp = ((const uint8_t *)(hdr + 1) + hdr_extra);
 		rssi = bwi_calc_rssi(sc, hdr);
 
 		m->m_pkthdr.rcvif = ifp;
@@ -8279,20 +8548,20 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 			mb.m_nextpkt = NULL;
 			mb.m_type = 0;
 			mb.m_flags = 0;
-			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+			bpf_mtap(sc->sc_drvbpf, &mb);
 		}
 #endif
 
 		m_adj(m, -IEEE80211_CRC_LEN);
 
-		wh = mtod(m, struct ieee80211_frame *);
+		wh = mtod(m, struct ieee80211_frame_min *);
 		ni = ieee80211_find_rxnode(ic, wh);
 		type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-		ieee80211_input(ifp, m, ni, hdr->rxh_rssi,
-		    letoh16(hdr->rxh_tsf));
+		ieee80211_input(ic, m, ni, hdr->rxh_rssi,
+		    le16toh(hdr->rxh_tsf));
 
-		ieee80211_release_node(ic, ni);
+		ieee80211_free_node(ni);
 
 		if (type == IEEE80211_FC0_TYPE_DATA) {
 			rx_data = 1;
@@ -8309,7 +8578,7 @@ next:
 	return (rx_data);
 }
 
-int
+static int
 bwi_rxeof32(struct bwi_softc *sc)
 {
 	uint32_t val, rx_ctrl;
@@ -8329,14 +8598,14 @@ bwi_rxeof32(struct bwi_softc *sc)
 	return (rx_data);
 }
 
-int
+static int
 bwi_rxeof64(struct bwi_softc *sc)
 {
 	/* TODO: 64 */
 	return (0);
 }
 
-void
+static void
 bwi_reset_rx_ring32(struct bwi_softc *sc, uint32_t rx_ctrl)
 {
 	int i;
@@ -8355,19 +8624,19 @@ bwi_reset_rx_ring32(struct bwi_softc *sc, uint32_t rx_ctrl)
 		DELAY(1000);
 	}
 	if (i == NRETRY)
-		printf("%s: reset rx ring timedout\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "reset rx ring timedout\n");
 #undef NRETRY
 
 	CSR_WRITE_4(sc, rx_ctrl + BWI_RX32_RINGINFO, 0);
 }
 
-void
+static void
 bwi_free_txstats32(struct bwi_softc *sc)
 {
 	bwi_reset_rx_ring32(sc, sc->sc_txstats->stats_ctrl_base);
 }
 
-void
+static void
 bwi_free_rx_ring32(struct bwi_softc *sc)
 {
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
@@ -8387,10 +8656,9 @@ bwi_free_rx_ring32(struct bwi_softc *sc)
 	}
 }
 
-void
+static void
 bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct bwi_ring_data *rd;
 	struct bwi_txbuf_data *tbd;
 	uint32_t state, val;
@@ -8411,10 +8679,9 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 
 		DELAY(1000);
 	}
-	if (i == NRETRY) {
-		printf("%s: wait for TX ring(%d) stable timed out\n",
-		    sc->sc_dev.dv_xname, ring_idx);
-	}
+	if (i == NRETRY)
+		aprint_error_dev(&sc->sc_dev,
+		    "wait for TX ring(%d) stable timed out\n", ring_idx);
 
 	CSR_WRITE_4(sc, rd->rdata_txrx_ctrl + BWI_TX32_CTRL, 0);
 	for (i = 0; i < NRETRY; ++i) {
@@ -8426,8 +8693,8 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 		DELAY(1000);
 	}
 	if (i == NRETRY)
-		printf("%s: reset TX ring (%d) timed out\n",
-		    sc->sc_dev.dv_xname, ring_idx);
+		aprint_error_dev(&sc->sc_dev, "reset TX ring (%d) timed out\n",
+		    ring_idx);
 #undef NRETRY
 
 	DELAY(1000);
@@ -8443,60 +8710,144 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 			tb->tb_mbuf = NULL;
 		}
 		if (tb->tb_ni != NULL) {
-			ieee80211_release_node(ic, tb->tb_ni);
+			ieee80211_free_node(tb->tb_ni);
 			tb->tb_ni = NULL;
 		}
 	}
 }
 
-void
+static void
 bwi_free_txstats64(struct bwi_softc *sc)
 {
 	/* TODO: 64 */
 }
 
-void
+static void
 bwi_free_rx_ring64(struct bwi_softc *sc)
 {
 	/* TODO: 64 */
 }
 
-void
+static void
 bwi_free_tx_ring64(struct bwi_softc *sc, int ring_idx)
 {
 	/* TODO: 64 */
 }
 
+/* XXX does not belong here */
+/* [TRC: Begin pilferage from OpenBSD.] */
+
+/*
+ * Convert bit rate (in 0.5Mbps units) to PLCP signal (R4-R1) and vice versa.
+ */
 uint8_t
-bwi_ofdm_plcp2rate(uint32_t *plcp0)
+bwi_ieee80211_rate2plcp(u_int8_t rate, enum ieee80211_phymode mode)
+{
+	rate &= IEEE80211_RATE_VAL;
+
+	if (mode == IEEE80211_MODE_11B) {
+		/* IEEE Std 802.11b-1999 page 15, subclause 18.2.3.3 */
+		switch (rate) {
+		case 2:		return 10;
+		case 4:		return 20;
+		case 11:	return 55;
+		case 22:	return 110;
+		/* IEEE Std 802.11g-2003 page 19, subclause 19.3.2.1 */
+		case 44:	return 220;
+		}
+	} else if (mode == IEEE80211_MODE_11G || mode == IEEE80211_MODE_11A) {
+		/* IEEE Std 802.11a-1999 page 14, subclause 17.3.4.1 */
+		switch (rate) {
+		case 12:	return 0x0b;
+		case 18:	return 0x0f;
+		case 24:	return 0x0a;
+		case 36:	return 0x0e;
+		case 48:	return 0x09;
+		case 72:	return 0x0d;
+		case 96:	return 0x08;
+		case 108:	return 0x0c;
+		}
+        } else
+		panic("Unexpected mode %u", mode);
+
+	return 0;
+}
+
+static uint8_t
+bwi_ieee80211_plcp2rate(uint8_t plcp, enum ieee80211_phymode mode)
+{
+	if (mode == IEEE80211_MODE_11B) {
+		/* IEEE Std 802.11g-2003 page 19, subclause 19.3.2.1 */
+		switch (plcp) {
+		case 10:	return 2;
+		case 20:	return 4;
+		case 55:	return 11;
+		case 110:	return 22;
+		/* IEEE Std 802.11g-2003 page 19, subclause 19.3.2.1 */
+		case 220:	return 44;
+		}
+	} else if (mode == IEEE80211_MODE_11G || mode == IEEE80211_MODE_11A) {
+		/* IEEE Std 802.11a-1999 page 14, subclause 17.3.4.1 */
+		switch (plcp) {
+		case 0x0b:	return 12;
+		case 0x0f:	return 18;
+		case 0x0a:	return 24;
+		case 0x0e:	return 36;
+		case 0x09:	return 48;
+		case 0x0d:	return 72;
+		case 0x08:	return 96;
+		case 0x0c:	return 108;
+		}
+	} else
+		panic("Unexpected mode %u", mode);
+
+	return 0;
+}
+/* [TRC: End pilferage from OpenBSD.] */
+
+static enum bwi_ieee80211_modtype
+bwi_ieee80211_rate2modtype(uint8_t rate)
+{
+	rate &= IEEE80211_RATE_VAL;
+
+	if (rate == 44)
+		return (IEEE80211_MODTYPE_PBCC);
+	else if (rate == 22 || rate < 12)
+		return (IEEE80211_MODTYPE_DS);
+	else
+		return (IEEE80211_MODTYPE_OFDM);
+}
+
+static uint8_t
+bwi_ofdm_plcp2rate(const uint32_t *plcp0)
 {
 	uint32_t plcp;
 	uint8_t plcp_rate;
 
-	plcp = letoh32(*plcp0);
+	plcp = le32toh(*plcp0);
 	plcp_rate = __SHIFTOUT(plcp, IEEE80211_OFDM_PLCP_RATE_MASK);
 
-	return (ieee80211_plcp2rate(plcp_rate, IEEE80211_MODE_11G));
+	return (bwi_ieee80211_plcp2rate(plcp_rate, IEEE80211_MODE_11G));
 }
 
-uint8_t
-bwi_ds_plcp2rate(struct ieee80211_ds_plcp_hdr *hdr)
+static uint8_t
+bwi_ds_plcp2rate(const struct ieee80211_ds_plcp_hdr *hdr)
 {
-	return (ieee80211_plcp2rate(hdr->i_signal, IEEE80211_MODE_11B));
+	return (bwi_ieee80211_plcp2rate(hdr->i_signal, IEEE80211_MODE_11B));
 }
 
-void
+static void
 bwi_ofdm_plcp_header(uint32_t *plcp0, int pkt_len, uint8_t rate)
 {
 	uint32_t plcp;
 
-	plcp = __SHIFTIN(ieee80211_rate2plcp(rate, IEEE80211_MODE_11G),
+	plcp = __SHIFTIN(bwi_ieee80211_rate2plcp(rate, IEEE80211_MODE_11G),
 	    IEEE80211_OFDM_PLCP_RATE_MASK) |
 	    __SHIFTIN(pkt_len, IEEE80211_OFDM_PLCP_LEN_MASK);
 	*plcp0 = htole32(plcp);
 }
 
-void
+static void
 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *plcp, int pkt_len,
     uint8_t rate)
 {
@@ -8518,22 +8869,22 @@ bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *plcp, int pkt_len,
 			service |= IEEE80211_DS_PLCP_SERVICE_LENEXT7;
 	}
 
-	plcp->i_signal = ieee80211_rate2plcp(rate, IEEE80211_MODE_11B);
+	plcp->i_signal = bwi_ieee80211_rate2plcp(rate, IEEE80211_MODE_11B);
 	plcp->i_service = service;
 	plcp->i_length = htole16(len);
 	/* NOTE: do NOT touch i_crc */
 }
 
-void
+static void
 bwi_plcp_header(void *plcp, int pkt_len, uint8_t rate)
 {
-	enum bwi_modtype modtype;
+	enum bwi_ieee80211_modtype modtype;
 
 	/*
 	 * Assume caller has zeroed 'plcp'
 	 */
 
-	modtype = bwi_rate2modtype(rate);
+	modtype = bwi_ieee80211_rate2modtype(rate);
 	if (modtype == IEEE80211_MODTYPE_OFDM)
 		bwi_ofdm_plcp_header(plcp, pkt_len, rate);
 	else if (modtype == IEEE80211_MODTYPE_DS)
@@ -8542,43 +8893,30 @@ bwi_plcp_header(void *plcp, int pkt_len, uint8_t rate)
 		panic("unsupport modulation type %u\n", modtype);
 }
 
-enum bwi_modtype
-bwi_rate2modtype(uint8_t rate)
-{
-	rate &= IEEE80211_RATE_VAL;
-
-	if (rate == 44)
-		return IEEE80211_MODTYPE_PBCC;
-	else if (rate == 22 || rate < 12)
-		return IEEE80211_MODTYPE_DS;
-	else
-		return IEEE80211_MODTYPE_OFDM;
-}
-
-uint8_t
-bwi_ack_rate(struct ieee80211_node *ni, uint8_t rate)
+static uint8_t
+bwi_ieee80211_ack_rate(struct ieee80211_node *ni, uint8_t rate)
 {
 	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	uint8_t ack_rate = 0;
-	enum bwi_modtype modtype;
+	enum bwi_ieee80211_modtype modtype;
 	int i;
 
 	rate &= IEEE80211_RATE_VAL;
 
-	modtype = bwi_rate2modtype(rate);
+	modtype = bwi_ieee80211_rate2modtype(rate);
 
 	for (i = 0; i < rs->rs_nrates; ++i) {
 		uint8_t rate1 = rs->rs_rates[i] & IEEE80211_RATE_VAL;
 		
 		if (rate1 > rate) {
 			if (ack_rate != 0)
-				return ack_rate;
+				return (ack_rate);
 			else
 				break;
 		}
 
 		if ((rs->rs_rates[i] & IEEE80211_RATE_BASIC) &&
-		    bwi_rate2modtype(rate1) == modtype)
+		    bwi_ieee80211_rate2modtype(rate1) == modtype)
 			ack_rate = rate1;
 	}
 
@@ -8613,8 +8951,10 @@ bwi_ack_rate(struct ieee80211_node *ni, uint8_t rate)
 	default:
 		panic("unsupported rate %d\n", rate);
 	}
-	return ack_rate;
+	return (ack_rate);
 }
+
+/* [TRC: XXX does not belong here] */
 
 #define IEEE80211_OFDM_TXTIME(kbps, frmlen)	\
 	(IEEE80211_OFDM_PREAMBLE_TIME +		\
@@ -8651,11 +8991,11 @@ bwi_ack_rate(struct ieee80211_node *ni, uint8_t rate)
 
 #define IEEE80211_CCK_NBITS(frmlen)		((frmlen) * NBBY)
 
-uint16_t
-bwi_txtime(struct ieee80211com *ic, struct ieee80211_node *ni, uint len,
-    uint8_t rs_rate, uint32_t flags)
+static uint16_t
+bwi_ieee80211_txtime(struct ieee80211com *ic, struct ieee80211_node *ni,
+    uint len, uint8_t rs_rate, uint32_t flags)
 {
-	enum bwi_modtype modtype;
+	enum bwi_ieee80211_modtype modtype;
 	uint16_t txtime;
 	int rate;
 
@@ -8663,7 +9003,7 @@ bwi_txtime(struct ieee80211com *ic, struct ieee80211_node *ni, uint len,
 
 	rate = rs_rate * 500;	/* ieee80211 rate -> kbps */
 
-	modtype = bwi_rate2modtype(rs_rate);
+	modtype = bwi_ieee80211_rate2modtype(rs_rate);
 	if (modtype == IEEE80211_MODTYPE_OFDM) {
 		/*
 		 * IEEE Std 802.11a-1999, page 37, equation (29)
@@ -8692,32 +9032,32 @@ bwi_txtime(struct ieee80211com *ic, struct ieee80211_node *ni, uint len,
 				  IEEE80211_CCK_PLCP_HDR_TIME;
 		}
 	}
-	return txtime;
+	return (txtime);
 }
 
-int
+static int
 bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
-    struct ieee80211_node *ni)
+    struct ieee80211_node **nip, int mgt_pkt)
 {
-	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
-
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = *nip;
 	struct bwi_ring_data *rd = &sc->sc_tx_rdata[BWI_TX_DATA_RING];
 	struct bwi_txbuf_data *tbd = &sc->sc_tx_bdata[BWI_TX_DATA_RING];
 	struct bwi_txbuf *tb = &tbd->tbd_buf[idx];
 	struct bwi_mac *mac;
 	struct bwi_txbuf_hdr *hdr;
 	struct ieee80211_frame *wh;
-	uint8_t rate;
+	uint8_t rate;		/* [TRC: XXX Use a fallback rate?] */
 	uint32_t mac_ctrl;
 	uint16_t phy_ctrl;
 	bus_addr_t paddr;
-	int pkt_len, error;
+	int pkt_len, error, mcast_pkt = 0;
 #if 0
 	const uint8_t *p;
 	int i;
 #endif
 
+	KASSERT(ni != NULL);
 	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
 
@@ -8730,28 +9070,40 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	 * Find TX rate
 	 */
 	bzero(tb->tb_rate_idx, sizeof(tb->tb_rate_idx));
-	if (ni != NULL) {
+	if (!mgt_pkt) {
 		if (ic->ic_fixed_rate != -1) {
 			rate = ic->ic_sup_rates[ic->ic_curmode].
 			    rs_rates[ic->ic_fixed_rate];
+			/* [TRC: XXX Set fallback rate.] */
 		} else {
 			/* AMRR rate control */
-			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+			/* [TRC: XXX amrr] */
+			/* rate = ni->ni_rates.rs_rates[ni->ni_txrate]; */
+			rate = (1 * 2);
+			/* [TRC: XXX Set fallback rate.] */
 		}
 	} else {
-		/* Fixed at 1Mbytes/s for mgt frames */
+		/* Fixed at 1Mbits/s for mgt frames */
+		/* [TRC: XXX Set fallback rate.] */
 		rate = (1 * 2);
 	}
 
 	rate &= IEEE80211_RATE_VAL;
 
-	if (IEEE80211_IS_MULTICAST(wh->i_addr1))
-		rate = (1 * 2);
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		/* [TRC: XXX Set fallback rate.] */
+		rate = ic->ic_mcast_rate;
+		mcast_pkt = 1;
+	}
 
+	/* [TRC: XXX Check fallback rate.] */
 	if (rate == 0) {
-		printf("%s: invalid rate %u or fallback rate",
-		    sc->sc_dev.dv_xname, rate);
-		rate = (1 * 2); /* Force 1Mbytes/s */
+		aprint_error_dev(&sc->sc_dev, "invalid rate %u", rate);
+		/* [TRC: In the margin of the following line,
+		   DragonFlyBSD writes `Force 1Mbits/s', whereas
+		   OpenBSD writes `Force 1Mbytes/s'.] */
+		rate = (1 * 2);
+		/* [TRC: XXX Set fallback rate.] */
 	}
 	sc->sc_tx_rate = rate;
 
@@ -8774,7 +9126,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		mb.m_nextpkt = NULL;
 		mb.m_type = 0;
 		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+		bpf_mtap(sc->sc_drvbpf, &mb);
 	}
 #endif
 
@@ -8783,7 +9135,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	 */
 	M_PREPEND(m, sizeof(*hdr), M_DONTWAIT);
 	if (m == NULL) {
-		printf("%s: prepend TX header failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "prepend TX header failed\n");
 		return (ENOBUFS);
 	}
 	hdr = mtod(m, struct bwi_txbuf_hdr *);
@@ -8793,12 +9145,13 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	bcopy(wh->i_fc, hdr->txh_fc, sizeof(hdr->txh_fc));
 	bcopy(wh->i_addr1, hdr->txh_addr1, sizeof(hdr->txh_addr1));
 
-	if (ni != NULL && !IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+	if (!mcast_pkt) {
 		uint16_t dur;
 		uint8_t ack_rate;
 
-		ack_rate = bwi_ack_rate(ni, rate);
-		dur = bwi_txtime(ic, ni,
+		/* [TRC: XXX Set fallback rate.] */
+		ack_rate = bwi_ieee80211_ack_rate(ni, rate);
+		dur = bwi_ieee80211_txtime(ic, ni,
 		    sizeof(struct ieee80211_frame_ack) + IEEE80211_CRC_LEN,
 		    ack_rate, ic->ic_flags & IEEE80211_F_SHPREAMBLE);
 
@@ -8809,11 +9162,12 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	    __SHIFTIN(idx, BWI_TXH_ID_IDX_MASK);
 
 	bwi_plcp_header(hdr->txh_plcp, pkt_len, rate);
+	/* [TRC: XXX Use fallback rate.] */
 	bwi_plcp_header(hdr->txh_fb_plcp, pkt_len, rate);
 
 	phy_ctrl = __SHIFTIN(mac->mac_rf.rf_ant_mode,
 	    BWI_TXH_PHY_C_ANTMODE_MASK);
-	if (bwi_rate2modtype(rate) == IEEE80211_MODTYPE_OFDM)
+	if (bwi_ieee80211_rate2modtype(rate) == IEEE80211_MODTYPE_OFDM)
 		phy_ctrl |= BWI_TXH_PHY_C_OFDM;
 	else if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) && rate != (2 * 1))
 		phy_ctrl |= BWI_TXH_PHY_C_SHPREAMBLE;
@@ -8821,7 +9175,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	mac_ctrl = BWI_TXH_MAC_C_HWSEQ | BWI_TXH_MAC_C_FIRST_FRAG;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1))
 		mac_ctrl |= BWI_TXH_MAC_C_ACK;
-	if (bwi_rate2modtype(rate) == IEEE80211_MODTYPE_OFDM)
+	if (bwi_ieee80211_rate2modtype(rate) == IEEE80211_MODTYPE_OFDM)
 		mac_ctrl |= BWI_TXH_MAC_C_FB_OFDM;
 
 	hdr->txh_mac_ctrl = htole32(mac_ctrl);
@@ -8835,8 +9189,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 	    BUS_DMA_NOWAIT);
 	if (error && error != EFBIG) {
-		printf("%s: can't load TX buffer (1) %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "can't load TX buffer (1) %d\n",
+		    error);
 		goto back;
 	}
 
@@ -8849,12 +9203,12 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		if (m_new == NULL) {
 			m_freem(m);
 			error = ENOBUFS;
-			printf("%s: can't defrag TX buffer\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't defrag TX buffer (1)\n");
 			goto back;
 		}
 
-		M_DUP_PKTHDR(m_new, m);
+		M_COPY_PKTHDR(m_new, m);
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
@@ -8865,8 +9219,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		}
 		
 		if (error) {
-			printf("%s: can't defrag TX buffer\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't defrag TX buffer (2)\n");
 			goto back;
 		}
 
@@ -8878,8 +9232,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 		    BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: can't load TX buffer (2) %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't load TX buffer (2) %d\n", error);
 			goto back;
 		}
 	}
@@ -8888,30 +9242,39 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	bus_dmamap_sync(sc->sc_dmat, tb->tb_dmap, 0,
 	    tb->tb_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
+	if (mgt_pkt || mcast_pkt) {
+		/* Don't involve mcast/mgt packets into TX rate control */
+		ieee80211_free_node(ni);
+		*nip = ni = NULL;
+	}
+
 	tb->tb_mbuf = m;
 	tb->tb_ni = ni;
 
 #if 0
 	p = mtod(m, const uint8_t *);
 	for (i = 0; i < m->m_pkthdr.len; ++i) {
-		if (i != 0 && i % 8 == 0)
-			printf("\n");
-		printf("%02x ", p[i]);
+		if (i % 8 == 0) {
+			if (i != 0)
+				aprint_debug("\n");
+			aprint_debug_dev(&sc->sc_dev, "");
+		}
+		aprint_debug(" %02x", p[i]);
 	}
-	printf("\n");
-
-	DPRINTF(1, "%s: idx %d, pkt_len %d, buflen %d\n",
-	    sc->sc_dev.dv_xname, idx, pkt_len, m->m_pkthdr.len);
+	aprint_debug("\n");
 #endif
+
+	DPRINTF(sc, BWI_DBG_TX, "idx %d, pkt_len %d, buflen %d\n",
+	    idx, pkt_len, m->m_pkthdr.len);
 
 	/* Setup TX descriptor */
 	paddr = tb->tb_dmap->dm_segs[0].ds_addr;
-	sc->sc_setup_txdesc(sc, rd, idx, paddr, m->m_pkthdr.len);
+	(sc->sc_setup_txdesc)(sc, rd, idx, paddr, m->m_pkthdr.len);
 	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
 	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* Kick start */
-	sc->sc_start_tx(sc, rd->rdata_txrx_ctrl, idx);
+	(sc->sc_start_tx)(sc, rd->rdata_txrx_ctrl, idx);
 
 back:
 	if (error)
@@ -8919,7 +9282,7 @@ back:
 	return (error);
 }
 
-void
+static void
 bwi_start_tx32(struct bwi_softc *sc, uint32_t tx_ctrl, int idx)
 {
 	idx = (idx + 1) % BWI_TX_NDESC;
@@ -8927,16 +9290,16 @@ bwi_start_tx32(struct bwi_softc *sc, uint32_t tx_ctrl, int idx)
 	    idx * sizeof(struct bwi_desc32));
 }
 
-void
+static void
 bwi_start_tx64(struct bwi_softc *sc, uint32_t tx_ctrl, int idx)
 {
 	/* TODO: 64 */
 }
 
-void
+static void
 bwi_txeof_status32(struct bwi_softc *sc)
 {
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	uint32_t val, ctrl_base;
 	int end_idx;
 
@@ -8952,26 +9315,26 @@ bwi_txeof_status32(struct bwi_softc *sc)
 	    end_idx * sizeof(struct bwi_desc32));
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		ifp->if_start(ifp);
+		ifp->if_start(ifp); /* [TRC: XXX Why not bwi_start?] */
 }
 
-void
+static void
 bwi_txeof_status64(struct bwi_softc *sc)
 {
 	/* TODO: 64 */
 }
 
-void
+static void
 _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 	struct bwi_txbuf_data *tbd;
 	struct bwi_txbuf *tb;
 	int ring_idx, buf_idx;
 
 	if (tx_id == 0) {
-		printf("%s: zero tx id\n", sc->sc_dev.dv_xname);
+		/* [TRC: XXX What is the severity of this message?] */
+		aprint_normal_dev(&sc->sc_dev, "zero tx id\n");
 		return;
 	}
 
@@ -8980,9 +9343,6 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 
 	KASSERT(ring_idx == BWI_TX_DATA_RING);
 	KASSERT(buf_idx < BWI_TX_NDESC);
-#if 0
-	DPRINTF(1, "%s: txeof idx %d\n", sc->sc_dev.dv_xname, buf_idx);
-#endif
 	tbd = &sc->sc_tx_bdata[ring_idx];
 	KASSERT(tbd->tbd_used > 0);
 	tbd->tbd_used--;
@@ -8994,7 +9354,7 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 	tb->tb_mbuf = NULL;
 
 	if (tb->tb_ni != NULL) {
-		ieee80211_release_node(ic, tb->tb_ni);
+		ieee80211_free_node(tb->tb_ni);
 		tb->tb_ni = NULL;
 	}
 
@@ -9004,7 +9364,7 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
-void
+static void
 bwi_txeof_status(struct bwi_softc *sc, int end_idx)
 {
 	struct bwi_txstats_data *st = sc->sc_txstats;
@@ -9015,16 +9375,20 @@ bwi_txeof_status(struct bwi_softc *sc, int end_idx)
 
 	idx = st->stats_idx;
 	while (idx != end_idx) {
-		_bwi_txeof(sc, letoh16(st->stats[idx].txs_id));
+		/* [TRC: XXX Filter this out if it is not pending; see
+		   DragonFlyBSD's revision 1.5. */
+		/* [TRC: XXX be16toh is wrong, probably due to the
+		   build environment] */
+		_bwi_txeof(sc, be16toh(st->stats[idx].txs_id));
 		idx = (idx + 1) % BWI_TXSTATS_NDESC;
 	}
 	st->stats_idx = idx;
 }
 
-void
+static void
 bwi_txeof(struct bwi_softc *sc)
 {
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ifnet *ifp = &sc->sc_if;
 
 	for (;;) {
 		uint32_t tx_status0, tx_status1;
@@ -9041,7 +9405,7 @@ bwi_txeof(struct bwi_softc *sc)
 		if (tx_info & 0x30) /* XXX */
 			continue;
 
-		_bwi_txeof(sc, letoh16(tx_id));
+		_bwi_txeof(sc, le16toh(tx_id));
 
 		ifp->if_opackets++;
 	}
@@ -9050,7 +9414,7 @@ bwi_txeof(struct bwi_softc *sc)
 		ifp->if_start(ifp);
 }
 
-int
+static int
 bwi_bbp_power_on(struct bwi_softc *sc, enum bwi_clock_mode clk_mode)
 {
 	bwi_power_on(sc, 1);
@@ -9058,14 +9422,14 @@ bwi_bbp_power_on(struct bwi_softc *sc, enum bwi_clock_mode clk_mode)
 	return (bwi_set_clock_mode(sc, clk_mode));
 }
 
-void
+static void
 bwi_bbp_power_off(struct bwi_softc *sc)
 {
 	bwi_set_clock_mode(sc, BWI_CLOCK_MODE_SLOW);
 	bwi_power_off(sc, 1);
 }
 
-int
+static int
 bwi_get_pwron_delay(struct bwi_softc *sc)
 {
 	struct bwi_regwin *com, *old;
@@ -9087,13 +9451,12 @@ bwi_get_pwron_delay(struct bwi_softc *sc)
 
 	val = CSR_READ_4(sc, BWI_PLL_ON_DELAY);
 	sc->sc_pwron_delay = howmany((val + 2) * 1000000, freq.clkfreq_min);
-	DPRINTF(1, "%s: power on delay %u\n",
-	    sc->sc_dev.dv_xname, sc->sc_pwron_delay);
+	DPRINTF(sc, BWI_DBG_ATTACH, "power on delay %u\n", sc->sc_pwron_delay);
 
 	return (bwi_regwin_switch(sc, old, NULL));
 }
 
-int
+static int
 bwi_bus_attach(struct bwi_softc *sc)
 {
 	struct bwi_regwin *bus, *old;
@@ -9114,7 +9477,7 @@ bwi_bus_attach(struct bwi_softc *sc)
 	return (bwi_regwin_switch(sc, old, NULL));
 }
 
-const char *
+static const char *
 bwi_regwin_name(const struct bwi_regwin *rw)
 {
 	switch (rw->rw_type) {
@@ -9132,24 +9495,25 @@ bwi_regwin_name(const struct bwi_regwin *rw)
 	return (NULL);
 }
 
-uint32_t
+static uint32_t
 bwi_regwin_disable_bits(struct bwi_softc *sc)
 {
 	uint32_t busrev;
 
 	/* XXX cache this */
 	busrev = __SHIFTOUT(CSR_READ_4(sc, BWI_ID_LO), BWI_ID_LO_BUSREV_MASK);
-	DPRINTF(1, "%s: bus rev %u\n", sc->sc_dev.dv_xname, busrev);
+	DPRINTF(sc, BWI_DBG_ATTACH | BWI_DBG_INIT | BWI_DBG_MISC,
+	    "bus rev %u\n", busrev);
 
 	if (busrev == BWI_BUSREV_0)
 		return (BWI_STATE_LO_DISABLE1);
 	else if (busrev == BWI_BUSREV_1)
 		return (BWI_STATE_LO_DISABLE2);
 	else
-		return ((BWI_STATE_LO_DISABLE1 | BWI_STATE_LO_DISABLE2));
+		return (BWI_STATE_LO_DISABLE1 | BWI_STATE_LO_DISABLE2);
 }
 
-int
+static int
 bwi_regwin_is_enabled(struct bwi_softc *sc, struct bwi_regwin *rw)
 {
 	uint32_t val, disable_bits;
@@ -9158,19 +9522,19 @@ bwi_regwin_is_enabled(struct bwi_softc *sc, struct bwi_regwin *rw)
 	val = CSR_READ_4(sc, BWI_STATE_LO);
 
 	if ((val & (BWI_STATE_LO_CLOCK |
-	    BWI_STATE_LO_RESET |
-	    disable_bits)) == BWI_STATE_LO_CLOCK) {
-		DPRINTF(1, "%s: %s is enabled\n",
-		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
+		    BWI_STATE_LO_RESET |
+		    disable_bits)) == BWI_STATE_LO_CLOCK) {
+		DPRINTF(sc, BWI_DBG_ATTACH | BWI_DBG_INIT, "%s is enabled\n",
+		    bwi_regwin_name(rw));
 		return (1);
 	} else {
-		DPRINTF(1, "%s: %s is disabled\n",
-		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
+		DPRINTF(sc, BWI_DBG_ATTACH | BWI_DBG_INIT, "%s is disabled\n",
+		    bwi_regwin_name(rw));
 		return (0);
 	}
 }
 
-void
+static void
 bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 {
 	uint32_t state_lo, disable_bits;
@@ -9182,8 +9546,8 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 	 * If current regwin is in 'reset' state, it was already disabled.
 	 */
 	if (state_lo & BWI_STATE_LO_RESET) {
-		DPRINTF(1, "%s: %s was already disabled\n",
-		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
+		DPRINTF(sc, BWI_DBG_ATTACH | BWI_DBG_INIT,
+		    "%s was already disabled\n", bwi_regwin_name(rw));
 		return;
 	}
 
@@ -9206,8 +9570,8 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		printf("%s: %s disable clock timeout\n",
-		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
+		aprint_error_dev(&sc->sc_dev, "%s disable clock timeout\n",
+		    bwi_regwin_name(rw));
 	}
 
 	for (i = 0; i < NRETRY; ++i) {
@@ -9219,8 +9583,8 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		printf("%s: %s wait BUSY unset timeout\n",
-		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
+		aprint_error_dev(&sc->sc_dev, "%s wait BUSY unset timeout\n",
+		    bwi_regwin_name(rw));
 	}
 #undef NRETRY
 
@@ -9246,7 +9610,7 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 	DELAY(1);
 }
 
-void
+static void
 bwi_regwin_enable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 {
 	uint32_t state_lo, state_hi, imstate;
@@ -9294,7 +9658,7 @@ bwi_regwin_enable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 	DELAY(1);
 }
 
-void
+static void
 bwi_set_bssid(struct bwi_softc *sc, const uint8_t *bssid)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -9325,17 +9689,17 @@ bwi_set_bssid(struct bwi_softc *sc, const uint8_t *bssid)
 	}
 }
 
-void
-bwi_updateslot(struct ieee80211com *ic)
+static void
+bwi_updateslot(struct ifnet *ifp)
 {
-	struct bwi_softc *sc = ic->ic_ifp->if_softc;
+	struct bwi_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct bwi_mac *mac;
-	struct ifnet *ifp = ic->ic_ifp;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
+	DPRINTF(sc, BWI_DBG_80211, "%s\n", __func__);
 
 	KASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
@@ -9343,7 +9707,7 @@ bwi_updateslot(struct ieee80211com *ic)
 	bwi_mac_updateslot(mac, (ic->ic_flags & IEEE80211_F_SHSLOT));
 }
 
-void
+static void
 bwi_calibrate(void *xsc)
 {
 	struct bwi_softc *sc = xsc;
@@ -9364,13 +9728,13 @@ bwi_calibrate(void *xsc)
 		}
 
 		/* XXX 15 seconds */
-		timeout_add(&sc->sc_calib_ch, hz * 15);
+		callout_schedule(&sc->sc_calib_ch, hz * 15);
 	}
 
 	splx(s);
 }
 
-int
+static int
 bwi_calc_rssi(struct bwi_softc *sc, const struct bwi_rxbuf_hdr *hdr)
 {
 	struct bwi_mac *mac;

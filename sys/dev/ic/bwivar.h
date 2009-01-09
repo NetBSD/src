@@ -1,3 +1,4 @@
+/*	$NetBSD: bwivar.h,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -36,8 +37,8 @@
  * $DragonFly: src/sys/dev/netif/bwi/if_bwivar.h,v 1.1 2007/09/08 06:15:54 sephe Exp $
  */
 
-#ifndef _IF_BWIVAR_H
-#define _IF_BWIVAR_H
+#ifndef _DEV_IC_BWIVAR_H
+#define _DEV_IC_BWIVAR_H
 
 #define BWI_ALIGN		0x1000
 #define BWI_RING_ALIGN		BWI_ALIGN
@@ -70,6 +71,11 @@ enum bwi_txpwrcb_type {
 };
 
 #define BWI_NOISE_FLOOR		-95	/* TODO: noise floor calc */
+
+/* [TRC: Bizarreness.  Cf. bwi_rxeof in OpenBSD's if_bwi.c and
+   DragonFlyBSD's bwi.c.] */
+#define BWI_FRAME_MIN_LEN(hdr)	\
+	((hdr) + sizeof(struct ieee80211_frame_ack) + IEEE80211_CRC_LEN)
 
 #define CSR_READ_4(sc, reg)			\
 	bus_space_read_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
@@ -262,10 +268,16 @@ struct bwi_fwhdr {
 #define BWI_FW_IV_OFS_MASK	0x7fff
 #define BWI_FW_IV_IS_32BIT	(1 << 15)
 
-struct fwheader {
-	char	filename[64];
-	int	filesize;
-	int	fileoffset;
+#define BWI_FW_NAME_FORMAT	"v%d/%s%d.fw"
+#define BWI_FW_UCODE_PREFIX	"ucode"
+#define BWI_FW_PCM_PREFIX	"pcm"
+#define BWI_FW_IV_PREFIX	"b0g0initvals"
+#define BWI_FW_IV_EXT_PREFIX	"b0g0bsinitvals"
+
+struct bwi_fw_image {
+	char	 fwi_name[64];
+	uint8_t	*fwi_data;
+	size_t	 fwi_size;
 };
 
 struct bwi_fw_iv {
@@ -431,17 +443,20 @@ struct bwi_mac {
 	struct bwi_tpctl	 mac_tpctl;	/* TX power control */
 	uint32_t		 mac_flags;	/* BWI_MAC_F_ */
 
-	uint8_t			*mac_fw;
-	size_t			 mac_fw_size;
-	uint8_t			*mac_ucode;
-	size_t			 mac_ucode_size;
-	uint8_t			*mac_pcm;
-	size_t			 mac_pcm_size;
-	uint8_t			*mac_iv;
-	size_t			 mac_iv_size;
-	uint8_t			*mac_iv_ext;
-	size_t			 mac_iv_ext_size;
+	struct bwi_fw_image	 mac_ucode_fwi;
+	struct bwi_fw_image	 mac_pcm_fwi;
+	struct bwi_fw_image	 mac_iv_fwi;
+	struct bwi_fw_image	 mac_iv_ext_fwi;
 };
+
+#define mac_ucode mac_ucode_fwi.fwi_data
+#define mac_ucode_size mac_ucode_fwi.fwi_size
+#define mac_pcm mac_pcm_fwi.fwi_data
+#define mac_pcm_size mac_pcm_fwi.fwi_size
+#define mac_iv mac_iv_fwi.fwi_data
+#define mac_iv_size mac_iv_fwi.fwi_size
+#define mac_iv_ext mac_iv_ext_fwi.fwi_data
+#define mac_iv_ext_size mac_iv_ext_fwi.fwi_size
 
 #define BWI_MAC_F_BSWAP		0x1
 #define BWI_MAC_F_TPCTL_INITED	0x2
@@ -501,6 +516,7 @@ struct bwi_rx_radiotap_hdr {
 	/* TODO: sq */
 };
 
+/* [TRC: XXX amrr] */
 struct bwi_node {
 	struct ieee80211_node		ni;
 	struct ieee80211_amrr_node	amn;
@@ -508,8 +524,11 @@ struct bwi_node {
 
 struct bwi_softc {
 	struct device		 sc_dev;
+	struct ethercom		 sc_ec;
 	struct ieee80211com	 sc_ic;
+#define sc_if sc_ec.ec_if
 	uint32_t		 sc_flags;	/* BWI_F_ */
+	void			*sc_ih;		/* [TRC: interrupt handler] */
 
 	uint32_t		 sc_cap;	/* BWI_CAP_ */
 	uint16_t		 sc_bbp_id;	/* BWI_BBPID_ */
@@ -525,20 +544,25 @@ struct bwi_softc {
 	uint16_t		 sc_pwron_delay;
 	int			 sc_locale;
 
+	/* [TRC: No clue what these are for.]
 	int			 sc_irq_rid;
 	struct resource		*sc_irq_res;
 	void			*sc_irq_handle;
+	*/
 
+	/* [TRC: Likewise.]
 	int			 sc_mem_rid;
 	struct resource		*sc_mem_res;
+	*/
 	bus_dma_tag_t		 sc_dmat;
 	bus_space_tag_t		 sc_mem_bt;
 	bus_space_handle_t	 sc_mem_bh;
 
-	struct timeout		 sc_scan_ch;
-	struct timeout		 sc_calib_ch;
-	struct timeout		 sc_amrr_ch;
+	struct callout		 sc_scan_ch;
+	struct callout		 sc_calib_ch;
 
+	/* [TRC: XXX amrr] */
+	struct callout		 sc_amrr_ch;
 	struct ieee80211_amrr	 sc_amrr;
 
 	struct bwi_regwin	*sc_cur_regwin;
@@ -555,8 +579,7 @@ struct bwi_softc {
 	int			 sc_led_blinking;
 	int			 sc_led_ticks;
 	struct bwi_led		*sc_blink_led;
-	struct timeout		 sc_led_blink_next_ch;
-	struct timeout		 sc_led_blink_end_ch;
+	struct callout		 sc_led_blink_ch;
 	int			 sc_led_blink_offdur;
 	struct bwi_led		 sc_leds[BWI_LED_MAX];
  
@@ -603,33 +626,54 @@ struct bwi_softc {
 	void			 (*sc_conf_write)(void *, uint32_t, uint32_t);
 	uint32_t		 (*sc_conf_read)(void *, uint32_t);
 
+	struct sysctllog	*sc_sysctllog;
+
 	/* Sysctl variables */
 	int			 sc_fw_version;	/* BWI_FW_VERSION[34] */
 	int			 sc_dwell_time;	/* milliseconds */
 	int			 sc_led_idle;
 	int			 sc_led_blink;
+	int			 sc_txpwr_calib;
+	int			 sc_debug;	/* BWI_DBG_ */
 
 #if NBPFILTER > 0
-        void			*sc_drvbpf;
+	struct bpf_if		*sc_drvbpf;
  
-        union {
-                struct bwi_rx_radiotap_hdr th;
-                uint8_t pad[64];
-        }                        sc_rxtapu;
-#define sc_rxtap                 sc_rxtapu.th
-        int                      sc_rxtap_len;
+	union {
+		struct bwi_rx_radiotap_hdr th;
+		uint8_t pad[64];
+	}			 sc_rxtapu;
+#define sc_rxtap		 sc_rxtapu.th
+	int			 sc_rxtap_len;
  
-        union {
-                struct bwi_tx_radiotap_hdr th;
-                uint8_t pad[64];
-        }                        sc_txtapu;
-#define sc_txtap                 sc_txtapu.th
-        int                      sc_txtap_len;
+	union {
+		struct bwi_tx_radiotap_hdr th;
+		uint8_t pad[64];
+	}			 sc_txtapu;
+#define sc_txtap		 sc_txtapu.th
+	int			 sc_txtap_len;
 #endif
 };
 
 #define BWI_F_BUS_INITED	0x1
 #define BWI_F_PROMISC		0x2
+
+#define BWI_DBG_MAC		0x00000001
+#define BWI_DBG_RF		0x00000002
+#define BWI_DBG_PHY		0x00000004
+#define BWI_DBG_MISC		0x00000008
+
+#define BWI_DBG_ATTACH		0x00000010
+#define BWI_DBG_INIT		0x00000020
+#define BWI_DBG_FIRMWARE	0x00000040
+#define BWI_DBG_80211		0x00000080
+#define BWI_DBG_TXPOWER		0x00000100
+#define BWI_DBG_INTR		0x00000200
+#define BWI_DBG_RX		0x00000400
+#define BWI_DBG_TX		0x00000800
+#define BWI_DBG_TXEOF		0x00001000
+#define BWI_DBG_LED		0x00002000
+#define BWI_DBG_STATION		0x00004000
 
 #define abs(a)	__builtin_abs(a)
 
@@ -741,8 +785,10 @@ bwi_rf_lo_update(struct bwi_mac *_mac)
 #define RF_FILT_SETBITS(mac, ofs, filt, bits)	\
 	RF_WRITE((mac), (ofs), (RF_READ((mac), (ofs)) & (filt)) | (bits))
 
-#endif	/* !_IF_BWIVAR_H */
+/* [TRC: XXX Why are these visible at all externally?] */
 
 int		bwi_intr(void *);
 int		bwi_attach(struct bwi_softc *);
-int		bwi_detach(void *);
+void		bwi_detach(struct bwi_softc *);
+
+#endif	/* !_DEV_IC_BWIVAR_H */

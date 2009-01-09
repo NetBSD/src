@@ -1,3 +1,4 @@
+/*	$NetBSD: bwireg.h,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
 /*	$OpenBSD: bwireg.h,v 1.7 2007/11/17 16:50:02 mglocker Exp $	*/
 
 /*
@@ -36,8 +37,8 @@
  * $DragonFly: src/sys/dev/netif/bwi/if_bwireg.h,v 1.1 2007/09/08 06:15:54 sephe Exp $
  */
 
-#ifndef _IF_BWIREG_H
-#define _IF_BWIREG_H
+#ifndef _DEV_IC_BWIREG_H
+#define _DEV_IC_BWIREG_H
 
 /*
  * Registers for all of the register windows
@@ -232,6 +233,8 @@
 /* MAC address of pairwise keys */
 #define BWI_PKEY_ADDR_MOBJ		0x4
 
+/* [TRC: XXX Adapt DragonFlyBSD's more elaborate TX status flags, perhaps.
+   See bwi_txeof &c.] */
 #define BWI_TXSTATUS_0			0x00000170
 #define BWI_TXSTATUS_0_MORE		(1 << 0)
 #define BWI_TXSTATUS_0_TXID_MASK	0xffff0000
@@ -334,7 +337,7 @@
 /*
  * Extended PCI registers
  */
-#define BWI_PCIR_BAR			PCIR_BAR(0)
+#define BWI_PCIR_BAR			0x10 /* [TRC: Was PCIR_BAR(0).] */
 #define BWI_PCIR_SEL_REGWIN		0x00000080
 /* Register value for BWI_PCIR_SEL_REGWIN */
 #define BWI_PCIM_REGWIN(id)		(((id) * 0x1000) + 0x18000000)
@@ -483,7 +486,7 @@
 #define BWI_TXRX_TX_INTRS		BWI_TXRX_INTR_ERROR
 #define BWI_TXRX_RX_INTRS		(BWI_TXRX_INTR_ERROR | BWI_TXRX_INTR_RX)
 #define BWI_TXRX_IS_RX(i)		((i) % 3 == 0)
-
+
 /* PHY */
 
 #define BWI_PHYR_NRSSI_THR_11B		0x020
@@ -633,7 +636,7 @@
 	0x3f22f46c, 0x3d96ee2b, 0x3b97e88e, 0x38d7e2b4,	\
 	0x35c8dd9f, 0x325ad826, 0x2e03d358, 0x299acf64,	\
 	0x246dcb87
-
+
 /* RF */
 
 #define BWI_RFR_ATTEN			0x43
@@ -675,11 +678,4 @@
 	33,	28,	22,	14,	5,	-7,	-20,	-20,	\
 	-20,	-20,	-20,	-20,	-20,	-20,	-20,	-20
 
-/* Find least significant bit that is set */
-#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
-
-#define	__SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
-#define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
-#define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
-
-#endif	/* !_IF_BWIREG_H */
+#endif /* !_DEV_IC_BWIREG_H */

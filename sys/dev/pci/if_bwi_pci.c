@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.7 2008/05/23 08:49:27 brad Exp $ */
+/*	$NetBSD: if_bwi_pci.c,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
+/*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -17,28 +18,31 @@
  */
 
 /*
- * PCI front-end for the Broadcom AirForce
+ * Broadcom AirForce BCM43xx IEEE 802.11b/g wireless network driver
+ * PCI front end
  */
 
 #include "bpfilter.h"
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.2 2009/01/09 20:49:42 macallan Exp $");
+
 #include <sys/param.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/callout.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/sockio.h>
+#include <sys/systm.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_ether.h>
 #include <net/if_media.h>
-
-#include <netinet/in.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
@@ -53,49 +57,51 @@
 /* Base Address Register */
 #define BWI_PCI_BAR0	0x10
 
-int		bwi_pci_match(struct device *, void *, void *);
-void		bwi_pci_attach(struct device *, struct device *, void *);
-int		bwi_pci_detach(struct device *, int);
-void		bwi_pci_conf_write(void *, uint32_t, uint32_t);
-uint32_t	bwi_pci_conf_read(void *, uint32_t);
+static int	bwi_pci_match(struct device *, struct cfdata *, void *);
+static void	bwi_pci_attach(struct device *, struct device *, void *);
+static int	bwi_pci_detach(struct device *, int);
+static void	bwi_pci_conf_write(void *, uint32_t, uint32_t);
+static uint32_t	bwi_pci_conf_read(void *, uint32_t);
 
 struct bwi_pci_softc {
 	struct bwi_softc	 psc_bwi;
 
 	pci_chipset_tag_t        psc_pc;
 	pcitag_t		 psc_pcitag;
-	void 			*psc_ih;
 
 	bus_size_t		 psc_mapsize;
 };
 
-struct cfattach bwi_pci_ca = {
-	sizeof(struct bwi_pci_softc), bwi_pci_match, bwi_pci_attach,
-	bwi_pci_detach
-};
+CFATTACH_DECL(bwi_pci, sizeof(struct bwi_pci_softc),
+    bwi_pci_match, bwi_pci_attach, bwi_pci_detach, NULL);
 
-const struct pci_matchid bwi_pci_devices[] = {
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4303 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4306 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4306_2 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4307 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4309 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4311 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4312 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4318 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4319 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4322 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43XG }
-};
-
-int
-bwi_pci_match(struct device *parent, void *match, void *aux)
+static int
+bwi_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, bwi_pci_devices,
-	    sizeof(bwi_pci_devices) / sizeof(bwi_pci_devices[0])));
+	struct pci_attach_args *pa = aux;
+
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_BROADCOM)
+		return (0);
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_BROADCOM_BCM4303:
+	case PCI_PRODUCT_BROADCOM_BCM4306:
+	case PCI_PRODUCT_BROADCOM_BCM4306_2:
+	case PCI_PRODUCT_BROADCOM_BCM4307:
+	case PCI_PRODUCT_BROADCOM_BCM4309:
+	case PCI_PRODUCT_BROADCOM_BCM4311:
+	case PCI_PRODUCT_BROADCOM_BCM4312:
+	case PCI_PRODUCT_BROADCOM_BCM4318:
+	case PCI_PRODUCT_BROADCOM_BCM4319:
+	case PCI_PRODUCT_BROADCOM_BCM4322:
+	case PCI_PRODUCT_BROADCOM_BCM43XG:
+		return (1);
+	}
+
+	return (0);
 }
 
-void
+static void
 bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
@@ -111,29 +117,37 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map control / status registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0); 
-	if (pci_mapreg_map(pa, BWI_PCI_BAR0, memtype, 0, &sc->sc_mem_bt,
-	    &sc->sc_mem_bh, NULL, &psc->psc_mapsize, 0)) {
-		printf(": could not map memory space\n");
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		if (pci_mapreg_map(pa, BWI_PCI_BAR0,
+		    memtype, 0, &sc->sc_mem_bt, &sc->sc_mem_bh,
+		    NULL, &psc->psc_mapsize) == 0)
+			break;
+	default:
+		aprint_error(": could not map memory space\n");
 		return;
 	}
 
+        aprint_normal("\n");
+
 	/* map interrupt */
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		aprint_error_dev(self, "could not map interrupt\n");
 		return;
 	}
 
 	/* establish interrupt */
 	intrstr = pci_intr_string(psc->psc_pc, ih);
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_NET, bwi_intr, sc);
-	if (psc->psc_ih == NULL) {
-		printf(": could not establish interrupt");
+	sc->sc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_NET, bwi_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/* we need to access PCI config space from the driver */
 	sc->sc_conf_write = bwi_pci_conf_write;
@@ -156,12 +170,16 @@ bwi_pci_detach(struct device *self, int flags)
 	struct bwi_softc *sc = &psc->psc_bwi;
 
 	bwi_detach(sc);
-	pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
+
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
 
 	return (0);
 }
 
-void
+static void
 bwi_pci_conf_write(void *self, uint32_t reg, uint32_t val)
 {
 	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
@@ -169,7 +187,7 @@ bwi_pci_conf_write(void *self, uint32_t reg, uint32_t val)
 	pci_conf_write(psc->psc_pc, psc->psc_pcitag, reg, val);
 }
 
-uint32_t
+static uint32_t
 bwi_pci_conf_read(void *self, uint32_t reg)
 {
 	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
