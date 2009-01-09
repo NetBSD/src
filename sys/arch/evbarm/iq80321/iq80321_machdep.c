@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.42 2008/11/30 18:21:33 martin Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.43 2009/01/09 16:23:59 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.42 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.43 2009/01/09 16:23:59 briggs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -246,6 +246,10 @@ int kgdb_devrate = KGDB_DEVRATE;
 int kgdb_devmode = KGDB_DEVMODE;
 #endif /* KGDB */
 
+#if defined(I80321_REBOOT)
+extern void I80321_REBOOT(int);
+#endif
+
 /*
  * void cpu_reboot(int howto, char *bootstr)
  *
@@ -300,6 +304,9 @@ cpu_reboot(int howto, char *bootstr)
 	IRQdisable;
 
 	if (howto & RB_HALT) {
+#if defined(I80321_REBOOT)
+		I80321_REBOOT(howto);
+#endif
 		iq80321_7seg('.', '.');
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -308,6 +315,10 @@ cpu_reboot(int howto, char *bootstr)
 
 	printf("rebooting...\n\r");
  reset:
+#if defined(I80321_REBOOT)
+	I80321_REBOOT(howto);
+#endif
+
 	/*
 	 * Make really really sure that all interrupts are disabled,
 	 * and poke the Internal Bus and Peripheral Bus reset lines.
