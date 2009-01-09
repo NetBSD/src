@@ -144,14 +144,15 @@ int if_address(const char *, const struct in_addr *, const struct in_addr *,
 #define get_address(ifname, addr, net) \
 	do_interface(ifname, NULL, NULL, addr, net, 1)
 
-int if_route(const char *, const struct in_addr *, const struct in_addr *,
+int if_route(const struct interface *,
+	     const struct in_addr *,const struct in_addr *,
 	     const struct in_addr *, int, int);
-#define add_route(ifname, dest, mask, gate, metric) \
-	if_route(ifname, dest, mask, gate, metric, 1)
-#define change_route(ifname, dest, mask, gate, metric) \
-	if_route(ifname, dest, mask, gate, metric, 0)
-#define del_route(ifname, dest, mask, gate, metric) \
-	if_route(ifname, dest, mask, gate, metric, -1)
+#define add_route(iface, dest, mask, gate, metric) \
+	if_route(iface, dest, mask, gate, metric, 1)
+#define change_route(iface, dest, mask, gate, metric) \
+	if_route(iface, dest, mask, gate, metric, 0)
+#define del_route(iface, dest, mask, gate, metric) \
+	if_route(iface, dest, mask, gate, metric, -1)
 void free_routes(struct rt *);
 
 int open_udp_socket(struct interface *);

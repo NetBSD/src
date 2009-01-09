@@ -98,12 +98,11 @@ if_address(const char *ifname, const struct in_addr *address,
 }
 
 int
-if_route(const char *ifname, const struct in_addr *destination,
-	 const struct in_addr *netmask, const struct in_addr *gateway,
+if_route(const struct interface *iface, const struct in_addr *dest,
+	 const struct in_addr *net, const struct in_addr *gate,
 	 _unused int metric, int action)
 {
 	int s;
-	static int seq;
 	union sockunion {
 		struct sockaddr sa;
 		struct sockaddr_in sin;
@@ -116,68 +115,83 @@ if_route(const char *ifname, const struct in_addr *destination,
 	struct rtm 
 	{
 		struct rt_msghdr hdr;
-		char buffer[sizeof(su) * 3];
+		char buffer[sizeof(su) * 4];
 	} rtm;
-	char *bp = rtm.buffer;
+	char *bp = rtm.buffer, *p;
 	size_t l;
-	unsigned char *hwaddr;
-	size_t hwlen = 0;
 	int retval = 0;
+
+#define ADDSU(_su) { \
+	l = SA_SIZE(&(_su.sa)); \
+	memcpy(bp, &(_su), l); \
+	bp += l; \
+}
+#define ADDADDR(_addr) { \
+	memset (&su, 0, sizeof(su)); \
+	su.sin.sin_family = AF_INET; \
+	su.sin.sin_len = sizeof(su.sin); \
+	memcpy (&su.sin.sin_addr, _addr, sizeof(su.sin.sin_addr)); \
+	ADDSU(su); \
+}
 
 	if ((s = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
 		return -1;
 
 	memset(&rtm, 0, sizeof(rtm));
 	rtm.hdr.rtm_version = RTM_VERSION;
-	rtm.hdr.rtm_seq = ++seq;
+	rtm.hdr.rtm_seq = 1;
 	if (action == 0)
 		rtm.hdr.rtm_type = RTM_CHANGE;
 	else if (action > 0)
 		rtm.hdr.rtm_type = RTM_ADD;
 	else
 		rtm.hdr.rtm_type = RTM_DELETE;
-	rtm.hdr.rtm_flags = RTF_UP | RTF_STATIC;
-	if (netmask->s_addr == INADDR_BROADCAST)
+	rtm.hdr.rtm_flags = RTF_UP;
+	/* None interface subnet routes are static. */
+	if (gate->s_addr != INADDR_ANY ||
+	    net->s_addr != iface->net.s_addr ||
+	    dest->s_addr != (iface->addr.s_addr & iface->net.s_addr))
+		rtm.hdr.rtm_flags |= RTF_STATIC;
+	rtm.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;
+	if (dest->s_addr == gate->s_addr && net->s_addr == INADDR_BROADCAST)
 		rtm.hdr.rtm_flags |= RTF_HOST;
-
-	/* This order is important */
-	rtm.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
-
-#define ADDADDR(_addr) \
-	memset (&su, 0, sizeof(su)); \
-	su.sin.sin_family = AF_INET; \
-	su.sin.sin_len = sizeof(su.sin); \
-	memcpy (&su.sin.sin_addr, _addr, sizeof(su.sin.sin_addr)); \
-	l = SA_SIZE (&(su.sa)); \
-	memcpy (bp, &(su), l); \
-	bp += l;
-
-	ADDADDR(destination);
-
-	if (gateway->s_addr == INADDR_ANY) {
-		/* Make us a link layer socket */
-		hwaddr = xmalloc(sizeof(unsigned char) * HWADDR_LEN);
-		do_interface(ifname, hwaddr, &hwlen, NULL, 0, 0);
-		memset(&su, 0, sizeof(su));
-		su.sdl.sdl_len = sizeof(su.sdl);
-		su.sdl.sdl_family = AF_LINK;
-		su.sdl.sdl_nlen = strlen(ifname);
-		memcpy(&su.sdl.sdl_data, ifname, (size_t)su.sdl.sdl_nlen);
-		su.sdl.sdl_alen = hwlen;
-		memcpy(((unsigned char *)&su.sdl.sdl_data) + su.sdl.sdl_nlen,
-		       hwaddr, (size_t)su.sdl.sdl_alen);
-
-		l = SA_SIZE(&(su.sa));
-		memcpy(bp, &su, l);
-		bp += l;
-		free(hwaddr);
-	} else {
-		rtm.hdr.rtm_flags |= RTF_GATEWAY;
-		ADDADDR(gateway);
+	else {
+		rtm.hdr.rtm_addrs |= RTA_NETMASK;
+		if (rtm.hdr.rtm_flags & RTF_STATIC)
+			rtm.hdr.rtm_flags |= RTF_GATEWAY;
+		if (action >= 0)
+			rtm.hdr.rtm_addrs |= RTA_IFA;
 	}
 
-	ADDADDR(netmask);
-#undef ADDADDR
+	ADDADDR(dest);
+	if (rtm.hdr.rtm_flags & RTF_HOST ||
+	    !(rtm.hdr.rtm_flags & RTF_STATIC))
+	{
+		/* Make us a link layer socket for the host gateway */
+		memset(&su, 0, sizeof(su));
+		su.sdl.sdl_len = sizeof(struct sockaddr_dl);
+		link_addr(iface->name, &su.sdl);
+		ADDSU(su);
+	} else
+		ADDADDR(gate);
+
+	if (rtm.hdr.rtm_addrs & RTA_NETMASK) {
+		/* Ensure that netmask is set correctly */
+		memset(&su, 0, sizeof(su));
+		su.sin.sin_family = AF_INET;
+		su.sin.sin_len = sizeof(su.sin);
+		memcpy(&su.sin.sin_addr, &net->s_addr, sizeof(su.sin.sin_addr));
+		p = su.sa.sa_len + (char *)&su;
+		for (su.sa.sa_len = 0; p > (char *)&su;)
+			if (*--p != 0) {
+				su.sa.sa_len = 1 + p - (char *)&su;
+				break;
+			}
+		ADDSU(su);
+	}
+
+	if (rtm.hdr.rtm_addrs & RTA_IFA)
+		ADDADDR(&iface->addr);
 
 	rtm.hdr.rtm_msglen = l = bp - (char *)&rtm;
 	if (write(s, &rtm, l) == -1)
