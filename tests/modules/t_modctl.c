@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.2 2008/05/02 14:20:50 ad Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.2.8.1 2009/01/09 02:12:50 snj Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.2 2008/05/02 14:20:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.2.8.1 2009/01/09 02:12:50 snj Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -316,7 +316,8 @@ ATF_TC_BODY(cmd_load, tc)
 	ATF_CHECK(load(NULL, false, longname) == ENAMETOOLONG);
 
 	ATF_CHECK(!k_helper_is_present(stat_check));
-	load(NULL, true, "%s/k_helper.kmod", atf_tc_get_config_var(tc, "srcdir"));
+	load(NULL, true, "%s/k_helper/k_helper.kmod",
+	    atf_tc_get_config_var(tc, "srcdir"));
 	printf("Checking if load was successful\n");
 	ATF_CHECK(k_helper_is_present(stat_check));
 }
@@ -340,7 +341,8 @@ ATF_TC_BODY(cmd_load_props, tc)
 
 	printf("Loading module without properties\n");
 	props = prop_dictionary_create();
-	load(props, true, "%s/k_helper.kmod", atf_tc_get_config_var(tc, "srcdir"));
+	load(props, true, "%s/k_helper/k_helper.kmod",
+	    atf_tc_get_config_var(tc, "srcdir"));
 	prop_object_release(props);
 	{
 		int ok;
@@ -354,7 +356,8 @@ ATF_TC_BODY(cmd_load_props, tc)
 	props = prop_dictionary_create();
 	prop_dictionary_set(props, "prop_str",
 	    prop_string_create_cstring("1st string"));
-	load(props, true, "%s/k_helper.kmod", atf_tc_get_config_var(tc, "srcdir"));
+	load(props, true, "%s/k_helper/k_helper.kmod",
+	    atf_tc_get_config_var(tc, "srcdir"));
 	prop_object_release(props);
 	{
 		int ok;
@@ -373,7 +376,8 @@ ATF_TC_BODY(cmd_load_props, tc)
 	props = prop_dictionary_create();
 	prop_dictionary_set(props, "prop_str",
 	    prop_string_create_cstring("2nd string"));
-	load(props, true, "%s/k_helper.kmod", atf_tc_get_config_var(tc, "srcdir"));
+	load(props, true, "%s/k_helper/k_helper.kmod",
+	    atf_tc_get_config_var(tc, "srcdir"));
 	prop_object_release(props);
 	{
 		int ok;
@@ -405,7 +409,8 @@ ATF_TC_BODY(cmd_stat, tc)
 
 	ATF_CHECK(!k_helper_is_present(both_checks));
 
-	load(NULL, true, "%s/k_helper.kmod", atf_tc_get_config_var(tc, "srcdir"));
+	load(NULL, true, "%s/k_helper/k_helper.kmod",
+	    atf_tc_get_config_var(tc, "srcdir"));
 	ATF_CHECK(k_helper_is_present(both_checks));
 	{
 		modstat_t ms;
@@ -434,7 +439,8 @@ ATF_TC_BODY(cmd_unload, tc)
 {
 	require_modular();
 
-	load(NULL, true, "%s/k_helper.kmod", atf_tc_get_config_var(tc, "srcdir"));
+	load(NULL, true, "%s/k_helper/k_helper.kmod",
+	    atf_tc_get_config_var(tc, "srcdir"));
 
 	ATF_CHECK(unload("", false) == ENOENT);
 	ATF_CHECK(unload("non-existent.kmod", false) == ENOENT);
