@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.204.6.2 2009/01/04 17:02:18 christos Exp $
+#	$NetBSD: shlib_version,v 1.204.6.3 2009/01/10 22:59:51 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -22,7 +22,7 @@
 # - libc/locale/{__mb_cur_max.c,rune.h}: remove __mb_len_max_runtime
 # - libc/locale/setlocale.c: __setlocale -> setlocale
 # - libc/locale/setlocale{1,32}.c: remove
-# - libc/locale/setrunelocale.c: __MB_LEN_MAX_RUNTIME -> MB_LEN_MAX
+# - libc/citrus/citrus_lc_ctype.c: __MB_LEN_MAX_RUNTIME -> MB_LEN_MAX
 # - remove frexp, ldexp, modf: they belong to libm.
 # - make sure we can support thread local [on arm don't use r9 for example,
 #   consider other risc architectures: mips, powerpc, sparc, etc]
@@ -31,5 +31,8 @@
 #   for example in assembler code.
 # - kill sigcontext: never request version 0 or 1 signal trampoline.
 #   always request version 2 trampoline. (on vax, 3).
+# - change _ctype_ table in ctype.h and gen/ctype_.c 8bit -> 16 or 32bit.
+#   it's insufficient bitwidth to implement all ctype class.
+#   see isblank's comment in ctype.h.
 major=12
 minor=164

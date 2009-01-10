@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.12.14.1 2009/01/04 17:02:20 christos Exp $	*/
+/*	$NetBSD: rune.h,v 1.12.14.2 2009/01/10 22:59:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 
 #include <stdio.h>
 #include <wchar.h>
-#include "runetype.h"
+#include "runetype_local.h"
 
 /*
  * map _RTYPE_x to _CTYPE_x
