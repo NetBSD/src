@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.25 2009/01/08 20:00:12 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.26 2009/01/10 20:19:43 pooka Exp $
 #
 
 WARNS?=		4
@@ -40,14 +40,18 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 # libraries.  The only non-renamed symbols are linkset delimiters and
 # the GOT, which are more a property of the compiler than the kernel.
 #
+
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
 	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+.if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "sh3" \
+ && ${MACHINE_CPU} != "arm" && ${MACHINE_CPU} != "sparc"
 	${NM} -go ${.TARGET} | ${TOOL_AWK} '	\
 	    $$NF!~/^(rump|RUMP|__(start|stop)_link_set|_GLOBAL_OFFSET_TABLE)/ \
 	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
 	    | sort | uniq  > renametab.${.TARGET}
 	${OBJCOPY} --redefine-syms renametab.${.TARGET} ${.TARGET}
 	rm -f renametab.${.TARGET}
+.endif
 	${RANLIB} ${.TARGET}
