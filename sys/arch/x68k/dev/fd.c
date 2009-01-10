@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.88 2008/12/18 03:18:27 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.89 2009/01/10 06:41:06 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.88 2008/12/18 03:18:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.89 2009/01/10 06:41:06 isaki Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -138,8 +138,6 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	device_t sc_dev;		/* boilerplate */
-
 	bus_space_tag_t sc_iot;		/* intio i/o space identifier */
 	bus_space_handle_t sc_ioh;	/* intio io handle */
 
@@ -408,8 +406,6 @@ fdcattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	struct intio_attach_args *ia = aux;
 	struct fdc_attach_args fa;
-
-	fdc->sc_dev = self;
 
 	iot = ia->ia_bst;
 
