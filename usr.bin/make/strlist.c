@@ -1,4 +1,4 @@
-/*	$NetBSD: strlist.c,v 1.1 2008/12/20 22:41:53 dsl Exp $	*/
+/*	$NetBSD: strlist.c,v 1.2 2009/01/10 16:55:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,11 +33,11 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: strlist.c,v 1.1 2008/12/20 22:41:53 dsl Exp $";
+static char rcsid[] = "$NetBSD: strlist.c,v 1.2 2009/01/10 16:55:39 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: strlist.c,v 1.1 2008/12/20 22:41:53 dsl Exp $");
+__RCSID("$NetBSD: strlist.c,v 1.2 2009/01/10 16:55:39 dsl Exp $");
 #endif /* not lint */
 #endif
 
@@ -50,7 +50,7 @@ void
 strlist_init(strlist_t *sl)
 {
 	sl->sl_num = 0;
-	sl->sl_str = NULL;
+	sl->sl_items = NULL;
 }
 
 void
@@ -61,25 +61,27 @@ strlist_clean(strlist_t *sl)
 
 	STRLIST_FOREACH(str, sl, i)
 		free(str);
-	free(sl->sl_str);
+	free(sl->sl_items);
 
 	sl->sl_num = 0;
-	sl->sl_str = NULL;
+	sl->sl_items = NULL;
 }
 
 void
-strlist_add_str(strlist_t *sl, char *str)
+strlist_add_str(strlist_t *sl, char *str, unsigned int info)
 {
 	unsigned int n;
-	char **new_strs;
+	strlist_item_t *new_items;
 
 	if (str == NULL)
 	    return;
 
 	n = sl->sl_num + 1;
 	sl->sl_num = n;
-	new_strs = bmake_realloc(sl->sl_str, (n + 1) * sizeof *sl->sl_str);
-	new_strs[n - 1] = str;
-	new_strs[n] = NULL;         /* STRLIST_FOREACH() terminator */
-	sl->sl_str = new_strs;
+	new_items = bmake_realloc(sl->sl_items, (n + 1) * sizeof *sl->sl_items);
+	sl->sl_items = new_items;
+	new_items += n - 1;
+	new_items->si_str = str;
+	new_items->si_info = info;
+	new_items[1].si_str = NULL;         /* STRLIST_FOREACH() terminator */
 }
