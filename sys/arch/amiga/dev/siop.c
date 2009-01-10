@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.60 2008/12/17 20:51:31 cegger Exp $ */
+/*	$NetBSD: siop.c,v 1.61 2009/01/10 19:10:50 mhitch Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,10 +70,12 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.60 2008/12/17 20:51:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.61 2009/01/10 19:10:50 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/buf.h>
@@ -109,6 +111,7 @@ int  siop_checkintr(struct siop_softc *, u_char, u_char, u_char, int *);
 void siopreset(struct siop_softc *);
 void siopsetdelay(int);
 void siop_scsidone(struct siop_acb *, int);
+void siop_timeout(void *);
 void siop_sched(struct siop_softc *);
 void siop_poll(struct siop_softc *, struct siop_acb *);
 void siopintr(struct siop_softc *);
@@ -419,6 +422,9 @@ siop_scsidone(struct siop_acb *acb, int stat)
 #endif
 		return;
 	}
+
+	callout_stop(&xs->xs_callout);
+
 	periph = xs->xs_periph;
 	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
@@ -595,6 +601,28 @@ siopinitialize(struct siop_softc *sc)
 	}
 
 	siopreset (sc);
+}
+
+void
+siop_timeout(void *arg)
+{
+	struct siop_acb *acb;
+	struct scsipi_periph *periph;
+	struct siop_softc *sc;
+	int s;
+
+	acb = arg;
+	periph = acb->xs->xs_periph;
+	sc = device_private(periph->periph_channel->chan_adapter->adapt_dev);
+	scsipi_printaddr(periph);
+	printf("timed out\n");
+
+	s = splbio();
+
+	acb->xs->error = XS_TIMEOUT;
+	siopreset(sc);
+
+	splx(s);
 }
 
 void
@@ -842,6 +870,8 @@ siop_start(struct siop_softc *sc, int target, int lun, u_char *cbuf, int clen,
 	}
 #endif
 	if (sc->nexus_list.tqh_first == NULL) {
+		callout_reset(&acb->xs->xs_callout,
+		    mstohz(acb->xs->timeout) + 1, siop_timeout, acb);
 		if (rp->siop_istat & SIOP_ISTAT_CON)
 			printf("%s: siop_select while connected?\n",
 			    sc->sc_dev.dv_xname);
