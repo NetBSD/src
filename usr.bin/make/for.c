@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.41 2008/12/29 10:12:30 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.42 2009/01/10 16:59:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.41 2008/12/29 10:12:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.42 2009/01/10 16:59:02 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.41 2008/12/29 10:12:30 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.42 2009/01/10 16:59:02 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -60,6 +60,10 @@ __RCSID("$NetBSD: for.c,v 1.41 2008/12/29 10:12:30 dsl Exp $");
 #include    "dir.h"
 #include    "buf.h"
 #include    "strlist.h"
+
+#define FOR_SUB_ESCAPE_COLON 1
+#define FOR_SUB_ESCAPE_BRACE 2
+#define FOR_SUB_ESCAPE_PAREN 4
 
 /*
  * For statements are of the form:
@@ -130,10 +134,8 @@ For_Eval(char *line)
 {
     char *ptr = line, *sub;
     int len;
-    int i;
     int escapes;
-    int depth;
-    char ch;
+    unsigned char ch;
 
     /* Forget anything we previously knew about - it cannot be useful */
     memset(&accumFor, 0, sizeof accumFor);
@@ -173,7 +175,7 @@ For_Eval(char *line)
 	    ptr += 2;
 	    break;
 	}
-	strlist_add_str(&accumFor.vars, make_str(ptr, len));
+	strlist_add_str(&accumFor.vars, make_str(ptr, len), len);
     }
 
     if (strlist_num(&accumFor.vars) == 0) {
@@ -186,7 +188,7 @@ For_Eval(char *line)
 
     /*
      * Make a list with the remaining words
-     * The values are substituted as ${:U<value>... so we must \ escape
+     * The values are substituted as ${:U<value>...} so we must \ escape
      * characters that break that syntax - particularly ':', maybe $ and \.
      */
     sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
@@ -197,27 +199,15 @@ For_Eval(char *line)
 	if (*ptr == 0)
 	    break;
 	escapes = 0;
-	for (len = 0; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
-	    if (ptr[len] == ':')
-		escapes++;
-	if (escapes == 0)
-	    strlist_add_str(&accumFor.items, make_str(ptr, len));
-	else {
-	    char *item = bmake_malloc(len + escapes + 1);
-	    strlist_add_str(&accumFor.items, item);
-	    for (depth= 0, i = 0; i < len; i++) {
-		ch = ptr[i];
-		/* Loose determination of nested variable definitions. */
-		if (ch == '(' || ch == '{')
-		    depth++;
-		else if (ch == ')' || ch == '}')
-		    depth--;
-		else if (ch == ':' && depth == 0)
-		    *item++ = '\\';
-		*item++ = ch;
-	    }
-	    *item = 0;
+	for (len = 0; (ch = ptr[len]) != 0 && !isspace(ch); len++) {
+	    if (ch == ':')
+		escapes |= FOR_SUB_ESCAPE_COLON;
+	    else if (ch == ')')
+		escapes |= FOR_SUB_ESCAPE_PAREN;
+	    else if (ch == /*{*/ '}')
+		escapes |= FOR_SUB_ESCAPE_BRACE;
 	}
+	strlist_add_str(&accumFor.items, make_str(ptr, len), escapes);
     }
 
     free(sub);
@@ -285,6 +275,55 @@ For_Accum(char *line)
  *
  *-----------------------------------------------------------------------
  */
+
+static void
+for_substitute(Buffer cmds, strlist_t *items, unsigned int item_no, char ech)
+{
+    int depth, var_depth;
+    int escape;
+    const char *item = strlist_str(items, item_no);
+    int i;
+    char ch;
+#define MAX_DEPTH 0x7fffffff
+
+    /* If there were no escapes, or the only escape is the other variable
+     * terminator, then just substitute the full string */
+    if (!(strlist_info(items, item_no) &
+	    (ech == ')' ? ~FOR_SUB_ESCAPE_BRACE : ~FOR_SUB_ESCAPE_PAREN))) {
+	Buf_AddBytes(cmds, strlen(item), item);
+	return;
+    }
+
+    /* Escape ':' and 'ech' provided they aren't inside variable expansions */
+    depth = 0;
+    var_depth = MAX_DEPTH;
+    escape = -1;
+    for (i = 0; (ch = item[i]) != 0; i++) {
+	/* Loose determination of nested variable definitions. */
+	if (ch == '(' || ch == '{') {
+	    depth++;
+	    if (var_depth == MAX_DEPTH && i != 0 && item[i-1] == '$')
+		var_depth = depth;
+	} else if (ch == ')' || ch == '}') {
+	    if (ch == ech && depth < var_depth)
+		escape = i;
+	    if (depth == var_depth)
+		var_depth = MAX_DEPTH;
+	    depth--;
+	} else if (ch == ':' && depth < var_depth)
+	    escape = i;
+	if (escape == i)
+	    Buf_AddByte(cmds, '\\');
+	Buf_AddByte(cmds, ch);
+    }
+
+    if (escape == -1) {
+	/* We didn't actually need to escape anything, remember for next time */
+	strlist_set_info(items, item_no, strlist_info(items, item_no) &
+	    (ech == ')' ? ~FOR_SUB_ESCAPE_PAREN : ~FOR_SUB_ESCAPE_BRACE));
+    }
+}
+
 void
 For_Run(int lineno)
 {
@@ -292,7 +331,7 @@ For_Run(int lineno)
     int i, len;
     unsigned int num_items;
     char *for_body;
-    char *var, *item;
+    char *var;
     char *cp;
     char *cmd_cp;
     char *body_end;
@@ -337,31 +376,30 @@ For_Run(int lineno)
 	cmds = Buf_Init(len + 256);
 	cmd_cp = for_body;
 	for (cp = for_body; (cp = strchr(cp, '$')) != NULL;) {
+	    char ech;
 	    ch = *++cp;
-	    if (ch == '(' || ch == '{') {
-		char ech = ch == '(' ? ')' : '}';
+	    if ((ch == '(' && (ech = ')')) || (ch == '{' && (ech = '}'))) {
 		cp++;
 		/* Check variable name against the .for loop variables */
 		STRLIST_FOREACH(var, &arg.vars, i) {
-		    len = strlen(var);
+		    len = strlist_info(&arg.vars, i);
 		    if (memcmp(cp, var, len) != 0)
 			continue;
 		    if (cp[len] != ':' && cp[len] != ech && cp[len] != '\\')
 			continue;
-		    /* Found a variable match. Replace with ${:U<value> */
+		    /* Found a variable match. Replace with :U<value> */
 		    Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
 		    Buf_AddBytes(cmds, 2, ":U");
 		    cp += len;
 		    cmd_cp = cp;
-		    item = strlist_str(&arg.items, num_items + i);
-		    Buf_AddBytes(cmds, strlen(item), item);
+		    for_substitute(cmds, &arg.items, num_items + i, ech);
 		    break;
 		}
 		continue;
 	    }
 	    if (ch == 0)
 		break;
-	    /* Probably a single character name, ignore $$ and stupid ones. */
+	    /* Probably a single character name, ignore $$ and stupid ones. {*/
 	    if (!short_var || strchr("}):$", ch) != NULL) {
 		cp++;
 		continue;
@@ -373,8 +411,7 @@ For_Run(int lineno)
 		Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
 		Buf_AddBytes(cmds, 3, "{:U");
 		cmd_cp = ++cp;
-		item = strlist_str(&arg.items, num_items + i);
-		Buf_AddBytes(cmds, strlen(item), item);
+		for_substitute(cmds, &arg.items, num_items + i, /*{*/ '}');
 		Buf_AddBytes(cmds, 1, "}");
 		break;
 	    }
