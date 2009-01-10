@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.6 2009/01/09 00:24:07 bjh21 Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.7 2009/01/10 11:04:36 he Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.6 2009/01/09 00:24:07 bjh21 Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.7 2009/01/10 11:04:36 he Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -200,7 +200,7 @@ cd9660_rrip_finalize_node(cd9660node *node)
 static int
 cd9660_susp_handle_continuation_common(cd9660node *node, int space)
 {
-	int ca_used, susp_used, susp_used_last, working;
+	int ca_used, susp_used, susp_used_last = 0, working;
 	struct ISO_SUSP_ATTRIBUTES *temp, *last = NULL, *CE;
 
 	working = 254 - space;
