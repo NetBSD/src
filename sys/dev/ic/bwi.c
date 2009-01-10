@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.3 2009/01/10 12:57:50 cegger Exp $	*/
+/*	$NetBSD: bwi.c,v 1.4 2009/01/10 13:03:19 cegger Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.3 2009/01/10 12:57:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.4 2009/01/10 13:03:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -598,13 +598,6 @@ static const struct {
 
 static const uint8_t bwi_zero_addr[IEEE80211_ADDR_LEN];
 
-/* [TRC: Why is this not in net80211/ieee80211.c, as in OpenBSD?] */
-
-static const struct ieee80211_rateset bwi_ieee80211_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-static const struct ieee80211_rateset bwi_ieee80211_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 /* [TRC: Derived from DragonFly's src/sys/netproto/802_11/_ieee80211.h */
 
 enum bwi_ieee80211_modtype {
@@ -972,7 +965,7 @@ bwi_attach(struct bwi_softc *sc)
 		uint16_t chan_flags;
 
 		ic->ic_sup_rates[IEEE80211_MODE_11B] =
-		    bwi_ieee80211_rateset_11b;
+		    ieee80211_std_rateset_11b;
 
 		if (phy->phy_mode == IEEE80211_MODE_11B) {
 			chan_flags = IEEE80211_CHAN_B;
@@ -984,7 +977,7 @@ bwi_attach(struct bwi_softc *sc)
 			    IEEE80211_CHAN_2GHZ;
 			ic->ic_phytype = IEEE80211_T_OFDM;
 			ic->ic_sup_rates[IEEE80211_MODE_11G] =
-			    bwi_ieee80211_rateset_11g;
+			    ieee80211_std_rateset_11g;
 		}
 
 		/* XXX depend on locale */
