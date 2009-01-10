@@ -1,4 +1,4 @@
-/*	$NetBSD: strlist.h,v 1.1 2008/12/20 22:41:53 dsl Exp $	*/
+/*	$NetBSD: strlist.h,v 1.2 2009/01/10 16:55:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,19 +36,26 @@
 #define _STRLIST_H
 
 typedef struct {
-    unsigned int  sl_num;
-    char          **sl_str;
+    char          *si_str;
+    unsigned int  si_info;
+} strlist_item_t;
+
+typedef struct {
+    unsigned int    sl_num;
+    strlist_item_t  *sl_items;
 } strlist_t;
 
-void strlist_init(strlist_t *sl);
-void strlist_clean(strlist_t *sl);
-void strlist_add_str(strlist_t *sl, char *str);
+void strlist_init(strlist_t *);
+void strlist_clean(strlist_t *);
+void strlist_add_str(strlist_t *, char *, unsigned int);
 
 #define strlist_num(sl) ((sl)->sl_num)
-#define strlist_str(sl, n)  ((sl)->sl_str[n])
+#define strlist_str(sl, n)  ((sl)->sl_items[n].si_str)
+#define strlist_info(sl, n)  ((sl)->sl_items[n].si_info)
+#define strlist_set_info(sl, n, v)  ((void)((sl)->sl_items[n].si_info = (v)))
 
 #define STRLIST_FOREACH(v, sl, index) \
-    if ((sl)->sl_str != NULL) \
-	for (index = 0; (v = (sl)->sl_str[index]) != NULL; index++)
+    if ((sl)->sl_items != NULL) \
+	for (index = 0; (v = strlist_str(sl, index)) != NULL; index++)
 
 #endif /* _STRLIST_H */
