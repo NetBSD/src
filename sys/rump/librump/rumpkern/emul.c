@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.63.2.4 2009/01/04 05:18:17 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.63.2.5 2009/01/10 20:03:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,9 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.63.2.4 2009/01/04 05:18:17 christos Exp $");
-
-#define malloc(a,b,c) __wrap_malloc(a,b,c)
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.63.2.5 2009/01/10 20:03:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -58,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.63.2.4 2009/01/04 05:18:17 christos Exp $
 
 #include <dev/cons.h>
 
-#include <machine/bswap.h>
 #include <machine/stdarg.h>
 
 #include <rump/rumpuser.h>
@@ -253,7 +250,7 @@ malloc_type_detach(struct malloc_type *type)
 }
 
 void *
-__wrap_malloc(unsigned long size, struct malloc_type *type, int flags)
+kern_malloc(unsigned long size, struct malloc_type *type, int flags)
 {
 	void *rv;
 
@@ -262,6 +259,20 @@ __wrap_malloc(unsigned long size, struct malloc_type *type, int flags)
 		memset(rv, 0, size);
 
 	return rv;
+}
+
+void *
+kern_realloc(void *ptr, unsigned long size, struct malloc_type *type, int flags)
+{
+
+	return rumpuser_malloc(size, (flags & (M_CANFAIL | M_NOWAIT)) != 0);
+}
+
+void
+kern_free(void *ptr, struct malloc_type *type)
+{
+
+	rumpuser_free(ptr);
 }
 
 void
@@ -578,33 +589,6 @@ proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
 
 	panic("%s: not implemented", __func__);
 }
-
-/*
- * Byteswap is in slightly bad taste linked directly against libc.
- * In case our machine uses namespace-renamed symbols, provide
- * an escape route.  We really should be including libkern, but
- * leave that to a later date.
- */
-#ifdef __BSWAP_RENAME
-#undef bswap16
-#undef bswap32
-uint16_t __bswap16(uint16_t);
-uint32_t __bswap32(uint32_t);
-
-uint16_t
-bswap16(uint16_t v)
-{
-
-	return __bswap16(v);
-}
-
-uint32_t
-bswap32(uint32_t v)
-{
-
-	return __bswap32(v);
-}
-#endif /* __BSWAP_RENAME */
 
 void
 module_init_md()

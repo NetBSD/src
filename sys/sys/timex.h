@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.13.8.3 2008/12/27 23:14:25 christos Exp $	*/
+/*	$NetBSD: timex.h,v 1.13.8.4 2009/01/10 20:03:36 christos Exp $	*/
 
 /*-
  ***********************************************************************
@@ -161,13 +161,13 @@
 #define STA_FMT	"\177\020\
 b\0PLL\0\
 b\1PPSFREQ\0\
-b\2PSTIME\0\
+b\2PPSTIME\0\
 b\3FLL\0\
 b\4INS\0\
 b\5DEL\0\
 b\6UNSYNC\0\
 b\7FREQHOLD\0\
-b\x8PSSIGNAL\0\
+b\x8PPSSIGNAL\0\
 b\x9PPSJITTER\0\
 b\xaPPSWANDER\0\
 b\xbPPSERROR\0\
