@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.24 2009/01/08 22:26:19 bjh21 Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.25 2009/01/10 22:06:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.24 2009/01/08 22:26:19 bjh21 Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.25 2009/01/10 22:06:29 bjh21 Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -114,6 +114,7 @@ __RCSID("$NetBSD: cd9660.c,v 1.24 2009/01/08 22:26:19 bjh21 Exp $");
 #include "makefs.h"
 #include "cd9660.h"
 #include "cd9660/iso9660_rrip.h"
+#include "cd9660/cd9660_archimedes.h"
 
 /*
  * Global variables
@@ -187,6 +188,7 @@ cd9660_allocate_cd9660node(void)
 	temp->isoDirRecord = NULL;
 	temp->isoExtAttributes = NULL;
 	temp->rr_real_parent = temp->rr_relocated = NULL;
+	temp->su_tail_data = NULL;
 	return temp;
 }
 
@@ -211,6 +213,8 @@ cd9660_set_defaults(void)
 	diskStructure.rock_ridge_renamed_dir_name = 0;
 	diskStructure.rock_ridge_move_count = 0;
 	diskStructure.rr_moved_dir = 0;
+
+	diskStructure.archimedes_enabled = 0;
 
 	diskStructure.include_padding_areas = 1;
 
@@ -394,6 +398,8 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 	/* RRIP */
 	else if (CD9660_IS_COMMAND_ARG_DUAL(var, "R", "rockridge"))
 		diskStructure.rock_ridge_enabled = 1;
+	else if (CD9660_IS_COMMAND_ARG_DUAL(var, "A", "archimedes"))
+		diskStructure.archimedes_enabled = 1;
 	else if (CD9660_IS_COMMAND_ARG_DUAL(var, "K", "keep-bad-images"))
 		diskStructure.keep_bad_images = 1;
 	else if (CD9660_IS_COMMAND_ARG(var, "allow-deep-trees"))
@@ -523,6 +529,10 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 
 	if (diskStructure.verbose_level > 0)
 		printf("cd9660_makefs: done converting tree\n");
+
+	/* non-SUSP extensions */
+	if (diskStructure.archimedes_enabled)
+		archimedes_convert_tree(diskStructure.rootNode);
 
 	/* Rock ridge / SUSP init pass */
 	if (diskStructure.rock_ridge_enabled) {
@@ -1634,6 +1644,10 @@ cd9660_level1_convert_filename(const char *oldname, char *newname, int is_file)
 				found_ext = 1;
 			}
 		} else {
+			/* cut RISC OS file type off ISO name */
+			if (diskStructure.archimedes_enabled &&
+			    *oldname == ',' && strlen(oldname) == 4)
+				break;
 			/* Enforce 12.3 / 8 */
 			if (((namelen == 8) && !found_ext) ||
 			    (found_ext && extlen == 3)) {
@@ -1697,6 +1711,10 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 				found_ext = 1;
 			}
 		} else {
+			/* cut RISC OS file type off ISO name */
+			if (diskStructure.archimedes_enabled &&
+			    *oldname == ',' && strlen(oldname) == 4)
+				break;
 			if ((namelen + extlen) == 30)
 				break;
 
@@ -1764,6 +1782,9 @@ cd9660_compute_record_size(cd9660node *node)
 
 	if (diskStructure.rock_ridge_enabled)
 		size += node->susp_entry_size;
+	size += node->su_tail_size;
+	size += size & 1; /* Ensure length of record is even. */
+	assert(size <= 254);
 	return size;
 }
 
