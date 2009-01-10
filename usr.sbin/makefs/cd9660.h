@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.12 2008/07/27 10:29:32 reinoud Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.13 2009/01/10 22:06:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -208,6 +208,10 @@ typedef struct _cd9660node {
 	int susp_dot_ce_length;
 	int susp_dot_dot_ce_length;
 
+	/* Data to put at the end of the System Use field */
+	int su_tail_size;
+	char *su_tail_data;
+
 	/*** PATH TABLE STUFF ***/
 	int level;			/*depth*/
 	int ptnumber;
@@ -283,6 +287,7 @@ typedef struct _iso9660_disk {
 	int rock_ridge_move_count;
 	cd9660node *rr_moved_dir;
 
+	int archimedes_enabled;
 
 	/* Spec breaking options */
 	u_char allow_deep_trees;
