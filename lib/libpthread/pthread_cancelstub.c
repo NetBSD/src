@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.24.2.2 2008/12/29 15:10:58 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.24.2.3 2009/01/10 21:56:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.24.2.2 2008/12/29 15:10:58 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.24.2.3 2009/01/10 21:56:42 christos Exp $");
 
 #ifndef lint
 
@@ -113,7 +113,7 @@ int	_sys___wait450(pid_t, int *, int, struct rusage *);
 ssize_t	_sys_write(int, const void *, size_t);
 ssize_t	_sys_writev(int, const struct iovec *, int);
 int	_sys___sigsuspend14(const sigset_t *);
-int	____sigtimedwait50(const sigset_t * __restrict, siginfo_t * __restrict,
+int	__sigtimedwait50(const sigset_t * __restrict, siginfo_t * __restrict,
 	    const struct timespec * __restrict);
 int	__sigsuspend14(const sigset_t *);
 
@@ -541,7 +541,7 @@ __sigtimedwait50(const sigset_t * __restrict set, siginfo_t * __restrict info,
 
 	self = pthread__self();
 	TESTCANCEL(self);
-	retval = ____sigtimedwait50(set, info, timeout);
+	retval = __sigtimedwait50(set, info, timeout);
 	TESTCANCEL(self);
 
 	return retval;
