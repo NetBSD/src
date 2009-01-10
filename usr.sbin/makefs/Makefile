@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2008/08/29 00:02:25 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.23 2009/01/10 22:06:29 bjh21 Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 PROG=	makefs
 SRCS=	buf.c \
 	cd9660.c cd9660_strings.c cd9660_debug.c cd9660_eltorito.c \
-	cd9660_write.c cd9660_conversion.c iso9660_rrip.c \
+	cd9660_write.c cd9660_conversion.c iso9660_rrip.c cd9660_archimedes.c \
 	ffs.c ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_subr.c ffs_tables.c \
 	getid.c \
 	makefs.c misc.c mkfs.c \
