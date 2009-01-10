@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.7 2009/01/08 18:44:31 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.8 2009/01/10 20:21:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -55,7 +55,7 @@ main(int argc, char *argv[])
 	struct syspuffs_args args;
 	int mntflags, rv;
 
-#if 1
+#if 0
 	extern int rumpns_puffsdebug;
 	extern int rumpns_putterdebug;
 
