@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.89 2009/01/10 06:41:06 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.90 2009/01/10 06:45:06 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.89 2009/01/10 06:41:06 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.90 2009/01/10 06:45:06 isaki Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1327,11 +1327,10 @@ loop:
 		callout_stop(&fdc->sc_timo_ch);
 		DPRINTF(("fdcintr: in IOCOMPLETE\n"));
 		if ((tmp = fdcresult(fdc)) != 7 || (st0 & 0xf8) != 0) {
-			printf("fdcintr: resnum=%d, st0=%x\n", tmp, st0);
 #if 0
 			isa_dmaabort(fdc->sc_drq);
 #endif
-			fdcstatus(fd->sc_dev, 7, bp->b_flags & B_READ ?
+			fdcstatus(fd->sc_dev, tmp, bp->b_flags & B_READ ?
 				  "read failed" : "write failed");
 			printf("blkno %" PRId64 " nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
@@ -1497,9 +1496,10 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct disklabel buffer;
 	int error;
 
-	DPRINTF(("fdioctl:\n"));
+	DPRINTF(("fdioctl:"));
 	switch (cmd) {
 	case DIOCGDINFO:
+		DPRINTF(("DIOCGDINFO\n"));
 #if 1
 		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
 		return(0);
@@ -1518,18 +1518,21 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 
 	case DIOCGPART:
+		DPRINTF(("DIOCGPART\n"));
 		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
 		    &fd->sc_dk.dk_label->d_partitions[part];
 		return(0);
 
 	case DIOCWLABEL:
+		DPRINTF(("DIOCWLABEL\n"));
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		/* XXX do something */
 		return 0;
 
 	case DIOCWDINFO:
+		DPRINTF(("DIOCWDINFO\n"));
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
@@ -1548,6 +1551,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return 0; /* XXX */
 
 	case DIOCEJECT:
+		DPRINTF(("DIOCEJECT\n"));
 		if (*(int *)addr == 0) {
 			/*
 			 * Don't force eject: check that we are the only
@@ -1561,6 +1565,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 		/* FALLTHROUGH */
 	case ODIOCEJECT:
+		DPRINTF(("ODIOCEJECT\n"));
 		fd_do_eject(fdc, FDUNIT(dev));
 		return 0;
 
