@@ -1,3 +1,8 @@
+2009-01-10  Timo Teras  <timo.teras@iki.fi>
+	From Cyrus Rahman <crahman@gmail.com>:
+	* src/racoon/{crypto_openssl.c|racoon.conf.5}: accept RFC2253
+	  compliant escaped special characters for asn1dn identifier
+
 2009-01-09  Timo Teras  <timo.teras@iki.fi>
 	* configure.ac: fix a CPPLAGS typo
 
