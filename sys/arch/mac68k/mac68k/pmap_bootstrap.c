@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.75 2008/12/28 05:15:59 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.76 2009/01/10 11:28:47 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.75 2008/12/28 05:15:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.76 2009/01/10 11:28:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -117,7 +117,7 @@ void	bootstrap_mac68k(int);
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, kptmpa, p0upa;
 	u_int nptpages, kstsize;
 	paddr_t avail_next;
 	int avail_remaining;
@@ -145,8 +145,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *
 	 *	kptmpa		kernel PT map		1 page
 	 *
-	 *	lkptpa		last kernel PT page	1 page
-	 *
 	 *	p0upa		proc 0 u-area		UPAGES pages
 	 *
 	 */
@@ -157,8 +155,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	kstpa = nextpa;
 	nextpa += kstsize * PAGE_SIZE;
 	kptmpa = nextpa;
-	nextpa += PAGE_SIZE;
-	lkptpa = nextpa;
 	nextpa += PAGE_SIZE;
 	p0upa = nextpa;
 	nextpa += USPACE;
@@ -254,18 +250,12 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
 		 * Now initialize the final portion of that block of
-		 * descriptors to map kptmpa and the "last PT page".
+		 * descriptors to map Sysmap.
 		 */
 		pte = &(PA2VA(kstpa, u_int*))
-				[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE*2];
+				[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
 		epte = &pte[NPTEPG/SG4_LEV3SIZE];
 		protoste = kptmpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
-		protoste = lkptpa | SG_U | SG_RW | SG_V;
 		while (pte < epte) {
 			*pte++ = protoste;
 			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
@@ -281,19 +271,16 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			protopte += PAGE_SIZE;
 		}
 		/*
-		 * Invalidate all but the last two remaining entries.
+		 * Invalidate all but the last remaining entry.
 		 */
-		epte = &(PA2VA(kptmpa, u_int *))[NPTEPG-2];
+		epte = &(PA2VA(kptmpa, u_int *))[NPTEPG - 1];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
 		/*
-		 * Initialize the last ones to point to Sysptmap and the page
-		 * table page allocated earlier.
+		 * Initialize the last one to point to Sysptmap.
 		 */
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
-		pte++;
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	} else {
 		/*
 		 * Map the page table pages in both the HW segment table
@@ -311,32 +298,19 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			protopte += PAGE_SIZE;
 		}
 		/*
-		 * Invalidate all but the last two remaining entries in both.
+		 * Invalidate all but the last remaining entries in both.
 		 */
-		epte = &(PA2VA(kptmpa, u_int *))[NPTEPG-2];
+		epte = &(PA2VA(kptmpa, u_int *))[NPTEPG - 1];
 		while (pte < epte) {
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
 		}
 		/*
-		 * Initialize the last ones to point to Sysptmap and the page
-		 * table page allocated earlier.
+		 * Initialize the last one to point to Sysptmap.
 		 */
 		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
-		ste++;
-		pte++;
-		*ste = lkptpa | SG_RW | SG_V;
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	}
-	/*
-	 * Invalidate all entries in the last kernel PT page
-	 * (u-area PTEs will be validated later).
-	 */
-	pte = PA2VA(lkptpa, u_int *);
-	epte = &pte[NPTEPG];
-	while (pte < epte)
-		*pte++ = PG_NV;
 
 	/*
 	 * Initialize kernel page table.
@@ -429,7 +403,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Allocated at the end of KVA space.
 	 */
-	Sysmap = (pt_entry_t *)m68k_ptob((NPTEPG - 2) * NPTEPG);
+	Sysmap = (pt_entry_t *)m68k_ptob((NPTEPG - 1) * NPTEPG);
 
 	/*
 	 * Setup u-area for process 0.
@@ -516,7 +490,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * descriptor mask noting that we have used:
 		 *	0:		level 1 table
 		 *	1 to `num':	map page tables
-		 *	MAXKL2SIZE-1:	maps kptmpa and last-page page table
+		 *	MAXKL2SIZE-1:	maps kptmpa
 		 */
 		if (mmutype == MMU_68040) {
 			int num;
