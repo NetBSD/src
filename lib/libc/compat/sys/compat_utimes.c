@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_utimes.c,v 1.1.2.1 2008/11/08 21:49:36 christos Exp $	*/
+/*	$NetBSD: compat_utimes.c,v 1.1.2.2 2009/01/10 16:03:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_utimes.c,v 1.1.2.1 2008/11/08 21:49:36 christos Exp $");
+__RCSID("$NetBSD: compat_utimes.c,v 1.1.2.2 2009/01/10 16:03:27 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -56,9 +56,11 @@ utimes(const char *path, const struct timeval50 *tv50)
 {
 	struct timeval tv[2];
 
-	timeval50_to_timeval(&tv50[0], &tv[0]);
-	timeval50_to_timeval(&tv50[1], &tv[1]);
-	return __utimes50(path, tv);
+	if (tv50) {
+		timeval50_to_timeval(&tv50[0], &tv[0]);
+		timeval50_to_timeval(&tv50[1], &tv[1]);
+	}
+	return __utimes50(path, tv50 ? tv : NULL);
 }
 
 int
@@ -66,9 +68,11 @@ lutimes(const char *path, const struct timeval50 *tv50)
 {
 	struct timeval tv[2];
 
-	timeval50_to_timeval(&tv50[0], &tv[0]);
-	timeval50_to_timeval(&tv50[1], &tv[1]);
-	return __lutimes50(path, tv);
+	if (tv50) {
+		timeval50_to_timeval(&tv50[0], &tv[0]);
+		timeval50_to_timeval(&tv50[1], &tv[1]);
+	}
+	return __lutimes50(path, tv50 ? tv : NULL);
 }
 
 int
@@ -76,7 +80,9 @@ futimes(int fd, const struct timeval50 *tv50)
 {
 	struct timeval tv[2];
 
-	timeval50_to_timeval(&tv50[0], &tv[0]);
-	timeval50_to_timeval(&tv50[1], &tv[1]);
-	return __futimes50(fd, tv);
+	if (tv50) {
+		timeval50_to_timeval(&tv50[0], &tv[0]);
+		timeval50_to_timeval(&tv50[1], &tv[1]);
+	}
+	return __futimes50(fd, tv50 ? tv : NULL);
 }
