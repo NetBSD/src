@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2009/01/04 17:54:29 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2009/01/10 23:36:22 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ SRCS+=	atomic_add_32_cas.c atomic_add_32_nv_cas.c atomic_and_32_cas.c \
 	atomic_or_32_nv_cas.c atomic_swap_32_cas.c membar_ops.S
 .  endif
 
-.  if (${LIB} == "kern")
+.  if (${LIB} == "kern" || ${LIB} == "rump")
 SRCS+=	atomic_cas.S
 .  endif
 
