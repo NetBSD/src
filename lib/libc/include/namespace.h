@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.134.2.6 2009/01/04 17:02:19 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.134.2.7 2009/01/10 21:39:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -488,7 +488,6 @@
 #define res_mkquery		_res_mkquery
 #define res_query		_res_query
 #define res_search		_res_search
-#define res_watch		_res_watch
 #define rewinddir		_rewinddir
 #define rpc_broadcast		_rpc_broadcast
 #define rpc_broadcast_exp	_rpc_broadcast_exp
