@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.h,v 1.14 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: locale.h,v 1.14.36.1 2009/01/10 23:20:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -74,6 +74,14 @@ struct lconv {
 #define	_LC_LAST	7		/* marks end */
 
 #include <sys/cdefs.h>
+
+#ifdef __SETLOCALE_SOURCE__
+
+typedef struct _locale_impl_t		*_locale_t;
+
+#define _LC_GLOBAL_LOCALE		((_locale_t)-1)
+
+#endif
 
 __BEGIN_DECLS
 struct lconv	*localeconv(void);
