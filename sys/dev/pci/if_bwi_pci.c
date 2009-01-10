@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.3 2009/01/10 12:55:45 cegger Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -25,7 +25,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.2 2009/01/09 20:49:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.3 2009/01/10 12:55:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -95,6 +95,7 @@ bwi_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	case PCI_PRODUCT_BROADCOM_BCM4319:
 	case PCI_PRODUCT_BROADCOM_BCM4322:
 	case PCI_PRODUCT_BROADCOM_BCM43XG:
+	case PCI_PRODUCT_BROADCOM_BCM4328:
 		return (1);
 	}
 
