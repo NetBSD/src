@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
+/*	$NetBSD: bwi.c,v 1.3 2009/01/10 12:57:50 cegger Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.2 2009/01/09 20:49:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.3 2009/01/10 12:57:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -407,7 +407,7 @@ static uint16_t	 bwi_ieee80211_txtime(struct ieee80211com *,
 		     struct ieee80211_node *, uint, uint8_t, uint32_t);
 
 /* MAC */
-static const uint8_t bwi_sup_macrev[] = { 2, 4, 5, 6, 7, 9, 10 };
+static const uint8_t bwi_sup_macrev[] = { 2, 4, 5, 6, 7, 9, 10, 12 };
 
 /* PHY */
 #define SUP_BPHY(num)	{ .rev = num, .init = bwi_phy_init_11b_rev##num }
