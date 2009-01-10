@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.26 2009/01/10 20:19:43 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.27 2009/01/10 23:38:40 pooka Exp $
 #
 
 WARNS?=		4
@@ -46,7 +46,7 @@ __archivebuild: .USE
 	rm -f ${.TARGET}
 	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "sh3" \
- && ${MACHINE_CPU} != "arm" && ${MACHINE_CPU} != "sparc"
+ && ${MACHINE_CPU} != "arm" && ${MACHINE_CPU} != "vax"
 	${NM} -go ${.TARGET} | ${TOOL_AWK} '	\
 	    $$NF!~/^(rump|RUMP|__(start|stop)_link_set|_GLOBAL_OFFSET_TABLE)/ \
 	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
