@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.16 2009/01/11 03:04:12 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.17 2009/01/11 19:09:29 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,8 +88,18 @@
 #define ut_user ut_name
 #define ut_xtime ut_tv.tv_sec
 
-#define _UTX_PADSIZE (40 - \
-    (sizeof(struct timeval) - sizeof(struct { long s; long u; })))
+/*
+ * This should be:
+ * 40 - (sizeof(struct timeval) - sizeof(struct { long s; long u; })))
+ * but g++ does not like it, to retain size compatibility with v1.00,
+ * so we do it manually.
+ */
+#ifdef _LP64
+#define _UTX_PADSIZE 36
+#else
+#define _UTX_PADSIZE 40
+#endif
+
 struct utmpx {
 	char ut_name[_UTX_USERSIZE];	/* login name */
 	char ut_id[_UTX_IDSIZE];	/* inittab id */
