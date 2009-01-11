@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.20 2008/02/05 22:31:50 garbled Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.21 2009/01/11 23:20:37 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.20 2008/02/05 22:31:50 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.21 2009/01/11 23:20:37 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -269,7 +269,7 @@ kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 void
 kgdb_connect(int verbose)
 {
-	if (kgdb_dev < 0)
+	if (kgdb_dev == NODEV)
 		return;
 
 	if (verbose)
@@ -291,7 +291,7 @@ kgdb_connect(int verbose)
 void
 kgdb_panic(void)
 {
-	if (kgdb_dev >= 0 && kgdb_debug_panic) {
+	if (kgdb_dev != NODEV && kgdb_debug_panic) {
 		printf("entering kgdb\n");
 		kgdb_connect(kgdb_active == 0);
 	}

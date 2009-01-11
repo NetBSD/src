@@ -1,4 +1,4 @@
-/* $NetBSD: kgdb_machdep.c,v 1.5 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: kgdb_machdep.c,v 1.6 2009/01/11 23:20:37 cegger Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.5 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.6 2009/01/11 23:20:37 cegger Exp $");
 
 #include "com.h"
 
@@ -264,7 +264,7 @@ void
 kgdb_connect(int verbose)
 {
 
-	if (kgdb_dev < 0)
+	if (kgdb_dev == NODEV)
 		return;
 
 	if (verbose)
@@ -287,7 +287,7 @@ kgdb_connect(int verbose)
 void
 kgdb_panic(void)
 {
-	if (kgdb_dev >= 0 && kgdb_debug_panic) {
+	if (kgdb_dev != NODEV && kgdb_debug_panic) {
 		printf("entering kgdb\n");
 		kgdb_connect(kgdb_active == 0);
 	}
