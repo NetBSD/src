@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.18 2008/01/01 14:06:42 chris Exp $	*/
+/*	$NetBSD: stubs.c,v 1.19 2009/01/11 23:27:47 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.18 2008/01/01 14:06:42 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.19 2009/01/11 23:27:47 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ cpu_dumpconf()
 		return;
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+		panic("dumpconf: bad dumpdev=0x%"PRIx64"", dumpdev);
 	if (bdev->d_psize == NULL)
 		return;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -236,13 +236,13 @@ dodumpsys()
 		cpu_dumpconf();
 	}
 	if (dumplo <= 0 || dumpsize == 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %"PRIu64",%"PRIu64" not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		delay(5000000);
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %"PRIu64",%"PRIu64" offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 
 	bdev = bdevsw_lookup(dumpdev);
