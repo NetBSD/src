@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.135 2009/01/11 21:09:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2009/01/11 21:09:13 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -271,6 +271,22 @@ machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 	userret(l, f, t, 0, 0);
 }
 
+static u_int
+fpsr2siginfocode(u_int fpsr)
+{
+	if (fpsr & (1 << 10))
+		return FPE_FLTDIV;
+	if (fpsr & (1 << 11))
+		return FPE_FLTUND;
+	if (fpsr & (1 << 12))
+		return FPE_FLTOVF;
+	if (fpsr & (1 << 13))
+		return FPE_FLTINV;
+	if (fpsr & (1 << 9))
+		return FPE_FLTRES;
+	return 0;
+}
+
 /*
  * Trap is called from locore to handle most types of processor traps,
  * including events such as simulated software interrupts/AST's.
@@ -401,17 +417,11 @@ copyfault:
 	 */
 	case T_FPERR|T_USER:
 		/*
-		 * We pass along the 68881 status register which locore
-		 * stashed in code for us.  Note that there is a
-		 * possibility that the bit pattern of this register
-		 * will conflict with one of the FPE_* codes defined
-		 * in signal.h.  Fortunately for us, the only such
-		 * codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so
-		 * there is no clash.
+		 * We decode the 68881 status register which locore
+		 * stashed in code for us.
 		 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 
 	/*
