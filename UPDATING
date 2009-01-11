@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.183 2008/12/19 20:37:45 pgoyette Exp $
+$NetBSD: UPDATING,v 1.184 2009/01/11 03:20:31 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -16,6 +16,19 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20090110:
+	time_t and dev_t have been bumped to 64 bit quantities. To upgrade:
+	1. Make sure your kernel has COMPAT_50 in it. Build and install.
+	2. make sure build.sh completes and the binaries in a chroot work
+	   before installing.
+	3. If you don't use build.sh and you build directly to root, and
+	   your build breaks in the middle, don't dispair. Make sure headers
+	   are installed properly, and start building libraries first libc
+	   and libutil, install them and then continue building all the
+	   libraries in src/lib and src/gnu/lib and install them. Once
+	   the new libraries are installed, you can restart the build.
+	4. If you compile packages and you notice link time warnings,
+	   you'll need to bump them and rebuild them.
 20081219:
 	config(1) has been updated, and one of the files it creates -
 	swapnetbsd.o - has changed format.  You need to rebuild config
