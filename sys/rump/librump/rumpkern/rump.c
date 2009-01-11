@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.85 2009/01/08 03:27:10 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.86 2009/01/11 16:19:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.85 2009/01/08 03:27:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.86 2009/01/11 16:19:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -102,10 +102,10 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 static int rump_inited;
 static struct emul emul_rump;
 
-void __rump_unavailable(void);
-void __rump_unavailable() {}
-__weak_alias(rump_net_init,__rump_unavailable);
-__weak_alias(rump_vfs_init,__rump_unavailable);
+void rump__unavailable(void);
+void rump__unavailable() {}
+__weak_alias(rump_net_init,rump__unavailable);
+__weak_alias(rump_vfs_init,rump__unavailable);
 
 static void
 pvfsinit_nop(struct proc *p)
