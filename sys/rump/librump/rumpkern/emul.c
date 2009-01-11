@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.73 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.74 2009/01/11 20:41:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.73 2009/01/11 02:45:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.74 2009/01/11 20:41:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -344,25 +344,37 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
+	thrstore[0] = '\0';
+	if (fmt) {
+		va_start(ap, fmt);
+		vsnprintf(thrstore, sizeof(thrstore), fmt, ap);
+		va_end(ap);
+		thrname = thrstore;
+	}
+
 	/*
 	 * We don't want a module unload thread.
 	 * (XXX: yes, this is a kludge too, and the kernel should
 	 * have a more flexible method for configuring which threads
 	 * we want).
 	 */
-	if (strcmp(fmt, "modunload") == 0) {
+	if (strcmp(thrstore, "modunload") == 0) {
 		return 0;
 	}
 
 	if (!rump_threads) {
 		/* fake them */
-		if (strcmp(fmt, "vrele") == 0) {
+		if (strcmp(thrstore, "vrele") == 0) {
 			printf("rump warning: threads not enabled, not starting"
 			   " vrele thread\n");
 			return 0;
-		} else if (strcmp(fmt, "cachegc") == 0) {
+		} else if (strcmp(thrstore, "cachegc") == 0) {
 			printf("rump warning: threads not enabled, not starting"
 			   " namecache g/c thread\n");
+			return 0;
+		} else if (strcmp(thrstore, "nfssilly") == 0) {
+			printf("rump warning: threads not enabled, not enabling"
+			   " nfs silly rename\n");
 			return 0;
 		} else
 			panic("threads not available, setenv RUMP_THREADS 1");
@@ -378,12 +390,6 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
 	if (flags & KTHREAD_MPSAFE)
 		l->l_pflag |= LP_MPSAFE;
-	if (fmt) {
-		va_start(ap, fmt);
-		vsnprintf(thrstore, sizeof(thrname), fmt, ap);
-		va_end(ap);
-		thrname = thrstore;
-	}
 	rv = rumpuser_thread_create(threadbouncer, k, thrname);
 	if (rv)
 		return rv;
