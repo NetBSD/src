@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.190 2009/01/11 02:45:50 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.191 2009/01/11 10:02:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.190 2009/01/11 02:45:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.191 2009/01/11 10:02:35 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -338,7 +338,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(0x%llx, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
+		printf("vndopen(0x%"PRIx64", 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL) {
@@ -402,7 +402,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(0x%llx, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
+		printf("vndclose(0x%"PRIx64", 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL)
@@ -893,7 +893,7 @@ vndread(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(0x%llx, %p)\n", dev, uio);
+		printf("vndread(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 
 	sc = device_lookup_private(&vnd_cd, unit);
@@ -915,7 +915,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(0x%llx, %p)\n", dev, uio);
+		printf("vndwrite(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 
 	sc = device_lookup_private(&vnd_cd, unit);
@@ -966,7 +966,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndioctl(0x%llx, 0x%lx, %p, 0x%x, %p): unit %d\n",
+		printf("vndioctl(0x%"PRIx64", 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, l->l_proc, unit);
 #endif
 	vnd = device_lookup_private(&vnd_cd, unit);
