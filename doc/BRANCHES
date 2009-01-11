@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.274 2009/01/11 03:31:57 christos Exp $
+#	$NetBSD: BRANCHES,v 1.275 2009/01/11 14:49:48 christos Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1680,8 +1680,8 @@ Description:	Change time_t and dev_t to 64 bit quantities; fix timeval
 Status:		merged
 Start Date:	29 March 2008
 End Date:	10 January 2009
-Base Tag:	gdamore-uart-base
-Maintainer:	Garrett D'Amore <gdamore@NetBSD.org>
+Base Tag:	christos-time_t-base
+Maintainer:	Christos Zoulas <christos@NetBSD.org>
 Scope:		kernel, libc, libutil, userland
 Notes:		Requires a major bump of all libraries except libc, libutil.
 ########################################################################
