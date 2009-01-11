@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.134 2008/11/29 17:57:33 tsutsui Exp $
+# $NetBSD: md.i386,v 1.135 2009/01/11 13:26:29 jnemeth Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -25,8 +25,8 @@
 ./usr/lib/libm387.so.0				base-sys-shlib		pic
 ./usr/lib/libm387.so.0.1			base-sys-shlib		pic
 ./usr/lib/libpmc.so				base-sys-shlib		pic
-./usr/lib/libpmc.so.0				base-sys-shlib		pic
-./usr/lib/libpmc.so.0.0				base-sys-shlib		pic
+./usr/lib/libpmc.so.1				base-sys-shlib		pic
+./usr/lib/libpmc.so.1.0				base-sys-shlib		pic
 ./usr/libexec/ld.so				base-sys-shlib
 ./usr/lkm/aps.o					base-obsolete		obsolete
 ./usr/lkm/compat_freebsd.o			base-obsolete		obsolete
