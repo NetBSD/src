@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/07 07:52:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2009/01/11 05:01:34 christos Exp $
+
+.include <bsd.own.mk>
 
 CPPFLAGS+=	-DELFSIZE=64
 LIB=	ldd_elf64
