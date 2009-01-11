@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.27 2009/01/10 23:38:40 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.28 2009/01/11 12:55:37 pooka Exp $
 #
 
 WARNS?=		4
@@ -48,7 +48,7 @@ __archivebuild: .USE
 .if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "sh3" \
  && ${MACHINE_CPU} != "arm" && ${MACHINE_CPU} != "vax"
 	${NM} -go ${.TARGET} | ${TOOL_AWK} '	\
-	    $$NF!~/^(rump|RUMP|__(start|stop)_link_set|_GLOBAL_OFFSET_TABLE)/ \
+	    $$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE)/ \
 	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
 	    | sort | uniq  > renametab.${.TARGET}
 	${OBJCOPY} --redefine-syms renametab.${.TARGET} ${.TARGET}
