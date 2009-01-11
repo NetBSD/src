@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.h,v 1.10 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: pmap_clnt.h,v 1.11 2009/01/11 03:04:12 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -69,11 +69,14 @@ __BEGIN_DECLS
 extern bool_t		pmap_set(u_long, u_long, int, int);
 extern bool_t		pmap_unset(u_long, u_long);
 extern struct pmaplist	*pmap_getmaps(struct sockaddr_in *);
+#ifndef __LIBC12_SOURCE__
 extern enum clnt_stat	pmap_rmtcall(struct sockaddr_in *,
 					u_long, u_long, u_long,
 					xdrproc_t, caddr_t,
 					xdrproc_t, caddr_t,
-					struct timeval, u_long *);
+					struct timeval, u_long *)
+					__RENAME(__pmap_rmtcall50);
+#endif
 extern enum clnt_stat	clnt_broadcast(u_long, u_long, u_long,
 					xdrproc_t, char *,
 					xdrproc_t, char *,

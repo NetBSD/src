@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.85 2008/06/21 00:58:00 gmcgarry Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.86 2009/01/11 03:04:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -265,7 +265,9 @@ int	 cgetustr(char *, const char *, char **);
 void	 csetexpandtc(int);
 
 int	 daemon(int, int);
-__aconst char *devname(dev_t, mode_t);
+#ifndef __LIBC12_SOURCE__
+__aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
+#endif
 
 #define	HN_DECIMAL		0x01
 #define	HN_NOSPACE		0x02
@@ -278,7 +280,9 @@ __aconst char *devname(dev_t, mode_t);
 int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
 int	 dehumanize_number(const char *, int64_t *);
 
-dev_t	 getdevmajor(const char *, mode_t);
+#ifndef __LIBC12_SOURCE__
+dev_t	 getdevmajor(const char *, mode_t) __RENAME(__getdevmajor50);
+#endif
 int	 getloadavg(double [], int);
 
 int	 getenv_r(const char *, char *, size_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.15 2008/04/28 20:22:54 martin Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.16 2009/01/11 03:04:12 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@
 #define ut_user ut_name
 #define ut_xtime ut_tv.tv_sec
 
+#define _UTX_PADSIZE (40 - \
+    (sizeof(struct timeval) - sizeof(struct { long s; long u; })))
 struct utmpx {
 	char ut_name[_UTX_USERSIZE];	/* login name */
 	char ut_id[_UTX_IDSIZE];	/* inittab id */
@@ -102,7 +104,7 @@ struct utmpx {
 	} ut_exit;
 	struct sockaddr_storage ut_ss;	/* address where entry was made from */
 	struct timeval ut_tv;		/* time entry was created */
-	uint32_t ut_pad[10];		/* reserved for future use */
+	uint8_t ut_pad[_UTX_PADSIZE];	/* reserved for future use */
 };
 
 #if defined(_NETBSD_SOURCE)
@@ -118,21 +120,25 @@ __BEGIN_DECLS
 
 void setutxent(void);
 void endutxent(void);
-struct utmpx *getutxent(void);
-struct utmpx *getutxid(const struct utmpx *);
-struct utmpx *getutxline(const struct utmpx *);
-struct utmpx *pututxline(const struct utmpx *);
+
+#ifndef __LIBC12_SOURCE__
+struct utmpx *getutxent(void) __RENAME(__getutxent50);
+struct utmpx *getutxid(const struct utmpx *) __RENAME(__getutxid50);
+struct utmpx *getutxline(const struct utmpx *) __RENAME(__getutxline50);
+struct utmpx *pututxline(const struct utmpx *) __RENAME(__pututxline50);
+#endif
 
 #if defined(_NETBSD_SOURCE)
-int updwtmpx(const char *, const struct utmpx *);
 #ifndef __LIBC12_SOURCE__
+int updwtmpx(const char *, const struct utmpx *) __RENAME(__updwtmpx50);
 struct lastlogx *getlastlogx(const char *, uid_t, struct lastlogx *)
-    __RENAME(__getlastlogx13);
-#endif
-int updlastlogx(const char *, uid_t, struct lastlogx *);
+    __RENAME(__getlastlogx50);
+int updlastlogx(const char *, uid_t, struct lastlogx *)
+    __RENAME(__updlastlogx50);
 struct utmp;
-void getutmp(const struct utmpx *, struct utmp *);
-void getutmpx(const struct utmp *, struct utmpx *);
+void getutmp(const struct utmpx *, struct utmp *) __RENAME(__getutmp50);
+void getutmpx(const struct utmp *, struct utmpx *) __RENAME(__getutmpx50);
+#endif
 
 int utmpxname(const char *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.23 2008/06/21 20:12:49 christos Exp $	*/
+/*	$NetBSD: nameser.h,v 1.24 2009/01/11 03:04:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -543,11 +543,15 @@ int		ns_name_compress(const char *, u_char *, size_t,
 int		ns_name_skip(const u_char **, const u_char *);
 void		ns_name_rollback(const u_char *, const u_char **,
 				      const u_char **);
+#ifndef __LIBC12_SOURCE__
 int		ns_sign(u_char *, int *, int, int, void *,
-			     const u_char *, int, u_char *, int *, time_t);
+			     const u_char *, int, u_char *, int *, time_t)
+    __RENAME(__ns_sign50);
 int		ns_sign2(u_char *, int *, int, int, void *,
 			      const u_char *, int, u_char *, int *, time_t,
-			      u_char **, u_char **);
+			      u_char **, u_char **)
+    __RENAME(__ns_sign250);
+#endif
 int		ns_sign_tcp(u_char *, int *, int, int,
 				 ns_tcp_tsig_state *, int);
 int		ns_sign_tcp2(u_char *, int *, int, int,
@@ -556,9 +560,12 @@ int		ns_sign_tcp2(u_char *, int *, int, int,
 int		ns_sign_tcp_init(void *, const u_char *, int,
 					ns_tcp_tsig_state *);
 u_char		*ns_find_tsig(u_char *, u_char *);
+#ifndef __LIBC12_SOURCE__
 int		ns_verify(u_char *, int *, void *,
 			       const u_char *, int, u_char *, int *,
-			       time_t *, int);
+			       time_t *, int)
+    __RENAME(__ns_verify50);
+#endif
 int		ns_verify_tcp(u_char *, int *, ns_tcp_tsig_state *, int);
 int		ns_verify_tcp_init(void *, const u_char *, int,
 					ns_tcp_tsig_state *);
