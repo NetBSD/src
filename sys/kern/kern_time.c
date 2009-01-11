@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.156 2009/01/11 02:45:52 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.157 2009/01/11 15:57:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.156 2009/01/11 02:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.157 2009/01/11 15:57:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -470,11 +470,12 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 			olddelta->tv_usec += 1000000;
 			olddelta->tv_sec--;
 		}
+		mutex_spin_exit(&timecounter_lock);
 	}
 	
 	if (delta) {
 		mutex_spin_enter(&timecounter_lock);
-		time_adjtime = (int64_t)delta->tv_sec * 1000000 + delta->tv_usec;
+		time_adjtime = delta->tv_sec * 1000000 + delta->tv_usec;
 
 		if (time_adjtime) {
 			/* We need to save the system time during shutdown */
