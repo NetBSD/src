@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.154 2009/01/08 21:12:09 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.155 2009/01/11 15:50:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.154 2009/01/08 21:12:09 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.155 2009/01/11 15:50:06 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.154 2009/01/08 21:12:09 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.155 2009/01/11 15:50:06 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -155,14 +155,17 @@ static GNode	    *mainNode;	/* The main target to create. This is the
 				 * first target on the first dependency
 				 * line in the first makefile */
 typedef struct IFile {
-    const char      *fname;	    /* name of file */
-    int             lineno;	    /* line number in file */
-    int             fd;		    /* the open file */
-    int             cond_depth;	    /* 'if' nesting when file opened */
+    const char      *fname;         /* name of file */
+    int             lineno;         /* current line number in file */
+    int             first_lineno;   /* line number of start of text */
+    int             fd;             /* the open file */
+    int             cond_depth;     /* 'if' nesting when file opened */
     char            *P_str;         /* point to base of string buffer */
     char            *P_ptr;         /* point to next char of string buffer */
     char            *P_end;         /* point to the end of string buffer */
     int             P_buflen;       /* current size of file buffer */
+    char            *(*nextbuf)(void *); /* Function to get more data */
+    void            *nextbuf_arg;   /* Opaque arg for nextbuf() */
 } IFile;
 
 #define IFILE_BUFLEN 0x8000
@@ -476,9 +479,8 @@ Parse_Error(int type, const char *fmt, ...)
 	va_start(ap, fmt);
 	if (curFile == NULL) {
 		/* avoid segfault */
-		static IFile intFile = {
-		    NULL, 0, /* fd */ -1, 0, NULL, NULL, NULL, 0
-		};
+		static IFile intFile;
+		intFile.fd = -1;
 		curFile = &intFile;
 	}
 	ParseVErrorInternal(stderr, curFile->fname, curFile->lineno,
@@ -1824,7 +1826,7 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
     }
 
     /* Start reading from this file next */
-    Parse_SetInput(fullname, 0, fd, NULL);
+    Parse_SetInput(fullname, 0, fd, NULL, NULL);
 }
 
 static void
@@ -1961,18 +1963,20 @@ ParseTrackInput(const char *name)
  *---------------------------------------------------------------------
  */
 void
-Parse_SetInput(const char *name, int line, int fd, char *buf)
+Parse_SetInput(const char *name, int line, int fd, char *(*nextbuf)(void *), void *arg)
 {
+    char *buf;
+
     if (name == NULL)
 	name = curFile->fname;
     else
 	ParseTrackInput(name);
 
     if (DEBUG(PARSE))
-	fprintf(debug_file, "Parse_SetInput: file %s, line %d, fd %d, buf %p\n",
-		name, line, fd, buf);
+	fprintf(debug_file, "Parse_SetInput: file %s, line %d, fd %d, nextbuf %p, arg %p\n",
+		name, line, fd, nextbuf, arg);
 
-    if (fd == -1 && buf == NULL)
+    if (fd == -1 && nextbuf == NULL)
 	/* sanity */
 	return;
 
@@ -1991,12 +1995,12 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
      */
     curFile->fname = name;
     curFile->lineno = line;
+    curFile->first_lineno = line;
     curFile->fd = fd;
-    curFile->cond_depth = Cond_save_depth();
+    curFile->nextbuf = nextbuf;
+    curFile->nextbuf_arg = arg;
 
-    ParseSetParseFile(name);
-
-    if (buf == NULL) {
+    if (nextbuf == NULL) {
 	/*
 	 * Allocate a 32k data buffer (as stdio seems to).
 	 * Set pointers so that first ParseReadc has to do a file read.
@@ -2008,12 +2012,20 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
 	curFile->P_end = buf;
 	curFile->P_buflen = IFILE_BUFLEN;
     } else {
-	/* Start reading from the start of the buffer */
+	/* Get first block of input data */
+	buf = curFile->nextbuf(curFile->nextbuf_arg);
+	if (buf == NULL) {
+	    /* Was all a waste of time ... */
+	    free(curFile);
+	    return;
+	}
 	curFile->P_str = buf;
 	curFile->P_ptr = buf;
 	curFile->P_end = NULL;
     }
 
+    curFile->cond_depth = Cond_save_depth();
+    ParseSetParseFile(name);
 }
 
 #ifdef SYSVINCLUDE
@@ -2098,6 +2110,20 @@ ParseTraditionalInclude(char *line)
 static int
 ParseEOF(void)
 {
+    char *ptr;
+
+    if (curFile->nextbuf != NULL) {
+       /* eg .for loop data, get next iteration */
+       ptr = curFile->nextbuf(curFile->nextbuf_arg);
+       curFile->P_ptr = ptr;
+       curFile->P_str = ptr;
+       curFile->lineno = curFile->first_lineno;
+       if (ptr != NULL) {
+	    /* Iterate again */
+	    return CONTINUE;
+	}
+    }
+
     /* Ensure the makefile (or loop) didn't have mismatched conditionals */
     Cond_restore_depth(curFile->cond_depth);
 
@@ -2449,7 +2475,7 @@ Parse_File(const char *name, int fd)
     inLine = FALSE;
     fatals = 0;
 
-    Parse_SetInput(name, 0, fd, NULL);
+    Parse_SetInput(name, 0, fd, NULL, NULL);
 
     do {
 	for (; (line = ParseReadLine()) != NULL; ) {

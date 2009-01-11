@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.42 2009/01/10 16:59:02 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.43 2009/01/11 15:50:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.42 2009/01/10 16:59:02 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.43 2009/01/11 15:50:06 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.42 2009/01/10 16:59:02 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.43 2009/01/11 15:50:06 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -92,9 +92,12 @@ typedef struct _For {
     Buffer	  buf;			/* Body of loop		*/
     strlist_t     vars;			/* Iteration variables	*/
     strlist_t     items;		/* Substitution items */
+    char          *parse_buf;
+    int           short_var;
+    int           sub_next;
 } For;
 
-static For        accumFor;             /* Loop being accumulated */
+static For        *accumFor;            /* Loop being accumulated */
 
 
 
@@ -107,6 +110,17 @@ make_str(const char *ptr, int len)
 	memcpy(new_ptr, ptr, len);
 	new_ptr[len] = 0;
 	return new_ptr;
+}
+
+static void
+For_Free(For *arg)
+{
+    Buf_Destroy(arg->buf, TRUE);
+    strlist_clean(&arg->vars);
+    strlist_clean(&arg->items);
+    free(arg->parse_buf);
+
+    free(arg);
 }
 
 /*-
@@ -132,17 +146,16 @@ make_str(const char *ptr, int len)
 int
 For_Eval(char *line)
 {
+    For *new_for;
     char *ptr = line, *sub;
     int len;
     int escapes;
     unsigned char ch;
 
-    /* Forget anything we previously knew about - it cannot be useful */
-    memset(&accumFor, 0, sizeof accumFor);
-
-    forLevel = 0;
+    /* Skip the '.' and any following whitespace */
     for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
 	continue;
+
     /*
      * If we are not in a for loop quickly determine if the statement is
      * a for.
@@ -161,12 +174,16 @@ For_Eval(char *line)
      * we found a for loop, and now we are going to parse it.
      */
 
+    new_for = bmake_malloc(sizeof *new_for);
+    memset(new_for, 0, sizeof *new_for);
+
     /* Grab the variables. Terminate on "in". */
     for (;; ptr += len) {
 	while (*ptr && isspace((unsigned char) *ptr))
 	    ptr++;
 	if (*ptr == '\0') {
 	    Parse_Error(PARSE_FATAL, "missing `in' in for");
+	    For_Free(new_for);
 	    return -1;
 	}
 	for (len = 1; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
@@ -175,11 +192,14 @@ For_Eval(char *line)
 	    ptr += 2;
 	    break;
 	}
-	strlist_add_str(&accumFor.vars, make_str(ptr, len), len);
+	if (len == 1)
+	    new_for->short_var = 1;
+	strlist_add_str(&new_for->vars, make_str(ptr, len), len);
     }
 
-    if (strlist_num(&accumFor.vars) == 0) {
+    if (strlist_num(&new_for->vars) == 0) {
 	Parse_Error(PARSE_FATAL, "no iteration variables in for");
+	For_Free(new_for);
 	return -1;
     }
 
@@ -207,29 +227,31 @@ For_Eval(char *line)
 	    else if (ch == /*{*/ '}')
 		escapes |= FOR_SUB_ESCAPE_BRACE;
 	}
-	strlist_add_str(&accumFor.items, make_str(ptr, len), escapes);
+	strlist_add_str(&new_for->items, make_str(ptr, len), escapes);
     }
 
     free(sub);
 
-    if (strlist_num(&accumFor.items) % strlist_num(&accumFor.vars)) {
+    if (strlist_num(&new_for->items) % strlist_num(&new_for->vars)) {
 	Parse_Error(PARSE_FATAL,
 		"Wrong number of words in .for substitution list %d %d",
-		strlist_num(&accumFor.items), strlist_num(&accumFor.vars));
+		strlist_num(&new_for->items), strlist_num(&new_for->vars));
 	/*
 	 * Return 'success' so that the body of the .for loop is accumulated.
-	 * The loop will have zero iterations expanded due a later test.
+	 * Remove all items so that the loop doesn't iterate.
 	 */
+	strlist_clean(&new_for->items);
     }
 
-    accumFor.buf = Buf_Init(0);
+    new_for->buf = Buf_Init(0);
+    accumFor = new_for;
     forLevel = 1;
     return 1;
 }
 
 /*
  * Add another line to a .for loop.
- * Returns 0 when the matching .enfor is reached.
+ * Returns 0 when the matching .endfor is reached.
  */
 
 int
@@ -256,8 +278,8 @@ For_Accum(char *line)
 	}
     }
 
-    Buf_AddBytes(accumFor.buf, strlen(line), (Byte *)line);
-    Buf_AddByte(accumFor.buf, (Byte)'\n');
+    Buf_AddBytes(accumFor->buf, strlen(line), (Byte *)line);
+    Buf_AddByte(accumFor->buf, (Byte)'\n');
     return 1;
 }
 
@@ -295,6 +317,7 @@ for_substitute(Buffer cmds, strlist_t *items, unsigned int item_no, char ech)
     }
 
     /* Escape ':' and 'ech' provided they aren't inside variable expansions */
+    /* Variable expansions are unusual here, but not impossible to contrive! */
     depth = 0;
     var_depth = MAX_DEPTH;
     escape = -1;
@@ -324,36 +347,26 @@ for_substitute(Buffer cmds, strlist_t *items, unsigned int item_no, char ech)
     }
 }
 
-void
-For_Run(int lineno)
+static char *
+For_Iterate(void *v_arg)
 {
-    For arg;
+    For *arg = v_arg;
     int i, len;
-    unsigned int num_items;
-    char *for_body;
     char *var;
     char *cp;
     char *cmd_cp;
     char *body_end;
     char ch;
     Buffer cmds;
-    int short_var;
 
-    arg = accumFor;
-    memset(&accumFor, 0, sizeof accumFor);
-
-    num_items = strlist_num(&arg.items);
-    if (num_items % strlist_num(&arg.vars))
-	/* Error message already printed */
-	goto out;
-
-    short_var = 0;
-    STRLIST_FOREACH(var, &arg.vars, i) {
-	if (var[1] == 0) {
-	    short_var = 1;
-	    break;
-	}
+    if (arg->sub_next + strlist_num(&arg->vars) > strlist_num(&arg->items)) {
+	/* No more iterations */
+	For_Free(arg);
+	return NULL;
     }
+
+    free(arg->parse_buf);
+    arg->parse_buf = NULL;
 
     /*
      * Scan the for loop body and replace references to the loop variables
@@ -365,69 +378,78 @@ For_Run(int lineno)
      * The detection of substitions of the loop control variable is naive.
      * Many of the modifiers use \ to escape $ (not $) so it is possible
      * to contrive a makefile where an unwanted substitution happens.
-     *
-     * Each loop expansion is fed back into the parser as if it were an
-     * include file.  This means we have to generate the last iteration first.
      */
-    while (num_items != 0) {
-	num_items -= strlist_num(&arg.vars);
-	for_body = (char *)Buf_GetAll(arg.buf, &len);
-	body_end = for_body + len;
-	cmds = Buf_Init(len + 256);
-	cmd_cp = for_body;
-	for (cp = for_body; (cp = strchr(cp, '$')) != NULL;) {
-	    char ech;
-	    ch = *++cp;
-	    if ((ch == '(' && (ech = ')')) || (ch == '{' && (ech = '}'))) {
-		cp++;
-		/* Check variable name against the .for loop variables */
-		STRLIST_FOREACH(var, &arg.vars, i) {
-		    len = strlist_info(&arg.vars, i);
-		    if (memcmp(cp, var, len) != 0)
-			continue;
-		    if (cp[len] != ':' && cp[len] != ech && cp[len] != '\\')
-			continue;
-		    /* Found a variable match. Replace with :U<value> */
-		    Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
-		    Buf_AddBytes(cmds, 2, ":U");
-		    cp += len;
-		    cmd_cp = cp;
-		    for_substitute(cmds, &arg.items, num_items + i, ech);
-		    break;
-		}
-		continue;
-	    }
-	    if (ch == 0)
-		break;
-	    /* Probably a single character name, ignore $$ and stupid ones. {*/
-	    if (!short_var || strchr("}):$", ch) != NULL) {
-		cp++;
-		continue;
-	    }
-	    STRLIST_FOREACH(var, &arg.vars, i) {
-		if (var[0] != ch || var[1] != 0)
+
+    cmd_cp = Buf_GetAll(arg->buf, &len);
+    body_end = cmd_cp + len;
+    cmds = Buf_Init(len + 256);
+    for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
+	char ech;
+	ch = *++cp;
+	if ((ch == '(' && (ech = ')')) || (ch == '{' && (ech = '}'))) {
+	    cp++;
+	    /* Check variable name against the .for loop variables */
+	    STRLIST_FOREACH(var, &arg->vars, i) {
+		len = strlist_info(&arg->vars, i);
+		if (memcmp(cp, var, len) != 0)
 		    continue;
-		/* Found a variable match. Replace with ${:U<value>} */
+		if (cp[len] != ':' && cp[len] != ech && cp[len] != '\\')
+		    continue;
+		/* Found a variable match. Replace with :U<value> */
 		Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
-		Buf_AddBytes(cmds, 3, "{:U");
-		cmd_cp = ++cp;
-		for_substitute(cmds, &arg.items, num_items + i, /*{*/ '}');
-		Buf_AddBytes(cmds, 1, "}");
+		Buf_AddBytes(cmds, 2, ":U");
+		cp += len;
+		cmd_cp = cp;
+		for_substitute(cmds, &arg->items, arg->sub_next + i, ech);
 		break;
 	    }
+	    continue;
 	}
-	Buf_AddBytes(cmds, body_end - cmd_cp, cmd_cp);
-
-	cp = Buf_GetAll(cmds, NULL);
-	if (DEBUG(FOR))
-	    (void)fprintf(debug_file, "For: loop body:\n%s", cp);
-	Parse_SetInput(NULL, lineno, -1, cp);
-	Buf_Destroy(cmds, FALSE);
+	if (ch == 0)
+	    break;
+	/* Probably a single character name, ignore $$ and stupid ones. {*/
+	if (!arg->short_var || strchr("}):$", ch) != NULL) {
+	    cp++;
+	    continue;
+	}
+	STRLIST_FOREACH(var, &arg->vars, i) {
+	    if (var[0] != ch || var[1] != 0)
+		continue;
+	    /* Found a variable match. Replace with ${:U<value>} */
+	    Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
+	    Buf_AddBytes(cmds, 3, "{:U");
+	    cmd_cp = ++cp;
+	    for_substitute(cmds, &arg->items, arg->sub_next + i, /*{*/ '}');
+	    Buf_AddBytes(cmds, 1, "}");
+	    break;
+	}
     }
+    Buf_AddBytes(cmds, body_end - cmd_cp, cmd_cp);
 
-  out:
-    strlist_clean(&arg.vars);
-    strlist_clean(&arg.items);
+    cp = Buf_GetAll(cmds, NULL);
+    Buf_Destroy(cmds, FALSE);
+    if (DEBUG(FOR))
+	(void)fprintf(debug_file, "For: loop body:\n%s", cp);
 
-    Buf_Destroy(arg.buf, TRUE);
+    arg->sub_next += strlist_num(&arg->vars);
+
+    arg->parse_buf = cp;
+    return cp;
+}
+
+void
+For_Run(int lineno)
+{ 
+    For *arg;
+  
+    arg = accumFor;
+    accumFor = NULL;
+
+    if (strlist_num(&arg->items) == 0) {
+        /* Nothing to expand - possibly due to an earlier syntax error. */
+        For_Free(arg);
+        return;
+    }
+ 
+    Parse_SetInput(NULL, lineno, -1, For_Iterate, arg);
 }
