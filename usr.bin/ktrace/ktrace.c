@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.42 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.43 2009/01/11 03:05:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.42 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.43 2009/01/11 03:05:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 	append = ops = pidset = trset = synclog = 0;
 	trpoints = 0;
 	block = 1;
-	vers = 1;
+	vers = 2;
 	pid = 0;	/* Appease GCC */
 
 #ifdef KTRUSS
