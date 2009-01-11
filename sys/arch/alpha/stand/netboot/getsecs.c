@@ -1,4 +1,4 @@
-/*	$NetBSD: getsecs.c,v 1.6 2002/11/09 06:34:38 thorpej Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.7 2009/01/11 13:03:17 dogcow Exp $	*/
 
 #include <sys/param.h>
 
@@ -11,7 +11,7 @@
 #include "include/prom.h"
 #include "include/rpb.h"
 
-int
+time_t
 getsecs(void)
 {
 	static long tnsec;
