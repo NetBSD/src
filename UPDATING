@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.187 2009/01/11 03:32:44 dholland Exp $
+$NetBSD: UPDATING,v 1.188 2009/01/11 18:00:04 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,6 +19,8 @@ Recent changes:
 20090110:
 	time_t and dev_t have been bumped to 64 bit quantities. To upgrade:
 	1. Make sure your kernel has COMPAT_50 in it. Build and install.
+	   This is needed even in the MODULAR kernel because there is
+	   conditionally compiled code in rtsock.c.
 	2. make sure build.sh completes and the binaries in a chroot work
 	   before installing.
 	3. If you don't use build.sh and you build directly to root, and
@@ -33,7 +35,8 @@ Recent changes:
 	   will be upgraded and it will not be backwards compatible.
 	6. The utmpx/wtmpx files have been versioned, and there is
 	   a heuristic for utmp. You are better off removing the
-	   old files after upgrading.
+	   old files after upgrading. The accounting file has not
+	   been versioned, and will need to be removed.
 
 20081219:
 	config(1) has been updated, and one of the files it creates -
