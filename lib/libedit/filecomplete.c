@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.11 2008/04/29 06:53:01 martin Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.12 2009/01/11 15:00:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.11 2008/04/29 06:53:01 martin Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.12 2009/01/11 15:00:23 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -245,7 +245,7 @@ append_char_function(const char *name)
 {
 	struct stat stbuf;
 	char *expname = *name == '~' ? fn_tilde_expand(name) : NULL;
-	const char *rs = "";
+	const char *rs = " ";
 
 	if (stat(expname ? expname : name, &stbuf) == -1)
 		goto out;
@@ -465,7 +465,7 @@ fn_complete(EditLine *el,
 			 * it, unless we do filename completion and the
 			 * object is a directory.
 			 */
-			el_insertstr(el, (*append_char_function)(matches[0])); 
+			el_insertstr(el, (*app_func)(matches[0])); 
 		} else if (what_to_do == '!') {
     display_matches:
 			/*
