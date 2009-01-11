@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.51 2009/01/11 02:45:52 christos Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.52 2009/01/11 21:00:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.51 2009/01/11 02:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.52 2009/01/11 21:00:11 christos Exp $");
 
 #include "opt_ntp.h"
 
@@ -980,14 +980,4 @@ SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 		       sizeof(struct ntptimeval),
 		       CTL_KERN, KERN_NTPTIME, CTL_EOL);
 }
-#else /* !NTP */
-/* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
-
-int
-sys___ntp_gettime50(struct lwp *l, const struct sys___ntp_gettime50_args *uap, register_t *retval)
-{
-
-	return(ENOSYS);
-}
-
 #endif /* !NTP */
