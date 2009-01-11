@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.185 2009/01/11 03:28:45 jmcneill Exp $
+$NetBSD: UPDATING,v 1.186 2009/01/11 03:31:12 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -29,6 +29,11 @@ Recent changes:
 	   the new libraries are installed, you can restart the build.
 	4. If you compile packages and you notice link time warnings,
 	   you'll need to bump them and rebuild them.
+	5. Next time you run pwd_mkdb with the new binary, the file
+	   will be upgraded and it will not be backwards compatible.
+	6. The utmpx/wtmpx files have been versioned, and there is
+	   a heuristic for utmp. You are better off removing the
+	   old files after upgrading.
 
 20081219:
 	config(1) has been updated, and one of the files it creates -
