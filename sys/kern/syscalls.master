@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.219 2009/01/11 02:45:53 christos Exp $
+	$NetBSD: syscalls.master,v 1.220 2009/01/11 19:40:38 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -531,7 +531,7 @@
 274	STD 	 RUMP	{ int sys_lchmod(const char *path, mode_t mode); }
 275	STD 	 RUMP	{ int sys_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
-276	COMPAT_50  	{ int sys_lutimes(const char *path, \
+276	COMPAT_50 MODULAR { int sys_lutimes(const char *path, \
 			    const struct timeval50 *tptr); }
 277	STD 		{ int sys___msync13(void *addr, size_t len, int flags); }
 278	COMPAT_30 MODULAR { int sys___stat13(const char *path, struct stat13 *ub); }
