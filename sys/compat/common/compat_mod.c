@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.5 2009/01/11 02:45:46 christos Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.6 2009/01/11 21:23:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.5 2009/01/11 02:45:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.6 2009/01/11 21:23:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -206,6 +206,7 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_50___sigtimedwait, 0, (sy_call_t *)compat_50_sys___sigtimedwait },
 	{ SYS_compat_50_mq_timedsend, 0, (sy_call_t *)compat_50_sys_mq_timedsend },
 	{ SYS_compat_50_mq_timedreceive, 0, (sy_call_t *)compat_50_sys_mq_timedreceive },
+	{ SYS_compat_50_lutimes, 0, (sy_call_t *)compat_50_sys_lutimes },
 # if defined(SYSVSEM)
 	{ SYS_compat_50_____semctl13, 0, (sy_call_t *)compat_50_sys_____semctl13 },
 # endif
