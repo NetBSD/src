@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.184 2009/01/11 03:20:31 christos Exp $
+$NetBSD: UPDATING,v 1.185 2009/01/11 03:28:45 jmcneill Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -29,6 +29,7 @@ Recent changes:
 	   the new libraries are installed, you can restart the build.
 	4. If you compile packages and you notice link time warnings,
 	   you'll need to bump them and rebuild them.
+
 20081219:
 	config(1) has been updated, and one of the files it creates -
 	swapnetbsd.o - has changed format.  You need to rebuild config
