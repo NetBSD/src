@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.1 2006/10/22 22:52:21 pooka Exp $
+#	$NetBSD: shlib_version,v 1.2 2009/01/11 03:07:49 christos Exp $
 #
-major=0
+major=1
 minor=0
