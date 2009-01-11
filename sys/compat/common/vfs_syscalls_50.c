@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.2 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.3 2009/01/11 20:46:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.2 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.3 2009/01/11 20:46:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,14 +197,18 @@ static int
 compat_50_do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path,
     int flag, const struct timeval50 *tptr)
 {
-	struct timeval tv[2];
+	struct timeval tv[2], *tvp;
 	struct timeval50 tv50[2];
-	int error = copyin(tptr, tv50, sizeof(tv50));
-	if (error)
-		return error;
-	timeval50_to_timeval(&tv50[0], &tv[0]);
-	timeval50_to_timeval(&tv50[1], &tv[1]);
-	return do_sys_utimes(l, vp, path, flag, tv, UIO_SYSSPACE);
+	if (tptr) {
+		int error = copyin(tptr, tv50, sizeof(tv50));
+		if (error)
+			return error;
+		timeval50_to_timeval(&tv50[0], &tv[0]);
+		timeval50_to_timeval(&tv50[1], &tv[1]);
+		tvp = tv;
+	} else
+		tvp = NULL;
+	return do_sys_utimes(l, vp, path, flag, tvp, UIO_SYSSPACE);
 }
     
 /*
