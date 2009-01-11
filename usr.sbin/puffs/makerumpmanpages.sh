@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.4 2008/10/16 10:30:17 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.5 2009/01/11 21:15:07 pooka Exp $
 #
 
 IFS=' '
@@ -32,7 +32,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 6, 2008
+.Dd January 11, 2009
 .Dt RUMP_XXXFSXXX 8
 .Os
 .Sh NAME
@@ -73,6 +73,24 @@ to crash the entire kernel, but with
 .Nm
 only the userspace server process will dump core.
 .Pp
+To use
+.Nm
+via
+.Xr mount 8 ,
+the flags
+.Fl "o rump"
+and
+.Fl "t xxxfsxxx"
+should be given.
+Similarly,
+.Nm
+is run instead of
+.Xr mount_xxxfsxxx 8
+if 
+.Dq rump
+is added to the options field of
+.Xr fstab 5 .
+.Pp
 Please see
 .Xr mount_xxxfsxxx 8
 for a full description of the available command line options.
@@ -85,14 +103,7 @@ for a full description of the available command line options.
 The
 .Nm
 utility first appeared in
-.Nx 5.0 .
-.Sh BUGS
-.Nm
-cannot be used via
-.Xr mount 8 .
-Instead,
-.Nm
-must be run directly.'
+.Nx 5.0 .'
 
 # generate the manual pages
 #
