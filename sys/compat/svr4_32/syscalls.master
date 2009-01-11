@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.16 2007/12/17 22:04:32 dsl Exp $
+	$NetBSD: syscalls.master,v 1.17 2009/01/11 13:14:15 nakayama Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -251,7 +251,7 @@
 			    int dummy); }
 136	NOARGS		{ int netbsd32_setegid(gid_t egid); }
 137	STD		{ int svr4_32_sys_sysconfig(int name); }
-138	NOARGS		{ int netbsd32_adjtime(netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
+138	NOARGS		{ int compat_50_netbsd32_adjtime(netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
 139	STD		{ netbsd32_long svr4_32_sys_systeminfo(int what, netbsd32_charp buf, \
 			    netbsd32_long len); }
 140	UNIMPL
@@ -272,8 +272,8 @@
 			    netbsd32_timevalp_t tptr); }
 155	STD		{ int svr4_32_sys_vhangup(void); }
 156	STD		{ int svr4_32_sys_gettimeofday(netbsd32_timevalp_t tp); }
-157	NOARGS		{ int netbsd32_getitimer(int which, netbsd32_itimervalp_t itv); }
-158	NOARGS		{ int netbsd32_setitimer(int which, \
+157	NOARGS		{ int compat_50_netbsd32_getitimer(int which, netbsd32_itimervalp_t itv); }
+158	NOARGS		{ int compat_50_netbsd32_setitimer(int which, \
 			    netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
 159	STD		{ int svr4_32_sys__lwp_create(svr4_32_ucontext_tp uc, \
 			    netbsd32_u_long flags, svr4_32_lwpid_tp lwpid); }
@@ -323,7 +323,7 @@
 196	UNIMPL		timer_settime
 197	UNIMPL		timer_gettime
 198	UNIMPL		timer_getoverrun
-199	NOARGS		{ int netbsd32_nanosleep(netbsd32_timespecp_t rqtp, \
+199	NOARGS		{ int compat_50_netbsd32_nanosleep(netbsd32_timespecp_t rqtp, \
 			   netbsd32_timespecp_t rmtp); }
 200	STD		{ int svr4_32_sys_facl(int fd, int cmd, int num, \
 			    svr4_32_aclent_tp buf); }
