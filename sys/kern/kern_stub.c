@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.16 2009/01/11 02:45:52 christos Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.17 2009/01/11 19:40:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.16 2009/01/11 02:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.17 2009/01/11 19:40:38 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -301,6 +301,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS_compat_50___sigtimedwait, "compat" },
 	    { SYS_compat_50_mq_timedsend, "compat" },
 	    { SYS_compat_50_mq_timedreceive, "compat" },
+	    { SYS_compat_50_lutimes, "compat" },
 	    { SYS_compat_50_____semctl13, "compat" },
 	    { SYS_compat_50___msgctl13, "compat" },
 	    { SYS_compat_50___shmctl13, "compat" },
