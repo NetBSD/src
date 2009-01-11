@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.20 2009/01/11 13:26:29 jnemeth Exp $
+# $NetBSD: shl.elf,v 1.21 2009/01/11 23:14:53 jnemeth Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -126,7 +126,7 @@
 ./usr/X11R7/lib/libX11.so			-unknown-		xorg
 ./usr/X11R7/lib/libX11.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXRes.so			-unknown-		xorg
-./usr/X11R7/lib/libXRes.so.7			-unknown-		xorg
+./usr/X11R7/lib/libXRes.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libXTrap.so			-unknown-		xorg
 ./usr/X11R7/lib/libXTrap.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXau.so			-unknown-		xorg
@@ -171,7 +171,7 @@
 ./usr/X11R7/lib/libXp.so			-unknown-		xorg
 ./usr/X11R7/lib/libXp.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libXpm.so			-unknown-		xorg
-./usr/X11R7/lib/libXpm.so.7			-unknown-		xorg
+./usr/X11R7/lib/libXpm.so.5			-unknown-		xorg
 ./usr/X11R7/lib/libXprintAppUtil.so		-unknown-		xorg
 ./usr/X11R7/lib/libXprintAppUtil.so.2		-unknown-		xorg
 ./usr/X11R7/lib/libXprintUtil.so		-unknown-		xorg
