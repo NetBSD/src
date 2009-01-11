@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1164 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1165 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -93,3 +93,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	rgephy(4): Support for flow control. From OpenBSD. [cegger 20090109]
 	time_t,dev_t: changed time_t and dev_t to be 64 bit quantities. Fixed
 		POSIX issues in timeval and timespec [christos 20090110]
+	make(1): Changes to the way .for loops are processed. [dsl20090111]
