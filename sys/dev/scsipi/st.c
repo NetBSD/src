@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.208 2008/11/17 21:19:03 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.209 2009/01/11 10:47:37 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.208 2008/11/17 21:19:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.209 2009/01/11 10:47:37 cegger Exp $");
 
 #include "opt_scsi.h"
 
@@ -548,7 +548,7 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 	periph = st->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
+	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%"PRIx64" (unit %d (of %d))\n", dev,
 	    unit, st_cd.cd_ndevs));
 
 
