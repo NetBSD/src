@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.275 2008/07/16 18:54:09 drochner Exp $	*/
+/*	$NetBSD: sd.c,v 1.276 2009/01/11 10:30:43 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.275 2008/07/16 18:54:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.276 2009/01/11 10:30:43 cegger Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -437,7 +437,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
+	    ("sdopen: dev=0x%"PRIx64" (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
 
 	/*
