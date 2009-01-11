@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.h,v 1.7 2009/01/11 21:12:04 tsutsui Exp $	*/
+/*	$NetBSD: aoutm68k_stat.h,v 1.8 2009/01/11 22:54:16 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,13 +60,13 @@ struct aoutm68k_stat43 {
 
 #ifdef COMPAT_12
 struct aoutm68k_stat12 {
-	dev_t	  st_dev;		/* inode's device */
+	u_int32_t st_dev;		/* inode's device */
 	u_int32_t st_ino;		/* inode's number */
 	u_int16_t st_mode;		/* inode protection mode */
 	u_int16_t st_nlink;		/* number of hard links */
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
-	dev_t	  st_rdev;		/* device type */
+	u_int32_t st_rdev;		/* device type */
 	struct	  timespec50 st_atimespec;/* time of last access */
 	struct	  timespec50 st_mtimespec;/* time of last data modification */
 	struct	  timespec50 st_ctimespec;/* time of last file status change */
@@ -81,13 +81,13 @@ struct aoutm68k_stat12 {
 #endif
 
 struct aoutm68k_stat {
-	dev_t	  st_dev;		/* inode's device */
+	u_int32_t st_dev;		/* inode's device */
 	u_int32_t st_ino;		/* inode's number */
 	mode_t	  st_mode;		/* inode protection mode */
 	nlink_t	  st_nlink;		/* number of hard links */
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
-	dev_t	  st_rdev;		/* device type */
+	u_int32_t st_rdev;		/* device type */
 	struct	  timespec50 st_atimespec;/* time of last access */
 	struct	  timespec50 st_mtimespec;/* time of last data modification */
 	struct	  timespec50 st_ctimespec;/* time of last file status change */
