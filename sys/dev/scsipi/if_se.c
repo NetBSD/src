@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.73 2008/11/07 00:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_se.c,v 1.74 2009/01/11 10:11:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.73 2008/11/07 00:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.74 2009/01/11 10:11:10 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1151,7 +1151,7 @@ seopen(dev, flag, fmt, l)
 		return (error);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("scopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
+	    ("scopen: dev=0x%"PRIx64" (unit %d (of %d))\n", dev, unit,
 	    se_cd.cd_ndevs));
 
 	periph->periph_flags |= PERIPH_OPEN;
