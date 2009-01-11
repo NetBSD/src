@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.80 2008/12/16 22:35:26 christos Exp $ */
+/*	$NetBSD: db_interface.c,v 1.81 2009/01/11 09:39:17 nakayama Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2008/12/16 22:35:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.81 2009/01/11 09:39:17 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -377,9 +377,9 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("maxsaddr:%p ssiz:%d pg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize,
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
-	db_printf("profile timer: %ld sec %ld usec\n",
+	db_printf("profile timer: %ld sec %ld nsec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
-		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
+		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_nsec);
 	db_printf("pcb: %p\n", &l->l_addr->u_pcb);
 	return;
 }
