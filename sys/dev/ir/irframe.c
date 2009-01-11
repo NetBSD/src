@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.42 2008/06/10 22:53:08 cegger Exp $	*/
+/*	$NetBSD: irframe.c,v 1.43 2009/01/11 14:21:48 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.42 2008/06/10 22:53:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.43 2009/01/11 14:21:48 mlelstv Exp $");
 
 #include "irframe.h"
 
@@ -140,6 +140,9 @@ irframe_attach(device_t parent, device_t self, void *aux)
 		delim = ",";
 	}
 	printf("\n");
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
@@ -162,6 +165,8 @@ irframe_detach(device_t self, int flags)
 {
 	/*struct irframe_softc *sc = device_private(self);*/
 	int maj, mn;
+
+	pmf_device_deregister(self);
 
 	/* XXX needs reference count */
 
