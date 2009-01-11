@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.46 2008/12/21 17:54:43 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.47 2009/01/11 02:57:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.46 2008/12/21 17:54:43 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.47 2009/01/11 02:57:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -339,6 +339,16 @@ pw_copy(int ffd, int tfd, struct passwd *pw, struct passwd *old_pw)
 	}
 }
 
+static void
+pw_print(FILE *to, const struct passwd *pw)
+{
+	(void)fprintf(to, "%s:%s:%d:%d:%s:%lld:%lld:%s:%s:%s\n",
+	    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
+	    pw->pw_class, (long long)pw->pw_change,
+	    (long long)pw->pw_expire,
+	    pw->pw_gecos, pw->pw_dir, pw->pw_shell);
+}
+
 int
 pw_copyx(int ffd, int tfd, struct passwd *pw, struct passwd *old_pw,
     char *errbuf, size_t errbufsz)
@@ -427,10 +437,7 @@ pw_copyx(int ffd, int tfd, struct passwd *pw, struct passwd *old_pw,
 			(void)fclose(to);
 			return (0);
 		}
-		(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
-		    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
-		    pw->pw_class, (long)pw->pw_change, (long)pw->pw_expire,
-		    pw->pw_gecos, pw->pw_dir, pw->pw_shell);
+		pw_print(to, pw);
 		done = 1;
 		if (ferror(to)) {
 			snprintf(errbuf, errbufsz, "%s", strerror(errno));
@@ -442,11 +449,7 @@ pw_copyx(int ffd, int tfd, struct passwd *pw, struct passwd *old_pw,
 	/* Only append a new entry if real uid is root! */
 	if (!done) {
 		if (getuid() == 0) {
-			(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
-			    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
-			    pw->pw_class, (long)pw->pw_change,
-			    (long)pw->pw_expire, pw->pw_gecos, pw->pw_dir,
-			    pw->pw_shell);
+			pw_print(to, pw);
 			done = 1;
 		} else {
 			snprintf(errbuf, errbufsz,

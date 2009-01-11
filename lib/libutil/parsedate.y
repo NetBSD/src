@@ -32,10 +32,6 @@
    unportable parsedate.c's), but that seems to cause as many problems
    as it solves.  */
 
-#define yyparse parsedate_yyparse
-#define yylex parsedate_yylex
-#define yyerror parsedate_yyerror
-
 #define EPOCH		1970
 #define HOUR(x)		((time_t)(x) * 60)
 #define SECSPERDAY	(24L * 60L * 60L)

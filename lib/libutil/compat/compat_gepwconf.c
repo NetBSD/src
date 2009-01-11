@@ -1,11 +1,11 @@
-/*	$NetBSD: sched.h,v 1.12 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: compat_gepwconf.c,v 1.2 2009/01/11 02:57:18 christos Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,6 +15,13 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -28,51 +35,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _SCHED_H_
-#define _SCHED_H_
-
 #include <sys/cdefs.h>
-#include <sys/featuretest.h>
-#include <sys/sched.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: compat_gepwconf.c,v 1.2 2009/01/11 02:57:18 christos Exp $");
+#endif /* LIBC_SCCS and not lint */
 
-/* Required by POSIX 1003.1, section 13.1, lines 12-13. */
-#include <time.h>
+#define __LIBC12_SOURCE__
 
-__BEGIN_DECLS
-int	sched_setparam(pid_t, const struct sched_param *);
-int	sched_getparam(pid_t, struct sched_param *);
-int	sched_setscheduler(pid_t, int, const struct sched_param *);
-int	sched_getscheduler(pid_t);
-int	sched_get_priority_max(int);
-int	sched_get_priority_min(int);
-#ifndef __LIBC12_SOURCE__
-int	sched_rr_get_interval(pid_t, struct timespec *)
-    __RENAME(__sched_rr_get_interval50);
-#endif
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pwd.h>
+#include <compat/include/pwd.h>
+#include <util.h>
+#include <compat/util.h>
 
-int	sched_yield(void);
-int	__libc_thr_yield(void);
-__END_DECLS
+__warn_references(pw_getpwconf,
+    "warning: reference to compatibility pw_getpwconf(); "
+    "include <pwd.h> to generate correct reference")
 
-#ifndef __LIBPTHREAD_SOURCE__
-#define sched_yield		__libc_thr_yield
-#endif /* __LIBPTHREAD_SOURCE__ */
-
-#if defined(_NETBSD_SOURCE)
-
-__BEGIN_DECLS
-
-/* Process affinity functions (not portable) */
-int	sched_getaffinity_np(pid_t, size_t, cpuset_t *);
-int	sched_setaffinity_np(pid_t, size_t, cpuset_t *);
-
-/* Historical functions, not defined in standard */
-pid_t	 clone(int (*)(void *), void *, int, void *);
-pid_t	__clone(int (*)(void *), void *, int, void *);
-
-__END_DECLS
-
-#endif /* _NETBSD_SOURCE */
-
-#endif /* _SCHED_H_ */
+void
+pw_getpwconf(char *buf, size_t len, const struct passwd50 *p, const char *opt)
+{
+	struct passwd px;
+	passwd50_to_passwd(p, &px);
+	__pw_getpwconf50(buf, len, &px, opt);
+}
