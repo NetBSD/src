@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.154 2008/06/19 13:56:22 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.155 2009/01/11 06:02:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -631,8 +631,8 @@ ENTRY_NOPROFILE(fpfault)
 	fsave	%a0@		| save state
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
-	cmpl	#CPU_68040,_C_LABEL(cputype)
-	jle	Lfptnull
+	cmpl	#FPU_68040,_C_LABEL(fputype)
+	jge	Lfptnull
 #endif
 	tstb	%a0@		| null state frame?
 	jeq	Lfptnull	| yes, safe
