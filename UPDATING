@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.186 2009/01/11 03:31:12 christos Exp $
+$NetBSD: UPDATING,v 1.187 2009/01/11 03:32:44 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -22,7 +22,7 @@ Recent changes:
 	2. make sure build.sh completes and the binaries in a chroot work
 	   before installing.
 	3. If you don't use build.sh and you build directly to root, and
-	   your build breaks in the middle, don't dispair. Make sure headers
+	   your build breaks in the middle, don't despair. Make sure headers
 	   are installed properly, and start building libraries first libc
 	   and libutil, install them and then continue building all the
 	   libraries in src/lib and src/gnu/lib and install them. Once
