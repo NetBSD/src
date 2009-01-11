@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscallargs.h,v 1.58 2008/04/23 14:10:03 ad Exp $ */
+/* $NetBSD: irix_syscallargs.h,v 1.59 2009/01/11 20:00:14 rumble Exp $ */
 
 /*
  * System call argument lists.
@@ -173,7 +173,7 @@ struct irix_sys_setrlimit64_args {
 };
 check_syscall_args(irix_sys_setrlimit64)
 
-struct sys_nanosleep_args;
+struct compat_50_sys_nanosleep_args;
 
 struct irix_sys_lseek64_args {
 	syscallarg(int) fd;
@@ -235,7 +235,7 @@ struct compat_43_sys_recvfrom_args;
 
 struct compat_43_sys_recvmsg_args;
 
-struct sys_select_args;
+struct compat_50_sys_select_args;
 
 struct compat_43_sys_send_args;
 
@@ -273,11 +273,11 @@ struct sys_setregid_args;
 
 struct sys_setreuid_args;
 
-struct sys_getitimer_args;
+struct compat_50_sys_getitimer_args;
 
-struct sys_setitimer_args;
+struct compat_50_sys_setitimer_args;
 
-struct sys_adjtime_args;
+struct compat_50_sys_adjtime_args;
 
 struct svr4_sys_gettimeofday_args;
 
@@ -619,7 +619,7 @@ int	irix_sys_getrlimit64(struct lwp *, const struct irix_sys_getrlimit64_args *,
 
 int	irix_sys_setrlimit64(struct lwp *, const struct irix_sys_setrlimit64_args *, register_t *);
 
-int	sys_nanosleep(struct lwp *, const struct sys_nanosleep_args *, register_t *);
+int	compat_50_sys_nanosleep(struct lwp *, const struct compat_50_sys_nanosleep_args *, register_t *);
 
 int	irix_sys_lseek64(struct lwp *, const struct irix_sys_lseek64_args *, register_t *);
 
@@ -661,7 +661,7 @@ int	compat_43_sys_recvfrom(struct lwp *, const struct compat_43_sys_recvfrom_arg
 
 int	compat_43_sys_recvmsg(struct lwp *, const struct compat_43_sys_recvmsg_args *, register_t *);
 
-int	sys_select(struct lwp *, const struct sys_select_args *, register_t *);
+int	compat_50_sys_select(struct lwp *, const struct compat_50_sys_select_args *, register_t *);
 
 int	compat_43_sys_send(struct lwp *, const struct compat_43_sys_send_args *, register_t *);
 
@@ -699,11 +699,11 @@ int	sys_setregid(struct lwp *, const struct sys_setregid_args *, register_t *);
 
 int	sys_setreuid(struct lwp *, const struct sys_setreuid_args *, register_t *);
 
-int	sys_getitimer(struct lwp *, const struct sys_getitimer_args *, register_t *);
+int	compat_50_sys_getitimer(struct lwp *, const struct compat_50_sys_getitimer_args *, register_t *);
 
-int	sys_setitimer(struct lwp *, const struct sys_setitimer_args *, register_t *);
+int	compat_50_sys_setitimer(struct lwp *, const struct compat_50_sys_setitimer_args *, register_t *);
 
-int	sys_adjtime(struct lwp *, const struct sys_adjtime_args *, register_t *);
+int	compat_50_sys_adjtime(struct lwp *, const struct compat_50_sys_adjtime_args *, register_t *);
 
 int	svr4_sys_gettimeofday(struct lwp *, const struct svr4_sys_gettimeofday_args *, register_t *);
 
