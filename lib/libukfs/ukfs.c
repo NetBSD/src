@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.15.2.2 2008/12/29 00:09:11 christos Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.15.2.3 2009/01/11 01:25:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -256,16 +256,12 @@ ukfs_release(struct ukfs *fs, int flags)
 	rump_mnt_destroy(fs->ukfs_mp);
 
 	pthread_spin_destroy(&fs->ukfs_spin);
-	if (fs->ukfs_devfd != -1)
+	if (fs->ukfs_devfd != -1) {
 		flock(fs->ukfs_devfd, LOCK_UN);
+		close(fs->ukfs_devfd);
+	}
 	free(fs);
 }
-
-/* don't need vn_lock(), since we don't have VXLOCK */
-#define VLE(a) RUMP_VOP_LOCK(a, RUMP_LK_EXCLUSIVE)
-#define VLS(a) RUMP_VOP_LOCK(a, RUMP_LK_SHARED)
-#define VUL(a) RUMP_VOP_UNLOCK(a, 0)
-#define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
 
 #define STDCALL(ukfs, thecall)						\
 	int rv = 0;							\
@@ -300,7 +296,7 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 	cred = rump_cred_suserget();
 	rv = RUMP_VOP_READDIR(vp, uio, cred, &eofflag, NULL, NULL);
 	rump_cred_suserput(cred);
-	VUL(vp);
+	RUMP_VOP_UNLOCK(vp, 0);
 	*off = rump_uio_getoff(uio);
 	resid = rump_uio_free(uio);
 	rump_vp_rele(vp);
