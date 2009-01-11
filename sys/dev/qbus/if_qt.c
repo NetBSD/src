@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.15 2008/12/16 22:35:34 christos Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.16 2009/01/11 07:40:02 matt Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.15 2008/12/16 22:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.16 2009/01/11 07:40:02 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -258,12 +258,13 @@ qtattach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->is_if;
 	struct uba_attach_args *ua = aux;
 
+	sc->sc_dev = self;
+
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qtintr, sc,
 	    &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
 	    device_xname(sc->sc_dev), "intr");
 
-	sc->sc_dev = self;
 	sc->sc_uh = device_private(parent);
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
