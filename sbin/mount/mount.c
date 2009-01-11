@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.87 2009/01/11 12:33:50 pooka Exp $	*/
+/*	$NetBSD: mount.c,v 1.88 2009/01/11 20:39:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.87 2009/01/11 12:33:50 pooka Exp $");
+__RCSID("$NetBSD: mount.c,v 1.88 2009/01/11 20:39:34 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,7 +430,10 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	if (argv == NULL)
 		err(1, "malloc");
 
-	(void) snprintf(execbase, sizeof(execbase), "mount_%s", vfstype);
+	if (hasopt(optbuf, "rump"))
+		(void)snprintf(execbase, sizeof(execbase), "rump_%s", vfstype);
+	else
+		(void)snprintf(execbase, sizeof(execbase), "mount_%s", vfstype);
 	argc = 0;
 	argv[argc++] = execbase;
 	if (optbuf)
