@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.212 2008/11/30 18:21:32 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.213 2009/01/11 22:51:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2008/11/30 18:21:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.213 2009/01/11 22:51:36 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -664,11 +664,11 @@ dumpsys()
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
