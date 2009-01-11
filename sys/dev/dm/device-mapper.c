@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.2 2008/12/19 15:24:03 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.3 2009/01/11 11:44:23 haad Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ dmdestroy(void)
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	aprint_debug("open routine called %d\n", minor(dev));
+	aprint_debug("open routine called %llu\n", minor(dev));
 	
 	if (unload == 1)
 		return EBUSY;
