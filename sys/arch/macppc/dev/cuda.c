@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.10 2009/01/11 17:04:37 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.11 2009/01/11 18:02:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.10 2009/01/11 17:04:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.11 2009/01/11 18:02:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,7 +767,7 @@ cuda_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		return EIO;
 
 	tvp->tv_sec = sc->sc_tod - DIFF19041970;
-	DPRINTF("tod: %ld\n", (uint32_t)tvp->tv_sec);
+	DPRINTF("tod: %lld\n", (long long)tvp->tv_sec);
 	tvp->tv_usec = 0;
 	return 0;
 }
