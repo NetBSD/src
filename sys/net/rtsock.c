@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.120 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.121 2009/01/11 04:34:16 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.120 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.121 2009/01/11 04:34:16 christos Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -110,7 +110,6 @@ static int sysctl_dumpentry(struct rtentry *, void *);
 static int sysctl_iflist(int, struct rt_walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
 static inline void rt_adjustcount(int, int);
-static void route_enqueue(struct mbuf *, int);
 
 static inline void
 rt_adjustcount(int af, int cnt)
