@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.64 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.65 2009/01/11 13:14:14 nakayama Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.64 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.65 2009/01/11 13:14:14 nakayama Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -196,14 +196,14 @@ sunos32_sys_wait4(struct lwp *l, const struct sunos32_sys_wait4_args *uap, regis
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */
 
-	struct netbsd32_wait4_args bsd_ua;
+	struct compat_50_netbsd32_wait4_args bsd_ua;
 
 	SCARG(&bsd_ua, pid) = SCARG(uap, pid) == 0 ? WAIT_ANY : SCARG(uap, pid);
 	SCARG(&bsd_ua, status) = SCARG(uap, status);
 	SCARG(&bsd_ua, options) = SCARG(uap, options);
 	SCARG(&bsd_ua, rusage) = SCARG(uap, rusage);
 
-	return netbsd32_wait4(l, &bsd_ua, retval);
+	return compat_50_netbsd32_wait4(l, &bsd_ua, retval);
 }
 
 int
@@ -884,7 +884,7 @@ sunos32_sys_socket(struct lwp *l, const struct sunos32_sys_socket_args *uap, reg
 	} */
 	int error;
 
-	error = netbsd32_sys___socket30(l, (const void *)uap, retval);
+	error = netbsd32___socket30(l, (const void *)uap, retval);
 	if (error)
 		return (error);
 	return sunos32_sys_socket_common(l, retval, SCARG(uap, type));
@@ -1180,7 +1180,7 @@ sunos32_sys_mknod(struct lwp *l, const struct sunos32_sys_mknod_args *uap, regis
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return netbsd32_mkfifo(l, (const struct netbsd32_mkfifo_args *)uap, retval);
 
-	return netbsd32_mknod(l, (const struct netbsd32_mknod_args *)uap, retval);
+	return compat_50_netbsd32_mknod(l, (const struct compat_50_netbsd32_mknod_args *)uap, retval);
 }
 
 #define SUNOS_SC_ARG_MAX	1

@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.17 2008/11/19 18:36:05 ad Exp $
+;	$NetBSD: syscalls.master,v 1.18 2009/01/11 13:14:14 nakayama Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -153,17 +153,17 @@
 80	NOARGS		{ int netbsd32_setgroups(u_int gidsetsize, netbsd32_gid_tp gidset); }
 81	NOARGS		{ int sys_getpgrp(void); }
 82	STD		{ int sunos32_sys_setpgrp(int pid, int pgid); }
-83	NOARGS		{ int netbsd32_setitimer(u_int which, netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
+83	NOARGS		{ int compat_50_netbsd32_setitimer(u_int which, netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
 84	UNIMPL		{ int sunos32_sys_wait(void); }
 85	NOARGS		{ int compat_12_netbsd32_oswapon(netbsd32_charp name); }
-86	NOARGS		{ int netbsd32_getitimer(u_int which, netbsd32_itimervalp_t itv); }
+86	NOARGS		{ int compat_50_netbsd32_getitimer(u_int which, netbsd32_itimervalp_t itv); }
 87	NOARGS		{ int compat_43_netbsd32_ogethostname(netbsd32_charp hostname, u_int len); }
 88	NOARGS		{ int compat_43_netbsd32_osethostname(netbsd32_charp hostname, u_int len); }
 89	NOARGS		{ int compat_43_sys_getdtablesize(void); } ogetdtablesize
 90	NOARGS		{ int netbsd32_dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
 92	STD		{ int sunos32_sys_fcntl(int fd, int cmd, netbsd32_voidp arg); }
-93	NOARGS		{ int netbsd32_select(u_int nd, netbsd32_fd_setp_t in, netbsd32_fd_setp_t ou, \
+93	NOARGS		{ int compat_50_netbsd32_select(u_int nd, netbsd32_fd_setp_t in, netbsd32_fd_setp_t ou, \
 			    netbsd32_fd_setp_t ex, netbsd32_timevalp_t tv); }
 94	UNIMPL		setdopt
 95	NOARGS		{ int netbsd32_fsync(int fd); }
@@ -194,9 +194,9 @@
 114	NOARGS		{ int compat_43_netbsd32_osendmsg(int s, netbsd32_caddr_t msg, \
 			    int flags); }
 115	OBSOL		vtrace
-116	NOARGS		{ int netbsd32_gettimeofday(netbsd32_timevalp_t tp, \
+116	NOARGS		{ int compat_50_netbsd32_gettimeofday(netbsd32_timevalp_t tp, \
 			    netbsd32_timezonep_t tzp); }
-117	NOARGS		{ int netbsd32_getrusage(int who, netbsd32_rusagep_t rusage); }
+117	NOARGS		{ int compat_50_netbsd32_getrusage(int who, netbsd32_rusagep_t rusage); }
 118	NOARGS		{ int netbsd32_getsockopt(int s, int level, int name, \
 			    netbsd32_caddr_t val, netbsd32_intp avalsize); }
 119	UNIMPL
@@ -204,7 +204,7 @@
 			    u_int iovcnt); }
 121	NOARGS		{ int netbsd32_writev(int fd, netbsd32_iovecp_t iovp, \
 			    u_int iovcnt); }
-122	NOARGS		{ int netbsd32_settimeofday(netbsd32_timevalp_t tv, \
+122	NOARGS		{ int compat_50_netbsd32_settimeofday(netbsd32_timevalp_t tv, \
 			    netbsd32_timezonep_t tzp); }
 123	NOARGS		{ int netbsd32_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int netbsd32_fchmod(int fd, int mode); }
@@ -225,9 +225,9 @@
 			    int protocol, netbsd32_intp rsv); }
 136	NOARGS		{ int netbsd32_mkdir(netbsd32_charp path, int mode); }
 137	NOARGS		{ int netbsd32_rmdir(netbsd32_charp path); }
-138	NOARGS		{ int netbsd32_utimes(netbsd32_charp path, netbsd32_timevalp_t tptr); }
+138	NOARGS		{ int compat_50_netbsd32_utimes(netbsd32_charp path, netbsd32_timevalp_t tptr); }
 139	STD		{ int sunos32_sys_sigreturn(netbsd32_sigcontextp_t sigcntxp); }
-140	NOARGS		{ int netbsd32_adjtime(netbsd32_timevalp_t delta, \
+140	NOARGS		{ int compat_50_netbsd32_adjtime(netbsd32_timevalp_t delta, \
 			    netbsd32_timevalp_t olddelta); }
 141	NOARGS		{ int compat_43_netbsd32_ogetpeername(int fdes, netbsd32_caddr_t asa, \
 			    netbsd32_intp alen); }
@@ -276,19 +276,19 @@
 168	STD		{ int sunos32_sys_ustat(int dev, \
 			    sunos32_ustatp_t buf); }
 #ifdef SYSVSEM
-169	NOARGS		{ int compat_10_netbsd32_sys_semsys(int which, int a2, int a3, \
+169	NOARGS		{ int compat_10_netbsd32_semsys(int which, int a2, int a3, \
 			    int a4, int a5); } osemsys
 #else
 169	UNIMPL		semsys
 #endif
 #ifdef SYSVMSG
-170	NOARGS		{ int compat_10_netbsd32_sys_msgsys(int which, int a2, int a3, \
+170	NOARGS		{ int compat_10_netbsd32_msgsys(int which, int a2, int a3, \
 			    int a4, int a5, int a6); } omsgsys
 #else
 170	UNIMPL		msgsys
 #endif
 #ifdef SYSVSHM
-171	NOARGS		{ int compat_10_netbsd32_sys_shmsys(int which, int a2, int a3, \
+171	NOARGS		{ int compat_10_netbsd32_shmsys(int which, int a2, int a3, \
 			    int a4); } oshmsys
 #else
 171	UNIMPL		shmsys
