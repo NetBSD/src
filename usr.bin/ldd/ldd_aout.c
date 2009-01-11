@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_aout.c,v 1.1 2009/01/06 03:59:56 mrg Exp $	*/
+/*	$NetBSD: ldd_aout.c,v 1.2 2009/01/11 00:06:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_aout.c,v 1.1 2009/01/06 03:59:56 mrg Exp $");
+__RCSID("$NetBSD: ldd_aout.c,v 1.2 2009/01/11 00:06:55 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,6 +46,25 @@ __RCSID("$NetBSD: ldd_aout.c,v 1.1 2009/01/06 03:59:56 mrg Exp $");
 #include <string.h>
 #include <unistd.h>
 
+/* from <compat/netbsd32/netbsd32_exec.h> */
+/*
+ * Header prepended to each a.out file.
+ * only manipulate the a_midmag field via the
+ * N_SETMAGIC/N_GET{MAGIC,MID,FLAG} macros below.
+ */
+typedef unsigned int netbsd32_u_long;
+struct netbsd32_exec {
+	netbsd32_u_long a_midmag;       /* htonl(flags<<26 | mid<<16 | magic) */
+	netbsd32_u_long a_text;         /* text segment size */
+	netbsd32_u_long a_data;         /* initialized data size */
+	netbsd32_u_long a_bss;          /* uninitialized data size */
+	netbsd32_u_long a_syms;         /* symbol table size */
+	netbsd32_u_long a_entry;        /* entry point */
+	netbsd32_u_long a_trsize;       /* text relocation size */
+	netbsd32_u_long a_drsize;       /* data relocation size */
+};
+
+
 /*
  * XXX put this here, rather than a separate ldd_aout.h
 #include "ldd.h"
@@ -56,7 +75,7 @@ int
 aout_ldd(char *file, char *fmt1, char *fmt2)
 {
 	struct stat st;
-	struct exec hdr;
+	struct netbsd32_exec hdr;
 	int status, rval;
 	int fd;
 
