@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.52 2008/04/23 14:07:49 ad Exp $
+	$NetBSD: syscalls.master,v 1.53 2009/01/11 20:00:06 rumble Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -161,8 +161,8 @@
 			    struct irix_rlimit64 *rlp); }
 76	STD		{ int irix_sys_setrlimit64(int resource, \
 			    const struct irix_rlimit64 *rlp); }
-77	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-			    struct timespec *rmtp); }
+77	NOARGS		{ int compat_50_sys_nanosleep(const struct timespec50 *rqtp, \
+			    struct timespec50 *rmtp); }
 78	STD		{ irix_off64_t irix_sys_lseek64(int fd, int pad1, \
 			    irix_off64_t offset, int whence, \
 			    int pad2, int pad3, int pad4); }
@@ -202,8 +202,8 @@
 			    int *fromlenaddr); }
 99	NOARGS		{ ssize_t compat_43_sys_recvmsg(int s, \
 			    struct msghdr *msg, int flags); }
-100	NOARGS		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
+100	NOARGS		{ int compat_50_sys_select(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval50 *tv); }
 101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); }
 102	NOARGS		{ ssize_t compat_43_sys_sendmsg(int s, \
@@ -240,13 +240,13 @@
 122	UNIMPL		exportfs
 123	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 124	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
-125	NOARGS		{ int sys_getitimer(u_int which, \
+125	NOARGS		{ int compat_50_sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
-126	NOARGS		{ int sys_setitimer(u_int which, \
+126	NOARGS		{ int compat_50_sys_setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
-127	NOARGS		{ int sys_adjtime(struct timeval *delta, \
-			    struct timeval *olddelta); }
-128	NOARGS		{ int svr4_sys_gettimeofday(struct timeval *tp); }
+127	NOARGS		{ int compat_50_sys_adjtime(struct timeval50 *delta, \
+			    struct timeval50 *olddelta); }
+128	NOARGS		{ int svr4_sys_gettimeofday(struct timeval50 *tp); }
 129	STD		{ irix_pid_t irix_sys_sproc(void *entry, \
 			    unsigned int inh, void *arg); }
 130	STD		{ ptrdiff_t irix_sys_prctl(unsigned int option, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.48 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.49 2009/01/11 20:00:06 rumble Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.48 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.49 2009/01/11 20:00:06 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -159,11 +159,11 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 		break;
 
 	case IRIX_SGI_RUSAGE: {	/* BSD getrusage(2) */
-		struct sys_getrusage_args cup;
+		struct compat_50_sys_getrusage_args cup;
 
 		SCARG(&cup, who) = (int)SCARG(uap, arg1);
-		SCARG(&cup, rusage) = (struct rusage *)SCARG(uap, arg2);
-		return sys_getrusage(l, &cup, retval);
+		SCARG(&cup, rusage) = (struct rusage50 *)SCARG(uap, arg2);
+		return compat_50_sys_getrusage(l, &cup, retval);
 		break;
 	}
 
