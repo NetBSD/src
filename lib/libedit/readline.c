@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.75 2008/04/29 06:53:01 martin Exp $	*/
+/*	$NetBSD: readline.c,v 1.76 2009/01/11 15:00:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.75 2008/04/29 06:53:01 martin Exp $");
+__RCSID("$NetBSD: readline.c,v 1.76 2009/01/11 15:00:23 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -448,7 +448,7 @@ _rl_compat_sub(const char *str, const char *what, const char *with,
 		} else
 			*r++ = *s++;
 	}
-	*r = 0;
+	*r = '\0';
 	return(result);
 }
 
@@ -469,7 +469,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 		return(NULL);
 
 	/* find out which event to take */
-	if (cmd[idx] == history_expansion_char || cmd[idx] == 0) {
+	if (cmd[idx] == history_expansion_char || cmd[idx] == '\0') {
 		if (history(h, &ev, H_FIRST) != 0)
 			return(NULL);
 		*cindex = cmd[idx]? (idx + 1):idx;
@@ -691,7 +691,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 	if (aptr)
 		free(aptr);
 
-	if (*cmd == 0 || (cmd - (command + offs) >= cmdlen)) {
+	if (*cmd == '\0' || (cmd - (command + offs) >= cmdlen)) {
 		*result = tmp;
 		return(1);
 	}
@@ -701,7 +701,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 			continue;
 		else if (*cmd == 'h') {		/* remove trailing path */
 			if ((aptr = strrchr(tmp, '/')) != NULL)
-				*aptr = 0;
+				*aptr = '\0';
 		} else if (*cmd == 't') {	/* remove leading path */
 			if ((aptr = strrchr(tmp, '/')) != NULL) {
 				aptr = strdup(aptr + 1);
@@ -710,7 +710,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 			}
 		} else if (*cmd == 'r') {	/* remove trailing suffix */
 			if ((aptr = strrchr(tmp, '.')) != NULL)
-				*aptr = 0;
+				*aptr = '\0';
 		} else if (*cmd == 'e') {	/* remove all but suffix */
 			if ((aptr = strrchr(tmp, '.')) != NULL) {
 				aptr = strdup(aptr);
@@ -1002,7 +1002,7 @@ history_arg_extract(int start, int end, const char *str)
 		if (i < end)
 			result[len++] = ' ';
 	}
-	result[len] = 0;
+	result[len] = '\0';
 
 	for (i = 0; arr[i]; i++)
 		free(arr[i]);
@@ -1490,7 +1490,8 @@ _rl_completion_append_character_function(const char *dummy
     __attribute__((__unused__)))
 {
 	static char buf[2];
-	buf[1] = rl_completion_append_character;
+	buf[0] = rl_completion_append_character;
+	buf[1] = '\0';
 	return buf;
 }
 
@@ -1771,7 +1772,7 @@ _rl_event_read_char(EditLine *el, char *cp)
 {
 	int	n, num_read = 0;
 
-	*cp = 0;
+	*cp = '\0';
 	while (rl_event_hook) {
 
 		(*rl_event_hook)();
