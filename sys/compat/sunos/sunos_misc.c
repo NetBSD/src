@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.163 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.164 2009/01/11 12:44:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.163 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.164 2009/01/11 12:44:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,14 +123,14 @@ sunos_sys_stime(struct lwp *l, const struct sunos_sys_stime_args *uap, register_
 int
 sunos_sys_wait4(struct lwp *l, const struct sunos_sys_wait4_args *uap, register_t *retval)
 {
-	struct sys_wait4_args bsd_ua;
+	struct compat_50_sys_wait4_args bsd_ua;
 
 	SCARG(&bsd_ua, pid) = SCARG(uap, pid) == 0 ? WAIT_ANY : SCARG(uap, pid);
 	SCARG(&bsd_ua, status) = SCARG(uap, status);
 	SCARG(&bsd_ua, options) = SCARG(uap, options);
 	SCARG(&bsd_ua, rusage) = SCARG(uap, rusage);
 
-	return (sys_wait4(l, &bsd_ua, retval));
+	return (compat_50_sys_wait4(l, &bsd_ua, retval));
 }
 
 int
@@ -872,7 +872,8 @@ sunos_sys_mknod(struct lwp *l, const struct sunos_sys_mknod_args *uap, register_
 		return sys_mkfifo(l, &fifo_ua, retval);
 	}
 
-	return sys_mknod(l, (const struct sys_mknod_args *)uap, retval);
+	return compat_50_sys_mknod(l,
+	    (const struct compat_50_sys_mknod_args *)uap, retval);
 }
 
 #define SUNOS_SC_ARG_MAX	1
