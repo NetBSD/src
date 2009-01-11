@@ -1,4 +1,4 @@
-/*	$NetBSD: mqueue.h,v 1.3 2008/05/26 17:45:51 rmind Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.4 2009/01/11 03:04:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -47,11 +47,13 @@ ssize_t	mq_receive(mqd_t, char *, size_t, unsigned *);
 int	mq_send(mqd_t, const char *, size_t, unsigned);
 int	mq_setattr(mqd_t, const struct mq_attr * __restrict,
 		    struct mq_attr * __restrict);
+#ifndef __LIBC12_SOURCE__
 ssize_t	mq_timedreceive(mqd_t, char * __restrict, size_t,
-		    unsigned * __restrict,
-		    const struct timespec * __restrict);
+    unsigned * __restrict, const struct timespec * __restrict)
+    __RENAME(__mq_timedreceive50);
 int	mq_timedsend(mqd_t, const char *, size_t, unsigned,
-		    const struct timespec *);
+    const struct timespec *) __RENAME(__mq_timedsend50);
+#endif
 int	mq_unlink(const char *);
 __END_DECLS
 

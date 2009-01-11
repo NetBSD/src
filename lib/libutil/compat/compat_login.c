@@ -1,7 +1,7 @@
-/*	$NetBSD: locale.h,v 1.16 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: compat_login.c,v 1.2 2009/01/11 02:57:18 christos Exp $	*/
 
 /*
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,71 +27,52 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)locale.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _LOCALE_H_
-#define _LOCALE_H_
-
-struct lconv {
-	char	*decimal_point;
-	char	*thousands_sep;
-	char	*grouping;
-	char	*int_curr_symbol;
-	char	*currency_symbol;
-	char	*mon_decimal_point;
-	char	*mon_thousands_sep;
-	char	*mon_grouping;
-	char	*positive_sign;
-	char	*negative_sign;
-	char	int_frac_digits;
-	char	frac_digits;
-	char	p_cs_precedes;
-	char	p_sep_by_space;
-	char	n_cs_precedes;
-	char	n_sep_by_space;
-	char	p_sign_posn;
-	char	n_sign_posn;
-	char	int_p_cs_precedes;
-	char	int_n_cs_precedes;
-	char	int_p_sep_by_space;
-	char	int_n_sep_by_space;
-	char	int_p_sign_posn;
-	char	int_n_sign_posn;
-};
-
-#include <sys/null.h>
-
-#define	LC_ALL		0
-#define	LC_COLLATE	1
-#define	LC_CTYPE	2
-#define	LC_MONETARY	3
-#define	LC_NUMERIC	4
-#define	LC_TIME		5
-#define LC_MESSAGES	6
-
-#define	_LC_LAST	7		/* marks end */
-
 #include <sys/cdefs.h>
-
-#ifdef __SETLOCALE_SOURCE__
-
-typedef struct _locale_impl_t		*_locale_t;
-
-#define _LC_GLOBAL_LOCALE		((_locale_t)-1)
-
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: compat_login.c,v 1.2 2009/01/11 02:57:18 christos Exp $");
 #endif
+#endif /* LIBC_SCCS and not lint */
 
-__BEGIN_DECLS
-struct lconv	*localeconv(void);
-#ifdef __SETLOCALE_SOURCE__
-char		*setlocale(int, const char *);
-char		*__setlocale_mb_len_max_32(int, const char *);
-char		*__setlocale(int, const char *);
-#else /* !__SETLOCALE_SOURCE__ */
-char		*setlocale(int, const char *) __RENAME(__setlocale_mb_len_max_32);
-#endif /* !__SETLOCALE_SOURCE__ */
-__END_DECLS
+#define __LIBC12_SOURCE__
+#include <sys/types.h>
 
-#endif /* _LOCALE_H_ */
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <util.h>
+#include <compat/util.h>
+#include <utmp.h>
+#include <compat/include/utmp.h>
+
+__warn_references(login,
+    "warning: reference to compatibility login(); include <util.h> to generate correct reference")
+
+void
+login(const struct utmp50 *ut50)
+{
+	int fd;
+	int tty;
+	struct utmp ut;
+
+	utmp50_to_utmp(ut50, &ut);
+
+	tty = ttyslot();
+	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {
+		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), SEEK_SET);
+		(void)write(fd, &ut, sizeof(ut));
+		(void)close(fd);
+	}
+	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) >= 0) {
+		(void)write(fd, &ut, sizeof(ut));
+		(void)close(fd);
+	}
+}

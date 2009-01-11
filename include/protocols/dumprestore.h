@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.15 2008/12/26 19:26:04 hannken Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.16 2009/01/11 03:04:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993

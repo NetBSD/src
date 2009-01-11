@@ -1,7 +1,7 @@
-/*	$NetBSD: locale.h,v 1.16 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.2 2009/01/11 02:57:18 christos Exp $	*/
 
-/*
- * Copyright (c) 1991, 1993
+/*-
+ * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,71 +27,37 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)locale.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _LOCALE_H_
-#define _LOCALE_H_
-
-struct lconv {
-	char	*decimal_point;
-	char	*thousands_sep;
-	char	*grouping;
-	char	*int_curr_symbol;
-	char	*currency_symbol;
-	char	*mon_decimal_point;
-	char	*mon_thousands_sep;
-	char	*mon_grouping;
-	char	*positive_sign;
-	char	*negative_sign;
-	char	int_frac_digits;
-	char	frac_digits;
-	char	p_cs_precedes;
-	char	p_sep_by_space;
-	char	n_cs_precedes;
-	char	n_sep_by_space;
-	char	p_sign_posn;
-	char	n_sign_posn;
-	char	int_p_cs_precedes;
-	char	int_n_cs_precedes;
-	char	int_p_sep_by_space;
-	char	int_n_sep_by_space;
-	char	int_p_sign_posn;
-	char	int_n_sign_posn;
-};
-
-#include <sys/null.h>
-
-#define	LC_ALL		0
-#define	LC_COLLATE	1
-#define	LC_CTYPE	2
-#define	LC_MONETARY	3
-#define	LC_NUMERIC	4
-#define	LC_TIME		5
-#define LC_MESSAGES	6
-
-#define	_LC_LAST	7		/* marks end */
+#ifndef _COMPAT_UTIL_H_
+#define	_COMPAT_UTIL_H_
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
+#include <compat/include/pwd.h>
+#include <compat/include/utmp.h>
+#include <compat/include/utmpx.h>
+#include <machine/ansi.h>
 
-#ifdef __SETLOCALE_SOURCE__
+void		login(const struct utmp50 *);
+void		loginx(const struct utmpx50 *);
 
-typedef struct _locale_impl_t		*_locale_t;
+int32_t		parsedate(const char *, const int32_t *, const int *);
 
-#define _LC_GLOBAL_LOCALE		((_locale_t)-1)
+void		pw_copy(int, int, struct passwd50 *, struct passwd50 *);
+int		pw_copyx(int, int, struct passwd50 *, struct passwd50 *,
+    char *, size_t);
+void		pw_getpwconf(char *, size_t, const struct passwd50 *,
+    const char *);
 
-#endif
+void		__login50(const struct utmp *);
+void		__loginx50(const struct utmpx *);
 
-__BEGIN_DECLS
-struct lconv	*localeconv(void);
-#ifdef __SETLOCALE_SOURCE__
-char		*setlocale(int, const char *);
-char		*__setlocale_mb_len_max_32(int, const char *);
-char		*__setlocale(int, const char *);
-#else /* !__SETLOCALE_SOURCE__ */
-char		*setlocale(int, const char *) __RENAME(__setlocale_mb_len_max_32);
-#endif /* !__SETLOCALE_SOURCE__ */
-__END_DECLS
+time_t		__parsedate50(const char *, const time_t *, const int *);
 
-#endif /* _LOCALE_H_ */
+void		__pw_copy50(int, int, struct passwd *, struct passwd *);
+int		__pw_copyx50(int, int, struct passwd *, struct passwd *,
+    char *, size_t);
+void		__pw_getpwconf50(char *, size_t, const struct passwd *,
+    const char *);
+#endif /* !_COMPAT_UTIL_H_ */

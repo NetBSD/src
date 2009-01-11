@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.50 2008/03/03 06:57:48 dholland Exp $	*/
+/*	$NetBSD: signal.h,v 1.51 2009/01/11 03:04:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -180,11 +180,15 @@ void	(*sigset (int, void (*)(int)))(int);
 int	sigwait	(const sigset_t * __restrict, int * __restrict);
 int	sigwaitinfo(const sigset_t * __restrict, siginfo_t * __restrict);
 
+#ifndef __LIBC12_SOURCE__
 struct timespec;
 int	sigtimedwait(const sigset_t * __restrict,
-	    siginfo_t * __restrict, const struct timespec * __restrict);
+    siginfo_t * __restrict, const struct timespec * __restrict)
+    __RENAME(__sigtimedwait50);
 int	__sigtimedwait(const sigset_t * __restrict,
-	    siginfo_t * __restrict, struct timespec * __restrict);
+    siginfo_t * __restrict, struct timespec * __restrict)
+    __RENAME(____sigtimedwait50);
+#endif
 #endif /* _POSIX_C_SOURCE >= 200112 || _XOPEN_SOURCE_EXTENDED || ... */
 
 
