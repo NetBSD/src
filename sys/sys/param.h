@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.337 2009/01/11 03:12:21 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.338 2009/01/11 21:38:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -393,6 +393,18 @@
 #endif
 #ifndef UBC_NWINS
 #define	UBC_NWINS	1024
+#endif
+
+/*
+ * There macros determine if we are running in protected mode or not.
+ *   _HARDKERNEL: code uses kernel namespace and runs in hw priviledged mode
+ *   _SOFTKERNEL: code uses kernel namespace but runs without hw priviledges
+ */
+#if defined(_KERNEL) && !defined(_RUMPKERNEL)
+#define _HARDKERNEL
+#endif
+#if defined(_KERNEL) && defined(_RUMPKERNEL)
+#define _SOFTKERNEL
 #endif
 
 #ifdef _KERNEL
