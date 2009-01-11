@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.111 2008/11/29 15:31:18 tsutsui Exp $
+# $NetBSD: HACKS,v 1.112 2009/01/11 18:25:17 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -472,6 +472,27 @@ port	vax
 	descr
 		Disable several warnings or use -Wno-error across Xorg sources
 		while we get them working
+	kcah
+
+	hack	32 bit time leftovers
+	cdat	11 January 2009
+	who	christos
+	file	lib/libc/time/localtime.c : 1.41
+		lib/libc/time/zic.c : 1.23
+	descr
+		The timezone compiled files still contain 32 bit time_t
+		quantities. I did not want to version the files because
+		the ``parser'' is too ugly for words. What needs to be
+		done, is to rewrite the parser from scratch also to avoid
+		potential core-dumps from parsing invalid files.
+	kcah
+
+	hack	32 bit time leftovers
+	cdat	11 January 2009
+	who	christos
+	file	various
+	descr
+		Many filesystem on-disk formats have 332 bit times.
 	kcah
 
 port	arm
