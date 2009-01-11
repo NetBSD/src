@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_30.c,v 1.2 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: kern_time_30.c,v 1.3 2009/01/11 12:19:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_30.c,v 1.2 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_30.c,v 1.3 2009/01/11 12:19:14 tsutsui Exp $");
 
 #include "opt_ntp.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_30.c,v 1.2 2009/01/11 02:45:47 christos Ex
 #include <compat/sys/time.h>
 #include <compat/sys/timex.h>
 
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 
 int
