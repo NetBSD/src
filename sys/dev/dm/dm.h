@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.6 2009/01/02 11:03:24 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.7 2009/01/11 11:54:52 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ typedef struct dm_dev {
 	char name[DM_NAME_LEN];
 	char uuid[DM_UUID_LEN];
 
-	int minor;
+	uint64_t minor;
 	uint32_t flags; /* store communication protocol flags */
 
 	kmutex_t dev_mtx; /* mutex for generall device lock */

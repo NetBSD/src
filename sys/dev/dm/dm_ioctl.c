@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.4 2008/12/21 00:53:27 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.5 2009/01/11 11:54:52 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
-static uint32_t      sc_minor_num; 
+static uint64_t      sc_minor_num; 
 
 #define DM_REMOVE_FLAG(flag, name) do {					\
 		prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag); \
@@ -225,7 +225,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	if (name)
 		strlcpy(dmv->name, name, DM_NAME_LEN);
 
-	dmv->minor = atomic_inc_32_nv(&sc_minor_num);
+	dmv->minor = atomic_inc_64_nv(&sc_minor_num);
 
 	dmv->flags = 0; /* device flags are set when needed */
 	dmv->ref_cnt = 0;
