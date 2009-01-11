@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_lfs.8,v 1.5 2009/01/11 21:15:32 pooka Exp $
+.\"	$NetBSD: rump_lfs.8,v 1.6 2009/01/11 22:03:15 wiz Exp $
 .\"
 .\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
@@ -72,15 +72,15 @@ To use
 via
 .Xr mount 8 ,
 the flags
-.Fl "o rump"
+.Fl o Ar rump
 and
-.Fl "t lfs"
+.Fl t Ar lfs
 should be given.
 Similarly,
 .Nm
 is run instead of
 .Xr mount_lfs 8
-if 
+if
 .Dq rump
 is added to the options field of
 .Xr fstab 5 .
