@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.338 2009/01/11 21:38:19 pooka Exp $	*/
+/*	$NetBSD: param.h,v 1.339 2009/01/11 22:29:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,12 +82,23 @@
 
 #define	NetBSD	199905		/* NetBSD version (year & month). */
 
+/*
+ * There macros determine if we are running in protected mode or not.
+ *   _HARDKERNEL: code uses kernel namespace and runs in hw priviledged mode
+ *   _SOFTKERNEL: code uses kernel namespace but runs without hw priviledges
+ */
+#if defined(_KERNEL) && !defined(_RUMPKERNEL)
+#define _HARDKERNEL
+#endif
+#if defined(_KERNEL) && defined(_RUMPKERNEL)
+#define _SOFTKERNEL
+#endif
+
 #include <sys/null.h>
 
 #ifndef _LOCORE
 #include <sys/inttypes.h>
 #include <sys/types.h>
-#endif
 
 /*
  * Machine-independent constants (some used in following include files).
@@ -395,18 +406,6 @@
 #define	UBC_NWINS	1024
 #endif
 
-/*
- * There macros determine if we are running in protected mode or not.
- *   _HARDKERNEL: code uses kernel namespace and runs in hw priviledged mode
- *   _SOFTKERNEL: code uses kernel namespace but runs without hw priviledges
- */
-#if defined(_KERNEL) && !defined(_RUMPKERNEL)
-#define _HARDKERNEL
-#endif
-#if defined(_KERNEL) && defined(_RUMPKERNEL)
-#define _SOFTKERNEL
-#endif
-
 #ifdef _KERNEL
 /*
  * macro to convert from milliseconds to hz without integer overflow
@@ -440,5 +439,6 @@ extern size_t coherency_unit;
 #ifndef MIN_LWP_ALIGNMENT
 #define	MIN_LWP_ALIGNMENT	32
 #endif
+#endif /* !_LOCORE */
 
 #endif /* !_SYS_PARAM_H_ */
