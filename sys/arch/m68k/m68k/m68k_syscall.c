@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.36 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.37 2009/01/11 20:40:31 martin Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.36 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.37 2009/01/11 20:40:31 martin Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -287,6 +287,16 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		frame->f_regs[D0] = rval[0];
 		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
+#ifdef COMPAT_50
+		/*
+		 * Starting with the 5.0 release all libc assembler
+		 * stubs properly handle returning pointers in %a0
+		 * themselves, so no need to copy the syscall return
+		 * value there. However, -current binaries post 4.0
+		 * but pre-5.0 might still require this copy, so we
+		 * select this behaviour based on COMPAT_50 as we have
+		 * no equivvalent for the exact in-between version.
+		 */
 #ifdef COMPAT_AOUT_M68K
 		{
 			extern struct emul emul_netbsd_aoutm68k;
@@ -300,6 +310,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		}
 #else
 		frame->f_regs[A0] = rval[0];
+#endif
 #endif
 		break;
 	case ERESTART:
@@ -408,6 +419,8 @@ out:
 		frame->f_regs[D0] = rval[0];
 		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
+#ifdef COMPAT_50
+		/* see syscall_plain for a comment explaining this */
 #ifdef COMPAT_AOUT_M68K
 		{
 			extern struct emul emul_netbsd_aoutm68k;
@@ -420,7 +433,8 @@ out:
 				frame->f_regs[A0] = rval[0];
 		}
 #else
-	frame->f_regs[A0] = rval[0];
+		frame->f_regs[A0] = rval[0];
+#endif
 #endif
 		break;
 	case ERESTART:
