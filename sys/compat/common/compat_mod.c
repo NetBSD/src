@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.4 2008/11/19 23:31:13 cegger Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.5 2009/01/11 02:45:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.4 2008/11/19 23:31:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.5 2009/01/11 02:45:46 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -181,6 +181,52 @@ static const struct syscall_package compat_syscalls[] = {
 
 #if defined(COMPAT_40)
 	{ SYS_compat_40_mount, 0, (sy_call_t *)compat_40_sys_mount },
+#endif
+#if defined(COMPAT_50)
+	{ SYS_compat_50_wait4, 0, (sy_call_t *)compat_50_sys_wait4 },
+	{ SYS_compat_50_mknod, 0, (sy_call_t *)compat_50_sys_mknod },
+	{ SYS_compat_50_setitimer, 0, (sy_call_t *)compat_50_sys_setitimer },
+	{ SYS_compat_50_getitimer, 0, (sy_call_t *)compat_50_sys_getitimer },
+	{ SYS_compat_50_select, 0, (sy_call_t *)compat_50_sys_select },
+	{ SYS_compat_50_gettimeofday, 0, (sy_call_t *)compat_50_sys_gettimeofday },
+	{ SYS_compat_50_getrusage, 0, (sy_call_t *)compat_50_sys_getrusage },
+	{ SYS_compat_50_settimeofday, 0, (sy_call_t *)compat_50_sys_settimeofday },
+	{ SYS_compat_50_utimes, 0, (sy_call_t *)compat_50_sys_utimes },
+	{ SYS_compat_50_adjtime, 0, (sy_call_t *)compat_50_sys_adjtime },
+#ifdef LFS
+	{ SYS_compat_50_lfs_segwait, 0, (sy_call_t *)compat_50_sys_lfs_segwait },
+#endif
+	{ SYS_compat_50_futimes, 0, (sy_call_t *)compat_50_sys_futimes },
+	{ SYS_compat_50_clock_gettime, 0, (sy_call_t *)compat_50_sys_clock_gettime },
+	{ SYS_compat_50_clock_settime, 0, (sy_call_t *)compat_50_sys_clock_settime },
+	{ SYS_compat_50_clock_getres, 0, (sy_call_t *)compat_50_sys_clock_getres },
+	{ SYS_compat_50_timer_settime, 0, (sy_call_t *)compat_50_sys_timer_settime },
+	{ SYS_compat_50_timer_gettime, 0, (sy_call_t *)compat_50_sys_timer_gettime },
+	{ SYS_compat_50_nanosleep, 0, (sy_call_t *)compat_50_sys_nanosleep },
+	{ SYS_compat_50___sigtimedwait, 0, (sy_call_t *)compat_50_sys___sigtimedwait },
+	{ SYS_compat_50_mq_timedsend, 0, (sy_call_t *)compat_50_sys_mq_timedsend },
+	{ SYS_compat_50_mq_timedreceive, 0, (sy_call_t *)compat_50_sys_mq_timedreceive },
+# if defined(SYSVSEM)
+	{ SYS_compat_50_____semctl13, 0, (sy_call_t *)compat_50_sys_____semctl13 },
+# endif
+# if defined(SYSVMSG)
+	{ SYS_compat_50___msgctl13, 0, (sy_call_t *)compat_50_sys___msgctl13 },
+# endif
+# if defined(SYSVSHM)
+	{ SYS_compat_50___shmctl13, 0, (sy_call_t *)compat_50_sys___shmctl13 },
+# endif
+	{ SYS_compat_50__lwp_park, 0, (sy_call_t *)compat_50_sys__lwp_park },
+	{ SYS_compat_50_kevent, 0, (sy_call_t *)compat_50_sys_kevent },
+	{ SYS_compat_50_pselect, 0, (sy_call_t *)compat_50_sys_pselect },
+	{ SYS_compat_50_pollts, 0, (sy_call_t *)compat_50_sys_pollts },
+	{ SYS_compat_50___stat30, 0, (sy_call_t *)compat_50_sys___stat30 },
+	{ SYS_compat_50___fstat30, 0, (sy_call_t *)compat_50_sys___fstat30 },
+	{ SYS_compat_50___lstat30, 0, (sy_call_t *)compat_50_sys___lstat30 },
+# if defined(NTP)
+	{ SYS_compat_50___ntp_gettime30, 0, (sy_call_t *)compat_50_sys___ntp_gettime30 },
+# endif
+	{ SYS_compat_50___fhstat40, 0, (sy_call_t *)compat_50_sys___fhstat40 },
+	{ SYS_compat_50_aio_suspend, 0, (sy_call_t *)compat_50_sys_aio_suspend },
 #endif
 	{ 0, 0, NULL },
 };

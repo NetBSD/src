@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.46 2008/12/30 12:56:12 pooka Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.47 2009/01/11 02:45:46 christos Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.46 2008/12/30 12:56:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.47 2009/01/11 02:45:46 christos Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -144,7 +144,7 @@ vc_nb_open(dev_t dev, int flag, int mode,
 
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
+    if (minor(dev) >= NVCODA)
 	return(ENXIO);
 
     if (!coda_nc_initialized)
@@ -175,7 +175,7 @@ vc_nb_close(dev_t dev, int flag, int mode, struct lwp *l)
 
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
+    if (minor(dev) >= NVCODA)
 	return(ENXIO);
 
     mi = &coda_mnttbl[minor(dev)];
@@ -237,8 +237,8 @@ vc_nb_close(dev_t dev, int flag, int mode, struct lwp *l)
 
     err = dounmount(mi->mi_vfsp, flag, l);
     if (err)
-	myprintf(("Error %d unmounting vfs in vcclose(%d)\n",
-	           err, minor(dev)));
+	myprintf(("Error %d unmounting vfs in vcclose(%llu)\n",
+	           err, (unsigned long long)minor(dev)));
     seldestroy(&vcp->vc_selproc);
     return 0;
 }
@@ -252,7 +252,7 @@ vc_nb_read(dev_t dev, struct uio *uiop, int flag)
 
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
+    if (minor(dev) >= NVCODA)
 	return(ENXIO);
 
     vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
@@ -302,7 +302,7 @@ vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
+    if (minor(dev) >= NVCODA)
 	return(ENXIO);
 
     vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
@@ -441,7 +441,7 @@ vc_nb_poll(dev_t dev, int events, struct lwp *l)
 
     ENTRY;
 
-    if (minor(dev) >= NVCODA || minor(dev) < 0)
+    if (minor(dev) >= NVCODA)
 	return(ENXIO);
 
     vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
@@ -491,7 +491,7 @@ vc_nb_kqfilter(dev_t dev, struct knote *kn)
 
 	ENTRY;
 
-	if (minor(dev) >= NVCODA || minor(dev) < 0)
+	if (minor(dev) >= NVCODA)
 		return(ENXIO);
 
 	vcp = &coda_mnttbl[minor(dev)].mi_vcomm;

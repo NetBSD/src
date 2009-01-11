@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.24 2008/11/14 13:14:12 ad Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.25 2009/01/11 02:45:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.24 2008/11/14 13:14:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.25 2009/01/11 02:45:46 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.24 2008/11/14 13:14:12 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sem.h>
+#include <sys/shm.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -91,12 +92,12 @@ compat_10_sys_semsys(struct lwp *l, const struct compat_10_sys_semsys_args *uap,
 			error = copyin(semctl_arg->buf, &osembuf, sizeof osembuf);
 			if (error != 0)
 				return error;
-			semid_ds14_to_native(&osembuf, &sembuf);
+			__semid_ds14_to_native(&osembuf, &sembuf);
 		}
 		error = semctl1(l, semctl_semid, semctl_semnum, semctl_cmd, 
 		    pass_arg, retval);
 		if (error == 0 && semctl_cmd == IPC_STAT) {
-			native_to_semid_ds14(&sembuf, &osembuf);
+			__native_to_semid_ds14(&sembuf, &osembuf);
 			error = copyout(&osembuf, semctl_arg->buf, sizeof(osembuf));
 		}
 		return error;

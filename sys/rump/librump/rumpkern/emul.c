@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.72 2009/01/07 21:06:53 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.73 2009/01/11 02:45:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.72 2009/01/07 21:06:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.73 2009/01/11 02:45:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -570,7 +570,7 @@ assert_sleepable(void)
 }
 
 void
-tc_setclock(struct timespec *ts)
+tc_setclock(const struct timespec *ts)
 {
 
 	panic("%s: not implemented", __func__);

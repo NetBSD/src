@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscallargs.h,v 1.74 2008/11/19 18:39:43 ad Exp $ */
+/* $NetBSD: freebsd_syscallargs.h,v 1.75 2009/01/11 02:45:47 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -41,7 +41,7 @@ struct sys_open_args;
 
 struct sys_close_args;
 
-struct sys_wait4_args;
+struct compat_50_sys_wait4_args;
 
 struct compat_43_sys_creat_args;
 
@@ -53,7 +53,7 @@ struct sys_chdir_args;
 
 struct sys_fchdir_args;
 
-struct sys_mknod_args;
+struct compat_50_sys_mknod_args;
 
 struct sys_chmod_args;
 
@@ -184,11 +184,11 @@ struct sys_setgroups_args;
 
 struct sys_setpgid_args;
 
-struct sys_setitimer_args;
+struct compat_50_sys_setitimer_args;
 
 struct compat_12_sys_swapon_args;
 
-struct sys_getitimer_args;
+struct compat_50_sys_getitimer_args;
 
 struct compat_43_sys_gethostname_args;
 
@@ -198,7 +198,7 @@ struct sys_dup2_args;
 
 struct sys_fcntl_args;
 
-struct sys_select_args;
+struct compat_50_sys_select_args;
 
 struct sys_fsync_args;
 
@@ -246,9 +246,9 @@ struct sys_vtrace_args;
 #else
 #endif
 
-struct sys_gettimeofday_args;
+struct compat_50_sys_gettimeofday_args;
 
-struct sys_getrusage_args;
+struct compat_50_sys_getrusage_args;
 
 struct sys_getsockopt_args;
 
@@ -256,7 +256,7 @@ struct sys_readv_args;
 
 struct sys_writev_args;
 
-struct sys_settimeofday_args;
+struct compat_50_sys_settimeofday_args;
 
 struct sys_fchown_args;
 
@@ -288,9 +288,9 @@ struct sys_mkdir_args;
 
 struct sys_rmdir_args;
 
-struct sys_utimes_args;
+struct compat_50_sys_utimes_args;
 
-struct sys_adjtime_args;
+struct compat_50_sys_adjtime_args;
 
 struct compat_43_sys_getpeername_args;
 
@@ -393,7 +393,7 @@ struct sys_lfs_markv_args;
 
 struct sys_lfs_segclean_args;
 
-struct sys_lfs_segwait_args;
+struct compat_50_sys_lfs_segwait_args;
 #else
 #endif
 
@@ -452,7 +452,7 @@ check_syscall_args(freebsd_sys_undelete)
 #else
 #endif
 
-struct sys_futimes_args;
+struct compat_50_sys_futimes_args;
 
 struct sys_getpgid_args;
 #if 0
@@ -496,13 +496,13 @@ struct sys_shmget_args;
 #else
 #endif
 
-struct sys_clock_gettime_args;
+struct compat_50_sys_clock_gettime_args;
 
-struct sys_clock_settime_args;
+struct compat_50_sys_clock_settime_args;
 
-struct sys_clock_getres_args;
+struct compat_50_sys_clock_getres_args;
 
-struct sys_nanosleep_args;
+struct compat_50_sys_nanosleep_args;
 
 struct sys_minherit_args;
 
@@ -519,7 +519,7 @@ struct sys_lchmod_args;
 
 struct sys_lchown_args;
 
-struct sys_lutimes_args;
+struct compat_50_sys_lutimes_args;
 
 struct sys___msync13_args;
 
@@ -633,7 +633,7 @@ int	sys_open(struct lwp *, const struct sys_open_args *, register_t *);
 
 int	sys_close(struct lwp *, const struct sys_close_args *, register_t *);
 
-int	sys_wait4(struct lwp *, const struct sys_wait4_args *, register_t *);
+int	compat_50_sys_wait4(struct lwp *, const struct compat_50_sys_wait4_args *, register_t *);
 
 int	compat_43_sys_creat(struct lwp *, const struct compat_43_sys_creat_args *, register_t *);
 
@@ -645,7 +645,7 @@ int	sys_chdir(struct lwp *, const struct sys_chdir_args *, register_t *);
 
 int	sys_fchdir(struct lwp *, const struct sys_fchdir_args *, register_t *);
 
-int	sys_mknod(struct lwp *, const struct sys_mknod_args *, register_t *);
+int	compat_50_sys_mknod(struct lwp *, const struct compat_50_sys_mknod_args *, register_t *);
 
 int	sys_chmod(struct lwp *, const struct sys_chmod_args *, register_t *);
 
@@ -778,13 +778,13 @@ int	sys_getpgrp(struct lwp *, const void *, register_t *);
 
 int	sys_setpgid(struct lwp *, const struct sys_setpgid_args *, register_t *);
 
-int	sys_setitimer(struct lwp *, const struct sys_setitimer_args *, register_t *);
+int	compat_50_sys_setitimer(struct lwp *, const struct compat_50_sys_setitimer_args *, register_t *);
 
 int	compat_43_sys_wait(struct lwp *, const void *, register_t *);
 
 int	compat_12_sys_swapon(struct lwp *, const struct compat_12_sys_swapon_args *, register_t *);
 
-int	sys_getitimer(struct lwp *, const struct sys_getitimer_args *, register_t *);
+int	compat_50_sys_getitimer(struct lwp *, const struct compat_50_sys_getitimer_args *, register_t *);
 
 int	compat_43_sys_gethostname(struct lwp *, const struct compat_43_sys_gethostname_args *, register_t *);
 
@@ -796,7 +796,7 @@ int	sys_dup2(struct lwp *, const struct sys_dup2_args *, register_t *);
 
 int	sys_fcntl(struct lwp *, const struct sys_fcntl_args *, register_t *);
 
-int	sys_select(struct lwp *, const struct sys_select_args *, register_t *);
+int	compat_50_sys_select(struct lwp *, const struct compat_50_sys_select_args *, register_t *);
 
 int	sys_fsync(struct lwp *, const struct sys_fsync_args *, register_t *);
 
@@ -841,9 +841,9 @@ int	sys_vtrace(struct lwp *, const struct sys_vtrace_args *, register_t *);
 
 #else
 #endif
-int	sys_gettimeofday(struct lwp *, const struct sys_gettimeofday_args *, register_t *);
+int	compat_50_sys_gettimeofday(struct lwp *, const struct compat_50_sys_gettimeofday_args *, register_t *);
 
-int	sys_getrusage(struct lwp *, const struct sys_getrusage_args *, register_t *);
+int	compat_50_sys_getrusage(struct lwp *, const struct compat_50_sys_getrusage_args *, register_t *);
 
 int	sys_getsockopt(struct lwp *, const struct sys_getsockopt_args *, register_t *);
 
@@ -851,7 +851,7 @@ int	sys_readv(struct lwp *, const struct sys_readv_args *, register_t *);
 
 int	sys_writev(struct lwp *, const struct sys_writev_args *, register_t *);
 
-int	sys_settimeofday(struct lwp *, const struct sys_settimeofday_args *, register_t *);
+int	compat_50_sys_settimeofday(struct lwp *, const struct compat_50_sys_settimeofday_args *, register_t *);
 
 int	sys_fchown(struct lwp *, const struct sys_fchown_args *, register_t *);
 
@@ -883,9 +883,9 @@ int	sys_mkdir(struct lwp *, const struct sys_mkdir_args *, register_t *);
 
 int	sys_rmdir(struct lwp *, const struct sys_rmdir_args *, register_t *);
 
-int	sys_utimes(struct lwp *, const struct sys_utimes_args *, register_t *);
+int	compat_50_sys_utimes(struct lwp *, const struct compat_50_sys_utimes_args *, register_t *);
 
-int	sys_adjtime(struct lwp *, const struct sys_adjtime_args *, register_t *);
+int	compat_50_sys_adjtime(struct lwp *, const struct compat_50_sys_adjtime_args *, register_t *);
 
 int	compat_43_sys_getpeername(struct lwp *, const struct compat_43_sys_getpeername_args *, register_t *);
 
@@ -965,7 +965,7 @@ int	sys_lfs_markv(struct lwp *, const struct sys_lfs_markv_args *, register_t *)
 
 int	sys_lfs_segclean(struct lwp *, const struct sys_lfs_segclean_args *, register_t *);
 
-int	sys_lfs_segwait(struct lwp *, const struct sys_lfs_segwait_args *, register_t *);
+int	compat_50_sys_lfs_segwait(struct lwp *, const struct compat_50_sys_lfs_segwait_args *, register_t *);
 
 #else
 #endif
@@ -1004,7 +1004,7 @@ int	freebsd_sys_undelete(struct lwp *, const struct freebsd_sys_undelete_args *,
 
 #else
 #endif
-int	sys_futimes(struct lwp *, const struct sys_futimes_args *, register_t *);
+int	compat_50_sys_futimes(struct lwp *, const struct compat_50_sys_futimes_args *, register_t *);
 
 int	sys_getpgid(struct lwp *, const struct sys_getpgid_args *, register_t *);
 
@@ -1046,13 +1046,13 @@ int	sys_shmget(struct lwp *, const struct sys_shmget_args *, register_t *);
 
 #else
 #endif
-int	sys_clock_gettime(struct lwp *, const struct sys_clock_gettime_args *, register_t *);
+int	compat_50_sys_clock_gettime(struct lwp *, const struct compat_50_sys_clock_gettime_args *, register_t *);
 
-int	sys_clock_settime(struct lwp *, const struct sys_clock_settime_args *, register_t *);
+int	compat_50_sys_clock_settime(struct lwp *, const struct compat_50_sys_clock_settime_args *, register_t *);
 
-int	sys_clock_getres(struct lwp *, const struct sys_clock_getres_args *, register_t *);
+int	compat_50_sys_clock_getres(struct lwp *, const struct compat_50_sys_clock_getres_args *, register_t *);
 
-int	sys_nanosleep(struct lwp *, const struct sys_nanosleep_args *, register_t *);
+int	compat_50_sys_nanosleep(struct lwp *, const struct compat_50_sys_nanosleep_args *, register_t *);
 
 int	sys_minherit(struct lwp *, const struct sys_minherit_args *, register_t *);
 
@@ -1066,7 +1066,7 @@ int	compat_30_sys_getdents(struct lwp *, const struct compat_30_sys_getdents_arg
 
 int	sys_lchmod(struct lwp *, const struct sys_lchmod_args *, register_t *);
 
-int	sys_lutimes(struct lwp *, const struct sys_lutimes_args *, register_t *);
+int	compat_50_sys_lutimes(struct lwp *, const struct compat_50_sys_lutimes_args *, register_t *);
 
 int	sys___msync13(struct lwp *, const struct sys___msync13_args *, register_t *);
 

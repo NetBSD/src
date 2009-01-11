@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.13 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.14 2009/01/11 02:46:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -153,7 +153,9 @@ int	__libc_cond_init(cond_t *, const condattr_t *);
 int	__libc_cond_signal(cond_t *);
 int	__libc_cond_broadcast(cond_t *);
 int	__libc_cond_wait(cond_t *, mutex_t *);
+#ifndef __LIBC12_SOURCE__
 int	__libc_cond_timedwait(cond_t *, mutex_t *, const struct timespec *);
+#endif
 int	__libc_cond_destroy(cond_t *);
 __END_DECLS
 

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.60 2008/11/19 18:36:02 ad Exp $
+	$NetBSD: syscalls.master,v 1.61 2009/01/11 02:45:47 christos Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -48,6 +48,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
+#include <compat/sys/time.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 
@@ -68,8 +69,8 @@
 4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
 5	NOARGS		{ int sys_open(const char *path, int flags, int mode); }
 6	NOARGS		{ int sys_close(int fd); }
-7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
-			    struct rusage *rusage); }
+7	NOARGS		{ int compat_50_sys_wait4(int pid, int *status, \
+			    int options, struct rusage50 *rusage); }
 8	NOARGS		{ int compat_43_sys_creat(const char *path, \
 			    int mode); } ocreat
 9	NOARGS		{ int sys_link(const char *path, const char *link); }
@@ -77,7 +78,7 @@
 11	OBSOL		execv
 12	NOARGS		{ int sys_chdir(const char *path); }
 13	NOARGS		{ int sys_fchdir(int fd); }
-14	NOARGS		{ int sys_mknod(const char *path, int mode, int dev); }
+14	NOARGS		{ int compat_50_sys_mknod(const char *path, int mode, int dev); }
 15	NOARGS		{ int sys_chmod(const char *path, int mode); }
 16	NOARGS		{ int sys_chown(const char *path, int uid, int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
@@ -176,12 +177,12 @@
 80	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
 81	NOARGS		{ int sys_getpgrp(void); }
 82	NOARGS		{ int sys_setpgid(int pid, int pgid); }
-83	NOARGS		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
+83	NOARGS		{ int compat_50_sys_setitimer(u_int which, \
+			    struct itimerval50 *itv, struct itimerval50 *oitv); }
 84	NOARGS		{ int compat_43_sys_wait(void); } owait
 85	NOARGS		{ int compat_12_sys_swapon(char *name); }
-86	NOARGS		{ int sys_getitimer(u_int which, \
-			    struct itimerval *itv); }
+86	NOARGS		{ int compat_50_sys_getitimer(u_int which, \
+			    struct itimerval50 *itv); }
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
 			    u_int len); } ogethostname
 88	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
@@ -191,8 +192,8 @@
 90	NOARGS		{ int sys_dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
 92	NOARGS		{ int sys_fcntl(int fd, int cmd, void *arg); }
-93	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
+93	NOARGS		{ int compat_50_sys_select(u_int nd, fd_set *in, \
+			    fd_set *ou, fd_set *ex, struct timeval50 *tv); }
 94	UNIMPL		setdopt
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
@@ -228,9 +229,10 @@
 #else
 115	OBSOL		vtrace
 #endif
-116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
+116	NOARGS		{ int compat_50_sys_gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
+117	NOARGS		{ int compat_50_sys_getrusage(int who, \
+			    struct rusage50 *rusage); }
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, int *avalsize); }
 119	OBSOL		resuba
@@ -238,8 +240,8 @@
 			    u_int iovcnt); }
 121	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
-122	NOARGS		{ int sys_settimeofday(struct timeval *tv, \
-			    struct timezone *tzp); }
+122	NOARGS		{ int compat_50_sys_settimeofday(struct timeval50 *tv, \
+			    struct timezone50 *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
 125	NOARGS		{ int compat_43_sys_recvfrom(int s, void *buf, \
@@ -261,10 +263,11 @@
 			    int protocol, int *rsv); }
 136	NOARGS		{ int sys_mkdir(const char *path, int mode); }
 137	NOARGS		{ int sys_rmdir(const char *path); }
-138	NOARGS		{ int sys_utimes(char *path, struct timeval *tptr); }
+138	NOARGS		{ int compat_50_sys_utimes(char *path, \
+			    struct timeval50 *tptr); }
 139	OBSOL		4.2 sigreturn
-140	NOARGS		{ int sys_adjtime(struct timeval *delta, \
-			    struct timeval *olddelta); }
+140	NOARGS		{ int compat_50_sys_adjtime(struct timeval50 *delta, \
+			    struct timeval50 *olddelta); }
 141	NOARGS		{ int compat_43_sys_getpeername(int fdes, void *asa, \
 			    int *alen); } ogetpeername
 142	NOARGS		{ int32_t compat_43_sys_gethostid(void); } ogethostid
@@ -363,7 +366,8 @@
 185	NOARGS		{ int sys_lfs_markv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
 186	NOARGS		{ int sys_lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	NOARGS		{ int sys_lfs_segwait(fsid_t *fsidp, struct timeval *tv); }
+187	NOARGS		{ int compat_50_sys_lfs_segwait(fsid_t *fsidp, \
+			    struct timeval50 *tv); }
 #else
 184	UNIMPL
 185	UNIMPL
@@ -401,7 +405,8 @@
 #else
 205	UNIMPL		undelete
 #endif
-206	NOARGS		{ int sys_futimes(int fd, const struct timeval *tptr); }
+206	NOARGS		{ int compat_50_sys_futimes(int fd, \
+			    const struct timeval50 *tptr); }
 207	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 #if 0
 208	NOARGS		{ int sys_reboot(int opt, char *bootstr); }
@@ -467,19 +472,20 @@
 #endif
 ;
 ; XXXX
-232	NOARGS		{ int sys_clock_gettime(clockid_t clock_id, \
-			    struct timespec *tp); }
-233	NOARGS		{ int sys_clock_settime(clockid_t clock_id, \
-			    const struct timespec *tp); }
-234	NOARGS		{ int sys_clock_getres(clockid_t clock_id, \
-			    struct timespec *tp); }
+232	NOARGS		{ int compat_50_sys_clock_gettime(clockid_t clock_id, \
+			    struct timespec50 *tp); }
+233	NOARGS		{ int compat_50_sys_clock_settime(clockid_t clock_id, \
+			    const struct timespec50 *tp); }
+234	NOARGS		{ int compat_50_sys_clock_getres(clockid_t clock_id, \
+			    struct timespec50 *tp); }
 235	UNIMPL		timer_create
 236	UNIMPL		timer_delete
 237	UNIMPL		timer_settime
 238	UNIMPL		timer_gettime
 239	UNIMPL		timer_getoverrun
-240	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-			    struct timespec *rmtp); }
+240	NOARGS		{ int compat_50_sys_nanosleep( \
+			    const struct timespec50 *rqtp, \
+			    struct timespec50 *rmtp); }
 241	UNIMPL
 242	UNIMPL
 243	UNIMPL
@@ -518,8 +524,8 @@
 274	NOARGS		{ int sys_lchmod(const char *path, mode_t mode); }
 275	NOARGS		{ int sys_lchown(const char *path, uid_t uid, \
 			    gid_t gid); } netbsd_lchown
-276	NOARGS		{ int sys_lutimes(const char *path, \
-			    const struct timeval *tptr); }
+276	NOARGS		{ int compat_50_sys_lutimes(const char *path, \
+			    const struct timeval50 *tptr); }
 277	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
 278	NOARGS		{ int compat_30_sys___stat13(const char *path, struct stat13 *ub); }
 279	NOARGS		{ int compat_30_sys___fstat13(int fd, struct stat13 *sb); }

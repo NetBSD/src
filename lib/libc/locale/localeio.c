@@ -1,4 +1,4 @@
-/*	$NetBSD: localeio.c,v 1.2 2009/01/02 00:20:20 tnozaki Exp $	*/
+/*	$NetBSD: localeio.c,v 1.3 2009/01/11 02:46:28 christos Exp $	*/
 /*
  * Copyright (c) 2008, The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio.c,v 1.2 2009/01/02 00:20:20 tnozaki Exp $");
+__RCSID("$NetBSD: localeio.c,v 1.3 2009/01/11 02:46:28 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"

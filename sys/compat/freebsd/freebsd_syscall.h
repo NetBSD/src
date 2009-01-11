@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscall.h,v 1.71 2008/11/19 18:39:43 ad Exp $ */
+/* $NetBSD: freebsd_syscall.h,v 1.72 2009/01/11 02:45:47 christos Exp $ */
 
 /*
  * System call numbers.
@@ -33,7 +33,7 @@
 /* syscall: "close" ret: "int" args: "int" */
 #define	FREEBSD_SYS_close	6
 
-/* syscall: "wait4" ret: "int" args: "int" "int *" "int" "struct rusage *" */
+/* syscall: "wait4" ret: "int" args: "int" "int *" "int" "struct rusage50 *" */
 #define	FREEBSD_SYS_wait4	7
 
 /* syscall: "ocreat" ret: "int" args: "const char *" "int" */
@@ -255,7 +255,7 @@
 /* syscall: "setpgid" ret: "int" args: "int" "int" */
 #define	FREEBSD_SYS_setpgid	82
 
-/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval *" "struct itimerval *" */
+/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval50 *" "struct itimerval50 *" */
 #define	FREEBSD_SYS_setitimer	83
 
 /* syscall: "owait" ret: "int" args: */
@@ -264,7 +264,7 @@
 /* syscall: "swapon" ret: "int" args: "char *" */
 #define	FREEBSD_SYS_swapon	85
 
-/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval *" */
+/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval50 *" */
 #define	FREEBSD_SYS_getitimer	86
 
 /* syscall: "ogethostname" ret: "int" args: "char *" "u_int" */
@@ -282,7 +282,7 @@
 /* syscall: "fcntl" ret: "int" args: "int" "int" "void *" */
 #define	FREEBSD_SYS_fcntl	92
 
-/* syscall: "select" ret: "int" args: "u_int" "fd_set *" "fd_set *" "fd_set *" "struct timeval *" */
+/* syscall: "select" ret: "int" args: "u_int" "fd_set *" "fd_set *" "fd_set *" "struct timeval50 *" */
 #define	FREEBSD_SYS_select	93
 
 /* syscall: "fsync" ret: "int" args: "int" */
@@ -350,10 +350,10 @@
 #else
 				/* 115 is obsolete vtrace */
 #endif
-/* syscall: "gettimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
+/* syscall: "gettimeofday" ret: "int" args: "struct timeval50 *" "struct timezone *" */
 #define	FREEBSD_SYS_gettimeofday	116
 
-/* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
+/* syscall: "getrusage" ret: "int" args: "int" "struct rusage50 *" */
 #define	FREEBSD_SYS_getrusage	117
 
 /* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
@@ -366,7 +366,7 @@
 /* syscall: "writev" ret: "int" args: "int" "struct iovec *" "u_int" */
 #define	FREEBSD_SYS_writev	121
 
-/* syscall: "settimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
+/* syscall: "settimeofday" ret: "int" args: "struct timeval50 *" "struct timezone50 *" */
 #define	FREEBSD_SYS_settimeofday	122
 
 /* syscall: "fchown" ret: "int" args: "int" "int" "int" */
@@ -414,11 +414,11 @@
 /* syscall: "rmdir" ret: "int" args: "const char *" */
 #define	FREEBSD_SYS_rmdir	137
 
-/* syscall: "utimes" ret: "int" args: "char *" "struct timeval *" */
+/* syscall: "utimes" ret: "int" args: "char *" "struct timeval50 *" */
 #define	FREEBSD_SYS_utimes	138
 
 				/* 139 is obsolete 4.2 sigreturn */
-/* syscall: "adjtime" ret: "int" args: "struct timeval *" "struct timeval *" */
+/* syscall: "adjtime" ret: "int" args: "struct timeval50 *" "struct timeval50 *" */
 #define	FREEBSD_SYS_adjtime	140
 
 /* syscall: "ogetpeername" ret: "int" args: "int" "void *" "int *" */
@@ -531,7 +531,7 @@
 /* syscall: "lfs_segclean" ret: "int" args: "fsid_t *" "u_long" */
 #define	FREEBSD_SYS_lfs_segclean	186
 
-/* syscall: "lfs_segwait" ret: "int" args: "fsid_t *" "struct timeval *" */
+/* syscall: "lfs_segwait" ret: "int" args: "fsid_t *" "struct timeval50 *" */
 #define	FREEBSD_SYS_lfs_segwait	187
 
 #else
@@ -590,7 +590,7 @@
 
 #else
 #endif
-/* syscall: "futimes" ret: "int" args: "int" "const struct timeval *" */
+/* syscall: "futimes" ret: "int" args: "int" "const struct timeval50 *" */
 #define	FREEBSD_SYS_futimes	206
 
 /* syscall: "getpgid" ret: "pid_t" args: "pid_t" */
@@ -650,16 +650,16 @@
 
 #else
 #endif
-/* syscall: "clock_gettime" ret: "int" args: "clockid_t" "struct timespec *" */
+/* syscall: "clock_gettime" ret: "int" args: "clockid_t" "struct timespec50 *" */
 #define	FREEBSD_SYS_clock_gettime	232
 
-/* syscall: "clock_settime" ret: "int" args: "clockid_t" "const struct timespec *" */
+/* syscall: "clock_settime" ret: "int" args: "clockid_t" "const struct timespec50 *" */
 #define	FREEBSD_SYS_clock_settime	233
 
-/* syscall: "clock_getres" ret: "int" args: "clockid_t" "struct timespec *" */
+/* syscall: "clock_getres" ret: "int" args: "clockid_t" "struct timespec50 *" */
 #define	FREEBSD_SYS_clock_getres	234
 
-/* syscall: "nanosleep" ret: "int" args: "const struct timespec *" "struct timespec *" */
+/* syscall: "nanosleep" ret: "int" args: "const struct timespec50 *" "struct timespec50 *" */
 #define	FREEBSD_SYS_nanosleep	240
 
 /* syscall: "minherit" ret: "int" args: "void *" "size_t" "int" */
@@ -683,7 +683,7 @@
 /* syscall: "netbsd_lchown" ret: "int" args: "const char *" "uid_t" "gid_t" */
 #define	FREEBSD_SYS_netbsd_lchown	275
 
-/* syscall: "lutimes" ret: "int" args: "const char *" "const struct timeval *" */
+/* syscall: "lutimes" ret: "int" args: "const char *" "const struct timeval50 *" */
 #define	FREEBSD_SYS_lutimes	276
 
 /* syscall: "__msync13" ret: "int" args: "void *" "size_t" "int" */

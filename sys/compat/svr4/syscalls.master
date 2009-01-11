@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58 2008/06/18 02:08:36 dogcow Exp $
+	$NetBSD: syscalls.master,v 1.59 2009/01/11 02:45:50 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -252,8 +252,8 @@
 			    int dummy); }
 136	NOARGS		{ int sys_setegid(gid_t egid); }
 137	STD		{ int svr4_sys_sysconfig(int name); }
-138	NOARGS		{ int sys_adjtime(struct timeval *delta, \
-			    struct timeval *olddelta); }
+138	NOARGS		{ int compat_50_sys_adjtime(struct timeval50 *delta, \
+			    struct timeval50 *olddelta); }
 139	STD		{ long svr4_sys_systeminfo(int what, char *buf, \
 			    long len); }
 140	UNIMPL
@@ -271,13 +271,13 @@
 152	UNIMPL		modctl
 153	NOARGS		{ int sys_fchroot(int fd); }
 154	STD		{ int svr4_sys_utimes(const char *path, \
-			    struct timeval *tptr); }
+			    struct timeval50 *tptr); }
 155	STD		{ int svr4_sys_vhangup(void); }
-156	STD		{ int svr4_sys_gettimeofday(struct timeval *tp); }
-157	NOARGS		{ int sys_getitimer(u_int which, \
-			    struct itimerval *itv); }
-158	NOARGS		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
+156	STD		{ int svr4_sys_gettimeofday(struct timeval50 *tp); }
+157	NOARGS		{ int compat_50_sys_getitimer(u_int which, \
+			    struct itimerval50 *itv); }
+158	NOARGS		{ int compat_50_sys_setitimer(u_int which, \
+			    struct itimerval50 *itv, struct itimerval50 *oitv); }
 159	STD		{ int svr4_sys__lwp_create(svr4_ucontext_t *uc, \
 			    unsigned long flags, svr4_lwpid_t *lwpid); }
 160	STD		{ int svr4_sys__lwp_exit(void); }
@@ -326,8 +326,9 @@
 196	UNIMPL		timer_settime
 197	UNIMPL		timer_gettime
 198	UNIMPL		timer_getoverrun
-199	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-			    struct timespec *rmtp); }
+199	NOARGS		{ int compat_50_sys_nanosleep( \
+			    const struct timespec50 *rqtp, \
+			    struct timespec50 *rmtp); }
 200	STD		{ int svr4_sys_facl(int fd, int cmd, int num, \
 			    struct svr4_aclent *buf); }
 201	UNIMPL		door

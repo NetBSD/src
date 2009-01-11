@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.31 2008/10/15 06:51:19 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.32 2009/01/11 02:45:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.31 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.32 2009/01/11 02:45:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,20 +468,21 @@ netbsd32_sigtimedwait_put_timeout(const void *src, void *dst, size_t size)
 }
 
 int
-netbsd32___sigtimedwait(struct lwp *l, const struct netbsd32___sigtimedwait_args *uap, register_t *retval)
+netbsd32_____sigtimedwait50(struct lwp *l, const struct netbsd32_____sigtimedwait50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_sigsetp_t) set;
 		syscallarg(netbsd32_siginfop_t) info;
-		syscallarg(netbsd32_timespecp_t) timeout;
+		syscallarg(netbsd32_timespec50p_t) timeout;
 	} */
-	struct sys___sigtimedwait_args ua;
+	struct sys_____sigtimedwait50_args ua;
 
 	NETBSD32TOP_UAP(set, const sigset_t);
 	NETBSD32TOP_UAP(info, siginfo_t);
 	NETBSD32TOP_UAP(timeout, struct timespec);
 
-	return __sigtimedwait1(l, &ua, retval, netbsd32_sigtimedwait_put_info,
+	return __sigtimedwait1(l, &ua, retval,
+	    netbsd32_sigtimedwait_put_info,
 	    netbsd32_sigtimedwait_fetch_timeout,
 	    netbsd32_sigtimedwait_put_timeout);
 }

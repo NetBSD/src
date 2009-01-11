@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fhstat30.c,v 1.3 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: compat___fhstat30.c,v 1.4 2009/01/11 02:46:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___fhstat30.c,v 1.3 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: compat___fhstat30.c,v 1.4 2009/01/11 02:46:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -40,18 +40,16 @@ __RCSID("$NetBSD: compat___fhstat30.c,v 1.3 2008/04/28 20:22:59 martin Exp $");
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <compat/include/fstypes.h>
+#include <compat/sys/mount.h>
 
 __warn_references(fhstat,
-    "warning: reference to compatibility fhstat(); include <sys/mount.h> to generate correct reference")
-
-int	__fhstat30(const struct compat_30_fhandle *fhp, struct stat *sb);
-int	__fhstat40(const void *fhp, size_t fh_size, struct stat *sb);
+    "warning: reference to compatibility __fhstat30(); include <sys/mount.h> to generate correct reference")
 
 /*
  * Convert old fhstat() call to new calling convention
  */
 int
-__fhstat30(const struct compat_30_fhandle *fhp, struct stat *sb)
+__fhstat30(const struct compat_30_fhandle *fhp, struct stat30 *sb)
 {
 	return __fhstat40(fhp, FHANDLE30_SIZE, sb);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.152 2008/12/29 17:41:18 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.153 2009/01/11 02:45:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.152 2008/12/29 17:41:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.153 2009/01/11 02:45:51 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_compat_netbsd.h"
 #include "opt_sa.h"
 #include "opt_posix.h"
 #include "pty.h"
@@ -71,6 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.152 2008/12/29 17:41:18 pooka Exp 
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
+#endif
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
 #endif
 
 #ifdef KERN_SA
@@ -446,6 +450,17 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System boot time"),
 		       NULL, 0, &boottime, sizeof(boottime),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
+#ifdef COMPAT_50
+	{
+		extern struct timeval50 boottime50;
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_STRUCT, "oboottime",
+			       SYSCTL_DESCR("System boot time"),
+			       NULL, 0, &boottime50, sizeof(boottime50),
+			       CTL_KERN, KERN_OBOOTTIME, CTL_EOL);
+	}
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "domainname",
@@ -3072,7 +3087,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 			ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ki->p_tsess = PTRTOUINT64(tp->t_session);
 		} else {
-			ki->p_tdev = NODEV;
+			ki->p_tdev = (int32_t)NODEV;
 		}
 	}
 
@@ -3210,7 +3225,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ep->e_tsess = tp->t_session;
 		} else
-			ep->e_tdev = NODEV;
+			ep->e_tdev = (uint32_t)NODEV;
 		ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
 		if (SESS_LEADER(p))
 			ep->e_flag |= EPROC_SLEADER;
