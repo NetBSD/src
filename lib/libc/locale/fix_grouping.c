@@ -1,4 +1,4 @@
-/* $NetBSD: fix_grouping.c,v 1.3 2009/01/05 06:11:43 tnozaki Exp $ */
+/* $NetBSD: fix_grouping.c,v 1.4 2009/01/11 02:46:28 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fix_grouping.c,v 1.3 2009/01/05 06:11:43 tnozaki Exp $");
+__RCSID("$NetBSD: fix_grouping.c,v 1.4 2009/01/11 02:46:28 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>

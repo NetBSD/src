@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigaltstack.c,v 1.2 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: compat_sigaltstack.c,v 1.3 2009/01/11 02:46:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,12 +31,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_sigaltstack.c,v 1.2 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: compat_sigaltstack.c,v 1.3 2009/01/11 02:46:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
 
 #include <limits.h>
+#include <sys/time.h>
+#include <compat/sys/time.h>
 #include <signal.h>
 #include <compat/include/signal.h>
 #include <stddef.h>

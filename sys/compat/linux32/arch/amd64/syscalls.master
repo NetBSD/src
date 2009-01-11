@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 2008/12/12 23:36:18 njoly Exp $
+	$NetBSD: syscalls.master,v 1.45 2009/01/11 02:45:49 christos Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -158,8 +158,8 @@
 		    netbsd32_orlimitp_t rlp); }
 76	STD	{ int linux32_sys_getrlimit(u_int which, \
 		    netbsd32_orlimitp_t rlp); }
-77	NOARGS	{ int netbsd32_getrusage(int who, \
-		    netbsd32_rusagep_t rusage); }
+77	NOARGS	{ int compat_50_netbsd32_getrusage(int who, \
+		    netbsd32_rusage50p_t rusage); }
 78	STD	{ int linux32_sys_gettimeofday(netbsd32_timevalp_t tp, \
 		    netbsd32_timezonep_t tzp); }
 79	STD	{ int linux32_sys_settimeofday(netbsd32_timevalp_t tp, \
@@ -200,10 +200,10 @@
 101	UNIMPL	ioperm
 102	STD	{ int linux32_sys_socketcall(int what, netbsd32_voidp args); }
 103	UNIMPL	syslog
-104	NOARGS	{ int netbsd32_setitimer(int which, \
-		    netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
-105	NOARGS	{ int netbsd32_getitimer(int which, \
-		    netbsd32_itimervalp_t itv); }
+104	NOARGS	{ int compat_50_netbsd32_setitimer(int which, \
+		    netbsd32_itimerval50p_t itv, netbsd32_itimerval50p_t oitv); }
+105	NOARGS	{ int compat_50_netbsd32_getitimer(int which, \
+		    netbsd32_itimerval50p_t itv); }
 106	UNIMPL	stat
 107	UNIMPL	lstat
 108	UNIMPL	fstat

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.29 2009/01/05 09:18:27 njoly Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.30 2009/01/11 02:45:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,8 @@
 #include <compat/linux/arch/amd64/linux_types.h>
 #else
 typedef unsigned long linux_clock_t;
-typedef unsigned long linux_time_t;
+typedef long linux_time_t;
+typedef long linux_suseconds_t;
 #endif
 
 typedef unsigned short linux_gid16_t;
@@ -83,6 +84,11 @@ struct linux_tms {
 	linux_clock_t ltms_stime;
 	linux_clock_t ltms_cutime;
 	linux_clock_t ltms_cstime;
+};
+
+struct linux_timeval {
+	linux_time_t tv_sec;
+	linux_suseconds_t tv_usec;
 };
 
 struct linux_utimbuf {

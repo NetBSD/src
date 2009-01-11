@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.147 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.148 2009/01/11 02:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.147 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.148 2009/01/11 02:45:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,8 +370,8 @@ ktraddentry(lwp_t *l, struct ktrace_entry *kte, int flags)
 			timersub(&t2, &t1, &t2);
 			if (t2.tv_sec > 0)
 				log(LOG_NOTICE,
-				    "ktrace long wait: %ld.%06ld\n",
-				    t2.tv_sec, t2.tv_usec);
+				    "ktrace long wait: %lld.%06ld\n",
+				    (long long)t2.tv_sec, (long)t2.tv_usec);
 #endif
 		} while (p->p_tracep == ktd &&
 		    (ktd->ktd_flags & (KTDF_WAIT | KTDF_DONE)) == KTDF_WAIT);
@@ -486,6 +486,7 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	struct proc *p = l->l_proc;
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
+	struct timespec ts;
 	void *buf;
 
 	if (ktrenter(l))
@@ -512,18 +513,26 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
 	kth->ktr_version = KTRFAC_VERSION(p->p_traceflag);
 
-	switch (KTRFAC_VERSION(p->p_traceflag)) {
-	case 0:
-		/* This is the original format */
-		microtime(&kth->ktr_tv);
-		break;
-	case 1:
+        nanotime(&ts);
+        switch (KTRFAC_VERSION(p->p_traceflag)) {
+        case 0:
+                /* This is the original format */
+                kth->ktr_otv.tv_sec = ts.tv_sec;
+                kth->ktr_otv.tv_usec = ts.tv_nsec / 1000;
+                break;
+        case 1: 
+		kth->ktr_olid = l->l_lid;
+                kth->ktr_ots.tv_sec = ts.tv_sec;
+                kth->ktr_ots.tv_nsec = ts.tv_nsec;       
+                break; 
+        case 2:
 		kth->ktr_lid = l->l_lid;
-		nanotime(&kth->ktr_time);
-		break;
-	default:
-		break;
-	}
+                kth->ktr_ts.tv_sec = ts.tv_sec;
+                kth->ktr_ts.tv_nsec = ts.tv_nsec;       
+                break; 
+        default:
+                break; 
+        }
 
 	*ktep = kte;
 	*bufp = buf;
@@ -813,23 +822,13 @@ ktr_csw(int out, int user)
 	 * from that is difficult to do. 
 	 */
 	if (out) {
+		struct timespec ts;
 		if (ktrenter(l))
 			return;
 
-		switch (KTRFAC_VERSION(p->p_traceflag)) {
-		case 0:
-			/* This is the original format */
-			microtime(&l->l_ktrcsw.tv);
-			l->l_pflag |= LP_KTRCSW;
-			break;
-		case 1:
-			nanotime(&l->l_ktrcsw.ts);
-			l->l_pflag |= LP_KTRCSW;
-			break;
-		default:
-			break;
-		}
-
+		nanotime(&l->l_ktrcsw);
+		l->l_pflag |= LP_KTRCSW;
+		nanotime(&ts);
 		if (user)
 			l->l_pflag |= LP_KTRCSWUSER;
 		else
@@ -844,6 +843,7 @@ ktr_csw(int out, int user)
 	 * once for exit.
 	 */
 	if ((l->l_pflag & LP_KTRCSW) != 0) {
+		struct timespec *ts;
 		l->l_pflag &= ~LP_KTRCSW;
 
 		if (ktealloc(&kte, (void *)&kc, l, KTR_CSW, sizeof(*kc)))
@@ -852,18 +852,22 @@ ktr_csw(int out, int user)
 		kc->out = 1;
 		kc->user = ((l->l_pflag & LP_KTRCSWUSER) != 0);
 
+		ts = &l->l_ktrcsw;
 		switch (KTRFAC_VERSION(p->p_traceflag)) {
 		case 0:
-			/* This is the original format */
-			memcpy(&kte->kte_kth.ktr_tv, &l->l_ktrcsw.tv,
-			    sizeof(kte->kte_kth.ktr_tv));
+			kte->kte_kth.ktr_otv.tv_sec = ts->tv_sec;
+			kte->kte_kth.ktr_otv.tv_usec = ts->tv_nsec / 1000;
 			break;
-		case 1:
-			memcpy(&kte->kte_kth.ktr_time, &l->l_ktrcsw.ts,
-			    sizeof(kte->kte_kth.ktr_time));
-			break;
+		case 1: 
+			kte->kte_kth.ktr_ots.tv_sec = ts->tv_sec;
+			kte->kte_kth.ktr_ots.tv_nsec = ts->tv_nsec;       
+			break; 
+		case 2:
+			kte->kte_kth.ktr_ts.tv_sec = ts->tv_sec;
+			kte->kte_kth.ktr_ts.tv_nsec = ts->tv_nsec;       
+			break; 
 		default:
-			break;
+			break; 
 		}
 
 		ktraddentry(l, kte, KTA_WAITOK);
@@ -1304,6 +1308,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 	switch (vers) {
 	case KTRFACv0:
 	case KTRFACv1:
+	case KTRFACv2:
 		break;
 	default:
 		error = EINVAL;
@@ -1390,6 +1395,7 @@ ktrsetchildren(lwp_t *curl, struct proc *top, int ops, int facs,
 void
 ktrwrite(struct ktr_desc *ktd, struct ktrace_entry *kte)
 {
+	size_t hlen;
 	struct uio auio;
 	struct iovec aiov[64], *iov;
 	struct ktrace_entry *top = kte;
@@ -1404,18 +1410,35 @@ next:
 	auio.uio_iovcnt = 0;
 	UIO_SETUP_SYSSPACE(&auio);
 	do {
+		struct timespec ts;
+		lwpid_t lid;
 		kth = &kte->kte_kth;
 
-		if (kth->ktr_version == 0) {
-			/*
-			 * Convert back to the old format fields
-			 */
-			TIMESPEC_TO_TIMEVAL(&kth->ktr_tv, &kth->ktr_time);
+		hlen = sizeof(struct ktr_header);
+		switch (kth->ktr_version) {
+		case 0:
+			ts = kth->ktr_time;
+
+			kth->ktr_otv.tv_sec = ts.tv_sec;
+			kth->ktr_otv.tv_usec = ts.tv_nsec / 1000;
 			kth->ktr_unused = NULL;
+			hlen -= sizeof(kth->_v) -
+			    MAX(sizeof(kth->_v._v0), sizeof(kth->_v._v1));
+			break;
+		case 1:
+			ts = kth->ktr_time;
+			lid = kth->ktr_lid;
+
+			kth->ktr_ots.tv_sec = ts.tv_sec;
+			kth->ktr_ots.tv_nsec = ts.tv_nsec;
+			kth->ktr_olid = lid;
+			hlen -= sizeof(kth->_v) -
+			    MAX(sizeof(kth->_v._v0), sizeof(kth->_v._v1));
+			break;
 		}
 		iov->iov_base = (void *)kth;
-		iov++->iov_len = sizeof(struct ktr_header);
-		auio.uio_resid += sizeof(struct ktr_header);
+		iov++->iov_len = hlen;
+		auio.uio_resid += hlen;
 		auio.uio_iovcnt++;
 		if (kth->ktr_len > 0) {
 			iov->iov_base = kte->kte_buf;

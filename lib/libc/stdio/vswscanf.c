@@ -1,4 +1,4 @@
-/*	$NetBSD: vswscanf.c,v 1.4 2008/11/16 03:16:00 christos Exp $	*/
+/*	$NetBSD: vswscanf.c,v 1.5 2009/01/11 02:46:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vswscanf.c,v 1.3 2004/04/07 09:55:05 tjr Exp $");
 #else
-__RCSID("$NetBSD: vswscanf.c,v 1.4 2008/11/16 03:16:00 christos Exp $");
+__RCSID("$NetBSD: vswscanf.c,v 1.5 2009/01/11 02:46:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

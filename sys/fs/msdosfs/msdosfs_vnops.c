@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.55 2008/11/28 10:57:03 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.56 2009/01/11 02:45:51 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.55 2008/11/28 10:57:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.56 2009/01/11 02:45:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1809,7 +1809,8 @@ msdosfs_print(v)
 	printf(
 	    "tag VT_MSDOSFS, startcluster %ld, dircluster %ld, diroffset %ld ",
 	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
-	printf(" dev %d, %d ", major(dep->de_dev), minor(dep->de_dev));
+	printf(" dev %llu, %llu ", (unsigned long long)major(dep->de_dev),
+	    (unsigned long long)minor(dep->de_dev));
 	printf("\n");
 	return (0);
 }

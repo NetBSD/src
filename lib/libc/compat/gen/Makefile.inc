@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2008/10/26 07:43:07 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2009/01/11 02:46:24 christos Exp $
 
 .PATH: ${COMPATDIR}/gen
 SRCS+=compat_errlist.c compat_fts.c compat___fts13.c compat___fts30.c \
@@ -6,7 +6,9 @@ SRCS+=compat_errlist.c compat_fts.c compat___fts13.c compat___fts30.c \
     compat_opendir.c compat_readdir.c compat__readdir_unlocked30.c \
     compat_scandir.c compat_siglist.c compat_signame.c compat_sigsetops.c \
     compat_times.c compat_timezone.c compat_unvis.c compat_utmpx.c \
-    compat__sys_errlist.c compat__sys_nerr.c compat__sys_siglist.c
+    compat__sys_errlist.c compat__sys_nerr.c compat__sys_siglist.c \
+    compat_time.c compat_utime.c compat_devname.c compat_getdevmajor.c \
+    compat_getpwent.c compat___fts32.c compat_utmp.c
 
 LIBMINC=-I${LIBCDIR}/../libm/src -DUSE_LIBM
 CPPFLAGS.compat_frexp_ieee754.c += ${LIBMINC}

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.2 2009/01/11 02:46:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,7 @@
 #ifndef _COMPAT_TIME_H_
 #define	_COMPAT_TIME_H_
 
+#include <compat/sys/time.h>
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
 #define CLK_TCK 100
@@ -48,11 +49,46 @@ __BEGIN_DECLS
 #if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
 char *strptime(const char * __restrict, const char * __restrict,
     struct tm * __restrict);
+#if 0
 #if defined(_NETBSD_SOURCE)
 char *timezone(int, int);
 #endif /* _NETBSD_SOURCE */
+#endif
 
 #endif /* !_ANSI_SOURCE */
-__END_DECLS
+char *ctime(const int32_t *);
+double difftime(int32_t, int32_t);
+struct tm *gmtime(const int32_t *);
+struct tm *localtime(const int32_t *);
+int32_t time(int32_t *);
+int32_t mktime(struct tm *);
+void tzset(void);
+void tzsetwall(void);
+void __tzset50(void);
+void __tzsetwall50(void);
 
+int clock_getres(clockid_t, struct timespec50 *);
+int clock_gettime(clockid_t, struct timespec50 *);
+int clock_settime(clockid_t, const struct timespec50 *);
+int __clock_getres50(clockid_t, struct timespec *);
+int __clock_gettime50(clockid_t, struct timespec *);
+int __clock_settime50(clockid_t, const struct timespec *);
+int nanosleep(const struct timespec50 *, struct timespec50 *);
+int __nanosleep50(const struct timespec *, struct timespec *);
+int timer_gettime(timer_t, struct itimerspec50 *);
+int timer_settime(timer_t, int, const struct itimerspec50 * __restrict, 
+    struct itimerspec50 * __restrict);
+int __timer_gettime50(timer_t, struct itimerspec *);
+int __timer_settime50(timer_t, int, const struct itimerspec * __restrict, 
+    struct itimerspec * __restrict);
+int __timer_getres50(timer_t, struct itimerspec *);
+char *ctime_r(const int32_t *, char *);
+struct tm *gmtime_r(const int32_t * __restrict, struct tm * __restrict);
+struct tm *localtime_r(const int32_t * __restrict, struct tm * __restrict);
+struct tm *offtime(const int32_t *, long);
+int32_t timelocal(struct tm *);
+int32_t timegm(struct tm *);
+int32_t timeoff(struct tm *, long);
+int32_t time2posix(int32_t);
+int32_t posix2time(int32_t);
 #endif /* !_COMPAT_TIME_H_ */

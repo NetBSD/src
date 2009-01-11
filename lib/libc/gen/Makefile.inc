@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.166 2009/01/02 00:20:19 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.167 2009/01/11 02:46:27 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources

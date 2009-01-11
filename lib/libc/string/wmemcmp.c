@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemcmp.c,v 1.5 2009/01/05 06:11:43 tnozaki Exp $	*/
+/*	$NetBSD: wmemcmp.c,v 1.6 2009/01/11 02:46:30 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemcmp.c,v 1.5 2009/01/05 06:11:43 tnozaki Exp $");
+__RCSID("$NetBSD: wmemcmp.c,v 1.6 2009/01/11 02:46:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>

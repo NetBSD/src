@@ -1,4 +1,4 @@
-/*	$NetBSD: settimeofday.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $ */
+/*	$NetBSD: settimeofday.c,v 1.13 2009/01/11 02:46:30 christos Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: settimeofday.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $");
+__RCSID("$NetBSD: settimeofday.c,v 1.13 2009/01/11 02:46:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,18 +51,12 @@ __RCSID("$NetBSD: settimeofday.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $");
 #include <time.h>
 #include <unistd.h>
  
-#ifdef __weak_alias
-__weak_alias(settimeofday,_settimeofday)
-#endif 
-
 int __clockctl_fd = -1;
 
-int __settimeofday(const struct timeval *, const void *);
+int ____settimeofday50(const struct timeval *, const void *);
 
 int
-settimeofday(tv, tzp)
-	const struct timeval *tv;
-	const void *tzp;
+settimeofday(const struct timeval *tv, const void *tzp)
 {
 	struct clockctl_settimeofday args;
 	int rv;
@@ -72,7 +66,7 @@ settimeofday(tv, tzp)
 	 * if that fails with EPERM
 	 */
 	if (__clockctl_fd == -1) {
-		rv = __settimeofday(tv, tzp);
+		rv = ____settimeofday50(tv, tzp);
 	
 		/*
 		 * switch to clockctl if we fail with EPERM, this

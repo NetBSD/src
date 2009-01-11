@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.9 2008/11/12 12:36:28 ad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.10 2009/01/11 02:45:55 christos Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.9 2008/11/12 12:36:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.10 2009/01/11 02:45:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -173,25 +173,21 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 
 		case KAUTH_REQ_SYSTEM_TIME_SYSTEM: {
 			struct timespec *ts = arg1;
-			struct timeval *delta = arg2;
+			struct timespec *delta = arg2;
 
 			/*
-			 * Don't allow the time to be set forward so far it will wrap
-			 * and become negative, thus allowing an attacker to bypass
-			 * the next check below.  The cutoff is 1 year before rollover
-			 * occurs, so even if the attacker uses adjtime(2) to move
-			 * the time past the cutoff, it will take a very long time
+			 * Don't allow the time to be set forward so far it
+			 * will wrap and become negative, thus allowing an
+			 * attacker to bypass the next check below.  The
+			 * cutoff is 1 year before rollover occurs, so even
+			 * if the attacker uses adjtime(2) to move the time
+			 * past the cutoff, it will take a very long time
 			 * to get to the wrap point.
-			 *
-			 * XXX: we check against INT_MAX since on 64-bit
-			 *      platforms, sizeof(int) != sizeof(long) and
-			 *      time_t is 32 bits even when atv.tv_sec is 64 bits.
 			 */
 			if (securelevel > 1 &&
-			    ((ts->tv_sec > INT_MAX - 365*24*60*60) ||
-			     (delta->tv_sec < 0 || delta->tv_usec < 0)))
+			    ((ts->tv_sec > LLONG_MAX - 365*24*60*60) ||
+			     (delta->tv_sec < 0 || delta->tv_nsec < 0)))
 				result = KAUTH_RESULT_DENY;
-
 			break;
 		}
 

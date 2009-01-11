@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___stat13.c,v 1.3 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: compat___stat13.c,v 1.4 2009/01/11 02:46:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___stat13.c,v 1.3 2006/07/31 16:34:42 martin Exp $");
+__RCSID("$NetBSD: compat___stat13.c,v 1.4 2009/01/11 02:46:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: compat___stat13.c,v 1.3 2006/07/31 16:34:42 martin Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <compat/sys/time.h>
 #include <compat/sys/stat.h>
 #include <compat/sys/mount.h>
 
@@ -68,17 +69,21 @@ static void
 cvtstat(struct stat13 *ost, const struct stat *st)
 {
 
-	ost->st_dev = st->st_dev;
+	ost->st_dev = (uint32_t)st->st_dev;
 	ost->st_ino = (uint32_t)st->st_ino;
 	ost->st_mode = st->st_mode;
 	ost->st_nlink = st->st_nlink;
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
-	ost->st_rdev = st->st_rdev;
-	ost->st_atimespec = st->st_atimespec;
-	ost->st_mtimespec = st->st_mtimespec;
-	ost->st_ctimespec = st->st_ctimespec;
-	ost->st_birthtimespec = st->st_birthtimespec;
+	ost->st_rdev = (uint32_t)st->st_rdev;
+	ost->st_atimespec.tv_sec = (int32_t)st->st_atimespec.tv_sec;
+	ost->st_atimespec.tv_nsec = st->st_atimespec.tv_nsec;
+	ost->st_mtimespec.tv_sec = (int32_t)st->st_mtimespec.tv_sec;
+	ost->st_mtimespec.tv_nsec = st->st_mtimespec.tv_nsec;
+	ost->st_ctimespec.tv_sec = (int32_t)st->st_ctimespec.tv_sec;
+	ost->st_ctimespec.tv_nsec = st->st_ctimespec.tv_nsec;
+	ost->st_birthtimespec.tv_sec = (int32_t)st->st_birthtimespec.tv_sec;
+	ost->st_birthtimespec.tv_nsec = st->st_birthtimespec.tv_nsec;
 	ost->st_size = st->st_size;
 	ost->st_blocks = st->st_blocks;
 	ost->st_blksize = st->st_blksize;
@@ -92,7 +97,7 @@ __stat13(const char *file, struct stat13 *ost)
 	struct stat nst;
 	int ret;
 
-	if ((ret = __stat30(file, &nst)) == -1)
+	if ((ret = __stat50(file, &nst)) == -1)
 		return ret;
 	cvtstat(ost, &nst);
 	return ret;
@@ -104,7 +109,7 @@ __fstat13(int f, struct stat13 *ost)
 	struct stat nst;
 	int ret;
 
-	if ((ret = __fstat30(f, &nst)) == -1)
+	if ((ret = __fstat50(f, &nst)) == -1)
 		return ret;
 	cvtstat(ost, &nst);
 	return ret;
@@ -116,7 +121,7 @@ __lstat13(const char *file, struct stat13 *ost)
 	struct stat nst;
 	int ret;
 
-	if ((ret = __lstat30(file, &nst)) == -1)
+	if ((ret = __lstat50(file, &nst)) == -1)
 		return ret;
 	cvtstat(ost, &nst);
 	return ret;
@@ -128,7 +133,7 @@ fhstat(const struct compat_30_fhandle *fh, struct stat13 *ost)
 	struct stat nst;
 	int ret;
 
-	if ((ret = __fhstat30(fh, &nst)) == -1)
+	if ((ret = __fhstat50((const void *)fh, /* FHANDLE_SIZE_COMPAT */28, &nst)) == -1)
 		return ret;
 	cvtstat(ost, &nst);
 	return ret;

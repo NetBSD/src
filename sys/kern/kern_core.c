@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.13 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.14 2009/01/11 02:45:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.13 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.14 2009/01/11 02:45:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -240,8 +240,8 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 				    p->p_pgrp->pg_session->s_login);
 				break;
 			case 't':
-				i = snprintf(d, end - d, "%ld",
-				    p->p_stats->p_start.tv_sec);
+				i = snprintf(d, end - d, "%lld",
+				    (long long)p->p_stats->p_start.tv_sec);
 				break;
 			default:
 				goto copy;

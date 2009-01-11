@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.27 2008/11/19 18:39:44 ad Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.28 2009/01/11 02:45:48 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -174,14 +174,14 @@ struct linux_sys_nanosleep_args {
 };
 check_syscall_args(linux_sys_nanosleep)
 
-struct sys_getitimer_args;
+struct compat_50_sys_getitimer_args;
 
 struct linux_sys_alarm_args {
 	syscallarg(unsigned int) secs;
 };
 check_syscall_args(linux_sys_alarm)
 
-struct sys_setitimer_args;
+struct compat_50_sys_setitimer_args;
 
 struct linux_sys_socket_args {
 	syscallarg(int) domain;
@@ -439,7 +439,7 @@ struct linux_sys_getrlimit_args {
 };
 check_syscall_args(linux_sys_getrlimit)
 
-struct sys_getrusage_args;
+struct compat_50_sys_getrusage_args;
 
 struct linux_sys_sysinfo_args {
 	syscallarg(struct linux_sysinfo *) arg;
@@ -965,11 +965,11 @@ int	linux_sys_pause(struct lwp *, const void *, register_t *);
 
 int	linux_sys_nanosleep(struct lwp *, const struct linux_sys_nanosleep_args *, register_t *);
 
-int	sys_getitimer(struct lwp *, const struct sys_getitimer_args *, register_t *);
+int	compat_50_sys_getitimer(struct lwp *, const struct compat_50_sys_getitimer_args *, register_t *);
 
 int	linux_sys_alarm(struct lwp *, const struct linux_sys_alarm_args *, register_t *);
 
-int	sys_setitimer(struct lwp *, const struct sys_setitimer_args *, register_t *);
+int	compat_50_sys_setitimer(struct lwp *, const struct compat_50_sys_setitimer_args *, register_t *);
 
 int	linux_sys_getpid(struct lwp *, const void *, register_t *);
 
@@ -1096,7 +1096,7 @@ int	linux_sys_gettimeofday(struct lwp *, const struct linux_sys_gettimeofday_arg
 
 int	linux_sys_getrlimit(struct lwp *, const struct linux_sys_getrlimit_args *, register_t *);
 
-int	sys_getrusage(struct lwp *, const struct sys_getrusage_args *, register_t *);
+int	compat_50_sys_getrusage(struct lwp *, const struct compat_50_sys_getrusage_args *, register_t *);
 
 int	linux_sys_sysinfo(struct lwp *, const struct linux_sys_sysinfo_args *, register_t *);
 

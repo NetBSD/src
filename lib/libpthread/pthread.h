@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.32 2008/07/18 16:17:11 pooka Exp $	*/
+/*	$NetBSD: pthread.h,v 1.33 2009/01/11 02:46:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,8 +105,10 @@ int	pthread_cond_init(pthread_cond_t * __restrict,
 int	pthread_cond_destroy(pthread_cond_t *);
 int	pthread_cond_wait(pthread_cond_t * __restrict,
 	    pthread_mutex_t * __restrict);
+#ifndef __LIBC12_SOURCE__
 int	pthread_cond_timedwait(pthread_cond_t * __restrict,
 	    pthread_mutex_t * __restrict, const struct timespec * __restrict);
+#endif
 int	pthread_cond_signal(pthread_cond_t *);
 int	pthread_cond_broadcast(pthread_cond_t *);
 int	pthread_condattr_init(pthread_condattr_t *);
@@ -162,10 +164,12 @@ int	pthread_rwlock_rdlock(pthread_rwlock_t *);
 int	pthread_rwlock_tryrdlock(pthread_rwlock_t *);
 int	pthread_rwlock_wrlock(pthread_rwlock_t *);
 int	pthread_rwlock_trywrlock(pthread_rwlock_t *);
+#ifndef __LIBC12_SOURCE__
 int	pthread_rwlock_timedrdlock(pthread_rwlock_t * __restrict,
 	    const struct timespec * __restrict);
 int	pthread_rwlock_timedwrlock(pthread_rwlock_t * __restrict,
 	    const struct timespec * __restrict);
+#endif
 int	pthread_rwlock_unlock(pthread_rwlock_t *);
 int	pthread_rwlockattr_init(pthread_rwlockattr_t *);
 int	pthread_rwlockattr_destroy(pthread_rwlockattr_t *);
@@ -310,8 +314,10 @@ int	__libc_cond_signal(pthread_cond_t *);
 int	__libc_cond_broadcast(pthread_cond_t *);
 int	__libc_cond_wait(pthread_cond_t * __restrict,
 	    pthread_mutex_t * __restrict);
+#ifndef __LIBC12_SOURCE__
 int	__libc_cond_timedwait(pthread_cond_t * __restrict,
 	    pthread_mutex_t * __restrict, const struct timespec * __restrict);
+#endif
 int	__libc_cond_destroy(pthread_cond_t *);
 __END_DECLS
 

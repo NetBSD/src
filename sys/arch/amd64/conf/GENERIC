@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.235 2008/12/14 00:45:03 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.236 2009/01/11 02:45:45 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.235 $"
+#ident 		"GENERIC-$Revision: 1.236 $"
 
 maxusers	64		# estimated number of users
 
@@ -113,6 +113,7 @@ options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
+options 	COMPAT_50	# NetBSD 5.0
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_OSSAUDIO

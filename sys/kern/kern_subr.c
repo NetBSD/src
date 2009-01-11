@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.197 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.198 2009/01/11 02:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.197 2008/12/19 17:11:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.198 2009/01/11 02:45:52 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1000,18 +1000,19 @@ setroot(struct device *bootdv, int bootpartition)
 
 		rootdevname = devsw_blk2name(major(rootdev));
 		if (rootdevname == NULL) {
-			printf("unknown device major 0x%x\n", rootdev);
+			printf("unknown device major 0x%llx\n",
+			    (unsigned long long)rootdev);
 			boothowto |= RB_ASKNAME;
 			goto top;
 		}
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "%s%d", rootdevname,
-		    DISKUNIT(rootdev));
+		snprintf(buf, sizeof(buf), "%s%llu", rootdevname,
+		    (unsigned long long)DISKUNIT(rootdev));
 
 		rootdv = finddevice(buf);
 		if (rootdv == NULL) {
-			printf("device %s (0x%x) not configured\n",
-			    buf, rootdev);
+			printf("device %s (0x%llx) not configured\n",
+			    buf, (unsigned long long)rootdev);
 			boothowto |= RB_ASKNAME;
 			goto top;
 		}
@@ -1026,7 +1027,7 @@ setroot(struct device *bootdv, int bootpartition)
 	case DV_DISK:
 		aprint_normal("root on %s", device_xname(rootdv));
 		if (DEV_USES_PARTITIONS(rootdv))
-			aprint_normal("%c", DISKPART(rootdev) + 'a');
+			aprint_normal("%c", (int)DISKPART(rootdev) + 'a');
 		break;
 
 	default:
@@ -1069,8 +1070,8 @@ setroot(struct device *bootdv, int bootpartition)
 		if (dumpdevname == NULL)
 			goto nodumpdev;
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "%s%d", dumpdevname,
-		    DISKUNIT(dumpdev));
+		snprintf(buf, sizeof(buf), "%s%llu", dumpdevname,
+		    (unsigned long long)DISKUNIT(dumpdev));
 
 		dumpdv = finddevice(buf);
 		if (dumpdv == NULL) {
@@ -1103,7 +1104,7 @@ setroot(struct device *bootdv, int bootpartition)
 	dumpcdev = devsw_blk2chr(dumpdev);
 	aprint_normal(" dumps on %s", device_xname(dumpdv));
 	if (DEV_USES_PARTITIONS(dumpdv))
-		aprint_normal("%c", DISKPART(dumpdev) + 'a');
+		aprint_normal("%c", (int)DISKPART(dumpdev) + 'a');
 	aprint_normal("\n");
 	return;
 

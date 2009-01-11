@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.1 2009/01/05 06:11:43 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.2 2009/01/11 02:46:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

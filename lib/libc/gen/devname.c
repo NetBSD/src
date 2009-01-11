@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.17 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: devname.c,v 1.18 2009/01/11 02:46:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)devname.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: devname.c,v 1.17 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: devname.c,v 1.18 2009/01/11 02:46:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -122,7 +122,7 @@ devname(dev, type)
 	}
 	/* initialise dev cache */
 	if (!failure && devtb == NULL) {
-		devtb = (DEVC **)calloc(DEV_SZ, sizeof(DEVC *));
+		devtb = calloc(DEV_SZ, sizeof(DEVC *));
 		if (devtb == NULL)
 			failure= 1;
 	}
@@ -130,7 +130,7 @@ devname(dev, type)
 		return (NULL);
 
 	/* see if we have this dev/type cached */
-	pptr = devtb + ((dev + type) % DEV_SZ);
+	pptr = devtb + (size_t)((dev + type) % DEV_SZ);
 	ptr = *pptr;
 
 	if (ptr && ptr->valid > 0 && ptr->dev == dev && ptr->type == type) {
@@ -140,14 +140,14 @@ devname(dev, type)
 	}
 
 	if (ptr == NULL)
-		*pptr = ptr = (DEVC *)malloc(sizeof(DEVC));
+		*pptr = ptr = malloc(sizeof(DEVC));
 
 	/*
 	 * Keys are a mode_t followed by a dev_t.  The former is the type of
 	 * the file (mode & S_IFMT), the latter is the st_rdev field.  Be
 	 * sure to clear any padding that may be found in bkey.
 	 */
-	memset(&bkey, 0, sizeof(bkey));
+	(void)memset(&bkey, 0, sizeof(bkey));
 	bkey.dev = dev;
 	bkey.type = type;
 	key.data = &bkey;
@@ -169,8 +169,9 @@ devname(dev, type)
 				pts = getdevmajor("pts", S_IFCHR);
 			if (pts != (dev_t)~0 && major(dev) == pts) {
 				(void)snprintf(ptr->name, sizeof(ptr->name),
-				    "%s%d", _PATH_DEV_PTS +
-				    sizeof(_PATH_DEV) - 1, minor(dev));
+				    "%s%llu", _PATH_DEV_PTS +
+				    sizeof(_PATH_DEV) - 1,
+				    (unsigned long long)minor(dev));
 				ptr->valid = VALID;
 			}
 		}

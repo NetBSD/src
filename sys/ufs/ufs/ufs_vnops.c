@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.171 2008/11/13 11:09:45 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.172 2009/01/11 02:45:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.171 2008/11/13 11:09:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.172 2009/01/11 02:45:56 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1996,9 +1996,10 @@ ufs_print(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	printf("tag VT_UFS, ino %llu, on dev %d, %d",
+	printf("tag VT_UFS, ino %llu, on dev %llu, %llu",
 	    (unsigned long long)ip->i_number,
-	    major(ip->i_dev), minor(ip->i_dev));
+	    (unsigned long long)major(ip->i_dev),
+	    (unsigned long long)minor(ip->i_dev));
 	printf(" flags 0x%x, effnlink %d, nlink %d\n",
 	    ip->i_flag, ip->i_ffs_effnlink, ip->i_nlink);
 	printf("\tmode 0%o, owner %d, group %d, size %qd",

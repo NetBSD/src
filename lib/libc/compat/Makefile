@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/08/26 16:07:01 matt Exp $
+#	$NetBSD: Makefile,v 1.4 2009/01/11 02:46:24 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 
@@ -15,6 +15,7 @@ COMPATDIR=${.CURDIR}
 .include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
 .include "${.CURDIR}/net/Makefile.inc"
+.include "${.CURDIR}/rpc/Makefile.inc"
 .include "${.CURDIR}/stdlib/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
 

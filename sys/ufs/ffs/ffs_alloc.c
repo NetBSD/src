@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.119 2008/12/06 20:05:55 joerg Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.120 2009/01/11 02:45:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.119 2008/12/06 20:05:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.120 2009/01/11 02:45:56 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -129,9 +129,9 @@ ffs_check_bad_allocation(const char *func, struct fs *fs, daddr_t bno,
 {
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
-		printf("dev = 0x%x, bno = %" PRId64 " bsize = %d, "
-		       "size = %ld, fs = %s\n",
-		    dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
+		printf("dev = 0x%llx, bno = %" PRId64 " bsize = %d, "
+		    "size = %ld, fs = %s\n",
+		    (long long)dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("%s: bad size", func);
 	}
 
@@ -205,8 +205,9 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 	*bnp = 0;
 #ifdef DIAGNOSTIC
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
-		printf("dev = 0x%x, bsize = %d, size = %d, fs = %s\n",
-		    ip->i_dev, fs->fs_bsize, size, fs->fs_fsmnt);
+		printf("dev = 0x%llx, bsize = %d, size = %d, fs = %s\n",
+		    (unsigned long long)ip->i_dev, fs->fs_bsize, size,
+		    fs->fs_fsmnt);
 		panic("ffs_alloc: bad size");
 	}
 	if (cred == NOCRED)
@@ -313,8 +314,9 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
 	    (u_int)nsize > fs->fs_bsize || fragoff(fs, nsize) != 0) {
 		printf(
-		    "dev = 0x%x, bsize = %d, osize = %d, nsize = %d, fs = %s\n",
-		    ip->i_dev, fs->fs_bsize, osize, nsize, fs->fs_fsmnt);
+		    "dev = 0x%llx, bsize = %d, osize = %d, nsize = %d, fs = %s\n",
+		    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
+		    fs->fs_fsmnt);
 		panic("ffs_realloccg: bad size");
 	}
 	if (cred == NOCRED)
@@ -331,8 +333,9 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		bprev = ufs_rw32(ip->i_ffs1_db[lbprev], UFS_FSNEEDSWAP(fs));
 
 	if (bprev == 0) {
-		printf("dev = 0x%x, bsize = %d, bprev = %" PRId64 ", fs = %s\n",
-		    ip->i_dev, fs->fs_bsize, bprev, fs->fs_fsmnt);
+		printf("dev = 0x%llx, bsize = %d, bprev = %" PRId64 ", fs = %s\n",
+		    (unsigned long long)ip->i_dev, fs->fs_bsize, bprev,
+		    fs->fs_fsmnt);
 		panic("ffs_realloccg: bad bprev");
 	}
 	mutex_exit(&ump->um_lock);
@@ -431,8 +434,8 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		fs->fs_optim = FS_OPTSPACE;
 		break;
 	default:
-		printf("dev = 0x%x, optim = %d, fs = %s\n",
-		    ip->i_dev, fs->fs_optim, fs->fs_fsmnt);
+		printf("dev = 0x%llx, optim = %d, fs = %s\n",
+		    (unsigned long long)ip->i_dev, fs->fs_optim, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad optim");
 		/* NOTREACHED */
 	}
@@ -1650,8 +1653,8 @@ ffs_blkfree_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 				mutex_exit(&ump->um_lock);
 				return;
 			}
-			printf("dev = 0x%x, block = %" PRId64 ", fs = %s\n",
-			    dev, bno, fs->fs_fsmnt);
+			printf("dev = 0x%llx, block = %" PRId64 ", fs = %s\n",
+			    (unsigned long long)dev, bno, fs->fs_fsmnt);
 			panic("blkfree: freeing free block");
 		}
 		ffs_setblock(fs, blksfree, fragno);
@@ -1683,9 +1686,10 @@ ffs_blkfree_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 		frags = numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
 			if (isset(blksfree, cgbno + i)) {
-				printf("dev = 0x%x, block = %" PRId64
+				printf("dev = 0x%llx, block = %" PRId64
 				       ", fs = %s\n",
-				    dev, bno + i, fs->fs_fsmnt);
+				    (unsigned long long)dev, bno + i,
+				    fs->fs_fsmnt);
 				panic("blkfree: freeing free frag");
 			}
 			setbit(blksfree, cgbno + i);
@@ -1769,8 +1773,8 @@ ffs_freefile(struct mount *mp, ino_t ino, int mode)
 	cgbno = fsbtodb(fs, cgtod(fs, cg));
 
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
-		    dev, (unsigned long long)ino, fs->fs_fsmnt);
+		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
+		    (long long)dev, (unsigned long long)ino, fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
 	    NOCRED, B_MODIFY, &bp);
 	if (error) {
@@ -1810,8 +1814,9 @@ ffs_freefile_snap(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	ump = VFSTOUFS(devvp->v_mount);
 	cgbno = fragstoblks(fs, cgtod(fs, cg));
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
-		    dev, (unsigned long long)ino, fs->fs_fsmnt);
+		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
+		    (unsigned long long)dev, (unsigned long long)ino,
+		    fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
 	    NOCRED, B_MODIFY, &bp);
 	if (error) {
@@ -1850,9 +1855,9 @@ ffs_freefile_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 	inosused = cg_inosused(cgp, needswap);
 	ino %= fs->fs_ipg;
 	if (isclr(inosused, ino)) {
-		printf("ifree: dev = 0x%x, ino = %llu, fs = %s\n",
-		    dev, (unsigned long long)ino + cg * fs->fs_ipg,
-		    fs->fs_fsmnt);
+		printf("ifree: dev = 0x%llx, ino = %llu, fs = %s\n",
+		    (unsigned long long)dev, (unsigned long long)ino +
+		    cg * fs->fs_ipg, fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}

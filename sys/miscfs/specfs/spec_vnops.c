@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.120 2008/12/29 17:41:19 pooka Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.121 2009/01/11 02:45:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.120 2008/12/29 17:41:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.121 2009/01/11 02:45:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -999,8 +999,8 @@ spec_print(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	printf("dev %d, %d\n", major(ap->a_vp->v_rdev),
-	    minor(ap->a_vp->v_rdev));
+	printf("dev %llu, %llu\n", (unsigned long long)major(ap->a_vp->v_rdev),
+	    (unsigned long long)minor(ap->a_vp->v_rdev));
 	return 0;
 }
 

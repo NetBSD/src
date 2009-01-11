@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscalls.c,v 1.47 2008/12/12 23:38:13 njoly Exp $ */
+/* $NetBSD: linux32_syscalls.c,v 1.48 2009/01/11 02:45:49 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.47 2008/12/12 23:38:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.48 2009/01/11 02:45:49 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -112,7 +112,7 @@ const char *const linux32_syscallnames[] = {
 	/*  74 */	"compat_43_netbsd32_osethostname",
 	/*  75 */	"setrlimit",
 	/*  76 */	"getrlimit",
-	/*  77 */	"netbsd32_getrusage",
+	/*  77 */	"compat_50_netbsd32_getrusage",
 	/*  78 */	"gettimeofday",
 	/*  79 */	"settimeofday",
 	/*  80 */	"getgroups16",
@@ -139,8 +139,8 @@ const char *const linux32_syscallnames[] = {
 	/* 101 */	"#101 (unimplemented ioperm)",
 	/* 102 */	"socketcall",
 	/* 103 */	"#103 (unimplemented syslog)",
-	/* 104 */	"netbsd32_setitimer",
-	/* 105 */	"netbsd32_getitimer",
+	/* 104 */	"compat_50_netbsd32_setitimer",
+	/* 105 */	"compat_50_netbsd32_getitimer",
 	/* 106 */	"#106 (unimplemented stat)",
 	/* 107 */	"#107 (unimplemented lstat)",
 	/* 108 */	"#108 (unimplemented fstat)",

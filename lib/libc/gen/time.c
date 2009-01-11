@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.10 2003/08/07 16:42:58 agc Exp $	*/
+/*	$NetBSD: time.c,v 1.11 2009/01/11 02:46:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.10 2003/08/07 16:42:58 agc Exp $");
+__RCSID("$NetBSD: time.c,v 1.11 2009/01/11 02:46:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,19 +44,14 @@ __RCSID("$NetBSD: time.c,v 1.10 2003/08/07 16:42:58 agc Exp $");
 
 #include <time.h>
 
-#ifdef __weak_alias
-__weak_alias(time,_time)
-#endif
-
 time_t
-time(t)
-	time_t *t;
+time(time_t *t)
 {
 	struct timeval tt;
 
-	if (gettimeofday(&tt, (struct timezone *)0) < 0)
-		return ((time_t)-1);
+	if (gettimeofday(&tt, NULL) == -1)
+		return (time_t)-1;
 	if (t != NULL)
 		*t = tt.tv_sec;
-	return (tt.tv_sec);
+	return tt.tv_sec;
 }

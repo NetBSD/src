@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2009/01/02 00:20:21 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2009/01/11 02:46:29 christos Exp $
 
 .PATH: ${.CURDIR}/nls
 

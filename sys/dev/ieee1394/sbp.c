@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.23 2009/01/03 03:43:22 yamt Exp $	*/
+/*	$NetBSD: sbp.c,v 1.24 2009/01/11 02:45:51 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.23 2009/01/03 03:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.24 2009/01/11 02:45:51 christos Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -870,8 +870,8 @@ sbp_login(struct sbp_dev *sdev)
 	if (t.tv_sec >= 0 && t.tv_usec > 0)
 		ticks = (t.tv_sec * 1000 + t.tv_usec / 1000) * hz / 1000;
 SBP_DEBUG(0)
-	printf("%s: sec = %jd usec = %ld ticks = %d\n", __func__,
-	    (intmax_t)t.tv_sec, t.tv_usec, ticks);
+	printf("%s: sec = %lld usec = %ld ticks = %d\n", __func__,
+	    (long long)t.tv_sec, (long)t.tv_usec, ticks);
 END_DEBUG
 	fw_callout_reset(&sdev->login_callout, ticks,
 			sbp_login_callout, (void *)(sdev));

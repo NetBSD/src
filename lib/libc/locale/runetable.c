@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.18 2009/01/02 00:20:20 tnozaki Exp $	*/
+/*	$NetBSD: runetable.c,v 1.19 2009/01/11 02:46:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.18 2009/01/02 00:20:20 tnozaki Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.19 2009/01/11 02:46:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

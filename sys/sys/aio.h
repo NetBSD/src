@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.8 2008/11/14 23:33:45 ad Exp $	*/
+/*	$NetBSD: aio.h,v 1.9 2009/01/11 02:45:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -113,8 +113,10 @@ struct aioproc {
 	struct lwp *aio_worker;		/* AIO worker thread */
 };
 
+extern u_int aio_listio_max;
 /* Prototypes */
 void	aio_print_jobs(void (*pr)(const char *, ...));
+int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 
 #endif /* _KERNEL */
 

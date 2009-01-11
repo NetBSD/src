@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.27 2008/11/19 18:39:44 ad Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.28 2009/01/11 02:45:48 christos Exp $ */
 
 /*
  * System call numbers.
@@ -123,13 +123,13 @@
 /* syscall: "nanosleep" ret: "int" args: "const struct linux_timespec *" "struct linux_timespec *" */
 #define	LINUX_SYS_nanosleep	35
 
-/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval *" */
+/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval50 *" */
 #define	LINUX_SYS_getitimer	36
 
 /* syscall: "alarm" ret: "int" args: "unsigned int" */
 #define	LINUX_SYS_alarm	37
 
-/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval *" "struct itimerval *" */
+/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval50 *" "struct itimerval50 *" */
 #define	LINUX_SYS_setitimer	38
 
 /* syscall: "getpid" ret: "pid_t" args: */
@@ -315,7 +315,7 @@
 /* syscall: "getrlimit" ret: "int" args: "int" "struct rlimit *" */
 #define	LINUX_SYS_getrlimit	97
 
-/* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
+/* syscall: "getrusage" ret: "int" args: "int" "struct rusage50 *" */
 #define	LINUX_SYS_getrusage	98
 
 /* syscall: "sysinfo" ret: "int" args: "struct linux_sysinfo *" */

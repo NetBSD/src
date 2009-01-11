@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.17 2009/01/02 00:20:19 tnozaki Exp $ */
+/* $NetBSD: isctype.c,v 1.18 2009/01/11 02:46:27 christos Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.17 2009/01/02 00:20:19 tnozaki Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.18 2009/01/11 02:46:27 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"

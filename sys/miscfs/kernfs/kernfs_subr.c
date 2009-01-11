@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.17 2008/12/17 20:51:36 cegger Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.18 2009/01/11 02:45:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.17 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.18 2009/01/11 02:45:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -373,6 +373,9 @@ kernfs_revoke_sa(sav)
 	struct vnode *vp;
 	struct kfs_hashhead *ppp;
 	struct mbuf *m;
+
+	if (key_setdumpsa_spi == NULL)
+		return;
 
 	ppp = &kfs_hashtbl[KFSVALUEHASH(ntohl(sav->spi))];
 	for (kfs = LIST_FIRST(ppp); kfs; kfs = pnext) {

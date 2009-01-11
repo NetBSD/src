@@ -1,4 +1,4 @@
-/*	$NetBSD: getlogin.c,v 1.14 2009/01/06 11:16:46 lukem Exp $	*/
+/*	$NetBSD: getlogin.c,v 1.15 2009/01/11 02:46:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #if 0
 static char sccsid[] = "@(#)getlogin.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getlogin.c,v 1.14 2009/01/06 11:16:46 lukem Exp $");
+__RCSID("$NetBSD: getlogin.c,v 1.15 2009/01/11 02:46:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

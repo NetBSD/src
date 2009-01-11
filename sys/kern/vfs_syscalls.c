@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.382 2008/12/14 23:12:58 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.383 2009/01/11 02:45:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.382 2008/12/14 23:12:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.383 2009/01/11 02:45:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1756,7 +1756,7 @@ do_fhstat(struct lwp *l, const void *ufhp, size_t fhsize, struct stat *sb)
 
 /* ARGSUSED */
 int
-sys___fhstat40(struct lwp *l, const struct sys___fhstat40_args *uap, register_t *retval)
+sys___fhstat50(struct lwp *l, const struct sys___fhstat50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const void *) fhp;
@@ -1829,13 +1829,22 @@ sys___fhstatvfs140(struct lwp *l, const struct sys___fhstatvfs140_args *uap, reg
  */
 /* ARGSUSED */
 int
-sys_mknod(struct lwp *l, const struct sys_mknod_args *uap, register_t *retval)
+sys___mknod50(struct lwp *l, const struct sys___mknod50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
-		syscallarg(int) mode;
-		syscallarg(int) dev;
+		syscallarg(mode_t) mode;
+		syscallarg(dev_t) dev;
 	} */
+	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
+	    SCARG(uap, dev), retval);
+}
+
+int
+do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
+    register_t *retval)
+{
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct vattr vattr;
@@ -1851,7 +1860,7 @@ sys_mknod(struct lwp *l, const struct sys_mknod_args *uap, register_t *retval)
 
 	optype = VOP_MKNOD_DESCOFFSET;
 
-	VERIEXEC_PATH_GET(SCARG(uap, path), seg, cpath, path);
+	VERIEXEC_PATH_GET(pathname, seg, cpath, path);
 	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, seg, cpath);
 
 	if ((error = namei(&nd)) != 0)
@@ -1862,11 +1871,10 @@ sys_mknod(struct lwp *l, const struct sys_mknod_args *uap, register_t *retval)
 	else {
 		VATTR_NULL(&vattr);
 		/* We will read cwdi->cwdi_cmask unlocked. */
-		vattr.va_mode =
-		    (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
-		vattr.va_rdev = SCARG(uap, dev);
+		vattr.va_mode = (mode & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
+		vattr.va_rdev = dev;
 
-		switch (SCARG(uap, mode) & S_IFMT) {
+		switch (mode & S_IFMT) {
 		case S_IFMT:	/* used by badsect to flag bad sectors */
 			vattr.va_type = VBAD;
 			break;
@@ -2419,7 +2427,7 @@ do_sys_stat(const char *path, unsigned int nd_flags, struct stat *sb)
  */
 /* ARGSUSED */
 int
-sys___stat30(struct lwp *l, const struct sys___stat30_args *uap, register_t *retval)
+sys___stat50(struct lwp *l, const struct sys___stat50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -2439,7 +2447,7 @@ sys___stat30(struct lwp *l, const struct sys___stat30_args *uap, register_t *ret
  */
 /* ARGSUSED */
 int
-sys___lstat30(struct lwp *l, const struct sys___lstat30_args *uap, register_t *retval)
+sys___lstat50(struct lwp *l, const struct sys___lstat50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -2927,7 +2935,8 @@ out:
  */
 /* ARGSUSED */
 int
-sys_utimes(struct lwp *l, const struct sys_utimes_args *uap, register_t *retval)
+sys___utimes50(struct lwp *l, const struct sys___utimes50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -2943,7 +2952,8 @@ sys_utimes(struct lwp *l, const struct sys_utimes_args *uap, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_futimes(struct lwp *l, const struct sys_futimes_args *uap, register_t *retval)
+sys___futimes50(struct lwp *l, const struct sys___futimes50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -2966,7 +2976,8 @@ sys_futimes(struct lwp *l, const struct sys_futimes_args *uap, register_t *retva
  * version does not follow links.
  */
 int
-sys_lutimes(struct lwp *l, const struct sys_lutimes_args *uap, register_t *retval)
+sys___lutimes50(struct lwp *l, const struct sys___lutimes50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -2999,7 +3010,7 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 
 		vanull = false;
 		if (seg != UIO_SYSSPACE) {
-			error = copyin(tptr, &tv, sizeof (tv));
+			error = copyin(tptr, tv, sizeof (tv));
 			if (error != 0)
 				return error;
 			tptr = tv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.4 2005/11/12 00:39:22 simonb Exp $	*/
+/*	$NetBSD: shm.h,v 1.5 2009/01/11 02:45:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -38,7 +38,6 @@
 #ifndef _COMPAT_SYS_SHM_H_
 #define _COMPAT_SYS_SHM_H_
 
-#ifdef _KERNEL
 #include <compat/sys/ipc.h>
 
 struct shmid_ds14 {
@@ -47,11 +46,109 @@ struct shmid_ds14 {
 	pid_t		shm_lpid;	/* process ID of last shm op */
 	pid_t		shm_cpid;	/* process ID of creator */
 	short		shm_nattch;	/* number of current attaches */
-	time_t		shm_atime;	/* time of last shmat() */
-	time_t		shm_dtime;	/* time of last shmdt() */
-	time_t		shm_ctime;	/* time of last change by shmctl() */
+	int32_t		shm_atime;	/* time of last shmat() */
+	int32_t		shm_dtime;	/* time of last shmdt() */
+	int32_t		shm_ctime;	/* time of last change by shmctl() */
 	void		*shm_internal;	/* sysv stupidity */
 };
-#endif
+
+struct shmid_ds13 {
+	struct ipc_perm	shm_perm;	/* operation permission structure */
+	size_t		shm_segsz;	/* size of segment in bytes */
+	pid_t		shm_lpid;	/* process ID of last shm operation */
+	pid_t		shm_cpid;	/* process ID of creator */
+	shmatt_t	shm_nattch;	/* number of current attaches */
+	int32_t		shm_atime;	/* time of last shmat() */
+	int32_t		shm_dtime;	/* time of last shmdt() */
+	int32_t		shm_ctime;	/* time of last change by shmctl() */
+
+	/*
+	 * These members are private and used only in the internal
+	 * implementation of this interface.
+	 */
+	void		*_shm_internal;
+};
+
+__BEGIN_DECLS
+static __inline void	__shmid_ds14_to_native(const struct shmid_ds14 *, struct shmid_ds *);
+static __inline void	__native_to_shmid_ds14(const struct shmid_ds *, struct shmid_ds14 *);
+static __inline void	__shmid_ds13_to_native(const struct shmid_ds13 *, struct shmid_ds *);
+static __inline void	__native_to_shmid_ds13(const struct shmid_ds *, struct shmid_ds13 *);
+static __inline void
+__shmid_ds14_to_native(const struct shmid_ds14 *oshmbuf, struct shmid_ds *shmbuf)
+{
+
+	__ipc_perm14_to_native(&oshmbuf->shm_perm, &shmbuf->shm_perm);
+
+#define	CVT(x)	shmbuf->x = oshmbuf->x
+	CVT(shm_segsz);
+	CVT(shm_lpid);
+	CVT(shm_cpid);
+	CVT(shm_nattch);
+	CVT(shm_atime);
+	CVT(shm_dtime);
+	CVT(shm_ctime);
+#undef CVT
+}
+
+static __inline void
+__native_to_shmid_ds14(const struct shmid_ds *shmbuf, struct shmid_ds14 *oshmbuf)
+{
+
+	__native_to_ipc_perm14(&shmbuf->shm_perm, &oshmbuf->shm_perm);
+
+#define	CVT(x)	oshmbuf->x = shmbuf->x
+#define	CVTI(x)	oshmbuf->x = (int)shmbuf->x
+	CVT(shm_segsz);
+	CVT(shm_lpid);
+	CVT(shm_cpid);
+	CVT(shm_nattch);
+	CVTI(shm_atime);
+	CVTI(shm_dtime);
+	CVTI(shm_ctime);
+#undef CVT
+#undef CVTI
+}
+
+static __inline void
+__shmid_ds13_to_native(const struct shmid_ds13 *oshmbuf, struct shmid_ds *shmbuf)
+{
+
+	shmbuf->shm_perm = oshmbuf->shm_perm;
+
+#define	CVT(x)	shmbuf->x = oshmbuf->x
+	CVT(shm_segsz);
+	CVT(shm_lpid);
+	CVT(shm_cpid);
+	CVT(shm_nattch);
+	CVT(shm_atime);
+	CVT(shm_dtime);
+	CVT(shm_ctime);
+#undef CVT
+}
+
+static __inline void
+__native_to_shmid_ds13(const struct shmid_ds *shmbuf, struct shmid_ds13 *oshmbuf)
+{
+
+	oshmbuf->shm_perm = shmbuf->shm_perm;
+
+#define	CVT(x)	oshmbuf->x = shmbuf->x
+#define	CVTI(x)	oshmbuf->x = (int)shmbuf->x
+	CVT(shm_segsz);
+	CVT(shm_lpid);
+	CVT(shm_cpid);
+	CVT(shm_nattch);
+	CVTI(shm_atime);
+	CVTI(shm_dtime);
+	CVTI(shm_ctime);
+#undef CVT
+#undef CVTI
+}
+
+int	__shmctl13(int, int, struct shmid_ds13 *);
+int	__shmctl14(int, int, struct shmid_ds14 *);
+int	__shmctl50(int, int, struct shmid_ds *);
+__END_DECLS
 
 #endif /* !_COMPAT_SYS_SHM_H_ */

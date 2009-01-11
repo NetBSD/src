@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans_local.h,v 1.3 2009/01/02 00:20:19 tnozaki Exp $	*/
+/*	$NetBSD: _wctrans_local.h,v 1.4 2009/01/11 02:46:28 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,

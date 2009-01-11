@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sysent.c,v 1.47 2008/12/12 23:38:13 njoly Exp $ */
+/* $NetBSD: linux32_sysent.c,v 1.48 2009/01/11 02:45:49 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.47 2008/12/12 23:38:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.48 2009/01/11 02:45:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -191,8 +191,8 @@ struct sysent linux32_sysent[] = {
 	    (sy_call_t *)linux32_sys_setrlimit },/* 75 = setrlimit */
 	{ ns(struct linux32_sys_getrlimit_args), 0,
 	    (sy_call_t *)linux32_sys_getrlimit },/* 76 = getrlimit */
-	{ ns(struct netbsd32_getrusage_args), 0,
-	    (sy_call_t *)netbsd32_getrusage },	/* 77 = netbsd32_getrusage */
+	{ ns(struct compat_50_netbsd32_getrusage_args), 0,
+	    (sy_call_t *)compat_50_netbsd32_getrusage },/* 77 = compat_50_netbsd32_getrusage */
 	{ ns(struct linux32_sys_gettimeofday_args), 0,
 	    (sy_call_t *)linux32_sys_gettimeofday },/* 78 = gettimeofday */
 	{ ns(struct linux32_sys_settimeofday_args), 0,
@@ -245,10 +245,10 @@ struct sysent linux32_sysent[] = {
 	    (sy_call_t *)linux32_sys_socketcall },/* 102 = socketcall */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 103 = unimplemented syslog */
-	{ ns(struct netbsd32_setitimer_args), 0,
-	    (sy_call_t *)netbsd32_setitimer },	/* 104 = netbsd32_setitimer */
-	{ ns(struct netbsd32_getitimer_args), 0,
-	    (sy_call_t *)netbsd32_getitimer },	/* 105 = netbsd32_getitimer */
+	{ ns(struct compat_50_netbsd32_setitimer_args), 0,
+	    (sy_call_t *)compat_50_netbsd32_setitimer },/* 104 = compat_50_netbsd32_setitimer */
+	{ ns(struct compat_50_netbsd32_getitimer_args), 0,
+	    (sy_call_t *)compat_50_netbsd32_getitimer },/* 105 = compat_50_netbsd32_getitimer */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 106 = unimplemented stat */
 	{ 0, 0, 0,

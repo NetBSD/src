@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.202 2008/11/12 12:36:10 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.203 2009/01/11 02:45:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.202 2008/11/12 12:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.203 2009/01/11 02:45:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -832,11 +832,12 @@ linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, registe
 		syscallarg(fd_set *) readfds;
 		syscallarg(fd_set *) writefds;
 		syscallarg(fd_set *) exceptfds;
-		syscallarg(struct timeval *) timeout;
+		syscallarg(struct timeval50 *) timeout;
 	} */
 
 	return linux_select1(l, retval, SCARG(uap, nfds), SCARG(uap, readfds),
-	    SCARG(uap, writefds), SCARG(uap, exceptfds), SCARG(uap, timeout));
+	    SCARG(uap, writefds), SCARG(uap, exceptfds),
+	    (struct linux_timeval *)SCARG(uap, timeout));
 }
 
 /*
@@ -851,9 +852,10 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 	register_t *retval;
 	int nfds;
 	fd_set *readfds, *writefds, *exceptfds;
-	struct timeval *timeout;
+	struct linux_timeval *timeout;
 {
 	struct timeval tv0, tv1, utv, *tv = NULL;
+	struct linux_timeval ltv;
 	int error;
 
 	/*
@@ -861,8 +863,10 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 	 * time left.
 	 */
 	if (timeout) {
-		if ((error = copyin(timeout, &utv, sizeof(utv))))
+		if ((error = copyin(timeout, &ltv, sizeof(ltv))))
 			return error;
+		utv.tv_sec = ltv.tv_sec;
+		utv.tv_usec = ltv.tv_usec;
 		if (itimerfix(&utv)) {
 			/*
 			 * The timeval was invalid.  Convert it to something
@@ -909,7 +913,9 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 				timerclear(&utv);
 		} else
 			timerclear(&utv);
-		if ((error = copyout(&utv, timeout, sizeof(utv))))
+		ltv.tv_sec = utv.tv_sec;
+		ltv.tv_usec = utv.tv_usec;
+		if ((error = copyout(&ltv, timeout, sizeof(ltv))))
 			return error;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.27 2008/11/19 18:39:44 ad Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.28 2009/01/11 02:45:48 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.27 2008/11/19 18:39:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.28 2009/01/11 02:45:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -21,6 +21,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.27 2008/11/19 18:39:44 ad Exp $
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/time.h>
+#include <compat/sys/time.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_ipc.h>

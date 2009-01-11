@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.141 2008/10/25 23:38:28 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.142 2009/01/11 02:45:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.141 2008/10/25 23:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.142 2009/01/11 02:45:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -815,8 +815,8 @@ fd2biosinfo(struct proc *p, struct file *fp)
 		return NULL;
 
 	blkname = devsw_blk2name(major(vp->v_rdev));
-	snprintf(diskname, sizeof diskname, "%s%u", blkname,
-	    DISKUNIT(vp->v_rdev));
+	snprintf(diskname, sizeof diskname, "%s%llu", blkname,
+	    (unsigned long long)DISKUNIT(vp->v_rdev));
 
 	for (i = 0; i < dl->dl_nnativedisks; i++) {
 		nip = &dl->dl_nativedisks[i];

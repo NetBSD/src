@@ -1,12 +1,11 @@
-/*	$NetBSD: sysv_ipc_14.c,v 1.5 2008/04/28 20:23:41 martin Exp $	*/
+/*	$NetBSD: compat___shmctl13.c,v 1.2 2009/01/11 02:46:26 christos Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,6 +15,13 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -29,42 +35,34 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_14.c,v 1.5 2008/04/28 20:23:41 martin Exp $");
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: compat___shmctl13.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
+#endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <compat/sys/ipc.h>
+#include "namespace.h"
+#define __LIBC12_SOURCE__
+#include <sys/time.h>
+#include <compat/sys/time.h>
+#include <sys/shm.h>
+#include <compat/sys/shm.h>
 
-void
-ipc_perm14_to_native(struct ipc_perm14 *operm, struct ipc_perm *perm)
+__warn_references(__shmctl13,
+    "warning: reference to compatibility __shmctl13(); include <sys/shm.h> to generate correct reference")
+
+int
+__shmctl13(int shmid, int cmd, struct shmid_ds13 *ds13)
 {
+	struct shmid_ds ds;
+	int error;
 
-#define	CVT(x)	perm->x = operm->x
-	CVT(uid);
-	CVT(gid);
-	CVT(cuid);
-	CVT(cgid);
-	CVT(mode);
-#undef CVT
-}
+	if (cmd == IPC_SET)
+		__shmid_ds13_to_native(ds13, &ds);
 
-void
-native_to_ipc_perm14(struct ipc_perm *perm, struct ipc_perm14 *operm)
-{
-
-#define	CVT(x)	operm->x = perm->x
-	CVT(uid);
-	CVT(gid);
-	CVT(cuid);
-	CVT(cgid);
-	CVT(mode);
-#undef CVT
-
-	/*
-	 * Not part of the API, but some programs might look at it.
-	 */
-	operm->seq = perm->_seq;
-	operm->key = perm->_key;
+	error = __shmctl50(shmid, cmd, &ds);
+	if (error)
+		return error;
+	if (cmd == IPC_STAT)
+		__native_to_shmid_ds13(&ds, ds13);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.34 2008/12/05 13:08:53 ad Exp $	*/
+/*	$NetBSD: opendir.c,v 1.35 2009/01/11 02:46:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.34 2008/12/05 13:08:53 ad Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.35 2009/01/11 02:46:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

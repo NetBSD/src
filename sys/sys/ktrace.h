@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.55 2008/10/20 11:36:39 ad Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.56 2009/01/11 02:45:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -64,20 +64,34 @@ struct ktr_header {
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
 	union {
-		struct timeval _tv;	/* v0 timestamp */
-		struct timespec _ts;	/* v1 timespec */
-	} _ktr_time;
-	union {
-		const void *_buf;	/* v0 unused */
-		lwpid_t _lid;		/* v1 lwp id */
-	} _ktr_id;
+		struct { /* v0 */
+			struct {
+				int32_t tv_sec;
+				long tv_usec;
+			} _tv;
+			const void *_buf;
+		} _v0;
+		struct { /* v1 */
+			struct {
+				int32_t tv_sec;
+				long tv_nsec;
+			} _ts;
+			lwpid_t _lid;
+		} _v1;
+		struct { /* v2 */
+			struct timespec _ts;
+			lwpid_t _lid;
+		} _v2;
+	} _v;
 };
 
-#define ktr_lid	_ktr_id._lid
-#define ktr_time _ktr_time._ts
-#define ktr_tv _ktr_time._tv
-#define ktr_ts _ktr_time._ts
-#define ktr_unused _ktr_id._buf
+#define ktr_lid		_v._v2._lid
+#define ktr_olid	_v._v1._lid
+#define ktr_time	_v._v2._ts
+#define ktr_otv		_v._v0._tv
+#define ktr_ots		_v._v1._ts
+#define ktr_ts		_v._v2._ts
+#define ktr_unused	_v._v0._buf
 
 #define	KTR_SHIMLEN	offsetof(struct ktr_header, ktr_pid)
 
@@ -265,6 +279,7 @@ struct ktr_saupcall {
 
 #define	KTRFACv0	(0 << KTRFAC_VER_SHIFT)
 #define	KTRFACv1	(1 << KTRFAC_VER_SHIFT)
+#define	KTRFACv2	(2 << KTRFAC_VER_SHIFT)
 
 #ifndef	_KERNEL
 

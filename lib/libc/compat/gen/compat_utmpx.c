@@ -1,7 +1,7 @@
-/*	$NetBSD: compat_utmpx.c,v 1.2 2008/04/28 20:22:59 martin Exp $	 */
+/*	$NetBSD: compat_utmpx.c,v 1.3 2009/01/11 02:46:25 christos Exp $	 */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,35 +31,114 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_utmpx.c,v 1.2 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: compat_utmpx.c,v 1.3 2009/01/11 02:46:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/wait.h>
 
-#include <assert.h>
-#include <db.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <utmp.h>
-/* don't define earlier, has side effects in fcntl.h */
 #define __LIBC12_SOURCE__
+#include <assert.h>
+#include <sys/time.h>
+#include <string.h>
+#include <compat/sys/time.h>
 #include <utmpx.h>
 #include <compat/include/utmpx.h>
 
+__warn_references(getutxent,
+    "warning: reference to compatibility getutxent(); include <utmpx.h> for correct reference")
+__warn_references(getutxid,
+    "warning: reference to compatibility getutxid(); include <utmpx.h> for correct reference")
+__warn_references(getutxline,
+    "warning: reference to compatibility getutxline(); include <utmpx.h> for correct reference")
+__warn_references(pututxline,
+    "warning: reference to compatibility pututxline(); include <utmpx.h> for correct reference")
+__warn_references(updwtmpx,
+    "warning: reference to compatibility updwtmpx(); include <utmpx.h> for correct reference")
 __warn_references(getlastlogx,
     "warning: reference to compatibility getlastlogx(); include <utmpx.h> for correct reference")
-__warn_references(lastlogxname,
-    "warning: reference to deprecated lastlogxname()")
+__warn_references(updlastlogx,
+    "warning: reference to compatibility updlastlogx(); include <utmpx.h> for correct reference")
+__warn_references(getutmp,
+    "warning: reference to compatibility getutmp(); include <utmpx.h> for correct reference")
+__warn_references(getutmpx,
+    "warning: reference to compatibility getutmpx(); include <utmpx.h> for correct reference")
+
+static struct utmpx50 *
+cvt(struct utmpx *ut)
+{
+	if (ut == NULL)
+		return NULL;
+	timeval_to_timeval50(&ut->ut_tv, (void *)&ut->ut_tv);
+	return (void *)ut;
+}
+
+static void
+lastlogx50_to_lastlogx(const struct lastlogx50 *ll50, struct lastlogx *ll)
+{
+	(void)memcpy(ll->ll_line, ll50->ll_line, sizeof(ll->ll_line));
+	(void)memcpy(ll->ll_host, ll50->ll_host, sizeof(ll->ll_host));
+	(void)memcpy(&ll->ll_ss, &ll50->ll_ss, sizeof(&ll->ll_ss));
+	timeval50_to_timeval(&ll50->ll_tv, &ll->ll_tv);
+}
+
+static void
+lastlogx_to_lastlogx50(const struct lastlogx *ll, struct lastlogx50 *ll50)
+{
+	(void)memcpy(ll50->ll_line, ll->ll_line, sizeof(ll50->ll_line));
+	(void)memcpy(ll50->ll_host, ll->ll_host, sizeof(ll50->ll_host));
+	(void)memcpy(&ll50->ll_ss, &ll->ll_ss, sizeof(&ll50->ll_ss));
+	timeval_to_timeval50(&ll->ll_tv, &ll50->ll_tv);
+}
+
+struct utmpx50 *
+getutxent(void)
+{
+	return cvt(__getutxent50());
+}
+
+struct utmpx50 *
+getutxid(const struct utmpx50 *ut50)
+{
+	struct utmpx ut;
+	utmpx50_to_utmpx(ut50, &ut);
+	return cvt(__getutxid50(&ut));
+}
+
+struct utmpx50 *
+getutxline(const struct utmpx50 *ut50)
+{
+	struct utmpx ut;
+	utmpx50_to_utmpx(ut50, &ut);
+	return cvt(__getutxline50(&ut));
+}
+
+struct utmpx50 *
+pututxline(const struct utmpx50 *ut50)
+{
+	struct utmpx ut;
+	utmpx50_to_utmpx(ut50, &ut);
+	return cvt(__pututxline50(&ut));
+}
+
+int
+updwtmpx(const char *fname, const struct utmpx50 *ut50)
+{
+	struct utmpx ut;
+	utmpx50_to_utmpx(ut50, &ut);
+	return __updwtmpx50(fname, &ut);
+}
+
+struct lastlogx50 *
+__getlastlogx13(const char *fname, uid_t uid, struct lastlogx50 *ll50)
+{
+	struct lastlogx ll;
+	if (__getlastlogx50(fname, uid, &ll) == NULL)
+		return NULL;
+	lastlogx_to_lastlogx50(&ll, ll50);
+	return ll50;
+}
 
 static char llfile[MAXPATHLEN] = _PATH_LASTLOGX;
 
@@ -83,9 +162,33 @@ lastlogxname(const char *fname)
 	return 1;
 }
 
-struct lastlogx *
-getlastlogx(uid_t uid, struct lastlogx *ll)
+struct lastlogx50 *
+getlastlogx(uid_t uid, struct lastlogx50 *ll)
 {
 
 	return __getlastlogx13(llfile, uid, ll);
+}
+
+int
+updlastlogx(const char *fname, uid_t uid, struct lastlogx50 *ll50)
+{
+	struct lastlogx ll;
+	lastlogx50_to_lastlogx(ll50, &ll);
+	return __updlastlogx50(fname, uid, &ll);
+}
+
+void
+getutmp(const struct utmpx50 *utx50, struct utmp *ut)
+{
+	struct utmpx utx;
+	utmpx50_to_utmpx(utx50, &utx);
+	__getutmp50(&utx, ut);
+}
+
+void
+getutmpx(const struct utmp *ut, struct utmpx50 *utx50)
+{
+	struct utmpx utx;
+	__getutmpx50(ut, &utx);
+	utmpx_to_utmpx50(&utx, utx50);
 }

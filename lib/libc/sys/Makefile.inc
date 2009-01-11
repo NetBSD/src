@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.196 2008/10/26 07:43:07 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.197 2009/01/11 02:46:30 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -31,10 +31,10 @@ SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigtimedwait.c sigwait.c \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-GLUE+=	adjtime.c clock_settime.c ftruncate.c \
-	lseek.c mmap.c ntp_adjtime.c pread.c preadv.c pwrite.c \
-	pwritev.c settimeofday.c \
-	truncate.c
+GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
+	pwritev.c truncate.c ntp_adjtime.c
+
+GLUE50+= adjtime.c clock_settime.c settimeofday.c semctl.c
 
 # 'glue' files might .c or .S depending on the architecture
 .for glue in ${GLUE}
@@ -53,10 +53,22 @@ ASM_GLUE+= tmp_${glue:.c=.S}
 . endif
 .endfor
 
-# glue to syscalls that may pass structs or unions, which cannot be
-# handled portably and easily by the syscall interface. The glue
-# converts structs and unions to pointers to them.
-SRCS+=	__semctl13.c
+# 'glue' files might .c or .S depending on the architecture
+.for glue in ${GLUE50}
+. if exists(${glue:.c=.S})
+# Build the ASM glue file
+SRCS+=${glue:.c=.S}
+. else
+.  if exists(____${glue:.c=}50.S)
+SRCS+=____${glue:.c=}50.S ${glue}
+.  else
+# Build the C glue file
+SRCS+= ${glue}
+# and an asm entry for ____<syscall>
+ASM_GLUE+= tmp___${glue:.c=}50.S
+.  endif
+. endif
+.endfor
 
 # namespace purity wrappers
 SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
@@ -64,8 +76,8 @@ SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 # modules with default implementations on all architectures:
 ASM=	access.S acct.S \
 	bind.S \
-	chdir.S chflags.S chmod.S chown.S chroot.S clock_getres.S \
-		clock_gettime.S \
+	chdir.S chflags.S chmod.S chown.S chroot.S __clock_getres50.S \
+		__clock_gettime50.S \
 	dup.S dup2.S  \
 	extattrctl.S \
 		extattr_delete_fd.S extattr_delete_file.S \
@@ -74,28 +86,28 @@ ASM=	access.S acct.S \
 		extattr_list_link.S extattr_set_fd.S extattr_set_file.S \
 		extattr_set_link.S \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
-		__fhopen40.S __fhstat40.S __fhstatvfs140.S fktrace.S \
-		flock.S fpathconf.S __fstat30.S fstatvfs1.S futimes.S \
-	__getcwd.S __getdents30.S __getfh30.S getvfsstat.S getgroups.S getitimer.S \
-		__getlogin.S getpeername.S getpgid.S getpgrp.S \
-		getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
-		getsockopt.S gettimeofday.S \
+		__fhopen40.S __fhstat50.S __fhstatvfs140.S fktrace.S \
+		flock.S fpathconf.S __fstat50.S fstatvfs1.S __futimes50.S \
+	__getcwd.S __getdents30.S __getfh30.S getvfsstat.S getgroups.S\
+		__getitimer50.S __getlogin.S getpeername.S getpgid.S getpgrp.S \
+		getpriority.S getrlimit.S __getrusage50.S getsid.S \
+		getsockname.S getsockopt.S __gettimeofday50.S \
 	ioctl.S \
-	kevent.S kqueue.S ktrace.S \
+	__kevent50.S kqueue.S ktrace.S \
 		_ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
 		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
 		_ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
-		lfs_segwait.S link.S listen.S __lstat30.S lutimes.S \
-		_lwp_create.S _lwp_exit.S _lwp_kill.S _lwp_park.S \
+		__lfs_segwait50.S link.S listen.S __lstat50.S __lutimes50.S \
+		_lwp_create.S _lwp_exit.S _lwp_kill.S ___lwp_park50.S \
 		_lwp_self.S _lwp_wait.S _lwp_unpark.S _lwp_unpark_all.S \
 		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S _lwp_detach.S \
 		_lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
-	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
-		mlock.S mlockall.S modctl.S __mount50.S mprotect.S __msgctl13.S \
-		msgget.S munlock.S munlockall.S munmap.S \
-	nfssvc.S __ntp_gettime30.S \
+	madvise.S mincore.S minherit.S mkdir.S mkfifo.S __mknod50.S \
+		mlock.S mlockall.S modctl.S __mount50.S mprotect.S \
+		__msgctl50.S msgget.S munlock.S munlockall.S munmap.S \
+	nfssvc.S __ntp_gettime50.S \
 	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
 		__posix_fadvise50.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
@@ -103,17 +115,18 @@ ASM=	access.S acct.S \
 	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 		rmdir.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
-		sa_preempt.S semconfig.S semget.S semop.S ____semctl13.S \
+		sa_preempt.S semconfig.S semget.S semop.S ____semctl50.S \
 		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
-		setgroups.S setitimer.S __setlogin.S setpgid.S setpriority.S \
+		setgroups.S __setitimer50.S __setlogin.S setpgid.S \
+		setpriority.S \
 		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
-		setuid.S __shmctl13.S shmdt.S shmget.S shutdown.S \
+		setuid.S __shmctl50.S shmdt.S shmget.S shutdown.S \
 		__sigaltstack14.S __sigpending14.S __sigaction_sigtramp.S \
-		__sigtimedwait.S __socket30.S socketpair.S __stat30.S statvfs1.S \
-		swapctl.S symlink.S __sysctl.S \
-	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
-		timer_settime.S \
-	umask.S undelete.S unlink.S unmount.S utimes.S utrace.S uuidgen.S \
+		____sigtimedwait50.S __socket30.S socketpair.S __stat50.S \
+		statvfs1.S swapctl.S symlink.S __sysctl.S \
+	timer_create.S timer_delete.S __timer_gettime50.S timer_getoverrun.S \
+		__timer_settime50.S \
+	umask.S undelete.S unlink.S unmount.S __utimes50.S utrace.S uuidgen.S \
 	vadvise.S
 
 # modules with potentially non default implementations
@@ -127,15 +140,15 @@ ASM_MD=	_lwp_getprivate.S mremap.S
 . endif
 .endfor
 
-WEAKASM= accept.S aio_suspend.S close.S connect.S execve.S \
+WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S fsync_range.S \
-	kill.S mq_receive.S mq_send.S mq_timedreceive.S mq_timedsend.S \
-	msgrcv.S msgsnd.S __msync13.S \
-	nanosleep.S open.S poll.S pollts.S pselect.S read.S readlink.S readv.S \
-	_sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
+	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
+	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S poll.S \
+	__pollts50.S __pselect50.S read.S readlink.S \
+	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S \
-	select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
-	wait4.S write.S writev.S
+	__select50.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	__wait450.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 	issetugid.S sync.S

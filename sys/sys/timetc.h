@@ -1,4 +1,4 @@
-/* $NetBSD: timetc.h,v 1.5 2008/05/08 18:56:58 ad Exp $ */
+/* $NetBSD: timetc.h,v 1.6 2009/01/11 02:45:56 christos Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -81,7 +81,7 @@ extern struct timecounter *timecounter;
 u_int64_t tc_getfrequency(void);
 void	tc_init(struct timecounter *tc);
 int	tc_detach(struct timecounter *);
-void	tc_setclock(struct timespec *ts);
+void	tc_setclock(const struct timespec *ts);
 void	tc_ticktock(void);
 void	tc_gonebad(struct timecounter *);
 

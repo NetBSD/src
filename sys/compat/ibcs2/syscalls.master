@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 2008/06/19 12:24:22 hans Exp $
+	$NetBSD: syscalls.master,v 1.36 2009/01/11 02:45:48 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -41,6 +41,9 @@
 #include <sys/mount.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/time.h>
+
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
@@ -265,8 +268,8 @@
 168	UNIMPL
 169	UNIMPL
 170	UNIMPL
-171	STD		{ int ibcs2_sys_gettimeofday(struct timeval *tp); }
-172	STD		{ int ibcs2_sys_settimeofday(struct timeval *tp); }
+171	STD		{ int ibcs2_sys_gettimeofday(struct timeval50 *tp); }
+172	STD		{ int ibcs2_sys_settimeofday(struct timeval50 *tp); }
 173	UNIMPL
 174	UNIMPL
 175	UNIMPL
@@ -330,8 +333,8 @@
 233	UNIMPL		xenix_execseg
 234	UNIMPL		xenix_unexecseg
 235	UNIMPL
-236	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
+236	NOARGS		{ int compat_50_sys_select(u_int nd, fd_set *in, \
+			    fd_set *ou, fd_set *ex, struct timeval50 *tv); }
 237	STD		{ int ibcs2_sys_eaccess(const char *path, int flags); }
 238	UNIMPL		xenix_paccess
 239	STD		{ int ibcs2_sys_sigaction(int signum, \

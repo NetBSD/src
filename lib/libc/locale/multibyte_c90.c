@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_c90.c,v 1.5 2009/01/02 00:20:20 tnozaki Exp $	*/
+/*	$NetBSD: multibyte_c90.c,v 1.6 2009/01/11 02:46:28 christos Exp $	*/
 
 /*-
  * Copyright (c)2002, 2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_c90.c,v 1.5 2009/01/02 00:20:20 tnozaki Exp $");
+__RCSID("$NetBSD: multibyte_c90.c,v 1.6 2009/01/11 02:46:28 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
