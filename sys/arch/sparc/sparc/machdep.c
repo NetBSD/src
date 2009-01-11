@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.285 2008/11/25 15:51:34 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.286 2009/01/11 00:25:12 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2008/11/25 15:51:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.286 2009/01/11 00:25:12 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2008/11/25 15:51:34 ad Exp $");
 #include <sys/exec.h>
 #include <sys/ucontext.h>
 #include <sys/simplelock.h>
+#include <sys/module.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
@@ -1268,6 +1269,12 @@ wcopy(const void *vb1, void *vb2, u_int l)
 		*b2 = *b1e;
 }
 
+#ifdef MODULAR
+void
+module_init_md(void)
+{
+}
+#endif
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
