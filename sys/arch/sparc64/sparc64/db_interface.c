@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.115 2009/01/11 09:39:17 nakayama Exp $ */
+/*	$NetBSD: db_interface.c,v 1.116 2009/01/11 09:48:49 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.115 2009/01/11 09:39:17 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.116 2009/01/11 09:48:49 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -856,7 +856,7 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
-	db_printf("profile timer: %ld sec %ld nsec\n",
+	db_printf("profile timer: %" PRId64 " sec %ld nsec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_nsec);
 	return;
