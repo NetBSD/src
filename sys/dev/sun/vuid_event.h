@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.5 2009/01/11 23:36:39 christos Exp $ */
+/*	$NetBSD: vuid_event.h,v 1.6 2009/01/11 23:55:25 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@ typedef struct firm_event {
 } Firm_event;
 
 __BEGIN_DECLS
-static __inline void firm_settime(Firm_event *fev)
+static __inline void firm_gettime(Firm_event *fev)
 {
 	struct timeval tv;
 	getmicrotime(&tv);
