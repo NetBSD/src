@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1162 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1163 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -91,3 +91,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[macallan 20090109]
 	rgephy(4): Support for RTL8211C(L) phy. From FreeBSD. [cegger 20090109]
 	rgephy(4): Support for flow control. From OpenBSD. [cegger 20090109]
+	time_t,dev_t: changed time_t and dev_t to be 64 bit quantities. Fixed
+		POSIX issues in timeval and timespec [christos 20090109]
