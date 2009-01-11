@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.63 2008/11/12 18:07:40 njoly Exp $
+	$NetBSD: syscalls.master,v 1.64 2009/01/11 12:59:34 tsutsui Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -161,10 +161,11 @@
 			    struct orlimit *rlp); }
 76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct orlimit *rlp); }
-77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
-78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
+77	NOARGS		{ int compat_50_sys_getrusage(int who, \
+			    struct rusage50 *rusage); }
+78	STD		{ int linux_sys_gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-79	STD		{ int linux_sys_settimeofday(struct timeval *tp, \
+79	STD		{ int linux_sys_settimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
 80	STD		{ int linux_sys_getgroups16(int gidsetsize, \
 			    linux_gid16_t *gidset); }
@@ -213,10 +214,11 @@
 101	UNIMPL		ioperm
 102	STD		{ int linux_sys_socketcall(int what, void *args); }
 103	UNIMPL		syslog
-104	NOARGS		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
-105	NOARGS		{ int sys_getitimer(u_int which, \
-			    struct itimerval *itv); }
+104	NOARGS		{ int compat_50_sys_setitimer(u_int which, \
+			    struct itimerval50 *itv, \
+			    struct itimerval50 *oitv); }
+105	NOARGS		{ int compat_50_sys_getitimer(u_int which, \
+			    struct itimerval50 *itv); }
 106	STD		{ int linux_sys_stat(const char *path, \
 			    struct linux_stat *sp); }
 107	STD		{ int linux_sys_lstat(const char *path, \
@@ -266,7 +268,7 @@
 			    struct linux_dirent *dent, unsigned int count); }
 142	STD		{ int linux_sys_select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
-			    struct timeval *timeout); }
+			    struct timeval50 *timeout); }
 143	NOARGS		{ int sys_flock(int fd, int how); }
 144	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
 145	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
