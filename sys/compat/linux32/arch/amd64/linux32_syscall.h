@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscall.h,v 1.47 2008/12/12 23:38:13 njoly Exp $ */
+/* $NetBSD: linux32_syscall.h,v 1.48 2009/01/11 02:45:48 christos Exp $ */
 
 /*
  * System call numbers.
@@ -199,8 +199,8 @@
 /* syscall: "getrlimit" ret: "int" args: "u_int" "netbsd32_orlimitp_t" */
 #define	LINUX32_SYS_getrlimit	76
 
-/* syscall: "netbsd32_getrusage" ret: "int" args: "int" "netbsd32_rusagep_t" */
-#define	LINUX32_SYS_netbsd32_getrusage	77
+/* syscall: "compat_50_netbsd32_getrusage" ret: "int" args: "int" "netbsd32_rusage50p_t" */
+#define	LINUX32_SYS_compat_50_netbsd32_getrusage	77
 
 /* syscall: "gettimeofday" ret: "int" args: "netbsd32_timevalp_t" "netbsd32_timezonep_t" */
 #define	LINUX32_SYS_gettimeofday	78
@@ -265,11 +265,11 @@
 /* syscall: "socketcall" ret: "int" args: "int" "netbsd32_voidp" */
 #define	LINUX32_SYS_socketcall	102
 
-/* syscall: "netbsd32_setitimer" ret: "int" args: "int" "netbsd32_itimervalp_t" "netbsd32_itimervalp_t" */
-#define	LINUX32_SYS_netbsd32_setitimer	104
+/* syscall: "compat_50_netbsd32_setitimer" ret: "int" args: "int" "netbsd32_itimerval50p_t" "netbsd32_itimerval50p_t" */
+#define	LINUX32_SYS_compat_50_netbsd32_setitimer	104
 
-/* syscall: "netbsd32_getitimer" ret: "int" args: "int" "netbsd32_itimervalp_t" */
-#define	LINUX32_SYS_netbsd32_getitimer	105
+/* syscall: "compat_50_netbsd32_getitimer" ret: "int" args: "int" "netbsd32_itimerval50p_t" */
+#define	LINUX32_SYS_compat_50_netbsd32_getitimer	105
 
 /* syscall: "olduname" ret: "int" args: "linux32_oldutsnamep_t" */
 #define	LINUX32_SYS_olduname	109

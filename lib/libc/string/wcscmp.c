@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscmp.c,v 1.7 2009/01/05 06:11:43 tnozaki Exp $	*/
+/*	$NetBSD: wcscmp.c,v 1.8 2009/01/11 02:46:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wcscmp.c,v 1.7 2009/01/05 06:11:43 tnozaki Exp $");
+__RCSID("$NetBSD: wcscmp.c,v 1.8 2009/01/11 02:46:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

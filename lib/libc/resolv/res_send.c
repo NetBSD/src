@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.15 2008/06/21 23:37:53 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.16 2009/01/11 02:46:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.18.10.1 2008/01/27 02:06:46 marka Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.15 2008/06/21 23:37:53 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.16 2009/01/11 02:46:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -913,8 +913,8 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 	timeout = evSubTime(finish, now);
 	if (timeout.tv_sec < 0)
 		timeout = evConsTime(0L, 0L);
-	polltimeout = 1000*timeout.tv_sec +
-		timeout.tv_nsec/1000000;
+	polltimeout = 1000*(int)timeout.tv_sec +
+		(int)timeout.tv_nsec/1000000;
 	pollfd.fd = s;
 	pollfd.events = POLLRDNORM;
 	n = poll(&pollfd, 1, polltimeout);

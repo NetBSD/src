@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_template_decl.h,v 1.1 2009/01/02 00:20:20 tnozaki Exp $ */
+/* $NetBSD: nb_lc_template_decl.h,v 1.2 2009/01/11 02:46:29 christos Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,

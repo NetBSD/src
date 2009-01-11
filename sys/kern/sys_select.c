@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.11 2008/11/20 01:25:28 yamt Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.12 2009/01/11 02:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.11 2008/11/20 01:25:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.12 2009/01/11 02:45:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,8 @@ static syncobj_t select_sobj = {
  * Select system call.
  */
 int
-sys_pselect(struct lwp *l, const struct sys_pselect_args *uap, register_t *retval)
+sys___pselect50(struct lwp *l, const struct sys___pselect50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)				nd;
@@ -186,7 +187,8 @@ gettimeleft(struct timeval *tv, struct timeval *sleeptv)
 }
 
 int
-sys_select(struct lwp *l, const struct sys_select_args *uap, register_t *retval)
+sys___select50(struct lwp *l, const struct sys___select50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			nd;
@@ -386,7 +388,8 @@ sys_poll(struct lwp *l, const struct sys_poll_args *uap, register_t *retval)
  * Poll system call.
  */
 int
-sys_pollts(struct lwp *l, const struct sys_pollts_args *uap, register_t *retval)
+sys___pollts50(struct lwp *l, const struct sys___pollts50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(struct pollfd *)		fds;

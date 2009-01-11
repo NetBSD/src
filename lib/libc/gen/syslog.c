@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.46 2008/12/10 15:20:04 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.47 2009/01/11 02:46:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.46 2008/12/10 15:20:04 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.47 2009/01/11 02:46:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -283,7 +283,7 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 
 		prlen = strftime(p, tbuf_left, "%FT%T", &tmnow);
 		DEC();
-		prlen = snprintf(p, tbuf_left, ".%06ld", tv.tv_usec);
+		prlen = snprintf(p, tbuf_left, ".%06ld", (long)tv.tv_usec);
 		DEC();
 		prlen = strftime(p, tbuf_left-1, "%z", &tmnow);
 		/* strftime gives eg. "+0200", but we need "+02:00" */

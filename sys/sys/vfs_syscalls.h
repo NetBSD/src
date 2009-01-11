@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.8 2008/11/19 10:37:27 pooka Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.9 2009/01/11 02:45:56 christos Exp $        */
 
 #ifndef _SYS_VFS_SYSCALLS_H_
 #define _SYS_VFS_SYSCALLS_H_
@@ -35,5 +35,6 @@ int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
 
 int	do_sys_unlink(const char *, enum uio_seg);
 int	do_sys_rename(const char *, const char *, enum uio_seg, int);
+int	do_sys_mknod(struct lwp *l, const char *, mode_t, dev_t, register_t *);
 
 #endif /* _SYS_VFS_SYSCALLS_H_ */

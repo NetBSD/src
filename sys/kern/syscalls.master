@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.218 2008/11/26 15:01:17 pooka Exp $
+	$NetBSD: syscalls.master,v 1.219 2009/01/11 02:45:53 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -69,17 +69,17 @@
 			    size_t nbyte); }
 5	STD 	 RUMP	{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
-6	STD 	 RUMP	{ int sys_close(int fd); }
-7	STD 		{ int sys_wait4(int pid, int *status, int options, \
-			    struct rusage *rusage); }
+6	STD	 RUMP	{ int sys_close(int fd); }
+7	COMPAT_50 MODULAR { int sys_wait4(int pid, int *status, \
+			    int options, struct rusage50 *rusage); }
 8	COMPAT_43 MODULAR { int sys_creat(const char *path, mode_t mode); } ocreat
 9	STD 	 RUMP	{ int sys_link(const char *path, const char *link); }
 10	STD 	 RUMP	{ int sys_unlink(const char *path); }
 11	OBSOL		execv
 12	STD 	 RUMP	{ int sys_chdir(const char *path); }
 13	STD 	 RUMP	{ int sys_fchdir(int fd); }
-14	STD 	 RUMP	{ int sys_mknod(const char *path, mode_t mode, \
-			    dev_t dev); }
+14	COMPAT_50 MODULAR { int sys_mknod(const char *path, mode_t mode, \
+			    uint32_t dev); }
 15	STD 	 RUMP	{ int sys_chmod(const char *path, mode_t mode); }
 16	STD 	 RUMP	{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
@@ -179,15 +179,15 @@
 			    gid_t *gidset); }
 80	STD 		{ int sys_setgroups(int gidsetsize, \
 			    const gid_t *gidset); }
-81	STD 	 	{ int sys_getpgrp(void); }
+81	STD 		{ int sys_getpgrp(void); }
 82	STD 		{ int sys_setpgid(int pid, int pgid); }
-83	STD 		{ int sys_setitimer(int which, \
-			    const struct itimerval *itv, \
-			    struct itimerval *oitv); }
+83	COMPAT_50 MODULAR { int sys_setitimer(int which, \
+			    const struct itimerval50 *itv, \
+			    struct itimerval50 *oitv); }
 84	COMPAT_43 MODULAR { int sys_wait(void); } owait
 85	COMPAT_12 MODULAR { int sys_swapon(const char *name); } oswapon
-86	STD 		{ int sys_getitimer(int which, \
-			    struct itimerval *itv); }
+86	COMPAT_50 MODULAR { int sys_getitimer(int which, \
+			    struct itimerval50 *itv); }
 87	COMPAT_43 MODULAR { int sys_gethostname(char *hostname, u_int len); } \
 			    ogethostname
 88	COMPAT_43 MODULAR { int sys_sethostname(char *hostname, u_int len); } \
@@ -196,8 +196,8 @@
 90	STD 		{ int sys_dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	STD 		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
-93	STD 		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
+93	COMPAT_50 MODULAR 	{ int sys_select(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval50 *tv); }
 94	UNIMPL		setdopt
 95	STD	RUMP 	{ int sys_fsync(int fd); }
 96	STD 		{ int sys_setpriority(int which, id_t who, int prio); }
@@ -231,9 +231,9 @@
 114	COMPAT_43 MODULAR { int sys_sendmsg(int s, void *msg, int flags); } \
 			    osendmsg
 115	OBSOL		vtrace
-116	STD 		{ int sys_gettimeofday(struct timeval *tp, \
+116	COMPAT_50 MODULAR { int sys_gettimeofday(struct timeval50 *tp, \
 			    void *tzp); }
-117	STD 		{ int sys_getrusage(int who, struct rusage *rusage); }
+117	COMPAT_50 MODULAR { int sys_getrusage(int who, struct rusage50 *rusage); }
 118	STD	RUMP	{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, unsigned int *avalsize); }
 119	OBSOL		resuba
@@ -241,7 +241,7 @@
 			    const struct iovec *iovp, int iovcnt); }
 121	STD 		{ ssize_t sys_writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-122	STD 		{ int sys_settimeofday(const struct timeval *tv, \
+122	COMPAT_50 MODULAR { int sys_settimeofday(const struct timeval50 *tv, \
 			    const void *tzp); }
 123	STD 		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD 		{ int sys_fchmod(int fd, mode_t mode); }
@@ -264,11 +264,11 @@
 			    int protocol, int *rsv); }
 136	STD 	 RUMP	{ int sys_mkdir(const char *path, mode_t mode); }
 137	STD 	 RUMP	{ int sys_rmdir(const char *path); }
-138	STD 	 RUMP	{ int sys_utimes(const char *path, \
-			    const struct timeval *tptr); }
+138	COMPAT_50 MODULAR { int sys_utimes(const char *path, \
+			    const struct timeval50 *tptr); }
 139	OBSOL		4.2 sigreturn
-140	STD 		{ int sys_adjtime(const struct timeval *delta, \
-			    struct timeval *olddelta); }
+140	COMPAT_50 MODULAR { int sys_adjtime(const struct timeval50 *delta, \
+			    struct timeval50 *olddelta); }
 141	COMPAT_43 MODULAR { int sys_getpeername(int fdes, void *asa, \
 			    int *alen); } ogetpeername
 142	COMPAT_43 MODULAR { int32_t sys_gethostid(void); } ogethostid
@@ -339,7 +339,7 @@
 174	STD 	 RUMP	{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
-175	STD		{ int sys_ntp_gettime(struct ntptimeval30 *ntvp); }
+175	COMPAT_30	{ int sys_ntp_gettime(struct ntptimeval30 *ntvp); }
 #if defined(NTP) || !defined(_KERNEL_OPT)
 176	STD 		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
@@ -359,9 +359,9 @@
 			    struct block_info *blkiov, int blkcnt); }
 185	STD 		{ int sys_lfs_markv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
-186	STD 		{ int sys_lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	STD 		{ int sys_lfs_segwait(fsid_t *fsidp, \
-			    struct timeval *tv); }
+186	STD		{ int sys_lfs_segclean(fsid_t *fsidp, u_long segment); }
+187	COMPAT_50 MODULAR { int sys_lfs_segwait(fsid_t *fsidp, \
+			    struct timeval50 *tv); }
 #else
 184	EXCL		lfs_bmapv
 185	EXCL		lfs_markv
@@ -397,10 +397,10 @@
 203	STD 		{ int sys_mlock(const void *addr, size_t len); }
 204	STD 		{ int sys_munlock(const void *addr, size_t len); }
 205	STD 		{ int sys_undelete(const char *path); }
-206	STD 		{ int sys_futimes(int fd, \
-			    const struct timeval *tptr); }
+206	COMPAT_50 MODULAR { int sys_futimes(int fd, \
+			    const struct timeval50 *tptr); }
 207	STD 		{ pid_t sys_getpgid(pid_t pid); }
-208	STD 		{ int sys_reboot(int opt, char *bootstr); }
+208	STD		{ int sys_reboot(int opt, char *bootstr); }
 209	STD 		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 ;
@@ -457,32 +457,32 @@
 230	EXCL		shmdt
 231	EXCL		shmget
 #endif
-232	STD 		{ int sys_clock_gettime(clockid_t clock_id, \
-			    struct timespec *tp); }
-233	STD 		{ int sys_clock_settime(clockid_t clock_id, \
-			    const struct timespec *tp); }
-234	STD 		{ int sys_clock_getres(clockid_t clock_id, \
-			    struct timespec *tp); }
-235	STD 		{ int sys_timer_create(clockid_t clock_id, \
+232	COMPAT_50 MODULAR { int sys_clock_gettime(clockid_t clock_id, \
+			    struct timespec50 *tp); }
+233	COMPAT_50 MODULAR { int sys_clock_settime(clockid_t clock_id, \
+			    const struct timespec50 *tp); }
+234	COMPAT_50 MODULAR { int sys_clock_getres(clockid_t clock_id, \
+			    struct timespec50 *tp); }
+235	STD		{ int sys_timer_create(clockid_t clock_id, \
 			    struct sigevent *evp, timer_t *timerid); }
-236	STD 		{ int sys_timer_delete(timer_t timerid); }
-237	STD 		{ int sys_timer_settime(timer_t timerid, int flags, \
-			    const struct itimerspec *value, \
-			    struct itimerspec *ovalue); }
-238	STD 		{ int sys_timer_gettime(timer_t timerid, struct \
-			    itimerspec *value); }
-239	STD 		{ int sys_timer_getoverrun(timer_t timerid); }
+236	STD		{ int sys_timer_delete(timer_t timerid); }
+237	COMPAT_50 MODULAR { int sys_timer_settime(timer_t timerid, int flags, \
+			    const struct itimerspec50 *value, \
+			    struct itimerspec50 *ovalue); }
+238	COMPAT_50 MODULAR { int sys_timer_gettime(timer_t timerid, struct \
+			    itimerspec50 *value); }
+239	STD		{ int sys_timer_getoverrun(timer_t timerid); }
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;
-240	STD 		{ int sys_nanosleep(const struct timespec *rqtp, \
-			    struct timespec *rmtp); }
+240	COMPAT_50 MODULAR { int sys_nanosleep(const struct timespec50 *rqtp, \
+			    struct timespec50 *rmtp); }
 241	STD 		{ int sys_fdatasync(int fd); }
 242	STD 		{ int sys_mlockall(int flags); }
 243	STD 		{ int sys_munlockall(void); }
-244	STD 		{ int sys___sigtimedwait(const sigset_t *set, \
+244	COMPAT_50 MODULAR { int sys___sigtimedwait(const sigset_t *set, \
 			    siginfo_t *info, \
-			    struct timespec *timeout); }
+			    struct timespec50 *timeout); }
 245	UNIMPL		sys_sigqueue
 246	STD 	 	{ int sys_modctl(int cmd, void *arg); }
 247	STD MODULAR 	{ int sys__ksem_init(unsigned int value, intptr_t *idp); }
@@ -512,13 +512,13 @@
 			    size_t msg_len, unsigned msg_prio); }
 264	STD 		{ ssize_t sys_mq_receive(mqd_t mqdes, char *msg_ptr, \
 			    size_t msg_len, unsigned *msg_prio); }
-265	STD 		{ int sys_mq_timedsend(mqd_t mqdes, \
+265	COMPAT_50 MODULAR { int sys_mq_timedsend(mqd_t mqdes, \
 			    const char *msg_ptr, size_t msg_len, \
 			    unsigned msg_prio, \
-			    const struct timespec *abs_timeout); }
-266	STD 		{ ssize_t sys_mq_timedreceive(mqd_t mqdes, \
+			    const struct timespec50 *abs_timeout); }
+266	COMPAT_50 MODULAR { ssize_t sys_mq_timedreceive(mqd_t mqdes, \
 			    char *msg_ptr, size_t msg_len, unsigned *msg_prio, \
-			    const struct timespec *abs_timeout); }
+			    const struct timespec50 *abs_timeout); }
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL
@@ -531,8 +531,8 @@
 274	STD 	 RUMP	{ int sys_lchmod(const char *path, mode_t mode); }
 275	STD 	 RUMP	{ int sys_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
-276	STD 	 RUMP	{ int sys_lutimes(const char *path, \
-			    const struct timeval *tptr); }
+276	COMPAT_50  	{ int sys_lutimes(const char *path, \
+			    const struct timeval50 *tptr); }
 277	STD 		{ int sys___msync13(void *addr, size_t len, int flags); }
 278	COMPAT_30 MODULAR { int sys___stat13(const char *path, struct stat13 *ub); }
 279	COMPAT_30 MODULAR { int sys___fstat13(int fd, struct stat13 *sb); }
@@ -574,20 +574,20 @@
 300	COMPAT_20 MODULAR { int sys_fhstatfs(const struct compat_30_fhandle *fhp, \
 			    struct statfs12 *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
-301	STD 		{ int sys_____semctl13(int semid, int semnum, int cmd, \
+301	COMPAT_50 MODULAR { int sys_____semctl13(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }
 #else
 301	EXCL		____semctl13
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
-302	STD 		{ int sys___msgctl13(int msqid, int cmd, \
+302	COMPAT_50 MODULAR { int sys___msgctl13(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
 #else
 302	EXCL		__msgctl13
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
-303	STD 		{ int sys___shmctl13(int shmid, int cmd, \
-			    struct shmid_ds *buf); }
+303	COMPAT_50 MODULAR { int sys___shmctl13(int shmid, int cmd, \
+			    struct shmid_ds13 *buf); }
 #else
 303	EXCL		__shmctl13
 #endif
@@ -610,7 +610,7 @@
 317	STD 		{ void sys__lwp_setprivate(void *ptr); }
 318	STD 		{ int sys__lwp_kill(lwpid_t target, int signo); }
 319	STD 		{ int sys__lwp_detach(lwpid_t target); }
-320	STD 		{ int sys__lwp_park(const struct timespec *ts, \
+320	COMPAT_50 MODULAR { int sys__lwp_park(const struct timespec50 *ts, \
 				lwpid_t unpark, const void *hint, \
 				const void *unparkhint); }
 321	STD 		{ int sys__lwp_unpark(lwpid_t target, const void *hint); }
@@ -647,14 +647,14 @@
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa, \
 			    const void *tramp, int vers); }
-341	STD 		{ int sys_pmc_get_info(int ctr, int op, void *args); }
-342	STD 		{ int sys_pmc_control(int ctr, int op, void *args); }
+341	STD		{ int sys_pmc_get_info(int ctr, int op, void *args); }
+342	STD		{ int sys_pmc_control(int ctr, int op, void *args); }
 343	STD 		{ int sys_rasctl(void *addr, size_t len, int op); }
 344	STD 		{ int sys_kqueue(void); }
-345	STD 		{ int sys_kevent(int fd, \
+345	COMPAT_50 MODULAR { int sys_kevent(int fd, \
 			    const struct kevent *changelist, size_t nchanges, \
 			    struct kevent *eventlist, size_t nevents, \
-			    const struct timespec *timeout); }
+			    const struct timespec50 *timeout); }
 
 ; Scheduling system calls.
 346	STD 		{ int sys__sched_setparam(pid_t pid, lwpid_t lid, \
@@ -714,11 +714,11 @@
 			    int attrnamespace, void *data, size_t nbytes); }
 372	STD 		{ ssize_t sys_extattr_list_link(const char *path, \
 			    int attrnamespace, void *data, size_t nbytes); }
-373	STD 		{ int sys_pselect(int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, const struct timespec *ts, \
+373	COMPAT_50 MODULAR { int sys_pselect(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, const struct timespec50 *ts, \
 			    const sigset_t *mask); }
-374	STD 		{ int sys_pollts(struct pollfd *fds, u_int nfds, \
-			    const struct timespec *ts, const sigset_t *mask); }
+374	COMPAT_50 MODULAR { int sys_pollts(struct pollfd *fds, u_int nfds, \
+			    const struct timespec50 *ts, const sigset_t *mask); }
 375	STD 		{ int sys_setxattr(const char *path, \
 			    const char *name, void *value, size_t size, \
 			    int flags); }
@@ -746,14 +746,14 @@
 			    const char *name); }
 386	STD 		{ int sys_fremovexattr(int fd, \
 			    const char *name); }
-387	STD 	 RUMP	{ int sys___stat30(const char *path, struct stat *ub); }
-388	STD 		{ int sys___fstat30(int fd, struct stat *sb); }
-389	STD 	 RUMP	{ int sys___lstat30(const char *path, struct stat *ub); }
+387	COMPAT_50 MODULAR { int sys___stat30(const char *path, struct stat30 *ub); }
+388	COMPAT_50 MODULAR { int sys___fstat30(int fd, struct stat30 *sb); }
+389	COMPAT_50 MODULAR { int sys___lstat30(const char *path, struct stat30 *ub); }
 390	STD 		{ int sys___getdents30(int fd, char *buf, size_t count); }
 391	IGNORED		old posix_fadvise
 392	COMPAT_30 MODULAR { int sys___fhstat30(const struct compat_30_fhandle \
-			    *fhp, struct stat *sb); }
-393	STD 		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
+			    *fhp, struct stat30 *sb); }
+393	COMPAT_50 MODULAR { int sys___ntp_gettime30(struct ntptimeval50 *ntvp); }
 394	STD	 RUMP	{ int sys___socket30(int domain, int type, int protocol); }
 395	STD 	 RUMP	{ int sys___getfh30(const char *fname, void *fhp, \
 			    size_t *fh_size); }
@@ -761,19 +761,19 @@
 			    int flags); }
 397	STD 		{ int sys___fhstatvfs140(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
-398	STD 		{ int sys___fhstat40(const void *fhp, \
-			    size_t fh_size, struct stat *sb); }
+398	COMPAT_50 MODULAR { int sys___fhstat40(const void *fhp, \
+			    size_t fh_size, struct stat30 *sb); }
 
 ; Asynchronous I/O system calls
-399	STD MODULAR	{ int sys_aio_cancel(int fildes, struct aiocb *aiocbp); }
-400	STD MODULAR	{ int sys_aio_error(const struct aiocb *aiocbp); }
-401	STD MODULAR	{ int sys_aio_fsync(int op, struct aiocb *aiocbp); }
-402	STD MODULAR	{ int sys_aio_read(struct aiocb *aiocbp); }
-403	STD MODULAR	{ int sys_aio_return(struct aiocb *aiocbp); }
-404	STD MODULAR	{ int sys_aio_suspend(const struct aiocb *const *list, \
-			    int nent, const struct timespec *timeout); }
-405	STD MODULAR	{ int sys_aio_write(struct aiocb *aiocbp); }
-406	STD MODULAR	{ int sys_lio_listio(int mode, struct aiocb *const *list, \
+399	STD MODULAR 	{ int sys_aio_cancel(int fildes, struct aiocb *aiocbp); }
+400	STD MODULAR 	{ int sys_aio_error(const struct aiocb *aiocbp); }
+401	STD MODULAR 	{ int sys_aio_fsync(int op, struct aiocb *aiocbp); }
+402	STD MODULAR 	{ int sys_aio_read(struct aiocb *aiocbp); }
+403	STD MODULAR 	{ int sys_aio_return(struct aiocb *aiocbp); }
+404	COMPAT_50 MODULAR { int sys_aio_suspend(const struct aiocb *const *list, \
+			    int nent, const struct timespec50 *timeout); }
+405	STD MODULAR 	{ int sys_aio_write(struct aiocb *aiocbp); }
+406	STD MODULAR 	{ int sys_lio_listio(int mode, struct aiocb *const *list, \
 			    int nent, struct sigevent *sig); }
 
 407	UNIMPL
@@ -795,3 +795,99 @@
 			    id_t second_id, psetid_t psid, psetid_t *opsid); }
 416	STD 		{ int sys___posix_fadvise50(int fd, int pad, \
 			    off_t offset, off_t len, int advice); }
+417	STD 		{ int sys___select50(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval *tv); }
+418	STD 		{ int sys___gettimeofday50(struct timeval *tp, \
+			    void *tzp); }
+419	STD 		{ int sys___settimeofday50(const struct timeval *tv, \
+			    const void *tzp); }
+420	STD  RUMP	{ int sys___utimes50(const char *path, \
+			    const struct timeval *tptr); }
+421	STD		{ int sys___adjtime50(const struct timeval *delta, \
+			    struct timeval *olddelta); }
+#if defined(LFS) || !defined(_KERNEL)
+422	STD		{ int sys___lfs_segwait50(fsid_t *fsidp, \
+			    struct timeval *tv); }
+#else
+422	EXCL		__lfs_segwait50
+#endif
+423	STD 		{ int sys___futimes50(int fd, \
+			    const struct timeval *tptr); }
+424	STD  RUMP 	{ int sys___lutimes50(const char *path, \
+			    const struct timeval *tptr); }
+425	STD		{ int sys___setitimer50(int which, \
+			    const struct itimerval *itv, \
+			    struct itimerval *oitv); }
+426	STD		{ int sys___getitimer50(int which, \
+			    struct itimerval *itv); }
+427	STD 		{ int sys___clock_gettime50(clockid_t clock_id, \
+			    struct timespec *tp); }
+428	STD 		{ int sys___clock_settime50(clockid_t clock_id, \
+			    const struct timespec *tp); }
+429	STD 		{ int sys___clock_getres50(clockid_t clock_id, \
+			    struct timespec *tp); }
+430	STD 		{ int sys___nanosleep50(const struct timespec *rqtp, \
+			    struct timespec *rmtp); }
+431	STD 		{ int sys_____sigtimedwait50(const sigset_t *set, \
+			    siginfo_t *info, \
+			    struct timespec *timeout); }
+432	STD 		{ int sys___mq_timedsend50(mqd_t mqdes, \
+			    const char *msg_ptr, size_t msg_len, \
+			    unsigned msg_prio, \
+			    const struct timespec *abs_timeout); }
+433	STD 		{ ssize_t sys___mq_timedreceive50(mqd_t mqdes, \
+			    char *msg_ptr, size_t msg_len, unsigned *msg_prio, \
+			    const struct timespec *abs_timeout); }
+434	STD 		{ int sys____lwp_park50(const struct timespec *ts, \
+				lwpid_t unpark, const void *hint, \
+				const void *unparkhint); }
+435	STD 		{ int sys___kevent50(int fd, \
+			    const struct kevent *changelist, size_t nchanges, \
+			    struct kevent *eventlist, size_t nevents, \
+			    const struct timespec *timeout); }
+436	STD 		{ int sys___pselect50(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, const struct timespec *ts, \
+			    const sigset_t *mask); }
+437	STD 		{ int sys___pollts50(struct pollfd *fds, u_int nfds, \
+			    const struct timespec *ts, const sigset_t *mask); }
+438	STD MODULAR	{ int sys___aio_suspend50( \
+			    const struct aiocb *const *list, \
+			    int nent, const struct timespec *timeout); }
+439	STD  RUMP	{ int sys___stat50(const char *path, struct stat *ub); }
+440	STD 		{ int sys___fstat50(int fd, struct stat *sb); }
+441	STD  RUMP	{ int sys___lstat50(const char *path, struct stat *ub); }
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
+442	STD 		{ int sys_____semctl50(int semid, int semnum, int cmd, \
+			    ... union __semun *arg); }
+#else
+442	EXCL		____semctl50
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
+443	STD 		{ int sys___shmctl50(int shmid, int cmd, \
+			    struct shmid_ds *buf); }
+#else
+443	EXCL 		____shmctl50
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
+444	STD 		{ int sys___msgctl50(int msqid, int cmd, \
+			    struct msqid_ds *buf); }
+#else
+444	EXCL 		____msgctl50
+#endif
+445	STD 		{ int sys___getrusage50(int who, struct rusage *rusage); }
+446	STD		{ int sys___timer_settime50(timer_t timerid, \
+			    int flags, const struct itimerspec *value, \
+			    struct itimerspec *ovalue); }
+447	STD		{ int sys___timer_gettime50(timer_t timerid, struct \
+			    itimerspec *value); }
+#if defined(NTP) || !defined(_KERNEL_OPT)
+448	STD		{ int sys___ntp_gettime50(struct ntptimeval *ntvp); }
+#else
+448	EXCL		___ntp_gettime50
+#endif
+449	STD 		{ int sys___wait450(int pid, int *status, \
+				    int options, struct rusage *rusage); }
+450	STD  RUMP	{ int sys___mknod50(const char *path, mode_t mode, \
+			    dev_t dev); }
+451	STD	 	{ int sys___fhstat50(const void *fhp, \
+			    size_t fh_size, struct stat *sb); }

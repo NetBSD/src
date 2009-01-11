@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.15 2008/11/20 09:30:32 ad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.16 2009/01/11 02:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,11 +62,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.15 2008/11/20 09:30:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.16 2009/01/11 02:45:52 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_sa.h"
+#ifdef _KERNEL_OPT
+#include "fs_lfs.h"
+#endif
 
 /* XXX To get syscall prototypes. */
 #define SYSVSHM
@@ -76,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.15 2008/11/20 09:30:32 ad Exp $");
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/fstypes.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -197,7 +201,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS_aio_fsync, "aio" },
 	    { SYS_aio_read, "aio" },
 	    { SYS_aio_return, "aio" },
-	    { SYS_aio_suspend, "aio" },
+	    { SYS___aio_suspend50, "aio" },
 	    { SYS_aio_write, "aio" },
 	    { SYS_lio_listio, "aio" },
 	    { SYS_compat_43_fstat43, "compat" },
@@ -274,6 +278,42 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS_compat_30_getfh, "compat" },
 	    { SYS_compat_30_socket, "compat" },
 	    { SYS_compat_40_mount, "compat" },
+	    { SYS_compat_50_wait4, "compat" },
+	    { SYS_compat_50_mknod, "compat" },
+	    { SYS_compat_50_setitimer, "compat" },
+	    { SYS_compat_50_getitimer, "compat" },
+	    { SYS_compat_50_select, "compat" },
+	    { SYS_compat_50_gettimeofday, "compat" },
+	    { SYS_compat_50_getrusage, "compat" },
+	    { SYS_compat_50_settimeofday, "compat" },
+	    { SYS_compat_50_utimes, "compat" },
+	    { SYS_compat_50_adjtime, "compat" },
+#ifdef LFS
+	    { SYS_compat_50_lfs_segwait, "compat" },
+#endif
+	    { SYS_compat_50_futimes, "compat" },
+	    { SYS_compat_50_clock_gettime, "compat" },
+	    { SYS_compat_50_clock_settime, "compat" },
+	    { SYS_compat_50_clock_getres, "compat" },
+	    { SYS_compat_50_timer_settime, "compat" },
+	    { SYS_compat_50_timer_gettime, "compat" },
+	    { SYS_compat_50_nanosleep, "compat" },
+	    { SYS_compat_50___sigtimedwait, "compat" },
+	    { SYS_compat_50_mq_timedsend, "compat" },
+	    { SYS_compat_50_mq_timedreceive, "compat" },
+	    { SYS_compat_50_____semctl13, "compat" },
+	    { SYS_compat_50___msgctl13, "compat" },
+	    { SYS_compat_50___shmctl13, "compat" },
+	    { SYS_compat_50__lwp_park, "compat" },
+	    { SYS_compat_50_kevent, "compat" },
+	    { SYS_compat_50_pselect, "compat" },
+	    { SYS_compat_50_pollts, "compat" },
+	    { SYS_compat_50___stat30, "compat" },
+	    { SYS_compat_50___fstat30, "compat" },
+	    { SYS_compat_50___lstat30, "compat" },
+	    { SYS_compat_50___ntp_gettime30, "compat" },
+	    { SYS_compat_50___fhstat40, "compat" },
+	    { SYS_compat_50_aio_suspend, "compat" },
 	    { SYS__ksem_init, "ksem" },
 	    { SYS__ksem_open, "ksem" },
 	    { SYS__ksem_unlink, "ksem" },

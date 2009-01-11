@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 2008/11/19 13:09:19 njoly Exp $
+	$NetBSD: syscalls.master,v 1.27 2009/01/11 02:45:48 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -36,7 +36,9 @@
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_compat_netbsd.h"
 #endif
+
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -44,6 +46,9 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/time.h>
+
+#include <compat/sys/time.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
@@ -128,11 +133,12 @@
 35	STD		{ int linux_sys_nanosleep( \
 			    const struct linux_timespec *rqtp, \
 			    struct linux_timespec *rmtp); }
-36	NOARGS		{ int sys_getitimer(u_int which, \
-			    struct itimerval *itv); }
+36	NOARGS		{ int compat_50_sys_getitimer(u_int which, \
+			    struct itimerval50 *itv); }
 37	STD		{ int linux_sys_alarm(unsigned int secs); }
-38	NOARGS		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
+38	NOARGS		{ int compat_50_sys_setitimer(u_int which, \
+			    struct itimerval50 *itv, \
+			    struct itimerval50 *oitv); }
 39	STD		{ pid_t linux_sys_getpid(void); }
 40	UNIMPL		sendfile
 41	STD		{ int linux_sys_socket(int domain, \
@@ -243,7 +249,7 @@
 			    struct timezone *tzp); }
 97	STD		{ int linux_sys_getrlimit(int which, \
 			    struct rlimit *rlp); }
-98	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
+98	NOARGS		{ int compat_50_sys_getrusage(int who, struct rusage50 *rusage); }
 99	STD		{ int linux_sys_sysinfo(struct linux_sysinfo *arg); }
 100	STD		{ int linux_sys_times(struct times *tms); }
 101	STD		{ int linux_sys_ptrace(long request, long pid, \

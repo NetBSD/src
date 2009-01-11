@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fts.c,v 1.2 2005/12/11 04:12:58 christos Exp $	*/
+/*	$NetBSD: compat_fts.c,v 1.3 2009/01/11 02:46:25 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -11,6 +11,7 @@
 
 #define __LIBC12_SOURCE__
 #include <sys/stat.h>
+#include <compat/sys/time.h>
 #include <compat/sys/stat.h>
 
 #define __fts_stat_t	struct stat12

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.119 2008/12/21 19:12:43 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.120 2009/01/11 02:45:54 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,9 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.119 2008/12/21 19:12:43 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.120 2009/01/11 02:45:54 christos Exp $");
 
 #include "opt_inet.h"
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +87,10 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.119 2008/12/21 19:12:43 roy Exp $");
 #include <net/route.h>
 #include <net/raw_cb.h>
 
+#if defined(COMPAT_14) || defined(COMPAT_50)
+#include <compat/net/if.h>
+#endif
+
 #include <machine/stdarg.h>
 
 DOMAIN_DEFINE(routedomain);	/* forward declare and add to link set */
@@ -95,24 +102,12 @@ int	route_maxqlen = IFQ_MAXLEN;
 static struct	ifqueue route_intrq;
 static void	*route_sih;
 
-struct walkarg {
-	int	w_op;
-	int	w_arg;
-	int	w_given;
-	int	w_needed;
-	void *	w_where;
-	int	w_tmemsize;
-	int	w_tmemneeded;
-	void *	w_tmem;
-};
-
-static struct mbuf *rt_msg1(int, struct rt_addrinfo *, void *, int);
-static int rt_msg2(int, struct rt_addrinfo *, void *, struct walkarg *, int *);
+static int rt_msg2(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *);
 static int rt_xaddrs(u_char, const char *, const char *, struct rt_addrinfo *);
 static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
     struct rt_addrinfo *);
 static int sysctl_dumpentry(struct rtentry *, void *);
-static int sysctl_iflist(int, struct walkarg *, int);
+static int sysctl_iflist(int, struct rt_walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
 static inline void rt_adjustcount(int, int);
 static void route_enqueue(struct mbuf *, int);
@@ -140,6 +135,20 @@ rt_adjustcount(int af, int cnt)
 		route_cb.iso_count += cnt;
 		return;
 	}
+}
+static inline void
+cvtmetrics(struct rt_metrics *ortm, const struct nrt_metrics *rtm)
+{
+	ortm->rmx_locks = rtm->rmx_locks;
+	ortm->rmx_mtu = rtm->rmx_mtu;
+	ortm->rmx_hopcount = rtm->rmx_hopcount;
+	ortm->rmx_expire = rtm->rmx_expire;
+	ortm->rmx_recvpipe = rtm->rmx_recvpipe;
+	ortm->rmx_sendpipe = rtm->rmx_sendpipe;
+	ortm->rmx_ssthresh = rtm->rmx_ssthresh;
+	ortm->rmx_rtt = rtm->rmx_rtt;
+	ortm->rmx_rttvar = rtm->rmx_rttvar;
+	ortm->rmx_pksent = rtm->rmx_pksent;
 }
 
 /*ARGSUSED*/
@@ -383,7 +392,7 @@ route_output(struct mbuf *m, ...)
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, rtm, NULL, 0);
 			rtm->rtm_flags = rt->rt_flags;
-			rtm->rtm_rmx = rt->rt_rmx;
+			cvtmetrics(&rtm->rtm_rmx, &rt->rt_rmx);
 			rtm->rtm_addrs = info.rti_addrs;
 			break;
 
@@ -512,7 +521,7 @@ flush:
 }
 
 void
-rt_setmetrics(u_long which, const struct rt_metrics *in, struct rt_metrics *out)
+rt_setmetrics(u_long which, const struct rt_metrics *in, struct nrt_metrics *out)
 {
 #define metric(f, e) if (which & (f)) out->e = in->e;
 	metric(RTV_RPIPE, rmx_recvpipe);
@@ -522,6 +531,7 @@ rt_setmetrics(u_long which, const struct rt_metrics *in, struct rt_metrics *out)
 	metric(RTV_RTTVAR, rmx_rttvar);
 	metric(RTV_HOPCOUNT, rmx_hopcount);
 	metric(RTV_MTU, rmx_mtu);
+	/* XXX time_t: Will not work after 2038 */
 	metric(RTV_EXPIRE, rmx_expire);
 #undef metric
 }
@@ -570,7 +580,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
 	return 0;
 }
 
-static struct mbuf *
+struct mbuf *
 rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 {
 	struct rt_msghdr *rtm;
@@ -591,8 +601,13 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 		break;
 
 #ifdef COMPAT_14
-	case RTM_OIFINFO:
+	case RTM_OOIFINFO:
 		len = sizeof(struct if_msghdr14);
+		break;
+#endif
+#ifdef COMPAT_50
+	case RTM_OIFINFO:
+		len = sizeof(struct if_msghdr50);
 		break;
 #endif
 
@@ -660,7 +675,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
  *	if the allocation fails ENOBUFS is returned.
  */
 static int
-rt_msg2(int type, struct rt_addrinfo *rtinfo, void *cpv, struct walkarg *w,
+rt_msg2(int type, struct rt_addrinfo *rtinfo, void *cpv, struct rt_walkarg *w,
 	int *lenp)
 {
 	int i;
@@ -676,8 +691,13 @@ again:
 		len = sizeof(struct ifa_msghdr);
 		break;
 #ifdef COMPAT_14
-	case RTM_OIFINFO:
+	case RTM_OOIFINFO:
 		len = sizeof(struct if_msghdr14);
+		break;
+#endif
+#ifdef COMPAT_50
+	case RTM_OIFINFO:
+		len = sizeof(struct if_msghdr50);
 		break;
 #endif
 
@@ -704,7 +724,7 @@ again:
 		len += dlen;
 	}
 	if (cp == NULL && w != NULL && !second_time) {
-		struct walkarg *rw = w;
+		struct rt_walkarg *rw = w;
 
 		rw->w_needed += len;
 		if (rw->w_needed <= 0 && rw->w_where) {
@@ -772,16 +792,13 @@ void
 rt_ifmsg(struct ifnet *ifp)
 {
 	struct if_msghdr ifm;
-#ifdef COMPAT_14
-	struct if_msghdr14 oifm;
-#endif
 	struct mbuf *m;
 	struct rt_addrinfo info;
 
 	if (route_cb.any_count == 0)
 		return;
-	memset(&info, 0, sizeof(info));
-	memset(&ifm, 0, sizeof(ifm));
+	(void)memset(&info, 0, sizeof(info));
+	(void)memset(&ifm, 0, sizeof(ifm));
 	ifm.ifm_index = ifp->if_index;
 	ifm.ifm_flags = ifp->if_flags;
 	ifm.ifm_data = ifp->if_data;
@@ -791,35 +808,13 @@ rt_ifmsg(struct ifnet *ifp)
 		return;
 	route_enqueue(m, 0);
 #ifdef COMPAT_14
-	memset(&info, 0, sizeof(info));
-	memset(&oifm, 0, sizeof(oifm));
-	oifm.ifm_index = ifp->if_index;
-	oifm.ifm_flags = ifp->if_flags;
-	oifm.ifm_data.ifi_type = ifp->if_data.ifi_type;
-	oifm.ifm_data.ifi_addrlen = ifp->if_data.ifi_addrlen;
-	oifm.ifm_data.ifi_hdrlen = ifp->if_data.ifi_hdrlen;
-	oifm.ifm_data.ifi_mtu = ifp->if_data.ifi_mtu;
-	oifm.ifm_data.ifi_metric = ifp->if_data.ifi_metric;
-	oifm.ifm_data.ifi_baudrate = ifp->if_data.ifi_baudrate;
-	oifm.ifm_data.ifi_ipackets = ifp->if_data.ifi_ipackets;
-	oifm.ifm_data.ifi_ierrors = ifp->if_data.ifi_ierrors;
-	oifm.ifm_data.ifi_opackets = ifp->if_data.ifi_opackets;
-	oifm.ifm_data.ifi_oerrors = ifp->if_data.ifi_oerrors;
-	oifm.ifm_data.ifi_collisions = ifp->if_data.ifi_collisions;
-	oifm.ifm_data.ifi_ibytes = ifp->if_data.ifi_ibytes;
-	oifm.ifm_data.ifi_obytes = ifp->if_data.ifi_obytes;
-	oifm.ifm_data.ifi_imcasts = ifp->if_data.ifi_imcasts;
-	oifm.ifm_data.ifi_omcasts = ifp->if_data.ifi_omcasts;
-	oifm.ifm_data.ifi_iqdrops = ifp->if_data.ifi_iqdrops;
-	oifm.ifm_data.ifi_noproto = ifp->if_data.ifi_noproto;
-	oifm.ifm_data.ifi_lastchange = ifp->if_data.ifi_lastchange;
-	oifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_OIFINFO, &info, &oifm, sizeof(oifm));
-	if (m == NULL)
-		return;
-	route_enqueue(m, 0);
+	compat_14_rt_ifmsg(ifp, &ifm);
+#endif
+#ifdef COMPAT_50
+	compat_50_rt_ifmsg(ifp, &ifm);
 #endif
 }
+
 
 /*
  * This is called to generate messages from the routing socket
@@ -978,7 +973,7 @@ rt_ieee80211msg(struct ifnet *ifp, int what, void *data, size_t data_len)
 static int
 sysctl_dumpentry(struct rtentry *rt, void *v)
 {
-	struct walkarg *w = v;
+	struct rt_walkarg *w = v;
 	int error = 0, size;
 	struct rt_addrinfo info;
 
@@ -1007,7 +1002,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v)
 
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_use = rt->rt_use;
-		rtm->rtm_rmx = rt->rt_rmx;
+		cvtmetrics(&rtm->rtm_rmx, &rt->rt_rmx);
 		KASSERT(rt->rt_ifp != NULL);
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
@@ -1021,7 +1016,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v)
 }
 
 static int
-sysctl_iflist(int af, struct walkarg *w, int type)
+sysctl_iflist(int af, struct rt_walkarg *w, int type)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -1040,6 +1035,11 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 			error = rt_msg2(RTM_IFINFO, &info, NULL, w, &len);
 			break;
 #ifdef COMPAT_14
+		case NET_RT_OOIFLIST:
+			error = rt_msg2(RTM_OOIFINFO, &info, NULL, w, &len);
+			break;
+#endif
+#ifdef COMPAT_50
 		case NET_RT_OIFLIST:
 			error = rt_msg2(RTM_OIFINFO, &info, NULL, w, &len);
 			break;
@@ -1068,53 +1068,18 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 			}
 
 #ifdef COMPAT_14
-			case NET_RT_OIFLIST: {
-				struct if_msghdr14 *ifm;
-
-				ifm = (struct if_msghdr14 *)w->w_tmem;
-				ifm->ifm_index = ifp->if_index;
-				ifm->ifm_flags = ifp->if_flags;
-				ifm->ifm_data.ifi_type = ifp->if_data.ifi_type;
-				ifm->ifm_data.ifi_addrlen =
-				    ifp->if_data.ifi_addrlen;
-				ifm->ifm_data.ifi_hdrlen =
-				    ifp->if_data.ifi_hdrlen;
-				ifm->ifm_data.ifi_mtu = ifp->if_data.ifi_mtu;
-				ifm->ifm_data.ifi_metric =
-				    ifp->if_data.ifi_metric;
-				ifm->ifm_data.ifi_baudrate =
-				    ifp->if_data.ifi_baudrate;
-				ifm->ifm_data.ifi_ipackets =
-				    ifp->if_data.ifi_ipackets;
-				ifm->ifm_data.ifi_ierrors =
-				    ifp->if_data.ifi_ierrors;
-				ifm->ifm_data.ifi_opackets =
-				    ifp->if_data.ifi_opackets;
-				ifm->ifm_data.ifi_oerrors =
-				    ifp->if_data.ifi_oerrors;
-				ifm->ifm_data.ifi_collisions =
-				    ifp->if_data.ifi_collisions;
-				ifm->ifm_data.ifi_ibytes =
-				    ifp->if_data.ifi_ibytes;
-				ifm->ifm_data.ifi_obytes =
-				    ifp->if_data.ifi_obytes;
-				ifm->ifm_data.ifi_imcasts =
-				    ifp->if_data.ifi_imcasts;
-				ifm->ifm_data.ifi_omcasts =
-				    ifp->if_data.ifi_omcasts;
-				ifm->ifm_data.ifi_iqdrops =
-				    ifp->if_data.ifi_iqdrops;
-				ifm->ifm_data.ifi_noproto =
-				    ifp->if_data.ifi_noproto;
-				ifm->ifm_data.ifi_lastchange =
-				    ifp->if_data.ifi_lastchange;
-				ifm->ifm_addrs = info.rti_addrs;
-				error = copyout(ifm, w->w_where, len);
+			case NET_RT_OOIFLIST:
+				error = compat_14_iflist(ifp, w, &info, len);
 				if (error)
 					return error;
-				w->w_where = (char *)w->w_where + len;
 				break;
-			}
+#endif
+#ifdef COMPAT_50
+			case NET_RT_OIFLIST:
+				error = compat_50_iflist(ifp, w, &info, len);
+				if (error)
+					return error;
+				break;
 #endif
 			default:
 				panic("sysctl_iflist(2)");
@@ -1156,7 +1121,7 @@ sysctl_rtable(SYSCTLFN_ARGS)
 	const void *new = newp;
 	int	i, s, error = EINVAL;
 	u_char  af;
-	struct	walkarg w;
+	struct	rt_walkarg w;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return sysctl_query(SYSCTLFN_CALL(rnode));
@@ -1194,6 +1159,11 @@ again:
 		break;
 
 #ifdef COMPAT_14
+	case NET_RT_OOIFLIST:
+		error = sysctl_iflist(af, &w, w.w_op);
+		break;
+#endif
+#ifdef COMPAT_50
 	case NET_RT_OIFLIST:
 		error = sysctl_iflist(af, &w, w.w_op);
 		break;
@@ -1249,7 +1219,7 @@ route_intr(void *cookie)
 /*
  * Enqueue a message to the software interrupt routine.
  */
-static void
+void
 route_enqueue(struct mbuf *m, int family)
 {
 	int s, wasempty;

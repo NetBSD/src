@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.216 2008/11/14 23:33:45 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.217 2009/01/11 02:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.216 2008/11/14 23:33:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.217 2009/01/11 02:45:52 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -705,7 +705,7 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 }
 
 int
-sys_wait4(struct lwp *l, const struct sys_wait4_args *uap, register_t *retval)
+sys___wait450(struct lwp *l, const struct sys___wait450_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int)			pid;

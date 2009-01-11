@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.8 2008/12/21 10:25:00 ad Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.9 2009/01/11 02:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.8 2008/12/21 10:25:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.9 2009/01/11 02:45:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,7 +484,7 @@ do_sys_fstat(int fd, struct stat *sb)
  * Return status information about a file descriptor.
  */
 int
-sys___fstat30(struct lwp *l, const struct sys___fstat30_args *uap,
+sys___fstat50(struct lwp *l, const struct sys___fstat50_args *uap,
 	      register_t *retval)
 {
 	/* {

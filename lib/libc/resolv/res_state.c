@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.7 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: res_state.c,v 1.8 2009/01/11 02:46:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.7 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.8 2009/01/11 02:46:29 christos Exp $");
 #endif
 
 #include <sys/types.h>

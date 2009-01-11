@@ -1,4 +1,4 @@
-/*	$NetBSD: __semctl13.c,v 1.6 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: semctl.c,v 1.13 2009/01/11 02:46:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __semctl13.c,v 1.6 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: semctl.c,v 1.13 2009/01/11 02:46:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -39,12 +39,10 @@ __RCSID("$NetBSD: __semctl13.c,v 1.6 2008/04/28 20:23:00 martin Exp $");
 #include <stdarg.h>
 
 /* The kernel version [... == union semun *] */
-int ____semctl13 __P((int, int, int, ...));
-/* The userland version [... == union semun] */
-int __semctl13 __P((int, int, int, ...));
+int ____semctl50(int, int, int, ...);
 
 int
-__semctl13(int semid, int semnum, int cmd, ...)
+semctl(int semid, int semnum, int cmd, ...)
 {
 	va_list ap;
 	union __semun semun;
@@ -63,5 +61,5 @@ __semctl13(int semid, int semnum, int cmd, ...)
 #endif
 	}
 	va_end(ap);
-	return ____semctl13(semid, semnum, cmd, &semun);
+	return ____semctl50(semid, semnum, cmd, &semun);
 }
