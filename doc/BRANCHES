@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.272 2008/12/22 02:07:39 haad Exp $
+#	$NetBSD: BRANCHES,v 1.273 2009/01/11 03:23:38 christos Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1674,6 +1674,16 @@ Scope:		kernel
 Notes:		Results in consolidation of Alchemy (mips/dev/alchemy/aucom.c)
 		com support, and also removes a nasty hack from Atheros com.
 
+Branch:		christos-time_t
+Description:	Change time_t and dev_t to 64 bit quantities; fix timeval
+		and timespec.
+Status:		merged
+Start Date:	29 March 2008
+End Date:	8 January 2009
+Base Tag:	gdamore-uart-base
+Maintainer:	Garrett D'Amore <gdamore@NetBSD.org>
+Scope:		kernel, libc, libutil, userland
+Notes:		Requires a major bump of all libraries except libc, libutil.
 ########################################################################
 # Other:
 ########################################################################
