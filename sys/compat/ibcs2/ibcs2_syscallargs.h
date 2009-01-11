@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscallargs.h,v 1.46 2008/06/19 12:27:04 hans Exp $ */
+/* $NetBSD: ibcs2_syscallargs.h,v 1.47 2009/01/11 02:45:48 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -404,12 +404,12 @@ struct ibcs2_sys_memcntl_args {
 check_syscall_args(ibcs2_sys_memcntl)
 
 struct ibcs2_sys_gettimeofday_args {
-	syscallarg(struct timeval *) tp;
+	syscallarg(struct timeval50 *) tp;
 };
 check_syscall_args(ibcs2_sys_gettimeofday)
 
 struct ibcs2_sys_settimeofday_args {
-	syscallarg(struct timeval *) tp;
+	syscallarg(struct timeval50 *) tp;
 };
 check_syscall_args(ibcs2_sys_settimeofday)
 
@@ -445,7 +445,7 @@ struct xenix_sys_nap_args {
 };
 check_syscall_args(xenix_sys_nap)
 
-struct sys_select_args;
+struct compat_50_sys_select_args;
 
 struct ibcs2_sys_eaccess_args {
 	syscallarg(const char *) path;
@@ -707,7 +707,7 @@ int	xenix_sys_ftime(struct lwp *, const struct xenix_sys_ftime_args *, register_
 
 int	xenix_sys_nap(struct lwp *, const struct xenix_sys_nap_args *, register_t *);
 
-int	sys_select(struct lwp *, const struct sys_select_args *, register_t *);
+int	compat_50_sys_select(struct lwp *, const struct compat_50_sys_select_args *, register_t *);
 
 int	ibcs2_sys_eaccess(struct lwp *, const struct ibcs2_sys_eaccess_args *, register_t *);
 

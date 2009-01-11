@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.16 2009/01/04 20:41:58 kardel Exp $	*/
+/*	$NetBSD: timex.h,v 1.17 2009/01/11 02:45:56 christos Exp $	*/
 
 /*-
  ***********************************************************************
@@ -247,11 +247,10 @@ int ntp_timestatus(void);
 
 extern kmutex_t timecounter_lock;
 #else /* !_KERNEL */
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
-int ntp_gettime(struct ntptimeval *) __RENAME(__ntp_gettime30);
+int ntp_gettime(struct ntptimeval *) __RENAME(__ntp_gettime50);
 #endif
 int ntp_adjtime(struct timex *);
 __END_DECLS

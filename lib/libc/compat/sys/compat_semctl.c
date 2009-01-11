@@ -1,4 +1,4 @@
-/* $NetBSD: compat_semctl.c,v 1.1 2005/09/13 01:44:09 christos Exp $ */
+/* $NetBSD: compat_semctl.c,v 1.2 2009/01/11 02:46:26 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -36,17 +36,59 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_semctl.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_semctl.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/null.h>
 #include <compat/sys/sem.h>
+#include <stdarg.h>
 
 int
-semctl(int semid, int semnum, int cmd, union __semun semun)
+semctl(int semid, int semnum, int cmd, ...)
 {
-	return (__semctl(semid, semnum, cmd, &semun));
+	va_list ap;
+	union __semun semun;
+	struct semid_ds ds;
+	struct semid_ds14 *ds14 = NULL;
+	int error;
+
+	va_start(ap, cmd);
+	switch (cmd) {
+	case IPC_SET:
+	case IPC_STAT:
+	case GETALL:
+	case SETVAL:
+	case SETALL:
+#ifdef __lint__
+		memcpy(&semun, &ap, sizeof(semun));
+#else
+		semun = va_arg(ap, union __semun);
+#endif
+	}
+	va_end(ap);
+
+	switch (cmd) {
+	case IPC_SET:
+	case IPC_STAT:
+		ds14 = (struct semid_ds14 *)(void *)semun.buf;
+		if (cmd == IPC_SET)
+			__semid_ds14_to_native(ds14, &ds);
+		semun.buf = &ds;
+		break;
+	}
+
+	error = __semctl50(semid, semnum, cmd, &semun);
+	switch (cmd) {
+	case IPC_SET:
+	case IPC_STAT:
+		semun.buf = (struct semid_ds *)(void *)ds14;
+		if (cmd == IPC_STAT && error == 0)
+			__native_to_semid_ds14(&ds, ds14);
+		break;
+	}
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.10 2008/04/29 06:53:02 martin Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.11 2009/01/11 02:45:49 christos Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.10 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.11 2009/01/11 02:45:49 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,10 +125,11 @@ netbsd32__lwp_setprivate(struct lwp *l, const struct netbsd32__lwp_setprivate_ar
 }
 
 int
-netbsd32__lwp_park(struct lwp *l, const struct netbsd32__lwp_park_args *uap, register_t *retval)
+netbsd32____lwp_park50(struct lwp *l,
+    const struct netbsd32____lwp_park50_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(const netbsd32_timespecp) ts;
+		syscallarg(const netbsd32_timespec50p) ts;
 		syscallarg(lwpid_t) unpark;
 		syscallarg(netbsd32_voidp) hint;
 		syscallarg(netbsd32_voidp) unparkhint;

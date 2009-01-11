@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.114 2008/12/22 13:49:17 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.115 2009/01/11 02:45:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.114 2008/12/22 13:49:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.115 2009/01/11 02:45:53 christos Exp $");
 
 #define SYSVSHM
 
@@ -496,7 +496,8 @@ err_detach:
  * Shared memory control operations.
  */
 int
-sys___shmctl13(struct lwp *l, const struct sys___shmctl13_args *uap, register_t *retval)
+sys___shmctl50(struct lwp *l, const struct sys___shmctl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) shmid;

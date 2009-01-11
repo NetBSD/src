@@ -1,14 +1,15 @@
-/*	$NetBSD: compat_glob.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_glob.c,v 1.2 2009/01/11 02:46:25 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
  * Public domain.
  */
-
+#include "namespace.h"
+#include <pwd.h>
 #define __LIBC12_SOURCE__
 
-#include "namespace.h"
 #include <sys/stat.h>
+#include <compat/sys/time.h>
 #include <compat/sys/stat.h>
 #include <dirent.h>
 #include <compat/include/dirent.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.27 2008/11/19 18:39:44 ad Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.28 2009/01/11 02:45:48 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.27 2008/11/19 18:39:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.28 2009/01/11 02:45:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -20,6 +20,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.27 2008/11/19 18:39:44 ad Exp $")
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/time.h>
+#include <compat/sys/time.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_ipc.h>
@@ -117,12 +119,12 @@ struct sysent linux_sysent[] = {
 	    (sy_call_t *)linux_sys_pause },	/* 34 = pause */
 	{ ns(struct linux_sys_nanosleep_args), 0,
 	    (sy_call_t *)linux_sys_nanosleep },	/* 35 = nanosleep */
-	{ ns(struct sys_getitimer_args), 0,
-	    (sy_call_t *)sys_getitimer },	/* 36 = getitimer */
+	{ ns(struct compat_50_sys_getitimer_args), 0,
+	    (sy_call_t *)compat_50_sys_getitimer },/* 36 = getitimer */
 	{ ns(struct linux_sys_alarm_args), 0,
 	    (sy_call_t *)linux_sys_alarm },	/* 37 = alarm */
-	{ ns(struct sys_setitimer_args), 0,
-	    (sy_call_t *)sys_setitimer },	/* 38 = setitimer */
+	{ ns(struct compat_50_sys_setitimer_args), 0,
+	    (sy_call_t *)compat_50_sys_setitimer },/* 38 = setitimer */
 	{ 0, 0, 0,
 	    (sy_call_t *)linux_sys_getpid },	/* 39 = getpid */
 	{ 0, 0, 0,
@@ -266,8 +268,8 @@ struct sysent linux_sysent[] = {
 	    (sy_call_t *)linux_sys_gettimeofday },/* 96 = gettimeofday */
 	{ ns(struct linux_sys_getrlimit_args), 0,
 	    (sy_call_t *)linux_sys_getrlimit },	/* 97 = getrlimit */
-	{ ns(struct sys_getrusage_args), 0,
-	    (sy_call_t *)sys_getrusage },	/* 98 = getrusage */
+	{ ns(struct compat_50_sys_getrusage_args), 0,
+	    (sy_call_t *)compat_50_sys_getrusage },/* 98 = getrusage */
 	{ ns(struct linux_sys_sysinfo_args), 0,
 	    (sy_call_t *)linux_sys_sysinfo },	/* 99 = sysinfo */
 	{ ns(struct linux_sys_times_args), 0,

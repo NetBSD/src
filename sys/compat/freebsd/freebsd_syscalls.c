@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscalls.c,v 1.71 2008/11/19 18:39:43 ad Exp $ */
+/* $NetBSD: freebsd_syscalls.c,v 1.72 2009/01/11 02:45:47 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.71 2008/11/19 18:39:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.72 2009/01/11 02:45:47 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -25,6 +25,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.71 2008/11/19 18:39:43 ad Exp
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <compat/sys/signal.h>
+#include <compat/sys/time.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <machine/freebsd_machdep.h>
 #endif /* _KERNEL_OPT */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.141 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.142 2009/01/11 02:45:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ struct if_data {
 	u_quad_t ifi_omcasts;		/* packets sent via multicast */
 	u_quad_t ifi_iqdrops;		/* dropped on input, this interface */
 	u_quad_t ifi_noproto;		/* destined for unsupported protocol */
-	struct	timeval ifi_lastchange;	/* last operational state change */
+	struct	timespec ifi_lastchange;/* last operational state change */
 };
 
 /*
@@ -188,32 +188,6 @@ struct if_data {
 #define	LINK_STATE_UNKNOWN	0	/* link invalid/unknown */
 #define	LINK_STATE_DOWN		1	/* link is down */
 #define	LINK_STATE_UP		2	/* link is up */
-
-#if defined(_KERNEL) && defined(COMPAT_14)
-/* Pre-1.5 if_data struct */
-struct if_data14 {
-	/* generic interface information */
-	u_char	ifi_type;		/* ethernet, tokenring, etc. */
-	u_char	ifi_addrlen;		/* media address length */
-	u_char	ifi_hdrlen;		/* media header length */
-	u_long	ifi_mtu;		/* maximum transmission unit */
-	u_long	ifi_metric;		/* routing metric (external only) */
-	u_long	ifi_baudrate;		/* linespeed */
-	/* volatile statistics */
-	u_long	ifi_ipackets;		/* packets received on interface */
-	u_long	ifi_ierrors;		/* input errors on interface */
-	u_long	ifi_opackets;		/* packets sent on interface */
-	u_long	ifi_oerrors;		/* output errors on interface */
-	u_long	ifi_collisions;		/* collisions on csma interfaces */
-	u_long	ifi_ibytes;		/* total number of octets received */
-	u_long	ifi_obytes;		/* total number of octets sent */
-	u_long	ifi_imcasts;		/* packets received via multicast */
-	u_long	ifi_omcasts;		/* packets sent via multicast */
-	u_long	ifi_iqdrops;		/* dropped on input, this interface */
-	u_long	ifi_noproto;		/* destined for unsupported protocol */
-	struct	timeval ifi_lastchange;	/* last operational state change */
-};
-#endif /* _KERNEL && COMPAT_14 */
 
 /*
  * Structure defining a queue for a network interface.
@@ -494,19 +468,6 @@ struct if_msghdr {
 	u_short	ifm_index;	/* index for associated ifp */
 	struct	if_data ifm_data;/* statistics and other data about if */
 };
-
-#if defined(_KERNEL) && defined(COMPAT_14)
-/* pre-1.5 if_msghdr (ifm_data changed) */
-struct if_msghdr14 {
-	u_short	ifm_msglen;	/* to skip over non-understood messages */
-	u_char	ifm_version;	/* future binary compatibility */
-	u_char	ifm_type;	/* message type */
-	int	ifm_addrs;	/* like rtm_addrs */
-	int	ifm_flags;	/* value of if_flags */
-	u_short	ifm_index;	/* index for associated ifp */
-	struct	if_data14 ifm_data; /* statistics and other data about if */
-};
-#endif /* _KERNEL && COMPAT_14 */
 
 /*
  * Message format for use in obtaining information about interface addresses

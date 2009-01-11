@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.14 2008/04/28 20:23:41 martin Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.15 2009/01/11 02:45:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.14 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.15 2009/01/11 02:45:47 christos Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.14 2008/04/28 20:23:41 martin Exp
 
 #include <net/if.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_socket.h>
 #include <compat/darwin/darwin_route.h>
 
@@ -111,7 +112,7 @@ darwin_ifaddrs(int af, char *dst, size_t *sizep)
 		dim.dim_data.did_lastchange.tv_sec =
 		    ifp->if_data.ifi_lastchange.tv_sec;
 		dim.dim_data.did_lastchange.tv_usec =
-		    ifp->if_data.ifi_lastchange.tv_usec;
+		    ifp->if_data.ifi_lastchange.tv_nsec * 1000;
 		dim.dim_data.did_default_proto = 0; /* XXX */
 		dim.dim_data.did_hwassist = 0; /* XXX */
 

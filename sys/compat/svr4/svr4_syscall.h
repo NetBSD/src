@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscall.h,v 1.80 2008/11/19 18:39:46 ad Exp $ */
+/* $NetBSD: svr4_syscall.h,v 1.81 2009/01/11 02:45:50 christos Exp $ */
 
 /*
  * System call numbers.
@@ -313,7 +313,7 @@
 /* syscall: "sysconfig" ret: "int" args: "int" */
 #define	SVR4_SYS_sysconfig	137
 
-/* syscall: "adjtime" ret: "int" args: "struct timeval *" "struct timeval *" */
+/* syscall: "adjtime" ret: "int" args: "struct timeval50 *" "struct timeval50 *" */
 #define	SVR4_SYS_adjtime	138
 
 /* syscall: "systeminfo" ret: "long" args: "int" "char *" "long" */
@@ -331,19 +331,19 @@
 /* syscall: "fchroot" ret: "int" args: "int" */
 #define	SVR4_SYS_fchroot	153
 
-/* syscall: "utimes" ret: "int" args: "const char *" "struct timeval *" */
+/* syscall: "utimes" ret: "int" args: "const char *" "struct timeval50 *" */
 #define	SVR4_SYS_utimes	154
 
 /* syscall: "vhangup" ret: "int" args: */
 #define	SVR4_SYS_vhangup	155
 
-/* syscall: "gettimeofday" ret: "int" args: "struct timeval *" */
+/* syscall: "gettimeofday" ret: "int" args: "struct timeval50 *" */
 #define	SVR4_SYS_gettimeofday	156
 
-/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval *" */
+/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval50 *" */
 #define	SVR4_SYS_getitimer	157
 
-/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval *" "struct itimerval *" */
+/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval50 *" "struct itimerval50 *" */
 #define	SVR4_SYS_setitimer	158
 
 /* syscall: "_lwp_create" ret: "int" args: "svr4_ucontext_t *" "unsigned long" "svr4_lwpid_t *" */
@@ -388,7 +388,7 @@
 /* syscall: "auditsys" ret: "int" args: "int" "int" "int" "int" "int" "int" */
 #define	SVR4_SYS_auditsys	186
 
-/* syscall: "nanosleep" ret: "int" args: "const struct timespec *" "struct timespec *" */
+/* syscall: "nanosleep" ret: "int" args: "const struct timespec50 *" "struct timespec50 *" */
 #define	SVR4_SYS_nanosleep	199
 
 /* syscall: "facl" ret: "int" args: "int" "int" "int" "struct svr4_aclent *" */

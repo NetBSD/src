@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.15 2008/06/21 23:37:53 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.16 2009/01/11 02:46:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.23 2007/07/09 01:43:23 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.15 2008/06/21 23:37:53 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.16 2009/01/11 02:46:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -677,7 +677,8 @@ res_randomid(void) {
 	struct timeval now;
 
 	gettimeofday(&now, NULL);
-	return (0xffff & (now.tv_sec ^ now.tv_usec ^ getpid()));
+	return (0xffff &
+	    ((u_int)now.tv_sec ^ (u_int)now.tv_usec ^ (u_int)getpid()));
 }
 
 /*%

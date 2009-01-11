@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.4 2009/01/02 00:20:20 tnozaki Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.5 2009/01/11 02:46:28 christos Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,

@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.13 2008/12/28 11:01:58 ad Exp $
+#	$NetBSD: shlib_version,v 1.14 2009/01/11 02:46:48 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # Things to do when bumping major version:
@@ -15,5 +15,5 @@
 #	inspect them for priority inheritance / inter-process synch,
 #	without compat_netbsd32 shims??
 #
-major=0
-minor=10
+major=1
+minor=0

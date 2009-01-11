@@ -1,4 +1,4 @@
-/* $NetBSD: sigtimedwait.c,v 1.2 2008/04/28 20:23:00 martin Exp $ */
+/* $NetBSD: sigtimedwait.c,v 1.3 2009/01/11 02:46:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sigtimedwait.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: sigtimedwait.c,v 1.3 2009/01/11 02:46:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -41,25 +41,18 @@ __RCSID("$NetBSD: sigtimedwait.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
 #include <signal.h>
 #include <time.h>
 
-#ifdef __weak_alias
-__weak_alias(sigtimedwait,_sigtimedwait)
-#endif
-
-int	_sigtimedwait __P((const sigset_t * __restrict,
-	    siginfo_t * __restrict, const struct timespec * __restrict));
-
 /*
  * Copy timeout to local variable and call the syscall.
  */
 int
-_sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
+sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
     const struct timespec * __restrict timeout)
 {
 	struct timespec ts;
 
 	if (timeout) {
 		ts = *timeout;
-		return (__sigtimedwait(set, info, &ts));
+		return __sigtimedwait(set, info, &ts);
 	} else
-		return (__sigtimedwait(set, info, NULL));
+		return __sigtimedwait(set, info, NULL);
 }

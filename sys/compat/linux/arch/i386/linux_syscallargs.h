@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.80 2008/11/19 18:39:44 ad Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.81 2009/01/11 02:45:48 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -253,16 +253,16 @@ struct linux_sys_getrlimit_args {
 };
 check_syscall_args(linux_sys_getrlimit)
 
-struct sys_getrusage_args;
+struct compat_50_sys_getrusage_args;
 
 struct linux_sys_gettimeofday_args {
-	syscallarg(struct timeval *) tp;
+	syscallarg(struct timeval50 *) tp;
 	syscallarg(struct timezone *) tzp;
 };
 check_syscall_args(linux_sys_gettimeofday)
 
 struct linux_sys_settimeofday_args {
-	syscallarg(struct timeval *) tp;
+	syscallarg(struct timeval50 *) tp;
 	syscallarg(struct timezone *) tzp;
 };
 check_syscall_args(linux_sys_settimeofday)
@@ -373,9 +373,9 @@ struct linux_sys_socketcall_args {
 };
 check_syscall_args(linux_sys_socketcall)
 
-struct sys_setitimer_args;
+struct compat_50_sys_setitimer_args;
 
-struct sys_getitimer_args;
+struct compat_50_sys_getitimer_args;
 
 struct linux_sys_stat_args {
 	syscallarg(const char *) path;
@@ -513,7 +513,7 @@ struct linux_sys_select_args {
 	syscallarg(fd_set *) readfds;
 	syscallarg(fd_set *) writefds;
 	syscallarg(fd_set *) exceptfds;
-	syscallarg(struct timeval *) timeout;
+	syscallarg(struct timeval50 *) timeout;
 };
 check_syscall_args(linux_sys_select)
 
@@ -1165,7 +1165,7 @@ int	linux_sys_setrlimit(struct lwp *, const struct linux_sys_setrlimit_args *, r
 
 int	linux_sys_getrlimit(struct lwp *, const struct linux_sys_getrlimit_args *, register_t *);
 
-int	sys_getrusage(struct lwp *, const struct sys_getrusage_args *, register_t *);
+int	compat_50_sys_getrusage(struct lwp *, const struct compat_50_sys_getrusage_args *, register_t *);
 
 int	linux_sys_gettimeofday(struct lwp *, const struct linux_sys_gettimeofday_args *, register_t *);
 
@@ -1220,9 +1220,9 @@ int	linux_sys_ioperm(struct lwp *, const struct linux_sys_ioperm_args *, registe
 
 int	linux_sys_socketcall(struct lwp *, const struct linux_sys_socketcall_args *, register_t *);
 
-int	sys_setitimer(struct lwp *, const struct sys_setitimer_args *, register_t *);
+int	compat_50_sys_setitimer(struct lwp *, const struct compat_50_sys_setitimer_args *, register_t *);
 
-int	sys_getitimer(struct lwp *, const struct sys_getitimer_args *, register_t *);
+int	compat_50_sys_getitimer(struct lwp *, const struct compat_50_sys_getitimer_args *, register_t *);
 
 int	linux_sys_stat(struct lwp *, const struct linux_sys_stat_args *, register_t *);
 

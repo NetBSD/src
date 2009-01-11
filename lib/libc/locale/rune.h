@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.14 2009/01/05 06:11:43 tnozaki Exp $	*/
+/*	$NetBSD: rune.h,v 1.15 2009/01/11 02:46:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

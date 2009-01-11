@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.180 2008/10/25 18:46:38 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.181 2009/01/11 02:45:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.180 2008/10/25 18:46:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.181 2009/01/11 02:45:51 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1371,8 +1371,9 @@ pccbb_power(struct pccbb_softc *sc, int command)
 	splx(s);
 	microtime(&after);
 	timersub(&after, &before, &diff);
-	aprint_debug_dev(sc->sc_dev, "wait took%s %ld.%06lds\n",
-	    (on && times < 0) ? " too long" : "", diff.tv_sec, diff.tv_usec);
+	aprint_debug_dev(sc->sc_dev, "wait took%s %lld.%06lds\n",
+	    (on && times < 0) ? " too long" : "", (long long)diff.tv_sec,
+	    (long)diff.tv_usec);
 
 	/*
 	 * Ok, wait a bit longer for things to settle.

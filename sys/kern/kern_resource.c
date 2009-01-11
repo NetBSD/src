@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.147 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.148 2009/01/11 02:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.147 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.148 2009/01/11 02:45:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,9 +269,6 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 
-	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
-		return (EINVAL);
-
 	if (limp->rlim_cur > limp->rlim_max) {
 		/*
 		 * This is programming error. According to SUSv2, we should
@@ -472,7 +469,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap,
+sys___getrusage50(struct lwp *l, const struct sys___getrusage50_args *uap,
     register_t *retval)
 {
 	/* {

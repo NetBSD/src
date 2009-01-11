@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscall.h,v 1.45 2008/06/19 12:27:04 hans Exp $ */
+/* $NetBSD: ibcs2_syscall.h,v 1.46 2009/01/11 02:45:47 christos Exp $ */
 
 /*
  * System call numbers.
@@ -272,10 +272,10 @@
 /* syscall: "memcntl" ret: "int" args: "ibcs2_caddr_t" "ibcs2_size_t" "int" "ibcs2_caddr_t" "int" "int" */
 #define	IBCS2_SYS_memcntl	131
 
-/* syscall: "gettimeofday" ret: "int" args: "struct timeval *" */
+/* syscall: "gettimeofday" ret: "int" args: "struct timeval50 *" */
 #define	IBCS2_SYS_gettimeofday	171
 
-/* syscall: "settimeofday" ret: "int" args: "struct timeval *" */
+/* syscall: "settimeofday" ret: "int" args: "struct timeval50 *" */
 #define	IBCS2_SYS_settimeofday	172
 
 /* syscall: "truncate" ret: "int" args: "char *" "long" */
@@ -299,7 +299,7 @@
 /* syscall: "nap" ret: "int" args: "long" */
 #define	IBCS2_SYS_nap	212
 
-/* syscall: "select" ret: "int" args: "u_int" "fd_set *" "fd_set *" "fd_set *" "struct timeval *" */
+/* syscall: "select" ret: "int" args: "u_int" "fd_set *" "fd_set *" "fd_set *" "struct timeval50 *" */
 #define	IBCS2_SYS_select	236
 
 /* syscall: "eaccess" ret: "int" args: "const char *" "int" */

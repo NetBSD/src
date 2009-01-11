@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.231 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.232 2009/01/11 02:45:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.231 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.232 2009/01/11 02:45:54 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1269,7 +1269,7 @@ if_down(struct ifnet *ifp)
 	struct ifaddr *ifa;
 
 	ifp->if_flags &= ~IFF_UP;
-	microtime(&ifp->if_lastchange);
+	nanotime(&ifp->if_lastchange);
 	IFADDR_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
@@ -1293,7 +1293,7 @@ if_up(struct ifnet *ifp)
 #endif
 
 	ifp->if_flags |= IFF_UP;
-	microtime(&ifp->if_lastchange);
+	nanotime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
 	IFADDR_FOREACH(ifa, ifp)
@@ -1584,6 +1584,11 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case OSIOCGIFCONF:
 	case OOSIOCGIFCONF:
 		return compat_ifconf(cmd, data);
+#endif
+#ifdef COMPAT_OIFDATA
+	case OSIOCGIFDATA:
+	case OSIOCZIFDATA:
+		return compat_ifdatareq(l, cmd, data);
 #endif
 	case SIOCGIFCONF:
 		return ifconf(cmd, data);
