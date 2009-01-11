@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.64 2008/10/16 09:12:54 pooka Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.65 2009/01/11 20:22:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.64 2008/10/16 09:12:54 pooka Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.65 2009/01/11 20:22:11 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ static const struct mntopt mopts[] = {
 	{ "nfsv3", 0, ALTF_NFSV3, 1 },
 	{ "rdirplus", 0, ALTF_RDIRPLUS, 1 },
 	{ "mntudp", 0, ALTF_MNTUDP, 1 },
-	{ "noresport", 0, ALTF_NORESPORT, 1 },
+	{ "resport", 1, ALTF_NORESPORT, 1 },
 #ifdef ISO
 	{ "seqpacket", 0, ALTF_SEQPACKET, 1 },
 #endif
