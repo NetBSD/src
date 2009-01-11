@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile,v 1.12 2009/01/11 03:09:35 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,8 +9,8 @@ LIB=		objc
 
 .if ${MKGCC} != "no"
 
-SHLIB_MAJOR=	2
-SHLIB_MINOR=	1
+SHLIB_MAJOR=	3
+SHLIB_MINOR=	0
 
 # XXX just while all platforms defs.mk are updated..
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
