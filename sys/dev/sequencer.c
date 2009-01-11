@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.50 2008/07/15 16:18:08 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.51 2009/01/11 10:40:27 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.50 2008/07/15 16:18:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.51 2009/01/11 10:40:27 cegger Exp $");
 
 #include "sequencer.h"
 
@@ -901,12 +901,12 @@ seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 	usec = (long long)divs * (long long)t->usperdiv; /* convert to usec */
 	when.tv_sec = usec / 1000000;
 	when.tv_usec = usec % 1000000;
-	DPRINTFN(4, ("seq_timer_waitabs: adjdivs=%d, sleep when=%ld.%06ld",
-	             divs, when.tv_sec, when.tv_usec));
+	DPRINTFN(4, ("seq_timer_waitabs: adjdivs=%d, sleep when=%"PRId64".%06"PRId64,
+	             divs, when.tv_sec, (uint64_t)when.tv_usec));
 	ADDTIMEVAL(&when, &t->reftime); /* abstime for end */
 	ticks = tvhzto(&when);
-	DPRINTFN(4, (" when+start=%ld.%06ld, tick=%d\n",
-		     when.tv_sec, when.tv_usec, ticks));
+	DPRINTFN(4, (" when+start=%"PRId64".%06"PRId64", tick=%d\n",
+		     when.tv_sec, (uint64_t)when.tv_usec, ticks));
 	if (ticks > 0) {
 #ifdef DIAGNOSTIC
 		if (ticks > 20 * hz) {
