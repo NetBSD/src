@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.5 2009/01/11 21:15:07 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.6 2009/01/11 22:02:38 wiz Exp $
 #
 
 IFS=' '
@@ -78,15 +78,15 @@ To use
 via
 .Xr mount 8 ,
 the flags
-.Fl "o rump"
+.Fl o Ar rump
 and
-.Fl "t xxxfsxxx"
+.Fl t Ar xxxfsxxx
 should be given.
 Similarly,
 .Nm
 is run instead of
 .Xr mount_xxxfsxxx 8
-if 
+if
 .Dq rump
 is added to the options field of
 .Xr fstab 5 .
