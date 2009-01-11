@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.44 2008/11/12 12:36:03 ad Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.45 2009/01/11 21:55:45 oster Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.44 2008/11/12 12:36:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.45 2009/01/11 21:55:45 oster Exp $");
 
 #ifdef _MODULE
 #define IWMCF_DRIVE 0
@@ -1697,8 +1697,8 @@ fdGetDiskLabel(fd_softc_t *fd, dev_t dev)
 	struct cpu_disklabel *clp;
 
 	if (TRACE_IOCTL)
-		printf("iwm: fdGetDiskLabel() for disk %d.\n",
-		    minor(dev) / MAXPARTITIONS);
+		printf("iwm: fdGetDiskLabel() for disk %" PRIu64 ".\n",
+		    (dev_t) (minor(dev) / MAXPARTITIONS));
 	fdType = minor(dev) % MAXPARTITIONS;
 	lp = fd->diskInfo.dk_label;
 	clp = fd->diskInfo.dk_cpulabel;
