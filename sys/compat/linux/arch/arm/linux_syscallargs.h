@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.38 2008/11/19 18:39:44 ad Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.39 2009/01/12 11:53:23 rtr Exp $ */
 
 /*
  * System call argument lists.
@@ -242,7 +242,7 @@ struct linux_sys_getrlimit_args {
 };
 check_syscall_args(linux_sys_getrlimit)
 
-struct sys_getrusage_args;
+struct compat_50_sys_getrusage_args;
 
 struct linux_sys_gettimeofday_args {
 	syscallarg(struct timeval *) tp;
@@ -355,9 +355,9 @@ struct linux_sys_socketcall_args {
 };
 check_syscall_args(linux_sys_socketcall)
 
-struct sys_setitimer_args;
+struct compat_50_sys_setitimer_args;
 
-struct sys_getitimer_args;
+struct compat_50_sys_getitimer_args;
 
 struct linux_sys_stat_args {
 	syscallarg(const char *) path;
@@ -1039,7 +1039,7 @@ int	linux_sys_setrlimit(struct lwp *, const struct linux_sys_setrlimit_args *, r
 
 int	linux_sys_getrlimit(struct lwp *, const struct linux_sys_getrlimit_args *, register_t *);
 
-int	sys_getrusage(struct lwp *, const struct sys_getrusage_args *, register_t *);
+int	compat_50_sys_getrusage(struct lwp *, const struct compat_50_sys_getrusage_args *, register_t *);
 
 int	linux_sys_gettimeofday(struct lwp *, const struct linux_sys_gettimeofday_args *, register_t *);
 
@@ -1092,9 +1092,9 @@ int	linux_sys_fstatfs(struct lwp *, const struct linux_sys_fstatfs_args *, regis
 
 int	linux_sys_socketcall(struct lwp *, const struct linux_sys_socketcall_args *, register_t *);
 
-int	sys_setitimer(struct lwp *, const struct sys_setitimer_args *, register_t *);
+int	compat_50_sys_setitimer(struct lwp *, const struct compat_50_sys_setitimer_args *, register_t *);
 
-int	sys_getitimer(struct lwp *, const struct sys_getitimer_args *, register_t *);
+int	compat_50_sys_getitimer(struct lwp *, const struct compat_50_sys_getitimer_args *, register_t *);
 
 int	linux_sys_stat(struct lwp *, const struct linux_sys_stat_args *, register_t *);
 
