@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.21 2008/07/25 18:37:24 dsl Exp $	*/
+/*	$NetBSD: rf.c,v 1.22 2009/01/12 08:33:02 cegger Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.21 2008/07/25 18:37:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.22 2009/01/12 08:33:02 cegger Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -575,7 +575,7 @@ rfstrategy(struct buf *buf)
 	if ((rf_sc->sc_state & (1 << (DISKPART(buf->b_dev) + RFS_OPEN_SHIFT)))
 	    == 0)
 		panic("rfstrategy: can not operate on non-open drive %s "
-		    "partition %d", device_xname(rf_sc->sc_dev),
+		    "partition %"PRIu64, device_xname(rf_sc->sc_dev),
 		    DISKPART(buf->b_dev));
 	if (buf->b_bcount == 0) {
 		biodone(buf);
@@ -1056,7 +1056,7 @@ rfclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
 		panic("rfclose: can not close non-open drive %s "
-		    "partition %d", device_xname(rf_sc->sc_dev), DISKPART(dev));
+		    "partition %"PRIu64, device_xname(rf_sc->sc_dev), DISKPART(dev));
 	else
 		rf_sc->sc_state &= ~(1 << (DISKPART(dev) + RFS_OPEN_SHIFT));
 	if ((rf_sc->sc_state & RFS_OPEN_MASK) == 0)
@@ -1092,7 +1092,7 @@ rfioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 	/* We are going to operate on a non-open dev? PANIC! */
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
 		panic("rfioctl: can not operate on non-open drive %s "
-		    "partition %d", device_xname(rf_sc->sc_dev), DISKPART(dev));
+		    "partition %"PRIu64, device_xname(rf_sc->sc_dev), DISKPART(dev));
 	switch (cmd) {
 	/* get and set disklabel; DIOCGPART used internally */
 	case DIOCGDINFO: /* get */
