@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2007/07/18 22:38:59 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2009/01/12 20:43:29 pooka Exp $
 #
 
 NOMAN= should challenge wizd
@@ -11,7 +11,7 @@ PROG=	mount_puffsportal
 SRCS=	puffs_portal.c activate.c conf.c pt_conf.c \
 	pt_exec.c pt_file.c pt_tcp.c pt_filter.c
 
-CPPFLAGS+= -I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/sbin/mount_portal
+CPPFLAGS+= -I${NETBSDSRCDIR}/sbin/mount_portal
 
 DPADD+=${LIBUTIL} ${LIBPUFFS}
 LDADD+=-lutil -lpuffs
