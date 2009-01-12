@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.38 2008/11/19 18:39:44 ad Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.39 2009/01/12 11:53:23 rtr Exp $ */
 
 /*
  * System call numbers.
@@ -212,7 +212,7 @@
 /* syscall: "getrlimit" ret: "int" args: "u_int" "struct orlimit *" */
 #define	LINUX_SYS_getrlimit	76
 
-/* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
+/* syscall: "getrusage" ret: "int" args: "int" "struct rusage50 *" */
 #define	LINUX_SYS_getrusage	77
 
 /* syscall: "gettimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
@@ -291,10 +291,10 @@
 /* syscall: "socketcall" ret: "int" args: "int" "void *" */
 #define	LINUX_SYS_socketcall	102
 
-/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval *" "struct itimerval *" */
+/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval50 *" "struct itimerval50 *" */
 #define	LINUX_SYS_setitimer	104
 
-/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval *" */
+/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval50 *" */
 #define	LINUX_SYS_getitimer	105
 
 /* syscall: "stat" ret: "int" args: "const char *" "struct linux_stat *" */
