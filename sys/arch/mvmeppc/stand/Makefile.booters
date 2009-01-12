@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.6 2005/12/11 12:18:20 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.7 2009/01/12 07:25:39 tsutsui Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -22,6 +22,12 @@ CPPFLAGS= -D_STANDALONE \
 	-DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY ${INCPATH} ${DEFS}
 BINDIR= ${MDEC_DIR}
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
+
 .if exists(${.CURDIR}/version)
 SRCS+= vers.c
 CLEANFILES+= vers.c
@@ -32,6 +38,10 @@ vers.c: version
 
 CLEANFILES+= machine powerpc
 
+.if !make(obj) && !make(clean) && !make(cleandir)
+.NOPATH: machine powerpc
+.BEGIN: machine powerpc
+
 machine :
 	-rm -f ${.TARGET}
 	ln -s $S/arch/mvmeppc/include machine
@@ -39,6 +49,7 @@ machine :
 powerpc :
 	-rm -f ${.TARGET}
 	ln -s $S/arch/powerpc/include powerpc
+.endif
 
 .if defined(LIB)
 
