@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosdisk.c,v 1.2 2006/04/01 19:08:08 bjh21 Exp $	*/
+/*	$NetBSD: riscosdisk.c,v 1.3 2009/01/12 07:07:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 Ben Harris
@@ -35,7 +35,7 @@
 #include <riscosdisk.h>
 #include <riscospart.h>
 
-#include <stdarg.h>
+#include <machine/stdarg.h>
 
 struct riscosdisk {
 	void	*privword;
