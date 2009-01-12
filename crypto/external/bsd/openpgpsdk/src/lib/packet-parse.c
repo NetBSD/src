@@ -727,7 +727,7 @@ void ops_packet_free(ops_packet_t *packet)
 \ingroup Core_Create
 \brief Free allocated memory
 */
-void ops_headers_free(ops_headers_t *headers)
+static void ops_headers_free(ops_headers_t *headers)
     {
     unsigned n;
 
@@ -744,7 +744,7 @@ void ops_headers_free(ops_headers_t *headers)
 \ingroup Core_Create
 \brief Free allocated memory
 */
-void ops_signed_cleartext_trailer_free(ops_signed_cleartext_trailer_t *trailer)
+static void ops_signed_cleartext_trailer_free(ops_signed_cleartext_trailer_t *trailer)
     {
     free(trailer->hash);
     trailer->hash=NULL;
@@ -754,7 +754,7 @@ void ops_signed_cleartext_trailer_free(ops_signed_cleartext_trailer_t *trailer)
 \ingroup Core_Create
 \brief Free allocated memory
 */
-void ops_cmd_get_passphrase_free(ops_secret_key_passphrase_t *skp)
+static void ops_cmd_get_passphrase_free(ops_secret_key_passphrase_t *skp)
     {
     if (skp->passphrase && *skp->passphrase)
         {
@@ -1224,7 +1224,7 @@ static int parse_user_id(ops_region_t *region,ops_parse_info_t *pinfo)
  * \brief Free the memory used when parsing a private/experimental PKA signature 
  * \param unknown_sig
  */
-void free_unknown_sig_pka(ops_unknown_signature_t *unknown_sig)
+static void free_unknown_sig_pka(ops_unknown_signature_t *unknown_sig)
     {
     data_free(&unknown_sig->data);
     }
@@ -2601,8 +2601,8 @@ static int parse_pk_session_key(ops_region_t *region,
 
     if (debug)
         {
-        printf("session key recovered (len=%d):\n",k);
         unsigned int j;
+        printf("session key recovered (len=%d):\n",k);
         for(j=0; j<k; j++)
             printf("%2x ", C.pk_session_key.key[j]);
         printf("\n");
@@ -2636,8 +2636,7 @@ static int parse_pk_session_key(ops_region_t *region,
     return 1;
     }
 
-// XXX: make this static?
-int ops_decrypt_se_data(ops_content_tag_t tag,ops_region_t *region,
+static int ops_decrypt_se_data(ops_content_tag_t tag,ops_region_t *region,
 		     ops_parse_info_t *pinfo)
     {
     int r=1;
@@ -2702,7 +2701,7 @@ int ops_decrypt_se_data(ops_content_tag_t tag,ops_region_t *region,
     return r;
     }
 
-int ops_decrypt_se_ip_data(ops_content_tag_t tag,ops_region_t *region,
+static int ops_decrypt_se_ip_data(ops_content_tag_t tag,ops_region_t *region,
 		     ops_parse_info_t *pinfo)
     {
     int r=1;
@@ -2842,6 +2841,7 @@ static int ops_parse_one_packet(ops_parse_info_t *pinfo,
 	{
 	ops_boolean_t rb;
 
+	rb = ops_false;
 	C.ptag.content_tag=(*ptag&OPS_PTAG_OF_CONTENT_TAG_MASK)
 	    >> OPS_PTAG_OF_CONTENT_TAG_SHIFT;
 	C.ptag.length_type=*ptag&OPS_PTAG_OF_LENGTH_TYPE_MASK;
