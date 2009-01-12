@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.14 2008/05/30 14:54:16 nisimura Exp $ */
+/* $NetBSD: pcn.c,v 1.15 2009/01/12 09:41:59 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,11 +54,6 @@
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
-
-int pcn_match(unsigned, void *);
-void *pcn_init(unsigned, void *);
-int pcn_send(void *, char *, unsigned);
-int pcn_recv(void *, char *, unsigned, unsigned);
 
 struct desc {
 	uint32_t xd0, xd1, xd2;
