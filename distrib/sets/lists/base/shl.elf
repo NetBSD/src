@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.159 2009/01/11 13:26:29 jnemeth Exp $
+# $NetBSD: shl.elf,v 1.160 2009/01/12 10:01:33 dogcow Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -87,9 +87,9 @@
 ./usr/lib/i18n/libmapper_std.so.5		base-i18n-shlib
 ./usr/lib/i18n/libmapper_zone.so		base-i18n-shlib
 ./usr/lib/i18n/libmapper_zone.so.5		base-i18n-shlib
-./usr/lib/libamu.so.3				base-amd-shlib
+./usr/lib/libamu.so.4				base-amd-shlib
 ./usr/lib/libarchive.so				base-sys-shlib
-./usr/lib/libarchive.so.2			base-sys-shlib
+./usr/lib/libarchive.so.3			base-sys-shlib
 ./usr/lib/libasn1.so				base-krb5-shlib		kerberos
 ./usr/lib/libasn1.so.8				base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.10				base-sys-shlib		bfd
@@ -123,7 +123,7 @@
 ./usr/lib/libevent.so				base-sys-shlib
 ./usr/lib/libevent.so.3				base-sys-shlib
 ./usr/lib/libfetch.so				base-sys-shlib
-./usr/lib/libfetch.so.1				base-sys-shlib
+./usr/lib/libfetch.so.2				base-sys-shlib
 ./usr/lib/libform.so				base-sys-shlib
 ./usr/lib/libform.so.6				base-sys-shlib
 ./usr/lib/libg2c.so				base-sys-shlib		gcc=3
@@ -167,11 +167,11 @@
 ./usr/lib/libkvm.so				base-sys-shlib
 ./usr/lib/libkvm.so.6				base-sys-shlib
 ./usr/lib/liblber.so				base-ldap-shlib		ldap
-./usr/lib/liblber.so.2				base-ldap-shlib		ldap
+./usr/lib/liblber.so.3				base-ldap-shlib		ldap
 ./usr/lib/libldap.so				base-ldap-shlib		ldap
-./usr/lib/libldap.so.2				base-ldap-shlib		ldap
+./usr/lib/libldap.so.3				base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap
-./usr/lib/libldap_r.so.2			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.3			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so				base-bind-shlib
 ./usr/lib/liblwres.so.2				base-bind-shlib
 ./usr/lib/libm.so				base-sys-shlib

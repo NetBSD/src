@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.455 2009/01/11 13:26:29 jnemeth Exp $
+# $NetBSD: shl.mi,v 1.456 2009/01/12 10:01:33 dogcow Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -51,8 +51,8 @@
 ./usr/lib/i18n/libmapper_serial.so.5.0		base-i18n-shlib
 ./usr/lib/i18n/libmapper_std.so.5.0		base-i18n-shlib
 ./usr/lib/i18n/libmapper_zone.so.5.0		base-i18n-shlib
-./usr/lib/libamu.so.3.0				base-amd-shlib
-./usr/lib/libarchive.so.2.1			base-sys-shlib
+./usr/lib/libamu.so.4.0				base-amd-shlib
+./usr/lib/libarchive.so.3.0			base-sys-shlib
 ./usr/lib/libasn1.so.8.0			base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.10.0			base-sys-shlib		bfd
 ./usr/lib/libbind9.so.2.0			base-bind-shlib
@@ -69,7 +69,7 @@
 ./usr/lib/libdns.so.2.0				base-bind-shlib
 ./usr/lib/libedit.so.3.0			base-sys-shlib
 ./usr/lib/libevent.so.3.0			base-sys-shlib
-./usr/lib/libfetch.so.1.0			base-sys-shlib
+./usr/lib/libfetch.so.2.0			base-sys-shlib
 ./usr/lib/libform.so.6.0			base-sys-shlib
 ./usr/lib/libg2c.so.2.0				base-sys-shlib		gcc=3
 ./usr/lib/libgcc_s.so.1.0			base-sys-shlib		gcc
@@ -89,9 +89,9 @@
 ./usr/lib/libkafs.so.10.0			base-krb5-shlib		kerberos
 ./usr/lib/libkrb5.so.23.0			base-krb5-shlib		kerberos
 ./usr/lib/libkvm.so.6.0				base-sys-shlib
-./usr/lib/liblber.so.2.5			base-ldap-shlib		ldap
-./usr/lib/libldap.so.2.5			base-ldap-shlib		ldap
-./usr/lib/libldap_r.so.2.5			base-ldap-shlib		ldap
+./usr/lib/liblber.so.3.0			base-ldap-shlib		ldap
+./usr/lib/libldap.so.3.0			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.3.0			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so.2.0			base-bind-shlib
 ./usr/lib/libm.so.0.6				base-sys-shlib
 ./usr/lib/libmagic.so.2.0			base-sys-shlib
