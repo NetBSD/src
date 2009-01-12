@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.13 2009/01/04 18:46:16 pooka Exp $	*/
+/*	$NetBSD: atomic.S,v 1.14 2009/01/12 02:53:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,11 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <machine/asm.h>
-
-#if defined(_KERNEL) && !defined(_RUMPKERNEL)
-#define _HARDKERNEL
-#endif
 
 #ifdef _HARDKERNEL
 #define	LOCK(n)		.Lpatch/**/n:	lock
