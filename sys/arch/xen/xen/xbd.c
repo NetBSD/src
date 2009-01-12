@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.47 2008/12/17 22:49:13 cegger Exp $ */
+/* $NetBSD: xbd.c,v 1.48 2009/01/12 16:16:18 christos Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.47 2008/12/17 22:49:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.48 2009/01/12 16:16:18 christos Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1213,7 +1213,7 @@ xbdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct	xbd_softc *xs;
 
-	DPRINTF_FOLLOW(("xbdopen(0x%04x, %d)\n", dev, flags));
+	DPRINTF_FOLLOW(("xbdopen(%" PRIu64 ", %d)\n", dev, flags));
 	switch (fmt) {
 	case S_IFCHR:
 		GETXBD_SOFTC_CDEV(xs, dev);
@@ -1232,7 +1232,7 @@ xbdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct	xbd_softc *xs;
 
-	DPRINTF_FOLLOW(("xbdclose(%d, %d)\n", dev, flags));
+	DPRINTF_FOLLOW(("xbdclose(%" PRIu64 ", %d)\n", dev, flags));
 	switch (fmt) {
 	case S_IFCHR:
 		GETXBD_SOFTC_CDEV(xs, dev);
@@ -1269,7 +1269,7 @@ xbdsize(dev_t dev)
 {
 	struct xbd_softc *xs = getxbd_softc(dev);
 
-	DPRINTF_FOLLOW(("xbdsize(%d)\n", dev));
+	DPRINTF_FOLLOW(("xbdsize(%" PRIu64 ")\n", dev));
 	if (xs == NULL || xs->sc_shutdown)
 		return -1;
 	return dk_size(xs->sc_di, &xs->sc_dksc, dev);
@@ -1620,7 +1620,7 @@ xbdread(dev_t dev, struct uio *uio, int flags)
 	struct	xbd_softc *xs;
 	struct	dk_softc *dksc;
 
-	DPRINTF_FOLLOW(("xbdread(%d, %p, %d)\n", dev, uio, flags));
+	DPRINTF_FOLLOW(("xbdread(%" PRIu64 ", %p, %d)\n", dev, uio, flags));
 	GETXBD_SOFTC_CDEV(xs, dev);
 	dksc = &xs->sc_dksc;
 	if ((dksc->sc_flags & DKF_INITED) == 0)
@@ -1636,7 +1636,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 	struct	xbd_softc *xs;
 	struct	dk_softc *dksc;
 
-	DPRINTF_FOLLOW(("xbdwrite(%d, %p, %d)\n", dev, uio, flags));
+	DPRINTF_FOLLOW(("xbdwrite(%" PRIu64 ", %p, %d)\n", dev, uio, flags));
 	GETXBD_SOFTC_CDEV(xs, dev);
 	dksc = &xs->sc_dksc;
 	if ((dksc->sc_flags & DKF_INITED) == 0)
@@ -1653,7 +1653,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int	error;
 	struct	disk *dk;
 
-	DPRINTF_FOLLOW(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
+	DPRINTF_FOLLOW(("xbdioctl(%" PRIu64 ", %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 	GETXBD_SOFTC(xs, dev);
 	dksc = &xs->sc_dksc;
@@ -1689,8 +1689,8 @@ xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct	xbd_softc *xs;
 
-	DPRINTF_FOLLOW(("xbddump(%d, %" PRId64 ", %p, %lu)\n", dev, blkno, va,
-	    (unsigned long)size));
+	DPRINTF_FOLLOW(("xbddump(%" PRIu64 ", %" PRId64 ", %p, %lu)\n", dev,
+	    blkno, va, (unsigned long)size));
 	GETXBD_SOFTC(xs, dev);
 	return dk_dump(xs->sc_di, &xs->sc_dksc, dev, blkno, va, size);
 }
