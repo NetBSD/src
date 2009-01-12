@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.6 2009/01/11 23:55:25 christos Exp $ */
+/*	$NetBSD: vuid_event.h,v 1.7 2009/01/12 02:26:16 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@ typedef struct firm_event {
 	struct	firm_timeval time;
 } Firm_event;
 
+#ifdef _KERNEL
 __BEGIN_DECLS
 static __inline void firm_gettime(Firm_event *fev)
 {
@@ -69,6 +70,7 @@ static __inline void firm_gettime(Firm_event *fev)
 	fev->time.tv_usec = (long)tv.tv_usec;
 }
 __END_DECLS
+#endif /* _KERNEL */
 
 /*
  * Special `id' fields.  These weird numbers simply match the old binaries.
