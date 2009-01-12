@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: time.c,v 1.3 2009/01/12 11:32:44 tsutsui Exp $	*/
 
 /*	$OpenBSD: time.c,v 1.3 1999/02/13 04:43:18 mickey Exp $	*/
 
@@ -35,14 +35,15 @@
 #include <sys/types.h>
 #include <machine/pdc.h>
 #include <sys/disklabel.h>
+#include <lib/libsa/net.h>
 #include "libsa.h"
 #include "dev_hppa.h"
 
-time_t
+satime_t
 getsecs(void)
 {
 	int err;
-	time_t tt;
+	satime_t tt;
 
 	if ((err = (*pdc)(PDC_TOD, PDC_TOD_READ, &pdcbuf)) < 0) {
 		tt = 0;

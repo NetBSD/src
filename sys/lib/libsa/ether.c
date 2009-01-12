@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.21 2007/11/24 13:20:55 isaki Exp $	*/
+/*	$NetBSD: ether.c,v 1.22 2009/01/12 11:32:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -89,7 +89,7 @@ sendether(struct iodesc *d, void *pkt, size_t len, u_char *dea, int etype)
  * NOTE: Caller must leave room for the Ether header.
  */
 ssize_t
-readether(struct iodesc *d, void *pkt, size_t len, time_t tleft,
+readether(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft,
 	u_int16_t *etype)
 {
 	ssize_t n;

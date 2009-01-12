@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 2008/01/12 09:54:32 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.10 2009/01/12 11:32:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -77,7 +77,7 @@ int     le_debug = 0;
 
 void le_end(struct netif *);
 void le_error(struct netif *, char *, volatile struct lereg1 *);
-int le_get(struct iodesc *, void *, size_t, time_t);
+int le_get(struct iodesc *, void *, size_t, saseconds_t);
 void le_init(struct iodesc *, void *);
 int le_match(struct netif *, void *);
 int le_poll(struct iodesc *, void *, int);
@@ -399,9 +399,9 @@ le_put(struct iodesc *desc, void *pkt, size_t len)
 }
 
 int
-le_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
+le_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
-	time_t  t;
+	satime_t  t;
 	int     cc;
 
 	t = getsecs();
