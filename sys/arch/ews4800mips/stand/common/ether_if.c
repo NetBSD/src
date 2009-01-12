@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_if.c,v 1.4 2009/01/12 11:00:49 tsutsui Exp $	*/
+/*	$NetBSD: ether_if.c,v 1.5 2009/01/12 11:32:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ struct devsw netdevsw = {
 int ether_match(struct netif *, void *);
 int ether_probe(struct netif *, void *);
 void ether_init(struct iodesc *, void *);
-int ether_get(struct iodesc *, void *, size_t, time_t);
+int ether_get(struct iodesc *, void *, size_t, saseconds_t);
 int ether_put(struct iodesc *, void *, size_t);
 void ether_end(struct netif *);
 
@@ -109,7 +109,7 @@ ether_init(struct iodesc *iodesc, void *hint)
 }
 
 int
-ether_get(struct iodesc *iodesc, void *pkt, size_t len, time_t timeout)
+ether_get(struct iodesc *iodesc, void *pkt, size_t len, saseconds_t timeout)
 {
 
 	return lance_get(pkt, len) ? len : -1;
@@ -137,7 +137,7 @@ _rtt(void)
 	/* NOTREACHED */
 }
 
-time_t
+satime_t
 getsecs(void)
 {
 	volatile uint8_t *mkclock;
@@ -148,5 +148,5 @@ getsecs(void)
 	t += bcdtobin(*(mkclock +  8)) * 60;
 	t += bcdtobin(*(mkclock + 12)) * 60 * 60;
 
-	return (time_t)t;
+	return (satime_t)t;
 }

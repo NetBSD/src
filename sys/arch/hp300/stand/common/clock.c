@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2006/06/25 17:35:12 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2009/01/12 11:32:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -111,13 +111,13 @@ static const int month_days[12] = {
 u_char bbc_registers[13];
 struct hil_dev *bbcaddr = BBCADDR;
 
-static int bbc_to_gmt(time_t *);
+static int bbc_to_gmt(satime_t *);
 
-time_t
+satime_t
 getsecs(void)
 {
 	static int bbcinited = 0;
-	time_t timbuf = 0;
+	satime_t timbuf = 0;
 
 	if (!bbc_to_gmt(&timbuf) && !bbcinited)
 		printf("WARNING: bad date in battery clock\n");
@@ -129,7 +129,7 @@ getsecs(void)
 
 
 static int
-bbc_to_gmt(time_t *timbuf)
+bbc_to_gmt(satime_t *timbuf)
 {
 	int i;
 	u_long tmp;
