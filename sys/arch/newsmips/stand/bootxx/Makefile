@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2006/06/29 01:45:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2009/01/12 06:52:15 tsutsui Exp $
 
 PROG= bootxx
 SRCS= start.S bootxx.c
@@ -14,6 +14,7 @@ COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
 LINKFLAGS= -x -N -Ttext a0004000 -e _start
 CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -D_STANDALONE #-DBOOTXX_DEBUG
 CPPFLAGS+= -nostdinc -I${COMMON} -I${.CURDIR}/../../../..
