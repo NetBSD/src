@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.23 2007/03/04 05:59:31 christos Exp $
+ * $NetBSD: main.c,v 1.24 2009/01/12 07:42:30 tsutsui Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -424,7 +424,7 @@ printf("Supressing %ld kernel symbols\n", marks[MARK_NSYM]);
 #ifndef PPCBOOTER
 		if (((cpuid >> 24) == 0x7D) &&
 		    ((u_long)kcd->addr < 0x1000000)) {
-			kcd->addr += 0x3000000;
+			kcd->addr = (char *)kcd->addr + 0x3000000;
 		}
 #endif
 		++kcd;
@@ -447,10 +447,10 @@ printf("Supressing %ld kernel symbols\n", marks[MARK_NSYM]);
 	/*
 	 * Copy startup code to end of kernel image and set start_it.
 	 */
-	memcpy(kp + ksize + 256, (char *)startit,
+	memcpy((char *)kp + ksize + 256, (char *)startit,
 	    (char *)startit_end - (char *)startit);
 	CacheClearU();
-	start_it = (void *)(kp + ksize + 256);
+	start_it = (void *)((char *)kp + ksize + 256);
 #endif
 	printf("*** Loading from %08lx to Fastmem %08lx ***\n",
 	    (u_long)kp, (u_long)fmem);
