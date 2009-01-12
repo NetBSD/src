@@ -85,4 +85,7 @@ ops_boolean_t ops_add_selfsigned_userid_to_keydata(ops_keydata_t* keydata, ops_u
 ops_keydata_t *ops_keydata_new(void);
 void ops_keydata_init(ops_keydata_t* keydata, const ops_content_tag_t type);
 
+void ops_copy_userid(ops_user_id_t*, const ops_user_id_t*);
+void ops_copy_packet(ops_packet_t*, const ops_packet_t*);
+
 #endif

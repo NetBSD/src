@@ -317,7 +317,7 @@ static int unarmoured_read_char(dearmour_arg_t *arg,ops_error_t **errors,
  *
  * \return header value if found, otherwise NULL
  */
-const char *ops_find_header(ops_headers_t *headers,const char *key)
+static const char *ops_find_header(ops_headers_t *headers,const char *key)
     {
     unsigned n;
 
@@ -331,7 +331,7 @@ const char *ops_find_header(ops_headers_t *headers,const char *key)
  * \param dest
  * \param src
  */
-void ops_dup_headers(ops_headers_t *dest,const ops_headers_t *src)
+static void ops_dup_headers(ops_headers_t *dest,const ops_headers_t *src)
     {
     unsigned n;
 

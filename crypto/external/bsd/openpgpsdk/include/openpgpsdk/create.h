@@ -77,6 +77,16 @@ ops_boolean_t ops_write_pk_session_key(ops_create_info_t *info,
 ops_boolean_t ops_write_transferable_public_key(const ops_keydata_t *key, ops_boolean_t armoured, ops_create_info_t *info);
 ops_boolean_t ops_write_transferable_secret_key(const ops_keydata_t *key, const unsigned char* passphrase, const size_t pplen, ops_boolean_t armoured, ops_create_info_t *info);
 
+void ops_fast_create_user_id(ops_user_id_t *,unsigned char *);
+ops_boolean_t ops_write_user_id(const unsigned char *,ops_create_info_t *);
+void ops_fast_create_rsa_public_key(ops_public_key_t *,time_t, BIGNUM *,BIGNUM *);
+ops_boolean_t ops_write_rsa_public_key(time_t ,const BIGNUM *, const BIGNUM *, ops_create_info_t *);
+void ops_fast_create_rsa_secret_key(ops_secret_key_t *,time_t, BIGNUM *,BIGNUM *,BIGNUM *,BIGNUM *, BIGNUM *,BIGNUM *);
+ops_boolean_t encode_m_buf(const unsigned char *, size_t, const ops_public_key_t *, unsigned char*);
+ops_boolean_t ops_write_literal_data_from_file(const char *, const ops_literal_data_type_t, ops_create_info_t *);
+ops_boolean_t ops_write_symmetrically_encrypted_data(const unsigned char *, const int, ops_create_info_t *);
+
+
 #endif /*OPS_CREATE_H*/
 
 // eof

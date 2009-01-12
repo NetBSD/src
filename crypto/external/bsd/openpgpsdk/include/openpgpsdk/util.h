@@ -51,4 +51,6 @@ void hexdump(const unsigned char *src,size_t length);
 
 void *ops_mallocz(size_t n);
 
+char *ops_str_from_map(int, ops_map_t *);
+
 #endif

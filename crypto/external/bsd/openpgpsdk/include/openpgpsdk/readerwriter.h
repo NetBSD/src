@@ -90,4 +90,7 @@ callback_cmd_get_secret_key(const ops_parser_content_t *content_,ops_parse_cb_in
 ops_parse_cb_return_t
 callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo);
 
+/* from reader_fd.c */
+void ops_reader_set_fd(ops_parse_info_t *,int);
+
 #endif /*OPS_READERWRITER_H__*/

@@ -137,6 +137,7 @@ static unsigned secret_key_length(const ops_secret_key_t *key)
     {
     int l;
 
+    l = 0;
     switch(key->public_key.algorithm)
 	{
     case OPS_PKA_RSA:
