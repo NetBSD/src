@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.35 2009/01/08 19:14:37 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.36 2009/01/12 02:22:55 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -86,6 +86,17 @@ SRCS+=	kobj_stubs.c
 # include libkern source files
 KERNDIR=${RUMPTOP}/../lib/libkern
 .include "${RUMPTOP}/../lib/libkern/Makefile.libkern"
+
+# Some architectures require a little special massage with atomic
+# compare-and-swap.  This is because the kernel version is using
+# instructions or routines unavailable to us in userspace.  We
+# use effectively the multiprocessor version of the userspace ops.
+#
+.if ${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "hppa" \
+    || ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "sh3"
+CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
+SRCS+=		atomic_cas_generic.c
+.endif
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
