@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.258 2008/11/24 11:41:08 ad Exp $
+# $NetBSD: GENERIC,v 1.259 2009/01/12 19:16:26 mhitch Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.69 2008/09/24 17:26:37 tsutsui Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.72 2009/01/12 19:11:41 mhitch Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.258 $"
+#ident 		"GENERIC-$Revision: 1.259 $"
 
 
 maxusers	8
@@ -151,6 +151,7 @@ options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_20	# compatibility with NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
