@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.8 2009/01/10 23:36:22 pooka Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.9 2009/01/12 02:53:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include "atomic_op_asm.h"
-
-#if defined(_KERNEL) && !defined(_RUMPKERNEL)
-#define _HARDKERNEL
-#endif
 
 #if defined(_HARKDERNEL)
 
