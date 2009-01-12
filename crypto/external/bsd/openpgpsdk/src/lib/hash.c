@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include <openpgpsdk/hash.h>
 #include <openpgpsdk/final.h>
 
 static int debug=0;

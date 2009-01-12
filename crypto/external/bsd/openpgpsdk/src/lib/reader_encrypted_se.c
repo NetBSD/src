@@ -66,6 +66,7 @@ static int encrypted_data_reader(void *dest,size_t length,ops_error_t **errors,
     {
     encrypted_arg_t *arg=ops_reader_get_arg(rinfo);
     int saved=length;
+    char	*cdest;
 
     // V3 MPIs have the count plain and the cipher is reset after each count
     if(arg->prev_read_was_plain && !rinfo->pinfo->reading_mpi_length)
@@ -104,6 +105,10 @@ static int encrypted_data_reader(void *dest,size_t length,ops_error_t **errors,
 	    length-=n;
 #ifdef WIN32
 	    (char*)dest+=n;
+#elif defined(__NetBSD__)
+	    cdest = dest;
+	    cdest+=n;
+	    dest = cdest;
 #else
         dest+=n;
 #endif
@@ -152,8 +157,8 @@ static int encrypted_data_reader(void *dest,size_t length,ops_error_t **errors,
 
                 if (debug)
                     {
-                    fprintf(stderr,"READING:\nencrypted: ");
                     int i=0;
+                    fprintf(stderr,"READING:\nencrypted: ");
                     for (i=0; i<16; i++)
                         fprintf(stderr,"%2x ", buffer[i]);
                     fprintf(stderr,"\n");
