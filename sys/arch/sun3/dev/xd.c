@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.65 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.66 2009/01/12 08:27:26 cegger Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.65 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.66 2009/01/12 08:27:26 cegger Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -1943,7 +1943,7 @@ xdc_perror(struct xd_iorq *iorq, struct xd_iopb *iopb, int still_trying)
 	    device_xname(iorq->xd->sc_dev) :
 	    device_xname(iorq->xdc->sc_dev));
 	if (iorq->buf)
-		printf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
+		printf("%c: ", 'a' + (char)DISKPART(iorq->buf->b_dev));
 	if (iopb->comm == XDCMD_RD || iopb->comm == XDCMD_WR)
 		printf("%s %d/%d/%d: ",
 		    (iopb->comm == XDCMD_RD) ? "read" : "write",
