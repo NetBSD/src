@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/05/31 01:43:57 nisimura Exp $
+#	$NetBSD: Makefile,v 1.14 2009/01/12 08:06:54 tsutsui Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -8,12 +8,13 @@ SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c nif.c \
 		atawd.c pciide.c siisata.c printf.c
 CLEANFILES+=	vers.c vers.o ${PROG} ${PROG}.bin
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
+CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DCONSNAME=\"com\" -DCONSPORT=0x3f8 -DCONSSPEED=115200
 #CPPFLAGS+=	-DCONSNAME=\"eumb\" -DCONSPORT=0x4600 -DCONSSPEED=57600
 #CPPFLAGS+=	-DTICKS_PER_SEC=(133333333/4)
 #CPPFLAGS+=	-DSTART_DDB_SESSION
-CPPFLAGS+=	-Wall -nostdinc -I. -I${.OBJDIR} -I${S}
+CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S}
 DBG=		-Os
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!

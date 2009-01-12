@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.19 2008/05/30 14:54:16 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.20 2009/01/12 08:06:54 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int tlp_match(unsigned, void *);
 void *tlp_init(unsigned, void *);
 int tlp_send(void *, char *, unsigned);
 int tlp_recv(void *, char *, unsigned, unsigned);
