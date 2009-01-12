@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.38 2008/11/19 18:39:44 ad Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.39 2009/01/12 11:53:23 rtr Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.38 2008/11/19 18:39:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.39 2009/01/12 11:53:23 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -16,6 +16,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.38 2008/11/19 18:39:44 ad Exp $")
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/time.h>
+#include <compat/sys/time.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
@@ -182,8 +184,8 @@ struct sysent linux_sysent[] = {
 	    (sy_call_t *)linux_sys_setrlimit },	/* 75 = setrlimit */
 	{ ns(struct linux_sys_getrlimit_args), 0,
 	    (sy_call_t *)linux_sys_getrlimit },	/* 76 = getrlimit */
-	{ ns(struct sys_getrusage_args), 0,
-	    (sy_call_t *)sys_getrusage },	/* 77 = getrusage */
+	{ ns(struct compat_50_sys_getrusage_args), 0,
+	    (sy_call_t *)compat_50_sys_getrusage },	/* 77 = getrusage */
 	{ ns(struct linux_sys_gettimeofday_args), 0,
 	    (sy_call_t *)linux_sys_gettimeofday },/* 78 = gettimeofday */
 	{ ns(struct linux_sys_settimeofday_args), 0,
@@ -241,10 +243,10 @@ struct sysent linux_sysent[] = {
 	    (sy_call_t *)linux_sys_socketcall },/* 102 = socketcall */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 103 = unimplemented syslog */
-	{ ns(struct sys_setitimer_args), 0,
-	    (sy_call_t *)sys_setitimer },	/* 104 = setitimer */
-	{ ns(struct sys_getitimer_args), 0,
-	    (sy_call_t *)sys_getitimer },	/* 105 = getitimer */
+	{ ns(struct compat_50_sys_setitimer_args), 0,
+	    (sy_call_t *)compat_50_sys_setitimer },	/* 104 = setitimer */
+	{ ns(struct compat_50_sys_getitimer_args), 0,
+	    (sy_call_t *)compat_50_sys_getitimer },	/* 105 = getitimer */
 	{ ns(struct linux_sys_stat_args), 0,
 	    (sy_call_t *)linux_sys_stat },	/* 106 = stat */
 	{ ns(struct linux_sys_lstat_args), 0,
