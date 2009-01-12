@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.69 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.70 2009/01/12 08:27:26 cegger Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.69 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.70 2009/01/12 08:27:26 cegger Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1842,7 +1842,7 @@ xyc_perror(struct xy_iorq *iorq, struct xy_iopb *iopb, int still_trying)
 	printf("%s", (iorq->xy) ? device_xname(iorq->xy->sc_dev)
 	    : device_xname(iorq->xyc->sc_dev));
 	if (iorq->buf)
-		printf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
+		printf("%c: ", 'a' + (char)DISKPART(iorq->buf->b_dev));
 	if (iopb->com == XYCMD_RD || iopb->com == XYCMD_WR)
 		printf("%s %d/%d/%d: ",
 		    (iopb->com == XYCMD_RD) ? "read" : "write",
