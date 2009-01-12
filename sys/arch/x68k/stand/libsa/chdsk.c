@@ -1,4 +1,4 @@
-/*	$NetBSD: chdsk.c,v 1.1 2001/09/28 15:19:33 minoura Exp $	*/
+/*	$NetBSD: chdsk.c,v 1.2 2009/01/12 07:56:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -26,6 +26,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include "libx68k.h"
 #include "iocs.h"

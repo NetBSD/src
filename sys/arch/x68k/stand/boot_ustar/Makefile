@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile,v 1.16 2009/01/12 07:56:31 tsutsui Exp $
 
 NOMAN=		# defined
 
@@ -33,7 +33,7 @@ vers.c:	${VERSIONFILE}
 
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
-CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS}
+CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 AFLAGS+=   -Wa,-mc68000
 .if ${OBJECT_FMT} == "ELF"
@@ -43,6 +43,9 @@ LINKFLAGS+=  -noinhibit-exec	# XXX
 LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
 OBJCOPY?=  objcopy
 .endif
+
+.include "${.CURDIR}/../Makefile.booters"
+.include "${S}/../common/lib/libc/Makefile.inc"
 
 CLEANFILES+=	${PROG}.x $(PROG).map
 

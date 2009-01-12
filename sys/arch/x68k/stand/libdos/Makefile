@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/10/19 22:05:22 apb Exp $
+#	$NetBSD: Makefile,v 1.9 2009/01/12 07:56:31 tsutsui Exp $
 
 LIB=	dos
 
@@ -6,7 +6,9 @@ NOLINT=# defined
 NOPROFILE=# defined
 NOPIC=# defined
 
-CPPFLAGS+=	-I${.CURDIR}
+.include "../Makefile.booters"
+
+CPPFLAGS+=	-I${.CURDIR} -I.
 
 SRCS=	dos_rename.S
 SRCS+=	dos_cerror.S dos_procerr.S dos_errno.c dos_strerror.S
