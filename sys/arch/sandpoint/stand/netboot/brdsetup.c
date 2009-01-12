@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.2 2009/01/12 08:06:54 tsutsui Exp $ */
+/* $NetBSD: brdsetup.c,v 1.3 2009/01/12 09:41:58 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@ const unsigned dcache_line_size = 32;		/* 32B linesize */
 const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
 
 void brdsetup(void);
-unsigned mpc107memsize(void);
 void setup_82C686B(void);
 void setup_83C553F(void);
 
@@ -62,8 +61,6 @@ unsigned uartbase;
 #define LSR_THRE	0x20
 #define UART_READ(r)		*(volatile char *)(uartbase + (r))
 #define UART_WRITE(r, v)	*(volatile char *)(uartbase + (r)) = (v)
-
-extern int brdtype;
 
 void
 brdsetup()

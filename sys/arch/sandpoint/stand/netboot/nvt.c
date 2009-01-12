@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.15 2008/05/30 14:54:16 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.16 2009/01/12 09:41:59 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -56,11 +56,6 @@
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
-
-int nvt_match(unsigned, void *);
-void *nvt_init(unsigned, void *);
-int nvt_send(void *, char *, unsigned);
-int nvt_recv(void *, char *, unsigned, unsigned);
 
 struct desc {
 	uint32_t xd0, xd1, xd2, xd3;
