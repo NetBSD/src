@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.14 2006/01/16 19:34:53 he Exp $
+#	$NetBSD: Makefile.gzboot,v 1.15 2009/01/12 07:45:24 tsutsui Exp $
 
 NOMAN=  # defined
 
@@ -34,6 +34,7 @@ STARTFILE= srtbegin.o
 
 CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
+CPPFLAGS+= -I${S}/../common/dist/zlib
 
 CPPFLAGS+= -D_STANDALONE
 
@@ -48,7 +49,8 @@ CPPFLAGS+= -DMAXIMAGESIZE=${MAXIMAGESIZE}
 CPPFLAGS+= -DLOADADDR=${LOADADDR}
 
 COPTS+=	-ffreestanding
-CWARNFLAGS+= -Wno-main
+CWARNFLAGS+= -Werror
+CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
 CLEANFILES+= ${PROGSYM}
