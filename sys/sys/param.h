@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.339 2009/01/11 22:29:02 pooka Exp $	*/
+/*	$NetBSD: param.h,v 1.340 2009/01/12 02:51:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -96,7 +96,7 @@
 
 #include <sys/null.h>
 
-#ifndef _LOCORE
+#ifndef __ASSEMBLER__
 #include <sys/inttypes.h>
 #include <sys/types.h>
 
@@ -439,6 +439,6 @@ extern size_t coherency_unit;
 #ifndef MIN_LWP_ALIGNMENT
 #define	MIN_LWP_ALIGNMENT	32
 #endif
-#endif /* !_LOCORE */
+#endif /* !__ASSEMBLER__ */
 
 #endif /* !_SYS_PARAM_H_ */
