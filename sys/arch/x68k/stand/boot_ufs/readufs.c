@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.c,v 1.8 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: readufs.c,v 1.9 2009/01/12 07:56:31 tsutsui Exp $	*/
 /*	from Id: readufs.c,v 1.8 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -16,7 +16,7 @@
 #define fs	ufs_info
 
 static void raw_read_queue __P((void *buf, daddr_t blkpos, size_t bytelen));
-static int ufs_read_indirect __P((daddr_t blk, int level, void **buf,
+static int ufs_read_indirect __P((daddr_t blk, int level, uint8_t **buf,
 		unsigned *poff, size_t count));
 
 #ifdef DEBUG_WITH_STDIO
@@ -92,7 +92,7 @@ ufs_read(di, buf, off, count)
 {
 	struct ufs_info *ufsinfo = &fs;
 	size_t bsize = ufsinfo->bsize;
-	void *b = buf;
+	uint8_t *b = buf;
 	int i;
 	size_t disize, nread;
 	daddr_t pos;
@@ -157,7 +157,7 @@ static int
 ufs_read_indirect(blk, level, buf, poff, count)
 	daddr_t blk;
 	int level;
-	void **buf;
+	uint8_t **buf;
 	unsigned *poff;	/* position in block */
 	size_t count;
 {
