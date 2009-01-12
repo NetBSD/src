@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.74 2009/01/11 20:41:18 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.75 2009/01/12 02:04:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.74 2009/01/11 20:41:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.75 2009/01/12 02:04:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -116,7 +116,6 @@ int max_bdevsws = DEVSW_SIZE;
 struct devsw_conv devsw_conv0;
 struct devsw_conv *devsw_conv = &devsw_conv0;
 int max_devsw_convs = 0;
-
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
@@ -682,3 +681,9 @@ cpu_reboot(int howto, char *bootstr)
 
 	rumpuser_panic();
 }
+
+/* XXX: static, but not used except to make spcopy.S link */
+#ifdef __hppa__
+#undef curlwp
+struct lwp *curlwp = &lwp0;
+#endif
