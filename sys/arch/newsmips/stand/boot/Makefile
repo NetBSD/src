@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2006/06/29 01:45:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2009/01/12 06:52:14 tsutsui Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -18,6 +18,7 @@ CLEANFILES+= ${PROG}.elf ${PROG}.tmp
 LINKFLAGS= -x -N -Ttext a0700000 -e _start
 LINKFLAGS+= -T ${S}/arch/mips/conf/stand.ldscript
 CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+= -DSUN_BOOTPARAMS

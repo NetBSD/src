@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2005/12/28 08:44:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.10 2009/01/12 06:50:31 tsutsui Exp $
 
 S= ${.CURDIR}/../../../..
 
 NOMAN= # defined
 
 CFLAGS= -Os -Wall
+CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -D_STANDALONE
 CPPFLAGS+= -DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
