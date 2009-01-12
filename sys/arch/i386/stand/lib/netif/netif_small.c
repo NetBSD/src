@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_small.c,v 1.9 2008/12/14 18:46:33 christos Exp $	*/
+/*	$NetBSD: netif_small.c,v 1.10 2009/01/12 11:32:44 tsutsui Exp $	*/
 
 /* minimal netif - for boot ROMs we don't have to select between
   several interfaces, and we have to save space
@@ -140,14 +140,14 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
  * Return the total length received (or -1 on error).
  */
 int
-netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	int len;
-	time_t t;
+	satime_t t;
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		printf("netif_get: pkt=%p, maxlen=%d, tmo=%ld\n",
+		printf("netif_get: pkt=%p, maxlen=%d, tmo=%d\n",
 			   pkt, maxlen, timo);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.5 2008/05/07 17:56:09 mlelstv Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.6 2009/01/12 11:32:44 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -183,7 +183,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	struct of_dev *op;
 	int tick0, tmo_ms;
@@ -227,7 +227,7 @@ netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
 /*
  * Shouldn't really be here, but is used solely for networking, so...
  */
-time_t
+satime_t
 getsecs(void)
 {
 

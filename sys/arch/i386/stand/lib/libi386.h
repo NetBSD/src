@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.28 2008/12/13 23:30:54 christos Exp $	*/
+/*	$NetBSD: libi386.h,v 1.29 2009/01/12 11:32:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -91,9 +91,6 @@ struct bootblk_command {
 };
 void bootmenu(void);
 void docommand(char *);
-
-/* getsecs.c */
-time_t getsecs(void);
 
 /* in "user code": */
 void command_help(char *);

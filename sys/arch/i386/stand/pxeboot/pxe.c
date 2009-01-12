@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.11 2009/01/11 02:45:45 christos Exp $	*/
+/*	$NetBSD: pxe.c,v 1.12 2009/01/12 11:32:44 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -151,7 +151,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
  * Caller leaves room for the headers (Ether, IP, UDP).
  */
 ssize_t
-readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
+readudp(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 {
 	t_PXENV_UDP_READ *ur = (void *) pxe_command_buf;
 	struct udphdr *uh;
