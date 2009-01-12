@@ -1,4 +1,4 @@
-/* $NetBSD: kse.c,v 1.1 2008/05/31 01:43:57 nisimura Exp $ */
+/* $NetBSD: kse.c,v 1.2 2009/01/12 09:41:59 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,11 +52,6 @@
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
-
-int kse_match(unsigned, void *);
-void *kse_init(unsigned, void *);
-int kse_send(void *, char *, unsigned);
-int kse_recv(void *, char *, unsigned, unsigned);
 
 struct desc {
 	uint32_t xd0, xd1, xd2, xd3;
