@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.34 2007/12/28 20:49:49 joerg Exp $ */
+/*	$NetBSD: ms.c,v 1.35 2009/01/12 03:18:26 mhitch Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.34 2007/12/28 20:49:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.35 2009/01/12 03:18:26 mhitch Exp $");
 
 /*
  * Mouse driver.
@@ -355,7 +355,7 @@ msintr(void *arg)
 			d = to_one[d - 1];	/* from 1..7 to {1,2,4} */
 			fe->id = to_id[d - 1];	/* from {1,2,4} to ID */
 			fe->value = mb & d ? VKEY_DOWN : VKEY_UP;
-			getmicrotime(&fe->time);
+			firm_gettime(fe);
 			fe++;
 
 			if (put >= EV_QSIZE) {
@@ -374,7 +374,7 @@ msintr(void *arg)
 
 			fe->id = LOC_X_DELTA;
 			fe->value = ms->ms_dx;
-			getmicrotime(&fe->time);
+			firm_gettime(fe);
 			fe++;
 
 			if (put >= EV_QSIZE) {
@@ -393,7 +393,7 @@ msintr(void *arg)
 
 			fe->id = LOC_Y_DELTA;
 			fe->value = ms->ms_dy;
-			getmicrotime(&fe->time);
+			firm_gettime(fe);
 			fe++;
 
 			if (put >= EV_QSIZE) {
