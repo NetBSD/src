@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.12 2009/01/11 20:39:34 pooka Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.13 2009/01/12 18:14:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -90,7 +90,8 @@ struct mntopt {
 	MOPT_RDONLY,							\
 	MOPT_UNION,							\
 	MOPT_IGNORE,							\
-	MOPT_SYMPERM
+	MOPT_SYMPERM,							\
+	MOPT_RUMP
 
 __BEGIN_DECLS
 typedef struct mntoptparse *mntoptparse_t;
