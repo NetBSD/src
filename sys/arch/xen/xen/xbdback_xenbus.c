@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.21 2008/11/17 14:12:52 cegger Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.22 2009/01/12 08:55:48 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.21 2008/11/17 14:12:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.22 2009/01/12 08:55:48 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -423,9 +423,10 @@ xbdback_xenbus_destroy(void *arg)
 	}
 	/* close device */
 	if (xbdi->xbdi_size) {
-		printf("xbd backend: detach device %s%d%c for domain %d\n",
+		printf("xbd backend: detach device %s%"PRId64"%c for domain %d\n",
 		    devsw_blk2name(major(xbdi->xbdi_dev)),
-		    DISKUNIT(xbdi->xbdi_dev), DISKPART(xbdi->xbdi_dev) + 'a',
+		    DISKUNIT(xbdi->xbdi_dev),
+		    (char)DISKPART(xbdi->xbdi_dev) + 'a',
 		    xbdi->xbdi_domid);
 		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 	}
@@ -626,9 +627,9 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	if (err)
 		return;
 	if (xbdi->xbdi_status == CONNECTED && xbdi->xbdi_dev != dev) {
-		printf("xbdback %s: changing physical device from 0x%x to "
-		    "0x%lx not supported\n", xbusd->xbusd_path, xbdi->xbdi_dev,
-		    dev);
+		printf("xbdback %s: changing physical device from 0x%"PRIx64
+		    " to 0x%lx not supported\n",
+		    xbusd->xbusd_path, xbdi->xbdi_dev, dev);
 		return;
 	}
 	xbdi->xbdi_dev = dev;
@@ -645,32 +646,32 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	major = major(xbdi->xbdi_dev);
 	devname = devsw_blk2name(major);
 	if (devname == NULL) {
-		printf("xbdback %s: unknown device 0x%x\n", xbusd->xbusd_path,
-		    xbdi->xbdi_dev);
+		printf("xbdback %s: unknown device 0x%"PRIx64"\n",
+		    xbusd->xbusd_path, xbdi->xbdi_dev);
 		return;
 	}
 	xbdi->xbdi_bdevsw = bdevsw_lookup(xbdi->xbdi_dev);
 	if (xbdi->xbdi_bdevsw == NULL) {
-		printf("xbdback %s: no bdevsw for device 0x%x\n",
+		printf("xbdback %s: no bdevsw for device 0x%"PRIx64"\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev);
 		return;
 	}
 	err = bdevvp(xbdi->xbdi_dev, &xbdi->xbdi_vp);
 	if (err) {
-		printf("xbdback %s: can't open device 0x%x: %d\n",
+		printf("xbdback %s: can't open device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 		return;
 	}
 	err = vn_lock(xbdi->xbdi_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (err) {
-		printf("xbdback %s: can't vn_lock device 0x%x: %d\n",
+		printf("xbdback %s: can't vn_lock device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 		vrele(xbdi->xbdi_vp);
 		return;
 	}
 	err  = VOP_OPEN(xbdi->xbdi_vp, FREAD, NOCRED);
 	if (err) {
-		printf("xbdback %s: can't VOP_OPEN device 0x%x: %d\n",
+		printf("xbdback %s: can't VOP_OPEN device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 		vput(xbdi->xbdi_vp);
 		return;
@@ -683,7 +684,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		    FREAD, NOCRED);
 		if (err) {
 			printf("xbdback %s: can't DIOCGWEDGEINFO device "
-			    "0x%x: %d\n", xbusd->xbusd_path,
+			    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
 			    xbdi->xbdi_dev, err);
 			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
 			vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
@@ -699,7 +700,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		struct partinfo dpart;
 		err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart, FREAD, 0);
 		if (err) {
-			printf("xbdback %s: can't DIOCGPART device 0x%x: %d\n",
+			printf("xbdback %s: can't DIOCGPART device 0x%"PRIx64": %d\n",
 			    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
 			vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
@@ -707,9 +708,10 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 			return;
 		}
 		xbdi->xbdi_size = dpart.part->p_size;
-		printf("xbd backend: attach device %s%d%c (size %" PRIu64 ") "
-		    "for domain %d\n", devname, DISKUNIT(xbdi->xbdi_dev),
-		    DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
+		printf("xbd backend: attach device %s%"PRId64
+		    "%c (size %" PRIu64 ") for domain %d\n",
+		    devname, DISKUNIT(xbdi->xbdi_dev),
+		    (char)DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
 		    xbdi->xbdi_domid);
 	}
 again:
