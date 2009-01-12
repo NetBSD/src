@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.31 2007/11/24 13:20:56 isaki Exp $	*/
+/*	$NetBSD: net.c,v 1.32 2009/01/12 11:32:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -84,12 +84,12 @@ ssize_t
 sendrecv(struct iodesc *d,
 	ssize_t (*sproc)(struct iodesc *, void *, size_t),
 	void *sbuf, size_t ssize,
-	ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t),
+	ssize_t (*rproc)(struct iodesc *, void *, size_t, saseconds_t),
 	void *rbuf, size_t rsize)
 {
 	ssize_t cc;
-	time_t t, tmo, tlast;
-	long tleft;
+	satime_t t, tlast;
+	saseconds_t tmo, tleft;
 
 #ifdef NET_DEBUG
 	if (debug)
@@ -97,7 +97,8 @@ sendrecv(struct iodesc *d,
 #endif
 
 	tmo = MINTMO;
-	tlast = tleft = 0;
+	tlast = 0;
+	tleft = 0;
 	t = getsecs();
 	for (;;) {
 		if (tleft <= 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.5 2007/03/04 06:00:56 christos Exp $ */
+/*	$NetBSD: if_qe.c,v 1.6 2009/01/12 11:32:45 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Roar Thronæs.  All rights reserved.
@@ -48,7 +48,7 @@
 
 #include "vaxstand.h"
 
-static int qe_get(struct iodesc *desc, void *pkt, size_t, time_t timeout);
+static int qe_get(struct iodesc *desc, void *pkt, size_t, saseconds_t timeout);
 static int qe_put(struct iodesc *desc, void *pkt, size_t);
 static void qe_init(u_char *eaddr);
 
@@ -180,7 +180,7 @@ qe_init(u_char *eaddr)
 }
 
 int
-qe_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timeout) {
+qe_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timeout) {
 	int len, j;
 
 retry:

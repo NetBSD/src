@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.3 2009/01/12 09:41:58 tsutsui Exp $ */
+/* $NetBSD: brdsetup.c,v 1.4 2009/01/12 11:32:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,6 @@
 #include <sys/param.h>
 
 #include <lib/libsa/stand.h>
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <lib/libsa/net.h>
 #include <lib/libkern/libkern.h>
 
@@ -136,7 +134,7 @@ mftb()
 	return (tb);
 }
 
-time_t
+satime_t
 getsecs()
 {
 	u_quad_t tb = mftb();

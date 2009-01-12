@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.22 2008/03/25 22:54:54 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.23 2009/01/12 11:32:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -37,6 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
 
 #ifndef _KERNEL	/* XXX - see <netinet/in.h> */
 #undef __IPADDR
@@ -93,14 +96,14 @@ int	rarp_getipaddress __P((int));
 
 /* Link functions: */
 ssize_t sendether __P((struct iodesc *, void *, size_t, u_char *, int));
-ssize_t readether __P((struct iodesc *, void *, size_t, time_t, u_int16_t *));
+ssize_t readether __P((struct iodesc *, void *, size_t, saseconds_t, u_int16_t *));
 
 ssize_t	sendudp __P((struct iodesc *, void *, size_t));
-ssize_t	readudp __P((struct iodesc *, void *, size_t, time_t));
+ssize_t	readudp __P((struct iodesc *, void *, size_t, saseconds_t));
 ssize_t	sendrecv __P((struct iodesc *,
 			ssize_t (*)(struct iodesc *, void *, size_t),
 			void *, size_t,
-			ssize_t (*)(struct iodesc *, void *, size_t, time_t),
+			ssize_t (*)(struct iodesc *, void *, size_t, saseconds_t),
 			void *, size_t));
 
 /* Utilities: */
@@ -108,4 +111,4 @@ char	*ether_sprintf __P((const u_char *));
 int	ip_cksum __P((const void *, size_t));
 
 /* Machine-dependent functions: */
-time_t	getsecs __P((void));
+satime_t	getsecs __P((void));

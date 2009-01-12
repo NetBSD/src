@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.6 2009/01/12 07:00:59 tsutsui Exp $	*/
+/*	$NetBSD: libsa.h,v 1.7 2009/01/12 11:32:45 tsutsui Exp $	*/
 
 /*
  * This file defines the API for libsa.a
@@ -28,7 +28,6 @@ void exit(int);
 
 /* clock.c */
 extern int hz;
-long getsecs(void);
 long getticks(void);
 
 /* exec_sun.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.4 2006/07/01 05:55:34 mrg Exp $	*/
+/*	$NetBSD: if_de.c,v 1.5 2009/01/12 11:32:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -56,7 +56,7 @@
 
 #include "vaxstand.h"
 
-static int de_get(struct iodesc *, void *, size_t, time_t);
+static int de_get(struct iodesc *, void *, size_t, saseconds_t);
 static int de_put(struct iodesc *, void *, size_t);
 static void dewait(char *);
 
@@ -191,7 +191,7 @@ deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 }
 
 int
-de_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timeout)
+de_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timeout)
 {
 	volatile int to = 100000 * timeout;
 	int len, csr0;

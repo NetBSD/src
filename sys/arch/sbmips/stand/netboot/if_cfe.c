@@ -1,4 +1,4 @@
-/* $NetBSD: if_cfe.c,v 1.2 2003/03/13 13:59:11 drochner Exp $ */
+/* $NetBSD: if_cfe.c,v 1.3 2009/01/12 11:32:44 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -51,7 +51,7 @@
 int cfenet_probe(struct netif *, void *);
 int cfenet_match(struct netif *, void *);
 void cfenet_init(struct iodesc *, void *);
-int cfenet_get(struct iodesc *, void *, size_t, time_t);
+int cfenet_get(struct iodesc *, void *, size_t, saseconds_t);
 int cfenet_put(struct iodesc *, void *, size_t);
 void cfenet_end(struct netif *);
 
@@ -113,9 +113,9 @@ cfenet_get(desc, pkt, len, timeout)
 	struct iodesc *desc;
 	void *pkt;
 	size_t len;
-	time_t timeout;
+	saseconds_t timeout;
 {
-	time_t t;
+	satime_t t;
 	int cc;
 
 	t = getsecs();

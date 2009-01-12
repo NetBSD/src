@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.10 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: netio.c,v 1.11 2009/01/12 11:32:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
 }
 
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t len, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timo)
 {
 	return (*((struct netif*)desc->io_netif)->nif_driver->netif_get)
 		(desc, pkt, len, timo);

@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.8 2009/01/12 09:41:59 tsutsui Exp $ */
+/* $NetBSD: nif.c,v 1.9 2009/01/12 11:32:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ netif_get(desc, pkt, maxlen, timo)
 	struct iodesc *desc;
 	void *pkt;
 	size_t maxlen;
-	time_t timo;
+	saseconds_t timo;
 {
 	struct nifdv *dv = desc->io_netif;
 	int len;
