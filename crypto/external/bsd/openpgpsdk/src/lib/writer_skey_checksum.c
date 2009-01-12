@@ -23,6 +23,7 @@
  */
 
 #include <openpgpsdk/create.h>
+#include <openpgpsdk/readerwriter.h>
 
 #include <openpgpsdk/final.h>
 

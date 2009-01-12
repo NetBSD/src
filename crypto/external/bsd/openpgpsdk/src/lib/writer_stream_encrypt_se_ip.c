@@ -36,6 +36,7 @@
 #include <openpgpsdk/keyring.h>
 #include <openpgpsdk/random.h>
 #include <openpgpsdk/readerwriter.h>
+#include <openpgpsdk/streamwriter.h>
 
 #define MAX_PARTIAL_DATA_LENGTH 1073741824
 
@@ -114,8 +115,7 @@ void ops_writer_push_stream_encrypt_se_ip(ops_create_info_t *cinfo,
     }
 
 
-
-unsigned int ops_calc_partial_data_length(unsigned int len)
+static unsigned int ops_calc_partial_data_length(unsigned int len)
     {
     int i;
     unsigned int mask = MAX_PARTIAL_DATA_LENGTH;
@@ -133,7 +133,7 @@ unsigned int ops_calc_partial_data_length(unsigned int len)
     return mask;
     }
 
-ops_boolean_t ops_write_partial_data_length(unsigned int len, 
+static ops_boolean_t ops_write_partial_data_length(unsigned int len, 
                                             ops_create_info_t *info)
     {
     // len must be a power of 2 from 0 to 30
@@ -148,7 +148,7 @@ ops_boolean_t ops_write_partial_data_length(unsigned int len,
  	return ops_write(c,1,info);
     }
 
-ops_boolean_t ops_stream_write_literal_data(const unsigned char *data, 
+static ops_boolean_t ops_stream_write_literal_data(const unsigned char *data, 
                                             unsigned int len, 
                                             ops_create_info_t *info)
     {
@@ -162,7 +162,8 @@ ops_boolean_t ops_stream_write_literal_data(const unsigned char *data,
     return ops_true;
     }
 
-ops_boolean_t ops_stream_write_literal_data_first(const unsigned char *data, 
+static ops_boolean_t
+ops_stream_write_literal_data_first(const unsigned char *data, 
                                                   unsigned int len, 
                                                   const ops_literal_data_type_t type,
                                                   ops_create_info_t *info)
@@ -189,7 +190,8 @@ ops_boolean_t ops_stream_write_literal_data_first(const unsigned char *data,
     return ops_true;
     }
 
-ops_boolean_t ops_stream_write_literal_data_last(const unsigned char *data, 
+static ops_boolean_t
+ops_stream_write_literal_data_last(const unsigned char *data, 
                                                  unsigned int len, 
                                                  ops_create_info_t *info)
     {
@@ -198,7 +200,8 @@ ops_boolean_t ops_stream_write_literal_data_last(const unsigned char *data,
     return ops_true;
     }
 
-ops_boolean_t ops_stream_write_se_ip(const unsigned char *data,
+static ops_boolean_t
+ops_stream_write_se_ip(const unsigned char *data,
                                      unsigned int len,
                                      stream_encrypt_se_ip_arg_t *arg,
                                      ops_create_info_t *cinfo)
@@ -219,7 +222,8 @@ ops_boolean_t ops_stream_write_se_ip(const unsigned char *data,
     return ops_true;
     }
 
-ops_boolean_t ops_stream_write_se_ip_first(const unsigned char *data,
+static ops_boolean_t
+ops_stream_write_se_ip_first(const unsigned char *data,
                                            unsigned int len,
                                            stream_encrypt_se_ip_arg_t *arg,
                                            ops_create_info_t *cinfo)
@@ -262,7 +266,8 @@ ops_boolean_t ops_stream_write_se_ip_first(const unsigned char *data,
     return ops_true;
     }
 
-ops_boolean_t ops_stream_write_se_ip_last(const unsigned char *data,
+static ops_boolean_t
+ops_stream_write_se_ip_last(const unsigned char *data,
                                           unsigned int len,
                                           stream_encrypt_se_ip_arg_t *arg,
                                           ops_create_info_t *cinfo)
