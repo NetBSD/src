@@ -1,4 +1,4 @@
-/*	$NetBSD: pte3.h,v 1.17 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: pte3.h,v 1.18 2009/01/12 06:53:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,8 +76,8 @@
 
 #define VA_PTE_NUM_SHIFT  13
 #define VA_PTE_NUM_MASK (0xF << VA_PTE_NUM_SHIFT)
-#define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
+#define VA_PTE_NUM(va) (((va) & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
 
-#define PA_PGNUM(pa) ((unsigned)pa >> PGSHIFT)
+#define PA_PGNUM(pa) ((unsigned)(pa) >> PGSHIFT)
 
 #endif /* _MACHINE_PTE3_H */
