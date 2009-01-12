@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.7 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: sun3.c,v 1.8 2009/01/12 07:00:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 
 u_int	get_pte(vaddr_t);
 void	set_pte(vaddr_t, u_int);
+void	dvma3_init(void);
 char *	dvma3_alloc(int);
 void	dvma3_free(char *, int);
 char *	dvma3_mapin(char *, int);

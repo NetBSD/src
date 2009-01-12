@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2006/09/17 06:15:40 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2009/01/12 07:00:59 tsutsui Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -19,6 +19,7 @@ INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 CPUFLAGS= -mc68000 -Wa,-mc68010
 COPTS= -Os -fno-defer-pop -ffreestanding
 CFLAGS= -msoft-float
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 
 SRTOBJ= ${LIBSA}/SRT0.o ${LIBSA}/SRT1.o
