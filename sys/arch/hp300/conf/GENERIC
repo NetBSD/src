@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2008/11/24 11:41:11 ad Exp $
+# $NetBSD: GENERIC,v 1.150 2009/01/12 17:24:20 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149 $"
+#ident 		"GENERIC-$Revision: 1.150 $"
 
 maxusers	32		# estimated number of users
 
@@ -85,6 +85,7 @@ options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_20	# compatibility with NetBSD 2.0
 options 	COMPAT_30	# compatibility with NetBSD 3.0
 options 	COMPAT_40	# compatibility with NetBSD 4.0
+options 	COMPAT_50	# compatibility with NetBSD 5.0
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Binary compatibility.
