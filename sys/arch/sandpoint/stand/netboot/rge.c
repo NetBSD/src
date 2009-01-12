@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.13 2008/05/30 14:54:16 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.14 2009/01/12 08:06:54 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int rge_match(unsigned, void *);
 void *rge_init(unsigned, void *);
 int rge_send(void *, char *, unsigned);
 int rge_recv(void *, char *, unsigned, unsigned);
