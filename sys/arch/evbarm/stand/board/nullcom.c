@@ -1,8 +1,10 @@
-/*	$NetBSD: nullcom.c,v 1.1 2008/11/10 20:30:12 cliff Exp $	*/
+/*	$NetBSD: nullcom.c,v 1.2 2009/01/12 07:45:24 tsutsui Exp $	*/
 
 /* 
  * nulldev-like console stubs for quiet gzboot
  */
+#include <lib/libsa/stand.h>
+#include "board.h"
 
 void
 cons_init(void)
