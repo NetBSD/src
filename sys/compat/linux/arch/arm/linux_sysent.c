@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.39 2009/01/12 11:53:23 rtr Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.40 2009/01/13 04:31:12 rtr Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.39 2009/01/12 11:53:23 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.40 2009/01/13 04:31:12 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -185,7 +185,7 @@ struct sysent linux_sysent[] = {
 	{ ns(struct linux_sys_getrlimit_args), 0,
 	    (sy_call_t *)linux_sys_getrlimit },	/* 76 = getrlimit */
 	{ ns(struct compat_50_sys_getrusage_args), 0,
-	    (sy_call_t *)compat_50_sys_getrusage },	/* 77 = getrusage */
+	    (sy_call_t *)compat_50_sys_getrusage },/* 77 = getrusage */
 	{ ns(struct linux_sys_gettimeofday_args), 0,
 	    (sy_call_t *)linux_sys_gettimeofday },/* 78 = gettimeofday */
 	{ ns(struct linux_sys_settimeofday_args), 0,
@@ -244,9 +244,9 @@ struct sysent linux_sysent[] = {
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 103 = unimplemented syslog */
 	{ ns(struct compat_50_sys_setitimer_args), 0,
-	    (sy_call_t *)compat_50_sys_setitimer },	/* 104 = setitimer */
+	    (sy_call_t *)compat_50_sys_setitimer },/* 104 = setitimer */
 	{ ns(struct compat_50_sys_getitimer_args), 0,
-	    (sy_call_t *)compat_50_sys_getitimer },	/* 105 = getitimer */
+	    (sy_call_t *)compat_50_sys_getitimer },/* 105 = getitimer */
 	{ ns(struct linux_sys_stat_args), 0,
 	    (sy_call_t *)linux_sys_stat },	/* 106 = stat */
 	{ ns(struct linux_sys_lstat_args), 0,

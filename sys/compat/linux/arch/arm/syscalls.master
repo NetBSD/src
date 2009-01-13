@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.37 2008/11/19 18:36:03 ad Exp $
+	$NetBSD: syscalls.master,v 1.38 2009/01/13 04:31:12 rtr Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -40,7 +40,9 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/time.h>
 
+#include <compat/sys/time.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
@@ -148,7 +150,7 @@
 			    struct orlimit *rlp); }
 76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct orlimit *rlp); }
-77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
+77	NOARGS		{ int compat_50_sys_getrusage(int who, struct rusage50 *rusage); }
 78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 79	STD		{ int linux_sys_settimeofday(struct timeval *tp, \
@@ -192,10 +194,11 @@
 101	UNIMPL
 102	STD		{ int linux_sys_socketcall(int what, void *args); }
 103	UNIMPL		syslog
-104	NOARGS		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
-105	NOARGS		{ int sys_getitimer(u_int which, \
-			    struct itimerval *itv); }
+104	NOARGS		{ int compat_50_sys_setitimer(u_int which, \
+			    struct itimerval50 *itv, \
+			    struct itimerval50 *oitv); }
+105	NOARGS		{ int compat_50_sys_getitimer(u_int which, \
+			    struct itimerval50 *itv); }
 106	STD		{ int linux_sys_stat(const char *path, \
 			    struct linux_stat *sp); }
 107	STD		{ int linux_sys_lstat(const char *path, \
