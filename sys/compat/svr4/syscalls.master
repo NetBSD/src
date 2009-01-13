@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.59 2009/01/11 02:45:50 christos Exp $
+	$NetBSD: syscalls.master,v 1.60 2009/01/13 22:08:30 pooka Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -410,7 +410,7 @@
 246	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, int valsize); }
 247	UNIMPL		sockconfig
-248	UNIMPL		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+248	UNIMPL		sys_ntp_gettime
 #if defined(NTP) || !defined(_KERNEL)
 249	NOARGS		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
