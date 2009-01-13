@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.72 2009/01/11 12:44:47 tsutsui Exp $
+	$NetBSD: syscalls.master,v 1.73 2009/01/13 21:57:55 pooka Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -149,7 +149,7 @@
 83	NOARGS		{ int compat_50_sys_setitimer(u_int which, \
 			    struct itimerval50 *itv, \
 			    struct itimerval50 *oitv); }
-84	UNIMPL		{ int sunos_sys_wait(void); }
+84	UNIMPL		sunos_sys_wait
 85	NOARGS		{ int compat_12_sys_swapon(char *name); }
 86	NOARGS		{ int compat_50_sys_getitimer(u_int which, \
 			    struct itimerval50 *itv); }
