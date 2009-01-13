@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.5 2009/01/13 01:57:35 pooka Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.6 2009/01/13 11:37:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.5 2009/01/13 01:57:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.6 2009/01/13 11:37:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -66,13 +66,6 @@ vfs_allocate_syncvnode(struct mount *mp)
 
 void
 vfs_deallocate_syncvnode(struct mount *mp)
-{
-
-	panic("%s: unimplemented", __func__);
-}
-
-int
-lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 {
 
 	panic("%s: unimplemented", __func__);
