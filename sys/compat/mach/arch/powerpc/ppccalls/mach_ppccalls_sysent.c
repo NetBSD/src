@@ -1,4 +1,4 @@
-/* $NetBSD: mach_ppccalls_sysent.c,v 1.8 2007/12/20 23:10:49 dsl Exp $ */
+/* $NetBSD: mach_ppccalls_sysent.c,v 1.9 2009/01/13 22:33:11 pooka Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_ppccalls_sysent.c,v 1.8 2007/12/20 23:10:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_ppccalls_sysent.c,v 1.9 2009/01/13 22:33:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
