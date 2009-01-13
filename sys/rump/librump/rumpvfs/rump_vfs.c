@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.9 2009/01/13 01:57:35 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.10 2009/01/13 02:03:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -77,11 +77,19 @@ pvfs_rele(struct proc *p)
 void
 rump_vfs_init()
 {
+	char buf[64];
+	int error;
 
 	syncdelay = 0;
 	dovfsusermount = 1;
 
 	rumpblk_init();
+
+	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
+		desiredvnodes = strtoul(buf, NULL, 10);
+	} else {
+		desiredvnodes = 1<<16;
+	}
 
 	cache_cpu_init(&rump_cpu);
 	vfsinit();

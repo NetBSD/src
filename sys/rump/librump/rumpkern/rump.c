@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.87 2009/01/13 01:57:35 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.88 2009/01/13 02:03:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.87 2009/01/13 01:57:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.88 2009/01/13 02:03:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -144,11 +144,6 @@ rump__init(int rump_version)
 		return EPROGMISMATCH;
 	}
 
-	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
-		desiredvnodes = strtoul(buf, NULL, 10);
-	} else {
-		desiredvnodes = 1<<16;
-	}
 	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
 		rump_threads = *buf != '0';
 	}
