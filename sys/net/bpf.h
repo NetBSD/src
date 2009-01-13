@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.49 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.50 2009/01/13 19:10:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -142,14 +142,15 @@ struct bpf_version {
 
 /*
  * Structure prepended to each packet. This is "wire" format, so we
- * cannot change it unfortunately to 64 bit times [yet].
+ * cannot change it unfortunately to 64 bit times on 32 bit systems [yet].
  */
-struct bpf_timespec {
-	int32_t tv_sec;
-	int32_t tv_usec;
+struct bpf_timeval {
+	long tv_sec;
+	long tv_usec;
 };
+
 struct bpf_hdr {
-	struct bpf_timespec bh_tstamp;	/* time stamp */
+	struct bpf_timeval bh_tstamp;	/* time stamp */
 	uint32_t	bh_caplen;	/* length of captured portion */
 	uint32_t	bh_datalen;	/* original length of packet */
 	uint16_t	bh_hdrlen;	/* length of bpf header (this struct
