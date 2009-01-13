@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_argv.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_argv.c,v 1.3 2009/01/13 15:43:27 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -220,7 +220,7 @@ argv_exp2(SCR *sp, EXCMD *excp, const CHAR_T *cmd, size_t cmdlen)
 			*p = '\0';
 			INT2CHAR(sp, bp + SHELLOFFSET, 
 				 STRLEN(bp + SHELLOFFSET) + 1, np1, nlen);
-			d = strdup(np);
+			d = strdup(np1);
 			rval = argv_lexp(sp, excp, d);
 			free (d);
 			break;
