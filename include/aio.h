@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.6 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: aio.h,v 1.7 2009/01/13 15:11:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -44,7 +44,7 @@ int	aio_error(const struct aiocb *);
 int	aio_fsync(int, struct aiocb *);
 int	aio_read(struct aiocb *);
 ssize_t	aio_return(struct aiocb *);
-#ifdef __LIBC12_SOURCE__
+#ifndef __LIBC12_SOURCE__
 int	aio_suspend(const struct aiocb * const [], int,
     const struct timespec *) __RENAME(__aio_suspend50);
 #endif
