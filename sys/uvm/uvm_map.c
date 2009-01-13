@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.268 2008/12/20 11:33:38 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.269 2009/01/13 14:04:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.268 2008/12/20 11:33:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.269 2009/01/13 14:04:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -756,6 +756,9 @@ vm_map_busy(struct vm_map *map)
 
 /*
  * vm_map_locked_p: return true if the map is write locked.
+ *
+ * => only for debug purposes like KASSERTs.
+ * => should not be used to verify that a map is not locked.
  */
 
 bool
