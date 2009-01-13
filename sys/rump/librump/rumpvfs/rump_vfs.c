@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.8 2008/12/31 00:57:45 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.9 2009/01/13 01:57:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -74,19 +74,14 @@ pvfs_rele(struct proc *p)
 	cwdfree(p->p_cwdi);
 }
 
-static const struct bdevsw rumpblk_bdevsw;
-static const struct cdevsw rumpblk_cdevsw;
-
 void
 rump_vfs_init()
 {
-	int rumpblk = RUMPBLK;
 
 	syncdelay = 0;
 	dovfsusermount = 1;
 
-	devsw_attach("rumpblk", &rumpblk_bdevsw, &rumpblk,
-	    &rumpblk_cdevsw, &rumpblk);
+	rumpblk_init();
 
 	cache_cpu_init(&rump_cpu);
 	vfsinit();

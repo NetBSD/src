@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.75 2009/01/12 02:04:35 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.76 2009/01/13 01:57:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.75 2009/01/12 02:04:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.76 2009/01/13 01:57:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -116,6 +116,9 @@ int max_bdevsws = DEVSW_SIZE;
 struct devsw_conv devsw_conv0;
 struct devsw_conv *devsw_conv = &devsw_conv0;
 int max_devsw_convs = 0;
+int mem_no = 2;
+
+kmutex_t tty_lock;
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.4 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.5 2009/01/13 01:57:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.4 2008/12/19 17:11:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.5 2009/01/13 01:57:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.4 2008/12/19 17:11:57 pgoyette Exp
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/syncfs/syncfs.h>
 
@@ -44,28 +43,6 @@ const char *rootfstype;
 
 #define VFSSTUB(name)							\
     int name(void *arg) {panic("%s: unimplemented vfs stub", __func__);}
-
-/* specfs */
-VFSSTUB(spec_lookup)
-VFSSTUB(spec_open)
-VFSSTUB(spec_close)
-VFSSTUB(spec_ioctl)
-VFSSTUB(spec_poll)
-VFSSTUB(spec_kqfilter)
-VFSSTUB(spec_mmap)
-VFSSTUB(spec_bmap)
-VFSSTUB(spec_strategy)
-VFSSTUB(spec_pathconf)
-VFSSTUB(spec_advlock)
-VFSSTUB(spec_read)
-VFSSTUB(spec_write)
-
-int
-spec_fsync(void *v)
-{
-
-	return 0;
-}
 
 /* fifo oops */
 int (**fifo_vnodeop_p)(void *);
