@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.75 2009/01/11 02:45:49 christos Exp $
+	$NetBSD: syscalls.master,v 1.76 2009/01/13 21:48:35 pooka Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -844,26 +844,20 @@
 			    netbsd32_stat50p_t sb); }
 
 ; Asynchronous I/O system calls
-399	UNIMPL		{ int sys_aio_cancel(int fildes, \
-			    struct aiocb *aiocbp); }
-400	UNIMPL		{ int sys_aio_error(const struct aiocb *aiocbp); }
-401	UNIMPL		{ int sys_aio_fsync(int op, struct aiocb *aiocbp); }
-402	UNIMPL		{ int sys_aio_read(struct aiocb *aiocbp); }
-403	UNIMPL		{ int sys_aio_return(struct aiocb *aiocbp); }
-404	UNIMPL		{ int sys_aio_suspend(const struct aiocb *const *list, \
-			    int nent, const netbsd32_timespecp_t timeout); }
-405	UNIMPL		{ int sys_aio_write(struct aiocb *aiocbp); }
-406	UNIMPL		{ int sys_lio_listio(int mode, \
-			    struct aiocb *const *list, \
-			    int nent, netbsd32_sigeventp_t sig); }
+399	UNIMPL		sys_aio_cancel
+400	UNIMPL		sys_aio_error
+401	UNIMPL		sys_aio_fsync
+402	UNIMPL		sys_aio_read
+403	UNIMPL		sys_aio_return
+404	UNIMPL		sys_aio_suspend
+405     UNIMPL		sys_aio_write
+406	UNIMPL		sys_lio_listio
 
 407	UNIMPL
 408	UNIMPL
 409	UNIMPL
 
-410	UNIMPL		{ int sys___mount50(const netbsd32_charp type, \
-			    const netbsd32_charp path, int flags, \
-			    netbsd32_voidp data, netbsd32_size_t data_len); }
+410	UNIMPL		sys___mount50
 411	STD 		{ netbsd32_voidp netbsd32_mremap( \
 			    netbsd32_voidp old_address, \
 			    netbsd32_size_t old_size, \
@@ -919,15 +913,8 @@
 			    const netbsd32_sigsetp_t set, \
 			    netbsd32_siginfop_t info, \
 			    netbsd32_timespecp_t timeout); }
-432	UNIMPL 		{ int netbsd32___mq_timedsend50(mqd_t mqdes, \
-			    const netbsd32_charp msg_ptr, \
-			    netbsd32_size_t msg_len, unsigned msg_prio, \
-			    const netbsd32_timespecp_t abs_timeout); }
-433	UNIMPL 		{ netbsd32_ssize_t netbsd32___mq_timedreceive50(\
-			    mqd_t mqdes, netbsd32_charp msg_ptr, \
-			    netbsd32_size_t msg_len, \
-			    netbsd32_pointer_t msg_prio, \
-			    const netbsd32_timespecp_t abs_timeout); }
+432	UNIMPL 		netbsd32___mq_timedsend50
+433	UNIMPL 		netbsd32___mq_timedreceive50
 434	STD 		{ int netbsd32____lwp_park50( \
 			    const netbsd32_timespecp_t ts, \
 			    lwpid_t unpark, const netbsd32_voidp hint, \
@@ -947,9 +934,7 @@
 437	STD 		{ int netbsd32___pollts50(netbsd32_pollfdp_t fds, \
 			    u_int nfds, const netbsd32_timespecp_t ts, \
 			    const netbsd32_sigsetp_t mask); }
-438	UNIMPL 		{ int netbsd32___aio_suspend50( \
-			    const struct aiocb *const *list, \
-			    int nent, const netbsd32_timespecp_t timeout); }
+438	UNIMPL 		netbsd32___aio_suspend50
 439	STD 		{ int netbsd32___stat50(const netbsd32_charp path, \
 			    netbsd32_statp_t ub); }
 440	STD 		{ int netbsd32___fstat50(int fd, netbsd32_statp_t sb); }
