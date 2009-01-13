@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.35 2008/11/17 16:32:04 cegger Exp $      */
+/*      $NetBSD: xbdback.c,v 1.36 2009/01/13 03:28:54 taca Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.35 2008/11/17 16:32:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.36 2009/01/13 03:28:54 taca Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -493,7 +493,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			goto end;
 		}
 		if (vbd->size) {
-			printf("xbd backend: detach device %s%d%c "
+			printf("xbd backend: detach device %s%" PRIu64
+			       "%" PRIu64 " "
 			    "for domain %d\n", devsw_blk2name(major(vbd->dev)),
 			    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
 			    xbdi->domid);
@@ -590,7 +591,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		vbd->size = req->extent.sector_length * (512 / DEV_BSIZE);
 		if (vbd->size == 0 || vbd->size > dpart.part->p_size);
 			vbd->size = dpart.part->p_size;
-		printf("xbd backend: attach device %s%d%c (size %d) "
+		printf("xbd backend: attach device %s%" PRIu64 "%" PRIu64
+		       " (size %d) "
 		    "for domain %d\n", devname, DISKUNIT(vbd->dev),
 		    DISKPART(vbd->dev) + 'a', vbd->size, xbdi->domid);
 		req->status = BLKIF_BE_STATUS_OKAY;
@@ -616,7 +618,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_VBD_NOT_FOUND;
 			goto end;
 		}
-		printf("xbd backend: detach device %s%d%c "
+		printf("xbd backend: detach device %s%" PRIu64 "%" PRIu64 " "
 		    "for domain %d\n", devsw_blk2name(major(vbd->dev)),
 		    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
 		    xbdi->domid);
