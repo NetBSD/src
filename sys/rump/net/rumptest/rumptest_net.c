@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.5 2008/11/14 14:24:00 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.6 2009/01/13 18:51:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,7 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +71,7 @@
 
 int rump_virtif_create(void *, void *); /* XXX: bad hack, prototype is wrong */
 static void
-configure_interface()
+configure_interface(void)
 {
         struct sockaddr_in *sin;
 	struct sockaddr_in sinstore;
@@ -164,7 +165,7 @@ configure_interface()
 #endif /* FULL_NETWORK_STACK */
 
 int
-main()
+main(int argc, char *argv[])
 {
 	char buf[65536];
 	struct sockaddr_in sin;
