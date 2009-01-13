@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/01/13 22:33:05 ahoka Exp $
+#	$NetBSD: Makefile,v 1.6 2009/01/13 22:38:00 haad Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -100,8 +100,9 @@ LIBDM_OBJDIR!=  cd ${LIBDM_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBDM_OBJDIR} -ldevmapper
 DPADD+=         ${LIBDM_OBJDIR}/libdevmapper.a
 
-LDADD+=		-lprop -ledit
+LDADD+=		-lprop -ledit -ltermcap
 
+LDSTATIC= 	-static
 
 .PATH:	${LVM2_DISTDIR}/tools
 
