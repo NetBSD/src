@@ -1,4 +1,4 @@
-/*	$NetBSD: iodesc.h,v 1.2 2008/04/29 06:53:01 martin Exp $	*/
+/*	$NetBSD: iodesc.h,v 1.3 2009/01/13 11:47:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
 #define _IODESC_H
 
 /* An alternative to the definition in sys/lib/libsa/iodesc.h */
+
+typedef	time_t	satime_t;
+typedef	time_t	saseconds_t;
 
 struct addrinfo;
 struct iodesc {
