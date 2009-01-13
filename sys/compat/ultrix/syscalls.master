@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.47 2008/11/19 18:36:06 ad Exp $
+	$NetBSD: syscalls.master,v 1.48 2009/01/13 22:15:42 pooka Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -272,8 +272,7 @@
 168	STD		{ int ultrix_sys_quotactl(int cmd, char *special, \
 			    int uid, void *addr); }
 169	STD		{ int ultrix_sys_exportfs(char *path, char *ex); }
-170	UNIMPL		{ int ultrix_sys_mount(char *special, char *dir, \
-			     int rdonly, int type, void *data); }
+170	UNIMPL		ultrix_sys_mount
 171	UNIMPL	4 hdwconf
 172	UNIMPL		msgctl
 173	UNIMPL		msgget
