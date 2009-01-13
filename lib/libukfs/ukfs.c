@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.18 2009/01/11 02:47:19 christos Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.19 2009/01/13 22:33:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -384,7 +384,7 @@ int
 ukfs_mknod(struct ukfs *ukfs, const char *path, mode_t mode, dev_t dev)
 {
 
-	STDCALL(ukfs, rump_sys___mknod50(path, mode, dev, &rv));
+	STDCALL(ukfs, rump_sys_mknod(path, mode, dev, &rv));
 }
 
 int
@@ -485,14 +485,14 @@ int
 ukfs_stat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
 {
 
-	STDCALL(ukfs, rump_sys___stat50(filename, file_stat, &rv));
+	STDCALL(ukfs, rump_sys_stat(filename, file_stat, &rv));
 }
 
 int
 ukfs_lstat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
 {
 
-	STDCALL(ukfs, rump_sys___lstat50(filename, file_stat, &rv));
+	STDCALL(ukfs, rump_sys_lstat(filename, file_stat, &rv));
 }
 
 int
@@ -541,7 +541,7 @@ int
 ukfs_utimes(struct ukfs *ukfs, const char *filename, const struct timeval *tptr)
 {
 
-	STDCALL(ukfs, rump_sys___utimes50(filename, tptr, &rv));
+	STDCALL(ukfs, rump_sys_utimes(filename, tptr, &rv));
 }
 
 int
@@ -549,7 +549,7 @@ ukfs_lutimes(struct ukfs *ukfs, const char *filename,
 	      const struct timeval *tptr)
 {
 
-	STDCALL(ukfs, rump_sys___lutimes50(filename, tptr, &rv));
+	STDCALL(ukfs, rump_sys_lutimes(filename, tptr, &rv));
 }
 
 /*
