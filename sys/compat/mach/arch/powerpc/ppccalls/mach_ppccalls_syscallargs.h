@@ -1,4 +1,4 @@
-/* $NetBSD: mach_ppccalls_syscallargs.h,v 1.7 2007/12/20 23:10:49 dsl Exp $ */
+/* $NetBSD: mach_ppccalls_syscallargs.h,v 1.8 2009/01/13 22:33:11 pooka Exp $ */
 
 /*
  * System call argument lists.
