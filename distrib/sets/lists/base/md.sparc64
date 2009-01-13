@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.31 2009/01/13 01:47:13 jnemeth Exp $
+# $NetBSD: md.sparc64,v 1.32 2009/01/13 05:43:39 jnemeth Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -27,7 +27,7 @@
 ./usr/lib/sparc/i18n/libUTF1632.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/sparc/i18n/libUTF7.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/sparc/i18n/libUTF7.so.5.0		base-i18n-shlib		compat,pic
-./usr/lib/sparc/i18n/libUTF8.so.4		base-i18n-shlib		compat,pic
+./usr/lib/sparc/i18n/libUTF8.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/sparc/i18n/libUTF8.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/sparc/i18n/libVIQR.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/sparc/i18n/libVIQR.so.5.0		base-i18n-shlib		compat,pic
@@ -70,7 +70,7 @@
 ./usr/lib/sparc/libcrypto.so.5			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypto.so.5.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcurses.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libcurses.so.6.4		base-compat-shlib	compat,pic
+./usr/lib/sparc/libcurses.so.7.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.2			base-compat-shlib	compat,pic
