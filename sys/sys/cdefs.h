@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.70 2008/12/10 22:10:47 alc Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.71 2009/01/13 22:35:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -260,7 +260,7 @@
 #endif /* NO_KERNEL_RCSIDS */
 #endif /* _KERNEL */
 
-#if !defined(_STANDALONE) && !defined(_KERNEL)
+#if (!defined(_STANDALONE) && !defined(_KERNEL)) || defined(_RUMPKERNEL)
 #if defined(__GNUC__) || defined(__PCC__)
 #define	__RENAME(x)	___RENAME(x)
 #else
