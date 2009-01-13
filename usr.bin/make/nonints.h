@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.51 2009/01/11 15:50:06 dsl Exp $	*/
+/*	$NetBSD: nonints.h,v 1.52 2009/01/13 18:22:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@ int For_Accum(char *);
 void For_Run(int);
 
 /* main.c */
-void Main_ParseArgLine(char *);
+void Main_ParseArgLine(const char *);
 int main(int, char **);
 char *Cmd_Exec(const char *, const char **);
 void Error(const char *, ...) __attribute__((__format__(__printf__, 1, 2)));
