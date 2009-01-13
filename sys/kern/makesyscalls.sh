@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.75 2008/11/16 18:40:13 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.76 2009/01/13 16:25:43 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -394,7 +394,7 @@ function parseline() {
 	f++
 
 	if ($f != "(")
-		parserr($f, ")")
+		parserr($f, "(")
 	f++
 
 	argc=0;
