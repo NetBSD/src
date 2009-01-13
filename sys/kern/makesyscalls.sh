@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.76 2009/01/13 16:25:43 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.77 2009/01/13 16:29:19 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -322,7 +322,7 @@ syscall != $1 {
 	exit 1
 }
 function parserr(was, wanted) {
-	printf "%s: line %d: unexpected %s (expected %s)\n", \
+	printf "%s: line %d: unexpected %s (expected <%s>)\n", \
 	    infile, NR, was, wanted
 	printf "line is:\n"
 	print
