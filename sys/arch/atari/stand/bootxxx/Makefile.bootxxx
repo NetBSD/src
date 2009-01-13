@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxxx,v 1.4 2009/01/06 13:35:30 tsutsui Exp $
+#	$NetBSD: Makefile.bootxxx,v 1.5 2009/01/13 13:44:01 tsutsui Exp $
 
 NOMAN=	# defined
 
@@ -48,10 +48,6 @@ LIBS=	${LIBSA}
 
 beforeinstall:
 	${INSTALL_DIR} ${DESTDIR}${BINDIR}
-
-afterinstall:
-	${INSTALL_FILE} -o root -g wheel -m 644 \
-		${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/
 
 ${PROG}:	${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
