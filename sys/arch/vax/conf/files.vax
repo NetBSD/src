@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.113 2008/11/19 18:36:01 ad Exp $
+#	$NetBSD: files.vax,v 1.114 2009/01/13 23:56:13 mjf Exp $
 #
 # new style config file for vax architecture
 #
@@ -351,6 +351,11 @@ file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
 file	arch/vax/uba/uba_dma.c		uba
 file	arch/vax/vax/multicpu.c		multiprocessor
+
+# Binary compatibility with previous NetBSD releases (COMPAT_XX)
+file	arch/vax/vax/compat_13_machdep.c 	compat_13 | compat_ultrix |
+						compat_ibcs2
+file	arch/vax/vax/compat_16_machdep.c	compat_16 | compat_ultrix
 
 include "compat/ibcs2/files.ibcs2"
 file	arch/vax/vax/ibcs2_machdep.c	compat_ibcs2
