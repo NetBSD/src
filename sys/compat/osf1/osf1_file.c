@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.31 2008/12/02 13:45:02 njoly Exp $ */
+/* $NetBSD: osf1_file.c,v 1.32 2009/01/13 11:35:24 rtr Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.31 2008/12/02 13:45:02 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.32 2009/01/13 11:35:24 rtr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -291,13 +291,9 @@ osf1_sys_lstat2(struct lwp *l, const struct osf1_sys_lstat2_args *uap, register_
 int
 osf1_sys_mknod(struct lwp *l, const struct osf1_sys_mknod_args *uap, register_t *retval)
 {
-	struct sys_mknod_args a;
 
-	SCARG(&a, path) = SCARG(uap, path);
-	SCARG(&a, mode) = SCARG(uap, mode);
-	SCARG(&a, dev) = osf1_cvt_dev_to_native(SCARG(uap, dev));
-
-	return sys_mknod(l, &a, retval);
+	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
+	    osf1_cvt_dev_to_native(SCARG(uap, dev)), retval);
 }
 
 int
