@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.16 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: bufq.9,v 1.17 2009/01/13 13:33:58 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 26, 2005
+.Dd January 13, 2009
 .Dt BUFQ 9
 .Os
 .Sh NAME
@@ -38,10 +38,10 @@
 .Nm bufq_free ,
 .Nm bufq_getstrategyname ,
 .Nm bufq_move ,
-.Nm BUFQ_PUT ,
-.Nm BUFQ_GET ,
-.Nm BUFQ_PEEK ,
-.Nm BUFQ_CANCEL
+.Nm bufq_put ,
+.Nm bufq_get ,
+.Nm bufq_peek ,
+.Nm bufq_cancel
 .Nd device buffer queues
 .Sh SYNOPSIS
 .In sys/bufq.h
@@ -56,13 +56,13 @@
 .Ft void
 .Fn bufq_move "struct bufq_state *dst" "struct bufq_state *src"
 .Ft void
-.Fn BUFQ_PUT "struct bufq_state *bufq" "struct buf *bp"
+.Fn bufq_put "struct bufq_state *bufq" "struct buf *bp"
 .Ft "struct buf *"
-.Fn BUFQ_GET "struct bufq_state *bufq"
+.Fn bufq_get "struct bufq_state *bufq"
 .Ft "struct buf *"
-.Fn BUFQ_PEEK "struct bufq_state *bufq"
+.Fn bufq_peek "struct bufq_state *bufq"
 .Ft "struct buf *"
-.Fn BUFQ_CANCEL "struct bufq_state *bufq" "struct buf *bp"
+.Fn bufq_cancel "struct bufq_state *bufq" "struct buf *bp"
 .Sh DESCRIPTION
 The
 .Nm
@@ -136,27 +136,27 @@ Move all requests from the buffer queue
 .Fa src
 to the buffer queue
 .Fa dst .
-.It Fn BUFQ_PUT "bufq" "bp"
+.It Fn bufq_put "bufq" "bp"
 Put the buf
 .Fa bp
 in the queue.
-.It Fn BUFQ_GET "bufq"
+.It Fn bufq_get "bufq"
 Get the next buf from the queue and remove it from the queue.
 Returns
 .Dv NULL
 if the queue is empty.
-.It Fn BUFQ_PEEK "bufq"
+.It Fn bufq_peek "bufq"
 Get the next buf from the queue without removal.
 The next buf will remain the same until
-.Fn BUFQ_GET ,
-.Fn BUFQ_PUT ,
+.Fn bufq_get ,
+.Fn bufq_put ,
 or
 .Fn bufq_drain
 is called.
 Returns
 .Dv NULL
 if the queue is empty.
-.It Fn BUFQ_CANCEL "bufq" "bp"
+.It Fn bufq_cancel "bufq" "bp"
 Cancel the buf
 .Fa bp
 issued earlier on the queue.

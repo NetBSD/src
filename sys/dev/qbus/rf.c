@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.22 2009/01/12 08:33:02 cegger Exp $	*/
+/*	$NetBSD: rf.c,v 1.23 2009/01/13 13:35:53 yamt Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.22 2009/01/12 08:33:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.23 2009/01/13 13:35:53 yamt Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -582,7 +582,7 @@ rfstrategy(struct buf *buf)
 		return;
 	}
 	/*
-	 * BUFQ_PUT() operates on b_rawblkno. rfstrategy() gets
+	 * bufq_put() operates on b_rawblkno. rfstrategy() gets
 	 * only b_blkno that is partition relative. As a floppy does not
 	 * have partitions b_rawblkno == b_blkno.
 	 */
@@ -601,7 +601,7 @@ rfstrategy(struct buf *buf)
 		rfc_intr(rfc_sc);
 	} else {
 		buf->b_resid = buf->b_blkno / RX2_SECTORS;
-		BUFQ_PUT(rf_sc->sc_bufq, buf);
+		bufq_put(rf_sc->sc_bufq, buf);
 		buf->b_resid = 0;
 	}
 	splx(s);
@@ -623,7 +623,7 @@ get_new_buf( struct rfc_softc *rfc_sc)
 	struct rf_softc *other_drive;
 
 	rf_sc = device_private(rfc_sc->sc_childs[rfc_sc->sc_curchild]);
-	rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
+	rfc_sc->sc_curbuf = bufq_get(rf_sc->sc_bufq);
 	if (rfc_sc->sc_curbuf != NULL) {
 		rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_data;
 		rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
@@ -632,10 +632,10 @@ get_new_buf( struct rfc_softc *rfc_sc)
 		other_drive = device_private(
 		    rfc_sc->sc_childs[ rfc_sc->sc_curchild == 0 ? 1 : 0]);
 		if (other_drive != NULL
-		    && BUFQ_PEEK(other_drive->sc_bufq) != NULL) {
+		    && bufq_peek(other_drive->sc_bufq) != NULL) {
 			rfc_sc->sc_curchild = rfc_sc->sc_curchild == 0 ? 1 : 0;
 			rf_sc = other_drive;
-			rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
+			rfc_sc->sc_curbuf = bufq_get(rf_sc->sc_bufq);
 			rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_data;
 			rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
 		} else

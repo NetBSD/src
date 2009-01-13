@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.39 2008/06/11 17:27:59 drochner Exp $	*/
+/*	$NetBSD: rl.c,v 1.40 2009/01/13 13:35:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.39 2008/06/11 17:27:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.40 2009/01/13 13:35:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -413,7 +413,7 @@ rlstrategy(struct buf *bp)
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
 	s = splbio();
-	BUFQ_PUT(rc->rc_rlc->sc_q, bp);
+	bufq_put(rc->rc_rlc->sc_q, bp);
 	rlcstart(rc->rc_rlc, 0);
 	splx(s);
 	return;
@@ -623,7 +623,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		return;	/* Already doing something */
 
 	if (ob == 0) {
-		bp = BUFQ_GET(sc->sc_q);
+		bp = bufq_get(sc->sc_q);
 		if (bp == NULL)
 			return;	/* Nothing to do */
 		sc->sc_bufaddr = bp->b_data;
@@ -717,7 +717,7 @@ rlcreset(device_t dev)
 	if (sc->sc_active == 0)
 		return;
 
-	BUFQ_PUT(sc->sc_q, sc->sc_active);
+	bufq_put(sc->sc_q, sc->sc_active);
 	sc->sc_active = 0;
 	rlcstart(sc, 0);
 }

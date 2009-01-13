@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.35 2008/12/18 12:19:03 cegger Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.36 2009/01/13 13:35:52 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.35 2008/12/18 12:19:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.36 2009/01/13 13:35:52 yamt Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -775,7 +775,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 	xbdreq->req_nr_segments = req->nr_segments = seg;
 	sc->sc_ring.req_prod_pvt++;
-	if (BUFQ_PEEK(sc->sc_dksc.sc_bufq)) {
+	if (bufq_peek(sc->sc_dksc.sc_bufq)) {
 		 /* we will be called again; don't notify guest yet */
 		runqueue = 0;
 	}

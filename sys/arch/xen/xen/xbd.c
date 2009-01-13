@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.49 2009/01/13 03:28:54 taca Exp $ */
+/* $NetBSD: xbd.c,v 1.50 2009/01/13 13:35:52 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.49 2009/01/13 03:28:54 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.50 2009/01/13 13:35:52 yamt Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1499,7 +1499,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 		    xr_suspended);
 		DPRINTF(XBDB_IO, ("xbdstart: suspended xbdreq %p "
 		    "for bp %p\n", pxr, bp));
-	} else if (CANGET_XBDREQ() && BUFQ_PEEK(bufq) != NULL) {
+	} else if (CANGET_XBDREQ() && bufq_peek(bufq) != NULL) {
 		/* 
 		 * We have enough resources to start another bp and
 		 * there are additional bps on the queue, dk_start

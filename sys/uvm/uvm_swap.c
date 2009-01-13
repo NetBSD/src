@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.142 2008/12/17 20:51:39 cegger Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.143 2009/01/13 13:35:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.142 2008/12/17 20:51:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.143 2009/01/13 13:35:54 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1337,7 +1337,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 
 		/* sort it in and start I/O if we are not over our limit */
 		/* XXXAD locking */
-		BUFQ_PUT(sdp->swd_tab, &nbp->vb_buf);
+		bufq_put(sdp->swd_tab, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
 
@@ -1380,7 +1380,7 @@ sw_reg_start(struct swapdev *sdp)
 	sdp->swd_flags |= SWF_BUSY;
 
 	while (sdp->swd_active < sdp->swd_maxactive) {
-		bp = BUFQ_GET(sdp->swd_tab);
+		bp = bufq_get(sdp->swd_tab);
 		if (bp == NULL)
 			break;
 		sdp->swd_active++;
