@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/12/22 01:48:58 haad Exp $
+#	$NetBSD: Makefile,v 1.3 2009/01/13 22:33:05 ahoka Exp $
 
 LIBISPRIVATE=	yes
 
@@ -11,6 +11,15 @@ LIB=		lvm
 
 CPPFLAGS+=	-I${LVM2_DISTDIR}/lib -I${LVM2_DISTDIR}/include \
 		-I. 
+
+# Some parts of liblvm can't be protected because if its
+# alloca() usage.
+#
+.if defined(USE_SSP) && (${USE_SSP} != "no")
+CPPFLAGS+=	-Wno-stack-protector
+.endif
+
+CPPFLAGS.imLcLkup.c=-Wno-error
 
 SRCS+=		activate.c lvmcache.c toolcontext.c config.c btree.c \
 		str_list.c dev-cache.c dev-io.c dev-md.c device.c \
