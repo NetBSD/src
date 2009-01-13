@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.18 2009/01/11 13:14:14 nakayama Exp $
+;	$NetBSD: syscalls.master,v 1.19 2009/01/13 22:03:12 pooka Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -154,7 +154,7 @@
 81	NOARGS		{ int sys_getpgrp(void); }
 82	STD		{ int sunos32_sys_setpgrp(int pid, int pgid); }
 83	NOARGS		{ int compat_50_netbsd32_setitimer(u_int which, netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
-84	UNIMPL		{ int sunos32_sys_wait(void); }
+84	UNIMPL		sunos32_sys_wait
 85	NOARGS		{ int compat_12_netbsd32_oswapon(netbsd32_charp name); }
 86	NOARGS		{ int compat_50_netbsd32_getitimer(u_int which, netbsd32_itimervalp_t itv); }
 87	NOARGS		{ int compat_43_netbsd32_ogethostname(netbsd32_charp hostname, u_int len); }
