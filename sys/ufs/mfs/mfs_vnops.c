@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.52 2008/06/02 00:24:28 christos Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.53 2009/01/13 13:35:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.52 2008/06/02 00:24:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.53 2009/01/13 13:35:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ mfs_strategy(void *v)
 		biodone(bp);
 	} else {
 		mutex_enter(&mfs_lock);
-		BUFQ_PUT(mfsp->mfs_buflist, bp);
+		bufq_put(mfsp->mfs_buflist, bp);
 		cv_broadcast(&mfsp->mfs_cv);
 		mutex_exit(&mfs_lock);
 	}
@@ -233,7 +233,7 @@ mfs_close(void *v)
 	 * Finish any pending I/O requests.
 	 */
 	mutex_enter(&mfs_lock);
-	while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
+	while ((bp = bufq_get(mfsp->mfs_buflist)) != NULL) {
 		mutex_exit(&mfs_lock);
 		mfs_doio(bp, mfsp->mfs_baseoff);
 		mutex_enter(&mfs_lock);
@@ -250,7 +250,7 @@ mfs_close(void *v)
 	 * There should be no way to have any more uses of this
 	 * vnode, so if we find any other uses, it is a panic.
 	 */
-	if (BUFQ_PEEK(mfsp->mfs_buflist) != NULL)
+	if (bufq_peek(mfsp->mfs_buflist) != NULL)
 		panic("mfs_close");
 	/*
 	 * Send a request to the filesystem server to exit.
@@ -275,9 +275,9 @@ mfs_inactive(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 
-	if (BUFQ_PEEK(mfsp->mfs_buflist) != NULL)
+	if (bufq_peek(mfsp->mfs_buflist) != NULL)
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
-			BUFQ_PEEK(mfsp->mfs_buflist));
+			bufq_peek(mfsp->mfs_buflist));
 	VOP_UNLOCK(vp, 0);
 	return (0);
 }

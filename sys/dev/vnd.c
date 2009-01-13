@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.191 2009/01/11 10:02:35 cegger Exp $	*/
+/*	$NetBSD: vnd.c,v 1.192 2009/01/13 13:35:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.191 2009/01/11 10:02:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.192 2009/01/13 13:35:52 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -521,7 +521,7 @@ vndstrategy(struct buf *bp)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
-	BUFQ_PUT(vnd->sc_tab, bp);
+	bufq_put(vnd->sc_tab, bp);
 	wakeup(&vnd->sc_tab);
 	splx(s);
 	return;
@@ -606,7 +606,7 @@ vndthread(void *arg)
 		struct buf *obp;
 		struct buf *bp;
 
-		obp = BUFQ_GET(vnd->sc_tab);
+		obp = bufq_get(vnd->sc_tab);
 		if (obp == NULL) {
 			tsleep(&vnd->sc_tab, PRIBIO, "vndbp", 0);
 			continue;

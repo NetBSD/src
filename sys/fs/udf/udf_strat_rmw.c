@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.16 2008/12/16 16:18:25 pooka Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.17 2009/01/13 13:35:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.16 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.17 2009/01/13 13:35:54 yamt Exp $");
 #endif /* not lint */
 
 
@@ -208,7 +208,7 @@ udf_dispose_eccline(struct udf_eccline *eccline)
 		eccline->present));
 
 	if (eccline->queued_on) {
-		ret = BUFQ_CANCEL(priv->queues[eccline->queued_on], eccline->buf);
+		ret = bufq_cancel(priv->queues[eccline->queued_on], eccline->buf);
 		KASSERT(ret == eccline->buf);
 		priv->num_queued[eccline->queued_on]--;
 	}
@@ -240,9 +240,9 @@ udf_push_eccline(struct udf_eccline *eccline, int newqueue)
 	/* requeue */
 	curqueue = eccline->queued_on;
 	if (curqueue) {
-		ret = BUFQ_CANCEL(priv->queues[curqueue], eccline->buf);
+		ret = bufq_cancel(priv->queues[curqueue], eccline->buf);
 
-		DPRINTF(PARANOIA, ("push_eccline BUFQ_CANCEL returned %p when "
+		DPRINTF(PARANOIA, ("push_eccline bufq_cancel returned %p when "
 			"requested to remove %p from queue %d\n", ret,
 			eccline->buf, curqueue));
 #ifdef DIAGNOSTIC
@@ -253,12 +253,12 @@ udf_push_eccline(struct udf_eccline *eccline, int newqueue)
 				"buffer; dumping queues\n");
 			for (i = 1; i < UDF_SHED_MAX; i++) {
 				printf("queue %d\n\t", i);
-				ret = BUFQ_GET(priv->queues[i]);
+				ret = bufq_get(priv->queues[i]);
 				while (ret) {
 					printf("%p ", ret);
 					if (ret == eccline->buf)
 						printf("[<-] ");
-					ret = BUFQ_GET(priv->queues[i]);
+					ret = bufq_get(priv->queues[i]);
 				}
 				printf("\n");
 			}
@@ -275,7 +275,7 @@ udf_push_eccline(struct udf_eccline *eccline, int newqueue)
 	eccline->buf->b_blkno    = eccline->start_sector;
 	eccline->buf->b_rawblkno = eccline->start_sector;
 
-	BUFQ_PUT(priv->queues[newqueue], eccline->buf);
+	bufq_put(priv->queues[newqueue], eccline->buf);
 	eccline->queued_on = newqueue;
 	priv->num_queued[newqueue]++;
 	vfs_timestamp(&priv->last_queued[newqueue]);
@@ -299,7 +299,7 @@ udf_pop_eccline(struct strat_private *priv, int queued_on)
 
 	KASSERT(mutex_owned(&priv->discstrat_mutex));
 
-	buf = BUFQ_GET(priv->queues[queued_on]);
+	buf = bufq_get(priv->queues[queued_on]);
 	if (!buf) {
 		KASSERT(priv->num_queued[queued_on] == 0);
 		return NULL;
@@ -1227,11 +1227,11 @@ udf_discstrat_thread(void *arg)
 			wait = 1;
 			/* check if we can/should switch */
 			new_queue = priv->cur_queue;
-			if (BUFQ_PEEK(priv->queues[UDF_SHED_READING]))
+			if (bufq_peek(priv->queues[UDF_SHED_READING]))
 				new_queue = UDF_SHED_READING;
-			if (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]))
+			if (bufq_peek(priv->queues[UDF_SHED_WRITING]))
 				new_queue = UDF_SHED_WRITING;
-			if (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]))
+			if (bufq_peek(priv->queues[UDF_SHED_SEQWRITING]))
 				new_queue = UDF_SHED_SEQWRITING;
 		}
 
@@ -1251,15 +1251,15 @@ udf_discstrat_thread(void *arg)
 			cv_timedwait(&priv->discstrat_cv,
 				&priv->discstrat_mutex, hz/4);	/* /8 */
 
-		work  = (BUFQ_PEEK(priv->queues[UDF_SHED_WAITING]) != NULL);
-		work |= (BUFQ_PEEK(priv->queues[UDF_SHED_READING]) != NULL);
-		work |= (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]) != NULL);
-		work |= (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]) != NULL);
+		work  = (bufq_peek(priv->queues[UDF_SHED_WAITING]) != NULL);
+		work |= (bufq_peek(priv->queues[UDF_SHED_READING]) != NULL);
+		work |= (bufq_peek(priv->queues[UDF_SHED_WRITING]) != NULL);
+		work |= (bufq_peek(priv->queues[UDF_SHED_SEQWRITING]) != NULL);
 
 		DPRINTF(PARANOIA, ("work : (%d, %d, %d) -> work %d, float %d\n",
-			(BUFQ_PEEK(priv->queues[UDF_SHED_READING]) != NULL),
-			(BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]) != NULL),
-			(BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]) != NULL),
+			(bufq_peek(priv->queues[UDF_SHED_READING]) != NULL),
+			(bufq_peek(priv->queues[UDF_SHED_WRITING]) != NULL),
+			(bufq_peek(priv->queues[UDF_SHED_SEQWRITING]) != NULL),
 			work, priv->num_floating));
 	}
 
@@ -1273,11 +1273,11 @@ udf_discstrat_thread(void *arg)
 	KASSERT(priv->num_queued[UDF_SHED_WRITING] == 0);
 	KASSERT(priv->num_queued[UDF_SHED_SEQWRITING] == 0);
 
-	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_WAITING]) == NULL);
-	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_IDLE]) == NULL);
-	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_READING]) == NULL);
-	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]) == NULL);
-	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]) == NULL);
+	KASSERT(bufq_peek(priv->queues[UDF_SHED_WAITING]) == NULL);
+	KASSERT(bufq_peek(priv->queues[UDF_SHED_IDLE]) == NULL);
+	KASSERT(bufq_peek(priv->queues[UDF_SHED_READING]) == NULL);
+	KASSERT(bufq_peek(priv->queues[UDF_SHED_WRITING]) == NULL);
+	KASSERT(bufq_peek(priv->queues[UDF_SHED_SEQWRITING]) == NULL);
 	eccline = udf_pop_eccline(priv, UDF_SHED_FREE);
 	while (eccline) {
 		udf_dispose_eccline(eccline);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.29 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: ctu.c,v 1.30 2009/01/13 13:35:52 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.29 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.30 2009/01/13 13:35:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ ctuclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 	struct buf *bp;
 	int s = spl7();
-	while ((bp = BUFQ_GET(tu_sc.sc_bufq)))
+	while ((bp = bufq_get(tu_sc.sc_bufq)))
 		;
 	splx(s);
 
@@ -208,8 +208,8 @@ ctustrategy(struct buf *bp)
 		return;
 	}
 
-	empty = (BUFQ_PEEK(tu_sc.sc_bufq) == NULL);
-	BUFQ_PUT(tu_sc.sc_bufq, bp);
+	empty = (bufq_peek(tu_sc.sc_bufq) == NULL);
+	bufq_put(tu_sc.sc_bufq, bp);
 	if (empty)
 		ctustart();
 	splx(s);
@@ -221,7 +221,7 @@ ctustart(void)
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(tu_sc.sc_bufq);
+	bp = bufq_peek(tu_sc.sc_bufq);
 	if (bp == NULL)
 		return;
 #ifdef TUDEBUG
@@ -273,7 +273,7 @@ cturintr(void *arg)
 	unsigned short ck = 0;
 	char *buf;
 
-	bp = BUFQ_PEEK(tu_sc.sc_bufq);
+	bp = bufq_peek(tu_sc.sc_bufq);
 	buf = bp->b_data;
 	switch (tu_sc.sc_state) {
 	case TU_RESET:
@@ -393,7 +393,7 @@ cturintr(void *arg)
 		return;
 	}
 	if (bp->b_error == 0) {
-		(void)BUFQ_GET(tu_sc.sc_bufq);
+		(void)bufq_get(tu_sc.sc_bufq);
 		biodone(bp);
 #ifdef TUDEBUG
 		printf("biodone %p\n", bp);

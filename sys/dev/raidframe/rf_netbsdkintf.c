@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.252 2009/01/11 21:58:41 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.253 2009/01/13 13:35:53 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.252 2009/01/11 21:58:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.253 2009/01/13 13:35:53 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -922,7 +922,7 @@ raidstrategy(struct buf *bp)
 	bp->b_resid = 0;
 
 	/* stuff it onto our queue */
-	BUFQ_PUT(rs->buf_queue, bp);
+	bufq_put(rs->buf_queue, bp);
 
 	/* scheduled the IO to happen at the next convenient time */
 	wakeup(&(raidPtrs[raidID]->iodone));
@@ -1957,7 +1957,7 @@ raidstart(RF_Raid_t *raidPtr)
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
-		if ((bp = BUFQ_GET(rs->buf_queue)) == NULL) {
+		if ((bp = bufq_get(rs->buf_queue)) == NULL) {
 			/* nothing more to do */
 			return;
 		}
@@ -3559,7 +3559,7 @@ rf_pool_init(struct pool *p, size_t size, const char *w_chan,
 int
 rf_buf_queue_check(int raidid)
 {
-	if ((BUFQ_PEEK(raid_softc[raidid].buf_queue) != NULL) &&
+	if ((bufq_peek(raid_softc[raidid].buf_queue) != NULL) &&
 	    raidPtrs[raidid]->openings > 0) {
 		/* there is work to do */
 		return 0;

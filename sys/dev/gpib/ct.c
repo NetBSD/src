@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.16 2008/06/11 18:46:24 cegger Exp $ */
+/*	$NetBSD: ct.c,v 1.17 2009/01/13 13:35:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.16 2008/06/11 18:46:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.17 2009/01/13 13:35:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ ctstrategy(struct buf *bp)
 	sc = device_lookup_private(&ct_cd, CTUNIT(bp->b_dev));
 
 	s = splbio();
-	BUFQ_PUT(sc->sc_tab, bp);
+	bufq_put(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		ctustart(sc);
@@ -514,7 +514,7 @@ ctustart(sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (gpibrequest(sc->sc_ic, sc->sc_hdl))
@@ -533,7 +533,7 @@ ctstart(sc)
 	slave = sc->sc_slave;
 	punit = sc->sc_punit;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	if ((sc->sc_flags & CTF_CMD) && sc->sc_bp == bp) {
 		switch(sc->sc_cmd) {
 		case MTFSF:
@@ -735,7 +735,7 @@ ctintr(sc)
 	slave = sc->sc_slave;
 	punit = sc->sc_punit;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	if (bp == NULL) {
 		aprint_error_dev(&sc->sc_dev, "bp == NULL\n");
 		return;
@@ -863,10 +863,10 @@ ctdone(sc, bp)
 	struct buf *bp;
 {
 
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if (BUFQ_PEEK(sc->sc_tab) == NULL) {
+	if (bufq_peek(sc->sc_tab) == NULL) {
 		sc->sc_active = 0;
 		return;
 	}

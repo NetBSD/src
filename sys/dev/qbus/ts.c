@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.26 2008/12/16 22:35:35 christos Exp $ */
+/*	$NetBSD: ts.c,v 1.27 2009/01/13 13:35:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.26 2008/12/16 22:35:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.27 2009/01/13 13:35:53 yamt Exp $");
 
 #undef	TSDEBUG
 
@@ -386,7 +386,7 @@ tsstart(struct ts_softc *sc, int isloaded)
 	struct buf *bp;
 	int cmd;
 
-	bp = BUFQ_PEEK(sc->sc_bufq);
+	bp = bufq_peek(sc->sc_bufq);
 	if (bp == NULL) {
 		return 0;
 	}
@@ -478,7 +478,7 @@ int
 tsready(struct uba_unit *uu)
 {
 	struct ts_softc *sc = device_private(uu->uu_dev);
-	struct buf *bp = BUFQ_PEEK(sc->sc_bufq);
+	struct buf *bp = bufq_peek(sc->sc_bufq);
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT))
@@ -561,7 +561,7 @@ tsintr(void *arg)
 
 	short ccode = sc->sc_vts->cmd.cmdr & TS_CF_CCODE;
 
-	bp = BUFQ_PEEK(sc->sc_bufq);
+	bp = bufq_peek(sc->sc_bufq);
 #ifdef TSDEBUG
 	{
 		char buf[100];
@@ -789,9 +789,9 @@ tsintr(void *arg)
 		    "error 0x%x, resetting controller\n", sr & TS_TC);
 		tsreset(sc);
 	}
-	if ((bp = BUFQ_GET(sc->sc_bufq)) != NULL) {
+	if ((bp = bufq_get(sc->sc_bufq)) != NULL) {
 #ifdef TSDEBUG
-		printf("tsintr2: que %p\n", BUFQ_PEEK(sc->sc_bufq));
+		printf("tsintr2: que %p\n", bufq_peek(sc->sc_bufq));
 #endif
 		if (bp != &sc->ts_cbuf) {	/* no ioctl */
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmam);
@@ -906,8 +906,8 @@ tsstrategy(struct buf *bp)
 	printf("buf: %p bcount %ld blkno %d\n", bp, bp->b_bcount, bp->b_blkno);
 #endif
 	s = splbio ();
-	empty = (BUFQ_PEEK(sc->sc_bufq) == NULL);
-	BUFQ_PUT(sc->sc_bufq, bp);
+	empty = (bufq_peek(sc->sc_bufq) == NULL);
+	bufq_put(sc->sc_bufq, bp);
 	if (empty)
 		tsstart(sc, 0);
 	splx(s);

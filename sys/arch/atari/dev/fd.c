@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.62 2008/06/11 14:35:53 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.63 2009/01/13 13:35:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2008/06/11 14:35:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63 2009/01/13 13:35:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,7 +634,7 @@ struct buf	*bp;
 	 * queue the buf and kick the low level code
 	 */
 	sps = splbio();
-	BUFQ_PUT(sc->bufq, bp);	/* XXX disksort_cylinder */
+	bufq_put(sc->bufq, bp);	/* XXX disksort_cylinder */
 	if (!lock_stat) {
 		if (fd_state & FLP_MON)
 			callout_stop(&sc->sc_motor_ch);
@@ -695,7 +695,7 @@ struct fd_softc	*sc;
 {
 	struct buf	*bp;
 
-	bp	     = BUFQ_PEEK(sc->bufq);
+	bp	     = bufq_peek(sc->bufq);
 	sc->sector   = bp->b_blkno;	/* Start sector for I/O		*/
 	sc->io_data  = bp->b_data;	/* KVA base for I/O		*/
 	sc->io_bytes = bp->b_bcount;	/* Transfer size in bytes	*/
@@ -733,7 +733,7 @@ register struct fd_softc	*sc;
 		 * Finish current transaction.
 		 */
 		sps = splbio();
-		bp = BUFQ_GET(sc->bufq);
+		bp = bufq_get(sc->bufq);
 		if (bp == NULL)
 			panic("fddone");
 		splx(sps);
@@ -762,7 +762,7 @@ register struct fd_softc	*sc;
 			i = 0;
 		if((sc1 = device_lookup_private(&fd_cd, i)) == NULL)
 			continue;
-		if (BUFQ_PEEK(sc1->bufq) != NULL)
+		if (bufq_peek(sc1->bufq) != NULL)
 			break;
 		if(i == sc->unit) {
 			callout_reset(&sc->sc_motor_ch, FLP_MONDELAY,
@@ -1003,7 +1003,7 @@ struct fd_softc	*sc;
 				return;
 			}
 
-			bp = BUFQ_PEEK(sc->bufq);
+			bp = bufq_peek(sc->bufq);
 
 			bp->b_error  = EIO;
 			fd_state     = FLP_MON;

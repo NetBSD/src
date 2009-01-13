@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.75 2009/01/11 10:47:37 cegger Exp $	*/
+/*	$NetBSD: ss.c,v 1.76 2009/01/13 13:35:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.75 2009/01/11 10:47:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.76 2009/01/13 13:35:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,7 +438,7 @@ ssstrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(ss->buf_queue, bp);
+	bufq_put(ss->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -493,7 +493,7 @@ ssstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(ss->buf_queue)) == NULL)
+		if ((bp = bufq_peek(ss->buf_queue)) == NULL)
 			return;
 
 		if (ss->special && ss->special->read) {

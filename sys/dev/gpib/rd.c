@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.21 2008/06/11 18:46:24 cegger Exp $ */
+/*	$NetBSD: rd.c,v 1.22 2009/01/13 13:35:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.21 2008/06/11 18:46:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.22 2009/01/13 13:35:53 yamt Exp $");
 
 #include "rnd.h"
 
@@ -649,7 +649,7 @@ rdstrategy(struct buf *bp)
 	}
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
-	BUFQ_PUT(sc->sc_tab, bp);
+	bufq_put(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		rdustart(sc);
@@ -683,7 +683,7 @@ rdustart(sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (gpibrequest(sc->sc_ic, sc->sc_hdl))
@@ -697,11 +697,11 @@ rdfinish(sc, bp)
 {
 
 	sc->sc_errcnt = 0;
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	bp->b_resid = 0;
 	biodone(bp);
 	gpibrelease(sc->sc_ic, sc->sc_hdl);
-	if ((bp = BUFQ_PEEK(sc->sc_tab)) != NULL)
+	if ((bp = bufq_peek(sc->sc_tab)) != NULL)
 		return (bp);
 	sc->sc_active = 0;
 	if (sc->sc_flags & RDF_WANTED) {
@@ -743,7 +743,7 @@ void
 rdstart(sc)
 	struct rd_softc *sc;
 {
-	struct buf *bp = BUFQ_PEEK(sc->sc_tab);
+	struct buf *bp = bufq_peek(sc->sc_tab);
 	int part, slave, punit;
 
 	slave = sc->sc_slave;
@@ -812,7 +812,7 @@ rdintr(sc)
 	int rv, dir, restart, slave;
 
 	slave = sc->sc_slave;
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 
 	DPRINTF(RDB_FOLLOW, ("rdintr(%s): bp %p, %c, flags %x\n",
 	    device_xname(&sc->sc_dev), bp, (bp->b_flags & B_READ) ? 'R' : 'W',
@@ -929,7 +929,7 @@ rderror(sc)
 	/*
 	 * First conjure up the block number at which the error occurred.
  	 */
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	pbn = sc->sc_dk.dk_label->d_partitions[RDPART(bp->b_dev)].p_offset;
 	if ((css.c_fef & FEF_CU) || (css.c_fef & FEF_DR) ||
 	    (css.c_ief & IEF_RRMASK)) {

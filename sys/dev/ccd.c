@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.131 2009/01/11 09:51:38 cegger Exp $	*/
+/*	$NetBSD: ccd.c,v 1.132 2009/01/13 13:35:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.131 2009/01/11 09:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.132 2009/01/13 13:35:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,7 +688,7 @@ ccdstrategy(struct buf *bp)
 
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
-	BUFQ_PUT(cs->sc_bufq, bp);
+	bufq_put(cs->sc_bufq, bp);
 	ccdstart(cs);
 	splx(s);
 	return;
@@ -714,7 +714,7 @@ ccdstart(struct ccd_softc *cs)
 #endif
 
 	/* See if there is work for us to do. */
-	while ((bp = BUFQ_PEEK(cs->sc_bufq)) != NULL) {
+	while ((bp = bufq_peek(cs->sc_bufq)) != NULL) {
 		/* Instrumentation. */
 		disk_busy(&cs->sc_dkdev);
 
@@ -750,7 +750,7 @@ ccdstart(struct ccd_softc *cs)
 		}
 
 		/* Transfer all set up, remove job from the queue. */
-		(void) BUFQ_GET(cs->sc_bufq);
+		(void) bufq_get(cs->sc_bufq);
 
 		/* Now fire off the requests. */
 		while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {

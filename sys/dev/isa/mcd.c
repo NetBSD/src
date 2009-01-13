@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.105 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: mcd.c,v 1.106 2009/01/13 13:35:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.105 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.106 2009/01/13 13:35:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ mcdstrategy(bp)
 
 	/* Queue it. */
 	s = splbio();
-	BUFQ_PUT(sc->buf_queue, bp);
+	bufq_put(sc->buf_queue, bp);
 	splx(s);
 	if (!sc->active)
 		mcdstart(sc);
@@ -495,7 +495,7 @@ mcdstart(sc)
 loop:
 	s = splbio();
 
-	if ((bp = BUFQ_GET(sc->buf_queue)) == NULL) {
+	if ((bp = bufq_get(sc->buf_queue)) == NULL) {
 		/* Nothing to do. */
 		sc->active = 0;
 		splx(s);

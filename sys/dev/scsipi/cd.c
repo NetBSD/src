@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.285 2009/01/11 10:05:53 cegger Exp $	*/
+/*	$NetBSD: cd.c,v 1.286 2009/01/13 13:35:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.285 2009/01/11 10:05:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.286 2009/01/13 13:35:54 yamt Exp $");
 
 #include "rnd.h"
 
@@ -727,7 +727,7 @@ cdstrategy(struct buf *bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	BUFQ_PUT(cd->buf_queue, bp);
+	bufq_put(cd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -796,7 +796,7 @@ cdstart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(cd->buf_queue)) != NULL) {
+			if ((bp = bufq_get(cd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
@@ -809,7 +809,7 @@ cdstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(cd->buf_queue)) == NULL)
+		if ((bp = bufq_peek(cd->buf_queue)) == NULL)
 			return;
 
 		/*
@@ -882,10 +882,10 @@ cdstart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(cd->buf_queue) != bp)
+		if (bufq_get(cd->buf_queue) != bp)
 			panic("cdstart(): dequeued wrong buf");
 #else
-		BUFQ_GET(cd->buf_queue);
+		bufq_get(cd->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -998,7 +998,7 @@ cdbounce(struct buf *bp)
 
 		/* enqueue the request and return */
 		s = splbio();
-		BUFQ_PUT(cd->buf_queue, nbp);
+		bufq_put(cd->buf_queue, nbp);
 		cdstart(cd->sc_periph);
 		splx(s);
 
