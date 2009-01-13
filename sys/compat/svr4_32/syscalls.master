@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 2009/01/13 22:10:58 pooka Exp $
+	$NetBSD: syscalls.master,v 1.19 2009/01/13 22:27:44 pooka Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -57,95 +57,95 @@
 
 %%
 
-0	NOARGS		{ int sys_nosys(void); } syscall
-1	NOARGS		{ int netbsd32_exit(int rval); }
-2	NOARGS		{ int sys_fork(void); }
-3	NOARGS		{ int netbsd32_read(int fd, netbsd32_charp buf, u_int nbyte); }
-4	NOARGS		{ int netbsd32_write(int fd, netbsd32_charp buf, u_int nbyte); }
-5	STD		{ int svr4_32_sys_open(netbsd32_charp path, int flags, \
+0	NOARGS		{ int|sys||nosys(void); } syscall
+1	NOARGS		{ int|netbsd32||exit(int rval); }
+2	NOARGS		{ int|sys||fork(void); }
+3	NOARGS		{ int|netbsd32||read(int fd, netbsd32_charp buf, u_int nbyte); }
+4	NOARGS		{ int|netbsd32||write(int fd, netbsd32_charp buf, u_int nbyte); }
+5	STD		{ int|svr4_32_sys||open(netbsd32_charp path, int flags, \
 			    int mode); }
-6	NOARGS		{ int netbsd32_close(int fd); }
-7	STD		{ int svr4_32_sys_wait(netbsd32_intp status); }
-8	STD		{ int svr4_32_sys_creat(netbsd32_charp path, int mode); }
-9	NOARGS		{ int netbsd32_link(netbsd32_charp path, netbsd32_charp link); }
-10	NOARGS		{ int netbsd32_unlink(netbsd32_charp path); }
-11	STD		{ int svr4_32_sys_execv(netbsd32_charp path, netbsd32_charpp argp); }
-12	NOARGS		{ int netbsd32_chdir(netbsd32_charp path); }
-13	STD		{ int svr4_32_sys_time(svr4_32_time_tp t); }
-14	STD		{ int svr4_32_sys_mknod(netbsd32_charp path, int mode, \
+6	NOARGS		{ int|netbsd32||close(int fd); }
+7	STD		{ int|svr4_32_sys||wait(netbsd32_intp status); }
+8	STD		{ int|svr4_32_sys||creat(netbsd32_charp path, int mode); }
+9	NOARGS		{ int|netbsd32||link(netbsd32_charp path, netbsd32_charp link); }
+10	NOARGS		{ int|netbsd32||unlink(netbsd32_charp path); }
+11	STD		{ int|svr4_32_sys||execv(netbsd32_charp path, netbsd32_charpp argp); }
+12	NOARGS		{ int|netbsd32||chdir(netbsd32_charp path); }
+13	STD		{ int|svr4_32_sys||time(svr4_32_time_tp t); }
+14	STD		{ int|svr4_32_sys||mknod(netbsd32_charp path, int mode, \
 			    int dev); }
-15	NOARGS		{ int netbsd32_chmod(netbsd32_charp path, mode_t mode); }
-16	NOARGS		{ int netbsd32___posix_chown(netbsd32_charp path, uid_t \
+15	NOARGS		{ int|netbsd32||chmod(netbsd32_charp path, mode_t mode); }
+16	NOARGS		{ int|netbsd32||__posix_chown(netbsd32_charp path, uid_t \
 			    uid, gid_t gid); } chown
-17	STD		{ int svr4_32_sys_break(netbsd32_caddr_t nsize); }
-18	STD		{ int svr4_32_sys_stat(netbsd32_charp path, \
+17	STD		{ int|svr4_32_sys||break(netbsd32_caddr_t nsize); }
+18	STD		{ int|svr4_32_sys||stat(netbsd32_charp path, \
 			    svr4_32_statp ub); }
-19	NOARGS		{ netbsd32_long compat_43_netbsd32_olseek(int fd, \
+19	NOARGS		{ netbsd32_long|compat_43_netbsd32||olseek(int fd, \
 			    netbsd32_long offset, int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS		{ pid_t|sys||getpid(void); }
 21	UNIMPL		old_mount
 22	UNIMPL		System V umount
-23	NOARGS		{ int netbsd32_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
+23	NOARGS		{ int|netbsd32||setuid(uid_t uid); }
+24	NOARGS		{ uid_t|sys||getuid_with_euid(void); }
 25	UNIMPL		stime
 26	UNIMPL		pcsample
-27	STD		{ int svr4_32_sys_alarm(unsigned sec); }
-28	STD		{ int svr4_32_sys_fstat(int fd, svr4_32_statp sb); }
-29	STD		{ int svr4_32_sys_pause(void); }
-30	STD		{ int svr4_32_sys_utime(netbsd32_charp path, \
+27	STD		{ int|svr4_32_sys||alarm(unsigned sec); }
+28	STD		{ int|svr4_32_sys||fstat(int fd, svr4_32_statp sb); }
+29	STD		{ int|svr4_32_sys||pause(void); }
+30	STD		{ int|svr4_32_sys||utime(netbsd32_charp path, \
 			     svr4_32_utimbufp ubuf); }
 31	UNIMPL		was stty
 32	UNIMPL		was gtty
-33	STD		{ int svr4_32_sys_access(netbsd32_charp path, int flags); }
-34	STD		{ int svr4_32_sys_nice(int prio); }
+33	STD		{ int|svr4_32_sys||access(netbsd32_charp path, int flags); }
+34	STD		{ int|svr4_32_sys||nice(int prio); }
 35	UNIMPL		statfs
-36	NOARGS		{ int sys_sync(void); }
-37	STD		{ int svr4_32_sys_kill(int pid, int signum); }
+36	NOARGS		{ int|sys||sync(void); }
+37	STD		{ int|svr4_32_sys||kill(int pid, int signum); }
 38	UNIMPL		fstatfs
-39	STD		{ int svr4_32_sys_pgrpsys(int cmd, int pid, int pgid); }
+39	STD		{ int|svr4_32_sys||pgrpsys(int cmd, int pid, int pgid); }
 40	UNIMPL		xenix
-41	NOARGS		{ int netbsd32_dup(u_int fd); }
-42	NOARGS		{ int sys_pipe(void); }
-43	STD		{ int svr4_32_sys_times(svr4_32_tms_tp tp); }
+41	NOARGS		{ int|netbsd32||dup(u_int fd); }
+42	NOARGS		{ int|sys||pipe(void); }
+43	STD		{ int|svr4_32_sys||times(svr4_32_tms_tp tp); }
 44	UNIMPL		profil
 45	UNIMPL		plock
-46	NOARGS		{ int netbsd32_setgid(gid_t gid); }
-47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
-48	STD		{ int svr4_32_sys_signal(int signum, svr4_sig_t handler); }
+46	NOARGS		{ int|netbsd32||setgid(gid_t gid); }
+47	NOARGS		{ gid_t|sys||getgid_with_egid(void); }
+48	STD		{ int|svr4_32_sys||signal(int signum, svr4_sig_t handler); }
 #ifdef SYSVMSG
-49	STD		{ int svr4_32_sys_msgsys(int what, int a2, int a3, \
+49	STD		{ int|svr4_32_sys||msgsys(int what, int a2, int a3, \
 					      int a4, int a5); }
 #else
 49	UNIMPL		msgsys
 #endif
-50	STD		{ int svr4_32_sys_sysarch(int op, netbsd32_voidp a1); }
+50	STD		{ int|svr4_32_sys||sysarch(int op, netbsd32_voidp a1); }
 51	UNIMPL		acct
 #ifdef SYSVSHM
-52	STD		{ int svr4_32_sys_shmsys(int what, int a2, int a3, \
+52	STD		{ int|svr4_32_sys||shmsys(int what, int a2, int a3, \
 					      int a4); }
 #else
 52	UNIMPL		shmsys
 #endif
 #ifdef SYSVSEM
-53	STD		{ int svr4_32_sys_semsys(int what, int a2, int a3, \
+53	STD		{ int|svr4_32_sys||semsys(int what, int a2, int a3, \
 					      int a4, int a5); }
 #else
 53	UNIMPL		semsys
 #endif
-54	STD		{ int svr4_32_sys_ioctl(int fd, netbsd32_u_long com, \
+54	STD		{ int|svr4_32_sys||ioctl(int fd, netbsd32_u_long com, \
 			    netbsd32_caddr_t data); }
 55	UNIMPL		uadmin
 56	UNIMPL		exch
-57	STD		{ int svr4_32_sys_utssys(netbsd32_voidp a1, \
+57	STD		{ int|svr4_32_sys||utssys(netbsd32_voidp a1, \
 			    netbsd32_voidp a2, int sel, \
 			    netbsd32_voidp a3); }
-58	NOARGS		{ int netbsd32_fsync(int fd); }
-59	NOARGS		{ int netbsd32_execve(netbsd32_charp path, netbsd32_charpp argp, \
+58	NOARGS		{ int|netbsd32||fsync(int fd); }
+59	NOARGS		{ int|netbsd32||execve(netbsd32_charp path, netbsd32_charpp argp, \
 			    netbsd32_charpp envp); }
-60	NOARGS		{ int netbsd32_umask(int newmask); }
-61	NOARGS		{ int netbsd32_chroot(netbsd32_charp path); }
-62	STD		{ int svr4_32_sys_fcntl(int fd, int cmd, netbsd32_charp arg); }
-63	STD		{ netbsd32_long svr4_32_sys_ulimit(int cmd, netbsd32_long newlimit); }
+60	NOARGS		{ int|netbsd32||umask(int newmask); }
+61	NOARGS		{ int|netbsd32||chroot(netbsd32_charp path); }
+62	STD		{ int|svr4_32_sys||fcntl(int fd, int cmd, netbsd32_charp arg); }
+63	STD		{ netbsd32_long|svr4_32_sys||ulimit(int cmd, netbsd32_long newlimit); }
 64	UNIMPL		reserved for unix/pc
 65	UNIMPL		reserved for unix/pc
 66	UNIMPL		reserved for unix/pc
@@ -161,105 +161,105 @@
 76	OBSOL		rdebug
 77	OBSOL		rfstop
 78	UNIMPL		rfsys
-79	NOARGS		{ int netbsd32_rmdir(netbsd32_charp path); }
-80	NOARGS		{ int netbsd32_mkdir(netbsd32_charp path, mode_t mode); }
-81	STD		{ int svr4_32_sys_getdents(int fd, netbsd32_charp buf, \
+79	NOARGS		{ int|netbsd32||rmdir(netbsd32_charp path); }
+80	NOARGS		{ int|netbsd32||mkdir(netbsd32_charp path, mode_t mode); }
+81	STD		{ int|svr4_32_sys||getdents(int fd, netbsd32_charp buf, \
 			    int nbytes); }
 82	OBSOL		libattach
 83	OBSOL		libdetach
 84	UNIMPL		sysfs
-85	STD		{ int svr4_32_sys_getmsg(int fd, svr4_32_strbuf_tp ctl, \
+85	STD		{ int|svr4_32_sys||getmsg(int fd, svr4_32_strbuf_tp ctl, \
 			    svr4_32_strbuf_tp dat, netbsd32_intp flags); }
-86	STD		{ int svr4_32_sys_putmsg(int fd, svr4_32_strbuf_tp ctl, \
+86	STD		{ int|svr4_32_sys||putmsg(int fd, svr4_32_strbuf_tp ctl, \
 			    svr4_32_strbuf_tp dat, int flags); }
-87	NOARGS		{ int netbsd32_poll(netbsd32_pollfdp_t fds, u_int nfds, \
+87	NOARGS		{ int|netbsd32||poll(netbsd32_pollfdp_t fds, u_int nfds, \
 			    int timeout); }
-88	STD		{ int svr4_32_sys_lstat(netbsd32_charp path, \
+88	STD		{ int|svr4_32_sys||lstat(netbsd32_charp path, \
 			    svr4_32_stat_tp ub); }
-89	NOARGS		{ int netbsd32_symlink(netbsd32_charp path, netbsd32_charp link); }
-90	NOARGS		{ int netbsd32_readlink(netbsd32_charp path, netbsd32_charp buf, netbsd32_size_t count); }
-91	NOARGS		{ int netbsd32_getgroups(int gidsetsize, netbsd32_gid_tp gidset); }
-92	NOARGS		{ int netbsd32_setgroups(int gidsetsize, netbsd32_gid_tp gidset); }
-93	NOARGS		{ int netbsd32_fchmod(int fd, int mode); }
-94	NOARGS		{ int netbsd32___posix_fchown(int fd, int uid, int gid); } \
+89	NOARGS		{ int|netbsd32||symlink(netbsd32_charp path, netbsd32_charp link); }
+90	NOARGS		{ int|netbsd32||readlink(netbsd32_charp path, netbsd32_charp buf, netbsd32_size_t count); }
+91	NOARGS		{ int|netbsd32||getgroups(int gidsetsize, netbsd32_gid_tp gidset); }
+92	NOARGS		{ int|netbsd32||setgroups(int gidsetsize, netbsd32_gid_tp gidset); }
+93	NOARGS		{ int|netbsd32||fchmod(int fd, int mode); }
+94	NOARGS		{ int|netbsd32||__posix_fchown(int fd, int uid, int gid); } \
 			    fchown
-95	STD		{ int svr4_32_sys_sigprocmask(int how, \
+95	STD		{ int|svr4_32_sys||sigprocmask(int how, \
 			    svr4_32_sigset_tp set, \
 			    svr4_32_sigset_tp oset); }
-96	STD		{ int svr4_32_sys_sigsuspend( \
+96	STD		{ int|svr4_32_sys||sigsuspend( \
 			    svr4_32_sigset_tp set); }
-97	STD		{ int svr4_32_sys_sigaltstack( \
+97	STD		{ int|svr4_32_sys||sigaltstack( \
 			    svr4_32_sigaltstack_tp nss, \
 			    svr4_32_sigaltstack_tp oss); }
-98	STD		{ int svr4_32_sys_sigaction(int signum, \
+98	STD		{ int|svr4_32_sys||sigaction(int signum, \
 			    svr4_32_sigaction_tp nsa, \
 			    svr4_32_sigaction_tp osa); }
-99	STD		{ int svr4_32_sys_sigpending(int what, \
+99	STD		{ int|svr4_32_sys||sigpending(int what, \
 			    svr4_32_sigset_tp set); }
-100	STD		{ int svr4_32_sys_context(int func, \
+100	STD		{ int|svr4_32_sys||context(int func, \
 			    svr4_32_ucontext_tp uc); }
 101	UNIMPL		evsys
 102	UNIMPL		evtrapret
-103	STD		{ int svr4_32_sys_statvfs(netbsd32_charp path, \
+103	STD		{ int|svr4_32_sys||statvfs(netbsd32_charp path, \
 			    svr4_32_statvfs_tp fs); }
-104	STD		{ int svr4_32_sys_fstatvfs(int fd, \
+104	STD		{ int|svr4_32_sys||fstatvfs(int fd, \
 			    svr4_32_statvfs_tp fs); }
 105	UNIMPL		getloadavg
 106	UNIMPL		nfssvc
-107	STD		{ int svr4_32_sys_waitsys(int grp, int id, \
+107	STD		{ int|svr4_32_sys||waitsys(int grp, int id, \
 			    svr4_32_siginfo_tp info, int options); }
 108	UNIMPL		sigsendsys
-109	STD		{ int svr4_32_sys_hrtsys(int cmd, int fun, int sub, \
+109	STD		{ int|svr4_32_sys||hrtsys(int cmd, int fun, int sub, \
 			    netbsd32_voidp rv1, netbsd32_voidp rv2); }
 110	UNIMPL		acancel
 111	UNIMPL		async
 112	UNIMPL		priocntlsys
-113	STD		{ int svr4_32_sys_pathconf(netbsd32_charp path, int name); }
+113	STD		{ int|svr4_32_sys||pathconf(netbsd32_charp path, int name); }
 114	UNIMPL		mincore
-115	STD		{ netbsd32_voidp svr4_32_sys_mmap(netbsd32_voidp addr, \
+115	STD		{ netbsd32_voidp|svr4_32_sys||mmap(netbsd32_voidp addr, \
 			    svr4_32_size_t len, int prot, int flags, int fd, \
 			    svr4_32_off_t pos); }
-116	NOARGS		{ int netbsd32_mprotect(netbsd32_voidp addr, netbsd32_size_t len, int prot); }
-117	NOARGS		{ int netbsd32_munmap(netbsd32_voidp addr, netbsd32_size_t len); }
-118	STD		{ int svr4_32_sys_fpathconf(int fd, int name); }
-119	NOARGS		{ int sys_vfork(void); }
-120	NOARGS		{ int netbsd32_fchdir(int fd); }
-121	NOARGS		{ int netbsd32_readv(int fd, netbsd32_iovecp_t iovp, int iovcnt); }
-122	NOARGS		{ int netbsd32_writev(int fd, netbsd32_iovecp_t iovp, int iovcnt); }
-123	STD		{ int svr4_32_sys_xstat(int two, netbsd32_charp path, \
+116	NOARGS		{ int|netbsd32||mprotect(netbsd32_voidp addr, netbsd32_size_t len, int prot); }
+117	NOARGS		{ int|netbsd32||munmap(netbsd32_voidp addr, netbsd32_size_t len); }
+118	STD		{ int|svr4_32_sys||fpathconf(int fd, int name); }
+119	NOARGS		{ int|sys||vfork(void); }
+120	NOARGS		{ int|netbsd32||fchdir(int fd); }
+121	NOARGS		{ int|netbsd32||readv(int fd, netbsd32_iovecp_t iovp, int iovcnt); }
+122	NOARGS		{ int|netbsd32||writev(int fd, netbsd32_iovecp_t iovp, int iovcnt); }
+123	STD		{ int|svr4_32_sys||xstat(int two, netbsd32_charp path, \
 			    svr4_32_xstat_tp ub); }
-124	STD		{ int svr4_32_sys_lxstat(int two, netbsd32_charp path, \
+124	STD		{ int|svr4_32_sys||lxstat(int two, netbsd32_charp path, \
 			    svr4_32_xstat_tp ub); }
-125	STD		{ int svr4_32_sys_fxstat(int two, int fd, \
+125	STD		{ int|svr4_32_sys||fxstat(int two, int fd, \
 			    svr4_32_xstat_tp sb); }
-126	STD		{ int svr4_32_sys_xmknod(int two, netbsd32_charp path, \
+126	STD		{ int|svr4_32_sys||xmknod(int two, netbsd32_charp path, \
 			    svr4_32_mode_t mode, svr4_dev_t dev); }
 127	UNIMPL		clocal
-128	STD		{ int svr4_32_sys_setrlimit(int which, \
+128	STD		{ int|svr4_32_sys||setrlimit(int which, \
 			    svr4_32_rlimit_tp rlp); }
-129	STD		{ int svr4_32_sys_getrlimit(int which, \
+129	STD		{ int|svr4_32_sys||getrlimit(int which, \
 			    svr4_32_rlimit_tp rlp); }
-130	NOARGS		{ int netbsd32_lchown(netbsd32_charp path, uid_t uid, gid_t gid); } lchown
-131	STD		{ int svr4_32_sys_memcntl(netbsd32_voidp  addr, \
+130	NOARGS		{ int|netbsd32||lchown(netbsd32_charp path, uid_t uid, gid_t gid); } lchown
+131	STD		{ int|svr4_32_sys||memcntl(netbsd32_voidp  addr, \
 			    svr4_32_size_t len, int cmd, netbsd32_voidp  arg, \
 			    int attr, int mask); }
 132	UNIMPL		getpmsg
 133	UNIMPL		putpmsg
-134	NOARGS		{ int netbsd32___posix_rename(netbsd32_charp from, netbsd32_charp to); } \
+134	NOARGS		{ int|netbsd32||__posix_rename(netbsd32_charp from, netbsd32_charp to); } \
 			    rename
-135	STD		{ int svr4_32_sys_uname(svr4_32_utsnamep name, \
+135	STD		{ int|svr4_32_sys||uname(svr4_32_utsnamep name, \
 			    int dummy); }
-136	NOARGS		{ int netbsd32_setegid(gid_t egid); }
-137	STD		{ int svr4_32_sys_sysconfig(int name); }
-138	NOARGS		{ int compat_50_netbsd32_adjtime(netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
-139	STD		{ netbsd32_long svr4_32_sys_systeminfo(int what, netbsd32_charp buf, \
+136	NOARGS		{ int|netbsd32||setegid(gid_t egid); }
+137	STD		{ int|svr4_32_sys||sysconfig(int name); }
+138	NOARGS		{ int|compat_50_netbsd32||adjtime(netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
+139	STD		{ netbsd32_long|svr4_32_sys||systeminfo(int what, netbsd32_charp buf, \
 			    netbsd32_long len); }
 140	UNIMPL
-141	NOARGS		{ int netbsd32_seteuid(uid_t euid); }
+141	NOARGS		{ int|netbsd32||seteuid(uid_t euid); }
 142	UNIMPL		vtrace
-143	NOARGS		{ int sys_fork(void); } fork1
+143	NOARGS		{ int|sys||fork(void); } fork1
 144	UNIMPL		sigtimedwait
-145	STD		{ int svr4_32_sys__lwp_info(svr4_32_lwpinfop lwpinfo);}
+145	STD		{ int|svr4_32_sys||_lwp_info(svr4_32_lwpinfop lwpinfo);}
 146	UNIMPL		yield
 147	UNIMPL		lwp_sema_wait
 148	UNIMPL		lwp_sema_post
@@ -267,36 +267,36 @@
 150	UNIMPL
 151	UNIMPL		corectl
 152	UNIMPL		modctl
-153	NOARGS		{ int netbsd32_fchroot(int fd); }
-154	STD		{ int svr4_32_sys_utimes(netbsd32_charp path, \
+153	NOARGS		{ int|netbsd32||fchroot(int fd); }
+154	STD		{ int|svr4_32_sys||utimes(netbsd32_charp path, \
 			    netbsd32_timevalp_t tptr); }
-155	STD		{ int svr4_32_sys_vhangup(void); }
-156	STD		{ int svr4_32_sys_gettimeofday(netbsd32_timevalp_t tp); }
-157	NOARGS		{ int compat_50_netbsd32_getitimer(int which, netbsd32_itimervalp_t itv); }
-158	NOARGS		{ int compat_50_netbsd32_setitimer(int which, \
+155	STD		{ int|svr4_32_sys||vhangup(void); }
+156	STD		{ int|svr4_32_sys||gettimeofday(netbsd32_timevalp_t tp); }
+157	NOARGS		{ int|compat_50_netbsd32||getitimer(int which, netbsd32_itimervalp_t itv); }
+158	NOARGS		{ int|compat_50_netbsd32||setitimer(int which, \
 			    netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
-159	STD		{ int svr4_32_sys__lwp_create(svr4_32_ucontext_tp uc, \
+159	STD		{ int|svr4_32_sys||_lwp_create(svr4_32_ucontext_tp uc, \
 			    netbsd32_u_long flags, svr4_32_lwpid_tp lwpid); }
-160	STD		{ int svr4_32_sys__lwp_exit(void); }
-161	STD		{ int svr4_32_sys__lwp_suspend(svr4_lwpid_t lwpid); }
-162	STD		{ int svr4_32_sys__lwp_continue(svr4_lwpid_t lwpid); }
-163	STD		{ int svr4_32_sys__lwp_kill(svr4_lwpid_t lwpid, \
+160	STD		{ int|svr4_32_sys||_lwp_exit(void); }
+161	STD		{ int|svr4_32_sys||_lwp_suspend(svr4_lwpid_t lwpid); }
+162	STD		{ int|svr4_32_sys||_lwp_continue(svr4_lwpid_t lwpid); }
+163	STD		{ int|svr4_32_sys||_lwp_kill(svr4_lwpid_t lwpid, \
 			    int signum); }
-164	STD		{ svr4_lwpid_t svr4_sys__lwp_self(void); }
-165	STD		{ netbsd32_voidp svr4_32_sys__lwp_getprivate(void); }
-166	STD		{ int svr4_32_sys__lwp_setprivate(netbsd32_voidp buffer); }
-167	STD		{ int svr4_32_sys__lwp_wait(svr4_lwpid_t wait_for, \
+164	STD		{ svr4_lwpid_t|svr4_sys||_lwp_self(void); }
+165	STD		{ netbsd32_voidp|svr4_32_sys||_lwp_getprivate(void); }
+166	STD		{ int|svr4_32_sys||_lwp_setprivate(netbsd32_voidp buffer); }
+167	STD		{ int|svr4_32_sys||_lwp_wait(svr4_lwpid_t wait_for, \
 			    svr4_32_lwpid_tp departed_lwp); }
 168	UNIMPL		lwp_mutex_wakeup
 169	UNIMPL		lwp_mutex_lock
 170	UNIMPL		lwp_cond_wait
 171	UNIMPL		lwp_cond_signal
 172	UNIMPL		lwp_cond_broadcast
-173	STD		{ netbsd32_ssize_t svr4_32_sys_pread(int fd, netbsd32_voidp buf, \
+173	STD		{ netbsd32_ssize_t|svr4_32_sys||pread(int fd, netbsd32_voidp buf, \
 			    netbsd32_size_t nbyte, svr4_32_off_t off); }
-174	STD		{ netbsd32_ssize_t svr4_32_sys_pwrite(int fd, netbsd32_voidp buf, \
+174	STD		{ netbsd32_ssize_t|svr4_32_sys||pwrite(int fd, netbsd32_voidp buf, \
 			    netbsd32_size_t nbyte, svr4_32_off_t off); }
-175	STD		{ svr4_32_off64_t svr4_32_sys_llseek(int fd, \
+175	STD		{ svr4_32_off64_t|svr4_32_sys||llseek(int fd, \
 			    netbsd32_long offset1, netbsd32_long offset2, int whence); }
 176	UNIMPL		inst_sync
 177	UNIMPL		srmlimitsys
@@ -307,9 +307,9 @@
 182	UNIMPL
 183	UNIMPL
 184	UNIMPL		tsolsys
-185	STD		{ int svr4_32_sys_acl(netbsd32_charp path, int cmd, int num, \
+185	STD		{ int|svr4_32_sys||acl(netbsd32_charp path, int cmd, int num, \
 			    svr4_32_aclent_tp buf); }
-186	STD		{ int svr4_32_sys_auditsys(int code, int a1, int a2, \
+186	STD		{ int|svr4_32_sys||auditsys(int code, int a1, int a2, \
 			    int a3, int a4, int a5); }
 187	UNIMPL		processor_bind
 188	UNIMPL		processor_info
@@ -323,96 +323,96 @@
 196	UNIMPL		timer_settime
 197	UNIMPL		timer_gettime
 198	UNIMPL		timer_getoverrun
-199	NOARGS		{ int compat_50_netbsd32_nanosleep(netbsd32_timespecp_t rqtp, \
+199	NOARGS		{ int|compat_50_netbsd32||nanosleep(netbsd32_timespecp_t rqtp, \
 			   netbsd32_timespecp_t rmtp); }
-200	STD		{ int svr4_32_sys_facl(int fd, int cmd, int num, \
+200	STD		{ int|svr4_32_sys||facl(int fd, int cmd, int num, \
 			    svr4_32_aclent_tp buf); }
 201	UNIMPL		door
-202	NOARGS		{ int netbsd32_setreuid(int ruid, int euid); }
-203	NOARGS		{ int netbsd32_setregid(int rgid, int egid); }
+202	NOARGS		{ int|netbsd32||setreuid(int ruid, int euid); }
+203	NOARGS		{ int|netbsd32||setregid(int rgid, int egid); }
 204	UNIMPL		install_utrap
 205	UNIMPL		signotify
-206	STD		{ int svr4_32_sys_schedctl(unsigned int x, int y, void **z); }
+206	STD		{ int|svr4_32_sys||schedctl(unsigned int x, int y, void **z); }
 207	UNIMPL		pset
 208	UNIMPL		sparc_utrap_install
-209	STD		{ int svr4_32_sys_resolvepath(netbsd32_charp path, \
+209	STD		{ int|svr4_32_sys||resolvepath(netbsd32_charp path, \
 			    netbsd32_charp buf, netbsd32_size_t bufsiz); }
 210	UNIMPL		signotifywait
 211	UNIMPL		lwp_sigredirect
 212	UNIMPL		lwp_alarm
-213	STD		{ int svr4_32_sys_getdents64(int fd, \
+213	STD		{ int|svr4_32_sys||getdents64(int fd, \
 			    svr4_32_dirent64_tp dp, \
 			    int nbytes); }
-214	STD		{ netbsd32_voidp svr4_32_sys_mmap64(netbsd32_voidp addr, \
+214	STD		{ netbsd32_voidp|svr4_32_sys||mmap64(netbsd32_voidp addr, \
 			    svr4_32_size_t len, int prot, int flags, int fd, \
 			    svr4_32_off64_t pos); }
-215	STD		{ int svr4_32_sys_stat64(netbsd32_charp path, \
+215	STD		{ int|svr4_32_sys||stat64(netbsd32_charp path, \
 			    svr4_32_stat64_tp sb); }
-216	STD		{ int svr4_32_sys_lstat64(netbsd32_charp path, \
+216	STD		{ int|svr4_32_sys||lstat64(netbsd32_charp path, \
 			    svr4_32_stat64_tp sb); }
-217	STD		{ int svr4_32_sys_fstat64(int fd, \
+217	STD		{ int|svr4_32_sys||fstat64(int fd, \
 			    svr4_32_stat64_tp sb); }
-218	STD		{ int svr4_32_sys_statvfs64(netbsd32_charp path, \
+218	STD		{ int|svr4_32_sys||statvfs64(netbsd32_charp path, \
 			    svr4_32_statvfs64_tp fs); }
-219	STD		{ int svr4_32_sys_fstatvfs64(int fd, \
+219	STD		{ int|svr4_32_sys||fstatvfs64(int fd, \
 			    svr4_32_statvfs64_tp fs); }
-220	STD		{ int svr4_32_sys_setrlimit64(int which, \
+220	STD		{ int|svr4_32_sys||setrlimit64(int which, \
 			    svr4_32_rlimit64_tp rlp); }
-221	STD		{ int svr4_32_sys_getrlimit64(int which, \
+221	STD		{ int|svr4_32_sys||getrlimit64(int which, \
 			    svr4_32_rlimit64_tp rlp); }
-222	STD		{ netbsd32_ssize_t svr4_32_sys_pread64(int fd, netbsd32_voidp buf, \
+222	STD		{ netbsd32_ssize_t|svr4_32_sys||pread64(int fd, netbsd32_voidp buf, \
 			    netbsd32_size_t nbyte, svr4_32_off64_t off); }
-223	STD		{ netbsd32_ssize_t svr4_32_sys_pwrite64(int fd, \
+223	STD		{ netbsd32_ssize_t|svr4_32_sys||pwrite64(int fd, \
 			    netbsd32_voidp buf, netbsd32_size_t nbyte, svr4_32_off64_t off); }
 #define svr4_32_sys_creat64 svr4_32_sys_creat
 #define svr4_32_sys_creat64_args svr4_32_sys_creat_args
-224	NOARGS		{ int svr4_32_sys_creat64(netbsd32_charp path, int mode); }
+224	NOARGS		{ int|svr4_32_sys||creat64(netbsd32_charp path, int mode); }
 #define svr4_32_sys_open64 svr4_32_sys_open
 #define svr4_32_sys_open64_args svr4_32_sys_open_args
-225	NOARGS		{ int svr4_32_sys_open64(netbsd32_charp path, int flags, \
+225	NOARGS		{ int|svr4_32_sys||open64(netbsd32_charp path, int flags, \
 			    int mode); }
 226	UNIMPL		rpcsys
 227	UNIMPL
 228	UNIMPL
 229	UNIMPL
-230	STD		{ int svr4_32_sys_socket(int domain, int type, \
+230	STD		{ int|svr4_32_sys||socket(int domain, int type, \
 			    int protocol); }
-231	NOARGS		{ int netbsd32_socketpair(int domain, int type, \
+231	NOARGS		{ int|netbsd32||socketpair(int domain, int type, \
 			    int protocol, netbsd32_intp rsv); }
-232	NOARGS		{ int netbsd32_bind(int s, netbsd32_sockaddrp_t name, \
+232	NOARGS		{ int|netbsd32||bind(int s, netbsd32_sockaddrp_t name, \
 			    int namelen); }
-233	NOARGS		{ int netbsd32_listen(int s, int backlog); }
-234	NOARGS		{ int compat_43_netbsd32_oaccept(int s, \
+233	NOARGS		{ int|netbsd32||listen(int s, int backlog); }
+234	NOARGS		{ int|compat_43_netbsd32||oaccept(int s, \
 			    netbsd32_sockaddrp_t name, netbsd32_intp anamelen); }
-235	NOARGS		{ int netbsd32_connect(int s, netbsd32_sockaddrp_t name, \
+235	NOARGS		{ int|netbsd32||connect(int s, netbsd32_sockaddrp_t name, \
 			    int namelen); }
-236	NOARGS		{ int netbsd32_shutdown(int s, int how); }
-237	NOARGS		{ int compat_43_netbsd32_orecv(int s, netbsd32_caddr_t buf, int len, \
+236	NOARGS		{ int|netbsd32||shutdown(int s, int how); }
+237	NOARGS		{ int|compat_43_netbsd32||orecv(int s, netbsd32_caddr_t buf, int len, \
 			    int flags); }
-238	NOARGS		{ int compat_43_netbsd32_orecvfrom(int s, \
+238	NOARGS		{ int|compat_43_netbsd32||orecvfrom(int s, \
 			    netbsd32_caddr_t buf, netbsd32_size_t len, int flags, \
 			    netbsd32_caddr_t from, netbsd32_intp fromlenaddr); }
-239	NOARGS		{ int compat_43_netbsd32_orecvmsg(int s, \
+239	NOARGS		{ int|compat_43_netbsd32||orecvmsg(int s, \
 			   netbsd32_omsghdrp_t msg, int flags); }
-240	NOARGS		{ int compat_43_netbsd32_osend(int s, netbsd32_caddr_t buf, \
+240	NOARGS		{ int|compat_43_netbsd32||osend(int s, netbsd32_caddr_t buf, \
 			  int len, int flags); }
-241	NOARGS		{ int compat_43_netbsd32_osendmsg(int s, netbsd32_caddr_t msg, \
+241	NOARGS		{ int|compat_43_netbsd32||osendmsg(int s, netbsd32_caddr_t msg, \
 			  int flags); }
-242	NOARGS		{ netbsd32_ssize_t netbsd32_sendto(int s, netbsd32_voidp buf, \
+242	NOARGS		{ netbsd32_ssize_t|netbsd32||sendto(int s, netbsd32_voidp buf, \
 			    netbsd32_size_t len, int flags, netbsd32_sockaddrp_t to, \
 			    int tolen); }
-243	NOARGS		{ int compat_43_netbsd32_ogetpeername(int fdes, \
+243	NOARGS		{ int|compat_43_netbsd32||ogetpeername(int fdes, \
 			    netbsd32_caddr_t asa, netbsd32_intp alen); }
-244	NOARGS		{ int compat_43_netbsd32_ogetsockname(int fdec, \
+244	NOARGS		{ int|compat_43_netbsd32||ogetsockname(int fdec, \
 			    netbsd32_caddr_t asa, netbsd32_intp alen); }
-245	NOARGS		{ int netbsd32_getsockopt(int s, int level, int name, \
+245	NOARGS		{ int|netbsd32||getsockopt(int s, int level, int name, \
 			    netbsd32_voidp val, netbsd32_intp avalsize); }
-246	NOARGS		{ int netbsd32_setsockopt(int s, int level, int name, \
+246	NOARGS		{ int|netbsd32||setsockopt(int s, int level, int name, \
 			    netbsd32_voidp val, int valsize); }
 247	UNIMPL		sockconfig
 248	UNIMPL		netbsd32_ntp_gettime
 #if defined(NTP) || !defined(_KERNEL)
-249	NOARGS		{ int netbsd32_ntp_adjtime(netbsd32_timexp_t tp); }
+249	NOARGS		{ int|netbsd32||ntp_adjtime(netbsd32_timexp_t tp); }
 #else
 249	EXCL		ntp_adjtime
 #endif
