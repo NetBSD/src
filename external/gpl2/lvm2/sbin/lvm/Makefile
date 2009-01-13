@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/12/24 02:11:53 haad Exp $
+#	$NetBSD: Makefile,v 1.5 2009/01/13 22:33:05 ahoka Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -30,6 +30,12 @@ CPPFLAGS+=	-I${LVM2_DISTDIR}/lib -I${LVM2_DISTDIR}/include \
 
 CPPFLAGS+=	-DLVM_SHARED_PATH=\"$(BINDIR)/lvm\"
 
+# Some parts of the code can't be protected because if its
+# alloca() usage.
+#
+.if defined(USE_SSP) && (${USE_SSP} != "no")
+CPPFLAGS+=      -Wno-stack-protector
+.endif
 
 MAN= 		lvchange.8 lvconvert.8 lvcreate.8 lvdisplay.8 lvextend.8 \
 		lvm.8 lvm.conf.5 lvmchange.8 lvmdiskscan.8 lvmdump.8 \
