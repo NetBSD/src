@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.68 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.69 2009/01/13 13:35:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.68 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.69 2009/01/13 13:35:53 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1365,7 +1365,7 @@ esh_fpstrategy(bp)
 		 */
 
 		struct esh_send_ring_ctl *ring = &sc->sc_send;
-		BUFQ_PUT(ring->ec_buf_queue, bp);
+		bufq_put(ring->ec_buf_queue, bp);
 #ifdef ESH_PRINTF
 		printf("esh_fpstrategy:  ready to call eshstart to write!\n");
 #endif
@@ -1977,7 +1977,7 @@ eshstart(ifp)
 	if ((sc->sc_flags & ESH_FL_FP_RING_UP) != 0 &&
 	    send->ec_cur_mbuf == NULL && send->ec_cur_buf == NULL &&
 	    send->ec_cur_dmainfo == NULL &&
-	    BUFQ_PEEK(send->ec_buf_queue) != NULL) {
+	    bufq_peek(send->ec_buf_queue) != NULL) {
 		struct buf *bp;
 
 #ifdef ESH_PRINTF
@@ -1985,7 +1985,7 @@ eshstart(ifp)
 		       send->ec_queue);
 #endif
 
-		bp = send->ec_cur_buf = BUFQ_GET(send->ec_buf_queue);
+		bp = send->ec_cur_buf = bufq_get(send->ec_buf_queue);
 		send->ec_offset = 0;
 		send->ec_len = bp->b_bcount;
 

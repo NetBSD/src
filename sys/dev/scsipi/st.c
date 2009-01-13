@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.209 2009/01/11 10:47:37 cegger Exp $ */
+/*	$NetBSD: st.c,v 1.210 2009/01/13 13:35:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.209 2009/01/11 10:47:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.210 2009/01/13 13:35:54 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -1110,7 +1110,7 @@ ststrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(st->buf_queue, bp);
+	bufq_put(st->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -1173,7 +1173,7 @@ ststart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(st->buf_queue)) != NULL) {
+			if ((bp = bufq_get(st->buf_queue)) != NULL) {
 				/* make sure that one implies the other.. */
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 				bp->b_error = EIO;
@@ -1185,7 +1185,7 @@ ststart(struct scsipi_periph *periph)
 			}
 		}
 
-		if ((bp = BUFQ_PEEK(st->buf_queue)) == NULL)
+		if ((bp = bufq_peek(st->buf_queue)) == NULL)
 			return;
 
 		iostat_busy(st->stats);
@@ -1207,14 +1207,14 @@ ststart(struct scsipi_periph *periph)
 					 * Back up over filemark
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
-						BUFQ_GET(st->buf_queue);
+						bufq_get(st->buf_queue);
 						bp->b_error = EIO;
 						bp->b_resid = bp->b_bcount;
 						biodone(bp);
 						continue;
 					}
 				} else {
-					BUFQ_GET(st->buf_queue);
+					bufq_get(st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
 					st->flags &= ~ST_AT_FILEMARK;
@@ -1228,7 +1228,7 @@ ststart(struct scsipi_periph *periph)
 		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
-			BUFQ_GET(st->buf_queue);
+			bufq_get(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
 			if (st->flags & ST_EIO_PENDING)
 				bp->b_error = EIO;
@@ -1288,10 +1288,10 @@ ststart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(st->buf_queue) != bp)
+		if (bufq_get(st->buf_queue) != bp)
 			panic("ststart(): dequeued wrong buf");
 #else
-		BUFQ_GET(st->buf_queue);
+		bufq_get(st->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */

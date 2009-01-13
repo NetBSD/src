@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.366 2008/12/16 22:35:29 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.367 2009/01/13 13:35:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.366 2008/12/16 22:35:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.367 2009/01/13 13:35:53 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -596,7 +596,7 @@ wdstrategy(struct buf *bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	BUFQ_PUT(wd->sc_q, bp);
+	bufq_put(wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);
 	return;
@@ -620,7 +620,7 @@ wdstart(void *arg)
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		if ((bp = BUFQ_GET(wd->sc_q)) == NULL)
+		if ((bp = bufq_get(wd->sc_q)) == NULL)
 			return;
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.70 2009/01/12 08:27:26 cegger Exp $	*/
+/*	$NetBSD: xy.c,v 1.71 2009/01/13 13:35:52 yamt Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.70 2009/01/12 08:27:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.71 2009/01/13 13:35:52 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1062,7 +1062,7 @@ xystrategy(struct buf *bp)
 
 	s = splbio();		/* protect the queues */
 
-	BUFQ_PUT(xy->xyq, bp);	 /* XXX disksort_cylinder */
+	bufq_put(xy->xyq, bp);	 /* XXX disksort_cylinder */
 
 	/* start 'em up */
 
@@ -1631,7 +1631,7 @@ xyc_reset(struct xyc_softc *xycsc, int quiet, struct xy_iorq *blastmode,
 				/* Sun3: map/unmap regardless of B_PHYS */
 				dvma_mapout(iorq->dbufbase,
 				    iorq->buf->b_bcount);
-				(void)BUFQ_GET(iorq->xy->xyq);
+				(void)bufq_get(iorq->xy->xyq);
 				disk_unbusy(&iorq->xy->sc_dk,
 				    (iorq->buf->b_bcount - iorq->buf->b_resid),
 				    (iorq->buf->b_flags & B_READ));
@@ -1675,11 +1675,11 @@ xyc_start(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL)
 				continue;
-			if (BUFQ_PEEK(xy->xyq) == NULL)
+			if (bufq_peek(xy->xyq) == NULL)
 				continue;
 			if (xy->xyrq->mode != XY_SUB_FREE)
 				continue;
-			xyc_startbuf(xycsc, xy, BUFQ_PEEK(xy->xyq));
+			xyc_startbuf(xycsc, xy, bufq_peek(xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -1805,7 +1805,7 @@ xyc_remove_iorq(struct xyc_softc *xycsc)
 			}
 			/* Sun3: map/unmap regardless of B_PHYS */
 			dvma_mapout(iorq->dbufbase, iorq->buf->b_bcount);
-			(void)BUFQ_GET(iorq->xy->xyq);
+			(void)bufq_get(iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid),
 			    (bp->b_flags & B_READ));

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.6 2008/12/16 16:18:25 pooka Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.7 2009/01/13 13:35:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.6 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.7 2009/01/13 13:35:54 yamt Exp $");
 #endif /* not lint */
 
 
@@ -292,7 +292,7 @@ udf_queuebuf_seq(struct udf_strat_args *args)
 
 	/* use our own sheduler lists for more complex sheduling */
 	mutex_enter(&priv->discstrat_mutex);
-		BUFQ_PUT(priv->queues[queue], nestbuf);
+		bufq_put(priv->queues[queue], nestbuf);
 		vfs_timestamp(&priv->last_queued[queue]);
 	mutex_exit(&priv->discstrat_mutex);
 
@@ -483,7 +483,7 @@ udf_doshedule(struct udf_mount *ump)
 	int new_queue;
 	int error;
 
-	buf = BUFQ_GET(priv->queues[priv->cur_queue]);
+	buf = bufq_get(priv->queues[priv->cur_queue]);
 	if (buf) {
 		/* transfer from the current queue to the device queue */
 		mutex_exit(&priv->discstrat_mutex);
@@ -526,11 +526,11 @@ udf_doshedule(struct udf_mount *ump)
 	/* check if we can/should switch */
 	new_queue = priv->cur_queue;
 
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_READING]))
+	if (bufq_peek(priv->queues[UDF_SHED_READING]))
 		new_queue = UDF_SHED_READING;
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]))
+	if (bufq_peek(priv->queues[UDF_SHED_SEQWRITING]))
 		new_queue = UDF_SHED_SEQWRITING;
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]))		/* only for unmount */
+	if (bufq_peek(priv->queues[UDF_SHED_WRITING]))		/* only for unmount */
 		new_queue = UDF_SHED_WRITING;
 	if (priv->cur_queue == UDF_SHED_READING) {
 		if (new_queue == UDF_SHED_SEQWRITING) {
@@ -569,9 +569,9 @@ udf_discstrat_thread(void *arg)
 	while (priv->run_thread || !empty) {
 		/* process the current selected queue */
 		udf_doshedule(ump);
-		empty  = (BUFQ_PEEK(priv->queues[UDF_SHED_READING]) == NULL);
-		empty &= (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]) == NULL);
-		empty &= (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]) == NULL);
+		empty  = (bufq_peek(priv->queues[UDF_SHED_READING]) == NULL);
+		empty &= (bufq_peek(priv->queues[UDF_SHED_WRITING]) == NULL);
+		empty &= (bufq_peek(priv->queues[UDF_SHED_SEQWRITING]) == NULL);
 
 		/* wait for more if needed */
 		if (empty)
