@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.6 2009/01/13 18:51:41 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.7 2009/01/13 22:35:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -91,7 +91,7 @@ configure_interface(void)
 	}
 
 	/* get a socket for configuring the interface */
-	s = rump_sys___socket30(PF_INET, SOCK_DGRAM, 0, &error);
+	s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0, &error);
 	if (s == -1)
 		errx(1, "configuration socket %d (%s)", error, strerror(error));
 
@@ -120,7 +120,7 @@ configure_interface(void)
 	rump_sys_close(s, &error);
 
 	/* open routing socket and configure our default router */
-	s = rump_sys___socket30(PF_ROUTE, SOCK_RAW, 0, &error);
+	s = rump_sys_socket(PF_ROUTE, SOCK_RAW, 0, &error);
 	if (s == -1)
 		errx(1, "routing socket %d (%s)", error, strerror(error));
 
@@ -169,10 +169,22 @@ main(int argc, char *argv[])
 {
 	char buf[65536];
 	struct sockaddr_in sin;
-	struct timeval tv;
 	ssize_t n;
 	size_t off;
 	int s, error;
+
+	/*
+	 * The following demonstrates in a less-than-amusing way how
+	 * the current binary interfaces are somewhat unflexible.
+	 * If we happen to have old userland and are calling a new
+	 * rumpkernel, timeval passed by this program is too small.
+	 * ... sigh
+	 */
+#ifdef TEH_HACK
+	struct { uint64_t tv_sec; long tv_usec; } tv;
+#else
+	struct timeval tv;
+#endif
 
 	if (rump_init())
 		errx(1, "rump_init failed");
@@ -181,7 +193,7 @@ main(int argc, char *argv[])
 	configure_interface();
 #endif
 
-	s = rump_sys___socket30(PF_INET, SOCK_STREAM, 0, &error);
+	s = rump_sys_socket(PF_INET, SOCK_STREAM, 0, &error);
 	if (s == -1)
 		errx(1, "can't open socket: %d (%s)", error, strerror(error));
 
