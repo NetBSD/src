@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 2008/10/27 07:22:22 mrg Exp $
+$NetBSD: README,v 1.3 2009/01/13 17:52:32 jmmv Exp $
 
 This directory contains Makefile fragments that will build all of the
 NetBSD libraries in 32-bit mode and install them into /usr/lib/<arch>
@@ -11,7 +11,7 @@ a n64 system.  It only supports one extra target.)
 
 
 Most of the makefiles here were built with the "build-makefiles" script.
-The expections are lib/csu/Makefile and ld.elf_so/Makefile.
+The exceptions are lib/csu/Makefile and ld.elf_so/Makefile.
 
 
 The method used is the:
