@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.120 2008/06/12 23:04:37 cegger Exp $ */
+/* $NetBSD: wskbd.c,v 1.121 2009/01/13 18:05:55 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,11 +105,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.120 2008/06/12 23:04:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.121 2009/01/13 18:05:55 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_wsdisplay_compat.h"
+#include "opt_compat_netbsd.h"
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -882,6 +883,9 @@ wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
+#ifndef COMPAT_50
+	evar->version = WSEVENT_VERSION;
+#endif
 	wsevent_init(evar, l->l_proc);
 
 	error = wskbd_do_open(sc, evar);
@@ -1225,6 +1229,9 @@ getkeyrepeat:
 		sc->sc_layout = enc;
 		wskbd_update_layout(sc->id, enc);
 		return (0);
+
+	case WSKBDIO_SETVERSION:
+		return wsevent_setversion(sc->sc_base.me_evp, *(int *)data);
 	}
 
 	/*

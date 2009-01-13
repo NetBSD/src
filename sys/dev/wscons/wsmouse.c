@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.60 2008/06/12 23:04:37 cegger Exp $ */
+/* $NetBSD: wsmouse.c,v 1.61 2009/01/13 18:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.60 2008/06/12 23:04:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.61 2009/01/13 18:05:55 christos Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -583,6 +585,9 @@ wsmouseopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
+#ifndef COMPAT_50
+	evar->version = WSEVENT_VERSION;
+#endif
 	wsevent_init(evar, l->l_proc);
 	sc->sc_base.me_evp = evar;
 
@@ -748,6 +753,9 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, void *data,
 		memcpy(&sc->sc_repeat, wr, sizeof(sc->sc_repeat));
 
 		return 0;
+
+	case WSMOUSEIO_SETVERSION:
+		return wsevent_setversion(sc->sc_base.me_evp, *(int *)data);
 	}
 
 	/*

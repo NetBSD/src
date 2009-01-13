@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.27 2008/04/28 20:24:01 martin Exp $ */
+/* $NetBSD: wsevent.c,v 1.28 2009/01/13 18:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.27 2008/04/28 20:24:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.28 2009/01/13 18:05:55 christos Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -151,8 +153,8 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 		return;
 	}
 	ev->get = ev->put = 0;
-	ev->q = malloc((u_long)WSEVENT_QSIZE * sizeof(struct wscons_event),
-		       M_DEVBUF, M_WAITOK|M_ZERO);
+	ev->q = malloc((u_long)WSEVENT_QSIZE * EVSIZE(ev),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 	selinit(&ev->sel);
 	ev->io = p;
 	ev->sih = softint_establish(SOFTINT_MPSAFE | SOFTINT_CLOCK,
@@ -189,7 +191,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	/*
 	 * Make sure we can return at least 1.
 	 */
-	if (uio->uio_resid < sizeof(struct wscons_event))
+	if (uio->uio_resid < EVSIZE(ev))
 		return (EMSGSIZE);	/* ??? */
 	s = splwsevent();
 	while (ev->get == ev->put) {
@@ -198,8 +200,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 			return (EWOULDBLOCK);
 		}
 		ev->wanted = 1;
-		error = tsleep(ev, PWSEVENT | PCATCH,
-		    "wsevent_read", 0);
+		error = tsleep(ev, PWSEVENT | PCATCH, "wsevent_read", 0);
 		if (error) {
 			splx(s);
 			return (error);
@@ -214,11 +215,10 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	else
 		cnt = ev->put - ev->get;	/* events in [get..put) */
 	splx(s);
-	n = howmany(uio->uio_resid, sizeof(struct wscons_event));
+	n = howmany(uio->uio_resid, EVSIZE(ev));
 	if (cnt > n)
 		cnt = n;
-	error = uiomove(&ev->q[ev->get],
-	    cnt * sizeof(struct wscons_event), uio);
+	error = uiomove(EVARRAY(ev, ev->get), cnt * EVSIZE(ev), uio);
 	n -= cnt;
 	/*
 	 * If we do not wrap to 0, used up all our space, or had an error,
@@ -230,8 +230,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 		return (error);
 	if (cnt > n)
 		cnt = n;
-	error = uiomove(&ev->q[0],
-	    cnt * sizeof(struct wscons_event), uio);
+	error = uiomove(EVARRAY(ev, 0), cnt * EVSIZE(ev), uio);
 	ev->get = cnt;
 	return (error);
 }
@@ -275,10 +274,9 @@ filt_wseventread(struct knote *kn, long hint)
 	if (ev->get < ev->put)
 		kn->kn_data = ev->put - ev->get;
 	else
-		kn->kn_data = (WSEVENT_QSIZE - ev->get) +
-		    ev->put;
+		kn->kn_data = (WSEVENT_QSIZE - ev->get) + ev->put;
 
-	kn->kn_data *= sizeof(struct wscons_event);
+	kn->kn_data *= EVSIZE(ev);
 
 	return (1);
 }
@@ -375,18 +373,69 @@ wsevent_inject(struct wseventvar *ev, struct wscons_event *events,
 	getnanotime(&t);
 
 	/* Inject the events. */
-	for (i = 0; i < nevents; i++) {
-		struct wscons_event *we;
+	switch (ev->version) {
+#ifdef COMPAT_50
+	case 0:
+		for (i = 0; i < nevents; i++) {
+			struct owscons_event *we;
 
-		we = &ev->q[ev->put];
-		we->type = events[i].type;
-		we->value = events[i].value;
-		we->time = t;
+			we = EVARRAY(ev, ev->put);
+			we->type = events[i].type;
+			we->value = events[i].value;
+			timespec_to_timespec50(&t, &we->time);
 
-		ev->put = (ev->put + 1) % WSEVENT_QSIZE;
+			ev->put = (ev->put + 1) % WSEVENT_QSIZE;
+		}
+		break;
+#endif
+	case WSEVENT_VERSION:
+		for (i = 0; i < nevents; i++) {
+			struct wscons_event *we;
+
+			we = EVARRAY(ev, ev->put);
+			we->type = events[i].type;
+			we->value = events[i].value;
+			we->time = t;
+
+			ev->put = (ev->put + 1) % WSEVENT_QSIZE;
+		}
+		break;
+
+	default:
+		return EINVAL;
 	}
 
 	wsevent_wakeup(ev);
 
+	return 0;
+}
+
+int
+wsevent_setversion(struct wseventvar *ev, int vers)
+{
+	void *oq;
+
+	if (ev == NULL)
+		return EINVAL;
+
+	switch (vers) {
+	case 0:
+	case WSEVENT_VERSION:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (vers == ev->version)
+		return 0;
+
+	oq = ev->q;
+	ev->get = ev->put = 0;
+	ev->version = vers;
+
+	ev->q = malloc((u_long)WSEVENT_QSIZE * EVSIZE(ev),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+
+	free(oq, M_DEVBUF);
 	return 0;
 }

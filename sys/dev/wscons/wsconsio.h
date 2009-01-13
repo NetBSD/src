@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.88 2007/08/27 02:01:23 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.89 2009/01/13 18:05:55 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -57,6 +57,7 @@ struct wscons_event {
 	int		value;
 	struct timespec	time;
 };
+#define WSEVENT_VERSION	1
 
 /* Event type definitions.  Comment for each is information in value. */
 #define	WSCONS_EVENT_KEY_UP		1	/* key code */
@@ -183,6 +184,10 @@ struct wskbd_scroll_data {
 #define	WSKBDIO_GETSCROLL	_IOR('W', 23, struct wskbd_scroll_data)
 #define	WSKBDIO_SETSCROLL	_IOW('W', 24, struct wskbd_scroll_data)
 
+/* Set event struct version */
+#define WSKBDIO_SETVERSION	_IOW('W', 25, int)
+#define WSKBDIO_EVENT_VERSION	WSEVENT_VERSION
+
 /*
  * Mouse ioctls (32 - 63)
  */
@@ -256,6 +261,9 @@ struct wsmouse_repeat {
 };
 #define WSMOUSEIO_GETREPEAT	_IOR('W', 39, struct wsmouse_repeat)
 #define WSMOUSEIO_SETREPEAT	_IOW('W', 40, struct wsmouse_repeat)
+
+#define WSMOUSEIO_SETVERSION	_IOW('W', 41, int)
+#define WSMOUSE_EVENT_VERSION	WSEVENT_VERSION
 
 /*
  * Display ioctls (64 - 95)
@@ -493,12 +501,14 @@ struct wsdisplay_msgattrs {
 /* Display information: number of bytes per row, may be same as pixels */
 #define	WSDISPLAYIO_LINEBYTES	_IOR('W', 95, u_int)
 
-/*
- * Mux ioctls (96 - 127)
- */
+/* WSMUXIO_OINJECTEVENT	was 96, but does not conflict because arg sizes */
 
-#define	WSMUXIO_INJECTEVENT	_IOW('W', 96, struct wscons_event)
-#define	WSMUX_INJECTEVENT	WSMUXIO_INJECTEVENT /* XXX compat */
+#define WSDISPLAYIO_SETVERSION	_IOW('W', 96, int)
+#define WSDISPLAYIO_EVENT_VERSION	WSEVENT_VERSION
+
+/*
+ * Mux ioctls (97 - 127)
+ */
 
 struct wsmux_device {
 	int type;
@@ -519,5 +529,8 @@ struct wsmux_device_list {
 };
 #define	WSMUXIO_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
 #define	WSMUX_LIST_DEVICES	WSMUXIO_LIST_DEVICES /* XXX compat */
+
+#define	WSMUXIO_INJECTEVENT	_IOW('W', 100, struct wscons_event)
+#define	WSMUX_INJECTEVENT	WSMUXIO_INJECTEVENT /* XXX compat */
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */
