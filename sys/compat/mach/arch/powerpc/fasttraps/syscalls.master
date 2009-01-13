@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2007/02/09 21:55:22 ad Exp $
+	$NetBSD: syscalls.master,v 1.8 2009/01/13 22:27:43 pooka Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -44,10 +44,10 @@
 %%
 
 0	UNIMPL
-1	STD		{ void mach_sys_cthread_set_self(mach_cproc_t p); }
-2	STD		{ mach_cproc_t mach_sys_cthread_self(void); }
-3	STD		{ int mach_sys_processor_facilities_used(void); }
-4	STD		{ void mach_sys_load_msr(void); }
+1	STD		{ void|mach_sys||cthread_set_self(mach_cproc_t p); }
+2	STD		{ mach_cproc_t|mach_sys||cthread_self(void); }
+3	STD		{ int|mach_sys||processor_facilities_used(void); }
+4	STD		{ void|mach_sys||load_msr(void); }
 5	UNIMPL
 6	UNIMPL
 7	UNIMPL
