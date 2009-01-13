@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.43 2009/01/11 15:50:06 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.44 2009/01/13 18:30:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.43 2009/01/11 15:50:06 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.44 2009/01/13 18:30:00 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.43 2009/01/11 15:50:06 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.44 2009/01/13 18:30:00 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: for.c,v 1.43 2009/01/11 15:50:06 dsl Exp $");
 #include    "buf.h"
 #include    "strlist.h"
 
-#define FOR_SUB_ESCAPE_COLON 1
+#define FOR_SUB_ESCAPE_CHAR  1
 #define FOR_SUB_ESCAPE_BRACE 2
 #define FOR_SUB_ESCAPE_PAREN 4
 
@@ -209,7 +209,10 @@ For_Eval(char *line)
     /*
      * Make a list with the remaining words
      * The values are substituted as ${:U<value>...} so we must \ escape
-     * characters that break that syntax - particularly ':', maybe $ and \.
+     * characters that break that syntax.
+     * Variables are fully expanded - so it is safe for escape $.
+     * We can't do the escapes here - because we don't know whether
+     * we are substuting into ${...} or $(...).
      */
     sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
@@ -220,8 +223,8 @@ For_Eval(char *line)
 	    break;
 	escapes = 0;
 	for (len = 0; (ch = ptr[len]) != 0 && !isspace(ch); len++) {
-	    if (ch == ':')
-		escapes |= FOR_SUB_ESCAPE_COLON;
+	    if (ch == ':' || ch == '$' || ch == '\\')
+		escapes |= FOR_SUB_ESCAPE_CHAR;
 	    else if (ch == ')')
 		escapes |= FOR_SUB_ESCAPE_PAREN;
 	    else if (ch == /*{*/ '}')
@@ -301,12 +304,9 @@ For_Accum(char *line)
 static void
 for_substitute(Buffer cmds, strlist_t *items, unsigned int item_no, char ech)
 {
-    int depth, var_depth;
-    int escape;
     const char *item = strlist_str(items, item_no);
     int i;
     char ch;
-#define MAX_DEPTH 0x7fffffff
 
     /* If there were no escapes, or the only escape is the other variable
      * terminator, then just substitute the full string */
@@ -316,34 +316,11 @@ for_substitute(Buffer cmds, strlist_t *items, unsigned int item_no, char ech)
 	return;
     }
 
-    /* Escape ':' and 'ech' provided they aren't inside variable expansions */
-    /* Variable expansions are unusual here, but not impossible to contrive! */
-    depth = 0;
-    var_depth = MAX_DEPTH;
-    escape = -1;
+    /* Escape ':', '$', '\\' and 'ech' - removed by :U processing */
     for (i = 0; (ch = item[i]) != 0; i++) {
-	/* Loose determination of nested variable definitions. */
-	if (ch == '(' || ch == '{') {
-	    depth++;
-	    if (var_depth == MAX_DEPTH && i != 0 && item[i-1] == '$')
-		var_depth = depth;
-	} else if (ch == ')' || ch == '}') {
-	    if (ch == ech && depth < var_depth)
-		escape = i;
-	    if (depth == var_depth)
-		var_depth = MAX_DEPTH;
-	    depth--;
-	} else if (ch == ':' && depth < var_depth)
-	    escape = i;
-	if (escape == i)
+	if (ch == ':' || ch == '$' || ch == '\\' || ch == ech)
 	    Buf_AddByte(cmds, '\\');
 	Buf_AddByte(cmds, ch);
-    }
-
-    if (escape == -1) {
-	/* We didn't actually need to escape anything, remember for next time */
-	strlist_set_info(items, item_no, strlist_info(items, item_no) &
-	    (ech == ')' ? ~FOR_SUB_ESCAPE_PAREN : ~FOR_SUB_ESCAPE_BRACE));
     }
 }
 
