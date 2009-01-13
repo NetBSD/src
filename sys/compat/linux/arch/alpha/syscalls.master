@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.64 2008/11/19 18:36:03 ad Exp $
+	$NetBSD: syscalls.master,v 1.65 2009/01/13 21:19:51 pooka Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -233,7 +233,7 @@
 ;112	ALIAS		osf1_sys_sigstack
 112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); }
-113	STD		{ size_t linux_sys_recvmsg(int s, struct msghdr *msg, \
+113	STD		{ ssize_t linux_sys_recvmsg(int s, struct msghdr *msg, \
 				int flags); }
 114	STD		{ ssize_t linux_sys_sendmsg(int s, \
 				const struct msghdr *msg, int flags); }
