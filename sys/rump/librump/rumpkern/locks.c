@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.25 2008/12/19 09:50:04 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.26 2009/01/13 02:03:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,12 +55,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.25 2008/12/19 09:50:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.26 2009/01/13 02:03:13 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
-#include <sys/atomic.h>
 
 #include <rump/rumpuser.h>
 

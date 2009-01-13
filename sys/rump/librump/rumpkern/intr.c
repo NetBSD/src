@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2008/12/18 00:24:12 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.12 2009/01/13 02:03:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,10 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2008/12/18 00:24:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2009/01/13 02:03:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/intr.h>
 
