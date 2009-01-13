@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.5 2008/12/29 20:39:49 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.6 2009/01/13 01:57:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.5 2008/12/29 20:39:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6 2009/01/13 01:57:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -96,11 +96,11 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 
 static struct mount mnt_dummy;
 
-static struct vnode *
-rump_makevnode(const char *path, size_t size, enum vtype vt)
+static int
+rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
 {
 	struct vnode *vp;
-	struct rump_specpriv *sp;
+	int rv;
 
 	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
 	vp->v_size = vp->v_writesize = size;
@@ -113,10 +113,12 @@ rump_makevnode(const char *path, size_t size, enum vtype vt)
 		panic("rump_makevnode: only VBLK/VDIR vnodes supported");
 
 	if (vp->v_type == VBLK) {
-		spec_node_init(vp, makedev(RUMPBLK, 0));
-		sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
-		strcpy(sp->rsp_path, path);
-		vp->v_data = sp;
+		rv = rumpblk_register(path);
+		if (rv == -1) {
+			rv = EINVAL;
+			goto bad;
+		}
+		spec_node_init(vp, makedev(RUMPBLK, rv));
 		vp->v_op = spec_vnodeop_p;
 	} else {
 		vp->v_op = rump_vnodeop_p;
@@ -128,8 +130,13 @@ rump_makevnode(const char *path, size_t size, enum vtype vt)
 	memset(&vp->v_lock, 0, sizeof(vp->v_lock));
 	rw_init(&vp->v_lock.vl_lock);
 	cv_init(&vp->v_cv, "vnode");
+	*vpp = vp;
 
-	return vp;
+	return 0;
+
+ bad:
+	kmem_free(vp, sizeof(*vp));
+	return rv;
 }
 
 /* from libpuffs, but let's decouple this from that */
@@ -184,8 +191,11 @@ rump_vop_lookup(void *v)
 	if (rv)
 		return error;
 
-	*ap->a_vpp = rump_makevnode(cnp->cn_pnbuf, sb_node.st_size,
-	    mode2vt(sb_node.st_mode));
+	error = rump_makevnode(cnp->cn_pnbuf, sb_node.st_size,
+	    mode2vt(sb_node.st_mode), ap->a_vpp);
+	if (error)
+		return error;
+
 	vn_lock(*ap->a_vpp, LK_RETRY | LK_EXCLUSIVE);
 	cnp->cn_consume = strlen(cnp->cn_nameptr + cnp->cn_namelen);
 	cnp->cn_flags &= ~REQUIREDIR;
@@ -196,8 +206,11 @@ rump_vop_lookup(void *v)
 void
 rumpfs_init()
 {
+	int rv;
 
 	vfs_opv_init(rump_opv_descs);
-	rootvnode = rump_makevnode("/", 0, VDIR);
+	rv = rump_makevnode("/", 0, VDIR, &rootvnode);
+	if (rv)
+		panic("could not create root vnode: %d", rv);
 	rootvnode->v_vflag |= VV_ROOT;
 }
