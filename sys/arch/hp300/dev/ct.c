@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.56 2008/06/17 19:46:23 he Exp $	*/
+/*	$NetBSD: ct.c,v 1.57 2009/01/13 13:35:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.56 2008/06/17 19:46:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.57 2009/01/13 13:35:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ ctstrategy(struct buf *bp)
 	sc = device_lookup_private(&ct_cd, UNIT(bp->b_dev));
 
 	s = splbio();
-	BUFQ_PUT(sc->sc_tab, bp);
+	bufq_put(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		ctustart(sc);
@@ -504,7 +504,7 @@ ctustart(struct ct_softc *sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (hpibreq(device_parent(sc->sc_dev), &sc->sc_hq))
@@ -521,7 +521,7 @@ ctstart(void *arg)
 	ctlr = device_unit(device_parent(sc->sc_dev));
 	slave = sc->sc_slave;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	if ((sc->sc_flags & CTF_CMD) && sc->sc_bp == bp) {
 		switch(sc->sc_cmd) {
 		case MTFSF:
@@ -631,7 +631,7 @@ ctgo(void *arg)
 	struct buf *bp;
 	int rw;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(device_unit(device_parent(sc->sc_dev)), sc->sc_slave, C_EXEC,
 	    sc->sc_addr, sc->sc_resid, rw, rw != 0);
@@ -723,7 +723,7 @@ ctintr(void *arg)
 	slave = sc->sc_slave;
 	unit = device_unit(sc->sc_dev);
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", device_xname(sc->sc_dev));
 		return;
@@ -857,10 +857,10 @@ static void
 ctdone(struct ct_softc *sc, struct buf *bp)
 {
 
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	biodone(bp);
 	hpibfree(device_parent(sc->sc_dev), &sc->sc_hq);
-	if (BUFQ_PEEK(sc->sc_tab) == NULL) {
+	if (bufq_peek(sc->sc_tab) == NULL) {
 		sc->sc_active = 0;
 		return;
 	}

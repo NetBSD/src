@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.61 2008/11/05 19:30:57 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.62 2009/01/13 13:35:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.61 2008/11/05 19:30:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.62 2009/01/13 13:35:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ fss_strategy(struct buf *bp)
 	}
 
 	bp->b_rawblkno = bp->b_blkno;
-	BUFQ_PUT(sc->sc_bufq, bp);
+	bufq_put(sc->sc_bufq, bp);
 	cv_signal(&sc->sc_work_cv);
 
 	mutex_exit(&sc->sc_slock);
@@ -1046,7 +1046,7 @@ fss_bs_thread(void *arg)
 		 */
 
 		if (sc->sc_flags & FSS_PERSISTENT) {
-			if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
+			if ((bp = bufq_get(sc->sc_bufq)) == NULL)
 				continue;
 			is_valid = FSS_ISVALID(sc);
 			is_read = (bp->b_flags & B_READ);
@@ -1104,7 +1104,7 @@ fss_bs_thread(void *arg)
 		/*
 		 * Process I/O requests
 		 */
-		if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
+		if ((bp = bufq_get(sc->sc_bufq)) == NULL)
 			continue;
 		is_valid = FSS_ISVALID(sc);
 		is_read = (bp->b_flags & B_READ);

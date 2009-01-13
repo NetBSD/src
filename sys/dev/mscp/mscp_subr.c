@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.35 2008/04/08 20:10:44 cegger Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.36 2009/01/13 13:35:53 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.35 2008/04/08 20:10:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.36 2009/01/13 13:35:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -485,7 +485,7 @@ mscp_intr(mi)
 	/*
 	 * If there are any not-yet-handled request, try them now.
 	 */
-	if (BUFQ_PEEK(mi->mi_resq))
+	if (bufq_peek(mi->mi_resq))
 		mscp_kickaway(mi);
 }
 
@@ -520,7 +520,7 @@ mscp_strategy(bp, usc)
 	struct	mscp_softc *mi = (void *)usc;
 	int s = spluba();
 
-	BUFQ_PUT(mi->mi_resq, bp);
+	bufq_put(mi->mi_resq, bp);
 	mscp_kickaway(mi);
 	splx(s);
 }
@@ -534,7 +534,7 @@ mscp_kickaway(mi)
 	struct	mscp *mp;
 	int next;
 
-	while ((bp = BUFQ_PEEK(mi->mi_resq)) != NULL) {
+	while ((bp = bufq_peek(mi->mi_resq)) != NULL) {
 		/*
 		 * Ok; we are ready to try to start a xfer. Get a MSCP packet
 		 * and try to start...
@@ -568,7 +568,7 @@ mscp_kickaway(mi)
 		(*mi->mi_me->me_fillin)(bp, mp);
 		(*mi->mi_mc->mc_go)(device_parent(&mi->mi_dev),
 		    &mi->mi_xi[next]);
-		(void)BUFQ_GET(mi->mi_resq);
+		(void)bufq_get(mi->mi_resq);
 	}
 }
 

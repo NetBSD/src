@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.82 2009/01/12 08:16:27 cegger Exp $	*/
+/*	$NetBSD: xy.c,v 1.83 2009/01/13 13:35:54 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.82 2009/01/12 08:16:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.83 2009/01/13 13:35:54 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1272,7 +1272,7 @@ xystrategy(bp)
 	 */
 	s = splbio();		/* protect the queues */
 
-	BUFQ_PUT(xy->xyq, bp);
+	bufq_put(xy->xyq, bp);
 
 	/* start 'em up */
 
@@ -1887,7 +1887,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 
 			    bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
-			    (void)BUFQ_GET(iorq->xy->xyq);
+			    (void)bufq_get(iorq->xy->xyq);
 			    disk_unbusy(&xycsc->reqs[lcv].xy->sc_dk,
 				(xycsc->reqs[lcv].buf->b_bcount -
 				xycsc->reqs[lcv].buf->b_resid),
@@ -1934,9 +1934,9 @@ xyc_start(xycsc, iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (BUFQ_PEEK(xy->xyq) == NULL) continue;
+			if (bufq_peek(xy->xyq) == NULL) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, BUFQ_PEEK(xy->xyq));
+			xyc_startbuf(xycsc, xy, bufq_peek(xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -2069,7 +2069,7 @@ xyc_remove_iorq(xycsc)
 
 			bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
-			(void)BUFQ_GET(iorq->xy->xyq);
+			(void)bufq_get(iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid),
 			    (bp->b_flags & B_READ));

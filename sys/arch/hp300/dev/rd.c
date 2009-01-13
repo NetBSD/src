@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.88 2008/06/17 21:08:08 he Exp $	*/
+/*	$NetBSD: rd.c,v 1.89 2009/01/13 13:35:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.88 2008/06/17 21:08:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.89 2009/01/13 13:35:51 yamt Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -738,7 +738,7 @@ rdstrategy(struct buf *bp)
 	}
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
-	BUFQ_PUT(sc->sc_tab, bp);
+	bufq_put(sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		rdustart(sc);
@@ -765,7 +765,7 @@ rdustart(struct rd_softc *sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (hpibreq(device_parent(sc->sc_dev), &sc->sc_hq))
@@ -777,11 +777,11 @@ rdfinish(struct rd_softc *sc, struct buf *bp)
 {
 
 	sc->sc_errcnt = 0;
-	(void)BUFQ_GET(sc->sc_tab);
+	(void)bufq_get(sc->sc_tab);
 	bp->b_resid = 0;
 	biodone(bp);
 	hpibfree(device_parent(sc->sc_dev), &sc->sc_hq);
-	if ((bp = BUFQ_PEEK(sc->sc_tab)) != NULL)
+	if ((bp = bufq_peek(sc->sc_tab)) != NULL)
 		return bp;
 	sc->sc_active = 0;
 	if (sc->sc_flags & RDF_WANTED) {
@@ -795,7 +795,7 @@ static void
 rdstart(void *arg)
 {
 	struct rd_softc *sc = arg;
-	struct buf *bp = BUFQ_PEEK(sc->sc_tab);
+	struct buf *bp = bufq_peek(sc->sc_tab);
 	int part, ctlr, slave;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));
@@ -873,7 +873,7 @@ static void
 rdgo(void *arg)
 {
 	struct rd_softc *sc = arg;
-	struct buf *bp = BUFQ_PEEK(sc->sc_tab);
+	struct buf *bp = bufq_peek(sc->sc_tab);
 	int rw, ctlr, slave;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));
@@ -896,7 +896,7 @@ rdintr(void *arg)
 {
 	struct rd_softc *sc = arg;
 	int unit = device_unit(sc->sc_dev);
-	struct buf *bp = BUFQ_PEEK(sc->sc_tab);
+	struct buf *bp = bufq_peek(sc->sc_tab);
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
@@ -1066,7 +1066,7 @@ rderror(int unit)
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
 	 */
-	bp = BUFQ_PEEK(sc->sc_tab);
+	bp = bufq_peek(sc->sc_tab);
 	pbn = sc->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)].p_offset;
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
 	    (sp->c_ief & IEF_RRMASK)) {
