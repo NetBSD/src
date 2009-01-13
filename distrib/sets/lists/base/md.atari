@@ -1,5 +1,4 @@
-# $NetBSD: md.atari,v 1.49 2008/11/29 17:57:33 tsutsui Exp $
-./boot.atari					base-sysutil-bin
+# $NetBSD: md.atari,v 1.50 2009/01/13 13:52:06 tsutsui Exp $
 ./sbin/ahdilabel				base-sysutil-root
 ./sbin/binpatch					base-sysutil-root
 ./sbin/edahdi					base-sysutil-root
