@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.21 2009/01/02 02:54:13 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.22 2009/01/13 01:57:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -59,15 +59,6 @@ extern struct rumpuser_mtx *rump_giantlock;
 
 #define UIO_VMSPACE_SYS (&rump_vmspace)
 
-struct rump_specpriv {
-	char	rsp_path[MAXPATHLEN+1];
-	int	rsp_fd;
-
-	struct partition *rsp_curpi;
-	struct partition rsp_pi;
-	struct disklabel rsp_dl;
-};
-
 #define RUMP_UBC_MAGIC_WINDOW (void *)0x37
 #define RUMP_LMUTEX_MAGIC ((kmutex_t *)0x101)
 
@@ -90,7 +81,5 @@ rump_proc_vfs_init_fn rump_proc_vfs_init;
 rump_proc_vfs_release_fn rump_proc_vfs_release;
 
 extern struct cpu_info rump_cpu;
-
-#define RUMPBLK	254
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */
