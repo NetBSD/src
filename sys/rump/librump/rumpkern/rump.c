@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.86 2009/01/11 16:19:35 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.87 2009/01/13 01:57:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.86 2009/01/11 16:19:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.87 2009/01/13 01:57:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -50,8 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.86 2009/01/11 16:19:35 pooka Exp $");
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
 #include <sys/select.h>
-#include <sys/uidinfo.h>
 #include <sys/sysctl.h>
+#include <sys/tty.h>
+#include <sys/uidinfo.h>
 
 #include <rump/rumpuser.h>
 
@@ -153,6 +154,7 @@ rump__init(int rump_version)
 	}
 	rumpuser_thrinit(_kernel_lock, _kernel_unlock, rump_threads);
 
+	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpuser_mutex_recursive_init(&rump_giantlock);
 	ksyms_init();
 
