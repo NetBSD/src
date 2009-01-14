@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.34 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.35 2009/01/14 23:18:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.34 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.35 2009/01/14 23:18:57 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -138,6 +138,36 @@ void	rm(const char *);
 int	scan(FILE *, struct passwd *, int *, int *);
 void	usage(void);
 void	wr_error(const char *);
+void	setversion(DB *);
+
+static __inline uint16_t swap16(uint16_t sw)
+{
+	return ((sw & 0x00ff) << 8) |
+	       ((sw & 0xff00) >> 8);
+}
+
+static __inline uint32_t swap32(uint32_t sw) {
+	return ((sw & 0x000000ff) << 24) |
+	       ((sw & 0x0000ff00) << 8) |
+	       ((sw & 0x00ff0000) >> 8) |
+	       ((sw & 0xff000000) >> 24);
+}
+
+static __inline uint64_t swap64(uint64_t sw) {
+	return ((sw & 0x00000000000000ffULL) << 56) |
+	       ((sw & 0x000000000000ff00ULL) << 40) |
+	       ((sw & 0x0000000000ff0000ULL) >> 24) |
+	       ((sw & 0x00000000ff000000ULL) << 8) |
+	       ((sw & 0x000000ff00000000ULL) >> 8) |
+	       ((sw & 0x0000ff0000000000ULL) >> 24) |
+	       ((sw & 0x00ff000000000000ULL) >> 40) |
+	       ((sw & 0xff00000000000000ULL) >> 56);
+}
+
+#define SWAP(sw) \
+    ((sizeof(sw) == 2 ? (typeof(sw))swap16((uint16_t)sw) : \
+    (sizeof(sw) == 4 ? (typeof(sw))swap32((uint32_t)sw) : \
+    (sizeof(sw) == 8 ? (typeof(sw))swap64((uint64_t)sw) : abort(), 0))))
 
 int
 main(int argc, char *argv[])
@@ -258,6 +288,7 @@ main(int argc, char *argv[])
 		    &openinfo);
 		if (dp == NULL)
 			error(pwd_db_tmp);
+		setversion(dp);
 		clean |= FILE_INSECURE;
 	}
 
@@ -271,6 +302,7 @@ main(int argc, char *argv[])
 	edp = dbopen(pwd_Sdb_tmp, flags, PERM_SECURE, DB_HASH, &openinfo);
 	if (!edp)
 		error(pwd_Sdb_tmp);
+	setversion(edp);
 	clean |= FILE_SECURE;
 
 	/*
@@ -606,6 +638,24 @@ bailout(void)
 	exit(EXIT_FAILURE);
 }
 
+void
+setversion(DB *dp)
+{
+	DBT data, key;
+	uint32_t version = sizeof(time_t) != sizeof(int32_t);
+
+	key.data = __UNCONST("VERSION");
+	key.size = strlen((const char *)key.data) + 1;
+
+	if (lorder != BYTE_ORDER)
+		version = SWAP(version);
+	data.data = &version;
+	data.size = sizeof(uint32_t);
+
+	if ((*dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
+		wr_error("setversion");
+}
+
 /*
  * Write entries to a database for a single user. 
  *
@@ -637,10 +687,10 @@ putdbents(DB *dp, struct passwd *pw, const char *passwd, int flags,
 	key.data = (u_char *)tbuf;
 
 	if (lorder != BYTE_ORDER) {
-		M_32_SWAP(pwd.pw_uid);
-		M_32_SWAP(pwd.pw_gid);
-		M_32_SWAP(pwd.pw_change);
-		M_32_SWAP(pwd.pw_expire);
+		pwd.pw_uid = SWAP(pwd.pw_uid);
+		pwd.pw_gid = SWAP(pwd.pw_gid);
+		pwd.pw_change = SWAP(pwd.pw_change);
+		pwd.pw_expire = SWAP(pwd.pw_expire);
 	}
 
 	/* Create insecure data. */
@@ -661,7 +711,7 @@ putdbents(DB *dp, struct passwd *pw, const char *passwd, int flags,
 	p += sizeof(pwd.pw_expire);
 	x = flags;
 	if (lorder != BYTE_ORDER)
-		M_32_SWAP(x);
+		x = SWAP(x);
 	memmove(p, &x, sizeof(x));
 	p += sizeof(flags);
 	data.size = p - buf;
@@ -678,7 +728,7 @@ putdbents(DB *dp, struct passwd *pw, const char *passwd, int flags,
 	tbuf[0] = _PW_KEYBYNUM;
 	x = lineno;
 	if (lorder != BYTE_ORDER)
-		M_32_SWAP(x);
+		x = SWAP(x);
 	memmove(tbuf + 1, &x, sizeof(x));
 	key.size = sizeof(x) + 1;
 	if ((*dp->put)(dp, &key, &data, dbflg) == -1)
@@ -713,7 +763,7 @@ deldbent(DB *dp, const char *fn, int type, void *keyp)
 	case _PW_KEYBYUID:
 		x = *(int *)keyp;
 		if (lorder != BYTE_ORDER)
-			M_32_SWAP(x);
+			x = SWAP(x);
 		memmove(tbuf + 1, &x, sizeof(x));
 		key.size = sizeof(x) + 1;
 		break;
@@ -749,7 +799,7 @@ getdbent(DB *dp, const char *fn, int type, void *keyp, struct passwd **tpwd)
 	case _PW_KEYBYUID:
 		x = *(int *)keyp;
 		if (lorder != BYTE_ORDER)
-			M_32_SWAP(x);
+			x = SWAP(x);
 		memmove(tbuf + 1, &x, sizeof(x));
 		key.size = sizeof(x) + 1;
 		break;
@@ -793,10 +843,10 @@ getdbent(DB *dp, const char *fn, int type, void *keyp, struct passwd **tpwd)
 	p += sizeof(pwd.pw_expire);
 
 	if (lorder != BYTE_ORDER) {
-		M_32_SWAP(pwd.pw_uid);
-		M_32_SWAP(pwd.pw_gid);
-		M_32_SWAP(pwd.pw_change);
-		M_32_SWAP(pwd.pw_expire);
+		pwd.pw_uid = SWAP(pwd.pw_uid);
+		pwd.pw_gid = SWAP(pwd.pw_gid);
+		pwd.pw_change = SWAP(pwd.pw_change);
+		pwd.pw_expire = SWAP(pwd.pw_expire);
 	}
 
 	*tpwd = &pwd;
