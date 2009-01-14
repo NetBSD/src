@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.64 2009/01/09 03:50:31 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.65 2009/01/14 18:00:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2010,4 +2010,22 @@ sys/dev/usb/uslsa.c				1.9
 	Correct license.  Also, use UT_*_VENDOR_INTERFACE instead of local
 	defines of the same thing.  No functional change.
 	[jakllsch, ticket #245]
+
+sys/arch/powerpc/ibm4xx/intr.c			1.21
+
+	Account ci->ci_idepth on calling handlers in ext_intr() as well as
+	powerpc/pic/intr.c:pic_handle_intr().  Closes PR port-evbppc/40288.
+	[tsutsui, ticket #246]
+
+sys/kern/sysv_shm.c				1.114
+
+	sys_shmat: initialise shmid of shmmap entry earlier.  Now error path,
+	i.e. shm_delete_mapping, wont use a random value.
+	[rmind, ticket #248]
+
+sys/dev/pci/if_ipw.c				1.45
+sys/dev/pci/if_iwi.c				1.78
+
+	Make the "EULA not accepted" message a bit more informative.
+	[jmcneill, ticket #250]
 
