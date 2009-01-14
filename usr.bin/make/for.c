@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.44 2009/01/13 18:30:00 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.45 2009/01/14 22:54:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.44 2009/01/13 18:30:00 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.45 2009/01/14 22:54:10 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.44 2009/01/13 18:30:00 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.45 2009/01/14 22:54:10 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -301,11 +301,43 @@ For_Accum(char *line)
  *-----------------------------------------------------------------------
  */
 
+static int
+for_var_len(const char *var)
+{
+    char ch, var_start, var_end;
+    int depth;
+    int len;
+
+    var_start = *var;
+    if (var_start == 0)
+	/* just escape the $ */
+	return 0;
+
+    if (var_start == '(')
+	var_end = ')';
+    else if (var_start == '{')
+	var_end = '}';
+    else
+	/* Single char variable */
+	return 1;
+
+    depth = 1;
+    for (len = 1; (ch = var[len++]) != 0;) {
+	if (ch == var_start)
+	    depth++;
+	else if (ch == var_end && --depth == 0)
+	    return len;
+    }
+
+    /* Variable end not found, escape the $ */
+    return 0;
+}
+
 static void
 for_substitute(Buffer cmds, strlist_t *items, unsigned int item_no, char ech)
 {
     const char *item = strlist_str(items, item_no);
-    int i;
+    int len;
     char ch;
 
     /* If there were no escapes, or the only escape is the other variable
@@ -317,8 +349,16 @@ for_substitute(Buffer cmds, strlist_t *items, unsigned int item_no, char ech)
     }
 
     /* Escape ':', '$', '\\' and 'ech' - removed by :U processing */
-    for (i = 0; (ch = item[i]) != 0; i++) {
-	if (ch == ':' || ch == '$' || ch == '\\' || ch == ech)
+    while ((ch = *item++) != 0) {
+	if (ch == '$') {
+	    len = for_var_len(item);
+	    if (len != 0) {
+		Buf_AddBytes(cmds, len + 1, item - 1);
+		item += len;
+		continue;
+	    }
+	    Buf_AddByte(cmds, '\\');
+	} else if (ch == ':' || ch == '\\' || ch == ech)
 	    Buf_AddByte(cmds, '\\');
 	Buf_AddByte(cmds, ch);
     }
