@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.51 2008/12/23 15:31:20 cegger Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.52 2009/01/14 19:31:25 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.51 2008/12/23 15:31:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.52 2009/01/14 19:31:25 cegger Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -616,9 +616,11 @@ mpbios_scan(device_t self, int *ncpup)
 		}
 
 		mp_busses = kmem_zalloc(sizeof(struct mp_bus)*mp_nbus,
-			KM_NOSLEEP);
+		    KM_SLEEP);
+		KASSERT(mp_busses != NULL);
 		mp_intrs = kmem_zalloc(sizeof(struct mp_intr_map)*intr_cnt,
-			KM_NOSLEEP);
+		    KM_SLEEP);
+		KASSERT(mp_intrs != NULL);
 		mp_nintr = intr_cnt;
 
 		/* re-walk the table, recording info of interest */
