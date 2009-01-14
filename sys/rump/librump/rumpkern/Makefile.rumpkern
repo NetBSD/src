@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.36 2009/01/12 02:22:55 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.37 2009/01/14 23:22:09 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -93,7 +93,8 @@ KERNDIR=${RUMPTOP}/../lib/libkern
 # use effectively the multiprocessor version of the userspace ops.
 #
 .if ${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "hppa" \
-    || ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "sh3"
+    || ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "sh3" \
+    || ${MACHINE_CPU} == "vax"
 CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
 SRCS+=		atomic_cas_generic.c
 .endif
