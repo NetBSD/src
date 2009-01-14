@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.8 2008/12/09 20:45:44 pooka Exp $ */
+/* $NetBSD: pmap.h,v 1.9 2009/01/14 23:14:48 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -35,7 +35,7 @@
 #ifdef _KERNEL
 #include <machine/memcreg.h>
 
-extern void pmap_bootstrap __P((int, paddr_t));
+extern void pmap_bootstrap(int, paddr_t);
 
 extern bool pmap_fault(pmap_t, vaddr_t, vm_prot_t);
 

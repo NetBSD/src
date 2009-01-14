@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideovar.h,v 1.2 2002/03/24 23:37:45 bjh21 Exp $ */
+/* $NetBSD: arcvideovar.h,v 1.3 2009/01/14 23:14:48 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -41,6 +41,6 @@ struct arcvideo_mode {
 	int sync_pol;
 };
 
-extern void arccons_init __P((void));
+extern void arccons_init(void);
 
 #endif
