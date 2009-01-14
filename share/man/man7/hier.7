@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.82 2008/11/12 12:35:53 ad Exp $
+.\"	$NetBSD: hier.7,v 1.83 2009/01/14 01:46:51 reed Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd May 22, 2008
+.Dd January 13, 2009
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -100,6 +100,9 @@ kernel physical memory device; see
 .It Sy null
 the null device; see
 .Xr null 4
+.It Sy pts
+mount point for the pseudo-terminal device file system; see
+.Xr mount_ptyfs 8
 .It Sy stderr
 .It Sy stdin
 .It Sy stdout
@@ -337,6 +340,9 @@ see
 .It Sy /home/
 mount point for the automounter; see
 .Xr amd 8
+.It Sy /kern/
+mount point for the kern file system; see
+.Xr mount_kernfs 8
 .It Sy /lib/
 dynamic linked libraries used by dynamic linked programs
 (such as those in
@@ -357,6 +363,9 @@ system administrators as a temporary mount point
 .It Sy /netbsd
 pure kernel executable (the operating system loaded into memory
 at boot time).
+.It Sy /proc/
+mount point for the process file system; see
+.Xr mount_procfs 8
 .It Sy /rescue/
 statically linked rescue tools, for use in system recovery
 .It Sy /root/
