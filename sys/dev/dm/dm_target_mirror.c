@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.2 2009/01/02 22:33:51 haad Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.3 2009/01/14 00:56:15 haad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_MISC, dm_target_mirror, NULL);
+MODULE(MODULE_CLASS_MISC, dm_target_mirror, "dm");
 
 static int
 dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
@@ -61,9 +61,6 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if ((r = module_hold("dm")) != 0)
-			return r;
-		
 		if ((dmt = dm_target_lookup("mirror")) != NULL)
 			return EEXIST;
 
@@ -86,7 +83,6 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 		r = dm_target_rem("mirror");
-		module_rele("dm"); /* release usage counter on dm module */
 		break;
 
 	case MODULE_CMD_STAT:
