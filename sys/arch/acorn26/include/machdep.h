@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.5 2009/01/14 20:43:28 bjh21 Exp $ */
+/* $NetBSD: machdep.h,v 1.6 2009/01/14 22:17:52 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -48,7 +48,6 @@ extern void address_exception_handler(struct trapframe *);
 extern void irq_handler	__P((struct irqframe *irqf));
 
 /* locore.S */
-extern register_t set_r13_irq	__P((register_t r13_irq));
 extern void int_on	__P((void));
 extern void int_off	__P((void));
 extern void fiq_on	__P((void));
