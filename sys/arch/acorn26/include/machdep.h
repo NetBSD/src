@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.4 2007/10/17 19:52:52 garbled Exp $ */
+/* $NetBSD: machdep.h,v 1.5 2009/01/14 20:43:28 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -48,8 +48,6 @@ extern void address_exception_handler(struct trapframe *);
 extern void irq_handler	__P((struct irqframe *irqf));
 
 /* locore.S */
-extern void atomic_set_bit	__P((u_int *address, u_int setmask));
-extern void atomic_clear_bit	__P((u_int *address, u_int clearmask));
 extern register_t set_r13_irq	__P((register_t r13_irq));
 extern void int_on	__P((void));
 extern void int_off	__P((void));
