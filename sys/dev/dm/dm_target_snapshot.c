@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.6 2009/01/02 11:06:17 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.7 2009/01/14 00:56:15 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #include <sys/kernel.h>
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_MISC, dm_target_snapshot, NULL);
+MODULE(MODULE_CLASS_MISC, dm_target_snapshot, "dm");
 
 static int
 dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
@@ -107,9 +107,6 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if ((r = module_hold("dm")) != 0)
-			return r;
-
 		if (((dmt = dm_target_lookup("snapshot")) != NULL) ||
 		    (((dmt = dm_target_lookup("snapshot-origin")) != NULL)))
 			return EEXIST;
@@ -153,8 +150,6 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		if ((r = dm_target_rem("snapshot")) == 0)
 			r = dm_target_rem("snapshot-origin");
 
-		module_rele("dm"); /* release usage counter on dm module */
-		
 		break;
 
 	case MODULE_CMD_STAT:
