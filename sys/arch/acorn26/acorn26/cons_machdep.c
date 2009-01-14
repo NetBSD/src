@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.9 2008/11/30 18:21:31 martin Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.10 2009/01/14 23:14:48 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.9 2008/11/30 18:21:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.10 2009/01/14 23:14:48 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/syslog.h>
@@ -52,7 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.9 2008/11/30 18:21:31 martin Exp 
 #include <machine/memcreg.h>
 #endif
 
-extern void arccons_init __P((void));
+#if NARCVIDEO > 0
+#include <arch/acorn26/vidc/arcvideovar.h>
+#endif
 
 void
 consinit()

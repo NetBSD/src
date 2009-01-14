@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.6 2009/01/14 22:17:52 bjh21 Exp $ */
+/* $NetBSD: machdep.h,v 1.7 2009/01/14 23:14:48 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -35,7 +35,7 @@
 struct bootconfig;
 
 /* start.c */
-extern void start __P((struct bootconfig *initbootconfig));
+extern void start(struct bootconfig *initbootconfig);
 
 /* except.c */
 extern void undefined_handler(struct trapframe *);
@@ -45,18 +45,18 @@ extern void prefetch_abort_handler(struct trapframe *);
 extern void address_exception_handler(struct trapframe *);
 
 /* irq.c */
-extern void irq_handler	__P((struct irqframe *irqf));
+extern void irq_handler(struct irqframe *irqf);
 
 /* locore.S */
-extern void int_on	__P((void));
-extern void int_off	__P((void));
-extern void fiq_on	__P((void));
-extern void fiq_off	__P((void));
+extern void int_on(void);
+extern void int_off(void);
+extern void fiq_on(void);
+extern void fiq_off(void);
 extern struct lwp *cpu_loswitch(struct lwp *, struct lwp *);
 extern void lwp_trampoline(void); /* not quite true */
 
 /* pmap.c */
-extern register_t update_memc	__P((register_t, register_t));
+extern register_t update_memc(register_t, register_t);
 
 /* rtc.c */
 extern int cmos_read(int);

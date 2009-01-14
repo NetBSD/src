@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.10 2009/01/07 22:58:38 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.11 2009/01/14 23:14:48 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.10 2009/01/07 22:58:38 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.11 2009/01/14 23:14:48 bjh21 Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.10 2009/01/07 22:58:38 bjh21 Exp $");
 #include <arch/acorn26/iobus/iocreg.h>
 #endif
 
-extern void main __P((void)); /* XXX Should be in a header file */
+extern void main(void); /* XXX Should be in a header file */
 
 struct bootconfig bootconfig;
 
