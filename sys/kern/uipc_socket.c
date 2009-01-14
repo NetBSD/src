@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.179 2009/01/14 18:09:00 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.180 2009/01/14 20:33:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.179 2009/01/14 18:09:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.180 2009/01/14 20:33:19 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1586,6 +1586,8 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	int error = 0, optval, opt;
 	struct linger l;
 	struct timeval tv;
+
+	memset(&tv, 0, sizeof(struct timeval));
 
 	switch ((opt = sopt->sopt_name)) {
 
