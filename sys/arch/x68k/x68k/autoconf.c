@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.59 2008/12/21 09:35:49 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.60 2009/01/14 01:48:42 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2008/12/21 09:35:49 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60 2009/01/14 01:48:42 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -194,7 +194,7 @@ device_register(struct device *dev, void *aux)
 	if (device_class(dev) == DV_IFNET) {
 		majdev = B_TYPE(bootdev);
 		if (X68K_BOOT_DEV_IS_NETIF(majdev)) {
-			sprintf(tname, "%s%d",
+			sprintf(tname, "%s%" PRIu64,
 				name_netif[255 - majdev], B_UNIT(bootdev));
 			if (!strcmp(tname, dev->dv_xname))
 				goto found;
@@ -244,7 +244,7 @@ scsi_find(dev_t bdev)
 		 * search for the scsibus whose parent is
 		 * the specified SCSI interface
 		 */
-		sprintf(tname, "%s%d",
+		sprintf(tname, "%s%" PRIu64,
 			name_scsiif[ifid], B_X68K_SCSI_IF_UN(bdev));
 
 		for (scsibus = TAILQ_FIRST(&alldevs); scsibus;
