@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.29 2009/01/12 02:22:55 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.30 2009/01/14 23:22:09 pooka Exp $
 #
 
 WARNS?=		4
@@ -56,12 +56,10 @@ __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
 	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
-.if ${MACHINE_CPU} != "vax"
 	${NM} -go ${.TARGET} | ${TOOL_AWK} '	\
 	    $$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
 	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
 	    | sort | uniq  > renametab.${.TARGET}
 	${OBJCOPY} --redefine-syms renametab.${.TARGET} ${.TARGET}
 	rm -f renametab.${.TARGET}
-.endif
 	${RANLIB} ${.TARGET}
