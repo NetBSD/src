@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.188 2009/01/11 18:00:04 christos Exp $
+$NetBSD: UPDATING,v 1.189 2009/01/14 15:53:29 hubertf Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -30,7 +30,9 @@ Recent changes:
 	   libraries in src/lib and src/gnu/lib and install them. Once
 	   the new libraries are installed, you can restart the build.
 	4. If you compile packages and you notice link time warnings,
-	   you'll need to bump them and rebuild them.
+	   rebuild the required packages to update their shared libraries.
+	   Any package you rebuild will require rebuilding all the packages
+	   that depend on it.
 	5. Next time you run pwd_mkdb with the new binary, the file
 	   will be upgraded and it will not be backwards compatible.
 	6. The utmpx/wtmpx files have been versioned, and there is
