@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.92 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.93 2009/01/14 18:07:29 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -131,8 +131,8 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define SO_RCVBUF	0x1002		/* receive buffer size */
 #define SO_SNDLOWAT	0x1003		/* send low-water mark */
 #define SO_RCVLOWAT	0x1004		/* receive low-water mark */
-#define SO_SNDTIMEO	0x1005		/* send timeout */
-#define SO_RCVTIMEO	0x1006		/* receive timeout */
+/* SO_OSNDTIMEO		0x1005 */
+/* SO_ORCVTIMEO		0x1006 */
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
 #define	SO_OVERFLOWED	0x1009		/* datagrams: return packets dropped */
@@ -141,6 +141,8 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 					 * kernel removes header and supplies
 					 * payload
 					 */
+#define SO_SNDTIMEO	0x100b		/* send timeout */
+#define SO_RCVTIMEO	0x100c		/* receive timeout */
 /*
  * Structure used for manipulating linger option.
  */
