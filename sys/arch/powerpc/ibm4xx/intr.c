@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2008/01/02 11:48:27 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.20.20.1 2009/01/14 17:50:25 snj Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2008/01/02 11:48:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20.20.1 2009/01/14 17:50:25 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -251,6 +251,7 @@ ext_intr(void)
 			ci->ci_ipending |= r_imen;
 			disable_irq(i);
  		} else {
+			ci->ci_idepth++;
 			splraise(intrs[i].is_mask);
 			if (intrs[i].is_type == IST_LEVEL)
 				disable_irq(i);
@@ -272,6 +273,7 @@ ext_intr(void)
 			ci->ci_cpl = pcpl;
 			uvmexp.intrs++;
 			intrs[i].is_evcnt.ev_count++;
+			ci->ci_idepth--;
 		}
 	}
 	mtdcr(INTR_ACK, bits_to_clear);	/* Acknowledge all pending interrupts */
