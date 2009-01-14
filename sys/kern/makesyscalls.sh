@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.78 2009/01/13 22:27:44 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.79 2009/01/14 19:40:30 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -213,7 +213,6 @@ NR == 1 {
 	printf "#include <sys/param.h>\n" > rumpcalls
 	printf "#include <sys/proc.h>\n" > rumpcalls
 	printf "#include <sys/syscallargs.h>\n" > rumpcalls
-	printf "#include <rump/rump_syscalls.h>\n" > rumpcalls
 	printf "#include \"rump_private.h\"\n\n" > rumpcalls
 	printf "#if\tBYTE_ORDER == BIG_ENDIAN\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.be.datum)\n" > rumpcalls
@@ -235,6 +234,9 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
 
 	printf " * created from%s\n */\n\n", $0 > rumpcallshdr
+	printf "#ifdef _RUMPKERNEL\n" > rumpcallshdr
+	printf "#error Interface not supported inside rump kernel\n" > rumpcallshdr
+	printf "#endif /* _RUMPKERNEL */\n\n" > rumpcallshdr
 
 	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
 	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
@@ -580,13 +582,11 @@ function putent(type, compatwrap) {
 		return
 
 	# need a local prototype, we export the re-re-named one in .h
-	if (wantrename) {
-		printf("\n%s rump_%s(", returntype, funcname) > rumpcalls
-		for (i = 1; i <= argc; i++) {
-			printf("%s, ", argtype[i]) > rumpcalls
-		}
-		printf("int *);") > rumpcalls
+	printf("\n%s rump_%s(", returntype, funcname) > rumpcalls
+	for (i = 1; i <= argc; i++) {
+		printf("%s, ", argtype[i]) > rumpcalls
 	}
+	printf("int *);") > rumpcalls
 
 	printf("\n%s\nrump_%s(", returntype, funcname) > rumpcalls
 	for (i = 1; i <= argc; i++) {
