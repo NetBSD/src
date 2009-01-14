@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.15 2009/01/14 20:43:28 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.16 2009/01/14 22:17:52 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -311,18 +311,6 @@ Lirq_to_ast:
 	bl	_C_LABEL(ast)
 	b	pull_trapframe
 
-/* XXX: Return type should be register_t */
-/* LINTSTUB: Func: int set_r13_irq(register_t r13_irq) */
-ENTRY(set_r13_irq)
-	/* XXX Is enabling FIQs OK? */
-	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_IRQ)
-	mov	r1, r0
-	mov	r0, r13
-	mov	r13, r1
-	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
-	MODE_CHANGE_NOP
-	movs	r15, lr
-
 /* LINTSTUB: Func: void int_on(void) */
 ENTRY(int_on)
 	bics	r15, r14, #(R15_IRQ_DISABLE)
@@ -436,4 +424,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.15 2009/01/14 20:43:28 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.16 2009/01/14 22:17:52 bjh21 Exp $")
