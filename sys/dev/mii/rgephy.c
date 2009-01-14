@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.24 2009/01/09 22:03:13 cegger Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.25 2009/01/14 19:24:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.24 2009/01/09 22:03:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.25 2009/01/14 19:24:32 cegger Exp $");
 
 
 /*
@@ -162,7 +162,7 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 #undef	ADD
 #undef	PRINT
 
-	PHY_RESET(sc);
+	rgephy_reset(sc);
 	aprint_normal("\n");
 }
 
@@ -201,7 +201,7 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		PHY_RESET(sc);	/* XXX hardware bug work-around */
+		rgephy_reset(sc);	/* XXX hardware bug work-around */
 
 		anar = PHY_READ(sc, RGEPHY_MII_ANAR);
 		anar &= ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX |
@@ -314,15 +314,17 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			}
 		}
 
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->mii_ticks <= MII_ANEGTICKS)
+		/* Announce link loss right after it happens. */
+		if (sc->mii_ticks++ == 0)
 			break;
+
+		/* Only retry autonegotiation every mii_anegticks seconds. */
+		if (sc->mii_ticks <= sc->mii_anegticks)
+			return 0;
 
 		sc->mii_ticks = 0;
 		rgephy_mii_phy_auto(sc);
-		return 0;
+		break;
 	}
 
 	/* Update the media status. */
@@ -336,8 +338,6 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
-	  	/* XXX only for v0/v1 phys. */
-		if (rsc->mii_revision < 2)
 		rgephy_load_dspcode(sc);
 	}
 	mii_phy_update(sc, cmd);
@@ -433,7 +433,7 @@ rgephy_mii_phy_auto(struct mii_softc *mii)
 	int anar;
 
 	rgephy_loop(mii);
-	PHY_RESET(mii);
+	rgephy_reset(mii);
 
 	anar = BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA;
 	if (mii->mii_flags & MIIF_DOPAUSE)
@@ -593,20 +593,17 @@ rgephy_reset(struct mii_softc *sc)
 	struct rgephy_softc *rsc;
 	uint16_t ssr;
 
-	mii_phy_reset(sc);
-	DELAY(1000);
-
 	rsc = (struct rgephy_softc *)sc;
-	if (rsc->mii_revision < 2) {
-		rgephy_load_dspcode(sc);
-	} else if (rsc->mii_revision == 3) {
+	if (rsc->mii_revision == 3) {
 		/* RTL8211C(L) */
 		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
 		if ((ssr & RGEPHY_SSR_ALDPS) != 0) {
 			ssr &= ~RGEPHY_SSR_ALDPS;
 			PHY_WRITE(sc, RGEPHY_MII_SSR, ssr);
 		}
-	} else {
+	}
+#if 0
+	else {
 		PHY_WRITE(sc, 0x1F, 0x0001);
 		PHY_WRITE(sc, 0x09, 0x273a);
 		PHY_WRITE(sc, 0x0e, 0x7bfb);
@@ -632,4 +629,9 @@ rgephy_reset(struct mii_softc *sc)
 	/* NWay enable and Restart NWay */
 	PHY_WRITE(sc, RGEPHY_MII_BMCR,
 	    RGEPHY_BMCR_RESET | RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
+#endif
+
+	mii_phy_reset(sc);
+	DELAY(1000);
+	rgephy_load_dspcode(sc);
 }
