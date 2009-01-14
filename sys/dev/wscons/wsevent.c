@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.28 2009/01/13 18:05:55 christos Exp $ */
+/* $NetBSD: wsevent.c,v 1.29 2009/01/14 15:34:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.28 2009/01/13 18:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.29 2009/01/14 15:34:36 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -153,7 +153,11 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 		return;
 	}
 	ev->get = ev->put = 0;
-	ev->q = malloc((u_long)WSEVENT_QSIZE * EVSIZE(ev),
+	/*
+	 * We allocate the maximum structure size here, so that we don't
+	 * need to malloc/free again in setversion.
+	 */
+	ev->q = malloc(WSEVENT_QSIZE * sizeof(struct wscons_event),
 	    M_DEVBUF, M_WAITOK|M_ZERO);
 	selinit(&ev->sel);
 	ev->io = p;
@@ -413,8 +417,6 @@ wsevent_inject(struct wseventvar *ev, struct wscons_event *events,
 int
 wsevent_setversion(struct wseventvar *ev, int vers)
 {
-	void *oq;
-
 	if (ev == NULL)
 		return EINVAL;
 
@@ -429,13 +431,7 @@ wsevent_setversion(struct wseventvar *ev, int vers)
 	if (vers == ev->version)
 		return 0;
 
-	oq = ev->q;
 	ev->get = ev->put = 0;
 	ev->version = vers;
-
-	ev->q = malloc((u_long)WSEVENT_QSIZE * EVSIZE(ev),
-	    M_DEVBUF, M_WAITOK|M_ZERO);
-
-	free(oq, M_DEVBUF);
 	return 0;
 }
