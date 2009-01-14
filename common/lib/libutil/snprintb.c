@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.2 2008/12/17 16:02:27 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.3 2009/01/14 21:33:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.2 2008/12/17 16:02:27 christos Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.3 2009/01/14 21:33:22 pooka Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: snprintb.c,v 1.2 2008/12/17 16:02:27 christos Exp $");
 #  include <errno.h>
 # else
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.2 2008/12/17 16:02:27 christos Exp $");
-#  include <sys/types.h>
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.3 2009/01/14 21:33:22 pooka Exp $");
+#  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
 #  include <lib/libkern/libkern.h>
