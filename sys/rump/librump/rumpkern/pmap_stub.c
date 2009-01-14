@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.9 2008/12/18 00:24:12 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.10 2009/01/14 18:17:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.9 2008/12/18 00:24:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.10 2009/01/14 18:17:23 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -188,6 +188,22 @@ void
 pmap_protect_long(pmap_t pmap, vaddr_t va1, vaddr_t va2, vm_prot_t prot)
 {
 
+}
+#endif
+
+#ifdef __powerpc__
+bool
+pmap_clear_bit(struct vm_page *pg, int ptebit)
+{
+
+	return true;
+}
+
+bool
+pmap_query_bit(struct vm_page *pg, int ptebit)
+{
+
+	return true;
 }
 #endif
 
