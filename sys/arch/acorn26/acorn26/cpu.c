@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.24 2009/01/06 23:41:28 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.25 2009/01/14 20:40:55 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2009/01/06 23:41:28 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2009/01/14 20:40:55 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -296,7 +296,7 @@ cpu_delay_calibrate(device_t self)
 	microtime(&end);
 	timersub(&end, &startt, &diff);
 	cpu_delay_factor = 10000 / diff.tv_usec + 1;
-	aprint_normal_dev(self, "10000 loops in %ld microseconds, "
+	aprint_normal_dev(self, "10000 loops in %d microseconds, "
 	    "delay factor = %d\n",
 	    diff.tv_usec, cpu_delay_factor);
 }
