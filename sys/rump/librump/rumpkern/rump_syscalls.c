@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.25 2009/01/13 22:31:42 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.26 2009/01/14 19:41:08 pooka Exp $ */
 
 /*
  * System call marshalling for rump.
@@ -8,13 +8,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.25 2009/01/13 22:31:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.26 2009/01/14 19:41:08 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
-#include <rump/rump_syscalls.h>
 #include "rump_private.h"
 
 #if	BYTE_ORDER == BIG_ENDIAN
@@ -31,6 +30,7 @@ rump_enosys()
 	return ENOSYS;
 }
 
+ssize_t rump_sys_read(int, void *, size_t, int *);
 ssize_t
 rump_sys_read(int fd, void * buf, size_t nbyte, int *error)
 {
@@ -48,6 +48,7 @@ rump_sys_read(int fd, void * buf, size_t nbyte, int *error)
 }
 __weak_alias(sys_read,rump_enosys);
 
+ssize_t rump_sys_write(int, const void *, size_t, int *);
 ssize_t
 rump_sys_write(int fd, const void * buf, size_t nbyte, int *error)
 {
@@ -65,6 +66,7 @@ rump_sys_write(int fd, const void * buf, size_t nbyte, int *error)
 }
 __weak_alias(sys_write,rump_enosys);
 
+int rump_sys_open(const char *, int, mode_t, int *);
 int
 rump_sys_open(const char * path, int flags, mode_t mode, int *error)
 {
@@ -82,6 +84,7 @@ rump_sys_open(const char * path, int flags, mode_t mode, int *error)
 }
 __weak_alias(sys_open,rump_enosys);
 
+int rump_sys_close(int, int *);
 int
 rump_sys_close(int fd, int *error)
 {
@@ -97,6 +100,7 @@ rump_sys_close(int fd, int *error)
 }
 __weak_alias(sys_close,rump_enosys);
 
+int rump_sys_link(const char *, const char *, int *);
 int
 rump_sys_link(const char * path, const char * link, int *error)
 {
@@ -113,6 +117,7 @@ rump_sys_link(const char * path, const char * link, int *error)
 }
 __weak_alias(sys_link,rump_enosys);
 
+int rump_sys_unlink(const char *, int *);
 int
 rump_sys_unlink(const char * path, int *error)
 {
@@ -128,6 +133,7 @@ rump_sys_unlink(const char * path, int *error)
 }
 __weak_alias(sys_unlink,rump_enosys);
 
+int rump_sys_chdir(const char *, int *);
 int
 rump_sys_chdir(const char * path, int *error)
 {
@@ -143,6 +149,7 @@ rump_sys_chdir(const char * path, int *error)
 }
 __weak_alias(sys_chdir,rump_enosys);
 
+int rump_sys_fchdir(int, int *);
 int
 rump_sys_fchdir(int fd, int *error)
 {
@@ -158,6 +165,7 @@ rump_sys_fchdir(int fd, int *error)
 }
 __weak_alias(sys_fchdir,rump_enosys);
 
+int rump_sys_chmod(const char *, mode_t, int *);
 int
 rump_sys_chmod(const char * path, mode_t mode, int *error)
 {
@@ -174,6 +182,7 @@ rump_sys_chmod(const char * path, mode_t mode, int *error)
 }
 __weak_alias(sys_chmod,rump_enosys);
 
+int rump_sys_chown(const char *, uid_t, gid_t, int *);
 int
 rump_sys_chown(const char * path, uid_t uid, gid_t gid, int *error)
 {
@@ -191,6 +200,7 @@ rump_sys_chown(const char * path, uid_t uid, gid_t gid, int *error)
 }
 __weak_alias(sys_chown,rump_enosys);
 
+int rump_sys_unmount(const char *, int, int *);
 int
 rump_sys_unmount(const char * path, int flags, int *error)
 {
@@ -207,6 +217,7 @@ rump_sys_unmount(const char * path, int flags, int *error)
 }
 __weak_alias(sys_unmount,rump_enosys);
 
+int rump_sys_accept(int, struct sockaddr *, unsigned int *, int *);
 int
 rump_sys_accept(int s, struct sockaddr * name, unsigned int * anamelen, int *error)
 {
@@ -224,6 +235,7 @@ rump_sys_accept(int s, struct sockaddr * name, unsigned int * anamelen, int *err
 }
 __weak_alias(sys_accept,rump_enosys);
 
+int rump_sys_chflags(const char *, u_long, int *);
 int
 rump_sys_chflags(const char * path, u_long flags, int *error)
 {
@@ -240,6 +252,7 @@ rump_sys_chflags(const char * path, u_long flags, int *error)
 }
 __weak_alias(sys_chflags,rump_enosys);
 
+void rump_sys_sync(int *);
 void
 rump_sys_sync(int *error)
 {
@@ -251,6 +264,7 @@ rump_sys_sync(int *error)
 }
 __weak_alias(sys_sync,rump_enosys);
 
+int rump_sys_ioctl(int, u_long, void *, int *);
 int
 rump_sys_ioctl(int fd, u_long com, void * data, int *error)
 {
@@ -268,6 +282,7 @@ rump_sys_ioctl(int fd, u_long com, void * data, int *error)
 }
 __weak_alias(sys_ioctl,rump_enosys);
 
+int rump_sys_symlink(const char *, const char *, int *);
 int
 rump_sys_symlink(const char * path, const char * link, int *error)
 {
@@ -284,6 +299,7 @@ rump_sys_symlink(const char * path, const char * link, int *error)
 }
 __weak_alias(sys_symlink,rump_enosys);
 
+ssize_t rump_sys_readlink(const char *, char *, size_t, int *);
 ssize_t
 rump_sys_readlink(const char * path, char * buf, size_t count, int *error)
 {
@@ -301,6 +317,7 @@ rump_sys_readlink(const char * path, char * buf, size_t count, int *error)
 }
 __weak_alias(sys_readlink,rump_enosys);
 
+int rump_sys_fsync(int, int *);
 int
 rump_sys_fsync(int fd, int *error)
 {
@@ -316,6 +333,7 @@ rump_sys_fsync(int fd, int *error)
 }
 __weak_alias(sys_fsync,rump_enosys);
 
+int rump_sys_connect(int, const struct sockaddr *, unsigned int, int *);
 int
 rump_sys_connect(int s, const struct sockaddr * name, unsigned int namelen, int *error)
 {
@@ -333,6 +351,7 @@ rump_sys_connect(int s, const struct sockaddr * name, unsigned int namelen, int 
 }
 __weak_alias(sys_connect,rump_enosys);
 
+int rump_sys_bind(int, const struct sockaddr *, unsigned int, int *);
 int
 rump_sys_bind(int s, const struct sockaddr * name, unsigned int namelen, int *error)
 {
@@ -350,6 +369,7 @@ rump_sys_bind(int s, const struct sockaddr * name, unsigned int namelen, int *er
 }
 __weak_alias(sys_bind,rump_enosys);
 
+int rump_sys_setsockopt(int, int, int, const void *, unsigned int, int *);
 int
 rump_sys_setsockopt(int s, int level, int name, const void * val, unsigned int valsize, int *error)
 {
@@ -369,6 +389,7 @@ rump_sys_setsockopt(int s, int level, int name, const void * val, unsigned int v
 }
 __weak_alias(sys_setsockopt,rump_enosys);
 
+int rump_sys_listen(int, int, int *);
 int
 rump_sys_listen(int s, int backlog, int *error)
 {
@@ -385,6 +406,7 @@ rump_sys_listen(int s, int backlog, int *error)
 }
 __weak_alias(sys_listen,rump_enosys);
 
+int rump_sys_getsockopt(int, int, int, void *, unsigned int *, int *);
 int
 rump_sys_getsockopt(int s, int level, int name, void * val, unsigned int * avalsize, int *error)
 {
@@ -404,6 +426,7 @@ rump_sys_getsockopt(int s, int level, int name, void * val, unsigned int * avals
 }
 __weak_alias(sys_getsockopt,rump_enosys);
 
+int rump_sys_rename(const char *, const char *, int *);
 int
 rump_sys_rename(const char * from, const char * to, int *error)
 {
@@ -420,6 +443,7 @@ rump_sys_rename(const char * from, const char * to, int *error)
 }
 __weak_alias(sys_rename,rump_enosys);
 
+int rump_sys_mkfifo(const char *, mode_t, int *);
 int
 rump_sys_mkfifo(const char * path, mode_t mode, int *error)
 {
@@ -436,6 +460,7 @@ rump_sys_mkfifo(const char * path, mode_t mode, int *error)
 }
 __weak_alias(sys_mkfifo,rump_enosys);
 
+int rump_sys_mkdir(const char *, mode_t, int *);
 int
 rump_sys_mkdir(const char * path, mode_t mode, int *error)
 {
@@ -452,6 +477,7 @@ rump_sys_mkdir(const char * path, mode_t mode, int *error)
 }
 __weak_alias(sys_mkdir,rump_enosys);
 
+int rump_sys_rmdir(const char *, int *);
 int
 rump_sys_rmdir(const char * path, int *error)
 {
@@ -467,6 +493,7 @@ rump_sys_rmdir(const char * path, int *error)
 }
 __weak_alias(sys_rmdir,rump_enosys);
 
+int rump_sys_nfssvc(int, void *, int *);
 int
 rump_sys_nfssvc(int flag, void * argp, int *error)
 {
@@ -483,6 +510,7 @@ rump_sys_nfssvc(int flag, void * argp, int *error)
 }
 __weak_alias(sys_nfssvc,rump_enosys);
 
+ssize_t rump_sys_pread(int, void *, size_t, int, off_t, int *);
 ssize_t
 rump_sys_pread(int fd, void * buf, size_t nbyte, int pad, off_t offset, int *error)
 {
@@ -502,6 +530,7 @@ rump_sys_pread(int fd, void * buf, size_t nbyte, int pad, off_t offset, int *err
 }
 __weak_alias(sys_pread,rump_enosys);
 
+ssize_t rump_sys_pwrite(int, const void *, size_t, int, off_t, int *);
 ssize_t
 rump_sys_pwrite(int fd, const void * buf, size_t nbyte, int pad, off_t offset, int *error)
 {
@@ -521,6 +550,7 @@ rump_sys_pwrite(int fd, const void * buf, size_t nbyte, int pad, off_t offset, i
 }
 __weak_alias(sys_pwrite,rump_enosys);
 
+int rump_sys_truncate(const char *, int, off_t, int *);
 int
 rump_sys_truncate(const char * path, int pad, off_t length, int *error)
 {
@@ -538,6 +568,7 @@ rump_sys_truncate(const char * path, int pad, off_t length, int *error)
 }
 __weak_alias(sys_truncate,rump_enosys);
 
+int rump_sys___sysctl(const int *, u_int, void *, size_t *, const void *, size_t, int *);
 int
 rump_sys___sysctl(const int * name, u_int namelen, void * old, size_t * oldlenp, const void * new, size_t newlen, int *error)
 {
@@ -558,6 +589,7 @@ rump_sys___sysctl(const int * name, u_int namelen, void * old, size_t * oldlenp,
 }
 __weak_alias(sys___sysctl,rump_enosys);
 
+int rump_sys_lchmod(const char *, mode_t, int *);
 int
 rump_sys_lchmod(const char * path, mode_t mode, int *error)
 {
@@ -574,6 +606,7 @@ rump_sys_lchmod(const char * path, mode_t mode, int *error)
 }
 __weak_alias(sys_lchmod,rump_enosys);
 
+int rump_sys_lchown(const char *, uid_t, gid_t, int *);
 int
 rump_sys_lchown(const char * path, uid_t uid, gid_t gid, int *error)
 {
@@ -591,6 +624,7 @@ rump_sys_lchown(const char * path, uid_t uid, gid_t gid, int *error)
 }
 __weak_alias(sys_lchown,rump_enosys);
 
+int rump_sys_lchflags(const char *, u_long, int *);
 int
 rump_sys_lchflags(const char * path, u_long flags, int *error)
 {
@@ -607,6 +641,7 @@ rump_sys_lchflags(const char * path, u_long flags, int *error)
 }
 __weak_alias(sys_lchflags,rump_enosys);
 
+int rump_sys_statvfs1(const char *, struct statvfs *, int, int *);
 int
 rump_sys_statvfs1(const char * path, struct statvfs * buf, int flags, int *error)
 {
