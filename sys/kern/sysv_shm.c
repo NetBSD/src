@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.113 2008/10/27 15:40:56 erh Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.113.2.1 2009/01/14 17:54:21 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.113 2008/10/27 15:40:56 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.113.2.1 2009/01/14 17:54:21 snj Exp $");
 
 #define SYSVSHM
 
@@ -386,6 +386,7 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 
 	/* Allocate a new map entry and set it */
 	shmmap_se = pool_get(&shmmap_entry_pool, PR_WAITOK);
+	shmmap_se->shmid = SCARG(uap, shmid);
 
 	mutex_enter(&shm_lock);
 	/* In case of reallocation, we will wait for completion */
@@ -466,7 +467,6 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	/* Set the new address, and update the time */
 	mutex_enter(&shm_lock);
 	shmmap_se->va = attach_va;
-	shmmap_se->shmid = SCARG(uap, shmid);
 	shmseg->shm_atime = time_second;
 	shm_realloc_disable--;
 	retval[0] = attach_va;
