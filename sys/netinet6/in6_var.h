@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.60 2008/08/20 18:35:20 matt Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.61 2009/01/14 18:06:52 christos Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -82,8 +82,8 @@
  *	in kernel: modify preferred/expire only
  */
 struct in6_addrlifetime {
-	time_t ia6t_expire;	/* valid lifetime expiration time */
-	time_t ia6t_preferred;	/* preferred lifetime expiration time */
+	int32_t ia6t_expire;	/* valid lifetime expiration time */
+	int32_t ia6t_preferred;	/* preferred lifetime expiration time */
 	u_int32_t ia6t_vltime;	/* valid lifetime */
 	u_int32_t ia6t_pltime;	/* prefix lifetime */
 };
