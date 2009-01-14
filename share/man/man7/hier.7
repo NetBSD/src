@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.83 2009/01/14 01:46:51 reed Exp $
+.\"	$NetBSD: hier.7,v 1.84 2009/01/14 01:51:29 reed Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,6 +67,10 @@ utilities used in both single and multi-user environments
 .It Sy /boot*
 second-stage boot loader(s) for some platforms; see
 .Xr installboot 8
+.It Sy /cdrom/
+empty directory commonly used by
+system administrators as a temporary mount point for CD devices
+for ISO-9660 file systems
 .It Sy /dev/
 block, character and other special device files
 .Pp
@@ -100,7 +104,7 @@ kernel physical memory device; see
 .It Sy null
 the null device; see
 .Xr null 4
-.It Sy pts
+.It Sy pts/
 mount point for the pseudo-terminal device file system; see
 .Xr mount_ptyfs 8
 .It Sy stderr
