@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.11 2009/01/13 22:43:48 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.12 2009/01/14 23:14:48 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.11 2009/01/13 22:43:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.12 2009/01/14 23:14:48 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,7 +98,7 @@ LIST_HEAD(irq_handler_head, irq_handler) irq_list_head =
 
 struct irq_handler {
 	LIST_ENTRY(irq_handler)	link;
-	int	(*func) __P((void *));
+	int	(*func)(void *);
 	void	*arg;
 	u_int32_t	mask;
 	int	irqnum;
