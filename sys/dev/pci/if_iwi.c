@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.74.2.2 2008/11/10 18:39:59 snj Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.74.2.3 2009/01/14 17:57:39 snj Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.74.2.2 2008/11/10 18:39:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.74.2.3 2009/01/14 17:57:39 snj Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2157,7 +2157,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 
 	if (iwi_accept_eula == 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "EULA not accepted, can't load firmware\n");
+		    "EULA not accepted; please see the iwi(4) man page.\n");
 		return EPERM;
 	}
 
