@@ -1,4 +1,4 @@
-/* $NetBSD: fix_grouping.c,v 1.4.2.3 2009/01/15 04:00:38 snj Exp $ */
+/* $NetBSD: fix_grouping.c,v 1.4.2.4 2009/01/15 04:21:25 snj Exp $ */
 
 /*
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -29,9 +29,13 @@
  *     FreeBSD: fix_grouping.c,v 1.8 2003/06/26 10:46:16 phantom Exp
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fix_grouping.c,v 1.4.2.3 2009/01/15 04:00:38 snj Exp $");
+__RCSID("$NetBSD: fix_grouping.c,v 1.4.2.4 2009/01/15 04:21:25 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
