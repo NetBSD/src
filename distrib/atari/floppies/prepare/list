@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2006/05/12 05:50:30 jdc Exp $
+#	$NetBSD: list,v 1.4.14.1 2009/01/15 22:25:22 bouyer Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -22,12 +22,12 @@ PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
-PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/swapctl
+PROG	sbin/sysctl
 PROG	sbin/umount
 
 PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
