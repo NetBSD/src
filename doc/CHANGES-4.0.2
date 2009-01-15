@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.12 2009/01/15 22:06:30 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.13 2009/01/15 22:26:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -94,4 +94,22 @@ lib/libc/gen/fts.c				1.35
 	by testing FTS_SYMFOLLOW in fts_flags instead of fts_options.
 	Fix provided by Ben Harris in PR 40319
 	[lukem, ticket #1256]
+
+distrib/atari/floppies/common/dot.profile	1.3
+distrib/atari/floppies/install/list		1.8
+distrib/atari/floppies/prepare/install.md	1.3
+distrib/atari/floppies/prepare/list		1.5
+distrib/atari/miniroot/Makefile.inc		delete
+distrib/atari/miniroot/disktab.shadow		delete
+distrib/atari/miniroot/dot.profile		delete
+distrib/atari/miniroot/install.md		delete
+distrib/atari/miniroot/list			delete
+distrib/atari/miniroot/termcap.vt		delete
+sys/arch/atari/stand/installboot/installboot.c	1.21
+
+	Since dl.d_type is always "unknown" now, pick the type of bootblock to
+	install based on the device name: eg /dev/fd0c would be floppy
+	Fix atari sysinst based miniroot image, and retire old (unreferenced)
+	miniroot.
+	[abs, ticket #1257]
 
