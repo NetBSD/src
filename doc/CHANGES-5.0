@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.66 2009/01/15 03:32:44 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.67 2009/01/15 04:37:02 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2275,4 +2275,26 @@ usr.sbin/chrtbl/ctypeio.h			1.1
 	Fix shortcomings in LC_{MONETARY,NUMERIC,TIME,MESSAGES} db format.
 	Closes PR lib/39662.
 	[tnozaki, ticket #222]
+
+usr.bin/mklocale/Makefile			1.13-1.15
+usr.bin/mklocale/lex.l				1.15, 1.16
+usr.bin/mklocale/yacc.y				1.26, 1.27
+usr.bin/mklocale/mklocaledb.c			1.2
+lib/libc/citrus/citrus_bcs_strtoul.c		1.2
+lib/libc/locale/fix_grouping.c			1.2, 1.3
+lib/libc/locale/iswctype_sb.c			1.7
+lib/libc/locale/rune.h				1.14
+lib/libc/locale/runetype.h			delete
+lib/libc/locale/runetype_local.h		1.1
+lib/libc/stdio/fparseln.c			1.8
+lib/libc/string/wcscmp.c			1.7
+lib/libc/string/wcsncmp.c			1.7
+lib/libc/string/wmemcmp.c			1.5
+tools/compat/compat_defs.h			1.68
+tools/compat/configure				regen
+tools/compat/configure.ac			1.68
+tools/compat/nbtool_config.h.in			regen
+
+	Crossbuild fixes for ticket 222.
+	[jmcneill, ticket #270]
 
