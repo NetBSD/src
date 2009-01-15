@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscmp.c,v 1.5.38.1 2009/01/15 03:24:08 snj Exp $	*/
+/*	$NetBSD: wcscmp.c,v 1.5.38.2 2009/01/15 04:21:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,13 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)strcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wcscmp.c,v 1.5.38.1 2009/01/15 03:24:08 snj Exp $");
+__RCSID("$NetBSD: wcscmp.c,v 1.5.38.2 2009/01/15 04:21:26 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <wchar.h>
-#include "runetype.h"
+#include "runetype_local.h"
 
 /*
  * Compare strings.

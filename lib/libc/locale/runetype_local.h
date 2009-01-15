@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.21 2007/09/29 08:10:17 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.2.2.2 2009/01/15 04:21:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,8 +34,8 @@
  *	@(#)runetype.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef	_NB_RUNETYPE_H_
-#define	_NB_RUNETYPE_H_
+#ifndef	_RUNETYPE_LOCAL_H_
+#define	_RUNETYPE_LOCAL_H_
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
@@ -223,4 +223,4 @@ typedef struct _NBRuneLocale {
 /* codeset tag */
 #define _NB_RUNE_CODESET "CODESET="
 
-#endif	/* !_NB_RUNETYPE_H_ */
+#endif	/* !_RUNETYPE_LOCAL_H_ */
