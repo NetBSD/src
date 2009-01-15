@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.63 2009/01/15 20:32:59 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.64 2009/01/15 23:22:15 christos Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -251,6 +251,10 @@ struct icmp6_ifstat {
 	u_quad_t ifs6_out_mlddone;
 };
 
+/*
+ * If you make changes that change the size of in6_ifreq,
+ * make sure you fix compat/netinet6/in6_var.h
+ */
 struct	in6_ifreq {
 	char	ifr_name[IFNAMSIZ];
 	union {
