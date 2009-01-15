@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.34 2008/11/28 20:46:17 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.35 2009/01/15 21:46:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -1130,4 +1130,13 @@ distrib/sets/lists/mi				1.778
 
 	update zoneinfo to tzdata2008i
 	[lukem, ticket #1977]
+
+sys/arch/sparc/stand/bootblk/bootblk.fth	1.8
+
+	Instead of bailing out with "Inode not directory", assume that the
+	disk is a RAIDframe mirror, apply the RAID boot offset, and try to
+	boot again.
+	Fixes the problem where disks would be unbootable if partitioned
+	normally and then converted to RAID 1 without being zeroed first.
+	[jdc, ticket #1986]
 
