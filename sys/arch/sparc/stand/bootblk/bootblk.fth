@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.6 2004/06/18 18:42:15 martin Exp $
+\	$NetBSD: bootblk.fth,v 1.6.22.1 2009/01/15 21:45:45 bouyer Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -126,6 +126,7 @@ sbsize buffer: sb-buf
 -1 value boot-ihandle
 dev_bsize value bsize
 0 value raid-offset	\ Offset if it's a raid-frame partition
+false value force-raid	\ Force reads from raid offset
 
 : strategy ( addr size start -- nread )
    raid-offset + bsize * 0 " seek" boot-ihandle $call-method
@@ -439,13 +440,26 @@ h# 2000 buffer: indir-block
       then 				( boot-path len ihandle )
       to boot-ihandle			\ Save ihandle to boot device
    then 2drop
-   sboff read-super
-   sb-buf fs_magic l@ fs_magic_value <>  if
+   force-raid if
+      boot-debug?  if ." Force RAID superblock read" cr then
       rf_protected dup to raid-offset 
       dev_bsize * sboff + read-super
       sb-buf fs_magic l@ fs_magic_value <>  if
          ." Invalid superblock magic" cr
          abort
+      then
+   else
+      boot-debug?  if ." Normal superblock read" cr then
+      sboff read-super
+      sb-buf fs_magic l@ fs_magic_value <>  if
+         boot-debug?  if ." RAID superblock read" cr then
+         true to force-raid
+         rf_protected dup to raid-offset 
+         dev_bsize * sboff + read-super
+         sb-buf fs_magic l@ fs_magic_value <>  if
+            ." Invalid superblock magic" cr
+            abort
+         then
       then
    then
    sb-buf fs_bsize l@ dup maxbsize >  if
@@ -509,7 +523,7 @@ h# 2000 buffer: indir-block
    \ For each path component
    \ 
    begin split-path dup 0<> while	( pino right len left len -- )
-      cur-inode is-dir? not  if ." Inode not directory" cr abort then
+      cur-inode is-dir? not  if ." Inode not directory" cr false exit then
       boot-debug?  if ." Looking for" space 2dup type space ." in directory..." cr then
       search-directory			( pino right len left len -- pino right len ino|false )
       dup 0=  if ." Bad path" cr abort then	( pino right len cino )
@@ -540,6 +554,7 @@ h# 2000 buffer: indir-block
       then				( pino right len )
    repeat
    2drop drop
+   true
 ;
 
 : read-file ( size addr -- )
@@ -588,8 +603,24 @@ h# 6000 constant loader-base
 : load-file ( load-file len boot-path len -- load-base )
    boot-debug?  if load-file-signon then
    the-file file_SIZEOF 0 fill		\ Clear out file structure
-   ufs-open 				( load-file len )
-   find-file				( )
+   \ copy "load-file len boot-path len" in case we need to set "force-raid"
+   2over 2over				( load-file len boot-path len load-file len boot-path len )
+   ufs-open 				( load-file len boot-path len load-file len )
+   find-file not if			( load-file len boot-path len )
+      force-raid not if
+         true to force-raid		( )
+         ufs-close
+         2drop 2drop drop		( load-file len boot-path len )
+         ufs-open 			( load-file len )
+         find-file			( true:false )
+         drop
+      else
+         abort
+      then
+   else
+      \ We didn't set "force-raid", discard the copies
+      2drop 2drop			( )
+   then
 
    \
    \ Now we've found the file we should read it in in one big hunk
