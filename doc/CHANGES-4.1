@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.123 2009/01/15 22:22:45 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.124 2009/01/15 22:42:10 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2597,4 +2597,19 @@ sys/arch/atari/stand/installboot/installboot.c	1.21
 	Fix atari sysinst based miniroot image, and retire old (unreferenced)
 	miniroot.
 	[abs, ticket #1257]
+
+sys/arch/atari/atari/atari_init.c		1.68 - 1.70
+sys/arch/atari/atari/genassym.cf		1.28
+sys/arch/atari/atari/pmap.c			1.106, 1.111 (via patch)
+sys/arch/atari/atari/pmap_bootstrap.c		1.1
+sys/arch/atari/conf/files.atari			1.113
+sys/arch/atari/include/pcb.h			1.7 - 1.9
+sys/arch/atari/include/pmap.h			1.35, 1.37, 1.39 (via patch)
+sys/arch/atari/include/pte.h			1.8
+sys/arch/atari/include/vmparam.h		1.22
+
+	These changes make atari pmap sync with (more well maintained)
+	amiga pmap, and also include (missed) necessary MD changes
+	on yamt-km merge.
+	[tsutsui, ticket #1258]
 
