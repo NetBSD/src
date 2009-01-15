@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.120 2009/01/02 12:45:47 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.121 2009/01/15 22:00:40 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2563,4 +2563,13 @@ lib/libc/stdio/fparseln.c			1.6-1.7
 	empty continuation lines Comment the code to make the logic obvious.
 	Fixes PR#40317.
 	[martin, ticket #1254]
+
+sys/arch/sparc/stand/bootblk/bootblk.fth	1.8
+
+	Instead of bailing out with "Inode not directory", assume that
+	the disk is a RAIDframe mirror, apply the RAID boot offset,
+	and try to boot again.
+	Fixes the problem where disks would be unbootable if partitioned
+	normally and then converted to RAID 1 without being zeroed first.
+	[jdc, ticket #1251]
 
