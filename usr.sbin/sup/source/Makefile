@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2008/10/25 22:35:37 apb Exp $
+#	$NetBSD: Makefile,v 1.32 2009/01/15 15:57:18 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -50,9 +50,9 @@
 #SITE			= FREEBSD
 #SITE			= CMUCS
 SITE1			!= uname -s | tr '[a-z]' '[A-Z]' \
-			    | ${TOOL_SED} -e s/_.*//g
+			    | sed -e s/_.*//g
 SITE2			= $(shell uname -s | tr '[a-z]' '[A-Z]' \
-			    | ${TOOL_SED} -e s/_.*//g)
+			    | sed -e s/_.*//g)
 SITE			= ${SITE1}${SITE2}
 TARDIR			= sup-0.3
 
@@ -74,17 +74,17 @@ NON_MACH_DEFINES	= -UMACH
 
 
 #INSTALLATION PARAMETERS
-PREFIX		       ?= /usr/local/
+PREFIX		       ?= /usr/pkg/
 NETBSD_BINDIR		= ${PREFIX}/sbin
 NETBSD_MAN1		= ${PREFIX}/man/man1
 NETBSD_MAN8		= ${PREFIX}/man/man8
 
-CFLAGS			= ${DEFS} -O -I.
+CFLAGS			= ${DEFS} -O -I. -g
 
 SUPCL			= supcmain.o supcvers.o supcparse.o supcname.o \
 			  supcmisc.o supcmeat.o
 SUPS			= scm.o scmio.o stree.o log.o supmsg.o netcrypt.o
-EXTRA			= atoo.o errmsg.o expand.o ffilecopy.o filecopy.o \
+EXTRA			= atoo.o expand.o ffilecopy.o filecopy.o \
 			  nxtarg.o path.o quit.o read_line.o run.o estrdup.o \
 			  skipto.o vprintf.o setproctitle.o
 
