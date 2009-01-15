@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.32 2009/01/13 22:27:43 pooka Exp $  
+	$NetBSD: syscalls.master,v 1.33 2009/01/15 23:48:50 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -151,10 +151,11 @@
 			    struct orlimit *rlp); }
 76	STD		{ int|linux_sys||getrlimit(u_int which, \
 			    struct orlimit *rlp); }
-77	NOARGS		{ int|sys||getrusage(int who, struct rusage *rusage); }
-78	STD		{ int|linux_sys||gettimeofday(struct timeval *tp, \
+77	NOARGS		{ int|compat_50_sys||getrusage(int who, \
+			    struct rusage50 *rusage); }
+78	STD		{ int|linux_sys||gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-79	STD		{ int|linux_sys||settimeofday(struct timeval *tp, \
+79	STD		{ int|linux_sys||settimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
 80	NOARGS		{ int|sys||getgroups(u_int gidsetsize, gid_t *gidset); }
 81	NOARGS		{ int|sys||setgroups(u_int gidsetsize, gid_t *gidset); }
@@ -190,10 +191,11 @@
 			    unsigned int hi, int val); }
 102	STD		{ int|linux_sys||socketcall(int what, void *args); }
 103	UNIMPL		syslog
-104	NOARGS		{ int|sys||setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
-105	NOARGS		{ int|sys||getitimer(u_int which, \
-			    struct itimerval *itv); }
+104	NOARGS		{ int|compat_50_sys||setitimer(u_int which, \
+			    struct itimerval50 *itv, \
+			    struct itimerval50 *oitv); }
+105	NOARGS		{ int|compat_50_sys||getitimer(u_int which, \
+			    struct itimerval50 *itv); }
 106	STD		{ int|linux_sys||stat(const char *path, \
 			    struct linux_stat *sp); }
 107	STD		{ int|linux_sys||lstat(const char *path, \
@@ -242,7 +244,7 @@
 			    struct linux_dirent *dent, unsigned int count); }
 142	STD		{ int|linux_sys||select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
-			    struct timeval *timeout); }
+			    struct timeval50 *timeout); }
 143	NOARGS		{ int|sys||flock(int fd, int how); }
 144	NOARGS		{ int|sys|13|msync(void *addr, size_t len, int flags); }
 145	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
