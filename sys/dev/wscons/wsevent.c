@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.29 2009/01/14 15:34:36 christos Exp $ */
+/* $NetBSD: wsevent.c,v 1.30 2009/01/15 04:22:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.29 2009/01/14 15:34:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.30 2009/01/15 04:22:11 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -152,6 +152,9 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 #endif
 		return;
 	}
+#if defined(COMPAT_50) || defined(MODULAR)
+	ev->version = 0;
+#endif /* defined(COMPAT_50) || defined(MODULAR) */
 	ev->get = ev->put = 0;
 	/*
 	 * We allocate the maximum structure size here, so that we don't
@@ -378,7 +381,7 @@ wsevent_inject(struct wseventvar *ev, struct wscons_event *events,
 
 	/* Inject the events. */
 	switch (ev->version) {
-#ifdef COMPAT_50
+#if defined(COMPAT_50) || defined(MODULAR)
 	case 0:
 		for (i = 0; i < nevents; i++) {
 			struct owscons_event *we;
@@ -391,7 +394,7 @@ wsevent_inject(struct wseventvar *ev, struct wscons_event *events,
 			ev->put = (ev->put + 1) % WSEVENT_QSIZE;
 		}
 		break;
-#endif
+#endif /* defined(COMPAT_50) || defined(MODULAR) */
 	case WSEVENT_VERSION:
 		for (i = 0; i < nevents; i++) {
 			struct wscons_event *we;

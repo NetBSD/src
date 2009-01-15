@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.124 2009/01/13 18:05:55 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.125 2009/01/15 04:22:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,12 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.124 2009/01/13 18:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.125 2009/01/15 04:22:11 yamt Exp $");
 
-#include "opt_compat_netbsd.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
-#include "opt_compat_netbsd.h"
 #include "wskbd.h"
 #include "wsmux.h"
 #include "wsdisplay.h"
@@ -872,9 +870,6 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return (ENXIO);
 
 	if (ISWSDISPLAYSTAT(dev)) {
-#ifndef COMPAT_50
-		sc->evar.version = WSEVENT_VERSION;
-#endif
 		wsevent_init(&sc->evar, l->l_proc);
 		return (0);
 	}
