@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.61 2009/01/14 18:06:52 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.62 2009/01/15 18:20:48 christos Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -82,8 +82,8 @@
  *	in kernel: modify preferred/expire only
  */
 struct in6_addrlifetime {
-	int32_t ia6t_expire;	/* valid lifetime expiration time */
-	int32_t ia6t_preferred;	/* preferred lifetime expiration time */
+	time_t ia6t_expire;	/* valid lifetime expiration time */
+	time_t ia6t_preferred;	/* preferred lifetime expiration time */
 	u_int32_t ia6t_vltime;	/* valid lifetime */
 	u_int32_t ia6t_pltime;	/* prefix lifetime */
 };
@@ -419,8 +419,7 @@ struct	in6_rrenumreq {
 #define SIOCGNBRINFO_IN6	_IOWR('i', 78, struct in6_nbrinfo)
 #define SIOCSPFXFLUSH_IN6	_IOWR('i', 79, struct in6_ifreq)
 #define SIOCSRTRFLUSH_IN6	_IOWR('i', 80, struct in6_ifreq)
-
-#define SIOCGIFALIFETIME_IN6	_IOWR('i', 81, struct in6_ifreq)
+/* 81 was old SIOCGIFALIFETIME_IN6 */
 #if 0
 /* withdrawn - do not reuse number 82 */
 #define SIOCSIFALIFETIME_IN6	_IOWR('i', 82, struct in6_ifreq)
@@ -441,7 +440,10 @@ struct	in6_rrenumreq {
 				     struct in6_rrenumreq) /* change */
 #define SIOCSGIFPREFIX_IN6	_IOW('i', 105, \
 				     struct in6_rrenumreq) /* set global */
+#define SIOCGIFALIFETIME_IN6	_IOWR('i', 106, struct in6_ifreq)
 
+
+/* XXX: Someone decided to switch to 'u' here for unknown reasons! */
 #define SIOCGETSGCNT_IN6	_IOWR('u', 106, \
 				      struct sioc_sg_req6) /* get s,g pkt cnt */
 #define SIOCGETMIFCNT_IN6	_IOWR('u', 107, \
