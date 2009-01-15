@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2003/07/11 11:54:10 he Exp $
+#	$NetBSD: list,v 1.6.16.1 2009/01/15 22:22:07 bouyer Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -15,6 +15,7 @@ PROG	bin/sh
 PROG	bin/stty
 
 PROG	sbin/disklabel
+PROG	sbin/dmesg
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
 PROG	sbin/ifconfig
@@ -23,7 +24,6 @@ PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
-PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
@@ -31,6 +31,7 @@ PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/route
 PROG	sbin/swapctl
+PROG	sbin/sysctl
 PROG	sbin/umount
 
 PROG	usr/bin/ftp
