@@ -1,4 +1,4 @@
-/*	$NetBSD: libc.h,v 1.7 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: libc.h,v 1.8 2009/01/15 15:58:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -143,7 +143,6 @@ extern char *concat(const char*, int, ...);
 /* CMU library routines */
 extern char *getname(int);
 extern char *pathof(char *);
-extern const char *errmsg(int);
 
 /*  CMU time additions */
 extern long gtime(const struct tm*);
