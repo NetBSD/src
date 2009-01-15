@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.c,v 1.5 2006/02/16 19:19:49 tnozaki Exp $	*/
+/*	$NetBSD: locale.c,v 1.5.28.1 2009/01/15 03:24:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Alexey Zelkin <phantom@FreeBSD.org>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: locale.c,v 1.5 2006/02/16 19:19:49 tnozaki Exp $");
+__RCSID("$NetBSD: locale.c,v 1.5.28.1 2009/01/15 03:24:11 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: locale.c,v 1.5 2006/02/16 19:19:49 tnozaki Exp $");
 #include "citrus_region.h"
 #include "citrus_lookup.h"
 #endif
-#include "rune.h"
+#include "setlocale_local.h"
 
 /* Local prototypes */
 void	init_locales_list(void);

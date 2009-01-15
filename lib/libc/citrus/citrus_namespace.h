@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_namespace.h,v 1.6 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_namespace.h,v 1.6.26.1 2009/01/15 03:24:06 snj Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -56,6 +56,8 @@
 #define _bcs_trunc_rws_len	_citrus_bcs_trunc_rws_len
 #define _bcs_convert_to_lower	_citrus_bcs_convert_to_lower
 #define _bcs_convert_to_upper	_citrus_bcs_convert_to_upper
+#define _bcs_strtol		_citrus_bcs_strtol
+#define _bcs_strtoul		_citrus_bcs_strtoul
 #endif /* _CITRUS_BCS_NO_NAMESPACE */
 
 /* citrus_csmapper */

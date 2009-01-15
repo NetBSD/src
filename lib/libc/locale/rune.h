@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.12 2007/09/03 20:31:56 drochner Exp $	*/
+/*	$NetBSD: rune.h,v 1.12.12.1 2009/01/15 03:24:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -89,10 +89,7 @@
 extern size_t __mb_len_max_runtime;
 #define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
 
-extern _RuneLocale _DefaultRuneLocale;
-extern _RuneLocale *_CurrentRuneLocale;
-extern const char *_PathLocale;
-
-#define _LOCALE_ALIAS_NAME	"locale.alias"
+extern const _RuneLocale _DefaultRuneLocale;
+extern const _RuneLocale *_CurrentRuneLocale;
 
 #endif	/*! _RUNE_H_ */

@@ -1,4 +1,4 @@
-# $NetBSD: locale.alias,v 1.10 2008/06/21 07:06:01 tnozaki Exp $
+# $NetBSD: locale.alias,v 1.10.2.1 2009/01/15 03:24:09 snj Exp $
 
 #
 # Locale aliases
@@ -115,20 +115,20 @@ zh_HK.UTF-8/LC_MESSAGES		/FORCE
 zh_TW.UTF-8/LC_MESSAGES		/FORCE
 
 # Pig locale
-Pig				/FORCE
-
-# Preexisting alias for zh_TW.Big5
-zh_TW.BIG5			zh_TW.Big5
+Pig/LC_MESSAGES			/FORCE
 
 # Linux/FreeBSD compatibility, EUC-CN == GB2312
 zh_CN.GB2312			zh_CN.eucCN
 
-# FreeBSD compatibility.
-zh_HK.Big5HKSCS			zh_HK.Big5-HKSCS
+# FreeBSD compatibility
+zh_HK.Big5HKSCS			zh_HK.Big5hkscs
 
 # nb(Bokmal, Norwegian) == no(Norwegian)
 nb_NO.ISO8859-1			no_NO.ISO8859-1
 nb_NO.ISO8859-15		no_NO.ISO8859-15
 
-# XFree86 compatibility.
-ja_JP.ISO-2022-JP		ja_JP.ISO2022-JP
+# backward compatibility.
+ja_JP.ISO2022-JP		ja_JP.ISO-2022-JP
+ja_JP.ISO2022-JP2		ja_JP.ISO-2022-JP-2
+zh_HK.Big5-HKSCS		zh_HK.Big5hkscs
+zh_TW.BIG5			zh_TW.Big5

@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans.c,v 1.6 2005/02/10 19:19:57 tnozaki Exp $	*/
+/*	$NetBSD: _wctrans.c,v 1.6.32.1 2009/01/15 03:24:07 snj Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctrans.c,v 1.6 2005/02/10 19:19:57 tnozaki Exp $");
+__RCSID("$NetBSD: _wctrans.c,v 1.6.32.1 2009/01/15 03:24:07 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -88,7 +88,7 @@ _wctrans_init(_RuneLocale *rl)
 }
 
 /*
- * _wctrans_ext:
+ * _towctrans_ext:
  *	translate a character (extended part)
  */
 wint_t

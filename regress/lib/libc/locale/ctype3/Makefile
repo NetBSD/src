@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/19 10:36:55 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.38.1 2009/01/15 03:24:08 snj Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,7 @@ PROG=		mbrtowc
 CPPFLAGS+=	-DUSE_MBSTATE
 .PATH:		${.CURDIR}/../ctype2
 
-TESTS=		C en_US.UTF-8 ja_JP.ISO2022-JP2 ja_JP.SJIS ja_JP.eucJP
+TESTS=		C en_US.UTF-8 ja_JP.ISO-2022-JP-2 ja_JP.SJIS ja_JP.eucJP
 
 INPUTS=		${TESTS:S/$/.in/}
 OUTPUTS=	${TESTS:S/$/.out/}

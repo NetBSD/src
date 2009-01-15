@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.17 2008/08/12 21:25:31 tnozaki Exp $	*/
+/*	$NetBSD: runetable.c,v 1.17.4.1 2009/01/15 03:24:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.17 2008/08/12 21:25:31 tnozaki Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.17.4.1 2009/01/15 03:24:08 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,12 +49,12 @@ __RCSID("$NetBSD: runetable.c,v 1.17 2008/08/12 21:25:31 tnozaki Exp $");
 #include <locale.h>
 #include <assert.h>
 #include <wchar.h>
-#include <citrus/citrus_module.h>
-#include <citrus/citrus_ctype.h>
+#include "citrus_module.h"
+#include "citrus_ctype.h"
 #include "rune.h"
 #include "rune_local.h"
 
-_RuneLocale _DefaultRuneLocale = {
+const _RuneLocale _DefaultRuneLocale = {
     _RUNE_MAGIC_1,
     "NONE",
     _DEFAULT_INVALID_RUNE,
@@ -349,6 +349,4 @@ _RuneLocale _DefaultRuneLocale = {
     _C_toupper_
 };
 
-_RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
-
-const char *_PathLocale;
+const _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;

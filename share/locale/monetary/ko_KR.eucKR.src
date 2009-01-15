@@ -1,4 +1,4 @@
-# $NetBSD: ko_KR.eucKR.src,v 1.1 2008/05/17 04:05:52 ginsbach Exp $
+# $NetBSD: ko_KR.eucKR.src,v 1.1.8.1 2009/01/15 03:24:10 snj Exp $
 #
 # Korean Language Monetary Locale for Korea, Republic of
 #
@@ -44,7 +44,7 @@ KRW
 #
 0
 #
-# Currency Symbol Precedes Positive Value (p_cs_preceds)
+# Currency Symbol Precedes Positive Value (p_cs_precedes)
 #    Must be either 1 or 0.
 #
 1
@@ -55,7 +55,7 @@ KRW
 #
 0
 #
-# Currency Symbol Precedes Negative Value (n_cs_preceds)
+# Currency Symbol Precedes Negative Value (n_cs_precedes)
 #    Must be either 1 or 0.
 #
 1
@@ -75,7 +75,7 @@ KRW
 #
 4
 #
-# International Currency Symbol Precedes	Positive Value (int_p_cs_preceds)
+# International Currency Symbol Precedes	Positive Value (int_p_cs_precedes)
 #    Must be either 1 or 0.
 #
 1
@@ -86,7 +86,7 @@ KRW
 #
 0
 #
-# International Currency Symbol Precedes Negative Value (int_n_cs_preceds)
+# International Currency Symbol Precedes Negative Value (int_n_cs_precedes)
 #    Must be either 1 or 0.
 #
 1
