@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.25 2007/12/20 20:17:15 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.26 2009/01/15 15:58:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -667,7 +667,7 @@ scmerr(int error, char *fmt, ...)
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (error >= 0)
-		fprintf(stderr, ": %s\n", errmsg(error));
+		fprintf(stderr, " (%s)\n", strerror(error));
 	else
 		fprintf(stderr, "\n");
 	(void) fflush(stderr);
