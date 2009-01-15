@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.155 2008/12/13 20:50:14 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.156 2009/01/15 21:44:25 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5119,4 +5119,13 @@ sys/dev/pci/if_wm.c				1.163
 	described in
 	  http://mail-index.netbsd.org/current-users/2008/12/02/msg006435.html
 	[sketch, ticket #1983]
+
+sys/arch/sparc/stand/bootblk/bootblk.fth	1.8
+
+	Instead of bailing out with "Inode not directory", assume that the
+	disk is a RAIDframe mirror, apply the RAID boot offset, and try to
+	boot again.
+	Fixes the problem where disks would be unbootable if partitioned
+	normally and then converted to RAID 1 without being zeroed first.
+	[jdc, ticket #1986]
 
