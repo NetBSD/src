@@ -1,8 +1,9 @@
-#	$NetBSD: list,v 1.6.16.1 2009/01/15 22:22:07 bouyer Exp $
+#	$NetBSD: list,v 1.6.16.2 2009/01/15 23:02:23 bouyer Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
 PROG	bin/cp
+PROG	bin/df
 PROG	bin/expr
 PROG	bin/ln
 PROG	bin/ls
