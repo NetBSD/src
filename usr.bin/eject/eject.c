@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.23 2009/01/14 15:47:23 christos Exp $	*/
+/*	$NetBSD: eject.c,v 1.24 2009/01/15 03:18:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.23 2009/01/14 15:47:23 christos Exp $");
+__RCSID("$NetBSD: eject.c,v 1.24 2009/01/15 03:18:30 lukem Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 	int devtype;
-	int n, i;
+	size_t n;
 	char *dev_name;		/* XXX - devname is declared in stdlib.h */
 	enum eject_op op;
 
@@ -159,10 +159,10 @@ main(int argc, char *argv[])
 			}
 			return 0;
 		case 't':
-			for (i = 0; i < __arraycount(devtypes); i++) {
-				if (strcasecmp(devtypes[i].name, optarg)
+			for (n = 0; n < __arraycount(devtypes); n++) {
+				if (strcasecmp(devtypes[n].name, optarg)
 				    == 0) {
-					devtype = devtypes[i].type;
+					devtype = devtypes[n].type;
 					break;
 				}
 			}
@@ -231,7 +231,7 @@ usage(void)
 static int
 guess_devtype(const char *dev_name)
 {
-	int n;
+	size_t n;
 
 	/* Nickname match: */
 	for (n = 0; n < __arraycount(nicknames); n++) {
@@ -274,7 +274,7 @@ static char *
 nick2dev(const char *nn)
 {
 	static char dev_name[MAXDEVLEN];
-	int n;
+	size_t n;
 	int devnum;
 
 	devnum = 0;
@@ -297,7 +297,7 @@ static char *
 nick2rdev(const char *nn)
 {
 	static char dev_name[MAXDEVLEN];
-	int n;
+	size_t n;
 	int devnum;
 
 	devnum = 0;
