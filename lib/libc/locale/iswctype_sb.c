@@ -1,13 +1,8 @@
-/*	$NetBSD: iswctype_sb.c,v 1.5 2008/08/12 20:51:25 tnozaki Exp $	*/
+/* $NetBSD: iswctype_sb.c,v 1.5.4.1 2009/01/15 03:24:07 snj Exp $ */
 
-/*
- * Copyright (c) 1989 The Regents of the University of California.
+/*-
+ * Copyright (c)2008 Citrus Project,
  * All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,14 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -36,134 +28,171 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_sb.c,v 1.5 2008/08/12 20:51:25 tnozaki Exp $");
+__RCSID("$NetBSD: iswctype_sb.c,v 1.5.4.1 2009/01/15 03:24:07 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include <wchar.h>
-#include <wctype.h>
+#include "namespace.h"
+#include <assert.h>
 #include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wctype.h>
+#include <wchar.h>
 
-#undef iswalnum
-int
-iswalnum(c)
-	wint_t c;
+#define _ISWCTYPE_FUNC(name)				\
+int							\
+isw##name(wint_t wc)					\
+{							\
+	int c;						\
+							\
+	c = (wc == WEOF) ? EOF : (unsigned char)wc;	\
+	return is##name(c);				\
+}
+_ISWCTYPE_FUNC(alnum)
+_ISWCTYPE_FUNC(alpha)
+_ISWCTYPE_FUNC(blank)
+_ISWCTYPE_FUNC(cntrl)
+_ISWCTYPE_FUNC(digit)
+_ISWCTYPE_FUNC(graph)
+_ISWCTYPE_FUNC(lower)
+_ISWCTYPE_FUNC(print)
+_ISWCTYPE_FUNC(punct)
+_ISWCTYPE_FUNC(space)
+_ISWCTYPE_FUNC(upper)
+_ISWCTYPE_FUNC(xdigit)
+
+#define _TOWCTRANS_FUNC(name)				\
+wint_t							\
+tow##name(wint_t wc)					\
+{							\
+	c = (wc == WEOF) ? EOF : (unsigned char)wc;	\
+	return to##name(c);				\
+}
+_TOWCTRANS_FUNC(upper)
+_TOWCTRANS_FUNC(lower)
+
+struct _wctype_priv_t {
+	const char *name;
+	int (*iswctype)(wint_t);
+};
+
+static const struct _wctype_priv_t _wctype_decl[] = {
+    { "alnum",  &iswalnum  },
+    { "alpha",  &iswalpha  },
+    { "blank",  &iswblank  },
+    { "cntrl",  &iswcntrl  },
+    { "digit",  &iswdigit  },
+    { "graph",  &iswgraph  },
+    { "lower",  &iswlower  },
+    { "print",  &iswprint  },
+    { "punct",  &iswpunct  },
+    { "space",  &iswspace  },
+    { "upper",  &iswupper  },
+    { "xdigit", &iswxdigit },
+};
+static const size_t _wctype_decl_size =
+    sizeof(_wctype_decl) / sizeof(struct _wctype_priv_t);
+
+wctype_t
+wctype(const char *charclass)
 {
-	return isalnum((int)c);
+	size_t i;
+
+	for (i = 0; i < _wctype_decl_size; ++i) {
+		 if (!strcmp(charclass, _wctype_decl[i].name))
+			return (wctype_t)__UNCONST(&_wctype_decl[i]);
+	}
+	return (wctrans_t)NULL;
 }
 
-#undef iswalpha
-int
-iswalpha(c)
-	wint_t c;
+struct _wctrans_priv_t {
+	const char *name;
+	wint_t (*towctrans)(wint_t);
+};
+
+static const struct _wctrans_priv_t _wctrans_decl[] = {
+    { "upper", &towupper },
+    { "lower", &towlower },
+};
+static const size_t _wctrans_decl_size =
+    sizeof(_wctrans_decl) / sizeof(struct _wctrans_priv_t);
+
+wctrans_t
+/*ARGSUSED*/
+wctrans(const char *charmap)
 {
-	return isalpha((int)c);
+	size_t i;
+
+	for (i = 0; i < _wctrans_decl_size; ++i) {
+		 if (!strcmp(charmap, _wctrans_decl[i].name))
+			return (wctrans_t)__UNCONST(&_wctrans_decl[i]);
+	}
+	return (wctrans_t)NULL;
 }
 
-#undef iswblank
-int
-iswblank(c)
-	wint_t c;
-{
-	return isblank((int)c);
-}
-
-#undef iswcntrl
-int
-iswcntrl(c)
-	wint_t c;
-{
-	return iscntrl((int)c);
-}
-
-#undef iswdigit
-int
-iswdigit(c)
-	wint_t c;
-{
-	return isdigit((int)c);
-}
-
-#undef iswgraph
-int
-iswgraph(c)
-	wint_t c;
-{
-	return isgraph((int)c);
-}
-
-#undef iswlower
-int
-iswlower(c)
-	wint_t c;
-{
-	return islower((int)c);
-}
-
-#undef iswprint
-int
-iswprint(c)
-	wint_t c;
-{
-	return isprint((int)c);
-}
-
-#undef iswpunct
-int
-iswpunct(c)
-	wint_t c;
-{
-	return ispunct((int)c);
-}
-
-#undef iswspace
-int
-iswspace(c)
-	wint_t c;
-{
-	return isspace((int)c);
-}
-
-#undef iswupper
-int
-iswupper(c)
-	wint_t c;
-{
-	return isupper((int)c);
-}
-
-#undef iswxdigit
-int
-iswxdigit(c)
-	wint_t c;
-{
-	return isxdigit((int)c);
-}
-
-#undef towupper
-wint_t
-towupper(c)
-	wint_t c;
-{
-	return toupper((int)c);
-}
-
-#undef towlower
-wint_t
-towlower(c)
-	wint_t c;
-{
-	return tolower((int)c);
-}
-
-#undef wcwidth
 int
 /*ARGSUSED*/
-wcwidth(c)
-	wchar_t c;
+iswctype(wint_t wc, wctype_t charclass)
 {
-	if (c == L'\0')
+	const struct _wctype_priv_t *p;
+
+	p = (const struct _wctype_priv_t *)(void *)charclass;
+	if (p < &_wctype_decl[0] || p > &_wctype_decl[_wctype_decl_size - 1]) {
+		errno = EINVAL;
 		return 0;
-	if (isprint((int)c))
+	}
+	return (*p->iswctype)(wc);
+}
+
+wint_t
+/*ARGSUSED*/
+towctrans(wint_t wc, wctrans_t charmap)
+{
+	const struct _wctrans_priv_t *p;
+
+	p = (const struct _wctrans_priv_t *)(void *)charmap;
+	if (p < &_wctrans_decl[0] || p > &_wctrans_decl[_wctrans_decl_size - 1]) {
+		errno = EINVAL;
+		return wc;
+	}
+	return (*p->towctrans)(wc);
+}
+
+__weak_alias(wcwidth,_wcwidth)
+
+int
+wcwidth(wchar_t wc)
+{ 
+	int c;
+
+	switch (wc) {
+	case L'\0':
+		return 0;
+	case WEOF:
+		c = EOF;
+		break;
+	default:
+		c = (unsigned char)wc;
+	}
+	if (isprint(c))
 		return 1;
 	return -1;
+}
+
+int
+wcswidth(const wchar_t * __restrict ws, size_t wn)
+{
+	const wchar_t *pws;
+	int c;
+
+	pws = ws;
+	while (wn > 0 && *ws != L'\0') {
+		c = (*ws == WEOF) ? EOF : (unsigned char)*ws;
+		if (!isprint(c))
+			return -1;
+		++ws, --wn;
+	}
+	return (int)(ws - pws);
 }

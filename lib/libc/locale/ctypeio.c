@@ -1,4 +1,4 @@
-/*	$NetBSD: ctypeio.c,v 1.7 2005/11/29 03:11:59 christos Exp $	*/
+/* $NetBSD: ctypeio.c,v 1.7.26.1 2009/01/15 03:24:07 snj Exp $ */
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,72 +31,76 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ctypeio.c,v 1.7 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: ctypeio.c,v 1.7.26.1 2009/01/15 03:24:07 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-
 #include <assert.h>
+#define _CTYPE_PRIVATE
+#include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define _CTYPE_PRIVATE
-#include <ctype.h>
+#include <unistd.h>
+
+#include "bsdctype.h"
 #include "ctypeio.h"
 
 int
-__loadctype(name)
-	const char *name;
+__loadctype(const char * __restrict path, _BSDCTypeLocale ** __restrict pdata)
 {
 	FILE *fp;
 	char id[sizeof(_CTYPE_ID) - 1];
-	u_int32_t i, len;
-	unsigned char *new_ctype = NULL;
-	short *new_toupper = NULL, *new_tolower = NULL;
+	uint32_t i, len;
+	char *ptr;
+	uint8_t *new_ctype;
+	int16_t *new_tolower, *new_toupper;
+	_BSDCTypeLocale *data;
 
-	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(path != NULL);
+	_DIAGASSERT(pdata != NULL);
 
-	if ((fp = fopen(name, "r")) == NULL)
-		return 0;
+	fp = fopen(path, "r");
+	if (fp == NULL)
+		return ENOENT;
 
-	if (fread(id, sizeof(id), 1, fp) != 1)
-		goto bad;
+	if (fread(id, sizeof(id), 1, fp) != 1 ||
+	    memcmp(id, _CTYPE_ID, sizeof(id)) != 0)
+		goto bad0;
 
-	if (memcmp(id, _CTYPE_ID, sizeof(id)) != 0)
-		goto bad;
+	if (fread(&i, sizeof(uint32_t), 1, fp) != 1 ||
+	    (i = ntohl(i)) != _CTYPE_REV)
+		goto bad0;
 
-	if (fread(&i, sizeof(u_int32_t), 1, fp) != 1) 
-		goto bad;
+	if (fread(&len, sizeof(uint32_t), 1, fp) != 1 ||
+	    (len = ntohl(len)) != _CTYPE_NUM_CHARS)
+		goto bad0;
 
-	if ((i = ntohl(i)) != _CTYPE_REV)
-		goto bad;
+	ptr = malloc(sizeof(*data) + ((sizeof(uint8_t) +
+	    sizeof(int16_t) + sizeof(int16_t)) * (len + 1)));
+	if (ptr == NULL)
+		return ENOMEM;
 
-	if (fread(&len, sizeof(u_int32_t), 1, fp) != 1)
-		goto bad;
+	data = (_BSDCTypeLocale *)(void *)ptr;
+	ptr += sizeof(*data);
 
-	if ((len = ntohl(len)) != _CTYPE_NUM_CHARS)
-		goto bad;
+	(new_ctype = (void *)ptr)[0] = (uint8_t)0;
+	ptr += sizeof(uint8_t);
+	if (fread((void *)ptr, sizeof(uint8_t), len, fp) != len)
+		goto bad1;
+	ptr += sizeof(uint8_t) * len;
 
-	if ((new_ctype = malloc(sizeof(u_int8_t) * (1 + len))) == NULL)
-		goto bad;
+	(new_toupper = (void *)ptr)[0] = (int16_t)EOF;
+	ptr += sizeof(int16_t);
+	if (fread((void *)ptr, sizeof(int16_t), len, fp) != len)
+		goto bad1;
+	ptr += sizeof(int16_t) * len;
 
-	new_ctype[0] = 0;
-	if (fread(&new_ctype[1], sizeof(u_int8_t), len, fp) != len)
-		goto bad;
-
-	if ((new_toupper = malloc(sizeof(int16_t) * (1 + len))) == NULL)
-		goto bad;
-
-	new_toupper[0] = EOF;
-	if (fread(&new_toupper[1], sizeof(int16_t), len, fp) != len)
-		goto bad;
-
-	if ((new_tolower = malloc(sizeof(int16_t) * (1 + len))) == NULL)
-		goto bad;
-
-	new_tolower[0] = EOF;
-	if (fread(&new_tolower[1], sizeof(int16_t), len, fp) != len)
-		goto bad;
+	(new_tolower = (void *)ptr)[0] = (int16_t)EOF;
+	ptr += sizeof(int16_t);
+	if (fread((void *)ptr, sizeof(int16_t), len, fp) != len)
+		goto bad1;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (i = 1; i <= len; i++) {
@@ -105,73 +109,18 @@ __loadctype(name)
 	}
 #endif
 
-	(void) fclose(fp);
-	if (_ctype_ != _C_ctype_)
-		free(__UNCONST(_ctype_));
-	_ctype_ = new_ctype;
-	if (_toupper_tab_ != _C_toupper_)
-		free(__UNCONST(_toupper_tab_));
-	_toupper_tab_ = new_toupper;
-	if (_tolower_tab_ != _C_tolower_)
-		free(__UNCONST(_tolower_tab_));
-	_tolower_tab_ = new_tolower;
+	fclose(fp);
 
-	return 1;
-bad:
-	free(new_tolower);
-	free(new_toupper);
-	free(new_ctype);
-	(void) fclose(fp);
-	return 0;
-}
+	data->ctype_tab = (const unsigned char *)new_ctype;
+	data->toupper_tab = (const short *)new_toupper;
+	data->tolower_tab = (const short *)new_tolower;
 
-int
-__savectype(name, new_ctype, new_toupper, new_tolower)
-	const char *name;
-	unsigned char *new_ctype;
-	short *new_toupper, *new_tolower;
-{
-	FILE *fp;
-	u_int32_t i, len = _CTYPE_NUM_CHARS;
+	*pdata = data;
 
-	_DIAGASSERT(name != NULL);
-	_DIAGASSERT(new_ctype != NULL);
-	_DIAGASSERT(new_toupper != NULL);
-	_DIAGASSERT(new_tolower != NULL);
-
-	if ((fp = fopen(name, "w")) == NULL)
 		return 0;
 
-	if (fwrite(_CTYPE_ID, sizeof(_CTYPE_ID) - 1, 1, fp) != 1)
-		goto bad;
-
-	i = htonl(_CTYPE_REV);
-	if (fwrite(&i, sizeof(u_int32_t), 1, fp) != 1) 
-		goto bad;
-
-	i = htonl(len);
-	if (fwrite(&i, sizeof(u_int32_t), 1, fp) != 1)
-		goto bad;
-
-	if (fwrite(&new_ctype[1], sizeof(u_int8_t), len, fp) != len)
-		goto bad;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-	for (i = 1; i <= len; i++) {
-		new_toupper[i] = htons(new_toupper[i]);
-		new_tolower[i] = htons(new_tolower[i]);
-	}
-#endif
-	if (fwrite(&new_toupper[1], sizeof(int16_t), len, fp) != len)
-		goto bad;
-
-	if (fwrite(&new_tolower[1], sizeof(int16_t), len, fp) != len)
-		goto bad;
-
-
-	(void) fclose(fp);
-	return 1;
-bad:
-	(void) fclose(fp);
-	return 0;
+bad1:
+	free(data);
+bad0:
+	return EFTYPE;
 }

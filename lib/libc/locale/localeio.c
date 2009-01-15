@@ -1,4 +1,4 @@
-/*	$NetBSD: localeio.c,v 1.1 2008/05/17 03:49:54 ginsbach Exp $	*/
+/*	$NetBSD: localeio.c,v 1.1.8.1 2009/01/15 03:24:07 snj Exp $	*/
 /*
  * Copyright (c) 2008, The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,16 +30,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio.c,v 1.1 2008/05/17 03:49:54 ginsbach Exp $");
+__RCSID("$NetBSD: localeio.c,v 1.1.8.1 2009/01/15 03:24:07 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
-#include <sys/localedef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <locale.h>
@@ -51,10 +51,10 @@ __RCSID("$NetBSD: localeio.c,v 1.1 2008/05/17 03:49:54 ginsbach Exp $");
 #include "localeio.h"
 
 int
-__loadlocale(const char *name, size_t nstr, size_t nbytes, size_t localesize,
-	     void *currentlocale, const void *defaultlocale)
+__loadlocale(const char *name, size_t nstr, size_t nbytes,
+    size_t localesize, void *currentlocale)
 {
-	int fd, i;
+	int fd, i, ret;
 	unsigned char **ap, *buf, *bp, *cp, *cbp, *ebp;
 	unsigned char ***locale;
 	struct stat st;
@@ -63,29 +63,37 @@ __loadlocale(const char *name, size_t nstr, size_t nbytes, size_t localesize,
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(localesize != 0);
 	_DIAGASSERT(currentlocale != NULL);
-	_DIAGASSERT(defaultlocale != NULL);
 
 	if ((fd = open(name, O_RDONLY)) == -1)
-		return 0;
+		return ENOENT;
 
-	if ((fstat(fd, &st) == -1) || (st.st_size <= 0))
+	if ((fstat(fd, &st) == -1) || !S_ISREG(st.st_mode) ||
+	    (st.st_size <= 0)) {
+		ret = EFTYPE;
 		goto error1;
+	}
 
 	bufsize = localesize + (size_t)st.st_size;
-	if ((buf = malloc(bufsize)) == NULL)
+	if ((buf = malloc(bufsize)) == NULL) {
+		ret = ENOMEM;
 		goto error1;
+	}
 
 	bp = buf + localesize;
-	if (read(fd, bp, (size_t)st.st_size) != st.st_size)
+	if (read(fd, bp, (size_t)st.st_size) != st.st_size) {
+		ret = EFTYPE;
 		goto error2;
+	}
 
 	ap = (unsigned char **)(void *)buf;
 	for (i = 0, ebp = buf + bufsize; i < nstr; i++) {
 		ap[i] = bp;
 		while (bp != ebp && *bp != '\n')
 			bp++;
-		if (bp == ebp)
+		if (bp == ebp) {
+			ret = EFTYPE;
 			goto error2;
+		}
 		*bp++ = '\0';
 	}
 
@@ -95,8 +103,10 @@ __loadlocale(const char *name, size_t nstr, size_t nbytes, size_t localesize,
 
 		while (bp != ebp && *bp != '\n')
 			bp++;
-		if (bp == ebp)
+		if (bp == ebp) {
+			ret = EFTYPE;
 			goto error2;
+		}
 		/* ignore overflow/underflow and bad characters */
 		n = (unsigned char)strtol((char *)cbp, NULL, 0);
 		cp[i] = (unsigned char)(n & CHAR_MAX);
@@ -104,51 +114,15 @@ __loadlocale(const char *name, size_t nstr, size_t nbytes, size_t localesize,
 	}
 
 	locale = currentlocale;
-	if (*locale != defaultlocale)
-		free(*locale);
 
 	*locale = (unsigned char **)(void *)buf;
 	(void)close(fd);
-	return 1;
+	return 0;
 
 error2:
 	free(buf);
+
 error1:
 	(void)close(fd);
-
-	return 0;
-}
-
-/*
- * Convert a grouping sequence string into POSIX form.
- *
- * Examples:	"3;3;-1" -> "\003\003\177\000"
- * 		"3"      -> "\003\000"
- */
-
-static const char nogrouping[] = { CHAR_MAX, '\0' };
-
-const char *
-__convertgrouping(const char *str)
-{
-	char *src, *dst;
-
-	_DIAGASSERT(str != NULL);
-
-	src = dst = __UNCONST(str);
-
-	while (*src != '\0') {
-		char *ep;
-		int n;
-
-		if ((n = strtol(src, &ep, 0)) >= CHAR_MAX ||
-		    ((*ep != ';') && (*ep != '\0')))
-			return nogrouping;	/* invalid grouping string */
-
-		*dst++ = n & CHAR_MAX;
-		src = (*ep == ';')? ep + 1 : ep;
-	}
-	*dst = '\0';
-
-	return (dst == str)? nogrouping : str;
+	return ret;
 }

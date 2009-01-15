@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2004/07/21 20:27:46 tshiozak Exp $
+#	$NetBSD: Makefile.inc,v 1.5.32.1 2009/01/15 03:24:06 snj Exp $
 
 # sources
 .PATH: ${ARCHDIR}/citrus ${.CURDIR}/citrus
@@ -7,12 +7,23 @@ CITRUS?=	yes
 
 .if ${CITRUS} == "yes"
 MODULE_SHLIB_MAJOR!= . ${NETBSDSRCDIR}/lib/i18n_module/shlib_version ; echo $$major
-CPPFLAGS+= -DI18NMODULE_MAJOR=${MODULE_SHLIB_MAJOR} -DCITRUS
-
-SRCS+=	citrus_bcs.c citrus_csmapper.c citrus_ctype.c citrus_ctype_fallback.c \
+CPPFLAGS.citrus_module.c+=-DI18NMODULE_MAJOR=${MODULE_SHLIB_MAJOR}
+SRCS+=	citrus_bcs.c citrus_bcs_strtol.c citrus_bcs_strtoul.c \
+	citrus_csmapper.c citrus_ctype.c citrus_ctype_fallback.c \
 	citrus_db.c citrus_db_hash.c citrus_esdb.c citrus_hash.c \
 	citrus_iconv.c citrus_lookup.c \
 	citrus_mapper.c citrus_memstream.c citrus_mmap.c citrus_module.c \
 	citrus_none.c citrus_stdenc.c
-
+SRCS+=	citrus_lc_ctype.c \
+	citrus_lc_monetary.c \
+	citrus_lc_numeric.c \
+	citrus_lc_time.c \
+	citrus_lc_messages.c
+CPPFLAGS.citrus_bcs_strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
+CPPFLAGS.citrus_bcs_strtoul.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
+CPPFLAGS.citrus_lc_ctype.c+=	-I${LIBCDIR}/locale
+CPPFLAGS.citrus_lc_monetary.c+=	-I${LIBCDIR}/locale
+CPPFLAGS.citrus_lc_numeric.c+=	-I${LIBCDIR}/locale
+CPPFLAGS.citrus_lc_time.c+=	-I${LIBCDIR}/locale
+CPPFLAGS.citrus_lc_messages.c+=	-I${LIBCDIR}/locale
 .endif

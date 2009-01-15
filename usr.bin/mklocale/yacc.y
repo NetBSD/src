@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.24 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: yacc.y,v 1.24.40.1 2009/01/15 03:24:11 snj Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.24 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.24.40.1 2009/01/15 03:24:11 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: yacc.y,v 1.24 2004/01/05 23:23:36 jmmv Exp $");
 
 #include <err.h>
 #include "locale/runetype.h"
+#include <locale.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,6 +82,7 @@ void set_digitmap __P((rune_map *, rune_list *));
 void add_map __P((rune_map *, rune_list *, u_int32_t));
 
 int		main __P((int, char *[]));
+void		usage __P((void));
 int		yyerror __P((const char *s));
 void		*xmalloc __P((unsigned int sz));
 u_int32_t	*xlalloc __P((unsigned int sz));
@@ -88,6 +90,10 @@ u_int32_t	*xrelalloc __P((u_int32_t *old, unsigned int sz));
 void		dump_tables __P((void));
 int		yyparse __P((void));
 extern int	yylex __P((void));
+
+/* mklocaledb.c */
+extern void mklocaledb __P((const char *, FILE *, FILE *));
+
 %}
 
 %union	{
@@ -255,11 +261,13 @@ main(ac, av)
 	char *av[];
 {
     int x;
+    const char *locale_type;
 
     extern char *optarg;
     extern int optind;
 
-    while ((x = getopt(ac, av, "do:")) != EOF) {
+    locale_type = NULL;
+    while ((x = getopt(ac, av, "do:t:")) != EOF) {
 	switch(x) {
 	case 'd':
 	    debug = 1;
@@ -269,10 +277,11 @@ main(ac, av)
 	    if ((ofile = fopen(locale_file, "w")) == 0)
 		err(1, "unable to open output file %s", locale_file);
 	    break;
+        case 't':
+	    locale_type = optarg;
+            break;
 	default:
-	usage:
-	    fprintf(stderr, "usage: mklocale [-d] [-o output] [source]\n");
-	    exit(1);
+	    usage();
 	}
     }
 
@@ -284,18 +293,37 @@ main(ac, av)
 	    err(1, "unable to open input file %s", av[optind]);
 	break;
     default:
-	goto usage;
+	usage();
     }
+
+    if (ofile == NULL)
+	ofile = stdout;
+    if (locale_type != NULL && strcasecmp(locale_type, "CTYPE")) {
+	mklocaledb(locale_type, stdin, ofile);
+	return 0;
+    }
+
     for (x = 0; x < _NB_CACHED_RUNES; ++x) {
 	mapupper.map[x] = x;
 	maplower.map[x] = x;
     }
+
     new_locale.rl_invalid_rune = _NB_DEFAULT_INVALID_RUNE;
     memcpy(new_locale.rl_magic, _NB_RUNE_MAGIC_1, sizeof(new_locale.rl_magic));
 
     yyparse();
 
     return 0;
+
+}
+
+void
+usage()
+{
+    fprintf(stderr,
+	"usage: mklocale [-d] [-o output] [-t type] [source]\n");
+
+    exit(1);
 }
 
 int
@@ -597,7 +625,7 @@ dump_tables()
     int x, n;
     rune_list *list;
     _FileRuneLocale file_new_locale;
-    FILE *fp = (ofile ? ofile : stdout);
+    FILE *fp = ofile;
 
     memset(&file_new_locale, 0, sizeof(file_new_locale));
 

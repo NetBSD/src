@@ -1,4 +1,4 @@
-/* $NetBSD: aliasname.c,v 1.2 2005/02/09 21:35:46 kleink Exp $ */
+/* $NetBSD: aliasname.c,v 1.2.32.1 2009/01/15 03:24:07 snj Exp $ */
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: aliasname.c,v 1.2 2005/02/09 21:35:46 kleink Exp $");
+__RCSID("$NetBSD: aliasname.c,v 1.2.32.1 2009/01/15 03:24:07 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,7 +50,7 @@ const char *
 __unaliasname(const char *dbname, const char *alias, void *buf, size_t bufsize)
 {
 	FILE *fp = NULL;
-	const char *result = alias;
+	const char *result = NULL;
 	size_t resultlen;
 	size_t aliaslen;
 	const char *p;

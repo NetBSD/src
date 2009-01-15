@@ -1,4 +1,4 @@
-/*	$NetBSD: localeio.h,v 1.1 2008/05/17 03:49:54 ginsbach Exp $	*/
+/*	$NetBSD: localeio.h,v 1.1.8.1 2009/01/15 03:24:07 snj Exp $	*/
 /*
  * Copyright (c) 2008, The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,6 +29,5 @@
  */
 
 __BEGIN_DECLS
-int __loadlocale(const char *, size_t, size_t, size_t, void *, const void *);
-const char * __convertgrouping(const char *);
+int __loadlocale(const char *, size_t, size_t, size_t, void *);
 __END_DECLS
