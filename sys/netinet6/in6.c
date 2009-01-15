@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.144 2009/01/15 18:20:48 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.145 2009/01/15 20:32:59 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.144 2009/01/15 18:20:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.145 2009/01/15 20:32:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -430,6 +430,12 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	 */
 	switch (cmd) {
 	case SIOCAIFADDR_IN6:
+#ifdef OSIOCAIFADDR_IN6
+	case OSIOCAIFADDR_IN6:
+#endif
+#ifdef OSIOCSIFPHYADDR_IN6
+	case OSIOCSIFPHYADDR_IN6:
+#endif
 	case SIOCSIFPHYADDR_IN6:
 		sa6 = &ifra->ifra_addr;
 		break;
@@ -490,6 +496,9 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		if (ia == NULL)
 			return EADDRNOTAVAIL;
 		/* FALLTHROUGH */
+#ifdef OSIOCAIFADDR_IN6
+	case OSIOCAIFADDR_IN6:
+#endif
 	case SIOCAIFADDR_IN6:
 		/*
 		 * We always require users to specify a valid IPv6 address for
@@ -613,6 +622,11 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 #endif
 		break;
 
+#ifdef OSIOCAIFADDR_IN6
+	case OSIOCAIFADDR_IN6:
+		in6_aliasreq50_to_in6_aliasreq(ifra);
+		/*FALLTHROUGH*/
+#endif
 	case SIOCAIFADDR_IN6:
 	{
 		int i;

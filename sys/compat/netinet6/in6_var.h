@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.1 2009/01/15 18:19:23 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.2 2009/01/15 20:32:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,18 @@ struct in6_addrlifetime50 {
 	u_int32_t ia6t_pltime;
 };
 
+struct in6_aliasreq50 {
+	char	ifra_name[IFNAMSIZ];
+	struct	sockaddr_in6 ifra_addr;
+	struct	sockaddr_in6 ifra_dstaddr;
+	struct	sockaddr_in6 ifra_prefixmask;
+	int	ifra_flags;
+	struct in6_addrlifetime50 ifra_lifetime;
+};
+
 #define OSIOCGIFALIFETIME_IN6	_IOWR('i', 81, struct in6_ifreq)
+#define OSIOCAIFADDR_IN6	_IOW('i', 26, struct in6_aliasreq50)
+#define OSIOCSIFPHYADDR_IN6	_IOW('i', 70, struct in6_aliasreq50)
 
 static inline void in6_addrlifetime_to_in6_addrlifetime50(
     struct in6_addrlifetime *al)
@@ -58,6 +69,19 @@ static inline void in6_addrlifetime_to_in6_addrlifetime50(
 	oal->ia6t_preferred = (int32_t)cp.ia6t_preferred;
 	oal->ia6t_vltime = cp.ia6t_vltime;
 	oal->ia6t_pltime = cp.ia6t_pltime;
+}
+
+static inline void in6_aliasreq50_to_in6_aliasreq(
+    struct in6_aliasreq *ar)
+{
+	struct in6_aliasreq50 *oar =
+	    (struct in6_aliasreq50 *)(void *)ar;
+	struct in6_aliasreq50 cp;
+	memcpy(&cp, oar, sizeof(cp));
+	ar->ifra_lifetime.ia6t_expire = cp.ifra_lifetime.ia6t_expire;
+	ar->ifra_lifetime.ia6t_preferred = cp.ifra_lifetime.ia6t_preferred;
+	ar->ifra_lifetime.ia6t_vltime = cp.ifra_lifetime.ia6t_vltime;
+	ar->ifra_lifetime.ia6t_pltime = cp.ifra_lifetime.ia6t_pltime;
 }
 
 #endif /* _COMPAT_NETINET6_IN6_VAR_H_ */
