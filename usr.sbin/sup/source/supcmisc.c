@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.18 2008/12/18 18:11:49 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.19 2009/01/15 15:58:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -109,15 +109,26 @@ establishdir(char *fname)
 int 
 makedir(char *fname, unsigned int mode, struct stat * statp)
 {
+	int en, rv;
+
 	if (lstat(fname, statp) != -1 && !S_ISDIR(statp->st_mode)) {
 		if (unlink(fname) == -1) {
-			notify("SUP: Can't delete %s\n", fname);
+			notify("SUP: Can't delete %s (%s)\n", fname,
+			    strerror(errno));
 			return -1;
 		}
 	}
-	(void) mkdir(fname, mode);
+	if (mkdir(fname, mode) == -1)
+		en = errno;
+	else
+		en = -1;
 
-	return stat(fname, statp);
+	rv = stat(fname, statp);
+
+	if (en != -1)
+		errno = en;
+
+	return rv;
 }
 
 int 
@@ -131,14 +142,16 @@ estabd(char *fname, char *dname)
 		return (FALSE);	/* exists */
 	path(dname, dpart, fpart);
 	if (strcmp(fpart, ".") == 0) {	/* dname is / or . */
-		notify("SUP: Can't create directory %s for %s\n", dname, fname);
+		notify("SUP: Can't create directory %s for %s (Invalid name)\n",
+		    dname, fname);
 		return (TRUE);
 	}
 	x = estabd(fname, dpart);
 	if (x)
 		return (TRUE);
 	if (makedir(dname, 0755, &sbuf) < 0) {
-		vnotify("SUP: Can't create directory %s for %s\n", dname, fname);
+		notify("SUP: Can't create directory %s for %s (%s)\n", dname,
+		    fname, strerror(errno));
 		return TRUE;
 	}
 	vnotify("SUP Created directory %s for %s\n", dname, fname);
