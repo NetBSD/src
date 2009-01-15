@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2004/07/21 19:02:17 tshiozak Exp $
+#	$NetBSD: Makefile,v 1.4.32.1 2009/01/15 03:24:09 snj Exp $
 
 .include <bsd.own.mk>
 
 NOOBJ=	# defined
 NOMAN=	# defined
 
-SUBDIR=	ctype
+SUBDIR=	ctype monetary numeric time messages
 
 FILES=		locale.alias
 FILESOWN=	${LOCALEOWN}

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/19 08:07:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.3.38.1 2009/01/15 03:24:08 snj Exp $
 
 NOMAN=		# defined
 
 PROG=		ctype1
 
-TESTS=		en_US.UTF-8 ja_JP.ISO2022-JP ja_JP.SJIS ja_JP.eucJP
+TESTS=		en_US.UTF-8 ja_JP.ISO-2022-JP ja_JP.SJIS ja_JP.eucJP
 
 INPUTS=		${TESTS:S/$/.in/}
 EXPECTS=	${TESTS:S/$/.exp/}
