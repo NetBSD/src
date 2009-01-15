@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.101 2008/12/23 11:32:08 cegger Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.102 2009/01/15 21:26:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.101 2008/12/23 11:32:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.102 2009/01/15 21:26:03 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -118,12 +118,8 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	void *cp;
 	int waitfor, flags;
 
-	KASSERT(vp != NULL);
-	KASSERT(vp->v_mount != NULL);
-
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
-	KASSERT(VTOI(vp) != NULL);
 	ip = VTOI(vp);
 	FFS_ITIMES(ip, acc, mod, NULL);
 	if (updflags & UPDATE_CLOSE)
