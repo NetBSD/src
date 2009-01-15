@@ -1,12 +1,9 @@
-/*	$NetBSD: supextern.h,v 1.19 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: supextern.h,v 1.20 2009/01/15 15:58:42 christos Exp $	*/
 
 struct stat;
 
 /* atoo.c */
 unsigned int atoo(char *);
-
-/* errmsg.c */
-const char *errmsg(int);
 
 /* expand.c */
 int expand(char *, char **, int);
