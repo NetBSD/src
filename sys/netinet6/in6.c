@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.143 2008/12/19 18:49:39 cegger Exp $	*/
+/*	$NetBSD: in6.c,v 1.144 2009/01/15 18:20:48 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.143 2008/12/19 18:49:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.144 2009/01/15 18:20:48 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -102,6 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.143 2008/12/19 18:49:39 cegger Exp $");
 
 #ifdef PFIL_HOOKS
 #include <net/pfil.h>
+#endif
+#ifdef COMPAT_50
+#include <compat/netinet6/in6_var.h>
 #endif
 
 MALLOC_DEFINE(M_IP6OPT, "ip6_options", "IPv6 options");
@@ -443,6 +447,9 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCSPFXFLUSH_IN6:
 	case SIOCSRTRFLUSH_IN6:
 	case SIOCGIFALIFETIME_IN6:
+#ifdef OSIOCGIFALIFETIME_IN6
+	case OSIOCGIFALIFETIME_IN6:
+#endif
 	case SIOCGIFSTAT_IN6:
 	case SIOCGIFSTAT_ICMP6:
 		sa6 = &ifr->ifr_addr;
@@ -503,6 +510,9 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCGIFNETMASK_IN6:
 	case SIOCGIFDSTADDR_IN6:
 	case SIOCGIFALIFETIME_IN6:
+#ifdef OSIOCGIFALIFETIME_IN6
+	case OSIOCGIFALIFETIME_IN6:
+#endif
 		/* must think again about its semantics */
 		if (ia == NULL)
 			return EADDRNOTAVAIL;
@@ -555,6 +565,9 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		    *((struct in6_ifextra *)ifp->if_afdata[AF_INET6])->icmp6_ifstat;
 		break;
 
+#ifdef OSIOCGIFALIFETIME_IN6
+	case OSIOCGIFALIFETIME_IN6:
+#endif
 	case SIOCGIFALIFETIME_IN6:
 		ifr->ifr_ifru.ifru_lifetime = ia->ia6_lifetime;
 		if (ia->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
@@ -593,6 +606,11 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			} else
 				retlt->ia6t_preferred = maxexpire;
 		}
+#ifdef OSIOCFIFALIFETIME_IN6
+		if (cmd == OSIOCFIFALIFETIME_IN6)
+			in6_addrlifetime_to_in6_addrlifetime50(
+			    &ifr->ifru.ifru_lifetime);
+#endif
 		break;
 
 	case SIOCAIFADDR_IN6:
