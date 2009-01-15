@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_sb.c,v 1.5.4.1 2009/01/15 03:24:07 snj Exp $ */
+/* $NetBSD: iswctype_sb.c,v 1.5.4.2 2009/01/15 04:21:25 snj Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_sb.c,v 1.5.4.1 2009/01/15 03:24:07 snj Exp $");
+__RCSID("$NetBSD: iswctype_sb.c,v 1.5.4.2 2009/01/15 04:21:25 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -67,6 +67,7 @@ _ISWCTYPE_FUNC(xdigit)
 wint_t							\
 tow##name(wint_t wc)					\
 {							\
+	int c;						\
 	c = (wc == WEOF) ? EOF : (unsigned char)wc;	\
 	return to##name(c);				\
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.7 2007/03/08 19:57:53 drochner Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.7.18.1 2009/01/15 04:21:25 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.7 2007/03/08 19:57:53 drochner Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.7.18.1 2009/01/15 04:21:25 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: fparseln.c,v 1.7 2007/03/08 19:57:53 drochner Exp $");
 __weak_alias(fparseln,_fparseln)
 #endif
 
-#if ! HAVE_FPARSELN
+#if ! HAVE_FPARSELN || BROKEN_FPARSELN
 
 #ifndef HAVE_NBTOOL_CONFIG_H
 #include "reentrant.h"
@@ -251,4 +251,4 @@ line 6
 */
 
 #endif /* TEST */
-#endif	/* ! HAVE_FPARSELN */
+#endif	/* ! HAVE_FPARSELN || BROKEN_FPARSELN */
