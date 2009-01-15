@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.30 2008/11/13 18:44:51 cegger Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.31 2009/01/15 14:51:30 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.30 2008/11/13 18:44:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.31 2009/01/15 14:51:30 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1072,7 +1072,6 @@ xennet_softstart(void *arg)
 #endif
 	}
 
-	x86_lfence();
 	if (do_notify) {
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 		ifp->if_timer = 5;
