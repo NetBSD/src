@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2006/04/05 16:55:05 garbled Exp $ */
+/*	$NetBSD: md.c,v 1.20.4.1 2009/01/15 23:20:03 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,10 +39,11 @@
 /* md.c -- Machine specific code for atari */
 
 #include <stdio.h>
-#include <util.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/param.h>
-#include <machine/cpu.h>
 #include <sys/sysctl.h>
+
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -80,10 +81,35 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
-	/* boot blocks ... */
+	static const int mib[2] = {CTL_HW, HW_MODEL};
+	size_t len;
+	char *cpu_model;
+	int milan;
+	char bootpath[MAXPATHLEN];
+	int rv;
+
+	/* check machine type via sysctl to select appropriate bootloaders */
+	milan = 0;	/* std is default */
+	sysctl(mib, 2, NULL, &len, NULL, 0);
+	cpu_model = malloc(len);
+	sysctl(mib, 2, cpu_model, &len, NULL, 0);
+	/* XXX model strings should be a common macro to sync with kernel */
+	if (strstr(cpu_model, "Milan") != NULL)
+		milan = 1;
+	free(cpu_model);
+
+	/* copy tertiary boot and install boot blocks */
 	msg_display(MSG_dobootblks, diskdev);
-	return run_program(RUN_DISPLAY, "/usr/mdec/installboot -v /dev/r%sc",
-	    diskdev);
+	snprintf(bootpath, sizeof(bootpath), "/usr/mdec/%s/boot.atari",
+	    milan ? "milan" : "std");
+	rv = cp_to_target(bootpath, "/");
+	if (rv != 0)
+		return rv;
+
+	rv = run_program(RUN_DISPLAY, "/usr/mdec/installboot -v%s /dev/r%sc",
+	    milan ? "m" : "", diskdev);
+
+	return rv;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: libtos.h,v 1.4 2002/02/24 20:51:08 leo Exp $	*/
+/*	$NetBSD: libtos.h,v 1.4.68.1 2009/01/15 23:20:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -49,8 +49,14 @@
 #endif
 #endif
 
+#ifdef TOSTOOLS
 #include <sys/types.h>
 #include <stdarg.h>
+#define	VA_LIST	va_list
+#else
+#include <lib/libsa/stand.h>
+#define	VA_LIST	_BSD_VA_LIST_
+#endif
 
 #ifndef int8_t
 /*
@@ -76,7 +82,7 @@ EXTERN void	press_any_key    PROTO((void));
 EXTERN void	redirect_output  PROTO((char *));
 EXTERN void	set_wait_for_key PROTO((void));
 EXTERN void	sys_info	 PROTO((struct osdsc *));
-EXTERN int	veprintf         PROTO((char *, va_list));
+EXTERN int	veprintf         PROTO((char *, VA_LIST));
 EXTERN void	xexit            PROTO((int)) NORETURN;
 EXTERN void *	xmalloc          PROTO((size_t));
 EXTERN void *	xrealloc         PROTO((void *, size_t));

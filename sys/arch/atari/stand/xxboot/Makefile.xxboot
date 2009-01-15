@@ -1,19 +1,22 @@
-#	$NetBSD: Makefile.xxboot,v 1.4 2005/12/11 12:17:02 christos Exp $
+#	$NetBSD: Makefile.xxboot,v 1.4.24.1 2009/01/15 23:20:02 bouyer Exp $
 
-BINDIR=		/usr/mdec/${BTYPE:tl}
 BINMODE=	${NONBINMODE}
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
+
+.include "../../Makefile.booters"
+.include "../${BTYPE}_LOADADDR"
+
 STRIPFLAG=
-LDFLAGS=	-nostdlib -static -Wl,-x,-Ttext,0,-N
-CPPFLAGS+=	-I- -I${.CURDIR}/.. -I${.CURDIR}/../.. -D${BTYPE}
+LINKFLAGS=	-static -x -N -Ttext 0
+CPPFLAGS+=	-I. -I${.CURDIR}/.. -I${.CURDIR}/../.. -D${BTYPE}
 
 beforeinstall:
-	${OBJCOPY} -O binary ${PROG} ${PROG}X
-	@mv -f ${PROG} ${PROG}XX
-	@mv -f ${PROG}X ${PROG}
-
-afterinstall:
-	@mv -f ${PROG}XX ${PROG}
+	${INSTALL_DIR} ${DESTDIR}${BINDIR}
 
 .s.o: ../${BTYPE}_LOADADDR
 	${CPP} ${CPPFLAGS} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET}
@@ -26,7 +29,8 @@ afterinstall:
 		false;					\
 	 fi
 
-${PROG}:
-	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS}
+${PROG}:	${OBJS}
+	${LD} ${LINKFLAGS} -o ${PROG}.elf ${OBJS}
+	${OBJCOPY} -O binary ${PROG}.elf ${.TARGET}
 
-.include "../${BTYPE}_LOADADDR"
+CLEANFILES+=	${PROG}.elf
