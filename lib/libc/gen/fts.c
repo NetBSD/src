@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.31 2006/03/30 01:23:50 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.31.4.1 2009/01/15 22:05:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.31 2006/03/30 01:23:50 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.31.4.1 2009/01/15 22:05:38 bouyer Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -249,7 +249,7 @@ fts_close(FTS *sp)
 	 * list which has a valid parent pointer.
 	 */
 	if (sp->fts_cur) {
-		if (ISSET(FTS_SYMFOLLOW))
+		if (sp->fts_cur->fts_flags & FTS_SYMFOLLOW)
 			(void)close(sp->fts_cur->fts_symfd);
 		for (p = sp->fts_cur; p->fts_level >= FTS_ROOTLEVEL;) {
 			freep = p;
