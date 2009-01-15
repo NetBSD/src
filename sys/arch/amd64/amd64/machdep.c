@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2009/01/11 09:59:13 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 2009/01/15 19:03:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2009/01/11 09:59:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2009/01/15 19:03:31 joerg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1275,7 +1275,7 @@ init_x86_64(paddr_t first_avail)
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 	/*
-	 * Initailize PAGE_SIZE-dependent variables.
+	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	uvm_setpagesize();
 
