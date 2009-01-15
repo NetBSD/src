@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.10 2009/01/03 11:18:28 jdc Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.11 2009/01/15 22:01:44 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -78,4 +78,13 @@ sys/arch/atari/dev/clock.c			1.39
 sys/arch/atari/include/param.h			1.31
 	Simplify delay based on x86 version.
 	[tsutsui, ticket #1253]
+
+sys/arch/sparc/stand/bootblk/bootblk.fth	1.8
+
+	Instead of bailing out with "Inode not directory", assume that
+	the disk is a RAIDframe mirror, apply the RAID boot offset,
+	and try to boot again.
+	Fixes the problem where disks would be unbootable if partitioned
+	normally and then converted to RAID 1 without being zeroed first.
+	[jdc, ticket #1251]
 
