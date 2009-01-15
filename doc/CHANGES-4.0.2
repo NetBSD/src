@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.13 2009/01/15 22:26:02 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.14 2009/01/15 23:06:23 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -112,4 +112,10 @@ sys/arch/atari/stand/installboot/installboot.c	1.21
 	Fix atari sysinst based miniroot image, and retire old (unreferenced)
 	miniroot.
 	[abs, ticket #1257]
+
+usr.bin/make/make.1				1.151
+
+	Fix blatantly wrong exposition of .WAIT example.
+	PR bin/40372 from Gao Ya'nan.
+	[dholland, ticket #1262]
 
