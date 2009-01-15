@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.121 2009/01/15 22:00:40 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.122 2009/01/15 22:05:56 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2572,4 +2572,11 @@ sys/arch/sparc/stand/bootblk/bootblk.fth	1.8
 	Fixes the problem where disks would be unbootable if partitioned
 	normally and then converted to RAID 1 without being zeroed first.
 	[jdc, ticket #1251]
+
+lib/libc/gen/fts.c				1.35
+
+	Ensure fts_close() doesn't spuriously close fd 0,
+	by testing FTS_SYMFOLLOW in fts_flags instead of fts_options.
+	Fix provided by Ben Harris in PR 40319
+	[lukem, ticket #1256]
 
