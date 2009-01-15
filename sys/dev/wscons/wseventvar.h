@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.13 2009/01/13 18:05:55 christos Exp $ */
+/* $NetBSD: wseventvar.h,v 1.14 2009/01/15 04:22:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,6 @@ void	wsevent_wakeup(struct wseventvar *);
 int	wsevent_inject(struct wseventvar *, struct wscons_event *, size_t);
 int	wsevent_setversion(struct wseventvar *, int);
 
-#ifdef COMPAT_50
 /*
  * Compatibility layer
  */
@@ -112,14 +111,7 @@ struct owscons_event {
 #define EVSIZE(ev)	((ev)->version == WSEVENT_VERSION ? \
     sizeof(struct wscons_event) : \
     sizeof(struct owscons_event))
+#define EVARRAY(ev, idx) (void *)(((char *)(ev)->q) + (EVSIZE(ev) * (idx)))
 
 #define	WSMUXIO_OINJECTEVENT	_IOW('W', 96, struct owscons_event)
-
-#else
-
-#define EVSIZE(ev)	sizeof(struct wscons_event)
-
-#endif
-
-#define EVARRAY(ev, idx) (void *)(((char *)(ev)->q) + (EVSIZE(ev) * (idx)))
 
