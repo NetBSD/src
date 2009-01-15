@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.47 2008/10/23 21:38:39 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.48 2009/01/15 23:33:41 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47 2008/10/23 21:38:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48 2009/01/15 23:33:41 bjh21 Exp $");
 
 #include "opt_sa.h"
 
@@ -237,7 +237,7 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 		/* Undefined so illegal instruction */
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
-		ksi.ksi_code = 0;	/* XXX get an ILL_ILLSYSCALL assigned */
+		ksi.ksi_code = ILL_ILLTRP;
 #ifdef THUMB_CODE
 		if (frame->tf_spsr & PSR_T_bit) 
 			ksi.ksi_addr = (void *)(frame->tf_pc - THUMB_INSN_SIZE);
