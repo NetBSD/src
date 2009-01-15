@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.9 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: aout.c,v 1.9.24.1 2009/01/15 23:20:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 
 #include <lib/libsa/stand.h>
 #include <atari_stand.h>
-#include <string.h>
 #include <libkern.h>
 #include <sys/exec_aout.h>
 
