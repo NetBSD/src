@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.197 2009/01/11 02:46:30 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.198 2009/01/15 01:35:45 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -34,7 +34,7 @@ SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigtimedwait.c sigwait.c \
 GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
 	pwritev.c truncate.c ntp_adjtime.c
 
-GLUE50+= adjtime.c clock_settime.c settimeofday.c semctl.c
+GLUE50+= adjtime.c clock_settime.c settimeofday.c __semctl.c
 
 # 'glue' files might .c or .S depending on the architecture
 .for glue in ${GLUE}
@@ -59,12 +59,12 @@ ASM_GLUE+= tmp_${glue:.c=.S}
 # Build the ASM glue file
 SRCS+=${glue:.c=.S}
 . else
-.  if exists(____${glue:.c=}50.S)
-SRCS+=____${glue:.c=}50.S ${glue}
+.  if exists(__${glue:.c=}50.S)
+SRCS+=__${glue:.c=}50.S ${glue}
 .  else
 # Build the C glue file
 SRCS+= ${glue}
-# and an asm entry for ____<syscall>
+# and an asm entry for __<syscall>
 ASM_GLUE+= tmp___${glue:.c=}50.S
 .  endif
 . endif
@@ -115,7 +115,7 @@ ASM=	access.S acct.S \
 	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 		rmdir.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
-		sa_preempt.S semconfig.S semget.S semop.S ____semctl50.S \
+		sa_preempt.S semconfig.S semget.S semop.S \
 		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
 		setgroups.S __setitimer50.S __setlogin.S setpgid.S \
 		setpriority.S \
