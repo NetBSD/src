@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.4 2007/12/15 16:03:30 perry Exp $	*/
+/*	$NetBSD: server.c,v 1.5 2009/01/15 23:17:00 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: server.c,v 1.4 2007/12/15 16:03:30 perry Exp $
+ * $Id: server.c,v 1.5 2009/01/15 23:17:00 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/server.c,v 1.2 2005/12/06 17:56:36 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.4 2007/12/15 16:03:30 perry Exp $");
+__RCSID("$NetBSD: server.c,v 1.5 2009/01/15 23:17:00 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -462,7 +462,14 @@ server_process_request(server_p srv, int32_t fd)
 		return (-1);
 	}
 
-	if ((cmsg = CMSG_FIRSTHDR(&msg)) != NULL
+	if (msg.msg_flags & MSG_TRUNC) {
+		log_err("Truncated message on %s socket",
+			srv->fdidx[fd].control? "control" : "L2CAP");
+		return (-1);
+	}
+
+	if ((msg.msg_flags & MSG_CTRUNC) == 0
+	    && (cmsg = CMSG_FIRSTHDR(&msg)) != NULL
 	    && cmsg->cmsg_level == SOL_SOCKET
 	    && cmsg->cmsg_type == SCM_CREDS
 	    && cmsg->cmsg_len >= CMSG_LEN(SOCKCREDSIZE(0)))
