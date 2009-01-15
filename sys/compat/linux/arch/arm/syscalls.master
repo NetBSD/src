@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.39 2009/01/13 22:27:43 pooka Exp $
+	$NetBSD: syscalls.master,v 1.40 2009/01/15 23:48:50 njoly Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -151,9 +151,9 @@
 76	STD		{ int|linux_sys||getrlimit(u_int which, \
 			    struct orlimit *rlp); }
 77	NOARGS		{ int|compat_50_sys||getrusage(int who, struct rusage50 *rusage); }
-78	STD		{ int|linux_sys||gettimeofday(struct timeval *tp, \
+78	STD		{ int|linux_sys||gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-79	STD		{ int|linux_sys||settimeofday(struct timeval *tp, \
+79	STD		{ int|linux_sys||settimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
 80	STD		{ int|linux_sys||getgroups16(int gidsetsize, \
 			    linux_gid16_t *gidset); }
@@ -247,7 +247,7 @@
 			    struct linux_dirent *dent, unsigned int count); }
 142	STD		{ int|linux_sys||select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
-			    struct timeval *timeout); }
+			    struct timeval50 *timeout); }
 143	NOARGS		{ int|sys||flock(int fd, int how); }
 144	NOARGS		{ int|sys|13|msync(void *addr, size_t len, int flags); }
 145	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
