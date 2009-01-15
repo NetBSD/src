@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.62 2009/01/15 18:20:48 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.63 2009/01/15 20:32:59 christos Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -400,9 +400,9 @@ struct	in6_rrenumreq {
 #define SIOCGIFNETMASK_IN6	_IOWR('i', 37, struct in6_ifreq)
 
 #define SIOCDIFADDR_IN6		 _IOW('i', 25, struct in6_ifreq)
-#define SIOCAIFADDR_IN6		 _IOW('i', 26, struct in6_aliasreq)
+/* 26 was OSIOCAIFADDR_IN6 */
 
-#define SIOCSIFPHYADDR_IN6       _IOW('i', 70, struct in6_aliasreq)
+/* 70 was OSIOCSIFPHYADDR_IN6 */
 #define	SIOCGIFPSRCADDR_IN6	_IOWR('i', 71, struct in6_ifreq)
 #define	SIOCGIFPDSTADDR_IN6	_IOWR('i', 72, struct in6_ifreq)
 
@@ -413,8 +413,6 @@ struct	in6_rrenumreq {
 #ifdef _KERNEL
 #define OSIOCGIFINFO_IN6	_IOWR('i', 76, struct in6_ondireq)
 #endif
-#define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
-#define SIOCSIFINFO_IN6		_IOWR('i', 109, struct in6_ndireq)
 #define SIOCSNDFLUSH_IN6	_IOWR('i', 77, struct in6_ifreq)
 #define SIOCGNBRINFO_IN6	_IOWR('i', 78, struct in6_nbrinfo)
 #define SIOCSPFXFLUSH_IN6	_IOWR('i', 79, struct in6_ifreq)
@@ -441,6 +439,10 @@ struct	in6_rrenumreq {
 #define SIOCSGIFPREFIX_IN6	_IOW('i', 105, \
 				     struct in6_rrenumreq) /* set global */
 #define SIOCGIFALIFETIME_IN6	_IOWR('i', 106, struct in6_ifreq)
+#define SIOCAIFADDR_IN6		_IOW('i', 107, struct in6_aliasreq)
+#define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
+#define SIOCSIFINFO_IN6		_IOWR('i', 109, struct in6_ndireq)
+#define SIOCSIFPHYADDR_IN6      _IOW('i', 110, struct in6_aliasreq)
 
 
 /* XXX: Someone decided to switch to 'u' here for unknown reasons! */
