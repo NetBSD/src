@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.121 2009/01/13 18:05:55 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.122 2009/01/15 04:22:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,12 +105,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.121 2009/01/13 18:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.122 2009/01/15 04:22:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_wsdisplay_compat.h"
-#include "opt_compat_netbsd.h"
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -883,9 +882,6 @@ wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-#ifndef COMPAT_50
-	evar->version = WSEVENT_VERSION;
-#endif
 	wsevent_init(evar, l->l_proc);
 
 	error = wskbd_do_open(sc, evar);
