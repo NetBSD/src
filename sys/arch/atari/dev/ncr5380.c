@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.52.18.1 2008/11/06 22:40:48 snj Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.52.18.2 2009/01/15 23:04:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.52.18.1 2008/11/06 22:40:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.52.18.2 2009/01/15 23:04:18 bouyer Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -1815,6 +1815,12 @@ SC_REQ	*reqp;
 	caddr_t			req_addr;
 	u_long			req_len;
 	struct dma_chain	*dm;
+
+	/*
+	 * To be safe, do not use DMA for Falcon
+	 */
+	if (machineid & ATARI_FALCON)
+		return (0);
 
 	/*
 	 * Initialize locals and requests' DMA-chain.
