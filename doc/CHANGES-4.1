@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.124 2009/01/15 22:42:10 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.125 2009/01/15 23:29:30 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2612,4 +2612,54 @@ sys/arch/atari/include/vmparam.h		1.22
 	amiga pmap, and also include (missed) necessary MD changes
 	on yamt-km merge.
 	[tsutsui, ticket #1258]
+
+build.sh					1.200
+
+	"\t" does not represent a tab in sed regular expressions,
+	so use a ${tab} variable instead.
+	[apb, ticket #1259]
+
+distrib/atari/floppies/install/list		1.9
+distrib/atari/floppies/prepare/list		1.6
+
+	Add df(1) to installation md_root files for atari.
+	It looks df(1) had been required by MAKEDEV(8) since NetBSD 1.6 days,
+	and this could workaround PR port-atari/40316 in branches with
+	minimum pullups.
+	[tsutsui, ticket #1260]
+
+sys/arch/atari/dev/ncr5380.c			1.57
+
+	To be safe, do not use DMA for Falcon
+	[tjam, ticket #1261]
+
+usr.bin/make/make.1				1.151
+
+	Fix blatantly wrong exposition of .WAIT example.
+	PR bin/40372 from Gao Ya'nan.
+	[dholland, ticket #1262]
+
+distrib/sets/lists/base/md.atari		1.50
+distrib/utils/sysinst/arch/atari/md.c		1.23
+sys/arch/atari/stand/Makefile.booters		1.1
+sys/arch/atari/stand/Makefile.inc		delete
+sys/arch/atari/stand/bootxx/Makefile.bootxx	1.8 via patch
+sys/arch/atari/stand/bootxx/bootxx.c		1.13
+sys/arch/atari/stand/bootxx/start.S		1.1
+sys/arch/atari/stand/bootxxx/Makefile.bootxxx	1.4, 1.5
+sys/arch/atari/stand/bootxxx/bootxxx.c		1.4
+sys/arch/atari/stand/bootxxx/start.S		1.1
+sys/arch/atari/stand/installboot/disklabel.c	1.3
+sys/arch/atari/stand/installboot/installboot.c	1.22
+sys/arch/atari/stand/installboot/installboot.h	1.9
+sys/arch/atari/stand/libsa/Makefile		1.28
+sys/arch/atari/stand/tostools/libtos/aout.c	1.11
+sys/arch/atari/stand/tostools/libtos/elf.c	1.9
+sys/arch/atari/stand/tostools/libtos/libtos.h	1.5
+sys/arch/atari/stand/tostools/libtos/sysinfo.c	1.8
+sys/arch/atari/stand/xxboot/Makefile.xxboot	1.5
+
+	Fixes for atari bootloader and installation.
+	Fix PR port-atari/40315: Bootloader fails on Atari TT030
+	[tsutsui, ticket #1263]
 
