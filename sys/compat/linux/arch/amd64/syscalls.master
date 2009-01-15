@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 2009/01/13 22:27:43 pooka Exp $
+	$NetBSD: syscalls.master,v 1.29 2009/01/15 23:48:50 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -109,7 +109,7 @@
 22	STD		{ int|linux_sys||pipe(int *pfds); }
 23	STD		{ int|linux_sys||select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
-			    struct timeval *timeout); }
+			    struct timeval50 *timeout); }
 24	STD		{ int|linux_sys||sched_yield(void); }
 25	STD		{ void *|linux_sys||mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
@@ -245,11 +245,12 @@
 94	NOARGS		{ int|sys||__posix_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 95	NOARGS		{ int|sys||umask(int newmask); }
-96	STD		{ int|linux_sys||gettimeofday(struct timeval *tp, \
+96	STD		{ int|linux_sys||gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
 97	STD		{ int|linux_sys||getrlimit(int which, \
 			    struct rlimit *rlp); }
-98	NOARGS		{ int|compat_50_sys||getrusage(int who, struct rusage50 *rusage); }
+98	NOARGS		{ int|compat_50_sys||getrusage(int who, \
+			    struct rusage50 *rusage); }
 99	STD		{ int|linux_sys||sysinfo(struct linux_sysinfo *arg); }
 100	STD		{ int|linux_sys||times(struct times *tms); }
 101	STD		{ int|linux_sys||ptrace(long request, long pid, \
@@ -340,7 +341,7 @@
 161	NOARGS		{ int|sys||chroot(char *path); }
 162	NOARGS		{ int|sys||sync(void); }
 163	NOARGS		{ int|sys||acct(char *path); }
-164	STD		{ int|linux_sys||settimeofday(struct timeval *tp, \
+164	STD		{ int|linux_sys||settimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
 165	UNIMPL		mount
 166	UNIMPL		umount2

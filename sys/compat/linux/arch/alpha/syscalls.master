@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.66 2009/01/13 22:27:43 pooka Exp $
+	$NetBSD: syscalls.master,v 1.67 2009/01/15 23:48:50 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -574,19 +574,21 @@
 			    size_t sigsetsize); }
 358	STD		{ int|linux_sys||select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
-			    struct timeval *timeout); }
-359	NOARGS		{ int|sys||gettimeofday(struct timeval *tp, \
-			    struct timezone *tzp); }
-360	NOARGS		{ int|sys||settimeofday(const struct timeval *tp, \
+			    struct timeval50 *timeout); }
+359	NOARGS		{ int|compat_50_sys||gettimeofday( \
+			    struct timeval50 *tp, struct timezone *tzp); }
+360	NOARGS		{ int|compat_50_sys||settimeofday( \
+			    const struct timeval50 *tp, \
 			    const struct timezone *tzp); }
-361	NOARGS		{ int|sys||getitimer(int which, \
-			    struct itimerval *itv); }
-362	NOARGS		{ int|sys||setitimer(int which, \
-			    const struct itimerval *itv, \
-			    struct itimerval *oitv); }
-363	NOARGS		{ int|sys||utimes(char *path, \
-			    struct timeval *times); }
-364	NOARGS		{ int|sys||getrusage(int who, struct rusage *rusage); }
+361	NOARGS		{ int|compat_50_sys||getitimer(int which, \
+			    struct itimerval50 *itv); }
+362	NOARGS		{ int|compat_50_sys||setitimer(int which, \
+			    const struct itimerval50 *itv, \
+			    struct itimerval50 *oitv); }
+363	NOARGS		{ int|compat_50_sys||utimes(char *path, \
+			    struct timeval50 *times); }
+364	NOARGS		{ int|compat_50_sys||getrusage(int who, \
+			    struct rusage50 *rusage); }
 365	STD		{ int|linux_sys||wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
 366	UNIMPL		adjtimex
