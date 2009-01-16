@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.7 2009/01/09 02:36:17 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.8 2009/01/16 01:12:30 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6630,6 +6630,14 @@
 ./usr/share/man/cat3/mpool_open.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mpool_put.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mpool_sync.0		comp-c-catman		.cat
+./usr/share/man/cat3/mq_close.0			comp-c-catman		.cat
+./usr/share/man/cat3/mq_getattr.0		comp-c-catman		.cat
+./usr/share/man/cat3/mq_notify.0		comp-c-catman		.cat
+./usr/share/man/cat3/mq_open.0			comp-c-catman		.cat
+./usr/share/man/cat3/mq_receive.0		comp-c-catman		.cat
+./usr/share/man/cat3/mq_send.0			comp-c-catman		.cat
+./usr/share/man/cat3/mq_setattr.0		comp-c-catman		.cat
+./usr/share/man/cat3/mq_unlink.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mrand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvaddch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvaddchnstr.0		comp-c-catman		.cat
@@ -11909,6 +11917,14 @@
 ./usr/share/man/html3/mpool_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/mpool_put.html		comp-c-htmlman		html
 ./usr/share/man/html3/mpool_sync.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_close.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_getattr.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_notify.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_open.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_receive.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_send.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_setattr.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_unlink.html		comp-c-htmlman		html
 ./usr/share/man/html3/mrand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvaddch.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvaddchnstr.html		comp-c-htmlman		html
@@ -17177,6 +17193,14 @@
 ./usr/share/man/man3/mpool_open.3		comp-c-man		.man
 ./usr/share/man/man3/mpool_put.3		comp-c-man		.man
 ./usr/share/man/man3/mpool_sync.3		comp-c-man		.man
+./usr/share/man/man3/mq_close.3			comp-c-man		.man
+./usr/share/man/man3/mq_getattr.3		comp-c-man		.man
+./usr/share/man/man3/mq_notify.3		comp-c-man		.man
+./usr/share/man/man3/mq_open.3			comp-c-man		.man
+./usr/share/man/man3/mq_receive.3		comp-c-man		.man
+./usr/share/man/man3/mq_send.3			comp-c-man		.man
+./usr/share/man/man3/mq_setattr.3		comp-c-man		.man
+./usr/share/man/man3/mq_unlink.3		comp-c-man		.man
 ./usr/share/man/man3/mrand48.3			comp-c-man		.man
 ./usr/share/man/man3/mvaddch.3			comp-c-man		.man
 ./usr/share/man/man3/mvaddchnstr.3		comp-c-man		.man

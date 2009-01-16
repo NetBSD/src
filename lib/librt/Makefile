@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2008/10/26 07:28:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2009/01/16 01:12:31 snj Exp $
 #
 
 WARNS=	2
@@ -9,6 +9,8 @@ SRCS+=	pset.c
 
 MAN+=	aio_cancel.3 aio_error.3 aio_fsync.3 aio_read.3 aio_return.3 \
 	aio_suspend.3 aio_write.3 lio_listio.3 \
+	mq_close.3 mq_getattr.3 mq_notify.3 mq_open.3 mq_receive.3 \
+	mq_send.3 mq_setattr.3 mq_unlink.3 \
 	pset.3 sched.3 \
 	sem_destroy.3 sem_getvalue.3 sem_init.3 sem_open.3 sem_post.3 \
 	sem_wait.3
