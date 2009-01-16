@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.86 2008/08/05 20:57:45 pooka Exp $	*/
+/*	$NetBSD: mount.c,v 1.86.2.1 2009/01/16 22:22:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.86 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount.c,v 1.86.2.1 2009/01/16 22:22:52 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,9 +280,14 @@ main(int argc, char *argv[])
 		 * specified ala Sun.
 		 */
 		if (vfslist == NULL) {
-			if (strpbrk(argv[0], ":@") != NULL)
+			if (strpbrk(argv[0], ":@") != NULL) {
+				fprintf(stderr, "WARNING: autoselecting nfs "
+				    "based on : or @ in the device name is "
+				    "deprecated!\n"
+				    "WARNING: This behaviour will be removed "
+				    "in a future release\n");
 				vfstype = "nfs";
-			else {
+			} else {
 				vfstype = getfslab(argv[0]);
 				if (vfstype == NULL)
 					vfstype = ffs_fstype;
