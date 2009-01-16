@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.69 2009/01/16 01:54:46 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.70 2009/01/16 03:08:50 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2356,4 +2356,56 @@ usr.sbin/puffs/mount_psshfs/node.c		1.55
 	Track parent directory in cross-directory renames so that mv & rm
 	for the same file during a vnode's lifecycle works.
 	[pooka, ticket #254]
+
+doc/3RDPARTY					1.661 via patch
+doc/CHANGES					1.1160 via patch
+usr.sbin/ntp/importdate				1.3  
+usr.sbin/ntp/ntp-keygen/ntp-keygen.8		1.5
+usr.sbin/ntp/ntpd/ntpd.8			1.19
+usr.sbin/ntp/ntpdc/ntpdc.8			1.17
+usr.sbin/ntp/ntpq/ntpq.8			1.20
+usr.sbin/ntp/scripts/mkver			1.11
+usr.sbin/sntp/sntp.1				1.6
+dist/ntp/COPYRIGHT				1.1.1.8
+dist/ntp/ChangeLog				1.1.1.9
+dist/ntp/CommitLog				1.1.1.3
+dist/ntp/NEWS					1.1.1.9
+dist/ntp/configure				1.9
+dist/ntp/packageinfo.sh				1.1.1.6
+dist/ntp/version				1.1.1.7
+dist/ntp/version.m4				1.1.1.6
+dist/ntp/html/copyright.html			1.5
+dist/ntp/include/version.def			1.1.1.6
+dist/ntp/ntpd/ntp_crypto.c			1.14
+dist/ntp/ntpd/ntp_loopfilter.c			1.9
+dist/ntp/ntpd/ntpd-opts.c			1.1.1.4
+dist/ntp/ntpd/ntpd-opts.h			1.1.1.4
+dist/ntp/ntpd/ntpd-opts.texi			1.1.1.4
+dist/ntp/ntpd/ntpd.1				1.1.1.4
+dist/ntp/ntpd/ntpdsim-opts.c			1.1.1.4
+dist/ntp/ntpd/ntpdsim-opts.h			1.1.1.4
+dist/ntp/ntpd/ntpdsim-opts.texi			1.1.1.4
+dist/ntp/ntpd/ntpdsim.1				1.1.1.4
+dist/ntp/ntpdc/ntpdc-opts.c			1.1.1.4
+dist/ntp/ntpdc/ntpdc-opts.h			1.1.1.4
+dist/ntp/ntpdc/ntpdc-opts.texi			1.1.1.4
+dist/ntp/ntpdc/ntpdc.1				1.1.1.4
+dist/ntp/ntpq/ntpq-opts.c			1.1.1.4
+dist/ntp/ntpq/ntpq-opts.h			1.1.1.4
+dist/ntp/ntpq/ntpq-opts.texi			1.1.1.4
+dist/ntp/ntpq/ntpq.1				1.1.1.4
+dist/ntp/sntp/sntp-opts.c			1.1.1.4
+dist/ntp/sntp/sntp-opts.h			1.1.1.4
+dist/ntp/sntp/sntp-opts.texi			1.1.1.4
+dist/ntp/sntp/sntp.1				1.1.1.5
+dist/ntp/sntp/version.def			1.1.1.4
+dist/ntp/util/ntp-keygen-opts.c			1.1.1.4
+dist/ntp/util/ntp-keygen-opts.h			1.1.1.4
+dist/ntp/util/ntp-keygen-opts.texi		1.1.1.4
+dist/ntp/util/ntp-keygen.1			1.1.1.4
+sys/sys/timex.h					1.15, 1.16
+
+	Update ntp to 4.2.4p6.
+	Make kernel sync status readble for humans.
+	[kardel, ticket #255]
 
