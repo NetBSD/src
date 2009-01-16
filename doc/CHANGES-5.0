@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.72 2009/01/16 21:44:31 bouyer Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.73 2009/01/16 22:23:52 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2510,4 +2510,55 @@ usr.sbin/Makefile			patch
 	Now that MKPUFFS is default, kill it as advertised.
 	While there, give puffs and refuse files sensible syspkg entries.
 	[pooka, ticket #259]
+
+sys/arch/atari/dev/ncr5380.c			1.57
+
+	To be safe, do not use DMA for Falcon - from Tuomo
+	[tjam, ticket #263]
+
+sys/arch/macppc/dev/dbcool_ki2c.c		1.4
+
+	makes dbcool(4) recognize the ADT7460 hardware in the aluminium
+	PowerBook G4 12".  The hardware is very similar to several other
+	models, to the point that it cannot be distinguished by its advertised
+	device id and revision id, which are the same as the ADT7463.
+	Patch from Taylor R Campbell.
+	[ahoka, ticket #264]
+
+gnu/usr.bin/binutils/ld/Makefile		1.28
+libexec/ld.elf_so/arch/i386/Makefile.inc	1.12
+libexec/ld.elf_so/arch/i386/Makefile.ld32	1.1
+libexec/ld.elf_so/arch/sparc/Makefile.inc	1.12
+libexec/ld.elf_so/arch/sparc/Makefile.ld32	1.1
+libexec/ld.elf_so/headers.c			1.27
+libexec/ld.elf_so/map_object.c			1.37
+rescue/Makefile					1.22
+rescue/list					1.35
+rescue/list.ldd					1.1
+usr.bin/ldd/Makefile				1.8, 1.9
+usr.bin/ldd/Makefile				1.9
+usr.bin/ldd/Makefile.elf			1.1 - 1.3
+usr.bin/ldd/aout/Makefile			1.1
+usr.bin/ldd/dummy.c				1.1
+usr.bin/ldd/elf32/Makefile			1.1 - 1.3
+usr.bin/ldd/elf64/Makefile			1.1 - 1.3
+usr.bin/ldd/ldd.c				1.3, 1.4
+usr.bin/ldd/ldd.h				1.1
+usr.bin/ldd/ldd_aout.c				1.1
+usr.bin/ldd/ldd_aout/Makefile			delete
+usr.bin/ldd/ldd_aout/ldd.c			delete
+usr.bin/ldd/ldd_elf/Makefile			delete
+usr.bin/ldd/ldd_elf/README			delete
+usr.bin/ldd/ldd_elf/ldd.c			delete
+usr.bin/ldd/ldd_elfxx.c				1.1
+
+	"gcc -m32" and "ldd on 64bits platform for 32bit binaries" fixes,
+	including fixes for PR#40170 and PR#40199
+	[mrg, ticket #265]
+
+sbin/mount/mount.c				1.87
+
+	Warn that autoselecting nfs based on : or @ in the device path will
+	be removed in a future release.
+	[pooka, ticket #266]
 
