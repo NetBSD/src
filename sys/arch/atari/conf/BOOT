@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOT,v 1.72.12.2 2008/11/18 18:51:40 snj Exp $
+# $NetBSD: BOOT,v 1.72.12.3 2009/01/16 21:02:24 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.65.2.3 2008/11/18 18:43:32 snj Exp $
+#		NetBSD: GENERIC.in,v 1.65.2.4 2009/01/16 20:58:22 bouyer Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -20,7 +20,6 @@ options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
-file-system KERNFS # Kernel parameter filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
 options PANICWAIT # Require keystroke to dump/reboot
@@ -39,7 +38,7 @@ options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
-options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
 options FALCON_SCSI # SCSI-support for Falcon
