@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 2008/05/03 14:48:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2009/01/16 07:09:09 junyoung Exp $
 
 LIBISPRIVATE=	yes
 
 LIB=	sup
 
 SRCS=	scm.c scmio.c stree.c log.c supmsg.c netcrypt.c
-SRCS+=	atoo.c errmsg.c expand.c ffilecopy.c filecopy.c \
+SRCS+=	atoo.c expand.c ffilecopy.c filecopy.c \
 	nxtarg.c path.c quit.c run.c skipto.c
 
 .PATH: ${.CURDIR}/../source
