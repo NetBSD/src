@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.7 2008/10/19 22:05:21 apb Exp $
+#	$NetBSD: Makefile.bootxx,v 1.7.4.1 2009/01/16 22:57:33 bouyer Exp $
 
 NOMAN=	# defined
 
@@ -6,26 +6,15 @@ NOMAN=	# defined
 .include <bsd.own.mk>
 
 PROG=	bootxx
-SRCS=	bootxx.c filesystem.c
 
 STRIPFLAG=
-BINDIR=	/usr/mdec/${BTYPE:tl}
 BINMODE=${NONBINMODE}
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
-
-DEFS=	-D_STANDALONE  -DHEAP_VARIABLE
-INCL=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
-
-CPPFLAGS+=	${DEFS} ${INCL}
-CFLAGS+=	-Wall -Wno-uninitialized
-CFLAGS+=	-fomit-frame-pointer -fno-function-cse -fstrength-reduce
-CFLAGS+=	-ffreestanding
-.if ${OBJECT_FMT} == "ELF"
-LDFLAGS=	-static -nostdlib -Wl,-x,-N,-e,bootxx,-Ttext,${LOADADDR}
-.else
-LDFLAGS=	-static -nostdlib -Wl,-N,-Ttext,${LOADADDR}
-.endif
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 # logically src/sys
 S=${.CURDIR}/../../../../..
@@ -38,37 +27,47 @@ S_MACHSAOBJ!=	cd ${S_MACHSA} && ${PRINTOBJDIR}
 
 LIBSA=${S_MACHSAOBJ}/libsa.a
 
-DPADD=	${LIBSA}
-LDADD=	${LIBSA}
+.include "../../Makefile.booters"
+.include "../../xxboot/${BTYPE}_LOADADDR"
 
-beforeinstall:
-	@len=`${SIZE} ${PROG} | ${TOOL_AWK} 'NR==2 { print $$1+$$2 }'`;	\
-	 if [ "$$len" -gt 6656 ]; then					\
-		${SIZE} ${PROG};					\
-		exit 1;							\
-	 fi;
-	${OBJCOPY} -O binary ${PROG} ${PROG}XX
-	@${TOOL_CAT} ${PROG}XX /dev/zero | dd of=${PROG}X		\
-			bs=1 count=6656  2>/dev/null
-	@mv -f ${PROG} ${PROG}XX
-	@mv -f ${PROG}X ${PROG};
-	${INSTALL_DIR} ${DESTDIR}${BINDIR}
 
-afterinstall:
-	@mv -f ${PROG}XX ${PROG}
+BOOTXX_MAXSIZE=		6656
 
-.s.o: ../../xxboot/${BTYPE}_LOADADDR
-	${CPP} ${CPPFLAGS} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET}
-
-.c.o:
-	${CC} ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC} -o ${.TARGET}
-
-${PROG}:
-	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
-
-${PROG}: ../../xxboot/${BTYPE}_LOADADDR
+CPPFLAGS+=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
+.if ${OBJECT_FMT} == "ELF"
+LINKFLAGS=	-static -N -e start -Ttext ${LOADADDR}
+.else
+LINKFLAGS=	-static -N -Ttext ${LOADADDR}
+.endif
 
 .PATH: ${.CURDIR}/.. ${S_LIBTOS}
 
-.include "../../xxboot/${BTYPE}_LOADADDR"
+#
+# Warning: start.S should be the first source!
+#
+SRCS=	start.S bootxx.c filesystem.c
+
+LIBS=	${LIBSA}
+
+beforeinstall:
+	${INSTALL_DIR} ${DESTDIR}${BINDIR}
+
+${PROG}:	${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${.TARGET}.elf ${OBJS} ${LIBS}
+	${OBJCOPY} -O binary ${PROG}.elf ${PROG}.bin
+	${SIZE} ${PROG}.elf
+	@len=`${SIZE} ${PROG}.elf |					\
+	    ${TOOL_AWK} 'NR==2 { print $$1+$$2 }'`;			\
+	if [ "$$len" -gt ${BOOTXX_MAXSIZE} ]; then			\
+		echo "### ${PROG} text+data size $$len is"		\
+		    "larger than ${BOOTXX_MAXSIZE}" >&2; \
+		exit 1;							\
+	fi;
+	${TOOL_CAT} ${PROG}.bin /dev/zero |				\
+	    dd of=${PROG}.tmp bs=1 count=6656  2>/dev/null
+	mv ${PROG}.tmp ${.TARGET}
+
+CLEANFILES+=	${PROG}.elf ${PROG}.bin ${PROG}.tmp
+
 .include <bsd.prog.mk>

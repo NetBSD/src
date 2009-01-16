@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.20.88.1 2009/01/08 22:04:12 snj Exp $	*/
+/*	$NetBSD: installboot.c,v 1.20.88.2 2009/01/16 22:57:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -59,7 +59,7 @@ static u_int	abcksum __P((void *));
 static void	setNVpref __P((void));
 static void	setIDEpar __P((u_int8_t *, size_t));
 static void	mkahdiboot __P((struct ahdi_root *, char *,
-						char *, daddr_t));
+						char *, u_int32_t));
 static void	mkbootblock __P((struct bootblock *, char *,
 				char *, struct disklabel *, u_int));
 static void	install_fd __P((char *, struct disklabel *));
@@ -272,7 +272,7 @@ install_sd (devnm, label)
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
 	struct disklabel rawlabel;
-	daddr_t		 bbsec;
+	u_int32_t	 bbsec;
 	u_int		 magic;
 
 	if (label->d_partitions[0].p_size == 0)
@@ -312,7 +312,7 @@ install_sd (devnm, label)
 	mkbootblock(&bootarea, xxboot, bootxx, label, magic);
 
 	if (!nowrite) {
-		off_t	bbo = bbsec * AHDI_BSIZE;
+		off_t	bbo = (off_t)bbsec * AHDI_BSIZE;
 		int	fd;
 
 		if ((fd = open(devnm, O_WRONLY)) < 0)
@@ -346,7 +346,7 @@ install_wd (devnm, label)
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
 	struct disklabel rawlabel;
-	daddr_t		 bbsec;
+	u_int32_t	 bbsec;
 	u_int		 magic;
 
 	if (label->d_partitions[0].p_size == 0)
@@ -388,7 +388,7 @@ install_wd (devnm, label)
 		int	fd;
 		off_t	bbo;
 
-		bbo = bbsec * AHDI_BSIZE;
+		bbo = (off_t)bbsec * AHDI_BSIZE;
 		if ((fd = open(devnm, O_WRONLY)) < 0)
 			err(EXIT_FAILURE, "%s", devnm);
 		if (lseek(fd, bbo, SEEK_SET) != bbo)
@@ -418,7 +418,7 @@ mkahdiboot (newroot, xxb00t, devnm, bbsec)
 	struct ahdi_root *newroot;
 	char		 *xxb00t,
 			 *devnm;
-	daddr_t		 bbsec;
+	u_int32_t	 bbsec;
 {
 	struct ahdi_root tmproot;
 	struct ahdi_part *pd;
