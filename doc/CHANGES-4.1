@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.125 2009/01/15 23:29:30 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.126 2009/01/16 20:55:01 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2662,4 +2662,9 @@ sys/arch/atari/stand/xxboot/Makefile.xxboot	1.5
 	Fixes for atari bootloader and installation.
 	Fix PR port-atari/40315: Bootloader fails on Atari TT030
 	[tsutsui, ticket #1263]
+
+sys/dev/pci/aac_pci.c				1.26
+
+	Allocate enough space for the aac_pci_softc, not just the aac_softc.
+	[briggs, ticket #1255]
 
