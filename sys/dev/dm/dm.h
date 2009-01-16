@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.7 2009/01/11 11:54:52 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.8 2009/01/16 11:19:02 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ typedef struct dm_dev {
 	struct dm_dev_head upcalls;
 	
 	struct disklabel *dk_label;    /* Disklabel for this table. */
+	struct disk *diskp;
 	
 	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
 
