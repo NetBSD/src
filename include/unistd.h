@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.118 2008/06/25 11:45:38 ad Exp $	*/
+/*	$NetBSD: unistd.h,v 1.118.4.1 2009/01/16 01:04:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ uid_t	 geteuid(void);
 gid_t	 getgid(void);
 int	 getgroups(int, gid_t []);
 __aconst char *getlogin(void);
-int	 getlogin_r(char *, int);
+int	 getlogin_r(char *, size_t);
 pid_t	 getpgrp(void);
 pid_t	 getpid(void);
 pid_t	 getppid(void);
