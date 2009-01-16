@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.3 2008/12/12 22:55:56 lukem Exp $ */
+/*	$NetBSD: v_txt.c,v 1.4 2009/01/16 15:05:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -951,7 +951,7 @@ k_escape:	LINE_RESOLVE;
 
 		switch (carat) {
 		case C_CARATSET:	/* ^^D */
-			if (tp->ai == 0 || tp->cno > tp->ai + tp->offset + 1)
+			if (tp->ai == 0 || tp->cno != tp->ai + tp->offset + 1)
 				goto ins_ch;
 
 			/* Save the ai string for later. */
@@ -964,17 +964,18 @@ k_escape:	LINE_RESOLVE;
 			carat = C_NOCHANGE;
 			goto leftmargin;
 		case C_ZEROSET:		/* 0^D */
-			if (tp->ai == 0 || tp->cno > tp->ai + tp->offset + 1)
+			if (tp->ai == 0 || tp->cno != tp->ai + tp->offset + 1)
 				goto ins_ch;
 
 			carat = C_NOTSET;
 leftmargin:		tp->lb[tp->cno - 1] = ' ';
 			tp->owrite += tp->cno - tp->offset;
-			tp->ai = 0;
 			tp->cno = tp->offset;
 			break;
+		case C_NOCHANGE:	/* ^D after reset with ^^D */
+			/* FALLTHROUGH */
 		case C_NOTSET:		/* ^D */
-			if (tp->ai == 0 || tp->cno > tp->ai + tp->offset)
+			if (tp->ai == 0 || tp->cno != tp->ai + tp->offset)
 				goto ins_ch;
 
 			(void)txt_dent(sp, tp, 0);
@@ -1899,7 +1900,6 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 	CHAR_T ch;
 	u_long sw, ts;
 	size_t cno, current, spaces, target, tabs;
-	int ai_reset;
 
 	ts = O_VAL(sp, O_TABSTOP);
 	sw = O_VAL(sp, O_SHIFTWIDTH);
@@ -1931,17 +1931,6 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 		--target;
 		target -= target % sw;
 	}
-
-	/*
-	 * The AI characters will be turned into overwrite characters if the
-	 * cursor immediately follows them.  We test both the cursor position
-	 * and the indent flag because there's no single test.  (^T can only
-	 * be detected by the cursor position, and while we know that the test
-	 * is always true for ^D, the cursor can be in more than one place, as
-	 * "0^D" and "^D" are different.)
-	 */
-	ai_reset = !isindent || tp->cno == tp->ai + tp->offset;
-/* XXXX: consider O_EXPANDTABS when calculating ai_reset ? */
 
 	/*
 	 * Back up over any previous <blank> characters, changing them into
@@ -1979,9 +1968,7 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 		spaces = target - cno;
 	}
 
-	/* If we overwrote ai characters, reset the ai count. */
-	if (ai_reset)
-		tp->ai = tabs + spaces;
+	tp->ai = tabs + spaces;
 
 	/*
 	 * Call txt_insch() to insert each character, so that we get the
