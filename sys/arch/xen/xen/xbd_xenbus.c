@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.36 2009/01/13 13:35:52 yamt Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.37 2009/01/16 20:16:47 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.36 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.37 2009/01/16 20:16:47 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -492,7 +492,7 @@ xbd_handler(void *arg)
 		return 0;
 again:
 	resp_prod = sc->sc_ring.sring->rsp_prod;
-	x86_lfence(); /* ensure we see replies up to resp_prod */
+	xen_rmb(); /* ensure we see replies up to resp_prod */
 	for (i = sc->sc_ring.rsp_cons; i != resp_prod; i++) {
 		blkif_response_t *rep = RING_GET_RESPONSE(&sc->sc_ring, i);
 		struct xbd_req *xbdreq = &sc->sc_reqs[rep->id];
@@ -536,7 +536,7 @@ next:
 		biodone(bp);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
-	x86_lfence();
+	xen_rmb();
 	sc->sc_ring.rsp_cons = i;
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_ring, more_to_do);
 	if (more_to_do)

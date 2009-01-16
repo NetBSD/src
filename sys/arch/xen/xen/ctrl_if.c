@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.20 2008/12/18 12:19:03 cegger Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.21 2009/01/16 20:16:47 jym Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.20 2008/12/18 12:19:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.21 2009/01/16 20:16:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __ctrl_if_tx_tasklet(unsigned long data)
     CONTROL_RING_IDX rp;
 
     rp = ctrl_if->tx_resp_prod;
-    x86_lfence(); /* Ensure we see all requests up to 'rp'. */
+    xen_rmb(); /* Ensure we see all requests up to 'rp'. */
 
     while ( ctrl_if_tx_resp_cons != rp )
     {
@@ -135,7 +135,7 @@ __ctrl_if_rxmsg_deferred(void *unused)
 	while (1) {
 		s = splsoftnet();
 		dp = ctrl_if_rxmsg_deferred_prod;
-		x86_lfence(); /* Ensure we see all requests up to 'dp'. */
+		xen_rmb(); /* Ensure we see all requests up to 'dp'. */
 		if (ctrl_if_rxmsg_deferred_cons == dp) {
 			tsleep(&ctrl_if_rxmsg_deferred_cons, PRIBIO,
 			    "rxdef", 0);
@@ -163,7 +163,7 @@ __ctrl_if_rx_tasklet(unsigned long data)
 
     dp = ctrl_if_rxmsg_deferred_prod;
     rp = ctrl_if->rx_req_prod;
-    x86_lfence(); /* Ensure we see all requests up to 'rp'. */
+    xen_rmb(); /* Ensure we see all requests up to 'rp'. */
 
     while ( ctrl_if_rx_req_cons != rp )
     {
@@ -192,7 +192,7 @@ __ctrl_if_rx_tasklet(unsigned long data)
             (*ctrl_if_rxmsg_handler[msg.type])(&msg, 0);
 	/* update rp, in case the console polling code was used */
     	rp = ctrl_if->rx_req_prod;
-    	x86_lfence(); /* Ensure we see all requests up to 'rp'. */
+    	xen_rmb(); /* Ensure we see all requests up to 'rp'. */
     }
 
     if ( dp != ctrl_if_rxmsg_deferred_prod )
@@ -268,7 +268,7 @@ ctrl_if_send_message_noblock(
 
     memcpy(&ctrl_if->tx_ring[MASK_CONTROL_IDX(ctrl_if->tx_req_prod)], 
            msg, sizeof(*msg));
-    x86_lfence(); /* Write the message before letting the controller peek at it. */
+    xen_rmb(); /* Write the message before letting the controller peek at it. */
     ctrl_if->tx_req_prod++;
 
     simple_unlock(&ctrl_if_lock);
@@ -315,7 +315,7 @@ static void __ctrl_if_get_response(ctrl_msg_t *msg, unsigned long id)
     struct rsp_wait    *wait = (struct rsp_wait *)id;
 
     memcpy(wait->msg, msg, sizeof(*msg));
-    x86_lfence();
+    xen_rmb();
     wait->done = 1;
 
     wakeup(wait);
@@ -366,7 +366,7 @@ ctrl_if_enqueue_space_callback(
      * the task is not executed despite the ring being non-full then we will
      * certainly return 'not full'.
      */
-    x86_lfence();
+    xen_rmb();
     return TX_FULL(ctrl_if);
 }
 #endif
@@ -394,7 +394,7 @@ ctrl_if_send_response(
     if ( dmsg != msg )
         memcpy(dmsg, msg, sizeof(*msg));
 
-    x86_lfence(); /* Write the message before letting the controller peek at it. */
+    xen_rmb(); /* Write the message before letting the controller peek at it. */
     ctrl_if->rx_resp_prod++;
 
     simple_unlock(&ctrl_if_lock);

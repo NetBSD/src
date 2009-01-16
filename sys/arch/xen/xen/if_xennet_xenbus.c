@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.31 2009/01/15 14:51:30 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.32 2009/01/16 20:16:47 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.31 2009/01/15 14:51:30 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.32 2009/01/16 20:16:47 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -689,7 +689,7 @@ xennet_tx_complete(struct xennet_xenbus_softc *sc)
 
 again:
 	resp_prod = sc->sc_tx_ring.sring->rsp_prod;
-	x86_lfence();
+	xen_rmb();
 	for (i = sc->sc_tx_ring.rsp_cons; i != resp_prod; i++) {
 		req = &sc->sc_txreqs[RING_GET_RESPONSE(&sc->sc_tx_ring, i)->id];
 		KASSERT(req->txreq_id ==
@@ -715,7 +715,7 @@ again:
 	sc->sc_tx_ring.sring->rsp_event = 
 	    resp_prod + ((sc->sc_tx_ring.sring->req_prod - resp_prod) >> 1) + 1;
 	ifp->if_timer = 0;
-	x86_sfence();
+	xen_wmb();
 	if (resp_prod != sc->sc_tx_ring.sring->rsp_prod)
 		goto again;
 end:
@@ -750,7 +750,7 @@ again:
 	    sc->sc_rx_ring.sring->rsp_prod, sc->sc_rx_ring.rsp_cons));
 
 	resp_prod = sc->sc_rx_ring.sring->rsp_prod;
-	x86_lfence(); /* ensure we see replies up to resp_prod */
+	xen_rmb(); /* ensure we see replies up to resp_prod */
 	for (i = sc->sc_rx_ring.rsp_cons; i != resp_prod; i++) {
 		netif_rx_response_t *rx = RING_GET_RESPONSE(&sc->sc_rx_ring, i);
 		req = &sc->sc_rxreqs[rx->id];
@@ -862,7 +862,7 @@ again:
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m);
 	}
-	x86_lfence();
+	xen_rmb();
 	sc->sc_rx_ring.rsp_cons = i;
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_rx_ring, more_to_do);
 	if (more_to_do)
