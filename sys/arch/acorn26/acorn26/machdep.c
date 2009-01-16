@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.26 2009/01/07 22:58:38 bjh21 Exp $ */
+/* $NetBSD: machdep.c,v 1.27 2009/01/16 00:44:43 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2009/01/07 22:58:38 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2009/01/16 00:44:43 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -215,17 +215,4 @@ cmos_write(int location, int value)
 	KASSERT(iociic_bootstrap_cookie() != NULL);
 	return (pcfrtc_bootstrap_write(iociic_bootstrap_cookie(), 0x50,
 	    location, &val, 1));
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-
-	ci->ci_want_resched = 1;
-	if (curlwp != ci->ci_data.cpu_idlelwp)
-		setsoftast();
 }
