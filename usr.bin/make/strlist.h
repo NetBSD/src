@@ -1,7 +1,7 @@
-/*	$NetBSD: strlist.h,v 1.2 2009/01/10 16:55:39 dsl Exp $	*/
+/*	$NetBSD: strlist.h,v 1.3 2009/01/16 21:15:34 dsl Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 - 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,6 +42,7 @@ typedef struct {
 
 typedef struct {
     unsigned int    sl_num;
+    unsigned int    sl_max;
     strlist_item_t  *sl_items;
 } strlist_t;
 
