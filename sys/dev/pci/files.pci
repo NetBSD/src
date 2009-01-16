@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.310 2009/01/09 19:53:24 macallan Exp $
+#	$NetBSD: files.pci,v 1.311 2009/01/16 20:18:08 cegger Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -936,6 +936,11 @@ attach	r128fb at pci
 file	dev/pci/r128fb.c		r128fb
 defflag	opt_r128fb.h	R128FB_DEBUG
 defflag	opt_r128fb.h	R128FB_WAIT
+
+# Attansic/Atheros L1 Gigabit-Ethernet
+device	age: ether, ifnet, arp, mii
+attach	age at pci
+file	dev/pci/if_age.c		age
 
 # Atheros/Attansic L2 Fast-Ethernet
 device	lii: ether, ifnet, arp, mii
