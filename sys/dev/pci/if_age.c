@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.3 2009/01/16 23:10:32 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.4 2009/01/16 23:23:34 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.3 2009/01/16 23:10:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.4 2009/01/16 23:23:34 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1194,7 +1194,7 @@ age_suspend(device_t dv PMF_FN_ARGS)
 	/* Request PME. */
 	pmstat = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
 	    PCI_PMCSR);
-	pmstat &= ~(PCI_PMCSR_PME | PCI_PMCSR_PME_EN);
+	pmstat &= ~(PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag,
 	    PCI_PMCSR, pmstat);
 
