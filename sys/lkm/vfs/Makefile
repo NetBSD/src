@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2007/06/29 23:30:31 rumble Exp $
+# $NetBSD: Makefile,v 1.20.44.1 2009/01/16 21:41:11 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -13,13 +13,10 @@ SUBDIR+=	miscfs
 SUBDIR+=	msdosfs
 SUBDIR+=	ntfs
 SUBDIR+=	ptyfs
+SUBDIR+=	puffs
 SUBDIR+=	smbfs
 SUBDIR+=	tmpfs
 SUBDIR+=	ufs
 SUBDIR+=	udf
-
-.if (${MKPUFFS} != "no")
-SUBDIR+=	puffs
-.endif
 
 .include <bsd.subdir.mk>
