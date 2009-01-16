@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.61 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.62 2009/01/16 20:51:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.61 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.62 2009/01/16 20:51:18 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -631,4 +631,37 @@ mii_phy_resume(device_t dv PMF_FN_ARGS)
 
 	PHY_RESET(sc);
 	return PHY_SERVICE(sc, sc->mii_pdata, MII_MEDIACHG) == 0;
+}
+
+
+/*
+ * Given an ifmedia word, return the corresponding ANAR value.
+ */
+int
+mii_anar(int media)
+{
+	int rv;
+
+	switch (media & (IFM_TMASK|IFM_NMASK|IFM_FDX)) {
+	case IFM_ETHER|IFM_10_T:
+		rv = ANAR_10|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_10_T|IFM_FDX:
+		rv = ANAR_10_FD|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_TX:
+		rv = ANAR_TX|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_TX|IFM_FDX:
+		rv = ANAR_TX_FD|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_T4:
+		rv = ANAR_T4|ANAR_CSMA;
+		break;
+	default:
+		rv = 0;
+		break;
+	}
+
+	return rv;
 }
