@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.2 2009/01/16 21:47:56 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.3 2009/01/16 23:10:32 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.2 2009/01/16 21:47:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.3 2009/01/16 23:10:32 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -82,6 +82,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.2 2009/01/16 21:47:56 cegger Exp $");
 static int	age_match(device_t, cfdata_t, void *);
 static void	age_attach(device_t, device_t, void *);
 static int	age_detach(device_t, int);
+
+static bool	age_suspend(device_t PMF_FN_PROTO);
+static bool	age_resume(device_t PMF_FN_PROTO);
 
 static int	age_miibus_readreg(device_t, int, int);
 static void	age_miibus_writereg(device_t, int, int, int);
@@ -283,7 +286,7 @@ age_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, age_suspend, age_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -538,22 +541,25 @@ age_read_vpd_word(struct age_softc *sc, uint32_t vpdc, uint32_t offset,
     uint32_t *word)
 {
 	int i;
+	pcireg_t rv;
 
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, vpdc + 0x0, offset << 16);
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_VPD_ADDRESS(vpdc),
+	    offset << PCI_VPD_ADDRESS_SHIFT);
 	for (i = AGE_TIMEOUT; i > 0; i--) {
 		DELAY(10);
-		if ((pci_conf_read(sc->sc_pct, sc->sc_pcitag, 
-		    vpdc + 0x0) >> 16 & 0x8000) == 0x8000)
+		rv = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+		    PCI_VPD_ADDRESS(vpdc));
+		if ((rv & PCI_VPD_OPFLAG) == PCI_VPD_OPFLAG)
 			break;
 	}
 	if (i == 0) {
 		printf("%s: VPD read timeout!\n", device_xname(sc->sc_dev));
 		*word = 0;
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 	}
 
-	*word = pci_conf_read(sc->sc_pct, sc->sc_pcitag, vpdc + 0x4);
-	return (0);
+	*word = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_VPD_DATAREG(vpdc));
+	return 0;
 }
 
 static void
@@ -1173,6 +1179,49 @@ age_mac_config(struct age_softc *sc)
 	}
 
 	CSR_WRITE_4(sc, AGE_MAC_CFG, reg);
+}
+
+static bool
+age_suspend(device_t dv PMF_FN_ARGS)
+{
+	struct age_softc *sc = device_private(dv);
+	uint16_t pmstat;
+
+	age_stop(sc);
+
+	/* XXXcegger Do we have Wake-On-LAN ? */
+
+	/* Request PME. */
+	pmstat = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+	    PCI_PMCSR);
+	pmstat &= ~(PCI_PMCSR_PME | PCI_PMCSR_PME_EN);
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag,
+	    PCI_PMCSR, pmstat);
+
+	return true;
+}
+
+static bool
+age_resume(device_t dv PMF_FN_ARGS)
+{
+	struct age_softc *sc = device_private(dv);
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	uint16_t cmd;
+
+	/*
+	 * Clear INTx emulation disable for hardware that
+	 * is set in resume event. From Linux.
+	 */
+	cmd = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
+	if ((cmd & 0x0400) != 0) {
+		cmd &= ~0x0400;
+		pci_conf_write(sc->sc_pct, sc->sc_pcitag,
+		    PCI_COMMAND_STATUS_REG, cmd);
+	}
+	if ((ifp->if_flags & IFF_UP) != 0)
+		age_init(ifp);
+
+	return true;
 }
 
 static int
