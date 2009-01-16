@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.46 2009/01/13 22:27:43 pooka Exp $
+	$NetBSD: syscalls.master,v 1.47 2009/01/16 13:10:47 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -160,9 +160,9 @@
 		    netbsd32_orlimitp_t rlp); }
 77	NOARGS	{ int|compat_50_netbsd32||getrusage(int who, \
 		    netbsd32_rusage50p_t rusage); }
-78	STD	{ int|linux32_sys||gettimeofday(netbsd32_timevalp_t tp, \
+78	STD	{ int|linux32_sys||gettimeofday(netbsd32_timeval50p_t tp, \
 		    netbsd32_timezonep_t tzp); }
-79	STD	{ int|linux32_sys||settimeofday(netbsd32_timevalp_t tp, \
+79	STD	{ int|linux32_sys||settimeofday(netbsd32_timeval50p_t tp, \
 		    netbsd32_timezonep_t tzp); }
 80	STD	{ int|linux32_sys||getgroups16(int gidsetsize, \
 		    linux32_gid16p_t gidset); }
@@ -249,7 +249,7 @@
 		    netbsd32_fd_setp_t readfds, \
 		    netbsd32_fd_setp_t writefds, \
 		    netbsd32_fd_setp_t exceptfds, \
-		    netbsd32_timevalp_t timeout); }
+		    netbsd32_timeval50p_t timeout); }
 143	NOARGS	{ int|netbsd32||flock(int fd, int how); } 
 144	NOARGS	{ int|netbsd32|13|msync(netbsd32_voidp addr, \
 		    netbsd32_size_t len, int flags); }

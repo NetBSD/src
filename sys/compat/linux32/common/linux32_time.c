@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.27 2008/12/29 22:21:49 njoly Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.28 2009/01/16 13:10:47 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.27 2008/12/29 22:21:49 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.28 2009/01/16 13:10:47 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,16 +88,16 @@ int
 linux32_sys_gettimeofday(struct lwp *l, const struct linux32_sys_gettimeofday_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(netbsd32_timevalp_t) tp;
+		syscallarg(netbsd32_timeval50p_t) tp;
 		syscallarg(netbsd32_timezonep_t) tzp;
 	} */
 	struct timeval tv;
-	struct netbsd32_timeval tv32;
+	struct netbsd32_timeval50 tv32;
 	int error;
 
 	if (SCARG_P32(uap, tp) != NULL) {
 		microtime(&tv);
-		netbsd32_from_timeval(&tv, &tv32);
+		netbsd32_from_timeval50(&tv, &tv32);
 		if ((error = copyout(&tv32, SCARG_P32(uap, tp), 
 		    sizeof(tv32))) != 0)
 			return error;
@@ -117,12 +117,12 @@ int
 linux32_sys_settimeofday(struct lwp *l, const struct linux32_sys_settimeofday_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(netbsd32_timevalp_t) tp;
+		syscallarg(netbsd32_timeval50p_t) tp;
 		syscallarg(netbsd32_timezonep_t) tzp;
 	} */
 	struct linux_sys_settimeofday_args ua;
 
-	NETBSD32TOP_UAP(tp, struct timeval);
+	NETBSD32TOP_UAP(tp, struct timeval50);
 	NETBSD32TOP_UAP(tzp, struct timezone);
 
 	return linux_sys_settimeofday(l, &ua, retval);
