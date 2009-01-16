@@ -1,0 +1,10 @@
+#	$NetBSD: Makefile.elf,v 1.3.2.2 2009/01/16 22:21:30 bouyer Exp $
+
+# Makefile fragment to build a (32 or 64 bit) libldd_elfxx.a.
+# Expects CPPFLAGS to have ELFSIZE set, and LIB to be set.
+
+SRCS=	ldd_elfxx.c
+SRCS+=	xmalloc.c debug.c expand.c map_object.c load.c search.c \
+	headers.c paths.c
+
+.include "Makefile.common"

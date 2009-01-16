@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.26 2007/12/29 01:44:03 christos Exp $	 */
+/*	$NetBSD: headers.c,v 1.26.10.1 2009/01/16 22:21:30 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.26 2007/12/29 01:44:03 christos Exp $");
+__RCSID("$NetBSD: headers.c,v 1.26.10.1 2009/01/16 22:21:30 bouyer Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -301,18 +301,18 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		switch (ph->p_type) {
 
 		case PT_PHDR:
-			relocoffs = (char *)phdr - (char *)ph->p_vaddr;
+			relocoffs = (uintptr_t)phdr - (uintptr_t)ph->p_vaddr;
 			break;
 
 		case PT_INTERP:
-			obj->interp = (const char *)vaddr;
+			obj->interp = (const char *)(uintptr_t)vaddr;
 			break;
 
 		case PT_LOAD:
 			assert(nsegs < 2);
 			if (nsegs == 0) {	/* First load segment */
 				obj->vaddrbase = round_down(vaddr);
-				obj->mapbase = (caddr_t)obj->vaddrbase;
+				obj->mapbase = (caddr_t)(uintptr_t)obj->vaddrbase;
 				obj->relocbase = (void *)relocoffs;
 				obj->textsize = round_up(vaddr + ph->p_memsz) -
 				    obj->vaddrbase;
@@ -324,7 +324,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			break;
 
 		case PT_DYNAMIC:
-			obj->dynamic = (Elf_Dyn *)vaddr;
+			obj->dynamic = (Elf_Dyn *)(uintptr_t)vaddr;
 			break;
 		}
 	}
