@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.71 2009/01/16 03:26:01 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.72 2009/01/16 21:44:31 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2465,4 +2465,49 @@ xsrc/external/mit/xterm/dist/vttests/tcapquery.pl patch
 	Update XTerm to version 239 to fix the security vulnerability
 	reported in CVE-2008-2383.
 	[tron, ticket #267]
+
+sys/arch/amiga/dev/siop.c			1.61
+sys/arch/amiga/dev/siop2.c			1.33
+
+	Add the appropriate timeout function to reset the controller
+	and restart things if a SCSI command stalls.
+	[mhitch, ticket #256]
+
+sys/arch/x86/x86/mpacpi.c			1.74
+
+	Return ENOENT instead of panicking when irq doesn't equal line
+	(mpacpi_findintr_linkdev: irq mismatch). This doesn't fix the cause
+	of kern/38540, but stops the bogus panic. It's pretty definite that
+	the device with the mismatched irq will not function.
+	[sborrill, ticket #257]
+
+sys/arch/acorn26/acorn26/irq.c			1.10
+
+	Replace the local current_spl with the ARM-wide curcpu()->ci_cpl, since
+	otherwise a DEBUG kernel panics at the first AST, though I don't think
+	any non-DEBUG code cares.
+	[bjh21, ticket #258]
+
+distrib/sets/sets.subr			patch
+distrib/sets/lists/base/lkm.mi		patch
+distrib/sets/lists/base/md.amd64	patch
+distrib/sets/lists/base/md.sparc64	patch
+distrib/sets/lists/base/mi		patch
+distrib/sets/lists/base/shl.elf		patch
+distrib/sets/lists/base/shl.mi		patch
+distrib/sets/lists/comp/md.amd64	patch
+distrib/sets/lists/comp/md.sparc64	patch
+distrib/sets/lists/comp/mi		patch
+distrib/sets/lists/comp/shl.mi		patch
+distrib/sets/lists/man/mi		patch
+lib/Makefile				patch
+share/man/man5/mk.conf.5		patch
+share/mk/bsd.README			patch
+share/mk/bsd.own.mk			patch
+sys/lkm/vfs/Makefile			patch
+usr.sbin/Makefile			patch
+
+	Now that MKPUFFS is default, kill it as advertised.
+	While there, give puffs and refuse files sensible syspkg entries.
+	[pooka, ticket #259]
 
