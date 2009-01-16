@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.19.2.3 2008/05/17 16:19:37 bouyer Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.19.2.4 2009/01/16 20:53:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.19.2.3 2008/05/17 16:19:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.19.2.4 2009/01/16 20:53:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,7 +572,7 @@ aac_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
 }
 
-CFATTACH_DECL(aac_pci, sizeof(struct aac_softc),
+CFATTACH_DECL(aac_pci, sizeof(struct aac_pci_softc),
     aac_pci_match, aac_pci_attach, NULL, NULL);
 
 /*
