@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.70 2008/10/16 09:39:43 pooka Exp $
+# $NetBSD: shl.mi,v 1.70.2.1 2009/01/16 21:41:09 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -62,7 +62,7 @@
 ./usr/lib/libopcodes.so.2			comp-c-shlib		bfd
 ./usr/lib/libopcodes.so.2.0			comp-c-shlib		bfd
 ./usr/lib/libossaudio_pic.a			comp-c-piclib
-./usr/lib/libp2k_pic.a				comp-c-piclib		puffs
+./usr/lib/libp2k_pic.a				comp-c-piclib	
 ./usr/lib/libpam_pic.a				comp-c-piclib		pam
 ./usr/lib/libpcap_pic.a				comp-c-piclib
 ./usr/lib/libpci_pic.a				comp-c-piclib
@@ -72,7 +72,7 @@
 ./usr/lib/libpthread_pic.a			comp-c-piclib
 ./usr/lib/libpuffs_pic.a			comp-c-piclib
 ./usr/lib/libradius_pic.a			comp-c-piclib
-./usr/lib/librefuse_pic.a			comp-c-piclib		puffs
+./usr/lib/librefuse_pic.a			comp-c-piclib	
 ./usr/lib/libresolv_pic.a			comp-c-piclib
 ./usr/lib/libroken_pic.a			comp-c-piclib		kerberos
 ./usr/lib/librpcsvc_pic.a			comp-c-piclib

@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.29 2008/09/23 07:56:59 hannken Exp $
+# $NetBSD: lkm.mi,v 1.29.2.1 2009/01/16 21:41:06 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -89,7 +89,7 @@
 ./usr/lkm/portal.o				base-vfs-lkm
 ./usr/lkm/procfs.o				base-vfs-lkm
 ./usr/lkm/ptyfs.o				base-vfs-lkm
-./usr/lkm/puffs.o				base-vfs-lkm	puffs
+./usr/lkm/puffs.o				base-vfs-lkm
 ./usr/lkm/smbfs.o				base-vfs-lkm
 ./usr/lkm/tap.o					base-net-lkm
 ./usr/lkm/tmpfs.o				base-vfs-lkm
