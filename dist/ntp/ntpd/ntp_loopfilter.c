@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.8 2007/06/24 16:55:14 kardel Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.8.18.1 2009/01/16 03:01:13 snj Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -20,6 +20,9 @@
 
 #include <signal.h>
 #include <setjmp.h>
+#ifdef __NetBSD__
+#include <util.h>
+#endif
 
 #if defined(VMS) && defined(VMS_LOCALUNIT)	/*wjm*/
 #include "ntp_refclock.h"
@@ -180,6 +183,20 @@ static struct sigaction newsigsys; /* new sigaction status */
 static sigjmp_buf env;		/* environment var. for pll_trap() */
 #endif /* SIGSYS */
 #endif /* KERNEL_PLL */
+
+static void
+sync_status(const char *what, int status)
+{
+	char buf[1024];
+#ifdef STA_FMT
+	snprintb(buf, sizeof(buf), STA_FMT, ntv.status);
+#else
+	snprintf(buf, sizeof(buf), "%04x, status);
+#endif
+	NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)
+	    msyslog(LOG_NOTICE,
+	    "kernel time sync %s %s", what, buf);
+}
 
 /*
  * init_loopfilter - initialize loop filter data
@@ -644,16 +661,11 @@ local_clock(
 		 * frequency and pretend we did it here.
 		 */
 		if (ntp_adjtime(&ntv) == TIME_ERROR) {
-			NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)
-			    msyslog(LOG_NOTICE,
-			    "kernel time sync error %04x", ntv.status);
+			sync_status("error", ntv.status);
 			ntv.status &= ~(STA_PPSFREQ | STA_PPSTIME);
 		} else {
 			if ((ntv.status ^ pll_status) & ~STA_FLL)
-				NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)
-				    msyslog(LOG_NOTICE,
-				    "kernel time sync status change %04x",
-				    ntv.status);
+				sync_status("status change", ntv.status);
 		}
 		pll_status = ntv.status;
 #ifdef STA_NANO
@@ -937,10 +949,7 @@ loop_config(
 			if (pll_status & STA_CLK)
 				ext_enable = 1;
 #endif /* STA_NANO */
-			NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)
-			    msyslog(LOG_INFO,
-		  	    "kernel time sync status %04x",
-			    pll_status);
+			sync_status("status", pll_status);
 		}
 #endif /* KERNEL_PLL */
 #endif /* LOCKCLOCK */
@@ -989,10 +998,7 @@ loop_config(
 			ntv.modes = MOD_BITS | MOD_OFFSET | MOD_FREQUENCY;
 			ntv.status = STA_UNSYNC;
 			ntp_adjtime(&ntv);
-			NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)
-			    msyslog(LOG_INFO,
-		  	    "kernel time sync disabled %04x",
-			    ntv.status);
+			sync_status("disabled", ntv.status);
 		   }
 #endif /* KERNEL_PLL */
 #endif /* LOCKCLOCK */
