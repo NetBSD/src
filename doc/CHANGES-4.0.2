@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.14 2009/01/15 23:06:23 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.15 2009/01/16 20:54:48 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -118,4 +118,9 @@ usr.bin/make/make.1				1.151
 	Fix blatantly wrong exposition of .WAIT example.
 	PR bin/40372 from Gao Ya'nan.
 	[dholland, ticket #1262]
+
+sys/dev/pci/aac_pci.c				1.26
+
+	Allocate enough space for the aac_pci_softc, not just the aac_softc.
+	[briggs, ticket #1255]
 
