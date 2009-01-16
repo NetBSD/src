@@ -1,9 +1,9 @@
-/*	$NetBSD: ntp-keygen-opts.h,v 1.1.1.3 2008/08/23 07:39:08 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen-opts.h,v 1.1.1.3.4.1 2009/01/16 02:48:56 snj Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntp-keygen-opts.h)
  *  
- *  It has been AutoGen-ed  Sunday August 17, 2008 at 05:27:32 AM EDT
+ *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:19:35 AM EST
  *  From the definitions    ntp-keygen-opts.def
  *  and the template file   options
  *
@@ -81,8 +81,8 @@ typedef enum {
 } teOptIndex;
 
 #define OPTION_CT    24
-#define NTP_KEYGEN_VERSION       "4.2.4p5"
-#define NTP_KEYGEN_FULL_VERSION  "ntp-keygen (ntp) - Create a NTP host key - Ver. 4.2.4p5"
+#define NTP_KEYGEN_VERSION       "4.2.4p6"
+#define NTP_KEYGEN_FULL_VERSION  "ntp-keygen (ntp) - Create a NTP host key - Ver. 4.2.4p6"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED

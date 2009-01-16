@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpq-opts.c,v 1.1.1.3 2008/08/23 07:38:54 kardel Exp $	*/
+/*	$NetBSD: ntpq-opts.c,v 1.1.1.3.4.1 2009/01/16 02:48:56 snj Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpq-opts.c)
  *  
- *  It has been AutoGen-ed  Sunday August 17, 2008 at 05:26:55 AM EDT
+ *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:18:56 AM EST
  *  From the definitions    ntpq-opts.def
  *  and the template file   options
  *
@@ -412,7 +412,7 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  */
 tSCC   zPROGNAME[]   = "NTPQ";
 tSCC   zUsageTitle[] =
-"ntpq - standard NTP query program - Ver. 4.2.4p5\n\
+"ntpq - standard NTP query program - Ver. 4.2.4p6\n\
 USAGE:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]... [ host ...]\n";
 tSCC   zRcName[]     = ".ntprc";
 tSCC*  apzHomeList[] = {

@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpd-opts.h,v 1.1.1.3 2008/08/23 07:38:52 kardel Exp $	*/
+/*	$NetBSD: ntpd-opts.h,v 1.1.1.3.4.1 2009/01/16 02:48:56 snj Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpd-opts.h)
  *  
- *  It has been AutoGen-ed  Sunday August 17, 2008 at 05:20:09 AM EDT
+ *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:11:54 AM EST
  *  From the definitions    ntpd-opts.def
  *  and the template file   options
  *
@@ -89,8 +89,8 @@ typedef enum {
 } teOptIndex;
 
 #define OPTION_CT    32
-#define NTPD_VERSION       "4.2.4p5"
-#define NTPD_FULL_VERSION  "ntpd - NTP daemon program - Ver. 4.2.4p5"
+#define NTPD_VERSION       "4.2.4p6"
+#define NTPD_FULL_VERSION  "ntpd - NTP daemon program - Ver. 4.2.4p6"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
