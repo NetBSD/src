@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.57 2007/12/25 18:33:42 perry Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.58 2009/01/16 23:09:27 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -465,6 +465,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PMCSR_STATE_D1      0x01
 #define PCI_PMCSR_STATE_D2      0x02
 #define PCI_PMCSR_STATE_D3      0x03
+#define PCI_PMCSR_PME           0x8000
 
 /*
  * PCI-X capability.
