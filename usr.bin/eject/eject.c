@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.24 2009/01/15 03:18:30 lukem Exp $	*/
+/*	$NetBSD: eject.c,v 1.25 2009/01/16 17:31:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.24 2009/01/15 03:18:30 lukem Exp $");
+__RCSID("$NetBSD: eject.c,v 1.25 2009/01/16 17:31:22 christos Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -56,6 +56,10 @@ __RCSID("$NetBSD: eject.c,v 1.24 2009/01/15 03:18:30 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#ifdef AMD_SUPPORT
+# include "am_glue.h"
+#endif
 
 struct nicknames_s {
 	const char *name;	/* The name given on the command line. */
@@ -328,6 +332,9 @@ unmount_dev(const char *name)
 	int i, nmnts;
 	const char *dn;
 
+#ifdef AMD_SUPPORT
+	am_init();
+#endif
 	nmnts = getmntinfo(&mounts, MNT_NOWAIT);
 	if (nmnts == 0)
 		err(1, "getmntinfo");
@@ -351,7 +358,11 @@ unmount_dev(const char *name)
 				    mounts[i].f_mntfromname,
 				    mounts[i].f_mntonname);
 
-			if (unmount(mounts[i].f_mntonname, 0) == -1)
+			if (
+#ifdef AMD_SUPPORT
+			    am_unmount(mounts[i].f_mntonname) != 0 &&
+#endif
+			    unmount(mounts[i].f_mntonname, 0) == -1)
 				err(1, "unmount: %s", mounts[i].f_mntonname);
 		}
 	}
