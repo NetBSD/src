@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.30 2009/01/15 04:22:11 yamt Exp $ */
+/* $NetBSD: wsevent.c,v 1.31 2009/01/16 14:38:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.30 2009/01/15 04:22:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.31 2009/01/16 14:38:09 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -152,9 +152,7 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 #endif
 		return;
 	}
-#if defined(COMPAT_50) || defined(MODULAR)
 	ev->version = 0;
-#endif /* defined(COMPAT_50) || defined(MODULAR) */
 	ev->get = ev->put = 0;
 	/*
 	 * We allocate the maximum structure size here, so that we don't
