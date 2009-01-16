@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.11 2008/11/13 18:44:51 cegger Exp $      */
+/*      $NetBSD: xengnt.c,v 1.12 2009/01/16 20:16:47 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.11 2008/11/13 18:44:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.12 2009/01/16 20:16:47 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -234,7 +234,7 @@ xengnt_grant_access(domid_t dom, paddr_t ma, int ro, grant_ref_t *entryp)
 
 	grant_table[*entryp].frame = ma >> PAGE_SHIFT;
 	grant_table[*entryp].domid  = dom;
-	x86_lfence();
+	xen_rmb();
 	grant_table[*entryp].flags =
 	    GTF_permit_access | (ro ? GTF_readonly : 0);
 	return 0;
@@ -265,7 +265,7 @@ xengnt_grant_transfer(domid_t dom, grant_ref_t *entryp)
 
 	grant_table[*entryp].frame = 0;
 	grant_table[*entryp].domid  =dom;
-	x86_lfence();
+	xen_rmb();
 	grant_table[*entryp].flags = GTF_accept_transfer;
 	return 0;
 }

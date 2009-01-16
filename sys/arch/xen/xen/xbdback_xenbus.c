@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.22 2009/01/12 08:55:48 cegger Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.23 2009/01/16 20:16:47 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.22 2009/01/12 08:55:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.23 2009/01/16 20:16:47 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -801,7 +801,7 @@ xbdback_co_main(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
 	xbdi->xbdi_req_prod = xbdi->xbdi_ring.ring_n.sring->req_prod;
-	x86_lfence(); /* ensure we see all requests up to req_prod */
+	xen_rmb(); /* ensure we see all requests up to req_prod */
 	/*
 	 * note that we'll eventually get a full ring of request.
 	 * in this case, MASK_BLKIF_IDX(req_cons) == MASK_BLKIF_IDX(req_prod)
