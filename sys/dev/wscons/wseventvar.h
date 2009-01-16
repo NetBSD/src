@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.14 2009/01/15 04:22:11 yamt Exp $ */
+/* $NetBSD: wseventvar.h,v 1.15 2009/01/16 15:14:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -84,7 +84,7 @@ struct wseventvar {
 	void	*sih;		/* soft interrupt handle for signals */
 	int	wanted;		/* wake up on input ready */
 	int	async;		/* send SIGIO on input ready */
-	void	*q;		/* circular buffer (queue) of events */
+	struct wscons_event *q;	/* circular buffer (queue) of events */
 	int	version;	/* event version */
 };
 
@@ -98,7 +98,7 @@ int	wsevent_inject(struct wseventvar *, struct wscons_event *, size_t);
 int	wsevent_setversion(struct wseventvar *, int);
 
 /*
- * Compatibility layer
+ * COMPAT_50
  */
 #include <compat/sys/time.h>
 
@@ -107,11 +107,6 @@ struct owscons_event {
 	int value;
 	struct timespec50 time;
 };
-
-#define EVSIZE(ev)	((ev)->version == WSEVENT_VERSION ? \
-    sizeof(struct wscons_event) : \
-    sizeof(struct owscons_event))
-#define EVARRAY(ev, idx) (void *)(((char *)(ev)->q) + (EVSIZE(ev) * (idx)))
 
 #define	WSMUXIO_OINJECTEVENT	_IOW('W', 96, struct owscons_event)
 

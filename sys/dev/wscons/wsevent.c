@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.31 2009/01/16 14:38:09 yamt Exp $ */
+/* $NetBSD: wsevent.c,v 1.32 2009/01/16 15:14:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,14 +104,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.31 2009/01/16 14:38:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.32 2009/01/16 15:14:11 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -128,6 +128,11 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.31 2009/01/16 14:38:09 yamt Exp $");
  * value may need tuning.
  */
 #define	WSEVENT_QSIZE	256
+
+#define EVSIZE(ver)	((ver) == WSEVENT_VERSION ? \
+    sizeof(struct wscons_event) : \
+    sizeof(struct owscons_event))
+#define EVARRAY(ev, idx) (&(ev)->q[(idx)])
 
 /*
  * Priority of code managing wsevent queues.  PWSEVENT is set just above
@@ -154,12 +159,7 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 	}
 	ev->version = 0;
 	ev->get = ev->put = 0;
-	/*
-	 * We allocate the maximum structure size here, so that we don't
-	 * need to malloc/free again in setversion.
-	 */
-	ev->q = malloc(WSEVENT_QSIZE * sizeof(struct wscons_event),
-	    M_DEVBUF, M_WAITOK|M_ZERO);
+	ev->q = kmem_alloc(WSEVENT_QSIZE * sizeof(*ev->q), KM_SLEEP);
 	selinit(&ev->sel);
 	ev->io = p;
 	ev->sih = softint_establish(SOFTINT_MPSAFE | SOFTINT_CLOCK,
@@ -179,9 +179,57 @@ wsevent_fini(struct wseventvar *ev)
 		return;
 	}
 	seldestroy(&ev->sel);
-	free(ev->q, M_DEVBUF);
+	kmem_free(ev->q, WSEVENT_QSIZE * sizeof(*ev->q));
 	ev->q = NULL;
 	softint_disestablish(ev->sih);
+}
+
+#if defined(COMPAT_50) || defined(MODULAR)
+static int
+wsevent_copyout_events50(const struct wscons_event *events, int cnt,
+    struct uio *uio)
+{
+	int i;
+
+	for (i = 0; i < cnt; i++) {
+		const struct wscons_event *ev = &events[i];
+		struct owscons_event ev50;
+		int error;
+
+		ev50.type = ev->type;
+		ev50.value = ev->value;
+		timespec_to_timespec50(&ev->time, &ev50.time);
+
+		error = uiomove(&ev50, sizeof(ev50), uio);
+		if (error) {
+			return error;
+		}
+	}
+	return 0;
+}
+#else /* defined(COMPAT_50) || defined(MODULAR) */
+static int
+wsevent_copyout_events50(const struct wscons_event *events, int cnt,
+    struct uio *uio)
+{
+
+	panic("%s: unexpected version", __func__);
+}
+#endif /* defined(COMPAT_50) || defined(MODULAR) */
+
+static int
+wsevent_copyout_events(const struct wscons_event *events, int cnt,
+    struct uio *uio, int ver)
+{
+
+	switch (ver) {
+	case 0:
+		return wsevent_copyout_events50(events, cnt, uio);
+	case WSEVENT_VERSION:
+		return uiomove(__UNCONST(events), cnt * sizeof(*events), uio);
+	default:
+		panic("%s: unknown version %d", __func__, ver);
+	}
 }
 
 /*
@@ -192,11 +240,13 @@ int
 wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 {
 	int s, n, cnt, error;
+	const int ver = ev->version;
+	const size_t evsize = EVSIZE(ver);
 
 	/*
 	 * Make sure we can return at least 1.
 	 */
-	if (uio->uio_resid < EVSIZE(ev))
+	if (uio->uio_resid < evsize)
 		return (EMSGSIZE);	/* ??? */
 	s = splwsevent();
 	while (ev->get == ev->put) {
@@ -220,10 +270,10 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	else
 		cnt = ev->put - ev->get;	/* events in [get..put) */
 	splx(s);
-	n = howmany(uio->uio_resid, EVSIZE(ev));
+	n = howmany(uio->uio_resid, evsize);
 	if (cnt > n)
 		cnt = n;
-	error = uiomove(EVARRAY(ev, ev->get), cnt * EVSIZE(ev), uio);
+	error = wsevent_copyout_events(EVARRAY(ev, ev->get), cnt, uio, ver);
 	n -= cnt;
 	/*
 	 * If we do not wrap to 0, used up all our space, or had an error,
@@ -235,7 +285,7 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 		return (error);
 	if (cnt > n)
 		cnt = n;
-	error = uiomove(EVARRAY(ev, 0), cnt * EVSIZE(ev), uio);
+	error = wsevent_copyout_events(EVARRAY(ev, 0), cnt, uio, ver);
 	ev->get = cnt;
 	return (error);
 }
@@ -281,7 +331,7 @@ filt_wseventread(struct knote *kn, long hint)
 	else
 		kn->kn_data = (WSEVENT_QSIZE - ev->get) + ev->put;
 
-	kn->kn_data *= EVSIZE(ev);
+	kn->kn_data *= EVSIZE(ev->version);
 
 	return (1);
 }
@@ -378,38 +428,16 @@ wsevent_inject(struct wseventvar *ev, struct wscons_event *events,
 	getnanotime(&t);
 
 	/* Inject the events. */
-	switch (ev->version) {
-#if defined(COMPAT_50) || defined(MODULAR)
-	case 0:
-		for (i = 0; i < nevents; i++) {
-			struct owscons_event *we;
+	for (i = 0; i < nevents; i++) {
+		struct wscons_event *we;
 
-			we = EVARRAY(ev, ev->put);
-			we->type = events[i].type;
-			we->value = events[i].value;
-			timespec_to_timespec50(&t, &we->time);
+		we = EVARRAY(ev, ev->put);
+		we->type = events[i].type;
+		we->value = events[i].value;
+		we->time = t;
 
-			ev->put = (ev->put + 1) % WSEVENT_QSIZE;
-		}
-		break;
-#endif /* defined(COMPAT_50) || defined(MODULAR) */
-	case WSEVENT_VERSION:
-		for (i = 0; i < nevents; i++) {
-			struct wscons_event *we;
-
-			we = EVARRAY(ev, ev->put);
-			we->type = events[i].type;
-			we->value = events[i].value;
-			we->time = t;
-
-			ev->put = (ev->put + 1) % WSEVENT_QSIZE;
-		}
-		break;
-
-	default:
-		return EINVAL;
+		ev->put = (ev->put + 1) % WSEVENT_QSIZE;
 	}
-
 	wsevent_wakeup(ev);
 
 	return 0;
