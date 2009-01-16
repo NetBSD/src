@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.12 2009/01/14 23:14:48 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.13 2009/01/16 00:44:43 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.12 2009/01/14 23:14:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.13 2009/01/16 00:44:43 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.12 2009/01/14 23:14:48 bjh21 Exp $");
 
 #define NIRQ 20
 extern char *irqnames[];
-
-int current_intr_depth = 0;
 
 #if NFIQ > 0
 void (*fiq_downgrade_handler)(void);
@@ -129,7 +127,7 @@ irq_handler(struct irqframe *irqf)
 	int s, status, result, stray;
 	struct irq_handler *h;
 
-	current_intr_depth++;
+	curcpu()->ci_intr_depth++;
 	KASSERT(the_ioc != NULL);
 	/* Get the current interrupt state */
 	status = ioc_irq_status_full();
@@ -201,7 +199,7 @@ handled:
 #endif
 
 	hardsplx(s);
-	current_intr_depth--;
+	curcpu()->ci_intr_depth--;
 
 	/* Check if we're in the kernel restartable atomic sequence. */
 	if ((irqf->if_r15 & R15_MODE) != R15_MODE_USR) {
@@ -220,13 +218,6 @@ handled:
 		}
 	}
 	    
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return current_intr_depth != 0;
 }
 
 struct irq_handler *

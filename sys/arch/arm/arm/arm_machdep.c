@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.22 2008/11/15 11:15:22 ad Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.23 2009/01/16 00:44:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.22 2008/11/15 11:15:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.23 2009/01/16 00:44:43 bjh21 Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -243,3 +243,22 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 }
 
 #endif /* KERN_SA */
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
+
+	ci->ci_want_resched = 1;
+	if (curlwp != ci->ci_data.cpu_idlelwp)
+		setsoftast();
+}
+
+bool
+cpu_intr_p(void)
+{
+	return curcpu()->ci_intr_depth != 0;
+}
