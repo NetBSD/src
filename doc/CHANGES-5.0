@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.67 2009/01/15 04:37:02 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.68 2009/01/16 00:40:58 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2297,4 +2297,9 @@ tools/compat/nbtool_config.h.in			regen
 
 	Crossbuild fixes for ticket 222.
 	[jmcneill, ticket #270]
+
+usr.bin/mklocale/mklocale.1			1.14
+
+	Document new -t flag, bump date.
+	[wiz, ticket #225]
 
