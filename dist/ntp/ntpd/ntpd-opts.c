@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpd-opts.c,v 1.1.1.3 2008/08/23 07:38:52 kardel Exp $	*/
+/*	$NetBSD: ntpd-opts.c,v 1.1.1.3.4.1 2009/01/16 02:48:56 snj Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpd-opts.c)
  *  
- *  It has been AutoGen-ed  Sunday August 17, 2008 at 05:20:10 AM EDT
+ *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:11:55 AM EST
  *  From the definitions    ntpd-opts.def
  *  and the template file   options
  *
@@ -837,7 +837,7 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  */
 tSCC   zPROGNAME[]   = "NTPD";
 tSCC   zUsageTitle[] =
-"ntpd - NTP daemon program - Ver. 4.2.4p5\n\
+"ntpd - NTP daemon program - Ver. 4.2.4p6\n\
 USAGE:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]...\n";
 #define zRcName     NULL
 #define apzHomeList NULL

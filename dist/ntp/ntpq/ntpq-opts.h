@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpq-opts.h,v 1.1.1.3 2008/08/23 07:38:54 kardel Exp $	*/
+/*	$NetBSD: ntpq-opts.h,v 1.1.1.3.4.1 2009/01/16 02:48:56 snj Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpq-opts.h)
  *  
- *  It has been AutoGen-ed  Sunday August 17, 2008 at 05:26:55 AM EDT
+ *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:18:56 AM EST
  *  From the definitions    ntpq-opts.def
  *  and the template file   options
  *
@@ -70,8 +70,8 @@ typedef enum {
 } teOptIndex;
 
 #define OPTION_CT    13
-#define NTPQ_VERSION       "4.2.4p5"
-#define NTPQ_FULL_VERSION  "ntpq - standard NTP query program - Ver. 4.2.4p5"
+#define NTPQ_VERSION       "4.2.4p6"
+#define NTPQ_FULL_VERSION  "ntpq - standard NTP query program - Ver. 4.2.4p6"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
