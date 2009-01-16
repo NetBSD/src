@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.82 2009/01/08 02:05:15 lukem Exp $
+# $NetBSD: postinstall,v 1.83 2009/01/16 01:58:32 haad Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -957,7 +957,7 @@ do_rc()
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \
 		kdc \
-		ldconfig local lpd \
+		ldconfig local lpd lvm\
 		mixerctl mopd motd mountall mountcritlocal mountcritremote \
 		mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
