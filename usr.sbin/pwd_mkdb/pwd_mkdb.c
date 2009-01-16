@@ -1,4 +1,30 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.35 2009/01/14 23:18:57 christos Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.36 2009/01/16 10:42:36 jmmv Exp $	*/
+
+/*
+ * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -60,12 +86,12 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 2000\
+__COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.35 2009/01/14 23:18:57 christos Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.36 2009/01/16 10:42:36 jmmv Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -138,6 +164,8 @@ void	rm(const char *);
 int	scan(FILE *, struct passwd *, int *, int *);
 void	usage(void);
 void	wr_error(const char *);
+void	checkversion(DB *);
+uint32_t getversion(void);
 void	setversion(DB *);
 
 static __inline uint16_t swap16(uint16_t sw)
@@ -288,8 +316,11 @@ main(int argc, char *argv[])
 		    &openinfo);
 		if (dp == NULL)
 			error(pwd_db_tmp);
-		setversion(dp);
 		clean |= FILE_INSECURE;
+		if (username != NULL)
+			checkversion(dp);
+		else
+			setversion(dp);
 	}
 
 	/* Open the temporary encrypted password database. */
@@ -302,8 +333,11 @@ main(int argc, char *argv[])
 	edp = dbopen(pwd_Sdb_tmp, flags, PERM_SECURE, DB_HASH, &openinfo);
 	if (!edp)
 		error(pwd_Sdb_tmp);
-	setversion(edp);
 	clean |= FILE_SECURE;
+	if (username != NULL)
+		checkversion(edp);
+	else
+		setversion(edp);
 
 	/*
 	 * Open file for old password file.  Minor trickiness -- don't want to
@@ -638,17 +672,57 @@ bailout(void)
 	exit(EXIT_FAILURE);
 }
 
+/*
+ * Ensures that an existing database is up to date.
+ *
+ * Makes sure that the version number of an existing database matches the
+ * version number setversion() writes.  If it does not, this function aborts
+ * execution because updating the database without fully regenerating it will
+ * leave it inconsistent.
+ */
 void
-setversion(DB *dp)
+checkversion(DB *dp)
 {
 	DBT data, key;
-	uint32_t version = sizeof(time_t) != sizeof(int32_t);
+	int ret;
 
 	key.data = __UNCONST("VERSION");
 	key.size = strlen((const char *)key.data) + 1;
 
+	ret = (*dp->get)(dp, &key, &data, 0);
+	if (ret == -1) {
+		warnx("cannot get VERSION record from database");
+		bailout();
+	}
+
+	if (ret == 1 || *(int *)data.data != getversion()) {
+		warnx("databases are laid out according to an old version");
+		warnx("re-build the databases without -u");
+		bailout();
+	}
+}
+
+/*
+ * Returns the version number we write to and expect from databases.
+ */
+uint32_t
+getversion(void)
+{
+	uint32_t version = sizeof(time_t) != sizeof(int32_t);
 	if (lorder != BYTE_ORDER)
 		version = SWAP(version);
+	return version;
+}
+
+void
+setversion(DB *dp)
+{
+	DBT data, key;
+	uint32_t version = getversion();
+
+	key.data = __UNCONST("VERSION");
+	key.size = strlen((const char *)key.data) + 1;
+
 	data.data = &version;
 	data.size = sizeof(uint32_t);
 
