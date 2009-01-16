@@ -1,3 +1,19 @@
+NTP 4.2.4p6 (Harlan Stenn <stenn@ntp.org>, 2009/01/07)
+
+Focus: Security Fix
+
+Severity: Low
+
+This release fixes oCERT.org's CVE-2009-0021, a vulnerability affecting
+the OpenSSL library relating to the incorrect checking of the return
+value of EVP_VerifyFinal function.
+
+Credit for finding this issue goes to the Google Security Team for
+finding the original issue with OpenSSL, and to ocert.org for finding
+the problem in NTP and telling us about it.
+
+This is a recommended upgrade.
+---
 NTP 4.2.4p5 (Harlan Stenn <stenn@ntp.org>, 2008/08/17)
 
 Focus: Minor Bugfixes 
