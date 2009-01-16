@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.4 2009/01/16 23:23:34 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.5 2009/01/16 23:58:05 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.4 2009/01/16 23:23:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.5 2009/01/16 23:58:05 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1187,8 +1187,6 @@ age_suspend(device_t dv PMF_FN_ARGS)
 	struct age_softc *sc = device_private(dv);
 	uint16_t pmstat;
 
-	age_stop(sc);
-
 	/* XXXcegger Do we have Wake-On-LAN ? */
 
 	/* Request PME. */
@@ -1205,7 +1203,6 @@ static bool
 age_resume(device_t dv PMF_FN_ARGS)
 {
 	struct age_softc *sc = device_private(dv);
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint16_t cmd;
 
 	/*
@@ -1218,8 +1215,6 @@ age_resume(device_t dv PMF_FN_ARGS)
 		pci_conf_write(sc->sc_pct, sc->sc_pcitag,
 		    PCI_COMMAND_STATUS_REG, cmd);
 	}
-	if ((ifp->if_flags & IFF_UP) != 0)
-		age_init(ifp);
 
 	return true;
 }
