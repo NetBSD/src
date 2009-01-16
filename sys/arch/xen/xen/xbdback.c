@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.36 2009/01/13 03:28:54 taca Exp $      */
+/*      $NetBSD: xbdback.c,v 1.37 2009/01/16 20:16:47 jym Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.36 2009/01/13 03:28:54 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.37 2009/01/16 20:16:47 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -704,7 +704,7 @@ xbdback_co_main(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
 	xbdi->req_prod = xbdi->blk_ring->req_prod;
-	x86_lfence(); /* ensure we see all requests up to req_prod */
+	xen_rmb(); /* ensure we see all requests up to req_prod */
 	/*
 	 * note that we'll eventually get a full ring of request.
 	 * in this case, MASK_BLKIF_IDX(req_cons) == MASK_BLKIF_IDX(req_prod)
@@ -1251,7 +1251,7 @@ xbdback_send_reply(struct xbdback_instance *xbdi, int id, int op, int status)
 	resp->operation = op;
 	resp->status    = status;
 	xbdi->resp_prod++;
-	x86_lfence(); /* ensure guest see all our replies */
+	xen_rmb(); /* ensure guest see all our replies */
 	xbdi->blk_ring->resp_prod = xbdi->resp_prod;
 	hypervisor_notify_via_evtchn(xbdi->evtchn);
 }
