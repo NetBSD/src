@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.276 2009/01/04 19:33:56 jdc Exp $
+#       $NetBSD: Makefile,v 1.277 2009/01/16 09:51:34 uebayasi Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -82,7 +82,7 @@ MLINKS+=accept_filter.9 accept_filt_get.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=autoconf.9 config_search_loc.9 \
 	autoconf.9 config_search_ia.9 \
-	autoconf.9 config_found_sm.9 \
+	autoconf.9 config_found_sm_loc.9 \
 	autoconf.9 config_found_ia.9 \
 	autoconf.9 config_found.9 \
 	autoconf.9 config_match.9 \
