@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.59 2008/11/19 06:22:15 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.60 2009/01/16 00:44:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.59 2008/11/19 06:22:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.60 2009/01/16 00:44:43 bjh21 Exp $");
 
 #include "opt_md.h"
 #include "opt_cpuoptions.h"
@@ -414,19 +414,6 @@ parse_mi_bootargs(args)
 	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= AB_VERBOSE;
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-
-	ci->ci_want_resched = 1;
-	if (curlwp != ci->ci_data.cpu_idlelwp)
-		setsoftast();
 }
 
 bool
