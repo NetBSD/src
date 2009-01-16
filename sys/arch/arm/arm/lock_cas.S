@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.5 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.6 2009/01/16 10:28:24 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,16 +51,15 @@
  *	ARM doesn't have a compare-and-swap, so this is implemented
  *	as a restartable atomic sequence.  See irq_dispatch.S.
  *
- *	Returns true if the swap was performed, false if the swap
- *	was not performed.
+ *	Returns the old value whether or not the swap happened.
  *
  * r0	Address of interest.
  * r1	Old value to compare.
  * r2	New value.
  */
+	.globl	_C_LABEL(_lock_cas_end)
 ENTRY_NP(_lock_cas)
 #ifdef _ARCH_ARM_6
-	.globl	_C_LABEL(_lock_cas_end)
         mov	ip, r0
 1:      ldrex	r0, [ip]		/* eventual return value */
         cmp	r1, r0
@@ -73,15 +72,13 @@ ENTRY_NP(_lock_cas)
 #else
 	ldr	r3, [r0]
 	teq	r3, r1
-	bne	1f
-	str	r2, [r0]
-
-	.globl	_C_LABEL(_lock_cas_end)
+	streq	r2, [r0]
 _C_LABEL(_lock_cas_end):
+	mov	r0, r3
 #if defined(ARM_LOCK_CAS_DEBUG)
-	mov	r3, r1			/* save 'old' */
-	ldr	r0, .L_lock_cas_success
-	ldmia	r0, {r1-r2}		/* load ev_count */
+	ldreq	r3, .L_lock_cas_success
+	ldrne	r3, .L_lock_cas_fail
+	ldmia	r3, {r1-r2}		/* load ev_count */
 #if defined(__ARMEB__)
 	adds	r2, r2, #1		/* 64-bit incr (lo) */
 	adc	r1, r1, #0		/* 64-bit incr (hi) */
@@ -89,26 +86,8 @@ _C_LABEL(_lock_cas_end):
 	adds	r1, r1, #1		/* 64-bit incr (lo) */
 	adc	r2, r2, #0		/* 64-bit incr (hi) */
 #endif /* __ARMEB__ */
-	stmia	r0, {r1-r2}		/* store ev_count */
-	mov	r0, r3			/* return 'old' */
-#else
-	mov	r0, r1			/* return 'old' */
+	stmia	r3, {r1-r2}		/* store ev_count */
 #endif /* ARM_LOCK_CAS_DEBUG */
-	RET
-1:
-#if defined(ARM_LOCK_CAS_DEBUG)
-	ldr	r0, .L_lock_cas_fail
-	ldmia	r0, {r1-r2}		/* load ev_count */
-#if defined(__ARMEB__)
-	adds	r2, r2, #1		/* 64-bit incr (lo) */
-	adc	r1, r1, #0		/* 64-bit incr (hi) */
-#else
-	adds	r1, r1, #1		/* 64-bit incr (lo) */
-	adc	r2, r2, #0		/* 64-bit incr (hi) */
-#endif /* __ARMEB__ */
-	stmia	r0, {r1-r2}		/* store ev_count */
-#endif /* ARM_LOCK_CAS_DEBUG */
-	mov	r0, r3			/* return actual value */
 	RET
 #endif
 
