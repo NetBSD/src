@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.3 2009/01/11 11:44:23 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.4 2009/01/16 00:46:12 haad Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ const struct cdevsw dm_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK | D_MPSAFE
 };
 
-int unload;
+extern uint64_t dev_counter;
 
 /*
  * This array is used to translate cmd to function pointer.
@@ -108,7 +108,7 @@ struct cmd_function cmd_fn[] = {
 };
 
 
-MODULE(MODULE_CLASS_MISC, dm, NULL);
+MODULE(MODULE_CLASS_DRIVER, dm, NULL);
 
 /* New module handle routine */
 static int
@@ -125,10 +125,17 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		break;
 
 	case MODULE_CMD_FINI:
+		/*
+		 * Disable unloading of dm module if there are any devices
+		 * defined in driver. This is probably too strong we need
+		 * to disable auto-unload only if there is mounted dm device
+		 * present.
+		 */ 
+		if (dev_counter > 0)
+			return EBUSY;
 		dmdestroy();
 		return devsw_detach(&dm_bdevsw, &dm_cdevsw);
 		break;
-
 	case MODULE_CMD_STAT:
 		return ENOTTY;
 
@@ -162,8 +169,6 @@ dmattach(void)
 int
 dmdestroy(void)
 {
-	atomic_inc_32(&unload);
-
 	dm_dev_destroy();
 	dm_pdev_destroy();
 	dm_target_destroy();
@@ -175,10 +180,6 @@ static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	aprint_debug("open routine called %llu\n", minor(dev));
-	
-	if (unload == 1)
-		return EBUSY;
-	
 	return 0;
 }
 
@@ -313,13 +314,12 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	
 	case DIOCGDINFO:
 	{
-		
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENOENT;
 
-		aprint_debug("DIOCGDINFO %d\n", dmv->dk_label->d_secsize);
+		aprint_debug("DIOCGDINFO %d\n", dmv->diskp->dk_label->d_secsize);
 		 
-		*(struct disklabel *)data = *(dmv->dk_label);
+		*(struct disklabel *)data = *(dmv->diskp->dk_label);
 
 		dm_dev_unbusy(dmv);
 		break;
@@ -330,8 +330,8 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENOENT;
 
-		((struct partinfo *)data)->disklab = dmv->dk_label;
-		((struct partinfo *)data)->part = &dmv->dk_label->d_partitions[0];
+		((struct partinfo *)data)->disklab = dmv->diskp->dk_label;
+		((struct partinfo *)data)->part = &dmv->diskp->dk_label->d_partitions[0];
 
 		dm_dev_unbusy(dmv);
 		break;
