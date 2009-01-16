@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.c,v 1.6 2009/01/02 00:20:23 tnozaki Exp $	*/
+/*	$NetBSD: locale.c,v 1.7 2009/01/16 13:30:07 hira Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Alexey Zelkin <phantom@FreeBSD.org>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: locale.c,v 1.6 2009/01/02 00:20:23 tnozaki Exp $");
+__RCSID("$NetBSD: locale.c,v 1.7 2009/01/16 13:30:07 hira Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -476,7 +476,7 @@ init_locales_list_alias(void)
 			    --n, ++s);
 #endif
 			n = (size_t)(s - t);
-			s = malloc(n);
+			s = malloc(n + 1);
 			if (s == NULL)
 				err(1, "could not allocate memory");
 			memcpy(s, t, n);
