@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.10 2009/01/05 09:18:27 njoly Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.11 2009/01/16 13:10:47 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -87,7 +87,7 @@ struct linux32_oldselect {
         netbsd32_fd_setp_t readfds;
         netbsd32_fd_setp_t writefds;
         netbsd32_fd_setp_t exceptfds;
-        netbsd32_timevalp_t timeout;
+        netbsd32_timeval50p_t timeout;
 };
 
 struct linux32_sysinfo {

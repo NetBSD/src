@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.29 2008/12/29 14:33:40 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.30 2009/01/16 13:10:47 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.29 2008/12/29 14:33:40 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.30 2009/01/16 13:10:47 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,7 +115,7 @@ linux32_sys_select(struct lwp *l, const struct linux32_sys_select_args *uap, reg
 		syscallarg(netbsd32_fd_setp_t) readfds;
 		syscallarg(netbsd32_fd_setp_t) writefds;
 		syscallarg(netbsd32_fd_setp_t) exceptfds;
-		syscallarg(netbsd32_timevalp_t) timeout;
+		syscallarg(netbsd32_timeval50p_t) timeout;
 	} */
 
 	return linux32_select1(l, retval, SCARG(uap, nfds), 
@@ -151,7 +151,7 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
         struct timeval *timeout;
 {   
 	struct timeval tv0, tv1, utv, *tv = NULL;
-	struct netbsd32_timeval utv32;
+	struct netbsd32_timeval50 utv32;
 	int error;
 
 	timerclear(&utv); /* XXX GCC4 */
@@ -164,7 +164,7 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 		if ((error = copyin(timeout, &utv32, sizeof(utv32))))
 			return error;
 
-		netbsd32_to_timeval(&utv32, &utv);
+		netbsd32_to_timeval50(&utv32, &utv);
 
 		if (itimerfix(&utv)) {
 			/*
@@ -214,7 +214,7 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			timerclear(&utv);
 		}
 		
-		netbsd32_from_timeval(&utv, &utv32);
+		netbsd32_from_timeval50(&utv, &utv32);
 
 		if ((error = copyout(&utv32, timeout, sizeof(utv32))))
 			return error;
