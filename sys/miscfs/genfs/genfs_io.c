@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.16 2008/12/01 11:22:12 joerg Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.17 2009/01/16 02:33:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.16 2008/12/01 11:22:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.17 2009/01/16 02:33:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,7 +844,7 @@ retry:
 		endoff = trunc_page(LLONG_MAX);
 	}
 	by_list = (uobj->uo_npages <=
-	    ((endoff - startoff) >> PAGE_SHIFT) * UVM_PAGE_HASH_PENALTY);
+	    ((endoff - startoff) >> PAGE_SHIFT) * UVM_PAGE_TREE_PENALTY);
 
 #if !defined(DEBUG)
 	/*
