@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1117 2009/01/04 15:34:17 wiz Exp $
+# $NetBSD: mi,v 1.1118 2009/01/16 21:28:10 cegger Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -624,6 +624,7 @@
 ./usr/share/man/cat4/adt7467c.0			man-obsolete		obsolete
 ./usr/share/man/cat4/adv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adw.0			man-sys-catman		.cat
+./usr/share/man/cat4/age.0			man-sys-catman		.cat
 ./usr/share/man/cat4/agp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/agr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aha.0			man-sys-catman		.cat
@@ -750,6 +751,7 @@
 ./usr/share/man/cat4/ate.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atf-test-case.0		man-atf-catman		.cat
 ./usr/share/man/cat4/ath.0			man-sys-catman		.cat
+./usr/share/man/cat4/atphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atppc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/attimer.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atu.0			man-sys-catman		.cat
@@ -3239,6 +3241,7 @@
 ./usr/share/man/html4/adt7467c.html		man-obsolete		obsolete
 ./usr/share/man/html4/adv.html			man-sys-htmlman		html
 ./usr/share/man/html4/adw.html			man-sys-htmlman		html
+./usr/share/man/html4/age.html			man-sys-htmlman		html
 ./usr/share/man/html4/agp.html			man-sys-htmlman		html
 ./usr/share/man/html4/agr.html			man-sys-htmlman		html
 ./usr/share/man/html4/aha.html			man-sys-htmlman		html
@@ -3329,6 +3332,7 @@
 ./usr/share/man/html4/ate.html			man-sys-htmlman		html
 ./usr/share/man/html4/atf-test-case.html	man-atf-htmlman		html
 ./usr/share/man/html4/ath.html			man-sys-htmlman		html
+./usr/share/man/html4/atphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/atppc.html		man-sys-htmlman		html
 ./usr/share/man/html4/attimer.html		man-sys-htmlman		html
 ./usr/share/man/html4/atu.html			man-sys-htmlman		html
@@ -5554,6 +5558,7 @@
 ./usr/share/man/man4/adt7467c.4			man-obsolete		obsolete
 ./usr/share/man/man4/adv.4			man-sys-man		.man
 ./usr/share/man/man4/adw.4			man-sys-man		.man
+./usr/share/man/man4/age.4			man-sys-man		.man
 ./usr/share/man/man4/agp.4			man-sys-man		.man
 ./usr/share/man/man4/agr.4			man-sys-man		.man
 ./usr/share/man/man4/aha.4			man-sys-man		.man
@@ -5680,6 +5685,7 @@
 ./usr/share/man/man4/ate.4			man-sys-man		.man
 ./usr/share/man/man4/atf-test-case.4		man-cat-man		.man
 ./usr/share/man/man4/ath.4			man-sys-man		.man
+./usr/share/man/man4/atphy.4			man-sys-man		.man
 ./usr/share/man/man4/atppc.4			man-sys-man		.man
 ./usr/share/man/man4/attimer.4			man-sys-man		.man
 ./usr/share/man/man4/atu.4			man-sys-man		.man
