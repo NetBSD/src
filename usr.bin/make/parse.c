@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.155 2009/01/11 15:50:06 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.156 2009/01/16 20:50:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.155 2009/01/11 15:50:06 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.156 2009/01/16 20:50:24 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.155 2009/01/11 15:50:06 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.156 2009/01/16 20:50:24 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -475,30 +475,25 @@ void
 Parse_Error(int type, const char *fmt, ...)
 {
 	va_list ap;
+	const char *fname;
+	size_t lineno;
+
+	if (curFile == NULL) {
+		fname = NULL;
+		lineno = 0;
+	} else {
+		fname = curFile->fname;
+		lineno = curFile->lineno;
+	}
 
 	va_start(ap, fmt);
-	if (curFile == NULL) {
-		/* avoid segfault */
-		static IFile intFile;
-		intFile.fd = -1;
-		curFile = &intFile;
-	}
-	ParseVErrorInternal(stderr, curFile->fname, curFile->lineno,
-		    type, fmt, ap);
+	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
 	if (debug_file != stderr && debug_file != stdout) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(debug_file, curFile->fname, curFile->lineno,
-			    type, fmt, ap);
+		ParseVErrorInternal(debug_file, fname, lineno, type, fmt, ap);
 		va_end(ap);
-	}
-	/*
-	 * if we get this far, make sure we don't leave curFile
-	 * pointing to our dummy one.
-	 */
-	if (curFile->fname == NULL) {
-		curFile = NULL;
 	}
 }
 
