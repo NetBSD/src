@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.5.6.2 2008/12/23 03:40:02 snj Exp $ */
+/*	$NetBSD: dbcool.c,v 1.5.6.3 2009/01/16 22:44:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5.6.2 2008/12/23 03:40:02 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5.6.3 2009/01/16 22:44:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,7 +539,7 @@ struct chip_id chip_table[] = {
 	{ DBCOOL_COMPANYID, ADT7473_DEVICEID, ADT7473_REV_ID1,
 		ADT7475_sensor_table, ADT7475_power_table,
 		DBCFLAG_TEMPOFFSET | DBCFLAG_HAS_MAXDUTY | DBCFLAG_HAS_SHDN,
-		90000 * 60, "ADT7463" },
+		90000 * 60, "ADT7460/ADT7463" },
 	{ DBCOOL_COMPANYID, ADT7473_DEVICEID, ADT7473_REV_ID2,
 		ADT7475_sensor_table, ADT7475_power_table,
 		DBCFLAG_TEMPOFFSET | DBCFLAG_HAS_MAXDUTY | DBCFLAG_HAS_SHDN,
