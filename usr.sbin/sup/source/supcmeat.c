@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.33 2009/01/15 15:58:42 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.34 2009/01/16 10:24:20 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -741,7 +741,7 @@ prepare(char *name, int mode, int *newp, struct stat * statp)
 	char *type;
 	char pname[MAXPATHLEN];
 	struct stat pbuf;
-	int er;
+	int er = 0;
 
 	if (mode == S_IFLNK)
 		*newp = (lstat(name, statp) < 0);
