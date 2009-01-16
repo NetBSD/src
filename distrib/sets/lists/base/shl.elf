@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.155 2008/10/16 09:39:43 pooka Exp $
+# $NetBSD: shl.elf,v 1.155.2.1 2009/01/16 21:41:07 bouyer Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -180,8 +180,8 @@
 ./usr/lib/libobjc.so.2				base-sys-shlib		gcc
 ./usr/lib/libossaudio.so			base-sys-shlib
 ./usr/lib/libossaudio.so.0			base-sys-shlib
-./usr/lib/libp2k.so				base-sys-shlib		puffs
-./usr/lib/libp2k.so.0				base-sys-shlib		puffs
+./usr/lib/libp2k.so				base-sys-shlib	
+./usr/lib/libp2k.so.0				base-sys-shlib	
 ./usr/lib/libpam.so				base-sys-shlib		pam
 ./usr/lib/libpam.so.1				base-sys-shlib		pam
 ./usr/lib/libpcap.so				base-net-shlib
@@ -200,8 +200,8 @@
 ./usr/lib/libpuffs.so.0				base-sys-shlib
 ./usr/lib/libradius.so				base-net-shlib
 ./usr/lib/libradius.so.2			base-net-shlib
-./usr/lib/librefuse.so				base-sys-shlib		puffs
-./usr/lib/librefuse.so.0			base-sys-shlib		puffs
+./usr/lib/librefuse.so				base-sys-shlib	
+./usr/lib/librefuse.so.0			base-sys-shlib	
 ./usr/lib/libresolv.so				base-net-shlib
 ./usr/lib/libresolv.so.1			base-net-shlib
 ./usr/lib/libroken.so				base-krb5-shlib		kerberos

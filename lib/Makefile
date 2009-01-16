@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 2008/10/16 09:44:12 pooka Exp $
+#	$NetBSD: Makefile,v 1.128.2.1 2009/01/16 21:41:10 bouyer Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -84,9 +84,7 @@ SUBDIR+=	libssh		# depends on libcrypto
 SUBDIR+=	libkrb5		# depends on libcrypto and more
 .endif
 
-.if (${MKPUFFS} != "no")
 SUBDIR+=	librefuse	# depends on libpuffs
-.endif
 
 SUBDIR+=	librumpuser	# depends on libpthread
 
@@ -124,9 +122,7 @@ SUBDIR+=	librumpnet	# depends on librump
 SUBDIR+=	libukfs		# depends on librump
 
 #==================== 4th library dependency barrier ====================
-.if (${MKPUFFS} != "no")
 SUBDIR+=	.WAIT
 SUBDIR+=	libp2k		# depends on libpuffs and libukfs
-.endif
 
 .include <bsd.subdir.mk>
