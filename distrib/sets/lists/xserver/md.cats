@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.25 2008/10/27 20:30:47 veego Exp $
+# $NetBSD: md.cats,v 1.25.2.1 2009/01/16 01:43:11 snj Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -347,6 +347,7 @@
 ./usr/X11R7/bin/pcitweak				-unknown-	xorg
 ./usr/X11R7/bin/scanpci					-unknown-	xorg
 ./usr/X11R7/bin/xorgconfig				-unknown-	xorg
+./usr/X11R7/lib/X11/Cards				-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
