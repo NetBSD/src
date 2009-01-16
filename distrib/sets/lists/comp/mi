@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1224 2009/01/05 21:19:48 rmind Exp $
+#	$NetBSD: mi,v 1.1225 2009/01/16 09:51:34 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8176,7 +8176,8 @@
 ./usr/share/man/cat9/config_finalize_register.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found_ia.0		comp-sys-catman		.cat
-./usr/share/man/cat9/config_found_sm.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_found_sm.0		comp-obsolete		obsolete
+./usr/share/man/cat9/config_found_sm_loc.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_interrupts.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_match.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_pending_decr.0	comp-sys-catman		.cat
@@ -13400,7 +13401,8 @@
 ./usr/share/man/html9/config_finalize_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_found.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config_found_ia.html	comp-sys-htmlman	html
-./usr/share/man/html9/config_found_sm.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_found_sm.html	comp-obsolete		obsolete
+./usr/share/man/html9/config_found_sm_loc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_interrupts.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_match.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config_pending_decr.html	comp-sys-htmlman	html
@@ -18744,7 +18746,8 @@
 ./usr/share/man/man9/config_finalize_register.9	comp-sys-man		.man
 ./usr/share/man/man9/config_found.9		comp-sys-man		.man
 ./usr/share/man/man9/config_found_ia.9		comp-sys-man		.man
-./usr/share/man/man9/config_found_sm.9		comp-sys-man		.man
+./usr/share/man/man9/config_found_sm.9		comp-obsolete		obsolete
+./usr/share/man/man9/config_found_sm_loc.9	comp-sys-man		.man
 ./usr/share/man/man9/config_interrupts.9	comp-sys-man		.man
 ./usr/share/man/man9/config_match.9		comp-sys-man		.man
 ./usr/share/man/man9/config_pending_decr.9	comp-sys-man		.man
