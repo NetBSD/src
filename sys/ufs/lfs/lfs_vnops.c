@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.218 2008/06/24 10:47:32 gmcgarry Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.219 2009/01/16 05:15:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.218 2008/06/24 10:47:32 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.219 2009/01/16 05:15:29 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1819,7 +1819,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
   top:
 	by_list = (vp->v_uobj.uo_npages <=
 		   ((endoffset - startoffset) >> PAGE_SHIFT) *
-		   UVM_PAGE_HASH_PENALTY);
+		   UVM_PAGE_TREE_PENALTY);
 	any_dirty = 0;
 
 	if (by_list) {
