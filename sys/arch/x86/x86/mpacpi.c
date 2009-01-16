@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.69.4.1 2009/01/16 21:35:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69.4.1 2009/01/16 21:35:43 bouyer Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -1200,8 +1200,12 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 		    acpi_pci_link_name(mip->linkdev), irq, line);
 	if (irq == X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
 		return ENOENT;
-	if (irq != line)
-		panic("mpacpi_findintr_linkdev: irq mismatch");
+	if (irq != line) {
+		aprint_error("%s: mpacpi_findintr_linkdev:"
+		    " irq mismatch (%d vs %d)\n",
+		    acpi_pci_link_name(mip->linkdev), irq, line);
+		return ENOENT;
+	}
 
 	/*
 	 * Convert ACPICA values to MPS values
