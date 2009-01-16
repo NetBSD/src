@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans.c,v 1.8 2009/01/11 02:46:28 christos Exp $	*/
+/*	$NetBSD: _wctrans.c,v 1.9 2009/01/16 21:12:11 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctrans.c,v 1.8 2009/01/11 02:46:28 christos Exp $");
+__RCSID("$NetBSD: _wctrans.c,v 1.9 2009/01/16 21:12:11 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,9 +76,14 @@ __RCSID("$NetBSD: _wctrans.c,v 1.8 2009/01/11 02:46:28 christos Exp $");
  * _wctrans_init:
  */
 
-void
+_RuneLocale *
 _wctrans_init(_RuneLocale *rl)
 {
+	if (rl == &_DefaultRuneLocale) {
+		if ((rl = malloc(sizeof(*rl))) == NULL)
+			return NULL;
+		(void)memcpy(rl, &_DefaultRuneLocale, sizeof(*rl))
+	}
 	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name = "tolower";
 	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_cached = rl->rl_maplower;
 	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_extmap = &rl->rl_maplower_ext;
