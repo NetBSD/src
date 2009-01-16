@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.144 2008/12/29 10:18:38 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.145 2009/01/16 21:14:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.144 2008/12/29 10:18:38 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.145 2009/01/16 21:14:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.144 2008/12/29 10:18:38 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.145 2009/01/16 21:14:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2285,7 +2285,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    if (*tstr == ':')
 		tstr++;
 	    else if (!*tstr && endc) {
-		Error("Unclosed variable specification for %s", v->name);
+		Error("Unclosed variable specification after complex modifier (expecting '%c') for %s", endc, v->name);
 		goto out;
 	    }
 	    continue;
@@ -3217,7 +3217,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    }
 	}
 	if (termc == '\0' && endc != '\0') {
-	    Error("Unclosed variable specification for %s", v->name);
+	    Error("Unclosed variable specification (expecting '%c') for \"%s\" (value \"%s\") modifier %c", endc, v->name, nstr, modifier);
 	} else if (termc == ':') {
 	    cp++;
 	}
