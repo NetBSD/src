@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.25 2009/01/10 22:06:29 bjh21 Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.26 2009/01/16 18:02:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.25 2009/01/10 22:06:29 bjh21 Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.26 2009/01/16 18:02:24 pooka Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -328,7 +328,6 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 	*/
 
 	assert(option != NULL);
-	assert(fsopts != NULL);
 
 	if (debug & DEBUG_FS_PARSE_OPTS)
 		printf("cd9660_parse_opts: got `%s'\n", option);
@@ -470,7 +469,6 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	assert(image != NULL);
 	assert(dir != NULL);
 	assert(root != NULL);
-	assert(fsopts != NULL);
 
 	if (diskStructure.displayHelp) {
 		/*
