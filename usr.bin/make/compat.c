@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.73 2008/12/19 22:01:19 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.74 2009/01/16 21:14:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.73 2008/12/19 22:01:19 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.74 2009/01/16 21:14:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.73 2008/12/19 22:01:19 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.74 2009/01/16 21:14:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -243,15 +243,15 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	free(cmdStart);
 	Error("%s expands to empty string", cmd);
 	return(0);
-    } else {
-	cmd = cmdStart;
     }
+    cmd = cmdStart;
     Lst_Replace(cmdNode, cmdStart);
 
     if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
 	(void)Lst_AtEnd(ENDNode->commands, cmdStart);
 	return(0);
-    } else if (strcmp(cmdStart, "...") == 0) {
+    }
+    if (strcmp(cmdStart, "...") == 0) {
 	gn->type |= OP_SAVE_CMDS;
 	return(0);
     }
@@ -312,6 +312,8 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     if (!doIt && NoExecute(gn)) {
 	return (0);
     }
+    if (DEBUG(JOB))
+	fprintf(debug_file, "Execute: '%s'\n", cmd);
 
 again:
     if (useShell) {
