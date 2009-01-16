@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.1 2009/01/16 20:18:08 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.2 2009/01/16 21:47:56 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -29,6 +29,9 @@
  */
 
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.2 2009/01/16 21:47:56 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"

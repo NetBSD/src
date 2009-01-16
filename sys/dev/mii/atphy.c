@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.1 2009/01/16 21:06:24 cegger Exp $ */
+/*	$NetBSD: atphy.c,v 1.2 2009/01/16 21:50:02 cegger Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -31,6 +31,9 @@
 /*
  * Driver for the Attansic F1 10/100/1000 PHY.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.2 2009/01/16 21:50:02 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
