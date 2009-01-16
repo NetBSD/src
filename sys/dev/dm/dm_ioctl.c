@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.5 2009/01/11 11:54:52 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.6 2009/01/16 00:46:12 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
@@ -92,6 +93,7 @@
 #include "dm.h"
 
 static uint64_t      sc_minor_num; 
+uint64_t dev_counter;
 
 #define DM_REMOVE_FLAG(flag, name) do {					\
 		prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag); \
@@ -216,7 +218,10 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	if ((dmv = dm_dev_alloc()) == NULL)
 		return ENOMEM;
-		
+	
+	if ((dmv->diskp = kmem_alloc(sizeof(struct disk), KM_NOSLEEP)) == NULL)
+		return ENOMEM;
+	
 	if (uuid)
 		strncpy(dmv->uuid, uuid, DM_UUID_LEN);
 	else 
@@ -241,13 +246,18 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 		dmv->flags |= DM_READONLY_FLAG;
 
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
-	
+
+	disk_init(dmv->diskp, dmv->name, NULL);
+
 	if ((r = dm_dev_insert(dmv)) != 0){
 		dm_dev_free(dmv);
 	}
 	
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);
 	DM_REMOVE_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
+
+	/* Increment device counter After creating device */
+	atomic_inc_64(&dev_counter);
 	
 	return r;
 }
@@ -392,6 +402,9 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	/* Destroy device */
 	(void)dm_dev_free(dmv);
 
+	/* Decrement device counter After removing device */
+	atomic_dec_64(&dev_counter);
+	
 	return 0;
 }
 
@@ -523,11 +536,15 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 	atomic_and_32(&dmv->flags, ~(DM_SUSPEND_FLAG | DM_INACTIVE_PRESENT_FLAG));
 	atomic_or_32(&dmv->flags, DM_ACTIVE_PRESENT_FLAG);
 
+	
 	dm_table_switch_tables(&dmv->table_head);
 		
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
 
 	dmgetdisklabel(dmv->dk_label, &dmv->table_head);
+
+	disk_attach(dmv->diskp);
+	dmgetdisklabel(dmv->diskp->dk_label, &dmv->table_head);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
