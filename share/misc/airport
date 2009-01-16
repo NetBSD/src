@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.30 2006/03/02 13:43:52 tron Exp $
+#	$NetBSD: airport,v 1.30.14.1 2009/01/16 21:23:11 bouyer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -760,7 +760,7 @@ BKF:Lake Brooks Seaplane Base, AK, USA
 BKH:Kekana, Kauai, HI, USA
 BKI:Kota Kinabalu, Sabah, Malaysia
 BKJ:Boke, Guinea
-BKK:Bangkok [Don Muang International Airport], Thailand
+BKK:Bangkok [Suvarnabhumi International Airport], Thailand
 BKL:Cleveland Lakefront, Ohio, USA
 BKM:Bakalalan, Sarawak, Malaysia
 BKN:Birni n'Konni, Niger
@@ -1795,6 +1795,7 @@ DMB:Zhambyl, Kazakhstan
 DMD:Doomadgee Mission, Queensland, Australia
 DME:Moscow (Domodemovo), Russia
 DMF:Montgomery (National Guard), AL, USA
+DMK:Don Muang International Airport, Bangkok, Thailand
 DMN:Deming Municipal Airport, NM, USA
 DMO:Sedalia Memorial Airport, MO, USA
 DMR:Dhamar, Yemen
