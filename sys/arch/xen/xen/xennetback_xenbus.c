@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.26 2009/01/06 00:57:47 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.27 2009/01/16 20:16:47 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -490,10 +490,10 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 			goto err2;
 		}
 		xneti->xni_evtchn = evop.u.bind_interdomain.local_port;
-		x86_sfence();
+		xen_wmb();
 		xneti->xni_status = CONNECTED;
 		xenbus_switch_state(xbusd, NULL, XenbusStateConnected);
-		x86_sfence();
+		xen_wmb();
 		event_set_handler(xneti->xni_evtchn, xennetback_evthandler,
 		    xneti, IPL_NET, xneti->xni_if.if_xname);
 		xennetback_ifinit(&xneti->xni_if);
@@ -617,17 +617,17 @@ xennetback_evthandler(void *arg)
 
 	XENPRINTF(("xennetback_evthandler "));
 	req_cons = xneti->xni_txring.req_cons;
-	x86_lfence();
+	xen_rmb();
 	while (1) {
-		x86_lfence(); /* be sure to read the request before updating */
+		xen_rmb(); /* be sure to read the request before updating */
 		xneti->xni_txring.req_cons = req_cons;
-		x86_sfence();
+		xen_wmb();
 		RING_FINAL_CHECK_FOR_REQUESTS(&xneti->xni_txring,
 		    receive_pending);
 		if (receive_pending == 0)
 			break;
 		txreq = RING_GET_REQUEST(&xneti->xni_txring, req_cons);
-		x86_lfence();
+		xen_rmb();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq->size));
 		req_cons++;
@@ -778,9 +778,9 @@ so always copy for now.
 #endif
 		(*ifp->if_input)(ifp, m);
 	}
-	x86_lfence(); /* be sure to read the request before updating pointer */
+	xen_rmb(); /* be sure to read the request before updating pointer */
 	xneti->xni_txring.req_cons = req_cons;
-	x86_sfence();
+	xen_wmb();
 	/* check to see if we can transmit more packets */
 	softint_schedule(xneti->xni_softintr);
 
@@ -866,7 +866,7 @@ xennetback_ifsoftstart(void *arg)
 		XENPRINTF(("pkt\n"));
 		req_prod = xneti->xni_rxring.sring->req_prod;
 		resp_prod = xneti->xni_rxring.rsp_prod_pvt;
-		x86_lfence();
+		xen_rmb();
 
 		mmup = xstart_mmu;
 		mclp = xstart_mcl;
@@ -928,7 +928,7 @@ xennetback_ifsoftstart(void *arg)
 			    xneti->xni_rxring.req_cons)->gref;
 			id = RING_GET_REQUEST(&xneti->xni_rxring,
 			    xneti->xni_rxring.req_cons)->id;
-			x86_lfence();
+			xen_rmb();
 			xneti->xni_rxring.req_cons++;
 			rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
 			    resp_prod);
@@ -1055,7 +1055,7 @@ xennetback_ifsoftstart(void *arg)
 		}
 		/* send event */
 		if (do_event) {
-			x86_lfence();
+			xen_rmb();
 			XENPRINTF(("%s receive event\n",
 			    xneti->xni_if.if_xname));
 			hypervisor_notify_via_evtchn(xneti->xni_evtchn);

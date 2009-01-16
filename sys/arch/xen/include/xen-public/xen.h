@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.7 2008/04/21 15:15:34 cegger Exp $ */
+/* $NetBSD: xen.h,v 1.8 2009/01/16 20:16:47 jym Exp $ */
 
 /*
  * Copyright (c) 2004, K A Fraser
@@ -41,6 +41,12 @@
 #include "arch-x86_64.h"
 #else
 #error "Unsupported architecture"
+#endif
+
+#if defined(__NetBSD__)
+#define xen_mb()  x86_mfence()
+#define xen_rmb() x86_lfence()
+#define xen_wmb() x86_sfence()
 #endif
 
 /*

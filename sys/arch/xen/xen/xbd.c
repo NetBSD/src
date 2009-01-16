@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.50 2009/01/13 13:35:52 yamt Exp $ */
+/* $NetBSD: xbd.c,v 1.51 2009/01/16 20:16:47 jym Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.50 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.51 2009/01/16 20:16:47 jym Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -661,7 +661,7 @@ recover_interface(void)
 			++req_prod;
 		}
 	recovery = 0;
-	x86_sfence();
+	xen_wmb();
 	signal_requests_to_xen();
 }
 
@@ -1531,7 +1531,7 @@ xbd_response_handler(void *arg)
 	}
 
 	rp = blk_ring->resp_prod;
-	x86_lfence(); /* Ensure we see queued responses up to 'rp'. */
+	xen_rmb(); /* Ensure we see queued responses up to 'rp'. */
 
 	for (i = resp_cons; i != rp; i++) {
 		ring_resp = &blk_ring->ring[MASK_BLKIF_IDX(i)].resp;
