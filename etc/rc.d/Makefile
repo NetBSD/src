@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.74 2009/01/08 02:07:28 lukem Exp $
+# $NetBSD: Makefile,v 1.75 2009/01/16 01:59:23 haad Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ CONFIGFILES=\
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \
 		kdc \
-		ldconfig local lpd \
+		ldconfig local lpd lvm\
 		mixerctl mopd motd mountall mountcritlocal mountcritremote \
 		mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
