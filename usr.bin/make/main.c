@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.161 2009/01/13 18:22:34 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.162 2009/01/16 21:13:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.161 2009/01/13 18:22:34 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.162 2009/01/16 21:13:13 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.161 2009/01/13 18:22:34 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.162 2009/01/16 21:13:13 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1575,13 +1575,22 @@ void
 Error(const char *fmt, ...)
 {
 	va_list ap;
+	FILE *err_file;
 
-	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", progname);
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	(void)fflush(stderr);
+	err_file = debug_file;
+	if (err_file == stdout)
+		err_file = stderr;
+	for (;;) {
+		va_start(ap, fmt);
+		fprintf(err_file, "%s: ", progname);
+		(void)vfprintf(err_file, fmt, ap);
+		va_end(ap);
+		(void)fprintf(err_file, "\n");
+		(void)fflush(err_file);
+		if (err_file == stderr)
+			break;
+		err_file = stderr;
+	}
 }
 
 /*-
