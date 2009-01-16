@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.14 2008/09/30 20:08:23 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.14.4.1 2009/01/16 01:48:47 snj Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -163,7 +163,8 @@ genfs_getpages(void *v)
 	endoff = MIN(endoff, ((vp->v_writesize+bsize-1) & ~(bsize-1)));
 	curoff = ap->a_offset & ~(MAX(bsize,PAGE_SIZE)-1);
 	remain = endoff - curoff;
-	remain = MIN(remain, diskeof - curoff);
+	if (diskeof > curoff)
+		remain = MIN(remain, diskeof - curoff);
 
 	DPRINTF(("a_offset: %llx, startoff: 0x%llx, endoff 0x%llx\n",
 	    (unsigned long long)ap->a_offset, (unsigned long long)curoff,
