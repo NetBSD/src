@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.520 2008/11/20 10:50:42 jnemeth Exp $
+$NetBSD: usbdevs,v 1.521 2009/01/16 13:31:01 jmcneill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1205,6 +1205,7 @@ product HP 959C			0x1104	Deskjet 959C
 product HP 568J			0x1116	Jornada 568
 product HP 930C			0x1204	DeskJet 930c
 product HP P2000U		0x1801	Inkjet P-2000U
+product HP RNDIS		0x1c1d	Generic RNDIS
 product HP 640C			0x2004	DeskJet 640c
 product HP 4670V		0x3005	ScanJet 4670v
 product HP P1100		0x3102	Photosmart P1100
