@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.198 2009/01/15 01:35:45 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.199 2009/01/16 00:02:57 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -27,14 +27,14 @@ CLEANFILES+=	${_LSRC:MLintSys*.c}
 
 # glue to offer userland wrappers for some syscalls
 SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigtimedwait.c sigwait.c \
-	sigwaitinfo.c statvfs.c swapon.c
+	sigwaitinfo.c statvfs.c swapon.c semctl.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
 GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
 	pwritev.c truncate.c ntp_adjtime.c
 
-GLUE50+= adjtime.c clock_settime.c settimeofday.c __semctl.c
+GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
 # 'glue' files might .c or .S depending on the architecture
 .for glue in ${GLUE}
@@ -125,7 +125,7 @@ ASM=	access.S acct.S \
 		____sigtimedwait50.S __socket30.S socketpair.S __stat50.S \
 		statvfs1.S swapctl.S symlink.S __sysctl.S \
 	timer_create.S timer_delete.S __timer_gettime50.S timer_getoverrun.S \
-		__timer_settime50.S \
+		____semctl50.S __timer_settime50.S \
 	umask.S undelete.S unlink.S unmount.S __utimes50.S utrace.S uuidgen.S \
 	vadvise.S
 
