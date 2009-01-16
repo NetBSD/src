@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.23 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.24 2009/01/16 20:52:20 cegger Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.23 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.24 2009/01/16 20:52:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,6 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
-	int rv;
-
 	/*
 	 * Can't isolate the RTL8139 phy, so it has to be the only one.
 	 */
@@ -185,29 +183,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			switch (ife->ifm_media &
-			    (IFM_TMASK|IFM_NMASK|IFM_FDX)) {
-				case IFM_ETHER|IFM_10_T:
-					rv = ANAR_10|ANAR_CSMA;
-					break;
-				case IFM_ETHER|IFM_10_T|IFM_FDX:
-					rv = ANAR_10_FD|ANAR_CSMA;
-					break;
-				case IFM_ETHER|IFM_100_TX:
-					rv = ANAR_TX|ANAR_CSMA;
-					break;
-				case IFM_ETHER|IFM_100_TX|IFM_FDX:
-					rv = ANAR_TX_FD|ANAR_CSMA;
-					break;
-				case IFM_ETHER|IFM_100_T4:
-					rv = ANAR_T4|ANAR_CSMA;
-					break;
-				default:
-					rv = 0;
-					break;
-			}
-
-			PHY_WRITE(sc, MII_ANAR, rv);
+			PHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
 			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;
