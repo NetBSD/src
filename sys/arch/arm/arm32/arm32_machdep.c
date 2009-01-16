@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.60 2009/01/16 00:44:43 bjh21 Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.61 2009/01/16 01:03:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.60 2009/01/16 00:44:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.61 2009/01/16 01:03:47 bjh21 Exp $");
 
 #include "opt_md.h"
-#include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
@@ -81,18 +80,6 @@ extern size_t md_root_size;		/* Memory disc size */
 #endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 pv_addr_t kernelstack;
-
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store = {
-	.ci_cpl = IPL_HIGH,
-#ifndef PROCESS_ID_IS_CURLWP
-	.ci_curlwp = &lwp0,
-#endif
-};
 
 void *	msgbufaddr;
 extern paddr_t msgbufphys;
