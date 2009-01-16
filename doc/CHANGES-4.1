@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.126 2009/01/16 20:55:01 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.127 2009/01/16 21:02:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2667,4 +2667,20 @@ sys/dev/pci/aac_pci.c				1.26
 
 	Allocate enough space for the aac_pci_softc, not just the aac_softc.
 	[briggs, ticket #1255]
+
+sys/arch/atari/conf/GENERIC.in			1.75, 1.76 via patch
+src/sys/arch/atari/conf/ATARITT			regen
+src/sys/arch/atari/conf/BOOT			regen
+src/sys/arch/atari/conf/BOOTX			regen
+src/sys/arch/atari/conf/FALCON			regen
+src/sys/arch/atari/conf/HADES			regen
+src/sys/arch/atari/conf/MILAN-ISAIDE		regen
+src/sys/arch/atari/conf/MILAN-PCIIDE		regen
+
+	Increase min ST_POOL_SIZE from 22 to 24 to avoid out of ST memory
+	issues.  Tested by Tuomo.
+	Enable 68060 support in FALCON & BOOTX kernels for CT60/63 upgrades
+	Drop KERNFS from INSTALL kernels
+	Drop 68040 support from ATARITT kernels
+	[tjam, ticket #1264]
 
