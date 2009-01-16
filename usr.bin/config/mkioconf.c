@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.11 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.12 2009/01/16 09:43:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,7 +178,7 @@ cf_locators_print(const char *name, void *value, void *arg)
 			    name);
 		fprintf(fp, "\t\"%s\", %d,\n\t{\n", name, a->a_loclen);
 		for (nv = a->a_locs; nv; nv = nv->nv_next)
-			fprintf(fp, "\t\t{\"%s\", \"%s\", %s},\n",
+			fprintf(fp, "\t\t{ \"%s\", \"%s\", %s },\n",
 				nv->nv_name,
 				(nv->nv_str ? nv->nv_str : "NULL"),
 				(nv->nv_str ? nv->nv_str : "0"));
@@ -414,18 +414,18 @@ emitcfdata(FILE *fp)
 			loc = locbuf;
 		} else
 			loc = "loc";
-		fprintf(fp, "    {\"%s\",%s\"%s\",%s%2d, %s, %7s, %#6x, ",
+		fprintf(fp, "    { \"%s\",%s\"%s\",%s%2d, %s, %7s, %#6x, ",
 			    basename, strlen(basename) < 8 ? "\t\t"
 			    				   : "\t",
 			    attachment, strlen(attachment) < 5 ? "\t\t"
 			    				       : "\t",
 			    unit, state, loc, i->i_cfflags);
 		if (ps != NULL)
-			fprintf(fp, "&pspec%d},\n", ps->p_inst);
+			fprintf(fp, "&pspec%d },\n", ps->p_inst);
 		else
-			fputs("NULL},\n", fp);
+			fputs("NULL },\n", fp);
 	}
-	fprintf(fp, "    {%s,%s%s,%s%2d, %s, %7s, %#6x, %s}\n};\n",
+	fprintf(fp, "    { %s,%s%s,%s%2d, %s, %7s, %#6x, %s }\n};\n",
 	    "NULL", "\t\t", "NULL", "\t\t", 0, "0", "NULL", 0, "NULL");
 }
 
