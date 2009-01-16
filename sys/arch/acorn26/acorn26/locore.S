@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.16 2009/01/14 22:17:52 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.17 2009/01/16 00:13:25 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -247,7 +247,6 @@ irq_entry:
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
 	MODE_CHANGE_NOP
 
-	mov	r0, sp
 	bl	_C_LABEL(irq_handler)
 
 	mov	r0, sp
@@ -275,7 +274,6 @@ Lirq_from_usr:
 	MODE_CHANGE_NOP
 
 	mov	fp, #0			/* This is the top of the stack */
-	mov	r0, sp
 	bl	_C_LABEL(irq_handler)
 
 	ldr	r1, Lastpending
@@ -424,4 +422,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.16 2009/01/14 22:17:52 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.17 2009/01/16 00:13:25 bjh21 Exp $")
