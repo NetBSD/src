@@ -1,0 +1,13 @@
+#	$NetBSD: list.ldd,v 1.1.2.2 2009/01/16 22:21:30 bouyer Exp $
+
+PROG	ldd
+
+LIBS	${LDD_AOUTDIR}/libldd_aout.a
+LIBS	${LDD_ELF32DIR}/libldd_elf32.a
+LIBS	${LDD_ELF64DIR}/libldd_elf64.a
+
+SPECIAL ldd	keepsymbols	_rtld_pagesz _rtld_error _rtld_trust
+SPECIAL ldd	keepsymbols	_rtld_default_paths _rtld_paths 
+SPECIAL ldd	keepsymbols	_rtld_xforms _rtld_objmain
+SPECIAL ldd	keepsymbols	_rtld_objtail _rtld_objlist
+SPECIAL ldd	keepsymbols	print_needed main_local main_progname

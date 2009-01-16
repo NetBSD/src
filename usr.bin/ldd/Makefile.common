@@ -1,0 +1,13 @@
+#	$NetBSD: Makefile.common,v 1.1.2.2 2009/01/16 22:21:30 bouyer Exp $
+
+LDELFSO=${NETBSDSRCDIR}/libexec/ld.elf_so
+CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"
+CPPFLAGS+= -D_RTLD_SOURCE
+#CPPFLAGS+= -DDEBUG
+.PATH: ${LDELFSO}
+
+.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64") || \
+    (${MACHINE_ARCH} == "arm") || (${MACHINE_ARCH} == "m68k") || \
+    (${MACHINE_ARCH} == "powerpc")
+CPPFLAGS+= -DVARPSZ
+.endif
