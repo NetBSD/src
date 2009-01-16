@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.68 2009/01/16 00:40:58 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.69 2009/01/16 01:54:46 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2302,4 +2302,58 @@ usr.bin/mklocale/mklocale.1			1.14
 
 	Document new -t flag, bump date.
 	[wiz, ticket #225]
+
+include/unistd.h				1.119
+lib/libc/gen/getlogin.c				1.14
+lib/libc/sys/getlogin.2				1.21
+
+	Change the second argument of getlogin_r() from int to
+	size_t, per POSIX.
+	[lukem, ticket #247]
+
+distrib/sets/lists/comp/mi			1.1224
+lib/librt/Makefile				1.10
+lib/librt/mq_close.3				1.1
+lib/librt/mq_getattr.3				1.1
+lib/librt/mq_notify.3				1.1
+lib/librt/mq_open.3				1.1
+lib/librt/mq_receive.3				1.1
+lib/librt/mq_send.3				1.1
+lib/librt/mq_setattr.3				1.1
+lib/librt/mq_unlink.3				1.1
+
+	Add man pages describing the interface of POSIX message queues.
+	[rmind, ticket #249]
+
+sys/arch/xen/xenbus/xenbus_probe.c		1.27
+
+	Do not probe for console when configuring xenbus devices, as it is
+	attached earlier during boot, when initializing hypervisor.
+
+	This avoids "unknown type console at xenbus0 id 0 not configured"
+	autoconf(9) messages.
+	[jym, ticket #251]
+
+distrib/sets/lists/xserver/md.amd64		1.42
+distrib/sets/lists/xserver/md.cats		1.26
+distrib/sets/lists/xserver/md.i386		1.57
+distrib/sets/lists/xserver/md.macppc		1.43
+distrib/sets/lists/xserver/md.netwinder		1.13
+distrib/sets/lists/xserver/md.shark		1.24
+distrib/sets/lists/xserver/md.sparc64		1.28
+external/mit/xorg/server/xorg-server/hw/xfree86/utils/xorgconfig/Makefile 1.5
+
+	Install the Cards file used by xorgconfig.
+	[jmcneill, ticket #252]
+
+sys/rump/librump/rumpvfs/genfs_io.c: patch
+
+	Make sure we write a positive length of data.
+	[pooka, ticket #253]
+
+usr.sbin/puffs/mount_psshfs/node.c		1.55
+
+	Track parent directory in cross-directory renames so that mv & rm
+	for the same file during a vnode's lifecycle works.
+	[pooka, ticket #254]
 
