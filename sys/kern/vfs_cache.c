@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.80 2008/10/25 14:20:17 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.81 2009/01/16 06:59:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.80 2008/10/25 14:20:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.81 2009/01/16 06:59:21 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -882,7 +882,7 @@ cache_prune(int incache, int target)
 			 */
 			tryharder = 1;
 		}
-		if (!tryharder && ncp->nc_hittime > recent) {
+		if (!tryharder && (ncp->nc_hittime - recent) > 0) {
 			if (sentinel == NULL)
 				sentinel = ncp;
 			TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
