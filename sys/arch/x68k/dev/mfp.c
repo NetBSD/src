@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.22 2009/01/17 09:20:46 isaki Exp $	*/
+/*	$NetBSD: mfp.c,v 1.23 2009/01/17 10:02:23 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.22 2009/01/17 09:20:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.23 2009/01/17 10:02:23 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,19 +56,19 @@ __KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.22 2009/01/17 09:20:46 isaki Exp $");
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/mfp.h>
 
-static int mfp_match(struct device *, struct cfdata *, void *);
-static void mfp_attach(struct device *, struct device *, void *);
+static int  mfp_match(device_t, cfdata_t, void *);
+static void mfp_attach(device_t, device_t, void *);
 static int  mfp_search(device_t, cfdata_t, const int *, void *);
 static void mfp_init(void);
 static void mfp_calibrate_delay(void);
 
-CFATTACH_DECL(mfp, sizeof(struct mfp_softc),
+CFATTACH_DECL_NEW(mfp, sizeof(struct mfp_softc),
     mfp_match, mfp_attach, NULL, NULL);
 
 static int mfp_attached;
 
 static int
-mfp_match(struct device *parent, struct cfdata *cf, void *aux)
+mfp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -94,13 +94,13 @@ mfp_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-mfp_attach(struct device *parent, struct device *self, void *aux)
+mfp_attach(device_t parent, device_t self, void *aux)
 {
-	struct mfp_softc *sc = (struct mfp_softc *)self;
+	struct mfp_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	int r;
 
-	printf("\n");
+	aprint_normal("\n");
 	mfp_attached = 1;
 
 	mfp_init();

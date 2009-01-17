@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.7 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: mfp.h,v 1.8 2009/01/17 10:02:23 isaki Exp $	*/
 
 /*
  *
@@ -36,8 +36,6 @@
 #define MFP_INTR	0x40
 
 struct mfp_softc {
-	struct device	sc_dev;
-
 	bus_space_tag_t	sc_bst;
 	bus_space_handle_t	sc_bht;
 	int		sc_intr;
