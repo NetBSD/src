@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.269.6.7 2009/01/17 13:29:08 mjf Exp $	*/
+/*	$NetBSD: sd.c,v 1.269.6.8 2009/01/17 20:17:09 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.7 2009/01/17 13:29:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.8 2009/01/17 20:17:09 mjf Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -340,14 +340,14 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	cmajor = cdevsw_lookup_major(&sd_cdevsw);
 	for (i = 0; i < 16; i++) {                                      
 		device_register_name(
-		    MAKEDISKDEV(bmajor, device_unit(&sd->sc_dev), i),
-			&sd->sc_dev, false, DEV_DISK,
-			"sd%d%c", device_unit(&sd->sc_dev), 'a'+i);
+		    MAKEDISKDEV(bmajor, device_unit(sd->sc_dev), i),
+			sd->sc_dev, false, DEV_DISK,
+			"sd%d%c", device_unit(sd->sc_dev), 'a'+i);
 			
 		device_register_name(
-		    MAKEDISKDEV(cmajor, device_unit(&sd->sc_dev), i),
-			&sd->sc_dev, true, DEV_DISK,
-			"rsd%d%c", device_unit(&sd->sc_dev), 'a' + i);
+		    MAKEDISKDEV(cmajor, device_unit(sd->sc_dev), i),
+			sd->sc_dev, true, DEV_DISK,
+			"rsd%d%c", device_unit(sd->sc_dev), 'a' + i);
 	}
 }
 
