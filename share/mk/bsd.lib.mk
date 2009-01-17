@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.293 2009/01/08 20:03:59 pooka Exp $
+#	$NetBSD: bsd.lib.mk,v 1.294 2009/01/17 12:07:59 he Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -511,10 +511,10 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
 	${LIBCC} ${LDLIBC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
-	    ${_LIBLDOPTS} \
-	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
+	    -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
+	    ${_LIBLDOPTS} ${LDFLAGS} \
 	    -L${_GCC_LIBGCCDIR}
 .else
 	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} \
