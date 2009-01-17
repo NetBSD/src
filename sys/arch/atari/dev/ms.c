@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.20 2008/01/08 18:04:16 joerg Exp $	*/
+/*	$NetBSD: ms.c,v 1.21 2009/01/17 05:23:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20 2008/01/08 18:04:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21 2009/01/17 05:23:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -214,7 +214,7 @@ int		size, type;
 		}
 		fe->id    = LOC_X_DELTA;
 		fe->value = rel_ms->dx;
-		getmicrotime(&fe->time);
+		firm_gettime(fe);
 		if (put >= EV_QSIZE) {
 			put = 0;
 			fe  = &ms->ms_events.ev_q[0];
@@ -228,7 +228,7 @@ int		size, type;
 		}
 		fe->id    = LOC_Y_DELTA;
 		fe->value = rel_ms->dy;
-		getmicrotime(&fe->time);
+		firm_gettime(fe);
 		if (put >= EV_QSIZE) {
 			put = 0;
 			fe  = &ms->ms_events.ev_q[0];
@@ -246,7 +246,7 @@ int		size, type;
 				fe2->id = MS_LEFT;
 			else fe2->id = MS_MIDDLE;
 			fe2->value = rel_ms->id & bmask ? VKEY_DOWN : VKEY_UP;
-			getmicrotime(&fe2->time);
+			firm_gettime(fe2);
 		}
 	}
 
