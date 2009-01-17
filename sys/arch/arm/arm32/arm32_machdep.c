@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.61 2009/01/16 01:03:47 bjh21 Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.62 2009/01/17 14:14:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.61 2009/01/16 01:03:47 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.62 2009/01/17 14:14:56 bjh21 Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -401,12 +401,6 @@ parse_mi_bootargs(args)
 	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= AB_VERBOSE;
-}
-
-bool
-cpu_intr_p(void)
-{
-	return curcpu()->ci_intr_depth != 0;
 }
 
 #ifdef __HAVE_FAST_SOFTINTS
