@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.74 2009/01/16 23:08:57 bouyer Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.75 2009/01/17 21:50:38 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2525,7 +2525,7 @@ sys/arch/macppc/dev/dbcool_ki2c.c		1.4
 	Patch from Taylor R Campbell.
 	[ahoka, ticket #264]
 
-gnu/usr.bin/binutils/ld/Makefile		1.28
+gnu/usr.bin/binutils/ld/Makefile		1.28, patch
 libexec/ld.elf_so/arch/i386/Makefile.inc	1.12
 libexec/ld.elf_so/arch/i386/Makefile.ld32	1.1
 libexec/ld.elf_so/arch/sparc/Makefile.inc	1.12
