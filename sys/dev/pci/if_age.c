@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.5 2009/01/16 23:58:05 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.6 2009/01/17 00:02:40 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.5 2009/01/16 23:58:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.6 2009/01/17 00:02:40 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -83,7 +83,6 @@ static int	age_match(device_t, cfdata_t, void *);
 static void	age_attach(device_t, device_t, void *);
 static int	age_detach(device_t, int);
 
-static bool	age_suspend(device_t PMF_FN_PROTO);
 static bool	age_resume(device_t PMF_FN_PROTO);
 
 static int	age_miibus_readreg(device_t, int, int);
@@ -286,7 +285,7 @@ age_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	if (!pmf_device_register(self, age_suspend, age_resume))
+	if (!pmf_device_register(self, NULL, age_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -1179,24 +1178,6 @@ age_mac_config(struct age_softc *sc)
 	}
 
 	CSR_WRITE_4(sc, AGE_MAC_CFG, reg);
-}
-
-static bool
-age_suspend(device_t dv PMF_FN_ARGS)
-{
-	struct age_softc *sc = device_private(dv);
-	uint16_t pmstat;
-
-	/* XXXcegger Do we have Wake-On-LAN ? */
-
-	/* Request PME. */
-	pmstat = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-	    PCI_PMCSR);
-	pmstat &= ~(PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN);
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag,
-	    PCI_PMCSR, pmstat);
-
-	return true;
 }
 
 static bool
