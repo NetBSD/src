@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.61 2009/01/17 06:32:03 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62 2009/01/17 06:33:15 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2009/01/17 06:32:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2009/01/17 06:33:15 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -78,7 +78,7 @@ cpu_rootconf(void)
 	findroot();
 
 	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
@@ -196,7 +196,7 @@ device_register(struct device *dev, void *aux)
 		if (X68K_BOOT_DEV_IS_NETIF(majdev)) {
 			sprintf(tname, "%s%d",
 				name_netif[255 - majdev], B_UNIT(bootdev));
-			if (!strcmp(tname, dev->dv_xname))
+			if (!strcmp(tname, device_xname(dev)))
 				goto found;
 		}
 	}
@@ -206,7 +206,7 @@ found:
 	if (booted_device) {
 		/* XXX should be a "panic()" */
 		printf("warning: double match for boot device (%s, %s)\n",
-		       booted_device->dv_xname, dev->dv_xname);
+		       device_xname(booted_device), device_xname(dev));
 		return;
 	}
 	booted_device = dev;
@@ -250,7 +250,7 @@ scsi_find(dev_t bdev)
 		for (scsibus = TAILQ_FIRST(&alldevs); scsibus;
 					scsibus = TAILQ_NEXT(scsibus, dv_list))
 			if (device_parent(scsibus)
-			    && !strcmp(tname, device_parent(scsibus)->dv_xname))
+			    && !strcmp(tname, device_xname(device_parent(scsibus))))
 				break;
 	}
 	if (!scsibus)
