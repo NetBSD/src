@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.199 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.200 2009/01/17 07:02:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -484,9 +484,6 @@ struct vnodeop_desc {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_CACHE);
-MALLOC_DECLARE(M_VNODE);
 
 /*
  * A list of all the operation descs.

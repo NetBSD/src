@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.81 2009/01/16 06:59:21 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.82 2009/01/17 07:02:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.81 2009/01/16 06:59:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.82 2009/01/17 07:02:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -130,8 +130,6 @@ TAILQ_HEAD(, namecache) nclruhead =		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
 static pool_cache_t namecache_cache;
-
-MALLOC_DEFINE(M_CACHE, "namecache", "Dynamically allocated cache entries");
 
 int cache_lowat = 95;
 int cache_hiwat = 98;
