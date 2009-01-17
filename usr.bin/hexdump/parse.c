@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.24 2006/10/09 14:27:06 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.25 2009/01/17 23:24:30 hans Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.24 2006/10/09 14:27:06 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.25 2009/01/17 23:24:30 hans Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ rewrite(FS *fs)
 	PR *pr, **nextpr;
 	FU *fu;
 	char *p1, *p2;
-	char savech, *fmtp, cs[3];
+	char savech, *fmtp, cs[4];
 	int nconv, prec;
 
 	prec = 0;
@@ -287,9 +287,10 @@ rewrite(FS *fs)
 				goto isint;
 			case 'o': case 'u': case 'x': case 'X':
 				pr->flags = F_UINT;
-isint:				cs[2] = '\0';
-				cs[1] = cs[0];
-				cs[0] = 'q';
+isint:				cs[3] = '\0';
+				cs[2] = cs[0];
+				cs[1] = 'l';
+				cs[0] = 'l';
 				switch(fu->bcnt) {
 				case 0: case 4:
 					pr->bcnt = 4;
@@ -347,9 +348,10 @@ isint:				cs[2] = '\0';
 					++p2;
 					switch(p1[2]) {
 					case 'd': case 'o': case'x':
-						cs[0] = 'q';
-						cs[1] = p1[2];
-						cs[2] = '\0';
+						cs[0] = 'l';
+						cs[1] = 'l';
+						cs[2] = p1[2];
+						cs[3] = '\0';
 						break;
 					default:
 						p1[3] = '\0';
