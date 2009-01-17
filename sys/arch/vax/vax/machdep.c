@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.162.6.3 2008/07/02 19:08:18 mjf Exp $	 */
+/* $NetBSD: machdep.c,v 1.162.6.4 2009/01/17 13:28:35 mjf Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162.6.3 2008/07/02 19:08:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162.6.4 2009/01/17 13:28:35 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162.6.3 2008/07/02 19:08:18 mjf Exp $"
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/savar.h>	/* for cpu_upcall */
 
 #include <machine/sid.h>
 #include <machine/pte.h>
@@ -172,7 +173,9 @@ int iospace_inited = 0;
 void
 cpu_startup(void)
 {
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	vaddr_t		minaddr, maxaddr;
+#endif
 	extern paddr_t avail_end;
 	char pbuf[9];
 
@@ -196,9 +199,9 @@ cpu_startup(void)
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	minaddr = 0;
 
-#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/*
 	 * Allocate a submap for physio.  This map effectively limits the
 	 * number of processes doing physio at any one time.
@@ -319,9 +322,9 @@ consinit(void)
 	iospace_inited = 1;
 #endif
 	cninit();
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symtab_start != NULL && symtab_nsyms != 0 && symtab_end != NULL) {
-		ksyms_init(symtab_nsyms, symtab_start, symtab_end);
+		ksyms_addsyms_elf(symtab_nsyms, symtab_start, symtab_end);
 	}
 #endif
 #ifdef DEBUG
@@ -348,6 +351,7 @@ cpu_reboot(int howto, char *b)
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		if (dep_call->cpu_halt)
 			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
@@ -423,12 +427,12 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 	printf("dump ");
 	switch ((*bdev->d_dump) (dumpdev, 0, 0, 0)) {
 
@@ -633,6 +637,52 @@ krnunlock(void)
 	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif
+
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	uint32_t saframe[11], *fp = saframe;
+
+	sp = (void *)((uintptr_t)sp - sizeof(saframe));
+
+	/*
+	 * We don't bother to save the callee's register mask
+	 * since the function is never expected to return.
+	 */
+
+	/*
+	 * Fake a CALLS stack frame.
+	 */
+	*fp++ = 0;			/* condition handler */
+	*fp++ = 0x20000000;		/* saved regmask & PSW */
+	*fp++ = 0;			/* saved AP */
+	*fp++ = 0;			/* saved FP, new call stack */
+	*fp++ = 0;			/* saved PC, new call stack */
+
+	/*
+	 * Now create the argument list.
+	 */
+	*fp++ = 5;			/* argc = 5 */
+	*fp++ = type;
+	*fp++ = (uintptr_t) sas;
+	*fp++ = nevents;
+	*fp++ = ninterrupted;
+	*fp++ = (uintptr_t) ap;
+
+	if (copyout(&saframe, sp, sizeof(saframe)) != 0) {
+		/* Copying onto the stack didn't work, die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->ap = (uintptr_t) sp + 20;
+	tf->sp = (long) sp;
+	tf->fp = (long) sp;
+	tf->pc = (long) upcall + 2;
+	tf->psl = (long) PSL_U | PSL_PREVU;
+}
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)

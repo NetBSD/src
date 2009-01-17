@@ -1,9 +1,10 @@
-/*	$NetBSD: clock.c,v 1.8 2008/01/12 09:54:32 tsutsui Exp $ */
+/*	$NetBSD: clock.c,v 1.8.6.1 2009/01/17 13:28:19 mjf Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 #include "libsa.h"
 
 /*
@@ -53,7 +54,7 @@ chiptotime(int sec, int min, int hour, int day, int mon, int year)
 	return days * SECDAY + hour * 3600 + min * 60 + sec;
 }
 
-time_t
+satime_t
 getsecs(void)
 {
 	struct mvmeprom_time m;

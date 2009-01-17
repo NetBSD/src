@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.6.14.1 2008/04/03 12:43:06 mjf Exp $	*/
+/*	$NetBSD: udp.c,v 1.6.14.2 2009/01/17 13:29:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -136,7 +136,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
  * Caller leaves room for the headers (Ether, IP, UDP)
  */
 ssize_t
-readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
+readudp(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 {
 	ssize_t n;
 	size_t hlen;

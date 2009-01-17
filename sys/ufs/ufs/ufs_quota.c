@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.58.6.2 2008/06/02 13:24:37 mjf Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.58.6.3 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.58.6.2 2008/06/02 13:24:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.58.6.3 2009/01/17 13:29:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -415,6 +415,13 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 	struct dquot *dq;
 	int error;
 	struct nameidata nd;
+
+	/* XXX XXX XXX */
+	if (mp->mnt_wapbl != NULL) {
+		printf("%s: quotas cannot yet be used with -o log\n",
+		    mp->mnt_stat.f_mntonname);
+		return (EOPNOTSUPP);
+	}
 
 	vpp = &ump->um_quotas[type];
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname);

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.494.6.5 2008/10/05 20:11:31 mjf Exp $
+$NetBSD: usbdevs,v 1.494.6.6 2009/01/17 13:29:10 mjf Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -447,6 +447,7 @@ vendor SHARK		0x13d2	Shark
 vendor PHISON		0x13fe	Phison Electronics Corp.
 vendor NOVATEL2		0x1410	Novatel
 vendor OMNIVISION2	0x1415	OmniVision Technologies, Inc.
+vendor MERLIN		0x1416	Merlin
 vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor HUAWEI3COM	0x1472	Huawei-3Com
 vendor SILICOM		0x1485	Silicom
@@ -473,10 +474,13 @@ vendor METAGEEK		0x1781	MetaGeek
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
+vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
+vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor ERICSSON		0x2282	Ericsson
 vendor MOTOROLA2	0x22b8	Motorola
+vendor PINNACLE		0x2304	Pinnacle Systems
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor HIROSE		0x2631	Hirose Electric
 vendor NHJ		0x2770	NHJ
@@ -652,6 +656,9 @@ product APC UPS			0x0002	Uninterruptible Power Supply
 
 /* Ambit Microsystems products */
 product AMBIT NTL_250		0x6098	NTL 250 cable modem
+
+/* AMD product */
+product AMD TV_WONDER_600_USB	0xb002	TV Wonder 600 USB
 
 /* AMIT products */
 product AMIT CGWLUSB2GO		0x0002	CG-WLUSB2GO
@@ -865,7 +872,9 @@ product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 product COREGA WLANUSB		0x0012	Wireless LAN USB Stick-11
 product COREGA FETHER_USB2_TX	0x0017	FEther USB2-TX
 product COREGA WLUSB_11_KEY	0x001a	ULUSB-11 Key
+product COREGA CGUSBRS232R	0x002a	CG-USBRS232R
 product COREGA CGWLUSB2GL	0x002d	CG-WLUSB2GL
+product COREGA CGWLUSB2GPX	0x002e	CG-WLUSB2GPX
 product COREGA FETHER_USB_TXC	0x9601	FEther USB-TXC
 
 /* Creative products */
@@ -990,6 +999,7 @@ product ELSA USB2ETHERNET	0x3000	Microlink USB2Ethernet
 
 /* eMPIA products */
 product EMPIA CAMERA		0x2761	Camera
+product EMPIA EM2883		0x2883	EM2883
 
 /* EMS products */
 product EMS DUAL_SHOOTER	0x0003	PSX gun controller converter
@@ -1195,6 +1205,7 @@ product HP 959C			0x1104	Deskjet 959C
 product HP 568J			0x1116	Jornada 568
 product HP 930C			0x1204	DeskJet 930c
 product HP P2000U		0x1801	Inkjet P-2000U
+product HP RNDIS		0x1c1d	Generic RNDIS
 product HP 640C			0x2004	DeskJet 640c
 product HP 4670V		0x3005	ScanJet 4670v
 product HP P1100		0x3102	Photosmart P1100
@@ -1489,6 +1500,9 @@ product MELCO SG54HP		0x00d8	WLI-U2-SG54HP
 product MELCO G54HP		0x00d9	WLI-U2-G54HP
 product MELCO KG54L		0x00da	WLI-U2-KG54L
 
+/* Merlin products */
+product MERLIN V620             0x1110  Merlin V620
+
 /* MetaGeek products */
 product METAGEEK WISPY_24X	0x083f	Wi-Spy 2.4x
 
@@ -1669,12 +1683,18 @@ product NOVATECH RT2573		0x9021	RT2573
 product NOVATEL FLEXPACKGPS	0x0100	NovAtel FlexPack GPS receiver
 product NOVATEL2 EXPRESSCARD	0x1100	ExpressCard 3G
 product NOVATEL2 MERLINV620	0x1110	Novatel Wireless Merlin CDMA
+product NOVATEL2 V740		0x1120	Merlin V740
 product NOVATEL2 S720		0x1130	S720
 product NOVATEL2 MERLINU740	0x1400	Novatel Merlin U740
+product NOVATEL2 U740_2		0x1410	Merlin U740
+product NOVATEL2 U870		0x1420	Merlin U870
 product NOVATEL2 XU870		0x1430	XU870
+product NOVATEL2 X950D		0x1450	Merlin X950D
 product NOVATEL2 ES620		0x2100	ES620 CDMA
 product NOVATEL2 U720		0x2110	U720
 product NOVATEL2 U727		0x4100	U727
+product NOVATEL2 MC950D		0x4400	Novatel Wireless HSUPA Modem
+product NOVATEL2 MC950D_DRIVER	0x5010	Novatel Wireless HSUPA Modem Windows Driver
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
@@ -1700,11 +1720,12 @@ product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 product ONSPEC2 8IN2		0xb012	8In2
 
 /* Option N.V. products */
-product OPTIONNV MC3G		0x5000	Mobile Connect 3G datacard
+product OPTIONNV MC3G		0x5000	Vodafone Mobile Connect 3G datacard
 product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
 product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
 product OPTIONNV QUADPLUSUMTS	0x6600	GlobeTrotter 3G Quad Plus
 product OPTIONNV HSDPA   	0x6701	GlobeTrotter HSDPA Modem
+product OPTIONNV GTMAXHSUPA	0x7001	GlobeTrotter HSUPA
 
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
@@ -1775,6 +1796,9 @@ product PIENGINEERING XKEYS	0x0233	Xkeys Programmable Keyboard
 
 /* Pilotech Systems Co., Ltd products */
 product PILOTECH CRW600		0x0001	CRW-600 6-in-1 Reader
+
+/* Pinnacle Systems, Inc. products */
+product PINNACLE PCTV800E	0x0227	PCTV 800e
 
 /* Planex Communications products */
 product PLANEX	GW_US11H	0x14ea	GW-US11H WLAN
@@ -1856,6 +1880,7 @@ product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
 product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
+product QUALCOMMINC CDMA_MSM	0x0001	CDMA Technologies MSM modem
 
 /* Qualcomm Kyocera products */
 product QUALCOMM_K CDMA_MSM_K	0x17da	Qualcomm Kyocera CDMA Technologies MSM
@@ -2011,16 +2036,30 @@ product SIEMENS2 WL54G		0x3c06	54g USB Network Adapter
 /* Sierra Wireless products */
 product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
 product SIERRA AIRCARD595	0x0019	Sierra Wireless AirCard 595
-product SIERRA MINI5725		0x0220	Sierra Wireless miniPCI 5275
+product SIERRA AC595U		0x0120	Sierra Wireless AirCard 595U
+product SIERRA AC597E		0x0021	Sierra Wireless AirCard 597E
+product SIERRA C597		0x0023	Sierra Wireless Compass 597
+product SIERRA AC880		0x6850	Sierra Wireless AirCard 880
+product SIERRA AC881		0x6851	Sierra Wireless AirCard 881
+product SIERRA AC880E		0x6852	Sierra Wireless AirCard 880E
+product SIERRA AC881E		0x6853	Sierra Wireless AirCard 881E
+product SIERRA AC880U		0x6855	Sierra Wireless AirCard 880U
+product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
 product SIERRA EM5625		0x0017	EM5625
-product SIERRA MC5720		0x0018	MC5720
+product SIERRA MC5720		0x0218	MC5720 Wireless Modem
+product SIERRA MC5720_2		0x0018	MC5720
 product SIERRA MC5725		0x0020	MC5725
+product SIERRA MINI5725		0x0220	Sierra Wireless miniPCI 5275
 product SIERRA MC8755_2		0x6802	MC8755
 product SIERRA MC8765		0x6803	MC8765
-product SIERRA MC8755		0x6804	MC8755 HSDPA
-product SIERRA MC8775		0x6812	MC8775 HSDPA
+product SIERRA MC8755		0x6804	MC8755
+product SIERRA AC875U		0x6812	AC875U HSDPA USB Modem
 product SIERRA MC8755_3		0x6813	MC8755 HSDPA
+product SIERRA MC8775_2		0x6815	MC8775
 product SIERRA AIRCARD875	0x6820	Aircard 875 HSDPA
+product SIERRA MC8780		0x6832	MC8780
+product SIERRA MC8781		0x6833	MC8781
+product SIERRA INSTALLER	0x0fff	Aircard Driver Installer
 
 /* Sigmatel products */
 product SIGMATEL SIR4116	0x4116	StIR4116 SIR
@@ -2308,6 +2347,7 @@ product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
 
 /* WinChipHead products */
 product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
+product WINCHIPHEAD2 CH341	0x7523	CH341 serial/parallel
 
 /* Wistron NeWeb products */
 product WISTRONNEWEB UR055G	0x0711	UR055G

@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.1.16.1 2008/09/28 10:39:48 mjf Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.1.16.2 2009/01/17 13:27:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.1.16.1 2008/09/28 10:39:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.1.16.2 2009/01/17 13:27:52 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -562,11 +562,6 @@ at91bus_setup(BootConfig *mem)
 	ipkdb_init();
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
-#endif
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB

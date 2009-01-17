@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25.6.3 2008/06/29 09:33:00 mjf Exp $ */
+/*	$NetBSD: syscall.c,v 1.25.6.4 2009/01/17 13:28:32 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,15 +79,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25.6.3 2008/06/29 09:33:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25.6.4 2009/01/17 13:28:32 mjf Exp $");
+
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/ktrace.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -98,9 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25.6.3 2008/06/29 09:33:00 mjf Exp $")
 #include <machine/pmap.h>
 #include <machine/frame.h>
 #include <machine/userret.h>
-
-#include <sparc/fpu/fpu_extern.h>
-#include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
 #define	offsetof(s, f) ((size_t)&((s *)0)->f)
@@ -304,10 +306,16 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	if ((error = getargs(p, tf, &code, &callp, &args, &s64)) != 0)
 		goto bad;
 
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-	error = (*callp->sy_call)(l, &args, rval);
+	error = sy_call(callp, l, &args, rval);
 
 	switch (error) {
 	case 0:
@@ -392,6 +400,12 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 #else
 	ap = &args;
 #endif
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
 		goto out;
 	}
@@ -404,7 +418,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-	error = (*callp->sy_call)(l, &args, rval);
+	error = sy_call(callp, l, &args, rval);
 out:
 	switch (error) {
 	case 0:
@@ -480,5 +494,13 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	userret(l, 0, 0);
+}
+
+void
+upcallret(struct lwp *l)
+{
+
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }

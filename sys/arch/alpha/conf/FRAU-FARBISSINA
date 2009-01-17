@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.52.36.1 2008/06/02 13:21:46 mjf Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.52.36.2 2009/01/17 13:27:47 mjf Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.52.36.1 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.52.36.2 $"
 
 maxusers 64
 
@@ -55,7 +55,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -97,7 +96,6 @@ options 	SYSVSHM
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 
 # Loadable Kernel Modules
-options 	LKM
 
 # Disable kernel security.
 #options 	INSECURE

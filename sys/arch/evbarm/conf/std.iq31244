@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq31244,v 1.6 2008/01/27 12:37:11 chris Exp $
+#	$NetBSD: std.iq31244,v 1.6.6.1 2009/01/17 13:27:58 mjf Exp $
 #
 # standard NetBSD/evbarm for IQ31244 options
 
@@ -18,10 +18,12 @@ options 	ARM32
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
+options         KERNEL_BASE_EXT=0xc0000000
 makeoptions	BOARDTYPE="iq31244"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80321"
 
 options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
+options		I80321_REBOOT=iq31244_reboot
 
 # We need to configure the PCI bus.
 options 	PCI_NETBSD_CONFIGURE

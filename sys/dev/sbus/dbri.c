@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.17.14.1 2008/06/02 13:23:49 mjf Exp $	*/
+/*	$NetBSD: dbri.c,v 1.17.14.2 2009/01/17 13:29:08 mjf Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.17.14.1 2008/06/02 13:23:49 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.17.14.2 2009/01/17 13:29:08 mjf Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2108,7 +2108,7 @@ dbri_free(void *v, void *p, struct malloc_type *mt)
 static paddr_t
 dbri_mappage(void *v, void *mem, off_t off, int prot)
 {
-	struct dbri_softc *sc = v;;
+	struct dbri_softc *sc = v;
 	int current;
 
 	if (off < 0)

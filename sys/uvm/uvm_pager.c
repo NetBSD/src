@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.90.6.2 2008/06/02 13:24:38 mjf Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.90.6.3 2009/01/17 13:29:43 mjf Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.90.6.2 2008/06/02 13:24:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.90.6.3 2009/01/17 13:29:43 mjf Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.90.6.2 2008/06/02 13:24:38 mjf Exp $
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/vnode.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm.h>
 

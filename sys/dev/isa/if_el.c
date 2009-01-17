@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.79.16.1 2008/06/02 13:23:31 mjf Exp $	*/
+/*	$NetBSD: if_el.c,v 1.79.16.2 2009/01/17 13:28:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.79.16.1 2008/06/02 13:23:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.79.16.2 2009/01/17 13:28:57 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -682,10 +682,7 @@ bad:
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
 int
-elioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+elioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct el_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -695,49 +692,53 @@ elioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
+		elinit(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			elinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			elinit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			elstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			elinit(sc);
-		} else {
+			break;
+		default:
 			/*
 			 * Some other important flag might have changed, so
 			 * reset.
 			 */
 			elreset(sc);
+			break;
 		}
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

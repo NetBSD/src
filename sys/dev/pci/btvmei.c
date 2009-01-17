@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.17.16.1 2008/06/02 13:23:37 mjf Exp $ */
+/* $NetBSD: btvmei.c,v 1.17.16.2 2009/01/17 13:28:59 mjf Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.17.16.1 2008/06/02 13:23:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.17.16.2 2009/01/17 13:28:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ b3_617_reset(sc)
 	if (status & LSR_CERROR_MASK) {
 		char sbuf[sizeof(BIT3_LSR_BITS) + 64];
 
-		bitmask_snprintf(status, BIT3_LSR_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), BIT3_LSR_BITS, status);
 		printf("%s: interface error, lsr=%s\n", device_xname(&sc->sc_dev),
 		       sbuf);
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.51.18.4 2008/07/02 19:08:19 mjf Exp $	*/
+/*	$NetBSD: md.c,v 1.51.18.5 2009/01/17 13:28:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.51.18.4 2008/07/02 19:08:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.51.18.5 2009/01/17 13:28:52 mjf Exp $");
 
 #include "opt_md.h"
 
@@ -306,7 +306,7 @@ mdstrategy(struct buf *bp)
 #if MEMORY_DISK_SERVER
 	case MD_UMEM_SERVER:
 		/* Just add this job to the server's queue. */
-		BUFQ_PUT(sc->sc_buflist, bp);
+		bufq_put(sc->sc_buflist, bp);
 		wakeup((void *)sc);
 		/* see md_server_loop() */
 		/* no biodone in this case */
@@ -454,7 +454,7 @@ md_server_loop(struct md_softc *sc)
 
 	for (;;) {
 		/* Wait for some work to arrive. */
-		while ((bp = BUFQ_GET(sc->sc_buflist)) == NULL) {
+		while ((bp = bufq_get(sc->sc_buflist)) == NULL) {
 			error = tsleep((void *)sc, md_sleep_pri, "md_idle", 0);
 			if (error)
 				return error;

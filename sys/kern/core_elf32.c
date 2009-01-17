@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.31.30.1 2008/06/02 13:24:07 mjf Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.31.30.2 2009/01/17 13:29:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,9 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.31.30.1 2008/06/02 13:24:07 mjf Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.31.30.2 2009/01/17 13:29:18 mjf Exp $");
 
-/* If not included by core_elf64.c, ELFSIZE won't be defined. */
+#ifdef _KERNEL_OPT
+#include "opt_coredump.h"
+#endif
+
 #ifndef ELFSIZE
 #define	ELFSIZE		32
 #endif
@@ -60,6 +63,8 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.31.30.1 2008/06/02 13:24:07 mjf Exp
 #include <machine/reg.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef COREDUMP
 
 struct countsegs_state {
 	int	npsections;
@@ -487,3 +492,14 @@ ELFNAMEEND(coredump_writenote)(struct proc *p, void *cookie, Elf_Nhdr *nhdr,
 
 	return coredump_write(cookie, UIO_SYSSPACE, data, nhdr->n_descsz);
 }
+
+#else	/* COREDUMP */
+
+int
+ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
+{
+
+	return ENOSYS;
+}
+
+#endif	/* COREDUMP */

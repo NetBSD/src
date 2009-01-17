@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.37 2007/12/03 15:34:33 ad Exp $ */
+/* $NetBSD: netisr.h,v 1.37.14.1 2009/01/17 13:29:31 mjf Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -48,13 +48,13 @@
 
 #if defined(_KERNEL)
 
-#if !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_natm.h"
 #include "arp.h"
-#endif /* !defined(_LKM) */
+#endif /* defined(_KERNEL_OPT) */
 
 #if !defined(_LOCORE)
 
@@ -112,6 +112,7 @@
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_NATM */
 #define	NETISR_ARP	28		/* same as AF_ARP */
+#define	NETISR_MAX	AF_MAX
 
 #if !defined(_LOCORE) && defined(_KERNEL)
 /* XXX Legacy netisr support. */

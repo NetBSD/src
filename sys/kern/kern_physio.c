@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.87.6.1 2008/09/28 10:40:52 mjf Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.87.6.2 2009/01/17 13:29:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.87.6.1 2008/09/28 10:40:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.87.6.2 2009/01/17 13:29:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,10 +173,13 @@ physio_biodone(struct buf *bp)
 #if defined(DIAGNOSTIC)
 	struct physio_stat *ps = bp->b_private;
 	size_t todo = bp->b_bufsize;
+	size_t done = bp->b_bcount - bp->b_resid;
 
 	KASSERT(ps->ps_running > 0);
 	KASSERT(bp->b_bcount <= todo);
 	KASSERT(bp->b_resid <= bp->b_bcount);
+	if (done == todo)
+		KASSERT(bp->b_error == 0);
 #endif /* defined(DIAGNOSTIC) */
 
 	workqueue_enqueue(physio_workqueue, &bp->b_work, NULL);

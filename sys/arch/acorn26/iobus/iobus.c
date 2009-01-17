@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.14 2006/09/30 16:30:10 bjh21 Exp $ */
+/* $NetBSD: iobus.c,v 1.14.52.1 2009/01/17 13:27:46 mjf Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.14 2006/09/30 16:30:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.14.52.1 2009/01/17 13:27:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,25 +43,20 @@ __KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.14 2006/09/30 16:30:10 bjh21 Exp $");
 
 #include "locators.h"
 
-static int iobus_match(struct device *parent, struct cfdata *cf, void *aux);
-static void iobus_attach(struct device *parent, struct device *self, void *aux);
-static int iobus_search_ioc(struct device *parent, struct cfdata *cf,
+static int iobus_match(device_t parent, cfdata_t cf, void *aux);
+static void iobus_attach(device_t parent, device_t self, void *aux);
+static int iobus_search_ioc(device_t parent, cfdata_t cf,
 			    const int *ldesc, void *aux);
-static int iobus_search(struct device *parent, struct cfdata *cf,
+static int iobus_search(device_t parent, cfdata_t cf,
 			const int *ldesc, void *aux);
 static int iobus_print(void *aux, const char *pnp);
 
-struct iobus_softc {
-	struct device	sc_dev;
-};
+CFATTACH_DECL_NEW(iobus, 0, iobus_match, iobus_attach, NULL, NULL);
 
-CFATTACH_DECL(iobus, sizeof(struct iobus_softc),
-    iobus_match, iobus_attach, NULL, NULL);
-
-struct iobus_softc *the_iobus;
+device_t the_iobus;
 
 static int
-iobus_match(struct device *parent, struct cfdata *cf, void *aux)
+iobus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* There can be only one! */
@@ -71,11 +66,11 @@ iobus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-iobus_attach(struct device *parent, struct device *self, void *aux)
+iobus_attach(device_t parent, device_t self, void *aux)
 {
 
-	the_iobus = (struct iobus_softc *)self;
-	printf("\n");
+	the_iobus = self;
+	aprint_normal("\n");
 
 	/*
 	 * Always look for the IOC first, since stuff under there determines
@@ -88,8 +83,7 @@ iobus_attach(struct device *parent, struct device *self, void *aux)
 extern struct bus_space iobus_bs_tag;
 
 static int
-iobus_search_ioc(struct device *parent, struct cfdata *cf,
-		 const int *ldesc, void *aux)
+iobus_search_ioc(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct iobus_attach_args ioa;
 
@@ -103,8 +97,7 @@ iobus_search_ioc(struct device *parent, struct cfdata *cf,
 }
 
 static int
-iobus_search(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+iobus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct iobus_attach_args ioa;
 	

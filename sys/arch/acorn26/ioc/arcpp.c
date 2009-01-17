@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.8.40.1 2008/06/29 09:32:53 mjf Exp $ */
+/* $NetBSD: arcpp.c,v 1.8.40.2 2009/01/17 13:27:46 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.8.40.1 2008/06/29 09:32:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.8.40.2 2009/01/17 13:27:46 mjf Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.8.40.1 2008/06/29 09:32:53 mjf Exp $");
 #include "ioeb.h"
 
 struct arcpp_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	void		*sc_aih;	/* ACK interrupt handler */
 	struct evcnt	sc_aintrcnt;	/* ... and count */
 	void		*sc_bih;	/* BUSY interrupt handler */
@@ -116,17 +116,17 @@ const struct cdevsw arcpp_cdevsw = {
 #define	ARCPPUNIT(s)	(minor(s) & 0x1f)
 #define	ARCPPFLAGS(s)	(minor(s) & 0xe0)
 
-static int arcpp_match(struct device *, struct cfdata *, void *);
-static void arcpp_attach(struct device *, struct device *, void *);
+static int arcpp_match(device_t, cfdata_t, void *);
+static void arcpp_attach(device_t, device_t, void *);
 
 static int arcppintr(void *);
 static int arcpppushbytes(struct arcpp_softc *);
 
-CFATTACH_DECL(arcpp, sizeof(struct arcpp_softc),
+CFATTACH_DECL_NEW(arcpp, sizeof(struct arcpp_softc),
     arcpp_match, arcpp_attach, NULL, NULL);
 
 static int
-arcpp_match(struct device *parent, struct cfdata *cf, void *aux)
+arcpp_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/*
@@ -142,20 +142,22 @@ arcpp_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-arcpp_attach(struct device *parent, struct device *self, void *aux)
+arcpp_attach(device_t parent, device_t self, void *aux)
 {
-	struct arcpp_softc *sc = (void *)self;
+	struct arcpp_softc *sc = device_private(self);
 	struct ioc_attach_args *ioc = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+
+	sc->sc_dev = self;
 
 	iot = sc->sc_iot = ioc->ioc_fast_t;
 	ioh = sc->sc_ioh = ioc->ioc_fast_h;
 
 	evcnt_attach_dynamic(&sc->sc_aintrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "ack intr");
+	    device_xname(self), "ack intr");
 	evcnt_attach_dynamic(&sc->sc_bintrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "busy intr");
+	    device_xname(self), "busy intr");
 	sc->sc_aih = irq_establish(IRQ_PACK, IPL_LPT, arcppintr, sc,
 	    &sc->sc_aintrcnt);
 	sc->sc_bih = irq_establish(IRQ_PBSY, IPL_LPT, arcppintr, sc,
@@ -165,7 +167,7 @@ arcpp_attach(struct device *parent, struct device *self, void *aux)
 	irq_disable(sc->sc_aih);
 	irq_disable(sc->sc_bih);
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 /*
@@ -186,7 +188,7 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
+		printf("%s: stat=0x%x not zero\n", device_xname(sc->sc_dev),
 		    sc->sc_state);
 #endif
 
@@ -243,8 +245,7 @@ arcppclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-arcpppushbytes(sc)
-	struct arcpp_softc *sc;
+arcpppushbytes(struct arcpp_softc *sc)
 {
 	int error;
 	int s;

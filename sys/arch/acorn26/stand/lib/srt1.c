@@ -1,4 +1,4 @@
-/*	$NetBSD: srt1.c,v 1.4 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: srt1.c,v 1.4.74.1 2009/01/17 13:27:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -31,8 +31,6 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 #include <riscoscalls.h>
-
-static int whitespace __P((char));
 
 static int
 whitespace(char c)

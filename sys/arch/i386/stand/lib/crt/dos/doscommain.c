@@ -1,4 +1,4 @@
-/*	$NetBSD: doscommain.c,v 1.5 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: doscommain.c,v 1.5.74.1 2009/01/17 13:28:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -42,26 +42,25 @@ static struct psp{
 
 static char* argv[64]; /* theor max */
 
-static int whitespace __P((char));
+static int whitespace(char);
 
 static int
-whitespace(c)
-	char c;
+whitespace(char c)
 {
 	if ((c == '\0') || (c == ' ') || (c == '\t')
 	    || (c == '\r') || (c == '\n'))
 		return (1);
-	return (0);
+	return 0;
 }
 
 enum state {skipping, doing_arg, doing_long_arg};
 
 /* build argv/argc, start real main() */
-int doscommain __P((void));
-extern int main __P((int, char**));
+int doscommain(void);
+extern int main(int, char**);
 
 int
-doscommain()
+doscommain(void)
 {
 	int argc, i;
 	enum state s;
@@ -116,5 +115,5 @@ doscommain()
 		PSP->cmd[i] = '\0'; /* to be sure */
 
 	/* start real main() */
-	return (main(argc, argv));
+	return main(argc, argv);
 }

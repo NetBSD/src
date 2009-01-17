@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/01/06 17:40:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.104.1 2009/01/17 13:28:25 mjf Exp $
 
 # Makefile for pmax tags file and boot blocks
 
@@ -18,7 +18,8 @@ DPMAX=	dev tc include
 tags:
 	-ctags -wdtf ${TPMAX} ${SPMAX} ${SMIPS} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${APMAX} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TPMAX}
 	sort -o ${TPMAX} ${TPMAX}
 

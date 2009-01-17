@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.17.6.1 2008/04/03 12:42:11 mjf Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.17.6.2 2009/01/17 13:27:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,14 +71,15 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
+#include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.17.6.1 2008/04/03 12:42:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.17.6.2 2009/01/17 13:27:51 mjf Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -88,11 +89,24 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.17.6.1 2008/04/03 12:42:11 mjf Exp
 #include <sys/ucontext.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
+#include <sys/savar.h>
 
 #include <arm/cpufunc.h>
 
 #include <machine/pcb.h>
 #include <machine/vmparam.h>
+
+/* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store = {
+	.ci_cpl = IPL_HIGH,
+#ifndef PROCESS_ID_IS_CURLWP
+	.ci_curlwp = &lwp0,
+#endif
+};
 
 /*
  * The ARM architecture places the vector page at address 0.
@@ -137,9 +151,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	memset(tf, 0, sizeof(*tf));
 	tf->tf_r0 = (u_int)l->l_proc->p_psstr;
-#ifdef COMPAT_13
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
-#endif
 	tf->tf_usr_sp = stack;
 	tf->tf_usr_lr = pack->ep_entry;
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
@@ -185,4 +197,81 @@ startlwp(void *arg)
 	pool_put(&lwp_uc_pool, uc);
 
 	userret(l);
+}
+
+#ifdef KERN_SA
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	userret(l);
+}
+
+/*
+ * cpu_upcall:
+ *
+ *	Send an an upcall to userland.
+ */
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+	struct saframe *sf, frame;
+
+	tf = process_frame(l);
+
+	/* Finally, copy out the rest of the frame. */
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+#endif
+	frame.sa_arg = ap;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_r0 = type;
+	tf->tf_r1 = (int) sas;
+	tf->tf_r2 = nevents;
+	tf->tf_r3 = ninterrupted;
+	tf->tf_pc = (int) upcall;
+#ifdef THUMB_CODE
+	if (((int) upcall) & 1)
+		tf->tf_spsr |= PSR_T_bit;
+	else
+		tf->tf_spsr &= ~PSR_T_bit;
+#endif
+	tf->tf_usr_sp = (int) sf;
+	tf->tf_usr_lr = 0;		/* no return */
+}
+
+#endif /* KERN_SA */
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
+
+	ci->ci_want_resched = 1;
+	if (curlwp != ci->ci_data.cpu_idlelwp)
+		setsoftast();
+}
+
+bool
+cpu_intr_p(void)
+{
+	return curcpu()->ci_intr_depth != 0;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/12/11 12:16:05 christos Exp $
+#	$NetBSD: Makefile,v 1.4.76.1 2009/01/17 13:27:46 mjf Exp $
 
 # Makefile for acorn32 tags file and boot blocks
 
@@ -15,7 +15,8 @@ DACORN32=	dev mainbus podulebus include
 tags:
 	-ctags -wdtf ${TACORN32} ${SACORN32} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AACORN32} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TACORN32}
 	sort -o ${TACORN32} ${TACORN32}
 

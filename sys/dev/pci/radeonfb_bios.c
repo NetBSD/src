@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb_bios.c,v 1.2 2007/10/19 12:00:55 ad Exp $ */
+/* $NetBSD: radeonfb_bios.c,v 1.2.16.1 2009/01/17 13:29:01 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.2 2007/10/19 12:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.2.16.1 2009/01/17 13:29:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,7 +571,7 @@ radeonfb_bios_init(struct radeonfb_softc *sc)
 		DPRINTF(("%s: parsing table %s\n", XNAME(sc), tp->name));
 
 		if (tp->offset != 0) {
-			uint16_t	temp, offset;;
+			uint16_t	temp, offset;
 
 			temp = GETBIOS16(sc, ROM_HEADER_OFFSET);
 			offset = GETBIOS16(sc, temp + tp->offset);

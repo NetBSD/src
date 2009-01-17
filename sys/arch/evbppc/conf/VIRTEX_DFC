@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.1.50.2 2008/09/28 10:39:55 mjf Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.1.50.3 2009/01/17 13:28:00 mjf Exp $
 #
 # VIRTEX_DFC
 #
@@ -42,7 +42,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 #options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -98,7 +97,6 @@ file-system 	TMPFS 		# virtual memory file system
 # File system options
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

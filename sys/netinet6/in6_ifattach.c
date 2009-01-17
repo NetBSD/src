@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.79.12.1 2008/06/02 13:24:26 mjf Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.79.12.2 2009/01/17 13:29:33 mjf Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.79.12.1 2008/06/02 13:24:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.79.12.2 2009/01/17 13:29:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,9 +315,9 @@ generate_tmp_ifid(u_int8_t *seed0, const u_int8_t *seed1, u_int8_t *ret)
 
 	return 0;
 }
+
 /*
  * Get interface identifier for the specified interface.
- * XXX assumes single sockaddr_dl (AF_LINK address) per an interfacea
  *
  * in6 - upper 64bits are preserved
  */
@@ -325,7 +325,7 @@ int
 in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	struct ifaddr *ifa;
-	const struct sockaddr_dl *sdl;
+	const struct sockaddr_dl *sdl = NULL, *tsdl;
 	const char *addr;
 	size_t addrlen;
 	static u_int8_t allzero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -335,18 +335,18 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
-		sdl = satocsdl(ifa->ifa_addr);
-		if (sdl == NULL)
+		tsdl = satocsdl(ifa->ifa_addr);
+		if (tsdl == NULL || tsdl->sdl_alen == 0)
 			continue;
-		if (sdl->sdl_alen == 0)
-			continue;
-
-		goto found;
+		if (sdl == NULL || ifa == ifp->if_dl || ifa == ifp->if_hwdl)
+			sdl = tsdl;
+		if (ifa == ifp->if_hwdl)
+			break;
 	}
 
-	return -1;
+	if (sdl == NULL)
+		return -1;
 
-found:
 	addr = CLLADDR(sdl);
 	addrlen = sdl->sdl_alen;
 

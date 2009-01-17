@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.50.6.4 2008/07/02 19:08:19 mjf Exp $	*/
+/*	$NetBSD: machfb.c,v 1.50.6.5 2009/01/17 13:29:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.50.6.4 2008/07/02 19:08:19 mjf Exp $");
+	"$NetBSD: machfb.c,v 1.50.6.5 2009/01/17 13:29:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1323,7 +1323,7 @@ mach64_cursor(void *cookie, int on, int row, int col)
 			y = ri->ri_crow * he + ri->ri_yorigin;
 			mach64_bitblt(sc, x, y, x, y, wi, he, MIX_NOT_SRC, 
 			    0xff);
-			ri->ri_flg |= RI_CURSOR;;
+			ri->ri_flg |= RI_CURSOR;
 		}
 	} else {
 		scr->scr_ri.ri_crow = row;

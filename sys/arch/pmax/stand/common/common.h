@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.6.116.1 2008/06/02 13:22:31 mjf Exp $	*/
+/*	$NetBSD: common.h,v 1.6.116.2 2009/01/17 13:28:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,9 +35,6 @@ extern int debug;	/* only used for network debugging for now */
 
 /* startprog.S */
 void startprog __P((int, int, int, char **, int, const void *, int, int));
-
-/* clock.c */
-long getsecs __P((void));
 
 /* PROM callbacks */
 int bootinit __P((const char *));

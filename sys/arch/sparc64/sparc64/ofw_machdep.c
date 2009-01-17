@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.31 2006/10/03 21:06:58 mrg Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.31.52.1 2009/01/17 13:28:32 mjf Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.31 2006/10/03 21:06:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.31.52.1 2009/01/17 13:28:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -684,8 +684,11 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 {
 	int i, len;
 	int address_cells, size_cells, interrupt_cells, interrupt_map_len;
-	int interrupt_map[100];
+	int static_interrupt_map[100];
 	int interrupt_map_mask[10];
+	int *interrupt_map = &static_interrupt_map[0];
+	int maplen = sizeof static_interrupt_map;
+	int *free_map = NULL;
 	int reg[10];
 	char dev_type[32];
 	int phc_node;
@@ -727,9 +730,9 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		}
 #endif
 
+ retry_map:
 		if ((interrupt_map_len = OF_getprop(node,
-			"interrupt-map", &interrupt_map,
-			sizeof(interrupt_map))) <= 0) {
+			"interrupt-map", interrupt_map, maplen)) <= 0) {
 
 			/* Swizzle interrupt if this is a PCI bridge. */
 			if (((len = OF_getprop(node, "device_type", &dev_type,
@@ -747,10 +750,24 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 			OF_getprop(node, "reg", &reg, sizeof(reg));
 			continue;
 		}
+		if (interrupt_map_len > maplen) {
+			DPRINTF(("interrupt_map_len %d > maplen %d, "
+				 "allocating\n", interrupt_map_len, maplen));
+			KASSERT(!free_map);
+			free_map = malloc(interrupt_map_len, M_DEVBUF,
+					  M_NOWAIT);
+			if (!free_map) {
+				interrupt_map_len = sizeof static_interrupt_map;
+			} else {
+				interrupt_map = free_map;
+				maplen = interrupt_map_len;
+				goto retry_map;
+			}
+		}
 		/* Convert from bytes to cells. */
 		interrupt_map_len = interrupt_map_len/sizeof(int);
-		if ((len = (OF_searchprop(node, "#address-cells", &address_cells,
-			sizeof(address_cells)))) <= 0) {
+		if ((len = (OF_searchprop(node, "#address-cells",
+			&address_cells, sizeof(address_cells)))) <= 0) {
 			/* How should I know. */
 			address_cells = 2;
 		}
@@ -822,6 +839,8 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 				/* Bingo! */
 				if (buflen < pintr_cells) {
 					/* Error -- ran out of storage. */
+					if (free_map)
+						free(free_map, M_DEVBUF);
 					return (-1);
 				}
 				parent++;
@@ -854,6 +873,10 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		}
 		DPRINTF(("reg len %d\n", len));
 
+		if (free_map) {
+			free(free_map, M_DEVBUF);
+			free_map = NULL;
+		}
 	} 
 	return (rc);
 }

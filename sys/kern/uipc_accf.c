@@ -1,4 +1,33 @@
-/*	$NetBSD: uipc_accf.c,v 1.3.2.3 2008/10/05 20:11:32 mjf Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.3.2.4 2009/01/17 13:29:20 mjf Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software developed for The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -29,49 +58,38 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.3.2.3 2008/10/05 20:11:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.3.2.4 2009/01/17 13:29:20 mjf Exp $");
 
 #define ACCEPT_FILTER_MOD
 
-#include "opt_inet.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
-#include <sys/lkm.h>
-#include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/queue.h>
 #include <sys/once.h>
+#include <sys/atomic.h>
+#include <sys/module.h>
 
-static kmutex_t accept_filter_mtx;
-#define	ACCEPT_FILTER_LOCK()		mutex_spin_enter(&accept_filter_mtx)
-#define	ACCEPT_FILTER_UNLOCK()		mutex_spin_exit(&accept_filter_mtx);
-#define	SOCK_LOCK(so)
-#define	SOCK_UNLOCK(so)
+static krwlock_t accept_filter_lock;
 
-static SLIST_HEAD(, accept_filter) accept_filtlsthd =
-	SLIST_HEAD_INITIALIZER(&accept_filtlsthd);
-
-MALLOC_DEFINE(M_ACCF, "accf", "accept filter data");
-
-static int unloadable = 0;
+static LIST_HEAD(, accept_filter) accept_filtlsthd =
+    LIST_HEAD_INITIALIZER(&accept_filtlsthd);
 
 /*
  * Names of Accept filter sysctl objects
  */
-
-#define ACCFCTL_UNLOADABLE	1	/* Allow module to be unloaded */
-
-
 SYSCTL_SETUP(sysctl_net_inet_accf_setup, "sysctl net.inet.accf subtree setup")
 {
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
@@ -88,71 +106,72 @@ SYSCTL_SETUP(sysctl_net_inet_accf_setup, "sysctl net.inet.accf subtree setup")
 		       SYSCTL_DESCR("Accept filters"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, SO_ACCEPTFILTER, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "unloadable",
-		       SYSCTL_DESCR("Allow unload of accept filters "
-				    "(not recommended)"),
-		       NULL, 0, &unloadable, 0,
-		       CTL_NET, PF_INET, SO_ACCEPTFILTER,
-		       ACCFCTL_UNLOADABLE, CTL_EOL);
 }
 
-/*
- * Must be passed a malloc'd structure so we don't explode if the kld is
- * unloaded, we leak the struct on deallocation to deal with this, but if a
- * filter is loaded with the same name as a leaked one we re-use the entry.
- */
 int
 accept_filt_add(struct accept_filter *filt)
 {
 	struct accept_filter *p;
 
-	ACCEPT_FILTER_LOCK();
-	SLIST_FOREACH(p, &accept_filtlsthd, accf_next)
+	accept_filter_init();
+
+	rw_enter(&accept_filter_lock, RW_WRITER);
+	LIST_FOREACH(p, &accept_filtlsthd, accf_next) {
 		if (strcmp(p->accf_name, filt->accf_name) == 0)  {
-			if (p->accf_callback != NULL) {
-				ACCEPT_FILTER_UNLOCK();
-				return (EEXIST);
-			} else {
-				p->accf_callback = filt->accf_callback;
-				ACCEPT_FILTER_UNLOCK();
-				FREE(filt, M_ACCF);
-				return (0);
-			}
+			rw_exit(&accept_filter_lock);
+			return EEXIST;
 		}
-				
-	if (p == NULL)
-		SLIST_INSERT_HEAD(&accept_filtlsthd, filt, accf_next);
-	ACCEPT_FILTER_UNLOCK();
-	return (0);
+	}				
+	LIST_INSERT_HEAD(&accept_filtlsthd, filt, accf_next);
+	rw_exit(&accept_filter_lock);
+
+	return 0;
 }
 
 int
-accept_filt_del(char *name)
+accept_filt_del(struct accept_filter *p)
 {
-	struct accept_filter *p;
 
-	p = accept_filt_get(name);
-	if (p == NULL)
-		return (ENOENT);
+	rw_enter(&accept_filter_lock, RW_WRITER);
+	if (p->accf_refcnt != 0) {
+		rw_exit(&accept_filter_lock);
+		return EBUSY;
+	}
+	LIST_REMOVE(p, accf_next);
+	rw_exit(&accept_filter_lock);
 
-	p->accf_callback = NULL;
-	return (0);
+	return 0;
 }
 
 struct accept_filter *
 accept_filt_get(char *name)
 {
 	struct accept_filter *p;
+	char buf[32];
+	u_int gen;
 
-	ACCEPT_FILTER_LOCK();
-	SLIST_FOREACH(p, &accept_filtlsthd, accf_next)
-		if (strcmp(p->accf_name, name) == 0)
+	do {
+		rw_enter(&accept_filter_lock, RW_READER);
+		LIST_FOREACH(p, &accept_filtlsthd, accf_next) {
+			if (strcmp(p->accf_name, name) == 0) {
+				atomic_inc_uint(&p->accf_refcnt);
+				break;
+			}
+		}
+		rw_exit(&accept_filter_lock);
+		if (p != NULL) {
 			break;
-	ACCEPT_FILTER_UNLOCK();
+		}
+		/* Try to autoload a module to satisfy the request. */
+		strcpy(buf, "accf_");
+		strlcat(buf, name, sizeof(buf));
+		mutex_enter(&module_lock);
+		gen = module_gen;
+		(void)module_autoload(buf, MODULE_CLASS_ANY);
+		mutex_exit(&module_lock);
+	} while (gen != module_gen);
 
-	return (p);
+	return p;
 }
 
 /*
@@ -163,7 +182,8 @@ accept_filt_get(char *name)
 static int
 accept_filter_init0(void)
 {
-	mutex_init(&accept_filter_mtx, MUTEX_DEFAULT, IPL_NET);
+
+	rw_init(&accept_filter_lock);
 
 	return 0;
 }
@@ -182,53 +202,13 @@ accept_filter_init(void)
 }
 
 int
-accept_filt_generic_mod_event(struct lkm_table *lkmtp, int event, void *data)
-{
-	struct accept_filter *p;
-	struct accept_filter *accfp = (struct accept_filter *) data;
-	int error;
-
-	switch (event) {
-	case LKM_E_LOAD:
-		accept_filter_init();
-		MALLOC(p, struct accept_filter *, sizeof(*p), M_ACCF,
-		    M_WAITOK);
-		bcopy(accfp, p, sizeof(*p));
-		error = accept_filt_add(p);
-		break;
-
-	case LKM_E_UNLOAD:
-		/*
-		 * Do not support unloading yet. we don't keep track of
-		 * refcounts and unloading an accept filter callback and then
-		 * having it called is a bad thing.  A simple fix would be to
-		 * track the refcount in the struct accept_filter.
-		 */
-		if (unloadable != 0) {
-			error = accept_filt_del(accfp->accf_name);
-		} else
-			error = EOPNOTSUPP;
-		break;
-
-	case LKM_E_STAT:
-		error = 0;
-		break;
-
-	default:
-		error = EOPNOTSUPP;
-		break;
-	}
-
-	return (error);
-}
-
-int
-do_getopt_accept_filter(struct socket *so, struct sockopt *sopt)
+accept_filt_getopt(struct socket *so, struct sockopt *sopt)
 {
 	struct accept_filter_arg afa;
 	int error;
 
-	SOCK_LOCK(so);
+	KASSERT(solocked(so));
+
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
 		goto out;
@@ -244,41 +224,70 @@ do_getopt_accept_filter(struct socket *so, struct sockopt *sopt)
 		strcpy(afa.af_arg, so->so_accf->so_accept_filter_str);
 	error = sockopt_set(sopt, &afa, sizeof(afa));
 out:
-	SOCK_UNLOCK(so);
-	return (error);
+	return error;
 }
 
+/*
+ * Simple delete case, with socket locked.
+ */
 int
-do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
+accept_filt_clear(struct socket *so)
+{
+	struct accept_filter_arg afa;
+	struct accept_filter *afp;
+	struct socket *so2, *next;
+	struct so_accf *af;
+
+	KASSERT(solocked(so));
+
+	if ((so->so_options & SO_ACCEPTCONN) == 0) {
+		return EINVAL;
+	}
+	if (so->so_accf != NULL) {
+		/* Break in-flight processing. */
+		for (so2 = TAILQ_FIRST(&so->so_q0); so2 != NULL; so2 = next) {
+			next = TAILQ_NEXT(so2, so_qe);
+			if (so2->so_upcall == NULL) {
+				continue;
+			}
+			so2->so_upcall = NULL;
+			so2->so_upcallarg = NULL;
+			so2->so_options &= ~SO_ACCEPTFILTER;
+			so2->so_rcv.sb_flags &= ~SB_UPCALL;
+			soisconnected(so2);
+		}
+		af = so->so_accf;
+		afp = af->so_accept_filter;
+		if (afp != NULL && afp->accf_destroy != NULL) {
+			(*afp->accf_destroy)(so);
+		}
+		if (af->so_accept_filter_str != NULL) {
+			kmem_free(af->so_accept_filter_str,
+			    sizeof(afa.af_name));
+		}
+		kmem_free(af, sizeof(*af));
+		so->so_accf = NULL;
+		atomic_dec_uint(&afp->accf_refcnt);
+	}
+	so->so_options &= ~SO_ACCEPTFILTER;
+	return 0;
+}
+
+/*
+ * setsockopt() for accept filters.  Called with the socket unlocked,
+ * will always return it locked.
+ */
+int
+accept_filt_setopt(struct socket *so, const struct sockopt *sopt)
 {
 	struct accept_filter_arg afa;
 	struct accept_filter *afp;
 	struct so_accf *newaf;
 	int error;
 
-	/*
-	 * Handle the simple delete case first.
-	 */
 	if (sopt == NULL || sopt->sopt_size == 0) {
-		SOCK_LOCK(so);
-		if ((so->so_options & SO_ACCEPTCONN) == 0) {
-			SOCK_UNLOCK(so);
-			return (EINVAL);
-		}
-		if (so->so_accf != NULL) {
-			struct so_accf *af = so->so_accf;
-			if (af->so_accept_filter != NULL &&
-				af->so_accept_filter->accf_destroy != NULL) {
-				af->so_accept_filter->accf_destroy(so);
-			}
-			if (af->so_accept_filter_str != NULL)
-				FREE(af->so_accept_filter_str, M_ACCF);
-			FREE(af, M_ACCF);
-			so->so_accf = NULL;
-		}
-		so->so_options &= ~SO_ACCEPTFILTER;
-		SOCK_UNLOCK(so);
-		return (0);
+		solock(so);
+		return accept_filt_clear(so);
 	}
 
 	/*
@@ -287,13 +296,15 @@ do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
 	 */
 	error = sockopt_get(sopt, &afa, sizeof(afa));
 	if (error) {
-		return (error);
+		solock(so);
+		return error;
 	}
 	afa.af_name[sizeof(afa.af_name)-1] = '\0';
 	afa.af_arg[sizeof(afa.af_arg)-1] = '\0';
 	afp = accept_filt_get(afa.af_name);
 	if (afp == NULL) {
-		return (ENOENT);
+		solock(so);
+		return ENOENT;
 	}
 	/*
 	 * Allocate the new accept filter instance storage.  We may
@@ -301,12 +312,18 @@ do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
 	 * attached properly, 'newaf' is NULLed to avoid a free()
 	 * while in use.
 	 */
-	MALLOC(newaf, struct so_accf *, sizeof(*newaf), M_ACCF, M_WAITOK |
-	    M_ZERO);
+	newaf = kmem_zalloc(sizeof(*newaf), KM_SLEEP);
 	if (afp->accf_create != NULL && afa.af_name[0] != '\0') {
-		int len = strlen(afa.af_name) + 1;
-		MALLOC(newaf->so_accept_filter_str, char *, len, M_ACCF,
-		    M_WAITOK);
+		/*
+		 * FreeBSD did a variable-size allocation here
+		 * with the actual string length from afa.af_name
+		 * but it is so short, why bother tracking it?
+		 * XXX as others have noted, this is an API mistake;
+		 * XXX accept_filter_arg should have a mandatory namelen.
+		 * XXX (but it's a bit too late to fix that now)
+		 */
+		newaf->so_accept_filter_str =
+		    kmem_alloc(sizeof(afa.af_name), KM_SLEEP);
 		strcpy(newaf->so_accept_filter_str, afa.af_name);
 	}
 
@@ -314,21 +331,20 @@ do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
 	 * Require a listen socket; don't try to replace an existing filter
 	 * without first removing it.
 	 */
-	SOCK_LOCK(so);
-	if (((so->so_options & SO_ACCEPTCONN) == 0) ||
-	    (so->so_accf != NULL)) {
+	solock(so);
+	if ((so->so_options & SO_ACCEPTCONN) == 0 || so->so_accf != NULL) {
 		error = EINVAL;
 		goto out;
 	}
 
 	/*
 	 * Invoke the accf_create() method of the filter if required.  The
-	 * socket mutex is held over this call, so create methods for filters
-	 * can't block.
+	 * socket lock is held over this call, so create methods for filters
+	 * shouldn't block.
 	 */
 	if (afp->accf_create != NULL) {
 		newaf->so_accept_filter_arg =
-		    afp->accf_create(so, afa.af_arg);
+		    (*afp->accf_create)(so, afa.af_arg);
 		if (newaf->so_accept_filter_arg == NULL) {
 			error = EINVAL;
 			goto out;
@@ -339,11 +355,12 @@ do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
 	so->so_options |= SO_ACCEPTFILTER;
 	newaf = NULL;
 out:
-	SOCK_UNLOCK(so);
 	if (newaf != NULL) {
 		if (newaf->so_accept_filter_str != NULL)
-			FREE(newaf->so_accept_filter_str, M_ACCF);
-		FREE(newaf, M_ACCF);
+			kmem_free(newaf->so_accept_filter_str,
+			    sizeof(afa.af_name));
+		kmem_free(newaf, sizeof(*newaf));
+		atomic_dec_uint(&afp->accf_refcnt);
 	}
-	return (error);
+	return error;
 }

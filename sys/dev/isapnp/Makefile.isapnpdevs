@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.isapnpdevs,v 1.1 1998/07/23 19:30:44 christos Exp $
+#	$NetBSD: Makefile.isapnpdevs,v 1.1.146.1 2009/01/17 13:28:57 mjf Exp $
 
-AWK=	awk
+.include <bsd.own.mk>
 
 # Kill shuttle .c rule
 .c:
 
 isapnpdevs.h isapnpdevs.c: isapnpdevs devlist2h.awk
 	/bin/rm -f isapnpdevs.h isapnpdevs.c
-	${AWK} -f devlist2h.awk isapnpdevs
+	${TOOL_AWK} -f devlist2h.awk isapnpdevs

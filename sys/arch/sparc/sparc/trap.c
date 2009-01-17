@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.174.6.1 2008/06/02 13:22:42 mjf Exp $ */
+/*	$NetBSD: trap.c,v 1.174.6.2 2009/01/17 13:28:31 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174.6.1 2008/06/02 13:22:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174.6.2 2009/01/17 13:28:31 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174.6.1 2008/06/02 13:22:42 mjf Exp $");
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
@@ -291,9 +293,9 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 			return;
 		}
 	dopanic:
+	        snprintb(bits, sizeof(bits), PSR_BITS, psr);
 		printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
-		       type, pc, tf->tf_npc, bitmask_snprintf(psr,
-		       PSR_BITS, bits, sizeof(bits)));
+		       type, pc, tf->tf_npc, bits);
 #ifdef DDB
 		write_all_windows();
 		(void) kdb_trap(type, tf);
@@ -330,9 +332,9 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 		if (type < 0x80) {
 			if (!ignore_bogus_traps)
 				goto dopanic;
+		        snprintb(bits, sizeof(bits), PSR_BITS, psr);
 			printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
-			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
-			       PSR_BITS, bits, sizeof(bits)));
+			       type, pc, tf->tf_npc, bits);
 			sig = SIGILL;
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
@@ -836,8 +838,8 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=0x%x ser=%s\n", pc,
-			  bitmask_snprintf(ser, SER_BITS, bits, sizeof(bits)));
+		        snprintb(bits, sizeof(bits), SER_BITS, ser);
+			printf("text fault: pc=0x%x ser=%s\n", pc, bits);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -868,8 +870,19 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 				return;
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		/*
+		 * WRS: Can drop LP_SA_NOBLOCK test iff can only get
+		 * here from a usermode-initiated access. LP_SA_NOBLOCK
+		 * should never be set there - it's kernel-only.
+		 */
+		if ((l->l_flag & LW_SA)
+		    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	/*
 	 * mmu_pagein returns -1 if the page is already valid, in which
@@ -925,9 +938,9 @@ kfault:
 			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
+				snprintb(bits, sizeof(bits), SER_BITS, ser);
 				printf("data fault: pc=0x%x addr=0x%x ser=%s\n",
-				    pc, v, bitmask_snprintf(ser, SER_BITS,
-				    bits, sizeof(bits)));
+				    pc, v, bits);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -956,6 +969,7 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
@@ -1141,9 +1155,9 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
+			snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
 			printf("text fault: pc=0x%x sfsr=%s sfva=0x%x\n", pc,
-			    bitmask_snprintf(sfsr, SFSR_BITS, bits,
-			    sizeof(bits)), sfva);
+			    bits, sfva);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -1168,8 +1182,19 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 			}
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		/*
+		 * WRS: Can drop LP_SA_NOBLOCK test iff can only get
+		 * here from a usermode-initiated access. LP_SA_NOBLOCK
+		 * should never be set there - it's kernel-only.
+		 */
+		if ((l->l_flag & LW_SA)
+		    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+			l->l_savp->savp_faultaddr = (vaddr_t)sfva;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	vm = p->p_vmspace;
 
@@ -1198,9 +1223,9 @@ kfault:
 			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
+				snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
 				printf("data fault: pc=0x%x addr=0x%x sfsr=%s\n",
-				    pc, sfva, bitmask_snprintf(sfsr, SFSR_BITS,
-				    bits, sizeof(bits)));
+				    pc, sfva, bits);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -1229,12 +1254,24 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 out_nounlock:
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
 }
 #endif /* SUN4M */
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	KERNEL_UNLOCK_LAST(l);
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
 
 /*
  * Start a new LWP

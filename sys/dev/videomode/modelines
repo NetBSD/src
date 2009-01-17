@@ -1,4 +1,4 @@
-// $NetBSD: modelines,v 1.5 2007/04/03 03:33:41 macallan Exp $
+// $NetBSD: modelines,v 1.5.30.1 2009/01/17 13:29:10 mjf Exp $
 //
 // This file was imported from XFree86, and is made of the contents of both
 // the vesamodes and extramodes files.  As a result these should correspond
@@ -161,3 +161,12 @@ Modeline "2048x1536" 340.48  2048 2216 2440 2832  1536 1537 1540 1603 -hsync +vs
 # 2048x1536 @ 85Hz (VESA GTF) hsync: 137.0kHz
 Modeline "2048x1536" 388.04  2048 2216 2440 2832  1536 1537 1540 1612 -hsync +vsync
 
+//
+// some Sun-specific modes
+//
+
+# 1152x900 @ 66Hz - default on most SBus graphics devices
+ModeLine "1152x900"  94.50 1152 1192 1320 1528 900 902 906 937 -hsync -vsync
+
+# 1152x900 @ 76Hz
+ModeLine "1152x900" 105.56 1152 1168 1280 1472 900 902 906 943 -hsync -vsync 

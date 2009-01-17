@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.14.6.1 2008/06/02 13:22:48 mjf Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.14.6.2 2009/01/17 13:28:36 mjf Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14.6.1 2008/06/02 13:22:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14.6.2 2009/01/17 13:28:36 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -114,11 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14.6.1 2008/06/02 13:22:48 mjf Exp
 
 #include <dev/cons.h>
 
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
-#include <compat/sys/signal.h>
-#include <compat/sys/signalvar.h>
-#endif
-
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
@@ -138,18 +133,10 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14.6.1 2008/06/02 13:22:48 mjf Exp
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
-typedef vaddr_t (*sig_setupstack_t)(const ksiginfo_t *, const sigset_t *,
+typedef vaddr_t (*sig_setupstack_t)(const struct ksiginfo *, const sigset_t *,
 	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
 
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
-static vaddr_t setupstack_oldsigcontext(const ksiginfo_t *, const sigset_t *,
-	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
-#endif
-#if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
-static vaddr_t setupstack_sigcontext2(const ksiginfo_t *, const sigset_t *,
-	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
-#endif
-static vaddr_t setupstack_siginfo3(const ksiginfo_t *, const sigset_t *,
+static vaddr_t setupstack_siginfo3(const struct ksiginfo *, const sigset_t *,
 	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
 
 const static sig_setupstack_t sig_setupstacks[] = {
@@ -167,216 +154,6 @@ const static sig_setupstack_t sig_setupstacks[] = {
 #endif
 	setupstack_siginfo3,		/* 3 */
 };
-
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
-int
-compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */
-	struct proc *p = l->l_proc;
-	struct trapframe *scf;
-	struct sigcontext13 *ucntx;
-	struct sigcontext13 ksc;
-	sigset_t mask;
-
-	scf = l->l_addr->u_pcb.framep;
-	ucntx = SCARG(uap, sigcntxp);
-	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))
-		return EINVAL;
-
-	/* Compatibility mode? */
-	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (ksc.sc_ps & PSL_CM)) {
-		return (EINVAL);
-	}
-
-	mutex_enter(p->p_lock);
-	if (ksc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	native_sigset13_to_sigset(&ksc.sc_mask, &mask);
-	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
-	mutex_exit(p->p_lock);
-
-	scf->fp = ksc.sc_fp;
-	scf->ap = ksc.sc_ap;
-	scf->pc = ksc.sc_pc;
-	scf->sp = ksc.sc_sp;
-	scf->psl = ksc.sc_ps;
-	return (EJUSTRETURN);
-}
-
-struct otrampframe {
-	unsigned sig;	/* Signal number */
-	unsigned code;	/* Info code */
-	vaddr_t	scp;	/* Pointer to struct sigcontext */
-	unsigned r0, r1, r2, r3, r4, r5; /* Registers saved when interrupt */
-	register_t pc;	/* Address of signal handler */
-	vaddr_t	arg;	/* Pointer to first (and only) sigreturn argument */
-};
-
-static vaddr_t
-setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
-	struct lwp *l, struct trapframe *tf, vaddr_t sp, int onstack,
-	vaddr_t handler)
-{
-	struct sigcontext sigctx;
-	struct otrampframe tramp;
-	struct proc *p = l->l_proc;
-	bool error;
-
-	sigctx.sc_pc = tf->pc;
-	sigctx.sc_ps = tf->psl;
-	sigctx.sc_ap = tf->ap;
-	sigctx.sc_fp = tf->fp; 
-	sigctx.sc_sp = tf->sp; 
-	sigctx.sc_onstack = onstack ? SS_ONSTACK : 0;
-	sigctx.sc_mask = *mask;
-	sp -= sizeof(struct sigcontext);
-
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
-	native_sigset_to_sigset13(mask, &sigctx.__sc_mask13);
-#endif
-
-	tramp.sig = ksi->ksi_signo;
-	tramp.code = (register_t)ksi->ksi_addr;
-	/* Set up positions for structs on stack */
-	tramp.scp = sp;
-	/* r0..r5 are saved by the popr in the sigcode snippet but we need
-	   to zero them anyway.  */
-	tramp.r0 = tramp.r1 = tramp.r2 = tramp.r3 = tramp.r4 = tramp.r5 = 0;
-	tramp.pc = (register_t)handler;
-	tramp.arg = sp;
-	sendsig_reset(l, ksi->ksi_signo);
-	mutex_exit(p->p_lock);
-
-	/* Point stack pointer at pc in trampoline.  */
-	sp =- 8;
-
-	error = copyout(&tramp, (char *)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
-	    copyout(&sigctx, (void *)tramp.scp, sizeof(sigctx)) != 0;
-
-	mutex_enter(p->p_lock);
-	if (error)
-		return 0;
-
-	return sp;
-}
-#endif /* COMPAT_13 || COMPAT_ULTRIX || COMPAT_IBCS2 */
-
-#if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
-int
-compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */
-	struct proc *p = l->l_proc;
-	struct trapframe *scf;
-	struct sigcontext *ucntx;
-	struct sigcontext ksc;
-
-	scf = l->l_addr->u_pcb.framep;
-	ucntx = SCARG(uap, sigcntxp);
-
-	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))
-		return EINVAL;
-	/* Compatibility mode? */
-	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (ksc.sc_ps & PSL_CM)) {
-		return (EINVAL);
-	}
-
-	mutex_enter(p->p_lock);
-	if (ksc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	/* Restore signal mask. */
-	(void) sigprocmask1(l, SIG_SETMASK, &ksc.sc_mask, 0);
-	mutex_exit(p->p_lock);
-
-	scf->fp = ksc.sc_fp;
-	scf->ap = ksc.sc_ap;
-	scf->pc = ksc.sc_pc;
-	scf->sp = ksc.sc_sp;
-	scf->psl = ksc.sc_ps;
-	return (EJUSTRETURN);
-}
-
-/*
- * Brief description of how sendsig() works:
- * A struct sigcontext is allocated on the user stack. The relevant
- * registers are saved in it. Below it is a struct trampframe constructed, it
- * is actually an argument list for callg. The user
- * stack pointer is put below all structs.
- *
- * The registers will contain when the signal handler is called:
- * pc, psl	- Obvious
- * sp		- An address below all structs
- * fp 		- The address of the signal handler
- * ap		- The address to the callg frame
- *
- * The trampoline code will save r0-r5 before doing anything else.
- */
-struct trampoline2 {
-	unsigned int narg;	/* Argument count (== 3) */
-	unsigned int sig;	/* Signal number */
-	unsigned int code;	/* Info code */
-	vaddr_t scp;		/* Pointer to struct sigcontext */
-};
-
-
-static vaddr_t
-setupstack_sigcontext2(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
-	struct lwp *l, struct trapframe *tf, vaddr_t sp, int onstack,
-	vaddr_t handler)
-{
-	struct trampoline2 tramp;
-	struct sigcontext sigctx;
-	struct proc *p = l->l_proc;
-	bool error;
-
-	/* The sigcontext struct will be passed back to sigreturn().  */
-	sigctx.sc_pc = tf->pc;
-	sigctx.sc_ps = tf->psl;
-	sigctx.sc_ap = tf->ap;
-	sigctx.sc_fp = tf->fp;
-	sigctx.sc_sp = tf->sp;
-	sigctx.sc_onstack = onstack ? SS_ONSTACK : 0;
-	sigctx.sc_mask = *mask;
-	sp -= sizeof(struct sigcontext);
-
-	/* Arguments given to the signal handler.  */
-	tramp.narg = 3;
-	tramp.sig = ksi->ksi_signo;
-	tramp.code = (register_t)ksi->ksi_addr;
-	tramp.scp = sp;
-	sp -= sizeof(tramp);
-	sendsig_reset(l, ksi->ksi_signo);
-	mutex_exit(p->p_lock);
-
-	/* Store the handler in the trapframe.  */
-	tf->fp = handler;
-
-	/* Copy out the sigcontext and trampoline.  */
-	error = (copyout(&sigctx, (char *)tramp.scp, sizeof(sigctx)) != 0 ||
-	    copyout(&tramp, (char *)sp, sizeof(tramp)) != 0);
-
-	mutex_enter(p->p_lock);
-	if (error)
-		return 0;
-
-	/* return updated stack pointer */
-	return sp;
-}
-#endif	/* COMPAT_16 || COMPAT_ULTRIX */
 
 /*
  * Brief description of how sendsig() works:
@@ -401,7 +178,7 @@ struct trampoline3 {
 };
 
 static vaddr_t
-setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
+setupstack_siginfo3(const struct ksiginfo *ksi, const sigset_t *mask, int vers,
 	struct lwp *l, struct trapframe *tf, vaddr_t sp, int onstack,
 	vaddr_t handler)
 {
@@ -443,7 +220,7 @@ setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 };
 
 void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+sendsig_sighelper(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

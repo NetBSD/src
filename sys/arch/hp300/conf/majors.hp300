@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.21 2007/12/31 15:31:54 ad Exp $
+#	$NetBSD: majors.hp300,v 1.21.6.1 2009/01/17 13:28:00 mjf Exp $
 #
 # Device majors for hp300
 #
@@ -27,7 +27,6 @@ device-major	st		char 20  block 7	st
 device-major	filedesc	char 21
 device-major	bpf		char 22			bpfilter
 device-major	tun		char 23			tun
-device-major	lkm		char 24			lkm
 
 # device major 31 was apci (superseded by MI com)
 device-major	md		char 32  block 14	md

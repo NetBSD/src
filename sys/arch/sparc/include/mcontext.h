@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8.62.1 2008/06/02 13:22:41 mjf Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.62.2 2009/01/17 13:28:30 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,11 +49,8 @@ typedef	long int	__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 
 /* Offsets into gregset_t, for convenience. */
-#ifdef __arch64__
-#define	_REG_CCR	0
-#else
-#define	_REG_PSR	0
-#endif
+#define	_REG_CCR	0	/* 64 bit only */
+#define	_REG_PSR	0	/* 32 bit only */
 #define	_REG_PC		1
 #define	_REG_nPC	2
 #define	_REG_Y		3
@@ -72,10 +69,8 @@ typedef	__greg_t	__gregset_t[_NGREG];
 #define	_REG_O5		16
 #define	_REG_O6		17
 #define	_REG_O7		18
-#ifdef __arch64__
-#define	_REG_ASI	19
-#define	_REG_FPRS	20
-#endif
+#define	_REG_ASI	19	/* 64 bit only */
+#define	_REG_FPRS	20	/* 64 bit only */
 
 
 #define	_SPARC_MAXREGWINDOW	31

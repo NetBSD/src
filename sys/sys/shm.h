@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.43.6.1 2008/06/02 13:24:33 mjf Exp $	*/
+/*	$NetBSD: shm.h,v 1.43.6.2 2009/01/17 13:29:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 #endif
 
 /* Segment low boundry address multiple */
-#if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
+#if defined(_KERNEL) || defined(_STANDALONE) || defined(_MODULE)
 #define	SHMLBA		PAGE_SIZE
 #else
 /*
@@ -180,7 +180,7 @@ int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
 
 __BEGIN_DECLS
 void	*shmat(int, const void *, int);
-int	shmctl(int, int, struct shmid_ds *) __RENAME(__shmctl13);
+int	shmctl(int, int, struct shmid_ds *) __RENAME(__shmctl50);
 int	shmdt(const void *);
 int	shmget(key_t, size_t, int);
 __END_DECLS

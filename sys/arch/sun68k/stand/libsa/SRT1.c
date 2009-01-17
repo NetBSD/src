@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.6.54.1 2008/06/02 13:22:47 mjf Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.6.54.2 2009/01/17 13:28:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ _start(void)
 	else
 		sun3_init();
 
-	main(0);
+	main();
 	exit(0);
 }
 
@@ -117,9 +117,3 @@ chain_to(void *func)
 	ICIA();
 	exit(0);
 }
-
-/*
- * Boot programs in C++ ?  Not likely!
- */
-void 
-__main(void) {}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.5.74.1 2008/06/02 13:22:47 mjf Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.5.74.2 2009/01/17 13:28:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #include <stand.h>
 #include <net.h>
 
+#include <lib/libkern/libkern.h>
+
 #include "libsa.h"
 #include "dvma.h"
 #include "saio.h"
@@ -71,6 +73,11 @@ struct devdata {
 	u_short dd_opens;
 	u_char dd_myea[6];
 } netif_devdata;
+
+struct devdata * netif_init(void *);
+void netif_fini(struct devdata *);
+int netif_attach(struct netif *, struct iodesc *, void *);
+void netif_detach(struct netif *);
 
 void netif_getether(struct saif *, u_char *);
 
@@ -271,7 +278,6 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
 	struct devdata *dd;
 	struct saioreq *si;
 	struct saif *sif;
-	char *dmabuf;
 	int rv, slen;
 
 #ifdef NETIF_DEBUG
@@ -332,7 +338,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
  * Return the total length received (or -1 on error).
  */
 int 
-netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, seseconds_t timo)
 {
 	struct netif *nif;
 	struct devdata *dd;

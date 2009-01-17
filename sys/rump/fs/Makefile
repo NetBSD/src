@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.30.1 2008/09/28 10:41:00 mjf Exp $
+#	$NetBSD: Makefile,v 1.1.30.2 2009/01/17 13:29:35 mjf Exp $
 #
 
-SUBDIR=	lib .WAIT rumptest
+SUBDIR=	lib
 
 .include <bsd.subdir.mk>

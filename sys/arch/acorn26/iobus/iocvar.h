@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.4 2006/10/04 23:40:00 bjh21 Exp $ */
+/* $NetBSD: iocvar.h,v 1.4.52.1 2009/01/17 13:27:46 mjf Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -64,7 +64,7 @@ struct ioc_softc {
 	u_int8_t		sc_ctl;
 };
 
-extern struct device *the_ioc;
+extern device_t the_ioc;
 
 /* Public IOC functions */
 
@@ -77,11 +77,11 @@ extern void ioc_irq_setmask(u_int32_t);
 
 extern void ioc_fiq_setmask(u_int32_t);
 
-extern void ioc_counter_start(struct device *, int, int);
+extern void ioc_counter_start(device_t , int, int);
 
-extern void ioc_initclocks(struct device *);
-extern void ioc_setstatclockrate(struct device *, int);
-extern void ioc_microtime(struct device *, struct timeval *);
+extern void ioc_initclocks(device_t );
+extern void ioc_setstatclockrate(device_t , int);
+extern void ioc_microtime(device_t , struct timeval *);
 
 /*
  * Control Register
@@ -97,17 +97,17 @@ extern void ioc_microtime(struct device *, struct timeval *);
  */
 
 static inline u_int
-ioc_ctl_read(struct device *self)
+ioc_ctl_read(device_t self)
 {
-	struct ioc_softc *sc = (void *)self;
+	struct ioc_softc *sc = device_private(self);
 
 	return bus_space_read_1(sc->sc_bst, sc->sc_bsh, IOC_CTL);
 }
 
 static inline void
-ioc_ctl_write(struct device *self, u_int value, u_int mask)
+ioc_ctl_write(device_t self, u_int value, u_int mask)
 {
-	struct ioc_softc *sc = (void *)self;
+	struct ioc_softc *sc = device_private(self);
 	int s;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;

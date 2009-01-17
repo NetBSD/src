@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.107.6.4 2008/09/28 10:40:54 mjf Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.107.6.5 2009/01/17 13:29:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.107.6.4 2008/09/28 10:40:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.107.6.5 2009/01/17 13:29:20 mjf Exp $");
 
-#include "opt_compat_sunos.h"
 #include "opt_ptm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
+#include <sys/ioctl_compat.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/stat.h>
@@ -1077,10 +1077,8 @@ ptyioctl(dev, cmd, data, flag, l)
 			mutex_spin_exit(&tty_lock);
 			return (0);
 
-#ifdef COMPAT_OLDTTY
 		case TIOCSETP:
 		case TIOCSETN:
-#endif
 		case TIOCSETD:
 		case TIOCSETA:
 		case TIOCSETAW:
@@ -1130,7 +1128,6 @@ ptyioctl(dev, cmd, data, flag, l)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-#ifdef COMPAT_OLDTTY
 		case TIOCSETP:
 		case TIOCSETN:
 		case TIOCSETC:
@@ -1138,7 +1135,6 @@ ptyioctl(dev, cmd, data, flag, l)
 		case TIOCLBIS:
 		case TIOCLBIC:
 		case TIOCLSET:
-#endif
 			pti->pt_send |= TIOCPKT_IOCTL;
 			ptcwakeup(tp, FREAD);
 		default:

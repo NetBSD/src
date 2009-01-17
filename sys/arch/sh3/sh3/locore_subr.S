@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.43.6.2 2008/06/02 13:22:39 mjf Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.43.6.3 2009/01/17 13:28:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43.6.2 2008/06/02 13:22:39 mjf Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43.6.3 2009/01/17 13:28:29 mjf Exp $")
 
 
 /*
@@ -399,7 +399,7 @@ ALTENTRY(lwp_setfunc_trampoline)
 	SET_ENTRY_SIZE(lwp_trampoline)
 
 
-#ifdef COMPAT_16
+#if defined(COMPAT_16) || defined(MODULAR)
 /*
  * LINTSTUB: Var: char sigcode[1]
  *	Signal trampoline. copied to top of user stack.
@@ -427,7 +427,7 @@ NENTRY(sigcode)
 .globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 	SET_ENTRY_SIZE(sigcode)
-#endif /* COMPAT_16 */
+#endif /* COMPAT_16 || MODULAR */
 
 
 /*

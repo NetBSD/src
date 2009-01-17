@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_gpt.h,v 1.4.6.2 2008/07/02 19:08:21 mjf Exp $	*/
+/*	$NetBSD: disklabel_gpt.h,v 1.4.6.3 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -67,6 +67,8 @@ struct gpt_hdr {
 #define	GPT_HDR_REVISION	0x00010000	/* 1.0 */
 
 #define	GPT_HDR_BLKNO		1
+
+#define	GPT_HDR_SIZE		0x5c
 
 /*
  * GUID Partition Entry

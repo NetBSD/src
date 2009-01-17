@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.3.140.1 2008/06/02 13:22:59 mjf Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.3.140.2 2009/01/17 13:28:43 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,16 +89,5 @@ typedef struct linux_siginfo {
 
 #define lsi_pid		_sidata._kill._pid
 #define lsi_uid		_sidata._kill._uid
-
-#define LINUX_SI_USER		0
-#define	LINUX_SI_KERNEL		0x80
-#define LINUX_SI_QUEUE		-1
-#define LINUX_SI_TIMER		-2
-#define LINUX_SI_MESGQ		-3
-#define LINUX_SI_ASYNCIO	-4
-
-#define LINUX_SI_FROMUSER(sp)	((sp)->si_code <= 0)
-#define LINUX_SI_FROMKERENL(sp)	((sp)->si_code > 0)
-
 
 #endif /* !_ALPHA_LINUX_SIGINFO_H */

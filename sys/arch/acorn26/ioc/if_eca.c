@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.8 2007/10/17 19:52:52 garbled Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.8.16.1 2009/01/17 13:27:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.8 2007/10/17 19:52:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.8.16.1 2009/01/17 13:27:46 mjf Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -120,8 +120,8 @@ eca_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ec.ec_claimwire = eca_claimwire;
 	sc->sc_ec.ec_txframe = eca_txframe;
 
-	sc->sc_rx_soft = softintr_establish(IPL_SOFTNET, eca_gotframe, sc);
-	sc->sc_tx_soft = softintr_establish(IPL_SOFTNET, eca_txdone, sc);
+	sc->sc_rx_soft = softint_establish(IPL_SOFTNET, eca_gotframe, sc);
+	sc->sc_tx_soft = softint_establish(IPL_SOFTNET, eca_txdone, sc);
 	if (sc->sc_rx_soft == NULL || sc->sc_tx_soft == NULL) {
 		printf("\n%s: failed to establish software interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -232,7 +232,7 @@ eca_txframe(struct ifnet *ifp, struct mbuf *m)
 	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_tx;
 	sc->sc_transmitting = 1;
 	sc->sc_txmbuf = m;
-	fr.fr_r8 = (register_t)sc->sc_ioh.a1;
+	fr.fr_r8 = (register_t)sc->sc_ioh;
 	fr.fr_r9 = (register_t)sc->sc_txmbuf->m_data;
 	fr.fr_r10 = (register_t)sc->sc_txmbuf->m_len;
 	fr.fr_r11 = (register_t)&sc->sc_fiqstate;
@@ -272,7 +272,7 @@ eca_tx_downgrade(void)
 		else {
 			log(LOG_ERR, "%s: incomplete transmission\n",
 			    sc->sc_dev.dv_xname);
-			bitmask_snprintf(sr1, MC6854_SR1_BITS, buf, 128);
+			snprintb(buf, 128, MC6854_SR1_BITS, sr1);
 			log(LOG_ERR, "%s: SR1 = %s\n",
 			    sc->sc_dev.dv_xname, buf);
 		}
@@ -289,7 +289,7 @@ eca_tx_downgrade(void)
 	ioc_fiq_setmask(IOC_FIQ_BIT(FIQ_EFIQ));
 	/* End code from eca_init_rx_hard(). */
 
-	softintr_schedule(sc->sc_tx_soft);
+	softint_schedule(sc->sc_tx_soft);
 }
 
 /*
@@ -358,7 +358,7 @@ eca_init_rx_soft(struct eca_softc *sc)
 	struct fiqregs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
 
 	memset(fr, 0, sizeof(*fr));
-	fr->fr_r8 = (register_t)sc->sc_ioh.a1;
+	fr->fr_r8 = (register_t)sc->sc_ioh;
 	fr->fr_r9 = (register_t)sc->sc_rcvmbuf->m_data;
 	fr->fr_r10 = (register_t)ECO_ADDR_LEN;
 	fr->fr_r11 = (register_t)&sc->sc_fiqstate;
@@ -438,7 +438,7 @@ eca_rx_downgrade(void)
 	struct eca_softc *sc = eca_fiqowner;
 
 	sc->sc_sr2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, MC6854_SR2);
-	softintr_schedule(sc->sc_rx_soft);
+	softint_schedule(sc->sc_rx_soft);
 }
 
 /*
@@ -473,7 +473,8 @@ eca_gotframe(void *arg)
 		if (eca_init_rxbuf(sc, M_DONTWAIT) == 0) {
 			ifp->if_ipackets++; /* XXX packet vs frame? */
 			/* Trim the tail of the mbuf chain. */
-			mtail->m_len = (void *)(fr.fr_r9) - mtail->m_data;
+			mtail->m_len =
+			    (char *)(fr.fr_r9) - mtod(mtail, char *);
 			m_freem(mtail->m_next);
 			mtail->m_next = NULL;
 			/* Set up the header of the chain. */
@@ -492,7 +493,7 @@ eca_gotframe(void *arg)
 		mtail = sc->sc_fiqstate.efs_rx_curmbuf;
 		log(LOG_ERR, "%s: Rx overrun (state = %d, len = %ld)\n",
 		    sc->sc_dev.dv_xname, sc->sc_ec.ec_state,
-		    (void *)(fr.fr_r9) - mtail->m_data);
+		    (char *)(fr.fr_r9) - mtod(mtail, char *));
 		ifp->if_ierrors++;
 
 		/* Discard the rest of the frame. */

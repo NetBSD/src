@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.52.3 2008/09/28 10:39:57 mjf Exp $
+#	$NetBSD: Makefile,v 1.8.52.4 2009/01/17 13:28:01 mjf Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
@@ -34,6 +34,8 @@ LIBCRT0=
 LIBCRTEND=
 LIBC=
 
+S=		${.CURDIR}/../../../..
+
 ${PROG}: iplsum ${OBJS}
 	${_MKTARGET_LINK}
 	${LD} -Ttext 0 -Tdata 0 -e '$$START$$' -N -o $@1 $(OBJS)
@@ -61,7 +63,7 @@ CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 # Place code to data section.
 .S.o:
 	${_MKTARGET_COMPILE}
-	sed -e 's/\.code/.data/' \
+	${TOOL_SED} -e 's/\.code/.data/' \
 	-e 's/\.bss/.section .bss,"aw",@nobits/' \
 	-e 's/\.allow$$/.level	1.0/' -e 's/\.allow/.level/' \
 	 ${.IMPSRC} | ${AS} -o ${.TARGET}
@@ -75,4 +77,14 @@ CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 		if [ $$? = 0 ]; then \
 			echo 'found non-relocatable code' >&2 && exit 1; \
 		fi
-	sed -e 's/\.text/.data/' $@.S | ${AS} -o ${.TARGET}
+	${TOOL_SED} -e 's/\.text/.data/' $@.S | ${AS} -o ${.TARGET}
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@([ -h machine ] || ln -s $S/arch/hp700/include machine)
+	@([ -h hppa ] || ln -s $S/arch/hppa/include hppa)
+
+.NOPATH: machine hppa
+.endif
+
+CLEANFILES+=machine hppa

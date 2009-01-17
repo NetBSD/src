@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.33.6.2 2008/09/28 10:40:14 mjf Exp $ */
+/* $NetBSD: hypervisor.c,v 1.33.6.3 2009/01/17 13:28:39 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.33.6.2 2008/09/28 10:40:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.33.6.3 2009/01/17 13:28:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 
 #ifdef XEN3
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
-	printf(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
+	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
 	       xen_version & 0x0000ffff);
 
 	xengnt_init();
@@ -263,10 +263,10 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_vcaa.vcaa_caa.cpu_func = 0;
 	config_found_ia(self, "xendevbus", &hac.hac_vcaa, hypervisor_print);
 #else
-	printf("\n");
+	aprint_normal("\n");
 #endif
 
-	init_events();
+	events_init();
 
 #if NXENBUS > 0
 	hac.hac_xenbus.xa_device = "xenbus";
@@ -306,7 +306,11 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
 	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
 	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
-	hac.hac_pba.pba_dmat64 = 0;
+#ifdef _LP64
+	hac.hac_pba.pba_dmat64 = &pci_bus_dma64_tag;
+#else
+	hac.hac_pba.pba_dmat64 = NULL;
+#endif /* _LP64 */
 	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
@@ -375,7 +379,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 
 #ifdef DOM0OPS
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
+	if (xendomain_is_privileged()) {
 		xenkernfs_init();
 		xenprivcmd_init();
 		xen_shm_init();

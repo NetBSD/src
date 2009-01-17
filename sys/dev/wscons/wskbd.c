@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.112.6.5 2008/06/29 09:33:11 mjf Exp $ */
+/* $NetBSD: wskbd.c,v 1.112.6.6 2009/01/17 13:29:10 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.112.6.5 2008/06/29 09:33:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.112.6.6 2009/01/17 13:29:10 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1232,6 +1232,9 @@ getkeyrepeat:
 		sc->sc_layout = enc;
 		wskbd_update_layout(sc->id, enc);
 		return (0);
+
+	case WSKBDIO_SETVERSION:
+		return wsevent_setversion(sc->sc_base.me_evp, *(int *)data);
 	}
 
 	/*

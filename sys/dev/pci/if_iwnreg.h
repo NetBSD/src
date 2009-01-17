@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.3 2008/02/09 19:14:53 skrll Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.3.10.1 2009/01/17 13:29:00 mjf Exp $	*/
 /*	OpenBSD: if_iwnreg.h,v 1.9 2007/11/27 20:59:40 damien Exp	*/
 
 /*-
@@ -35,7 +35,7 @@
 #define IWN_MAX_SCATTER	20
 
 /* Rx buffers must be large enough to hold a full 4K A-MPDU */
-#define IWN_RBUF_SIZE	(4 * 1024)
+#define IWN_RBUF_SIZE	(8 * 1024)
 
 /*
  * Control and status registers.
@@ -259,6 +259,7 @@ struct iwn_tx_cmd {
 #define IWN_CMD_SET_LED			 72
 #define IWN_CMD_SET_POWER_MODE		119
 #define IWN_CMD_SCAN			128
+#define IWN_CMD_SCAN_ABORT		129
 #define IWN_CMD_SET_BEACON		145
 #define IWN_CMD_TXPOWER			151
 #define IWN_CMD_BLUETOOTH		155
@@ -313,8 +314,7 @@ struct iwn_config {
 #define IWN_FILTER_NODECRYPT	(1 << 3)
 #define IWN_FILTER_BSS		(1 << 5)
 
-	uint8_t		chan;
-	uint8_t		reserved5;
+	uint16_t	chan;
 	uint8_t		ht_single_mask;
 	uint8_t		ht_dual_mask;
 } __packed;
@@ -443,16 +443,23 @@ struct iwn_cmd_beacon {
 	uint16_t	len;
 	uint16_t	reserved1;
 	uint32_t	flags;	/* same as iwn_cmd_data */
+	uint8_t		try_cnt;
+	uint8_t		kill_cnt;
+	uint16_t	reserved2;
 	uint8_t		rate;
+	uint8_t		flags2;
+	uint16_t	ext_flags;
 	uint8_t		id;
-	uint8_t		reserved2[30];
+	uint8_t		reserved3[23];
 	uint32_t	lifetime;
-	uint8_t		ofdm_mask;
-	uint8_t		cck_mask;
-	uint16_t	reserved3[3];
+	uint32_t	reserved4;
+	uint8_t		reserved5;
+	uint8_t		reserved6;
+	uint8_t		reserved7;
+	uint16_t	reserved8[9];
 	uint16_t	tim;
 	uint8_t		timsz;
-	uint8_t		reserved4;
+	uint8_t		reserved9;
 	struct		ieee80211_frame wh;
 } __packed;
 
@@ -516,23 +523,24 @@ struct iwn_scan_essid {
 	uint8_t	data[IEEE80211_NWID_LEN];
 } __packed;
 
-struct iwn_scan_hdr {
-	uint16_t	len;
-	uint8_t		reserved1;
-	uint8_t		nchan;
-	uint16_t	quiet;
-	uint16_t	plcp_threshold;
-	uint16_t	crc_threshold;
-	uint16_t	rxchain;
-	uint32_t	max_svc;	/* background scans */
-	uint32_t	pause_svc;	/* background scans */
-	uint32_t	flags;
-	uint32_t	filter;
+#define IWN_MAX_PROBES	4
 
-	/* followed by a struct iwn_cmd_data */
-	/* followed by an array of 4x struct iwn_scan_essid */
-	/* followed by probe request body */
-	/* followed by nchan x struct iwn_scan_chan */
+struct iwn_scan_hdr {
+	uint16_t		len;
+	uint8_t			reserved1;
+	uint8_t			nchan;
+	uint16_t		quiet;
+	uint16_t		plcp_threshold;
+	uint16_t		crc_threshold;
+	uint16_t		rxchain;
+	uint32_t		max_svc;	/* background scans */
+	uint32_t		pause_svc;	/* background scans */
+	uint32_t		flags;
+	uint32_t		filter;
+	struct iwn_cmd_data	tx_cmd;
+	struct iwn_scan_essid	scan_essid[IWN_MAX_PROBES];
+	struct ieee80211_frame	wh;
+	uint8_t			data[0];    /* nchan x struct iwn_scan_chan */
 } __packed;
 
 struct iwn_scan_chan {
@@ -654,6 +662,14 @@ struct iwn_tx_stat {
 	uint16_t	reserved;
 	uint32_t	power[2];
 	uint32_t	status;
+	/* from FreeBSD driver... XXX */
+#define IWN_TX_SUCCESS                  0x00
+#define IWN_TX_FAIL                     0x80    /* all failures have 0x80 set */
+#define IWN_TX_FAIL_SHORT_LIMIT         0x82    /* too many RTS retries */
+#define IWN_TX_FAIL_LONG_LIMIT          0x83    /* too many retries */
+#define IWN_TX_FAIL_FIFO_UNDERRRUN      0x84    /* tx fifo not kept running */
+#define IWN_TX_FAIL_DEST_IN_PS          0x88    /* sta found in power save */
+#define IWN_TX_FAIL_TX_LOCKED           0x90    /* waiting to see traffic */
 } __packed;
 
 /* structure for IWN_BEACON_MISSED notification */

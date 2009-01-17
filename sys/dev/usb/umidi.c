@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.34.6.2 2008/09/28 10:40:34 mjf Exp $	*/
+/*	$NetBSD: umidi.c,v 1.34.6.3 2009/01/17 13:29:10 mjf Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.34.6.2 2008/09/28 10:40:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.34.6.3 2009/01/17 13:29:10 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1486,8 +1486,8 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	if ( umididebug >= 100 )
 		microtime(&umidi_tv);
 #endif
-	DPRINTFN(100, ("umidi out: %lu.%06lus ep=%p cn=%d len=%d cin=%#x\n",
-	    umidi_tv.tv_sec%100, umidi_tv.tv_usec,
+	DPRINTFN(100, ("umidi out: %"PRIu64".%06"PRIu64"s ep=%p cn=%d len=%d cin=%#x\n",
+	    umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec,
 	    ep, out_jack->cable_number, len, cin));
 	
 	s = splusb();
@@ -1631,9 +1631,9 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 #endif
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
         if ( 0 == count % UMIDI_PACKET_SIZE ) {
-		DPRINTFN(200,("%s: %lu.%06lus out ep %p xfer length %u\n",
+		DPRINTFN(200,("%s: %"PRIu64".%06"PRIu64"s out ep %p xfer length %u\n",
 			     USBDEVNAME(ep->sc->sc_dev),
-			     umidi_tv.tv_sec%100, umidi_tv.tv_usec, ep, count));
+			     umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec, ep, count));
         } else {
                 DPRINTF(("%s: output endpoint %p odd transfer length %u\n",
                         USBDEVNAME(ep->sc->sc_dev), ep, count));

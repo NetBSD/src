@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.33.14.1 2008/06/29 09:33:08 mjf Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.33.14.2 2009/01/17 13:28:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.33.14.1 2008/06/29 09:33:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.33.14.2 2009/01/17 13:28:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -123,7 +123,7 @@ ofcons_open(dev_t dev, int flag, int mode, struct lwp *l)
 	struct ofcons_softc *sc;
 	struct tty *tp;
 
-	sc = device_lookup_private(&ofcons_cd, minor(dev));;
+	sc = device_lookup_private(&ofcons_cd, minor(dev));
 	if (!sc)
 		return ENXIO;
 	if (!(tp = sc->of_tty))

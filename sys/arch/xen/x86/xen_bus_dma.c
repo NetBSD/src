@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.9.42.2 2008/06/05 19:14:35 mjf Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.9.42.3 2009/01/17 13:28:39 mjf Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.9.42.2 2008/06/05 19:14:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.9.42.3 2009/01/17 13:28:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
@@ -96,7 +95,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = INVALID_P2M_ENTRY;
 #ifdef XEN3
-		res.extent_start = &mfn;
+		xenguest_handle(res.extent_start) = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.domid = DOMID_SELF;
@@ -128,7 +127,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	}
 	/* Get the new contiguous memory extent */
 #ifdef XEN3
-	res.extent_start = &mfn;
+	xenguest_handle(res.extent_start) = &mfn;
 	res.nr_extents = 1;
 	res.extent_order = order;
 	res.address_bits = get_order(high) + PAGE_SHIFT;
@@ -195,7 +194,7 @@ failed:
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pgnext) {
 		pgnext = pg->pageq.queue.tqe_next;
 #ifdef XEN3
-		res.extent_start = &mfn;
+		xenguest_handle(res.extent_start) = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.address_bits = 32;

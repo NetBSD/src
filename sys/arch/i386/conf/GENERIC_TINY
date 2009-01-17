@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.111.6.2 2008/06/02 13:22:13 mjf Exp $
+#	$NetBSD: GENERIC_TINY,v 1.111.6.3 2009/01/17 13:28:03 mjf Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -28,9 +28,6 @@ maxusers	8		# estimated number of users
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
 
-# Save a physical page per process by not setting a kernel stack red zone.
-options 	NOREDZONE
-
 # Standard system options
 
 options 	INSECURE	# disable kernel security levels - X needs this
@@ -48,7 +45,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	NMBCLUSTERS=256
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

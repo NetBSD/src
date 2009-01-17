@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.18.6.1 2008/09/28 10:40:56 mjf Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.18.6.2 2009/01/17 13:29:32 mjf Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -688,7 +688,7 @@ struct ieee80211_duration {
 				 IEEE80211_DUR_DS_SLOW_ACK + \
 				 IEEE80211_DUR_DS_LONG_PREAMBLE + \
 				 IEEE80211_DUR_DS_SLOW_PLCPHDR + \
-				 IEEE80211_DUR_DIFS)
+				 IEEE80211_DUR_DS_DIFS)
 
 
 #endif /* !_NET80211_IEEE80211_H_ */

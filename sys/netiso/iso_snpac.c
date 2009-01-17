@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.47.20.1 2008/06/02 13:24:29 mjf Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.47.20.2 2009/01/17 13:29:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.47.20.1 2008/06/02 13:24:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.47.20.2 2009/01/17 13:29:33 mjf Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -178,7 +178,7 @@ union sockunion {
  * NOTES:		This does a lot of obscure magic;
  */
 void
-llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+llc_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	union sockunion *gate = (union sockunion *) rt->rt_gateway;
 	struct llinfo_llc *lc = (struct llinfo_llc *) rt->rt_llinfo;
@@ -281,12 +281,12 @@ iso_setmcasts(struct ifnet *ifp, int req)
 	(void)memset(&ifr, 0, sizeof(ifr));
 	for (cpp = addrlist; *cpp; cpp++) {
 		(void)memcpy(ifr.ifr_addr.sa_data, *cpp, 6);
-		if (req == RTM_ADD && (ifp->if_ioctl == NULL ||
-		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr) != 0))
+		if (req == RTM_ADD && 
+		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr) != 0)
 			printf("iso_setmcasts: %s unable to add mcast\n",
 			    ifp->if_xname);
-		else if (req == RTM_DELETE && (ifp->if_ioctl == NULL ||
-		    (*ifp->if_ioctl)(ifp, SIOCDELMULTI, &ifr) != 0))
+		else if (req == RTM_DELETE && 
+		    (*ifp->if_ioctl)(ifp, SIOCDELMULTI, &ifr) != 0)
 			printf("iso_setmcasts: %s unable to delete mcast\n",
 			    ifp->if_xname);
 	}
@@ -469,8 +469,7 @@ add:
 		if (nsellength && (rt->rt_flags & RTF_HOST)) {
 			if (rt->rt_refcnt == 0) {
 				rtrequest(RTM_DELETE, sisotosa(&dst),
-				(struct sockaddr *) 0, (struct sockaddr *) 0,
-					  0, (struct rtentry **) 0);
+				    NULL, NULL, 0, NULL);
 				rt = 0;
 				goto add;
 			} else {
@@ -606,7 +605,7 @@ snpac_logdefis(struct rtentry *sc)
 	rt = rtalloc1((struct sockaddr *) & zsi, 0);
 	if (rt == 0) {
 		rtrequest(RTM_ADD, sisotosa(&zsi), rt_getkey(sc),
-		    sisotosa(&zmk), RTF_DYNAMIC | RTF_GATEWAY, 0);
+		    sisotosa(&zmk), RTF_DYNAMIC | RTF_GATEWAY, NULL);
 	} else {
 		if ((rt->rt_flags & RTF_DYNAMIC) &&
 		    (rt->rt_flags & RTF_GATEWAY) && rt_mask(rt)->sa_len == 0)

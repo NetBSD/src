@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_net.c,v 1.1.2.2 2008/10/05 20:11:34 mjf Exp $	*/
+/*	$NetBSD: rumpuser_net.c,v 1.1.2.3 2009/01/17 13:29:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -25,6 +25,11 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: rumpuser_net.c,v 1.1.2.3 2009/01/17 13:29:37 mjf Exp $");
+#endif /* !lint */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -38,19 +43,47 @@ int
 rumpuser_net_socket(int domain, int type, int proto, int *error)
 {
 
-	DOCALL(int, (socket(domain, type, proto)));
+	DOCALL_KLOCK(int, (socket(domain, type, proto)));
 }
 
 int
 rumpuser_net_sendmsg(int s, const struct msghdr *msg, int flags, int *error)
 {
 
-	DOCALL(ssize_t, (sendmsg(s, msg, flags)));
+	DOCALL_KLOCK(ssize_t, (sendmsg(s, msg, flags)));
 }
 
 int
 rumpuser_net_recvmsg(int s, struct msghdr *msg, int flags, int *error)
 {
 
-	DOCALL(ssize_t, (recvmsg(s, msg, flags)));
+	DOCALL_KLOCK(ssize_t, (recvmsg(s, msg, flags)));
+}
+
+int
+rumpuser_net_connect(int s, const struct sockaddr *name, int len, int *error)
+{
+
+	DOCALL_KLOCK(int, (connect(s, name, (socklen_t)len)));
+}
+
+int
+rumpuser_net_bind(int s, const struct sockaddr *name, int len, int *error)
+{
+
+	DOCALL_KLOCK(int, (bind(s, name, (socklen_t)len)));
+}
+
+int
+rumpuser_net_accept(int s, struct sockaddr *name, int *lenp, int *error)
+{
+
+	DOCALL_KLOCK(int, (accept(s, name, (socklen_t *)lenp)));
+}
+
+int
+rumpuser_net_listen(int s, int backlog, int *error)
+{
+
+	DOCALL_KLOCK(int, (listen(s, backlog)));
 }

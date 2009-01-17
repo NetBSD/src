@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.64.6.2 2008/06/02 13:24:34 mjf Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.64.6.3 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.64.6.2 2008/06/02 13:24:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.64.6.3 2009/01/17 13:29:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,7 +553,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 	if (copy != NULL) {
-		FREE(copy, M_TEMP);
+		free(copy, M_TEMP);
 	} else {
 		brelse(bp, BC_INVAL);
 	}

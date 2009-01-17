@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.h,v 1.11 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: ip_ecn.h,v 1.11.70.1 2009/01/17 13:29:32 mjf Exp $	*/
 /*	$KAME: ip_ecn.h,v 1.6 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #define _NETINET_IP_ECN_H_
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 #endif

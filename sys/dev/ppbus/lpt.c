@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.20.16.3 2008/06/02 13:23:47 mjf Exp $ */
+/* $NetBSD: lpt.c,v 1.20.16.4 2009/01/17 13:29:07 mjf Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.20.16.3 2008/06/02 13:23:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.20.16.4 2009/01/17 13:29:07 mjf Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -179,8 +179,9 @@ lpt_attach(device_t parent, device_t self, void *aux)
 
 	/* Print out mode */
         ppbdev->ctx.mode = ppbus_get_mode(parent);
-	bitmask_snprintf(ppbdev->ctx.mode, "\20\1COMPATIBLE\2NIBBLE"
-		"\3PS2\4EPP\5ECP\6FAST_CENTR", buf, sizeof(buf));
+	snprintb(buf, sizeof(buf),
+	    "\20\1COMPATIBLE\2NIBBLE\3PS2\4EPP\5ECP\6FAST_CENTR",
+	    ppbdev->ctx.mode);
 	printf(": port mode = %s\n", buf);
 
 	/* Initialize the device on open by default */

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.5.14.1 2008/06/02 13:22:55 mjf Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.5.14.2 2009/01/17 13:28:40 mjf Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,16 +29,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.5.14.1 2008/06/02 13:22:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.5.14.2 2009/01/17 13:28:40 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
 #include <sys/errno.h> 
-#include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <xen/xen.h>	/* for xendomain_is_dom0() */
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
@@ -75,8 +75,7 @@ xenstore_domain_interface(void)
 static int
 wake_waiting(void *arg)
 {
-	if (__predict_false(xenstored_ready == 0 &&
-	    xen_start_info.flags & SIF_INITDOMAIN)) {
+	if (__predict_false(xenstored_ready == 0 && xendomain_is_dom0())) {
 		xenstored_ready = 1; 
 		wakeup(&xenstored_ready);
 	} 
@@ -134,7 +133,7 @@ xb_write(const void *data, unsigned len)
 		/* Read indexes, then verify. */
 		cons = intf->req_cons;
 		prod = intf->req_prod;
-		x86_lfence();
+		xen_rmb();
 		if (!check_indexes(cons, prod)) {
 			splx(s);
 			return EIO;
@@ -151,9 +150,9 @@ xb_write(const void *data, unsigned len)
 		len -= avail;
 
 		/* Other side must not see new header until data is there. */
-		x86_lfence();
+		xen_rmb();
 		intf->req_prod += avail;
-		x86_lfence();
+		xen_rmb();
 
 		hypervisor_notify_via_evtchn(xen_start_info.store_evtchn);
 	}
@@ -180,7 +179,7 @@ xb_read(void *data, unsigned len)
 		/* Read indexes, then verify. */
 		cons = intf->rsp_cons;
 		prod = intf->rsp_prod;
-		x86_lfence();
+		xen_rmb();
 		if (!check_indexes(cons, prod)) {
 			XENPRINTF(("xb_read EIO\n"));
 			splx(s);
@@ -194,16 +193,16 @@ xb_read(void *data, unsigned len)
 			avail = len;
 
 		/* We must read header before we read data. */
-		x86_lfence();
+		xen_rmb();
 
 		memcpy(data, src, avail);
 		data = (char *)data + avail;
 		len -= avail;
 
 		/* Other side must not see free space until we've copied out */
-		x86_lfence();
+		xen_rmb();
 		intf->rsp_cons += avail;
-		x86_lfence();
+		xen_rmb();
 
 		XENPRINTF(("Finished read of %i bytes (%i to go)\n",
 		    avail, len));
@@ -215,7 +214,7 @@ xb_read(void *data, unsigned len)
 	return 0;
 }
 
-/* Set up interrupt handler off store event channel. */
+/* Set up interrupt handler of store event channel. */
 int
 xb_init_comms(device_t dev)
 {
@@ -227,11 +226,11 @@ xb_init_comms(device_t dev)
 	err = event_set_handler(xen_start_info.store_evtchn, wake_waiting,
 	    NULL, IPL_TTY, "xenbus");
 	if (err) {
-		printf("XENBUS request irq failed %i\n", err);
+		aprint_error_dev(dev, "request irq failed %i\n", err);
 		return err;
 	}
 	xenbus_irq = xen_start_info.store_evtchn;
-	printf("%s: using event channel %d\n", device_xname(dev), xenbus_irq);
+	aprint_verbose_dev(dev, "using event channel %d\n", xenbus_irq);
 	hypervisor_enable_event(xenbus_irq);
 	return 0;
 }

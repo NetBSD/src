@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.19.6.1 2008/06/02 13:22:22 mjf Exp $
+#	$NetBSD: majors.mac68k,v 1.19.6.2 2009/01/17 13:28:11 mjf Exp $
 #
 # Device majors for mac68k
 #
@@ -26,7 +26,6 @@ device-major	filedesc	char 21
 device-major	bpf		char 22			bpfilter
 device-major	aed		char 23			aed
 device-major	tun		char 24			tun
-device-major	lkm		char 25			lkm
 
 device-major	md		char 32  block 13	md
 device-major	ss		char 33			ss

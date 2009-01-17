@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxxx,v 1.3 2005/12/11 12:17:00 christos Exp $
+#	$NetBSD: Makefile.bootxxx,v 1.3.74.1 2009/01/17 13:27:55 mjf Exp $
 
 NOMAN=	# defined
 
@@ -6,28 +6,15 @@ NOMAN=	# defined
 .include <bsd.own.mk>
 
 PROG=	boot.atari
-#
-# Warning: bootxxx.c should be the first source!
-#
-SRCS=	bootxxx.c aout.c bsdstart.s elf.c filesystem.c sysinfo.c
 
 STRIPFLAG=
-BINDIR=/usr/mdec/${BTYPE:tl}
 BINMODE=${NONBINMODE}
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
-
-DEFS=	-D_STANDALONE  -DHEAP_VARIABLE
-INCL=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
-
-CPPFLAGS+=	${DEFS} ${INCL}
-CFLAGS+=	-fomit-frame-pointer -Wall -fno-function-cse -fstrength-reduce
-CFLAGS+=	-ffreestanding
-.if ${OBJECT_FMT} == "ELF"
-LDFLAGS=	-static -nostdlib -Wl,-x,-N,-e,bootxxx,-Ttext,${LOADADDR3}
-.else
-LDFLAGS=	-static -nostdlib -Wl,-N,-Ttext,${LOADADDR3}
-.endif
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 # logically src/sys
 S=${.CURDIR}/../../../../..
@@ -40,31 +27,33 @@ S_MACHSAOBJ!=	cd ${S_MACHSA} && ${PRINTOBJDIR}
 
 LIBSA=${S_MACHSAOBJ}/libsa.a
 
-DPADD=	${LIBSA}
-LDADD=	${LIBSA}
+.include "../../Makefile.booters"
+.include "../../xxboot/${BTYPE}_LOADADDR"
 
-beforeinstall:
-	${OBJCOPY} -O binary ${PROG} ${PROG}X
-	@mv -f ${PROG} ${PROG}XX
-	@mv -f ${PROG}X ${PROG};
-
-afterinstall:
-	${INSTALL_FILE} -o root -g wheel -m 644 \
-		${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/
-	@mv -f ${PROG}XX ${PROG}
-
-.s.o:
-	${CPP} ${CPPFLAGS} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET}
-
-.c.o:
-	${CC} ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC} -o ${.TARGET}
-
-${PROG}:
-	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
-
-${PROG}: ../../xxboot/${BTYPE}_LOADADDR
+CPPFLAGS+=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
+.if ${OBJECT_FMT} == "ELF"
+LINKFLAGS=	-static -N -e start -Ttext ${LOADADDR3}
+.else
+LINKFLAGS=	-static -N -Ttext ${LOADADDR3}
+.endif
 
 .PATH: ${.CURDIR}/.. ${S_LIBTOS}
 
-.include "../../xxboot/${BTYPE}_LOADADDR"
+#
+# Warning: start.S should be the first source!
+#
+SRCS=	start.S bootxxx.c aout.c bsdstart.s elf.c filesystem.c sysinfo.c
+
+LIBS=	${LIBSA}
+
+beforeinstall:
+	${INSTALL_DIR} ${DESTDIR}${BINDIR}
+
+${PROG}:	${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${.TARGET}.elf ${OBJS} ${LIBS}
+	${OBJCOPY} -O binary ${PROG}.elf ${.TARGET}
+
+CLEANFILES+=	${PROG}.elf
+
 .include <bsd.prog.mk>

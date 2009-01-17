@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.70 2007/12/08 18:36:00 dsl Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.70.12.1 2009/01/17 13:28:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.70 2007/12/08 18:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.70.12.1 2009/01/17 13:28:42 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -76,7 +76,7 @@ int ibcs2_debug = 1;
 
 struct uvm_object *emul_ibcs2_object;
 
-const struct emul emul_ibcs2 = {
+struct emul emul_ibcs2 = {
 	"ibcs2",
 	"/emul/ibcs2",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -113,6 +113,7 @@ const struct emul emul_ibcs2 = {
 
 	uvm_default_mapaddr,
 	NULL,	/* e_usertrap */
+	NULL,	/* e_sa */
 	0,	/* e_ucsize */
 	NULL,	/* e_startlwp */
 };

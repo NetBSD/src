@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.53.16.3 2008/09/28 10:40:23 mjf Exp $	*/
+/*	$NetBSD: mlx.c,v 1.53.16.4 2009/01/17 13:28:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.53.16.3 2008/09/28 10:40:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.53.16.4 2009/01/17 13:28:56 mjf Exp $");
 
 #include "ld.h"
 
@@ -1150,7 +1150,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 		mes = (struct mlx_enq_sys_drive *)mc->mc_mx.mx_context;
 		dr = &mlx->mlx_sysdrive[0];
 
-		for (i = 0; i < mlx->mlx_numsysdrives; i++) {
+		for (i = 0; i < mlx->mlx_numsysdrives; i++, dr++) {
 			/* Has state been changed by controller? */
 			if (dr->ms_state != mes[i].sd_state) {
 				switch (mes[i].sd_state) {

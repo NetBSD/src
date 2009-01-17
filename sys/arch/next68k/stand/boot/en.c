@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.14 2005/12/11 12:18:29 christos Exp $        */
+/*      $NetBSD: en.c,v 1.14.74.1 2009/01/17 13:28:23 mjf Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -61,7 +61,7 @@ extern char *mg;
 int en_match(struct netif *, void *);
 int en_probe(struct netif *, void *);
 void en_init(struct iodesc *, void *);
-int en_get(struct iodesc *, void *, size_t, time_t);
+int en_get(struct iodesc *, void *, size_t, saseconds_t);
 int en_put(struct iodesc *, void *, size_t);
 void en_end(struct netif *);
 
@@ -273,7 +273,7 @@ en_put(struct iodesc *desc, void *pkt, size_t len)
 }
 
 int
-en_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
+en_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
 	volatile struct en_regs *er;
 	volatile struct dma_dev *rxdma;

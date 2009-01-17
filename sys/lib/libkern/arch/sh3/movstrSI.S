@@ -1,4 +1,4 @@
-/*	$NetBSD: movstrSI.S,v 1.7 2006/05/22 21:34:08 uwe Exp $	*/
+/*	$NetBSD: movstrSI.S,v 1.7.58.1 2009/01/17 13:29:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo.  All rights reserved.
@@ -27,6 +27,26 @@
  */
 
 #include <machine/asm.h>
+
+
+#ifdef __ELF__
+	.hidden __movstrSI4, __movmemSI4 
+	.hidden __movstrSI8, __movmemSI8 
+	.hidden __movstrSI12, __movmemSI12
+	.hidden __movstrSI16, __movmemSI16
+	.hidden __movstrSI20, __movmemSI20
+	.hidden __movstrSI24, __movmemSI24
+	.hidden __movstrSI28, __movmemSI28
+	.hidden __movstrSI32, __movmemSI32
+	.hidden __movstrSI36, __movmemSI36
+	.hidden __movstrSI40, __movmemSI40
+	.hidden __movstrSI44, __movmemSI44
+	.hidden __movstrSI48, __movmemSI48
+	.hidden __movstrSI52, __movmemSI52
+	.hidden __movstrSI56, __movmemSI56
+	.hidden __movstrSI60, __movmemSI60
+	.hidden __movstrSI64, __movmemSI64
+#endif
 
 
 NENTRY(__movstrSI64)

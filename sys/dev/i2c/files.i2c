@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.16.20.2 2008/10/05 20:11:29 mjf Exp $
+#	$NetBSD: files.i2c,v 1.16.20.3 2009/01/17 13:28:54 mjf Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -49,6 +49,10 @@ device	lmtemp: sysmon_envsys
 attach	lmtemp at iic
 file	dev/i2c/lm75.c				lmtemp
 
+# National Semiconductor LM78 temp sensor/fan controller
+attach	lm at iic with lm_iic
+file	dev/i2c/lm_i2c.c			lm_iic
+
 # Dallas DS1307 Real Time Clock
 device	dsrtc
 attach	dsrtc at iic
@@ -59,29 +63,11 @@ device	xrtc
 attach	xrtc at iic
 file	dev/i2c/x1226.c				xrtc
 
-# Analog Devices ADT 7463 thermal monitor / fan controller
-define adt7463c {}
-device adt7463c: sysmon_envsys
-attach adt7463c at iic
-file dev/i2c/adt7463.c			adt7463c
-
-# Analog Devices ADT 7467 thermal monitor / fan controller
-define adt7467c {}
-device adt7467c: sysmon_envsys
-attach adt7467c at iic
-file dev/i2c/adt7467.c			adt7467c
-
 # Analog Devices dBCool family of thermal monitors / fan controllers
 define dbcool {}
 device dbcool: sysmon_envsys
 attach dbcool at iic
 file dev/i2c/dbcool.c			dbcool
-
-# Analog Devices ADM 1030 thermal monitor / fan controller
-define adm1030c {}
-device adm1030c: sysmon_envsys
-attach adm1030c at iic
-file dev/i2c/adm1030.c			adm1030c
 
 # RICOH RS5C372[AB] Real Time Clock
 device	rs5c372rtc
@@ -119,3 +105,8 @@ file	dev/i2c/xbseeprom.c		xbseeprom
 device	spdmem
 attach	spdmem at iic
 file	dev/i2c/spdmem.c		spdmem
+
+# ADM1021
+device	admtemp: sysmon_envsys
+attach	admtemp at iic
+file	dev/i2c/adm1021.c		admtemp

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.19.6.1 2008/06/02 13:22:56 mjf Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.19.6.2 2009/01/17 13:28:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -78,5 +78,8 @@ unsigned long emul_flags_translate(const struct emul_flags_xtab *tab,
 				   unsigned long in, unsigned long *leftover);
 
 void compat_offseterr(struct vnode *, const char *);
+
+void compat_sysctl_init(void);
+void compat_sysctl_fini(void);
 
 #endif /* !_COMPAT_UTIL_H_ */

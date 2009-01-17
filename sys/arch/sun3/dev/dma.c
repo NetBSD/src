@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.19.40.1 2008/06/02 13:22:45 mjf Exp $ */
+/*	$NetBSD: dma.c,v 1.19.40.2 2009/01/17 13:28:33 mjf Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.19.40.1 2008/06/02 13:22:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.19.40.2 2009/01/17 13:28:33 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -313,13 +313,16 @@ espdmaintr(struct dma_softc *sc)
 
 	csr = DMA_GCSR(sc);
 
+#ifdef NCR53C9X_DEBUG
+        if (ncr53c9x_debug & NCR_SHOWDMA)
+		snprintb(bits, sizeof(bits), DMACSRBITS, csr);
+#endif
 	NCR_DMA(("%s: intr: addr 0x%x, csr %s\n",
-	    device_xname(sc->sc_dev), DMADDR(sc),
-	    bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits))));
+	    device_xname(sc->sc_dev), DMADDR(sc), bits));
 
 	if (csr & D_ERR_PEND) {
-		printf("%s: error: csr=%s\n", device_xname(sc->sc_dev),
-		    bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
+		snprintb(bits, sizeof(bits), DMACSRBITS, csr);
+		printf("%s: error: csr=%s\n", device_xname(sc->sc_dev), bits);
 		csr &= ~D_EN_DMA;	/* Stop DMA */
 		DMA_SCSR(sc, csr);
 		csr |= D_FLUSH;

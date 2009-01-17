@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.50.6.1 2008/04/03 12:43:12 mjf Exp $ */
+/* $NetBSD: kauth.h,v 1.50.6.2 2009/01/17 13:29:40 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -86,7 +86,6 @@ enum {
 	KAUTH_SYSTEM_CPU,
 	KAUTH_SYSTEM_DEBUG,
 	KAUTH_SYSTEM_FILEHANDLE,
-	KAUTH_SYSTEM_LKM,
 	KAUTH_SYSTEM_MKNOD,
 	KAUTH_SYSTEM_MOUNT,
 	KAUTH_SYSTEM_PSET,

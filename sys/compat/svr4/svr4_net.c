@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.50.12.2 2008/06/02 13:23:08 mjf Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.50.12.3 2009/01/17 13:28:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.50.12.2 2008/06/02 13:23:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.50.12.3 2009/01/17 13:28:48 mjf Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -176,7 +176,7 @@ svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 		break;
 
 	default:
-		DPRINTF(("%d);\n", minor(dev)));
+		DPRINTF(("%"PRId64");\n", minor(dev)));
 		return EOPNOTSUPP;
 	}
 

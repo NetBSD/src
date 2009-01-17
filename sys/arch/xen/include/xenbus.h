@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.7.14.2 2008/06/02 13:22:53 mjf Exp $ */
+/* $NetBSD: xenbus.h,v 1.7.14.3 2009/01/17 13:28:39 mjf Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -34,8 +34,10 @@
 
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <xen/xen3-public/xen.h>
 #include <xen/xen3-public/io/xenbus.h>
 #include <xen/xen3-public/io/xs_wire.h>
+#include <xen/xen3-public/grant_table.h>	/* for grant_ref_t */
 
 /* xenbus to hypervisor attach */
 struct xenbus_attach_args {
@@ -158,10 +160,6 @@ void xs_resume(void);
 
 /* Used by xenbus_dev to borrow kernel's store connection. */
 int xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void **);
-
-/* Called from xen core code. */
-void xenbus_suspend(void);
-void xenbus_resume(void);
 
 void xenbus_probe(void *);
 

@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.11.6.2 2008/06/02 13:22:24 mjf Exp $ */
+/* $Id: if_ae.c,v 1.11.6.3 2009/01/17 13:28:15 mjf Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.11.6.2 2008/06/02 13:22:24 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.11.6.3 2009/01/17 13:28:15 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -154,6 +154,7 @@ static void	ae_attach(device_t, device_t, void *);
 static int	ae_detach(device_t, int);
 static int	ae_activate(device_t, enum devact);
 
+static int	ae_ifflags_cb(struct ethercom *);
 static void	ae_reset(struct ae_softc *);
 static void	ae_idle(struct ae_softc *, u_int32_t);
 
@@ -387,6 +388,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, ae_ifflags_cb);
 
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
@@ -813,6 +815,24 @@ ae_watchdog(struct ifnet *ifp)
 	ae_start(ifp);
 }
 
+/* If the interface is up and running, only modify the receive
+ * filter when changing to/from promiscuous mode.  Otherwise return
+ * ENETRESET so that ether_ioctl will reset the chip.
+ */
+static int
+ae_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct ae_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & IFF_PROMISC) != 0)
+		ae_filter_setup(sc);
+	return 0;
+}
+
 /*
  * ae_ioctl:		[ifnet interface function]
  *
@@ -826,37 +846,16 @@ ae_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFFLAGS:
-		/* If the interface is up and running, only modify the receive
-		 * filter when setting promiscuous or debug mode.  Otherwise
-		 * fall through to ether_ioctl, which will reset the chip.
-		 */
-#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
-		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
-		    == (IFF_UP|IFF_RUNNING))
-		    && ((ifp->if_flags & (~RESETIGN))
-		    == (sc->sc_if_flags & (~RESETIGN)))) {
-			/* Set up the receive filter. */
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING) {
+			/*
+			 * Multicast list has changed.  Set the
+			 * hardware filter accordingly.
+			 */
 			ae_filter_setup(sc);
-			error = 0;
-			break;
-#undef RESETIGN
 		}
-		/* FALLTHROUGH */
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING) {
-				/*
-				 * Multicast list has changed.  Set the
-				 * hardware filter accordingly.
-				 */
-				ae_filter_setup(sc);
-			}
-			error = 0;
-		}
-		break;
+		error = 0;
 	}
 
 	/* Try to get more packets going. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.19.16.1 2008/06/02 13:22:40 mjf Exp $	*/
+/*	$NetBSD: sw.c,v 1.19.16.2 2009/01/17 13:28:30 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.19.16.1 2008/06/02 13:22:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.19.16.2 2009/01/17 13:28:30 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -357,9 +357,9 @@ sw_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_options) {
-		aprint_normal_dev(self, "options=%s\n",
-		    bitmask_snprintf(sc->sc_options, SW_OPTIONS_BITS,
-		    bits, sizeof(bits)));
+		snprintb(bits, sizeof(bits),
+		    SW_OPTIONS_BITS, sc->sc_options);
+		aprint_normal_dev(self, "options=%s\n", bits);
 	}
 
 	ncr_sc->sc_channel.chan_id = 7;

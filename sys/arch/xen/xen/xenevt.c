@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.22.6.4 2008/09/28 10:40:14 mjf Exp $      */
+/*      $NetBSD: xenevt.c,v 1.22.6.5 2009/01/17 13:28:40 mjf Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.22.6.4 2008/09/28 10:40:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.22.6.5 2009/01/17 13:28:40 mjf Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -165,7 +165,7 @@ xenevtattach(int n)
 	memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
 
 	/* register a handler at splhigh, so that spllower() will call us */
-	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
+	ih = malloc(sizeof (struct intrhand), M_DEVBUF,
 	     M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		panic("can't allocate xenevt interrupt source");

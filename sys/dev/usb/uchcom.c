@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.2.6.1 2008/06/02 13:23:54 mjf Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.2.6.2 2009/01/17 13:29:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.2.6.1 2008/06/02 13:23:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.2.6.2 2009/01/17 13:29:09 mjf Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -176,6 +176,7 @@ static const struct uchcom_divider_record dividers[] =
 
 static const struct usb_devno uchcom_devs[] = {
 	{ USB_VENDOR_WINCHIPHEAD, USB_PRODUCT_WINCHIPHEAD_CH341SER },
+	{ USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341 },
 };
 #define uchcom_lookup(v, p)	usb_lookup(uchcom_devs, v, p)
 

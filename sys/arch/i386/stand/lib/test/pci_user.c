@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_user.c,v 1.3 2005/12/11 12:17:49 christos Exp $	*/
+/*	$NetBSD: pci_user.c,v 1.3.74.1 2009/01/17 13:28:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <pcivar.h>
 
-extern int mapio __P((void));
+extern int mapio(void);
 
 /*
  * Replacement for i386/stand/lib/biospci.c.
@@ -47,25 +47,25 @@ extern int mapio __P((void));
 #define	PCI_MODE1_DATA_REG	0x0cfc
 
 static int
-maketag(bus, dev, fcn)
-	int bus, dev, fcn;
+maketag(int bus, int dev, int fcn)
 {
-	return (PCI_MODE1_ENABLE |
-		(bus << 16) | (dev << 11) | (fcn << 8));
+
+	return PCI_MODE1_ENABLE |
+	    (bus << 16) | (dev << 11) | (fcn << 8);
 }
 
 int
-pcicheck()
+pcicheck(void)
 {
-	return (mapio() ? -1 : 0);
+
+	return mapio() ? -1 : 0;
 }
 
-int 
-pcifinddev(vid, did, handle)
-	int             vid, did;
-	pcihdl_t       *handle;
+int
+pcifinddev(int vid, int did, pcihdl_t *handle)
 {
 	int i;
+
 	for (i = 0; i < 32; i++) {
 		pcihdl_t h;
 		int id;
@@ -73,17 +73,14 @@ pcifinddev(vid, did, handle)
 		pcicfgread(&h, 0, &id);
 		if (id == (vid | (did << 16))) {
 			*handle = h;
-			return (0);
+			return 0;
 		}
 	}
-	return (-1);
+	return -1;
 }
 
-int 
-pcicfgread(handle, off, val)
-	pcihdl_t       *handle;
-	int             off;
-	int            *val;
+int
+pcicfgread(pcihdl_t *handle, int off, int *val)
 {
 	int data;
 
@@ -91,17 +88,14 @@ pcicfgread(handle, off, val)
 	data = inl(PCI_MODE1_DATA_REG);
 	outl(PCI_MODE1_ADDRESS_REG, 0);
 	*val = data;
-	return (0);
+	return 0;
 }
 
-int 
-pcicfgwrite(handle, off, val)
-	pcihdl_t       *handle;
-	int             off;
-	int             val;
+int
+pcicfgwrite(pcihdl_t *handle, int off, int val)
 {
 	outl(PCI_MODE1_ADDRESS_REG, *handle | off);
 	outl(PCI_MODE1_DATA_REG, val);
 	outl(PCI_MODE1_ADDRESS_REG, 0);
-	return (0);
+	return 0;
 }

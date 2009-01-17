@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.67 2008/01/25 14:32:16 ad Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.67.6.1 2009/01/17 13:29:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,23 +40,13 @@
 
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/rb.h>
 
 #ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>
 #endif
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
-
-/*
- * Silly rename structure that hangs off the nfsnode until the name
- * can be removed by nfs_inactive()
- */
-struct sillyrename {
-	kauth_cred_t	s_cred;
-	struct	vnode *s_dvp;
-	long	s_namlen;
-	char	s_name[20];
-};
 
 /*
  * Definitions for the directory cache. Because directory cookies
@@ -163,7 +153,7 @@ struct nfsnode {
 #define n_sillyrename	n_un2.nf_silly
 #define n_dirgens	n_un2.ndir_dirgens
 
-	LIST_ENTRY(nfsnode)	n_hash;		/* Hash chain */
+	struct rb_node		n_rbnode;	/* red/black node */
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
 	struct vattr		*n_vattr;	/* Vnode attribute cache */
 	struct vnode		*n_vnode;	/* associated vnode */
@@ -181,7 +171,6 @@ struct nfsnode {
 	kauth_cred_t		n_rcred;
 	kauth_cred_t		n_wcred;
 };
-LIST_HEAD(nfsnodehashhead, nfsnode);
 
 /*
  * Values for n_commitflags
@@ -214,6 +203,19 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 #define NFSTOV(np)	((np)->n_vnode)
 
 #ifdef _KERNEL
+
+#include <sys/workqueue.h>
+/*
+ * Silly rename structure that hangs off the nfsnode until the name
+ * can be removed by nfs_inactive()
+ */
+struct sillyrename {
+	struct work	s_work;
+	kauth_cred_t	s_cred;
+	struct	vnode *s_dvp;
+	long	s_namlen;
+	char	s_name[20];
+};
 
 /*
  * Per-nfsiod datas
@@ -281,7 +283,6 @@ int	nfs_pathconf	__P((void *));
 int	nfs_advlock	__P((void *));
 int	nfs_getpages	__P((void *));
 int	nfs_putpages	__P((void *));
-int	nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	nfs_kqfilter	__P((void *));
 
 extern int (**nfsv2_vnodeop_p) __P((void *));

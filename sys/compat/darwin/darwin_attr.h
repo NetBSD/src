@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.h,v 1.3.70.1 2008/06/02 13:22:57 mjf Exp $ */
+/*	$NetBSD: darwin_attr.h,v 1.3.70.2 2009/01/17 13:28:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ struct darwin_fssearchblock {
 	void *returnbuffer;
 	size_t returnbuffersize;
 	u_long maxmatches;
-	struct timeval timelimit;
+	struct darwin_timeval timelimit;
 	void *searchparams1;
 	size_t sizeofsearchparams1;
 	void *searchparams2;

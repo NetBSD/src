@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.85.6.2 2008/10/05 20:11:30 mjf Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.85.6.3 2009/01/17 13:29:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.85.6.2 2008/10/05 20:11:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.85.6.3 2009/01/17 13:29:00 mjf Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -385,7 +385,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_write_byte = tl_i2c_write_byte;
 
 #ifdef TLDEBUG
-	aprint_debug_dev(sefl, "default values of INTreg: 0x%x\n",
+	aprint_debug_dev(self, "default values of INTreg: 0x%x\n",
 	    tl_intreg_read(sc, TL_INT_Defaults));
 #endif
 

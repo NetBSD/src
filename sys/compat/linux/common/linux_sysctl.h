@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.h,v 1.3.70.1 2008/06/02 13:23:04 mjf Exp $	*/
+/*	$NetBSD: linux_sysctl.h,v 1.3.70.2 2009/01/17 13:28:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -466,8 +466,7 @@
 #define	LINUX_BUS_ISA_PORT_BASE					2
 #define	LINUX_BUS_ISA_PORT_SHIFT				3
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(linux_sysctl_setup);
-SYSCTL_SETUP_PROTO(sysctl_emul_linux_setup);
-#endif /* SYSCTL_SETUP_PROTO */
+void	linux_sysctl_init(void);
+void	linux_sysctl_fini(void);
+
 #endif /* !_LINUX_SYSCTL_H */

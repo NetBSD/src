@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.c,v 1.1.4.2 2008/09/28 10:40:03 mjf Exp $	*/
+/*	$NetBSD: memory.c,v 1.1.4.3 2009/01/17 13:28:14 mjf Exp $	*/
 /*	$OpenBSD: mem.c,v 1.15 2007/10/14 17:29:04 kettenis Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.1.4.2 2008/09/28 10:40:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.1.4.3 2009/01/17 13:28:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,13 +98,13 @@ memory_attach(struct device *parent, struct device *self, void *aux)
 	struct i2c_attach_args ia;
 
 	sc->sc_len = OF_getproplen(ca->ca_node, "dimm-info");
-	printf("len: %d\n", sc->sc_len);
 	if (sc->sc_len > 0) {
 		sc->sc_buf = malloc(sc->sc_len, M_DEVBUF, M_NOWAIT);
 		if (sc->sc_buf == NULL) {
 			printf(": can't allocate memory\n");
 			return;
 		}
+		printf(": len=%d", sc->sc_len);
 	}
 
 	printf("\n");

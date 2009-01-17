@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.17.74.1 2008/04/03 12:42:15 mjf Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.17.74.2 2009/01/17 13:28:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -132,8 +132,8 @@ struct	rd_softc {
 #define RDF_WANTED	0x20
 #define RDF_WLABEL	0x40
 
-#define	rdunit(x)	(minor(x) >> 3)
-#define rdpart(x)	(minor(x) & 0x7)
+#define	rdunit(x)	((int)(minor(x) >> 3))
+#define rdpart(x)	((int)(minor(x) & 0x7))
 #define	rdpunit(x)	((x) & 7)
 #define rdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* rd?c */
 

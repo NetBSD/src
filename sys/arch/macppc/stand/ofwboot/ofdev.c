@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.19.60.1 2008/06/02 13:22:23 mjf Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.19.60.2 2009/01/17 13:28:14 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -189,7 +189,7 @@ get_long(const void *p)
  * Find a valid disklabel.
  */
 static int
-search_label(struct of_dev *devp, u_long off, u_char *buf, struct disklabel *lp,
+search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	     u_long off0)
 {
 	size_t nread;

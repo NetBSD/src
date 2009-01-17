@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.48.6.1 2008/06/02 13:22:17 mjf Exp $	*/
+/*	$NetBSD: segments.h,v 1.48.6.2 2009/01/17 13:28:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -246,17 +246,18 @@ void idt_vec_free(int);
 #define	SDT_MEMERC	30	/* memory execute read conforming */
 #define	SDT_MEMERAC	31	/* memory execute read accessed conforming */
 
+#define SDTYPE(p)	(((const struct segment_descriptor *)(p))->sd_type)
 /* is memory segment descriptor pointer ? */
-#define ISMEMSDP(s)	((s->d_type) >= SDT_MEMRO && \
-			 (s->d_type) <= SDT_MEMERAC)
+#define ISMEMSDP(s)	(SDTYPE(s) >= SDT_MEMRO && \
+			 SDTYPE(s) <= SDT_MEMERAC)
 
 /* is 286 gate descriptor pointer ? */
-#define IS286GDP(s)	((s->d_type) >= SDT_SYS286CGT && \
-			 (s->d_type) < SDT_SYS286TGT)
+#define IS286GDP(s)	(SDTYPE(s) >= SDT_SYS286CGT && \
+			 SDTYPE(s) < SDT_SYS286TGT)
 
 /* is 386 gate descriptor pointer ? */
-#define IS386GDP(s)	((s->d_type) >= SDT_SYS386CGT && \
-			 (s->d_type) < SDT_SYS386TGT)
+#define IS386GDP(s)	(SDTYPE(s) >= SDT_SYS386CGT && \
+			 SDTYPE(s) < SDT_SYS386TGT)
 
 /* is gate descriptor pointer ? */
 #define ISGDP(s)	(IS286GDP(s) || IS386GDP(s))

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.28.6.4 2008/07/02 19:08:20 mjf Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.28.6.5 2009/01/17 13:29:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.28.6.4 2008/07/02 19:08:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.28.6.5 2009/01/17 13:29:19 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -184,13 +184,13 @@ lockdebug_unlock_cpus(void)
  *	Find a lockdebug structure by a pointer to a lock and return it locked.
  */
 static inline lockdebug_t *
-lockdebug_lookup(volatile void *lock)
+lockdebug_lookup(volatile void *lock, uintptr_t where)
 {
 	lockdebug_t *ld;
 
 	ld = lockdebug_lookup1(lock);
 	if (ld == NULL)
-		panic("lockdebug_lookup: uninitialized lock (lock=%p)", lock);
+		panic("lockdebug_lookup: uninitialized lock (lock=%p, from=%08"PRIxPTR")", lock, where);
 	return ld;
 }
 
@@ -316,7 +316,7 @@ lockdebug_free(volatile void *lock)
 
 	s = splhigh();
 	__cpu_simple_lock(&ld_mod_lk);
-	ld = lockdebug_lookup(lock);
+	ld = lockdebug_lookup(lock, (uintptr_t) __builtin_return_address(0));
 	if (ld == NULL) {
 		__cpu_simple_unlock(&ld_mod_lk);
 		panic("lockdebug_free: destroying uninitialized object %p"
@@ -423,7 +423,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, bool shared,
 		return;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(lock)) == NULL) {
+	if ((ld = lockdebug_lookup(lock, where)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -472,7 +472,7 @@ lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
 		return;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(lock)) == NULL) {
+	if ((ld = lockdebug_lookup(lock, where)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -529,7 +529,7 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 		return;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(lock)) == NULL) {
+	if ((ld = lockdebug_lookup(lock, where)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -605,7 +605,7 @@ lockdebug_wakeup(volatile void *lock, uintptr_t where)
 
 	s = splhigh();
 	/* Find the CV... */
-	if ((ld = lockdebug_lookup(lock)) == NULL) {
+	if ((ld = lockdebug_lookup(lock, where)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -818,7 +818,8 @@ lockdebug_abort(volatile void *lock, lockops_t *ops, const char *func,
 	int s;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(lock)) != NULL) {
+	if ((ld = lockdebug_lookup(lock, 
+			(uintptr_t) __builtin_return_address(0))) != NULL) {
 		lockdebug_abort1(ld, s, func, msg, true);
 		return;
 	}

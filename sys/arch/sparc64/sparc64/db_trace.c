@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.39.40.1 2008/09/28 10:40:09 mjf Exp $ */
+/*	$NetBSD: db_trace.c,v 1.39.40.2 2009/01/17 13:28:32 mjf Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.40.1 2008/09/28 10:40:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.40.2 2009/01/17 13:28:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -87,7 +87,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			struct lwp *l;
 			struct user *u;
 			if (lwpaddr) {
-				l = (struct lwp *)addr;
+				l = (struct lwp *)(uintptr_t)addr;
 				p = l->l_proc;
 				(*pr)("trace: pid %d ", p->p_pid);
 			} else {
@@ -194,7 +194,7 @@ db_dump_window(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 		else frame = (uint64_t)((struct frame32 *)(u_long)frame)->fr_fp;
 	}
 
-	db_printf("Window %lx ", addr);
+	db_printf("Window %lx ", (long)addr);
 	db_print_window(frame);
 }
 
@@ -356,7 +356,7 @@ db_dump_trap(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 	/* Or an arbitrary trapframe */
 	if (have_addr)
-		tf = (struct trapframe64 *)addr;
+		tf = (struct trapframe64 *)(uintptr_t)addr;
 
 	db_printf("Trapframe %p:\ttstate: %llx\tpc: %llx\tnpc: %llx\n",
 		  tf, (unsigned long long)tf->tf_tstate,
@@ -429,7 +429,7 @@ db_dump_fpstate(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 	fpstate = DDB_FP;
 	/* Or an arbitrary trapframe */
 	if (have_addr)
-		fpstate = (struct fpstate64 *)addr;
+		fpstate = (struct fpstate64 *)(uintptr_t)addr;
 
 	db_printf("fpstate %p: fsr = %llx gsr = %lx\nfpregs:\n",
 		fpstate, (unsigned long long)fpstate->fs_fsr,

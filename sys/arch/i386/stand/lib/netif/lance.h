@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.h,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: lance.h,v 1.1.1.1.160.1 2009/01/17 13:28:06 mjf Exp $	*/
 
 /*
  * source in this file came from
@@ -42,15 +42,15 @@
  * The initialization block
  */
 typedef struct {
-    u_short	ib_mode;	/* modebits, see below */
-    char	ib_padr[6];	/* physical 48bit Ether-address */
-    u_short	ib_ladrf[4];	/* 64bit hashtable for "logical" addresses */
-    u_short	ib_rdralow;	/* low 16 bits of Receiver Descr. Ring addr */
-    u_char	ib_rdrahigh;	/* high 8 bits of Receiver Descr. Ring addr */
-    u_char	ib_rlen;	/* upper 3 bits are 2log Rec. Ring Length */
-    u_short	ib_tdralow;	/* low 16 bits of Transm. Descr. Ring addr */
-    u_char	ib_tdrahigh;	/* high 8 bits of Transm. Descr. Ring addr */
-    u_char	ib_tlen;	/* upper 3 bits are 2log Transm. Ring Length */
+	u_short	ib_mode;	/* modebits, see below */
+	char	ib_padr[6];	/* physical 48bit Ether-address */
+	u_short	ib_ladrf[4];	/* 64bit hashtable for "logical" addresses */
+	u_short	ib_rdralow;	/* low 16 bits of Receiver Descr. Ring addr */
+	u_char	ib_rdrahigh;	/* high 8 bits of Receiver Descr. Ring addr */
+	u_char	ib_rlen;	/* upper 3 bits are 2log Rec. Ring Length */
+	u_short	ib_tdralow;	/* low 16 bits of Transm. Descr. Ring addr */
+	u_char	ib_tdrahigh;	/* high 8 bits of Transm. Descr. Ring addr */
+	u_char	ib_tlen;	/* upper 3 bits are 2log Transm. Ring Length */
 } initblock_t;
 
 /* bits in mode */
@@ -67,11 +67,11 @@ typedef struct {
  * A receive message descriptor entry
  */
 typedef struct {
-    u_short	rmd_ladr;	/* low 16 bits of bufaddr */
-    char	rmd_hadr;	/* high 8 bits of bufaddr */
-    char	rmd_flags; 	/* see below */
-    short	rmd_bcnt;	/* two's complement of buffer byte count */
-    u_short	rmd_mcnt;	/* message byte count */
+	u_short	rmd_ladr;	/* low 16 bits of bufaddr */
+	char	rmd_hadr;	/* high 8 bits of bufaddr */
+	char	rmd_flags; 	/* see below */
+	short	rmd_bcnt;	/* two's complement of buffer byte count */
+	u_short	rmd_mcnt;	/* message byte count */
 } rmde_t;
 
 /* bits in flags */
@@ -88,11 +88,11 @@ typedef struct {
  * A transmit message descriptor entry
  */
 typedef struct {
-    u_short	tmd_ladr;	/* low 16 bits of bufaddr */
-    u_char	tmd_hadr;	/* high 8 bits of bufaddr */
-    u_char	tmd_flags;	/* see below */
-    short	tmd_bcnt;	/* two's complement of buffer byte count */
-    u_short	tmd_err;	/* more error bits + TDR */
+	u_short	tmd_ladr;	/* low 16 bits of bufaddr */
+	u_char	tmd_hadr;	/* high 8 bits of bufaddr */
+	u_char	tmd_flags;	/* see below */
+	short	tmd_bcnt;	/* two's complement of buffer byte count */
+	u_short	tmd_err;	/* more error bits + TDR */
 } tmde_t;
 
 /* bits in flags */
@@ -111,4 +111,3 @@ typedef struct {
 #define TMDE_LCAR	0x0800
 #define TMDE_RTRY	0x0400
 #define TMDE_TDR	0x003F	/* mask for TDR */
-

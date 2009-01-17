@@ -1,4 +1,4 @@
-#	$NetBSD: majors.news68k,v 1.19 2007/12/31 15:32:01 ad Exp $
+#	$NetBSD: majors.news68k,v 1.19.6.1 2009/01/17 13:28:20 mjf Exp $
 #
 # Device majors for news68k
 #
@@ -21,7 +21,6 @@ device-major	tun		char 25			tun
 
 device-major	log		char 33
 
-device-major	lkm		char 45			lkm
 device-major	ipl		char 46			ipfilter
 device-major	rnd		char 47			rnd
 device-major	filedesc	char 48

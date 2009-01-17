@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.26 2007/12/31 15:31:55 ad Exp $
+#	$NetBSD: majors.hpcmips,v 1.26.6.1 2009/01/17 13:28:02 mjf Exp $
 #
 # Device majors for hpcmips
 #
@@ -50,7 +50,6 @@ device-major	isdnbchan	char 43			isdnbchan
 device-major	isdntrc		char 44			isdntrc
 device-major	isdntel		char 45			isdntel
 device-major	clockctl	char 46			clockctl
-device-major	lkm		char 47			lkm
 device-major	audio		char 48			audio
 device-major	cgd		char 50  block 10	cgd
 device-major	apmdev		char 51			apmdev

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.55.14.1 2008/06/02 13:22:55 mjf Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.55.14.2 2009/01/17 13:28:39 mjf Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.55.14.1 2008/06/02 13:22:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.55.14.2 2009/01/17 13:28:39 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -242,7 +242,7 @@ xennet_scan(device_t self, struct xennet_attach_args *xneta,
 	ctrl_msg_t cmsg;
 	netif_fe_driver_status_t st;
 
-	if ((xen_start_info.flags & SIF_INITDOMAIN) ||
+	if (xendomain_is_dom0() ||
 	    (xen_start_info.flags & SIF_NET_BE_DOMAIN))
 		return 0;
 
@@ -551,7 +551,7 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		 * we've probably just requeued some packets.
 		 */
 		sc->sc_backend_state = BEST_CONNECTED;
-		x86_sfence();
+		xen_wmb();
 		hypervisor_notify_via_evtchn(status->evtchn);  
 		network_tx_buf_gc(sc);
 
@@ -702,7 +702,7 @@ xen_network_handler(void *arg)
 
  again:
 	resp_prod = sc->sc_rx->resp_prod;
-	x86_lfence(); /* ensure we see all requests up to resp_prod */
+	xen_rmb(); /* ensure we see all requests up to resp_prod */
 	for (ringidx = sc->sc_rx_resp_cons;
 	     ringidx != resp_prod;
 	     ringidx++) {
@@ -826,7 +826,7 @@ xen_network_handler(void *arg)
 
 	sc->sc_rx_resp_cons = ringidx;
 	sc->sc_rx->event = resp_prod + 1;
-	x86_lfence();
+	xen_rmb();
 	  /* ensure backend see the new sc_rx->event before we start again */
 
 	if (sc->sc_rx->resp_prod != resp_prod)
@@ -892,7 +892,7 @@ network_tx_buf_gc(struct xennet_softc *sc)
 		 */
 		sc->sc_tx->event = /* atomic */
 			prod + (sc->sc_tx_entries >> 1) + 1;
-		x86_lfence();
+		xen_rmb();
 	} while (prod != sc->sc_tx->resp_prod);
 
 	if (sc->sc_tx->resp_prod == sc->sc_tx->req_prod)
@@ -1143,12 +1143,12 @@ xennet_softstart(void *arg)
 		txreq->addr = xpmap_ptom(pa);
 		txreq->size = m->m_pkthdr.len;
 
-		x86_lfence();
+		xen_rmb();
 		idx++;
 		sc->sc_tx->req_prod = idx;
 
 		sc->sc_tx_entries++; /* XXX atomic */
-		x86_lfence();
+		xen_rmb();
 
 #ifdef XENNET_DEBUG
 		DPRINTFN(XEDB_MEM, ("packet addr %p/%p, physical %p/%p, "
@@ -1168,7 +1168,7 @@ xennet_softstart(void *arg)
 #endif
 	}
 
-	x86_lfence();
+	xen_rmb();
 	if (sc->sc_tx->resp_prod != idx) {
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 		ifp->if_timer = 5;
@@ -1287,6 +1287,7 @@ xennet_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 xennet_bootstatic_callback(struct nfs_diskless *nd)
 {
+	int flags = 0;
 	struct ifnet *ifp = nd->nd_ifp;
 	struct xennet_softc *sc = ifp->if_softc;
 	union xen_cmdline_parseinfo xcp;
@@ -1296,6 +1297,12 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	xcp.xcp_netinfo.xi_ifno = sc->sc_ifno;
 	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
 	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
+
+	if (xcp.xcp_netinfo.xi_root[0] != '\0') {
+		flags |= NFS_BOOT_HAS_SERVER;
+		if (strchr(xcp.xcp_netinfo.xi_root, ':') != NULL)
+			flags |= NFS_BOOT_HAS_ROOTPATH;
+	}
 
 	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
 	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
@@ -1307,12 +1314,16 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
 
-	if (nd->nd_myip.s_addr == 0)
-		return NFS_BOOTSTATIC_NOSTATIC;
-	else
-		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-		    NFS_BOOTSTATIC_HAS_SERVER);
+	if (nd->nd_myip.s_addr)
+		flags |= NFS_BOOT_HAS_MYIP;
+	if (nd->nd_gwip.s_addr)
+		flags |= NFS_BOOT_HAS_GWIP;
+	if (nd->nd_mask.s_addr)
+		flags |= NFS_BOOT_HAS_MASK;
+	if (sin->sin_addr.s_addr)
+		flags |= NFS_BOOT_HAS_SERVADDR;
+
+	return flags;
 }
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 

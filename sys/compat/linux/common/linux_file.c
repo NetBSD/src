@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.92.6.2 2008/06/02 13:23:02 mjf Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.92.6.3 2009/01/17 13:28:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.92.6.2 2008/06/02 13:23:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.92.6.3 2009/01/17 13:28:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,18 +536,15 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_
 		SCARG(&bma, mode) = SCARG(uap, mode);
 		return sys_mkfifo(l, &bma, retval);
 	} else {
-		struct sys_mknod_args bma;
 
-		SCARG(&bma, path) = SCARG(uap, path);
-		SCARG(&bma, mode) = SCARG(uap, mode);
 		/*
 		 * Linux device numbers uses 8 bits for minor and 8 bits
 		 * for major. Due to how we map our major and minor,
 		 * this just fits into our dev_t. Just mask off the
 		 * upper 16bit to remove any random junk.
 		 */
-		SCARG(&bma, dev) = SCARG(uap, dev) & 0xffff;
-		return sys_mknod(l, &bma, retval);
+		return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
+		    SCARG(uap, dev) & 0xffff, retval);
 	}
 }
 

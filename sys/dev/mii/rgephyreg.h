@@ -1,3 +1,5 @@
+/*	$NetBSD: rgephyreg.h,v 1.2.48.2 2009/01/17 13:28:58 mjf Exp $	*/
+
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -137,7 +139,7 @@
 #define RGEPHY_EXTSTS_T_FD_CAP	0x2000	/* 1000base-T FD capable */
 #define RGEPHY_EXTSTS_T_HD_CAP	0x1000	/* 1000base-T HD capable */
 
-/* RTL8211B(L) */
+/* RTL8211B(L)/RTL8211C(L) */
 #define RGEPHY_MII_SSR		0x11	/* PHY Specific status register */
 #define	RGEPHY_SSR_S1000	0x8000	/* 1000Mbps */
 #define	RGEPHY_SSR_S100		0x4000	/* 100Mbps */
@@ -148,6 +150,7 @@
 #define	RGEPHY_SSR_SPD_DPLX_RESOLVED	0x0800	/* speed/duplex resolved */
 #define	RGEPHY_SSR_LINK		0x0400	/* link up */
 #define	RGEPHY_SSR_MDI_XOVER	0x0040	/* MDI crossover */
+#define RGEPHY_SSR_ALDPS	0x0008	/* RTL8211C(L) only */
 #define	RGEPHY_SSR_JABBER	0x0001	/* Jabber */
 
 #endif /* _DEV_MII_RGEPHYREG_H_ */

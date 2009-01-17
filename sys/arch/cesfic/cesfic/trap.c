@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40.6.1 2008/06/02 13:21:59 mjf Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.6.2 2009/01/17 13:27:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.6.1 2008/06/02 13:21:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.6.2 2009/01/17 13:27:56 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.6.1 2008/06/02 13:21:59 mjf Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -597,8 +599,14 @@ trap(fp, type, code, v)
 		if ((type & T_USER) == 0 &&
 		    ((l->l_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
-		else
+		else {
 			map = vm ? &vm->vm_map : kernel_map;
+			if ((l->l_flag & LW_SA)
+			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+				l->l_savp->savp_faultaddr = (vaddr_t)v;
+				l->l_pflag |= LP_SA_PAGEFAULT;
+			}
+		}
 
 		if (WRFAULT(code))
 			ftype = VM_PROT_WRITE;
@@ -638,6 +646,7 @@ trap(fp, type, code, v)
 #endif
 				return;
 			}
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		if (rv == EACCES) {
@@ -654,6 +663,7 @@ trap(fp, type, code, v)
 			       type, code);
 			goto dopanic;
 		}
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",

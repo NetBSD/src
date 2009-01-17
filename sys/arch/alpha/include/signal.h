@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.14 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: signal.h,v 1.14.74.1 2009/01/17 13:27:48 mjf Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,16 +34,9 @@
 
 typedef long	sig_atomic_t;
 
-#ifdef _KERNEL
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_osf1.h"
-#endif
-#ifdef COMPAT_16
-#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
-#else
-#define SIGTRAMP_VALID(vers)	((vers) == 2)
-#endif
 #endif
 
 /*

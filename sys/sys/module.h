@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.1.12.3 2008/09/28 10:41:04 mjf Exp $	*/
+/*	$NetBSD: module.h,v 1.1.12.4 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -56,10 +56,17 @@ typedef enum modsrc {
 
 /* Commands passed to module control routine. */
 typedef enum modcmd {
-	MODULE_CMD_INIT,
-	MODULE_CMD_FINI,
-	MODULE_CMD_STAT
+	MODULE_CMD_INIT,		/* mandatory */
+	MODULE_CMD_FINI,		/* mandatory */
+	MODULE_CMD_STAT,		/* optional */
+	MODULE_CMD_AUTOUNLOAD,		/* optional */
 } modcmd_t;
+
+#ifdef _KERNEL
+
+#include <sys/mutex.h>
+
+#include <prop/proplib.h>
 
 /* Module header structure. */
 typedef struct modinfo {
@@ -79,13 +86,8 @@ typedef struct module {
 	struct module		*mod_required[MAXMODDEPS];
 	u_int			mod_nrequired;
 	modsrc_t		mod_source;
+	time_t			mod_autotime;
 } module_t;
-
-#ifdef _KERNEL
-
-#include <sys/mutex.h>
-
-#include <prop/proplib.h>
 
 /*
  * Per-module linkage.  Loadable modules have a `link_set_modules' section
@@ -110,6 +112,7 @@ extern struct vm_map	*module_map;
 extern kmutex_t		module_lock;
 extern u_int		module_count;
 extern struct modlist	module_list;
+extern u_int		module_gen;
 
 void	module_init(void);
 void	module_init_md(void);
@@ -117,12 +120,16 @@ void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
 
 bool	module_compatible(int, int);
-int	module_load(const char *, int, prop_dictionary_t, modclass_t, bool);
+int	module_load(const char *, int, prop_dictionary_t, modclass_t);
+int	module_autoload(const char *, modclass_t);
 int	module_unload(const char *);
 int	module_hold(const char *);
 void	module_rele(const char *);
 int	module_find_section(const char *, void **, size_t *);
+void	module_thread_kick(void);
 
+void	module_whatis(uintptr_t, void (*)(const char *, ...));
+void	module_print_list(void (*)(const char *, ...));
 #else	/* _KERNEL */
 
 #include <stdint.h>

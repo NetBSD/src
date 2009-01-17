@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.18 2007/12/20 23:02:49 dsl Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.18.6.1 2009/01/17 13:28:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.18 2007/12/20 23:02:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.18.6.1 2009/01/17 13:28:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,25 +100,25 @@ ibcs2_socksys(struct lwp *l, const struct ibcs2_socksys_args *uap, register_t *r
 	case SOCKSYS_SOCKET:
 		return compat_30_sys_socket(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_SELECT:
-		return sys_select(l, (const void *)(realargs + 1), retval);
+		return compat_50_sys_select(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_GETIPDOMAIN:
 		return compat_09_sys_getdomainname(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_SETIPDOMAIN:
 		return compat_09_sys_setdomainname(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_ADJTIME:
-		return sys_adjtime(l, (const void *)(realargs + 1), retval);
+		return compat_50_sys_adjtime(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_SETREUID:
 		return sys_setreuid(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_SETREGID:
 		return sys_setregid(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_GETTIME:
-		return sys_gettimeofday(l, (const void *)(realargs + 1), retval);
+		return compat_50_sys_gettimeofday(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_SETTIME:
-		return sys_settimeofday(l, (const void *)(realargs + 1), retval);
+		return compat_50_sys_settimeofday(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_GETITIMER:
-		return sys_getitimer(l, (const void *)(realargs + 1), retval);
+		return compat_50_sys_getitimer(l, (const void *)(realargs + 1), retval);
 	case SOCKSYS_SETITIMER:
-		return sys_setitimer(l, (const void *)(realargs + 1), retval);
+		return compat_50_sys_setitimer(l, (const void *)(realargs + 1), retval);
 
 	default:
 		printf("socksys unknown %08x %08x %08x %08x %08x %08x %08x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.21 2007/10/17 19:54:56 garbled Exp $	*/
+/*	$NetBSD: ansi.h,v 1.21.16.1 2009/01/17 13:28:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,8 +31,8 @@
  *	@(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef	_ANSI_H_
-#define	_ANSI_H_
+#ifndef	_I386_ANSI_H_
+#define	_I386_ANSI_H_
 
 #include <sys/cdefs.h>
 
@@ -51,7 +51,7 @@
 #define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
-#define	_BSD_TIME_T_		long		/* time() */
+#define	_BSD_TIME_T_		__int64_t	/* time() */
 #if __GNUC_PREREQ__(2, 96)
 #define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
 #else
@@ -76,4 +76,4 @@ typedef union {
 } __mbstate_t;
 #define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 
-#endif	/* _ANSI_H_ */
+#endif	/* _I386_ANSI_H_ */

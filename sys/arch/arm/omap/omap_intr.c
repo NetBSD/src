@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.c,v 1.4.6.1 2008/06/02 13:21:55 mjf Exp $	*/
+/*	$NetBSD: omap_intr.c,v 1.4.6.2 2009/01/17 13:27:53 mjf Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_intr.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.4.6.1 2008/06/02 13:21:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.4.6.2 2009/01/17 13:27:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,13 +106,13 @@ static struct irq_handler {
 static int extirq_level[OMAP_NIRQ];
 
 int
-omapintc_match(struct device *parent, struct cfdata *cf, void *aux)
+omapintc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 void
-omapintc_attach(struct device *parent, struct device *self, void *args)
+omapintc_attach(device_t parent, device_t self, void *args)
 {
 	int i;
 	aprint_normal(": Interrupt Controller\n");

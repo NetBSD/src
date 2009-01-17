@@ -1,6 +1,4 @@
-#undef DEBUG_DARWIN
-#undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.27.6.2 2008/06/02 13:22:57 mjf Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.27.6.3 2009/01/17 13:28:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.27.6.2 2008/06/02 13:22:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.27.6.3 2009/01/17 13:28:41 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.27.6.2 2008/06/02 13:22:57 mjf Exp
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_syscallargs.h>
 

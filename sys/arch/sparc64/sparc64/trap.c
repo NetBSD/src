@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145.16.5 2008/09/28 10:40:09 mjf Exp $ */
+/*	$NetBSD: trap.c,v 1.145.16.6 2009/01/17 13:28:32 mjf Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.16.5 2008/09/28 10:40:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.16.6 2009/01/17 13:28:32 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.16.5 2008/09/28 10:40:09 mjf Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/kernel.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
@@ -93,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.16.5 2008/09/28 10:40:09 mjf Exp $");
 #endif
 
 #include <sparc/fpu/fpu_extern.h>
-#include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
 #define	offsetof(s, f) ((size_t)&((s *)0)->f)
@@ -458,7 +459,7 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 
 		printf("trap: type 0x%x: pc=%lx &tf=%p\n",
 		       type, pc, tf);
-		bitmask_snprintf(pstate, PSTATE_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), PSTATE_BITS, pstate);
 		printf(" npc=%lx pstate=%s %s\n",
 		       (long)tf->tf_npc, sbuf, 
 		       type < N_TRAP_TYPES ? trap_type[type] : 
@@ -473,7 +474,7 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 		trap_trace_dis = 1;
 		printf("trap: type 0x%x: lvl=%d pc=%lx &tf=%p",
 		       type, (int)tl(), pc, tf);
-		bitmask_snprintf(pstate, PSTATE_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), PSTATE_BITS, pstate);
 		printf(" npc=%lx pstate=%s %s\n",
 		       (long)tf->tf_npc, sbuf, 
 		       type < N_TRAP_TYPES ? trap_type[type] : 
@@ -569,14 +570,13 @@ dopanic:
 			trap_trace_dis = 1;
 
 			{
-				char sbuf[sizeof(PSTATE_BITS) + 64];
+				char sb[sizeof(PSTATE_BITS) + 64];
 
 				printf("trap type 0x%x: cpu %d, pc=%lx",
 				       type, cpu_number(), pc); 
-				bitmask_snprintf(pstate, PSTATE_BITS, sbuf,
-						 sizeof(sbuf));
+				snprintb(sb, sizeof(sb), PSTATE_BITS, pstate);
 				printf(" npc=%lx pstate=%s\n",
-				       (long)tf->tf_npc, sbuf);
+				       (long)tf->tf_npc, sb);
 				DEBUGGER(type, tf);
 				panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			}
@@ -1132,8 +1132,19 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 				return;
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		/*
+		 * WRS: Can drop LP_SA_NOBLOCK test iff can only get
+		 * here from a usermode-initiated access. LP_SA_NOBLOCK
+		 * should never be set there - it's kernel-only.
+		 */
+		if ((l->l_flag & LW_SA)
+		    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+			l->l_savp->savp_faultaddr = addr;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
@@ -1231,6 +1242,7 @@ kfault:
 		trapsignal(l, &ksi);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
@@ -1282,7 +1294,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	    trapdebug & (TDB_ADDFLT | TDB_FOLLOW)) {
 		char buf[768];
 
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 		printf("%d data_access_error(%lx, %lx, %lx, %p)=%lx @ %p %s\n",
 		       curproc?curproc->p_pid:-1, 
 		       (long)type, (long)sfva, (long)afva, tf,
@@ -1294,7 +1306,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
 		char buf[768];
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 
 		printf("%d tl %ld data_access_error(%lx, %lx, %lx, %p)="
 		       "%lx @ %lx %s\n",
@@ -1349,7 +1361,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 			char buf[768];
 
 			trap_trace_dis = 1; /* Disable traptrace for printf */
-			bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+			snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 			(void) splhigh();
 			printf("data fault: pc=%lx addr=%lx sfsr=%s\n",
 				(u_long)pc, (long)sfva, buf);
@@ -1365,7 +1377,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 		if (afsr & ASFR_PRIV) {
 			char buf[128];
 
-			bitmask_snprintf(afsr, AFSR_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf), AFSR_BITS, afsr);
 			panic("Privileged Async Fault: AFAR %p AFSR %lx\n%s",
 				(void *)afva, afsr, buf);
 			/* NOTREACHED */
@@ -1579,7 +1591,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	write_user_windows();
 	if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved) ||
 	    trapdebug & (TDB_TXTFLT | TDB_FOLLOW)) {
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 		printf("%ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
 		       (long)(curproc?curproc->p_pid:-1), 
 		       (long)type, pc, (long)afva, tf, (long)tf->tf_tstate, 
@@ -1589,7 +1601,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 		printf("%ld tl %ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
 		       (long)(curproc?curproc->p_pid:-1), (long)tl(),
 		       (long)type, (long)pc, (long)afva, tf, 
@@ -1654,7 +1666,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if (tstate & TSTATE_PRIV) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 		(void) splhigh();
 		printf("text error: pc=%lx sfsr=%s\n", pc, buf);
 		DEBUGGER(type, tf);
@@ -1689,7 +1701,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		if (tstate & TSTATE_PRIV) {
 			extern int trap_trace_dis;
 			trap_trace_dis = 1; /* Disable traptrace for printf */
-			bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+			snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 			(void) splhigh();
 			printf("text error: pc=%lx sfsr=%s\n", pc, buf);
 			DEBUGGER(type, tf);

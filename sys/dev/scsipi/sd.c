@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.269.6.6 2008/09/28 10:40:31 mjf Exp $	*/
+/*	$NetBSD: sd.c,v 1.269.6.7 2009/01/17 13:29:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.6 2008/09/28 10:40:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.7 2009/01/17 13:29:08 mjf Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -462,7 +462,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
+	    ("sdopen: dev=0x%"PRIx64" (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
 
 	/*
@@ -755,7 +755,7 @@ sdstrategy(struct buf *bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	BUFQ_PUT(sd->buf_queue, bp);
+	bufq_put(sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -826,7 +826,7 @@ sdstart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(sd->buf_queue)) != NULL) {
+			if ((bp = bufq_get(sd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
@@ -839,7 +839,7 @@ sdstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(sd->buf_queue)) == NULL)
+		if ((bp = bufq_peek(sd->buf_queue)) == NULL)
 			return;
 
 		/*
@@ -927,10 +927,10 @@ sdstart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(sd->buf_queue) != bp)
+		if (bufq_get(sd->buf_queue) != bp)
 			panic("sdstart(): dequeued wrong buf");
 #else
-		BUFQ_GET(sd->buf_queue);
+		bufq_get(sd->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */

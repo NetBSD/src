@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.9.74.1 2008/06/02 13:22:47 mjf Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.9.74.2 2009/01/17 13:28:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ void set_iommupte(vaddr_t, paddr_t);
 
 u_int	get_pte(vaddr_t);
 void	set_pte(vaddr_t, paddr_t);
+void	dvma3x_init(void);
 char *	dvma3x_alloc(int);
 void	dvma3x_free(char *, int);
 char *	dvma3x_mapin(char *, int);

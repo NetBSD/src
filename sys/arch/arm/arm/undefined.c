@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.32.16.1 2008/06/02 13:21:52 mjf Exp $	*/
+/*	$NetBSD: undefined.c,v 1.32.16.2 2009/01/17 13:27:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32.16.1 2008/06/02 13:21:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32.16.2 2009/01/17 13:27:51 mjf Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -101,7 +101,7 @@ install_coproc_handler(int coproc, undef_handler_t handler)
 	KASSERT(handler != NULL); /* Used to be legal. */
 
 	/* XXX: M_TEMP??? */
-	MALLOC(uh, struct undefined_handler *, sizeof(*uh), M_TEMP, M_WAITOK);
+	uh = malloc(sizeof(*uh), M_TEMP, M_WAITOK);
 	uh->uh_handler = handler;
 	install_coproc_handler_static(coproc, uh);
 	return uh;
@@ -120,7 +120,7 @@ remove_coproc_handler(void *cookie)
 	struct undefined_handler *uh = cookie;
 
 	LIST_REMOVE(uh, uh_link);
-	FREE(uh, M_TEMP);
+	free(uh, M_TEMP);
 }
 
 
@@ -203,8 +203,7 @@ undefinedinstruction(trapframe_t *frame)
 	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
-	if (!(frame->tf_spsr & I32_bit))
-		enable_interrupts(I32_bit);
+	restore_interrupts(frame->tf_spsr & IF32_bits);
 #endif
 
 #ifndef acorn26

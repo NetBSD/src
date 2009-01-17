@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.78.6.4 2008/09/28 10:40:50 mjf Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.78.6.5 2009/01/17 13:29:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,11 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.6.4 2008/09/28 10:40:50 mjf Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_quota.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.6.5 2009/01/17 13:29:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,8 +200,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_stat.f_namemax =
 	    (vcp->vc_hflags2 & SMB_FLAGS2_KNOWS_LONG_NAMES) ? 255 : 12;
 
-	MALLOC(smp, struct smbmount *, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
-	memset(smp, 0, sizeof(*smp));
+	smp = malloc(sizeof(*smp), M_SMBFSDATA, M_WAITOK|M_ZERO);
 	mp->mnt_data = smp;
 
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, true,
@@ -242,8 +237,6 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#ifdef QUOTA
-#endif
 	/* Drop the extra reference to root vnode. */
 	if (smp->sm_root) {
 		vrele(SMBTOV(smp->sm_root));
@@ -269,7 +262,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 
 	hashdone(smp->sm_hash, HASH_LIST, smp->sm_hashlen);
 	mutex_destroy(&smp->sm_hashlock);
-	FREE(smp, M_SMBFSDATA);
+	free(smp, M_SMBFSDATA);
 	return error;
 }
 

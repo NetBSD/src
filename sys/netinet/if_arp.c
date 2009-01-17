@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.131.6.2 2008/09/28 10:40:57 mjf Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.131.6.3 2009/01/17 13:29:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131.6.2 2008/09/28 10:40:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131.6.3 2009/01/17 13:29:32 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -340,7 +340,6 @@ arp_drain(void)
 	KERNEL_LOCK(1, NULL);
 
 	if (arp_lock_try(0) == 0) {
-		printf("arp_drain: locked; punting\n");
 		KERNEL_UNLOCK_ONE(NULL);
 		return;
 	}
@@ -450,7 +449,7 @@ arp_setgate(struct rtentry *rt, struct sockaddr *gate,
  * Parallel to llc_rtrequest.
  */
 void
-arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -477,6 +476,19 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		}
 		callout_init(&arptimer_ch, CALLOUT_MPSAFE);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
+	}
+
+	if (req == RTM_LLINFO_UPD) {
+		struct in_addr *in;
+
+		if ((ifa = info->rti_ifa) == NULL)
+			return;
+
+		in = &ifatoia(ifa)->ia_addr.sin_addr;
+
+		arprequest(ifa->ifa_ifp, in, in,
+		    CLLADDR(ifa->ifa_ifp->if_sadl));
+		return;
 	}
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0) {
@@ -514,7 +526,6 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	ARP_LOCK(1);		/* we may already be locked here. */
 
 	switch (req) {
-
 	case RTM_SETGATE:
 		gate = arp_setgate(rt, gate, info->rti_info[RTAX_NETMASK]);
 		break;
@@ -561,11 +572,12 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			break;
 		}
 		/* Announce a new entry if requested. */
-		if (rt->rt_flags & RTF_ANNOUNCE)
+		if (rt->rt_flags & RTF_ANNOUNCE) {
 			arprequest(ifp,
 			    &satocsin(rt_getkey(rt))->sin_addr,
 			    &satocsin(rt_getkey(rt))->sin_addr,
 			    CLLADDR(satocsdl(gate)));
+		}
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
@@ -793,7 +805,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		rt->rt_flags &= ~RTF_REJECT;
 		if (la->la_asked == 0 || rt->rt_expire != time_second) {
 			rt->rt_expire = time_second;
-			if (la->la_asked++ < arp_maxtries)
+			if (la->la_asked++ < arp_maxtries) {
 				arprequest(ifp,
 				    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 				    &satocsin(dst)->sin_addr,
@@ -802,7 +814,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 				    CLLADDR(rt->rt_ifp->if_sadl):
 #endif
 				    CLLADDR(ifp->if_sadl));
-			else {
+			} else {
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
 				la->la_asked = 0;
@@ -1537,9 +1549,9 @@ db_show_rtentry(struct rtentry *rt, void *w)
 {
 	db_printf("rtentry=%p", rt);
 
-	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%ld\n",
+	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%lld\n",
 			  rt->rt_flags, rt->rt_refcnt,
-			  rt->rt_use, rt->rt_expire);
+			  rt->rt_use, (long long)rt->rt_expire);
 
 	db_printf(" key="); db_print_sa(rt_getkey(rt));
 	db_printf(" mask="); db_print_sa(rt_mask(rt));

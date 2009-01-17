@@ -1,4 +1,4 @@
-/*	$NetBSD: example.c,v 1.1.12.2 2008/06/02 13:24:21 mjf Exp $	*/
+/*	$NetBSD: example.c,v 1.1.12.3 2009/01/17 13:29:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,11 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.1.12.2 2008/06/02 13:24:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.1.12.3 2009/01/17 13:29:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
+
+/*
+ * Last parameter of MODULE macro is name of modules on
+ * which defined module depends.
+ */
 
 MODULE(MODULE_CLASS_MISC, example, NULL);
 

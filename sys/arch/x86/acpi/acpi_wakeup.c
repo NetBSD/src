@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.6.3 2008/09/28 10:40:11 mjf Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.6.4 2009/01/17 13:28:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.6.3 2008/09/28 10:40:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.6.4 2009/01/17 13:28:37 mjf Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -375,6 +375,8 @@ acpi_md_sleep(int state)
 	AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
 	AcpiClearEvent(ACPI_EVENT_RTC);
 	AcpiHwDisableAllGpes ();
+
+	acpi_pci_link_resume();
 
 out:
 

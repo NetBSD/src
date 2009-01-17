@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.18.6.2 2008/09/28 10:40:31 mjf Exp $	*/
+/*	$NetBSD: rf.c,v 1.18.6.3 2009/01/17 13:29:07 mjf Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.18.6.2 2008/09/28 10:40:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.18.6.3 2009/01/17 13:29:07 mjf Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -575,14 +575,14 @@ rfstrategy(struct buf *buf)
 	if ((rf_sc->sc_state & (1 << (DISKPART(buf->b_dev) + RFS_OPEN_SHIFT)))
 	    == 0)
 		panic("rfstrategy: can not operate on non-open drive %s "
-		    "partition %d", device_xname(rf_sc->sc_dev),
+		    "partition %"PRIu64, device_xname(rf_sc->sc_dev),
 		    DISKPART(buf->b_dev));
 	if (buf->b_bcount == 0) {
 		biodone(buf);
 		return;
 	}
 	/*
-	 * BUFQ_PUT() operates on b_rawblkno. rfstrategy() gets
+	 * bufq_put() operates on b_rawblkno. rfstrategy() gets
 	 * only b_blkno that is partition relative. As a floppy does not
 	 * have partitions b_rawblkno == b_blkno.
 	 */
@@ -601,7 +601,7 @@ rfstrategy(struct buf *buf)
 		rfc_intr(rfc_sc);
 	} else {
 		buf->b_resid = buf->b_blkno / RX2_SECTORS;
-		BUFQ_PUT(rf_sc->sc_bufq, buf);
+		bufq_put(rf_sc->sc_bufq, buf);
 		buf->b_resid = 0;
 	}
 	splx(s);
@@ -623,7 +623,7 @@ get_new_buf( struct rfc_softc *rfc_sc)
 	struct rf_softc *other_drive;
 
 	rf_sc = device_private(rfc_sc->sc_childs[rfc_sc->sc_curchild]);
-	rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
+	rfc_sc->sc_curbuf = bufq_get(rf_sc->sc_bufq);
 	if (rfc_sc->sc_curbuf != NULL) {
 		rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_data;
 		rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
@@ -632,10 +632,10 @@ get_new_buf( struct rfc_softc *rfc_sc)
 		other_drive = device_private(
 		    rfc_sc->sc_childs[ rfc_sc->sc_curchild == 0 ? 1 : 0]);
 		if (other_drive != NULL
-		    && BUFQ_PEEK(other_drive->sc_bufq) != NULL) {
+		    && bufq_peek(other_drive->sc_bufq) != NULL) {
 			rfc_sc->sc_curchild = rfc_sc->sc_curchild == 0 ? 1 : 0;
 			rf_sc = other_drive;
-			rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
+			rfc_sc->sc_curbuf = bufq_get(rf_sc->sc_bufq);
 			rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_data;
 			rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
 		} else
@@ -1056,7 +1056,7 @@ rfclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
 		panic("rfclose: can not close non-open drive %s "
-		    "partition %d", device_xname(rf_sc->sc_dev), DISKPART(dev));
+		    "partition %"PRIu64, device_xname(rf_sc->sc_dev), DISKPART(dev));
 	else
 		rf_sc->sc_state &= ~(1 << (DISKPART(dev) + RFS_OPEN_SHIFT));
 	if ((rf_sc->sc_state & RFS_OPEN_MASK) == 0)
@@ -1092,7 +1092,7 @@ rfioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 	/* We are going to operate on a non-open dev? PANIC! */
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
 		panic("rfioctl: can not operate on non-open drive %s "
-		    "partition %d", device_xname(rf_sc->sc_dev), DISKPART(dev));
+		    "partition %"PRIu64, device_xname(rf_sc->sc_dev), DISKPART(dev));
 	switch (cmd) {
 	/* get and set disklabel; DIOCGPART used internally */
 	case DIOCGDINFO: /* get */

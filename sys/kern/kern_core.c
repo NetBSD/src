@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.9.6.2 2008/06/02 13:24:07 mjf Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.9.6.3 2009/01/17 13:29:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.9.6.2 2008/06/02 13:24:07 mjf Exp $");
-
-#include "opt_coredump.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.9.6.3 2009/01/17 13:29:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -51,17 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.9.6.2 2008/06/02 13:24:07 mjf Exp $"
 #include <sys/exec.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
-#if !defined(COREDUMP)
-
-int
-coredump(struct lwp *l, const char *pattern)
-{
-
-	return (ENOSYS);
-}
-
-#else	/* COREDUMP */
+MODULE(MODULE_CLASS_MISC, coredump, NULL);
 
 struct coredump_iostate {
 	struct lwp *io_lwp;
@@ -70,13 +60,36 @@ struct coredump_iostate {
 	off_t io_offset;
 };
 
+static int	coredump(struct lwp *, const char *);
 static int	coredump_buildname(struct proc *, char *, const char *, size_t);
+
+static int
+coredump_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		coredump_vec = coredump;
+		return 0;
+	case MODULE_CMD_FINI:
+		/*
+		 * In theory we don't need to patch this, as the various
+		 * exec formats depend on this module.  If this module has
+		 * no references, and so can be unloaded, no user programs
+		 * can be running and so nothing can call *coredump_vec.
+		 */
+		coredump_vec = (int (*)(struct lwp *, const char *))enosys;
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
 
 /*
  * Dump core, into a file named "progname.core" or "core" (depending on the
  * value of shortcorename), unless the process was setuid/setgid.
  */
-int
+static int
 coredump(struct lwp *l, const char *pattern)
 {
 	struct vnode		*vp;
@@ -227,8 +240,8 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 				    p->p_pgrp->pg_session->s_login);
 				break;
 			case 't':
-				i = snprintf(d, end - d, "%ld",
-				    p->p_stats->p_start.tv_sec);
+				i = snprintf(d, end - d, "%lld",
+				    (long long)p->p_stats->p_start.tv_sec);
 				break;
 			default:
 				goto copy;
@@ -267,5 +280,3 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 	io->io_offset += len;
 	return (0);
 }
-
-#endif	/* COREDUMP */

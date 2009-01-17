@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.55.6.2 2008/09/28 10:40:53 mjf Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.55.6.3 2009/01/17 13:29:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.55.6.2 2008/09/28 10:40:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.55.6.3 2009/01/17 13:29:20 mjf Exp $");
 
 #define SYSVMSG
 
@@ -392,7 +392,8 @@ msg_freehdr(struct __msg *msghdr)
 }
 
 int
-sys___msgctl13(struct lwp *l, const struct sys___msgctl13_args *uap, register_t *retval)
+sys___msgctl50(struct lwp *l, const struct sys___msgctl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) msqid;

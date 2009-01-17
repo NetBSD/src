@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.22.16.1 2008/07/02 19:08:15 mjf Exp $ */
+/* $NetBSD: machdep.c,v 1.22.16.2 2009/01/17 13:27:46 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.16.1 2008/07/02 19:08:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.16.2 2009/01/17 13:27:46 mjf Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -42,9 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.16.1 2008/07/02 19:08:15 mjf Exp $"
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8583var.h>
+
+#include <arch/acorn26/ioc/iociicvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -52,15 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.16.1 2008/07/02 19:08:15 mjf Exp $"
 #include <machine/memcreg.h>
 
 int physmem;
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
 char cpu_model[] = "Archimedes";
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
-
-/* For reading NVRAM during bootstrap. */
-i2c_tag_t acorn26_i2c_tag;
 
 struct vm_map *phys_map = NULL;
 struct vm_map *mb_map = NULL; /* and ever more shall be so */
@@ -106,6 +101,8 @@ cpu_reboot(howto, b)
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 haltsys:
 	if (howto & RB_HALT) {
@@ -192,7 +189,8 @@ cmos_read(int location)
 {
 	uint8_t val;
 
-	if (pcfrtc_bootstrap_read(acorn26_i2c_tag, 0x50,
+	KASSERT(iociic_bootstrap_cookie() != NULL);
+	if (pcfrtc_bootstrap_read(iociic_bootstrap_cookie(), 0x50,
 	    location, &val, 1) != 0)
 		return (-1);
 	return (val);
@@ -204,19 +202,7 @@ cmos_write(int location, int value)
 {
 	uint8_t val = value;
 
-	return (pcfrtc_bootstrap_write(acorn26_i2c_tag, 0x50,
+	KASSERT(iociic_bootstrap_cookie() != NULL);
+	return (pcfrtc_bootstrap_write(iociic_bootstrap_cookie(), 0x50,
 	    location, &val, 1));
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-
-	ci->ci_want_resched = 1;
-	if (curlwp != ci->ci_data.cpu_idlelwp)
-		setsoftast();
 }

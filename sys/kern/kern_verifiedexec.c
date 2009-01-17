@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.107.6.4 2008/09/28 10:40:53 mjf Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.107.6.5 2009/01/17 13:29:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.107.6.4 2008/09/28 10:40:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.107.6.5 2009/01/17 13:29:19 mjf Exp $");
 
 #include "opt_veriexec.h"
 
@@ -726,7 +726,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	struct veriexec_file_entry *vfe;
 	int r;
 
-	if (veriexec_bypass)
+	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
 
 	r = veriexec_file_verify(l, vp, name, flag, VERIEXEC_UNLOCKED, &vfe);
@@ -823,7 +823,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 	struct veriexec_file_entry *vfe;
 	int error;
 
-	if (veriexec_bypass)
+	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
 
 	rw_enter(&veriexec_op_lock, RW_READER);
@@ -865,7 +865,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 {
 	struct veriexec_file_entry *vfe, *tvfe;
 
-	if (veriexec_bypass)
+	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
 
 	rw_enter(&veriexec_op_lock, RW_READER);
@@ -1185,7 +1185,8 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	const char *file, *fp_type;
 	int error;
 
-	file = prop_string_cstring_nocopy(prop_dictionary_get(dict, "file"));
+	if (!prop_dictionary_get_cstring_nocopy(dict, "file", &file))
+		return (EINVAL);
 
 	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file);
 	error = namei(&nid);
@@ -1416,7 +1417,8 @@ veriexec_unmountchk(struct mount *mp)
 {
 	int error;
 
-	if (veriexec_bypass || doing_shutdown)
+	if ((veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
+	    || doing_shutdown)
 		return (0);
 
 	rw_enter(&veriexec_op_lock, RW_READER);
@@ -1468,7 +1470,7 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 	struct veriexec_file_entry *vfe = NULL;
 	int error = 0;
 
-	if (veriexec_bypass)
+	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
 
 	if (vp == NULL) {

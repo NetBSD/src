@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.28.6.1 2008/06/02 13:22:53 mjf Exp $	*/
+/*	$NetBSD: xen.h,v 1.28.6.2 2009/01/17 13:28:39 mjf Exp $	*/
 
 /*
  *
@@ -129,6 +129,8 @@ void vprintk(const char *, _BSD_VA_LIST_);
 void trap_init(void);
 void xpq_flush_cache(void);
 
+#define xendomain_is_dom0()		(xen_start_info.flags & SIF_INITDOMAIN)
+#define xendomain_is_privileged()	(xen_start_info.flags & SIF_PRIVILEGED)
 
 /*
  * STI/CLI equivalents. These basically set and clear the virtual

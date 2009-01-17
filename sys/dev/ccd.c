@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.127.6.3 2008/06/02 13:23:11 mjf Exp $	*/
+/*	$NetBSD: ccd.c,v 1.127.6.4 2009/01/17 13:28:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.127.6.3 2008/06/02 13:23:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.127.6.4 2009/01/17 13:28:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,7 +559,7 @@ ccdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdopen(0x%x, 0x%x)\n", dev, flags);
+		printf("ccdopen(0x%"PRIx64", 0x%x)\n", dev, flags);
 #endif
 	if (unit >= numccd)
 		return (ENXIO);
@@ -620,7 +620,7 @@ ccdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdclose(0x%x, 0x%x)\n", dev, flags);
+		printf("ccdclose(0x%"PRIx64", 0x%x)\n", dev, flags);
 #endif
 
 	if (unit >= numccd)
@@ -698,7 +698,7 @@ ccdstrategy(struct buf *bp)
 
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
-	BUFQ_PUT(cs->sc_bufq, bp);
+	bufq_put(cs->sc_bufq, bp);
 	ccdstart(cs);
 	splx(s);
 	return;
@@ -724,7 +724,7 @@ ccdstart(struct ccd_softc *cs)
 #endif
 
 	/* See if there is work for us to do. */
-	while ((bp = BUFQ_PEEK(cs->sc_bufq)) != NULL) {
+	while ((bp = bufq_peek(cs->sc_bufq)) != NULL) {
 		/* Instrumentation. */
 		disk_busy(&cs->sc_dkdev);
 
@@ -760,7 +760,7 @@ ccdstart(struct ccd_softc *cs)
 		}
 
 		/* Transfer all set up, remove job from the queue. */
-		(void) BUFQ_GET(cs->sc_bufq);
+		(void) bufq_get(cs->sc_bufq);
 
 		/* Now fire off the requests. */
 		while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
@@ -868,7 +868,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
-		printf(" dev 0x%x(u%lu): cbp %p bn %" PRId64 " addr %p"
+		printf(" dev 0x%"PRIx64"(u%lu): cbp %p bn %" PRId64 " addr %p"
 		       " bcnt %d\n",
 		    ci->ci_dev, (unsigned long) (ci-cs->sc_cinfo), cbp,
 		    cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
@@ -916,7 +916,7 @@ ccdiodone(struct buf *vbp)
 	if (ccddebug & CCDB_IO) {
 		printf("ccdiodone: bp %p bcount %d resid %d\n",
 		       bp, bp->b_bcount, bp->b_resid);
-		printf(" dev 0x%x(u%d), cbp %p bn %" PRId64 " addr %p"
+		printf(" dev 0x%"PRIx64"(u%d), cbp %p bn %" PRId64 " addr %p"
 		       " bcnt %d\n",
 		       cbp->cb_buf.b_dev, cbp->cb_comp, cbp,
 		       cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
@@ -953,7 +953,7 @@ ccdread(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdread(0x%x, %p)\n", dev, uio);
+		printf("ccdread(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 	if (unit >= numccd)
 		return (ENXIO);
@@ -974,7 +974,7 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdwrite(0x%x, %p)\n", dev, uio);
+		printf("ccdwrite(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 	if (unit >= numccd)
 		return (ENXIO);

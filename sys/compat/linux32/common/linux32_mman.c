@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mman.c,v 1.6.6.1 2008/04/03 12:42:33 mjf Exp $ */
+/*	$NetBSD: linux32_mman.c,v 1.6.6.2 2009/01/17 13:28:45 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.6.6.1 2008/04/03 12:42:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.6.6.2 2009/01/17 13:28:45 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.6.6.1 2008/04/03 12:42:33 mjf Exp
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/common/linux_mmap.h>
 

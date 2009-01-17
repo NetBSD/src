@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrsi3.S,v 1.5 2006/05/22 20:56:44 uwe Exp $	*/
+/*	$NetBSD: ashrsi3.S,v 1.5.58.1 2009/01/17 13:29:21 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,11 @@
  */
 
 #include <machine/asm.h>
+
+
+#ifdef __ELF__
+	.hidden __ashrsi3
+#endif
 
 
 NENTRY(__ashrsi3)

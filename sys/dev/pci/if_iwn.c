@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.5.8.3 2008/09/28 10:40:26 mjf Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.5.8.4 2009/01/17 13:28:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.5.8.3 2008/09/28 10:40:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.5.8.4 2009/01/17 13:28:59 mjf Exp $");
 
 
 /*
@@ -169,7 +169,7 @@ static void		iwn_compute_differential_gain(struct iwn_softc *,
 static void		iwn_tune_sensitivity(struct iwn_softc *,
     const struct iwn_rx_stats *);
 static int		iwn_send_sensitivity(struct iwn_softc *);
-/*static int		  iwn_setup_beacon(struct iwn_softc *, struct ieee80211_node *);*/
+static int		iwn_setup_beacon(struct iwn_softc *, struct ieee80211_node *);
 static int		iwn_auth(struct iwn_softc *);
 static int		iwn_run(struct iwn_softc *);
 static int		iwn_scan(struct iwn_softc *, uint16_t);
@@ -183,7 +183,7 @@ static void		iwn_stop(struct ifnet *, int);
 static void		iwn_fix_channel(struct ieee80211com *, struct mbuf *);
 static bool		iwn_resume(device_t PMF_FN_PROTO);
 static int		iwn_add_node(struct iwn_softc *sc,
-	struct ieee80211_node *ni, bool broadcast, bool async);
+				     struct ieee80211_node *ni, bool broadcast, bool async, uint32_t htflags);
 
 
 
@@ -271,7 +271,17 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		return;
 	}
 
+#if 0
 	sc->sc_dmat = pa->pa_dmat;
+#endif
+	/* XXX may not be needed */
+	if (bus_dmatag_subregion(pa->pa_dmat, 0, 3 << 30,
+	    &(sc->sc_dmat), BUS_DMA_NOWAIT) != 0) {
+		aprint_error_dev(self,
+		    "WARNING: failed to restrict dma range, "
+		    "falling back to parent bus dma range\n");
+		sc->sc_dmat = pa->pa_dmat;
+	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(self, "could not map interrupt\n");
@@ -342,6 +352,9 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	}
 
 
+	/* Set the state of the RF kill switch */
+	sc->sc_radio = (IWN_READ(sc, IWN_GPIO_CTL) & IWN_GPIO_RF_ENABLED);
+
 	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
@@ -367,6 +380,9 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	/* IBSS channel undefined for now */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
+
+	memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
+	ic->ic_des_esslen = 0;
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -505,13 +521,14 @@ iwn_setup_beacon(struct iwn_softc *sc, struct ieee80211_node *ni)
 	bcn = (struct iwn_cmd_beacon *)cmd->data;
 	memset(bcn, 0, sizeof (struct iwn_cmd_beacon));
 	bcn->id = IWN_ID_BROADCAST;
-	bcn->ofdm_mask = 0xff;
-	bcn->cck_mask = 0x0f;
 	bcn->lifetime = htole32(IWN_LIFETIME_INFINITE);
 	bcn->len = htole16(m0->m_pkthdr.len);
 	bcn->rate = (ic->ic_curmode == IEEE80211_MODE_11A) ?
 	    iwn_plcp_signal(12) : iwn_plcp_signal(2);
-	bcn->flags = htole32(IWN_TX_AUTO_SEQ | IWN_TX_INSERT_TSTAMP);
+	bcn->flags2 = 0x2; /* RATE_MCS_CCK_MSK */
+
+	bcn->flags = htole32(IWN_TX_AUTO_SEQ | IWN_TX_INSERT_TSTAMP
+			     | IWN_TX_USE_NODE_RATE);
 
 	/* save and trim IEEE802.11 header */
 	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (void *)&bcn->wh);
@@ -536,6 +553,8 @@ iwn_setup_beacon(struct iwn_softc *sc, struct ieee80211_node *ni)
 	IWN_SET_DESC_SEG(desc, 1,  data->map->dm_segs[0].ds_addr,
 	    data->map->dm_segs[1].ds_len);
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+	    data->map->dm_mapsize /* calc? */, BUS_DMASYNC_PREWRITE);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
@@ -1018,20 +1037,20 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			break;
 		/* FALLTHROUGH */
 	case IEEE80211_S_AUTH:
-		/* reset state to handle reassociations correctly */
-		sc->config.associd = 0;
-		sc->config.filter &= ~htole32(IWN_FILTER_BSS);
-		/*sc->calib.state = IWN_CALIB_STATE_INIT;*/
+		/* cancel any active scan - it apparently breaks auth */
+		/*(void)iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 1);*/
 
 		if ((error = iwn_auth(sc)) != 0) {
-			aprint_error_dev(sc->sc_dev, "could not move to auth state\n");
+			aprint_error_dev(sc->sc_dev,
+					 "could not move to auth state\n");
 			return error;
 		}
 		break;
 
 	case IEEE80211_S_RUN:
 		if ((error = iwn_run(sc)) != 0) {
-			aprint_error_dev(sc->sc_dev, "could not move to run state\n");
+			aprint_error_dev(sc->sc_dev,
+					 "could not move to run state\n");
 			return error;
 		}
 		break;
@@ -1217,7 +1236,7 @@ iwn_load_firmware(struct iwn_softc *sc)
 	int error;
 
 	/* load firmware image from disk */
-	if ((error = firmware_open("if_iwn","iwlwifi-4965.ucode", &fw)) != 0) {
+	if ((error = firmware_open("if_iwn","iwlwifi-4965-1.ucode", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
 		goto fail1;
 	}
@@ -1685,16 +1704,74 @@ iwn_cmd_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 }
 
 static void
+iwn_microcode_ready(struct iwn_softc *sc, struct iwn_ucode_info *uc)
+{
+
+	/* the microcontroller is ready */
+	DPRINTF(("microcode alive notification version=%d.%d "
+		 "subtype=%x alive=%x\n", uc->major, uc->minor,
+		 uc->subtype, le32toh(uc->valid)));
+
+	if (le32toh(uc->valid) != 1) {
+		aprint_error_dev(sc->sc_dev, "microcontroller initialization "
+				 "failed\n");
+		return;
+	}
+	if (uc->subtype == IWN_UCODE_INIT) {
+		/* save microcontroller's report */
+		memcpy(&sc->ucode_info, uc, sizeof (*uc));
+	}
+}
+
+
+static void
 iwn_notif_intr(struct iwn_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = ic->ic_ifp;
+	struct iwn_rx_data *data;
+	struct iwn_rx_desc *desc;
 	uint16_t hw;
 
 	hw = le16toh(sc->shared->closed_count);
+
+	/*
+	 * If the radio is disabled then down the interface and stop
+	 * processing - scan the queue for a microcode load command
+	 * result.  It is the only thing that we can do with the radio
+	 * off.
+	 */
+	if (!sc->sc_radio) {
+		while (sc->rxq.cur != hw) {
+			data = &sc->rxq.data[sc->rxq.cur];
+			desc = (void *)data->m->m_ext.ext_buf;
+			if (desc->type == IWN_UC_READY) {
+				iwn_microcode_ready(sc,
+				    (struct iwn_ucode_info *)(desc + 1));
+			} else if (desc->type == IWN_STATE_CHANGED) {
+				uint32_t *status = (uint32_t *)(desc + 1);
+
+				/* enabled/disabled notification */
+				DPRINTF(("state changed to %x\n",
+					 le32toh(*status)));
+
+				sc->sc_radio = !(le32toh(*status) & 1);
+			}
+
+			sc->rxq.cur = (sc->rxq.cur + 1) % IWN_RX_RING_COUNT;
+		}
+
+		if (!sc->sc_radio) {
+			ifp->if_flags &= ~IFF_UP;
+			iwn_stop(ifp, 1);
+		}
+
+		return;
+	}
+
 	while (sc->rxq.cur != hw) {
-		struct iwn_rx_data *data = &sc->rxq.data[sc->rxq.cur];
-		struct iwn_rx_desc *desc = (void *)data->m->m_ext.ext_buf;
+		data = &sc->rxq.data[sc->rxq.cur];
+		desc = (void *)data->m->m_ext.ext_buf;
 
 		DPRINTFN(4,("rx notification qid=%x idx=%d flags=%x type=%d "
 			"len=%d\n", desc->qid, desc->idx, desc->flags, desc->type,
@@ -1741,23 +1818,8 @@ iwn_notif_intr(struct iwn_softc *sc)
 
 		case IWN_UC_READY:
 		{
-			struct iwn_ucode_info *uc =
-			    (struct iwn_ucode_info *)(desc + 1);
-
-			/* the microcontroller is ready */
-			DPRINTF(("microcode alive notification version=%d.%d "
-				"subtype=%x alive=%x\n", uc->major, uc->minor,
-				uc->subtype, le32toh(uc->valid)));
-
-			if (le32toh(uc->valid) != 1) {
-				aprint_error_dev(sc->sc_dev, "microcontroller initialization "
-				    "failed\n");
-				break;
-			}
-			if (uc->subtype == IWN_UCODE_INIT) {
-				/* save microcontroller's report */
-				memcpy(&sc->ucode_info, uc, sizeof (*uc));
-			}
+			iwn_microcode_ready(sc,
+			    (struct iwn_ucode_info *)(desc + 1));
 			break;
 		}
 		case IWN_STATE_CHANGED:
@@ -1767,6 +1829,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 			/* enabled/disabled notification */
 			DPRINTF(("state changed to %x\n", le32toh(*status)));
 
+			sc->sc_radio = !(le32toh(*status) & 1);
 			if (le32toh(*status) & 1) {
 				/* the radio button has to be pushed */
 				aprint_error_dev(sc->sc_dev, "Radio transmitter is off\n");
@@ -1851,6 +1914,7 @@ iwn_intr(void *arg)
 		uint32_t tmp = IWN_READ(sc, IWN_GPIO_CTL);
 		aprint_error_dev(sc->sc_dev, "RF switch: radio %s\n",
 		    (tmp & IWN_GPIO_RF_ENABLED) ? "enabled" : "disabled");
+		sc->sc_radio = (tmp & IWN_GPIO_RF_ENABLED);
 	}
 	if (r1 & IWN_CT_REACHED) {
 		aprint_error_dev(sc->sc_dev, "critical temperature reached!\n");
@@ -1992,7 +2056,11 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}else if (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
 		flags |= (IWN_TX_NEED_RTS | IWN_TX_FULL_TXOP);
 
-	tx->id = IEEE80211_IS_MULTICAST(wh->i_addr1) ? IWN_ID_BROADCAST : IWN_ID_BSS;
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1)
+	    || (type != IEEE80211_FC0_TYPE_DATA))
+		tx->id = IWN_ID_BROADCAST;
+	else
+		tx->id = IWN_ID_BSS;
 
 	DPRINTFN(5, ("addr1: %x:%x:%x:%x:%x:%x, id = 0x%x\n",
 		     wh->i_addr1[0], wh->i_addr1[1], wh->i_addr1[2],
@@ -2007,7 +2075,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 			flags |= IWN_TX_INSERT_TSTAMP;
 
 		if (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_REQ ||
-		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
+		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ ||
+		    subtype == IEEE80211_FC0_SUBTYPE_AUTH ||
+		    subtype == IEEE80211_FC0_SUBTYPE_DEAUTH) {
 			flags &= ~IWN_TX_NEED_RTS;
 			flags |= IWN_TX_NEED_CTS;
 			tx->timeout = htole16(3);
@@ -2053,7 +2123,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}
 
 	/* copy and trim IEEE802.11 header */
-	memcpy((uint8_t *)(tx + 1), wh, hdrlen);
+	memcpy(((uint8_t *)tx) + sizeof(*tx), wh, hdrlen);
 	m_adj(m0, hdrlen);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
@@ -2122,6 +2192,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	ring->queued++;
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+	    data->map->dm_mapsize /* calc? */, BUS_DMASYNC_PREWRITE);
+
 	/* kick ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
 	IWN_WRITE(sc, IWN_TX_WIDX, ring->qid << 8 | ring->cur);
@@ -2143,9 +2216,11 @@ iwn_start(struct ifnet *ifp)
 
 	/*
 	 * net80211 may still try to send management frames even if the
-	 * IFF_RUNNING flag is not set...
+	 * IFF_RUNNING flag is not set... Also, don't bother if the radio
+	 * is not enabled.
 	 */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if (((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) ||
+	    !sc->sc_radio)
 		return;
 
 	for (;;) {
@@ -2271,8 +2346,22 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void * data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
+			/*
+			 * resync the radio state just in case we missed
+			 * and event.
+			 */
+			sc->sc_radio =
+			    (IWN_READ(sc, IWN_GPIO_CTL) & IWN_GPIO_RF_ENABLED);
+
+			if (!sc->sc_radio) {
+				ifp->if_flags &= ~IFF_UP;
+				error = EBUSY; /* XXX not really but same as elsewhere in driver */
+				if (ifp->if_flags & IFF_RUNNING)
+					iwn_stop(ifp, 1);
+			} else if (!(ifp->if_flags & IFF_RUNNING))
 				iwn_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -2476,6 +2565,9 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 		sc->shared->len[ring->qid][ring->cur + IWN_TX_RING_COUNT] =
 		    htole16(8);
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, ring->cmd_dma.map, 0,
+	    4 + size, BUS_DMASYNC_PREWRITE);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
@@ -3116,7 +3208,7 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 
 static int
 iwn_add_node(struct iwn_softc *sc, struct ieee80211_node *ni, bool broadcast,
-    bool async)
+	     bool async, uint32_t htflags)
 {
 	struct iwn_node_info node;
 	int error;
@@ -3131,8 +3223,7 @@ iwn_add_node(struct iwn_softc *sc, struct ieee80211_node *ni, bool broadcast,
 	} else {
 		IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
 		node.id = IWN_ID_BSS;
-		node.htflags = htole32(3 << IWN_AMDPU_SIZE_FACTOR_SHIFT |
-				       5 << IWN_AMDPU_DENSITY_SHIFT);
+		node.htflags = htole32(htflags);
 		DPRINTF(("adding BSS node\n"));
 	}
 
@@ -3160,27 +3251,35 @@ iwn_auth(struct iwn_softc *sc)
 	struct ieee80211_node *ni = ic->ic_bss;
 	int error;
 
+	sc->calib.state = IWN_CALIB_STATE_INIT;
+
 	/* update adapter's configuration */
+	sc->config.associd = 0;
 	IEEE80211_ADDR_COPY(sc->config.bssid, ni->ni_bssid);
-	sc->config.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
+	sc->config.chan = htole16(ieee80211_chan2ieee(ic, ni->ni_chan));
 	sc->config.flags = htole32(IWN_CONFIG_TSF);
 	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
 		sc->config.flags |= htole32(IWN_CONFIG_AUTO |
 		    IWN_CONFIG_24GHZ);
 	}
-	switch (ic->ic_curmode) {
-	case IEEE80211_MODE_11A:
+	if (IEEE80211_IS_CHAN_A(ni->ni_chan)) {
 		sc->config.cck_mask  = 0;
 		sc->config.ofdm_mask = 0x15;
-		break;
-	case IEEE80211_MODE_11B:
+	} else if (IEEE80211_IS_CHAN_B(ni->ni_chan)) {
 		sc->config.cck_mask  = 0x03;
 		sc->config.ofdm_mask = 0;
-		break;
-	default:	/* assume 802.11b/g */
+	} else {
+		/* assume 802.11b/g */
 		sc->config.cck_mask  = 0xf;
 		sc->config.ofdm_mask = 0x15;
 	}
+
+	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		sc->config.flags |= htole32(IWN_CONFIG_SHSLOT);
+	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+		sc->config.flags |= htole32(IWN_CONFIG_SHPREAMBLE);
+	sc->config.filter &= ~htole32(IWN_FILTER_BSS);
+
 	DPRINTF(("config chan %d flags %x cck %x ofdm %x\n", sc->config.chan,
 		sc->config.flags, sc->config.cck_mask, sc->config.ofdm_mask));
 	error = iwn_cmd(sc, IWN_CMD_CONFIGURE, &sc->config,
@@ -3200,11 +3299,11 @@ iwn_auth(struct iwn_softc *sc)
 	 * Reconfiguring clears the adapter's nodes table so we must
 	 * add the broadcast node again.
 	 */
-	if ((error = iwn_add_node(sc, ni, true, true)) != 0)
+	if ((error = iwn_add_node(sc, ni, true, true, 0)) != 0)
 		return error;
 
 	/* add BSS node */
-	if ((error = iwn_add_node(sc, ni, false, true)) != 0)
+	if ((error = iwn_add_node(sc, ni, false, true, 0)) != 0)
 		return error;
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
@@ -3267,7 +3366,9 @@ iwn_run(struct iwn_softc *sc)
 	}
 
 	/* add BSS node */
-	iwn_add_node(sc, ni, false, true);
+	iwn_add_node(sc, ni, false, true,
+		     (3 << IWN_AMDPU_SIZE_FACTOR_SHIFT |
+		      5 << IWN_AMDPU_DENSITY_SHIFT));
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		/* fake a join to init the tx rate */
@@ -3306,7 +3407,8 @@ iwn_run(struct iwn_softc *sc)
 
 /*
  * Send a scan request to the firmware. Since this command is huge, we map it
- * into a mbuf instead of using the pre-allocated set of commands.
+ * into a mbuf instead of using the pre-allocated set of commands. this function
+ * implemented as iwl4965_bg_request_scan in the linux driver.
  */
 static int
 iwn_scan(struct iwn_softc *sc, uint16_t flags)
@@ -3318,7 +3420,6 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	struct iwn_tx_cmd *cmd;
 	struct iwn_cmd_data *tx;
 	struct iwn_scan_hdr *hdr;
-	struct iwn_scan_essid *essid;
 	struct iwn_scan_chan *chan;
 	struct ieee80211_frame *wh;
 	struct ieee80211_rateset *rs;
@@ -3330,11 +3431,21 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
 
+	/*
+	 * allocate an mbuf and initialize it so that it contains a packet
+	 * header. M_DONTWAIT can fail and MT_DATA means it is dynamically
+	 * allocated.
+	 */
 	MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 	if (data->m == NULL) {
 		aprint_error_dev(sc->sc_dev, "could not allocate mbuf for scan command\n");
 		return ENOMEM;
 	}
+
+	/*
+	 * allocates and adds an mbuf cluster to a normal mbuf m. the how
+	 * is M_DONTWAIT and the flag M_EXT is set upon success.
+	 */
 	MCLGET(data->m, M_DONTWAIT);
 	if (!(data->m->m_flags & M_EXT)) {
 		m_freem(data->m);
@@ -3343,6 +3454,11 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 		return ENOMEM;
 	}
 
+	/*
+	 * returns a pointer to the data contained in the specified mbuf.
+	 * in this case it is our iwn_tx_cmd. we initialize the basic
+	 * members of the command here with exception to data[136].
+	 */
 	cmd = mtod(data->m, struct iwn_tx_cmd *);
 	cmd->code = IWN_CMD_SCAN;
 	cmd->flags = 0;
@@ -3362,8 +3478,15 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	/* select Ant B and Ant C for scanning */
 	hdr->rxchain = htole16(0x3e1 | 7 << IWN_RXCHAIN_ANTMSK_SHIFT);
 
-	tx = (struct iwn_cmd_data *)(hdr + 1);
-	memset(tx, 0, sizeof (struct iwn_cmd_data));
+	tx = &(hdr->tx_cmd);
+	/*
+	 * linux
+	 * flags = IWN_TX_AUTO_SEQ
+	 * 	   0x200 is rate selection?
+	 * id = ???
+	 * lifetime = IWN_LIFETIME_INFINITE
+	 *
+	 */
 	tx->flags = htole32(IWN_TX_AUTO_SEQ | 0x200); // XXX
 	tx->id = IWN_ID_BROADCAST;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
@@ -3380,17 +3503,15 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 		tx->rflags |= IWN_RFLAG_CCK;
 	}
 
-	essid = (struct iwn_scan_essid *)(tx + 1);
-	memset(essid, 0, 4 * sizeof (struct iwn_scan_essid));
-	essid[0].id  = IEEE80211_ELEMID_SSID;
-	essid[0].len = ic->ic_des_esslen;
-	memcpy(essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
+	hdr->scan_essid[0].id  = IEEE80211_ELEMID_SSID;
+	hdr->scan_essid[0].len = ic->ic_des_esslen;
+	memcpy(hdr->scan_essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
 
 	/*
 	 * Build a probe request frame.	 Most of the following code is a
 	 * copy & paste of what is done in net80211.
 	 */
-	wh = (struct ieee80211_frame *)&essid[4];
+	wh = &(hdr->wh);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
 	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
 	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
@@ -3400,11 +3521,13 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	*(u_int16_t *)&wh->i_dur[0] = 0;	/* filled by h/w */
 	*(u_int16_t *)&wh->i_seq[0] = 0;	/* filled by h/w */
 
-	frm = (uint8_t *)(wh + 1);
+	frm = &(hdr->data[0]);
 
-	/* add empty SSID IE (firmware generates it for directed scans) */
+	/* add empty SSID IE */
 	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = 0;
+	*frm++ = ic->ic_des_esslen;
+	memcpy(frm, ic->ic_des_essid, ic->ic_des_esslen);
+	frm += ic->ic_des_esslen;
 
 	mode = ieee80211_chan2mode(ic, ic->ic_ibss_chan);
 	rs = &ic->ic_sup_rates[mode];
@@ -3482,6 +3605,9 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 		    htole16(8);
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+	    data->map->dm_segs[0].ds_len, BUS_DMASYNC_PREWRITE);
+
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
 	IWN_WRITE(sc, IWN_TX_WIDX, ring->qid << 8 | ring->cur);
@@ -3527,7 +3653,7 @@ iwn_config(struct iwn_softc *sc)
 	IEEE80211_ADDR_COPY(sc->config.myaddr, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(sc->config.wlap, ic->ic_myaddr);
 	/* set default channel */
-	sc->config.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
+	sc->config.chan = htole16(ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
 	sc->config.flags = htole32(IWN_CONFIG_TSF);
 	if (IEEE80211_IS_CHAN_2GHZ(ic->ic_ibss_chan)) {
 		sc->config.flags |= htole32(IWN_CONFIG_AUTO |
@@ -3572,7 +3698,7 @@ iwn_config(struct iwn_softc *sc)
 	}
 
 	/* add broadcast node */
-	if ((error = iwn_add_node(sc, NULL, true, false)) != 0)
+	if ((error = iwn_add_node(sc, NULL, true, false, 0)) != 0)
 		return error;
 
 	if ((error = iwn_set_critical_temp(sc)) != 0) {
@@ -3797,9 +3923,12 @@ iwn_init(struct ifnet *ifp)
 	/* check that the radio is not disabled by RF switch */
 	if (!(IWN_READ(sc, IWN_GPIO_CTL) & IWN_GPIO_RF_ENABLED)) {
 		aprint_error_dev(sc->sc_dev, "radio is disabled by hardware switch\n");
+		sc->sc_radio = false;
 		error = EBUSY;	/* XXX ;-) */
 		goto fail1;
 	}
+
+	sc->sc_radio = true;
 
 	if ((error = iwn_load_firmware(sc)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not load firmware\n");

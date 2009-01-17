@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13.14.2 2008/06/29 09:32:54 mjf Exp $	*/
+/*	$NetBSD: intr.c,v 1.13.14.3 2009/01/17 13:27:54 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.14.2 2008/06/29 09:32:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.14.3 2009/01/17 13:27:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.14.2 2008/06/29 09:32:54 mjf Exp $");
 typedef LIST_HEAD(, intrhand) ih_list_t;
 ih_list_t autovec_list[AVEC_MAX - AVEC_MIN + 1];
 ih_list_t uservec_list[UVEC_MAX - UVEC_MIN + 1];
-static int idepth;
+int idepth;
 volatile int ssir;
 
 void
@@ -287,7 +287,6 @@ struct clockframe	frame;
 	ih_list_t	*vec_list;
 	struct intrhand	*ih;
 
-	idepth++;
 	uvmexp.intrs++;
 	vector = (frame.cf_vo & 0xfff) >> 2;
 	if (vector < (AVEC_LOC+AVEC_MAX) && vector >= AVEC_LOC)
@@ -300,7 +299,6 @@ struct clockframe	frame;
 		printf("intr_dispatch: vector %d unexpected\n", vector);
 		if (++unexpected > 10)
 		  panic("intr_dispatch: too many unexpected interrupts");
-		idepth--;
 		return;
 	}
 	ih->ih_intrcnt[0]++;
@@ -316,7 +314,6 @@ struct clockframe	frame;
 	    panic("intr_dispatch: too many stray interrupts");
 	else
 	    printf("intr_dispatch: stray level %d interrupt\n", vector);
-	idepth--;
 }
 
 bool

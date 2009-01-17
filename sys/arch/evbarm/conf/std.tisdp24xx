@@ -1,4 +1,4 @@
-#	$NetBSD: std.tisdp24xx,v 1.1.18.2 2008/09/28 10:39:54 mjf Exp $
+#	$NetBSD: std.tisdp24xx,v 1.1.18.3 2009/01/17 13:27:58 mjf Exp $
 #
 # standard NetBSD/evbarm for SDP2430 options
 
@@ -17,6 +17,7 @@ options 	ARM11_PMC
 options 	ARM11_PMC_CCNT_HZ=266000000
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 #options 	PROCESS_ID_IS_CURLWP
+#options 	PROCESS_ID_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
 
 makeoptions	LOADADDRESS="0x80300000"

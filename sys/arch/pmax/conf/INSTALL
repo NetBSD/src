@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.63.44.1 2008/09/28 10:40:05 mjf Exp $
+# 	$NetBSD: INSTALL,v 1.63.44.2 2009/01/17 13:28:25 mjf Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -37,7 +37,6 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 #options 	KTRACE			# system call tracing support
-#options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel

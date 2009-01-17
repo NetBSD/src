@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.50.6.3 2008/06/05 19:14:38 mjf Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.50.6.4 2009/01/17 13:29:43 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -268,7 +268,6 @@ void uvm_page_own(struct vm_page *, const char *);
 #if !defined(PMAP_STEAL_MEMORY)
 bool uvm_page_physget(paddr_t *);
 #endif
-void uvm_page_rehash(void);
 void uvm_page_recolor(int);
 void uvm_pageidlezero(void);
 
@@ -296,10 +295,7 @@ static int vm_physseg_find(paddr_t, int *);
  * macros
  */
 
-#define UVM_PAGE_HASH_PENALTY	4	/* XXX: a guess */
-
-#define uvm_pagehash(obj,off) \
-	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
+#define UVM_PAGE_TREE_PENALTY	4	/* XXX: a guess */
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 

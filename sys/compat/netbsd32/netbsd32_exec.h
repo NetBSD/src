@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.26.12.1 2008/06/02 13:23:06 mjf Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.26.12.2 2009/01/17 13:28:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -48,7 +48,7 @@ struct netbsd32_exec {
 	netbsd32_u_long	a_drsize;	/* data relocation size */
 };
 
-extern const struct emul emul_netbsd32;
+extern struct emul emul_netbsd32;
 
 #ifdef EXEC_AOUT
 int netbsd32_exec_aout_prep_zmagic(struct lwp *, struct exec_package *);

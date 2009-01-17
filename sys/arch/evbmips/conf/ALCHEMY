@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.18.16.2 2008/09/28 10:39:54 mjf Exp $
+#	$NetBSD: ALCHEMY,v 1.18.16.3 2009/01/17 13:27:59 mjf Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.18.16.2 $"
+#ident 		"ALCHEMY-$Revision: 1.18.16.3 $"
 
 maxusers	32
 
@@ -38,7 +38,6 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-#options 	LKM		# loadable kernel modules
 options 	NTP		# network time protocol
 
 # Debugging options
@@ -90,7 +89,6 @@ file-system	FDESC		# user file descriptor filesystem
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

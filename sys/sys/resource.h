@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.29 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: resource.h,v 1.29.54.1 2009/01/17 13:29:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -58,9 +58,7 @@ struct	rusage {
 	struct timeval ru_utime;	/* user time used */
 	struct timeval ru_stime;	/* system time used */
 	long	ru_maxrss;		/* max resident set size */
-#ifdef _KERNEL
 #define	ru_first	ru_ixrss
-#endif
 	long	ru_ixrss;		/* integral shared memory size */
 	long	ru_idrss;		/* integral unshared data " */
 	long	ru_isrss;		/* integral unshared stack " */
@@ -74,9 +72,7 @@ struct	rusage {
 	long	ru_nsignals;		/* signals received */
 	long	ru_nvcsw;		/* voluntary context switches */
 	long	ru_nivcsw;		/* involuntary " */
-#ifdef _KERNEL
 #define	ru_last		ru_nivcsw
-#endif
 };
 
 /*
@@ -134,7 +130,9 @@ int	donice(struct lwp *, struct proc *, int);
 __BEGIN_DECLS
 int	getpriority(int, id_t);
 int	getrlimit(int, struct rlimit *);
-int	getrusage(int, struct rusage *);
+#ifndef __LIBC12_SOURCE__
+int	getrusage(int, struct rusage *) __RENAME(__getrusage50);
+#endif
 int	setpriority(int, id_t, int);
 int	setrlimit(int, const struct rlimit *);
 __END_DECLS

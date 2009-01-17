@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.21.38.1 2008/06/29 09:33:02 mjf Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.21.38.2 2009/01/17 13:28:36 mjf Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.21.38.1 2008/06/29 09:33:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.21.38.2 2009/01/17 13:28:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,6 @@ static int rtsettod(todr_chip_handle_t, struct clock_ymdhms *);
 
 static int rtc_match(device_t, cfdata_t, void *);
 static void rtc_attach(device_t, device_t, void *);
-
-int rtclockinit(void);
 
 CFATTACH_DECL_NEW(rtc, sizeof(struct rtc_softc),
     rtc_match, rtc_attach, NULL, NULL);

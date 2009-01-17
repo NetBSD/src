@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.98.6.2 2008/09/28 10:41:06 mjf Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.98.6.3 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.98.6.2 2008/09/28 10:41:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.98.6.3 2009/01/17 13:29:42 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -295,9 +295,6 @@ ffs_fsync(void *v)
 	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(vp) ||
 	    (vp->v_type != VREG)) {
 		int flags = ap->a_flags;
-
-		if (vp->v_type == VBLK)
-			flags |= FSYNC_VFS;
 		error = ffs_full_fsync(vp, flags);
 		goto out;
 	}
@@ -396,17 +393,32 @@ out:
 }
 
 /*
- * Synch an open file.
+ * Synch an open file.  Called for VOP_FSYNC() and VFS_FSYNC().
+ *
+ * BEWARE: THIS ROUTINE ACCEPTS BOTH FFS AND NON-FFS VNODES.
  */
 /* ARGSUSED */
 int
 ffs_full_fsync(struct vnode *vp, int flags)
 {
+	extern struct vfsops ffs_vfsops;
 	struct buf *bp, *nbp;
 	int error, passes, skipmeta, inodedeps_only, waitfor;
 	struct mount *mp;
+	bool ffsino;
 
 	error = 0;
+
+	if ((flags & FSYNC_VFS) != 0) {
+		KASSERT(vp->v_specmountpoint != NULL);
+		mp = vp->v_specmountpoint;
+		ffsino = (mp->mnt_op == &ffs_vfsops);
+		KASSERT(vp->v_type == VBLK);
+	} else {
+		mp = vp->v_mount;
+		ffsino = true;
+		KASSERT(vp->v_tag == VT_UFS);
+	}
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
@@ -425,11 +437,6 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
 		int pflags = PGO_ALLPAGES | PGO_CLEANIT;
 
-		if ((flags & FSYNC_VFS) != 0 && vp->v_specmountpoint != NULL)
-			mp = vp->v_specmountpoint;
-		else
-			mp = vp->v_mount;
-
 		if ((flags & FSYNC_WAIT))
 			pflags |= PGO_SYNCIO;
 		if (vp->v_type == VREG &&
@@ -439,7 +446,6 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		if (error)
 			return error;
 	} else {
-		mp = vp->v_mount;
 		mutex_exit(&vp->v_interlock);
 	}
 
@@ -449,7 +455,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		if (flags & FSYNC_DATAONLY)
 			return error;
 
-		if (VTOI(vp) && (VTOI(vp)->i_flag &
+		if (ffsino && VTOI(vp) && (VTOI(vp)->i_flag &
 		    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY |
 				 IN_MODIFIED | IN_ACCESSED))) {
 			error = UFS_WAPBL_BEGIN(mp);
@@ -461,6 +467,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		}
 		if (error || (flags & FSYNC_NOLOG))
 			return error;
+
 		/*
 		 * Don't flush the log if the vnode being flushed
 		 * contains no dirty buffers that could be in the log.
@@ -569,12 +576,8 @@ loop:
 	else
 		waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
 
-	if (vp->v_tag == VT_UFS)
+	if (ffsino && vp->v_tag == VT_UFS)
 		error = ffs_update(vp, NULL, NULL, waitfor);
-	else {
-		KASSERT(vp->v_type == VBLK);
-		KASSERT((flags & FSYNC_VFS) != 0);
-	}
 
 	if (error == 0 && flags & FSYNC_CACHE) {
 		int i = 0;
@@ -690,24 +693,6 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	} else {
 		*eobp = blkroundup(fs, size);
 	}
-}
-
-int
-ffs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
-{
-	int error;
-	const bool need_wapbl = (curlwp != uvm.pagedaemon_lwp &&
-	    vp->v_mount->mnt_wapbl && (flags & PGO_JOURNALLOCKED) == 0);
-
-	if (need_wapbl) {
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			return error;
-	}
-	error = genfs_gop_write(vp, pgs, npages, flags);
-	if (need_wapbl)
-		UFS_WAPBL_END(vp->v_mount);
-	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/01/10 07:34:02 dyoung Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2009/01/17 13:27:57 mjf Exp $
 
 # Makefile for evbarm tags file and boot blocks
 
@@ -23,7 +23,8 @@ tags:
 	-echo ${SEVBARM} | xargs ctags -wadtf ${TEVBARM}
 	-${FINDCOMM} | xargs ctags -wadtf ${TEVBARM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AEVBARM} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TEVBARM}
 	sort -o ${TEVBARM} ${TEVBARM}
 

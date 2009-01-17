@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.59.6.1 2008/04/03 12:42:34 mjf Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.59.6.2 2009/01/17 13:28:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,11 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.59.6.1 2008/04/03 12:42:34 mjf Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_execfmt.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.59.6.2 2009/01/17 13:28:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

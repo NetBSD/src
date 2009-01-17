@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.26.6.3 2008/06/29 09:32:54 mjf Exp $	*/
+/*	$NetBSD: intr.c,v 1.26.6.4 2009/01/17 13:27:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26.6.3 2008/06/29 09:32:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26.6.4 2009/01/17 13:27:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26.6.3 2008/06/29 09:32:54 mjf Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 

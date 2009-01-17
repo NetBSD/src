@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.53.6.1 2008/06/02 13:24:26 mjf Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.53.6.2 2009/01/17 13:29:33 mjf Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.53.6.1 2008/06/02 13:24:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.53.6.2 2009/01/17 13:29:33 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -88,7 +88,7 @@ int
 in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
-	struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = ifp->if_softc;
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
 	struct ip6_hdr *ip6;
@@ -201,17 +201,16 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	error = ip6_output(m, 0, &sc->gif_ro, IPV6_MINMTU,
-		    (struct ip6_moptions *)NULL, (struct socket *)NULL, NULL);
+	error = ip6_output(m, 0, &sc->gif_ro, IPV6_MINMTU, NULL, NULL, NULL);
 #else
-	error = ip6_output(m, 0, &sc->gif_ro, 0,
-		    (struct ip6_moptions *)NULL, (struct socket *)NULL, NULL);
+	error = ip6_output(m, 0, &sc->gif_ro, 0, NULL, NULL, NULL);
 #endif
 
 	return (error);
 }
 
-int in6_gif_input(struct mbuf **mp, int *offp, int proto)
+int
+in6_gif_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	struct ifnet *gifp = NULL;
@@ -229,7 +228,7 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 #ifndef GIF_ENCAPCHECK
-	if (!gif_validate6(ip6, (struct gif_softc *)gifp, m->m_pkthdr.rcvif)) {
+	if (!gif_validate6(ip6, gifp->if_softc, m->m_pkthdr.rcvif)) {
 		m_freem(m);
 		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
@@ -314,22 +313,22 @@ gif_validate6(const struct ip6_hdr *ip6, struct gif_softc *sc,
 
 	/* ingress filters on outer source */
 	if ((sc->gif_if.if_flags & IFF_LINK2) == 0 && ifp) {
-		struct sockaddr_in6 sin6;
+		union {
+			struct sockaddr sa;
+			struct sockaddr_in6 sin6;
+		} u;
 		struct rtentry *rt;
 
-		memset(&sin6, 0, sizeof(sin6));
-		sin6.sin6_family = AF_INET6;
-		sin6.sin6_len = sizeof(struct sockaddr_in6);
-		sin6.sin6_addr = ip6->ip6_src;
 		/* XXX scopeid */
-		rt = rtalloc1((struct sockaddr *)&sin6, 0);
-		if (!rt || rt->rt_ifp != ifp) {
+		sockaddr_in6_init(&u.sin6, &ip6->ip6_src, 0, 0, 0);
+		rt = rtalloc1(&u.sa, 0);
+		if (rt == NULL || rt->rt_ifp != ifp) {
 #if 0
 			log(LOG_WARNING, "%s: packet from %s dropped "
 			    "due to ingress filter\n", if_name(&sc->gif_if),
-			    ip6_sprintf(&sin6.sin6_addr));
+			    ip6_sprintf(&u.sin6.sin6_addr));
 #endif
-			if (rt)
+			if (rt != NULL)
 				rtfree(rt);
 			return 0;
 		}
@@ -352,7 +351,7 @@ gif_encapcheck6(struct mbuf *m, int off, int proto, void *arg)
 	struct ifnet *ifp;
 
 	/* sanity check done in caller */
-	sc = (struct gif_softc *)arg;
+	sc = arg;
 
 	m_copydata(m, 0, sizeof(ip6), (void *)&ip6);
 	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m->m_pkthdr.rcvif : NULL;
@@ -367,7 +366,7 @@ in6_gif_attach(struct gif_softc *sc)
 #ifndef GIF_ENCAPCHECK
 	struct sockaddr_in6 mask6;
 
-	bzero(&mask6, sizeof(mask6));
+	memset(&mask6, 0, sizeof(mask6));
 	mask6.sin6_len = sizeof(struct sockaddr_in6);
 	mask6.sin6_addr.s6_addr32[0] = mask6.sin6_addr.s6_addr32[1] =
 	    mask6.sin6_addr.s6_addr32[2] = mask6.sin6_addr.s6_addr32[3] = ~0;

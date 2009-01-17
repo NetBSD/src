@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44.36.2 2008/06/29 09:33:04 mjf Exp $
+	$NetBSD: syscalls.master,v 1.44.36.3 2009/01/17 13:28:49 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -32,7 +32,6 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "fs_nfs.h"
 #endif
 
@@ -46,35 +45,35 @@
 
 %%
 
-0	NOARGS		{ int sys_nosys(void); } syscall
-1	NOARGS		{ int sys_exit(int rval); }
-2	NOARGS		{ int sys_fork(void); }
-3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
-4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int ultrix_sys_open(const char *path, int flags, \
+0	NOARGS		{ int|sys||nosys(void); } syscall
+1	NOARGS		{ int|sys||exit(int rval); }
+2	NOARGS		{ int|sys||fork(void); }
+3	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
+4	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
+5	STD		{ int|ultrix_sys||open(const char *path, int flags, \
 			    int mode); }
-6	NOARGS		{ int sys_close(int fd); }
-7	NOARGS		{ int compat_43_sys_wait(void); } owait
-8	STD		{ int ultrix_sys_creat(const char *path, int mode); }
-9	NOARGS		{ int sys_link(char *path, char *link); }
-10	NOARGS		{ int sys_unlink(char *path); }
-11	STD		{ int ultrix_sys_execv(const char *path, char **argp); }
-12	NOARGS		{ int sys_chdir(char *path); }
+6	NOARGS		{ int|sys||close(int fd); }
+7	NOARGS		{ int|compat_43_sys||wait(void); } owait
+8	STD		{ int|ultrix_sys||creat(const char *path, int mode); }
+9	NOARGS		{ int|sys||link(char *path, char *link); }
+10	NOARGS		{ int|sys||unlink(char *path); }
+11	STD		{ int|ultrix_sys||execv(const char *path, char **argp); }
+12	NOARGS		{ int|sys||chdir(char *path); }
 13	OBSOL		time
-14	STD		{ int ultrix_sys_mknod(const char *path, int mode, \
+14	STD		{ int|ultrix_sys||mknod(const char *path, int mode, \
 			    int dev); }
-15	NOARGS		{ int sys_chmod(char *path, int mode); }
-16	NOARGS		{ int sys___posix_chown(char *path, int uid, int gid); }
-17	NOARGS		{ int sys_obreak(char *nsize); } break
+15	NOARGS		{ int|sys||chmod(char *path, int mode); }
+16	NOARGS		{ int|sys||__posix_chown(char *path, int uid, int gid); }
+17	NOARGS		{ int|sys||obreak(char *nsize); } break
 18	OBSOL		stat
-19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
+19	NOARGS		{ long|compat_43_sys||lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS 		{ pid_t sys_getpid(void); }
-21	STD		{ int ultrix_sys_mount(char *special, char *dir, \
+20	NOARGS 		{ pid_t|sys||getpid(void); }
+21	STD		{ int|ultrix_sys||mount(char *special, char *dir, \
 			     int rdonly, int type, void *data); }
 22	OBSOL		sysV_unmount
-23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+23	NOARGS		{ int|sys||setuid(uid_t uid); }
+24	NOARGS		{ uid_t|sys||getuid(void); }
 25	OBSOL		v7 stime
 26	OBSOL		v7 ptrace
 27	OBSOL		v7 alarm
@@ -83,165 +82,165 @@
 30	OBSOL		v7 utime
 31	OBSOL		v7 stty
 32	OBSOL		v7 gtty
-33	STD		{ int ultrix_sys_access(const char *path, int flags); }
+33	STD		{ int|ultrix_sys||access(const char *path, int flags); }
 34	OBSOL		v7 nice
 35	OBSOL		v7 ftime
-36	NOARGS		{ int sys_sync(void); }
-37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	STD		{ int ultrix_sys_stat(const char *path, \
+36	NOARGS		{ int|sys||sync(void); }
+37	NOARGS		{ int|sys||kill(int pid, int signum); }
+38	STD		{ int|ultrix_sys||stat(const char *path, \
 			    struct stat43 *ub); } stat43
 39	OBSOL		v7 setpgrp
-40	STD		{ int ultrix_sys_lstat(const char *path, \
+40	STD		{ int|ultrix_sys||lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
-41	NOARGS		{ int sys_dup(u_int fd); }
-42	NOARGS		{ int sys_pipe(void); }
+41	NOARGS		{ int|sys||dup(u_int fd); }
+42	NOARGS		{ int|sys||pipe(void); }
 43	OBSOL		v7 times
-44	NOARGS		{ int sys_profil(void *samples, u_int size, \
+44	NOARGS		{ int|sys||profil(void *samples, u_int size, \
 			    u_int offset, u_int scale); }
 45	UNIMPL
 46	OBSOL		v7 setgid
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS		{ gid_t|sys||getgid(void); }
 48	UNIMPL		ssig
 49	UNIMPL		reserved for USG
 50	UNIMPL		reserved for USG
-51	NOARGS		{ int sys_acct(char *path); }
+51	NOARGS		{ int|sys||acct(char *path); }
 52	UNIMPL
 53	UNIMPL		syslock
-54	STD		{ int ultrix_sys_ioctl(int fd, u_long com, void *data); }
-55	NOARGS		{ int sys_reboot(int opt); }
+54	STD		{ int|ultrix_sys||ioctl(int fd, u_long com, void *data); }
+55	NOARGS		{ int|sys||reboot(int opt); }
 56	UNIMPL		v7 mpxchan
-57	NOARGS		{ int sys_symlink(char *path, char *link); }
-58	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
-59	STD		{ int ultrix_sys_execve(const char *path, char **argp, \
+57	NOARGS		{ int|sys||symlink(char *path, char *link); }
+58	NOARGS		{ int|sys||readlink(char *path, char *buf, int count); }
+59	STD		{ int|ultrix_sys||execve(const char *path, char **argp, \
 			    char **envp); }
-60	NOARGS		{ int sys_umask(int newmask); }
-61	NOARGS		{ int sys_chroot(char *path); }
-62	NOARGS		{ int compat_43_sys_fstat(int fd, struct stat43 *sb); }
+60	NOARGS		{ int|sys||umask(int newmask); }
+61	NOARGS		{ int|sys||chroot(char *path); }
+62	NOARGS		{ int|compat_43_sys||fstat(int fd, struct stat43 *sb); }
 63	UNIMPL
-64	NOARGS		{ int compat_43_sys_getpagesize(void); }
+64	NOARGS		{ int|compat_43_sys||getpagesize(void); }
 65	UNIMPL		mremap
-66	NOARGS		{ int sys_vfork(void); }
+66	NOARGS		{ int|sys||vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	NOARGS		{ int sys_sbrk(intptr_t incr); }
-70	NOARGS		{ int sys_sstk(int incr); }
-71	STD		{ int ultrix_sys_mmap(void *addr, size_t len, \
+69	NOARGS		{ int|sys||sbrk(intptr_t incr); }
+70	NOARGS		{ int|sys||sstk(int incr); }
+71	STD		{ int|ultrix_sys||mmap(void *addr, size_t len, \
 			    int prot, u_int flags, int fd, long pos); }
-72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
-73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
-74	NOARGS		{ int sys_mprotect(void *addr, size_t len, \
+72	NOARGS		{ int|sys||ovadvise(int anom); } vadvise
+73	NOARGS		{ int|sys||munmap(void *addr, size_t len); }
+74	NOARGS		{ int|sys||mprotect(void *addr, size_t len, \
 			    int prot); }
-75	NOARGS		{ int sys_madvise(void *addr, size_t len, \
+75	NOARGS		{ int|sys||madvise(void *addr, size_t len, \
 			    int behav); }
-76	STD		{ int ultrix_sys_vhangup(void); }
+76	STD		{ int|ultrix_sys||vhangup(void); }
 77	UNIMPL		old vlimit
-78	NOARGS		{ int sys_mincore(void *addr, int len, char *vec); }
-79	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
-80	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
-81	NOARGS		{ int sys_getpgrp(void); }
-82	STD		{ int ultrix_sys_setpgrp(int pid, int pgid); }
-83	NOARGS		{ int sys_setitimer(u_int which, \
+78	NOARGS		{ int|sys||mincore(void *addr, int len, char *vec); }
+79	NOARGS		{ int|sys||getgroups(u_int gidsetsize, gid_t *gidset); }
+80	NOARGS		{ int|sys||setgroups(u_int gidsetsize, gid_t *gidset); }
+81	NOARGS		{ int|sys||getpgrp(void); }
+82	STD		{ int|ultrix_sys||setpgrp(int pid, int pgid); }
+83	NOARGS		{ int|sys||setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
-84	STD		{ int ultrix_sys_wait3(int *status, int options, \
+84	STD		{ int|ultrix_sys||wait3(int *status, int options, \
 			    struct rusage *rusage);}
-85	NOARGS		{ int compat_12_sys_swapon(char *name); }
-86	NOARGS		{ int sys_getitimer(u_int which, \
+85	NOARGS		{ int|compat_12_sys||swapon(char *name); }
+86	NOARGS		{ int|sys||getitimer(u_int which, \
 			    struct itimerval *itv); }
-87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
+87	NOARGS		{ int|compat_43_sys||gethostname(char *hostname, \
 			    u_int len); }
-88	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
+88	NOARGS		{ int|compat_43_sys||sethostname(char *hostname, \
 			    u_int len); }
-89	NOARGS		{ int compat_43_sys_getdtablesize(void); }
-90	NOARGS		{ int sys_dup2(u_int from, u_int to); }
+89	NOARGS		{ int|compat_43_sys||getdtablesize(void); }
+90	NOARGS		{ int|sys||dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
-92	STD		{ int ultrix_sys_fcntl(int fd, int cmd, void *arg); }
-93	STD		{ int ultrix_sys_select(u_int nd, fd_set *in, fd_set *ou, \
+92	STD		{ int|ultrix_sys||fcntl(int fd, int cmd, void *arg); }
+93	STD		{ int|ultrix_sys||select(u_int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
-95	NOARGS		{ int sys_fsync(int fd); }
-96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
-97	NOARGS		{ int compat_30_sys_socket(int domain, int type, int protocol); }
-98	NOARGS		{ int sys_connect(int s, void *name, int namelen); }
-99	NOARGS		{ int compat_43_sys_accept(int s, void *name, \
+95	NOARGS		{ int|sys||fsync(int fd); }
+96	NOARGS		{ int|sys||setpriority(int which, int who, int prio); }
+97	NOARGS		{ int|compat_30_sys||socket(int domain, int type, int protocol); }
+98	NOARGS		{ int|sys||connect(int s, void *name, int namelen); }
+99	NOARGS		{ int|compat_43_sys||accept(int s, void *name, \
 			    int *anamelen); }
-100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
+100	NOARGS		{ int|sys||getpriority(int which, int who); }
+101	NOARGS		{ int|compat_43_sys||send(int s, void *buf, int len, \
 			    int flags); }
-102	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
+102	NOARGS		{ int|compat_43_sys||recv(int s, void *buf, int len, \
 			    int flags); }
-103	STD			{ int ultrix_sys_sigreturn(struct sigcontext * \
+103	STD			{ int|ultrix_sys||sigreturn(struct sigcontext * \
 							sigcntxp); }
-104	NOARGS		{ int sys_bind(int s, void *name, int namelen); }
-105	STD		{ int ultrix_sys_setsockopt(int s, int level, \
+104	NOARGS		{ int|sys||bind(int s, void *name, int namelen); }
+105	STD		{ int|ultrix_sys||setsockopt(int s, int level, \
 			    int name, void *val, int valsize); }
-106	NOARGS		{ int sys_listen(int s, int backlog); }
+106	NOARGS		{ int|sys||listen(int s, int backlog); }
 107	UNIMPL		vtimes
-108	STD		{ int ultrix_sys_sigvec(int signum, \
+108	STD		{ int|ultrix_sys||sigvec(int signum, \
 			    struct sigvec *nsv, struct sigvec *osv); }
-109	NOARGS		{ int compat_43_sys_sigblock(int mask); }
-110	NOARGS		{ int compat_43_sys_sigsetmask(int mask); }
-111	STD			{ int ultrix_sys_sigsuspend(int mask); }
-112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
+109	NOARGS		{ int|compat_43_sys||sigblock(int mask); }
+110	NOARGS		{ int|compat_43_sys||sigsetmask(int mask); }
+111	STD			{ int|ultrix_sys||sigsuspend(int mask); }
+112	NOARGS		{ int|compat_43_sys||sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); }
-113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
+113	NOARGS		{ int|compat_43_sys||recvmsg(int s, \
 			    struct omsghdr *msg, int flags); }
-114	NOARGS		{ int compat_43_sys_sendmsg(int s, void *msg, \
+114	NOARGS		{ int|compat_43_sys||sendmsg(int s, void *msg, \
 			    int flags); }
 115	OBSOL		vtrace
-116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
+116	NOARGS		{ int|sys||gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
-117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
-118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
+117	NOARGS		{ int|sys||getrusage(int who, struct rusage *rusage); }
+118	NOARGS		{ int|sys||getsockopt(int s, int level, int name, \
 			    void *val, int *avalsize); }
 119	UNIMPL		resuba
-120	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
+120	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
-121	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
+121	NOARGS		{ int|sys||writev(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
-122	NOARGS		{ int sys_settimeofday(struct timeval *tv, \
+122	NOARGS		{ int|sys||settimeofday(struct timeval *tv, \
 			    struct timezone *tzp); }
-123	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
-124	NOARGS		{ int sys_fchmod(int fd, int mode); }
-125	NOARGS		{ int compat_43_sys_recvfrom(int s, void *buf, \
+123	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); }
+124	NOARGS		{ int|sys||fchmod(int fd, int mode); }
+125	NOARGS		{ int|compat_43_sys||recvfrom(int s, void *buf, \
 			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); }
-126	NOARGS		{ int sys_setreuid(int ruid, int euid); }
-127	NOARGS		{ int sys_setregid(int rgid, int egid); }
-128	NOARGS		{ int sys_rename(char *from, char *to); }
-129	NOARGS		{ int compat_43_sys_truncate(char *path, long length); }
-130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
-131	NOARGS		{ int sys_flock(int fd, int how); }
+126	NOARGS		{ int|sys||setreuid(int ruid, int euid); }
+127	NOARGS		{ int|sys||setregid(int rgid, int egid); }
+128	NOARGS		{ int|sys||rename(char *from, char *to); }
+129	NOARGS		{ int|compat_43_sys||truncate(char *path, long length); }
+130	NOARGS		{ int|compat_43_sys||ftruncate(int fd, long length); }
+131	NOARGS		{ int|sys||flock(int fd, int how); }
 132	UNIMPL
-133	NOARGS		{ int sys_sendto(int s, void *buf, size_t len, \
+133	NOARGS		{ int|sys||sendto(int s, void *buf, size_t len, \
 			    int flags, void *to, int tolen); }
-134	NOARGS		{ int sys_shutdown(int s, int how); }
-135	NOARGS		{ int sys_socketpair(int domain, int type, \
+134	NOARGS		{ int|sys||shutdown(int s, int how); }
+135	NOARGS		{ int|sys||socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	NOARGS		{ int sys_mkdir(char *path, int mode); }
-137	NOARGS		{ int sys_rmdir(char *path); }
-138	NOARGS		{ int sys_utimes(char *path, struct timeval *tptr); }
-139	STD		{ int ultrix_sys_sigcleanup(struct sigcontext *sigcntxp); }
-140	NOARGS		{ int sys_adjtime(struct timeval *delta, \
+136	NOARGS		{ int|sys||mkdir(char *path, int mode); }
+137	NOARGS		{ int|sys||rmdir(char *path); }
+138	NOARGS		{ int|sys||utimes(char *path, struct timeval *tptr); }
+139	STD		{ int|ultrix_sys||sigcleanup(struct sigcontext *sigcntxp); }
+140	NOARGS		{ int|sys||adjtime(struct timeval *delta, \
 			    struct timeval *olddelta); }
-141	NOARGS		{ int compat_43_sys_getpeername(int fdes, void *asa, \
+141	NOARGS		{ int|compat_43_sys||getpeername(int fdes, void *asa, \
 			    int *alen); }
-142	NOARGS		{ int compat_43_sys_gethostid(void); }
+142	NOARGS		{ int|compat_43_sys||gethostid(void); }
 143	UNIMPL		old sethostid
-144	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
+144	NOARGS		{ int|compat_43_sys||getrlimit(u_int which, \
 			    struct orlimit *rlp); }
-145	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
+145	NOARGS		{ int|compat_43_sys||setrlimit(u_int which, \
 			    struct orlimit *rlp); }
-146	NOARGS		{ int compat_43_sys_killpg(int pgid, int signum); }
+146	NOARGS		{ int|compat_43_sys||killpg(int pgid, int signum); }
 147	UNIMPL
 148	UNIMPL		setquota
 149	UNIMPL	 	quota /* needs to be nullop to boot on Ultrix root partition*/
-150	NOARGS		{ int compat_43_sys_getsockname(int fdes, void *asa, \
+150	NOARGS		{ int|compat_43_sys||getsockname(int fdes, void *asa, \
 			    int *alen); }
 151	UNIMPL		sysmips /* 4 args */
 #ifdef __mips
-152	STD		{ int ultrix_sys_cacheflush(char *addr, int nbytes, \
+152	STD		{ int|ultrix_sys||cacheflush(char *addr, int nbytes, \
 			    int whichcache); }
-153	STD	{ int ultrix_sys_cachectl(char *addr, int nbytes, int cacheop); }
+153	STD	{ int|ultrix_sys||cachectl(char *addr, int nbytes, int cacheop); }
 #else	/* !mips */
 152	UNIMPL
 153	UNIMPL
@@ -250,35 +249,30 @@
 155	UNIMPL		atomic_op
 156	UNIMPL
 157	UNIMPL
-#ifdef NFSSERVER
-158	STD		{ int ultrix_sys_nfssvc(int fd); }
-#else
-158	UNIMPL
-#endif
-159	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
+158	STD		{ int|ultrix_sys||nfssvc(int fd); }
+159	NOARGS		{ int|compat_43_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
-160	STD		{ int ultrix_sys_statfs(const char *path, \
+160	STD		{ int|ultrix_sys||statfs(const char *path, \
 			    struct ultrix_statfs *buf); }
-161	STD		{ int ultrix_sys_fstatfs(int fd, \
+161	STD		{ int|ultrix_sys||fstatfs(int fd, \
 			    struct ultrix_statfs *buf); }
 162	UNIMPL		umount
 #ifdef NFS
-163	NOARGS		{ int async_daemon(void); }
-164	NOARGS		{ int compat_30_sys_getfh(char *fname, fhandle_t *fhp); }
+163	NOARGS		{ int|async||daemon(void); }
+164	NOARGS		{ int|compat_30_sys||getfh(char *fname, fhandle_t *fhp); }
 #else
 163	UNIMPL		async_daemon
 164	UNIMPL		getfh
 #endif
-165	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+165	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); }
-166	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
+166	NOARGS		{ int|compat_09_sys||setdomainname(char *domainname, \
 			    int len); }
 167	UNIMPL
-168	STD		{ int ultrix_sys_quotactl(int cmd, char *special, \
+168	STD		{ int|ultrix_sys||quotactl(int cmd, char *special, \
 			    int uid, void *addr); }
-169	STD		{ int ultrix_sys_exportfs(char *path, char *ex); }
-170	UNIMPL		{ int ultrix_sys_mount(char *special, char *dir, \
-			     int rdonly, int type, void *data); }
+169	STD		{ int|ultrix_sys||exportfs(char *path, char *ex); }
+170	UNIMPL		ultrix_sys_mount
 171	UNIMPL	4 hdwconf
 172	UNIMPL		msgctl
 173	UNIMPL		msgget
@@ -287,21 +281,21 @@
 176	UNIMPL		semctl
 177	UNIMPL		semget
 178	UNIMPL		semop
-179	STD		{ int ultrix_sys_uname(struct ultrix_utsname *name); }
-180	STD		{ int ultrix_sys_shmsys(u_int shmop, \
+179	STD		{ int|ultrix_sys||uname(struct ultrix_utsname *name); }
+180	STD		{ int|ultrix_sys||shmsys(u_int shmop, \
 						u_int a2, u_int a3, u_int a4); }
 181	UNIMPL	0 plock
 182	UNIMPL	0 lockf
-183	STD		{ int ultrix_sys_ustat(int dev, \
+183	STD		{ int|ultrix_sys||ustat(int dev, \
 			    struct ultrix_ustat *buf); }
-184	STD		{ int ultrix_sys_getmnt(int *start, \
+184	STD		{ int|ultrix_sys||getmnt(int *start, \
 				struct ultrix_fs_data *buf, \
 				int bufsize, int mode, char *path); }
 185	UNIMPL	 	notdef
 186	UNIMPL	 	notdef
-187	STD		{ int ultrix_sys_sigpending(int *mask); }
-188	NOARGS		{ int sys_setsid(void); }
-189	STD		{ int ultrix_sys_waitpid(int pid, int *status, \
+187	STD		{ int|ultrix_sys||sigpending(int *mask); }
+188	NOARGS		{ int|sys||setsid(void); }
+189	STD		{ int|ultrix_sys||waitpid(int pid, int *status, \
 			    int options); }
 190	UNIMPL
 191	UNIMPL
@@ -369,8 +363,8 @@
 253	UNIMPL		audgen /*Make no-op for installation on Ultrix rootpartition?*/
 254	UNIMPL		startcpu
 255	UNIMPL		stopcpu
-256	STD		{ int ultrix_sys_getsysinfo(unsigned op, char *buffer, \
+256	STD		{ int|ultrix_sys||getsysinfo(unsigned op, char *buffer, \
 			    unsigned nbytes, int *start, char *arg); }
-257	STD		{ int ultrix_sys_setsysinfo(unsigned op, char *buffer, \
+257	STD		{ int|ultrix_sys||setsysinfo(unsigned op, char *buffer, \
 			    unsigned nbytes, unsigned arg, unsigned flag); }
 

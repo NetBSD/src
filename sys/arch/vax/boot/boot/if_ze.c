@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.12 2002/05/27 16:54:18 ragge Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.12.108.1 2009/01/17 13:28:35 mjf Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -54,7 +54,7 @@
 
 #include "vaxstand.h"
 
-static int ze_get(struct iodesc *, void *, size_t, time_t);
+static int ze_get(struct iodesc *, void *, size_t, saseconds_t);
 static int ze_put(struct iodesc *, void *, size_t);
 
 
@@ -190,7 +190,7 @@ ze_get(desc, pkt, maxlen, timeout)
 	struct iodesc *desc;
 	void *pkt;
 	size_t maxlen;
-	time_t timeout;
+	saseconds_t timeout;
 {
 	int timeout_ctr=100000*timeout, len, rdes;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.10.6.1 2008/06/02 13:22:36 mjf Exp $ */
+/* $NetBSD: main.c,v 1.10.6.2 2009/01/17 13:28:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@ uint8_t en[6];		/* NIC macaddr, fill by netif_init() */
 void main(void);
 void bi_init(void *);
 void bi_add(void *, int, int);
-
-unsigned mpc107memsize(void);
 
 extern char bootprog_rev[], bootprog_maker[], bootprog_date[];
 

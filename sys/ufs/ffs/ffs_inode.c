@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.94.6.4 2008/09/28 10:41:06 mjf Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.94.6.5 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.94.6.4 2008/09/28 10:41:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.94.6.5 2009/01/17 13:29:42 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -707,7 +707,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 	if (copy != NULL) {
-		FREE(copy, M_TEMP);
+		free(copy, M_TEMP);
 	} else {
 		brelse(bp, BC_INVAL);
 	}

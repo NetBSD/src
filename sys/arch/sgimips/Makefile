@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2007/10/17 19:57:03 garbled Exp $
+#	$NetBSD: Makefile,v 1.5.16.1 2009/01/17 13:28:28 mjf Exp $
 
 # Makefile for sgimips tags file
 
@@ -27,7 +27,8 @@ tags:
 	-echo ${SSGIMIPS} ${SMIPS} | xargs ctags -wadtf ${TSGIMIPS}
 	-${FINDCOMM} | xargs ctags -wadtf ${TSGIMIPS}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASGIMIPS} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TSGIMIPS}
 	sort -o ${TSGIMIPS} ${TSGIMIPS}
 
@@ -36,6 +37,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	compile include stand
+SUBDIR=	compile include dev stand
 
 .include <bsd.subdir.mk>

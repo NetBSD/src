@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.55.6.2 2008/06/02 13:22:44 mjf Exp $ */
+/*	$NetBSD: intr.c,v 1.55.6.3 2009/01/17 13:28:32 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55.6.2 2008/06/02 13:22:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55.6.3 2009/01/17 13:28:32 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -95,11 +95,11 @@ strayintr(const struct trapframe64 *fp, int vectored)
 	/* If we're in polled mode ignore spurious interrupts */
 	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
+	snprintb(buf, sizeof(buf), PSTATE_BITS,
+	    (fp->tf_tstate>>TSTATE_PSTATE_SHIFT));
 	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%s vecttored=%d\n",
 	    fp->tf_pil, (unsigned long long)fp->tf_pc,
-	    (unsigned long long)fp->tf_npc, 
-	    bitmask_snprintf((fp->tf_tstate>>TSTATE_PSTATE_SHIFT),
-	      PSTATE_BITS, buf, sizeof(buf)), vectored);
+	    (unsigned long long)fp->tf_npc,  buf, vectored);
 
 	timesince = time_second - straytime;
 	if (timesince <= 10) {

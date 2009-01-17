@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44.6.1 2008/06/02 13:21:48 mjf Exp $	*/
+/*	$NetBSD: trap.c,v 1.44.6.2 2009/01/17 13:27:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,14 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44.6.1 2008/06/02 13:21:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44.6.2 2009/01/17 13:27:49 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_ibcs2.h"
 #include "opt_xen.h"
 #if !defined(XEN)
 #include "tprof.h"
@@ -96,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44.6.1 2008/06/02 13:21:48 mjf Exp $");
 #include <sys/reboot.h>
 #include <sys/pool.h>
 #include <sys/cpu.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -178,9 +176,7 @@ trap(struct trapframe *frame)
 	struct pcb *pcb;
 	extern char fusuintrfailure[], kcopy_fault[],
 		    resume_iret[];
-#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 	extern char IDTVEC(oosyscall)[];
-#endif
 #if 0
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
@@ -444,6 +440,10 @@ copyfault:
 		if (p->p_emul->e_usertrap != NULL &&
 		    (*p->p_emul->e_usertrap)(l, cr2, frame) != 0)
 			return;
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -531,6 +531,7 @@ faultcommon:
 				 */
 				pfail = kpreempt(0);
 			}
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -564,11 +565,11 @@ faultcommon:
 			ksi.ksi_signo = SIGSEGV;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 	}
 
 	case T_TRCTRAP:
-#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 		/* Check whether they single-stepped into a lcall. */
 		if (frame->tf_rip == (int)IDTVEC(oosyscall))
 			return;
@@ -576,7 +577,6 @@ faultcommon:
 			frame->tf_rflags &= ~PSL_T;
 			return;
 		}
-#endif
 		goto we_re_toast;
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
@@ -642,6 +642,14 @@ startlwp(void *arg)
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	pool_put(&lwp_uc_pool, uc);
+	userret(l);
+}
+
+void
+upcallret(struct lwp *l)
+{
+	KERNEL_UNLOCK_LAST(l);
+
 	userret(l);
 }
 

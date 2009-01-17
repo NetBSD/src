@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47.6.2 2008/09/28 10:40:01 mjf Exp $
+#	$NetBSD: GENERIC,v 1.47.6.3 2009/01/17 13:28:09 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47.6.2 $"
+#ident 		"GENERIC-$Revision: 1.47.6.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -59,7 +59,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
@@ -141,7 +140,6 @@ file-system     FILECORE        # Acorn filecore file system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.4 2007/10/17 19:52:52 garbled Exp $ */
+/* $NetBSD: machdep.h,v 1.4.16.1 2009/01/17 13:27:46 mjf Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -35,7 +35,7 @@
 struct bootconfig;
 
 /* start.c */
-extern void start __P((struct bootconfig *initbootconfig));
+extern void start(struct bootconfig *initbootconfig);
 
 /* except.c */
 extern void undefined_handler(struct trapframe *);
@@ -45,21 +45,18 @@ extern void prefetch_abort_handler(struct trapframe *);
 extern void address_exception_handler(struct trapframe *);
 
 /* irq.c */
-extern void irq_handler	__P((struct irqframe *irqf));
+extern void irq_handler(struct irqframe *irqf);
 
 /* locore.S */
-extern void atomic_set_bit	__P((u_int *address, u_int setmask));
-extern void atomic_clear_bit	__P((u_int *address, u_int clearmask));
-extern register_t set_r13_irq	__P((register_t r13_irq));
-extern void int_on	__P((void));
-extern void int_off	__P((void));
-extern void fiq_on	__P((void));
-extern void fiq_off	__P((void));
+extern void int_on(void);
+extern void int_off(void);
+extern void fiq_on(void);
+extern void fiq_off(void);
 extern struct lwp *cpu_loswitch(struct lwp *, struct lwp *);
 extern void lwp_trampoline(void); /* not quite true */
 
 /* pmap.c */
-extern register_t update_memc	__P((register_t, register_t));
+extern register_t update_memc(register_t, register_t);
 
 /* rtc.c */
 extern int cmos_read(int);

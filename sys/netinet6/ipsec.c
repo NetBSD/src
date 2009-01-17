@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.124.6.2 2008/06/29 09:33:19 mjf Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.124.6.3 2009/01/17 13:29:33 mjf Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.124.6.2 2008/06/29 09:33:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.124.6.3 2009/01/17 13:29:33 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.124.6.2 2008/06/29 09:33:19 mjf Exp $");
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>
+#include <sys/uidinfo.h>
 
 #include <net/if.h>
 #include <net/route.h>

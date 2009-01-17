@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.79.20.1 2008/06/02 13:24:26 mjf Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.79.20.2 2009/01/17 13:29:33 mjf Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79.20.1 2008/06/02 13:24:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79.20.2 2009/01/17 13:29:33 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -408,7 +408,7 @@ struct domain inet6domain = {
 	.dom_protoswNPROTOSW = (const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
 	.dom_rtattach = rn_inithead,
 	.dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr) << 3,
-	.dom_maxrtkey = sizeof(struct sockaddr_in6),
+	.dom_maxrtkey = sizeof(struct ip_pack6),
 	.dom_ifattach = in6_domifattach, .dom_ifdetach = in6_domifdetach,
 	.dom_ifqueues = { &ip6intrq, NULL },
 	.dom_link = { NULL },

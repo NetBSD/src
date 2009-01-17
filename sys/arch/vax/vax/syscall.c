@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9.6.2 2008/06/02 13:22:48 mjf Exp $     */
+/*	$NetBSD: syscall.c,v 1.9.6.3 2009/01/17 13:28:36 mjf Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,18 +33,22 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.6.2 2008/06/02 13:22:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.6.3 2009/01/17 13:28:36 mjf Exp $");
 
 #include "opt_multiprocessor.h"
+#include "opt_sa.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/ktrace.h>
 #include <sys/pool.h>
 
@@ -59,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.6.2 2008/06/02 13:22:48 mjf Exp $");
 #include <machine/userret.h>
 
 #ifdef TRAPDEBUG
+extern const char * const syscallnames[];
 int startsysc = 0;
 #define TDB(a) if (startsysc) printf a
 #else
@@ -111,6 +116,12 @@ syscall(struct trapframe *frame)
 			goto bad;
 	}
 
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	/*
 	 * Only trace if tracing is enabled and the syscall isn't indirect
 	 * (SYS_syscall or SYS___syscall)
@@ -118,7 +129,7 @@ syscall(struct trapframe *frame)
 	if (__predict_true(!p->p_trace_enabled)
 	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
 	    || (error = trace_enter(frame->code, args, callp->sy_narg)) == 0) {
-		error = (*callp->sy_call)(curlwp, args, rval);
+		error = sy_call(callp, curlwp, args, rval);
 	}
 
 	KASSERT(exptr == l->l_addr->u_pcb.framep);

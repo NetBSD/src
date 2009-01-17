@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.6.1 2008/06/02 13:22:56 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.6.2 2009/01/17 13:28:40 mjf Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.6.1 2008/06/02 13:22:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.6.2 2009/01/17 13:28:40 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -358,6 +358,8 @@ cpu_reboot(int howto, char *bootstr)
 haltsys:
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

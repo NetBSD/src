@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.1.50.1 2008/06/02 13:22:56 mjf Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.1.50.2 2009/01/17 13:28:40 mjf Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ elf32bsdboot(void)
 }
 
 /*
- * Initialize the LKM.
+ * Initialize the module.
  */
 int
 init_module(void)

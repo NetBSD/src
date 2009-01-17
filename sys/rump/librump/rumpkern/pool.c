@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.6.6.2 2008/09/28 10:41:03 mjf Exp $	*/
+/*	$NetBSD: pool.c,v 1.6.6.3 2009/01/17 13:29:36 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pool.c,v 1.6.6.3 2009/01/17 13:29:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -155,6 +158,30 @@ pool_setlowat(struct pool *pp, int n)
 {
 
 	return;
+}
+
+void
+pool_cache_sethardlimit(pool_cache_t pc, int n, const char *warnmess,
+	int ratecap)
+{
+
+	return;
+}
+
+void
+pool_cache_setlowat(pool_cache_t pc, int n)
+{
+
+	return;
+}
+
+void
+pool_cache_set_drain_hook(pool_cache_t pc, void (*fn)(void *, int), void *arg)
+{
+
+	/* XXX: notused */
+	pc->pc_pool.pr_drain_hook = fn;
+	pc->pc_pool.pr_drain_hook_arg = arg;
 }
 
 /* XXX: for tmpfs, shouldn't be here */

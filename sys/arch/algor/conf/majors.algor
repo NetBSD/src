@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.18 2007/12/31 15:31:45 ad Exp $
+#	$NetBSD: majors.algor,v 1.18.6.1 2009/01/17 13:27:47 mjf Exp $
 #
 # Device majors for algor
 #
@@ -19,7 +19,6 @@ device-major	st		char 12  block 2	st
 device-major	cd		char 13  block 3	cd
 device-major	ch		char 14			ch
 
-device-major	lkm		char 16			lkm
 
 device-major	audio		char 24			audio
 device-major	wsdisplay	char 25			wsdisplay

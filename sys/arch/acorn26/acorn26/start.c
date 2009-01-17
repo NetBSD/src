@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.8 2007/03/05 17:52:26 he Exp $ */
+/* $NetBSD: start.c,v 1.8.40.1 2009/01/17 13:27:46 mjf Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8 2007/03/05 17:52:26 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8.40.1 2009/01/17 13:27:46 mjf Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8 2007/03/05 17:52:26 he Exp $");
 #include <arch/acorn26/iobus/iocreg.h>
 #endif
 
-extern void main __P((void)); /* XXX Should be in a header file */
+extern void main(void); /* XXX Should be in a header file */
 
 struct bootconfig bootconfig;
 
@@ -144,7 +144,7 @@ start(initbootconfig)
 		panic("Bootloader mislaid the data segment");
 #endif
 
-#if !NKSYMS && !defined(DDB) && !defined(LKM)
+#if !NKSYMS && !defined(DDB) && !defined(MODULAR)
 	/* Throw away the symbol table to gain space. */
 	if (bootconfig.freebase == bootconfig.esym) {
 		bootconfig.freebase = bootconfig.ssym;
@@ -192,12 +192,6 @@ start(initbootconfig)
 	 */
 	proc0paddr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
 	bzero(proc0paddr, sizeof(*proc0paddr));
-
-	/*
-	 * Get a handle on the IOC's I2C interface in the event we need
-	 * it during bootstrap.
-	 */
-	acorn26_i2c_tag = iociic_bootstrap_cookie();
 
 	/* TODO: anything else? */
 	

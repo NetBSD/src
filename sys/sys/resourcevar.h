@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.41.6.1 2008/04/03 12:43:12 mjf Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.41.6.2 2009/01/17 13:29:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ struct pstats {
 #define	pstat_endzero	pstat_startcopy
 
 #define	pstat_startcopy	p_timer
-	struct	itimerval p_timer[3];	/* virtual-time timers */
+	struct	itimerspec p_timer[3];	/* virtual-time timers */
 
 	struct uprof {			/* profile arguments */
 		char *	pr_base;	/* buffer base */
@@ -83,32 +83,16 @@ struct plimit {
 };
 
 /* add user profiling from AST XXXSMP */
-#define	ADDUPROF(p)							\
+#define	ADDUPROF(l)							\
 	do {								\
-		struct proc *_p = l->l_proc;				\
-		addupc_task(l,						\
-		    (_p)->p_stats->p_prof.pr_addr,			\
-		    (_p)->p_stats->p_prof.pr_ticks);			\
-		(_p)->p_stats->p_prof.pr_ticks = 0;			\
+		struct proc *_p = (l)->l_proc;				\
+		addupc_task((l),					\
+		    _p->p_stats->p_prof.pr_addr,			\
+		    _p->p_stats->p_prof.pr_ticks);			\
+		_p->p_stats->p_prof.pr_ticks = 0;			\
 	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
-/*
- * Structure associated with user caching.
- */
-struct uidinfo {
-	SLIST_ENTRY(uidinfo) ui_hash;
-	uid_t	ui_uid;
-	u_long	ui_proccnt;	/* Number of processes */
-	u_long	ui_lockcnt;	/* Number of locks */
-	rlim_t	ui_sbsize;	/* Socket buffer size */
-};
-
-int	chgproccnt(uid_t, int);
-int	chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
-struct uidinfo *uid_find(uid_t);
-void	uid_init(void);
-
 extern char defcorename[];
 
 extern int security_setidcore_dump;

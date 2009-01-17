@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33.6.1 2008/06/29 09:32:57 mjf Exp $
+#	$NetBSD: Makefile,v 1.33.6.2 2009/01/17 13:28:02 mjf Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -13,7 +13,8 @@ SI386=	${SYSDIR}/arch/i386/acpi/*.[ch] \
 	${SYSDIR}/arch/i386/pnpbios/*.[ch] \
 	${SYSDIR}/contrib/dev/ath/*.[ch] \
 	${SYSDIR}/contrib/dev/ath/netbsd/*.[ch] \
-	${SYSDIR}/contrib/dev/ath/public/*.[ch]
+	${SYSDIR}/contrib/dev/ath/public/*.[ch] \
+	${SYSDIR}/dist/acpica/*.[ch]
 SI386+=	${SYSDIR}/arch/x86/x86/*.[ch] \
 	${SYSDIR}/arch/x86/acpi/*.[ch] \
 	${SYSDIR}/arch/x86/include/*.h \
@@ -31,7 +32,8 @@ tags:
 	-echo ${SI386} | xargs ctags -wadtf ${TI386}
 	-${FINDCOMM} | xargs ctags -wadtf ${TI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+	"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TI386}
 	sort -o ${TI386} ${TI386}
 

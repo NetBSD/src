@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4.6.2 2008/07/02 19:08:16 mjf Exp $ */
+/* $NetBSD: machdep.c,v 1.4.6.3 2009/01/17 13:27:59 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.6.2 2008/07/02 19:08:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.6.3 2009/01/17 13:27:59 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.6.2 2008/07/02 19:08:16 mjf Exp $");
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -139,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.6.2 2008/07/02 19:08:16 mjf Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -446,9 +447,6 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, 0, 0);
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -558,6 +556,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/*
 	 * Routerboard BIOS may autoboot, so "pseudo-halt".

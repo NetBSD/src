@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.18 2007/03/04 05:59:00 christos Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.18.36.1 2009/01/17 13:27:46 mjf Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.18 2007/03/04 05:59:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.18.36.1 2009/01/17 13:27:46 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -371,8 +371,7 @@ afmioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 	flowmap = (struct atm_flowmap *)addr;
 	flowmap->af_ifname[IFNAMSIZ-1] = '\0';
 	ifp = ifunit(flowmap->af_ifname);
-	if (ifp == NULL || ifp->if_ioctl == NULL ||
-	    (ifp->if_flags & IFF_RUNNING) == 0)
+	if (ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0)
 		error = ENXIO;
 	else
 		error = ifp->if_ioctl(ifp, cmd, addr);

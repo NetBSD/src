@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.98.6.1 2008/04/03 12:42:42 mjf Exp $ */
+/* $NetBSD: rtw.c,v 1.98.6.2 2009/01/17 13:28:56 mjf Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.98.6.1 2008/04/03 12:42:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.98.6.2 2009/01/17 13:28:56 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -135,7 +135,7 @@ static void rtw_txring_fixup(struct rtw_softc *sc, const char *fn, int ln);
 /*
  * Setup sysctl(3) MIB, hw.rtw.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_rtw, "sysctl rtw(4) subtree setup")
 {
@@ -2970,7 +2970,9 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 	if (cmd == SIOCSIFFLAGS) {
-		if ((ifp->if_flags & IFF_UP) != 0) {
+		if ((rc = ifioctl_common(ifp, cmd, data)) != 0)
+			;
+		else if ((ifp->if_flags & IFF_UP) != 0) {
 			if (device_is_active(sc->sc_dev))
 				rtw_pktfilt_load(sc);
 			else

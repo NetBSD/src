@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.22.1 2008/06/02 13:22:54 mjf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.22.2 2009/01/17 13:28:39 mjf Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.22.1 2008/06/02 13:22:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.22.2 2009/01/17 13:28:39 mjf Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.22.1 2008/06/02 13:22:54 mjf Exp $"
 #include <sys/reboot.h>
 #endif
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/dkio.h>
@@ -91,8 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.22.1 2008/06/02 13:22:54 mjf Exp $"
 #include <machine/bootinfo.h>
 
 static void findroot(void);
-static int is_valid_disk(struct device *);
-static void handle_wedges(struct device *, int);
+static int is_valid_disk(device_t);
+static void handle_wedges(device_t, int);
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
@@ -125,7 +124,7 @@ cpu_configure(void)
 
 #if NBIOS32 > 0 && defined(DOM0OPS)
 #ifdef XEN3
-	if (xen_start_info.flags & SIF_INITDOMAIN)
+	if (xendomain_is_dom0())
 #endif
 		bios32_init();
 #endif /* NBIOS32 > 0 && DOM0OPS */
@@ -180,7 +179,7 @@ cpu_rootconf(void)
 void
 findroot(void)
 {
-	struct device *dv;
+	device_t dv;
 	union xen_cmdline_parseinfo xcp;
 
 	if (booted_device)
@@ -189,21 +188,27 @@ findroot(void)
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
-		if (is_valid_disk(dv) == 0)
+		bool is_ifnet, is_disk;
+		const char *devname;
+
+		is_ifnet = (device_class(dv) == DV_IFNET);
+		is_disk = is_valid_disk(dv);
+		devname = device_xname(dv);
+
+		if (!is_ifnet && !is_disk)
 			continue;
 
-		if (xcp.xcp_bootdev[0] == 0) {
+		if (is_disk && xcp.xcp_bootdev[0] == 0) {
 			handle_wedges(dv, 0);
 			break;
 		}
 
-		if (strncmp(xcp.xcp_bootdev, device_xname(dv),
-		    strlen(device_xname(dv))))
+		if (strncmp(xcp.xcp_bootdev, devname, strlen(devname)))
 			continue;
 
-		if (strlen(xcp.xcp_bootdev) > strlen(device_xname(dv))) {
+		if (is_disk && strlen(xcp.xcp_bootdev) > strlen(devname)) {
 			booted_partition = toupper(
-				xcp.xcp_bootdev[strlen(device_xname(dv))]) - 'A';
+				xcp.xcp_bootdev[strlen(devname)]) - 'A';
 		}
 
 		booted_device = dv;
@@ -226,6 +231,7 @@ dom0_bootstatic_callback(struct nfs_diskless *nd)
 #if 0
 	struct ifnet *ifp = nd->nd_ifp;
 #endif
+	int flags = 0;
 	union xen_cmdline_parseinfo xcp;
 	struct sockaddr_in *sin;
 
@@ -233,6 +239,12 @@ dom0_bootstatic_callback(struct nfs_diskless *nd)
 	xcp.xcp_netinfo.xi_ifno = 0; /* XXX first interface hardcoded */
 	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
 	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
+
+	if (xcp.xcp_netinfo.xi_root[0] != '\0') {
+		flags |= NFS_BOOT_HAS_SERVER;
+		if (strchr(xcp.xcp_netinfo.xi_root, ':') != NULL)
+			flags |= NFS_BOOT_HAS_ROOTPATH;
+	}
 
 	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
 	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
@@ -244,17 +256,21 @@ dom0_bootstatic_callback(struct nfs_diskless *nd)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
 
-	if (nd->nd_myip.s_addr == 0)
-		return NFS_BOOTSTATIC_NOSTATIC;
-	else
-		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-		    NFS_BOOTSTATIC_HAS_SERVER);
+	if (nd->nd_myip.s_addr)
+		flags |= NFS_BOOT_HAS_MYIP;
+	if (nd->nd_gwip.s_addr)
+		flags |= NFS_BOOT_HAS_GWIP;
+	if (nd->nd_mask.s_addr)
+		flags |= NFS_BOOT_HAS_MASK;
+	if (sin->sin_addr.s_addr)
+		flags |= NFS_BOOT_HAS_SERVADDR;
+
+	return flags;
 }
 #endif
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	/*
 	 * Handle network interfaces here, the attachment information is
@@ -270,7 +286,7 @@ device_register(struct device *dev, void *aux)
 		    sizeof(xcp.xcp_bootdev)) == 0) {
 #ifdef NFS_BOOT_BOOTSTATIC
 #ifdef DOM0OPS
-			if (xen_start_info.flags & SIF_PRIVILEGED) {
+			if (xendomain_is_privileged()) {
 				nfs_bootstatic_callback = dom0_bootstatic_callback;
 			} else
 #endif
@@ -337,7 +353,7 @@ found:
 }
 
 static void
-handle_wedges(struct device *dv, int par)
+handle_wedges(device_t dv, int par)
 {
 	if (config_handle_wedges(dv, par) == 0)
 		return;
@@ -346,7 +362,7 @@ handle_wedges(struct device *dv, int par)
 }
 
 static int
-is_valid_disk(struct device *dv)
+is_valid_disk(device_t dv)
 {
 
 	if (device_class(dv) != DV_DISK)

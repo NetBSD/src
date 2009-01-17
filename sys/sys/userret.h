@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.12.14.1 2008/06/02 13:24:34 mjf Exp $	*/
+/*	$NetBSD: userret.h,v 1.12.14.2 2009/01/17 13:29:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -77,6 +77,10 @@
 static __inline void
 mi_userret(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
+#ifndef __HAVE_PREEMPTION
+	struct cpu_info *ci;
+#endif
 
 	/*
 	 * Handle "exceptional" events: pending signals, stop/exit actions,
@@ -84,14 +88,14 @@ mi_userret(struct lwp *l)
 	 * posted as we are reading unlocked.
 	 */
 #ifdef __HAVE_PREEMPTION
-	if (__predict_false((l->l_flag & LW_USERRET) != 0))
+	if (__predict_false(((l->l_flag & LW_USERRET) | p->p_timerpend) != 0))
 		lwp_userret(l);
 	l->l_kpriority = false;
 	cpu_set_curpri(l->l_priority);	/* XXX this needs to die */
 #else
-	struct cpu_info *ci;
 	ci = l->l_cpu;
-	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0) {
+	if (((l->l_flag & LW_USERRET) | p->p_timerpend |
+	    ci->ci_data.cpu_softints) != 0) {
 		lwp_userret(l);
 		ci = l->l_cpu;
 	}

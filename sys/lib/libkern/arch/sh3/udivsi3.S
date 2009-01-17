@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.7 2006/05/22 20:56:44 uwe Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.7.58.1 2009/01/17 13:29:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: udivsi3.S,v 1.7 2006/05/22 20:56:44 uwe Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.7.58.1 2009/01/17 13:29:21 mjf Exp $")
 #endif
 
 /*
@@ -57,6 +57,11 @@
  * . this function cannot have _PROF_PROLOGUE
  * . this function cannot be called via PLT
  */
+
+
+#ifdef __ELF__
+	.hidden __udivsi3
+#endif
 
 
 /* r0 <= r4 / r5 */

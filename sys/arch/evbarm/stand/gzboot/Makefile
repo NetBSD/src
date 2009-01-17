@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2005/12/11 12:17:10 christos Exp $
+#	$NetBSD: Makefile,v 1.7.74.1 2009/01/17 13:27:59 mjf Exp $
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms
 SUBDIR=  ADI_BRH_flash_0x00140000
+SUBDIR+=  GEMINI_dram_0x01600000
 SUBDIR+= IQ80310_flash_0x00080000
 SUBDIR+= IQ80321_flash_0xf0080000
 SUBDIR+= SMDK2410_flash_0x00000000

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.79 2007/10/17 19:52:57 garbled Exp $
+#	$NetBSD: Makefile.alpha,v 1.79.16.1 2009/01/17 13:27:48 mjf Exp $
 
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ CPPFLAGS+=	-Dalpha
 CFLAGS+=	-mno-fp-regs
 AFLAGS+=	-traditional
 
-NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | \
+NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | ${TOOL_SED} -e 's,^\#.*,,' | \
 		${AS} -o ${.TARGET}
 
 ##
@@ -92,9 +92,6 @@ MKDEP_AFLAGS=	-x assembler-with-cpp ${AFLAGS}
 %LOAD
 
 %RULES
-
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

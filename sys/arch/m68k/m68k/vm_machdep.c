@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 2007/10/17 19:55:12 garbled Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26.16.1 2009/01/17 13:28:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,9 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 2007/10/17 19:55:12 garbled Exp $");
-
-#include "opt_coredump.h"
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26.16.1 2009/01/17 13:28:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,60 +191,6 @@ cpu_lwp_free2(struct lwp *l)
 
 	/* Nothing to do */
 }
-
-#ifdef COREDUMP
-/*
- * Dump the machine specific header information at the start of a core dump.
- */
-struct md_core {
-	struct reg intreg;
-	struct fpreg freg;
-};
-
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
-{
-	struct md_core md_core;
-	struct coreseg cseg;
-	int error;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-		chdr->c_cpusize = sizeof(md_core);
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	/* Save integer registers. */
-	error = process_read_regs(l, &md_core.intreg);
-	if (error)
-		return error;
-
-	if (fputype) {
-		/* Save floating point registers. */
-		error = process_read_fpregs(l, &md_core.freg);
-		if (error)
-			return error;
-	} else {
-		/* Make sure these are clear. */
-		memset((void *)&md_core.freg, 0, sizeof(md_core.freg));
-	}
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
-}
-#endif
 
 /*
  * Map a user I/O request into kernel virtual address space.

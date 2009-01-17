@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.1.2.2 2008/06/02 13:22:36 mjf Exp $ */
+/* $NetBSD: brdsetup.c,v 1.1.2.3 2009/01/17 13:28:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 #include <lib/libkern/libkern.h>
 
 #include "globals.h"
@@ -39,9 +40,11 @@
 const unsigned dcache_line_size = 32;		/* 32B linesize */
 const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
 
-unsigned mpc107memsize(void);
+void brdsetup(void);
 void setup_82C686B(void);
 void setup_83C553F(void);
+
+static inline u_quad_t mftb(void);
 
 unsigned uartbase;
 #define THR		0
@@ -56,8 +59,6 @@ unsigned uartbase;
 #define LSR_THRE	0x20
 #define UART_READ(r)		*(volatile char *)(uartbase + (r))
 #define UART_WRITE(r, v)	*(volatile char *)(uartbase + (r)) = (v)
-
-extern int brdtype;
 
 void
 brdsetup()
@@ -133,7 +134,7 @@ mftb()
 	return (tb);
 }
 
-time_t
+satime_t
 getsecs()
 {
 	u_quad_t tb = mftb();

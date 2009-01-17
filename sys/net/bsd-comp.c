@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.17.6.1 2008/06/29 09:33:18 mjf Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.17.6.2 2009/01/17 13:29:30 mjf Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.17.6.1 2008/06/29 09:33:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.17.6.2 2009/01/17 13:29:30 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/module.h>
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/ppp_defs.h>
@@ -147,21 +148,21 @@ static void	bsd_comp_stats(void *state, struct compstat *stats);
 /*
  * Procedures exported to if_ppp.c.
  */
-struct compressor ppp_bsd_compress = {
-    CI_BSD_COMPRESS,		/* compress_proto */
-    bsd_comp_alloc,		/* comp_alloc */
-    bsd_free,			/* comp_free */
-    bsd_comp_init,		/* comp_init */
-    bsd_reset,			/* comp_reset */
-    bsd_compress,		/* compress */
-    bsd_comp_stats,		/* comp_stat */
-    bsd_decomp_alloc,		/* decomp_alloc */
-    bsd_free,			/* decomp_free */
-    bsd_decomp_init,		/* decomp_init */
-    bsd_reset,			/* decomp_reset */
-    bsd_decompress,		/* decompress */
-    bsd_incomp,			/* incomp */
-    bsd_comp_stats,		/* decomp_stat */
+static struct compressor ppp_bsd_compress = {
+    .compress_proto =	CI_BSD_COMPRESS,
+    .comp_alloc =	bsd_comp_alloc,
+    .comp_free =	bsd_free,
+    .comp_init =	bsd_comp_init,
+    .comp_reset =	bsd_reset,
+    .compress =		bsd_compress,
+    .comp_stat =	bsd_comp_stats,
+    .decomp_alloc =	bsd_decomp_alloc,
+    .decomp_free =	bsd_free,
+    .decomp_init =	bsd_decomp_init,
+    .decomp_reset =	bsd_reset,
+    .decompress =	bsd_decompress,
+    .incomp =		bsd_incomp,
+    .decomp_stat =	bsd_comp_stats,
 };
 
 /*
@@ -1087,5 +1088,25 @@ bsd_decompress(void *state, struct mbuf *cmp, struct mbuf **dmpp)
     m_freem(mret);
     return DECOMP_FATALERROR;
 #endif /* DEBUG */
+}
+
+MODULE(MODULE_CLASS_MISC, ppp_bsdcomp, NULL);
+
+static int
+ppp_bsdcomp_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return ppp_register_compressor(&ppp_bsd_compress, 1);
+	case MODULE_CMD_FINI:
+		return ppp_unregister_compressor(&ppp_bsd_compress, 1);
+	case MODULE_CMD_STAT:
+		return 0;
+	default:
+		return ENOTTY;
+	}
+
+	return ENOTTY;
 }
 #endif /* DO_BSD_COMPRESS */

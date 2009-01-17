@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2.22.1 2008/06/02 13:22:04 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.22.2 2009/01/17 13:28:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.22.1 2008/06/02 13:22:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.22.2 2009/01/17 13:28:00 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -244,13 +244,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-#ifdef SYMTAB_SPACE
-	ksyms_init(0, NULL, NULL);
-#else
-	#error "No SYMTAB_SPACE"
-#endif
-#endif
 #ifdef IPKDB
 	/*
 	 * Now trap to IPKDB
@@ -377,12 +370,15 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("halted\n\n");
 		while(1);
 	}
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 	printf("rebooting\n\n");
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)

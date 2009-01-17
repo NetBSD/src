@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.1.2.2 2008/10/05 20:11:34 mjf Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.1.2.3 2009/01/17 13:29:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -25,9 +25,37 @@
  * SUCH DAMAGE.
  */
 
+#include <rump/rumpuser.h>
+
+extern kernel_lockfn rumpuser__klock;
+extern kernel_unlockfn rumpuser__kunlock;
+extern int rumpuser__wantthreads;
+
+#define KLOCK_WRAP(a)							\
+do {									\
+	int nlocks;							\
+	rumpuser__kunlock(0, &nlocks);					\
+	a;								\
+	if (nlocks)							\
+		rumpuser__klock(nlocks);				\
+} while (/*CONSTCOND*/0)
+
 #define DOCALL(rvtype, call)						\
 	rvtype rv;							\
 	rv = call;							\
+	if (rv == -1)							\
+		*error = errno;						\
+	else								\
+		*error = 0;						\
+	return rv;
+
+#define DOCALL_KLOCK(rvtype, call)					\
+	rvtype rv;							\
+	int nlocks;							\
+	rumpuser__kunlock(0, &nlocks);					\
+	rv = call;							\
+	if (nlocks)							\
+		rumpuser__klock(nlocks);				\
 	if (rv == -1)							\
 		*error = errno;						\
 	else								\

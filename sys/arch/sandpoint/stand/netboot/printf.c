@@ -1,4 +1,4 @@
-/* $NetBSD: printf.c,v 1.4.14.1 2008/06/02 13:22:36 mjf Exp $ */
+/* $NetBSD: printf.c,v 1.4.14.2 2009/01/17 13:28:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,13 +35,13 @@
 
 #include <sys/types.h>
 #include <machine/stdarg.h>
+#include <lib/libsa/stand.h>
 
 #define MAXSTR	80
 
-static int _doprnt(int (*)(int), const char *, va_list);
-static void pr_int();
-static int sputchar(int);
-extern int putchar(int);
+static int _doprnt(void (*)(int), const char *, va_list);
+static void pr_int(unsigned long, int, char *);
+static void sputchar(int);
 
 static char *sbuf, *ebuf;
 
@@ -56,13 +56,10 @@ printf(const char *fmt, ...)
 }
 
 void
-vprintf(const char *fmt, ...)
+vprintf(const char *fmt, va_list ap)
 {
-	va_list ap;
 
-	va_start(ap, fmt);
 	_doprnt(putchar, fmt, ap);
-	va_end(ap);
 }
 
 int
@@ -93,7 +90,7 @@ snprintf(char *buf, size_t size, const char *fmt, ...)
 
 static int
 _doprnt(func, fmt, ap)
-	int (*func)(int);	/* Function to put a character */
+	void (*func)(int);	/* Function to put a character */
 	const char *fmt;	/* Format string for pr_int/pr_float */
 	va_list ap;		/* Arguments to pr_int/pr_float */
 {
@@ -254,12 +251,11 @@ static void pr_int(lval, base, s)
 		;
 }
 
-static int
+static void
 sputchar(c)
 	int c;
 {
 
 	if (sbuf < ebuf)
 		*sbuf++ = c;
-	return c;
 }

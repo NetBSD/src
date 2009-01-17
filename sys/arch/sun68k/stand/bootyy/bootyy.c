@@ -1,4 +1,4 @@
-/*	$NetBSD: bootyy.c,v 1.3.74.1 2008/06/02 13:22:47 mjf Exp $ */
+/*	$NetBSD: bootyy.c,v 1.3.74.2 2009/01/17 13:28:34 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 #include <stand.h>
 #include "libsa.h"
 
+int copyboot(struct open_file *, char *);
+
 /* This determines the largest boot program we can load. */
 #define MAXBLOCKNUM	64
 
@@ -79,7 +81,7 @@ main(void)
 	struct open_file	f;
 	void	*entry;
 	char	*addr;
-	int n, error;
+	int error;
 
 #ifdef DEBUG
 	printf("bootyy: open...\n");
@@ -87,7 +89,7 @@ main(void)
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &addr)) {
 		printf("bootyy: devopen failed\n");
-		return;
+		return 1;
 	}
 
 	addr = (char *)KERN_LOADADDR;
@@ -101,13 +103,14 @@ main(void)
 		chain_to(entry);
 	}
 	/* copyboot had a problem... */
-	return;
+	return 0;
 }
 
 int 
 copyboot(struct open_file *fp, char *addr)
 {
-	int	n, i, blknum;
+	size_t n;
+	int i, blknum;
 	char *buf;
 
 	/* Need to use a buffer that can be mapped into DVMA space. */

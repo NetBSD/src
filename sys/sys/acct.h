@@ -1,4 +1,4 @@
-/*	$NetBSD: acct.h,v 1.26 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: acct.h,v 1.26.70.1 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -47,7 +47,7 @@
 typedef uint16_t comp_t;
 
 struct acct {
-	char	  ac_comm[10];	/* command name */
+	char	  ac_comm[16];	/* command name */
 	comp_t	  ac_utime;	/* user time */
 	comp_t	  ac_stime;	/* system time */
 	comp_t	  ac_etime;	/* elapsed time */

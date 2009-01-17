@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.5 2006/03/08 03:29:49 christos Exp $        */
+/*      $NetBSD: rtc.c,v 1.5.64.1 2009/01/17 13:28:23 mjf Exp $        */
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -32,11 +32,11 @@
 #include <sys/param.h>
 #include <next68k/dev/clockreg.h>
 #include <machine/cpu.h>
-#include <stand.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 
 u_char rtc_read(u_char);
 void rtc_init(void);
-time_t getsecs(void);
 
 
 /* ### where shall I put this definition? */
@@ -101,7 +101,7 @@ rtc_init(void)
 	new_clock = (val & RTC_NEW_CLOCK) ? 1 : 0;
 }
 
-time_t
+satime_t
 getsecs(void)
 {
 	u_int secs;

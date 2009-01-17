@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.42 2007/10/17 19:57:10 garbled Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.42.16.1 2009/01/17 13:28:30 mjf Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -55,7 +55,6 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
-options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

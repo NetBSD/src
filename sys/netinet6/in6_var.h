@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.56.12.2 2008/09/28 10:40:59 mjf Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.56.12.3 2009/01/17 13:29:33 mjf Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -251,6 +251,10 @@ struct icmp6_ifstat {
 	u_quad_t ifs6_out_mlddone;
 };
 
+/*
+ * If you make changes that change the size of in6_ifreq,
+ * make sure you fix compat/netinet6/in6_var.h
+ */
 struct	in6_ifreq {
 	char	ifr_name[IFNAMSIZ];
 	union {
@@ -400,9 +404,9 @@ struct	in6_rrenumreq {
 #define SIOCGIFNETMASK_IN6	_IOWR('i', 37, struct in6_ifreq)
 
 #define SIOCDIFADDR_IN6		 _IOW('i', 25, struct in6_ifreq)
-#define SIOCAIFADDR_IN6		 _IOW('i', 26, struct in6_aliasreq)
+/* 26 was OSIOCAIFADDR_IN6 */
 
-#define SIOCSIFPHYADDR_IN6       _IOW('i', 70, struct in6_aliasreq)
+/* 70 was OSIOCSIFPHYADDR_IN6 */
 #define	SIOCGIFPSRCADDR_IN6	_IOWR('i', 71, struct in6_ifreq)
 #define	SIOCGIFPDSTADDR_IN6	_IOWR('i', 72, struct in6_ifreq)
 
@@ -413,14 +417,11 @@ struct	in6_rrenumreq {
 #ifdef _KERNEL
 #define OSIOCGIFINFO_IN6	_IOWR('i', 76, struct in6_ondireq)
 #endif
-#define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
-#define SIOCSIFINFO_IN6		_IOWR('i', 109, struct in6_ndireq)
 #define SIOCSNDFLUSH_IN6	_IOWR('i', 77, struct in6_ifreq)
 #define SIOCGNBRINFO_IN6	_IOWR('i', 78, struct in6_nbrinfo)
 #define SIOCSPFXFLUSH_IN6	_IOWR('i', 79, struct in6_ifreq)
 #define SIOCSRTRFLUSH_IN6	_IOWR('i', 80, struct in6_ifreq)
-
-#define SIOCGIFALIFETIME_IN6	_IOWR('i', 81, struct in6_ifreq)
+/* 81 was old SIOCGIFALIFETIME_IN6 */
 #if 0
 /* withdrawn - do not reuse number 82 */
 #define SIOCSIFALIFETIME_IN6	_IOWR('i', 82, struct in6_ifreq)
@@ -441,7 +442,14 @@ struct	in6_rrenumreq {
 				     struct in6_rrenumreq) /* change */
 #define SIOCSGIFPREFIX_IN6	_IOW('i', 105, \
 				     struct in6_rrenumreq) /* set global */
+#define SIOCGIFALIFETIME_IN6	_IOWR('i', 106, struct in6_ifreq)
+#define SIOCAIFADDR_IN6		_IOW('i', 107, struct in6_aliasreq)
+#define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
+#define SIOCSIFINFO_IN6		_IOWR('i', 109, struct in6_ndireq)
+#define SIOCSIFPHYADDR_IN6      _IOW('i', 110, struct in6_aliasreq)
 
+
+/* XXX: Someone decided to switch to 'u' here for unknown reasons! */
 #define SIOCGETSGCNT_IN6	_IOWR('u', 106, \
 				      struct sioc_sg_req6) /* get s,g pkt cnt */
 #define SIOCGETMIFCNT_IN6	_IOWR('u', 107, \

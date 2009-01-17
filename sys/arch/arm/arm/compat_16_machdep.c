@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.9.6.1 2008/06/02 13:21:52 mjf Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.9.6.2 2009/01/17 13:27:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,13 +40,16 @@
  * Created      : 17/09/94
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9.6.2 2009/01/17 13:27:51 mjf Exp $");
+
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_armfpe.h"
+#endif
 
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9.6.1 2008/06/02 13:21:52 mjf Exp $");
-
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
 #include <sys/signal.h>

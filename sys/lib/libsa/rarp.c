@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.26.14.2 2008/06/02 13:24:16 mjf Exp $	*/
+/*	$NetBSD: rarp.c,v 1.26.14.3 2009/01/17 13:29:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -77,7 +77,7 @@ struct ether_arp {
 #define	arp_op	ea_hdr.ar_op
 
 static ssize_t rarpsend __P((struct iodesc *, void *, size_t));
-static ssize_t rarprecv __P((struct iodesc *, void *, size_t, time_t));
+static ssize_t rarprecv __P((struct iodesc *, void *, size_t, saseconds_t));
 
 /*
  * Ethernet (Reverse) Address Resolution Protocol (see RFC 903, and 826).
@@ -172,7 +172,7 @@ rarpsend(struct iodesc *d, void *pkt, size_t len)
  * else -1 (and errno == 0)
  */
 static ssize_t
-rarprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
+rarprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 {
 	ssize_t n;
 	struct ether_arp *ap;

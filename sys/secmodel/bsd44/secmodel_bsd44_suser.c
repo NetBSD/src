@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.53.6.1 2008/04/03 12:43:11 mjf Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.53.6.2 2009/01/17 13:29:40 mjf Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.53.6.1 2008/04/03 12:43:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.53.6.2 2009/01/17 13:29:40 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.53.6.1 2008/04/03 12:43:1
 #include <sys/ptrace.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/uidinfo.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -350,7 +351,6 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_CHSYSFLAGS:
-	case KAUTH_SYSTEM_LKM:
 	case KAUTH_SYSTEM_SETIDCORE:
 		/*
 		 * Decisions here are root-agnostic.
@@ -358,8 +358,6 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		 * CHSYSFLAGS - Should be used only after the caller was
 		 *              determined as root. Needs to be re-factored
 		 *              anyway. Infects ufs, ext2fs, tmpfs, and rump.
-		 *
-		 * LKM - Subject to permissions on /dev/lkm for now.
 		 *
 		 * SETIDCORE - Should be used only after the caller was
 		 *             determined as someone who can modify sysctl
@@ -370,6 +368,8 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_SYSTEM_MODULE:
 		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		if ((uintptr_t)arg2 != 0)	/* autoload */
 			result = KAUTH_RESULT_ALLOW;
 		break;
 

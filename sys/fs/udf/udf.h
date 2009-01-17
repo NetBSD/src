@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.10.18.4 2008/10/05 20:11:31 mjf Exp $ */
+/* $NetBSD: udf.h,v 1.10.18.5 2009/01/17 13:29:17 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -121,8 +121,8 @@ extern int udf_verbose;
 #define UDF_DIRHASH_HASHSIZE	(1<<UDF_DIRHASH_HASHBITS)
 #define UDF_DIRHASH_HASHMASK	(UDF_DIRHASH_HASHSIZE -1)
 
-#define UDF_ECCLINE_MAXFREE	10			/* picked */
-#define UDF_ECCLINE_MAXBUSY	100			/* picked */
+#define UDF_ECCLINE_MAXFREE	5			/* picked, needs calculation */
+#define UDF_ECCLINE_MAXBUSY	300			/* picked, needs calculation */
 
 #define UDF_MAX_MAPPINGS	(MAXPHYS/DEV_BSIZE)	/* 128 */
 #define UDF_VAT_CHUNKSIZE	(64*1024)		/* picked */

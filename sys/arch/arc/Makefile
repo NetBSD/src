@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2005/12/11 12:16:37 christos Exp $
+#	$NetBSD: Makefile,v 1.10.74.1 2009/01/17 13:27:50 mjf Exp $
 #	$OpenBSD: Makefile,v 1.5 1997/05/19 10:34:53 pefo Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
 
@@ -21,7 +21,7 @@ DARC=	arc dev dti include isa pci jazz
 tags:
 	-ctags -wdtf ${TARC} ${SARC} ${SMIPS} ${COMM}
 	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${AARC} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TARC}
 	sort -o ${TARC} ${TARC}
 

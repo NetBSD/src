@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.18.6.1 2008/06/29 09:33:12 mjf Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.18.6.2 2009/01/17 13:29:11 mjf Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.18.6.1 2008/06/29 09:33:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.18.6.2 2009/01/17 13:29:11 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1743,9 +1743,9 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			    SEQ_GT(tsecr, dst->scrub->pfss_tsval) ? '2' : ' ',
 			    SEQ_LT(tsecr, dst->scrub->pfss_tsval0)? '3' : ' '));
 			DPFPRINTF((" tsval: %" PRIu32 "  tsecr: %" PRIu32
-			    "  +ticks: %" PRIu32 "  idle: %lus %lums\n",
+			    "  +ticks: %" PRIu32 "  idle: %"PRIx64"s %ums\n",
 			    tsval, tsecr, tsval_from_last, delta_ts.tv_sec,
-			    delta_ts.tv_usec / 1000));
+			    delta_ts.tv_usec / 1000U));
 			DPFPRINTF((" src->tsval: %" PRIu32 "  tsecr: %" PRIu32
 			    "\n",
 			    src->scrub->pfss_tsval, src->scrub->pfss_tsecr));

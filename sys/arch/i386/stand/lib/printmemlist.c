@@ -1,4 +1,4 @@
-/*	$NetBSD: printmemlist.c,v 1.1 1999/12/21 14:22:55 drochner Exp $	*/
+/*	$NetBSD: printmemlist.c,v 1.1.136.1 2009/01/17 13:28:05 mjf Exp $	*/
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -28,7 +28,7 @@
 #include <lib/libsa/stand.h>
 #include "libi386.h"
 
-extern int getmementry __P((int *, int *));
+extern int getmementry(int *, int *);
 
 static char *memtypes[] = {
 	"available",
@@ -38,7 +38,7 @@ static char *memtypes[] = {
 };
 
 void
-printmemlist()
+printmemlist(void)
 {
         int buf[5], i;
 	char *type;

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.10 2007/11/22 16:17:03 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.10.14.1 2009/01/17 13:28:39 mjf Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.10 2007/11/22 16:17:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.10.14.1 2009/01/17 13:28:39 mjf Exp $");
 
 #include "opt_kgdb.h"
 
@@ -153,7 +153,7 @@ consinit()
 	xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
 	
 #if (NVGA > 0)
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
+	if (xendomain_is_privileged()) {
 #ifdef CONS_OVERRIDE
 		if (strcmp(default_consinfo.devname, "tty0") == 0 ||
 		    strcmp(default_consinfo.devname, "pc") == 0) {

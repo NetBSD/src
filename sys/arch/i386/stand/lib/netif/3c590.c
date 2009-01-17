@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.14 2006/05/11 00:48:05 mrg Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.14.62.1 2009/01/17 13:28:06 mjf Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -49,8 +49,8 @@ Author: Martin Renters.
 unsigned ether_medium;
 unsigned short eth_base;
 
-extern void epreset __P((void));
-extern int ep_get_e __P((int));
+extern void epreset(void);
+extern int ep_get_e(int);
 
 u_char eth_myaddr[6];
 
@@ -72,8 +72,8 @@ static struct btinfo_netif bi_netif;
 /**************************************************************************
 ETH_PROBE - Look for an adapter
 ***************************************************************************/
-int EtherInit(myadr)
-	unsigned char *myadr;
+int
+EtherInit(unsigned char *myadr)
 {
 	/* common variables */
 	int i, j;
@@ -88,9 +88,9 @@ int EtherInit(myadr)
 	pcihdl_t hdl;
 	int iobase;
 
-	if(pcicheck() == -1) {
-	    printf("cannot access PCI\n");
-	    return(0);
+	if (pcicheck() == -1) {
+		printf("cannot access PCI\n");
+		return 0;
 	}
 
 	if (pcifinddev(0x10b7, 0x5900, &hdl) &&
@@ -99,12 +99,12 @@ int EtherInit(myadr)
 	    pcifinddev(0x10b7, 0x9001, &hdl) &&
 	    pcifinddev(0x10b7, 0x9050, &hdl)) {
 		printf("cannot find 3c59x / 3c90x\n");
-		return(0);
+		return 0;
 	}
 
-	if(pcicfgread(&hdl, 0x10, &iobase) || !(iobase & 1)) {
-	    printf("cannot map IO space\n");
-	    return(0);
+	if (pcicfgread(&hdl, 0x10, &iobase) || !(iobase & 1)) {
+		printf("cannot map IO space\n");
+		return 0;
 	}
 	eth_base = iobase & 0xfffffffc;
 
@@ -115,35 +115,35 @@ int EtherInit(myadr)
 
 	GO_WINDOW(0);
 
-	for(ether_medium = 0, m = mediatab;
-	    ether_medium < sizeof(mediatab) / sizeof(mediatab[0]);
-	    ether_medium++, m++) {
-	    if(j == m->address_cfg) {
-		if(!(i & m->config_bit)) {
-		    printf("%s not present\n", m->name);
-		    return(0);
+	for (ether_medium = 0, m = mediatab;
+	     ether_medium < sizeof(mediatab) / sizeof(mediatab[0]);
+	     ether_medium++, m++) {
+		if (j == m->address_cfg) {
+			if (!(i & m->config_bit)) {
+				printf("%s not present\n", m->name);
+				return 0;
+			}
+			printf("using %s\n", m->name);
+			goto ok;
 		}
-		printf("using %s\n", m->name);
-		goto ok;
-	    }
 	}
 	printf("unknown connector\n");
-	return(0);
+	return 0;
 
-ok:
+ ok:
 	/*
-	* Read the station address from the eeprom
-	*/
+	 * Read the station address from the eeprom
+	 */
 	p = (u_short *) eth_myaddr;
 	for (i = 0; i < 3; i++) {
-	  u_short help;
-	  GO_WINDOW(0);
-	  help = ep_get_e(i);
-	  p[i] = ((help & 0xff) << 8) | ((help & 0xff00) >> 8);
-	  GO_WINDOW(2);
-	  outw(BASE + EP_W2_ADDR_0 + (i * 2), help);
+		u_short help;
+		GO_WINDOW(0);
+		help = ep_get_e(i);
+		p[i] = ((help & 0xff) << 8) | ((help & 0xff00) >> 8);
+		GO_WINDOW(2);
+		outw(BASE + EP_W2_ADDR_0 + (i * 2), help);
 	}
-	for(i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++)
 		myadr[i] = eth_myaddr[i];
 
 	epreset();
@@ -157,5 +157,5 @@ ok:
 	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 #endif
 
-	return(1);
+	return 1;
 }

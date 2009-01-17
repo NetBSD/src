@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.31.14.1 2008/04/03 12:43:06 mjf Exp $	*/
+/*	$NetBSD: bootp.c,v 1.31.14.2 2009/01/17 13:29:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -63,7 +63,7 @@ char linuxcmdline[256];
 
 static n_long	nmask, smask;
 
-static time_t	bot;
+static satime_t	bot;
 
 static	char vm_rfc1048[4] = VM_RFC1048;
 #ifdef BOOTP_VEND_CMU
@@ -72,7 +72,7 @@ static	char vm_cmu[4] = VM_CMU;
 
 /* Local forwards */
 static	ssize_t bootpsend __P((struct iodesc *, void *, size_t));
-static	ssize_t bootprecv __P((struct iodesc *, void *, size_t, time_t));
+static	ssize_t bootprecv __P((struct iodesc *, void *, size_t, saseconds_t));
 static	int vend_rfc1048 __P((u_char *, u_int));
 #ifdef BOOTP_VEND_CMU
 static	void vend_cmu __P((u_char *));
@@ -291,7 +291,7 @@ bootpsend(struct iodesc *d, void *pkt, size_t len)
 }
 
 static ssize_t
-bootprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
+bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 {
 	ssize_t n;
 	struct bootp *bp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.32.6.1 2008/06/02 13:22:56 mjf Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.32.6.2 2009/01/17 13:28:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.32.6.1 2008/06/02 13:22:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.32.6.2 2009/01/17 13:28:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.32.6.1 2008/06/02 13:22:56 mjf Ex
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <compat/sys/time.h>
 
 int
 compat_43_sys_getdtablesize(struct lwp *l, const void *v, register_t *retval)
@@ -134,7 +135,7 @@ struct bsdi_si {
         long    open_max;
         long    child_max;
 
-        struct  timeval boottime;
+        struct  timeval50 boottime;
         char    *hostname;
 };
 
@@ -218,6 +219,7 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 			struct bsdi_si *usi =
 			    (struct bsdi_si *) SCARG(uap, where);
 			struct bsdi_si ksi;
+			struct timeval tv;
 			char *us = (char *) &usi[1];
 
 			if (usi == NULL) {
@@ -257,7 +259,8 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 			ksi.open_max = OPEN_MAX;
 			ksi.child_max = CHILD_MAX;
 
-			ksi.boottime = boottime;
+			TIMESPEC_TO_TIMEVAL(&tv, &boottime);
+			timeval_to_timeval50(&tv, &ksi.boottime);
 			COPY(hostname);
 
 			size = (us - (char *) &usi[1]) + sizeof(ksi);

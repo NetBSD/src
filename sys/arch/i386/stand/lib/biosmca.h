@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmca.h,v 1.1.128.1 2008/06/02 13:22:19 mjf Exp $	*/
+/*	$NetBSD: biosmca.h,v 1.1.128.2 2009/01/17 13:28:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -26,6 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void biosmca __P((void));
+void biosmca(void);
 
 extern int biosmca_ps2model;

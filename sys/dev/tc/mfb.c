@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.50.16.2 2008/09/28 10:40:32 mjf Exp $ */
+/* $NetBSD: mfb.c,v 1.50.16.3 2009/01/17 13:29:09 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.50.16.2 2008/09/28 10:40:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.50.16.3 2009/01/17 13:29:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ mfbattach(device_t parent, device_t self, void *aux)
 		sc->nscreens = 1;
 	}
 	else {
-		MALLOC(ri, struct rasops_info *, sizeof(struct rasops_info),
+		ri = malloc(sizeof(struct rasops_info),
 			M_DEVBUF, M_NOWAIT);
 		if (ri == NULL) {
 			printf(": can't alloc memory\n");

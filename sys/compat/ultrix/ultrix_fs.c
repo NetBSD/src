@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.46.6.1 2008/06/02 13:23:10 mjf Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.46.6.2 2009/01/17 13:28:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.46.6.1 2008/06/02 13:23:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.46.6.2 2009/01/17 13:28:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 		 * Only get info on mountpoints that matches the path
 		 * provided.
 		 */
-		MALLOC(path, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
+		path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 		if ((error = copyinstr(SCARG(uap, path), path,
 				       MAXPATHLEN, NULL)) != 0)
 			goto bad;
@@ -298,7 +298,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 
 bad:
 	if (path)
-		FREE(path, M_TEMP);
+		free(path, M_TEMP);
 	return error;
 }
 

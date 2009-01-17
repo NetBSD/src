@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20.6.2 2008/06/29 09:32:59 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.20.6.3 2009/01/17 13:28:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ splraiseipl(ipl_cookie_t icookie)
 	return _splraise(icookie._psl);
 }
 
-static __inline void
+static inline void
 splx(int sr)
 {
 

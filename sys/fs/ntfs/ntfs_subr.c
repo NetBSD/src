@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.36.6.1 2008/06/02 13:24:05 mjf Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.36.6.2 2009/01/17 13:29:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.36.6.1 2008/06/02 13:24:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.36.6.2 2009/01/17 13:29:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,17 +419,15 @@ ntfs_ntlookup(
 		return (0);
 	}
 
-	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
-	       M_NTFSNTNODE, M_WAITOK);
+	ip = malloc(sizeof(struct ntnode), M_NTFSNTNODE, M_WAITOK|M_ZERO);
 	ddprintf(("ntfs_ntlookup: allocating ntnode: %llu: %p\n",
 	    (unsigned long long)ino, ip));
-	bzero(ip, sizeof(struct ntnode));
 
 	mutex_enter(&ntfs_hashlock);
 	if ((*ipp = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
 		mutex_exit(&ntfs_hashlock);
 		ntfs_ntget(*ipp);
-		FREE(ip, M_NTFSNTNODE);
+		free(ip, M_NTFSNTNODE);
 		dprintf(("ntfs_ntlookup: ntnode %llu: %p,"
 		    " usecount: %d\n",
 		    (unsigned long long)ino, *ipp, (*ipp)->i_usecount));
@@ -506,7 +504,7 @@ ntfs_ntput(ip)
 		}
 		mutex_destroy(&ip->i_interlock);
 		cv_destroy(&ip->i_lock);
-		FREE(ip, M_NTFSNTNODE);
+		free(ip, M_NTFSNTNODE);
 	}
 }
 
@@ -561,7 +559,7 @@ ntfs_freentvattr(vap)
 		if (vap->va_datap)
 			free(vap->va_datap, M_NTFSRDATA);
 	}
-	FREE(vap, M_NTFSNTVATTR);
+	free(vap, M_NTFSNTVATTR);
 }
 
 /*
@@ -580,9 +578,7 @@ ntfs_attrtontvattr(
 	error = 0;
 	*rvapp = NULL;
 
-	MALLOC(vap, struct ntvattr *, sizeof(struct ntvattr),
-		M_NTFSNTVATTR, M_WAITOK);
-	bzero(vap, sizeof(struct ntvattr));
+	vap = malloc(sizeof(struct ntvattr), M_NTFSNTVATTR, M_WAITOK|M_ZERO);
 	vap->va_ip = NULL;
 	vap->va_flag = rap->a_hdr.a_flag;
 	vap->va_type = rap->a_hdr.a_type;
@@ -626,7 +622,7 @@ ntfs_attrtontvattr(
 	ddprintf((", len: %qu", (long long)vap->va_datalen));
 
 	if (error)
-		FREE(vap, M_NTFSNTVATTR);
+		free(vap, M_NTFSNTVATTR);
 	else
 		*rvapp = vap;
 
@@ -790,8 +786,7 @@ ntfs_fget(
 	if (*fpp)
 		return (0);
 
-	MALLOC(fp, struct fnode *, sizeof(struct fnode), M_NTFSFNODE, M_WAITOK);
-	bzero(fp, sizeof(struct fnode));
+	fp = malloc(sizeof(struct fnode), M_NTFSFNODE, M_WAITOK|M_ZERO);
 	dprintf(("ntfs_fget: allocating fnode: %p\n",fp));
 
 	fp->f_ip = ip;
@@ -825,10 +820,10 @@ ntfs_frele(
 	dprintf(("ntfs_frele: deallocating fnode\n"));
 	LIST_REMOVE(fp,f_fnlist);
 	if (fp->f_flag & FN_AATTRNAME)
-		FREE(fp->f_attrname, M_TEMP);
+		free(fp->f_attrname, M_TEMP);
 	if (fp->f_dirblbuf)
-		FREE(fp->f_dirblbuf, M_NTFSDIR);
-	FREE(fp, M_NTFSFNODE);
+		free(fp->f_dirblbuf, M_NTFSDIR);
+	free(fp, M_NTFSFNODE);
 	ntfs_ntrele(ip);
 }
 
@@ -990,8 +985,7 @@ ntfs_ntlookupfile(
 			 * and this is subnode, dive */
 			if (fullscan && res != 0) {
 			    if (iep->ie_flag & NTFS_IEFLAG_SUBNODE) {
-				MALLOC(tctx, struct ntfs_lookup_ctx *,
-					sizeof(struct ntfs_lookup_ctx),
+				tctx = malloc(sizeof(struct ntfs_lookup_ctx),
 					M_TEMP, M_WAITOK);
 				tctx->aoff	= aoff + iep->reclen;
 				tctx->rdsize	= rdsize;
@@ -1026,7 +1020,7 @@ ntfs_ntlookupfile(
 
 			/* free the buffer returned by ntfs_ntlookupattr() */
 			if (attrname) {
-				FREE(attrname, M_TEMP);
+				free(attrname, M_TEMP);
 				attrname = NULL;
 			}
 
@@ -1119,7 +1113,7 @@ ntfs_ntlookupfile(
 
 			tctx = lookup_ctx;
 			lookup_ctx = lookup_ctx->prev;
-			FREE(tctx, M_TEMP);
+			free(tctx, M_TEMP);
 		} else {
 			dprintf(("ntfs_ntlookupfile: nowhere to dive :-(\n"));
 			error = ENOENT;
@@ -1141,12 +1135,12 @@ ntfs_ntlookupfile(
 
 fail:
 	if (attrname)
-		FREE(attrname, M_TEMP);
+		free(attrname, M_TEMP);
 	if (lookup_ctx) {
 		while(lookup_ctx) {
 			tctx = lookup_ctx;
 			lookup_ctx = lookup_ctx->prev;
-			FREE(tctx, M_TEMP);
+			free(tctx, M_TEMP);
 		}
 	}
 	ntfs_ntvattrrele(vap);
@@ -1345,7 +1339,7 @@ fail:
 	if (iavap)
 		ntfs_ntvattrrele(iavap);
 	if (bmp)
-		FREE(bmp, M_TEMP);
+		free(bmp, M_TEMP);
 	ntfs_ntput(ip);
 	return (error);
 }
@@ -1890,8 +1884,8 @@ ntfs_readattr(
 			cn += NTFS_COMPUNIT_CL;
 		}
 
-		FREE(uup, M_NTFSDECOMP);
-		FREE(cup, M_NTFSDECOMP);
+		free(uup, M_NTFSDECOMP);
+		free(cup, M_NTFSDECOMP);
 	} else
 		error = ntfs_readattr_plain(ntmp, ip, attrnum, attrname,
 					     roff, rsize, rdata, &init, uio);
@@ -2072,7 +2066,7 @@ ntfs_toupper_use(mp, ntmp)
 	 * XXX for now, just the first 256 entries are used anyway,
 	 * so don't bother reading more
 	 */
-	MALLOC(ntfs_toupper_tab, wchar *, 256 * 256 * sizeof(wchar),
+	ntfs_toupper_tab = malloc(256 * 256 * sizeof(wchar),
 		M_NTFSRDATA, M_WAITOK);
 
 	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
@@ -2100,7 +2094,7 @@ ntfs_toupper_unuse()
 
 	ntfs_toupper_usecount--;
 	if (ntfs_toupper_usecount == 0) {
-		FREE(ntfs_toupper_tab, M_NTFSRDATA);
+		free(ntfs_toupper_tab, M_NTFSRDATA);
 		ntfs_toupper_tab = NULL;
 	}
 #ifdef DIAGNOSTIC

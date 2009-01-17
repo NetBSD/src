@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.27.6.2 2008/04/05 23:33:21 mjf Exp $	*/
+/*	$NetBSD: spkr.c,v 1.27.6.3 2009/01/17 13:28:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.27.6.2 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.27.6.3 2009/01/17 13:28:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,11 +429,10 @@ spkrattach(device_t parent, device_t self, void *aux)
 }
 
 int
-spkropen(dev_t dev, int	flags, int mode,
-    struct lwp *l)
+spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
 {
 #ifdef SPKRDEBUG
-    printf("spkropen: entering with dev = %x\n", dev);
+    printf("spkropen: entering with dev = %"PRIx64"\n", dev);
 #endif /* SPKRDEBUG */
 
     if (minor(dev) != 0 || !spkr_attached)
@@ -455,7 +454,7 @@ spkrwrite(dev_t dev, struct uio *uio, int flags)
     int n;
     int error;
 #ifdef SPKRDEBUG
-    printf("spkrwrite: entering with dev = %x, count = %d\n",
+    printf("spkrwrite: entering with dev = %"PRIx64", count = %d\n",
 		dev, uio->uio_resid);
 #endif /* SPKRDEBUG */
 
@@ -475,7 +474,7 @@ int spkrclose(dev_t dev, int flags, int mode,
     struct lwp *l)
 {
 #ifdef SPKRDEBUG
-    printf("spkrclose: entering with dev = %x\n", dev);
+    printf("spkrclose: entering with dev = %"PRIx64"\n", dev);
 #endif /* SPKRDEBUG */
 
     if (minor(dev) != 0)
@@ -493,7 +492,7 @@ int spkrioctl(dev_t dev, u_long cmd, void *data, int	flag,
     struct lwp *l)
 {
 #ifdef SPKRDEBUG
-    printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
+    printf("spkrioctl: entering with dev = %"PRIx64", cmd = %lx\n", dev, cmd);
 #endif /* SPKRDEBUG */
 
     if (minor(dev) != 0)

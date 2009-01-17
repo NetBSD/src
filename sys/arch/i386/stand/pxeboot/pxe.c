@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.10 2006/04/14 05:32:26 dyoung Exp $	*/
+/*	$NetBSD: pxe.c,v 1.10.62.1 2009/01/17 13:28:07 mjf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -151,7 +151,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
  * Caller leaves room for the headers (Ether, IP, UDP).
  */
 ssize_t
-readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
+readudp(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 {
 	t_PXENV_UDP_READ *ur = (void *) pxe_command_buf;
 	struct udphdr *uh;
@@ -160,7 +160,7 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 	uh = (struct udphdr *)pkt - 1;
 	ip = (struct ip *)uh - 1;
 
-	bzero(ur, sizeof(*ur));
+	(void)memset(ur, 0, sizeof(*ur));
 
 	ur->dest_ip = d->myip.s_addr;
 	ur->d_port = d->myport;
@@ -210,7 +210,7 @@ pxe_netif_open()
 	}
 	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 
-	bzero(uo, sizeof(*uo));
+	(void)memset(uo, 0, sizeof(*uo));
 
 	uo->src_ip = bootplayer.yip;
 
@@ -384,7 +384,7 @@ pxe_init(void)
 	/*
 	 * Get the cached info from the server's Discovery reply packet.
 	 */
-	bzero(gci, sizeof(*gci));
+	(void)memset(gci, 0, sizeof(*gci));
 	gci->PacketType = PXENV_PACKET_TYPE_BINL_REPLY;
 	pxe_call(PXENV_GET_CACHED_INFO);
 	if (gci->Status != PXENV_STATUS_SUCCESS) {
@@ -398,7 +398,7 @@ pxe_init(void)
 	/*
 	 * Get network interface information.
 	 */
-	bzero(gnt, sizeof(*gnt));
+	(void)memset(gnt, 0, sizeof(*gnt));
 	pxe_call(PXENV_UNDI_GET_NIC_TYPE);
 
 	if (gnt->Status != PXENV_STATUS_SUCCESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.266 2008/02/13 09:51:37 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.266.6.1 2009/01/17 13:29:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,11 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266 2008/02/13 09:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.6.1 2009/01/17 13:29:34 mjf Exp $");
 
-#include "opt_inet.h"
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1629,9 +1630,6 @@ nfs_mknod(v)
 	return (error);
 }
 
-#ifndef NFS_V2_ONLY
-static u_long create_verf;
-#endif
 /*
  * nfs file create call
  */
@@ -1687,16 +1685,8 @@ again:
 		if (excl_mode == NFSV3CREATE_EXCLUSIVE) {
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			nfsm_build(tl, u_int32_t *, NFSX_V3CREATEVERF);
-#ifdef INET
-			if (TAILQ_FIRST(&in_ifaddrhead))
-				*tl++ = TAILQ_FIRST(&in_ifaddrhead)->
-				    ia_addr.sin_addr.s_addr;
-			else
-				*tl++ = create_verf;
-#else
-			*tl++ = create_verf;
-#endif
-			*tl = ++create_verf;
+			*tl++ = arc4random();
+			*tl = arc4random();
 		} else {
 			*tl = txdr_unsigned(excl_mode);
 			nfsm_v3attrbuild(vap, false);
@@ -3429,8 +3419,9 @@ nfs_print(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 
-	printf("tag VT_NFS, fileid %lld fsid 0x%lx",
-	    (unsigned long long)np->n_vattr->va_fileid, np->n_vattr->va_fsid);
+	printf("tag VT_NFS, fileid %lld fsid 0x%llx",
+	    (unsigned long long)np->n_vattr->va_fileid, 
+	    (unsigned long long)np->n_vattr->va_fsid);
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
 	printf("\n");

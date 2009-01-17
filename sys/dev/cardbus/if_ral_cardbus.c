@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.10.10.2 2008/06/29 09:33:05 mjf Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.10.10.3 2009/01/17 13:28:53 mjf Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.10.10.2 2008/06/29 09:33:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.10.10.3 2009/01/17 13:28:53 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -134,8 +134,13 @@ ral_cardbus_attach(struct device *parent, struct device *self,
 	struct rt2560_softc *sc = &csc->sc_sc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
+	char devinfo[256];
 	bus_addr_t base;
-	int error;
+	int error, revision;
+
+	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
+	revision = PCI_REVISION(ca->ca_class);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	csc->sc_opns =
 	    (CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_RALINK_RT2560) ?

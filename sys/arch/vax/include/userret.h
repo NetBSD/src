@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.9 2007/11/05 20:37:48 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.9.16.1 2009/01/17 13:28:35 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,16 +41,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	LOCKDEBUG_BARRIER(NULL, 0);
-
-	/* Take pending signals. */
-	for (;;) {
-		if ((l->l_flag & LW_USERRET) != 0)
-			lwp_userret(l);
-		if (!curcpu()->ci_want_resched)
-			break;
-		preempt();
-	}
+	mi_userret(l);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.

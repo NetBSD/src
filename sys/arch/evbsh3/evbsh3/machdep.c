@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59.6.1 2008/06/02 13:22:04 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.6.2 2009/01/17 13:28:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.6.1 2008/06/02 13:22:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.6.2 2009/01/17 13:28:00 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.6.1 2008/06/02 13:22:04 mjf Exp $")
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -199,6 +200,8 @@ cpu_reboot(howto, bootstr)
 haltsys:
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	if (howto & RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
@@ -267,11 +270,7 @@ initSH3(void *pc)	/* XXX return address */
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, NULL, NULL);
-#endif
-
-	/*
+#	/*
 	 * XXX We can't return here, because we change stack pointer.
 	 *     So jump to return address directly.
 	 */

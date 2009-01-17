@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.55.6.3 2008/09/28 10:39:47 mjf Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.55.6.4 2009/01/17 13:27:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55.6.3 2008/09/28 10:39:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55.6.4 2009/01/17 13:27:51 mjf Exp $");
 
 #include "opt_md.h"
-#include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
@@ -81,18 +80,6 @@ extern size_t md_root_size;		/* Memory disc size */
 #endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 pv_addr_t kernelstack;
-
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store = {
-	.ci_cpl = IPL_HIGH,
-#ifndef PROCESS_ID_IS_CURLWP
-	.ci_curlwp = &lwp0,
-#endif
-};
 
 void *	msgbufaddr;
 extern paddr_t msgbufphys;
@@ -416,19 +403,6 @@ parse_mi_bootargs(args)
 			boothowto |= AB_VERBOSE;
 }
 
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-
-	ci->ci_want_resched = 1;
-	if (curlwp != ci->ci_data.cpu_idlelwp)
-		setsoftast();
-}
-
 bool
 cpu_intr_p(void)
 {
@@ -457,10 +431,13 @@ cpu_intr_p(void)
 
 /*
  * This returns a mask of softint IPLs that be dispatch at <ipl>
- * SOFTIPLMASK(IPL_NONE)	= 0xffffffff
- * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0xfffffff0
+ * SOFTIPLMASK(IPL_NONE)	= 0x0000000f
+ * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0x0000000e
+ * SOFTIPLMASK(IPL_SOFTBIO)	= 0x0000000c
+ * SOFTIPLMASK(IPL_SOFTNET)	= 0x00000008
+ * SOFTIPLMASK(IPL_SOFTSERIAL)	= 0x00000000
  */
-#define	SOFTIPLMASK(ipl) (~0 << (ipl))
+#define	SOFTIPLMASK(ipl) (0x0f << (ipl))
 
 void softint_switch(lwp_t *, int);
 
@@ -477,6 +454,10 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 	KASSERT(*lp == NULL || *lp == l);
 	*lp = l;
 	*machdep = 1 << SOFTINT2IPL(level);
+	KASSERT(level != SOFTINT_CLOCK || *machdep == (1 << (IPL_SOFTCLOCK - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_BIO || *machdep == (1 << (IPL_SOFTBIO - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_NET || *machdep == (1 << (IPL_SOFTNET - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_SERIAL || *machdep == (1 << (IPL_SOFTSERIAL - IPL_SOFTCLOCK)));
 }
 
 void
@@ -488,6 +469,7 @@ dosoftints(void)
 
 	for (;;) {
 		u_int softints = ci->ci_softints & softiplmask;
+		KASSERT((softints != 0) == ((ci->ci_softints >> opl) != 0));
 		if (softints == 0)
 			return;
 		ci->ci_cpl = IPL_HIGH;

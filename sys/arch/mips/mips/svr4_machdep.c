@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.10.40.1 2008/06/02 13:22:25 mjf Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.10.40.2 2009/01/17 13:28:17 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.10.40.1 2008/06/02 13:22:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.10.40.2 2009/01/17 13:28:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,4 +87,16 @@ svr4_getmcontext(l, mc, flags)
 {    
 	printf("Warning: svr4_getmcontext() called\n");
 	return NULL;
+}
+
+void
+svr4_md_init(void)
+{
+
+}
+
+void
+svr4_md_fini(void)
+{
+
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.105.6.2 2008/06/05 19:14:36 mjf Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.105.6.3 2009/01/17 13:29:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.105.6.2 2008/06/05 19:14:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.105.6.3 2009/01/17 13:29:19 mjf Exp $");
 
 #include "opt_compat_43.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.105.6.2 2008/06/05 19:14:36 mjf Exp 
 #include <sys/pool.h>
 #include <sys/prot.h>
 #include <sys/syslog.h>
-#include <sys/resourcevar.h>
+#include <sys/uidinfo.h>
 #include <sys/kauth.h>
 
 #include <sys/mount.h>

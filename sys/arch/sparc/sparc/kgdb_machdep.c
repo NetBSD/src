@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.18.40.1 2008/06/02 13:22:41 mjf Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.18.40.2 2009/01/17 13:28:31 mjf Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.18.40.1 2008/06/02 13:22:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.18.40.2 2009/01/17 13:28:31 mjf Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -227,7 +227,7 @@ void
 kgdb_connect(int verbose)
 {
 
-	if (kgdb_dev < 0)
+	if (kgdb_dev == NODEV)
 		return;
 #if NFB > 0
 	fb_unblank();
@@ -258,7 +258,7 @@ void
 kgdb_panic(void)
 {
 
-	if (kgdb_dev >= 0 && kgdb_debug_panic)
+	if (kgdb_dev != NODEV && kgdb_debug_panic)
 		kgdb_connect(kgdb_active == 0);
 }
 

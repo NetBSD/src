@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.65.6.1 2008/06/29 09:33:18 mjf Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.65.6.2 2009/01/17 13:29:31 mjf Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65.6.1 2008/06/29 09:33:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65.6.2 2009/01/17 13:29:31 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -173,7 +173,7 @@ static int stf_checkaddr4(struct stf_softc *, const struct in_addr *,
 	struct ifnet *);
 static int stf_checkaddr6(struct stf_softc *, const struct in6_addr *,
 	struct ifnet *);
-static void stf_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+static void stf_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 static int stf_ioctl(struct ifnet *, u_long, void *);
 
 /* ARGSUSED */
@@ -662,7 +662,7 @@ in_stf_input(struct mbuf *m, ...)
 /* ARGSUSED */
 static void
 stf_rtrequest(int cmd, struct rtentry *rt,
-    struct rt_addrinfo *info)
+    const struct rt_addrinfo *info)
 {
 	if (rt != NULL) {
 		struct stf_softc *sc;
@@ -683,7 +683,7 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	error = 0;
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifa = (struct ifaddr *)data;
 		if (ifa == NULL || ifa->ifa_addr->sa_family != AF_INET6) {
 			error = EAFNOSUPPORT;
@@ -718,7 +718,7 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 

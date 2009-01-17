@@ -1,8 +1,11 @@
-/*	$NetBSD: kern_module.c,v 1.8.10.3 2008/09/28 10:40:52 mjf Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.8.10.4 2009/01/17 13:29:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software developed for The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,13 +33,16 @@
  * Kernel module support.
  */
 
-#include "opt_modular.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.8.10.3 2008/09/28 10:40:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.8.10.4 2009/01/17 13:29:18 mjf Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
@@ -44,21 +50,28 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.8.10.3 2008/09/28 10:40:52 mjf Exp
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/kauth.h>
+#include <sys/kthread.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/stdarg.h>
 
-#ifndef LKM	/* XXX */
-struct vm_map *lkm_map;
-#endif
+struct vm_map *module_map;
 
 struct modlist	module_list = TAILQ_HEAD_INITIALIZER(module_list);
 struct modlist	module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
 static module_t	*module_active;
 static char	module_base[64];
+static int	module_verbose_on;
+static int	module_autoload_on = 1;
 u_int		module_count;
 kmutex_t	module_lock;
+u_int		module_autotime = 10;
+u_int		module_gen = 1;
+static kcondvar_t module_thread_cv;
+static kmutex_t module_thread_lock;
+static int	module_thread_ticks;
 
 /* Ensure that the kernel's link set isn't empty. */
 static modinfo_t module_dummy;
@@ -69,8 +82,10 @@ static int	module_do_load(const char *, bool, int, prop_dictionary_t,
 		    module_t **, modclass_t class, bool);
 static int	module_do_unload(const char *);
 static void	module_error(const char *, ...);
+static void	module_print(const char *, ...);
 static int	module_do_builtin(const char *, module_t **);
 static int	module_fetch_info(module_t *);
+static void	module_thread(void *);
 
 /*
  * module_error:
@@ -90,6 +105,25 @@ module_error(const char *fmt, ...)
 }
 
 /*
+ * module_print:
+ *
+ *	Utility function: log verbose output.
+ */
+static void
+module_print(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (module_verbose_on) {
+		va_start(ap, fmt);
+		printf("DEBUG: module: ");
+		vprintf(fmt, ap);
+		printf("\n");
+		va_end(ap);
+	}
+}
+
+/*
  * module_init:
  *
  *	Initialize the module subsystem.
@@ -97,11 +131,15 @@ module_error(const char *fmt, ...)
 void
 module_init(void)
 {
-	extern struct vm_map *lkm_map;
+	extern struct vm_map *module_map;
+	int error;
 
-	if (lkm_map == NULL)
-		lkm_map = kernel_map;
+	if (module_map == NULL) {
+		module_map = kernel_map;
+	}
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&module_thread_cv, "modunload");
+	mutex_init(&module_thread_lock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef MODULAR	/* XXX */
 	module_init_md();
 #endif
@@ -114,6 +152,44 @@ module_init(void)
 	    machine, __NetBSD_Version__ / 100000000,
 	    __NetBSD_Version__ / 1000000 % 100);
 #endif
+
+	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, module_thread,
+	    NULL, NULL, "modunload");
+	if (error != 0)
+		panic("module_init: %d", error);
+}
+
+SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "kern", NULL,
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "module",
+		SYSCTL_DESCR("Module options"),
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_CREATE, CTL_EOL);
+
+	if (node == NULL)
+		return;
+
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "autoload",
+		SYSCTL_DESCR("Enable automatic load of modules"),
+		NULL, 0, &module_autoload_on, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "verbose",
+		SYSCTL_DESCR("Enable verbose output"),
+		NULL, 0, &module_verbose_on, 0,
+		CTL_CREATE, CTL_EOL);
 }
 
 /*
@@ -154,7 +230,7 @@ module_init_class(modclass_t class)
 			    class != mi->mi_class)
 				continue;
 			module_do_load(mi->mi_name, false, 0, NULL, NULL,
-			    class, true);
+			    class, false);
 			break;
 		}
 	} while (mod != NULL);
@@ -188,7 +264,7 @@ module_compatible(int v1, int v2)
  */
 int
 module_load(const char *filename, int flags, prop_dictionary_t props,
-	    modclass_t class, bool autoload)
+	    modclass_t class)
 {
 	int error;
 
@@ -201,10 +277,43 @@ module_load(const char *filename, int flags, prop_dictionary_t props,
 
 	mutex_enter(&module_lock);
 	error = module_do_load(filename, false, flags, props, NULL, class,
-	    autoload);
+	    false);
 	mutex_exit(&module_lock);
 
 	return error;
+}
+
+/*
+ * module_autoload:
+ *
+ *	Load a single module from the file system, system initiated.
+ */
+int
+module_autoload(const char *filename, modclass_t class)
+{
+	int error;
+
+	KASSERT(mutex_owned(&module_lock));
+
+	/* Nothing if the user has disabled it. */
+	if (!module_autoload_on) {
+		return EPERM;
+	}
+
+        /* Disallow path seperators and magic symlinks. */
+        if (strchr(filename, '/') != NULL || strchr(filename, '@') != NULL ||
+            strchr(filename, '.') != NULL) {
+        	return EPERM;
+	}
+
+	/* Authorize. */
+	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
+	    0, (void *)(uintptr_t)MODCTL_LOAD, (void *)(uintptr_t)1, NULL);
+	if (error != 0) {
+		return error;
+	}
+
+	return module_do_load(filename, false, 0, NULL, NULL, class, true);
 }
 
 /*
@@ -297,6 +406,36 @@ module_rele(const char *name)
 }
 
 /*
+ * module_enqueue:
+ *
+ *	Put a module onto the global list and update counters.
+ */
+static void
+module_enqueue(module_t *mod)
+{
+	int i;
+
+	/*
+	 * If there are requisite modules, put at the head of the queue.
+	 * This is so that autounload can unload requisite modules with
+	 * only one pass through the queue.
+	 */
+	if (mod->mod_nrequired) {
+		TAILQ_INSERT_HEAD(&module_list, mod, mod_chain);
+
+		/* Add references to the requisite modules. */
+		for (i = 0; i < mod->mod_nrequired; i++) {
+			KASSERT(mod->mod_required[i] != NULL);
+			mod->mod_required[i]->mod_refcnt++;
+		}
+	} else {
+		TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
+	}
+	module_count++;
+	module_gen++;
+}
+
+/*
  * module_do_builtin:
  *
  *	Initialize a single module from the list of modules that are
@@ -312,7 +451,7 @@ module_do_builtin(const char *name, module_t **modp)
 	modinfo_t *mi;
 	module_t *mod, *mod2;
 	size_t len;
-	int error, i;
+	int error;
 
 	KASSERT(mutex_owned(&module_lock));
 
@@ -341,6 +480,7 @@ module_do_builtin(const char *name, module_t **modp)
 		}
 	}
 	if (error != 0) {
+		module_error("can't find `%s'", name);
 		return error;
 	}
 
@@ -349,6 +489,7 @@ module_do_builtin(const char *name, module_t **modp)
 	 */
 	mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
 	if (mod == NULL) {
+		module_error("out of memory for `%s'", name);
 		return ENOMEM;
 	}
 	if (modp != NULL) {
@@ -394,16 +535,7 @@ module_do_builtin(const char *name, module_t **modp)
 	}
 	mod->mod_info = mi;
 	mod->mod_source = MODULE_SOURCE_KERNEL;
-	module_count++;
-	TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
-
-	/*
-	 * If that worked, count dependencies.
-	 */
-	for (i = 0; i < mod->mod_nrequired; i++) {
-		mod->mod_required[i]->mod_refcnt++;
-	}
-
+	module_enqueue(mod);
 	return 0;
 }
 
@@ -414,7 +546,7 @@ module_do_builtin(const char *name, module_t **modp)
  *	pushed by the boot loader.
  */
 static int
-module_do_load(const char *filename, bool isdep, int flags,
+module_do_load(const char *name, bool isdep, int flags,
 	       prop_dictionary_t props, module_t **modp, modclass_t class,
 	       bool autoload)
 {
@@ -427,7 +559,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	const char *s, *p;
 	int error;
 	size_t len;
-	u_int i;
 
 	KASSERT(mutex_owned(&module_lock));
 
@@ -447,10 +578,10 @@ module_do_load(const char *filename, bool isdep, int flags,
 	 * scan the list of modules loaded by the boot loader.  Just
 	 * before init is started the list of modules loaded at boot
 	 * will be purged.  Before init is started we can assume that
-	 * `filename' is a module name and not a path name.
+	 * `name' is a module name and not a path name.
 	 */
 	TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
-		if (strcmp(mod->mod_info->mi_name, filename) == 0) {
+		if (strcmp(mod->mod_info->mi_name, name) == 0) {
 			TAILQ_REMOVE(&module_bootlist, mod, mod_chain);
 			break;
 		}
@@ -458,23 +589,50 @@ module_do_load(const char *filename, bool isdep, int flags,
 	if (mod != NULL) {
 		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 	} else {
+		/*
+		 * If a requisite module, check to see if it is
+		 * already present.
+		 */
+		if (isdep) {
+			TAILQ_FOREACH(mod, &module_list, mod_chain) {
+				if (strcmp(mod->mod_info->mi_name, name) == 0) {
+					break;
+				}
+			}
+			if (mod != NULL) {
+				if (modp != NULL) {
+					*modp = mod;
+				}
+				depth--;
+				return 0;
+			}
+		}				
 		mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
 		if (mod == NULL) {
+			module_error("out of memory for `%s'", name);
 			depth--;
 			return ENOMEM;
 		}
-		error = kobj_load_file(&mod->mod_kobj, filename, module_base,
+		error = kobj_load_file(&mod->mod_kobj, name, module_base,
 		    autoload);
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
-			module_error("unable to load kernel object");
+			if (autoload) {
+				module_print("Cannot load kernel object `%s'"
+				    " error=%d", name, error);
+			} else {
+				module_error("Cannot load kernel object `%s'"
+				    " error=%d", name, error);
+			}
 			return error;
 		}
 		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 		mod->mod_source = MODULE_SOURCE_FILESYS;
 		error = module_fetch_info(mod);
 		if (error != 0) {
+			module_error("cannot fetch module info for `%s'",
+			    name);
 			goto fail;
 		}
 	}
@@ -485,13 +643,18 @@ module_do_load(const char *filename, bool isdep, int flags,
 	mi = mod->mod_info;
 	if (strlen(mi->mi_name) >= MAXMODNAME) {
 		error = EINVAL;
-		module_error("module name too long");
+		module_error("module name `%s' too long", mi->mi_name);
 		goto fail;
 	}
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
-		error = EPROGMISMATCH;
-		module_error("module built for different version of system");
-		goto fail;
+		module_error("module built for `%d', system `%d'",
+		    mi->mi_version, __NetBSD_Version__);
+		if ((flags & MODCTL_LOAD_FORCE) != 0) {
+			module_error("forced load, system may be unstable");
+		} else {
+			error = EPROGMISMATCH;
+			goto fail;
+		}
 	}
 
 	/*
@@ -499,15 +662,19 @@ module_do_load(const char *filename, bool isdep, int flags,
 	 * a match.
 	 */
 	if (class != MODULE_CLASS_ANY && class != mi->mi_class) {
+		module_print("incompatible module class for `%s' (%d != %d)",
+		    name, class, mi->mi_class);
 		error = ENOENT;
 		goto fail;
 	}
 
 	/*
-	 * If loading a dependency, `filename' is a plain module name.
+	 * If loading a dependency, `name' is a plain module name.
 	 * The name must match.
 	 */
-	if (isdep && strcmp(mi->mi_name, filename) != 0) {
+	if (isdep && strcmp(mi->mi_name, name) != 0) {
+		module_error("dependency name mismatch (`%s' != `%s')",
+		    name, mi->mi_name);
 		error = ENOENT;
 		goto fail;
 	}
@@ -520,6 +687,7 @@ module_do_load(const char *filename, bool isdep, int flags,
 	if ((mod2 = module_lookup(mi->mi_name)) != NULL) {
 		if (modp != NULL)
 			*modp = mod2;
+		module_print("module `%s' already loaded", mi->mi_name);
 		error = EEXIST;
 		goto fail;
 	}
@@ -533,7 +701,8 @@ module_do_load(const char *filename, bool isdep, int flags,
 		}
 		if (strcmp(mod2->mod_info->mi_name, mi->mi_name) == 0) {
 		    	error = EDEADLK;
-			module_error("circular dependency detected");
+			module_error("circular dependency detected for `%s'",
+			    mi->mi_name);
 		    	goto fail;
 		}
 	}
@@ -551,7 +720,8 @@ module_do_load(const char *filename, bool isdep, int flags,
 			len = p - s + 1;
 			if (len >= MAXMODNAME) {
 				error = EINVAL;
-				module_error("required module name too long");
+				module_error("required module name `%s'"
+				    " too long", mi->mi_required);
 				goto fail;
 			}
 			strlcpy(buf, s, len);
@@ -559,18 +729,20 @@ module_do_load(const char *filename, bool isdep, int flags,
 				break;
 			if (mod->mod_nrequired == MAXMODDEPS - 1) {
 				error = EINVAL;
-				module_error("too many required modules");
+				module_error("too many required modules (%d)",
+				    mod->mod_nrequired);
 				goto fail;
 			}
 			if (strcmp(buf, mi->mi_name) == 0) {
 				error = EDEADLK;
-				module_error("self-dependency detected");
+				module_error("self-dependency detected for "
+				   "`%s'", mi->mi_name);
 				goto fail;
 			}
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod->mod_required[mod->mod_nrequired++],
 			    MODULE_CLASS_ANY, true);
-			if (error != 0 && error != EEXIST)
+			if (error != 0)
 				goto fail;
 		}
 	}
@@ -581,7 +753,8 @@ module_do_load(const char *filename, bool isdep, int flags,
 	 */
 	error = kobj_affix(mod->mod_kobj, mi->mi_name);
 	if (error != 0) {
-		module_error("unable to affix module");
+		/* Cannot touch 'mi' as the module is now gone. */
+		module_error("unable to affix module `%s'", name);
 		goto fail2;
 	}
 
@@ -590,7 +763,8 @@ module_do_load(const char *filename, bool isdep, int flags,
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
 	module_active = NULL;
 	if (error != 0) {
-		module_error("modctl function returned error %d", error);
+		module_error("modcmd function returned error %d for `%s'",
+		    error, mi->mi_name);
 		goto fail;
 	}
 
@@ -598,15 +772,18 @@ module_do_load(const char *filename, bool isdep, int flags,
 	 * Good, the module loaded successfully.  Put it onto the
 	 * list and add references to its requisite modules.
 	 */
-	module_count++;
 	TAILQ_REMOVE(&pending, mod, mod_chain);
-	TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
-	for (i = 0; i < mod->mod_nrequired; i++) {
-		KASSERT(mod->mod_required[i] != NULL);
-		mod->mod_required[i]->mod_refcnt++;
-	}
+	module_enqueue(mod);
 	if (modp != NULL) {
 		*modp = mod;
+	}
+	if (autoload) {
+		/*
+		 * Arrange to try unloading the module after
+		 * a short delay.
+		 */
+		mod->mod_autotime = time_second + module_autotime;
+		module_thread_kick();
 	}
 	depth--;
 	return 0;
@@ -636,9 +813,11 @@ module_do_unload(const char *name)
 
 	mod = module_lookup(name);
 	if (mod == NULL) {
+		module_error("module `%s' not found", name);
 		return ENOENT;
 	}
 	if (mod->mod_refcnt != 0 || mod->mod_source == MODULE_SOURCE_KERNEL) {
+		module_print("module `%s' busy", name);
 		return EBUSY;
 	}
 	KASSERT(module_active == NULL);
@@ -646,6 +825,8 @@ module_do_unload(const char *name)
 	error = (*mod->mod_info->mi_modcmd)(MODULE_CMD_FINI, NULL);
 	module_active = NULL;
 	if (error != 0) {
+		module_print("cannot unload module `%s' error=%d", name,
+		    error);
 		return error;
 	}
 	module_count--;
@@ -657,6 +838,7 @@ module_do_unload(const char *name)
 		kobj_unload(mod->mod_kobj);
 	}
 	kmem_free(mod, sizeof(*mod));
+	module_gen++;
 
 	return 0;
 }
@@ -743,3 +925,130 @@ module_find_section(const char *name, void **addr, size_t *size)
 
 	return kobj_find_section(module_active->mod_kobj, name, addr, size);
 }
+
+/*
+ * module_thread:
+ *
+ *	Automatically unload modules.  We try once to unload autoloaded
+ *	modules after module_autotime seconds.  If the system is under
+ *	severe memory pressure, we'll try unloading all modules.
+ */
+static void
+module_thread(void *cookie)
+{
+	module_t *mod, *next;
+	modinfo_t *mi;
+	int error;
+
+	for (;;) {
+		mutex_enter(&module_lock);
+		for (mod = TAILQ_FIRST(&module_list); mod != NULL; mod = next) {
+			next = TAILQ_NEXT(mod, mod_chain);
+			if (uvmexp.free < uvmexp.freemin) {
+				module_thread_ticks = hz;
+			} else if (mod->mod_autotime == 0) {
+				continue;
+			} else if (time_second < mod->mod_autotime) {
+				module_thread_ticks = hz;
+			    	continue;
+			} else {
+				mod->mod_autotime = 0;
+			}
+			/*
+			 * If this module wants to avoid autounload then
+			 * skip it.  Some modules can ping-pong in and out
+			 * because their use is transient but often. 
+			 * Example: exec_script.
+			 */
+			mi = mod->mod_info;
+			error = (*mi->mi_modcmd)(MODULE_CMD_AUTOUNLOAD, NULL);
+			if (error == 0 || error == ENOTTY) {
+				(void)module_do_unload(mi->mi_name);
+			}
+		}
+		mutex_exit(&module_lock);
+
+		mutex_enter(&module_thread_lock);
+		(void)cv_timedwait(&module_thread_cv, &module_thread_lock,
+		    module_thread_ticks);
+		module_thread_ticks = 0;
+		mutex_exit(&module_thread_lock);
+	}
+}
+
+/*
+ * module_thread:
+ *
+ *	Kick the module thread into action, perhaps because the
+ *	system is low on memory.
+ */
+void
+module_thread_kick(void)
+{
+
+	mutex_enter(&module_thread_lock);
+	module_thread_ticks = hz;
+	cv_broadcast(&module_thread_cv);
+	mutex_exit(&module_thread_lock);
+}
+
+#ifdef DDB
+/*
+ * module_whatis:
+ *
+ *	Helper routine for DDB.
+ */
+void
+module_whatis(uintptr_t addr, void (*pr)(const char *, ...))
+{
+	module_t *mod;
+	size_t msize;
+	vaddr_t maddr;
+
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		kobj_stat(mod->mod_kobj, &maddr, &msize);
+		if (addr < maddr || addr >= maddr + msize) {
+			continue;
+		}
+		(*pr)("%p is %p+%zu, in kernel module `%s'\n",
+		    (void *)addr, (void *)maddr,
+		    (size_t)(addr - maddr), mod->mod_info->mi_name);
+	}
+}
+
+/*
+ * module_print_list:
+ *
+ *	Helper routine for DDB.
+ */
+void
+module_print_list(void (*pr)(const char *, ...))
+{
+	const char *src;
+	module_t *mod;
+	size_t msize;
+	vaddr_t maddr;
+
+	(*pr)("%16s %16s %8s %8s\n", "NAME", "TEXT/DATA", "SIZE", "SOURCE");
+
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		switch (mod->mod_source) {
+		case MODULE_SOURCE_KERNEL:
+			src = "builtin";
+			break;
+		case MODULE_SOURCE_FILESYS:
+			src = "filesys";
+			break;
+		case MODULE_SOURCE_BOOT:
+			src = "boot";
+			break;
+		default:
+			src = "unknown";
+			break;
+		}
+		kobj_stat(mod->mod_kobj, &maddr, &msize);
+		(*pr)("%16s %16lx %8ld %8s\n", mod->mod_info->mi_name,
+		    (long)maddr, (long)msize, src);
+	}
+}
+#endif	/* DDB */

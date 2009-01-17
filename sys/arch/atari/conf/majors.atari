@@ -1,4 +1,4 @@
-#	$NetBSD: majors.atari,v 1.20 2007/12/31 15:31:50 ad Exp $
+#	$NetBSD: majors.atari,v 1.20.6.1 2009/01/17 13:27:54 mjf Exp $
 #
 # Device majors for atari
 #
@@ -23,7 +23,6 @@ device-major	fd		char 16  block 2	fd | fdisa | hdfd
 device-major	vnd		char 17  block 0	vnd
 device-major	filedesc	char 18
 device-major	bpf		char 19			bpfilter
-device-major	lkm		char 20			lkm
 
 device-major	ses		char 26			ses
 device-major	ccd		char 27  block 13	ccd

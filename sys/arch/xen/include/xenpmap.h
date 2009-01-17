@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.19 2008/01/23 19:46:45 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.19.6.1 2009/01/17 13:28:39 mjf Exp $	*/
 
 /*
  *
@@ -52,11 +52,11 @@ int  xpq_update_foreign(paddr_t, pt_entry_t, int);
 extern unsigned long *xpmap_phys_to_machine_mapping;
 
 /*   
- * On Xen-2, the start of the day virual memory starts at KERNTEXTOFF
+ * On Xen-2, the start of the day virtual memory starts at KERNTEXTOFF
  * (0xc0100000). On Xen-3 for domain0 it starts at KERNBASE (0xc0000000).
  * So the offset between physical and virtual address is different on
  * Xen-2 and Xen-3 for domain0.
- * starting with xen-3.0.2, we can add notes so that virual memory starts
+ * starting with xen-3.0.2, we can add notes so that virtual memory starts
  * at KERNBASE for domU as well.
  */  
 #if defined(XEN3) && (defined(DOM0OPS) || !defined(XEN_COMPAT_030001))
@@ -64,6 +64,9 @@ extern unsigned long *xpmap_phys_to_machine_mapping;
 #else
 #define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE)
 #endif
+
+#define mfn_to_pfn(mfn) (machine_to_phys_mapping[(mfn)])
+#define pfn_to_mfn(pfn) (xpmap_phys_to_machine_mapping[(pfn)])
 
 static __inline paddr_t
 xpmap_mtop(paddr_t mpa)

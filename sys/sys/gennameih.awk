@@ -1,6 +1,6 @@
 #!/usr/bin/awk -F
 #
-#	$NetBSD: gennameih.awk,v 1.1.30.1 2008/06/02 13:24:32 mjf Exp $
+#	$NetBSD: gennameih.awk,v 1.1.30.2 2009/01/17 13:29:40 mjf Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,42 +34,61 @@ function getrcsid(idstr) {
 	return idstr;
 }
 
+function printheader(outfile) {
+	print "/*\t$NetBSD: gennameih.awk,v 1.1.30.2 2009/01/17 13:29:40 mjf Exp $\t*/\n\n" > outfile
+
+	print  "/*" > outfile
+	print  " * WARNING: GENERATED FILE.  DO NOT EDIT" > outfile
+	print  " * (edit namei.src and run make namei in src/sys/sys)" > outfile
+	printf " *   by:   %s\n", getrcsid(myvers) > outfile
+	printf " *   from: %s\n", getrcsid(fileheader) > outfile
+	print  " */" > outfile
+}
+
+BEGIN {
+	myvers="$NetBSD: gennameih.awk,v 1.1.30.2 2009/01/17 13:29:40 mjf Exp $"
+	namei="namei.h"
+	rumpnamei = "../rump/include/rump/rump_namei.h"
+}
+
 NR == 1 {
-	printf "/*\t\$NetBSD\$\t*/\n\n"
-
-	myvers="$NetBSD: gennameih.awk,v 1.1.30.1 2008/06/02 13:24:32 mjf Exp $"
-
-	print  "/*"
-	print  " * WARNING: GENERATED FILE.  DO NOT EDIT"
-	print  " * (edit namei.src and run make namei)"
-	printf " *   by:   %s\n", getrcsid(myvers);
-	printf " *   from: %s\n", getrcsid($0);
-	print  " */"
-
+	fileheader=$0
+	printheader(namei)
 	next
-
 }
 
 /^NAMEIFL/ {
 	sub("NAMEIFL", "#define", $0);
-	print $0;
+	print $0 > namei
 
 	sub("^", "NAMEI_", $2)
-	nameifl[i++] = "#define " $2 "\t" $3;
+	nameifl[i++] = $2 "\t" $3;
 	next
 }
 
 {
-	print $0
+	print $0 > namei
 }
 
 END {
-	printf "\n/* Definitions match above, but with NAMEI_ prefix */\n"
+	printf "\n/* Definitions match above, but with NAMEI_ prefix */\n">namei
 
 	# print flags in the same order
 	for (j = 0; j < i; j++) {
-		print nameifl[j]
+		print "#define " nameifl[j] > namei
 	}
 
-	printf "\n#endif /* !_SYS_NAMEI_H_ */\n"
+	printf "\n#endif /* !_SYS_NAMEI_H_ */\n" > namei
+
+	# Now, create rump_namei.h
+	printheader(rumpnamei)
+	printf("\n#ifndef _RUMP_RUMP_NAMEI_H_\n") > rumpnamei
+	printf("#define _RUMP_RUMP_NAMEI_H_\n\n") > rumpnamei
+
+	# print flags in the same order
+	for (j = 0; j < i; j++) {
+		print "#define RUMP_" nameifl[j] > rumpnamei
+	}
+
+	printf("\n#endif /* _RUMP_RUMP_NAMEI_H_ */\n") > rumpnamei
 }

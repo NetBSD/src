@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.243.6.6 2008/10/05 20:11:31 mjf Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.243.6.7 2009/01/17 13:29:07 mjf Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,12 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243.6.6 2008/10/05 20:11:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243.6.7 2009/01/17 13:29:07 mjf Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_raid_autoconfig.h"
+#include "raid.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -165,8 +170,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243.6.6 2008/10/05 20:11:31 mjf
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
-#include "raid.h"
-#include "opt_raid_autoconfig.h"
+
 #include "rf_raid.h"
 #include "rf_copyback.h"
 #include "rf_dag.h"
@@ -317,6 +321,7 @@ void rf_release_all_vps(RF_ConfigSet_t *);
 void rf_cleanup_config_set(RF_ConfigSet_t *);
 int rf_have_enough_components(RF_ConfigSet_t *);
 int rf_auto_config_set(RF_ConfigSet_t *, int *);
+static int rf_sync_component_caches(RF_Raid_t *raidPtr);
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  allow autoconfig to take place.
@@ -917,7 +922,7 @@ raidstrategy(struct buf *bp)
 	bp->b_resid = 0;
 
 	/* stuff it onto our queue */
-	BUFQ_PUT(rs->buf_queue, bp);
+	bufq_put(rs->buf_queue, bp);
 
 	/* scheduled the IO to happen at the next convenient time */
 	wakeup(&(raidPtrs[raidID]->iodone));
@@ -1043,6 +1048,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCAWEDGE:
 	case DIOCDWEDGE:
 	case DIOCLWEDGES:
+	case DIOCCACHESYNC:
 	case RAIDFRAME_SHUTDOWN:
 	case RAIDFRAME_REWRITEPARITY:
 	case RAIDFRAME_GET_INFO:
@@ -1814,7 +1820,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCLWEDGES:
 		return dkwedge_list(&rs->sc_dkdev,
 		    (struct dkwedge_list *)data, l);
-
+	case DIOCCACHESYNC:
+		return rf_sync_component_caches(raidPtr);
 	default:
 		retcode = ENOTTY;
 	}
@@ -1950,7 +1957,7 @@ raidstart(RF_Raid_t *raidPtr)
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
-		if ((bp = BUFQ_GET(rs->buf_queue)) == NULL) {
+		if ((bp = bufq_get(rs->buf_queue)) == NULL) {
 			/* nothing more to do */
 			return;
 		}
@@ -3552,7 +3559,7 @@ rf_pool_init(struct pool *p, size_t size, const char *w_chan,
 int
 rf_buf_queue_check(int raidid)
 {
-	if ((BUFQ_PEEK(raid_softc[raidid].buf_queue) != NULL) &&
+	if ((bufq_peek(raid_softc[raidid].buf_queue) != NULL) &&
 	    raidPtrs[raidid]->openings > 0) {
 		/* there is work to do */
 		return 0;
@@ -3656,4 +3663,50 @@ rf_set_properties(struct raid_softc *rs, RF_Raid_t *raidPtr)
 	rs->sc_dkdev.dk_info = disk_info;
 	if (odisk_info)
 		prop_object_release(odisk_info);
+}
+
+/* 
+ * Implement forwarding of the DIOCCACHESYNC ioctl to each of the components.
+ * We end up returning whatever error was returned by the first cache flush
+ * that fails.
+ */
+
+static int
+rf_sync_component_caches(RF_Raid_t *raidPtr)
+{
+	int c, sparecol;
+	int e,error;
+	int force = 1;
+	
+	error = 0;
+	for (c = 0; c < raidPtr->numCol; c++) {
+		if (raidPtr->Disks[c].status == rf_ds_optimal) {
+			e = VOP_IOCTL(raidPtr->raid_cinfo[c].ci_vp, DIOCCACHESYNC, 
+					  &force, FWRITE, NOCRED);
+			if (e) {
+				printf("raid%d: cache flush to component %s failed.\n",
+				       raidPtr->raidid, raidPtr->Disks[c].devname);
+				if (error == 0) {
+					error = e;
+				}
+			}
+		}
+	}
+
+	for( c = 0; c < raidPtr->numSpare ; c++) {
+		sparecol = raidPtr->numCol + c;
+		/* Need to ensure that the reconstruct actually completed! */
+		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
+			e = VOP_IOCTL(raidPtr->raid_cinfo[sparecol].ci_vp,
+					  DIOCCACHESYNC, &force, FWRITE, NOCRED);
+			if (e) {
+				printf("raid%d: cache flush to component %s failed.\n",
+				       raidPtr->raidid, raidPtr->Disks[sparecol].devname);
+				if (error == 0) {
+					error = e;
+				}
+			}
+		}
+	}
+	return error;
 }

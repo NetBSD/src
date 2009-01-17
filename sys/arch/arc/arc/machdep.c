@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110.6.2 2008/07/02 19:08:15 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110.6.3 2009/01/17 13:27:50 mjf Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110.6.2 2008/07/02 19:08:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110.6.3 2009/01/17 13:27:50 mjf Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -233,7 +233,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	char *kernend;
 	vaddr_t v;
-#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	char *ssym = NULL;
 	char *esym = NULL;
 	struct btinfo_symtab *bi_syms;
@@ -255,7 +255,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
 	/* clear the BSS segment in kernel code */
-#if NKSYM > 0 || defined(DDB) || defined(LKM)
+#if NKSYM > 0 || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* check whether there is valid bootinfo symtab info */
@@ -413,14 +413,10 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		kernend += round_page(mfs_initminiroot(kernend));
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(esym - ssym, ssym, esym);
-#ifdef SYMTAB_SPACE
-	else
-		ksyms_init(0, NULL, NULL);
-#endif
+		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
 
 	maxmem = physmem;
@@ -659,6 +655,8 @@ cpu_reboot(int howto, char *bootstr)
 		dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("\n");

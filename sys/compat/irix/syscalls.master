@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.51.36.1 2008/06/02 13:22:59 mjf Exp $
+	$NetBSD: syscalls.master,v 1.51.36.2 2009/01/17 13:28:43 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -58,62 +58,62 @@
 
 %%
 
-0	NOARGS		{ int sys_nosys(void); } syscall
-1	NOARGS		{ int sys_exit(int rval); }
-2	NOARGS		{ int sys_fork(void); }
-3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
-4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int irix_sys_open(const char *path, int flags, \
+0	NOARGS		{ int|sys||nosys(void); } syscall
+1	NOARGS		{ int|sys||exit(int rval); }
+2	NOARGS		{ int|sys||fork(void); }
+3	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
+4	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
+5	STD		{ int|irix_sys||open(const char *path, int flags, \
 			    int mode); }
-6	NOARGS		{ int sys_close(int fd); }
+6	NOARGS		{ int|sys||close(int fd); }
 7	OBSOL		wait
-8	NOARGS		{ int svr4_sys_creat(const char *path, int mode); }
-9	NOARGS		{ int sys_link(char *path, char *link); }
-10	NOARGS		{ int sys_unlink(char *path); }
-11	NOARGS		{ int svr4_sys_execv(const char *path, char **argp); }
-12	NOARGS		{ int sys_chdir(char *path); }
-13	NOARGS		{ int svr4_sys_time(svr4_time_t *t); }
+8	NOARGS		{ int|svr4_sys||creat(const char *path, int mode); }
+9	NOARGS		{ int|sys||link(char *path, char *link); }
+10	NOARGS		{ int|sys||unlink(char *path); }
+11	NOARGS		{ int|svr4_sys||execv(const char *path, char **argp); }
+12	NOARGS		{ int|sys||chdir(char *path); }
+13	NOARGS		{ int|svr4_sys||time(svr4_time_t *t); }
 14	OBSOL		mknod
-15	NOARGS		{ int sys_chmod(char *path, int mode); }
-16	NOARGS		{ int sys___posix_chown(char *path, int uid, \
+15	NOARGS		{ int|sys||chmod(char *path, int mode); }
+16	NOARGS		{ int|sys||__posix_chown(char *path, int uid, \
 			    int gid); } chown
-17	STD		{ int irix_sys_break(void *nsize); }
+17	STD		{ int|irix_sys||break(void *nsize); }
 18	OBSOL		stat
-19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
+19	NOARGS		{ long|compat_43_sys||lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS 		{ pid_t sys_getpid(void); }
+20	NOARGS 		{ pid_t|sys||getpid(void); }
 21	UNIMPL		old_mount
 22	UNIMPL		System V umount
-23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
+23	NOARGS		{ int|sys||setuid(uid_t uid); }
+24	NOARGS		{ uid_t|sys||getuid_with_euid(void); }
 25	UNIMPL		stime
 26	UNIMPL		ptrace
-27	NOARGS		{ int svr4_sys_alarm(unsigned sec); }
-28	NOARGS		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
-29	NOARGS		{ int svr4_sys_pause(void); }
-30	NOARGS		{ int svr4_sys_utime(const char *path, \
+27	NOARGS		{ int|svr4_sys||alarm(unsigned sec); }
+28	NOARGS		{ int|svr4_sys||fstat(int fd, struct svr4_stat *sb); }
+29	NOARGS		{ int|svr4_sys||pause(void); }
+30	NOARGS		{ int|svr4_sys||utime(const char *path, \
 			     struct svr4_utimbuf *ubuf); }
 31	UNIMPL		was stty
 32	UNIMPL		was gtty
-33	NOARGS		{ int svr4_sys_access(const char *path, int flags); }
-34	NOARGS		{ int svr4_sys_nice(int prio); }
+33	NOARGS		{ int|svr4_sys||access(const char *path, int flags); }
+34	NOARGS		{ int|svr4_sys||nice(int prio); }
 35	UNIMPL		statfs
-36	NOARGS		{ int sys_sync(void); }
-37	NOARGS		{ int svr4_sys_kill(int pid, int signum); }
+36	NOARGS		{ int|sys||sync(void); }
+37	NOARGS		{ int|svr4_sys||kill(int pid, int signum); }
 38	UNIMPL		fstatfs
-39	NOARGS		{ int svr4_sys_pgrpsys(int cmd, int pid, int pgid); }
-40	STD		{ ptrdiff_t irix_sys_syssgi(int request, void *arg1, \
+39	NOARGS		{ int|svr4_sys||pgrpsys(int cmd, int pid, int pgid); }
+40	STD		{ ptrdiff_t|irix_sys||syssgi(int request, void *arg1, \
 			    void *arg2, void *arg3, void *arg4, void *arg5); }
-41	NOARGS		{ int sys_dup(u_int fd); }
-42	NOARGS		{ int sys_pipe(void); }
-43	NOARGS		{ int svr4_sys_times(struct tms *tp); }
+41	NOARGS		{ int|sys||dup(u_int fd); }
+42	NOARGS		{ int|sys||pipe(void); }
+43	NOARGS		{ int|svr4_sys||times(struct tms *tp); }
 44	UNIMPL		profil
 45	UNIMPL		plock
-46	NOARGS		{ int sys_setgid(gid_t gid); }
-47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
+46	NOARGS		{ int|sys||setgid(gid_t gid); }
+47	NOARGS		{ gid_t|sys||getgid_with_egid(void); }
 48	OBSOL		ssig
 #ifdef SYSVMSG
-49	NOARGS		{ int svr4_sys_msgsys(int what, int a2, int a3, \
+49	NOARGS		{ int|svr4_sys||msgsys(int what, int a2, int a3, \
 					      int a4, int a5); }
 #else
 49	UNIMPL		msgsys
@@ -121,31 +121,31 @@
 50	UNIMPL		sysmips
 51	UNIMPL		acct
 #ifdef SYSVSHM
-52	STD		{ int irix_sys_shmsys(int what, int a2, int a3, \
+52	STD		{ int|irix_sys||shmsys(int what, int a2, int a3, \
 					      int a4); }
 #else
 52	UNIMPL		shmsys
 #endif
 #ifdef SYSVSEM
-53	NOARGS		{ int svr4_sys_semsys(int what, int a2, int a3, \
+53	NOARGS		{ int|svr4_sys||semsys(int what, int a2, int a3, \
 					      int a4, int a5); }
 #else
 53	UNIMPL		semsys
 #endif
-54	STD		{ int irix_sys_ioctl(int fd, u_long com, \
+54	STD		{ int|irix_sys||ioctl(int fd, u_long com, \
 			    void *data); }
 55	UNIMPL		uadmin
-56	STD		{ int irix_sys_sysmp(int cmd, void *arg1, void *arg2, \
+56	STD		{ int|irix_sys||sysmp(int cmd, void *arg1, void *arg2, \
 			    void *arg3, void *arg4); }
-57	STD		{ int irix_sys_utssys(void *a1, void *a2, int sel, \
+57	STD		{ int|irix_sys||utssys(void *a1, void *a2, int sel, \
 			    void *a3); }
 58	UNIMPL
-59	NOARGS		{ int svr4_sys_execve(const char *path, char **argp, \
+59	NOARGS		{ int|svr4_sys||execve(const char *path, char **argp, \
 			    char **envp); }
-60	NOARGS		{ int sys_umask(int newmask); }
-61	NOARGS		{ int sys_chroot(char *path); }
-62	STD		{ int irix_sys_fcntl(int fd, int cmd, char *arg); }
-63	NOARGS		{ long svr4_sys_ulimit(int cmd, long newlimit); }
+60	NOARGS		{ int|sys||umask(int newmask); }
+61	NOARGS		{ int|sys||chroot(char *path); }
+62	STD		{ int|irix_sys||fcntl(int fd, int cmd, char *arg); }
+63	NOARGS		{ long|svr4_sys||ulimit(int cmd, long newlimit); }
 64	UNIMPL		reserved for unix/pc
 65	UNIMPL		reserved for unix/pc
 66	UNIMPL		reserved for unix/pc
@@ -157,80 +157,80 @@
 72	OBSOL		rmount
 73	OBSOL		rumount
 74	OBSOL		rfstart
-75	STD		{ int irix_sys_getrlimit64(int resource, \
+75	STD		{ int|irix_sys||getrlimit64(int resource, \
 			    struct irix_rlimit64 *rlp); }
-76	STD		{ int irix_sys_setrlimit64(int resource, \
+76	STD		{ int|irix_sys||setrlimit64(int resource, \
 			    const struct irix_rlimit64 *rlp); }
-77	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-			    struct timespec *rmtp); }
-78	STD		{ irix_off64_t irix_sys_lseek64(int fd, int pad1, \
+77	NOARGS		{ int|compat_50_sys||nanosleep(const struct timespec50 *rqtp, \
+			    struct timespec50 *rmtp); }
+78	STD		{ irix_off64_t|irix_sys||lseek64(int fd, int pad1, \
 			    irix_off64_t offset, int whence, \
 			    int pad2, int pad3, int pad4); }
-79	NOARGS		{ int sys_rmdir(char *path); }
-80	NOARGS		{ int sys_mkdir(char *path, int mode); }
-81	STD		{ int irix_sys_getdents(int fildes, \
+79	NOARGS		{ int|sys||rmdir(char *path); }
+80	NOARGS		{ int|sys||mkdir(char *path, int mode); }
+81	STD		{ int|irix_sys||getdents(int fildes, \
 			    irix_dirent_t *buf, int nbytes); }
-82	STD		{ long irix_sys_sginap (long ticks); }
+82	STD		{ long|irix_sys||sginap (long ticks); }
 83	UNIMPL		sgikopt
 84	UNIMPL		sysfs
-85	NOARGS		{ int svr4_sys_getmsg(int fd, struct svr4_strbuf *ctl, \
+85	NOARGS		{ int|svr4_sys||getmsg(int fd, struct svr4_strbuf *ctl, \
 			    struct svr4_strbuf *dat, int *flags); }
-86	NOARGS		{ int svr4_sys_putmsg(int fd, struct svr4_strbuf *ctl, \
+86	NOARGS		{ int|svr4_sys||putmsg(int fd, struct svr4_strbuf *ctl, \
 			    struct svr4_strbuf *dat, int flags); }
-87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
+87	NOARGS		{ int|sys||poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
-88	STD		{ int irix_sys_sigreturn(struct irix_sigcontext *scp, \
+88	STD		{ int|irix_sys||sigreturn(struct irix_sigcontext *scp, \
 			    struct irix_ucontext *ucp, int signo); }
-89	NOARGS		{ int compat_43_sys_accept(int s, \
+89	NOARGS		{ int|compat_43_sys||accept(int s, \
 			    struct sockaddr *name, int *anamelen); }
-90	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \
+90	NOARGS		{ int|sys||bind(int s, const struct sockaddr *name, \
 			    int namelen); }
-91	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
+91	NOARGS		{ int|sys||connect(int s, const struct sockaddr *name, \
 			    int namelen); }
-92	NOARGS		{ int32_t compat_43_sys_gethostid(void); }
-93	NOARGS		{ int compat_43_sys_getpeername(int fdes, \
+92	NOARGS		{ int32_t|compat_43_sys||gethostid(void); }
+93	NOARGS		{ int|compat_43_sys||getpeername(int fdes, \
 			    struct sockaddr *asa, int *alen); }
-94	NOARGS		{ int compat_43_sys_getsockname(int fdes, \
+94	NOARGS		{ int|compat_43_sys||getsockname(int fdes, \
 			    struct sockaddr *asa, int *alen); }
-95	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
+95	NOARGS		{ int|sys||getsockopt(int s, int level, int name, \
 			    void *val, int *avalsize); }
-96	NOARGS		{ int sys_listen(int s, int backlog); }
-97	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
+96	NOARGS		{ int|sys||listen(int s, int backlog); }
+97	NOARGS		{ int|compat_43_sys||recv(int s, void *buf, int len, \
 			    int flags); }
-98	NOARGS		{ ssize_t compat_43_sys_recvfrom(int s, void *buf, \
+98	NOARGS		{ ssize_t|compat_43_sys||recvfrom(int s, void *buf, \
 			    size_t len, int flags, struct sockaddr *from, \
 			    int *fromlenaddr); }
-99	NOARGS		{ ssize_t compat_43_sys_recvmsg(int s, \
+99	NOARGS		{ ssize_t|compat_43_sys||recvmsg(int s, \
 			    struct msghdr *msg, int flags); }
-100	NOARGS		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
-101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
+100	NOARGS		{ int|compat_50_sys||select(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval50 *tv); }
+101	NOARGS		{ int|compat_43_sys||send(int s, void *buf, int len, \
 			    int flags); }
-102	NOARGS		{ ssize_t compat_43_sys_sendmsg(int s, \
+102	NOARGS		{ ssize_t|compat_43_sys||sendmsg(int s, \
 			    const struct msghdr *msg, int flags); }
-103	NOARGS		{ ssize_t sys_sendto(int s, const void *buf, \
+103	NOARGS		{ ssize_t|sys||sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    int tolen); }
-104	NOARGS		{ int compat_43_sys_sethostid(int32_t hostid); }
-105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
+104	NOARGS		{ int|compat_43_sys||sethostid(int32_t hostid); }
+105	NOARGS		{ int|sys||setsockopt(int s, int level, int name, \
 			    const void *val, int valsize); }
-106	NOARGS		{ int sys_shutdown(int s, int how); }
-107	NOARGS		{ int svr4_sys_socket(int domain, int type, \
+106	NOARGS		{ int|sys||shutdown(int s, int how); }
+107	NOARGS		{ int|svr4_sys||socket(int domain, int type, \
 			    int protocol); }
-108	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
+108	NOARGS		{ int|compat_43_sys||gethostname(char *hostname, \
 			    u_int len); }
-109	NOARGS		{ int compat_43_sys_sethostname(const char *hostname, \
+109	NOARGS		{ int|compat_43_sys||sethostname(const char *hostname, \
 			    u_int len); }
-110	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+110	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); }
-111	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
+111	NOARGS		{ int|compat_09_sys||setdomainname(char *domainname, \
 			    int len); }
-112	NOARGS		{ int sys_truncate(const char *path, long length); }
-113	NOARGS		{ int sys_ftruncate(int fd, long length); }
-114	NOARGS		{ int sys_rename(const char *from, const char *to); }
-115	NOARGS		{ int sys_symlink(const char *path, \
+112	NOARGS		{ int|sys||truncate(const char *path, long length); }
+113	NOARGS		{ int|sys||ftruncate(int fd, long length); }
+114	NOARGS		{ int|sys||rename(const char *from, const char *to); }
+115	NOARGS		{ int|sys||symlink(const char *path, \
 			    const char *link); }
-116	NOARGS		{ int sys_readlink(const char *path, char *buf, \
+116	NOARGS		{ int|sys||readlink(const char *path, char *buf, \
 			    size_t count); }
 117	UNIMPL		lstat
 118	UNIMPL
@@ -238,106 +238,106 @@
 120	UNIMPL		nfs_getfh
 121	UNIMPL		async_daemon
 122	UNIMPL		exportfs
-123	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
-124	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
-125	NOARGS		{ int sys_getitimer(u_int which, \
+123	NOARGS		{ int|sys||setregid(gid_t rgid, gid_t egid); }
+124	NOARGS		{ int|sys||setreuid(uid_t ruid, uid_t euid); }
+125	NOARGS		{ int|compat_50_sys||getitimer(u_int which, \
 			    struct itimerval *itv); }
-126	NOARGS		{ int sys_setitimer(u_int which, \
+126	NOARGS		{ int|compat_50_sys||setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
-127	NOARGS		{ int sys_adjtime(struct timeval *delta, \
-			    struct timeval *olddelta); }
-128	NOARGS		{ int svr4_sys_gettimeofday(struct timeval *tp); }
-129	STD		{ irix_pid_t irix_sys_sproc(void *entry, \
+127	NOARGS		{ int|compat_50_sys||adjtime(struct timeval50 *delta, \
+			    struct timeval50 *olddelta); }
+128	NOARGS		{ int|svr4_sys||gettimeofday(struct timeval50 *tp); }
+129	STD		{ irix_pid_t|irix_sys||sproc(void *entry, \
 			    unsigned int inh, void *arg); }
-130	STD		{ ptrdiff_t irix_sys_prctl(unsigned int option, \
+130	STD		{ ptrdiff_t|irix_sys||prctl(unsigned int option, \
 			    void *arg1); }
-131	STD		{ int irix_sys_procblk(int cmd, pid_t pid, int count); }
-132	STD		{ irix_pid_t irix_sys_sprocsp(void *entry, \
+131	STD		{ int|irix_sys||procblk(int cmd, pid_t pid, int count); }
+132	STD		{ irix_pid_t|irix_sys||sprocsp(void *entry, \
 			    unsigned int inh, void *arg, void *sp, \
 			    irix_size_t len); }
 133	UNIMPL		sgigsc
-134	STD		{ void *irix_sys_mmap(void *addr, irix_size_t len, \
+134	STD		{ void *|irix_sys||mmap(void *addr, irix_size_t len, \
 			    int prot, int flags, int fd, irix_off_t pos); }
-135	STD		{ int irix_sys_munmap(void *addr, int len); }
-136	STD		{ int irix_sys_mprotect(void *addr, \
+135	STD		{ int|irix_sys||munmap(void *addr, int len); }
+136	STD		{ int|irix_sys||mprotect(void *addr, \
 			    int len, int prot); }
-137	NOARGS		{ int sys___msync13(void *addr, \
+137	NOARGS		{ int|sys|13|msync(void *addr, \
 			    size_t len, int flags); }
 138	UNIMPL		madvise
 139	UNIMPL		pagelock
 140	UNIMPL		getpagesize
 141	UNIMPL		quotactl
 142	UNIMPL
-143	NOARGS		{ int sys_getpgrp(void); }
-144	STD		{ int irix_sys_setpgrp(int pid, int pgid); }
+143	NOARGS		{ int|sys||getpgrp(void); }
+144	STD		{ int|irix_sys||setpgrp(int pid, int pgid); }
 145	UNIMPL		vhangup
-146	NOARGS		{ int sys_fsync(int fd); }
-147	NOARGS		{ int sys_fchdir(int fd); }
-148	STD		{ int irix_sys_getrlimit(int resource, \
+146	NOARGS		{ int|sys||fsync(int fd); }
+147	NOARGS		{ int|sys||fchdir(int fd); }
+148	STD		{ int|irix_sys||getrlimit(int resource, \
 			     struct irix_rlimit *rlp); }
-149	STD		{ int irix_sys_setrlimit(int resource, \
+149	STD		{ int|irix_sys||setrlimit(int resource, \
 			    const struct irix_rlimit *rlp); }
 150	UNIMPL		cacheflush
 151	UNIMPL		cachectl
-152	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); } \
+152	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); } \
 			    fchown
-153	NOARGS		{ int sys_fchmod(int fd, int mode); }
+153	NOARGS		{ int|sys||fchmod(int fd, int mode); }
 154	UNIMPL		wait3
 155	UNIMPL		socketpair
-156	STD		{ long irix_sys_systeminfo(int what, char *buf, \
+156	STD		{ long|irix_sys||systeminfo(int what, char *buf, \
 			    long len); }
-157	STD		{ int irix_sys_uname(struct irix_utsname *name); }
-158	STD		{ int irix_sys_xstat(const int version, \
+157	STD		{ int|irix_sys||uname(struct irix_utsname *name); }
+158	STD		{ int|irix_sys||xstat(const int version, \
 			    const char *path, struct stat *buf); }
-159	STD		{ int irix_sys_lxstat(const int version, \
+159	STD		{ int|irix_sys||lxstat(const int version, \
 			    const char *path, struct stat *buf); }
-160	STD		{ int irix_sys_fxstat(const int version, \
+160	STD		{ int|irix_sys||fxstat(const int version, \
 			    const int fd, struct stat *buf); }
 161	UNIMPL		xmknod
-162	STD		{ int irix_sys_sigaction(int signum, \
+162	STD		{ int|irix_sys||sigaction(int signum, \
 			    const struct svr4_sigaction *nsa, \
 			    struct svr4_sigaction *osa, void *sigtramp); }
-163	NOARGS		{ int svr4_sys_sigpending(int what, \
+163	NOARGS		{ int|svr4_sys||sigpending(int what, \
 			    svr4_sigset_t *set); }
-164	STD		{ int irix_sys_sigprocmask(int how, \
+164	STD		{ int|irix_sys||sigprocmask(int how, \
 			    const irix_sigset_t *set, \
 			    irix_sigset_t *oset); }
-165	NOARGS		{ int svr4_sys_sigsuspend( \
+165	NOARGS		{ int|svr4_sys||sigsuspend( \
 			    const svr4_sigset_t *set); }
 166	UNIMPL		sigpoll_sys
-167	STD		{ int irix_sys_swapctl(int cmd, void *arg); }
-168	STD		{ int irix_sys_getcontext(irix_ucontext_t *ucp); }
-169	STD		{ int irix_sys_setcontext(const irix_ucontext_t *ucp); }
-170	STD		{ int irix_sys_waitsys(int type, int pid, \
+167	STD		{ int|irix_sys||swapctl(int cmd, void *arg); }
+168	STD		{ int|irix_sys||getcontext(irix_ucontext_t *ucp); }
+169	STD		{ int|irix_sys||setcontext(const irix_ucontext_t *ucp); }
+170	STD		{ int|irix_sys||waitsys(int type, int pid, \
 			    struct irix_irix5_siginfo *info, int options, \
 			    struct rusage *ru); }
 171	UNIMPL		sigstack
 172	UNIMPL		sigaltstack
 173	UNIMPL		sigsendset
-174	NOARGS		{ int svr4_sys_statvfs(const char *path, \
+174	NOARGS		{ int|svr4_sys||statvfs(const char *path, \
 			    struct svr4_statvfs *fs); }
-175	NOARGS		{ int svr4_sys_fstatvfs(int fd, \
+175	NOARGS		{ int|svr4_sys||fstatvfs(int fd, \
 			    struct svr4_statvfs *fs); }
 176	UNIMPL		getpmsg
 177	UNIMPL		putpmsg
 178	UNIMPL		lchown
 179	UNIMPL		priocntl
 180	UNIMPL		sigqueue
-181	NOARGS		{ ssize_t sys_readv(int fd, \
+181	NOARGS		{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-182	NOARGS		{ ssize_t sys_writev(int fd, \
+182	NOARGS		{ ssize_t|sys||writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-183	NOARGS		{ int sys_truncate(const char *path, int pad, \
+183	NOARGS		{ int|sys||truncate(const char *path, int pad, \
 			    off_t length); } truncate64
-184	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); } \
+184	NOARGS		{ int|sys||ftruncate(int fd, int pad, off_t length); } \
 			    ftruncate64
-185	STD		{ void *irix_sys_mmap64(void *addr, irix_size_t len, \
+185	STD		{ void *|irix_sys||mmap64(void *addr, irix_size_t len, \
 			    int prot, int flags, int fd, int pad1, \
 			    irix_off_t pos); }
 186	UNIMPL		dmi
-187	NOARGS		{ ssize_t svr4_sys_pread(int fd, void *buf, \
+187	NOARGS		{ ssize_t|svr4_sys||pread(int fd, void *buf, \
 			    size_t nbyte, svr4_off_t off); }
-188	NOARGS		{ ssize_t svr4_sys_pwrite(int fd, const void *buf, \
+188	NOARGS		{ ssize_t|svr4_sys||pwrite(int fd, const void *buf, \
 			    size_t nbyte, svr4_off_t off); }
 189	UNIMPL		fdatasync
 190	UNIMPL		sgifastpath
@@ -353,20 +353,20 @@
 200	UNIMPL		attr_multif
 201	UNIMPL		statvfs64
 202	UNIMPL		fstatvfs64
-203	STD		{ int irix_sys_getmountid(const char *path, \
+203	STD		{ int|irix_sys||getmountid(const char *path, \
 			    irix_mountid_t *buf); }
 204	UNIMPL		nsproc
-205	STD		{ int irix_sys_getdents64(int fildes, \
+205	STD		{ int|irix_sys||getdents64(int fildes, \
 			    irix_dirent64_t *buf, int nbytes); }
 206	UNIMPL		afs_syscall
-207	STD		{ int irix_sys_ngetdents(int fildes, \
+207	STD		{ int|irix_sys||ngetdents(int fildes, \
 			    irix_dirent_t *buf, unsigned short nbyte, \
 			    int *eof); }
-208	STD		{ int irix_sys_ngetdents64(int fildes, \
+208	STD		{ int|irix_sys||ngetdents64(int fildes, \
 			    irix_dirent64_t *buf, unsigned short nbyte, \
 			    int *eof); }
 209	UNIMPL		sgi_sesmgr
-210	STD		{ irix_pid_t irix_sys_pidsprocsp(void *entry, \
+210	STD		{ irix_pid_t|irix_sys||pidsprocsp(void *entry, \
 			    unsigned int inh, void *arg, void *sp, \
 			    irix_size_t len, irix_pid_t pid); }
 211	UNIMPL		rexec
@@ -381,7 +381,7 @@
 220	UNIMPL		sched_setscheduler
 221	UNIMPL		sched_getparam
 222	UNIMPL		sched_setparam
-223	STD		{ int irix_sys_usync_cntl(int cmd, void *arg); }
+223	STD		{ int|irix_sys||usync_cntl(int cmd, void *arg); }
 224	UNIMPL		psema_cntl
 225	UNIMPL		restartreturn
 226	UNIMPL		sysget

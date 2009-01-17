@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135.6.2 2008/07/02 19:08:15 mjf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135.6.3 2009/01/17 13:27:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.6.2 2008/07/02 19:08:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.6.3 2009/01/17 13:27:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ static void	pmap_pvdump(paddr_t);
  * convert to a vax protection code.
  */
 #define pte_prot(m, p)	(protection_codes[p])
-int	protection_codes[8];
+u_int	protection_codes[8];
 
 /*
  * Kernel page table page management.
@@ -268,17 +268,20 @@ struct kpt_page *kpt_pages;
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
-u_int	*Sysseg, *Sysseg_pa;
+st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
-vsize_t	Sysptsize = VM_KERNEL_PT_PAGES;
+vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pv_entry	*pv_table;	/* array of entries, one per page */
 
-struct pmap	kernel_pmap_store;
+static struct pmap kernel_pmap_store;
+struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*pt_map;
 struct vm_map_kernel pt_map_store;
 
+paddr_t		avail_start;	/* PA of first available physical page */
+paddr_t		avail_end;	/* PA of last available physical page */
 vsize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
@@ -294,10 +297,6 @@ int		protostfree;	/* prototype (default) free ST map */
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
 pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
 
-extern void *	msgbufaddr;
-extern paddr_t	msgbufpa;
-
-u_long	noncontig_enable;
 extern const vaddr_t amiga_uptbase;
 
 extern paddr_t z2mem_start;
@@ -322,16 +321,6 @@ void		pmap_collect1(pmap_t, paddr_t, paddr_t);
 #define		PRM_CFLUSH	0x02
 #define		PRM_KEEPPTPAGE	0x04
 
-
-
-
-
-/*
- * All those kernel PT submaps that BSD is so fond of
- */
-void 	*CADDR1, *CADDR2;
-char	*vmmap;
-
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized			\
 				 && vm_physseg_find(atop((pa)), NULL) != -1)
 
@@ -341,7 +330,7 @@ static inline char *pa_to_attribute(paddr_t pa);
 static inline struct pv_entry *
 pa_to_pvh(paddr_t pa)
 {
-	int bank, pg = 0;	/* gcc4 -Wunitialized */
+	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
 
 	bank = vm_physseg_find(atop((pa)), &pg);
 	return &vm_physmem[bank].pmseg.pvent[pg];
@@ -350,7 +339,7 @@ pa_to_pvh(paddr_t pa)
 static inline char *
 pa_to_attribute(paddr_t pa)
 {
-	int bank, pg = 0;	/* gcc4 -Wuninitialized */
+	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
 
 	bank = vm_physseg_find(atop((pa)), &pg);
 	return &vm_physmem[bank].pmseg.attrs[pg];
@@ -391,7 +380,8 @@ pmap_init()
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
 		    Sysseg, Sysmap, Sysptmap);
-		printf(" vstart %lx, vend %lx\n", virtual_avail, virtual_end);
+		printf("  pstart %lx, pend %lx, vstart %lx, vend %lx\n",
+		    avail_start, avail_end, virtual_avail, virtual_end);
 	}
 #endif
 
@@ -667,8 +657,7 @@ pmap_create()
 		printf("pmap_create\n");
 #endif
 
-	pmap = malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-	bzero(pmap, sizeof(*pmap));
+	pmap = malloc(sizeof(*pmap), M_VMPMAP, M_WAITOK|M_ZERO);
 	pmap_pinit(pmap);
 	return (pmap);
 }
@@ -1216,7 +1205,8 @@ validate:
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel()) {
 		va -= PAGE_SIZE;
-		pmap_check_wiring("enter", trunc_page((vaddr_t) pmap_pte(pmap, va)));
+		pmap_check_wiring("enter",
+		    trunc_page((vaddr_t) pmap_pte(pmap, va)));
 	}
 #endif
 	return 0;
@@ -2366,7 +2356,8 @@ pmap_enter_ptpage(pmap, va, can_fail)
 			    pmap_ste2(pmap, va), ste);
 #endif
 	}
-#endif
+#endif /* defined(M68040) || defined(M68060) */
+
 	va = trunc_page((vaddr_t)pmap_pte(pmap, va));
 
 	/*

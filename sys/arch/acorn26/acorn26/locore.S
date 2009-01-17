@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.13.16.1 2008/06/29 09:32:53 mjf Exp $ */
+/* $NetBSD: locore.S,v 1.13.16.2 2009/01/17 13:27:46 mjf Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -41,7 +41,6 @@
 
 #include <sys/syscall.h>
 #include <arm/armreg.h>
-#include <arm/atomic.h>
 #include <arm/trap.h>
 #include "assym.h"
 
@@ -248,7 +247,6 @@ irq_entry:
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
 	MODE_CHANGE_NOP
 
-	mov	r0, sp
 	bl	_C_LABEL(irq_handler)
 
 	mov	r0, sp
@@ -276,7 +274,6 @@ Lirq_from_usr:
 	MODE_CHANGE_NOP
 
 	mov	fp, #0			/* This is the top of the stack */
-	mov	r0, sp
 	bl	_C_LABEL(irq_handler)
 
 	ldr	r1, Lastpending
@@ -312,43 +309,6 @@ Lirq_to_ast:
 	bl	_C_LABEL(ast)
 	b	pull_trapframe
 
-#ifdef ATOMIC_SET_BIT_NONINLINE_REQUIRED
-/* LINTSTUB: Func: void atomic_set_bit(u_int *address, u_int setmask) */
-ENTRY(atomic_set_bit)
-	/* disable interrupts */
-	/* Note that this is evil and only works due to prefetching */
-	mov	r2, r15
-	orrs	r15, r2, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
-	ldr	r2, [r0]
-	orr	r2, r2, r1
-	str	r2, [r0]
-	/* restore interrupt state and return */
-	movs	pc, lr
-/* LINTSTUB: Func: void atomic_clear_bit(u_int *address, u_int clearmask) */
-ENTRY(atomic_clear_bit)
-	/* disable interrupts */
-	/* Note that this is evil and only works due to prefetching */
-	mov	r2, r15
-	orrs	r15, r2, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
-	ldr	r2, [r0]
-	bic	r2, r2, r1
-	str	r2, [r0]
-	/* restore interrupt state and return */
-	movs	pc, lr
-
-#endif /* ATOMIC_SET_BIT_NONINLINE_REQUIRED */
-/* XXX: Return type should be register_t */
-/* LINTSTUB: Func: int set_r13_irq(register_t r13_irq) */
-ENTRY(set_r13_irq)
-	/* XXX Is enabling FIQs OK? */
-	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_IRQ)
-	mov	r1, r0
-	mov	r0, r13
-	mov	r13, r1
-	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
-	MODE_CHANGE_NOP
-	movs	r15, lr
-
 /* LINTSTUB: Func: void int_on(void) */
 ENTRY(int_on)
 	bics	r15, r14, #(R15_IRQ_DISABLE)
@@ -462,4 +422,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.13.16.1 2008/06/29 09:32:53 mjf Exp $")
+RCSID("$NetBSD: locore.S,v 1.13.16.2 2009/01/17 13:27:46 mjf Exp $")

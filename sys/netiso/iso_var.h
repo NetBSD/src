@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.28 2007/12/05 23:47:19 dyoung Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.28.12.1 2009/01/17 13:29:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -170,7 +170,7 @@ int m_datalen (struct mbuf *);
 int m_compress (struct mbuf *, struct mbuf **);
 
 /* iso_snpac.c */
-void llc_rtrequest (int, struct rtentry *, struct rt_addrinfo *);
+void llc_rtrequest (int, struct rtentry *, const struct rt_addrinfo *);
 void iso_setmcasts (struct ifnet *, int);
 int iso_snparesolve(struct ifnet *, const struct sockaddr_iso *,
 			 void *, int *);

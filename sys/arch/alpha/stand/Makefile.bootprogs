@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.27 2005/12/11 12:16:20 christos Exp $
+# $NetBSD: Makefile.bootprogs,v 1.27.74.1 2009/01/17 13:27:48 mjf Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -39,7 +39,8 @@ CFLAGS=		-ffreestanding -mno-fp-regs -g
 NETBSD_VERS!=${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 
-CWARNFLAGS+=	-Wno-main
+CWARNFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+CFLAGS+=	-Werror ${CWARNFLAGS}
 
 # if there is a 'version' file, add rule for vers.c and add it to SRCS
 # and CLEANFILES

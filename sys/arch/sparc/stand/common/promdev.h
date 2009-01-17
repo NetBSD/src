@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.h,v 1.12.58.1 2008/06/02 13:22:42 mjf Exp $ */
+/*	$NetBSD: promdev.h,v 1.12.58.2 2009/01/17 13:28:31 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,8 +46,6 @@ struct promdata {
 #define DDB_MAGIC0	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
 #define DDB_MAGIC1	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('1') )
 #define DDB_MAGIC2	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('2') )
-
-extern time_t	getsecs(void);
 
 #define	MAX_PROM_PATH	128
 

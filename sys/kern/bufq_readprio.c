@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_readprio.c,v 1.9.18.1 2008/06/02 13:24:07 mjf Exp $	*/
+/*	$NetBSD: bufq_readprio.c,v 1.9.18.2 2009/01/17 13:29:18 mjf Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.9.18.1 2008/06/02 13:24:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.9.18.2 2009/01/17 13:29:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,20 +221,17 @@ bufq_prio_cancel(struct bufq_state *bufq, struct buf *buf)
 	struct buf *bq;
 
 	/* search read queue */
-	bq = TAILQ_FIRST(&prio->bq_read);
-	while (bq) {
+	TAILQ_FOREACH(bq, &prio->bq_read, b_actq) {
 		if (bq == buf) {
 			TAILQ_REMOVE(&prio->bq_read, bq, b_actq);
 			/* force new section */
 			prio->bq_next = NULL;
 			return buf;
 		}
-		bq = TAILQ_NEXT(bq, b_actq);
 	}
 
 	/* not found in read queue, search write queue */
-	bq = TAILQ_FIRST(&prio->bq_write);
-	while (bq) {
+	TAILQ_FOREACH(bq, &prio->bq_write, b_actq) {
 		if (bq == buf) {
 			if (bq == prio->bq_write_next) {
 				/*
@@ -254,7 +251,6 @@ bufq_prio_cancel(struct bufq_state *bufq, struct buf *buf)
 			prio->bq_next = NULL;
 			return buf;
 		}
-		bq = TAILQ_NEXT(bq, b_actq);
 	}
 
 	/* still not found */

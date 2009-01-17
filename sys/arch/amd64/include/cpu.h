@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44.6.2 2008/06/02 13:21:49 mjf Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44.6.3 2009/01/17 13:27:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,11 +37,13 @@
 #ifndef _AMD64_CPU_H_
 #define _AMD64_CPU_H_
 
+#ifdef __x86_64__
+
 #include <x86/cpu.h>
 
 #ifdef _KERNEL
 
-#if defined(__GNUC__) && !defined(_LKM)
+#if defined(__GNUC__) && !defined(_MODULE)
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
@@ -79,7 +81,7 @@ cpu_set_curpri(int pri)
 	    "r" (pri)
 	);
 }
-#endif	/* __GNUC__ && !_LKM */
+#endif	/* __GNUC__ && !_MODULE */
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_tf.tf_cs, \
 				    (frame)->cf_if.if_tf.tf_rflags)
@@ -88,5 +90,11 @@ cpu_set_curpri(int pri)
 #define LWP_PC(l)		((l)->l_md.md_regs->tf_rip)
 
 #endif	/* _KERNEL */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/cpu.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_CPU_H_ */

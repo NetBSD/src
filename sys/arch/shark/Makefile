@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.106.1 2009/01/17 13:28:29 mjf Exp $
 
 # Makefile for shark tags file and boot blocks
 
@@ -15,7 +15,8 @@ DSHARK=	isa include ofw
 tags:
 	-ctags -wdtf ${TSHARK} ${SSHARK} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASHARK} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TSHARK}
 	sort -o ${TSHARK} ${TSHARK}
 

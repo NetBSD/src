@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.68.6.2 2008/09/28 10:39:57 mjf Exp $
+#	$NetBSD: JORNADA720,v 1.68.6.3 2009/01/17 13:28:01 mjf Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68.6.2 $"
+#ident 		"GENERIC-$Revision: 1.68.6.3 $"
 
 # estimated number of users
 maxusers	32
@@ -53,7 +53,6 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	NFSSERVER
@@ -111,7 +110,6 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	USERCONF	# userconf(4) support
@@ -227,14 +225,6 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
-
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?		# ESS 1688 AudioDrive
-# OPL[23] FM synthesizers
-#opl*   at esl?
-
-# Audio support
-#audio*	at audiobus?
 
 # Bluetooth Controller and Device support
 

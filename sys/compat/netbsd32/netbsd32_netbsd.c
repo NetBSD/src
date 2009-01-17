@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.141.6.2 2008/06/02 13:23:07 mjf Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.141.6.3 2009/01/17 13:28:46 mjf Exp $	*/
 
 /*
- * Copyright (c) 1998, 2001 Matthew R. Green
+ * Copyright (c) 1998, 2001, 2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.141.6.2 2008/06/02 13:23:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.141.6.3 2009/01/17 13:28:46 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -35,18 +35,16 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.141.6.2 2008/06/02 13:23:07 mj
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
-#include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
-#include "opt_ptrace.h"
+#include "opt_sa.h"
 
 #include "fs_lfs.h"
-#include "fs_nfs.h"
 #endif
 
 /*
  * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
  * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
- * this would be LKM-safe.
+ * this would be module-safe.
  */
 #define COMPAT_OLDSOCK /* used by <sys/socket.h> */
 
@@ -74,9 +72,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.141.6.2 2008/06/02 13:23:07 mj
 #include <sys/namei.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
+#include <sys/vfs_syscalls.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
@@ -89,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.141.6.2 2008/06/02 13:23:07 mj
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/netbsd32/netbsd32_sa.h>
 
 #include <machine/frame.h>
 
@@ -115,13 +117,28 @@ struct uvm_object *emul_netbsd32_object;
 
 extern struct sysctlnode netbsd32_sysctl_root;
 
-const struct emul emul_netbsd32 = {
+const struct sa_emul saemul_netbsd32 = {
+	sizeof(ucontext32_t),
+	sizeof(struct netbsd32_sa_t),
+	sizeof(netbsd32_sa_tp),
+	netbsd32_sacopyout,  
+	netbsd32_upcallconv,
+	netbsd32_cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext32_sa,
+#ifdef KERN_SA
+	netbsd32_sa_ucsp
+#else
+	NULL
+#endif
+}; 
+
+struct emul emul_netbsd32 = {
 	"netbsd32",
 	"/emul/netbsd32",
 #ifndef __HAVE_MINIMAL_EMUL
 	0,
 	NULL,
-	NETBSD32_SYS_syscall,
+	NETBSD32_SYS_netbsd32_syscall,
 	NETBSD32_SYS_NSYSENT,
 #endif
 	netbsd32_sysent,
@@ -158,6 +175,11 @@ const struct emul emul_netbsd32 = {
 
 	netbsd32_vm_default_addr,
 	NULL,
+#ifdef COMPAT_40
+	&saemul_netbsd32,
+#else
+	NULL,
+#endif
 	sizeof(ucontext32_t),
 	startlwp32,
 };
@@ -296,20 +318,16 @@ netbsd32_fchdir(struct lwp *l, const struct netbsd32_fchdir_args *uap, register_
 }
 
 int
-netbsd32_mknod(struct lwp *l, const struct netbsd32_mknod_args *uap, register_t *retval)
+netbsd32___mknod50(struct lwp *l, const struct netbsd32___mknod50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(mode_t) mode;
 		syscallarg(dev_t) dev;
 	} */
-	struct sys_mknod_args ua;
 
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(dev);
-	NETBSD32TO64_UAP(mode);
-
-	return (sys_mknod(l, &ua, retval));
+	return do_sys_mknod(l, SCARG_P32(uap, path), SCARG(uap, mode),
+	    SCARG(uap, dev), retval);
 }
 
 int
@@ -360,6 +378,7 @@ netbsd32_break(struct lwp *l, const struct netbsd32_break_args *uap, register_t 
 int
 netbsd32_mount(struct lwp *l, const struct netbsd32_mount_args *uap, register_t *retval)
 {
+#ifdef COMPAT_40
 	/* {
 		syscallarg(const netbsd32_charp) type;
 		syscallarg(const netbsd32_charp) path;
@@ -373,6 +392,9 @@ netbsd32_mount(struct lwp *l, const struct netbsd32_mount_args *uap, register_t 
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TOP_UAP(data, void);
 	return (compat_40_sys_mount(l, &ua, retval));
+#else
+	return ENOSYS;
+#endif
 }
 
 int
@@ -404,7 +426,6 @@ netbsd32_setuid(struct lwp *l, const struct netbsd32_setuid_args *uap, register_
 int
 netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
 	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -417,14 +438,8 @@ netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap, register_
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TO64_UAP(data);
-#ifdef _LKM
+
 	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
-#else
-	return sys_ptrace(l, &ua, retval);
-#endif
-#else
-	return (ENOSYS);
-#endif /* PTRACE || _LKM */
 }
 
 int
@@ -914,7 +929,7 @@ netbsd32_setpriority(struct lwp *l, const struct netbsd32_setpriority_args *uap,
 }
 
 int
-netbsd32_sys___socket30(struct lwp *l, const struct netbsd32_sys___socket30_args *uap, register_t *retval)
+netbsd32___socket30(struct lwp *l, const struct netbsd32___socket30_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) domain;
@@ -1209,7 +1224,6 @@ netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, regis
 	return (sys_quotactl(l, &ua, retval));
 }
 
-#if defined(NFS) || defined(NFSSERVER)
 int
 netbsd32_nfssvc(struct lwp *l, const struct netbsd32_nfssvc_args *uap, register_t *retval)
 {
@@ -1228,7 +1242,6 @@ netbsd32_nfssvc(struct lwp *l, const struct netbsd32_nfssvc_args *uap, register_
 	return (ENOSYS);
 #endif
 }
-#endif
 
 int
 netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, register_t *retval)
@@ -1360,28 +1373,28 @@ netbsd32_seteuid(struct lwp *l, const struct netbsd32_seteuid_args *uap, registe
 
 #ifdef LFS
 int
-netbsd32_sys_lfs_bmapv(struct lwp *l, const struct netbsd32_sys_lfs_bmapv_args *v, register_t *retval)
+netbsd32_lfs_bmapv(struct lwp *l, const struct netbsd32_lfs_bmapv_args *v, register_t *retval)
 {
 
 	return (ENOSYS);	/* XXX */
 }
 
 int
-netbsd32_sys_lfs_markv(struct lwp *l, const struct netbsd32_sys_lfs_markv_args *v, register_t *retval)
+netbsd32_lfs_markv(struct lwp *l, const struct netbsd32_lfs_markv_args *v, register_t *retval)
 {
 
 	return (ENOSYS);	/* XXX */
 }
 
 int
-netbsd32_sys_lfs_segclean(struct lwp *l, const struct netbsd32_sys_lfs_segclean_args *v, register_t *retval)
+netbsd32_lfs_segclean(struct lwp *l, const struct netbsd32_lfs_segclean_args *v, register_t *retval)
 {
 
 	return (ENOSYS);	/* XXX */
 }
 
 int
-netbsd32_sys_lfs_segwait(struct lwp *l, const struct netbsd32_sys_lfs_segwait_args *v, register_t *retval)
+netbsd32___lfs_segwait50(struct lwp *l, const struct netbsd32___lfs_segwait50_args *v, register_t *retval)
 {
 
 	return (ENOSYS);	/* XXX */
@@ -2512,6 +2525,86 @@ netbsd32___posix_fadvise50(struct lwp *l,
 	    SCARG(uap, len), SCARG(uap, advice));
 }
 
+int
+netbsd32__sched_setparam(struct lwp *l,
+			 const struct netbsd32__sched_setparam_args *uap,
+			 register_t *retval)
+{
+	/* {
+		syscallarg(pid_t) pid;
+		syscallarg(lwpid_t) lid;
+		syscallarg(int) policy;
+		syscallarg(const netbsd32_sched_paramp_t) params;
+	} */
+	struct sys__sched_setparam_args ua;
+
+	NETBSD32TO64_UAP(pid);
+	NETBSD32TO64_UAP(lid);
+	NETBSD32TO64_UAP(policy);
+	NETBSD32TOP_UAP(params, const struct sched_param *);
+	return sys__sched_setparam(l, &ua, retval);
+}
+
+int
+netbsd32__sched_getparam(struct lwp *l,
+			 const struct netbsd32__sched_getparam_args *uap,
+			 register_t *retval)
+{
+	/* {
+		syscallarg(pid_t) pid;
+		syscallarg(lwpid_t) lid;
+		syscallarg(netbsd32_intp) policy;
+		syscallarg(netbsd32_sched_paramp_t) params;
+	} */
+	struct sys__sched_getparam_args ua;
+
+	NETBSD32TO64_UAP(pid);
+	NETBSD32TO64_UAP(lid);
+	NETBSD32TOP_UAP(policy, int *);
+	NETBSD32TOP_UAP(params, struct sched_param *);
+	return sys__sched_getparam(l, &ua, retval);
+}
+
+int
+netbsd32__sched_setaffinity(struct lwp *l,
+			    const struct netbsd32__sched_setaffinity_args *uap,
+			    register_t *retval)
+{
+	/* {
+		syscallarg(pid_t) pid;
+		syscallarg(lwpid_t) lid;
+		syscallarg(netbsd_size_t) size;
+		syscallarg(const netbsd32_cpusetp_t) cpuset;
+	} */
+	struct sys__sched_setaffinity_args ua;
+
+	NETBSD32TO64_UAP(pid);
+	NETBSD32TO64_UAP(lid);
+	NETBSD32TOX_UAP(size, size_t);
+	NETBSD32TOP_UAP(cpuset, const cpuset_t *);
+	return sys__sched_setaffinity(l, &ua, retval);
+}
+
+int
+netbsd32__sched_getaffinity(struct lwp *l,
+			    const struct netbsd32__sched_getaffinity_args *uap,
+			    register_t *retval)
+{
+	/* {
+		syscallarg(pid_t) pid;
+		syscallarg(lwpid_t) lid;
+		syscallarg(netbsd_size_t) size;
+		syscallarg(netbsd32_cpusetp_t) cpuset;
+	} */
+	struct sys__sched_getaffinity_args ua;
+
+	NETBSD32TO64_UAP(pid);
+	NETBSD32TO64_UAP(lid);
+	NETBSD32TOX_UAP(size, size_t);
+	NETBSD32TOP_UAP(cpuset, cpuset_t *);
+	return sys__sched_getaffinity(l, &ua, retval);
+}
+
 /*
  * MI indirect system call support.
  * Only used if the MD netbsd32_syscall.c doesn't intercept the calls.
@@ -2521,10 +2614,10 @@ netbsd32___posix_fadvise50(struct lwp *l,
 #undef SYS_NSYSENT
 #define SYS_NSYSENT NETBSD32_SYS_NSYSENT
 
-#define SYS_SYSCALL netbsd32_sys_syscall
+#define SYS_SYSCALL netbsd32_syscall
 #include "../../kern/sys_syscall.c"
 #undef SYS_SYSCALL
 
-#define SYS_SYSCALL netbsd32_sys___syscall
+#define SYS_SYSCALL netbsd32____syscall
 #include "../../kern/sys_syscall.c"
 #undef SYS_SYSCALL

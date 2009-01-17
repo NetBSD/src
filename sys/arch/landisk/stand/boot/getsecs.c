@@ -1,4 +1,4 @@
-/*	$NetBSD: getsecs.c,v 1.2 2006/09/11 13:48:57 nonaka Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.2.56.1 2009/01/17 13:28:09 mjf Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -164,14 +164,14 @@ rtc_write(uint32_t addr, uint8_t data)
 	rtc_ce(0);
 }
 
-time_t
+satime_t
 getsecs(void)
 {
 	uint32_t sec, min, hour, day;
 #if 0
 	uint32_t mon, year;
 #endif
-	time_t secs;
+	satime_t secs;
 
 	sec = rtc_read(RS5C313_SEC1);
 	sec += rtc_read(RS5C313_SEC10) * 10;

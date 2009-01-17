@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15.12.2 2008/06/29 09:32:56 mjf Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.12.3 2009/01/17 13:28:01 mjf Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.12.2 2008/06/29 09:32:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.12.3 2009/01/17 13:28:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,7 @@ memattach(struct device *parent, struct device *self, void *aux)
 
 		/* XXX other values seem to blow it up */
 		if (sc->sc_vp->vi_status.hw_rev == 0) {
-			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, 
-			    sizeof(bits));
+			snprintb(bits, sizeof(bits), VIPER_BITS, VI_CTRL);
 			printf (" viper rev %x, ctrl %s",
 			    sc->sc_vp->vi_status.hw_rev,
 			    bits);
@@ -221,8 +220,7 @@ memattach(struct device *parent, struct device *self, void *aux)
 			sc->sc_vp->vi_control = VI_CTRL;
 			splx(s);
 #ifdef DEBUG
-			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, 
-			    sizeof(bits));
+			snprintb(bits, sizeof(bits), VIPER_BITS, VI_CTRL);
 			printf (" >> %s", bits);
 #endif
 		} else
@@ -247,8 +245,7 @@ memattach(struct device *parent, struct device *self, void *aux)
 	    HPPA_PA_SPEC_LETTER(hppa_cpu_info->hppa_cpu_info_pa_spec) == 'e') {
 		sc->sc_l2 = (struct l2_mioc *)ca->ca_hpa;
 #ifdef DEBUG
-		bitmask_snprintf(sc->sc_l2->sltcv, SLTCV_BITS, bits,
-				 sizeof(bits));
+		snprintb(bits, sizeof(bits), SLTCV_BITS, sc->sc_l2->sltcv);
 		printf(", sltcv %s", bits);
 #endif
 		/* sc->sc_l2->sltcv |= SLTCV_UP4COUT; */

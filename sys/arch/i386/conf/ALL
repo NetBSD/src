@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.160.6.4 2008/10/05 20:11:26 mjf Exp $
+# $NetBSD: ALL,v 1.160.6.5 2009/01/17 13:28:02 mjf Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.160.6.4 $"
+#ident 		"ALL-$Revision: 1.160.6.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -87,7 +87,6 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 options 	MODULAR		# new modules framework
 
 options 	USERCONF	# userconf(4) support
@@ -184,7 +183,6 @@ file-system 	ADOSFS		# AmigaDOS file system
 # File system options
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
@@ -518,6 +516,7 @@ pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -640,9 +639,13 @@ iic*	at nfsmb?
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
-adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-adt7463c* at iic? addr 0x2D		# Tyan S2881
-adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+# dbCool thermal monitor and fan controller
+dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+dbcool* at iic? addr 0x2D		# Tyan S2881
+dbcool* at iic? addr 0x2E		# Tyan S2882-D
+
+# LM7[89] and compatible hardware monitors
+lm0	at iic?	addr 0x2e
 
 pic16lc*	at iic? addr 0x10	# XBOX PIC16LC
 xbseeprom*	at iic? addr 0x54	# XBOX serial EEPROM
@@ -1265,6 +1268,7 @@ esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
+gcscaudio* at pci? dev ? function ?	# AMD Geode CS5536 Companion Audio
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio

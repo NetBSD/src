@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.75.6.3 2008/10/05 20:11:29 mjf Exp $
+$NetBSD: miidevs,v 1.75.6.4 2009/01/17 13:28:58 mjf Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,9 @@ $NetBSD: miidevs,v 1.75.6.3 2008/10/05 20:11:29 mjf Exp $
  * which is mangled accordingly to compensate.
  */
 
+oui AGERE			0x00053d	Agere
 oui ALTIMA			0x0010a9	Altima Communications
+oui ATHEROS			0x001374	Atheros
 oui AMD				0x00001a	Advanced Micro Devices
 oui BROADCOM			0x001018	Broadcom Corporation
 oui BROADCOM2			0x000af7	Broadcom Corporation
@@ -100,6 +102,15 @@ oui yyREALTEK			0x000004	Realtek
 /*
  * List of known models.  Grouped by oui.
  */
+
+/*
+ * Agere PHYs
+ */
+model AGERE ET1011		0x0004 Agere ET1011 10/100/1000baseT PHY
+
+/* Atheros PHYs */
+model ATHEROS F1		0x0001 F1 10/100/1000 PHY
+model ATHEROS F2		0x0002 F2 10/100 PHY
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */

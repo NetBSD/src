@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2007/10/17 19:57:27 garbled Exp $
+#	$NetBSD: Makefile,v 1.16.16.1 2009/01/17 13:28:31 mjf Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 
@@ -19,7 +19,8 @@ tags:
 	-rm ${TSPARC64}
 	-echo ${SSPARC64} ${COMM} | xargs ctags -wadtf ${TSPARC64}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASPARC64} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> tags
 	sort -o ${TSPARC64} ${TSPARC64}
 

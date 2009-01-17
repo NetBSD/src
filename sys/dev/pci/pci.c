@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.110.6.4 2008/09/28 10:40:27 mjf Exp $	*/
+/*	$NetBSD: pci.c,v 1.110.6.5 2009/01/17 13:29:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.110.6.4 2008/09/28 10:40:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.110.6.5 2009/01/17 13:29:01 mjf Exp $");
 
 #include "opt_pci.h"
 
@@ -255,12 +255,11 @@ pciprint(void *aux, const char *pnp)
 		if (qd == NULL) {
 			printf(" no quirks");
 		} else {
-			bitmask_snprintf(qd->quirks,
+			snprintb(devinfo, sizeof (devinfo),
 			    "\002\001multifn\002singlefn\003skipfunc0"
 			    "\004skipfunc1\005skipfunc2\006skipfunc3"
 			    "\007skipfunc4\010skipfunc5\011skipfunc6"
-			    "\012skipfunc7",
-			    devinfo, sizeof (devinfo));
+			    "\012skipfunc7", qd->quirks);
 			printf(" quirks %s", devinfo);
 		}
 		printf(")");
@@ -633,8 +632,7 @@ int
 pci_dma64_available(struct pci_attach_args *pa)
 {
 #ifdef _PCI_HAVE_DMA64
-	if (BUS_DMA_TAG_VALID(pa->pa_dmat64) &&
-		((uint64_t)physmem << PAGE_SHIFT) > 0xffffffffULL)
+	if (BUS_DMA_TAG_VALID(pa->pa_dmat64))
                         return 1;
 #endif
         return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.5 2007/12/06 17:00:31 ad Exp $	*/
+/*	$NetBSD: iociic.c,v 1.5.12.1 2009/01/17 13:27:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -67,6 +67,8 @@ struct iociic_softc {
 	uint32_t sc_ioc_ctl;
 };
 
+static struct iociic_softc *the_iociic;
+
 static int	iociic_acquire_bus(void *, int);
 static void	iociic_release_bus(void *, int);
 
@@ -98,7 +100,7 @@ iociic_bb_read_bits(void *cookie)
 {
 	struct iociic_softc *sc = cookie;
 
-	return (ioc_ctl_read(device_parent(&sc->sc_dev)));
+	return ioc_ctl_read(device_parent(&sc->sc_dev));
 }
 
 static const struct i2c_bitbang_ops iociic_bbops = {
@@ -114,19 +116,22 @@ static const struct i2c_bitbang_ops iociic_bbops = {
 };
 
 static int
-iociic_match(struct device *parent, struct cfdata *cf, void *aux)
+iociic_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 static void
-iociic_attach(struct device *parent, struct device *self, void *aux)
+iociic_attach(device_t parent, device_t self, void *aux)
 {
-	struct iociic_softc *sc = (void *) self;
+	struct iociic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
-	printf("\n");
+	if (the_iociic == NULL)
+		the_iociic = sc;
+
+	aprint_normal("\n");
 
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -140,7 +145,7 @@ iociic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_write_byte = iociic_write_byte;
 
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	(void) config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }
 
 CFATTACH_DECL(iociic, sizeof(struct iociic_softc),
@@ -149,21 +154,10 @@ CFATTACH_DECL(iociic, sizeof(struct iociic_softc),
 i2c_tag_t
 iociic_bootstrap_cookie(void)
 {
-	static struct iociic_softc sc;
 
-	/* XXX Yuck. */
-	strcpy(sc.sc_dev.dv_xname, "iociicboot");
-
-	sc.sc_i2c.ic_cookie = &sc;
-	sc.sc_i2c.ic_acquire_bus = iociic_acquire_bus;
-	sc.sc_i2c.ic_release_bus = iociic_release_bus;
-	sc.sc_i2c.ic_send_start = iociic_send_start;
-	sc.sc_i2c.ic_send_stop = iociic_send_stop;
-	sc.sc_i2c.ic_initiate_xfer = iociic_initiate_xfer;
-	sc.sc_i2c.ic_read_byte = iociic_read_byte;
-	sc.sc_i2c.ic_write_byte = iociic_write_byte;
-
-	return ((void *) &sc.sc_i2c);
+	if (the_iociic == NULL)
+		return NULL;
+	return &the_iociic->sc_i2c;
 }
 
 static int
@@ -176,7 +170,7 @@ iociic_acquire_bus(void *cookie, int flags)
 		return (0);
 
 	mutex_enter(&sc->sc_buslock);
-	return (0);
+	return 0;
 }
 
 static void
@@ -195,7 +189,7 @@ static int
 iociic_send_start(void *cookie, int flags)
 {
 	
-	return (i2c_bitbang_send_start(cookie, flags, &iociic_bbops));
+	return i2c_bitbang_send_start(cookie, flags, &iociic_bbops);
 }
 
 static int
@@ -209,19 +203,19 @@ static int
 iociic_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 {
 
-	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, &iociic_bbops));
+	return i2c_bitbang_initiate_xfer(cookie, addr, flags, &iociic_bbops);
 }
 
 static int
 iociic_read_byte(void *cookie, uint8_t *bytep, int flags)
 {
 
-	return (i2c_bitbang_read_byte(cookie, bytep, flags, &iociic_bbops));
+	return i2c_bitbang_read_byte(cookie, bytep, flags, &iociic_bbops);
 }
 
 static int
 iociic_write_byte(void *cookie, uint8_t byte, int flags)
 {
 
-	return (i2c_bitbang_write_byte(cookie, byte, flags, &iociic_bbops));
+	return i2c_bitbang_write_byte(cookie, byte, flags, &iociic_bbops);
 }

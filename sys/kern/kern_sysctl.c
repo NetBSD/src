@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.214.6.2 2008/06/02 13:24:10 mjf Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.214.6.3 2009/01/17 13:29:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.214.6.2 2008/06/02 13:24:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.214.6.3 2009/01/17 13:29:19 mjf Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -101,6 +101,8 @@ static int sysctl_cvt_out(struct lwp *, int, const struct sysctlnode *,
 
 static int sysctl_log_add(struct sysctllog **, const struct sysctlnode *);
 static int sysctl_log_realloc(struct sysctllog *);
+
+typedef void (*sysctl_setup_func)(struct sysctllog **);
 
 struct sysctllog {
 	const struct sysctlnode *log_root;
@@ -729,11 +731,11 @@ sysctl_create(SYSCTLFN_ARGS)
 
 	/*
 	 * nothing can add a node if:
-	 * we've finished initial set up and
-	 * the tree itself is not writeable or
-	 * the entire sysctl system is not writeable
+	 * we've finished initial set up of this tree and
+	 * (the tree itself is not writeable or
+	 * the entire sysctl system is not writeable)
 	 */
-	if ((sysctl_root.sysctl_flags & CTLFLAG_PERMANENT) &&
+	if ((sysctl_rootof(rnode)->sysctl_flags & CTLFLAG_PERMANENT) &&
 	    (!(sysctl_rootof(rnode)->sysctl_flags & CTLFLAG_READWRITE) ||
 	     !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE)))
 		return (EPERM);
@@ -1994,7 +1996,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	 * initialize lock state -- we need locks if the main tree has
 	 * been marked as complete, but since we could be called from
 	 * either there, or from a device driver (say, at device
-	 * insertion), or from an lkm (at lkm load time, say), we
+	 * insertion), or from a module (at module load time, say), we
 	 * don't really want to "wait"...
 	 */
 	sysctl_lock(true);

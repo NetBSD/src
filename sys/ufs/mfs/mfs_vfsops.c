@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.90.4.4 2008/06/29 09:33:21 mjf Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.90.4.5 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.90.4.4 2008/06/29 09:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.90.4.5 2009/01/17 13:29:42 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.90.4.4 2008/06/29 09:33:21 mjf Exp 
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
 
-MODULE(MODULE_CLASS_VFS, mfs, NULL);
+MODULE(MODULE_CLASS_VFS, mfs, "ffs");
 
 void *	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
 u_long	mfs_rootsize;	/* size of mini-root in bytes */
@@ -253,7 +253,7 @@ mfs_initminiroot(void *base)
 	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
 	    fs->fs_bsize < sizeof(struct fs))
 		return (0);
-	mountroot = mfs_mountroot;
+	rootfstype = MOUNT_MFS;
 	mfs_rootbase = base;
 	mfs_rootsize = fs->fs_fsize * fs->fs_size;
 	rootdev = makedev(255, mfs_minor);
@@ -408,7 +408,7 @@ mfs_start(struct mount *mp, int flags)
 	base = mfsp->mfs_baseoff;
 	mutex_enter(&mfs_lock);
 	while (mfsp->mfs_shutdown != 1) {
-		while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
+		while ((bp = bufq_get(mfsp->mfs_buflist)) != NULL) {
 			mutex_exit(&mfs_lock);
 			mfs_doio(bp, base);
 			mutex_enter(&mfs_lock);
@@ -437,7 +437,7 @@ mfs_start(struct mount *mp, int flags)
 
 		sleepreturn = cv_wait_sig(&mfsp->mfs_cv, &mfs_lock);
 	}
-	KASSERT(BUFQ_PEEK(mfsp->mfs_buflist) == NULL);
+	KASSERT(bufq_peek(mfsp->mfs_buflist) == NULL);
 	refcnt = --mfsp->mfs_refcnt;
 	mutex_exit(&mfs_lock);
 	if (refcnt == 0) {

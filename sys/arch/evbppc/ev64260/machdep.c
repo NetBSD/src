@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2007/10/17 19:54:17 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20.16.1 2009/01/17 13:28:00 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2007/10/17 19:54:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.16.1 2009/01/17 13:28:00 mjf Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"
@@ -231,10 +231,10 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern void *startsym, *endsym;
-		ksyms_init((int)((u_int)endsym - (u_int)startsym),
+		ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym),
 		    startsym, endsym);
 	}
 #endif
@@ -380,6 +380,7 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("halted\n\n");
 		cnhalt();
 		while(1);
@@ -387,6 +388,8 @@ cpu_reboot(int howto, char *what)
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 	printf("rebooting\n\n");
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)

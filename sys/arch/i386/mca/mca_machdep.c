@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.34.14.2 2008/09/28 10:40:00 mjf Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.34.14.3 2009/01/17 13:28:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.34.14.2 2008/09/28 10:40:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.34.14.3 2009/01/17 13:28:04 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,7 +307,7 @@ mca_busprobe(void)
 	paddr = (regs.ES << 4) + regs.BX;
 	scp = (struct bios_config *)ISA_HOLE_VADDR(paddr);
 
-	bitmask_snprintf((scp->feature2 << 8) | scp->feature1,
+	snprintb(buf, sizeof(buf),
 		"\20"
 		"\01MCA+ISA"
 		"\02MCA"
@@ -324,8 +324,7 @@ mca_busprobe(void)
 		"\015MMF"
 		"\016GPDF"
 		"\017KBDF"
-		"\020DMA32\n",
-		buf, sizeof(buf));
+		"\020DMA32\n", (scp->feature2 << 8) | scp->feature1);
 
 	aprint_verbose("BIOS CFG: Model-SubM-Rev: %02x-%02x-%02x, 0x%s\n",
 		scp->model, scp->submodel, scp->bios_rev, buf);

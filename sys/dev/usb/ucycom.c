@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.20.8.1 2008/06/02 13:23:54 mjf Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.20.8.2 2009/01/17 13:29:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.20.8.1 2008/06/02 13:23:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.20.8.2 2009/01/17 13:29:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	int s, err;
 
-	DPRINTF(("ucycomopen: unit=%d\n", UCYCOMUNIT(dev)));
+	DPRINTF(("ucycomopen: unit=%"PRId64"\n", UCYCOMUNIT(dev)));
 	DPRINTF(("ucycomopen: sc=%p\n", sc));
  
 	if (sc == NULL)
@@ -419,7 +419,7 @@ ucycomclose(dev_t dev, int flag, int mode, struct lwp *l)
 	    device_lookup_private(&ucycom_cd, UCYCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
-	DPRINTF(("ucycomclose: unit=%d\n", UCYCOMUNIT(dev)));
+	DPRINTF(("ucycomclose: unit=%"PRId64"\n", UCYCOMUNIT(dev)));
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 

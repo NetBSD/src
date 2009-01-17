@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.23.6.3 2008/06/29 09:33:04 mjf Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.23.6.4 2009/01/17 13:28:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.23.6.3 2008/06/29 09:33:04 mjf Exp $");
-
-#include "opt_nfsserver.h"
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.23.6.4 2009/01/17 13:28:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,21 +259,21 @@ compat_30_netbsd32_getfh(struct lwp *l, const struct compat_30_netbsd32_getfh_ar
 
 
 int
-compat_30_netbsd32_sys___fhstat30(struct lwp *l, const struct compat_30_netbsd32_sys___fhstat30_args *uap, register_t *retval)
+compat_30_netbsd32___fhstat30(struct lwp *l, const struct compat_30_netbsd32___fhstat30_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(netbsd32_statp_t) sb;
 	} */
 	struct stat sb;
-	struct netbsd32_stat sb32;
+	struct netbsd32_stat50 sb32;
 	int error;
 
 	error = do_fhstat(l, SCARG_P32(uap, fhp), FHANDLE_SIZE_COMPAT, &sb);
 	if (error)
 		return error;
 
-	netbsd32_from___stat30(&sb, &sb32);
+	netbsd32_from___stat50(&sb, &sb32);
 	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	return error;
 }

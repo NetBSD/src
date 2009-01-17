@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.33.16.2 2008/06/29 09:33:01 mjf Exp $	*/
+/*	$NetBSD: intio.c,v 1.33.16.3 2009/01/17 13:28:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.33.16.2 2008/06/29 09:33:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.33.16.3 2009/01/17 13:28:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,11 +134,6 @@ static struct intio_interrupt_vector {
 	struct evcnt		*iiv_evcnt;
 } iiv[256] = {{0,},};
 
-/* used in console initialization */
-extern int x68k_realconfig;
-int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
-static cfdata_t cfdata_intiobus = NULL;
-
 #ifdef DEBUG
 int intio_debug = 0;
 #endif
@@ -151,25 +146,9 @@ intio_match(device_t parent, cfdata_t cf, void *aux)
 		return (0);
 	if (intio_attached)
 		return (0);
-	if (x68k_realconfig == 0)
-		cfdata_intiobus = cf; /* XXX */
 
 	return (1);
 }
-
-
-/* used in console initialization: configure only MFP */
-static struct intio_attach_args initial_ia = {
-	&intio_bus,
-	0/*XXX*/,
-
-	"mfp",			/* ia_name */
-	MFP_ADDR,		/* ia_addr */
-	0x30,			/* ia_size */
-	MFP_INTR,		/* ia_intr */
-	-1			/* ia_dma */
-	-1,			/* ia_dmaintr */
-};
 
 static void
 intio_attach(device_t parent, device_t self, void *aux)
@@ -177,19 +156,13 @@ intio_attach(device_t parent, device_t self, void *aux)
 	struct intio_softc *sc = device_private(self);
 	struct intio_attach_args ia;
 
-	if (self == NULL) {
-		/* console only init */
-		x68k_config_found(cfdata_intiobus, NULL, &initial_ia, NULL);
-		return;
-	}
-
 	intio_attached = 1;
 
 	aprint_normal(" mapped at %8p\n", intiobase);
 
 	sc->sc_map = extent_create("intiomap",
-				  PHYS_INTIODEV,
-				  PHYS_INTIODEV + 0x400000,
+				  INTIOBASE,
+				  INTIOBASE + 0x400000,
 				  M_DEVBUF, NULL, 0, EX_NOWAIT);
 	intio_alloc_system_ports(sc);
 
@@ -303,8 +276,8 @@ intio_bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	/*
 	 * Intio bus is mapped permanently.
 	 */
-	*bshp = (bus_space_handle_t)
-	  ((u_int) bpa - PHYS_INTIODEV + intiobase);
+	*bshp = (bus_space_handle_t)IIOV(bpa);
+
 	/*
 	 * Some devices are mapped on odd or even addresses only.
 	 */

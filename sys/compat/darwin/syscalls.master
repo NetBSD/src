@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35.6.1 2008/06/02 13:22:57 mjf Exp $
+	$NetBSD: syscalls.master,v 1.35.6.2 2009/01/17 13:28:42 mjf Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -51,290 +51,295 @@
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
+#include <compat/sys/time.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
 %%
 
-0	NOARGS INDIR	{ int sys_syscall(int code, \
+0	NOARGS INDIR	{ int|sys||syscall(int code, \
 			    ... register_t args[DARWIN_SYS_MAXSYSARGS]); }
-1	NOARGS		{ void sys_exit(int rval); }
-2	STD		{ int darwin_sys_fork(void); }
-3	NOARGS		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
-4	NOARGS		{ ssize_t sys_write(int fd, const void *buf, \
+1	NOARGS		{ void|sys||exit(int rval); }
+2	STD		{ int|darwin_sys||fork(void); }
+3	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+4	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
 			    size_t nbyte); }
-5	NOARGS		{ int sys_open(const char *path, \
+5	NOARGS		{ int|sys||open(const char *path, \
 			    int flags, ... mode_t mode); }
-6	NOARGS		{ int sys_close(int fd); }
-7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
-			    struct rusage *rusage); }
-8	NOARGS		{ int compat_43_sys_creat(const char *path, \
+6	NOARGS		{ int|sys||close(int fd); }
+7	NOARGS		{ int|compat_50_sys||wait4(int pid, int *status, \
+			    int options, struct rusage50 *rusage); }
+8	NOARGS		{ int|compat_43_sys||creat(const char *path, \
 			    mode_t mode); } ocreat
-9	NOARGS		{ int sys_link(const char *path, \
+9	NOARGS		{ int|sys||link(const char *path, \
 			    const char *link); }
-10	NOARGS		{ int sys_unlink(const char *path); }
+10	NOARGS		{ int|sys||unlink(const char *path); }
 11	UNIMPL		execv
-12	NOARGS		{ int sys_chdir(const char *path); }
-13	NOARGS		{ int sys_fchdir(int fd); }
-14	STD		{ int darwin_sys_mknod(const char *path, \
-			    mode_t mode, dev_t dev); }
-15	NOARGS		{ int sys_chmod(const char *path, mode_t mode); }
-16	NOARGS		{ int sys_chown(const char *path, uid_t uid, \
+12	NOARGS		{ int|sys||chdir(const char *path); }
+13	NOARGS		{ int|sys||fchdir(int fd); }
+14	STD		{ int|darwin_sys||mknod(const char *path, \
+			    mode_t mode, darwin_dev_t dev); }
+15	NOARGS		{ int|sys||chmod(const char *path, mode_t mode); }
+16	NOARGS		{ int|sys||chown(const char *path, uid_t uid, \
 			    gid_t gid); }
-17	NOARGS		{ int sys_obreak(char *nsize); } break
-18	STD		{ int darwin_sys_getfsstat(struct darwin_statfs *buf, \
+17	NOARGS		{ int|sys||obreak(char *nsize); } break
+18	STD		{ int|darwin_sys||getfsstat(struct darwin_statfs *buf, \
 			    long bufsize, int flags); }
-19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
+19	NOARGS		{ long|compat_43_sys||lseek(int fd, long offset, \
 			    int whence); } olseek
-20	STD		{ pid_t darwin_sys_getpid(void); }
-21	NOARGS		{ int compat_40_sys_mount(const char *type, \
+20	STD		{ pid_t|darwin_sys||getpid(void); }
+21	NOARGS		{ int|compat_40_sys||mount(const char *type, \
 			    const char *path, int flags, void *data); }
-22	NOARGS		{ int sys_unmount(const char *path, int flags); }
-23	NOARGS		{ int sys_setuid(uid_t uid); }
+22	NOARGS		{ int|sys||unmount(const char *path, int flags); }
+23	NOARGS		{ int|sys||setuid(uid_t uid); }
 #ifdef COMPAT_43
-24	NOARGS		{ uid_t sys_getuid_with_euid(void); } getuid
+24	NOARGS		{ uid_t|sys||getuid_with_euid(void); } getuid
 #else
-24	NOARGS		{ uid_t sys_getuid(void); }
+24	NOARGS		{ uid_t|sys||getuid(void); }
 #endif
-25	NOARGS		{ uid_t sys_geteuid(void); }
-26	STD		{ int darwin_sys_ptrace(int req, pid_t pid, \
+25	NOARGS		{ uid_t|sys||geteuid(void); }
+26	STD		{ int|darwin_sys||ptrace(int req, pid_t pid, \
 			    void *addr, int data); }
-27	NOARGS		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
+27	NOARGS		{ ssize_t|sys||recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
-28	NOARGS		{ ssize_t sys_sendmsg(int s, \
+28	NOARGS		{ ssize_t|sys||sendmsg(int s, \
 			    const struct msghdr *msg, int flags); }
-29	STD		{ ssize_t darwin_sys_recvfrom(int s, void *buf, \
+29	STD		{ ssize_t|darwin_sys||recvfrom(int s, void *buf, \
 			    size_t len, int flags, struct sockaddr *from, \
 			    unsigned int *fromlenaddr); }
-30	STD		{ int darwin_sys_accept(int s, struct sockaddr *name, \
+30	STD		{ int|darwin_sys||accept(int s, struct sockaddr *name, \
 			    unsigned int *anamelen); }
-31	STD		{ int darwin_sys_getpeername(int fdes, \
+31	STD		{ int|darwin_sys||getpeername(int fdes, \
 			    struct sockaddr *asa, unsigned int *alen); }
-32	STD		{ int darwin_sys_getsockname(int fdes, \
+32	STD		{ int|darwin_sys||getsockname(int fdes, \
 			    struct sockaddr *asa, unsigned int *alen); }
-33	NOARGS		{ int sys_access(const char *path, \
+33	NOARGS		{ int|sys||access(const char *path, \
 			    int flags); }
-34	NOARGS		{ int sys_chflags(const char *path, \
+34	NOARGS		{ int|sys||chflags(const char *path, \
 			    u_long flags); }
-35	NOARGS		{ int sys_fchflags(int fd, u_long flags); }
-36	NOARGS		{ void sys_sync(void); }
-37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	NOARGS		{ int compat_43_sys_stat(const char *path, \
+35	NOARGS		{ int|sys||fchflags(int fd, u_long flags); }
+36	NOARGS		{ void|sys||sync(void); }
+37	NOARGS		{ int|sys||kill(int pid, int signum); }
+38	NOARGS		{ int|compat_43_sys||stat(const char *path, \
 			    struct stat43 *ub); } stat43
-39	NOARGS		{ pid_t sys_getppid(void); }
-40	NOARGS		{ int compat_43_sys_lstat(const char *path, \
+39	NOARGS		{ pid_t|sys||getppid(void); }
+40	NOARGS		{ int|compat_43_sys||lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
-41	NOARGS		{ int sys_dup(int fd); }
-42	NOARGS		{ int sys_pipe(void); }
-43	NOARGS		{ gid_t sys_getegid(void); }
-44	NOARGS		{ int sys_profil(void *samples, size_t size, \
+41	NOARGS		{ int|sys||dup(int fd); }
+42	NOARGS		{ int|sys||pipe(void); }
+43	NOARGS		{ gid_t|sys||getegid(void); }
+44	NOARGS		{ int|sys||profil(void *samples, size_t size, \
 			    u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
-45	NOARGS		{ int sys_ktrace(const char *fname, int ops, \
+45	NOARGS		{ int|sys||ktrace(const char *fname, int ops, \
 			    int facs, int pid); }
 #else
 45	EXCL		ktrace
 #endif
-46	STD		{ int darwin_sys_sigaction(int signum, \
+46	STD		{ int|darwin_sys||sigaction(int signum, \
 			    struct darwin___sigaction *nsa, \
 			    struct sigaction13 *osa); }
 #ifdef COMPAT_43
-47	NOARGS		{ gid_t sys_getgid_with_egid(void); } getgid
+47	NOARGS		{ gid_t|sys||getgid_with_egid(void); } getgid
 #else
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS		{ gid_t|sys||getgid(void); }
 #endif
-48	STD		{ int darwin_sys_sigprocmask(int how, \
+48	STD		{ int|darwin_sys||sigprocmask(int how, \
 			    sigset13_t *set, sigset13_t *oset); }
-49	NOARGS		{ int sys___getlogin(char *namebuf, size_t namelen); }
-50	NOARGS		{ int sys___setlogin(const char *namebuf); }
-51	NOARGS		{ int sys_acct(const char *path); }
-52	NOARGS    	{ int compat_13_sys_sigpending(void); } sigpending13
-53	NOARGS    	{ int compat_13_sys_sigaltstack( \
+49	NOARGS		{ int|sys||__getlogin(char *namebuf, size_t namelen); }
+50	NOARGS		{ int|sys||__setlogin(const char *namebuf); }
+51	NOARGS		{ int|sys||acct(const char *path); }
+52	NOARGS    	{ int|compat_13_sys||sigpending(void); } sigpending13
+53	NOARGS    	{ int|compat_13_sys||sigaltstack( \
 			    const struct sigaltstack13 *nss, \
 			    struct sigaltstack13 *oss); } sigaltstack13
-54	STD		{ int darwin_sys_ioctl(int fd, \
+54	STD		{ int|darwin_sys||ioctl(int fd, \
 			    u_long com, ... void *data); }
-55	NOARGS		{ int sys_reboot(int opt); } oreboot
-56	NOARGS		{ int sys_revoke(const char *path); }
-57	NOARGS		{ int sys_symlink(const char *path, \
+55	NOARGS		{ int|sys||reboot(int opt); } oreboot
+56	NOARGS		{ int|sys||revoke(const char *path); }
+57	NOARGS		{ int|sys||symlink(const char *path, \
 			    const char *link); }
-58	NOARGS		{ int sys_readlink(const char *path, \
+58	NOARGS		{ int|sys||readlink(const char *path, \
 			    char *buf, size_t count); }
-59	NOARGS		{ int sys_execve(const char *path, \
+59	NOARGS		{ int|sys||execve(const char *path, \
 			    char * const *argp, char * const *envp); }
-60	NOARGS		{ mode_t sys_umask(mode_t newmask); }
-61	NOARGS		{ int sys_chroot(const char *path); }
-62	NOARGS		{ int compat_43_sys_fstat(int fd, \
+60	NOARGS		{ mode_t|sys||umask(mode_t newmask); }
+61	NOARGS		{ int|sys||chroot(const char *path); }
+62	NOARGS		{ int|compat_43_sys||fstat(int fd, \
 			    struct stat43 *sb); } fstat43
 63	UNIMPL
-64	NOARGS    	{ int compat_43_sys_getpagesize(void); } ogetpagesize
-65	NOARGS    	{ int compat_12_sys_msync(void *addr, size_t len); }
-66	STD		{ int darwin_sys_vfork(void); }
+64	NOARGS    	{ int|compat_43_sys||getpagesize(void); } ogetpagesize
+65	NOARGS    	{ int|compat_12_sys||msync(void *addr, size_t len); }
+66	STD		{ int|darwin_sys||vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	NOARGS		{ int sys_sbrk(intptr_t incr); }
-70	NOARGS		{ int sys_sstk(int incr); }
-71	NOARGS    	{ int sys_mmap(void *addr, size_t len, int prot, \
+69	NOARGS		{ int|sys||sbrk(intptr_t incr); }
+70	NOARGS		{ int|sys||sstk(int incr); }
+71	NOARGS    	{ int|sys||mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
-72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
-73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
-74	NOARGS		{ int sys_mprotect(void *addr, size_t len, \
+72	NOARGS		{ int|sys||ovadvise(int anom); } vadvise
+73	NOARGS		{ int|sys||munmap(void *addr, size_t len); }
+74	NOARGS		{ int|sys||mprotect(void *addr, size_t len, \
 			    int prot); }
-75	NOARGS		{ int sys_madvise(void *addr, size_t len, \
+75	NOARGS		{ int|sys||madvise(void *addr, size_t len, \
 			    int behav); }
 76	UNIMPL
 77	UNIMPL
-78	NOARGS		{ int sys_mincore(void *addr, size_t len, \
+78	NOARGS		{ int|sys||mincore(void *addr, size_t len, \
 			    char *vec); }
-79	NOARGS		{ int sys_getgroups(int gidsetsize, \
+79	NOARGS		{ int|sys||getgroups(int gidsetsize, \
 			    gid_t *gidset); }
-80	NOARGS		{ int sys_setgroups(int gidsetsize, \
+80	NOARGS		{ int|sys||setgroups(int gidsetsize, \
 			    const gid_t *gidset); }
-81	NOARGS		{ int sys_getpgrp(void); }
-82	NOARGS		{ int sys_setpgid(int pid, int pgid); }
-83	NOARGS		{ int sys_setitimer(int which, \
-			    const struct itimerval *itv, \
-			    struct itimerval *oitv); }
-84	NOARGS    	{ int compat_43_sys_wait(void); } owait
-85	NOARGS    	{ int compat_12_sys_swapon(const char *name); }
-86	NOARGS		{ int sys_getitimer(int which, \
-			    struct itimerval *itv); }
-87	NOARGS    	{ int compat_43_sys_gethostname(char *hostname, \
+81	NOARGS		{ int|sys||getpgrp(void); }
+82	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
+83	NOARGS		{ int|compat_50_sys||setitimer(int which, \
+			    const struct itimerval50 *itv, \
+			    struct itimerval50 *oitv); }
+84	NOARGS    	{ int|compat_43_sys||wait(void); } owait
+85	NOARGS    	{ int|compat_12_sys||swapon(const char *name); }
+86	NOARGS		{ int|compat_50_sys||getitimer(int which, \
+			    struct itimerval50 *itv); }
+87	NOARGS    	{ int|compat_43_sys||gethostname(char *hostname, \
 			    u_int len); } ogethostname
-88	NOARGS    	{ int compat_43_sys_sethostname(char *hostname, \
+88	NOARGS    	{ int|compat_43_sys||sethostname(char *hostname, \
 			    u_int len); } osethostname
-89	NOARGS    	{ int compat_43_sys_getdtablesize(void); } \
+89	NOARGS    	{ int|compat_43_sys||getdtablesize(void); } \
 			    ogetdtablesize
-90	NOARGS		{ int sys_dup2(int from, int to); }
+90	NOARGS		{ int|sys||dup2(int from, int to); }
 91	UNIMPL
-92	NOARGS		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
-93	NOARGS		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
+92	NOARGS		{ int|sys||fcntl(int fd, int cmd, ... void *arg); }
+93	NOARGS		{ int|compat_50_sys||select(int nd, fd_set *in, \
+			    fd_set *ou, fd_set *ex, struct timeval50 *tv); }
 94	UNIMPL
-95	NOARGS		{ int sys_fsync(int fd); }
-96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
-97	STD		{ int darwin_sys_socket(int domain, \
+95	NOARGS		{ int|sys||fsync(int fd); }
+96	NOARGS		{ int|sys||setpriority(int which, int who, int prio); }
+97	STD		{ int|darwin_sys||socket(int domain, \
 			    int type, int protocol); }
-98	STD		{ int darwin_sys_connect(int s, \
+98	STD		{ int|darwin_sys||connect(int s, \
 			    const struct sockaddr *name, \
 			    unsigned int namelen); }
-99	NOARGS    	{ int compat_43_sys_accept(int s, void *name, \
+99	NOARGS    	{ int|compat_43_sys||accept(int s, void *name, \
 			    int *anamelen); } oaccept
-100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS    	{ int compat_43_sys_send(int s, void *buf, int len, \
+100	NOARGS		{ int|sys||getpriority(int which, int who); }
+101	NOARGS    	{ int|compat_43_sys||send(int s, void *buf, int len, \
 			    int flags); } osend
-102	NOARGS    	{ int compat_43_sys_recv(int s, void *buf, int len, \
+102	NOARGS    	{ int|compat_43_sys||recv(int s, void *buf, int len, \
 			    int flags); } orecv
-103	STD	    	{ int darwin_sys_sigreturn_x2(struct \
+103	STD	    	{ int|darwin_sys||sigreturn_x2(struct \
 			    darwin_ucontext *uctx); }
-104	STD		{ int darwin_sys_bind(int s, \
+104	STD		{ int|darwin_sys||bind(int s, \
 			     const struct sockaddr *name, \
 			    unsigned int namelen); }
-105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
+105	NOARGS		{ int|sys||setsockopt(int s, int level, int name, \
 			    const void *val, unsigned int valsize); }
-106	NOARGS		{ int sys_listen(int s, int backlog); }
+106	NOARGS		{ int|sys||listen(int s, int backlog); }
 107	UNIMPL
-108	NOARGS    	{ int compat_43_sys_sigvec(int signum, \
+108	NOARGS    	{ int|compat_43_sys||sigvec(int signum, \
 			    struct sigvec *nsv, struct sigvec *osv); } osigvec
-109	NOARGS    	{ int compat_43_sys_sigblock(int mask); } osigblock
-110	NOARGS    	{ int compat_43_sys_sigsetmask(int mask); } osigsetmask
-111	NOARGS    	{ int compat_13_sys_sigsuspend(int mask); } \
+109	NOARGS    	{ int|compat_43_sys||sigblock(int mask); } osigblock
+110	NOARGS    	{ int|compat_43_sys||sigsetmask(int mask); } osigsetmask
+111	NOARGS    	{ int|compat_13_sys||sigsuspend(int mask); } \
 			    sigsuspend13
-112	NOARGS    	{ int compat_43_sys_sigstack(struct sigstack *nss, \
+112	NOARGS    	{ int|compat_43_sys||sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); } osigstack
-113	NOARGS    	{ int compat_43_sys_recvmsg(int s, \
+113	NOARGS    	{ int|compat_43_sys||recvmsg(int s, \
 			    struct omsghdr *msg, int flags); } orecvmsg
-114	NOARGS    	{ int compat_43_sys_sendmsg(int s, void *msg, \
+114	NOARGS    	{ int|compat_43_sys||sendmsg(int s, void *msg, \
 			    int flags); } osendmsg
 115	UNIMPL
-116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
+116	NOARGS		{ int|compat_50_sys||gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
-118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
+117	NOARGS		{ int|compat_50_sys||getrusage(int who, \
+			    struct rusage50 *rusage); }
+118	NOARGS		{ int|sys||getsockopt(int s, int level, int name, \
 			    void *val, unsigned int *avalsize); }
 119	UNIMPL
-120	NOARGS		{ ssize_t sys_readv(int fd, \
+120	NOARGS		{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-121	NOARGS		{ ssize_t sys_writev(int fd, \
+121	NOARGS		{ ssize_t|sys||writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-122	NOARGS		{ int sys_settimeofday(const struct timeval *tv, \
+122	NOARGS		{ int|compat_50_sys||settimeofday( \
+			    const struct timeval50 *tv, \
 			    const struct timezone *tzp); }
-123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
-124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
-125	NOARGS    	{ int compat_43_sys_recvfrom(int s, void *buf, \
+123	NOARGS		{ int|sys||fchown(int fd, uid_t uid, gid_t gid); }
+124	NOARGS		{ int|sys||fchmod(int fd, mode_t mode); }
+125	NOARGS    	{ int|compat_43_sys||recvfrom(int s, void *buf, \
 			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); } orecvfrom
-126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
-127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
-128	NOARGS		{ int sys_rename(const char *from, \
+126	NOARGS		{ int|sys||setreuid(uid_t ruid, uid_t euid); }
+127	NOARGS		{ int|sys||setregid(gid_t rgid, gid_t egid); }
+128	NOARGS		{ int|sys||rename(const char *from, \
 			    const char *to); }
-129	NOARGS		{ int compat_43_sys_truncate(const \
+129	NOARGS		{ int|compat_43_sys||truncate(const \
 			    char *path, long length); } \
 			    otruncate
-130	NOARGS    	{ int compat_43_sys_ftruncate(int fd, \
+130	NOARGS    	{ int|compat_43_sys||ftruncate(int fd, \
 			    long length); } oftruncate
-131	NOARGS		{ int sys_flock(int fd, int how); }
-132	NOARGS		{ int sys_mkfifo(const char *path, \
+131	NOARGS		{ int|sys||flock(int fd, int how); }
+132	NOARGS		{ int|sys||mkfifo(const char *path, \
 			    mode_t mode); }
-133	STD		{ ssize_t darwin_sys_sendto(int s, const void *buf, \
+133	STD		{ ssize_t|darwin_sys||sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    unsigned int tolen); }
-134	NOARGS		{ int sys_shutdown(int s, int how); }
-135	NOARGS		{ int sys_socketpair(int domain, int type, \
+134	NOARGS		{ int|sys||shutdown(int s, int how); }
+135	NOARGS		{ int|sys||socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	NOARGS		{ int sys_mkdir(const char *path, mode_t mode); }
-137	NOARGS		{ int sys_rmdir(const char *path); }
-138	NOARGS		{ int sys_utimes(const char *path, \
-			    const struct timeval *tptr); }
+136	NOARGS		{ int|sys||mkdir(const char *path, mode_t mode); }
+137	NOARGS		{ int|sys||rmdir(const char *path); }
+138	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
 139	UNIMPL		futimes
-140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
-			    struct timeval *olddelta); }
-141	NOARGS    	{ int compat_43_sys_getpeername(int fdes, \
+140	NOARGS		{ int|compat_50_sys||adjtime( \
+			    const struct timeval50 *delta, \
+			    struct timeval50 *olddelta); }
+141	NOARGS    	{ int|compat_43_sys||getpeername(int fdes, \
 			    void *asa, int *alen); } ogetpeername
-142	NOARGS    	{ int32_t compat_43_sys_gethostid(void); } ogethostid
+142	NOARGS    	{ int32_t|compat_43_sys||gethostid(void); } ogethostid
 143	UNIMPL
-144	NOARGS    	{ int compat_43_sys_getrlimit(int which, \
+144	NOARGS    	{ int|compat_43_sys||getrlimit(int which, \
 			    struct orlimit *rlp); } ogetrlimit
-145	NOARGS    	{ int compat_43_sys_setrlimit(int which, \
+145	NOARGS    	{ int|compat_43_sys||setrlimit(int which, \
 			    const struct orlimit *rlp); } osetrlimit
-146	NOARGS    	{ int compat_43_sys_killpg(int pgid, int signum); } \
+146	NOARGS    	{ int|compat_43_sys||killpg(int pgid, int signum); } \
 			    okillpg
-147	NOARGS		{ int sys_setsid(void); }
+147	NOARGS		{ int|sys||setsid(void); }
 148	UNIMPL
 149	UNIMPL
-150	NOARGS    	{ int compat_43_sys_getsockname(int fdec, \
+150	NOARGS    	{ int|compat_43_sys||getsockname(int fdec, \
 			    void *asa, int *alen); } ogetsockname
 151	UNIMPL		getpgid
 152	UNIMPL		setprivexec
 153	UNIMPL		pread
 154	UNIMPL		pwrite
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-155	NOARGS		{ int sys_nfssvc(int flag, void *argp); }
+155	NOARGS		{ int|sys||nfssvc(int flag, void *argp); }
 #else
 155	EXCL		nfssvc
 #endif
-156	NOARGS    	{ int compat_43_sys_getdirentries(int fd, char *buf, \
+156	NOARGS    	{ int|compat_43_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	STD		{ int darwin_sys_statfs(const char *path, \
+157	STD		{ int|darwin_sys||statfs(const char *path, \
 			    struct darwin_statfs *buf); }
-158	STD		{ int darwin_sys_fstatfs(int fd, \
+158	STD		{ int|darwin_sys||fstatfs(int fd, \
 			    struct darwin_statfs *buf); }
 159	UNIMPL		unmount
 160	UNIMPL
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-161	NOARGS		{ int compat_30_sys_getfh(const char *fname, \
+161	NOARGS		{ int|compat_30_sys||getfh(const char *fname, \
 			    fhandle_t *fhp); }
 #else
 161	EXCL		getfh
 #endif
-162	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+162	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); } ogetdomainname
-163	NOARGS    	{ int compat_09_sys_setdomainname(char *domainname, \
+163	NOARGS    	{ int|compat_09_sys||setdomainname(char *domainname, \
 			    int len); } osetdomainname
 164	UNIMPL
 165	UNIMPL		quotactl
@@ -352,46 +357,46 @@
 177	UNIMPL
 178	UNIMPL
 179	UNIMPL
-180	STD		{ int darwin_sys_kdebug_trace(int debugid, int arg1, \
+180	STD		{ int|darwin_sys||kdebug_trace(int debugid, int arg1, \
 			    int arg2, int arg3, int arg4, int arg5); }
-181	NOARGS		{ int sys_setgid(gid_t gid); }
-182	NOARGS		{ int sys_setegid(gid_t egid); }
-183	NOARGS		{ int sys_seteuid(uid_t euid); }
-184	STD	    	{ int darwin_sys_sigreturn(struct \
+181	NOARGS		{ int|sys||setgid(gid_t gid); }
+182	NOARGS		{ int|sys||setegid(gid_t egid); }
+183	NOARGS		{ int|sys||seteuid(uid_t euid); }
+184	STD	    	{ int|darwin_sys||sigreturn(struct \
 			    darwin_ucontext *uctx, int ucvers); }
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
-188	STD		{ int darwin_sys_stat(const char *path, \
+188	STD		{ int|darwin_sys||stat(const char *path, \
 			    struct stat12 *ub); } stat12
-189	STD		{ int darwin_sys_fstat(int fd, \
+189	STD		{ int|darwin_sys||fstat(int fd, \
 			    struct stat12 *sb); }
-190	STD		{ int darwin_sys_lstat(const char *path, \
+190	STD		{ int|darwin_sys||lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
-191	NOARGS		{ long sys_pathconf(const char *path, \
+191	NOARGS		{ long|sys||pathconf(const char *path, \
 			    int name); }
-192	NOARGS		{ long sys_fpathconf(int fd, int name); }
+192	NOARGS		{ long|sys||fpathconf(int fd, int name); }
 193	UNIMPL		getfsstat
-194	NOARGS		{ int sys_getrlimit(int which, \
+194	NOARGS		{ int|sys||getrlimit(int which, \
 			    struct rlimit *rlp); }
-195	NOARGS		{ int sys_setrlimit(int which, \
+195	NOARGS		{ int|sys||setrlimit(int which, \
 			    const struct rlimit *rlp); }
-196	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
+196	NOARGS		{ int|compat_12_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
-197	NOARGS		{ void *sys_mmap(void *addr, size_t len, int prot, \
+197	NOARGS		{ void *|sys||mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
 198	UNIMPL
-199	STD	    	{ off_t darwin_sys_lseek(int fd, long off1, \
+199	STD	    	{ off_t|darwin_sys||lseek(int fd, long off1, \
 			    long off2, int whence); }
-200	NOARGS		{ int sys_truncate(const char *path, \
+200	NOARGS		{ int|sys||truncate(const char *path, \
 			    int pad, off_t length); }
-201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
-202	STD		{ int darwin_sys___sysctl(int *name, u_int namelen, \
+201	NOARGS		{ int|sys||ftruncate(int fd, int pad, off_t length); }
+202	STD		{ int|darwin_sys||__sysctl(int *name, u_int namelen, \
 			    void *oldp, size_t *oldlenp, void *newp, \
 			    size_t newlen); }
-203	NOARGS		{ int sys_mlock(const void *addr, size_t len); }
-204	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
-205	NOARGS		{ int sys_undelete(const char *path); }
+203	NOARGS		{ int|sys||mlock(const void *addr, size_t len); }
+204	NOARGS		{ int|sys||munlock(const void *addr, size_t len); }
+205	NOARGS		{ int|sys||undelete(const char *path); }
 206	UNIMPL		atsocket
 207	UNIMPL		atgetmsg
 208	UNIMPL		atputmsg
@@ -406,7 +411,7 @@
 217	UNIMPL
 218	UNIMPL
 219	UNIMPL
-220	STD		{ int darwin_sys_getattrlist(const char *path, \
+220	STD		{ int|darwin_sys||getattrlist(const char *path, \
 			    struct darwin_attrlist *alist, void *attributes, \
 			    size_t buflen, unsigned long options); }
 221	UNIMPL		setattrlist
@@ -484,7 +489,7 @@
 293	UNIMPL
 294	UNIMPL
 295	UNIMPL
-296	STD		{ int darwin_sys_load_shared_file(char *filename, \
+296	STD		{ int|darwin_sys||load_shared_file(char *filename, \
 			    void *addr, u_long len, void **base, \
 			    int count, mach_sf_mapping_t *mappings, \
 			    int *flags); }
@@ -522,11 +527,11 @@
 328	UNIMPL		__pthread_kill
 329	UNIMPL		pthread_sigmask
 330	UNIMPL		sigwait
-331	STD		{ void darwin_sys_pthread_exit(void *value_ptr); }
+331	STD		{ void|darwin_sys||pthread_exit(void *value_ptr); }
 332	UNIMPL
 333	UNIMPL
 334	UNIMPL
-335	STD		{ int darwin_sys_utrace(void *addr, size_t len); }
+335	STD		{ int|darwin_sys||utrace(void *addr, size_t len); }
 336	UNIMPL
 337	UNIMPL
 338	UNIMPL
@@ -541,21 +546,21 @@
 347	UNIMPL
 348	UNIMPL
 349	UNIMPL
-350	STD		{ int darwin_sys_audit(void *record, int len); }
-351	STD		{ int darwin_sys_auditon(int cmd, \
+350	STD		{ int|darwin_sys||audit(void *record, int len); }
+351	STD		{ int|darwin_sys||auditon(int cmd, \
 			    void *data, int len); }
 352	UNIMPL
-353	STD		{ int darwin_sys_getauid(darwin_au_id_t *auid); }
-354	STD		{ int darwin_sys_setauid(darwin_au_id_t *auid); }
-355	STD		{ int darwin_sys_getauditinfo(struct \
+353	STD		{ int|darwin_sys||getauid(darwin_au_id_t *auid); }
+354	STD		{ int|darwin_sys||setauid(darwin_au_id_t *auid); }
+355	STD		{ int|darwin_sys||getauditinfo(struct \
 			    darwin_auditinfo *auditinfo); }
-356	STD		{ int darwin_sys_setauditinfo(struct \
+356	STD		{ int|darwin_sys||setauditinfo(struct \
 			    darwin_auditinfo *auditinfo); }
-357	STD		{ int darwin_sys_getaudit_addr(struct \
+357	STD		{ int|darwin_sys||getaudit_addr(struct \
 			    darwin_auditinfo_addr *auditinfo_addr, int len); }
-358	STD		{ int darwin_sys_setaudit_addr(struct \
+358	STD		{ int|darwin_sys||setaudit_addr(struct \
 			    darwin_auditinfo_addr *auditinfo_addr, int len); }
-359	STD		{ int darwin_sys_auditctl(char *path); }
+359	STD		{ int|darwin_sys||auditctl(char *path); }
 360	UNIMPL
 361	UNIMPL
 362	UNIMPL		kqueue

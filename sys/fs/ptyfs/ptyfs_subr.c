@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.15.6.1 2008/06/02 13:24:05 mjf Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.15.6.2 2009/01/17 13:29:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.15.6.1 2008/06/02 13:24:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.15.6.2 2009/01/17 13:29:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ ptyfs_free_get(ptyfstype type, int pty, struct lwp *l)
 	}
 	mutex_exit(&ptyfs_free_slock);
 
-	MALLOC(pp, void *, sizeof(struct ptyfsnode), M_TEMP, M_WAITOK);
+	pp = malloc(sizeof(struct ptyfsnode), M_TEMP, M_WAITOK);
 	pp->ptyfs_pty = pty;
 	pp->ptyfs_type = type;
 	pp->ptyfs_fileno = PTYFS_FILENO(pty, type);

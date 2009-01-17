@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_rtc.c,v 1.1.52.1 2008/06/02 13:21:55 mjf Exp $	*/
+/*	$NetBSD: omap_rtc.c,v 1.1.52.2 2009/01/17 13:27:53 mjf Exp $	*/
 
 /*
  * OMAP RTC driver, based on i80321_timer.c.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_rtc.c,v 1.1.52.1 2008/06/02 13:21:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_rtc.c,v 1.1.52.2 2009/01/17 13:27:53 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,11 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: omap_rtc.c,v 1.1.52.1 2008/06/02 13:21:55 mjf Exp $"
 #define RTC_INTERRUPTS_REG	0x48
 #define IT_ALARM		3
 
-static int	omaprtc_match(struct device *, struct cfdata *, void *);
-static void	omaprtc_attach(struct device *, struct device *, void *);
+static int	omaprtc_match(device_t, cfdata_t, void *);
+static void	omaprtc_attach(device_t, device_t, void *);
 
 struct omaprtc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_intr;
@@ -90,7 +90,7 @@ struct omaprtc_softc {
 	struct todr_chip_handle	sc_todr;
 };
 
-CFATTACH_DECL(omaprtc, sizeof(struct omaprtc_softc),
+CFATTACH_DECL_NEW(omaprtc, sizeof(struct omaprtc_softc),
     omaprtc_match, omaprtc_attach, NULL, NULL);
 
 static int omaprtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
@@ -195,7 +195,7 @@ omaprtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 }
 
 static int
-omaprtc_match(struct device *parent, struct cfdata *match, void *aux)
+omaprtc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct tipb_attach_args *tipb = aux;
 
@@ -210,9 +210,9 @@ omaprtc_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-omaprtc_attach(struct device *parent, struct device *self, void *aux)
+omaprtc_attach(device_t parent, device_t self, void *aux)
 {
-	struct omaprtc_softc *sc = (struct omaprtc_softc*)self;
+	struct omaprtc_softc *sc = device_private(self);
 	struct tipb_attach_args *tipb = aux;
 
 	sc->sc_iot = tipb->tipb_iot;
@@ -220,7 +220,7 @@ omaprtc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(tipb->tipb_iot, tipb->tipb_addr, tipb->tipb_size, 0,
 			 &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
 	aprint_normal(": OMAP RTC\n");
 	aprint_naive("\n");
@@ -239,4 +239,3 @@ omaprtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.todr_settime_ymdhms = omaprtc_settime;
 	todr_attach(&sc->sc_todr);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.56.16.1 2008/06/02 13:22:40 mjf Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.56.16.2 2009/01/17 13:28:30 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.56.16.1 2008/06/02 13:22:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.56.16.2 2009/01/17 13:28:30 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -448,8 +448,8 @@ sparc_vme_error(void)
 
 	afsr = sc->sc_reg->vmebus_afsr;
 	afpa = sc->sc_reg->vmebus_afar;
-	printf("VME error:\n\tAFSR %s\n",
-		bitmask_snprintf(afsr, VMEBUS_AFSR_BITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), VMEBUS_AFSR_BITS, afsr);
+	printf("VME error:\n\tAFSR %s\n", bits);
 	printf("\taddress: 0x%x%x\n", afsr, afpa);
 	return (0);
 }
@@ -766,11 +766,9 @@ sparc_vme_intr_establish(void *cookie, vme_intr_handle_t vih, int level,
 			break;
 
 	if (ih == NULL) {
-		ih = (struct intrhand *)
-			malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+		ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (ih == NULL)
 			panic("vme_addirq");
-		bzero(ih, sizeof *ih);
 		ih->ih_fun = sc->sc_vmeintr;
 		ih->ih_arg = vih;
 		intr_establish(pil, 0, ih, NULL);

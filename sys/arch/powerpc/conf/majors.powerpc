@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.2 2007/12/31 15:32:04 ad Exp $
+#	$NetBSD: majors.powerpc,v 1.2.10.1 2009/01/17 13:28:26 mjf Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -35,7 +35,6 @@ device-major	aed		char 28			aed
 device-major	vcoda		char 29			vcoda
 
 device-major	wd		char 30  block 10	wd
-device-major	lkm		char 31			lkm
 device-major	filedesc	char 32
 device-major	nvram		char 33			nvram
 device-major	scsibus		char 34			scsibus

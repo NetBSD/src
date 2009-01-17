@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 2008/02/07 00:36:57 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13.6.1 2009/01/17 13:28:26 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,9 @@
 #ifndef	_POWERPC_OEA_PMAP_H_
 #define	_POWERPC_OEA_PMAP_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#endif
 #include <powerpc/oea/pte.h>
 
 #ifndef _LOCORE
@@ -60,8 +62,6 @@ struct pmap {
 	unsigned int pm_ste_evictions;
 #endif
 };
-
-typedef	struct pmap *pmap_t;
 
 struct pmap_ops {
 	int (*pmapop_pte_spill)(struct pmap *, vaddr_t, bool);
@@ -112,8 +112,6 @@ __BEGIN_DECLS
 extern register_t iosrtable[];
 #endif
 extern int pmap_use_altivec;
-extern struct pmap kernel_pmap_;
-#define	pmap_kernel()	(&kernel_pmap_)
 
 #define pmap_clear_modify(pg)		(pmap_clear_bit((pg), PTE_CHG))
 #define	pmap_clear_reference(pg)	(pmap_clear_bit((pg), PTE_REF))

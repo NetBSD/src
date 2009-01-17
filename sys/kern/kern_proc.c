@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.129.6.3 2008/06/29 09:33:14 mjf Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.129.6.4 2009/01/17 13:29:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.129.6.3 2008/06/29 09:33:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.129.6.4 2009/01/17 13:29:19 mjf Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.129.6.3 2008/06/29 09:33:14 mjf Exp 
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/filedesc.h>
 #include "sys/syscall_stats.h"
 #include <sys/kauth.h>
@@ -141,7 +143,7 @@ static pid_t pid_max = PID_MAX;		/* largest value we allocate */
 
 /* Components of the first process -- never freed. */
 
-extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
+extern struct emul emul_netbsd;	/* defined in kern_exec.c */
 
 struct session session0 = {
 	.s_count = 1,
@@ -493,7 +495,7 @@ expand_pid_table(void)
 	if (pt_size != pid_tbl_mask + 1) {
 		/* Another process beat us to it... */
 		mutex_exit(proc_lock);
-		FREE(new_pt, M_PROC);
+		free(new_pt, M_PROC);
 		return;
 	}
 
@@ -552,7 +554,7 @@ expand_pid_table(void)
 		pid_alloc_lim <<= 1;	/* doubles number of free slots... */
 
 	mutex_exit(proc_lock);
-	FREE(n_pt, M_PROC);
+	free(n_pt, M_PROC);
 }
 
 struct proc *

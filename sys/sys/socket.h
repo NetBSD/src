@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.89.20.2 2008/09/28 10:41:05 mjf Exp $	*/
+/*	$NetBSD: socket.h,v 1.89.20.3 2009/01/17 13:29:41 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -131,8 +131,8 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define SO_RCVBUF	0x1002		/* receive buffer size */
 #define SO_SNDLOWAT	0x1003		/* send low-water mark */
 #define SO_RCVLOWAT	0x1004		/* receive low-water mark */
-#define SO_SNDTIMEO	0x1005		/* send timeout */
-#define SO_RCVTIMEO	0x1006		/* receive timeout */
+/* SO_OSNDTIMEO		0x1005 */
+/* SO_ORCVTIMEO		0x1006 */
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
 #define	SO_OVERFLOWED	0x1009		/* datagrams: return packets dropped */
@@ -141,6 +141,8 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 					 * kernel removes header and supplies
 					 * payload
 					 */
+#define SO_SNDTIMEO	0x100b		/* send timeout */
+#define SO_RCVTIMEO	0x100c		/* receive timeout */
 /*
  * Structure used for manipulating linger option.
  */
@@ -429,14 +431,16 @@ struct kinfo_pcb {
  */
 #define NET_RT_DUMP	1		/* dump; may limit to a.f. */
 #define NET_RT_FLAGS	2		/* by flags, e.g. RESOLVING */
-#define NET_RT_OIFLIST	3		/* old NET_RT_IFLIST (pre 1.5) */
-#define NET_RT_IFLIST	4		/* survey interface list */
-#define	NET_RT_MAXID	5
+#define NET_RT_OOIFLIST	3		/* old NET_RT_IFLIST (pre 1.5) */
+#define NET_RT_OIFLIST	4		/* survey interface list */
+#define	NET_RT_IFLIST	5
+#define	NET_RT_MAXID	6
 
 #define CTL_NET_RT_NAMES { \
 	{ 0, 0 }, \
 	{ "dump", CTLTYPE_STRUCT }, \
 	{ "flags", CTLTYPE_STRUCT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
 }

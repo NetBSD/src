@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3.6.1 2008/06/02 13:22:54 mjf Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3.6.2 2009/01/17 13:28:39 mjf Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.6.1 2008/06/02 13:22:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.6.2 2009/01/17 13:28:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,9 +133,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
-#if NACPI > 0 || defined(MPBIOS)
-	int numioapics = 0;     
-#endif
 #endif /* defined(DOM0OPS) && defined(XEN3) */
 
 	aprint_naive("\n");
@@ -149,7 +146,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	config_found_ia(self, "cpubus", &mba.mba_caa, mainbus_print);
 #else /* XEN3 */
 #ifdef DOM0OPS
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 #ifdef MPBIOS
 		mpbios_present = mpbios_probe(self);
 #endif
@@ -169,14 +166,13 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if NACPI > 0
 		acpi_present = acpi_probe();
 		if (acpi_present)
-			mpacpi_active = mpacpi_scan_apics(self,
-			    &numcpus, &numioapics);
+			mpacpi_active = mpacpi_scan_apics(self, &numcpus);
 		if (!mpacpi_active)
 #endif
 		{
 #ifdef MPBIOS
 			if (mpbios_present)
-				mpbios_scan(self, &numcpus, &numioapics);       
+				mpbios_scan(self, &numcpus);       
 			else
 #endif
 			if (numcpus == 0) {

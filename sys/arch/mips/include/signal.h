@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.27 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.27.74.1 2009/01/17 13:28:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,16 +41,9 @@
 
 #include <machine/cdefs.h>	/* for API selection */
 
-#ifdef _KERNEL
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
-#endif
-#ifdef COMPAT_16 
-#define SIGTRAMP_VALID(vers) ((unsigned)(vers) <= 2)
-#else
-#define SIGTRAMP_VALID(vers) ((vers) == 2)
-#endif 
 #endif
 
 #if !defined(__ASSEMBLER__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.139.6.3 2008/06/29 09:33:20 mjf Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.139.6.4 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -841,7 +841,7 @@ char *	m_mapin(struct mbuf *);
 void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 
 /* Inline routines. */
-static __inline u_int m_length(struct mbuf *) __unused;
+static __inline u_int m_length(const struct mbuf *) __unused;
 
 /* Statistics */
 void mbstat_type_add(int, int);
@@ -885,13 +885,18 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 #define	PACKET_TAG_ECO_RETRYPARMS		27 /* Econet retry parameters */
 
+#define	PACKET_TAG_TUNNEL_INFO			28 /* tunnel identification and
+						    * protocol callback, for
+						    * loop detection/recovery
+						    */
+
 /*
  * Return the number of bytes in the mbuf chain, m.
  */
 static __inline u_int
-m_length(struct mbuf *m)
+m_length(const struct mbuf *m)
 {
-	struct mbuf *m0;
+	const struct mbuf *m0;
 	u_int pktlen;
 
 	if ((m->m_flags & M_PKTHDR) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.h,v 1.5 2003/03/12 14:49:19 drochner Exp $	*/
+/*	$NetBSD: netif.h,v 1.5.100.1 2009/01/17 13:29:22 mjf Exp $	*/
 
 #ifndef __SYS_LIBNETBOOT_NETIF_H
 #define __SYS_LIBNETBOOT_NETIF_H
@@ -12,7 +12,7 @@ struct netif_driver {
 	int	(*netif_match) __P((struct netif *, void *));
 	int	(*netif_probe) __P((struct netif *, void *));
 	void	(*netif_init) __P((struct iodesc *, void *));
-	int	(*netif_get) __P((struct iodesc *, void *, size_t, time_t));
+	int	(*netif_get) __P((struct iodesc *, void *, size_t, saseconds_t));
 	int	(*netif_put) __P((struct iodesc *, void *, size_t));
 	void	(*netif_end) __P((struct netif *));
 	struct	netif_dif *netif_ifs;

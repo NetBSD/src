@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.38.6.6 2008/09/28 10:40:56 mjf Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.38.6.7 2009/01/17 13:29:31 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.6 2008/09/28 10:40:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.7 2009/01/17 13:29:31 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.6 2008/09/28 10:40:56 mjf Exp $");
  * sysctl node management
  *
  * It's not really possible to use a SYSCTL_SETUP block with
- * current LKM implementation, so it is easier to just define
+ * current module implementation, so it is easier to just define
  * our own function.
  *
  * The handler function is a "helper" in Andrew Brown's sysctl
@@ -257,6 +257,9 @@ tap_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
 	 * do some randomisation using the current uptime.  It's not meant
@@ -392,6 +395,8 @@ tap_detach(device_t self, int flags)
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_rdlock);
+
+	pmf_device_deregister(self);
 
 	return (0);
 }
@@ -549,7 +554,7 @@ tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 	if (sdl->sdl_family != AF_LINK)
 		return (EINVAL);
 
-	if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN);
+	if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN, false);
 
 	return (0);
 }
@@ -1231,7 +1236,7 @@ tap_kqread(struct knote *kn, long hint)
  * (called a link set) which is used at init_sysctl() time to cycle
  * through all those functions to create the kernel's sysctl tree.
  *
- * It is not (currently) possible to use link sets in a LKM, so the
+ * It is not possible to use link sets in a module, so the
  * easiest is to simply call our own setup routine at load time.
  *
  * In the SYSCTL_SETUP blocks you find in the kernel, nodes have the
@@ -1345,6 +1350,6 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	/* Commit change */
 	if (ether_nonstatic_aton(enaddr, addr) != 0)
 		return (EINVAL);
-	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN);
+	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return (error);
 }

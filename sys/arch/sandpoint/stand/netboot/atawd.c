@@ -1,4 +1,4 @@
-/* $NetBSD: atawd.c,v 1.7.2.2 2008/06/02 13:22:36 mjf Exp $ */
+/* $NetBSD: atawd.c,v 1.7.2.3 2009/01/17 13:28:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -72,15 +72,11 @@ struct atacdv *atac;
 void *disk[4];
 int ndisk;
 
-int wdopen(struct open_file *, ...);
-int wdclose(struct open_file *);
-int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int parsefstype(void *);
 static int wd_get_params(struct wd_softc *);
 static int wdgetdisklabel(struct wd_softc *);
 
 int atac_init(unsigned);
-int atac_probe(struct atacdv *);
+int atac_probe(void *);
 static int atac_wait_for_ready(struct atac_channel *); 
 static int atac_exec_identify(struct wd_softc *, void *);
 static int atac_read_block(struct wd_softc *, struct atac_command *);
@@ -191,7 +187,7 @@ atac_init(unsigned tag)
 }
 
 int
-atatc_probe(void *atac)
+atac_probe(void *atac)
 {
 	struct atac_softc *l = atac;
 	struct wd_softc *wd;

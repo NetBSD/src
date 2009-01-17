@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.45.14.2 2008/06/29 09:32:58 mjf Exp $	*/
+/*	$NetBSD: zs.c,v 1.45.14.3 2009/01/17 13:28:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.14.2 2008/06/29 09:32:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.14.3 2009/01/17 13:28:14 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -253,7 +253,7 @@ zsc_attach(device_t parent, device_t self, void *aux)
 		node = OF_peer(node);	/* ch-b */
 	}
 
-	aprint_normal(": irq %d,%d\n", intr[0][0], intr[1][0]);
+	aprint_normal(" irq %d,%d\n", intr[0][0], intr[1][0]);
 
 	/*
 	 * Initialize software state for each channel.

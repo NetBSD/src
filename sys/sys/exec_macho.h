@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.19.70.1 2008/06/02 13:24:32 mjf Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.19.70.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -242,7 +242,7 @@ struct exec_macho_emul_arg {
 	int dynamic;
 };
 
-#ifndef _LKM
+#ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
 #endif
 

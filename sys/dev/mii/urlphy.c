@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.21.6.1 2008/06/02 13:23:35 mjf Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.21.6.2 2009/01/17 13:28:58 mjf Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.21.6.1 2008/06/02 13:23:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.21.6.2 2009/01/17 13:28:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,9 +131,6 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

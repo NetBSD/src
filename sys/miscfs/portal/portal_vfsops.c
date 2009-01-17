@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.70.6.3 2008/06/29 09:33:16 mjf Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.70.6.4 2009/01/17 13:29:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.70.6.3 2008/06/29 09:33:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.70.6.4 2009/01/17 13:29:28 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -143,8 +143,7 @@ portal_mount(
 		fd_putfile(args->pa_socket);
 		return (error);
 	}
-	MALLOC(rvp->v_data, void *, sizeof(struct portalnode),
-		M_TEMP, M_WAITOK);
+	rvp->v_data = malloc(sizeof(struct portalnode), M_TEMP, M_WAITOK);
 
 	fmp = (struct portalmount *) malloc(sizeof(struct portalmount),
 				 M_UFSMNT, M_WAITOK);	/* XXX */

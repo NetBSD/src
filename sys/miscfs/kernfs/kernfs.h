@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.32.40.2 2008/09/28 10:40:55 mjf Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.32.40.3 2009/01/17 13:29:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -195,5 +195,14 @@ kfstype kernfs_alloctype(int, const struct kernfs_fileop *);
 } while (/*CONSTCOND*/0)
 #define	KERNFS_ENTOPARENTDIR(dkt) &(dkt)->dkt_kt
 int kernfs_addentry(kernfs_parentdir_t *, kernfs_entry_t *);
+
+#ifdef IPSEC
+__weak_extern(key_freesp)
+__weak_extern(key_getspbyid)
+__weak_extern(key_setdumpsa_spi)
+__weak_extern(key_setdumpsp)
+__weak_extern(satailq)
+__weak_extern(sptailq)
+#endif
 
 #endif /* _KERNEL */

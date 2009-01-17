@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.36.16.1 2008/06/02 13:22:22 mjf Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.36.16.2 2009/01/17 13:28:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,9 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36.16.1 2008/06/02 13:22:22 mjf Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36.16.2 2009/01/17 13:28:11 mjf Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -88,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36.16.1 2008/06/02 13:22:22 mjf Ex
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/ucontext.h>
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36.16.1 2008/06/02 13:22:22 mjf Ex
 #include <machine/frame.h>
 
 #include <m68k/m68k.h>
+#include <m68k/saframe.h>
 
 extern short exframesize[];
 struct fpframe m68k_cached_fpu_idle_frame;
@@ -168,7 +169,7 @@ buildcontext(struct lwp *l, void *catcher, void *fp)
 	frame->f_pc = (int)catcher;
 }
 
-static void
+void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -180,18 +181,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
-	default:	/* unknown version */
-		printf("nsendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-	case 2:
-		break;
-	}
 
 	kf.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 	kf.sf_signum = sig;
@@ -227,15 +216,33 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
 {
+	struct saframe *sfp, sf;
+	struct frame *frame;
 
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		sendsig_siginfo(ksi, mask);
+	frame = (struct frame *)l->l_md.md_regs;
+
+	/* Finally, copy out the rest of the frame */
+	sf.sa_ra = 0;
+	sf.sa_type = type;
+	sf.sa_sas = sas;
+	sf.sa_events = nevents;
+	sf.sa_interrupted = ninterrupted;
+	sf.sa_arg = ap;
+
+	sfp = (struct saframe *)sp - 1;
+	if (copyout(&sf, sfp, sizeof(sf)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	frame->f_pc = (int)upcall;
+	frame->f_regs[SP] = (int) sfp;
+	frame->f_regs[A6] = 0; /* indicate call-frame-top to debuggers */
+	frame->f_sr &= ~PSL_T;
 }
 
 void

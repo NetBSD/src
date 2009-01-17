@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.2.34.2 2008/06/02 13:22:38 mjf Exp $ */
+/*	$NetBSD: rtc.c,v 1.2.34.3 2009/01/17 13:28:28 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2.34.2 2008/06/02 13:22:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2.34.3 2009/01/17 13:28:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,8 +96,8 @@ rtc_attach(device_t parent, device_t self, void *aux)
 	r = _reg_read_1(SH_(RCR2));
 
 #ifdef RTC_DEBUG
-	aprint_debug_dev(sc->sc_dev, "RCR2=%s\n",
-		bitmask_snprintf(r, SH_RCR2_BITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), SH_RCR2_BITS, r);
+	aprint_debug_dev(sc->sc_dev, "RCR2=%s\n", bits);
 #endif
 
 	/* Was the clock running? */

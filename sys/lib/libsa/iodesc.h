@@ -1,4 +1,4 @@
-/*	$NetBSD: iodesc.h,v 1.7 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: iodesc.h,v 1.7.70.1 2009/01/17 13:29:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -41,6 +41,25 @@
 #ifndef __SYS_LIBNETBOOT_IODESC_H
 #define __SYS_LIBNETBOOT_IODESC_H
 
+#ifdef _STANDALONE
+/*
+ * libsa code uses the following types to avoid 64 bit time_t:
+ *
+ * satime_t:
+ *	numbers in seconds returned by the machine dependent getsecs() function
+ *	which are used to measure relative time
+ *
+ * saseconds_t:
+ *	numbers in seconds used to specify timeout to network drivers
+ *
+ */
+typedef unsigned int	satime_t;
+typedef int		saseconds_t;
+#else
+typedef time_t		satime_t;
+typedef time_t		saseconds_t;
+#endif
+
 struct iodesc {
 	struct	in_addr destip;		/* dest. ip addr, net order */
 	struct	in_addr myip;		/* local ip addr, net order */
@@ -52,7 +71,7 @@ struct iodesc {
 };
 
 struct iodesc	*socktodesc __P((int));
-ssize_t		netif_get __P((struct iodesc *, void *, size_t, time_t));
+ssize_t		netif_get __P((struct iodesc *, void *, size_t, saseconds_t));
 ssize_t		netif_put __P((struct iodesc *, void *, size_t));
 
 #endif /* __SYS_LIBNETBOOT_IODESC_H */

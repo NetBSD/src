@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_msg.h,v 1.9.6.1 2008/06/02 13:23:03 mjf Exp $	*/
+/*	$NetBSD: linux_msg.h,v 1.9.6.2 2009/01/17 13:28:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -57,8 +57,17 @@ struct linux_msqid_ds {
 struct linux_msqid64_ds {
 	struct linux_ipc64_perm	l_msg_perm;
 	linux_time_t		l_msg_stime;
+#ifndef _LP64
+	ulong			l___unused1;
+#endif
 	linux_time_t		l_msg_rtime;
+#ifndef _LP64
+	ulong			l___unused2;
+#endif
 	linux_time_t		l_msg_ctime;
+#ifndef _LP64
+	ulong			l___unused3;
+#endif
 	ulong			l_msg_cbytes;
 	ulong			l_msg_qnum;
 	ulong			l_msg_qbytes;

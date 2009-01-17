@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.12.6.1 2008/06/29 09:33:01 mjf Exp $	*/
+/*	$NetBSD: bmd.c,v 1.12.6.2 2009/01/17 13:28:36 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.12.6.1 2008/06/29 09:33:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.12.6.2 2009/01/17 13:28:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ bmd_match(device_t parent, cfdata_t cf, void *aux)
 	if (ia->ia_addr != BMD_ADDR1 && ia->ia_addr != BMD_ADDR2)
 		return (0);
 
-	if (badaddr(INTIO_ADDR(ia->ia_addr)))
+ 	if (badaddr((void *)IIOV(ia->ia_addr)))
 		return (0);
 
 	ia->ia_size = 2;

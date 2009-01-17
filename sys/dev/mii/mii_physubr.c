@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.57.6.2 2008/06/02 13:23:35 mjf Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.57.6.3 2009/01/17 13:28:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.57.6.2 2008/06/02 13:23:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.57.6.3 2009/01/17 13:28:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -403,6 +403,7 @@ void
 mii_phy_add_media(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
+	device_t self = sc->mii_dev;
 	const char *sep = "";
 	int fdx = 0;
 
@@ -425,7 +426,7 @@ mii_phy_add_media(struct mii_softc *sc)
 			    MII_MEDIA_10_T);
 			PRINT("HomePNA1");
 		}
-		return;
+		goto out;
 	}
 
 	if (sc->mii_capabilities & BMSR_10THDX) {
@@ -517,6 +518,11 @@ mii_phy_add_media(struct mii_softc *sc)
 #undef PRINT
 	if (fdx != 0 && (sc->mii_flags & MIIF_DOPAUSE))
 		mii->mii_media.ifm_mask |= IFM_ETH_FMASK;
+out:
+	if (!pmf_device_register(self, NULL, mii_phy_resume)) {
+		aprint_normal("\n");
+		aprint_error_dev(self, "couldn't establish power handler");
+	}
 }
 
 void
@@ -625,4 +631,37 @@ mii_phy_resume(device_t dv PMF_FN_ARGS)
 
 	PHY_RESET(sc);
 	return PHY_SERVICE(sc, sc->mii_pdata, MII_MEDIACHG) == 0;
+}
+
+
+/*
+ * Given an ifmedia word, return the corresponding ANAR value.
+ */
+int
+mii_anar(int media)
+{
+	int rv;
+
+	switch (media & (IFM_TMASK|IFM_NMASK|IFM_FDX)) {
+	case IFM_ETHER|IFM_10_T:
+		rv = ANAR_10|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_10_T|IFM_FDX:
+		rv = ANAR_10_FD|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_TX:
+		rv = ANAR_TX|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_TX|IFM_FDX:
+		rv = ANAR_TX_FD|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_T4:
+		rv = ANAR_T4|ANAR_CSMA;
+		break;
+	default:
+		rv = 0;
+		break;
+	}
+
+	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.60.6.1 2008/06/29 09:33:19 mjf Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.60.6.2 2009/01/17 13:29:32 mjf Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.60.6.1 2008/06/29 09:33:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.60.6.2 2009/01/17 13:29:32 mjf Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -204,11 +204,11 @@ ieee80211_node_detach(struct ieee80211com *ic)
 	ieee80211_node_table_cleanup(&ic->ic_scan);
 	ieee80211_node_table_cleanup(&ic->ic_sta);
 	if (ic->ic_aid_bitmap != NULL) {
-		FREE(ic->ic_aid_bitmap, M_DEVBUF);
+		free(ic->ic_aid_bitmap, M_DEVBUF);
 		ic->ic_aid_bitmap = NULL;
 	}
 	if (ic->ic_tim_bitmap != NULL) {
-		FREE(ic->ic_tim_bitmap, M_DEVBUF);
+		free(ic->ic_tim_bitmap, M_DEVBUF);
 		ic->ic_tim_bitmap = NULL;
 	}
 }
@@ -915,7 +915,7 @@ node_alloc(struct ieee80211_node_table *nt)
 {
 	struct ieee80211_node *ni;
 
-	MALLOC(ni, struct ieee80211_node *, sizeof(struct ieee80211_node),
+	ni = malloc(sizeof(struct ieee80211_node),
 		M_80211_NODE, M_NOWAIT | M_ZERO);
 	return ni;
 }
@@ -958,7 +958,7 @@ node_cleanup(struct ieee80211_node *ni)
 
 	ni->ni_associd = 0;
 	if (ni->ni_challenge != NULL) {
-		FREE(ni->ni_challenge, M_DEVBUF);
+		free(ni->ni_challenge, M_DEVBUF);
 		ni->ni_challenge = NULL;
 	}
 	/*
@@ -992,11 +992,11 @@ node_free(struct ieee80211_node *ni)
 
 	ic->ic_node_cleanup(ni);
 	if (ni->ni_wpa_ie != NULL)
-		FREE(ni->ni_wpa_ie, M_DEVBUF);
+		free(ni->ni_wpa_ie, M_DEVBUF);
 	if (ni->ni_wme_ie != NULL)
-		FREE(ni->ni_wme_ie, M_DEVBUF);
+		free(ni->ni_wme_ie, M_DEVBUF);
 	IEEE80211_NODE_SAVEQ_DESTROY(ni);
-	FREE(ni, M_80211_NODE);
+	free(ni, M_80211_NODE);
 }
 
 static u_int8_t
@@ -1763,7 +1763,7 @@ ieee80211_node_delucastkey(struct ieee80211_node *ni)
 	status = ieee80211_crypto_delkey(ic, &ni->ni_ucastkey);
 	if (nt->nt_keyixmap != NULL && keyix < nt->nt_keyixmax) {
 		nikey = nt->nt_keyixmap[keyix];
-		nt->nt_keyixmap[keyix] = NULL;;
+		nt->nt_keyixmap[keyix] = NULL;
 	} else
 		nikey = NULL;
 	if (!isowned)
@@ -2476,7 +2476,7 @@ ieee80211_node_table_cleanup(struct ieee80211_node_table *nt)
 			if (nt->nt_keyixmap[i] != NULL)
 				printf("%s: %s[%u] still active\n", __func__,
 					nt->nt_name, i);
-		FREE(nt->nt_keyixmap, M_80211_NODE);
+		free(nt->nt_keyixmap, M_80211_NODE);
 		nt->nt_keyixmap = NULL;
 	}
 	IEEE80211_SCAN_LOCK_DESTROY(nt);

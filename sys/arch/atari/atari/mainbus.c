@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5.40.1 2008/06/02 13:21:56 mjf Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5.40.2 2009/01/17 13:27:54 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5.40.1 2008/06/02 13:21:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5.40.2 2009/01/17 13:27:54 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,25 +142,25 @@ static void		mb_bus_space_set_region_8 __P((bus_space_tag_t,
 	((u_long)(base) + ((off) << (stride)) + (wm))
 
 #define __read_1(t, h, o)	\
-	(*((u_int8_t *)(calc_addr(h, o, (t)->stride, (t)->wo_1))))
+	(*((volatile u_int8_t *)(calc_addr(h, o, (t)->stride, (t)->wo_1))))
 #define __read_2(t, h, o)	\
-	(*((u_int16_t *)(calc_addr(h, o, (t)->stride, (t)->wo_2))))
+	(*((volatile u_int16_t *)(calc_addr(h, o, (t)->stride, (t)->wo_2))))
 #define	__read_4(t, h, o)	\
-	(*((u_int32_t *)(calc_addr(h, o, (t)->stride, (t)->wo_4))))
+	(*((volatile u_int32_t *)(calc_addr(h, o, (t)->stride, (t)->wo_4))))
 #define	__read_8(t, h, o)	\
-	(*((u_int64_t *)(calc_addr(h, o, (t)->stride, (t)->wo_8))))
+	(*((volatile u_int64_t *)(calc_addr(h, o, (t)->stride, (t)->wo_8))))
 
 #define __write_1(t, h, o, v)	\
-    *((u_int8_t *)(calc_addr(h, o, (t)->stride, (t)->wo_1))) = v
+    *((volatile u_int8_t *)(calc_addr(h, o, (t)->stride, (t)->wo_1))) = v
 
 #define __write_2(t, h, o, v)	\
-    *((u_int16_t *)(calc_addr(h, o, (t)->stride, (t)->wo_2))) = v
+    *((volatile u_int16_t *)(calc_addr(h, o, (t)->stride, (t)->wo_2))) = v
 
 #define __write_4(t, h, o, v)	\
-    *((u_int32_t *)(calc_addr(h, o, (t)->stride, (t)->wo_4))) = v
+    *((volatile u_int32_t *)(calc_addr(h, o, (t)->stride, (t)->wo_4))) = v
 
 #define __write_8(t, h, o, v)	\
-    *((u_int64_t *)(calc_addr(h, o, (t)->stride, (t)->wo_8))) = v
+    *((volatile u_int64_t *)(calc_addr(h, o, (t)->stride, (t)->wo_8))) = v
 
 bus_space_tag_t
 mb_alloc_bus_space_tag()
@@ -168,9 +168,9 @@ mb_alloc_bus_space_tag()
 	bus_space_tag_t	mb_t;
 
 	/* Not really M_TEMP, is it.. */
-	if ((mb_t = malloc(sizeof(*mb_t), M_TEMP, M_NOWAIT)) == NULL)
-		return(NULL);
-	bzero(mb_t, sizeof(*mb_t));
+	mb_t = malloc(sizeof(*mb_t), M_TEMP, M_NOWAIT|M_ZERO);
+	if (mb_t == NULL)
+		return NULL;
 	
 	mb_t->abs_p_1   = mb_bus_space_peek_1;
 	mb_t->abs_p_2   = mb_bus_space_peek_2;
@@ -364,9 +364,9 @@ mb_bus_space_read_multi_1(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int8_t		*a;
 {
-	u_int8_t	*ba;
+	volatile u_int8_t	*ba;
 
-	ba = (u_int8_t *)calc_addr(h, o, t->stride, t->wo_1);
+	ba = (volatile u_int8_t *)calc_addr(h, o, t->stride, t->wo_1);
 	for (; c; a++, c--)
 		*a = *ba;
 }
@@ -378,9 +378,9 @@ mb_bus_space_read_multi_2(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int16_t		*a;
 {
-	u_int16_t	*ba;
+	volatile u_int16_t	*ba;
 
-	ba = (u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	ba = (volatile u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
 	for (; c; a++, c--)
 		*a = *ba;
 }
@@ -392,9 +392,9 @@ mb_bus_space_read_multi_4(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int32_t		*a;
 {
-	u_int32_t	*ba;
+	volatile u_int32_t	*ba;
 
-	ba = (u_int32_t *)calc_addr(h, o, t->stride, t->wo_4);
+	ba = (volatile u_int32_t *)calc_addr(h, o, t->stride, t->wo_4);
 	for (; c; a++, c--)
 		*a = *ba;
 }
@@ -406,9 +406,9 @@ mb_bus_space_read_multi_8(t, h, o, a, c)
 	bus_size_t		o, c;
 	u_int64_t		*a;
 {
-	u_int64_t	*ba;
+	volatile u_int64_t	*ba;
 
-	ba = (u_int64_t *)calc_addr(h, o, t->stride, t->wo_8);
+	ba = (volatile u_int64_t *)calc_addr(h, o, t->stride, t->wo_8);
 	for (; c; a++, c--)
 		*a = *ba;
 }
@@ -420,9 +420,9 @@ mb_bus_space_write_multi_1(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int8_t		*a;
 {
-	u_int8_t	*ba;
+	volatile u_int8_t	*ba;
 
-	ba = (u_int8_t *)calc_addr(h, o, t->stride, t->wo_1);
+	ba = (volatile u_int8_t *)calc_addr(h, o, t->stride, t->wo_1);
 	for (; c; a++, c--)
 		*ba = *a;
 }
@@ -434,9 +434,9 @@ mb_bus_space_write_multi_2(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int16_t		*a;
 {
-	u_int16_t	*ba;
+	volatile u_int16_t	*ba;
 
-	ba = (u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	ba = (volatile u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
 	for (; c; a++, c--)
 		*ba = *a;
 }
@@ -448,9 +448,9 @@ mb_bus_space_write_multi_4(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int32_t		*a;
 {
-	u_int32_t	*ba;
+	volatile u_int32_t	*ba;
 
-	ba = (u_int32_t *)calc_addr(h, o, t->stride, t->wo_4);
+	ba = (volatile u_int32_t *)calc_addr(h, o, t->stride, t->wo_4);
 	for (; c; a++, c--)
 		*ba = *a;
 }
@@ -462,9 +462,9 @@ mb_bus_space_write_multi_8(t, h, o, a, c)
 	bus_size_t		o, c;
 	const u_int64_t		*a;
 {
-	u_int64_t	*ba;
+	volatile u_int64_t	*ba;
 
-	ba = (u_int64_t *)calc_addr(h, o, t->stride, t->wo_8);
+	ba = (volatile u_int64_t *)calc_addr(h, o, t->stride, t->wo_8);
 	for (; c; a++, c--)
 		*ba = *a;
 }
@@ -590,9 +590,9 @@ mb_bus_space_set_multi_1(t, h, o, v, c)
 	bus_size_t		o, c;
 	u_int8_t		v;
 {
-	u_int8_t	*ba;
+	volatile u_int8_t	*ba;
 
-	ba = (u_int8_t *)calc_addr(h, o, t->stride, t->wo_1);
+	ba = (volatile u_int8_t *)calc_addr(h, o, t->stride, t->wo_1);
 	for (; c; c--)
 		*ba = v;
 }
@@ -604,9 +604,9 @@ mb_bus_space_set_multi_2(t, h, o, v, c)
 	bus_size_t		o, c;
 	u_int16_t		v;
 {
-	u_int16_t	*ba;
+	volatile u_int16_t	*ba;
 
-	ba = (u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	ba = (volatile u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
 	for (; c; c--)
 		*ba = v;
 }
@@ -618,9 +618,9 @@ mb_bus_space_set_multi_4(t, h, o, v, c)
 	bus_size_t		o, c;
 	u_int32_t		v;
 {
-	u_int32_t	*ba;
+	volatile u_int32_t	*ba;
 
-	ba = (u_int32_t *)calc_addr(h, o, t->stride, t->wo_4);
+	ba = (volatile u_int32_t *)calc_addr(h, o, t->stride, t->wo_4);
 	for (; c; c--)
 		*ba = v;
 }
@@ -632,9 +632,9 @@ mb_bus_space_set_multi_8(t, h, o, v, c)
 	bus_size_t		o, c;
 	u_int64_t		v;
 {
-	u_int64_t	*ba;
+	volatile u_int64_t	*ba;
 
-	ba = (u_int64_t *)calc_addr(h, o, t->stride, t->wo_8);
+	ba = (volatile u_int64_t *)calc_addr(h, o, t->stride, t->wo_8);
 	for (; c; c--)
 		*ba = v;
 }

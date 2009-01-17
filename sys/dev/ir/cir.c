@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.17.36.5 2008/06/29 09:33:07 mjf Exp $	*/
+/*	$NetBSD: cir.c,v 1.17.36.6 2009/01/17 13:28:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.5 2008/06/29 09:33:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.6 2009/01/17 13:28:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,10 @@ dev_type_read(cirread);
 dev_type_write(cirwrite);
 dev_type_ioctl(cirioctl);
 dev_type_poll(cirpoll);
-dev_type_kqfilter(cirkqfilter);
 
 const struct cdevsw cir_cdevsw = {
 	ciropen, circlose, cirread, cirwrite, cirioctl,
-	nostop, notty, cirpoll, nommap, cirkqfilter,
+	nostop, notty, cirpoll, nommap, nokqfilter,
 	D_OTHER
 };
 
@@ -152,6 +151,8 @@ ciropen(dev_t dev, int flag, int mode, struct lwp *l)
 		return (EIO);
 	if (sc->sc_open)
 		return (EBUSY);
+
+	sc->sc_rdframes = 0;
 	if (sc->sc_methods->im_open != NULL) {
 		error = sc->sc_methods->im_open(sc->sc_handle, flag, mode,
 		    l->l_proc);
@@ -255,11 +256,9 @@ cirpoll(dev_t dev, int events, struct lwp *l)
 
 	revents = 0;
 	s = splir();
-#if 0
 	if (events & (POLLIN | POLLRDNORM))
 		if (sc->sc_rdframes > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
-#endif
 
 #if 0
 	/* How about write? */

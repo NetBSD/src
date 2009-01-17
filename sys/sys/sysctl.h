@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.173.6.3 2008/09/28 10:41:05 mjf Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.173.6.4 2009/01/17 13:29:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -213,7 +213,7 @@ struct ctlname {
 #define	KERN_NGROUPS		18	/* int: # of supplemental group ids */
 #define	KERN_JOB_CONTROL	19	/* int: is job control available */
 #define	KERN_SAVED_IDS		20	/* int: saved set-user/group-ID */
-#define	KERN_BOOTTIME		21	/* struct: time kernel was booted */
+#define	KERN_OBOOTTIME		21	/* struct: time kernel was booted */
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
 #define	KERN_RAWPARTITION	24	/* int: raw partition number */
@@ -275,7 +275,8 @@ struct ctlname {
 #define	KERN_HARDCLOCK_TICKS	80	/* int: number of hardclock ticks */
 #define	KERN_ARND		81	/* void *buf, size_t siz random */
 #define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
-#define	KERN_MAXID		83	/* number of valid kern ids */
+#define	KERN_BOOTTIME		83	/* struct: time kernel was booted */
+#define	KERN_MAXID		84	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -300,7 +301,7 @@ struct ctlname {
 	{ "ngroups", CTLTYPE_INT }, \
 	{ "job_control", CTLTYPE_INT }, \
 	{ "saved_ids", CTLTYPE_INT }, \
-	{ "boottime", CTLTYPE_STRUCT }, \
+	{ 0, 0 }, \
 	{ "domainname", CTLTYPE_STRING }, \
 	{ "maxpartitions", CTLTYPE_INT }, \
 	{ "rawpartition", CTLTYPE_INT }, \
@@ -362,6 +363,7 @@ struct ctlname {
 	{ "hardclock_ticks", CTLTYPE_INT }, \
 	{ "arandom", CTLTYPE_STRUCT }, \
 	{ "sysvipc", CTLTYPE_STRUCT }, \
+	{ "boottime", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -425,7 +427,7 @@ struct kinfo_proc {
 		pid_t	e_ppid;			/* parent process id */
 		pid_t	e_pgid;			/* process group id */
 		short	e_jobc;			/* job control counter */
-		dev_t	e_tdev;			/* controlling tty dev */
+		uint32_t e_tdev;		/* XXX: controlling tty dev */
 		pid_t	e_tpgid;		/* tty process group id */
 		struct	session *e_tsess;	/* tty session pointer */
 #define	WMESGLEN	8
@@ -505,7 +507,7 @@ struct kinfo_proc2 {
 	int16_t	p_ngroups;		/* SHORT: number of groups */
 
 	int16_t	p_jobc;			/* SHORT: job control counter */
-	uint32_t p_tdev;		/* DEV_T: controlling tty dev */
+	uint32_t p_tdev;		/* XXX: DEV_T: controlling tty dev */
 
 	uint32_t p_estcpu;		/* U_INT: Time averaged value of p_cpticks. */
 	uint32_t p_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
@@ -1057,7 +1059,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	oldlenp, newp, newlen, \
 	oname, l, node
 
-#ifdef _LKM
+#ifdef _MODULE
 
 #define SYSCTL_SETUP_PROTO(name)				\
 	void name(struct sysctllog **)
@@ -1077,7 +1079,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 
-#else /* !_LKM */
+#else /* !_MODULE */
 
 #define SYSCTL_SETUP_PROTO(name)
 #ifdef SYSCTL_DEBUG_SETUP
@@ -1094,9 +1096,8 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	__link_set_add_text(sysctl_funcs, name);		\
 	static void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
-typedef void (*sysctl_setup_func)(struct sysctllog **);
 
-#endif /* !_LKM */
+#endif /* !_MODULE */
 
 /*
  * Internal sysctl function calling convention:
@@ -1178,6 +1179,7 @@ int	sysctl_kern_vnode(SYSCTLFN_PROTO);
 int	sysctl_net_inet_ip_ports(SYSCTLFN_PROTO);
 int	sysctl_consdev(SYSCTLFN_PROTO);
 int	sysctl_root_device(SYSCTLFN_PROTO);
+int	sysctl_vfs_generic_fstypes(SYSCTLFN_PROTO);
 
 /*
  * primitive helper stubs

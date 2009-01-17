@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.34.16.1 2008/06/02 13:23:24 mjf Exp $ */
+/* $NetBSD: lemac.c,v 1.34.16.2 2009/01/17 13:28:55 mjf Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.34.16.1 2008/06/02 13:23:24 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.34.16.2 2009/01/17 13:28:55 mjf Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -757,7 +757,7 @@ lemac_ifioctl(
     s = splnet();
 
     switch (cmd) {
-	case SIOCSIFADDR: {
+	case SIOCINITIFADDR: {
 	    struct ifaddr *ifa = (struct ifaddr *)data;
 
 	    ifp->if_flags |= IFF_UP;
@@ -779,6 +779,8 @@ lemac_ifioctl(
 	}
 
 	case SIOCSIFFLAGS: {
+	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+		break;
 	    lemac_init(sc);
 	    break;
 	}
@@ -805,7 +807,7 @@ lemac_ifioctl(
 	}
 
 	default: {
-	    error = EINVAL;
+	    error = ether_ioctl(ifp, cmd, data);
 	    break;
 	}
     }

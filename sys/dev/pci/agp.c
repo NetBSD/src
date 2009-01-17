@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.54.10.5 2008/09/28 10:40:25 mjf Exp $	*/
+/*	$NetBSD: agp.c,v 1.54.10.6 2009/01/17 13:28:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.54.10.5 2008/09/28 10:40:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.54.10.6 2009/01/17 13:28:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,8 +184,12 @@ const struct agp_product {
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82Q33_HB,
 	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82G35_HB,
+	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82946GZ_HB,
 	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82GM45_HB,
+	  NULL, 		agp_i810_attach },
 #endif
 
 #if NAGP_INTEL > 0
@@ -400,8 +404,10 @@ agp_alloc_gatt(struct agp_softc *sc)
 
 	if (agp_alloc_dmamem(sc->as_dmat, entries * sizeof(u_int32_t),
 	    0, &gatt->ag_dmamap, &virtual, &gatt->ag_physical,
-	    &gatt->ag_dmaseg, 1, &dummyseg) != 0)
+	    &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
+		free(gatt, M_AGP);
 		return NULL;
+	}
 	gatt->ag_virtual = (uint32_t *)virtual;
 
 	gatt->ag_size = entries * sizeof(u_int32_t);

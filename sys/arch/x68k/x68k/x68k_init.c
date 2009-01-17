@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.10 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.10.74.1 2009/01/17 13:28:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.10 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.10.74.1 2009/01/17 13:28:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,41 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.10 2005/12/24 22:45:40 perry Exp $")
 #include <machine/bus.h>
 
 #include <arch/x68k/dev/intiovar.h>
-#include <arch/x68k/dev/mfp.h>
 #include <x68k/x68k/iodevice.h>
-#define zsdev IODEVbase->io_inscc
 
-volatile struct IODEVICE *IODEVbase = (volatile struct IODEVICE *) PHYS_IODEV;
-
-void intr_reset(void);
-
-extern int iera;
-extern int ierb;
-/*
- * disable all interrupt.
- */
-void
-intr_reset(void)
-{
-	/* I/O Controller */
-	ioctlr.intr = 0;
-
-	/* Internal RS-232C port */
-	zsdev.zs_chan_a.zc_csr = 1;
-	__asm("nop");
-	zsdev.zs_chan_a.zc_csr = 0;
-	__asm("nop");
-
-	/* mouse */
-	zsdev.zs_chan_b.zc_csr = 1;
-	__asm("nop");
-	zsdev.zs_chan_b.zc_csr = 0;
-	__asm("nop");
-
-	mfp_send_usart(0x41);
-
-	/* MFP (hard coded interrupt vector XXX) */
-	mfp_set_vr(0x40);
-	mfp_set_iera(0);
-	mfp_set_ierb(0);
-}
+volatile struct IODEVICE *IODEVbase;

@@ -207,4 +207,8 @@ struct ieee80211_rateset {
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
 };
 
+extern const struct ieee80211_rateset ieee80211_std_rateset_11a;
+extern const struct ieee80211_rateset ieee80211_std_rateset_11b;
+extern const struct ieee80211_rateset ieee80211_std_rateset_11g;
+
 #endif /* !_NET80211__IEEE80211_H_ */

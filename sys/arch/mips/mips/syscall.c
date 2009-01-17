@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.33.6.1 2008/06/02 13:22:25 mjf Exp $	*/
+/*	$NetBSD: syscall.c,v 1.33.6.2 2009/01/17 13:28:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33.6.1 2008/06/02 13:22:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33.6.2 2009/01/17 13:28:17 mjf Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_sa.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +119,9 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33.6.1 2008/06/02 13:22:25 mjf Exp $")
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -188,6 +195,12 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 
 	callp = p->p_emul->e_sysent;
 	ov0 = code = frame->f_regs[_R_V0] - SYSCALL_SHIFT;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	switch (code) {
 	case SYS_syscall:
@@ -275,7 +288,7 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	rval[1] = frame->f_regs[_R_V1];
 #endif
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -330,6 +343,12 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 
 	callp = p->p_emul->e_sysent;
 	ov0 = code = frame->f_regs[_R_V0] - SYSCALL_SHIFT;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	switch (code) {
 	case SYS_syscall:
@@ -420,7 +439,7 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	rval[1] = frame->f_regs[_R_V1];
 #endif
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:

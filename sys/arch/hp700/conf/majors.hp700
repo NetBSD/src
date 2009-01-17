@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp700,v 1.22 2007/12/31 15:31:54 ad Exp $
+#	$NetBSD: majors.hp700,v 1.22.6.1 2009/01/17 13:28:01 mjf Exp $
 #
 # Device majors for hp700
 #
@@ -22,7 +22,6 @@ device-major	uk		char 15			uk
 device-major	filedesc	char 16
 device-major	bpf		char 17			bpfilter
 device-major	tun		char 18			tun
-device-major	lkm		char 19			lkm
 device-major	rnd		char 20			rnd
 device-major	ipl		char 21			ipfilter
 device-major	pdc		char 22

@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.78.6.3 2008/09/28 10:40:23 mjf Exp $	*/
+/*	$NetBSD: midway.c,v 1.78.6.4 2009/01/17 13:28:55 mjf Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.78.6.3 2008/09/28 10:40:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.78.6.4 2009/01/17 13:28:55 mjf Exp $");
 
 #include "opt_natm.h"
 
@@ -140,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.78.6.3 2008/09/28 10:40:23 mjf Exp $");
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #else
-#define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
+#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
 #endif
 
 #if NEN > 0 || !defined(__FreeBSD__)
@@ -1199,39 +1199,30 @@ void *data;
 #endif
 		break;
 #endif
-	case SIOCSIFADDR:
-#ifdef INET6
-	case SIOCSIFADDR_IN6:
-#endif
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		en_reset(sc);
+		en_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			en_reset(sc);
-			en_init(sc);
 			ifa->ifa_rtrequest = atm_rtrequest; /* ??? */
 			break;
 #endif
 #ifdef INET6
 		case AF_INET6:
-			en_reset(sc);
-			en_init(sc);
 			ifa->ifa_rtrequest = atm_rtrequest; /* ??? */
 			break;
 #endif
 		default:
 			/* what to do if not INET? */
-			en_reset(sc);
-			en_init(sc);
 			break;
 		}
 		break;
 
-	case SIOCGIFADDR:
-		error = EINVAL;
-		break;
-
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 #ifdef ATM_PVCEXT
 	  	/* point-2-point pvc is allowed to change if_flags */
 		if (((ifp->if_flags & IFF_UP) && !(ifp->if_flags & IFF_RUNNING))
@@ -1344,7 +1335,7 @@ void *data;
 #endif /* ATM_PVCEXT */
 
 	default:
-	    error = EINVAL;
+	    error = ifioctl_common(ifp, cmd, data);
 	    break;
     }
     splx(s);
@@ -2694,7 +2685,7 @@ void *arg;
   {
     char sbuf[256];
 
-    bitmask_snprintf(reg, MID_INTBITS, sbuf, sizeof(sbuf));
+    snprintb(sbuf, sizeof(sbuf), MID_INTBITS, reg);
     printf("%s: interrupt=0x%s\n", device_xname(&sc->sc_dev), sbuf);
   }
 #endif
@@ -2706,7 +2697,7 @@ void *arg;
   if ((reg & (MID_INT_IDENT|MID_INT_LERR|MID_INT_DMA_ERR|MID_INT_SUNI)) != 0) {
     char sbuf[256];
 
-    bitmask_snprintf(reg, MID_INTBITS, sbuf, sizeof(sbuf));
+    snprintb(sbuf, sizeof(sbuf), MID_INTBITS, reg);
     printf("%s: unexpected interrupt=0x%s, resetting card\n",
            device_xname(&sc->sc_dev), sbuf);
 #ifdef EN_DEBUG
@@ -3429,7 +3420,7 @@ int unit, level;
     if (unit != -1 && unit != lcv)
       continue;
 
-    bitmask_snprintf(level, END_BITS, sbuf, sizeof(sbuf));
+    snprintb(sbuf, sizeof(sbuf), END_BITS, level);
     printf("dumping device %s at level 0x%s\n", device_xname(&sc->sc_dev), sbuf);
 
     if (sc->dtq_us == 0) {
@@ -3477,13 +3468,13 @@ int unit, level;
       printf("mregs:\n");
       printf("resid = 0x%x\n", EN_READ(sc, MID_RESID));
 
-      bitmask_snprintf(EN_READ(sc, MID_INTSTAT), MID_INTBITS, ybuf, sizeof(ybuf));
+      snprintb(ybuf, sizeof(ybuf), MID_INTBITS, EN_READ(sc, MID_INTSTAT));
       printf("interrupt status = 0x%s\n", ybuf);
 
-      bitmask_snprintf(EN_READ(sc, MID_INTENA), MID_INTBITS, ybuf, sizeof(ybuf));
+      snprintb(ybuf, sizeof(ybuf), MID_INTBITS, EN_READ(sc, MID_INTENA));
       printf("interrupt enable = 0x%s\n", ybuf);
 
-      bitmask_snprintf(EN_READ(sc, MID_MAST_CSR), MID_MCSRBITS, ybuf, sizeof(ybuf));
+      snprintb(ybuf, sizeof(ybuf), MID_MCSRBITS, EN_READ(sc, MID_MAST_CSR));
       printf("mcsr = 0x%s\n", ybuf);
 
       printf("serv_write = [chip=%d] [us=%d]\n", EN_READ(sc, MID_SERV_WRITE),
@@ -3642,7 +3633,7 @@ static void rrp_add(sc, ifp)
 	}
 
 	/* create a new entry */
-	MALLOC(new, struct rrp *, sizeof(struct rrp), M_DEVBUF, M_WAITOK);
+	new = malloc(sizeof(struct rrp), M_DEVBUF, M_WAITOK);
 	if (new == NULL) {
 		printf("en_rrp_add: malloc failed!\n");
 		return;
@@ -3694,7 +3685,7 @@ static void rrp_delete(sc, ifp)
 				if (head == p)
 					sc->txrrp = p->next;
 			}
-			FREE(p, M_DEVBUF);
+			free(p, M_DEVBUF);
 		}
 		prev = p;
 		p = prev->next;

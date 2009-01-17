@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.13.16.1 2008/06/02 13:23:21 mjf Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.13.16.2 2009/01/17 13:28:55 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.13.16.1 2008/06/02 13:23:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.13.16.2 2009/01/17 13:28:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,8 +276,8 @@ hlcd_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 {
 	struct hlcd_screen *hdscr = v, *new;
 
-	new = *cookiep = malloc(sizeof(struct hlcd_screen), M_DEVBUF, M_WAITOK);
-	bzero(*cookiep, sizeof(struct hlcd_screen));
+	new = *cookiep = malloc(sizeof(struct hlcd_screen),
+				M_DEVBUF, M_WAITOK|M_ZERO);
 	new->hlcd_sc = hdscr->hlcd_sc;
 	new->image = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
 	memset(new->image, ' ', PAGE_SIZE);

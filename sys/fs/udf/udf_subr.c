@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.44.6.4 2008/10/05 20:11:31 mjf Exp $ */
+/* $NetBSD: udf_subr.c,v 1.44.6.5 2009/01/17 13:29:17 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,12 +29,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.6.4 2008/10/05 20:11:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.6.5 2009/01/17 13:29:17 mjf Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -139,8 +138,7 @@ udf_dump_discinfo(struct udf_mount *ump)
 	printf("\tfst on last ses    %d\n", di->first_track_last_session);
 	printf("\tlst on last ses    %d\n", di->last_track_last_session);
 	printf("\tlink block penalty %d\n", di->link_block_penalty);
-	bitmask_snprintf(di->disc_flags, MMC_DFLAGS_FLAGBITS, bits,
-		sizeof(bits));
+	snprintb(bits, sizeof(bits), MMC_DFLAGS_FLAGBITS, di->disc_flags);
 	printf("\tdisc flags         %s\n", bits);
 	printf("\tdisc id            %x\n", di->disc_id);
 	printf("\tdisc barcode       %"PRIx64"\n", di->disc_barcode);
@@ -148,9 +146,9 @@ udf_dump_discinfo(struct udf_mount *ump)
 	printf("\tnum sessions       %d\n", di->num_sessions);
 	printf("\tnum tracks         %d\n", di->num_tracks);
 
-	bitmask_snprintf(di->mmc_cur, MMC_CAP_FLAGBITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), MMC_CAP_FLAGBITS, di->mmc_cur);
 	printf("\tcapabilities cur   %s\n", bits);
-	bitmask_snprintf(di->mmc_cap, MMC_CAP_FLAGBITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), MMC_CAP_FLAGBITS, di->mmc_cap);
 	printf("\tcapabilities cap   %s\n", bits);
 }
 #else
@@ -489,7 +487,9 @@ udf_check_track_metadata_overlap(struct udf_mount *ump,
 int
 udf_search_writing_tracks(struct udf_mount *ump)
 {
+	struct vnode *devvp = ump->devvp;
 	struct mmc_trackinfo trackinfo;
+	struct mmc_op        op;
 	struct part_desc *part;
 	uint32_t tracknr, start_track, num_tracks;
 	uint32_t track_start, track_end, part_start, part_end;
@@ -528,6 +528,26 @@ udf_search_writing_tracks(struct udf_mount *ump)
 		if (error)
 			return error;
 
+		/*
+		 * If this track is marked damaged, ask for repair. This is an
+		 * optional command, so ignore its error but report warning.
+		 */
+		if (trackinfo.flags & MMC_TRACKINFO_DAMAGED) {
+			memset(&op, 0, sizeof(op));
+			op.operation   = MMC_OP_REPAIRTRACK;
+			op.mmc_profile = ump->discinfo.mmc_profile;
+			op.tracknr     = tracknr;
+			error = VOP_IOCTL(devvp, MMCOP, &op, FKIOCTL, NOCRED);
+			if (error)
+				(void)printf("Drive can't explicitly repair "
+					"damaged track %d, but it might "
+					"autorepair\n", tracknr);
+
+			/* reget track info */
+			error = udf_update_trackinfo(ump, &trackinfo);
+			if (error)
+				return error;
+		}
 		if ((trackinfo.flags & MMC_TRACKINFO_NWA_VALID) == 0)
 			continue;
 	
@@ -1991,6 +2011,12 @@ udf_process_vds(struct udf_mount *ump) {
 	if (n_spar)
 		ump->strategy = &udf_strat_rmw;
 
+#if 0
+	/* read-only access won't benefit from the other shedulers */
+	if (ump->vfs_mountp->mnt_flag & MNT_RDONLY)
+		ump->strategy = &udf_strat_direct;
+#endif
+
 	/* print results */
 	DPRINTF(VOLUMES, ("\tdata partition    %d\n", ump->data_part));
 	DPRINTF(VOLUMES, ("\t\talloc scheme %d\n", ump->vtop_alloc[ump->data_part]));
@@ -1999,11 +2025,11 @@ udf_process_vds(struct udf_mount *ump) {
 	DPRINTF(VOLUMES, ("\tfids partition    %d\n", ump->fids_part));
 	DPRINTF(VOLUMES, ("\t\talloc scheme %d\n", ump->vtop_alloc[ump->fids_part]));
 
-	bitmask_snprintf(ump->lvopen,  UDFLOGVOL_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), UDFLOGVOL_BITS, ump->lvopen);
 	DPRINTF(VOLUMES, ("\tactions on logvol open  %s\n", bits));
-	bitmask_snprintf(ump->lvclose, UDFLOGVOL_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), UDFLOGVOL_BITS, ump->lvclose);
 	DPRINTF(VOLUMES, ("\tactions on logvol close %s\n", bits));
-	bitmask_snprintf(ump->lvreadwrite, UDFONERROR_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), UDFONERROR_BITS, ump->lvreadwrite);
 	DPRINTF(VOLUMES, ("\tactions on logvol errors %s\n", bits));
 
 	DPRINTF(VOLUMES, ("\tselected sheduler `%s`\n", 
@@ -3617,8 +3643,7 @@ udf_write_terminator(struct udf_mount *ump, uint32_t sector)
 	union dscrptr *dscr;
 	int error;
 
-	dscr = malloc(ump->discinfo.sector_size, M_TEMP, M_WAITOK);
-	bzero(dscr, ump->discinfo.sector_size);
+	dscr = malloc(ump->discinfo.sector_size, M_TEMP, M_WAITOK|M_ZERO);
 	udf_inittag(ump, &dscr->tag, TAGID_TERM, sector);
 
 	/* CRC length for an anchor is 512 - tag length; defined in Ecma 167 */
@@ -3965,10 +3990,11 @@ udf_getownership(struct udf_node *udf_node, uid_t *uidp, gid_t *gidp)
 	}
 	
 	/* do the uid/gid translation game */
-	if ((uid == (uid_t) -1) && (gid == (gid_t) -1)) {
+	if (uid == (uid_t) -1)
 		uid = ump->mount_args.anon_uid;
+	if (gid == (gid_t) -1)
 		gid = ump->mount_args.anon_gid;
-	}
+
 	*uidp = uid;
 	*gidp = gid;
 
@@ -3990,10 +4016,10 @@ udf_setownership(struct udf_node *udf_node, uid_t uid, gid_t gid)
 	/* do the uid/gid translation game */
 	nobody_uid = ump->mount_args.nobody_uid;
 	nobody_gid = ump->mount_args.nobody_gid;
-	if ((uid == nobody_uid) && (gid == nobody_gid)) {
+	if (uid == nobody_uid)
 		uid = (uid_t) -1;
+	if (gid == nobody_gid)
 		gid = (gid_t) -1;
-	}
 
 	if (fe) {
 		fe->uid  = udf_rw32((uint32_t) uid);
@@ -4088,9 +4114,6 @@ dirhash_fill(struct udf_node *dir_node)
 /*
  * Directory read and manipulation functions.
  *
- * Note that if the file is found, the cached diroffset position *before* the
- * advance is remembered. Thus if the same filename is lookup again just after
- * this lookup its immediately found.
  */
 
 int 
@@ -4483,7 +4506,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	struct icb_tag       *icbtag;
 	struct charspec osta_charspec;
 	struct dirent   dirent;
-	uint64_t unique_id, dir_size, diroffset;
+	uint64_t unique_id, dir_size;
 	uint64_t fid_pos, end_fid_pos, chosen_fid_pos;
 	uint32_t chosen_size, chosen_size_diff;
 	int lb_size, lb_rest, fidsize, this_fidsize, size_diff;
@@ -4532,8 +4555,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 		file_char = UDF_FILE_CHAR_DIR;
 
 	/* malloc scrap buffer */
-	fid = malloc(lb_size, M_TEMP, M_WAITOK);
-	bzero(fid, lb_size);
+	fid = malloc(lb_size, M_TEMP, M_WAITOK|M_ZERO);
 
 	/* calculate _minimum_ fid size */
 	unix_to_udf_name((char *) fid->data, &fid->l_fi,
@@ -4624,7 +4646,6 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 		}
 	}
 	chosen_size_diff = chosen_size - fidsize;
-	diroffset = chosen_fid_pos + chosen_size;
 
 	/* populate the FID */
 	memset(fid, 0, lb_size);
@@ -4800,6 +4821,12 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	genfs_node_init(nvp, &udf_genfsops);	/* inititise genfs */
 	udf_node->outstanding_bufs = 0;
 	udf_node->outstanding_nodedscr = 0;
+
+	/* check if we're fetching the root */
+	if (ump->fileset_desc)
+		if (memcmp(&udf_node->loc, &ump->fileset_desc->rootdir_icb,
+		    sizeof(struct long_ad)) == 0)
+			nvp->v_vflag |= VV_ROOT;
 
 	/* insert into the hash lookup */
 	udf_register_node(udf_node);
@@ -5616,7 +5643,7 @@ udf_update(struct vnode *vp, struct timespec *acc,
 	char bits[128];
 	DPRINTF(CALL, ("udf_update(node, %p, %p, %p, %d)\n", acc, mod, birth,
 		updflags));
-	bitmask_snprintf(udf_node->i_flags, IN_FLAGBITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), IN_FLAGBITS, udf_node->i_flags);
 	DPRINTF(CALL, ("\tnode flags %s\n", bits));
 	DPRINTF(CALL, ("\t\tmnt_async = %d\n", mnt_async));
 #endif
@@ -5902,10 +5929,10 @@ recount:
 
 	if (waitfor == MNT_WAIT) {
 		ndirty = ump->devvp->v_numoutput;
-		DPRINTF(NODE, ("counting pending blocks: on devvp %d\n",
+		DPRINTF(SYNC, ("counting pending blocks: on devvp %d\n",
 			ndirty));
 		udf_sync_pass(ump, cred, waitfor, 3, &ndirty);
-		DPRINTF(NODE, ("counted num dirty pending blocks %d\n",
+		DPRINTF(SYNC, ("counted num dirty pending blocks %d\n",
 			ndirty));
 	
 		if (ndirty) {

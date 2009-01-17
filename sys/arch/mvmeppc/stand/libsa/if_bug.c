@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bug.c,v 1.1.122.1 2008/06/02 13:22:27 mjf Exp $	*/
+/*	$NetBSD: if_bug.c,v 1.1.122.2 2009/01/17 13:28:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 static int	bug_match(struct netif *, void *);
 static int	bug_probe(struct netif *, void *);
 static void	bug_init(struct iodesc *, void *);
-static int	bug_get(struct iodesc *, void *, size_t, time_t);
+static int	bug_get(struct iodesc *, void *, size_t, saseconds_t);
 static int	bug_put(struct iodesc *, void *, size_t);
 static void	bug_end(struct netif *);
 
@@ -147,7 +147,7 @@ bug_get(desc, pkt, len, timeout)
 	struct	iodesc *desc;
 	void	*pkt;
 	size_t	len;
-	time_t	timeout;
+	saseconds_t	timeout;
 {
 	struct netif *nif = desc->io_netif;
 	struct bug_softc *sc = nif->nif_devdata;

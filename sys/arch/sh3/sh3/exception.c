@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.46.6.3 2008/06/29 09:32:59 mjf Exp $	*/
+/*	$NetBSD: exception.c,v 1.46.6.4 2009/01/17 13:28:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.6.3 2008/06/29 09:32:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.6.4 2009/01/17 13:28:29 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -459,7 +459,7 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(p);
+			ADDUPROF(l);
 		}
 
 		if (l->l_cpu->ci_want_resched) {
@@ -469,4 +469,17 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		userret(l);
 	}
+}
+
+/*
+ * void upcallret(struct lwp *l):
+ *
+ *     Perform userret() for an LWP.
+ *     XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	userret(l);
 }

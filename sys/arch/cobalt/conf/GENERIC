@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111.6.2 2008/09/28 10:39:52 mjf Exp $
+# $NetBSD: GENERIC,v 1.111.6.3 2009/01/17 13:27:56 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.111.6.2 $"
+#ident 		"GENERIC-$Revision: 1.111.6.3 $"
 
 maxusers	32
 
@@ -32,7 +32,6 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-options 	LKM		# loadable kernel modules
 options 	NTP		# network time protocol
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -87,6 +86,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
@@ -95,7 +95,6 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -297,10 +296,13 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 # PCI audio devices
 #clcs*		at pci? dev ? function ?	# Cirrus Logic CS4280
 #eap*		at pci? dev ? function ?	# Ensoniq AudioPCI
+#emuxki* 	at pci? dev ? function ?	# SoundBlaster Live!
 #eso*		at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 #fms*		at pci? dev ? function ?	# Forte Media FM801
-#sbl*		at pci? dev ? function ?	# SoundBlaster Live!
 #sv*		at pci? dev ? function ?	# S3 SonicVibes
+
+# Audio support
+#audio*		at audiobus?
 
 # Pseudo-devices
 
@@ -360,6 +362,10 @@ pseudo-device	nullcons			# no-op console
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb				# experimental - SMB requester
+
 pseudo-device	ksyms				# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if

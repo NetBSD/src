@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.122.6.4 2008/09/28 10:40:51 mjf Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.122.6.5 2009/01/17 13:29:18 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.122.6.4 2008/09/28 10:40:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.122.6.5 2009/01/17 13:29:18 mjf Exp $");
 
 #include "opt_sysv.h"
-#include "opt_posix.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_compat_netbsd.h"
+#include "opt_sa.h"
+#include "opt_posix.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -57,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.122.6.4 2008/09/28 10:40:51 mjf Ex
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/tty.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/exec.h>
@@ -66,16 +68,27 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.122.6.4 2008/09/28 10:40:51 mjf Ex
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-
-#include <miscfs/specfs/specdev.h>
+#include <sys/ksem.h>
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
 #endif
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#endif
+
+#ifdef KERN_SA
+#include <sys/sa.h>
+#endif
 
 #include <sys/cpu.h>
 
-/* XXX this should not be here */
+#if defined(MODULAR) || defined(P1003_1B_SEMAPHORE)
+int posix_semaphores = 200112;
+#else
+int posix_semaphores;
+#endif
+
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
@@ -125,6 +138,7 @@ static const u_int sysctl_lwpflagmap[] = {
 	LW_INMEM, P_INMEM,
 	LW_SINTR, P_SINTR,
 	LW_SYSTEM, P_SYSTEM,
+	LW_SA, P_SA,	/* WRS ??? */
 	0
 };
 
@@ -436,6 +450,17 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System boot time"),
 		       NULL, 0, &boottime, sizeof(boottime),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
+#ifdef COMPAT_50
+	{
+		extern struct timeval50 boottime50;
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_STRUCT, "oboottime",
+			       SYSCTL_DESCR("System boot time"),
+			       NULL, 0, &boottime50, sizeof(boottime50),
+			       CTL_KERN, KERN_OBOOTTIME, CTL_EOL);
+	}
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "domainname",
@@ -695,17 +720,13 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, _POSIX_THREADS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_THREADS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "posix_semaphores",
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Semaphores option to which the system "
 				    "attempts to conform"), NULL,
-#ifdef P1003_1B_SEMAPHORE
-		       200112,
-#else /* P1003_1B_SEMAPHORE */
-		       0,
-#endif /* P1003_1B_SEMAPHORE */
-		       NULL, 0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
+		       0, &posix_semaphores,
+		       0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_barriers",
@@ -829,12 +850,35 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_security_setidcore, 0, &security_setidcore_mode,
 		       0,
 		       CTL_CREATE, CTL_EOL);
+#ifdef KERN_SA
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "no_sa_support",
+		       SYSCTL_DESCR("0 if the kernel supports SA, otherwise it doesn't"),
+		       NULL, 0, &sa_system_disabled, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+#else
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "no_sa_support",
 		       SYSCTL_DESCR("0 if the kernel supports SA, otherwise it doesn't"),
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
+#endif
+
+	/* kern.posix. */
+	sysctl_createv(clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "posix",
+			SYSCTL_DESCR("POSIX options"),
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+			CTLTYPE_INT, "semmax",
+			SYSCTL_DESCR("Maximal number of semaphores"),
+			NULL, 0, &ksem_max, 0,
+			CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -1883,7 +1927,7 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	 */
 	error = 0;
 	sysctl_unlock();
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	for (i = 0; i < max_devsw_convs; i++) {
 		dname = devsw_conv[i].d_name;
 		if (dname == NULL)
@@ -1896,15 +1940,15 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 		kd.d_bmajor = devsw_conv[i].d_bmajor;
 		kd.d_cmajor = devsw_conv[i].d_cmajor;
 		strlcpy(kd.d_name, dname, sizeof kd.d_name);
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		error = dcopyout(l, &kd, where, sizeof kd);
-		mutex_enter(&specfs_lock);
+		mutex_enter(&device_lock);
 		if (error != 0)
 			break;
 		buflen -= sizeof kd;
 		where += sizeof kd;
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 	sysctl_relock();
 	*oldlenp = where - start;
 	return error;
@@ -2027,6 +2071,11 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			    NULL, NULL);
 			mutex_exit(p->p_lock);
 			if (error != 0) {
+				/*
+				 * Don't leak kauth retval if we're silently
+				 * skipping this entry.
+				 */
+				error = 0;
 				continue;
 			}
 
@@ -2778,7 +2827,7 @@ sysctl_hw_usermem(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	switch (rnode->sysctl_num) {
-	    case HW_USERMEM:
+	case HW_USERMEM:
 		if ((ui = physmem - uvmexp.wired) > (UINT_MAX / PAGE_SIZE))
 			ui = UINT_MAX;
 		else
@@ -2866,6 +2915,39 @@ sysctl_consdev(SYSCTLFN_ARGS)
  * section 4: support for some helpers
  * ********************************************************************
  */
+/*
+ * Find the most ``active'' lwp of a process and return it for ps display
+ * purposes
+ */
+static struct lwp *
+proc_active_lwp(struct proc *p)
+{
+	static const int ostat[] = {
+		0,	
+		2,	/* LSIDL */
+		6,	/* LSRUN */
+		5,	/* LSSLEEP */
+		4,	/* LSSTOP */
+		0,	/* LSZOMB */
+		1,	/* LSDEAD */
+		7,	/* LSONPROC */
+		3	/* LSSUSPENDED */
+	};
+
+	struct lwp *l, *lp = NULL;
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		KASSERT(l->l_stat >= 0 && l->l_stat < __arraycount(ostat));
+		if (lp == NULL ||
+		    ostat[l->l_stat] > ostat[lp->l_stat] ||
+		    (ostat[l->l_stat] == ostat[lp->l_stat] &&
+		    l->l_cpticks > lp->l_cpticks)) {
+			lp = l;
+			continue;
+		}
+	}
+	return lp;
+}
+
 
 /*
  * Fill in a kinfo_proc2 structure for the specified process.
@@ -2954,7 +3036,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_ssize = vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
-		l = LIST_FIRST(&p->p_lwps);
+		l = proc_active_lwp(p);
 		KASSERT(l != NULL);
 		lwp_lock(l);
 		ki->p_nrlwps = p->p_nrlwps;
@@ -3005,7 +3087,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 			ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ki->p_tsess = PTRTOUINT64(tp->t_session);
 		} else {
-			ki->p_tdev = NODEV;
+			ki->p_tdev = (int32_t)NODEV;
 		}
 	}
 
@@ -3124,7 +3206,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_vm.vm_ssize = vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
-		l = LIST_FIRST(&p->p_lwps);
+		l = proc_active_lwp(p);
 		KASSERT(l != NULL);
 		lwp_lock(l);
 		if (l->l_wchan)
@@ -3143,7 +3225,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ep->e_tsess = tp->t_session;
 		} else
-			ep->e_tdev = NODEV;
+			ep->e_tdev = (uint32_t)NODEV;
 		ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
 		if (SESS_LEADER(p))
 			ep->e_flag |= EPROC_SLEADER;

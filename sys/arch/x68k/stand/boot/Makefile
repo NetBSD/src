@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2007/11/11 05:33:12 isaki Exp $
+#	$NetBSD: Makefile,v 1.14.14.1 2009/01/17 13:28:37 mjf Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,8 @@ NOMAN=		# defined
 
 BOOT=		Multi-boot
 VERSIONFILE=	${.CURDIR}/version
-VERSION!=	awk -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } END { print it }' ${VERSIONFILE}
+VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
+			END { print it }' ${VERSIONFILE}
 NEWVERSWHAT=	"${BOOT}"
 
 # text address
@@ -50,7 +51,7 @@ LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs
 
 .include "../Makefile.booters"
 
-realall: machine-links ${PROG}
+realall: ${PROG}
 ${PROG}:	${OBJS} ${LIBSA}/libsa.a ${LIBIOCS}/libiocs.a
 	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}

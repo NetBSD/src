@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.6.6.2 2008/09/28 10:39:59 mjf Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.6.6.3 2009/01/17 13:28:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.6.6.2 2008/09/28 10:39:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.6.6.3 2009/01/17 13:28:03 mjf Exp $");
 
 #include "opt_xen.h"
 
@@ -44,10 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.6.6.2 2008/09/28 10:39:59 mjf Exp $");
 #include <machine/segments.h>
 
 #include "assym.h"
-
-/* Small and slow, so align less. */
-#undef _ALIGN_TEXT
-#define	_ALIGN_TEXT	.align 8
 
 ENTRY(x86_lfence)
 	lock
@@ -167,45 +163,6 @@ ENTRY(breakpoint)
 	popl	%ebp
 	ret
 END(breakpoint)
-
-ENTRY(x86_atomic_testset_ul)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	xchgl	%eax, (%ecx)
-	ret
-END(x86_atomic_testset_ul)
-
-ENTRY(x86_atomic_testset_i)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	xchgl	%eax, (%ecx)
-	ret
-END(x86_atomic_testset_i)
-
-ENTRY(x86_atomic_testset_b)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	xchgb	%al, (%ecx)
-	andl	$0xff, %eax
-	ret
-END(x86_atomic_testset_b)
-
-ENTRY(x86_atomic_setbits_l)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	lock
-	orl	%eax, (%ecx)
-	ret
-END(x86_atomic_setbits_l)
-
-ENTRY(x86_atomic_clearbits_l)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	notl	%eax
-	lock
-	andl	%eax, (%ecx)
-	ret
-END(x86_atomic_clearbits_l)
 
 ENTRY(x86_curcpu)
 	movl	%fs:(CPU_INFO_SELF), %eax

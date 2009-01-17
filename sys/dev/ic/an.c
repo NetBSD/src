@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.50.10.2 2008/09/28 10:40:21 mjf Exp $	*/
+/*	$NetBSD: an.c,v 1.50.10.3 2009/01/17 13:28:54 mjf Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.50.10.2 2008/09/28 10:40:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.50.10.3 2009/01/17 13:28:54 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -347,7 +347,7 @@ an_attach(struct an_softc *sc)
 /*
  * Setup sysctl(3) MIB, hw.an.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_an, "sysctl an(4) subtree setup")
 {
@@ -889,6 +889,8 @@ an_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (sc->sc_enabled) {
 				/*

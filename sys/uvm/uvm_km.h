@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.17 2007/02/21 23:00:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.17.38.1 2009/01/17 13:29:43 mjf Exp $	*/
 
 /*
  *
@@ -49,9 +49,9 @@
 
 void uvm_km_init(vaddr_t, vaddr_t);
 void uvm_km_pgremove(vaddr_t, vaddr_t);
-void uvm_km_pgremove_intrsafe(vaddr_t, vaddr_t);
+void uvm_km_pgremove_intrsafe(struct vm_map *, vaddr_t, vaddr_t);
 #if defined(DEBUG)
-void uvm_km_check_empty(vaddr_t, vaddr_t, bool);
+void uvm_km_check_empty(struct vm_map *, vaddr_t, vaddr_t);
 #else
 #define	uvm_km_check_empty(a, b, c)	/* nothing */
 #endif /* defined(DEBUG) */

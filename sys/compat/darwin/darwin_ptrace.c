@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.14.6.1 2008/06/02 13:22:57 mjf Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.14.6.2 2009/01/17 13:28:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14.6.1 2008/06/02 13:22:57 mjf Exp $");
-
-#include "opt_ptrace.h"
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14.6.2 2009/01/17 13:28:41 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14.6.1 2008/06/02 13:22:57 mjf E
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_ptrace.h>
@@ -59,150 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14.6.1 2008/06/02 13:22:57 mjf E
 int
 darwin_sys_ptrace(struct lwp *l, const struct darwin_sys_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
 	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
 		syscallarg(void *) addr;
 		syscallarg(int) data;
 	} */
-	int req = SCARG(uap, req);
-	struct proc *p = l->l_proc;
-	struct darwin_emuldata *ded = NULL;
-	struct proc *t;			/* target process */
-	struct sys_ptrace_args bsd_ua;
-	int error;
 
-#ifdef _LKM
-#define sys_ptrace (*sysent[SYS_ptrace].sy_call)
-	if (sys_ptrace == sys_nosys)
-		return ENOSYS;
-#endif
-
-	/* XXXAD locking */
-	SCARG(&bsd_ua, req) = SCARG(uap, req);
-	SCARG(&bsd_ua, pid) = SCARG(uap, pid);
-	SCARG(&bsd_ua, addr) = SCARG(uap, addr);
-	SCARG(&bsd_ua, data) = SCARG(uap, data);
-
-
-	ded = (struct darwin_emuldata *)p->p_emuldata;
-
-	switch (req) {
-	case DARWIN_PT_ATTACHEXC:
-		if ((t = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
-
-		if (t->p_emul != &emul_darwin)
-			return ESRCH;
-		ded = t->p_emuldata;
-
-		if (ded->ded_flags & DARWIN_DED_SIGEXC)
-			return EBUSY;
-
-		ded->ded_flags |= DARWIN_DED_SIGEXC;
-
-		SCARG(&bsd_ua, req) = PT_ATTACH;
-		if ((error = sys_ptrace(l, &bsd_ua, retval)) != 0)
-			 ded->ded_flags &= ~DARWIN_DED_SIGEXC;
-
-		return error;
-		break;
-
-	case DARWIN_PT_SIGEXC:
-		if ((p->p_slflag & PSL_TRACED) == 0)
-			return EBUSY;
-
-		ded->ded_flags |= DARWIN_DED_SIGEXC;
-		break;
-
-	case DARWIN_PT_DETACH: {
-		int had_sigexc = 0;
-
-		if ((t = pfind(SCARG(uap, pid))) == NULL)
-			return (ESRCH);
-
-		if ((t->p_emul == &emul_darwin) &&
-		    (t->p_slflag & PSL_TRACED) &&
-		    (t->p_pptr == p)) {
-			ded = t->p_emuldata;
-			if (ded->ded_flags & DARWIN_DED_SIGEXC) {
-				had_sigexc = 1;
-				ded->ded_flags &= ~DARWIN_DED_SIGEXC;
-			}
-		}
-
-		/*
-		 * If the process is not marked as stopped,
-		 * sys_ptrace sanity checks will return EBUSY.
-		 */
-		mutex_enter(proc_lock);
-		mutex_enter(t->p_lock);
-		proc_stop(t, 0, SIGSTOP);
-		mutex_exit(t->p_lock);
-		mutex_exit(proc_lock);
-
-		if ((error = sys_ptrace(l, &bsd_ua, retval)) != 0) {
-			mutex_enter(proc_lock);
-			mutex_enter(t->p_lock);
-			proc_unstop(t);
-			mutex_exit(t->p_lock);
-			mutex_exit(proc_lock);
-			if (had_sigexc)
-				ded->ded_flags |= DARWIN_DED_SIGEXC;
-		}
-
-		break;
-	}
-
-	case DARWIN_PT_THUPDATE: {
-		int signo = SCARG(uap, data);
-
-		if ((t = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
-
-		/* Checks from native ptrace */
-		if (!ISSET(t->p_slflag, PSL_TRACED))
-			return EPERM;
-
-		if (ISSET(t->p_slflag, PSL_FSTRACE))
-			return EBUSY;
-
-		if (t->p_pptr != p)
-			return EBUSY;
-
-#if 0
-		if (t->p_stat != SSTOP || !ISSET(t->p_sflag, PS_WAITED))
-			return EBUSY;
-#endif
-		if ((signo < 0) || (signo > NSIG))
-			return EINVAL;
-
-		t->p_xstat = signo;
-		if (signo != 0)
-			sigaddset(&p->p_sigpend.sp_set, signo);
-
-		break;
-	}
-
-	case DARWIN_PT_READ_U:
-	case DARWIN_PT_WRITE_U:
-	case DARWIN_PT_STEP:
-	case DARWIN_PT_FORCEQUOTA:
-	case DARWIN_PT_DENY_ATTACH:
-		printf("darwin_sys_ptrace: unimplemented command %d\n", req);
-		break;
-
-	/* The other ptrace commands are the same on NetBSD */
-	default:
-		return sys_ptrace(l, &bsd_ua, retval);
-		break;
-	}
-
-	return 0;
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
+	return ENOSYS;	/* code was badly broken */
 }
 
 int

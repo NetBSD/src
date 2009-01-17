@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_proc.h,v 1.6.36.1 2008/06/02 13:22:57 mjf Exp $ */
+/*	$NetBSD: darwin_proc.h,v 1.6.36.2 2009/01/17 13:28:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct darwin_extern_proc {
 			struct darwin_proc *__p_forw;
 			struct darwin_proc *__p_back;
 		} p_st1;
-		struct timeval __p_starttime;
+		struct darwin_timeval __p_starttime;
 	} p_un;
 	struct darwin_vmspace *p_vmspace;
 	struct darwin_sigacts *p_sigacts;
@@ -106,7 +106,7 @@ struct darwin_extern_proc {
 	u_int	p_swtime;
 	u_int	p_slptime;
 	struct	itimerval p_realtimer;
-	struct	timeval p_rtime;
+	struct	darwin_timeval p_rtime;
 	u_quad_t p_uticks;
 	u_quad_t p_sticks;
 	u_quad_t p_iticks;
@@ -146,7 +146,7 @@ struct darwin_kinfo_proc {
 		pid_t	e_ppid;
 		pid_t	e_pgid;
 		short	e_jobc;
-		dev_t	e_tdev;
+		darwin_dev_t	e_tdev;
 		pid_t	e_tpgid;
 		struct	darwin_session *e_tsess;
 #define DARWIN_WMESGLEN 7

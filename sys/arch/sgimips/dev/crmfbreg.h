@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.7.6.1 2008/06/02 13:22:37 mjf Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.7.6.2 2009/01/17 13:28:28 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -173,7 +173,8 @@
 #define CRIME_DE_STIPPLE_PAT	0x20c4
 #define CRIME_DE_FG		0x20d0
 #define CRIME_DE_BG		0x20d8
-
+#define CRIME_DE_ALPHA_COLOR	0x21a0	/* constant colour for alpha */
+#define CRIME_DE_ALPHA_FUNC	0x21a8	/* blend function */
 #define CRIME_DE_ROP		0x21b0
 #define CRIME_DE_PLANEMASK	0x21b8
 
@@ -242,8 +243,33 @@
 #define DE_PRIM_TB		0x00020000	/* top to bottom */
 #define DE_PRIM_LINE_WIDTH_MASK	0x0000ffff	/* in half pixels */
 
+/* alpha function register */
+#define DE_ALPHA_ADD		0x00000000
+#define DE_ALPHA_MIN		0x00000100
+#define DE_ALPHA_MAX		0x00000200
+#define DE_ALPHA_SUB		0x00000300
+#define DE_ALPHA_REV_SUB	0x00000400
+
+#define DE_ALPHA_OP_ZERO		0
+#define DE_ALPHA_OP_ONE			1
+#define DE_ALPHA_OP_DST_COLOR		2
+#define DE_ALPHA_OP_1_MINUS_DST_COLOR	3
+#define DE_ALPHA_OP_SRC_ALPHA		4
+#define DE_ALPHA_OP_1_MINUS_SRC_ALPHA	5
+#define DE_ALPHA_OP_DST_ALPHA		6
+#define DE_ALPHA_OP_1_MINUS_DST_APLHA	7
+#define DE_ALPHA_OP_CONSTANT_COLOR	8
+#define DE_ALPHA_OP_1_MINUS_CONST_COLOR	9
+#define DE_ALPHA_OP_CONSTANT_ALPHA	10
+#define DE_ALPHA_OP_1_MINUS_CONST_ALPHA	11
+#define DE_ALPHA_OP_SRC_ALPHA_SATURATE	12
+
+#define DE_ALPHA_OP_SRC_SHIFT 4
+#define DE_ALPHA_OP_DST_SHIFT 0
+
 /* status register */
 #define CRIME_DE_STATUS		0x4000
 #define CRIME_DE_IDLE		0x10000000
+#define CRIME_DE_READY		0x02000000
 
 #endif /* CRMFBREG_H */

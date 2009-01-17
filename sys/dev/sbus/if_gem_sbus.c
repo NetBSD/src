@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.2.16.2 2008/06/02 13:23:49 mjf Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.2.16.3 2009/01/17 13:29:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.2.16.2 2008/06/02 13:23:49 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.2.16.3 2009/01/17 13:29:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,12 +93,6 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
-	sc->sc_chiprev = prom_getpropint(sa->sa_node, "gem-rev", 0);
-
-	printf(": GEM Ethernet controller (%s), version %s (rev 0x%02x)\n",
-	    sa->sa_name, prom_getpropstring(sa->sa_node, "version"),
-	    sc->sc_chiprev);
-
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
 			device_xname(self), sa->sa_nreg);
@@ -134,6 +128,7 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	if (!strcmp("serdes", prom_getpropstring(sa->sa_node, "shared-pins")))
 		sc->sc_flags |= GEM_SERDES;
 	sc->sc_variant = GEM_SUN_GEM;
+	sc->sc_flags &= ~GEM_PCI;
 
 	/*
 	 * SBUS config
@@ -142,6 +137,12 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	delay(100);
 	bus_space_write_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_CONFIG,
 	    GEM_SBUS_CFG_BSIZE128|GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
+	sc->sc_chiprev = bus_space_read_4(sa->sa_bustag, sc->sc_h2,
+	    GEM_SBUS_REVISION);
+
+	printf(": GEM Ethernet controller (%s), version %s (rev 0x%02x)\n",
+	    sa->sa_name, prom_getpropstring(sa->sa_node, "version"),
+	    sc->sc_chiprev);
 
 	gem_attach(sc, enaddr);
 

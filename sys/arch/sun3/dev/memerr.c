@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.20.74.1 2008/06/29 09:33:01 mjf Exp $ */
+/*	$NetBSD: memerr.c,v 1.20.74.2 2009/01/17 13:28:33 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.20.74.1 2008/06/29 09:33:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.20.74.2 2009/01/17 13:28:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,8 +178,8 @@ memerr_interrupt(void *arg)
 	    (ctx & 8) ? "DVMA" : "CPU");
 	printf(" ctx=%d, vaddr=0x%x, paddr=0x%x\n",
 	    (ctx & 7), va, pa);
-	printf(" csr=%s\n", bitmask_snprintf(csr, sc->sc_csrbits,
-	    bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), sc->sc_csrbits, csr);
+	printf(" csr=%s\n", bits);
 
 	/*
 	 * If we have parity-checked memory, there is

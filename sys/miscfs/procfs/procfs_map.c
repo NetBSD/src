@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.34.6.1 2008/09/28 10:40:55 mjf Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.34.6.2 2009/01/17 13:29:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.34.6.1 2008/09/28 10:40:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.34.6.2 2009/01/17 13:29:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ again:
 				}
 			}
 			pos += snprintf(buffer + pos, bufsize - pos,
-			    "%0*lx-%0*lx %c%c%c%c %0*lx %02x:%02x %ld     %s\n",
+			    "%0*lx-%0*lx %c%c%c%c %0*lx %llx:%llx %ld     %s\n",
 			    (int)sizeof(void *) * 2,(unsigned long)entry->start,
 			    (int)sizeof(void *) * 2,(unsigned long)entry->end,
 			    (entry->protection & VM_PROT_READ) ? 'r' : '-',
@@ -180,7 +180,8 @@ again:
 			    (entry->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
 			    (int)sizeof(void *) * 2,
 			    (unsigned long)entry->offset,
-			    major(dev), minor(dev), fileid, path);
+			    (unsigned long long)major(dev),
+			    (unsigned long long)minor(dev), fileid, path);
 		} else {
 			pos += snprintf(buffer + pos, bufsize - pos,
 			    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
