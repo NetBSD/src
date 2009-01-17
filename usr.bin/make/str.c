@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.31 2008/12/19 22:04:36 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.32 2009/01/17 13:29:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.31 2008/12/19 22:04:36 christos Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.32 2009/01/17 13:29:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.31 2008/12/19 22:04:36 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.32 2009/01/17 13:29:37 dsl Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -487,20 +487,20 @@ Str_SYSVMatch(const char *word, const char *pattern, int *len)
  *-----------------------------------------------------------------------
  */
 void
-Str_SYSVSubst(Buffer buf, char *pat, char *src, int len)
+Str_SYSVSubst(Buffer *buf, char *pat, char *src, int len)
 {
     char *m;
 
     if ((m = strchr(pat, '%')) != NULL) {
 	/* Copy the prefix */
-	Buf_AddBytes(buf, m - pat, (Byte *)pat);
+	Buf_AddBytes(buf, m - pat, pat);
 	/* skip the % */
 	pat = m + 1;
     }
 
     /* Copy the pattern */
-    Buf_AddBytes(buf, len, (Byte *)src);
+    Buf_AddBytes(buf, len, src);
 
     /* append the rest */
-    Buf_AddBytes(buf, strlen(pat), (Byte *)pat);
+    Buf_AddBytes(buf, strlen(pat), pat);
 }
