@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 2009/01/01 08:13:23 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.147 2009/01/17 07:17:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2009/01/01 08:13:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2009/01/17 07:17:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ static void	pmap_pvdump(paddr_t);
  * convert to a vax protection code.
  */
 #define pte_prot(m, p)	(protection_codes[p])
-int	protection_codes[8];
+u_int	protection_codes[8];
 
 /*
  * Kernel page table page management.

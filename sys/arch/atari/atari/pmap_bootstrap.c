@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1 2009/01/01 04:10:25 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 2009/01/17 07:17:35 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -82,19 +82,12 @@
 struct memseg	boot_segs[NMEM_SEGS];
 struct memseg	usable_segs[NMEM_SEGS];
 
-extern st_entry_t	*Sysseg;
-extern pt_entry_t	*Sysmap;
-
 extern paddr_t	avail_start;
 extern paddr_t	avail_end;
-extern vsize_t	mem_size;
-extern vaddr_t	virtual_avail;
-extern vaddr_t	virtual_end;
 #if defined(M68040) || defined(M68060)
 extern int	protostfree;
 #endif
 
-extern void *	msgbufaddr;
 extern paddr_t	msgbufpa;
 
 /*
@@ -102,8 +95,6 @@ extern paddr_t	msgbufpa;
  */
 void 		*CADDR1, *CADDR2;
 char		*vmmap;
-
-extern int	protection_codes[];
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -164,9 +155,9 @@ pmap_bootstrap(vaddr_t vstart, paddr_t sysseg_pa)
 	 * absolute "jmp" table.
 	 */
 	{
-		int *kp;
+		u_int *kp;
 
-		kp = (int *)&protection_codes;
+		kp = (u_int *)&protection_codes;
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;

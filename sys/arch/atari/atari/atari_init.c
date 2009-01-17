@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.72 2009/01/04 04:18:36 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.73 2009/01/17 07:17:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.72 2009/01/04 04:18:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.73 2009/01/17 07:17:35 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -118,11 +118,8 @@ int iomem_malloc_safe;
 static cpu_kcore_hdr_t cpu_kcore_hdr;
 
 extern u_int 	lowram;
-extern u_int	Sysptsize, proc0paddr;
-extern pt_entry_t *Sysptmap;
-extern st_entry_t *Sysseg;
+extern u_int	proc0paddr;
 int		machineid, mmutype, cputype, astpending;
-char		*vmmap;
 #if defined(M68040) || defined(M68060)
 extern int	protostfree;
 #endif
