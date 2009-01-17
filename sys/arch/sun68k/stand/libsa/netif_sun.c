@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.8 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.9 2009/01/17 12:47:02 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -337,8 +337,8 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
  * Receive a packet, including the ether header.
  * Return the total length received (or -1 on error).
  */
-int 
-netif_get(struct iodesc *desc, void *pkt, size_t maxlen, seseconds_t timo)
+ssize_t
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	struct netif *nif;
 	struct devdata *dd;
