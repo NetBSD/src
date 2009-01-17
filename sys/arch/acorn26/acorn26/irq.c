@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.13 2009/01/16 00:44:43 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.14 2009/01/17 15:43:52 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.13 2009/01/16 00:44:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.14 2009/01/17 15:43:52 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -209,7 +209,7 @@ handled:
 		extern struct evcnt _lock_cas_restart;
 #endif
 
-		if (pc >= _lock_cas && pc < _lock_cas_end) {
+		if (pc > _lock_cas && pc < _lock_cas_end) {
 			irqf->if_r15 = (irqf->if_r15 & ~R15_PC) | 
 			    (register_t)_lock_cas;
 #ifdef ARM_LOCK_CAS_DEBUG
