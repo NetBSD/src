@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.15 2009/01/17 13:29:37 dsl Exp $	*/
+/*	$NetBSD: buf.h,v 1.16 2009/01/17 13:55:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -87,6 +87,11 @@ typedef struct Buffer {
     int     count;	/* Number of bytes in buffer */
     Byte    *buffer;	/* The buffer itself (zero terminated) */
 } Buffer;
+
+/* If we aren't on netbsd, __predict_false() might not be defined. */
+#ifndef __predict_false
+#define __predict_false(x) (x)
+#endif
 
 /* Buf_AddByte adds a single byte to a buffer. */
 #define	Buf_AddByte(bp, byte) do { \
