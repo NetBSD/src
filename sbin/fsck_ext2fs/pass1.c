@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.16.8.1 2008/04/03 13:54:10 mjf Exp $	*/
+/*	$NetBSD: pass1.c,v 1.16.8.2 2009/01/17 13:48:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.16.8.1 2008/04/03 13:54:10 mjf Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.16.8.2 2009/01/17 13:48:52 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	lncntp[inumber] = fs2h16(dp->e2di_nlink);
 	if (dp->e2di_nlink == 0) {
-		zlnp = (struct zlncnt *)malloc(sizeof *zlnp);
+		zlnp = malloc(sizeof *zlnp);
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0)
@@ -369,7 +369,7 @@ pass1check(struct inodesc *idesc)
 					exit(FSCK_EXIT_CHECK_FAILED);
 				return (STOP);
 			}
-			new = (struct dups *)malloc(sizeof(struct dups));
+			new = malloc(sizeof(struct dups));
 			if (new == NULL) {
 				pfatal("DUP TABLE OVERFLOW.");
 				if (reply("CONTINUE") == 0)

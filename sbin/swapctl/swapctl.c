@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.32.18.1 2008/06/02 13:21:24 mjf Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.32.18.2 2009/01/17 13:48:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.32.18.1 2008/06/02 13:21:24 mjf Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.32.18.2 2009/01/17 13:48:54 mjf Exp $");
 #endif
 
 
@@ -523,7 +523,9 @@ get_dumpdev(void)
 		if (name)
 			printf("%s\n", name);
 		else
-			printf("major %d minor %d\n", major(dev), minor(dev));
+			printf("major %llu minor %llu\n",
+			    (unsigned long long)major(dev),
+			    (unsigned long long)minor(dev));
 	}
 	return 1;
 }

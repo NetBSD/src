@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.10.10.1 2008/09/28 11:17:13 mjf Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.10.10.2 2009/01/17 13:48:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.10.10.1 2008/09/28 11:17:13 mjf Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.10.10.2 2009/01/17 13:48:53 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,7 +272,7 @@ tryagain:
 				opflags &= ~BGRND;
 				if ((i = fork()) != 0) {
 					if (i == -1)
-						err(1, "nqnfs 2");
+						err(1, "fork");
 					exit(0);
 				}
 				(void) setsid();

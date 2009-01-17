@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_cd9660.8,v 1.26.20.1 2008/06/02 13:21:23 mjf Exp $
+.\" $NetBSD: mount_cd9660.8,v 1.26.20.2 2009/01/17 13:48:53 mjf Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"     @(#)mount_cd9660.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd March 29, 2005
+.Dd January 3, 2009
 .Dt MOUNT_CD9660 8
 .Os
 .Sh NAME
@@ -105,6 +105,9 @@ stating a version number (albeit it's quite difficult to know it, if
 you are not using the
 .Cm gens
 option), in which case you get the specified version.
+.It Cm nocasetrans
+A synonym for
+.Cm nomaplcase .
 .It Cm nojoliet
 Do not make use of Joliet extensions for long filenames which
 may be present in the filesystem.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31.18.2 2008/09/28 11:17:11 mjf Exp $
+#	$NetBSD: Makefile,v 1.31.18.3 2009/01/17 13:48:52 mjf Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -17,5 +17,10 @@ SRCS+= af_inet6.c
 .endif
 
 .include "Makefile.inc"
+
+.if ${MACHINE_ARCH} == "m68000"
+# XXX workaround for gcc -O1 bug (PR bin/40036 and toolchain/40066)
+COPTS.ifconfig.c+= -fno-loop-optimize
+.endif
 
 .include <bsd.prog.mk>

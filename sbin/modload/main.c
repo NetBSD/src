@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.6.2 2008/06/02 13:21:22 mjf Exp $	*/
+/*	$NetBSD: main.c,v 1.1.6.3 2009/01/17 13:48:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1.6.2 2008/06/02 13:21:22 mjf Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.6.3 2009/01/17 13:48:52 mjf Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -45,13 +45,14 @@ __RCSID("$NetBSD: main.c,v 1.1.6.2 2008/06/02 13:21:22 mjf Exp $");
 
 int		main(int, char **);
 static void	parse_bool_param(prop_dictionary_t, const char *,
-		    const char *);
+				 const char *);
 static void	parse_int_param(prop_dictionary_t, const char *,
-		    const char *);
+				const char *);
 static void	parse_param(prop_dictionary_t, const char *,
-		    void (*)(prop_dictionary_t, const char *, const char *));
+			    void (*)(prop_dictionary_t, const char *,
+			    const char *));
 static void	parse_string_param(prop_dictionary_t, const char *,
-		    const char *);
+				   const char *);
 static void	usage(void) __dead;
 
 int
@@ -114,10 +115,9 @@ main(int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
-static
-void
+static void
 parse_bool_param(prop_dictionary_t props, const char *name,
-    const char *value)
+		 const char *value)
 {
 	bool boolvalue;
 
@@ -138,10 +138,9 @@ parse_bool_param(prop_dictionary_t props, const char *name,
 	prop_dictionary_set(props, name, prop_bool_create(boolvalue));
 }
 
-static
-void
+static void
 parse_int_param(prop_dictionary_t props, const char *name,
-    const char *value)
+		const char *value)
 {
 	int64_t intvalue;
 
@@ -155,10 +154,9 @@ parse_int_param(prop_dictionary_t props, const char *name,
 	    prop_number_create_integer(intvalue));
 }
 
-static
-void
+static void
 parse_param(prop_dictionary_t props, const char *origstr,
-    void (*fmt_handler)(prop_dictionary_t, const char *, const char *))
+	    void (*fmt_handler)(prop_dictionary_t, const char *, const char *))
 {
 	char *name, *value;
 
@@ -176,10 +174,9 @@ parse_param(prop_dictionary_t props, const char *origstr,
 	free(name);
 }
 
-static
-void
+static void
 parse_string_param(prop_dictionary_t props, const char *name,
-    const char *value)
+		   const char *value)
 {
 
 	assert(name != NULL);

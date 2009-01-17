@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.122.12.2 2008/09/28 11:17:15 mjf Exp $ */
+/*	$NetBSD: sysctl.c,v 1.122.12.3 2009/01/17 13:48:54 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.122.12.2 2008/09/28 11:17:15 mjf Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.122.12.3 2009/01/17 13:48:54 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -2103,7 +2103,7 @@ kern_consdev(HANDLER_ARGS)
 		if (nflag < 2 && (sname = devname(cons, S_IFCHR)) != NULL)
 			printf("%s\n", sname);
 		else
-			printf("0x%x\n", cons);
+			printf("0x%llx\n", (unsigned long long)cons);
 	}
 }
 
