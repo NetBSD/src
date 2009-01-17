@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.70.6.2 2008/06/29 08:38:43 mjf Exp $
+# $NetBSD: rc.subr,v 1.70.6.3 2009/01/17 20:43:41 mjf Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -464,11 +464,25 @@ run_rc_command()
 					# if ${rcvar} is set, and $1 is not
 					# "rcvar", then run
 					#	checkyesno ${rcvar}
-					# and return if that failed
+					# and return if that failed or warn
+					# user and exit when interactive
 					#
 	if [ -n "${rcvar}" -a "$rc_arg" != "rcvar" ]; then
 		if ! checkyesno ${rcvar}; then
-			return 0
+					# check whether interactive or not
+			if [ -n "$_run_rc_script" ]; then
+				return 0
+			fi
+			for _elem in $_keywords; do
+				if [ "$_elem" = "$rc_arg" ]; then
+					echo 1>&2 "\$${rcvar} is not enabled - see ${rcvar_manpage}."
+					echo 1>&2 "Use the following if you wish to perform the operation:"
+					echo 1>&2 "  $0 one${rc_arg}"
+					exit 1
+				fi
+			done
+			echo 1>&2 "$0: unknown directive '$rc_arg'."
+			rc_usage "$_keywords"
 		fi
 	fi
 
@@ -713,6 +727,8 @@ run_rc_script()
 	if [ -z "$_file" -o -z "$_arg" ]; then
 		err 3 'USAGE: run_rc_script file arg'
 	fi
+
+	_run_rc_script=true
 
 	unset	name command command_args command_interpreter \
 		extra_commands pidfile procname \

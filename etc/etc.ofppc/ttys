@@ -1,10 +1,11 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.5 2008/01/23 23:18:50 garbled Exp $
+#	$NetBSD: ttys,v 1.5.6.1 2009/01/17 20:43:43 mjf Exp $
 #
 # name	getty				type	status		comments
 #
 console	"/usr/libexec/getty std.9600"	vt100	on secure
+constty	"/usr/libexec/getty std.9600"	vt100	off secure
 ttyE0	"/usr/libexec/getty std.9600"	vt100	off secure
 tty00	"/usr/libexec/getty std.9600"	vt100	off secure
 tty01	"/usr/libexec/getty std.9600"	unknown	off secure

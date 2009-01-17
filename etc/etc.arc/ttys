@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.6 2004/06/20 21:30:26 christos Exp $
+#	$NetBSD: ttys,v 1.6.26.1 2009/01/17 20:43:42 mjf Exp $
 #
 # name	getty				type	status		comments
 
@@ -8,6 +8,7 @@
 
 # console pseudo-device
 console	"/usr/libexec/getty std.9600"	vt220 on secure
+constty	"/usr/libexec/getty std.9600"	vt220 off secure
 
 # Workstation console
 ttyE0	"/usr/libexec/getty std.9600"	vt220 off secure

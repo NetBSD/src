@@ -1,13 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.9 2007/04/06 14:20:17 apb Exp $
+# $NetBSD: ipsec,v 1.9.12.1 2009/01/17 20:43:44 mjf Exp $
 #
 
 # PROVIDE: ipsec
-# REQUIRE: root beforenetlkm mountcritlocal tty
+# REQUIRE: root bootconf mountcritlocal tty
 # BEFORE:  DAEMON
-
-#	it does not really require beforenetlkm.
 
 $_rc_subr_loaded . /etc/rc.subr
 
