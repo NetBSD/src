@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.50.68.1 2008/06/02 13:22:42 mjf Exp $	*/
+/*	$NetBSD: ebus.c,v 1.50.68.2 2009/01/17 13:28:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.50.68.1 2008/06/02 13:22:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.50.68.2 2009/01/17 13:28:31 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -76,7 +76,6 @@ int ebus_debug = 0;
 #include <sparc64/dev/psychovar.h>
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
-#include <sparc64/sparc64/cache.h>
 
 struct ebus_softc {
 	struct device			sc_dev;

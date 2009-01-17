@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.31.6.2 2008/09/28 10:39:44 mjf Exp $
+#	$NetBSD: EB7500ATX,v 1.31.6.3 2009/01/17 13:27:46 mjf Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.31.6.2 $"
+#ident		"EB7500ATX-$Revision: 1.31.6.3 $"
 
 # estimated number of users
 maxusers	32
@@ -64,7 +64,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -140,7 +139,6 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	USERCONF	# userconf(4) support

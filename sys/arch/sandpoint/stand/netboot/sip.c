@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.10.10.1 2008/06/02 13:22:37 mjf Exp $ */
+/* $NetBSD: sip.c,v 1.10.10.2 2009/01/17 13:28:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,11 +52,6 @@
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
-
-int sip_match(unsigned, void *);
-void *sip_init(unsigned, void *);
-int sip_send(void *, char *, unsigned);
-int sip_recv(void *, char *, unsigned, unsigned);
 
 struct desc {
 	uint32_t xd0, xd1, xd2;

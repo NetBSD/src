@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.94 2008/01/05 22:51:34 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.94.6.1 2009/01/17 13:28:31 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,10 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94 2008/01/05 22:51:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94.6.1 2009/01/17 13:28:31 mjf Exp $");
 
 #include "opt_multiprocessor.h"
-#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,45 +320,21 @@ cpu_lwp_free2(struct lwp *l)
 		free((void *)fs, M_SUBPROC);
 }
 
-#ifdef COREDUMP
-/*
- * cpu_coredump is called to write a core dump header.
- * (should this be defined elsewhere?  machdep.c?)
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	int error;
-	struct md_coredump md_core;
-	struct coreseg cseg;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	/*struct trapframe *tf = l->l_md.md_tf;*/
+	struct rwindow *rp;
 
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-		chdr->c_cpusize = sizeof(md_core);
-		chdr->c_nseg++;
-		return 0;
-	}
+	/* Construct kernel frame to return to in cpu_switch() */
+	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (int)func;		/* Function to call */
+	rp->rw_local[1] = (int)arg;		/* and its argument */
+	rp->rw_local[2] = (int)l;		/* new lwp */
 
-	md_core.md_tf = *l->l_md.md_tf;
-	if (l->l_md.md_fpstate) {
-		if (l == cpuinfo.fplwp)
-			savefpstate(l->l_md.md_fpstate);
-		md_core.md_fpstate = *l->l_md.md_fpstate;
-	} else
-		bzero((void *)&md_core.md_fpstate, sizeof(struct fpstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
+	pcb->pcb_pc = (int)lwp_trampoline - 8;
+	pcb->pcb_sp = (int)rp;
+	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
+	pcb->pcb_wim = 1;		/* Fence at window #1 */
 }
-#endif

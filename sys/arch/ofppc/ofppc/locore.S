@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38.6.1 2008/06/02 13:22:30 mjf Exp $	*/
+/*	$NetBSD: locore.S,v 1.38.6.2 2009/01/17 13:28:24 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,7 +105,7 @@ __start:
 	/* compute end of kernel memory */
         lis	4,_C_LABEL(end)@ha
         addi	4,4,_C_LABEL(end)@l
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* skip symbol table */
 	cmpwi	6,0
 	beq	1f

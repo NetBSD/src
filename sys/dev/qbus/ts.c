@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.23.6.2 2008/06/02 13:23:48 mjf Exp $ */
+/*	$NetBSD: ts.c,v 1.23.6.3 2009/01/17 13:29:07 mjf Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.23.6.2 2008/06/02 13:23:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.23.6.3 2009/01/17 13:29:07 mjf Exp $");
 
 #undef	TSDEBUG
 
@@ -386,7 +386,7 @@ tsstart(struct ts_softc *sc, int isloaded)
 	struct buf *bp;
 	int cmd;
 
-	bp = BUFQ_PEEK(sc->sc_bufq);
+	bp = bufq_peek(sc->sc_bufq);
 	if (bp == NULL) {
 		return 0;
 	}
@@ -478,7 +478,7 @@ int
 tsready(struct uba_unit *uu)
 {
 	struct ts_softc *sc = device_private(uu->uu_dev);
-	struct buf *bp = BUFQ_PEEK(sc->sc_bufq);
+	struct buf *bp = bufq_peek(sc->sc_bufq);
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT))
@@ -540,9 +540,9 @@ prtstat(struct ts_softc *sc, int sr)
 {
 	char buf[100];
 
-	bitmask_snprintf(sr, TS_TSSR_BITS, buf, sizeof(buf));
+	snprintb(buf, sizeof(buf), TS_TSSR_BITS, sr);
 	aprint_normal_dev(sc->sc_dev, "TSSR=%s\n", buf);
-	bitmask_snprintf(sc->sc_vts->status.xst0,TS_XST0_BITS,buf,sizeof(buf));
+	snprintb(buf, sizeof(buf), TS_XST0_BITS, sc->sc_vts->status.xst0);
 	aprint_normal_dev(sc->sc_dev, "XST0=%s\n", buf);
 }
 
@@ -561,11 +561,11 @@ tsintr(void *arg)
 
 	short ccode = sc->sc_vts->cmd.cmdr & TS_CF_CCODE;
 
-	bp = BUFQ_PEEK(sc->sc_bufq);
+	bp = bufq_peek(sc->sc_bufq);
 #ifdef TSDEBUG
 	{
 		char buf[100];
-		bitmask_snprintf(sr, TS_TSSR_BITS, buf, sizeof(buf));
+		snprintb(buf, sizeof(buf), TS_TSSR_BITS, sr);
 		printf("tsintr: sr %x mh %x\n", sr, mh);
 		printf("srbits: %s\n", buf);
 	}
@@ -658,8 +658,8 @@ tsintr(void *arg)
 #ifdef TSDEBUG
 		{
 			char buf[100];
-			bitmask_snprintf(sc->sc_vts->status.xst0,
-			    TS_XST0_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf),
+			    TS_XST0_BITS, sc->sc_vts->status.xst0);
 			printf("TSA: sr %x bits %s\n",
 			    sc->sc_vts->status.xst0, buf);
 		}
@@ -685,8 +685,8 @@ tsintr(void *arg)
 #ifndef TSDEBUG
 		{
 			char buf[100];
-			bitmask_snprintf(sc->sc_vts->status.xst0,
-			    TS_XST0_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf),
+			    TS_XST0_BITS, sc->sc_vts->status.xst0);
 			printf("TSA: sr %x bits %s\n",
 			    sc->sc_vts->status.xst0, buf);
 		}
@@ -704,8 +704,8 @@ tsintr(void *arg)
 #ifdef TSDEBUG
 		{
 			char buf[100];
-			bitmask_snprintf(sc->sc_vts->status.xst0,
-			    TS_XST0_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf),
+			    TS_XST0_BITS, sc->sc_vts->status.xst0);
 			printf("FR: sr %x bits %s\n",
 			    sc->sc_vts->status.xst0, buf);
 		}
@@ -789,9 +789,9 @@ tsintr(void *arg)
 		    "error 0x%x, resetting controller\n", sr & TS_TC);
 		tsreset(sc);
 	}
-	if ((bp = BUFQ_GET(sc->sc_bufq)) != NULL) {
+	if ((bp = bufq_get(sc->sc_bufq)) != NULL) {
 #ifdef TSDEBUG
-		printf("tsintr2: que %p\n", BUFQ_PEEK(sc->sc_bufq));
+		printf("tsintr2: que %p\n", bufq_peek(sc->sc_bufq));
 #endif
 		if (bp != &sc->ts_cbuf) {	/* no ioctl */
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmam);
@@ -848,8 +848,8 @@ tsopen(dev_t dev, int flag, int type, struct lwp *l)
 #ifdef TSDEBUG
 	{
 		char buf[100];
-		bitmask_snprintf(sc->sc_vts->status.xst0,
-		    TS_XST0_BITS, buf, sizeof(buf));
+		snprintb(buf, sizeof(buf),
+		    TS_XST0_BITS, sc->sc_vts->status.xst0);
 		printf("tsopen: xst0 %s\n", buf);
 	}
 #endif
@@ -906,8 +906,8 @@ tsstrategy(struct buf *bp)
 	printf("buf: %p bcount %ld blkno %d\n", bp, bp->b_bcount, bp->b_blkno);
 #endif
 	s = splbio ();
-	empty = (BUFQ_PEEK(sc->sc_bufq) == NULL);
-	BUFQ_PUT(sc->sc_bufq, bp);
+	empty = (bufq_peek(sc->sc_bufq) == NULL);
+	bufq_put(sc->sc_bufq, bp);
 	if (empty)
 		tsstart(sc, 0);
 	splx(s);

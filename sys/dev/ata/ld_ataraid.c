@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.24.6.3 2008/09/28 10:40:19 mjf Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.24.6.4 2009/01/17 13:28:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,12 +42,12 @@
  * controllers we're dealing with (Promise, etc.) only support
  * configuration data on the component disks, with the BIOS supporting
  * booting from the RAID volumes.
- *
+ *            
  * bio(4) support was written by Juan Romero Pardines <xtraeme@gmail.com>.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.24.6.3 2008/09/28 10:40:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.24.6.4 2009/01/17 13:28:52 mjf Exp $");
 
 #include "bio.h"
 #include "rnd.h"

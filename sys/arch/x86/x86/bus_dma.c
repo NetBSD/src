@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.40.14.3 2008/06/29 09:33:02 mjf Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.40.14.4 2009/01/17 13:28:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40.14.3 2008/06/29 09:33:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40.14.4 2009/01/17 13:28:38 mjf Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -855,7 +855,7 @@ end:
 	} else if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTREAD)) {
 		/*
 		 * all past reads should have completed at before this point,
-		 * and futur reads should not have started yet.
+		 * and future reads should not have started yet.
 		 */
 		x86_lfence();
 	}

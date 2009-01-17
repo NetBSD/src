@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.57.6.2 2008/06/29 09:33:19 mjf Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.57.6.3 2009/01/17 13:29:31 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.57.6.2 2008/06/29 09:33:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.57.6.3 2009/01/17 13:29:31 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -462,14 +462,14 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifnet *pr;
+	struct ifcapreq *ifcr;
 	struct vlanreq vlr;
-	struct sockaddr *sa;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (ifv->ifv_p != NULL) {
 			ifp->if_flags |= IFF_UP;
 
@@ -485,11 +485,6 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		} else {
 			error = EINVAL;
 		}
-		break;
-
-	case SIOCGIFADDR:
-		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
 
 	case SIOCSIFMTU:
@@ -543,6 +538,8 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		/*
 		 * For promiscuous mode, we enable promiscuous mode on
 		 * the parent if we need promiscuous on the VLAN interface.
@@ -561,8 +558,19 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		    (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr) : EINVAL;
 		break;
 
+	case SIOCSIFCAP:
+		ifcr = data;
+		/* make sure caps are enabled on parent */
+		if ((ifv->ifv_p->if_capenable & ifcr->ifcr_capenable) !=
+		    ifcr->ifcr_capenable) {
+			error = EINVAL;
+			break;
+		}
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
+		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 
 	splx(s);
@@ -590,8 +598,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 * about it.  Also, remember this multicast address so that
 	 * we can delete them on unconfigure.
 	 */
-	MALLOC(mc, struct vlan_mc_entry *, sizeof(struct vlan_mc_entry),
-	    M_DEVBUF, M_NOWAIT);
+	mc = malloc(sizeof(struct vlan_mc_entry), M_DEVBUF, M_NOWAIT);
 	if (mc == NULL) {
 		error = ENOMEM;
 		goto alloc_failed;
@@ -614,7 +621,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 
  ioctl_failed:
 	LIST_REMOVE(mc, mc_entries);
-	FREE(mc, M_DEVBUF);
+	free(mc, M_DEVBUF);
  alloc_failed:
 	(void)ether_delmulti(sa, &ifv->ifv_ec);
 	return (error);
@@ -650,7 +657,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 		    mc = LIST_NEXT(mc, mc_entries)) {
 			if (mc->mc_enm == enm) {
 				LIST_REMOVE(mc, mc_entries);
-				FREE(mc, M_DEVBUF);
+				free(mc, M_DEVBUF);
 				break;
 			}
 		}
@@ -684,7 +691,7 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 		    (const struct sockaddr *)&mc->mc_addr);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
 		LIST_REMOVE(mc, mc_entries);
-		FREE(mc, M_DEVBUF);
+		free(mc, M_DEVBUF);
 	}
 }
 

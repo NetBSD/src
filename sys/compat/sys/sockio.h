@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.4 2007/08/20 04:49:41 skd Exp $	*/
+/*	$NetBSD: sockio.h,v 1.4.24.1 2009/01/17 13:28:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -39,13 +39,24 @@
 #if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
     defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
     defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
+    defined(COMPAT_30) || defined(COMPAT_40) || defined(MODULAR)
 #define COMPAT_OIFREQ
 #endif
 
-#else
-#define COMPAT_OIFREQ
+#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
+    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
+    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
+    defined(COMPAT_30) || defined(COMPAT_40) || defined(COMPAT_50) || \
+    defined(MODULAR)
+#define COMPAT_OIFDATA
 #endif
+
+#else /* !_KERNEL_OPT */
+
+#undef COMPAT_OIFREQ
+#undef COMPAT_OIFDATA
+
+#endif /* _KERNEL_OPT */
 
 struct oifreq {
 	char	ifr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
@@ -75,6 +86,40 @@ struct	oifconf {
 #define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
 };
 
+#include <compat/sys/time.h>
+/*
+ * Structure defining statistics and other data kept regarding a network
+ * interface.
+ */
+struct oif_data {
+	/* generic interface information */
+	u_char	ifi_type;		/* ethernet, tokenring, etc. */
+	u_char	ifi_addrlen;		/* media address length */
+	u_char	ifi_hdrlen;		/* media header length */
+	int	ifi_link_state;		/* current link state */
+	u_quad_t ifi_mtu;		/* maximum transmission unit */
+	u_quad_t ifi_metric;		/* routing metric (external only) */
+	u_quad_t ifi_baudrate;		/* linespeed */
+	/* volatile statistics */
+	u_quad_t ifi_ipackets;		/* packets received on interface */
+	u_quad_t ifi_ierrors;		/* input errors on interface */
+	u_quad_t ifi_opackets;		/* packets sent on interface */
+	u_quad_t ifi_oerrors;		/* output errors on interface */
+	u_quad_t ifi_collisions;	/* collisions on csma interfaces */
+	u_quad_t ifi_ibytes;		/* total number of octets received */
+	u_quad_t ifi_obytes;		/* total number of octets sent */
+	u_quad_t ifi_imcasts;		/* packets received via multicast */
+	u_quad_t ifi_omcasts;		/* packets sent via multicast */
+	u_quad_t ifi_iqdrops;		/* dropped on input, this interface */
+	u_quad_t ifi_noproto;		/* destined for unsupported protocol */
+	struct	timeval50 ifi_lastchange;/* last operational state change */
+};
+
+struct oifdatareq {
+	char	ifdr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	struct	oif_data ifdr_data;
+};
+
 #define	OSIOCSIFADDR	 _IOW('i', 12, struct oifreq)	/* set ifnet address */
 #define	OOSIOCGIFADDR	 _IOWR('i', 13, struct oifreq)	/* get ifnet address */
 #define	OSIOCSIFDSTADDR	 _IOW('i', 14, struct oifreq)	/* set p-p address */
@@ -90,6 +135,9 @@ struct	oifconf {
 #define	OSIOCADDMULTI	 _IOW('i', 49, struct oifreq)	/* add m'cast addr */
 #define	OSIOCDELMULTI	 _IOW('i', 50, struct oifreq)	/* del m'cast addr */
 #define	OSIOCSIFMEDIA	 _IOWR('i', 53, struct oifreq)	/* set net media */
+#define	OSIOCGIFDATA	 _IOWR('i', 128, struct oifdatareq) /* get if_data */
+#define	OSIOCZIFDATA	 _IOWR('i', 129, struct oifdatareq) /* get if_data then
+							     zero ctrs*/
 
 
 
@@ -114,9 +162,27 @@ struct	oifconf {
 		    sizeof((oi)->ifr_ifru)); \
 	} while (/*CONSTCOND*/0)
 
+#define ifdatan2o(oi, ni) \
+	do { \
+		(void)memcpy((oi), (ni),  sizeof(*(oi))); \
+		(oi)->ifi_lastchange.tv_sec = \
+		    (int32_t)(ni)->ifi_lastchange.tv_sec; \
+		(oi)->ifi_lastchange.tv_usec = \
+		    (ni)->ifi_lastchange.tv_nsec / 1000; \
+	} while (/*CONSTCOND*/0)
+
+#define ifdatao2n(oi, ni) \
+	do { \
+		(void)memcpy((ni), (oi),  sizeof(*(oi))); \
+		    sizeof((oi)->ifr_name)); \
+		(ni)->ifi_lastchange.tv_sec = (oi)->ifi_lastchange.tv_sec; \
+		(ni)->ifi_lastchange.tv_nsec = \
+		    (oi)->ifi_lastchange.tv_usec * 1000; \
+	} while (/*CONSTCOND*/0)
 #ifdef _KERNEL
 __BEGIN_DECLS
 int compat_ifconf(u_long, void *);
+int compat_ifdatareq(struct lwp *, u_long, void *);
 __END_DECLS
 #endif
 #endif /* _COMPAT_SYS_SOCKIO_H_ */

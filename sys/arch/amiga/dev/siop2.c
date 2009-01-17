@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.30 2007/10/17 19:53:17 garbled Exp $ */
+/*	$NetBSD: siop2.c,v 1.30.16.1 2009/01/17 13:27:50 mjf Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,10 +70,12 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.30 2007/10/17 19:53:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.30.16.1 2009/01/17 13:27:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/buf.h>
@@ -111,6 +113,7 @@ int  siopng_checkintr(struct siop_softc *, u_char, u_char, u_short, int *);
 void siopngreset(struct siop_softc *);
 void siopngsetdelay(int);
 void siopng_scsidone(struct siop_acb *, int);
+void siopng_timeout(void *);
 void siopng_sched(struct siop_softc *);
 void siopng_poll(struct siop_softc *, struct siop_acb *);
 void siopngintr(struct siop_softc *);
@@ -403,6 +406,9 @@ siopng_scsidone(struct siop_acb *acb, int stat)
 #endif
 		return;
 	}
+
+	callout_stop(&xs->xs_callout);
+
 	periph = xs->xs_periph;
 	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
@@ -542,8 +548,8 @@ siopnginitialize(struct siop_softc *sc)
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
 	 */
 
-	MALLOC(sc->sc_acb, struct siop_acb *,
-		sizeof(struct siop_acb) * SIOP_NACB, M_DEVBUF, M_NOWAIT);
+	sc->sc_acb = malloc(sizeof(struct siop_acb) * SIOP_NACB,
+		M_DEVBUF, M_NOWAIT);
 	if (sc->sc_acb == NULL)
 		panic("siopnginitialize: ACB malloc failed!");
 
@@ -582,6 +588,28 @@ siopnginitialize(struct siop_softc *sc)
 	}
 
 	siopngreset (sc);
+}
+
+void
+siopng_timeout(void *arg)
+{
+	struct siop_acb *acb;
+	struct scsipi_periph *periph;
+	struct siop_softc *sc;
+	int s;
+
+	acb = arg;
+	periph = acb->xs->xs_periph;
+	sc = device_private(periph->periph_channel->chan_adapter->adapt_dev);
+	scsipi_printaddr(periph);
+	printf("timed out\n");
+
+	s = splbio();
+
+	acb->xs->error = XS_TIMEOUT;
+	siopngreset(sc);
+
+	splx(s);
 }
 
 void
@@ -901,6 +929,8 @@ siopng_start(struct siop_softc *sc, int target, int lun, u_char *cbuf,
 	}
 #endif
 	if (sc->nexus_list.tqh_first == NULL) {
+		callout_reset(&acb->xs->xs_callout,
+		    mstohz(acb->xs->timeout) + 1, siopng_timeout, acb);
 		if (rp->siop_istat & SIOP_ISTAT_CON)
 			printf("%s: siopng_select while connected?\n",
 			    sc->sc_dev.dv_xname);
@@ -1474,7 +1504,7 @@ siopng_dump(sc);
 			sc->sc_dev.dv_xname, rp->siop_sfbr, acb->msg[1], rp->siop_sbcl);
 		/* what should be done here? */
 		DCIAS(kvtop(&acb->msg[1]));
-		rp->siop_dsp = sc->sc_scriptspa + Ent_switch;
+		rp->siop_dsp = sc->sc_scriptspa + Ent_clear_ack;
 		return (0);
 	}
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff0a) {

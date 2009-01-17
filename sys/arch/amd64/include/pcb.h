@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11.6.1 2008/06/02 13:21:49 mjf Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11.6.2 2009/01/17 13:27:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@
 #ifndef _AMD64_PCB_H_
 #define _AMD64_PCB_H_
 
+#ifdef __x86_64__
+
 #include <sys/signal.h>
 
 #include <machine/segments.h>
@@ -111,5 +113,11 @@ struct pcb {
 struct md_coredump {
 	long	md_pad[8];
 };    
+
+#else	/*	__x86_64__	*/
+
+#include <i386/pcb.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* _AMD64_PCB_H_ */

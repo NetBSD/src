@@ -1,4 +1,4 @@
-/*	$NetBSD: virtex_start.S,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/*	$NetBSD: virtex_start.S,v 1.1.50.1 2009/01/17 13:28:00 mjf Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -163,7 +163,7 @@ __start:
 	cmpw    %r7,%r4
 	bne+    2b
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* We don't have a symbol table, so set startsym = endsym = end */
 	lis	%r7,_C_LABEL(startsym)@ha
 	ori 	%r7,%r7,_C_LABEL(startsym)@l

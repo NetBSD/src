@@ -1,0 +1,28 @@
+#	$NetBSD: std.beagle,v 1.1.10.2 2009/01/17 13:27:58 mjf Exp $
+#
+# standard NetBSD/evbarm for BEAGLEBAORD options
+
+machine	evbarm arm
+include		"conf/std"	# MI standard options
+
+# Pull in BEAGLEBAORD config definitions.
+include "arch/evbarm/conf/files.beagle"
+
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+options 	ARM11_PMC
+options 	ARM11_PMC_CCNT_HZ=500000000
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+#options 	PROCESS_ID_IS_CURLWP
+options 	KERNEL_BASE_EXT=0x80000000
+
+makeoptions	LOADADDRESS="0x80300000"
+makeoptions	BOARDTYPE="beagle"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.beagle"
+makeoptions	CPPFLAGS+="-I$S/../../../include"
+
+options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
+options		ARM_GENERIC_TODR

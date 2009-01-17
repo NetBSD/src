@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.39.28.1 2008/06/02 13:24:33 mjf Exp $	*/
+/*	$NetBSD: mman.h,v 1.39.28.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -169,7 +169,6 @@ typedef	__off_t		off_t;		/* file offset */
 
 __BEGIN_DECLS
 void *	mmap(void *, size_t, int, int, int, off_t);
-void *	mremap(void *, size_t, void *, size_t, int);
 int	munmap(void *, size_t);
 int	mprotect(void *, size_t, int);
 #ifndef __LIBC12_SOURCE__
@@ -183,6 +182,7 @@ int	munlockall(void);
 int	madvise(void *, size_t, int);
 int	mincore(void *, size_t, char *);
 int	minherit(void *, size_t, int);
+void *	mremap(void *, size_t, void *, size_t, int);
 #endif
 int	posix_madvise(void *, size_t, int);
 __END_DECLS

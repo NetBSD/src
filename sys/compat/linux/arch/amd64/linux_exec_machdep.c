@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.10.16.1 2009/01/17 13:28:43 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10.16.1 2009/01/17 13:28:43 mjf Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -54,17 +54,22 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad E
 
 #include <sys/cpu.h>
 #include <machine/vmparam.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
-#include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_errno.h>
+#include <compat/linux/common/linux_prctl.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
+#include <compat/linux/linux_syscallargs.h>
 
 int
 linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
@@ -249,3 +254,17 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 
 	return 0;
 }
+
+#ifdef LINUX_NPTL
+int
+linux_init_thread_area(struct lwp *l, struct lwp *l2)
+{
+	register_t retval;
+	struct linux_sys_arch_prctl_args uap;
+	struct trapframe *tf = l2->l_md.md_regs;
+
+	SCARG(&uap, code) = LINUX_ARCH_SET_FS;
+	SCARG(&uap, addr) = tf->tf_r8;
+	return linux_sys_arch_prctl(l2, &uap, &retval);
+}
+#endif

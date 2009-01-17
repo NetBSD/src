@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.5 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: libsa.h,v 1.5.74.1 2009/01/17 13:28:01 mjf Exp $	*/
 
 /*	$OpenBSD: libsa.h,v 1.7 1999/12/23 04:07:47 mickey Exp $	*/
 
@@ -50,7 +50,6 @@ int	cngetc(void);
 int	tcngetc(void);
 void	cnputc(int);
 void	cninit(void);
-time_t	getsecs(void);
 int	tgetchar(void);
 
 void pdc_init(void);

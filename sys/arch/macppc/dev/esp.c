@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.23.16.1 2008/06/02 13:22:23 mjf Exp $	*/
+/*	$NetBSD: esp.c,v 1.23.16.2 2009/01/17 13:28:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23.16.1 2008/06/02 13:22:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23.16.2 2009/01/17 13:28:13 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -403,8 +403,8 @@ espdmaintr(struct esp_softc *sc)
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%s\n", device_xname(nsc->sc_dev),
-		    bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
+		snprintb(bits, sizeof(bits), DMACSRBITS, csr);
+		printf("%s: error: csr=%s\n", device_xname(nsc->sc_dev), bits);
 		return -1;
 	}
 #endif

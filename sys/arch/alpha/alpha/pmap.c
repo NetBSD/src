@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.232.2.3 2008/06/02 13:21:45 mjf Exp $ */
+/* $NetBSD: pmap.c,v 1.232.2.4 2009/01/17 13:27:47 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.232.2.3 2008/06/02 13:21:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.232.2.4 2009/01/17 13:27:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,10 @@ pt_entry_t	*kernel_lev1map;
  */
 static pt_entry_t *VPT;
 
-struct pmap	kernel_pmap_store
+static struct pmap	kernel_pmap_store
 	[(PMAP_SIZEOF(ALPHA_MAXPROCS) + sizeof(struct pmap) - 1)
 		/ sizeof(struct pmap)];
+struct pmap *const kernel_pmap_ptr = kernel_pmap_store;
 
 paddr_t    	avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */

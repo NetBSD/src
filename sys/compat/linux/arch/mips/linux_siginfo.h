@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.4.70.1 2008/06/02 13:23:01 mjf Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.4.70.2 2009/01/17 13:28:44 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -103,22 +103,11 @@ typedef struct linux_siginfo {
 #define lsi_pid _sidata._kill._pid
 #define lsi_uid _sidata._kill._uid
 
-/*
- * si_code values
- * Digital reserves positive values for kernel-generated signals.
- */
-#define LINUX__SI_CODE(T,N)  ((T) << 16 | ((N) & 0xffff))
+/* si_code specific values (IRIX compatible) */
+#define LINUX_SI_CODE_ARCH
 
-#define LINUX_SI_USER		0
-#define LINUX_SI_KERNEL		0x80
-#define LINUX_SI_QUEUE		-1
 #define LINUX_SI_ASYNCIO	-2
-#define LINUX_SI_TIMER		LINUX__SI_CODE(__SI_TIMER,-3)
+#define LINUX_SI_TIMER		-3
 #define LINUX_SI_MESGQ		-4
-#define LINUX_SI_SIGIO  	-5
-
-#define LINUX_SI_FROMUSER(siptr)	((siptr)->si_code <= 0)
-#define LINUX_SI_FROMKERENL(siptr)	((siptr)->si_code > 0)
-
 
 #endif /* !_MIPS_LINUX_SIGINFO_H */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.23.6.4 2008/09/28 10:39:45 mjf Exp $
+#	$NetBSD: genassym.cf,v 1.23.6.5 2009/01/17 13:27:48 mjf Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@
 if defined(_KERNEL_OPT)
 include "opt_compat_netbsd32.h"
 include "opt_compat_linux32.h"
-include "opt_multiprocessor.h"
 include "opt_xen.h"
 endif
 
@@ -83,6 +82,7 @@ include <sys/mutex.h>
 include <sys/rwlock.h>
 include <sys/cpu_data.h>
 include <sys/evcnt.h>
+include <sys/cpu.h>
 
 include <netinet/in.h>
 include <netinet/in_systm.h>
@@ -106,16 +106,12 @@ if defined(COMPAT_LINUX32)
 include <machine/linux32_machdep.h>
 endif
 
-if defined(_KERNEL) && !defined(_LKM)
+if defined(_KERNEL) && defined(_KERNEL_OPT)
 include "isa.h"
 include "ioapic.h"
 endif
 if NISA > 0
 include <machine/isa_machdep.h>
-endif
-
-ifdef MULTIPROCESSOR
-include <machine/cpu.h>
 endif
 
 if NIOAPIC > 0
@@ -160,6 +156,7 @@ define	L_NCSW			offsetof(struct lwp, l_ncsw)
 define	L_NOPREEMPT		offsetof(struct lwp, l_nopreempt)
 define	L_DOPREEMPT		offsetof(struct lwp, l_dopreempt)
 define	L_CPU			offsetof(struct lwp, l_cpu)
+define	L_KPRIORITY		offsetof(struct lwp, l_kpriority)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
@@ -244,6 +241,7 @@ define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
+define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
@@ -384,3 +382,5 @@ define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
 
 define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)
+
+define	RESCHED_KPREEMPT	RESCHED_KPREEMPT

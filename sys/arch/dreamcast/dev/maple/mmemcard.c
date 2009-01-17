@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.14.16.2 2008/06/29 09:32:55 mjf Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.14.16.3 2009/01/17 13:27:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.14.16.2 2008/06/29 09:32:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.14.16.3 2009/01/17 13:27:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -316,7 +316,7 @@ mmemdetach(struct device *self, int flags)
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
-	while ((bp = BUFQ_GET(sc->sc_q)) != NULL) {
+	while ((bp = bufq_get(sc->sc_q)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -730,7 +730,7 @@ mmemstrategy(struct buf *bp)
 	bp->b_rawblkno = off;
 
 	/* queue this transfer */
-	BUFQ_PUT(sc->sc_q, bp);
+	bufq_put(sc->sc_q, bp);
 
 	if (sc->sc_stat == MMEM_IDLE)
 		mmemstart(sc);
@@ -752,7 +752,7 @@ mmemstart(struct mmem_softc *sc)
 	struct mmem_pt *pt;
 	int s;
 
-	if ((bp = BUFQ_GET(sc->sc_q)) == NULL) {
+	if ((bp = bufq_get(sc->sc_q)) == NULL) {
 		sc->sc_stat = MMEM_IDLE;
 		maple_enable_unit_ping(sc->sc_parent, sc->sc_unit,
 		    MAPLE_FN_MEMCARD, 1);

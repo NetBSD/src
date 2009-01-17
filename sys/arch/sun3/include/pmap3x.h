@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.24.6.1 2008/06/02 13:22:46 mjf Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.24.6.2 2009/01/17 13:28:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,9 +45,6 @@ struct pmap {
 };
 
 #ifdef _KERNEL
-extern	struct pmap 	kernel_pmap;
-#define	pmap_kernel()	(&kernel_pmap)
-
 /* Common function for pmap_resident_count(), pmap_wired_count() */
 segsz_t pmap_count(pmap_t, int);
 

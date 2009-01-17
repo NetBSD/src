@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.123.6.1 2008/07/02 19:08:21 mjf Exp $	*/
+/*	$NetBSD: exec.h,v 1.123.6.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -143,7 +143,7 @@ struct execsw {
 		int (*ecoff_probe_func)(struct lwp *, struct exec_package *);
 		int (*mach_probe_func)(const char **);
 	} u;
-	const struct  emul *es_emul;	/* os emulation */
+	struct  emul *es_emul;		/* os emulation */
 	int	es_prio;		/* entry priority */
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
@@ -258,15 +258,8 @@ struct core32;
 int	cpu_coredump(struct lwp *, void *, struct core *);
 int	cpu_coredump32(struct lwp *, void *, struct core32 *);
 
-
-#ifdef LKM
-int	emul_register		(const struct emul *, int);
-int	emul_unregister		(const char *);
-const struct emul *emul_search(const char *);
-
-int	exec_add		(struct execsw *, const char *);
-int	exec_remove		(const struct execsw *);
-#endif /* LKM */
+int	exec_add(struct execsw *, int);
+int	exec_remove(struct execsw *, int);
 
 void	new_vmcmd(struct exec_vmcmd_set *,
 		    int (*)(struct lwp *, struct exec_vmcmd *),

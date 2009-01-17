@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.333.6.3 2008/06/29 09:32:57 mjf Exp $
+#	$NetBSD: files.i386,v 1.333.6.4 2009/01/17 13:28:03 mjf Exp $
 #
 # new style config file for i386 architecture
 #
@@ -44,9 +44,6 @@ defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
 			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
 defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 
-# No unmapped page below kernel stack
-defflag			NOREDZONE
-
 # kernel stack debug
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
@@ -65,7 +62,9 @@ file 	arch/i386/i386/multiboot.c	multiboot
 defflag 	POWERNOW_K7
 
 file	arch/i386/i386/autoconf.c
+file	arch/i386/i386/aout_machdep.c	exec_aout
 file	arch/i386/i386/busfunc.S
+file	arch/i386/i386/core_machdep.c	coredump
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0

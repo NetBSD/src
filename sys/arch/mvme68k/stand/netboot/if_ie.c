@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.12 2008/01/12 09:54:32 tsutsui Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.12.6.1 2009/01/17 13:28:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -58,7 +58,7 @@ int     ie_debug = 0;
 void ie_stop(struct netif *);
 void ie_end(struct netif *);
 void ie_error(struct netif *, char *, volatile struct iereg *);
-int ie_get(struct iodesc *, void *, size_t, time_t);
+int ie_get(struct iodesc *, void *, size_t, saseconds_t);
 void ie_init(struct iodesc *, void *);
 int ie_match(struct netif *, void *);
 int ie_poll(struct iodesc *, void *, int);
@@ -400,9 +400,9 @@ ie_put(struct iodesc *desc, void *pkt, size_t len)
 }
 
 int
-ie_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
+ie_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
-	time_t  t;
+	satime_t  t;
 	int     cc;
 
 	t = getsecs();

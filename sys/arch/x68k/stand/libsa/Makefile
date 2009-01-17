@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2007/11/11 13:23:07 isaki Exp $
+#	$NetBSD: Makefile,v 1.22.14.1 2009/01/17 13:28:37 mjf Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -16,6 +16,7 @@ SRCS+=		close.c closeall.c cread.c dev.c fstat.c ioctl.c lseek.c
 SRCS+=		open.c read.c stat.c
 SRCS+=		loadfile.c loadfile_aout.c loadfile_elf32.c
 SRCS+=		cd9660.c lfsv1.c lfsv2.c nfs.c ufs.c ufs_ls.c ustarfs.c
+SRCS+=		globals.c
 #SRCS+=		arp.c ether.c in_cksum.c net.c netif.c rpc.c udp.c
 #SRCS+=		bootp.c
 
@@ -33,8 +34,9 @@ NOPROFILE=	# defined
 NOPIC=		# defined
 NOLINT=		# defined
 
-CPPFLAGS+=	-I${.OBJDIR} -I${LIBSADIR} -I$S -I${LIBZDIR} -D_STANDALONE
+CPPFLAGS+=	-I${.OBJDIR} -I${LIBSADIR} -I$S -I${LIBZDIR} -I${LIBZDIST}
 CPPFLAGS+=	-I${.CURDIR}/../libiocs -I${.CURDIR}/../common
+CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-DHEAP_VARIABLE -D__INTERNAL_LIBSA_CREAD
 CPPFLAGS+=	-DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+=	-DUSTAR_SECT_PER_CYL=16

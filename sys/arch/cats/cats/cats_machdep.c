@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.59.6.1 2008/06/02 13:21:59 mjf Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.59.6.2 2009/01/17 13:27:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.59.6.1 2008/06/02 13:21:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.59.6.2 2009/01/17 13:27:56 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -233,6 +233,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -262,6 +263,8 @@ cpu_reboot(int howto, char *bootstr)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -879,18 +882,13 @@ initarm(void *arm_bootargs)
 	footbridge_intr_init();
 	printf("done.\n");
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-#ifdef __ELF__
-	/* ok this is really rather sick, in ELF what happens is that the
-	 * ELF symbol table is added after the text section.
-	 */
-	ksyms_init(0, NULL, NULL);	/* XXX */
-#else
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+#ifndef __ELF__		/* XXX */
 	{
 		extern int end;
 		extern int *esym;
 
-		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #endif /* __ELF__ */
 #endif

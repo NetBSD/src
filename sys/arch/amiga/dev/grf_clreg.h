@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_clreg.h,v 1.9 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: grf_clreg.h,v 1.9.74.1 2009/01/17 13:27:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -303,10 +303,12 @@ struct grfcltext_mode {
 		WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); \
 	} while (0)
 
+#ifdef _KERNEL
 int cl_mode(register struct grf_softc *gp, u_long cmd, void *arg,
 			u_long a2, int a3);
 int cl_load_mon(struct grf_softc *gp, struct grfcltext_mode *gv);
 int grfcl_cnprobe(void);
 void grfcl_iteinit(struct grf_softc *gp);
+#endif
 
 #endif /* _GRF_RHREG_H */

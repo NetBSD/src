@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.7 2007/03/05 15:42:23 he Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.7.40.1 2009/01/17 13:27:46 mjf Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7 2007/03/05 15:42:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7.40.1 2009/01/17 13:27:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/syslog.h>
@@ -52,7 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7 2007/03/05 15:42:23 he Exp $");
 #include <machine/memcreg.h>
 #endif
 
-extern void arccons_init __P((void));
+#if NARCVIDEO > 0
+#include <arch/acorn26/vidc/arcvideovar.h>
+#endif
 
 void
 consinit()
@@ -66,8 +68,8 @@ consinit()
 #ifdef DDB
 	db_machine_init();
 #endif /* DDB */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(bootconfig.esym - bootconfig.ssym,
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf(bootconfig.esym - bootconfig.ssym,
 		 (char*)MEMC_PHYS_BASE + bootconfig.ssym,
 		 (char*)MEMC_PHYS_BASE + bootconfig.esym);
 #endif

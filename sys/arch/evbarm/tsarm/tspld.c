@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.13 2007/10/17 19:54:13 garbled Exp $	*/
+/*	$NetBSD: tspld.c,v 1.13.16.1 2009/01/17 13:27:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.13 2007/10/17 19:54:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.13.16.1 2009/01/17 13:27:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -529,6 +529,10 @@ tspld_wdog_setmode(smw)
 		bus_space_write_2(sc->sc_iot, sc->sc_wdogfeed_ioh, 0, 0x5);
 		bus_space_write_2(sc->sc_iot, sc->sc_wdogctrl_ioh, 0, 0);
 	} else {
+		if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
+			smw->smw_period = 8;
+		}
+
 		bus_space_write_2(sc->sc_iot, sc->sc_wdogfeed_ioh, 0, 0x5);
 		switch (smw->smw_period) {
 		case 1:

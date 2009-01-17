@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.108.6.2 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.108.6.3 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.108.6.2 2008/06/05 19:14:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.108.6.3 2009/01/17 13:29:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3308,7 +3308,7 @@ handle_workitem_freefile(freefile)
 	freefile->fx_fs->fs_pendinginodes -= 1;
 	mutex_exit(&ump->um_lock);
 
-	if ((error = ffs_freefile(freefile->fx_fs, freefile->fx_devvp,
+	if ((error = ffs_freefile(freefile->fx_mnt,
 	    freefile->fx_oldinum, freefile->fx_mode)) != 0)
 		softdep_error("handle_workitem_freefile", error);
 	workitem_free(freefile, D_FREEFILE);

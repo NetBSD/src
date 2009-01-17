@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.6.6.5 2008/10/05 20:11:34 mjf Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.6.6.6 2009/01/17 13:29:36 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,13 +27,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.6.6.6 2009/01/17 13:29:36 mjf Exp $");
+
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/event.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
-#include <sys/cpu.h>
-#include <sys/evcnt.h>
+#include <sys/syscallvar.h>
+#include <sys/xcall.h>
 
 #ifdef __sparc__
  /* 
@@ -70,7 +75,7 @@ knote(struct klist *list, long hint)
 }
 
 struct cpu_info *
-cpu_lookup_byindex(u_int index)
+cpu_lookup(u_int index)
 {
 	extern struct cpu_info rump_cpu;
 
@@ -80,6 +85,40 @@ cpu_lookup_byindex(u_int index)
 void
 evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
     const char *group, const char *name)
+{
+
+}
+
+void
+evcnt_detach(struct evcnt *ev)
+{
+
+}
+
+int
+syscall_establish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
+}
+
+int
+syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
+}
+
+/* crosscalls not done, no other hardware CPUs */
+uint64_t
+xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
+{
+
+	return -1;
+}
+
+void
+xc_wait(uint64_t where)
 {
 
 }

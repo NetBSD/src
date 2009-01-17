@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.20 2007/12/09 13:34:24 dogcow Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.20.10.1 2009/01/17 13:28:47 mjf Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.20 2007/12/09 13:34:24 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.20.10.1 2009/01/17 13:28:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,6 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 {
 	struct osf1_exec_emul_arg *emul_arg = epp->ep_emul_arg;
 	struct ecoff_exechdr ldr_exechdr;
-	struct nameidata nd;
 	struct vnode *ldr_vp;
         size_t resid;
 	int error;
@@ -212,11 +211,9 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 * make sure the object type is amenable, then arrange to
 	 * load it up.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_SYSSPACE,
-	    emul_arg->loader_name);
-	if ((error = namei(&nd)) != 0)
-		goto bad_no_vp;
-	ldr_vp = nd.ni_vp;
+	ldr_vp = epp->ep_interp;
+	epp->ep_interp = NULL;
+	vn_lock(ldr_vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
 	 * Basic access checks.  Reject if:
@@ -303,6 +300,5 @@ badunlock:
 	VOP_UNLOCK(ldr_vp, 0);
 bad:
 	vrele(ldr_vp);
-bad_no_vp:
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.6.6.1 2008/09/28 10:41:03 mjf Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.6.6.2 2009/01/17 13:29:36 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.6.2 2009/01/17 13:29:36 mjf Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
@@ -55,6 +58,9 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	struct ltsleeper lts;
 	int iplrecurse;
 
+	if (__predict_false(slock))
+		panic("simplelock not supported by rump, convert code");
+
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
@@ -67,8 +73,6 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 		rumpuser_rw_exit(&rumpspl);
 
 	/* protected by sleepermtx */
-	if (slock)
-		simple_unlock(slock);
 	cv_wait(&lts.cv, &sleepermtx);
 
 	/* retake ipl */
@@ -80,9 +84,6 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	mutex_exit(&sleepermtx);
 
 	cv_destroy(&lts.cv);
-
-	if (slock && (prio & PNORELOCK) == 0)
-		simple_lock(slock);
 
 	return 0;
 }

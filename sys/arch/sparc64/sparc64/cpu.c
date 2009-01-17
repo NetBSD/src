@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.66.6.3 2008/09/28 10:40:09 mjf Exp $ */
+/*	$NetBSD: cpu.c,v 1.66.6.4 2009/01/17 13:28:32 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66.6.3 2008/09/28 10:40:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66.6.4 2009/01/17 13:28:32 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -117,7 +117,8 @@ alloc_cpuinfo(u_int cpu_node)
 	/*
 	 * Check for UPAID in the cpus list.
 	 */
-	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0)
+	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0 &&
+	    OF_getprop(cpu_node, "portid", &portid, sizeof(portid)) <= 0)
 		panic("alloc_cpuinfo: upa-portid");
 
 	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
@@ -245,10 +246,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
 	}
 	for (i = 0; i < IPI_EVCNT_NUM; ++i)
-		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_INTR,
+		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_MISC,
 				     NULL, device_xname(dev), ipi_evcnt_names[i]);
 #endif
-	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_MISC, NULL,
 			     device_xname(dev), "timer");
 
 	clk = prom_getpropint(node, "clock-frequency", 0);

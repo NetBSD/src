@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.4 2006/08/28 16:41:04 he Exp $ */
+/*	$NetBSD: vuid_event.h,v 1.4.52.1 2009/01/17 13:29:08 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,11 @@
 #ifndef _SUN_VUID_EVENT_H_
 #define _SUN_VUID_EVENT_H_
 
+struct firm_timeval {
+	long tv_sec;
+	long tv_usec;
+};
+
 /*
  * The following is a minimal emulation of Sun's `Firm_event' structures
  * and related operations necessary to make X11 happy (i.e., make it
@@ -52,8 +57,20 @@ typedef struct firm_event {
 	u_short	id;		/* key or MS_* or LOC_[XY]_DELTA */
 	u_short	pad;		/* unused, at least by X11 */
 	int	value;		/* VKEY_{UP,DOWN} or locator delta */
-	struct	timeval time;
+	struct	firm_timeval time;
 } Firm_event;
+
+#ifdef _KERNEL
+__BEGIN_DECLS
+static __inline void firm_gettime(Firm_event *fev)
+{
+	struct timeval tv;
+	getmicrotime(&tv);
+	fev->time.tv_sec = (long)tv.tv_sec;
+	fev->time.tv_usec = (long)tv.tv_usec;
+}
+__END_DECLS
+#endif /* _KERNEL */
 
 /*
  * Special `id' fields.  These weird numbers simply match the old binaries.

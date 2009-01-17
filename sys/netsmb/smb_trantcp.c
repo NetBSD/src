@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.31.28.4 2008/09/28 10:41:00 mjf Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.31.28.5 2009/01/17 13:29:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31.28.4 2008/09/28 10:41:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31.28.5 2009/01/17 13:29:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,8 +463,7 @@ smb_nbst_create(struct smb_vc *vcp, struct lwp *l)
 {
 	struct nbpcb *nbp;
 
-	MALLOC(nbp, struct nbpcb *, sizeof *nbp, M_NBDATA, M_WAITOK);
-	memset(nbp, 0, sizeof *nbp);
+	nbp = malloc(sizeof *nbp, M_NBDATA, M_WAITOK|M_ZERO);
 	nbp->nbp_state = NBST_CLOSED;
 	nbp->nbp_vc = vcp;
 	vcp->vc_tdata = nbp;

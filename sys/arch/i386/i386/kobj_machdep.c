@@ -1,8 +1,11 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3.14.1 2008/06/02 13:22:15 mjf Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.3.14.2 2009/01/17 13:28:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software developed for The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.14.1 2008/06/02 13:22:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.14.2 2009/01/17 13:28:03 mjf Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -109,14 +112,6 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		addr += addend - (Elf_Addr)where;
 		break;
 
-	case R_386_COPY:	/* none */
-		/*
-		 * There shouldn't be copy relocations in kernel
-		 * objects.
-		 */
-		printf("kobj_reloc: unexpected R_COPY relocation\n");
-		return -1;
-
 	case R_386_GLOB_DAT:	/* S */
 		addr = kobj_sym_lookup(ko, symidx);
 		if (addr == 0)
@@ -141,6 +136,10 @@ kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 {
 	uint64_t where;
 
+	/*
+	 * Currently we want this to invalidate the Pentium 4 trace cache.
+	 * Other caches are snoopably coherent.
+	 */
 	if (load) {
 		if (cold) {
 			wbinvd();

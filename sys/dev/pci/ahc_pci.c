@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.62.6.1 2008/04/03 12:42:48 mjf Exp $
+ * $Id: ahc_pci.c,v 1.62.6.2 2009/01/17 13:28:58 mjf Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.62.6.1 2008/04/03 12:42:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.62.6.2 2009/01/17 13:28:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -893,7 +893,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, DEVCONFIG, devconfig);
 
 	/* Ensure busmastering is enabled */
-	command |= PCI_COMMAND_MASTER_ENABLE;;
+	command |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 	/*

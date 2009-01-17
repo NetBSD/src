@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.32.6.1 2008/04/03 12:42:10 mjf Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.32.6.2 2009/01/17 13:27:47 mjf Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.32.6.1 2008/04/03 12:42:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.32.6.2 2009/01/17 13:27:47 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -3943,7 +3943,7 @@ tulip_ifioctl(
     s = TULIP_RAISESPL();
 #endif
     switch (cmd) {
-	case SIOCSIFADDR: {
+	case SIOCINITIFADDR: {
 	    ifp->if_flags |= IFF_UP;
 	    switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -3982,13 +3982,9 @@ tulip_ifioctl(
 	    }
 	    break;
 	}
-	case SIOCGIFADDR: {
-	    memcpy((void *) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		(void *) sc->tulip_enaddr, 6);
-	    break;
-	}
-
 	case SIOCSIFFLAGS: {
+	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+		break;
 	    tulip_init(sc);
 	    break;
 	}
@@ -4056,7 +4052,7 @@ tulip_ifioctl(
 	}
 #endif
 	default: {
-	    error = EINVAL;
+	    error = ether_ioctl(ifp, cmd, data);
 	    break;
 	}
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.45.16.1 2008/04/03 12:42:28 mjf Exp $ */
+/*	$NetBSD: hp.c,v 1.45.16.2 2009/01/17 13:28:35 mjf Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.45.16.1 2008/04/03 12:42:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.45.16.2 2009/01/17 13:28:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,8 +224,8 @@ hpstrategy(struct buf *bp)
 
 	s = splbio();
 
-	gp = BUFQ_PEEK(sc->sc_md.md_q);
-	BUFQ_PUT(sc->sc_md.md_q, bp);
+	gp = bufq_peek(sc->sc_md.md_q);
+	bufq_put(sc->sc_md.md_q, bp);
 	if (gp == 0)
 		mbaqueue(&sc->sc_md);
 
@@ -245,7 +245,7 @@ hpstart(struct mba_device *md)
 {
 	struct hp_softc * const sc = md->md_softc;
 	struct disklabel * const lp = sc->sc_disk.dk_label;
-	struct buf *bp = BUFQ_PEEK(md->md_q);
+	struct buf *bp = bufq_peek(md->md_q);
 	unsigned bn, cn, sn, tn;
 
 	/*
@@ -373,7 +373,7 @@ enum xfer_action
 hpfinish(struct mba_device *md, int mbasr, int *attn)
 {
 	struct hp_softc * const sc = md->md_softc;
-	struct buf *bp = BUFQ_PEEK(md->md_q);
+	struct buf *bp = bufq_peek(md->md_q);
 	int er1, er2, bc;
 	unsigned byte;
 
@@ -411,8 +411,8 @@ hper2:
 	if (mbasr)
 		aprint_error_dev(sc->sc_dev, "massbuss error: %x\n", mbasr);
 
-	BUFQ_PEEK(md->md_q)->b_resid = 0;
-	disk_unbusy(&sc->sc_disk, BUFQ_PEEK(md->md_q)->b_bcount,
+	bufq_peek(md->md_q)->b_resid = 0;
+	disk_unbusy(&sc->sc_disk, bufq_peek(md->md_q)->b_bcount,
 	    (bp->b_flags & B_READ));
 	return XFER_FINISH;
 }

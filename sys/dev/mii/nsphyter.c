@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.28.6.1 2008/06/02 13:23:35 mjf Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.28.6.2 2009/01/17 13:28:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.28.6.1 2008/06/02 13:23:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.28.6.2 2009/01/17 13:28:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,6 @@ nsphyterattach(device_t parent, device_t self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

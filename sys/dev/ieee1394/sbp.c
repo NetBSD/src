@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.20.8.1 2008/04/03 12:42:43 mjf Exp $	*/
+/*	$NetBSD: sbp.c,v 1.20.8.2 2009/01/17 13:28:56 mjf Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.20.8.1 2008/04/03 12:42:43 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.20.8.2 2009/01/17 13:28:56 mjf Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -201,7 +201,7 @@ static int sysctl_sbp_verify_tags(SYSCTLFN_PROTO);
 /*
  * Setup sysctl(3) MIB, hw.sbp.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_sbp, "sysctl sbp(4) subtree setup")
 {
@@ -870,8 +870,8 @@ sbp_login(struct sbp_dev *sdev)
 	if (t.tv_sec >= 0 && t.tv_usec > 0)
 		ticks = (t.tv_sec * 1000 + t.tv_usec / 1000) * hz / 1000;
 SBP_DEBUG(0)
-	printf("%s: sec = %jd usec = %ld ticks = %d\n", __func__,
-	    (intmax_t)t.tv_sec, t.tv_usec, ticks);
+	printf("%s: sec = %lld usec = %ld ticks = %d\n", __func__,
+	    (long long)t.tv_sec, (long)t.tv_usec, ticks);
 END_DEBUG
 	fw_callout_reset(&sdev->login_callout, ticks,
 			sbp_login_callout, (void *)(sdev));
@@ -2276,7 +2276,7 @@ sbp_free_target(struct sbp_target *target)
 	}
 	STAILQ_INIT(&target->xferlist);
 	free(target->luns, M_SBP);
-	target->num_lun = 0;;
+	target->num_lun = 0;
 	target->luns = NULL;
 	target->fwdev = NULL;
 }
@@ -2499,7 +2499,7 @@ sbp_timeout(void *arg)
 		SBP_DETACH_TARGET(target);
 		if (target->luns != NULL)
 			free(target->luns, M_SBP);
-		target->num_lun = 0;;
+		target->num_lun = 0;
 		target->luns = NULL;
 		target->fwdev = NULL;
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2007/10/17 19:54:14 garbled Exp $
+#	$NetBSD: Makefile,v 1.6.16.1 2009/01/17 13:27:59 mjf Exp $
 
 # Makefile for evbmips tags file and boot blocks
 
@@ -22,7 +22,8 @@ tags:
 	-echo ${SEVBMIPS} ${SMIPS} | xargs ctags -wadtf ${TEVBMIPS}
 	-${FINDCOMM} | xargs ctags -wadtf ${TEVBMIPS}
 	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${AEVBMIPS} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TEVBMIPS}
 	sort -o ${TEVBMIPS} ${TEVBMIPS}
 

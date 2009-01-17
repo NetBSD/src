@@ -1,8 +1,7 @@
-#	$NetBSD: files,v 1.892.6.8 2008/10/05 20:11:27 mjf Exp $
-
+#	$NetBSD: files,v 1.892.6.9 2009/01/17 13:28:49 mjf Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20080610
+version 	20081219
 
 #
 # device classes
@@ -24,13 +23,15 @@ defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
 defflag				COREDUMP
-defflag opt_modular.h		MODULAR
 
 defparam			DEFCORENAME
 defparam			HZ
 defparam			MAXUPRC
 defparam			RTC_OFFSET
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
+
+defflag				AIO
+defflag				MQUEUE
 
 defflag				BUFQ_DISKSORT
 defflag				BUFQ_FCFS
@@ -116,17 +117,20 @@ defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
 # compatibility options
 #
-defflag	opt_compat_netbsd.h	COMPAT_40
-defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40
-defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
-defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
-defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16
-defflag	opt_compat_netbsd.h	COMPAT_14: COMPAT_15
-defflag	opt_compat_netbsd.h	COMPAT_13: COMPAT_14
-defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13
-defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12
-defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
-defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
+defflag	opt_sa.h		KERN_SA
+defflag opt_compat_netbsd.h	COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_50: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, KERN_SA, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_14: COMPAT_15, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_13: COMPAT_14, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_IBCS2
@@ -257,6 +261,8 @@ defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 #
 defflag	opt_perfctrs.h		PERFCTRS
 
+defflag	opt_wlan.h		WLAN
+
 # Machine-independent device majors assignements
 include "conf/majors"
 
@@ -301,6 +307,13 @@ define	audiobell
 #
 device	video
 attach	video at videobus
+
+# National Semiconductor LM7[89]
+#
+# (included here so files.i2c can define an attachment)
+
+device	lm: sysmon_envsys
+file	dev/ic/nslm7x.c			lm			needs-flag
 
 # I2C device support
 include "dev/i2c/files.i2c"
@@ -574,15 +587,16 @@ file	dev/ic/am79c930.c		awi
 device	wi: arp, wlan, ifnet
 file	dev/ic/wi.c			wi
 
+# Atheros HAL
+#
+include "external/isc/atheros_hal/conf/files.ath_hal"
+
 # Atheros 5210/5211/5212 multi-mode 802.11
 #
-defflag	opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
 device	ath: arp, wlan, ifnet
 file	dev/ic/ath.c					ath
 file	dev/ic/ath_netbsd.c				ath
 file	dev/ic/athrate-sample.c				ath
-file	contrib/dev/ath/netbsd/ah_osdep.c		ath
-object	/athhal.o					ath
 
 # ADMtek ADM8211 802.11
 #
@@ -810,11 +824,6 @@ file	dev/ic/attimer.c		attimer			needs-flag
 #
 device	clmpcc: tty
 file	dev/ic/clmpcc.c			clmpcc			needs-flag
-
-# National Semiconductor LM7[89]
-#
-device	lm: sysmon_envsys
-file	dev/ic/nslm7x.c			lm			needs-flag
 
 # Abit uGuru
 #
@@ -1186,6 +1195,10 @@ file	dev/ic/isic_bchan.c		isic
 device	iavc: isdndev, isdncapi, passive_isdn
 file	dev/ic/iavc.c			iavc
 
+# Broadcom AirForce / Apple Airport Extreme
+device	bwi: arp, ifnet, firmload, wlan
+file	dev/ic/bwi.c			bwi
+
 # legitimate pseudo-devices
 #
 defpseudodev vnd:	disk
@@ -1273,6 +1286,10 @@ defpseudo pud
 file	dev/pud/pud.c			pud
 file	dev/pud/pud_dev.c		pud
 
+=======
+# device-mapper driver for LVM
+include "dev/dm/files.dm"
+
 defpseudo devfsctl
 file   dev/devfsctl/devfsctl.c         devfsctl
 
@@ -1318,6 +1335,8 @@ include "secmodel/files.secmodel"
 #
 # kernel sources
 #
+file	compat/common/compat_mod.c	compat_netbsd
+file	compat/sa/compat_sa.c
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
@@ -1354,13 +1373,12 @@ file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
-file	kern/core_elf32.c		coredump & exec_elf32
-file	kern/core_elf64.c		coredump & exec_elf64
-file	kern/core_netbsd.c		coredump & (exec_aout | exec_coff |
-					     exec_ecoff | exec_macho | lkm)
+file	kern/core_elf32.c		exec_elf32
+file	kern/core_elf64.c		exec_elf64
+file	kern/core_netbsd.c		exec_aout | exec_coff |
+					exec_ecoff | exec_macho
 file	kern/cnmagic.c
 file	kern/exec_aout.c		exec_aout
-file	kern/exec_conf.c
 file	kern/exec_ecoff.c		exec_ecoff
 file	kern/exec_elf32.c		exec_elf32
 file	kern/exec_elf64.c		exec_elf64
@@ -1374,7 +1392,7 @@ file	kern/kern_acct.c
 file	kern/kern_auth.c
 file	kern/kern_clock.c
 file	kern/kern_condvar.c
-file	kern/kern_core.c
+file	kern/kern_core.c		coredump
 file	kern/kern_cpu.c
 file	kern/kern_descrip.c
 file	kern/kern_event.c
@@ -1384,8 +1402,7 @@ file	kern/kern_fork.c
 file	kern/kern_idle.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c		ktrace
-file	kern/kern_ksyms.c		ksyms | ddb | lkm needs-flag
-file	kern/kern_lkm.c			lkm
+file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
@@ -1417,6 +1434,7 @@ file	kern/kern_time.c
 file	kern/kern_timeout.c
 file	kern/kern_turnstile.c
 file	kern/kern_todr.c
+file	kern/kern_uidinfo.c
 file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
@@ -1431,6 +1449,7 @@ file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
+file	kern/subr_exec_fd.c
 file	kern/subr_extent.c
 file	kern/subr_hash.c
 file	kern/subr_kmem.c
@@ -1440,7 +1459,6 @@ file	kern/subr_log.c
 file	kern/subr_percpu.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
-file	kern/subr_prf2.c
 file	kern/subr_prof.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
@@ -1451,11 +1469,11 @@ file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xcall.c
-file	kern/sys_aio.c
+file	kern/sys_aio.c			aio
 file	kern/sys_descrip.c
 file	kern/sys_generic.c
 file	kern/sys_module.c
-file	kern/sys_mqueue.c
+file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
@@ -1477,7 +1495,7 @@ file	kern/tty_pty.c			pty 			needs-flag
 file	kern/tty_ptm.c			pty
 file	kern/tty_subr.c
 file	kern/tty_tty.c
-file	kern/uipc_accf.c		inet
+file	kern/uipc_accf.c
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
@@ -1490,6 +1508,7 @@ file	kern/uipc_syscalls.c
 file	kern/uipc_usrreq.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
+file	kern/vfs_cwd.c
 file	kern/vfs_dirhash.c
 file	kern/vfs_getcwd.c
 file	kern/vfs_hooks.c
@@ -1508,9 +1527,9 @@ file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
 file	miscfs/genfs/genfs_vfsops.c
 file	miscfs/genfs/genfs_vnops.c
-file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs | lkm
-file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs | lkm
-file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs | lkm
+file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs
+file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs
+file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
@@ -1556,8 +1575,8 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
-file	netinet/accf_data.c		inet & accf_data
-file	netinet/accf_http.c		inet & accf_http
+file	netinet/accf_data.c		accf_data
+file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm

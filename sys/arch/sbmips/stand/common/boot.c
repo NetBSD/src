@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.3 2005/12/11 12:18:51 christos Exp $ */
+/* $NetBSD: boot.c,v 1.3.74.1 2009/01/17 13:28:28 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,12 +124,15 @@ main(long fwhandle,long fd,long fwentry)
 	}
 
 	memset(marks, 0, sizeof marks);
-	if (boot_file[0] != '\0')
-		win = loadfile(name = boot_file, marks, LOAD_KERNEL) == 0;
-	else
+	if (boot_file[0] != '\0') {
+		name = boot_file;
+		win = loadfile(name, marks, LOAD_KERNEL) == 0;
+	} else {
+		name = NULL;	/* XXX gcc -Wuninitialized */
 		for (namep = kernelnames, win = 0; *namep != NULL && !win;
 		    namep++)
 			win = loadfile(name = *namep, marks, LOAD_KERNEL) == 0;
+	}
 
 	entry = marks[MARK_ENTRY];
 	booted_dev_close();

@@ -1,7 +1,8 @@
-/*	$NetBSD: once.h,v 1.4 2008/01/04 18:18:31 ad Exp $	*/
+/*	$NetBSD: once.h,v 1.4.6.1 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
+ * Copyright (c)2008 Antti Kantee,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,24 +30,24 @@
 #ifndef _SYS_ONCE_H_
 #define	_SYS_ONCE_H_
 
-#include <sys/simplelock.h>
-
 typedef struct {
-	struct simplelock o_lock;
-	int o_flags;
+	unsigned o_status;
+	int o_error;
+#define	ONCE_VIRGIN	0
 #define	ONCE_RUNNING	1
 #define	ONCE_DONE	2
 } once_t;
 
+void once_init(void);
 int _run_once(once_t *, int (*)(void));
 
 #define	ONCE_DECL(o) \
 	once_t (o) = { \
-		.o_lock = SIMPLELOCK_INITIALIZER, \
-		.o_flags = 0, \
+		.o_status = 0, \
 	};
 
 #define	RUN_ONCE(o, fn) \
-    (__predict_true(((o)->o_flags & ONCE_DONE) != 0) ? 0 : _run_once((o), (fn)))
+    (__predict_true((o)->o_status == ONCE_DONE) ? \
+      ((o)->o_error) : _run_once((o), (fn)))
 
 #endif /* _SYS_ONCE_H_ */

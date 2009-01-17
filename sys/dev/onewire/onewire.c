@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.7.20.1 2008/06/02 13:23:36 mjf Exp $ */
+/* $NetBSD: onewire.c,v 1.7.20.2 2009/01/17 13:28:58 mjf Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.7.20.1 2008/06/02 13:23:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.7.20.2 2009/01/17 13:28:58 mjf Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -426,8 +426,8 @@ onewire_scan(struct onewire_softc *sc)
 			    onewire_print)) == NULL)
 				continue;
 
-			MALLOC(nd, struct onewire_device *,
-			    sizeof(struct onewire_device), M_DEVBUF, M_NOWAIT);
+			nd = malloc(sizeof(struct onewire_device),
+				M_DEVBUF, M_NOWAIT);
 			if (nd == NULL)
 				continue;
 			nd->d_dev = dev;
@@ -445,7 +445,7 @@ onewire_scan(struct onewire_softc *sc)
 		if (!d->d_present) {
 			config_detach(d->d_dev, DETACH_FORCE);
 			TAILQ_REMOVE(&sc->sc_devs, d, d_list);
-			FREE(d, M_DEVBUF);
+			free(d, M_DEVBUF);
 		}
 	}
 	onewire_unlock(sc);

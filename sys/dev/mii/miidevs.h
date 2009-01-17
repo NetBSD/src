@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.78.6.3 2008/10/05 20:11:29 mjf Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.78.6.4 2009/01/17 13:28:58 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.78 2008/09/28 18:30:11 bouyer Exp
+ *	NetBSD: miidevs,v 1.81 2009/01/16 20:41:39 cegger Exp
  */
 
 /*-
@@ -52,7 +52,9 @@
  * which is mangled accordingly to compensate.
  */
 
+#define	MII_OUI_AGERE	0x00053d	/* Agere */
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
+#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
@@ -107,6 +109,18 @@
 /*
  * List of known models.  Grouped by oui.
  */
+
+/*
+ * Agere PHYs
+ */
+#define	MII_MODEL_AGERE_ET1011	0x0004
+#define	MII_STR_AGERE_ET1011	"Agere ET1011 10/100/1000baseT PHY"
+
+/* Atheros PHYs */
+#define	MII_MODEL_ATHEROS_F1	0x0001
+#define	MII_STR_ATHEROS_F1	"F1 10/100/1000 PHY"
+#define	MII_MODEL_ATHEROS_F2	0x0002
+#define	MII_STR_ATHEROS_F2	"F2 10/100 PHY"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */

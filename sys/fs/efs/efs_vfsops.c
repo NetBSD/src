@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.14.12.2 2008/09/28 10:40:50 mjf Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.14.12.3 2009/01/17 13:29:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.14.12.2 2008/09/28 10:40:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.14.12.3 2009/01/17 13:29:16 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ MALLOC_JUSTDEFINE(M_EFSINO, "efsino", "efs in-core inode structure");
 MALLOC_JUSTDEFINE(M_EFSTMP, "efstmp", "efs temporary allocations");
 
 extern int (**efs_vnodeop_p)(void *); 	/* for getnewvnode() */
+extern int (**efs_specop_p)(void *); 	/* for getnewvnode() */
+extern int (**efs_fifoop_p)(void *); 	/* for getnewvnode() */
 static int efs_statvfs(struct mount *, struct statvfs *);
 
 /*
@@ -413,9 +415,12 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	switch (eip->ei_mode & S_IFMT) {
 	case S_IFIFO:
 		vp->v_type = VFIFO;
+		vp->v_op = efs_fifoop_p;
 		break;
 	case S_IFCHR:
 		vp->v_type = VCHR;
+		vp->v_op = efs_specop_p;
+		spec_node_init(vp, eip->ei_dev);
 		break;
 	case S_IFDIR:
 		vp->v_type = VDIR;
@@ -424,6 +429,8 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		break;
 	case S_IFBLK:
 		vp->v_type = VBLK;
+		vp->v_op = efs_specop_p;
+		spec_node_init(vp, eip->ei_dev);
 		break;
 	case S_IFREG:
 		vp->v_type = VREG;
@@ -551,13 +558,13 @@ efs_done(void)
 }
 
 extern const struct vnodeopv_desc efs_vnodeop_opv_desc;
-//extern const struct vnodeopv_desc efs_specop_opv_desc;
-//extern const struct vnodeopv_desc efs_fifoop_opv_desc;
+extern const struct vnodeopv_desc efs_specop_opv_desc;
+extern const struct vnodeopv_desc efs_fifoop_opv_desc;
 
 const struct vnodeopv_desc * const efs_vnodeopv_descs[] = {
 	&efs_vnodeop_opv_desc,
-//	&efs_specop_opv_desc,
-//	&efs_fifoop_opv_desc,
+	&efs_specop_opv_desc,
+	&efs_fifoop_opv_desc,
 	NULL
 };
 

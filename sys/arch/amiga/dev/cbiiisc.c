@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.15.64.1 2008/06/29 09:32:53 mjf Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.15.64.2 2009/01/17 13:27:50 mjf Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.15.64.1 2008/06/29 09:32:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.15.64.2 2009/01/17 13:27:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,6 @@ cbiiiscattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_clock_freq = 50;		/* Clock = 50 MHz >> */
 	sc->sc_ctest7 = 0x00;
 	sc->sc_dcntl = 0x20;		/* XXX ?? */
-
-	alloc_sicallback();
 
         /*
          * Fill in the scsipi_adapter.

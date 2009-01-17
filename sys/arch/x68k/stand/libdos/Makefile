@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2006/06/29 03:46:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.7.58.1 2009/01/17 13:28:37 mjf Exp $
 
 LIB=	dos
 
@@ -6,9 +6,9 @@ NOLINT=# defined
 NOPROFILE=# defined
 NOPIC=# defined
 
-CPPFLAGS+=	-I${.CURDIR}
+.include "../Makefile.booters"
 
-AWK?=	awk
+CPPFLAGS+=	-I${.CURDIR} -I.
 
 SRCS=	dos_rename.S
 SRCS+=	dos_cerror.S dos_procerr.S dos_errno.c dos_strerror.S
@@ -51,13 +51,14 @@ MAKECALL=${.CURDIR}/makedoscalls.awk
 ${ASM}: ${.CURDIR}/dos.h ${MAKECALL}
 	${_MKTARGET_COMPILE}
 	@grep -i 'DOS_${.PREFIX} ' ${.CURDIR}/dos.h | \
-	    ${AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} | ${AS} -o ${.TARGET}
+	    ${TOOL_AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} | \
+	    ${AS} -o ${.TARGET}
 
 MAKESTRERR=${.CURDIR}/makestrerror.awk
 
 dos_strerror.S: ${.CURDIR}/dos_errno.h ${MAKESTRERR}
 	${_MKTARGET_CREATE}
-	@${AWK} -f ${MAKESTRERR} ${.CURDIR}/dos_errno.h > ${.TARGET}\
+	@${TOOL_AWK} -f ${MAKESTRERR} ${.CURDIR}/dos_errno.h > ${.TARGET}\
 		|| ( rm -f ${.TARGET}; exit 1 )
 
 # only needed during build

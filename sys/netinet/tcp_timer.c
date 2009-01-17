@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.77.28.1 2008/06/02 13:24:25 mjf Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.77.28.2 2009/01/17 13:29:32 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.77.28.1 2008/06/02 13:24:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.77.28.2 2009/01/17 13:29:32 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -208,7 +208,11 @@ tcp_delack(void *arg)
 	 */
 
 	mutex_enter(softnet_lock);
-	if ((tp->t_flags & TF_DEAD) != 0) {
+	if ((tp->t_flags & (TF_DEAD | TF_DELACK)) != TF_DELACK) {
+		mutex_exit(softnet_lock);
+		return;
+	}
+	if (!callout_expired(&tp->t_delack_ch)) {
 		mutex_exit(softnet_lock);
 		return;
 	}
@@ -268,6 +272,10 @@ tcp_timer_rexmt(void *arg)
 
 	mutex_enter(softnet_lock);
 	if ((tp->t_flags & TF_DEAD) != 0) {
+		mutex_exit(softnet_lock);
+		return;
+	}
+	if (!callout_expired(&tp->t_timer[TCPT_REXMT])) {
 		mutex_exit(softnet_lock);
 		return;
 	}
@@ -428,6 +436,10 @@ tcp_timer_persist(void *arg)
 		mutex_exit(softnet_lock);
 		return;
 	}
+	if (!callout_expired(&tp->t_timer[TCPT_PERSIST])) {
+		mutex_exit(softnet_lock);
+		return;
+	}
 
 	KERNEL_LOCK(1, NULL);
 #ifdef TCP_DEBUG
@@ -492,6 +504,10 @@ tcp_timer_keep(void *arg)
 
 	mutex_enter(softnet_lock);
 	if ((tp->t_flags & TF_DEAD) != 0) {
+		mutex_exit(softnet_lock);
+		return;
+	}
+	if (!callout_expired(&tp->t_timer[TCPT_KEEP])) {
 		mutex_exit(softnet_lock);
 		return;
 	}
@@ -582,6 +598,10 @@ tcp_timer_2msl(void *arg)
 
 	mutex_enter(softnet_lock);
 	if ((tp->t_flags & TF_DEAD) != 0) {
+		mutex_exit(softnet_lock);
+		return;
+	}
+	if (!callout_expired(&tp->t_timer[TCPT_2MSL])) {
 		mutex_exit(softnet_lock);
 		return;
 	}

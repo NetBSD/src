@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.11.6.3 2008/09/28 10:41:03 mjf Exp $	*/
+/*	$NetBSD: locks.c,v 1.11.6.4 2009/01/17 13:29:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Finnish Cultural Foundation.
@@ -54,70 +54,94 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.11.6.4 2009/01/17 13:29:36 mjf Exp $");
+
 #include <sys/param.h>
+#include <sys/atomic.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
-#include <sys/atomic.h>
 
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
 
+/*
+ * We map locks to pthread routines.  The difference between kernel
+ * and rumpuser routines is that while the kernel uses static
+ * storage, rumpuser allocates the object from the heap.  This
+ * indirection is necessary because we don't know the size of
+ * pthread objects here.  It is also benefitial, since we can
+ * be easily compatible with the kernel ABI because all kernel
+ * objects regardless of machine architecture are always at least
+ * the size of a pointer.  The downside, of course, is a performance
+ * penalty.
+ */
+
+#define RUMPMTX(mtx) (*(struct rumpuser_mtx **)(mtx))
+
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 {
 
-	rumpuser_mutex_init(&mtx->kmtx_mtx);
+	CTASSERT(sizeof(kmutex_t) >= sizeof(void *));
+
+	rumpuser_mutex_init((struct rumpuser_mtx **)mtx);
 }
 
 void
 mutex_destroy(kmutex_t *mtx)
 {
 
-	rumpuser_mutex_destroy(mtx->kmtx_mtx);
+	rumpuser_mutex_destroy(RUMPMTX(mtx));
 }
 
 void
 mutex_enter(kmutex_t *mtx)
 {
 
-	rumpuser_mutex_enter(mtx->kmtx_mtx);
+	rumpuser_mutex_enter(RUMPMTX(mtx));
 }
 
 void
 mutex_spin_enter(kmutex_t *mtx)
 {
 
-	mutex_enter(mtx);
+	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
+		mutex_enter(mtx);
 }
 
 int
 mutex_tryenter(kmutex_t *mtx)
 {
 
-	return rumpuser_mutex_tryenter(mtx->kmtx_mtx);
+	return rumpuser_mutex_tryenter(RUMPMTX(mtx));
 }
 
 void
 mutex_exit(kmutex_t *mtx)
 {
 
-	rumpuser_mutex_exit(mtx->kmtx_mtx);
+	rumpuser_mutex_exit(RUMPMTX(mtx));
 }
 
 void
 mutex_spin_exit(kmutex_t *mtx)
 {
 
-	mutex_exit(mtx);
+	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
+		mutex_exit(mtx);
 }
 
 int
 mutex_owned(kmutex_t *mtx)
 {
 
-	return rumpuser_mutex_held(mtx->kmtx_mtx);
+	return rumpuser_mutex_held(RUMPMTX(mtx));
 }
+
+#define RUMPRW(rw) (*(struct rumpuser_rw **)(rw))
 
 /* reader/writer locks */
 
@@ -125,35 +149,37 @@ void
 rw_init(krwlock_t *rw)
 {
 
-	rumpuser_rw_init(&rw->krw_pthlock);
+	CTASSERT(sizeof(krwlock_t) >= sizeof(void *));
+
+	rumpuser_rw_init((struct rumpuser_rw **)rw);
 }
 
 void
 rw_destroy(krwlock_t *rw)
 {
 
-	rumpuser_rw_destroy(rw->krw_pthlock);
+	rumpuser_rw_destroy(RUMPRW(rw));
 }
 
 void
 rw_enter(krwlock_t *rw, const krw_t op)
 {
 
-	rumpuser_rw_enter(rw->krw_pthlock, op == RW_WRITER);
+	rumpuser_rw_enter(RUMPRW(rw), op == RW_WRITER);
 }
 
 int
 rw_tryenter(krwlock_t *rw, const krw_t op)
 {
 
-	return rumpuser_rw_tryenter(rw->krw_pthlock, op == RW_WRITER);
+	return rumpuser_rw_tryenter(RUMPRW(rw), op == RW_WRITER);
 }
 
 void
 rw_exit(krwlock_t *rw)
 {
 
-	rumpuser_rw_exit(rw->krw_pthlock);
+	rumpuser_rw_exit(RUMPRW(rw));
 }
 
 /* always fails */
@@ -168,33 +194,34 @@ int
 rw_write_held(krwlock_t *rw)
 {
 
-	return rumpuser_rw_wrheld(rw->krw_pthlock);
+	return rumpuser_rw_wrheld(RUMPRW(rw));
 }
 
 int
 rw_read_held(krwlock_t *rw)
 {
 
-	return rumpuser_rw_rdheld(rw->krw_pthlock);
+	return rumpuser_rw_rdheld(RUMPRW(rw));
 }
 
 int
 rw_lock_held(krwlock_t *rw)
 {
 
-	return rumpuser_rw_held(rw->krw_pthlock);
+	return rumpuser_rw_held(RUMPRW(rw));
 }
 
 /* curriculum vitaes */
 
-/* forgive me for I have sinned */
-#define RUMPCV(a) ((struct rumpuser_cv *)(__UNCONST((a)->cv_wmesg)))
+#define RUMPCV(cv) (*(struct rumpuser_cv **)(cv))
 
 void
 cv_init(kcondvar_t *cv, const char *msg)
 {
 
-	rumpuser_cv_init((struct rumpuser_cv **)__UNCONST(&cv->cv_wmesg));
+	CTASSERT(sizeof(kcondvar_t) >= sizeof(void *));
+
+	rumpuser_cv_init((struct rumpuser_cv **)cv);
 }
 
 void
@@ -208,14 +235,14 @@ void
 cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 {
 
-	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
+	rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
 }
 
 int
 cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 {
 
-	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
+	rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
 	return 0;
 }
 
@@ -231,7 +258,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 		return 0;
 	} else {
 		KASSERT(hz == 100);
-		return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+		return rumpuser_cv_timedwait(RUMPCV(cv), RUMPMTX(mtx), ticks);
 	}
 }
 
@@ -263,24 +290,45 @@ cv_has_waiters(kcondvar_t *cv)
 	return rumpuser_cv_has_waiters(RUMPCV(cv));
 }
 
-/* kernel biglock, only for vnode_if */
+/*
+ * giant lock
+ */
 
+static volatile int lockcnt;
 void
 _kernel_lock(int nlocks)
 {
 
-	KASSERT(nlocks == 1);
-	mutex_enter(&rump_giantlock);
+	while (nlocks--) {
+		rumpuser_mutex_enter(rump_giantlock);
+		lockcnt++;
+	}
 }
 
 void
 _kernel_unlock(int nlocks, int *countp)
 {
 
-	KASSERT(nlocks == 1);
-	mutex_exit(&rump_giantlock);
+	if (!rumpuser_mutex_held(rump_giantlock)) {
+		KASSERT(nlocks == 0);
+		if (countp)
+			*countp = 0;
+		return;
+	}
+
 	if (countp)
-		*countp = 1;
+		*countp = lockcnt;
+	if (nlocks == 0)
+		nlocks = lockcnt;
+	if (nlocks == -1) {
+		KASSERT(lockcnt == 1);
+		nlocks = 1;
+	}
+	KASSERT(nlocks <= lockcnt);
+	while (nlocks--) {
+		lockcnt--;
+		rumpuser_mutex_exit(rump_giantlock);
+	}
 }
 
 struct kmutexobj {

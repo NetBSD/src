@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv2.c,v 1.2 2003/04/11 11:27:06 dsl Exp $ */
+/* $NetBSD: lfsv2.c,v 1.2.100.1 2009/01/17 13:29:22 mjf Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	2
@@ -18,5 +18,8 @@
 #else
 #define	INOPBx(fs) INOPB(fs)
 #endif
+
+#define	FSMOD			"lfs"
+#define	FSMOD2			"ffs"
 
 #include "lib/libsa/ufs.c"

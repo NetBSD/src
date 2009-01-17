@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2008/06/29 09:33:17 mjf Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2009/01/17 13:29:30 mjf Exp $
 
 .include "../Makefile.inc"
 
@@ -13,6 +13,6 @@ COPTS+=	-DLFS -Dufs_mkdir=lfs_ufs_mkdir -Dufs_makeinode=lfs_ufs_makeinode \
 KMOD=	lfs
 SRCS=	lfs_vfsops.c lfs_vnops.c lfs_subr.c lfs_alloc.c lfs_balloc.c \
 	lfs_bio.c lfs_cksum.c lfs_debug.c lfs_inode.c lfs_segment.c \
-	lfs_syscalls.c ufs_vnops.c
+	lfs_syscalls.c ufs_vnops.c lfs_itimes.c
 
 .include <bsd.kmodule.mk>

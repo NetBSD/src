@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.134 2008/01/02 11:49:00 ad Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.134.6.1 2009/01/17 13:29:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.134 2008/01/02 11:49:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.134.6.1 2009/01/17 13:29:27 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -400,7 +400,8 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		struct timeval tv;
 
 		microtime(&tv);
-		snprintf(*bufp, len, "%ld %ld\n", tv.tv_sec, tv.tv_usec);
+		snprintf(*bufp, len, "%lld %ld\n", (long long)tv.tv_sec,
+		    (long)tv.tv_usec);
 		break;
 	}
 
@@ -475,6 +476,8 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 
 #ifdef IPSEC
 	case KFSipsecsa:
+		if (key_setdumpsa_spi == NULL)
+			return 0;
 		/*
 		 * Note that SA configuration could be changed during the
 		 * read operation, resulting in garbled output.
@@ -499,6 +502,8 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		 * Note that SP configuration could be changed during the
 		 * read operation, resulting in garbled output.
 		 */
+		if (key_getspbyid == NULL)
+			return 0;
 		if (!kfs->kfs_v) {
 			struct secpolicy *sp;
 
@@ -715,6 +720,8 @@ kernfs_open(v)
 	switch (kfs->kfs_type) {
 #ifdef IPSEC
 	case KFSipsecsa:
+		if (key_setdumpsa_spi == NULL)
+			return 0;
 		m = key_setdumpsa_spi(htonl(kfs->kfs_value));
 		if (m) {
 			m_freem(m);
@@ -723,6 +730,8 @@ kernfs_open(v)
 			return (ENOENT);
 
 	case KFSipsecsp:
+		if (key_getspbyid == NULL)
+			return 0;
 		sp = key_getspbyid(kfs->kfs_value);
 		if (sp) {
 			kfs->kfs_v = sp;
@@ -751,6 +760,8 @@ kernfs_close(v)
 	switch (kfs->kfs_type) {
 #ifdef IPSEC
 	case KFSipsecsp:
+		if (key_freesp == NULL)
+			return 0;
 		key_freesp((struct secpolicy *)kfs->kfs_v);
 		break;
 #endif
@@ -827,7 +838,7 @@ kernfs_getattr(v)
 	/* Make all times be current TOD, except for the "boottime" node. */
 	if (kfs->kfs_kt->kt_namlen == 8 &&
 	    !memcmp(kfs->kfs_kt->kt_name, "boottime", 8)) {
-		TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_ctime);
+		vap->va_ctime = boottime;
 	} else {
 		getnanotime(&vap->va_ctime);
 	}
@@ -1254,6 +1265,8 @@ kernfs_readdir(v)
 	case KFSipsecsadir:
 		/* count SA in the system */
 		n = 0;
+		if (&satailq == NULL)
+			return 0;
 		TAILQ_FOREACH(sav, &satailq, tailq) {
 			for (sav2 = TAILQ_FIRST(&satailq);
 			    sav2 != sav;
@@ -1328,6 +1341,9 @@ kernfs_readdir(v)
 
 	case KFSipsecspdir:
 		/* count SP in the system */
+		if (&sptailq == NULL)
+			return 0;
+
 		n = 0;
 		TAILQ_FOREACH(sp, &sptailq, tailq)
 			n++;
@@ -1420,6 +1436,8 @@ kernfs_inactive(v)
 	switch (kfs->kfs_type) {
 #ifdef IPSEC
 	case KFSipsecsa:
+		if (key_setdumpsa_spi == NULL)
+			return 0;
 		m = key_setdumpsa_spi(htonl(kfs->kfs_value));
 		if (m)
 			m_freem(m);
@@ -1427,6 +1445,8 @@ kernfs_inactive(v)
 			*ap->a_recycle = true;
 		break;
 	case KFSipsecsp:
+		if (key_getspbyid == NULL)
+			return 0;
 		sp = key_getspbyid(kfs->kfs_value);
 		if (sp)
 			key_freesp(sp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.22.74.2 2008/09/28 10:40:01 mjf Exp $	 */
+/*	$NetBSD: exec.c,v 1.22.74.3 2009/01/17 13:28:05 mjf Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 
+#include <machine/multiboot.h>
+
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
@@ -133,32 +135,48 @@ static char module_base[64] = "/";
 
 static void	module_init(void);
 
-int
-exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
+void
+module_add(char *name)
 {
-	u_long          boot_argv[BOOT_NARGS];
-	int		fd;
-	u_long		marks[MARK_MAX];
-	struct btinfo_symtab btinfo_symtab;
-	u_long		extmem;
-	u_long		basemem;
+	boot_module_t *bm, *bmp;
+	size_t len;
+	char *str;
+
+	while (*name == ' ' || *name == '\t')
+		++name;
+
+	bm = alloc(sizeof(boot_module_t));
+	len = strlen(name) + 1;
+	str = alloc(len);
+	if (bm == NULL || str == NULL) {
+		printf("couldn't allocate module\n");
+		return;
+	}
+	memcpy(str, name, len);
+	bm->bm_path = str;
+	bm->bm_next = NULL;
+	if (boot_modules == NULL)
+		boot_modules = bm;
+	else {
+		for (bmp = boot_modules; bmp->bm_next;
+		    bmp = bmp->bm_next)
+			;
+		bmp->bm_next = bm;
+	}
+}
+
+static int
+common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
+    physaddr_t loadaddr, int floppy, u_long marks[MARK_MAX])
+{
+	int fd;
 #ifdef XMS
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
 #endif
-	char		*machine;
 
-#ifdef	DEBUG
-	printf("exec: file=%s loadaddr=0x%lx\n",
-	       file ? file : "NULL", loadaddr);
-#endif
-
-	BI_ALLOC(32); /* ??? */
-
-	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
-
-	extmem = getextmem();
-	basemem = getbasemem();
+	*extmem = getextmem();
+	*basemem = getbasemem();
 
 #ifdef XMS
 	if ((getextmem1() == 0) && (xmsmem = checkxms())) {
@@ -171,14 +189,14 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 		 * xmsmem is a few kB less than the actual size, but
 		 *  better than nothing.
 		 */
-		if (xmsmem > extmem)
-			extmem = xmsmem;
+		if (xmsmem > *extmem)
+			*extmem = xmsmem;
 		/*
 		 * Get the size of the kernel
 		 */
 		marks[MARK_START] = loadaddr;
 		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
-			goto out;
+			return EIO;
 		close(fd);
 
 		kernsize = marks[MARK_END];
@@ -192,16 +210,14 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
 	    LOAD_KERNEL & ~(floppy ? LOAD_NOTE : 0))) == -1)
-		goto out;
-
-	boot_argv[0] = boothowto;
-	boot_argv[1] = 0;
-	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
-	/* argv[3] below */
-	boot_argv[4] = extmem;
-	boot_argv[5] = basemem;
+		return EIO;
 
 	close(fd);
+
+	/* Now we know the root fs type, load modules for it. */
+	module_add(fsmod);
+	if (fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
+		module_add(fsmod2);
 
 	/*
 	 * Gather some information for the kernel. Do this after the
@@ -231,37 +247,42 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 #endif
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
-	boot_argv[3] = marks[MARK_END];
 	image_end = marks[MARK_END];
 	kernel_loaded = true;
 
+	return 0;
+}
+
+int
+exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
+{
+	u_long          boot_argv[BOOT_NARGS];
+	u_long		marks[MARK_MAX];
+	struct btinfo_symtab btinfo_symtab;
+	u_long		extmem;
+	u_long		basemem;
+
+#ifdef	DEBUG
+	printf("exec: file=%s loadaddr=0x%lx\n",
+	       file ? file : "NULL", loadaddr);
+#endif
+
+	BI_ALLOC(32); /* ??? */
+
+	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
+
+	if (common_load_kernel(file, &basemem, &extmem, loadaddr, floppy, marks))
+		goto out;
+
+	boot_argv[0] = boothowto;
+	boot_argv[1] = 0;
+	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
+	boot_argv[3] = marks[MARK_END];
+	boot_argv[4] = extmem;
+	boot_argv[5] = basemem;
+
 	/* pull in any modules if necessary */
 	if (boot_modules_enabled) {
-		switch (netbsd_elf_class) {
-		case ELFCLASS32:
-			machine = "i386";
-			break;
-		case ELFCLASS64:
-			machine = "amd64";
-			break;
-		default:
-			machine = "generic";
-			break;
-		}
-		if (netbsd_version / 1000000 % 100 == 99) {
-			/* -current */
-			snprintf(module_base, sizeof(module_base),
-			    "/stand/%s/%d.%d.%d/modules", machine,
-			    netbsd_version / 100000000,
-			    netbsd_version / 1000000 % 100,
-			    netbsd_version / 100 % 100);
-		} else if (netbsd_version != 0) {
-			/* release */
-			snprintf(module_base, sizeof(module_base),
-			    "/stand/%s/%d.%d/modules", machine,
-			    netbsd_version / 100000000,
-			    netbsd_version / 1000000 % 100);
-		}
 		module_init();
 		if (btinfo_modulelist) {
 			BI_ADD(btinfo_modulelist, BTINFO_MODULELIST,
@@ -293,22 +314,34 @@ static const char *
 module_path(boot_module_t *bm)
 {
 	static char buf[256];
-	const char *name;
+	char name_buf[256];
+	const char *name, *name2;
 
 	name = bm->bm_path;
-	if (name[0] == '/')
-		return name;
-	snprintf(buf, sizeof(buf), "%s/%s/%s.kmod", module_base, bm->bm_path,
-	    bm->bm_path);
+	for (name2 = name; *name2; ++name2) {
+		if (*name2 == ' ' || *name2 == '\t') {
+			strlcpy(name_buf, name, sizeof(name_buf));
+			if (name2 - name < sizeof(name_buf))
+				name_buf[name2 - name] = '\0';
+			name = name_buf;
+			break;
+		}
+	}
+ 	if (name[0] == '/')
+		snprintf(buf, sizeof(buf), "%s", name);
+	else
+		snprintf(buf, sizeof(buf), "%s/%s/%s.kmod",
+		    module_base, name, name);
+
 	return buf;
 }
 
-static int 
+static int
 module_open(boot_module_t *bm, int mode)
 {
 	int fd;
 	const char *path;
-		
+
 	/* check the expanded path first */
 	path = module_path(bm);
 	fd = open(path, mode);
@@ -327,11 +360,38 @@ module_init(void)
 {
 	struct bi_modulelist_entry *bi;
 	struct stat st;
+	const char *machine;
 	char *buf;
 	boot_module_t *bm;
 	size_t len;
 	off_t off;
 	int err, fd;
+
+	switch (netbsd_elf_class) {
+	case ELFCLASS32:
+		machine = "i386";
+		break;
+	case ELFCLASS64:
+		machine = "amd64";
+		break;
+	default:
+		machine = "generic";
+		break;
+	}
+	if (netbsd_version / 1000000 % 100 == 99) {
+		/* -current */
+		snprintf(module_base, sizeof(module_base),
+		    "/stand/%s/%d.%d.%d/modules", machine,
+		    netbsd_version / 100000000,
+		    netbsd_version / 1000000 % 100,
+		    netbsd_version / 100 % 100);
+	} else if (netbsd_version != 0) {
+		/* release */
+		snprintf(module_base, sizeof(module_base),
+		    "/stand/%s/%d.%d/modules", machine,
+		    netbsd_version / 100000000,
+		    netbsd_version / 1000000 % 100);
+	}
 
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);
@@ -395,4 +455,80 @@ module_init(void)
 		close(fd);
 	}
 	btinfo_modulelist->endpa = image_end;
+}
+
+int
+exec_multiboot(const char *file, char *args)
+{
+	struct multiboot_info *mbi;
+	struct multiboot_module *mbm;
+	struct bi_modulelist_entry *bim;
+	int		i, len;
+	u_long		marks[MARK_MAX];
+	u_long		extmem;
+	u_long		basemem;
+	char		*cmdline;
+
+	mbi = alloc(sizeof(struct multiboot_info));
+	mbi->mi_flags = MULTIBOOT_INFO_HAS_MEMORY;
+
+	if (common_load_kernel(file, &basemem, &extmem, 0, 0, marks))
+		goto out;
+
+	mbi->mi_mem_upper = extmem;
+	mbi->mi_mem_lower = basemem;
+
+	if (args) {
+		mbi->mi_flags |= MULTIBOOT_INFO_HAS_CMDLINE;
+		len = strlen(file) + 1 + strlen(args) + 1;
+		cmdline = alloc(len);
+		snprintf(cmdline, len, "%s %s", file, args);
+		mbi->mi_cmdline = (char *) vtophys(cmdline);
+	}
+
+	/* pull in any modules if necessary */
+	if (boot_modules_enabled) {
+		module_init();
+		if (btinfo_modulelist) {
+			mbm = alloc(sizeof(struct multiboot_module) *
+					   btinfo_modulelist->num);
+
+			bim = (struct bi_modulelist_entry *)
+			  (((char *) btinfo_modulelist) +
+			   sizeof(struct btinfo_modulelist));
+			for (i = 0; i < btinfo_modulelist->num; i++) {
+				mbm[i].mmo_start = bim->base;
+				mbm[i].mmo_end = bim->base + bim->len;
+				mbm[i].mmo_string = (char *)vtophys(bim->path);
+				mbm[i].mmo_reserved = 0;
+				bim++;
+			}
+			mbi->mi_flags |= MULTIBOOT_INFO_HAS_MODS;
+			mbi->mi_mods_count = btinfo_modulelist->num;
+			mbi->mi_mods_addr = vtophys(mbm);
+		}
+	}
+
+#ifdef DEBUG
+	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_ENTRY],
+	    marks[MARK_NSYM], marks[MARK_SYM], marks[MARK_END]);
+#endif
+
+
+#if 0
+	if (btinfo_symtab.nsym) {
+		mbi->mi_flags |= MULTIBOOT_INFO_HAS_ELF_SYMS;
+		mbi->mi_elfshdr_addr = marks[MARK_SYM];
+	btinfo_symtab.nsym = marks[MARK_NSYM];
+	btinfo_symtab.ssym = marks[MARK_SYM];
+	btinfo_symtab.esym = marks[MARK_END];
+#endif
+
+	multiboot(marks[MARK_ENTRY], vtophys(mbi),
+		  x86_trunc_page(mbi->mi_mem_lower*1024));
+	panic("exec returned");
+
+out:
+        dealloc(mbi, 0);
+	return -1;
 }

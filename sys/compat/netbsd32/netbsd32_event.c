@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_event.c,v 1.4.6.2 2008/06/02 13:23:06 mjf Exp $	*/
+/*	$NetBSD: netbsd32_event.c,v 1.4.6.3 2009/01/17 13:28:46 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.4.6.2 2008/06/02 13:23:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.4.6.3 2009/01/17 13:28:46 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,8 @@ netbsd32_kevent_put_events(void *private, struct kevent *events,
 }
 
 int
-netbsd32_kevent(struct lwp *l, const struct netbsd32_kevent_args *uap, register_t *retval)
+netbsd32___kevent50(struct lwp *l,
+    const struct netbsd32___kevent50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;

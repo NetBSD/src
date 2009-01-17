@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.36.36.1 2008/06/02 13:23:51 mjf Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.36.36.2 2009/01/17 13:29:08 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.36.36.1 2008/06/02 13:23:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.36.36.2 2009/01/17 13:29:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -496,10 +496,10 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 		return(0);
 	}
 #ifdef DIAGNOSTIC
-	if (BUFQ_GET(ss->buf_queue) != bp)
+	if (bufq_get(ss->buf_queue) != bp)
 		panic("ssstart(): dequeued wrong buf");
 #else
-	BUFQ_GET(ss->buf_queue);
+	bufq_get(ss->buf_queue);
 #endif
 	error = scsipi_execute_xs(xs);
 	/* with a scsipi_xfer preallocated, scsipi_command can't fail */

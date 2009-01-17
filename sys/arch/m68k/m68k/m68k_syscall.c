@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.34 2008/02/06 22:12:40 dsl Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.34.6.1 2009/01/17 13:28:11 mjf Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,11 +110,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34 2008/02/06 22:12:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.6.1 2009/01/17 13:28:11 mjf Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_aout_m68k.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +123,10 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34 2008/02/06 22:12:40 dsl Exp $"
 #include <sys/pool.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/ktrace.h>
@@ -167,6 +171,12 @@ syscall(register_t code, struct frame frame)
 	sticks = p->p_sticks;
 	l->l_md.md_regs = frame.f_regs;
 	LWP_CACHE_CREDS(l, p);
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	(p->p_md.md_syscall)(code, l, &frame);
 
@@ -264,7 +274,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -277,6 +287,16 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		frame->f_regs[D0] = rval[0];
 		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
+#ifdef COMPAT_50
+		/*
+		 * Starting with the 5.0 release all libc assembler
+		 * stubs properly handle returning pointers in %a0
+		 * themselves, so no need to copy the syscall return
+		 * value there. However, -current binaries post 4.0
+		 * but pre-5.0 might still require this copy, so we
+		 * select this behaviour based on COMPAT_50 as we have
+		 * no equivvalent for the exact in-between version.
+		 */
 #ifdef COMPAT_AOUT_M68K
 		{
 			extern struct emul emul_netbsd_aoutm68k;
@@ -290,6 +310,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		}
 #else
 		frame->f_regs[A0] = rval[0];
+#endif
 #endif
 		break;
 	case ERESTART:
@@ -385,7 +406,7 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:
@@ -398,6 +419,8 @@ out:
 		frame->f_regs[D0] = rval[0];
 		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
+#ifdef COMPAT_50
+		/* see syscall_plain for a comment explaining this */
 #ifdef COMPAT_AOUT_M68K
 		{
 			extern struct emul emul_netbsd_aoutm68k;
@@ -410,7 +433,8 @@ out:
 				frame->f_regs[A0] = rval[0];
 		}
 #else
-	frame->f_regs[A0] = rval[0];
+		frame->f_regs[A0] = rval[0];
+#endif
 #endif
 		break;
 	case ERESTART:
@@ -476,6 +500,17 @@ startlwp(void *arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
+
+	machine_userret(l, f, 0);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	machine_userret(l, f, 0);
 }

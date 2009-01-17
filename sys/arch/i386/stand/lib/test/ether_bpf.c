@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_bpf.c,v 1.9 2007/12/05 22:50:00 dyoung Exp $	*/
+/*	$NetBSD: ether_bpf.c,v 1.9.12.1 2009/01/17 13:28:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -66,8 +66,8 @@ static struct nlist nl[] = {
 	{NULL}
 };
 
-int EtherInit(ha)
-	char *ha;
+int
+EtherInit(char *ha)
 {
 	int res;
 	u_int val;
@@ -83,46 +83,46 @@ int EtherInit(ha)
 	bpf = open(BPFDEV, O_RDWR, 0);
 	if (bpf < 0) {
 		warn("open %s", BPFDEV);
-		return (0);
+		return 0;
 	}
 
 	val = MAXPKT;
 	res = ioctl(bpf, BIOCSBLEN, &val);
 	if (res < 0) {
 		warn("ioctl BIOCSBLEN");
-		return (0);
+		return 0;
 	}
 
 	val = 1;
 	res = ioctl(bpf, BIOCIMMEDIATE, &val);
 	if (res < 0) {
 		warn("ioctl BIOCIMMEDIATE");
-		return (0);
+		return 0;
 	}
 
 	val = 1;
 	res = ioctl(bpf, FIONBIO, &val);
 	if (res < 0) {
 		warn("ioctl FIONBIO");
-		return (0);
+		return 0;
 	}
 
 	memcpy(ifr.ifr_name, BPF_IFNAME, IFNAMSIZ);
 	res = ioctl(bpf, BIOCSETIF, &ifr);
 	if (res < 0) {
 		warn("ioctl BIOCSETIF %s", BPF_IFNAME);
-		return (0);
+		return 0;
 	}
 
 	kvm = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
 	if (!kvm) {
 		warnx(errbuf);
-		return (0);
+		return 0;
 	}
 	if (kvm_nlist(kvm, nl) < 0) {
 		warnx("nlist failed (%s)", kvm_geterr(kvm));
 		kvm_close(kvm);
-		return (0);
+		return 0;
 	}
 
 	kvm_read(kvm, nl[0].n_value, &ifh, sizeof(struct ifnet_head));
@@ -139,7 +139,7 @@ int EtherInit(ha)
 	if (!ifp) {
 		warnx("interface not found");
 		kvm_close(kvm);
-		return (0);
+		return 0;
 	}
 
 #define _offsetof(t, m) ((int)((void *)&((t *)0)->m))
@@ -161,28 +161,28 @@ int EtherInit(ha)
 	kvm_close(kvm);
 	if (!ifap) {
 		warnx("interface hw addr not found");
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 
 void
-EtherStop()
+EtherStop(void)
 {
+
 	if (bpf != -1)
 		close(bpf);
 }
 
 int
-EtherSend(pkt, len)
-	char *pkt;
-	int len;
+EtherSend(char *pkt, int len)
 {
+
 	if (write(bpf, pkt, len) != len) {
 		warn("EtherSend");
-		return (-1);
+		return -1;
 	}
-	return (len);
+	return len;
 }
 
 static union {
@@ -191,9 +191,7 @@ static union {
 } rbuf;
 
 int
-EtherReceive(pkt, maxlen)
-	char *pkt;
-	int maxlen;
+EtherReceive(char *pkt, int maxlen)
 {
 	int res;
 
@@ -209,10 +207,10 @@ EtherReceive(pkt, maxlen)
 		fprintf(stderr, "\n");
 #endif
 		if (rbuf.h.bh_caplen > maxlen)
-			return (0);
+			return 0;
 		memcpy(pkt, &rbuf.buf[rbuf.h.bh_hdrlen], rbuf.h.bh_caplen);
-		return (rbuf.h.bh_caplen);
+		return rbuf.h.bh_caplen;
 	}
 
-	return (0);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.83.6.2 2008/06/29 09:32:57 mjf Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.83.6.3 2009/01/17 13:28:02 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.83.6.2 2008/06/29 09:32:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.83.6.3 2009/01/17 13:28:02 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -57,8 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.83.6.2 2008/06/29 09:32:57 mjf Exp
 #include <sys/ksyms.h>
 #include <sys/boot_flag.h>
 #include <sys/conf.h>	/* XXX for consinit related hacks */
+#include <sys/device.h>
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -208,6 +209,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("Halted while still in the ICE age.\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -243,6 +245,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQs are disabled. */
 	IRQdisable;
@@ -299,7 +303,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	vaddr_t freemempos;
 	vsize_t pt_size;
 	int loop, i;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	Elf_Shdr *sh;
 #endif
 
@@ -331,7 +335,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (!memcmp(&end, "\177ELF", 4)) {
 		sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
 		loop = ((Elf_Ehdr *)&end)->e_shnum;
@@ -359,8 +363,8 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 			/* boot device: -b=sd0 etc. */
 			cp = cp + 2;
 #ifdef NFS
-			if (strcmp(cp, "nfs") == 0)
-				mountroot = nfs_mountroot;
+			if (strcmp(cp, MOUNT_NFS) == 0)
+				rootfstype = MOUNT_NFS;
 			else
 				strncpy(boot_file, cp, sizeof(boot_file));
 #else /* !NFS */
@@ -702,8 +706,8 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 #ifdef DDB
 	db_machine_init();
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 #endif
 
 	printf("kernsize=0x%x", kerneldatasize);

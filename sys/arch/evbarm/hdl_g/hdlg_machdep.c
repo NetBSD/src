@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.5.6.1 2008/06/02 13:22:01 mjf Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.5.6.2 2009/01/17 13:27:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.5.6.1 2008/06/02 13:22:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.5.6.2 2009/01/17 13:27:58 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -649,11 +649,6 @@ initarm(void *arg)
 	boothowto = BOOTHOWTO;
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
-#endif
-
 #ifdef DDB
 	db_machine_init();
 	if (boothowto & RB_KDB)
@@ -714,6 +709,8 @@ cpu_reboot(int howto, char *bootstr)
 haltsys:
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

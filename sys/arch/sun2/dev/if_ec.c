@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.13.6.2 2008/09/28 10:40:09 mjf Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.13.6.3 2009/01/17 13:28:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.13.6.2 2008/09/28 10:40:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.13.6.3 2009/01/17 13:28:33 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -601,7 +601,7 @@ ec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -618,26 +618,30 @@ ec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			ec_init(ifp);
-		} else {
+			break;
+		default:
 			/*
 			 * Some other important flag might have changed, so
 			 * reset.
 			 */
 			ec_reset(ifp);
+			break;
 		}
 		break;
 
@@ -647,7 +651,7 @@ ec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

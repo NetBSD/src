@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13.40.1 2008/03/29 18:47:00 mjf Exp $	*/
+/*	$NetBSD: mem.c,v 1.13.40.2 2009/01/17 13:28:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.13.40.1 2008/03/29 18:47:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.13.40.2 2009/01/17 13:28:09 mjf Exp $");
 
 /*
  * Memory special file
@@ -201,9 +201,8 @@ mmrw(dev, uio, flags)
 			 * of memory for use with /dev/zero.
 			 */
 			if (devzeropage == NULL) {
-				devzeropage = (void *)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(devzeropage, PAGE_SIZE);
+				devzeropage =
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK|M_ZERO);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);

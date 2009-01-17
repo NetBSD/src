@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.39.6.4 2008/10/05 20:11:26 mjf Exp $
+# $NetBSD: XEN2_DOM0,v 1.39.6.5 2009/01/17 13:28:03 mjf Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -44,7 +44,6 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -113,7 +112,6 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
@@ -209,7 +207,7 @@ pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -220,7 +218,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 agp* 	at pchb?
 
 # ISA bus support
-#isa0	at ichlpcib?
+isa0	at ichlpcib?
 isa0	at pcib?
 isa0	at hypervisor?
 
@@ -255,10 +253,12 @@ amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
+
+# dbCool thermal monitor and fan controller
 #iic*	at amdpm?			# sensors below are on this bus
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
@@ -287,6 +287,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3

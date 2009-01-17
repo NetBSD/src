@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.199.6.2 2008/09/28 10:40:04 mjf Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.199.6.3 2009/01/17 13:28:16 mjf Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.199.6.2 2008/09/28 10:40:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.199.6.3 2009/01/17 13:28:16 mjf Exp $");
 
 #include "opt_cputype.h"
 
@@ -132,6 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.199.6.2 2008/09/28 10:40:04 mjf E
 #include <sys/kcore.h>
 #include <sys/pool.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
 
@@ -1390,11 +1392,11 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		printf("\ndump to dev %llu,%llu not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	printf("\ndumping to dev %llu,%llu offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
@@ -1421,7 +1423,8 @@ dumpsys(void)
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 			/* Print out how many MBs we have left to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%ld ", totalbytesleft / (1024 * 1024));
+				printf_nolog("%ld ",
+				    totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;
@@ -1680,6 +1683,53 @@ startlwp(arg)
 
 	userret(l);
 }
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	userret(l);
+}
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct saframe *sf, frame;
+	struct frame *f;
+
+	f = (struct frame *)l->l_md.md_regs;
+
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+#endif
+	frame.sa_arg = ap;
+	frame.sa_upcall = upcall;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		mutex_enter(l->l_proc->p_lock);
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	f->f_regs[_R_PC] = (uintptr_t)upcall;
+	f->f_regs[_R_SP] = (uintptr_t)sf;
+	f->f_regs[_R_A0] = type;
+	f->f_regs[_R_A1] = (uintptr_t)sas;
+	f->f_regs[_R_A2] = nevents;
+	f->f_regs[_R_A3] = ninterrupted;
+	f->f_regs[_R_S8] = 0;
+	f->f_regs[_R_RA] = 0;
+	f->f_regs[_R_T9] = (uintptr_t)upcall;  /* t9=Upcall function*/
+}
+
 
 void
 cpu_getmcontext(l, mcp, flags)

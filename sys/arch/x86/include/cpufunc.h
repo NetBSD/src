@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4.6.1 2008/06/02 13:22:50 mjf Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4.6.2 2009/01/17 13:28:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,9 @@ void	x86_lfence(void);
 void	x86_sfence(void);
 void	x86_mfence(void);
 void	x86_flush(void);
-void	x86_patch(void);
+#ifndef XEN
+void	x86_patch(bool);
+#endif
 void	invlpg(vaddr_t);
 void	lidt(struct region_descriptor *);
 void	lldt(u_short);

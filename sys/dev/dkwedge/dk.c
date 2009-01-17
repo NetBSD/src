@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.33.6.5 2008/06/29 09:33:06 mjf Exp $	*/
+/*	$NetBSD: dk.c,v 1.33.6.6 2009/01/17 13:28:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.33.6.5 2008/06/29 09:33:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.33.6.6 2009/01/17 13:28:53 mjf Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -1032,7 +1032,7 @@ dkstrategy(struct buf *bp)
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
 	sc->sc_iopend++;
-	BUFQ_PUT(sc->sc_bufq, bp);
+	bufq_put(sc->sc_bufq, bp);
 	dkstart(sc);
 	splx(s);
 	return;
@@ -1055,9 +1055,9 @@ dkstart(struct dkwedge_softc *sc)
 	struct buf *bp, *nbp;
 
 	/* Do as much work as has been enqueued. */
-	while ((bp = BUFQ_PEEK(sc->sc_bufq)) != NULL) {
+	while ((bp = bufq_peek(sc->sc_bufq)) != NULL) {
 		if (sc->sc_state != DKW_STATE_RUNNING) {
-			(void) BUFQ_GET(sc->sc_bufq);
+			(void) bufq_get(sc->sc_bufq);
 			if (sc->sc_iopend-- == 1 &&
 			    (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
 				sc->sc_flags &= ~DK_F_WAIT_DRAIN;
@@ -1083,7 +1083,7 @@ dkstart(struct dkwedge_softc *sc)
 			return;
 		}
 
-		(void) BUFQ_GET(sc->sc_bufq);
+		(void) bufq_get(sc->sc_bufq);
 
 		nbp->b_data = bp->b_data;
 		nbp->b_flags = bp->b_flags;

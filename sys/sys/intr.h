@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6.14.1 2008/06/02 13:24:32 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.14.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -61,8 +61,13 @@ void	softint_dispatch(lwp_t *, int);
 #define	SOFTINT_NET	0x0003
 #define	SOFTINT_MPSAFE	0x0100
 
+/* Implementation private flags. */
+#define	SOFTINT_PENDING	0x1000
+#define	SOFTINT_ACTIVE	0x2000
+
 #define	SOFTINT_COUNT	0x0004
 #define	SOFTINT_LVLMASK	0x00ff
+#define	SOFTINT_IMPMASK	0xf000
 
 extern u_int	softint_timing;
 extern int	safepri;

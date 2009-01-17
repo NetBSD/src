@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.101.28.1 2008/09/28 10:41:04 mjf Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.101.28.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -388,6 +388,7 @@ static const char *const mountnames[] = { FSTYPE_DEFN(FS_MOUNTNAMES) NULL };
 #define		D_BADSECT	0x04		/* supports bad sector forw. */
 #define		D_RAMDISK	0x08		/* disk emulator */
 #define		D_CHAIN		0x10		/* can do back-back transfers */
+#define		D_SCSI_MMC	0x20		/* SCSI MMC sessioned media */
 
 /*
  * Drive data for SMD.

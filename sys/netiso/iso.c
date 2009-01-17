@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.48.12.1 2008/06/02 13:24:29 mjf Exp $	*/
+/*	$NetBSD: iso.c,v 1.48.12.2 2009/01/17 13:29:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.48.12.1 2008/06/02 13:24:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.48.12.2 2009/01/17 13:29:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,7 +511,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		if (ifp == 0)
 			panic("iso_control");
 		if (ia == 0) {
-			MALLOC(ia, struct iso_ifaddr *, sizeof(*ia),
+			ia = malloc(sizeof(*ia),
 			       M_IFADDR, M_WAITOK|M_ZERO);
 			if (ia == 0)
 				return (ENOBUFS);
@@ -587,9 +587,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	default:
 		if (cmdbyte(cmd) == 'a')
 			return (snpac_ioctl(so, cmd, data, l));
-		if (ifp == 0 || ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		return ENOTTY;
 	}
 	return (0);
 }
@@ -651,8 +649,7 @@ iso_ifinit(struct ifnet *ifp, struct iso_ifaddr *ia, struct sockaddr_iso *siso,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl) (ifp, SIOCSIFADDR, (void *) ia))) {
+	if ((error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ia)) != 0) {
 		splx(s);
 		ia->ia_addr = oldaddr;
 		return (error);
@@ -665,6 +662,10 @@ iso_ifinit(struct ifnet *ifp, struct iso_ifaddr *ia, struct sockaddr_iso *siso,
 	/*
 	 * XXX -- The following is here temporarily out of laziness in not
 	 * changing every ethernet driver's if_ioctl routine
+	 *
+	 * XXX extract llc_ifinit() and call from ether_ioctl(),
+	 * XXX fddi_ioctl().  --dyoung
+	 *
 	 */
 	if (ifp->if_type == IFT_ETHER || ifp->if_type == IFT_FDDI) {
 		ia->ia_ifa.ifa_rtrequest = llc_rtrequest;

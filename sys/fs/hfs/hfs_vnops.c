@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.9.6.2 2008/09/28 10:40:50 mjf Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.9.6.3 2009/01/17 13:29:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.6.2 2008/09/28 10:40:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.6.3 2009/01/17 13:29:16 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -817,19 +817,14 @@ hfs_vop_read(void *v)
 
 	error = 0;
 	while (uio->uio_resid > 0 && error == 0) {
-		int flags;
 		vsize_t len;
-		void *win;
 
 		len = MIN(uio->uio_resid, fsize - uio->uio_offset);
 		if (len == 0)
 			break;
 		
-		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &len,
-				advice, UBC_READ);
-		error = uiomove(win, len, uio);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, flags);
+		error = ubc_uiomove(&vp->v_uobj, uio, len, advice,
+		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 	}
 
         return error;
@@ -1018,7 +1013,7 @@ hfs_vop_reclaim(void *v)
 	}
 	
 	genfs_node_destroy(vp);
-	FREE(vp->v_data, M_TEMP);
+	free(vp->v_data, M_TEMP);
 	vp->v_data = 0;
 
 	return 0;

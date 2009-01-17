@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.21.40.1 2008/06/02 13:24:33 mjf Exp $	*/
+/*	$NetBSD: msg.h,v 1.21.40.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ extern kmutex_t	msgmutex;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	msgctl(int, int, struct msqid_ds *) __RENAME(__msgctl13);
+int	msgctl(int, int, struct msqid_ds *) __RENAME(__msgctl50);
 int	msgget(key_t, int);
 int	msgsnd(int, const void *, size_t, int);
 ssize_t	msgrcv(int, void *, size_t, long, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.123.6.2 2008/09/28 10:40:58 mjf Exp $	*/
+/*	$NetBSD: in.c,v 1.123.6.3 2009/01/17 13:29:32 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.123.6.2 2008/09/28 10:40:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.123.6.3 2009/01/17 13:29:32 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -393,11 +393,9 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			return (EPERM);
 
 		if (ia == 0) {
-			MALLOC(ia, struct in_ifaddr *, sizeof(*ia),
-			       M_IFADDR, M_WAITOK);
+			ia = malloc(sizeof(*ia), M_IFADDR, M_WAITOK|M_ZERO);
 			if (ia == 0)
 				return (ENOBUFS);
-			bzero((void *)ia, sizeof *ia);
 			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 			IFAREF(&ia->ia_ifa);
 			ifa_insert(ifp, &ia->ia_ifa);
@@ -466,9 +464,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			return (EINVAL);
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satocsin(ifreq_getdstaddr(cmd, ifr));
-		if (ifp->if_ioctl != NULL &&
-		    (error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR,
-		                              (void *)ia)) != 0) {
+		if ((error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, ia)) != 0) {
 			ia->ia_dstaddr = oldaddr;
 			return error;
 		}
@@ -569,11 +565,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 #endif /* MROUTING */
 
 	default:
-		if (ifp == NULL || ifp->if_ioctl == NULL)
-			return EOPNOTSUPP;
-		error = (*ifp->if_ioctl)(ifp, cmd, data);
-		in_setmaxmtu();
-		break;
+		return ENOTTY;
 	}
 
 	if (error != 0 && newifaddr) {
@@ -891,8 +883,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (void *)ia)))
+	if ((error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ia)) != 0)
 		goto bad;
 	splx(s);
 	if (scrub) {
@@ -1013,6 +1004,12 @@ in_addprefix(struct in_ifaddr *target, int flags)
 	error = rtinit(&target->ia_ifa, RTM_ADD, flags);
 	if (error == 0)
 		target->ia_flags |= IFA_ROUTE;
+	else if (error == EEXIST) {
+		/* 
+		 * the fact the route already exists is not an error.
+		 */ 
+		error = 0;
+	}
 	return error;
 }
 
@@ -1152,8 +1149,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 */
 		sockaddr_in_init(&sin, ap, 0);
 		ifreq_setaddr(SIOCADDMULTI, &ifr, sintosa(&sin));
-		if ((ifp->if_ioctl == NULL) ||
-		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(void *)&ifr) != 0) {
+		if ((*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr) != 0) {
 			LIST_REMOVE(inm, inm_list);
 			pool_put(&inmulti_pool, inm);
 			splx(s);
@@ -1201,8 +1197,7 @@ in_delmulti(struct in_multi *inm)
 		 */
 		sockaddr_in_init(&sin, &inm->inm_addr, 0);
 		ifreq_setaddr(SIOCDELMULTI, &ifr, sintosa(&sin));
-		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI,
-							     (void *)&ifr);
+		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI, &ifr);
 		pool_put(&inmulti_pool, inm);
 	}
 	splx(s);

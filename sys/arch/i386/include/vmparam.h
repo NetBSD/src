@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.68 2008/01/23 19:46:44 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.68.6.1 2009/01/17 13:28:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,8 +34,8 @@
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
 
-#ifndef _VMPARAM_H_
-#define _VMPARAM_H_
+#ifndef _I386_VMPARAM_H_
+#define _I386_VMPARAM_H_
 
 #include <sys/tree.h>
 #include <sys/mutex.h>
@@ -152,4 +152,4 @@ struct vm_page_md {
 	struct pmap_page mp_pp;
 };
 
-#endif /* _VMPARAM_H_ */
+#endif /* _I386_VMPARAM_H_ */

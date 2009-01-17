@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.6.1 2008/07/02 19:08:15 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.6.2 2009/01/17 13:27:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.6.1 2008/07/02 19:08:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.6.2 2009/01/17 13:27:54 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -198,15 +198,15 @@ consinit(void)
 	 */
 	cninit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern int end;
 		extern int *esym;
 
 #ifndef __ELF__
-		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 #else
-		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 			(void *)&end, esym);
 #endif
 	}
@@ -427,6 +427,8 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	splhigh();			/* extreme priority */
 	if(howto & RB_HALT) {
 		printf("halted\n\n");
@@ -528,12 +530,12 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %" PRIu64" ,%" PRIu64 " not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %" PRIu64" ,%" PRIu64 " offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 #if defined(DDB) || defined(PANICWAIT)
 	printf("Do you want to dump memory? [y]");
@@ -573,7 +575,7 @@ dumpsys(void)
 		 */
 		n = nbytes - i;
 		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+			printf_nolog("%d ", n / (1024 * 1024));
 
 		/*
 		 * Limit transfer to BYTES_PER_DUMP
@@ -808,7 +810,20 @@ call_sicallbacks(void)
 			si->next = si_free;
 			si_free  = si;
 			splx(s);
+
+			/*
+			 * Raise spl for BASEPRI() checks to see
+			 * nested interrupts in some drivers using callbacks
+			 * since modern MI softint(9) doesn't seem to do it
+			 * in !__HAVE_FAST_SOFTINTS case.
+			 *
+			 * XXX: This is just a workaround hack.
+			 *      Each driver should raise spl in its handler
+			 *      to avoid nested interrupts if necessary.
+			 */
+			s = splsoftnet();	/* XXX */
 			function(rock1, rock2);
+			splx(s);
 		}
 	} while (si);
 #ifdef DIAGNOSTIC

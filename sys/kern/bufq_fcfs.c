@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.6.70.1 2008/06/02 13:24:06 mjf Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.6.70.2 2009/01/17 13:29:18 mjf Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.6.70.1 2008/06/02 13:24:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.6.70.2 2009/01/17 13:29:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,13 +121,11 @@ bufq_fcfs_cancel(struct bufq_state *bufq, struct buf *buf)
 	struct bufq_fcfs *fcfs = bufq->bq_private;
 	struct buf *bp;
 
-	bp = TAILQ_FIRST(&fcfs->bq_head);
-	while (bp) {
+	TAILQ_FOREACH(bp, &fcfs->bq_head, b_actq) {
 		if (bp == buf) {
 			TAILQ_REMOVE(&fcfs->bq_head, bp, b_actq);
 			return buf;
 		}
-		bp = TAILQ_NEXT(bp, b_actq);
 	}
 	return NULL;
 }

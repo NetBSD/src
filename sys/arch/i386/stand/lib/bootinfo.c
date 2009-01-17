@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.3 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.3.74.1 2009/01/17 13:28:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -34,13 +34,12 @@
 
 struct bootinfo *bootinfo;
 
-void bi_add(what, type, size)
-struct btinfo_common *what;
-int type, size;
+void
+bi_add(struct btinfo_common *what, int type, int size)
 {
 	what->len = size;
 	what->type = type;
 
-	if(bootinfo)
+	if (bootinfo)
 		bootinfo->entry[bootinfo->nentries++] = vtophys(what);
 }

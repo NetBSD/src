@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.12 2007/03/05 19:48:19 he Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.12.40.1 2009/01/17 13:27:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -83,6 +83,7 @@ struct grfcvtext_mode {
 #define vgaw16(ba, reg, val) \
 	*((volatile unsigned short *)  (((volatile char *)ba)+reg)) = val
 
+#ifdef _KERNEL
 int grfcv_cnprobe(void);
 void grfcv_iteinit(struct grf_softc *);
 static inline void GfxBusyWait(volatile void *);
@@ -91,6 +92,7 @@ static inline unsigned char RAttr(volatile void *, short);
 static inline unsigned char RSeq(volatile void *, short);
 static inline unsigned char RCrt(volatile void *, short);
 static inline unsigned char RGfx(volatile void *, short);
+#endif
 
 
 /*

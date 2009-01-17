@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.13.26.1 2008/06/02 13:24:10 mjf Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.13.26.2 2009/01/17 13:29:19 mjf Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.13.26.1 2008/06/02 13:24:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.13.26.2 2009/01/17 13:29:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +180,7 @@ bufq_peek(struct bufq_state *bufq)
 struct buf *
 bufq_cancel(struct bufq_state *bufq, struct buf *bp)
 {
+
 	return (*bufq->bq_cancel)(bufq, bp);
 }
 
@@ -191,7 +192,7 @@ bufq_drain(struct bufq_state *bufq)
 {
 	struct buf *bp;
 
-	while ((bp = BUFQ_GET(bufq)) != NULL) {
+	while ((bp = bufq_get(bufq)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -206,7 +207,7 @@ bufq_free(struct bufq_state *bufq)
 {
 
 	KASSERT(bufq->bq_private != NULL);
-	KASSERT(BUFQ_PEEK(bufq) == NULL);
+	KASSERT(bufq_peek(bufq) == NULL);
 
 	free(bufq->bq_private, M_DEVBUF);
 	free(bufq, M_DEVBUF);
@@ -230,8 +231,8 @@ bufq_move(struct bufq_state *dst, struct bufq_state *src)
 {
 	struct buf *bp;
 
-	while ((bp = BUFQ_GET(src)) != NULL) {
-		BUFQ_PUT(dst, bp);
+	while ((bp = bufq_get(src)) != NULL) {
+		bufq_put(dst, bp);
 	}
 }
 

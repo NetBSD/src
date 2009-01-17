@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/06/25 14:35:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.58.1 2009/01/17 13:28:05 mjf Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -12,6 +12,10 @@ LIBC=		# nothing
 
 PRIMARY_LOAD_ADDRESS=0x600
 SECONDARY_LOAD_ADDRESS=0x10000
+
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
 
 .include <bsd.own.mk>
 
@@ -57,7 +61,8 @@ CLEANFILES+= ${PROG}.tmp
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} ${OBJS}
-	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<free_space\>' | sed 's/^0*//'  ); \
+	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<free_space\>' \
+		    | ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp

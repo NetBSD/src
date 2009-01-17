@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.75.6.2 2008/06/29 09:33:16 mjf Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.75.6.3 2009/01/17 13:29:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75.6.2 2008/06/29 09:33:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75.6.3 2009/01/17 13:29:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75.6.2 2008/06/29 09:33:16 mjf Exp
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
-MODULE(MODULE_CLASS_VFS, umapfs, NULL);
+MODULE(MODULE_CLASS_VFS, umapfs, "layerfs");
 
 VFS_PROTOS(umapfs);
 

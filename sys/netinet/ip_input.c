@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.262.6.4 2008/10/05 20:11:33 mjf Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.262.6.5 2009/01/17 13:29:32 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.262.6.4 2008/10/05 20:11:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.262.6.5 2009/01/17 13:29:32 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -931,6 +931,7 @@ ours:
 				 */
 				if (ip->ip_tos != fp->ipq_tos) {
 					IP_STATINC(IP_STAT_BADFRAGS);
+					IPQ_UNLOCK();
 					goto bad;
 				}
 				goto found;
@@ -1121,8 +1122,7 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp, struct ipqhead *ipqhead)
 		else if (ip_nfragpackets >= ip_maxfragpackets)
 			goto dropfrag;
 		ip_nfragpackets++;
-		MALLOC(fp, struct ipq *, sizeof (struct ipq),
-		    M_FTABLE, M_NOWAIT);
+		fp = malloc(sizeof (struct ipq), M_FTABLE, M_NOWAIT);
 		if (fp == NULL)
 			goto dropfrag;
 		LIST_INSERT_HEAD(ipqhead, fp, ipq_q);
@@ -1253,7 +1253,7 @@ insert:
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
 	LIST_REMOVE(fp, ipq_q);
-	FREE(fp, M_FTABLE);
+	free(fp, M_FTABLE);
 	ip_nfragpackets--;
 	m->m_len += (ip->ip_hl << 2);
 	m->m_data -= (ip->ip_hl << 2);
@@ -1306,7 +1306,7 @@ ip_freef(struct ipq *fp)
 	    printf("ip_freef: nfrags %d != %d\n", fp->ipq_nfrags, nfrags);
 	ip_nfrags -= nfrags;
 	LIST_REMOVE(fp, ipq_q);
-	FREE(fp, M_FTABLE);
+	free(fp, M_FTABLE);
 	ip_nfragpackets--;
 }
 

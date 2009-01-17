@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.7.48.1 2008/09/28 10:40:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.7.48.2 2009/01/17 13:29:32 mjf Exp $");
 #endif
 
 /*
@@ -116,8 +116,7 @@ tkip_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct tkip_ctx *ctx;
 
-	MALLOC(ctx, struct tkip_ctx *, sizeof(struct tkip_ctx),
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ctx = malloc(sizeof(struct tkip_ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
 		return NULL;
@@ -132,7 +131,7 @@ tkip_detach(struct ieee80211_key *k)
 {
 	struct tkip_ctx *ctx = k->wk_private;
 
-	FREE(ctx, M_DEVBUF);
+	free(ctx, M_DEVBUF);
 }
 
 static int

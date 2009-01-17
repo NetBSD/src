@@ -1,20 +1,27 @@
-#	$NetBSD: Makefile.booters,v 1.4 2005/12/11 12:19:44 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.4.74.1 2009/01/17 13:28:37 mjf Exp $
 
 S?=	${.CURDIR}/../../../..
 
-.PHONY:	machine-links
-
 CFLAGS+= -ffreestanding
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+CFLAGS+= -Wno-pointer-sign
+CFLAGS+= -Werror
 
-machine-links:
+.if !make(obj) && !make(clean) && !make(cleandir)
+.NOPATH: machine ${MACHINE_ARCH}
+.BEGIN: machine ${MACHINE_ARCH}
+
+machine::
 	-rm -f machine && \
 	ln -s $S/arch/${MACHINE}/include machine
+
+m68k::
 	-rm -f ${MACHINE_ARCH} && \
 	ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+.endif
 
 CLEANFILES+=	machine ${MACHINE_ARCH}
 
-beforedepend:	machine-links
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=

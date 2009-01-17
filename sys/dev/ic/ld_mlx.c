@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.15.16.2 2008/09/28 10:40:23 mjf Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.15.16.3 2009/01/17 13:28:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.15.16.2 2008/09/28 10:40:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.15.16.3 2009/01/17 13:28:55 mjf Exp $");
 
 #include "rnd.h"
 
@@ -224,7 +224,7 @@ ld_mlx_handler(struct mlx_ccb *mc)
 
 	mx = &mc->mc_mx;
 	bp = mx->mx_context;
-	sc = (struct ld_mlx_softc *)mx->mx_dv;
+	sc = device_private(mx->mx_dv);
 	mlx = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	if (mc->mc_status != MLX_STATUS_OK) {

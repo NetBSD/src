@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.106.6.2 2008/09/28 10:40:09 mjf Exp $ */
+/*	$NetBSD: db_interface.c,v 1.106.6.3 2009/01/17 13:28:32 mjf Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.106.6.2 2008/09/28 10:40:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.106.6.3 2009/01/17 13:28:32 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -268,7 +268,7 @@ const struct db_variable db_regs[] = {
 	{ "f60",	dbregfp(regs[60]),	db_sparc_regop, 0 },
 	{ "f62",	dbregfp(regs[62]),	db_sparc_regop, 0 },
 	{ "fsr",	dbregfp(fsr),		db_sparc_regop, 0 },
-	{ "gsr",	dbregfp(gsr),		db_sparc_regop, 0 },
+	{ "gsr",	dbregfp(gsr),		db_sparc_intop, 0 },
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
@@ -378,8 +378,21 @@ fill_ddb_regs_from_tf(struct trapframe64 *tf)
 #endif
 
 	DDB_REGS->db_tf = *tf;
-	DDB_REGS->db_fr = *(struct frame64 *)
-		(uintptr_t)tf->tf_out[6];
+#ifdef __arch64__
+	DDB_REGS->db_fr = *(struct frame64 *)(uintptr_t)tf->tf_out[6];
+#else
+    {
+	struct frame32 *tf32 = (struct frame32 *)(uintptr_t)tf->tf_out[6];
+	int i;
+
+	for (i = 0; i < 8; i++)
+		DDB_REGS->db_fr.fr_local[i] = (uint32_t)tf32->fr_local[i];
+	for (i = 0; i < 6; i++)
+		DDB_REGS->db_fr.fr_arg[i] = (uint32_t)tf32->fr_arg[i];
+	DDB_REGS->db_fr.fr_fp = tf32->fr_fp;
+	DDB_REGS->db_fr.fr_pc = tf32->fr_pc;
+    }
+#endif
 
 	if (fplwp) {
 		savefpstate(fplwp->l_md.md_fpstate);
@@ -507,14 +520,11 @@ kdb_trap(int type, struct trapframe64 *tf)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t	addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(db_addr_t addr, size_t size, char *data)
 {
-	register char	*src;
+	char *src;
 
-	src = (char *)addr;
+	src = (char *)(uintptr_t)addr;
 	while (size-- > 0) {
 		if (src >= (char *)VM_MIN_KERNEL_ADDRESS)
 			*data++ = probeget((paddr_t)(u_long)src++, ASI_P, 1);
@@ -528,15 +538,12 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t	addr;
-	register size_t	size;
-	register const char	*data;
+db_write_bytes(db_addr_t addr, size_t size, const char *data)
 {
-	register char	*dst;
+	char *dst;
 	extern paddr_t pmap_kextract(vaddr_t va);
 
-	dst = (char *)addr;
+	dst = (char *)(uintptr_t)addr;
 	while (size-- > 0) {
 		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
 			*dst = *data;
@@ -611,7 +618,7 @@ db_pload_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	while (count--) {
 		if (db_print_position() == 0) {
 			/* Always print the address. */
-			db_printf("%16.16lx:\t", addr);
+			db_printf("%16.16lx:\t", (long)addr);
 		}
 		oldaddr=addr;
 		db_printf("%8.8lx\n", (long)ldxa(addr, asi));
@@ -664,7 +671,6 @@ db_dump_pmap(struct pmap *pm)
 void
 db_pmap_kernel(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	extern struct pmap kernel_pmap_;
 	int i, j, full = 0;
 	uint64_t data;
 
@@ -678,25 +684,25 @@ db_pmap_kernel(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	if (have_addr) {
 		/* lookup an entry for this VA */
 		
-		if ((data = pseg_get(&kernel_pmap_, (vaddr_t)addr))) {
+		if ((data = pseg_get(pmap_kernel(), (vaddr_t)addr))) {
 			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%qx\n",
-				  (void *)addr, (u_long)va_to_seg(addr), 
+				  (void *)(uintptr_t)addr, (u_long)va_to_seg(addr), 
 				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
 				  (unsigned long long)data);
 		} else {
-			db_printf("No mapping for %p\n", (void *)addr);
+			db_printf("No mapping for %p\n", (void *)(uintptr_t)addr);
 		}
 		return;
 	}
 
 	db_printf("pmap_kernel(%p) psegs %p phys %llx\n",
-		  &kernel_pmap_, kernel_pmap_.pm_segs,
-		  (unsigned long long)kernel_pmap_.pm_physaddr);
+		  pmap_kernel(), pmap_kernel()->pm_segs,
+		  (unsigned long long)pmap_kernel()->pm_physaddr);
 	if (full) {
-		db_dump_pmap(&kernel_pmap_);
+		db_dump_pmap(pmap_kernel());
 	} else {
 		for (j=i=0; i<STSZ; i++) {
-			long seg = (long)ldxa((vaddr_t)&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			long seg = (long)ldxa((vaddr_t)pmap_kernel()->pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
 				db_printf("seg %d => %lx%c", i, seg, (j++%4)?'\t':'\n');
 		}
@@ -712,7 +718,7 @@ db_pm_extract(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif
 		if (pmap_extract(pmap_kernel(), addr, &pa))
 			db_printf("pa = %llx\n", (long long)pa);
 		else
-			db_printf("%p not found\n", (void *)addr);
+			db_printf("%p not found\n", (void *)(uintptr_t)addr);
 	} else
 		db_printf("pmap_extract: no address\n");
 }
@@ -734,7 +740,7 @@ db_pmap_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	if (curlwp && curlwp->l_proc->p_vmspace)
 		pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
 	if (have_addr)
-		pm = (struct pmap*)addr;
+		pm = (struct pmap*)(uintptr_t)addr;
 
 	db_printf("pmap %p: ctx %x refs %d physaddr %llx psegs %p\n",
 		pm, pmap_ctx(pm), pm->pm_refs,
@@ -744,7 +750,7 @@ db_pmap_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		db_dump_pmap(pm);
 	} else {
 		for (i=0; i<STSZ; i++) {
-			long seg = (long)ldxa((vaddr_t)&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			long seg = (long)ldxa((vaddr_t)pmap_kernel()->pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
 				db_printf("seg %d => %lx%c", i, seg, (j++%4)?'\t':'\n');
 		}
@@ -817,7 +823,7 @@ db_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 	l = curlwp;
 	if (have_addr) 
-		l = (struct lwp*) addr;
+		l = (struct lwp*)(uintptr_t)addr;
 	if (l == NULL) {
 		db_printf("no current lwp\n");
 		return;
@@ -838,7 +844,7 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	if (curlwp)
 		p = curlwp->l_proc;
 	if (have_addr) 
-		p = (struct proc*) addr;
+		p = (struct proc*)(uintptr_t)addr;
 	if (p == NULL) {
 		db_printf("no current process\n");
 		return;
@@ -850,9 +856,9 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
-	db_printf("profile timer: %ld sec %ld usec\n",
+	db_printf("profile timer: %" PRId64 " sec %ld nsec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
-		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
+		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_nsec);
 	return;
 }
 
@@ -889,7 +895,7 @@ db_dump_pcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 	pcb = curpcb;
 	if (have_addr) 
-		pcb = (struct pcb*) addr;
+		pcb = (struct pcb*)(uintptr_t)addr;
 
 	db_printf("pcb@%p sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
 		  pcb, (void *)(long)pcb->pcb_sp, (void *)(long)pcb->pcb_pc, pcb->pcb_cwp,
@@ -946,7 +952,7 @@ db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 #endif
 			if (p->p_vmspace->vm_map.pmap == pmap_kernel()) {
 				db_printf("PID %ld has a kernel context.\n",
-				    addr);
+				    (long)addr);
 				return;
 			}
 			ctx = pmap_ctx(p->p_vmspace->vm_map.pmap);
@@ -962,11 +968,11 @@ db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 				return;
 			}
 			db_printf("could not activate pmap for PID %ld.\n",
-			    addr);
+			    (long)addr);
 			return;
 		}
 	}
-	db_printf("PID %ld not found.\n", addr);
+	db_printf("PID %ld not found.\n", (long)addr);
 }
 
 static void
@@ -1162,12 +1168,12 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		if (ci->ci_index == addr)
 			break;
 	if (ci == NULL) {
-		db_printf("CPU %ld not configured\n", addr);
+		db_printf("CPU %ld not configured\n", (long)addr);
 		return;
 	}
 	if (ci != curcpu()) {
 		if (!mp_cpu_is_paused(ci->ci_index)) {
-			db_printf("CPU %ld not paused\n", addr);
+			db_printf("CPU %ld not paused\n", (long)addr);
 			return;
 		}
 		/* no locking needed - all other cpus are paused */

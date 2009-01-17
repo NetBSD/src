@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.11.6.1 2008/06/02 13:21:55 mjf Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.11.6.2 2009/01/17 13:27:54 mjf Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -75,7 +75,6 @@
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/atomic.h>
 #include <machine/intr.h>
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>

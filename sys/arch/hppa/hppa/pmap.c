@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42.6.1 2008/06/02 13:22:12 mjf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42.6.2 2009/01/17 13:28:02 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.6.1 2008/06/02 13:22:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.6.2 2009/01/17 13:28:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,8 @@ static u_int *page_aliased_bitmap;
 #define _PAGE_ALIASED_BIT(pa) (1 << (((pa) >> PGSHIFT) & 31))
 #define PAGE_IS_ALIASED(pa) (_PAGE_ALIASED_WORD(pa) & _PAGE_ALIASED_BIT(pa))
 
-struct pmap	kernel_pmap_store;
-pmap_t		kernel_pmap;
+static struct pmap	kernel_pmap_store;
+struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
 bool		pmap_initialized = false;
 
 TAILQ_HEAD(, pmap)	pmap_freelist;	/* list of free pmaps */
@@ -813,17 +813,16 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	/*
 	 * Initialize kernel pmap
 	 */
-	kernel_pmap = &kernel_pmap_store;
 #if	NCPUS > 1
 	lock_init(&pmap_lock, false, ETAP_VM_PMAP_SYS, ETAP_VM_PMAP_SYS_I);
 #endif	/* NCPUS > 1 */
-	simple_lock_init(&kernel_pmap->pmap_lock);
+	simple_lock_init(&pmap_kernel()->pmap_lock);
 	simple_lock_init(&pmap_freelock);
 	simple_lock_init(&sid_pid_lock);
 
-	kernel_pmap->pmap_refcnt = 1;
-	kernel_pmap->pmap_space = HPPA_SID_KERNEL;
-	kernel_pmap->pmap_pid = HPPA_PID_KERNEL;
+	pmap_kernel()->pmap_refcnt = 1;
+	pmap_kernel()->pmap_space = HPPA_SID_KERNEL;
+	pmap_kernel()->pmap_pid = HPPA_PID_KERNEL;
 
 	ksro = (paddr_t) &kernel_text;
 	kero = ksrw = (paddr_t) &__data_start;
@@ -1046,12 +1045,12 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	/* Now insert all of the BTLB entries. */
 	for (btlb_i = 0; btlb_i < btlb_j; btlb_i++) {
 		btlb_entry_got = btlb_entry_size[btlb_i];
-		if (hppa_btlb_insert(kernel_pmap->pmap_space, 
+		if (hppa_btlb_insert(pmap_kernel()->pmap_space, 
 				btlb_entry_start[btlb_i],
 				btlb_entry_start[btlb_i],
 				&btlb_entry_got,
-				kernel_pmap->pmap_pid |
-				pmap_prot(kernel_pmap, 
+				pmap_kernel()->pmap_pid |
+				pmap_prot(pmap_kernel(), 
 					btlb_entry_vm_prot[btlb_i])) < 0)
 			panic("pmap_bootstrap: cannot insert BTLB entry");
 		if (btlb_entry_got != btlb_entry_size[btlb_i])
@@ -1263,10 +1262,9 @@ pmap_create(void)
 		splx(s);
 	} else {
 		splx(s);
-		MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_NOWAIT);
+		pmap = malloc(sizeof(*pmap), M_VMPMAP, M_NOWAIT|M_ZERO);
 		if (pmap == NULL)
 			return NULL;
-		memset(pmap, 0, sizeof(*pmap));
 	}
 
 	pmap_pinit(pmap);
@@ -1393,14 +1391,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			/* We are just changing the protection.  */
 #ifdef PMAPDEBUG
 			if (pmapdebug & PDB_ENTER) {
-				char buffer1[64];
-				char buffer2[64];
-				bitmask_snprintf(pv->pv_tlbprot, TLB_BITS, 
-						 buffer1, sizeof(buffer1));
-				bitmask_snprintf(tlbprot, TLB_BITS, 
-						 buffer2, sizeof(buffer2));
-				printf("pmap_enter: changing %s->%s\n",
-				    buffer1, buffer2);
+				char b1[64];
+				char b2[64];
+				snprintb(b1, sizeof(b1), TLB_BITS,
+				    pv->pv_tlbprot);
+				snprintb(b2, sizeof(b2), TLB_BITS, tlbprot);
+				printf("pmap_enter: changing %s->%s\n", b1, b2);
 			}
 #endif
 			pmap_pv_update(pv, TLB_AR_MASK|TLB_PID_MASK|TLB_WIRED, 
@@ -1510,8 +1506,9 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 #ifdef PMAPDEBUG
 			if (pmapdebug & PDB_PROTECT) {
 				char buffer[64];
-				bitmask_snprintf(pv->pv_tlbprot, TLB_BITS,
-						 buffer, sizeof(buffer));
+				snprintb(buffer, sizeof(buffer), TLB_BITS,
+				    pv->pv_tlbprot);
+	
 				printf("pv={%p,%x:%x,%s,%x}->%p\n",
 				    pv->pv_pmap, pv->pv_space, pv->pv_va,
 				    buffer,
@@ -1950,16 +1947,16 @@ pmap_hptdump(void)
 		if (hpt->hpt_valid || hpt->hpt_entry) {
 			char buf[128];
 
-			bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
-			    sizeof(buf));
+			snprintb(buf, sizeof(buf), TLB_BITS, hpt->hpt_tlbprot);
+	
 			db_printf("hpt@%p: %x{%sv=%x:%x},%s,%x\n",
 			    hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
 			    hpt->hpt_space, hpt->hpt_vpn << 9,
 			    buf, tlbptob(hpt->hpt_tlbpage));
 
 			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash) {
-				bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
-				    sizeof(buf));
+				snprintb(buf, sizeof(buf), TLB_BITS,
+				    hpt->hpt_tlbprot);
 				db_printf("    pv={%p,%x:%x,%s,%x}->%p\n",
 				    pv->pv_pmap, pv->pv_space, pv->pv_va,
 				    buf, tlbptob(pv->pv_tlbpage), pv->pv_hash);

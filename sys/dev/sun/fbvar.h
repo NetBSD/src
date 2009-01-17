@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.11 2007/03/04 06:02:45 christos Exp $ */
+/*	$NetBSD: fbvar.h,v 1.11.36.1 2009/01/17 13:29:08 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
 
 struct fbdriver {
 	/* device unblank function (force kernel output to display) */
-	void	(*fbd_unblank)(struct device *);
+	void	(*fbd_unblank)(device_t);
 	int	(*fbd_open)(dev_t, int, int, struct lwp *);
 	int	(*fbd_close)(dev_t, int, int, struct lwp *);
 	int	(*fbd_ioctl)(dev_t, u_long, void *, int, struct lwp *);
@@ -78,7 +78,7 @@ struct fbdevice {
 	int	fb_linebytes;		/* bytes per display line */
 
 	struct	fbdriver *fb_driver;	/* pointer to driver */
-	struct	device *fb_device;	/* parameter for fbd_unblank */
+	device_t	fb_device;	/* parameter for fbd_unblank */
 
 	int	fb_flags;		/* misc. flags */
 #define	FB_FORCE	0x00000001	/* force device into /dev/fb */

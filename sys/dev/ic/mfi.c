@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.11.14.3 2008/06/29 09:33:07 mjf Exp $ */
+/* $NetBSD: mfi.c,v 1.11.14.4 2009/01/17 13:28:55 mjf Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.11.14.3 2008/06/29 09:33:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.11.14.4 2009/01/17 13:28:55 mjf Exp $");
 
 #include "bio.h"
 
@@ -85,8 +85,10 @@ static int		mfi_scsi_ld(struct mfi_ccb *, struct scsipi_xfer *);
 static int		mfi_scsi_io(struct mfi_ccb *, struct scsipi_xfer *,
 				uint32_t, uint32_t);
 static void		mfi_scsi_xs_done(struct mfi_ccb *);
-static int		mfi_mgmt(struct mfi_softc *, uint32_t, uint32_t,
-				uint32_t, void *, uint8_t *);
+static int		mfi_mgmt_internal(struct mfi_softc *,
+			    uint32_t, uint32_t, uint32_t, void *, uint8_t *);
+static int		mfi_mgmt(struct mfi_ccb *,struct scsipi_xfer *,
+			    uint32_t, uint32_t, uint32_t, void *, uint8_t *);
 static void		mfi_mgmt_done(struct mfi_ccb *);
 
 #if NBIO > 0
@@ -436,7 +438,7 @@ mfi_get_info(struct mfi_softc *sc)
 #endif
 	DNPRINTF(MFI_D_MISC, "%s: mfi_get_info\n", DEVNAME(sc));
 
-	if (mfi_mgmt(sc, MR_DCMD_CTRL_GET_INFO, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_CTRL_GET_INFO, MFI_DATA_IN,
 	    sizeof(sc->sc_info), &sc->sc_info, NULL))
 		return 1;
 
@@ -1073,19 +1075,13 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		break;
 
 	case SCSI_SYNCHRONIZE_CACHE_10:
-		mfi_put_ccb(ccb); /* we don't need this */
-
 		mbox[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
-		if (mfi_mgmt(sc, MR_DCMD_CTRL_CACHE_FLUSH, MFI_DATA_NONE,
-		    0, NULL, mbox))
+		if (mfi_mgmt(ccb, xs,
+		    MR_DCMD_CTRL_CACHE_FLUSH, MFI_DATA_NONE, 0, NULL, mbox)) {
+			mfi_put_ccb(ccb);
 			goto stuffup;
-		xs->error = XS_NOERROR;
-		xs->status = SCSI_OK;
-		xs->resid = 0;
-		scsipi_done(xs);
-		splx(s);
-		return;
-		/* NOTREACHED */
+		}
+		break;
 
 	/* hand it of to the firmware and let it deal with it */
 	case SCSI_TEST_UNIT_READY:
@@ -1211,17 +1207,45 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 }
 
 static int
-mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
-    void *buf, uint8_t *mbox)
-{
+mfi_mgmt_internal(struct mfi_softc *sc, uint32_t opc, uint32_t dir,
+    uint32_t len, void *buf, uint8_t *mbox) {
 	struct mfi_ccb		*ccb;
-	struct mfi_dcmd_frame	*dcmd;
 	int			rv = 1;
-
-	DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt %#x\n", DEVNAME(sc), opc);
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL)
 		return rv;
+	rv = mfi_mgmt(ccb, NULL, opc, dir, len, buf, mbox);
+	if (rv)
+		return rv;
+
+	if (cold) {
+		if (mfi_poll(ccb))
+			goto done;
+	} else {
+		mfi_post(sc, ccb);
+
+		DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt_internal sleeping\n",
+		    DEVNAME(sc));
+		while (ccb->ccb_state != MFI_CCB_DONE)
+			tsleep(ccb, PRIBIO, "mfi_mgmt", 0);
+
+		if (ccb->ccb_flags & MFI_CCB_F_ERR)
+			goto done;
+	}
+	rv = 0;
+
+done:
+	mfi_put_ccb(ccb);
+	return rv;
+}
+
+static int
+mfi_mgmt(struct mfi_ccb *ccb, struct scsipi_xfer *xs,
+    uint32_t opc, uint32_t dir, uint32_t len, void *buf, uint8_t *mbox)
+{
+	struct mfi_dcmd_frame	*dcmd;
+
+	DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt %#x\n", DEVNAME(ccb->ccb_sc), opc);
 
 	dcmd = &ccb->ccb_frame->mfr_dcmd;
 	memset(dcmd->mdf_mbox, 0, MFI_MBOX_SIZE);
@@ -1231,6 +1255,7 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 	dcmd->mdf_opcode = opc;
 	dcmd->mdf_header.mfh_data_len = 0;
 	ccb->ccb_direction = dir;
+	ccb->ccb_xs = xs;
 	ccb->ccb_done = mfi_mgmt_done;
 
 	ccb->ccb_frame_size = MFI_DCMD_FRAME_SIZE;
@@ -1246,33 +1271,15 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 		ccb->ccb_sgl = &dcmd->mdf_sgl;
 
 		if (mfi_create_sgl(ccb, BUS_DMA_WAITOK))
-			goto done;
+			return 1;
 	}
-
-	if (cold) {
-		if (mfi_poll(ccb))
-			goto done;
-	} else {
-		mfi_post(sc, ccb);
-
-		DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt sleeping\n", DEVNAME(sc));
-		while (ccb->ccb_state != MFI_CCB_DONE)
-			tsleep(ccb, PRIBIO, "mfi_mgmt", 0);
-
-		if (ccb->ccb_flags & MFI_CCB_F_ERR)
-			goto done;
-	}
-
-	rv = 0;
-
-done:
-	mfi_put_ccb(ccb);
-	return rv;
+	return 0;
 }
 
 static void
 mfi_mgmt_done(struct mfi_ccb *ccb)
 {
+	struct scsipi_xfer	*xs = ccb->ccb_xs;
 	struct mfi_softc	*sc = ccb->ccb_sc;
 	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
@@ -1294,8 +1301,18 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 		ccb->ccb_flags |= MFI_CCB_F_ERR;
 
 	ccb->ccb_state = MFI_CCB_DONE;
-
-	wakeup(ccb);
+	if (xs) {
+		if (hdr->mfh_cmd_status != MFI_STAT_OK) {
+			xs->error = XS_DRIVER_STUFFUP;
+		} else {
+			xs->error = XS_NOERROR;
+			xs->status = SCSI_OK;
+			xs->resid = 0;
+		}
+		mfi_put_ccb(ccb);
+		scsipi_done(xs);
+	} else 
+		wakeup(ccb);
 }
 
 #if NBIO > 0
@@ -1365,7 +1382,8 @@ mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 
 	/* get figures */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
+	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	    sizeof *cfg, cfg, NULL))
 		goto freeme;
 
 	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
@@ -1387,7 +1405,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol %#x\n",
 	    DEVNAME(sc), bv->bv_volid);
 
-	if (mfi_mgmt(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
 	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL))
 		goto done;
 
@@ -1396,7 +1414,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol target %#x\n",
 	    DEVNAME(sc), mbox[0]);
 
-	if (mfi_mgmt(sc, MR_DCMD_LD_GET_INFO, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_LD_GET_INFO, MFI_DATA_IN,
 	    sizeof(sc->sc_ld_details), &sc->sc_ld_details, mbox))
 		goto done;
 
@@ -1488,7 +1506,8 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	/* send single element command to retrieve size for full structure */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
+	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	    sizeof *cfg, cfg, NULL))
 		goto freeme;
 
 	size = cfg->mfc_size;
@@ -1496,7 +1515,8 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
+	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	    size, cfg, NULL))
 		goto freeme;
 
 	ar = cfg->mfc_array;
@@ -1560,7 +1580,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	/* get the remaining fields */
 	*((uint16_t *)&mbox) = ar[arr].pd[disk].mar_pd.mfp_id;
 	memset(pd, 0, sizeof(*pd));
-	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
 	    sizeof *pd, pd, mbox))
 		goto freeme;
 
@@ -1620,7 +1640,7 @@ mfi_ioctl_alarm(struct mfi_softc *sc, struct bioc_alarm *ba)
 		return EINVAL;
 	}
 
-	if (mfi_mgmt(sc, opc, dir, sizeof(ret), &ret, NULL))
+	if (mfi_mgmt_internal(sc, opc, dir, sizeof(ret), &ret, NULL))
 		rv = EINVAL;
 	else
 		if (ba->ba_opcode == BIOC_GASTATUS)
@@ -1648,7 +1668,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 
 	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
 
-	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
 	    MFI_PD_LIST_SIZE, pd, NULL))
 		goto done;
 
@@ -1664,7 +1684,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 
 	memset(mbox, 0, sizeof mbox);
 
-	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;;
+	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;
 
 	switch (bb->bb_status) {
 	case BIOC_SBUNBLINK:
@@ -1683,7 +1703,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	}
 
 
-	if (mfi_mgmt(sc, cmd, MFI_DATA_NONE, 0, NULL, mbox))
+	if (mfi_mgmt_internal(sc, cmd, MFI_DATA_NONE, 0, NULL, mbox))
 		goto done;
 
 	rv = 0;
@@ -1705,7 +1725,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 
 	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
 
-	if (mfi_mgmt(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
 	    MFI_PD_LIST_SIZE, pd, NULL))
 		goto done;
 
@@ -1721,7 +1741,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 
 	memset(mbox, 0, sizeof mbox);
 
-	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;;
+	*((uint16_t *)&mbox) = pd->mpl_address[i].mpa_pd_id;
 
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
@@ -1750,7 +1770,8 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	}
 
 
-	if (mfi_mgmt(sc, MD_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL, mbox))
+	if (mfi_mgmt_internal(sc, MD_DCMD_PD_SET_STATE, MFI_DATA_NONE,
+	    0, NULL, mbox))
 		goto done;
 
 	rv = 0;
@@ -1782,7 +1803,8 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 
 	/* send single element command to retrieve size for full structure */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
+	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	    sizeof *cfg, cfg, NULL))
 		goto freeme;
 
 	size = cfg->mfc_size;
@@ -1790,7 +1812,8 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
+	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
+	    size, cfg, NULL))
 		goto freeme;
 
 	/* calculate offset to hs structure */
@@ -1815,7 +1838,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	/* get pd fields */
 	memset(mbox, 0, sizeof mbox);
 	*((uint16_t *)&mbox) = hs[i].mhs_pd.mfp_id;
-	if (mfi_mgmt(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
+	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
 	    sizeof *pd, pd, mbox)) {
 		DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs illegal PD\n",
 		    DEVNAME(sc));

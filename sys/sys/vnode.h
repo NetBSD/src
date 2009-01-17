@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.190.6.6 2008/09/28 10:41:05 mjf Exp $	*/
+/*	$NetBSD: vnode.h,v 1.190.6.7 2009/01/17 13:29:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -260,7 +260,7 @@ struct vattr {
 	nlink_t		va_nlink;	/* number of references to file */
 	uid_t		va_uid;		/* owner user id */
 	gid_t		va_gid;		/* owner group id */
-	long		va_fsid;	/* file system id (dev for now) */
+	dev_t		va_fsid;	/* file system id (dev for now) */
 	ino_t		va_fileid;	/* file id */
 	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
@@ -486,9 +486,6 @@ struct vnodeop_desc {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_CACHE);
-MALLOC_DECLARE(M_VNODE);
 
 /*
  * A list of all the operation descs.

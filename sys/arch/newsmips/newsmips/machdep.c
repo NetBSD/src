@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97.14.1 2008/07/02 19:08:17 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97.14.2 2009/01/17 13:28:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.14.1 2008/07/02 19:08:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.14.2 2009/01/17 13:28:21 mjf Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -222,7 +222,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 	int nsym = 0;
 	char *ssym, *esym;
@@ -240,7 +240,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 			x_bootdev = bi_arg->bootdev;
 			x_maxmem = bi_arg->maxmem;
 		}
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 		bi_sym = lookup_bootinfo(BTINFO_SYMTAB);
 		if (bi_sym) {
 			nsym = bi_sym->nsym;
@@ -304,7 +304,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTSW_ADDR)) = x_boothowto;
 
 	kernend = (char *)mips_round_page(end);
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (nsym)
 		kernend = (char *)mips_round_page(esym);
 #endif
@@ -339,9 +339,9 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	 */
 	newsmips_bus_dma_init();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (nsym)
-		ksyms_init(esym - ssym, ssym, esym);
+		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
 
 #ifdef KADB
@@ -584,6 +584,8 @@ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
 		prom_halt(0x80);	/* rom monitor RB_PWOFF */

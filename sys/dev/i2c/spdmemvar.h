@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.2.6.2 2008/10/05 20:11:29 mjf Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.2.6.3 2009/01/17 13:28:54 mjf Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -387,25 +387,26 @@ struct spdmem_rambus {				/* Direct Rambus DRAM */
 	);
 } __packed;
 
-/*
- * No JEDEC standard for DDR3 memory has yet been made publicly available.
- * This information is compiled from information posted at www.simmtester.com
- * and www.digit-life.com
- */
 struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
 	uint8_t	ddr3_mod_type;
 	SPD_BITFIELD(				\
 		/* chipsize is offset by 28: 0 = 256M, 1 = 512M, ... */ \
-		uint8_t ddr3_chipsize:5,	\
-		/* logbanks is offset by 1 */	\
-		uint8_t ddr3_logbanks:3, ,	\
+		uint8_t ddr3_chipsize:4,	\
+		/* logbanks is offset by 3 */	\
+		uint8_t ddr3_logbanks:3,	\
+		uint8_t ddr3_unused1:1,		\
 	);
 	/* cols is offset by 9, rows offset by 12 */
 	SPD_BITFIELD(				\
 		uint8_t ddr3_cols:3,		\
 		uint8_t ddr3_rows:5, ,		\
 	);
-	uint8_t	ddr3_unused2;
+	SPD_BITFIELD(				\
+		uint8_t ddr3_NOT15V:1,		\
+		uint8_t ddr3_135V:1,		\
+		uint8_t ddr3_12XV:1,		\
+		uint8_t	ddr3_unused2:5		\
+	);
 	/* chipwidth in bits offset by 2: 0 = X4, 1 = X8, 2 = X16 */
 	/* physbanks is offset by 1 */
 	SPD_BITFIELD(				\
@@ -414,15 +415,20 @@ struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
 	);
 	/* datawidth in bits offset by 3: 1 = 16b, 2 = 32b, 3 = 64b */
 	SPD_BITFIELD(				\
-		uint8_t ddr3_datawidth:7,	\
-		uint8_t ddr3_hasECC:1, ,	\
+		uint8_t ddr3_datawidth:3,	\
+		uint8_t ddr3_hasECC:2,		\
+		uint8_t ddr3_unused2a:3 ,	\
 	);
-	uint8_t	ddr3_ftb;		/* 0x52 = 2.5ps, 0x55 = 5.0ps */
+	/* Fine time base, in pico-seconds */
+	SPD_BITFIELD(				\
+		uint8_t ddr3_ftb_divisor:4,	\
+		uint8_t ddr3_ftb_dividend:4, ,	\
+	);
 	uint8_t ddr3_mtb_dividend;	/* 0x0108 = 0.1250ns */
 	uint8_t	ddr3_mtb_divisor;	/* 0x010f = 0.0625ns */
 	uint8_t	ddr3_tCKmin;		/* in terms of mtb */
 	uint8_t	ddr3_unused3;
-	uint16_t ddr3_CAS_sup;
+	uint16_t ddr3_CAS_sup;		/* Bit 0 ==> CAS 4 cycles */
 	uint8_t	ddr3_tAAmin;		/* in terms of mtb */
 	uint8_t	ddr3_tWRmin;
 	uint8_t	ddr3_tRCDmin;
@@ -445,11 +451,21 @@ struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
 	uint8_t	ddr3_output_drvrs;
 	SPD_BITFIELD(				\
 		uint8_t	ddr3_ext_temp_range:1,	\
-		uint8_t	ddr3_unused6:1,		\
+		uint8_t	ddr3_ext_temp_2x_refresh:1, \
 		uint8_t	ddr3_asr_refresh:1,	\
+		/* Bit 4 indicates on-die thermal sensor */
+		/* Bit 7 indicates Partial-Array Self-Refresh (PASR) */
 		uint8_t	ddr3_unused7:5		\
 	);
-	uint8_t	ddr3_unused4[28];
+	SPD_BITFIELD(				\
+		uint8_t ddr3_therm_sensor_acc:7,\
+		uint8_t ddr3_has_therm_sensor:1, , \
+	);
+	SPD_BITFIELD(				\
+		uint8_t ddr3_non_std_devtype:7,	\
+		uint8_t ddr3_std_device:1, ,	\
+	);
+	uint8_t	ddr3_unused4[26];
 	uint8_t	ddr3_mod_height;
 	uint8_t	ddr3_mod_thickness;
 	uint8_t	ddr3_ref_card;

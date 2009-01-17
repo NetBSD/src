@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.13.6.1 2008/04/03 12:42:55 mjf Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.13.6.2 2009/01/17 13:29:07 mjf Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.13.6.1 2008/04/03 12:42:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.13.6.2 2009/01/17 13:29:07 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -258,12 +258,13 @@ qtattach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->is_if;
 	struct uba_attach_args *ua = aux;
 
+	sc->sc_dev = self;
+
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qtintr, sc,
 	    &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
 	    device_xname(sc->sc_dev), "intr");
 
-	sc->sc_dev = self;
 	sc->sc_uh = device_private(parent);
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
@@ -535,7 +536,7 @@ qttint(struct qt_softc *sc)
 			{
 #ifdef QTDEBUG
 			char buf[100];
-			bitmask_snprintf(rp->tmd2, TMD2_BITS, buf, 100);
+			snprintb(buf, sizeof(buf), TMD2_BITS, rp->tmd2);
 			printf("%s: tmd2 %s\n", device_xname(sc->sc_dev), buf);
 #endif
 			sc->is_if.if_oerrors++;
@@ -576,9 +577,9 @@ qtrint(struct qt_softc *sc)
 			{
 #ifdef QTDEBUG
 			char buf[100];
-			bitmask_snprintf(rp->rmd0, RMD0_BITS, buf, 100);
+			snprintb(buf, sizeof(buf), RMD0_BITS, rp->rmd0);
 			printf("%s: rmd0 %s\n", device_xname(sc->sc_dev), buf);
-			bitmask_snprintf(rp->rmd2, RMD2_BITS, buf, 100);
+			snprintb(buf, sizeof(buf), RMD2_BITS, rp->rmd2);
 			printf("%s: rmd2 %s\n", device_xname(sc->sc_dev), buf);
 #endif
 			sc->is_if.if_ierrors++;
@@ -627,7 +628,7 @@ void
 qtsrr(struct qt_softc *sc, int srrbits)
 {
 	char buf[100];
-	bitmask_snprintf(srrbits, SRR_BITS, buf, sizeof buf);
+	snprintb(buf, sizeof(buf), SRR_BITS, srrbits);
 	printf("%s: srr=%s\n", device_xname(sc->sc_dev), buf);
 }
 

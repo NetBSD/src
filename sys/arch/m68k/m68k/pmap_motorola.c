@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.35.6.2 2008/06/29 09:32:58 mjf Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.35.6.3 2009/01/17 13:28:11 mjf Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.35.6.2 2008/06/29 09:32:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.35.6.3 2009/01/17 13:28:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ int pmapdebug = PDB_PARANOIA;
  * convert to an m68k protection code.
  */
 #define pte_prot(m, p)	(protection_codes[p])
-int	protection_codes[8];
+u_int	protection_codes[8];
 
 /*
  * Kernel page table page management.
@@ -236,7 +236,8 @@ pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
-struct pmap	kernel_pmap_store;
+static struct pmap kernel_pmap_store;
+struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*st_map, *pt_map;
 struct vm_map_kernel st_map_store, pt_map_store;
 

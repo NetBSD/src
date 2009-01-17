@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.3.144.1 2008/06/02 13:24:16 mjf Exp $	*/
+/*	$NetBSD: random.S,v 1.3.144.2 2009/01/17 13:29:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,14 +77,20 @@ randseed:
 	.text
 ENTRY(random)
 	movl	$16807,%eax
-	imull	randseed
+	PIC_PROLOGUE
+	imull	PIC_GOTOFF(randseed)
+	PIC_EPILOGUE
 	shld	$1,%eax,%edx
 	andl	$0x7fffffff,%eax
 	addl	%edx,%eax
 	js	1f
-	movl	%eax,randseed
+	PIC_PROLOGUE
+	movl	%eax,PIC_GOTOFF(randseed)
+	PIC_EPILOGUE
 	ret
 1:
 	subl	$0x7fffffff,%eax
-	movl	%eax,randseed
+	PIC_PROLOGUE
+	movl	%eax,PIC_GOTOFF(randseed)
+	PIC_EPILOGUE
 	ret

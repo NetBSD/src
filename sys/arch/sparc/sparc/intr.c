@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.100 2008/01/09 13:52:33 ad Exp $ */
+/*	$NetBSD: intr.c,v 1.100.6.1 2009/01/17 13:28:31 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100 2008/01/09 13:52:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100.6.1 2009/01/17 13:28:31 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -98,9 +98,9 @@ strayintr(struct clockframe *fp)
 	char bits[64];
 	int timesince;
 
+	snprintb(bits, sizeof(bits), PSR_BITS, fp->psr);
 	printf("stray interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
-		fp->ipl, fp->pc, fp->npc, bitmask_snprintf(fp->psr,
-		       PSR_BITS, bits, sizeof(bits)));
+	    fp->ipl, fp->pc, fp->npc, bits);
 
 	timesince = time_uptime - straytime;
 	if (timesince <= 10) {
@@ -123,10 +123,9 @@ bogusintr(struct clockframe *fp)
 {
 	char bits[64];
 
+	snprintb(bits, sizeof(bits), PSR_BITS, fp->psr);
 	printf("cpu%d: bogus interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
-		cpu_number(),
-		fp->ipl, fp->pc, fp->npc, bitmask_snprintf(fp->psr,
-		       PSR_BITS, bits, sizeof(bits)));
+	    cpu_number(), fp->ipl, fp->pc, fp->npc, bits);
 }
 #endif /* DIAGNOSTIC */
 
@@ -198,9 +197,9 @@ nmi_hard(void)
 
 	afsr = afva = 0;
 	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
+		snprintb(bits, sizeof(bits), AFSR_BITS, afsr);
 		printf("Async registers (mid %d): afsr=%s; afva=0x%x%x\n",
-			cpuinfo.mid,
-			bitmask_snprintf(afsr, AFSR_BITS, bits, sizeof(bits)),
+			cpuinfo.mid, bits,
 			(afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, afva);
 	}
 
@@ -235,8 +234,9 @@ nmi_hard(void)
 	 * Examine pending system interrupts.
 	 */
 	si = *((uint32_t *)ICR_SI_PEND);
-	printf("cpu%d: NMI: system interrupts: %s\n", cpu_number(),
-		bitmask_snprintf(si, SINTR_BITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), SINTR_BITS, si);
+	printf("cpu%d: NMI: system interrupts: %s\n", cpu_number(), bits);
+		
 
 	if ((si & SINTR_M) != 0) {
 		/* ECC memory error */
@@ -374,8 +374,9 @@ nmi_hard_msiiep(void)
 	int fatal = 0;
 
 	si = mspcic_read_4(pcic_sys_ipr);
-	printf("NMI: system interrupts: %s\n",
-	       bitmask_snprintf(si, MSIIEP_SYS_IPR_BITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), MSIIEP_SYS_IPR_BITS, si);
+	printf("NMI: system interrupts: %s\n", bits);
+	       
 
 	if (si & MSIIEP_SYS_IPR_MEM_FAULT) {
 		uint32_t afsr, afar, mfsr, mfar;
@@ -386,17 +387,15 @@ nmi_hard_msiiep(void)
 		mfar = *(volatile uint32_t *)MSIIEP_MFAR;
 		mfsr = *(volatile uint32_t *)MSIIEP_MFSR;
 
-		if (afsr & MSIIEP_AFSR_ERR)
-			printf("async fault: afsr=%s; afar=%08x\n",
-			       bitmask_snprintf(afsr, MSIIEP_AFSR_BITS,
-						bits, sizeof(bits)),
-			       afar);
+		if (afsr & MSIIEP_AFSR_ERR) {
+			snprintb(bits, sizeof(bits), MSIIEP_AFSR_BITS, afsr);
+			printf("async fault: afsr=%s; afar=%08x\n", bits, afsr);
+		}
 
-		if (mfsr & MSIIEP_MFSR_ERR)
-			printf("mem fault: mfsr=%s; mfar=%08x\n",
-			       bitmask_snprintf(mfsr, MSIIEP_MFSR_BITS,
-						bits, sizeof(bits)),
-			       mfar);
+		if (mfsr & MSIIEP_MFSR_ERR) {
+			snprintb(bits, sizeof(bits), MSIIEP_MFSR_BITS, mfsr);
+			printf("mem fault: mfsr=%s; mfar=%08x\n", bits, mfsr);
+		}
 
 		fatal = 0;
 	}

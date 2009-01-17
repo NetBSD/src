@@ -1,8 +1,11 @@
-/*	$NetBSD: frameasm.h,v 1.10.6.2 2008/06/02 13:21:49 mjf Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.10.6.3 2009/01/17 13:27:49 mjf Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
+
+#ifdef _KERNEL_OPT
 #include "opt_xen.h"
+#endif
 
 /*
  * Macros to define pushing/popping frames for interrupts, traps

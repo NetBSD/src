@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.25.12.1 2008/06/02 13:23:08 mjf Exp $	 */
+/*	$NetBSD: svr4_exec.h,v 1.25.12.2 2009/01/17 13:28:48 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #define SVR4_INTERP_ADDR	0x10000000
 #endif
 
-extern const struct emul emul_svr4;
+extern struct emul emul_svr4;
 
 void svr4_setregs(struct lwp *, struct exec_package *, u_long);
 int svr4_elf32_probe(struct lwp *, struct exec_package *, void *,

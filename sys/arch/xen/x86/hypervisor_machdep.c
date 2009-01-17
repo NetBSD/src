@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.6.6.3 2008/09/28 10:40:14 mjf Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.6.6.4 2009/01/17 13:28:39 mjf Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6.6.3 2008/09/28 10:40:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6.6.4 2009/01/17 13:28:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +384,7 @@ hypervisor_machdep_attach(void) {
 
 #ifdef XEN3
  	/* dom0 does not require the arch-dependent P2M translation table */
-	if ( !(xen_start_info.flags & SIF_INITDOMAIN) ) {
+	if ( !xendomain_is_dom0() ) {
 		build_p2m_frame_list_list();
 	}
 #endif

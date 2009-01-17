@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.32.40.1 2008/04/03 12:42:28 mjf Exp $ */
+/*	$NetBSD: ka43.c,v 1.32.40.2 2009/01/17 13:28:35 mjf Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.32.40.1 2008/04/03 12:42:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.32.40.2 2009/01/17 13:28:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -188,10 +188,10 @@ ka43_memerr(void)
 
 	printf("memory error!\n");
 
-	bitmask_snprintf(mfpr(PR_PCSTS), KA43_PCSTS_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), KA43_PCSTS_BITS, mfpr(PR_PCSTS));
 	printf("primary cache status: %s\n", sbuf);
 
-	bitmask_snprintf(*ka43_creg, KA43_SESR_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), KA43_SESR_BITS, *ka43_creg);
 	printf("secondary cache status: %s\n", sbuf);
 }
 
@@ -226,10 +226,10 @@ ka43_cache_reset(void)
 	ka43_cache_invalidate();
 	ka43_cache_enable();
 
-	bitmask_snprintf(mfpr(PR_PCSTS), KA43_PCSTS_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), KA43_PCSTS_BITS, mfpr(PR_PCSTS));
 	printf("primary cache status: %s\n", sbuf);
 
-	bitmask_snprintf(*ka43_creg, KA43_SESR_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), KA43_SESR_BITS, *ka43_creg);
 	printf("secondary cache status: %s\n", sbuf);
 
 	return (0);

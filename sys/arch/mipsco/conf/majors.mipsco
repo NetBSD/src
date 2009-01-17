@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.18 2007/12/31 15:31:59 ad Exp $
+#	$NetBSD: majors.mipsco,v 1.18.6.1 2009/01/17 13:28:17 mjf Exp $
 #
 # Device majors for mipsco
 #
@@ -23,7 +23,6 @@ device-major	tun		char 25			tun
 
 device-major	log		char 33
 
-device-major	lkm		char 45			lkm
 device-major	ipl		char 46			ipfilter
 device-major	rnd		char 47			rnd
 device-major	filedesc	char 48

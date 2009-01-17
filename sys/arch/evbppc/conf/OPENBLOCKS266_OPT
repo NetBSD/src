@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.9 2007/12/02 05:19:13 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.9.14.1 2009/01/17 13:28:00 mjf Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -266,19 +266,6 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options UGEN_BULK_RA_WB
-
-
-# PCMCIA audio devices
-esl*	at pcmcia? function ?		# ESS 1688 AudioDrive
-
-# OPL[23] FM synthesizers
-#opl*	at esl?
-
-# Audio support
-audio*	at audiobus?
-
-# MIDI support
-midi*	at midibus?
 
 
 # CardBus IEEE1394 controllers

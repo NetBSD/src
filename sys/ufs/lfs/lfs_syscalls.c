@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.128.6.1 2008/06/02 13:24:36 mjf Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.128.6.2 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.128.6.1 2008/06/02 13:24:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.128.6.2 2009/01/17 13:29:42 mjf Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -980,7 +980,8 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segwait(struct lwp *l, const struct sys_lfs_segwait_args *uap, register_t *retval)
+sys___lfs_segwait50(struct lwp *l, const struct sys___lfs_segwait50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(fsid_t *) fsidp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.c,v 1.22.12.1 2008/06/02 13:23:09 mjf Exp $	 */
+/*	$NetBSD: svr4_32_exec.c,v 1.22.12.2 2009/01/17 13:28:48 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.22.12.1 2008/06/02 13:23:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.22.12.2 2009/01/17 13:28:48 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -62,7 +62,7 @@ void syscall(void);
 
 struct uvm_object *emul_svr4_32_object;
 
-const struct emul emul_svr4_32 = {
+struct emul emul_svr4_32 = {
 	"svr4_32",
 	"/emul/svr4_32",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -98,6 +98,7 @@ const struct emul emul_svr4_32 = {
 	NULL,
 
 	svr4_32_vm_default_addr,
+	NULL,
 	NULL,
 	0,
 	NULL,

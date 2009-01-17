@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.11.6.1 2008/06/02 13:23:00 mjf Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.11.6.2 2009/01/17 13:28:43 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.6.1 2008/06/02 13:23:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.6.2 2009/01/17 13:28:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -161,8 +161,8 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 
 	switch (request) {
 	case  LINUX_PTRACE_GETREGS:
-		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
-		MALLOC(linux_regs, struct linux_reg*, sizeof(struct linux_reg),
+		regs = malloc(sizeof(struct reg), M_TEMP, M_WAITOK);
+		linux_regs = malloc(sizeof(struct linux_reg),
 			M_TEMP, M_WAITOK);
 
 		error = process_read_regs(lt, regs);
@@ -181,8 +181,8 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 		goto out;
 
 	case  LINUX_PTRACE_SETREGS:
-		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
-		MALLOC(linux_regs, struct linux_reg *, sizeof(struct linux_reg),
+		regs = malloc(sizeof(struct reg), M_TEMP, M_WAITOK);
+		linux_regs = malloc(sizeof(struct linux_reg),
 			M_TEMP, M_WAITOK);
 
 		error = copyin((void *)SCARG(uap, data), linux_regs,
@@ -208,13 +208,13 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 
     out:
 	if (regs)
-		FREE(regs, M_TEMP);
+		free(regs, M_TEMP);
 	if (fpregs)
-		FREE(fpregs, M_TEMP);
+		free(fpregs, M_TEMP);
 	if (linux_regs)
-		FREE(linux_regs, M_TEMP);
+		free(linux_regs, M_TEMP);
 	if (linux_fpregs)
-		FREE(linux_fpregs, M_TEMP);
+		free(linux_fpregs, M_TEMP);
 	return (error);
 
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.23 2007/12/31 15:31:53 ad Exp $
+#	$NetBSD: majors.evbmips,v 1.23.6.1 2009/01/17 13:27:59 mjf Exp $
 #
 # Device majors for evbmips
 #
@@ -19,7 +19,6 @@ device-major	st		char 12  block 2	st
 device-major	cd		char 13  block 3	cd
 device-major	ch		char 14			ch
 
-device-major	lkm		char 16			lkm
 device-major	sbjcn		char 17			jtagconsole
 device-major	sbscn		char 17			sbscn & !jtagconsole
 

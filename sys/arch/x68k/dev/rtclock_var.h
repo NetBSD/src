@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock_var.h,v 1.9.40.1 2008/06/29 09:33:02 mjf Exp $	*/
+/*	$NetBSD: rtclock_var.h,v 1.9.40.2 2009/01/17 13:28:36 mjf Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -90,9 +90,5 @@ struct rtc_softc {
 #define RTC_UNUSED2	0x19
 
 #define RTC_BASE_YEAR	1980
-
-#define	range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return(0)
-#define	range_test0(n, h)	if ((unsigned)(n) > (h)) return(0)
-				/* cast to unsigned in case n is signed */
 
 #endif /* _RTCLOCKVAR_H_ */

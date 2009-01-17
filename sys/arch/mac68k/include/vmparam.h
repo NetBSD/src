@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.36.74.1 2009/01/17 13:28:12 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -183,7 +183,7 @@
 #define VM_MAXUSER_ADDRESS	((vaddr_t)(USRSTACK))
 #define VM_MAX_ADDRESS		((vaddr_t)(0-(UPAGES*PAGE_SIZE)))
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG*2))
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

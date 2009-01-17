@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.11.70.1 2008/06/02 13:24:33 mjf Exp $	*/
+/*	$NetBSD: poll.h,v 1.11.70.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,8 +87,11 @@ __END_DECLS
 struct timespec;
 
 __BEGIN_DECLS
+#ifndef __LIBC12_SOURCE__
 int	pollts(struct pollfd * __restrict, nfds_t,
-	    const struct timespec * __restrict, const sigset_t * __restrict);
+    const struct timespec * __restrict, const sigset_t * __restrict)
+    __RENAME(__pollts50);
+#endif /* __LIBC12_SOURCE__ */
 __END_DECLS
 #endif /* _NETBSD_SOURCE */
 

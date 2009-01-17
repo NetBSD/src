@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2005/12/11 12:18:29 christos Exp $
+#	$NetBSD: Makefile,v 1.20.74.1 2009/01/17 13:28:23 mjf Exp $
 
 NOMAN=	# defined
 
@@ -28,6 +28,8 @@ DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG -DSD_DEB
 SAMISCCPPFLAGS=	-DSUPPORT_DHCP -DSUPPORT_BOOTP -DINSECURE # -DBOOTP_DEBUG -DETHER_DEBUG -DNET_DEBUG # -DNETIF_DEBUG -DNFS_DEBUG  -DARP_DEBUG 
 WARNS=1
 CFLAGS+=	 -ffreestanding -nostdinc ${INCLUDES} ${DEFS}
+CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+AFLAGS+=	${INCLUDES}
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
 LIBC=
@@ -66,7 +68,8 @@ ${PROG}: srt0.o ${OBJS} ${LIBS}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} -o $@.elf
 	${SIZE} $@.elf
 	${OBJCOPY} -O binary $@.elf $@.raw
-	(${SIZE} $@.elf | tail +2 | awk ${AWKPROG} | xargs printf ; cat $@.raw) > $@
+	(${SIZE} $@.elf | tail +2 | ${TOOL_AWK} ${AWKPROG} | \
+		xargs printf ; cat $@.raw) > $@
 
 # startup
 
@@ -87,10 +90,15 @@ vers.c: version
 # utilities
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	rm -f machine
+.NOPATH: machine ${MACHINE_ARCH}
+.BEGIN: machine ${MACHINE_ARCH}
+
+machine:
+	-rm -f machine
 	ln -s ${S}/arch/${MACHINE}/include machine
-	rm -f ${MACHINE_ARCH}
+
+${MACHINE_ARCH}:
+	-rm -f ${MACHINE_ARCH}
 	ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 .endif
 

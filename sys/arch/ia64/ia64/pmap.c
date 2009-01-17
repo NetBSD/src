@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.11.16.2 2008/06/02 13:22:19 mjf Exp $ */
+/* $NetBSD: pmap.c,v 1.11.16.3 2009/01/17 13:28:08 mjf Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11.16.2 2008/06/02 13:22:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11.16.3 2009/01/17 13:28:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,8 @@ kmutex_t pmap_rid_lock;			/* RID allocator lock */
 bool		pmap_initialized;	/* Has pmap_init completed? */
 u_long		pmap_pages_stolen;	/* instrumentation */
 
-struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+struct pmap *const kernel_pmap_ptr = &kernel_map_store;
 
 static vaddr_t	kernel_vm_end;	/* VA of last avail page ( end of kernel Address Space ) */
 

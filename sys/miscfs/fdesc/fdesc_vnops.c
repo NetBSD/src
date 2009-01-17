@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.101.12.2 2008/06/02 13:24:19 mjf Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.101.12.3 2009/01/17 13:29:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.101.12.2 2008/06/02 13:24:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.101.12.3 2009/01/17 13:29:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ loop:
 	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, vpp);
 	if (error)
 		goto out;
-	MALLOC(fd, void *, sizeof(struct fdescnode), M_TEMP, M_WAITOK);
+	fd = malloc(sizeof(struct fdescnode), M_TEMP, M_WAITOK);
 	(*vpp)->v_data = fd;
 	fd->fd_vnode = *vpp;
 	fd->fd_type = ftype;
@@ -986,7 +986,7 @@ fdesc_reclaim(v)
 	struct fdescnode *fd = VTOFDESC(vp);
 
 	LIST_REMOVE(fd, fd_hash);
-	FREE(vp->v_data, M_TEMP);
+	free(vp->v_data, M_TEMP);
 	vp->v_data = 0;
 
 	return (0);

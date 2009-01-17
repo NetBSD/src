@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.117.6.2 2008/06/02 13:22:14 mjf Exp $
+#	$NetBSD: INSTALL_TINY,v 1.117.6.3 2009/01/17 13:28:03 mjf Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -30,9 +30,6 @@ maxusers	2		# estimated number of users
 # I/O address.
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=9600
 
-# Save a physical page per process by not setting a kernel stack red zone.
-options 	NOREDZONE
-
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
 # values.  Note that the BIOS may *correctly* report less than 640k of base
@@ -52,7 +49,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

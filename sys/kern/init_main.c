@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.341.6.5 2008/09/28 10:40:51 mjf Exp $	*/
+/*	$NetBSD: init_main.c,v 1.341.6.6 2009/01/17 13:29:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,19 +97,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.5 2008/09/28 10:40:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.6 2009/01/17 13:29:18 mjf Exp $");
 
+#include "opt_ddb.h"
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
-#include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
+#include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
 
+#include "ksyms.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
@@ -125,7 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.5 2008/09/28 10:40:51 mjf Exp 
 #include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -162,6 +163,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.5 2008/09/28 10:40:51 mjf Exp 
 #include <sys/module.h>
 #include <sys/event.h>
 #include <sys/lockf.h>
+#include <sys/once.h>
+#include <sys/ksyms.h>
+#include <sys/uidinfo.h>
+#include <sys/kprintf.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -174,18 +179,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.5 2008/09/28 10:40:51 mjf Exp 
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
-#ifdef P1003_1B_SEMAPHORE
-#include <sys/ksem.h>
-#endif
 #include <sys/domain.h>
 #include <sys/namei.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
 #include <sys/pipe.h>
-#ifdef LKM
-#include <sys/lkm.h>
-#endif
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
@@ -231,6 +230,11 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.5 2008/09/28 10:40:51 mjf Exp 
 
 #include <secmodel/secmodel.h>
 
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+struct timeval50 boottime50;
+#endif
+
 extern struct proc proc0;
 extern struct lwp lwp0;
 extern struct cwdinfo cwdi0;
@@ -244,7 +248,7 @@ struct	proc *initproc;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
-struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
+struct timespec boottime;	        /* time at system startup - will only follow settime deltas */
 
 int	start_init_exec;		/* semaphore for start_init() */
 
@@ -315,7 +319,7 @@ __secmodel_none(void)
 void
 main(void)
 {
-	struct timeval time;
+	struct timespec time;
 	struct lwp *l;
 	struct proc *p;
 	int s, error;
@@ -337,10 +341,14 @@ main(void)
 	consinit();
 
 	kernel_lock_init();
+	once_init();
 
 	uvm_init();
 
-	kmem_init();
+#if ((NKSYMS > 0) || (NDDB > 0) || (NMODULAR > 0))
+	ksyms_init();
+#endif
+	kprintf_init();
 
 	percpu_init();
 
@@ -352,6 +360,9 @@ main(void)
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
+
+	/* Initialize the sysctl subsystem. */
+	sysctl_init();
 
 	/* Initialize callouts, part 1. */
 	callout_startup();
@@ -425,9 +436,6 @@ main(void)
 	 */
 	mbinit();
 
-	/* Initialize the sysctl subsystem. */
-	sysctl_init();
-
 	/* Initialize I/O statistics. */
 	iostat_init();
 
@@ -459,11 +467,11 @@ main(void)
 	/* Initialize the file descriptor system. */
 	fd_sys_init();
 
+	/* Initialize cwd structures */
+	cwd_sys_init();
+
 	/* Initialize kqueue. */
 	kqueue_init();
-
-	/* Initialize asynchronous I/O. */
-	aio_sysinit();
 
 	/* Initialize message queues. */
 	mqueue_sysinit();
@@ -522,11 +530,6 @@ main(void)
 #ifdef SYSVMSG
 	/* Initialize System V style message queues. */
 	msginit();
-#endif
-
-#ifdef P1003_1B_SEMAPHORE
-	/* Initialize posix semaphores */
-	ksem_init();
 #endif
 
 #if NVERIEXEC > 0
@@ -661,13 +664,20 @@ main(void)
 	 * from the file system.  Reset l->l_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-	getmicrotime(&time);
+	getnanotime(&time);
 	boottime = time;
+#ifdef COMPAT_50
+	{
+		struct timeval tv;
+		TIMESPEC_TO_TIMEVAL(&tv, &time);
+		timeval_to_timeval50(&tv, &boottime50);
+	}
+#endif
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
 		mutex_enter(p->p_lock);
-		p->p_stats->p_start = time;
+		TIMESPEC_TO_TIMEVAL(&p->p_stats->p_start, &time);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
 			memset(&l->l_rtime, 0, sizeof(l->l_rtime));
@@ -814,18 +824,34 @@ start_init(void *arg)
 				printf(" (default %s)", initpaths[ipx]);
 			printf(": ");
 			len = cngetsn(ipath, sizeof(ipath)-1);
-			if (len == 0) {
-				if (initpaths[ipx])
-					path = initpaths[ipx++];
-				else
-					continue;
-			} else {
+			if (len == 4 && strcmp(ipath, "halt") == 0) {
+				cpu_reboot(RB_HALT, NULL);
+			} else if (len == 6 && strcmp(ipath, "reboot") == 0) {
+				cpu_reboot(0, NULL);
+#if defined(DDB)
+			} else if (len == 3 && strcmp(ipath, "ddb") == 0) {
+				console_debugger();
+				continue;
+#endif
+			} else if (len > 0 && ipath[0] == '/') {
 				ipath[len] = '\0';
 				path = ipath;
+			} else if (len == 0 && initpaths[ipx] != NULL) {
+				path = initpaths[ipx++];
+			} else {
+				printf("use absolute path, ");
+#if defined(DDB)
+				printf("\"ddb\", ");
+#endif
+				printf("\"halt\", or \"reboot\"\n");
+				continue;
 			}
 		} else {
-			if ((path = initpaths[ipx++]) == NULL)
-				break;
+			if ((path = initpaths[ipx++]) == NULL) {
+				ipx = 0;
+				boothowto |= RB_ASKNAME;
+				continue;
+			}
 		}
 
 		ucp = (char *)USRSTACK;

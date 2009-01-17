@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.270.6.4 2008/06/29 09:33:20 mjf Exp $	*/
+/*	$NetBSD: proc.h,v 1.270.6.5 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct emul {
 	int		e_nosys;	/* Offset of the nosys() syscall */
 	int		e_nsysent;	/* Number of system call entries */
 #endif
-	const struct sysent *e_sysent;	/* System call array */
+	struct sysent	*e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
 	void		(*e_sendsig)(const struct ksiginfo *,
@@ -171,6 +171,9 @@ struct emul {
 
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
+
+	/* SA-related information */
+	const struct sa_emul *e_sa;
 
 	size_t		e_ucsize;	/* size of ucontext_t */
 	void		(*e_startlwp)(void *);
@@ -257,6 +260,8 @@ struct proc {
 	u_int		p_waited;	/* l: parent has waited on child */
 	struct lwp	*p_zomblwp;	/* p: detached LWP to be reaped */
 
+	struct sadata	*p_sa;		/* p: Scheduler activation info */
+
 	/* scheduling */
 	void		*p_sched_info;	/* p: Scheduler-specific structure */
 	fixpt_t		p_estcpu;	/* p: Time avg. value of p_cpticks */
@@ -272,16 +277,18 @@ struct proc {
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
 
 	int		p_traceflag;	/* k: Kernel trace points */
+	int		p_timerpend;	/* p: Pending itimer to run */
 	void		*p_tracep;	/* k: Trace private data */
 	struct vnode 	*p_textvp;	/* :: Vnode of executable */
 
 	void	     (*p_userret)(void);/* p: return-to-user hook */
-	const struct emul *p_emul;	/* :: emulation information */
+	struct emul	*p_emul;	/* :: emulation information */
 	void		*p_emuldata;	/* :: per-proc emul data, or NULL */
 	const struct execsw *p_execsw;	/* :: exec package information */
 	struct klist	p_klist;	/* p: knotes attached to proc */
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
+	sigstore_t	p_sigstore;	/* p: process-wide signal state */
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
@@ -357,12 +364,14 @@ struct proc {
  * process context only.
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
+#define	PS_SA		0x00000400 /* Process using scheduler activations */
 #define	PS_WCORE	0x00001000 /* Process needs to dump core */
 #define	PS_WEXIT	0x00002000 /* Working on exiting */
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
+#define	PS_NOSA 	0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
 
 /*
@@ -385,6 +394,7 @@ struct proc {
  */
 #define	PL_CONTROLT	0x00000002 /* Has a controlling terminal */
 #define	PL_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
+#define	PL_SIGCOMPAT	0x00000200 /* Has used compat signal trampoline */
 #define	PL_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 
 /*
@@ -570,6 +580,8 @@ void kstack_check_magic(const struct lwp *);
 #ifndef KSTACK_SIZE
 #define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif
+
+extern struct emul emul_netbsd;
 
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

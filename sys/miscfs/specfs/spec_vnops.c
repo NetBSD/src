@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.115.6.1 2008/06/02 13:24:20 mjf Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.115.6.2 2009/01/17 13:29:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.115.6.1 2008/06/02 13:24:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.115.6.2 2009/01/17 13:29:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -93,7 +93,6 @@ const char	devioc[] = "devioc";
 const char	devcls[] = "devcls";
 
 vnode_t		*specfs_hash[SPECHSZ];
-kmutex_t	specfs_lock;
 
 /*
  * This vnode operations vector is used for special device nodes
@@ -194,7 +193,7 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 		/* XXX */
 		panic("spec_node_init: unable to allocate memory");
 	}
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	vpp = &specfs_hash[SPECHASH(rdev)];
 	for (vp2 = *vpp; vp2 != NULL; vp2 = vp2->v_specnext) {
 		KASSERT(vp2->v_specnode != NULL);
@@ -224,7 +223,7 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 	vp->v_specnode = sn;
 	vp->v_specnext = *vpp;
 	*vpp = vp;
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 
 	/* Free the record we allocated if unused. */
 	if (sd != NULL) {
@@ -250,20 +249,20 @@ spec_node_revoke(vnode_t *vp)
 	KASSERT((vp->v_iflag & VI_XLOCK) != 0);
 	KASSERT(sn->sn_gone == false);
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	KASSERT(sn->sn_opencnt <= sd->sd_opencnt);
 	if (sn->sn_opencnt != 0) {
 		sd->sd_opencnt -= (sn->sn_opencnt - 1);
 		sn->sn_opencnt = 1;
 		sn->sn_gone = true;
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 
 		VOP_CLOSE(vp, FNONBLOCK, NOCRED);
 
-		mutex_enter(&specfs_lock);
+		mutex_enter(&device_lock);
 		KASSERT(sn->sn_opencnt == 0);
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 }
 
 /*
@@ -285,7 +284,7 @@ spec_node_destroy(vnode_t *vp)
 	KASSERT(vp->v_specnode != NULL);
 	KASSERT(sn->sn_opencnt == 0);
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	/* Remove from the hash and destroy the node. */
 	vpp = &specfs_hash[SPECHASH(vp->v_rdev)];
 	for (vp2 = *vpp;; vp2 = vp2->v_specnext) {
@@ -306,7 +305,7 @@ spec_node_destroy(vnode_t *vp)
 	vp->v_specnode = NULL;
 	refcnt = sd->sd_refcnt--;
 	KASSERT(refcnt > 0);
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 
 	/* If the device is no longer in use, destroy our record. */
 	if (refcnt == 1) {
@@ -388,14 +387,14 @@ spec_open(void *v)
 		 * Character devices can accept opens from multiple
 		 * vnodes.
 		 */
-		mutex_enter(&specfs_lock);
+		mutex_enter(&device_lock);
 		if (sn->sn_gone) {
-			mutex_exit(&specfs_lock);
+			mutex_exit(&device_lock);
 			return (EBADF);
 		}
 		sd->sd_opencnt++;
 		sn->sn_opencnt++;
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 		if (cdev_type(dev) == D_TTY)
 			vp->v_vflag |= VV_ISTTY;
 		VOP_UNLOCK(vp, 0);
@@ -413,19 +412,19 @@ spec_open(void *v)
 		 * cache cannot remain self-consistent with multiple
 		 * vnodes holding a block device open.
 		 */
-		mutex_enter(&specfs_lock);
+		mutex_enter(&device_lock);
 		if (sn->sn_gone) {
-			mutex_exit(&specfs_lock);
+			mutex_exit(&device_lock);
 			return (EBADF);
 		}
 		if (sd->sd_opencnt != 0) {
-			mutex_exit(&specfs_lock);
+			mutex_exit(&device_lock);
 			return EBUSY;
 		}
 		sn->sn_opencnt = 1;
 		sd->sd_opencnt = 1;
 		sd->sd_bdevvp = vp;
-		mutex_exit(&specfs_lock);
+		mutex_exit(&device_lock);
 
 		error = bdev_open(dev, ap->a_mode, S_IFBLK, l);
 		break;
@@ -441,7 +440,7 @@ spec_open(void *v)
 		return 0;
 	}
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	if (sn->sn_gone) {
 		if (error == 0)
 			error = EBADF;
@@ -452,7 +451,7 @@ spec_open(void *v)
 			sd->sd_bdevvp = NULL;
 
 	}
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 
 	if (cdev_type(dev) != D_DISK || error != 0)
 		return error;
@@ -951,12 +950,12 @@ spec_close(void *v)
 		panic("spec_close: not special");
 	}
 
-	mutex_enter(&specfs_lock);
+	mutex_enter(&device_lock);
 	sn->sn_opencnt--;
 	count = --sd->sd_opencnt;
 	if (vp->v_type == VBLK)
 		sd->sd_bdevvp = NULL;
-	mutex_exit(&specfs_lock);
+	mutex_exit(&device_lock);
 
 	if (count != 0)
 		return 0;
@@ -1000,8 +999,8 @@ spec_print(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	printf("dev %d, %d\n", major(ap->a_vp->v_rdev),
-	    minor(ap->a_vp->v_rdev));
+	printf("dev %llu, %llu\n", (unsigned long long)major(ap->a_vp->v_rdev),
+	    (unsigned long long)minor(ap->a_vp->v_rdev));
 	return 0;
 }
 

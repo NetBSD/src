@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.34.16.1 2008/06/02 13:21:52 mjf Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.34.16.2 2009/01/17 13:27:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,12 +40,11 @@
  * Created      : 17/09/94
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_armfpe.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.34.16.1 2008/06/02 13:21:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.34.16.2 2009/01/17 13:27:51 mjf Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -89,7 +88,7 @@ getframe(struct lwp *l, int sig, int *onstack)
  * resets the signal mask, the stack, and the
  * frame pointer, it returns to the user specified pc.
  */
-static void
+void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -111,18 +110,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	
 	/* make the stack aligned */
 	fp = (struct sigframe_siginfo *)STACKALIGN(fp);
-
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
-	default:	/* unknown version */
-		printf("nsendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-	case 2:
-		break;
-	}
 
 	/* populate the siginfo frame */
 	frame.sf_si._info = ksi->ksi_info;
@@ -174,17 +161,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		sendsig_siginfo(ksi, mask);
 }
 
 void

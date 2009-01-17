@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.1.18.1 2008/06/02 13:21:55 mjf Exp $	*/
+/*	$Id: obio_ohci.c,v 1.1.18.2 2009/01/17 13:27:53 mjf Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.1.18.1 2008/06/02 13:21:55 mjf Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.1.18.2 2009/01/17 13:27:53 mjf Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.1.18.1 2008/06/02 13:21:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.1.18.2 2009/01/17 13:27:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.1.18.1 2008/06/02 13:21:55 mjf Exp $
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
-#include <arm/omap/omap2430obiovar.h>
-#include <arm/omap/omap2430obioreg.h>
+#include <arm/omap/omap2_obiovar.h>
+#include <arm/omap/omap2_obioreg.h>
 
 
 struct obioohci_softc {
@@ -59,7 +59,7 @@ static int	obioohci_detach(struct device *, int);
 void *		obioohci_fake_intr_establish(int (*)(void *), void *);
 void		obioohci_fake_intr(void);
 
-CFATTACH_DECL(obioohci, sizeof(struct obioohci_softc),
+CFATTACH_DECL_NEW(obioohci, sizeof(struct obioohci_softc),
     obioohci_match, obioohci_attach, obioohci_detach, ohci_activate);
 
 static void	obioohci_clkinit(struct obio_attach_args *);
@@ -134,7 +134,7 @@ obioohci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = obioohci_fake_intr_establish(ohci_intr, &sc->sc);
 #endif
 
-	strlcpy(sc->sc.sc_vendor, "OMAP2430", sizeof(sc->sc.sc_vendor));
+	strlcpy(sc->sc.sc_vendor, "OMAP2", sizeof(sc->sc.sc_vendor));
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error("%s: init failed, error=%d\n",

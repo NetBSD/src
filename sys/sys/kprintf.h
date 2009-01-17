@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.9 2008/01/04 18:21:06 ad Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.9.6.1 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,8 +37,6 @@
 #ifndef _SYS_KPRINTF_H_
 #define	_SYS_KPRINTF_H_
 
-#include <sys/simplelock.h>
-
 /*
  * Implementation internals of the kernel printf.  Exposing them here
  * allows other subsystems to implement precisely the printf semantics
@@ -48,25 +46,6 @@
 /* max size buffer kprintf needs to print quad_t [size in base 8 + \0] */
 #define KPRINTF_BUFSIZE         (sizeof(quad_t) * NBBY / 3 + 2)
 
-extern struct simplelock kprintf_slock;
-
-/*
- * Use cpu_simple_lock() and cpu_simple_unlock().  These are the actual
- * atomic locking operations, and never attempt to print debugging
- * information.
- */
-#define	KPRINTF_MUTEX_ENTER(s)						\
-do {									\
-	(s) = splhigh();						\
-	__cpu_simple_lock(&kprintf_slock.lock_data);			\
-} while (/*CONSTCOND*/0)
-
-#define	KPRINTF_MUTEX_EXIT(s)						\
-do {									\
-	__cpu_simple_unlock(&kprintf_slock.lock_data);			\
-	splx((s));							\
-} while (/*CONSTCOND*/0)
-
 /* flags for kprintf */
 #define	TOCONS		0x0001	/* to the console */
 #define	TOTTY		0x0002	/* to the process' tty */
@@ -75,6 +54,9 @@ do {									\
 #define	TODDB		0x0010	/* to ddb console */
 #define	NOLOCK		0x1000	/* don't acquire a tty lock */
 
+void	kprintf_init(void);
+void	kprintf_lock(void);
+void	kprintf_unlock(void);
 /*
  * NOTE: the kprintf mutex must be held when these functions are called!
  */

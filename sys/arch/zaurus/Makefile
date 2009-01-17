@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2007/10/17 19:58:34 garbled Exp $
+#	$NetBSD: Makefile,v 1.3.16.1 2009/01/17 13:28:40 mjf Exp $
 
 # Makefile for zaurus tags file and boot blocks
 
@@ -15,7 +15,8 @@ DZAURUS=	include
 tags:
 	-ctags -wdtf ${TZAURUS} ${SZAURUS} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AZAURUS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TZAURUS}
 	sort -o ${TZAURUS} ${TZAURUS}
 

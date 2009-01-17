@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.100.16.1 2008/06/02 13:23:31 mjf Exp $	*/
+/*	$NetBSD: gus.c,v 1.100.16.2 2009/01/17 13:28:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.100.16.1 2008/06/02 13:23:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.100.16.2 2009/01/17 13:28:57 mjf Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1366,7 +1366,7 @@ gusclose(void *addr)
 	sc->sc_flags &= ~(GUS_OPEN|GUS_LOCKED|GUS_DMAOUT_ACTIVE|GUS_DMAIN_ACTIVE);
 
 	if (sc->sc_deintr_buf) {
-		FREE(sc->sc_deintr_buf, M_DEVBUF);
+		free(sc->sc_deintr_buf, M_DEVBUF);
 		sc->sc_deintr_buf = NULL;
 	}
 	/* turn off speaker, etc. */
@@ -2389,7 +2389,7 @@ gus_round_blocksize(void *addr, int blocksize,
 	/* set up temporary buffer to hold the deinterleave, if necessary
 	   for stereo output */
 	if (sc->sc_deintr_buf) {
-		FREE(sc->sc_deintr_buf, M_DEVBUF);
+		free(sc->sc_deintr_buf, M_DEVBUF);
 		sc->sc_deintr_buf = NULL;
 	}
 	sc->sc_deintr_buf = malloc(blocksize>>1, M_DEVBUF, M_WAITOK);

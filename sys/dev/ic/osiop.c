@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.33.16.2 2008/06/02 13:23:26 mjf Exp $	*/
+/*	$NetBSD: osiop.c,v 1.33.16.3 2009/01/17 13:28:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.33.16.2 2008/06/02 13:23:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.33.16.3 2009/01/17 13:28:56 mjf Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -1598,7 +1598,7 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 		    osiop_read_1(sc, OSIOP_SFBR), ds->msgbuf[1],
 		    osiop_read_1(sc, OSIOP_SBCL));
 		/* what should be done here? */
-		osiop_write_4(sc, OSIOP_DSP, scraddr + Ent_switch);
+		osiop_write_4(sc, OSIOP_DSP, scraddr + Ent_clear_ack);
 		bus_dmamap_sync(sc->sc_dmat, dsdma,
 		    acb->dsoffset, sizeof(struct osiop_ds),
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);

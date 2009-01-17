@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.6.6.2 2008/09/28 10:40:14 mjf Exp $      */
+/*      $NetBSD: xengnt.c,v 1.6.6.3 2009/01/17 13:28:40 mjf Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.6.6.2 2008/09/28 10:40:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.6.6.3 2009/01/17 13:28:40 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,8 +117,12 @@ xengnt_resume()
 	}
 }
 
+/*
+ * Add another page to the grant table
+ * Returns 0 on success, ENOMEM on failure
+ */
 static int
-xengnt_more_entries()
+xengnt_more_entries(void)
 {
 	gnttab_setup_table_t setup;
 	unsigned long *pages;
@@ -134,13 +138,18 @@ xengnt_more_entries()
 
 	setup.dom = DOMID_SELF;
 	setup.nr_frames = nframes_new;
-	setup.frame_list = pages;
+	xenguest_handle(setup.frame_list) = pages;
 
+	/*
+	 * setup the grant table, made of nframes_new frames
+	 * and return the list of their virtual addresses
+	 * in 'pages'
+	 */
 	if (HYPERVISOR_grant_table_op(GNTTABOP_setup_table, &setup, 1) != 0)
-		panic("xengnt_more_entries: setup table failed");
-	if (setup.status != 0) {
-		printf("xengnt_more_entries: setup table returned %d\n",
-		    setup.status);
+		panic("%s: setup table failed", __func__);
+	if (setup.status != GNTST_okay) {
+		aprint_error("%s: setup table returned %d\n",
+		    __func__, setup.status);
 		free(pages, M_DEVBUF);
 		return ENOMEM;
 	}
@@ -149,10 +158,17 @@ xengnt_more_entries()
 	    pages[gnt_nr_grant_frames],
 	    (char *)grant_table + gnt_nr_grant_frames * PAGE_SIZE));
 
+	/*
+	 * map between grant_table addresses and the machine addresses of
+	 * the grant table frames
+	 */
 	pmap_kenter_ma(((vaddr_t)grant_table) + gnt_nr_grant_frames * PAGE_SIZE,
 	    pages[gnt_nr_grant_frames] << PAGE_SHIFT, VM_PROT_WRITE);
 
-
+	/*
+	 * add the grant entries associated to the last grant table frame
+	 * and mark them as free
+	 */
 	for (i = gnt_nr_grant_frames * NR_GRANT_ENTRIES_PER_PAGE;
 	    i < nframes_new * NR_GRANT_ENTRIES_PER_PAGE;
 	    i++) {
@@ -165,6 +181,9 @@ xengnt_more_entries()
 	return 0;
 }
 
+/*
+ * Returns a reference to the first free entry in grant table
+ */
 static grant_ref_t
 xengnt_get_entry()
 {
@@ -192,6 +211,9 @@ xengnt_get_entry()
 	return entry;
 }
 
+/*
+ * Mark the grant table entry as free
+ */
 static void
 xengnt_free_entry(grant_ref_t entry)
 {
@@ -212,7 +234,7 @@ xengnt_grant_access(domid_t dom, paddr_t ma, int ro, grant_ref_t *entryp)
 
 	grant_table[*entryp].frame = ma >> PAGE_SHIFT;
 	grant_table[*entryp].domid  = dom;
-	x86_lfence();
+	xen_rmb();
 	grant_table[*entryp].flags =
 	    GTF_permit_access | (ro ? GTF_readonly : 0);
 	return 0;
@@ -243,7 +265,7 @@ xengnt_grant_transfer(domid_t dom, grant_ref_t *entryp)
 
 	grant_table[*entryp].frame = 0;
 	grant_table[*entryp].domid  =dom;
-	x86_lfence();
+	xen_rmb();
 	grant_table[*entryp].flags = GTF_accept_transfer;
 	return 0;
 }

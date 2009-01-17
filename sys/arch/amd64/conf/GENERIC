@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.199.6.5 2008/10/05 20:11:25 mjf Exp $
+# $NetBSD: GENERIC,v 1.199.6.6 2009/01/17 13:27:49 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.199.6.5 $"
+#ident 		"GENERIC-$Revision: 1.199.6.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -60,12 +60,12 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
+# Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
+#options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 options		MODULAR		# new style module framework
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -114,6 +114,7 @@ options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
+options 	COMPAT_50	# NetBSD 5.0
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_OSSAUDIO
@@ -157,7 +158,6 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
@@ -325,7 +325,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
 
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and Speedstep support.
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
@@ -336,7 +336,7 @@ agp* 	at pchb?
 isa0	at mainbus?
 isa0	at pcib?
 #isa0 	at amdpcib?
-#isa0 	at ichlpcib?
+isa0 	at ichlpcib?
 
 # CardBus bridge support
 cbb*		at pci? dev ? function ?
@@ -354,6 +354,7 @@ pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
@@ -429,9 +430,10 @@ options 	INTEL_CORETEMP
 ichsmb*	at pci? dev ? function ?
 iic*	at ichsmb?
 
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E            # Tyan S2882-D
+# Thermal monitor and fan controller
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # Fintek Super I/O with hardware monitor
 #finsio0 	at isa? port 0x4e
@@ -623,6 +625,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
@@ -873,6 +876,10 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options	UGEN_BULK_RA_WB
+
+# USB 3G datacards
+u3g*	at uhub? port ?
+ucom*	at u3g?
 
 # USB generic serial port (e.g., data over cellular)
 ugensa*	at uhub? port ?

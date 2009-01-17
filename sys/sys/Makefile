@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.108.6.2 2008/09/28 10:41:04 mjf Exp $
+#	$NetBSD: Makefile,v 1.108.6.3 2009/01/17 13:29:40 mjf Exp $
 
 .include <bsd.sys.mk>
 
@@ -18,14 +18,15 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	ieee754.h inttypes.h ioccom.h ioctl.h ioctl_compat.h iostat.h ipc.h \
 	joystick.h \
 	kcore.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
-	lkm.h localedef.h lock.h lockf.h lwp.h lwpctl.h \
+	localedef.h lock.h lockf.h lwp.h lwpctl.h \
 	malloc.h mallocvar.h mbuf.h md4.h md5.h midiio.h \
 	mman.h module.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
-	protosw.h pset.h ptrace.h queue.h \
+	protosw.h pset.h ptrace.h ptree.h \
+	queue.h \
 	ras.h rb.h reboot.h radioio.h resource.h resourcevar.h rmd160.h \
-	rnd.h rwlock.h \
+	rnd.h rwlock.h sa.h satypes.h \
 	scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
 	shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
 	sleepq.h socket.h \
@@ -37,7 +38,7 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
 	vadvise.h verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h \
-	wait.h wapbl.h wdog.h
+	wait.h wapbl.h wapbl_replay.h wdog.h
 
 INCSYMLINKS=\
 	sys/exec_elf.h /usr/include/elf.h \
@@ -55,6 +56,6 @@ INCSYMLINKS=\
 INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
 
 namei: namei.src gennameih.awk
-	${AWK} -f gennameih.awk < namei.src > namei.h
+	${TOOL_AWK} -f gennameih.awk < namei.src
 
 .include <bsd.kinc.mk>

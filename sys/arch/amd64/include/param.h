@@ -1,4 +1,6 @@
-/*	$NetBSD: param.h,v 1.8 2008/01/08 13:15:02 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.8.6.1 2009/01/17 13:27:49 mjf Exp $	*/
+
+#ifdef __x86_64__
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -56,7 +58,11 @@
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
+#ifdef DIAGNOSTIC
+#define	UPAGES		4		/* pages of u-area (1 for redzone) */
+#else
 #define	UPAGES		3		/* pages of u-area */
+#endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 #define	INTRSTACKSIZE	4096
 
@@ -127,3 +133,9 @@
 #define round_pdr(x)			x86_round_pdr(x)
 
 #define mstohz(ms) ((ms + 0UL) * hz / 1000)
+
+#else	/*	__x86_64__	*/
+
+#include <i386/param.h>
+
+#endif	/*	__x86_64__	*/

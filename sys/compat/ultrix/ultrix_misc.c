@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.110.6.4 2008/09/28 10:40:17 mjf Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.110.6.5 2009/01/17 13:28:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,10 +76,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.110.6.4 2008/09/28 10:40:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.110.6.5 2009/01/17 13:28:49 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #endif
 
@@ -162,7 +161,7 @@ struct uvm_object *emul_ultrix_object;
 void	syscall(void);
 #endif
 
-const struct emul emul_ultrix = {
+struct emul emul_ultrix = {
 	"ultrix",
 	"/emul/ultrix",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -198,6 +197,7 @@ const struct emul emul_ultrix = {
 	NULL,
 
 	uvm_default_mapaddr,
+	NULL,
 	NULL,
 	0,
 	NULL
@@ -465,7 +465,6 @@ ultrix_sys_setpgrp(struct lwp *l, const struct ultrix_sys_setpgrp_args *uap, reg
 		return sys_setpgid(l, &ap, retval);
 }
 
-#if defined (NFSSERVER)
 int
 ultrix_sys_nfssvc(struct lwp *l, const struct ultrix_sys_nfssvc_args *uap,
     register_t *retval)
@@ -496,7 +495,6 @@ ultrix_sys_nfssvc(struct lwp *l, const struct ultrix_sys_nfssvc_args *uap,
 	return ENOSYS;
 #endif
 }
-#endif /* NFSSERVER */
 
 struct ultrix_ustat {
 	daddr_t	f_tfree;	/* total free */
