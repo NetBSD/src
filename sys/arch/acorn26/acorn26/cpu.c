@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.25 2009/01/14 20:40:55 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.26 2009/01/17 16:08:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2009/01/14 20:40:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2009/01/17 16:08:02 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -66,13 +66,11 @@ CFATTACH_DECL_NEW(cpu_root, 0, cpu_match, cpu_attach, NULL, NULL);
 /* cf_flags bits */
 #define CFF_NOCACHE	0x00000001
 
-device_t the_cpu;
-
 static int
 cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (the_cpu == NULL)
+	if (curcpu()->ci_dev == NULL)
 		return 1;
 	return 0;
 }
@@ -82,11 +80,16 @@ cpu_attach(device_t parent, device_t self, void *aux)
 {
 	int supported;
 
-	the_cpu = self;
+	curcpu()->ci_dev = self;
 	aprint_normal(": ");
-	cputype = cpu_identify();
+	curcpu()->ci_arm_cpuid = cpu_identify();
+	cputype = curcpu()->ci_arm_cputype =
+	    curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK;
+	curcpu()->ci_arm_cpurev =
+	    curcpu()->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+
 	supported = 0;
-	switch (cputype) {
+	switch (curcpu()->ci_arm_cputype) {
 	case CPU_ID_ARM2:
 		aprint_normal("ARM2");
 #ifdef CPU_ARM2
@@ -102,14 +105,15 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 		break;
 	case CPU_ID_ARM3:
-		aprint_normal("ARM3 (rev. %d)", cputype & CPU_ID_REVISION_MASK);
+		aprint_normal("ARM3 (rev. %u)", curcpu()->ci_arm_cpurev);
 #ifdef CPU_ARM3
 		supported = 1;
 		cpu_arm3_setup(self, device_cfdata(self)->cf_flags);
 #endif
 		break;
 	default:
-		aprint_normal("Unknown type, ID=0x%08x", cputype);
+		aprint_normal("Unknown type, ID=0x%08x",
+		    curcpu()->ci_arm_cputype);
 		break;
 	}
 	aprint_normal("\n");
