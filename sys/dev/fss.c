@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.43.6.7 2009/01/17 13:28:52 mjf Exp $	*/
+/*	$NetBSD: fss.c,v 1.43.6.8 2009/01/17 20:17:09 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.7 2009/01/17 13:28:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.8 2009/01/17 20:17:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,25 +119,7 @@ extern struct cfdriver fss_cd;
 void
 fssattach(int num)
 {
-	int i, cmaj, bmaj;
-	struct fss_softc *sc;
 
-	bmaj = bdevsw_lookup_major(&fss_bdevsw);
-	cmaj = cdevsw_lookup_major(&fss_cdevsw);
-
-	for (i = 0; i < NFSS; i++) {
-		sc = &fss_softc[i];
-		sc->sc_unit = i;
-		sc->sc_bdev = NODEV;
-		simple_lock_init(&sc->sc_slock);
-		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
-
-		device_register_name(makedev(cmaj, i), NULL, true,
-		    DEV_OTHER, "rfss%d", i);
-		device_register_name(makedev(bmaj, i), NULL, false,
-		    DEV_OTHER, "fss%d", i);
-	}
 	mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
 	if (config_cfattach_attach(fss_cd.cd_name, &fss_ca))
 		aprint_error("%s: unable to register\n", fss_cd.cd_name);
@@ -153,6 +135,7 @@ static void
 fss_attach(device_t parent, device_t self, void *aux)
 {
 	struct fss_softc *sc = device_private(self);
+	int bmaj, cmaj;
 
 	sc->sc_dev = self;
 	sc->sc_bdev = NODEV;
@@ -166,6 +149,14 @@ fss_attach(device_t parent, device_t self, void *aux)
 	disk_init(sc->sc_dkdev, device_xname(self), NULL);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	bmaj = bdevsw_lookup_major(&fss_bdevsw);
+	cmaj = cdevsw_lookup_major(&fss_cdevsw);
+
+	device_register_name(makedev(cmaj, device_unit(self)), NULL, true,
+	    DEV_OTHER, "rfss%d", device_unit(self));
+	device_register_name(makedev(bmaj, device_unit(self)), NULL, false,
+	    DEV_OTHER, "fss%d", device_unit(self));
 
 	if (fss_num_attached++ == 0)
 		vfs_hooks_attach(&fss_vfs_hooks);

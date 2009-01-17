@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.35.6.3 2009/01/17 13:29:18 mjf Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.35.6.4 2009/01/17 20:17:09 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35.6.3 2009/01/17 13:29:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35.6.4 2009/01/17 20:17:09 mjf Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -105,6 +105,11 @@ static struct ksyms_hdr ksyms_hdr;
 static kmutex_t ksyms_lock;
 
 void ksymsattach(int);
+static int ksymsopen(dev_t, int, int, struct lwp *);
+static int ksymsclose(dev_t, int, int, struct lwp *);
+static int ksymsread(dev_t, struct uio *, int);
+static int ksymswrite(dev_t, struct uio *, int); 
+static int ksymsioctl(dev_t, u_long, void *, int, struct lwp *);
 static void ksyms_hdr_init(void *);
 static void ksyms_sizes_calc(void);
 
@@ -196,6 +201,11 @@ findsym(const char *name, struct ksyms_symtab *table, int type)
 	}
 	return NULL;
 }
+
+const struct cdevsw ksyms_cdevsw = {
+	ksymsopen, ksymsclose, ksymsread, ksymswrite, ksymsioctl,
+	nullstop, notty, nopoll, nommap, nullkqfilter, D_OTHER | D_MPSAFE
+};
 
 /*
  * The "attach" is in reality done in ksyms_init().
@@ -930,8 +940,3 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 
 	return error;
 }
-
-const struct cdevsw ksyms_cdevsw = {
-	ksymsopen, ksymsclose, ksymsread, ksymswrite, ksymsioctl,
-	nullstop, notty, nopoll, nommap, nullkqfilter, D_OTHER | D_MPSAFE
-};
