@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.75 2009/01/17 21:50:38 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.76 2009/01/17 23:01:15 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2650,4 +2650,19 @@ dist/ntp/libntp/emalloc.c			1.3
 	trust me, malloc's argument is size_t not u_int.
 	fix build failure caused by ticket #255
 	[kardel, ticket #279]
+
+sys/dev/pci/if_jme.c				1.5
+sys/dev/pci/if_jmereg.h				1.3
+
+	The transmitter and ckecksum offload clocks need to be programmed
+	according to the negociated speed; make it so. This makes JME250
+	and JME260 work.
+	[bouyer, ticket #278]
+
+sys/arch/mac68k/nubus/if_ae_nubus.c		1.41
+
+	Split device_t/softc, missed on MI dp8390nic changes 10 months ago.
+	Also use aprint_*(), and remove unnecessary casts against void *
+	variables.
+	[tsutsui, ticket #280]
 
