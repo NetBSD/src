@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans.c,v 1.10 2009/01/16 21:18:37 christos Exp $	*/
+/*	$NetBSD: _wctrans.c,v 1.11 2009/01/17 17:56:01 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctrans.c,v 1.10 2009/01/16 21:18:37 christos Exp $");
+__RCSID("$NetBSD: _wctrans.c,v 1.11 2009/01/17 17:56:01 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -79,18 +79,22 @@ __RCSID("$NetBSD: _wctrans.c,v 1.10 2009/01/16 21:18:37 christos Exp $");
 _RuneLocale *
 _wctrans_init(_RuneLocale *rl)
 {
+	_RuneLocale *nrl;
+
 	if (rl == &_DefaultRuneLocale) {
-		if ((rl = malloc(sizeof(*rl))) == NULL)
+		if ((nrl = malloc(sizeof(*nrl))) == NULL)
 			return NULL;
-		(void)memcpy(rl, &_DefaultRuneLocale, sizeof(*rl));
-	}
-	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name = "tolower";
-	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_cached = rl->rl_maplower;
-	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_extmap = &rl->rl_maplower_ext;
-	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_name = "toupper";
-	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_cached = rl->rl_mapupper;
-	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_extmap = &rl->rl_mapupper_ext;
-	return rl;
+		(void)memcpy(nrl, &_DefaultRuneLocale, sizeof(*nrl));
+	} else
+		nrl = rl;
+
+	nrl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name = "tolower";
+	nrl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_cached = rl->rl_maplower;
+	nrl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_extmap = &rl->rl_maplower_ext;
+	nrl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_name = "toupper";
+	nrl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_cached = rl->rl_mapupper;
+	nrl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_extmap = &rl->rl_mapupper_ext;
+	return nrl;
 }
 
 /*
