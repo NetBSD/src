@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.84.12.1 2008/09/28 11:17:12 mjf Exp $	*/
+/*	$NetBSD: mount.c,v 1.84.12.2 2009/01/17 13:48:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.84.12.1 2008/09/28 11:17:12 mjf Exp $");
+__RCSID("$NetBSD: mount.c,v 1.84.12.2 2009/01/17 13:48:53 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,9 +280,14 @@ main(int argc, char *argv[])
 		 * specified ala Sun.
 		 */
 		if (vfslist == NULL) {
-			if (strpbrk(argv[0], ":@") != NULL)
+			if (strpbrk(argv[0], ":@") != NULL) {
+				fprintf(stderr, "WARNING: autoselecting nfs "
+				    "based on : or @ in the device name is "
+				    "deprecated!\n"
+				    "WARNING: This behaviour will be removed "
+				    "in a future release\n");
 				vfstype = "nfs";
-			else {
+			} else {
 				vfstype = getfslab(argv[0]);
 				if (vfstype == NULL)
 					vfstype = ffs_fstype;
@@ -425,7 +430,10 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	if (argv == NULL)
 		err(1, "malloc");
 
-	(void) snprintf(execbase, sizeof(execbase), "mount_%s", vfstype);
+	if (hasopt(optbuf, "rump"))
+		(void)snprintf(execbase, sizeof(execbase), "rump_%s", vfstype);
+	else
+		(void)snprintf(execbase, sizeof(execbase), "mount_%s", vfstype);
 	argc = 0;
 	argv[argc++] = execbase;
 	if (optbuf)

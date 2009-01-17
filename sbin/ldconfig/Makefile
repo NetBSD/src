@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.21 2002/11/12 14:33:49 itohy Exp $
+#	$NetBSD: Makefile,v 1.21.32.1 2009/01/17 13:48:52 mjf Exp $
 
 .include <bsd.own.mk>   # For OBJECT_FMT
 .include <bsd.shlib.mk>
 
-.if (${OBJECT_FMT} == "a.out" ||	\
+.if ${MKPIC} != "no" && \
+    (${OBJECT_FMT} == "a.out" ||	\
     (${OBJECT_FMT} == "ELF" &&		\
     (${MACHINE_ARCH} == "arm" ||	\
      ${MACHINE_ARCH} == "i386" ||	\

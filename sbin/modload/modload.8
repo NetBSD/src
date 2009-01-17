@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.26 2006/03/24 00:38:23 reed Exp $
+.\" $NetBSD: modload.8,v 1.26.20.1 2009/01/17 13:48:52 mjf Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 23, 2006
+.Dd November 12, 2008
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -40,100 +40,58 @@
 .Nd load a kernel module
 .Sh SYNOPSIS
 .Nm
-.Op Fl dfnsSv
-.Op Fl A Ar kernel
-.Op Fl e Ar entry
-.Op Fl p Ar postinstall
-.Op Fl o Ar output_file
-.Op Fl T Ar linker_script
-.Ar input_file
+.Op Fl b Ar name=val
+.Op Fl f
+.Op Fl i Ar name=val
+.Op Fl s Ar name=val
+.Ar module
 .Sh DESCRIPTION
 The
 .Nm
-utility loads a loadable kernel module into a running system.
-The input file is an object file (.o file).
+utility loads a kernel module specified by the
+.Ar module
+paramamter into the running system.
+.Pp
+The current working directory is first searched for the module object file.
+If not found there, the default system module areas are searched.
 .Pp
 The options to
 .Nm
 are as follows:
 .Bl -tag -width indent
-.It Fl d
-Debug.
-Used to debug
-.Nm
-itself.
+.It Fl b
+Pass the module a boolean property with the name
+.Ar name .
+.Ar val
+may be either
+.Dv true
+or
+.Dv false .
+.It Fl i
+Pass the module an integer property with the name
+.Ar name
+and integral value
+.Ar val .
 .It Fl f
-This forces load of the module, even if it doesn't match the
-currently running kernel.
-When LKM is loaded, the kernel normally checks if the LKM is
-compatible with the running kernel.
-This option disables this check.
-.Em Note
-an incompatible LKM can cause system instability, including data
+When a module is loaded, the kernel checks if the module is compatible
+with the running kernel and will refuse to load modules that are
+potentially incompatible.
+This option disables compatibility checks.
+.Em Note :
+an incompatible module can cause system instability, including data
 loss or corruption.
-Don't use this option unless you are sure what you are doing.
-.It Fl n
-Do everything, except calling the module entry point (and any
-post-install program).
-.It Fl v
-Print comments about the loading process.
 .It Fl s
-Load the symbol table.
-.It Fl S
-Do not remove the temporary object file.
-By default, the
-.Xr ld 1
-output is removed after being loaded into the kernel.
-.It Fl A Ar kernel
-Specify the file that is passed to the linker
-to resolve module references to external symbols.
-The symbol file must be for the currently running
-kernel or the module is likely to crash the system.
-.It Fl e Ar entry
-Specify the module entry point.
-This is passed by
-.Nm
-to
-.Xr ld 1
-when the module is linked.
-The default module entry point name is `xxxinit'.
-If `xxxinit' cannot be found, an attempt to
-use `\*[Lt]module_name\*[Gt]_lkmentry' will be made, where
-\*[Lt]module_name\*[Gt] is the filename being loaded without the `.o'.
-.It Fl p Ar postinstall
-Specify the name of a shell script or program that will
-be executed if the module is successfully loaded.
-It is always passed the module id (in decimal) and module
-type (in hexadecimal) as the first two arguments.
-For loadable drivers, the third argument is the character major device number
-and the fourth argument is the block major device number.
-For a loadable system call, the third argument is the system call number.
-.It Fl o Ar output_file
-Specify the name of the output file that is produced by the linker.
-.It Fl T Ar linker_script
-Specify the name of the linker script use to link against the kernel.
-.El
-.Sh FILES
-.Bl -tag -width /usr/include/sys/lkm.h -compact
-.It Pa /netbsd
-default file passed to the linker to resolve external
-references in the module
-.It Pa /usr/include/sys/lkm.h
-file containing definitions of module types
-.\" .It Pa output file.
-.\" default output file name
+Pass the module a string property with the name
+.Ar name
+and string value
+.Ar val .
 .El
 .Sh DIAGNOSTICS
 The
 .Nm
 utility exits with a status of 0 on success
 and with a nonzero status if an error occurs.
-.Pp
-Mismatched LKM and kernel versions will be reported to the console
-and to the system message buffer.
 .Sh SEE ALSO
-.Xr ld 1 ,
-.Xr lkm 4 ,
 .Xr modstat 8 ,
 .Xr modunload 8
 .Sh HISTORY
@@ -142,11 +100,3 @@ The
 command was designed to be similar in functionality
 to the corresponding command in
 .Tn "SunOS 4.1.3" .
-.Sh AUTHORS
-.An Terrence R. Lambert
-.Aq terry@cs.weber.edu .
-.Sh BUGS
-Loading the symbol table is expensive in terms of space:
-it presently duplicates all the kernel symbols for each lkm loaded
-with
-.Fl s .
