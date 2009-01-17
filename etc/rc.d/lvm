@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+# $NetBSD: lvm,v 1.1.2.2 2009/01/17 20:43:44 mjf Exp $
+#
+
+# PROVIDE: disks
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="lvm"
+rcvar=$name
+start_cmd="lvm_start"
+stop_cmd="lvm_stop"
+
+dm_test()
+{
+    if [ -x /sbin/dmsetup ]; then
+	/sbin/dmsetup version >/dev/null
+	
+	if [ $? -ne 0 ]; then 
+	    echo "Device-mapper not present in kernel"
+	    exit;
+	fi
+    fi
+}
+
+lvm_start()
+{
+        dm_test;
+
+        if [ -x /sbin/lvm ]; then
+                echo "Configuring lvm devices."
+
+		# Scan for all available VG's
+	        /sbin/lvm vgscan --mknodes --ignorelockingfailure >/dev/null
+		
+		# Activate all LV's and create apropriate nodes in /dev
+		/sbin/lvm vgchange --ignorelockingfailure -a y >/dev/null
+		
+		echo "   Activated Volume Groups:"`/sbin/lvm vgdisplay -C -o vg_name --noheadings 2>/dev/null`
+        fi
+}
+
+lvm_stop()
+{
+      dm_test;
+
+      if [ -x /sbin/lvm ]; then
+                echo "Deconfiguring lvm devices."
+
+		LOGICAL_VOLUMES=`/sbin/lvm lvdisplay -C -o vg_name,lv_name -O vg_name --separator \/ --noheadings 2>/dev/null`
+		VOLUME_GROUPS=`/sbin/lvm vgdisplay -C -o vg_name --separator " " --noheadings 2>/dev/null`
+
+		for x in ${LOGICAL_VOLUMES}; do
+		    IFS=":"
+		    set -- `/sbin/lvm lvdisplay -c`
+		    # The fourth argument in the column LV display is inkernel flag
+		    LV_IS_ACTIVE=$4;
+		    unset IFS
+
+		    if [ ${LV_IS_ACTIVE} -eq 1 ]; then
+			echo "  Shutting Down logical volume: ${x} "
+			/sbin/lvm lvchange -an --ignorelockingfailure -P ${x} >/dev/null
+		    fi
+		done
+
+		for x in ${VOLUME_GROUPS}; do
+		    echo "VG -> |${x}|"
+		    # Set IFS to field separator
+		    IFS=":"
+		    set -- `/sbin/lvm vgdisplay -cA ${x} 2>/dev/null`
+		    # The seventh parameter is number of opened LVs in a Volume Group
+		    VG_HAS_ACTIVE_LV=$7
+		    unset IFS
+
+		    if [ "${VG_HAS_ACTIVE_LV}" = 0 ]
+		    then
+			echo "  Shutting Down volume group: ${x}"
+			/sbin/lvm vgchange -an --ignorelockingfailure -P ${x} >/dev/null
+		    fi
+		done
+        fi
+}
+
+load_rc_config $name
+run_rc_command "$1"
+

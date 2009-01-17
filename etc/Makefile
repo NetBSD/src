@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.348.8.4 2008/10/05 20:11:18 mjf Exp $
+#	$NetBSD: Makefile,v 1.348.8.5 2009/01/17 20:43:41 mjf Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -36,7 +36,7 @@
 # For MK* vars
 .include <bsd.own.mk>
 
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.sys.mk>		# for HOST_SH, TOOL_AWK, ...
 .include <bsd.kernobj.mk>	# For KERNSRCDIR, KERNOBJDIR, ...
 .include <bsd.endian.mk>	# For TARGET_ENDIANNESS
 
@@ -91,11 +91,11 @@ UTMPGRP= utmp
 BIN1+=	audit-packages.conf bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf devfsd.conf dm.conf envsys.conf \
 	floppytab ftpchroot \
-	ftpusers gettytab group hosts hosts.lpd inetd.conf lkm.conf \
+	ftpusers gettytab group hosts hosts.lpd inetd.conf \
 	locate.conf login.conf mailer.conf man.conf monthly monthly.conf \
 	mrouted.conf named.conf netconfig networks newsyslog.conf \
 	nsswitch.conf ntp.conf passwd.conf phones printcap profile protocols \
-	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr rc.shutdown remote rpc \
+	rbootd.conf rc rc.conf rc.local rc.subr rc.shutdown remote rpc \
 	security security.conf services shells shrc sysctl.conf syslog.conf \
 	weekly weekly.conf wscons.conf
 
@@ -159,11 +159,13 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 	${MAKEDIRTARGET} ${NETBSDSRCDIR} install _DISTRIB=
 .endif	# !INSTALL_DONE
 	${MAKEDIRTARGET} . install-etc-files
-.if ${MKXORG} != "no"
+. if ${MKX11} != "no"
+.  if ${X11FLAVOUR} == "Xorg"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/mit/xorg distribution
-.elif ${MKX11} != "no"
+.  else
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/x11 distribution
-.endif
+.  endif
+. endif
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets makesetfiles
 .endif	# !DISTRIBUTION_DONE
 
@@ -173,7 +175,8 @@ MAKEDEV: .EXEC
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
-	    awk -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
+	    ${TOOL_AWK} -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
+	    > ${.TARGET}
 
 RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		DESTDIR EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \
@@ -190,7 +193,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MKMAN MKMANZ MKNLS MKNVI MKOBJ MKOBJDIRS \
 		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
-		MKUNPRIVED MKUPDATE MKX11 MKXORG MKYP \
+		MKUNPRIVED MKUPDATE MKX11 MKYP \
 		NBUILDJOBS NETBSDSRCDIR \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
 		OBJMACHINE \
@@ -198,7 +201,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS USE_LDAP \
 		USE_PAM USE_SKEY USE_YP \
 		USETOOLS USR_OBJMACHINE \
-		X11SRCDIR
+		X11SRCDIR X11FLAVOUR
 
 params: .PHONY
 .for var in ${RELEASEVARS}
@@ -357,13 +360,13 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc tests text
-.if ${MKX11} != "no" || ${MKXORG} != "no"
+.if ${MKX11} != "no"
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif
 
 install-obsolete-lists: .PHONY .MAKE
 	mkdir -p ${OBSOLETE.dir}
-.if ${MKX11} != "no" || ${MKXORG} != "no"
+.if ${MKX11} != "no"
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
 	    MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -b -t ${OBSOLETE.dir})
 .else
@@ -403,7 +406,7 @@ distrib-dirs: .PHONY check_DESTDIR
 .if ${MKUNPRIVED} != "no"						# {
 	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
 	    -p ${DESTDIR}/ -C -k all | \
-	    awk '/ optional/ {next} // {print}' | ${METALOG.add}
+	    ${TOOL_AWK} '/ optional/ {next} // {print}' | ${METALOG.add}
 .endif	# MKUNPRIVED							# }
 .endif	# DISTRIBUTION_DONE						# }
 
@@ -538,7 +541,7 @@ snap_post: .PHONY .MAKE build_kernelsets build_releasekernels
 #
 ALL_KERNELS?=	${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
 
-GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
+GETKERNELAWK=	${TOOL_AWK} '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 
 build_kernels: .PHONY
@@ -632,7 +635,10 @@ snap_md_post: .PHONY check_DESTDIR check_RELEASEDIR snap_post
 clean:
 	-rm -rf ${CDROM.dir} ${CDROM.pathlist} ${OBSOLETE.dir}
 
+SUBDIR=	rc.d
+
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
 
 test:
 	@echo ${OBSOLETE.files}

@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# $NetBSD: httpd,v 1.1.2.2 2009/01/17 20:43:44 mjf Exp $
+#
+
+# PROVIDE: httpd
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="httpd"
+rcvar=$name
+command="/usr/libexec/${name}"
+
+load_rc_config $name
+
+httpd_wwwuser_arg=${httpd_wwwuser:+-U \'$httpd_wwwuser\'}
+command_args="$httpd_wwwuser_arg -b '$httpd_wwwdir'"
+required_dirs="$httpd_wwwdir"
+
+run_rc_command "$1"
