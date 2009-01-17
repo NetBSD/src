@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.21 2008/12/31 08:00:31 isaki Exp $	*/
+/*	$NetBSD: mfp.c,v 1.22 2009/01/17 09:20:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.21 2008/12/31 08:00:31 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.22 2009/01/17 09:20:46 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.21 2008/12/31 08:00:31 isaki Exp $");
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/mfp.h>
@@ -97,33 +98,22 @@ mfp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mfp_softc *sc = (struct mfp_softc *)self;
 	struct intio_attach_args *ia = aux;
+	int r;
+
+	printf("\n");
+	mfp_attached = 1;
 
 	mfp_init();
-
-	if (sc != NULL) {
-		/* realconfig */
-		int r;
-
-		printf("\n");
-
-		mfp_attached = 1;
-		sc->sc_bst = ia->ia_bst;
-		sc->sc_intr = ia->ia_intr;
-		ia->ia_size = 0x30;
-		r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
+	sc->sc_bst = ia->ia_bst;
+	sc->sc_intr = ia->ia_intr;
+	ia->ia_size = 0x30;
+	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
-		if (r)
-			panic("IO map for MFP corruption??");
+	if (r)
+		panic("IO map for MFP corruption??");
 #endif
-		bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
-		config_search_ia(mfp_search, self, "mfp", NULL);
-	} else {
-		/*
-		 * Called from config_console;
-		 * calibrate the DELAY loop counter
-		 */
-		mfp_calibrate_delay();
-	}
+	bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
+	config_search_ia(mfp_search, self, "mfp", NULL);
 }
 
 static int
@@ -132,6 +122,13 @@ mfp_search(device_t parent, cfdata_t cf, const int *loc, void *aux)
 	if (config_match(parent, cf, __UNCONST(cf->cf_name)) > 0)
 		config_attach(parent, cf, __UNCONST(cf->cf_name), NULL);
 	return 0;
+}
+
+void
+mfp_config_console(void)
+{
+	mfp_init();
+	mfp_calibrate_delay();
 }
 
 static void

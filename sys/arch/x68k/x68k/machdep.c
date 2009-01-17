@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.157 2009/01/17 07:17:36 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.158 2009/01/17 09:20:46 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2009/01/17 07:17:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2009/01/17 09:20:46 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2009/01/17 07:17:36 tsutsui Exp $"
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <arch/x68k/dev/intiovar.h>
 
 void initcpu(void);

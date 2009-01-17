@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.38 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: intio.c,v 1.39 2009/01/17 09:20:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.38 2008/12/18 05:56:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.39 2009/01/17 09:20:46 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,11 +134,6 @@ static struct intio_interrupt_vector {
 	struct evcnt		*iiv_evcnt;
 } iiv[256] = {{0,},};
 
-/* used in console initialization */
-extern int x68k_realconfig;
-int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
-static cfdata_t cfdata_intiobus = NULL;
-
 #ifdef DEBUG
 int intio_debug = 0;
 #endif
@@ -151,37 +146,15 @@ intio_match(device_t parent, cfdata_t cf, void *aux)
 		return (0);
 	if (intio_attached)
 		return (0);
-	if (x68k_realconfig == 0)
-		cfdata_intiobus = cf; /* XXX */
 
 	return (1);
 }
-
-
-/* used in console initialization: configure only MFP */
-static struct intio_attach_args initial_ia = {
-	&intio_bus,
-	0/*XXX*/,
-
-	"mfp",			/* ia_name */
-	MFP_ADDR,		/* ia_addr */
-	0x30,			/* ia_size */
-	MFP_INTR,		/* ia_intr */
-	-1			/* ia_dma */
-	-1,			/* ia_dmaintr */
-};
 
 static void
 intio_attach(device_t parent, device_t self, void *aux)
 {
 	struct intio_softc *sc = device_private(self);
 	struct intio_attach_args ia;
-
-	if (self == NULL) {
-		/* console only init */
-		x68k_config_found(cfdata_intiobus, NULL, &initial_ia, NULL);
-		return;
-	}
 
 	intio_attached = 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.55 2008/06/13 13:57:58 cegger Exp $	*/
+/*	$NetBSD: ite.c,v 1.56 2009/01/17 09:20:46 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.55 2008/06/13 13:57:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56 2009/01/17 09:20:46 isaki Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.55 2008/06/13 13:57:58 cegger Exp $");
 #include <machine/cpu.h>
 #include <machine/kbio.h>
 #include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <machine/grfioctl.h>
 #include <machine/iteioctl.h>
 
@@ -229,37 +230,29 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 	struct grf_softc *gp;
 
 	gp = (struct grf_softc *)auxp;
-	if (dp) {
-		ip = (struct ite_softc *)dp;
-		if(con_itesoftc.grf != NULL
-			/*&& con_itesoftc.grf->g_unit == gp->g_unit*/) {
-			/*
-			 * console reinit copy params over.
-			 * and console always gets keyboard
-			 */
-			memcpy(&ip->grf, &con_itesoftc.grf,
-			    (char *)&ip[1] - (char *)&ip->grf);
-			con_itesoftc.grf = NULL;
-			kbd_ite = ip;
-		}
-		ip->grf = gp;
-		iteinit(device_unit(&ip->device)); /* XXX */
-		printf(": rows %d cols %d", ip->rows, ip->cols);
-		if (kbd_ite == NULL)
-			kbd_ite = ip;
-		printf("\n");
-	} else {
-		if (con_itesoftc.grf != NULL)
-			return;
-		con_itesoftc.grf = gp;
-		con_itesoftc.tabs = cons_tabs;
+	ip = (struct ite_softc *)dp;
+	if(con_itesoftc.grf != NULL
+		/*&& con_itesoftc.grf->g_unit == gp->g_unit*/) {
+		/*
+		 * console reinit copy params over.
+		 * and console always gets keyboard
+		 */
+		memcpy(&ip->grf, &con_itesoftc.grf,
+		    (char *)&ip[1] - (char *)&ip->grf);
+		con_itesoftc.grf = NULL;
+		kbd_ite = ip;
 	}
+	ip->grf = gp;
+	iteinit(device_unit(&ip->device)); /* XXX */
+	printf(": rows %d cols %d", ip->rows, ip->cols);
+	if (kbd_ite == NULL)
+		kbd_ite = ip;
+	printf("\n");
 }
 
 struct ite_softc *
 getitesp(dev_t dev)
 {
-	extern int x68k_realconfig;
 
 	if (x68k_realconfig && con_itesoftc.grf == NULL)
 		return device_lookup_private(&ite_cd, UNIT(dev));
@@ -292,6 +285,17 @@ iteinit(dev_t dev)
 		ip->tabs = malloc(MAX_TABS*sizeof(u_char), M_DEVBUF, M_WAITOK);
 	ite_reset(ip);
 	ip->flags |= ITE_INITED;
+}
+
+void
+ite_config_console(void)
+{
+	struct grf_softc *gp = &congrf;
+
+	if (con_itesoftc.grf != NULL)
+		return;
+	con_itesoftc.grf = gp;
+	con_itesoftc.tabs = cons_tabs;
 }
 
 /*

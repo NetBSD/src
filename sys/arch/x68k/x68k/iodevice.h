@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.16 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.17 2009/01/17 09:20:46 isaki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -356,14 +356,4 @@ struct IODEVICE
 
 #if defined(_KERNEL) && !defined(LOCORE)
 extern volatile struct IODEVICE *IODEVbase;
-#endif
-
-#if 0
-/*
- * devices that need to configure before console use this
- * *and know it* (i.e. everything is really tight certain params won't be
- * passed in some cases and the devices will deal with it)
- */
-#include <sys/device.h>
-int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
 #endif
