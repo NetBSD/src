@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.48 2009/01/17 09:20:46 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -187,9 +187,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 extern int machineid;
 extern char *intiobase;
 extern char *intiolimit;
-
-/* autoconf.c functions */
-void	config_console(void);
 
 /* fpu.c functions */
 int	fpu_probe(void);
