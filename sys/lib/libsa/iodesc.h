@@ -1,4 +1,4 @@
-/*	$NetBSD: iodesc.h,v 1.8 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: iodesc.h,v 1.9 2009/01/17 14:00:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -70,8 +70,8 @@ struct iodesc {
 	void	*io_netif;
 };
 
-struct iodesc	*socktodesc __P((int));
-ssize_t		netif_get __P((struct iodesc *, void *, size_t, saseconds_t));
-ssize_t		netif_put __P((struct iodesc *, void *, size_t));
+struct iodesc	*socktodesc(int);
+ssize_t		netif_get(struct iodesc *, void *, size_t, saseconds_t);
+ssize_t		netif_put(struct iodesc *, void *, size_t);
 
 #endif /* __SYS_LIBNETBOOT_IODESC_H */

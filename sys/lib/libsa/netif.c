@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.23 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: netif.c,v 1.24 2009/01/17 14:00:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -74,7 +74,7 @@ netif_init(void)
 	}
 }
 
-int	netif_match __P((struct netif *, void *));
+int	netif_match(struct netif *, void *);
 
 int
 netif_match(struct netif *nif, void *machdep_hint)
