@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.21 2008/11/19 06:22:15 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.22 2009/01/17 22:56:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -168,18 +168,7 @@ void validate_trapframe(trapframe_t *, int);
 	ldr	rX, .Laflt_cpu_info_store
 
 #else /* !MULTIPROCESSOR */
-
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpufuncs:							;\
-	.word	_C_LABEL(cpufuncs)					;\
-.Laflt_cpu_info:							;\
-	.word	_C_LABEL(cpu_info)
-
-#define	GET_CURCPU(rX)							\
-	ldr	rX, .Laflt_cpu_info					;\
-	bl	_C_LABEL(cpu_number)					;\
-	ldr	r0, [rX, r0, lsl #2]
-
+#error no GET_CURCPU available
 #endif /* MULTIPROCESSOR */
 
 /*
