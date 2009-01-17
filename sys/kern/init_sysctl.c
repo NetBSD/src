@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.153 2009/01/11 02:45:51 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.154 2009/01/17 07:02:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.153 2009/01/11 02:45:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.154 2009/01/17 07:02:35 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.153 2009/01/11 02:45:51 christos E
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/tty.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/exec.h>

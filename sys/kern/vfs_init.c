@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.42 2008/12/07 20:58:46 pooka Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.43 2009/01/17 07:02:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.42 2008/12/07 20:58:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.43 2009/01/17 07:02:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.42 2008/12/07 20:58:46 pooka Exp $");
 #include <sys/ucred.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/module.h>
 #include <sys/dirhash.h>
@@ -277,9 +277,8 @@ vfs_opv_init(const struct vnodeopv_desc * const *vopvdpp)
 	 * Allocate the vectors.
 	 */
 	for (i = 0; vopvdpp[i] != NULL; i++) {
-		/* XXX - shouldn't be M_VNODE */
 		opv_desc_vector =
-		    malloc(VNODE_OPS_COUNT * sizeof(PFI), M_VNODE, M_WAITOK);
+		    kmem_alloc(VNODE_OPS_COUNT * sizeof(PFI), KM_SLEEP);
 		memset(opv_desc_vector, 0, VNODE_OPS_COUNT * sizeof(PFI));
 		*(vopvdpp[i]->opv_desc_vector_p) = opv_desc_vector;
 		DODEBUG(printf("vector at %p allocated\n",
@@ -309,8 +308,8 @@ vfs_opv_free(const struct vnodeopv_desc * const *vopvdpp)
 	 * Free the vectors allocated in vfs_opv_init().
 	 */
 	for (i = 0; vopvdpp[i] != NULL; i++) {
-		/* XXX - shouldn't be M_VNODE */
-		free(*(vopvdpp[i]->opv_desc_vector_p), M_VNODE);
+		kmem_free(*(vopvdpp[i]->opv_desc_vector_p),
+		    VNODE_OPS_COUNT * sizeof(PFI));
 		*(vopvdpp[i]->opv_desc_vector_p) = NULL;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.161 2008/11/12 12:36:16 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.162 2009/01/17 07:02:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.161 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.162 2009/01/17 07:02:35 yamt Exp $");
 
 #include "veriexec.h"
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.161 2008/11/12 12:36:16 ad Exp $");
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.383 2009/01/11 02:45:53 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.384 2009/01/17 07:02:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.383 2009/01/11 02:45:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.384 2009/01/17 07:02:35 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.383 2009/01/11 02:45:53 christos 
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/dirent.h>
 #include <sys/sysctl.h>
@@ -508,7 +507,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			    && data_len < sizeof (struct mnt_export_args30))
 				data_len = sizeof (struct mnt_export_args30);
 		}
-		data_buf = malloc(data_len, M_TEMP, M_WAITOK);
+		data_buf = kmem_alloc(data_len, KM_SLEEP);
 
 		/* NFS needs the buffer even for mnt_getargs .... */
 		error = copyin(data, data_buf, data_len);
@@ -541,7 +540,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	    	vput(vp);
 	}
 	if (data_buf != data)
-		free(data_buf, M_TEMP);
+		kmem_free(data_buf, data_len);
 	return (error);
 }
 
@@ -3409,17 +3408,21 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 #if NVERIEXEC > 0
 	if (!error) {
 		char *f1, *f2;
+		size_t f1_len;
+		size_t f2_len;
 
-		f1 = malloc(fromnd.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
-		strlcpy(f1, fromnd.ni_cnd.cn_nameptr, fromnd.ni_cnd.cn_namelen + 1);
+		f1_len = fromnd.ni_cnd.cn_namelen + 1;
+		f1 = kmem_alloc(f1_len, KM_SLEEP);
+		strlcpy(f1, fromnd.ni_cnd.cn_nameptr, f1_len);
 
-		f2 = malloc(tond.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
-		strlcpy(f2, tond.ni_cnd.cn_nameptr, tond.ni_cnd.cn_namelen + 1);
+		f2_len = tond.ni_cnd.cn_namelen + 1;
+		f2 = kmem_alloc(f2_len, KM_SLEEP);
+		strlcpy(f2, tond.ni_cnd.cn_nameptr, f2_len);
 
 		error = veriexec_renamechk(l, fvp, f1, tvp, f2);
 
-		free(f1, M_TEMP);
-		free(f2, M_TEMP);
+		kmem_free(f1, f1_len);
+		kmem_free(f2, f2_len);
 	}
 #endif /* NVERIEXEC > 0 */
 
