@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.19 2007/05/29 13:20:21 blymn Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.20 2009/01/17 15:25:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.19 2007/05/29 13:20:21 blymn Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.20 2009/01/17 15:25:36 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -98,7 +98,8 @@ __CTRACE(int area, const char *fmt,...)
 	gettimeofday(&tv, NULL);
         if (seencr && (tracemask & __CTRACE_TSTAMP)) {
                 gettimeofday(&tv, NULL);
-                (void) fprintf(tracefp, "%lu.%06lu: ", tv.tv_sec, tv.tv_usec);
+                (void) fprintf(tracefp, "%llu.%06lu: ", 
+		    (long long)tv.tv_sec, (long)tv.tv_usec);
         }
 	va_start(ap, fmt);
         (void) vfprintf(tracefp, fmt, ap);
