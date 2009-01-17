@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.49 2009/01/13 22:27:44 pooka Exp $
+	$NetBSD: syscalls.master,v 1.50 2009/01/17 15:48:06 he Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -139,13 +139,13 @@
 80	NOARGS		{ int|sys||setgroups(u_int gidsetsize, gid_t *gidset); }
 81	NOARGS		{ int|sys||getpgrp(void); }
 82	STD		{ int|ultrix_sys||setpgrp(int pid, int pgid); }
-83	NOARGS		{ int|sys||setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
+83	NOARGS		{ int|sys|50|setitimer(u_int which, \
+			    struct itimerval50 *itv, struct itimerval50 *oitv); }
 84	STD		{ int|ultrix_sys||wait3(int *status, int options, \
-			    struct rusage *rusage);}
+			    struct rusage50 *rusage);}
 85	NOARGS		{ int|compat_12_sys||swapon(char *name); }
-86	NOARGS		{ int|sys||getitimer(u_int which, \
-			    struct itimerval *itv); }
+86	NOARGS		{ int|sys|50|getitimer(u_int which, \
+			    struct itimerval50 *itv); }
 87	NOARGS		{ int|compat_43_sys||gethostname(char *hostname, \
 			    u_int len); }
 88	NOARGS		{ int|compat_43_sys||sethostname(char *hostname, \
@@ -155,7 +155,7 @@
 91	UNIMPL		getdopt
 92	STD		{ int|ultrix_sys||fcntl(int fd, int cmd, void *arg); }
 93	STD		{ int|ultrix_sys||select(u_int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
+			    fd_set *ex, struct timeval50 *tv); }
 94	UNIMPL		setdopt
 95	NOARGS		{ int|sys||fsync(int fd); }
 96	NOARGS		{ int|sys||setpriority(int which, int who, int prio); }
@@ -187,9 +187,9 @@
 114	NOARGS		{ int|compat_43_sys||sendmsg(int s, void *msg, \
 			    int flags); }
 115	OBSOL		vtrace
-116	NOARGS		{ int|sys||gettimeofday(struct timeval *tp, \
+116	NOARGS		{ int|sys|50|gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-117	NOARGS		{ int|sys||getrusage(int who, struct rusage *rusage); }
+117	NOARGS		{ int|sys|50|getrusage(int who, struct rusage50 *rusage); }
 118	NOARGS		{ int|sys||getsockopt(int s, int level, int name, \
 			    void *val, int *avalsize); }
 119	UNIMPL		resuba
@@ -197,7 +197,7 @@
 			    u_int iovcnt); }
 121	NOARGS		{ int|sys||writev(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
-122	NOARGS		{ int|sys||settimeofday(struct timeval *tv, \
+122	NOARGS		{ int|sys|50|settimeofday(struct timeval50 *tv, \
 			    struct timezone *tzp); }
 123	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int|sys||fchmod(int fd, int mode); }
@@ -218,10 +218,10 @@
 			    int protocol, int *rsv); }
 136	NOARGS		{ int|sys||mkdir(char *path, int mode); }
 137	NOARGS		{ int|sys||rmdir(char *path); }
-138	NOARGS		{ int|sys||utimes(char *path, struct timeval *tptr); }
+138	NOARGS		{ int|sys|50|utimes(char *path, struct timeval50 *tptr); }
 139	STD		{ int|ultrix_sys||sigcleanup(struct sigcontext *sigcntxp); }
-140	NOARGS		{ int|sys||adjtime(struct timeval *delta, \
-			    struct timeval *olddelta); }
+140	NOARGS		{ int|sys|50|adjtime(struct timeval50 *delta, \
+			    struct timeval50 *olddelta); }
 141	NOARGS		{ int|compat_43_sys||getpeername(int fdes, void *asa, \
 			    int *alen); }
 142	NOARGS		{ int|compat_43_sys||gethostid(void); }
