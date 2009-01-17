@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.28 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: rpc.c,v 1.29 2009/01/17 14:00:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -103,7 +103,7 @@ struct rpc_reply {
 };
 
 /* Local forwards */
-static	ssize_t recvrpc __P((struct iodesc *, void *, size_t, saseconds_t));
+static	ssize_t recvrpc(struct iodesc *, void *, size_t, saseconds_t);
 
 int rpc_xid;
 int rpc_port = 0x400;	/* predecrement */
