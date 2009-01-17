@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.116.6.2 2008/06/29 08:38:43 mjf Exp $
+#	$NetBSD: special,v 1.116.6.3 2009/01/17 20:43:44 mjf Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -92,7 +92,6 @@
 ./etc/iscsi/auths		type=file mode=0600
 ./etc/iscsi/targets		type=file mode=0644
 ./etc/ld.so.conf		type=file mode=0644 optional
-./etc/lkm.conf			type=file mode=0644 optional
 ./etc/localtime			type=link mode=0755
 ./etc/locate.conf		type=file mode=0644 optional
 ./etc/login.conf		type=file mode=0644 optional
@@ -206,6 +205,7 @@
 ./etc/rc.d/ftp_proxy		type=file mode=0555
 ./etc/rc.d/ftpd			type=file mode=0555
 ./etc/rc.d/hostapd		type=file mode=0555
+./etc/rc.d/httpd		type=file mode=0555
 ./etc/rc.d/identd		type=file mode=0555
 ./etc/rc.d/ifwatchd		type=file mode=0555
 ./etc/rc.d/inetd		type=file mode=0555
@@ -219,11 +219,9 @@
 ./etc/rc.d/isdnd		type=file mode=0555
 ./etc/rc.d/kdc			type=file mode=0555
 ./etc/rc.d/ldconfig		type=file mode=0555
-./etc/rc.d/lkm1			type=file mode=0555
-./etc/rc.d/lkm2			type=file mode=0555
-./etc/rc.d/lkm3			type=file mode=0555
 ./etc/rc.d/local		type=file mode=0555
 ./etc/rc.d/lpd			type=file mode=0555
+./etc.rc.d/lvm			type=file mode=0555
 ./etc/rc.d/mixerctl		type=file mode=0555
 ./etc/rc.d/mopd			type=file mode=0555
 ./etc/rc.d/motd			type=file mode=0555
@@ -245,7 +243,6 @@
 ./etc/rc.d/pf			type=file mode=0555
 ./etc/rc.d/pf_boot		type=file mode=0555
 ./etc/rc.d/pflogd		type=file mode=0555
-./etc/rc.d/poffd		type=file mode=0555
 ./etc/rc.d/postfix		type=file mode=0555
 ./etc/rc.d/powerd		type=file mode=0555
 ./etc/rc.d/ppp			type=file mode=0555
@@ -256,6 +253,7 @@
 ./etc/rc.d/raidframeparity	type=file mode=0555
 ./etc/rc.d/rarpd		type=file mode=0555
 ./etc/rc.d/rbootd		type=file mode=0555
+./etc/rc.d/rndctl		type=file mode=0555
 ./etc/rc.d/root			type=file mode=0555
 ./etc/rc.d/route6d		type=file mode=0555
 ./etc/rc.d/routed		type=file mode=0555
@@ -289,7 +287,6 @@
 ./etc/rc.d/ypbind		type=file mode=0555
 ./etc/rc.d/yppasswdd		type=file mode=0555
 ./etc/rc.d/ypserv		type=file mode=0555
-./etc/rc.lkm			type=file mode=0644
 ./etc/rc.local			type=file mode=0644 optional
 ./etc/rc.shutdown		type=file mode=0644
 ./etc/rc.shutdown.local		type=file mode=0644 optional

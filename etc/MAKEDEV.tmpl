@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.101.6.3 2008/10/05 20:11:18 mjf Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.101.6.4 2009/01/17 20:43:41 mjf Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -246,7 +246,6 @@
 #	ite*	terminal emulator interface to HP300 graphics devices
 #	joy*	joystick device
 #	kttcp	kernel ttcp helper device
-#	lkm	loadable kernel modules interface
 #	lockstat kernel locking statistics
 #	magma*	Magma multiport serial/parallel cards
 #	midi*	MIDI
@@ -288,12 +287,19 @@
 
 
 #
-# Apart from a few lines right at the end, this file should consist
-# entirely of function definitions.
+# NOTE:
 #
-# This file is used both as a standalone script (via "sh ./MAKEDEV all"
-# or similar), and as a function library (via "MAKEDEV_AS_LIBRARY=1 .
-# MAKEDEV" from MAKEDEV.local).
+# * MAKEDEV is used both as a standalone script (via "sh ./MAKEDEV
+#   all" or similar), and as a function library for MAKEDEV.local (via
+#   "MAKEDEV_AS_LIBRARY=1 . MAKEDEV").  Because of this, the script
+#   should consist almost entirely of function definitions, apart from a
+#   few lines right at the end.
+#
+# * MAKEDEV may be executed in an environment that is missing some
+#   common commands.  For example, it may be executed from a minimal
+#   system used during installation, or it may be executed early in the
+#   boot sequence before most file systems have been mounted.  It may
+#   also be executed in a cross-build environment on a non-NetBSD host.
 #
 
 usage()
@@ -477,14 +483,32 @@ setup()
 	# only allow read&write for owner by default
 	umask 077
 
-	# Check if we have fdesc mounted
+	# Set fdesc_mounted=true if the fdesc file system is mounted
+	# on the current directory (typically "/dev").
+	# Later, this will be used to suppress creation of device nodes
+	# that are supplied by the fdesc file system.
+	#
+	fdesc_mounted=false
 	if [ -d fd ]; then
-		case "$(df fd)" in
-		*fdesc*)	nofdesc=false;;
-		*)		nofdesc=true;;
+		# Parse the output from "mount -u -o nosuchoption .".
+		# We don't parse the output from df(1) because that's
+		# less likely to be available on install media.
+		#
+		# If the current directory is a mount point for the
+		# fdesc file system, then the expected output (whether
+		# or not the current user is root) is:
+		#	mount_fdesc: -o suchoption: option not supported.
+		#
+		# If the current directory is not a mount point, then
+		# the expected output is:
+		#	mount: .: unknown special file or file system.
+		#
+		# If we are not running on NetBSD, or mount(8) is not
+		# found, then we should get some other error message.
+		#
+		case "$({ LC_ALL=C mount -u -o nosuchoption . ; } 2>&1)" in
+		*mount_fdesc*)	fdesc_mounted=true ;;
 		esac
-	else
-		nofdesc=true
 	fi
 
 	# do_force requires mknod
@@ -708,7 +732,7 @@ all)
 	makedev bpf
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl pf crypto random
-	makedev lkm lockstat clockctl cpuctl
+	makedev lockstat clockctl cpuctl
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
@@ -716,7 +740,7 @@ all)
 	makedev bthub
 	makedev putter
 	makedev drvctl
-	makedev audio
+	makedev video
 	makedev local # do this last
 	;;
 
@@ -783,7 +807,7 @@ std)
 	mkdev		zero	c %mem_chr% 12	666
 	mkdev		klog	c %log_chr% 0	600
 	mkdev		ksyms	c %ksyms_chr% 0 444
-	if $nofdesc; then
+	if ! $fdesc_mounted; then
 		mkdev	tty	c %ctty_chr% 0		666
 		mkdev	stdin	c %filedesc_chr% 0	666
 		mkdev	stdout	c %filedesc_chr% 1	666
@@ -909,7 +933,7 @@ wskbd*)
 	;;
 
 fd)
-	if $nofdesc; then
+	if ! $fdesc_mounted; then
 		makedir fd 755
 		n=0
 		while [ $n -lt 64 ]
@@ -1247,10 +1271,6 @@ cmos)
 
 speaker)
 	mkdev speaker c %spkr_chr% 0
-	;;
-
-lkm)
-	mkdev lkm c %lkm_chr% 0 640 $g_kmem
 	;;
 
 lockstat)
@@ -1667,12 +1687,14 @@ leo*)
 
 scif*)
 	unit=${i#scif}
-	mkdev scif$unit c %scif_chr% $unit "" "" $u_uucp
+	mkdev scif$unit c %scif_chr% $(($unit + $dialin )) "" "" $u_uucp
+	mkdev dscif$unit c %scif_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 sci*)
 	unit=${i#sci}
-	mkdev sci$unit c %sci_chr% $unit "" "" $u_uucp
+	mkdev sci$unit c %sci_chr% $(($unit + $dialin )) "" "" $u_uucp
+	mkdev dsci$unit c %sci_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 maple*)
@@ -1916,8 +1938,6 @@ local)
 			sh "$0.local" $opts all
 		fi
 		umask 077
-	else
-		warn "missing $0.local"
 	fi
 	;;
 
@@ -2067,25 +2087,30 @@ create_mfs_dev()
 	# Add 2 reserved inodes (needed for both mfs and tmpfs), and round
 	# up to a multiple of 32 (needed for mfs, not needed for tmpfs).
 	ninode=$(( (ninode + 2 + 31) / 32 * 32 ))
-	# This file system size calculation is exact for mount_mfs(8)
-	# with 512-byte sectors; it's larger than necessary
-	# for mount_tmpfs(8).  40960 bytes (80 blocks) is the minimum size
-	# allowed by mount_mfs.
-	fs_bytes=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
-	[ "$fs_bytes" -lt 40960 ] && fs_bytes=40960
-	fs_blocks=$((fs_bytes/512))
-
 	# Try tmpfs; if that fails try mfs.
+	#
+	# For tmpfs, allocate 16KB and 512 byte per node.
+	# Actual requirements are much lower, but the size limit
+	# is only intended to avoid accidental writing to /dev.
+	fs_bytes=$((16384 + ninode * 512))
 	if mount_tmpfs -s $fs_bytes -n $ninode -m 0755 \
 		-o union tmpfs "$dev_mountpoint"
 	then
-	    fstype=tmpfs
-	elif mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 0755 \
-		-o union swap "$dev_mountpoint"
-	then
-	    fstype=mfs
+		fstype=tmpfs
 	else
-	    die "Failed to create memory file system"
+		# This file system size calculation is exact for mount_mfs(8)
+		# with 512-byte sectors.  40960 bytes (80 blocks) is the
+		# minimum size allowed by mount_mfs.
+		fs_bytes=$((8192 + 2 * 8192 + 4096 + ninode*512 + 8192))
+		[ "$fs_bytes" -lt 40960 ] && fs_bytes=40960
+		fs_blocks=$((fs_bytes/512))
+		if mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 0755 \
+		    -o union swap "$dev_mountpoint"
+		then
+			fstype=mfs
+		else
+			die "Failed to create memory file system"
+		fi
 	fi
 
 	# Our current directory was in the lower file system; change it to
@@ -2100,7 +2125,7 @@ create_mfs_dev()
 	fi
 
 	echo "Created $fstype $dev_mountpoint" \
-		"($fs_blocks blocks, $ninode inodes)"
+		"($fs_bytes byte, $ninode inodes)"
 }
 
 #

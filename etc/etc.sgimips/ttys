@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.7.26.1 2008/04/03 13:54:12 mjf Exp $
+#	$NetBSD: ttys,v 1.7.26.2 2009/01/17 20:43:44 mjf Exp $
 #
 # name	getty				type	status		comments
 
@@ -9,6 +9,7 @@
 
 # Console pseudo-device
 console	"/usr/libexec/getty std.9600"	vt100	on secure
+constty	"/usr/libexec/getty std.9600"	vt100	off secure
 
 # "com" serial console port
 ttyC0	"/usr/libexec/getty std.9600"	vt100	off secure
