@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.365 2009/01/11 02:45:53 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.366 2009/01/17 07:02:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.365 2009/01/11 02:45:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.366 2009/01/17 07:02:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.365 2009/01/11 02:45:53 christos Exp 
 #include <sys/ucred.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/syscallargs.h>
 #include <sys/device.h>
 #include <sys/filedesc.h>
@@ -162,8 +162,6 @@ kmutex_t vnode_free_list_lock;
 kmutex_t vfs_list_lock;
 
 static pool_cache_t vnode_cache;
-
-MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 
 /*
  * These define the root filesystem and device.

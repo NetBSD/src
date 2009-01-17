@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.171 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.172 2009/01/17 07:02:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.171 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.172 2009/01/17 07:02:35 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.171 2008/10/11 13:40:57 pooka Exp $"
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
