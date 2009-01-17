@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.53.6.1 2008/06/02 13:24:22 mjf Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.53.6.2 2009/01/17 13:29:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.53.6.1 2008/06/02 13:24:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.53.6.2 2009/01/17 13:29:31 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -656,7 +656,7 @@ token_ifattach(struct ifnet *ifp, void *lla)
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
 
-	if_set_sadl(ifp, lla, ISO88025_ADDR_LEN);
+	if_set_sadl(ifp, lla, ISO88025_ADDR_LEN, true);
 
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_IEEE802, sizeof(struct token_header));

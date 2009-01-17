@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.52.10.4 2008/06/29 09:33:08 mjf Exp $	*/
+/*	$NetBSD: azalia.c,v 1.52.10.5 2009/01/17 13:28:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.52.10.4 2008/06/29 09:33:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.52.10.5 2009/01/17 13:28:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1643,9 +1643,10 @@ azalia_widget_init(widget_t *this, const codec_t *codec,
 	this->nid = nid;
 	this->widgetcap = result;
 	this->type = COP_AWCAP_TYPE(result);
-	bitmask_snprintf(this->widgetcap, "\20\014LRSWAP\013POWER\012DIGITAL"
+	snprintb(flagbuf, sizeof(flagbuf),
+	    "\20\014LRSWAP\013POWER\012DIGITAL"
 	    "\011CONNLIST\010UNSOL\07PROC\06STRIPE\05FORMATOV\04AMPOV\03OUTAMP"
-	    "\02INAMP\01STEREO", flagbuf, FLAGBUFLEN);
+	    "\02INAMP\01STEREO", this->widgetcap);
 	DPRINTF(("%s: ", device_xname(codec->dev)));
 	if (this->widgetcap & COP_AWCAP_POWER) {
 		codec->comresp(codec, nid, CORB_SET_POWER_STATE, CORB_PS_D0, &result);
@@ -1783,8 +1784,8 @@ azalia_widget_print_audio(const widget_t *this, const char *lead, int channels)
 {
 	char flagbuf[FLAGBUFLEN];
 
-	bitmask_snprintf(this->d.audio.encodings, "\20\3AC3\2FLOAT32\1PCM",
-	    flagbuf, FLAGBUFLEN);
+	snprintb(flagbuf, sizeof(flagbuf), 
+	    "\20\3AC3\2FLOAT32\1PCM", this->d.audio.encodings);
 	if (channels < 0) {
 		aprint_normal("%sencodings=%s\n", lead, flagbuf);
 	} else if (this->widgetcap & COP_AWCAP_DIGITAL) {
@@ -1794,11 +1795,12 @@ azalia_widget_print_audio(const widget_t *this, const char *lead, int channels)
 		aprint_normal("%smax channels=%d, encodings=%s\n",
 		    lead, channels, flagbuf);
 	}
-	bitmask_snprintf(this->d.audio.bits_rates, "\20\x15""32bit\x14""24bit\x13""20bit"
+	snprintb(flagbuf, sizeof(flagbuf), 
+	    "\20\x15""32bit\x14""24bit\x13""20bit"
 	    "\x12""16bit\x11""8bit""\x0c""384kHz\x0b""192kHz\x0a""176.4kHz"
 	    "\x09""96kHz\x08""88.2kHz\x07""48kHz\x06""44.1kHz\x05""32kHz\x04"
 	    "22.05kHz\x03""16kHz\x02""11.025kHz\x01""8kHz",
-	    flagbuf, FLAGBUFLEN);
+	    this->d.audio.bits_rates);
 	aprint_normal("%sPCM formats=%s\n", lead, flagbuf);
 	return 0;
 }
@@ -1860,9 +1862,10 @@ azalia_widget_print_pin(const widget_t *this, const char *lead)
 	DPRINTF(("%spin config; device=%s color=%s assoc=%d seq=%d", lead,
 	    pin_devices[this->d.pin.device], pin_colors[this->d.pin.color],
 	    this->d.pin.association, this->d.pin.sequence));
-	bitmask_snprintf(this->d.pin.cap, "\20\021EAPD\07BALANCE\06INPUT"
+	snprintb(flagbuf, sizeof(flagbuf), 
+	    "\20\021EAPD\07BALANCE\06INPUT"
 	    "\05OUTPUT\04HEADPHONE\03PRESENCE\02TRIGGER\01IMPEDANCE",
-	    flagbuf, FLAGBUFLEN);
+	    this->d.pin.cap);
 	DPRINTF((" cap=%s\n", flagbuf));
 	return 0;
 }

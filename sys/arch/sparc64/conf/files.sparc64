@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.118 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.sparc64,v 1.118.6.1 2009/01/17 13:28:31 mjf Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -27,12 +27,15 @@ file	arch/sparc64/dev/sbus.c			sbus
 
 device	psycho: pcibus, sysmon_power, sysmon_taskq
 attach	psycho at mainbus
+device	schizo: pcibus, sysmon_power, sysmon_taskq
+attach	schizo at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
-file	arch/sparc64/dev/pci_machdep.c		psycho
+file	arch/sparc64/dev/schizo.c		schizo
+file	arch/sparc64/dev/pci_machdep.c		psycho | schizo
 
 # IOMMU is for both
-file	arch/sparc64/dev/iommu.c		sbus | psycho
+file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo
 
 include "dev/ata/files.ata"
 
@@ -177,6 +180,7 @@ file	arch/sparc/fpu/fpu_subr.c
 file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
 file	arch/sparc64/sparc64/clock.c
+file	arch/sparc64/sparc64/core_machdep.c	coredump
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb

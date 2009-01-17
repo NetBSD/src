@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.4 2008/01/25 12:03:36 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.4.6.1 2009/01/17 13:28:29 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,14 +30,46 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SH3_PTRACE_H_
+#define _SH3_PTRACE_H_
+
 /*
  * sh3-dependent ptrace definitions
  */
 
-#define	PT_GETREGS	(PT_FIRSTMACH + 1)
-#define	PT_SETREGS	(PT_FIRSTMACH + 2)
+/* old struct reg (now struct __reg40) that was missing r_gbr */
+#define	PT___GETREGS40	(PT_FIRSTMACH + 1)
+#define	PT___SETREGS40	(PT_FIRSTMACH + 2)
+
+#define	PT_GETREGS	(PT_FIRSTMACH + 3)
+#define	PT_SETREGS	(PT_FIRSTMACH + 4)
 
 #define PT_MACHDEP_STRINGS \
 	"(unused)", \
+	"PT___GETREGS40", \
+	"PT___SETREGS40", \
 	"PT_GETREGS", \
 	"PT_SETREGS",
+
+
+#ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#endif
+
+#ifdef COMPAT_40
+
+#define __HAVE_PTRACE_MACHDEP
+
+#define	PTRACE_MACHDEP_REQUEST_CASES			\
+	case PT___GETREGS40:	/* FALLTHROUGH */	\
+	case PT___SETREGS40:
+
+#endif /* COMPAT_40 */
+
+#ifdef __HAVE_PTRACE_MACHDEP
+int ptrace_machdep_dorequest(struct lwp *, struct lwp *, int, void *, int);
+#endif
+
+#endif /* _KERNEL */
+#endif /* !_SH3_PTRACE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12.6.3 2008/09/28 10:40:11 mjf Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12.6.4 2009/01/17 13:28:38 mjf Exp $	*/
 
 /*
  *
@@ -119,9 +119,6 @@
  * pmap data structures: see pmap.c for details of locking.
  */
 
-struct pmap;
-typedef struct pmap *pmap_t;
-
 /*
  * we maintain a list of all non-kernel pmaps
  */
@@ -188,7 +185,6 @@ struct pmap {
 /* PDPpaddr: is the physical address of the kernel's PDP */
 extern u_long PDPpaddr;
 
-extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int pmap_pg_g;			/* do we support PG_G? */
 extern long nkptp[PTP_LEVELS];
 
@@ -196,7 +192,6 @@ extern long nkptp[PTP_LEVELS];
  * macros
  */
 
-#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 

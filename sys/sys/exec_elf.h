@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.94.6.1 2008/06/02 13:24:32 mjf Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.94.6.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -914,7 +914,7 @@ typedef struct {
 	Elf32_Half	vs_vers;
 } Elf32_Versym;
 
-#ifndef _LKM
+#ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
 #endif
 

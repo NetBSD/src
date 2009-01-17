@@ -51,7 +51,7 @@
 
 #include <fs/unionfs/unionfs.h>
 
-MODULE(MODULE_CLASS_VFS, unionfs, NULL);
+MODULE(MODULE_CLASS_VFS, unionfs, "layerfs");
 
 MALLOC_DEFINE(M_UNIONFSMNT, "UNIONFS mount", "UNIONFS mount structure");
 

@@ -1,4 +1,4 @@
-/* $NetBSD: apic.c,v 1.5.6.1 2008/06/02 13:22:51 mjf Exp $ */
+/* $NetBSD: apic.c,v 1.5.6.2 2009/01/17 13:28:38 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.5.6.1 2008/06/02 13:22:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.5.6.2 2009/01/17 13:28:38 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,13 +62,15 @@ apic_format_redir(const char *where1, const char *where2, int idx,
 {
 	char buf[256];
 
+	snprintb(buf, sizeof(buf), redirlofmt, redirlo);
 	printf("%s: %s%d %s",
-	    where1, where2, idx,
-	    bitmask_snprintf(redirlo, redirlofmt, buf, sizeof(buf)));
+	    where1, where2, idx, buf);
 
-	if ((redirlo & LAPIC_DEST_MASK) == 0)
-		printf(" %s",
-		    bitmask_snprintf(redirhi, redirhifmt, buf, sizeof(buf)));
+	if ((redirlo & LAPIC_DEST_MASK) == 0) {
+		snprintb(buf, sizeof(buf), redirhifmt, redirhi);
+		printf(" %s", buf);
+	}
+		    
 
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.9.6.3 2008/09/28 10:40:16 mjf Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.9.6.4 2009/01/17 13:28:45 mjf Exp $ */
 
 /*-
  * Copyright (c) 1995-2006, 2008  The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.9.6.3 2008/09/28 10:40:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.9.6.4 2009/01/17 13:28:45 mjf Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_linux32.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.9.6.3 2008/09/28 10:40:16 mjf 
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_termios.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 int

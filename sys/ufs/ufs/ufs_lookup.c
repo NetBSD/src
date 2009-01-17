@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.96.12.3 2008/09/28 10:41:06 mjf Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.96.12.4 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.96.12.3 2008/09/28 10:41:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.96.12.4 2009/01/17 13:29:42 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
+#include "fs_ffs.h"
 #endif
 
 #include <sys/param.h>
@@ -67,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.96.12.3 2008/09/28 10:41:06 mjf Exp
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_wapbl.h>
-
-#include "fs_ffs.h"
 
 #ifdef DIAGNOSTIC
 int	dirchk = 1;

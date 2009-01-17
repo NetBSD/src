@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.17.6.1 2008/06/02 13:21:56 mjf Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.17.6.2 2009/01/17 13:27:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.17.6.1 2008/06/02 13:21:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.17.6.2 2009/01/17 13:27:54 mjf Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -195,7 +195,16 @@ i80321_intr_calculate_masks(void)
 	 * chance at not dropping data.
 	 */
 
+#if 0
+	/*
+	 * This assert might be useful, but only after some interrupts
+	 * are configured.  As it stands now, it will always fire early
+	 * in the initialization phase.  If it's useful enough to re-
+	 * enable, it should be conditionalized on something else like
+	 * having at least something in the levels/irqs above.
+	 */
 	KASSERT(i80321_imask[IPL_VM] != 0);
+#endif
 	i80321_imask[IPL_SCHED] |= i80321_imask[IPL_VM];
 	i80321_imask[IPL_HIGH] |= i80321_imask[IPL_SCHED];
 

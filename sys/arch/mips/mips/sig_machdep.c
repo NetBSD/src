@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.14.16.1 2008/06/02 13:22:25 mjf Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.14.16.2 2009/01/17 13:28:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,10 +31,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14.16.1 2008/06/02 13:22:25 mjf Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14.16.2 2009/01/17 13:28:17 mjf Exp $"); 
 
 #include "opt_cputype.h"
-#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +73,7 @@ struct sigframe_siginfo {
 /*
  * Send a signal to process.
  */
-static void
+void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -90,18 +89,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	tf = (struct frame *)l->l_md.md_regs;
 	fp--;
-
-        /* Build stack frame for signal trampoline. */
-        switch (ps->sa_sigdesc[sig].sd_vers) {
-        case 0:         /* handled by sendsig_sigcontext */
-        case 1:         /* handled by sendsig_sigcontext */
-        default:        /* unknown version */
-                printf("sendsig_siginfo: bad version %d\n",
-                    ps->sa_sigdesc[sig].sd_vers);
-                sigexit(l, SIGILL);
-        case 2:
-                break;
-        }
 
         uc.uc_flags = _UC_SIGMASK
             | ((l->l_sigstk.ss_flags & SS_ONSTACK)
@@ -145,14 +132,3 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
-
-void    
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{               
-#ifdef COMPAT_16    
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else    
-#endif  
-		sendsig_siginfo(ksi, mask);
-}       

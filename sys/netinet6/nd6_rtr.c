@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.72.6.2 2008/06/02 13:24:27 mjf Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.72.6.3 2009/01/17 13:29:33 mjf Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.72.6.2 2008/06/02 13:24:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.72.6.3 2009/01/17 13:29:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,7 +433,10 @@ nd6_rtmsg(int cmd, struct rtentry *rt)
 void
 defrouter_addreq(struct nd_defrouter *new)
 {
-	struct sockaddr_in6 def, mask, gate;
+	union {
+		struct sockaddr_in6 sin6;
+		struct sockaddr sa;
+	} def, mask, gate;
 	struct rtentry *newrt = NULL;
 	int s;
 	int error;
@@ -442,17 +445,16 @@ defrouter_addreq(struct nd_defrouter *new)
 	memset(&mask, 0, sizeof(mask));
 	memset(&gate, 0,sizeof(gate)); /* for safety */
 
-	def.sin6_len = mask.sin6_len = gate.sin6_len =
+	def.sin6.sin6_len = mask.sin6.sin6_len = gate.sin6.sin6_len =
 	    sizeof(struct sockaddr_in6);
-	def.sin6_family = mask.sin6_family = gate.sin6_family = AF_INET6;
-	gate.sin6_addr = new->rtaddr;
+	def.sin6.sin6_family = mask.sin6.sin6_family = gate.sin6.sin6_family = AF_INET6;
+	gate.sin6.sin6_addr = new->rtaddr;
 #ifndef SCOPEDROUTING
-	gate.sin6_scope_id = 0;	/* XXX */
+	gate.sin6.sin6_scope_id = 0;	/* XXX */
 #endif
 
 	s = splsoftnet();
-	error = rtrequest(RTM_ADD, (struct sockaddr *)&def,
-	    (struct sockaddr *)&gate, (struct sockaddr *)&mask,
+	error = rtrequest(RTM_ADD, &def.sa, &gate.sa, &mask.sa,
 	    RTF_GATEWAY, &newrt);
 	if (newrt) {
 		nd6_rtmsg(RTM_ADD, newrt); /* tell user process */
@@ -525,7 +527,10 @@ defrtrlist_del(struct nd_defrouter *dr)
 static void
 defrouter_delreq(struct nd_defrouter *dr)
 {
-	struct sockaddr_in6 def, mask, gw;
+	union {
+		struct sockaddr_in6 sin6;
+		struct sockaddr sa;
+	} def, mask, gw;
 	struct rtentry *oldrt = NULL;
 
 #ifdef DIAGNOSTIC
@@ -533,21 +538,19 @@ defrouter_delreq(struct nd_defrouter *dr)
 		panic("dr == NULL in defrouter_delreq");
 #endif
 
-	bzero(&def, sizeof(def));
-	bzero(&mask, sizeof(mask));
-	bzero(&gw, sizeof(gw));	/* for safety */
+	memset(&def, 0, sizeof(def));
+	memset(&mask, 0, sizeof(mask));
+	memset(&gw, 0, sizeof(gw));	/* for safety */
 
-	def.sin6_len = mask.sin6_len = gw.sin6_len =
+	def.sin6.sin6_len = mask.sin6.sin6_len = gw.sin6.sin6_len =
 	    sizeof(struct sockaddr_in6);
-	def.sin6_family = mask.sin6_family = gw.sin6_family = AF_INET6;
-	gw.sin6_addr = dr->rtaddr;
+	def.sin6.sin6_family = mask.sin6.sin6_family = gw.sin6.sin6_family = AF_INET6;
+	gw.sin6.sin6_addr = dr->rtaddr;
 #ifndef SCOPEDROUTING
-	gw.sin6_scope_id = 0;	/* XXX */
+	gw.sin6.sin6_scope_id = 0;	/* XXX */
 #endif
 
-	rtrequest(RTM_DELETE, (struct sockaddr *)&def,
-	    (struct sockaddr *)&gw,
-	    (struct sockaddr *)&mask, RTF_GATEWAY, &oldrt);
+	rtrequest(RTM_DELETE, &def.sa, &gw.sa, &mask.sa, RTF_GATEWAY, &oldrt);
 	if (oldrt) {
 		nd6_rtmsg(RTM_DELETE, oldrt);
 		if (oldrt->rt_refcnt <= 0) {
@@ -821,10 +824,9 @@ pfxrtr_add(struct nd_prefix *pr, struct nd_defrouter *dr)
 {
 	struct nd_pfxrouter *new;
 
-	new = (struct nd_pfxrouter *)malloc(sizeof(*new), M_IP6NDP, M_NOWAIT);
+	new = malloc(sizeof(*new), M_IP6NDP, M_NOWAIT|M_ZERO);
 	if (new == NULL)
 		return;
-	bzero(new, sizeof(*new));
 	new->router = dr;
 
 	LIST_INSERT_HEAD(&pr->ndpr_advrtrs, new, pfr_entry);
@@ -865,10 +867,9 @@ nd6_prelist_add(struct nd_prefixctl *pr, struct nd_defrouter *dr,
 	int error;
 
 	error = 0;
-	new = (struct nd_prefix *)malloc(sizeof(*new), M_IP6NDP, M_NOWAIT);
+	new = malloc(sizeof(*new), M_IP6NDP, M_NOWAIT|M_ZERO);
 	if (new == NULL)
 		return ENOMEM;
-	bzero(new, sizeof(*new));
 	new->ndpr_ifp = pr->ndpr_ifp;
 	new->ndpr_prefix = pr->ndpr_prefix;
 	new->ndpr_plen = pr->ndpr_plen;

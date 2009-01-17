@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.21.14.1 2008/04/03 12:43:06 mjf Exp $	*/
+/*	$NetBSD: netif.c,v 1.21.14.2 2009/01/17 13:29:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -214,7 +214,7 @@ netif_detach(struct netif *nif)
 }
 
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t len, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timo)
 {
 	struct netif *nif = desc->io_netif;
 	struct netif_driver *drv = nif->nif_driver;

@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.18.36.1 2008/06/02 13:24:29 mjf Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.18.36.2 2009/01/17 13:29:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.18.36.1 2008/06/02 13:24:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.18.36.2 2009/01/17 13:29:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -189,7 +189,7 @@ idrp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			if (error)
 				break;
 		}
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
+		rp = malloc(sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
 		if (rp == 0) {
 			error = ENOBUFS;
 			break;

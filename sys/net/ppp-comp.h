@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.14 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.14.6.1 2009/01/17 13:29:31 mjf Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -62,6 +62,8 @@
  * Structure giving methods for compression/decompression.
  */
 #ifdef PACKETPTR
+#include <sys/queue.h>
+
 struct compressor {
 	int	compress_proto;	/* CCP compression protocol number */
 
@@ -92,6 +94,9 @@ struct compressor {
 	void	(*incomp)(void *, PACKETPTR);
 	/* Return decompression statistics */
 	void	(*decomp_stat)(void *, struct compstat *);
+
+	LIST_ENTRY(compressor)	comp_list;
+	unsigned int		comp_refcnt;
 };
 #endif /* PACKETPTR */
 

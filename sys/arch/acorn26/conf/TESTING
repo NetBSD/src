@@ -1,0 +1,17 @@
+# $NetBSD: TESTING,v 1.2.2.2 2009/01/17 13:27:46 mjf Exp $
+#
+# Test kernel, with extra things turned on, including all consistency checks.
+
+include "arch/acorn26/conf/GENERIC"
+
+options		DIAGNOSTIC
+options 	DEBUG
+options 	DDB_ONPANIC=2		# Stack trace on panic
+
+#fpu0		at cpu0			# Floating point unit (FPPC/FPA10)
+
+#ssn0		at ioc0			# Unique ID chip (Silicon Serial No)
+eca0		at ioc0 bank 2		# Econet module
+arcpp0		at ioc0 bank 5		# Parallel printer port (Arc)
+
+powerrom*	at podulebus? slot ?

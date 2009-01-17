@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.6.14.1 2008/06/02 13:24:31 mjf Exp $	*/
+/*	$NetBSD: aio.h,v 1.6.14.2 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -113,11 +113,10 @@ struct aioproc {
 	struct lwp *aio_worker;		/* AIO worker thread */
 };
 
+extern u_int aio_listio_max;
 /* Prototypes */
-void	aio_sysinit(void);
-int	aio_init(struct proc *);
-void	aio_exit(struct proc *, struct aioproc *);
 void	aio_print_jobs(void (*pr)(const char *, ...));
+int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 
 #endif /* _KERNEL */
 

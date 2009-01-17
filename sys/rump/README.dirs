@@ -1,22 +1,32 @@
-	$NetBSD: README.dirs,v 1.3.28.1 2008/09/28 10:41:00 mjf Exp $
+	$NetBSD: README.dirs,v 1.3.28.2 2009/01/17 13:29:35 mjf Exp $
 
     Runnable Userspace Meta Programs
 
 Quick rundown of the current directory structure:
 
 sys/rump/librump - kernel runtime emulation
-  /rumpkern - portion compiled with -D_KERNEL, uses kernel headers
+  /rumpkern - kernel core, e.g. syscall, interrupt and lock support
+  /rumpnet  - networking support and sockets layer
   /rumpuser - userspace namespace support for previous, *NO* -D_KERNEL
 	      provides e.g. malloc() and some syscalls
+  /rumpvfs  - file system support
 
 sys/rump/include
-  /machine - headers meant to be used for rump compilation when the MD
-	     ones cause too much trouble, e.g. curlwp which is different
-	     from arch to arch
+  /machine - used for architectures where the rump ABI is not yet the
+	     same as the kernel module ABI.  will eventually disappear
+	     completely
+  /rump    - rump headers installed to userspace
 
 sys/rump/fs - file system rumps
-  /lib/lib_$fs  - kernel file system code compiled out of /sys with -D_KERNEL
+  /lib/lib${fs}  - kernel file system code compiled out of /sys with -D_KERNEL
 
+sys/rump/net - networking rumps
+  /lib/libnet	  - subroutines from sys/net, e.g. route and if_ethersubr
+  /lib/libnetinet - TCP/IP
+  /lib/libvirtif  - a virtual interface which uses host tap(4) to shovel
+		    packets.  This is used by netinet and if_ethersubr.
+  /lib/libsockin  - implements PF_INET using host kernel sockets.  This is
+		    mutually exclusive with net, netinet and virtif.
 
 Users:
 src/lib

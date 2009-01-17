@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.19.14.1 2008/06/02 13:23:08 mjf Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.19.14.2 2009/01/17 13:28:47 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.19.14.1 2008/06/02 13:23:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.19.14.2 2009/01/17 13:28:47 mjf Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -80,7 +80,7 @@ void	syscall(void);
 extern const char * const syscallnames[];
 #endif
 
-const struct emul emul_pecoff = {
+struct emul emul_pecoff = {
 	"pecoff",
 	"/emul/pecoff",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -122,6 +122,7 @@ const struct emul emul_pecoff = {
 	NULL,
 
 	uvm_default_mapaddr,
+	NULL,
 	NULL,
 	sizeof(ucontext_t),
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.154.6.4 2008/09/28 10:40:54 mjf Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.154.6.5 2009/01/17 13:29:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.154.6.4 2008/09/28 10:40:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.154.6.5 2009/01/17 13:29:21 mjf Exp $");
 
-#include "fs_union.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -49,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.154.6.4 2008/09/28 10:40:54 mjf Exp 
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -72,9 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.154.6.4 2008/09/28 10:40:54 mjf Exp 
 #include <fs/union/union.h>
 #endif
 
-#if defined(LKM) || defined(UNION)
 int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
-#endif
 
 #include <sys/verified_exec.h>
 
@@ -403,7 +399,6 @@ unionread:
 	if (error)
 		return (error);
 
-#if defined(UNION) || defined(LKM)
 	if (count == auio.uio_resid && vn_union_readdir_hook) {
 		struct vnode *ovp = vp;
 
@@ -413,7 +408,6 @@ unionread:
 		if (vp != ovp)
 			goto unionread;
 	}
-#endif /* UNION || LKM */
 
 	if (count == auio.uio_resid && (vp->v_vflag & VV_ROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {

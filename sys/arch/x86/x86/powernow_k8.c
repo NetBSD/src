@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.20.34.1 2008/06/02 13:22:52 mjf Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.20.34.2 2009/01/17 13:28:38 mjf Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.20.34.1 2008/06/02 13:22:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.20.34.2 2009/01/17 13:28:38 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.20.34.1 2008/06/02 13:22:52 mjf Ex
 	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;	\
 	msr_cpu_broadcast(&mcb);
 
-#ifdef _LKM
+#ifdef _MODULE
 static struct sysctllog *sysctllog;
 #define SYSCTLLOG	&sysctllog
 #else
@@ -485,7 +485,7 @@ k8_powernow_init_main(void)
 void
 k8_powernow_destroy(void)
 {
-#ifdef _LKM
+#ifdef _MODULE
 	sysctl_teardown(SYSCTLLOG);
 
 	if (k8pnow_current_state)

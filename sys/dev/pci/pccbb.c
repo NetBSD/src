@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.165.6.4 2008/09/28 10:40:27 mjf Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.165.6.5 2009/01/17 13:29:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.165.6.4 2008/09/28 10:40:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.165.6.5 2009/01/17 13:29:00 mjf Exp $");
 
 /*
 #define CBB_DEBUG
@@ -314,6 +314,8 @@ const struct yenta_chipinfo {
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520YENTA), CB_TI12XX,
+	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420YENTA), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 
 	/* Ricoh chips */
@@ -1369,8 +1371,9 @@ pccbb_power(struct pccbb_softc *sc, int command)
 	splx(s);
 	microtime(&after);
 	timersub(&after, &before, &diff);
-	aprint_debug_dev(sc->sc_dev, "wait took%s %ld.%06lds\n",
-	    (on && times < 0) ? " too long" : "", diff.tv_sec, diff.tv_usec);
+	aprint_debug_dev(sc->sc_dev, "wait took%s %lld.%06lds\n",
+	    (on && times < 0) ? " too long" : "", (long long)diff.tv_sec,
+	    (long)diff.tv_usec);
 
 	/*
 	 * Ok, wait a bit longer for things to settle.

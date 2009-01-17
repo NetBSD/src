@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.19.6.2 2008/06/02 13:23:38 mjf Exp $ */
+/*	$NetBSD: if_dge.c,v 1.19.6.3 2009/01/17 13:28:59 mjf Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.19.6.2 2008/06/02 13:23:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.19.6.3 2009/01/17 13:28:59 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1428,6 +1428,8 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
         case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		/* extract link flags */
 		if ((ifp->if_flags & IFF_LINK0) == 0 &&
 		    (ifp->if_flags & IFF_LINK1) == 0)

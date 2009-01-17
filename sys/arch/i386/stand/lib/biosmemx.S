@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemx.S,v 1.8 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.8.74.1 2009/01/17 13:28:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -125,6 +125,38 @@ ENTRY(getmementry)
 	movl	%ebx, 0(%eax)		/* updated index */
 	xorl	%eax, %eax
 	movb	%cl, %al
+
+	pop	%edi
+	pop	%esi
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%ebp
+	ret
+
+/* int biosA20(void)
+   return: 0=ok, else error
+*/
+ENTRY(biosA20)
+	pushl	%ebp
+	movl	%esp,%ebp
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	push	%esi
+	push	%edi
+
+	call	_C_LABEL(prot_to_real)
+	.code16
+
+	movl	$0x2401, %eax
+	int	$0x15
+	setc	%cl
+
+	calll	_C_LABEL(real_to_prot)
+	.code32
+
+	movzbl	%cl, %eax
 
 	pop	%edi
 	pop	%esi

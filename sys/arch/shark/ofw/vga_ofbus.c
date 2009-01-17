@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.12.16.2 2008/06/02 13:22:39 mjf Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.12.16.3 2009/01/17 13:28:30 mjf Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.12.16.2 2008/06/02 13:22:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.12.16.3 2009/01/17 13:28:30 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,14 +113,14 @@ vga_ofbus_attach(device_t parent, device_t self, void *aux)
 	/* for some idiotic reason we get this in the wrong byte order */
 	for (i = 0; i < 12; i++) {
 		vga_reg[i] = be32toh(vga_reg[i]);
-		printf("%08x\n", vga_reg[i]);
+		aprint_debug_dev(self, "vga_reg[%2d] = 0x%08x\n",
+		    i, vga_reg[i]);
 	}
 
 	vga_common_attach(sc, &isa_io_bs_tag, &isa_mem_bs_tag,
 	    WSDISPLAY_TYPE_ISAVGA, 0, &vga_ofbus_funcs);
 	if (vga_reg[10] > 0) {
-		aprint_normal("%s: aperture at 0x%08x\n", device_xname(self), 
-		    vga_reg[10]);
+		aprint_normal_dev(self, "aperture at 0x%08x\n", vga_reg[10]);
 	}
 }
 

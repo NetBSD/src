@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.20.58.1 2008/06/02 13:22:42 mjf Exp $ */
+/*	$NetBSD: promdev.c,v 1.20.58.2 2009/01/17 13:28:31 mjf Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -45,6 +45,7 @@
 #include <machine/pte.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 #include <lib/libkern/libkern.h>
 #include <sparc/stand/common/promdev.h>
 
@@ -505,7 +506,7 @@ getchar(void)
 	return (prom_getchar());
 }
 
-time_t
+satime_t
 getsecs(void)
 {
 

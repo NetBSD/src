@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.3.18.1 2008/06/02 13:22:36 mjf Exp $ */
+/* $NetBSD: globals.h,v 1.3.18.2 2009/01/17 13:28:27 mjf Exp $ */
 
 /* clock feed */
 #ifndef TICKS_PER_SEC
@@ -7,10 +7,13 @@
 #define NS_PER_TICK     (1000000000 / TICKS_PER_SEC)
 
 /* brd type */
+extern int brdtype;
 #define BRD_SANDPOINTX2		2
 #define BRD_SANDPOINTX3		3
 #define BRD_ENCOREPP1		10
 #define BRD_UNKNOWN		-1
+
+unsigned mpc107memsize(void);
 
 /* PPC processor ctl */
 void __syncicache(void *, size_t);
@@ -63,10 +66,38 @@ void _wbinv(uint32_t, uint32_t);
 void _inv(uint32_t, uint32_t);
 
 /* NIF */
+int net_open(struct open_file *, ...);
+int net_close(struct open_file *);
+int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+
 int netif_init(unsigned);
+int netif_open(void *); 
+int netif_close(int); 
+
+#define NIF_DECL(xxx) \
+    int xxx ## _match(unsigned, void *); \
+    void * xxx ## _init(unsigned, void *); \
+    int xxx ## _send(void *, char *, unsigned); \
+    int xxx ## _recv(void *, char *, unsigned, unsigned)
+
+NIF_DECL(fxp);
+NIF_DECL(tlp);
+NIF_DECL(nvt);
+NIF_DECL(sip);
+NIF_DECL(pcn);
+NIF_DECL(kse);
+NIF_DECL(sme);
+NIF_DECL(vge);
+NIF_DECL(rge);
+NIF_DECL(wm);
 
 #ifdef LABELSECTOR
 /* IDE/SATA and disk */
+int wdopen(struct open_file *, ...);
+int wdclose(struct open_file *);
+int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int parsefstype(void *);
+
 struct atac_channel {
 	volatile uint8_t *c_cmdbase;
 	volatile uint8_t *c_ctlbase;

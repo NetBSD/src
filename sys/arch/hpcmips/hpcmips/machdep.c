@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95.16.1 2008/07/02 19:08:16 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.16.2 2009/01/17 13:28:02 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.16.1 2008/07/02 19:08:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.16.2 2009/01/17 13:28:02 mjf Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -136,6 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.16.1 2008/07/02 19:08:16 mjf Exp $"
 #include <sys/mount.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -155,7 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.16.1 2008/07/02 19:08:16 mjf Exp $"
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -260,7 +261,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif
 	extern struct user *proc0paddr;
 	extern char edata[], end[];
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern void *esym;
 #endif
 	void *kernend;
@@ -268,7 +269,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	int i;
 
 	/* clear the BSS segment */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	size_t symbolsz = 0;
 	Elf_Ehdr *eh = (void *)end;
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) == 0 &&
@@ -292,7 +293,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		kernend = (void *)mips_round_page(esym);
 		bzero(edata, end - edata);
 	} else
-#endif /* NKSYMS || defined(DDB) || defined(LKM) */
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	{
 		kernend = (void *)mips_round_page(end);
 		memset(edata, 0, (char *)kernend - edata);
@@ -417,7 +418,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 				/* boot device: -b=sd0 etc. */
 #ifdef NFS
 				if (strcmp(cp+2, "nfs") == 0)
-					mountroot = nfs_mountroot;
+					rootfstype = MOUNT_NFS;
 				else
 					makebootdev(cp+2);
 #else /* NFS */
@@ -446,10 +447,10 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	}
 #endif /* MFS */
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(symbolsz, &end, esym);
+		ksyms_addsyms_elf(symbolsz, &end, esym);
 #endif /* DDB */
 	/*
 	 * Alloc u pages for lwp0 stealing KSEG0 memory.
@@ -650,6 +651,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {

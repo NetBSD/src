@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.17.6.2 2008/06/29 09:33:05 mjf Exp $	*/
+/*	$NetBSD: btuart.c,v 1.17.6.3 2009/01/17 13:28:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.17.6.2 2008/06/29 09:33:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.17.6.3 2009/01/17 13:28:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -260,8 +260,9 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 	}
 	sc = device_private(dev);
 
-	aprint_normal_dev(dev, "major %d minor %d\n",
-	    major(tp->t_dev), minor(tp->t_dev));
+	aprint_normal_dev(dev, "major %llu minor %llu\n",
+	    (unsigned long long)major(tp->t_dev),
+	    (unsigned long long)minor(tp->t_dev));
 
 	sc->sc_tp = tp;
 	tp->t_sc = sc;

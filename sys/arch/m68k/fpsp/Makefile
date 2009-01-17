@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2006/06/24 03:28:42 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15.58.1 2009/01/17 13:28:10 mjf Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -37,7 +37,6 @@
 #
 
 .include <bsd.prog.mk>
-#.include <bsd.sys.mk>		# for HOST_SH
 
 TARGET = fpsp
 
@@ -56,7 +55,7 @@ AFLAGS		= -x assembler-with-cpp -m68040
 # For the Library Version:
 #
 AR?		= ar
-LIB_FILTER 	= sed 's/fpsp.defs/l_fpsp.defs/'
+LIB_FILTER 	= ${TOOL_SED} 's/fpsp.defs/l_fpsp.defs/'
 LIB_TARGET	= lib$(TARGET).a
 #
 # SYS selects the template set to use
@@ -252,7 +251,7 @@ $(LIB_O_FILES): l_fpsp.defs
 # the entry routines for each function.
 #
 l_entry.sa: L_ENTRY.AWK L_LIST MONADIC.$(SYS) DYADIC.$(SYS) l_fpsp.h
-	awk -f L_ENTRY.AWK SYS=$(SYS) PREFIX=$(PREFIX) - \
+	${TOOL_AWK} -f L_ENTRY.AWK SYS=$(SYS) PREFIX=$(PREFIX) - \
 	    <L_LIST | ${HOST_SH} >l_entry.sa
 
 #

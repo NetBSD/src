@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.84.6.2 2008/09/28 10:40:58 mjf Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.84.6.3 2009/01/17 13:29:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -214,7 +214,7 @@ int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
 int	 ip_output(struct mbuf *, ...);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
-int	 ip_pcbopts(struct mbuf **, struct mbuf *);
+int	 ip_pcbopts(struct mbuf **, const struct sockopt *);
 struct mbuf *
 	 ip_reass(struct ipqent *, struct ipq *, struct ipqhead *);
 struct in_ifaddr *

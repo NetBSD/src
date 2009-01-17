@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42.6.2 2008/09/28 10:39:48 mjf Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42.6.3 2009/01/17 13:27:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42.6.2 2008/09/28 10:39:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42.6.3 2009/01/17 13:27:52 mjf Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -103,6 +103,20 @@ cpu_proc_fork(p1, p2)
 #endif
 }
 
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = pcb->pcb_tf;
+	struct switchframe *sf = (struct switchframe *)tf - 1;
+
+	sf->sf_r4 = (u_int)func;
+	sf->sf_r5 = (u_int)arg;
+	sf->sf_sp = (u_int)tf;
+	sf->sf_pc = (u_int)lwp_trampoline;
+	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
+}
+
 /*
  * Finish a fork operation, with LWP l2 nearly set up.
  *
@@ -121,7 +135,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
-	struct switchframe *sf;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -188,12 +201,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (stack != NULL)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
-	sf = (struct switchframe *)tf - 1;
-	sf->sf_r4 = (u_int)func;
-	sf->sf_r5 = (u_int)arg;
-	sf->sf_sp = (u_int)tf;
-	sf->sf_pc = (u_int)lwp_trampoline;
-	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
+	cpu_setfunc(l2, func, arg);
 }
 
 /*

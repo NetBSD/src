@@ -1,4 +1,4 @@
-/*	$NetBSD: etherdrv.h,v 1.8 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: etherdrv.h,v 1.8.74.1 2009/01/17 13:28:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -26,10 +26,10 @@
  *
  */
 
-int EtherInit __P((unsigned char *));
-int EtherSend __P((char *, int));
-int EtherReceive __P((char *, int));
-void EtherStop __P((void));
+int EtherInit(unsigned char *);
+int EtherSend(char *, int);
+int EtherReceive(char *, int);
+void EtherStop(void);
 
 extern unsigned ether_medium;
 #define ETHERMEDIUM_BNC 0

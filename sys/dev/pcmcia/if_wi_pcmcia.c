@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.77.10.1 2008/06/02 13:23:46 mjf Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.77.10.2 2009/01/17 13:29:07 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.77.10.1 2008/06/02 13:23:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.77.10.2 2009/01/17 13:29:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.77.10.1 2008/06/02 13:23:46 mjf E
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#ifdef _LKM
+#ifdef _MODULE
 #define WI_PCMCIA_SPECTRUM24T_FW 1
 #else
 #include <opt_if_wi_pcmcia.h>

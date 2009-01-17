@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.23.74.2 2008/09/28 10:40:01 mjf Exp $	*/
+/*	$NetBSD: libi386.h,v 1.23.74.3 2009/01/17 13:28:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -36,8 +36,10 @@ physaddr_t vtophys(void *);
 
 ssize_t pread(int, void *, size_t);
 void startprog(physaddr_t, int, unsigned long *, physaddr_t);
+void multiboot(physaddr_t, physaddr_t, physaddr_t);
 
 int exec_netbsd(const char *, physaddr_t, int, int);
+int exec_multiboot(const char *, char *);
 
 void delay(int);
 int getbasemem(void);
@@ -53,6 +55,7 @@ void printmemlist(void);
 void reboot(void);
 void gateA20(void);
 
+void clear_pc_screen(void);
 void initio(int);
 #define CONSDEV_PC 0
 #define CONSDEV_COM0 1
@@ -88,9 +91,6 @@ struct bootblk_command {
 };
 void bootmenu(void);
 void docommand(char *);
-
-/* getsecs.c */
-time_t getsecs(void);
 
 /* in "user code": */
 void command_help(char *);
@@ -133,3 +133,5 @@ int dosopen(char *);
 int dosread(int, char *, int);
 int dosseek(int, int, int);
 extern int doserrno;	/* in dos_file.S */
+
+void module_add(char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.9.6.1 2008/06/02 13:21:49 mjf Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9.6.2 2009/01/17 13:27:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _AMD64_MCONTEXT_H_
 #define _AMD64_MCONTEXT_H_
+
+#ifdef __x86_64__
 
 #include <machine/frame_regs.h>
 
@@ -128,5 +130,11 @@ struct lwp;
 int check_mcontext(struct lwp *, const mcontext_t *, struct trapframe *);
 
 #endif /* _KERNEL */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/mcontext.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif	/* !_AMD64_MCONTEXT_H_ */

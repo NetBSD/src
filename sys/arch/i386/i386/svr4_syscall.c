@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.37.6.2 2008/06/02 13:22:17 mjf Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.37.6.3 2009/01/17 13:28:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.37.6.2 2008/06/02 13:22:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.37.6.3 2009/01/17 13:28:04 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.37.6.2 2008/06/02 13:22:17 mjf Ex
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -114,7 +115,7 @@ svr4_syscall_plain(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -191,7 +192,7 @@ svr4_syscall_fancy(frame)
 	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
-		error = (*callp->sy_call)(l, args, rval);
+		error = sy_call(callp, l, args, rval);
 	}
 
 	switch (error) {

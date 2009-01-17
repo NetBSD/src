@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/05/31 20:57:42 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5.108.1 2009/01/17 13:27:50 mjf Exp $
 
 ### what we need:
 
@@ -91,7 +91,7 @@ CLEANFILES += kickstart.o kickstart.bin kickstart68.c
 ppcstart.o:	kickstart68.c
 
 kickstart68.c:	kickstart.bin hex2c.awk
-		hexdump kickstart.bin | awk -f ${.CURDIR}/hex2c.awk > $@
+		hexdump kickstart.bin | ${TOOL_AWK} -f ${.CURDIR}/hex2c.awk > $@
 
 kickstart.bin:	kickstart.o
 		$(PPCLD) -Ttext=0xfff00100 -o$@ --oformat binary $?

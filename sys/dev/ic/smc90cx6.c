@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.54.6.1 2008/06/02 13:23:27 mjf Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.54.6.2 2009/01/17 13:28:56 mjf Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.54.6.1 2008/06/02 13:23:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.54.6.2 2009/01/17 13:28:56 mjf Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.54.6.1 2008/06/02 13:23:27 mjf Exp $"
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_ether.h>
 #include <net/if_types.h>
 #include <net/if_arc.h>
 
@@ -276,7 +277,7 @@ bah_reset(sc)
 #endif
 
 	/* tell the routing level about the (possibly changed) link address */
-	if_set_sadl(ifp, &linkaddress, sizeof(linkaddress));
+	if_set_sadl(ifp, &linkaddress, sizeof(linkaddress), false);
 
 	/* POR is NMI, but we need it below: */
 	sc->sc_intmask = BAH_RECON|BAH_POR;
@@ -922,36 +923,39 @@ bah_ioctl(ifp, cmd, data)
 #endif
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		bah_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			bah_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			bah_init(sc);
 			break;
 		}
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop it.
 			 */
 			bah_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			bah_init(sc);
+			break;
 		}
 		break;
 
@@ -969,7 +973,7 @@ bah_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 
 	splx(s);

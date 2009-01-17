@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.8.16.2 2008/06/29 09:33:10 mjf Exp $ */
+/*	$NetBSD: agten.c,v 1.8.16.3 2009/01/17 13:29:08 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.8.16.2 2008/06/29 09:33:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.8.16.3 2009/01/17 13:29:08 mjf Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -338,7 +338,7 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	fb->fb_type.fb_width = sc->sc_width;
 	fb->fb_type.fb_height = sc->sc_height;
 	fb->fb_type.fb_depth = 32;
-	fb->fb_linebytes = sc->sc_stride;
+	fb->fb_linebytes = sc->sc_stride << 2;
 	fb_attach(fb, console);
 	agten_set_video(sc, 1);	/* make sure video's on */
 }

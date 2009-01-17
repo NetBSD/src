@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.121.16.1 2008/06/02 13:23:56 mjf Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.121.16.2 2009/01/17 13:29:10 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.121.16.1 2008/06/02 13:23:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.121.16.2 2009/01/17 13:29:10 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -505,6 +505,15 @@ usbd_interface2endpoint_descriptor(usbd_interface_handle iface, u_int8_t index)
 	return (iface->endpoints[index].edesc);
 }
 
+/* Some drivers may wish to abort requests on the default pipe, *
+ * but there is no mechanism for getting a handle on it.        */
+usbd_status
+usbd_abort_default_pipe(struct usbd_device *device)
+{
+
+	return usbd_abort_pipe(device->default_pipe);
+}
+
 usbd_status
 usbd_abort_pipe(usbd_pipe_handle pipe)
 {
@@ -805,17 +814,15 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		xfer->status = USBD_SHORT_XFER;
 	}
 
-	if (xfer->callback)
-		xfer->callback(xfer, xfer->priv, xfer->status);
-
-#ifdef DIAGNOSTIC
-	if (pipe->methods->done != NULL)
+	if (repeat) {
+		if (xfer->callback)
+			xfer->callback(xfer, xfer->priv, xfer->status);
 		pipe->methods->done(xfer);
-	else
-		printf("usb_transfer_complete: pipe->methods->done == NULL\n");
-#else
-	pipe->methods->done(xfer);
-#endif
+	} else {
+		pipe->methods->done(xfer);
+		if (xfer->callback)
+			xfer->callback(xfer, xfer->priv, xfer->status);
+	}
 
 	if (sync && !polling)
 		wakeup(xfer);

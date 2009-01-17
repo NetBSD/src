@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.9.6.2 2008/09/28 10:39:53 mjf Exp $
+# $NetBSD: HDL_G,v 1.9.6.3 2009/01/17 13:27:57 mjf Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -52,7 +52,6 @@ file-system	UNION		# union file system
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
-#options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -120,7 +119,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions

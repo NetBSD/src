@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2006/10/09 11:25:03 dsl Exp $
+#	$NetBSD: Makefile,v 1.10.52.1 2009/01/17 13:28:04 mjf Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -46,7 +46,7 @@ ${PROG}: ${OBJS}
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
 	    ${OBJS}
 	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<free_space\>' \
-		| sed 's/^0*//'  ); \
+		| ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16.14.2 2008/06/29 09:32:55 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.14.3 2009/01/17 13:27:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2007 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 int spl0 __P((void));
 
 extern const uint16_t ipl2psl_table[NIPL];
+extern int idepth;
 
 typedef int ipl_t;
 typedef struct {

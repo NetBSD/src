@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.h,v 1.3.68.1 2008/06/02 13:22:55 mjf Exp $ */
+/* $NetBSD: xenbus_comms.h,v 1.3.68.2 2009/01/17 13:28:40 mjf Exp $ */
 /*
  * Private include for xenbus communications.
  * 
@@ -30,7 +30,7 @@
 #define _XENBUS_COMMS_H
 
 void xenbus_kernfs_init(void);
-int xs_init(void);
+int xs_init(device_t dev);
 int xb_init_comms(device_t dev);
 
 /* Low level routines. */

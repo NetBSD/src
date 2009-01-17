@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.135.6.4 2008/10/05 20:11:32 mjf Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.135.6.5 2009/01/17 13:29:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,9 +115,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.135.6.4 2008/10/05 20:11:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.135.6.5 2009/01/17 13:29:20 mjf Exp $");
 
-#include "opt_coredump.h"
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 
@@ -162,9 +161,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	int error, write, tmp, req, pheld;
 	int signo;
 	ksiginfo_t ksi;
-#ifdef COREDUMP
 	char *path;
-#endif
 
 	error = 0;
 	req = SCARG(uap, req);
@@ -291,9 +288,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	case  PT_DETACH:
 	case  PT_LWPINFO:
 	case  PT_SYSCALL:
-#ifdef COREDUMP
 	case  PT_DUMPCORE:
-#endif
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
@@ -476,7 +471,6 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		uvmspace_free(vm);
 		break;
 
-#ifdef COREDUMP
 	case  PT_DUMPCORE:
 		if ((path = SCARG(uap, addr)) != NULL) {
 			char *dst;
@@ -493,11 +487,10 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			path = dst;
 			path[len] = '\0';
 		}
-		error = coredump(lt, path);
+		error = (*coredump_vec)(lt, path);
 		if (path)
 			free(path, M_TEMP);
 		break;
-#endif
 
 #ifdef PT_STEP
 	case  PT_STEP:

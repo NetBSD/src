@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.52.1 2008/04/03 12:42:16 mjf Exp $
+#	$NetBSD: Makefile,v 1.21.52.2 2009/01/17 13:28:01 mjf Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -99,10 +99,10 @@ install101:
 
 uuencode:
 	find binary -name "hpcboot*.exe" -print | \
-	awk '{ print "uuencode", $$1, $$1, ">", $$1".uue ; rm -f", $$1 }' \
+	${TOOL_AWK} '{ print "uuencode", $$1, $$1, ">", $$1".uue ; rm -f", $$1 }' \
 	    | ${HOST_SH}
 	cp binary/build_number.h build_number.h
-	awk '{if (/HPCBOOT_BUILD_NUMBER/)				\
+	${TOOL_AWK} '{if (/HPCBOOT_BUILD_NUMBER/)			\
 		{ i = $$3 + 1;						\
 			printf("#define HPCBOOT_BUILD_NUMBER	%d\n", i);\
 		} else {						\

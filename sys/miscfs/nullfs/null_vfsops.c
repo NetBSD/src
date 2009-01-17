@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.73.6.2 2008/06/29 09:33:16 mjf Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.73.6.3 2009/01/17 13:29:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.73.6.2 2008/06/29 09:33:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.73.6.3 2009/01/17 13:29:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.73.6.2 2008/06/29 09:33:16 mjf Exp
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
 
-MODULE(MODULE_CLASS_VFS, nullfs, NULL);
+MODULE(MODULE_CLASS_VFS, nullfs, "layerfs");
 
 VFS_PROTOS(nullfs);
 

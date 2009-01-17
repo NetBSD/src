@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.9.8.1 2008/06/02 13:24:04 mjf Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.9.8.2 2009/01/17 13:29:11 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -104,7 +104,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.9.8.1 2008/06/02 13:24:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.9.8.2 2009/01/17 13:29:11 mjf Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.8 2006/07/14 06:12:20 darrenr Exp";
 #endif
@@ -920,7 +920,7 @@ void *ptr;
 # else
 	MUTEX_EXIT(&ipsl_mutex);
 #  ifdef _KERNEL
-	wakeup(&sl_tail);
+	WAKEUP(&sl_tail);
 	POLLWAKEUP(IPL_LOGSYNC);
 #  endif
 # endif
@@ -1010,7 +1010,7 @@ synclist_t *sl;
 # else
 	MUTEX_EXIT(&ipsl_mutex);
 #  ifdef _KERNEL
-	wakeup(&sl_tail);
+	WAKEUP(&sl_tail);
 	POLLWAKEUP(IPL_LOGSYNC);
 #  endif
 # endif

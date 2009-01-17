@@ -1,12 +1,12 @@
 #
-# $NetBSD: ATARITT,v 1.85.16.1 2008/09/28 10:39:51 mjf Exp $
+# $NetBSD: ATARITT,v 1.85.16.2 2009/01/17 13:27:54 mjf Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: ATARITT.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.73 2008/07/31 07:47:43 simonb Exp $
+#		NetBSD: GENERIC.in,v 1.76 2008/11/15 21:21:23 abs Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -14,8 +14,6 @@ options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels
 options M68030 # support for 030
 options FPU_EMULATE # Support for MC68881/MC68882 emulator
-options M68040 # support for 040
-options FPSP # 68040 Floatingpoint support
 options INET # IP + ICMP + TCP + UDP
 options INET6 # IPV6
 options NETATALK # AppleTalk networking protocols
@@ -27,9 +25,9 @@ options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
-file-system KERNFS # Kernel parameter filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
+file-system KERNFS # Kernel parameter filesystem
 file-system NFS # Network File System client side code
 file-system PROCFS # Process filesystem
 file-system FDESC # /dev/fd
@@ -43,7 +41,6 @@ file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
 options WAPBL # File system journaling support - Experimental
 options QUOTA # Disk quotas for local disks
-options SOFTDEP # FFS soft updates support.
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
@@ -70,13 +67,13 @@ options KTRACE # Add kernel tracing system call
 options USERCONF # userconf(4) support
 options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
 options SCSIVERBOSE # human readable SCSI error messages
-options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-options SERCONSOLE # modem1 console support
+options SERCONSOLE # modem1 console support, breaks Falcon
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
 options TRY_SCSI_LINKED_COMMANDS=0x7f

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.27.6.2 2008/06/02 13:22:15 mjf Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.27.6.3 2009/01/17 13:28:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.27.6.2 2008/06/02 13:22:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.27.6.3 2009/01/17 13:28:03 mjf Exp $");
 
 #include "opt_vm86.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.27.6.2 2008/06/02 13:22:15 mjf Ex
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -132,7 +133,7 @@ mach_syscall_plain(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 	KERNEL_LOCK(1, NULL);
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 	KERNEL_UNLOCK_ONE(NULL);
 	switch (error) {
 	case 0:
@@ -224,7 +225,7 @@ mach_syscall_fancy(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 	KERNEL_LOCK(1, NULL);
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 	KERNEL_UNLOCK_ONE(NULL);
 out:
 	switch (error) {

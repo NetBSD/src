@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.63.6.1 2008/06/02 13:23:21 mjf Exp $	*/
+/*	$NetBSD: hme.c,v 1.63.6.2 2009/01/17 13:28:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.63.6.1 2008/06/02 13:23:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.63.6.2 2009/01/17 13:28:55 mjf Exp $");
 
 /* #define HMEDEBUG */
 
@@ -1104,9 +1104,9 @@ hme_eint(sc, status)
 			device_xname(&sc->sc_dev), cf, st, sm);
 		return (1);
 	}
-
-	printf("%s: status=%s\n", device_xname(&sc->sc_dev),
-		bitmask_snprintf(status, HME_SEB_STAT_BITS, bits,sizeof(bits)));
+	snprintb(bits, sizeof(bits), HME_SEB_STAT_BITS, status);
+	printf("%s: status=%s\n", device_xname(&sc->sc_dev), bits);
+		
 	return (1);
 }
 
@@ -1400,10 +1400,7 @@ hme_mediachange(ifp)
  * Process an ioctl request.
  */
 int
-hme_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct hme_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1413,7 +1410,7 @@ hme_ioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -1435,25 +1432,32 @@ hme_ioctl(ifp, cmd, data)
 
 	case SIOCSIFFLAGS:
 #ifdef HMEDEBUG
-		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
+		{
+			struct ifreq *ifr = data;
+			sc->sc_debug =
+			    (ifr->ifr_flags & IFF_DEBUG) != 0 ? 1 : 0;
+		}
 #endif
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			hme_stop(sc, false);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			error = hme_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			break;
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * If setting debug or promiscuous mode, do not reset
 			 * the chip; for everything else, call hme_init()
@@ -1468,6 +1472,9 @@ hme_ioctl(ifp, cmd, data)
 					error = hme_init(sc);
 			}
 #undef RESETIGN
+			break;
+		case 0:
+			break;
 		}
 
 		if (sc->sc_ec_capenable != sc->sc_ethercom.ec_capenable)

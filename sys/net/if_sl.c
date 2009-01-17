@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.110.6.2 2008/06/29 09:33:18 mjf Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.110.6.3 2009/01/17 13:29:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.110.6.2 2008/06/29 09:33:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.110.6.3 2009/01/17 13:29:31 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -231,7 +231,7 @@ sl_clone_create(struct if_clone *ifc, int unit)
 {
 	struct sl_softc *sc;
 
-	MALLOC(sc, struct sl_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
 	sc->sc_unit = unit;
 	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
@@ -267,7 +267,7 @@ sl_clone_destroy(struct ifnet *ifp)
 #endif
 	if_detach(ifp);
 
-	FREE(sc, M_DEVBUF);
+	free(sc, M_DEVBUF);
 	return 0;
 }
 
@@ -984,7 +984,7 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			ifp->if_flags |= IFF_UP;
 		else
@@ -1053,7 +1053,8 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
+		break;
 	}
 	splx(s);
 	return error;

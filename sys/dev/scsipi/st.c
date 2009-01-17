@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.202.18.4 2008/09/28 10:40:31 mjf Exp $ */
+/*	$NetBSD: st.c,v 1.202.18.5 2009/01/17 13:29:08 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.202.18.4 2008/09/28 10:40:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.202.18.5 2009/01/17 13:29:08 mjf Exp $");
 
 #include "opt_scsi.h"
 
@@ -574,7 +574,7 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 	periph = st->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
+	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%"PRIx64" (unit %d (of %d))\n", dev,
 	    unit, st_cd.cd_ndevs));
 
 
@@ -1136,7 +1136,7 @@ ststrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(st->buf_queue, bp);
+	bufq_put(st->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -1199,7 +1199,7 @@ ststart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(st->buf_queue)) != NULL) {
+			if ((bp = bufq_get(st->buf_queue)) != NULL) {
 				/* make sure that one implies the other.. */
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 				bp->b_error = EIO;
@@ -1211,7 +1211,7 @@ ststart(struct scsipi_periph *periph)
 			}
 		}
 
-		if ((bp = BUFQ_PEEK(st->buf_queue)) == NULL)
+		if ((bp = bufq_peek(st->buf_queue)) == NULL)
 			return;
 
 		iostat_busy(st->stats);
@@ -1233,14 +1233,14 @@ ststart(struct scsipi_periph *periph)
 					 * Back up over filemark
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
-						BUFQ_GET(st->buf_queue);
+						bufq_get(st->buf_queue);
 						bp->b_error = EIO;
 						bp->b_resid = bp->b_bcount;
 						biodone(bp);
 						continue;
 					}
 				} else {
-					BUFQ_GET(st->buf_queue);
+					bufq_get(st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
 					st->flags &= ~ST_AT_FILEMARK;
@@ -1254,7 +1254,7 @@ ststart(struct scsipi_periph *periph)
 		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
-			BUFQ_GET(st->buf_queue);
+			bufq_get(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
 			if (st->flags & ST_EIO_PENDING)
 				bp->b_error = EIO;
@@ -1314,10 +1314,10 @@ ststart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(st->buf_queue) != bp)
+		if (bufq_get(st->buf_queue) != bp)
 			panic("ststart(): dequeued wrong buf");
 #else
-		BUFQ_GET(st->buf_queue);
+		bufq_get(st->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -2225,6 +2225,12 @@ st_interpret_sense(struct scsipi_xfer *xs)
 				retval = 0;
 			} else {
 				retval = EIO;
+				/*
+				 * If we return an error we can't claim to
+				 * have transfered all data.
+				 */
+				if (xs->resid == 0)
+					xs->resid = xs->datalen;
 			}
 
 			/*
@@ -2263,7 +2269,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 			}
 		}
 		if (bp)
-			bp->b_resid = info;
+			bp->b_resid = xs->resid;
 	}
 
 #ifndef SCSIPI_DEBUG

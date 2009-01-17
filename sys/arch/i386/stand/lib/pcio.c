@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.21.72.1 2008/06/02 13:22:19 mjf Exp $	 */
+/*	$NetBSD: pcio.c,v 1.21.72.2 2009/01/17 13:28:05 mjf Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -87,6 +87,16 @@ getcomaddr(int idx)
 #endif
 
 void
+clear_pc_screen(void)
+{
+#ifdef SUPPORT_SERIAL
+	/* Clear the screen if we are on a glass tty. */
+	if (iodev == CONSDEV_PC)
+		conclr();
+#endif
+}
+
+void
 initio(int dev)
 {
 #ifdef SUPPORT_SERIAL
@@ -100,10 +110,10 @@ initio(int dev)
 
 	switch (dev) {
 	case CONSDEV_AUTO:
-		for(i = 0; i < 3; i++) {
+		for (i = 0; i < 3; i++) {
 			iodev = CONSDEV_COM0 + i;
 			btinfo_console.addr = getcomaddr(i);
-			if(!btinfo_console.addr)
+			if (!btinfo_console.addr)
 				break;
 			conputc('0' + i); /* to tell user what happens */
 			cominit_x();
@@ -147,7 +157,7 @@ ok:
 	case CONSDEV_COM3:
 		iodev = dev;
 		btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
-		if(!btinfo_console.addr)
+		if (!btinfo_console.addr)
 			goto nocom;
 		cominit_x();
 		break;
@@ -158,7 +168,7 @@ ok:
 		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
 		i = iodev - CONSDEV_COM0;
 		btinfo_console.addr = getcomaddr(i);
-		if(!btinfo_console.addr)
+		if (!btinfo_console.addr)
 			goto nocom;
 		conputc('0' + i); /* to tell user what happens */
 		cominit_x();
@@ -201,10 +211,6 @@ nocom:
 	conputc('\n');
 	strncpy(btinfo_console.devname, iodev == CONSDEV_PC ? "pc" : "com", 16);
 
-	if (iodev == CONSDEV_PC) {
-		/* Clear screen if on a glass tty. */
-		conclr();
-	}
 #else /* !SUPPORT_SERIAL */
 	btinfo_console.devname[0] = 'p';
 	btinfo_console.devname[1] = 'c';

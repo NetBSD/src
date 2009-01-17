@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.35.6.1 2008/06/29 09:32:58 mjf Exp $	*/
+/*	$NetBSD: proc.h,v 1.35.6.2 2009/01/17 13:28:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -33,10 +33,6 @@
 
 #ifndef _I386_PROC_H_
 #define _I386_PROC_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_noredzone.h"
-#endif
 
 #include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.72.26.4 2008/06/29 09:33:10 mjf Exp $	*/
+/*	$NetBSD: ss.c,v 1.72.26.5 2009/01/17 13:29:08 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.4 2008/06/29 09:33:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.5 2009/01/17 13:29:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ ssopen(dev_t dev, int flag, int mode, struct lwp *l)
 	periph = ss->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
+	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%"PRIx64" (unit %d (of %d))\n", dev,
 	    unit, ss_cd.cd_ndevs));
 
 	if (periph->periph_flags & PERIPH_OPEN) {
@@ -451,7 +451,7 @@ ssstrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	BUFQ_PUT(ss->buf_queue, bp);
+	bufq_put(ss->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -506,7 +506,7 @@ ssstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(ss->buf_queue)) == NULL)
+		if ((bp = bufq_peek(ss->buf_queue)) == NULL)
 			return;
 
 		if (ss->special && ss->special->read) {

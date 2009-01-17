@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.40.6.1 2008/06/02 13:22:33 mjf Exp $	*/
+/*	$NetBSD: syscall.c,v 1.40.6.2 2009/01/17 13:28:26 mjf Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -34,6 +34,7 @@
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
+#include "opt_sa.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 /* If needed, they will be included by file that includes this one */
 
@@ -42,7 +43,10 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/ktrace.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -60,7 +64,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40.6.1 2008/06/02 13:22:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40.6.2 2009/01/17 13:28:26 mjf Exp $");
 
 void
 child_return(void *arg)
@@ -100,6 +104,12 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	code = frame->fixreg[0];
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 #ifdef COMPAT_MACH
 	if ((callp = mach_syscall_dispatch(&code)) == NULL)
@@ -144,7 +154,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(l, params, rval);
+	error = sy_call(callp, l, params, rval);
 
 	switch (error) {
 	case 0:
@@ -205,6 +215,12 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	realcode = code;
 #ifdef COMPAT_MACH
 	if ((callp = mach_syscall_dispatch(&code)) == NULL)
@@ -253,7 +269,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(l, params, rval);
+	error = sy_call(callp, l, params, rval);
 out:
 	switch (error) {
 	case 0:

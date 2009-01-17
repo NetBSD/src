@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.49.6.2 2008/06/02 13:23:35 mjf Exp $	*/
+/*	$NetBSD: miivar.h,v 1.49.6.3 2009/01/17 13:28:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -231,6 +231,7 @@ int	mii_mediachg(struct mii_data *);
 void	mii_tick(struct mii_data *);
 void	mii_pollstat(struct mii_data *);
 void	mii_down(struct mii_data *);
+int	mii_anar(int);
 
 int mii_ifmedia_change(struct mii_data *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.58.6.2 2008/09/28 10:40:15 mjf Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.58.6.3 2009/01/17 13:28:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.58.6.2 2008/09/28 10:40:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.58.6.3 2009/01/17 13:28:45 mjf Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -604,6 +604,45 @@ linux_sys_sigaltstack(struct lwp *l, const struct linux_sys_sigaltstack_args *ua
 #endif /* LINUX_SS_ONSTACK */
 
 #ifdef LINUX_NPTL
+static int
+linux_do_tkill(struct lwp *l, int tgid, int tid, int signum)
+{
+	struct proc *p;
+	int error;
+	ksiginfo_t ksi;
+	struct linux_emuldata *led;
+
+	if (signum < 0 || signum >= LINUX__NSIG)
+		return EINVAL;
+	signum = linux_to_native_signo[signum];
+
+	KSI_INIT(&ksi);
+	ksi.ksi_signo = signum;
+	ksi.ksi_code = SI_LWP;
+	ksi.ksi_pid = l->l_proc->p_pid;
+	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
+
+	mutex_enter(proc_lock);
+	if ((p = p_find(tid, PFIND_LOCKED)) == NULL) {
+		mutex_exit(proc_lock);
+		return ESRCH;
+	}
+	led = p->p_emuldata;
+	if (tgid > 0 && led->s->group_pid != tgid) {
+		mutex_exit(proc_lock);
+		return ESRCH;
+	}
+	mutex_enter(p->p_lock);
+	error = kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signum), NULL, NULL);
+	if (!error && signum)
+		kpsignal2(p, &ksi);
+	mutex_exit(p->p_lock);
+	mutex_exit(proc_lock);
+
+	return error;
+}
+
 int
 linux_sys_tkill(struct lwp *l, const struct linux_sys_tkill_args *uap, register_t *retval)
 {
@@ -611,13 +650,11 @@ linux_sys_tkill(struct lwp *l, const struct linux_sys_tkill_args *uap, register_
 		syscallarg(int) tid;
 		syscallarg(int) sig;
 	} */
-	struct linux_sys_kill_args cup;
 
-	/* We use the PID as the TID ... */
-	SCARG(&cup, pid) = SCARG(uap, tid);
-	SCARG(&cup, signum) = SCARG(uap, sig);
+	if (SCARG(uap, tid) <= 0)
+		return EINVAL;
 
-	return linux_sys_kill(l, &cup, retval);
+	return linux_do_tkill(l, 0, SCARG(uap, tid), SCARG(uap, sig));
 }
 
 int
@@ -628,31 +665,24 @@ linux_sys_tgkill(struct lwp *l, const struct linux_sys_tgkill_args *uap, registe
 		syscallarg(int) tid;
 		syscallarg(int) sig;
 	} */
-	struct linux_sys_kill_args cup;
-	struct linux_emuldata *led;
-	struct proc *p;
 
-	SCARG(&cup, pid) = SCARG(uap, tid);
-	SCARG(&cup, signum) = SCARG(uap, sig);
+	if (SCARG(uap, tid) <= 0 || SCARG(uap, tgid) <= 0)
+		return EINVAL;
 
-	if (SCARG(uap, tgid) == -1)
-		return linux_sys_kill(l, &cup, retval);
+	return linux_do_tkill(l, SCARG(uap, tgid), SCARG(uap, tid), SCARG(uap, sig));
+}
 
-	/* We use the PID as the TID, but make sure the group ID is right */
-	/* XXX racy */
-	mutex_enter(proc_lock);
-	if ((p = p_find(SCARG(uap, tid), PFIND_LOCKED)) == NULL ||
-	    p->p_emul != &emul_linux) {
-		mutex_exit(proc_lock);
-		return ESRCH;
-	}
-	led = p->p_emuldata;
-	if (led->s->group_pid != SCARG(uap, tgid)) {
-		mutex_exit(proc_lock);
-		return ESRCH;
-	}
-	mutex_exit(proc_lock);
+int
+native_to_linux_si_code(int code)
+{
+	int si_codes[] = {
+	    LINUX_SI_USER, LINUX_SI_QUEUE, LINUX_SI_TIMER, LINUX_SI_ASYNCIO,
+	    LINUX_SI_MESGQ, LINUX_SI_TKILL /* SI_LWP */
+	};
 
-	return linux_sys_kill(l, &cup, retval);
+	if (code <= 0 && -code < __arraycount(si_codes))
+		return si_codes[-code];
+
+	return code;
 }
 #endif /* LINUX_NPTL */

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.35.6.4 2008/10/05 20:11:32 mjf Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.35.6.5 2009/01/17 13:29:17 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35.6.4 2008/10/05 20:11:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35.6.5 2009/01/17 13:29:17 mjf Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -638,10 +637,17 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 			printf("UDF mount: disc is not recordable\n");
 			return EROFS;
 		}
-		/*
-		 * TODO if on sequential media and last session is closed,
-		 * check for enough space to open/close new session
-		 */
+		if (ump->discinfo.mmc_cur & MMC_CAP_SEQUENTIAL) {
+			if (ump->discinfo.disc_state == MMC_STATE_FULL) {
+				printf("UDF mount: disc is not appendable\n");
+				return EROFS;
+			}
+
+			/*
+			 * TODO if the last session is closed check if there
+			 * is enough space to open/close new session
+			 */
+		}
 	}
 
 	/* initialise bootstrap disc strategy */
@@ -757,7 +763,7 @@ udf_root(struct mount *mp, struct vnode **vpp)
 		return error;
 
 	vp = root_dir->vnode;
-	root_dir->vnode->v_vflag |= VV_ROOT;
+	KASSERT(vp->v_vflag & VV_ROOT);
 
 	*vpp = vp;
 	return 0;

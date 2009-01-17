@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.25.6.1 2008/09/28 10:40:14 mjf Exp $ */
+/* $NetBSD: privcmd.c,v 1.25.6.2 2009/01/17 13:28:39 mjf Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,9 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.25.6.1 2008/09/28 10:40:14 mjf Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.25.6.2 2009/01/17 13:28:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,12 +272,10 @@ privcmd_ioctl(void *v)
 
 	switch (ap->a_command) {
 	case IOCTL_PRIVCMD_HYPERCALL:
-#ifdef COMPAT_40
 	case IOCTL_PRIVCMD_HYPERCALL_OLD:
 	/*
 	 * oprivcmd_hypercall_t is privcmd_hypercall_t without the last entry
 	 */
-#endif
 	{
 		privcmd_hypercall_t *hc = ap->a_data;
 		if (hc->op >= (PAGE_SIZE >> 5))
@@ -340,14 +336,12 @@ privcmd_ioctl(void *v)
 		break;
 	}
 #ifndef XEN3
-#if defined(COMPAT_30)
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
 		error = initdom_ctrlif_domcontroller_port;
 		}
 		break;
-#endif /* defined(COMPAT_30) */
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
@@ -369,6 +363,8 @@ privcmd_ioctl(void *v)
 			error = copyin(&mcmd->entry[i], &mentry, sizeof(mentry));
 			if (error)
 				return error;
+			if (mentry.npages == 0)
+				return EINVAL;
 			if (mentry.va > VM_MAXUSER_ADDRESS)
 				return EINVAL;
 #if 0
@@ -401,6 +397,7 @@ privcmd_ioctl(void *v)
 		u_long mfn, ma;
 		struct vm_map *vmm;
 		struct vm_map_entry *entry;
+		vm_prot_t prot;
 		pmap_t pmap;
 		vaddr_t trymap;
 
@@ -408,6 +405,8 @@ privcmd_ioctl(void *v)
 		pmap = vm_map_pmap(vmm);
 		va0 = pmb->addr & ~PAGE_MASK;
 
+		if (pmb->num == 0)
+			return EINVAL;
 		if (va0 > VM_MAXUSER_ADDRESS)
 			return EINVAL;
 		if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
@@ -418,6 +417,7 @@ privcmd_ioctl(void *v)
 			vm_map_unlock_read(vmm);
 			return EINVAL;
 		}
+		prot = entry->protection;
 		vm_map_unlock_read(vmm);
 		
 		maddr = kmem_alloc(sizeof(paddr_t) * pmb->num, KM_SLEEP);
@@ -442,8 +442,7 @@ privcmd_ioctl(void *v)
 			}
 			ma = mfn << PGSHIFT;
 			if (pmap_enter_ma(pmap_kernel(), trymap, ma, 0,
-			    entry->protection, PMAP_CANFAIL,
-			    pmb->dom)) {
+			    prot, PMAP_CANFAIL, pmb->dom)) {
 				mfn |= 0xF0000000;
 				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
 				maddr[i] = INVALID_PAGE;
@@ -453,15 +452,12 @@ privcmd_ioctl(void *v)
 				maddr[i] = ma;
 			}
 		}
-		error  = privcmd_map_obj(vmm, va0, maddr, pmb->num, pmb->dom);
-		if (error) {
-			uvm_km_free(kernel_map, trymap, PAGE_SIZE,
-			    UVM_KMF_VAONLY);
+		error = privcmd_map_obj(vmm, va0, maddr, pmb->num, pmb->dom);
+		uvm_km_free(kernel_map, trymap, PAGE_SIZE, UVM_KMF_VAONLY);
+
+		if (error != 0)
 			return error;
-		}
-		uvm_km_free(kernel_map, trymap, PAGE_SIZE,
-		    UVM_KMF_VAONLY);
-		error = 0;
+
 		break;
 	}
 #ifndef XEN3
@@ -622,7 +618,7 @@ xenprivcmd_init()
 	kernfs_entry_t *dkt;
 	kfstype kfst;
 
-	if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
+	if (!xendomain_is_privileged())
 		return;
 
 	kfst = KERNFS_ALLOCTYPE(privcmd_fileops);

@@ -1,7 +1,8 @@
-/*	$NetBSD: subr_once.c,v 1.3 2006/01/16 21:45:38 yamt Exp $	*/
+/*	$NetBSD: subr_once.c,v 1.3.70.1 2009/01/17 13:29:19 mjf Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
+ * Copyright (c)2008 Antti Kantee,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,37 +28,44 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.3 2006/01/16 21:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.3.70.1 2009/01/17 13:29:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/condvar.h>
+#include <sys/mutex.h>
 #include <sys/once.h>
+
+static kmutex_t oncemtx;
+static kcondvar_t oncecv;
+
+void
+once_init()
+{
+
+	mutex_init(&oncemtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&oncecv, "runonce");
+}
 
 int
 _run_once(once_t *o, int (*fn)(void))
 {
-	int error = 0;
 
-	simple_lock(&o->o_lock);
-	while ((o->o_flags & ONCE_RUNNING) != 0) {
-		ltsleep(o, PUSER, "runonce", 0, &o->o_lock);
+	/* Fastpath handled by RUN_ONCE() */
+
+	mutex_enter(&oncemtx);
+	if (o->o_status == ONCE_VIRGIN) {
+		o->o_status = ONCE_RUNNING;
+		mutex_exit(&oncemtx);
+		o->o_error = fn();
+		mutex_enter(&oncemtx);
+		o->o_status = ONCE_DONE;
+		cv_broadcast(&oncecv);
 	}
-	if (o->o_flags & ONCE_DONE) {
-		goto done;
-	}
-	o->o_flags |= ONCE_RUNNING;
-	simple_unlock(&o->o_lock);
+	while (o->o_status != ONCE_DONE)
+		cv_wait(&oncecv, &oncemtx);
+	mutex_exit(&oncemtx);
 
-	error = (*fn)();
-
-	simple_lock(&o->o_lock);
-	if (error == 0) {
-		o->o_flags = ONCE_DONE;
-	}
-	wakeup(o);
-done:
-	simple_unlock(&o->o_lock);
-
-	return error;
+	KASSERT(o->o_status == ONCE_DONE);
+	return o->o_error;
 }

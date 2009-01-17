@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_aesxcbcmac.c,v 1.4 2007/05/23 17:14:59 christos Exp $	*/
+/*	$NetBSD: ah_aesxcbcmac.c,v 1.4.28.1 2009/01/17 13:29:33 mjf Exp $	*/
 /*	$KAME: ah_aesxcbcmac.c,v 1.7 2004/06/02 05:53:14 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_aesxcbcmac.c,v 1.4 2007/05/23 17:14:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_aesxcbcmac.c,v 1.4.28.1 2009/01/17 13:29:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,9 @@ ah_aes_xcbc_mac_init(struct ah_algorithm_state *state, struct secasvar * sav)
 		panic("ah_aes_xcbc_mac_init: what?");
 
 	state->sav = sav;
-	state->foo = (void *)malloc(sizeof(aesxcbc_ctx), M_TEMP, M_NOWAIT);
+	state->foo = malloc(sizeof(aesxcbc_ctx), M_TEMP, M_NOWAIT|M_ZERO);
 	if (!state->foo)
 		return ENOBUFS;
-	bzero(state->foo, sizeof(aesxcbc_ctx));
 
 	ctx = (aesxcbc_ctx *)state->foo;
 

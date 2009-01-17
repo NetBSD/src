@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.9.70.1 2008/06/02 13:23:01 mjf Exp $ */
+/*	$NetBSD: linux_types.h,v 1.9.70.2 2009/01/17 13:28:44 mjf Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@ typedef int linux_gid_t;
 typedef unsigned int linux_dev_t;
 typedef unsigned int linux_mode_t;
 typedef long linux_time_t;
+typedef long linux_suseconds_t;
 typedef long linux_clock_t;
 typedef long linux_off_t;
 typedef int linux_pid_t;

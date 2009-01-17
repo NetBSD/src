@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.43.6.1 2008/06/02 13:22:46 mjf Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.43.6.2 2009/01/17 13:28:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,9 +45,6 @@ struct pmap {
 };
 
 #ifdef _KERNEL
-extern	struct pmap	kernel_pmap_store;
-#define	pmap_kernel()	(&kernel_pmap_store)
-
 /*
  * We give the pmap code a chance to resolve faults by
  * reloading translations that it was forced to unload.

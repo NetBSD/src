@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.20.6.1 2008/04/03 12:43:14 mjf Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.20.6.2 2009/01/17 13:29:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,9 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.20.6.1 2008/04/03 12:43:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.20.6.2 2009/01/17 13:29:42 mjf Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ffs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +359,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
 
-	MALLOC(dirbuf, char *, DIRBLKSIZ, M_TEMP, M_WAITOK);
+	dirbuf = malloc(DIRBLKSIZ, M_TEMP, M_WAITOK);
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -427,7 +429,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 				break;
 		}
 	}
-	FREE(dirbuf, M_TEMP);
+	free(dirbuf, M_TEMP);
 	
 	return (0);
 }

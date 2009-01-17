@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.67 2007/03/04 05:59:39 christos Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.67.40.1 2009/01/17 13:27:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67 2007/03/04 05:59:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.40.1 2009/01/17 13:27:54 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -80,16 +80,16 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67 2007/03/04 05:59:39 christos Exp
 
 void start_c __P((int, u_int, u_int, u_int, char *));
 static void atari_hwinit __P((void));
-static void cpu_init_kcorehdr __P((u_long));
+static void cpu_init_kcorehdr __P((paddr_t, paddr_t));
 static void initcpu __P((void));
-static void mmu030_setup __P((st_entry_t *, u_int, pt_entry_t *, u_int,
-			      pt_entry_t *, u_int, u_int));
-static void map_io_areas __P((pt_entry_t *, u_int, u_int));
+static void mmu030_setup __P((paddr_t, u_int, paddr_t, psize_t, paddr_t,
+			      paddr_t));
+static void map_io_areas __P((paddr_t, psize_t, u_int));
 static void set_machtype __P((void));
 
 #if defined(M68040) || defined(M68060)
-static void mmu040_setup __P((st_entry_t *, u_int, pt_entry_t *, u_int,
-			      pt_entry_t *, u_int, u_int));
+static void mmu040_setup __P((paddr_t, u_int, paddr_t, psize_t, paddr_t,
+			      paddr_t));
 #endif
 
 /*
@@ -118,13 +118,8 @@ int iomem_malloc_safe;
 static cpu_kcore_hdr_t cpu_kcore_hdr;
 
 extern u_int 	lowram;
-extern u_int	Sysptsize, Sysseg_pa, proc0paddr;
-extern pt_entry_t *Sysptmap;
-extern st_entry_t *Sysseg;
-u_int		*Sysmap;
+extern u_int	proc0paddr;
 int		machineid, mmutype, cputype, astpending;
-char		*vmmap;
-pv_entry_t	pv_table;
 #if defined(M68040) || defined(M68060)
 extern int	protostfree;
 #endif
@@ -190,17 +185,21 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	extern char	end[];
 	extern void	etext __P((void));
 	extern u_long	protorp[2];
-	u_int		pstart;		/* Next available physical address*/
-	u_int		vstart;		/* Next available virtual address */
-	u_int		avail;
-	pt_entry_t	*pt;
-	u_int		ptsize, ptextra;
+	paddr_t		pstart;		/* Next available physical address */
+	vaddr_t		vstart;		/* Next available virtual address */
+	vsize_t		avail;
+	paddr_t		ptpa;
+	psize_t		ptsize;
+	u_int		ptextra;
+	vaddr_t		kva;
 	u_int		tc, i;
-	u_int		*pg;
-	u_int		pg_proto;
-	u_int		end_loaded;
-	u_long		kbase;
+	pt_entry_t	*pg, *epg;
+	pt_entry_t	pg_proto;
+	vaddr_t		end_loaded;
+	paddr_t		kbase;
 	u_int		kstsize;
+	paddr_t		Sysseg_pa;
+	paddr_t		Sysptmap_pa;
 
 #if defined(_MILANHW_)
 	/* XXX
@@ -237,8 +236,9 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * the kernel ends at end() or esym.
 	 */
 	if(esym == NULL)
-		end_loaded = (u_int)end;
-	else end_loaded = (u_int)esym;
+		end_loaded = (vaddr_t)&end;
+	else
+		end_loaded = (vaddr_t)esym;
 
 	/*
 	 * If we have enough fast-memory to put the kernel in and the
@@ -246,7 +246,8 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	if((reloc_kernel != 0) && (ttphysize >= end_loaded))
 		kbase = ttphystart;
-	else kbase = 0;
+	else
+		kbase = 0;
 
 	/*
 	 * Determine the type of machine we are running on. This needs
@@ -265,10 +266,19 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * pstart: start of usable ST memory
 	 * avail : size of ST memory available.
 	 */
-	pstart = (u_int)end_loaded;
-	pstart = m68k_round_page(pstart);
+	vstart = (vaddr_t)end_loaded;
+	vstart = m68k_round_page(vstart);
+	pstart = (paddr_t)vstart;	/* pre-reloc PA == kernel VA here */
 	avail  = stphysize - pstart;
-  
+
+	/*
+	 * Save KVA of proc0 user-area and allocate it
+	 */
+	proc0paddr = vstart;
+	pstart    += USPACE;
+	vstart    += USPACE;
+	avail     -= USPACE;
+
 	/*
 	 * Calculate the number of pages needed for Sysseg.
 	 * For the 68030, we need 256 descriptors (segment-table-entries).
@@ -286,11 +296,21 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/*
 	 * allocate the kernel segment table
 	 */
-	Sysseg     = (st_entry_t *)pstart;
-	Sysseg_pa  = (u_int)Sysseg + kbase;
+	Sysseg_pa  = pstart;			/* pre-reloc PA to init STEs */
+	Sysseg     = (st_entry_t *)vstart;
 	pstart    += kstsize * PAGE_SIZE;
+	vstart    += kstsize * PAGE_SIZE;
 	avail     -= kstsize * PAGE_SIZE;
-  
+
+	/*
+	 * allocate kernel page table map
+	 */
+	Sysptmap_pa = pstart;			/* pre-reloc PA to init PTEs */
+	Sysptmap = (pt_entry_t *)vstart;
+	pstart  += PAGE_SIZE;
+	vstart  += PAGE_SIZE;
+	avail   -= PAGE_SIZE;
+
 	/*
 	 * Determine the number of pte's we need for extra's like
 	 * ST I/O map's.
@@ -311,48 +331,28 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * the I/O areas. The various I/O areas are mapped (virtually) at
 	 * the top of the address space mapped by 'pt' (ie. just below Sysmap).
 	 */
-	pt      = (pt_entry_t *)pstart;
+	ptpa	= pstart;			/* pre-reloc PA to init PTEs */
 	ptsize  = (Sysptsize + howmany(ptextra, NPTEPG)) << PGSHIFT;
 	pstart += ptsize;
+	vstart += ptsize;
 	avail  -= ptsize;
-  
-	/*
-	 * allocate kernel page table map
-	 */
-	Sysptmap = (pt_entry_t *)pstart;
-	pstart  += PAGE_SIZE;
-	avail   -= PAGE_SIZE;
 
 	/*
-	 * Set Sysmap; mapped after page table pages. Because I too (LWP)
-	 * didn't understand the reason for this, I borrowed the following
-	 * (sligthly modified) comment from mac68k/locore.s:
-	 * LAK:  There seems to be some confusion here about the next line,
-	 * so I'll explain.  The kernel needs some way of dynamically modifying
-	 * the page tables for its own virtual memory.  What it does is that it
-	 * has a page table map.  This page table map is mapped right after the
-	 * kernel itself (in our implementation; in HP's it was after the I/O
-	 * space). Therefore, the first three (or so) entries in the segment
-	 * table point to the first three pages of the page tables (which
-	 * point to the kernel) and the next entry in the segment table points
-	 * to the page table map (this is done later).  Therefore, the value
-	 * of the pointer "Sysmap" will be something like 16M*3 = 48M.  When
-	 * the kernel addresses this pointer (e.g., Sysmap[0]), it will get
-	 * the first longword of the first page map (== pt[0]).  Since the
-	 * page map mirrors the segment table, addressing any index of Sysmap
-	 * will give you a PTE of the page maps which map the kernel.
+	 * Sysmap is now placed at the end of Supervisor virtual address space.
 	 */
-	Sysmap = (u_int *)(ptsize << (SEGSHIFT - PGSHIFT));
+	Sysmap = (pt_entry_t *)-(NPTEPG * PAGE_SIZE);
 
 	/*
 	 * Initialize segment tables
 	 */
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040)
-		mmu040_setup(Sysseg, kstsize, pt, ptsize, Sysptmap, 1, kbase);
+		mmu040_setup(Sysseg_pa, kstsize, ptpa, ptsize, Sysptmap_pa,
+		    kbase);
 	else
 #endif /* defined(M68040) || defined(M68060) */
-		mmu030_setup(Sysseg, kstsize, pt, ptsize, Sysptmap, 1, kbase);
+		mmu030_setup(Sysseg_pa, kstsize, ptpa, ptsize, Sysptmap_pa,
+		    kbase);
 
 	/*
 	 * initialize kernel page table page(s).
@@ -360,12 +360,15 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * - Text pages are RO
 	 * - Page zero is invalid
 	 */
-	pg_proto = (0 + kbase) | PG_RO | PG_V;
-	pg       = pt;
-	*pg++ = PG_NV; pg_proto += PAGE_SIZE;
-	for(i = PAGE_SIZE; i < (u_int)etext;
-	    i += PAGE_SIZE, pg_proto += PAGE_SIZE)
+	pg_proto = (0 + kbase) /* relocated PA */ | PG_RO | PG_V;
+	pg       = (pt_entry_t *)ptpa;
+	*pg++    = PG_NV;
+
+	pg_proto += PAGE_SIZE;
+	for (kva = PAGE_SIZE; kva < (vaddr_t)etext; kva += PAGE_SIZE) {
 		*pg++ = pg_proto;
+		pg_proto += PAGE_SIZE;
+	}
 
 	/* 
 	 * data, bss and dynamic tables are read/write
@@ -380,18 +383,23 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	if (mmutype == MMU_68040) {
 
-	    if (kernel_copyback)
-		pg_proto |= PG_CCB;
+		if (kernel_copyback)
+			pg_proto |= PG_CCB;
 
-	    for (; i < (u_int)Sysseg; i += PAGE_SIZE, pg_proto += PAGE_SIZE)
-		*pg++ = pg_proto;
+		for (; kva < (vaddr_t)Sysseg; kva += PAGE_SIZE) {
+			*pg++ = pg_proto;
+			pg_proto += PAGE_SIZE;
+		}
 
-	    pg_proto = (pg_proto & ~PG_CCB) | PG_CI;
-	    for (; i < pstart; i += PAGE_SIZE, pg_proto += PAGE_SIZE)
-		*pg++ = pg_proto;
-	    pg_proto = (pg_proto & ~PG_CI);
-	    if (kernel_copyback)
-		pg_proto |= PG_CCB;
+		pg_proto = (pg_proto & ~PG_CCB) | PG_CI;
+		for (; kva < (vaddr_t)Sysptmap; kva += PAGE_SIZE) {
+			*pg++ = pg_proto;
+			pg_proto += PAGE_SIZE;
+		}
+
+		pg_proto = (pg_proto & ~PG_CI);
+		if (kernel_copyback)
+			pg_proto |= PG_CCB;
 	}
 #endif /* defined(M68040) || defined(M68060) */
 
@@ -399,31 +407,23 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * go till end of data allocated so far
 	 * plus proc0 u-area (to be allocated)
 	 */
-	for(; i < pstart + USPACE; i += PAGE_SIZE, pg_proto += PAGE_SIZE)
+	for (; kva < vstart; kva += PAGE_SIZE) {
 		*pg++ = pg_proto;
+		pg_proto += PAGE_SIZE;
+	}
 
 	/*
 	 * invalidate remainder of kernel PT
 	 */
-	while(pg < &pt[ptsize/sizeof(pt_entry_t)])
+	epg = (pt_entry_t *)ptpa;
+	epg = &epg[ptsize / sizeof(pt_entry_t)];
+	while (pg < epg)
 		*pg++ = PG_NV;
 
 	/*
 	 * Map various I/O areas
 	 */
-	map_io_areas(pt, ptsize, ptextra);
-
-	/*
-	 * Save KVA of proc0 user-area and allocate it
-	 */
-	proc0paddr = pstart;
-	pstart    += USPACE;
-	avail     -= USPACE;
-
-	/*
-	 * At this point, virtual and physical allocation starts to divert.
-	 */
-	vstart     = pstart;
+	map_io_areas(ptpa, ptsize, ptextra);
 
 	/*
 	 * Map the allocated space in ST-ram now. In the contig-case, there
@@ -432,7 +432,8 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * Physcal space is already reserved!
 	 */
 	st_pool_virt = vstart;
-	pg           = &pt[vstart / PAGE_SIZE];
+	pg           = (pt_entry_t *)ptpa;
+	pg           = &pg[vstart / PAGE_SIZE];
 	pg_proto     = st_pool_phys | PG_RW | PG_CI | PG_V;
 	vstart      += st_pool_size;
 	while(pg_proto < (st_pool_phys + st_pool_size)) {
@@ -447,11 +448,21 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * copying there....).
 	 */
 	page_zero  = vstart;
-	pg         = &pt[vstart / PAGE_SIZE];
+	pg         = (pt_entry_t *)ptpa;
+	pg         = &pg[vstart / PAGE_SIZE];
 	*pg++      = PG_RW | PG_CI | PG_V;
 	vstart    += PAGE_SIZE;
 	*pg        = PG_RW | PG_CI | PG_V | PAGE_SIZE;
 	vstart    += PAGE_SIZE;
+
+	/*
+	 * All necessary STEs and PTEs have been initialized.
+	 * Update Sysseg_pa and Sysptmap_pa to point relocated PA.
+	 */
+	if (kbase) {
+		Sysseg_pa   += kbase;
+		Sysptmap_pa += kbase;
+	}
 
 	lowram  = 0 >> PGSHIFT; /* XXX */
 
@@ -475,7 +486,8 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		usable_segs[0].start  = PAGE_SIZE;
 		usable_segs[1].start += pstart;
 	}
-	else usable_segs[0].start += pstart;
+	else
+		usable_segs[0].start += pstart;
 
 	/*
 	 * As all segment sizes are now valid, calculate page indexes and
@@ -490,21 +502,20 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	for (i = 0, physmem = 0; usable_segs[i].start; i++)
 		physmem += usable_segs[i].end - usable_segs[i].start;
 	physmem >>= PGSHIFT;
-  
+
 	/*
 	 * get the pmap module in sync with reality.
 	 */
-	pmap_bootstrap(vstart, stio_addr, ptextra);
+	pmap_bootstrap(vstart, Sysseg_pa);
 
 	/*
 	 * Prepare to enable the MMU.
 	 * Setup and load SRP nolimit, share global, 4 byte PTE's
 	 */
 	protorp[0] = 0x80000202;
-	protorp[1] = (u_int)Sysseg + kbase;	/* + segtable address */
-	Sysseg_pa  = (u_int)Sysseg + kbase;
+	protorp[1] = Sysseg_pa;			/* + segtable address */
 
-	cpu_init_kcorehdr(kbase);
+	cpu_init_kcorehdr(kbase, Sysseg_pa);
 
 	/*
 	 * copy over the kernel (and all now initialized variables) 
@@ -512,11 +523,11 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * than 128k !
 	 */
 	if(kbase) {
-		register u_long	*lp, *le, *fp;
+		register paddr_t *lp, *le, *fp;
 
-		lp = (u_long *)0;
-		le = (u_long *)pstart;
-		fp = (u_long *)kbase;
+		lp = (paddr_t *)0;
+		le = (paddr_t *)pstart;
+		fp = (paddr_t *)kbase;
 		while(lp < le)
 			*fp++ = *lp++;
 	}
@@ -552,7 +563,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		tc = 0x82d08b00;
 		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
- 
+
 	/* Is this to fool the optimizer?? */
 	i = *(int *)proc0paddr;
 	*(volatile int *)proc0paddr = i;
@@ -709,17 +720,18 @@ atari_hwinit()
  * All I/O areas are virtually mapped at the end of the pt-table.
  */
 static void
-map_io_areas(pt, ptsize, ptextra)
-pt_entry_t	*pt;
-u_int		ptsize;		/* Size of 'pt' in bytes	*/
-u_int		ptextra;	/* #of additional I/O pte's	*/
+map_io_areas(ptpa, ptsize, ptextra)
+	paddr_t		ptpa;
+	psize_t		ptsize;		/* Size of 'pt' in bytes	*/
+	u_int		ptextra;	/* #of additional I/O pte's	*/
 {
 	extern void	bootm_init __P((vaddr_t, pt_entry_t *, u_long));
 	vaddr_t		ioaddr;
-	pt_entry_t	*pg, *epg;
+	pt_entry_t	*pt, *pg, *epg;
 	pt_entry_t	pg_proto;
 	u_long		mask;
 
+	pt = (pt_entry_t *)ptpa;
 	ioaddr = ((ptsize / sizeof(pt_entry_t)) - ptextra) * PAGE_SIZE;
 
 	/*
@@ -845,8 +857,9 @@ cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *p_blkno)
  * Initialize the cpu_kcore_header.
  */
 static void
-cpu_init_kcorehdr(kbase)
-u_long	kbase;
+cpu_init_kcorehdr(kbase, sysseg_pa)
+	paddr_t	kbase;
+	paddr_t sysseg_pa;
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -883,7 +896,7 @@ u_long	kbase;
 	/*
 	 * Initialize pointer to kernel segment table.
 	 */
-	m->sysseg_pa = (u_int)Sysseg + kbase;
+	m->sysseg_pa = sysseg_pa;		/* PA after relocation */
 
 	/*
 	 * Initialize relocation value such that:
@@ -895,7 +908,7 @@ u_long	kbase;
 	/*
 	 * Define the end of the relocatable range.
 	 */
-	m->relocend = (u_int32_t)end;
+	m->relocend = (vaddr_t)end;
 
 	for (i = 0; i < NMEM_SEGS; i++) {
 		m->ram_segs[i].start = boot_segs[i].start;
@@ -905,30 +918,27 @@ u_long	kbase;
 }
 
 void
-mmu030_setup(sysseg, kstsize, pt, ptsize, sysptmap, sysptsize, kbase)
-	st_entry_t	*sysseg;	/* System segment table		*/
+mmu030_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
+	paddr_t		sysseg_pa;	/* System segment table		*/
 	u_int		kstsize;	/* size of 'sysseg' in pages	*/
-	pt_entry_t	*pt;		/* Kernel page table		*/
-	u_int		ptsize;		/* size	of 'pt' in bytes	*/
-	pt_entry_t	*sysptmap;	/* System page table		*/
-	u_int		sysptsize;	/* size of 'sysptmap' in pages	*/
-	u_int		kbase;
+	paddr_t		ptpa;		/* Kernel page table		*/
+	psize_t		ptsize;		/* size	of 'pt' in bytes	*/
+	paddr_t		sysptmap_pa;	/* System page table		*/
+	paddr_t		kbase;
 {
-	st_entry_t	sg_proto, *sg;
+	st_entry_t	sg_proto, *sg, *esg;
 	pt_entry_t	pg_proto, *pg, *epg;
-
-	sg_proto = ((u_int)pt + kbase) | SG_RW | SG_V;
-	pg_proto = ((u_int)pt + kbase) | PG_RW | PG_CI | PG_V;
 
 	/*
 	 * Map the page table pages in both the HW segment table
-	 * and the software Sysptmap.  Note that Sysptmap is also
-	 * considered a PT page, hence the +sysptsize.
+	 * and the software Sysptmap.
 	 */
-	sg  = sysseg;
-	pg  = sysptmap; 
-	epg = &pg[(ptsize >> PGSHIFT) + sysptsize];
-	while(pg < epg) {
+	sg  = (st_entry_t *)sysseg_pa;
+	pg  = (pt_entry_t *)sysptmap_pa;
+	epg = &pg[ptsize >> PGSHIFT];
+	sg_proto = (ptpa + kbase) /* relocated PA */ | SG_RW | SG_V;
+	pg_proto = (ptpa + kbase) /* relocated PA */ | PG_RW | PG_CI | PG_V;
+	while (pg < epg) {
 		*sg++ = sg_proto;
 		*pg++ = pg_proto;
 		sg_proto += PAGE_SIZE;
@@ -936,88 +946,132 @@ mmu030_setup(sysseg, kstsize, pt, ptsize, sysptmap, sysptsize, kbase)
 	}
 
 	/* 
-	 * invalidate the remainder of the tables
+	 * Invalidate the remainder of the tables.
 	 */
-	epg = &sysptmap[sysptsize * NPTEPG];
-	while(pg < epg) {
+	esg = (st_entry_t *)sysseg_pa;
+	esg = &esg[256];			/* XXX should be TIA_SIZE */
+	while (sg < esg)
 		*sg++ = SG_NV;
+	epg = (pt_entry_t *)sysptmap_pa;
+	epg = &epg[NPTEPG];			/* XXX should be TIB_SIZE */
+	while (pg < epg)
 		*pg++ = PG_NV;
-	}
+
+	/*
+	 * Initialize the PTE for the last one to point Sysptmap.
+	 */
+	sg = (st_entry_t *)sysseg_pa;
+	sg = &sg[256 - 1];			/* XXX should be TIA_SIZE */
+	pg = (pt_entry_t *)sysptmap_pa;
+	pg = &pg[256 - 1];			/* XXX should be TIA_SIZE */
+	*sg = (sysptmap_pa + kbase) /* relocated PA */ | SG_RW | SG_V;
+	*pg = (sysptmap_pa + kbase) /* relocated PA */ | PG_RW | PG_CI | PG_V;
 }
 
 #if defined(M68040) || defined(M68060)
 void
-mmu040_setup(sysseg, kstsize, pt, ptsize, sysptmap, sysptsize, kbase)
-	st_entry_t	*sysseg;	/* System segment table		*/
+mmu040_setup(sysseg_pa, kstsize, ptpa, ptsize, sysptmap_pa, kbase)
+	paddr_t		sysseg_pa;	/* System segment table		*/
 	u_int		kstsize;	/* size of 'sysseg' in pages	*/
-	pt_entry_t	*pt;		/* Kernel page table		*/
-	u_int		ptsize;		/* size	of 'pt' in bytes	*/
-	pt_entry_t	*sysptmap;	/* System page table		*/
-	u_int		sysptsize;	/* size of 'sysptmap' in pages	*/
-	u_int		kbase;
+	paddr_t		ptpa;		/* Kernel page table		*/
+	psize_t		ptsize;		/* size	of 'pt' in bytes	*/
+	paddr_t		sysptmap_pa;	/* System page table		*/
+	paddr_t		kbase;
 {
-	int		i;
+	int		nl1desc, nl2desc, i;
 	st_entry_t	sg_proto, *sg, *esg;
-	pt_entry_t	pg_proto;
+	pt_entry_t	pg_proto, *pg, *epg;
 
 	/*
 	 * First invalidate the entire "segment table" pages
 	 * (levels 1 and 2 have the same "invalid" values).
 	 */
-	sg  = sysseg;
+	sg  = (st_entry_t *)sysseg_pa;
 	esg = &sg[kstsize * NPTEPG];
 	while (sg < esg)
 		*sg++ = SG_NV;
 
 	/*
 	 * Initialize level 2 descriptors (which immediately
-	 * follow the level 1 table). These should map 'pt' + 'sysptmap'.
+	 * follow the level 1 table).
 	 * We need:
 	 *	NPTEPG / SG4_LEV3SIZE
-	 * level 2 descriptors to map each of the nptpages + 1
+	 * level 2 descriptors to map each of the nptpages
 	 * pages of PTEs.  Note that we set the "used" bit
 	 * now to save the HW the expense of doing it.
 	 */
-	i   = ((ptsize >> PGSHIFT) + sysptsize) * (NPTEPG / SG4_LEV3SIZE);
-	sg  = &sysseg[SG4_LEV1SIZE];
-	esg = &sg[i];
-	sg_proto = ((u_int)pt + kbase) | SG_U | SG_RW | SG_V;
+	nl2desc = (ptsize >> PGSHIFT) * (NPTEPG / SG4_LEV3SIZE);
+	sg  = (st_entry_t *)sysseg_pa;
+	sg  = &sg[SG4_LEV1SIZE];
+	esg = &sg[nl2desc];
+	sg_proto = (ptpa + kbase) /* relocated PA */ | SG_U | SG_RW | SG_V;
 	while (sg < esg) {
 		*sg++     = sg_proto;
-		sg_proto += (SG4_LEV3SIZE * sizeof (st_entry_t));
+		sg_proto += (SG4_LEV3SIZE * sizeof(st_entry_t));
 	}
 
 	/*
 	 * Initialize level 1 descriptors.  We need:
-	 *	roundup(num, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
-	 * level 1 descriptors to map the 'num' level 2's.
+	 *	howmany(nl2desc, SG4_LEV2SIZE)
+	 * level 1 descriptors to map the 'nl2desc' level 2's.
 	 */
-	i = roundup(i, SG4_LEV2SIZE) / SG4_LEV2SIZE;
-	protostfree = (-1 << (i + 1)) /* & ~(-1 << MAXKL2SIZE) */;
-	sg  = sysseg;
-	esg = &sg[i];
-	sg_proto = ((u_int)&sg[SG4_LEV1SIZE] + kbase) | SG_U | SG_RW |SG_V;
+	nl1desc = howmany(nl2desc, SG4_LEV2SIZE);
+	sg  = (st_entry_t *)sysseg_pa;
+	esg = &sg[nl1desc];
+	sg_proto = ((paddr_t)&sg[SG4_LEV1SIZE] + kbase) /* relocated PA */
+	    | SG_U | SG_RW | SG_V;
 	while (sg < esg) {
 		*sg++     = sg_proto;
 		sg_proto += (SG4_LEV2SIZE * sizeof(st_entry_t));
 	}
 
+	/* Sysmap is last entry in level 1 */
+	sg  = (st_entry_t *)sysseg_pa;
+	sg  = &sg[SG4_LEV1SIZE - 1];
+	*sg = sg_proto;
+
 	/*
-	 * Initialize sysptmap
+	 * Kernel segment table at end of next level 2 table
 	 */
-	sg  = sysptmap;
-	esg = &sg[(ptsize >> PGSHIFT) + sysptsize];
-	pg_proto = ((u_int)pt + kbase) | PG_RW | PG_CI | PG_V;
+	i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
+	sg  = (st_entry_t *)sysseg_pa;
+	sg  = &sg[i + SG4_LEV2SIZE - (NPTEPG / SG4_LEV3SIZE)];
+	esg = &sg[NPTEPG / SG4_LEV3SIZE];
+	sg_proto = (sysptmap_pa + kbase) /* relocated PA */
+	    | SG_U | SG_RW | SG_V;
 	while (sg < esg) {
-		*sg++     = pg_proto;
+		*sg++ = sg_proto;
+		sg_proto += (SG4_LEV3SIZE * sizeof(st_entry_t));
+	}
+
+	/* Include additional level 2 table for Sysmap in protostfree */
+	protostfree = (~0 << (1 + nl1desc + 1)) /* & ~(~0 << MAXKL2SIZE) */;
+
+	/*
+	 * Initialize Sysptmap
+	 */
+	pg  = (pt_entry_t *)sysptmap_pa;
+	epg = &pg[ptsize >> PGSHIFT];
+	pg_proto = (ptpa + kbase) /* relocated PA */ | PG_RW | PG_CI | PG_V;
+	while (pg < epg) {
+		*pg++ = pg_proto;
 		pg_proto += PAGE_SIZE;
 	}
+
 	/*
-	 * Invalidate rest of Sysptmap page
+	 * Invalidate rest of Sysptmap page.
 	 */
-	esg = &sysptmap[sysptsize * NPTEPG];
-	while (sg < esg)
-		*sg++ = SG_NV;
+	epg = (pt_entry_t *)sysptmap_pa;
+	epg = &epg[NPTEPG];		/* XXX: should be TIB_SIZE */
+	while (pg < epg)
+		*pg++ = PG_NV;
+
+	/*
+	 * Initialize the PTE for the last one to point Sysptmap.
+	 */
+	pg = (pt_entry_t *)sysptmap_pa;
+	pg = &pg[256 - 1];		/* XXX: should be TIA_SIZE */
+	*pg = (sysptmap_pa + kbase) /* relocated PA */ | PG_RW | PG_CI | PG_V;
 }
 #endif /* M68040 */
 
@@ -1121,7 +1175,7 @@ dump_segtable(stp)
 
 	s = stp;
 	{
-		es = s + (ATARI_STSIZE >> 2);
+		es = s + (M68K_STSIZE >> 2);
 		shift = SG_ISHIFT;
 	}
 

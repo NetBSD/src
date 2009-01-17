@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.75.22.1 2008/06/02 13:23:56 mjf Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.75.22.2 2009/01/17 13:29:10 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ void usbd_get_xfer_status(usbd_xfer_handle, usbd_private_handle *,
 usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 			(usbd_interface_handle, u_int8_t);
 usbd_status usbd_abort_pipe(usbd_pipe_handle);
+usbd_status usbd_abort_default_pipe(usbd_device_handle);
 usbd_status usbd_clear_endpoint_stall(usbd_pipe_handle);
 usbd_status usbd_clear_endpoint_stall_async(usbd_pipe_handle);
 void usbd_clear_endpoint_toggle(usbd_pipe_handle);

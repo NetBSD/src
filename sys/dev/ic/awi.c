@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.77.16.1 2008/06/02 13:23:19 mjf Exp $	*/
+/*	$NetBSD: awi.c,v 1.77.16.2 2009/01/17 13:28:54 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.77.16.1 2008/06/02 13:23:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.77.16.2 2009/01/17 13:28:54 mjf Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -902,6 +902,8 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (sc->sc_enabled) {
 				/*

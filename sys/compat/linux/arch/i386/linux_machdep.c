@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.133.6.3 2008/09/28 10:40:15 mjf Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.133.6.4 2009/01/17 13:28:43 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.133.6.3 2008/09/28 10:40:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.133.6.4 2009/01/17 13:28:43 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -297,9 +297,6 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		lsi->lsi_utime = ksi->ksi_utime;
 		lsi->lsi_stime = ksi->ksi_stime;
-
-		/* We use the same codes */
-		lsi->lsi_code = ksi->ksi_code;
 		/* XXX is that right? */
 		lsi->lsi_status = WEXITSTATUS(ksi->ksi_status);
 		break;
@@ -818,8 +815,8 @@ fd2biosinfo(struct proc *p, struct file *fp)
 		return NULL;
 
 	blkname = devsw_blk2name(major(vp->v_rdev));
-	snprintf(diskname, sizeof diskname, "%s%u", blkname,
-	    DISKUNIT(vp->v_rdev));
+	snprintf(diskname, sizeof diskname, "%s%llu", blkname,
+	    (unsigned long long)DISKUNIT(vp->v_rdev));
 
 	for (i = 0; i < dl->dl_nnativedisks; i++) {
 		nip = &dl->dl_nativedisks[i];
@@ -1120,7 +1117,9 @@ linux_get_uname_arch(void)
 void *
 linux_get_newtls(struct lwp *l)
 {
+#if 0
 	struct trapframe *tf = l->l_md.md_regs;
+#endif
 
 	/* XXX: Implement me */
 	return NULL;

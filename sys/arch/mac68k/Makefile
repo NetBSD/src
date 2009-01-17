@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2007/02/25 05:47:55 dyoung Exp $
+#	$NetBSD: Makefile,v 1.9.42.1 2009/01/17 13:28:11 mjf Exp $
 
 # Makefile for mac68k tags file and boot blocks
 
@@ -20,7 +20,8 @@ tags:
 	-rm -f ${TMAC68K}
 	-echo ${SMAC68K} ${SM68K} ${COMM} | xargs ctags -wdtf ${TMAC68K}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AMAC68K} ${AM68K} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TMAC68K}
 	sort -o ${TMAC68K} ${TMAC68K}
 

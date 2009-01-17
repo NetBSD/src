@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.2 1998/07/22 12:49:42 leo Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.2.150.1 2009/01/17 13:27:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -57,10 +57,10 @@ struct ahdilabel {
 };
 
 u_int	dkcksum __P((struct disklabel *));
-daddr_t	readdisklabel __P((char *, struct disklabel *));
+u_int32_t readdisklabel __P((char *, struct disklabel *));
 
 static int  bsd_label __P((int, off_t, struct disklabel *));
-static int  ahdi_label __P((int, daddr_t *, struct disklabel *));
+static int  ahdi_label __P((int, u_int32_t *, struct disklabel *));
 static int  ahdi_getparts __P((int, daddr_t, daddr_t, struct ahdilabel *));
 
 u_int
@@ -76,13 +76,13 @@ dkcksum (dl)
 	return(sum);
 }
 
-daddr_t
+u_int32_t
 readdisklabel (fn, dl)
 	char		 *fn;
 	struct disklabel *dl;
 {
 	int		 fd, e;
-	daddr_t		 bbsec;
+	u_int32_t	 bbsec;
 
 	memset(dl, 0, sizeof *dl);
 
@@ -137,7 +137,7 @@ bsd_label (fd, offs, label)
 static int
 ahdi_label (fd, bbsec, label)
 	int		 fd;
-	daddr_t		 *bbsec;
+	u_int32_t	 *bbsec;
 	struct disklabel *label;
 {
 	struct ahdilabel al;

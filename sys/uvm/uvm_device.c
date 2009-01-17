@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.53.6.1 2008/06/05 19:14:38 mjf Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.53.6.2 2009/01/17 13:29:43 mjf Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53.6.1 2008/06/05 19:14:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53.6.2 2009/01/17 13:29:43 mjf Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -221,8 +221,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 		mutex_exit(&udv_lock);
 		/* NOTE: we could sleep in the following malloc() */
-		MALLOC(udv, struct uvm_device *, sizeof(*udv), M_TEMP,
-		       M_WAITOK);
+		udv = malloc(sizeof(*udv), M_TEMP, M_WAITOK);
 		mutex_enter(&udv_lock);
 
 		/*
@@ -242,7 +241,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 		if (lcv) {
 			mutex_exit(&udv_lock);
-			FREE(udv, M_TEMP);
+			free(udv, M_TEMP);
 			continue;
 		}
 
@@ -332,7 +331,7 @@ again:
 	mutex_exit(&udv_lock);
 	mutex_exit(&uobj->vmobjlock);
 	UVM_OBJ_DESTROY(uobj);
-	FREE(udv, M_TEMP);
+	free(udv, M_TEMP);
 	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
 }
 

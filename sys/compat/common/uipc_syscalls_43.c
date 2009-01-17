@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.41 2008/01/15 09:25:26 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.41.6.1 2009/01/17 13:28:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.41 2008/01/15 09:25:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.41.6.1 2009/01/17 13:28:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,147 +397,4 @@ compat_43_sa_put(void *from)
 		return (error);
 
 	return (0);
-}
-
-u_long 
-compat_cvtcmd(u_long cmd)
-{ 
-	u_long ncmd;
-
-	if (IOCPARM_LEN(cmd) != sizeof(struct oifreq))
-		return cmd;
-
-	ncmd = ((cmd) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) | 
-		(sizeof(struct ifreq) << IOCPARM_SHIFT);
-
-	switch (ncmd) {
-	case BIOCGETIF:
-	case BIOCSETIF:
-	case GREDSOCK:
-	case GREGADDRD:
-	case GREGADDRS:
-	case GREGPROTO:
-	case GRESADDRD:
-	case GRESADDRS:
-	case GRESPROTO:
-	case GRESSOCK:
-#ifdef COMPAT_20
-	case OSIOCG80211STATS:
-	case OSIOCG80211ZSTATS:
-#endif /* COMPAT_20 */
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCDIFADDR:
-	case SIOCDIFADDR_IN6:
-	case SIOCDIFPHYADDR:
-	case SIOCGDEFIFACE_IN6:
-	case SIOCG80211NWID:
-	case SIOCG80211STATS:
-	case SIOCG80211ZSTATS:
-	case SIOCGIFADDR:
-	case SIOCGIFADDR_IN6:
-	case SIOCGIFAFLAG_IN6:
-	case SIOCGIFALIFETIME_IN6:
-	case SIOCGIFBRDADDR:
-	case SIOCGIFDLT:
-	case SIOCGIFDSTADDR:
-	case SIOCGIFDSTADDR_IN6:
-	case SIOCGIFFLAGS:
-	case SIOCGIFGENERIC:
-	case SIOCGIFMETRIC:
-	case SIOCGIFMTU:
-	case SIOCGIFNETMASK:
-	case SIOCGIFNETMASK_IN6:
-	case SIOCGIFPDSTADDR:
-	case SIOCGIFPDSTADDR_IN6:
-	case SIOCGIFPSRCADDR:
-	case SIOCGIFPSRCADDR_IN6:
-	case SIOCGIFSTAT_ICMP6:
-	case SIOCGIFSTAT_IN6:
-	case SIOCGPVCSIF:
-	case SIOCGVH:
-	case SIOCIFCREATE:
-	case SIOCIFDESTROY:
-	case SIOCS80211NWID:
-	case SIOCSDEFIFACE_IN6:
-	case SIOCSIFADDR:
-	case SIOCSIFADDR_IN6:
-	case SIOCSIFBRDADDR:
-	case SIOCSIFDSTADDR:
-	case SIOCSIFDSTADDR_IN6:
-	case SIOCSIFFLAGS:
-	case SIOCSIFGENERIC:
-	case SIOCSIFMEDIA:
-	case SIOCSIFMETRIC:
-	case SIOCSIFMTU:
-	case SIOCSIFNETMASK:
-	case SIOCSIFNETMASK_IN6:
-	case SIOCSNDFLUSH_IN6:
-	case SIOCSPFXFLUSH_IN6:
-	case SIOCSPVCSIF:
-	case SIOCSRTRFLUSH_IN6:
-	case SIOCSVH:
-	case TAPGIFNAME:
-		return ncmd;
-	}
-	return cmd;
-}
-
-int
-compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
-    struct lwp *l)
-{
-	int error;
-	struct ifreq *ifr = data;
-	struct ifnet *ifp = ifunit(ifr->ifr_name);
-	struct sockaddr *sa;
-
-	if (ifp == NULL)
-		return ENXIO;
-
-	switch (ocmd) {
-	case OSIOCSIFADDR:
-	case OSIOCSIFDSTADDR:
-	case OSIOCSIFBRDADDR:
-	case OSIOCSIFNETMASK:
-		sa = &ifr->ifr_addr;
-#if BYTE_ORDER != BIG_ENDIAN
-		if (sa->sa_family == 0 && sa->sa_len < 16) {
-			sa->sa_family = sa->sa_len;
-			sa->sa_len = 16;
-		}
-#else
-		if (sa->sa_len == 0)
-			sa->sa_len = 16;
-#endif
-		break;
-
-	case OOSIOCGIFADDR:
-		cmd = SIOCGIFADDR;
-		break;
-
-	case OOSIOCGIFDSTADDR:
-		cmd = SIOCGIFDSTADDR;
-		break;
-
-	case OOSIOCGIFBRDADDR:
-		cmd = SIOCGIFBRDADDR;
-		break;
-
-	case OOSIOCGIFNETMASK:
-		cmd = SIOCGIFNETMASK;
-	}
-
-	error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-	    (struct mbuf *)cmd, (struct mbuf *)ifr, (struct mbuf *)ifp, l);
-
-	switch (ocmd) {
-	case OOSIOCGIFADDR:
-	case OOSIOCGIFDSTADDR:
-	case OOSIOCGIFBRDADDR:
-	case OOSIOCGIFNETMASK:
-		*(u_int16_t *)&ifr->ifr_addr = 
-		    ((struct sockaddr *)&ifr->ifr_addr)->sa_family;
-	}
-	return error;
 }

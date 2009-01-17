@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.6.2 2008/09/28 10:39:52 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.6.3 2009/01/17 13:27:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.6.2 2008/09/28 10:39:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.6.3 2009/01/17 13:27:56 mjf Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -149,8 +149,6 @@ struct cpu_info cpu_info_store;
 
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
-
-extern vaddr_t virtual_avail;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -271,9 +269,6 @@ consinit()
 		zscons.cn_putc = zs_kgdb_cnputc;
 		zscons.cn_getc = zs_kgdb_cngetc;
 	}
-#endif
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, 0, 0);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -436,6 +431,8 @@ cpu_reboot(howto, bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {

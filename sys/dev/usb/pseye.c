@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.9.2.3 2008/10/05 20:11:31 mjf Exp $ */
+/* $NetBSD: pseye.c,v 1.9.2.4 2009/01/17 13:29:09 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.9.2.3 2008/10/05 20:11:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.9.2.4 2009/01/17 13:29:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,6 +256,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    USBDEV(self));
+
 }
 
 static int

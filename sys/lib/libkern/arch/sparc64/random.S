@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
+/*	$NetBSD: random.S,v 1.1.1.1.146.1 2009/01/17 13:29:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -45,13 +45,21 @@
 	.data
 randseed:
 	.long	1
+
 	.text
 ENTRY(random)
 	sethi	%hi(16807), %o1
 	wr	%o1, %lo(16807), %y
-	 sethi	%hi(randseed), %g1
-	 ld	[%g1 + %lo(randseed)], %o0
-	 andcc	%g0, 0, %o2
+#ifdef PIC
+	PIC_PROLOGUE(%o5, %o2)
+	set	randseed, %g1
+	ldx	[%o5 + %g1], %g1
+	ld	[%g1], %o0
+#else
+	sethi	%hi(randseed), %g1
+	ld	[%g1 + %lo(randseed)], %o0
+#endif
+	andcc	%g0, 0, %o2
 	mulscc  %o2, %o0, %o2
 	mulscc  %o2, %o0, %o2
 	mulscc  %o2, %o0, %o2
@@ -77,12 +85,20 @@ ENTRY(random)
 	or	%o3, %o0, %o0
 	addcc	%o0, %o1, %o0
 	bneg	1f
-	 sethi	%hi(0x7fffffff), %o1
+	sethi	%hi(0x7fffffff), %o1
 	retl
-	 st	%o0, [%g1 + %lo(randseed)]
+#ifdef PIC
+	st	%o0, [%g1]
+#else
+	st	%o0, [%g1 + %lo(randseed)]
+#endif
 1:
 	or	%o1, %lo(0x7fffffff), %o1
 	add	%o0, 1, %o0
 	and	%o1, %o0, %o0
 	retl
-	 st	%o0, [%g1 + %lo(randseed)]
+#ifdef PIC
+	st	%o0, [%g1]
+#else
+	st	%o0, [%g1 + %lo(randseed)]
+#endif

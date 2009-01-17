@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthreevar.h,v 1.4.70.1 2008/06/02 13:23:52 mjf Exp $ */
+/*	$NetBSD: cgthreevar.h,v 1.4.70.2 2009/01/17 13:29:08 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,13 @@ struct cgthree_softc {
 	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
 
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
+#if NWSDISPLAY > 0	
+	uint32_t sc_width;
+	uint32_t sc_height;	/* display width / height */
+	uint32_t sc_stride;
+	int sc_mode;
+	struct vcons_data vd;
+#endif	
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 

@@ -277,6 +277,26 @@ void	arm8_setup		(char *);
 u_int	arm8_clock_config	(u_int, u_int);
 #endif
 
+#ifdef CPU_FA526
+void	fa526_setup		(char *);
+void	fa526_setttb		(u_int);
+void	fa526_context_switch	(u_int);
+void	fa526_cpu_sleep		(int);
+void	fa526_tlb_flushI_SE	(u_int);
+void	fa526_tlb_flushID_SE	(u_int);
+void	fa526_flush_prefetchbuf	(void);
+void	fa526_flush_brnchtgt_E	(u_int);
+
+void	fa526_icache_sync_all	(void);
+void	fa526_icache_sync_range(vaddr_t, vsize_t);
+void	fa526_dcache_wbinv_all	(void);
+void	fa526_dcache_wbinv_range(vaddr_t, vsize_t);
+void	fa526_dcache_inv_range	(vaddr_t, vsize_t);
+void	fa526_dcache_wb_range	(vaddr_t, vsize_t);
+void	fa526_idcache_wbinv_all(void);
+void	fa526_idcache_wbinv_range(vaddr_t, vsize_t);
+#endif
+
 #ifdef CPU_SA110
 void	sa110_setup		(char *);
 void	sa110_context_switch	(u_int);
@@ -439,6 +459,7 @@ void	arm1136_sleep_rev0		(int);	/* for errata 336501 */
 
 #if defined(CPU_ARM9) || defined(CPU_ARM9E) || defined(CPU_ARM10) || \
     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
+    defined(CPU_FA526) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 
@@ -574,6 +595,7 @@ static inline register_t cpsid(register_t psw) __attribute__((__unused__));
 static inline void
 cpsie(register_t psw)
 {
+#ifdef _ARM_ARCH_6
 	if (!__builtin_constant_p(psw)) {
 		enable_interrupts(psw);
 		return;
@@ -583,11 +605,15 @@ cpsie(register_t psw)
 	case F32_bit:		__asm("cpsie\tf"); break;
 	case I32_bit|F32_bit:	__asm("cpsie\tif"); break;
 	}
+#else
+	enable_interrupts(psw);
+#endif
 }
 
 static inline register_t
 cpsid(register_t psw)
 {
+#ifdef _ARM_ARCH_6
 	register_t oldpsw;
 	if (!__builtin_constant_p(psw))
 		return disable_interrupts(psw);
@@ -599,6 +625,9 @@ cpsid(register_t psw)
 	case I32_bit|F32_bit:	__asm("cpsid\tif"); break;
 	}
 	return oldpsw;
+#else 
+	return disable_interrupts(psw);
+#endif
 }
 
 #else /* ! __PROG32 */

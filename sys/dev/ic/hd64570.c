@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.38.16.1 2008/06/02 13:23:21 mjf Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.38.16.2 2009/01/17 13:28:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.38.16.1 2008/06/02 13:23:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.38.16.2 2009/01/17 13:28:55 mjf Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -926,10 +926,10 @@ sca_output(
 }
 
 static int
-sca_ioctl(ifp, cmd, addr)
+sca_ioctl(ifp, cmd, data)
      struct ifnet *ifp;
      u_long cmd;
-     void *addr;
+     void *data;
 {
 	struct ifreq *ifr;
 	struct ifaddr *ifa;
@@ -938,12 +938,12 @@ sca_ioctl(ifp, cmd, addr)
 
 	s = splnet();
 
-	ifr = (struct ifreq *)addr;
-	ifa = (struct ifaddr *)addr;
+	ifr = (struct ifreq *)data;
+	ifa = (struct ifaddr *)data;
 	error = 0;
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -997,6 +997,8 @@ sca_ioctl(ifp, cmd, addr)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifr->ifr_flags & IFF_UP) {
 			ifp->if_flags |= IFF_UP;
 			sca_port_up(ifp->if_softc);
@@ -1008,7 +1010,7 @@ sca_ioctl(ifp, cmd, addr)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 
 	splx(s);

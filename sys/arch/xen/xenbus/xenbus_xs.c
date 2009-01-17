@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.13.6.1 2008/04/03 12:42:31 mjf Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.13.6.2 2009/01/17 13:28:40 mjf Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.13.6.1 2008/04/03 12:42:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.13.6.2 2009/01/17 13:28:40 mjf Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.13.6.1 2008/04/03 12:42:31 mjf Exp $
 
 #include <machine/stdarg.h>
 
+#include <xen/xen.h>	/* for xendomain_is_dom0() */
 #include <xen/xenbus.h>
 #include "xenbus_comms.h"
 
@@ -139,7 +140,7 @@ read_reply(enum xsd_sockmsg_type *type, unsigned int *len)
 	if (len)
 		*len = msg->hdr.len;
 	body = msg->u.reply.body;
-	DPRINTK("read_reply: type %d body %s\n",
+	DPRINTK("read_reply: type %d body %s",
 	    msg->hdr.type, body);
 
 	free(msg, M_DEVBUF);
@@ -219,7 +220,7 @@ xs_talkv(struct xenbus_transaction *t,
 
 	for (i = 0; i < num_vecs; i++) {
 		DPRINTK("write iovect");
-		err = xb_write(iovec[i].iov_base, iovec[i].iov_len);;
+		err = xb_write(iovec[i].iov_base, iovec[i].iov_len);
 		DPRINTK("write iovect err %d", err);
 		if (err) {
 			mutex_exit(&xs_state.xs_lock);
@@ -746,7 +747,7 @@ xenwatch_thread(void *unused)
 			simple_lock(&watch_events_lock);
 			SIMPLEQ_REMOVE_HEAD(&watch_events, msg_next);
 			simple_unlock(&watch_events_lock);
-			DPRINTK("xenwatch_thread: got event\n");
+			DPRINTK("xenwatch_thread: got event");
 
 			msg->u.watch.handle->xbw_callback(
 				msg->u.watch.handle,
@@ -794,7 +795,7 @@ process_msg(void)
 	body[msg->hdr.len] = '\0';
 
 	if (msg->hdr.type == XS_WATCH_EVENT) {
-		DPRINTK("process_msg: XS_WATCH_EVENT\n");
+		DPRINTK("process_msg: XS_WATCH_EVENT");
 		msg->u.watch.vec = split(body, msg->hdr.len,
 					 &msg->u.watch.vec_size);
 		if (msg->u.watch.vec == NULL) {
@@ -818,7 +819,7 @@ process_msg(void)
 		splx(s);
 		simple_unlock(&watches_lock);
 	} else {
-		DPRINTK("process_msg: type %d body %s\n", msg->hdr.type, body);
+		DPRINTK("process_msg: type %d body %s", msg->hdr.type, body);
 		    
 		msg->u.reply.body = body;
 		simple_lock(&xs_state.reply_lock);
@@ -845,7 +846,7 @@ xenbus_thread(void *unused)
 }
 
 int
-xs_init(void)
+xs_init(device_t dev)
 {
 	int err;
 
@@ -855,13 +856,17 @@ xs_init(void)
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenwatch_thread,
 	    NULL, NULL, "xenwatch");
-	if (err)
-		printf("kthread_create(xenwatch): %d\n", err);
+	if (err) {
+		aprint_error_dev(dev, "kthread_create(xenwatch): %d\n", err);
+		return err;
+	}
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenbus_thread,
 	    NULL, NULL, "xenbus");
-	if (err)
-		printf("kthread_create(xenbus): %d\n", err);
+	if (err) {
+		aprint_error_dev(dev, "kthread_create(xenbus): %d\n", err);
+		return err;
+	}
 
 	return 0;
 }

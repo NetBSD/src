@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1.8.3 2008/09/28 10:39:57 mjf Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.1.8.4 2009/01/17 13:28:02 mjf Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1.8.3 2008/09/28 10:39:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1.8.4 2009/01/17 13:28:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				    tf->tf_t1, scargs[1], scargs[2],
 				    scargs[3], scargs[4]);
 			else
-				pr("-- trap #%d%s\n", tf->tf_flags & 0x3f,
+				pr("-- trap #%d (%p) %s\n", tf->tf_flags & 0x3f, tf,
 				    (tf->tf_flags & T_USER)? " from user" : "");
 
 			if (!(tf->tf_flags & TFF_LAST)) {

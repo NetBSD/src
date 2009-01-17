@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45.74.1 2008/06/02 13:22:23 mjf Exp $
+#	$NetBSD: Makefile,v 1.45.74.2 2009/01/17 13:28:14 mjf Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,7 +7,8 @@ FILES=		${PROG}.elf ${PROG}.xcf
 SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c alloc.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
-CFLAGS+=	-Wno-main -msoft-float -mmultiple -ffreestanding
+CFLAGS+=	-msoft-float -mmultiple -ffreestanding
+CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK

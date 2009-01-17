@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.154.6.3 2008/09/28 10:40:27 mjf Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.154.6.4 2009/01/17 13:29:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.154.6.3 2008/09/28 10:40:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.154.6.4 2009/01/17 13:29:00 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -848,6 +848,15 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_C,
 	  "82801I (C) LAN Controller",
 	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M,
+	  "82801I mobile LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IGP_M_V,
+	  "82801I mobile (V) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
+	  "82801I mobile (AMT) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -1083,7 +1092,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 	} else if (sc->sc_type >= WM_T_82571) {
 		sc->sc_flags |= WM_F_PCIE;
-		if ((sc->sc_type != WM_T_ICH8) || (sc->sc_type != WM_T_ICH9))
+		if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9))
 			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 		aprint_verbose_dev(sc->sc_dev, "PCI-Express bus\n");
 	} else {

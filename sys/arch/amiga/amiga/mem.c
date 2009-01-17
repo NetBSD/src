@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.42.40.1 2008/03/29 18:47:00 mjf Exp $	*/
+/*	$NetBSD: mem.c,v 1.42.40.2 2009/01/17 13:27:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.42.40.1 2008/03/29 18:47:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.42.40.2 2009/01/17 13:27:50 mjf Exp $");
 
 /*
  * Memory special file
@@ -200,10 +200,9 @@ mmrw(dev, uio, flags)
 				 */
 				if (uio->uio_rw == UIO_READ) {
 					if (devzeropage == NULL) {
-						devzeropage = (void *)
+						devzeropage =
 						    malloc(PAGE_SIZE, M_TEMP,
-						    M_WAITOK);
-						bzero(devzeropage, PAGE_SIZE);
+						    M_WAITOK|M_ZERO);
 					}
 					c = min(c, PAGE_SIZE - (int)v);
 					v = (vm_offset_t) devzeropage;
@@ -230,9 +229,8 @@ mmrw(dev, uio, flags)
 				break;
 			}
 			if (devzeropage == NULL) {
-				devzeropage = (void *)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(devzeropage, PAGE_SIZE);
+				devzeropage =
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK|M_ZERO);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);

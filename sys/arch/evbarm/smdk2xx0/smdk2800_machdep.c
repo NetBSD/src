@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.25.6.1 2008/06/02 13:22:02 mjf Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.25.6.2 2009/01/17 13:27:59 mjf Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.25.6.1 2008/06/02 13:22:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.25.6.2 2009/01/17 13:27:59 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -292,6 +292,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -320,6 +321,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -830,11 +833,6 @@ initarm(void *arg)
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
 	}
-#endif
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB

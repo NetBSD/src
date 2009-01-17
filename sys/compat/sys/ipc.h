@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.1 2005/11/11 17:10:42 christos Exp $	*/
+/*	$NetBSD: ipc.h,v 1.1.76.1 2009/01/17 13:28:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@
 #ifndef _COMPAT_SYS_IPC_H_
 #define _COMPAT_SYS_IPC_H_
 
-#ifdef _KERNEL
+__BEGIN_DECLS
 /*
  * Old IPC permission structure used before NetBSD 1.5.
  */
@@ -62,8 +62,39 @@ struct ipc_perm14 {
 	key_t	key;		/* user specified msg/sem/shm key */
 };
 
-void	ipc_perm14_to_native(struct ipc_perm14 *, struct ipc_perm *);
-void	native_to_ipc_perm14(struct ipc_perm *, struct ipc_perm14 *);
-#endif
+static __inline void	__ipc_perm14_to_native(const struct ipc_perm14 *, struct ipc_perm *);
+static __inline void	__native_to_ipc_perm14(const struct ipc_perm *, struct ipc_perm14 *);
+static __inline void
+__ipc_perm14_to_native(const struct ipc_perm14 *operm, struct ipc_perm *perm)
+{
+
+#define	CVT(x)	perm->x = operm->x
+	CVT(uid);
+	CVT(gid);
+	CVT(cuid);
+	CVT(cgid);
+	CVT(mode);
+#undef CVT
+}
+
+void
+__native_to_ipc_perm14(const struct ipc_perm *perm, struct ipc_perm14 *operm)
+{
+
+#define	CVT(x)	operm->x = perm->x
+	CVT(uid);
+	CVT(gid);
+	CVT(cuid);
+	CVT(cgid);
+	CVT(mode);
+#undef CVT
+
+	/*
+	 * Not part of the API, but some programs might look at it.
+	 */
+	operm->seq = perm->_seq;
+	operm->key = perm->_key;
+}
+__END_DECLS
 
 #endif /* !_COMPAT_SYS_IPC_H_ */

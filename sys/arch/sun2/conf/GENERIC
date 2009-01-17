@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.67.6.2 2008/09/28 10:40:09 mjf Exp $
+# $NetBSD: GENERIC,v 1.67.6.3 2009/01/17 13:28:33 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.67.6.2 $"
+#ident 		"GENERIC-$Revision: 1.67.6.3 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -41,7 +41,6 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -98,7 +97,6 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space

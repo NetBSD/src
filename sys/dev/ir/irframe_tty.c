@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.50.6.2 2008/06/02 13:23:29 mjf Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.50.6.3 2009/01/17 13:28:57 mjf Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.50.6.2 2008/06/02 13:23:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.50.6.3 2009/01/17 13:28:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -148,6 +148,7 @@ static void	irt_ioctl(struct tty *, u_long, void *);
 static void	irt_setspeed(struct tty *, u_int);
 static void	irt_setline(struct tty *, u_int);
 static void	irt_delay(struct tty *, u_int);
+static void	irt_buffer(struct irframet_softc *, u_int);
 
 static const struct irframe_methods irframet_methods = {
 	irframet_open, irframet_close, irframet_read, irframet_write,
@@ -218,9 +219,16 @@ irframettyattach(int n)
 static void
 irframet_attach(device_t parent, device_t self, void *aux)
 {
+	struct irframet_softc *sc = device_private(self);
 
 	/* pseudo-device attachment does not print name */
 	aprint_normal("%s", device_xname(self));
+
+	callout_init(&sc->sc_timeout, 0);
+	mutex_init(&sc->sc_wr_lk, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&sc->sc_rsel);
+	selinit(&sc->sc_wsel);
+	
 #if 0 /* XXX can't do it yet because pseudo-devices don't get aux */
 	struct ir_attach_args ia;
 
@@ -234,8 +242,19 @@ irframet_attach(device_t parent, device_t self, void *aux)
 static int
 irframet_detach(struct device *dev, int flags)
 {
+	struct irframet_softc *sc = device_private(dev);
+	int rc;
 
-	return (irframe_detach(dev, flags));
+	callout_stop(&sc->sc_timeout);
+
+	rc = irframe_detach(dev, flags);
+
+	callout_destroy(&sc->sc_timeout);
+	mutex_destroy(&sc->sc_wr_lk);
+	seldestroy(&sc->sc_wsel);
+	seldestroy(&sc->sc_rsel);
+
+	return rc;
 }
 
 /*
@@ -290,7 +309,7 @@ irframetopen(dev_t dev, struct tty *tp)
 	tp->t_sc = sc;
 	sc->sc_tp = tp;
 	aprint_normal("%s attached at tty%02d\n", device_xname(d),
-	    minor(tp->t_dev));
+	    (int)minor(tp->t_dev));
 
 	DPRINTF(("%s: set sc=%p\n", __func__, sc));
 
@@ -326,11 +345,11 @@ irframetclose(struct tty *tp, int flag)
 	ttyflush(tp, FREAD | FWRITE);
 	mutex_spin_exit(&tty_lock);	 /* XXX */
 	ttyldisc_release(tp->t_linesw);
-	tp->t_linesw = ttyldisc_default();
-	if (sc != NULL) {
+	tp->t_linesw = ttyldisc_default(); if (sc != NULL) {
+		irt_buffer(sc, 0);
 		tp->t_sc = NULL;
 		aprint_normal("%s detached from tty%02d\n",
-		    device_xname(sc->sc_irp.sc_dev), minor(tp->t_dev));
+		    device_xname(sc->sc_irp.sc_dev), (int)minor(tp->t_dev));
 
 		if (sc->sc_tp == tp) {
 			cfdata = device_cfdata(sc->sc_irp.sc_dev);
@@ -400,6 +419,35 @@ irframetstart(struct tty *tp)
 	splx(s);
 
 	return (0);
+}
+
+static void
+irt_buffer(struct irframet_softc *sc, u_int maxsize)
+{
+	int i;
+
+	DPRINTF(("%s: sc=%p, maxsize=%u\n", __func__, sc, maxsize));
+
+	if (sc->sc_params.maxsize != maxsize) {
+		sc->sc_params.maxsize = maxsize;
+		if (sc->sc_inbuf != NULL)
+			free(sc->sc_inbuf, M_DEVBUF);
+		for (i = 0; i < MAXFRAMES; i++)
+			if (sc->sc_frames[i].buf != NULL)
+				free(sc->sc_frames[i].buf, M_DEVBUF);
+		if (sc->sc_params.maxsize != 0) {
+			sc->sc_inbuf = malloc(sc->sc_params.maxsize+2,
+					      M_DEVBUF, M_WAITOK);
+			for (i = 0; i < MAXFRAMES; i++)
+				sc->sc_frames[i].buf =
+					malloc(sc->sc_params.maxsize,
+					       M_DEVBUF, M_WAITOK);
+		} else {
+			sc->sc_inbuf = NULL;
+			for (i = 0; i < MAXFRAMES; i++)
+				sc->sc_frames[i].buf = NULL;
+		}
+	}
 }
 
 void
@@ -529,7 +577,6 @@ irframet_open(void *h, int flag, int mode,
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
-	static bool again;
 
 	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
@@ -541,15 +588,6 @@ irframet_open(void *h, int flag, int mode,
 	sc->sc_framei = 0;
 	sc->sc_frameo = 0;
 
-	/* XXX */
-	if (!again) {
-		again = true;
-		callout_init(&sc->sc_timeout, 0);
-		mutex_init(&sc->sc_wr_lk, MUTEX_DEFAULT, IPL_NONE);
-		selinit(&sc->sc_rsel);
-		selinit(&sc->sc_wsel);
-	}
-
 	return (0);
 }
 
@@ -559,22 +597,17 @@ irframet_close(void *h, int flag, int mode,
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
-	int i, s;
+	int s;
 
 	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
+	/* line discipline was closed */
+	if (sc == NULL)
+		return (0);
+
 	callout_stop(&sc->sc_timeout);
 	s = splir();
-	if (sc->sc_inbuf != NULL) {
-		free(sc->sc_inbuf, M_DEVBUF);
-		sc->sc_inbuf = NULL;
-	}
-	for (i = 0; i < MAXFRAMES; i++) {
-		if (sc->sc_frames[i].buf != NULL) {
-			free(sc->sc_frames[i].buf, M_DEVBUF);
-			sc->sc_frames[i].buf = NULL;
-		}
-	}
+	irt_buffer(sc, 0);
 	splx(s);
 
 	return (0);
@@ -830,7 +863,6 @@ irframet_set_params(void *h, struct irda_params *p)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
-	int i;
 
 	DPRINTF(("%s: tp=%p speed=%d ebofs=%d maxsize=%d\n",
 		 __func__, tp, p->speed, p->ebofs, p->maxsize));
@@ -845,27 +877,7 @@ irframet_set_params(void *h, struct irda_params *p)
 
 	/* Max size checked in irframe.c */
 	sc->sc_params.ebofs = p->ebofs;
-	/* Max size checked in irframe.c */
-	if (sc->sc_params.maxsize != p->maxsize) {
-		sc->sc_params.maxsize = p->maxsize;
-		if (sc->sc_inbuf != NULL)
-			free(sc->sc_inbuf, M_DEVBUF);
-		for (i = 0; i < MAXFRAMES; i++)
-			if (sc->sc_frames[i].buf != NULL)
-				free(sc->sc_frames[i].buf, M_DEVBUF);
-		if (sc->sc_params.maxsize != 0) {
-			sc->sc_inbuf = malloc(sc->sc_params.maxsize+2,
-					      M_DEVBUF, M_WAITOK);
-			for (i = 0; i < MAXFRAMES; i++)
-				sc->sc_frames[i].buf =
-					malloc(sc->sc_params.maxsize,
-					       M_DEVBUF, M_WAITOK);
-		} else {
-			sc->sc_inbuf = NULL;
-			for (i = 0; i < MAXFRAMES; i++)
-				sc->sc_frames[i].buf = NULL;
-		}
-	}
+	irt_buffer(sc, p->maxsize);
 	sc->sc_framestate = FRAME_OUTSIDE;
 
 	return (0);

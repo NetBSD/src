@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.72.14.3 2008/09/28 10:40:54 mjf Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.72.14.4 2009/01/17 13:29:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.72.14.3 2008/09/28 10:40:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.72.14.4 2009/01/17 13:29:20 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -130,8 +130,6 @@ TAILQ_HEAD(, namecache) nclruhead =		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
 static pool_cache_t namecache_cache;
-
-MALLOC_DEFINE(M_CACHE, "namecache", "Dynamically allocated cache entries");
 
 int cache_lowat = 95;
 int cache_hiwat = 98;
@@ -341,6 +339,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		/*
 		 * Restore the ISWHITEOUT flag saved earlier.
 		 */
+		KASSERT((ncp->nc_flags & ~ISWHITEOUT) == 0);
 		cnp->cn_flags |= ncp->nc_flags;
 		if (__predict_true(cnp->cn_nameiop != CREATE ||
 		    (cnp->cn_flags & ISLASTCN) == 0)) {
@@ -456,6 +455,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 		/*
 		 * Restore the ISWHITEOUT flag saved earlier.
 		 */
+		KASSERT((ncp->nc_flags & ~ISWHITEOUT) == 0);
 		cnp->cn_flags |= ncp->nc_flags;
 		COUNT(cpup->cpu_stats, ncs_neghits);
 		mutex_exit(&ncp->nc_lock);
@@ -482,6 +482,8 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 		}
 	}
 
+	/* Unlocked, but only for stats. */
+	COUNT(cpup->cpu_stats, ncs_goodhits); /* XXX can be "badhits" */
 	*vpp = vp;
 	return 0;
 }
@@ -878,7 +880,7 @@ cache_prune(int incache, int target)
 			 */
 			tryharder = 1;
 		}
-		if (!tryharder && ncp->nc_hittime > recent) {
+		if (!tryharder && (ncp->nc_hittime - recent) > 0) {
 			if (sentinel == NULL)
 				sentinel = ncp;
 			TAILQ_REMOVE(&nclruhead, ncp, nc_lru);

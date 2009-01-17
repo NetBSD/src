@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2007/12/17 19:09:01 garbled Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2009/01/17 13:28:27 mjf Exp $
 
 # Makefile for tags file
 
@@ -15,7 +15,8 @@ DRS6000=       include
 tags:
 	-ctags -wdtf ${TRS6000} ${SRS6000} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ARS6000} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TRS6000}
 	sort -o ${TRS6000} ${TRS6000}
 

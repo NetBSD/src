@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.12.16.2 2008/09/28 10:40:24 mjf Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.12.16.3 2009/01/17 13:28:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.12.16.2 2008/09/28 10:40:24 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.12.16.3 2009/01/17 13:28:57 mjf Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -446,7 +446,7 @@ idma_chan_alloc(
 	int err;
 	int i;
 	unsigned int s;
-	STATIC void idma_time(void *);;
+	STATIC void idma_time(void *);
 
 	DPRINTF(("idma_chan_alloc %d %p %p\n", ndesc, callback, arg));
 	KASSERT(ndesc >= 0);

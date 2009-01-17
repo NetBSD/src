@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.6.6.1 2008/06/02 13:23:07 mjf Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.6.6.2 2009/01/17 13:28:46 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.6.6.1 2008/06/02 13:23:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.6.6.2 2009/01/17 13:28:46 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_posix.h"
@@ -50,13 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.6.6.1 2008/06/02 13:23:07 mjf Exp
 static int
 netbsd32_ksem_copyout(const void *src, void *dst, size_t size)
 {
-	const semid_t *idp = src;
-	netbsd32_semid_t id32, *outidp = dst;
+	const intptr_t *idp = src;
+	netbsd32_intptr_t id32, *outidp = dst;
 
-	KASSERT(size == sizeof(semid_t));
+	KASSERT(size == sizeof(intptr_t));
 
 	/* Returning a kernel pointer to userspace sucks badly :-( */
-	id32 = (netbsd32_semid_t)*idp;
+	id32 = (netbsd32_intptr_t)*idp;
 	return copyout(&id32, outidp, sizeof(id32));
 }
 
@@ -104,11 +104,11 @@ int
 netbsd32__ksem_close(struct lwp *l, const struct netbsd32__ksem_close_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(netbsd32_semid_t) id;
+		syscallarg(netbsd32_intptr_t) id;
 	} */
 	struct sys__ksem_close_args ua;
 
-	NETBSD32TOX_UAP(id, semid_t);
+	NETBSD32TOX_UAP(id, intptr_t);
 	return sys__ksem_close(l, &ua, retval);
 }
 
@@ -116,11 +116,11 @@ int
 netbsd32__ksem_post(struct lwp *l, const struct netbsd32__ksem_post_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(netbsd32_semid_t) id;
+		syscallarg(netbsd32_intptr_t) id;
 	} */
 	struct sys__ksem_post_args ua;
 
-	NETBSD32TOX_UAP(id, semid_t);
+	NETBSD32TOX_UAP(id, intptr_t);
 	return sys__ksem_post(l, &ua, retval);
 }
 
@@ -128,11 +128,11 @@ int
 netbsd32__ksem_wait(struct lwp *l, const struct netbsd32__ksem_wait_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(netbsd32_semid_t) id;
+		syscallarg(netbsd32_intptr_t) id;
 	} */
 	struct sys__ksem_wait_args ua;
 
-	NETBSD32TOX_UAP(id, semid_t);
+	NETBSD32TOX_UAP(id, intptr_t);
 	return sys__ksem_wait(l, &ua, retval);
 }
 
@@ -140,11 +140,11 @@ int
 netbsd32__ksem_trywait(struct lwp *l, const struct netbsd32__ksem_trywait_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(netbsd32_semid_t) id;
+		syscallarg(netbsd32_intptr_t) id;
 	} */
 	struct sys__ksem_trywait_args ua;
 
-	NETBSD32TOX_UAP(id, semid_t);
+	NETBSD32TOX_UAP(id, intptr_t);
 	return sys__ksem_trywait(l, &ua, retval);
 }
 
@@ -152,11 +152,11 @@ int
 netbsd32__ksem_destroy(struct lwp *l, const struct netbsd32__ksem_destroy_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(netbsd32_semid_t) id;
+		syscallarg(netbsd32_intptr_t) id;
 	} */
 	struct sys__ksem_destroy_args ua;
 
-	NETBSD32TOX_UAP(id, semid_t);
+	NETBSD32TOX_UAP(id, intptr_t);
 	return sys__ksem_destroy(l, &ua, retval);
 }
 
@@ -164,12 +164,12 @@ int
 netbsd32__ksem_getvalue(struct lwp *l, const struct netbsd32__ksem_getvalue_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(netbsd32_semid_t) id;
+		syscallarg(netbsd32_intptr_t) id;
 		syscallarg(netbsd32_intp) value;
 	} */
 	struct sys__ksem_getvalue_args ua;
 
-	NETBSD32TOX_UAP(id, semid_t);
+	NETBSD32TOX_UAP(id, intptr_t);
 	NETBSD32TOP_UAP(value, unsigned int);
 	return sys__ksem_getvalue(l, &ua, retval);
 }

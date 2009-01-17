@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28.6.2 2008/09/28 10:40:15 mjf Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.28.6.3 2009/01/17 13:28:43 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.6.2 2008/09/28 10:40:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.6.3 2009/01/17 13:28:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -230,7 +230,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	sigframe.info.lsi_signo = native_to_linux_signo[sig];
 	sigframe.info.lsi_errno = native_to_linux_errno[ksi->ksi_errno];
-	sigframe.info.lsi_code = ksi->ksi_code;
+	sigframe.info.lsi_code = native_to_linux_si_code(ksi->ksi_code);
 
 	/* XXX This is a rought conversion, taken from i386 code */
 	switch (sigframe.info.lsi_signo) {
@@ -567,8 +567,8 @@ linux_sys_arch_prctl(struct lwp *l, const struct linux_sys_arch_prctl_args *uap,
 const int linux_vsyscall_to_syscall[] = {
 	LINUX_SYS_gettimeofday,
 	LINUX_SYS_time,
-	LINUX_SYS_nosys,
-	LINUX_SYS_nosys,
+	LINUX_SYS_nosys,	/* nosys */
+	LINUX_SYS_nosys,	/* nosys */
 };
 
 int

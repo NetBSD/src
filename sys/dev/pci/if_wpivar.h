@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.11.6.1 2008/07/02 19:08:19 mjf Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.11.6.2 2009/01/17 13:29:00 mjf Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -142,6 +142,7 @@ struct wpi_softc {
 
 	/* firmware DMA transfer */
 	struct wpi_dma_info	fw_dma;
+	bool			fw_used;
 
 	struct wpi_tx_ring	txq[4];
 	struct wpi_tx_ring	cmdq;

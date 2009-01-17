@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.27 2005/01/20 20:55:55 drochner Exp $	*/
+/*	$NetBSD: signal.h,v 1.27.92.1 2009/01/17 13:28:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -38,25 +38,13 @@
 
 typedef int sig_atomic_t;
 
-#ifdef _KERNEL
-#ifdef _KERNEL_OPT
-#include "opt_compat_netbsd.h"
-#include "opt_compat_ibcs2.h"
-#endif
-#ifdef COMPAT_16
-#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
-#else
-#define SIGTRAMP_VALID(vers)	((vers) == 2)
-#endif
-#endif
-
 #if defined(_NETBSD_SOURCE)
 /*
  * Get the "code" values
  */
 #include <machine/trap.h>
 
-#if defined(_KERNEL) && (defined(COMPAT_16) || defined(COMPAT_IBCS2))
+#if defined(_KERNEL)
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -64,7 +52,6 @@ typedef int sig_atomic_t;
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
  */
-#if defined(COMPAT_13)
 struct sigcontext13 {
 	int	sc_gs;
 	int	sc_fs;
@@ -90,7 +77,6 @@ struct sigcontext13 {
 	int	sc_trapno;		/* XXX should be above */
 	int	sc_err;
 };
-#endif /* COMPAT_13 */
 
 struct sigcontext {
 	int	sc_gs;
@@ -119,7 +105,7 @@ struct sigcontext {
 
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
-#endif /* _KERNEL && (COMPAT_16 || COMPAT_IBCS2) */
+#endif /* _KERNEL */
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_I386_SIGNAL_H_ */

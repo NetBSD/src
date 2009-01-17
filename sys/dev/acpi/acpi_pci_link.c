@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.11.6.2 2008/06/05 19:14:35 mjf Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.11.6.3 2009/01/17 13:28:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.11.6.2 2008/06/05 19:14:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.11.6.3 2009/01/17 13:28:52 mjf Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -1154,6 +1154,20 @@ acpi_pci_link_devbyhandle(ACPI_HANDLE handle)
 	TAILQ_INSERT_TAIL(&acpi_pci_linkdevs, sc, pl_list);
 
 	return (void *)sc;
+}
+
+void
+acpi_pci_link_resume(void)
+{
+	struct acpi_pci_link_softc *sc;
+	ACPI_BUFFER srsbuf;
+
+	TAILQ_FOREACH(sc, &acpi_pci_linkdevs, pl_list) {
+		ACPI_SERIAL_BEGIN(pci_link);
+		if (ACPI_SUCCESS(acpi_pci_link_srs(sc, &srsbuf)))
+			AcpiOsFree(srsbuf.Pointer);
+		ACPI_SERIAL_END(pci_link);
+	}
 }
 
 ACPI_HANDLE

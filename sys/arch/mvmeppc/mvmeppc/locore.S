@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2008/02/05 22:31:49 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.7.6.1 2009/01/17 13:28:19 mjf Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ __start:
 	isync
 
 /* compute end of kernel memory */
-#if NKSYMS || defined(DDB) || defined(LKM) || defined(KERNFS)
+#if NKSYMS || defined(DDB) || defined(MODULAR) || defined(KERNFS)
 	lis	%r7,_C_LABEL(startsym)@ha
 	addi	%r7,%r7,_C_LABEL(startsym)@l
 	stw	%r3,0(%r7)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.89.6.4 2008/09/28 10:40:54 mjf Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.89.6.5 2009/01/17 13:29:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,9 +58,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.89.6.4 2008/09/28 10:40:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.89.6.5 2009/01/17 13:29:20 mjf Exp $");
 
-#include "opt_inet.h"
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
 
@@ -79,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.89.6.4 2008/09/28 10:40:54 mjf Ex
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/pool.h>
+#include <sys/uidinfo.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers.
@@ -190,8 +190,7 @@ soisconnected(struct socket *so)
 			so->so_upcallarg = head->so_accf->so_accept_filter_arg;
 			so->so_rcv.sb_flags |= SB_UPCALL;
 			so->so_options &= ~SO_ACCEPTFILTER;
-			so->so_upcall(so, so->so_upcallarg, M_DONTWAIT);
-		}
+			(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);		}
 	} else {
 		cv_broadcast(&so->so_cv);
 		sorwakeup(so);
@@ -253,10 +252,10 @@ sonewconn(struct socket *head, int connstatus)
 		connstatus = 0;
 	soqueue = connstatus ? 1 : 0;
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
-		return ((struct socket *)0);
+		return NULL;
 	so = soget(false);
 	if (so == NULL)
-		return (NULL);
+		return NULL;
 	mutex_obj_hold(head->so_lock);
 	so->so_lock = head->so_lock;
 	so->so_type = head->so_type;
@@ -290,21 +289,21 @@ sonewconn(struct socket *head, int connstatus)
 	KASSERT(solocked(so));
 	if (error != 0) {
 		(void) soqremque(so, soqueue);
-
-#ifdef INET
-		/* remove acccept filter if one is present. */
+		/*
+		 * Remove acccept filter if one is present.
+		 * XXX Is this really needed?
+		 */
 		if (so->so_accf != NULL)
-			do_setopt_accept_filter(so, NULL);
-#endif
+			(void)accept_filt_clear(so);
 		soput(so);
-		return (NULL);
+		return NULL;
 	}
 	if (connstatus) {
 		sorwakeup(head);
 		cv_broadcast(&head->so_cv);
 		so->so_state |= connstatus;
 	}
-	return (so);
+	return so;
 }
 
 struct socket *

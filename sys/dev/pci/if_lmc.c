@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.40.6.2 2008/06/29 09:33:09 mjf Exp $ */
+/* $NetBSD: if_lmc.c,v 1.40.6.3 2009/01/17 13:29:00 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.40.6.2 2008/06/29 09:33:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.40.6.3 2009/01/17 13:29:00 mjf Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -161,7 +161,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.40.6.2 2008/06/29 09:33:09 mjf Exp $");
 #
 # include <sys/systm.h>
 # include <sys/kernel.h>
-# include <sys/lkm.h>
+# include <sys/module.h>
 # include <sys/mbuf.h>
 # include <sys/socket.h>
 # include <sys/sockio.h>
@@ -216,7 +216,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.40.6.2 2008/06/29 09:33:09 mjf Exp $");
 # include <sys/kernel.h>
 # include <sys/conf.h>
 # include <sys/exec.h>
-# include <sys/lkm.h>
+# include <sys/module.h>
 # include <sys/mbuf.h>
 # include <sys/socket.h>
 # include <sys/sockio.h>
@@ -3549,11 +3549,13 @@ rawip_ioctl(softc_t *sc, u_long cmd, void *data)
     case SIOCDELMULTI:
       if (sc->config.debug)
         printf("%s: rawip_ioctl: SIOCADD/DELMULTI\n", NAME_UNIT);
-    case SIOCAIFADDR:
     case SIOCSIFFLAGS:
+      error = ifioctl_common(sc->ifp, cmd, data);
+      break;
+    case SIOCAIFADDR:
     case SIOCSIFDSTADDR:
       break;
-    case SIOCSIFADDR:
+    case SIOCINITIFADDR:
       sc->ifp->if_flags |= IFF_UP; /* a Unix tradition */
       break;
     case SIOCSIFMTU:
@@ -7370,7 +7372,7 @@ struct cfattach lmc_ca =
   .ca_activate	= NULL,
   };
 
-# if defined(LKM)
+# if defined(_MODULE)
 
 struct cfdriver lmc_cd =
   {
@@ -7477,7 +7479,7 @@ int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
   return error;
   }
 
-# endif /* LKM */
+# endif /* _MODULE */
 
 #endif  /* __OpenBSD__ */
 

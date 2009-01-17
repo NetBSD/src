@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.145.6.1 2008/09/28 10:39:55 mjf Exp $
+# $NetBSD: GENERIC,v 1.145.6.2 2009/01/17 13:28:00 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.145.6.1 $"
+#ident 		"GENERIC-$Revision: 1.145.6.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -46,7 +46,6 @@ options 	FPSP		# floating point interface for 68040
 
 # Standard system options
 options 	KTRACE		# system call tracing support
-options 	LKM		# Loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -86,6 +85,7 @@ options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_20	# compatibility with NetBSD 2.0
 options 	COMPAT_30	# compatibility with NetBSD 3.0
 options 	COMPAT_40	# compatibility with NetBSD 4.0
+options 	COMPAT_50	# compatibility with NetBSD 5.0
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Binary compatibility.
@@ -119,7 +119,6 @@ file-system	PTYFS		# /dev/pts/N support
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network filesystem server

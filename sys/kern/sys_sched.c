@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.15.6.4 2008/09/28 10:40:53 mjf Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.15.6.5 2009/01/17 13:29:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -29,13 +29,20 @@
 /*
  * System calls relating to the scheduler.
  *
+ * Lock order:
+ *
+ *	cpu_lock ->
+ *	    proc_lock ->
+ *		proc_t::p_lock ->
+ *		    lwp_t::lwp_lock
+ *
  * TODO:
  *  - Handle pthread_setschedprio() as defined by POSIX;
  *  - Handle sched_yield() case for SCHED_FIFO as defined by POSIX;
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.15.6.4 2008/09/28 10:40:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.15.6.5 2009/01/17 13:29:20 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -46,12 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.15.6.4 2008/09/28 10:40:53 mjf Exp $
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/pset.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/unistd.h>
+
+#include "opt_sa.h"
 
 /*
  * Convert user priority or the in-kernel priority or convert the current
@@ -60,39 +71,33 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.15.6.4 2008/09/28 10:40:53 mjf Exp $
 static pri_t
 convert_pri(lwp_t *l, int policy, pri_t pri)
 {
-	int delta = 0;
 
-	switch (policy) {
-	case SCHED_OTHER:
-		delta = PRI_USER;
-		break;
-	case SCHED_FIFO:
-	case SCHED_RR:
-		delta = PRI_USER_RT;
-		break;
-	default:
-		panic("upri_to_kpri");
-	}
-
+	/* Convert user priority to the in-kernel */
 	if (pri != PRI_NONE) {
-		/* Convert user priority to the in-kernel */
+		/* Only for real-time threads */
 		KASSERT(pri >= SCHED_PRI_MIN && pri <= SCHED_PRI_MAX);
-		return pri + delta;
+		KASSERT(policy != SCHED_OTHER);
+		return PRI_USER_RT + pri;
 	}
+
+	/* Neither policy, nor priority change */
 	if (l->l_class == policy)
 		return l->l_priority;
 
-	/* Change the current priority to the appropriate range */
+	/* Time-sharing -> real-time */
 	if (l->l_class == SCHED_OTHER) {
 		KASSERT(policy == SCHED_FIFO || policy == SCHED_RR);
-		return delta;
+		return PRI_USER_RT;
 	}
+
+	/* Real-time -> time-sharing */
 	if (policy == SCHED_OTHER) {
 		KASSERT(l->l_class == SCHED_FIFO || l->l_class == SCHED_RR);
-		return l->l_priority - delta;
+		return l->l_priority - PRI_USER_RT;
 	}
-	KASSERT(l->l_class != SCHED_OTHER && policy != SCHED_OTHER);
-	return l->l_class;
+
+	/* Real-time -> real-time */
+	return l->l_priority;
 }
 
 int
@@ -150,19 +155,19 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 
 		if (lid && lid != t->l_lid)
 			continue;
+
 		lcnt++;
-		KASSERT(pri != PRI_NONE || policy != SCHED_NONE);
 		lwp_lock(t);
+		lpolicy = (policy == SCHED_NONE) ? t->l_class : policy;
 
-		if (policy == SCHED_NONE)
-			lpolicy = t->l_class;
-		else
-			lpolicy = policy;
+		/* Disallow setting of priority for SCHED_OTHER threads */
+		if (lpolicy == SCHED_OTHER && pri != PRI_NONE) {
+			lwp_unlock(t);
+			error = EINVAL;
+			break;
+		}
 
-		/*
-		 * Note that, priority may need to be changed to get into
-		 * the correct priority range of the new scheduling class.
-		 */
+		/* Convert priority, if needed */
 		kpri = convert_pri(t, lpolicy, pri);
 
 		/* Check the permission */
@@ -174,14 +179,9 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 			break;
 		}
 
-		/* Set the scheduling class */
-		if (policy != SCHED_NONE)
-			t->l_class = policy;
-
-		/* Change the priority */
-		if (t->l_priority != kpri)
-			lwp_changepri(t, kpri);
-
+		/* Set the scheduling class, change the priority */
+		t->l_class = lpolicy;
+		lwp_changepri(t, kpri);
 		lwp_unlock(t);
 	}
 	mutex_exit(p->p_lock);
@@ -211,9 +211,8 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 
 	error = do_sched_setparam(SCARG(uap, pid), SCARG(uap, lid),
 	    SCARG(uap, policy), &params);
-
- out:
-	return (error);
+out:
+	return error;
 }
 
 int
@@ -286,12 +285,13 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 	error = copyout(&params, SCARG(uap, params), sizeof(params));
 	if (error == 0 && SCARG(uap, policy) != NULL)
 		error = copyout(&policy, SCARG(uap, policy), sizeof(int));
-
- out:
-	return (error);
+out:
+	return error;
 }
 
-/* Allocate the CPU set, and get it from userspace */
+/*
+ * Allocate the CPU set, and get it from userspace.
+ */
 static int
 genkcpuset(kcpuset_t **dset, const cpuset_t *sset, size_t size)
 {
@@ -322,26 +322,41 @@ sys__sched_setaffinity(struct lwp *l,
 	struct proc *p;
 	struct lwp *t;
 	CPU_INFO_ITERATOR cii;
+	bool offline_in_set;
 	lwpid_t lid;
 	u_int lcnt;
 	int error;
 
-	if ((error = genkcpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size))))
+	error = genkcpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size));
+	if (error)
 		return error;
 
-	/* Look for a CPU in the set */
+	/*
+	 * Look for a CPU in the set, however, skip offline CPUs.
+	 *
+	 * To avoid the race with CPU online/offline calls, cpu_lock will
+	 * be locked for the entire operation.
+	 */
+	offline_in_set = false;
+	mutex_enter(&cpu_lock);
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		error = kcpuset_isset(cpu_index(ci), cpuset);
-		if (error) {
-			if (error == -1) {
-				error = E2BIG;
-				goto out;
-			}
-			break;
-		}
-	}
+		struct schedstate_percpu *spc;
 
+		if (kcpuset_isset(cpu_index(ci), cpuset) == 0)
+			continue;
+		spc = &ci->ci_schedstate;
+		if (spc->spc_flags & SPCF_OFFLINE) {
+			offline_in_set = true;
+			continue;
+		}
+		break;
+	}
 	if (ci == NULL) {
+		if (offline_in_set) {
+			/* All CPUs in the set are offline */
+			error = EPERM;
+			goto out;
+		}
 		/* Empty set */
 		kcpuset_unuse(cpuset, NULL);
 		cpuset = NULL; 
@@ -380,6 +395,15 @@ sys__sched_setaffinity(struct lwp *l,
 		goto out;
 	}
 
+#ifdef KERN_SA
+	/* Changing the affinity of a SA process is not supported */
+	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		error = EINVAL;
+		goto out;
+	}
+#endif
+
 	/* Find the LWP(s) */
 	lcnt = 0;
 	lid = SCARG(uap, lid);
@@ -415,6 +439,7 @@ sys__sched_setaffinity(struct lwp *l,
 	if (lcnt == 0)
 		error = ESRCH;
 out:
+	mutex_exit(&cpu_lock);
 	if (cpuset != NULL)
 		kcpuset_unuse(cpuset, &cpulst);
 	kcpuset_destroy(cpulst);
@@ -438,7 +463,8 @@ sys__sched_getaffinity(struct lwp *l,
 	kcpuset_t *cpuset;
 	int error;
 
-	if ((error = genkcpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size))))
+	error = genkcpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size));
+	if (error)
 		return error;
 
 	/* Locks the LWP */
@@ -477,6 +503,11 @@ sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
+#ifdef KERN_SA
+	if (l->l_flag & LW_SA) {
+		sa_preempt(l);
+	}
+#endif
 	return 0;
 }
 

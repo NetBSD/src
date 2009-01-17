@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.6.14.2 2008/09/28 10:40:11 mjf Exp $ */
+/* $NetBSD: ipmivar.h,v 1.6.14.3 2009/01/17 13:28:38 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -77,7 +77,7 @@ struct ipmi_if {
 };
 
 struct ipmi_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	struct ipmi_if		*sc_if;		/* Interface layer */
 	int			sc_if_iospacing; /* Spacing of I/O ports */

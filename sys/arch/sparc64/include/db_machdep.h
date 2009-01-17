@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.23.42.2 2008/09/28 10:40:09 mjf Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.23.42.3 2009/01/17 13:28:32 mjf Exp $ */
 
 /*
  * Mach Operating System
@@ -41,8 +41,9 @@
 #include <machine/reg.h>
 
 
+/* use 64-bit types explicitly for 32-bit kernels */
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
-typedef	long		db_expr_t;	/* expression - signed */
+typedef	int64_t		db_expr_t;	/* expression - signed */
 
 struct trapstate {
 	int64_t tstate;

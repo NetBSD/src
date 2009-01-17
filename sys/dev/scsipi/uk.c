@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.52.36.4 2008/06/29 09:33:10 mjf Exp $	*/
+/*	$NetBSD: uk.c,v 1.52.36.5 2009/01/17 13:29:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.52.36.4 2008/06/29 09:33:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.52.36.5 2009/01/17 13:29:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ ukopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
+	    ("ukopen: dev=0x%"PRIx64" (unit %d (of %d))\n", dev, unit,
 		uk_cd.cd_ndevs));
 
 	/*

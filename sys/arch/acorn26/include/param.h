@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1.116.1 2008/07/02 19:08:15 mjf Exp $	*/
+/*	$NetBSD: param.h,v 1.1.116.2 2009/01/17 13:27:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -90,7 +90,7 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-void	delay __P((unsigned));
+void delay(unsigned);
 #define DELAY(x)	delay(x)
 #endif
 #define	MAXEXEC		1

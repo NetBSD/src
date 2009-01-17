@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.44 2008/01/25 21:12:12 joerg Exp $
+#	$NetBSD: files.m68k,v 1.44.6.1 2009/01/17 13:28:10 mjf Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
@@ -7,6 +7,7 @@ defflag				PMAP_DEBUG
 
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/copypage.s
+file	arch/m68k/m68k/core_machdep.c		coredump
 file	arch/m68k/m68k/db_disasm.c		ddb
 file	arch/m68k/m68k/db_interface.c		ddb
 file	arch/m68k/m68k/db_trace.c		ddb

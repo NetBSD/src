@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.34 2007/12/29 16:48:03 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.34.6.1 2009/01/17 13:28:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.34 2007/12/29 16:48:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.34.6.1 2009/01/17 13:28:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,22 +51,17 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.34 2007/12/29 16:48:03 tsutsui 
 
 #include <uvm/uvm_extern.h>
 
-#define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
+#define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
+#define RELOCPTR(v, t)	((t)((uintptr_t)RELOC((v), t) + firstpa))
 
 extern char *etext;
-extern int Sysptsize;
 extern char *proc0paddr;
-extern st_entry_t *Sysseg;
-extern pt_entry_t *Sysptmap, *Sysmap;
 extern vaddr_t CLKbase, MMUbase;
 extern paddr_t bootinfo_pa;
 extern vaddr_t bootinfo_va;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
-extern vaddr_t virtual_avail, virtual_end;
-extern vsize_t mem_size;
-extern int protection_codes[];
 #ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
@@ -158,10 +153,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * each mapping 256kb.  Note that there may be additional "segment
 	 * table" pages depending on how large MAXKL2SIZE is.
 	 *
-	 * Portions of the last segment of KVA space (0xFFF00000 -
-	 * 0xFFFFFFFF) are mapped for a couple of purposes.  0xFFF00000
-	 * for UPAGES is used for mapping the current process u-area
-	 * (u + kernel stack).  The very last page (0xFFFFF000) is mapped
+	 * Portions of the last two segment of KVA space (0xFF800000 -
+	 * 0xFFFFFFFF) are mapped for a couple of purposes.
+	 * The first segment (0xFF800000 - 0xFFBFFFFF) is mapped
+	 * for the kernel page tables.
+	 * The very last page (0xFFFFF000) in the second segment is mapped
 	 * to the last physical page of RAM to give us a region in which
 	 * PA == VA.  We use the first part of this page for enabling
 	 * and disabling mapping.  The last part of this page also contains
@@ -453,9 +449,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * absolute "jmp" table.
 	 */
 	{
-		int *kp;
+		u_int *kp;
 
-		kp = &RELOC(protection_codes, int);
+		kp = &RELOC(protection_codes, u_int);
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
@@ -471,7 +467,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * just initialize pointers.
 	 */
 	{
-		struct pmap *kpm = &RELOC(kernel_pmap_store, struct pmap);
+		struct pmap *kpm;
+
+		kpm = RELOCPTR(kernel_pmap_ptr, struct pmap *);
 
 		kpm->pm_stab = RELOC(Sysseg, st_entry_t *);
 		kpm->pm_ptab = RELOC(Sysmap, pt_entry_t *);

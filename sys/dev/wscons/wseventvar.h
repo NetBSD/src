@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.11.48.1 2008/06/02 13:23:57 mjf Exp $ */
+/* $NetBSD: wseventvar.h,v 1.11.48.2 2009/01/17 13:29:10 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -85,6 +85,7 @@ struct wseventvar {
 	int	wanted;		/* wake up on input ready */
 	int	async;		/* send SIGIO on input ready */
 	struct wscons_event *q;	/* circular buffer (queue) of events */
+	int	version;	/* event version */
 };
 
 void	wsevent_init(struct wseventvar *, struct proc *);
@@ -94,3 +95,18 @@ int	wsevent_poll(struct wseventvar *, int, struct lwp *);
 int	wsevent_kqfilter(struct wseventvar *, struct knote *);
 void	wsevent_wakeup(struct wseventvar *);
 int	wsevent_inject(struct wseventvar *, struct wscons_event *, size_t);
+int	wsevent_setversion(struct wseventvar *, int);
+
+/*
+ * COMPAT_50
+ */
+#include <compat/sys/time.h>
+
+struct owscons_event {
+	u_int type;
+	int value;
+	struct timespec50 time;
+};
+
+#define	WSMUXIO_OINJECTEVENT	_IOW('W', 96, struct owscons_event)
+

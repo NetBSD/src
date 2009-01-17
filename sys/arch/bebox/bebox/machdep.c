@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92.6.2 2008/06/29 09:32:55 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.6.3 2009/01/17 13:27:55 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.6.2 2008/06/29 09:32:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.6.3 2009/01/17 13:27:55 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -331,12 +331,14 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("halted\n\n");
 
 	}
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
 	doshutdownhooks();
+	pmf_system_shutdown(boothowto);
 	printf("rebooting\n\n");
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)

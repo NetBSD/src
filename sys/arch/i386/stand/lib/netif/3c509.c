@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.c,v 1.9 2006/05/11 00:48:05 mrg Exp $	*/
+/*	$NetBSD: 3c509.c,v 1.9.62.1 2009/01/17 13:28:06 mjf Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -43,11 +43,11 @@ Author: Martin Renters.
 unsigned ether_medium;
 unsigned short eth_base;
 
-extern void epreset __P((void));
-extern int ep_get_e __P((int));
+extern void epreset(void);
+extern int ep_get_e(int);
 
-static int send_ID_sequence __P((int));
-static int get_eeprom_data __P((int, int));
+static int send_ID_sequence(int);
+static int get_eeprom_data(int, int);
 
 u_char eth_myaddr[6];
 
@@ -66,14 +66,14 @@ static struct btinfo_netif bi_netif;
 #endif
 
 #ifndef _STANDALONE
-extern int mapio __P((void));
+extern int mapio(void);
 #endif
 
 /**************************************************************************
 ETH_PROBE - Look for an adapter
 ***************************************************************************/
-int EtherInit(myadr)
-	unsigned char *myadr;
+int
+EtherInit(unsigned char *myadr)
 {
 	/* common variables */
 	int i;
@@ -87,7 +87,7 @@ int EtherInit(myadr)
 #ifndef _STANDALONE
 	if (mapio()) {
 		printf("no IO access\n");
-		return (0);
+		return 0;
 	}
 #endif
 
@@ -126,7 +126,8 @@ int EtherInit(myadr)
 		break;
 	}
 
-	if(i==EP_MAX_BOARDS)return 0;
+	if (i == EP_MAX_BOARDS)
+		return 0;
 */
 
 	/*
@@ -144,20 +145,20 @@ int EtherInit(myadr)
 	i = inw(IS_BASE + EP_W0_CONFIG_CTRL);
 	j = inw(IS_BASE + EP_W0_ADDRESS_CFG) >> 14;
 
-	for(ether_medium = 0, m = mediatab;
+	for (ether_medium = 0, m = mediatab;
 	    ether_medium < sizeof(mediatab) / sizeof(mediatab[0]);
 	    ether_medium++, m++) {
-	    if(j == m->address_cfg) {
-		if(!(i & m->config_bit)) {
+	    if (j == m->address_cfg) {
+		if (!(i & m->config_bit)) {
 		    printf("%s not present\n", m->name);
-		    return(0);
+		    return 0;
 		}
 		printf("using %s\n", m->name);
 		goto ok;
 	    }
 	}
 	printf("unknown connector\n");
-	return(0);
+	return 0;
 
 ok:
 	/*
@@ -167,12 +168,12 @@ ok:
 	for (i = 0; i < 3; i++) {
 	  u_short help;
 	  GO_WINDOW(0);
-	  help=ep_get_e(i);
+	  help = ep_get_e(i);
 	  p[i] = ((help & 0xff) << 8) | ((help & 0xff00) >> 8);
 	  GO_WINDOW(2);
 	  outw(BASE + EP_W2_ADDR_0 + (i * 2), help);
 	}
-	for(i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++)
 		myadr[i] = eth_myaddr[i];
 
 	epreset();
@@ -185,12 +186,11 @@ ok:
 	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 #endif
 
-	return(1);
+	return 1;
 }
 
 static int
-send_ID_sequence(port)
-int port;
+send_ID_sequence(int port)
 {
 	int cx, al;
 
@@ -200,7 +200,7 @@ int port;
 		if (al & 0x100)
 			al ^= 0xcf;
 	}
-	return (1);
+	return 1;
 }
 
 /*
@@ -216,14 +216,12 @@ int port;
  * read 16 times getting one bit of data with each read.
  */
 static int
-get_eeprom_data(id_port, offset)
-int id_port;
-int offset;
+get_eeprom_data(int id_port, int offset)
 {
 	int i, data = 0;
 	outb(id_port, 0x80 + offset);
 	delay(1000);
 	for (i = 0; i < 16; i++)
 		data = (data << 1) | (inw(id_port) & 1);
-	return (data);
+	return data;
 }

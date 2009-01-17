@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.6.74.1 2008/06/02 13:21:58 mjf Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.6.74.2 2009/01/17 13:27:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 
 #include <lib/libsa/stand.h>
 #include <atari_stand.h>
-#include <string.h>
 #include <libkern.h>
 #include <machine/cpu.h>
 #endif /* TOSTOOLS */

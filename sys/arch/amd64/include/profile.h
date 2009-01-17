@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.12.6.1 2008/06/02 13:21:49 mjf Exp $	*/
+/*	$NetBSD: profile.h,v 1.12.6.2 2009/01/17 13:27:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -30,6 +30,8 @@
  *
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifdef __x86_64__
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -158,3 +160,9 @@ mcount_write_psl(u_long ef)
 	mcount_write_psl(s);
 
 #endif /* _KERNEL */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/profile.h>
+
+#endif	/*	__x86_64__	*/

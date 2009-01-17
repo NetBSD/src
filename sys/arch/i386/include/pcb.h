@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.44.6.1 2008/06/02 13:22:17 mjf Exp $	*/
+/*	$NetBSD: pcb.h,v 1.44.6.2 2009/01/17 13:28:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,8 +78,8 @@
 
 #include <machine/segments.h>
 #include <machine/tss.h>
-#include <machine/npx.h>
-#include <machine/sysarch.h>
+#include <i386/npx.h>
+#include <i386/sysarch.h>
 
 struct pcb {
 	int	pcb_esp0;		/* ring0 esp */

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.56.6.3 2008/09/28 10:40:15 mjf Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.56.6.4 2009/01/17 13:28:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.56.6.3 2008/09/28 10:40:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.56.6.4 2009/01/17 13:28:41 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.56.6.3 2008/09/28 10:40:15 mjf E
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
-#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_types.h>
+#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_proc.h>
@@ -813,7 +813,7 @@ darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 		/* (ptr) */ de->e_tsess = (struct darwin_session *)
 		    p->p_session->s_ttyp->t_session;
 	} else {
-		de->e_tdev = NODEV;
+		de->e_tdev = (darwin_dev_t)NODEV;
 		/* de->e_tpgid */
 		/* (ptr) de->e_tsess */
 	}

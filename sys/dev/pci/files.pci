@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.302.6.3 2008/09/28 10:40:26 mjf Exp $
+#	$NetBSD: files.pci,v 1.302.6.4 2009/01/17 13:28:59 mjf Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -363,6 +363,11 @@ file	dev/pci/if_hme_pci.c		hme_pci
 attach	gem at pci with gem_pci
 file	dev/pci/if_gem_pci.c		gem_pci
 
+# JMicron JMC2[56]0 ethernet controllers
+device	jme: ether, ifnet, arp, mii
+attach	jme at pci
+file	dev/pci/if_jme.c		jme
+
 # NE2000-compatible PCI Ethernet cards
 defparam opt_ipkdb.h	IPKDB_NE_PCISLOT
 defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE
@@ -475,6 +480,11 @@ device	azalia: audiobus, auconv, mulaw, ac97, aurateconv
 attach	azalia at pci
 file	dev/pci/azalia.c		azalia
 file	dev/pci/azalia_codec.c		azalia
+
+# AMD Geode CS5536 Companion Audio
+device	gcscaudio: audiobus, auconv, mulaw, ac97, aurateconv
+attach	gcscaudio at pci
+file	dev/pci/gcscaudio.c		gcscaudio
 
 # NeoMagic 256 AC'97 Audio
 device	neo: audiobus, auconv, mulaw, ac97
@@ -927,6 +937,11 @@ file	dev/pci/r128fb.c		r128fb
 defflag	opt_r128fb.h	R128FB_DEBUG
 defflag	opt_r128fb.h	R128FB_WAIT
 
+# Attansic/Atheros L1 Gigabit-Ethernet
+device	age: ether, ifnet, arp, mii, mii_phy
+attach	age at pci
+file	dev/pci/if_age.c		age
+
 # Atheros/Attansic L2 Fast-Ethernet
 device	lii: ether, ifnet, arp, mii
 attach	lii at pci
@@ -938,3 +953,19 @@ file dev/ic/siisata.c atapibus & atabus & siisata
 device siisata: ata, ata_dma, ata_udma, sata, siisata
 attach siisata at pci with siisata_pci
 file dev/pci/siisata_pci.c siisata_pci
+
+# Acer Labs M7101 power management controller
+device	alipm: i2cbus
+attach	alipm at pci
+file	dev/pci/alipm.c				alipm
+
+#
+# NetOctave NSP2000
+#
+include "dev/pci/n8/files.n8"
+
+#
+# Broadcom AirForce / Apple Airport Extreme
+#
+attach	bwi at pci with bwi_pci
+file	dev/pci/if_bwi_pci.c		bwi_pci

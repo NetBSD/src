@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.15.6.2 2008/09/28 10:40:33 mjf Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.15.6.3 2009/01/17 13:29:09 mjf Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15.6.2 2008/09/28 10:40:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15.6.3 2009/01/17 13:29:09 mjf Exp $");
 #include "bpfilter.h"
 #ifdef	__NetBSD__
 #include "opt_inet.h"
@@ -434,7 +434,7 @@ cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch(command) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		cdce_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
@@ -458,18 +458,23 @@ cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				cdce_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				cdce_stop(sc);
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP:
+			cdce_init(sc);
+			break;
+		case IFF_RUNNING:
+			cdce_stop(sc);
+			break;
+		default:
+			break;
 		}
-		error = 0;
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, command, data);
 		break;
 	}
 

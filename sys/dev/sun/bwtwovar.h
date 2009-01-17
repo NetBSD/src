@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwovar.h,v 1.5.70.1 2008/06/02 13:23:51 mjf Exp $ */
+/*	$NetBSD: bwtwovar.h,v 1.5.70.2 2009/01/17 13:29:08 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,6 +89,13 @@ struct bwtwo_softc {
 	/* Video status */
 	int	(*sc_get_video)(struct bwtwo_softc *);
 	void	(*sc_set_video)(struct bwtwo_softc *, int);
+#if NWSDISPLAY > 0	
+	uint32_t sc_width;
+	uint32_t sc_height;	/* display width / height */
+	uint32_t sc_stride;
+	int sc_mode;
+	struct vcons_data vd;
+#endif
 };
 
 void	bwtwoattach(struct bwtwo_softc *, const char *, int);

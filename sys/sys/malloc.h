@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.99 2007/11/11 23:22:25 matt Exp $	*/
+/*	$NetBSD: malloc.h,v 1.99.14.1 2009/01/17 13:29:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -41,6 +41,8 @@
 #endif
 
 
+#ifdef _KERNEL
+
 /*
  * flags to malloc
  */
@@ -49,8 +51,6 @@
 #define	M_ZERO		0x0002	/* zero the allocation */
 #define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
 				 * be allocated */
-#ifdef _KERNEL
-
 #include <sys/mallocvar.h>
 /*
  * The following are standard, built-in malloc types that are
@@ -90,20 +90,18 @@ struct kmembuckets {
 };
 
 #ifdef _KERNEL
-#define	MALLOC(space, cast, size, type, flags) \
-	(space) = (cast)malloc((u_long)(size), (type), (flags))
-#define	FREE(addr, type) free((void *)(addr), (type))
-
 #ifdef MALLOCLOG
-void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);
-void	_free(void *, struct malloc_type *, const char *, long);
+void	*_kern_malloc(unsigned long, struct malloc_type *, int, const char *, long);
+void	_kern_free(void *, struct malloc_type *, const char *, long);
 #define	malloc(size, type, flags) \
-	    _malloc((size), (type), (flags), __FILE__, __LINE__)
+	    _kern_malloc((size), (type), (flags), __FILE__, __LINE__)
 #define	free(addr, type) \
-	    _free((addr), (type), __FILE__, __LINE__)
+	    _kern_free((addr), (type), __FILE__, __LINE__)
 #else
-void	*malloc(unsigned long, struct malloc_type *, int);
-void	free(void *, struct malloc_type *);
+void	*kern_malloc(unsigned long, struct malloc_type *, int);
+void	kern_free(void *, struct malloc_type *);
+#define malloc(size, type, flags) kern_malloc(size, type, flags)
+#define free(addr, type) kern_free(addr, type)
 #endif /* MALLOCLOG */
 
 #ifdef MALLOC_DEBUG
@@ -114,7 +112,9 @@ void	debug_malloc_print(void);
 void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
 #endif /* MALLOC_DEBUG */
 
-void	*realloc(void *, unsigned long, struct malloc_type *, int);
+void	*kern_realloc(void *, unsigned long, struct malloc_type *, int);
+#define realloc(ptr, size, type, flags) \
+	    kern_realloc(ptr, size, type, flags)
 unsigned long
 	malloc_roundup(unsigned long);
 #endif /* _KERNEL */

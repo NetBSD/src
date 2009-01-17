@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_stdtype.c,v 1.1.2.2 2008/09/28 10:40:52 mjf Exp $	*/
+/*	$NetBSD: kern_malloc_stdtype.c,v 1.1.2.3 2009/01/17 13:29:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_stdtype.c,v 1.1.2.2 2008/09/28 10:40:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_stdtype.c,v 1.1.2.3 2009/01/17 13:29:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -58,3 +58,4 @@ MALLOC_DEFINE(M_IPMADDR, "in_multi", "internet multicast address");
 MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
 MALLOC_DEFINE(M_BWMETER, "bwmeter", "multicast upcall bw meters");
 MALLOC_DEFINE(M_1394DATA, "1394data", "IEEE 1394 data buffers");
+MALLOC_DEFINE(M_IOV, "iov", "large iov's");

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.135.6.1 2008/04/03 12:43:10 mjf Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.135.6.2 2009/01/17 13:29:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.135.6.1 2008/04/03 12:43:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.135.6.2 2009/01/17 13:29:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.135.6.1 2008/04/03 12:43:10 mjf Exp $
 #include <sys/kernel.h>
 #include <sys/hash.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
+#include <sys/syscall.h>
+#include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm.h>
 
@@ -82,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.135.6.1 2008/04/03 12:43:10 mjf Exp $
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfs_var.h>
 
+MODULE(MODULE_CLASS_MISC, nfsserver, "nfs");
+
 /* Global vars */
 extern u_int32_t nfs_xdrneg1;
 extern u_int32_t nfs_false, nfs_true;
@@ -90,9 +96,50 @@ extern struct nfsstats nfsstats;
 extern const nfstype nfsv2_type[9];
 extern const nfstype nfsv3_type[9];
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
-int nfsd_use_loan = 1;	/* use page-loan for READ OP */
+bool nfsd_use_loan = true;	/* use page-loan for READ OP */
 
 #define	nqsrv_getl(vp, rw)	/* nothing */
+
+static const struct syscall_package nfsserver_syscalls[] = {
+	{ SYS_nfssvc, 0, (sy_call_t *)sys_nfssvc },
+	{ 0, 0, NULL },
+};
+
+static int
+nfsserver_modcmd(modcmd_t cmd, void *arg)
+{
+	extern krwlock_t netexport_lock;		/* XXX */
+	extern struct vfs_hooks nfs_export_hooks;	/* XXX */
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = syscall_establish(NULL, nfsserver_syscalls);
+		if (error != 0) {
+			return error;
+		}
+		nfs_init();	/* XXX for monolithic kernel */
+		rw_init(&netexport_lock);
+		nfsrv_init(0);		/* Init server data structures */
+		nfsrv_initcache();	/* Init the server request cache */
+		vfs_hooks_attach(&nfs_export_hooks);
+		nfs_timer_srvinit(nfsrv_timer);
+		return 0;
+	case MODULE_CMD_FINI:
+		error = syscall_disestablish(NULL, nfsserver_syscalls);
+		if (error != 0) {
+			return error;
+		}
+		nfs_timer_srvfini();
+		vfs_hooks_detach(&nfs_export_hooks);
+		nfsrv_finicache();
+		nfsrv_fini();
+		rw_destroy(&netexport_lock);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
 
 /*
  * nfs v3 access service
@@ -952,7 +999,7 @@ nfsrv_write(nfsd, slp, lwp, mrq)
 		 * for debugging purposes.
 		 */
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_usec);
+		*tl = txdr_unsigned(boottime.tv_nsec / 1000);
 	} else {
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 		nfsm_srvfillattr(&va, fp);
@@ -1257,7 +1304,7 @@ loop1:
 			     * for debugging purposes.
 			     */
 			    *tl++ = txdr_unsigned(boottime.tv_sec);
-			    *tl = txdr_unsigned(boottime.tv_usec);
+			    *tl = txdr_unsigned(boottime.tv_nsec / 1000);
 			} else {
 			    nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 			    nfsm_srvfillattr(&va, fp);
@@ -2515,9 +2562,10 @@ out:
 struct flrep {
 	nfsuint64 fl_off;
 	u_int32_t fl_postopok;
-	u_int32_t fl_fattr[NFSX_V3FATTR / sizeof (u_int32_t)];
+	struct nfs_fattr fl_fattr; /* XXX: must be of fattr3 size */
 	u_int32_t fl_fhok;
 	u_int32_t fl_fhsize;
+	/* handle comes here, filled in dynamically */
 };
 
 int
@@ -3160,7 +3208,7 @@ nfsrv_commit(nfsd, slp, lwp, mrq)
 	if (!error) {
 		nfsm_build(tl, u_int32_t *, NFSX_V3WRITEVERF);
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_usec);
+		*tl = txdr_unsigned(boottime.tv_nsec / 1000);
 	} else {
 		return (0);
 	}

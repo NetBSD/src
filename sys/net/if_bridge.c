@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.56.6.2 2008/06/29 09:33:18 mjf Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.56.6.3 2009/01/17 13:29:30 mjf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.56.6.2 2008/06/29 09:33:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.56.6.3 2009/01/17 13:29:30 mjf Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -488,23 +488,30 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.
 			 */
 			(*ifp->if_stop)(ifp, 1);
-		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			error = (*ifp->if_init)(ifp);
+			break;
+		default:
+			break;
 		}
 		break;
 
 	default:
-		error = ENOTTY;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 

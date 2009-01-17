@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.126.6.2 2008/09/28 10:40:33 mjf Exp $	*/
+/*	$NetBSD: umass.c,v 1.126.6.3 2009/01/17 13:29:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.126.6.2 2008/09/28 10:40:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.126.6.3 2009/01/17 13:29:10 mjf Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -692,7 +692,11 @@ umass_activate(device_t dev, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
+		if (scbus == NULL || scbus->sc_child == NULL)
+			break;
+		rv = config_activate(scbus->sc_child);
+		DPRINTF(UDMASS_USB, ("%s: umass activate: child "
+		    "returned %d\n", USBDEVNAME(sc->sc_dev), rv));
 		break;
 
 	case DVACT_DEACTIVATE:
@@ -700,7 +704,7 @@ umass_activate(device_t dev, enum devact act)
 		if (scbus == NULL || scbus->sc_child == NULL)
 			break;
 		rv = config_deactivate(scbus->sc_child);
-		DPRINTF(UDMASS_USB, ("%s: umass_activate: child "
+		DPRINTF(UDMASS_USB, ("%s: umass_deactivate: child "
 		    "returned %d\n", USBDEVNAME(sc->sc_dev), rv));
 		break;
 	}
@@ -714,20 +718,24 @@ umass_disco(struct umass_softc *sc)
 
 	DPRINTF(UDMASS_GEN, ("umass_disco\n"));
 
+	/* Remove all the pipes. */
+	for (i = 0 ; i < UMASS_NEP ; i++) {
+		if (sc->sc_pipe[i] != NULL) {
+			usbd_abort_pipe(sc->sc_pipe[i]);
+			usbd_close_pipe(sc->sc_pipe[i]);
+			sc->sc_pipe[i] = NULL;
+		}
+	}
+
+	/* Some xfers may be queued in the default pipe */
+	usbd_abort_default_pipe(sc->sc_udev);
+
 	/* Free the xfers. */
 	for (i = 0; i < XFER_NR; i++)
 		if (sc->transfer_xfer[i] != NULL) {
 			usbd_free_xfer(sc->transfer_xfer[i]);
 			sc->transfer_xfer[i] = NULL;
 		}
-
-	/* Remove all the pipes. */
-	for (i = 0 ; i < UMASS_NEP ; i++) {
-		if (sc->sc_pipe[i] != NULL) {
-			usbd_close_pipe(sc->sc_pipe[i]);
-			sc->sc_pipe[i] = NULL;
-		}
-	}
 }
 
 /*

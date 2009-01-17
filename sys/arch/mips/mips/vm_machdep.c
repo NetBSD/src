@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.120 2007/10/17 19:55:39 garbled Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.120.16.1 2009/01/17 13:28:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,11 +76,10 @@
  *	@(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
  */
 
-#include "opt_ddb.h"
-#include "opt_coredump.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120 2007/10/17 19:55:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120.16.1 2009/01/17 13:28:17 mjf Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120 2007/10/17 19:55:39 garbled Exp
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -241,48 +242,6 @@ cpu_lwp_free2(struct lwp *l)
 
 	(void)l;
 }
-
-#ifdef COREDUMP
-/*
- * Dump the machine specific segment at the start of a core dump.
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
-{
-	int error;
-	struct coreseg cseg;
-	struct cpustate {
-		struct frame frame;
-		struct fpreg fpregs;
-	} cpustate;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = ALIGN(sizeof(struct core));
-		chdr->c_seghdrsize = ALIGN(sizeof(struct coreseg));
-		chdr->c_cpusize = sizeof(struct cpustate);
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		savefpregs(l);
-	cpustate.frame = *(struct frame *)l->l_md.md_regs;
-	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &cpustate,
-	    chdr->c_cpusize);
-}
-#endif
 
 /*
  * Map a user I/O request into kernel virtual address space.

@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.24 2007/12/06 00:28:37 dyoung Exp $	 */
+/*	$NetBSD: at_control.c,v 1.24.12.1 2009/01/17 13:29:32 mjf Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.24 2007/12/06 00:28:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.24.12.1 2009/01/17 13:29:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,9 +318,7 @@ at_control(cmd, data, ifp, l)
 		break;
 
 	default:
-		if (ifp == 0 || ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl) (ifp, cmd, data));
+		return ENOTTY;
 	}
 	return (0);
 }
@@ -586,8 +584,7 @@ at_ifinit(ifp, aa, sat)
 	 * Now that we have selected an address, we need to tell the
 	 * interface about it, just in case it needs to adjust something.
 	 */
-	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl) (ifp, SIOCSIFADDR, (void *) aa))) {
+	if ((error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, aa)) != 0) {
 		/*
 		 * of course this could mean that it objects violently
 		 * so if it does, we back out again..

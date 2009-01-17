@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.3.14.2 2008/06/02 13:22:52 mjf Exp $ */
+/* $NetBSD: platform.c,v 1.3.14.3 2009/01/17 13:28:38 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,11 +29,10 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3.14.2 2008/06/02 13:22:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3.14.3 2009/01/17 13:28:38 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/pmf.h>
 

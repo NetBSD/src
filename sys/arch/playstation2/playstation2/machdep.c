@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21.16.2 2008/07/02 19:08:17 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.16.3 2009/01/17 13:28:25 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.16.2 2008/07/02 19:08:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.16.3 2009/01/17 13:28:25 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.16.2 2008/07/02 19:08:17 mjf Exp $"
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -248,6 +249,8 @@ cpu_reboot(int howto, char *bootstr)
 
  haltsys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
 		sifbios_halt(0); /* power down */

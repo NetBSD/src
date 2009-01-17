@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.123.6.2 2008/09/28 10:41:07 mjf Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.123.6.3 2009/01/17 13:29:43 mjf Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.123.6.2 2008/09/28 10:41:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.123.6.3 2009/01/17 13:29:43 mjf Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -991,8 +991,8 @@ ReFault:
 			    PMAP_CANFAIL |
 			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
 		}
-		mutex_exit(&anon->an_lock);
 		pmap_update(ufi.orig_map->pmap);
+		mutex_exit(&anon->an_lock);
 	}
 
 	/* locked: maps(read), amap(if there) */

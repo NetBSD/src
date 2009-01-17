@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_icu.c,v 1.1.20.2 2008/06/29 09:32:54 mjf Exp $	*/
+/*	$NetBSD: imx31_icu.c,v 1.1.20.3 2009/01/17 13:27:53 mjf Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.20.2 2008/06/29 09:32:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.20.3 2009/01/17 13:27:53 mjf Exp $");
 
 #define _INTR_PRIVATE
  
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.20.2 2008/06/29 09:32:54 mjf Exp $
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
  
 #include <uvm/uvm_extern.h>
   
@@ -47,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.20.2 2008/06/29 09:32:54 mjf Exp $
 #include <arm/cpufunc.h>
 
 #include <machine/autoconf.h>
-#include <machine/atomic.h>
 #include <machine/bus.h>
 
 #include <arm/imx/imx31reg.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: arckbdvar.h,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: arckbdvar.h,v 1.2.116.1 2009/01/17 13:27:46 mjf Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -39,6 +39,6 @@ struct arckbd_kbidtab {
 extern const struct wskbd_mapdata arckbd_mapdata_default;
 extern const struct arckbd_kbidtab arckbd_kbidtab[];
 
-extern void arckbd_cnattach __P((struct device * self));
+extern void arckbd_cnattach(device_t self);
 
 #endif

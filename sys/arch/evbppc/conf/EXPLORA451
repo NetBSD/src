@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.33.6.2 2008/09/28 10:39:54 mjf Exp $
+#	$NetBSD: EXPLORA451,v 1.33.6.3 2009/01/17 13:28:00 mjf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -35,7 +35,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -98,7 +97,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

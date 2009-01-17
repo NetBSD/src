@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.27.6.2 2008/06/29 09:33:14 mjf Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.27.6.3 2009/01/17 13:29:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.27.6.2 2008/06/29 09:33:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.27.6.3 2009/01/17 13:29:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.27.6.2 2008/06/29 09:33:14 mjf Exp $"
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/xcall.h>
 #include <sys/syscallargs.h>
 

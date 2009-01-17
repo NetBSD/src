@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.39.16.2 2008/06/29 09:33:08 mjf Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.39.16.3 2009/01/17 13:28:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.39.16.2 2008/06/29 09:33:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.39.16.3 2009/01/17 13:28:57 mjf Exp $");
 
 #include "rnd.h"
 
@@ -253,7 +253,7 @@ edmcastrategy(bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	simple_lock(&ed->sc_q_lock);
-	BUFQ_PUT(ed->sc_q, bp);
+	bufq_put(ed->sc_q, bp);
 	simple_unlock(&ed->sc_q_lock);
 
 	/* Ring the worker thread */

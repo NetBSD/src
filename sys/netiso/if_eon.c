@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.65.6.1 2008/06/02 13:24:29 mjf Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.65.6.2 2009/01/17 13:29:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.65.6.1 2008/06/02 13:24:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.65.6.2 2009/01/17 13:29:33 mjf Exp $");
 
 #include "opt_eon.h"
 
@@ -149,12 +149,12 @@ eonattach(void)
 	ifp->if_ioctl = eonioctl;
 	ifp->if_output = eonoutput;
 	ifp->if_type = IFT_EON;
-	ifp->if_addrlen = 5;
+	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = EONIPLEN;
 	ifp->if_flags = IFF_BROADCAST;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	eonioctl(ifp, SIOCSIFADDR, ifp->if_dl);
+	eonioctl(ifp, SIOCINITIFADDR, ifp->if_dl);
 	eon_llinfo.el_qhdr.link =
 		eon_llinfo.el_qhdr.rlink = &(eon_llinfo.el_qhdr);
 
@@ -190,7 +190,7 @@ eonioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (ifa == NULL)
 			break;
 		ifp->if_flags |= IFF_UP;
@@ -198,7 +198,7 @@ eonioctl(struct ifnet *ifp, u_long cmd, void *data)
 			ifa->ifa_rtrequest = eonrtrequest;
 		break;
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 	splx(s);
@@ -251,7 +251,7 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro, int class)
  * RETURNS:			nothing
  */
 void
-eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
+eonrtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	struct rtentry *nrt;
 	unsigned long   zerodst = 0;

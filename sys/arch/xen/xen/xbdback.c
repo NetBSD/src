@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.30.6.3 2008/09/28 10:40:14 mjf Exp $      */
+/*      $NetBSD: xbdback.c,v 1.30.6.4 2009/01/17 13:28:40 mjf Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.30.6.3 2008/09/28 10:40:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.30.6.4 2009/01/17 13:28:40 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.30.6.3 2008/09/28 10:40:14 mjf Exp $")
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/workqueue.h>
+#include <sys/buf.h>
 
 #include <machine/pmap.h>
 #include <xen/hypervisor.h>
@@ -271,7 +272,7 @@ xbdback_init(void)
 	ctrl_msg_t cmsg;
 	blkif_be_driver_status_t st;
 
-	if ( !(xen_start_info.flags & SIF_INITDOMAIN) &&
+	if ( !xendomain_is_dom0() &&
 	     !(xen_start_info.flags & SIF_BLK_BE_DOMAIN) )
 		return;
 
@@ -492,7 +493,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			goto end;
 		}
 		if (vbd->size) {
-			printf("xbd backend: detach device %s%d%c "
+			printf("xbd backend: detach device %s%" PRIu64
+			       "%" PRIu64 " "
 			    "for domain %d\n", devsw_blk2name(major(vbd->dev)),
 			    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
 			    xbdi->domid);
@@ -589,7 +591,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		vbd->size = req->extent.sector_length * (512 / DEV_BSIZE);
 		if (vbd->size == 0 || vbd->size > dpart.part->p_size);
 			vbd->size = dpart.part->p_size;
-		printf("xbd backend: attach device %s%d%c (size %d) "
+		printf("xbd backend: attach device %s%" PRIu64 "%" PRIu64
+		       " (size %d) "
 		    "for domain %d\n", devname, DISKUNIT(vbd->dev),
 		    DISKPART(vbd->dev) + 'a', vbd->size, xbdi->domid);
 		req->status = BLKIF_BE_STATUS_OKAY;
@@ -615,7 +618,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_VBD_NOT_FOUND;
 			goto end;
 		}
-		printf("xbd backend: detach device %s%d%c "
+		printf("xbd backend: detach device %s%" PRIu64 "%" PRIu64 " "
 		    "for domain %d\n", devsw_blk2name(major(vbd->dev)),
 		    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
 		    xbdi->domid);
@@ -701,7 +704,7 @@ xbdback_co_main(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
 	xbdi->req_prod = xbdi->blk_ring->req_prod;
-	x86_lfence(); /* ensure we see all requests up to req_prod */
+	xen_rmb(); /* ensure we see all requests up to req_prod */
 	/*
 	 * note that we'll eventually get a full ring of request.
 	 * in this case, MASK_BLKIF_IDX(req_cons) == MASK_BLKIF_IDX(req_prod)
@@ -1248,7 +1251,7 @@ xbdback_send_reply(struct xbdback_instance *xbdi, int id, int op, int status)
 	resp->operation = op;
 	resp->status    = status;
 	xbdi->resp_prod++;
-	x86_lfence(); /* ensure guest see all our replies */
+	xen_rmb(); /* ensure guest see all our replies */
 	xbdi->blk_ring->resp_prod = xbdi->resp_prod;
 	hypervisor_notify_via_evtchn(xbdi->evtchn);
 }

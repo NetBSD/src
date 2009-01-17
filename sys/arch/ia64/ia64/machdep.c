@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6.40.3 2008/07/02 19:08:16 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6.40.4 2009/01/17 13:28:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -91,6 +91,8 @@
 #include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/ksyms.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/msgbuf.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
@@ -120,7 +122,7 @@
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 vaddr_t ia64_unwindtab;
@@ -747,8 +749,8 @@ ia64_init()
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif
 
@@ -852,6 +854,12 @@ setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
 
 void
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	return;
+}
+ 
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	return;
 }

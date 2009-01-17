@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.35.6.3 2008/06/29 09:32:59 mjf Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.35.6.4 2009/01/17 13:28:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.35.6.3 2008/06/29 09:32:59 mjf Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.35.6.4 2009/01/17 13:28:29 mjf Exp $")
 
 
 /*
@@ -279,7 +279,7 @@ NENTRY(sh3_vector_tlbmiss)
 	.align	4
 .L3_VPN_cleanup:		.long	~0x00000c00
 .L3_curptd:			.long	_C_LABEL(curptd)
-.L3_kernptd:			.long	_C_LABEL(__pmap_kernel)
+.L3_kernptd:			.long	_C_LABEL(kernel_pmap_ptr)
 .L3_VM_MIN_KERNEL_ADDRESS:	.long	VM_MIN_KERNEL_ADDRESS
 .L3_ptp_index_mask:		.long	0x1ff
 .L3_ptp_offset_mask:		.long	0x3ff << 2
@@ -431,7 +431,7 @@ NENTRY(sh4_vector_tlbmiss)
 .L4_SH4_PTEH:			.long	SH4_PTEH
 .L4_VPN_cleanup:		.long	~0x00000c00
 .L4_curptd:			.long	_C_LABEL(curptd)
-.L4_kernptd:			.long	_C_LABEL(__pmap_kernel)
+.L4_kernptd:			.long	_C_LABEL(kernel_pmap_ptr)
 .L4_VM_MIN_KERNEL_ADDRESS:	.long	VM_MIN_KERNEL_ADDRESS
 .L4_ptp_index_mask:		.long	0x1ff
 .L4_ptp_offset_mask:		.long	0x3ff << 2
