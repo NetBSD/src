@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.56 2009/01/17 09:20:46 isaki Exp $	*/
+/*	$NetBSD: ite.c,v 1.57 2009/01/17 10:02:23 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56 2009/01/17 09:20:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.57 2009/01/17 10:02:23 isaki Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -186,10 +186,10 @@ void	itestart(struct tty *);
 void iteputchar(int, struct ite_softc *);
 void ite_putstr(const u_char *, int, dev_t);
 
-void iteattach(struct device *, struct device *, void *);
-int itematch(struct device *, struct cfdata *, void *);
+int itematch(device_t, cfdata_t, void *);
+void iteattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ite, sizeof(struct ite_softc),
+CFATTACH_DECL_NEW(ite, sizeof(struct ite_softc),
     itematch, iteattach, NULL, NULL);
 
 extern struct cfdriver ite_cd;
@@ -208,7 +208,7 @@ const struct cdevsw ite_cdevsw = {
 };
 
 int
-itematch(struct device *pdp, struct cfdata *cdp, void *auxp)
+itematch(device_t pdp, cfdata_t cdp, void *auxp)
 {
 	struct grf_softc *gp;
 	
@@ -224,13 +224,13 @@ itematch(struct device *pdp, struct cfdata *cdp, void *auxp)
  * an ite device, it is also called from ite_cninit().
  */
 void
-iteattach(struct device *pdp, struct device *dp, void *auxp)
+iteattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct ite_softc *ip;
 	struct grf_softc *gp;
 
 	gp = (struct grf_softc *)auxp;
-	ip = (struct ite_softc *)dp;
+	ip = device_private(dp);
 	if(con_itesoftc.grf != NULL
 		/*&& con_itesoftc.grf->g_unit == gp->g_unit*/) {
 		/*
@@ -244,10 +244,10 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 	}
 	ip->grf = gp;
 	iteinit(device_unit(&ip->device)); /* XXX */
-	printf(": rows %d cols %d", ip->rows, ip->cols);
+	aprint_normal(": rows %d cols %d", ip->rows, ip->cols);
 	if (kbd_ite == NULL)
 		kbd_ite = ip;
-	printf("\n");
+	aprint_normal("\n");
 }
 
 struct ite_softc *

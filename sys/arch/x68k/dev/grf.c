@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.36 2008/06/14 13:36:24 isaki Exp $	*/
+/*	$NetBSD: grf.c,v 1.37 2009/01/17 10:02:23 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36 2008/06/14 13:36:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37 2009/01/17 10:02:23 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ grfmmap(dev_t dev, off_t off, int prot)
 int
 grfon(struct grf_softc *gp)
 {
-	int unit = device_unit(&gp->g_device);
+	int unit = device_unit(gp->g_device);
 
 	/*
 	 * XXX: iteoff call relies on devices being in same order
@@ -260,7 +260,7 @@ grfon(struct grf_softc *gp)
 int
 grfoff(struct grf_softc *gp)
 {
-	int unit = device_unit(&gp->g_device);
+	int unit = device_unit(gp->g_device);
 	int error;
 
 #if 0				/* always fails in EINVAL... */
