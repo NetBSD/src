@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.13 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: fusu.S,v 1.14 2009/01/17 22:56:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -41,8 +41,7 @@
 
 #if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
 #ifdef MULTIPROCESSOR
-.Lcpu_info:
-	.word	_C_LABEL(cpu_info)
+#error
 #else
 .Lcurpcb:
 	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
@@ -51,13 +50,7 @@
 
 #if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
 #if defined(MULTIPROCESSOR)
-#define	GET_CURPCB(rX)				\
-	stmfd	sp!, {r0, r1, r3, r14}		;\
-	bl	_C_LABEL(cpu_number)		;\
-	ldr	rX, .Lcpu_info			;\
-	ldr	rX, [rX, r0, lsl #2]		;\
-	ldr	rX, [rX, #CI_CURPCB]		;\
-	ldmfd	sp!, {r0, r1, r3, r14}
+#error GET_CURPCB not defined
 #else
 #define	GET_CURPCB(rX)				\
 	ldr	rX, .Lcurpcb			;\
@@ -317,12 +310,7 @@ ENTRY(subyte)
 #if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r2)
 #elif defined(MULTIPROCESSOR)
-	stmfd	sp!, {r0, r1, r3, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r2, .Lcpu_info
-	ldr	r2, [r2, r0, lsl #2]
-	ldr	r2, [r2, #CI_CURPCB]
-	ldmfd	sp!, {r0, r1, r3, r14}
+#error MULTIPROCESSOR without GET_CURPCB
 #else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
