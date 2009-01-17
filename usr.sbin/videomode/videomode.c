@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.c,v 1.6 2009/01/14 22:57:48 he Exp $	*/
+/*	$NetBSD: videomode.c,v 1.7 2009/01/17 22:01:32 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Christian E. Hopps
@@ -104,8 +104,8 @@ get_grf()
 		errx(1, "stdin not a tty");
 	if (major(stb.st_rdev) != 13)
 		errx(1, "stdin not an ite device");
-	(void)snprintf(grfname, sizeof(grfname), "/dev/grf%d",
-	    (int)minor(stb.st_rdev) & 0x7);
+	(void)snprintf(grfname, sizeof(grfname), "/dev/grf%u",
+	    (u_int)minor(stb.st_rdev) & 0x7);
 	if ((grffd = open(grfname, 2)) < 0)
 		err(1, "%s", grfname);
 	return (grffd);
