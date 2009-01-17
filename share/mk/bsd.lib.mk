@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.294 2009/01/17 12:07:59 he Exp $
+#	$NetBSD: bsd.lib.mk,v 1.295 2009/01/17 12:09:58 he Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -80,6 +80,8 @@ CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g+
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
 SHLIB_MINOR != . ${SHLIB_VERSION_FILE} ; echo $$minor
 SHLIB_TEENY != . ${SHLIB_VERSION_FILE} ; echo $$teeny
+
+DPADD+=	${SHLIB_VERSION_FILE}
 
 # Check for higher installed library versions.
 .if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB}) && \
