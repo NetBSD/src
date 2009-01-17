@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.4 2008/10/16 21:22:32 abs Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.4.6.1 2009/01/17 22:51:03 snj Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.4 2008/10/16 21:22:32 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.4.6.1 2009/01/17 22:51:03 snj Exp $");
 
 
 #include <sys/param.h>
@@ -1763,13 +1763,13 @@ jme_mac_config(jme_softc_t *sc)
 	/* Reprogram Tx/Rx MACs with resolved speed/duplex. */
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
 	case IFM_10_T:
-		ghc |= GHC_SPEED_10;
+		ghc |= GHC_SPEED_10 | GHC_CLKSRC_10_100;
 		break;
 	case IFM_100_TX:
-		ghc |= GHC_SPEED_100;
+		ghc |= GHC_SPEED_100 | GHC_CLKSRC_10_100;
 		break;
 	case IFM_1000_T:
-		ghc |= GHC_SPEED_1000;
+		ghc |= GHC_SPEED_1000 | GHC_CLKSRC_1000;
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) == 0)
 			txmac |= TXMAC_CARRIER_EXT | TXMAC_FRAME_BURST;
 		break;
