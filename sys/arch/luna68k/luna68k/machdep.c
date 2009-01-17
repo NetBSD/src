@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.60 2009/01/17 19:34:28 he Exp $ */
+/* $NetBSD: machdep.c,v 1.61 2009/01/17 19:39:50 he Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2009/01/17 19:34:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2009/01/17 19:39:50 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -615,14 +615,14 @@ dumpsys()
 			return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %" PRIu64 ",%" PRIu64 "not possible\n",
+		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
 	}
 	dump = bdev->d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 "offset %ld\n",
+	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
 	printf("dump ");
