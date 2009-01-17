@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_devfs.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $ */
+/*	$NetBSD: mount_devfs.c,v 1.1.6.3 2009/01/17 22:56:15 mjf Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_devfs.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $");
+__RCSID("$NetBSD: mount_devfs.c,v 1.1.6.3 2009/01/17 22:56:15 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,7 +58,8 @@ __RCSID("$NetBSD: mount_devfs.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "fattr.h"
+
+#include "mountprog.h"
 
 /* --------------------------------------------------------------------- */
 
