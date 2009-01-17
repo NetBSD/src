@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2008/11/30 18:21:32 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2009/01/17 07:17:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2008/11/30 18:21:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2009/01/17 07:17:35 tsutsui Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -149,8 +149,6 @@ struct cpu_info cpu_info_store;
 
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
-
-extern vaddr_t virtual_avail;
 
 /*
  * Declare these as initialized data so we can patch them.
