@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.154 2009/01/17 07:02:35 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.155 2009/01/17 09:00:24 cegger Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.154 2009/01/17 07:02:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.155 2009/01/17 09:00:24 cegger Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2827,7 +2827,7 @@ sysctl_hw_usermem(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	switch (rnode->sysctl_num) {
-	    case HW_USERMEM:
+	case HW_USERMEM:
 		if ((ui = physmem - uvmexp.wired) > (UINT_MAX / PAGE_SIZE))
 			ui = UINT_MAX;
 		else
