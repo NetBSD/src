@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.24 2008/01/08 02:07:50 matt Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.25 2009/01/17 17:06:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.24 2008/01/08 02:07:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.25 2009/01/17 17:06:18 mjf Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -247,7 +247,7 @@ checkdelay(void)
 		return;
 	if (diff.tv_usec > 10000)
 		return;
-	printf("WARNING: delay(10000) took %ld us\n", diff.tv_usec);
+	printf("WARNING: delay(10000) took %d us\n", diff.tv_usec);
 }
 #endif
 
