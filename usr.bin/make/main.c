@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.162 2009/01/16 21:13:13 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.163 2009/01/17 13:29:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.162 2009/01/16 21:13:13 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.163 2009/01/17 13:29:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.162 2009/01/16 21:13:13 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.163 2009/01/17 13:29:37 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1502,13 +1502,13 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	 */
 	(void)close(fds[1]);
 
-	buf = Buf_Init(0);
+	Buf_Init(&buf, 0);
 
 	do {
 	    char   result[BUFSIZ];
 	    cc = read(fds[0], result, sizeof(result));
 	    if (cc > 0)
-		Buf_AddBytes(buf, cc, (Byte *)result);
+		Buf_AddBytes(&buf, cc, result);
 	}
 	while (cc > 0 || (cc == -1 && errno == EINTR));
 
@@ -1523,8 +1523,8 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	while(((pid = waitpid(cpid, &status, 0)) != cpid) && (pid >= 0))
 	    continue;
 
-	res = (char *)Buf_GetAll(buf, &cc);
-	Buf_Destroy(buf, FALSE);
+	cc = Buf_Size(&buf);
+	res = Buf_Destroy(&buf, FALSE);
 
 	if (cc == 0)
 	    *errnum = "Couldn't read shell's output for \"%s\"";

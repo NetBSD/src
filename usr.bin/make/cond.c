@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.49 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.50 2009/01/17 13:29:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.49 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.50 2009/01/17 13:29:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.49 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.50 2009/01/17 13:29:37 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -258,7 +258,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
      * Create a buffer for the argument and start it out at 16 characters
      * long. Why 16? Why not?
      */
-    buf = Buf_Init(16);
+    Buf_Init(&buf, 16);
 
     while ((strchr(" \t)&|", *cp) == NULL) && (*cp != '\0')) {
 	if (*cp == '$') {
@@ -273,19 +273,18 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 	    void	*freeIt;
 
 	    cp2 = Var_Parse(cp, VAR_CMD, TRUE, &len, &freeIt);
-	    Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
+	    Buf_AddBytes(&buf, strlen(cp2), cp2);
 	    if (freeIt)
 		free(freeIt);
 	    cp += len;
 	} else {
-	    Buf_AddByte(buf, (Byte)*cp);
+	    Buf_AddByte(&buf, *cp);
 	    cp++;
 	}
     }
 
-    Buf_AddByte(buf, (Byte)'\0');
-    *argPtr = (char *)Buf_GetAll(buf, &argLen);
-    Buf_Destroy(buf, FALSE);
+    *argPtr = Buf_GetAll(&buf, &argLen);
+    Buf_Destroy(&buf, FALSE);
 
     while (*cp == ' ' || *cp == '\t') {
 	cp++;
@@ -294,7 +293,9 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
 		     func);
 	return (0);
-    } else if (parens) {
+    }
+
+    if (parens) {
 	/*
 	 * Advance pointer past close parenthesis.
 	 */
@@ -552,7 +553,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
     int qt;
     char *start;
 
-    buf = Buf_Init(0);
+    Buf_Init(&buf, 0);
     str = NULL;
     *freeIt = NULL;
     *quoted = qt = *condExpr == '"' ? 1 : 0;
@@ -563,7 +564,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
 	case '\\':
 	    if (condExpr[1] != '\0') {
 		condExpr++;
-		Buf_AddByte(buf, (Byte)*condExpr);
+		Buf_AddByte(&buf, *condExpr);
 	    }
 	    break;
 	case '"':
@@ -571,7 +572,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
 		condExpr++;		/* we don't want the quotes */
 		goto got_str;
 	    } else
-		Buf_AddByte(buf, (Byte)*condExpr); /* likely? */
+		Buf_AddByte(&buf, *condExpr); /* likely? */
 	    break;
 	case ')':
 	case '!':
@@ -583,7 +584,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
 	    if (!qt)
 		goto got_str;
 	    else
-		Buf_AddByte(buf, (Byte)*condExpr);
+		Buf_AddByte(&buf, *condExpr);
 	    break;
 	case '$':
 	    /* if we are in quotes, then an undefined variable is ok */
@@ -617,7 +618,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
 	     * Nope, we better copy str to buf
 	     */
 	    for (cp = str; *cp; cp++) {
-		Buf_AddByte(buf, (Byte)*cp);
+		Buf_AddByte(&buf, *cp);
 	    }
 	    if (*freeIt) {
 		free(*freeIt);
@@ -627,16 +628,15 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
 	    condExpr--;			/* don't skip over next char */
 	    break;
 	default:
-	    Buf_AddByte(buf, (Byte)*condExpr);
+	    Buf_AddByte(&buf, *condExpr);
 	    break;
 	}
     }
  got_str:
-    Buf_AddByte(buf, (Byte)'\0');
-    str = (char *)Buf_GetAll(buf, NULL);
+    str = Buf_GetAll(&buf, NULL);
     *freeIt = str;
  cleanup:
-    Buf_Destroy(buf, FALSE);
+    Buf_Destroy(&buf, FALSE);
     return str;
 }
 

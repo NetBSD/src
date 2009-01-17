@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.45 2009/01/14 22:54:10 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.46 2009/01/17 13:29:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.45 2009/01/14 22:54:10 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.46 2009/01/17 13:29:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.45 2009/01/14 22:54:10 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.46 2009/01/17 13:29:37 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -115,7 +115,7 @@ make_str(const char *ptr, int len)
 static void
 For_Free(For *arg)
 {
-    Buf_Destroy(arg->buf, TRUE);
+    Buf_Destroy(&arg->buf, TRUE);
     strlist_clean(&arg->vars);
     strlist_clean(&arg->items);
     free(arg->parse_buf);
@@ -246,7 +246,7 @@ For_Eval(char *line)
 	strlist_clean(&new_for->items);
     }
 
-    new_for->buf = Buf_Init(0);
+    Buf_Init(&new_for->buf, 0);
     accumFor = new_for;
     forLevel = 1;
     return 1;
@@ -281,8 +281,8 @@ For_Accum(char *line)
 	}
     }
 
-    Buf_AddBytes(accumFor->buf, strlen(line), (Byte *)line);
-    Buf_AddByte(accumFor->buf, (Byte)'\n');
+    Buf_AddBytes(&accumFor->buf, strlen(line), line);
+    Buf_AddByte(&accumFor->buf, '\n');
     return 1;
 }
 
@@ -334,7 +334,7 @@ for_var_len(const char *var)
 }
 
 static void
-for_substitute(Buffer cmds, strlist_t *items, unsigned int item_no, char ech)
+for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
 {
     const char *item = strlist_str(items, item_no);
     int len;
@@ -397,9 +397,9 @@ For_Iterate(void *v_arg)
      * to contrive a makefile where an unwanted substitution happens.
      */
 
-    cmd_cp = Buf_GetAll(arg->buf, &len);
+    cmd_cp = Buf_GetAll(&arg->buf, &len);
     body_end = cmd_cp + len;
-    cmds = Buf_Init(len + 256);
+    Buf_Init(&cmds, len + 256);
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
 	char ech;
 	ch = *++cp;
@@ -413,11 +413,11 @@ For_Iterate(void *v_arg)
 		if (cp[len] != ':' && cp[len] != ech && cp[len] != '\\')
 		    continue;
 		/* Found a variable match. Replace with :U<value> */
-		Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
-		Buf_AddBytes(cmds, 2, ":U");
+		Buf_AddBytes(&cmds, cp - cmd_cp, cmd_cp);
+		Buf_AddBytes(&cmds, 2, ":U");
 		cp += len;
 		cmd_cp = cp;
-		for_substitute(cmds, &arg->items, arg->sub_next + i, ech);
+		for_substitute(&cmds, &arg->items, arg->sub_next + i, ech);
 		break;
 	    }
 	    continue;
@@ -433,18 +433,17 @@ For_Iterate(void *v_arg)
 	    if (var[0] != ch || var[1] != 0)
 		continue;
 	    /* Found a variable match. Replace with ${:U<value>} */
-	    Buf_AddBytes(cmds, cp - cmd_cp, cmd_cp);
-	    Buf_AddBytes(cmds, 3, "{:U");
+	    Buf_AddBytes(&cmds, cp - cmd_cp, cmd_cp);
+	    Buf_AddBytes(&cmds, 3, "{:U");
 	    cmd_cp = ++cp;
-	    for_substitute(cmds, &arg->items, arg->sub_next + i, /*{*/ '}');
-	    Buf_AddBytes(cmds, 1, "}");
+	    for_substitute(&cmds, &arg->items, arg->sub_next + i, /*{*/ '}');
+	    Buf_AddBytes(&cmds, 1, "}");
 	    break;
 	}
     }
-    Buf_AddBytes(cmds, body_end - cmd_cp, cmd_cp);
+    Buf_AddBytes(&cmds, body_end - cmd_cp, cmd_cp);
 
-    cp = Buf_GetAll(cmds, NULL);
-    Buf_Destroy(cmds, FALSE);
+    cp = Buf_Destroy(&cmds, FALSE);
     if (DEBUG(FOR))
 	(void)fprintf(debug_file, "For: loop body:\n%s", cp);
 
