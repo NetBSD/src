@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.14 2008/12/20 18:08:24 dsl Exp $	*/
+/*	$NetBSD: buf.h,v 1.15 2009/01/17 13:29:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -80,36 +80,34 @@
 #ifndef _BUF_H
 #define _BUF_H
 
-#include    "sprite.h"
-
 typedef char Byte;
 
 typedef struct Buffer {
     int	    size; 	/* Current size of the buffer */
-    int     left;	/* Space left (== size - (inPtr - buffer)) */
-    Byte    *buffer;	/* The buffer itself */
-    Byte    *inPtr;	/* Place to write to */
-} *Buffer;
+    int     count;	/* Number of bytes in buffer */
+    Byte    *buffer;	/* The buffer itself (zero terminated) */
+} Buffer;
 
 /* Buf_AddByte adds a single byte to a buffer. */
 #define	Buf_AddByte(bp, byte) do { \
-	if (--(bp)->left <= 0) \
-		Buf_OvAddByte(bp, byte); \
-	else { \
-		*(bp)->inPtr++ = (byte); \
-		*(bp)->inPtr = 0; \
-	} \
+	int _count = ++(bp)->count; \
+	char *_ptr; \
+	if (__predict_false(_count >= (bp)->size)) \
+		Buf_Expand_1(bp); \
+	_ptr = (bp)->buffer + _count; \
+	_ptr[-1] = (byte); \
+	_ptr[0] = 0; \
     } while (0)
 
 #define BUF_ERROR 256
 
-void Buf_OvAddByte(Buffer, int);
-void Buf_AddBytes(Buffer, int, const Byte *);
-Byte *Buf_GetAll(Buffer, int *);
-void Buf_Empty(Buffer);
-int Buf_Size(Buffer);
-Buffer Buf_Init(int);
-void Buf_Destroy(Buffer, Boolean);
-void Buf_ReplaceLastByte(Buffer, int);
+#define Buf_Size(bp) ((bp)->count)
+
+void Buf_Expand_1(Buffer *);
+void Buf_AddBytes(Buffer *, int, const Byte *);
+Byte *Buf_GetAll(Buffer *, int *);
+void Buf_Empty(Buffer *);
+void Buf_Init(Buffer *, int);
+Byte *Buf_Destroy(Buffer *, Boolean);
 
 #endif /* _BUF_H */

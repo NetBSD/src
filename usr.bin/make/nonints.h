@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.52 2009/01/13 18:22:34 dsl Exp $	*/
+/*	$NetBSD: nonints.h,v 1.53 2009/01/17 13:29:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -151,7 +151,7 @@ char **brk_string(const char *, int *, Boolean, char **);
 char *Str_FindSubstring(const char *, const char *);
 int Str_Match(const char *, const char *);
 char *Str_SYSVMatch(const char *, const char *, int *len);
-void Str_SYSVSubst(Buffer, char *, char *, int);
+void Str_SYSVSubst(Buffer *, char *, char *, int);
 
 /* suff.c */
 void Suff_ClearSuffixes(void);
