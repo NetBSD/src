@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.67 2009/01/15 23:48:50 njoly Exp $
+	$NetBSD: syscalls.master,v 1.68 2009/01/17 22:28:52 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -590,7 +590,7 @@
 364	NOARGS		{ int|compat_50_sys||getrusage(int who, \
 			    struct rusage50 *rusage); }
 365	STD		{ int|linux_sys||wait4(int pid, int *status, \
-			    int options, struct rusage *rusage); }
+			    int options, struct rusage50 *rusage); }
 366	UNIMPL		adjtimex
 367	NOARGS		{ int|sys||__getcwd(char *bufp, size_t length); }
 368	UNIMPL		capget
