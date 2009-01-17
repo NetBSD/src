@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27.2.1 2009/01/16 22:21:31 bouyer Exp $
+#	$NetBSD: Makefile,v 1.27.2.2 2009/01/17 21:49:10 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -75,14 +75,15 @@ DPSRCS+=	.depend.${f} e${f}.c
 CLEANFILES+=	.depend.${f} e${f}.c
 
 # XXX super hack
-. if (${MACHINE_ARCH} == "x86_64" && \
-      (${f} == "elf_i386" || ${f} == "i386nbsd"))
-EMUL_LIB_PATH.${f}=/usr/lib/i386
-. elif (${MACHINE_ARCH} == "sparc64" && \
-      (${f} == "elf32_sparc" || ${f} == "sparcnbsd"))
-EMUL_LIB_PATH.${f}=/usr/lib/sparc
-. else
-EMUL_LIB_PATH.${f}=/usr/lib
+EMUL_LIB_PATH.${f}:=/usr/lib
+. if ${MACHINE_ARCH} == "x86_64"
+.  if ${f} == "elf_i386" || ${f} == "i386nbsd"
+EMUL_LIB_PATH.${f}:=/usr/lib/i386
+.  endif
+. elif ${MACHINE_ARCH} == "sparc64"
+.  if ${f} == "elf32_sparc" || ${f} == "sparcnbsd"
+EMUL_LIB_PATH.${f}:=/usr/lib/sparc
+.  endif
 . endif
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
