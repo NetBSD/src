@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.26 2008/12/28 05:15:59 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.27 2009/01/17 07:17:36 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26 2008/12/28 05:15:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27 2009/01/17 07:17:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -65,22 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26 2008/12/28 05:15:59 tsutsui 
 #define RELOCPTR(v, t)	((t)((uintptr_t)RELOC((v), t) + firstpa))
 
 extern char *etext;
-extern int Sysptsize;
 extern char *proc0paddr;
-extern st_entry_t *Sysseg;
-extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
-extern vaddr_t virtual_avail, virtual_end;
-extern vsize_t mem_size;
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
 extern paddr_t msgbufpa;
-extern int protection_codes[];
-#ifdef M68K_MMU_HP
-extern int pmap_aliasmask;
-#endif
 
 void	pmap_bootstrap(paddr_t, paddr_t);
 
@@ -543,9 +534,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * absolute "jmp" table.
 	 */
 	{
-		int *kp;
+		u_int *kp;
 
-		kp = &RELOC(protection_codes, int);
+		kp = &RELOC(protection_codes, u_int);
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;

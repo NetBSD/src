@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 2009/01/14 01:48:42 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.157 2009/01/17 07:17:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2009/01/14 01:48:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2009/01/17 07:17:36 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -155,10 +155,8 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
-extern vaddr_t virtual_avail;
 extern u_int lowram;
 extern int end, *esym;
-extern psize_t mem_size;
 
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
