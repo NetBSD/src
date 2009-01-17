@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.23 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: net.h,v 1.24 2009/01/17 14:00:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -90,25 +90,23 @@ extern	n_long netmask;
 extern	int debug;			/* defined in the machdep sources */
 
 /* ARP/RevARP functions: */
-u_char	*arpwhohas __P((struct iodesc *, struct in_addr));
-void	arp_reply __P((struct iodesc *, void *));
-int	rarp_getipaddress __P((int));
+u_char	*arpwhohas(struct iodesc *, struct in_addr);
+void	arp_reply(struct iodesc *, void *);
+int	rarp_getipaddress(int);
 
 /* Link functions: */
-ssize_t sendether __P((struct iodesc *, void *, size_t, u_char *, int));
-ssize_t readether __P((struct iodesc *, void *, size_t, saseconds_t, u_int16_t *));
+ssize_t sendether(struct iodesc *, void *, size_t, u_char *, int);
+ssize_t readether(struct iodesc *, void *, size_t, saseconds_t, u_int16_t *);
 
-ssize_t	sendudp __P((struct iodesc *, void *, size_t));
-ssize_t	readudp __P((struct iodesc *, void *, size_t, saseconds_t));
-ssize_t	sendrecv __P((struct iodesc *,
-			ssize_t (*)(struct iodesc *, void *, size_t),
-			void *, size_t,
-			ssize_t (*)(struct iodesc *, void *, size_t, saseconds_t),
-			void *, size_t));
+ssize_t	sendudp(struct iodesc *, void *, size_t);
+ssize_t	readudp(struct iodesc *, void *, size_t, saseconds_t);
+ssize_t	sendrecv(struct iodesc *, ssize_t (*)(struct iodesc *, void *, size_t),
+    void *, size_t, ssize_t (*)(struct iodesc *, void *, size_t, saseconds_t),
+    void *, size_t);
 
 /* Utilities: */
-char	*ether_sprintf __P((const u_char *));
-int	ip_cksum __P((const void *, size_t));
+char	*ether_sprintf(const u_char *);
+int	ip_cksum(const void *, size_t);
 
 /* Machine-dependent functions: */
-satime_t	getsecs __P((void));
+satime_t	getsecs(void);

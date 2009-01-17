@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.33 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: bootp.c,v 1.34 2009/01/17 14:00:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -71,11 +71,11 @@ static	char vm_cmu[4] = VM_CMU;
 #endif
 
 /* Local forwards */
-static	ssize_t bootpsend __P((struct iodesc *, void *, size_t));
-static	ssize_t bootprecv __P((struct iodesc *, void *, size_t, saseconds_t));
-static	int vend_rfc1048 __P((u_char *, u_int));
+static	ssize_t bootpsend(struct iodesc *, void *, size_t);
+static	ssize_t bootprecv(struct iodesc *, void *, size_t, saseconds_t);
+static	int vend_rfc1048(u_char *, u_int);
 #ifdef BOOTP_VEND_CMU
-static	void vend_cmu __P((u_char *));
+static	void vend_cmu(u_char *);
 #endif
 
 #ifdef SUPPORT_DHCP
