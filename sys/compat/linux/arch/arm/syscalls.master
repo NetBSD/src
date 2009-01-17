@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.40 2009/01/15 23:48:50 njoly Exp $
+	$NetBSD: syscalls.master,v 1.41 2009/01/17 22:28:52 njoly Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -210,7 +210,7 @@
 112	UNIMPL		idle
 113	UNIMPL		syscall
 114	STD		{ int|linux_sys||wait4(int pid, int *status, \
-			    int options, struct rusage *rusage); }
+			    int options, struct rusage50 *rusage); }
 115	STD		{ int|linux_sys||swapoff(const char *path); }
 116	STD		{ int|linux_sys||sysinfo(struct linux_sysinfo *arg); }
 117	STD		{ int|linux_sys||ipc(int what, int a1, int a2, int a3, \

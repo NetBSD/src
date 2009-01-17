@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.47 2009/01/16 13:10:47 njoly Exp $
+	$NetBSD: syscalls.master,v 1.48 2009/01/17 22:28:53 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -213,7 +213,7 @@
 112	UNIMPL	idle
 113	UNIMPL	vm86old
 114	STD	{ int|linux32_sys||wait4(int pid, netbsd32_intp status, \
-		    int options, netbsd32_rusagep_t rusage); }
+		    int options, netbsd32_rusage50p_t rusage); }
 115	STD	{ int|linux32_sys||swapoff(netbsd32_charp path); }
 116	STD	{ int|linux32_sys||sysinfo(linux32_sysinfop_t arg); }
 117	STD	{ int|linux32_sys||ipc(int what, int a1, int a2, int a3, \

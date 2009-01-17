@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29 2009/01/15 23:48:50 njoly Exp $
+	$NetBSD: syscalls.master,v 1.30 2009/01/17 22:28:52 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -180,7 +180,7 @@
 			    char **envp); }
 60	NOARGS		{ int|sys||exit(int rval); }
 61	STD		{ int|linux_sys||wait4(int pid, int *status, \
-			    int options, struct rusage *rusage); }
+			    int options, struct rusage50 *rusage); }
 62	STD		{ int|linux_sys||kill(int pid, int signum); }
 63	STD		{ int|linux_sys||uname(struct linux_utsname *up); }
 #ifdef SYSVSEM

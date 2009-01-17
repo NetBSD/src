@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.2 2009/01/11 02:45:50 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.3 2009/01/17 22:28:53 njoly Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,6 +56,9 @@ struct	rusage50 {
 	long	ru_nvcsw;		/* voluntary context switches */
 	long	ru_nivcsw;		/* involuntary " */
 };
+
+void rusage_to_rusage50(const struct rusage *, struct rusage50 *);
+
 #ifndef _KERNEL
 __BEGIN_DECLS
 int	getrusage(int, struct rusage50 *);

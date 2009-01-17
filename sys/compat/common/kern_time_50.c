@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.3 2009/01/14 22:50:12 njoly Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.4 2009/01/17 22:28:52 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.3 2009/01/14 22:50:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.4 2009/01/17 22:28:52 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -640,7 +640,7 @@ compat_50_sys___sigtimedwait(struct lwp *l,
 	    tscopyin, tscopyout);
 }
 
-static void
+void
 rusage_to_rusage50(const struct rusage *ru, struct rusage50 *ru50)
 {
 	(void)memcpy(&ru50->ru_first, &ru->ru_first,
