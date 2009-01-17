@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.60 2009/01/14 01:48:42 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.61 2009/01/17 06:32:03 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60 2009/01/14 01:48:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2009/01/17 06:32:03 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -141,7 +141,7 @@ config_console(void)
 	x68k_config_found(cf, NULL, __UNCONST("grfbus"), NULL);
 }
 
-dev_t	bootdev = 0;
+uint32_t bootdev = 0;
 
 static void
 findroot(void)
@@ -194,7 +194,7 @@ device_register(struct device *dev, void *aux)
 	if (device_class(dev) == DV_IFNET) {
 		majdev = B_TYPE(bootdev);
 		if (X68K_BOOT_DEV_IS_NETIF(majdev)) {
-			sprintf(tname, "%s%" PRIu64,
+			sprintf(tname, "%s%d",
 				name_netif[255 - majdev], B_UNIT(bootdev));
 			if (!strcmp(tname, dev->dv_xname))
 				goto found;
