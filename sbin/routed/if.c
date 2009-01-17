@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.26 2007/08/14 03:39:19 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.26.10.1 2009/01/17 13:48:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.26 2007/08/14 03:39:19 dyoung Exp $");
+__RCSID("$NetBSD: if.c,v 1.26.10.1 2009/01/17 13:48:53 mjf Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -981,9 +981,10 @@ ifinit(void)
 				} else if (now.tv_sec>(ifp->int_data.ts
 						       + CHECK_BAD_INTERVAL)) {
 					trace_act("interface %s has been off"
-						  " %ld seconds; forget it",
+						  " %lld seconds; forget it",
 						  ifp->int_name,
-						  now.tv_sec-ifp->int_data.ts);
+						  (long long)now.tv_sec -
+						  ifp->int_data.ts);
 					ifdel(ifp);
 					ifp = 0;
 				}

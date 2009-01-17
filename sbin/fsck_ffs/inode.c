@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.58.12.2 2008/09/28 11:17:11 mjf Exp $	*/
+/*	$NetBSD: inode.c,v 1.58.12.3 2009/01/17 13:48:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.58.12.2 2008/09/28 11:17:11 mjf Exp $");
+__RCSID("$NetBSD: inode.c,v 1.58.12.3 2009/01/17 13:48:52 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -647,7 +647,7 @@ pinode(ino_t ino)
 	dp = ginode(ino);
 	printf(" OWNER=");
 #ifndef SMALL
-	if ((pw = getpwuid((int)iswap32(DIP(dp, uid)))) != 0)
+	if (Uflag && (pw = getpwuid((int)iswap32(DIP(dp, uid)))) != 0)
 		printf("%s ", pw->pw_name);
 	else
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.22 2004/07/06 23:36:24 mycroft Exp $	*/
+/*	$NetBSD: table.c,v 1.22.26.1 2009/01/17 13:48:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.22 2004/07/06 23:36:24 mycroft Exp $");
+__RCSID("$NetBSD: table.c,v 1.22.26.1 2009/01/17 13:48:53 mjf Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -2130,11 +2130,11 @@ age(naddr bad_gate)
 		if (ifp->int_act_time != NEVER
 		    && now.tv_sec - ifp->int_act_time > EXPIRE_TIME) {
 			msglog("remote interface %s to %s timed out after"
-			       " %ld:%ld",
+			       " %lld:%lld",
 			       ifp->int_name,
 			       naddr_ntoa(ifp->int_dstaddr),
-			       (now.tv_sec - ifp->int_act_time)/60,
-			       (now.tv_sec - ifp->int_act_time)%60);
+			       (long long)(now.tv_sec - ifp->int_act_time)/60,
+			       (long long)(now.tv_sec - ifp->int_act_time)%60);
 			if_sick(ifp);
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.17.12.2 2008/09/28 11:17:11 mjf Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.17.12.3 2009/01/17 13:48:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.17.12.2 2008/09/28 11:17:11 mjf Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.17.12.3 2009/01/17 13:48:52 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -113,10 +113,14 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 		puts("regular file");
 		break;
 	case IFBLK:
-		printf("block special (%d,%d)", major(rdev), minor(rdev));
+		printf("block special (%llu,%llu)",
+		    (unsigned long long)major(rdev),
+		    (unsigned long long)minor(rdev));
 		break;
 	case IFCHR:
-		printf("character special (%d,%d)", major(rdev), minor(rdev));
+		printf("character special (%llu,%llu)",
+		    (unsigned long long)major(rdev),
+		    (unsigned long long)minor(rdev));
 		break;
 	case IFLNK:
 		fputs("symlink", stdout);

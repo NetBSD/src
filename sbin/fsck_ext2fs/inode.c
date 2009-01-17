@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.21.8.1 2008/04/03 13:54:10 mjf Exp $	*/
+/*	$NetBSD: inode.c,v 1.21.8.2 2009/01/17 13:48:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.21.8.1 2008/04/03 13:54:10 mjf Exp $");
+__RCSID("$NetBSD: inode.c,v 1.21.8.2 2009/01/17 13:48:52 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ inosize(struct ext2fs_dinode *dp)
 
 	if ((fs2h16(dp->e2di_mode) & IFMT) == IFREG)
 		size |= (u_int64_t)fs2h32(dp->e2di_dacl) << 32;
-	if (size >= 0x80000000U)
+	if (size > INT32_MAX)
 		(void)setlarge();
 	return size;
 }
@@ -137,10 +137,10 @@ inossize(struct ext2fs_dinode *dp, u_int64_t size)
 {
 	if ((fs2h16(dp->e2di_mode) & IFMT) == IFREG) {
 		dp->e2di_dacl = h2fs32(size >> 32);
-		if (size >= 0x80000000U)
+		if (size > INT32_MAX)
 			if (!setlarge())
 				return;
-	} else if (size >= 0x80000000U) {
+	} else if (size > INT32_MAX) {
 		pfatal("TRYING TO SET FILESIZE TO %llu ON MODE %x FILE\n",
 		    (unsigned long long)size, fs2h16(dp->e2di_mode) & IFMT);
 		return;
@@ -169,7 +169,7 @@ ckinode(struct ext2fs_dinode *dp, struct inodesc *idesc)
 	dino = *dp;
 	ndb = howmany(inosize(&dino), sblock.e2fs_bsize);
 	for (ap = &dino.e2di_blocks[0]; ap < &dino.e2di_blocks[NDADDR];
-																ap++,ndb--) {
+	    ap++,ndb--) {
 		idesc->id_numfrags = 1;
 		if (*ap == 0) {
 			if (idesc->id_type == DATA && ndb > 0) {
@@ -325,7 +325,7 @@ chkrange(daddr_t blk, int cnt)
 {
 	int c, overh;
 
-	if ((unsigned)(blk + cnt) > maxfsblock)
+	if ((unsigned int)(blk + cnt) > maxfsblock)
 		return (1);
 	c = dtog(&sblock, blk);
 	overh = cgoverhead(c);
@@ -444,8 +444,7 @@ resetinodebuf(void)
 		partialsize = inobufsize;
 	}
 	if (inodebuf == NULL &&
-	    (inodebuf = (struct ext2fs_dinode *)malloc((unsigned)inobufsize)) ==
-		NULL)
+	    (inodebuf = malloc((unsigned int)inobufsize)) == NULL)
 		errexit("Cannot allocate space for inode buffer");
 	while (nextino < EXT2_ROOTINO)
 		(void)getnextinode(nextino);
@@ -456,7 +455,7 @@ freeinodebuf(void)
 {
 
 	if (inodebuf != NULL)
-		free((char *)inodebuf);
+		free(inodebuf);
 	inodebuf = NULL;
 }
 
@@ -478,8 +477,7 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
 	/* XXX ondisk32 */
-	inp = (struct inoinfo *)
-		malloc(sizeof(*inp) + (blks - 1) * sizeof(int32_t));
+	inp = malloc(sizeof(*inp) + (blks - 1) * sizeof(int32_t));
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % numdirs];
@@ -499,7 +497,7 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	if (inplast == listmax) {
 		listmax += 100;
 		inpsort = (struct inoinfo **)realloc((char *)inpsort,
-		    (unsigned)listmax * sizeof(struct inoinfo *));
+		    (unsigned int)listmax * sizeof(struct inoinfo *));
 		if (inpsort == NULL)
 			errexit("cannot increase directory list");
 	}
@@ -534,9 +532,9 @@ inocleanup(void)
 	if (inphead == NULL)
 		return;
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--)
-		free((char *)(*inpp));
-	free((char *)inphead);
-	free((char *)inpsort);
+		free(*inpp);
+	free(inphead);
+	free(inpsort);
 	inphead = inpsort = NULL;
 }
 	
@@ -555,7 +553,7 @@ clri(struct inodesc *idesc, const char *type, int flag)
 	dp = ginode(idesc->id_number);
 	if (flag == 1) {
 		pwarn("%s %s", type,
-		    (dp->e2di_mode & IFMT) == IFDIR ? "DIR" : "FILE");
+		    (fs2h16(dp->e2di_mode) & IFMT) == IFDIR ? "DIR" : "FILE");
 		pinode(idesc->id_number);
 	}
 	if (preen || reply("CLEAR") == 1) {
@@ -612,18 +610,22 @@ pinode(ino_t ino)
 	char *p;
 	struct passwd *pw;
 	time_t t;
+	uid_t uid;
 
 	printf(" I=%llu ", (unsigned long long)ino);
 	if ((ino < EXT2_FIRSTINO && ino != EXT2_ROOTINO) || ino > maxino)
 		return;
 	dp = ginode(ino);
+	uid = fs2h16(dp->e2di_uid);
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0)
+		uid |= fs2h16(dp->e2di_uid_high) << 16;
 	printf(" OWNER=");
 #ifndef SMALL
-	if ((pw = getpwuid((int)dp->e2di_uid)) != 0)
+	if (Uflag && (pw = getpwuid(uid)) != 0)
 		printf("%s ", pw->pw_name);
 	else
 #endif
-		printf("%u ", (unsigned)fs2h16(dp->e2di_uid));
+		printf("%u ", (unsigned int)uid);
 	printf("MODE=%o\n", fs2h16(dp->e2di_mode));
 	if (preen)
 		printf("%s: ", cdevname());

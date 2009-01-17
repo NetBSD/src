@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.37.8.1 2008/06/02 13:21:21 mjf Exp $	 */
+/* $NetBSD: inode.c,v 1.37.8.2 2009/01/17 13:48:52 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -531,7 +531,7 @@ pinode(ino_t ino)
 	if (dp) {
 		printf(" OWNER=");
 #ifndef SMALL
-		if ((pw = getpwuid((int) dp->di_uid)) != 0)
+		if (Uflag && (pw = getpwuid((int) dp->di_uid)) != 0)
 			printf("%s ", pw->pw_name);
 		else
 #endif

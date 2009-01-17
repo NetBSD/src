@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.29.26.1 2008/09/28 11:17:10 mjf Exp $	*/
+/*	$NetBSD: badsect.c,v 1.29.26.2 2009/01/17 13:48:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.29.26.1 2008/09/28 11:17:10 mjf Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.29.26.2 2009/01/17 13:48:52 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,8 +130,8 @@ main(int argc, char *argv[])
 	}
 
 	if (dp == NULL)
-		errx(1, "Cannot find dev 0%o corresponding to %s", 
-		    stbuf.st_rdev, argv[1]);
+		errx(1, "Cannot find dev 0%llo corresponding to %s", 
+		    (long long)stbuf.st_rdev, argv[1]);
 
 	/*
 	 * The filesystem is mounted; use the character device instead.

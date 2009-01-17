@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.1.4.2 2008/06/02 13:21:23 mjf Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2009/01/17 13:48:53 mjf Exp $
 
 .include <bsd.own.mk>
 
 WARNS=	4
 PROG=	newfs_udf
 MAN=	newfs_udf.8
-SRCS=	newfs_udf.c udf_create.o udf_osta.o fattr.c
+SRCS=	newfs_udf.c udf_create.c udf_osta.c fattr.c
 
 MOUNT=  ${NETBSDSRCDIR}/sbin/mount
 KUDF=	${NETBSDSRCDIR}/sys/fs/udf

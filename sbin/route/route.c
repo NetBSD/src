@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.106.12.1 2008/09/28 11:17:14 mjf Exp $	*/
+/*	$NetBSD: route.c,v 1.106.12.2 2009/01/17 13:48:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.106.12.1 2008/09/28 11:17:14 mjf Exp $");
+__RCSID("$NetBSD: route.c,v 1.106.12.2 2009/01/17 13:48:53 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -762,7 +762,7 @@ set_metric(const char *value, int key)
 		rt_metrics.rmx_locks |= flag;
 	if (locking)
 		locking = 0;
-	*valp = atoi(value);
+	*valp = strtoul(value, NULL, 0);
 }
 
 static int

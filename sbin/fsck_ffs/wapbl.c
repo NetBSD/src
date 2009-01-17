@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.c,v 1.2.4.2 2008/09/28 11:17:11 mjf Exp $	*/
+/*	$NetBSD: wapbl.c,v 1.2.4.3 2009/01/17 13:48:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005,2008 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 /* This file contains fsck support for wapbl
  */
+#define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.2.4.2 2008/09/28 11:17:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.2.4.3 2009/01/17 13:48:52 mjf Exp $");
 
 #include <sys/stat.h>
 #include <sys/time.h>

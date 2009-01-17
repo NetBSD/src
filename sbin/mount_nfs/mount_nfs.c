@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.61.8.1 2008/09/28 11:17:13 mjf Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.61.8.2 2009/01/17 13:48:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.61.8.1 2008/09/28 11:17:13 mjf Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.61.8.2 2009/01/17 13:48:53 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.61.8.1 2008/09/28 11:17:13 mjf Exp $");
 
 #include <mntopts.h>
 
+#include "mountprog.h"
 #include "mount_nfs.h"
 
 #define	ALTF_BG		0x00000001
@@ -114,7 +115,7 @@ static const struct mntopt mopts[] = {
 	{ "nfsv3", 0, ALTF_NFSV3, 1 },
 	{ "rdirplus", 0, ALTF_RDIRPLUS, 1 },
 	{ "mntudp", 0, ALTF_MNTUDP, 1 },
-	{ "noresport", 0, ALTF_NORESPORT, 1 },
+	{ "resport", 1, ALTF_NORESPORT, 1 },
 #ifdef ISO
 	{ "seqpacket", 0, ALTF_SEQPACKET, 1 },
 #endif
@@ -156,6 +157,8 @@ struct nfs_args nfsdefargs = {
 	(char *)0,
 };
 
+#define DEF_RETRY 10000
+
 int retrycnt = DEF_RETRY;
 int opflags = 0;
 int force2 = 0;
@@ -175,25 +178,47 @@ static void	usage(void);
 int
 main(int argc, char **argv)
 {
+
+	setprogname(argv[0]);
 	return mount_nfs(argc, argv);
 }
 #endif
 
-int
-mount_nfs(int argc, char *argv[])
+void
+mount_nfs_dogetargs(struct nfs_args *nfsargsp, int mntflags, const char *spec)
 {
-	int c, retval;
-	struct nfs_args *nfsargsp;
-	struct nfs_args nfsargs;
 	struct sockaddr_storage sa;
-	int mntflags, altflags, num;
-	char name[MAXPATHLEN], *p, *spec;
+	char *tspec;
+
+	if ((mntflags & MNT_GETARGS) != 0) {
+		memset(&sa, 0, sizeof(sa));
+		nfsargsp->addr = (struct sockaddr *)&sa;
+		nfsargsp->addrlen = sizeof(sa);
+	} else {
+		if ((tspec = strdup(spec)) == NULL) {
+			err(1, "strdup");
+		}
+		if (!getnfsargs(tspec, nfsargsp)) {
+			exit(1);
+		}
+		free(tspec);
+	}
+}
+
+void
+mount_nfs_parseargs(int argc, char *argv[],
+	struct nfs_args *nfsargsp, int *mntflags,
+	char *spec, char *name)
+{
+	char *p;
+	int altflags, num;
+	int c;
 	mntoptparse_t mp;
 
-	mntflags = 0;
+	*mntflags = 0;
 	altflags = 0;
-	nfsargs = nfsdefargs;
-	nfsargsp = &nfsargs;
+	memset(nfsargsp, 0, sizeof(*nfsargsp));
+	*nfsargsp = nfsdefargs;
 	while ((c = getopt(argc, argv,
 	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:UX")) != -1)
 		switch (c) {
@@ -262,7 +287,7 @@ mount_nfs(int argc, char *argv[])
 			nfsargsp->flags |= NFSMNT_RDIRPLUS;
 			break;
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, &altflags);
+			mp = getmntopts(optarg, mopts, mntflags, &altflags);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			if (altflags & ALTF_BG)
@@ -420,47 +445,40 @@ mount_nfs(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
-	spec = *argv++;
-	if (realpath(*argv, name) == NULL)           /* Check mounton path */
-		err(1, "realpath %s", *argv);
-	if (strncmp(*argv, name, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", *argv);
-		warnx("using \"%s\" instead.", name);
-	}
+	strlcpy(spec, *argv++, MAXPATHLEN);
+	pathadj(*argv, name);
+	mount_nfs_dogetargs(nfsargsp, *mntflags, spec);
+}
 
-retry:
-	if ((mntflags & MNT_GETARGS) != 0) {
-		memset(&sa, 0, sizeof(sa));
-		nfsargsp->addr = (struct sockaddr *)&sa;
-		nfsargsp->addrlen = sizeof(sa);
-	} else {
-		char *tspec;
+int
+mount_nfs(int argc, char *argv[])
+{
+	char spec[MAXPATHLEN], name[MAXPATHLEN];
+	struct nfs_args args;
+	int mntflags;
+	int retval;
 
-		if ((tspec = strdup(spec)) == NULL) {
-			err(1, "strdup");
-		}
-		if (!getnfsargs(tspec, nfsargsp)) {
-			exit(1);
-		}
-		free(tspec);
-	}
+	mount_nfs_parseargs(argc, argv, &args, &mntflags, spec, name);
+
+ retry:
 	if ((retval = mount(MOUNT_NFS, name, mntflags,
-	    nfsargsp, sizeof *nfsargsp)) == -1) {
+	    &args, sizeof args)) == -1) {
 		/* Did we just default to v3 on a v2-only kernel?
 		 * If so, default to v2 & try again */
 		if (errno == EPROGMISMATCH &&
-		    (nfsargsp->flags & NFSMNT_NFSV3) != 0 && !force3) {
+		    (args.flags & NFSMNT_NFSV3) != 0 && !force3) {
 			/*
 			 * fall back to v2.  XXX lack of V3 umount.
 			 */
-			nfsargsp->flags &= ~NFSMNT_NFSV3;
+			args.flags &= ~NFSMNT_NFSV3;
+			mount_nfs_dogetargs(&args, mntflags, spec);
 			goto retry;
 		}
 	}
 	if (retval == -1)
 		err(1, "%s on %s", spec, name);
 	if (mntflags & MNT_GETARGS) {
-		shownfsargs(nfsargsp);
+		shownfsargs(&args);
 		return (0);
 	}
 		
