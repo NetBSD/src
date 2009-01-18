@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.88 2008/08/29 00:02:22 gmcgarry Exp $
+#  $NetBSD: Makefile,v 1.89 2009/01/18 20:42:11 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -228,7 +228,7 @@ MLINKS+=tanh.3 tanhf.3
 MLINKS+=round.3 roundf.3
 MLINKS+=trunc.3 truncf.3
 
-.ifdef (${MKCOMPLEX} != "no")
+.if (${MKCOMPLEX} != "no")
 .include "${.CURDIR}/complex/Makefile.inc"
 .endif
 

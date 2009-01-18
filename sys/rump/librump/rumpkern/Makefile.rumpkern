@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.37 2009/01/14 23:22:09 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.38 2009/01/18 20:42:11 he Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -70,7 +70,7 @@ AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
 # the kernel of our compat target (amd64->i386 & sparc64->sparc), so
 # take MD stuff from the right arch.
 #
-.ifdef(LD32DIR)
+.ifdef LD32DIR
 ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${LD32DIR}
 LIBKERN_ARCH=	${LD32DIR}
 .else
