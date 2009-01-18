@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.37 2009/01/17 10:02:23 isaki Exp $	*/
+/*	$NetBSD: grf.c,v 1.38 2009/01/18 02:40:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37 2009/01/17 10:02:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.38 2009/01/18 02:40:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,12 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37 2009/01/17 10:02:23 isaki Exp $");
 #include <sys/mman.h>
 #include <sys/conf.h>
 
+#include <machine/cpu.h>
 #include <machine/grfioctl.h>
 
 #include <x68k/dev/grfvar.h>
 #include <x68k/dev/itevar.h>
-
-#include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>

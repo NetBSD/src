@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2008/12/18 02:09:20 isaki Exp $	*/
+/*	$NetBSD: clock.c,v 1.31 2009/01/18 02:40:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2008/12/18 02:09:20 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2009/01/18 02:40:05 isaki Exp $");
 
 #include "clock.h"
 
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2008/12/18 02:09:20 isaki Exp $");
 #include <dev/clock_subr.h>
 
 #include <arch/x68k/dev/mfp.h>
-#include <arch/x68k/dev/rtclock_var.h>
 
 static int clock_match(device_t, cfdata_t, void *);
 static void clock_attach(device_t, device_t, void *);
