@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.57 2007/07/07 22:33:57 christos Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.58 2009/01/18 10:39:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.57 2007/07/07 22:33:57 christos Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.58 2009/01/18 10:39:17 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -966,7 +966,7 @@ direct_set(char *buf, int outlen, struct _dom_binding *ypdb)
 	iov[1].iov_len = sizeof(ybr);
 	bytes = readv(fd, iov, 2);
 	(void)close(fd);
-	if (bytes != (iov[0].iov_len + iov[1].iov_len)) {
+	if ((size_t)bytes != (iov[0].iov_len + iov[1].iov_len)) {
 		/* Binding file corrupt? */
 		yp_log(LOG_WARNING, "%s: %m", path);
 		been_ypset = 0;
@@ -1022,7 +1022,7 @@ try_again:
 #endif
 		return RPC_CANTRECV;
 	}
-	if (inlen < sizeof(u_int32_t))
+	if ((size_t)inlen < sizeof(u_int32_t))
 		goto recv_again;
 
 	/*
@@ -1083,7 +1083,7 @@ try_again:
 #endif
 		return RPC_CANTRECV;
 	}
-	if (inlen < sizeof(u_int32_t))
+	if ((size_t)inlen < sizeof(u_int32_t))
 		goto recv_again;
 
 	/*
@@ -1188,7 +1188,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port =
 	    raddrp->sin_port;
 
-	if (writev(ypdb->dom_lockfd, iov, 2) !=
+	if ((size_t)writev(ypdb->dom_lockfd, iov, 2) !=
 	    iov[0].iov_len + iov[1].iov_len) {
 		yp_log(LOG_WARNING, "writev: %m");
 		(void)close(ypdb->dom_lockfd);
