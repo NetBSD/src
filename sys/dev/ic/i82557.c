@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.121 2008/12/05 11:17:38 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.122 2009/01/18 10:37:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.121 2008/12/05 11:17:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.122 2009/01/18 10:37:04 mrg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -262,26 +262,16 @@ fxp_attach(struct fxp_softc *sc)
 
 	callout_init(&sc->sc_callout, 0);
 
-	/*
-	 * Enable some good stuff on i82558 and later.
-	 */
-	if (sc->sc_rev >= FXP_REV_82558_A4) {
-		/* Enable the extended TxCB. */
-		sc->sc_flags |= FXPF_EXT_TXCB;
-	}
-
         /*
 	 * Enable use of extended RFDs and TCBs for 82550
 	 * and later chips. Note: we need extended TXCB support
 	 * too, but that's already enabled by the code above.
 	 * Be careful to do this only on the right devices.
 	 */
-	if (sc->sc_rev == FXP_REV_82550 || sc->sc_rev == FXP_REV_82550_C) {
-		sc->sc_flags |= FXPF_EXT_RFA | FXPF_IPCB;
+	if (sc->sc_flags & FXPF_IPCB)
 		sc->sc_txcmd = htole16(FXP_CB_COMMAND_IPCBXMIT);
-	} else {
+	else
 		sc->sc_txcmd = htole16(FXP_CB_COMMAND_XMIT);
-	}
 
 	sc->sc_rfa_size =
 	    (sc->sc_flags & FXPF_EXT_RFA) ? RFA_EXT_SIZE : RFA_SIZE;
@@ -426,7 +416,7 @@ fxp_attach(struct fxp_softc *sc)
 	    NULL, device_xname(sc->sc_dev), "txintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "rxintr");
-	if (sc->sc_rev >= FXP_REV_82558_A4) {
+	if (sc->sc_flags & FXPF_FC) {
 		evcnt_attach_dynamic(&sc->sc_ev_txpause, EVCNT_TYPE_MISC,
 		    NULL, device_xname(sc->sc_dev), "txpause");
 		evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_MISC,
@@ -483,8 +473,8 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	    fxp_mii_mediastatus);
 
 	flags = MIIF_NOISOLATE;
-	if (sc->sc_rev >= FXP_REV_82558_A4)
-		flags |= MIIF_DOPAUSE;
+	if (sc->sc_flags & FXPF_FC)
+		flags |= MIIF_FORCEANEG|MIIF_DOPAUSE;
 	/*
 	 * The i82557 wedges if all of its PHYs are isolated!
 	 */
@@ -1438,7 +1428,7 @@ fxp_tick(void *arg)
 			tx_threshold += 64;
 	}
 #ifdef FXP_EVENT_COUNTERS
-	if (sc->sc_rev >= FXP_REV_82558_A4) {
+	if (sc->sc_flags & FXPF_FC) {
 		sc->sc_ev_txpause.ev_count += sp->tx_pauseframes;
 		sc->sc_ev_rxpause.ev_count += sp->rx_pauseframes;
 	}
@@ -1486,7 +1476,7 @@ fxp_tick(void *arg)
 		sp->rx_alignment_errors = 0;
 		sp->rx_rnr_errors = 0;
 		sp->rx_overrun_errors = 0;
-		if (sc->sc_rev >= FXP_REV_82558_A4) {
+		if (sc->sc_flags & FXPF_FC) {
 			sp->tx_pauseframes = 0;
 			sp->rx_pauseframes = 0;
 		}
@@ -1761,7 +1751,7 @@ fxp_init(struct ifnet *ifp)
 	cbp->ext_rx_mode =	(sc->sc_flags & FXPF_EXT_RFA) ? 1 : 0;
 	cbp->vlan_drop_en =	vlan_drop;
 
-	if (sc->sc_rev < FXP_REV_82558_A4) {
+	if (!(sc->sc_flags & FXPF_FC)) {
 		/*
 		 * The i82557 has no hardware flow control, the values
 		 * here are the defaults for the chip.
@@ -1972,14 +1962,6 @@ fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	ether_mediastatus(ifp, ifmr);
-
-	/*
-	 * XXX Flow control is always turned on if the chip supports
-	 * XXX it; we can't easily control it dynamically, since it
-	 * XXX requires sending a setup packet.
-	 */
-	if (sc->sc_rev >= FXP_REV_82558_A4)
-		ifmr->ifm_active |= IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE;
 }
 
 int

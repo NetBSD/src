@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.41 2008/12/03 15:34:38 tsutsui Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.42 2009/01/18 10:37:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -224,6 +224,7 @@ struct fxp_softc {
 #define	FXPF_EXT_RFA		0x0200	/* enable extended RFD */
 #define	FXPF_IPCB		0x0400	/* use IPCB */
 #define	FXPF_RECV_WORKAROUND	0x0800	/* receiver lock-up workaround */
+#define	FXPF_FC			0x1000	/* has flow control */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */

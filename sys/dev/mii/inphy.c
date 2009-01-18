@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.49 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: inphy.c,v 1.50 2009/01/18 10:37:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.49 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.50 2009/01/18 10:37:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,6 +249,7 @@ inphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
+
 		scr = PHY_READ(sc, MII_INPHY_SCR);
 		if ((bmsr & BMSR_100T4) && (scr & SCR_T4))
 			mii->mii_media_active |= IFM_100_T4;
@@ -258,6 +259,9 @@ inphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 		if (scr & SCR_FDX)
 			mii->mii_media_active |= IFM_FDX;
+
+		if (mii->mii_media_active & IFM_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
