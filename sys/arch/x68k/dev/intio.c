@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.40 2009/01/18 02:40:05 isaki Exp $	*/
+/*	$NetBSD: intio.c,v 1.41 2009/01/18 04:48:53 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.40 2009/01/18 02:40:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.41 2009/01/18 04:48:53 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,10 +357,6 @@ intio_intr(struct frame *frame)
 {
 	int vector = frame->f_vector / 4;
 
-#if 0				/* this is not correct now */
-	/* CAUTION: HERE WE ARE IN SPLHIGH() */
-	/* LOWER TO APPROPRIATE IPL AT VERY FIRST IN THE HANDLER!! */
-#endif
 	if (iiv[vector].iiv_handler == 0) {
 		printf("Stray interrupt: %d type %x, pc %x\n",
 			vector, frame->f_format, frame->f_pc);
