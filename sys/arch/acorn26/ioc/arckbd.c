@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.13 2009/01/18 22:57:55 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.14 2009/01/18 23:23:40 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.13 2009/01/18 22:57:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.14 2009/01/18 23:23:40 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -275,11 +275,11 @@ arckbd_attach(device_t parent, device_t self, void *aux)
 	aka.aka_wskbdargs.console = 1; /* XXX FIXME */
 	aka.aka_wskbdargs.keymap = &sc->sc_mapdata;
 	aka.aka_wskbdargs.accessops = &arckbd_accessops;
-	aka.aka_wskbdargs.accesscookie = self;
+	aka.aka_wskbdargs.accesscookie = sc;
 #endif
 #if NARCWSMOUSE > 0
 	aka.aka_wsmouseargs.accessops = &arcmouse_accessops;
-	aka.aka_wsmouseargs.accesscookie = self;
+	aka.aka_wsmouseargs.accesscookie = sc;
 #endif
 #if NARCWSKBD > 0
 	aka.aka_devtype = ARCKBD_KBDDEV;
