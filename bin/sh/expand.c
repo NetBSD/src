@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.81 2008/12/21 17:15:09 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.82 2009/01/18 00:30:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.81 2008/12/21 17:15:09 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.82 2009/01/18 00:30:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -372,7 +372,7 @@ expari(int flag)
 	 */
 /* SPACE_NEEDED is enough for all digits, plus possible "-", plus 2 (why?) */
 #define SPACE_NEEDED ((sizeof(intmax_t) * CHAR_BIT + 2) / 3 + 1 + 2)
-	CHECKSTRSPACE(SPACE_NEEDED - 2, expdest);
+	CHECKSTRSPACE((int)(SPACE_NEEDED - 2), expdest);
 	USTPUTC('\0', expdest);
 	start = stackblock();
 	p = expdest - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2008/10/16 14:55:28 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2009/01/18 00:30:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.52 2008/10/16 14:55:28 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.53 2009/01/18 00:30:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ state3:
 		    SIGPIPE
 		};
 #define SIGSSIZE (sizeof(sigs)/sizeof(sigs[0]))
-		int i;
+		size_t i;
 
 		for (i = 0; i < SIGSSIZE; i++)
 		    setsignal(sigs[i], 0);

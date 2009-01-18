@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.96 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.97 2009/01/18 00:25:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.96 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.97 2009/01/18 00:25:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1304,7 +1304,7 @@ make_utmpx(const char *name, const char *line, int type, pid_t pid,
 	ut.ut_session = session;
 
 	eline = line + strlen(line);
-	if (eline - line >= sizeof(ut.ut_id))
+	if ((size_t)(eline - line) >= sizeof(ut.ut_id))
 		line = eline - sizeof(ut.ut_id);
 	(void)strncpy(ut.ut_id, line, sizeof(ut.ut_id));
 
