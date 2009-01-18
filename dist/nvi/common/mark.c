@@ -1,4 +1,4 @@
-/*	$NetBSD: mark.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: mark.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -116,7 +116,7 @@ mark_get(SCR *sp, ARG_CHAR_T key, MARK *mp, mtype_t mtype)
 		key = ABSMARK1;
 
 	lmp = mark_find(sp, key);
-	if (lmp == NULL || lmp->name != key) {
+	if (lmp == NULL || (ARG_CHAR_T)lmp->name != key) {
 		msgq(sp, mtype, "017|Mark %s: not set", KEY_NAME(sp, key));
                 return (1);
 	}
@@ -163,7 +163,7 @@ mark_set(SCR *sp, ARG_CHAR_T key, MARK *value, int userset)
 	 * by a previous undo.
 	 */
 	lmp = mark_find(sp, key);
-	if (lmp == NULL || lmp->name != key) {
+	if (lmp == NULL || (ARG_CHAR_T)lmp->name != key) {
 		MALLOC_RET(sp, lmt, LMARK *, sizeof(LMARK));
 		if (lmp == NULL) {
 			LIST_INSERT_HEAD(&sp->ep->marks, lmt, q);
@@ -197,8 +197,8 @@ mark_find(SCR *sp, ARG_CHAR_T key)
 	 */
 	for (lastlmp = NULL, lmp = sp->ep->marks.lh_first;
 	    lmp != NULL; lastlmp = lmp, lmp = lmp->q.le_next)
-		if (lmp->name >= key)
-			return (lmp->name == key ? lmp : lastlmp);
+		if ((ARG_CHAR_T)lmp->name >= key)
+			return ((ARG_CHAR_T)lmp->name == key ? lmp : lastlmp);
 	return (lastlmp);
 }
 

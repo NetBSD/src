@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.3 2008/12/06 23:18:36 christos Exp $ */
+/*	$NetBSD: vs_line.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -65,7 +65,7 @@ vs_line(SCR *sp, SMAP *smp, size_t *yp, size_t *xp)
 	no_draw = 0;
 	if (!F_ISSET(sp, SC_TINPUT_INFO) && VIP(sp)->totalcount > 1)
 		no_draw = 1;
-	if (F_ISSET(sp, SC_SCR_EXWROTE) && smp - HMAP != LASTLINE(sp))
+	if (F_ISSET(sp, SC_SCR_EXWROTE) && (size_t)(smp - HMAP) != LASTLINE(sp))
 		no_draw = 1;
 
 	/*

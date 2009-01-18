@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: vs_refresh.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -625,7 +625,7 @@ shifted:		/* Fill in screen map with the new offset. */
 	    vip->sc_smap = NULL; smp <= TMAP && smp->lno == LNO; ++smp) {
 		if (vs_line(sp, smp, &y, &SCNO))
 			return (1);
-		if (y != -1) {
+		if (y != (size_t)-1) {
 			vip->sc_smap = smp;
 			break;
 		}
@@ -645,7 +645,7 @@ paint:	for (smp = HMAP; smp <= TMAP; ++smp)
 	for (y = -1, vip->sc_smap = NULL, smp = HMAP; smp <= TMAP; ++smp) {
 		if (vs_line(sp, smp, &y, &SCNO))
 			return (1);
-		if (y != -1 && vip->sc_smap == NULL)
+		if (y != (size_t)-1 && vip->sc_smap == NULL)
 			vip->sc_smap = smp;
 	}
 	/*
