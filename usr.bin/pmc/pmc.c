@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.16 2007/12/15 19:44:52 perry Exp $	*/
+/*	$NetBSD: pmc.c,v 1.17 2009/01/18 07:05:53 lukem Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.16 2007/12/15 19:44:52 perry Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.17 2009/01/18 07:05:53 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -325,7 +325,7 @@ static struct pmc_name2val_cpus {
 static const struct pmc_name2val_cpus *
 pmc_lookup_cpu(int type)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(pmc_cpus)/sizeof(struct pmc_name2val_cpus);
 	    i++) {
