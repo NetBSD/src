@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.126 2009/01/16 01:58:32 haad Exp $
+#	$NetBSD: special,v 1.127 2009/01/18 08:24:46 taca Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -221,7 +221,7 @@
 ./etc/rc.d/ldconfig		type=file mode=0555
 ./etc/rc.d/local		type=file mode=0555
 ./etc/rc.d/lpd			type=file mode=0555
-./etc.rc.d/lvm			type=file mode=0555
+./etc/rc.d/lvm			type=file mode=0555
 ./etc/rc.d/mixerctl		type=file mode=0555
 ./etc/rc.d/mopd			type=file mode=0555
 ./etc/rc.d/motd			type=file mode=0555
