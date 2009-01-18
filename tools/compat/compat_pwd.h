@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_pwd.h,v 1.5 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: compat_pwd.h,v 1.6 2009/01/18 01:44:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,12 +50,12 @@ struct passwd {
 	char	*pw_passwd;
 	int32_t	pw_uid;
 	int32_t	pw_gid;
-	int32_t	pw_change;
+	int64_t	pw_change;
 	char	*pw_class;
 	char	*pw_gecos;
 	char	*pw_dir;
 	char	*pw_shell;
-	int32_t	pw_expire;
+	int64_t	pw_expire;
 };
 
 int pw_scan(char *, struct passwd *, int *);
