@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.29 2008/12/11 18:40:02 seanb Exp $	*/
+/*	$NetBSD: tftp.c,v 1.30 2009/01/18 07:11:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.29 2008/12/11 18:40:02 seanb Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.30 2009/01/18 07:11:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,7 +358,7 @@ send_data:
 		if (block > 0)
 			amount += size;
 		block++;
-	} while (size == blksize || block == 1);
+	} while ((size_t)size == blksize || block == 1);
 abort:
 	(void)fclose(file);
 	stopclock();
@@ -513,7 +513,7 @@ skip_ack:
 			break;
 		}
 		amount += size;
-	} while (size == blksize);
+	} while ((size_t)size == blksize);
 abort:						/* ok to ack, since user */
 	ap->th_opcode = htons((u_short)ACK);	/* has seen err msg */
 	ap->th_block = htons((u_short)block);
@@ -634,7 +634,7 @@ nak(error, peer)
 	msglen = &tp->th_msg[length + 1] - ackbuf;
 	if (trace)
 		tpacket("sent", tp, (int)msglen);
-	if (sendto(f, ackbuf, msglen, 0, peer, (socklen_t)peer->sa_len) != msglen)
+	if ((size_t)sendto(f, ackbuf, msglen, 0, peer, (socklen_t)peer->sa_len) != msglen)
 		warn("nak");
 }
 
