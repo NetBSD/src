@@ -1,4 +1,4 @@
-/* $NetBSD: mmcformat.c,v 1.2 2008/05/18 13:08:58 tron Exp $ */
+/* $NetBSD: mmcformat.c,v 1.3 2009/01/18 09:58:41 lukem Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -260,7 +260,8 @@ get_format_capabilities(struct uscsi_dev *mydev, uint8_t *buf, uint32_t *len)
 {
 	scsicmd		cmd;
 	int		list_length;
-	int		buf_len = 512, trans_len;
+	int		trans_len;
+	size_t		buf_len = 512;
 	int		error;
 
 	assert(*len >= buf_len);

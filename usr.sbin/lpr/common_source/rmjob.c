@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.23 2006/01/20 17:30:00 christos Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.24 2009/01/18 09:57:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.23 2006/01/20 17:30:00 christos Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.24 2009/01/18 09:57:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ rmremote(void)
 	} else {
 		struct sigaction osa, nsa;
 
-		if (write(rem, s, len) != len)
+		if ((size_t)write(rem, s, len) != len)
 			fatal("Lost connection");
 		if (len > sizeof(line))
 			(void)free(s);

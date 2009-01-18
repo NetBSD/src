@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.32 2006/03/21 22:47:26 christos Exp $	*/
+/*	$NetBSD: displayq.c,v 1.33 2009/01/18 09:57:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.32 2006/03/21 22:47:26 christos Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.33 2009/01/18 09:57:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,14 +220,17 @@ displayq(int format)
 	(void)snprintf(line, sizeof(line), "%c%s", format + '\3', RP);
 	cp = line;
 	ecp = line + sizeof(line);
-	for (i = 0; i < requests && cp - line + 11 < sizeof(line) - 2; i++) {
+	for (i = 0;
+	    i < requests && (size_t)(cp - line + 11) < sizeof(line) - 2;
+	    i++) {
 		cp += strlen(cp);
 		(void)snprintf(cp, ecp - cp, " %d", requ[i]);
 	}
-	for (i = 0; i < users && cp - line + 1 + strlen(user[i]) <
-	    sizeof(line) - 2; i++) {
+	for (i = 0;
+	    i < users && cp - line + 1 + strlen(user[i]) < sizeof(line) - 2;
+	    i++) {
 		cp += strlen(cp);
-		if (cp - line > sizeof(line) - 2)
+		if ((size_t)(cp - line) > sizeof(line) - 2)
 			break;
 		*cp++ = ' ';
 		/* truncation may happen */

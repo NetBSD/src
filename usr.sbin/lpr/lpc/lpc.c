@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.24 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: lpc.c,v 1.25 2009/01/18 09:57:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.24 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.25 2009/01/18 09:57:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ makeargv(void)
 
 	s = strlen(cmdline) + 1;
 	margc = 0;
-	for (cp = cmdline; *cp && (cp - cmdline) < s && n < MAX_MARGV; n++) {
+	for (cp = cmdline; *cp && (size_t)(cp - cmdline) < s && n < MAX_MARGV; n++) {
 		while (isspace((unsigned char)*cp))
 			cp++;
 		if (*cp == '\0')

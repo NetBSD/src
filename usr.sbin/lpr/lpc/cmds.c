@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.20 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.21 2009/01/18 09:57:26 lukem Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.20 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.21 2009/01/18 09:57:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ doabort(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			abortpr(1);
@@ -226,7 +226,7 @@ clean(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			cleanpr();
@@ -293,7 +293,7 @@ cleanpr(void)
 
 	/* XXX depends on SD being non nul */
 	ep = line + sizeof(line);
-	for (lp = line, cp = SD; (lp - line) < sizeof(line) &&
+	for (lp = line, cp = SD; (size_t)(lp - line) < sizeof(line) &&
 	    (*lp++ = *cp++) != '\0'; )
 		;
 	lp[-1] = '/';
@@ -366,7 +366,7 @@ enable(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			enablepr();
@@ -437,7 +437,7 @@ disable(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			disablepr();
@@ -502,7 +502,7 @@ down(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			putmsg(argc - 2, argv + 2);
@@ -575,7 +575,7 @@ putmsg(int argc, char **argv)
 	cp1 = buf;
 	while (--argc >= 0) {
 		cp2 = *argv++;
-		while ((cp1 - buf) < sizeof(buf) && (*cp1++ = *cp2++))
+		while ((size_t)(cp1 - buf) < sizeof(buf) && (*cp1++ = *cp2++))
 			;
 		cp1[-1] = ' ';
 	}
@@ -614,7 +614,7 @@ restart(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			abortpr(0);
@@ -651,7 +651,7 @@ startcmd(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			startpr(1);
@@ -707,7 +707,7 @@ status(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			prstat();
@@ -803,7 +803,7 @@ stop(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			stoppr();
@@ -1026,7 +1026,7 @@ up(int argc, char *argv[])
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (size_t)(cp1 - prbuf) < sizeof(prbuf))
 				*cp1++ = c;
 			*cp1 = '\0';
 			startpr(2);
