@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.38 2008/12/16 22:35:33 christos Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.39 2009/01/18 11:21:06 cegger Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.38 2008/12/16 22:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.39 2009/01/18 11:21:06 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -538,8 +538,6 @@ nfe_intr(void *arg)
 
 	handled = 0;
 
-	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
-
 	for (;;) {
 		r = NFE_READ(sc, NFE_IRQ_STATUS);
 		if ((r & NFE_IRQ_WANTED) == 0)
@@ -564,8 +562,6 @@ nfe_intr(void *arg)
 			    device_xname(sc->sc_dev)));
 		}
 	}
-
-	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 
 	if (handled && !IF_IS_EMPTY(&ifp->if_snd))
 		nfe_start(ifp);
@@ -1250,7 +1246,9 @@ nfe_init(struct ifnet *ifp)
 	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_VALID);
 
 	s = splnet();
+	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
 	nfe_intr(sc); /* XXX clear IRQ status registers */
+	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 	splx(s);
 
 #if 1
