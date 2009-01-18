@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.12 2008/02/20 21:43:33 drochner Exp $
+# $NetBSD: files.acorn26,v 1.13 2009/01/18 18:23:59 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -189,7 +189,6 @@ file	arch/acorn26/acorn26/bus.c
 file	arch/acorn26/acorn26/bus_asm.S
 file	arch/acorn26/acorn26/conf.c
 file	arch/acorn26/acorn26/cons_machdep.c
-file	arch/acorn26/acorn26/copyinout.S
 file	arch/acorn26/acorn26/cpuswitch.c
 file	arch/acorn26/acorn26/except.c
 file	arch/acorn26/acorn26/irq.c
