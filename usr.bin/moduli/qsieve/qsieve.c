@@ -1,4 +1,4 @@
-/* $NetBSD: qsieve.c,v 1.1 2006/01/24 18:59:23 elad Exp $ */
+/* $NetBSD: qsieve.c,v 1.2 2009/01/18 01:34:30 lukem Exp $ */
 
 /*-
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
@@ -239,7 +239,7 @@ main(int argc, char *argv[])
          * This is changed to 1 less than the desired safe prime moduli p.
          */
 	power = (int) strtoul(argv[2], NULL, 10);
-	if (power > TEST_MAXIMUM) {
+	if ((unsigned)power > TEST_MAXIMUM) {
 		errx(1, "Too many bits: %d > %lu.", power,
 		     (unsigned long)TEST_MAXIMUM);
 	} else if (power < TEST_MINIMUM) {

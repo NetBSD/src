@@ -1,4 +1,4 @@
-/* $NetBSD: qsafe.c,v 1.1 2006/01/24 18:59:23 elad Exp $ */
+/* $NetBSD: qsafe.c,v 1.2 2009/01/18 01:34:30 lukem Exp $ */
 
 /*-
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 		 * due to earlier inconsistencies in interpretation, check the
 		 * proposed bit size.
 		 */
-		if (BN_num_bits(p) != (in_size + 1)) {
+		if ((uint32_t)BN_num_bits(p) != (in_size + 1)) {
 #ifdef  DEBUGPRINT
 			(void)fprintf(stderr, "%10lu: bit size %ul "
 				      "mismatch\n", count_in, in_size);
