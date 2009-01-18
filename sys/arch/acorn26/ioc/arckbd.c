@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.12 2009/01/06 23:58:00 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.13 2009/01/18 22:57:55 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.12 2009/01/06 23:58:00 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.13 2009/01/18 22:57:55 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -231,7 +231,7 @@ arckbd_attach(device_t parent, device_t self, void *aux)
 	    device_xname(&sc->sc_dev), "rx intr");
 	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self,
 	    &sc->sc_rev);
-	aprint_verbose("\n%s: interrupting at %s (rx)", self->dv_xname,
+	aprint_verbose("\n%s: interrupting at %s (rx)", device_xname(self),
 	    irq_string(sc->sc_rirq));
 
 	evcnt_attach_dynamic(&sc->sc_xev, EVCNT_TYPE_INTR, NULL,
@@ -266,7 +266,8 @@ arckbd_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 #if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, self->dv_xname, RND_TYPE_TTY, 0);
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
+	    RND_TYPE_TTY, 0);
 #endif
 
 	/* Attach the dummy drivers */
