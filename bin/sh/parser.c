@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.73 2008/11/08 00:14:05 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.74 2009/01/18 00:30:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.73 2008/11/08 00:14:05 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.74 2009/01/18 00:30:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -924,7 +924,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 	int * volatile dblquotep = NULL;
 	volatile size_t maxnest = 32;
 	volatile int dblquote;
-	volatile int varnest;	/* levels of variables expansion */
+	volatile size_t varnest;	/* levels of variables expansion */
 	volatile int arinest;	/* levels of arithmetic expansion */
 	volatile int parenlevel;	/* levels of parens in arithmetic */
 	volatile int oldstyle;

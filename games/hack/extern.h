@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2009/01/18 00:34:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ int dosuspend(void);
 
 /* hack.lev.c */
 void savelev(int, xchar);
-void bwrite(int, const void *, unsigned);
+void bwrite(int, const void *, size_t);
 void saveobjchn(int, struct obj *);
 void savemonchn(int, struct monst *);
 void savegoldchn(int, struct gold *);

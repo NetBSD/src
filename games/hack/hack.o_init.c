@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.o_init.c,v 1.7 2003/04/02 18:36:38 jsm Exp $	*/
+/*	$NetBSD: hack.o_init.c,v 1.8 2009/01/18 00:34:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.o_init.c,v 1.7 2003/04/02 18:36:38 jsm Exp $");
+__RCSID("$NetBSD: hack.o_init.c,v 1.8 2009/01/18 00:34:03 lukem Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -180,7 +180,7 @@ savenames(fd)
 	int             fd;
 {
 	int             i;
-	unsigned        len;
+	size_t          len;
 	bwrite(fd, (char *) bases, sizeof bases);
 	bwrite(fd, (char *) objects, sizeof objects);
 	/*
