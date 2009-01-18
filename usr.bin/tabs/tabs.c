@@ -1,4 +1,4 @@
-/* $NetBSD: tabs.c,v 1.1 2008/12/11 11:18:35 roy Exp $ */
+/* $NetBSD: tabs.c,v 1.2 2009/01/18 07:08:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2008 \
 The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: tabs.c,v 1.1 2008/12/11 11:18:35 roy Exp $");
+__RCSID("$NetBSD: tabs.c,v 1.2 2009/01/18 07:08:30 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -83,13 +83,14 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-        char *term, *arg, *tbp, *token, *end, *tabs = NULL, *p;
+	char *term, *arg, *tbp, *token, *end, *tabs = NULL, *p;
 	const char *cr, *ct, *st, *ML, *spec = NULL;
-        int i, j, n, inc = 8, stops[NSTOPS], nstops, last, cols, margin = 0;
+	int i, n, inc = 8, stops[NSTOPS], nstops, last, cols, margin = 0;
+	size_t j;
 	struct winsize ws;
 
-        term = getenv("TERM");
-        for (i = 1; i < argc; i++) {
+	term = getenv("TERM");
+	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '+') {
 			arg = argv[i] + 1;
 			if (arg[0] == 'm')
@@ -132,8 +133,7 @@ main(int argc, char **argv)
 		}
 		for (j = 0; j < ntabspecs; j++) {
 			if (arg[0] == tabspecs[j].opt[0] &&
-			    arg[1] == tabspecs[j].opt[1])
-			{
+			    arg[1] == tabspecs[j].opt[1]) {
 				spec = tabspecs[j].spec;
 				break;
 			}
