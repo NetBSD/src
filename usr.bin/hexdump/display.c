@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.20 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: display.c,v 1.21 2009/01/18 21:34:32 apb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.20 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: display.c,v 1.21 2009/01/18 21:34:32 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,9 +127,9 @@ print(PR *pr, u_char *bp)
 	  int16_t s2;
 	  int32_t s4;
 	  int64_t s8;
-	u_int16_t u2;
-	u_int32_t u4;
-	u_int64_t u8;
+	 uint16_t u2;
+	 uint32_t u4;
+	 uint64_t u8;
 
 	switch(pr->flags) {
 	case F_ADDRESS:
@@ -171,7 +171,7 @@ print(PR *pr, u_char *bp)
 			break;
 		case 8:
 			memmove(&s8, bp, sizeof(s8));
-			(void)printf(pr->fmt, s8);
+			(void)printf(pr->fmt, (int64_t)s8);
 			break;
 		}
 		break;
@@ -202,7 +202,7 @@ print(PR *pr, u_char *bp)
 			break;
 		case 8:
 			memmove(&u8, bp, sizeof(u8));
-			(void)printf(pr->fmt, u8);
+			(void)printf(pr->fmt, (uint64_t)u8);
 			break;
 		}
 		break;
