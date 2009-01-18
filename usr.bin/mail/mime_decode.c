@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.13 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.14 2009/01/18 01:29:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.13 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.14 2009/01/18 01:29:57 lukem Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -841,7 +841,8 @@ enum dispmode_e {
 	DM_BINARY,		/* indicate binary data */
 	DM_PGPSIGN,		/* OpenPGP signed part */
 	DM_PGPENCR,		/* OpenPGP encrypted part */
-	DM_PGPKEYS		/* OpenPGP keys part */
+	DM_PGPKEYS,		/* OpenPGP keys part */
+	DM_SENTINEL		/* end marker; shouldn't be used */
 };
 #define APPLICATION_OCTET_STREAM	DM_BINARY
 
@@ -1018,15 +1019,15 @@ mime_decode_body(struct mime_info *mip)
 			{ DM_PGPKEYS,	"OpenPGP keys"		},
 			{ DM_UNKNOWN,	"unknown data"		},
 			{ DM_IGNORE,	NULL			},
-			{ -1,		NULL			},
+			{ DM_SENTINEL,	NULL			},
 		};
 		const struct msg_tbl_s *mp;
 
-		for (mp = msg_tbl; mp->dm != -1; mp++)
+		for (mp = msg_tbl; mp->dm != DM_SENTINEL; mp++)
 			if (mp->dm == dispmode)
 				break;
 
-		assert(mp->dm != -1);	/* msg_tbl is short if this happens! */
+		assert(mp->dm != DM_SENTINEL);	/* msg_tbl is short if this happens! */
 
 		if (mp->msg)
 			(void)fprintf(pipe_end(mip), "  [%s]\n\n", mp->msg);

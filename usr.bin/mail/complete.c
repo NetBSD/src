@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.15 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.15 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -89,8 +89,8 @@ static int doglob = 1;			/* glob local file names */
 static void
 list_vertical(StringList *sl)
 {
-	int i, j, k;
-	int columns, lines;
+	int k;
+	size_t i, j, columns, lines;
 	char *p;
 	size_t w, width;
 
@@ -144,7 +144,7 @@ list_vertical(StringList *sl)
 static void
 ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
 {
-	int	di, si;
+	size_t	di, si;
 
 	for (di = si = 0;
 	    src[si] != '\0' && di < dstlen && si < srclen;
@@ -248,8 +248,7 @@ complete_ambiguous(EditLine *el, char *word, int dolist, StringList *words)
 {
 	char insertstr[MAXPATHLEN];
 	char *lastmatch, *p;
-	int i, j;
-	size_t matchlen, wordlen;
+	size_t i, j, matchlen, wordlen;
 
 	wordlen = strlen(word);
 	if (words->sl_cur == 0)
@@ -1109,7 +1108,7 @@ my_gets(el_mode_t *em, const char *prompt, char *string)
 
 	if (buf[cnt - 1] == '\n')
 		cnt--;	/* trash the trailing LF */
-	len = MIN(sizeof(line) - 1, cnt);
+	len = MIN(sizeof(line) - 1, (size_t)cnt);
 	(void)memcpy(line, buf, len);
 	line[cnt] = '\0';
 
