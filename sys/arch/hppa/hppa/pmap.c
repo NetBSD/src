@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.13 2008/12/15 19:41:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.14 2009/01/18 18:32:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.13 2008/12/15 19:41:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.14 2009/01/18 18:32:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1609,7 +1609,7 @@ pmap_zero_page(paddr_t pa)
  * pmap_copy_page copies the src page to the destination page. If a mapping
  * can be found for the source, we use that virtual address. Otherwise, a
  * slower physical page copy must be done. The destination is always a
- * physical address sivnce there is usually no mapping for it.
+ * physical address since there is usually no mapping for it.
  */
 void
 pmap_copy_page(paddr_t spa, paddr_t dpa)
