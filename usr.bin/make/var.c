@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.146 2009/01/17 13:29:37 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.147 2009/01/18 01:31:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.146 2009/01/17 13:29:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.147 2009/01/18 01:31:12 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.146 2009/01/17 13:29:37 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.147 2009/01/18 01:31:12 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -587,7 +587,7 @@ Var_Export1(const char *name, int force)
 	    return 1;
 	}
 	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
-	if (n < sizeof(tmp)) {
+	if (n < (int)sizeof(tmp)) {
 	    val = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
 	    setenv(name, val, 1);
 	    free(val);
@@ -637,7 +637,7 @@ Var_ExportVars(void)
      * We have a number of exported vars,
      */
     n = snprintf(tmp, sizeof(tmp), "${" MAKE_EXPORTED ":O:u}");
-    if (n < sizeof(tmp)) {
+    if (n < (int)sizeof(tmp)) {
 	char **av;
 	char *as;
 	int ac;
