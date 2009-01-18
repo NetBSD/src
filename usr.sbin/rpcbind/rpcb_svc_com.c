@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.13 2007/08/27 19:51:50 dsl Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.14 2009/01/18 10:17:37 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -284,7 +284,7 @@ map_unset(RPCB *regp, const char *owner)
 }
 
 void
-delete_prog(int prog)
+delete_prog(rpcprog_t prog)
 {
 	RPCB reg;
 	register rpcblist_ptr rbl;
@@ -777,7 +777,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 			"rpcbproc_callit_com:  duplicate request\n");
 		free((void *) m_uaddr);
 		goto error;
-	} else 	if (call_msg.rm_xid == -1) {
+	} else 	if (call_msg.rm_xid == (uint32_t)-1) {
 		/*  forward_register failed.  Perhaps no memory. */
 		if (debugging)
 			fprintf(stderr,
@@ -1295,8 +1295,8 @@ static void
 find_versions(rpcprog_t prog, char *netid, rpcvers_t *lowvp, rpcvers_t *highvp)
 {
 	register rpcblist_ptr rbl;
-	int lowv = 0;
-	int highv = 0;
+	rpcvers_t lowv = 0;
+	rpcvers_t highv = 0;
 
 	for (rbl = list_rbl; rbl != NULL; rbl = rbl->rpcb_next) {
 		if ((rbl->rpcb_map.r_prog != prog) ||
@@ -1425,7 +1425,7 @@ del_pmaplist(RPCB *arg)
 {
 	struct pmaplist *pml;
 	struct pmaplist *prevpml, *fnd;
-	long prot;
+	unsigned long prot;
 
 	if (strcmp(arg->r_netid, udptrans) == 0) {
 		/* It is UDP! */
