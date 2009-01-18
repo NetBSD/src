@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.14 2009/01/18 18:32:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.15 2009/01/18 18:36:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.14 2009/01/18 18:32:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.15 2009/01/18 18:36:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1632,9 +1632,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte, opte;
-#if 0
-	pmap_t pmap = pmap_kernel();
-#endif
 
 #ifdef PMAPDEBUG
 	int opmapdebug = pmapdebug;
