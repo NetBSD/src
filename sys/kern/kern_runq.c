@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.23 2008/12/02 17:57:32 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.24 2009/01/18 05:07:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.23 2008/12/02 17:57:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.24 2009/01/18 05:07:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ typedef struct {
 } queue_t;
 
 typedef struct {
-	/* Lock and bitmap */
+	/* Bitmap */
 	uint32_t	r_bitmap[PRI_COUNT >> BITMAP_SHIFT];
 	/* Counters */
 	u_int		r_count;	/* Count of the threads */
@@ -92,7 +92,7 @@ typedef struct {
 
 static void *	sched_getrq(runqueue_t *, const pri_t);
 #ifdef MULTIPROCESSOR
-static lwp_t	*sched_catchlwp(struct cpu_info *);
+static lwp_t *	sched_catchlwp(struct cpu_info *);
 static void	sched_balance(void *);
 #endif
 
@@ -333,7 +333,7 @@ static inline bool
 lwp_cache_hot(const struct lwp *l)
 {
 
-	if (l->l_slptime || l->l_rticks == 0)
+	if (__predict_false(l->l_slptime || l->l_rticks == 0))
 		return false;
 
 	return (hardclock_ticks - l->l_rticks <= cacheht_time);
@@ -372,31 +372,37 @@ sched_takecpu(struct lwp *l)
 
 	KASSERT(lwp_locked(l, NULL));
 
+	/* If thread is strictly bound, do not estimate other CPUs */
 	ci = l->l_cpu;
+	if (l->l_pflag & LP_BOUND)
+		return ci;
+
 	spc = &ci->ci_schedstate;
 	ci_rq = spc->spc_sched_info;
 
-	/*
-	 * If thread is strictly bound, do not estimate other CPUs.
-	 * If CPU of this thread is idling - run there.
-	 */
-	if ((l->l_pflag & LP_BOUND) != 0 || ci_rq->r_count == 0) {
-		ci_rq->r_ev_stay.ev_count++;
-		return ci;
-	}
-
-	/* Stay if thread is cache-hot. */
-	eprio = lwp_eprio(l);
-	if (__predict_true(l->l_stat != LSIDL) &&
-	    lwp_cache_hot(l) && eprio >= spc->spc_curpriority) {
-		ci_rq->r_ev_stay.ev_count++;
-		return ci;
+	/* Make sure that thread is in appropriate processor-set */
+	if (__predict_true(spc->spc_psid == l->l_psid)) {
+		/* If CPU of this thread is idling - run there */
+		if (ci_rq->r_count == 0) {
+			ci_rq->r_ev_stay.ev_count++;
+			return ci;
+		}
+		/* Stay if thread is cache-hot */
+		eprio = lwp_eprio(l);
+		if (__predict_true(l->l_stat != LSIDL) &&
+		    lwp_cache_hot(l) && eprio >= spc->spc_curpriority) {
+			ci_rq->r_ev_stay.ev_count++;
+			return ci;
+		}
+	} else {
+		eprio = lwp_eprio(l);
 	}
 
 	/* Run on current CPU if priority of thread is higher */
 	ci = curcpu();
 	spc = &ci->ci_schedstate;
 	if (eprio > spc->spc_curpriority && sched_migratable(l, ci)) {
+		ci_rq = spc->spc_sched_info;
 		ci_rq->r_ev_localize.ev_count++;
 		return ci;
 	}
@@ -441,12 +447,15 @@ static struct lwp *
 sched_catchlwp(struct cpu_info *ci)
 {
 	struct cpu_info *curci = curcpu();
-	struct schedstate_percpu *spc;
+	struct schedstate_percpu *spc, *curspc;
 	TAILQ_HEAD(, lwp) *q_head;
 	runqueue_t *ci_rq;
 	struct lwp *l;
 
+	curspc = &curci->ci_schedstate;
 	spc = &ci->ci_schedstate;
+	KASSERT(curspc->spc_psid == spc->spc_psid);
+
 	ci_rq = spc->spc_sched_info;
 	if (ci_rq->r_mcount < min_catch) {
 		spc_unlock(ci);
@@ -475,7 +484,7 @@ sched_catchlwp(struct cpu_info *ci)
 		sched_dequeue(l);
 		l->l_cpu = curci;
 		ci_rq->r_ev_pull.ev_count++;
-		lwp_unlock_to(l, curci->ci_schedstate.spc_mutex);
+		lwp_unlock_to(l, curspc->spc_mutex);
 		sched_enqueue(l, false);
 		return l;
 	}
@@ -608,7 +617,8 @@ no_migration:
 	ci_rq->r_avgcount = 0;
 	sched_balance(ci);
 	tci = worker_ci;
-	if (ci == tci)
+	tspc = &tci->ci_schedstate;
+	if (ci == tci || spc->spc_psid != tspc->spc_psid)
 		return;
 	spc_dlock(ci, tci);
 	(void)sched_catchlwp(tci);
@@ -705,6 +715,7 @@ sched_nextlwp(void)
 #ifdef MULTIPROCESSOR
 	/* If runqueue is empty, try to catch some thread from other CPU */
 	if (__predict_false(ci_rq->r_count == 0)) {
+		struct schedstate_percpu *cspc;
 		struct cpu_info *cci;
 
 		/* Offline CPUs should not perform this, however */
@@ -715,7 +726,9 @@ sched_nextlwp(void)
 		ci_rq->r_avgcount = 0;
 		sched_balance(ci);
 		cci = worker_ci;
-		if (ci == cci || !mutex_tryenter(cci->ci_schedstate.spc_mutex))
+		cspc = &cci->ci_schedstate;
+		if (ci == cci || spc->spc_psid != cspc->spc_psid ||
+		    !mutex_tryenter(cci->ci_schedstate.spc_mutex))
 			return NULL;
 		return sched_catchlwp(cci);
 	}
