@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2008/11/30 18:21:35 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2009/01/18 16:46:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2008/11/30 18:21:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2009/01/18 16:46:12 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -147,7 +147,9 @@ say_hi(void)
 {
 	printf("HELLO?!\n");
 	setled(0x55500000);
+#ifdef DDB
 	Debugger();
+#endif
 #if 0
         li      %r28,0x00000041 /* PUT A to R28*/         
         li      %r29,0x30       /* put serial addr to r29*/
