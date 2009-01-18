@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.12 2008/07/26 20:20:56 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.13 2009/01/18 00:18:41 lukem Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.12 2008/07/26 20:20:56 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.13 2009/01/18 00:18:41 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -578,7 +578,7 @@ int
 udf_create_primaryd(void)
 {
 	struct pri_vol_desc *pri;
-	int crclen;
+	uint16_t crclen;
 
 	pri = calloc(1, context.sector_size);
 	if (pri == NULL)
@@ -629,7 +629,7 @@ udf_create_partitiond(int part_num, int part_accesstype)
 	struct part_desc     *pd;
 	struct part_hdr_desc *phd;
 	uint32_t sector_size, bitmap_bytes;
-	int crclen;
+	uint16_t crclen;
 
 	sector_size = context.sector_size;
 	bitmap_bytes = layout.alloc_bitmap_dscr_size * sector_size;
@@ -686,7 +686,7 @@ int
 udf_create_unalloc_spaced(void)
 {
 	struct unalloc_sp_desc *usd;
-	int crclen;
+	uint16_t crclen;
 
 	usd = calloc(1, context.sector_size);
 	if (usd == NULL)
@@ -713,7 +713,7 @@ udf_create_base_logical_dscr(void)
 {
 	struct logvol_desc *lvd;
 	uint32_t sector_size;
-	int crclen;
+	uint16_t crclen;
 
 	sector_size = context.sector_size;
 
@@ -763,8 +763,8 @@ udf_add_logvol_part_physical(uint16_t phys_part)
 	struct logvol_desc *logvol = context.logical_vol;
 	union  udf_pmap *pmap;
 	uint8_t         *pmap_pos;
-	int crclen, pmap1_size;
-	int log_part;
+	uint16_t crclen;
+	uint32_t pmap1_size, log_part;
 
 	log_part = udf_rw32(logvol->n_pm);
 	pmap_pos = logvol->maps + udf_rw32(logvol->mt_l);
@@ -797,8 +797,8 @@ udf_add_logvol_part_virtual(uint16_t phys_part)
 	union  udf_pmap *pmap;
 	struct logvol_desc *logvol = context.logical_vol;
 	uint8_t *pmap_pos;
-	int crclen, pmapv_size;
-	int log_part;
+	uint16_t crclen;
+	uint32_t pmapv_size, log_part;
 
 	log_part = udf_rw32(logvol->n_pm);
 	pmap_pos = logvol->maps + udf_rw32(logvol->mt_l);
@@ -835,10 +835,10 @@ udf_add_logvol_part_sparable(uint16_t phys_part)
 {
 	union  udf_pmap *pmap;
 	struct logvol_desc *logvol = context.logical_vol;
-	uint32_t *st_pos, sparable_bytes;;
-	uint8_t  *pmap_pos;
-	int num, crclen, pmaps_size;
-	int log_part;
+	uint32_t *st_pos, sparable_bytes, pmaps_size;
+	uint8_t  *pmap_pos, num;
+	uint16_t crclen;
+	uint32_t log_part;
 
 	log_part = udf_rw32(logvol->n_pm);
 	pmap_pos = logvol->maps + udf_rw32(logvol->mt_l);
@@ -889,8 +889,8 @@ udf_create_sparing_tabled(void)
 {
 	struct udf_sparing_table *spt;
 	struct spare_map_entry   *sme;
-	uint32_t loc;
-	int crclen, cnt;
+	uint32_t loc, cnt;
+	uint32_t crclen;	/* XXX: should be 16; need to detect overflow */
 
 	spt = calloc(context.sector_size, layout.sparing_table_dscr_lbas);
 	if (spt == NULL)
@@ -915,7 +915,8 @@ udf_create_sparing_tabled(void)
 	/* calculate crc len for actual size */
 	crclen  = sizeof(struct udf_sparing_table) - UDF_DESC_TAG_LENGTH;
 	crclen += (layout.sparable_blocks-1) * sizeof(struct spare_map_entry);
-	spt->tag.desc_crc_len = udf_rw16(crclen);
+/* XXX ensure crclen doesn't exceed UINT16_MAX ? */
+	spt->tag.desc_crc_len = udf_rw16((uint16_t)crclen);
 
 	context.sparing_table = spt;
 
@@ -929,8 +930,8 @@ udf_add_logvol_part_meta(uint16_t phys_part)
 	union  udf_pmap *pmap;
 	struct logvol_desc *logvol = context.logical_vol;
 	uint8_t *pmap_pos;
-	int crclen, pmapv_size;
-	int log_part;
+	uint32_t pmapv_size, log_part;
+	uint16_t crclen;
 
 	log_part = udf_rw32(logvol->n_pm);
 	pmap_pos = logvol->maps + udf_rw32(logvol->mt_l);
@@ -1004,7 +1005,7 @@ udf_create_impvold(char *field1, char *field2, char *field3)
 {
 	struct impvol_desc *ivd;
 	struct udf_lv_info *lvi;
-	int crclen;
+	uint16_t crclen;
 
 	ivd = calloc(1, context.sector_size);
 	if (ivd == NULL)
@@ -1045,8 +1046,8 @@ udf_update_lvintd(int type)
 	struct udf_logvol_info *lvinfo;
 	struct logvol_desc     *logvol;
 	uint32_t *pos;
-	int crclen, cnt, l_iu;
-	int num_partmappings;
+	uint32_t cnt, l_iu, num_partmappings;
+	uint32_t crclen;	/* XXX: should be 16; need to detect overflow */
 
 	lvid   = context.logvol_integrity;
 	logvol = context.logical_vol;
@@ -1091,6 +1092,7 @@ udf_update_lvintd(int type)
 
 	crclen  = sizeof(struct logvol_int_desc) -4 -UDF_DESC_TAG_LENGTH + l_iu;
 	crclen += num_partmappings * 2 * 4;
+/* XXX ensure crclen doesn't exceed UINT16_MAX ? */
 	lvid->tag.desc_crc_len = udf_rw16(crclen);
 
 	context.logvol_info = lvinfo;
@@ -1120,7 +1122,7 @@ int
 udf_create_fsd(void)
 {
 	struct fileset_desc *fsd;
-	int crclen;
+	uint16_t crclen;
 
 	fsd = calloc(1, context.sector_size);
 	if (fsd == NULL)
@@ -1170,7 +1172,8 @@ udf_create_space_bitmap(uint32_t dscr_size, uint32_t part_size_lba,
 	struct space_bitmap_desc **sbdp)
 {
 	struct space_bitmap_desc *sbd;
-	int crclen, cnt;
+	uint32_t cnt;
+	uint16_t crclen;
 
 	*sbdp = NULL;
 	sbd = calloc(context.sector_size, dscr_size);
@@ -1202,7 +1205,7 @@ udf_register_bad_block(uint32_t location)
 {
 	struct udf_sparing_table *spt;
 	struct spare_map_entry   *sme, *free_sme;
-	int cnt;
+	uint32_t cnt;
 
 	spt = context.sparing_table;
 	if (spt == NULL) {
@@ -1431,7 +1434,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	struct filetimes_extattr_entry *ft_extattr;
 	uint32_t fidsize;
 	uint8_t *bpos;
-	int crclen;
+	uint32_t crclen;	/* XXX: should be 16; need to detect overflow */
 
 	*fep = NULL;
 	fe = calloc(1, context.sector_size);
@@ -1493,6 +1496,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 
 	crclen  = sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
 	crclen += udf_rw32(fe->l_ea) + fidsize;
+/* XXX ensure crclen doesn't exceed UINT16_MAX ? */
 	fe->tag.desc_crc_len = udf_rw16(crclen);
 
 	*fep = fe;
@@ -1507,7 +1511,7 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type,
 	struct extfile_entry *efe;
 	struct icb_tag       *icb;
 	uint32_t fidsize;
-	int crclen;
+	uint32_t crclen;	/* XXX: should be 16; need to detect overflow */
 
 	*efep = NULL;
 	efe = calloc(1, context.sector_size);
@@ -1554,6 +1558,7 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type,
 
 	crclen  = sizeof(struct extfile_entry) - 1 - UDF_DESC_TAG_LENGTH;
 	crclen += fidsize;
+/* XXX ensure crclen doesn't exceed UINT16_MAX ? */
 	efe->tag.desc_crc_len = udf_rw16(crclen);
 
 	*efep = efe;
@@ -1746,7 +1751,8 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 	struct udf_vat *vathdr;
 	uint32_t *vat_pos;
 	uint8_t *bpos, *extattr;
-	int inf_len, ea_len, vat_len, filetype;
+	uint32_t ea_len, inf_len, vat_len;
+	int filetype;
 	int error;
 
 	assert((layout.rootdir < 2) && (layout.fsd < 2));

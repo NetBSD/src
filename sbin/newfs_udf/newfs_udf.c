@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.5 2008/08/05 20:57:45 pooka Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.6 2009/01/18 00:18:41 lukem Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -434,9 +434,9 @@ static int
 udf_write_dscr_phys(union dscrptr *dscr, uint32_t location,
 	uint32_t sects)
 {
-	uint32_t phys;
+	uint32_t phys, cnt;
 	uint8_t *bpos;
-	int error, cnt;
+	int error;
 
 	dscr->tag.tag_loc = udf_rw32(location);
 	(void) udf_validate_tag_and_crc_sums(dscr);
@@ -461,9 +461,9 @@ udf_write_dscr_virt(union dscrptr *dscr, uint32_t location, uint32_t vpart,
 	struct file_entry *fe;
 	struct extfile_entry *efe;
 	struct extattrhdr_desc *extattrhdr;
-	uint32_t phys;
+	uint32_t phys, cnt;
 	uint8_t *bpos;
-	int error, cnt;
+	int error;
 
 	extattrhdr = NULL;
 	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
@@ -820,10 +820,9 @@ static int
 udf_surface_check(void)
 {
 	uint32_t loc, block_bytes;
-	uint32_t sector_size, blockingnr;
+	uint32_t sector_size, blockingnr, bpos;
 	uint8_t *buffer;
 	int error, num_errors;
-	int bpos;
 
 	sector_size = context.sector_size;
 	blockingnr  = layout.blockingnr;
