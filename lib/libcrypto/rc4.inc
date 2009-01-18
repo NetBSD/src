@@ -1,4 +1,4 @@
-#	$NetBSD: rc4.inc,v 1.7 2008/05/10 20:14:20 christos Exp $
+#	$NetBSD: rc4.inc,v 1.8 2009/01/18 16:52:18 he Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/rc4
 
-.ifndef(RC4_SRCS)
+.if !defined(RC4_SRCS)
 RC4_SRCS = rc4_skey.c rc4_enc.c 
 .endif
 SRCS += ${RC4_SRCS}
