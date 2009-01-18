@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.164 2008/11/28 05:58:22 dholland Exp $ */
+/* $NetBSD: vmstat.c,v 1.165 2009/01/18 07:20:00 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.164 2008/11/28 05:58:22 dholland Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.165 2009/01/18 07:20:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,6 +305,7 @@ main(int argc, char *argv[])
 	char errbuf[_POSIX2_LINE_MAX];
 	gid_t egid = getegid();
 	const char *histname, *hashname;
+	size_t i;
 
 	histname = hashname = NULL;
 	(void)setegid(getgid());
@@ -404,14 +405,14 @@ main(int argc, char *argv[])
 		int doexit = 0;
 		if (c == -1)
 			errx(1, "kvm_nlist: %s %s", "namelist", kvm_geterr(kd));
-		for (c = 0; c < sizeof(namelist) / sizeof(namelist[0])-1; c++)
-			if (namelist[c].n_type == 0 &&
-			    c != X_TIME_SECOND &&
-			    c != X_TIME) {
+		for (i = 0; i < sizeof(namelist) / sizeof(namelist[0])-1; i++)
+			if (namelist[i].n_type == 0 &&
+			    i != X_TIME_SECOND &&
+			    i != X_TIME) {
 				if (doexit++ == 0)
 					(void)fprintf(stderr, "vmstat: undefined symbols:");
 				(void)fprintf(stderr, " %s",
-				    namelist[c].n_name);
+				    namelist[i].n_name);
 			}
 		if (doexit) {
 			(void)fputc('\n', stderr);
@@ -524,7 +525,7 @@ main(int argc, char *argv[])
 char **
 choosedrives(char **argv)
 {
-	int i;
+	size_t i;
 
 	/*
 	 * Choose drives to be displayed.  Priority goes to (in order) drives
@@ -736,7 +737,7 @@ dovmstat(struct timespec *interval, int reps)
 void
 printhdr(void)
 {
-	int i;
+	size_t i;
 
 	(void)printf(" procs    memory      page%*s", 23, "");
 	if (ndrives > 0)
@@ -941,7 +942,7 @@ doforkst(void)
 void
 drvstats(int *ovflwp)
 {
-	int dn;
+	size_t dn;
 	double etime;
 	int ovflw = *ovflwp;
 
@@ -1311,7 +1312,8 @@ dopoolcache(void)
 	char name[32];
 	uint64_t cpuhit, cpumiss, tot;
 	void *addr;
-	int first, ovflw, i;
+	int first, ovflw;
+	size_t i;
 	double p;
 
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
@@ -1432,8 +1434,8 @@ dohashstat(int verbose, int todo, const char *hashname)
 	struct kernel_hash	*curhash;
 	void	*hashaddr, *hashbuf, *nhashbuf, *nextaddr;
 	size_t	elemsize, hashbufsize, thissize;
-	u_long	hashsize;
-	int	i, used, items, chain, maxchain;
+	u_long	hashsize, i;
+	int	used, items, chain, maxchain;
 
 	hashbuf = NULL;
 	hashbufsize = 0;
@@ -1522,7 +1524,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 			if (nextaddr == NULL)
 				continue;
 			if (verbose)
-				(void)printf("%5d: %p\n", i, nextaddr);
+				(void)printf("%5lu: %p\n", i, nextaddr);
 			used++;
 			chain = 0;
 			do {
@@ -1591,7 +1593,7 @@ deref_kptr(const void *kptr, void *ptr, size_t len, const char *msg)
 
 	if (*msg == '_')
 		msg++;
-	if (kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len)
+	if ((size_t)kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len)
 		errx(1, "kptr %lx: %s: %s", (u_long)kptr, msg, kvm_geterr(kd));
 }
 
