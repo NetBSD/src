@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.7 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.8 2009/01/18 01:29:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.7 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.8 2009/01/18 01:29:57 lukem Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -227,7 +227,7 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 
 #define EQU	(unsigned)-2
 #define BAD	(unsigned)-1
-#define uchar64(c)  (unsigned)((c) >= sizeof(b64index) ? BAD : b64index[(c)])
+#define uchar64(c)  ((c) >= sizeof(b64index) ? BAD : (unsigned)b64index[(c)])
 
 	p = (unsigned char *)bin;
 	q = (const unsigned char *)b64;

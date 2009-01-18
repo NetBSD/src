@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.6 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: thread.c,v 1.7 2009/01/18 01:29:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.6 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: thread.c,v 1.7 2009/01/18 01:29:57 lukem Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -662,7 +662,7 @@ flattencmd_core(struct message *mp)
 	size_t mcount;
 	struct message *tp;
 	struct message *nextmp;
-	int i;
+	size_t i;
 
 	if (mp == NULL)
 		return;
@@ -776,7 +776,7 @@ qsort_cmpfn(const void *left, const void *right)
 static void
 link_array(struct key_sort_s *marray, size_t mcount)
 {
-	int i;
+	size_t i;
 	struct message *lastmp;
 	lastmp = NULL;
 	for (i = 0; i < mcount; i++) {
@@ -794,9 +794,9 @@ link_array(struct key_sort_s *marray, size_t mcount)
 }
 
 static void
-cut_array(struct key_sort_s *marray, int beg, int end)
+cut_array(struct key_sort_s *marray, size_t beg, size_t end)
 {
-	int i;
+	size_t i;
 
 	if (beg + 1 < end) {
 		assert(marray[beg].mp->m_clink == NULL);
@@ -825,7 +825,7 @@ thread_array(struct key_sort_s *marray, size_t mcount, int cutit)
 	link_array(marray, mcount);
 
 	if (cutit) {
-		int i, j;
+		size_t i, j;
 		/*
 		 * Flatten out the array.
 		 */
@@ -930,8 +930,7 @@ thread_on_reference(struct message *mp)
 	} *marray;
 	struct message *parent;
 	state_t oldstate;
-	size_t mcount;
-	int i;
+	size_t mcount, i;
 
 	assert(mp == current_thread.t_head);
 
@@ -981,7 +980,7 @@ thread_on_reference(struct message *mp)
 	for (i = 0; i < mcount; i++) {
 		struct message *child;
 		char *parent_id;
-		int j;
+		size_t j;
 
 		if ((parent_id = marray[i].parent_id) == NULL)
 			continue;
@@ -1429,7 +1428,7 @@ static void
 field_load(struct key_sort_s *marray, size_t mcount, struct message *mp,
     const char *key, int skin_it)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < mcount; i++) {
 		marray[i].mp = mp;
 		marray[i].key.str =
@@ -1443,7 +1442,7 @@ static void
 subj_load(struct key_sort_s *marray, size_t mcount, struct message *mp,
     const char *key __unused, int flags __unused)
 {
-	int i;
+	size_t i;
 #ifdef __lint__
 	flags = flags;
 	key = key;
@@ -1464,7 +1463,7 @@ static void
 lines_load(struct key_sort_s *marray, size_t mcount, struct message *mp,
     const char *key __unused, int flags)
 {
-	int i;
+	size_t i;
 	int use_blines;
 	int use_hlines;
 #ifdef __lint__
@@ -1489,7 +1488,7 @@ static void
 size_load(struct key_sort_s *marray, size_t mcount, struct message *mp,
     const char *key __unused, int flags __unused)
 {
-	int i;
+	size_t i;
 #ifdef __lint__
 	flags = flags;
 	key = key;
@@ -1506,7 +1505,7 @@ static void __unused
 date_load(struct key_sort_s *marray, size_t mcount, struct message *mp,
     const char *key __unused, int flags)
 {
-	int i;
+	size_t i;
 	int use_hl_date;
 	int zero_hour_min_sec;
 #ifdef __lint__
@@ -1538,7 +1537,7 @@ static void
 from_load(struct key_sort_s *marray, size_t mcount, struct message *mp,
     const char *key __unused, int flags __unused)
 {
-	int i;
+	size_t i;
 #ifdef __lint__
 	flags = flags;
 	key = key;
