@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.c,v 1.3 2008/11/21 03:23:43 jnemeth Exp $ */
+/* $NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.3 2008/11/21 03:23:43 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.3 2008/11/21 03:23:43 jnemeth Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.3 2008/11/21 03:23:43 jnemeth Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -741,7 +741,7 @@ ptree_iterate(pt_tree_t *pt, const void *item, pt_direction_t direction)
 			slot = ptree_testnode(pt, target, ptn);
 			node = PTN_BRANCH_SLOT(ptn, slot);
 			if (direction == PT_ASCENDING) {
-				if (slot != (1 << PTN_BRANCH_BITLEN(ptn)) - 1)
+				if (slot != (pt_slot_t)((1 << PTN_BRANCH_BITLEN(ptn)) - 1))
 					next_node = PTN_BRANCH_SLOT(ptn, slot + 1);
 			} else {
 				if (slot > 0) {

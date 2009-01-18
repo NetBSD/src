@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.29 2005/09/14 02:12:34 christos Exp $	*/
+/*	$NetBSD: pty.c,v 1.30 2009/01/18 12:13:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.29 2005/09/14 02:12:34 christos Exp $");
+__RCSID("$NetBSD: pty.c,v 1.30 2009/01/18 12:13:04 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,7 +106,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 			if ((master = open(line, O_RDWR, 0)) == -1) {
 				if (errno != ENOENT)
 					continue;	/* busy */
-				if (cp2 - cp + 1 < sizeof(TTY_OLD_SUFFIX))
+				if ((size_t)(cp2 - cp + 1) < sizeof(TTY_OLD_SUFFIX))
 					return -1; /* out of ptys */
 				else	
 					break;	/* out of ptys in this group */
