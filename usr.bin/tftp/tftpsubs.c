@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpsubs.c,v 1.10 2006/04/09 18:45:19 christos Exp $	*/
+/*	$NetBSD: tftpsubs.c,v 1.11 2009/01/18 07:11:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftpsubs.c,v 1.10 2006/04/09 18:45:19 christos Exp $");
+__RCSID("$NetBSD: tftpsubs.c,v 1.11 2009/01/18 07:11:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ read_ahead(file, amt, convert)
 	size_t amt;			/* number of bytes to read */
 	int convert;                    /* if true, convert to ascii */
 {
-	int i;
+	size_t i;
 	char *p;
 	int c;
 	struct bf *b;
