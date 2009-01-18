@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.20 2009/01/18 19:53:11 christos Exp $	*/
+/*	$NetBSD: runetable.c,v 1.21 2009/01/18 22:03:19 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.20 2009/01/18 19:53:11 christos Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.21 2009/01/18 22:03:19 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: runetable.c,v 1.20 2009/01/18 19:53:11 christos Exp $");
 #include "rune.h"
 #include "rune_local.h"
 
-/*###57 [cc] error: conflicting type qualifiers for '_DefaultRuneLocale'%%%*/
-_RuneLocale _DefaultRuneLocale = {
+const _RuneLocale _DefaultRuneLocale = {
     _RUNE_MAGIC_1,
     "NONE",
     _DEFAULT_INVALID_RUNE,
@@ -328,8 +327,14 @@ _RuneLocale _DefaultRuneLocale = {
     "646",
     &_citrus_ctype_default,
     {
-	    { NULL, NULL, NULL },
-	    { NULL, NULL, NULL },
+	{   "towlower",
+	    __UNCONST(&_DefaultRuneLocale.rl_maplower[0]),
+	    __UNCONST(&_DefaultRuneLocale.rl_maplower_ext)
+	},
+	{   "towupper",
+	    __UNCONST(&_DefaultRuneLocale.rl_mapupper[0]),
+	    __UNCONST(&_DefaultRuneLocale.rl_mapupper_ext)
+	},
     },
     {
 	    { "alnum", _CTYPE_A|_CTYPE_D },
@@ -350,5 +355,4 @@ _RuneLocale _DefaultRuneLocale = {
     _C_toupper_
 };
 
-/*###352 [cc] error: conflicting types for '_CurrentRuneLocale'%%%*/
-_RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
+const _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
