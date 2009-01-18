@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.53 2008/10/25 14:14:11 yamt Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.54 2009/01/18 12:14:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.53 2008/10/25 14:14:11 yamt Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.54 2009/01/18 12:14:17 lukem Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -239,7 +239,7 @@ pthread__cond_wake_one(pthread_cond_t *cond)
 	 * deferred wakeup list.  The waiter will be set running when the
 	 * caller (this thread) releases the mutex.
 	 */
-	if (__predict_false(self->pt_nwaiters == pthread__unpark_max)) {
+	if (__predict_false(self->pt_nwaiters == (size_t)pthread__unpark_max)) {
 		(void)_lwp_unpark_all(self->pt_waiters, self->pt_nwaiters,
 		    __UNVOLATILE(&mutex->ptm_waiters));
 		self->pt_nwaiters = 0;
