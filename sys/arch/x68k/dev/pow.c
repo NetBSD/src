@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.22 2008/12/20 13:20:59 isaki Exp $	*/
+/*	$NetBSD: pow.c,v 1.23 2009/01/18 04:48:53 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.22 2008/12/20 13:20:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.23 2009/01/18 04:48:53 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,9 +309,6 @@ powintr(void *arg)
 {
 	struct pow_softc *sc = arg;
 	int sw;
-	int s;
-
-	s = spl6();
 
 	sw = ~mfp_get_gpip() & 6;
 	mfp_bit_clear_aer(sw);
@@ -319,7 +316,6 @@ powintr(void *arg)
 
 	sysmon_task_queue_sched(0, pow_pressed_event, sc);
 
-	splx(s);
 	return 0;
 }
 
