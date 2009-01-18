@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.24 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: net.h,v 1.25 2009/01/18 02:59:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -109,4 +109,6 @@ char	*ether_sprintf(const u_char *);
 int	ip_cksum(const void *, size_t);
 
 /* Machine-dependent functions: */
+#ifdef _STANDALONE	/* XXX for mount_nfs(8) SMALLPROG hack */
 satime_t	getsecs(void);
+#endif
