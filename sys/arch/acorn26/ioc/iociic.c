@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.7 2009/01/07 22:58:38 bjh21 Exp $	*/
+/*	$NetBSD: iociic.c,v 1.8 2009/01/18 18:41:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #include <acorn26/ioc/iociicvar.h>
 
 struct iociic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
 
@@ -83,7 +83,7 @@ iociic_bb_set_bits(void *cookie, uint32_t bits)
 {
 	struct iociic_softc *sc = cookie;
 
-	ioc_ctl_write(device_parent(&sc->sc_dev), sc->sc_ioc_ctl | bits,
+	ioc_ctl_write(device_parent(sc->sc_dev), sc->sc_ioc_ctl | bits,
 		      IOC_CTL_SDA | IOC_CTL_SCL);
 }
 
@@ -100,7 +100,7 @@ iociic_bb_read_bits(void *cookie)
 {
 	struct iociic_softc *sc = cookie;
 
-	return ioc_ctl_read(device_parent(&sc->sc_dev));
+	return ioc_ctl_read(device_parent(sc->sc_dev));
 }
 
 static const struct i2c_bitbang_ops iociic_bbops = {
@@ -128,6 +128,7 @@ iociic_attach(device_t parent, device_t self, void *aux)
 	struct iociic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
+	sc->sc_dev = self;
 	if (the_iociic == NULL)
 		the_iociic = sc;
 
@@ -148,7 +149,7 @@ iociic_attach(device_t parent, device_t self, void *aux)
 	(void) config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }
 
-CFATTACH_DECL(iociic, sizeof(struct iociic_softc),
+CFATTACH_DECL_NEW(iociic, sizeof(struct iociic_softc),
     iociic_match, iociic_attach, NULL, NULL);
 
 i2c_tag_t
