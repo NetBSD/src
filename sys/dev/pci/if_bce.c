@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.23 2008/03/11 23:58:06 dyoung Exp $	 */
+/* $NetBSD: if_bce.c,v 1.24 2009/01/18 10:00:51 mrg Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.23 2008/03/11 23:58:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.24 2009/01/18 10:00:51 mrg Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -430,7 +430,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->bce_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
 	mii_attach(&sc->bce_dev, &sc->bce_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, MIIF_FORCEANEG|MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->bce_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE);
