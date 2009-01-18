@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.5 2009/01/06 23:48:30 bjh21 Exp $ */
+/* $NetBSD: iocvar.h,v 1.6 2009/01/18 20:31:08 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -52,7 +52,7 @@ struct ioc_attach_args {
 };
 
 struct ioc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	struct irq_handler	*sc_clkirq;
@@ -68,7 +68,6 @@ extern device_t the_ioc;
 
 /* Public IOC functions */
 
-
 extern int ioc_irq_status(int);
 extern void ioc_irq_waitfor(int);
 extern void ioc_irq_clear(int);
@@ -77,11 +76,7 @@ extern void ioc_irq_setmask(u_int32_t);
 
 extern void ioc_fiq_setmask(u_int32_t);
 
-extern void ioc_counter_start(device_t , int, int);
-
-extern void ioc_initclocks(device_t );
-extern void ioc_setstatclockrate(device_t , int);
-extern void ioc_microtime(device_t , struct timeval *);
+extern void ioc_counter_start(device_t, int, int);
 
 /*
  * Control Register
