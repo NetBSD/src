@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.22 2008/10/07 10:03:47 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.23 2009/01/18 01:04:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.22 2008/10/07 10:03:47 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.23 2009/01/18 01:04:34 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -195,7 +195,7 @@ main(int argc, char *argv[])
 			lval = strtol(optarg, &p, 10);
 			if (p == optarg || *p != '\0')
 				errx(1, "Invalid pagesize `%s'", optarg);
-			if (lval < 0 || lval >= UINT_MAX)
+			if (lval < 0 || (unsigned int)lval >= UINT_MAX)
 				errx(1, "Pagesize `%s' out of range", optarg);
 			oi.pagesize = (unsigned int)lval;
 			break;
