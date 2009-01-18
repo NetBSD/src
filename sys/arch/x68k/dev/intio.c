@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.41 2009/01/18 04:48:53 isaki Exp $	*/
+/*	$NetBSD: intio.c,v 1.42 2009/01/18 05:00:39 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.41 2009/01/18 04:48:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.42 2009/01/18 05:00:39 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,6 @@ _intio_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	struct intio_dma_cookie *cookie;
 	bus_dmamap_t map;
 	int error, cookieflags;
-	void *cookiestore;
 	size_t cookiesize;
 	extern paddr_t avail_end;
 
@@ -447,13 +446,12 @@ _intio_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	/*
 	 * Allocate our cookie.
 	 */
-	if ((cookiestore = malloc(cookiesize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
+	cookie = malloc(cookiesize, M_DMAMAP, 
+	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK) | M_ZERO);
+	if (cookie == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
-	memset(cookiestore, 0, cookiesize);
-	cookie = (struct intio_dma_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
 	map->x68k_dm_cookie = cookie;
 
