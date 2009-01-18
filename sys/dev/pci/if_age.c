@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.6 2009/01/17 00:02:40 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.7 2009/01/18 18:55:38 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.6 2009/01/17 00:02:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.7 2009/01/18 18:55:38 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -197,7 +197,7 @@ age_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(self, "%s", intrstr);
+	aprint_normal_dev(self, "%s\n", intrstr);
 
 	/* Set PHY address. */
 	sc->age_phyaddr = AGE_PHY_ADDR;
