@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.30 2009/01/14 23:22:09 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.31 2009/01/18 20:42:11 he Exp $
 #
 
 WARNS?=		4
@@ -7,7 +7,7 @@ NOLINT=		# kernel code
 .include <bsd.own.mk>
 
 # use kernel ABI instead of rump ABI (needs md code)
-.ifndef(RUMPKMOD)
+.ifndef RUMPKMOD
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
 .endif
 

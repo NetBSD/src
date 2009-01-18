@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2009/01/08 18:43:28 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2009/01/18 20:42:11 he Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -9,8 +9,8 @@ USE_FORT?= yes	# network client
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
 
-.ifdef(ISRUMP)
-.ifdef(MOUNTNAME)
+.ifdef ISRUMP
+.ifdef MOUNTNAME
 PROG=		rump_${MOUNTNAME}
 MAN=		rump_${MOUNTNAME}.8
 
@@ -23,7 +23,7 @@ SRCS+=		mount_${MOUNTNAME}.c rump_${MOUNTNAME}.c pathadj.c fattr.c
 # on select archs use the kernel module directly, otherwise fallback
 # to the rump library
 .undef RUMPKMOD
-.ifdef(RUMPKMOD)
+.ifdef RUMPKMOD
 OSRELEASE!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 KMODULEDIR=	${DESTDIR}/stand/${MACHINE}/${OSRELEASE}/modules/${MOUNTNAME}
 LDADD+=		${KMODULEDIR}/${MOUNTNAME}.kmod
