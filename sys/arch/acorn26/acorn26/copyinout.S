@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.8 2008/06/23 17:58:17 matt Exp $ */
+/* $NetBSD: copyinout.S,v 1.9 2009/01/18 01:19:32 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.8 2008/06/23 17:58:17 matt Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.9 2009/01/18 01:19:32 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -41,9 +41,7 @@ RCSID("$NetBSD: copyinout.S,v 1.8 2008/06/23 17:58:17 matt Exp $")
 ENTRY(fubyte)
 	mov	ip, lr			/* data-abort safety */
 	adr	r1, Lfusufault
-	ldr	r2, Lcurlwp
-	ldr	r2, [r2]
-	ldr	r2, [r2, #L_ADDR]
+	GET_CURPCB(r2)
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
 	ldrbt	r1, [r0]
 	mov	r0, r1
@@ -55,9 +53,7 @@ ENTRY(fubyte)
 ENTRY(fuword)
 	mov	ip, lr
 	adr	r1, Lfusufault
-	ldr	r2, Lcurlwp
-	ldr	r2, [r2]
-	ldr	r2, [r2, #L_ADDR]
+	GET_CURPCB(r2)
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
 	ldrt	r1, [r0]
 	mov	r0, r1
@@ -69,9 +65,7 @@ ENTRY(fuword)
 ENTRY(subyte)
 	mov	ip, lr
 	adr	r3, Lfusufault
-	ldr	r2, Lcurlwp
-	ldr	r2, [r2]
-	ldr	r2, [r2, #L_ADDR]
+	GET_CURPCB(r2)
 	str	r3, [r2, #(U_PCB + PCB_ONFAULT)]
 	strbt	r1, [r0]
 	mov	r0, #0
@@ -82,9 +76,7 @@ ENTRY(subyte)
 ENTRY(suword)
 	mov	ip, lr
 	adr	r3, Lfusufault
-	ldr	r2, Lcurlwp
-	ldr	r2, [r2]
-	ldr	r2, [r2, #L_ADDR]
+	GET_CURPCB(r2)
 	str	r3, [r2, #(U_PCB + PCB_ONFAULT)]
 	strt	r1, [r0]
 	mov	r0, #0
@@ -96,6 +88,3 @@ Lfusufault:
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
 	mvn	r0, #0
 	mov	pc, ip
-
-Lcurlwp:
-	.word	_C_LABEL(cpu_info_store) + CI_CURLWP

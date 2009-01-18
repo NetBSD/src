@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.16 2009/01/17 22:56:34 bjh21 Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.17 2009/01/18 01:19:32 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -47,19 +47,10 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.16 2009/01/17 22:56:34 bjh21 Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.17 2009/01/18 01:19:32 bjh21 Exp $")	
 
 	.text
 	.align	0
-
-#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
-#ifdef MULTIPROCESSOR
-#error MULTIPROCESSOR without GET_CURPCB
-#else
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
-#endif
-#endif
 
 #ifdef __PROG32
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
@@ -94,14 +85,7 @@ ENTRY(copyin)
 	RETc(eq)
 
 	SAVE_REGS
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r4)
-#elif defined(MULTIPROCESSOR)
-#error MULTIPROCESSOR without GET_CURPCB
-#else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
-#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	adr	r3, .Lcopyfault
@@ -313,14 +297,7 @@ ENTRY(copyout)
 	moveq	pc, lr
 
 	SAVE_REGS
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r4)
-#elif defined(MULTIPROCESSOR)
-#error MULTIPROCESSOR without GET_CURPCB
-#else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
-#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	adr	r3, .Lcopyfault
@@ -522,14 +499,7 @@ ENTRY(kcopy)
 	moveq	pc, lr
 
 	SAVE_REGS
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r4)
-#elif defined(MULTIPROCESSOR)
-#error MULTIPROCESSOR without GET_CURPCB
-#else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
-#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	adr	r3, .Lcopyfault
@@ -712,14 +682,7 @@ ENTRY(kcopy)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_1)
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r2)
-#elif defined(MULTIPROCESSOR)
-#error MULTIPROCESSOR without GET_CURPCB
-#else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
-#endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]
@@ -742,14 +705,7 @@ ENTRY(badaddr_read_1)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_2)
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r2)
-#elif defined(MULTIPROCESSOR)
-#error MULTIPROCESSOR without GET_CURPCB
-#else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
-#endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]
@@ -772,14 +728,7 @@ ENTRY(badaddr_read_2)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_4)
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r2)
-#elif defined(MULTIPROCESSOR)
-#error MULTIPROCESSOR without GET_CURPCB
-#else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
-#endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]

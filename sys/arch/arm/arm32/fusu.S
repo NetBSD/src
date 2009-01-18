@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.14 2009/01/17 22:56:34 bjh21 Exp $	*/
+/*	$NetBSD: fusu.S,v 1.15 2009/01/18 01:19:33 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -39,24 +39,6 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
-#ifdef MULTIPROCESSOR
-#error
-#else
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
-#endif
-#endif
-
-#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
-#if defined(MULTIPROCESSOR)
-#error GET_CURPCB not defined
-#else
-#define	GET_CURPCB(rX)				\
-	ldr	rX, .Lcurpcb			;\
-	ldr	rX, [rX]
-#endif
-#endif
 /*
  * fuword(void *uaddr);
  * Fetch an int from the user's address space.
@@ -307,15 +289,7 @@ ENTRY(susword)
  */
 
 ENTRY(subyte)
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r2)
-#elif defined(MULTIPROCESSOR)
-#error MULTIPROCESSOR without GET_CURPCB
-#else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
-#endif
-
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
