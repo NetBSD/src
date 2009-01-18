@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1168 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1169 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -59,12 +59,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[njoly 20081124]
 	module: Make PPP compressors modules. [cube 20081125]
 	i386: Make pxeboot(8) understand boot.cfg(5). [ad 20081125]
-	wscons(4): Add wscons/vcons support for Sun cg3. [jdc 20081128]
 	agp(4): Add support for the Intel G45 AGP. [christos 20081129]
 	compat_osf1(8): Fix getdirentries(2). [njoly 20081202]
 	module: Add a couple of sysctl(8) entries, kern.module.autoload and
 		kern.module.verbose. [ad 20081203]
-	wscons(4): Add wscons/vcons support for Sun bw2. [jdc 20081205]
 	module: Add a layerfs module. [ad 20081205]
 	libc: Add fdopendir(3), from Solaris/Linux. [ad 20081205]
 	compat_linux32: Add getresuid() and getresgid() syscalls.
