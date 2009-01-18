@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.23 2008/04/28 20:24:15 martin Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.24 2009/01/18 07:14:03 lukem Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.23 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.24 2009/01/18 07:14:03 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -163,7 +163,7 @@ main(int argc, char **argv)
 
 	if (verbose)
 		(void)printf("report size %d\n", sz);
-	if (sz > sizeof buf)
+	if (sz > (int)sizeof(buf))
 		errx(1, "report too large");
 
 	(void)signal(SIGHUP, sighup);

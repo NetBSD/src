@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.49 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: tip.c,v 1.50 2009/01/18 07:12:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.49 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: tip.c,v 1.50 2009/01/18 07:12:39 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -510,7 +510,7 @@ static char partab[0200];
 void
 xpwrite(int fd, char *buf, size_t n)
 {
-	int i;
+	size_t i;
 	char *bp;
 
 	bp = buf;
