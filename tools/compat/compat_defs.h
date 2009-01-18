@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.68 2009/01/06 19:15:39 agc Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.69 2009/01/18 21:09:47 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -509,6 +509,123 @@ void *setmode(const char *);
 #endif
 #ifndef O_SHLOCK
 #define O_SHLOCK 0
+#endif
+
+/* <inttypes.h> */
+
+#if USHRT_MAX == 65535			/* short is a 16-bit type */
+#ifndef PRId16
+#define PRId16 "hd"
+#endif
+#ifndef PRIi16
+#define PRIi16 "hi"
+#endif
+#ifndef PRIo16
+#define PRIo16 "ho"
+#endif
+#ifndef PRIu16
+#define PRIu16 "hu"
+#endif
+#ifndef PRIx16
+#define PRIx16 "hx"
+#endif
+#ifndef PRIX16
+#define PRIX16 "hX"
+#endif
+#endif					/* short is a 16-bit type */
+#if ! (defined(PRId16) && defined(PRIi16) && defined(PRIo16) && \
+	defined(PRIu16) && defined(PRIx16) && defined(PRIX16))
+#error "Don't know how to define PRI[diouxX]16"
+#endif
+
+#if UINT_MAX == 4294967295		/* int is a 32-bit type */
+#ifndef PRId32
+#define PRId32 "d"
+#endif
+#ifndef PRIi32
+#define PRIi32 "i"
+#endif
+#ifndef PRIo32
+#define PRIo32 "o"
+#endif
+#ifndef PRIu32
+#define PRIu32 "u"
+#endif
+#ifndef PRIx32
+#define PRIx32 "x"
+#endif
+#ifndef PRIX32
+#define PRIX32 "X"
+#endif
+#endif					/* int is a 32-bit type */
+#if ULONG_MAX == 4294967295		/* long is a 32-bit type */
+#ifndef PRId32
+#define PRId32 "ld"
+#endif
+#ifndef PRIi32
+#define PRIi32 "li"
+#endif
+#ifndef PRIo32
+#define PRIo32 "lo"
+#endif
+#ifndef PRIu32
+#define PRIu32 "lu"
+#endif
+#ifndef PRIx32
+#define PRIx32 "lx"
+#endif
+#ifndef PRIX32
+#define PRIX32 "lX"
+#endif
+#endif					/* long is a 32-bit type */
+#if ! (defined(PRId32) && defined(PRIi32) && defined(PRIo32) && \
+	defined(PRIu32) && defined(PRIx32) && defined(PRIX32))
+#error "Don't know how to define PRI[diouxX]32"
+#endif
+
+#if ULONG_MAX == 18446744073709551615	/* long is a 64-bit type */
+#ifndef PRId64
+#define PRId64 "ld"
+#endif
+#ifndef PRIi64
+#define PRIi64 "li"
+#endif
+#ifndef PRIo64
+#define PRIo64 "lo"
+#endif
+#ifndef PRIu64
+#define PRIu64 "lu"
+#endif
+#ifndef PRIx64
+#define PRIx64 "lx"
+#endif
+#ifndef PRIX64
+#define PRIX64 "lX"
+#endif
+#endif					/* long is a 64-bit type */
+#if ULLONG_MAX == 18446744073709551615	/* long long is a 64-bit type */
+#ifndef PRId64
+#define PRId64 "lld"
+#endif
+#ifndef PRIi64
+#define PRIi64 "lli"
+#endif
+#ifndef PRIo64
+#define PRIo64 "llo"
+#endif
+#ifndef PRIu64
+#define PRIu64 "llu"
+#endif
+#ifndef PRIx64
+#define PRIx64 "llx"
+#endif
+#ifndef PRIX64
+#define PRIX64 "llX"
+#endif
+#endif					/* long long is a 64-bit type */
+#if ! (defined(PRId64) && defined(PRIi64) && defined(PRIo64) && \
+	defined(PRIu64) && defined(PRIx64) && defined(PRIX64))
+#error "Don't know how to define PRI[diouxX]64"
 #endif
 
 /* <limits.h> */
