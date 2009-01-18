@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_udf.8,v 1.4 2008/07/26 20:20:56 reinoud Exp $
+.\" $NetBSD: newfs_udf.8,v 1.5 2009/01/18 00:21:09 lukem Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 26, 2008
+.Dd January 18, 2009
 .Dt NEWFS_UDF 8
 .Os
 .Sh NAME
@@ -131,7 +131,7 @@ vnconfig -c vnd0 bigdisk.2048.udf 2048/1/1/1
 newfs_udf -L bigdisk /dev/rvnd0d
 .Ed
 .Pp
-Create a 4.8 Gb sparse file and configure it using
+Create a 4.8 GiB sparse file and configure it using
 .Xr vnconfig 8
 to be a 2048 sector size disc and create a new UDF file system on
 .Pa /dev/rvnd0d .
