@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.7 2008/03/07 18:20:20 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.8 2009/01/18 00:36:20 lukem Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.142 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -934,7 +934,7 @@ process_request(http_req *request)
 			sz -= WRSZ;
 			addr += WRSZ;
 		}
-		if (sz && bozowrite(STDOUT_FILENO, addr, sz) != sz)
+		if (sz && (size_t)bozowrite(STDOUT_FILENO, addr, sz) != sz)
 			error(1, "final write failed: %s", strerror(errno));
 		debug((DEBUG_OBESE, "wrote %d bytes", (int)sz));
 		if (munmap(oaddr, mappedsz) < 0)
@@ -1640,7 +1640,7 @@ http_error(int code, http_req *request, const char *msg)
 		    "</body></html>\n",
 		    header, header, request->hr_url, reason,
 		    myname, portbuf, myname, portbuf);
-		if (size >= sizeof buf)
+		if (size >= (int)sizeof buf)
 			warning("http_error buffer too small, truncated");
 	} else
 		size = 0;
