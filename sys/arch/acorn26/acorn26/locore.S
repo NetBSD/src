@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.18 2009/01/18 01:17:07 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.19 2009/01/18 01:30:44 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -44,6 +44,7 @@
 #include <arm/trap.h>
 #include "assym.h"
 
+#include <arm/cpu.h>
 #include <arm/cpuconf.h>
 
 #include "opt_ddb.h"
@@ -420,4 +421,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.18 2009/01/18 01:17:07 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.19 2009/01/18 01:30:44 bjh21 Exp $")
