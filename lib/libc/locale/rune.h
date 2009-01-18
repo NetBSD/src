@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.15 2009/01/11 02:46:29 christos Exp $	*/
+/*	$NetBSD: rune.h,v 1.16 2009/01/18 19:53:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -89,7 +89,7 @@
 extern size_t __mb_len_max_runtime;
 #define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
 
-extern const _RuneLocale _DefaultRuneLocale;
-extern const _RuneLocale *_CurrentRuneLocale;
+extern _RuneLocale _DefaultRuneLocale;
+extern _RuneLocale *_CurrentRuneLocale;
 
 #endif	/*! _RUNE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.19 2009/01/11 02:46:29 christos Exp $	*/
+/*	$NetBSD: runetable.c,v 1.20 2009/01/18 19:53:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.19 2009/01/11 02:46:29 christos Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.20 2009/01/18 19:53:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,8 @@ __RCSID("$NetBSD: runetable.c,v 1.19 2009/01/11 02:46:29 christos Exp $");
 #include "rune.h"
 #include "rune_local.h"
 
-const _RuneLocale _DefaultRuneLocale = {
+/*###57 [cc] error: conflicting type qualifiers for '_DefaultRuneLocale'%%%*/
+_RuneLocale _DefaultRuneLocale = {
     _RUNE_MAGIC_1,
     "NONE",
     _DEFAULT_INVALID_RUNE,
@@ -349,4 +350,5 @@ const _RuneLocale _DefaultRuneLocale = {
     _C_toupper_
 };
 
-const _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
+/*###352 [cc] error: conflicting types for '_CurrentRuneLocale'%%%*/
+_RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
