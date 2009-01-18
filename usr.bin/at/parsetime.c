@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.18 2008/04/05 16:26:57 christos Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.19 2009/01/18 01:02:31 lukem Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -65,7 +65,8 @@ typedef enum { /* symbols */
 	NUMBER, PLUS, DOT, SLASH, ID, JUNK,
 	JAN, FEB, MAR, APR, MAY, JUN,
 	JUL, AUG, SEP, OCT, NOV, DEC,
-	SUN, MON, TUE, WED, THU, FRI, SAT
+	SUN, MON, TUE, WED, THU, FRI, SAT,
+	TOKEOF	/* EOF marker */
 } tokid_t;
 
 /*
@@ -159,7 +160,7 @@ static bool sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.18 2008/04/05 16:26:57 christos Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.19 2009/01/18 01:02:31 lukem Exp $");
 #endif
 #endif
 
@@ -169,7 +170,7 @@ static void	expect(tokid_t);
 static void	init_scanner(int, char **);
 static void	month(struct tm *);
 static tokid_t	parse_token(char *);
-static void	plonk(int) __dead;
+static void	plonk(tokid_t) __dead;
 static void	plus(struct tm *);
 static void	tod(struct tm *);
 static tokid_t	token(void);
@@ -180,7 +181,7 @@ static tokid_t	token(void);
 static tokid_t
 parse_token(char *arg)
 {
-	int i;
+	size_t i;
 
 	for (i=0; i < __arraycount(Specials); i++) {
 		if (strcasecmp(Specials[i].name, arg) == 0) {
@@ -221,14 +222,14 @@ token(void)
 
 	for(;;) {
 		(void)memset(sc_token, 0, sc_len);
-		sc_tokid = EOF;
+		sc_tokid = TOKEOF;
 		sc_tokplur = false;
 		idx = 0;
 
 		/*
 		 * if we need to read another argument, walk along the
 		 * argument list; when we fall off the arglist, we'll
-		 * just return EOF forever
+		 * just return TOKEOF forever
 		 */
 		if (need) {
 			if (scc < 1)
@@ -285,10 +286,10 @@ token(void)
  */
 __dead
 static void
-plonk(int tok)
+plonk(tokid_t tok)
 {
 
-	panic(tok == EOF ? "incomplete time" : "garbled time");
+	panic(tok == TOKEOF ? "incomplete time" : "garbled time");
 }
 
 /*
@@ -404,7 +405,7 @@ tod(struct tm *tm)
 	 * if we've gone past that time - but if we're specifying a time plus
 	 * a relative offset, it's okay to bump things
 	 */
-	if ((sc_tokid == EOF || sc_tokid == PLUS) && tm->tm_hour > hour) {
+	if ((sc_tokid == TOKEOF || sc_tokid == PLUS) && tm->tm_hour > hour) {
 		tm->tm_mday++;
 		tm->tm_wday++;
 	}
@@ -519,7 +520,7 @@ month(struct tm *tm)
 		(void)token();
 
 		if (sc_tokid == SLASH || sc_tokid == DOT) {
-			int sep;
+			tokid_t sep;
 
 			sep = sc_tokid;
 			expect(NUMBER);
@@ -633,7 +634,7 @@ parsetime(int argc, char **argv)
 		month(&runtime);
 		break;
 	}
-	expect(EOF);
+	expect(TOKEOF);
 
 	/*
 	 * adjust for daylight savings time
