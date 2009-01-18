@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.22 2009/01/18 02:40:05 isaki Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.23 2009/01/18 05:00:39 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.22 2009/01/18 02:40:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.23 2009/01/18 05:00:39 isaki Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -124,7 +124,6 @@ const struct cdevsw bell_cdevsw = {
 void
 bellattach(int num)
 {
-	char *mem;
 	u_long size;
 	struct bell_softc *sc;
 	int unit;
@@ -133,13 +132,11 @@ bellattach(int num)
 		return;
 	callout_init(&bell_ch, 0);
 	size = num * sizeof(struct bell_softc);
-	mem = malloc(size, M_DEVBUF, M_NOWAIT);
-	if (mem == NULL) {
+	bell_softc = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (bell_softc == NULL) {
 		printf("WARNING: no memory for opm bell\n");
 		return;
 	}
-	memset(mem, 0, size);
-	bell_softc = (struct bell_softc *)mem;
 
 	for (unit = 0; unit < num; unit++) {
 		sc = &bell_softc[unit];
