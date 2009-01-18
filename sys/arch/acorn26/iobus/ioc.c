@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.17 2009/01/06 23:48:30 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.18 2009/01/18 20:31:08 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.17 2009/01/06 23:48:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.18 2009/01/18 20:31:08 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,7 @@ static int ioc_irq_clock(void *cookie);
 static int ioc_irq_statclock(void *cookie);
 static u_int ioc_get_timecount(struct timecounter *);
 
-CFATTACH_DECL(ioc, sizeof(struct ioc_softc),
+CFATTACH_DECL_NEW(ioc, sizeof(struct ioc_softc),
     ioc_match, ioc_attach, NULL, NULL);
 
 device_t the_ioc;
@@ -94,7 +94,7 @@ ioc_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 
-	the_ioc = self;
+	sc->sc_dev = the_ioc = self;
 	sc->sc_bst = ioa->ioa_tag;
 	if (bus_space_map(ioa->ioa_tag, ioa->ioa_base, 0x00200000,
 			  0, &(sc->sc_bsh)) != 0)
@@ -331,17 +331,17 @@ cpu_initclocks(void)
 		panic("ioc_initclocks: Impossible clock rate: %d Hz", hz);
 	ioc_counter_start(the_ioc, 0, t0_count);
 	evcnt_attach_dynamic(&sc->sc_clkev, EVCNT_TYPE_INTR, NULL,
-	    device_xname(&sc->sc_dev), "clock");
+	    device_xname(sc->sc_dev), "clock");
 	sc->sc_clkirq = irq_establish(IOC_IRQ_TM0, IPL_CLOCK, ioc_irq_clock,
 	    NULL, &sc->sc_clkev);
 	sc->sc_tc.tc_get_timecount = ioc_get_timecount;
 	sc->sc_tc.tc_counter_mask = ~(u_int)0;
 	sc->sc_tc.tc_frequency = IOC_TIMER_RATE;
-	sc->sc_tc.tc_name = device_xname(&sc->sc_dev);
+	sc->sc_tc.tc_name = device_xname(sc->sc_dev);
 	sc->sc_tc.tc_quality = 100;
 	sc->sc_tc.tc_priv = sc;
 	tc_init(&sc->sc_tc);
-	aprint_verbose_dev(&sc->sc_dev, "%d Hz clock interrupting at %s\n",
+	aprint_verbose_dev(sc->sc_dev, "%d Hz clock interrupting at %s\n",
 	    hz, irq_string(sc->sc_clkirq));
 	
 	if (stathz) {
@@ -359,10 +359,10 @@ cpu_initclocks(void)
 		ioc_counter_start(the_ioc, 1, statint);
 
 		evcnt_attach_dynamic(&sc->sc_sclkev, EVCNT_TYPE_INTR, NULL,
-		    device_xname(&sc->sc_dev), "statclock");
+		    device_xname(sc->sc_dev), "statclock");
 		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_HIGH,
 		    ioc_irq_statclock, NULL, &sc->sc_sclkev);
-		aprint_verbose_dev(&sc->sc_dev,
+		aprint_verbose_dev(sc->sc_dev,
 		    "%d Hz statclock interrupting at %s\n",
 		    stathz, irq_string(sc->sc_sclkirq));
 	}
