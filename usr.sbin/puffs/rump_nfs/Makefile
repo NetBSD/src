@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/12/30 22:20:56 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2009/01/18 20:42:11 he Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ SRCS+=		getnfsargs.c
 # second one runs the real NetBSD kernel networking stack in userspace
 # and uses /dev/tap to access the network.
 #
-.ifdef(RUMPKMOD)
+.ifdef RUMPKMOD
 LDADD+= 	-lrumpnet -lrumpnet_sockin
 .else
 LDADD+= 	-lrumpfs_nfs -lrumpnet -lrumpnet_sockin
