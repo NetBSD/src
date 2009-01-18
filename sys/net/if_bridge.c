@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.63 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.64 2009/01/18 10:28:55 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.63 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.64 2009/01/18 10:28:55 mrg Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1449,15 +1449,15 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
-		/* Tap off 802.1D packets; they do not get forwarded. */
-		if (memcmp(eh->ether_dhost, bstp_etheraddr,
-		    ETHER_ADDR_LEN) == 0) {
-			m = bstp_input(ifp, m);
-			if (m == NULL)
-				return (NULL);
-		}
-
 		if (bif->bif_flags & IFBIF_STP) {
+			/* Tap off 802.1D packets; they do not get forwarded. */
+			if (memcmp(eh->ether_dhost, bstp_etheraddr,
+			    ETHER_ADDR_LEN) == 0) {
+				m = bstp_input(sc, bif, m);
+				if (m == NULL)
+					return (NULL);
+			}
+
 			switch (bif->bif_state) {
 			case BSTP_IFSTATE_BLOCKING:
 			case BSTP_IFSTATE_LISTENING:
