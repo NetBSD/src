@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.67 2008/12/28 19:35:12 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.68 2009/01/18 12:09:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.67 2008/12/28 19:35:12 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.68 2009/01/18 12:09:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,7 +314,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 
 		if (snprintf(path, sizeof(path), "%s%s%s",
 		    dir, *dir ? "/" : "", cur->name)
-		    >= sizeof(path))
+		    >= (int)sizeof(path))
 			mtree_err("Pathname too long.");
 
 		if (!pathlast)

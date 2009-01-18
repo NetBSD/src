@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.3 2009/01/14 21:33:22 pooka Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.4 2009/01/18 12:05:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.3 2009/01/14 21:33:22 pooka Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.4 2009/01/18 12:05:49 lukem Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.3 2009/01/14 21:33:22 pooka Exp $");
 #  include <errno.h>
 # else
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.3 2009/01/14 21:33:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.4 2009/01/18 12:05:49 lukem Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -93,7 +93,7 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 	if (len < 0)
 		goto internal;
 
-	if (len < buflen)
+	if ((size_t)len < buflen)
 		bp += len;
 	else
 		bp += buflen - 1;
@@ -105,7 +105,7 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 	if ((val == 0) && (ch != '\177'))
 		goto terminate;
 
-#define PUTC(c) if (++len < buflen) *bp++ = (c)
+#define PUTC(c) if ((size_t)(++len) < buflen) *bp++ = (c)
 #define PUTS(s) while ((ch = *(s)++) != 0) PUTC(ch)
 
 	/*
@@ -152,7 +152,7 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 				if (flen < 0)
 					goto internal;
 				len += flen;
-				if (len < buflen)
+				if ((size_t)len < buflen)
 					bp += flen;
 				break;
 			case '=':
