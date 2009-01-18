@@ -1,10 +1,10 @@
-/* $NetBSD: stubs.c,v 1.7 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: stubs.c,v 1.8 2009/01/18 16:42:09 bjh21 Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.7 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.8 2009/01/18 16:42:09 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -22,28 +22,11 @@ suibyte(base, c)
 }
 
 int
-susword(base, c)
-	void *base;
-	short c;
-{
-	panic("susword not implemented");
-}
-
-int
 suisword(base, c)
 	void *base;
 	short c;
 {
 	panic("suisword not implemented");
-}
-
-int
-suswintr(base, c)
-	void *base;
-	short c;
-{
-
-	return -1;
 }
 
 int
@@ -62,25 +45,10 @@ fuibyte(base)
 }
 
 int
-fusword(base)
-	const void *base;
-{
-	panic("fusword not implemented");
-}
-
-int
 fuisword(base)
 	const void *base;
 {
 	panic("fuisword not implemented");
-}
-
-int
-fuswintr(base)
-	const void *base;
-{
-
-	return -1;
 }
 
 long
