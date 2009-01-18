@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.3 2009/01/02 00:32:11 tnozaki Exp $ */
+/*	$NetBSD: regcomp.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -895,7 +895,7 @@ p_b_coll_elem(register struct parse *p, int endc)
 {
 	register RCHAR_T *sp = p->next;
 	register struct cname *cp;
-	register int len;
+	register size_t len;
 
 	while (MORE() && !SEETWO(endc, ']'))
 		NEXT();
@@ -1148,7 +1148,7 @@ allocset(register struct parse *p)
 static void
 freeset(register struct parse *p, register cset *cs)
 {
-	register int i;
+	register size_t i;
 	register cset *top = &p->g->sets[p->g->ncsets];
 	register size_t css = (size_t)p->g->csetsize;
 
@@ -1172,7 +1172,7 @@ static int			/* set number */
 freezeset(register struct parse *p, register cset *cs)
 {
 	register uch h = cs->hash;
-	register int i;
+	register size_t i;
 	register cset *top = &p->g->sets[p->g->ncsets];
 	register cset *cs2;
 	register size_t css = (size_t)p->g->csetsize;
@@ -1203,7 +1203,7 @@ freezeset(register struct parse *p, register cset *cs)
 static int			/* character; there is no "none" value */
 firstch(register struct parse *p, register cset *cs)
 {
-	register int i;
+	register size_t i;
 	register size_t css = (size_t)p->g->csetsize;
 
 	for (i = 0; i < css; i++)
@@ -1220,7 +1220,7 @@ firstch(register struct parse *p, register cset *cs)
 static int
 nch(register struct parse *p, register cset *cs)
 {
-	register int i;
+	register size_t i;
 	register size_t css = (size_t)p->g->csetsize;
 	register int n = 0;
 

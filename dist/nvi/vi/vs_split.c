@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_split.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: vs_split.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -98,7 +98,7 @@ vs_split(SCR *sp, SCR *new, int ccl)
 	 * in half and update the shared information.
 	 */
 	splitup =
-	    !ccl && (vs_sm_cursor(sp, &smp) ? 0 : (smp - HMAP) + 1) >= half;
+	    !ccl && (vs_sm_cursor(sp, &smp) ? 0 : (size_t)(smp - HMAP) + 1) >= half;
 	if (splitup) {				/* Old is bottom half. */
 		new->rows = sp->rows - half;	/* New. */
 		new->roff = sp->roff;
@@ -827,9 +827,9 @@ vs_resize(SCR *sp, long int count, adj_t adj)
 	if (count == 0)
 		return (0);
 	if (adj == A_SET) {
-		if (sp->t_maxrows == count)
+		if (sp->t_maxrows == (size_t)count)
 			return (0);
-		if (sp->t_maxrows > count) {
+		if (sp->t_maxrows > (size_t)count) {
 			adj = A_DECREASE;
 			count = sp->t_maxrows - count;
 		} else {
@@ -862,7 +862,7 @@ vs_resize(SCR *sp, long int count, adj_t adj)
 		if (count < 0)
 			count = -count;
 		s = sp;
-		if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count)
+		if (s->t_maxrows < MINIMUM_SCREEN_ROWS + (size_t)count)
 			goto toosmall;
 		if ((g = prev) == (void *)&wp->scrq) {
 			if ((g = next) == (void *)&wp->scrq)
@@ -873,7 +873,7 @@ vs_resize(SCR *sp, long int count, adj_t adj)
 	} else {
 		g = sp;
 		if ((s = next) != (void *)&wp->scrq &&
-		    s->t_maxrows >= MINIMUM_SCREEN_ROWS + count)
+		    s->t_maxrows >= MINIMUM_SCREEN_ROWS + (size_t)count)
 				s_off = count;
 		else
 			s = NULL;
@@ -884,7 +884,7 @@ toobig:				msgq(sp, M_BERR, adj == A_DECREASE ?
 				    "228|The screen cannot grow");
 				return (1);
 			}
-			if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count) {
+			if (s->t_maxrows < MINIMUM_SCREEN_ROWS + (size_t)count) {
 toosmall:			msgq(sp, M_BERR,
 				    "226|The screen can only shrink to %d rows",
 				    MINIMUM_SCREEN_ROWS);
