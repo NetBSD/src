@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.50 2009/01/17 13:29:37 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.51 2009/01/18 12:50:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.50 2009/01/17 13:29:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.51 2009/01/18 12:50:15 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.50 2009/01/17 13:29:37 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.51 2009/01/18 12:50:15 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -228,6 +228,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
     char	  *cp;
     int	    	  argLen;
     Buffer	  buf;
+    const char    *terminators = ") \t&|";
 
     cp = *linePtr;
     if (parens) {
@@ -237,7 +238,8 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 	if (*cp == '(') {
 	    cp++;
 	}
-    }
+    } else
+	terminators++;
 
     if (*cp == '\0') {
 	/*
@@ -260,7 +262,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
      */
     Buf_Init(&buf, 16);
 
-    while ((strchr(" \t)&|", *cp) == NULL) && (*cp != '\0')) {
+    while ((strchr(terminators, *cp) == NULL) && (*cp != '\0')) {
 	if (*cp == '$') {
 	    /*
 	     * Parse the variable spec and install it as part of the argument
@@ -1170,27 +1172,24 @@ Cond_EvalExpression(int dosetup, char *line, Boolean *value, int eprint)
     case True:
 	if (CondToken(TRUE) == EndOfFile) {
 	    *value = TRUE;
-	    break;
+	    return COND_PARSE;
 	}
-	goto err;
-	/*FALLTHRU*/
+	break;
     case False:
 	if (CondToken(TRUE) == EndOfFile) {
 	    *value = FALSE;
-	    break;
+	    return COND_PARSE;
 	}
-	/*FALLTHRU*/
-    case Err:
-err:
-	if (eprint)
-	    Parse_Error(PARSE_FATAL, "Malformed conditional (%s)",
-			 line);
-	return (COND_INVALID);
-    default:
 	break;
+    case Err:
+	break;
+    default:
+	return COND_PARSE;
     }
 
-    return COND_PARSE;
+    if (eprint)
+	Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", line);
+    return COND_INVALID;
 }
 
 
