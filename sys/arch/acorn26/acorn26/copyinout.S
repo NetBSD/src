@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.9 2009/01/18 01:19:32 bjh21 Exp $ */
+/* $NetBSD: copyinout.S,v 1.10 2009/01/18 01:31:58 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,21 +32,23 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.9 2009/01/18 01:19:32 bjh21 Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.10 2009/01/18 01:31:58 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
+
+#include <arm/cpu.h>
 
 /* LINTSTUB: Func: int fubyte(void *base) */
 ENTRY(fubyte)
 	mov	ip, lr			/* data-abort safety */
 	adr	r1, Lfusufault
 	GET_CURPCB(r2)
-	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r1, [r2, #PCB_ONFAULT]
 	ldrbt	r1, [r0]
 	mov	r0, r1
 	mov	r1, #0
-	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r1, [r2, #PCB_ONFAULT]
 	mov	pc, ip
 
 /* LINTSTUB: Func: int fuword(void *base) */
@@ -54,11 +56,11 @@ ENTRY(fuword)
 	mov	ip, lr
 	adr	r1, Lfusufault
 	GET_CURPCB(r2)
-	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r1, [r2, #PCB_ONFAULT]
 	ldrt	r1, [r0]
 	mov	r0, r1
 	mov	r1, #0
-	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r1, [r2, #PCB_ONFAULT]
 	mov	pc, ip
 
 /* LINTSTUB: Func: int subyte(void *base, int c) */
@@ -66,10 +68,10 @@ ENTRY(subyte)
 	mov	ip, lr
 	adr	r3, Lfusufault
 	GET_CURPCB(r2)
-	str	r3, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r3, [r2, #PCB_ONFAULT]
 	strbt	r1, [r0]
 	mov	r0, #0
-	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r0, [r2, #PCB_ONFAULT]
 	mov	pc, ip
 
 /* LINTSTUB: Func: int suword(void *base, long c) */
@@ -77,14 +79,14 @@ ENTRY(suword)
 	mov	ip, lr
 	adr	r3, Lfusufault
 	GET_CURPCB(r2)
-	str	r3, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r3, [r2, #PCB_ONFAULT]
 	strt	r1, [r0]
 	mov	r0, #0
-	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r0, [r2, #PCB_ONFAULT]
 	mov	pc, ip
 
 Lfusufault:
 	mov	r0, #0
-	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
+	str	r0, [r2, #PCB_ONFAULT]
 	mvn	r0, #0
 	mov	pc, ip
