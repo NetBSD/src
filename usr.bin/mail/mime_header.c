@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_header.c,v 1.6 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_header.c,v 1.7 2009/01/18 01:29:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_header.c,v 1.6 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: mime_header.c,v 1.7 2009/01/18 01:29:57 lukem Exp $");
 #endif /* not __lint__ */
 
 #include <stdio.h>
@@ -182,7 +182,8 @@ decode_word(const char **ibuf, char **obuf, char *oend, const char *to_cs)
 		return -1;
 
 	dstend = to_cs ? decword : *obuf;
-	dstlen = (to_cs ? sizeof(decword): oend - *obuf) - 1;
+/* XXX: what if oend <= *obuf, or decword == "" ? */
+	dstlen = (to_cs ? sizeof(decword) : (size_t)(oend - *obuf)) - 1;
 
 	if (enctype == 'B' || enctype == 'b')
 		declen = mime_B64_decode(dstend, dstlen, encword, enclen);
