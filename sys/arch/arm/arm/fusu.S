@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.15 2009/01/18 01:19:33 bjh21 Exp $	*/
+/*	$NetBSD: fusu.S,v 1.1 2009/01/18 15:43:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.

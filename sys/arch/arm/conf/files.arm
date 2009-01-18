@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.94 2008/11/19 18:35:58 ad Exp $
+#	$NetBSD: files.arm,v 1.95 2009/01/18 15:43:20 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -152,7 +152,7 @@ file	arch/arm/arm32/cpu.c			arm32 & cpu
 file	arch/arm/arm32/cpuswitch.S		arm32
 file	arch/arm/arm32/exception.S		arm32
 file	arch/arm/arm32/fault.c			arm32
-file	arch/arm/arm32/fusu.S			arm32
+file	arch/arm/arm/fusu.S			arm32
 file	arch/arm/arm32/kobj_machdep.c		arm32 & modular
 file	arch/arm/arm32/mem.c			arm32
 file	arch/arm/arm32/pmap.c			arm32
