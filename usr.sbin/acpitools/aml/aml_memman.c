@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_memman.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
+/*	$NetBSD: aml_memman.c,v 1.3 2009/01/18 09:46:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_memman.c,v 1.2 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_memman.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
+__RCSID("$NetBSD: aml_memman.c,v 1.3 2009/01/18 09:46:59 lukem Exp $");
 
 /*
  * Generic Memory Management
@@ -186,7 +186,7 @@ static void
 memman_flexsize_add_histogram(struct memman *memman, size_t size,
     int tolerance)
 {
-	int	i;
+	unsigned int i;
 	int	gap;
 
 	if (size == 0) {
@@ -384,7 +384,7 @@ memman_free_flexsize(struct memman *memman, void *chunk)
 void
 memman_freeall(struct memman *memman)
 {
-	int	id;
+	unsigned int id;
 	void	*chunk;
 	struct	memman_blockman *bmp;
 	struct	memman_node *memnode;
@@ -396,7 +396,7 @@ memman_freeall(struct memman *memman)
 
 		while ((memnode = LIST_FIRST(&bmp->occupied_node_list))) {
 			chunk = memnode->node;
-			printf("memman_freeall: fixed size (id = %d)\n", id);
+			printf("memman_freeall: fixed size (id = %u)\n", id);
 			memman_free(memman, id, chunk);
 		}
 		while ((memblock = LIST_FIRST(&bmp->block_list))) {
@@ -433,7 +433,7 @@ memman_statistics_fixedsize(struct memman *memman)
 static void
 memman_statistics_flexsize(struct memman *memman)
 {
-	int	i;
+	unsigned int	i;
 
 	printf("  flexible size memory blocks\n");
 	printf("    alloc():		%d times\n", memman->flex_alloc_called);
@@ -455,7 +455,7 @@ memman_statistics_flexsize(struct memman *memman)
 	printf("	size	count\n");
 	memman_sort_histogram_by_size(memman);
 	for (i = 0; i < memman->flex_mem_histogram_ptr; i++) {
-		printf("	%d	%d\n",
+		printf("	%zu	%d\n",
 		    memman->flex_mem_histogram[i].mem_size,
 		    memman->flex_mem_histogram[i].count);
 	}
