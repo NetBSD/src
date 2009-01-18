@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.16 2009/01/18 18:39:38 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.17 2009/01/18 18:45:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.16 2009/01/18 18:39:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.17 2009/01/18 18:45:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,7 @@ u_int	sid_counter;
 
 /* Prototypes. */
 struct vm_page *pmap_pagealloc(struct uvm_object *, voff_t);
+void pmap_pagefree(struct vm_page *);
 
 static inline void pmap_sdir_set(pa_space_t, volatile uint32_t *);
 static inline uint32_t *pmap_sdir_get(pa_space_t);
@@ -246,6 +247,13 @@ pmap_pagealloc(struct uvm_object *obj, voff_t off)
 		printf("pmap_pagealloc fail\n");
 
 	return (pg);
+}
+
+void
+pmap_pagefree(struct vm_page *pg)
+{
+	fdcache(HPPA_SID_KERNEL, VM_MAP_TO_PHYS(pg), PAGE_SIZE);
+	uvm_pagefree(pg);
 }
 
 #ifdef USE_HPT
@@ -378,7 +386,7 @@ pmap_pde_release(pmap_t pmap, vaddr_t va, struct vm_page *ptp)
 		if (ptp->flags & PG_BUSY)
 			panic("pmap_pde_release: busy page table page");
 #endif
-		uvm_pagefree(ptp);
+		pmap_pagefree(ptp);
 	}
 }
 
@@ -1124,7 +1132,7 @@ pmap_destroy(pmap_t pmap)
 #endif
 	pmap_sdir_set(pmap->pm_space, 0);
 	mutex_enter(&pmap->pm_lock);
-	uvm_pagefree(pmap->pm_pdir_pg);
+	pmap_pagefree(pmap->pm_pdir_pg);
 	mutex_exit(&pmap->pm_lock);
 	pmap->pm_pdir_pg = NULL;
 	pool_put(&pmap_pool, pmap);
