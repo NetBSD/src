@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.19 2009/01/18 01:30:44 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.20 2009/01/18 15:14:34 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -175,6 +175,7 @@ pull_trapframe:
 	bl	_C_LABEL(ast)	/* Handle AST */
 	b	1b			/* Try again */
 
+#ifndef DIAGNOSTIC
 2:
 	ldr	lr, [sp, #TF_R15]	/* Pull return address */
 3:					/* ... which we may have done above */
@@ -183,6 +184,36 @@ pull_trapframe:
 	USR_LDM_NOP
 	add	sp, sp, #(TF_SIZE-TF_R0)	/* Adjust SP */
 	movs	pc, lr			
+#else /* DIAGNOSTIC */
+	/*
+	 * Taking a trap inherently corrupts R14_svc.  Rather than leaving
+	 * it with the return address in, we put in a sentinel value that'll
+	 * panic if it's treated as a return address.  To do this, we have
+	 * to return via IRQ mode.
+	 */
+2:
+3:
+	adr	lr, r14_svc_corrupted	/* Sentinel in R14_svc */
+	mov	r0, sp			/* Save for mode switch */
+	add	sp, sp, #TF_SIZE	/* Restore stack pointer */
+	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_IRQ)
+	add	r0, r0, #TF_R0
+	ldr	lr, [r0, #(TF_R15-TF_R0)] /* Fetch return address (R14_irq) */
+	ldmia	r0, {TRAP_REGS}^	/* Restore USR mode registers */
+	USR_LDM_NOP
+	movs	pc, lr			/* And return */
+
+r14_svc_corrupted:
+ 	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	adr	r0, .Lr14_panicmsg
+	bl	_C_LABEL(panic)
+	/* NOTREACHED */
+.Lr14_panicmsg:
+	.asciz	"R14_svc corrupted by trap handler"
+	.balign	4
+#endif
 
 	.global	reset_entry
 reset_entry:
@@ -421,4 +452,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.19 2009/01/18 01:30:44 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.20 2009/01/18 15:14:34 bjh21 Exp $")
