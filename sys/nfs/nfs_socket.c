@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.175 2008/11/23 08:22:07 mrg Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.176 2009/01/18 09:45:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.175 2008/11/23 08:22:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.176 2009/01/18 09:45:05 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -1673,6 +1673,8 @@ nfs_timer(void *arg)
 				timeo = NFS_RTO(nmp, proct[rep->r_procnum]);
 			if (nmp->nm_timeouts > 0)
 				timeo *= nfs_backoff[nmp->nm_timeouts - 1];
+			if (timeo > NFS_MAXTIMEO)
+				timeo = NFS_MAXTIMEO;
 			if (rep->r_rtt <= timeo)
 				continue;
 			if (nmp->nm_timeouts <
