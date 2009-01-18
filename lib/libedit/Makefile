@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.36 2007/05/28 12:06:18 tls Exp $
+#	$NetBSD: Makefile,v 1.37 2009/01/18 12:17:49 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
 
-WARNS=	3
+WARNS=	4
 LIB=	edit
 
 LIBDPLIBS+=     termcap ${.CURDIR}/../libterm
