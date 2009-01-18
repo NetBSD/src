@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.17 2009/01/18 18:45:16 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.18 2009/01/18 18:46:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.17 2009/01/18 18:45:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.18 2009/01/18 18:46:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ pmap_pagealloc(struct uvm_object *obj, voff_t off)
 void
 pmap_pagefree(struct vm_page *pg)
 {
-	fdcache(HPPA_SID_KERNEL, VM_MAP_TO_PHYS(pg), PAGE_SIZE);
+	fdcache(HPPA_SID_KERNEL, VM_PAGE_TO_PHYS(pg), PAGE_SIZE);
 	uvm_pagefree(pg);
 }
 
