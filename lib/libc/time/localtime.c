@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.42 2009/01/11 02:46:30 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.43 2009/01/18 10:57:15 drochner Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.42 2009/01/11 02:46:30 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.43 2009/01/18 10:57:15 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1482,6 +1482,14 @@ const int		do_norm_secs;
 	** (this works whether time_t is signed or unsigned).
 	*/
 	bits = TYPE_BIT(time_t) - 1;
+	/*
+	 * "tm_year" in "struct tm" is a signed 32-bit integer. It will
+	 * overflow if a time_t > 2^31*60*60*24*365 is converted,
+	 * causing tmcomp() to give wrong results and thus the
+	 * binary search below to fail.
+	 */
+	if (bits > 55)
+		bits = 55; /* could be 56 for signed time_t */
 	/*
 	** If time_t is signed, then 0 is just above the median,
 	** assuming two's complement arithmetic.
