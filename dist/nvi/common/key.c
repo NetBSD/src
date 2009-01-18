@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.4 2009/01/02 00:32:11 tnozaki Exp $ */
+/*	$NetBSD: key.c,v 1.5 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -146,7 +146,7 @@ v_key_init(SCR *sp)
 	}
 
 	/* Find a non-printable character to use as a message separator. */
-	for (ch = 1; ch <= MAX_CHAR_T; ++ch)
+	for (ch = 1; (unsigned)ch <= MAX_CHAR_T; ++ch)
 		if (!ISPRINT(ch)) {
 			gp->noprint = ch;
 			break;

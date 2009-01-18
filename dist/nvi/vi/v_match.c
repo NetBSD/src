@@ -1,4 +1,4 @@
-/*	$NetBSD: v_match.c,v 1.3 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: v_match.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,7 +44,8 @@ v_match(SCR *sp, VICMD *vp)
 	char *cp;
 	const char *match_chars;
 
-	static int match_lno, match_col, match_dir;
+	static MARK match = { 0, 0 };
+	static int match_dir;
 
 	/*
 	 * Historically vi would match (), {} and [] however
@@ -84,7 +85,7 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 	/* Alternate back-forward search if startc and matchc the same */
 	if (startc == matchc) {
 		/* are we continuing from where last match finished? */
-		if (match_lno == vp->m_start.lno && match_col ==vp->m_start.cno)
+		if (match.lno == vp->m_start.lno && match.cno ==vp->m_start.cno)
 			/* yes - continue in sequence */
 			match_dir++;
 		else
@@ -137,8 +138,8 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 	else
 		vp->m_final = vp->m_stop;
 
-	match_lno = vp->m_final.lno;
-	match_col = vp->m_final.cno;
+	match.lno = vp->m_final.lno;
+	match.cno = vp->m_final.cno;
 
 	/*
 	 * !!!
