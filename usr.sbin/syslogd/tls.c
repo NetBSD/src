@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.3 2008/11/07 07:36:38 minskim Exp $	*/
+/*	$NetBSD: tls.c,v 1.4 2009/01/18 10:35:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.3 2008/11/07 07:36:38 minskim Exp $");
+__RCSID("$NetBSD: tls.c,v 1.4 2009/01/18 10:35:26 lukem Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -1780,7 +1780,7 @@ dispatch_tls_send(int fd, short event, void *arg)
 		}
 		RESTORE_SIGNALS(omask);
 		return;
-	} else if (rc < smsg->linelen) {
+	} else if ((size_t)rc < smsg->linelen) {
 		DPRINTF((D_TLS|D_DATA), "TLS: SSL_write() wrote %d out of %zu "
 		    "bytes\n", rc, (smsg->linelen - smsg->offset));
 		smsg->offset += rc;
@@ -1789,7 +1789,7 @@ dispatch_tls_send(int fd, short event, void *arg)
 			EVENT_ADD(conn_info->event);
 		dispatch_tls_send(0, 0, smsg);
 		return;
-	} else if (rc == (smsg->linelen - smsg->offset)) {
+	} else if ((size_t)rc == (smsg->linelen - smsg->offset)) {
 		DPRINTF((D_TLS|D_DATA), "TLS: SSL_write() complete\n");
 		ST_CHANGE(conn_info->state, ST_TLS_EST);
 		free_tls_send_msg(smsg);
