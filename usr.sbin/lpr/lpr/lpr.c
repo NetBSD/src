@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.41 2008/12/28 21:45:49 christos Exp $	*/
+/*	$NetBSD: lpr.c,v 1.42 2009/01/18 09:57:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.41 2008/12/28 21:45:49 christos Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.42 2009/01/18 09:57:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -429,7 +429,8 @@ main(int argc, char *argv[])
 static void
 copy(int f, const char *n)
 {
-	int fd, i, nr, nc;
+	int fd, i, nr;
+	size_t nc;
 	char buf[BUFSIZ];
 
 	if (format == 'p')
