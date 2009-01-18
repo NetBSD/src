@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.14 2006/03/19 21:55:37 christos Exp $ */
+/*	$NetBSD: pidlock.c,v 1.15 2009/01/18 12:13:04 lukem Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.14 2006/03/19 21:55:37 christos Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.15 2009/01/18 12:13:04 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 	 * XXX This is not thread safe.
 	 */
 	if (snprintf(tempfile, sizeof(tempfile), "%s.%d.%s", lockfile,
-	    (int) getpid(), hostname) >= sizeof(tempfile))  {
+	    (int) getpid(), hostname) >= (int)sizeof(tempfile))  {
 		errno = ENAMETOOLONG;
 		return -1;
 	}
@@ -88,7 +88,7 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 
 	if ((flags & PIDLOCK_USEHOSTNAME))  {		/* hostname */
 		len = strlen(hostname);
-		if (write(f, hostname, len) != len
+		if ((size_t)write(f, hostname, len) != len
 		    || write(f, "\n", (size_t)1) != 1)
 			goto out;
 	}
@@ -99,7 +99,7 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 				goto out;
 		}
 		len = strlen(info);
-		if (write(f, info, len) != len ||
+		if ((size_t)write(f, info, len) != len ||
 		    write(f, "\n", (size_t)1) != 1)
 			goto out;
 	}

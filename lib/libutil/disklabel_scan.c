@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel_scan.c,v 1.2 2008/04/28 20:23:02 martin Exp $ */
+/* $NetBSD: disklabel_scan.c,v 1.3 2009/01/18 12:13:03 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: disklabel_scan.c,v 1.2 2008/04/28 20:23:02 martin Exp $");
+__RCSID("$NetBSD: disklabel_scan.c,v 1.3 2009/01/18 12:13:03 lukem Exp $");
 #endif
 
 #include <string.h>
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: disklabel_scan.c,v 1.2 2008/04/28 20:23:02 martin Exp $");
 int
 disklabel_scan(struct disklabel *lp, char *buf, size_t buflen)
 {
-	int	i;
+	size_t	i;
 
 	/* scan for the correct magic numbers. */
 

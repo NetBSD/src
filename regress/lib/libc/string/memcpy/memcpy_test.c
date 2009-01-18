@@ -46,7 +46,8 @@ main(int ac, char **av)
 
 void runTest(unsigned char *b1, unsigned char *b2)
 {
-	int	i, j, k, m, n;
+	int	i, j, k, m;
+	size_t	n;
 
 	for (i = 0; i < ALIGNMENTS; ++i) {
 		for (j = 0; j < ALIGNMENTS; ++j) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.29 2006/10/16 00:11:57 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.30 2009/01/18 12:09:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.29 2006/10/16 00:11:57 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.30 2009/01/18 12:09:38 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,7 +116,7 @@ parsekey(const char *name, int *needvaluep)
 	KEY *k, tmp;
 
 	if (allbits == 0) {
-		int i;
+		size_t i;
 
 		for (i = 0; i < sizeof(keylist) / sizeof(KEY); i++)
 			allbits |= keylist[i].val;

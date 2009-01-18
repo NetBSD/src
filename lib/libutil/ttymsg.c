@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.22 2005/08/27 17:16:06 elad Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.23 2009/01/18 12:13:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.22 2005/08/27 17:16:06 elad Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.23 2009/01/18 12:13:04 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,7 +76,13 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 	_DIAGASSERT(iovcnt >= 0);
 	_DIAGASSERT(line != NULL);
 
-	if (iovcnt >= sizeof(localiov) / sizeof(localiov[0])) {
+	if (iovcnt < 0) {
+		(void)snprintf(errbuf, sizeof(errbuf),
+		    "%s: negative iovcnt", __func__);
+		return errbuf;
+	}
+
+	if ((size_t)iovcnt >= sizeof(localiov) / sizeof(localiov[0])) {
 		(void)snprintf(errbuf, sizeof(errbuf),
 		    "%s: too many iov's (%d) max is %zu", __func__,
 		    iovcnt, sizeof(localiov) / sizeof(localiov[0]));
@@ -117,7 +123,7 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 		return errbuf;
 	}
 
-	for (cnt = left = 0; cnt < iovcnt; ++cnt)
+	for (cnt = left = 0; cnt < (size_t)iovcnt; ++cnt)
 		left += iov[cnt].iov_len;
 
 	for (;;) {

@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.13 2007/01/09 14:04:44 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.14 2009/01/18 12:13:04 lukem Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -181,8 +181,8 @@ pw_policy_handle_len(HANDLER_ARGS __unused)
 	case TEST_POLICY:
 		len = strlen(pw);
 
-		if ((policy->minlen > 0 && len < policy->minlen) ||
-		    (policy->maxlen > 0 && len > policy->maxlen))
+		if ((policy->minlen > 0 && (int32_t)len < policy->minlen) ||
+		    (policy->maxlen > 0 && (int32_t)len > policy->maxlen))
 			return EPERM;
 		return 0;
 	default:
