@@ -1,4 +1,4 @@
-/* $NetBSD: _wctype.c,v 1.4 2009/01/18 19:53:11 christos Exp $ */
+/* $NetBSD: _wctype.c,v 1.5 2009/01/18 22:03:19 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctype.c,v 1.4 2009/01/18 19:53:11 christos Exp $");
+__RCSID("$NetBSD: _wctype.c,v 1.5 2009/01/18 22:03:19 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -113,6 +113,7 @@ _iswctype_priv(_RuneLocale const *rl,
 }
 
 wint_t
+/*ARGSUSED*/
 _towctrans_priv(_RuneLocale const *rl,
     wint_t wc, _WCTransEntry const *te)
 {
@@ -126,8 +127,7 @@ _towctrans_priv(_RuneLocale const *rl,
 
 	if (wc == WEOF)
 		return wc;
-	if (te->te_name == NULL)
-		_wctrans_init(__UNCONST(rl));
+	_DIAGASSERT(te->te_name != NULL);
 	if (_RUNE_ISCACHED(wc))
 		return te->te_cached[(size_t)wc];
 	wc0 = (__nbrune_t)wc;
