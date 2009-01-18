@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.253 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.254 2009/01/18 16:37:19 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,9 +139,10 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.253 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.254 2009/01/18 16:37:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
 #include "opt_raid_autoconfig.h"
 #include "raid.h"
 #endif
@@ -184,6 +185,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.253 2009/01/13 13:35:53 yamt Ex
 #include "rf_driver.h"
 #include "rf_parityscan.h"
 #include "rf_threadstuff.h"
+
+#ifdef COMPAT_50
+#include "rf_compat50.h"
+#endif
 
 #ifdef DEBUG
 int     rf_kdebug_level = 0;
@@ -1080,7 +1085,15 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	switch (cmd) {
+#ifdef COMPAT_50
+	case RAIDFRAME_GET_INFO50:
+		return rf_get_info50(raidPtr, data);
 
+	case RAIDFRAME_CONFIGURE50:
+		if ((retcode = rf_config50(raidPtr, unit, data, &k_cfg)) != 0)
+			return retcode;
+		goto config;
+#endif
 		/* configure the system */
 	case RAIDFRAME_CONFIGURE:
 
@@ -1105,6 +1118,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				retcode));
 			return (retcode);
 		}
+		goto config;
+	config:
 		/* allocate a buffer for the layout-specific data, and copy it
 		 * in */
 		if (k_cfg->layoutSpecificSize) {
