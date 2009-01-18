@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.28 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.29 2009/01/18 10:00:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.28 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.29 2009/01/18 10:00:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,9 @@ bmtphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
+
+		if (mii->mii_media_active & IFM_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
