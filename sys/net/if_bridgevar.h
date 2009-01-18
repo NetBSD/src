@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.12 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.13 2009/01/18 10:28:55 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -313,7 +313,7 @@ struct mbuf *bridge_input(struct ifnet *, struct mbuf *);
 
 void	bstp_initialization(struct bridge_softc *);
 void	bstp_stop(struct bridge_softc *);
-struct mbuf *bstp_input(struct ifnet *, struct mbuf *);
+struct mbuf *bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
 
 void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
