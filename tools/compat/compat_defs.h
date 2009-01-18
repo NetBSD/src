@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.69 2009/01/18 21:09:47 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.70 2009/01/18 21:59:19 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -513,7 +513,7 @@ void *setmode(const char *);
 
 /* <inttypes.h> */
 
-#if USHRT_MAX == 65535			/* short is a 16-bit type */
+#if USHRT_MAX == 0xffffU		/* short is a 16-bit type */
 #ifndef PRId16
 #define PRId16 "hd"
 #endif
@@ -538,7 +538,7 @@ void *setmode(const char *);
 #error "Don't know how to define PRI[diouxX]16"
 #endif
 
-#if UINT_MAX == 4294967295		/* int is a 32-bit type */
+#if UINT_MAX == 0xffffffffU		/* int is a 32-bit type */
 #ifndef PRId32
 #define PRId32 "d"
 #endif
@@ -558,7 +558,7 @@ void *setmode(const char *);
 #define PRIX32 "X"
 #endif
 #endif					/* int is a 32-bit type */
-#if ULONG_MAX == 4294967295		/* long is a 32-bit type */
+#if ULONG_MAX == 0xffffffffU		/* long is a 32-bit type */
 #ifndef PRId32
 #define PRId32 "ld"
 #endif
@@ -583,7 +583,7 @@ void *setmode(const char *);
 #error "Don't know how to define PRI[diouxX]32"
 #endif
 
-#if ULONG_MAX == 18446744073709551615	/* long is a 64-bit type */
+#if ULONG_MAX == 0xffffffffffffffffU	/* long is a 64-bit type */
 #ifndef PRId64
 #define PRId64 "ld"
 #endif
@@ -603,7 +603,7 @@ void *setmode(const char *);
 #define PRIX64 "lX"
 #endif
 #endif					/* long is a 64-bit type */
-#if ULLONG_MAX == 18446744073709551615	/* long long is a 64-bit type */
+#if ULLONG_MAX == 0xffffffffffffffffU	/* long long is a 64-bit type */
 #ifndef PRId64
 #define PRId64 "lld"
 #endif
