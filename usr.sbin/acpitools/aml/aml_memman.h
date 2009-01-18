@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_memman.h,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_memman.h,v 1.2 2009/01/18 09:46:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -79,7 +79,7 @@ struct	memman_blockman {
 /* memory size histogram */
 #define MEMMAN_HISTOGRAM_SIZE	20
 struct	memman_histogram {
-	int	mem_size;
+	size_t	mem_size;
 	int	count;
 };
 

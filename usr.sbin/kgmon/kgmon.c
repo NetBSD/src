@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.23 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.24 2009/01/18 09:50:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.23 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.24 2009/01/18 09:50:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,7 +280,7 @@ setprof(struct kvmvars *kvp, int state)
 			return;
 		}
 		(void)seteuid(getuid());
-	} else if (kvm_write(kvp->kd, (u_long)&p->state, (void *)&state, sz) 
+	} else if ((size_t)kvm_write(kvp->kd, (u_long)&p->state, (void *)&state, sz) 
 	    == sz)
 		return;
 bad:
@@ -462,15 +462,15 @@ reset(struct kvmvars *kvp)
 		err(EXIT_FAILURE, "cannot allocate zbuf space");
 	(void)memset(zbuf, 0, biggest);
 	if (kflag) {
-		if (kvm_write(kvp->kd, (u_long)kvp->gpm.kcount, zbuf,
+		if ((size_t)kvm_write(kvp->kd, (u_long)kvp->gpm.kcount, zbuf,
 		    (size_t)kvp->gpm.kcountsize) != kvp->gpm.kcountsize)
 			errx(EXIT_FAILURE, "tickbuf zero: %s",
 			     kvm_geterr(kvp->kd));
-		if (kvm_write(kvp->kd, (u_long)kvp->gpm.froms, zbuf,
+		if ((size_t)kvm_write(kvp->kd, (u_long)kvp->gpm.froms, zbuf,
 		    (size_t)kvp->gpm.fromssize) != kvp->gpm.fromssize)
 			errx(EXIT_FAILURE, "froms zero: %s",
 			     kvm_geterr(kvp->kd));
-		if (kvm_write(kvp->kd, (u_long)kvp->gpm.tos, zbuf,
+		if ((size_t)kvm_write(kvp->kd, (u_long)kvp->gpm.tos, zbuf,
 		    (size_t)kvp->gpm.tossize) != kvp->gpm.tossize)
 			errx(EXIT_FAILURE, "tos zero: %s", kvm_geterr(kvp->kd));
 		free(zbuf);

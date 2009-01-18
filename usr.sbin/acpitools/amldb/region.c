@@ -1,4 +1,4 @@
-/*	$NetBSD: region.c,v 1.2 2008/08/29 00:50:01 gmcgarry Exp $	*/
+/*	$NetBSD: region.c,v 1.3 2009/01/18 09:46:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/region.c,v 1.4 2000/11/19 13:29:43 kris Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: region.c,v 1.2 2008/08/29 00:50:01 gmcgarry Exp $");
+__RCSID("$NetBSD: region.c,v 1.3 2009/01/18 09:46:59 lukem Exp $");
 
 /*
  * Region I/O subroutine
@@ -209,9 +209,9 @@ int
 aml_region_read_simple(struct aml_region_handle *h, vm_offset_t offset, 
     u_int32_t *valuep)
 {
-	int		i, state;
+	int		state;
 	u_int8_t	val;
-	u_int32_t	value;
+	u_int32_t	value, i;
 
 	state = 0;
 	value = val = 0;
@@ -232,8 +232,9 @@ int
 aml_region_write_simple(struct aml_region_handle *h, vm_offset_t offset,
     u_int32_t value)
 {
-	int		i, state;
+	int		state;
 	u_int8_t	val;
+	u_int32_t	i;
 
 	state = 0;
 	val = 0;
