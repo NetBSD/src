@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
+/*	$NetBSD: sign.c,v 1.3 2009/01/18 10:35:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.2 2008/11/07 07:36:38 minskim Exp $");
+__RCSID("$NetBSD: sign.c,v 1.3 2009/01/18 10:35:26 lukem Exp $");
 
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
@@ -281,7 +281,7 @@ sign_sg_init(struct filed *Files)
 	struct filed_queue	 *fq;
 	struct string_queue	 *sqentry, *last_sqentry;
 	struct filed *f;
-	int i;
+	unsigned int i;
 
 	/* note on SG 1 and 2:
 	 * it is assumed that redundant signature groups
@@ -380,7 +380,7 @@ sign_sg_init(struct filed *Files)
 		}
 
 		STAILQ_FOREACH(sqentry, &GlobalSign.sig2_delims, entries) {
-			int min_pri = 0;
+			unsigned int min_pri = 0;
 			ALLOC_SG(newsg);
 			newsg->spri = sqentry->key;
 
@@ -579,7 +579,7 @@ sign_get_sg(int pri, struct filed *f)
 		case 1:
 		case 2:
 			STAILQ_FOREACH(sg, &GlobalSign.SigGroups, entries) {
-				if (sg->spri >= pri) {
+				if (sg->spri >= (unsigned int)pri) {
 					rc = sg;
 					break;
 				}
@@ -621,7 +621,7 @@ sign_send_signature_block(struct signature_group_t *sg, bool force)
 	struct string_queue *qentry, *old_qentry;
 	struct buf_msg *buffer;
 	struct filed_queue *fq;
-	int i;
+	size_t i;
 
 	if (!sg) return 0;
 	DPRINTF((D_CALL|D_SIGN), "sign_send_signature_block(%p, %d)\n",
