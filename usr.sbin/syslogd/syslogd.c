@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.95 2008/12/29 03:45:23 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.96 2009/01/18 10:35:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.95 2008/12/29 03:45:23 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.96 2009/01/18 10:35:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ typedef struct deadq_entry {
 int	repeatinterval[] = { 30, 120, 600 };	/* # of secs before flush */
 #define MAXREPEAT ((sizeof(repeatinterval) / sizeof(repeatinterval[0])) - 1)
 #define REPEATTIME(f)	((f)->f_time + repeatinterval[(f)->f_repeatcount])
-#define BACKOFF(f)	{ if (++(f)->f_repeatcount > MAXREPEAT) \
+#define BACKOFF(f)	{ if ((size_t)(++(f)->f_repeatcount) > MAXREPEAT) \
 				 (f)->f_repeatcount = MAXREPEAT; \
 			}
 
@@ -2119,7 +2119,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 #endif
 #define REPBUFSIZE 80
 	char greetings[200];
-#define ADDEV() do { v++; assert(v - iov < A_CNT(iov)); } while(/*CONSTCOND*/0)
+#define ADDEV() do { v++; assert((size_t)(v - iov) < A_CNT(iov)); } while(/*CONSTCOND*/0)
 
 	DPRINTF(D_CALL, "fprintlog(%p, %p, %p)\n", f, buffer, qentry);
 
@@ -2194,7 +2194,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 	}
 	/* assert maximum message length */
 	if (TypeInfo[f->f_type].max_msg_length != -1
-	    && TypeInfo[f->f_type].max_msg_length
+	    && (size_t)TypeInfo[f->f_type].max_msg_length
 	    < linelen - tlsprefixlen - prilen) {
 		linelen = TypeInfo[f->f_type].max_msg_length
 		    + tlsprefixlen + prilen;
@@ -2499,10 +2499,10 @@ sendagain:
 					fail++;
 					break;
 				}
-			} else if (lsent == len)
+			} else if ((size_t)lsent == len)
 				break;
 		}
-		if (lsent != len && fail) {
+		if ((size_t)lsent != len && fail) {
 			f->f_type = F_UNUSED;
 			logerror("sendto() failed");
 		}
@@ -2811,6 +2811,7 @@ die(int fd, short event, void *ev)
 	char **p;
 	sigset_t newmask, omask;
 	int i;
+	size_t j;
 
 	ShuttingDown = 1;	/* Don't log SIGCHLDs. */
 	/* prevent recursive signals */
@@ -2885,9 +2886,9 @@ die(int fd, short event, void *ev)
 	}
 
 	/* free config options */
-	for (i = 0; i < A_CNT(TypeInfo); i++) {
-		FREEPTR(TypeInfo[i].queue_length_string);
-		FREEPTR(TypeInfo[i].queue_size_string);
+	for (j = 0; j < A_CNT(TypeInfo); j++) {
+		FREEPTR(TypeInfo[j].queue_length_string);
+		FREEPTR(TypeInfo[j].queue_size_string);
 	}
 
 #ifndef DISABLE_TLS
@@ -3242,7 +3243,7 @@ void
 init(int fd, short event, void *ev)
 {
 	FILE *cf;
-	size_t i;
+	int i;
 	struct filed *f, *newf, **nextp, *f2;
 	char *p;
 	sigset_t newmask, omask;
@@ -4309,7 +4310,7 @@ find_qentry_to_delete(const struct buf_queue_head *head, int strategy,
 size_t
 message_queue_purge(struct filed *f, size_t del_entries, int strategy)
 {
-	int removed = 0;
+	size_t removed = 0;
 	struct buf_queue *qentry = NULL;
 
 	DPRINTF((D_CALL|D_BUFFER), "purge_message_queue(%p, %zu, %d) with "
