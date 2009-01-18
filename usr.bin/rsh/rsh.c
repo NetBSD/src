@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.30 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: rsh.c,v 1.31 2009/01/18 00:42:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.30 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.31 2009/01/18 00:42:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,8 @@ main(int argc, char **argv)
 #ifdef IN_RCMD
 	char	*locuser = 0, *loop;
 #endif /* IN_RCMD */
-	int argoff, asrsh, ch, dflag, nflag, one, rem, i;
+	int argoff, asrsh, ch, dflag, nflag, one, rem;
+	size_t i;
 	int family = AF_UNSPEC;
 	pid_t pid;
 	uid_t uid;
