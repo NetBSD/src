@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.9 2008/07/08 06:50:23 mrg Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.10 2009/01/18 10:04:35 mrg Exp $	*/
 
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.9 2008/07/08 06:50:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.10 2009/01/18 10:04:35 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -154,7 +154,7 @@ CFATTACH_DECL_NEW(radeondrm, sizeof(drm_device_t), radeondrm_probe, radeondrm_at
 
 #ifdef _MODULE
 
-MODULE(MODULE_CLASS_DRIVER, radeondrm, NULL);
+MODULE(MODULE_CLASS_DRIVER, radeondrm, "drm");
 
 CFDRIVER_DECL(radeondrm, DV_DULL, NULL);
 extern struct cfattach radeondrm_ca;
