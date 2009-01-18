@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2008/11/09 14:24:14 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2009/01/18 20:50:43 bouyer Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2008/11/09 14:24:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2009/01/18 20:50:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2008/11/09 14:24:14 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_mpbios.h"
+#include "opt_pcifixup.h"
 
 #include "acpi.h"
 #include "ioapic.h"
@@ -71,6 +72,12 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2008/11/09 14:24:14 cegger Exp $");
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>       
 #endif /* MPBIOS */
+#ifdef PCI_BUS_FIXUP
+#include <arch/x86/pci/pci_bus_fixup.h>
+#ifdef PCI_ADDR_FIXUP
+#include <arch/x86/pci/pci_addr_fixup.h>
+#endif  
+#endif
 
 #if defined(MPBIOS) || NACPI > 0
 struct mp_bus *mp_busses;
@@ -133,6 +140,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
+#ifdef PCI_BUS_FIXUP
+	int pci_maxbus = 0;
+#endif
 #endif /* defined(DOM0OPS) && defined(XEN3) */
 
 	aprint_naive("\n");
@@ -154,14 +164,16 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		/* ACPI needs to be able to access PCI configuration space. */
 		pci_mode = pci_mode_detect();
 #ifdef PCI_BUS_FIXUP
-		pci_maxbus = pci_bus_fixup(NULL, 0);
-		aprint_debug_dev(self, "PCI bus max, after pci_bus_fixup: %i\n",
-		    pci_maxbus);
+		if (pci_mode != 0) {
+			pci_maxbus = pci_bus_fixup(NULL, 0);
+			aprint_debug_dev(self, "PCI bus max, after "
+			    "pci_bus_fixup: %i\n", pci_maxbus);
 #ifdef PCI_ADDR_FIXUP
-		pciaddr.extent_port = NULL;
-		pciaddr.extent_mem = NULL;
-		pci_addr_fixup(NULL, pci_maxbus);
+			pciaddr.extent_port = NULL;
+			pciaddr.extent_mem = NULL;
+			pci_addr_fixup(NULL, pci_maxbus);
 #endif /* PCI_ADDR_FIXUP */
+		}
 #endif /* PCI_BUS_FIXUP */
 #if NACPI > 0
 		acpi_present = acpi_probe();
