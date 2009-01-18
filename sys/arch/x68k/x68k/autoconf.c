@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 2009/01/17 09:20:46 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64 2009/01/18 05:23:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2009/01/17 09:20:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2009/01/18 05:23:34 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2009/01/17 09:20:46 isaki Exp $");
 #include <dev/scsipi/scsiconf.h>
 
 static void findroot(void);
-static struct device *scsi_find(dev_t);
+static device_t scsi_find(dev_t);
 
 int x68k_realconfig;
 
@@ -130,7 +130,7 @@ findroot(void)
 static const char *const name_netif[] = { X68K_BOOT_NETIF_STRINGS };
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	int majdev;
 	char tname[16];
@@ -163,13 +163,13 @@ found:
 
 static const char *const name_scsiif[] = { X68K_BOOT_SCSIIF_STRINGS };
 
-static struct device *
+static device_t
 scsi_find(dev_t bdev)
 {
 #if defined(NSCSIBUS) && NSCSIBUS > 0
 	int ifid;
 	char tname[16];
-	struct device *scsibus;
+	device_t scsibus;
 	struct scsibus_softc *sbsc;
 	struct scsipi_periph *periph;
 
