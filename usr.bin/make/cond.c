@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.51 2009/01/18 12:50:15 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.52 2009/01/18 17:30:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.51 2009/01/18 12:50:15 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.52 2009/01/18 17:30:19 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.51 2009/01/18 12:50:15 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.52 2009/01/18 17:30:19 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -228,7 +228,6 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
     char	  *cp;
     int	    	  argLen;
     Buffer	  buf;
-    const char    *terminators = ") \t&|";
 
     cp = *linePtr;
     if (parens) {
@@ -238,8 +237,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 	if (*cp == '(') {
 	    cp++;
 	}
-    } else
-	terminators++;
+    }
 
     if (*cp == '\0') {
 	/*
@@ -262,7 +260,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
      */
     Buf_Init(&buf, 16);
 
-    while ((strchr(terminators, *cp) == NULL) && (*cp != '\0')) {
+    while ((strchr(" \t)&|", *cp) == NULL) && (*cp != '\0')) {
 	if (*cp == '$') {
 	    /*
 	     * Parse the variable spec and install it as part of the argument
@@ -890,11 +888,8 @@ compare_function(Boolean doEval)
 
 	arglen = fn_def->fn_getarg(&cp, &arg, fn_def->fn_name, TRUE);
 	if (arglen <= 0) {
-	    if (arglen < 0) {
-		condExpr = cp;
-		return Err;
-	    }
-	    break;
+	    condExpr = cp;
+	    return arglen < 0 ? Err : False;
 	}
 	/* Evaluate the argument using the required function. */
 	t = !doEval || fn_def->fn_proc(arglen, arg) ? True : False;
