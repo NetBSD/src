@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1167 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1168 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -26,7 +26,6 @@
 
 Changes from NetBSD 5.0 to NetBSD 6.0:
 
-	tab(1): Add tabs utility, fixes PR bin/11227. [roy 20081211]
 	syslog(3): Import Martin Schuette's Summer of Code project: 
 		Reliable TCP connections, syslog protocol API,
 		encryption. [christos 20081031]
@@ -72,18 +71,33 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[njoly 20081205]
 	ddb(4): Add 'show vmem' and 'show all vmems' commands.
 		[cegger 20081207]
-	httpd(8): Add rc.d script to control httpd daemon [mishka 20081211]
+	re(4): Add support for a 8168C/8111C revision. [alc 20081208]
+	tab(1): Add tabs utility, fixes PR bin/11227. [roy 20081211]
+	httpd(8): Add rc.d script to control httpd daemon. [mishka 20081211]
 	ath(4): Switch from the binary HAL to the open-source HAL released by
 		Sam Leffler. [alc 20081211]
 	nvi(1): Added "expandtab" option.  [lukem 20081212]
+	compat_linux32: Add clock_nanosleep syscall. [njoly 20081212]
+	boot.cfg(5): Add an option to clear the screen. [christos 20081213]
 	pms(4): Add Elantech multi-touch trackpad support [jmcneill 20081213]
-	sparc:  switch to use wscons [macallan 20081213]
+	sparc: Switch to use wscons. [macallan 20081213]
+	snprintb(3), kprintf(9): Share snprintb(3) among kernel and libutil
+		and make it supersede bitmask_snprintf(9). [christos 20081216]
+	sup(1): Add -M user flag to specify the username to send mail to from
+		the command line. [christos 20081217]
+	malloc(9): Remove MALLOC() and FREE() macros. [cegger 20081217]
 	x68k:	pow(4) switches to use MI powerd(8) [isaki 20081220]
+	viaide(4): Add VT8237S Integrated SATA Controller support.
+		[nonaka 20081221]
 	lvm:	Add LVM functionality to NetBSD; this is done by dm(4) driver
 		in kernel and lvm2 tools made by RedHat. We use the same well
 		known interface as Linux does for managing LVM. [haad 20081222]
 	gcscaudio(4): Add AMD Geode CS5536 audio driver, from SHIMIZU Ryo.
 		[jmcneill 20081228]
+	mount_cd9660(8): Add nocasetrans option as a synonym for nomaplcase.
+		[christos 20090103]
+	rc.d(8): Add a script for rndctl(8). [apb 20090104]
+	module: Add sysvbfs module. [pooka 20090105]
 	ntp:	import ntp 4.2.4p6
 		openssl API related security fix. [kardel 20090108]
 	bwi:	Add a driver for Broadcom AirForce / Apple Airport Extreme
@@ -91,9 +105,12 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[macallan 20090109]
 	rgephy(4): Support for RTL8211C(L) phy. From FreeBSD. [cegger 20090109]
 	rgephy(4): Support for flow control. From OpenBSD. [cegger 20090109]
-	time_t,dev_t: changed time_t and dev_t to be 64 bit quantities. Fixed
-		POSIX issues in timeval and timespec [christos 20090110]
+	makefs(8): Add support for encoding RISC OS metadata into
+		ISO 9660 filesystems. [bjh21 20090110]
+	time_t, dev_t: Change time_t and dev_t to be 64 bit quantities. Fixed
+		POSIX issues in timeval and timespec. [christos 20090110]
 	make(1): Changes to the way .for loops are processed. [dsl 20090111]
+	openpgpsdk: Initial import of openpgpsdk v0.9. [agc 20090112]
 	age(4):	Add a driver for Attensic/Atheros L1 gigabit ethernet.
 		From FreeBSD via OpenBSD. [cegger 20090116]
 	atphy(4): Add a driver for Attensic/Atheros F1 PHY.
