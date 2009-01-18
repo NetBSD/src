@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: msg.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -458,8 +458,8 @@ mod_rpt(SCR *sp)
 	};
 	db_recno_t total;
 	u_long rptval;
-	int first, cnt;
-	size_t blen, len, tlen;
+	int first;
+	size_t cnt, blen, len, tlen;
 	const char *t;
 	const char * const *ap;
 	char *bp, *p;
@@ -685,7 +685,7 @@ msgq_status(SCR *sp, db_recno_t lno, u_int flags)
 	 */
 	s = bp;
 	if (LF_ISSET(MSTAT_TRUNCATE) && len > sp->cols) {
-		for (; s < np && (*s != '/' || (p - s) > sp->cols - 3); ++s);
+		for (; s < np && (*s != '/' || (size_t)(p - s) > sp->cols - 3); ++s);
 		if (s == np) {
 			s = p - (sp->cols - 5);
 			*--s = ' ';

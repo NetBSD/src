@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_smap.c,v 1.1.1.2 2008/05/18 14:31:52 aymeric Exp $ */
+/*	$NetBSD: vs_smap.c,v 1.2 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -913,7 +913,7 @@ vs_sm_down(SCR *sp, MARK *rp, db_recno_t count, scroll_t scmd, SMAP *smp)
 		 * The ^B and ^U commands move the cursor towards SOF
 		 * if there are more lines to move.
 		 */
-		if (count < smp - HMAP)
+		if (count < (db_recno_t)(smp - HMAP))
 			smp -= count;
 		else
 			smp = HMAP;
@@ -1142,7 +1142,7 @@ vs_sm_position(SCR *sp, MARK *rp, u_long cnt, pos_t pos)
 		 * We do nothing special here, just making sure that H in
 		 * an empty screen works.
 		 */
-		if (cnt > TMAP - HMAP)
+		if (cnt > (u_long)(TMAP - HMAP))
 			goto sof;
 		smp = HMAP + cnt;
 		if (cnt && !db_exist(sp, smp->lno)) {
@@ -1173,14 +1173,14 @@ sof:			msgq(sp, M_BERR, "220|Movement past the end-of-screen");
 		 * If the screen isn't filled, find the bottom of what's
 		 * real and try to offset from there.
 		 */
-		if (cnt > TMAP - HMAP)
+		if (cnt > (u_long)(TMAP - HMAP))
 			goto eof;
 		smp = TMAP - cnt;
 		if (!db_exist(sp, smp->lno)) {
 			if (db_last(sp, &last))
 				return (1);
 			for (; smp->lno > last && smp > HMAP; --smp);
-			if (cnt > smp - HMAP) {
+			if (cnt > (u_long)(smp - HMAP)) {
 eof:				msgq(sp, M_BERR,
 			    "221|Movement past the beginning-of-screen");
 				return (1);

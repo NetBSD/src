@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_screen.c,v 1.1.1.2 2008/05/18 14:31:17 aymeric Exp $ */
+/*	$NetBSD: ex_screen.c,v 1.2 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -104,7 +104,8 @@ ex_sdisplay(SCR *sp)
 {
 	GS *gp;
 	SCR *tsp;
-	int cnt, col, len, sep;
+	int cnt, sep;
+	size_t col, len;
 
 	gp = sp->gp;
 	if ((tsp = gp->hq.cqh_first) == (void *)&gp->hq) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_shell.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_shell.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -359,7 +359,7 @@ sigmsg(int signo)
 {
 	static char buf[40];
 	const SIGS *sigp;
-	int n;
+	size_t n;
 
 	for (n = 0,
 	    sigp = &sigs[0]; n < sizeof(sigs) / sizeof(sigs[0]); ++n, ++sigp)

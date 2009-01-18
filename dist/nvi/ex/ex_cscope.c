@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.3 2008/12/06 18:39:20 christos Exp $ */
+/*	$NetBSD: ex_cscope.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1994, 1996
@@ -322,7 +322,7 @@ get_paths(SCR *sp, CSC *csc)
 		len = sb.st_size;
 		MALLOC_RET(sp, csc->pbuf, char *, len + 1);
 		if ((fd = open(buf, O_RDONLY, 0)) < 0 ||
-		    read(fd, csc->pbuf, len) != len) {
+		    (size_t)read(fd, csc->pbuf, len) != len) {
 			 msgq_str(sp, M_SYSERR, buf, "%s");
 			 if (fd >= 0)
 				(void)close(fd);

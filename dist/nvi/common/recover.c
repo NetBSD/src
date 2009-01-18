@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -403,7 +403,7 @@ rcv_mailfile(SCR *sp, int issync, char *cp_path)
 	    "Precedence: bulk");		/* For vacation(1). */
 	if (len > sizeof(buf) - 1)
 		goto lerr;
-	if (write(fd, buf, len) != len)
+	if ((size_t)write(fd, buf, len) != len)
 		goto werr;
 
 	len = snprintf(buf, sizeof(buf),

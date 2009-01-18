@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.5 2008/12/06 18:39:20 christos Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.6 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -54,7 +54,7 @@ static TAGQ	*gtag_slist __P((SCR *, CHAR_T *, int));
 #endif
 static int	 ctag_sfile __P((SCR *, TAGF *, TAGQ *, char *));
 static TAGQ	*ctag_slist __P((SCR *, CHAR_T *));
-static char	*linear_search __P((char *, char *, char *, long));
+static char	*linear_search __P((char *, char *, char *, unsigned long));
 static int	 tag_copy __P((SCR *, TAG *, TAG **));
 static int	 tag_pop __P((SCR *, TAGQ *, int));
 static int	 tagf_copy __P((SCR *, TAGF *, TAGF **));
@@ -122,7 +122,7 @@ ex_tag_push(SCR *sp, EXCMD *cmdp)
 {
 	EX_PRIVATE *exp;
 	TAGQ *tqp;
-	long tl;
+	unsigned long tl;
 
 	exp = EXP(sp);
 	switch (cmdp->argc) {
@@ -1208,7 +1208,7 @@ ctag_sfile(SCR *sp, TAGF *tfp, TAGQ *tqp, char *tname)
 	char *cname = NULL, *dname = NULL, *name = NULL;
 	const CHAR_T *wp;
 	size_t wlen;
-	long tl;
+	unsigned long tl;
 
 	if ((fd = open(tfp->name, O_RDONLY, 0)) < 0) {
 		tfp->errnum = errno;
@@ -1444,11 +1444,11 @@ binary_search(register char *string, register char *front, register char *back)
  *	o front is before or at the first line to be printed.
  */
 static char *
-linear_search(char *string, char *front, char *back, long tl)
+linear_search(char *string, char *front, char *back, unsigned long tl)
 {
 	char *end;
 	while (front < back) {
-		end = tl && back-front > tl ? front+tl : back;
+		end = tl && (unsigned long)(back-front) > tl ? front+tl : back;
 		switch (compare(string, front, end)) {
 		case EQUAL:		/* Found it. */
 			return (front);

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.4 2009/01/16 15:05:55 christos Exp $ */
+/*	$NetBSD: v_txt.c,v 1.5 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -276,7 +276,8 @@ v_txt(SCR *sp, VICMD *vp, MARK *tm, const CHAR_T *lp, size_t len, ARG_CHAR_T pro
 	int hexcnt;		/* Hex character count. */
 	int showmatch;		/* Showmatch set on this character. */
 	int wm_set, wm_skip;	/* Wrapmargin happened, blank skip flags. */
-	int max, tmp;
+	size_t max;
+	int tmp;
 	CHAR_T *p;
 
 	gp = sp->gp;
@@ -2215,7 +2216,7 @@ txt_fc_col(SCR *sp, int argc, ARGS **argv)
 	} else {
 		/* Figure out the number of columns. */
 		numcols = (sp->cols - 1) / colwidth;
-		if (argc > numcols) {
+		if ((size_t)argc > numcols) {
 			numrows = argc / numcols;
 			if (argc % numcols)
 				++numrows;
@@ -2232,7 +2233,7 @@ txt_fc_col(SCR *sp, int argc, ARGS **argv)
 				if (nf)
 					FREE_SPACE(sp, pp, 0);
 				CHK_INTR;
-				if ((base += numrows) >= argc)
+				if ((base += numrows) >= (size_t)argc)
 					break;
 				(void)ex_printf(sp,
 				    "%*s", (int)(colwidth - cnt), "");

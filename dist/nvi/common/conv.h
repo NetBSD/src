@@ -1,9 +1,10 @@
-/*	$NetBSD: conv.h,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: conv.h,v 1.3 2009/01/18 03:43:45 lukem Exp $ */
 
 #define KEY_COL(sp, ch)							\
-	(INTISWIDE(ch) ? CHAR_WIDTH(sp, ch) ? CHAR_WIDTH(sp, ch) : 	\
-					      1 : /* extra space */	\
-			 KEY_LEN(sp,ch))
+	(INTISWIDE(ch) ? 						\
+	    (size_t)CHAR_WIDTH(sp, ch) ?				\
+	       (size_t)CHAR_WIDTH(sp, ch) : 1 /* extra space */		\
+	    : KEY_LEN(sp,ch))
 
 struct _conv_win {
     void    *bp1;

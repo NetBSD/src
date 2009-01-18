@@ -1,4 +1,4 @@
-/*	$NetBSD: v_increment.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: v_increment.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -55,8 +55,8 @@ int
 v_increment(SCR *sp, VICMD *vp)
 {
 	enum nresult nret;
-	u_long ulval;
-	long change, ltmp, lval;
+	u_long ulval, change;
+	long ltmp, lval;
 	size_t beg, blen, end, len, nlen, wlen;
 	int base, isempty, rval;
 	const char *ntype;
@@ -193,7 +193,8 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 		if ((nret = nget_slong(sp, &lval, t, NULL, 10)) != NUM_OK)
 			goto err;
 		ltmp = vp->character == '-' ? -change : change;
-		if (lval > 0 && ltmp > 0 && !NPFITS(LONG_MAX, lval, ltmp)) {
+		if (lval > 0 && ltmp > 0 &&
+		    !NPFITS(LONG_MAX, (unsigned long)lval, (unsigned long)ltmp)) {
 			nret = NUM_OVER;
 			goto err;
 		}
