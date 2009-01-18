@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.10 2007/05/16 14:42:08 christos Exp $	*/
+/*	$NetBSD: security.c,v 1.11 2009/01/18 10:17:38 lukem Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -57,7 +57,7 @@ int log_severity = PORTMAP_LOG_FACILITY|PORTMAP_LOG_SEVERITY;
 extern int verboselog;
 
 int 
-check_access(SVCXPRT *xprt, rpcproc_t proc, void *args, int rpcbvers)
+check_access(SVCXPRT *xprt, rpcproc_t proc, void *args, unsigned long rpcbvers)
 {
 	struct netbuf *caller = svc_getrpccaller(xprt);
 	struct sockaddr *addr = (struct sockaddr *)caller->buf;

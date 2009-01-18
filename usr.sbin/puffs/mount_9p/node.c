@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.20 2008/08/22 17:44:14 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.21 2009/01/18 10:10:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.20 2008/08/22 17:44:14 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.21 2009/01/18 10:10:47 lukem Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -321,7 +321,7 @@ puffs9p_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	size_t nread;
 
 	nread = 0;
-	while (*resid > 0 && offset+nread < pn->pn_va.va_size) {
+	while (*resid > 0 && (uint64_t)(offset+nread) < pn->pn_va.va_size) {
 		p9pbuf_put_1(pb, P9PROTO_T_READ);
 		p9pbuf_put_2(pb, tag);
 		p9pbuf_put_4(pb, p9n->fid_read);

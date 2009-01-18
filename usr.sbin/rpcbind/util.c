@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.15 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.16 2009/01/18 10:17:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -310,7 +310,8 @@ network_init()
 #ifdef INET6
 	struct ifaddrs *ifap, *ifp;
 	struct ipv6_mreq mreq6;
-	int ifindex, s;
+	unsigned int ifindex;
+	int s;
 #endif
 	int ecode;
 	struct addrinfo hints, *res;
