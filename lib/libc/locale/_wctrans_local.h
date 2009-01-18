@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans_local.h,v 1.5 2009/01/16 21:12:11 christos Exp $	*/
+/*	$NetBSD: _wctrans_local.h,v 1.6 2009/01/18 19:53:11 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -31,7 +31,7 @@
 
 __BEGIN_DECLS
 wint_t	_towctrans_ext(wint_t, _WCTransEntry *);
-_RuneLocale *_wctrans_init(_RuneLocale *);
+void _wctrans_init(_RuneLocale *);
 __END_DECLS
 
 static __inline wint_t
@@ -45,7 +45,7 @@ static __inline struct _WCTransEntry *
 _wctrans_lower(_RuneLocale *rl)
 {
 	if (rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name == NULL)
-		rl = _wctrans_init(rl);
+		_wctrans_init(rl);
 	return (&rl->rl_wctrans[_WCTRANS_INDEX_LOWER]);
 }
 
@@ -53,7 +53,7 @@ static __inline struct _WCTransEntry *
 _wctrans_upper(_RuneLocale *rl)
 {
 	if (rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_name == NULL)
-		rl = _wctrans_init(rl);
+		_wctrans_init(rl);
 	return (&rl->rl_wctrans[_WCTRANS_INDEX_UPPER]);
 }
 
