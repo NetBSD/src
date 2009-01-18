@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.91 2009/01/13 13:35:52 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.92 2009/01/18 02:40:05 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.91 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.92 2009/01/18 02:40:05 isaki Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.91 2009/01/13 13:35:52 yamt Exp $");
 #endif
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -1628,8 +1630,6 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 
 	return(0);
 }
-
-#include <dev/cons.h>
 
 /*
  * Mountroot hook: prompt the user to enter the root file system
