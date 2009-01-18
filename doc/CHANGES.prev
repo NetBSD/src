@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.84 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.85 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9762,5 +9762,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Technologies, ported from vendor FreeBSD SDK and integrated
 		with opencrypto by CoyotePoint Systems.
 		[darran 20081030]
+	wscons(4): Add wscons/vcons support for Sun cg3. [jdc 20081128]
 	fxp(4): Add a workaround for hardware ip4csum-tx bug.
 		[tsutsui 20081203]
+	wscons(4): Add wscons/vcons support for Sun bw2. [jdc 20081205]
