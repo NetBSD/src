@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.h,v 1.2 2008/07/26 20:20:56 reinoud Exp $ */
+/* $NetBSD: udf_create.h,v 1.3 2009/01/18 00:18:41 lukem Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -133,7 +133,7 @@ struct udf_create_context {
 	int	 gmtoff;	/* in minutes	*/
 
 	/* XXX to layout? */
-	int	 sector_size;
+	uint32_t	 sector_size;
 
 	/* identification */
 	char	*logvol_name;
