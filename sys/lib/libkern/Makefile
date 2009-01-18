@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.94 2009/01/04 18:00:55 pooka Exp $
+#	$NetBSD: Makefile,v 1.95 2009/01/18 20:42:11 he Exp $
 
 LIB=		kern
 NOPIC=		# defined
 LLIBS=		# defined
 
 .include "Makefile.libkern"
-.ifndef(ARCHSUBDIR)
+.ifndef ARCHSUBDIR
 .BEGIN:
 	@echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
 	@false
