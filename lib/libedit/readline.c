@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.76 2009/01/11 15:00:23 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.77 2009/01/18 12:17:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.76 2009/01/11 15:00:23 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.77 2009/01/18 12:17:24 lukem Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -691,7 +691,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 	if (aptr)
 		free(aptr);
 
-	if (*cmd == '\0' || (cmd - (command + offs) >= cmdlen)) {
+	if (*cmd == '\0' || ((size_t)(cmd - (command + offs)) >= cmdlen)) {
 		*result = tmp;
 		return(1);
 	}
@@ -986,20 +986,20 @@ history_arg_extract(int start, int end, const char *str)
 	if (start < 0)
 		start = end;
 
-	if (start < 0 || end < 0 || start > max || end > max || start > end)
+	if (start < 0 || end < 0 || (size_t)start > max || (size_t)end > max || start > end)
 		return(NULL);
 
-	for (i = start, len = 0; i <= end; i++)
+	for (i = start, len = 0; i <= (size_t)end; i++)
 		len += strlen(arr[i]) + 1;
 	len++;
 	result = malloc(len);
 	if (result == NULL)
 		return NULL;
 
-	for (i = start, len = 0; i <= end; i++) {
+	for (i = start, len = 0; i <= (size_t)end; i++) {
 		(void)strcpy(result + len, arr[i]);
 		len += strlen(arr[i]);
-		if (i < end)
+		if (i < (size_t)end)
 			result[len++] = ' ';
 	}
 	result[len] = '\0';
@@ -1639,7 +1639,7 @@ int
 rl_add_defun(const char *name, Function *fun, int c)
 {
 	char dest[8];
-	if (c >= sizeof(map) / sizeof(map[0]) || c < 0)
+	if ((size_t)c >= sizeof(map) / sizeof(map[0]) || c < 0)
 		return -1;
 	map[(unsigned char)c] = fun;
 	el_set(e, EL_ADDFN, name, name, rl_bind_wrapper);

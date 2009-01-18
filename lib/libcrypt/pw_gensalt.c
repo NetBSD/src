@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.6 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.7 2009/01/18 12:15:27 lukem Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.6 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.7 2009/01/18 12:15:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -162,7 +162,7 @@ __gensalt_sha1(char *salt, size_t saltsiz, const char *option)
 	 * The salt can be up to 64 bytes, but 8
 	 * is considered enough for now.
 	 */
-	if (n + 9 >= saltsiz)
+	if ((size_t)n + 9 >= saltsiz)
 		return 0;
 	__crypt_to64(&salt[n], arc4random(), 4);
 	__crypt_to64(&salt[n + 4], arc4random(), 4);

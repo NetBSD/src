@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.11 2008/10/10 09:13:20 ad Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.12 2009/01/18 12:14:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.11 2008/10/10 09:13:20 ad Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.12 2009/01/18 12:14:16 lukem Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -355,7 +355,7 @@ pthread_attr_setstacksize(pthread_attr_t *attr, size_t size)
 {
 	struct pthread_attr_private *p;
 
-	if (size < sysconf(_SC_THREAD_STACK_MIN))
+	if (size < (size_t)sysconf(_SC_THREAD_STACK_MIN))
 		return EINVAL;
 
 	p = pthread__attr_init_private(attr);

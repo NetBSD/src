@@ -1,4 +1,4 @@
-/* $NetBSD: hmac.c,v 1.1 2006/10/27 18:22:56 drochner Exp $ */
+/* $NetBSD: hmac.c,v 1.2 2009/01/18 12:15:27 lukem Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
@@ -42,7 +42,7 @@
  */
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: hmac.c,v 1.1 2006/10/27 18:22:56 drochner Exp $");
+__RCSID("$NetBSD: hmac.c,v 1.2 2009/01/18 12:15:27 lukem Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -75,7 +75,7 @@ HMAC_FUNC (const unsigned char *text, size_t text_len,
     unsigned char k_opad[HMAC_BLOCKSZ + 1];
     /* HASH(key) if needed */
     unsigned char tk[HASH_LENGTH];	
-    int i;
+    size_t i;
 
     /*
      * If key is longer than HMAC_BLOCKSZ bytes
