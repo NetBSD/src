@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 2009/01/11 06:02:19 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 2009/01/18 04:48:53 isaki Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -573,9 +573,6 @@ ENTRY_NOPROFILE(com1trap)
 ENTRY_NOPROFILE(intiotrap)
 	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
-#if 0
-	movw	#PSL_HIGHIPL,%sr	| XXX
-#endif
 	pea	%sp@(16-(FR_HW))	| XXX
 	jbsr	_C_LABEL(intio_intr)
 	addql	#4,%sp

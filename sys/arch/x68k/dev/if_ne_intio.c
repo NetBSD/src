@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.12 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.13 2009/01/18 04:48:53 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.12 2008/12/18 05:56:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.13 2009/01/18 04:48:53 isaki Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.12 2008/12/18 05:56:42 isaki Exp $
 
 static int  ne_intio_match(device_t, cfdata_t, void *);
 static void ne_intio_attach(device_t, device_t, void *);
-static int  ne_intio_intr(void *);
 
 #define ne_intio_softc ne2000_softc
 
@@ -223,19 +222,7 @@ ne_intio_attach(device_t parent, device_t self, void *aux)
 	ne2000_attach(sc, NULL);
 
 	/* Establish the interrupt handler */
-	if (intio_intr_establish(ia->ia_intr, "ne", ne_intio_intr, dsc))
+	if (intio_intr_establish(ia->ia_intr, "ne", dp8390_intr, dsc))
 		aprint_error_dev(self,
 		    "couldn't establish interrupt handler\n");
-}
-
-static int
-ne_intio_intr(void *arg)
-{
-	int error;
-	int s;
-
-	s = splnet();
-	error = dp8390_intr(arg);
-	splx(s);
-	return error;
 }
