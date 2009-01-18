@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.54 2008/11/29 05:59:40 isaki Exp $	*/
+/*	$NetBSD: com.c,v 1.55 2009/01/18 02:40:05 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.54 2008/11/29 05:59:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.55 2009/01/18 02:40:05 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -87,6 +87,11 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.54 2008/11/29 05:59:40 isaki Exp $");
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/kauth.h>
+
+#ifdef KGDB
+#include <machine/remote-sl.h>
+#include <sys/kgdb.h>
+#endif
 
 #include <machine/cpu.h>
 #if 0
@@ -192,13 +197,6 @@ int	comconsole = -1;
 int	comconsinit;
 int	comsopen = 0;
 int	comevents = 0;
-
-#ifdef KGDB
-#include <machine/remote-sl.h>
-extern int kgdb_dev;
-extern int kgdb_rate;
-extern int kgdb_debug_init;
-#endif
 
 #define	COMUNIT(x)	(minor(x) & 0x7F)
 #define	COMDIALOUT(x)	(minor(x) & 0x80)
