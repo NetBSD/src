@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.22 2008/07/15 21:27:58 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.23 2009/01/18 00:24:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.22 2008/07/15 21:27:58 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.23 2009/01/18 00:24:29 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,7 +93,6 @@ static int setifrts(prop_dictionary_t, prop_dictionary_t);
 static int scan_exec(prop_dictionary_t, prop_dictionary_t);
 
 static void printies(const u_int8_t *, int, int);
-static void printie(const char* , const uint8_t *, size_t , int);
 static void printwmeparam(const char *, const u_int8_t *, size_t , int);
 static void printwmeinfo(const char *, const u_int8_t *, size_t , int);
 static const char * wpa_cipher(const u_int8_t *);
@@ -768,7 +767,7 @@ list_scan(prop_dictionary_t env)
 	if (direct_ioctl(env, SIOCG80211, &ireq) < 0)
 		errx(EXIT_FAILURE, "unable to get scan results");
 	len = ireq.i_len;
-	if (len < sizeof(struct ieee80211req_scan_result))
+	if (len < (int)sizeof(struct ieee80211req_scan_result))
 		return;
 
 	ssidmax = IEEE80211_NWID_LEN;
@@ -799,10 +798,10 @@ list_scan(prop_dictionary_t env)
 			, sr->isr_intval
 			, getcaps(sr->isr_capinfo)
 		);
-		printies(vp + sr->isr_ssid_len, sr->isr_ie_len, 24);;
+		printies(vp + sr->isr_ssid_len, sr->isr_ie_len, 24);
 		printf("\n");
 		cp += sr->isr_len, len -= sr->isr_len;
-	} while (len >= sizeof(struct ieee80211req_scan_result));
+	} while (len >= (int)sizeof(struct ieee80211req_scan_result));
 }
 /*
  * Convert MHz frequency to IEEE channel number.
@@ -878,7 +877,7 @@ printie(const char* tag, const uint8_t *ie, size_t ielen, int maxlen)
 	printf("%s", tag);
 
 	maxlen -= strlen(tag)+2;
-	if (2*ielen > maxlen)
+	if ((int)(2*ielen) > maxlen)
 		maxlen--;
 	printf("<");
 	for (; ielen > 0; ie++, ielen--) {
@@ -1131,8 +1130,7 @@ static int
 copy_essid(char buf[], size_t bufsize, const u_int8_t *essid, size_t essid_len)
 {
 	const u_int8_t *p;
-	size_t maxlen;
-	int i;
+	size_t maxlen, i;
 
 	if (essid_len > bufsize)
 		maxlen = bufsize;
@@ -1175,7 +1173,7 @@ static void
 printrates(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
 {
 	const char *sep;
-	int i;
+	size_t i;
 
 	printf("%s", tag);
 	sep = "<";

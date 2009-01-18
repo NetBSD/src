@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 2008/07/02 07:44:15 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.9 2009/01/18 00:24:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.8 2008/07/02 07:44:15 dyoung Exp $");
+__RCSID("$NetBSD: util.c,v 1.9 2009/01/18 00:24:29 lukem Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -179,7 +179,7 @@ prefixlen_to_mask(int af, int plen)
 	}
 	u.sa.sa_family = af;
 
-	if (plen < 0 || plen > addrlen * NBBY) {
+	if (plen < 0 || (size_t)plen > addrlen * NBBY) {
 		errno = EINVAL;
 		return NULL;
 	}

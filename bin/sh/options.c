@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.40 2005/12/13 17:44:18 dsl Exp $	*/
+/*	$NetBSD: options.c,v 1.41 2009/01/18 00:30:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.40 2005/12/13 17:44:18 dsl Exp $");
+__RCSID("$NetBSD: options.c,v 1.41 2009/01/18 00:30:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ STATIC int getopts(char *, char *, char **, char ***, char **);
 void
 procargs(int argc, char **argv)
 {
-	int i;
+	size_t i;
 
 	argptr = argv;
 	if (argc > 0)
@@ -197,9 +197,9 @@ options(int cmdline)
 }
 
 static void
-set_opt_val(int i, int val)
+set_opt_val(size_t i, int val)
 {
-	int j;
+	size_t j;
 	int flag;
 
 	if (val && (flag = optlist[i].opt_set)) {
@@ -218,7 +218,7 @@ set_opt_val(int i, int val)
 STATIC void
 minus_o(char *name, int val)
 {
-	int i;
+	size_t i;
 
 	if (name == NULL) {
 		if (val) {
@@ -249,7 +249,7 @@ minus_o(char *name, int val)
 STATIC void
 setoption(int flag, int val)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < NOPTS; i++)
 		if (optlist[i].letter == flag) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.lev.c,v 1.7 2008/01/28 06:55:41 dholland Exp $	*/
+/*	$NetBSD: hack.lev.c,v 1.8 2009/01/18 00:34:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.lev.c,v 1.7 2008/01/28 06:55:41 dholland Exp $");
+__RCSID("$NetBSD: hack.lev.c,v 1.8 2009/01/18 00:34:03 lukem Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -133,10 +133,10 @@ void
 bwrite(fd, loc, num)
 	int fd;
 	const void     *loc;
-	unsigned        num;
+	size_t          num;
 {
 	/* lint wants the 3rd arg of write to be an int; lint -p an unsigned */
-	if (write(fd, loc, (int) num) != num)
+	if ((size_t)write(fd, loc, num) != num)
 		panic("cannot write %u bytes to file #%d", num, fd);
 }
 

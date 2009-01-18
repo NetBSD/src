@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.213 2008/08/01 22:29:13 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.214 2009/01/18 00:24:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.213 2008/08/01 22:29:13 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.214 2009/01/18 00:24:29 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -691,7 +691,7 @@ main(int argc, char **argv)
 static void
 init_afs(void)
 {
-	int i;
+	size_t i;
 	const struct afswtch *afp;
 	struct kwinst kw = {.k_type = KW_T_INT};
 
