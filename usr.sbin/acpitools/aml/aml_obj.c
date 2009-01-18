@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_obj.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_obj.c,v 1.2 2009/01/18 09:46:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_obj.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_obj.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: aml_obj.c,v 1.2 2009/01/18 09:46:59 lukem Exp $");
 
 #include <sys/param.h>
 
@@ -243,7 +243,7 @@ aml_realloc_object(union aml_object *obj, int size)
 		*obj = tmp;
 		break;
 	case aml_t_string:
-		if (strlen((const char *)obj->str.string) >= size) {
+		if ((int)strlen((const char *)obj->str.string) >= size) {
 			return;
 		}
 		tmp.str.string = memman_alloc_flexsize(aml_memman, size + 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_common.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_common.c,v 1.2 2009/01/18 09:46:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_common.c,v 1.6 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_common.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: aml_common.c,v 1.2 2009/01/18 09:46:59 lukem Exp $");
 
 #include <sys/param.h>
 
@@ -396,9 +396,8 @@ aml_bufferfield_io(int io, u_int32_t *valuep, u_int8_t *origin,
 	u_int8_t	val, tmp, masklow, maskhigh;
 	u_int8_t	offsetlow, offsethigh;
 	u_int8_t	*addr;
-	int		i;
 	u_int32_t	value, readval;
-	u_int32_t	byteoffset, bytelen;
+	u_int32_t	byteoffset, bytelen, i;
 
 	masklow = maskhigh = 0xff;
 	val = readval = 0;
@@ -641,8 +640,8 @@ aml_region_io_simple(struct aml_environ *env, int io, int regtype,
     u_int32_t flags, u_int32_t *valuep, u_int32_t baseaddr,
     u_int32_t bitoffset, u_int32_t bitlen)
 {
-	int		i, state;
-	u_int32_t	readval, value, offset, bytelen;
+	int		state;
+	u_int32_t	readval, value, offset, bytelen, i;
 	struct		aml_region_handle handle;
 
 	state = aml_region_handle_alloc(env, regtype, flags,
@@ -711,8 +710,8 @@ aml_region_io(struct aml_environ *env, int io, int regtype,
 {
 	u_int32_t	unit, offset;
 	u_int32_t	offadj, bitadj;
-	u_int32_t	value, readval;
-	int		state, i;
+	u_int32_t	value, readval, i;
+	int		state;
 
 	readval = 0;
 	state = 0;
