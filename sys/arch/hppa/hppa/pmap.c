@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.18 2009/01/18 18:46:37 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.19 2009/01/18 18:50:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.18 2009/01/18 18:46:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.19 2009/01/18 18:50:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -700,11 +700,11 @@ pmap_bootstrap(vaddr_t vstart)
 
 	DPRINTF(PDB_INIT, ("pmap_bootstrap: curlwp set as %p\n", &lwp0));
 
-	/* kernel virtual is the last gig of the moohicans */
+	/* Pre-allocate PDEs for kernel virtual */
 	nkpdes = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / PDE_SIZE;
-
 	/* ... and io space too */
 	nkpdes += HPPA_IOLEN / PDE_SIZE;
+	/* ... and all physmem (VA == PA) */
 	npdes = nkpdes + (physmem + atop(PDE_SIZE) - 1) / atop(PDE_SIZE);
 
 	DPRINTF(PDB_INIT, ("pmap_bootstrap: npdes %d\n", npdes));
