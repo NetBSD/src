@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.7 2009/01/18 18:55:38 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.8 2009/01/18 21:24:44 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.7 2009/01/18 18:55:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.8 2009/01/18 21:24:44 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1094,54 +1094,22 @@ age_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		if (!(ifp->if_flags & IFF_RUNNING))
-			 age_init(ifp);
-#ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			arp_ifinit(&sc->sc_ec, ifa);
-#endif
-		break;
-
-	case SIOCSIFFLAGS:
-		error = ifioctl_common(ifp, cmd, data);
-		if (error)
-			break;
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
-				age_rxfilter(sc);
-			else
-				age_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				age_stop(sc);
-		}
-		sc->age_if_flags = ifp->if_flags;
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = ether_ioctl(ifp, cmd, data);
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				age_rxfilter(sc);
+			error = 0;
+		}
 		break;
 	}
 
-	if (error == ENETRESET) {
-		if (ifp->if_flags & IFF_RUNNING)
-			age_rxfilter(sc);
-		error = 0;
-	}
-
 	splx(s);
-	return (error);
+	return error;
 }
 
 static void
