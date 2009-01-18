@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.25 2009/01/17 23:24:30 hans Exp $	*/
+/*	$NetBSD: parse.c,v 1.26 2009/01/18 21:34:32 apb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.25 2009/01/17 23:24:30 hans Exp $");
+__RCSID("$NetBSD: parse.c,v 1.26 2009/01/18 21:34:32 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: parse.c,v 1.25 2009/01/17 23:24:30 hans Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -216,7 +217,7 @@ rewrite(FS *fs)
 	PR *pr, **nextpr;
 	FU *fu;
 	char *p1, *p2;
-	char savech, *fmtp, cs[4];
+	char savech, *fmtp, cs[sizeof(PRId64)];
 	int nconv, prec;
 
 	prec = 0;
@@ -287,10 +288,26 @@ rewrite(FS *fs)
 				goto isint;
 			case 'o': case 'u': case 'x': case 'X':
 				pr->flags = F_UINT;
-isint:				cs[3] = '\0';
-				cs[2] = cs[0];
-				cs[1] = 'l';
-				cs[0] = 'l';
+isint:
+				/*
+				 * Regardless of pr->bcnt, all integer
+				 * values are cast to [u]int64_t before
+				 * being printed by display().  We
+				 * therefore need to use PRI?64 as the
+				 * format, where '?' could actually
+				 * be any of [diouxX].  We make the
+				 * assumption (not guaranteed by the
+				 * C99 standard) that we can derive
+				 * all the other PRI?64 values from
+				 * PRId64 simply by changing the last
+				 * character.  For example, if PRId64 is
+				 * "lld" or "qd", and cs[0] is 'o', then
+				 * we end up with "llo" or "qo".
+				 */
+				savech = cs[0];
+				strncpy(cs, PRId64, sizeof(PRId64) - 2);
+				cs[sizeof(PRId64) - 2] = savech;
+				cs[sizeof(PRId64) - 1] = '\0';
 				switch(fu->bcnt) {
 				case 0: case 4:
 					pr->bcnt = 4;
@@ -348,10 +365,14 @@ isint:				cs[3] = '\0';
 					++p2;
 					switch(p1[2]) {
 					case 'd': case 'o': case'x':
-						cs[0] = 'l';
-						cs[1] = 'l';
-						cs[2] = p1[2];
-						cs[3] = '\0';
+						/*
+						 * See comments above for
+						 * the way we use PRId64.
+						 */
+						strncpy(cs, PRId64,
+							sizeof(PRId64) - 2);
+						cs[sizeof(PRId64) - 2] = p1[2];
+						cs[sizeof(PRId64) - 1] = '\0';
 						break;
 					default:
 						p1[3] = '\0';
