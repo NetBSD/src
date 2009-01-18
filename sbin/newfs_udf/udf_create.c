@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.13 2009/01/18 00:18:41 lukem Exp $ */
+/* $NetBSD: udf_create.c,v 1.14 2009/01/18 00:21:09 lukem Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.13 2009/01/18 00:18:41 lukem Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.14 2009/01/18 00:21:09 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -310,7 +310,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 		printf("\tsparable\t\t%d\n", layout.sparable_area);
 	}
 	printf("\tpartion start lba\t%d\n", layout.part_start_lba);
-	printf("\tpartition size\t\t%d Kb, %d Mb\n",
+	printf("\tpartition size\t\t%d KiB, %d MiB\n",
 		(layout.part_size_lba * sector_size) / 1024,
 		(layout.part_size_lba * sector_size) / (1024*1024));
 	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
@@ -320,7 +320,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 	if (format_flags & FORMAT_META) {
 		printf("\tmeta blockingnr\t\t%d\n", layout.meta_blockingnr);
 		printf("\tmeta alignment\t\t%d\n",  layout.meta_alignment);
-		printf("\tmeta size\t\t%d Kb, %d Mb\n",
+		printf("\tmeta size\t\t%d KiB, %d MiB\n",
 			(layout.meta_part_size_lba * sector_size) / 1024,
 			(layout.meta_part_size_lba * sector_size) / (1024*1024));
 		printf("\tmeta file\t\t%d\n", layout.meta_file);
@@ -335,11 +335,11 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 #endif
 
 	kbsize = (uint64_t) last_lba * sector_size;
-	printf("Total space on this medium aprox. %"PRIu64" Kb, %"PRIu64" Mb\n",
+	printf("Total space on this medium aprox. %"PRIu64" KiB, %"PRIu64" MiB\n",
 			kbsize/1024, kbsize/(1024*1024));
 	kbsize = (uint64_t) (layout.part_size_lba - layout.alloc_bitmap_dscr_size
 		- layout.meta_bitmap_dscr_size) * sector_size;
-	printf("Free space on this volume aprox.  %"PRIu64" Kb, %"PRIu64" Mb\n\n",
+	printf("Free space on this volume aprox.  %"PRIu64" KiB, %"PRIu64" MiB\n\n",
 			kbsize/1024, kbsize/(1024*1024));
 
 	return 0;
