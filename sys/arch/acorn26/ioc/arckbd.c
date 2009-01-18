@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.14 2009/01/18 23:23:40 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.15 2009/01/18 23:25:12 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.14 2009/01/18 23:23:40 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.15 2009/01/18 23:25:12 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -421,8 +421,7 @@ arckbd_pollc(void *cookie, int poll)
 #endif
 
 static int
-arckbd_send(device_t self, int data, enum arckbd_state newstate,
-    int waitok)
+arckbd_send(device_t self, int data, enum arckbd_state newstate, int waitok)
 {
 	struct arckbd_softc *sc = device_private(self);
 	int s, res;
@@ -741,8 +740,7 @@ arcmouse_enable(void *cookie)
 
 /* ARGSUSED */
 static int
-arcmouse_ioctl(void *cookie, u_long cmd, void *data, int flag,
-    struct lwp *l)
+arcmouse_ioctl(void *cookie, u_long cmd, void *data, int flag, struct lwp *l)
 {
 /*	struct arckbd_softc *sc = cookie; */
 
