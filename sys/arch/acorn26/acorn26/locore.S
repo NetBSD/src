@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.17 2009/01/16 00:13:25 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.18 2009/01/18 01:17:07 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -162,7 +162,7 @@ pull_trapframe:
 	ldr	lr, [sp, #TF_R15]	/* Pull return address and PSR */
 	tst	lr, #R15_MODE		/* Was trap in USR mode? */
 	bne	3f			/* If not, return */
-	ldr	r4, Lastpending
+	ldr	r4, =_C_LABEL(cpu_info_store) + CI_ASTPENDING
 1:
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
 	ldr	r1, [r4]
@@ -183,8 +183,6 @@ pull_trapframe:
 	add	sp, sp, #(TF_SIZE-TF_R0)	/* Adjust SP */
 	movs	pc, lr			
 
-Lastpending:
-	.word	_C_LABEL(cpu_info_store) + CI_ASTPENDING
 	.global	reset_entry
 reset_entry:
 	mov	ip, sp
@@ -276,7 +274,7 @@ Lirq_from_usr:
 	mov	fp, #0			/* This is the top of the stack */
 	bl	_C_LABEL(irq_handler)
 
-	ldr	r1, Lastpending
+	ldr	r1, =_C_LABEL(cpu_info_store) + CI_ASTPENDING
 	ldr	r0, [r1]
 	cmp	r0, #0
 	bne	Lirq_to_ast
@@ -422,4 +420,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.17 2009/01/16 00:13:25 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.18 2009/01/18 01:17:07 bjh21 Exp $")
