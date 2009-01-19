@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.36 2009/01/13 13:35:53 yamt Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.37 2009/01/19 19:15:07 mjf Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.36 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.37 2009/01/19 19:15:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.36 2009/01/13 13:35:53 yamt Exp $");
 #include <sys/bufq.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/sid.h>
@@ -112,6 +113,20 @@ CFATTACH_DECL(mscpbus, sizeof(struct mscp_softc),
 #define	WRITE_SW(x)	bus_space_write_2(mi->mi_iot, mi->mi_swh, 0, (x))
 
 struct	mscp slavereply;
+
+#define NITEMS		4
+
+static inline void
+mscp_free_workitems(struct mscp_softc *mi)
+{
+	struct mscp_work *mw;
+
+	while (!SLIST_EMPTY(&mi->mi_freelist)) {
+		mw = SLIST_FIRST(&mi->mi_freelist);
+		SLIST_REMOVE_HEAD(&mi->mi_freelist, mw_list);
+		kmem_free(mw, sizeof(*mw));
+	}
+}
 
 /*
  * This function is for delay during init. Some MSCP clone card (Dilog)
@@ -170,7 +185,7 @@ mscp_attach(parent, self, aux)
 	struct mscp *mp2;
 	volatile struct mscp *mp;
 	volatile int i;
-	int	timeout, next = 0;
+	int	timeout, error, next = 0;
 
 	mi->mi_mc = ma->ma_mc;
 	mi->mi_me = NULL;
@@ -186,6 +201,31 @@ mscp_attach(parent, self, aux)
 	mi->mi_adapnr = ma->ma_adapnr;
 	mi->mi_ctlrnr = ma->ma_ctlrnr;
 	*ma->ma_softc = mi;
+
+	mutex_init(&mi->mi_mtx, MUTEX_DEFAULT, IPL_VM);
+	SLIST_INIT(&mi->mi_freelist);
+
+	error = workqueue_create(&mi->mi_wq, "mscp_wq", mscp_worker, NULL,
+	    PRI_NONE, IPL_VM, 0);
+	if (error != 0) {
+		aprint_error_dev(&mi->mi_dev, "could not create workqueue");
+		return;
+	}
+
+	/* Stick some items on the free list to be used in autoconf */
+	for (i = 0; i < NITEMS; i++) {
+		struct mscp_work *mw;
+
+		if ((mw = kmem_zalloc(sizeof(*mw), KM_SLEEP)) == NULL) {
+			mscp_free_workitems(mi);
+			aprint_error_dev(&mi->mi_dev,
+			    "failed to allocate memory for work items");
+			return;
+		}
+	
+		SLIST_INSERT_HEAD(&mi->mi_freelist, mw, mw_list);
+	}
+
 	/*
 	 * Go out to init the bus, so that we can give commands
 	 * to its devices.
