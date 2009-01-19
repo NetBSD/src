@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.13 2009/01/07 23:14:40 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.14 2009/01/19 23:09:22 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.13 2009/01/07 23:14:40 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.14 2009/01/19 23:09:22 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,7 +86,7 @@ static int arcvideo_load_font(void *cookie, void *scookie,
 static void arccons_8bpp_hack(struct rasops_info *ri);
 
 struct arcvideo_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	paddr_t			sc_screenmem_base;
 	struct arcvideo_mode	sc_current_mode;
 	u_int32_t		sc_vidc_ctl;
@@ -96,7 +96,7 @@ struct arcvideo_softc {
 #define AV_VIDEO_ON	0x01
 };
 
-CFATTACH_DECL(arcvideo, sizeof(struct arcvideo_softc),
+CFATTACH_DECL_NEW(arcvideo, sizeof(struct arcvideo_softc),
     arcvideo_match, arcvideo_attach, NULL, NULL);
 
 device_t the_arcvideo;
@@ -130,9 +130,9 @@ arcvideo_attach(device_t parent, device_t self, void *aux)
 	const struct wsscreen_descr *screenp;
 	struct arcvideo_softc *sc = device_private(self);
 
-	the_arcvideo = self;
+	sc->sc_dev = the_arcvideo = self;
 	if (!arcvideo_isconsole) {
-		printf(": Not console -- I can't cope with this!\n");
+		aprint_error(": Not console -- I can't cope with this!\n");
 		return;
 	}
 
@@ -142,7 +142,7 @@ arcvideo_attach(device_t parent, device_t self, void *aux)
 
 	/* Find IRQ */
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    device_xname(&sc->sc_dev), "vsync intr");
+	    device_xname(sc->sc_dev), "vsync intr");
 	sc->sc_irq = irq_establish(IOC_IRQ_IR, IPL_TTY, arcvideo_intr, self,
 	    &sc->sc_intrcnt);
 	aprint_verbose(": VSYNC interrupts at %s", irq_string(sc->sc_irq));
