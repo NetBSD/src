@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.22 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: sysv_ipc_50.c,v 1.1 2009/01/19 19:39:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,10 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.22 2009/01/19 19:39:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.1 2009/01/19 19:39:41 christos Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -57,6 +60,15 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.22 2009/01/19 19:39:41 christos Exp $
 
 #ifdef COMPAT_50
 #include <compat/sys/ipc.h>
+#ifdef SYSVMSG
+#include <compat/sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <compat/sys/sem.h>
+#endif
+#ifdef SYSVSHM
+#include <compat/sys/shm.h>
+#endif
 #endif
 
 /*
@@ -64,63 +76,18 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.22 2009/01/19 19:39:41 christos Exp $
  */
 
 int
-ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
-{
-	mode_t mask;
-	int ismember = 0;
-
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
-		return (0);
-
-	if (mode == IPC_M) {
-		if (kauth_cred_geteuid(cred) == perm->uid ||
-		    kauth_cred_geteuid(cred) == perm->cuid)
-			return (0);
-		return (EPERM);
-	}
-
-	mask = 0;
-
-	if (kauth_cred_geteuid(cred) == perm->uid ||
-	    kauth_cred_geteuid(cred) == perm->cuid) {
-		if (mode & IPC_R)
-			mask |= S_IRUSR;
-		if (mode & IPC_W)
-			mask |= S_IWUSR;
-		return ((perm->mode & mask) == mask ? 0 : EACCES);
-	}
-
-	if (kauth_cred_getegid(cred) == perm->gid ||
-	    (kauth_cred_ismember_gid(cred, perm->gid, &ismember) == 0 && ismember) ||
-	    kauth_cred_getegid(cred) == perm->cgid ||
-	    (kauth_cred_ismember_gid(cred, perm->cgid, &ismember) == 0 && ismember)) {
-		if (mode & IPC_R)
-			mask |= S_IRGRP;
-		if (mode & IPC_W)
-			mask |= S_IWGRP;
-		return ((perm->mode & mask) == mask ? 0 : EACCES);
-	}
-
-	if (mode & IPC_R)
-		mask |= S_IROTH;
-	if (mode & IPC_W)
-		mask |= S_IWOTH;
-	return ((perm->mode & mask) == mask ? 0 : EACCES);
-}
-
-static int
-sysctl_kern_sysvipc(SYSCTLFN_ARGS)
+sysctl_kern_sysvipc50(SYSCTLFN_ARGS)
 {
 	void *where = oldp;
 	size_t *sizep = oldlenp;
 #ifdef SYSVMSG
-	struct msg_sysctl_info *msgsi = NULL;
+	struct msg_sysctl_info50 *msgsi = NULL;
 #endif
 #ifdef SYSVSEM
-	struct sem_sysctl_info *semsi = NULL;
+	struct sem_sysctl_info50 *semsi = NULL;
 #endif
 #ifdef SYSVSHM
-	struct shm_sysctl_info *shmsi = NULL;
+	struct shm_sysctl_info50 *shmsi = NULL;
 #endif
 	size_t infosize, dssize, tsize, buflen;
 	void *bf = NULL;
@@ -128,16 +95,6 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 	int32_t nds;
 	int i, error, ret;
 
-#ifdef COMPAT_50
-	switch ((error = sysctl_kern_sysvipc50(SYSCTLFN_CALL(rnode)))) {
-	case 0:
-		return 0;
-	case EPASSTHROUGH:
-		break;
-	default:
-		return error;
-	}
-#endif
 	if (namelen != 1)
 		return EINVAL;
 
@@ -145,7 +102,7 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 	buflen = *sizep;
 
 	switch (*name) {
-	case KERN_SYSVIPC_MSG_INFO:
+	case KERN_SYSVIPC_OMSG_INFO:
 #ifdef SYSVMSG
 		infosize = sizeof(msgsi->msginfo);
 		nds = msginfo.msgmni;
@@ -154,7 +111,7 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 #else
 		return EINVAL;
 #endif
-	case KERN_SYSVIPC_SEM_INFO:
+	case KERN_SYSVIPC_OSEM_INFO:
 #ifdef SYSVSEM
 		infosize = sizeof(semsi->seminfo);
 		nds = seminfo.semmni;
@@ -163,7 +120,7 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 #else
 		return EINVAL;
 #endif
-	case KERN_SYSVIPC_SHM_INFO:
+	case KERN_SYSVIPC_OSHM_INFO:
 #ifdef SYSVSHM
 		infosize = sizeof(shmsi->shminfo);
 		nds = shminfo.shmmni;
@@ -173,7 +130,7 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 		return EINVAL;
 #endif
 	default:
-		return EINVAL;
+		return EPASSTHROUGH;
 	}
 	/*
 	 * Round infosize to 64 bit boundary if requesting more than just
@@ -198,20 +155,20 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 
 	switch (*name) {
 #ifdef SYSVMSG
-	case KERN_SYSVIPC_MSG_INFO:
-		msgsi = (struct msg_sysctl_info *)bf;
+	case KERN_SYSVIPC_OMSG_INFO:
+		msgsi = (struct msg_sysctl_info50 *)bf;
 		msgsi->msginfo = msginfo;
 		break;
 #endif
 #ifdef SYSVSEM
-	case KERN_SYSVIPC_SEM_INFO:
-		semsi = (struct sem_sysctl_info *)bf;
+	case KERN_SYSVIPC_OSEM_INFO:
+		semsi = (struct sem_sysctl_info50 *)bf;
 		semsi->seminfo = seminfo;
 		break;
 #endif
 #ifdef SYSVSHM
-	case KERN_SYSVIPC_SHM_INFO:
-		shmsi = (struct shm_sysctl_info *)bf;
+	case KERN_SYSVIPC_OSHM_INFO:
+		shmsi = (struct shm_sysctl_info50 *)bf;
 		shmsi->shminfo = shminfo;
 		break;
 #endif
@@ -228,19 +185,19 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 			}
 			switch (*name) {
 #ifdef SYSVMSG
-			case KERN_SYSVIPC_MSG_INFO:
+			case KERN_SYSVIPC_OMSG_INFO:
 				mutex_enter(&msgmutex);
 				SYSCTL_FILL_MSG(msqs[i].msq_u, msgsi->msgids[i]);
 				mutex_exit(&msgmutex);
 				break;
 #endif
 #ifdef SYSVSEM
-			case KERN_SYSVIPC_SEM_INFO:
+			case KERN_SYSVIPC_OSEM_INFO:
 				SYSCTL_FILL_SEM(sema[i], semsi->semids[i]);
 				break;
 #endif
 #ifdef SYSVSHM
-			case KERN_SYSVIPC_SHM_INFO:
+			case KERN_SYSVIPC_OSHM_INFO:
 				SYSCTL_FILL_SHM(shmsegs[i], shmsi->shmids[i]);
 				break;
 #endif
@@ -256,27 +213,4 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 	if (bf)
 		free(bf, M_TEMP);
 	return error;
-}
-
-SYSCTL_SETUP(sysctl_ipc_setup, "sysctl kern.ipc subtree setup")
-{
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "ipc",
-		SYSCTL_DESCR("SysV IPC options"),
-		NULL, 0, NULL, 0,
-		CTL_KERN, KERN_SYSVIPC, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_STRUCT, "sysvipc_info",
-		SYSCTL_DESCR("System V style IPC information"),
-		sysctl_kern_sysvipc, 0, NULL, 0,
-		CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_INFO, CTL_EOL);
 }

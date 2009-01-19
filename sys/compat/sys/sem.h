@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.5 2009/01/11 02:45:50 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.6 2009/01/19 19:39:41 christos Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -36,6 +36,22 @@ struct semid_ds13 {
 	 */
 	struct __sem	*_sem_base;	/* pointer to first semaphore in set */
 };
+
+/* Warning: 64-bit structure padding is needed here */
+struct semid_ds_sysctl50 {
+	struct	ipc_perm_sysctl sem_perm;
+	int16_t	sem_nsems;
+	int16_t	pad2;
+	int32_t	pad3;
+	int32_t	sem_otime;
+	int32_t	sem_ctime;
+};
+
+struct sem_sysctl_info50 {
+	struct	seminfo seminfo;
+	struct	semid_ds_sysctl50 semids[1];
+};
+
 __BEGIN_DECLS
 static __inline void	__semid_ds14_to_native(const struct semid_ds14 *, struct semid_ds *);
 static __inline void	__native_to_semid_ds14(const struct semid_ds *, struct semid_ds14 *);
