@@ -1,6 +1,6 @@
-# $NetBSD: t_factor.sh,v 1.3 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_factor.sh,v 1.4 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 
 expect() {
 	echo "${2}" >expout
-	atf_check "factor ${1}" 0 expout null
+	atf_check -s eq:0 -o file:expout -e empty factor ${1}
 }
 
 atf_test_case overflow

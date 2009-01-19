@@ -1,6 +1,6 @@
-# $NetBSD: t_vnd.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_vnd.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -36,13 +36,14 @@ basic_head() {
 basic_body() {
 	test_mount
 
-	atf_check 'dd if=/dev/zero of=disk.img bs=1m count=10' 0 ignore ignore
-	atf_check 'vnconfig /dev/vnd3 disk.img' 0 null null
+	atf_check -s eq:0 -o ignore -e ignore \
+	    dd if=/dev/zero of=disk.img bs=1m count=10
+	atf_check -s eq:0 -o empty -e empty vnconfig /dev/vnd3 disk.img
 
-	atf_check 'newfs /dev/rvnd3a' 0 ignore ignore
+	atf_check -s eq:0 -o ignore -e ignore newfs /dev/rvnd3a
 
-	atf_check 'mkdir mnt' 0 null null
-	atf_check 'mount /dev/vnd3a mnt' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir mnt
+	atf_check -s eq:0 -o empty -e empty mount /dev/vnd3a mnt
 
 	echo "Creating test files"
 	for f in $(jot 100); do
@@ -56,8 +57,8 @@ basic_body() {
 		    atf_fail "Invalid checksum for file ${f}"
 	done
 
-	atf_check 'umount mnt' 0 null null
-	atf_check 'vnconfig -u /dev/vnd3' 0 null null
+	atf_check -s eq:0 -o empty -e empty umount mnt
+	atf_check -s eq:0 -o empty -e empty vnconfig -u /dev/vnd3
 
 	test_unmount
 }

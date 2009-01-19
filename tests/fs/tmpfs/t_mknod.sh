@@ -1,6 +1,6 @@
-# $NetBSD: t_mknod.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_mknod.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ block_body() {
 	test_mount
 	umask 022
 
-	atf_check 'mknod fd0a b 2 0' 0 null null
+	atf_check -s eq:0 -o empty -e empty mknod fd0a b 2 0
 	eval $(stat -s fd0a)
 	[ ${st_mode} = 060644 ] || atf_fail "Invalid mode"
 	[ ${st_rdev} -eq 512 ] || atf_fail "Invalid device"
@@ -56,7 +56,7 @@ block_kqueue_body() {
 	test_mount
 	umask 022
 
-	atf_check 'mkdir dir' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir dir
 	echo 'mknod dir/fd0a b 2 0' | kqueue_monitor 1 dir
 	kqueue_check dir NOTE_WRITE
 
@@ -72,7 +72,7 @@ char_body() {
 	test_mount
 	umask 022
 
-	atf_check 'mknod null c 2 2' 0 null null
+	atf_check -s eq:0 -o empty -e empty mknod null c 2 2
 	eval $(stat -s null)
 	[ ${st_mode} = 020644 ] || atf_fail "Invalid mode"
 	[ ${st_rdev} -eq 514 ] || atf_fail "Invalid device"
@@ -90,7 +90,7 @@ char_kqueue_body() {
 	test_mount
 	umask 022
 
-	atf_check 'mkdir dir' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir dir
 	echo 'mknod dir/null c 2 2' | kqueue_monitor 1 dir
 	kqueue_check dir NOTE_WRITE
 
@@ -106,7 +106,7 @@ pipe_body() {
 	test_mount
 	umask 022
 
-	atf_check 'mknod pipe p' 0 null null
+	atf_check -s eq:0 -o empty -e empty mknod pipe p
 	eval $(stat -s pipe)
 	[ ${st_mode} = 010644 ] || atf_fail "Invalid mode"
 
@@ -123,7 +123,7 @@ pipe_kqueue_body() {
 	test_mount
 	umask 022
 
-	atf_check 'mkdir dir' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir dir
 	echo 'mknod dir/pipe p' | kqueue_monitor 1 dir
 	kqueue_check dir NOTE_WRITE
 

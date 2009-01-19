@@ -1,6 +1,6 @@
-# $NetBSD: t_create.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_create.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,9 @@ create_head() {
 create_body() {
 	test_mount
 
-	atf_check 'test -f a' 1 null null
-	atf_check 'touch a' 0 null null
-	atf_check 'test -f a' 0 null null
+	atf_check -s eq:1 -o empty -e empty test -f a
+	atf_check -s eq:0 -o empty -e empty touch a
+	atf_check -s eq:0 -o empty -e empty test -f a
 
 	test_unmount
 }
@@ -58,9 +58,9 @@ attrs_body() {
 	test_mount
 
 	umask 022
-	atf_check 'test -f a' 1 null null
-	atf_check 'touch a' 0 null null
-	atf_check 'test -f a' 0 null null
+	atf_check -s eq:1 -o empty -e empty test -f a
+	atf_check -s eq:0 -o empty -e empty touch a
+	atf_check -s eq:0 -o empty -e empty test -f a
 
 	eval $(stat -s . | sed -e 's|st_|dst_|g')
 	eval $(stat -s a)
@@ -72,14 +72,14 @@ attrs_body() {
 
 	user=$(atf_config_get unprivileged-user)
 
-	atf_check 'mkdir b c' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir b c
 
-	atf_check "chown ${user}:0 b" 0 null null
+	atf_check -s eq:0 -o empty -e empty chown ${user}:0 b
 	eval $(stat -s b)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 0 ] || atf_fail "Incorrect group"
 
-	atf_check "chown ${user}:100 c" 0 null null
+	atf_check -s eq:0 -o empty -e empty chown ${user}:100 c
 	eval $(stat -s c)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 100 ] || atf_fail "Incorrect group"
@@ -106,7 +106,7 @@ kqueue_head() {
 kqueue_body() {
 	test_mount
 
-	atf_check 'mkdir dir' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir dir
 	echo 'touch dir/a' | kqueue_monitor 1 dir
 	kqueue_check dir NOTE_WRITE
 

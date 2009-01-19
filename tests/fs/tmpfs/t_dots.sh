@@ -1,6 +1,6 @@
-# $NetBSD: t_dots.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_dots.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,9 @@ topdir_head() {
 topdir_body() {
 	test_mount
 
-	atf_check 'mkdir a' 0 null null
-	atf_check 'test -d ./a' 0 null null
-	atf_check 'test -d a/../a' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir a
+	atf_check -s eq:0 -o empty -e empty test -d ./a
+	atf_check -s eq:0 -o empty -e empty test -d a/../a
 
 	test_unmount
 }
@@ -50,10 +50,10 @@ nesteddir_head() {
 nesteddir_body() {
 	test_mount
 
-	atf_check 'mkdir a' 0 null null
-	atf_check 'mkdir a/b' 0 null null
-	atf_check 'test -d a/b/../b' 0 null null
-	atf_check 'test -d a/b/../../a' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir a
+	atf_check -s eq:0 -o empty -e empty mkdir a/b
+	atf_check -s eq:0 -o empty -e empty test -d a/b/../b
+	atf_check -s eq:0 -o empty -e empty test -d a/b/../../a
 
 	test_unmount
 }

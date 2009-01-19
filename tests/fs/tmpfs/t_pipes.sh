@@ -1,6 +1,6 @@
-# $NetBSD: t_pipes.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_pipes.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@ basic_body() {
 
 	umask 022
 
-	atf_check 'mknod pipe p' 0 null null
+	atf_check -s eq:0 -o empty -e empty mknod pipe p
 
 	echo "Writing to pipe and waiting for response"
 	echo -n foo >pipe &

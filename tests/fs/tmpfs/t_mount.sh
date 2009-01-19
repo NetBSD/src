@@ -1,4 +1,4 @@
-# $NetBSD: t_mount.sh,v 1.3 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_mount.sh,v 1.4 2009/01/19 07:15:46 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -104,10 +104,10 @@ large_body() {
 	test_unmount
 
 	mkdir tmp
-	atf_check "mount -t tmpfs -o -s9223372036854775808 tmpfs \
-	    tmp" 1 null ignore
-	atf_check "mount -t tmpfs -o -s9223372036854775808g tmpfs \
-	    tmp" 1 null ignore
+	atf_check -s eq:1 -o empty -e ignore \
+	    mount -t tmpfs -o -s9223372036854775808 tmpfs tmp
+	atf_check -s eq:1 -o empty -e ignore \
+	    mount -t tmpfs -o -s9223372036854775808g tmpfs tmp
 	rmdir tmp
 }
 
@@ -119,12 +119,12 @@ mntpt_head() {
 }
 mntpt_body() {
 	mount_tmpfs unused $(pwd)/mnt >out 2>&1
-	atf_check "grep unused out" 1 null null
-	atf_check "grep '$(pwd)/mnt' out" 0 ignore null
+	atf_check -s eq:1 -o empty -e empty grep unused out
+	atf_check -s eq:0 -o ignore -e empty grep "$(pwd)/mnt" out
 
 	mount_tmpfs unused mnt >out 2>&1
-	atf_check "grep unused out" 1 null null
-	atf_check "grep mnt out" 0 ignore null
+	atf_check -s eq:1 -o empty -e empty grep unused out
+	atf_check -s eq:0 -o ignore -e empty grep mnt out
 }
 
 atf_init_test_cases() {
