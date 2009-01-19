@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.277 2008/12/17 20:51:37 cegger Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.278 2009/01/19 02:27:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,9 +91,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.277 2008/12/17 20:51:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.278 2009/01/19 02:27:57 christos Exp $");
 
 #include "opt_inet.h"
+#include "opt_compat_netbsd.h"
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -171,6 +172,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.277 2008/12/17 20:51:37 cegger Exp $"
 #endif
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
+#endif
+
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#include <compat/sys/socket.h>
 #endif
 
 /*
@@ -2051,10 +2057,22 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
     struct mbuf *m)
 {
 
-	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
+	if (inp->inp_socket->so_options & SO_TIMESTAMP 
+#ifdef SO_OTIMESTAMP
+	    || inp->inp_socket->so_options & SO_OTIMESTAMP 
+#endif
+	    ) {
 		struct timeval tv;
 
 		microtime(&tv);
+#ifdef SO_OTIMESTAMP
+		if (inp->inp_socket->so_options & SO_OTIMESTAMP) {
+			struct timeval50 tv50;
+			timeval_to_timeval50(&tv, &tv50);
+			*mp = sbcreatecontrol((void *) &tv50, sizeof(tv50),
+			    SCM_OTIMESTAMP, SOL_SOCKET);
+		} else
+#endif
 		*mp = sbcreatecontrol((void *) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)

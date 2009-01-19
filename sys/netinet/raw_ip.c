@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.108 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.109 2009/01/19 02:27:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,9 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.108 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.109 2009/01/19 02:27:57 christos Exp $");
 
 #include "opt_inet.h"
+#include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
@@ -106,6 +107,10 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.108 2008/08/06 15:01:23 plunky Exp $");
 #include <netipsec/ipsec_private.h>
 #endif	/* FAST_IPSEC */
 
+#ifdef COMPAT_50
+#include <compat/sys/socket.h>
+#endif
+
 struct inpcbtable rawcbtable;
 
 int	 rip_pcbnotify(struct inpcbtable *, struct in_addr,
@@ -140,8 +145,11 @@ rip_sbappendaddr(struct inpcb *last, struct ip *ip, const struct sockaddr *sa,
 {
 	if (last->inp_flags & INP_NOHEADER)
 		m_adj(n, hlen);
-	if (last->inp_flags & INP_CONTROLOPTS ||
-	    last->inp_socket->so_options & SO_TIMESTAMP)
+	if (last->inp_flags & INP_CONTROLOPTS 
+#ifdef SO_OTIMESTAMP
+	    || last->inp_socket->so_options & SO_OTIMESTAMP
+#endif
+	    || last->inp_socket->so_options & SO_TIMESTAMP)
 		ip_savecontrol(last, &opts, ip, n);
 	if (sbappendaddr(&last->inp_socket->so_rcv, sa, n, opts) == 0) {
 		/* should notify about lost packet */

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.10 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: socket.h,v 1.11 2009/01/19 02:27:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -71,6 +71,12 @@ struct omsghdr {
 };
 
 #ifdef _KERNEL
+
+#define	SO_OSNDTIMEO	0x1005
+#define	SO_ORCVTIMEO	0x1006
+#define	SO_OTIMESTAMP	0x0400
+#define	SCM_OTIMESTAMP	0x2
+
 __BEGIN_DECLS
 struct socket;
 struct proc;
