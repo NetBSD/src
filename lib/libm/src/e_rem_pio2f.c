@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_rem_pio2f.c,v 1.8 2002/05/26 22:01:52 wiz Exp $");
+__RCSID("$NetBSD: e_rem_pio2f.c,v 1.9 2009/01/19 06:00:30 lukem Exp $");
 #endif
 
 /* __ieee754_rem_pio2f(x,y)
@@ -130,7 +130,7 @@ __ieee754_rem_pio2f(float x, float *y)
 	    fn = (float)n;
 	    r  = t-fn*pio2_1;
 	    w  = fn*pio2_1t;	/* 1st round good to 40 bit */
-	    if(n<32&&(ix&0xffffff00)!=npio2_hw[n-1]) {
+	    if(n<32&&(int32_t)(ix&0xffffff00)!=npio2_hw[n-1]) {
 		y[0] = r-w;	/* quick check no cancellation */
 	    } else {
 	        u_int32_t high;
