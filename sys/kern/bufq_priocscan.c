@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.13 2009/01/16 01:44:27 yamt Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.14 2009/01/19 14:54:28 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009 YAMAMOTO Takashi,
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.13 2009/01/16 01:44:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.14 2009/01/19 14:54:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 /*
  * Cyclical scan (CSCAN)
@@ -307,6 +307,14 @@ bufq_priocscan_cancel(struct bufq_state *bufq, struct buf *bp)
 }
 
 static void
+bufq_priocscan_fini(struct bufq_state *bufq)
+{
+
+	KASSERT(bufq->bq_private != NULL);
+	kmem_free(bufq->bq_private, sizeof(struct bufq_priocscan));
+}
+
+static void
 bufq_priocscan_init(struct bufq_state *bufq)
 {
 	struct bufq_priocscan *q;
@@ -315,8 +323,8 @@ bufq_priocscan_init(struct bufq_state *bufq)
 	bufq->bq_get = bufq_priocscan_get;
 	bufq->bq_put = bufq_priocscan_put;
 	bufq->bq_cancel = bufq_priocscan_cancel;
-	bufq->bq_private = malloc(sizeof(struct bufq_priocscan),
-	    M_DEVBUF, M_ZERO);
+	bufq->bq_fini = bufq_priocscan_fini;
+	bufq->bq_private = kmem_zalloc(sizeof(struct bufq_priocscan), KM_SLEEP);
 
 	q = bufq->bq_private;
 	for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {

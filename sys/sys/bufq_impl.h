@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_impl.h,v 1.7 2008/04/30 12:09:02 reinoud Exp $	*/
+/*	$NetBSD: bufq_impl.h,v 1.8 2009/01/19 14:54:28 yamt Exp $	*/
 /*	NetBSD: bufq.h,v 1.3 2005/03/31 11:28:53 yamt Exp	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
@@ -81,6 +81,7 @@ struct bufq_state {
 	void (*bq_put)(struct bufq_state *, struct buf *);
 	struct buf *(*bq_get)(struct bufq_state *, int);
 	struct buf *(*bq_cancel)(struct bufq_state *, struct buf *);
+	void (*bq_fini)(struct bufq_state *);
 	void *bq_private;
 	int bq_flags;			/* Flags from bufq_alloc() */
 	const struct bufq_strat *bq_strat;
