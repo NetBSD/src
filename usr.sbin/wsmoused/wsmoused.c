@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.24 2009/01/13 18:09:19 christos Exp $ */
+/* $NetBSD: wsmoused.c,v 1.25 2009/01/19 00:53:15 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: wsmoused.c,v 1.24 2009/01/13 18:09:19 christos Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.25 2009/01/19 00:53:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -249,6 +249,7 @@ init_mouse(void)
 static void
 open_device(unsigned int secs)
 {
+	int version = WSMOUSE_EVENT_VERSION;
 
 	if (Mouse.m_devfd != -1)
 		return;
@@ -260,8 +261,7 @@ open_device(unsigned int secs)
 	if (Mouse.m_devfd == -1)
 		log_err(EXIT_FAILURE, "cannot open %s", Mouse.m_devname);
 
-	if (ioctl(Mouse.m_devfd, WSMOUSEIO_SETVERSION, WSMOUSE_EVENT_VERSION)
-	    == -1)
+	if (ioctl(Mouse.m_devfd, WSMOUSEIO_SETVERSION, &version) == -1)
 		log_err(EXIT_FAILURE, "cannot set version %s", Mouse.m_devname);
 }
 
