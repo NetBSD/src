@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.29 2008/04/08 20:10:44 cegger Exp $	*/
+/*	$NetBSD: mscp.c,v 1.30 2009/01/19 19:15:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.29 2008/04/08 20:10:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.30 2009/01/19 19:15:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -297,11 +297,24 @@ loop:
 			break;
 
 		if (drive == 0) {
-			struct	drive_attach_args da;
+			struct mscp_work *mw;
 
-			da.da_mp = (struct mscp *)mp;
-			da.da_typ = mi->mi_type;
-			config_found(&mi->mi_dev, (void *)&da, mscp_print);
+			mutex_spin_enter(&mi->mi_mtx);
+
+			mw = SLIST_FIRST(&mi->mi_freelist);
+			if (mw == NULL) {
+				aprint_error_dev(&mi->mi_dev,
+				    "couldn't attach drive (no free items)\n");
+				mutex_spin_exit(&mi->mi_mtx);
+			} else {
+				SLIST_REMOVE_HEAD(&mi->mi_freelist, mw_list);
+				mutex_spin_exit(&mi->mi_mtx);
+
+				mw->mw_mi = mi;
+				mw->mw_mp = *mp;
+				workqueue_enqueue(mi->mi_wq,
+				    (struct work *)mw, NULL);
+			}
 		} else
 			/* Hack to avoid complaints */
 			if (!(((mp->mscp_event & M_ST_MASK) == M_ST_AVAILABLE)
@@ -469,3 +482,22 @@ mscp_requeue(mi)
 	panic("mscp_requeue");
 }
 
+void
+mscp_worker(struct work *wk, void *dummy)
+{
+	struct mscp_softc *mi;
+	struct mscp_work *mw;
+	struct	drive_attach_args da;
+
+	mw = (struct mscp_work *)wk;
+	mi = mw->mw_mi;
+
+	da.da_mp = &mw->mw_mp;
+	da.da_typ = mi->mi_type;
+
+	config_found(&mi->mi_dev, (void *)&da, mscp_print);
+
+	mutex_spin_enter(&mi->mi_mtx);
+	SLIST_INSERT_HEAD(&mw->mw_mi->mi_freelist, mw, mw_list);
+	mutex_spin_exit(&mi->mi_mtx);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.15 2007/03/04 06:02:14 christos Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.16 2009/01/19 19:15:07 mjf Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -183,6 +183,14 @@ struct	drive_attach_args {
 #define MSCP_FAILED	1		/* no go */
 #define MSCP_RESTARTED	2		/* transfer restarted */
 
+/* Work item for autoconf setup */
+struct mscp_work {
+	struct work mw_work;
+	struct mscp_softc *mw_mi;
+	struct mscp mw_mp;
+	SLIST_ENTRY(mscp_work) mw_list;
+};
+
 /*
  * Per device information.
  *
@@ -224,6 +232,9 @@ struct mscp_softc {
 	bus_space_handle_t mi_sah;	/* status & address (read part) */
 	bus_space_handle_t mi_swh;	/* status & address (write part) */
 	struct bufq_state *mi_resq;	/* While waiting for packets */
+	struct workqueue *mi_wq;	/* Autoconf workqueue */
+	kmutex_t mi_mtx;		/* Freelist mutex */
+	SLIST_HEAD(, mscp_work) mi_freelist; /* Work item freelist */
 };
 
 /* mi_flags */
@@ -280,3 +291,4 @@ void	mscp_printtype(int, int);
 int	mscp_waitstep(struct mscp_softc *, int, int);
 void	mscp_dgo(struct mscp_softc *, struct mscp_xi *);
 void	mscp_intr(struct mscp_softc *);
+void	mscp_worker(struct work *, void *);
