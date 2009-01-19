@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2008/12/08 12:39:04 pooka Exp $
+# $NetBSD: Makefile,v 1.11 2009/01/19 07:08:14 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,10 +6,6 @@ SUBDIR=	fs games net util
 
 .if ${MACHINE} != "evbppc"
 SUBDIR+= modules
-.endif
-
-.if ${MKATF} != "no"
-SUBDIR+= atf
 .endif
 
 TESTSDIR=	${TESTSBASE}

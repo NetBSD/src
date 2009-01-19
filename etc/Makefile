@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.362 2008/12/05 18:52:59 cube Exp $
+#	$NetBSD: Makefile,v 1.363 2009/01/19 07:08:27 jmmv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -338,7 +338,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
 	    	/dev/null ${DESTDIR}${file}
 .endfor
-.for subdir in . atf defaults bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
+.for subdir in . defaults bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/dhcpcd/sbin/dhcpcd configinstall
@@ -351,6 +351,9 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 .endif
 .if (${MKPOSTFIX} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix configinstall
+.endif
+.if (${MKATF} != "no")
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/atf/etc/atf configinstall
 .endif
 
 
