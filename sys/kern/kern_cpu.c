@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.39 2008/12/07 11:40:53 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.40 2009/01/19 17:39:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.39 2008/12/07 11:40:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.40 2009/01/19 17:39:02 christos Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.39 2008/12/07 11:40:53 ad Exp $");
 #include <sys/callout.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef COMPAT_50
+#include <compat/sys/cpuio.h>
+#endif
 
 void	cpuctlattach(int);
 
@@ -157,8 +163,20 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 
 	mutex_enter(&cpu_lock);
 	switch (cmd) {
+#ifdef IOC_CPU_OSETSTATE
+		cpustate_t csb;
+
+	case IOC_CPU_OSETSTATE: {
+		cpustate50_t *ocs = data;
+		cpustate50_to_cpustate(ocs, &csb);
+		cs = &csb;
+		error = 1;
+		/*FALLTHROUGH*/
+	}
+#endif
 	case IOC_CPU_SETSTATE:
-		cs = data;
+		if (error == 0)
+			cs = data;
 		error = kauth_authorize_system(l->l_cred,
 		    KAUTH_SYSTEM_CPU, KAUTH_REQ_SYSTEM_CPU_SETSTATE, cs, NULL,
 		    NULL);
@@ -176,8 +194,18 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = cpu_setstate(ci, cs->cs_online);
 		break;
 
+#ifdef IOC_CPU_OGETSTATE
+	case IOC_CPU_OGETSTATE: {
+		cpustate50_t *ocs = data;
+		cpustate50_to_cpustate(ocs, &csb);
+		cs = &csb;
+		error = 1;
+		/*FALLTHROUGH*/
+	}
+#endif
 	case IOC_CPU_GETSTATE:
-		cs = data;
+		if (error == 0)
+			cs = data;
 		id = cs->cs_id;
 		memset(cs, 0, sizeof(*cs));
 		cs->cs_id = id;
@@ -192,6 +220,12 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			cs->cs_online = true;
 		cs->cs_intr = true;
 		cs->cs_lastmod = ci->ci_schedstate.spc_lastmod;
+#ifdef IOC_CPU_OGETSTATE
+		if (cmd == IOC_CPU_OGETSTATE) {
+			cpustate50_t *ocs = data;
+			cpustate_to_cpustate50(cs, ocs);
+		}
+#endif
 		break;
 
 	case IOC_CPU_MAPID:
