@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.972 2009/01/07 00:40:09 jnemeth Exp $
+$NetBSD: pcidevs,v 1.973 2009/01/19 15:03:50 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1059,6 +1059,7 @@ product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
 product ASUSTEK HFCPCI		0x0675	ISDN
 
 /* Attansic Technology Corp. */
+product ATTANSIC ETHERNET_L1E	0x1026	L1E Gigabit Ethernet Adapter
 product ATTANSIC ETHERNET_GIGA	0x1048	L1 Gigabit Ethernet Adapter
 product ATTANSIC ETHERNET_100	0x2048	L2 100 Mbit Ethernet Adapter
 
