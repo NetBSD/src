@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuio.h,v 1.1 2009/01/19 17:39:02 christos Exp $	*/
+/*	$NetBSD: cpuio.h,v 1.2 2009/01/19 23:01:42 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,6 +75,6 @@ void cpustate50_to_cpustate(const cpustate50_t *cp50, cpustate_t *cp)
 }
 
 #define	IOC_CPU_OSETSTATE	_IOW('c', 0, cpustate50_t)
-#define	IOC_CPU_OETSTATE	_IOWR('c', 1, cpustate50_t)
+#define	IOC_CPU_OGETSTATE	_IOWR('c', 1, cpustate50_t)
 
 #endif /* !_COMPAT_SYS_CPUIO_H_ */
