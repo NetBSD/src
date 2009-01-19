@@ -1,0 +1,17 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = atf
+
+tp: t_env
+tp: t_config
+tp: t_text
+tp: t_fs
+tp: t_macros
+tp: t_io
+tp: t_expand
+tp: t_user
+tp: t_parser
+tp: t_signals
+tp: t_tests
+tp: t_utils
+tp: t_process
