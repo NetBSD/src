@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.974 2009/01/07 00:40:51 jnemeth Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.975 2009/01/19 15:04:24 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.972 2009/01/07 00:40:09 jnemeth Exp
+ *	NetBSD: pcidevs,v 1.973 2009/01/19 15:03:50 jmcneill Exp
  */
 
 /*
@@ -1066,6 +1066,7 @@
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
 
 /* Attansic Technology Corp. */
+#define	PCI_PRODUCT_ATTANSIC_ETHERNET_L1E	0x1026		/* L1E Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA	0x1048		/* L1 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
 
