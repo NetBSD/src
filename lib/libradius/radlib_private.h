@@ -1,4 +1,4 @@
-/* $NetBSD: radlib_private.h,v 1.3 2005/03/26 04:38:21 christos Exp $ */
+/* $NetBSD: radlib_private.h,v 1.4 2009/01/19 07:21:59 lukem Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -91,7 +91,7 @@ struct rad_handle {
 	size_t		 resp_pos;	/* Current position scanning attrs */
 	size_t		 total_tries;	/* How many requests we'll send */
 	size_t		 try;		/* How many requests we've sent */
-	int		 srv;		/* Server number we did last */
+	size_t		 srv;		/* Server number we did last */
 	int		 type;		/* Handle type */
 };
 
