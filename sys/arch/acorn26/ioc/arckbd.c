@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.15 2009/01/18 23:25:12 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.16 2009/01/19 00:11:16 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.15 2009/01/18 23:25:12 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.16 2009/01/19 00:11:16 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -128,7 +128,7 @@ static void arcmouse_disable(void *cookie);
 #endif
 
 struct arckbd_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	u_int			sc_mouse_buttons;
@@ -160,7 +160,7 @@ struct arckbd_softc {
 #define AKF_SENTLEDS	0x08
 #define AKF_POLLING	0x10
 
-CFATTACH_DECL(arckbd, sizeof(struct arckbd_softc),
+CFATTACH_DECL_NEW(arckbd, sizeof(struct arckbd_softc),
     arckbd_match, arckbd_attach, NULL, NULL);
 
 /*
@@ -227,15 +227,16 @@ arckbd_attach(device_t parent, device_t self, void *aux)
 	bst = sc->sc_bst = ioc->ioc_fast_t;
 	bsh = sc->sc_bsh = ioc->ioc_fast_h; 
 
+	sc->sc_dev = self;
 	evcnt_attach_dynamic(&sc->sc_rev, EVCNT_TYPE_INTR, NULL,
-	    device_xname(&sc->sc_dev), "rx intr");
+	    device_xname(sc->sc_dev), "rx intr");
 	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self,
 	    &sc->sc_rev);
 	aprint_verbose("\n%s: interrupting at %s (rx)", device_xname(self),
 	    irq_string(sc->sc_rirq));
 
 	evcnt_attach_dynamic(&sc->sc_xev, EVCNT_TYPE_INTR, NULL,
-	    device_xname(&sc->sc_dev), "tx intr");
+	    device_xname(sc->sc_dev), "tx intr");
 	sc->sc_xirq = irq_establish(IOC_IRQ_STX, IPL_TTY, arckbd_xint, self,
 	    &sc->sc_xev);
 	irq_disable(sc->sc_xirq);
@@ -385,12 +386,12 @@ arckbd_getc(void *cookie, u_int *typep, int *valuep)
 
 	if (!(sc->sc_flags & AKF_POLLING))
 		panic("%s: arckbd_getc called with polling disabled",
-		      device_xname(&sc->sc_dev));
+		      device_xname(sc->sc_dev));
 	while (sc->sc_poll_type == 0) {
 		if (ioc_irq_status(IOC_IRQ_STX))
-			arckbd_xint(&sc->sc_dev);
+			arckbd_xint(sc->sc_dev);
 		if (ioc_irq_status(IOC_IRQ_SRX))
-			arckbd_rint(&sc->sc_dev);
+			arckbd_rint(sc->sc_dev);
 	}
 	s = spltty();
 	*typep = sc->sc_poll_type;
@@ -438,7 +439,7 @@ arckbd_send(device_t self, int data, enum arckbd_state newstate, int waitok)
 			}
 	} else if (!ioc_irq_status(IOC_IRQ_STX)) {
 		if (sc->sc_cmdqueued)
-			panic("%s: queue overflow", device_xname(&sc->sc_dev));
+			panic("%s: queue overflow", device_xname(sc->sc_dev));
 		else {
 			sc->sc_cmdqueue = data;
 			sc->sc_statequeue = newstate;
@@ -450,7 +451,7 @@ arckbd_send(device_t self, int data, enum arckbd_state newstate, int waitok)
 	sc->sc_state = newstate;
 #ifdef ARCKBD_DEBUG
 	log(LOG_DEBUG, "%s: sent 0x%02x.  now in state %s\n",
-	    device_xname(&sc->sc_dev), data, arckbd_statenames[newstate]);
+	    device_xname(sc->sc_dev), data, arckbd_statenames[newstate]);
 #endif
 	wakeup(&sc->sc_state);
 	splx(s);
@@ -468,14 +469,14 @@ arckbd_xint(void *cookie)
 	/* First, process queued commands (acks from the last receive) */
 	if (sc->sc_cmdqueued) {
 		sc->sc_cmdqueued = 0;
-		arckbd_send(&sc->sc_dev, sc->sc_cmdqueue, sc->sc_statequeue, 0);
+		arckbd_send(sc->sc_dev, sc->sc_cmdqueue, sc->sc_statequeue, 0);
 	} else if (sc->sc_state == AS_IDLE) {
 	/* Do things that need doing after a reset */
 		if (!(sc->sc_flags & AKF_SENTRQID)) {
-			arckbd_send(&sc->sc_dev, ARCKBD_RQID, AS_IDLE, 0);
+			arckbd_send(sc->sc_dev, ARCKBD_RQID, AS_IDLE, 0);
 			sc->sc_flags |= AKF_SENTRQID;
 		} else if (!(sc->sc_flags & AKF_SENTLEDS)) {
-			arckbd_send(&sc->sc_dev, ARCKBD_LEDS | sc->sc_leds,
+			arckbd_send(sc->sc_dev, ARCKBD_LEDS | sc->sc_leds,
 				    AS_IDLE, 0);
 			sc->sc_flags |= AKF_SENTLEDS;
 		}
@@ -697,7 +698,7 @@ arckbd_set_leds(void *cookie, int new_state)
 
 	s = spltty();
 	sc->sc_leds = arckbd_led_encode(new_state);
-	if (arckbd_send(cookie, ARCKBD_LEDS | sc->sc_leds, AS_IDLE, 0) == 0)
+	if (arckbd_send(sc->sc_dev, ARCKBD_LEDS | sc->sc_leds, AS_IDLE, 0) == 0)
 		sc->sc_flags |= AKF_SENTLEDS;
 	splx(s);
 }
