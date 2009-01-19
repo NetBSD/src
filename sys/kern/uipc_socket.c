@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.183 2009/01/15 15:29:10 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.184 2009/01/19 02:27:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.183 2009/01/15 15:29:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.184 2009/01/19 02:27:57 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -95,8 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.183 2009/01/15 15:29:10 christos E
 
 #ifdef COMPAT_50
 #include <compat/sys/time.h>
-#define	SO_OSNDTIMEO	0x1005
-#define	SO_ORCVTIMEO	0x1006
+#include <compat/sys/socket.h>
 #endif
 
 #include <uvm/uvm.h>
@@ -1620,6 +1619,9 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	case SO_REUSEPORT:
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
+#ifdef SO_OTIMESTAMP
+	case SO_OTIMESTAMP:
+#endif
 		error = sockopt_getint(sopt, &optval);
 		solock(so);
 		if (error)
@@ -1815,6 +1817,9 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 	case SO_BROADCAST:
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
+#ifdef SO_OTIMESTAMP
+	case SO_OTIMESTAMP:
+#endif
 		error = sockopt_setint(sopt, (so->so_options & opt) ? 1 : 0);
 		break;
 
