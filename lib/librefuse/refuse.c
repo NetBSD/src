@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.89 2008/08/01 15:54:09 dillo Exp $	*/
+/*	$NetBSD: refuse.c,v 1.90 2009/01/19 10:01:38 lukem Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.89 2008/08/01 15:54:09 dillo Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.90 2009/01/19 10:01:38 lukem Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1084,7 +1084,7 @@ puffs_fuse_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	    &rn->file_info);
 
 	if (ret > 0) {
-		if (offset + ret > pn->pn_va.va_size)
+		if ((uint64_t)(offset + ret) > pn->pn_va.va_size)
 			pn->pn_va.va_size = offset + ret;
 		*resid -= ret;
 		ret = 0;
