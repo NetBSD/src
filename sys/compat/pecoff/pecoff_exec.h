@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.h,v 1.9 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.h,v 1.9.84.1 2009/01/19 13:17:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -33,6 +33,8 @@
 
 #ifndef _PECOFF_EXEC_H_
 #define _PECOFF_EXEC_H_
+
+#include <sys/exec_coff.h> /* for COFF_HDR_SIZE */
 
 struct pecoff_dos_filehdr {
 	u_int16_t	d_magic;	/* +0x00 'MZ' */
@@ -113,7 +115,7 @@ struct pecoff_args {
 	struct pecoff_opthdr a_opthdr;
 };
 
-extern const struct emul emul_pecoff;
+extern struct emul emul_pecoff;
 
 struct exec_package;
 int     exec_pecoff_makecmds (struct lwp *, struct exec_package *);

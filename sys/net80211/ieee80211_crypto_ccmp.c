@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.7 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.7.62.1 2009/01/19 13:20:12 skrll Exp $");
 #endif
 
 /*
@@ -102,7 +102,7 @@ ccmp_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx;
 
-	MALLOC(ctx, struct ccmp_ctx *, sizeof(struct ccmp_ctx),
+	ctx = malloc(sizeof(struct ccmp_ctx),
 		M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
@@ -117,7 +117,7 @@ ccmp_detach(struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx = k->wk_private;
 
-	FREE(ctx, M_DEVBUF);
+	free(ctx, M_DEVBUF);
 }
 
 static int

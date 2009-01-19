@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.27 2008/01/20 18:09:13 joerg Exp $	*/
+/*	$NetBSD: kernel.h,v 1.27.20.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,7 +48,7 @@ extern int hostnamelen;
 extern char domainname[MAXHOSTNAMELEN];
 extern int domainnamelen;
 
-extern struct timeval boottime;
+extern struct timespec boottime;
 
 extern int rtc_offset;		/* offset of rtc from UTC in minutes */
 

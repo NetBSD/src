@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.131 2008/05/19 17:15:00 ad Exp $	*/
+/*	$NetBSD: conf.h,v 1.131.6.1 2009/01/19 13:20:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -93,6 +93,9 @@ struct cdevsw {
 };
 
 #ifdef _KERNEL
+
+#include <sys/mutex.h>
+extern kmutex_t device_lock;
 
 int devsw_attach(const char *, const struct bdevsw *, int *,
 		 const struct cdevsw *, int *);

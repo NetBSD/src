@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.67 2007/10/18 15:28:37 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.67.28.1 2009/01/19 13:16:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,15 +97,12 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#ifdef _KERNEL_OPT
-#include "opt_noredzone.h"
-#endif
 #ifndef UPAGES
-#ifdef NOREDZONE
-#define	UPAGES		2		/* pages of u-area */
-#else
-#define UPAGES		3
-#endif /*NOREDZONE */
+# ifdef DIAGNOSTIC
+#  define	UPAGES		3	/* 2 + 1 page for redzone */
+# else
+#  define	UPAGES		2	/* normal pages of u-area */
+# endif /* DIAGNOSTIC */
 #endif /* !defined(UPAGES) */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 #define	INTRSTACKSIZE	8192

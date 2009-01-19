@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.25 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: TWINTAIL,v 1.25.2.1 2009/01/19 13:16:04 skrll Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -53,7 +53,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -117,7 +116,6 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
@@ -137,7 +135,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	KGDB
 #options  	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=340000
+options 	SYMTAB_SPACE=350000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -331,9 +329,6 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 wdc*	at pcmcia? function ?
 atabus*	at wdc? channel ?
 wd*		at atabus? drive ? flags 0x0000
-
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)

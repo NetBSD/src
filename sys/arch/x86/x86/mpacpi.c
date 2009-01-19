@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.69.2.1 2009/01/19 13:17:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69.2.1 2009/01/19 13:17:09 skrll Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>
@@ -343,7 +343,7 @@ mpacpi_count(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 static ACPI_STATUS
 mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
-	struct device *parent = aux;
+	device_t parent = aux;
 	ACPI_MADT_LOCAL_APIC *p;
 	struct cpu_attach_args caa;
 	int cpunum = 0;
@@ -374,7 +374,7 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 static ACPI_STATUS
 mpacpi_config_ioapic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
-	struct device *parent = aux;
+	device_t parent = aux;
 	struct apic_attach_args aaa;
 	ACPI_MADT_IO_APIC *p;
 	int locs[IOAPICBUSCF_NLOCS];
@@ -394,7 +394,7 @@ mpacpi_config_ioapic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 }
 
 int
-mpacpi_scan_apics(struct device *self, int *ncpup, int *napic)
+mpacpi_scan_apics(device_t self, int *ncpup)
 {
 	int rv = 0;
 
@@ -427,7 +427,6 @@ mpacpi_scan_apics(struct device *self, int *ncpup, int *napic)
 	rv = 1;
 done:
 	*ncpup = mpacpi_ncpu;
-	*napic = mpacpi_nioapic;
 	acpi_madt_unmap();
 	return rv;
 }
@@ -560,8 +559,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 		if ((devinfo->Valid & ACPI_VALID_STA) == 0 ||
 		    (devinfo->CurrentStatus & ACPI_STA_OK) == ACPI_STA_OK) {
 			AcpiOsFree(buf.Pointer);
-			dev = malloc(sizeof(struct ac_dev), M_TEMP,
-			    M_WAITOK|M_ZERO);
+			dev = kmem_zalloc(sizeof(struct ac_dev), KM_SLEEP);
 			if (dev == NULL)
 				return -1;
 			dev->handle = current;
@@ -624,7 +622,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 	while (!TAILQ_EMPTY(&dev_list)) {
 		dev = TAILQ_FIRST(&dev_list);
 		TAILQ_REMOVE(&dev_list, dev, list);
-		free(dev, M_TEMP);
+		kmem_free(dev, sizeof(struct ac_dev));
 	}
 
 	return bus;
@@ -659,7 +657,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 	    (devinfo->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 		goto out;
 
-	mpr = malloc(sizeof (struct mpacpi_pcibus), M_TEMP, M_WAITOK|M_ZERO);
+	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);
 	if (mpr == NULL) {
 		AcpiOsFree(buf.Pointer);
 		return AE_NO_MEMORY;
@@ -668,7 +666,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 	/* try get _PRT. if this fails, we're not interested in it */
 	rv = acpi_get(handle, &mpr->mpr_buf, AcpiGetIrqRoutingTable);
 	if (ACPI_FAILURE(rv)) {
-		free(mpr, M_TEMP);
+		kmem_free(mpr, sizeof(struct mpacpi_pcibus));
 		goto out;
 	}
 
@@ -696,7 +694,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 		if (mpr->mpr_bus < 0) {
 			if (mp_verbose)
 				printf("mpacpi: failed to derive bus number, ignoring\n");
-			free(mpr, M_TEMP);
+			kmem_free(mpr, sizeof(struct mpacpi_pcibus));
 			goto out;
 		}
 		if (mp_verbose)
@@ -894,13 +892,11 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 	mp_nbus = mp_isa_bus + 1;
 	mp_nintr = nintr;
 
-	mp_busses = malloc(sizeof(struct mp_bus) * mp_nbus, M_DEVBUF,
-	    M_NOWAIT|M_ZERO);
+	mp_busses = kmem_zalloc(sizeof(struct mp_bus) * mp_nbus, KM_SLEEP);
 	if (mp_busses == NULL)
 		panic("can't allocate mp_busses");
 
-	mp_intrs = malloc(sizeof(struct mp_intr_map) * mp_nintr, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	mp_intrs = kmem_zalloc(sizeof(struct mp_intr_map) * mp_nintr, KM_SLEEP);
 	if (mp_intrs == NULL)
 		panic("can't allocate mp_intrs");
 
@@ -1042,12 +1038,12 @@ mpacpi_print_intr(struct mp_intr_map *mpi)
 			printf("%d", mpi->bus->mb_idx);
 		(*(mpi->bus->mb_intr_print))(mpi->bus_pin);
 	}
+	snprintb(buf, sizeof(buf), inttype_fmt, mpi->type);
+	printf(" (type %s", buf);
+	    
+	snprintb(buf, sizeof(buf), flagtype_fmt, mpi->flags);
+	printf(" flags %s)\n", buf);
 
-	printf(" (type %s",
-	    bitmask_snprintf(mpi->type, inttype_fmt, buf, sizeof(buf)));
-
-	printf(" flags %s)\n",
-	    bitmask_snprintf(mpi->flags, flagtype_fmt, buf, sizeof(buf)));
 }
 
 
@@ -1108,7 +1104,7 @@ mpacpi_find_interrupts(void *self)
 #if NPCI > 0
 
 int
-mpacpi_pci_attach_hook(struct device *parent, struct device *self,
+mpacpi_pci_attach_hook(device_t parent, device_t self,
 		       struct pcibus_attach_args *pba)
 {
 	struct mp_bus *mpb;
@@ -1162,7 +1158,7 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 }
 
 int
-mpacpi_scan_pci(struct device *self, struct pcibus_attach_args *pba,
+mpacpi_scan_pci(device_t self, struct pcibus_attach_args *pba,
 	        cfprint_t print)
 {
 	int i;
@@ -1200,8 +1196,12 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 		    acpi_pci_link_name(mip->linkdev), irq, line);
 	if (irq == X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
 		return ENOENT;
-	if (irq != line)
-		panic("mpacpi_findintr_linkdev: irq mismatch");
+	if (irq != line) {
+		aprint_error("%s: mpacpi_findintr_linkdev:"
+		    " irq mismatch (%d vs %d)\n",
+		    acpi_pci_link_name(mip->linkdev), irq, line);
+		return ENOENT;
+	}
 
 	/*
 	 * Convert ACPICA values to MPS values

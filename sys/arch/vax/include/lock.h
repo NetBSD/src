@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.28 2008/02/23 05:48:13 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.28.12.1 2009/01/19 13:17:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -32,6 +32,8 @@
 
 #ifndef _VAX_LOCK_H_
 #define _VAX_LOCK_H_
+
+#include <sys/param.h>
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -69,7 +71,7 @@ static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *);
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *__alp)
 {
-#ifdef _KERNEL
+#ifdef _HARDKERNEL
 	__asm __volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
 		: "g"(__alp)
@@ -88,7 +90,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *__alp)
 {
 	int ret;
 
-#ifdef _KERNEL
+#ifdef _HARDKERNEL
 	__asm __volatile ("movl %1,%%r1;jsb Slocktry;movl %%r0,%0"
 		: "=&r"(ret)
 		: "g"(__alp)
@@ -107,7 +109,7 @@ static __inline void __cpu_simple_lock(__cpu_simple_lock_t *);
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *__alp)
 {
-#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+#if defined(_HARDKERNEL) && defined(MULTIPROCESSOR)
 	struct cpu_info * const __ci = curcpu();
 
 	while (__cpu_simple_lock_try(__alp) == 0) {
@@ -116,19 +118,19 @@ __cpu_simple_lock(__cpu_simple_lock_t *__alp)
 			cpu_handle_ipi();
 		}
 	}
-#else /* _KERNEL && MULTIPROCESSOR */
+#else /* _HARDKERNEL && MULTIPROCESSOR */
 	__asm __volatile ("1:bbssi $0,%0,1b"
 		: /* No outputs */
 		: "m"(*__alp)
 		: "cc");
-#endif /* _KERNEL && MULTIPROCESSOR */
+#endif /* _HARDKERNEL && MULTIPROCESSOR */
 }
 
 static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *);
 static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *__alp)
 {
-#ifdef _KERNEL
+#ifdef _HARDKERNEL
 	__asm __volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
 		: "g"(__alp)

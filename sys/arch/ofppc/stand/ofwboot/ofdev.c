@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.15 2008/01/03 06:40:02 mrg Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.15.18.1 2009/01/19 13:16:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -358,7 +358,7 @@ devopen(struct open_file *of, const char *name, char **file)
 #define RF_PROTECTED_SECTORS 64
 				ofdev.partoff += RF_PROTECTED_SECTORS;
 				DPRINTF("devopen: found RAID partition, "
-				    "adjusting offset to %x\n", ofdev.partoff);
+				    "adjusting offset to %lx\n", ofdev.partoff);
 			}
 		}
 

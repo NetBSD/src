@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.13 2008/06/08 03:49:26 tsutsui Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.13.6.1 2009/01/19 13:17:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.13 2008/06/08 03:49:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.13.6.1 2009/01/19 13:17:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.13 2008/06/08 03:49:26 tsutsui Exp $")
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/m41st84reg.h>
+#include <dev/i2c/m41st84var.h>
 
 struct strtc_softc {
 	device_t sc_dev;
@@ -413,4 +414,29 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	return (1);
+}
+
+void
+strtc_wdog_config(void *arg, uint8_t wd)
+{
+	struct strtc_softc *sc = arg;
+	uint8_t	cmdbuf[2];
+
+	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+		aprint_error_dev(sc->sc_dev,
+		    "strtc_wdog_config: failed to acquire I2C bus\n");
+		return;
+	}
+
+	cmdbuf[0] = M41ST84_REG_WATCHDOG;
+	cmdbuf[1] = wd;
+
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
+		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
+		aprint_error_dev(sc->sc_dev,
+		    "strtc_wdog_config: failed to write watchdog\n");
+		return;
+	}
+
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 }

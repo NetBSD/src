@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.16 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.16.8.1 2009/01/19 13:20:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.16 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.16.8.1 2009/01/19 13:20:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -194,8 +194,7 @@ kernfs_allocvp(mp, vpp, kfs_type, kt, value)
 		return (error);
 	}
 
-	MALLOC(kfs, void *, sizeof(struct kernfs_node), M_TEMP, M_WAITOK);
-	memset(kfs, 0, sizeof(*kfs));
+	kfs = malloc(sizeof(struct kernfs_node), M_TEMP, M_WAITOK|M_ZERO);
 	vp->v_data = kfs;
 	cookie = &(VFSTOKERNFS(mp)->fileno_cookie);
 again:
@@ -252,7 +251,7 @@ kernfs_freevp(vp)
 	kernfs_hashrem(kfs);
 	TAILQ_REMOVE(&VFSTOKERNFS(vp->v_mount)->nodelist, kfs, kfs_list);
 
-	FREE(vp->v_data, M_TEMP);
+	free(vp->v_data, M_TEMP);
 	vp->v_data = 0;
 	return (0);
 }
@@ -374,6 +373,9 @@ kernfs_revoke_sa(sav)
 	struct vnode *vp;
 	struct kfs_hashhead *ppp;
 	struct mbuf *m;
+
+	if (key_setdumpsa_spi == NULL)
+		return;
 
 	ppp = &kfs_hashtbl[KFSVALUEHASH(ntohl(sav->spi))];
 	for (kfs = LIST_FIRST(ppp); kfs; kfs = pnext) {

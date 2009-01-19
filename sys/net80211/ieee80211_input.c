@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.66 2007/03/04 07:54:11 christos Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.66.50.1 2009/01/19 13:20:12 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.66 2007/03/04 07:54:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.66.50.1 2009/01/19 13:20:12 skrll Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1040,7 +1040,7 @@ static int
 alloc_challenge(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni->ni_challenge == NULL)
-		MALLOC(ni->ni_challenge, u_int32_t*, IEEE80211_CHALLENGE_LEN,
+		ni->ni_challenge = malloc(IEEE80211_CHALLENGE_LEN,
 		    M_DEVBUF, M_NOWAIT);
 	if (ni->ni_challenge == NULL) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
@@ -1231,7 +1231,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		switch (seq) {
 		case IEEE80211_AUTH_SHARED_PASS:
 			if (ni->ni_challenge != NULL) {
-				FREE(ni->ni_challenge, M_DEVBUF);
+				free(ni->ni_challenge, M_DEVBUF);
 				ni->ni_challenge = NULL;
 			}
 			if (status != 0) {
@@ -1779,7 +1779,7 @@ ieee80211_saveie(u_int8_t **iep, const u_int8_t *ie)
 	 */
 	if (*iep == NULL || (*iep)[1] != ie[1]) {
 		if (*iep != NULL)
-			FREE(*iep, M_DEVBUF);
+			free(*iep, M_DEVBUF);
 		*iep = malloc(ielen, M_DEVBUF, M_NOWAIT);
 	}
 	if (*iep != NULL)
@@ -2398,7 +2398,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		/* discard challenge after association */
 		if (ni->ni_challenge != NULL) {
-			FREE(ni->ni_challenge, M_DEVBUF);
+			free(ni->ni_challenge, M_DEVBUF);
 			ni->ni_challenge = NULL;
 		}
 		/* NB: 802.11 spec says to ignore station's privacy bit */
@@ -2453,7 +2453,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			/*
 			 * Flush any state from a previous association.
 			 */
-			FREE(ni->ni_wpa_ie, M_DEVBUF);
+			free(ni->ni_wpa_ie, M_DEVBUF);
 			ni->ni_wpa_ie = NULL;
 		}
 		if (wme != NULL) {
@@ -2468,7 +2468,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			/*
 			 * Flush any state from a previous association.
 			 */
-			FREE(ni->ni_wme_ie, M_DEVBUF);
+			free(ni->ni_wme_ie, M_DEVBUF);
 			ni->ni_wme_ie = NULL;
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 		}

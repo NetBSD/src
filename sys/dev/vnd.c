@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.187 2008/09/24 07:57:30 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.187.2.1 2009/01/19 13:17:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187 2008/09/24 07:57:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.2.1 2009/01/19 13:17:52 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -194,7 +194,7 @@ struct vndxfer {
 #define VNDLABELDEV(dev) \
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
-/* called by main() at boot time (XXX: and the LKM driver) */
+/* called by main() at boot time */
 void	vndattach(int);
 
 static void	vndclear(struct vnd_softc *, int);
@@ -338,7 +338,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
+		printf("vndopen(0x%"PRIx64", 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL) {
@@ -402,7 +402,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
+		printf("vndclose(0x%"PRIx64", 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL)
@@ -448,9 +448,15 @@ vndstrategy(struct buf *bp)
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd =
 	    device_lookup_private(&vnd_cd, unit);
-	struct disklabel *lp = vnd->sc_dkdev.dk_label;
+	struct disklabel *lp;
 	daddr_t blkno;
 	int s = splbio();
+
+	if (vnd == NULL) {
+		bp->b_error = ENXIO;
+		goto done;
+	}
+	lp = vnd->sc_dkdev.dk_label;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
@@ -515,7 +521,7 @@ vndstrategy(struct buf *bp)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
-	BUFQ_PUT(vnd->sc_tab, bp);
+	bufq_put(vnd->sc_tab, bp);
 	wakeup(&vnd->sc_tab);
 	splx(s);
 	return;
@@ -600,7 +606,7 @@ vndthread(void *arg)
 		struct buf *obp;
 		struct buf *bp;
 
-		obp = BUFQ_GET(vnd->sc_tab);
+		obp = bufq_get(vnd->sc_tab);
 		if (obp == NULL) {
 			tsleep(&vnd->sc_tab, PRIBIO, "vndbp", 0);
 			continue;
@@ -887,7 +893,7 @@ vndread(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(0x%x, %p)\n", dev, uio);
+		printf("vndread(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 
 	sc = device_lookup_private(&vnd_cd, unit);
@@ -909,7 +915,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(0x%x, %p)\n", dev, uio);
+		printf("vndwrite(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 
 	sc = device_lookup_private(&vnd_cd, unit);
@@ -960,7 +966,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
+		printf("vndioctl(0x%"PRIx64", 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, l->l_proc, unit);
 #endif
 	vnd = device_lookup_private(&vnd_cd, unit);

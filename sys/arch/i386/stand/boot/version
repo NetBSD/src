@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.8 2008/10/11 11:06:20 joerg Exp $
+$NetBSD: version,v 1.8.2.1 2009/01/19 13:16:21 skrll Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -39,3 +39,4 @@ is taken as the current.
 5.0:	Support for boot menu, modules.
 5.1:	Change boot messages to replace build date with kernel version.
 5.2:	Support for multiboot.
+5.3:	Autoload kernel module for root file system.

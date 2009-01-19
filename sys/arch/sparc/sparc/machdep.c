@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.282 2008/10/16 19:38:36 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.282.2.1 2009/01/19 13:16:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282 2008/10/16 19:38:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282.2.1 2009/01/19 13:16:46 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282 2008/10/16 19:38:36 martin Exp $")
 #include <sys/exec.h>
 #include <sys/ucontext.h>
 #include <sys/simplelock.h>
+#include <sys/module.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
@@ -475,160 +476,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 /*
  * Send an interrupt to process.
  */
-#ifdef COMPAT_16
-struct sigframe_sigcontext {
-	int	sf_signo;		/* signal number */
-	int	sf_code;		/* code */
-	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
-	int	sf_addr;		/* SunOS compat, always 0 for now */
-	struct	sigcontext sf_sc;	/* actual sigcontext */
-};
-
-static void
-sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
-	struct sigframe_sigcontext *fp;
-	struct trapframe *tf;
-	int addr, onstack, oldsp, newsp, error;
-	struct sigframe_sigcontext sf;
-	int sig = ksi->ksi_signo;
-	u_long code = KSI_TRAPCODE(ksi);
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
-
-	tf = l->l_md.md_tf;
-	oldsp = tf->tf_out[6];
-
-	/*
-	 * Compute new user stack addresses, subtract off
-	 * one signal frame, and align.
-	 */
-	onstack =
-	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	if (onstack)
-		fp = (struct sigframe_sigcontext *)
-			((char *)l->l_sigstk.ss_sp +
-			 l->l_sigstk.ss_size);
-	else
-		fp = (struct sigframe_sigcontext *)oldsp;
-
-	fp = (struct sigframe_sigcontext *)((int)(fp - 1) & ~7);
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig: %s[%d] sig %d newusp %p scp %p\n",
-		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc);
-#endif
-	/*
-	 * Now set up the signal frame.  We build it in kernel space
-	 * and then copy it out.  We probably ought to just build it
-	 * directly in user space....
-	 */
-	sf.sf_signo = sig;
-	sf.sf_code = code;
-	sf.sf_scp = 0;
-	sf.sf_addr = 0;			/* XXX */
-
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	sf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
-	sf.sf_sc.sc_mask = *mask;
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &sf.sf_sc.__sc_mask13);
-#endif
-	sf.sf_sc.sc_sp = oldsp;
-	sf.sf_sc.sc_pc = tf->tf_pc;
-	sf.sf_sc.sc_npc = tf->tf_npc;
-	sf.sf_sc.sc_psr = tf->tf_psr;
-	sf.sf_sc.sc_g1 = tf->tf_global[1];
-	sf.sf_sc.sc_o0 = tf->tf_out[0];
-
-	/*
-	 * Put the stack in a consistent state before we whack away
-	 * at it.  Note that write_user_windows may just dump the
-	 * registers into the pcb; we need them in the process's memory.
-	 * We also need to make sure that when we start the signal handler,
-	 * its %i6 (%fp), which is loaded from the newly allocated stack area,
-	 * joins seamlessly with the frame it was in when the signal occurred,
-	 * so that the debugger and _longjmp code can back up through it.
-	 */
-	sendsig_reset(l, sig);
-	mutex_exit(p->p_lock);
-	newsp = (int)fp - sizeof(struct rwindow);
-	write_user_windows();
-	error = (rwindow_save(l) || copyout((void *)&sf, (void *)fp, sizeof sf) ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
-	mutex_enter(p->p_lock);
-
-	if (error) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig: window save or copyout error\n");
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig: %s[%d] sig %d scp %p\n",
-		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
-#endif
-	/*
-	 * Arrange to continue execution at the code copied out in exec().
-	 * It needs the function to call in %g1, and a new stack pointer.
-	 */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* legacy on-stack sigtramp */
-		addr = (int)p->p_sigctx.ps_sigcode;
-		break;
-
-	case 1:
-		addr = (int)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-
-	default:
-		/* Don't know what trampoline version; kill it. */
-		addr = 0;
-		sigexit(l, SIGILL);
-	}
-
-	tf->tf_global[1] = (int)catcher;
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = newsp;
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig: about to return to catcher\n");
-#endif
-}
-#endif /* COMPAT_16 */
-
 struct sigframe {
 	siginfo_t sf_si;
 	ucontext_t sf_uc;
 };
 
-void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -642,13 +496,6 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	size_t ucsz;
 
 	sig = ksi->ksi_signo;
-
-#ifdef COMPAT_16
-	if (ps->sa_sigdesc[sig].sd_vers < 2) {
-		sendsig_sigcontext(ksi, mask);
-		return;
-	}
-#endif /* COMPAT_16 */
 
 	tf = l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
@@ -748,75 +595,6 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		printf("sendsig: about to return to catcher\n");
 #endif
 }
-
-#ifdef COMPAT_16
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above),
- * and return to the given trap frame (if there is one).
- * Check carefully to make sure that the user has not
- * modified the state to gain improper privileges or to cause
- * a machine fault.
- */
-/* ARGSUSED */
-int
-compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */
-	struct sigcontext sc, *scp;
-	struct trapframe *tf;
-	struct proc *p;
-	int error;
-
-	p = l->l_proc;
-
-	/* First ensure consistent stack state (see sendsig). */
-	write_user_windows();
-	if (rwindow_save(l)) {
-		mutex_enter(p->p_lock);
-		sigexit(l, SIGILL);
-	}
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: %s[%d], sigcntxp %p\n",
-		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
-#endif
-	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
-		return (error);
-	scp = &sc;
-
-	tf = l->l_md.md_tf;
-	/*
-	 * Only the icc bits in the psr are used, so it need not be
-	 * verified.  pc and npc must be multiples of 4.  This is all
-	 * that is required; if it holds, just do it.
-	 */
-	if (((scp->sc_pc | scp->sc_npc) & 3) != 0)
-		return (EINVAL);
-
-	/* take only psr ICC field */
-	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (scp->sc_psr & PSR_ICC);
-	tf->tf_pc = scp->sc_pc;
-	tf->tf_npc = scp->sc_npc;
-	tf->tf_global[1] = scp->sc_g1;
-	tf->tf_out[0] = scp->sc_o0;
-	tf->tf_out[6] = scp->sc_sp;
-
-	mutex_enter(p->p_lock);
-	if (scp->sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	/* Restore signal mask */
-	(void) sigprocmask1(l, SIG_SETMASK, &scp->sc_mask, 0);
-	mutex_exit(p->p_lock);
-
-	return (EJUSTRETURN);
-}
-#endif /* COMPAT_16 */
 
 /*
  * cpu_upcall:
@@ -1101,6 +879,8 @@ cpu_reboot(int howto, char *user_boot_string)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		prom_interpret("power-off");
@@ -1228,12 +1008,12 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %"PRIu64",%"PRIu64" not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %"PRIu64",%"PRIu64" offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
@@ -1265,7 +1045,7 @@ dumpsys(void)
 
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
-				printf("%d ", i / (1024*1024));
+				printf_nolog("%d ", i / (1024*1024));
 
 			(void) pmap_map(dumpspace, maddr, maddr + n,
 					VM_PROT_READ);
@@ -1489,6 +1269,12 @@ wcopy(const void *vb1, void *vb2, u_int l)
 		*b2 = *b1e;
 }
 
+#ifdef MODULAR
+void
+module_init_md(void)
+{
+}
+#endif
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific

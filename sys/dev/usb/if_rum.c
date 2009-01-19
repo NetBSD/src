@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.23 2008/10/21 12:21:46 jun Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.23.2.1 2009/01/19 13:19:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.23 2008/10/21 12:21:46 jun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.23.2.1 2009/01/19 13:19:08 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -270,7 +270,7 @@ rum_attachhook(void *xsc)
 		printf("%s: failed to allocate firmware memory\n",
 		    USBDEVNAME(sc->sc_dev));
 		firmware_close(fwh);
-		return ENOMEM;;
+		return ENOMEM;
 	}
 	error = firmware_read(fwh, 0, ucode, size);
 	firmware_close(fwh);
@@ -1373,14 +1373,21 @@ rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
-				rum_update_promisc(sc);
-			else
-				rum_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				rum_stop(ifp, 1);
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP|IFF_RUNNING:
+			rum_update_promisc(sc);
+			break;
+		case IFF_UP:
+			rum_init(ifp);
+			break;
+		case IFF_RUNNING:
+			rum_stop(ifp, 1);
+			break;
+		case 0:
+			break;
 		}
 		break;
 

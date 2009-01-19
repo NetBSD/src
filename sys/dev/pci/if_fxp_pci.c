@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.60 2008/07/09 17:07:28 joerg Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.60.2.1 2009/01/19 13:18:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.60 2008/07/09 17:07:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.60.2.1 2009/01/19 13:18:25 skrll Exp $");
 
 #include "rnd.h"
 
@@ -110,9 +110,9 @@ static const struct fxp_pci_product {
 	{ PCI_PRODUCT_INTEL_82801BA_LAN,
 	  "Intel i82562 Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801E_LAN_1,
-	  "Intel i82559 Ethernet" },
+	  "Intel i82801E Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801E_LAN_2,
-	  "Intel i82559 Ethernet" },
+	  "Intel i82801E Ethernet" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_0,
 	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_1,
@@ -335,6 +335,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 
 		if (sc->sc_rev >= FXP_REV_82558_A4) {
 			chipname = "i82558 Ethernet";
+			sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 			/*
 			 * Enable the MWI command for memory writes.
 			 */
@@ -345,8 +346,10 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 			chipname = "i82559 Ethernet";
 		if (sc->sc_rev >= FXP_REV_82559S_A)
 			chipname = "i82559S Ethernet";
-		if (sc->sc_rev >= FXP_REV_82550)
+		if (sc->sc_rev >= FXP_REV_82550) {
 			chipname = "i82550 Ethernet";
+			sc->sc_flags |= FXPF_EXT_RFA|FXPF_IPCB;
+		}
 
 		/*
 		 * Mark all i82559 and i82550 revisions as having
@@ -361,16 +364,6 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	    }
 
 	case PCI_PRODUCT_INTEL_82801BA_LAN:
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
-
-		/*
-		 * The 82801BA Ethernet has a bug which requires us to send a
-		 * NOP before a CU_RESUME if we're in 10baseT mode.
-		 */
-		if (fpp->fpp_prodid == PCI_PRODUCT_INTEL_82801BA_LAN)
-			sc->sc_flags |= FXPF_HAS_RESUME_BUG;
-		break;
-
 	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_0:
@@ -380,41 +373,16 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
 		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
-
+		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 		/*
-		 * ICH3 chips apparently have problems with the enhanced
-		 * features, so just treat them as an i82557.  It also
-		 * has the resume bug that the ICH2 has.
+		 * The ICH-2 and ICH-3 have the "resume bug".
 		 */
-		sc->sc_rev = 1;
 		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
 		break;
-	case PCI_PRODUCT_INTEL_82801E_LAN_1:
-	case PCI_PRODUCT_INTEL_82801E_LAN_2:
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 
-		/*
-		 *  XXX We have to read the C-ICH's developer's manual
-		 *  in detail
-		 */
-		break;
-	case PCI_PRODUCT_INTEL_PRO_100_VE_2:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_3:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_4:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_5:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_3:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_4:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_5:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_6:
-	case PCI_PRODUCT_INTEL_82801EB_LAN:
-	case PCI_PRODUCT_INTEL_82801FB_LAN:
-	case PCI_PRODUCT_INTEL_82801G_LAN:
 	default:
 		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
-
-		/*
-		 * No particular quirks.
-		 */
+		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB|FXPF_EXT_RFA|FXPF_IPCB;
 		break;
 	}
 

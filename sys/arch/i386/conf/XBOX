@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.14 2008/04/30 15:29:12 ad Exp $
+# $NetBSD: XBOX,v 1.14.8.1 2009/01/19 13:16:15 skrll Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -24,7 +24,6 @@ options 	INSECURE	# disable kernel security levels - X needs this
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	LKM		# loadable kernel modules
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options

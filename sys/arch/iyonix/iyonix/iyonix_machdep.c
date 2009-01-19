@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.8 2008/04/27 18:58:47 matt Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.8.8.1 2009/01/19 13:16:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.8 2008/04/27 18:58:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.8.8.1 2009/01/19 13:16:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -269,6 +269,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -297,6 +298,8 @@ cpu_reboot(int howto, char *bootstr)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
@@ -807,11 +810,6 @@ initarm(void *arg)
 
 #ifdef BOOTHOWTO
 	boothowto = BOOTHOWTO;
-#endif
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB

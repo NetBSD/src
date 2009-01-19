@@ -1,4 +1,4 @@
-#	$NetBSD: majors.newsmips,v 1.19 2007/12/31 15:32:02 ad Exp $
+#	$NetBSD: majors.newsmips,v 1.19.18.1 2009/01/19 13:16:33 skrll Exp $
 #
 # Device majors for newsmips
 #
@@ -21,7 +21,6 @@ device-major	tun		char 25			tun
 
 device-major	log		char 33
 
-device-major	lkm		char 45			lkm
 device-major	ipl		char 46			ipfilter
 device-major	rnd		char 47			rnd
 device-major	filedesc	char 48

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.201 2008/06/24 11:18:15 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.201.4.1 2009/01/19 13:17:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,11 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.201 2008/06/24 11:18:15 ad Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ptrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.201.4.1 2009/01/19 13:17:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.201 2008/06/24 11:18:15 ad Exp $");
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
+
+#include <compat/sys/resource.h>
 
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_types.h>
@@ -219,10 +217,11 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
-		syscallarg(struct rusage *) rusage;
+		syscallarg(struct rusage50 *) rusage;
 	} */
 	int error, status, options, linux_options, was_zombie;
 	struct rusage ru;
+	struct rusage50 ru50;
 	int pid = SCARG(uap, pid);
 	proc_t *p;
 
@@ -259,8 +258,10 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 	sigdelset(&p->p_sigpend.sp_set, SIGCHLD); /* XXXAD ksiginfo leak */
         mutex_exit(p->p_lock);
 
-	if (SCARG(uap, rusage) != NULL)
+	if (SCARG(uap, rusage) != NULL) {
+		rusage_to_rusage50(&ru, &ru50);
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+	}
 
 	if (error == 0 && SCARG(uap, status) != NULL) {
 		status = bsd_to_linux_wstat(status);
@@ -836,11 +837,12 @@ linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, registe
 		syscallarg(fd_set *) readfds;
 		syscallarg(fd_set *) writefds;
 		syscallarg(fd_set *) exceptfds;
-		syscallarg(struct timeval *) timeout;
+		syscallarg(struct timeval50 *) timeout;
 	} */
 
 	return linux_select1(l, retval, SCARG(uap, nfds), SCARG(uap, readfds),
-	    SCARG(uap, writefds), SCARG(uap, exceptfds), SCARG(uap, timeout));
+	    SCARG(uap, writefds), SCARG(uap, exceptfds),
+	    (struct linux_timeval *)SCARG(uap, timeout));
 }
 
 /*
@@ -855,9 +857,10 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 	register_t *retval;
 	int nfds;
 	fd_set *readfds, *writefds, *exceptfds;
-	struct timeval *timeout;
+	struct linux_timeval *timeout;
 {
 	struct timeval tv0, tv1, utv, *tv = NULL;
+	struct linux_timeval ltv;
 	int error;
 
 	/*
@@ -865,8 +868,10 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 	 * time left.
 	 */
 	if (timeout) {
-		if ((error = copyin(timeout, &utv, sizeof(utv))))
+		if ((error = copyin(timeout, &ltv, sizeof(ltv))))
 			return error;
+		utv.tv_sec = ltv.tv_sec;
+		utv.tv_usec = ltv.tv_usec;
 		if (itimerfix(&utv)) {
 			/*
 			 * The timeval was invalid.  Convert it to something
@@ -913,7 +918,9 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 				timerclear(&utv);
 		} else
 			timerclear(&utv);
-		if ((error = copyout(&utv, timeout, sizeof(utv))))
+		ltv.tv_sec = utv.tv_sec;
+		ltv.tv_usec = utv.tv_usec;
+		if ((error = copyout(&ltv, timeout, sizeof(ltv))))
 			return error;
 	}
 
@@ -1040,13 +1047,9 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 		syscallarg(T) addr;
 		syscallarg(T) data;
 	} */
-#if defined(PTRACE) || defined(_LKM)
 	const int *ptr;
 	int request;
 	int error;
-#ifdef _LKM
-#define sys_ptrace (*sysent[SYS_ptrace].sy_call)
-#endif
 
 	ptr = linux_ptrace_request_map;
 	request = SCARG(uap, request);
@@ -1062,13 +1065,13 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			/*
 			 * Linux ptrace(PTRACE_CONT, pid, 0, 0) means actually
 			 * to continue where the process left off previously.
-			 * The same thing is achieved by addr == (void *) 1
+ 			 * The same thing is achieved by addr == (void *) 1
 			 * on NetBSD, so rewrite 'addr' appropriately.
 			 */
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (void *) 1;
 
-			error = sys_ptrace(l, &pta, retval);
+			error = sysent[SYS_ptrace].sy_call(l, &pta, retval);
 			if (error)
 				return error;
 			switch (request) {
@@ -1088,9 +1091,6 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			ptr++;
 
 	return LINUX_SYS_PTRACE_ARCH(l, uap, retval);
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
 }
 
 int

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.4 2008/05/04 00:02:11 martin Exp $ */
+/*      $NetBSD: if_prom.c,v 1.4.8.1 2009/01/19 13:16:37 skrll Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@ void fill_arpcache __P((void *, int));
 int prom_probe __P((struct netif *, void *));
 int prom_match __P((struct netif *, void *));
 void prom_init __P((struct iodesc *, void *));
-int prom_get __P((struct iodesc *, void *, size_t, time_t));
+int prom_get __P((struct iodesc *, void *, size_t, saseconds_t));
 int prom_put __P((struct iodesc *, void *, size_t));
 void prom_end __P((struct netif *));
 
@@ -209,10 +209,10 @@ prom_get(desc, pkt, len, timeout)
 	struct iodesc *desc;
 	void *pkt;
 	size_t len;
-	time_t timeout;
+	saseconds_t timeout;
 {
 	int s;
-	time_t t;
+	satime_t t;
 
 #ifdef NET_DEBUG
 	printf("prom_get: called\n");

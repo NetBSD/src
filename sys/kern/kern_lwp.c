@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.125 2008/10/21 11:51:23 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.125.2.1 2009/01/19 13:19:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.125 2008/10/21 11:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.125.2.1 2009/01/19 13:19:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1251,8 +1251,11 @@ lwp_userret(struct lwp *l)
 	/*
 	 * It should be safe to do this read unlocked on a multiprocessor
 	 * system..
+	 *
+	 * LW_SA_UPCALL will be handled after the while() loop, so don't
+	 * consider it now.
 	 */
-	while ((l->l_flag & LW_USERRET) != 0) {
+	while ((l->l_flag & (LW_USERRET & ~(LW_SA_UPCALL))) != 0) {
 		/*
 		 * Process pending signals first, unless the process
 		 * is dumping core or exiting, where we will instead
@@ -1317,9 +1320,6 @@ lwp_userret(struct lwp *l)
 		timerupcall(l);
 	if (l->l_flag & LW_SA_UPCALL)
 		sa_upcall_userret(l);
-	else if (__predict_false((l->l_savp)
-	    && (l->l_savp->savp_pflags & SAVP_FLAG_NOUPCALLS)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_NOUPCALLS;
 #endif /* KERN_SA */
 }
 

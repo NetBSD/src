@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.33 2008/07/15 16:15:28 dyoung Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.33.2.1 2009/01/19 13:17:52 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -289,6 +289,7 @@ int		acpi_pci_link_route_interrupt(void *, int, int *, int *, int *);
 char *		acpi_pci_link_name(void *);
 ACPI_HANDLE	acpi_pci_link_handle(void *);
 void		acpi_pci_link_state(void);
+void		acpi_pci_link_resume(void);
 
 struct acpi_io		*acpi_res_io(struct acpi_resources *, int);
 struct acpi_iorange	*acpi_res_iorange(struct acpi_resources *, int);

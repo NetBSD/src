@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.167 2008/10/17 08:12:23 cegger Exp $	 */
+/* $NetBSD: machdep.c,v 1.167.2.1 2009/01/19 13:17:02 skrll Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2008/10/17 08:12:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.1 2009/01/19 13:17:02 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -173,7 +173,9 @@ int iospace_inited = 0;
 void
 cpu_startup(void)
 {
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	vaddr_t		minaddr, maxaddr;
+#endif
 	extern paddr_t avail_end;
 	char pbuf[9];
 
@@ -197,9 +199,9 @@ cpu_startup(void)
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	minaddr = 0;
 
-#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/*
 	 * Allocate a submap for physio.  This map effectively limits the
 	 * number of processes doing physio at any one time.
@@ -320,9 +322,9 @@ consinit(void)
 	iospace_inited = 1;
 #endif
 	cninit();
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symtab_start != NULL && symtab_nsyms != 0 && symtab_end != NULL) {
-		ksyms_init(symtab_nsyms, symtab_start, symtab_end);
+		ksyms_addsyms_elf(symtab_nsyms, symtab_start, symtab_end);
 	}
 #endif
 #ifdef DEBUG
@@ -349,6 +351,7 @@ cpu_reboot(int howto, char *b)
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		if (dep_call->cpu_halt)
 			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
@@ -424,12 +427,12 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 	printf("dump ");
 	switch ((*bdev->d_dump) (dumpdev, 0, 0, 0)) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.5 2008/01/12 09:54:32 tsutsui Exp $	*/
+/*	$NetBSD: libsa.h,v 1.5.18.1 2009/01/19 13:16:31 skrll Exp $	*/
 
 /*
  * libsa prototypes 
@@ -14,7 +14,6 @@ int bugscstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 /* clock.c */
 u_long chiptotime(int, int, int, int, int, int);
-time_t getsecs(void);
 
 /* exec_mvme.c */
 void exec_mvme(char *, int, int);

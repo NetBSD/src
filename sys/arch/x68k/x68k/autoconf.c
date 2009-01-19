@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57 2008/07/16 18:50:58 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57.2.1 2009/01/19 13:17:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2008/07/16 18:50:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57.2.1 2009/01/19 13:17:08 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -44,20 +44,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2008/07/16 18:50:58 drochner Exp $
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <machine/cpu.h>
-#include <x68k/x68k/iodevice.h>
 #include <machine/bootinfo.h>
+#include <machine/autoconf.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-void configure(void);
 static void findroot(void);
-int mbmatch(device_t, cfdata_t, void *);
-void mbattach(device_t, device_t, void *);
-int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
-
-static struct device *scsi_find(dev_t);
+static device_t scsi_find(dev_t);
 
 int x68k_realconfig;
 
@@ -82,70 +77,20 @@ cpu_rootconf(void)
 	findroot();
 
 	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
 
-/*
- * use config_search_ia to find appropriate device, then call that device
- * directly with NULL device variable storage.  A device can then
- * always tell the difference between the real and console init
- * by checking for NULL.
- */
-int
-x68k_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
-    cfprint_t pfn)
-{
-	struct device temp;
-	struct cfdata *cf;
-	const struct cfattach *ca;
-
-	if (x68k_realconfig)
-		return(config_found(pdp, auxp, pfn) != NULL);
-
-	if (pdp == NULL)
-		pdp = &temp;
-
-	/* XXX Emulate 'struct device' of mainbus for cfparent_match() */
-	pdp->dv_cfdata = pcfp;
-	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
-	pdp->dv_unit = 0;
-	if ((cf = config_search_ia(NULL, pdp, NULL, auxp)) != NULL) {
-		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
-		if (ca != NULL) {
-			(*ca->ca_attach)(pdp, NULL, auxp);
-			pdp->dv_cfdata = NULL;
-			return(1);
-		}
-	}
-	pdp->dv_cfdata = NULL;
-	return(0);
-}
-
-/*
- * this function needs to get enough configured to do a console
- * basically this means start attaching the grfxx's that support
- * the console. Kinda hacky but it works.
- */
 void
 config_console(void)
 {	
-	struct cfdata *cf;
-
-	config_init();
-
-	/*
-	 * we need mainbus' cfdata.
-	 */
-	cf = config_rootsearch(NULL, "mainbus", NULL);
-	if (cf == NULL)
-		panic("no mainbus");
-	x68k_config_found(cf, NULL, __UNCONST("intio"), NULL);
-	x68k_config_found(cf, NULL, __UNCONST("grfbus"), NULL);
+	mfp_config_console();
+	grf_config_console();
+	ite_config_console();
 }
 
-dev_t	bootdev = 0;
+uint32_t bootdev = 0;
 
 static void
 findroot(void)
@@ -185,7 +130,7 @@ findroot(void)
 static const char *const name_netif[] = { X68K_BOOT_NETIF_STRINGS };
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	int majdev;
 	char tname[16];
@@ -200,7 +145,7 @@ device_register(struct device *dev, void *aux)
 		if (X68K_BOOT_DEV_IS_NETIF(majdev)) {
 			sprintf(tname, "%s%d",
 				name_netif[255 - majdev], B_UNIT(bootdev));
-			if (!strcmp(tname, dev->dv_xname))
+			if (!strcmp(tname, device_xname(dev)))
 				goto found;
 		}
 	}
@@ -210,7 +155,7 @@ found:
 	if (booted_device) {
 		/* XXX should be a "panic()" */
 		printf("warning: double match for boot device (%s, %s)\n",
-		       booted_device->dv_xname, dev->dv_xname);
+		       device_xname(booted_device), device_xname(dev));
 		return;
 	}
 	booted_device = dev;
@@ -218,13 +163,13 @@ found:
 
 static const char *const name_scsiif[] = { X68K_BOOT_SCSIIF_STRINGS };
 
-static struct device *
+static device_t
 scsi_find(dev_t bdev)
 {
 #if defined(NSCSIBUS) && NSCSIBUS > 0
 	int ifid;
 	char tname[16];
-	struct device *scsibus;
+	device_t scsibus;
 	struct scsibus_softc *sbsc;
 	struct scsipi_periph *periph;
 
@@ -248,13 +193,13 @@ scsi_find(dev_t bdev)
 		 * search for the scsibus whose parent is
 		 * the specified SCSI interface
 		 */
-		sprintf(tname, "%s%d",
+		sprintf(tname, "%s%" PRIu64,
 			name_scsiif[ifid], B_X68K_SCSI_IF_UN(bdev));
 
 		for (scsibus = TAILQ_FIRST(&alldevs); scsibus;
 					scsibus = TAILQ_NEXT(scsibus, dv_list))
 			if (device_parent(scsibus)
-			    && !strcmp(tname, device_parent(scsibus)->dv_xname))
+			    && !strcmp(tname, device_xname(device_parent(scsibus))))
 				break;
 	}
 	if (!scsibus)
@@ -267,41 +212,4 @@ scsi_find(dev_t bdev)
 #else
 	return NULL;
 #endif /* NSCSIBUS > 0 */
-}
-
-/*
- * mainbus driver
- */
-CFATTACH_DECL_NEW(mainbus, 0,
-    mbmatch, mbattach, NULL, NULL);
-
-static int mb_attached;
-
-int
-mbmatch(device_t parent, cfdata_t cf, void *auxp)
-{
-
-	if (mb_attached)
-		return 0;
-
-	return 1;
-}
-
-/*
- * "find" all the things that should be there.
- */
-void
-mbattach(device_t parent, device_t dp, void *auxp)
-{
-
-	mb_attached = 1;
-
-	aprint_normal("\n");
-
-	config_found(dp, __UNCONST("intio")  , NULL);
-	config_found(dp, __UNCONST("grfbus") , NULL);
-	config_found(dp, __UNCONST("par")    , NULL);
-	config_found(dp, __UNCONST("com")    , NULL);
-	config_found(dp, __UNCONST("com")    , NULL);
-	config_found(dp, __UNCONST("*")      , NULL);
 }

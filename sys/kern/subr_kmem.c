@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.19 2008/02/09 12:56:20 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.19.18.1 2009/01/19 13:19:39 skrll Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.19 2008/02/09 12:56:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.19.18.1 2009/01/19 13:19:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>

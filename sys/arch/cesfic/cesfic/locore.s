@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.16 2007/10/17 19:54:07 garbled Exp $	*/
+/*	$NetBSD: locore.s,v 1.16.28.1 2009/01/19 13:16:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -650,7 +650,7 @@ ENTRY_NOPROFILE(fpfault)
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
 	cmpl	#FPU_68040,_C_LABEL(fputype)
-	jle	Lfptnull
+	jge	Lfptnull
 #endif
 	tstb	%a0@		| null state frame?
 	jeq	Lfptnull	| yes, safe

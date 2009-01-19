@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.73 2008/07/31 07:47:43 simonb Exp $
+#	$NetBSD: GENERIC.in,v 1.73.2.1 2009/01/19 13:16:00 skrll Exp $
 #
 # Generic atari
 #
@@ -37,11 +37,9 @@ options 	INSECURE	# disable kernel security levels
 #if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
 options 	M68030		# support for 030
 options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
-#if !defined(INSTALL_KERNEL)
-options 	M68040		# support for 040
-options 	FPSP		# 68040 Floatingpoint support
 #endif
-#else /* for the Hades & Milan: */
+#if defined(HADES_KERNEL) || defined(MILAN_KERNEL) || ( defined(FALCON_KERNEL) \
+	&& (defined(INSTALLX_KERNEL) || !defined(INSTALL_KERNEL) ))
 options 	M68040		# support for 040
 options 	M68060		# support for 060
 options 	FPSP		# 68040 Floatingpoint support
@@ -98,7 +96,6 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 # File systems
 file-system 	FFS		# Berkeley fast file system
 file-system 	MFS		# Memory based filesystem
-file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 #file-system	PTYFS		# experimental - /dev/ptm support
@@ -106,6 +103,7 @@ file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #ifndef INSTALL_KERNEL
+file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	NFS		# Network File System client side code
 file-system 	PROCFS		# Process filesystem
 file-system 	FDESC		# /dev/fd
@@ -124,7 +122,6 @@ options 	WAPBL		# File system journaling support - Experimental
 #ifndef INSTALL_KERNEL
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
@@ -204,7 +201,7 @@ options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 # Atari specific options
 #
 #options 	KFONT_8x8		# Use 8x8 font instead of 8x16
-options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
+options 	ST_POOL_SIZE=24		# smallest that allows TT-HIGH
 #if defined(TT030_KERNEL) || defined(HADES_KERNEL)
 options 	TT_SCSI			# SCSI-support for TT
 options 	TT_VIDEO		# Graphics support for TT
@@ -218,7 +215,9 @@ options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #ifndef INSTALL_KERNEL
-options 	SERCONSOLE		# modem1 console support
+#ifndef FALCON_KERNEL
+options 	SERCONSOLE		# modem1 console support, breaks Falcon
+#endif
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
 options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
 #options 	STATCLOCK	        # Separate {stat,prof}clock

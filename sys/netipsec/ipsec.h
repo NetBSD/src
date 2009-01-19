@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.22 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.22.10.1 2009/01/19 13:20:14 skrll Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -38,7 +38,7 @@
 #ifndef _NETIPSEC_IPSEC_H_
 #define _NETIPSEC_IPSEC_H_
 
-#if defined(_KERNEL) && !defined(_LKM) && !defined(KLD_MODULE)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #endif

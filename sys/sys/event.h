@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.20 2008/03/21 21:53:35 ad Exp $	*/
+/*	$NetBSD: event.h,v 1.20.14.1 2009/01/19 13:20:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -226,9 +226,14 @@ struct kevent_ops {
 	kevent_put_events_t keo_put_events;
 };
 
-int	kevent1(register_t *, int, const struct kevent *, size_t,
-		struct kevent *, size_t, const struct timespec *,
-		const struct kevent_ops *);
+
+int	kevent_fetch_changes(void *, const struct kevent *, struct kevent *,
+    size_t, int);
+int 	kevent_put_events(void *, struct kevent *, struct kevent *, size_t,
+    int);
+int	kevent1(register_t *, int, const struct kevent *,
+    size_t, struct kevent *, size_t, const struct timespec *,
+    const struct kevent_ops *);
 
 int	kfilter_register(const char *, const struct filterops *, int *);
 int	kfilter_unregister(const char *);
@@ -244,8 +249,10 @@ struct timespec;
 __BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
 int	kqueue(void);
+#ifndef __LIBC12_SOURCE__
 int	kevent(int, const struct kevent *, size_t, struct kevent *, size_t,
-		    const struct timespec *);
+		    const struct timespec *) __RENAME(__kevent50);
+#endif
 #endif /* !_POSIX_C_SOURCE */
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.17 2008/10/24 13:55:42 christos Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.17.2.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -39,14 +39,14 @@ struct ksyms_symtab {
 	TAILQ_ENTRY(ksyms_symtab) sd_queue; /* All active tables */
 	const char *sd_name;	/* Name of this table */
 	Elf_Sym *sd_symstart;	/* Address of symbol table */
-	Elf_Sym *sd_minsym;	/* symbol with minimum value */
-	Elf_Sym *sd_maxsym;	/* symbol with maximum value */
+	uintptr_t sd_minsym;	/* symbol with minimum value */
+	uintptr_t sd_maxsym;	/* symbol with maximum value */
 	char *sd_strstart;	/* Address of corresponding string table */
 	int sd_usroffset;	/* Real address for userspace */
 	int sd_symsize;		/* Size in bytes of symbol table */
 	int sd_strsize;		/* Size of string table */
+	int sd_nglob;		/* Number of global symbols */
 	bool sd_gone;		/* dead but around for open() */
-	bool sd_malloc;		/* XXX REMOVE WHEN LKMS GO */
 };
 
 /*
@@ -56,9 +56,10 @@ struct ksyms_symtab {
 #define	SYMTAB		1
 #define	STRTAB		2
 #define	SHSTRTAB	3
-#define NSECHDR		4
+#define	SHBSS		4
+#define NSECHDR		5
 
-#define	NPRGHDR		2
+#define	NPRGHDR		1
 #define	SHSTRSIZ	32
 
 struct ksyms_hdr {
@@ -105,8 +106,9 @@ int ksyms_getval(const char *, const char *, unsigned long *, int);
 int ksyms_getval_unlocked(const char *, const char *, unsigned long *, int);
 int ksyms_addsymtab(const char *, void *, vsize_t, char *, vsize_t);
 int ksyms_delsymtab(const char *);
-void ksyms_init(int, void *, void *);
-void ksyms_init_explicit(void *, void *, size_t, void *, size_t);
+void ksyms_init(void);
+void ksyms_addsyms_elf(int, void *, void *);
+void ksyms_addsyms_explicit(void *, void *, size_t, void *, size_t);
 int ksyms_sift(char *, char *, int);
 void ksyms_modload(const char *, void *, vsize_t, char *, vsize_t);
 void ksyms_modunload(const char *);

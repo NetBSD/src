@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.17 2008/04/28 20:24:11 martin Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.17.8.1 2009/01/19 13:20:30 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ typedef union siginfo {
 #define	POLL_MSG	3	/* Input message available		*/
 #define	POLL_ERR	4	/* I/O Error				*/
 #define	POLL_PRI	5	/* High priority input available	*/
-#define	POLL_HUP	4	/* Device disconnected			*/
+#define	POLL_HUP	6	/* Device disconnected			*/
 
 
 /** si_code */

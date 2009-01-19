@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.31 2007/11/24 13:20:58 isaki Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.31.26.1 2009/01/19 13:19:57 skrll Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -140,15 +140,15 @@ static const char formatid[] = "USTARFS",
 
 static const int ustarfs_mode_offset = BBSIZE;
 
-static int checksig __P((ust_active_t *));
-static int convert __P((const char *, int, int));
-static int get_volume __P((struct open_file *, int));
+static int checksig(ust_active_t *);
+static int convert(const char *, int, int);
+static int get_volume(struct open_file *, int);
 static void setwindow(ust_active_t *, ustoffs, ustoffs);
-static int real_fs_cylinder_read __P((struct open_file *, ustoffs, int));
-static int ustarfs_cylinder_read __P((struct open_file *, ustoffs, int));
-static void ustarfs_sscanf __P((const char *, const char *, int *));
-static int read512block __P((struct open_file *, ustoffs, char block[512]));
-static int init_volzero_sig __P((struct open_file *));
+static int real_fs_cylinder_read(struct open_file *, ustoffs, int);
+static int ustarfs_cylinder_read(struct open_file *, ustoffs, int);
+static void ustarfs_sscanf(const char *, const char *, int *);
+static int read512block(struct open_file *, ustoffs, char block[512]);
+static int init_volzero_sig(struct open_file *);
 
 #ifdef HAVE_CHANGEDISK_HOOK
 /*
@@ -156,7 +156,7 @@ static int init_volzero_sig __P((struct open_file *));
  * Machine dependent code can eject the medium etc.
  * The new medium must be ready when this hook returns.
  */
-void changedisk_hook __P((struct open_file *));
+void changedisk_hook(struct open_file *);
 #endif
 
 static int

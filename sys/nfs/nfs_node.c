@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.106 2008/10/22 12:29:35 matt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.106.2.1 2009/01/19 13:20:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,9 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.106 2008/10/22 12:29:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.106.2.1 2009/01/19 13:20:20 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,14 +62,14 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.106 2008/10/22 12:29:35 matt Exp $");
 
 struct pool nfs_node_pool;
 struct pool nfs_vattr_pool;
-
-MALLOC_JUSTDEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");
+static struct workqueue *nfs_sillyworkq;
 
 extern int prtactive;
 
-void nfs_gop_size(struct vnode *, off_t, off_t *, int);
-int nfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
-int nfs_gop_write(struct vnode *, struct vm_page **, int, int);
+static void nfs_gop_size(struct vnode *, off_t, off_t *, int);
+static int nfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
+static int nfs_gop_write(struct vnode *, struct vm_page **, int, int);
+static void nfs_sillyworker(struct work *, void *);
 
 static const struct genfs_ops nfs_genfsops = {
 	.gop_size = nfs_gop_size,
@@ -81,11 +83,15 @@ static const struct genfs_ops nfs_genfsops = {
 void
 nfs_node_init()
 {
-	malloc_type_attach(M_NFSNODE);
+
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
 	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
 	    &pool_allocator_nointr, IPL_NONE);
+	if (workqueue_create(&nfs_sillyworkq, "nfssilly", nfs_sillyworker,
+	    NULL, PRI_NONE, IPL_NONE, 0) != 0) {
+	    	panic("nfs_node_init");
+	}
 }
 
 /*
@@ -94,9 +100,10 @@ nfs_node_init()
 void
 nfs_node_done()
 {
+
 	pool_destroy(&nfs_node_pool);
 	pool_destroy(&nfs_vattr_pool);
-	malloc_type_detach(M_NFSNODE);
+	workqueue_destroy(nfs_sillyworkq);
 }
 
 #define	RBTONFSNODE(node) \
@@ -270,26 +277,7 @@ nfs_inactive(v)
 	VOP_UNLOCK(vp, 0);
 
 	if (sp != NULL) {
-		int error;
-
-		/*
-		 * Remove the silly file that was rename'd earlier
-		 *
-		 * Just in case our thread also has the parent node locked,
-		 * we use LK_CANRECURSE.
-		 */
-
-		error = vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_CANRECURSE);
-		if (error || sp->s_dvp->v_data == NULL) {
-			/* XXX should recover */
-			printf("%s: vp=%p error=%d\n",
-			    __func__, sp->s_dvp, error);
-		} else {
-			nfs_removeit(sp);
-		}
-		kauth_cred_free(sp->s_cred);
-		vput(sp->s_dvp);
-		kmem_free(sp, sizeof(*sp));
+		workqueue_enqueue(nfs_sillyworkq, &sp->s_work, NULL);
 	}
 
 	return (0);
@@ -371,4 +359,31 @@ nfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		pmap_page_protect(pgs[i], VM_PROT_READ);
 	}
 	return genfs_gop_write(vp, pgs, npages, flags);
+}
+
+/*
+ * Remove a silly file that was rename'd earlier
+ */
+static void
+nfs_sillyworker(struct work *work, void *arg)
+{
+	struct sillyrename *sp;
+	int error;
+
+	sp = (struct sillyrename *)work;
+	error = vn_lock(sp->s_dvp, LK_EXCLUSIVE);
+	if (error || sp->s_dvp->v_data == NULL) {
+		/* XXX should recover */
+		printf("%s: vp=%p error=%d\n", __func__, sp->s_dvp, error);
+		if (error == 0) {
+			vput(sp->s_dvp);
+		} else {
+			vrele(sp->s_dvp);
+		}
+	} else {
+		nfs_removeit(sp);
+		vput(sp->s_dvp);
+	}
+	kauth_cred_free(sp->s_cred);
+	kmem_free(sp, sizeof(*sp));
 }

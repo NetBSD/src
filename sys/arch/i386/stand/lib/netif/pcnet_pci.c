@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_pci.c,v 1.7 2005/12/11 12:17:49 christos Exp $	*/
+/*	$NetBSD: pcnet_pci.c,v 1.7.86.1 2009/01/19 13:16:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -45,29 +45,29 @@ static pcihdl_t hdl;
 
 u_char eth_myaddr[6];
 
-extern void am7990_init __P((void));
-extern void am7990_stop __P((void));
+extern void am7990_init(void);
+extern void am7990_stop(void);
 
 static struct btinfo_netif bi_netif;
 
-int EtherInit(myadr)
-	unsigned char *myadr;
+int
+EtherInit(unsigned char *myadr)
 {
   int iobase, pcicsr, i;
 
-  if(pcicheck() == -1) {
+  if (pcicheck() == -1) {
     printf("cannot access PCI\n");
-    return(0);
+    return 0;
   }
 
-  if(pcifinddev(0x1022, 0x2000, &hdl)) {
+  if (pcifinddev(0x1022, 0x2000, &hdl)) {
     printf("cannot find PCNET\n");
-    return(0);
+    return 0;
   }
 
-  if(pcicfgread(&hdl, 0x10, &iobase) || !(iobase & 1)) {
+  if (pcicfgread(&hdl, 0x10, &iobase) || !(iobase & 1)) {
     printf("cannot map IO space\n");
-    return(0);
+    return 0;
   }
   iobase &= 0xfffffffc;
 
@@ -78,13 +78,13 @@ int EtherInit(myadr)
   am7990_stop();
 
   /* enable bus mastering in PCI command register */
-  if(pcicfgread(&hdl, 0x04, &pcicsr)
+  if (pcicfgread(&hdl, 0x04, &pcicsr)
      || pcicfgwrite(&hdl, 0x04, pcicsr | 4)) {
     printf("cannot enable DMA\n");
-    return(0);
+    return 0;
   }
 
-  for(i=0; i<6; i++)
+  for (i = 0; i < 6; i++)
 	  myadr[i] = eth_myaddr[i] = inb(iobase + i);
 
   am7990_init();
@@ -95,5 +95,5 @@ int EtherInit(myadr)
 
   BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 
-  return(1);
+  return 1;
 }

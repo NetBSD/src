@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.6 2005/12/11 12:18:51 christos Exp $
+# $NetBSD: Makefile.bootprogs,v 1.6.86.1 2009/01/19 13:16:42 skrll Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -35,11 +35,14 @@ AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
 CFLAGS=		-Os -g -ffreestanding -mno-abicalls -msoft-float -G 0
+CFLAGS+=	-Werror ${CWARNFLAGS}
 
 NETBSD_VERS!=${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CWARNFLAGS+=	-Wno-main 
+CWARNFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+CWARNFLAGS+=	-Wno-pointer-sign
 
 # if there is a 'version' file, add rule for vers.c and add it to SRCS
 # and CLEANFILES

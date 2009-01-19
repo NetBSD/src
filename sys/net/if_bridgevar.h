@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.11 2007/07/09 21:11:00 ad Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.11.44.1 2009/01/19 13:20:11 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -161,6 +161,7 @@ struct ifbifconf {
  */
 struct ifbareq {
 	char		ifba_ifsname[IFNAMSIZ];	/* member if name */
+	/*XXX: time_t */
 	unsigned long	ifba_expire;		/* address expire time */
 	uint8_t		ifba_flags;		/* address flags */
 	uint8_t		ifba_dst[ETHER_ADDR_LEN];/* destination address */
@@ -261,7 +262,7 @@ struct bridge_rtnode {
 	LIST_ENTRY(bridge_rtnode) brt_hash;	/* hash table linkage */
 	LIST_ENTRY(bridge_rtnode) brt_list;	/* list linkage */
 	struct ifnet		*brt_ifp;	/* destination if */
-	unsigned long		brt_expire;	/* expiration time */
+	time_t			brt_expire;	/* expiration time */
 	uint8_t			brt_flags;	/* address flags */
 	uint8_t			brt_addr[ETHER_ADDR_LEN];
 };
@@ -312,7 +313,7 @@ struct mbuf *bridge_input(struct ifnet *, struct mbuf *);
 
 void	bstp_initialization(struct bridge_softc *);
 void	bstp_stop(struct bridge_softc *);
-struct mbuf *bstp_input(struct ifnet *, struct mbuf *);
+struct mbuf *bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
 
 void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);

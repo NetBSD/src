@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.26 2007/03/04 06:03:19 christos Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.26.50.1 2009/01/19 13:20:13 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -276,6 +276,9 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_C_SHPREAMBLE	0x00008000	/* CAPABILITY: short preamble */
 #define	IEEE80211_C_MONITOR	0x00010000	/* CAPABILITY: monitor mode */
 #define	IEEE80211_C_TKIPMIC	0x00020000	/* CAPABILITY: TKIP MIC avail */
+#define IEEE80211_C_WME_TKIPMIC 0x00040000      /* CAPABILITY: TKIP MIC for QoS
+						   frame */
+/* 0x780000 available */
 #define	IEEE80211_C_WPA1	0x00800000	/* CAPABILITY: WPA1 avail */
 #define	IEEE80211_C_WPA2	0x01000000	/* CAPABILITY: WPA2 avail */
 #define	IEEE80211_C_WPA		0x01800000	/* CAPABILITY: WPA1+WPA2 avail*/

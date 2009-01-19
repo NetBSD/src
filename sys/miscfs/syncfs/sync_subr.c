@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.34 2008/01/02 11:49:02 ad Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.34.18.1 2009/01/19 13:20:07 skrll Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.34 2008/01/02 11:49:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.34.18.1 2009/01/19 13:20:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.34 2008/01/02 11:49:02 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -79,8 +79,8 @@ vn_initialize_syncerd()
 
 	syncer_last = SYNCER_MAXDELAY + 2;
 
-	syncer_workitem_pending = malloc(syncer_last * sizeof (struct synclist),
-	    M_VNODE, M_WAITOK);
+	syncer_workitem_pending =
+	    kmem_alloc(syncer_last * sizeof (struct synclist), KM_SLEEP);
 
 	for (i = 0; i < syncer_last; i++)
 		TAILQ_INIT(&syncer_workitem_pending[i]);

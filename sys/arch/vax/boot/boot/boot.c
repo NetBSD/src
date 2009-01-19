@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.26 2005/12/24 22:45:40 perry Exp $ */
+/*	$NetBSD: boot.c,v 1.26.86.1 2009/01/19 13:17:02 skrll Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
@@ -57,7 +58,6 @@ extern	unsigned opendev;
 void	usage(char *), boot(char *), halt(char *);
 void	Xmain(void);
 void	autoconf(void);
-int	getsecs(void);
 int	setjmp(int *);
 int	testkey(void);
 void	loadpcs(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.16 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: spifi.c,v 1.16.12.1 2009/01/19 13:16:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.16 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.16.12.1 2009/01/19 13:16:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -454,7 +454,7 @@ spifi_intr(void *v)
 	reg->intr = ~intr;
 
 #ifdef SPIFI_DEBUG
-	bitmask_snprintf(intr, INTR_BITMASK, bitmask, sizeof bitmask);
+	snprintb(bitmask, sizeof bitmask, INTR_BITMASK, intr);
 	printf("spifi_intr intr = 0x%s (%s), ", bitmask,
 		scsi_phase_name[(reg->prstat >> 3) & 7]);
 	printf("state = 0x%x, icond = 0x%x\n", state, icond);

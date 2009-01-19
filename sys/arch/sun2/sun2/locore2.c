@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.18 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: locore2.c,v 1.18.8.1 2009/01/19 13:16:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.18 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.18.8.1 2009/01/19 13:16:56 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -104,7 +104,7 @@ void _bootstrap(void);
 static void _verify_hardware(void);
 static void _vm_init(void);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 static void _save_symtab(void);
 
 /*
@@ -172,7 +172,7 @@ _vm_init(void)
 	 * if DDB is not part of this kernel, ignore the symbols.
 	 */
 	esym = end + 4;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* This will advance esym past the symbols. */
 	_save_symtab();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.21.8.1 2009/01/19 13:16:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ parseargs(char *str, int *howtop)
 static void
 chain(boot_entry_t entry, char *args, void *ssym, void *esym)
 {
-	extern char end[], *cp;
+	extern char end[];
 	u_int l, magic = 0x19730224;
 
 	/*
@@ -190,7 +190,7 @@ main(void)
 {
 	extern char bootprog_name[], bootprog_rev[],
 		    bootprog_maker[], bootprog_date[];
-	int chosen, options, cpu, cpunode, j, is64=0;
+	int chosen, cpu, cpunode, j, is64=0;
 	char bootline[512];		/* Should check size? */
 	char *cp;
 	u_long marks[MARK_MAX];

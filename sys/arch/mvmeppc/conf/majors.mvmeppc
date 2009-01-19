@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvmeppc,v 1.18 2007/12/31 15:32:00 ad Exp $
+#	$NetBSD: majors.mvmeppc,v 1.18.18.1 2009/01/19 13:16:31 skrll Exp $
 #
 # Device majors for mvmeppc
 #
@@ -26,7 +26,6 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
-device-major	lkm		char 28			lkm
 
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd

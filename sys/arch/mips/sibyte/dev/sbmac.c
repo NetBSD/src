@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.28 2008/02/07 01:21:52 dyoung Exp $ */
+/* $NetBSD: sbmac.c,v 1.28.18.1 2009/01/19 13:16:30 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28 2008/02/07 01:21:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.18.1 2009/01/19 13:16:30 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -256,7 +256,7 @@ static void sbmac_intr(void *xsc, uint32_t status, uint32_t pc);
 static void sbmac_start(struct ifnet *ifp);
 static void sbmac_setmulti(struct sbmac_softc *sc);
 static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data);
-static int sbmac_ioctl(struct ifnet *ifp, u_long command, void *data);
+static int sbmac_ioctl(struct ifnet *, u_long, void *);
 static void sbmac_watchdog(struct ifnet *ifp);
 static int sbmac_match(struct device *parent, struct cfdata *match, void *aux);
 static void sbmac_attach(struct device *parent, struct device *self, void *aux);
@@ -1957,7 +1957,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct sbmac_softc *sc = ifp->if_softc;
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -1990,21 +1990,21 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		return (EINVAL);
+		return ENOTTY;
 	}
 
 	return (0);
 }
 
 /*
- *  SBMAC_IOCTL(ifp, command, data)
+ *  SBMAC_IOCTL(ifp, cmd, data)
  *
  *  Main IOCTL handler - dispatches to other IOCTLs for various
  *  types of requests.
  *
  *  Input parameters:
  *	ifp - interface pointer
- *	command - command code
+ *	cmd - command code
  *	data - pointer to argument data
  *
  *  Return value:
@@ -2013,7 +2013,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  */
 
 static int
-sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
+sbmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct sbmac_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -2021,19 +2021,20 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch(command) {
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-		error = sbmac_ether_ioctl(ifp, command, data);
+	switch (cmd) {
+	case SIOCINITIFADDR:
+		error = sbmac_ether_ioctl(ifp, cmd, data);
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			/* XXX Program new MTU here */
 			error = 0;
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			/*
 			 * If only the state of the PROMISC flag changed,
@@ -2062,14 +2063,14 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			error = 0;
 			if (ifp->if_flags & IFF_RUNNING)
 				sbmac_setmulti(sc);
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

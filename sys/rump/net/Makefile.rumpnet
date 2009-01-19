@@ -1,4 +1,4 @@
-#	$NetBSD
+#	$NetBSD: Makefile.rumpnet,v 1.2.6.1 2009/01/19 13:20:27 skrll Exp $
 #
 
 RUMPNETLIST=	sockin virtif net netinet

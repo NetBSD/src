@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.54 2008/06/13 13:10:18 cegger Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.54.4.1 2009/01/19 13:16:44 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -81,9 +81,11 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <dev/pci/pciio.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -235,6 +237,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	int i, isconsole;
 
 	sc->sc_dev = self;
+	sc->sc_opens = 0;
 	node = sa->sa_node;
 
 	/* Remember cookies for cgfourteenmmap() */
@@ -284,7 +287,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset,
 			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR,
+			 0 /*BUS_SPACE_MAP_LINEAR*/,
 			 &bh) != 0) {
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
@@ -349,7 +352,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 		printf("vram at %p\n",(void *)bh);
 		/* XXX should use actual screen size */
 
-		for (i = 0; i < 1152 * 900; i++)
+		for (i = 0; i < ramsize; i++)
 		    ((unsigned char *)bh)[i] = 0;
 		fbrcons_init(&sc->sc_rcfb);
 		cg14_set_rcons_luts(sc);
@@ -369,6 +372,8 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_fb.fb_pixels = bus_space_vaddr(sc->sc_bustag, bh);
+	sc->sc_shadowfb = kmem_alloc(ramsize, KM_NOSLEEP);
+
 	if (isconsole)
 		printf(" (console)\n");
 	else
@@ -388,20 +393,18 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
  * the last close. This kind of nonsense is needed to give screenblank
  * a fighting chance of working.
  */
-static int cg14_opens = 0;
 
 int
 cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgfourteen_softc *sc;
-	int s, oldopens;
+	int oldopens;
 
+if (1) return EINVAL;             
 	sc = device_lookup_private(&cgfourteen_cd, minor(dev));
 	if (sc == NULL)
 		return(ENXIO);
-	s = splhigh();
-	oldopens = cg14_opens++;
-	splx(s);
+	oldopens = sc->sc_opens++;
 
 	/* Setup the cg14 as we want it, and save the original PROM state */
 	if (oldopens == 0)	/* first open only, to make screenblank work */
@@ -415,13 +418,11 @@ cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgfourteen_softc *sc = 
 	    device_lookup_private(&cgfourteen_cd, minor(dev));
-	int s, opens;
+	int opens;
 
-	s = splhigh();
-	opens = --cg14_opens;
-	if (cg14_opens < 0)
-		opens = cg14_opens = 0;
-	splx(s);
+	opens = --sc->sc_opens;
+	if (sc->sc_opens < 0)
+		opens = sc->sc_opens = 0;
 
 	/*
 	 * Restore video state to make the PROM happy, on last close.
@@ -808,6 +809,15 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	if (is_cons) {
 		vcons_init_screen(&sc->sc_vd, &sc->sc_console_screen, 1,
 		    &defattr);
+
+		/* clear the screen with the default background colour */
+		memset(sc->sc_fb.fb_pixels,
+		       (defattr >> 16) & 0xff,
+		       ri->ri_stride * ri->ri_height);
+		if (sc->sc_shadowfb != NULL)
+			memset(sc->sc_shadowfb,
+			       (defattr >> 16) & 0xff,
+			       ri->ri_stride * ri->ri_height);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
@@ -943,7 +953,7 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			    (struct wsdisplay_cmap *)data);
 
 		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = ms->scr_ri.ri_width << 2;
+			*(u_int *)data = ms->scr_ri.ri_stride << 2;
 			return 0;
 
 		case WSDISPLAYIO_SMODE:
@@ -958,8 +968,9 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						cg14_set_depth(sc, 8);
 						cg14_init_cmap(sc);
 						vcons_redraw_screen(ms);
-					} else
+					} else {
 						cg14_set_depth(sc, 32);
+					}
 				}
 			}
 			return 0;
@@ -998,6 +1009,10 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 				return cg14_do_cursor(sc, cursor);
 			}
+		case PCI_IOC_CFGREAD:
+		case PCI_IOC_CFGWRITE:
+			return EINVAL;
+
 	}
 	return EPASSTHROUGH;
 }
@@ -1031,7 +1046,11 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = ri->ri_width;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
-	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
+	if (sc->sc_shadowfb != NULL) {
+		ri->ri_bits = sc->sc_shadowfb;
+		ri->ri_hwbits = (char *)sc->sc_fb.fb_pixels;
+	} else 
+		ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
@@ -1113,7 +1132,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 		int i;
 		uint32_t val;
 	
-		for (i = 0; i < cur->cmap.count; i++) {
+		for (i = 0; i < min(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] ) |
 			      (cur->cmap.green[i] << 8) |
 			      (cur->cmap.blue[i] << 16);
@@ -1126,7 +1145,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 		uint32_t buffer[32], latch, tmp;
 		int i;
 
-		memcpy(buffer, cur->mask, 128);
+		copyin(cur->mask, buffer, 128);
 		for (i = 0; i < 32; i++) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1148,7 +1167,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 			bus_space_write_4(sc->sc_bustag, sc->sc_regh,
 			    CG14_CURSOR_PLANE0 + (i << 2), latch);
 		}
-		memcpy(buffer, cur->image, 128);
+		copyin(cur->image, buffer, 128);
 		for (i = 0; i < 32; i++) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;

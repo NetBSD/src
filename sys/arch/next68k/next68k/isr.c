@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.26 2008/06/26 02:52:03 isaki Exp $ */
+/*	$NetBSD: isr.c,v 1.26.4.1 2009/01/19 13:16:36 skrll Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.26 2008/06/26 02:52:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.26.4.1 2009/01/19 13:16:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,12 +329,12 @@ isrdispatch_autovec(struct clockframe *frame)
 
 		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
 
-		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),
-				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
+		    (*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)));
 		printf("  *intrstat = 0x%s\n", sbuf);
 
-		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),
-				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
+		    (*(volatile u_long *)IIOV(NEXT_P_INTRMASK)));
 		printf("  *intrmask = 0x%s\n", sbuf);
 	}
 #endif

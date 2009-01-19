@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.30 2008/10/15 06:51:20 wrstuden Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.30.2.1 2009/01/19 13:17:40 skrll Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.30 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.30.2.1 2009/01/19 13:17:40 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -60,7 +60,7 @@ void	syscall(void);
 
 struct uvm_object *emul_sunos32_object;
 
-const struct emul emul_sunos = {
+struct emul emul_sunos = {
 	"sunos32",
 	"/emul/sunos",
 #ifndef __HAVE_MINIMAL_EMUL

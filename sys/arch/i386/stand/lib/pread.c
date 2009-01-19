@@ -1,4 +1,4 @@
-/*	$NetBSD: pread.c,v 1.6 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: pread.c,v 1.6.86.1 2009/01/19 13:16:21 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -40,11 +40,8 @@
 
 static char     *buf;
 
-ssize_t 
-pread(fd, dest, size)
-	int	fd;
-	void	*dest;
-	size_t	size;
+ssize_t
+pread(int fd, void *dest, size_t size)
 {
 	int             rsize;
 
@@ -59,7 +56,7 @@ pread(fd, dest, size)
 
 		got = read(fd, buf, count);
 		if (got < 0)
-			return (-1);
+			return -1;
 
 		/* put to physical space */
 		vpbcopy(buf, dest, got);
@@ -69,5 +66,5 @@ pread(fd, dest, size)
 		if (got < count)
 			break;	/* EOF */
 	}
-	return (size - rsize);
+	return size - rsize;
 }

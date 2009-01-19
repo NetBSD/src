@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.43 2008/10/16 08:47:07 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.43.2.1 2009/01/19 13:19:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.43 2008/10/16 08:47:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.43.2.1 2009/01/19 13:19:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,7 +592,8 @@ lwp_park(struct timespec *ts, const void *hint)
  * requests that it be unparked.
  */
 int
-sys__lwp_park(struct lwp *l, const struct sys__lwp_park_args *uap, register_t *retval)
+sys____lwp_park50(struct lwp *l, const struct sys____lwp_park50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const struct timespec *)	ts;

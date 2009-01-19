@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_hooks.c,v 1.4 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: vfs_hooks.c,v 1.4.6.1 2009/01/19 13:19:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.4 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.4.6.1 2009/01/19 13:19:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -96,12 +96,12 @@ func fargs								\
 	int error;							\
 	struct vfs_hooks *hp;						\
  									\
-	error = 0;							\
+	error = EJUSTRETURN;						\
  									\
 	mutex_enter(&vfs_hooks_lock);					\
         LIST_FOREACH(hp, &vfs_hooks_head, vfs_hooks_list) {		\
 		if (hp-> hook != NULL) {				\
-			error = hp-> hook args;				\
+			error = hp-> hook hargs;			\
 			if (error != 0)					\
 				break;					\
 		}							\
@@ -135,3 +135,4 @@ func fargs								\
  */
 
 VFS_HOOKS_WO_ERROR(vfs_hooks_unmount, (struct mount *mp), vh_unmount, (mp));
+VFS_HOOKS_W_ERROR(vfs_hooks_reexport, (struct mount *mp, const char *path, void *data), vh_reexport, (mp, path, data));

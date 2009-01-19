@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.13 2008/05/30 14:54:16 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.13.6.1 2009/01/19 13:16:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -56,10 +56,6 @@
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
-
-void *rge_init(unsigned, void *);
-int rge_send(void *, char *, unsigned);
-int rge_recv(void *, char *, unsigned, unsigned);
 
 struct desc {
 	uint32_t xd0, xd1, xd2, xd3;

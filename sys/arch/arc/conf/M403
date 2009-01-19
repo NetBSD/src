@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.45 2007/10/17 19:53:27 garbled Exp $
+#	$NetBSD: M403,v 1.45.28.1 2009/01/19 13:15:56 skrll Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -24,7 +24,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-options 	LKM		# loadable kernel modules
 
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -83,7 +82,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

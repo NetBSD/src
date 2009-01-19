@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2008/10/14 14:09:29 pooka Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.2.1 2009/01/19 13:20:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,10 +30,14 @@
 #ifndef _SYS_RUMP_INTR_H_
 #define _SYS_RUMP_INTR_H_
 
+#ifndef _LOCORE
+
 typedef uint8_t ipl_t;
 typedef struct {
         ipl_t _ipl;
 } ipl_cookie_t;
+
+#endif /* !_LOCORE */
 
 int  rump_splfoo(void);
 void rump_splx(int);
@@ -41,6 +45,7 @@ void rump_splx(int);
 #define spllower(x) ((void)0)
 #define splraise(x) 0
 #define splsoftnet() rump_splfoo()
+#define splsoftclock() rump_splfoo()
 #define splhigh() rump_splfoo()
 #define splsched() rump_splfoo()
 #define splvm() rump_splfoo()
@@ -53,5 +58,6 @@ void rump_splx(int);
 #define	IPL_SOFTNET 0
 #define IPL_SCHED 0
 #define IPL_VM 0
+#define IPL_HIGH 0
 
 #endif /* _SYS_RUMP_INTR_H_ */

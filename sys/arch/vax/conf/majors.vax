@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.21 2007/12/31 15:32:08 ad Exp $
+#	$NetBSD: majors.vax,v 1.21.18.1 2009/01/19 13:17:02 skrll Exp $
 #
 # Device majors for vax
 #
@@ -36,7 +36,6 @@ device-major	gen		char 25			vax8600 | vax8200 |
 							vaxany
 device-major	lpa		char 26			lpa
 device-major	ps		char 27			ps
-device-major	lkm		char 28			lkm
 device-major	ad		char 29			ad
 device-major	rx		char 30  block 12	rx
 device-major	ik		char 31			ik

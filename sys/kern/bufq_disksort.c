@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_disksort.c,v 1.9 2008/04/30 12:09:02 reinoud Exp $	*/
+/*	$NetBSD: bufq_disksort.c,v 1.9.8.1 2009/01/19 13:19:37 skrll Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.9 2008/04/30 12:09:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.9.8.1 2009/01/19 13:19:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,13 +197,11 @@ bufq_disksort_cancel(struct bufq_state *bufq, struct buf *buf)
 	struct bufq_disksort *disksort = bufq->bq_private;
 	struct buf *bq;
 
-	bq = TAILQ_FIRST(&disksort->bq_head);
-	while (bq) {
+	TAILQ_FOREACH(bq, &disksort->bq_head, b_actq) {
 		if (bq == buf) {
 			TAILQ_REMOVE(&disksort->bq_head, bq, b_actq);
 			return buf;
 		}
-		bq = TAILQ_NEXT(bq, b_actq);
 	}
 	return NULL;
 }

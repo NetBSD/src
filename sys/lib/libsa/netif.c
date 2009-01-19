@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.22 2008/03/25 21:23:50 christos Exp $	*/
+/*	$NetBSD: netif.c,v 1.22.12.1 2009/01/19 13:19:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -74,7 +74,7 @@ netif_init(void)
 	}
 }
 
-int	netif_match __P((struct netif *, void *));
+int	netif_match(struct netif *, void *);
 
 int
 netif_match(struct netif *nif, void *machdep_hint)
@@ -214,7 +214,7 @@ netif_detach(struct netif *nif)
 }
 
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t len, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timo)
 {
 	struct netif *nif = desc->io_netif;
 	struct netif_driver *drv = nif->nif_driver;

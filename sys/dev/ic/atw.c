@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.140 2008/07/09 20:07:19 joerg Exp $  */
+/*	$NetBSD: atw.c,v 1.140.2.1 2009/01/19 13:17:54 skrll Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.140 2008/07/09 20:07:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.140.2.1 2009/01/19 13:17:54 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -3294,8 +3294,8 @@ atw_txintr(struct atw_softc *sc)
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 		    (txstat & ATW_TXSTAT_ERRMASK) != 0) {
-			bitmask_snprintf(txstat & ATW_TXSTAT_ERRMASK,
-			    ATW_TXSTAT_FMT, txstat_buf, sizeof(txstat_buf));
+			snprintb(txstat_buf, sizeof(txstat_buf),
+			    ATW_TXSTAT_FMT, txstat & ATW_TXSTAT_ERRMASK);
 			printf("%s: txstat %s %" __PRIuBITS "\n",
 			    device_xname(sc->sc_dev), txstat_buf,
 			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
@@ -3838,6 +3838,8 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ATW_IS_ENABLED(sc)) {
 				/*

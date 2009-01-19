@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.8 2008/04/24 18:39:23 ad Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.8.10.1 2009/01/19 13:17:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.8 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.8.10.1 2009/01/19 13:17:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.8 2008/04/24 18:39:23 ad Exp $");
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -95,11 +97,11 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 		syscallarg(int) pid;
 		syscallarg(netbsd32_intp) status;
 		syscallarg(int) options;
-		syscallarg(netbsd32_rusagep_t) rusage;
+		syscallarg(netbsd32_rusage50p_t) rusage;
 	} */
 	int error, status, linux_options, options, was_zombie;
 	struct rusage ru;
-	struct netbsd32_rusage ru32;
+	struct netbsd32_rusage50 ru32;
 	proc_t *p;
 	int pid;
 
@@ -130,7 +132,7 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 	mutex_exit(p->p_lock);
 
 	if (SCARG_P32(uap, rusage) != NULL) {
-		netbsd32_from_rusage(&ru, &ru32);
+		netbsd32_from_rusage50(&ru, &ru32);
 		error = copyout(&ru32, SCARG_P32(uap, rusage), sizeof(ru32));
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.19 2007/03/11 08:09:24 isaki Exp $	*/
+/*	$NetBSD: mfp.c,v 1.19.50.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.19 2007/03/11 08:09:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.19.50.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,22 +51,24 @@ __KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.19 2007/03/11 08:09:24 isaki Exp $");
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/mfp.h>
 
-static int mfp_match(struct device *, struct cfdata *, void *);
-static void mfp_attach(struct device *, struct device *, void *);
+static int  mfp_match(device_t, cfdata_t, void *);
+static void mfp_attach(device_t, device_t, void *);
+static int  mfp_search(device_t, cfdata_t, const int *, void *);
 static void mfp_init(void);
 static void mfp_calibrate_delay(void);
 
-CFATTACH_DECL(mfp, sizeof(struct mfp_softc),
+CFATTACH_DECL_NEW(mfp, sizeof(struct mfp_softc),
     mfp_match, mfp_attach, NULL, NULL);
 
 static int mfp_attached;
 
 static int
-mfp_match(struct device *parent, struct cfdata *cf, void *aux)
+mfp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -92,51 +94,54 @@ mfp_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-mfp_attach(struct device *parent, struct device *self, void *aux)
+mfp_attach(device_t parent, device_t self, void *aux)
 {
-	struct mfp_softc *sc = (struct mfp_softc *)self;
+	struct mfp_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
+	int r;
+
+	aprint_normal("\n");
+	mfp_attached = 1;
 
 	mfp_init();
-
-	if (sc != NULL) {
-		/* realconfig */
-		int r;
-
-		printf("\n");
-
-		mfp_attached = 1;
-		sc->sc_bst = ia->ia_bst;
-		sc->sc_intr = ia->ia_intr;
-		ia->ia_size = 0x30;
-		r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
+	sc->sc_bst = ia->ia_bst;
+	sc->sc_intr = ia->ia_intr;
+	ia->ia_size = 0x30;
+	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
-		if (r)
-			panic("IO map for MFP corruption??");
+	if (r)
+		panic("IO map for MFP corruption??");
 #endif
-		bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
-		config_found(self, __UNCONST("kbd"), NULL);
-		config_found(self, __UNCONST("clock"), NULL);
-		config_found(self, __UNCONST("pow"), NULL);
-	} else {
-		/*
-		 * Called from config_console;
-		 * calibrate the DELAY loop counter
-		 */
-		mfp_calibrate_delay();
-	}
+	bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
+	config_search_ia(mfp_search, self, "mfp", NULL);
+}
+
+static int
+mfp_search(device_t parent, cfdata_t cf, const int *loc, void *aux)
+{
+	if (config_match(parent, cf, __UNCONST(cf->cf_name)) > 0)
+		config_attach(parent, cf, __UNCONST(cf->cf_name), NULL);
+	return 0;
+}
+
+void
+mfp_config_console(void)
+{
+	mfp_init();
+	mfp_calibrate_delay();
 }
 
 static void
 mfp_init(void)
 {
-#if 0				/* done in x68k_init.c::intr_reset() */
 	mfp_set_vr(MFP_INTR);
 
 	/* stop all interrupts */
 	mfp_set_iera(0);
 	mfp_set_ierb(0);
-#endif
+
+	/* make MSCTRL 'High', XXX where should I do it? */
+	mfp_send_usart(0x41);
 
 	/* Timer A settings */
 	mfp_set_tacr(MFP_TIMERA_RESET | MFP_TIMERA_STOP);

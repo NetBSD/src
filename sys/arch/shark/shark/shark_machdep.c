@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.30 2008/04/17 00:03:36 macallan Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.30.12.1 2009/01/19 13:16:43 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.30 2008/04/17 00:03:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.30.12.1 2009/01/19 13:16:43 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -299,19 +299,20 @@ initarm(void *arg)
 	if (fiq_claim(&shark_fiqhandler))
 		panic("Cannot claim FIQ vector.");
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #ifdef __ELF__
-	ksyms_init(0, NULL, NULL);	/* XXX */
-#else
+	/* XXX: Load the symbol table in SYMTAB_SPACE */
+	ksyms_addsyms_elf(0, NULL, NULL);
+#else /* !__ELF__ */
 	{
 		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
 		extern char *esym;
 
-		ksyms_init(kernexec->a_syms, &end, esym);
+		ksyms_addsyms_elf(kernexec->a_syms, &end, esym);
 	}
 #endif /* __ELF__ */
-#endif /* NKSYMS || defined(DDB) || defined(LKM) */
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 
 #ifdef DDB
 	db_machine_init();

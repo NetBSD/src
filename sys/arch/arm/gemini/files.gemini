@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.2 2008/10/24 16:48:29 matt Exp $
+#	$NetBSD: files.gemini,v 1.2.2.1 2009/01/19 13:15:57 skrll Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -11,13 +11,17 @@ file	arch/arm/arm32/irq_dispatch.S
 # Memory size in megabytes
 defparam opt_gemini.h				MEMSIZE
 defflag opt_gemini.h				GEMINI
+defparam opt_gemini.h				GEMINI_BUSBASE: GEMINI
 defflag opt_gemini.h				SL3516: GEMINI
+defflag opt_gemini.h				GEMINI_MASTER: GEMINI
+defflag opt_gemini.h				GEMINI_SLAVE: GEMINI
+defflag opt_gemini.h				GEMINI_SINGLE: GEMINI
 
 # OBIO just an attach point
 define obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0]
 	     } : bus_space_generic
-device obio: obio, pcibus
-attach obio at mainbus
+device	obio: obio, pcibus
+attach	obio at mainbus
 file	arch/arm/gemini/gemini_obio.c		obio needs-count
 
 # OBIO files
@@ -38,12 +42,24 @@ device	geminiicu: pic
 attach	geminiicu at obio with geminiicu
 file	arch/arm/gemini/gemini_icu.c		geminiicu needs-flag
 
+# Gemini inter-processor-interrupts
+device	geminiipi {}
+attach	geminiipi at obio
+file	arch/arm/gemini/gemini_ipi.c		geminiipi needs-flag
 
+# Gemini inter-processor-messages
+device	geminiipm {}
+attach	geminiipm at geminiipi
+file	arch/arm/gemini/gemini_ipm.c		geminiipm needs-flag
+
+device	gpn: ifnet, ether, arp
+attach	gpn at geminiipm
+file	arch/arm/gemini/if_gpn.c		gpn needs-flag
 
 # GEMINI GPIO controllers
 
 # GEMINI Timers
-device geminitmr
+device	geminitmr
 file	arch/arm/gemini/gemini_timer.c		geminitmr
 defparam opt_gemini.h				GEMINI_TIMER_CLOCK_FREQ
 
@@ -52,24 +68,57 @@ attach 	geminitmr at obio with obiotimer
 file	arch/arm/gemini/obio_timer.c		obiotimer
 
 # Gemini Watchdog timer
-device geminiwdt: sysmon_wdog
-file arch/arm/gemini/gemini_wdt.c		geminiwdt needs-flag
+device	geminiwdt: sysmon_wdog
+file	arch/arm/gemini/gemini_wdt.c		geminiwdt needs-flag
 defparam opt_gemini.h				GEMINI_WDT_CLOCK_FREQ
 
 attach geminiwdt at obio with obiowdt
-file arch/arm/gemini/obio_wdt.c			obiowdt
+file	arch/arm/gemini/obio_wdt.c			obiowdt
 
 # NS16550 compatible serial ports
 attach com at obio with gemini_com
 file	arch/arm/gemini/gemini_com.c		gemini_com
 defparam opt_com.h				CONSADDR CONSPEED CONMODE
 
+# GEMINI LPC Bus
+define  lpcbus  {[addr = -1]}
+device	lpc { [ldn=-1], [addr=-1], [size=0], [intr=-1] }
+attach	lpc at lpcbus
+file	arch/arm/gemini/gemini_lpc.c		lpc needs-count
+
+# GEMINI LPC Host Controller
+device	geminilpchc: lpcbus
+attach	geminilpchc at obio with obio_lpchc
+file	arch/arm/gemini/obio_lpchc.c		obio_lpchc
+file	arch/arm/gemini/gemini_lpchc.c		geminilpchc needs-count
+
+# LPC Bus COM UARTs
+attach	com at lpc with lpc_com
+file	arch/arm/gemini/lpc_com.c		lpc_com
+
+# GEMINI GPIO controllers
+device	geminigpio: gpiobus
+attach	geminigpio at obio with geminigpio
+file	arch/arm/gemini/gemini_gpio.c		geminigpio
+
 # GEMINI USB controller
 attach ehci at obio with ehci_obio
 file	arch/arm/gemini/obio_ehci.c		ehci_obio
 
+# GEMINI ATA controller
+attach wdc at obio with wdc_obio
+file	arch/arm/gemini/obio_wdc.c		wdc_obio
 
 # PCI
-device gemini_pci: pcibus
-attach gemini_pci at obio
-file arch/arm/gemini/gemini_pci.c		pci
+device	gemini_pci: pcibus
+attach	gemini_pci at obio
+file	arch/arm/gemini/gemini_pci.c		pci needs-flag
+
+# GEMINI MAC controller
+device	geminigmac { port, intr, phy }: mii, mii_bitbang
+attach	geminigmac at obio with geminigmac
+file	arch/arm/gemini/gemini_gmac.c		geminigmac needs-flag
+
+device	gmc: ifnet, ether, arp, mii
+attach	gmc at geminigmac
+file	arch/arm/gemini/if_gmc.c		gmc

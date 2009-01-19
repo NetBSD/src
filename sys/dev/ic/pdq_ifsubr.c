@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.52 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.52.12.1 2009/01/19 13:17:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.52 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.52.12.1 2009/01/19 13:17:55 skrll Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -104,21 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.52 2008/04/08 12:07:27 cegger Exp $
 #include "pdqvar.h"
 #include "pdqreg.h"
 #endif
-
-#if defined(__bsdi__) && _BSDI_VERSION < 199506 /* XXX */
-static void
-arp_ifinit(
-    struct arpcom *ac,
-    struct ifaddr *ifa)
-{
-    sc->sc_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-    arpwhohas(&sc->sc_ac, &IA_SIN(ifa)->sin_addr);
-#if _BSDI_VERSION >= 199401
-    ifa->ifa_rtrequest = arp_rtrequest;
-    ifa->ifa_flags |= RTF_CLONING;
-#endif
-#endif
-
 
 void
 pdq_ifinit(
@@ -425,35 +410,25 @@ pdq_ifioctl(
     s = PDQ_OS_SPL_RAISE();
 
     switch (cmd) {
-	case SIOCSIFADDR: {
+	case SIOCINITIFADDR: {
 	    struct ifaddr *ifa = (struct ifaddr *)data;
 
 	    ifp->if_flags |= IFF_UP;
+	    pdq_ifinit(sc);
 	    switch(ifa->ifa_addr->sa_family) {
 #if defined(INET)
-		case AF_INET: {
-		    pdq_ifinit(sc);
+		case AF_INET:
 		    PDQ_ARP_IFINIT(sc, ifa);
 		    break;
-		}
 #endif /* INET */
-
-
-		default: {
-		    pdq_ifinit(sc);
+		default:
 		    break;
-		}
 	    }
 	    break;
 	}
-	case SIOCGIFADDR: {
-	    struct ifreq *ifr = (struct ifreq *)data;
-	    error = ifreq_setaddr(cmd, ifr,
-	        (const struct sockaddr *)sc->sc_if.if_sadl);
-	    break;
-	}
-
 	case SIOCSIFFLAGS: {
+	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+		break;
 	    pdq_ifinit(sc);
 	    break;
 	}
@@ -500,7 +475,7 @@ pdq_ifioctl(
 #endif
 
 	default: {
-	    error = EINVAL;
+	    error = ether_ioctl(ifp, cmd, data);
 	    break;
 	}
     }

@@ -1,4 +1,4 @@
-/* $NetBSD: mach_ppccalls_syscall.h,v 1.7 2007/12/20 23:10:49 dsl Exp $ */
+/* $NetBSD: mach_ppccalls_syscall.h,v 1.7.18.1 2009/01/19 13:17:36 skrll Exp $ */
 
 /*
  * System call numbers.

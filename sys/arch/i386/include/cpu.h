@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.175 2008/05/22 13:55:51 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.175.6.1 2009/01/19 13:16:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 
 #ifdef _KERNEL
 
-#if defined(__GNUC__) && !defined(_LKM)
+#if defined(__GNUC__) && !defined(_MODULE)
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 

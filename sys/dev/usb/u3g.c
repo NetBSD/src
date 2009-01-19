@@ -45,7 +45,7 @@
 #define U3G_MAXPORTS           4
 
 struct u3g_softc {
-	device_t                    sc_ucom[U3G_MAXPORTS];;
+	device_t                    sc_ucom[U3G_MAXPORTS];
 	device_t                    sc_dev;
 	usbd_device_handle          sc_udev;
 	u_char                      sc_msr;
@@ -130,7 +130,6 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8775_2 },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8780 },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8781 },
-	{ 0, 0 }
 };
 
 #ifdef U3G_DEBUG

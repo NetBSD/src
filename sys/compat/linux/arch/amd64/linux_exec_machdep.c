@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.12 2008/10/26 02:00:57 christos Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.12.2.1 2009/01/19 13:17:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.12 2008/10/26 02:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.12.2.1 2009/01/19 13:17:23 skrll Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.12 2008/10/26 02:00:57 chri
 
 #include <sys/cpu.h>
 #include <machine/vmparam.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
 
@@ -65,6 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.12 2008/10/26 02:00:57 chri
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_errno.h>
+#include <compat/linux/common/linux_prctl.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
+#include <compat/linux/linux_syscallargs.h>
 
 int
 linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
@@ -254,6 +259,12 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 int
 linux_init_thread_area(struct lwp *l, struct lwp *l2)
 {
-	return 0;
+	register_t retval;
+	struct linux_sys_arch_prctl_args uap;
+	struct trapframe *tf = l2->l_md.md_regs;
+
+	SCARG(&uap, code) = LINUX_ARCH_SET_FS;
+	SCARG(&uap, addr) = tf->tf_r8;
+	return linux_sys_arch_prctl(l2, &uap, &retval);
 }
 #endif

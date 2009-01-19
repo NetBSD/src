@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.8 2007/12/11 11:34:08 lukem Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.8.20.1 2009/01/19 13:18:13 skrll Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.8 2007/12/11 11:34:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.8.20.1 2009/01/19 13:18:13 skrll Exp $");
 #if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwmem.c,v 1.34 2007/06/06 14:31:36 simokawa Exp $");
 #endif
@@ -115,7 +115,7 @@ static int sysctl_fwmem_verify_speed(SYSCTLFN_PROTO);
 /*
  * Setup sysctl(3) MIB, hw.fwmem.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_fwmem, "sysctl fwmem subtree setup")
 {

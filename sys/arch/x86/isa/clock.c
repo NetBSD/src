@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2008/05/11 22:18:08 ad Exp $	*/
+/*	$NetBSD: clock.c,v 1.30.6.1 2009/01/19 13:17:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2008/05/11 22:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30.6.1 2009/01/19 13:17:09 skrll Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -361,8 +361,8 @@ startrtclock(void)
 	/* Check diagnostic status */
 	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0) { /* XXX softc */
 		char bits[128];
-		printf("RTC BIOS diagnostic error %s\n",
-		    bitmask_snprintf(s, NVRAM_DIAG_BITS, bits, sizeof(bits)));
+		snprintb(bits, sizeof(bits), NVRAM_DIAG_BITS, s);
+		printf("RTC BIOS diagnostic error %s\n", bits);
 	}
 
 	tc_init(&i8254_timecounter);

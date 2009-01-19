@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.4 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.4.8.1 2009/01/19 13:16:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.4 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.4.8.1 2009/01/19 13:16:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,12 +169,14 @@ dodumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0 || dumpsize == 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %llu,%llu not possible\n",
+		    (unsigned long long)major(dumpdev),
+		    (unsigned long long)minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %llu,%llu offset %ld\n",
+	    (unsigned long long)major(dumpdev),
+	    (unsigned long long)minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
@@ -654,7 +656,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 	for (i = 0; i < bytes; i += n, dump_totalbytesleft -= n) {
 		/* Print out how many MBs we have left to go. */
 		if ((dump_totalbytesleft % (1024*1024)) == 0)
-			printf("%lu ", (unsigned long)
+			printf_nolog("%lu ", (unsigned long)
 			    (dump_totalbytesleft / (1024 * 1024)));
 
 		/* Limit size for next transfer. */

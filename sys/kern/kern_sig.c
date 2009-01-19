@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.289 2008/10/24 18:07:36 wrstuden Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.289.2.1 2009/01/19 13:19:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289 2008/10/24 18:07:36 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289.2.1 2009/01/19 13:19:38 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289 2008/10/24 18:07:36 wrstuden Exp 
 #include <sys/callout.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #ifdef PAX_SEGVGUARD
 #include <sys/pax.h>
@@ -110,7 +111,7 @@ static void	proc_stop_callout(void *);
 int	sigunwait(struct proc *, const ksiginfo_t *);
 void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 int	sigpost(struct lwp *, sig_t, int, int, int);
-int	sigchecktrace(sigpend_t **);
+int	sigchecktrace(void);
 void	sigswitch(bool, int, int);
 void	sigrealloc(ksiginfo_t *);
 
@@ -121,6 +122,10 @@ static void	*sigacts_poolpage_alloc(struct pool *, int);
 static callout_t proc_stop_ch;
 static pool_cache_t siginfo_cache;
 static pool_cache_t ksiginfo_cache;
+
+void (*sendsig_sigcontext_vec)(const struct ksiginfo *, const sigset_t *);
+int (*coredump_vec)(struct lwp *, const char *) =
+    (int (*)(struct lwp *, const char *))enosys;
 
 static struct pool_allocator sigactspool_allocator = {
         .pa_alloc = sigacts_poolpage_alloc,
@@ -1034,8 +1039,8 @@ sigismasked(struct lwp *l, int sig)
 /*
  * sigpost:
  *
- *	 Post a pending signal to an LWP.  Returns non-zero if the LWP was
- *	 able to take the signal.
+ *	 Post a pending signal to an LWP.  Returns non-zero if the LWP may
+ *	 be able to take the signal.
  */
 int
 sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
@@ -1052,21 +1057,11 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 	if (l->l_refcnt == 0)
 		return 0;
 
-	lwp_lock(l);
-
-	/*
-	 * When sending signals to SA processes, we first try to find an
-	 * idle VP to take it.
-	 */
-	if (idlecheck && (l->l_flag & (LW_SA_IDLE | LW_SA_YIELD)) == 0) {
-		lwp_unlock(l);
-		return 0;
-	}
-
 	/*
 	 * Have the LWP check for signals.  This ensures that even if no LWP
 	 * is found to take the signal immediately, it should be taken soon.
 	 */
+	lwp_lock(l);
 	l->l_flag |= LW_PENDSIG;
 
 	/*
@@ -1671,7 +1666,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
  * Check for a signal from the debugger.
  */
 int
-sigchecktrace(sigpend_t **spp)
+sigchecktrace(void)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1680,15 +1675,15 @@ sigchecktrace(sigpend_t **spp)
 
 	KASSERT(mutex_owned(p->p_lock));
 
+	/* If there's a pending SIGKILL, process it immediately. */
+	if (sigismember(&p->p_sigpend.sp_set, SIGKILL))
+		return 0;
+
 	/*
 	 * If we are no longer being traced, or the parent didn't
 	 * give us a signal, look for more signals.
 	 */
 	if ((p->p_slflag & PSL_TRACED) == 0 || p->p_xstat == 0)
-		return 0;
-
-	/* If there's a pending SIGKILL, process it immediately. */
-	if (sigismember(&p->p_sigpend.sp_set, SIGKILL))
 		return 0;
 
 	/*
@@ -1697,10 +1692,6 @@ sigchecktrace(sigpend_t **spp)
 	 */
 	signo = p->p_xstat;
 	p->p_xstat = 0;
-	if ((sigprop[signo] & SA_TOLWP) != 0)
-		*spp = &l->l_sigpend;
-	else
-		*spp = &p->p_sigpend;
 	mask = (p->p_sa != NULL) ? &p->p_sa->sa_sigmask : &l->l_sigmask;
 	if (sigismember(mask, signo))
 		signo = 0;
@@ -1718,18 +1709,20 @@ sigchecktrace(sigpend_t **spp)
  *
  * We will also return -1 if the process is exiting and the current LWP must
  * follow suit.
- *
- * Note that we may be called while on a sleep queue, so MUST NOT sleep.  We
- * can switch away, though.
  */
 int
 issignal(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-	int signo = 0, prop;
-	sigpend_t *sp = NULL;
+	struct proc *p;
+	int signo, prop;
+	sigpend_t *sp;
 	sigset_t ss;
 
+	p = l->l_proc;
+	sp = NULL;
+	signo = 0;
+
+	KASSERT(p == curproc);
 	KASSERT(mutex_owned(p->p_lock));
 
 	for (;;) {
@@ -1748,9 +1741,12 @@ issignal(struct lwp *l)
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 			sigswitch(true, PS_NOCLDSTOP, 0);
-			signo = sigchecktrace(&sp);
+			signo = sigchecktrace();
 		} else
 			signo = 0;
+
+		/* Signals from the debugger are "out of band". */
+		sp = NULL;
 
 		/*
 		 * If the debugger didn't provide a signal, find a pending
@@ -1813,8 +1809,11 @@ issignal(struct lwp *l)
 				    signo);
 
 			/* Check for a signal from the debugger. */
-			if ((signo = sigchecktrace(&sp)) == 0)
+			if ((signo = sigchecktrace()) == 0)
 				continue;
+
+			/* Signals from the debugger are "out of band". */
+			sp = NULL;
 		}
 
 		prop = sigprop[signo];
@@ -1924,7 +1923,7 @@ postsig(int signo)
 	 * signal.
 	 *
 	 * Special case: user has done a sigsuspend.  Here the current mask is
-	 * not of interest, but rather the mask from before the sigsuspen is
+	 * not of interest, but rather the mask from before the sigsuspend is
 	 * what we want restored after the signal processing is completed.
 	 */
 	if (l->l_sigrestore) {
@@ -1964,6 +1963,41 @@ postsig(int signo)
 #endif
 
 	kpsendsig(l, &ksi, returnmask);
+}
+
+/*
+ * sendsig:
+ *
+ *	Default signal delivery method for NetBSD.
+ */
+void
+sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
+{
+	struct sigacts *sa;
+	int sig;
+
+	sig = ksi->ksi_signo;
+	sa = curproc->p_sigacts;
+
+	switch (sa->sa_sigdesc[sig].sd_vers)  {
+	case 0:
+	case 1:
+		/* Compat for 1.6 and earlier. */
+		if (sendsig_sigcontext_vec == NULL) {
+			break;
+		}
+		(*sendsig_sigcontext_vec)(ksi, mask);
+		return;
+	case 2:
+	case 3:
+		sendsig_siginfo(ksi, mask);
+		return;
+	default:
+		break;
+	}
+
+	printf("sendsig: bad version %d\n", sa->sa_sigdesc[sig].sd_vers);
+	sigexit(curlwp, SIGILL);
 }
 
 /*
@@ -2094,7 +2128,7 @@ sigexit(struct lwp *l, int signo)
 
 	if (docore) {
 		mutex_exit(p->p_lock);
-		if ((error = coredump(l, NULL)) == 0)
+		if ((error = (*coredump_vec)(l, NULL)) == 0)
 			exitsig |= WCOREFLAG;
 
 		if (kern_logsigexit) {

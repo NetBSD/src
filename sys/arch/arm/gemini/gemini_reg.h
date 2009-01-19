@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.1.2.1 2009/01/19 13:15:58 skrll Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -16,9 +16,12 @@
  * Gemini SL3516 memory map
  */
 #define GEMINI_SRAM_BASE	0x00000000	/* Internal SRAM  */
+						/* NOTE: use the SHADOW to avoid conflict w/ DRAM */
 #define GEMINI_SRAM_SIZE	0x10000000 	/* 128 MB */
-#define GEMINI_DRAM_BASE	0x10000000 	/* DRAM (via DDR Control Module) */
+#define GEMINI_DRAM_BASE	0x00000000 	/* DRAM (via DDR Control Module) */
+						/* NOTE: this is a shadow of 0x10000000 */
 #define GEMINI_DRAM_SIZE	0x20000000	/* 512 MB */
+						/* NOTE: size of addr space, not necessarily populated */
 #define GEMINI_FLASH_BASE	0x30000000 	/* DRAM (via DDR Control Module) */
 #define GEMINI_FLASH_SIZE	0x10000000	/* 128 MB */
 
@@ -34,7 +37,7 @@
 #define GEMINI_RTC_BASE		0x45000000 	/* Real Time Clock module */
 #define GEMINI_SATA_BASE	0x46000000 	/* Serial ATA module */
 #define GEMINI_LPCHC_BASE	0x47000000 	/* LPC Hosr Controller module */
-#define GEMINI_LPCP_BASE	0x47800000 	/* LPC Peripherals IO space */
+#define GEMINI_LPCIO_BASE	0x47800000 	/* LPC Peripherals IO space */
 #define GEMINI_IC0_BASE		0x48000000 	/* Interrupt Control module #0 */
 #define GEMINI_IC1_BASE		0x49000000 	/* Interrupt Control module #1 */
 #define GEMINI_SSPC_BASE	0x4a000000 	/* Synchronous Serial Port Control module */
@@ -48,7 +51,8 @@
 #define GEMINI_PCIIO_SIZE	0x0007f000 	/* PCI IO     space size */
 #define GEMINI_PCIMEM_BASE	0x58000000 	/* PCI Memory space      */
 #define GEMINI_PCIMEM_SIZE	0x08000000 	/* PCI Memory space size */
-#define GEMINI_NGC_BASE		0x60000000 	/* NetEngine & GMAC Configuration registers */
+#define GEMINI_GMAC_BASE	0x60000000 	/* NetEngine & GMAC Configuration registers */
+#define GEMINI_GMAC_SIZE	0x00010000 	/* NetEngine & GMAC Configuration size */
 #define GEMINI_SDC_BASE		0x62000000 	/* Security DMA and Configure registers */
 #define GEMINI_MIDE_BASE	0x63000000 	/* Multi IDE registers */
 #define GEMINI_RXDC_BASE	0x64000000 	/* RAID XOR DMA Configuration registers */
@@ -59,6 +63,23 @@
 #define GEMINI_USB1_BASE	0x69000000 	/* USB #1 registers */
 #define GEMINI_TVE_BASE		0x6a000000 	/* TVE registers */
 #define GEMINI_SRAM_SHADOW_BASE	0x70000000 	/* Shadow of internal SRAM */
+
+/*
+ * Gemini SL3516 Global register offsets and bits
+ */
+#define GEMINI_GLOBAL_WORD_ID	0x0		/* Global Word ID */			/* ro */
+#define  GLOBAL_ID_CHIP_ID	__BITS(31,8)
+#define  GLOBAL_ID_CHIP_REV	__BITS(7,0)
+#define GEMINI_GLOBAL_RESET_CTL	0xc		/* Global Soft Reset Control */		/* rw */
+#define GLOBAL_RESET_GLOBAL	__BIT(31)	/* Global Soft Reset */
+#define GLOBAL_RESET_CPU1	__BIT(30)	/* CPU#1 reset hold */
+#define GLOBAL_RESET_GMAC1	__BIT(6)	/* GMAC1 reset hold */
+#define GLOBAL_RESET_GMAC0	__BIT(5)	/* CGMAC reset hold */
+#define GEMINI_GLOBAL_MISC_CTL	0x30		/* Miscellaneous Control */		/* rw */
+#define GEMINI_GLOBAL_CPU0	0x38		/* CPU #0 Status and Control */		/* rw */
+#define  GLOBAL_CPU0_IPICPU1	__BIT(31)	/* IPI to CPU#1 */
+#define GEMINI_GLOBAL_CPU1	0x3c		/* CPU #1 Status and Control */		/* rw */
+#define  GLOBAL_CPU1_IPICPU0	__BIT(31)	/* IPI to CPU#0 */
 
 /*
  * Gemini SL3516 Watchdog device register offsets and bits
@@ -158,6 +179,84 @@
 #define GEMINI_ICU_IRQ_DEBOUNCE		0x58						/* ro */
 #define GEMINI_ICU_FIQ_DEBOUNCE		0x5c						/* ro */
 
+
+/*
+ * Gemini LPC controller register offsets and bits
+ */
+#define GEMINI_LPCHC_ID			0x00						/* ro */
+# define LPCHC_ID_DEVICE		__BITS(31,8)	/* Device ID */
+# define LPCHC_ID_REV			__BITS(7,0)	/* Revision */
+# define _LPCHC_ID_DEVICE(r)		((typeof(r))(((r) & LPCHC_ID_DEVICE) >> 8))
+# define _LPCHC_ID_REV(r)		((typeof(r))(((r) & LPCHC_ID_REV) >> 0))
+#define GEMINI_LPCHC_CSR		0x04						/* rw */
+# define LPCHC_CSR_RESa			__BITS(31,24)
+# define LPCHC_CSR_STO			__BIT(23)	/* Sync Time Out */
+# define LPCHC_CSR_SERR			__BIT(22)	/* Sync Error */
+# define LPCHC_CSR_RESb			__BITS(21,8)
+# define LPCHC_CSR_STOE			__BIT(7)	/* Sync Time Out Enable */
+# define LPCHC_CSR_SERRE		__BIT(6)	/* Sync Error Enable */
+# define LPCHC_CSR_RESc			__BITS(5,1)
+# define LPCHC_CSR_BEN			__BIT(0)	/* Bridge Enable */
+#define GEMINI_LPCHC_IRQCTL		0x08						/* rw */
+# define LPCHC_IRQCTL_RESV		__BITS(31,8)
+# define LPCHC_IRQCTL_SIRQEN		__BIT(7)	/* Serial IRQ Enable */
+# define LPCHC_IRQCTL_SIRQMS		__BIT(6)	/* Serial IRQ Mode Select */
+# define LPCHC_IRQCTL_SIRQFN		__BITS(5,2)	/* Serial IRQ Frame Number */
+# define LPCHC_IRQCTL_SIRQFW		__BITS(1,0)	/* Serial IRQ Frame Width */
+#  define IRQCTL_SIRQFW_4		0		
+#  define IRQCTL_SIRQFW_6		1		
+#  define IRQCTL_SIRQFW_8		2		
+#  define IRQCTL_SIRQFW_RESV		3		
+#define GEMINI_LPCHC_SERIRQSTS		0x0c						/* rwc */
+# define LPCHC_SERIRQSTS_RESV		__BITS(31,17)
+#define GEMINI_LPCHC_SERIRQTYP		0x10						/* rw */
+# define LPCHC_SERIRQTYP_RESV		__BITS(31,17)
+#  define SERIRQTYP_EDGE		1
+#  define SERIRQTYP_LEVEL		0
+#define GEMINI_LPCHC_SERIRQPOLARITY	0x14						/* rw */
+# define LPCHC_SERIRQPOLARITY_RESV	__BITS(31,17)
+#  define SERIRQPOLARITY_HI		1
+#  define SERIRQPOLARITY_LO		0
+#define GEMINI_LPCHC_SIZE		(GEMINI_LPCHC_SERIRQPOLARITY + 4)
+#define GEMINI_LPCHC_NSERIRQ		17
+
+/*
+ * Gemini GPIO controller register offsets and bits
+ */
+#define GEMINI_GPIO_DATAOUT		0x00		/* Data Out */			/* rw */
+#define GEMINI_GPIO_DATAIN		0x04		/* Data Out */			/* ro */
+#define GEMINI_GPIO_PINDIR		0x08		/* Pin Direction */		/* rw */
+#define  GPIO_PINDIR_INPUT		0
+#define  GPIO_PINDIR_OUTPUT		1
+#define GEMINI_GPIO_PINBYPASS		0x0c		/* Pin Bypass */		/* rw */
+#define GEMINI_GPIO_DATASET		0x10		/* Data Set */			/* wo */
+#define GEMINI_GPIO_DATACLR		0x14		/* Data Clear */		/* wo */
+#define GEMINI_GPIO_PULLENB		0x18		/* Pullup Enable */		/* rw */
+#define GEMINI_GPIO_PULLTYPE		0x1c		/* Pullup Type */		/* rw */
+#define  GPIO_PULLTYPE_LOW		0
+#define  GPIO_PULLTYPE_HIGH		1
+#define GEMINI_GPIO_INTRENB		0x20		/* Interrupt Enable */		/* rw */
+#define GEMINI_GPIO_INTRRAWSTATE	0x24		/* Interrupt Raw State */	/* ro */
+#define GEMINI_GPIO_INTRMSKSTATE	0x28		/* Interrupt Masked State */	/* ro */
+#define GEMINI_GPIO_INTRMASK		0x2c		/* Interrupt Mask */		/* rw */
+#define GEMINI_GPIO_INTRCLR		0x30		/* Interrupt Clear */		/* wo */
+#define GEMINI_GPIO_INTRTRIG		0x34		/* Interrupt Trigger Method */	/* rw */
+#define  GPIO_INTRTRIG_EDGE		0
+#define  GPIO_INTRTRIG_LEVEL		1
+#define GEMINI_GPIO_INTREDGEBOTH	0x38		/* Both edges trigger Intr. */	/* rw */
+#define GEMINI_GPIO_INTRDIR		0x3c		/* edge/level direction */	/* rw */
+#define  GPIO_INTRDIR_EDGE_RISING	0
+#define  GPIO_INTRDIR_EDGE_FALLING	1
+#define  GPIO_INTRDIR_LEVEL_HIGH	0
+#define  GPIO_INTRDIR_LEVEL_LOW		1
+#define GEMINI_GPIO_BOUNCEENB		0x40		/* Bounce Enable */		/* rw */
+#define GEMINI_GPIO_BOUNCESCALE		0x44		/* Bounce Pre-Scale */		/* rw */
+#define  GPIO_BOUNCESCALE_RESV		__BITS(31,16)
+#define  GPIO_BOUNCESCALE_VAL		__BITS(15,0)	/* NOTE:
+							 * if bounce is enabled, and bounce pre-scale == 0
+							 * then the the pin will not detect any interrupt 
+							 */
+#define GEMINI_GPIO_SIZE		(GEMINI_GPIO_BOUNCESCALE + 4)
 
 /*
  * Gemini PCI controller register offsets and bits
@@ -272,6 +371,28 @@ gemini_pci_cfg_reg_mem_size(size_t sz)
 	/* NOTREACHED */
 }
 #endif	/* _LOCORE */
+
+/*
+ * Gemini SL3516 IDE device register offsets, &etc.
+ */
+#define GEMINI_MIDE_NCHAN		2
+#define GEMINI_MIDE_OFFSET(chan)	((chan == 0) ? 0x0 : 0x400000)
+#define GEMINI_MIDE_BASEn(chan)		(GEMINI_MIDE_BASE + GEMINI_MIDE_OFFSET(chan))
+#define GEMINI_MIDE_CMDBLK		0x20
+#define GEMINI_MIDE_CTLBLK		0x36
+#define GEMINI_MIDE_SIZE		0x40
+
+
+/*
+ * Gemini DRAM Controller register offsets, &etc.
+ */
+#define GEMINI_DRAMC_RMCR		0x40		/* CPU Remap Control */				/* rw */
+#define  DRAMC_RMCR_RESa		__BITS(31,29)
+#define  DRAMC_RMCR_RMBAR		__BITS(28,20)	/* Remap Base Address */
+#define  DRAMC_RMCR_RMBAR_SHFT		20
+#define  DRAMC_RMCR_RESb		__BITS(19,9)
+#define  DRAMC_RMCR_RMSZR		__BITS(8,0)	/* Remap Size Address */
+#define  DRAMC_RMCR_RMSZR_SHFT		0
 
 #else
 # error unknown gemini cpu type

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: clock.c,v 1.28.4.1 2009/01/19 13:17:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28.4.1 2009/01/19 13:17:08 skrll Exp $");
 
 #include "clock.h"
 
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2008/06/25 08:14:59 isaki Exp $");
 #include <dev/clock_subr.h>
 
 #include <arch/x68k/dev/mfp.h>
-#include <arch/x68k/dev/rtclock_var.h>
 
 static int clock_match(device_t, cfdata_t, void *);
 static void clock_attach(device_t, device_t, void *);
@@ -106,7 +105,7 @@ CFATTACH_DECL_NEW(clock, 0,
 
 static int clock_attached;
 
-static unsigned mfp_get_timecount(struct timecounter *);
+static unsigned int mfp_get_timecount(struct timecounter *);
 
 static int
 clock_match(device_t parent, cfdata_t cf, void *aux)
@@ -202,7 +201,7 @@ setstatclockrate(int newhz)
  * Returns number of usec since last recorded clock "tick"
  * (i.e. clock interrupt).
  */
-unsigned
+unsigned int
 mfp_get_timecount(struct timecounter *tc)
 {
 	uint8_t	val;
@@ -232,9 +231,9 @@ DELAY(mic)
 	 */
 	n = mic/32 + 2;
 	do {
-		while ((mfp.gpip & MFP_GPIP_HSYNC) != 0)
+		while ((mfp_get_gpip() & MFP_GPIP_HSYNC) != 0)
 			__asm("nop");
-		while ((mfp.gpip & MFP_GPIP_HSYNC) == 0)
+		while ((mfp_get_gpip() & MFP_GPIP_HSYNC) == 0)
 			__asm("nop");
 	} while (n--);
 }

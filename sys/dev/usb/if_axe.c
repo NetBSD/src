@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.25 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.25.6.1 2009/01/19 13:19:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.25 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.25.6.1 2009/01/19 13:19:08 skrll Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1134,7 +1134,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int			error = 0;
 
 	switch(cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		axe_init(sc);
 
@@ -1159,6 +1159,8 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
@@ -1209,7 +1211,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

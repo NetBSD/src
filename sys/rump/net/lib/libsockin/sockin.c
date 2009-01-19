@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.4 2008/10/26 18:39:01 minskim Exp $	*/
+/*	$NetBSD: sockin.c,v 1.4.2.1 2009/01/19 13:20:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.4.2.1 2009/01/19 13:20:29 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/condvar.h>
 #include <sys/domain.h>
@@ -38,6 +41,8 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/time.h>
+
+#include <net/radix.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -56,6 +61,7 @@ DOMAIN_DEFINE(sockindomain);
 static void	sockin_init(void);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
+static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
 
 const struct protosw sockinsw[] = {
 {
@@ -64,6 +70,7 @@ const struct protosw sockinsw[] = {
 	.pr_protocol = IPPROTO_UDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_usrreq = sockin_usrreq,
+	.pr_ctloutput = sockin_ctloutput,
 },
 {
 	.pr_type = SOCK_STREAM,
@@ -71,6 +78,7 @@ const struct protosw sockinsw[] = {
 	.pr_protocol = IPPROTO_TCP,
 	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
 	.pr_usrreq = sockin_usrreq,
+	.pr_ctloutput = sockin_ctloutput,
 }};
 
 struct domain sockindomain = {
@@ -81,9 +89,9 @@ struct domain sockindomain = {
 	.dom_dispose = NULL,
 	.dom_protosw = sockinsw,
 	.dom_protoswNPROTOSW = &sockinsw[__arraycount(sockinsw)],
-	.dom_rtattach = NULL,
-	.dom_rtoffset = 0,
-	.dom_maxrtkey = 0,
+	.dom_rtattach = rn_inithead,
+	.dom_rtoffset = 32,
+	.dom_maxrtkey = sizeof(struct sockaddr_in),
 	.dom_ifattach = NULL,
 	.dom_ifdetach = NULL,
 	.dom_ifqueues = { NULL },
@@ -100,6 +108,37 @@ struct domain sockindomain = {
 
 #define SO2S(so) ((intptr_t)(so->so_internal))
 #define SOCKIN_SBSIZE 65536
+
+struct sockin_unit {
+	struct socket *su_so;
+
+	LIST_ENTRY(sockin_unit) su_entries;
+};
+static LIST_HEAD(, sockin_unit) su_ent = LIST_HEAD_INITIALIZER(su_ent);
+static kmutex_t su_mtx;
+static bool rebuild;
+static int nsock;
+
+static int
+registersock(struct socket *so, int news)
+{
+	struct sockin_unit *su;
+
+	su = kmem_alloc(sizeof(*su), KM_NOSLEEP);
+	if (!su)
+		return ENOMEM;
+
+	so->so_internal = (void *)(intptr_t)news;
+	su->su_so = so;
+
+	mutex_enter(&su_mtx);
+	LIST_INSERT_HEAD(&su_ent, su, su_entries);
+	nsock++;
+	rebuild = true;
+	mutex_exit(&su_mtx);
+
+	return 0;
+}
 
 static void
 sockin_process(struct socket *so)
@@ -142,17 +181,32 @@ sockin_process(struct socket *so)
 	sorwakeup(so);
 }
 
-struct sockin_unit {
-	struct socket *su_so;
-
-	LIST_ENTRY(sockin_unit) su_entries;
-};
-static LIST_HEAD(, sockin_unit) su_ent = LIST_HEAD_INITIALIZER(su_ent);
-static kmutex_t su_mtx;
-static bool rebuild;
-static int nsock;
-
 #ifndef SOCKIN_NOTHREAD
+static void
+sockin_accept(struct socket *so)
+{
+	struct socket *nso;
+	struct sockaddr_in sin;
+	int news, error, slen;
+
+	slen = sizeof(sin);
+	news = rumpuser_net_accept(SO2S(so), (struct sockaddr *)&sin,
+	    &slen, &error);
+	if (news == -1)
+		return;
+
+	if ((nso = sonewconn(so, SS_ISCONNECTED)) == NULL)
+		goto errout;
+	if (registersock(nso, news) != 0)
+		goto errout;
+	return;
+
+ errout:
+	rumpuser_close(news, &error);
+	if (nso)
+		soclose(nso);
+}
+
 #define POLLTIMEOUT 100	/* check for new entries every 100ms */
 
 /* XXX: doesn't handle socket (kernel) locking properly? */
@@ -161,6 +215,7 @@ sockinworker(void *arg)
 {
 	struct pollfd *pfds = NULL, *npfds;
 	struct sockin_unit *su_iter;
+	struct socket *so;
 	int cursock = 0, i, rv, error;
 
 	/*
@@ -200,9 +255,15 @@ sockinworker(void *arg)
 				mutex_enter(&su_mtx);
 				LIST_FOREACH(su_iter, &su_ent, su_entries) {
 					if (SO2S(su_iter->su_so)==pfds[i].fd) {
+						so = su_iter->su_so;
+						mutex_exit(&su_mtx);
 						mutex_enter(softnet_lock);
-						sockin_process(su_iter->su_so);
+						if(so->so_options&SO_ACCEPTCONN)
+							sockin_accept(so);
+						else
+							sockin_process(so);
 						mutex_exit(softnet_lock);
+						mutex_enter(&su_mtx);
 						break;
 					}
 				}
@@ -249,7 +310,6 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 	case PRU_ATTACH:
 	{
-		struct sockin_unit *su;
 		int news;
 
 		sosetlock(so);
@@ -259,28 +319,25 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				break;
 		}
 
-		su = kmem_alloc(sizeof(*su), KM_NOSLEEP);
-		if (!su) {
-			error = ENOMEM;
-			break;
-		}
-
 		news = rumpuser_net_socket(PF_INET, so->so_proto->pr_type,
 		    0, &error);
-		if (news == -1) {
-			kmem_free(su, sizeof(*su));
+		if (news == -1)
 			break;
-		}
-		so->so_internal = (void *)(intptr_t)news;
-		su->su_so = so;
 
-		mutex_enter(&su_mtx);
-		LIST_INSERT_HEAD(&su_ent, su, su_entries);
-		nsock++;
-		rebuild = true;
-		mutex_exit(&su_mtx);
+		if ((error = registersock(so, news)) != 0)
+			rumpuser_close(news, &error);
+
 		break;
 	}
+
+	case PRU_ACCEPT:
+		/* we do all the work in the worker thread */
+		break;
+
+	case PRU_BIND:
+		rumpuser_net_bind(SO2S(so), mtod(nam, const struct sockaddr *),
+		    sizeof(struct sockaddr_in), &error);
+		break;
 
 	case PRU_CONNECT:
 		/* don't bother to connect udp sockets, always sendmsg */
@@ -292,6 +349,10 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		    &error);
 		if (rv == 0)
 		soisconnected(so);
+		break;
+
+	case PRU_LISTEN:
+		rumpuser_net_listen(SO2S(so), so->so_qlimit, &error);
 		break;
 
 	case PRU_SEND:
@@ -362,4 +423,12 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	return error;
+}
+
+static int
+sockin_ctloutput(int op, struct socket *so, struct sockopt *sopt)
+{
+
+	/* XXX: we should also do something here */
+	return 0;
 }

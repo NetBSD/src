@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.12 2008/04/24 18:39:20 ad Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.12.10.1 2009/01/19 13:16:24 skrll Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,9 +75,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.10.1 2009/01/19 13:16:24 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #define __M68K_SIGNAL_PRIVATE
 

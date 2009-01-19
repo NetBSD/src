@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.146 2008/07/02 14:47:34 matt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.146.4.1 2009/01/19 13:19:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.146 2008/07/02 14:47:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.146.4.1 2009/01/19 13:19:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,7 +55,6 @@ bool	kernel_lock_dodebug;
 __cpu_simple_lock_t kernel_lock[CACHE_LINE_SIZE / sizeof(__cpu_simple_lock_t)]
     __aligned(CACHE_LINE_SIZE);
 
-#if defined(DEBUG) || defined(LKM)
 void
 assert_sleepable(void)
 {
@@ -83,7 +82,6 @@ assert_sleepable(void)
 		    (void *)RETURN_ADDRESS);
 	}
 }
-#endif /* defined(DEBUG) || defined(LKM) */
 
 /*
  * Functions for manipulating the kernel_lock.  We put them here

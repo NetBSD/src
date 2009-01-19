@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.22 2008/10/24 21:41:04 dyoung Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.22.2.1 2009/01/19 13:20:11 skrll Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.22 2008/10/24 21:41:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.22.2.1 2009/01/19 13:20:11 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -214,6 +214,9 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	sc->sc_src = NULL;
 	sc->sc_dst = NULL;
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
 	 * do some randomisation using the current uptime.  It's not meant
@@ -320,6 +323,8 @@ etherip_detach(device_t self, int flags)
 	if_detach(ifp);
 	rtcache_free(&sc->sc_ro);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+
+	pmf_device_deregister(self);
 
 	return 0;
 }
@@ -606,7 +611,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 {
 	cfdata_t cf;
 
-	MALLOC(cf, cfdata_t, sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
+	cf = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	cf->cf_name   = etherip_cd.cd_name;
 	cf->cf_atname = etherip_ca.ca_name;
 	cf->cf_unit   = unit;
@@ -630,7 +635,7 @@ etherip_clone_destroy(struct ifnet *ifp)
 
 	if ((error = config_detach(sc->sc_dev, 0)) != 0)
 		aprint_error_dev(sc->sc_dev, "unable to detach instance\n");
-	FREE(cf, M_DEVBUF);
+	free(cf, M_DEVBUF);
 
 	return error;
 }
@@ -695,7 +700,7 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 	if (ether_nonstatic_aton(enaddr, addr) != 0)
 		return EINVAL;
 
-	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN);
+	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return error;
 }
 

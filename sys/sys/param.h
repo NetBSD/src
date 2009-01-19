@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.330 2008/10/09 11:02:17 pooka Exp $	*/
+/*	$NetBSD: param.h,v 1.330.2.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499007300	/* NetBSD 4.99.73 */
+#define	__NetBSD_Version__	599000700	/* NetBSD 5.99.7 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -82,12 +82,23 @@
 
 #define	NetBSD	199905		/* NetBSD version (year & month). */
 
+/*
+ * There macros determine if we are running in protected mode or not.
+ *   _HARDKERNEL: code uses kernel namespace and runs in hw priviledged mode
+ *   _SOFTKERNEL: code uses kernel namespace but runs without hw priviledges
+ */
+#if defined(_KERNEL) && !defined(_RUMPKERNEL)
+#define _HARDKERNEL
+#endif
+#if defined(_KERNEL) && defined(_RUMPKERNEL)
+#define _SOFTKERNEL
+#endif
+
 #include <sys/null.h>
 
-#ifndef _LOCORE
+#ifndef __ASSEMBLER__
 #include <sys/inttypes.h>
 #include <sys/types.h>
-#endif
 
 /*
  * Machine-independent constants (some used in following include files).
@@ -428,5 +439,6 @@ extern size_t coherency_unit;
 #ifndef MIN_LWP_ALIGNMENT
 #define	MIN_LWP_ALIGNMENT	32
 #endif
+#endif /* !__ASSEMBLER__ */
 
 #endif /* !_SYS_PARAM_H_ */

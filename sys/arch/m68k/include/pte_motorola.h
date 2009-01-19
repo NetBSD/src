@@ -1,4 +1,4 @@
-/*	$NetBSD: pte_motorola.h,v 1.5 2007/10/17 19:55:05 garbled Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.5.28.1 2009/01/19 13:16:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -83,8 +83,8 @@
  * m68k motorola MMU segment/page table entries
  */
 
-typedef int	st_entry_t;	/* segment table entry */
-typedef int	pt_entry_t;	/* page table entry */
+typedef u_int	st_entry_t;	/* segment table entry */
+typedef u_int	pt_entry_t;	/* page table entry */
 
 #define	PT_ENTRY_NULL	NULL
 #define	ST_ENTRY_NULL	NULL

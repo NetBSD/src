@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.36 2007/12/31 15:31:57 ad Exp $
+#	$NetBSD: majors.i386,v 1.36.18.1 2009/01/19 13:16:15 skrll Exp $
 #
 # Device majors for i386
 #
@@ -31,7 +31,6 @@ device-major	md		char 24  block 17	md
 
 device-major	joy		char 26			joy
 device-major	spkr		char 27			spkr
-device-major	lkm		char 28			lkm
 
 # next three are obsolete
 #device-major	omms		char 35			omms

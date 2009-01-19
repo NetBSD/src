@@ -1,7 +1,7 @@
-/*	$NetBSD: swap.h,v 1.7 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: swap.h,v 1.7.6.1 2009/01/19 13:20:31 skrll Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1998 Matthew R. Green
+ * Copyright (c) 1995, 1996, 1998, 2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,40 +30,27 @@
 
 #include <sys/syslimits.h>
 
-/* These structures are used to return swap information for userland */
-
-/*
- * NetBSD 1.3 swapctl(SWAP_STATS, ...) swapent structure; now used as an
- * overlay for both the new swapent structure, and the hidden swapdev
- * structure (see sys/uvm/uvm_swap.c).
- */
-struct oswapent {
-	dev_t	ose_dev;		/* device id */
-	int	ose_flags;		/* flags */
-	int	ose_nblks;		/* total blocks */
-	int	ose_inuse;		/* blocks in use */
-	int	ose_priority;		/* priority of this device */
-};
+/* Thise structure is used to return swap information for userland */
 
 struct swapent {
-	struct oswapent se_ose;
-#define	se_dev		se_ose.ose_dev
-#define	se_flags	se_ose.ose_flags
-#define	se_nblks	se_ose.ose_nblks
-#define	se_inuse	se_ose.ose_inuse
-#define	se_priority	se_ose.ose_priority
+	dev_t	se_dev;			/* device id */
+	int	se_flags;		/* flags */
+	int	se_nblks;		/* total blocks */
+	int	se_inuse;		/* blocks in use */
+	int	se_priority;		/* priority of this device */
 	char	se_path[PATH_MAX+1];	/* path name */
 };
 
 #define SWAP_ON		1		/* begin swapping on device */
 #define SWAP_OFF	2		/* stop swapping on device */
 #define SWAP_NSWAP	3		/* how many swap devices ? */
-#define SWAP_OSTATS	4		/* old SWAP_STATS, no se_path */
+#define SWAP_STATS13	4		/* old SWAP_STATS, no se_path */
 #define SWAP_CTL	5		/* change priority on device */
-#define SWAP_STATS	6		/* get device info */
+#define SWAP_STATS50	6		/* old SWAP_STATS, 32 bit dev_t */
 #define SWAP_DUMPDEV	7		/* use this device as dump device */
 #define SWAP_GETDUMPDEV	8		/* use this device as dump device */
 #define SWAP_DUMPOFF	9		/* stop using the dump device */
+#define SWAP_STATS	10		/* get device info */
 
 #define SWF_INUSE	0x00000001	/* in use: we have swapped here */
 #define SWF_ENABLE	0x00000002	/* enabled: we can swap here */

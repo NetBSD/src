@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.22 2008/05/04 17:06:10 xtraeme Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.22.8.1 2009/01/19 13:18:14 skrll Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.22 2008/05/04 17:06:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.22.8.1 2009/01/19 13:18:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,17 +141,12 @@ rlphyattach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
 rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-
-	int rv;
 
 	/*
 	 * Can't isolate the RTL8139 phy, so it has to be the only one.
@@ -188,29 +183,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			switch (ife->ifm_media &
-			    (IFM_TMASK|IFM_NMASK|IFM_FDX)) {
-				case IFM_ETHER|IFM_10_T:
-					rv = ANAR_10|ANAR_CSMA;
-					break;
-				case IFM_ETHER|IFM_10_T|IFM_FDX:
-					rv = ANAR_10_FD|ANAR_CSMA;
-					break;
-				case IFM_ETHER|IFM_100_TX:
-					rv = ANAR_TX|ANAR_CSMA;
-					break;
-				case IFM_ETHER|IFM_100_TX|IFM_FDX:
-					rv = ANAR_TX_FD|ANAR_CSMA;
-					break;
-				case IFM_ETHER|IFM_100_T4:
-					rv = ANAR_T4|ANAR_CSMA;
-					break;
-				default:
-					rv = 0;
-					break;
-			}
-
-			PHY_WRITE(sc, MII_ANAR, rv);
+			PHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
 			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 2008/06/23 08:33:38 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.84.4.1 2009/01/19 13:17:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -354,7 +354,7 @@ ENTRY_NOPROFILE(fpfault)
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
 	cmpl	#FPU_68040,_C_LABEL(fputype)
-	jle	Lfptnull
+	jge	Lfptnull
 #endif
 	tstb	%a0@		| null state frame?
 	jeq	Lfptnull	| yes, safe
@@ -527,24 +527,12 @@ Lbrkpt3:
 #include <m68k/m68k/sigreturn.s>
 
 /*
- * Interrupt handlers. (auto vector.... not used)
- * original(amiga) routines:
- *	Level 0:	Spurious: ignored.
- *	Level 1:	builtin-RS232 TBE, softint (not used yet)
- *	Level 2:	keyboard (CIA-A) + DMA + SCSI
- *	Level 3:	VBL
- *	Level 4:	not used
- *	Level 5:	builtin-RS232 RBF
- *	Level 6:	Clock (CIA-B-Timers)
- *	Level 7:	Non-maskable: shouldn't be possible. ignore.
- */
-
-/* Provide a generic interrupt dispatcher, only handle hardclock (int6)
+ * Provide a generic interrupt dispatcher, only handle hardclock (int6)
  * specially, to improve performance
  */
 
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@- ; addql #1,_C_LABEL(idepth)
-#define INTERRUPT_RESTOREREG	subql #1,_C_LABEL(idepth) ; moveml	%sp@+,#0x0303
+#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
+#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
@@ -553,51 +541,43 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 ENTRY_NOPROFILE(kbdtimer)
 	rte
 
-ENTRY_NOPROFILE(powtrap)
-#include "pow.h"
-#if NPOW > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(powintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+36
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	rei
-
 ENTRY_NOPROFILE(com0trap)
 #include "com.h"
 #if NXCOM > 0
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	movel	#0,%sp@-
 	jbsr	_C_LABEL(comintr)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 #endif
-	addql	#1,_C_LABEL(intrcnt)+40
+	addql	#1,_C_LABEL(intrcnt)+36
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
 ENTRY_NOPROFILE(com1trap)
 #if NXCOM > 1
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	movel	#1,%sp@-
 	jbsr	_C_LABEL(comintr)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 #endif
-	addql	#1,_C_LABEL(intrcnt)+40
+	addql	#1,_C_LABEL(intrcnt)+36
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
 ENTRY_NOPROFILE(intiotrap)
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
-#if 0
-	movw	#PSL_HIGHIPL,%sr	| XXX
-#endif
 	pea	%sp@(16-(FR_HW))	| XXX
 	jbsr	_C_LABEL(intio_intr)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -607,6 +587,7 @@ ENTRY_NOPROFILE(lev3intr)
 ENTRY_NOPROFILE(lev4intr)
 ENTRY_NOPROFILE(lev5intr)
 ENTRY_NOPROFILE(lev6intr)
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 Lnotdma:
 	lea	_C_LABEL(intrcnt),%a0
@@ -618,21 +599,25 @@ Lnotdma:
 	jbsr	_C_LABEL(intrhand)	| handle interrupt
 	addql	#4,%sp			| pop SR
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(timertrap)
-	moveml	#0xC0C0,%sp@-		| save scratch registers
+	addql	#1,_C_LABEL(idepth)
+	INTERRUPT_SAVEREG		| save scratch registers
 	addql	#1,_C_LABEL(intrcnt)+32	| count hardclock interrupts
 	lea	%sp@(16),%a1		| a1 = &clockframe
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
-	moveml	%sp@+,#0x0303		| restore scratch registers
+	INTERRUPT_RESTOREREG		| restore scratch registers
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)
+	addql	#1,_C_LABEL(idepth)
 	addql	#1,_C_LABEL(intrcnt)+28
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
@@ -643,6 +628,7 @@ ENTRY_NOPROFILE(lev7intr)
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
@@ -791,9 +777,6 @@ ASENTRY_NOPROFILE(start)
 #endif
 	RELOC(lowram, %a0)
 	movl	%a5,%a0@		| store start of physical memory
-
-	RELOC(intr_reset, %a0)
-	jbsr	%a0@			| XXX
 
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
@@ -1288,11 +1271,12 @@ GLOBAL(protorp)
 GLOBAL(proc0paddr)
 	.long	0		| KVA of lwp0 u-area
 
+GLOBAL(intiobase)
+	.long	0		| KVA of base of internal IO space
+
 GLOBAL(intiolimit)
 	.long	0		| KVA of end of internal IO space
 
-GLOBAL(extiobase)
-	.long	0		| KVA of base of external IO space
 #ifdef DEBUG
 ASGLOBAL(fulltflush)
 	.long	0
@@ -1313,11 +1297,10 @@ GLOBAL(intrnames)
 	.asciz	"lev6"
 	.asciz	"nmi"
 	.asciz	"clock"
-	.asciz	"pow"
 	.asciz	"com"
 GLOBAL(eintrnames)
 	.even
 
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)

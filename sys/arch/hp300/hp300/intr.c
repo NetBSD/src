@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37 2008/06/22 17:35:14 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.37.4.1 2009/01/19 13:16:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2008/06/22 17:35:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37.4.1 2009/01/19 13:16:10 skrll Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -76,7 +76,6 @@ const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_SCHED]      = PSL_S|PSL_IPL6,
 	[IPL_HIGH]       = PSL_S|PSL_IPL7,
 };
-volatile uint8_t ssir;
 int idepth;
 
 void	netintr(void);
@@ -188,8 +187,6 @@ intr_dispatch(int evec /* format | vector offset */)
 	int handled, ipl, vec;
 	static int straycount, unexpected;
 
-	idepth++;
-
 	vec = (evec & 0xfff) >> 2;
 #ifdef DIAGNOSTIC
 	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
@@ -220,6 +217,4 @@ intr_dispatch(int evec /* format | vector offset */)
 		panic("intr_dispatch: too many stray interrupts");
 	else
 		printf("intr_dispatch: stray level %d interrupt\n", ipl);
-
-	idepth--;
 }

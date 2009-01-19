@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.33 2008/05/04 07:22:14 thorpej Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.33.8.1 2009/01/19 13:20:13 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.33 2008/05/04 07:22:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.33.8.1 2009/01/19 13:20:13 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -444,7 +444,7 @@ at_pcballoc(so)
 {
 	struct ddpcb   *ddp;
 
-	MALLOC(ddp, struct ddpcb *, sizeof(*ddp), M_PCB, M_WAITOK|M_ZERO);
+	ddp = malloc(sizeof(*ddp), M_PCB, M_WAITOK|M_ZERO);
 	if (!ddp)
 		panic("at_pcballoc");
 	ddp->ddp_lsat.sat_port = ATADDR_ANYPORT;

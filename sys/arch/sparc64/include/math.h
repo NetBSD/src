@@ -1,4 +1,3 @@
-/*	$NetBSD: math.h,v 1.6 2005/12/11 12:19:10 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.6.86.1 2009/01/19 13:16:51 skrll Exp $	*/
 
-#define	__HAVE_LONG_DOUBLE
-#define	__HAVE_NANF
+#include <sparc/math.h>

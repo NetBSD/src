@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_timer.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: obio_timer.c,v 1.1.2.1 2009/01/19 13:15:58 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: obio_mputmr.c,v 1.3 2008/08/27 11:03:10 matt Exp
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.1.2.1 2009/01/19 13:15:58 skrll Exp $");
 
 #include "opt_cpuoptions.h"
 #include "opt_gemini.h"
@@ -127,9 +127,13 @@ __KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
 #include <arm/gemini/gemini_obiovar.h>
 #include <arm/gemini/gemini_timervar.h>
 
+#if STATHZ != HZ
+# error system clock HZ and stat clock STATHZ must be same
+#endif
+
 
 #ifndef GEMINI_TIMER_CLOCK_FREQ
-# error Specify the timer frequency in Hz with the GEMINI_TIMER_CLOCK_FREQ option.
+# error Specify the timer frequency in Hz with option GEMINI_TIMER_CLOCK_FREQ 
 #endif
 
 static int	obiotimer_match(device_t, struct cfdata *, void *);
@@ -182,7 +186,7 @@ obiotimer_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
-	if ((obio->obio_addr == IICCF_ADDR_DEFAULT)
+	if ((obio->obio_addr == OBIOCF_ADDR_DEFAULT)
 	||  (obio->obio_intr == OBIOCF_INTR_DEFAULT))
 		panic("geminitmr must have addr and intr specified in config.");
 
@@ -198,7 +202,9 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 	struct geminitmr_softc *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
 	const obiotimer_instance_t *ip;
+#ifndef GEMINI_SLAVE
 	static int once=1;
+#endif
 
 	ip = obiotimer_lookup(obio);
 	if (ip == NULL)
@@ -209,7 +215,7 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = obio->obio_iot;
 	sc->sc_intr = obio->obio_intr;
 	sc->sc_addr = obio->obio_addr;
-	sc->sc_size = (obio->obio_size == IICCF_SIZE_DEFAULT)
+	sc->sc_size = (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		? (GEMINI_TIMER_INTRMASK + 4)
 		: obio->obio_size;
 
@@ -220,6 +226,7 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
+#ifndef GEMINI_SLAVE
 	if (once) {
 		once = 0;
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
@@ -229,31 +236,41 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			GEMINI_TIMER_INTRSTATE, 0);
 	}
+#endif
 
 	switch (sc->sc_timerno) {
 	case 1:
+#ifndef GEMINI_SLAVE
 		/*
-		 * timer #1 is the system clock
+		 * timer #1 is the combined system clock and stat clock
+		 * for the Master or Single Gemini CPU
 		 * it gets started later
 		 */
-		clock_sc = sc;
+		profhz = stathz = hz;
+		stat_sc = clock_sc = sc;
+#endif
 		break;
 	case 2:
+#ifdef GEMINI_SLAVE
 		/*
-		 * timer #2 is the stat clock
+		 * timer #2 is the combined system clock and stat clock
+		 * for the Slave Gemini CPU
 		 * it gets started later
 		 */
-		profhz = stathz = STATHZ;
-		stat_sc = sc;
+		profhz = stathz = hz;
+		stat_sc = clock_sc = sc;
+#endif
 		break;
 	case 3:
 		/*
-		 * Timer #3 is used for microtime reference clock and for delay()
-		 * autoloading, non-interrupting, just wraps around as an unsigned int.
+		 * Timer #3 is used for microtime reference clock and delay()
+		 * autoloading, non-interrupting, just wraps around
 		 * we start it now to make delay() available
 		 */
 		ref_sc = sc;
+#ifndef GEMINI_SLAVE
 		gemini_microtime_init();
+#endif
 		break;
 	default:
 		panic("bad gemini timer number %d\n", sc->sc_timerno);

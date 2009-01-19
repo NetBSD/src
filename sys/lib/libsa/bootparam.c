@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.17 2008/03/25 21:23:50 christos Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.17.12.1 2009/01/19 13:19:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -85,11 +85,11 @@ struct xdr_inaddr {
 	int32_t	addr[4];
 };
 
-int xdr_inaddr_encode __P((char **, struct in_addr));
-int xdr_inaddr_decode __P((char **, struct in_addr *));
+int xdr_inaddr_encode(char **, struct in_addr);
+int xdr_inaddr_decode(char **, struct in_addr *);
 
-int xdr_string_encode __P((char **, char *, int));
-int xdr_string_decode __P((char **, char *, int *));
+int xdr_string_encode(char **, char *, int);
+int xdr_string_decode(char **, char *, int *);
 
 
 /*

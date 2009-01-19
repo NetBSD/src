@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.82 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: cpu.c,v 1.82.8.1 2009/01/19 13:15:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82.8.1 2009/01/19 13:15:53 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -378,10 +378,12 @@ cpu_announce_extensions(struct cpu_info *ci)
 		cpu_amask &= amask;
 	}
 
-	if (amask)
+	if (amask) {
+		snprintb(bits, sizeof(bits),
+		    ALPHA_AMASK_BITS, cpu_amask);
 		printf("%s: Architecture extensions: %s\n",
-		    ci->ci_softc->sc_dev.dv_xname, bitmask_snprintf(cpu_amask,
-		    ALPHA_AMASK_BITS, bits, sizeof(bits)));
+		    ci->ci_softc->sc_dev.dv_xname, bits);
+	}
 }
 
 #if defined(MULTIPROCESSOR)

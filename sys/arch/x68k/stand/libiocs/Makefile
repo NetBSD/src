@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.9 2008/10/19 22:05:22 apb Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2009/01/19 13:17:08 skrll Exp $
 
 LIB=	iocs
 
 NOLINT=# defined
 NOPROFILE=# defined
 NOPIC=# defined
+
+.include "../Makefile.booters"
+
+CPPFLAGS+=	-I.
 
 ASM=	b_keyinp.o b_keysns.o b_sftsns.o bitsns.o skeyset.o tvctrl.o \
 	ledmod.o tgusemd.o defchr.o crtmod.o contrast.o hsvtorgb.o tpalet.o \

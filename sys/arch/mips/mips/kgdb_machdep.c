@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.12 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.12.8.1 2009/01/19 13:16:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12.8.1 2009/01/19 13:16:30 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -256,8 +256,7 @@ kgdb_setregs(regs, gdb_regs)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
 	if (kgdb_dev < 0)
 		return;
@@ -280,7 +279,7 @@ kgdb_connect(verbose)
 void
 kgdb_panic(void)
 {
-	if (kgdb_dev >= 0 && kgdb_debug_panic) {
+	if (kgdb_dev != NODEV && kgdb_debug_panic) {
 		printf("entering kgdb\n");
 		kgdb_connect(kgdb_active == 0);
 	}

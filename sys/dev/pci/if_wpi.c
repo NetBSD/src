@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.39 2008/07/02 03:42:55 cube Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.39.4.1 2009/01/19 13:18:26 skrll Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.39 2008/07/02 03:42:55 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.39.4.1 2009/01/19 13:18:26 skrll Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.39 2008/07/02 03:42:55 cube Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/callout.h>
@@ -91,6 +92,12 @@ static const struct ieee80211_rateset wpi_rateset_11b =
 
 static const struct ieee80211_rateset wpi_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
+
+static once_t wpi_firmware_init;
+static kmutex_t wpi_firmware_mutex;
+static size_t wpi_firmware_users;
+static uint8_t *wpi_firmware_image;
+static size_t wpi_firmware_size;
 
 static int  wpi_match(device_t, struct cfdata *, void *);
 static void wpi_attach(device_t, device_t, void *);
@@ -189,6 +196,13 @@ wpi_match(device_t parent, struct cfdata *match __unused, void *aux)
 /* Base Address Register */
 #define WPI_PCI_BAR0	0x10
 
+static int
+wpi_attach_once(void)
+{
+	mutex_init(&wpi_firmware_mutex, MUTEX_DEFAULT, IPL_NONE);
+	return 0;
+}
+
 static void
 wpi_attach(device_t parent __unused, device_t self, void *aux)
 {
@@ -203,6 +217,9 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	int error, ac, revision;
+
+	RUN_ONCE(&wpi_firmware_init, wpi_attach_once);
+	sc->fw_used = false;
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -404,6 +421,13 @@ wpi_detach(device_t self, int flags __unused)
 	}
 
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+
+	if (sc->fw_used) {
+		mutex_enter(&wpi_firmware_mutex);
+		if (--wpi_firmware_users == 0)
+			firmware_free(wpi_firmware_image, wpi_firmware_size);
+		mutex_exit(&wpi_firmware_mutex);
+	}
 
 	return 0;
 }
@@ -1114,6 +1138,74 @@ wpi_load_microcode(struct wpi_softc *sc, const uint8_t *ucode, int size)
 }
 
 static int
+wpi_cache_firmware(struct wpi_softc *sc)
+{
+	firmware_handle_t fw;
+	int error;
+
+	if (sc->fw_used)
+		return 0;
+
+	mutex_enter(&wpi_firmware_mutex);
+	if (wpi_firmware_users++) {
+		mutex_exit(&wpi_firmware_mutex);
+		return 0;
+	}
+
+	/* load firmware image from disk */
+	if ((error = firmware_open("if_wpi","iwlwifi-3945.ucode", &fw) != 0)) {
+		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
+		goto fail1;
+	}
+
+	wpi_firmware_size = firmware_get_size(fw);
+
+	if (wpi_firmware_size > sizeof (struct wpi_firmware_hdr) +
+	    WPI_FW_MAIN_TEXT_MAXSZ + WPI_FW_MAIN_DATA_MAXSZ +
+	    WPI_FW_INIT_TEXT_MAXSZ + WPI_FW_INIT_DATA_MAXSZ +
+	    WPI_FW_BOOT_TEXT_MAXSZ) {
+		aprint_error_dev(sc->sc_dev, "invalid firmware file\n");
+		error = EFBIG;
+		goto fail1;
+	}
+
+	if (wpi_firmware_size < sizeof (struct wpi_firmware_hdr)) {
+		aprint_error_dev(sc->sc_dev,
+		    "truncated firmware header: %zu bytes\n",
+		    wpi_firmware_size);
+		error = EINVAL;
+		goto fail2;
+	}
+
+	wpi_firmware_image = firmware_malloc(wpi_firmware_size);
+	if (wpi_firmware_image == NULL) {
+		aprint_error_dev(sc->sc_dev, "not enough memory to stock firmware\n");
+		error = ENOMEM;
+		goto fail1;
+	}
+
+	if ((error = firmware_read(fw, 0, wpi_firmware_image, wpi_firmware_size)) != 0) {
+		aprint_error_dev(sc->sc_dev, "can't get firmware\n");
+		goto fail2;
+	}
+
+	sc->fw_used = true;
+	firmware_close(fw);
+	mutex_exit(&wpi_firmware_mutex);
+
+	return 0;
+
+fail2:
+	firmware_free(wpi_firmware_image, wpi_firmware_size);
+fail1:
+	firmware_close(fw);
+	if (--wpi_firmware_users == 0)
+		firmware_free(wpi_firmware_image, wpi_firmware_size);
+	mutex_exit(&wpi_firmware_mutex);
+	return error;
+}
+
+static int
 wpi_load_firmware(struct wpi_softc *sc)
 {
 	struct wpi_dma_info *dma = &sc->fw_dma;
@@ -1122,32 +1214,12 @@ wpi_load_firmware(struct wpi_softc *sc)
 	const uint8_t *boot_text;
 	uint32_t init_textsz, init_datasz, main_textsz, main_datasz;
 	uint32_t boot_textsz;
-	firmware_handle_t fw;
-	u_char *dfw;
-	size_t size;
 	int error;
 
-	/* load firmware image from disk */
-	if ((error = firmware_open("if_wpi","iwlwifi-3945.ucode", &fw) != 0)) {
-		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
-		goto fail1;
-	}
-	
-	size = firmware_get_size(fw);
+	if ((error = wpi_cache_firmware(sc)) != 0)
+		return error;
 
-	/* extract firmware header information */
-	if (size < sizeof (struct wpi_firmware_hdr)) {
-		aprint_error_dev(sc->sc_dev, "truncated firmware header: %zu bytes\n",
-		    			 size);
-		error = EINVAL;
-		goto fail2;
-	}
-
-	if ((error = firmware_read(fw, 0, &hdr,
-		sizeof (struct wpi_firmware_hdr))) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't get firmware header\n");
-		goto fail2;
-	}
+	memcpy(&hdr, wpi_firmware_image, sizeof(hdr));
 
 	main_textsz = le32toh(hdr.main_textsz);
 	main_datasz = le32toh(hdr.main_datasz);
@@ -1164,32 +1236,21 @@ wpi_load_firmware(struct wpi_softc *sc)
 	    (boot_textsz & 3) != 0) {
 		aprint_error_dev(sc->sc_dev, "invalid firmware header\n");
 		error = EINVAL;
-		goto fail2;
+		goto free_firmware;
 	}
 
 	/* check that all firmware segments are present */
-	if (size < sizeof (struct wpi_firmware_hdr) + main_textsz +
-		main_datasz + init_textsz + init_datasz + boot_textsz) {
-		aprint_error_dev(sc->sc_dev, "firmware file too short: %zu bytes\n",
-		    			 size);
+	if (wpi_firmware_size <
+	    sizeof (struct wpi_firmware_hdr) + main_textsz +
+	    main_datasz + init_textsz + init_datasz + boot_textsz) {
+		aprint_error_dev(sc->sc_dev,
+		    "firmware file too short: %zu bytes\n", wpi_firmware_size);
 		error = EINVAL;
-		goto fail2;
-	}
-
-	dfw = firmware_malloc(size);
-	if (dfw == NULL) {
-		aprint_error_dev(sc->sc_dev, "not enough memory to stock firmware\n");
-		error = ENOMEM;
-		goto fail2;
-	}
-
-	if ((error = firmware_read(fw, 0, dfw, size)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't get firmware\n");
-		goto fail2;
+		goto free_firmware;
 	}
 
 	/* get pointers to firmware segments */
-	main_text = dfw + sizeof (struct wpi_firmware_hdr);
+	main_text = wpi_firmware_image + sizeof (struct wpi_firmware_hdr);
 	main_data = main_text + main_textsz;
 	init_text = main_data + main_datasz;
 	init_data = init_text + init_textsz;
@@ -1211,7 +1272,7 @@ wpi_load_firmware(struct wpi_softc *sc)
 	/* load firmware boot code */
 	if ((error = wpi_load_microcode(sc, boot_text, boot_textsz)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not load boot firmware\n");
-		goto fail3;
+		return error;
 	}
 
 	/* now press "execute" ;-) */
@@ -1221,7 +1282,7 @@ wpi_load_firmware(struct wpi_softc *sc)
 	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
 		/* this isn't what was supposed to happen.. */
 		aprint_error_dev(sc->sc_dev, 
-					"timeout waiting for adapter to initialize\n");
+		    "timeout waiting for adapter to initialize\n");
 	}
 
 	/* copy runtime images into pre-allocated DMA-safe memory */
@@ -1241,13 +1302,17 @@ wpi_load_firmware(struct wpi_softc *sc)
 	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
 		/* this isn't what was supposed to happen.. */
 		aprint_error_dev(sc->sc_dev, 
-						"timeout waiting for adapter to initialize\n");
+		    "timeout waiting for adapter to initialize\n");
 	}
 
+	return error;
 
-fail3: 	firmware_free(dfw,size);
-fail2:	firmware_close(fw);
-fail1:	return error;
+free_firmware:
+	mutex_enter(&wpi_firmware_mutex);
+	sc->fw_used = false;
+	--wpi_firmware_users;
+	mutex_exit(&wpi_firmware_mutex);
+	return error;
 }
 
 static void
@@ -2035,6 +2100,8 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				wpi_init(ifp);

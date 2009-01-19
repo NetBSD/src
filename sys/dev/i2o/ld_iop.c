@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.32 2008/09/09 12:45:39 tron Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.32.2.1 2009/01/19 13:17:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.32 2008/09/09 12:45:39 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.32.2.1 2009/01/19 13:17:54 skrll Exp $");
 
 #include "rnd.h"
 
@@ -354,7 +354,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	u_int64_t ba;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
-	sc = (struct ld_iop_softc *)ld;
+	sc = device_private(ld->sc_dv);
 	iop = device_private(device_parent(ld->sc_dv));
 
 	im = iop_msg_alloc(iop, 0);
@@ -414,7 +414,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	u_int64_t ba;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
-	sc = (struct ld_iop_softc *)ld;
+	sc = device_private(ld->sc_dv);
 	iop = device_private(device_parent(ld->sc_dv));
 	bcount = blkcnt * ld->sc_secsize;
 	ba = (u_int64_t)blkno * ld->sc_secsize;
@@ -450,7 +450,7 @@ ld_iop_flush(struct ld_softc *ld, int flags)
 	struct i2o_rbs_cache_flush mf;
 	int rv;
 
-	sc = (struct ld_iop_softc *)ld;
+	sc = device_private(ld->sc_dv);
 	iop = device_private(device_parent(ld->sc_dv));
 	im = iop_msg_alloc(iop, IM_WAIT);
 
@@ -478,7 +478,7 @@ ld_iop_intr(device_t dv, struct iop_msg *im, void *reply)
 
 	rb = reply;
 	bp = im->im_dvcontext;
-	sc = (struct ld_iop_softc *)dv;
+	sc = device_private(dv);
 	iop = device_private(device_parent(dv));
 
 	err = ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0);
@@ -518,7 +518,7 @@ ld_iop_intr_event(device_t dv, struct iop_msg *im, void *reply)
 		return;
 
 	event = le32toh(rb->event);
-	sc = (struct ld_iop_softc *)dv;
+	sc = device_private(dv);
 
 	if (event == I2O_EVENT_GEN_EVENT_MASK_MODIFIED) {
 		iop = device_private(device_parent(dv));

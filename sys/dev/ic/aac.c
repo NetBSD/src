@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.41 2008/10/02 08:21:57 sborrill Exp $	*/
+/*	$NetBSD: aac.c,v 1.41.2.1 2009/01/19 13:17:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.41 2008/10/02 08:21:57 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.41.2.1 2009/01/19 13:17:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ aac_describe_code(const struct aac_code_lookup *table, u_int32_t code)
 }
 
 /*
- * bitmask_snprintf(9) format string for the adapter options.
+ * snprintb(3) format string for the adapter options.
  */
 static const char *optfmt = 
     "\20\1SNAPSHOT\2CLUSTERS\3WCACHE\4DATA64\5HOSTTIME\6RAID50"
@@ -399,9 +399,8 @@ aac_describe_controller(struct aac_softc *sc)
 	    info->MonitorRevision.buildNumber,
 	    ((u_int32_t)info->SerialNumber & 0xffffff));
 
-	aprint_verbose_dev(&sc->sc_dv, "Controller supports: %s\n",
-	    bitmask_snprintf(sc->sc_supported_options, optfmt, fmtbuf,
-			     sizeof(fmtbuf)));
+	snprintb(fmtbuf, sizeof(fmtbuf), optfmt, sc->sc_supported_options);
+	aprint_verbose_dev(&sc->sc_dv, "Controller supports: %s\n", fmtbuf);
 
 	/* Save the kernel revision structure for later use. */
 	sc->sc_revision = info->KernelRevision;
@@ -1678,7 +1677,7 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib,
 	int i;
 
 	printf("%s: FIB @ %p\n", caller, fib);
-	bitmask_snprintf(le32toh(fib->Header.XferState),
+	snprintb(tbuf, sizeof(tbuf),
 	    "\20"
 	    "\1HOSTOWNED"
 	    "\2ADAPTEROWNED"
@@ -1700,9 +1699,7 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib,
 	    "\22ADAPMICROFIB"
 	    "\23BIOSFIB"
 	    "\24FAST_RESPONSE"
-	    "\25APIFIB\n",
-	    tbuf,
-	    sizeof(tbuf));
+	    "\25APIFIB\n", le32toh(fib->Header.XferState));
 
 	printf("  XferState       %s\n", tbuf);
 	printf("  Command         %d\n", le16toh(fib->Header.Command));

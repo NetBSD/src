@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_news.c,v 1.6 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: netif_news.c,v 1.6.86.1 2009/01/19 13:16:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -151,10 +151,10 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	struct romdev *pd;
-	int tick0;
+	satime_t tick0;
 	ssize_t len;
 
 	pd = (struct romdev *)desc->io_netif;
@@ -206,7 +206,7 @@ prom_getether(struct romdev *pd, u_char *ea)
 	return 0;
 }
 
-time_t
+satime_t
 getsecs(void)
 {
 	u_int t[2];

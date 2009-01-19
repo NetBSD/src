@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.19 2003/03/13 14:15:58 drochner Exp $ */
+/* $NetBSD: if_prom.c,v 1.19.116.1 2009/01/19 13:15:54 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -93,10 +93,10 @@ prom_put(struct iodesc *desc, void *pkt, size_t len)
 }
 
 static int
-prom_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
+prom_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
 	prom_return_t ret;
-	time_t t;
+	satime_t t;
 	int cc;
 	char hate[2000];
 

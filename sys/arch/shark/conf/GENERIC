@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.81 2008/08/10 15:31:22 tls Exp $
+#	$NetBSD: GENERIC,v 1.81.2.1 2009/01/19 13:16:43 skrll Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.81 $"
+#ident		"GENERIC-$Revision: 1.81.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -65,7 +65,6 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
@@ -121,6 +120,7 @@ options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_LINUX	# Linux compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -150,7 +150,6 @@ options 	INSECURE		# disable kernel securelevel
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
-options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

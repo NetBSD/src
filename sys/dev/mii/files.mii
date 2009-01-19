@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.41 2008/01/02 00:41:07 dyoung Exp $
+#	$NetBSD: files.mii,v 1.41.18.1 2009/01/19 13:18:14 skrll Exp $
 
 defflag	opt_mii.h	MIIVERBOSE
 
@@ -131,3 +131,7 @@ file	dev/mii/rlphy.c				rlphy
 device	mvphy: mii_phy
 attach	mvphy at mii
 file	dev/mii/mvphy.c				mvphy
+
+device	atphy: mii_phy
+attach	atphy at mii
+file	dev/mii/atphy.c				atphy

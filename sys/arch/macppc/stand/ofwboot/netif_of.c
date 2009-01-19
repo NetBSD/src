@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.11 2006/01/27 04:01:04 uwe Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.11.84.1 2009/01/19 13:16:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -70,6 +70,7 @@ int
 netif_of_open(struct of_dev *op)
 {
 	struct iodesc *io;
+	int rv;
 
 #ifdef	NETIF_DEBUG
 	printf("netif_open...");
@@ -88,10 +89,11 @@ netif_of_open(struct of_dev *op)
 	io->io_netif = (void *)op;
 
 	/* Put our ethernet address in io->myea */
-	OF_getprop(OF_instance_to_package(op->handle),
-		   "local-mac-address", io->myea, sizeof io->myea) == -1 &&
-	OF_getprop(OF_instance_to_package(op->handle),
-		   "mac-address", io->myea, sizeof io->myea);
+	rv = OF_getprop(OF_instance_to_package(op->handle),
+	    "local-mac-address", io->myea, sizeof io->myea);
+	if (rv == -1)
+		OF_getprop(OF_instance_to_package(op->handle),
+		    "mac-address", io->myea, sizeof io->myea);
 
 #ifdef	NETIF_DEBUG
 	printf("OK\n");
@@ -175,7 +177,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 {
 	struct of_dev *op;
 	int tick0, tmo_ms;
@@ -219,8 +221,9 @@ netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
 /*
  * Shouldn't really be here, but is used solely for networking, so...
  */
-time_t
+satime_t
 getsecs(void)
 {
+
 	return OF_milliseconds() / 1000;
 }

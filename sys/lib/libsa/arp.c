@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.31 2008/03/25 22:55:25 christos Exp $	*/
+/*	$NetBSD: arp.c,v 1.31.12.1 2009/01/19 13:19:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -89,8 +89,8 @@ struct arp_list {
 int arp_num = 1;
 
 /* Local forwards */
-static	ssize_t arpsend __P((struct iodesc *, void *, size_t));
-static	ssize_t arprecv __P((struct iodesc *, void *, size_t, time_t));
+static	ssize_t arpsend(struct iodesc *, void *, size_t);
+static	ssize_t arprecv(struct iodesc *, void *, size_t, saseconds_t);
 
 /* Broadcast an ARP packet, asking who has addr on interface d */
 u_char *
@@ -186,7 +186,7 @@ arpsend(struct iodesc *d, void *pkt, size_t len)
  * else -1 (and errno == 0)
  */
 static ssize_t
-arprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
+arprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 {
 	ssize_t n;
 	struct ether_arp *ah;

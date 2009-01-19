@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.67 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: INSTALL,v 1.67.2.1 2009/01/19 13:16:02 skrll Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -53,7 +53,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-#options 	SOFTDEP		# FFS soft updates support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -108,14 +107,13 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=4200	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4400	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions

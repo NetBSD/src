@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.45 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: qe.c,v 1.45.8.1 2009/01/19 13:19:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.45 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.45.8.1 2009/01/19 13:19:03 skrll Exp $");
 
 #define QEDEBUG
 
@@ -610,8 +610,8 @@ qeintr(arg)
 		bus_space_tag_t t1 = sc->sc_bustag;
 		bus_space_handle_t mr = sc->sc_mr;
 
-		printf("qe%d: intr: qestat=%s\n", sc->sc_channel,
-		bitmask_snprintf(qestat, QE_CR_STAT_BITS, bits, sizeof(bits)));
+		snprintb(bits, sizeof(bits), QE_CR_STAT_BITS, qestat);
+		printf("qe%d: intr: qestat=%s\n", sc->sc_channel, bits);
 
 		printf("MACE registers:\n");
 		for (i = 0 ; i < 32; i++) {
@@ -626,9 +626,8 @@ qeintr(arg)
 #ifdef QEDEBUG
 		if (sc->sc_debug) {
 			char bits[64];
-			printf("qe%d: eint: qestat=%s\n", sc->sc_channel,
-			    bitmask_snprintf(qestat, QE_CR_STAT_BITS, bits,
-			    sizeof(bits)));
+			snprintb(bits, sizeof(bits), QE_CR_STAT_BITS, qestat);
+			printf("qe%d: eint: qestat=%s\n", sc->sc_channel, bits);
 		}
 #endif
 		r |= qe_eint(sc, qestat);
@@ -923,46 +922,48 @@ qeioctl(ifp, cmd, data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		qeinit(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			qeinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
 		default:
-			qeinit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			qestop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			qeinit(sc);
-
-		} else {
+			break;
+		default:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
 			qestop(sc);
 			qeinit(sc);
+			break;
 		}
 #ifdef QEDEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.2 2008/10/22 17:38:59 matt Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.2.2.1 2009/01/19 13:16:03 skrll Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -47,7 +47,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-#options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -123,7 +122,6 @@ options 	SYSVSHM		# System V-like memory sharing
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages

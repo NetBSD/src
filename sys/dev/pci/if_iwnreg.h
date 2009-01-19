@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.4 2008/10/13 12:39:26 blymn Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.4.2.1 2009/01/19 13:18:25 skrll Exp $	*/
 /*	OpenBSD: if_iwnreg.h,v 1.9 2007/11/27 20:59:40 damien Exp	*/
 
 /*-
@@ -314,8 +314,7 @@ struct iwn_config {
 #define IWN_FILTER_NODECRYPT	(1 << 3)
 #define IWN_FILTER_BSS		(1 << 5)
 
-	uint8_t		chan;
-	uint8_t		reserved5;
+	uint16_t	chan;
 	uint8_t		ht_single_mask;
 	uint8_t		ht_dual_mask;
 } __packed;
@@ -524,23 +523,24 @@ struct iwn_scan_essid {
 	uint8_t	data[IEEE80211_NWID_LEN];
 } __packed;
 
-struct iwn_scan_hdr {
-	uint16_t	len;
-	uint8_t		reserved1;
-	uint8_t		nchan;
-	uint16_t	quiet;
-	uint16_t	plcp_threshold;
-	uint16_t	crc_threshold;
-	uint16_t	rxchain;
-	uint32_t	max_svc;	/* background scans */
-	uint32_t	pause_svc;	/* background scans */
-	uint32_t	flags;
-	uint32_t	filter;
+#define IWN_MAX_PROBES	4
 
-	/* followed by a struct iwn_cmd_data */
-	/* followed by an array of 4x struct iwn_scan_essid */
-	/* followed by probe request body */
-	/* followed by nchan x struct iwn_scan_chan */
+struct iwn_scan_hdr {
+	uint16_t		len;
+	uint8_t			reserved1;
+	uint8_t			nchan;
+	uint16_t		quiet;
+	uint16_t		plcp_threshold;
+	uint16_t		crc_threshold;
+	uint16_t		rxchain;
+	uint32_t		max_svc;	/* background scans */
+	uint32_t		pause_svc;	/* background scans */
+	uint32_t		flags;
+	uint32_t		filter;
+	struct iwn_cmd_data	tx_cmd;
+	struct iwn_scan_essid	scan_essid[IWN_MAX_PROBES];
+	struct ieee80211_frame	wh;
+	uint8_t			data[0];    /* nchan x struct iwn_scan_chan */
 } __packed;
 
 struct iwn_scan_chan {

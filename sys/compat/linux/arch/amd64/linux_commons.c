@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_commons.c,v 1.8 2008/10/17 20:17:19 njoly Exp $ */
+/*	$NetBSD: linux_commons.c,v 1.8.2.1 2009/01/19 13:17:23 skrll Exp $ */
 
 /*
  * This file includes C files from the common
@@ -13,12 +13,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.8 2008/10/17 20:17:19 njoly Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.8.2.1 2009/01/19 13:17:23 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
-#include "opt_nfsserver.h"
-#include "fs_nfs.h"
 #include "fs_lfs.h"
 #endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.19 2008/08/04 03:55:47 tls Exp $
+# $NetBSD: XEN2_DOMU,v 1.19.2.1 2009/01/19 13:16:15 skrll Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -41,7 +41,6 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -110,7 +109,6 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server

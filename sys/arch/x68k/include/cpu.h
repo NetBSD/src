@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2008/02/27 18:26:16 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45.12.1 2009/01/19 13:17:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -185,10 +185,8 @@ extern int astpending;		/* need to trap before returning to user mode */
 
 #ifdef _KERNEL
 extern int machineid;
+extern char *intiobase;
 extern char *intiolimit;
-
-/* autoconf.c functions */
-void	config_console(void);
 
 /* fpu.c functions */
 int	fpu_probe(void);
@@ -222,6 +220,8 @@ int	badbaddr(volatile void*);
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
+#define	IIOV(pa)	((u_int)(pa) - INTIOBASE + (u_int)intiobase)
+#define	IIOP(va)	((u_int)(va) - (u_int)intiobase + INTIOBASE)
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 4mb */
 

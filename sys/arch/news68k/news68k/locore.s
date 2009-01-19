@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 2007/12/03 15:34:03 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.45.26.1 2009/01/19 13:16:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -680,8 +680,8 @@ ENTRY_NOPROFILE(trap0)
 	movl	%d0,%sp@-		| push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall arg
-	tstl	_C_LABEL(astpending)
-	jne	Lrei2
+	tstl	_C_LABEL(astpending)	| AST pending?
+	jne	Lrei			| yes, handle it via trap
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -838,21 +838,25 @@ ENTRY_NOPROFILE(spurintr)	/* Level 0 */
 	rte
 
 ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		| push exception vector
 	clrw	%sp@-
 	jbsr	_C_LABEL(isrdispatch_autovec) | call dispatcher
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 ENTRY_NOPROFILE(lev1intr)		/* Level 1: AST interrupt */
+	addql	#1,_C_LABEL(idepth)
 	movl	%a0,%sp@-
 	addql	#1,_C_LABEL(intrcnt)+4
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	movl	_C_LABEL(ctrl_ast),%a0
 	clrb	%a0@			| disable AST interrupt
 	movl	%sp@+,%a0
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| handle AST
 
 #ifdef notyet
@@ -864,32 +868,40 @@ ENTRY_NOPROFILE(_softintr)		/* Level 2: software interrupt */
 #endif
 
 ENTRY_NOPROFILE(lev3intr)		/* Level 3: fd, lpt, vme etc. */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev3)
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 ENTRY_NOPROFILE(lev4intr)		/* Level 4: scsi, le, vme etc. */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev4)
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 #if 0
 ENTRY_NOPROFILE(lev5intr)		/* Level 5: kb, ms (zs is vectored) */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev5)
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 #endif
 
 ENTRY_NOPROFILE(_isr_clock)		/* Level 6: clock (see clock_hb.c) */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	lea	%sp@(16),%a1
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(clock_intr)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 #if 0
@@ -908,6 +920,7 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 #endif
 
 ENTRY_NOPROFILE(intrhand_vectored)
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	lea	%sp@(16),%a1		| get pointer to frame
 	movl	%a1,%sp@-
@@ -917,6 +930,7 @@ ENTRY_NOPROFILE(intrhand_vectored)
 	jbsr	_C_LABEL(isrdispatch_vectored) | call dispatcher
 	lea	%sp@(12),%sp		| pop value args
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 #undef INTERRUPT_SAVEREG
@@ -925,36 +939,35 @@ ENTRY_NOPROFILE(intrhand_vectored)
 /*
  * Emulation of VAX REI instruction.
  *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling) and software interrupts (network, softclock).
- * We check for ASTs first, just like the VAX.  To avoid excess overhead
- * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifing that we need an AST we
- * drop the IPL to allow device interrupts.
+ * This code deals with checking for and servicing
+ * ASTs (profiling, scheduling).
+ * After identifing that we need an AST we drop the IPL
+ * to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
  */
 /*
- * news68k has hardware support for AST and software interrupt.
- * We just use it rather than VAX REI emulation.
+ * news68k has hardware support for AST,
+ * so only traps (including system call) and
+ * the AST interrupt use this REI function.
  */
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
-	jne	Lrei1			| no, done
-	rte
-Lrei1:
-	btst	#5,%sp@			| yes, are we returning to user mode?
-	jeq	1f			| no, done
+	jne	1f			| no, done
 	rte
 1:
+	btst	#5,%sp@			| yes, are we returning to user mode?
+	jeq	2f			| no, done
+	rte
+2:
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lrei2:
+Lrei:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_ASTFLT,%sp@-		| type == async system trap

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.112 2008/10/07 09:35:03 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.112.2.1 2009/01/19 13:19:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.112 2008/10/07 09:35:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.112.2.1 2009/01/19 13:19:40 skrll Exp $");
 
 #define SYSVSHM
 
@@ -386,6 +386,7 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 
 	/* Allocate a new map entry and set it */
 	shmmap_se = pool_get(&shmmap_entry_pool, PR_WAITOK);
+	shmmap_se->shmid = SCARG(uap, shmid);
 
 	mutex_enter(&shm_lock);
 	/* In case of reallocation, we will wait for completion */
@@ -466,7 +467,6 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	/* Set the new address, and update the time */
 	mutex_enter(&shm_lock);
 	shmmap_se->va = attach_va;
-	shmmap_se->shmid = SCARG(uap, shmid);
 	shmseg->shm_atime = time_second;
 	shm_realloc_disable--;
 	retval[0] = attach_va;
@@ -496,7 +496,8 @@ err_detach:
  * Shared memory control operations.
  */
 int
-sys___shmctl13(struct lwp *l, const struct sys___shmctl13_args *uap, register_t *retval)
+sys___shmctl50(struct lwp *l, const struct sys___shmctl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) shmid;
@@ -623,15 +624,20 @@ again:
 		goto again;
 	}
 
-	/* Check the permission, segment size and appropriate flag */
+	/*
+	 * First check the flags, to generate a useful error when a
+	 * segment already exists.
+	 */
+	if ((SCARG(uap, shmflg) & (IPC_CREAT | IPC_EXCL)) ==
+	    (IPC_CREAT | IPC_EXCL))
+		return EEXIST;
+
+	/* Check the permission and segment size. */
 	error = ipcperm(cred, &shmseg->shm_perm, mode);
 	if (error)
 		return error;
 	if (SCARG(uap, size) && SCARG(uap, size) > shmseg->shm_segsz)
 		return EINVAL;
-	if ((SCARG(uap, shmflg) & (IPC_CREAT | IPC_EXCL)) ==
-	    (IPC_CREAT | IPC_EXCL))
-		return EEXIST;
 
 	*retval = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);
 	return 0;

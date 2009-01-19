@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.52 2008/07/02 17:06:12 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.52.4.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -202,9 +202,12 @@ int	fd_dup(file_t *, int, int *, bool);
 int	fd_dup2(file_t *, unsigned);
 int	fd_clone(file_t *, unsigned, int, const struct fileops *, void *);
 
+void	cwd_sys_init(void);
 struct cwdinfo *cwdinit(void);
 void	cwdshare(proc_t *);
+void	cwdunshare(proc_t *);
 void	cwdfree(struct cwdinfo *);
+
 #define GETCWD_CHECK_ACCESS 0x0001
 int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
     int, struct lwp *);

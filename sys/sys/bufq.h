@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq.h,v 1.9 2008/04/30 12:09:02 reinoud Exp $	*/
+/*	$NetBSD: bufq.h,v 1.9.8.1 2009/01/19 13:20:29 skrll Exp $	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
 /*-
@@ -93,22 +93,13 @@ struct bufq_state;
 int	bufq_alloc(struct bufq_state **, const char *, int);
 void	bufq_drain(struct bufq_state *);
 void	bufq_free(struct bufq_state *);
+/* Put buffer in queue */
 void	bufq_put(struct bufq_state *, struct buf *);
+/* Get and remove buffer from queue */
 struct buf *bufq_get(struct bufq_state *);
+/* Get buffer from queue */
 struct buf *bufq_peek(struct bufq_state *);
+/* Remove specified buffer from queue */
 struct buf *bufq_cancel(struct bufq_state *, struct buf *);
 const char *bufq_getstrategyname(struct bufq_state *);
 void	bufq_move(struct bufq_state *, struct bufq_state *);
-
-/* Put buffer in queue */
-#define BUFQ_PUT(bufq, bp)	bufq_put(bufq, bp)
-
-/* Get and remove buffer from queue */
-#define BUFQ_GET(bufq)		bufq_get(bufq)
-
-/* Get buffer from queue */
-#define BUFQ_PEEK(bufq)		bufq_peek(bufq)
-
-/* Remove specified buffer from queue */
-#define BUFQ_CANCEL(bufq, bp)	bufq_cancel(bufq, bp)
-

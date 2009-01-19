@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.31 2008/05/30 20:10:03 tsutsui Exp $
+#	$NetBSD: OFWGENCFG,v 1.31.6.1 2009/01/19 13:16:43 skrll Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -101,7 +101,6 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

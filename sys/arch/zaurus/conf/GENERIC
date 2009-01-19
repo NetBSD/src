@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 2008/08/10 15:31:22 tls Exp $
+#	$NetBSD: GENERIC,v 1.13.2.1 2009/01/19 13:17:13 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -68,7 +68,6 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-#options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -109,7 +108,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Miscellaneous kernel options
 #options 	KTRACE          # system call tracing via ktrace(1)
-#options 	LKM             # loadable kernel modules
 #options 	KMEMSTATS       # kernel memory statistics
 #options 	SCSIVERBOSE     # Verbose SCSI errors
 #options 	MIIVERBOSE      # Verbose MII autoconfuration messages

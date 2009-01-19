@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.35 2008/10/26 17:57:49 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.35.2.1 2009/01/19 13:17:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -280,7 +280,7 @@ struct linux_desc_struct {
 #define LINUX_VMWARE_LAST 237
 
 /*
- * Range of ioctls to just pass on, so that LKMs (like VMWare) can
+ * Range of ioctls to just pass on, so that modules (like VMWare) can
  * handle them.
  */
 #define LINUX_IOCTL_MIN_PASS	LINUX_VMWARE_NONE

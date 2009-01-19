@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.154 2008/10/14 18:32:53 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.154.2.1 2009/01/19 13:19:08 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154 2008/10/14 18:32:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.2.1 2009/01/19 13:19:08 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154 2008/10/14 18:32:53 jmcneill Exp $");
 #define DPRINTFN(n,x)	do { if (ehcidebug>(n)) printf x; } while (0)
 int ehcidebug = 0;
 #ifndef __NetBSD__
-#define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
+#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
 #endif
 #else
 #define DPRINTF(x)
@@ -908,6 +908,9 @@ ehci_idone(struct ehci_xfer *ex)
 
 				status = le32toh(itd->itd.itd_ctl[i]);
 				len = EHCI_ITD_GET_LEN(status);
+				if (EHCI_ITD_GET_STATUS(status) != 0)
+					len = 0; /*No valid data on error*/
+
 				xfer->frlengths[nframes++] = len;
 				actlen += len;
 			}
@@ -918,11 +921,6 @@ ehci_idone(struct ehci_xfer *ex)
 
 		xfer->actlen = actlen;
 		xfer->status = USBD_NORMAL_COMPLETION;
-		if (xfer->rqflags & URQ_DEV_DMABUF) {
-       		usb_syncmem(&xfer->dmabuf, 0, ex->isoc_len,
-				BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-		}
-
 		goto end;
 	}
 
@@ -968,9 +966,9 @@ ehci_idone(struct ehci_xfer *ex)
 #ifdef EHCI_DEBUG
 		char sbuf[128];
 
-		bitmask_snprintf((u_int32_t)status,
-				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
-				 "\3MISSED\1PINGSTATE", sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf),
+		    "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR\3MISSED\1PINGSTATE",
+		    (u_int32_t)status);
 
 		DPRINTFN(2, ("ehci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
@@ -1439,9 +1437,9 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 	printf(" altnext="); ehci_dump_link(qtd->qtd_altnext, 0);
 	printf("\n");
 	s = le32toh(qtd->qtd_status);
-	bitmask_snprintf(EHCI_QTD_GET_STATUS(s),
-			 "\20\10ACTIVE\7HALTED\6BUFERR\5BABBLE\4XACTERR"
-			 "\3MISSED\2SPLIT\1PING", sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf),
+	    "\20\10ACTIVE\7HALTED\6BUFERR\5BABBLE\4XACTERR"
+	    "\3MISSED\2SPLIT\1PING", EHCI_QTD_GET_STATUS(s));
 	printf("  status=0x%08x: toggle=%d bytes=0x%x ioc=%d c_page=0x%x\n",
 	       s, EHCI_QTD_GET_TOGGLE(s), EHCI_QTD_GET_BYTES(s),
 	       EHCI_QTD_GET_IOC(s), EHCI_QTD_GET_C_PAGE(s));
@@ -3953,11 +3951,12 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 			if (page_offs >= dma_buf->block->size)
 				break;
 
-			int page = DMAADDR(dma_buf, page_offs);
+			long long page = DMAADDR(dma_buf, page_offs);
 			page = EHCI_PAGE(page);
 			itd->itd.itd_bufr[j] =
-			    htole32(EHCI_ITD_SET_BPTR(page) | 
-				    EHCI_LINK_ITD);
+			    htole32(EHCI_ITD_SET_BPTR(page));
+			itd->itd.itd_bufr_hi[j] =
+			    htole32(page >> 32);
 		}
 
 		/*
@@ -3989,6 +3988,9 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	stop = itd;
 	stop->xfer_next = NULL;
 	exfer->isoc_len = total_length;
+
+	usb_syncmem(&exfer->xfer.dmabuf, 0, total_length,
+		BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Part 2: Transfer descriptors have now been set up, now they must

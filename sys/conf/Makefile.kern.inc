@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.118 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.118.2.1 2009/01/19 13:17:45 skrll Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -196,7 +196,7 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
+SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
@@ -232,7 +232,7 @@ LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
 SYSTEM_LD_TAIL+=; \
-	if grep -q '^\#define.*SYMTAB_SPACE' opt_ddbparam.h; then \
+	if grep '^\#define.*SYMTAB_SPACE' opt_ddbparam.h > /dev/null; then \
 		echo "${DBSYM} $@"; \
 		${DBSYM} $@; \
 	fi

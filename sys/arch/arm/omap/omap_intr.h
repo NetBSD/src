@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.3 2008/04/27 18:58:45 matt Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.3.8.1 2009/01/19 13:15:59 skrll Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,6 @@
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/atomic.h>
 
 #define OMAP_IRQ_MIN			0
 #define OMAP_NIRQ			(OMAP_INT_L1_NIRQ + OMAP_INT_L2_NIRQ)
@@ -185,8 +184,8 @@ void	_setsoftintr(int);
 void omap_irq_handler(void *);
 void *omap_intr_establish(int, int, const char *, int (*)(void *), void *);
 void omap_intr_disestablish(void *);
-int omapintc_match(struct device *, struct cfdata *, void *);
-void omapintc_attach(struct device *, struct device *, void *);
+int omapintc_match(device_t, cfdata_t, void *);
+void omapintc_attach(device_t, device_t, void *);
 
 #endif /* ! _LOCORE */
 

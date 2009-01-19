@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr_i4.S,v 1.5 2006/05/22 21:34:08 uwe Exp $	*/
+/*	$NetBSD: movstr_i4.S,v 1.5.72.1 2009/01/19 13:19:56 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2002 SHIMIZU Ryo.  All rights reserved.
@@ -27,6 +27,12 @@
  */
 
 #include <machine/asm.h>
+
+
+#ifdef __ELF__
+	.hidden __movstr_i4_odd, __movmem_i4_odd
+	.hidden __movstr_i4_even, __movmem_i4_even
+#endif
 
 
 NENTRY(__movstr_i4_odd)

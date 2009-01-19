@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_hal.c,v 1.13.2.3 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.4 2007/10/19 12:16:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.4.28.1 2009/01/19 13:17:36 skrll Exp $");
 #endif
 
 #include <sys/param.h>
@@ -55,9 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.4 2007/10/19 12:16:39 ad Exp $");
 #endif
 
 #include <sys/systm.h>
-#ifdef __NetBSD__
-#include <sys/lkm.h>
-#endif
 #ifdef __FreeBSD__
 #include <machine/clock.h>
 #include <machine/bus_memio.h>

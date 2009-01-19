@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.4 2005/12/11 12:19:29 christos Exp $ */
+/*	$NetBSD: promdev.c,v 1.4.86.1 2009/01/19 13:16:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -55,7 +55,7 @@ prom_iopen(struct saioreq *si)
 {
 	struct boottab *ops;
 	struct devinfo *dip;
-	int	i, ctlr, error;
+	int	ctlr, error;
 
 	if (promdev_inuse)
 		return(EMFILE);

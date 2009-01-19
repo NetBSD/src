@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.50 2008/07/31 07:41:07 simonb Exp $
+#	$NetBSD: INSTALL,v 1.50.2.1 2009/01/19 13:17:02 skrll Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -101,7 +101,6 @@ options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_ULTRIX
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
-#options 	LKM
 
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

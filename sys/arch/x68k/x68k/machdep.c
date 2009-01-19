@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:57 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.4.1 2009/01/19 13:17:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.4.1 2009/01/19 13:17:08 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -112,10 +112,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:57 ad Exp $");
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
+#include <sys/device.h>
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <sys/exec_elf.h>
 #endif
 
@@ -134,11 +136,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:57 ad Exp $");
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>
-
-#include <sys/device.h>
-
 #include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <arch/x68k/dev/intiovar.h>
 
 void initcpu(void);
@@ -155,10 +154,8 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
-extern vaddr_t virtual_avail;
 extern u_int lowram;
 extern int end, *esym;
-extern psize_t mem_size;
 
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -227,8 +224,8 @@ consinit(void)
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		 (void *)&end, esym);
 #endif
 #ifdef DDB
@@ -262,9 +259,6 @@ cpu_startup(void)
 	int opmapdebug = pmapdebug;
 
 	pmapdebug = 0;
-#endif
-#if 0
-	rtclockinit(); /* XXX */
 #endif
 
 	if (fputype != FPU_NONE)
@@ -495,6 +489,8 @@ cpu_reboot(int howto, char *bootstr)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
 		printf("hit any key to reboot...\n");
@@ -721,15 +717,15 @@ dumpsys(void)
 			return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
 	dump = bdev->d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 	printf("dump ");
 
@@ -742,7 +738,7 @@ dumpsys(void)
 #define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
+			printf_nolog("%d ", pg / NPGMB);
 #undef NPGMB
 		if (maddr == 0) {
 			/* Skip first page */

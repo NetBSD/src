@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.44 2008/10/25 23:38:28 christos Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.44.2.1 2009/01/19 13:17:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-extern const struct emul emul_linux;
+extern struct emul emul_linux;
 
 int linux_sysctl(int *, u_int, void *, size_t *, void *, size_t,
     struct lwp *);

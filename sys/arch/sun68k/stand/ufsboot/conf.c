@@ -1,8 +1,10 @@
-/*	$NetBSD: conf.c,v 1.4 2005/12/11 12:19:29 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.4.86.1 2009/01/19 13:17:02 skrll Exp $	*/
 
 #include <stand.h>
 #include <ufs.h>
 #include <dev_disk.h>
+
+#include "libsa.h"
 
 struct fs_ops file_system[] = {
 	FS_OPS(ufs),
@@ -17,5 +19,8 @@ int ndevs = 1;
 int
 main(void)
 {
+
 	xxboot_main("ufsboot");
+
+	return 0;
 }

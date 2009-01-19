@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.10 2008/04/24 11:46:30 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.10.10.1 2009/01/19 13:16:00 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.10 2008/04/24 11:46:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.10.10.1 2009/01/19 13:16:00 skrll Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -202,14 +202,12 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	struct gpio_irq_handler *gh;
 	u_int32_t bit, reg;
 
-#ifdef DEBUG
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	if (gpio >= GPIO_NPINS)
 		panic("pxa2x0_gpio_intr_establish: bad pin number: %d", gpio);
 #else
 	if (gpio > 1)
 		panic("pxa2x0_gpio_intr_establish: bad pin number: %d", gpio);
-#endif
 #endif
 
 	if (!GPIO_IS_GPIO_IN(pxa2x0_gpio_get_function(gpio)))
@@ -229,8 +227,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	if (sc->sc_handlers[gpio] != NULL)
 		panic("pxa2x0_gpio_intr_establish: illegal shared interrupt");
 
-	MALLOC(gh, struct gpio_irq_handler *, sizeof(struct gpio_irq_handler),
-	    M_DEVBUF, M_NOWAIT);
+	gh = malloc(sizeof(struct gpio_irq_handler), M_DEVBUF, M_NOWAIT);
 
 	gh->gh_func = func;
 	gh->gh_arg = arg;
@@ -316,7 +313,7 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 #endif
 	}
 
-	FREE(gh, M_DEVBUF);
+	free(gh, M_DEVBUF);
 }
 
 static int

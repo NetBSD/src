@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.4 2008/10/16 09:25:30 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.4.4.1 2009/01/19 13:20:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.4.4.1 2009/01/19 13:20:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>

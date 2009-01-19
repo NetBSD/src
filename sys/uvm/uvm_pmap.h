@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.23 2008/07/16 14:33:09 matt Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.23.2.1 2009/01/19 13:20:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -70,6 +70,12 @@
 
 struct lwp;		/* for pmap_activate()/pmap_deactivate() proto */
 
+struct pmap;
+typedef struct pmap *pmap_t;
+
+extern struct pmap	*const kernel_pmap_ptr;
+#define pmap_kernel()	kernel_pmap_ptr
+
 /*
  * Each machine dependent implementation is expected to
  * keep certain statistics.  They may do this anyway they
@@ -104,10 +110,6 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
-#if !defined(pmap_kernel)
-struct pmap	*pmap_kernel(void);
-#endif
-
 void		pmap_activate(struct lwp *);
 void		pmap_deactivate(struct lwp *);
 void		pmap_unwire(pmap_t, vaddr_t);

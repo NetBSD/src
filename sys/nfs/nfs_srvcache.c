@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.42 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.42.8.1 2009/01/19 13:20:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,9 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.42 2008/05/05 17:11:17 ad Exp $");
-
-#include "opt_iso.h"
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.42.8.1 2009/01/19 13:20:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -60,9 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.42 2008/05/05 17:11:17 ad Exp $")
 #include <sys/socketvar.h>
 
 #include <netinet/in.h>
-#ifdef ISO
-#include <netiso/iso.h>
-#endif
 #include <nfs/nfsm_subs.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -87,7 +82,7 @@ static struct mowner nfsd_cache_mowner = MOWNER_INIT("nfsd", "cache");
 #endif /* defined(MBUFTRACE) */
 
 #define	NETFAMILY(rp) \
-		(((rp)->rc_flags & RC_INETADDR) ? AF_INET : AF_ISO)
+		(((rp)->rc_flags & RC_INETADDR) ? AF_INET : -1)
 
 static struct nfsrvcache *nfsrv_lookupcache(struct nfsrv_descript *nd);
 static void nfsrv_unlockcache(struct nfsrvcache *rp);
@@ -170,6 +165,18 @@ nfsrv_initcache()
 	pool_init(&nfs_reqcache_pool, sizeof(struct nfsrvcache), 0, 0, 0,
 	    "nfsreqcachepl", &pool_allocator_nointr, IPL_NONE);
 	MOWNER_ATTACH(&nfsd_cache_mowner);
+}
+
+void
+nfsrv_finicache()
+{
+
+	nfsrv_cleancache();
+	KASSERT(TAILQ_EMPTY(&nfsrvlruhead));
+	pool_destroy(&nfs_reqcache_pool);
+	hashdone(nfsrvhashtbl, HASH_LIST, nfsrvhash);
+	MOWNER_DETACH(&nfsd_cache_mowner);
+	mutex_destroy(&nfsrv_reqcache_lock);
 }
 
 /*
@@ -307,7 +314,6 @@ found:
 		rp->rc_flags |= RC_INETADDR;
 		rp->rc_inetaddr = saddr->sin_addr.s_addr;
 		break;
-	case AF_ISO:
 	default:
 		rp->rc_flags |= RC_NAM;
 		rp->rc_nam = m_copym(nd->nd_nam, 0, M_COPYALL, M_WAIT);

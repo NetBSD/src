@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.39 2008/06/11 21:25:31 drochner Exp $ */
+/*	$NetBSD: p9100.c,v 1.39.4.1 2009/01/19 13:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.39 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.39.4.1 2009/01/19 13:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,9 @@ static uint8_t	p9100_ramdac_read(struct p9100_softc *, bus_size_t);
 static void	p9100_ramdac_write(struct p9100_softc *, bus_size_t, uint8_t);
 
 static uint8_t	p9100_ramdac_read_ctl(struct p9100_softc *, int);
+#if NTCTRL > 0
 static void	p9100_ramdac_write_ctl(struct p9100_softc *, int, uint8_t);
+#endif
 
 static void 	p9100_init_engine(struct p9100_softc *);
 
@@ -232,7 +234,9 @@ static int	p9100_intr(void *);
 /* power management stuff */
 static void p9100_power_hook(int, void *);
 
+#if NTCTRL > 0
 static void p9100_set_extvga(void *, int);
+#endif
 
 #if NWSDISPLAY > 0
 struct wsdisplay_accessops p9100_accessops = {
@@ -876,6 +880,7 @@ p9100_ramdac_read_ctl(struct p9100_softc *sc, int off)
 	return p9100_ramdac_read(sc, DAC_INDX_DATA);
 }
 
+#if NTCTRL > 0
 static void
 p9100_ramdac_write_ctl(struct p9100_softc *sc, int off, uint8_t val)
 {
@@ -883,6 +888,7 @@ p9100_ramdac_write_ctl(struct p9100_softc *sc, int off, uint8_t val)
 	p9100_ramdac_write(sc, DAC_INDX_HI, (off & 0xff00) >> 8);
 	p9100_ramdac_write(sc, DAC_INDX_DATA, val);
 }
+#endif /* NTCTRL > 0 */
 
 /*
  * Undo the effect of an FBIOSVIDEO that turns the video off.
@@ -1543,6 +1549,7 @@ p9100_loadcursor(struct p9100_softc *sc)
 #endif
 }
 
+#if NTCTRL > 0
 static void
 p9100_set_extvga(void *cookie, int status)
 {
@@ -1571,3 +1578,4 @@ p9100_set_extvga(void *cookie, int status)
 	splx(s);
 #endif
 }
+#endif /* NTCTRL > 0 */

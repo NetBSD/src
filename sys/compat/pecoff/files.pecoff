@@ -1,5 +1,6 @@
-#	$NetBSD: files.pecoff,v 1.5 2007/11/10 09:41:02 dsl Exp $
+#	$NetBSD: files.pecoff,v 1.5.26.1 2009/01/19 13:17:40 skrll Exp $
 #
 
 file	compat/pecoff/pecoff_exec.c	compat_pecoff
 file	compat/pecoff/pecoff_emul.c	compat_pecoff
+file	compat/pecoff/pecoff_mod.c	compat_pecoff

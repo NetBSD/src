@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.73 2008/10/13 18:16:33 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.73.2.1 2009/01/19 13:19:39 skrll Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -114,7 +114,7 @@ s/\$//g
 	b join
 	}
 2,${
-	/^#/!s/\([{}()*,]\)/ \1 /g
+	/^#/!s/\([{}()*,|]\)/ \1 /g
 }
 ' < $2 | $awk "
 $toupper
@@ -213,7 +213,6 @@ NR == 1 {
 	printf "#include <sys/param.h>\n" > rumpcalls
 	printf "#include <sys/proc.h>\n" > rumpcalls
 	printf "#include <sys/syscallargs.h>\n" > rumpcalls
-	printf "#include \"rump_syscalls.h\"\n" > rumpcalls
 	printf "#include \"rump_private.h\"\n\n" > rumpcalls
 	printf "#if\tBYTE_ORDER == BIG_ENDIAN\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.be.datum)\n" > rumpcalls
@@ -235,6 +234,9 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
 
 	printf " * created from%s\n */\n\n", $0 > rumpcallshdr
+	printf "#ifdef _RUMPKERNEL\n" > rumpcallshdr
+	printf "#error Interface not supported inside rump kernel\n" > rumpcallshdr
+	printf "#endif /* _RUMPKERNEL */\n\n" > rumpcallshdr
 
 	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
 	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
@@ -322,7 +324,7 @@ syscall != $1 {
 	exit 1
 }
 function parserr(was, wanted) {
-	printf "%s: line %d: unexpected %s (expected %s)\n", \
+	printf "%s: line %d: unexpected %s (expected <%s>)\n", \
 	    infile, NR, was, wanted
 	printf "line is:\n"
 	print
@@ -344,6 +346,12 @@ function parseline() {
 	if ($f == "INDIR") {		# allow for "NOARG INDIR"
 		sycall_flags = "SYCALL_INDIRECT | " sycall_flags
 		f++
+	}
+	if ($f == "MODULAR") {		# registered at runtime
+		modular = 1
+		f++
+	} else {
+		modular =  0;
 	}
 	if ($f == "RUMP") {
 		rumpable = 1
@@ -375,12 +383,40 @@ function parseline() {
 		returntype = returntype$f;
 		oldf = $f;
 		f++
-	} while (f < (end - 1) && $(f+1) != "(");
+	} while ($f != "|" && f < (end-1))
 	if (f == (end - 1)) {
-		parserr($f, "function argument definition (maybe \"(\"?)");
+		parserr($f, "function argument definition (maybe \"|\"?)");
+	}
+	f++
+
+	fprefix=$f
+	f++
+	if ($f != "|") {
+		parserr($f, "function compat delimiter (maybe \"|\"?)");
+	}
+	f++
+
+	fcompat=""
+	if ($f != "|") {
+		fcompat=$f
+		f++
 	}
 
-	funcname=$f
+	if ($f != "|") {
+		parserr($f, "function name delimiter (maybe \"|\"?)");
+	}
+	f++
+	fbase=$f
+
+	funcstdname=fprefix "_" fbase
+	if (fcompat != "") {
+		funcname=fprefix "___" fbase "" fcompat
+		wantrename=1
+	} else {
+		funcname=funcstdname
+		wantrename=0
+	}
+
 	if (funcalias == "") {
 		funcalias=funcname
 		sub(/^([^_]+_)*sys_/, "", funcalias)
@@ -388,7 +424,7 @@ function parseline() {
 	f++
 
 	if ($f != "(")
-		parserr($f, ")")
+		parserr($f, "(")
 	f++
 
 	argc=0;
@@ -464,12 +500,13 @@ function printproto(wrap) {
 	if (!rumpable)
 		return
 
-	if (wrap == "")
-		wrap = "sys"
-	printf("%s rump_%s_%s(", returntype, wrap, funcalias) > rumpcallshdr
+	printf("%s rump_%s(", returntype, funcstdname) > rumpcallshdr
 	for (i = 1; i <= argc; i++)
 		printf("%s, ", argtype[i]) > rumpcallshdr
-	printf("int *);\n") > rumpcallshdr
+	printf("int *)") > rumpcallshdr
+	if (wantrename)
+		printf(" __RENAME(rump_%s)", funcname) > rumpcallshdr
+	printf(";\n") > rumpcallshdr
 }
 
 function putent(type, compatwrap) {
@@ -497,7 +534,9 @@ function putent(type, compatwrap) {
 	} else {
 		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > sysent
 	}
-	if (compatwrap == "")
+	if (modular) 
+		wfn = "(sy_call_t *)sys_nomodule";
+	else if (compatwrap == "")
 		wfn = "(sy_call_t *)" funcname;
 	else
 		wfn = "(sy_call_t *)" compatwrap "(" funcname ")";
@@ -542,12 +581,20 @@ function putent(type, compatwrap) {
 	if (!rumpable)
 		return
 
+	# need a local prototype, we export the re-re-named one in .h
+	printf("\n%s rump_%s(", returntype, funcname) > rumpcalls
+	for (i = 1; i <= argc; i++) {
+		printf("%s, ", argtype[i]) > rumpcalls
+	}
+	printf("int *);") > rumpcalls
+
 	printf("\n%s\nrump_%s(", returntype, funcname) > rumpcalls
 	for (i = 1; i <= argc; i++) {
 		printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
 	}
 	printf("int *error)\n") > rumpcalls
 	printf("{\n\tregister_t retval = 0;\n") > rumpcalls
+
 	argarg = "NULL"
 	if (argc) {
 		argarg = "&arg"

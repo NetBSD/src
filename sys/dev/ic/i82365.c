@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.102 2008/04/08 12:07:26 cegger Exp $	*/
+/*	$NetBSD: i82365.c,v 1.102.12.1 2009/01/19 13:17:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.102 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.102.12.1 2009/01/19 13:17:55 skrll Exp $");
 
 #define	PCICDEBUG
 
@@ -369,11 +369,12 @@ pcic_power(why, arg)
 			if (sc->irq != -1)
 			    reg |= sc->irq << PCIC_CSC_INTR_IRQ_SHIFT;
 			pcic_write(h, PCIC_CSC_INTR, reg);
+#ifdef PCICDEBUG
+			snprintb(bitbuf, sizeof(bitbuf), PCIC_CSC_INTR_FORMAT,
+			    pcic_read(h, PCIC_CSC_INTR));
+#endif
 			DPRINTF(("%s: CSC_INTR was zero; reset to %s\n",
-			    device_xname(&sc->dev),
-			    bitmask_snprintf(pcic_read(h, PCIC_CSC_INTR),
-				PCIC_CSC_INTR_FORMAT,
-				bitbuf, sizeof(bitbuf))));
+			    device_xname(&sc->dev), bitbuf));
 		}
 
 		/*

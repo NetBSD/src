@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.10 2007/11/24 13:20:57 isaki Exp $	*/
+/*	$NetBSD: rpc.h,v 1.10.26.1 2009/01/19 13:19:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -49,12 +49,12 @@
 #define	PMAPPROC_CALLIT		5
 
 /* RPC functions: */
-ssize_t	rpc_call __P((struct iodesc *, n_long, n_long, n_long,
-                     void *, size_t, void *, size_t));
-void	rpc_fromaddr __P((void *, struct in_addr *, u_short *));
-int	rpc_pmap_getcache __P((struct in_addr, u_int, u_int));
-void	rpc_pmap_putcache __P((struct in_addr, u_int, u_int, int));
-int	rpc_getport __P((struct iodesc *, n_long, n_long));
+ssize_t	rpc_call(struct iodesc *, n_long, n_long, n_long, void *, size_t,
+    void *, size_t);
+void	rpc_fromaddr(void *, struct in_addr *, u_short *);
+int	rpc_pmap_getcache(struct in_addr, u_int, u_int);
+void	rpc_pmap_putcache(struct in_addr, u_int, u_int, int);
+int	rpc_getport(struct iodesc *, n_long, n_long);
 
 extern int rpc_port;	/* decrement before bind */
 

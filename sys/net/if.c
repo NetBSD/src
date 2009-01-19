@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.230 2008/10/24 21:46:09 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.230.2.1 2009/01/19 13:20:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230 2008/10/24 21:46:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230.2.1 2009/01/19 13:20:11 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -278,7 +278,7 @@ struct ifnet **ifindex2ifnet = NULL;
 struct ifnet *lo0ifp;
 
 void
-if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen)
+if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen, bool factory)
 {
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -289,6 +289,10 @@ if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen)
 	sdl = satosdl(ifa->ifa_addr);
 
 	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lla, ifp->if_addrlen);
+	if (factory) {
+		ifp->if_hwdl = ifp->if_dl;
+		IFAREF(ifp->if_hwdl);
+	}
 	/* TBD routing socket */
 }
 
@@ -388,8 +392,9 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa,
 	if_deactivate_sadl(ifp);
 
 	if_sadl_setrefs(ifp, ifa);
+	IFADDR_FOREACH(ifa, ifp)
+		rtinit(ifa, RTM_LLINFO_UPD, 0);
 	splx(s);
-	rt_ifmsg(ifp);
 }
 
 /*
@@ -416,8 +421,11 @@ if_free_sadl(struct ifnet *ifp)
 	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
 	ifa_remove(ifp, ifa);
-
 	if_deactivate_sadl(ifp);
+	if (ifp->if_hwdl == ifa) {
+		IFAFREE(ifa);
+		ifp->if_hwdl = NULL;
+	}
 	splx(s);
 }
 
@@ -436,6 +444,9 @@ if_attach(struct ifnet *ifp)
 	}
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
+	if (ifp->if_ioctl == NULL)
+		ifp->if_ioctl = ifioctl_common;
+
 	ifp->if_index = if_index;
 	if (ifindex2ifnet == NULL)
 		if_index++;
@@ -1258,7 +1269,7 @@ if_down(struct ifnet *ifp)
 	struct ifaddr *ifa;
 
 	ifp->if_flags &= ~IFF_UP;
-	microtime(&ifp->if_lastchange);
+	nanotime(&ifp->if_lastchange);
 	IFADDR_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
@@ -1282,7 +1293,7 @@ if_up(struct ifnet *ifp)
 #endif
 
 	ifp->if_flags |= IFF_UP;
-	microtime(&ifp->if_lastchange);
+	nanotime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
 	IFADDR_FOREACH(ifa, ifp)
@@ -1574,8 +1585,15 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case OOSIOCGIFCONF:
 		return compat_ifconf(cmd, data);
 #endif
+#ifdef COMPAT_OIFDATA
+	case OSIOCGIFDATA:
+	case OSIOCZIFDATA:
+		return compat_ifdatareq(l, cmd, data);
+#endif
 	case SIOCGIFCONF:
 		return ifconf(cmd, data);
+	case SIOCINITIFADDR:
+		return EPERM;
 	}
 
 #ifdef COMPAT_OIFREQ
@@ -1648,47 +1666,13 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 	oif_flags = ifp->if_flags;
-	switch (cmd) {
 
-	case SIOCSIFFLAGS:
-		ifioctl_common(ifp, cmd, data);
-		if (ifp->if_ioctl)
-			(void)(*ifp->if_ioctl)(ifp, cmd, data);
-		break;
-
-	case SIOCSIFPHYADDR:
-	case SIOCDIFPHYADDR:
-#ifdef INET6
-	case SIOCSIFPHYADDR_IN6:
-#endif
-	case SIOCSLIFPHYADDR:
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCSIFMEDIA:
-	case SIOCGIFPSRCADDR:
-	case SIOCGIFPDSTADDR:
-	case SIOCGLIFPHYADDR:
-	case SIOCGIFMEDIA:
-	case SIOCG80211:
-	case SIOCS80211:
-	case SIOCS80211NWID:
-	case SIOCS80211NWKEY:
-	case SIOCS80211POWER:
-	case SIOCS80211BSSID:
-	case SIOCS80211CHANNEL:
-	case SIOCSIFCAP:
-	case SIOCSIFMTU:
-		if (ifp->if_ioctl == NULL)
-			return EOPNOTSUPP;
-		error = (*ifp->if_ioctl)(ifp, cmd, data);
-		break;
-
-	default:
-		error = ifioctl_common(ifp, cmd, data);
-		if (error != ENOTTY)
-			break;
-		if (so->so_proto == NULL)
-			return EOPNOTSUPP;
+	error = (*ifp->if_ioctl)(ifp, cmd, data);
+	if (error != ENOTTY)
+		;
+	else if (so->so_proto == NULL)
+		return EOPNOTSUPP;
+	else {
 #ifdef COMPAT_OSOCK
 		error = compat_ifioctl(so, ocmd, cmd, data, l);
 #else
@@ -1696,7 +1680,6 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		    (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, l);
 #endif
-		break;
 	}
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {

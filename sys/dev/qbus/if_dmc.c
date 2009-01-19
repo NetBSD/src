@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.16 2008/04/05 19:16:49 cegger Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.16.12.1 2009/01/19 13:18:59 skrll Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.16 2008/04/05 19:16:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.16.12.1 2009/01/19 13:18:59 skrll Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -695,8 +695,8 @@ dmcxint(void *a)
 			arg &= DMC_CNTMASK;
 			if (arg & DMC_FATAL) {
 				if (arg != DMC_START) {
-					bitmask_snprintf(arg, CNTLO_BITS,
-					    buf, sizeof(buf));
+					snprintb(buf, sizeof(buf), CNTLO_BITS,
+					    arg);
 					log(LOG_ERR,
 					    "%s: fatal error, flags=%s\n",
 					    device_xname(&sc->sc_dev), buf);
@@ -730,7 +730,7 @@ dmcxint(void *a)
 			break;
 		report:
 #ifdef DMCDEBUG
-			bitmask_snprintf(arg, CNTLO_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf), CNTLO_BITS, arg);
 			printd("%s: soft error, flags=%s\n",
 			    device_xname(&sc->sc_dev), buf);
 #endif
@@ -841,7 +841,7 @@ dmcioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			dmcinit(ifp);
@@ -853,6 +853,8 @@ dmcioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    sc->sc_flag & DMC_RUNNING)
 			dmcdown(sc);
@@ -862,7 +864,7 @@ dmcioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 	splx(s);
 	return (error);
@@ -942,10 +944,10 @@ dmctimeout(struct ifnet *ifp)
 	char buf1[64], buf2[64];
 
 	if (sc->sc_flag & DMC_ONLINE) {
-		bitmask_snprintf(DMC_RBYTE(DMC_BSEL0) & 0xff, DMC0BITS,
-		    buf1, sizeof(buf1));
-		bitmask_snprintf(DMC_RBYTE(DMC_BSEL2) & 0xff, DMC2BITS,
-		    buf2, sizeof(buf2));
+		snprintb(buf1, sizeof(buf1), DMC0BITS,
+		    DMC_RBYTE(DMC_BSEL0) & 0xff);
+		snprintb(buf2, sizeof(buf2), DMC2BITS,
+		    DMC_RBYTE(DMC_BSEL2) & 0xff);
 		log(LOG_ERR, "%s: output timeout, bsel0=%s bsel2=%s\n",
 		    device_xname(&sc->sc_dev), buf1, buf2);
 		dmcrestart(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.60 2008/06/11 17:32:30 drochner Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.60.4.1 2009/01/19 13:18:24 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.60 2008/06/11 17:32:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.60.4.1 2009/01/19 13:18:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -334,7 +334,7 @@ raclose(dev, flags, fmt, l)
 #if notyet
 	if (ra->ra_openpart == 0) {
 		s = spluba();
-		while (BUFQ_PEEK(udautab[unit]) != NULL)
+		while (bufq_peek(udautab[unit]) != NULL)
 			(void) tsleep(&udautab[unit], PZERO - 1,
 			    "raclose", 0);
 		splx(s);
@@ -984,7 +984,7 @@ rriodone(usc, bp)
 		ra = device_lookup_private(&rx_cd, unit);
 	else
 #endif
-		panic("rriodone: unexpected major %d unit %d",
+		panic("rriodone: unexpected major %"PRIu64" unit %u",
 		    major(bp->b_dev), unit);
 	disk_unbusy(&ra->ra_disk, bp->b_bcount, (bp->b_flags & B_READ));
 

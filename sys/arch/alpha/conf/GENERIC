@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.325 2008/08/10 15:31:20 tls Exp $
+# $NetBSD: GENERIC,v 1.325.2.1 2009/01/19 13:15:53 skrll Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.325 $"
+ident		"GENERIC-$Revision: 1.325.2.1 $"
 
 maxusers 32
 
@@ -93,7 +93,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Sun NFS-compatible file system server
@@ -170,7 +169,6 @@ options 	SYSVSHM
 options 	P1003_1B_SEMAPHORE
 
 # Loadable Kernel Modules
-options 	LKM
 
 # Disable kernel security.
 #options 	INSECURE

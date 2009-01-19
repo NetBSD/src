@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.82 2008/10/23 17:16:24 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.82.2.1 2009/01/19 13:20:32 skrll Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.82 2008/10/23 17:16:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.82.2.1 2009/01/19 13:20:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -380,8 +380,8 @@ out:
 #ifdef DEBUG
 		getmicrotime(&endtime);
 		timersub(&endtime, &starttime, &endtime);
-		printf("%s: suspended %ld.%03ld sec, redo %d of %d\n",
-		    mp->mnt_stat.f_mntonname, (long)endtime.tv_sec,
+		printf("%s: suspended %lld.%03d sec, redo %d of %d\n",
+		    mp->mnt_stat.f_mntonname, (long long)endtime.tv_sec,
 		    endtime.tv_usec / 1000, redo, fs->fs_ncg);
 #endif
 	}
@@ -649,7 +649,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		if (loc < NDADDR) {
 			len = fragroundup(fs, blkoff(fs, xp->i_size));
 			if (len > 0 && len < fs->fs_bsize) {
-				ffs_blkfree(copy_fs, vp, db_get(xp, loc),
+				ffs_blkfree_snap(copy_fs, vp, db_get(xp, loc),
 				    len, xp->i_number);
 				blkno = db_get(xp, loc);
 				db_assign(xp, loc, 0);
@@ -660,7 +660,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		if (blkno)
 			db_assign(xp, loc, blkno);
 		if (!error)
-			error = ffs_freefile(copy_fs, vp, xp->i_number,
+			error = ffs_freefile_snap(copy_fs, vp, xp->i_number,
 			    xp->i_mode);
 		if (error) {
 			(void)vunmark(mvp);
@@ -729,7 +729,7 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 			break;
 		if (xp->i_ffs_effnlink != 0)
 			continue;
-		error = ffs_freefile(copy_fs, vp, xp->i_number, xp->i_mode);
+		error = ffs_freefile_snap(copy_fs, vp, xp->i_number, xp->i_mode);
 		if (error)
 			break;
 	}
@@ -1118,7 +1118,7 @@ indiracct(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	last = howmany(remblks, blksperindir);
 	if (last > NINDIR(fs))
 		last = NINDIR(fs);
-	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK);
+	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK | M_ZERO);
 	bcopy(bp->b_data, (void *)bap, fs->fs_bsize);
 	brelse(bp, 0);
 	error = (*acctfunc)(snapvp, bap, 0, last,
@@ -1141,7 +1141,7 @@ indiracct(struct vnode *snapvp, struct vnode *cancelvp, int level,
 		remblks -= blksperindir;
 	}
 out:
-	FREE(bap, M_DEVBUF);
+	free(bap, M_DEVBUF);
 	return (error);
 }
 
@@ -1241,7 +1241,7 @@ mapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 			*ip->i_snapblklist++ = lblkno;
 		if (blkno == BLK_SNAP)
 			blkno = blkstofrags(fs, lblkno);
-		ffs_blkfree(fs, vp, blkno, fs->fs_bsize, inum);
+		ffs_blkfree_snap(fs, vp, blkno, fs->fs_bsize, inum);
 	}
 	return (0);
 }
@@ -1654,7 +1654,7 @@ ffs_snapshot_mount(struct mount *mp)
 		error = vn_rdwr(UIO_READ, vp,
 		    (void *)&snaplistsize, sizeof(snaplistsize),
 		    lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
-		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
+		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT|IO_ALTSEMANTICS,
 		    l->l_cred, NULL, NULL);
 		if (error) {
 			printf("ffs_snapshot_mount: read_1 failed %d\n", error);
@@ -1669,7 +1669,7 @@ ffs_snapshot_mount(struct mount *mp)
 			error = vn_rdwr(UIO_READ, vp, (void *)snapblklist,
 			    snaplistsize * sizeof(daddr_t),
 			    lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
-			    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
+			    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT|IO_ALTSEMANTICS,
 			    l->l_cred, NULL, NULL);
 			for (i = 0; i < snaplistsize; i++)
 				snapblklist[i] = ufs_rw64(snapblklist[i], ns);
@@ -1725,12 +1725,11 @@ ffs_snapshot_unmount(struct mount *mp)
 	mutex_enter(&si->si_lock);
 	while ((xp = TAILQ_FIRST(&si->si_snapshots)) != 0) {
 		vp = ITOV(xp);
-		vp->v_vnlock = &vp->v_lock;
 		TAILQ_REMOVE(&si->si_snapshots, xp, i_nextsnap);
 		xp->i_nextsnap.tqe_prev = 0;
 		if (xp->i_snapblklist == si->si_snapblklist)
 			si->si_snapblklist = NULL;
-		FREE(xp->i_snapblklist, M_UFSMNT);
+		free(xp->i_snapblklist, M_UFSMNT);
 		if (xp->i_ffs_effnlink > 0) {
 			si->si_gen++;
 			mutex_exit(&si->si_lock);
@@ -1783,7 +1782,7 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 		return 0;
 	}
 	snapblklist = si->si_snapblklist;
-	upper = si->si_snapblklist[0] - 1;
+	upper = (snapblklist != NULL ? snapblklist[0] - 1 : 0);
 	lower = 1;
 	while (lower <= upper) {
 		mid = (lower + upper) / 2;
@@ -1949,7 +1948,10 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	mutex_enter(&si->si_snaplock);
 
-	fsbytes = lfragtosize(fs, fs->fs_size);
+	if (ioflag & IO_ALTSEMANTICS)
+		fsbytes = ip->i_size;
+	else
+		fsbytes = lfragtosize(fs, fs->fs_size);
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		bytesinfile = fsbytes - uio->uio_offset;
 		if (bytesinfile <= 0)
@@ -1963,7 +1965,8 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 
 		if (lblktosize(fs, nextlbn + 1) >= fsbytes) {
 			if (lblktosize(fs, lbn) + size > fsbytes)
-				size = fsbytes - lblktosize(fs, lbn);
+				size = fragroundup(fs,
+				    fsbytes - lblktosize(fs, lbn));
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		} else {
 			int nextsize = fs->fs_bsize;

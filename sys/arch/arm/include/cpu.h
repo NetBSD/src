@@ -92,12 +92,12 @@
 extern int cpu_do_powersave;
 #endif
 
-#ifdef __PROG32
 #ifdef _LOCORE
-#ifdef _ARM_ARCH_6
+
+#if defined(_ARM_ARCH_6)
 #define IRQdisable	cprid	i
 #define IRQenable	cpsie	i
-#else
+#elif defined(__PROG32)
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
 	mrs	r0, cpsr ; \
@@ -111,7 +111,9 @@ extern int cpu_do_powersave;
 	bic	r0, r0, #(I32_bit) ; \
 	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}		
-#endif /* _ARM_ARCH_6 */
+#else
+/* Not yet used in 26-bit code */
+#endif
 
 #if defined (PROCESS_ID_IS_CURCPU)
 #define GET_CURCPU(rX)		mrc	p15, 0, rX, c13, c0, 4
@@ -121,16 +123,23 @@ extern int cpu_do_powersave;
 #define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
 #define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
 #define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_ADDR]
+#elif !defined(MULTIPROCESSOR)
+#define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
+#define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
+#define GET_CURPCB(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURPCB]
 #endif
 
-#else
+#else /* !_LOCORE */
+
+#ifdef __PROG32
 #define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
 #define IRQenable __set_cpsr_c(I32_bit, 0);
-#endif	/* _LOCORE */
 #else
 #define IRQdisable set_r15(R15_IRQ_DISABLE, R15_IRQ_DISABLE);
 #define IRQenable set_r15(R15_IRQ_DISABLE, 0);
 #endif
+
+#endif /* !_LOCORE */
 
 #ifndef _LOCORE
 

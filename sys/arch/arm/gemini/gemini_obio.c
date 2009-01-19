@@ -1,12 +1,13 @@
-/*	$NetBSD: gemini_obio.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.1.2.1 2009/01/19 13:15:58 skrll Exp $	*/
 
 /* adapted from:
- *	$Id: gemini_obio.c,v 1.1 2008/10/24 04:23:18 matt Exp $
+ *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
  */
 
 /*
- * Autoconfiguration support for the Texas Instruments OMAP "On Board" I/O.
+ * Autoconfiguration support for the Gemini "On Board" I/O.
  *
+ * Based on arm/omap/omap2_obio.c which in turn was derived
  * Based on arm/omap/omap_emifs.c which in turn was derived
  * Based on arm/xscale/pxa2x0.c which in turn was derived
  * from arm/sa11x0/sa11x0.c
@@ -103,11 +104,12 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.1.2.1 2009/01/19 13:15:58 skrll Exp $");
 
 #include "locators.h"
 #include "obio.h"
 #include "geminiicu.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +142,7 @@ static int	obio_print(void *, const char *);
 static void	obio_attach_critical(struct obio_softc *);
 
 /* attach structures */
-CFATTACH_DECL(obio, sizeof(struct obio_softc),
+CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
 	obio_match, obio_attach, NULL, NULL);
 
 
@@ -155,11 +157,23 @@ obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_softc *sc = device_private(self);
 	struct mainbus_attach_args *mb = (struct mainbus_attach_args *)aux;
+#if NPCI > 0
 	struct pcibus_attach_args pba;
+#endif
+
+	sc->sc_dev = self;
 
 	sc->sc_iot = &gemini_bs_tag;
 
 	aprint_normal(": On-Board IO\n");
+
+#if (GEMINI_BUSBASE != 0)
+	sc->sc_dmarange.dr_sysbase = 0;
+	sc->sc_dmarange.dr_busbase = (GEMINI_BUSBASE * 1024 * 1024);
+	sc->sc_dmarange.dr_len = MEMSIZE * 1024 * 1024;
+	gemini_bus_dma_tag._ranges = &sc->sc_dmarange;
+	gemini_bus_dma_tag._nranges = 1;
+#endif
 
 	sc->sc_ioh = 0;
 	sc->sc_dmat = &gemini_bus_dma_tag;
@@ -171,6 +185,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	 */
 	obio_attach_critical(sc);
 
+#if NPCI > 0
 	/*
 	 * map PCI controller registers
 	 */
@@ -184,12 +199,14 @@ obio_attach(device_t parent, device_t self, void *aux)
 	 * initialize the PCI chipset tag
 	 */
 	gemini_pci_init(&sc->sc_pci_chipset, sc);
+#endif	/* NPCI */
 
 	/*
 	 * attach the rest of our devices
 	 */
 	config_search_ia(obio_search, self, "obio", NULL);
 
+#if NPCI > 0
 	/*
 	 * attach the PCI bus
 	 */
@@ -205,7 +222,8 @@ obio_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
-	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
+	(void) config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
+#endif	/* NPCI */
 	
 }
 
@@ -319,12 +337,18 @@ static const struct {
 	bus_addr_t addr;
 	bool required;
 } critical_devs[] = {
-	{ .name = "geminiicu0", .addr = 0x48000000, .required = true },
-	{ .name = "geminiwdt0", .addr = 0x41000000, .required = true },
-	{ .name = "geminitmr0", .addr = 0x43000000, .required = true },
-	{ .name = "geminitmr1", .addr = 0x43000000, .required = true },
-	{ .name = "geminitmr2", .addr = 0x43000000, .required = true },
-	{ .name = "com0",     .addr = 0x42000000, .required = true },
+#if defined(GEMINI_MASTER) || defined(GEMINI_SINGLE)
+	{ .name = "geminiicu0",   .addr = 0x48000000, .required = true },
+	{ .name = "geminiwdt0",   .addr = 0x41000000, .required = true },
+	{ .name = "geminitmr0",   .addr = 0x43000000, .required = true },
+	{ .name = "geminitmr2",   .addr = 0x43000000, .required = true },
+	{ .name = "com0",         .addr = 0x42000000, .required = true },
+#elif defined(GEMINI_SLAVE)
+	{ .name = "geminiicu1",   .addr = 0x49000000, .required = true },
+	{ .name = "geminitmr1",   .addr = 0x43000000, .required = true },
+	{ .name = "geminitmr2",   .addr = 0x43000000, .required = true },
+	{ .name = "geminilpchc0", .addr = 0x47000000, .required = true },
+#endif
 };
 
 static void
@@ -350,7 +374,7 @@ obio_attach_critical(struct obio_softc *sc)
 			continue;
 #endif
 
-		cf = config_search_ia(obio_find, &sc->sc_dev, "obio", &oa);
+		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
 		if (cf == NULL && critical_devs[i].required)
 			panic("obio_attach_critical: failed to find %s!",
 			    critical_devs[i].name);
@@ -359,7 +383,7 @@ obio_attach_critical(struct obio_softc *sc)
 		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
 		oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
 		oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
-		config_attach(&sc->sc_dev, cf, &oa, obio_print);
+		config_attach(sc->sc_dev, cf, &oa, obio_print);
 	}
 }
 

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.34 2008/05/30 20:10:02 tsutsui Exp $
+# 	$NetBSD: RC3230,v 1.34.6.1 2009/01/19 13:16:31 skrll Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -15,7 +15,6 @@ options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
-#options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
 options 	HZ=25
 options 	USERCONF		# userconf(4) support

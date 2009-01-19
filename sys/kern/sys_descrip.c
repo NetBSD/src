@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.7 2008/09/15 18:12:56 rmind Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.7.2.1 2009/01/19 13:19:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.7 2008/09/15 18:12:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.7.2.1 2009/01/19 13:19:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,11 @@ sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 	if ((fp = fd_getfile(old)) == NULL) {
 		return EBADF;
 	}
+	mutex_enter(&fp->f_lock);
+	fp->f_count++;
+	mutex_exit(&fp->f_lock);
+	fd_putfile(old);
+
 	if ((u_int)new >= curproc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 	    (u_int)new >= maxfiles) {
 		error = EBADF;
@@ -144,7 +149,7 @@ sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 	} else {
 		error = fd_dup2(fp, new);
 	}
-	fd_putfile(old);
+	closef(fp);
 	*retval = new;
 
 	return error;
@@ -479,7 +484,7 @@ do_sys_fstat(int fd, struct stat *sb)
  * Return status information about a file descriptor.
  */
 int
-sys___fstat30(struct lwp *l, const struct sys___fstat30_args *uap,
+sys___fstat50(struct lwp *l, const struct sys___fstat50_args *uap,
 	      register_t *retval)
 {
 	/* {

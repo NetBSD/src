@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.60 2008/02/05 18:14:02 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.60.18.1 2009/01/19 13:16:26 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -84,7 +84,8 @@ _C_LABEL(kernel_text):
 	.text
 	.globl	__start
 __start:
-	bl	_C_LABEL(ofwinit)	/* init OF */
+	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
+	bl	_C_LABEL(ofwinit)		/* init OF */
 
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
@@ -93,7 +94,7 @@ __start:
 /* compute end of kernel memory */
 	lis	4,_C_LABEL(end)@ha
 	addi	4,4,_C_LABEL(end)@l
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* skip symbol table */
 	cmpwi	6,0
 	beq	1f

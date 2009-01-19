@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.15 2008/06/24 10:13:51 gmcgarry Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.15.4.1 2009/01/19 13:18:13 skrll Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.15 2008/06/24 10:13:51 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.15.4.1 2009/01/19 13:18:13 skrll Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -158,7 +158,7 @@ MALLOC_DEFINE(M_FWIP, "if_fwip", "IP over IEEE1394 interface");
 /*
  * Setup sysctl(3) MIB, hw.fwip.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_fwip, "sysctl fwip(4) subtree setup")
 {
@@ -540,19 +540,13 @@ fwip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 		s = splfwnet();
-		if (ifp->if_flags & IFF_UP) {
-#if defined(__FreeBSD__)
-			if (!(ifp->if_drv_flags & IFF_DRV_RUNNING))
-#elif defined(__NetBSD__)
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			;
+		else if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
-#endif
 				FWIP_INIT(fwip);
 		} else {
-#if defined(__FreeBSD__)
-			if (ifp->if_drv_flags & IFF_DRV_RUNNING)
-#elif defined(__NetBSD__)
 			if (ifp->if_flags & IFF_RUNNING)
-#endif
 				FWIP_STOP(fwip);
 		}
 		splx(s);
@@ -592,22 +586,11 @@ fwip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif /* DEVICE_POLLING */
 		break;
 
-#if (defined(__FreeBSD__) && __FreeBSD_version >= 500000) || defined(__NetBSD__)
 	default:
-#else
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFMTU:
-#endif
 		s = splfwnet();
 		error = FIREWIRE_IOCTL(ifp, cmd, data);
 		splx(s);
 		return (error);
-#if defined(__DragonFly__) || \
-    (defined(__FreeBSD__) && __FreeBSD_version < 500000)
-	default:
-		return (EINVAL);
-#endif
 	}
 
 	return error;

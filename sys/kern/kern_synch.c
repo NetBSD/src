@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.252 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.252.2.1 2009/01/19 13:19:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.252 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.252.2.1 2009/01/19 13:19:38 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -129,7 +129,6 @@ kcondvar_t	lbolt;			/* once a second sleep address */
 /* Preemption event counters */
 static struct evcnt kpreempt_ev_crit;
 static struct evcnt kpreempt_ev_klock;
-static struct evcnt kpreempt_ev_ipl;
 static struct evcnt kpreempt_ev_immed;
 
 /*
@@ -154,8 +153,6 @@ sched_init(void)
 	   "kpreempt", "defer: critical section");
 	evcnt_attach_dynamic(&kpreempt_ev_klock, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: kernel_lock");
-	evcnt_attach_dynamic(&kpreempt_ev_ipl, EVCNT_TYPE_MISC, NULL,
-	   "kpreempt", "defer: IPL");
 	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "immediate");
 
@@ -165,8 +162,8 @@ sched_init(void)
 /*
  * OBSOLETE INTERFACE
  *
- * General sleep call.  Suspends the current process until a wakeup is
- * performed on the specified identifier.  The process will then be made
+ * General sleep call.  Suspends the current LWP until a wakeup is
+ * performed on the specified identifier.  The LWP will then be made
  * runnable with the specified priority.  Sleeps at most timo/hz seconds (0
  * means no timeout).  If pri includes PCATCH flag, signals are checked
  * before and after sleeping, else signals are not checked.  Returns 0 if
@@ -296,7 +293,7 @@ sa_awaken(struct lwp *l)
 /*
  * OBSOLETE INTERFACE
  *
- * Make all processes sleeping on the specified identifier runnable.
+ * Make all LWPs sleeping on the specified identifier runnable.
  */
 void
 wakeup(wchan_t ident)
@@ -314,7 +311,7 @@ wakeup(wchan_t ident)
 /*
  * OBSOLETE INTERFACE
  *
- * Make the highest priority process first in line on the specified
+ * Make the highest priority LWP first in line on the specified
  * identifier runnable.
  */
 void 
@@ -332,9 +329,9 @@ wakeup_one(wchan_t ident)
 
 
 /*
- * General yield call.  Puts the current process back on its run queue and
+ * General yield call.  Puts the current LWP back on its run queue and
  * performs a voluntary context switch.  Should only be called when the
- * current process explicitly requests it (eg sched_yield(2)).
+ * current LWP explicitly requests it (eg sched_yield(2)).
  */
 void
 yield(void)
@@ -351,7 +348,7 @@ yield(void)
 }
 
 /*
- * General preemption call.  Puts the current process back on its run queue
+ * General preemption call.  Puts the current LWP back on its run queue
  * and performs an involuntary context switch.
  */
 void
@@ -377,7 +374,6 @@ preempt(void)
  */
 static char	in_critical_section;
 static char	kernel_lock_held;
-static char	spl_raised;
 static char	is_softint;
 
 bool
@@ -437,10 +433,6 @@ kpreempt(uintptr_t where)
 			 * interrupt to retry later.
 			 */
 			splx(s);
-			if ((dop & DOPREEMPT_COUNTED) == 0) {
-				kpreempt_ev_ipl.ev_count++;
-			}
-			failed = (uintptr_t)&spl_raised;
 			break;
 		}
 		/* Do it! */
@@ -723,7 +715,7 @@ mi_switch(lwp_t *l)
 		}
 
 		/*
-		 * Mark that context switch is going to be perfomed
+		 * Mark that context switch is going to be performed
 		 * for this LWP, to protect it from being switched
 		 * to on another CPU.
 		 */
@@ -915,7 +907,7 @@ lwp_exit_switchaway(lwp_t *l)
 }
 
 /*
- * Change process state to be runnable, placing it on the run queue if it is
+ * Change LWP state to be runnable, placing it on the run queue if it is
  * in memory, and awakening the swapper if it isn't in memory.
  *
  * Call with the process and LWP locked.  Will return with the LWP unlocked.
@@ -925,7 +917,6 @@ setrunnable(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	struct cpu_info *ci;
-	sigset_t *ss;
 
 	KASSERT((l->l_flag & LW_IDLE) == 0);
 	KASSERT(mutex_owned(p->p_lock));
@@ -938,14 +929,8 @@ setrunnable(struct lwp *l)
 		 * If we're being traced (possibly because someone attached us
 		 * while we were stopped), check for a signal from the debugger.
 		 */
-		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xstat != 0) {
-			if ((sigprop[p->p_xstat] & SA_TOLWP) != 0)
-				ss = &l->l_sigpend.sp_set;
-			else
-				ss = &p->p_sigpend.sp_set;
-			sigaddset(ss, p->p_xstat);
+		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xstat != 0)
 			signotify(l);
-		}
 		p->p_nrlwps++;
 		break;
 	case LSSUSPENDED:

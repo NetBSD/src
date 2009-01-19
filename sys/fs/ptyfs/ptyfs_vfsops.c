@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.37 2008/10/26 23:06:41 joerg Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.37.2.1 2009/01/19 13:19:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.37 2008/10/26 23:06:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.37.2.1 2009/01/19 13:19:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,9 @@ ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
 		len = snprintf(tbuf, bufsiz, "/dev/null");
 		break;
 	case 't':
-		len = snprintf(tbuf, bufsiz, "%s/%d", mp->mnt_stat.f_mntonname,
-		    minor(dev));
+		len = snprintf(tbuf, bufsiz, "%s/%llu",
+		    mp->mnt_stat.f_mntonname,
+		    (unsigned long long)minor(dev));
 		break;
 	default:
 		return EINVAL;

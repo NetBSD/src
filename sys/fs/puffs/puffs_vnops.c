@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.129 2008/09/10 19:25:33 christos Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.129.2.1 2009/01/19 13:19:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129 2008/09/10 19:25:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.2.1 2009/01/19 13:19:36 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/buf.h>
 #include <sys/fstrans.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
@@ -1769,10 +1770,9 @@ puffs_vnop_read(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct uio *uio = ap->a_uio;
-	void *win;
 	size_t tomove, argsize;
 	vsize_t bytelen;
-	int error, ubcflags;
+	int error;
 
 	read_msg = NULL;
 	error = 0;
@@ -1786,20 +1786,14 @@ puffs_vnop_read(void *v)
 	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
-		ubcflags = 0;
-		if (UBC_WANT_UNMAP(vp))
-			ubcflags = UBC_UNMAP;
-
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(uio->uio_resid,
 			    vp->v_size - uio->uio_offset);
 			if (bytelen == 0)
 				break;
 
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-			    &bytelen, advice, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			ubc_release(win, ubcflags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
+			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 			if (error)
 				break;
 		}
@@ -1889,9 +1883,7 @@ puffs_vnop_write(void *v)
 	write_msg = NULL;
 
 	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
-		ubcflags = UBC_WRITE | UBC_PARTIALOK;
-		if (UBC_WANT_UNMAP(vp))
-			ubcflags |= UBC_UNMAP;
+		ubcflags = UBC_WRITE | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp);
 
 		/*
 		 * userspace *should* be allowed to control this,

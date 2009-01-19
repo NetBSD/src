@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50 2007/03/04 06:00:12 christos Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.52.1 2009/01/19 13:16:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50 2007/03/04 06:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.52.1 2009/01/19 13:16:30 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -55,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50 2007/03/04 06:00:12 christos Exp $
 #include <sys/exec_ecoff.h>
 #endif
 #include <sys/exec_elf.h>			/* mandatory */
-#ifdef COMPAT_09
-#include <machine/bsd-aout.h>
-#endif
+#include <mips/bsd-aout.h>
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
@@ -81,19 +79,16 @@ cpu_exec_aout_makecmds(l, epp)
 
 	/* If COMPAT_09 is defined, allow loading of old-style 4.4bsd a.out
 	   executables. */
-#ifdef COMPAT_09
 	struct bsd_aouthdr *hdr = (struct bsd_aouthdr *)epp->ep_hdr;
 
 	/* Only handle paged files (laziness). */
 	if (hdr->a_magic != BSD_ZMAGIC)
-#endif
 	{
 		/* If that failed, try old NetBSD-1.1 elf format */
 		error = mips_elf_makecmds (l, epp);
 		return error;
 	}
 
-#ifdef COMPAT_09
 	error = vn_marktext(epp->ep_vp);
 	if (error)
 		return (error);
@@ -118,8 +113,7 @@ cpu_exec_aout_makecmds(l, epp)
 	    epp->ep_daddr + hdr->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->ep_setup_stack)(p, epp);
-#endif
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 #ifdef EXEC_ECOFF

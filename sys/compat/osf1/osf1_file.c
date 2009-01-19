@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.30 2008/03/21 21:54:59 ad Exp $ */
+/* $NetBSD: osf1_file.c,v 1.30.12.1 2009/01/19 13:17:37 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.30 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.30.12.1 2009/01/19 13:17:37 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -86,11 +86,13 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.30 2008/03/21 21:54:59 ad Exp $");
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/dirent.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
+#include <compat/osf1/osf1_dirent.h>
 
 int
 osf1_sys_access(struct lwp *l, const struct osf1_sys_access_args *uap, register_t *retval)
@@ -119,6 +121,133 @@ osf1_sys_execve(struct lwp *l, const struct osf1_sys_execve_args *uap, register_
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
 	return sys_execve(l, &ap, retval);
+}
+
+int
+osf1_sys_getdirentries(struct lwp *l, const struct osf1_sys_getdirentries_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(char *) buf;
+		syscallarg(u_int) nbytes;
+		syscallarg(long *) basep;
+	} */
+	struct dirent *bdp;
+	struct vnode *vp;
+	char *inp, *buf;        /* BSD-format */
+	int len, reclen;        /* BSD-format */
+	char *outp;             /* OSF1-format */
+	int resid, osf1_reclen; /* OSF1-format */
+	struct file *fp;
+	struct uio auio;
+	struct iovec aiov;
+	struct osf1_dirent idb;
+	off_t off;              /* true file offset */
+	int buflen, error, eofflag;
+	off_t *cookiebuf = NULL, *cookie;
+	int ncookies, fd;
+
+	fd = SCARG(uap, fd);
+	if ((error = fd_getvnode(fd, &fp)) != 0)
+		return (error);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out1;
+	}
+
+	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto out1;
+	}
+
+	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
+	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	off = fp->f_offset;
+again:
+	aiov.iov_base = buf;
+	aiov.iov_len = buflen;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_resid = buflen;
+	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
+	/*
+	 * First we read into the malloc'ed buffer, then
+	 * we massage it into user space, one record at a time.
+	 */
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &cookiebuf,
+	    &ncookies);
+	if (error)
+		goto out;
+
+	inp = buf;
+	outp = (char *)SCARG(uap, buf);
+	resid = SCARG(uap, nbytes);
+	if ((len = buflen - auio.uio_resid) == 0)
+		goto eof;
+
+	for (cookie = cookiebuf; len > 0; len -= reclen) {
+		bdp = (struct dirent *)inp;
+		reclen = bdp->d_reclen;
+		if (reclen & 3)
+			panic("osf1_sys_getdirentries: bad reclen");
+		if (cookie)
+			off = *cookie++; /* each entry points to the next */
+		else
+			off += reclen;
+		if ((off >> 32) != 0) {
+			compat_offseterr(vp, "osf1_sys_getdirentries");
+			error = EINVAL;
+			goto out;
+		}
+		if (bdp->d_fileno == 0) {
+			inp += reclen;  /* it is a hole; squish it out */
+			continue;
+		}
+		osf1_reclen = OSF1_RECLEN(&idb, bdp->d_namlen);
+		if (reclen > len || resid < osf1_reclen) {
+			/* entry too big for buffer, so just stop */
+			outp++;
+			break;
+		}
+		/*
+		 * Massage in place to make a OSF1-shaped dirent (otherwise
+		 * we have to worry about touching user memory outside of
+		 * the copyout() call).
+		 */
+		idb.d_ino = (osf1_ino_t)bdp->d_fileno;
+		idb.d_reclen = (u_short)osf1_reclen;
+		idb.d_namlen = (u_short)bdp->d_namlen;
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
+		if ((error = copyout((void *)&idb, outp, osf1_reclen)))
+			goto out;
+		/* advance past this real entry */
+		inp += reclen;
+		/* advance output past OSF1-shaped entry */
+		outp += osf1_reclen;
+		resid -= osf1_reclen;
+	}
+
+	/* if we squished out the whole block, try again */
+	if (outp == (char *)SCARG(uap, buf))
+		goto again;
+	fp->f_offset = off;     /* update the vnode offset */
+
+eof:
+	*retval = SCARG(uap, nbytes) - resid;
+out:
+	VOP_UNLOCK(vp, 0);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
+	free(buf, M_TEMP);
+out1:
+	fd_putfile(fd);
+	if (SCARG(uap, basep) != NULL)
+		error = copyout(&eofflag, SCARG(uap, basep), sizeof(long));
+	return error;
 }
 
 /*
@@ -162,13 +291,9 @@ osf1_sys_lstat2(struct lwp *l, const struct osf1_sys_lstat2_args *uap, register_
 int
 osf1_sys_mknod(struct lwp *l, const struct osf1_sys_mknod_args *uap, register_t *retval)
 {
-	struct sys_mknod_args a;
 
-	SCARG(&a, path) = SCARG(uap, path);
-	SCARG(&a, mode) = SCARG(uap, mode);
-	SCARG(&a, dev) = osf1_cvt_dev_to_native(SCARG(uap, dev));
-
-	return sys_mknod(l, &a, retval);
+	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
+	    osf1_cvt_dev_to_native(SCARG(uap, dev)), retval);
 }
 
 int

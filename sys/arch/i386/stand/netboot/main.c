@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2008/09/26 14:12:50 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.12.2.1 2009/01/19 13:16:22 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -76,6 +76,7 @@ bootit(filename, howto)
 static void
 print_banner(void)
 {
+	clear_pc_screen();
 
 	printf("\n"
 	       ">> %s, Revision %s (from NetBSD %s)\n"

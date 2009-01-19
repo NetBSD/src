@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.57 2008/01/25 14:32:15 ad Exp $
+#	$NetBSD: vnode_if.src,v 1.57.18.1 2009/01/19 13:19:40 skrll Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,7 @@
 #
 vop_lookup {
 	IN struct vnode *dvp;
-	INOUT WILLMAKE struct vnode **vpp;
+	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 };
 

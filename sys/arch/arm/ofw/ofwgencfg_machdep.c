@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.13 2008/08/29 19:08:29 matt Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.13.2.1 2009/01/19 13:15:59 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.13 2008/08/29 19:08:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.13.2.1 2009/01/19 13:15:59 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -201,10 +201,6 @@ initarm(void *cookie)
 
 	/* Set-up the IRQ system. */
 	irq_init();
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, NULL, NULL);	/* XXX */
-#endif
 
 #ifdef DDB
 	db_machine_init();

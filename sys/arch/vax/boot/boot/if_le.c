@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.11 2008/03/31 06:19:59 he Exp $ */
+/*	$NetBSD: if_le.c,v 1.11.12.1 2009/01/19 13:17:02 skrll Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,7 +67,7 @@
 
 #define	QW_ALLOC(x)	(((uintptr_t)alloc((x) + 7) + 7) & ~7)
 
-static int le_get(struct iodesc *, void *, size_t, time_t);
+static int le_get(struct iodesc *, void *, size_t, saseconds_t);
 static int le_put(struct iodesc *, void *, size_t);
 static void copyout(void *from, int dest, int len);
 static void copyin(int src, void *to, int len);
@@ -239,7 +239,7 @@ igen:
 }
 
 int
-le_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timeout)
+le_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timeout)
 {
 	int csr, len;
 	volatile int to = 100000 * timeout;

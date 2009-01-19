@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.65 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: cia.c,v 1.65.8.1 2009/01/19 13:15:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.65 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.65.8.1 2009/01/19 13:15:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,10 +301,10 @@ ciaattach(parent, self, aux)
 
 	printf(": DECchip 2117x Core Logic Chipset (%s), pass %d\n",
 	    name, pass);
-	if (ccp->cc_cnfg)
-		printf("%s: extended capabilities: %s\n", self->dv_xname,
-		    bitmask_snprintf(ccp->cc_cnfg, CIA_CSR_CNFG_BITS,
-		    bits, sizeof(bits)));
+	if (ccp->cc_cnfg) {
+		snprintb(bits, sizeof(bits), CIA_CSR_CNFG_BITS, ccp->cc_cnfg);
+		printf("%s: extended capabilities: %s\n", self->dv_xname, bits);
+	}
 
 	switch (ccp->cc_flags & (CCF_PCI_USE_BWX|CCF_BUS_USE_BWX)) {
 	case CCF_PCI_USE_BWX|CCF_BUS_USE_BWX:

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.76 2008/10/24 21:30:34 dyoung Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.76.2.1 2009/01/19 13:20:14 skrll Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.76 2008/10/24 21:30:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.76.2.1 2009/01/19 13:20:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -824,10 +824,9 @@ pfxrtr_add(struct nd_prefix *pr, struct nd_defrouter *dr)
 {
 	struct nd_pfxrouter *new;
 
-	new = (struct nd_pfxrouter *)malloc(sizeof(*new), M_IP6NDP, M_NOWAIT);
+	new = malloc(sizeof(*new), M_IP6NDP, M_NOWAIT|M_ZERO);
 	if (new == NULL)
 		return;
-	bzero(new, sizeof(*new));
 	new->router = dr;
 
 	LIST_INSERT_HEAD(&pr->ndpr_advrtrs, new, pfr_entry);
@@ -868,10 +867,9 @@ nd6_prelist_add(struct nd_prefixctl *pr, struct nd_defrouter *dr,
 	int error;
 
 	error = 0;
-	new = (struct nd_prefix *)malloc(sizeof(*new), M_IP6NDP, M_NOWAIT);
+	new = malloc(sizeof(*new), M_IP6NDP, M_NOWAIT|M_ZERO);
 	if (new == NULL)
 		return ENOMEM;
-	bzero(new, sizeof(*new));
 	new->ndpr_ifp = pr->ndpr_ifp;
 	new->ndpr_prefix = pr->ndpr_prefix;
 	new->ndpr_plen = pr->ndpr_plen;

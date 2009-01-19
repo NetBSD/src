@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.14 2008/06/23 17:58:17 matt Exp $ */
+/* $NetBSD: locore.S,v 1.14.4.1 2009/01/19 13:15:50 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -41,10 +41,10 @@
 
 #include <sys/syscall.h>
 #include <arm/armreg.h>
-#include <arm/atomic.h>
 #include <arm/trap.h>
 #include "assym.h"
 
+#include <arm/cpu.h>
 #include <arm/cpuconf.h>
 
 #include "opt_ddb.h"
@@ -163,7 +163,7 @@ pull_trapframe:
 	ldr	lr, [sp, #TF_R15]	/* Pull return address and PSR */
 	tst	lr, #R15_MODE		/* Was trap in USR mode? */
 	bne	3f			/* If not, return */
-	ldr	r4, Lastpending
+	ldr	r4, =_C_LABEL(cpu_info_store) + CI_ASTPENDING
 1:
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
 	ldr	r1, [r4]
@@ -175,6 +175,7 @@ pull_trapframe:
 	bl	_C_LABEL(ast)	/* Handle AST */
 	b	1b			/* Try again */
 
+#ifndef DIAGNOSTIC
 2:
 	ldr	lr, [sp, #TF_R15]	/* Pull return address */
 3:					/* ... which we may have done above */
@@ -183,9 +184,37 @@ pull_trapframe:
 	USR_LDM_NOP
 	add	sp, sp, #(TF_SIZE-TF_R0)	/* Adjust SP */
 	movs	pc, lr			
+#else /* DIAGNOSTIC */
+	/*
+	 * Taking a trap inherently corrupts R14_svc.  Rather than leaving
+	 * it with the return address in, we put in a sentinel value that'll
+	 * panic if it's treated as a return address.  To do this, we have
+	 * to return via IRQ mode.
+	 */
+2:
+3:
+	adr	lr, r14_svc_corrupted	/* Sentinel in R14_svc */
+	mov	r0, sp			/* Save for mode switch */
+	add	sp, sp, #TF_SIZE	/* Restore stack pointer */
+	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_IRQ)
+	add	r0, r0, #TF_R0
+	ldr	lr, [r0, #(TF_R15-TF_R0)] /* Fetch return address (R14_irq) */
+	ldmia	r0, {TRAP_REGS}^	/* Restore USR mode registers */
+	USR_LDM_NOP
+	movs	pc, lr			/* And return */
 
-Lastpending:
-	.word	_C_LABEL(cpu_info_store) + CI_ASTPENDING
+r14_svc_corrupted:
+ 	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	adr	r0, .Lr14_panicmsg
+	bl	_C_LABEL(panic)
+	/* NOTREACHED */
+.Lr14_panicmsg:
+	.asciz	"R14_svc corrupted by trap handler"
+	.balign	4
+#endif
+
 	.global	reset_entry
 reset_entry:
 	mov	ip, sp
@@ -248,7 +277,6 @@ irq_entry:
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
 	MODE_CHANGE_NOP
 
-	mov	r0, sp
 	bl	_C_LABEL(irq_handler)
 
 	mov	r0, sp
@@ -276,10 +304,9 @@ Lirq_from_usr:
 	MODE_CHANGE_NOP
 
 	mov	fp, #0			/* This is the top of the stack */
-	mov	r0, sp
 	bl	_C_LABEL(irq_handler)
 
-	ldr	r1, Lastpending
+	ldr	r1, =_C_LABEL(cpu_info_store) + CI_ASTPENDING
 	ldr	r0, [r1]
 	cmp	r0, #0
 	bne	Lirq_to_ast
@@ -312,43 +339,6 @@ Lirq_to_ast:
 	bl	_C_LABEL(ast)
 	b	pull_trapframe
 
-#ifdef ATOMIC_SET_BIT_NONINLINE_REQUIRED
-/* LINTSTUB: Func: void atomic_set_bit(u_int *address, u_int setmask) */
-ENTRY(atomic_set_bit)
-	/* disable interrupts */
-	/* Note that this is evil and only works due to prefetching */
-	mov	r2, r15
-	orrs	r15, r2, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
-	ldr	r2, [r0]
-	orr	r2, r2, r1
-	str	r2, [r0]
-	/* restore interrupt state and return */
-	movs	pc, lr
-/* LINTSTUB: Func: void atomic_clear_bit(u_int *address, u_int clearmask) */
-ENTRY(atomic_clear_bit)
-	/* disable interrupts */
-	/* Note that this is evil and only works due to prefetching */
-	mov	r2, r15
-	orrs	r15, r2, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
-	ldr	r2, [r0]
-	bic	r2, r2, r1
-	str	r2, [r0]
-	/* restore interrupt state and return */
-	movs	pc, lr
-
-#endif /* ATOMIC_SET_BIT_NONINLINE_REQUIRED */
-/* XXX: Return type should be register_t */
-/* LINTSTUB: Func: int set_r13_irq(register_t r13_irq) */
-ENTRY(set_r13_irq)
-	/* XXX Is enabling FIQs OK? */
-	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_IRQ)
-	mov	r1, r0
-	mov	r0, r13
-	mov	r13, r1
-	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
-	MODE_CHANGE_NOP
-	movs	r15, lr
-
 /* LINTSTUB: Func: void int_on(void) */
 ENTRY(int_on)
 	bics	r15, r14, #(R15_IRQ_DISABLE)
@@ -462,4 +452,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.14 2008/06/23 17:58:17 matt Exp $")
+RCSID("$NetBSD: locore.S,v 1.14.4.1 2009/01/19 13:15:50 skrll Exp $")

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.20 2008/05/21 07:39:24 ghen Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.20.6.1 2009/01/19 13:19:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.20 2008/05/21 07:39:24 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.20.6.1 2009/01/19 13:19:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -329,7 +329,7 @@ Static const keysym_t ukbd_keydesc_sv[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(45),  KS_plus,		KS_question,	KS_backslash,
     KC(48),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
-    KC(50),  KS_comma,		KS_asterisk,
+    KC(50),  KS_apostrophe,	KS_asterisk,
     KC(51),  KS_odiaeresis,
     KC(52),  KS_adiaeresis,
     KC(53),  KS_paragraph,	KS_onehalf,

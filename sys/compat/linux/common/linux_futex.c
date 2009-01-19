@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.18 2008/10/26 19:13:16 jmcneill Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.18.2.1 2009/01/19 13:17:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.18 2008/10/26 19:13:16 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.18.2.1 2009/01/19 13:17:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -53,8 +53,11 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.18 2008/10/26 19:13:16 jmcneill Ex
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_futex.h>
 #include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
+
+void linux_to_native_timespec(struct timespec *, struct linux_timespec *);
 
 struct futex;
 
@@ -94,7 +97,7 @@ static ONCE_DECL(futex_once);
 static int
 futex_init(void)
 {
-	printf("futex_init: initializing futex\n");
+	FUTEXPRINTF(("futex_init: initializing futex\n"));
 	mutex_init(&futex_lock, MUTEX_DEFAULT, IPL_NONE);
 	return 0;
 }
@@ -119,18 +122,18 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		syscallarg(int *) uaddr;
 		syscallarg(int) op;
 		syscallarg(int) val;
-		syscallarg(const struct timespec *) timeout;
+		syscallarg(const struct linux_timespec *) timeout;
 		syscallarg(int *) uaddr2;
 		syscallarg(int) val3;
 	} */
 	int val;
 	int ret;
-	struct timespec timeout = { 0, 0 };
+	struct linux_timespec timeout = { 0, 0 };
 	int error = 0;
 	struct futex *f;
 	struct futex *newf;
 	int timeout_hz;
-	struct timeval tv = {0, 0};
+	struct timespec ts;
 	struct futex *f2;
 	int op_ret;
 
@@ -172,11 +175,12 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		    SCARG(uap, uaddr), val, (long long)timeout.tv_sec,
 		    timeout.tv_nsec));
 
-		tv.tv_usec = timeout.tv_sec * 1000000 + timeout.tv_nsec / 1000;
-		timeout_hz = tvtohz(&tv);
-
-		if (timeout.tv_sec == 0 && timeout.tv_nsec == 0)
-			timeout_hz = 0;
+		linux_to_native_timespec(&ts, &timeout);
+		if ((error = itimespecfix(&ts)) != 0) {
+			FUTEX_SYSTEM_UNLOCK;
+			return error;
+		}
+		timeout_hz = tstohz(&ts);
 
 		/*
 		 * If the user process requests a non null timeout,
@@ -186,8 +190,7 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		 * We use a minimal timeout of 1/hz. Maybe it would make
 		 * sense to just return ETIMEDOUT without sleeping.
 		 */
-		if (((timeout.tv_sec != 0) || (timeout.tv_nsec != 0)) &&
-		    (timeout_hz == 0))
+		if (SCARG(uap, timeout) != NULL && timeout_hz == 0)
 			timeout_hz = 1;
 
 		f = futex_get(SCARG(uap, uaddr), FUTEX_UNLOCKED);
@@ -580,7 +583,7 @@ void
 release_futexes(struct proc *p)
 {
 	struct linux_robust_list_head *head = NULL;
-	struct linux_robust_list *entry, *next_entry, *pending;
+	struct linux_robust_list *entry, *next_entry = NULL, *pending;
 	unsigned int limit = 2048, pi, next_pi, pip;
 	struct linux_emuldata *led;
 	unsigned long futex_offset;

@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.54 2008/07/31 07:40:59 simonb Exp $
+#	$NetBSD: P5064,v 1.54.2.1 2009/01/19 13:15:52 skrll Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.54 $"
+#ident 		"P5064-$Revision: 1.54.2.1 $"
 
 maxusers 32
 
@@ -42,7 +42,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -82,7 +81,6 @@ options 	SYSVSHM
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 
 # Loadable Kernel Modules
-options 	LKM
 
 # Disable kernel security.
 #options 	INSECURE

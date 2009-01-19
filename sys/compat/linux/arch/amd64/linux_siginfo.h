@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.3 2008/10/21 20:24:15 njoly Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.3.2.1 2009/01/19 13:17:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -82,18 +82,5 @@ struct linux_siginfo {
 		} _sigpoll;
 	} _sifields;
 } linux_siginfo_t;
-
-/*
- * si_code values for non-signals
- */
-#define LINUX_SI_USER		0
-#define LINUX_SI_KERNEL		0x80
-#define LINUX_SI_QUEUE		-1
-#define LINUX_SI_TIMER		-2
-#define LINUX_SI_MESGQ		-3
-#define LINUX_SI_ASYNCIO	-4
-#define LINUX_SI_SIGIO		-5
-#define LINUX_SI_TKILL		-6
-#define LINUX_SI_DETHREAD	-7
 
 #endif /* !_AMD64_LINUX_SIGINFO_H */

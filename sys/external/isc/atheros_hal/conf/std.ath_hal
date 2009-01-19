@@ -1,0 +1,25 @@
+#options ATHHAL_ASSERT
+#options ATHHAL_DEBUG
+#options ATHHAL_DEBUG_ALQ
+
+# Atheros HAL Chipset Support
+#
+options ATHHAL_AR5210
+options ATHHAL_AR5211
+options ATHHAL_AR5212
+options ATHHAL_AR5311
+#options ATHHAL_AR5312
+#options ATHHAL_AR2316
+#options ATHHAL_AR2317
+options ATHHAL_AR5416
+#options ATHHAL_AR9280
+
+# Atheros AR5212/AR5312 RF Support
+#
+options ATHHAL_RF2316
+options ATHHAL_RF2317
+options ATHHAL_RF2413
+options ATHHAL_RF2425
+options ATHHAL_RF5111
+options ATHHAL_RF5112
+options ATHHAL_RF5413

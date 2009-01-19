@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.914 2008/10/19 11:34:31 joerg Exp $
+# $NetBSD: GENERIC,v 1.914.2.1 2009/01/19 13:16:15 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,12 +22,18 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.914 $"
+#ident 		"GENERIC-$Revision: 1.914.2.1 $"
 
 maxusers	64		# estimated number of users
 
 makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
+
+# For GENERIC, we build the exec formats as modules by default.
+no options	EXEC_AOUT       # exec a.out binaries
+no options	EXEC_ELF32      # exec ELF binaries
+no options	EXEC_SCRIPT     # exec #! scripts
+no options	COREDUMP
 
 # CPU-related options.
 options 	VM86		# virtual 8086 emulation
@@ -93,11 +99,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
+#options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
+no options	AIO		# POSIX AIO, built as a module
 
-options 	LKM		# loadable kernel modules
 options		MODULAR		# new style module framework
-options 	APM_NO_IDLE	# needed for SMP
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -130,28 +135,28 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
-# Compatibility options
-options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
-options 	COMPAT_09	# NetBSD 0.9
-options 	COMPAT_10	# NetBSD 1.0
-options 	COMPAT_11	# NetBSD 1.1
-options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
-options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
-options 	COMPAT_14	# NetBSD 1.4
-options 	COMPAT_15	# NetBSD 1.5
-options 	COMPAT_16	# NetBSD 1.6
-options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0
-options 	COMPAT_40	# NetBSD 4.0
-options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
+# Compatibility options, built as modules by default
+#options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
+#options 	COMPAT_09	# NetBSD 0.9
+#options 	COMPAT_10	# NetBSD 1.0
+#options 	COMPAT_11	# NetBSD 1.1
+#options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
+#options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
+#options 	COMPAT_14	# NetBSD 1.4
+#options 	COMPAT_15	# NetBSD 1.5
+#options 	COMPAT_16	# NetBSD 1.6
+#options 	COMPAT_20	# NetBSD 2.0
+#options 	COMPAT_30	# NetBSD 3.0
+#options 	COMPAT_40	# NetBSD 4.0
+#options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_SVR4	# binary compatibility with SVR4
-options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
-options 	COMPAT_LINUX	# binary compatibility with Linux
-options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+#options 	COMPAT_SVR4	# binary compatibility with SVR4
+#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+#options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_MACH	# binary compatibility with Mach binaries
 #options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
@@ -166,39 +171,36 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
-# File systems
-file-system 	FFS		# UFS
-file-system 	EXT2FS		# second extended file system (linux)
-file-system 	LFS		# log-structured file system
-file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-file-system 	NTFS		# Windows/NT file system (experimental)
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
-file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
-file-system 	PROCFS		# /proc
-file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union file system
-file-system 	CODA		# Coda File System; also needs vcoda (below)
-file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system 	PTYFS		# /dev/ptm support
-file-system 	TMPFS		# Efficient memory file-system
+# File systems, built as modules by default
+#file-system 	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	LFS		# log-structured file system
+#file-system 	MFS		# memory file system
+#file-system 	NFS		# Network File System client
+#file-system 	NTFS		# Windows/NT file system (experimental)
+#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system 	MSDOSFS		# MS-DOS file system
+#file-system 	FDESC		# /dev/fd
+#file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+#file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+#file-system 	UNION		# union file system
+#file-system 	CODA		# Coda File System; also needs vcoda (below)
+#file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+#file-system 	PTYFS		# /dev/ptm support
+#file-system 	TMPFS		# Efficient memory file-system
 #file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
-options 	QUOTA		# UFS quotas
+#options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
-# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
-# It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	NFSSERVER	# Network File System server
+#options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -216,8 +218,8 @@ options 	INET6		# IPV6
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
-options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
@@ -447,7 +449,7 @@ amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 # PCI bridges
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog, SpeedStep and HPET
 #hpet* 	at ichlpcib?
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
@@ -474,7 +476,7 @@ eisa0	at pceb?
 # ISA bus support
 #isa0 	at amdpcib?
 isa0 	at gcscpcib?
-#isa0	at ichlpcib?
+isa0	at ichlpcib?
 #isa0	at piixpcib?
 #isa0	at gscpcib?
 #isa0	at viapcib?
@@ -526,6 +528,7 @@ pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -1261,6 +1264,7 @@ esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
+gcscaudio* at pci? dev ? function ?	# AMD Geode CS5536 Companion Audio
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
@@ -1488,9 +1492,9 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	srt			# source-address-based routing
 
 #
-# accept filters
-pseudo-device	accf_data		# "dataready" accept filter
-pseudo-device	accf_http		# "httpready" accept filter
+# accept filters, built as modules by default
+#pseudo-device	accf_data		# "dataready" accept filter
+#pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -1505,10 +1509,10 @@ pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
-pseudo-device	nsmb			# experimental - SMB requester
+#pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

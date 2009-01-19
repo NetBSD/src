@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.4 2008/10/16 18:21:45 wrstuden Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.4.4.1 2009/01/19 13:17:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.4 2008/10/16 18:21:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.4.4.1 2009/01/19 13:17:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1117,6 +1117,13 @@ sa_yield(struct lwp *l)
 				 * upcalls.
 				 */
 				vp->savp_pflags |= SAVP_FLAG_NOUPCALLS;
+				/*
+				 * Now force us to call into sa_upcall_userret()
+				 * which will clear SAVP_FLAG_NOUPCALLS
+				 */
+				lwp_lock(l);
+				l->l_flag |= LW_SA_UPCALL;
+				lwp_unlock(l);
 			}
 		}
 
@@ -1253,12 +1260,12 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		== 0);
 
 	/* XXX prevent recursive upcalls if we sleep for memory */
-	SA_LWP_STATE_LOCK(l, f);
+	SA_LWP_STATE_LOCK(curlwp, f);
 	sau = sadata_upcall_alloc(1);
 	mutex_enter(&sa->sa_mutex);
 	sast = sa_getstack(sa);
 	mutex_exit(&sa->sa_mutex);
-	SA_LWP_STATE_UNLOCK(l, f);
+	SA_LWP_STATE_UNLOCK(curlwp, f);
 
 	if (sau == NULL || sast == NULL) {
 		if (sast != NULL) {
@@ -1856,7 +1863,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	p->p_nlwps--;
 	l->l_prflag |= LPR_DETACHED;
 #endif
-	l->l_flag |= (LW_SA | LW_SINTR);
+	l->l_flag |= LW_SA;
 	membar_producer();
 	DPRINTFN(5,("sa_putcachelwp(%d.%d) Adding LWP %d to cache\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
@@ -1997,11 +2004,25 @@ sa_upcall_userret(struct lwp *l)
 	vp = l->l_savp;
 
 	if (vp->savp_pflags & SAVP_FLAG_NOUPCALLS) {
+		int	do_clear = 0;
 		/*
 		 * We made upcalls in sa_yield() (otherwise we would
 		 * still be in the loop there!). Don't do it again.
+		 * Clear LW_SA_UPCALL, unless there are upcalls to deliver.
+		 * they will get delivered next time we return to user mode.
 		 */
 		vp->savp_pflags &= ~SAVP_FLAG_NOUPCALLS;
+		mutex_enter(&vp->savp_mutex);
+		if ((vp->savp_woken_count == 0)
+		    && SIMPLEQ_EMPTY(&vp->savp_upcalls)) {
+			do_clear = 1;
+		}
+		mutex_exit(&vp->savp_mutex);
+		if (do_clear) {
+			lwp_lock(l);
+			l->l_flag &= ~LW_SA_UPCALL;
+			lwp_unlock(l);
+		}
 		DPRINTFN(7,("sa_upcall_userret(%d.%d %x) skipping processing\n",
 		    p->p_pid, l->l_lid, l->l_flag));
 		return;
@@ -2507,7 +2528,6 @@ sa_unblock_userret(struct lwp *l)
 	sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
 	sleepq_enqueue(&vp->savp_woken, &vp->savp_woken, sa_lwpwoken_wmesg,
 	    &sa_sobj);
-	l->l_flag |= LW_SINTR;
 	uvm_lwp_hold(l);
 	vp->savp_woken_count++;
 	//l->l_stat = LSSUSPENDED;

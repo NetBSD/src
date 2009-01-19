@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.7 2008/05/31 01:43:57 nisimura Exp $ */
+/* $NetBSD: nif.c,v 1.7.6.1 2009/01/19 13:16:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 
+#include "globals.h"
+
 struct nifdv {
 	char *name;
 	int (*match)(unsigned, void *);
@@ -47,28 +49,7 @@ struct nifdv {
 	void *priv;
 };
 
-int netif_init(unsigned);
-int netif_open(void *);
-int netif_close(int);
-
 static struct iodesc netdesc;
-
-#define NIF_DECL(xxx) \
-    int xxx ## _match(unsigned, void *); \
-    void * xxx ## _init(unsigned, void *); \
-    int xxx ## _send(void *, char *, unsigned); \
-    int xxx ## _recv(void *, char *, unsigned, unsigned)
-
-NIF_DECL(fxp);
-NIF_DECL(tlp);
-NIF_DECL(nvt);
-NIF_DECL(sip);
-NIF_DECL(pcn);
-NIF_DECL(kse);
-NIF_DECL(sme);
-NIF_DECL(vge);
-NIF_DECL(rge);
-NIF_DECL(wm);
 
 static struct nifdv vnifdv[] = {
 	{ "fxp", fxp_match, fxp_init, fxp_send, fxp_recv },
@@ -151,7 +132,7 @@ netif_get(desc, pkt, maxlen, timo)
 	struct iodesc *desc;
 	void *pkt;
 	size_t maxlen;
-	time_t timo;
+	saseconds_t timo;
 {
 	struct nifdv *dv = desc->io_netif;
 	int len;

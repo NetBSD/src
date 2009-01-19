@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 2007/12/03 15:33:21 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.101.26.1 2009/01/19 13:16:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -379,9 +379,11 @@ Lfptnull:
  */
 
 ENTRY_NOPROFILE(intr_glue)
+	addql	#1,_C_LABEL(idepth)
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  Save scratch registers
 	jbsr	_C_LABEL(intr_dispatch)	|  handle interrupt
 	moveml	%sp@+,%d0-%d1/%a0-%a1
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev2intr)
@@ -393,9 +395,11 @@ ENTRY_NOPROFILE(lev4intr)		|  VBL interrupt
 	jne	1f			|  Yes, go service a VBL-request
 	rte				|  Nothing to do.
 1:
+	addql	#1,_C_LABEL(idepth)
 	moveml	%d0-%d1/%a0-%a1,%sp@-
 	jbsr	_C_LABEL(falcon_display_switch)
 	moveml	%sp@+,%d0-%d1/%a0-%a1
+	subql	#1,_C_LABEL(idepth)
 #endif /* FALCON_VIDEO */
 	rte
 
@@ -409,6 +413,7 @@ ENTRY_NOPROFILE(lev6intr)
 #define	PLX_PCICR	0x4204
 #define	PLX_CNTRL	0x42ec
 #define	PLX_DMCFGA	0x42ac
+	addql	#1,_C_LABEL(idepth)
 	moveml	%d0-%d2/%a0-%a1,%sp@-
 	movw	%sp@(20),%sp@-		|  push previous SR value
 	clrw	%sp@-			|	padded to longword
@@ -431,6 +436,7 @@ ENTRY_NOPROFILE(lev6intr)
 	jbsr	_C_LABEL(milan_isa_intr)
 	addql	#8,%sp
 	moveml	%sp@+,%d0-%d2/%a0-%a1
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 
 /*
@@ -492,6 +498,7 @@ ENTRY_NOPROFILE(lev7intr)
 
 ENTRY_NOPROFILE(lev3intr)
 ENTRY_NOPROFILE(badtrap)
+	addql	#1,_C_LABEL(idepth)
 	moveml	#0xC0C0,%sp@-		|  save scratch regs
 	movw	%sp@(22),%sp@-		|  push exception vector info
 	clrw	%sp@-
@@ -499,9 +506,11 @@ ENTRY_NOPROFILE(badtrap)
 	jbsr	_C_LABEL(straytrap)	|  report
 	addql	#8,%sp			|  pop args
 	moveml	%sp@+,#0x0303		|  restore regs
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		|  all done
 
 ENTRY_NOPROFILE(badmfpint)
+	addql	#1,_C_LABEL(idepth)
 	moveml	#0xC0C0,%sp@-		|  save scratch regs
 	movw	%sp@(22),%sp@-		|  push exception vector info
 	clrw	%sp@-
@@ -509,6 +518,7 @@ ENTRY_NOPROFILE(badmfpint)
 	jbsr	_C_LABEL(straymfpint)	|  report
 	addql	#8,%sp			|  pop args
 	moveml	%sp@+,#0x0303		|  restore regs
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		|  all done
 
 ENTRY_NOPROFILE(trap0)
@@ -672,6 +682,7 @@ ENTRY_NOPROFILE(spurintr)
 
 	/* MFP timer A handler --- System clock --- */
 ASENTRY_NOPROFILE(mfp_tima)
+	addql	#1,_C_LABEL(idepth)
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  save scratch registers
 	movl	%sp,%sp@-		|  push pointer to clockframe
 	jbsr	_C_LABEL(hardclock)	|  call generic clock int routine
@@ -680,22 +691,26 @@ ASENTRY_NOPROFILE(mfp_tima)
 					|  add another system clock interrupt
 	moveml	%sp@+,%d0-%d1/%a0-%a1	|  restore scratch regs	
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		|  all done
 
 #ifdef STATCLOCK
 	/* MFP timer C handler --- Stat/Prof clock --- */
 ASENTRY_NOPROFILE(mfp_timc)
+	addql	#1,_C_LABEL(idepth)
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  save scratch registers
 	jbsr	_C_LABEL(statintr)	|  call statistics clock handler
 	addql	#1,_C_LABEL(intrcnt)+36	|  add another stat clock interrupt
 	moveml	%sp@+,%d0-%d1/%a0-%a1	|  restore scratch regs	
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		|  all done
 #endif /* STATCLOCK */
 
 #if NKBD > 0
 	/* MFP ACIA handler --- keyboard/midi --- */
 ASENTRY_NOPROFILE(mfp_kbd)
+	addql	#1,_C_LABEL(idepth)
 	addql	#1,_C_LABEL(intrcnt)+8	|  add another kbd/mouse interrupt
 
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  Save scratch registers
@@ -705,12 +720,14 @@ ASENTRY_NOPROFILE(mfp_kbd)
 	addql	#4,%sp			|  pop SR
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 #endif /* NKBD */
 
 #if NNCRSCSI > 0
 	/* MFP2 SCSI DMA handler --- NCR5380 --- */
 ASENTRY_NOPROFILE(mfp2_5380dm)
+	addql	#1,_C_LABEL(idepth)
 	addql	#1,_C_LABEL(intrcnt)+24	|  add another 5380-DMA interrupt
 
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  Save scratch registers
@@ -720,10 +737,12 @@ ASENTRY_NOPROFILE(mfp2_5380dm)
 	addql	#4,%sp			|  pop SR
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 
 	/* MFP2 SCSI handler --- NCR5380 --- */
 ASENTRY_NOPROFILE(mfp2_5380)
+	addql	#1,_C_LABEL(idepth)
 	addql	#1,_C_LABEL(intrcnt)+20	|  add another 5380-SCSI interrupt
 
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  Save scratch registers
@@ -733,12 +752,14 @@ ASENTRY_NOPROFILE(mfp2_5380)
 	addql	#4,%sp			|  pop SR
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 #endif /* NNCRSCSI > 0 */
 
 #if NZS > 0
 	/* SCC Interrupt --- modem2/serial2 --- */
 ASENTRY_NOPROFILE(sccint)
+	addql	#1,_C_LABEL(idepth)
 	addql	#1,_C_LABEL(intrcnt)+32	|  add another SCC interrupt
 
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  Save scratch registers
@@ -748,12 +769,14 @@ ASENTRY_NOPROFILE(sccint)
 	addql	#4,%sp			|  pop SR
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 #endif /* NZS > 0 */
 
 #ifdef _ATARIHW_
 	/* Level 1 (Software) interrupt handler */
 ENTRY_NOPROFILE(lev1intr)
+	addql	#1,_C_LABEL(idepth)
 	moveml	%d0-%d1/%a0-%a1,%sp@-
 	movl	_C_LABEL(stio_addr),%a0 |  get KVA of ST-IO area
 	moveb	#0, %a0@(SCU_SOFTINT)	|  Turn off software interrupt
@@ -761,6 +784,7 @@ ENTRY_NOPROFILE(lev1intr)
 	jbsr	_C_LABEL(nullop)	|  XXX handle software interrupts
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 
 	/*
@@ -774,6 +798,7 @@ ENTRY_NOPROFILE(lev7intr)
 	 * Note that the nmi has to be turned off while handling it because
 	 * the hardware modification has no de-bouncing logic....
 	 */
+	addql	#1,_C_LABEL(idepth)
 	movl	%a0, %sp@-		|  save a0
 	movl	_C_LABEL(stio_addr),%a0	|  get KVA of ST-IO area
 	movb	%a0@(SCU_SYSMASK),%sp@-	|  save current sysmask
@@ -781,6 +806,7 @@ ENTRY_NOPROFILE(lev7intr)
 	trap	#15			|  drop into the debugger
 	movb	%sp@+, %a0@(SCU_SYSMASK)|  restore sysmask
 	movl	%sp@+, %a0		|  restore a0
+	subql	#1,_C_LABEL(idepth)
 #endif
 	addql	#1,_C_LABEL(intrcnt)+28	|  add another nmi interrupt
 	rte				|  all done

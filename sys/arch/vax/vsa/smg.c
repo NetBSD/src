@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.48 2008/03/15 00:21:30 matt Exp $ */
+/*	$NetBSD: smg.c,v 1.48.12.1 2009/01/19 13:17:03 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.48 2008/03/15 00:21:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.48.12.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -536,8 +536,7 @@ int
 smg_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *defattrp)
 {
-	*cookiep = malloc(sizeof(struct smg_screen), M_DEVBUF, M_WAITOK);
-	bzero(*cookiep, sizeof(struct smg_screen));
+	*cookiep = malloc(sizeof(struct smg_screen), M_DEVBUF, M_WAITOK|M_ZERO);
 	*curxp = *curyp = *defattrp = 0;
 	return 0;
 }

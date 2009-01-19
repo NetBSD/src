@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.10 2008/04/08 06:12:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.10.12.1 2009/01/19 13:18:13 skrll Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -39,11 +39,7 @@ __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#ifdef __FreeBSD__
 #include <sys/module.h>
-#else
-#include <sys/lkm.h>
-#endif
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>

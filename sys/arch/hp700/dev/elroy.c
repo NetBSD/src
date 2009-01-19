@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.1.2.1 2008/11/27 21:59:25 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.1.2.2 2009/01/19 13:16:13 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.4 2007/08/28 21:19:44 kettenis Exp $	*/
 
@@ -1202,8 +1202,9 @@ elroy_attach(struct device *parent, struct device *self, void *aux)
 	    elroy_read32(&r->status) & htole32(ELROY_STATUS_RC); DELAY(10));
 	if (i < 0) {
 		char buf[128]; /* XXXNH */
-		bitmask_snprintf(htole32(r->status), ELROY_STATUS_BITS, buf,
-		    sizeof(buf));
+
+		snprintb(buf, sizeof(buf), ELROY_STATUS_BITS,
+		    htole32(r->status));
 		printf(": reset failed; status %s\n", buf);
 		return;
 	}

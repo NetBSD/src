@@ -1,4 +1,4 @@
-/*	$NetBSD: parseutils.c,v 1.3 2000/09/24 12:32:35 jdolecek Exp $	*/
+/*	$NetBSD: parseutils.c,v 1.3.140.1 2009/01/19 13:16:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -48,13 +48,12 @@
  * or possibly an empty string.
  */
 char *
-gettrailer(arg)
-	char *arg;
+gettrailer(char *arg)
 {
 	char *options;
 
 	if ((options = strchr(arg, ' ')) == NULL)
-		return ("");
+		return "";
 	else
 		*options++ = '\0';
 
@@ -62,38 +61,45 @@ gettrailer(arg)
 	while (*options && *options == ' ')
 		options++;
 
-	return (options);
+	return options;
 }
 
 int
-parseopts(opts, howto)
-	const char *opts;
-	int *howto;
+parseopts(const char *opts, int *howto)
 {
 	int r, tmpopt = 0;
 
 	opts++; 	/* skip - */
-	while (*opts && *opts != ' ') {
+	while (*opts) {
 		r = 0;
 		BOOT_FLAG(*opts, r);
 		if (r == 0) {
 			printf("-%c: unknown flag\n", *opts);
 			command_help(NULL);
-			return(0);
+			return 0;
 		}
 		tmpopt |= r;
 		opts++;
+		if (*opts == ' ' || *opts == '\t') {
+			do
+				opts++;		/* skip whitespace */
+			while (*opts == ' ' || *opts == '\t');
+			if (*opts == '-')
+				opts++;		/* skip - */
+			else if (*opts != '\0') {
+				printf("invalid arguments\n");
+				command_help(NULL);
+				return 0;
+			}
+		}
 	}
 
 	*howto = tmpopt;
-	return(1);
+	return 1;
 }
 
 int
-parseboot(arg, filename, howto)
-	char *arg;
-	char **filename;
-	int *howto;
+parseboot(char *arg, char **filename, int *howto)
 {
 	char *opts = NULL;
 
@@ -102,7 +108,7 @@ parseboot(arg, filename, howto)
 
 	/* if there were no arguments */
 	if (!*arg)
-		return(1);
+		return 1;
 
 	/* format is... */
 	/* [[xxNx:]filename] [-adqsv] */
@@ -120,7 +126,7 @@ parseboot(arg, filename, howto)
 		else if (*opts != '-') {
 			printf("invalid arguments\n");
 			command_help(NULL);
-			return(0);
+			return 0;
 		}
 	}
 
@@ -129,8 +135,8 @@ parseboot(arg, filename, howto)
 	/* now, deal with options */
 	if (opts) {
 		if (parseopts(opts, howto) == 0)
-			return(0);
+			return 0;
 	}
 
-	return(1);
+	return 1;
 }

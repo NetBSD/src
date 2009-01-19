@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.41 2008/06/02 09:04:50 he Exp $
+# $NetBSD: RAMDISK,v 1.41.6.1 2009/01/19 13:16:52 skrll Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -26,7 +26,6 @@ maxusers	2
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -72,7 +71,6 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.12 2008/09/29 10:27:53 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.12.2.1 2009/01/19 13:19:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12 2008/09/29 10:27:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12.2.1 2009/01/19 13:19:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -217,22 +217,17 @@ mqueue_get(struct lwp *l, mqd_t mqd, int access, file_t **fpr)
  * Converter from struct timespec to the ticks.
  * Used by mq_timedreceive(), mq_timedsend().
  */
-static int
-abstimeout2timo(const void *uaddr, int *timo)
+int
+abstimeout2timo(struct timespec *ts, int *timo)
 {
-	struct timespec ts;
 	int error;
-
-	error = copyin(uaddr, &ts, sizeof(struct timespec));
-	if (error)
-		return error;
 
 	/*
 	 * According to POSIX, validation check is needed only in case of
 	 * blocking.  Thus, set the invalid value right now, and fail latter.
 	 */
-	error = itimespecfix(&ts);
-	*timo = (error == 0) ? tstohz(&ts) : -1;
+	error = itimespecfix(ts);
+	*timo = (error == 0) ? tstohz(ts) : -1;
 
 	return 0;
 }
@@ -476,7 +471,7 @@ sys_mq_close(struct lwp *l, const struct sys_mq_close_args *uap,
 /*
  * Primary mq_receive1() function.
  */
-static int
+int
 mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
     unsigned *msg_prio, int t, ssize_t *mlen)
 {
@@ -573,8 +568,8 @@ sys_mq_receive(struct lwp *l, const struct sys_mq_receive_args *uap,
 }
 
 int
-sys_mq_timedreceive(struct lwp *l, const struct sys_mq_timedreceive_args *uap,
-    register_t *retval)
+sys___mq_timedreceive50(struct lwp *l,
+    const struct sys___mq_timedreceive50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(mqd_t) mqdes;
@@ -585,10 +580,15 @@ sys_mq_timedreceive(struct lwp *l, const struct sys_mq_timedreceive_args *uap,
 	} */
 	int error, t;
 	ssize_t mlen;
+	struct timespec ts;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
-		error = abstimeout2timo(SCARG(uap, abs_timeout), &t);
+		error = copyin(SCARG(uap, abs_timeout), &ts, sizeof(ts));
+		if (error)
+			return error;
+
+		error = abstimeout2timo(&ts, &t);
 		if (error)
 			return error;
 	} else
@@ -605,7 +605,7 @@ sys_mq_timedreceive(struct lwp *l, const struct sys_mq_timedreceive_args *uap,
 /*
  * Primary mq_send1() function.
  */
-static int
+int
 mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
     unsigned msg_prio, int t)
 {
@@ -733,7 +733,7 @@ sys_mq_send(struct lwp *l, const struct sys_mq_send_args *uap,
 }
 
 int
-sys_mq_timedsend(struct lwp *l, const struct sys_mq_timedsend_args *uap,
+sys___mq_timedsend50(struct lwp *l, const struct sys___mq_timedsend50_args *uap,
     register_t *retval)
 {
 	/* {
@@ -744,10 +744,15 @@ sys_mq_timedsend(struct lwp *l, const struct sys_mq_timedsend_args *uap,
 		syscallarg(const struct timespec *) abs_timeout;
 	} */
 	int t;
+	struct timespec ts;
+	int error;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
-		int error = abstimeout2timo(SCARG(uap, abs_timeout), &t);
+		error = copyin(SCARG(uap, abs_timeout), &ts, sizeof(ts));
+		if (error)
+			return error;
+		error = abstimeout2timo(&ts, &t);
 		if (error)
 			return error;
 	} else

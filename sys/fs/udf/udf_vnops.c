@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.30 2008/07/17 19:10:22 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.30.2.1 2009/01/19 13:19:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30 2008/07/17 19:10:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.2.1 2009/01/19 13:19:37 skrll Exp $");
 #endif /* not lint */
 
 
@@ -186,9 +186,7 @@ udf_read(void *v)
 	struct extfile_entry *efe;
 	uint64_t file_size;
 	vsize_t len;
-	void *win;
 	int error;
-	int flags;
 
 	/*
 	 * XXX reading from extended attributes not yet implemented. FreeBSD
@@ -228,7 +226,6 @@ udf_read(void *v)
 
 	/* read contents using buffercache */
 	uobj = &vp->v_uobj;
-	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 	error = 0;
 	while (uio->uio_resid > 0) {
 		/* reached end? */
@@ -241,10 +238,8 @@ udf_read(void *v)
 			break;
 
 		/* ubc, here we come, prepare to trap */
-		win = ubc_alloc(uobj, uio->uio_offset, &len,
-				advice, UBC_READ);
-		error = uiomove(win, len, uio);
-		ubc_release(win, flags);
+		error = ubc_uiomove(uobj, uio, len, advice,
+		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 		if (error)
 			break;
 	}
@@ -278,11 +273,10 @@ udf_write(void *v)
 	struct udf_node      *udf_node = VTOI(vp);
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
-	void *win;
 	uint64_t file_size, old_size;
 	vsize_t len;
 	int error;
-	int flags, resid, extended;
+	int resid, extended;
 
 	/*
 	 * XXX writing to extended attributes not yet implemented. FreeBSD has
@@ -337,7 +331,6 @@ udf_write(void *v)
 
 	/* write contents using buffercache */
 	uobj = &vp->v_uobj;
-	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 	resid = uio->uio_resid;
 	error = 0;
 
@@ -349,10 +342,8 @@ udf_write(void *v)
 			break;
 
 		/* ubc, here we come, prepare to trap */
-		win = ubc_alloc(uobj, uio->uio_offset, &len,
-				advice, UBC_WRITE);
-		error = uiomove(win, len, uio);
-		ubc_release(win, flags);
+		error = ubc_uiomove(uobj, uio, len, advice,
+		    UBC_WRITE | UBC_UNMAP_FLAG(vp));
 		if (error)
 			break;
 	}
@@ -555,8 +546,7 @@ udf_readdir(void *v)
 
 	/* we are called just as long as we keep on pushing data in */
 	error = 0;
-	if ((uio->uio_offset < file_size) &&
-	    (uio->uio_resid >= sizeof(struct dirent))) {
+	if (uio->uio_offset < file_size) {
 		/* allocate temporary space for fid */
 		lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 		fid = malloc(lb_size, M_UDFTEMP, M_WAITOK);
@@ -606,7 +596,7 @@ udf_readdir(void *v)
 	}
 
 	if (ap->a_eofflag)
-		*ap->a_eofflag = (uio->uio_offset == file_size);
+		*ap->a_eofflag = (uio->uio_offset >= file_size);
 
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_READDIR) {
@@ -860,10 +850,10 @@ udf_getattr(void *v)
 	}
 
 	/* do the uid/gid translation game */
-	if ((uid == (uid_t) -1) && (gid == (gid_t) -1)) {
+	if (uid == (uid_t) -1)
 		uid = ump->mount_args.anon_uid;
+	if (gid == (gid_t) -1)
 		gid = ump->mount_args.anon_gid;
-	}
 
 	/* fill in struct vattr with values from the node */
 	VATTR_NULL(vap);
@@ -2083,7 +2073,8 @@ udf_fsync(void *v)
 	struct udf_node *udf_node = VTOI(vp);
 	int error, flags, wait;
 
-	DPRINTF(STRATEGY, ("udf_fsync called : %s, %s\n",
+	DPRINTF(SYNC, ("udf_fsync called on %p : %s, %s\n",
+		udf_node,
 		(ap->a_flags & FSYNC_WAIT)     ? "wait":"no wait",
 		(ap->a_flags & FSYNC_DATAONLY) ? "data_only":"complete"));
 
@@ -2119,31 +2110,33 @@ udf_fsync(void *v)
 	/* if we don't have to wait, check for IO pending */
 	if (!wait) {
 		if (vp->v_numoutput > 0) {
-			DPRINTF(NODE, ("udf_fsync: rejecting on v_numoutput\n"));
+			DPRINTF(SYNC, ("udf_fsync %p, rejecting on v_numoutput\n", udf_node));
 			return 0;
 		}
 		if (udf_node->outstanding_bufs > 0) {
-			DPRINTF(NODE, ("udf_fsync: rejecting on outstanding_bufs\n"));
+			DPRINTF(SYNC, ("udf_fsync %p, rejecting on outstanding_bufs\n", udf_node));
 			return 0;
 		}
 		if (udf_node->outstanding_nodedscr > 0) {
-			DPRINTF(NODE, ("udf_fsync: rejecting on outstanding_nodedscr\n"));
+			DPRINTF(SYNC, ("udf_fsync %p, rejecting on outstanding_nodedscr\n", udf_node));
 			return 0;
 		}
 	}
 
 	/* wait until vp->v_numoutput reaches zero i.e. is finished */
 	if (wait) {
-		DPRINTF(SYNC, ("udf_fsync, waiting\n"));
+		DPRINTF(SYNC, ("udf_fsync %p, waiting\n", udf_node));
 		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput) {
+			DPRINTF(SYNC, ("udf_fsync %p, v_numoutput %d\n", udf_node, vp->v_numoutput));
 			cv_timedwait(&vp->v_cv, &vp->v_interlock, hz/8);
 		}
 		mutex_exit(&vp->v_interlock);
-		DPRINTF(SYNC, ("udf_fsync: fin wait\n"));
+		DPRINTF(SYNC, ("udf_fsync %p, fin wait\n", udf_node));
 	}
 
 	/* write out node and wait for it if requested */
+	DPRINTF(SYNC, ("udf_fsync %p, writeout node\n", udf_node));
 	error = udf_writeout_node(udf_node, wait);
 	if (error)
 		return error;

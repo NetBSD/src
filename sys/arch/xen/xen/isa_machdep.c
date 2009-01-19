@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.12 2008/07/03 15:44:19 drochner Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.12.4.1 2009/01/19 13:17:12 skrll Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,14 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12 2008/07/03 15:44:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12.4.1 2009/01/19 13:17:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 

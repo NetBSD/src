@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.23 2008/04/28 20:24:06 martin Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.23.8.1 2009/01/19 13:19:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 static int netdev_sock = -1;
 static int netdev_opens;
 
-static int net_getparams __P((int));
+static int net_getparams(int);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.

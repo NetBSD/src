@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.27 2008/10/24 22:32:53 dyoung Exp $	*/
+/*	$NetBSD: sockio.h,v 1.27.2.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -99,12 +99,11 @@
 #define	SIOCSLIFPHYADDR	 _IOW('i', 74, struct if_laddrreq) /* set gif addrs */
 #define	SIOCGLIFPHYADDR	_IOWR('i', 75, struct if_laddrreq) /* get gif addrs */
 
-#define	SIOCZIFDATA	_IOWR('i', 129, struct ifdatareq) /* get if_data then
-							     zero ctrs*/
-#define	SIOCGIFDATA	_IOWR('i', 128, struct ifdatareq) /* get if_data */
-
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
+
+/* 128 was SIOCGIFDATA */
+/* 129 was SIOCZIFDATA */
 
 /* 125 was SIOCSIFASYNCMAP */
 /* 124 was SIOCGIFASYNCMAP */
@@ -125,5 +124,9 @@
 #define	SIOCSVH		_IOWR('i', 130, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 131, struct ifreq)	/* get carp param */
 #define	SIOCINITIFADDR	_IOWR('i', 132, struct ifaddr)
+
+#define	SIOCGIFDATA	_IOWR('i', 133, struct ifdatareq) /* get if_data */
+#define	SIOCZIFDATA	_IOWR('i', 134, struct ifdatareq) /* get if_data then
+							     zero ctrs*/
 
 #endif /* !_SYS_SOCKIO_H_ */

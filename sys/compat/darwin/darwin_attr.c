@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.24 2008/04/28 20:23:41 martin Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.24.8.1 2009/01/19 13:17:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.24 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.24.8.1 2009/01/19 13:17:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.24 2008/04/28 20:23:41 martin Exp 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_attr.h>
 #include <compat/darwin/darwin_syscallargs.h>
@@ -185,7 +186,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	}
 
 	if (kalist.commonattr & DARWIN_ATTR_CMN_DEVID) {
-		dev_t device;
+		darwin_dev_t device;
 
 		device = st.st_dev;
 		if (ATTR_APPEND(device, bp, len) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: biospci.c,v 1.4 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: biospci.c,v 1.4.86.1 2009/01/19 13:16:21 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -34,30 +34,28 @@
 
 #include "pcivar.h"
 
-extern int pcibios_present __P((int *));
-extern int pcibios_finddev __P((int, int, int, unsigned int *));
-extern int pcibios_cfgread __P((unsigned int, int, int *));
-extern int pcibios_cfgwrite __P((unsigned int, int, int));
+extern int pcibios_present(int *);
+extern int pcibios_finddev(int, int, int, unsigned int *);
+extern int pcibios_cfgread(unsigned int, int, int *);
+extern int pcibios_cfgwrite(unsigned int, int, int);
 
 #define PCISIG ('P' | ('C' << 8) | ('I' << 16) | (' ' << 24))
 
-int 
-pcicheck()
+int
+pcicheck(void)
 {
 	int             ret, sig;
 
 	ret = pcibios_present(&sig);
 
 	if ((ret & 0xff00) || (sig != PCISIG))
-		return (-1);
+		return -1;
 
-	return (0);
+	return 0;
 }
 
-int 
-pcifinddev(vid, did, handle)
-	int             vid, did;
-	pcihdl_t       *handle;
+int
+pcifinddev(int vid, int did, pcihdl_t *handle)
 {
 	int             ret;
 
@@ -66,39 +64,33 @@ pcifinddev(vid, did, handle)
 	ret = pcibios_finddev(vid, did, 0, handle);
 
 	if (ret)
-		return (-1);
+		return -1;
 
-	return (0);
+	return 0;
 }
 
-int 
-pcicfgread(handle, off, val)
-	pcihdl_t       *handle;
-	int             off;
-	int            *val;
+int
+pcicfgread(pcihdl_t *handle, int off, int *val)
 {
 	int             ret;
 
 	ret = pcibios_cfgread(*handle, off, val);
 
 	if (ret)
-		return (-1);
+		return -1;
 
-	return (0);
+	return 0;
 }
 
-int 
-pcicfgwrite(handle, off, val)
-	pcihdl_t       *handle;
-	int             off;
-	int             val;
+int
+pcicfgwrite(pcihdl_t *handle, int off, int val)
 {
 	int             ret;
 
 	ret = pcibios_cfgwrite(*handle, off, val);
 
 	if (ret)
-		return (-1);
+		return -1;
 
-	return (0);
+	return 0;
 }

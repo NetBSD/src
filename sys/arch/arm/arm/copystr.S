@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.9 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: copystr.S,v 1.9.8.1 2009/01/19 13:15:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,22 +45,12 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-RCSID("$NetBSD: copystr.S,v 1.9 2008/04/27 18:58:43 matt Exp $")
+RCSID("$NetBSD: copystr.S,v 1.9.8.1 2009/01/19 13:15:56 skrll Exp $")
 
 #include <sys/errno.h>
 
 	.text
 	.align	0
-#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
-#ifdef MULTIPROCESSOR
-.Lcpu_info:
-	.word	_C_LABEL(cpu_info)
-#else
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
-#endif
-#endif
-
 /*
  * r0 - from
  * r1 - to
@@ -118,20 +108,7 @@ ENTRY(copyinstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r4)
-#elif defined(MULTIPROCESSOR)
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r3, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r4, .Lcpu_info
-	ldr	r4, [r4, r0, lsl #2]
-	ldr	r4, [r4, #CI_CURPCB]
-	ldmfd	sp!, {r0-r3, r14}
-#else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
-#endif
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
@@ -177,20 +154,7 @@ ENTRY(copyoutstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r4)
-#elif defined(MULTIPROCESSOR)
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r3, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r4, .Lcpu_info
-	ldr	r4, [r4, r0, lsl #2]
-	ldr	r4, [r4, #CI_CURPCB]
-	ldmfd	sp!, {r0-r3, r14}
-#else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
-#endif
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.100 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.100.2.1 2009/01/19 13:20:14 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.100 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.100.2.1 2009/01/19 13:20:14 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -305,10 +305,10 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return NULL;;
+		return NULL;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return NULL;;
+		return NULL;
 	if (PRC_IS_REDIRECT(cmd))
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
@@ -316,7 +316,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	else if (cmd == PRC_MSGSIZE)
 		; /* special code is present, see below */
 	else if (inet6ctlerrmap[cmd] == 0)
-		return NULL;;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -663,8 +663,8 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
 
-		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
-		    sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
+		in6p->in6p_icmp6filt = malloc(sizeof(struct icmp6_filter),
+			M_PCB, M_NOWAIT);
 		if (in6p->in6p_icmp6filt == NULL) {
 			in6_pcbdetach(in6p);
 			error = ENOMEM;
@@ -692,7 +692,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 			ip6_mrouter_done();
 		/* xxx: RSVP */
 		if (in6p->in6p_icmp6filt != NULL) {
-			FREE(in6p->in6p_icmp6filt, M_PCB);
+			free(in6p->in6p_icmp6filt, M_PCB);
 			in6p->in6p_icmp6filt = NULL;
 		}
 		in6_pcbdetach(in6p);

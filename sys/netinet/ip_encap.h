@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.12 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.12.10.1 2009/01/19 13:20:13 skrll Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -55,7 +55,24 @@ struct encaptab {
 	void *arg;			/* passed via PACKET_TAG_ENCAP */
 };
 
-void	encap_setkeylen(void);
+/* to lookup a pair of address using radix tree */
+struct sockaddr_pack {
+	u_int8_t sp_len;
+	u_int8_t sp_family;	/* not really used */
+	/* followed by variable-length data */
+};
+
+struct ip_pack4 {
+	struct sockaddr_pack p;
+	struct sockaddr_in mine;
+	struct sockaddr_in yours;
+};
+struct ip_pack6 {
+	struct sockaddr_pack p;
+	struct sockaddr_in6 mine;
+	struct sockaddr_in6 yours;
+};
+
 void	encap_init(void);
 void	encap4_input(struct mbuf *, ...);
 int	encap6_input(struct mbuf **, int *, int);

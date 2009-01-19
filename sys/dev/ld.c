@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.63 2008/09/09 12:45:39 tron Exp $	*/
+/*	$NetBSD: ld.c,v 1.63.2.1 2009/01/19 13:17:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.63 2008/09/09 12:45:39 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.63.2.1 2009/01/19 13:17:51 skrll Exp $");
 
 #include "rnd.h"
 
@@ -646,11 +646,11 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	mutex_enter(&sc->sc_mutex);
 
 	if (bp != NULL)
-		BUFQ_PUT(sc->sc_bufq, bp);
+		bufq_put(sc->sc_bufq, bp);
 
 	while (sc->sc_queuecnt < sc->sc_maxqueuecnt) {
 		/* See if there is work to do. */
-		if ((bp = BUFQ_PEEK(sc->sc_bufq)) == NULL)
+		if ((bp = bufq_peek(sc->sc_bufq)) == NULL)
 			break;
 
 		disk_busy(&sc->sc_dk);
@@ -661,7 +661,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 			 * The back-end is running the job; remove it from
 			 * the queue.
 			 */
-			(void) BUFQ_GET(sc->sc_bufq);
+			(void) bufq_get(sc->sc_bufq);
 		} else  {
 			disk_unbusy(&sc->sc_dk, 0, (bp->b_flags & B_READ));
 			sc->sc_queuecnt--;
@@ -676,7 +676,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 				 */
 				break;
 			} else {
-				(void) BUFQ_GET(sc->sc_bufq);
+				(void) bufq_get(sc->sc_bufq);
 				bp->b_error = error;
 				bp->b_resid = bp->b_bcount;
 				mutex_exit(&sc->sc_mutex);

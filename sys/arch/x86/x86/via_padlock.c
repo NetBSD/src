@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.9 2008/04/16 16:06:52 cegger Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.9.12.1 2009/01/19 13:17:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.9 2008/04/16 16:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.9.12.1 2009/01/19 13:17:09 skrll Exp $");
 
 #include "opt_viapadlock.h"
 
@@ -216,14 +216,12 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 				return EINVAL;
 			}
 		authcommon:
-			MALLOC(swd, struct swcr_data *,
-			    sizeof(struct swcr_data), M_CRYPTO_DATA,
-			    M_NOWAIT);
+			swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
+			    M_NOWAIT|M_ZERO);
 			if (swd == NULL) {
 				via_padlock_crypto_freesession(sc, sesn);
 				return (ENOMEM);
 			}
-			memset(swd, 0, sizeof(struct swcr_data));
 			ses->swd = swd;
 
 			swd->sw_ictx = malloc(axf->auth_hash->ctxsize,
@@ -302,7 +300,7 @@ via_padlock_crypto_freesession(void *arg, uint64_t tid)
 			memset(swd->sw_octx, 0, axf->ctxsize);
 			free(swd->sw_octx, M_CRYPTO_DATA);
 		}
-		FREE(swd, M_CRYPTO_DATA);
+		free(swd, M_CRYPTO_DATA);
 	}
 
 	memset(&sc->sc_sessions[sesn], 0, sizeof(sc->sc_sessions[sesn]));
