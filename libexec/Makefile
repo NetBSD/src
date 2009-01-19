@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2008/08/16 23:51:15 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.59 2009/01/19 07:08:27 jmmv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -8,10 +8,6 @@ SUBDIR= atrun \
 	ld.elf_so lfs_cleanerd mail.local makekey makewhatis rexecd \
 	rlogind rshd rpc.rquotad rpc.rstatd rpc.rusersd rpc.rwalld \
 	rpc.sprayd talkd telnetd tftpd utmp_update
-
-.if (${MKATF} != "no")
-SUBDIR+= atf-cleanup atf-exec atf-format atf-killpg
-.endif
 
 .if (${MKKERBEROS} != "no")
 # Heimdal/KTH Kerberos
