@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.131 2008/11/27 16:14:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.132 2009/01/19 07:08:27 jmmv Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -10,10 +10,6 @@ SUBDIR=	csu libc .WAIT libarch \
 	libossaudio libpcap libpci libpmc libposix libprop libpthread \
 	libpthread_dbg libpuffs libresolv librmt librpcsvc librt libsdp \
 	libterm libusbhid libutil libwrap liby libz
-
-.if (${MKATF} != "no")
-SUBDIR+= libatf-c libatf-c++
-.endif
 
 # libform and libmenu need libcurses
 SUBDIR+=	.WAIT libform libmenu 
