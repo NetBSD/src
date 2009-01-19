@@ -1,0 +1,10 @@
+4: Unexpected token `foo'; expected start of test program
+5: Unexpected token `<<NEWLINE>>'; expected `:'
+6: Unexpected token `<<NEWLINE>>'; expected test program name
+7: Unexpected token `<<NEWLINE>>'; expected `,'
+8: Unexpected token `<<NEWLINE>>'; expected number of test programs
+10: Unexpected token `bar'; expected end of test program
+12: Unexpected token `<<NEWLINE>>'; expected `:'
+14: Unexpected token `<<NEWLINE>>'; expected test program name
+16: Test program name used in terminator does not match opening
+18: Empty reason for failed test program
