@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuio.h,v 1.3 2009/01/19 17:39:02 christos Exp $	*/
+/*	$NetBSD: cpuio.h,v 1.1 2009/01/19 17:39:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(_SYS_CPUIO_H_)
-#define	_SYS_CPUIO_H_
+#if !defined(_COMPAT_SYS_CPUIO_H_)
+#define	_COMPAT_SYS_CPUIO_H_
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -40,25 +40,41 @@
 #include <stdbool.h>
 #endif
 
-/*
- * This is not a great place to describe CPU properties, those
- * are better returned via autoconf.
- */
-typedef struct cpustate {
+typedef struct cpustate50 {
 	u_int		cs_id;		/* matching ci_cpuid */
 	bool		cs_online;	/* running unbound LWPs */
 	bool		cs_intr;	/* fielding interrupts */
 	bool		cs_unused[2];	/* reserved */
-	time_t		cs_lastmod;	/* time of last state change */
+	int32_t		cs_lastmod;	/* time of last state change */
 	char		cs_name[16];	/* reserved */
 	uint32_t	cs_reserved[4];	/* reserved */
-} cpustate_t;
+} cpustate50_t;
 
-/* 0 IOC_CPU_OSETSTATE */
-/* 1 IOC_CPU_OGETSTATE */
-#define	IOC_CPU_GETCOUNT	_IOR('c', 2, int)
-#define	IOC_CPU_MAPID		_IOWR('c', 3, int)
-#define	IOC_CPU_SETSTATE	_IOW('c', 4, cpustate_t)
-#define	IOC_CPU_GETSTATE	_IOWR('c', 5, cpustate_t)
+static __inline
+void cpustate_to_cpustate50(const cpustate_t *cp, cpustate50_t *cp50)
+{
+	cp50->cs_id = (int32_t)cp->cs_id;
+	cp50->cs_online = (int32_t)cp->cs_online;
+	cp50->cs_intr = (int32_t)cp->cs_intr;
+	memcpy(cp50->cs_unused, cp->cs_unused, sizeof(cp50->cs_unused));
+	cp50->cs_lastmod = (int32_t)cp->cs_lastmod;
+	memcpy(cp50->cs_name, cp->cs_name, sizeof(cp50->cs_name));
+	memcpy(cp50->cs_reserved, cp->cs_reserved, sizeof(cp50->cs_reserved));
+}
 
-#endif /* !_SYS_CPUIO_H_ */
+static __inline
+void cpustate50_to_cpustate(const cpustate50_t *cp50, cpustate_t *cp)
+{
+	cp->cs_id = cp50->cs_id;
+	cp->cs_online = cp50->cs_online;
+	cp->cs_intr = cp50->cs_intr;
+	memcpy(cp->cs_unused, cp50->cs_unused, sizeof(cp->cs_unused));
+	cp->cs_lastmod = cp50->cs_lastmod;
+	memcpy(cp->cs_name, cp50->cs_name, sizeof(cp->cs_name));
+	memcpy(cp->cs_reserved, cp50->cs_reserved, sizeof(cp->cs_reserved));
+}
+
+#define	IOC_CPU_OSETSTATE	_IOW('c', 0, cpustate50_t)
+#define	IOC_CPU_OETSTATE	_IOWR('c', 1, cpustate50_t)
+
+#endif /* !_COMPAT_SYS_CPUIO_H_ */
