@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.10 2009/01/19 07:21:59 lukem Exp $ */
+/* $NetBSD: radlib.c,v 1.11 2009/01/19 09:43:11 jmmv Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.10 2009/01/19 07:21:59 lukem Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.11 2009/01/19 09:43:11 jmmv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ static int	 put_password_attr(struct rad_handle *, int,
 		    const void *, size_t);
 static int	 put_raw_attr(struct rad_handle *, int,
 		    const void *, size_t);
-static int	 split(char *, const char *[], size_t, char *, size_t);
+static size_t	 split(char *, const char *[], size_t, char *, size_t);
 
 static void
 clear_password(struct rad_handle *h)
@@ -420,7 +420,7 @@ rad_config(struct rad_handle *h, const char *path)
 	while (fgets(buf, (int)sizeof buf, fp) != NULL) {
 		size_t len;
 		const char *fields[5];
-		int nfields;
+		size_t nfields;
 		char msg[ERRSIZE];
 		const char *type;
 		const char *host;
@@ -452,9 +452,10 @@ rad_config(struct rad_handle *h, const char *path)
 		buf[len - 1] = '\0';
 
 		/* Extract the fields from the line. */
+		msg[0] = '\0';
 		nfields = split(buf, fields, sizeof(fields) / sizeof(fields[0]),
 		    msg, sizeof msg);
-		if (nfields == -1) {
+		if (msg[0] != '\0') {
 			generr(h, "%s:%d: %s", path, linenum, msg);
 			retval = -1;
 			break;
@@ -986,9 +987,10 @@ rad_strerror(struct rad_handle *h)
  * The return value is the actual number of fields parsed, and is always
  * <= maxfields.
  *
- * On a syntax error, places a message in the msg string, and returns -1.
+ * On a syntax error, places a message in the msg string, and returns
+ * SIZE_MAX.
  */
-static int
+static size_t
 split(char *str, const char *fields[], size_t maxfields, char *msg,
     size_t msglen)
 {
@@ -1006,7 +1008,7 @@ split(char *str, const char *fields[], size_t maxfields, char *msg,
 			break;
 		if (i >= maxfields) {
 			snprintf(msg, msglen, "line has too many fields");
-			return -1;
+			return SIZE_MAX;
 		}
 		if (*p == '"') {
 			char *dst;
@@ -1020,13 +1022,13 @@ split(char *str, const char *fields[], size_t maxfields, char *msg,
 					    *p != '\0') {
 						snprintf(msg, msglen,
 						    "invalid `\\' escape");
-						return -1;
+						return SIZE_MAX;
 					}
 				}
 				if (*p == '\0') {
 					snprintf(msg, msglen,
 					    "unterminated quoted string");
-					return -1;
+					return SIZE_MAX;
 				}
 				*dst++ = *p++;
 			}
@@ -1035,12 +1037,12 @@ split(char *str, const char *fields[], size_t maxfields, char *msg,
 			if (*fields[i] == '\0') {
 				snprintf(msg, msglen,
 				    "empty quoted string not permitted");
-				return -1;
+				return SIZE_MAX;
 			}
 			if (*p != '\0' && strspn(p, ws) == 0) {
 				snprintf(msg, msglen, "quoted string not"
 				    " followed by white space");
-				return -1;
+				return SIZE_MAX;
 			}
 		} else {
 			fields[i] = p;
