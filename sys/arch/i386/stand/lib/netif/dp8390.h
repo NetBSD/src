@@ -1,7 +1,7 @@
-/*	$NetBSD: dp8390.h,v 1.5 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: dp8390.h,v 1.5.86.1 2009/01/19 13:16:21 skrll Exp $	*/
 
-extern int dp8390_config __P((void));
-extern void dp8390_stop __P((void));
+extern int dp8390_config(void);
+extern void dp8390_stop(void);
 
 extern int dp8390_iobase;
 extern int dp8390_membase;

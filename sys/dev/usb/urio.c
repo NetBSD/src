@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.30 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: urio.c,v 1.30.6.1 2009/01/19 13:19:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.30 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.30.6.1 2009/01/19 13:19:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ urioopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	USB_GET_SC_OPEN(urio, URIOUNIT(dev), sc);
 
-	DPRINTFN(5, ("urioopen: flag=%d, mode=%d, unit=%d\n",
+	DPRINTFN(5, ("urioopen: flag=%d, mode=%d, unit=%"PRId64"\n",
 		     flag, mode, URIOUNIT(dev)));
 
 	if (sc->sc_dying)
@@ -340,7 +340,7 @@ urioclose(dev_t dev, int flag, int mode,
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
 
-	DPRINTFN(5, ("urioclose: flag=%d, mode=%d, unit=%d\n",
+	DPRINTFN(5, ("urioclose: flag=%d, mode=%d, unit=%"PRId64"\n",
 		     flag, mode, URIOUNIT(dev)));
 
 	if (sc->sc_in_pipe != NULL) {
@@ -369,7 +369,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
 
-	DPRINTFN(5, ("urioread: %d\n", URIOUNIT(dev)));
+	DPRINTFN(5, ("urioread: %"PRId64"\n", URIOUNIT(dev)));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -426,7 +426,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
 
-	DPRINTFN(5, ("uriowrite: unit=%d, len=%ld\n", URIOUNIT(dev),
+	DPRINTFN(5, ("uriowrite: unit=%"PRId64", len=%ld\n", URIOUNIT(dev),
 		     (long)uio->uio_resid));
 
 	if (sc->sc_dying)
@@ -469,7 +469,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
-	DPRINTFN(5, ("uriowrite: done unit=%d, error=%d\n", URIOUNIT(dev),
+	DPRINTFN(5, ("uriowrite: done unit=%"PRId64", error=%d\n", URIOUNIT(dev),
 		     error));
 
 	return (error);

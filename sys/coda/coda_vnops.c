@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.68 2008/01/30 09:50:19 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.68.20.1 2009/01/19 13:17:13 skrll Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.68 2008/01/30 09:50:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.68.20.1 2009/01/19 13:17:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,8 +244,9 @@ coda_open(void *v)
     if (error)
 	return (error);
     if (!error) {
-	CODADEBUG(CODA_OPEN, myprintf(("open: dev %d inode %llu result %d\n",
-				  dev, (unsigned long long)inode, error)); )
+	    CODADEBUG(CODA_OPEN,
+		myprintf(("open: dev 0x%llx inode %llu result %d\n",
+	        (unsigned long long)dev, (unsigned long long)inode, error));)
     }
 
     /* 
@@ -1837,7 +1838,8 @@ coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
 
     /* Obtain mount point structure from device. */
     if (!(mp = devtomp(dev))) {
-	myprintf(("coda_grab_vnode: devtomp(%d) returns NULL\n", dev));
+	myprintf(("coda_grab_vnode: devtomp(0x%llx) returns NULL\n",
+	    (unsigned long long)dev));
 	return(ENXIO);
     }
 
@@ -1848,8 +1850,8 @@ coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
      */
     error = VFS_VGET(mp, ino, vpp);
     if (error) {
-	myprintf(("coda_grab_vnode: iget/vget(%d, %llu) returns %p, err %d\n",
-		  dev, (unsigned long long)ino, *vpp, error));
+	myprintf(("coda_grab_vnode: iget/vget(0x%llx, %llu) returns %p, err %d\n",
+	    (unsigned long long)dev, (unsigned long long)ino, *vpp, error));
 	return(ENOENT);
     }
     return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.72 2008/06/08 18:18:34 tsutsui Exp $	*/
+/*	$NetBSD: if_se.c,v 1.72.6.1 2009/01/19 13:19:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.72 2008/06/08 18:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.72.6.1 2009/01/19 13:19:03 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -977,10 +977,7 @@ se_stop(sc)
  * Process an ioctl request.
  */
 static int
-se_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct se_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -992,7 +989,7 @@ se_ioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if ((error = se_enable(sc)) != 0)
 			break;
 		ifp->if_flags |= IFF_UP;
@@ -1024,8 +1021,11 @@ se_ioctl(ifp, cmd, data)
 
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
@@ -1033,8 +1033,8 @@ se_ioctl(ifp, cmd, data)
 			se_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 			se_disable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -1042,12 +1042,15 @@ se_ioctl(ifp, cmd, data)
 			if ((error = se_enable(sc)) != 0)
 				break;
 			error = se_init(sc);
-		} else if (sc->sc_enabled) {
+			break;
+		default:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			error = se_init(sc);
+			if (sc->sc_enabled)
+				error = se_init(sc);
+			break;
 		}
 #ifdef SEDEBUG
 		if (ifp->if_flags & IFF_DEBUG)
@@ -1077,7 +1080,7 @@ se_ioctl(ifp, cmd, data)
 
 	default:
 
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
@@ -1148,7 +1151,7 @@ seopen(dev, flag, fmt, l)
 		return (error);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("scopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
+	    ("scopen: dev=0x%"PRIx64" (unit %d (of %d))\n", dev, unit,
 	    se_cd.cd_ndevs));
 
 	periph->periph_flags |= PERIPH_OPEN;

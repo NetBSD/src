@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.4 2008/04/05 04:13:48 nisimura Exp $
+# $NetBSD: ENCPP1,v 1.4.12.1 2009/01/19 13:16:38 skrll Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.4 $"
+#ident 		"ENCPP1-$Revision: 1.4.12.1 $"
 
 maxusers	32
 
@@ -78,7 +78,6 @@ file-system 	PROCFS
 #file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
 
-options 	SOFTDEP		# FFS soft updates support.
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 options 	INET

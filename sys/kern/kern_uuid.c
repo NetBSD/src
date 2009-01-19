@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.15 2008/07/02 14:47:34 matt Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.15.4.1 2009/01/19 13:19:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.15 2008/07/02 14:47:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.15.4.1 2009/01/19 13:19:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -181,14 +181,41 @@ uuid_generate(struct uuid_private *uuid, uint64_t *timep, int count)
 	mutex_exit(&uuid_mutex);
 }
 
-int
-sys_uuidgen(struct lwp *l, const struct sys_uuidgen_args *uap, register_t *retval)
+static int
+kern_uuidgen(struct uuid *store, int count, bool to_user)
 {
 	struct uuid_private uuid;
 	uint64_t xtime;
-	int error;
-	int i;
+	int error = 0, i;
 
+	KASSERT(count >= 1);
+
+	/* Generate the base UUID. */
+	uuid_generate(&uuid, &xtime, count);
+
+	/* Set sequence and variant and deal with byte order. */
+	uuid.seq = htobe16(uuid.seq | 0x8000);
+
+	for (i = 0; i < count; xtime++, i++) {
+		/* Set time and version (=1) and deal with byte order. */
+		uuid.time.x.low = (uint32_t)xtime;
+		uuid.time.x.mid = (uint16_t)(xtime >> 32);
+		uuid.time.x.hi = ((uint16_t)(xtime >> 48) & 0xfff) | (1 << 12);
+		if (to_user) {
+			error = copyout(&uuid, store + i, sizeof(uuid));
+			if (error != 0)
+				break;
+		} else {
+			memcpy(store + i, &uuid, sizeof(uuid));
+		}
+	}
+
+	return error;
+}
+
+int
+sys_uuidgen(struct lwp *l, const struct sys_uuidgen_args *uap, register_t *retval)
+{
 	/*
 	 * Limit the number of UUIDs that can be created at the same time
 	 * to some arbitrary number. This isn't really necessary, but I
@@ -198,26 +225,13 @@ sys_uuidgen(struct lwp *l, const struct sys_uuidgen_args *uap, register_t *retva
 	if (SCARG(uap,count) < 1 || SCARG(uap,count) > 2048)
 		return (EINVAL);
 
-	/* XXX: pre-validate accessibility to the whole of the UUID store? */
+	return kern_uuidgen(SCARG(uap, store), SCARG(uap,count), true);
+}
 
-	/* Generate the base UUID. */
-	uuid_generate(&uuid, &xtime, SCARG(uap, count));
-
-	/* Set sequence and variant and deal with byte order. */
-	uuid.seq = htobe16(uuid.seq | 0x8000);
-
-	/* XXX: this should copyout larger chunks at a time. */
-	for (i = 0; i < SCARG(uap, count); xtime++, i++) {
-		/* Set time and version (=1) and deal with byte order. */
-		uuid.time.x.low = (uint32_t)xtime;
-		uuid.time.x.mid = (uint16_t)(xtime >> 32);
-		uuid.time.x.hi = ((uint16_t)(xtime >> 48) & 0xfff) | (1 << 12);
-		error = copyout(&uuid, SCARG(uap,store) + i, sizeof(uuid));
-		if (error != 0)
-			return error;
-	}
-
-	return 0;
+int
+uuidgen(struct uuid *store, int count)
+{
+	return kern_uuidgen(store,count, false);
 }
 
 int

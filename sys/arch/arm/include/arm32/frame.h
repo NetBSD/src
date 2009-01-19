@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.20 2008/10/26 16:23:29 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.20.2.1 2009/01/19 13:15:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -106,7 +106,7 @@ struct frame {
 };
 
 #ifdef _KERNEL
-void validate_trapframe __P((trapframe_t *, int));
+void validate_trapframe(trapframe_t *, int);
 #endif /* _KERNEL */
 
 #else /* _LOCORE */
@@ -127,7 +127,7 @@ void validate_trapframe __P((trapframe_t *, int));
 #define	DO_PENDING_SOFTINTS						\
 	ldr	r0, [r4, #CI_INTR_DEPTH]/* Get current intr depth */	;\
 	teq	r0, #0			/* Test for 0. */		;\
-	beq	10f			/*   skip softints if != 0 */	;\
+	bne	10f			/*   skip softints if != 0 */	;\
 	ldr	r0, [r4, #CI_CPL]	/* Get current priority level */;\
 	ldr	r1, [r4, #CI_SOFTINTS]	/* Get pending softint mask */	;\
 	movs	r0, r1, lsr r0		/* shift mask by cpl */		;\
@@ -147,40 +147,9 @@ void validate_trapframe __P((trapframe_t *, int));
  * relies on r4 being preserved.
  */
 #ifdef EXEC_AOUT
-#if defined(PROCESS_ID_IS_CURLWP) || defined(PROCESS_ID_IS_CURCPU)
-
 #define	AST_ALIGNMENT_FAULT_LOCALS					\
 .Laflt_cpufuncs:							;\
 	.word	_C_LABEL(cpufuncs)
-
-#elif !defined(MULTIPROCESSOR)
-
-/*
- * Local variables needed by the AST/Alignment Fault macroes
- */
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpufuncs:							;\
-	.word	_C_LABEL(cpufuncs)					;\
-.Laflt_cpu_info_store:							;\
-	.word	_C_LABEL(cpu_info_store)
-
-#define	GET_CURCPU(rX)							\
-	ldr	rX, .Laflt_cpu_info_store
-
-#else /* !MULTIPROCESSOR */
-
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpufuncs:							;\
-	.word	_C_LABEL(cpufuncs)					;\
-.Laflt_cpu_info:							;\
-	.word	_C_LABEL(cpu_info)
-
-#define	GET_CURCPU(rX)							\
-	ldr	rX, .Laflt_cpu_info					;\
-	bl	_C_LABEL(cpu_number)					;\
-	ldr	r0, [rX, r0, lsl #2]
-
-#endif /* MULTIPROCESSOR */
 
 /*
  * This macro must be invoked following PUSHFRAMEINSVC or PUSHFRAME at
@@ -248,28 +217,7 @@ void validate_trapframe __P((trapframe_t *, int));
 
 #else	/* !EXEC_AOUT */
 
-#if defined(PROCESS_ID_IS_CURLWP) || defined(PROCESS_ID_IS_CURCPU)
 #define	AST_ALIGNMENT_FAULT_LOCALS
-
-#elif !defined(MULTIPROCESSOR)
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpu_info_store:							;\
-	.word	_C_LABEL(cpu_info_store)
-
-#define	GET_CURCPU(rX)							\
-	ldr	rX, .Laflt_cpu_info_store
-
-#else
-#define	AST_ALIGNMENT_FAULT_LOCALS					\
-.Laflt_cpu_info:							;\
-	.word	_C_LABEL(cpu_info)
-
-#define	GET_CURCPU(rX)							\
-	bl	_C_LABEL(cpu_number)					;\
-	ldr	r1, .Laflt_cpu_info					;\
-	ldr	rX, [r1, r0, lsl #2]
-
-#endif
 
 #define	ENABLE_ALIGNMENT_FAULTS		GET_CURCPU(r4)
 

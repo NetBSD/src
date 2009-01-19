@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.209 2008/07/02 17:28:54 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.209.4.1 2009/01/19 13:15:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2008/07/02 17:28:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209.4.1 2009/01/19 13:15:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,12 +229,12 @@ consinit()
 	 */
 	cninit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern int end[];
 		extern int *esym;
 
-		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
 	}
 #endif
@@ -664,11 +664,11 @@ dumpsys()
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
@@ -704,7 +704,7 @@ dumpsys()
 		/* Print out how many MBs we have to go. */
 		n = bytes - i;
 		if (n && (n % (1024 * 1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+			printf_nolog("%d ", n / (1024 * 1024));
 
 		/* Limit size for next transfer. */
 		if (n > BYTES_PER_DUMP)
@@ -1466,7 +1466,7 @@ cpu_exec_aout_makecmds(l, epp)
 	return(error);
 }
 
-#ifdef LKM
+#ifdef MODULAR
 
 int _spllkm6(void);
 int _spllkm7(void);

@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.9 2007/08/04 11:03:00 ad Exp $
+# $NetBSD: std,v 1.9.36.1 2009/01/19 13:17:45 skrll Exp $
 #
 # standard MI 'options'
 #
@@ -13,6 +13,8 @@ options	BUFQ_DISKSORT	# Traditional min seek sort strategy
 options	RFC2292		# Previous version of Adv. Sockets API for IPv6 
 options	PTRACE		# Include ptrace(2)
 options	COREDUMP	# allow processes to coredump.
+options	AIO		# POSIX asynchronous I/O
+options	MQUEUE		# POSIX message queues
 
 #
 # Security model.

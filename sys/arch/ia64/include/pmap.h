@@ -93,8 +93,6 @@ struct pmap {
 
 };
 
-typedef struct pmap	*pmap_t;
-
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
  * mappings of that page.  An entry is a pv_entry_t, the list is pv_pvlist.
@@ -110,10 +108,6 @@ typedef struct pv_entry {
 #define	PGA_MODIFIED		0x01		/* modified */
 #define	PGA_REFERENCED		0x02		/* referenced */
 
-
-extern struct pmap	kernel_pmap_store;
-
-#define pmap_kernel()			(&kernel_pmap_store)
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)

@@ -1,0 +1,465 @@
+/* $NetBSD: gemini_gmacreg.h,v 1.3.4.2 2009/01/19 13:15:58 skrll Exp $ */
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Thomas <matt@3am-software.com>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _ARM_GEMINI_GEMINI_GMACREG_H
+#define _ARM_GEMINI_GEMINI_GMACREG_H
+
+#define	GMAC_GLOBAL_OFFSET	0x0000
+#define	GMAC_GLOBAL_SIZE	0x2000
+
+#define	GMAC_TOE_VERSION	0x0000
+#define	GMAC_TOE_DEVID(x)	(((x) >> 4) & 0xfff)
+#define	GMAC_TOE_REVID(x)	(((x) >> 0) & 0x00f)
+
+#define	GMAC_SWFREEQ_BASE	0x0004
+#define	GMAC_HWFREEQ_BASE	0x0008
+
+#define	FREEQ_SIZE		0x000f	/* 2^n from 3 to 15 */
+
+#define	GMAC_SKBSIZE		0x0010
+#define	SKB_SIZE_SET(hw,sw)	(((hw) << 16) | (sw))
+
+#define	GMAC_SWFREEQ_RWPTR	0x0014
+#define	GMAC_HWFREEQ_RWPTR	0x0018
+
+#define	GMAC_INT0_STATUS	0x0020
+#define	GMAC_INT0_MASK		0x0024
+#define	GMAC_INT0_SELECT	0x0028
+
+#define	INT0_TXDERR1		__BIT(31)	/* GMAC1 AHB bus err while TX */
+#define	INT0_TXPERR1		__BIT(30)	/* GMAC1 TX descriptor error */
+#define	INT0_TXDERR0		__BIT(29)	/* GMAC0 AHB bus err while TX */
+#define	INT0_TXPERR0		__BIT(28)	/* GMAC0 TX descriptor error */
+#define	INT0_RXDERR1		__BIT(27)	/* GMAC1 AHB bus err while RX */
+#define	INT0_RXPERR1		__BIT(26)	/* GMAC1 RX descriptor error */
+#define	INT0_RXDERR0		__BIT(25)	/* GMAC0 AHB bus err while RX */
+#define	INT0_RXPERR0		__BIT(24)	/* GMAC0 RX descriptor error */
+#define	INT0_SWTXQ15_FIN	__BIT(23)	/* GMAC1 SW TX queue 5 finish */
+#define	INT0_SWTXQ14_FIN	__BIT(22)	/* GMAC1 SW TX queue 4 finish */
+#define	INT0_SWTXQ13_FIN	__BIT(21)	/* GMAC1 SW TX queue 3 finish */
+#define	INT0_SWTXQ12_FIN	__BIT(20)	/* GMAC1 SW TX queue 2 finish */
+#define	INT0_SWTXQ11_FIN	__BIT(19)	/* GMAC1 SW TX queue 1 finish */
+#define	INT0_SWTXQ10_FIN	__BIT(18)	/* GMAC1 SW TX queue 0 finish */
+#define	INT0_SWTXQ1n_FIN(n)	__BIT(18 + n)
+#define	INT0_SWTXQ1_FIN		__BITS(18,23)
+#define	INT0_SWTXQ05_FIN	__BIT(17)	/* GMAC0 SW TX queue 5 finish */
+#define	INT0_SWTXQ04_FIN	__BIT(16)	/* GMAC0 SW TX queue 4 finish */
+#define	INT0_SWTXQ03_FIN	__BIT(15)	/* GMAC0 SW TX queue 3 finish */
+#define	INT0_SWTXQ02_FIN	__BIT(14)	/* GMAC0 SW TX queue 2 finish */
+#define	INT0_SWTXQ01_FIN	__BIT(13)	/* GMAC0 SW TX queue 1 finish */
+#define	INT0_SWTXQ00_FIN	__BIT(12)	/* GMAC0 SW TX queue 0 finish */
+#define	INT0_SWTXQ0n_FIN(n)	__BIT(12 + n)
+#define	INT0_SWTXQ0_FIN		__BITS(12,17)
+#define	INT0_SWTXQ_FIN		__BITS(12,23)
+#define	INT0_SWTXQ15_EOF	__BIT(11)	/* GMAC1 SW TX queue 5 EOF */
+#define	INT0_SWTXQ14_EOF	__BIT(10)	/* GMAC1 SW TX queue 4 EOF */
+#define	INT0_SWTXQ13_EOF	__BIT( 9)	/* GMAC1 SW TX queue 3 EOF */
+#define	INT0_SWTXQ12_EOF	__BIT( 8)	/* GMAC1 SW TX queue 2 EOF */
+#define	INT0_SWTXQ11_EOF	__BIT( 7)	/* GMAC1 SW TX queue 1 EOF */
+#define	INT0_SWTXQ10_EOF	__BIT( 6)	/* GMAC1 SW TX queue 0 EOF */
+#define	INT0_SWTXQ1n_EOF(n)	__BIT( 6 + n)
+#define	INT0_SWTXQ1_EOF		__BITS(6,11)
+#define	INT0_SWTXQ05_EOF	__BIT( 5)	/* GMAC0 SW TX queue 5 EOF */
+#define	INT0_SWTXQ04_EOF	__BIT( 4)	/* GMAC0 SW TX queue 4 EOF */
+#define	INT0_SWTXQ03_EOF	__BIT( 3)	/* GMAC0 SW TX queue 3 EOF */
+#define	INT0_SWTXQ02_EOF	__BIT( 2)	/* GMAC0 SW TX queue 2 EOF */
+#define	INT0_SWTXQ01_EOF	__BIT( 1)	/* GMAC0 SW TX queue 1 EOF */
+#define	INT0_SWTXQ00_EOF	__BIT( 0)	/* GMAC0 SW TX queue 0 EOF */
+#define	INT0_SWTXQ0n_EOF(n)	__BIT( n)
+#define	INT0_SWTXQ0_EOF		__BITS(0,5)
+#define	INT0_SWTXQ_EOF		__BITS(0,11)
+
+#define	INT0_TXDERR		(INT0_TXDERR0|INT0_TXDERR1)
+#define	INT0_TXPERR		(INT0_TXPERR0|INT0_TXPERR1)
+#define	INT0_RXDERR		(INT0_RXDERR0|INT0_RXDERR1)
+#define	INT0_RXPERR		(INT0_RXPERR0|INT0_RXPERR1)
+
+#define	INT0_SWTXQn_FIN(n)	(INT0_SWTXQ0n_FIN(n)|INT0_SWTXQ1n_FIN(n))
+#define	INT0_SWTXQn_EOF(n)	(INT0_SWTXQ0n_EOF(n)|INT0_SWTXQ1n_EOF(n))
+
+#define	INT0_GMAC0		\
+	(INT0_TXDERR0|INT0_TXPERR0|INT0_RXDERR0|INT0_RXPERR0 \
+	 |INT0_SWTXQ05_FIN|INT0_SWTXQ04_FIN|INT0_SWTXQ03_FIN \
+	 |INT0_SWTXQ02_FIN|INT0_SWTXQ01_FIN|INT0_SWTXQ00_FIN \
+	 |INT0_SWTXQ05_EOF|INT0_SWTXQ04_EOF|INT0_SWTXQ03_EOF \
+	 |INT0_SWTXQ02_EOF|INT0_SWTXQ01_EOF|INT0_SWTXQ00_EOF)
+#define	INT0_GMAC1		\
+	(INT0_TXDERR1|INT0_TXPERR1|INT0_RXDERR1|INT0_RXPERR1 \
+	 |INT0_SWTXQ15_FIN|INT0_SWTXQ14_FIN|INT0_SWTXQ13_FIN \
+	 |INT0_SWTXQ12_FIN|INT0_SWTXQ11_FIN|INT0_SWTXQ10_FIN \
+	 |INT0_SWTXQ15_EOF|INT0_SWTXQ14_EOF|INT0_SWTXQ13_EOF \
+	 |INT0_SWTXQ12_EOF|INT0_SWTXQ11_EOF|INT0_SWTXQ10_EOF)
+
+#define	GMAC_INT1_STATUS	0x0030
+#define	GMAC_INT1_MASK		0x0034
+#define	GMAC_INT1_SELECT	0x0038
+
+#define	INT1_TOE_IQ3_FULL	__BIT(31)	/* TOE Intr Queue3 Full */
+#define	INT1_TOE_IQ2_FULL	__BIT(30)	/* TOE Intr Queue2 Full */
+#define	INT1_TOE_IQ1_FULL	__BIT(29)	/* TOE Intr Queue1 Full */
+#define	INT1_TOE_IQ0_FULL	__BIT(28)	/* TOE Intr Queue0 Full */
+#define	INT1_TOE_IQ3_NONEMPTY	__BIT(27)	/* TOE Intr Queue3 !Emtpy */
+#define	INT1_TOE_IQ2_NONEMPTY	__BIT(26)	/* TOE Intr Queue2 !Emtpy */
+#define	INT1_TOE_IQ1_NONEMPTY	__BIT(25)	/* TOE Intr Queue1 !Emtpy */
+#define	INT1_TOE_IQ0_NONEMPTY	__BIT(24)	/* TOE Intr Queue0 !Emtpy */
+#define	INT1_HWTQ13_EOF		__BIT(23)	/* GMAC1 HW TX Queue3 EOF */
+#define	INT1_HWTQ12_EOF		__BIT(22)	/* GMAC1 HW TX Queue2 EOF */
+#define	INT1_HWTQ11_EOF		__BIT(21)	/* GMAC1 HW TX Queue1 EOF */
+#define	INT1_HWTQ10_EOF		__BIT(20)	/* GMAC1 HW TX Queue0 EOF */
+#define	INT1_HWTQ03_EOF		__BIT(19)	/* GMAC0 HW TX Queue3 EOF */
+#define	INT1_HWTQ02_EOF		__BIT(18)	/* GMAC0 HW TX Queue2 EOF */
+#define	INT1_HWTQ01_EOF		__BIT(17)	/* GMAC0 HW TX Queue1 EOF */
+#define	INT1_HWTQ00_EOF		__BIT(16)	/* GMAC0 HW TX Queue0 EOF */
+#define	INT1_CLASS_Q_EOF(n)	__BIT((n)+2)	/* Classfication Q[n] EOF */
+#define	INT1_DEF_RXQ1_EOF	__BIT(1)	/* GMAC1 Default RX Queue EOF */
+#define	INT1_DEF_RXQ0_EOF	__BIT(0)	/* GMAC0 Default RX Queue EOF */
+
+#define	INT1_DEF_RXQ_EOF	(INT1_DEF_RXQ0_EOF|INT1_DEF_RXQ1_EOF)
+#define	INT1_HWTQ3_EOF		(INT1_HWTQ03_EOF|INT1_HWTQ13_EOF)
+#define	INT1_HWTQ2_EOF		(INT1_HWTQ02_EOF|INT1_HWTQ12_EOF)
+#define	INT1_HWTQ1_EOF		(INT1_HWTQ01_EOF|INT1_HWTQ11_EOF)
+#define	INT1_HWTQ0_EOF		(INT1_HWTQ00_EOF|INT1_HWTQ10_EOF)
+
+#define	INT1_GMAC0	\
+	(INT1_HWTQ03_EOF|INT1_HWTQ02_EOF|INT1_HWTQ01_EOF|INT1_HWTQ00_EOF \
+	 |INT1_DEF_RXQ0_EOF)
+#define	INT1_GMAC1	\
+	(INT1_HWTQ13_EOF|INT1_HWTQ12_EOF|INT1_HWTQ11_EOF|INT1_HWTQ10_EOF \
+	 |INT1_DEF_RXQ1_EOF)
+
+#define	GMAC_INT2_STATUS	0x0040
+#define	GMAC_INT2_MASK		0x0044
+#define	GMAC_INT2_SELECT	0x0048
+
+#define	INT2_TOE_QFULL(n)	__BIT((n)-32)	/* TOE (32-63) Q[n] Full */
+#define	INT2_GMAC0		0
+#define	INT2_GMAC1		0
+
+#define	GMAC_INT3_STATUS	0x0050
+#define	GMAC_INT3_MASK		0x0054
+#define	GMAC_INT3_SELECT	0x0058
+
+#define	INT3_TOE_QFULL(n)	__BIT((n))	/* TOE (0-31) Q[n] Full */
+#define	INT3_GMAC0		0
+#define	INT3_GMAC1		0
+
+#define	GMAC_INT4_STATUS	0x0060
+#define	GMAC_INT4_MASK		0x0064
+#define	GMAC_INT4_SELECT	0x0068
+
+#define	INT4_TX_FAIL0		__BIT(23)	/* GMAC0 TX fail */
+#define	INT4_TX_FAIL1		__BIT(23+8)	/* GMAC1 TX fail */
+#define	INT4_TX_FAIL		(INT4_TX_FAIL0|INT4_TX_FAIL1)
+#define	INT4_MIB_HEMIWRAP0	__BIT(22)	/* GMAC0 MIB counters 1/2 */
+#define	INT4_MIB_HEMIWRAP1	__BIT(22+8)	/* GMAC1 MIB counters 1/2 */
+#define	INT4_MIB_HEMIWRAP	(INT4_MIB_HEMIWRAP0|INT4_MIB_HEMIWRAP1)
+#define	INT4_RX_XON0		__BIT(21)	/* GMAC0 RX Pause On */
+#define	INT4_RX_XON1		__BIT(21+8)	/* GMAC1 RX Pause On */
+#define	INT4_RX_XON		(INT4_RX_XON0|INT4_RX_XON1)
+#define	INT4_TX_XON0		__BIT(20)	/* GMAC0 TX Pause On */
+#define	INT4_TX_XON1		__BIT(20+8)	/* GMAC1 TX Pause On */
+#define	INT4_TX_XON		(INT4_TX_XON0|INT4_TX_XON1)
+#define	INT4_RX_XOFF0		__BIT(19)	/* GMAC0 RX Pause Off */
+#define	INT4_RX_XOFF1		__BIT(19+8)	/* GMAC1 RX Pause Off */
+#define	INT4_RX_XOFF		(INT4_RX_XOFF0|INT4_RX_XOFF1)
+#define	INT4_TX_XOFF0		__BIT(18)	/* GMAC0 TX Pause Off */
+#define	INT4_TX_XOFF1		__BIT(18+8)	/* GMAC1 TX Pause Off */
+#define	INT4_TX_XOFF		(INT4_TX_XOFF0|INT4_TX_XOFF1)
+#define	INT4_RX_FIFO_OVRN0	__BIT(17)	/* GMAC0 RX FIFO overrun */
+#define	INT4_RX_FIFO_OVRN1	__BIT(17+8)	/* GMAC1 RX FIFO overrun */
+#define	INT4_RX_FIFO_OVRN	(INT4_RX_FIFO_OVRN0|INT4_RX_FIFO_OVRN1)
+#define	INT4_RGMII_STSCHG0	__BIT(16)	/* GMAC0 RGMII status change */
+#define	INT4_RGMII_STSCHG1	__BIT(16+8)	/* GMAC1 RGMII status change */
+#define	INT4_RGMII_STSCHG	(INT4_RGMII_STSCHG0|INT4_RGMII_STSCHG1)
+#define	INT4_CLASS_Q_FULL(n)	__BIT((n)+2)	/* Classification Q[n] Full */
+#define	INT4_HW_FREEQ_EMPTY	__BIT(1)	/* HW Free Q empty */
+#define	INT4_SW_FREEQ_EMPTY	__BIT(0)	/* SW Free Q empty */
+
+#define	INT4_GMAC0		__BITS(16,23)
+#define	INT4_GMAC1		(__BITS(24,31)|INT4_HW_FREEQ_EMPTY)
+
+#define	GMAC_QFE_THRESHOLD	0x0070
+#define	QFE_TOEQ_THRESHOLD_MASK	__BITS(24,31)
+#define	QFE_TOEQ_THRESHOLD_GET(x) (((x) >> 24) & 0xff)
+#define	QFE_TOEQ_THRESHOLD(x)	 (((x) & 0xff) << 24)
+#define	QFE_INTQ_THRESHOLD_MASK	__BITS(16,23)
+#define	QFE_INTQ_THRESHOLD_GET(x) (((x) >> 16) & 0xff)
+#define	QFE_INTQ_THRESHOLD(x)	 (((x) & 0xff) << 16)
+#define	QFE_HWFQ_THRESHOLD_MASK	__BITS(8,15)
+#define	QFE_HWFQ_THRESHOLD_GET(x) (((x) >> 8) & 0xff)
+#define	QFE_HWFQ_THRESHOLD(x)	 (((x) & 0xff) << 8)
+#define	QFE_SWFQ_THRESHOLD_MASK	__BITS(0,7)
+#define	QFE_SWFQ_THRESHOLD_GET(x) (((x) >> 0) & 0xff)
+#define	QFE_SWFQ_THRESHOLD(x)	 (((x) & 0xff) << 0)
+
+#define	GMAC_NONTOE_QH_OFFSET	0x2000
+#define	GMAC_NONTOE_QH_SIZE	0x1000
+
+#define	GMAC_DEF_RXQn_BASE(n)	(0x2000 + (n) * 4)
+#define	GMAC_DEF_RXQn_RWPTR(n)	(0x2004 + (n) * 4)
+#define	GMAC_DEF_RXQ0_BASE	0x2000
+#define	GMAC_DEF_RXQ0_RWPTR	0x2004
+#define	GMAC_DEF_RXQ1_BASE	0x2008
+#define	GMAC_DEF_RXQ1_RWPTR	0x200c
+
+#define	GMAC_TOE_QH_OFFSET	0x3000
+#define	GMAC_TOE_QH_SIZE	0x1000
+
+#define	GMAC_VBIT_MEM_OFFSET	0x4000
+#define	GMAC_VBIT_MEM_SIZE	0x2000
+
+#define	GMAC_ABIT_MEM_OFFSET	0x6000
+#define	GMAC_ABIT_MEM_SIZE	0x2000
+
+#define	GMAC_PORT0_DMA_OFFSET	0x8000
+#define	GMAC_PORT_DMA_SIZE	0x2000
+
+#define	GMAC_DMAVR		0x0000
+#define	DMAVR_RXDMA_ENABLE	__BIT(31)
+#define	DMAVR_TXDMA_ENABLE	__BIT(30)
+#define	DMAVR_LOOPBACK		__BIT(29)
+#define	DMAVR_DROP_SMALL_ACK	__BIT(28)
+#define	DMAVR_EXTRABYTES_MASK	__BITS(16,17)
+#define	DMAVR_EXTRABYTES_GET(x)	(((x) >> 16) & DMAR_EXTRABYTES_MASK)
+#define	DMAVR_EXTRABYTES(x)	(((x) & 3) << 16)
+#define	DMAVR_RXBURSTSIZE_MASK	__BITS(10,11)
+#define	DMAVR_RXBURSTSIZE_GET(x) (((x) >> 10) & DMAR_BURSTSIZE_MASK)
+#define	DMAVR_RXBURSTSIZE(x)	(((x) & 3) << 10)
+#define	DMAVR_RXBUSWIDTH_MASK	__BITS(8,9)
+#define	DMAVR_RXBUSWIDTH_GET(x)	(((x) >> 8) & DMAVR_BUSWIDTH_MASK)
+#define	DMAVR_RXBUSWIDTH(x)	(((x) & 3) << 8)
+#define	DMAVR_TXBURSTSIZE_MASK	__BITS(2,3)
+#define	DMAVR_TXBURSTSIZE_GET(x) (((x) >> 2) & DMAR_BURSTSIZE_MASK)
+#define	DMAVR_TXBURSTSIZE(x)	(((x) & 3) << 2)
+#define	DMAVR_TXBUSWIDTH_MASK	__BITS(0,1)
+#define	DMAVR_TXBUSWIDTH_GET(x)	(((x) >> 0) & DMAVR_BUSWIDTH_MASK)
+#define	DMAVR_TXBUSWIDTH(x)	(((x) & 3) << 0)
+#define	DMAVR_BURSTSIZE_4W	0
+#define	DMAVR_BURSTSIZE_8W	1
+#define	DMAVR_BURSTSIZE_16W	2
+#define	DMAVR_BURSTSIZE_32W	3
+#define	DMAVR_BURSTSIZE_MASK	3
+#define	DMAVR_BUSWIDTH_8BITS	0
+#define	DMAVR_BUSWIDTH_16BITS	2
+#define	DMAVR_BUSWIDTH_32BITS	3
+#define	DMAVR_BUSWIDTH_MASK	3
+#define	GMAC_TX_WEIGHTING_1	0x0004
+#define	GMAC_TX_WEIGHTING_2	0x0008
+#define	GMAC_SW_TX_Qn_RWPTR(n)	(0x000c+(n)*4)
+#define	GMAC_SW_TX_Q0_RWPTR	GMAC_SW_TX_Qn_RWPTR(0)
+#define	GMAC_SW_TX_Q1_RWPTR	GMAC_SW_TX_Qn_RWPTR(1)
+#define	GMAC_SW_TX_Q2_RWPTR	GMAC_SW_TX_Qn_RWPTR(2)
+#define	GMAC_SW_TX_Q3_RWPTR	GMAC_SW_TX_Qn_RWPTR(3)
+#define	GMAC_SW_TX_Q4_RWPTR	GMAC_SW_TX_Qn_RWPTR(4)
+#define	GMAC_SW_TX_Q5_RWPTR	GMAC_SW_TX_Qn_RWPTR(5)
+#define	GMAC_HW_TX_Qn_RWPTR(n)	(0x0024+(n)*4)
+#define	GMAC_HW_TX_Q0_RWPTR	GMAC_HW_TX_Qn_RWPTR(0)
+#define	GMAC_HW_TX_Q1_RWPTR	GMAC_HW_TX_Qn_RWPTR(1)
+#define	GMAC_HW_TX_Q2_RWPTR	GMAC_HW_TX_Qn_RWPTR(2)
+#define	GMAC_HW_TX_Q3_RWPTR	GMAC_HW_TX_Qn_RWPTR(3)
+
+#define	GMAC_DMA_TX_1ST_DESC	0x0038
+#define	GMAC_DMA_TX_CUR_DESC	0x003c
+#define	GMAC_DMA_TX_DESC(n)	(0x0040+(n)*4)
+#define	GMAC_DMA_TX_DESC0	GMAC_DMA_TX_DESC(0)
+#define	GMAC_DMA_TX_DESC1	GMAC_DMA_TX_DESC(1)
+#define	GMAC_DMA_TX_DESC2	GMAC_DMA_TX_DESC(2)
+#define	GMAC_DMA_TX_DESC3	GMAC_DMA_TX_DESC(3)
+#define	GMAC_SW_TX_Q_BASE	0x0050
+#define	GMAC_HW_TX_Q_BASE	0x0054
+
+#define	GMAC_DMA_RX_1ST_DESC	0x0058
+#define	GMAC_DMA_RX_CUR_DESC	0x005c
+#define	GMAC_DMA_RX_DESC(n)	(0x0060+(n)*4)
+#define	GMAC_DMA_RX_DESC0	GMAC_DMA_RX_DESC(0)
+#define	GMAC_DMA_RX_DESC1	GMAC_DMA_RX_DESC(1)
+#define	GMAC_DMA_RX_DESC2	GMAC_DMA_RX_DESC(2)
+#define	GMAC_DMA_RX_DESC3	GMAC_DMA_RX_DESC(3)
+
+#define	GMAC_HEE_AO_EL0		0x0070	/* HashEngineEna/ActionOff/EntryLen */
+#define	GMAC_HEE_AO_EL1		0x0070	/* HashEngineEna/ActionOff/EntryLen */
+
+#define	GMAC_RULEMATCH0(n)	(0x0078+(n)*12)
+#define	GMAC_RULEMATCH1(n)	(0x0080+(n)*12)
+#define	GMAC_RULEMATCH2(n)	(0x0084+(n)*12)
+
+#define	GMAC_SUPPORTEDPROTO(n)	(0x00a8+(n)*4)
+#define	GMAC_HRT_AHB_WEIGHTING	0x00c8	/* Hash/Rx/Tx AHB Weighting */
+
+#define	HRT_AHB_TQDV_START	__BITS(20,24)
+#define	HRT_AHB_RX_PREREQ	__BITS(15,19)
+#define	HRT_AHB_TX_WEIGHT	__BITS(10,14)
+#define	HRT_AHB_RX_WEIGHT	__BITS(5,9)
+#define	HRT_AHB_HASH_WEIGHT	__BITS(0,4)
+
+#define	GMAC_PORTn_DMA_OFFSET(n)	(0x8000 + (n) * 0x4000)
+#define	GMAC_PORTn_GMAC_OFFSET(n)	(0xa000 + (n) * 0x4000)
+#define	GMAC_PORTn_DMA_SIZE	0x2000
+#define	GMAC_PORTn_GMAC_SIZE	0x2000
+
+#define	GMAC_STA_ADD0		0x0000
+#define	GMAC_STA_ADD1		0x0004
+#define	GMAC_STA_ADD2		0x0008
+
+#define	GMAC_RX_FILTER		0x000c
+#define	RXFILTER_PROMISC_ALL	__BIT(4)
+#define	RXFILTER_PROMISC	__BIT(3)
+#define	RXFILTER_BROADCAST	__BIT(2)
+#define	RXFILTER_MULTICAST	__BIT(1)
+#define	RXFILTER_UNICAST	__BIT(0)
+
+#define	GMAC_MCAST_FILTER0	0x0010
+#define	GMAC_MCAST_FILTER1	0x0014
+
+#define	GMAC_CONFIG0		0x0018
+
+#define	CONFIG0_PORT1_CLASSIFY_QCHECK_EN	__BIT(29)
+#define	CONFIG0_PORT0_CLASSIFY_QCHECK_EN	__BIT(28)
+#define	CONFIG0_PORT1_TOE_ALMOSTFULL_EN		__BIT(27)
+#define	CONFIG0_PORT0_TOE_ALMOSTFULL_EN		__BIT(26)
+#define	CONFIG0_PORT1_RX_HW_QCHECK_EN		__BIT(25)
+#define	CONFIG0_PORT0_RX_HW_QCHECK_EN		__BIT(24)
+#define	CONFIG0_RX_ER_DETECTING_INDEX_DIS	__BIT(23)
+#define	CONFIG0_IPV6_STRICT_ORDER		__BIT(22)
+#define	CONFIG0_INVERSE_RXC_RGMII		__BIT(21)
+#define	CONFIG0_R_LATCHED_MMII			__BIT(20)
+#define	CONFIG0_VLAN_TAG_REMOVAL		__BIT(19)
+#define	CONFIG0_IPV6_RX_CHECKSUM_ENABLE		__BIT(18)
+#define	CONFIG0_IPV4_RX_CHECKSUM_ENABLE		__BIT(17)
+#define	CONFIG0_RGMII_INBAND_STATUS_ENABLE	__BIT(16)
+#define	CONFIG0_TX_FLOWCTL_ENABLE		__BIT(15)
+#define	CONFIG0_RX_FLOWCTL_ENABLE		__BIT(14)
+#define	CONFIG0_SIM_TEST			__BIT(13)
+#define	CONFIG0_BACKOFF_MASK			__BITS(11,12)
+#define	CONFIG0_BACKOFF_GET(x)			(((x) >> 11) & CONFIG0_BACKOFF_MASK)
+#define	CONFIG0_BACKOFF(x)			(((x) & CONFIG0_BACKOFF_MASK) << 11)
+#define	CONFIG0_BACKOFF_NORMAL			0
+#define	CONFIG0_BACKOFF_2X			1
+#define	CONFIG0_BACKOFF_4X			2
+#define	CONFIG0_BACKOFF_DISABLE			3
+#define	CONFIG0_MAXLEN_MASK			__BITS(8,10)
+#define	CONFIG0_MAXLEN_GET(x)			(((x) >> 8) & CONFIG0_MAXLEN_MASK)
+#define	CONFIG0_MAXLEN(x)			(((x) & CONFIG0_MAXLEN_MASK) << 8)
+#define	CONFIG0_MAXLEN_1536			0
+#define	CONFIG0_MAXLEN_1518			1
+#define	CONFIG0_MAXLEN_1522			2
+#define	CONFIG0_MAXLEN_1548			3
+#define	CONFIG0_MAXLEN_JUMBO			4
+#define	CONFIG0_IFG_ADJUST_MASK			__BITS(4,7)
+#define	CONFIG0_IFG_ADJUST_GET(x)		(((x) >> 4) & CONFIG0_IFG_ADJUST_MASK)
+#define	CONFIG0_IFG_ADJUST(x)			(((x) & CONFIG0_IFG_ADJUST_MASK) << 4)
+#define	CONFIG0_DROP_16COLL_ENABLE		__BIT(3)
+#define	CONFIG0_LOOPBACK			__BIT(2)
+#define	CONFIG0_RX_DISABLE			__BIT(1)
+#define	CONFIG0_TX_DISABLE			__BIT(0)
+
+#define	GMAC_STATUS		0x002c
+#define	STATUS_PHYMODE_MASK	__BITS(5,6)
+#define	STATUS_PHYMODE_MII	(0 << 5)
+#define	STATUS_PHYMODE_GMII	(1 << 5)
+#define	STATUS_PHYMODE_RGMII_A	(2 << 5)
+#define	STATUS_PHYMODE_RGMII_B	(3 << 5)
+#define	STATUS_DUPLEX_FULL	__BIT(3)
+#define	STATUS_SPEED_MASK	__BITS(1,2)
+#define	STATUS_SPEED_10M	(0 << 1)
+#define	STATUS_SPEED_100M	(1 << 1)
+#define	STATUS_SPEED_1000M	(2 << 1)
+#define	STATUS_LINK_ON		__BIT(0)
+
+#define	DESC0_DROP	__BIT(31)
+#define	DESC0_DERR	__BIT(30)
+#define	DESC0_PERR	__BIT(29)
+#define	DESC0_STATUS	__BITS(22, 28)
+#define	DESC0_DESC_CNT	__BITS(16, 21)
+#define	DESC0_BUF_SIZE	__BITS(0, 15)
+
+#define	DESC0_RXCSUMSTS_GET(x)		(((x) >> 26) & 7)
+#define	DESC0_RXCSUMSTS_IPALL_OK	0	/* IP Hdr OK & TCP/UDP OK */
+#define	DESC0_RXCSUMSTS_IPHDR_OK	1	/* IP Hdr OK (!TCP/UDP) */
+#define	DESC0_RXCSUMSTS_NOTIP		2	/* Not an IP PKT */
+#define	DESC0_RXCSUMSTS_INVALID		3	/* Invalid PKT */
+#define	DESC0_RXCSUMSTS__RSVR4		4
+#define	DESC0_RXCSUMSTS_IPHDR_BAD	5	/* IP Hdr BAD */
+#define	DESC0_RXCSUMSTS_IPPAY_BAD	6	/* IP Hdr OK, TDP/UDP BAD */
+#define	DESC0_RXCSUMSTS__RSVR7		7
+
+#define	DESC0_RXSTS_GET(x)		(((x) >> 22) & 15)
+#define	DESC0_RXSTS_GOOD		0	/* good frame */
+#define	DESC0_RXSTS_LONG		1	/* long frame (CRC OK) */
+#define	DESC0_RXSTS_RUNT		2	/* runt frame */
+#define	DESC0_RXSTS_NOSFD		3	/* SFD not found */
+#define	DESC0_RXSTS_BADCRC		4	/* bad CRC */
+#define	DESC0_RXSTS_LONG_BADCRC		5	/* Too long with bad CRC */
+#define	DESC0_RXSTS_BADALIGN		6	/* Alignment error */
+#define	DESC0_RXSTS_ALLBAD		7	/* Long & bad CRC & Align Err */
+#define	DESC0_RXSTS_PAUSE		8	/* Pause Frame received */
+#define	DESC0_RXSTS_RX_ER		9	/* RX_ER Error detected */
+#define	DESC0_RXSTS_ADDR_FILTER		10	/* DA is not matched */
+#define	DESC0_RXSTS_OVERRUN		11	/* RX FIFO Overrun */
+
+#define	DESC0_TXSTS_OK			__BIT(22)	/* TX successful */
+
+#define	DESC1_RX_SWID			__BITS(16, 31)
+#define	DESC1_TX_FLAG			__BITS(16, 31)
+#define	DESC1_BUFLEN			__BITS(0, 15)
+
+#define	DESC1_TX_IPLEN_FIXED		__BITS(22)	/* IPLEN is fixed */
+#define	DESC1_TX_TSS_BYPASS		__BITS(21)	/* TSS Bypass */
+#define	DESC1_TX_UDP_CSUM_EN		__BITS(20)	/* Calc UDP CSUM */
+#define	DESC1_TX_TCP_CSUM_EN		__BITS(19)	/* Calc TCP CSUM */
+#define	DESC1_TX_IPV6_EN		__BITS(18)	/* Calc UDP CSUM */
+#define	DESC1_TX_IPV4_CSUM_EN		__BITS(17)	/* Calc IP HDR CSUM */
+#define	DESC1_TX_SEG_OFFLOAD_EN		__BITS(16)	/* TSS Bypass */
+
+#define	DESC2_BUFADDR			__BITS(2,31)
+
+#define	DESC3_SOF			__BIT(31)
+#define	DESC3_EOF			__BIT(30)
+#define	DESC3_EOFIE			__BIT(29)
+
+#define	DESC3_RX_CTL			__BIT(28)
+#define	DESC3_RX_OSQ			__BIT(27)
+#define	DESC3_RX_OPT			__BIT(26)
+#define	DESC3_RX_ABN			__BIT(25)
+#define	DESC3_RX_DACK			__BIT(24)
+#define	DESC3_RX_L3_OFF			__BITS(16, 32)
+#define	DESC3_RX_L4_OFF			__BITS(8, 15)
+#define	DESC3_RX_L7_OFF			__BITS(0, 7)
+
+#define	DESC3_TX_TSS_MTU		__BITS(0, 10)
+
+typedef struct {
+	volatile uint32_t d_desc0;
+	volatile uint32_t d_desc1;
+	uint32_t d_bufaddr;
+	volatile uint32_t d_desc3;
+} gmac_desc_t;
+
+#endif /* _ARM_GEMINI_GEMINI_GMACREG_H */

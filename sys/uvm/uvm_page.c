@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140 2008/07/04 10:56:59 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.4.1 2009/01/19 13:20:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140 2008/07/04 10:56:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.4.1 2009/01/19 13:20:36 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1071,7 +1071,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	int lcv, try1, try2, zeroit = 0, color;
 	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
-	bool use_reserve;
+	lwp_t *l;
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(anon == NULL || off == 0);
@@ -1102,16 +1102,20 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * fail if any of these conditions is true:
 	 * [1]  there really are no free pages, or
 	 * [2]  only kernel "reserved" pages remain and
-	 *        the page isn't being allocated to a kernel object.
+	 *        reserved pages have not been requested.
 	 * [3]  only pagedaemon "reserved" pages remain and
 	 *        the requestor isn't the pagedaemon.
+	 * we make kernel reserve pages available if called by a
+	 * kernel thread or a realtime thread.
 	 */
-
-	use_reserve = (flags & UVM_PGA_USERESERVE) ||
-		(obj && UVM_OBJ_IS_KERN_OBJECT(obj));
-	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
+	l = curlwp;
+	if (__predict_true(l != NULL) && lwp_eprio(l) >= PRI_KTHREAD) {
+		flags |= UVM_PGA_USERESERVE;
+	}
+	if ((uvmexp.free <= uvmexp.reserve_kernel &&
+	    (flags & UVM_PGA_USERESERVE) == 0) ||
 	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !(use_reserve && curlwp == uvm.pagedaemon_lwp)))
+	     curlwp != uvm.pagedaemon_lwp))
 		goto fail;
 
 #if PGFL_NQUEUES != 2
@@ -1510,6 +1514,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			uvm_pagefree(pg);
 		} else {
 			UVMHIST_LOG(ubchist, "unbusying pg %p", pg,0,0,0);
+			KASSERT((pg->flags & PG_FAKE) == 0);
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}

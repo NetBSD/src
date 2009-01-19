@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.30 2008/07/02 19:49:58 rmind Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.30.4.1 2009/01/19 13:17:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.30 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.30.4.1 2009/01/19 13:17:18 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.30 2008/07/02 19:49:58 rmind Exp
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_exception.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_signal.h>

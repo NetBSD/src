@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.9 2008/04/28 20:23:43 martin Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.9.8.1 2009/01/19 13:17:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ struct linux_rt_sigframe
 #define LINUX_VMWARE_LAST 237
 
 /*
- * Range of ioctls to just pass on, so that LKMs (like VMWare) can
+ * Range of ioctls to just pass on, so that modules (like VMWare) can
  * handle them.
  *
  * From Linux's include/linux/vt.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.59 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.59.12.1 2009/01/19 13:20:13 skrll Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.59 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.59.12.1 2009/01/19 13:20:13 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -91,7 +91,7 @@ int
 in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
-	struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = ifp->if_softc;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
@@ -156,7 +156,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		return EAFNOSUPPORT;
 	}
 
-	bzero(&iphdr, sizeof(iphdr));
+	memset(&iphdr, 0, sizeof(iphdr));
 	iphdr.ip_src = sin_src->sin_addr;
 	/* bidirectional configured tunnel mode */
 	if (sin_dst->sin_addr.s_addr != INADDR_ANY)
@@ -225,7 +225,7 @@ in_gif_input(struct mbuf *m, ...)
 		return;
 	}
 #ifndef GIF_ENCAPCHECK
-	if (!gif_validate4(ip, (struct gif_softc *)gifp, m->m_pkthdr.rcvif)) {
+	if (!gif_validate4(ip, gifp->if_softc, m->m_pkthdr.rcvif)) {
 		m_freem(m);
 		ip_statinc(IP_STAT_NOGIF);
 		return;
@@ -322,21 +322,21 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 
 	/* ingress filters on outer source */
 	if ((sc->gif_if.if_flags & IFF_LINK2) == 0 && ifp) {
-		struct sockaddr_in sin;
+		union {
+			struct sockaddr sa;
+			struct sockaddr_in sin;
+		} u;
 		struct rtentry *rt;
 
-		bzero(&sin, sizeof(sin));
-		sin.sin_family = AF_INET;
-		sin.sin_len = sizeof(struct sockaddr_in);
-		sin.sin_addr = ip->ip_src;
-		rt = rtalloc1((struct sockaddr *)&sin, 0);
-		if (!rt || rt->rt_ifp != ifp) {
+		sockaddr_in_init(&u.sin, &ip->ip_src, 0);
+		rt = rtalloc1(&u.sa, 0);
+		if (rt == NULL || rt->rt_ifp != ifp) {
 #if 0
 			log(LOG_WARNING, "%s: packet from 0x%x dropped "
 			    "due to ingress filter\n", if_name(&sc->gif_if),
-			    (u_int32_t)ntohl(sin.sin_addr.s_addr));
+			    (u_int32_t)ntohl(u.sin.sin_addr.s_addr));
 #endif
-			if (rt)
+			if (rt != NULL)
 				rtfree(rt);
 			return 0;
 		}
@@ -359,9 +359,9 @@ gif_encapcheck4(struct mbuf *m, int off, int proto, void *arg)
 	struct ifnet *ifp;
 
 	/* sanity check done in caller */
-	sc = (struct gif_softc *)arg;
+	sc = arg;
 
-	m_copydata(m, 0, sizeof(ip), (void *)&ip);
+	m_copydata(m, 0, sizeof(ip), &ip);
 	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m->m_pkthdr.rcvif : NULL;
 
 	return gif_validate4(&ip, sc, ifp);
@@ -374,7 +374,7 @@ in_gif_attach(struct gif_softc *sc)
 #ifndef GIF_ENCAPCHECK
 	struct sockaddr_in mask4;
 
-	bzero(&mask4, sizeof(mask4));
+	memset(&mask4, 0, sizeof(mask4));
 	mask4.sin_len = sizeof(struct sockaddr_in);
 	mask4.sin_addr.s_addr = ~0;
 

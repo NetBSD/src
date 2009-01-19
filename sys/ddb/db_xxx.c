@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.52 2008/10/03 14:52:11 rmind Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.52.2.1 2009/01/19 13:17:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.52 2008/10/03 14:52:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.52.2.1 2009/01/19 13:17:51 skrll Exp $");
 
 #include "opt_kgdb.h"
+#include "opt_aio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.52 2008/10/03 14:52:11 rmind Exp $");
 #include <sys/kauth.h>
 #include <sys/mqueue.h>
 #include <sys/vnode.h>
+#include <sys/module.h>
 
 #include <machine/db_machdep.h>
 
@@ -160,18 +162,27 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 	}
 }
 
+#ifdef AIO
 void
 db_show_aio_jobs(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 	aio_print_jobs(db_printf);
 }
+#endif
 
 void
 db_show_mqueue_cmd(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 	mqueue_print_list(db_printf);
+}
+
+void
+db_show_module_cmd(db_expr_t addr, bool haddr,
+    db_expr_t count, const char *modif)
+{
+	module_print_list(db_printf);
 }
 
 void

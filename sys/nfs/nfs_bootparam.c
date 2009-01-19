@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.33 2008/10/24 17:17:12 cegger Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.33.2.1 2009/01/19 13:20:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.33 2008/10/24 17:17:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.33.2.1 2009/01/19 13:20:20 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
-#include "opt_inet.h"
+#include "arp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.33 2008/10/24 17:17:12 cegger Ex
 #include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
 #include <nfs/nfs_var.h>
-
-#include "arp.h"
 
 /*
  * There are two implementations of NFS diskless boot.
@@ -103,7 +103,7 @@ static int bp_getfile (struct sockaddr_in *bpsin, const char *key,
  * is used for all subsequent booptaram RPCs.
  */
 int
-nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp)
+nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 {
 	struct ifnet *ifp = nd->nd_ifp;
 	struct in_addr my_ip, arps_ip, gw_ip;
@@ -126,7 +126,6 @@ nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp)
 	}
 
 	error = EADDRNOTAVAIL;
-#ifdef INET
 #if NARP > 0
 	if (ifp->if_type == IFT_ETHER || ifp->if_type == IFT_FDDI) {
 		/*
@@ -135,15 +134,17 @@ nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp)
 		error = revarpwhoarewe(ifp, &arps_ip, &my_ip);
 	}
 #endif
-#endif
 	if (error) {
 		printf("revarp failed, error=%d\n", error);
 		goto out;
 	}
 
-	nd->nd_myip.s_addr = my_ip.s_addr;
-	printf("nfs_boot: client_addr=%s", inet_ntoa(my_ip));
-	printf(" (RARP from %s)\n", inet_ntoa(arps_ip));
+	if (!(*flags & NFS_BOOT_HAS_MYIP)) {
+		nd->nd_myip.s_addr = my_ip.s_addr;
+		printf("nfs_boot: client_addr=%s", inet_ntoa(my_ip));
+		printf(" (RARP from %s)\n", inet_ntoa(arps_ip));
+		*flags |= NFS_BOOT_HAS_MYIP;
+	}
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
@@ -262,6 +263,9 @@ gwok:
 	if (gw_ndm)
 		kmem_free(gw_ndm, sizeof(*gw_ndm));
 #endif
+	if ((*flags & NFS_BOOT_ALLINFO) != NFS_BOOT_ALLINFO)
+		return error ? error : EADDRNOTAVAIL;
+
 	return (error);
 }
 

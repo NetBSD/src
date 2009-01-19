@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.7 2008/12/09 09:13:00 mjf Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.8 2009/01/19 13:16:14 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -54,7 +54,6 @@ struct pmap {
 
 	struct pmap_statistics	pm_stats;
 };
-typedef struct pmap *pmap_t;
 
 #define	PMAP_NC		0x100
 
@@ -98,7 +97,6 @@ extern struct pdc_hwtlb pdc_hwtlb;
 } while(0)
 
 #define	pmap_sid2pid(s)			(((s) + 1) << 1)
-#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_update(p)

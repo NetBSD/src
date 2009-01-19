@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.116 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.116.2.1 2009/01/19 13:17:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,10 +76,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.116 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.116.2.1 2009/01/19 13:17:45 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #endif
 
@@ -128,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.116 2008/10/15 06:51:20 wrstuden E
 #include <compat/ultrix/ultrix_syscall.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
+#include <compat/sys/time.h>
 
 #include <netinet/in.h>
 
@@ -162,7 +162,7 @@ struct uvm_object *emul_ultrix_object;
 void	syscall(void);
 #endif
 
-const struct emul emul_ultrix = {
+struct emul emul_ultrix = {
 	"ultrix",
 	"/emul/ultrix",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -235,27 +235,27 @@ ultrix_sys_setsysinfo(struct lwp *l, const struct ultrix_sys_setsysinfo_args *ua
 int
 ultrix_sys_waitpid(struct lwp *l, const struct ultrix_sys_waitpid_args *uap, register_t *retval)
 {
-	struct sys_wait4_args ap;
+	struct compat_50_sys_wait4_args ap;
 
 	SCARG(&ap, pid) = SCARG(uap, pid);
 	SCARG(&ap, status) = SCARG(uap, status);
 	SCARG(&ap, options) = SCARG(uap, options);
 	SCARG(&ap, rusage) = 0;
 
-	return sys_wait4(l, &ap, retval);
+	return compat_50_sys_wait4(l, &ap, retval);
 }
 
 int
 ultrix_sys_wait3(struct lwp *l, const struct ultrix_sys_wait3_args *uap, register_t *retval)
 {
-	struct sys_wait4_args ap;
+	struct compat_50_sys_wait4_args ap;
 
 	SCARG(&ap, pid) = -1;
 	SCARG(&ap, status) = SCARG(uap, status);
 	SCARG(&ap, options) = SCARG(uap, options);
 	SCARG(&ap, rusage) = SCARG(uap, rusage);
 
-	return sys_wait4(l, &ap, retval);
+	return compat_50_sys_wait4(l, &ap, retval);
 }
 
 /*
@@ -268,9 +268,9 @@ ultrix_sys_wait3(struct lwp *l, const struct ultrix_sys_wait3_args *uap, registe
 int
 ultrix_sys_select(struct lwp *l, const struct ultrix_sys_select_args *uap, register_t *retval)
 {
-	struct timeval atv;
+	struct timeval50 atv;
 	int error;
-	struct sys_select_args ap;
+	struct compat_50_sys_select_args ap;
 
 	/* Limit number of FDs selected on to the native maximum */
 
@@ -296,7 +296,7 @@ ultrix_sys_select(struct lwp *l, const struct ultrix_sys_select_args *uap, regis
 #endif
 
 	}
-	error = sys_select(l, &ap, retval);
+	error = compat_50_sys_select(l, &ap, retval);
 	if (error == EINVAL)
 		printf("ultrix select: bad args?\n");
 
@@ -466,7 +466,6 @@ ultrix_sys_setpgrp(struct lwp *l, const struct ultrix_sys_setpgrp_args *uap, reg
 		return sys_setpgid(l, &ap, retval);
 }
 
-#if defined (NFSSERVER)
 int
 ultrix_sys_nfssvc(struct lwp *l, const struct ultrix_sys_nfssvc_args *uap,
     register_t *retval)
@@ -497,7 +496,6 @@ ultrix_sys_nfssvc(struct lwp *l, const struct ultrix_sys_nfssvc_args *uap,
 	return ENOSYS;
 #endif
 }
-#endif /* NFSSERVER */
 
 struct ultrix_ustat {
 	daddr_t	f_tfree;	/* total free */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.2.1 2009/01/19 13:16:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.2.1 2009/01/19 13:16:15 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $")
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/extent.h>
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -111,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -142,6 +142,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $")
 #include <machine/bootinfo.h>
 #include <machine/mtrr.h>
 #include <x86/x86/tsc.h>
+
+#include <x86/machdep.h>
 
 #include <machine/multiboot.h>
 #ifdef XEN
@@ -239,10 +241,6 @@ int     cpureset_delay = 2000; /* default to 2s */
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-#ifdef COMPAT_NOMID
-static int exec_nomid(struct lwp *, struct exec_package *);
-#endif
-
 int	physmem;
 
 unsigned int cpu_feature;
@@ -295,8 +293,6 @@ int	mem_cluster_cnt;
 
 void	init386(paddr_t);
 void	initgdt(union descriptor *);
-
-void	add_mem_cluster(uint64_t, uint64_t, uint32_t);
 
 extern int time_adjusted;
 
@@ -538,7 +534,7 @@ i386_proc0_tss_ldt_init()
 	pcb = &l->l_addr->u_pcb;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
+	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
@@ -769,9 +765,12 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+
+	/* Ensure FP state is reset, if FP is used. */
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 }
 
-static void
+void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -789,18 +788,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	KASSERT(mutex_owned(p->p_lock));
 
 	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
-	default:	/* unknown version */
-		printf("nsendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-	case 2:
-		break;
-	}
 
 	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_signum = sig;
@@ -840,22 +827,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-
-	KASSERT(mutex_owned(curproc->p_lock));
-
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		sendsig_siginfo(ksi, mask);
-}
-
-void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-    void *ap, void *sp, sa_upcall_t upcall)
+	   void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct saframe *sf, frame;
@@ -896,6 +869,7 @@ int	waittime = -1;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	int s = 0;	/* XXX gcc */
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -915,7 +889,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable interrupts. */
-	splhigh();
+	s = splhigh();
 
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
@@ -923,6 +897,14 @@ cpu_reboot(int howto, char *bootstr)
 
 haltsys:
 	doshutdownhooks();
+
+	if (!cold) {
+		splx(s);
+
+		pmf_system_shutdown(boothowto);
+
+		splhigh();
+	}
 
 #ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);
@@ -1120,9 +1102,9 @@ typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
-#ifdef COMPAT_SVR4
 extern vector IDTVEC(svr4_fasttrap);
-#endif /* COMPAT_SVR4 */
+void (*svr4_fasttrap_vec)(void) = (void (*)(void))nullop;
+krwlock_t svr4_fasttrap_lock;
 #ifdef COMPAT_MACH
 extern vector IDTVEC(mach_trap);
 #endif
@@ -1132,114 +1114,12 @@ trap_info_t xen_idt[MAX_XEN_IDT];
 int xen_idt_idx;
 #endif
 
-#define	KBTOB(x)	((size_t)(x) * 1024UL)
-#define	MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
-
 #ifndef XEN
 void cpu_init_idt()
 {
 	struct region_descriptor region;
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
-}
-
-void
-add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
-{
-	extern struct extent *iomem_ex;
-	uint64_t new_physmem;
-	int i;
-
-	if (seg_end > 0x100000000ULL) {
-		printf("WARNING: skipping large "
-		    "memory map entry: "
-		    "0x%qx/0x%qx/0x%x\n",
-		    seg_start,
-		    (seg_end - seg_start),
-		    type);
-		return;
-	}
-
-	/*
-	 * XXX Chop the last page off the size so that
-	 * XXX it can fit in avail_end.
-	 */
-	if (seg_end == 0x100000000ULL)
-		seg_end -= PAGE_SIZE;
-
-	if (seg_end <= seg_start)
-		return;
-
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		if ((mem_clusters[i].start == round_page(seg_start))
-		    && (mem_clusters[i].size
-			    == trunc_page(seg_end) - mem_clusters[i].start)) {
-#ifdef DEBUG_MEMLOAD
-			printf("WARNING: skipping duplicate segment entry\n");
-#endif
-			return;
-		}
-	}
-
-	/*
-	 * Allocate the physical addresses used by RAM
-	 * from the iomem extent map.  This is done before
-	 * the addresses are page rounded just to make
-	 * sure we get them all.
-	 */
-	if (extent_alloc_region(iomem_ex, seg_start,
-	    seg_end - seg_start, EX_NOWAIT)) {
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE "
-		    "MEMORY SEGMENT "
-		    "(0x%qx/0x%qx/0x%x) FROM "
-		    "IOMEM EXTENT MAP!\n",
-		    seg_start, seg_end - seg_start, type);
-		return;
-	}
-
-	/*
-	 * If it's not free memory, skip it.
-	 */
-	if (type != BIM_Memory)
-		return;
-
-	/* XXX XXX XXX */
-	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-		panic("init386: too many memory segments "
-		    "(increase VM_PHYSSEG_MAX)");
-
-#ifdef PHYSMEM_MAX_ADDR
-	if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
-		return;
-	if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
-		seg_end = MBTOB(PHYSMEM_MAX_ADDR);
-#endif
-
-	seg_start = round_page(seg_start);
-	seg_end = trunc_page(seg_end);
-
-	if (seg_start == seg_end)
-		return;
-
-	mem_clusters[mem_cluster_cnt].start = seg_start;
-	new_physmem = physmem + atop(seg_end - seg_start);
-
-#ifdef PHYSMEM_MAX_SIZE
-	if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
-		return;
-	if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
-		seg_end = seg_start + MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
-		new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
-	}
-#endif
-
-	mem_clusters[mem_cluster_cnt].size = seg_end - seg_start;
-
-	if (avail_end < seg_end)
-		avail_end = seg_end;
-	physmem = new_physmem;
-	mem_cluster_cnt++;
 }
 #endif /* !XEN */
 
@@ -1373,7 +1253,7 @@ init386_pte0(void)
 static void
 init386_ksyms(void)
 {
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern int end;
 	struct btinfo_symtab *symtab;
 
@@ -1382,35 +1262,32 @@ init386_ksyms(void)
 #endif
 
 #if defined(MULTIBOOT)
-	if (multiboot_ksyms_init())
+	if (multiboot_ksyms_addsyms_elf())
 		return;
 #endif
 
 	if ((symtab = lookup_bootinfo(BTINFO_SYMTAB)) == NULL) {
-		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 		return;
 	}
 
 	symtab->ssym += KERNBASE;
 	symtab->esym += KERNBASE;
-	ksyms_init(symtab->nsym, (int *)symtab->ssym, (int *)symtab->esym);
+	ksyms_addsyms_elf(symtab->nsym, (int *)symtab->ssym, (int *)symtab->esym);
 #endif
 }
 
 void
 init386(paddr_t first_avail)
 {
+	extern void consinit(void);
+	int x;
 #ifndef XEN
 	union descriptor *tgdt;
 	extern struct extent *iomem_ex;
-	struct btinfo_memmap *bim;
 	struct region_descriptor region;
-	int first16q;
-	uint64_t seg_start, seg_end;
-	uint64_t seg_start1, seg_end1;
+	struct btinfo_memmap *bim;
 #endif
-	extern void consinit(void);
-	int x;
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
@@ -1544,254 +1421,20 @@ init386(paddr_t first_avail)
 	 * Check to see if we have a memory map from the BIOS (passed
 	 * to us by the boot program.
 	 */
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
-	    (bim = lookup_bootinfo(BTINFO_MEMMAP)) != NULL && bim->num > 0) {
-#ifdef DEBUG_MEMLOAD
-		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
-#endif
-		for (x = 0; x < bim->num; x++) {
-#ifdef DEBUG_MEMLOAD
-			printf("    addr 0x%qx  size 0x%qx  type 0x%x\n",
-			    bim->entry[x].addr,
-			    bim->entry[x].size,
-			    bim->entry[x].type);
-#endif
-
-			/*
-			 * If the segment is not memory, skip it.
-			 */
-			switch (bim->entry[x].type) {
-			case BIM_Memory:
-			case BIM_ACPI:
-			case BIM_NVS:
-				break;
-			default:
-				continue;
-			}
-
-			/*
-			 * If the segment is smaller than a page, skip it.
-			 */
-			if (bim->entry[x].size < NBPG) {
-				continue;
-			}
-
-			/*
-			 * Sanity check the entry.
-			 * XXX Need to handle uint64_t in extent code
-			 * XXX and 64-bit physical addresses in i386
-			 * XXX port.
-			 */
-			seg_start = bim->entry[x].addr;
-			seg_end = bim->entry[x].addr + bim->entry[x].size;
-
-			/*
-			 *   Avoid Compatibility Holes.
-			 * XXX  Holes within memory space that allow access
-			 * XXX to be directed to the PC-compatible frame buffer
-			 * XXX (0xa0000-0xbffff),to adapter ROM space
-			 * XXX (0xc0000-0xdffff), and to system BIOS space
-			 * XXX (0xe0000-0xfffff).
-			 * XXX  Some laptop(for example,Toshiba Satellite2550X)
-			 * XXX report this area and occurred problems,
-			 * XXX so we avoid this area.
-			 */
-			if (seg_start < 0x100000 && seg_end > 0xa0000) {
-				printf("WARNING: memory map entry overlaps "
-				    "with ``Compatibility Holes'': "
-				    "0x%qx/0x%qx/0x%x\n", seg_start,
-				    seg_end - seg_start, bim->entry[x].type);
-				add_mem_cluster(seg_start, 0xa0000,
-				    bim->entry[x].type);
-				add_mem_cluster(0x100000, seg_end,
-				    bim->entry[x].type);
-			} else
-				add_mem_cluster(seg_start, seg_end,
-				    bim->entry[x].type);
-		}
-	}
+	    bim != NULL && bim->num > 0)
+		initx86_parse_memmap(bim, iomem_ex);
 
 	/*
 	 * If the loop above didn't find any valid segment, fall back to
 	 * former code.
 	 */
-	if (mem_cluster_cnt == 0) {
-		/*
-		 * Allocate the physical addresses used by RAM from the iomem
-		 * extent map.  This is done before the addresses are
-		 * page rounded just to make sure we get them all.
-		 */
-		if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem),
-		    EX_NOWAIT)) {
-			/* XXX What should we do? */
-			printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM "
-			    "IOMEM EXTENT MAP!\n");
-		}
-		mem_clusters[0].start = 0;
-		mem_clusters[0].size = trunc_page(KBTOB(biosbasemem));
-		physmem += atop(mem_clusters[0].size);
-		if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
-		    EX_NOWAIT)) {
-			/* XXX What should we do? */
-			printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
-			    "IOMEM EXTENT MAP!\n");
-		}
-#if NISADMA > 0
-		/*
-		 * Some motherboards/BIOSes remap the 384K of RAM that would
-		 * normally be covered by the ISA hole to the end of memory
-		 * so that it can be used.  However, on a 16M system, this
-		 * would cause bounce buffers to be allocated and used.
-		 * This is not desirable behaviour, as more than 384K of
-		 * bounce buffers might be allocated.  As a work-around,
-		 * we round memory down to the nearest 1M boundary if
-		 * we're using any isadma devices and the remapped memory
-		 * is what puts us over 16M.
-		 */
-		if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
-			char pbuf[9];
+	if (mem_cluster_cnt == 0)
+		initx86_fake_memmap(iomem_ex);
 
-			format_bytes(pbuf, sizeof(pbuf),
-			    biosextmem - (15*1024));
-			printf("Warning: ignoring %s of remapped memory\n",
-			    pbuf);
-			biosextmem = (15*1024);
-		}
-#endif
-		mem_clusters[1].start = IOM_END;
-		mem_clusters[1].size = trunc_page(KBTOB(biosextmem));
-		physmem += atop(mem_clusters[1].size);
+	initx86_load_memmap(first_avail);
 
-		mem_cluster_cnt = 2;
-
-		avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
-	}
-	/*
-	 * If we have 16M of RAM or less, just put it all on
-	 * the default free list.  Otherwise, put the first
-	 * 16M of RAM on a lower priority free list (so that
-	 * all of the ISA DMA'able memory won't be eaten up
-	 * first-off).
-	 */
-	if (avail_end <= (16 * 1024 * 1024))
-		first16q = VM_FREELIST_DEFAULT;
-	else
-		first16q = VM_FREELIST_FIRST16;
-
-	/* Make sure the end of the space used by the kernel is rounded. */
-	first_avail = round_page(first_avail);
-
-	/*
-	 * Now, load the memory clusters (which have already been
-	 * rounded and truncated) into the VM system.
-	 *
-	 * NOTE: WE ASSUME THAT MEMORY STARTS AT 0 AND THAT THE KERNEL
-	 * IS LOADED AT IOM_END (1M).
-	 */
-	for (x = 0; x < mem_cluster_cnt; x++) {
-		seg_start = mem_clusters[x].start;
-		seg_end = mem_clusters[x].start + mem_clusters[x].size;
-		seg_start1 = 0;
-		seg_end1 = 0;
-
-		/*
-		 * Skip memory before our available starting point.
-		 */
-		if (seg_end <= avail_start)
-			continue;
-
-		if (avail_start >= seg_start && avail_start < seg_end) {
-			if (seg_start != 0)
-				panic("init386: memory doesn't start at 0");
-			seg_start = avail_start;
-			if (seg_start == seg_end)
-				continue;
-		}
-
-		/*
-		 * If this segment contains the kernel, split it
-		 * in two, around the kernel.
-		 */
-		if (seg_start <= IOM_END && first_avail <= seg_end) {
-			seg_start1 = first_avail;
-			seg_end1 = seg_end;
-			seg_end = IOM_END;
-		}
-
-		/* First hunk */
-		if (seg_start != seg_end) {
-			if (seg_start < (16 * 1024 * 1024) &&
-			    first16q != VM_FREELIST_DEFAULT) {
-				uint64_t tmp;
-
-				if (seg_end > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
-				else
-					tmp = seg_end;
-
-				if (tmp != seg_start) {
-#ifdef DEBUG_MEMLOAD
-					printf("loading 0x%qx-0x%qx "
-					    "(0x%lx-0x%lx)\n",
-				    	    seg_start, tmp,
-				  	    atop(seg_start), atop(tmp));
-#endif
-					uvm_page_physload(atop(seg_start),
-				    	    atop(tmp), atop(seg_start),
-				    	    atop(tmp), first16q);
-				}
-				seg_start = tmp;
-			}
-
-			if (seg_start != seg_end) {
-#ifdef DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start, seg_end,
-				    atop(seg_start), atop(seg_end));
-#endif
-				uvm_page_physload(atop(seg_start),
-				    atop(seg_end), atop(seg_start),
-				    atop(seg_end), VM_FREELIST_DEFAULT);
-			}
-		}
-
-		/* Second hunk */
-		if (seg_start1 != seg_end1) {
-			if (seg_start1 < (16 * 1024 * 1024) &&
-			    first16q != VM_FREELIST_DEFAULT) {
-				uint64_t tmp;
-
-				if (seg_end1 > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
-				else
-					tmp = seg_end1;
-
-				if (tmp != seg_start1) {
-#ifdef DEBUG_MEMLOAD
-					printf("loading 0x%qx-0x%qx "
-					    "(0x%lx-0x%lx)\n",
-				    	    seg_start1, tmp,
-				    	    atop(seg_start1), atop(tmp));
-#endif
-					uvm_page_physload(atop(seg_start1),
-				    	    atop(tmp), atop(seg_start1),
-				    	    atop(tmp), first16q);
-				}
-				seg_start1 = tmp;
-			}
-
-			if (seg_start1 != seg_end1) {
-#ifdef DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start1, seg_end1,
-				    atop(seg_start1), atop(seg_end1));
-#endif
-				uvm_page_physload(atop(seg_start1),
-				    atop(seg_end1), atop(seg_start1),
-				    atop(seg_end1), VM_FREELIST_DEFAULT);
-			}
-		}
-	}
 #else /* !XEN */
 	XENPRINTK(("load the memory cluster %p(%d) - %p(%ld)\n",
 	    (void *)(long)avail_start, (int)atop(avail_start),
@@ -1878,11 +1521,9 @@ init386(paddr_t first_avail)
 	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-#ifdef COMPAT_SVR4
 	idt_vec_reserve(0xd2);
 	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-#endif /* COMPAT_SVR4 */
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
@@ -1920,14 +1561,12 @@ init386(paddr_t first_avail)
 	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(syscall);
 	xen_idt_idx++;
-#ifdef COMPAT_SVR4
 	KASSERT(xen_idt_idx < MAX_XEN_IDT);
 	xen_idt[xen_idt_idx].vector = 0xd2;
 	xen_idt[xen_idt_idx].flags = SEL_UPL;
 	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(svr4_fasttrap);
 	xen_idt_idx++;
-#endif /* COMPAT_SVR4 */
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 
 	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
@@ -1979,96 +1618,8 @@ init386(paddr_t first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
-}
 
-#ifdef COMPAT_NOMID
-static int
-exec_nomid(struct lwp *l, struct exec_package *epp)
-{
-	int error;
-	u_long midmag, magic;
-	u_short mid;
-	struct exec *execp = epp->ep_hdr;
-
-	/* check on validity of epp->ep_hdr performed by exec_out_makecmds */
-
-	midmag = ntohl(execp->a_midmag);
-	mid = (midmag >> 16) & 0xffff;
-	magic = midmag & 0xffff;
-
-	if (magic == 0) {
-		magic = (execp->a_midmag & 0xffff);
-		mid = MID_ZERO;
-	}
-
-	midmag = mid << 16 | magic;
-
-	switch (midmag) {
-	case (MID_ZERO << 16) | ZMAGIC:
-		/*
-		 * 386BSD's ZMAGIC format:
-		 */
-		error = exec_aout_prep_oldzmagic(l, epp);
-		break;
-
-	case (MID_ZERO << 16) | QMAGIC:
-		/*
-		 * BSDI's QMAGIC format:
-		 * same as new ZMAGIC format, but with different magic number
-		 */
-		error = exec_aout_prep_zmagic(l, epp);
-		break;
-
-	case (MID_ZERO << 16) | NMAGIC:
-		/*
-		 * BSDI's NMAGIC format:
-		 * same as NMAGIC format, but with different magic number
-		 * and with text starting at 0.
-		 */
-		error = exec_aout_prep_oldnmagic(l, epp);
-		break;
-
-	case (MID_ZERO << 16) | OMAGIC:
-		/*
-		 * BSDI's OMAGIC format:
-		 * same as OMAGIC format, but with different magic number
-		 * and with text starting at 0.
-		 */
-		error = exec_aout_prep_oldomagic(l, epp);
-		break;
-
-	default:
-		error = ENOEXEC;
-	}
-
-	return error;
-}
-#endif
-
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
- * if COMPAT_NOMID is given as a kernel option.
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	int error = ENOEXEC;
-
-#ifdef COMPAT_NOMID
-	if ((error = exec_nomid(l, epp)) == 0)
-		return error;
-#else
-	(void) l;
-	(void) epp;
-#endif /* ! COMPAT_NOMID */
-
-	return error;
+	rw_init(&svr4_fasttrap_lock);
 }
 
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
@@ -2201,8 +1752,6 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
-		 * XXX npxsave() also clears the FPU state; depending on the
-		 * XXX application this might be a penalty.
 		 */
 		if (l->l_addr->u_pcb.pcb_fpcpu) {
 			npxsave_lwp(l, true);
@@ -2284,15 +1833,16 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_ss     = gr[_REG_SS];
 	}
 
+#if NNPX > 0
+	/*
+	 * If we were using the FPU, forget that we were.
+	 */
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_lwp(l, false);
+#endif
+
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
-#if NNPX > 0
-		/*
-		 * If we were using the FPU, forget that we were.
-		 */
-		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			npxsave_lwp(l, false);
-#endif
 		if (flags & _UC_FXSAVE) {
 			if (i386_use_fxsave) {
 				memcpy(
@@ -2316,12 +1866,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 				    sizeof (l->l_addr->u_pcb.pcb_savefpu.sv_87));
 			}
 		}
-		/* If not set already. */
 		l->l_md.md_flags |= MDL_USEDFPU;
-#if 0
-		/* Apparently unused. */
-		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
-#endif
 	}
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)

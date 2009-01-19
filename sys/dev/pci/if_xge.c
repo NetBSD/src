@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.9 2008/04/10 19:13:37 cegger Exp $ */
+/*      $NetBSD: if_xge.c,v 1.9.12.1 2009/01/19 13:18:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.9 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.9.12.1 2009/01/19 13:18:26 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -633,7 +633,7 @@ xge_init(struct ifnet *ifp)
 		char buf[200];
 		printf("%s: adapter not quiescent, aborting\n", XNAME);
 		val = (val & QUIESCENT) ^ QUIESCENT;
-		bitmask_snprintf(val, QUIESCENT_BMSK, buf, sizeof buf);
+		snprintb(buf, sizeof buf, QUIESCENT_BMSK, val);
 		printf("%s: ADAPTER_STATUS missing bits %s\n", XNAME, buf);
 		return 1;
 	}

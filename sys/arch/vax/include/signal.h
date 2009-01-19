@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.13 2005/12/11 12:19:34 christos Exp $   */
+/*      $NetBSD: signal.h,v 1.13.86.1 2009/01/19 13:17:02 skrll Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -37,6 +37,8 @@
 #define _VAX_SIGNAL_H_
 
 #include <sys/featuretest.h>
+#include <sys/siginfo.h>
+#include <machine/trap.h>
 
 typedef int sig_atomic_t;
 
@@ -72,13 +74,39 @@ struct sigcontext {
 };
 
 #ifdef _KERNEL
+#define sendsig_sigcontext	sendsig_sighelper
+#define sendsig_siginfo		sendsig_sighelper
+
 void sendsig_context(int, const sigset_t *, u_long);
 
-#ifdef COMPAT_16
-#define	SIGTRAMP_VALID(vers)	((vers) <= 3 && (vers) != 1)
-#else
-#define	SIGTRAMP_VALID(vers)	((vers) == 3)
-#endif
+/* Avoid a cyclic dependency and don't use ksiginfo_t here. */
+struct ksiginfo;
+
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
+struct otrampframe {
+	unsigned sig;	/* Signal number */
+	unsigned code;	/* Info code */
+	vaddr_t	scp;	/* Pointer to struct sigcontext */
+	unsigned r0, r1, r2, r3, r4, r5; /* Registers saved when interrupt */
+	register_t pc;	/* Address of signal handler */
+	vaddr_t	arg;	/* Pointer to first (and only) sigreturn argument */
+};
+
+vaddr_t setupstack_oldsigcontext(const struct ksiginfo *, const sigset_t *,
+	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
+#endif /* COMPAT_13 || COMPAT_ULTRIX || COMPAT_IBCS2 */
+
+#if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
+struct trampoline2 {
+	unsigned int narg;	/* Argument count (== 3) */
+	unsigned int sig;	/* Signal number */
+	unsigned int code;	/* Info code */
+	vaddr_t scp;		/* Pointer to struct sigcontext */
+};
+
+vaddr_t setupstack_sigcontext2(const struct ksiginfo *, const sigset_t *,
+	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
+#endif /* COMPAT_16 || COMPAT_ULTRIX */
 
 #endif	/* _KERNEL */
 

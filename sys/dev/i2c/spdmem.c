@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.11 2008/09/28 12:59:54 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.11.2.1 2009/01/19 13:17:54 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.11 2008/09/28 12:59:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.11.2.1 2009/01/19 13:17:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -405,7 +405,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 			(s->sm_ddr3.ddr3_chipsize + 28 - 20) - 3 +
 			(s->sm_ddr3.ddr3_datawidth + 3) -
 			(s->sm_ddr3.ddr3_chipwidth + 2);
-		num_banks = s->sm_ddr3.ddr3_physbanks;
+		num_banks = s->sm_ddr3.ddr3_physbanks + 1;
 		per_chip = 1;
 	} else if (s->sm_type == SPDMEM_MEMTYPE_FBDIMM ||
 		   s->sm_type == SPDMEM_MEMTYPE_FBDIMM_PROBE) {
@@ -604,7 +604,8 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		    "%d rows, %d cols, %d internal banks, %d physical banks, "
 		    "%d.%03dns cycle time\n",
 		    s->sm_ddr3.ddr3_rows + 9, s->sm_ddr3.ddr3_cols + 12,
-		    8 << s->sm_ddr3.ddr3_logbanks, s->sm_ddr3.ddr3_physbanks,
+		    1 << (s->sm_ddr3.ddr3_logbanks + 3),
+		    s->sm_ddr3.ddr3_physbanks + 1,
 		    cycle_time/1000, cycle_time % 1000);
 		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
 		break;

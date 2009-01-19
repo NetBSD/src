@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.15 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.15.6.1 2009/01/19 13:17:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.15 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.15.6.1 2009/01/19 13:17:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.15 2008/05/29 14:51:26 mrg Exp
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32_select(struct lwp *l, const struct netbsd32_select_args *uap, register_t *retval)
+netbsd32___select50(struct lwp *l, const struct netbsd32___select50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) nd;
@@ -77,7 +77,7 @@ netbsd32_select(struct lwp *l, const struct netbsd32_select_args *uap, register_
 }
 
 int
-netbsd32_pselect(struct lwp *l, const struct netbsd32_pselect_args *uap, register_t *retval)
+netbsd32___pselect50(struct lwp *l, const struct netbsd32___pselect50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) nd;
@@ -114,7 +114,7 @@ netbsd32_pselect(struct lwp *l, const struct netbsd32_pselect_args *uap, registe
 }
 
 int
-netbsd32_pollts(struct lwp *l, const struct netbsd32_pollts_args *uap, register_t *retval)
+netbsd32___pollts50(struct lwp *l, const struct netbsd32___pollts50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(struct netbsd32_pollfdp_t) fds;

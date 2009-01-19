@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.10 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.10.84.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,8 @@
 /*
  * Functions and variables exported from kgdb_stub.c
  */
-extern int kgdb_dev, kgdb_rate, kgdb_active;
+extern dev_t kgdb_dev;
+extern int kgdb_rate, kgdb_active;
 extern int kgdb_debug_init, kgdb_debug_panic;
 extern label_t *kgdb_recover;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.h,v 1.2.84.1 2009/01/19 13:20:12 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -62,7 +62,7 @@ struct lacp_peerinfo {
 #define	LACP_STATE_DEFAULTED	(1<<6)
 #define	LACP_STATE_EXPIRED	(1<<7)
 
-/* for bitmask_snprintf(9) */
+/* for snprintb(3) */
 #define	LACP_STATE_BITS		\
 	"\177\020"		\
 	"b\0ACTIVITY\0"		\

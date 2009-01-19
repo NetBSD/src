@@ -1,4 +1,4 @@
-/* $NetBSD: ne.c,v 1.6 2008/04/28 20:23:25 martin Exp $ */
+/* $NetBSD: ne.c,v 1.6.8.1 2009/01/19 13:16:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ EtherInit(unsigned char *myadr)
 
 	/* Temporarily initialize DCR for byte operations. */
 	NIC_OUTB(ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS);
-	
+
 	NIC_OUTB(ED_P0_PSTART, 8192 >> ED_PAGE_SHIFT);
 	NIC_OUTB(ED_P0_PSTOP, 16384 >> ED_PAGE_SHIFT);
 
@@ -160,7 +160,7 @@ EtherInit(unsigned char *myadr)
 #else
 {
 	uint8_t romdata[16];
-	
+
 	ne2000_readmem(0, romdata, 16);
 	for (i = 0; i < 6; i++)
 		myadr[i] = eth_myaddr[i] = romdata[i*2];
@@ -183,7 +183,7 @@ out:
 }
 
 void
-EtherStop() {
+EtherStop(void) {
 	uint8_t tmp;
 
 	dp8390_stop();

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.19 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.19.84.1 2009/01/19 13:19:02 skrll Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.19 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.19.84.1 2009/01/19 13:19:02 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -52,7 +52,7 @@ static void rf_FreeShutdownEnt(RF_ShutdownList_t *);
 static void
 rf_FreeShutdownEnt(RF_ShutdownList_t *ent)
 {
-	FREE(ent, M_RAIDFRAME);
+	free(ent, M_RAIDFRAME);
 }
 
 #if RF_DEBUG_SHUTDOWN

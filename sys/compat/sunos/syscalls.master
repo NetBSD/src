@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 2008/06/21 13:20:46 tsutsui Exp $
+	$NetBSD: syscalls.master,v 1.69.4.1 2009/01/19 13:17:40 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -32,10 +32,7 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_sysv.h"
-
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -51,36 +48,36 @@
 
 %%
 
-0	NOARGS		{ int sys_nosys(void); } syscall
-1	NOARGS		{ int sys_exit(int rval); }
-2	NOARGS		{ int sys_fork(void); }
-3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
-4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int sunos_sys_open(const char *path, int flags, \
+0	NOARGS		{ int|sys||nosys(void); } syscall
+1	NOARGS		{ int|sys||exit(int rval); }
+2	NOARGS		{ int|sys||fork(void); }
+3	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
+4	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
+5	STD		{ int|sunos_sys||open(const char *path, int flags, \
 			    int mode); }
-6	NOARGS		{ int sys_close(int fd); }
-7	STD		{ int sunos_sys_wait4(int pid, int *status, \
-			    int options, struct rusage *rusage); }
-8	STD		{ int sunos_sys_creat(const char *path, int mode); }
-9	NOARGS		{ int sys_link(char *path, char *link); }
-10	NOARGS		{ int sys_unlink(char *path); }
-11	STD		{ int sunos_sys_execv(const char *path, char **argp); }
-12	NOARGS		{ int sys_chdir(char *path); }
+6	NOARGS		{ int|sys||close(int fd); }
+7	STD		{ int|sunos_sys||wait4(int pid, int *status, \
+			    int options, struct rusage50 *rusage); }
+8	STD		{ int|sunos_sys||creat(const char *path, int mode); }
+9	NOARGS		{ int|sys||link(char *path, char *link); }
+10	NOARGS		{ int|sys||unlink(char *path); }
+11	STD		{ int|sunos_sys||execv(const char *path, char **argp); }
+12	NOARGS		{ int|sys||chdir(char *path); }
 13	OBSOL		old_time
-14	STD		{ int sunos_sys_mknod(const char *path, int mode, \
+14	STD		{ int|sunos_sys||mknod(const char *path, int mode, \
 			    int dev); }
-15	NOARGS		{ int sys_chmod(char *path, int mode); }
-16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
-17	NOARGS		{ int sys_obreak(char *nsize); } break
+15	NOARGS		{ int|sys||chmod(char *path, int mode); }
+16	NOARGS		{ int|sys||chown(char *path, int uid, int gid); }
+17	NOARGS		{ int|sys||obreak(char *nsize); } break
 18	OBSOL		old_stat
-19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, int whence); }
-20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
+19	NOARGS		{ long|compat_43_sys||lseek(int fd, long offset, int whence); }
+20	NOARGS		{ pid_t|sys||getpid_with_ppid(void); }
 21	OBSOL		sunos_old_mount
 22	UNIMPL		System V umount
-23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
-25	STD		{ int sunos_sys_stime(time_t *tp); }
-26	STD		{ long sunos_sys_ptrace(int req, pid_t pid, \
+23	NOARGS		{ int|sys||setuid(uid_t uid); }
+24	NOARGS		{ uid_t|sys||getuid_with_euid(void); }
+25	STD		{ int|sunos_sys||stime(sunos_time_t *tp); }
+26	STD		{ long|sunos_sys||ptrace(int req, pid_t pid, \
 			    void *addr, int data, char *addr2); }
 27	UNIMPL		old_sunos_alarm
 28	UNIMPL		old_sunos_fstat
@@ -88,232 +85,226 @@
 30	UNIMPL		old_sunos_utime
 31	UNIMPL		old_sunos_stty
 32	UNIMPL		old_sunos_gtty
-33	NOARGS		{ int sys_access(const char *path, int flags); }
+33	NOARGS		{ int|sys||access(const char *path, int flags); }
 34	UNIMPL		old_sunos_nice
 35	UNIMPL		old_sunos_ftime
-36	NOARGS		{ int sys_sync(void); }
-37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	NOARGS		{ int compat_43_sys_stat(const char *path, \
+36	NOARGS		{ int|sys||sync(void); }
+37	NOARGS		{ int|sys||kill(int pid, int signum); }
+38	NOARGS		{ int|compat_43_sys||stat(const char *path, \
 			    struct stat43 *ub); }
 39	UNIMPL		sunos_setpgrp
-40	NOARGS		{ int compat_43_sys_lstat(const char *path, \
+40	NOARGS		{ int|compat_43_sys||lstat(const char *path, \
 			    struct stat43 *ub); }
-41	NOARGS		{ int sys_dup(u_int fd); }
-42	NOARGS		{ int sys_pipe(void); }
+41	NOARGS		{ int|sys||dup(u_int fd); }
+42	NOARGS		{ int|sys||pipe(void); }
 43	UNIMPL		sunos_times
-44	NOARGS		{ int sys_profil(void *samples, u_int size, \
+44	NOARGS		{ int|sys||profil(void *samples, u_int size, \
 			    u_int offset, u_int scale); }
 45	UNIMPL
-46	NOARGS		{ int sys_setgid(uid_t gid); }
-47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
+46	NOARGS		{ int|sys||setgid(uid_t gid); }
+47	NOARGS		{ gid_t|sys||getgid_with_egid(void); }
 48	UNIMPL		sunos_ssig
 49	UNIMPL		reserved for USG
 50	UNIMPL		reserved for USG
-51	NOARGS		{ int sys_acct(char *path); }
+51	NOARGS		{ int|sys||acct(char *path); }
 52	UNIMPL
-53	STD		{ int sunos_sys_mctl(void *addr, int len, int func, \
+53	STD		{ int|sunos_sys||mctl(void *addr, int len, int func, \
 			    void *arg); }
-54	STD		{ int sunos_sys_ioctl(int fd, u_long com, \
+54	STD		{ int|sunos_sys||ioctl(int fd, u_long com, \
 			    void *data); }
-55	STD		{ int sunos_sys_reboot(int howto, char *bootstr); }
+55	STD		{ int|sunos_sys||reboot(int howto, char *bootstr); }
 56	OBSOL		sunos_owait3
-57	NOARGS		{ int sys_symlink(char *path, char *link); }
-58	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
-59	STD		{ int sunos_sys_execve(const char *path, char **argp, \
+57	NOARGS		{ int|sys||symlink(char *path, char *link); }
+58	NOARGS		{ int|sys||readlink(char *path, char *buf, int count); }
+59	STD		{ int|sunos_sys||execve(const char *path, char **argp, \
 			    char **envp); }
-60	NOARGS		{ int sys_umask(int newmask); }
-61	NOARGS		{ int sys_chroot(char *path); }
-62	NOARGS		{ int compat_43_sys_fstat(int fd, struct stat43 *sb); }
+60	NOARGS		{ int|sys||umask(int newmask); }
+61	NOARGS		{ int|sys||chroot(char *path); }
+62	NOARGS		{ int|compat_43_sys||fstat(int fd, struct stat43 *sb); }
 63	UNIMPL
-64	NOARGS		{ int compat_43_sys_getpagesize(void); }
-65	STD		{ int sunos_sys_omsync(void *addr, size_t len, \
+64	NOARGS		{ int|compat_43_sys||getpagesize(void); }
+65	STD		{ int|sunos_sys||omsync(void *addr, size_t len, \
 			    int flags); }
-66	NOARGS		{ int sys_vfork(void); }
+66	NOARGS		{ int|sys||vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	NOARGS		{ int sys_sbrk(intptr_t incr); }
-70	NOARGS		{ int sys_sstk(int incr); }
-71	STD		{ void *sunos_sys_mmap(void *addr, size_t len, \
+69	NOARGS		{ int|sys||sbrk(intptr_t incr); }
+70	NOARGS		{ int|sys||sstk(int incr); }
+71	STD		{ void *|sunos_sys||mmap(void *addr, size_t len, \
 			    int prot, int flags, int fd, long pos); }
-72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
-73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
-74	NOARGS		{ int sys_mprotect(void *addr, size_t len, \
+72	NOARGS		{ int|sys||ovadvise(int anom); } vadvise
+73	NOARGS		{ int|sys||munmap(void *addr, size_t len); }
+74	NOARGS		{ int|sys||mprotect(void *addr, size_t len, \
 			    int prot); }
-75	NOARGS		{ int sys_madvise(void *addr, size_t len, \
+75	NOARGS		{ int|sys||madvise(void *addr, size_t len, \
 			    int behav); }
-76	STD		{ int sunos_sys_vhangup(void); }
+76	STD		{ int|sunos_sys||vhangup(void); }
 77	UNIMPL		vlimit
-78	NOARGS		{ int sys_mincore(void *addr, size_t len, \
+78	NOARGS		{ int|sys||mincore(void *addr, size_t len, \
 			    char *vec); }
-79	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
-80	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
-81	NOARGS		{ int sys_getpgrp(void); }
-82	STD		{ int sunos_sys_setpgrp(int pid, int pgid); }
-83	NOARGS		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
-84	UNIMPL		{ int sunos_sys_wait(void); }
-85	NOARGS		{ int compat_12_sys_swapon(char *name); }
-86	NOARGS		{ int sys_getitimer(u_int which, \
-			    struct itimerval *itv); }
-87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
+79	NOARGS		{ int|sys||getgroups(u_int gidsetsize, gid_t *gidset); }
+80	NOARGS		{ int|sys||setgroups(u_int gidsetsize, gid_t *gidset); }
+81	NOARGS		{ int|sys||getpgrp(void); }
+82	STD		{ int|sunos_sys||setpgrp(int pid, int pgid); }
+83	NOARGS		{ int|compat_50_sys||setitimer(u_int which, \
+			    struct itimerval50 *itv, \
+			    struct itimerval50 *oitv); }
+84	UNIMPL		sunos_sys_wait
+85	NOARGS		{ int|compat_12_sys||swapon(char *name); }
+86	NOARGS		{ int|compat_50_sys||getitimer(u_int which, \
+			    struct itimerval50 *itv); }
+87	NOARGS		{ int|compat_43_sys||gethostname(char *hostname, \
 			    u_int len); }
-88	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
+88	NOARGS		{ int|compat_43_sys||sethostname(char *hostname, \
 			    u_int len); }
-89	NOARGS		{ int compat_43_sys_getdtablesize(void); }
-90	NOARGS		{ int sys_dup2(u_int from, u_int to); }
+89	NOARGS		{ int|compat_43_sys||getdtablesize(void); }
+90	NOARGS		{ int|sys||dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
-92	STD		{ int sunos_sys_fcntl(int fd, int cmd, void *arg); }
-93	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
+92	STD		{ int|sunos_sys||fcntl(int fd, int cmd, void *arg); }
+93	NOARGS		{ int|compat_50_sys||select(u_int nd, fd_set *in, \
+			    fd_set *ou, fd_set *ex, struct timeval50 *tv); }
 94	UNIMPL		setdopt
-95	NOARGS		{ int sys_fsync(int fd); }
-96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
-97	STD		{ int sunos_sys_socket(int domain, int type, int protocol); }
-98	NOARGS		{ int sys_connect(int s, void *name, int namelen); }
-99	NOARGS		{ int compat_43_sys_accept(int s, void *name, \
+95	NOARGS		{ int|sys||fsync(int fd); }
+96	NOARGS		{ int|sys||setpriority(int which, int who, int prio); }
+97	STD		{ int|sunos_sys||socket(int domain, int type, int protocol); }
+98	NOARGS		{ int|sys||connect(int s, void *name, int namelen); }
+99	NOARGS		{ int|compat_43_sys||accept(int s, void *name, \
 			    int *anamelen); }
-100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
+100	NOARGS		{ int|sys||getpriority(int which, int who); }
+101	NOARGS		{ int|compat_43_sys||send(int s, void *buf, int len, \
 			    int flags); }
-102	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
+102	NOARGS		{ int|compat_43_sys||recv(int s, void *buf, int len, \
 			    int flags); }
 103	UNIMPL		old socketaddr
-104	NOARGS		{ int sys_bind(int s, void *name, int namelen); }
-105	STD		{ int sunos_sys_setsockopt(int s, int level, int name, \
+104	NOARGS		{ int|sys||bind(int s, void *name, int namelen); }
+105	STD		{ int|sunos_sys||setsockopt(int s, int level, int name, \
 			    void *val, int valsize); }
-106	NOARGS		{ int sys_listen(int s, int backlog); }
+106	NOARGS		{ int|sys||listen(int s, int backlog); }
 107	UNIMPL		vtimes
-108	STD		{ int sunos_sys_sigvec(int signum, struct sigvec *nsv, \
+108	STD		{ int|sunos_sys||sigvec(int signum, struct sigvec *nsv, \
 			    struct sigvec *osv); }
-109	NOARGS		{ int compat_43_sys_sigblock(int mask); }
-110	NOARGS		{ int compat_43_sys_sigsetmask(int mask); }
-111	STD		{ int sunos_sys_sigsuspend(int mask); }
-112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
+109	NOARGS		{ int|compat_43_sys||sigblock(int mask); }
+110	NOARGS		{ int|compat_43_sys||sigsetmask(int mask); }
+111	STD		{ int|sunos_sys||sigsuspend(int mask); }
+112	NOARGS		{ int|compat_43_sys||sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); }
-113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
+113	NOARGS		{ int|compat_43_sys||recvmsg(int s, \
 			    struct omsghdr *msg, int flags); }
-114	NOARGS		{ int compat_43_sys_sendmsg(int s, void *msg, \
+114	NOARGS		{ int|compat_43_sys||sendmsg(int s, void *msg, \
 			    int flags); }
 115	OBSOL		vtrace
-116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
+116	NOARGS		{ int|compat_50_sys||gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
-117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
-118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
+117	NOARGS		{ int|compat_50_sys||getrusage(int who, \
+			    struct rusage50 *rusage); }
+118	NOARGS		{ int|sys||getsockopt(int s, int level, int name, \
 			    void *val, int *avalsize); }
 119	UNIMPL
-120	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
+120	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
-121	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
+121	NOARGS		{ int|sys||writev(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
-122	NOARGS		{ int sys_settimeofday(struct timeval *tv, \
+122	NOARGS		{ int|compat_50_sys||settimeofday(struct timeval50 *tv, \
 			    struct timezone *tzp); }
-123	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
-124	NOARGS		{ int sys_fchmod(int fd, int mode); }
-125	NOARGS		{ int compat_43_sys_recvfrom(int s, void *buf, \
+123	NOARGS		{ int|sys||fchown(int fd, int uid, int gid); }
+124	NOARGS		{ int|sys||fchmod(int fd, int mode); }
+125	NOARGS		{ int|compat_43_sys||recvfrom(int s, void *buf, \
 			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); }
-126	NOARGS		{ int sys_setreuid(int ruid, int euid); }
-127	NOARGS		{ int sys_setregid(int rgid, int egid); }
-128	NOARGS		{ int sys_rename(char *from, char *to); }
-129	NOARGS		{ int compat_43_sys_truncate(char *path, long length); }
-130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
-131	NOARGS		{ int sys_flock(int fd, int how); }
+126	NOARGS		{ int|sys||setreuid(int ruid, int euid); }
+127	NOARGS		{ int|sys||setregid(int rgid, int egid); }
+128	NOARGS		{ int|sys||rename(char *from, char *to); }
+129	NOARGS		{ int|compat_43_sys||truncate(char *path, long length); }
+130	NOARGS		{ int|compat_43_sys||ftruncate(int fd, long length); }
+131	NOARGS		{ int|sys||flock(int fd, int how); }
 132	UNIMPL
-133	NOARGS		{ int sys_sendto(int s, void *buf, size_t len, \
+133	NOARGS		{ int|sys||sendto(int s, void *buf, size_t len, \
 			    int flags, void *to, int tolen); }
-134	NOARGS		{ int sys_shutdown(int s, int how); }
-135	STD		{ int sunos_sys_socketpair(int domain, int type, \
+134	NOARGS		{ int|sys||shutdown(int s, int how); }
+135	STD		{ int|sunos_sys||socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	NOARGS		{ int sys_mkdir(char *path, int mode); }
-137	NOARGS		{ int sys_rmdir(char *path); }
-138	NOARGS		{ int sys_utimes(char *path, struct timeval *tptr); }
-139	STD		{ int sunos_sys_sigreturn(struct sigcontext *sigcntxp); }
-140	NOARGS		{ int sys_adjtime(struct timeval *delta, \
-			    struct timeval *olddelta); }
-141	NOARGS		{ int compat_43_sys_getpeername(int fdes, void *asa, \
+136	NOARGS		{ int|sys||mkdir(char *path, int mode); }
+137	NOARGS		{ int|sys||rmdir(char *path); }
+138	NOARGS		{ int|compat_50_sys||utimes(char *path, \
+			    struct timeval50 *tptr); }
+139	STD		{ int|sunos_sys||sigreturn(struct sigcontext *sigcntxp); }
+140	NOARGS		{ int|compat_50_sys||adjtime(struct timeval50 *delta, \
+			    struct timeval50 *olddelta); }
+141	NOARGS		{ int|compat_43_sys||getpeername(int fdes, void *asa, \
 			    int *alen); }
-142	NOARGS		{ int compat_43_sys_gethostid(void); }
+142	NOARGS		{ int|compat_43_sys||gethostid(void); }
 143	UNIMPL		old sethostid
-144	STD		{ int sunos_sys_getrlimit(u_int which, \
+144	STD		{ int|sunos_sys||getrlimit(u_int which, \
 			    struct orlimit *rlp); }
-145	STD		{ int sunos_sys_setrlimit(u_int which, \
+145	STD		{ int|sunos_sys||setrlimit(u_int which, \
 			    struct orlimit *rlp); }
-146	NOARGS		{ int compat_43_sys_killpg(int pgid, int signum); }
+146	NOARGS		{ int|compat_43_sys||killpg(int pgid, int signum); }
 147	UNIMPL
 148	UNIMPL
 149	UNIMPL
-150	NOARGS		{ int compat_43_sys_getsockname(int fdes, void *asa, \
+150	NOARGS		{ int|compat_43_sys||getsockname(int fdes, void *asa, \
 			    int *alen); }
 151	UNIMPL		getmsg
 152	UNIMPL		putmsg
-153	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
+153	NOARGS		{ int|sys||poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 154	UNIMPL
-#ifdef NFSSERVER
-155	STD		{ int sunos_sys_nfssvc(int fd); }
-#else
-155	UNIMPL
-#endif
-156	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
+155	STD		{ int|sunos_sys||nfssvc(int fd); }
+156	NOARGS		{ int|compat_12_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
-157	STD		{ int sunos_sys_statfs(const char *path, \
+157	STD		{ int|sunos_sys||statfs(const char *path, \
 			    struct sunos_statfs *buf); }
-158	STD		{ int sunos_sys_fstatfs(int fd, \
+158	STD		{ int|sunos_sys||fstatfs(int fd, \
 			    struct sunos_statfs *buf); }
-159	STD		{ int sunos_sys_unmount(char *path); }
-#ifdef NFS
-160	NOARGS		{ int async_daemon(void); }
-161	NOARGS		{ int compat_30_sys_getfh(char *fname, fhandle_t *fhp); }
-#else
-160	UNIMPL
-161	UNIMPL
-#endif
-162	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+159	STD		{ int|sunos_sys||unmount(char *path); }
+160	NOARGS		{ int|async||daemon(void); }
+161	NOARGS		{ int|compat_30_sys||getfh(char *fname, fhandle_t *fhp); }
+162	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); }
-163	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
+163	NOARGS		{ int|compat_09_sys||setdomainname(char *domainname, \
 			    int len); }
 164	UNIMPL		rtschedule
-165	STD		{ int sunos_sys_quotactl(int cmd, char *special, \
+165	STD		{ int|sunos_sys||quotactl(int cmd, char *special, \
 			    int uid, void *addr); }
-166	STD		{ int sunos_sys_exportfs(char *path, char *ex); }
-167	STD		{ int sunos_sys_mount(char *type, char *dir, \
+166	STD		{ int|sunos_sys||exportfs(char *path, char *ex); }
+167	STD		{ int|sunos_sys||mount(char *type, char *dir, \
 			    int flags, void *data); }
-168	STD		{ int sunos_sys_ustat(int dev, \
+168	STD		{ int|sunos_sys||ustat(int dev, \
 			    struct sunos_ustat *buf); }
 #ifdef SYSVSEM
-169	NOARGS		{ int compat_10_sys_semsys(int which, int a2, int a3, \
+169	NOARGS		{ int|compat_10_sys||semsys(int which, int a2, int a3, \
 			    int a4, int a5); }
 #else
 169	UNIMPL		semsys
 #endif
 #ifdef SYSVMSG
-170	NOARGS		{ int compat_10_sys_msgsys(int which, int a2, int a3, \
+170	NOARGS		{ int|compat_10_sys||msgsys(int which, int a2, int a3, \
 			    int a4, int a5, int a6); }
 #else
 170	UNIMPL		msgsys
 #endif
 #ifdef SYSVSHM
-171	NOARGS		{ int compat_10_sys_shmsys(int which, int a2, int a3, \
+171	NOARGS		{ int|compat_10_sys||shmsys(int which, int a2, int a3, \
 			    int a4); }
 #else
 171	UNIMPL		shmsys
 #endif
-172	STD		{ int sunos_sys_auditsys(char *record); }
+172	STD		{ int|sunos_sys||auditsys(char *record); }
 173	UNIMPL		rfssys
-174	STD		{ int sunos_sys_getdents(int fd, char *buf, \
+174	STD		{ int|sunos_sys||getdents(int fd, char *buf, \
 			    int nbytes); }
-175	NOARGS		{ int sys_setsid(void); }
-176	NOARGS		{ int sys_fchdir(int fd); }
-177	NOARGS		{ int sys_fchroot(int fd); }
+175	NOARGS		{ int|sys||setsid(void); }
+176	NOARGS		{ int|sys||fchdir(int fd); }
+177	NOARGS		{ int|sys||fchroot(int fd); }
 178	UNIMPL		vpixsys
 179	UNIMPL		aioread
 180	UNIMPL		aiowrite
 181	UNIMPL		aiowait
 182	UNIMPL		aiocancel
-183	STD		{ int sunos_sys_sigpending(int *mask); }
+183	STD		{ int|sunos_sys||sigpending(int *mask); }
 184	UNIMPL
-185	NOARGS		{ int sys_setpgid(int pid, int pgid); }
-186	NOARGS		{ long sys_pathconf(char *path, int name); }
-187	NOARGS		{ long sys_fpathconf(int fd, int name); }
-188	STD		{ int sunos_sys_sysconf(int name); }
-189	STD		{ int sunos_sys_uname(struct sunos_utsname *name); }
+185	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
+186	NOARGS		{ long|sys||pathconf(char *path, int name); }
+187	NOARGS		{ long|sys||fpathconf(int fd, int name); }
+188	STD		{ int|sunos_sys||sysconf(int name); }
+189	STD		{ int|sunos_sys||uname(struct sunos_utsname *name); }

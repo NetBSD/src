@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.68 2008/10/22 11:36:06 matt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.68.2.1 2009/01/19 13:20:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,17 +47,6 @@
 #endif
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
-
-/*
- * Silly rename structure that hangs off the nfsnode until the name
- * can be removed by nfs_inactive()
- */
-struct sillyrename {
-	kauth_cred_t	s_cred;
-	struct	vnode *s_dvp;
-	long	s_namlen;
-	char	s_name[20];
-};
 
 /*
  * Definitions for the directory cache. Because directory cookies
@@ -215,6 +204,19 @@ struct nfsnode {
 
 #ifdef _KERNEL
 
+#include <sys/workqueue.h>
+/*
+ * Silly rename structure that hangs off the nfsnode until the name
+ * can be removed by nfs_inactive()
+ */
+struct sillyrename {
+	struct work	s_work;
+	kauth_cred_t	s_cred;
+	struct	vnode *s_dvp;
+	long	s_namlen;
+	char	s_name[20];
+};
+
 /*
  * Per-nfsiod datas
  */
@@ -281,7 +283,6 @@ int	nfs_pathconf	__P((void *));
 int	nfs_advlock	__P((void *));
 int	nfs_getpages	__P((void *));
 int	nfs_putpages	__P((void *));
-int	nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	nfs_kqfilter	__P((void *));
 
 extern int (**nfsv2_vnodeop_p) __P((void *));

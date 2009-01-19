@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.46 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.46.8.1 2009/01/19 13:16:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.46 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.46.8.1 2009/01/19 13:16:14 skrll Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1029,20 +1029,20 @@ hd64461video_set_display_mode_lcdc(struct hd64461video_chip *hvc)
 		uint16_t clor;	/* display size 640 x 240 */
 		uint16_t ldr3;
 		const char *name;
-	} disp_conf[] = {
-		[LCD256_C]	= { 0x280 , HD64461_LCDLDR3_CG_COLOR8 ,
+	} *conf, disp_conf[] = {
+		[LCD256_C]	= { 640, HD64461_LCDLDR3_CG_COLOR8,
 				    "8bit color" },
-		[LCD64K_C]	= { 0x500 , HD64461_LCDLDR3_CG_COLOR16 ,
+		[LCD64K_C]	= { 640 * 2, HD64461_LCDLDR3_CG_COLOR16,
 				    "16bit color" },
-		[LCD64_MONO]	= { 0x280 , HD64461_LCDLDR3_CG_GRAY6 ,
-				    "6bit gray scale" },
-		[LCD16_MONO]	= { 0x140 , HD64461_LCDLDR3_CG_GRAY4 ,
-				    "4bit gray scale" },
-		[LCD4_MONO]	= { 0x0a0 , HD64461_LCDLDR3_CG_GRAY2 ,
-				    "2bit gray scale" },
-		[LCD2_MONO]	= { 0x050 , HD64461_LCDLDR3_CG_GRAY1 ,
-				    "mono chrome" },
-	}, *conf;
+		[LCD64_MONO]	= { 640, HD64461_LCDLDR3_CG_GRAY6 ,
+				    "6bit grayscale" },
+		[LCD16_MONO]	= { 640 / 2, HD64461_LCDLDR3_CG_GRAY4,
+				    "4bit grayscale" },
+		[LCD4_MONO]	= { 640 / 4, HD64461_LCDLDR3_CG_GRAY2,
+				    "2bit grayscale" },
+		[LCD2_MONO]	= { 640 / 8, HD64461_LCDLDR3_CG_GRAY1,
+				    "monochrome" },
+	};
 	uint16_t r;
 	int omode;
 	
@@ -1305,7 +1305,7 @@ hd64461video_info(struct hd64461video_softc *sc)
 		printf("8-bit grayscale");
 		break;
 	case HD64461_LCDLDR2_LM_GRAY4:
-		printf("8-bit grayscale");
+		printf("4-bit grayscale");
 		break;
 	}
 	printf(" LCD interface\n");

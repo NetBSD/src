@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2008/08/10 15:31:21 tls Exp $
+# $NetBSD: GENERIC,v 1.84.2.1 2009/01/19 13:16:23 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.84.2.1 $"
 
 maxusers	8
 
@@ -39,7 +39,6 @@ options 	KTRACE
 #options 	SYSVSEM			# System V semaphores
 #options 	SYSVSHM			# System V shared memory
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-#options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -96,7 +95,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independent support
-options 	SOFTDEP		# ffs soft updates support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

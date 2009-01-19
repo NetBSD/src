@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.18 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.18.4.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.18 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.18.4.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ scsirom_find(device_t parent, struct intio_attach_args *ia)
 
 	if (bus_space_map(ia->ia_bst, ia->ia_addr, ia->ia_size, 0, &ioh) < 0)
 		return -1;
-	if (badaddr(INTIO_ADDR(ia->ia_addr+SCSIROM_ID))) {
+	if (badaddr((void *)IIOV(ia->ia_addr+SCSIROM_ID))) {
 		bus_space_unmap(ia->ia_bst, ioh, ia->ia_size);
 		return -1;
 	}

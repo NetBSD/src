@@ -1,4 +1,4 @@
-/*	$NetBSD: powvar.h,v 1.2 1998/01/05 07:03:44 perry Exp $	*/
+/*	$NetBSD: powvar.h,v 1.2.164.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -40,7 +40,5 @@ struct pow_softc {
 	short status;
 	short rw;
 	int sw;
-	pid_t pid;
-	struct proc *proc;
-	int signum;
+	struct sysmon_pswitch smpsw;
 };

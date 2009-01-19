@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.9 2008/10/22 11:57:14 ad Exp $	*/
+/*	$NetBSD: ksem.h,v 1.9.2.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -32,26 +32,27 @@
 #include <sys/cdefs.h>
 
 #ifdef _KERNEL
-void ksem_init(void);
+#define	KSEM_MAX	128
 
-int do_ksem_init(struct lwp *, unsigned int, semid_t *, copyout_t);
+int do_ksem_init(struct lwp *, unsigned int, intptr_t *, copyout_t);
 int do_ksem_open(struct lwp *, const char *, int, mode_t, unsigned int,
-    semid_t *, copyout_t);
+    intptr_t *, copyout_t);
 
 extern int	posix_semaphores;
+extern int	ksem_max;
 #endif
 
 #ifdef _LIBC
 __BEGIN_DECLS
-int _ksem_close(semid_t);
-int _ksem_destroy(semid_t);
-int _ksem_getvalue(semid_t, int *);
-int _ksem_init(unsigned int, semid_t *);
-int _ksem_open(const char *, int, mode_t, unsigned int, semid_t *);
-int _ksem_post(semid_t);
-int _ksem_trywait(semid_t);
+int _ksem_close(intptr_t);
+int _ksem_destroy(intptr_t);
+int _ksem_getvalue(intptr_t, int *);
+int _ksem_init(unsigned int, intptr_t *);
+int _ksem_open(const char *, int, mode_t, unsigned int, intptr_t *);
+int _ksem_post(intptr_t);
+int _ksem_trywait(intptr_t);
 int _ksem_unlink(const char *);
-int _ksem_wait(semid_t);
+int _ksem_wait(intptr_t);
 __END_DECLS
 #endif /* _LIBC */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.32 2008/03/25 21:23:50 christos Exp $	*/
+/*	$NetBSD: bootp.c,v 1.32.12.1 2009/01/19 13:19:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -63,7 +63,7 @@ char linuxcmdline[256];
 
 static n_long	nmask, smask;
 
-static time_t	bot;
+static satime_t	bot;
 
 static	char vm_rfc1048[4] = VM_RFC1048;
 #ifdef BOOTP_VEND_CMU
@@ -71,11 +71,11 @@ static	char vm_cmu[4] = VM_CMU;
 #endif
 
 /* Local forwards */
-static	ssize_t bootpsend __P((struct iodesc *, void *, size_t));
-static	ssize_t bootprecv __P((struct iodesc *, void *, size_t, time_t));
-static	int vend_rfc1048 __P((u_char *, u_int));
+static	ssize_t bootpsend(struct iodesc *, void *, size_t);
+static	ssize_t bootprecv(struct iodesc *, void *, size_t, saseconds_t);
+static	int vend_rfc1048(u_char *, u_int);
 #ifdef BOOTP_VEND_CMU
-static	void vend_cmu __P((u_char *));
+static	void vend_cmu(u_char *);
 #endif
 
 #ifdef SUPPORT_DHCP
@@ -291,7 +291,7 @@ bootpsend(struct iodesc *d, void *pkt, size_t len)
 }
 
 static ssize_t
-bootprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
+bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 {
 	ssize_t n;
 	struct bootp *bp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_thread.c,v 1.16 2008/04/28 20:23:41 martin Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.16.8.1 2009/01/19 13:17:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.16 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.16.8.1 2009/01/19 13:17:18 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.16 2008/04/28 20:23:41 martin Ex
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>

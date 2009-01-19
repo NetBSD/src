@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.11 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.11.4.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*
  *
@@ -87,14 +87,8 @@ int intio_intr_disestablish(int, void *);
 int intio_intr(struct frame *);
 
 
-#define PHYS_INTIODEV 0x00c00000
-
-extern u_int8_t *intiobase;
-
-#define INTIO_ADDR(a)	((volatile u_int8_t *) (((u_int32_t) (a)) - (PHYS_INTIODEV) + intiobase))
-
 #define INTIO_SYSPORT		(0x00e8e000)
-#define intio_sysport		INTIO_ADDR(INTIO_SYSPORT)
+#define intio_sysport		((volatile uint8_t *)IIOV(INTIO_SYSPORT))
 #define sysport_contrast	1
 #define sysport_tvctrl		3
 #define sysport_imageunit	5
@@ -137,7 +131,7 @@ extern u_int8_t *intiobase;
 
 /* I/O controller (sicilian/pluto) */
 #define INTIO_SICILIAN		(0x00e9c000)
-#define intio_sicilian		INTIO_ADDR(INTIO_SICILIAN)
+#define intio_sicilian		((volatile uint8_t *)IIOV(INTIO_SICILIAN))
 #define sicilian_intr		1
 #define sicilian_ivec		3
 

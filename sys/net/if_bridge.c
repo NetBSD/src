@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.62 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.62.4.1 2009/01/19 13:20:11 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.62 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.62.4.1 2009/01/19 13:20:11 skrll Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -488,23 +488,30 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.
 			 */
 			(*ifp->if_stop)(ifp, 1);
-		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			error = (*ifp->if_init)(ifp);
+			break;
+		default:
+			break;
 		}
 		break;
 
 	default:
-		error = ENOTTY;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 
@@ -1442,15 +1449,15 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
-		/* Tap off 802.1D packets; they do not get forwarded. */
-		if (memcmp(eh->ether_dhost, bstp_etheraddr,
-		    ETHER_ADDR_LEN) == 0) {
-			m = bstp_input(ifp, m);
-			if (m == NULL)
-				return (NULL);
-		}
-
 		if (bif->bif_flags & IFBIF_STP) {
+			/* Tap off 802.1D packets; they do not get forwarded. */
+			if (memcmp(eh->ether_dhost, bstp_etheraddr,
+			    ETHER_ADDR_LEN) == 0) {
+				m = bstp_input(sc, bif, m);
+				if (m == NULL)
+					return (NULL);
+			}
+
 			switch (bif->bif_state) {
 			case BSTP_IFSTATE_BLOCKING:
 			case BSTP_IFSTATE_LISTENING:

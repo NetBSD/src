@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.84 2008/01/02 11:49:15 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.84.18.1 2009/01/19 13:20:36 skrll Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84 2008/01/02 11:49:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84.18.1 2009/01/19 13:20:36 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84 2008/01/02 11:49:15 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
@@ -224,10 +225,10 @@ fail1:
 	 * since we can need more than it would normally free.
 	 */
 	if ((waitf & UVM_FLAG_NOWAIT) != 0) {
-		extern int uvm_extrapages;
-		uvm_extrapages += ((sizeof(int) * 2 +
-				    sizeof(struct vm_anon *)) *
-				   totalslots) >> PAGE_SHIFT;
+		extern u_int uvm_extrapages;
+		atomic_add_int(&uvm_extrapages,
+		    ((sizeof(int) * 2 + sizeof(struct vm_anon *)) *
+		    totalslots) >> PAGE_SHIFT);
 	}
 	return (NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.120 2008/09/19 11:19:33 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.120.2.1 2009/01/19 13:17:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.120 2008/09/19 11:19:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.120.2.1 2009/01/19 13:17:52 skrll Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -176,7 +176,7 @@ static const char * const acpi_ignored_ids[] = {
 
 static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
 static int acpi_sleepstate = ACPI_STATE_S0;
-static char acpi_supported_states[3 * 6 + 1] = "";;
+static char acpi_supported_states[3 * 6 + 1] = "";
 
 /*
  * Prototypes.
@@ -808,15 +808,29 @@ acpi_print(void *aux, const char *pnp)
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
 			char *pnpstr =
 			    aa->aa_node->ad_devinfo->HardwareId.Value;
-			char *str;
+			ACPI_BUFFER buf;
 
 			aprint_normal("%s (%s) ", aa->aa_node->ad_name,
 			    pnpstr);
-			rv = acpi_eval_string(aa->aa_node->ad_handle,
-			    "_STR", &str);
+
+			buf.Pointer = NULL;
+			buf.Length = ACPI_ALLOCATE_BUFFER;
+			rv = AcpiEvaluateObject(aa->aa_node->ad_handle,
+			    "_STR", NULL, &buf);
 			if (ACPI_SUCCESS(rv)) {
-				aprint_normal("[%s] ", str);
-				AcpiOsFree(str);
+				ACPI_OBJECT *obj = buf.Pointer;
+				switch (obj->Type) {
+				case ACPI_TYPE_STRING:
+					aprint_normal("[%s] ", obj->String.Pointer);
+					break;
+				case ACPI_TYPE_BUFFER:
+					aprint_normal("buffer %p ", obj->Buffer.Pointer);
+					break;
+				default:
+					aprint_normal("type %d ",obj->Type);
+					break;
+				}
+				AcpiOsFree(buf.Pointer);
 			}
 #ifdef ACPIVERBOSE
 			else {

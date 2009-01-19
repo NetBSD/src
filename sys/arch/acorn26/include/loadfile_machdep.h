@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.3.8.1 2009/01/19 13:15:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,9 +69,9 @@ extern void *boot26_memset(void *, int, size_t);
 #define	DEALLOC(a, b)		free(a)
 #define	OKMAGIC(a)		((a) == OMAGIC)
 
-ssize_t vread __P((int, u_long, u_long *, size_t));
-void vcopy __P((u_long, u_long, u_long *, size_t));
-void vzero __P((u_long, u_long *, size_t));
+ssize_t vread(int, u_long, u_long *, size_t);
+void vcopy(u_long, u_long, u_long *, size_t);
+void vzero(u_long, u_long *, size_t);
 
 #endif
 #endif

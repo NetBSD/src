@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.267 2008/10/15 14:21:35 pooka Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.267.2.1 2009/01/19 13:20:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,10 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.267 2008/10/15 14:21:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.267.2.1 2009/01/19 13:20:20 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -3417,8 +3419,9 @@ nfs_print(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 
-	printf("tag VT_NFS, fileid %lld fsid 0x%lx",
-	    (unsigned long long)np->n_vattr->va_fileid, np->n_vattr->va_fsid);
+	printf("tag VT_NFS, fileid %lld fsid 0x%llx",
+	    (unsigned long long)np->n_vattr->va_fileid, 
+	    (unsigned long long)np->n_vattr->va_fsid);
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
 	printf("\n");

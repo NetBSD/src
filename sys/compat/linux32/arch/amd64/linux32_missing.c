@@ -1,8 +1,10 @@
-/*	$NetBSD: linux32_missing.c,v 1.5 2008/02/02 19:37:53 dsl Exp $ */
+/*	$NetBSD: linux32_missing.c,v 1.5.18.1 2009/01/19 13:17:31 skrll Exp $ */
 
 #include <sys/cdefs.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_linux32.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -21,6 +23,8 @@
 #include <compat/linux32/arch/amd64/linux32_missing.h>
 #include <compat/linux32/arch/amd64/linux32_syscallargs.h>
 
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/common/linux_fcntl64.c>
 #include <compat/linux/common/linux_llseek.c>
 #include <compat/linux/common/linux_misc_notalpha.c>

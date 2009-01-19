@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.8 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: ARMADILLO210,v 1.8.2.1 2009/01/19 13:16:03 skrll Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -41,7 +41,6 @@ file-system	NFS		# Network file system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
@@ -111,7 +110,6 @@ options 	CONUNIT=1		# Console port number
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions

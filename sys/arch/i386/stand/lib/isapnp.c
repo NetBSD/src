@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.4 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: isapnp.c,v 1.4.86.1 2009/01/19 13:16:21 skrll Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -63,9 +63,8 @@ enum {
 
 static int      pnpdataport;
 
-static int 
-getiobase(nr)
-	int             nr;
+static int
+getiobase(int nr)
 {
 	unsigned short  iobase;
 
@@ -77,12 +76,11 @@ getiobase(nr)
 	outb(PNPADDR, IOBASE + nr * 2 + 1);
 	iobase |= inb(pnpdataport);
 
-	return (iobase);
+	return iobase;
 }
 
-static int 
-getdmachan(nr)
-	int             nr;
+static int
+getdmachan(int nr)
 {
 	unsigned char   dmachannel;
 
@@ -92,7 +90,7 @@ getdmachan(nr)
 	outb(PNPADDR, DMABASE + nr);
 	dmachannel = inb(pnpdataport) & 0x07;
 
-	return (dmachannel);
+	return dmachannel;
 }
 
 struct cardid {
@@ -104,9 +102,8 @@ struct cardid {
 /*
  do isolation, call pnpscanresc() in board config state
  */
-static int 
-pnpisol(csn)
-	int             csn;
+static int
+pnpisol(int csn)
 {
 	unsigned char   buf[9];
 	int             i, j;
@@ -132,7 +129,7 @@ pnpisol(csn)
 			else if ((a == 0xff) && (b == 0xff))
 				bitset = 0;
 			else
-				return (-1);	/* data port conflict */
+				return -1;	/* data port conflict */
 
 			buf[i] = (buf[i] >> 1) | (bitset << 7);
 
@@ -147,18 +144,18 @@ pnpisol(csn)
 	id = (struct cardid *) buf;
 
 	if (id->crc != crc)
-		return (0);	/* normal end */
+		return 0;	/* normal end */
 
 	outb(PNPADDR, SETCSN);
 	outb(PNPWDATA, csn);	/* set csn for winning card and put it to
 				 * config state */
 
-	return ((id->eisaid[0] << 24) | (id->eisaid[1] << 16)
-		| (id->eisaid[2] << 8) | (id->eisaid[3]));
+	return (id->eisaid[0] << 24) | (id->eisaid[1] << 16)
+		| (id->eisaid[2] << 8) | (id->eisaid[3]);
 }
 
-static void 
-pnpisolreset()
+static void
+pnpisolreset(void)
 {
 	outb(PNPADDR, WAKE);
 	outb(PNPWDATA, 0);	/* put all remaining cards to isolation state */
@@ -167,8 +164,8 @@ pnpisolreset()
 /*
  send initiation sequence (app. B.1)
  */
-static void 
-pnpinit()
+static void
+pnpinit(void)
 {
 	int             i;
 	unsigned char   key = 0x6a;
@@ -183,10 +180,8 @@ pnpinit()
 	}
 }
 
-int 
-isapnp_finddev(id, iobase, dmachan)
-	int             id;
-	int            *iobase, *dmachan;
+int
+isapnp_finddev(int id, int *iobase, int *dmachan)
 {
 	int             csn;
 
@@ -228,9 +223,9 @@ isapnp_finddev(id, iobase, dmachan)
 		outb(PNPWDATA, 2);	/* return to wait for key */
 
 		if (csn > 1)	/* at least 1 board found */
-			return (!found);
+			return !found;
 
 		/* if no board found, try next dataport */
 	}
-	return (-1);		/* nothing found */
+	return -1;		/* nothing found */
 }

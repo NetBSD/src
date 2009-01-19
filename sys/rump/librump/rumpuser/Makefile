@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 2008/10/02 21:37:59 pooka Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2009/01/19 13:20:27 skrll Exp $
 #
 
 LIB=		rumpuser
-INCS=		rumpuser.h
-INCSDIR=	/usr/include/rump
 WARNS=		4
 
 SRCS=		rumpuser.c rumpuser_net.c rumpuser_pth.c
-
-LDFLAGS+=	-Wl,--wrap=malloc
 
 # no shlib_version because this is automatically in sync with lib/librumpuser
 SHLIB_MAJOR=	0

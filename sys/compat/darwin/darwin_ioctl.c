@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioctl.c,v 1.11 2008/06/24 11:18:15 ad Exp $ */
+/*	$NetBSD: darwin_ioctl.c,v 1.11.4.1 2009/01/19 13:17:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.11 2008/06/24 11:18:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.11.4.1 2009/01/19 13:17:17 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.11 2008/06/24 11:18:15 ad Exp $")
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_ioctl.h>
 #include <compat/darwin/darwin_syscallargs.h>

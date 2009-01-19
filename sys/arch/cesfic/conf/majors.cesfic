@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cesfic,v 1.19 2007/12/31 15:31:51 ad Exp $
+#	$NetBSD: majors.cesfic,v 1.19.18.1 2009/01/19 13:16:02 skrll Exp $
 #
 # Device majors for cesfic
 #
@@ -17,7 +17,6 @@ device-major	zstty		char 10			zstty
 device-major	filedesc	char 11
 device-major	bpf		char 12			bpfilter
 device-major	tun		char 13			tun
-device-major	lkm		char 14			lkm
 device-major	md		char 15  block 3	md
 device-major	raid		char 16  block 5	raid
 device-major	sd		char 17  block 6	sd

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.68 2008/03/12 14:31:11 cube Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.68.12.1 2009/01/19 13:17:55 skrll Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.68 2008/03/12 14:31:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.68.12.1 2009/01/19 13:17:55 skrll Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -873,25 +873,26 @@ dp8390_ioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if ((error = dp8390_enable(sc)) != 0)
 			break;
 		ifp->if_flags |= IFF_UP;
 
+		dp8390_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			dp8390_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			dp8390_init(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
@@ -951,7 +952,7 @@ dp8390_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = ENODEV;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

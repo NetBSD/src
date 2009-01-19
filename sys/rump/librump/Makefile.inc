@@ -1,4 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/05/29 13:12:29 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.1.12.1 2009/01/19 13:20:25 skrll Exp $
 #
-
 CPPFLAGS+=	-DRUMP_WITHOUT_THREADS

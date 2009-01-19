@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2008/09/26 14:12:49 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.24.2.1 2009/01/19 13:16:21 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -215,6 +215,8 @@ print_banner(void)
 {
 	int extmem = getextmem();
 	char *s = "";
+
+	clear_pc_screen();
 
 #ifdef XMS
 	u_long xmsmem;

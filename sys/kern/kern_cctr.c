@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cctr.c,v 1.8 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: kern_cctr.c,v 1.8.6.1 2009/01/19 13:19:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.8 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.8.6.1 2009/01/19 13:19:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ cc_calibrate_cpu(struct cpu_info *ci)
 		ci->ci_cc.cc_val = val;
 		ci->ci_cc.cc_denom = cpu_frequency(ci);
 		if (ci->ci_cc.cc_denom == 0)
-			ci->ci_cc.cc_denom = cc_timecounter.tc_frequency;;
+			ci->ci_cc.cc_denom = cc_timecounter.tc_frequency;
 		ci->ci_cc.cc_delta = ci->ci_cc.cc_denom;
 		ci->ci_cc.cc_gen = gen;
 		splx(s);

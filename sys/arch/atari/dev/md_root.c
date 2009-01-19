@@ -1,4 +1,4 @@
-/*	NetBSD: md_root.c,v 1.17 2002/05/23 14:59:28 leo Exp $	*/
+/*	$NetBSD: md_root.c,v 1.25.18.1 2009/01/19 13:16:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.25 2008/01/02 11:48:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.25.18.1 2009/01/19 13:16:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,9 @@ struct read_info	*rsp;
 	while(bytes_left > 0) {
 		bp->b_cflags = BC_BUSY;
 		bp->b_flags  = B_PHYS | B_READ;
+		bp->b_oflags &= ~BO_DONE;
 		bp->b_blkno  = btodb(rsp->offset);
-		bp->b_bcount = rsp->chunk;
+		bp->b_bcount = min(rsp->chunk, bytes_left);
 		bp->b_data   = rsp->bufp;
 		bp->b_error  = 0;
 
@@ -247,6 +248,7 @@ struct read_info	*rsp;
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
+
 		bytes_left   -= done;
 		rsp->offset  += done;
 		rsp->bufp    += done;
@@ -307,6 +309,7 @@ int			nbyte;
 	while(nbyte > 0) {
 		bp->b_cflags = BC_BUSY;
 		bp->b_flags  = B_PHYS | B_READ;
+		bp->b_oflags &= ~BO_DONE;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = min(rsp->chunk, nbyte);
 		bp->b_data   = buf;
@@ -317,6 +320,7 @@ int			nbyte;
 
 		/* Wait for results	*/
 		biowait(bp);
+		error = bp->b_error;
 
 		/* Dot counter */
 		printf(".");
@@ -324,6 +328,7 @@ int			nbyte;
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
+
 		nbyte        -= done;
 		nread        += done;
 		rsp->offset  += done;
@@ -332,7 +337,6 @@ int			nbyte;
 			break;
 
 		if((rsp->offset == rsp->media_sz) && (nbyte != 0)) {
-		if(rsp->offset == rsp->media_sz) {
 			printf("\nInsert next media and hit any key...");
 			if(cngetc() != '\n')
 				printf("\n");

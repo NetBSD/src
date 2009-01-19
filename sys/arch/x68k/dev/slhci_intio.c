@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.11 2008/05/23 13:27:40 isaki Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.11.6.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.11 2008/05/23 13:27:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.11.6.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ slhci_intio_match(device_t parent, cfdata_t cf, void *aux)
 	/* Whether the control port is accessible or not */
 	nc_addr = ia->ia_addr + NEREID_ADDR_OFFSET;
 	nc_size = 0x02;
-	if (badbaddr(INTIO_ADDR(nc_addr)))
+	if (badbaddr((void *)IIOV(nc_addr)))
 		return 0;
 
 	/* Map two I/O spaces */

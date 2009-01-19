@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.57 2008/05/06 11:35:38 tsutsui Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.57.8.1 2009/01/19 13:18:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.57 2008/05/06 11:35:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.57.8.1 2009/01/19 13:18:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,12 +191,13 @@ tlphyattach(device_t parent, device_t self, void *aux)
 	} else if ((tsc->sc_tlphycap &
 		    (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5)) == 0)
 		aprint_error("no media present");
+	else if (!pmf_device_register(self, NULL, mii_phy_resume)) {
+		aprint_normal("\n");
+		aprint_error_dev(self, "couldn't establish power handler");
+	}
 	aprint_normal("\n");
 #undef ADD
 #undef PRINT
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

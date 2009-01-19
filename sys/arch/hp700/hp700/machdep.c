@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.8 2008/11/18 14:09:39 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.9 2009/01/19 13:16:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.8 2008/11/18 14:09:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.9 2009/01/19 13:16:13 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.8 2008/11/18 14:09:39 skrll Exp $
 #include <sys/sysctl.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/module.h>
 #include <sys/extent.h>
 #include <sys/ksyms.h>
 #include <sys/mount.h>
@@ -587,14 +588,14 @@ do {									\
 #endif /* NCOM > 0 */
 #endif /* KGDB */
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL)
-                ksyms_init(bi_sym->nsym, (int *)bi_sym->ssym,
+                ksyms_addsyms_elf(bi_sym->nsym, (int *)bi_sym->ssym,
                     (int *)bi_sym->esym);
         else {
 		extern int end;
 
-		ksyms_init(esym - (int)&end, &end, (int*)esym);
+		ksyms_addsyms_elf(esym - (int)&end, &end, (int*)esym);
 	}
 #endif
 
@@ -1383,6 +1384,8 @@ cpu_reboot(int howto, char *user_boot_string)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 #ifdef POWER_SWITCH
 	if (pwr_sw_state == 0 &&
 	    (howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -1457,8 +1460,8 @@ hppa_machine_check(int check_type)
 	int error;
 #define	PIM_WORD(name, word, bits)			\
 do {							\
-	bitmask_snprintf(word, bits, bitmask_buffer,	\
-		sizeof(bitmask_buffer));		\
+	snprintb(bitmask_buffer, sizeof(bitmask_buffer),\
+	    bits, word);				\
 	printf("%s %s", name, bitmask_buffer);		\
 } while (/* CONSTCOND */ 0)
 
@@ -1623,10 +1626,12 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %x not possible\n", dumpdev);
+		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
@@ -1648,7 +1653,7 @@ dumpsys(void)
 			/* Print out how many MBs we are to go. */
 			n = bytes - i;
 			if (n && (n % (1024*1024)) == 0)
-				printf("%d ", n / (1024 * 1024));
+				printf_nolog("%d ", n / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 
@@ -1824,3 +1829,14 @@ consinit(void)
 		cninit();
 	}
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */
+

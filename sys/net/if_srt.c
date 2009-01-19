@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.8 2008/06/15 16:37:21 christos Exp $ */
+/* $NetBSD: if_srt.c,v 1.8.4.1 2009/01/19 13:20:11 skrll Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.8 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.8.4.1 2009/01/19 13:20:11 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -140,7 +140,7 @@ static int srt_if_ioctl(struct ifnet *intf, u_long cmd, void *data)
  err = 0;
  s = splnet();
  switch (cmd)
-  { case SIOCSIFADDR:
+  { case SIOCINITIFADDR:
     case SIOCSIFDSTADDR:
        ifa = (void *) data;
        switch (ifa->ifa_addr->sa_family)
@@ -158,13 +158,9 @@ static int srt_if_ioctl(struct ifnet *intf, u_long cmd, void *data)
 	}
        /* XXX do we need to do more here for either of these? */
        break;
-    case SIOCSIFMTU:
-    case SIOCGIFMTU:
+    default:
        if ((err = ifioctl_common(intf, cmd, data)) == ENETRESET)
              err = 0;
-       break;
-    default:
-       err = EINVAL;
        break;
   }
  splx(s);

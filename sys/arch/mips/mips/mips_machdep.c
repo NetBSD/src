@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205 2008/10/17 00:46:07 uebayasi Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.2.1 2009/01/19 13:16:30 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205 2008/10/17 00:46:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.2.1 2009/01/19 13:16:30 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1392,11 +1392,11 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		printf("\ndump to dev %llu,%llu not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	printf("\ndumping to dev %llu,%llu offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
@@ -1423,7 +1423,8 @@ dumpsys(void)
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 			/* Print out how many MBs we have left to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%ld ", totalbytesleft / (1024 * 1024));
+				printf_nolog("%ld ",
+				    totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;

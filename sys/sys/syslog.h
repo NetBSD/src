@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.31 2008/08/27 21:17:28 tls Exp $	*/
+/*	$NetBSD: syslog.h,v 1.31.2.1 2009/01/19 13:20:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -212,6 +212,16 @@ void	syslog_r(int, struct syslog_data *, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
 void	vsyslog_r(int, struct syslog_data *, const char *, _BSD_VA_LIST_)
     __attribute__((__format__(__printf__,3,0)));
+void syslogp(int, const char *, const char *, const char *, ...)
+    __attribute__((__format__(__printf__,4,5)));
+void vsyslogp(int, const char *, const char *, const char *, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__,4,0)));
+void syslogp_r(int, struct syslog_data *, const char *, const char *,
+    const char *, ...)
+    __attribute__((__format__(__printf__,5,6)));
+void vsyslogp_r(int, struct syslog_data *, const char *, const char *,
+    const char *, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__,5,0)));
 #endif
 __END_DECLS
 

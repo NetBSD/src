@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.1 2008/10/10 13:14:41 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.1.6.1 2009/01/19 13:20:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.1.6.1 2009/01/19 13:20:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>

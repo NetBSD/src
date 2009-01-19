@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.38 2008/07/31 07:41:07 simonb Exp $
+#	$NetBSD: INSTALL,v 1.38.2.1 2009/01/19 13:16:43 skrll Exp $
 #
 #	Shark installation kernel
 #
@@ -123,7 +123,6 @@ options 	INSECURE		# disable kernel securelevel
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics, XXX temp required
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

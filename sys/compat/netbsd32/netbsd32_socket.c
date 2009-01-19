@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.33 2008/06/24 11:18:15 ad Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.33.4.1 2009/01/19 13:17:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.33 2008/06/24 11:18:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.33.4.1 2009/01/19 13:17:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 	}
 done:
 	if (iov != aiov)
-		FREE(iov, M_IOV);
+		free(iov, M_IOV);
 	return (error);
 }
 
@@ -151,7 +151,7 @@ recvit32(struct lwp *l, int s, struct netbsd32_msghdr *mp, struct iovec *iov, vo
 
 	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_READ, ktriov, len - auio.uio_resid, error);
-		FREE(ktriov, M_TEMP);
+		free(ktriov, M_TEMP);
 	}
 
 	if (error)
@@ -254,7 +254,7 @@ netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, registe
 	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
-		FREE(iov, M_IOV);
+		free(iov, M_IOV);
 	return (error);
 }
 

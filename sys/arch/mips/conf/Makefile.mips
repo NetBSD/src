@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.50 2008/02/18 15:21:04 tsutsui Exp $
+#	$NetBSD: Makefile.mips,v 1.50.18.1 2009/01/19 13:16:30 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -55,7 +55,7 @@ AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
 ##
 ## (3) libkern and compat
 ##
-.if !empty(IDENT:M-DLKM)
+.if !empty(IDENT:M-DMODULAR)
 KERN_AS=	obj
 .endif
 
@@ -121,9 +121,6 @@ mips64_subr.o mipsX_subr.o sigcode.o: assym.h
 %LOAD
 
 %RULES
-
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

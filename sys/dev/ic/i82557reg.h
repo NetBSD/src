@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.20 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.20.8.1 2009/01/19 13:17:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -326,6 +326,14 @@ struct fxp_ipcb {
 /* for ipcb_ip_activation_high */
 #define FXP_IPCB_HARDWAREPARSING_ENABLE	0x01
 #define FXP_IPCB_INSERTVLAN_ENABLE	0x02
+
+/*
+ * hardware ip4csum-tx on fxp(4) doesn't set IP checksums properly
+ * if the TX IP packet length is 21 or 22 bytes and it requires autopadding.
+ * To avoid this bug, we have to pad such very short packets manually.
+ */
+#define FXP_IP4CSUMTX_MINLEN	22
+#define FXP_IP4CSUMTX_PADLEN	(ETHER_HDR_LEN + FXP_IP4CSUMTX_MINLEN)
 
 /*
  * Transmit command.

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.28 2007/12/31 15:32:06 ad Exp $
+#	$NetBSD: majors.sparc64,v 1.28.18.1 2009/01/19 13:16:47 skrll Exp $
 #
 # Device majors for sparc64
 #
@@ -94,7 +94,6 @@ device-major	bpp		char 107		bpp
 device-major	tcx		char 109		tcx
 device-major	vnd		char 110 block 8	vnd
 device-major	tun		char 111		tun
-device-major	lkm		char 112		lkm
 
 device-major	rnd		char 119		rnd
 device-major	scsibus		char 120		scsibus

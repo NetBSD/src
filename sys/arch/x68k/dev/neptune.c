@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.18 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: neptune.c,v 1.18.4.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.18 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.18.4.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ neptune_attach(device_t parent, device_t self, void *aux)
 	*sc->sc_bst = neptune_bus;
 	sc->sc_bst->x68k_bus_device = self;
 
-	sc->sc_addr = (vaddr_t)(ia->ia_addr - PHYS_INTIODEV + intiobase);
+	sc->sc_addr = (vaddr_t)IIOV(ia->ia_addr);
 
 	na.na_bst = sc->sc_bst;
 	na.na_intr = ia->ia_intr;

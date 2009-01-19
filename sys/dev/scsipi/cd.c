@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.283 2008/09/05 22:25:39 gmcgarry Exp $	*/
+/*	$NetBSD: cd.c,v 1.283.2.1 2009/01/19 13:19:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283 2008/09/05 22:25:39 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283.2.1 2009/01/19 13:19:03 skrll Exp $");
 
 #include "rnd.h"
 
@@ -389,7 +389,7 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	part = CDPART(dev);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev,
+	    ("cdopen: dev=0x%"PRIx64" (unit %"PRId64" (of %d), partition %"PRId64")\n", dev,
 	    CDUNIT(dev), cd_cd.cd_ndevs, CDPART(dev)));
 
 	/*
@@ -727,7 +727,7 @@ cdstrategy(struct buf *bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	BUFQ_PUT(cd->buf_queue, bp);
+	bufq_put(cd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -796,7 +796,7 @@ cdstart(struct scsipi_periph *periph)
 		 */
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
-			if ((bp = BUFQ_GET(cd->buf_queue)) != NULL) {
+			if ((bp = bufq_get(cd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
@@ -809,7 +809,7 @@ cdstart(struct scsipi_periph *periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_PEEK(cd->buf_queue)) == NULL)
+		if ((bp = bufq_peek(cd->buf_queue)) == NULL)
 			return;
 
 		/*
@@ -882,10 +882,10 @@ cdstart(struct scsipi_periph *periph)
 		 * HBA driver
 		 */
 #ifdef DIAGNOSTIC
-		if (BUFQ_GET(cd->buf_queue) != bp)
+		if (bufq_get(cd->buf_queue) != bp)
 			panic("cdstart(): dequeued wrong buf");
 #else
-		BUFQ_GET(cd->buf_queue);
+		bufq_get(cd->buf_queue);
 #endif
 		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
@@ -998,7 +998,7 @@ cdbounce(struct buf *bp)
 
 		/* enqueue the request and return */
 		s = splbio();
-		BUFQ_PUT(cd->buf_queue, nbp);
+		bufq_put(cd->buf_queue, nbp);
 		cdstart(cd->sc_periph);
 		splx(s);
 
@@ -1708,12 +1708,12 @@ cdgetdefaultlabel(struct cd_softc *cd, struct cd_formatted_toc *toc,
 	 * We could probe the mode pages to figure out what kind of disc it is.
 	 * Is this worthwhile?
 	 */
-	strncpy(lp->d_typename, "mydisc", 16);
+	strncpy(lp->d_typename, "optical media", 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = cd->params.disksize;
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
-	lp->d_flags = D_REMOVABLE;
+	lp->d_flags = D_REMOVABLE | D_SCSI_MMC;
 
 	if (cdreadmsaddr(cd, toc, &lastsession) != 0)
 		lastsession = 0;
@@ -1722,9 +1722,11 @@ cdgetdefaultlabel(struct cd_softc *cd, struct cd_formatted_toc *toc,
 	lp->d_partitions[0].p_size = lp->d_secperunit;
 	lp->d_partitions[0].p_cdsession = lastsession;
 	lp->d_partitions[0].p_fstype = FS_ISO9660;
+
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UDF;
+
 	lp->d_npartitions = RAW_PART + 1;
 
 	lp->d_magic = DISKMAGIC;
@@ -1745,6 +1747,7 @@ cdgetdisklabel(struct cd_softc *cd)
 	struct disklabel *lp = cd->sc_dk.dk_label;
 	struct cd_formatted_toc toc;
 	const char *errstring;
+	int bmajor;
 
 	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
@@ -1752,9 +1755,13 @@ cdgetdisklabel(struct cd_softc *cd)
 
 	/*
 	 * Call the generic disklabel extraction routine
+	 *
+	 * bmajor follows ata_raid code
 	 */
-	errstring = readdisklabel(MAKECDDEV(0, device_unit(cd->sc_dev),
-	    RAW_PART), cdstrategy, lp, cd->sc_dk.dk_cpulabel);
+	bmajor = devsw_name2blk(device_xname(cd->sc_dev), NULL, 0);
+	errstring = readdisklabel(MAKECDDEV(bmajor,
+	    device_unit(cd->sc_dev), RAW_PART),
+	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
 
 	/* if all went OK, we are passed a NULL error string */
 	if (errstring == NULL)

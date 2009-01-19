@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.5 2008/10/12 12:49:04 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.5.4.1 2009/01/19 13:17:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5 2008/10/12 12:49:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5.4.1 2009/01/19 13:17:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,7 +539,7 @@ struct chip_id chip_table[] = {
 	{ DBCOOL_COMPANYID, ADT7473_DEVICEID, ADT7473_REV_ID1,
 		ADT7475_sensor_table, ADT7475_power_table,
 		DBCFLAG_TEMPOFFSET | DBCFLAG_HAS_MAXDUTY | DBCFLAG_HAS_SHDN,
-		90000 * 60, "ADT7463" },
+		90000 * 60, "ADT7460/ADT7463" },
 	{ DBCOOL_COMPANYID, ADT7473_DEVICEID, ADT7473_REV_ID2,
 		ADT7475_sensor_table, ADT7475_power_table,
 		DBCFLAG_TEMPOFFSET | DBCFLAG_HAS_MAXDUTY | DBCFLAG_HAS_SHDN,
@@ -594,7 +594,9 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_readreg = dbcool_readreg;
 	sc.sc_writereg = dbcool_writereg;
 
-	/* no probing if we attach to iic, but verify chip id */
+	/* no probing if we attach to iic, but verify chip id  and address */
+	if ((ia->ia_addr & DBCOOL_ADDRMASK) != DBCOOL_ADDR)
+		return 0;
 	if (dbcool_chip_ident(&sc) >= 0)
 		return 1;
 
@@ -639,7 +641,6 @@ dbcool_detach(device_t self, int flags)
 	struct dbcool_softc *sc = device_private(self);
 
 	sysmon_envsys_unregister(sc->sc_sme);
-	sysmon_envsys_destroy(sc->sc_sme);
 	sc->sc_sme = NULL;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.13 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.13.8.1 2009/01/19 13:15:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.13 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.13.8.1 2009/01/19 13:15:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -160,14 +160,6 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	KASSERT(iopaau_desc_4_cache != NULL);
-	aau321_func_zero.af_desc_cache = iopaau_desc_4_cache;
-	aau321_func_fill8.af_desc_cache = iopaau_desc_4_cache;
-	aau321_func_xor_1_4.af_desc_cache = iopaau_desc_4_cache;
-
-	KASSERT(iopaau_desc_8_cache != NULL);
-	aau321_func_xor_5_8.af_desc_cache = iopaau_desc_8_cache;
-
 	sc->sc_st = ia->ia_st;
 	error = bus_space_subregion(sc->sc_st, ia->ia_sh,
 	    ia->ia_offset, ia->ia_size, &sc->sc_sh);
@@ -212,9 +204,16 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 
 	iopaau_attach(sc);
 
+	/*
+	 * These must be initialized after iopaau_attach()
+	 * because iopaau_desc_[48]_cache is set up there.
+	 */
+	KASSERT(iopaau_desc_4_cache != NULL);
 	aau321_func_zero.af_desc_cache = iopaau_desc_4_cache;
 	aau321_func_fill8.af_desc_cache = iopaau_desc_4_cache;
 	aau321_func_xor_1_4.af_desc_cache = iopaau_desc_4_cache;
+
+	KASSERT(iopaau_desc_8_cache != NULL);
 	aau321_func_xor_5_8.af_desc_cache = iopaau_desc_8_cache;
 }
 

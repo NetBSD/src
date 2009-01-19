@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.55 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.55.2.1 2009/01/19 13:15:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,17 +36,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.55 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.55.2.1 2009/01/19 13:15:54 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
 #include "opt_execfmt.h"
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/exec.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
@@ -630,6 +632,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	int32_t n;
 	struct mtrr32 *m32p, m32;
 	struct mtrr *m64p, *mp;
+	size_t size;
 
 	m64p = NULL;
 
@@ -657,7 +660,8 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX))
 		return EINVAL;
 
-	m64p = malloc(n * sizeof (struct mtrr), M_TEMP, M_WAITOK);
+	size = n * sizeof(struct mtrr);
+	m64p = kmem_zalloc(size, KM_SLEEP);
 	if (m64p == NULL) {
 		error = ENOMEM;
 		goto fail;
@@ -681,12 +685,11 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	}
 fail:
 	if (m64p != NULL)
-		free(m64p, M_TEMP);
+		kmem_free(m64p, size);
 	if (error != 0)
 		n = 0;
 	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
 	return error;
-		
 }
 
 static int
@@ -697,6 +700,7 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	struct mtrr *m64p, *mp;
 	int error, i;
 	int32_t n;
+	size_t size;
 
 	m64p = NULL;
 
@@ -721,7 +725,8 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 		goto fail;
 	}
 
-	m64p = malloc(n * sizeof (struct mtrr), M_TEMP, M_WAITOK);
+	size = n * sizeof(struct mtrr);
+	m64p = kmem_zalloc(size, KM_SLEEP);
 	if (m64p == NULL) {
 		error = ENOMEM;
 		goto fail;
@@ -744,7 +749,7 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	error = mtrr_set(m64p, &n, l->l_proc, 0);
 fail:
 	if (m64p != NULL)
-		free(m64p, M_TEMP);
+		kmem_free(m64p, size);
 	if (error != 0)
 		n = 0;
 	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);

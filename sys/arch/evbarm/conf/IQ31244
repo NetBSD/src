@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.40 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: IQ31244,v 1.40.2.1 2009/01/19 13:16:03 skrll Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -49,7 +49,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
-options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -117,7 +116,6 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
@@ -169,14 +167,13 @@ iopwdog*	at iopxs?		# Watchdog timer
 pci0		at iopxs? bus ?		# PCI/PCI-X support
 
 # IIC devices
-# XXX These don't seem to work yet
 
 # Temperature sensors
-#lmtemp0  	at iic0	addr 0x48	# LM75 temperature sensor
-#lmtemp1  	at iic0	addr 0x49	# LM75 temperature sensor
+lmtemp0  	at iic0	addr 0x48	# LM75 temperature sensor
+lmtemp1  	at iic0	addr 0x49	# LM75 temperature sensor
 
 # RTC
-#strtc0		at iic0 addr 0x68	# M41ST84 RTC
+strtc0		at iic0 addr 0x68	# M41ST84 RTC & watchdog
 
 # PCI-PCI bridges
 ppb*		at pci? dev ? function ?

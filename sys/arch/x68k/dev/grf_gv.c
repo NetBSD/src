@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gv.c,v 1.13 2007/12/31 13:38:53 ad Exp $	*/
+/*	$NetBSD: grf_gv.c,v 1.13.18.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,18 +81,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.13 2007/12/31 13:38:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.13.18.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 
+#include <machine/cpu.h>
 #include <machine/grfioctl.h>
 
 #include <x68k/dev/grfvar.h>
 #include <x68k/x68k/iodevice.h>
-
-#include <machine/cpu.h>
 
 int gv_init(struct grf_softc *, void *);
 int gv_mode(struct grf_softc *, u_long, void *);

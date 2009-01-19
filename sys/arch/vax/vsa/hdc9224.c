@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.44 2008/03/15 00:25:05 matt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.44.12.1 2009/01/19 13:17:03 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.44 2008/03/15 00:25:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.44.12.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ rdstrategy(struct buf *bp)
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
 	s = splbio();
-	BUFQ_PUT(sc->sc_q, bp);
+	bufq_put(sc->sc_q, bp);
 	if (inq == 0) {
 		inq = 1;
 		vsbus_dma_start(&sc->sc_vd);
@@ -493,7 +493,7 @@ hdc_qstart(void *arg)
 	inq = 0;
 
 	hdcstart(sc, 0);
-	if (BUFQ_PEEK(sc->sc_q)) {
+	if (bufq_peek(sc->sc_q)) {
 		vsbus_dma_start(&sc->sc_vd); /* More to go */
 		inq = 1;
 	}
@@ -513,7 +513,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 		return; /* Already doing something */
 
 	if (ob == 0) {
-		bp = BUFQ_GET(sc->sc_q);
+		bp = bufq_get(sc->sc_q);
 		if (bp == NULL)
 			return; /* Nothing to do */
 		sc->sc_bufaddr = bp->b_data;

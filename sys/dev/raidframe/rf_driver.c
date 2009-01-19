@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.118 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.118.8.1 2009/01/19 13:19:02 skrll Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,9 +66,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.118 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.118.8.1 2009/01/19 13:19:02 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,9 +225,18 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 
 	/* Wait for any parity re-writes to stop... */
 	while (raidPtr->parity_rewrite_in_progress) {
-		printf("Waiting for parity re-write to exit...\n");
+		printf("raid%d: Waiting for parity re-write to exit...\n",
+		       raidPtr->raidid);
 		tsleep(&raidPtr->parity_rewrite_in_progress, PRIBIO,
 		       "rfprwshutdown", 0);
+	}
+
+	/* Wait for any reconstruction to stop... */
+	while (raidPtr->reconInProgress) {
+		printf("raid%d: Waiting for reconstruction to stop...\n",
+		       raidPtr->raidid);
+		tsleep(&raidPtr->waitForReconCond, PRIBIO,
+		       "rfreshutdown",0);
 	}
 
 	raidPtr->valid = 0;

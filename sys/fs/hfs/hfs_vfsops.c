@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.19 2008/09/03 22:57:46 gmcgarry Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.19.2.1 2009/01/19 13:19:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.19 2008/09/03 22:57:46 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.19.2.1 2009/01/19 13:19:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -546,8 +546,8 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	/* Allocate a new vnode/inode. */
 	if ((error = getnewvnode(VT_HFS, mp, hfs_vnodeop_p, &vp)) != 0)
 		goto error;
-	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
-		M_WAITOK + M_ZERO);
+	hnode = malloc(sizeof(struct hfsnode), M_TEMP,
+		M_WAITOK | M_ZERO);
 
 	/*
 	 * If someone beat us to it while sleeping in getnewvnode(),
@@ -557,7 +557,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	if (hfs_nhashget(dev, cnid, fork, 0) != NULL) {
 		mutex_exit(&hfs_hashlock);
 		ungetnewvnode(vp);
-		FREE(hnode, M_TEMP);
+		free(hnode, M_TEMP);
 		goto retry;
 	}
 

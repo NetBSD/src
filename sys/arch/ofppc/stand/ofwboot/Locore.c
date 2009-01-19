@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.21 2008/02/12 04:27:46 garbled Exp $	*/
+/*	$NetBSD: Locore.c,v 1.21.18.1 2009/01/19 13:16:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -515,7 +515,6 @@ OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 
 static int stdin;
 static int stdout;
-static int memory;
 
 static void
 setup(void)

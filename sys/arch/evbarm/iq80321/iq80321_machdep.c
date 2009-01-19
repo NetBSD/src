@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.39 2008/04/27 18:58:46 matt Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.39.8.1 2009/01/19 13:16:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.39 2008/04/27 18:58:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.39.8.1 2009/01/19 13:16:07 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -246,6 +246,10 @@ int kgdb_devrate = KGDB_DEVRATE;
 int kgdb_devmode = KGDB_DEVMODE;
 #endif /* KGDB */
 
+#if defined(I80321_REBOOT)
+extern void I80321_REBOOT(int);
+#endif
+
 /*
  * void cpu_reboot(int howto, char *bootstr)
  *
@@ -264,6 +268,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -293,10 +298,15 @@ cpu_reboot(int howto, char *bootstr)
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
 
 	if (howto & RB_HALT) {
+#if defined(I80321_REBOOT)
+		I80321_REBOOT(howto);
+#endif
 		iq80321_7seg('.', '.');
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -305,6 +315,10 @@ cpu_reboot(int howto, char *bootstr)
 
 	printf("rebooting...\n\r");
  reset:
+#if defined(I80321_REBOOT)
+	I80321_REBOOT(howto);
+#endif
+
 	/*
 	 * Make really really sure that all interrupts are disabled,
 	 * and poke the Internal Bus and Peripheral Bus reset lines.
@@ -779,11 +793,6 @@ initarm(void *arg)
 
 #ifdef BOOTHOWTO
 	boothowto = BOOTHOWTO;
-#endif
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB

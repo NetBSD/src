@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.8 2008/10/12 20:52:56 pooka Exp $	*/
+/*	$NetBSD: lock.h,v 1.8.2.1 2009/01/19 13:15:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,11 +32,13 @@
 #ifndef _ACORN32_LOCK_H_
 #define _ACORN32_LOCK_H_
 
+#include <sys/param.h>
+
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
 
-#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+#if defined(_HARDKERNEL) && defined(MULTIPROCESSOR)
 
 #include <arm/cpufunc.h>
 
@@ -83,7 +85,7 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-#else /* !(_KERNEL && MULTIPROCESSOR) */
+#else /* !(_HARDKERNEL && MULTIPROCESSOR) */
 #include <arm/lock.h>
-#endif /* !(_KERNEL && MULTIPROCESSOR) */
+#endif /* !(_HARDKERNEL && MULTIPROCESSOR) */
 #endif

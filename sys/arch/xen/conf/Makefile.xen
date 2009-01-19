@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.26 2008/01/25 21:12:13 joerg Exp $
+#	$NetBSD: Makefile.xen,v 1.26.18.1 2009/01/19 13:17:11 skrll Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -117,7 +117,7 @@ apmcall.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 .elif  ${XEN_BUILD} == amd64
 locore.o machdep.o: Makefile
-linux32_sigcode.o netbsd32_sigcode.o: assym.h
+linux_support.o linux32_sigcode.o netbsd32_sigcode.o: assym.h
 .endif
 busfunc.o cpu_in_cksum.o cpufunc.o lock_stubs.o: assym.h
 
@@ -139,9 +139,6 @@ busfunc.o cpu_in_cksum.o cpufunc.o lock_stubs.o: assym.h
 %LOAD
 
 %RULES
-
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

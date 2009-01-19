@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.14 2008/04/25 12:41:50 skrll Exp $
+#	$NetBSD: files.hppa,v 1.14.10.1 2009/01/19 13:16:14 skrll Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -9,6 +9,7 @@ defflag	opt_cputype.h	HP7000_CPU HP7100_CPU HP7150_CPU HP7100LC_CPU
 			HP7200_CPU HP7250_CPU HP7300LC_CPU
 			HP8000_CPU HP8200_CPU HP8500_CPU HP8600_CPU
 
+file	arch/hppa/hppa/core_machdep.c		coredump
 file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
 file	arch/hppa/hppa/db_memrw.c		ddb | kgdb

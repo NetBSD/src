@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.4 2007/12/04 18:40:18 dsl Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.4.24.1 2009/01/19 13:17:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -40,7 +40,7 @@
 #include <compat/linux32/arch/amd64/linux32_exec.h>
 #endif
 
-extern const struct emul emul_linux32;
+extern struct emul emul_linux32;
 
 /* XXXmanu Do a.out later... */
 

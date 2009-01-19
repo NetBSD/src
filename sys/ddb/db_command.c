@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.120 2008/10/03 14:52:11 rmind Exp $	*/
+/*	$NetBSD: db_command.c,v 1.120.2.1 2009/01/19 13:17:51 skrll Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,8 +58,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.120 2008/10/03 14:52:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.120.2.1 2009/01/19 13:17:51 skrll Exp $");
 
+#include "opt_aio.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_inet.h"
@@ -81,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.120 2008/10/03 14:52:11 rmind Exp $
 #include <sys/lockdebug.h>
 #include <sys/sleepq.h>
 #include <sys/cpu.h>
+#include <sys/buf.h>
+#include <sys/module.h>
 
 /*include queue macros*/
 #include <sys/queue.h>
@@ -110,9 +113,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.120 2008/10/03 14:52:11 rmind Exp $
 /*
  * Results of command search.
  */
-#define	CMD_UNIQUE	0
-#define	CMD_FOUND	1
-#define	CMD_NONE	2
+#define	CMD_EXACT		0
+#define	CMD_PREFIX		1
+#define	CMD_NONE		2
 #define	CMD_AMBIGUOUS	3
 
 /*
@@ -127,18 +130,19 @@ db_addr_t	db_next;
 
 
 /*
-  New DDB api for adding and removing commands uses three lists, because
-  we use two types of commands
-  a) standard commands without subcommands -> reboot
-  b) show commands which are subcommands of show command -> show aio_jobs
-  c) if defined machine specific commands
-
-  ddb_add_cmd, ddb_rem_cmd use type (DDB_SHOW_CMD||DDB_BASE_CMD)argument to
-  add them to representativ lists.
-*/
+ * New DDB api for adding and removing commands uses three lists, because
+ * we use two types of commands
+ * a) standard commands without subcommands -> reboot
+ * b) show commands which are subcommands of show command -> show aio_jobs
+ * c) if defined machine specific commands
+ *
+ * ddb_add_cmd, ddb_rem_cmd use type (DDB_SHOW_CMD||DDB_BASE_CMD)argument to
+ * add them to representativ lists.
+ */
 
 static const struct db_command db_command_table[];
 static const struct db_command db_show_cmds[];
+
 #ifdef DB_MACHINE_COMMANDS
 static const struct db_command db_machine_command_table[];
 #endif
@@ -183,13 +187,16 @@ static void	db_init_commands(void);
 static int	db_register_tbl_entry(uint8_t type,
     struct db_cmd_tbl_en *list_ent);
 static void	db_cmd_list(const struct db_cmd_tbl_en_head *);
-static int	db_cmd_search(const char *, const struct db_command *,
-    const struct db_command **);
+static int	db_cmd_search(const char *, struct db_cmd_tbl_en_head *,
+			      const struct db_command **);
+static int	db_cmd_search_table(const char *, const struct db_command *,
+				    const struct db_command **);
+static void	db_cmd_search_failed(char *, int);
+static const struct db_command *db_read_command(void);
 static void	db_command(const struct db_command **);
 static void	db_buf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_event_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_fncall(db_expr_t, bool, db_expr_t, const char *);
-static int      db_get_list_type(const char *);
 static void     db_help_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_lock_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -212,6 +219,8 @@ static void	db_uvmexp_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_uvmhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
 	/*added from all sub cmds*/
@@ -223,9 +232,11 @@ static const struct db_command db_show_cmds[] = {
 	    0 ,"List all processes.",NULL,NULL) },
 	{ DDB_ADD_CMD("pools",	db_show_all_pools,
 	    0 ,"Show all poolS",NULL,NULL) },
+#ifdef AIO
 	/*added from all sub cmds*/
 	{ DDB_ADD_CMD("aio_jobs",	db_show_aio_jobs,	0,
 	    "Show aio jobs",NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD("all",	NULL,
 	    CS_COMPAT, NULL,NULL,NULL) },
 #if defined(INET) && (NARP > 0)
@@ -244,6 +255,8 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("malloc",	db_malloc_print_cmd,0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
+	    "Print kernel modules", NULL, NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
 	    "Print the mount structure at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("mqueue", db_show_mqueue_cmd,	0,
@@ -273,6 +286,10 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD("vnode",	db_vnode_print_cmd,	0,
 	    "Print the vnode at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("vmem", db_vmem_print_cmd,	0,
+	    "Print the vmem usage.", "[/a] address", NULL) },
+	{ DDB_ADD_CMD("vmems", db_show_all_vmems,	0,
+	    "Show all vmems.", NULL, NULL) },
 	{ DDB_ADD_CMD("watches",	db_listwatch_cmd, 	0,
 	    "Display all watchpoints.", NULL,NULL) },
 	{ DDB_ADD_CMD(NULL,		NULL,			0,NULL,NULL,NULL) }
@@ -403,10 +420,10 @@ db_error(const char *s)
 	longjmp(db_recover);
 }
 
-/*Execute commandlist after ddb start
- *This function goes through the command list created from commands and ';'
+/*
+ * Execute commandlist after ddb start
+ * This function goes through the command list created from commands and ';'
  */
-
 static void
 db_execute_commandlist(const char *cmdlist)
 {
@@ -428,7 +445,7 @@ db_execute_commandlist(const char *cmdlist)
 	}
 }
 
-/*Initialize ddb command tables*/
+/* Initialize ddb command tables */
 void
 db_init_commands(void)
 {
@@ -452,15 +469,15 @@ db_init_commands(void)
  * int type specifies type of command table DDB_SHOW_CMD|DDB_BASE_CMD|DDB_MAC_CMD
  * *cmd_tbl poiter to static allocated db_command table
  *
- *Command table must be NULL terminated array of struct db_command
+ * Command table must be NULL terminated array of struct db_command
  */
 int
 db_register_tbl(uint8_t type, const struct db_command *cmd_tbl)
 {
 	struct db_cmd_tbl_en *list_ent;
-
+	
+	/* empty list - ignore */
 	if (cmd_tbl->name == 0)
-		/* empty list - ignore */
 		return 0;
 
 	/* force builtin commands to be registered first */
@@ -524,10 +541,10 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 		return EINVAL;
 	}
 
-	TAILQ_FOREACH (list_ent,list,db_cmd_next) {
+	TAILQ_FOREACH (list_ent, list, db_cmd_next) {
 		if (list_ent->db_cmd == cmd_tbl){
 			TAILQ_REMOVE(list,
-			    list_ent,db_cmd_next);
+			    list_ent, db_cmd_next);
 			free(list_ent,M_TEMP);
 			return 0;
 		}
@@ -535,11 +552,10 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 	return ENOENT;
 }
 
-/*This function is called from machine trap code.*/
+/* This function is called from machine trap code. */
 void
 db_command_loop(void)
 {
-
 	label_t	db_jmpbuf;
 	label_t	*savejmp;
 
@@ -551,16 +567,16 @@ db_command_loop(void)
 
 	db_cmd_loop_done = false;
 
-	/*Init default command tables add machine, base,
-	  show command tables to the list*/
+	/* Init default command tables add machine, base,
+	   show command tables to the list */
 	db_init_commands();
 
-	/*save context for return from ddb*/
+	/* save context for return from ddb */
 	savejmp = db_recover;
 	db_recover = &db_jmpbuf;
 	(void) setjmp(&db_jmpbuf);
 
-	/*Execute default ddb start commands*/
+	/* Execute default ddb start commands */
 	db_execute_commandlist(db_cmd_on_enter);
 
 	(void) setjmp(&db_jmpbuf);
@@ -584,15 +600,12 @@ db_command_loop(void)
 }
 
 /*
- * Search for command table for command prefix
- * ret: CMD_UNIQUE    -> completely matches command
- *      CMD_FOUND     -> matches prefix of single command
- *      CMD_AMBIGIOUS -> matches prefix of more than one command
- *      CMD_NONE      -> command not found
+ * Search command table for command prefix
  */
 static int
-db_cmd_search(const char *name,const struct db_command *table,
-    const struct db_command **cmdp)
+db_cmd_search_table(const char *name,
+		    const struct db_command *table,
+		    const struct db_command **cmdp)
 {
 
 	const struct db_command	*cmd;
@@ -600,6 +613,7 @@ db_cmd_search(const char *name,const struct db_command *table,
 
 	result = CMD_NONE;
 	*cmdp = NULL;
+
 	for (cmd = table; cmd->name != 0; cmd++) {
 		const char *lp;
 		const char *rp;
@@ -614,17 +628,17 @@ db_cmd_search(const char *name,const struct db_command *table,
 		if (*lp != '\0') /* mismatch or extra chars in name */
 			continue;
 
-		if (*rp == '\0') { /* complete match */
+		if (*rp == '\0') { /* exact match */
 			*cmdp = cmd;
-			return (CMD_UNIQUE);
+			return (CMD_EXACT);
 		}
 
 		/* prefix match: end of name, not end of command */
 		if (result == CMD_NONE) {
-			result = CMD_FOUND;
+			result = CMD_PREFIX;
 			*cmdp = cmd;
 		}
-		else if (result == CMD_FOUND) {
+		else if (result == CMD_PREFIX) {
 			result = CMD_AMBIGUOUS;
 			*cmdp = NULL;
 		}
@@ -633,8 +647,79 @@ db_cmd_search(const char *name,const struct db_command *table,
 	return (result);
 }
 
+
 /*
- *List commands to the console.
+ * Search list of command tables for command
+ */
+static int
+db_cmd_search(const char *name,
+	      struct db_cmd_tbl_en_head *list_head,
+	      const struct db_command **cmdp)
+{
+	struct db_cmd_tbl_en *list_ent;
+	const struct db_command *found_command;
+	bool accept_prefix_match;
+	int result;
+
+	result = CMD_NONE;
+	found_command = NULL;
+	accept_prefix_match = true;
+
+	TAILQ_FOREACH(list_ent, list_head, db_cmd_next) {
+		const struct db_command *cmd;
+		int found;
+
+		found = db_cmd_search_table(name, list_ent->db_cmd, &cmd);
+		if (found == CMD_EXACT) {
+			result = CMD_EXACT;
+			found_command = cmd;
+			break;
+		}
+
+		if (found == CMD_PREFIX) {
+			if (accept_prefix_match) {
+				/*
+				 * Continue search, but note current result
+				 * in case we won't find anything else.
+				 */
+				accept_prefix_match = false;
+				result = CMD_PREFIX;
+				found_command = cmd;
+			} else {
+				/*
+				 * Watch out for globally ambiguous
+				 * prefix match that is not locally
+				 * ambiguous - with one match in one
+				 * table and another match(es) in
+				 * another table.
+				 */
+				result = CMD_AMBIGUOUS;
+				found_command = NULL;
+			}
+		}
+		else if (found == CMD_AMBIGUOUS) {
+			accept_prefix_match = false;
+			result = CMD_AMBIGUOUS;
+			found_command = NULL;
+		}
+	}
+
+	*cmdp = found_command;
+	return result;
+}
+
+static void
+db_cmd_search_failed(char *name, int search_result)
+{
+	if (search_result == CMD_NONE)
+		db_printf("No such command: %s\n", name);
+	else
+		db_printf("Ambiguous command: %s\n", name);
+}
+
+
+/*
+ * List commands to the console.
  */
 static void
 db_cmd_list(const struct db_cmd_tbl_en_head *list)
@@ -690,81 +775,66 @@ db_cmd_list(const struct db_cmd_tbl_en_head *list)
 }
 
 /*
- *Returns type of list for command with name *name.
+ * Read complete command with all subcommands, starting with current
+ * db_tok_string. If subcommand is missing, print the list of all
+ * subcommands.  If command/subcommand is not found, print an error
+ * message.  Returns pointer to "leaf" command or NULL.
  */
-static int
-db_get_list_type(const char *name)
+static const struct db_command *
+db_read_command(void)
 {
+	const struct db_command *command;
+	struct db_cmd_tbl_en_head *list;
+	int found;
+	int t;
 
-	const struct db_command    *cmd;
-	struct db_cmd_tbl_en *list_ent;
-	int error,ret=-1;
-
-	/* search for the command name */
-	TAILQ_FOREACH(list_ent,&db_base_cmd_list,db_cmd_next) {
-		/*
-		 * cmd_search returns CMD_UNIQUE, CMD_FOUND ...
-		 * CMD_UNIQUE when name was completly matched to cmd->name
-		 * CMD_FOUND  when name was only partially matched to cmd->name
-		 * CMD_NONE   command not found in a list
-		 * CMD_AMBIGIOUS ->more partialy matches
-		 */
-
-		error = db_cmd_search(name, list_ent->db_cmd, &cmd);
-
-		if (error == CMD_UNIQUE) {
-			/* exact match found */
-			if (cmd->flag == CS_SHOW) {
-				ret = DDB_SHOW_CMD;
-				break;
-			}
-			if (cmd->flag == CS_MACH) {
-				ret = DDB_MACH_CMD;
-				break;
-			} else {
-				ret = DDB_BASE_CMD;
-				break;
-			}
-
-		} else if (error == CMD_FOUND) {
-			/*
-			 * partial match, search will continue, but
-			 * note current result in case we won't
-			 * find anything better.
-			 */
-			if (cmd->flag == CS_SHOW)
-				ret = DDB_SHOW_CMD;
-			else if (cmd->flag == CS_MACH)
-				ret = DDB_MACH_CMD;
-			else
-				ret = DDB_BASE_CMD;
+	list = &db_base_cmd_list;
+	do {
+		found = db_cmd_search(db_tok_string, list, &command);
+		if (command == NULL) {
+			db_cmd_search_failed(db_tok_string, found);
+			db_flush_lex();
+			return NULL;
 		}
-	}
 
-	return ret;
+		if (command->flag == CS_SHOW)
+			list = &db_show_cmd_list;
+		else if (command->flag == CS_MACH)
+			list = &db_mach_cmd_list;
+		else if (command->flag == CS_COMPAT)
+			/* same list */;
+		else
+			break; /* expect no more subcommands */
+
+		t = db_read_token(); /* read subcommand */
+		if (t != tIDENT) {
+			/* if none given - just print all of them */
+			db_cmd_list(list);
+			db_flush_lex();
+			return NULL;
+		}
+	} while (list != NULL);
+
+	return command;
 }
 
 /*
- *Parse command line and execute apropriate function.
+ * Parse command line and execute apropriate function.
  */
 static void
 db_command(const struct db_command **last_cmdp)
 {
 	const struct db_command *command;
-	struct db_cmd_tbl_en *list_ent;
-	struct db_cmd_tbl_en_head *list;
-
-	int		t;
-	int		result;
-
-	char		modif[TOK_STRING_SIZE];
+	static db_expr_t last_count;
 	db_expr_t	addr, count;
+	char		modif[TOK_STRING_SIZE];
+	
+	int			t;
 	bool		have_addr = false;
 
-	static db_expr_t last_count = 0;
-
-	command = NULL;	/* XXX gcc */
-
+	command = NULL;
+	last_count = 0;
+	
 	t = db_read_token();
 	if ((t == tEOL) || (t == tCOMMA)) {
 		/*
@@ -800,76 +870,9 @@ db_command(const struct db_command **last_cmdp)
 
 	} else {
 
-		switch(db_get_list_type(db_tok_string)) {
-
-		case DDB_BASE_CMD:
-			list = &db_base_cmd_list;
-			break;
-
-		case DDB_SHOW_CMD:
-			list = &db_show_cmd_list;
-			/* need to read show subcommand if show command list
-			   is used. */
-			t = db_read_token();
-
-			if (t != tIDENT) {
-				/* if only show command is executed, print
-				   all subcommands */
-				db_cmd_list(list);
-				db_flush_lex();
-				return;
-			}
-			break;
-		case DDB_MACH_CMD:
-			list = &db_mach_cmd_list;
-			/* need to read machine subcommand if
-			  machine level 2 command list is used. */
-			t = db_read_token();
-
-			if (t != tIDENT) {
-				/* if only show command is executed, print
-				   all subcommands */
-				db_cmd_list(list);
-				db_flush_lex();
-				return;
-			}
-			break;
-		default:
-			db_printf("No such command\n");
-			db_flush_lex();
+		command = db_read_command();
+		if (command == NULL)
 			return;
-		}
-
- COMPAT_RET:
-		TAILQ_FOREACH(list_ent, list, db_cmd_next) {
-			result = db_cmd_search(db_tok_string, list_ent->db_cmd,
-			    &command);
-
-			/* after CMD_UNIQUE in cmd_list only a single command
-			   name is possible */
-			if (result == CMD_UNIQUE)
-				break;
-
-		}
-
-		/* check compatibility flag */
-		if (command && command->flag & CS_COMPAT){
-			t = db_read_token();
-			if (t != tIDENT) {
-					db_cmd_list(list);
-					db_flush_lex();
-					return;
-			}
-
-			/* support only level 2 commands here */
-			goto COMPAT_RET;
-		}
-
-		if (!command) {
-			db_printf("No such command\n");
-			db_flush_lex();
-			return;
-		}
 
 		if ((command->flag & CS_OWN) == 0) {
 
@@ -919,13 +922,14 @@ db_command(const struct db_command **last_cmdp)
 		}
 	}
 
-	if (command->flag & CS_NOREPEAT) {
+	if (command != NULL && command->flag & CS_NOREPEAT) {
 		*last_cmdp = NULL;
 		last_count = 0;
 	} else {
 		*last_cmdp = command;
 		last_count = count;
 	}
+
 
 	if (command != NULL) {
 		/*
@@ -958,109 +962,38 @@ db_command(const struct db_command **last_cmdp)
  */
 static void
 db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif)
+const char *modif)
 {
-
-	const struct db_cmd_tbl_en_head *list;
-	const struct db_cmd_tbl_en *list_ent;
-	const struct db_command *help = NULL;
-	int t, result;
+	const struct db_command *command;
+	int t;
 
 	t = db_read_token();
+
 	/* is there another command after the "help"? */
-	if (t == tIDENT){
-
-		switch(db_get_list_type(db_tok_string)) {
-
-		case DDB_BASE_CMD:
-			list=&db_base_cmd_list;
-			break;
-		case DDB_SHOW_CMD:
-			list=&db_show_cmd_list;
-			/* read the show subcommand */
-			t = db_read_token();
-
-			if (t != tIDENT) {
-				/* no subcommand, print the list */
-				db_cmd_list(list);
-				db_flush_lex();
-				return;
-			}
-
-			break;
-		case DDB_MACH_CMD:
-			list=&db_mach_cmd_list;
-			/* read machine subcommand */
-			t = db_read_token();
-
-			if (t != tIDENT) {
-				/* no subcommand - just print the list */
-				db_cmd_list(list);
-				db_flush_lex();
-				return;
-			}
-			break;
-
-		default:
-			db_printf("No such command\n");
-			db_flush_lex();
-			return;
-		}
- COMPAT_RET:
-		TAILQ_FOREACH(list_ent,list,db_cmd_next){
-			result = db_cmd_search(db_tok_string, list_ent->db_cmd,
-					&help);
-			/* after CMD_UNIQUE only a single command
-			   name is possible */
-			if (result == CMD_UNIQUE)
-				break;
-		}
-#ifdef DDB_VERBOSE_HELP
-		/*print help*/
-
-		db_printf("Command: %s\n",help->name);
-
-		if (help->cmd_descr != NULL)
-			db_printf(" Description: %s\n",help->cmd_descr);
-
-		if (help->cmd_arg != NULL)
-			db_printf(" Arguments: %s\n",help->cmd_arg);
-
-		if (help->cmd_arg_help != NULL)
-			db_printf(" Arguments description:\n%s\n",
-			    help->cmd_arg_help);
-
-		if ((help->cmd_arg == NULL) && (help->cmd_descr == NULL))
-			db_printf("%s Doesn't have any help message included.\n",
-			    help->name);
-#endif
-		/* check compatibility flag */
-		/*
-		 * The "show all" command table has been merged with the
-		 * "show" command table - but we want to keep the old UI
-		 * available. So if we find a CS_COMPAT entry, we read
-		 * the next token and try again.
-		 */
-		if (help->flag == CS_COMPAT){
-			t = db_read_token();
-
-			if (t != tIDENT){
-				db_cmd_list(list);
-				db_flush_lex();
-				return;
-			}
-
-			goto COMPAT_RET;
-			/* support only level 2 commands here */
-		} else {
-			db_skip_to_eol();
-		}
-
-	} else /* t != tIDENT */
+	if (t != tIDENT) {
 		/* print base commands */
 		db_cmd_list(&db_base_cmd_list);
+		return;
+	}
 
-	return;
+	command = db_read_command();
+	if (command == NULL)
+		return;
+
+#ifdef DDB_VERBOSE_HELP
+	db_printf("Command: %s\n", command->name);
+	if (command->cmd_descr != NULL)
+		db_printf(" Description: %s\n", command->cmd_descr);
+	if (command->cmd_arg != NULL)
+		db_printf(" Arguments: %s\n", command->cmd_arg);
+	if (command->cmd_arg_help != NULL)
+		db_printf(" Arguments description:\n%s\n",
+			  command->cmd_arg_help);
+	if ((command->cmd_arg == NULL) && (command->cmd_descr == NULL))
+		db_printf(" No help message.\n");
+#endif
+
+	db_skip_to_eol();
 }
 
 /*ARGSUSED*/
@@ -1170,6 +1103,22 @@ db_vnode_print_cmd(db_expr_t addr, bool have_addr,
 	vfs_vnode_print((struct vnode *)(uintptr_t) addr, full, db_printf);
 }
 
+/*ARGSUSED*/
+static void
+db_vmem_print_cmd(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+	vmem_print((uintptr_t) addr, modif, db_printf);
+}
+
+/*ARGSUSED*/
+static void
+db_show_all_vmems(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+	vmem_print((uintptr_t)addr, "a", db_printf);
+}
+
 static void
 db_mount_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
@@ -1235,7 +1184,7 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	lockdebug_lock_print((void *)addr, db_printf);
+	lockdebug_lock_print((void *)(uintptr_t)addr, db_printf);
 }
 
 /*
@@ -1397,4 +1346,5 @@ db_whatis_cmd(db_expr_t address, bool have_addr,
 	pool_whatis(addr, db_printf);
 	vmem_whatis(addr, db_printf);
 	uvm_whatis(addr, db_printf);
+	module_whatis(addr, db_printf);
 }

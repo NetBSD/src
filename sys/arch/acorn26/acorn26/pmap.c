@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.19 2007/10/17 19:52:52 garbled Exp $ */
+/* $NetBSD: pmap.c,v 1.19.28.1 2009/01/19 13:15:50 skrll Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2007/10/17 19:52:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19.28.1 2009/01/19 13:15:50 skrll Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -179,7 +179,8 @@ struct pv_entry *pv_table;
 
 /* Kernel pmap -- statically allocated to make life slightly less odd. */
 
-struct pmap kernel_pmap_store;
+static struct pmap kernel_pmap_store;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 struct pv_entry *kernel_pmap_entries[PM_NENTRIES];
 
 static bool pmap_initialised = false;
@@ -377,9 +378,9 @@ pmap_create()
 		pmap_init2();
 	pmap = pool_get(&pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
-	MALLOC(pmap->pm_entries, struct pv_entry **,
-	    sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP, M_WAITOK);
-	bzero(pmap->pm_entries, sizeof(struct pv_entry *) * PM_NENTRIES);
+	pmap->pm_entries = (struct pv_entry **)malloc(
+		sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP,
+		M_WAITOK | M_ZERO);
 	pmap->pm_count = 1;
 	return pmap;
 }
@@ -403,7 +404,7 @@ pmap_destroy(pmap_t pmap)
 		if (pmap->pm_entries[i] != NULL)
 			panic("pmap_destroy: pmap isn't empty");
 #endif
-	FREE(pmap->pm_entries, M_VMPMAP);
+	free((void *)pmap->pm_entries, M_VMPMAP);
 	pool_put(&pmap_pool, pmap);
 }
 
@@ -539,21 +540,16 @@ pv_update(struct pv_entry *pv)
 
 
 static struct pv_entry *
-pv_alloc()
+pv_alloc(void)
 {
-	struct pv_entry *pv;
-
-	MALLOC(pv, struct pv_entry *, sizeof(*pv), M_VMPMAP, M_NOWAIT);
-	if (pv != NULL)
-		bzero(pv, sizeof(*pv));
-	return pv;
+	return malloc(sizeof(struct pv_entry), M_VMPMAP, M_NOWAIT | M_ZERO);
 }
 
 static void
 pv_free(struct pv_entry *pv)
 {
 
-	FREE(pv, M_VMPMAP);
+	free(pv, M_VMPMAP);
 }
 
 static struct pv_entry *

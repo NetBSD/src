@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.20 2007/03/04 05:59:20 christos Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.20.52.1 2009/01/19 13:15:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,6 +78,7 @@
 
 struct ite_softc;
 
+#ifdef _KERNEL
 /*
  * this struct is owned by the driver (grfcc, grfrt)
  * and is passed to grf when grf is configed. The ite also
@@ -103,6 +104,7 @@ struct	grf_softc {
 	void (*g_itescroll)(struct ite_softc *, int, int, int, int);
 	int	g_blank;		/* shadow copy of blank value */
 };
+#endif /* _KERNEL */
 
 /* flags */
 #define	GF_ALIVE	0x01

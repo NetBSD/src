@@ -1,4 +1,4 @@
-# $NetBSD: files.sun,v 1.14 2008/02/21 13:44:17 martin Exp $
+# $NetBSD: files.sun,v 1.14.16.1 2009/01/19 13:19:03 skrll Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
@@ -69,10 +69,10 @@ file	dev/sun/fb.c			fb needs-flag
 define	pfour
 file	dev/sun/pfour_subr.c		pfour needs-flag
 
-device bwtwo: fb, rasops1, pfour
+device bwtwo: fb, rasops1, pfour, wsemuldisplaydev, vcons
 file	dev/sun/bwtwo.c			bwtwo needs-flag
 
-device cgthree: bt_dac, fb, rasops8
+device cgthree: bt_dac, fb, rasops8, wsemuldisplaydev, vcons
 file	dev/sun/cgthree.c		cgthree needs-flag
 
 device cgsix: bt_dac, fb, rasops8, pfour, wsemuldisplaydev, vcons

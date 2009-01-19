@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.46 2008/10/11 13:40:58 pooka Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.46.2.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ struct pstats {
 #define	pstat_endzero	pstat_startcopy
 
 #define	pstat_startcopy	p_timer
-	struct	itimerval p_timer[3];	/* virtual-time timers */
+	struct	itimerspec p_timer[3];	/* virtual-time timers */
 
 	struct uprof {			/* profile arguments */
 		char *	pr_base;	/* buffer base */
@@ -83,13 +83,13 @@ struct plimit {
 };
 
 /* add user profiling from AST XXXSMP */
-#define	ADDUPROF(p)							\
+#define	ADDUPROF(l)							\
 	do {								\
-		struct proc *_p = l->l_proc;				\
-		addupc_task(l,						\
-		    (_p)->p_stats->p_prof.pr_addr,			\
-		    (_p)->p_stats->p_prof.pr_ticks);			\
-		(_p)->p_stats->p_prof.pr_ticks = 0;			\
+		struct proc *_p = (l)->l_proc;				\
+		addupc_task((l),					\
+		    _p->p_stats->p_prof.pr_addr,			\
+		    _p->p_stats->p_prof.pr_ticks);			\
+		_p->p_stats->p_prof.pr_ticks = 0;			\
 	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL

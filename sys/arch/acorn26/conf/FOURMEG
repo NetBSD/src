@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.29 2006/10/02 03:28:29 chs Exp $
+# $NetBSD: FOURMEG,v 1.29.64.1 2009/01/19 13:15:50 skrll Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -52,7 +52,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	NFS_V2_ONLY	# Make a smaller NFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -96,7 +95,6 @@ options 	SYSVSHM		# System V-like shared memory
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	BUFPAGES=1

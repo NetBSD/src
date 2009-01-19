@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.46 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.46.8.1 2009/01/19 13:18:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.46 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.46.8.1 2009/01/19 13:18:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,9 +171,6 @@ lxtphyattach(device_t parent, device_t self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

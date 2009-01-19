@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.9 2008/06/11 19:31:10 cegger Exp $ */
+/* $NetBSD: spiflash.c,v 1.9.4.1 2009/01/19 13:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.9 2008/06/11 19:31:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.9.4.1 2009/01/19 13:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -338,7 +338,7 @@ spiflash_strategy(struct buf *bp)
 
 	/* all ready, hand off to thread for async processing */
 	s = splbio();
-	BUFQ_PUT(sc->sc_waitq, bp);
+	bufq_put(sc->sc_waitq, bp);
 	wakeup(&sc->sc_thread);
 	splx(s);
 }
@@ -350,7 +350,7 @@ spiflash_process_done(spiflash_handle_t sc, int err)
 	int		cnt = 0;
 	int		flag = 0;
 
-	while ((bp = BUFQ_GET(sc->sc_doneq)) != NULL) {
+	while ((bp = bufq_get(sc->sc_doneq)) != NULL) {
 		flag = bp->b_flags & B_READ;
 		if ((bp->b_error = err) == 0)
 			bp->b_resid = 0;
@@ -367,12 +367,12 @@ spiflash_process_read(spiflash_handle_t sc)
 	int		err = 0;
 
 	disk_busy(&sc->sc_dk);
-	while ((bp = BUFQ_GET(sc->sc_workq)) != NULL) {
+	while ((bp = bufq_get(sc->sc_workq)) != NULL) {
 		size_t addr = bp->b_blkno * DEV_BSIZE;
 		uint8_t *data = bp->b_data;
 		int cnt = bp->b_resid;
 
-		BUFQ_PUT(sc->sc_doneq, bp);
+		bufq_put(sc->sc_doneq, bp);
 
 		DPRINTF(("read from addr %x, cnt %d\n", (unsigned)addr, cnt));
 
@@ -407,7 +407,7 @@ spiflash_process_write(spiflash_handle_t sc)
 	 * to save.
 	 */
 
-	bp = BUFQ_PEEK(sc->sc_workq);
+	bp = bufq_peek(sc->sc_workq);
 	len = spiflash_nsectors(sc, bp)  * sc->sc_erase_size;
 	blkno = bp->b_blkno;
 	base = (blkno * DEV_BSIZE) & ~ (sc->sc_erase_size - 1);
@@ -428,7 +428,7 @@ spiflash_process_write(spiflash_handle_t sc)
 	 * now coalesce the writes into the save area, but also
 	 * check to see if we need to do an erase
 	 */
-	while ((bp = BUFQ_GET(sc->sc_workq)) != NULL) {
+	while ((bp = bufq_get(sc->sc_workq)) != NULL) {
 		uint8_t	*data, *dst;
 		int resid = bp->b_resid;
 
@@ -450,7 +450,7 @@ spiflash_process_write(spiflash_handle_t sc)
 			resid--;
 		}
 
-		BUFQ_PUT(sc->sc_doneq, bp);
+		bufq_put(sc->sc_doneq, bp);
 	}
 	
 	/*
@@ -514,12 +514,12 @@ spiflash_thread(void *arg)
 
 	s = splbio();
 	for (;;) {
-		if ((bp = BUFQ_GET(sc->sc_waitq)) == NULL) {
+		if ((bp = bufq_get(sc->sc_waitq)) == NULL) {
 			tsleep(&sc->sc_thread, PRIBIO, "spiflash_thread", 0);
 			continue;
 		}
 
-		BUFQ_PUT(sc->sc_workq, bp);
+		bufq_put(sc->sc_workq, bp);
 
 		if (bp->b_flags & B_READ) {
 			/* just do the read */
@@ -544,7 +544,7 @@ spiflash_thread(void *arg)
 		if (sector < 0)
 			goto dowrite;
 
-		while ((bp = BUFQ_PEEK(sc->sc_waitq)) != NULL) {
+		while ((bp = bufq_peek(sc->sc_waitq)) != NULL) {
 			/* can't deal with read requests! */
 			if (bp->b_flags & B_READ)
 				break;
@@ -553,8 +553,8 @@ spiflash_thread(void *arg)
 			if (spiflash_sector(sc, bp) != sector)
 				break;
 
-			bp = BUFQ_GET(sc->sc_waitq);
-			BUFQ_PUT(sc->sc_workq, bp);
+			bp = bufq_get(sc->sc_waitq);
+			bufq_put(sc->sc_workq, bp);
 		}
 
 	dowrite:

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.36 2008/06/14 13:36:24 isaki Exp $	*/
+/*	$NetBSD: grf.c,v 1.36.4.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36 2008/06/14 13:36:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36.4.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,12 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36 2008/06/14 13:36:24 isaki Exp $");
 #include <sys/mman.h>
 #include <sys/conf.h>
 
+#include <machine/cpu.h>
 #include <machine/grfioctl.h>
 
 #include <x68k/dev/grfvar.h>
 #include <x68k/dev/itevar.h>
-
-#include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -245,7 +244,7 @@ grfmmap(dev_t dev, off_t off, int prot)
 int
 grfon(struct grf_softc *gp)
 {
-	int unit = device_unit(&gp->g_device);
+	int unit = device_unit(gp->g_device);
 
 	/*
 	 * XXX: iteoff call relies on devices being in same order
@@ -260,7 +259,7 @@ grfon(struct grf_softc *gp)
 int
 grfoff(struct grf_softc *gp)
 {
-	int unit = device_unit(&gp->g_device);
+	int unit = device_unit(gp->g_device);
 	int error;
 
 #if 0				/* always fails in EINVAL... */

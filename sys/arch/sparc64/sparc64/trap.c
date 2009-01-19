@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.155 2008/10/15 06:51:19 wrstuden Exp $ */
+/*	$NetBSD: trap.c,v 1.155.2.1 2009/01/19 13:16:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155.2.1 2009/01/19 13:16:52 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -459,7 +459,7 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 
 		printf("trap: type 0x%x: pc=%lx &tf=%p\n",
 		       type, pc, tf);
-		bitmask_snprintf(pstate, PSTATE_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), PSTATE_BITS, pstate);
 		printf(" npc=%lx pstate=%s %s\n",
 		       (long)tf->tf_npc, sbuf, 
 		       type < N_TRAP_TYPES ? trap_type[type] : 
@@ -474,7 +474,7 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 		trap_trace_dis = 1;
 		printf("trap: type 0x%x: lvl=%d pc=%lx &tf=%p",
 		       type, (int)tl(), pc, tf);
-		bitmask_snprintf(pstate, PSTATE_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), PSTATE_BITS, pstate);
 		printf(" npc=%lx pstate=%s %s\n",
 		       (long)tf->tf_npc, sbuf, 
 		       type < N_TRAP_TYPES ? trap_type[type] : 
@@ -570,14 +570,13 @@ dopanic:
 			trap_trace_dis = 1;
 
 			{
-				char sbuf[sizeof(PSTATE_BITS) + 64];
+				char sb[sizeof(PSTATE_BITS) + 64];
 
 				printf("trap type 0x%x: cpu %d, pc=%lx",
 				       type, cpu_number(), pc); 
-				bitmask_snprintf(pstate, PSTATE_BITS, sbuf,
-						 sizeof(sbuf));
+				snprintb(sb, sizeof(sb), PSTATE_BITS, pstate);
 				printf(" npc=%lx pstate=%s\n",
-				       (long)tf->tf_npc, sbuf);
+				       (long)tf->tf_npc, sb);
 				DEBUGGER(type, tf);
 				panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			}
@@ -1295,7 +1294,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	    trapdebug & (TDB_ADDFLT | TDB_FOLLOW)) {
 		char buf[768];
 
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 		printf("%d data_access_error(%lx, %lx, %lx, %p)=%lx @ %p %s\n",
 		       curproc?curproc->p_pid:-1, 
 		       (long)type, (long)sfva, (long)afva, tf,
@@ -1307,7 +1306,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
 		char buf[768];
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 
 		printf("%d tl %ld data_access_error(%lx, %lx, %lx, %p)="
 		       "%lx @ %lx %s\n",
@@ -1362,7 +1361,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 			char buf[768];
 
 			trap_trace_dis = 1; /* Disable traptrace for printf */
-			bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+			snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 			(void) splhigh();
 			printf("data fault: pc=%lx addr=%lx sfsr=%s\n",
 				(u_long)pc, (long)sfva, buf);
@@ -1378,7 +1377,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 		if (afsr & ASFR_PRIV) {
 			char buf[128];
 
-			bitmask_snprintf(afsr, AFSR_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf), AFSR_BITS, afsr);
 			panic("Privileged Async Fault: AFAR %p AFSR %lx\n%s",
 				(void *)afva, afsr, buf);
 			/* NOTREACHED */
@@ -1592,7 +1591,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	write_user_windows();
 	if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved) ||
 	    trapdebug & (TDB_TXTFLT | TDB_FOLLOW)) {
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 		printf("%ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
 		       (long)(curproc?curproc->p_pid:-1), 
 		       (long)type, pc, (long)afva, tf, (long)tf->tf_tstate, 
@@ -1602,7 +1601,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 		printf("%ld tl %ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
 		       (long)(curproc?curproc->p_pid:-1), (long)tl(),
 		       (long)type, (long)pc, (long)afva, tf, 
@@ -1667,7 +1666,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if (tstate & TSTATE_PRIV) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
-		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 		(void) splhigh();
 		printf("text error: pc=%lx sfsr=%s\n", pc, buf);
 		DEBUGGER(type, tf);
@@ -1702,7 +1701,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		if (tstate & TSTATE_PRIV) {
 			extern int trap_trace_dis;
 			trap_trace_dis = 1; /* Disable traptrace for printf */
-			bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
+			snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 			(void) splhigh();
 			printf("text error: pc=%lx sfsr=%s\n", pc, buf);
 			DEBUGGER(type, tf);

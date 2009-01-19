@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.8 2008/05/03 05:31:56 yamt Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.8.8.1 2009/01/19 13:19:39 skrll Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.8 2008/05/03 05:31:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.8.8.1 2009/01/19 13:19:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -45,11 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.8 2008/05/03 05:31:56 yamt Exp $")
 
 #include <uvm/uvm_extern.h>
 
-static krwlock_t percpu_swap_lock;
-static kmutex_t percpu_allocation_lock;
-static vmem_t *percpu_offset_arena;
-static unsigned int percpu_nextoff;
-
 #define	PERCPU_QUANTUM_SIZE	(ALIGNBYTES + 1)
 #define	PERCPU_QCACHE_MAX	0
 #define	PERCPU_IMPORT_SIZE	2048
@@ -62,6 +57,11 @@ static unsigned int percpu_nextoff;
 #define	percpu_encrypt(pc)	(pc)
 #define	percpu_decrypt(pc)	(pc)
 #endif /* defined(DIAGNOSTIC) */
+
+static krwlock_t percpu_swap_lock;
+static kmutex_t percpu_allocation_lock;
+static vmem_t *percpu_offset_arena;
+static unsigned int percpu_nextoff = PERCPU_QUANTUM_SIZE;
 
 static percpu_cpu_t *
 cpu_percpu(struct cpu_info *ci)

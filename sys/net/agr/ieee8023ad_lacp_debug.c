@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_debug.c,v 1.4 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_debug.c,v 1.4.84.1 2009/01/19 13:20:12 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.4 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_debug.c,v 1.4.84.1 2009/01/19 13:20:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ lacp_format_state(uint8_t state, char *buf, size_t buflen)
 {
 	static const char lacp_state_bits[] = LACP_STATE_BITS;
 
-	bitmask_snprintf(state, lacp_state_bits, buf, buflen);
+	snprintb(buf, buflen, lacp_state_bits, state);
 
 	return buf;
 }

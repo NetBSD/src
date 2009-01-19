@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.16 2008/01/06 13:25:22 dsl Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.16.18.1 2009/01/19 13:16:24 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -97,8 +97,6 @@ struct pmap {
 	int			pm_ptpages;	/* more stats: PT pages */
 };
 
-typedef struct pmap	*pmap_t;
-
 /*
  * On the 040, we keep track of which level 2 blocks are already in use
  * with the pm_stfree mask.  Bits are arranged from LSB (block 0) to MSB
@@ -167,9 +165,6 @@ struct pv_page {
 	struct pv_entry pvp_pv[NPVPPG];
 };
 
-extern struct pmap	kernel_pmap_store;
-
-#define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
 #define	active_user_pmap(pm) \
@@ -189,7 +184,13 @@ pmap_remove_all(struct pmap *pmap)
 	/* Nothing. */
 }
 
-extern pt_entry_t	*Sysmap;
+extern st_entry_t	*Sysseg;
+extern pt_entry_t	*Sysmap, *Sysptmap;
+extern vsize_t		Sysptsize;
+extern vsize_t		mem_size;
+extern vaddr_t		virtual_avail, virtual_end;
+extern u_int		protection_codes[];
+
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 extern void		*CADDR1, *CADDR2;
 extern void		*msgbufaddr;

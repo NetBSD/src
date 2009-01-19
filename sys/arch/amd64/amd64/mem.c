@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2008/09/25 10:40:48 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.2.1 2009/01/19 13:15:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15 2008/09/25 10:40:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.2.1 2009/01/19 13:15:54 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -129,8 +129,8 @@ void *zeropage;
 static kmutex_t mm_lock;
 extern int start, end, __data_start;
 extern vaddr_t kern_end;
-extern vaddr_t lkm_start, lkm_end;
-extern struct vm_map *lkm_map;
+extern vaddr_t module_start, module_end;
+extern struct vm_map *module_map;
 
 dev_type_open(mmopen);
 dev_type_read(mmrw);
@@ -209,8 +209,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				if (v < (vaddr_t)&__data_start &&
 				    uio->uio_rw == UIO_WRITE)
 					return EFAULT;
-			} else if (v >= lkm_start && v < lkm_end) {
-				if (!uvm_map_checkprot(lkm_map, v, v + c,
+			} else if (v >= module_start && v < module_end) {
+				if (!uvm_map_checkprot(module_map, v, v + c,
 				    uio->uio_rw == UIO_READ ?
 				    VM_PROT_READ: VM_PROT_WRITE))
 					return EFAULT;

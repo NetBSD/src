@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.44 2008/07/31 07:41:02 simonb Exp $
+# 	$NetBSD: NEWS1200,v 1.44.2.1 2009/01/19 13:16:32 skrll Exp $
 
 #	news1200 config file
 #
@@ -18,7 +18,6 @@ options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
-options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -44,6 +43,7 @@ options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options 	COMPAT_30		# NetBSD 3.0 binary compatibility
 options 	COMPAT_40		# NetBSD 4.0 binary compatibility
+options 	COMPAT_50		# NetBSD 5.0 binary compatibility
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 #options 	COMPAT_SVR4		# binary compatibility with SVR4
@@ -74,7 +74,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independent support
-#options 	SOFTDEP		# ffs soft updates support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.11 2008/03/12 15:07:48 tsutsui Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.11.12.1 2009/01/19 13:17:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.11 2008/03/12 15:07:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.11.12.1 2009/01/19 13:17:03 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.11 2008/03/12 15:07:48 tsutsui Exp
 
 static int  ne_intio_match(device_t, cfdata_t, void *);
 static void ne_intio_attach(device_t, device_t, void *);
-static int  ne_intio_intr(void *);
 
 #define ne_intio_softc ne2000_softc
 
@@ -119,7 +118,7 @@ ne_intio_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	/* Check whether the board is inserted or not */
-	if (badaddr(INTIO_ADDR(ia->ia_addr)))
+	if (badaddr((void *)IIOV(ia->ia_addr)))
 		return 0;
 
 	/* Map I/O space */
@@ -223,19 +222,7 @@ ne_intio_attach(device_t parent, device_t self, void *aux)
 	ne2000_attach(sc, NULL);
 
 	/* Establish the interrupt handler */
-	if (intio_intr_establish(ia->ia_intr, "ne", ne_intio_intr, dsc))
+	if (intio_intr_establish(ia->ia_intr, "ne", dp8390_intr, dsc))
 		aprint_error_dev(self,
 		    "couldn't establish interrupt handler\n");
-}
-
-static int
-ne_intio_intr(void *arg)
-{
-	int error;
-	int s;
-
-	s = splnet();
-	error = dp8390_intr(arg);
-	splx(s);
-	return error;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2008/09/20 18:29:04 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.5.2.1 2009/01/19 13:15:51 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -31,7 +31,6 @@
 # SUCH DAMAGE.
 
 include <machine/intr.h>
-include <arch/acorn32/acorn32/hydravar.h>
 
 define	NIPL			NIPL
 
@@ -43,8 +42,3 @@ define	IH_NUM			offsetof(struct irqhandler, ih_num)
 define	IH_MASKADDR		offsetof(struct irqhandler, ih_maskaddr)
 define	IH_MASKBITS		offsetof(struct irqhandler, ih_maskbits)
 define	IH_NEXT			offsetof(struct irqhandler, ih_next)
-
-define	HB_TTB		offsetof(struct hydraboot_vars, hb_ttb)
-define	HB_BOOTPAGE_PA	offsetof(struct hydraboot_vars, hb_bootpage_pa)
-define	HB_SP		offsetof(struct hydraboot_vars, hb_sp)
-define	HB_ENTRY	offsetof(struct hydraboot_vars, hb_entry)

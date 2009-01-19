@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.21 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.21.10.1 2009/01/19 13:20:14 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.21 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.21.10.1 2009/01/19 13:20:14 skrll Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -529,7 +529,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 						/* Free, if we allocated. */
 						if (alloc)
-							FREE(ptr, M_XDATA);
+							free(ptr, M_XDATA);
 						return EINVAL;
 					}
 
@@ -549,7 +549,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 						/* Free, if we allocated. */
 						if (alloc)
-							FREE(ptr, M_XDATA);
+							free(ptr, M_XDATA);
 						return EINVAL;
 					}
 				}
@@ -573,7 +573,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				DPRINTF(("ah_massage_headers: unexpected "
 				    "IPv6 header type %d", off));
 				if (alloc)
-					FREE(ptr, M_XDATA);
+					free(ptr, M_XDATA);
 				m_freem(m);
 				return EINVAL;
 			}

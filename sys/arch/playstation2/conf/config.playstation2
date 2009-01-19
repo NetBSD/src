@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.21 2008/07/31 07:41:03 simonb Exp $
+# 	$NetBSD: config.playstation2,v 1.21.2.1 2009/01/19 13:16:36 skrll Exp $
 #
 
 maxusers	16
@@ -18,7 +18,6 @@ file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

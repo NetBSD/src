@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.29 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: xencons.c,v 1.29.2.1 2009/01/19 13:17:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.29 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.29.2.1 2009/01/19 13:17:12 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -223,10 +223,10 @@ xencons_attach(device_t parent, device_t self, void *aux)
 		} else {
 #ifdef XEN3
 			printf("%s: using event channel %d\n",
-			    device_xname(self), xen_start_info.console_evtchn);
-			event_set_handler(xen_start_info.console_evtchn,
+			    device_xname(self), xen_start_info.console.domU.evtchn);
+			event_set_handler(xen_start_info.console.domU.evtchn,
 			    xencons_handler, sc, IPL_TTY, "xencons");
-			hypervisor_enable_event(xen_start_info.console_evtchn);
+			hypervisor_enable_event(xen_start_info.console.domU.evtchn);
 #else
 			(void)ctrl_if_register_receiver(CMSG_CONSOLE,
 			    xencons_rx, 0);
@@ -386,7 +386,7 @@ xencons_start(struct tty *tp)
 #define XNC_OUT (xencons_interface->out)
 		cons = xencons_interface->out_cons;
 		prod = xencons_interface->out_prod;
-		x86_lfence();
+		xen_rmb();
 		while (prod != cons + sizeof(xencons_interface->out)) {
 			if (MASK_XENCONS_IDX(prod, XNC_OUT) <
 			    MASK_XENCONS_IDX(cons, XNC_OUT)) {
@@ -402,10 +402,10 @@ xencons_start(struct tty *tp)
 				break;
 			prod = prod + len;
 		}
-		x86_sfence();
+		xen_wmb();
 		xencons_interface->out_prod = prod;
-		x86_sfence();
-		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+		xen_wmb();
+		hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 #undef XNC_OUT
 #else /* XEN3 */
 		ctrl_msg_t msg;
@@ -459,7 +459,7 @@ xencons_handler(void *arg)
 
 	cons = xencons_interface->in_cons;
 	prod = xencons_interface->in_prod;
-	x86_lfence();
+	xen_rmb();
 	while (cons != prod) {
 		if (MASK_XENCONS_IDX(cons, XNC_IN) <
 		    MASK_XENCONS_IDX(prod, XNC_IN))
@@ -474,15 +474,15 @@ xencons_handler(void *arg)
 			/* catch up with xenconscn_getc() */
 			cons = xencons_interface->in_cons;
 			prod = xencons_interface->in_prod;
-			x86_lfence();
+			xen_rmb();
 		} else {
 			cons += len;
-			x86_sfence();
+			xen_wmb();
 			xencons_interface->in_cons = cons;
-			x86_sfence();
+			xen_wmb();
 		}
 	}
-	hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+	hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 	splx(s);
 	return 1;
 #undef XNC_IN
@@ -627,15 +627,15 @@ xenconscn_getc(dev_t dev)
 #ifdef XEN3
 	cons = xencons_interface->in_cons;
 	prod = xencons_interface->in_prod;
-	x86_lfence();
+	xen_rmb();
 	while (cons == prod) {
 		HYPERVISOR_yield();
 		prod = xencons_interface->in_prod;
 	}
-	x86_lfence();
+	xen_rmb();
 	c = xencons_interface->in[MASK_XENCONS_IDX(xencons_interface->in_cons,
 	    xencons_interface->in)];
-	x86_lfence();
+	xen_rmb();
 	xencons_interface->in_cons = cons + 1;
 	cn_check_magic(dev, c, xencons_cnm_state);
 	splx(s);
@@ -675,18 +675,18 @@ xenconscn_putc(dev_t dev, int c)
 #ifdef XEN3
 		cons = xencons_interface->out_cons;
 		prod = xencons_interface->out_prod;
-		x86_lfence();
+		xen_rmb();
 		while (prod == cons + sizeof(xencons_interface->out)) {
 			cons = xencons_interface->out_cons;
 			prod = xencons_interface->out_prod;
-			x86_lfence();
+			xen_rmb();
 		}
 		xencons_interface->out[MASK_XENCONS_IDX(xencons_interface->out_prod,
 		    xencons_interface->out)] = c;
-		x86_lfence();
+		xen_rmb();
 		xencons_interface->out_prod++;
-		x86_lfence();
-		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+		xen_rmb();
+		hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 #else
 		ctrl_msg_t msg;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.14 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: i8259.c,v 1.14.4.1 2009/01/19 13:17:09 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,14 +70,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.14 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.14.4.1 2009/01/19 13:17:09 skrll Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <dev/isa/isareg.h>

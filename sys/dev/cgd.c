@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.53 2008/09/12 16:51:55 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.53.2.1 2009/01/19 13:17:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.53 2008/09/12 16:51:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.53.2.1 2009/01/19 13:17:51 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,7 +152,7 @@ getcgd_softc(dev_t dev)
 {
 	int	unit = CGDUNIT(dev);
 
-	DPRINTF_FOLLOW(("getcgd_softc(0x%x): unit = %d\n", dev, unit));
+	DPRINTF_FOLLOW(("getcgd_softc(0x%"PRIx64"): unit = %d\n", dev, unit));
 	if (unit >= numcgd)
 		return NULL;
 	return &cgd_softc[unit];
@@ -200,7 +200,7 @@ cgdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct	cgd_softc *cs;
 
-	DPRINTF_FOLLOW(("cgdopen(%d, %d)\n", dev, flags));
+	DPRINTF_FOLLOW(("cgdopen(0x%"PRIx64", %d)\n", dev, flags));
 	GETCGD_SOFTC(cs, dev);
 	return dk_open(di, &cs->sc_dksc, dev, flags, fmt, l);
 }
@@ -210,7 +210,7 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct	cgd_softc *cs;
 
-	DPRINTF_FOLLOW(("cgdclose(%d, %d)\n", dev, flags));
+	DPRINTF_FOLLOW(("cgdclose(0x%"PRIx64", %d)\n", dev, flags));
 	GETCGD_SOFTC(cs, dev);
 	return dk_close(di, &cs->sc_dksc, dev, flags, fmt, l);
 }
@@ -232,7 +232,7 @@ cgdsize(dev_t dev)
 {
 	struct cgd_softc *cs = getcgd_softc(dev);
 
-	DPRINTF_FOLLOW(("cgdsize(%d)\n", dev));
+	DPRINTF_FOLLOW(("cgdsize(0x%"PRIx64")\n", dev));
 	if (!cs)
 		return -1;
 	return dk_size(di, &cs->sc_dksc, dev);
@@ -357,7 +357,7 @@ cgdiodone(struct buf *nbp)
 	DPRINTF_FOLLOW(("cgdiodone(%p)\n", nbp));
 	DPRINTF(CGDB_IO, ("cgdiodone: bp %p bcount %d resid %d\n",
 	    obp, obp->b_bcount, obp->b_resid));
-	DPRINTF(CGDB_IO, (" dev 0x%x, nbp %p bn %" PRId64 " addr %p bcnt %d\n",
+	DPRINTF(CGDB_IO, (" dev 0x%"PRIx64", nbp %p bn %" PRId64 " addr %p bcnt %d\n",
 	    nbp->b_dev, nbp, nbp->b_blkno, nbp->b_data,
 	    nbp->b_bcount));
 	if (nbp->b_error != 0) {
@@ -398,7 +398,8 @@ cgdread(dev_t dev, struct uio *uio, int flags)
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
 
-	DPRINTF_FOLLOW(("cgdread(%d, %p, %d)\n", dev, uio, flags));
+	DPRINTF_FOLLOW(("cgdread(0x%llx, %p, %d)\n",
+	    (unsigned long long)dev, uio, flags));
 	GETCGD_SOFTC(cs, dev);
 	dksc = &cs->sc_dksc;
 	if ((dksc->sc_flags & DKF_INITED) == 0)
@@ -413,7 +414,7 @@ cgdwrite(dev_t dev, struct uio *uio, int flags)
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
 
-	DPRINTF_FOLLOW(("cgdwrite(%d, %p, %d)\n", dev, uio, flags));
+	DPRINTF_FOLLOW(("cgdwrite(0x%"PRIx64", %p, %d)\n", dev, uio, flags));
 	GETCGD_SOFTC(cs, dev);
 	dksc = &cs->sc_dksc;
 	if ((dksc->sc_flags & DKF_INITED) == 0)
@@ -431,7 +432,7 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 
-	DPRINTF_FOLLOW(("cgdioctl(%d, %ld, %p, %d, %p)\n",
+	DPRINTF_FOLLOW(("cgdioctl(0x%"PRIx64", %ld, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 	GETCGD_SOFTC(cs, dev);
 	dksc = &cs->sc_dksc;
@@ -474,8 +475,8 @@ cgddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct	cgd_softc *cs;
 
-	DPRINTF_FOLLOW(("cgddump(%d, %" PRId64 ", %p, %lu)\n", dev, blkno, va,
-	    (unsigned long)size));
+	DPRINTF_FOLLOW(("cgddump(0x%"PRIx64", %" PRId64 ", %p, %lu)\n",
+	    dev, blkno, va, (unsigned long)size));
 	GETCGD_SOFTC(cs, dev);
 	return dk_dump(di, &cs->sc_dksc, dev, blkno, va, size);
 }
@@ -621,14 +622,34 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 }
 
 static int
+getsize(struct lwp *l, struct vnode *vp, size_t *size)
+{
+	struct partinfo dpart;
+	struct dkwedge_info dkw;
+	int ret;
+
+	if ((ret = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
+	    l->l_cred)) == 0) {
+		*size = dkw.dkw_size;
+		return 0;
+	}
+
+	if ((ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred)) == 0) {
+		*size = dpart.part->p_size;
+		return 0;
+	}
+
+	return ret;
+}
+
+
+static int
 cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	struct lwp *l)
 {
 	struct	dk_geom *pdg;
-	struct	partinfo dpart;
 	struct	vattr va;
 	size_t	size;
-	int	maxsecsize = 0;
 	int	ret;
 	char	*tmppath;
 
@@ -648,14 +669,8 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 
 	cs->sc_tdev = va.va_rdev;
 
-	ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred);
-	if (ret)
+	if ((ret = getsize(l, vp, &size)) != 0)
 		goto bail;
-
-	maxsecsize =
-	    ((dpart.disklab->d_secsize > maxsecsize) ?
-	    dpart.disklab->d_secsize : maxsecsize);
-	size = dpart.part->p_size;
 
 	if (!size) {
 		ret = ENODEV;
