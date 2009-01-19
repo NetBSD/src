@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.789 2009/01/05 00:18:38 lukem Exp $
+# $NetBSD: mi,v 1.790 2009/01/19 07:19:35 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -650,6 +650,7 @@
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
 ./usr/bin/at					base-cron-bin
+./usr/bin/atf-check				base-atf-bin
 ./usr/bin/atf-config				base-atf-bin
 ./usr/bin/atf-report				base-atf-bin
 ./usr/bin/atf-run				base-atf-bin
@@ -1189,7 +1190,7 @@
 ./usr/libexec/atf-cleanup			base-atf-bin
 ./usr/libexec/atf-exec				base-atf-bin
 ./usr/libexec/atf-format			base-atf-bin
-./usr/libexec/atf-killpg			base-atf-bin
+./usr/libexec/atf-killpg			base-atf-bin		obsolete
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
