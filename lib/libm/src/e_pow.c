@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_pow.c,v 1.14 2008/04/25 22:21:53 christos Exp $");
+__RCSID("$NetBSD: e_pow.c,v 1.15 2009/01/19 06:41:13 lukem Exp $");
 #endif
 
 /* __ieee754_pow(x,y) return x**y
@@ -129,7 +129,7 @@ __ieee754_pow(double x, double y)
 		k = (iy>>20)-0x3ff;	   /* exponent */
 		if(k>20) {
 		    j = ly>>(52-k);
-		    if((j<<(52-k))==ly) yisint = 2-(j&1);
+		    if((uint32_t)(j<<(52-k))==ly) yisint = 2-(j&1);
 		} else if(ly==0) {
 		    j = iy>>(20-k);
 		    if((j<<(20-k))==iy) yisint = 2-(j&1);

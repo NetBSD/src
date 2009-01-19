@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_powf.c,v 1.13 2008/04/25 22:21:53 christos Exp $");
+__RCSID("$NetBSD: e_powf.c,v 1.14 2009/01/19 05:59:06 lukem Exp $");
 #endif
 
 #include "math.h"
@@ -208,7 +208,7 @@ __ieee754_powf(float x, float y)
 	else if (j==0x43000000) {			/* if z == 128 */
 	    if(p_l+ovt>z-p_h) return s*huge*huge;	/* overflow */
 	}
-	else if (j==0xc3160000){			/* z == -150 */
+	else if ((uint32_t)j==0xc3160000){		/* z == -150 */
 	    if(p_l<=z-p_h) return s*tiny*tiny;		/* underflow */
 	}
 	else if ((j&0x7fffffff)>0x43160000)		/* z <= -150 */

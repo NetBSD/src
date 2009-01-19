@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_jnf.c,v 1.9 2002/05/26 22:01:50 wiz Exp $");
+__RCSID("$NetBSD: e_jnf.c,v 1.10 2009/01/19 05:58:27 lukem Exp $");
 #endif
 
 #include "math.h"
@@ -189,7 +189,7 @@ __ieee754_ynf(int n, float x)
 	b = __ieee754_y1f(x);
 	/* quit if b is -inf */
 	GET_FLOAT_WORD(ib,b);
-	for(i=1;i<n&&ib!=0xff800000;i++){
+	for(i=1;i<n&&(uint32_t)ib!=0xff800000;i++){
 	    temp = b;
 	    b = ((float)(i+i)/x)*b - a;
 	    GET_FLOAT_WORD(ib,b);
