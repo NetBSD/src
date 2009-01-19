@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.78 2008/12/23 02:56:10 agc Exp $
+#	$NetBSD: sets.subr,v 1.79 2009/01/19 19:13:45 minskim Exp $
 #
 
 #
@@ -57,7 +57,6 @@ MKVARS="\
 	MKPIC		\
 	MKPOSTFIX	\
 	MKPROFILE	\
-	MKSENDMAIL	\
 	MKSHARE		\
 	MKSKEY		\
 	MKX11		\
@@ -228,7 +227,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.78 2008/12/23 02:56:10 agc Exp $
+# 	# $NetBSD: sets.subr,v 1.79 2009/01/19 19:13:45 minskim Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -283,7 +282,6 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	pic			${MKPIC} != no
 #	postfix			${MKPOSTFIX} != no
 #	profile			${MKPROFILE} != no
-#	sendmail		${MKSENDMAIL} != no
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
 #	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
