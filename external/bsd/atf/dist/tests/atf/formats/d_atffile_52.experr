@@ -1,0 +1,14 @@
+3: Unexpected token `<<NEWLINE>>'; expected `:'
+4: Unexpected token `<<NEWLINE>>'; expected variable name
+5: Unexpected token `<<NEWLINE>>'; expected word or quoted string
+6: Unexpected token `#'; expected word or quoted string
+8: Unexpected token `<<NEWLINE>>'; expected `:'
+9: Unexpected token `<<NEWLINE>>'; expected property name
+10: Unexpected token `<<NEWLINE>>'; expected word or quoted string
+11: Unexpected token `#'; expected word or quoted string
+13: Unexpected token `<<NEWLINE>>'; expected `:'
+14: Unexpected token `<<NEWLINE>>'; expected word or quoted string
+15: Unexpected token `#'; expected word or quoted string
+17: Unexpected token `<<NEWLINE>>'; expected `:'
+18: Unexpected token `<<NEWLINE>>'; expected word or quoted string
+19: Unexpected token `#'; expected word or quoted string

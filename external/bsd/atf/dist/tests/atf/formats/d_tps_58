@@ -1,0 +1,7 @@
+Content-Type: application/X-atf-tps; version="2"
+
+tps-count: 1
+tp-start: foo, 0
+tp-end: foo
+tp-start: bar, 0
+tp-end: bar
