@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecavar.h,v 1.1 2002/03/24 15:47:16 bjh21 Exp $	*/
+/*	$NetBSD: if_ecavar.h,v 1.2 2009/01/19 23:43:14 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@ struct eca_fiqstate {
 };
 
 struct eca_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	struct ecocom 	sc_ec;
 	u_int8_t	sc_cr1;
 	u_int8_t	sc_cr2;
