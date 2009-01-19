@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.21.2.1 2009/01/19 13:15:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,15 +71,15 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
+#include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
 #include "opt_sa.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.21.2.1 2009/01/19 13:15:56 skrll Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -95,6 +95,18 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $"
 
 #include <machine/pcb.h>
 #include <machine/vmparam.h>
+
+/* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store = {
+	.ci_cpl = IPL_HIGH,
+#ifndef PROCESS_ID_IS_CURLWP
+	.ci_curlwp = &lwp0,
+#endif
+};
 
 /*
  * The ARM architecture places the vector page at address 0.
@@ -139,9 +151,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	memset(tf, 0, sizeof(*tf));
 	tf->tf_r0 = (u_int)l->l_proc->p_psstr;
-#ifdef COMPAT_13
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
-#endif
 	tf->tf_usr_sp = stack;
 	tf->tf_usr_lr = pack->ep_entry;
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
@@ -246,3 +256,22 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 }
 
 #endif /* KERN_SA */
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
+
+	ci->ci_want_resched = 1;
+	if (curlwp != ci->ci_data.cpu_idlelwp)
+		setsoftast();
+}
+
+bool
+cpu_intr_p(void)
+{
+	return curcpu()->ci_intr_depth != 0;
+}

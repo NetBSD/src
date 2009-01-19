@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.68 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.68.4.1 2009/01/19 13:19:33 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,10 +48,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.68 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.68.4.1 2009/01/19 13:19:33 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -584,11 +583,11 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
 		/* XXX - We should probably check more values here */
     		if (!pmp->pm_BytesPerSec || !SecPerClust
-	    		|| pmp->pm_Heads > 255 || pmp->pm_SecPerTrack > 63) {
+	    		|| pmp->pm_SecPerTrack > 63) {
 			DPRINTF(("bytespersec %d secperclust %d "
-			    "heads %d secpertrack %d\n", 
+			    "secpertrack %d\n", 
 			    pmp->pm_BytesPerSec, SecPerClust,
-			    pmp->pm_Heads, pmp->pm_SecPerTrack));
+			    pmp->pm_SecPerTrack));
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -845,7 +844,6 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	mp->mnt_dev_bshift = pmp->pm_bnshift;
 	mp->mnt_fs_bshift = pmp->pm_cnshift;
 
-#ifdef QUOTA
 	/*
 	 * If we ever do quotas for DOS filesystems this would be a place
 	 * to fill in the info in the msdosfsmount structure. You dolt,
@@ -853,7 +851,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 * owners on dos filesystems. of course there is some empty space
 	 * in the directory entry where we could put uid's and gid's.
 	 */
-#endif
+
 	devvp->v_specmountpoint = mp;
 
 	return (0);
@@ -891,8 +889,6 @@ msdosfs_unmount(mp, mntflags)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#ifdef QUOTA
-#endif
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
@@ -1040,9 +1036,6 @@ loop:
 	if ((error = VOP_FSYNC(pmp->pm_devvp, cred,
 	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 		allerror = error;
-#ifdef QUOTA
-	/* qsync(mp); */
-#endif
 	return (allerror);
 }
 

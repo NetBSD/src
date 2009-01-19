@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.62 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.62.12.1 2009/01/19 13:19:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,13 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.62 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.62.12.1 2009/01/19 13:19:37 skrll Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
 #endif
-
-#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,9 +50,53 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.62 2008/03/21 21:55:00 ad Exp $");
 #include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-
+#include <sys/module.h>
 #include <sys/exec_script.h>
 #include <sys/exec_elf.h>
+
+MODULE(MODULE_CLASS_MISC, exec_script, NULL);
+
+static struct execsw exec_script_execsw[] = {
+	{ SCRIPT_HDR_SIZE,
+	  exec_script_makecmds,
+	  { NULL },
+	  NULL,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  NULL,
+	  NULL,
+	  NULL,
+	  exec_setup_stack },
+};
+
+static int
+exec_script_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return exec_add(exec_script_execsw,
+		    __arraycount(exec_script_execsw));
+
+	case MODULE_CMD_FINI:
+		return exec_remove(exec_script_execsw,
+		    __arraycount(exec_script_execsw));
+
+	case MODULE_CMD_AUTOUNLOAD:
+		/*
+		 * We don't want to be autounloaded because our use is
+		 * transient: no executables with p_execsw equal to
+		 * exec_script_execsw will exist, so FINI will never
+		 * return EBUSY.  However, the system will run scripts
+		 * often.  Return EBUSY here to prevent this module from
+		 * ping-ponging in and out of the kernel.
+		 */
+		return EBUSY;
+
+	default:
+		return ENOTTY;
+        }
+}
 
 /*
  * exec_script_makecmds(): Check if it's an executable shell script.

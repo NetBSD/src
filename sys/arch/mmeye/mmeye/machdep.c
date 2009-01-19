@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.8.1 2009/01/19 13:16:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.8.1 2009/01/19 13:16:31 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2008/04/28 20:23:29 martin Exp $");
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
+#include <sys/device.h>
 
 #include <sh3/bscreg.h>
 #include <sh3/cpgreg.h>
@@ -204,6 +205,8 @@ cpu_reboot(howto, bootstr)
 haltsys:
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	if (howto & RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
@@ -237,7 +240,7 @@ initSH3(void *pc)	/* XXX return address */
 	consinit();
 
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* XXX Currently symbol table size is not passed to the kernel. */
 	kernend += atop(0x40000);			/* XXX */
 #endif
@@ -255,8 +258,8 @@ initSH3(void *pc)	/* XXX return address */
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(1, end, end + 0x40000);			/* XXX */
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf(1, end, end + 0x40000);			/* XXX */
 #endif
 	/*
 	 * XXX We can't return here, because we change stack pointer.

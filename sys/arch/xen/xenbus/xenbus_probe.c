@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.25 2008/10/24 21:09:24 jym Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.25.2.1 2009/01/19 13:17:12 skrll Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.25 2008/10/24 21:09:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.25.2.1 2009/01/19 13:17:12 skrll Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.25 2008/10/24 21:09:24 jym Exp $"
 
 #include <machine/stdarg.h>
 
+#include <xen/xen.h>	/* for xendomain_is_dom0() */
 #include <xen/hypervisor.h>
 #include <xen/xenbus.h>
 #include <xen/evtchn.h>
@@ -394,6 +395,14 @@ xenbus_probe_frontends(void)
 		return err;
 
 	for (i = 0; i < dir_n; i++) {
+		/*
+		 * console is configured through xen_start_info when
+		 * xencons is attaching to hypervisor, so avoid console
+		 * probing when configuring xenbus devices
+		 */
+		if (strcmp(dir[i], "console") == 0)
+			continue;
+
 		snprintf(path, sizeof(path), "device/%s", dir[i]);
 		err = xenbus_probe_device_type(path, dir[i], NULL);
 		if (err)

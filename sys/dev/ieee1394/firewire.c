@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.21 2008/05/10 13:56:54 jmcneill Exp $	*/
+/*	$NetBSD: firewire.c,v 1.21.6.1 2009/01/19 13:18:13 skrll Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.21 2008/05/10 13:56:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.21.6.1 2009/01/19 13:18:13 skrll Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -122,7 +122,7 @@ MALLOC_DEFINE(M_FWXFER, "fw_xfer", "XFER/FireWire");
 /*
  * Setup sysctl(3) MIB, hw.ieee1394if.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_ieee1394if, "sysctl ieee1394if(4) subtree setup")
 {

@@ -1,3 +1,33 @@
+/*	$NetBSD: rumptest_net.c,v 1.3.4.1 2009/01/19 13:20:29 skrll Exp $	*/
+
+/*
+ * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
+ *
+ * Development of this software was supported by then
+ * Finnish Cultural Foundation.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/sockio.h>
@@ -10,6 +40,7 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,11 +48,21 @@
 #define DEST_ADDR "204.152.190.12"	/* www.NetBSD.org */
 #define DEST_PORT 80			/* take a wild guess */
 
+#ifdef FULL_NETWORK_STACK
 /*
  * If we are running with the full networking stack, configure
- * virtual interface
+ * virtual interface.  For this to currently work, you *must* have
+ * tap0 bridged with your main networking interface.  Essentially
+ * the following steps are required:
+ *
+ * # ifconfig tap0 create
+ * # ifconfig tap0 up
+ * # ifconfig bridge0 create
+ * # brconfig bridge0 add tap0 add yourrealif0
+ * # brconfig bridge0 up
+ *
+ * The usability is likely to be improved later.
  */
-#ifdef FULL_NETWORK_STACK
 #define MYADDR "10.181.181.11"
 #define MYBCAST "10.181.181.255"
 #define MYMASK "255.255.255.0"
@@ -30,7 +71,7 @@
 
 int rump_virtif_create(void *, void *); /* XXX: bad hack, prototype is wrong */
 static void
-configure_interface()
+configure_interface(void)
 {
         struct sockaddr_in *sin;
 	struct sockaddr_in sinstore;
@@ -50,7 +91,7 @@ configure_interface()
 	}
 
 	/* get a socket for configuring the interface */
-	s = rump_sys___socket30(PF_INET, SOCK_DGRAM, 0, &error);
+	s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0, &error);
 	if (s == -1)
 		errx(1, "configuration socket %d (%s)", error, strerror(error));
 
@@ -79,7 +120,7 @@ configure_interface()
 	rump_sys_close(s, &error);
 
 	/* open routing socket and configure our default router */
-	s = rump_sys___socket30(PF_ROUTE, SOCK_RAW, 0, &error);
+	s = rump_sys_socket(PF_ROUTE, SOCK_RAW, 0, &error);
 	if (s == -1)
 		errx(1, "routing socket %d (%s)", error, strerror(error));
 
@@ -124,14 +165,26 @@ configure_interface()
 #endif /* FULL_NETWORK_STACK */
 
 int
-main()
+main(int argc, char *argv[])
 {
 	char buf[65536];
 	struct sockaddr_in sin;
-	struct timeval tv;
 	ssize_t n;
 	size_t off;
 	int s, error;
+
+	/*
+	 * The following demonstrates in a less-than-amusing way how
+	 * the current binary interfaces are somewhat unflexible.
+	 * If we happen to have old userland and are calling a new
+	 * rumpkernel, timeval passed by this program is too small.
+	 * ... sigh
+	 */
+#ifdef TEH_HACK
+	struct { uint64_t tv_sec; long tv_usec; } tv;
+#else
+	struct timeval tv;
+#endif
 
 	if (rump_init())
 		errx(1, "rump_init failed");
@@ -140,7 +193,7 @@ main()
 	configure_interface();
 #endif
 
-	s = rump_sys___socket30(PF_INET, SOCK_STREAM, 0, &error);
+	s = rump_sys_socket(PF_INET, SOCK_STREAM, 0, &error);
 	if (s == -1)
 		errx(1, "can't open socket: %d (%s)", error, strerror(error));
 

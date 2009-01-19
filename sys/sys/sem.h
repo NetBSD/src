@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.27 2008/10/22 11:25:19 ad Exp $	*/
+/*	$NetBSD: sem.h,v 1.27.2.1 2009/01/19 13:20:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ extern struct semid_ds *sema;		/* semaphore id pool */
 
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
-int	semctl(int, int, int, ...) __RENAME(__semctl13);
+int	semctl(int, int, int, ...) __RENAME(__semctl50);
 #endif
 int	semget(key_t, int, int);
 int	semop(int, struct sembuf *, size_t);

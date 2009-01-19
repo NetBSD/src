@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.88 2008/08/03 19:32:03 joerg Exp $
+#	$NetBSD: files.xen,v 1.88.2.1 2009/01/19 13:17:11 skrll Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -16,9 +16,6 @@ defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
 
-# No unmapped page below kernel stack
-defflag			NOREDZONE
-
 # Beep on halt
 defflag opt_beep.h		BEEP_ONHALT
 defparam opt_beep.h		BEEP_ONHALT_COUNT=3
@@ -33,7 +30,9 @@ defparam		PCI_CONF_MODE
 
 file	arch/xen/x86/autoconf.c
 ifdef i386
+file	arch/i386/i386/aout_machdep.c	exec_aout
 file	arch/i386/i386/busfunc.S
+file	arch/i386/i386/core_machdep.c	coredump
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S   (inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
@@ -254,10 +253,8 @@ file	arch/x86/x86/i8259.c		xen3
 # MP configuration using Intel SMP specification 1.4
 file	arch/x86/x86/mpbios.c		mpbios
 
-ifdef i386
-file	arch/i386/pci/pci_bus_fixup.c	pci_bus_fixup
-file	arch/i386/pci/pci_addr_fixup.c	pci_addr_fixup
-endif
+file	arch/x86/pci/pci_bus_fixup.c	pci_bus_fixup
+file	arch/x86/pci/pci_addr_fixup.c	pci_addr_fixup
 
 file	arch/x86/x86/apic.c		ioapic
 

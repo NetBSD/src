@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.18 2008/08/29 15:04:18 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.18.2.1 2009/01/19 13:19:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.18 2008/08/29 15:04:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.18.2.1 2009/01/19 13:19:37 skrll Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 

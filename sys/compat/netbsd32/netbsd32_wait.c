@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.19 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.19.6.1 2009/01/19 13:17:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.19 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.19.6.1 2009/01/19 13:17:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.19 2008/05/29 14:51:26 mrg Exp $
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32_wait4(struct lwp *l, const struct netbsd32_wait4_args *uap, register_t *retval)
+netbsd32___wait450(struct lwp *l, const struct netbsd32___wait450_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) pid;
@@ -80,7 +81,8 @@ netbsd32_wait4(struct lwp *l, const struct netbsd32_wait4_args *uap, register_t 
 
 
 int
-netbsd32_getrusage(struct lwp *l, const struct netbsd32_getrusage_args *uap, register_t *retval)
+netbsd32___getrusage50(struct lwp *l,
+    const struct netbsd32___getrusage50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) who;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.11 2008/04/08 12:07:26 cegger Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.11.12.1 2009/01/19 13:17:55 skrll Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.11 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.11.12.1 2009/01/19 13:17:55 skrll Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -444,10 +444,7 @@ mb86950_watchdog(ifp)
  * Process an ioctl request.
  */
 int
-mb86950_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+mb86950_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct mb86950_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -458,32 +455,34 @@ mb86950_ioctl(ifp, cmd, data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		/* XXX depreciated ? What should I use instead? */
+	case SIOCINITIFADDR:
+		/* XXX deprecated ? What should I use instead? */
 		if ((error = mb86950_enable(sc)) != 0)
 			break;
 
 		ifp->if_flags |= IFF_UP;
 
+		mb86950_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 
 #ifdef INET
 		case AF_INET:
-			mb86950_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 
 
 		default:
-			mb86950_init(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
@@ -491,9 +490,8 @@ mb86950_ioctl(ifp, cmd, data)
 			mb86950_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 			mb86950_disable(sc);
-
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			(ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -501,15 +499,19 @@ mb86950_ioctl(ifp, cmd, data)
 			if ((error = mb86950_enable(sc)) != 0)
 				break;
 			mb86950_init(sc);
-
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			break;
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-/* Setmode not supported
+#if 0
+			/* Setmode not supported */
 			mb86950_setmode(sc);
-*/
+#endif
+			break;
+		case 0:
+			break;
 		}
 
 #if ESTAR_DEBUG >= 1
@@ -528,7 +530,7 @@ mb86950_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

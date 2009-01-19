@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.134 2008/05/05 20:19:09 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.134.8.1 2009/01/19 13:18:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.134 2008/05/05 20:19:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.134.8.1 2009/01/19 13:18:26 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -559,6 +559,7 @@ sip_init_rxdesc(struct sip_softc *sc, int x)
 
 #define SIP_TIMEOUT 1000
 
+static int	sip_ifflags_cb(struct ethercom *);
 static void	sipcom_start(struct ifnet *);
 static void	sipcom_watchdog(struct ifnet *);
 static int	sipcom_ioctl(struct ifnet *, u_long, void *);
@@ -1283,6 +1284,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, sip_ifflags_cb);
 	sc->sc_prev.ec_capenable = sc->sc_ethercom.ec_capenable;
 	sc->sc_prev.is_vlan = VLAN_ATTACHED(&(sc)->sc_ethercom);
 	sc->sc_prev.if_capenable = ifp->if_capenable;
@@ -1719,6 +1721,30 @@ sipcom_watchdog(struct ifnet *ifp)
 	sipcom_start(ifp);
 }
 
+/* If the interface is up and running, only modify the receive
+ * filter when setting promiscuous or debug mode.  Otherwise fall
+ * through to ether_ioctl, which will reset the chip.
+ */
+static int
+sip_ifflags_cb(struct ethercom *ec)
+{
+#define COMPARE_EC(sc) (((sc)->sc_prev.ec_capenable			\
+			 == (sc)->sc_ethercom.ec_capenable)		\
+			&& ((sc)->sc_prev.is_vlan ==			\
+			    VLAN_ATTACHED(&(sc)->sc_ethercom) ))
+#define COMPARE_IC(sc, ifp) ((sc)->sc_prev.if_capenable == (ifp)->if_capenable)
+	struct ifnet *ifp = &ec->ec_if;
+	struct sip_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0 || !COMPARE_EC(sc) ||
+	    !COMPARE_IC(sc, ifp))
+		return ENETRESET;
+	/* Set up the receive filter. */
+	(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
+	return 0;
+}
+
 /*
  * sip_ioctl:		[ifnet interface function]
  *
@@ -1762,34 +1788,7 @@ sipcom_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		goto ethioctl;
-	case SIOCSIFFLAGS:
-		/* If the interface is up and running, only modify the receive
-		 * filter when setting promiscuous or debug mode.  Otherwise
-		 * fall through to ether_ioctl, which will reset the chip.
-		 */
-
-#define COMPARE_EC(sc) (((sc)->sc_prev.ec_capenable			\
-			 == (sc)->sc_ethercom.ec_capenable)		\
-			&& ((sc)->sc_prev.is_vlan ==			\
-			    VLAN_ATTACHED(&(sc)->sc_ethercom) ))
-
-#define COMPARE_IC(sc, ifp) ((sc)->sc_prev.if_capenable == (ifp)->if_capenable)
-
-#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
-		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
-		    == (IFF_UP|IFF_RUNNING))
-		    && ((ifp->if_flags & (~RESETIGN))
-		    == (sc->sc_if_flags & (~RESETIGN)))
-		    && COMPARE_EC(sc) && COMPARE_IC(sc, ifp)) {
-			/* Set up the receive filter. */
-			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
-			error = 0;
-			break;
-#undef RESETIGN
-		}
-		/* FALLTHROUGH */
-	ethioctl:
+		/*FALLTHROUGH*/
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;

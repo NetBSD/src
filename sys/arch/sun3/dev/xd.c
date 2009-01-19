@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.65 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.65.4.1 2009/01/19 13:16:56 skrll Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.65 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.65.4.1 2009/01/19 13:16:56 skrll Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -1101,7 +1101,7 @@ xdstrategy(struct buf *bp)
 
 	/* first, give jobs in front of us a chance */
 	parent = xd->parent;
-	while (parent->nfree > 0 && BUFQ_PEEK(parent->sc_wq) != NULL)
+	while (parent->nfree > 0 && bufq_peek(parent->sc_wq) != NULL)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1110,7 +1110,7 @@ xdstrategy(struct buf *bp)
 	 * buffs will get picked up later by xdcintr().
 	 */
 	if (parent->nfree == 0) {
-		BUFQ_PUT(parent->sc_wq, bp);
+		bufq_put(parent->sc_wq, bp);
 		splx(s);
 		return;
 	}
@@ -1154,7 +1154,7 @@ xdcintr(void *v)
 	xdc_start(xdcsc, XDC_MAXIOPB);
 
 	/* fill up any remaining iorq's with queue'd buffers */
-	while (xdcsc->nfree > 0 && BUFQ_PEEK(xdcsc->sc_wq) != NULL)
+	while (xdcsc->nfree > 0 && bufq_peek(xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1379,7 +1379,7 @@ xdc_startbuf(struct xdc_softc *xdcsc, struct xd_softc *xdsc, struct buf *bp)
 	/* get buf */
 
 	if (bp == NULL) {
-		bp = BUFQ_GET(xdcsc->sc_wq);
+		bp = bufq_get(xdcsc->sc_wq);
 		if (bp == NULL)
 			panic("%s bp", __func__);
 		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
@@ -1422,7 +1422,7 @@ xdc_startbuf(struct xdc_softc *xdcsc, struct xd_softc *xdsc, struct buf *bp)
 		printf("%s: warning: out of DVMA space\n",
 		    device_xname(xdcsc->sc_dev));
 		XDC_FREE(xdcsc, rqno);
-		BUFQ_PUT(xdcsc->sc_wq, bp);
+		bufq_put(xdcsc->sc_wq, bp);
 		return XD_ERR_FAIL;	/* XXX: need some sort of
 		                         * call-back scheme here? */
 	}
@@ -1615,7 +1615,7 @@ xdc_piodriver(struct xdc_softc *xdcsc, int iorqno, int freeone)
 	 * queued
 	 */
 
-	while (xdcsc->nfree > 0 && BUFQ_PEEK(xdcsc->sc_wq) != NULL)
+	while (xdcsc->nfree > 0 && bufq_peek(xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1943,7 +1943,7 @@ xdc_perror(struct xd_iorq *iorq, struct xd_iopb *iopb, int still_trying)
 	    device_xname(iorq->xd->sc_dev) :
 	    device_xname(iorq->xdc->sc_dev));
 	if (iorq->buf)
-		printf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
+		printf("%c: ", 'a' + (char)DISKPART(iorq->buf->b_dev));
 	if (iopb->comm == XDCMD_RD || iopb->comm == XDCMD_WR)
 		printf("%s %d/%d/%d: ",
 		    (iopb->comm == XDCMD_RD) ? "read" : "write",

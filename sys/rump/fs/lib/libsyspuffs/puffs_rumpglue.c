@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.8 2008/10/07 23:22:05 pooka Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.8.2.1 2009/01/19 13:20:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.8 2008/10/07 23:22:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.8.2.1 2009/01/19 13:20:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -161,7 +161,7 @@ writethread(void *arg)
 }
 
 int
-syspuffs_glueinit(int fd, int *newfd)
+rump_syspuffs_glueinit(int fd, int *newfd)
 {
 	struct ptargs *pap;
 	int rv;

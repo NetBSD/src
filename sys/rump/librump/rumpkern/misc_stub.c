@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.13 2008/10/15 08:13:17 ad Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.13.2.1 2009/01/19 13:20:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,13 +27,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.13.2.1 2009/01/19 13:20:25 skrll Exp $");
+
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/event.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
-#include <sys/cpu.h>
-#include <sys/evcnt.h>
+#include <sys/syscallvar.h>
+#include <sys/xcall.h>
 
 #ifdef __sparc__
  /* 
@@ -80,6 +85,40 @@ cpu_lookup(u_int index)
 void
 evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
     const char *group, const char *name)
+{
+
+}
+
+void
+evcnt_detach(struct evcnt *ev)
+{
+
+}
+
+int
+syscall_establish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
+}
+
+int
+syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
+}
+
+/* crosscalls not done, no other hardware CPUs */
+uint64_t
+xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
+{
+
+	return -1;
+}
+
+void
+xc_wait(uint64_t where)
 {
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.6 2008/09/08 03:16:43 joerg Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.6.6.1 2009/01/19 13:20:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.6 2008/09/08 03:16:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.6.6.1 2009/01/19 13:20:32 skrll Exp $");
+
+#define WAPBL_INTERNAL
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -151,8 +153,9 @@ ffs_wapbl_replay_finish(struct mount *mp)
 		}
 		vput(vp);
 	}
-	mp->mnt_wapbl_replay = 0;
+	wapbl_replay_stop(wr);
 	wapbl_replay_free(wr);
+	mp->mnt_wapbl_replay = NULL;
 }
 
 /* Callback for wapbl */
@@ -191,17 +194,6 @@ ffs_wapbl_abort_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 	struct fs *fs = ump->um_fs;
 	int i;
 
-	/*
-	 * I suppose we could dig around for an in use inode, but
-	 * its not really used by ffs_blkalloc, so we just fake
-	 * the couple of fields that it touches.
-	 */
-	struct inode in;
-	in.i_fs = fs;
-	in.i_devvp = ump->um_devvp;
-	in.i_dev = ump->um_dev;
-	in.i_number = -1;
-	in.i_uid = 0;
 	for (i = 0; i < dealloccnt; i++) {
 		/*
 		 * Since the above blkfree may have failed, this blkalloc might
@@ -209,7 +201,7 @@ ffs_wapbl_abort_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 		 * blkfree succeeded above, then this shouldn't fail because
 		 * the buffer will be locked in the current transaction.
 		 */
-		ffs_blkalloc(&in, dbtofsb(fs, deallocblks[i]),
+		ffs_blkalloc_ump(ump, dbtofsb(fs, deallocblks[i]),
 		    dealloclens[i]);
 	}
 }

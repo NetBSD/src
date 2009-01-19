@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.9 2008/05/14 23:14:11 nisimura Exp $ */
+/* $NetBSD: fxp.c,v 1.9.6.1 2009/01/19 13:16:38 skrll Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -129,10 +129,6 @@ struct local {
 	unsigned eeprom_addr;
 };
 
-int fxp_match(unsigned, void *);
-void *fxp_init(unsigned, void *);
-int fxp_send(void *, char *, unsigned);
-int fxp_recv(void *, char *, unsigned, unsigned);
 static void autosize_eeprom(struct local *);
 static int read_eeprom(struct local *, int);
 static void fxp_scb_wait(struct local *);

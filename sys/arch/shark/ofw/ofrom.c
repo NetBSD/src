@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.16 2008/06/11 21:16:28 cegger Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.16.4.1 2009/01/19 13:16:43 skrll Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.16 2008/06/11 21:16:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.16.4.1 2009/01/19 13:16:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,7 +136,7 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 	struct iovec *iov;
 	paddr_t v;
 	psize_t o;
-	extern int physlock;
+	extern kmutex_t memlock;
 	extern char *memhook;
 
 	sc = device_lookup_private(&ofrom_cd, minor(dev));
@@ -144,14 +144,7 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 		return (ENXIO);			/* XXX PANIC */
 
 	/* lock against other uses of shared vmmap */
-	while (physlock > 0) {
-		physlock++;
-		error = tsleep((void *)&physlock, PZERO | PCATCH, "ofromrw",
-		    0);
-		if (error)
-			return (error);
-	}
-	physlock = 1;
+	mutex_enter(&memlock);
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -184,9 +177,7 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 		pmap_update(pmap_kernel());
 	}
 
-	if (physlock > 1)
-		wakeup((void *)&physlock);
-	physlock = 0;
+	mutex_exit(&memlock);
 
 	return (error);
 }

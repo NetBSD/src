@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.70 2008/09/25 10:40:48 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.70.2.1 2009/01/19 13:16:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -106,9 +106,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.70 2008/09/25 10:40:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.70.2.1 2009/01/19 13:16:16 skrll Exp $");
 
-#include "opt_compat_netbsd.h"
 #include "opt_compat_freebsd.h"
 
 #include <sys/param.h>
@@ -157,7 +156,6 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}			
 
 	switch (minor(dev)) {
-#if defined(COMPAT_10) || defined(COMPAT_FREEBSD)
 	/* This is done by i386_iopl(3) now. */
 	case DEV_IO:
 		if (flag & FWRITE) {
@@ -173,9 +171,6 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;
-#else
-	(void) flag;
-#endif
 
 	default:
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.5 2006/11/29 19:56:47 freza Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.5.64.1 2009/01/19 13:16:09 skrll Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.5 2006/11/29 19:56:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.5.64.1 2009/01/19 13:16:09 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.5 2006/11/29 19:56:47 freza Exp
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -107,7 +108,7 @@ char bootpath[256];
 
 extern paddr_t msgbuf_paddr;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
 
@@ -160,8 +161,8 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	printf("  Chip Pin Strapping Register = 0x%08x\n", psr);
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -243,6 +244,8 @@ cpu_reboot(int howto, char *what)
 		ibm4xx_dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 	  /* Power off here if we know how...*/

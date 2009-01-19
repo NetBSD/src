@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.36 2008/07/31 07:41:01 simonb Exp $
+# $NetBSD: INSTALL,v 1.36.2.1 2009/01/19 13:16:09 skrll Exp $
 #
 # INSTALL machine description file
 #
@@ -56,6 +56,7 @@ maxusers	32
 #options 	COMPAT_20	# compatibility with NetBSD 2.0
 #options 	COMPAT_30	# compatibility with NetBSD 3.0
 #options 	COMPAT_40	# compatibility with NetBSD 4.0
+#options 	COMPAT_50	# compatibility with NetBSD 5.0
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVSHM		# System V-style shared memory
@@ -66,7 +67,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVMSG		# System V-style message queues
 #options 	KTRACE		# system call tracing support
-#options 	LKM		# Loadable kernel modules
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 
 # Filesystems
@@ -83,7 +83,6 @@ file-system	MFS		# Memory-based filesystem
 # Filesystem options
 #options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network filesystem server
 #options 	NFS_BOOT_BOOTP	# use bootp for NFS boot

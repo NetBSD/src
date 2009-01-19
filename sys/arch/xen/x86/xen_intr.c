@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.8 2008/07/01 18:44:50 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.8.4.1 2009/01/19 13:17:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.8 2008/07/01 18:44:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.8.4.1 2009/01/19 13:17:12 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -107,7 +107,7 @@ x86_write_psl(u_long psl)
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_vcpu->evtchn_upcall_mask = psl;
-	x86_lfence();
+	xen_rmb();
 	if (ci->ci_vcpu->evtchn_upcall_pending && psl == 0) {
 	    	hypervisor_force_callback();
 	}

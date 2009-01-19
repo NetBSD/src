@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.21 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.21.50.1 2009/01/19 13:20:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.21 2007/03/04 06:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.21.50.1 2009/01/19 13:20:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -979,8 +979,7 @@ tp_rsyset(struct tp_pcb *tpcb)
 	maxcredit *= sizeof(struct mbuf *);
 	if (tpcb->tp_rsyq)
 		tp_rsyflush(tpcb);
-	if ((rsyq = (void *) malloc(maxcredit, M_PCB, M_NOWAIT)) != NULL)
-		bzero(rsyq, maxcredit);
+	rsyq = malloc(maxcredit, M_PCB, M_NOWAIT|M_ZERO);
 	tpcb->tp_rsyq = (struct mbuf **) rsyq;
 }
 

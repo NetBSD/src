@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.3 2008/10/16 19:27:24 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.3.4.1 2009/01/19 13:20:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,23 +26,17 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.3.4.1 2009/01/19 13:20:26 skrll Exp $");
+
 #include <sys/param.h>
 
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/socketvar.h>
 
+#include <net/radix.h>
+
 #include "rump_net_private.h"
-
-/* XXX: tempkludge */
-void __rumpnet_unimpl(void);
-void
-__rumpnet_unimpl()
-{
-
-	panic("XXX");
-}
-__weak_alias(ifunit,__rumpnet_unimpl);
 
 void
 rump_net_init()
@@ -50,6 +44,7 @@ rump_net_init()
 
 	mbinit();
 	domaininit();
+	rn_init();
 	soinit();
 	soinit2();
 	rump_netisr_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.41 2008/05/27 21:41:01 dyoung Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.41.6.1 2009/01/19 13:18:25 skrll Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.41 2008/05/27 21:41:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.41.6.1 2009/01/19 13:18:25 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -87,6 +87,9 @@ int ipw_debug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
 #endif
+
+/* Permit loading the Intel firmware */
+static int ipw_accept_eula;
 
 static int	ipw_dma_alloc(struct ipw_softc *);
 static void	ipw_release(struct ipw_softc *);
@@ -210,7 +213,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = memt;
 	sc->sc_sh = memh;
 	sc->sc_dmat = pa->pa_dmat;
-	strlcpy(sc->sc_fwname, "ipw2100-1.2.fw", sizeof(sc->sc_fwname));
+	sc->sc_fwname = "ipw2100-1.2.fw";
 
 	/* disable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
@@ -1613,6 +1616,8 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				ipw_init(ifp);
@@ -1641,14 +1646,11 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFMEDIA:
 		if (ifr->ifr_media & IFM_IEEE80211_ADHOC)
-			strlcpy(sc->sc_fwname, "ipw2100-1.2-i.fw",
-			    sizeof(sc->sc_fwname));
+			sc->sc_fwname = "ipw2100-1.2-i.fw";
 		else if (ifr->ifr_media & IFM_IEEE80211_MONITOR)
-			strlcpy(sc->sc_fwname, "ipw2100-1.2-p.fw",
-			    sizeof(sc->sc_fwname));
+			sc->sc_fwname = "ipw2100-1.2-p.fw";
 		else
-			strlcpy(sc->sc_fwname, "ipw2100-1.2.fw",
-			    sizeof(sc->sc_fwname));
+			sc->sc_fwname = "ipw2100-1.2.fw";
 
 		ipw_free_firmware(sc);
 		/* FALLTRHOUGH */
@@ -1875,6 +1877,12 @@ ipw_cache_firmware(struct ipw_softc *sc)
 
 	ipw_free_firmware(sc);
 
+	if (ipw_accept_eula == 0) {
+		aprint_error_dev(&sc->sc_dev,
+		    "EULA not accepted; please see the ipw(4) man page.\n");
+		return EPERM;
+	}
+
 	if ((error = firmware_open("if_ipw", sc->sc_fwname, &fwh)) != 0)
 		goto fail0;
 
@@ -1985,7 +1993,6 @@ ipw_config(struct ipw_softc *sc)
 	}
 
 	DPRINTF(("Setting MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
-	if_set_sadl(ifp, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN);
 	if (error != 0)
@@ -2264,4 +2271,34 @@ ipw_write_mem_1(struct ipw_softc *sc, bus_size_t offset, uint8_t *datap,
 		CSR_WRITE_4(sc, IPW_CSR_INDIRECT_ADDR, offset & ~3);
 		CSR_WRITE_1(sc, IPW_CSR_INDIRECT_DATA + (offset & 3), *datap);
 	}
+}
+
+SYSCTL_SETUP(sysctl_hw_ipw_accept_eula_setup, "sysctl hw.ipw.accept_eula")
+{
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	sysctl_createv(NULL, 0, NULL, &rnode,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "hw",
+		NULL,
+		NULL, 0,
+		NULL, 0,
+		CTL_HW, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &rnode, &rnode,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "ipw",
+		NULL,
+		NULL, 0,
+		NULL, 0,
+		CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &rnode, &cnode,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "accept_eula",
+		SYSCTL_DESCR("Accept Intel EULA and permit use of ipw(4) firmware"),
+		NULL, 0,
+		&ipw_accept_eula, sizeof(ipw_accept_eula),
+		CTL_CREATE, CTL_EOL);
 }

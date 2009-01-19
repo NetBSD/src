@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.55 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.55.8.1 2009/01/19 13:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.55 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.55.8.1 2009/01/19 13:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -716,8 +716,7 @@ stp4020_intr(arg)
 #ifdef STP4020_DEBUG
 		if (stp4020_debug != 0) {
 			char bits[64];
-			bitmask_snprintf(v, STP4020_ISR0_IOBITS,
-					 bits, sizeof(bits));
+			snprintb(bits, sizeof(bits), STP4020_ISR0_IOBITS, v);
 			printf("stp4020_statintr: ISR0=%s\n", bits);
 		}
 #endif
@@ -1046,8 +1045,9 @@ stp4020_chip_socket_enable(pch)
 	}
 	if (i <= 0) {
 		char bits[64];
-		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR0_IDX),
-				 STP4020_ISR0_IOBITS, bits, sizeof(bits));
+		snprintb(bits, sizeof(bits),
+		    STP4020_ISR0_IOBITS,
+		    stp4020_rd_sockctl(h, STP4020_ISR0_IDX));
 		printf("stp4020_chip_socket_enable: not ready: status %s\n",
 			bits);
 		return;
@@ -1188,20 +1188,20 @@ stp4020_dump_regs(h)
 	 * Dump control and status registers.
 	 */
 	printf("socket[%d] registers:\n", h->sock);
-	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR0_IDX),
-			 STP4020_ICR0_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), STP4020_ICR0_BITS,
+	    stp4020_rd_sockctl(h, STP4020_ICR0_IDX));
 	printf("\tICR0=%s\n", bits);
 
-	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR1_IDX),
-			 STP4020_ICR1_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), STP4020_ICR1_BITS,
+	    stp4020_rd_sockctl(h, STP4020_ICR1_IDX));
 	printf("\tICR1=%s\n", bits);
 
-	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR0_IDX),
-			 STP4020_ISR0_IOBITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), STP4020_ISR0_IOBITS,
+	    stp4020_rd_sockctl(h, STP4020_ISR0_IDX));
 	printf("\tISR0=%s\n", bits);
 
-	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR1_IDX),
-			 STP4020_ISR1_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), STP4020_ISR1_BITS,
+	    stp4020_rd_sockctl(h, STP4020_ISR1_IDX));
 	printf("\tISR1=%s\n", bits);
 }
 #endif /* STP4020_DEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.39 2008/10/24 21:09:24 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.39.2.1 2009/01/19 13:17:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.39 2008/10/24 21:09:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.39.2.1 2009/01/19 13:17:12 skrll Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -287,29 +287,36 @@ splx:
 	 * C version of spllower(). ASTs will be checked when
 	 * hypevisor_callback() exits, so no need to check here.
 	 */
-	iplbit = 1 << (NIPL - 1);
-	i = (NIPL - 1);
 	iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
 	while (iplmask != 0) {
-		KASSERT(iplbit != 0);
-		while (iplmask & iplbit) {
-			ci->ci_ipending &= ~iplbit;
-			KASSERT(i > ilevel);
-			ci->ci_ilevel = i;
-			for (ih = ci->ci_isources[i]->ipl_handlers; ih != NULL;
-			    ih = ih->ih_ipl_next) {
-				KASSERT(ih->ih_level == i);
-				sti();
-				ih_fun = (void *)ih->ih_fun;
-				ih_fun(ih->ih_arg, regs);
-				cli();
+		iplbit = 1 << (NIPL - 1);
+		i = (NIPL - 1);
+		while (iplmask != 0 && i > ilevel) {
+			while (iplmask & iplbit) {
+				ci->ci_ipending &= ~iplbit;
+				ci->ci_ilevel = i;
+				for (ih = ci->ci_isources[i]->ipl_handlers;
+				    ih != NULL; ih = ih->ih_ipl_next) {
+					sti();
+					ih_fun = (void *)ih->ih_fun;
+					ih_fun(ih->ih_arg, regs);
+					cli();
+					if (ci->ci_ilevel != i) {
+						printf("evtchn_do_event: "
+						    "handler %p didn't lower "
+						    "ipl %d %d\n",
+						    ih_fun, ci->ci_ilevel, i);
+						ci->ci_ilevel = i;
+					}
+				}
+				hypervisor_enable_ipl(i);
+				/* more pending IPLs may have been registered */
+				iplmask =
+				    (IUNMASK(ci, ilevel) & ci->ci_ipending);
 			}
-			hypervisor_enable_ipl(i);
-			/* more pending IPLs may have been registered */
-			iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
+			i--;
+			iplbit >>= 1;
 		}
-		i--;
-		iplbit >>= 1;
 	}
 	ci->ci_ilevel = ilevel;
 	return 0;
@@ -519,7 +526,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
 	       handler, level);
 #endif
-	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
+	ih = malloc(sizeof (struct intrhand), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		panic("can't allocate fixed interrupt source");
@@ -544,7 +551,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
-		MALLOC(evts, struct evtsource *, sizeof (struct evtsource),
+		evts = malloc(sizeof (struct evtsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
 		if (evts == NULL)
 			panic("can't allocate fixed interrupt source");
@@ -588,7 +595,7 @@ event_set_iplhandler(struct intrhand *ih, int level)
 	struct iplsource *ipls;
 
 	if (ci->ci_isources[level] == NULL) {
-		MALLOC(ipls, struct iplsource *, sizeof (struct iplsource),
+		ipls = malloc(sizeof (struct iplsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
 		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
@@ -636,10 +643,10 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	if (ih == NULL)
 		panic("event_remove_handler");
 	*ihp = ih->ih_ipl_next;
-	FREE(ih, M_DEVBUF);
+	free(ih, M_DEVBUF);
 	if (evts->ev_handlers == NULL) {
 		evcnt_detach(&evts->ev_evcnt);
-		FREE(evts, M_DEVBUF);
+		free(evts, M_DEVBUF);
 		evtsource[evtch] = NULL;
 	} else {
 		intr_calculatemasks(evts);

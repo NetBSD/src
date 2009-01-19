@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.33.2.1 2009/01/19 13:17:12 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.33.2.1 2009/01/19 13:17:12 skrll Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $");
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/stat.h>
@@ -55,11 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $");
 
 #include <uvm/uvm.h>
 
-#include <xen/xen3-public/io/ring.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#include <xen/granttables.h>
 #include <xen/xen3-public/io/blkif.h>
 #include <xen/xen3-public/io/protocols.h>
 
-#include <xen/granttables.h>
 #include <xen/xenbus.h>
 #include "locators.h"
 
@@ -492,7 +492,7 @@ xbd_handler(void *arg)
 		return 0;
 again:
 	resp_prod = sc->sc_ring.sring->rsp_prod;
-	x86_lfence(); /* ensure we see replies up to resp_prod */
+	xen_rmb(); /* ensure we see replies up to resp_prod */
 	for (i = sc->sc_ring.rsp_cons; i != resp_prod; i++) {
 		blkif_response_t *rep = RING_GET_RESPONSE(&sc->sc_ring, i);
 		struct xbd_req *xbdreq = &sc->sc_reqs[rep->id];
@@ -536,7 +536,7 @@ next:
 		biodone(bp);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
-	x86_lfence();
+	xen_rmb();
 	sc->sc_ring.rsp_cons = i;
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_ring, more_to_do);
 	if (more_to_do)
@@ -775,7 +775,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 	xbdreq->req_nr_segments = req->nr_segments = seg;
 	sc->sc_ring.req_prod_pvt++;
-	if (BUFQ_PEEK(sc->sc_dksc.sc_bufq)) {
+	if (bufq_peek(sc->sc_dksc.sc_bufq)) {
 		 /* we will be called again; don't notify guest yet */
 		runqueue = 0;
 	}

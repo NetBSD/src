@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.23 2007/03/04 14:47:18 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.23.52.1 2009/01/19 13:15:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2007/03/04 14:47:18 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23.52.1 2009/01/19 13:15:50 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -48,53 +48,50 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2007/03/04 14:47:18 bjh21 Exp $");
 
 #include <arch/acorn26/acorn26/cpuvar.h>
 
-static int cpu_match(struct device *, struct cfdata *, void *);
-static void cpu_attach(struct device *, struct device *, void *);
-static int cpu_search(struct device *, struct cfdata *,
-		      const int *, void *);
+static int cpu_match(device_t, cfdata_t, void *);
+static void cpu_attach(device_t, device_t, void *);
+static int cpu_search(device_t, cfdata_t, const int *, void *);
 static register_t cpu_identify(void);
 #ifdef CPU_ARM2
 static int arm2_undef_handler(u_int, u_int, struct trapframe *, int);
 static int swp_handler(u_int, u_int, struct trapframe *, int);
 #endif
 #ifdef CPU_ARM3
-static void cpu_arm3_setup(struct device *, int);
+static void cpu_arm3_setup(device_t, int);
 #endif
-static void cpu_delay_calibrate(struct device *);
+static void cpu_delay_calibrate(device_t);
 
-struct cpu_softc {
-	struct device sc_dev;
-};
-
-CFATTACH_DECL(cpu_root, sizeof(struct cpu_softc),
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpu_root, 0, cpu_match, cpu_attach, NULL, NULL);
 
 /* cf_flags bits */
 #define CFF_NOCACHE	0x00000001
 
-struct cpu_softc *the_cpu;
-
 static int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (the_cpu == NULL)
+	if (curcpu()->ci_dev == NULL)
 		return 1;
 	return 0;
 }
 
 static void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 	int supported;
 
-	the_cpu = (struct cpu_softc *)self;
-	printf(": ");
-	cputype = cpu_identify();
+	curcpu()->ci_dev = self;
+	aprint_normal(": ");
+	curcpu()->ci_arm_cpuid = cpu_identify();
+	cputype = curcpu()->ci_arm_cputype =
+	    curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK;
+	curcpu()->ci_arm_cpurev =
+	    curcpu()->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+
 	supported = 0;
-	switch (cputype) {
+	switch (curcpu()->ci_arm_cputype) {
 	case CPU_ID_ARM2:
-		printf("ARM2");
+		aprint_normal("ARM2");
 #ifdef CPU_ARM2
 		supported = 1;
 		install_coproc_handler(CORE_UNKNOWN_HANDLER,
@@ -102,34 +99,34 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		break;
 	case CPU_ID_ARM250:
-		printf("ARM250");
+		aprint_normal("ARM250");
 #ifdef CPU_ARM250
 		supported = 1;
 #endif
 		break;
 	case CPU_ID_ARM3:
-		printf("ARM3 (rev. %d)", cputype & CPU_ID_REVISION_MASK);
+		aprint_normal("ARM3 (rev. %u)", curcpu()->ci_arm_cpurev);
 #ifdef CPU_ARM3
 		supported = 1;
 		cpu_arm3_setup(self, device_cfdata(self)->cf_flags);
 #endif
 		break;
 	default:
-		printf("Unknown type, ID=0x%08x", cputype);
+		aprint_normal("Unknown type, ID=0x%08x",
+		    curcpu()->ci_arm_cputype);
 		break;
 	}
-	printf("\n");
+	aprint_normal("\n");
 	set_cpufuncs();
 	if (!supported)
-		printf("%s: WARNING: CPU type not supported by kernel\n",
-		       self->dv_xname);
+		aprint_error_dev(self,
+		    "WARNING: CPU type not supported by kernel\n");
 	config_interrupts(self, cpu_delay_calibrate);
 	config_search_ia(cpu_search, self, "cpu", NULL);
 }
 
 static int
-cpu_search(struct device *parent, struct cfdata *cf,
-	   const int *ldesc, void *aux)
+cpu_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	
 	if (config_match(parent, cf, NULL) > 0)
@@ -255,13 +252,13 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 	__asm ("mcr 15, 0, %0, cr" __STRING(reg) ", cr0" : : "r" (val))
 
 static void
-cpu_arm3_setup(struct device *self, int flags)
+cpu_arm3_setup(device_t self, int flags)
 {
 
 	/* Disable the cache while we set things up. */
 	ARM3_WRITE(ARM3_CP15_CONTROL, ARM3_CTL_SHARED);
 	if (flags & CFF_NOCACHE) {
-		printf(", cache disabled");
+		aprint_normal(", cache disabled");
 		return;
 	}
 	/* All RAM and ROM is cacheable. */
@@ -273,7 +270,7 @@ cpu_arm3_setup(struct device *self, int flags)
 	/* Flush the cache and turn it on. */
 	ARM3_WRITE(ARM3_CP15_FLUSH, 0);
 	ARM3_WRITE(ARM3_CP15_CONTROL, ARM3_CTL_CACHE_ON | ARM3_CTL_SHARED);
-	printf(", cache enabled");
+	aprint_normal(", cache enabled");
 	cpu_delay_factor = 8;
 }
 #endif
@@ -294,7 +291,7 @@ cpu_cache_flush(void)
 int cpu_delay_factor = 1;
 
 static void
-cpu_delay_calibrate(struct device *self)
+cpu_delay_calibrate(device_t self)
 {
 	struct timeval startt, end, diff;
 
@@ -303,6 +300,7 @@ cpu_delay_calibrate(struct device *self)
 	microtime(&end);
 	timersub(&end, &startt, &diff);
 	cpu_delay_factor = 10000 / diff.tv_usec + 1;
-	printf("%s: 10000 loops in %ld microseconds, delay factor = %d\n",
-	       self->dv_xname, diff.tv_usec, cpu_delay_factor);
+	aprint_normal_dev(self, "10000 loops in %d microseconds, "
+	    "delay factor = %d\n",
+	    diff.tv_usec, cpu_delay_factor);
 }

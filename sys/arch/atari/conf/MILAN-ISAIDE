@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.53 2008/07/31 07:48:37 simonb Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.53.2.1 2009/01/19 13:16:00 skrll Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.21 2006/09/03 13:51:24 bjh21 Exp $
-#		NetBSD: GENERIC.in,v 1.73 2008/07/31 07:47:43 simonb Exp $
+#		NetBSD: GENERIC.in,v 1.76 2008/11/15 21:21:23 abs Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -27,9 +27,9 @@ options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
-file-system KERNFS # Kernel parameter filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
+file-system KERNFS # Kernel parameter filesystem
 file-system NFS # Network File System client side code
 file-system PROCFS # Process filesystem
 file-system FDESC # /dev/fd
@@ -43,7 +43,6 @@ file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
 options WAPBL # File system journaling support - Experimental
 options QUOTA # Disk quotas for local disks
-options SOFTDEP # FFS soft updates support.
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
@@ -72,11 +71,11 @@ options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
 options SCSIVERBOSE # human readable SCSI error messages
 options MIIVERBOSE # verbose PHY autoconfig messages
 options PCIVERBOSE # verbose PCI device autoconfig messages
-options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-options SERCONSOLE # modem1 console support
+options SERCONSOLE # modem1 console support, breaks Falcon
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
 options TRY_SCSI_LINKED_COMMANDS=0x7f

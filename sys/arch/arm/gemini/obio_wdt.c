@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdt.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: obio_wdt.c,v 1.1.2.1 2009/01/19 13:15:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.1.2.1 2009/01/19 13:15:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
 static int geminiwdt_match(struct device *, struct cfdata *, void *);
 static void geminiwdt_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(obiowdt, sizeof(struct geminiwdt_softc),
+CFATTACH_DECL_NEW(obiowdt, sizeof(struct geminiwdt_softc),
     geminiwdt_match, geminiwdt_attach, NULL, NULL);
 
 static int
@@ -65,7 +65,7 @@ geminiwdt_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
-	if (obio->obio_addr == IICCF_ADDR_DEFAULT)
+	if (obio->obio_addr == OBIOCF_ADDR_DEFAULT)
 		panic("geminiwdt must have addr specified in config.");
 
 	if (obio->obio_addr == GEMINI_WATCHDOG_BASE)
@@ -77,15 +77,16 @@ geminiwdt_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 geminiwdt_attach(struct device *parent, struct device *self, void *aux)
 {
-	geminiwdt_softc_t *sc = (geminiwdt_softc_t *)self;
+	geminiwdt_softc_t *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
 
+	sc->sc_dev = self;
 	sc->sc_addr = obio->obio_addr;
-	sc->sc_size = (obio->obio_size == IICCF_SIZE_DEFAULT)
+	sc->sc_size = (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		? GEMINI_WDT_WDINTERLEN + 4
 		: obio->obio_size;
 
-	sc->sc_smw.smw_name = device_xname(&sc->sc_dev);
+	sc->sc_smw.smw_name = device_xname(sc->sc_dev);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = geminiwdt_setmode;
 	sc->sc_smw.smw_tickle = geminiwdt_tickle;
@@ -97,15 +98,15 @@ geminiwdt_attach(struct device *parent, struct device *self, void *aux)
 
 	geminiwdt_sc = sc;
 
+	sc->sc_armed = 1;	/* fake armed so can disarm */
+	geminiwdt_enable(0);	/* disable, stop, disarm */
+
+	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
+		geminiwdt_sc = NULL;
+		aprint_error("%s: unable to register with sysmon\n",
+			     device_xname(sc->sc_dev));
+	}
+
 	aprint_normal("\n");
 	aprint_naive("\n"); 
-
-#if 0
-	Debugger();	/* can try reboot function here to test wdt */
-#endif
-#if 0
-	geminiwdt_set_timeout(30);	/* test 30 sec reset */
-	geminiwdt_enable(1);
-#endif
-	
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.40 2007/03/04 09:23:29 macallan Exp $ */
+/*	$NetBSD: mem.c,v 1.40.52.1 2009/01/19 13:16:46 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.40 2007/03/04 09:23:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.40.52.1 2009/01/19 13:16:46 skrll Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -205,9 +205,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				return(0);
 			}
 			if (zeropage == NULL) {
-				zeropage = (void *)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(zeropage, PAGE_SIZE);
+				zeropage =
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK|M_ZERO);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);

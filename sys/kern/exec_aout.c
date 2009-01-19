@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.33 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.33.84.1 2009/01/19 13:19:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.33 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.33.84.1 2009/01/19 13:19:37 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_coredump.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +45,48 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.33 2005/12/11 12:24:29 christos Exp 
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/resourcevar.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef COREDUMP
+#define	DEP	"coredump"
+#else
+#define	DEP	NULL
+#endif
+
+MODULE(MODULE_CLASS_MISC, exec_aout, DEP);
+
+static struct execsw exec_aout_execsw[] = {
+	{ sizeof(struct exec),
+	  exec_aout_makecmds,
+	  { NULL },
+	  &emul_netbsd,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  copyargs,
+	  NULL,
+	  coredump_netbsd,
+	  exec_setup_stack },
+};
+
+static int
+exec_aout_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return exec_add(exec_aout_execsw,
+		    __arraycount(exec_aout_execsw));
+
+	case MODULE_CMD_FINI:
+		return exec_remove(exec_aout_execsw,
+		    __arraycount(exec_aout_execsw));
+
+	default:
+		return ENOTTY;
+        }
+}
 
 /*
  * exec_aout_makecmds(): Check if it's an a.out-format executable.

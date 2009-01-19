@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.156 2008/10/21 06:07:14 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.156.2.1 2009/01/19 13:16:51 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.156 2008/10/21 06:07:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.156.2.1 2009/01/19 13:16:51 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -251,7 +251,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	void *bi;
 	long bmagic;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 #endif
 	struct btinfo_count *bi_count;
@@ -311,9 +311,9 @@ die_old_boot_loader:
 		panic("Kernel end address is not found in bootinfo.\n");
 	}
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	LOOKUP_BOOTINFO(bi_sym, BTINFO_SYMTAB);
-	ksyms_init(bi_sym->nsym, (int *)(u_long)bi_sym->ssym,
+	ksyms_addsyms_elf(bi_sym->nsym, (int *)(u_long)bi_sym->ssym,
 			(int *)(u_long)bi_sym->esym);
 #ifdef DDB
 #ifdef __arch64__
@@ -629,7 +629,9 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_name = sbuf;
 		ma.ma_node = node;
 		if (OF_getprop(node, "upa-portid", &portid, sizeof(portid)) !=
-		    sizeof(portid)) 
+		    sizeof(portid) && 
+		    OF_getprop(node, "portid", &portid, sizeof(portid)) !=
+		    sizeof(portid))
 			portid = -1;
 		ma.ma_upaid = portid;
 
@@ -757,6 +759,11 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
 	if (child == ofbootpackage) {
 		/* boot device is on this controller */
 		DPRINTF(ACDB_BOOTDEV, ("found controller of bootdevice\n"));
+		/*
+		 * Note: "child" here is == ofbootpackage (s.a.), which
+		 * may be completely wrong for the device we are checking,
+		 * what we realy do here is to match "target" and "lun".
+		 */
 		sprintf(buf, "%s@%d,%d", prom_getpropstring(child, "name"),
 		    target, lun);
 		if (ofboottarget && strcmp(buf, ofboottarget) == 0) {
@@ -858,6 +865,7 @@ device_register(struct device *dev, void *aux)
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
+		int off = 0;
 
 		/*
 		 * There are two "cd" attachments:
@@ -865,10 +873,20 @@ device_register(struct device *dev, void *aux)
 		 *   scsibus -> controller
 		 * We want the node of the controller.
 		 */
-		if (device_is_a(busdev, "atapibus"))
+		if (device_is_a(busdev, "atapibus")) {
 			busdev = device_parent(busdev);
+			/*
+			 * if the atapibus is connected to the secondary
+			 * channel of the atabus, we need an offset of 2
+			 * to match OF's idea of the target number.
+			 * (i.e. on U5/U10 "cdrom" and "disk2" have the
+			 * same target encoding, though different names)
+			 */
+			if (periph->periph_channel->chan_channel == 1)
+				off = 2;
+		}
 		ofnode = device_ofnode(device_parent(busdev));
-		dev_path_drive_match(dev, ofnode, periph->periph_target,
+		dev_path_drive_match(dev, ofnode, periph->periph_target + off,
 		    periph->periph_lun);
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;

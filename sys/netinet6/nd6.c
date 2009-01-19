@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.130 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.130.2.1 2009/01/19 13:20:14 skrll Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.130 2008/10/24 17:07:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.130.2.1 2009/01/19 13:20:14 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1125,6 +1125,35 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 	struct ifaddr *ifa;
 
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+
+	if (req == RTM_LLINFO_UPD) {
+		int rc;
+		struct in6_addr *in6;
+		struct in6_addr in6_all;
+		int anycast;
+
+		if ((ifa = info->rti_ifa) == NULL)
+			return;
+
+		in6 = &ifatoia6(ifa)->ia_addr.sin6_addr;
+		anycast = ifatoia6(ifa)->ia6_flags & IN6_IFF_ANYCAST;
+
+		in6_all = in6addr_linklocal_allnodes;
+		if ((rc = in6_setscope(&in6_all, ifa->ifa_ifp, NULL)) != 0) {
+			log(LOG_ERR, "%s: failed to set scope %s "
+			    "(errno=%d)\n", __func__, if_name(ifp), rc);
+			return;
+		}
+
+		/* XXX don't set Override for proxy addresses */
+		nd6_na_output(ifa->ifa_ifp, &in6_all, in6,
+		    (anycast ? 0 : ND_NA_FLAG_OVERRIDE)
+#if 0
+		    | (ip6_forwarding ? ND_NA_FLAG_ROUTER : 0)
+#endif
+		    , 1, NULL);
+		return;
+	}
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0)
 		return;

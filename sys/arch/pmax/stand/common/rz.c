@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.22 2006/01/25 18:28:27 christos Exp $	*/
+/*	$NetBSD: rz.c,v 1.22.84.1 2009/01/19 13:16:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ rzopen(struct open_file *f, ...)
 	int i;
 	char *msg;
 	char buf[DEV_BSIZE];
-	int cnt;
+	size_t cnt;
 	static char device[] = "rz(0,0,0)";
 	va_list ap;
 

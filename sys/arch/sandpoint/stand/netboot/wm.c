@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.8 2008/05/30 14:54:16 nisimura Exp $ */
+/* $NetBSD: wm.c,v 1.8.6.1 2009/01/19 13:16:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,11 +54,6 @@
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
-
-int wm_match(unsigned, void *);
-void *wm_init(unsigned, void *);
-int wm_send(void *, char *, unsigned);
-int wm_recv(void *, char *, unsigned, unsigned);
 
 struct tdesc {
 	uint32_t lo;	/* 31:0 */

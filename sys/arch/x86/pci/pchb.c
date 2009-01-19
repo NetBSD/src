@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.14 2008/08/22 18:05:44 tnn Exp $ */
+/*	$NetBSD: pchb.c,v 1.14.2.1 2009/01/19 13:17:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.14 2008/08/22 18:05:44 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.14.2.1 2009/01/19 13:17:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -382,6 +382,8 @@ pchbattach(device_t parent, device_t self, void *aux)
 		case PCI_PRODUCT_INTEL_82Q35_HB:
 		case PCI_PRODUCT_INTEL_82G33_HB:
 		case PCI_PRODUCT_INTEL_82Q33_HB:
+		case PCI_PRODUCT_INTEL_82G35_HB:
+		case PCI_PRODUCT_INTEL_82GM45_HB:
 			/*
 			 * The host bridge is either in GFX mode (internal
 			 * graphics) or in AGP mode. In GFX mode, we pretend

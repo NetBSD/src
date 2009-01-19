@@ -1,4 +1,4 @@
-/*	$NetBSD: powioctl.h,v 1.3 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: powioctl.h,v 1.3.86.1 2009/01/19 13:17:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -61,6 +61,6 @@ struct x68k_alarminfo {
 #define POWIOCGPOWERINFO	_IOR('p', 0, struct x68k_powerinfo)
 #define POWIOCGALARMINFO	_IOR('p', 1, struct x68k_alarminfo)
 #define POWIOCSALARMINFO	_IOW('p', 2, struct x68k_alarminfo)
-#define POWIOCSSIGNAL		_IOW('p', 3, int)
+/* 3: POWIOCSSIGNAL is obsoleted */
 
 #endif

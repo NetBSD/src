@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.21 2008/05/19 02:53:47 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.21.6.1 2009/01/19 13:20:12 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.21 2008/05/19 02:53:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.21.6.1 2009/01/19 13:20:12 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -532,11 +532,10 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 * start to modify ifp_port.
 	 */
 
-	error = (*ifp_port->if_ioctl)(ifp_port, SIOCSIFADDR,
-	    (void *)ifp->if_dl);
+	error = (*ifp_port->if_ioctl)(ifp_port, SIOCINITIFADDR, ifp->if_dl);
 
 	if (error) {
-		printf("%s: SIOCSIFADDR error %d\n", __func__, error);
+		printf("%s: SIOCINITIFADDR error %d\n", __func__, error);
 		goto cleanup;
 	}
 	port->port_flags |= AGRPORT_LADDRCHANGED;
@@ -696,7 +695,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 		    port->port_origlladdr, ifp_port->if_addrlen);
 		memset(&ifa, 0, sizeof(ifa));
 		ifa.ifa_addr = &u.sa;
-		error = agrport_ioctl(port, SIOCSIFADDR, &ifa);
+		error = agrport_ioctl(port, SIOCINITIFADDR, &ifa);
 #endif
 		if (error) {
 			printf("%s: if_init error %d\n", __func__, error);
@@ -751,13 +750,32 @@ agr_ioctl_filter(struct ifnet *ifp, u_long cmd, void *arg)
 	KASSERT(port);
 
 	switch (cmd) {
-	case SIOCGIFADDR:
-	case SIOCGIFMEDIA:
-	case SIOCSIFFLAGS: /* XXX */
-		error = agrport_ioctl(port, cmd, arg);
-		break;
-	default:
+	case SIOCADDMULTI: /* add m'cast addr */
+	case SIOCAIFADDR: /* add/chg IF alias */
+	case SIOCALIFADDR: /* add IF addr */
+	case SIOCDELMULTI: /* del m'cast addr */
+	case SIOCDIFADDR: /* delete IF addr */
+	case SIOCDIFPHYADDR: /* delete gif addrs */
+	case SIOCDLIFADDR: /* delete IF addr */
+	case SIOCINITIFADDR:
+	case SIOCSDRVSPEC: /* set driver-specific parameters */
+	case SIOCSIFADDR: /* set ifnet address */
+	case SIOCSIFBRDADDR: /* set broadcast addr */
+	case SIOCSIFDSTADDR: /* set p-p address */
+	case SIOCSIFGENERIC: /* generic IF set op */
+	case SIOCSIFMEDIA: /* set net media */
+	case SIOCSIFMETRIC: /* set IF metric */
+	case SIOCSIFMTU: /* set ifnet mtu */
+	case SIOCSIFNETMASK: /* set net addr mask */
+	case SIOCSIFPHYADDR: /* set gif addres */
+	case SIOCSLIFPHYADDR: /* set gif addrs */
+	case SIOCSVH: /* set carp param */
 		error = EBUSY;
+		break;
+	case SIOCSIFCAP: /* XXX */
+	case SIOCSIFFLAGS: /* XXX */
+	default:
+		error = agrport_ioctl(port, cmd, arg);
 		break;
 	}
 	return error;
@@ -801,7 +819,6 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct agr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct sockaddr *sa;
 	struct agrreq ar;
 	int error = 0;
 	int s;
@@ -811,7 +828,7 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (sc->sc_nports == 0) {
 			error = EINVAL;
 			break;
@@ -828,16 +845,13 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-	case SIOCGIFADDR:
-		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
-		break;
-
 #if 0 /* notyet */
 	case SIOCSIFMTU:
 #endif
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		agr_config_promisc(sc);
 		break;
 
@@ -878,7 +892,7 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 

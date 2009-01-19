@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/03/30 08:52:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8.116.1 2009/01/19 13:16:33 skrll Exp $
 
 WARNS?= 1
 S= ${.CURDIR}/../../../..
@@ -6,6 +6,7 @@ S= ${.CURDIR}/../../../..
 OBJS= romcalls.o
 
 CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -DHAVE_CHANGEDISK_HOOK

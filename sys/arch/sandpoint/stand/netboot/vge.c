@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.16 2008/05/30 14:54:16 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.16.6.1 2009/01/19 13:16:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -56,11 +56,6 @@
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
-
-int vge_match(unsigned, void *);
-void *vge_init(unsigned, void *);
-int vge_send(void *, char *, unsigned);
-int vge_recv(void *, char *, unsigned, unsigned);
 
 struct tdesc {
 	uint32_t t0, t1;

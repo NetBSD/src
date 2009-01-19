@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_timer.c,v 1.15 2008/05/21 17:08:07 drochner Exp $	*/
+/*	$NetBSD: clnp_timer.c,v 1.15.6.1 2009/01/19 13:20:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_timer.c,v 1.15 2008/05/21 17:08:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_timer.c,v 1.15.6.1 2009/01/19 13:20:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -125,7 +125,7 @@ clnp_freefrags(
 	}
 
 	/* free the fragment header */
-	FREE(cfh, M_FTABLE);
+	free(cfh, M_FTABLE);
 
 	return (next);
 }

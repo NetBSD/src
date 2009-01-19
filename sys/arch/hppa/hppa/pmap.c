@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.19 2009/01/18 18:50:45 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.20 2009/01/19 13:16:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.19 2009/01/18 18:50:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.20 2009/01/19 13:16:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,9 @@ int pmapdebug = 0
 int		pmap_hptsize = 16 * PAGE_SIZE;	/* patchable */
 vaddr_t		pmap_hpt;
 
-struct pmap	kernel_pmap_store;
+static struct pmap	kernel_pmap_store;
+struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
+
 int		hppa_sid_max = HPPA_SID_MAX;
 struct pool	pmap_pool;
 struct pool	pmap_pv_pool;
@@ -479,8 +481,8 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 			if (!(pte = pmap_pte_get(pde, va)))
 				continue;
 
-			bitmask_snprintf(TLB_PROT(pte & PAGE_MASK), TLB_BITS,
-			    buf, sizeof(buf));
+			snprintb(buf, sizeof(buf), TLB_BITS,
+			   TLB_PROT(pte & PAGE_MASK));
 			printf("0x%08lx-0x%08x:%s\n", va, pte & ~PAGE_MASK,
 			    buf);
 		}
@@ -628,7 +630,7 @@ pmap_bootstrap(vaddr_t vstart)
 	 * Initialize kernel pmap
 	 */
 	addr = round_page(vstart);
-	kpm = &kernel_pmap_store;
+	kpm = pmap_kernel();
 	memset(kpm, 0, sizeof(*kpm));
 
 	UVM_OBJ_INIT(&kpm->pm_obj, NULL, 1);
@@ -867,7 +869,7 @@ pmap_bootstrap(vaddr_t vstart)
 			btlb_entry_got = btlb_entry_size[btlb_i];
 			prot = btlb_entry_vm_prot[btlb_i];
 
-			error = hppa_btlb_insert(pmap_kernel()->pm_space,
+			error = hppa_btlb_insert(kpm->pm_space,
 			    btlb_entry_start[btlb_i], btlb_entry_start[btlb_i],
 			    &btlb_entry_got,
 			    kpm->pm_pid | pmap_prot(kpm, prot));
@@ -1812,8 +1814,8 @@ pmap_hptdump(void)
 		if (hpt->hpt_valid || hpt->hpt_entry) {
 			char buf[128];
 
-			bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
-			    sizeof(buf));
+			snprintb(buf, sizeof(buf), TLB_BITS, hpt->hpt_tlbprot);
+	
 			db_printf("hpt@%p: %x{%sv=%x:%x},%s,%x\n",
 			    hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
 			    hpt->hpt_space, hpt->hpt_vpn << 9,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 2008/05/11 16:13:34 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15.6.1 2009/01/19 13:17:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15 2008/05/11 16:13:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15.6.1 2009/01/19 13:17:09 skrll Exp $");
 
-#include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
 #include "opt_user_ldt.h"
@@ -734,11 +733,9 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	case X86_VM86:
 		error = x86_vm86(l, SCARG(uap, parms), retval);
 		break;
-#ifdef COMPAT_16
 	case X86_OLD_VM86:
 		error = compat_16_x86_vm86(l, SCARG(uap, parms), retval);
 		break;
-#endif
 #endif
 
 #ifdef PERFCTRS

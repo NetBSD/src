@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.519 2008/10/25 17:35:44 christos Exp $
+$NetBSD: usbdevs,v 1.519.2.1 2009/01/19 13:19:09 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -872,6 +872,7 @@ product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 product COREGA WLANUSB		0x0012	Wireless LAN USB Stick-11
 product COREGA FETHER_USB2_TX	0x0017	FEther USB2-TX
 product COREGA WLUSB_11_KEY	0x001a	ULUSB-11 Key
+product COREGA CGUSBRS232R	0x002a	CG-USBRS232R
 product COREGA CGWLUSB2GL	0x002d	CG-WLUSB2GL
 product COREGA CGWLUSB2GPX	0x002e	CG-WLUSB2GPX
 product COREGA FETHER_USB_TXC	0x9601	FEther USB-TXC
@@ -1204,6 +1205,7 @@ product HP 959C			0x1104	Deskjet 959C
 product HP 568J			0x1116	Jornada 568
 product HP 930C			0x1204	DeskJet 930c
 product HP P2000U		0x1801	Inkjet P-2000U
+product HP RNDIS		0x1c1d	Generic RNDIS
 product HP 640C			0x2004	DeskJet 640c
 product HP 4670V		0x3005	ScanJet 4670v
 product HP P1100		0x3102	Photosmart P1100

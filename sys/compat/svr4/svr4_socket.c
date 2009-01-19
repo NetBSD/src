@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.21 2008/06/18 02:08:36 dogcow Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.21.4.1 2009/01/19 13:17:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.21 2008/06/18 02:08:36 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.21.4.1 2009/01/19 13:17:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ svr4_find_socket(struct proc *p, struct file *fp, dev_t dev, svr4_ino_t ino)
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;
 
 	if (!initialized) {
-		DPRINTF(("svr4_find_socket: uninitialized [%p,%d,%lu]\n",
+		DPRINTF(("svr4_find_socket: uninitialized [%p,%"PRId64",%lu]\n",
 		    p, dev, ino));
 		TAILQ_INIT(&svr4_head);
 		initialized = 1;
@@ -93,7 +93,7 @@ svr4_find_socket(struct proc *p, struct file *fp, dev_t dev, svr4_ino_t ino)
 	}
 
 
-	DPRINTF(("svr4_find_socket: [%p,%d,%lu]: ", p, dev, ino));
+	DPRINTF(("svr4_find_socket: [%p,%"PRId64",%lu]: ", p, dev, ino));
 	for (e = svr4_head.tqh_first; e != NULL; e = e->entries.tqe_next)
 		if (e->p == p && e->dev == dev && e->ino == ino) {
 #ifdef DIAGNOSTIC
@@ -128,7 +128,7 @@ svr4_delete_socket(struct proc *p, struct file *fp)
 	for (e = svr4_head.tqh_first; e != NULL; e = e->entries.tqe_next)
 		if (e->p == p && e->cookie == cookie) {
 			TAILQ_REMOVE(&svr4_head, e, entries);
-			DPRINTF(("svr4_delete_socket: %s [%p,%d,%lu]\n",
+			DPRINTF(("svr4_delete_socket: %s [%p,%"PRId64",%lu]\n",
 				 e->sock.sun_path, p, e->dev, e->ino));
 			free(e, M_TEMP);
 			break;
@@ -170,7 +170,7 @@ svr4_add_socket(struct proc *p, const char *path, struct stat *st)
 	e->sock.sun_len = len;
 
 	TAILQ_INSERT_HEAD(&svr4_head, e, entries);
-	DPRINTF(("svr4_add_socket: %s [%p,%d,%lu]\n", e->sock.sun_path,
+	DPRINTF(("svr4_add_socket: %s [%p,%"PRId64",%lu]\n", e->sock.sun_path,
 		 p, e->dev, e->ino));
 
 	KERNEL_UNLOCK_ONE(NULL);

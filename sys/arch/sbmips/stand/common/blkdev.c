@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.c,v 1.4 2005/12/11 12:18:51 christos Exp $ */
+/* $NetBSD: blkdev.c,v 1.4.86.1 2009/01/19 13:16:42 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -160,7 +160,7 @@ blkdevstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
 	void *addrvoid;
 	size_t *cnt;	/* out: number of bytes transfered */
 {
-	char *addr = addrvoid;
+	unsigned char *addr = addrvoid;
 	int res;
 
 #if !defined(LIBSA_NO_TWIDDLE)

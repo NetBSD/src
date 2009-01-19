@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.211 2008/06/04 12:41:41 ad Exp $ */
+/*	$NetBSD: cpu.c,v 1.211.6.1 2009/01/19 13:16:46 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.211 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.211.6.1 2009/01/19 13:16:46 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -411,8 +411,8 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	 * (see autoconf.c and cpuunit.c)
 	 */
 	if (cpus == NULL) {
-		cpus = malloc(sparc_ncpus * sizeof(cpi), M_DEVBUF, M_NOWAIT);
-		bzero(cpus, sparc_ncpus * sizeof(cpi));
+		cpus = malloc(sparc_ncpus * sizeof(cpi),
+				M_DEVBUF, M_NOWAIT|M_ZERO);
 
 		getcpuinfo(&cpuinfo, node);
 

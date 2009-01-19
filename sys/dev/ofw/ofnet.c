@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.41 2008/04/08 20:11:58 cegger Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.41.12.1 2009/01/19 13:18:24 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.41 2008/04/08 20:11:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.41.12.1 2009/01/19 13:18:24 skrll Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -374,7 +374,7 @@ ofnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int error = 0;
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -389,20 +389,25 @@ ofnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ofnet_init(of);
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/* If interface is down, but running, stop it. */
 			ofnet_stop(of);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/* If interface is up, but not running, start it. */
 			ofnet_init(of);
-		} else {
+			break;
+		default:
 			/* Other flags are ignored. */
+			break;
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 	return error;

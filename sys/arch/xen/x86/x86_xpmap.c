@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.11 2008/10/24 21:09:24 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.11.2.1 2009/01/19 13:17:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.11 2008/10/24 21:09:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.11.2.1 2009/01/19 13:17:12 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -677,7 +677,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 
 	__PRINTK(("xen_bootstrap_tables text_end 0x%lx map_end 0x%lx\n",
 	    text_end, map_end));
-	__PRINTK(("console 0x%lx ", xen_start_info.console_mfn));
+	__PRINTK(("console 0x%lx ", xen_start_info.console.domU.mfn));
 	__PRINTK(("xenstore 0x%lx\n", xen_start_info.store_mfn));
 
 	/* 
@@ -778,9 +778,9 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 			}
 #ifdef XEN3
 			if ((xpmap_ptom_masked(page - KERNBASE) >> PAGE_SHIFT)
-			    == xen_start_info.console_mfn) {
+			    == xen_start_info.console.domU.mfn) {
 				xencons_interface = (void *)page;
-				pte[pl1_pi(page)] = xen_start_info.console_mfn;
+				pte[pl1_pi(page)] = xen_start_info.console.domU.mfn;
 				pte[pl1_pi(page)] <<= PAGE_SHIFT;
 				__PRINTK(("xencons_interface "
 				    "va 0x%lx pte 0x%" PRIx64 "\n",

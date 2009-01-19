@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.15 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.15.8.1 2009/01/19 13:15:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -47,20 +47,10 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.15 2008/04/27 18:58:43 matt Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.15.8.1 2009/01/19 13:15:56 skrll Exp $")	
 
 	.text
 	.align	0
-
-#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
-#ifdef MULTIPROCESSOR
-.Lcpu_info:
-	.word	_C_LABEL(cpu_info)
-#else
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
-#endif
-#endif
 
 #ifdef __PROG32
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
@@ -95,20 +85,7 @@ ENTRY(copyin)
 	RETc(eq)
 
 	SAVE_REGS
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r4)
-#elif defined(MULTIPROCESSOR)
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r2, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r4, .Lcpu_info
-	ldr	r4, [r4, r0, lsl #2]
-	ldr	r4, [r4, #CI_CURPCB]
-	ldmfd	sp!, {r0-r2, r14}
-#else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
-#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	adr	r3, .Lcopyfault
@@ -320,20 +297,7 @@ ENTRY(copyout)
 	moveq	pc, lr
 
 	SAVE_REGS
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r4)
-#elif defined(MULTIPROCESSOR)
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r2, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r4, .Lcpu_info
-	ldr	r4, [r4, r0, lsl #2]
-	ldr	r4, [r4, #CI_CURPCB]
-	ldmfd	sp!, {r0-r2, r14}
-#else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
-#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	adr	r3, .Lcopyfault
@@ -535,20 +499,7 @@ ENTRY(kcopy)
 	moveq	pc, lr
 
 	SAVE_REGS
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r4)
-#elif defined(MULTIPROCESSOR)
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r2, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r4, .Lcpu_info
-	ldr	r4, [r4, r0, lsl #2]
-	ldr	r4, [r4, #CI_CURPCB]
-	ldmfd	sp!, {r0-r2, r14}
-#else
-	ldr	r4, .Lcurpcb
-	ldr	r4, [r4]
-#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	adr	r3, .Lcopyfault
@@ -731,20 +682,7 @@ ENTRY(kcopy)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_1)
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r2)
-#elif defined(MULTIPROCESSOR)
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r1, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r2, .Lcpu_info
-	ldr	r2, [r2, r0, lsl #2]
-	ldr	r2, [r2, #CI_CURPCB]
-	ldmfd	sp!, {r0-r1, r14}
-#else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
-#endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]
@@ -767,20 +705,7 @@ ENTRY(badaddr_read_1)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_2)
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r2)
-#elif defined(MULTIPROCESSOR)
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r1, r3, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r2, .Lcpu_info
-	ldr	r2, [r2, r0, lsl #2]
-	ldr	r2, [r2, #CI_CURPCB]
-	ldmfd	sp!, {r0-r1, r3, r14}
-#else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
-#endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]
@@ -803,20 +728,7 @@ ENTRY(badaddr_read_2)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_4)
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
 	GET_CURPCB(r2)
-#elif defined(MULTIPROCESSOR)
-	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r1, r3, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r2, .Lcpu_info
-	ldr	r2, [r2, r0, lsl #2]
-	ldr	r2, [r2, #CI_CURPCB]
-	ldmfd	sp!, {r0-r1, r3, r14}
-#else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
-#endif
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]

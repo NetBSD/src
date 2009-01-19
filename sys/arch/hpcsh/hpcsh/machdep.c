@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61.8.1 2009/01/19 13:16:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.8.1 2009/01/19 13:16:14 skrll Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2008/04/28 20:23:22 martin Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/user.h>
+#include <sys/device.h>
 
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -56,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2008/04/28 20:23:22 martin Exp $");
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -73,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2008/04/28 20:23:22 martin Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(LKM) || defined(DDB) || defined(KGDB)
+#if NKSYMS || defined(MODULAR) || defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -241,7 +243,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 			p = cp + 2;
 #ifdef NFS
 			if (strcmp(p, "nfs") == 0)
-				mountroot = nfs_mountroot;
+				rootfstype = MOUNT_NFS;
 			else
 				makebootdev(p);
 #else /* NFS */
@@ -291,9 +293,9 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symbolsize) {
-		ksyms_init(symbolsize, &end, end + symbolsize);
+		ksyms_addsyms_elf(symbolsize, &end, end + symbolsize);
 		_DPRINTF("symbol size = %d byte\n", symbolsize);
 	}
 #endif
@@ -415,6 +417,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Finally, halt/reboot the system. */
 #ifdef KLOADER
@@ -635,3 +639,14 @@ intc_intr(int ssr, int spc, int ssp)
 		__dbg_heart_beat(HEART_BEAT_BLUE);
 	}
 }
+
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */

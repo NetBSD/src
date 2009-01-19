@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.122 2008/08/21 15:34:10 matt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.122.2.1 2009/01/19 13:20:14 skrll Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,12 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.122 2008/08/21 15:34:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.122.2.1 2009/01/19 13:20:14 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +120,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.122 2008/08/21 15:34:10 matt Exp $")
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #endif /* FAST_IPSEC */
+
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#include <compat/sys/socket.h>
+#endif
 
 #include <netinet6/ip6protosw.h>
 
@@ -1102,17 +1108,27 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 #define IS2292(x, y)	(y)
 #endif
 
-#ifdef SO_TIMESTAMP
-	if (in6p->in6p_socket->so_options & SO_TIMESTAMP) {
+	if (in6p->in6p_socket->so_options & SO_TIMESTAMP
+#ifdef SO_OTIMESTAMP
+	    || in6p->in6p_socket->so_options & SO_OTIMESTAMP
+#endif
+	) {
 		struct timeval tv;
 
 		microtime(&tv);
+#ifdef SO_OTIMESTAMP
+		if (in6p->in6p_socket->so_options & SO_OTIMESTAMP) {
+			struct timeval50 tv50;
+			timeval_to_timeval50(&tv, &tv50);
+			*mp = sbcreatecontrol((void *) &tv50, sizeof(tv50),
+			    SCM_OTIMESTAMP, SOL_SOCKET);
+		} else
+#endif
 		*mp = sbcreatecontrol((void *) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-#endif
 
 	/* some OSes call this logic with IPv4 packet, for SO_TIMESTAMP */
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)

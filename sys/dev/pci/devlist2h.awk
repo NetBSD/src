@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.12 2005/12/11 12:22:49 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.12.84.1 2009/01/19 13:18:25 skrll Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -31,6 +31,7 @@
 #
 BEGIN {
 	nproducts = nvendors = blanklines = 0
+	nchars = 1
 	dfile="pcidevs_data.h"
 	hfile="pcidevs.h"
 }
@@ -91,7 +92,20 @@ NF > 0 && $1 == "vendor" {
 			continue
 		}
 		vendors[nvendors, i] = $f
-		printf("%s", vendors[nvendors, i]) > hfile
+		if (words[$f, 1] == 0) {
+			l = length($f);
+			parts = split($f, junk, "\\");
+			l = l - (parts - 1);
+			nwords++;
+			words[$f, 1] = nwords;
+			words[$f, 2] = l;
+			wordlist[nwords, 1] = $f;
+			wordlist[nwords, 3] = nchars;
+			nchars = nchars + l + 1;
+		}
+		wordlist[words[$f, 1], 2]++;
+		vendors[nvendors, i] = words[$f, 1];
+		printf("%s", $f) > hfile
 		if (f < NF)
 			printf(" ") > hfile
 		i++; f++;
@@ -135,8 +149,20 @@ NF > 0 && $1 == "product" {
 			f++
 			continue
 		}
-		products[nproducts, i] = $f
-		printf("%s", products[nproducts, i]) > hfile
+		if (words[$f, 1] == 0) {
+			l = length($f);
+			parts = split($f, junk, "\\");
+			l = l - (parts - 1);
+			nwords++;
+			words[$f, 2] = l;
+			words[$f, 1] = nwords;
+			wordlist[nwords, 1] = $f;
+			wordlist[nwords, 3] = nchars;
+			nchars = nchars + l + 1;
+		}
+		wordlist[words[$f, 1], 2]++;
+		products[nproducts, i] = words[$f, 1];
+		printf("%s", $f) > hfile
 		if (f < NF)
 			printf(" ") > hfile
 		i++; f++;
@@ -161,52 +187,57 @@ END {
 
 	printf("\n") > dfile
 
-	printf("static const struct pci_vendor pci_vendors[] = {\n") > dfile
+	printf("static const uint16_t pci_vendors[] = {\n") > dfile
 	for (i = 1; i <= nvendors; i++) {
-		printf("\t{\n") > dfile
-		printf("\t    PCI_VENDOR_%s,\n", vendors[i, 1]) \
+		printf("\t    PCI_VENDOR_%s", vendors[i, 1]) \
 		    > dfile
 
-		printf("\t    \"") > dfile
 		j = 3;
-		needspace = 0;
 		while ((i, j) in vendors) {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", vendors[i, j]) > dfile
-			needspace = 1
+			printf(", %d",
+			    wordlist[vendors[i, j], 3]) > dfile
+#			printf(", %d /* %s */",
+#			    wordlist[vendors[i, j], 3],
+#			    wordlist[vendors[i, j], 1]) > dfile
 			j++
 		}
-		printf("\",\n") > dfile
-		printf("\t},\n") > dfile
+		printf(", 0,\n", sep) > dfile
 	}
 	printf("};\n") > dfile
-	printf("const int pci_nvendors = %d;\n", nvendors) > dfile
 
 	printf("\n") > dfile
 
-	printf("static const struct pci_product pci_products[] = {\n") > dfile
+	printf("static const uint16_t pci_products[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
-		printf("\t{\n") > dfile
-		printf("\t    PCI_VENDOR_%s, PCI_PRODUCT_%s_%s,\n",
+		printf("\t    PCI_VENDOR_%s, PCI_PRODUCT_%s_%s, \n",
 		    products[i, 1], products[i, 1], products[i, 2]) \
 		    > dfile
 
-		printf("\t    \"") > dfile
-		j = 4;
-		needspace = 0;
+		printf("\t    ") > dfile
+		j = 4
+		sep = ""
 		while ((i, j) in products) {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", products[i, j]) > dfile
-			needspace = 1
+			printf("%s%d", sep,
+			    wordlist[products[i, j], 3]) > dfile
+#			printf("%s%d /* %s */", sep,
+#			    wordlist[products[i, j], 3],
+#			    wordlist[products[i, j], 1]) > dfile
+			sep = ", "
 			j++
 		}
-		printf("\",\n") > dfile
-		printf("\t},\n") > dfile
+		printf("%s0,\n", sep) > dfile
 	}
 	printf("};\n") > dfile
-	printf("const int pci_nproducts = %d;\n", nproducts) >dfile
+
+	printf("static const char pci_words[] = { \".\" \n") > dfile
+	for (i = 1; i <= nwords; i++) {
+		printf("\t    \"%s\\0\" /* %d refs @ %d */\n",
+		    wordlist[i, 1], wordlist[i, 2], wordlist[i, 3]) > dfile
+	}
+	printf("};\n") > dfile
+	printf("const int pci_nwords = %d;\n", nwords) > dfile
+
+	printf("\n") > dfile
 
 	close(dfile)
 	close(hfile)

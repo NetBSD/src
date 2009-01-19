@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.41 2008/04/30 14:07:14 ad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.41.8.1 2009/01/19 13:19:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.41 2008/04/30 14:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.41.8.1 2009/01/19 13:19:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,7 +550,7 @@ ntfs_readdir(void *v)
 
 	off = uio->uio_offset;
 
-	MALLOC(cde, struct dirent *, sizeof(struct dirent), M_TEMP, M_WAITOK);
+	cde = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK);
 
 	/* Simulate . in every dir except ROOT */
 	if (ip->i_number != NTFS_ROOTINO
@@ -661,7 +661,7 @@ ntfs_readdir(void *v)
 	    *ap->a_eofflag = VTONT(ap->a_vp)->i_size <= uio->uio_offset;
 */
     out:
-	FREE(cde, M_TEMP);
+	free(cde, M_TEMP);
 	return (error);
 }
 

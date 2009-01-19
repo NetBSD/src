@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.40 2008/04/04 09:49:33 hauke Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.40.12.1 2009/01/19 13:16:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.40 2008/04/04 09:49:33 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.40.12.1 2009/01/19 13:16:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.40 2008/04/04 09:49:33 hauke Exp $
 #include <mac68k/dev/if_aevar.h>
 #include <mac68k/dev/if_aereg.h>
 
-static int	ae_nubus_match(struct device *, struct cfdata *, void *);
-static void	ae_nubus_attach(struct device *, struct device *, void *);
+static int	ae_nubus_match(device_t, cfdata_t, void *);
+static void	ae_nubus_attach(device_t, device_t, void *);
 static int	ae_nb_card_vendor(bus_space_tag_t, bus_space_handle_t,
 		    struct nubus_attach_args *);
 static int	ae_nb_get_enaddr(bus_space_tag_t, bus_space_handle_t,
@@ -76,13 +76,13 @@ static void	ae_nb_watchdog(struct ifnet *);
 
 void		ae_nubus_intr(void *);
 
-CFATTACH_DECL(ae_nubus, sizeof(struct dp8390_softc),
+CFATTACH_DECL_NEW(ae_nubus, sizeof(struct dp8390_softc),
     ae_nubus_match, ae_nubus_attach, NULL, NULL);
 
 static int
-ae_nubus_match(struct device *parent, struct cfdata *cf, void *aux)
+ae_nubus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
+	struct nubus_attach_args *na = aux;
 	bus_space_handle_t bsh;
 	int rv;
 
@@ -120,10 +120,10 @@ ae_nubus_match(struct device *parent, struct cfdata *cf, void *aux)
  * Install interface into kernel networking data structures
  */
 static void
-ae_nubus_attach(struct device *parent, struct device *self, void *aux)
+ae_nubus_attach(device_t parent, device_t self, void *aux)
 {
-	struct dp8390_softc *sc = (struct dp8390_softc *)self;
-	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
+	struct dp8390_softc *sc = device_private(self);
+	struct nubus_attach_args *na = aux;
 #ifdef DEBUG
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 #endif
@@ -132,10 +132,11 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 	int i, success;
 	const char *cardtype;
 
+	sc->sc_dev = self;
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
 	    0, &bsh)) {
-		printf(": can't map memory space\n");
+		aprint_error(": can't map memory space\n");
 		return;
 	}
 
@@ -161,17 +162,17 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 		if ((sc->mem_size = ae_size_card_memory(bst, bsh,
 		    AE_DATA_OFFSET)) == 0) {
-			printf(": failed to determine size of RAM.\n");
+			aprint_error(": failed to determine size of RAM.\n");
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
 		    AE_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 #ifdef AE_OLD_GET_ENADDR
@@ -181,7 +182,7 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 			    bus_space_read_1(bst, bsh, (AE_ROM_OFFSET + i * 2));
 #else
 		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_enaddr)) {
-			printf(": can't find MAC address\n");
+			aprint_error(": can't find MAC address\n");
 			break;
 		}
 #endif
@@ -197,13 +198,13 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    DP_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 		sc->mem_size = 8192;
 		if (bus_space_subregion(bst, bsh,
 		    DP_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 #ifdef AE_OLD_GET_ENADDR
@@ -213,12 +214,12 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 			    bus_space_read_1(bst, bsh, (DP_ROM_OFFSET + i * 2));
 #else
 		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_enaddr)) {
-			printf(": can't find MAC address\n");
+			aprint_error(": can't find MAC address\n");
 			break;
 		}
 #endif
 
-		printf(": unsupported Dayna hardware\n");
+		aprint_error(": unsupported Dayna hardware\n");
 		break;
 
 	case DP8390_VENDOR_FARALLON:
@@ -229,17 +230,17 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 		if ((sc->mem_size = ae_size_card_memory(bst, bsh,
 		    AE_DATA_OFFSET)) == 0) {
-			printf(": failed to determine size of RAM.\n");
+			aprint_error(": failed to determine size of RAM.\n");
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
 		    AE_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 #ifdef AE_OLD_GET_ENADDR
@@ -249,7 +250,7 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 			    bus_space_read_1(bst, bsh, (FE_ROM_OFFSET + i));
 #else
 		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_enaddr)) {
-			printf(": can't find MAC address\n");
+			aprint_error(": can't find MAC address\n");
 			break;
 		}
 #endif
@@ -265,17 +266,17 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    GC_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 		if ((sc->mem_size = ae_size_card_memory(bst, bsh,
 		    GC_DATA_OFFSET)) == 0) {
-			printf(": failed to determine size of RAM.\n");
+			aprint_error(": failed to determine size of RAM.\n");
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
 		    GC_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 
@@ -300,21 +301,21 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 
 		if (bus_space_subregion(bst, bsh,
 		    KE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 		if ((sc->mem_size = ae_size_card_memory(bst, bsh,
 		    KE_DATA_OFFSET)) == 0) {
-			printf(": failed to determine size of RAM.\n");
+			aprint_error(": failed to determine size of RAM.\n");
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
 		    KE_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_enaddr)) {
-			printf(": can't find MAC address\n");
+			aprint_error(": can't find MAC address\n");
 			break;
 		}
 
@@ -328,21 +329,21 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
   		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
 		if (bus_space_subregion(bst, bsh,
 		    CT_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 		if ((sc->mem_size = ae_size_card_memory(bst, bsh,
 		    CT_DATA_OFFSET)) == 0) {
-			printf(": failed to determine size of RAM.\n");
+			aprint_error(": failed to determine size of RAM.\n");
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
 		    CT_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
-			printf(": failed to map register space\n");
+			aprint_error(": failed to map register space\n");
 			break;
 		}
 		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_enaddr)) {
-			printf(": can't find MAC address\n");
+			aprint_error(": can't find MAC address\n");
 			break;
 		}
 		success = 1;
@@ -370,7 +371,7 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 	/* Interface is always enabled. */
 	sc->sc_enabled = 1;
 
-	printf(": %s, %dKB memory\n", cardtype, sc->mem_size / 1024);
+	aprint_normal(": %s, %dKB memory\n", cardtype, sc->mem_size / 1024);
 
 	if (dp8390_config(sc)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
@@ -384,7 +385,7 @@ ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 void
 ae_nubus_intr(void *arg)
 {
-	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
+	struct dp8390_softc *sc = arg;
 	
 	(void)dp8390_intr(sc);
 }

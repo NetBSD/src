@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.75 2008/10/24 17:17:12 cegger Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.75.2.1 2009/01/19 13:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,11 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.75 2008/10/24 17:17:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.75.2.1 2009/01/19 13:20:19 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
 #include "opt_nfs_boot.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +108,12 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 {
 	struct ifnet *ifp;
 	int error = 0;
+	int flags;
+
+	/* Explicitly necessary or build fails
+	 * due to unused variable, otherwise.
+	 */
+	flags = 0;
 
 	/*
 	 * Find the network interface.
@@ -122,7 +130,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 #if defined(NFS_BOOT_BOOTSTATIC)
 	if (error && nfs_boot_bootstatic) {
 		printf("nfs_boot: trying static\n");
-		error = nfs_bootstatic(nd, lwp);
+		error = nfs_bootstatic(nd, lwp, &flags);
 	}
 #endif
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
@@ -132,13 +140,13 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 #else
 		printf("nfs_boot: trying BOOTP\n");
 #endif
-		error = nfs_bootdhcp(nd, lwp);
+		error = nfs_bootdhcp(nd, lwp, &flags);
 	}
 #endif
 #ifdef NFS_BOOT_BOOTPARAM
 	if (error && nfs_boot_bootparam) {
 		printf("nfs_boot: trying RARP (and RPC/bootparam)\n");
-		error = nfs_bootparam(nd, lwp);
+		error = nfs_bootparam(nd, lwp, &flags);
 	}
 #endif
 	if (error)
@@ -528,6 +536,8 @@ nfs_boot_flushrt(struct ifnet *ifp)
  * Get an initial NFS file handle using Sun RPC/mountd.
  * Separate function because we used to call it twice.
  * (once for root and once for swap)
+ *
+ * ndm  output
  */
 static int
 nfs_boot_getfh(struct nfs_dlmount *ndm, struct lwp *l)
@@ -594,9 +604,7 @@ nfs_boot_getfh(struct nfs_dlmount *ndm, struct lwp *l)
 
 	/* Set port number for NFS use. */
 	/* XXX: NFS port is always 2049, right? */
-#ifdef NFS_BOOT_TCP
 retry:
-#endif
 	error = krpc_portmap(sin, NFS_PROG,
 		    (args->flags & NFSMNT_NFSV3) ? NFS_VER3 : NFS_VER2,
 		    (args->sotype == SOCK_STREAM) ? IPPROTO_TCP : IPPROTO_UDP,
@@ -604,12 +612,10 @@ retry:
 	if (port == htons(0))
 		error = EIO;
 	if (error) {
-#ifdef NFS_BOOT_TCP
 		if (args->sotype == SOCK_STREAM) {
 			args->sotype = SOCK_DGRAM;
 			goto retry;
 		}
-#endif
 		printf("nfs_boot: portmap NFS, error=%d\n", error);
 		return (error);
 	}

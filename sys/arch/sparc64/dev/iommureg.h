@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.14 2006/02/13 21:47:12 cdi Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.14.80.1 2009/01/19 13:16:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,6 +138,7 @@ struct iommu_strbuf {
 #define INTMAP_TID	0x07c000000LL	/* UPA target ID mask */
 #define INTMAP_TID_SHIFT 26
 #define INTMAP_IGN	0x0000007c0LL	/* Interrupt group no (sbus only). */
+#define INTMAP_IGN_SHIFT 6
 #define INTMAP_INO	0x00000003fLL	/* Interrupt number */
 #define INTMAP_INR	(INTMAP_IGN|INTMAP_INO)
 #define INTMAP_SBUSSLOT	0x000000018LL	/* SBUS slot # */
@@ -152,6 +153,7 @@ struct iommu_strbuf {
 #define INTSLOT(x)	(((x)>>3)&0x7)
 #define	INTPRI(x)	((x)&0x7)
 #define	INTINO(x)	((x)&INTMAP_INO)
+#define INTIGN(x)       ((x)&INTMAP_IGN)
 
 #define	INTPCI_MAXOBINO	0x16		/* maximum OBIO INO value for PCI */
 #define	INTPCIOBINOX(x)	((x)&0x1f)	/* OBIO ino index (for PCI machines) */

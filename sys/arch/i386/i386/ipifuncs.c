@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.27 2008/05/10 16:12:32 ad Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.27.6.1 2009/01/19 13:16:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.27 2008/05/10 16:12:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.27.6.1 2009/01/19 13:16:15 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -69,10 +69,8 @@ void i386_ipi_kpreempt(struct cpu_info *);
 
 #if NNPX > 0
 void i386_ipi_synch_fpu(struct cpu_info *);
-void i386_ipi_flush_fpu(struct cpu_info *);
 #else
 #define i386_ipi_synch_fpu 0
-#define i386_ipi_flush_fpu 0
 #endif
 
 #ifdef MTRR
@@ -91,7 +89,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
 	NULL,
-	i386_ipi_flush_fpu,
+	NULL,
 	i386_ipi_synch_fpu,
 	i386_reload_mtrr,
 	gdt_reload_cpu,
@@ -112,12 +110,6 @@ i386_ipi_halt(struct cpu_info *ci)
 }
 
 #if NNPX > 0
-void
-i386_ipi_flush_fpu(struct cpu_info *ci)
-{
-	npxsave_cpu(false);
-}
-
 void
 i386_ipi_synch_fpu(struct cpu_info *ci)
 {

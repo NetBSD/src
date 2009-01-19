@@ -1,4 +1,4 @@
-/* $NetBSD: linux_support.S,v 1.1 2008/10/26 20:25:49 christos Exp $ */
+/* $NetBSD: linux_support.S,v 1.1.2.1 2009/01/19 13:17:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Konstantin Belousov
@@ -30,7 +30,6 @@
  *
  * $FreeBSD: src/sys/amd64/linux32/linux32_support.s,v 1.1 2007/05/23 08:33:05 kib Exp $
  */
-#include "opt_multiprocessor.h"
 #include <machine/asm.h>
 
 #include "assym.h"
@@ -67,9 +66,7 @@ ENTRY(futex_addl)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rsi
 	ja	futex_fault
-#ifdef MULTIPROCESSOR
 	lock
-#endif
 	xaddl	%edi,(%rsi)
 	movl	%edi,(%rdx)
 	xorl	%eax,%eax
@@ -85,9 +82,7 @@ ENTRY(futex_orl)
 	movl	(%rsi),%eax
 1:	movl	%eax,%ecx
 	orl	%edi,%ecx
-#ifdef MULTIPROCESSOR
 	lock
-#endif
 	cmpxchgl %ecx,(%rsi)
 	jnz	1b
 	movl	%eax,(%rdx)
@@ -104,9 +99,7 @@ ENTRY(futex_andl)
 	movl	(%rsi),%eax
 1:	movl	%eax,%ecx
 	andl	%edi,%ecx
-#ifdef MULTIPROCESSOR
 	lock
-#endif
 	cmpxchgl %ecx,(%rsi)
 	jnz	1b
 	movl	%eax,(%rdx)
@@ -123,9 +116,7 @@ ENTRY(futex_xorl)
 	movl	(%rsi),%eax
 1:	movl	%eax,%ecx
 	xorl	%edi,%ecx
-#ifdef MULTIPROCESSOR
 	lock
-#endif
 	cmpxchgl %ecx,(%rsi)
 	jnz	1b
 	movl	%eax,(%rdx)

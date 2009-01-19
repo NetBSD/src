@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.c,v 1.5 2005/12/11 12:19:29 christos Exp $ */
+/*	$NetBSD: xxboot.c,v 1.5.86.1 2009/01/19 13:16:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -151,6 +151,6 @@ gotit:
 		printf("relocating program...");
 		entry = sun2_map_mem_run(entry);
 	}
-	printf("starting program at 0x%x\n", entry);
+	printf("starting program at 0x%x\n", (u_int)entry);
 	chain_to(entry);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36.8.1 2009/01/19 13:16:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36.8.1 2009/01/19 13:16:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -220,8 +220,9 @@ vaddr_t tmp_vpages[2] = {
 int tmp_vpages_inuse;
 
 static int pmap_version = 1;
-struct pmap kernel_pmap_store;
-#define kernel_pmap (&kernel_pmap_store)
+static struct pmap kernel_pmap_store;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
+#define kernel_pmap (kernel_pmap_ptr)
 static u_char kernel_segmap[NSEGMAP];
 
 /* memory pool for pmap structures */

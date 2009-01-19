@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.169 2008/07/23 06:34:31 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.169.2.1 2009/01/19 13:20:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.169 2008/07/23 06:34:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.169.2.1 2009/01/19 13:20:11 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1077,7 +1077,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 
-	if_set_sadl(ifp, lla, ETHER_ADDR_LEN);
+	if_set_sadl(ifp, lla, ETHER_ADDR_LEN, !ETHER_IS_LOCAL(lla));
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
@@ -1433,6 +1433,12 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	return (ENETRESET);
 }
 
+void
+ether_set_ifflags_cb(struct ethercom *ec, ether_cb_t cb)
+{
+	ec->ec_ifflags_cb = cb;
+}
+
 /*
  * Common ioctls for Ethernet interfaces.  Note, we must be
  * called at splnet().
@@ -1443,30 +1449,23 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ethercom *ec = (void *) ifp;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct if_laddrreq *iflr = data;
+	const struct sockaddr_dl *sdl;
+	static const uint8_t zero[ETHER_ADDR_LEN];
 	int error;
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
-			    (error = (*ifp->if_init)(ifp)) != 0)
+	case SIOCINITIFADDR:
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING)) {
+			ifp->if_flags |= IFF_UP;
+			if ((error = (*ifp->if_init)(ifp)) != 0)
 				return error;
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-		default:
-			if ((ifp->if_flags & IFF_RUNNING) == 0)
-				return (*ifp->if_init)(ifp);
-			break;
 		}
-		return 0;
-
-	case SIOCGIFADDR:
-		memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		    CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(ifp, ifa);
+#endif /* INET */
 		return 0;
 
 	case SIOCSIFMTU:
@@ -1490,6 +1489,8 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	    }
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			return error;
 		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
@@ -1505,11 +1506,17 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 */
 			return (*ifp->if_init)(ifp);
 		case IFF_UP|IFF_RUNNING:
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect the hardware state.
-			 */
-			return (*ifp->if_init)(ifp);
+			error = 0;
+			if (ec->ec_ifflags_cb == NULL ||
+			    (error = (*ec->ec_ifflags_cb)(ec)) == ENETRESET) {
+				/*
+				 * Reset the interface to pick up
+				 * changes in any other flags that
+				 * affect the hardware state.
+				 */
+				return (*ifp->if_init)(ifp);
+			} else 
+				return error;
 		case 0:
 			break;
 		}
@@ -1523,10 +1530,17 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (ec->ec_mii == NULL)
 			return ENOTTY;
 		return ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media, cmd);
-	case SIOCSIFCAP:
-		return ifioctl_common(ifp, cmd, data);
+	case SIOCALIFADDR:
+		sdl = satocsdl(sstocsa(&iflr->addr));
+		if (sdl->sdl_family != AF_LINK)
+			;
+		else if (ETHER_IS_MULTICAST(CLLADDR(sdl)))
+			return EINVAL;
+		else if (memcmp(zero, CLLADDR(sdl), sizeof(zero)) == 0)
+			return EINVAL;
+		/*FALLTHROUGH*/
 	default:
-		return ENOTTY;
+		return ifioctl_common(ifp, cmd, data);
 	}
 	return 0;
 }

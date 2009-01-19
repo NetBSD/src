@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.20 2008/02/04 00:35:34 tls Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.20.18.1 2009/01/19 13:20:20 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.20 2008/02/04 00:35:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.20.18.1 2009/01/19 13:20:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,7 +537,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	else
 		result = cxf->decompress(data, crd->crd_len, &out);
 
-	FREE(data, M_CRYPTO_DATA);
+	free(data, M_CRYPTO_DATA);
 	if (result == 0)
 		return EINVAL;
 
@@ -549,7 +549,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	if (crd->crd_flags & CRD_F_COMP) {
 		if (result > crd->crd_len) {
 			/* Compression was useless, we lost time */
-			FREE(out, M_CRYPTO_DATA);
+			free(out, M_CRYPTO_DATA);
 			return 0;
 		}
 	}
@@ -580,7 +580,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 			}
 		}
 	}
-	FREE(out, M_CRYPTO_DATA);
+	free(out, M_CRYPTO_DATA);
 	return 0;
 }
 
@@ -900,7 +900,7 @@ swcr_freesession(void *arg, u_int64_t tid)
 			break;
 		}
 
-		FREE(swd, M_CRYPTO_DATA);
+		free(swd, M_CRYPTO_DATA);
 	}
 	return 0;
 }

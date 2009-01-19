@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.76 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.76.12.1 2009/01/19 13:18:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.76 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.76.12.1 2009/01/19 13:18:13 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -838,10 +838,7 @@ bad:
 }
 
 int
-egioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+egioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct eg_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -851,39 +848,42 @@ egioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
+		eginit(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			eginit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			eginit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			egstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			eginit(sc);
-		} else {
+			break;
+		default:
 			sc->eg_pcb[0] = EG_CMD_GETSTATS;
 			sc->eg_pcb[1] = 0;
 			if (egwritePCB(sc->sc_iot, sc->sc_ioh, sc->eg_pcb) != 0) {
@@ -894,11 +894,12 @@ egioctl(ifp, cmd, data)
 			 * IFF_MULTICAST, IFF_PROMISC,
 			 * IFF_LINK0, IFF_LINK1,
 			 */
+			break;
 		}
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

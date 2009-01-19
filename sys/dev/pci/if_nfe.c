@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.36 2008/06/17 12:59:32 cube Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.36.4.1 2009/01/19 13:18:26 skrll Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.36 2008/06/17 12:59:32 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.36.4.1 2009/01/19 13:18:26 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.36 2008/06/17 12:59:32 cube Exp $");
 
 #include <dev/pci/if_nfereg.h>
 #include <dev/pci/if_nfevar.h>
+
+static int nfe_ifflags_cb(struct ethercom *);
 
 int	nfe_match(device_t, cfdata_t, void *);
 void	nfe_attach(device_t, device_t, void *);
@@ -363,10 +365,8 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-#ifdef notyet
 	if (sc->sc_flags & NFE_USE_JUMBO)
-		ifp->if_hardmtu = NFE_JUMBO_MTU;
-#endif
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 #if NVLAN > 0
 	if (sc->sc_flags & NFE_HW_VLAN)
@@ -400,6 +400,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, nfe_ifflags_cb);
 
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, nfe_tick, sc);
@@ -537,8 +538,6 @@ nfe_intr(void *arg)
 
 	handled = 0;
 
-	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
-
 	for (;;) {
 		r = NFE_READ(sc, NFE_IRQ_STATUS);
 		if ((r & NFE_IRQ_WANTED) == 0)
@@ -564,26 +563,43 @@ nfe_intr(void *arg)
 		}
 	}
 
-	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
-
 	if (handled && !IF_IS_EMPTY(&ifp->if_snd))
 		nfe_start(ifp);
 
 	return handled;
 }
 
+static int
+nfe_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct nfe_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	/*
+	 * If only the PROMISC flag changes, then
+	 * don't do a full re-init of the chip, just update
+	 * the Rx filter.
+	 */
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & IFF_PROMISC) != 0)
+		nfe_setmulti(sc);
+
+	return 0;
+}
+
 int
 nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct nfe_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		nfe_init(ifp);
 		switch (ifa->ifa_addr->sa_family) {
@@ -595,35 +611,6 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		default:
 			break;
 		}
-		break;
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN ||
-		    ((sc->sc_flags & NFE_USE_JUMBO) &&
-		    ifr->ifr_mtu > ETHERMTU_JUMBO) ||
-		    (!(sc->sc_flags & NFE_USE_JUMBO) &&
-		    ifr->ifr_mtu > ETHERMTU))
-			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
-			error = 0;
-		break;
-	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			/*
-			 * If only the PROMISC or ALLMULTI flag changes, then
-			 * don't do a full re-init of the chip, just update
-			 * the Rx filter.
-			 */
-			if ((ifp->if_flags & IFF_RUNNING) &&
-			    ((ifp->if_flags ^ sc->sc_if_flags) &
-			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
-				nfe_setmulti(sc);
-			} else
-				nfe_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				nfe_stop(ifp, 1);
-		}
-		sc->sc_if_flags = ifp->if_flags;
 		break;
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
@@ -637,6 +624,7 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			nfe_setmulti(sc);
 		break;
 	}
+	sc->sc_if_flags = ifp->if_flags;
 
 	splx(s);
 
@@ -964,9 +952,9 @@ nfe_txeof(struct nfe_softc *sc)
 				continue;
 
 			if ((flags & NFE_TX_ERROR_V1) != 0) {
+				snprintb(buf, sizeof(buf), NFE_V1_TXERR, flags);
 				aprint_error_dev(sc->sc_dev, "tx v1 error %s\n",
-				    bitmask_snprintf(flags, NFE_V1_TXERR,
-				    buf, sizeof(buf)));
+				    buf);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -976,9 +964,9 @@ nfe_txeof(struct nfe_softc *sc)
 				continue;
 
 			if ((flags & NFE_TX_ERROR_V2) != 0) {
+				snprintb(buf, sizeof(buf), NFE_V2_TXERR, flags);
 				aprint_error_dev(sc->sc_dev, "tx v2 error %s\n",
-				    bitmask_snprintf(flags, NFE_V2_TXERR,
-				    buf, sizeof(buf)));
+				    buf);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -1258,7 +1246,9 @@ nfe_init(struct ifnet *ifp)
 	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_VALID);
 
 	s = splnet();
+	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
 	nfe_intr(sc); /* XXX clear IRQ status registers */
+	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 	splx(s);
 
 #if 1

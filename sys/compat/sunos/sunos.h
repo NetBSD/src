@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.22 2007/12/04 18:40:21 dsl Exp $	*/
+/*	$NetBSD: sunos.h,v 1.22.26.1 2009/01/19 13:17:40 skrll Exp $	*/
 
 #ifndef _COMPAT_SUNOS_SUNOS_H_
 #define _COMPAT_SUNOS_SUNOS_H_
@@ -9,6 +9,8 @@ typedef u_int32_t	sunos_charp;
 #else
 typedef char *		sunos_charp;
 #endif
+
+typedef long	sunos_time_t;
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */

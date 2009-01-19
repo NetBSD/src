@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36.8.1 2009/01/19 13:16:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.8.1 2009/01/19 13:16:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2008/04/28 20:23:16 martin Exp $");
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -138,9 +139,6 @@ dreamcast_startup(void)
 	pmap_bootstrap();
 
 	/* Debugger. */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, NULL, NULL);
-#endif
 #if defined(KGDB) && (NSCIF > 0)
 	if (scif_kgdb_init() == 0) {
 		kgdb_debug_init = 1;
@@ -241,6 +239,8 @@ cpu_reboot(int howto, char *bootstr)
 
  haltsys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("\n");

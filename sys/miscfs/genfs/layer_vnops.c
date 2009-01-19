@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.35 2008/01/30 09:50:23 ad Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.35.18.1 2009/01/19 13:20:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.35 2008/01/30 09:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.35.18.1 2009/01/19 13:20:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,8 +458,9 @@ layer_lookup(v)
 	if (ldvp == lvp) {
 
 		/*
-		 * Did lookup on "." or ".." in the root node of a mount point.
-		 * So we return dvp after a VREF.
+		 * Got the same object back, because we looked up ".",
+		 * or ".." in the root node of a mount point.
+		 * So we make another reference to dvp and return it.
 		 */
 		VREF(dvp);
 		*ap->a_vpp = dvp;

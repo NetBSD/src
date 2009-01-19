@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.124 2008/10/11 05:07:20 jmcneill Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.124.2.1 2009/01/19 13:19:09 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.124 2008/10/11 05:07:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.124.2.1 2009/01/19 13:19:09 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -503,6 +503,15 @@ usbd_interface2endpoint_descriptor(usbd_interface_handle iface, u_int8_t index)
 	if (index >= iface->idesc->bNumEndpoints)
 		return (0);
 	return (iface->endpoints[index].edesc);
+}
+
+/* Some drivers may wish to abort requests on the default pipe, *
+ * but there is no mechanism for getting a handle on it.        */
+usbd_status
+usbd_abort_default_pipe(struct usbd_device *device)
+{
+
+	return usbd_abort_pipe(device->default_pipe);
 }
 
 usbd_status

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41 2008/06/11 14:35:53 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.41.4.1 2009/01/19 13:16:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2008/06/11 14:35:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41.4.1 2009/01/19 13:16:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -239,7 +239,6 @@ void		*auxp;
 	MFP->mf_tadr  = divisor;	/* Set divisor			*/
 
 	clk_timecounter.tc_frequency = CLOCK_HZ;
-	tc_init(&clk_timecounter);
 
 	if (hz != 48 && hz != 64 && hz != 96) { /* XXX */
 		printf (": illegal value %d for systemclock, reset to %d\n\t",
@@ -247,6 +246,7 @@ void		*auxp;
 		hz = 64;
 	}
 	printf(": system hz %d timer-A divisor 200/%d\n", hz, divisor);
+	tc_init(&clk_timecounter);
 
 #ifdef STATCLOCK
 	if ((stathz == 0) || (stathz > hz) || (CLOCK_HZ % stathz))

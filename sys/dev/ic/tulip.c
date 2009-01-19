@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.163 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: tulip.c,v 1.163.8.1 2009/01/19 13:17:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.163 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.163.8.1 2009/01/19 13:17:56 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -93,6 +93,7 @@ static void	tlp_watchdog(struct ifnet *);
 static int	tlp_ioctl(struct ifnet *, u_long, void *);
 static int	tlp_init(struct ifnet *);
 static void	tlp_stop(struct ifnet *, int);
+static int	tlp_ifflags_cb(struct ethercom *);
 
 static void	tlp_rxdrain(struct tulip_softc *);
 static int	tlp_add_rxbuf(struct tulip_softc *, int);
@@ -525,6 +526,7 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, tlp_ifflags_cb);
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(&sc->sc_dev),
 	    RND_TYPE_NET, 0);
@@ -958,6 +960,24 @@ tlp_watchdog(struct ifnet *ifp)
 	tlp_start(ifp);
 }
 
+/* If the interface is up and running, only modify the receive
+ * filter when setting promiscuous or debug mode.  Otherwise fall
+ * through to ether_ioctl, which will reset the chip.
+ */
+static int
+tlp_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct tulip_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	if ((change & IFF_PROMISC) != 0)
+		(*sc->sc_filter_setup)(sc);
+	return 0;
+}
+
 /*
  * tlp_ioctl:		[ifnet interface function]
  *
@@ -977,23 +997,6 @@ tlp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
-	case SIOCSIFFLAGS:
-		/* If the interface is up and running, only modify the receive
-		 * filter when setting promiscuous or debug mode.  Otherwise
-		 * fall through to ether_ioctl, which will reset the chip.
-		 */
-#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
-		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
-		    == (IFF_UP|IFF_RUNNING))
-		    && ((ifp->if_flags & (~RESETIGN))
-		    == (sc->sc_if_flags & (~RESETIGN)))) {
-			/* Set up the receive filter. */
-			(*sc->sc_filter_setup)(sc);
-			error = 0;
-			break;
-#undef RESETIGN
-		}
-		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {

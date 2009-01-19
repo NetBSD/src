@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.8 2007/12/03 15:33:00 ad Exp $ */
+/* $NetBSD: irq.c,v 1.8.26.1 2009/01/19 13:15:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8 2007/12/03 15:33:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8.26.1 2009/01/19 13:15:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8 2007/12/03 15:33:00 ad Exp $");
 #include <arch/acorn26/iobus/iocreg.h>
 #include <arch/acorn26/iobus/iocvar.h>
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_flashything.h"
 #include "fiq.h"
@@ -75,8 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8 2007/12/03 15:33:00 ad Exp $");
 #define NIRQ 20
 extern char *irqnames[];
 
-int current_intr_depth = 0;
-
 #if NFIQ > 0
 void (*fiq_downgrade_handler)(void);
 int fiq_want_downgrade;
@@ -97,7 +96,7 @@ LIST_HEAD(irq_handler_head, irq_handler) irq_list_head =
 
 struct irq_handler {
 	LIST_ENTRY(irq_handler)	link;
-	int	(*func) __P((void *));
+	int	(*func)(void *);
 	void	*arg;
 	u_int32_t	mask;
 	int	irqnum;
@@ -105,8 +104,6 @@ struct irq_handler {
 	int	enabled;
 	struct	evcnt *ev;
 };
-
-volatile static int current_spl = IPL_HIGH;
 
 inline int hardsplx(int);
 
@@ -130,7 +127,7 @@ irq_handler(struct irqframe *irqf)
 	int s, status, result, stray;
 	struct irq_handler *h;
 
-	current_intr_depth++;
+	curcpu()->ci_intr_depth++;
 	KASSERT(the_ioc != NULL);
 	/* Get the current interrupt state */
 	status = ioc_irq_status_full();
@@ -202,14 +199,25 @@ handled:
 #endif
 
 	hardsplx(s);
-	current_intr_depth--;
-}
+	curcpu()->ci_intr_depth--;
 
-bool
-cpu_intr_p(void)
-{
+	/* Check if we're in the kernel restartable atomic sequence. */
+	if ((irqf->if_r15 & R15_MODE) != R15_MODE_USR) {
+		char *pc = (char *)(irqf->if_r15 & R15_PC);
+		extern char _lock_cas[], _lock_cas_end[];
+#ifdef ARM_LOCK_CAS_DEBUG
+		extern struct evcnt _lock_cas_restart;
+#endif
 
-	return current_intr_depth != 0;
+		if (pc > _lock_cas && pc < _lock_cas_end) {
+			irqf->if_r15 = (irqf->if_r15 & ~R15_PC) | 
+			    (register_t)_lock_cas;
+#ifdef ARM_LOCK_CAS_DEBUG
+			_lock_cas_restart.ev_count++;
+#endif
+		}
+	}
+	    
 }
 
 struct irq_handler *
@@ -222,9 +230,8 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 	if (irqnum >= NIRQ)
 		panic("irq_register: bad irq: %d", irqnum);
 #endif
-	MALLOC(new, struct irq_handler *, sizeof(struct irq_handler),
-	       M_DEVBUF, M_WAITOK);
-	bzero(new, sizeof(*new));
+	new = (struct irq_handler *)malloc(sizeof(struct irq_handler),
+	       M_DEVBUF, M_WAITOK | M_ZERO);
 	new->irqnum = irqnum;
 	new->mask = 1 << irqnum;
 #if NUNIXBP > 0
@@ -357,7 +364,7 @@ hardsplx(int s)
 #ifdef FLASHYTHING
 	VIDC_WRITE(VIDC_PALETTE_BCOL | iplcolours[s]);
 #endif
-	was = current_spl;
+	was = curcpu()->ci_cpl;
 	mask = irqmask[s];
 #if NFIQ > 0
 	if (fiq_want_downgrade)
@@ -369,7 +376,7 @@ hardsplx(int s)
 #if NUNIXBP > 0
 	unixbp_irq_setmask(mask >> IRQ_UNIXBP_BASE);
 #endif
-	current_spl = s;
+	curcpu()->ci_cpl = s;
 	int_on();
 	return was;
 }
@@ -383,8 +390,8 @@ splhigh(void)
 #ifdef FLASHYTHING
 	VIDC_WRITE(VIDC_PALETTE_BCOL | iplcolours[IPL_HIGH]);
 #endif
-	was = current_spl;
-	current_spl = IPL_HIGH;
+	was = curcpu()->ci_cpl;
+	curcpu()->ci_cpl = IPL_HIGH;
 #ifdef DEBUG
 	/* Make sure that anything that turns off the I flag gets spotted. */
 	if (the_ioc != NULL)
@@ -397,17 +404,17 @@ int
 raisespl(int s)
 {
 
-	if (s > current_spl)
+	if (s > curcpu()->ci_cpl)
 		return hardsplx(s);
 	else
-		return current_spl;
+		return curcpu()->ci_cpl;
 }
 
 void
 lowerspl(int s)
 {
 
-	if (s < current_spl) {
+	if (s < curcpu()->ci_cpl) {
 #if 0
 		dosoftints(s);
 #endif

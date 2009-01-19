@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.35 2008/06/24 11:18:15 ad Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.35.4.1 2009/01/19 13:17:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.35 2008/06/24 11:18:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.35.4.1 2009/01/19 13:17:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,5 +283,7 @@ ultrix_sys_mknod(struct lwp *l, const struct ultrix_sys_mknod_args *uap, registe
 		return sys_mkfifo(l, (const struct sys_mkfifo_args *)uap,
 		    retval);
 
-	return sys_mknod(l, (const struct sys_mknod_args *)uap, retval);
+	return compat_50_sys_mknod(l,
+				   (const struct compat_50_sys_mknod_args *)uap,
+				   retval);
 }

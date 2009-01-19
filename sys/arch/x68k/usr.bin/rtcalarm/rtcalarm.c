@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.5 2006/08/04 02:32:30 mhitch Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.5.70.1 2009/01/19 13:17:08 skrll Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -105,9 +105,9 @@ showinfo(void)
 	struct x68k_alarminfo alarminfo;
 	int             fd;
 
-	fd = open("/dev/pow1", O_RDONLY);
+	fd = open("/dev/pow0", O_RDONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow1", -1);
+		myperror("Opening /dev/pow0", -1);
 
 	if (ioctl(fd, POWIOCGALARMINFO, &alarminfo) < 0)
 		myperror("powiocgalarminfo", fd);
@@ -199,9 +199,9 @@ disablealarm(void)
 
 	alarminfo.al_enable = 0;
 
-	fd = open("/dev/pow1", O_WRONLY);
+	fd = open("/dev/pow0", O_WRONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow1", -1);
+		myperror("Opening /dev/pow0", -1);
 	if (ioctl(fd, POWIOCSALARMINFO, &alarminfo) < 0)
 		myperror("powiocsalarminfo", fd);
 	close(fd);
@@ -264,9 +264,9 @@ setinfo(argc, argv)
 	alarminfo.al_dowhat = dowhat;
 	alarminfo.al_offtime = offtime * 60;
 
-	fd = open("/dev/pow1", O_WRONLY);
+	fd = open("/dev/pow0", O_WRONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow1", -1);
+		myperror("Opening /dev/pow0", -1);
 	if (ioctl(fd, POWIOCSALARMINFO, &alarminfo) < 0)
 		myperror("powiocsalarminfo", fd);
 	close(fd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lshrsi3.S,v 1.5 2006/05/22 20:56:44 uwe Exp $	*/
+/*	$NetBSD: lshrsi3.S,v 1.5.72.1 2009/01/19 13:19:56 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,11 @@
  */
 
 #include <machine/asm.h>
+
+
+#ifdef __ELF__
+	.hidden __lshrsi3
+#endif
 
 
 NENTRY(__lshrsi3)

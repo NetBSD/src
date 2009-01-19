@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.4 2008/10/24 22:06:06 jym Exp $ */
+/* $NetBSD: hypercalls.h,v 1.4.2.1 2009/01/19 13:17:12 skrll Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -389,6 +389,7 @@ HYPERVISOR_kexec_op(
 	return _hypercall2(int, kexec_op, op, args);
 }
 
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 static inline int
 HYPERVISOR_dom0_op(
 	dom0_op_t *dom0_op)
@@ -396,6 +397,7 @@ HYPERVISOR_dom0_op(
 	dom0_op->interface_version = DOM0_INTERFACE_VERSION;
 	return _hypercall1(int, dom0_op, dom0_op);
 }
+#endif	/* __XEN_INTERFACE_VERSION__ */
 
 static inline int
 HYPERVISOR_machine_check(struct xen_mc *mc)

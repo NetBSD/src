@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.1 2008/05/23 21:11:40 jnemeth Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.1.12.1 2009/01/19 13:18:28 skrll Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -262,6 +262,12 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		/* _match() should prevent us from getting here */
 		panic("siisata: the universe might be falling apart!\n");
 
+	/* set the necessary bits in case the firmware didn't */
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	csr |= PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+
 	gcreg = GRREAD(sc, GR_GC);
 
 	aprint_normal("%s: SiI%d on ", SIISATANAME(sc), sc->sc_chip);
@@ -292,12 +298,6 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(" 3.0Gb/s capable.\n");
 	else
 		aprint_normal("\n");
-
-	/* enable bus mastering in case the firmware didn't */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_MASTER_ENABLE;
-	csr |= PCI_COMMAND_MEM_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	siisata_attach(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.40 2008/07/09 17:07:28 joerg Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.40.2.1 2009/01/19 13:17:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -132,6 +132,11 @@ struct fxp_control_data {
 	 * The NIC statistics.
 	 */
 	struct fxp_stats fcd_stats;
+
+	/*
+	 * TX pad buffer for ip4csum-tx bug workaround.
+	 */
+	uint8_t fcd_txpad[FXP_IP4CSUMTX_PADLEN];
 };
 
 #define	txd_tbd	txd_u.txdu_tbd
@@ -144,6 +149,7 @@ struct fxp_control_data {
 #define	FXP_CDMCSOFF	FXP_CDOFF(fcd_mcscb)
 #define	FXP_CDUCODEOFF	FXP_CDOFF(fcd_ucode)
 #define	FXP_CDSTATSOFF	FXP_CDOFF(fcd_stats)
+#define	FXP_CDTXPADOFF	FXP_CDOFF(fcd_txpad)
 
 /*
  * Software state for transmit descriptors.
@@ -218,6 +224,7 @@ struct fxp_softc {
 #define	FXPF_EXT_RFA		0x0200	/* enable extended RFD */
 #define	FXPF_IPCB		0x0400	/* use IPCB */
 #define	FXPF_RECV_WORKAROUND	0x0800	/* receiver lock-up workaround */
+#define	FXPF_FC			0x1000	/* has flow control */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */
@@ -250,6 +257,7 @@ struct fxp_softc {
 
 #define	FXP_CDTXADDR(sc, x)	((sc)->sc_cddma + FXP_CDTXOFF((x)))
 #define	FXP_CDTBDADDR(sc, x)	((sc)->sc_cddma + FXP_CDTBDOFF((x)))
+#define	FXP_CDTXPADADDR(sc)	((sc)->sc_cddma + FXP_CDTXPADOFF)
 
 #define	FXP_CDTX(sc, x)		(&(sc)->sc_control_data->fcd_txdescs[(x)])
 

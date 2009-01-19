@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.210 2008/09/11 09:14:46 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.210.2.1 2009/01/19 13:19:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.210 2008/09/11 09:14:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.210.2.1 2009/01/19 13:19:40 skrll Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -176,6 +176,8 @@ static void biointr(void *);
 static void biodone2(buf_t *);
 static void bref(buf_t *);
 static void brele(buf_t *);
+static void sysctl_kern_buf_setup(void);
+static void sysctl_vm_buf_setup(void);
 
 /*
  * Definitions for the buffer hash lists.
@@ -505,6 +507,9 @@ bufinit(void)
 	 */
 	nbuf = (bufmem_hiwater / 1024) / 3;
 	bufhashtbl = hashinit(nbuf, HASH_LIST, true, &bufhash);
+
+	sysctl_kern_buf_setup();
+	sysctl_vm_buf_setup();
 }
 
 void
@@ -720,20 +725,6 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 	if (error == 0 && (flags & B_MODIFY) != 0)	/* XXXX before the next code block or after? */
 		error = fscow_run(bp, true);
 
-	if (!error) {
-		struct mount *mp = wapbl_vptomp(vp);
-
-		if (mp && mp->mnt_wapbl_replay &&
-		    WAPBL_REPLAY_ISOPEN(mp)) {
-			error = WAPBL_REPLAY_READ(mp, bp->b_data, bp->b_blkno,
-			    bp->b_bcount);
-			if (error) {
-				mutex_enter(&bufcache_lock);
-				SET(bp->b_cflags, BC_INVAL);
-				mutex_exit(&bufcache_lock);
-			}
-		}
-	}
 	return error;
 }
 
@@ -1281,8 +1272,14 @@ allocbuf(buf_t *bp, int size, int preserve)
 	bp->b_bcount = size;
 
 	oldsize = bp->b_bufsize;
-	if (oldsize == desired_size)
+	if (oldsize == desired_size) {
+		/*
+		 * Do not short cut the WAPBL resize, as the buffer length
+		 * could still have changed and this would corrupt the
+		 * tracking of the transaction length.
+		 */
 		goto out;
+	}
 
 	/*
 	 * If we want a buffer of a different size, re-allocate the
@@ -1653,7 +1650,8 @@ buf_syncwait(void)
 			 * written will be remarked as dirty until other
 			 * buffers are written.
 			 */
-			if (bp->b_vp && bp->b_vp->v_mount
+			if (bp->b_vp && bp->b_vp->v_tag != VT_NON
+			    && bp->b_vp->v_mount
 			    && (bp->b_vp->v_mount->mnt_flag & MNT_SOFTDEP)
 			    && (bp->b_oflags & BO_DELWRI)) {
 				bremfree(bp);
@@ -1857,15 +1855,18 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 	return 0;
 }
 
-SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
+static struct sysctllog *vfsbio_sysctllog;
+
+static void
+sysctl_kern_buf_setup(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "buf",
 		       SYSCTL_DESCR("Kernel buffer cache information"),
@@ -1873,37 +1874,37 @@ SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
 		       CTL_KERN, KERN_BUF, CTL_EOL);
 }
 
-SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
+static void
+sysctl_vm_buf_setup(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vm", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufcache",
 		       SYSCTL_DESCR("Percentage of physical memory to use for "
 				    "buffer cache"),
 		       sysctl_bufvm_update, 0, &bufcache, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "bufmem",
 		       SYSCTL_DESCR("Amount of kernel memory used by buffer "
 				    "cache"),
 		       NULL, 0, &bufmem, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufmem_lowater",
 		       SYSCTL_DESCR("Minimum amount of kernel memory to "
 				    "reserve for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_lowater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufmem_hiwater",
 		       SYSCTL_DESCR("Maximum amount of kernel memory to use "

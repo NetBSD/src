@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.6 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: mboot.c,v 1.6.8.1 2009/01/19 13:17:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #include <sys/types.h>
 #include <machine/disklabel.h>
+
+int bootmain(int);
 
 struct iocs_readcap {
 	unsigned long	block;

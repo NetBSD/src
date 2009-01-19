@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.121 2008/10/26 12:23:28 blymn Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.121.2.1 2009/01/19 13:19:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.121 2008/10/26 12:23:28 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.121.2.1 2009/01/19 13:19:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -324,11 +324,11 @@ kmutex_t malloc_lock;
  */
 #ifdef MALLOCLOG
 void *
-_malloc(unsigned long size, struct malloc_type *ksp, int flags,
+_kern_malloc(unsigned long size, struct malloc_type *ksp, int flags,
     const char *file, long line)
 #else
 void *
-malloc(unsigned long size, struct malloc_type *ksp, int flags)
+kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif /* MALLOCLOG */
 {
 	struct kmembuckets *kbp;
@@ -348,8 +348,9 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif
 #ifdef MALLOC_DEBUG
 	if (debug_malloc(size, ksp, flags, (void *) &va)) {
-		if (va != 0)
+		if (va != 0) {
 			FREECHECK_OUT(&malloc_freecheck, (void *)va);
+		}
 		return ((void *) va);
 	}
 #endif
@@ -538,10 +539,10 @@ out:
  */
 #ifdef MALLOCLOG
 void
-_free(void *addr, struct malloc_type *ksp, const char *file, long line)
+_kern_free(void *addr, struct malloc_type *ksp, const char *file, long line)
 #else
 void
-free(void *addr, struct malloc_type *ksp)
+kern_free(void *addr, struct malloc_type *ksp)
 #endif /* MALLOCLOG */
 {
 	struct kmembuckets *kbp;
@@ -679,7 +680,7 @@ free(void *addr, struct malloc_type *ksp)
  * Change the size of a block of memory.
  */
 void *
-realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
+kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
     int flags)
 {
 	struct kmemusage *kup;

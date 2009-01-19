@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.79 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.79.10.1 2009/01/19 13:20:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.79 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.79.10.1 2009/01/19 13:20:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,8 +214,7 @@ portal_lookup(v)
 		goto bad;
 	fvp->v_type = VREG;
 	uvm_vnp_setsize(fvp, 0);
-	MALLOC(fvp->v_data, void *, sizeof(struct portalnode), M_TEMP,
-	    M_WAITOK);
+	fvp->v_data = malloc(sizeof(struct portalnode), M_TEMP, M_WAITOK);
 
 	pt = VTOPORTAL(fvp);
 
@@ -623,10 +622,10 @@ portal_reclaim(v)
 
 	if (pt->pt_arg) {
 		free(pt->pt_arg, M_TEMP);
-		pt->pt_arg = 0;
+		pt->pt_arg = NULL;
 	}
-	FREE(ap->a_vp->v_data, M_TEMP);
-	ap->a_vp->v_data = 0;
+	free(ap->a_vp->v_data, M_TEMP);
+	ap->a_vp->v_data = NULL;
 
 	return (0);
 }

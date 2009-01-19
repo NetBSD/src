@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.140 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.140.2.1 2009/01/19 13:20:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ struct if_data {
 	u_quad_t ifi_omcasts;		/* packets sent via multicast */
 	u_quad_t ifi_iqdrops;		/* dropped on input, this interface */
 	u_quad_t ifi_noproto;		/* destined for unsupported protocol */
-	struct	timeval ifi_lastchange;	/* last operational state change */
+	struct	timespec ifi_lastchange;/* last operational state change */
 };
 
 /*
@@ -188,32 +188,6 @@ struct if_data {
 #define	LINK_STATE_UNKNOWN	0	/* link invalid/unknown */
 #define	LINK_STATE_DOWN		1	/* link is down */
 #define	LINK_STATE_UP		2	/* link is up */
-
-#if defined(_KERNEL) && defined(COMPAT_14)
-/* Pre-1.5 if_data struct */
-struct if_data14 {
-	/* generic interface information */
-	u_char	ifi_type;		/* ethernet, tokenring, etc. */
-	u_char	ifi_addrlen;		/* media address length */
-	u_char	ifi_hdrlen;		/* media header length */
-	u_long	ifi_mtu;		/* maximum transmission unit */
-	u_long	ifi_metric;		/* routing metric (external only) */
-	u_long	ifi_baudrate;		/* linespeed */
-	/* volatile statistics */
-	u_long	ifi_ipackets;		/* packets received on interface */
-	u_long	ifi_ierrors;		/* input errors on interface */
-	u_long	ifi_opackets;		/* packets sent on interface */
-	u_long	ifi_oerrors;		/* output errors on interface */
-	u_long	ifi_collisions;		/* collisions on csma interfaces */
-	u_long	ifi_ibytes;		/* total number of octets received */
-	u_long	ifi_obytes;		/* total number of octets sent */
-	u_long	ifi_imcasts;		/* packets received via multicast */
-	u_long	ifi_omcasts;		/* packets sent via multicast */
-	u_long	ifi_iqdrops;		/* dropped on input, this interface */
-	u_long	ifi_noproto;		/* destined for unsupported protocol */
-	struct	timeval ifi_lastchange;	/* last operational state change */
-};
-#endif /* _KERNEL && COMPAT_14 */
 
 /*
  * Structure defining a queue for a network interface.
@@ -268,7 +242,17 @@ struct ifnet {				/* and the entries */
 		    (struct ifnet *);
 	struct ifaltq if_snd;		/* output queue (includes altq) */
 	struct ifaddr	*if_dl;		/* identity of this interface. */
-	const struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
+	const struct	sockaddr_dl *if_sadl;	/* pointer to sockaddr_dl
+						 * of if_dl
+						 */
+	/* if_hwdl: h/w identity
+	 *
+	 * May be NULL.  If not NULL, it is the address assigned
+	 * to the interface by the manufacturer, so it very likely
+	 * to be unique.  It MUST NOT be deleted.  It is highly
+	 * suitable for deriving the EUI64 for the interface.
+	 */
+	struct ifaddr	*if_hwdl;
 	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
@@ -485,19 +469,6 @@ struct if_msghdr {
 	struct	if_data ifm_data;/* statistics and other data about if */
 };
 
-#if defined(_KERNEL) && defined(COMPAT_14)
-/* pre-1.5 if_msghdr (ifm_data changed) */
-struct if_msghdr14 {
-	u_short	ifm_msglen;	/* to skip over non-understood messages */
-	u_char	ifm_version;	/* future binary compatibility */
-	u_char	ifm_type;	/* message type */
-	int	ifm_addrs;	/* like rtm_addrs */
-	int	ifm_flags;	/* value of if_flags */
-	u_short	ifm_index;	/* index for associated ifp */
-	struct	if_data14 ifm_data; /* statistics and other data about if */
-};
-#endif /* _KERNEL && COMPAT_14 */
-
 /*
  * Message format for use in obtaining information about interface addresses
  * from sysctl and the routing socket.
@@ -643,6 +614,7 @@ struct if_laddrreq {
 	unsigned int flags;
 #define IFLR_PREFIX	0x8000	/* in: prefix given  out: kernel fills id */
 #define IFLR_ACTIVE	0x4000	/* in/out: link-layer address activation */
+#define IFLR_FACTORY	0x2000	/* in/out: factory link-layer address */
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
@@ -826,7 +798,7 @@ void if_initname(struct ifnet *, const char *, int);
 struct ifaddr *if_dl_create(const struct ifnet *, const struct sockaddr_dl **);
 void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
-void	if_set_sadl(struct ifnet *, const void *, u_char);
+void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);

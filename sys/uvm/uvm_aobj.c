@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.104.2.1 2009/01/19 13:20:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.104.2.1 2009/01/19 13:20:36 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -762,7 +762,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			stop = aobj->u_pages << PAGE_SHIFT;
 		}
 		by_list = (uobj->uo_npages <=
-		    ((stop - start) >> PAGE_SHIFT) * UVM_PAGE_HASH_PENALTY);
+		    ((stop - start) >> PAGE_SHIFT) * UVM_PAGE_TREE_PENALTY);
 	}
 	UVMHIST_LOG(maphist,
 	    " flush start=0x%lx, stop=0x%x, by_list=%d, flags=0x%x",

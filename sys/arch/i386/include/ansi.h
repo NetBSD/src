@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.22 2008/10/26 06:57:30 mrg Exp $	*/
+/*	$NetBSD: ansi.h,v 1.22.2.1 2009/01/19 13:16:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@
 #define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
-#define	_BSD_TIME_T_		long		/* time() */
+#define	_BSD_TIME_T_		__int64_t	/* time() */
 #if __GNUC_PREREQ__(2, 96)
 #define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
 #else

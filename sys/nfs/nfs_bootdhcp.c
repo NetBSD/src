@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.43 2008/10/24 17:17:12 cegger Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.43.2.1 2009/01/19 13:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,10 +44,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.43 2008/10/24 17:17:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.43.2.1 2009/01/19 13:20:19 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,8 +219,8 @@ static const u_int8_t vm_rfc1048[4] = { 99, 130, 83, 99 };
 /* Convenience macro */
 #define INTOHL(ina) ((u_int32_t)ntohl((ina).s_addr))
 
-static int bootpc_call (struct nfs_diskless *, struct lwp *);
-static void bootp_extract (struct bootp *, int, struct nfs_diskless *);
+static int bootpc_call (struct nfs_diskless *, struct lwp *, int *);
+static void bootp_extract (struct bootp *, int, struct nfs_diskless *, int *);
 
 #ifdef	DEBUG_NFS_BOOT_DHCP
 #define DPRINTF(s)  printf s
@@ -231,7 +233,7 @@ static void bootp_extract (struct bootp *, int, struct nfs_diskless *);
  * Get our boot parameters using BOOTP.
  */
 int
-nfs_bootdhcp(struct nfs_diskless *nd, struct lwp *lwp)
+nfs_bootdhcp(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 {
 	struct ifnet *ifp = nd->nd_ifp;
 	int error;
@@ -240,15 +242,17 @@ nfs_bootdhcp(struct nfs_diskless *nd, struct lwp *lwp)
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  Use address zero for now.
 	 */
-	error = nfs_boot_setaddress(ifp, lwp, INADDR_ANY, INADDR_ANY,
-				    INADDR_BROADCAST);
+	error = nfs_boot_setaddress(ifp, lwp,
+		*flags & NFS_BOOT_HAS_MYIP ? nd->nd_myip.s_addr : INADDR_ANY,
+		*flags & NFS_BOOT_HAS_MASK ? nd->nd_mask.s_addr : INADDR_ANY,
+		    INADDR_BROADCAST);
 	if (error) {
 		printf("nfs_boot: set ifaddr zero, error=%d\n", error);
 		return (error);
 	}
 
 	/* This function call does the real send/recv work. */
-	error = bootpc_call(nd, lwp);
+	error = bootpc_call(nd, lwp, flags);
 
 	/* Get rid of the temporary (zero) IP address. */
 	(void) nfs_boot_deladdress(ifp, lwp, INADDR_ANY);
@@ -266,6 +270,9 @@ nfs_bootdhcp(struct nfs_diskless *nd, struct lwp *lwp)
 		printf("nfs_boot: set ifaddr real, error=%d\n", error);
 		goto out;
 	}
+
+	if ((*flags & NFS_BOOT_ALLINFO) != NFS_BOOT_ALLINFO)
+		return EADDRNOTAVAIL;
 
 out:
 	if (error) {
@@ -436,7 +443,7 @@ warn:
 }
 
 static int
-bootpc_call(struct nfs_diskless *nd, struct lwp *lwp)
+bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 {
 	struct socket *so;
 	struct ifnet *ifp = nd->nd_ifp;
@@ -649,7 +656,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp)
 #endif
 	       inet_ntoa(bpc.replybuf->bp_siaddr));
 
-	bootp_extract(bpc.replybuf, bpc.replylen, nd);
+	bootp_extract(bpc.replybuf, bpc.replylen, nd, flags);
 
 out:
 	if (bpc.replybuf)
@@ -663,7 +670,8 @@ out:
 }
 
 static void
-bootp_extract(struct bootp *bootp, int replylen, struct nfs_diskless *nd)
+bootp_extract(struct bootp *bootp, int replylen,
+		struct nfs_diskless *nd, int *flags)
 {
 	struct sockaddr_in *sin;
 	struct in_addr netmask;
@@ -777,49 +785,71 @@ bootp_extract(struct bootp *bootp, int replylen, struct nfs_diskless *nd)
 		domainnamelen = mydomainlen;
 		printf("nfs_boot: my_domain=%s\n", domainname);
 	}
-	nd->nd_myip = bootp->bp_yiaddr;
-	if (nd->nd_myip.s_addr)
+	if (!(*flags & NFS_BOOT_HAS_MYIP)) {
+		nd->nd_myip = bootp->bp_yiaddr;
 		printf("nfs_boot: my_addr=%s\n", inet_ntoa(nd->nd_myip));
-	nd->nd_mask = netmask;
-	if (nd->nd_mask.s_addr)
+		*flags |= NFS_BOOT_HAS_MYIP;
+	}
+	if (!(*flags & NFS_BOOT_HAS_MASK)) {
+		nd->nd_mask = netmask;
 		printf("nfs_boot: my_mask=%s\n", inet_ntoa(nd->nd_mask));
-	nd->nd_gwip = gateway;
-	if (nd->nd_gwip.s_addr)
+		*flags |= NFS_BOOT_HAS_MASK;
+	}
+	if (!(*flags & NFS_BOOT_HAS_GWIP)) {
+		nd->nd_gwip = gateway;
 		printf("nfs_boot: gateway=%s\n", inet_ntoa(nd->nd_gwip));
+		*flags |= NFS_BOOT_HAS_GWIP;
+	}
 
 	/*
 	 * Store the information about our NFS root mount.
 	 * The caller will print it, so be silent here.
 	 */
-	{
+	do {
 		struct nfs_dlmount *ndm = &nd->nd_root;
 
-		/* Server IP address. */
-		sin = (struct sockaddr_in *) &ndm->ndm_saddr;
-		memset((void *)sin, 0, sizeof(*sin));
-		sin->sin_len = sizeof(*sin);
-		sin->sin_family = AF_INET;
-		sin->sin_addr = rootserver;
-		/* Server name. */
-		if (!overloaded && bootp->bp_sname[0] != 0 &&
-		    !memcmp(&rootserver, &bootp->bp_siaddr,
-			  sizeof(struct in_addr))) {
-			/* standard root server, we have the name */
-			strncpy(ndm->ndm_host, bootp->bp_sname, BP_SNAME_LEN-1);
-		} else {
-			/* Show the server IP address numerically. */
-			strncpy(ndm->ndm_host, inet_ntoa(rootserver),
-				BP_SNAME_LEN-1);
+
+		if (!(*flags & NFS_BOOT_HAS_SERVADDR)) {
+			/* Server IP address. */
+			sin = (struct sockaddr_in *) &ndm->ndm_saddr;
+			memset((void *)sin, 0, sizeof(*sin));
+			sin->sin_len = sizeof(*sin);
+			sin->sin_family = AF_INET;
+			sin->sin_addr = rootserver;
+			*flags |= NFS_BOOT_HAS_SERVADDR;
 		}
-		len = strlen(ndm->ndm_host);
-		if (rootpath &&
-		    len + 1 + rootpathlen + 1 <= sizeof(ndm->ndm_host)) {
-			ndm->ndm_host[len++] = ':';
-			strncpy(ndm->ndm_host + len,
-				rootpath, rootpathlen);
-			ndm->ndm_host[len + rootpathlen] = '\0';
-		} /* else: upper layer will handle error */
-	}
+
+		if (!(*flags & NFS_BOOT_HAS_SERVER)) {
+			/* Server name. */
+			if (!overloaded && bootp->bp_sname[0] != 0 &&
+			    !memcmp(&rootserver, &bootp->bp_siaddr,
+				  sizeof(struct in_addr)))
+			{
+				/* standard root server, we have the name */
+				strncpy(ndm->ndm_host, bootp->bp_sname,
+					BP_SNAME_LEN-1);
+				*flags |= NFS_BOOT_HAS_SERVER;
+			} else {
+				/* Show the server IP address numerically. */
+				strncpy(ndm->ndm_host, inet_ntoa(rootserver),
+					BP_SNAME_LEN-1);
+				*flags |= NFS_BOOT_HAS_SERVER;
+			}
+		}
+
+		if (!(*flags & NFS_BOOT_HAS_ROOTPATH)) {
+			len = strlen(ndm->ndm_host);
+			if (rootpath &&
+			    len + 1 + rootpathlen + 1 <= sizeof(ndm->ndm_host))
+			{
+				ndm->ndm_host[len++] = ':';
+				strncpy(ndm->ndm_host + len,
+					rootpath, rootpathlen);
+				ndm->ndm_host[len + rootpathlen] = '\0';
+				*flags |= NFS_BOOT_HAS_ROOTPATH;
+			} /* else: upper layer will handle error */
+		}
+	} while(0);
 
 #ifdef TFTPROOT
 #if BP_FILE_LEN > MNAMELEN

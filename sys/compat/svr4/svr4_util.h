@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_util.h,v 1.12 2008/04/28 20:23:45 martin Exp $	 */
+/*	$NetBSD: svr4_util.h,v 1.12.8.1 2009/01/19 13:17:41 skrll Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,5 +39,8 @@
 #else
 #define DPRINTF(a)
 #endif
+
+void	svr4_md_init(void);
+void	svr4_md_fini(void);
 
 #endif /* !_SVR4_UTIL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32.8.1 2009/01/19 13:16:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,17 +46,15 @@
 #define	PMAP_GROWKERNEL
 
 #define	__PMAP_PTP_N	512	/* # of page table page maps 2GB. */
-typedef struct pmap {
+struct pmap {
 	pt_entry_t **pm_ptp;
 	int pm_asid;
 	int pm_refcnt;
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-} *pmap_t;
-extern struct pmap __pmap_kernel;
+};
 
 void pmap_bootstrap(void);
 void pmap_procwr(struct proc *, vaddr_t, size_t);
-#define	pmap_kernel()			(&__pmap_kernel)
 #define	pmap_update(pmap)		((void)0)
 #define	pmap_copy(dp,sp,d,l,s)		((void)0)
 #define	pmap_collect(pmap)		((void)0)

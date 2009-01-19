@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.23 2008/03/11 05:34:01 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.23.12.1 2009/01/19 13:18:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.23 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.23.12.1 2009/01/19 13:18:59 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -615,10 +615,10 @@ dewait(struct de_softc *sc, const char *fn)
 		char bits0[64];
 		char bits1[64];
 		csr1 = DE_RCSR(DE_PCSR1);
+		snprintb(bits0, sizeof(bits0), PCSR0_BITS, csr0);
+		snprintb(bits1, sizeof(bits1), PCSR1_BITS, csr1);
 		aprint_error_dev(sc->sc_dev, "%s failed, csr0=%s csr1=%s\n",
-		    fn,
-		    bitmask_snprintf(csr0, PCSR0_BITS, bits0, sizeof(bits0)),
-		    bitmask_snprintf(csr1, PCSR1_BITS, bits1, sizeof(bits1)));
+		    fn, bits0, bits1);
 	}
 }
 

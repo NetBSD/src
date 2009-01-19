@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.263 2008/07/29 00:03:06 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.263.2.1 2009/01/19 13:20:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263 2008/07/29 00:03:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.2.1 2009/01/19 13:20:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -756,6 +756,9 @@ vm_map_busy(struct vm_map *map)
 
 /*
  * vm_map_locked_p: return true if the map is write locked.
+ *
+ * => only for debug purposes like KASSERTs.
+ * => should not be used to verify that a map is not locked.
  */
 
 bool
@@ -1198,8 +1201,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 #if defined(DEBUG)
 	if (!error && VM_MAP_IS_KERNEL(map)) {
-		uvm_km_check_empty(*startp, *startp + size,
-		    (map->flags & VM_MAP_INTRSAFE) != 0);
+		uvm_km_check_empty(map, *startp, *startp + size);
 	}
 #endif /* defined(DEBUG) */
 
@@ -2328,7 +2330,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 */
 
 			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
-				uvm_km_pgremove_intrsafe(entry->start,
+				uvm_km_pgremove_intrsafe(map, entry->start,
 				    entry->end);
 				pmap_kremove(entry->start, len);
 			}
@@ -2406,8 +2408,8 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			}
 
 			if (VM_MAP_IS_KERNEL(map)) {
-				uvm_km_check_empty(entry->start, entry->end,
-				    (map->flags & VM_MAP_INTRSAFE) != 0);
+				uvm_km_check_empty(map, entry->start,
+				    entry->end);
 			}
 		}
 #endif /* defined(DEBUG) */
@@ -4475,7 +4477,6 @@ uvmspace_fork(struct vmspace *vm1)
 					     old_entry->end,
 					     old_entry->protection &
 					     ~VM_PROT_WRITE);
-				pmap_update(old_map->pmap);
 			      }
 			      old_entry->etype |= UVM_ET_NEEDSCOPY;
 			  }
@@ -4485,6 +4486,7 @@ uvmspace_fork(struct vmspace *vm1)
 		old_entry = old_entry->next;
 	}
 
+	pmap_update(old_map->pmap);
 	vm_map_unlock(old_map);
 
 #ifdef SYSVSHM
@@ -4617,7 +4619,8 @@ again:
 	 * for simplicity, always allocate one page chunk of them at once.
 	 */
 
-	pg = uvm_pagealloc(NULL, 0, NULL, 0);
+	pg = uvm_pagealloc(NULL, 0, NULL,
+	    (flags & UVM_KMF_NOWAIT) != 0 ? UVM_PGA_USERESERVE : 0);
 	if (__predict_false(pg == NULL)) {
 		if (flags & UVM_FLAG_NOWAIT)
 			return NULL;
@@ -5025,8 +5028,8 @@ uvm_page_printit(struct vm_page *pg, bool full,
 	char pqbuf[128];
 
 	(*pr)("PAGE %p:\n", pg);
-	bitmask_snprintf(pg->flags, page_flagbits, pgbuf, sizeof(pgbuf));
-	bitmask_snprintf(pg->pqflags, page_pqflagbits, pqbuf, sizeof(pqbuf));
+	snprintb(pgbuf, sizeof(pgbuf), page_flagbits, pg->flags);
+	snprintb(pqbuf, sizeof(pqbuf), page_pqflagbits, pg->pqflags);
 	(*pr)("  flags=%s, pqflags=%s, wire_count=%d, pa=0x%lx\n",
 	    pgbuf, pqbuf, pg->wire_count, (long)VM_PAGE_TO_PHYS(pg));
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
@@ -5133,8 +5136,7 @@ uvm_map_create(pmap_t pmap, vaddr_t vmin, vaddr_t vmax, int flags)
 {
 	struct vm_map *result;
 
-	MALLOC(result, struct vm_map *, sizeof(struct vm_map),
-	    M_VMMAP, M_WAITOK);
+	result = malloc(sizeof(struct vm_map), M_VMMAP, M_WAITOK);
 	uvm_map_setup(result, vmin, vmax, flags);
 	result->pmap = pmap;
 	return(result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.21 2008/05/04 17:06:10 xtraeme Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.21.8.1 2009/01/19 13:18:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.21 2008/05/04 17:06:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.21.8.1 2009/01/19 13:18:14 skrll Exp $");
 
 
 /*
@@ -129,7 +129,7 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	sc->mii_funcs = &rgephy_funcs;
 
@@ -162,11 +162,8 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 #undef	ADD
 #undef	PRINT
 
-	PHY_RESET(sc);
+	rgephy_reset(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -204,7 +201,7 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		PHY_RESET(sc);	/* XXX hardware bug work-around */
+		rgephy_reset(sc);	/* XXX hardware bug work-around */
 
 		anar = PHY_READ(sc, RGEPHY_MII_ANAR);
 		anar &= ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX |
@@ -317,15 +314,17 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			}
 		}
 
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->mii_ticks <= MII_ANEGTICKS)
+		/* Announce link loss right after it happens. */
+		if (sc->mii_ticks++ == 0)
 			break;
+
+		/* Only retry autonegotiation every mii_anegticks seconds. */
+		if (sc->mii_ticks <= sc->mii_anegticks)
+			return 0;
 
 		sc->mii_ticks = 0;
 		rgephy_mii_phy_auto(sc);
-		return 0;
+		break;
 	}
 
 	/* Update the media status. */
@@ -339,8 +338,6 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
-	  	/* XXX only for v0/v1 phys. */
-		if (rsc->mii_revision < 2)
 		rgephy_load_dspcode(sc);
 	}
 	mii_phy_update(sc, cmd);
@@ -407,7 +404,8 @@ rgephy_status(struct mii_softc *sc)
 			break;
 		}
 		if (ssr & RGEPHY_SSR_FDX)
-			mii->mii_media_active |= IFM_FDX;
+			mii->mii_media_active |= mii_phy_flowstatus(sc) |
+			    IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
 	} else {
@@ -421,7 +419,10 @@ rgephy_status(struct mii_softc *sc)
 		else
 			mii->mii_media_active |= IFM_NONE;
 		if ((gstat & RTK_GMEDIASTAT_FDX) != 0)
-			mii->mii_media_active |= IFM_FDX;
+			mii->mii_media_active |= mii_phy_flowstatus(sc) |
+			    IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	}
 }
 
@@ -429,12 +430,16 @@ rgephy_status(struct mii_softc *sc)
 static int
 rgephy_mii_phy_auto(struct mii_softc *mii)
 {
+	int anar;
 
 	rgephy_loop(mii);
-	PHY_RESET(mii);
+	rgephy_reset(mii);
 
-	PHY_WRITE(mii, RGEPHY_MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA);
+	anar = BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA;
+	if (mii->mii_flags & MIIF_DOPAUSE)
+		anar |= RGEPHY_ANAR_PC | RGEPHY_ANAR_ASP;
+
+	PHY_WRITE(mii, RGEPHY_MII_ANAR, anar);
 	DELAY(1000);
 	PHY_WRITE(mii, RGEPHY_MII_1000CTL,
 	    RGEPHY_1000CTL_AHD | RGEPHY_1000CTL_AFD);
@@ -486,7 +491,12 @@ rgephy_loop(struct mii_softc *sc)
 static void
 rgephy_load_dspcode(struct mii_softc *sc)
 {
+	struct rgephy_softc *rsc;
 	int val;
+
+	rsc = (struct rgephy_softc *)sc;
+	if (rsc->mii_revision >= 2)
+		return;
 
 #if 1
 	PHY_WRITE(sc, 31, 0x0001);
@@ -581,13 +591,18 @@ static void
 rgephy_reset(struct mii_softc *sc)
 {
 	struct rgephy_softc *rsc;
-
-	mii_phy_reset(sc);
-	DELAY(1000);
+	uint16_t ssr;
 
 	rsc = (struct rgephy_softc *)sc;
-	if (rsc->mii_revision < 2)
-		rgephy_load_dspcode(sc);
+	if (rsc->mii_revision == 3) {
+		/* RTL8211C(L) */
+		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
+		if ((ssr & RGEPHY_SSR_ALDPS) != 0) {
+			ssr &= ~RGEPHY_SSR_ALDPS;
+			PHY_WRITE(sc, RGEPHY_MII_SSR, ssr);
+		}
+	}
+#if 0
 	else {
 		PHY_WRITE(sc, 0x1F, 0x0001);
 		PHY_WRITE(sc, 0x09, 0x273a);
@@ -614,4 +629,9 @@ rgephy_reset(struct mii_softc *sc)
 	/* NWay enable and Restart NWay */
 	PHY_WRITE(sc, RGEPHY_MII_BMCR,
 	    RGEPHY_BMCR_RESET | RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
+#endif
+
+	mii_phy_reset(sc);
+	DELAY(1000);
+	rgephy_load_dspcode(sc);
 }

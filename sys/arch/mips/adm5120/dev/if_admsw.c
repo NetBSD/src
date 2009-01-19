@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.4 2008/02/07 01:21:52 dyoung Exp $ */
+/* $NetBSD: if_admsw.c,v 1.4.18.1 2009/01/19 13:16:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.4 2008/02/07 01:21:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.4.18.1 2009/01/19 13:16:26 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -812,8 +812,8 @@ admsw_intr(void *arg)
 	pending = REG_READ(ADMSW_INT_ST);
 
 	if ((pending & ~(ADMSW_INTR_RHD|ADMSW_INTR_RLD|ADMSW_INTR_SHD|ADMSW_INTR_SLD|ADMSW_INTR_W1TE|ADMSW_INTR_W0TE)) != 0) {
-		printf("%s: pending=%s\n", __func__,
-		    bitmask_snprintf(pending, ADMSW_INT_FMT, buf, sizeof(buf)));
+		snprintb(buf, sizeof(buf), ADMSW_INT_FMT, pending);
+		printf("%s: pending=%s\n", __func__, buf);
 	}
 	REG_WRITE(ADMSW_INT_ST, pending);
 

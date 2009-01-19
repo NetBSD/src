@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.32 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: ZAO425,v 1.32.2.1 2009/01/19 13:16:04 skrll Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -53,7 +53,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
-options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -122,7 +121,6 @@ options 	CONUNIT=0		# Console port number
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions

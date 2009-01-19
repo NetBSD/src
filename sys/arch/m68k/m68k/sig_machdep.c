@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.39 2008/10/18 13:38:42 martin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.39.2.1 2009/01/19 13:16:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,9 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.39 2008/10/18 13:38:42 martin Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.39.2.1 2009/01/19 13:16:24 skrll Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -171,7 +169,7 @@ buildcontext(struct lwp *l, void *catcher, void *fp)
 	frame->f_pc = (int)catcher;
 }
 
-static void
+void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -183,18 +181,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
-	default:	/* unknown version */
-		printf("nsendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-	case 2:
-		break;
-	}
 
 	kf.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 	kf.sf_signum = sig;
@@ -227,18 +213,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		sendsig_siginfo(ksi, mask);
 }
 
 void
