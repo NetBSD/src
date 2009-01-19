@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.40 2009/01/19 17:39:02 christos Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.41 2009/01/19 23:04:26 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.40 2009/01/19 17:39:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.41 2009/01/19 23:04:26 njoly Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -224,6 +224,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		if (cmd == IOC_CPU_OGETSTATE) {
 			cpustate50_t *ocs = data;
 			cpustate_to_cpustate50(cs, ocs);
+			error = 0;
 		}
 #endif
 		break;
