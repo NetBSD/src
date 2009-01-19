@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/01/19 08:02:16 jmmv Exp $
+#	$NetBSD: Makefile,v 1.3 2009/01/19 08:08:18 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -13,4 +13,5 @@ FILESNAME_catalog.atf=	catalog
 FILES=			catalog
 .endif
 
+.include <bsd.prog.mk> # XXX Bring in missing targets (e.g. includes)
 .include <bsd.files.mk>
