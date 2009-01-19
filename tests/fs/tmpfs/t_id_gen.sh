@@ -1,6 +1,6 @@
-# $NetBSD: t_id_gen.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_id_gen.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,17 +35,17 @@ main_body() {
 	test_mount
 
 	echo "Creating directory with node number = 3"
-	atf_check 'mkdir a' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir a
 	eval $(stat -s a | sed -e 's|st_|ost_|g') || atf_fail "stat failed"
 	ofhsum=$($(atf_get_srcdir)/h_tools getfh a | md5) || \
 	    atf_fail "Failed to calculate file handle"
 	[ ${ost_ino} -eq 3 ] || atf_fail "Node number is not 3"
 
 	echo "Deleting the directory"
-	atf_check 'rmdir a' 0 null null
+	atf_check -s eq:0 -o empty -e empty rmdir a
 
 	echo "Creating another directory to reuse node number 3"
-	atf_check 'mkdir b' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir b
 	eval $(stat -s b) || atf_fail "stat failed"
 	fhsum=$($(atf_get_srcdir)/h_tools getfh b | md5) || \
 	    atf_fail "Failed to calculate file handle"
