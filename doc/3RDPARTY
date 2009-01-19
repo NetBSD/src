@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.662 2009/01/10 22:30:30 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.663 2009/01/19 07:20:38 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -52,8 +52,8 @@ Fix symbolic links before import.
 Check src/usr.sbin/amd/include/config.h is correct after import.
 
 Package:	Automated Testing Framework (ATF)
-Version:	0.5
-Current Vers:	0.5
+Version:	0.6
+Current Vers:	0.6
 Maintainer:	Julio M. Merino Vidal <jmmv@NetBSD.org>
 Archive site:	ftp://ftp.NetBSD.org/pub/NetBSD/misc/jmmv/atf/
 Home page:	http://www.NetBSD.org/~jmmv/atf/
@@ -61,7 +61,7 @@ Mailing List:	atf-devel@NetBSD.org
 Responsible:	jmmv
 License:	The NetBSD Foundation's license (BSD 2-clause)
 Notes:
-The source files are in dist/atf.
+The source files are in external/bsd/atf/dist.
 Given that the primary goal of ATF is to provide a testing framework for
 NetBSD, no local changes should be ever needed.  Always direct them to the
 maintainer for integration in official releases.
