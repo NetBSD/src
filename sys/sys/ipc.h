@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.30 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: ipc.h,v 1.31 2009/01/19 19:39:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -149,6 +149,20 @@ struct ipc_perm_sysctl {
 
 struct kauth_cred;
 int	ipcperm(struct kauth_cred *, struct ipc_perm *, int);
+
+/*
+ * sysctl helper routine for kern.ipc.sysvipc_info subtree.
+ */
+
+#define SYSCTL_FILL_PERM(src, dst) do { \
+	(dst)._key = (src)._key; \
+	(dst).uid = (src).uid; \
+	(dst).gid = (src).gid; \
+	(dst).cuid = (src).cuid; \
+	(dst).cgid = (src).cgid; \
+	(dst).mode = (src).mode; \
+	(dst)._seq = (src)._seq; \
+} while (/*CONSTCOND*/ 0);
 
 #endif /* _KERNEL */
 

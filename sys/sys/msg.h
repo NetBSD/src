@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.23 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: msg.h,v 1.24 2009/01/19 19:39:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -180,6 +180,18 @@ extern kmsq_t	*msqs;		/* MSGMNI queues */
 extern kmutex_t	msgmutex;
 
 #define MSG_LOCKED	01000	/* Is this msqid_ds locked? */
+
+#define SYSCTL_FILL_MSG(src, dst) do { \
+	SYSCTL_FILL_PERM((src).msg_perm, (dst).msg_perm); \
+	(dst).msg_qnum = (src).msg_qnum; \
+	(dst).msg_qbytes = (src).msg_qbytes; \
+	(dst)._msg_cbytes = (src)._msg_cbytes; \
+	(dst).msg_lspid = (src).msg_lspid; \
+	(dst).msg_lrpid = (src).msg_lrpid; \
+	(dst).msg_stime = (src).msg_stime; \
+	(dst).msg_rtime = (src).msg_rtime; \
+	(dst).msg_ctime = (src).msg_ctime; \
+} while (/*CONSTCOND*/ 0)
 
 #endif /* _KERNEL */
 
