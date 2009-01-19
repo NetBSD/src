@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.173 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.174 2009/01/19 02:27:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,9 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.173 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.174 2009/01/19 02:27:57 christos Exp $");
 
 #include "opt_inet.h"
+#include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_ipkdb.h"
@@ -135,6 +136,10 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.173 2008/08/06 15:01:23 plunky Exp 
 #include <netinet6/esp.h>
 #include <netkey/key.h>
 #endif /* IPSEC */
+
+#ifdef COMPAT_50
+#include <compat/sys/socket.h>
+#endif
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -639,6 +644,9 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (inp && (inp->inp_flags & INP_CONTROLOPTS
+#ifdef SO_OTIMESTAMP
+			 || so->so_options & SO_OTIMESTAMP
+#endif
 			 || so->so_options & SO_TIMESTAMP)) {
 			struct ip *ip = mtod(n, struct ip *);
 			ip_savecontrol(inp, &opts, ip, n);
@@ -686,7 +694,10 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS
-			  || in6p->in6p_socket->so_options & SO_TIMESTAMP)) {
+#ifdef SO_OTIMESTAMP
+		    || in6p->in6p_socket->so_options & SO_OTIMESTAMP
+#endif
+		    || in6p->in6p_socket->so_options & SO_TIMESTAMP)) {
 			struct ip6_hdr *ip6 = mtod(n, struct ip6_hdr *);
 			ip6_savecontrol(in6p, &opts, ip6, n);
 		}

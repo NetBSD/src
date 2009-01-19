@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.93 2009/01/14 18:07:29 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.94 2009/01/19 02:27:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -120,8 +120,9 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_LINGER	0x0080		/* linger on close if data present */
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
-#define	SO_TIMESTAMP	0x0400		/* timestamp received dgram traffic */
+/* 	SO_OTIMESTAMP	0x0400		*/
 #define	SO_ACCEPTFILTER	0x1000		/* there is an accept filter */
+#define	SO_TIMESTAMP	0x2000		/* timestamp received dgram traffic */
 
 
 /*
@@ -544,8 +545,9 @@ struct cmsghdr {
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
 #if defined(_NETBSD_SOURCE)
-#define	SCM_TIMESTAMP	0x02		/* timestamp (struct timeval) */
+/* 			0x02		   timestamp (struct timeval50) */
 #define	SCM_CREDS	0x04		/* credentials (struct sockcred) */
+#define	SCM_TIMESTAMP	0x08		/* timestamp (struct timeval) */
 #endif
 
 /*
