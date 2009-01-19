@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.28 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.29 2009/01/19 19:39:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -196,6 +196,14 @@ extern struct semid_ds *sema;		/* semaphore id pool */
  */
 #define	SEM_CONFIG_FREEZE	0	/* Freeze the semaphore facility. */
 #define	SEM_CONFIG_THAW		1	/* Thaw the semaphore facility. */
+
+#define SYSCTL_FILL_SEM(src, dst) do { \
+	SYSCTL_FILL_PERM((src).sem_perm, (dst).sem_perm); \
+	(dst).sem_nsems = (src).sem_nsems; \
+	(dst).sem_otime = (src).sem_otime; \
+	(dst).sem_ctime = (src).sem_ctime; \
+} while (/*CONSTCOND*/ 0)
+
 #endif /* _KERNEL */
 
 #ifndef _KERNEL

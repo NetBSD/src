@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.3 2009/01/11 02:45:50 christos Exp $	*/
+/*	$NetBSD: msg.h,v 1.4 2009/01/19 19:39:41 christos Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -61,6 +61,24 @@ struct msqid_ds13 {
 	struct __msg	*_msg_first;	/* first message in the queue */
 	struct __msg	*_msg_last;	/* last message in the queue */
 	msglen_t	_msg_cbytes;	/* # of bytes currently in queue */
+};
+
+/* Warning: 64-bit structure padding is needed here */
+struct msgid_ds_sysctl50 {
+	struct		ipc_perm_sysctl msg_perm;
+	uint64_t	msg_qnum;
+	uint64_t	msg_qbytes;
+	uint64_t	_msg_cbytes;
+	pid_t		msg_lspid;
+	pid_t		msg_lrpid;
+	int32_t		msg_stime;
+	int32_t		msg_rtime;
+	int32_t		msg_ctime;
+	int32_t		pad;
+};
+struct msg_sysctl_info50 {
+	struct	msginfo msginfo;
+	struct	msgid_ds_sysctl50 msgids[1];
 };
 
 __BEGIN_DECLS
