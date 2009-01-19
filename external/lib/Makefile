@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/01/12 16:03:16 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2009/01/19 07:16:11 jmmv Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -7,6 +7,10 @@
 #
 
 .include <bsd.own.mk>
+
+.if (${MKATF} != "no")
+SUBDIR+= ../bsd/atf/lib
+.endif
 
 .if (${MKLDAP} != "no")
 SUBDIR+= ../bsd/openldap/lib
