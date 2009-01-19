@@ -1,6 +1,6 @@
-# $NetBSD: t_sizes.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_sizes.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ small_body() {
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	f_bused=$((${f_blocks} - ${f_bfree}))
 	[ ${f_bused} -gt 1 ] || atf_fail "Incorrect bused count"
-	atf_check 'rm a' 0 null null
+	atf_check -s eq:0 -o empty -e empty rm a
 
 	test_unmount
 }
@@ -58,14 +58,15 @@ big_body() {
 	eval $($(atf_get_srcdir)/h_tools statvfs . | sed -e 's|^f_|cf_|')
 	cf_bused=$((${cf_blocks} - ${cf_bfree}))
 
-	atf_check 'dd if=/dev/zero of=a bs=1m count=5' 0 ignore ignore
+	atf_check -s eq:0 -o ignore -e ignore \
+	    dd if=/dev/zero of=a bs=1m count=5
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	f_bused=$((${f_blocks} - ${f_bfree}))
 	[ ${f_bused} -ne ${cf_bused} ] || atf_fail "bused did not change"
 	[ ${f_bused} -gt $((5 * 1024 * 1024 / ${pagesize})) ] || \
 	    atf_fail "bused too big"
 	of_bused=${f_bused}
-	atf_check 'rm a' 0 null null
+	atf_check -s eq:0 -o empty -e empty rm a
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	f_bused=$((${f_blocks} - ${f_bfree}))
 	[ ${f_bused} -lt ${of_bused} ] || \
@@ -83,12 +84,13 @@ overflow_head() {
 overflow_body() {
 	test_mount -o -s10M
 
-	atf_check 'touch a' 0 null null
-	atf_check 'rm a' 0 null null
+	atf_check -s eq:0 -o empty -e empty touch a
+	atf_check -s eq:0 -o empty -e empty rm a
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	of_bused=$((${f_blocks} - ${f_bfree}))
-	atf_check 'dd if=/dev/zero of=a bs=1m count=15' 1 ignore ignore
-	atf_check 'rm a' 0 null null
+	atf_check -s eq:1 -o ignore -e ignore \
+	    dd if=/dev/zero of=a bs=1m count=15
+	atf_check -s eq:0 -o empty -e empty rm a
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	f_bused=$((${f_blocks} - ${f_bfree}))
 	[ ${f_bused} -ge ${of_bused} -a ${f_bused} -le $((${of_bused} + 1)) ] \
@@ -106,10 +108,11 @@ overwrite_head() {
 overwrite_body() {
 	test_mount -o -s10M
 
-	atf_check 'dd if=/dev/zero of=a bs=1024 count=10' 0 ignore ignore
+	atf_check -s eq:0 -o ignore -e ignore \
+	    dd if=/dev/zero of=a bs=1024 count=10
 	sync
-	atf_check 'dd if=/dev/zero of=a bs=1024 conv=notrunc seek=1 count=1' \
-	     0 ignore ignore
+	atf_check -s eq:0 -o ignore -e ignore \
+	    dd if=/dev/zero of=a bs=1024 conv=notrunc seek=1 count=1
 	sync
 	eval $(stat -s a)
 	[ ${st_size} -eq 10240 ] || atf_fail "Incorrect file size"

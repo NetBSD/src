@@ -1,6 +1,6 @@
-# $NetBSD: t_readdir.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_readdir.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,9 @@ dots_head() {
 dots_body() {
 	test_mount
 
-	atf_check '/bin/ls -a' 0 stdout null
-	atf_check "grep '^\.$' ../stdout" 0 ignore null
-	atf_check "grep '^\..$' ../stdout" 0 ignore null
+	atf_check -s eq:0 -o save:stdout -e empty /bin/ls -a
+	atf_check -s eq:0 -o ignore -e empty grep '^\.$' stdout
+	atf_check -s eq:0 -o ignore -e empty grep '^\..$' stdout
 
 	test_unmount
 }
@@ -54,16 +54,17 @@ types_head() {
 types_body() {
 	test_mount
 
-	atf_check 'mkdir dir' 0 null null
-	atf_check 'touch reg' 0 null null
-	atf_check 'ln -s reg lnk' 0 null null
-	atf_check 'mknod blk b 0 0' 0 null null
-	atf_check 'mknod chr c 0 0' 0 null null
-	atf_check 'mknod fifo p' 0 null null
-	atf_check "$(atf_get_srcdir)/h_tools sockets sock" 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir dir
+	atf_check -s eq:0 -o empty -e empty touch reg
+	atf_check -s eq:0 -o empty -e empty ln -s reg lnk
+	atf_check -s eq:0 -o empty -e empty mknod blk b 0 0
+	atf_check -s eq:0 -o empty -e empty mknod chr c 0 0
+	atf_check -s eq:0 -o empty -e empty mknod fifo p
+	atf_check -s eq:0 -o empty -e empty \
+	    $(atf_get_srcdir)/h_tools sockets sock
 
-	atf_check 'ls' 0 ignore null
-	atf_check 'rm -rf *' 0 null null
+	atf_check -s eq:0 -o ignore -e empty ls
+	atf_check -s eq:0 -o empty -e empty rm -rf *
 
 	test_unmount
 }
@@ -77,10 +78,10 @@ caching_head() {
 caching_body() {
 	test_mount
 
-	atf_check 'touch $(jot 10)' 0 null null
-	atf_check 'rm *' 0 null null
-	atf_check 'touch $(jot 20)' 0 null null
-	atf_check 'ls >/dev/null' 0 null null
+	atf_check -s eq:0 -o empty -e empty touch $(jot 10)
+	atf_check -s eq:0 -o empty -e empty rm *
+	atf_check -s eq:0 -o empty -e empty touch $(jot 20)
+	atf_check -s eq:0 -o empty -e empty -x "ls >/dev/null"
 
 	test_unmount
 }
@@ -93,13 +94,13 @@ many_head() {
 many_body() {
 	test_mount
 
-	atf_check 'mkdir a' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir a
 	echo "Creating 500 files"
 	for f in $(jot 500); do
 		touch a/$f
 	done
-	atf_check 'rm a/*' 0 null null
-	atf_check 'rmdir a' 0 null null
+	atf_check -s eq:0 -o empty -e empty rm a/*
+	atf_check -s eq:0 -o empty -e empty rmdir a
 
 	test_unmount
 }

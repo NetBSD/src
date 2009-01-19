@@ -1,6 +1,6 @@
-# $NetBSD: t_psshfs.sh,v 1.4 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_psshfs.sh,v 1.5 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -72,24 +72,27 @@ start_ssh() {
 	sed -e "s,@SRCDIR@,$(atf_get_srcdir),g" -e "s,@WORKDIR@,$(pwd),g" \
 	    $(atf_get_srcdir)/sshd_config.in >sshd_config || \
 	    atf_fail "Failed to create sshd_config"
-	atf_check 'cp /usr/libexec/sftp-server .' 0 null null
-	atf_check "cp $(atf_get_srcdir)/ssh_host_key ." 0 null null
-	atf_check "cp $(atf_get_srcdir)/ssh_host_key.pub ." 0 null null
-	atf_check "chmod 400 ssh_host_key" 0 null null
-	atf_check "chmod 444 ssh_host_key.pub" 0 null null
+	atf_check -s eq:0 -o empty -e empty cp /usr/libexec/sftp-server .
+	atf_check -s eq:0 -o empty -e empty \
+	    cp $(atf_get_srcdir)/ssh_host_key .
+	atf_check -s eq:0 -o empty -e empty \
+	    cp $(atf_get_srcdir)/ssh_host_key.pub .
+	atf_check -s eq:0 -o empty -e empty chmod 400 ssh_host_key
+	atf_check -s eq:0 -o empty -e empty chmod 444 ssh_host_key.pub
 
 	/usr/sbin/sshd -e -D -f ./sshd_config >sshd.log 2>&1 &
 	echo $! >sshd.pid
 	echo "SSH server started (pid $(cat sshd.pid))"
 
 	echo "Setting up SSH client configuration"
-	atf_check 'ssh-keygen -f ssh_user_key -t rsa -b 1024 -N "" -q' \
-	    0 null null
-	atf_check 'cp ssh_user_key.pub authorized_keys' 0 null null
+	atf_check -s eq:0 -o empty -e empty \
+	    ssh-keygen -f ssh_user_key -t rsa -b 1024 -N "" -q
+	atf_check -s eq:0 -o empty -e empty \
+	    cp ssh_user_key.pub authorized_keys
 	echo "[localhost]:10000,[127.0.0.1]:10000,[::1]:10000" \
 	    "$(cat $(atf_get_srcdir)/ssh_host_key.pub)" >known_hosts || \
 	    atf_fail "Failed to create known_hosts"
-	atf_check 'chmod 600 authorized_keys' 0 null null
+	atf_check -s eq:0 -o empty -e empty chmod 600 authorized_keys
 	sed -e "s,@SRCDIR@,$(atf_get_srcdir),g" -e "s,@WORKDIR@,$(pwd),g" \
 	    $(atf_get_srcdir)/ssh_config.in >ssh_config || \
 	    atf_fail "Failed to create ssh_config"
@@ -114,16 +117,8 @@ stop_ssh() {
 # Both directories are supposed to live on the current directory.
 #
 mount_psshfs() {
-	atf_check "mount -t psshfs -o -F=$(pwd)/ssh_config
-	    localhost:$(pwd)/${1} ${2}" 0 null null
-}
-
-#
-# Compares the inodes of the two given files and returns true if they are
-# different; false otherwise.
-#
-ne_inodes() {
-	test $(stat -f %i ${1}) -ne $(stat -f %i ${2})
+	atf_check -s eq:0 -o empty -e empty \
+	    mount -t psshfs -o -F=$(pwd)/ssh_config localhost:$(pwd)/${1} ${2}
 }
 
 # -------------------------------------------------------------------------
@@ -147,12 +142,26 @@ inode_nos_body() {
 	touch root/file3
 	touch root/file4
 
+	cat >ne_inodes.sh <<EOF
+#! $(atf-config -t atf_shell)
+#
+# Compares the inodes of the two given files and returns true if they are
+# different; false otherwise.
+#
+test \$(stat -f %i \${1}) -ne \$(stat -f %i \${2})
+EOF
+	chmod +x ne_inodes.sh
+
 	mkdir mnt
 	mount_psshfs root mnt
-	atf_check 'ne_inodes root/dir root/dir/file1' 0 null null
-	atf_check 'ne_inodes root/dir root/dir/file2' 0 null null
-	atf_check 'ne_inodes root/dir/file1 root/dir/file2' 0 null null
-	atf_check 'ne_inodes root/file3 root/file4' 0 null null
+	atf_check -s eq:0 -o empty -e empty \
+	    ./ne_inodes.sh root/dir root/dir/file1
+	atf_check -s eq:0 -o empty -e empty \
+	    ./ne_inodes.sh root/dir root/dir/file2
+	atf_check -s eq:0 -o empty -e empty \
+	    ./ne_inodes.sh root/dir/file1 root/dir/file2
+	atf_check -s eq:0 -o empty -e empty \
+	    ./ne_inodes.sh root/file3 root/file4
 }
 inode_nos_cleanup() {
 	umount mnt
@@ -172,11 +181,12 @@ pwd_body() {
 	mkdir root/dir
 
 	mkdir mnt
-	atf_check 'echo $(cd mnt && /bin/pwd)/dir' 0 stdout null
+	atf_check -s eq:0 -o save:stdout -e empty \
+	    -x 'echo $(cd mnt && /bin/pwd)/dir'
 	mv stdout expout
 	mount_psshfs root mnt
-	atf_check 'cd mnt/dir && ls .. >/dev/null && /bin/pwd' \
-	    0 expout null
+	atf_check -s eq:0 -o file:expout -e empty \
+	    -x 'cd mnt/dir && ls .. >/dev/null && /bin/pwd'
 }
 pwd_cleanup() {
 	umount mnt

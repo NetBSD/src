@@ -1,6 +1,6 @@
-# $NetBSD: t_df.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_df.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,8 @@ filer:/     1202716672 1202716672 -180407500 117% /filer
 /dev/strpct 21474836476 10737418240 10737418236  50% /strpct
 /dev/wd0e     10485688    2859932    7625756  27% /mount/windows/C
 EOF
-	atf_check "BLOCKSIZE=1k $(atf_get_srcdir)/h_df" 0 expout null
+	atf_check -s eq:0 -o file:expout -e empty \
+	    -x "BLOCKSIZE=1k $(atf_get_srcdir)/h_df"
 }
 
 atf_test_case hflag
@@ -136,7 +137,8 @@ filer:/           1.1T       1.1T      -172G 117% /filer
 /dev/strpct        20T        10T        10T  50% /strpct
 /dev/wd0e          10G       2.7G       7.3G  27% /mount/windows/C
 EOF
-	atf_check "BLOCKSIZE=1k $(atf_get_srcdir)/h_df -h" 0 expout null
+	atf_check -s eq:0 -o file:expout -e empty \
+	    -x "BLOCKSIZE=1k $(atf_get_srcdir)/h_df -h"
 }
 
 atf_init_test_cases()
