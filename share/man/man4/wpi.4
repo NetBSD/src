@@ -1,4 +1,4 @@
-.\" $NetBSD: wpi.4,v 1.8 2008/11/07 14:51:12 joerg Exp $
+.\" $NetBSD: wpi.4,v 1.9 2009/01/19 12:38:13 jmcneill Exp $
 .\"
 .\" Copyright (c) 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 7, 2008
+.Dd January 19, 2009
 .Os
 .Dt WPI 4
 .Sh NAME
@@ -224,8 +224,6 @@ An attempt to load the firmware into the adapter failed.
 The driver will reset the hardware.
 .El
 .Sh NOTES
-802.11a is not working yet.
-.Pp
 On some laptops the radio transmitter button must be pushed twice
 to get the driver working, or you will get a
 .Pa "wpi%d: fatal firmware error"
