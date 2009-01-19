@@ -1,0 +1,6 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: foo = "
+prop: bar = "text
+prop: baz = "te\"xt
+prop: last = "\"
