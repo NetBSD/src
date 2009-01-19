@@ -1,6 +1,6 @@
-# $NetBSD: t_tar.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_tar.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,14 +35,14 @@ append_body() {
 	touch foo bar
 
 	# store both foo and bar into file1.tar
-	atf_check 'tar -cf file1.tar foo bar' 0 null null
+	atf_check -s eq:0 -o empty -e empty tar -cf file1.tar foo bar
 
 	# store foo into file2.tar, then append bar to file2.tar
-	atf_check 'tar -cf file2.tar foo' 0 null null
-	atf_check 'tar -rf file2.tar bar' 0 null null
+	atf_check -s eq:0 -o empty -e empty tar -cf file2.tar foo
+	atf_check -s eq:0 -o empty -e empty tar -rf file2.tar bar
 
 	# ensure that file1.tar and file2.tar are equal
-	atf_check 'cmp file1.tar file2.tar' 0 null null
+	atf_check -s eq:0 -o empty -e empty cmp file1.tar file2.tar
 }
 
 atf_init_test_cases()

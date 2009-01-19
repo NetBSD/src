@@ -1,6 +1,6 @@
-# $NetBSD: t_trail_slash.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_trail_slash.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,11 @@ main_head() {
 main_body() {
 	test_mount
 
-	atf_check 'mkdir a/' 0 null null
-	atf_check 'touch a/b' 0 null null
-	atf_check 'test -f a/b' 0 null null
-	atf_check 'rm a/b' 0 null null
-	atf_check 'rmdir a/' 0 null null
+	atf_check -s eq:0 -o empty -e empty mkdir a/
+	atf_check -s eq:0 -o empty -e empty touch a/b
+	atf_check -s eq:0 -o empty -e empty test -f a/b
+	atf_check -s eq:0 -o empty -e empty rm a/b
+	atf_check -s eq:0 -o empty -e empty rmdir a/
 
 	test_unmount
 }
