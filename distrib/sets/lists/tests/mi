@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2009/01/18 12:49:07 he Exp $
+# $NetBSD: mi,v 1.26 2009/01/19 07:19:36 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6,6 +6,8 @@
 ./usr/libdata/debug/usr/tests						tests-base-debug
 ./usr/libdata/debug/usr/tests/atf					tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/atf-c					tests-atf-debug
+./usr/libdata/debug/usr/tests/atf/atf-c/h_check.debug			tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/atf-c/t_check.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_config.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_dynstr.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_env.debug			tests-atf-debug		debug
@@ -16,6 +18,7 @@
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_list.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_macros.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_map.debug			tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/atf-c/t_process.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_sanity.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_signals.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_tc.debug			tests-atf-debug		debug
@@ -24,6 +27,7 @@
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_ui.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_user.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++				tests-atf-debug
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_check.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_config.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_env.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_expand.debug		tests-atf-debug		debug
@@ -31,6 +35,7 @@
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_io.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_macros.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_parser.debug		tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_process.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_signals.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_tests.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/atf-c++/t_text.debug			tests-atf-debug		debug
@@ -83,6 +88,8 @@
 ./usr/tests/atf/Atffile				tests-atf-tests
 ./usr/tests/atf/atf-c				tests-atf-tests
 ./usr/tests/atf/atf-c/Atffile			tests-atf-tests
+./usr/tests/atf/atf-c/h_check			tests-atf-tests
+./usr/tests/atf/atf-c/t_check			tests-atf-tests
 ./usr/tests/atf/atf-c/t_config			tests-atf-tests
 ./usr/tests/atf/atf-c/t_dynstr			tests-atf-tests
 ./usr/tests/atf/atf-c/t_env			tests-atf-tests
@@ -93,6 +100,7 @@
 ./usr/tests/atf/atf-c/t_list			tests-atf-tests
 ./usr/tests/atf/atf-c/t_macros			tests-atf-tests
 ./usr/tests/atf/atf-c/t_map			tests-atf-tests
+./usr/tests/atf/atf-c/t_process			tests-atf-tests
 ./usr/tests/atf/atf-c/t_sanity			tests-atf-tests
 ./usr/tests/atf/atf-c/t_signals			tests-atf-tests
 ./usr/tests/atf/atf-c/t_tc			tests-atf-tests
@@ -102,6 +110,7 @@
 ./usr/tests/atf/atf-c/t_user			tests-atf-tests
 ./usr/tests/atf/atf-c++				tests-atf-tests
 ./usr/tests/atf/atf-c++/Atffile			tests-atf-tests
+./usr/tests/atf/atf-c++/t_check			tests-atf-tests
 ./usr/tests/atf/atf-c++/t_config		tests-atf-tests
 ./usr/tests/atf/atf-c++/t_env			tests-atf-tests
 ./usr/tests/atf/atf-c++/t_expand		tests-atf-tests
@@ -109,6 +118,7 @@
 ./usr/tests/atf/atf-c++/t_io			tests-atf-tests
 ./usr/tests/atf/atf-c++/t_macros		tests-atf-tests
 ./usr/tests/atf/atf-c++/t_parser		tests-atf-tests
+./usr/tests/atf/atf-c++/t_process		tests-atf-tests
 ./usr/tests/atf/atf-c++/t_signals		tests-atf-tests
 ./usr/tests/atf/atf-c++/t_tests			tests-atf-tests
 ./usr/tests/atf/atf-c++/t_text			tests-atf-tests
@@ -322,11 +332,12 @@
 ./usr/tests/atf/tools/h_misc			tests-atf-tests
 ./usr/tests/atf/tools/h_mode			tests-atf-tests
 ./usr/tests/atf/tools/h_pass			tests-atf-tests
+./usr/tests/atf/tools/t_atf_check		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_cleanup		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_compile		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_config		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_exec		tests-atf-tests
-./usr/tests/atf/tools/t_atf_killpg		tests-atf-tests
+./usr/tests/atf/tools/t_atf_killpg		tests-atf-tests		obsolete
 ./usr/tests/atf/tools/t_atf_report		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_run			tests-atf-tests
 ./usr/tests/atf/units				tests-obsolete		obsolete
