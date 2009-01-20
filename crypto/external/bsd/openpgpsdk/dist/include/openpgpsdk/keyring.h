@@ -87,5 +87,6 @@ void ops_keydata_init(ops_keydata_t* keydata, const ops_content_tag_t type);
 
 void ops_copy_userid(ops_user_id_t*, const ops_user_id_t*);
 void ops_copy_packet(ops_packet_t*, const ops_packet_t*);
+unsigned ops_get_keydata_content_type(const ops_keydata_t *);
 
 #endif
