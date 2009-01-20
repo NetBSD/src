@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
+/*	$NetBSD: ex_cscope.c,v 1.1.1.2.6.2 2009/01/20 02:47:43 snj Exp $ */
 
 /*-
  * Copyright (c) 1994, 1996
@@ -502,7 +502,7 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 		 * search cscope command character and a leading space
 		 * there.)
 		 */
-		(void)fprintf(csc->to_fp, "%d%s\n", search, tqp->tag + 2);
+		(void)fprintf(csc->to_fp, "%zu%s\n", search, tqp->tag + 2);
 		(void)fflush(csc->to_fp);
 
 		/* Read the output. */
