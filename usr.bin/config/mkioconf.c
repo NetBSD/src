@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.12 2009/01/16 09:43:41 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.13 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -486,11 +486,11 @@ emitname2blk(FILE *fp)
 	fprintf(fp, "struct devnametobdevmaj dev_name2blk[] = {\n");
 
 	TAILQ_FOREACH(dev, &allbases, d_next) {
-		if (dev->d_major == NODEV)
+		if (dev->d_major == NODEVMAJOR)
 			continue;
 
-		fprintf(fp, "\t{ \"%s\", %lld },\n",
-			    dev->d_name, (long long)dev->d_major);
+		fprintf(fp, "\t{ \"%s\", %d },\n",
+			    dev->d_name, dev->d_major);
 	}
 	fprintf(fp, "\t{ NULL, 0 }\n};\n");
 }
