@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1170 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1171 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -74,7 +74,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	httpd(8): Add rc.d script to control httpd daemon. [mishka 20081211]
 	ath(4): Switch from the binary HAL to the open-source HAL released by
 		Sam Leffler. [alc 20081211]
-	nvi(1): Added "expandtab" option.  [lukem 20081212]
 	compat_linux32: Add clock_nanosleep syscall. [njoly 20081212]
 	boot.cfg(5): Add an option to clear the screen. [christos 20081213]
 	pms(4): Add Elantech multi-touch trackpad support [jmcneill 20081213]
