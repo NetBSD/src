@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.182 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.183 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -716,8 +716,8 @@ struct kinfo_lwp {
  */
 
 struct kinfo_drivers {
-	int32_t		d_cmajor;
-	int32_t		d_bmajor;
+	devmajor_t	d_cmajor;
+	devmajor_t	d_bmajor;
 	char		d_name[24];
 };
 
