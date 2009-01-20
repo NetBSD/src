@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
+/*	$NetBSD: engine.c,v 1.1.1.2.6.2 2009/01/20 03:14:17 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -330,20 +330,20 @@ sopno stopst;
 	for (ss = startst; ss < stopst; ss = es) {
 		/* identify end of subRE */
 		es = ss;
-		switch (OP(m->g->strip[es])) {
+		switch (m->g->strip[es]) {
 		case OPLUS_:
 		case OQUEST_:
-			es += OPND(m->g->strip[es]);
+			es += m->g->stripdata[es];
 			break;
 		case OCH_:
-			while (OP(m->g->strip[es]) != O_CH)
-				es += OPND(m->g->strip[es]);
+			while (m->g->strip[es] != O_CH)
+				es += m->g->stripdata[es];
 			break;
 		}
 		es++;
 
 		/* figure out what it matched */
-		switch (OP(m->g->strip[ss])) {
+		switch (m->g->strip[ss]) {
 		case OEND:
 			assert(nope);
 			break;
@@ -439,21 +439,21 @@ sopno stopst;
 				assert(stp >= sp);	/* it did work */
 			}
 			ssub = ss + 1;
-			esub = ss + OPND(m->g->strip[ss]) - 1;
-			assert(OP(m->g->strip[esub]) == OOR1);
+			esub = ss + m->g->stripdata[ss] - 1;
+			assert(m->g->strip[esub] == OOR1);
 			for (;;) {	/* find first matching branch */
 				if (slow(m, sp, rest, ssub, esub) == rest)
 					break;	/* it matched all of it */
 				/* that one missed, try next one */
-				assert(OP(m->g->strip[esub]) == OOR1);
+				assert(m->g->strip[esub] == OOR1);
 				esub++;
-				assert(OP(m->g->strip[esub]) == OOR2);
+				assert(m->g->strip[esub] == OOR2);
 				ssub = esub + 1;
-				esub += OPND(m->g->strip[esub]);
-				if (OP(m->g->strip[esub]) == OOR2)
+				esub += m->g->stripdata[esub];
+				if (m->g->strip[esub] == OOR2)
 					esub--;
 				else
-					assert(OP(m->g->strip[esub]) == O_CH);
+					assert(m->g->strip[esub] == O_CH);
 			}
 			dp = dissect(m, sp, rest, ssub, esub);
 			assert(dp == rest);
@@ -467,12 +467,12 @@ sopno stopst;
 			assert(nope);
 			break;
 		case OLPAREN:
-			i = OPND(m->g->strip[ss]);
+			i = m->g->stripdata[ss];
 			assert(0 < i && i <= m->g->nsub);
 			m->pmatch[i].rm_so = sp - m->offp;
 			break;
 		case ORPAREN:
-			i = OPND(m->g->strip[ss]);
+			i = m->g->stripdata[ss];
 			assert(0 < i && i <= m->g->nsub);
 			m->pmatch[i].rm_eo = sp - m->offp;
 			break;
@@ -510,6 +510,7 @@ sopno lev;			/* PLUS nesting level */
 	register size_t len;
 	register int hard;
 	register sop s;
+	register RCHAR_T d;
 	register regoff_t offsave;
 	register cset *cs;
 
@@ -518,10 +519,12 @@ sopno lev;			/* PLUS nesting level */
 
 	/* get as far as we can with easy stuff */
 	hard = 0;
-	for (ss = startst; !hard && ss < stopst; ss++)
-		switch (OP(s = m->g->strip[ss])) {
+	for (ss = startst; !hard && ss < stopst; ss++) {
+		s = m->g->strip[ss];
+		d = m->g->stripdata[ss];
+		switch (s) {
 		case OCHAR:
-			if (sp == stop || *sp++ != (RCHAR_T)OPND(s))
+			if (sp == stop || *sp++ != d)
 				return(NULL);
 			break;
 		case OANY:
@@ -530,7 +533,7 @@ sopno lev;			/* PLUS nesting level */
 			sp++;
 			break;
 		case OANYOF:
-			cs = &m->g->sets[OPND(s)];
+			cs = &m->g->sets[d];
 			if (sp == stop || !CHIN(cs, *sp++))
 				return(NULL);
 			break;
@@ -576,16 +579,20 @@ sopno lev;			/* PLUS nesting level */
 		case OOR1:	/* matches null but needs to skip */
 			ss++;
 			s = m->g->strip[ss];
+			d = m->g->stripdata[ss];
 			do {
-				assert(OP(s) == OOR2);
-				ss += OPND(s);
-			} while (OP(s = m->g->strip[ss]) != O_CH);
+				assert(s == OOR2);
+				ss += d;
+				s = m->g->strip[ss];
+				d = m->g->stripdata[ss];
+			} while (s != O_CH);
 			/* note that the ss++ gets us past the O_CH */
 			break;
 		default:	/* have to make a choice */
 			hard = 1;
 			break;
 		}
+	}
 	if (!hard) {		/* that was it! */
 		if (sp != stop)
 			return(NULL);
@@ -596,9 +603,10 @@ sopno lev;			/* PLUS nesting level */
 	/* the hard stuff */
 	AT("hard", sp, stop, ss, stopst);
 	s = m->g->strip[ss];
-	switch (OP(s)) {
+	d = m->g->stripdata[ss];
+	switch (s) {
 	case OBACK_:		/* the vilest depths */
-		i = OPND(s);
+		i = d;
 		assert(0 < i && i <= m->g->nsub);
 		if (m->pmatch[i].rm_eo == -1)
 			return(NULL);
@@ -610,7 +618,7 @@ sopno lev;			/* PLUS nesting level */
 		ssp = m->offp + m->pmatch[i].rm_so;
 		if (memcmp(sp, ssp, len) != 0)
 			return(NULL);
-		while (m->g->strip[ss] != SOP(O_BACK, i))
+		while (m->g->strip[ss] != O_BACK || m->g->stripdata[ss] != i)
 			ss++;
 		return(backref(m, sp+len, stop, ss+1, stopst, lev));
 		break;
@@ -618,7 +626,7 @@ sopno lev;			/* PLUS nesting level */
 		dp = backref(m, sp, stop, ss+1, stopst, lev);
 		if (dp != NULL)
 			return(dp);	/* not */
-		return(backref(m, sp, stop, ss+OPND(s)+1, stopst, lev));
+		return(backref(m, sp, stop, ss+d+1, stopst, lev));
 		break;
 	case OPLUS_:
 		assert(m->lastpos != NULL);
@@ -631,7 +639,7 @@ sopno lev;			/* PLUS nesting level */
 			return(backref(m, sp, stop, ss+1, stopst, lev-1));
 		/* try another pass */
 		m->lastpos[lev] = sp;
-		dp = backref(m, sp, stop, ss-OPND(s)+1, stopst, lev);
+		dp = backref(m, sp, stop, ss-d+1, stopst, lev);
 		if (dp == NULL)
 			return(backref(m, sp, stop, ss+1, stopst, lev-1));
 		else
@@ -639,27 +647,27 @@ sopno lev;			/* PLUS nesting level */
 		break;
 	case OCH_:		/* find the right one, if any */
 		ssub = ss + 1;
-		esub = ss + OPND(s) - 1;
-		assert(OP(m->g->strip[esub]) == OOR1);
+		esub = ss + d - 1;
+		assert(m->g->strip[esub] == OOR1);
 		for (;;) {	/* find first matching branch */
 			dp = backref(m, sp, stop, ssub, esub, lev);
 			if (dp != NULL)
 				return(dp);
 			/* that one missed, try next one */
-			if (OP(m->g->strip[esub]) == O_CH)
+			if (m->g->strip[esub] == O_CH)
 				return(NULL);	/* there is none */
 			esub++;
-			assert(OP(m->g->strip[esub]) == OOR2);
+			assert(m->g->strip[esub] == OOR2);
 			ssub = esub + 1;
-			esub += OPND(m->g->strip[esub]);
-			if (OP(m->g->strip[esub]) == OOR2)
+			esub += m->g->stripdata[esub];
+			if (m->g->strip[esub] == OOR2)
 				esub--;
 			else
-				assert(OP(m->g->strip[esub]) == O_CH);
+				assert(m->g->strip[esub] == O_CH);
 		}
 		break;
 	case OLPAREN:		/* must undo assignment if rest fails */
-		i = OPND(s);
+		i = d;
 		assert(0 < i && i <= m->g->nsub);
 		offsave = m->pmatch[i].rm_so;
 		m->pmatch[i].rm_so = sp - m->offp;
@@ -670,7 +678,7 @@ sopno lev;			/* PLUS nesting level */
 		return(NULL);
 		break;
 	case ORPAREN:		/* must undo assignment if rest fails */
-		i = OPND(s);
+		i = d;
 		assert(0 < i && i <= m->g->nsub);
 		offsave = m->pmatch[i].rm_eo;
 		m->pmatch[i].rm_eo = sp - m->offp;
@@ -894,6 +902,7 @@ register states aft;		/* states already known reachable after */
 {
 	register cset *cs;
 	register sop s;
+	register RCHAR_T d;
 	register sopno pc;
 	register onestate here;		/* note, macros know this name */
 	register sopno look;
@@ -901,14 +910,15 @@ register states aft;		/* states already known reachable after */
 
 	for (pc = start, INIT(here, pc); pc != stop; pc++, INC(here)) {
 		s = g->strip[pc];
-		switch (OP(s)) {
+		d = g->stripdata[pc];
+		switch (s) {
 		case OEND:
 			assert(pc == stop-1);
 			break;
 		case OCHAR:
 			/* only characters can match */
-			assert(!NONCHAR(ch) || ch != (RCHAR_T)OPND(s));
-			if (ch == (RCHAR_T)OPND(s))
+			assert(!NONCHAR(ch) || ch != d);
+			if (ch == d)
 				FWD(aft, bef, 1);
 			break;
 		case OBOL:
@@ -932,7 +942,7 @@ register states aft;		/* states already known reachable after */
 				FWD(aft, bef, 1);
 			break;
 		case OANYOF:
-			cs = &g->sets[OPND(s)];
+			cs = &g->sets[d];
 			if (!NONCHAR(ch) && CHIN(cs, ch))
 				FWD(aft, bef, 1);
 			break;
@@ -945,17 +955,17 @@ register states aft;		/* states already known reachable after */
 			break;
 		case O_PLUS:		/* both forward and back */
 			FWD(aft, aft, 1);
-			i = ISSETBACK(aft, OPND(s));
-			BACK(aft, aft, OPND(s));
-			if (!i && ISSETBACK(aft, OPND(s))) {
+			i = ISSETBACK(aft, d);
+			BACK(aft, aft, d);
+			if (!i && ISSETBACK(aft, d)) {
 				/* oho, must reconsider loop body */
-				pc -= OPND(s) + 1;
+				pc -= d + 1;
 				INIT(here, pc);
 			}
 			break;
 		case OQUEST_:		/* two branches, both forward */
 			FWD(aft, aft, 1);
-			FWD(aft, aft, OPND(s));
+			FWD(aft, aft, d);
 			break;
 		case O_QUEST:		/* just an empty */
 			FWD(aft, aft, 1);
@@ -966,23 +976,26 @@ register states aft;		/* states already known reachable after */
 			break;
 		case OCH_:		/* mark the first two branches */
 			FWD(aft, aft, 1);
-			assert(OP(g->strip[pc+OPND(s)]) == OOR2);
-			FWD(aft, aft, OPND(s));
+			assert(OP(g->strip[pc+d]) == OOR2);
+			FWD(aft, aft, d);
 			break;
 		case OOR1:		/* done a branch, find the O_CH */
 			if (ISSTATEIN(aft, here)) {
-				for (look = 1;
-						OP(s = g->strip[pc+look]) != O_CH;
-						look += OPND(s))
-					assert(OP(s) == OOR2);
+				for (look = 1; /**/; look += d) {
+					s = g->strip[pc+look];
+					d = g->stripdata[pc+look];
+					if (s == O_CH)
+						break;
+					assert(s == OOR2);
+				}
 				FWD(aft, aft, look);
 			}
 			break;
 		case OOR2:		/* propagate OCH_'s marking */
 			FWD(aft, aft, 1);
-			if (OP(g->strip[pc+OPND(s)]) != O_CH) {
-				assert(OP(g->strip[pc+OPND(s)]) == OOR2);
-				FWD(aft, aft, OPND(s));
+			if (g->strip[pc+d] != O_CH) {
+				assert(g->strip[pc+d] == OOR2);
+				FWD(aft, aft, d);
 			}
 			break;
 		case O_CH:		/* just empty */
