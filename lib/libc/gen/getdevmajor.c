@@ -1,4 +1,4 @@
-/*	$NetBSD: getdevmajor.c,v 1.4 2009/01/20 18:20:48 drochner Exp $ */
+/*	$NetBSD: getdevmajor.c,v 1.5 2009/01/20 20:08:12 drochner Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getdevmajor.c,v 1.4 2009/01/20 18:20:48 drochner Exp $");
+__RCSID("$NetBSD: getdevmajor.c,v 1.5 2009/01/20 20:08:12 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,6 +50,18 @@ __RCSID("$NetBSD: getdevmajor.c,v 1.4 2009/01/20 18:20:48 drochner Exp $");
 #ifdef __weak_alias
 __weak_alias(getdevmajor,_getdevmajor)
 #endif
+
+/*
+ * XXX temporary alias because getdevmajor() was renamed
+ * in -current for some time
+ */
+dev_t __getdevmajor50(const char *, mode_t);
+dev_t
+__getdevmajor50(const char *name, mode_t type)
+{
+
+	return (dev_t)getdevmajor(name, type);
+}
 
 devmajor_t
 getdevmajor(const char *name, mode_t type)
