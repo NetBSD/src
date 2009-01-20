@@ -31,7 +31,6 @@
 #include <libgen.h>
 
 #include "openpgpsdk/keyring.h"
-#include "../src/lib/keyring_local.h"
 #include "openpgpsdk/crypto.h"
 #include "openpgpsdk/signature.h"
 #include "openpgpsdk/validate.h"
@@ -372,7 +371,7 @@ int main(int argc, char **argv)
             }
 
         ops_setup_memory_write(&cinfo, &mem, 128);
-        if (keydata->type==OPS_PTAG_CT_PUBLIC_KEY)
+        if (ops_get_keydata_content_type(keydata)==OPS_PTAG_CT_PUBLIC_KEY)
             ops_write_transferable_public_key(keydata, ops_true, cinfo);
         else
             ops_write_transferable_secret_key(keydata, (unsigned char *)opt_passphrase, strlen(opt_passphrase), ops_true, cinfo);
