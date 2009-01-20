@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.19 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.20 2009/01/20 20:57:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.19 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.20 2009/01/20 20:57:26 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -219,7 +219,7 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	dev->sc_cfflags = device_cfdata(&dev->sc_dev)->cf_flags;
 	wd33c93_init(dev);
 	
-	printf(": %s (%d.%d MHz clock, %s, SCSI ID %d)\n",
+	aprint_normal(": %s (%d.%d MHz clock, %s, SCSI ID %d)\n",
 	    wd33c93_chip_names[dev->sc_chip],
 	    dev->sc_clkfreq / 10, dev->sc_clkfreq % 10,
 	    (dev->sc_dmamode == SBIC_CTL_DMA) ? "DMA" :
@@ -227,11 +227,11 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	    (dev->sc_dmamode == SBIC_CTL_BURST_DMA) ? "BURST DMA" : "PIO",
 	    dev->sc_channel.chan_id);
 	if (dev->sc_chip == SBIC_CHIP_WD33C93B) {
-		aprint_error_dev(&dev->sc_dev, "microcode revision 0x%02x",
+		aprint_normal_dev(&dev->sc_dev, "microcode revision 0x%02x",
 		    dev->sc_rev);
 		if (dev->sc_minsyncperiod < 50)
-			printf(", Fast SCSI");
-		printf("\n");
+			aprint_normal(", Fast SCSI");
+		aprint_normal("\n");
 	}
 
 	dev->sc_child = config_found(&dev->sc_dev, &dev->sc_channel,
