@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.100 2009/01/11 10:56:27 cegger Exp $	*/
+/*	$NetBSD: ugen.c,v 1.101 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.100 2009/01/11 10:56:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.101 2009/01/20 18:20:48 drochner Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -503,7 +503,7 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 
-	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%"PRId64", endpt=%d\n",
+	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
 		     flag, mode, UGENUNIT(dev), endpt));
 
 #ifdef DIAGNOSTIC

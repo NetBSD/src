@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.26 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.27 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,14 +71,20 @@
 
 #ifdef	MAKE_BOOTSTRAP
 #undef	dev_t
+#undef	devmajor_t
+#undef	devminor_t
 #undef	NODEV
+#undef	NODEVMAJOR
 #undef	major
 #undef	minor
 #undef	makedev
-#define	dev_t		int		/* XXX: assumes int is 32 bits */
+#define	dev_t		unsigned int	/* XXX: assumes int is 32 bits */
 #define	NODEV		((dev_t)-1)
-#define major(x)        ((int)((((x) & 0x000fff00) >>  8)))
-#define minor(x)        ((int)((((x) & 0xfff00000) >> 12) | \
+#define devmajor_t	int
+#define devminor_t	int
+#define NODEVMAJOR	(-1)
+#define major(x)        ((devmajor_t)((((x) & 0x000fff00) >>  8)))
+#define minor(x)        ((devminor_t)((((x) & 0xfff00000) >> 12) | \
 			       (((x) & 0x000000ff) >>  0)))
 #define makedev(x,y)    ((dev_t)((((x) <<  8) & 0x000fff00) | \
                                  (((y) << 12) & 0xfff00000) | \
@@ -200,7 +206,7 @@ struct devbase {
 	TAILQ_ENTRY(devbase) d_next;
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
-	dev_t	d_major;		/* used for "root on sd0", e.g. */
+	devmajor_t d_major;		/* used for "root on sd0", e.g. */
 	struct	nvlist *d_attrs;	/* attributes, if any */
 	int	d_umax;			/* highest unit number + 1 */
 	struct	devi *d_ihead;		/* first instance, if any */
@@ -361,8 +367,8 @@ struct devm {
 	const char	*dm_srcfile;	/* the name of the "majors" file */
 	u_short		dm_srcline;	/* the line number */
 	const char	*dm_name;	/* [bc]devsw name */
-	int		dm_cmajor;	/* character major */
-	int		dm_bmajor;	/* block major */
+	devmajor_t	dm_cmajor;	/* character major */
+	devmajor_t	dm_bmajor;	/* block major */
 	struct nvlist	*dm_opts;	/* options */
 };
 
@@ -425,8 +431,8 @@ TAILQ_HEAD(, devm)	alldevms;	/* list of all device-majors */
 TAILQ_HEAD(, pspec)	allpspecs;	/* list of all parent specs */
 int	ndevi;				/* number of devi's (before packing) */
 int	npspecs;			/* number of parent specs */
-int	maxbdevm;			/* max number of block major */
-int	maxcdevm;			/* max number of character major */
+devmajor_t maxbdevm;			/* max number of block major */
+devmajor_t maxcdevm;			/* max number of character major */
 int	do_devsw;			/* 0 if pre-devsw config */
 int	oktopackage;			/* 0 before setmachine() */
 int	devilevel;			/* used for devi->i_level */

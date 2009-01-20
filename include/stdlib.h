@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.86 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.87 2009/01/20 18:20:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -281,7 +281,7 @@ int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
 int	 dehumanize_number(const char *, int64_t *);
 
 #ifndef __LIBC12_SOURCE__
-dev_t	 getdevmajor(const char *, mode_t) __RENAME(__getdevmajor50);
+devmajor_t getdevmajor(const char *, mode_t) __RENAME(__getdevmajor50);
 #endif
 int	 getloadavg(double [], int);
 

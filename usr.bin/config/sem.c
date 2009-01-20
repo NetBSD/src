@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.31 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.32 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,9 +83,9 @@ static char *extend(char *, const char *);
 static int split(const char *, size_t, char *, size_t, int *);
 static void selectbase(struct devbase *, struct deva *);
 static const char **fixloc(const char *, struct attr *, struct nvlist *);
-static const char *makedevstr(dev_t, dev_t);
-static const char *major2name(int);
-static dev_t dev2major(struct devbase *);
+static const char *makedevstr(devmajor_t, devminor_t);
+static const char *major2name(devmajor_t);
+static devmajor_t dev2major(struct devbase *);
 
 extern const char *yyfile;
 extern int vflag;
@@ -436,7 +436,7 @@ getdevbase(const char *name)
 		dev = ecalloc(1, sizeof *dev);
 		dev->d_name = name;
 		dev->d_isdef = 0;
-		dev->d_major = NODEV;
+		dev->d_major = NODEVMAJOR;
 		dev->d_attrs = NULL;
 		dev->d_ihead = NULL;
 		dev->d_ipp = &dev->d_ihead;
@@ -631,18 +631,18 @@ expandattr(struct attr *a, void (*callback)(struct attr *))
  * as a root/dumps "on" device in a configuration.
  */
 void
-setmajor(struct devbase *d, int n)
+setmajor(struct devbase *d, devmajor_t n)
 {
 
-	if (d != &errdev && d->d_major != NODEV)
-		cfgerror("device `%s' is already major %lld",
-		    d->d_name, (long long)d->d_major);
+	if (d != &errdev && d->d_major != NODEVMAJOR)
+		cfgerror("device `%s' is already major %d",
+		    d->d_name, d->d_major);
 	else
 		d->d_major = n;
 }
 
 const char *
-major2name(int maj)
+major2name(devmajor_t maj)
 {
 	struct devbase *dev;
 	struct devm *dm;
@@ -661,7 +661,7 @@ major2name(int maj)
 	return (NULL);
 }
 
-dev_t
+devmajor_t
 dev2major(struct devbase *dev)
 {
 	struct devm *dm;
@@ -673,26 +673,24 @@ dev2major(struct devbase *dev)
 		if (strcmp(dm->dm_name, dev->d_name) == 0)
 			return (dm->dm_bmajor);
 	}
-	return (NODEV);
+	return (NODEVMAJOR);
 }
 
 /*
  * Make a string description of the device at maj/min.
  */
 static const char *
-makedevstr(dev_t maj, dev_t min)
+makedevstr(devmajor_t maj, devminor_t min)
 {
 	const char *devicename;
 	char buf[32];
 
 	devicename = major2name(maj);
 	if (devicename == NULL)
-		(void)snprintf(buf, sizeof(buf), "<%lld/%lld>",
-		    (long long)maj, (long long)min);
+		(void)snprintf(buf, sizeof(buf), "<%d/%d>", maj, min);
 	else
-		(void)snprintf(buf, sizeof(buf), "%s%lld%c", devicename,
-		    (long long)min / maxpartitions,
-		    (char)(min % maxpartitions) + 'a');
+		(void)snprintf(buf, sizeof(buf), "%s%d%c", devicename,
+		    min / maxpartitions, (min % maxpartitions) + 'a');
 
 	return (intern(buf));
 }
@@ -709,7 +707,8 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	struct nvlist *nv;
 	struct devbase *dev;
 	const char *cp;
-	dev_t maj, min;
+	devmajor_t maj;
+	devminor_t min;
 	int i, l;
 	int unit;
 	char buf[NAMESIZE];
@@ -1464,22 +1463,23 @@ delpseudo(const char *name)
 }
 
 void
-adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
+adddevm(const char *name, devmajor_t cmajor, devmajor_t bmajor,
+	struct nvlist *options)
 {
 	struct devm *dm;
 
-	if (cmajor < -1 || cmajor >= 4096) {
+	if (cmajor != NODEVMAJOR && (cmajor < 0 || cmajor >= 4096)) {
 		cfgerror("character major %d is invalid", cmajor);
 		nvfreel(options);
 		return;
 	}
 
-	if (bmajor < -1 || bmajor >= 4096) {
+	if (bmajor != NODEVMAJOR && (bmajor < 0 || bmajor >= 4096)) {
 		cfgerror("block major %d is invalid", bmajor);
 		nvfreel(options);
 		return;
 	}
-	if (cmajor == -1 && bmajor == -1) {
+	if (cmajor == NODEVMAJOR && bmajor == NODEVMAJOR) {
 		cfgerror("both character/block majors are not specified");
 		nvfreel(options);
 		return;

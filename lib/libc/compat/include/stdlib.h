@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.2 2009/01/11 02:46:25 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.3 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@ int	 __unsetenv13(const char *);
 __aconst char *devname(int32_t, mode_t);
 __aconst char *__devname50(dev_t, mode_t);
 int32_t	 getdevmajor(const char *, mode_t);
-dev_t	 __getdevmajor50(const char *, mode_t);
+devmajor_t __getdevmajor50(const char *, mode_t);
 
 __END_DECLS
 

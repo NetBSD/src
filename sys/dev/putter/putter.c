@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.18 2008/12/29 17:52:43 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.19 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.18 2008/12/29 17:52:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.19 2009/01/20 18:20:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -619,7 +619,7 @@ static int
 putter_modcmd(modcmd_t cmd, void *arg)
 {
 #ifdef _MODULE
-	int bmajor = -1, cmajor = -1;
+	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

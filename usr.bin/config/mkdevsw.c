@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.6 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.7 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ emitdevm(FILE *fp)
 {
 	struct devm *dm;
 	char mstr[16];
-	int i;
+	devmajor_t i;
 
 	fputs("\n/* device switch table for block device */\n", fp);
 
