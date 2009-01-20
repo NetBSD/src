@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_file.c,v 1.1.1.2 2008/05/18 14:31:14 aymeric Exp $ */
+/*	$NetBSD: ex_file.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@ ex_file(SCR *sp, EXCMD *cmdp)
 {
 	char *p;
 	FREF *frp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	NEEDFILE(sp, cmdp);

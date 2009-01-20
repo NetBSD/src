@@ -1,4 +1,4 @@
-/*	$NetBSD: v_mark.c,v 1.1.1.2 2008/05/18 14:31:42 aymeric Exp $ */
+/*	$NetBSD: v_mark.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -125,7 +125,7 @@ mark(SCR *sp, VICMD *vp, int getmark, enum which cmd)
 		if (db_get(sp, vp->m_stop.lno, DBG_FATAL, NULL, &len))
 			return (1);
 		if (vp->m_stop.cno < len ||
-		    vp->m_stop.cno == len && len == 0)
+		    (vp->m_stop.cno == len && len == 0))
 			break;
 
 		if (ISMOTION(vp))
@@ -166,8 +166,8 @@ mark(SCR *sp, VICMD *vp, int getmark, enum which cmd)
 	 * and backward motions can happen for any kind of search command.
 	 */
 	if (vp->m_start.lno > vp->m_stop.lno ||
-	    vp->m_start.lno == vp->m_stop.lno &&
-	    vp->m_start.cno > vp->m_stop.cno) {
+	    (vp->m_start.lno == vp->m_stop.lno &&
+	    vp->m_start.cno > vp->m_stop.cno)) {
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;

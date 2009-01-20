@@ -1,4 +1,4 @@
-/*	$NetBSD: v_paragraph.c,v 1.1.1.2 2008/05/18 14:31:43 aymeric Exp $ */
+/*	$NetBSD: v_paragraph.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -51,7 +51,7 @@ static const char sccsid[] = "Id: v_paragraph.c,v 10.10 2001/06/25 15:19:32 skim
 		continue;						\
 	for (lp = VIP(sp)->ps; *lp != '\0'; lp += 2)			\
 		if (lp[0] == p[1] &&					\
-		    (lp[1] == ' ' && len == 2 || lp[1] == p[2]) &&	\
+		    ((lp[1] == ' ' && len == 2) || lp[1] == p[2]) &&	\
 		    !--cnt)						\
 			goto found;					\
 }
@@ -89,7 +89,7 @@ v_paragraphf(SCR *sp, VICMD *vp)
 	 * line itself remained.  If somebody complains, don't pause, don't
 	 * hesitate, just hit them.
 	 */
-	if (ISMOTION(vp))
+	if (ISMOTION(vp)) {
 		if (vp->m_start.cno == 0)
 			F_SET(vp, VM_LMODE);
 		else {
@@ -100,6 +100,7 @@ v_paragraphf(SCR *sp, VICMD *vp)
 			if (vp->m_start.cno <= vp->m_stop.cno)
 				F_SET(vp, VM_LMODE);
 		}
+	}
 
 	/* Figure out what state we're currently in. */
 	lno = vp->m_start.lno;
@@ -232,7 +233,7 @@ v_paragraphb(SCR *sp, VICMD *vp)
 	 */
 	lno = vp->m_start.lno;
 
-	if (ISMOTION(vp))
+	if (ISMOTION(vp)) {
 		if (vp->m_start.cno == 0) {
 			if (vp->m_start.lno == 1) {
 				v_sof(sp, &vp->m_start);
@@ -242,6 +243,7 @@ v_paragraphb(SCR *sp, VICMD *vp)
 			F_SET(vp, VM_LMODE);
 		} else
 			--vp->m_start.cno;
+	}
 
 	if (vp->m_start.lno <= 1)
 		goto sof;
@@ -308,10 +310,10 @@ found:	vp->m_stop.lno = lno;
  * v_buildps --
  *	Build the paragraph command search pattern.
  *
- * PUBLIC: int v_buildps __P((SCR *, char *, char *));
+ * PUBLIC: int v_buildps __P((SCR *, const char *, const char *));
  */
 int
-v_buildps(SCR *sp, char *p_p, char *s_p)
+v_buildps(SCR *sp, const char *p_p, const char *s_p)
 {
 	VI_PRIVATE *vip;
 	size_t p_len, s_len;

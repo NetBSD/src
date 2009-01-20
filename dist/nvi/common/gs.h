@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.h,v 1.2 2008/06/11 21:32:17 aymeric Exp $ */
+/*	$NetBSD: gs.h,v 1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -158,7 +158,7 @@ struct _gs {
 					/* Insert a line. */
 	int	(*scr_insertln) __P((SCR *));
 					/* Handle an option change. */
-	int	(*scr_optchange) __P((SCR *, int, char *, u_long *));
+	int	(*scr_optchange) __P((SCR *, int, const char *, u_long *));
 					/* Move the cursor. */
 	int	(*scr_move) __P((SCR *, size_t, size_t));
 					/* Refresh the screen. */

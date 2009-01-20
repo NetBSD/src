@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_write.c,v 1.1.1.2 2008/05/18 14:31:16 aymeric Exp $ */
+/*	$NetBSD: ex_write.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -130,9 +130,9 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 	MARK rm;
 	int flags;
 	char *name;
-	CHAR_T *p;
+	CHAR_T *p = NULL;
 	size_t nlen;
-	char *n;
+	const char *n;
 	int rc;
 
 	NEEDFILE(sp, cmdp);
@@ -235,9 +235,10 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 		 */
 		if (F_ISSET(sp->frp, FR_TMPFILE) &&
 		    !F_ISSET(sp->frp, FR_EXNAMED)) {
-			if ((n = v_strdup(sp, name, nlen - 1)) != NULL) {
+			char *q;
+			if ((q = v_strdup(sp, name, nlen - 1)) != NULL) {
 				free(sp->frp->name);
-				sp->frp->name = n;
+				sp->frp->name = q;
 			}
 			/*
 			 * The file has a real name, it's no longer a
@@ -274,10 +275,10 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
  *	Write a range of lines to a FILE *.
  *
  * PUBLIC: int ex_writefp __P((SCR *,
- * PUBLIC:    char *, FILE *, MARK *, MARK *, u_long *, u_long *, int));
+ * PUBLIC:    const char *, FILE *, MARK *, MARK *, u_long *, u_long *, int));
  */
 int
-ex_writefp(SCR *sp, char *name, FILE *fp, MARK *fm, MARK *tm, u_long *nlno, u_long *nch, int silent)
+ex_writefp(SCR *sp, const char *name, FILE *fp, MARK *fm, MARK *tm, u_long *nlno, u_long *nch, int silent)
 {
 	struct stat sb;
 	GS *gp;
@@ -285,9 +286,9 @@ ex_writefp(SCR *sp, char *name, FILE *fp, MARK *fm, MARK *tm, u_long *nlno, u_lo
 	db_recno_t fline, tline, lcnt;
 	size_t len;
 	int rval;
-	char *msg;
+	const char *msg;
 	CHAR_T *p;
-	char *f;
+	const char *f;
 	size_t flen;
 
 	gp = sp->gp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.h,v 1.2 2008/08/27 10:18:41 christos Exp $ */
+/*	$NetBSD: vi.h,v 1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -147,8 +147,8 @@ struct _vikeys {			/* Underlying function. */
 #define	V_RBUF		0x01000000	/* Buffer (required, trailing). */
 #define	V_SECURE	0x02000000	/* Permission denied if O_SECURE set. */
 	u_int32_t flags;
-	char	*usage;			/* Usage line. */
-	char	*help;			/* Help line. */
+	const char *usage;		/* Usage line. */
+	const char *help;		/* Help line. */
 };
 #define	MAXVIKEY	126		/* List of vi commands. */
 extern VIKEYS const vikeys[MAXVIKEY + 1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_print.c,v 1.1.1.2 2008/05/18 14:31:17 aymeric Exp $ */
+/*	$NetBSD: ex_print.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -100,10 +100,9 @@ ex_print(SCR *sp, EXCMD *cmdp, MARK *fp, MARK *tp, u_int32_t flags)
 	GS *gp;
 	db_recno_t from, to;
 	size_t col, len;
-	CHAR_T *p;
+	const CHAR_T *p;
 	CHAR_T buf[10];
-	CHAR_T *wp;
-	size_t wlen;
+	CHAR_T *q;
 
 	NEEDFILE(sp, cmdp);
 
@@ -131,8 +130,9 @@ ex_print(SCR *sp, EXCMD *cmdp, MARK *fp, MARK *tp, u_int32_t flags)
 		 * especially in handling end-of-line tabs, but they're almost
 		 * backward compatible.
 		 */
-		if (db_get(sp, from, DBG_FATAL, &p, &len))
+		if (db_get(sp, from, DBG_FATAL, &q, &len))
 			return (1);
+		p = q;
 
 		if (len == 0 && !LF_ISSET(E_C_LIST))
 			(void)ex_puts(sp, "\n");
@@ -175,7 +175,8 @@ ex_ldisplay(SCR *sp, const CHAR_T *p, size_t len, size_t col, u_int flags)
 int
 ex_scprint(SCR *sp, MARK *fp, MARK *tp)
 {
-	CHAR_T *p;
+	const CHAR_T *p;
+	CHAR_T *q;
 	size_t col, len;
 
 	col = 0;
@@ -185,8 +186,9 @@ ex_scprint(SCR *sp, MARK *fp, MARK *tp)
 			return (1);
 	}
 
-	if (db_get(sp, fp->lno, DBG_FATAL, &p, &len))
+	if (db_get(sp, fp->lno, DBG_FATAL, &q, &len))
 		return (1);
+	p = q;
 
 	if (ex_prchars(sp, p, &col, fp->cno, 0, ' '))
 		return (1);
@@ -212,7 +214,7 @@ ex_prchars(SCR *sp, const CHAR_T *p, size_t *colp, size_t len,
 	    u_int flags, int repeatc)
 {
 	CHAR_T ch;
-	char *kp;
+	const char *kp;
 	GS *gp;
 	size_t col, tlen, ts;
 
@@ -236,7 +238,7 @@ ex_prchars(SCR *sp, const CHAR_T *p, size_t *colp, size_t len,
 			    str[0] = ch;
 			    INT2CHAR(sp, str, 2, kp, tlen);
 			} else {
-			    kp = KEY_NAME(sp, ch);
+			    kp = (char *)KEY_NAME(sp, ch);
 			    tlen = KEY_LEN(sp, ch);
 			}
 			if (!repeatc  && col + tlen < sp->cols) {
@@ -277,7 +279,6 @@ ex_printf(sp, fmt, va_alist)
 	EX_PRIVATE *exp;
 	va_list ap;
 	size_t n;
-	CHAR_T *kp;
 
 	exp = EXP(sp);
 

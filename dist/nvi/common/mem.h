@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.1.1.2 2008/05/18 14:29:48 aymeric Exp $ */
+/*	$NetBSD: mem.h,v 1.1.1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -11,9 +11,9 @@
  *	Id: mem.h,v 10.13 2002/01/05 23:13:37 skimo Exp (Berkeley) Date: 2002/01/05 23:13:37
  */
 
-#ifdef HAVE_GCC
+#if defined(HAVE_GCC) && !defined(__NetBSD__)
 #define CHECK_TYPE(type, var)						\
-	type L__lp __attribute__((unused)) = var;
+	do { type L__lp __attribute__((__unused__)) = var; } while (/*CONSTCOND*/0);
 #else
 #define CHECK_TYPE(type, var)
 #endif
@@ -103,8 +103,8 @@
  * returns, one that jumps to an error label.
  */
 #define	ADD_SPACE_GOTO(sp, type, bp, blen, nlen) {			\
-	CHECK_TYPE(type *, bp)						\
 	WIN *L__wp = (sp) == NULL ? NULL : (sp)->wp;			\
+	CHECK_TYPE(type *, bp)						\
 	if (L__wp == NULL || bp == (type *)L__wp->tmp_bp) {		\
 		F_CLR(L__wp, W_TMP_INUSE);				\
 		BINC_GOTOC(sp, L__wp->tmp_bp, L__wp->tmp_blen, nlen);	\
