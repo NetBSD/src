@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.48 2009/01/17 22:28:53 njoly Exp $
+	$NetBSD: syscalls.master,v 1.49 2009/01/20 12:00:58 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -237,7 +237,7 @@
 133	NOARGS	{ int|netbsd32||fchdir(int fd); }
 134	UNIMPL	bdflush
 135	UNIMPL	sysfs
-136	UNIMPL	personality
+136	STD	{ int|linux32_sys||personality(int per); }
 137	UNIMPL	afs_syscall
 138	NOARGS	setfsuid16 { int|linux32_sys||setfsuid(uid_t uid); }
 139	NOARGS	setfsgid16 { int|linux32_sys||setfsgid(gid_t gid); }
