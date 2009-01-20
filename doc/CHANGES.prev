@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.85 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.86 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9766,3 +9766,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	fxp(4): Add a workaround for hardware ip4csum-tx bug.
 		[tsutsui 20081203]
 	wscons(4): Add wscons/vcons support for Sun bw2. [jdc 20081205]
+	nvi(1): Added "expandtab" option.  [lukem 20081212]
