@@ -875,6 +875,12 @@ ops_keyring_list(const ops_keyring_t* keyring)
 	}
     }
 
+unsigned
+ops_get_keydata_content_type(const ops_keydata_t *keydata)
+{
+	return keydata->type;
+}
+
 /* Static functions */
 
 static ops_parse_cb_return_t
