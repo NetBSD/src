@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.8 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: files.c,v 1.9 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -382,7 +382,7 @@ fixdevsw(void)
 		    !expr_eval(dm->dm_opts, fixsel, NULL))
 			continue;
 
-		if (dm->dm_cmajor != -1) {
+		if (dm->dm_cmajor != NODEVMAJOR) {
 			if (ht_lookup(cdevmtab, intern(dm->dm_name)) != NULL) {
 				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of character device '%s' "
@@ -404,7 +404,7 @@ fixdevsw(void)
 				      dm->dm_name, dm->dm_cmajor);
 			}
 		}
-		if (dm->dm_bmajor != -1) {
+		if (dm->dm_bmajor != NODEVMAJOR) {
 			if (ht_lookup(bdevmtab, intern(dm->dm_name)) != NULL) {
 				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of block device '%s' "

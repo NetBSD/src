@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.20 2009/01/18 10:04:35 mrg Exp $ */
+/* $NetBSD: drm_drv.c,v 1.21 2009/01/20 18:20:48 drochner Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.20 2009/01/18 10:04:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.21 2009/01/20 18:20:48 drochner Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -820,7 +820,7 @@ static int
 drm_modcmd(modcmd_t cmd, void *arg)
 {
 #ifdef _MODULE
-	int bmajor = -1, cmajor = -1;
+	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

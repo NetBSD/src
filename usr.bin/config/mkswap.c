@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.6 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.7 2009/01/20 18:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,8 +79,8 @@ mkdevstr(dev_t d)
 	if (d == NODEV)
 		(void)snprintf(buf, sizeof(buf), "NODEV");
 	else
-		(void)snprintf(buf, sizeof(buf), "makedev(%" PRIi64 ", %"
-		    PRIi64 ")", (int64_t)major(d), (int64_t)minor(d));
+		(void)snprintf(buf, sizeof(buf), "makedev(%d, %d)",
+		    major(d), minor(d));
 	return buf;
 }
 
