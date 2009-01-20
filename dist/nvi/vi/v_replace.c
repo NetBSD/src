@@ -1,4 +1,4 @@
-/*	$NetBSD: v_replace.c,v 1.1.1.2 2008/05/18 14:31:43 aymeric Exp $ */
+/*	$NetBSD: v_replace.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -155,7 +155,7 @@ next:		if (v_event_get(sp, &ev, 0, 0))
 	 * is different from the historic vi, which replaced N characters with
 	 * a single new line.  Users complained, so we match historic practice.
 	 */
-	if (!quote && vip->rvalue == K_CR || vip->rvalue == K_NL) {
+	if ((!quote && vip->rvalue == K_CR) || vip->rvalue == K_NL) {
 		/* Set return line. */
 		vp->m_stop.lno = vp->m_start.lno + 1;
 		vp->m_stop.cno = 0;

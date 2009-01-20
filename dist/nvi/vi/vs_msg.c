@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_msg.c,v 1.1.1.2 2008/05/18 14:31:51 aymeric Exp $ */
+/*	$NetBSD: vs_msg.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -162,7 +162,7 @@ vs_update(SCR *sp, const char *m1, const CHAR_T *m2)
 {
 	GS *gp;
 	size_t len, mlen, oldx, oldy;
-	CONST char *np;
+	const char *np;
 	size_t nlen;
 
 	gp = sp->gp;
@@ -244,12 +244,13 @@ vs_msg(SCR *sp, mtype_t mtype, char *line, size_t len)
 	 * XXX
 	 * Shouldn't we save this, too?
 	 */
-	if (F_ISSET(sp, SC_TINPUT_INFO) || F_ISSET(gp, G_BELLSCHED))
+	if (F_ISSET(sp, SC_TINPUT_INFO) || F_ISSET(gp, G_BELLSCHED)) {
 		if (F_ISSET(sp, SC_SCR_VI)) {
 			F_CLR(gp, G_BELLSCHED);
 			(void)gp->scr_bell(sp);
 		} else
 			F_SET(gp, G_BELLSCHED);
+	}
 
 	/*
 	 * If vi is using the error line for text input, there's no screen
@@ -275,13 +276,14 @@ vs_msg(SCR *sp, mtype_t mtype, char *line, size_t len)
 	 * the screen, so previous opinions are ignored.
 	 */
 	if (F_ISSET(sp, SC_EX | SC_SCR_EXWROTE)) {
-		if (!F_ISSET(sp, SC_SCR_EX))
+		if (!F_ISSET(sp, SC_SCR_EX)) {
 			if (F_ISSET(sp, SC_SCR_EXWROTE)) {
 				if (sp->gp->scr_screen(sp, SC_EX))
 					return;
 			} else
 				if (ex_init(sp))
 					return;
+		}
 
 		if (mtype == M_ERR)
 			(void)gp->scr_attr(sp, SA_INVERSE, 1);
@@ -343,13 +345,14 @@ vs_msg(SCR *sp, mtype_t mtype, char *line, size_t len)
 	padding += 2;
 
 	maxcols = sp->cols - 1;
-	if (vip->lcontinue != 0)
+	if (vip->lcontinue != 0) {
 		if (len + vip->lcontinue + padding > maxcols)
 			vs_output(sp, vip->mtype, ".\n", 2);
 		else  {
 			vs_output(sp, vip->mtype, ";", 1);
 			vs_output(sp, M_NONE, " ", 1);
 		}
+	}
 	vip->mtype = mtype;
 	for (s = line;; s = t) {
 		for (; len > 0 && isblank(*s); --len, ++s);
@@ -392,7 +395,7 @@ ret:	(void)gp->scr_move(sp, oldy, oldx);
 static void
 vs_output(SCR *sp, mtype_t mtype, const char *line, int llen)
 {
-	char *kp;
+	unsigned char *kp;
 	GS *gp;
 	VI_PRIVATE *vip;
 	size_t chlen, notused;

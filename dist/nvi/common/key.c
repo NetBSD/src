@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.2 2008/08/27 10:18:41 christos Exp $ */
+/*	$NetBSD: key.c,v 1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -204,7 +204,7 @@ void
 v_key_ilookup(SCR *sp)
 {
 	UCHAR_T ch;
-	char *p, *t;
+	unsigned char *p, *t;
 	GS *gp;
 	size_t len;
 
@@ -246,7 +246,7 @@ v_key_name(SCR *sp, ARG_CHAR_T ach)
 	CHAR_T ch, mask;
 	size_t len;
 	int cnt, shift;
-	char *chp;
+	const char *chp;
 
 	ch = ach;
 
@@ -301,7 +301,7 @@ nopr:	if (ISCNTRL(ch) && (ch < 0x20 || ch == 0x7f)) {
 	} else {
 		sp->cname[0] = '\\';
 		sp->cname[1] = 'x';
-		for (len = 2, chp = (u_int8_t *)&ch,
+		for (len = 2, chp = (char *)&ch,
 		    /* sizeof(CHAR_T) conflict with MAX_CHARACTER_COLUMNS
 		     * and code depends on big endian
 		     * and might not be needed in the long run
@@ -342,10 +342,10 @@ v_key_val(SCR *sp, ARG_CHAR_T ch)
  * an associated flag value, which indicates if it has already been quoted,
  * and if it is the result of a mapping or an abbreviation.
  *
- * PUBLIC: int v_event_push __P((SCR *, EVENT *, CHAR_T *, size_t, u_int));
+ * PUBLIC: int v_event_push __P((SCR *, EVENT *, const CHAR_T *, size_t, u_int));
  */
 int
-v_event_push(SCR *sp, EVENT *p_evp, CHAR_T *p_s, size_t nitems, u_int flags)
+v_event_push(SCR *sp, EVENT *p_evp, const CHAR_T *p_s, size_t nitems, u_int flags)
 	        
 	             			/* Push event. */
 	            			/* Push characters. */
@@ -628,7 +628,7 @@ newmap:	evp = &wp->i_event[wp->i_next];
 	 */
 	if (istimeout || FL_ISSET(evp->e_flags, CH_NOMAP) ||
 	    !LF_ISSET(EC_MAPCOMMAND | EC_MAPINPUT) ||
-	    evp->e_c < MAX_BIT_SEQ && !bit_test(gp->seqb, evp->e_c))
+	    (evp->e_c < MAX_BIT_SEQ && !bit_test(gp->seqb, evp->e_c)))
 		goto nomap;
 
 	/* Search the map. */
@@ -847,5 +847,5 @@ v_event_grow(SCR *sp, int add)
 static int
 v_key_cmp(const void *ap, const void *bp)
 {
-	return (((KEYLIST *)ap)->ch - ((KEYLIST *)bp)->ch);
+	return (((const KEYLIST *)ap)->ch - ((const KEYLIST *)bp)->ch);
 }

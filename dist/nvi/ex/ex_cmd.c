@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cmd.c,v 1.2 2008/10/29 17:50:49 christos Exp $ */
+/*	$NetBSD: ex_cmd.c,v 1.2.2.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -467,5 +467,8 @@ EXCMDLIST const cmds[] = {
 	    "s",
 	    "[line [,line]] ~ [cgr] [count] [#lp]",
 	    "replace previous RE with previous replacement string,"},
-	{NULL},
+	{NULL,			NULL,		0,
+	     NULL,
+	     NULL,
+	     NULL,},
 };

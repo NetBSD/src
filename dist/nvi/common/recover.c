@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.1.1.2 2008/05/18 14:29:51 aymeric Exp $ */
+/*	$NetBSD: recover.c,v 1.1.1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -115,7 +115,7 @@ static int	 rcv_copy __P((SCR *, int, char *));
 static void	 rcv_email __P((SCR *, char *));
 static char	*rcv_gets __P((char *, size_t, int));
 static int	 rcv_mailfile __P((SCR *, int, char *));
-static int	 rcv_mktemp __P((SCR *, char *, char *, int));
+static int	 rcv_mktemp __P((SCR *, char *, const char *, int));
 
 /*
  * rcv_tmp --
@@ -128,7 +128,8 @@ rcv_tmp(SCR *sp, EXF *ep, char *name)
 {
 	struct stat sb;
 	int fd;
-	char *dp, path[MAXPATHLEN];
+	char path[MAXPATHLEN];
+	const char *dp;
 
 	/*
 	 * !!!
@@ -250,7 +251,8 @@ rcv_sync(SCR *sp, u_int flags)
 {
 	EXF *ep;
 	int fd, rval;
-	char *dp, buf[1024];
+	char buf[1024];
+	const char *dp;
 
 	/* Make sure that there's something to recover/sync. */
 	ep = sp->ep;
@@ -328,7 +330,8 @@ rcv_mailfile(SCR *sp, int issync, char *cp_path)
 	time_t now;
 	uid_t uid;
 	int fd;
-	char *dp, *p, *t, buf[4096], mpath[MAXPATHLEN];
+	char *p, *t, buf[4096], mpath[MAXPATHLEN];
+	const char *dp;
 	char *t1, *t2, *t3;
 
 	/*
@@ -484,14 +487,16 @@ rcv_list(SCR *sp)
 	DIR *dirp;
 	FILE *fp;
 	int found;
-	char *p, *t, file[MAXPATHLEN], path[MAXPATHLEN];
+	char *p, *t;
+	const char *d;
+	char file[MAXPATHLEN], path[MAXPATHLEN];
 
 	/* Open the recovery directory for reading. */
 	if (opts_empty(sp, O_RECDIR, 0))
 		return (1);
-	p = O_STR(sp, O_RECDIR);
-	if (chdir(p) || (dirp = opendir(".")) == NULL) {
-		msgq_str(sp, M_SYSERR, p, "recdir: %s");
+	d = O_STR(sp, O_RECDIR);
+	if (chdir(d) || (dirp = opendir(".")) == NULL) {
+		msgq_str(sp, M_SYSERR, d, "recdir: %s");
 		return (1);
 	}
 
@@ -586,8 +591,9 @@ rcv_read(SCR *sp, FREF *frp)
 	DIR *dirp;
 	EXF *ep;
 	time_t rec_mtime;
-	int fd, found, locked, requested, sv_fd;
-	char *name, *p, *t, *rp, *recp, *pathp;
+	int fd, found, locked = 0, requested, sv_fd;
+	char *name, *p, *t, *recp, *pathp;
+	const char *rp;
 	char file[MAXPATHLEN], path[MAXPATHLEN], recpath[MAXPATHLEN];
 
 	if (opts_empty(sp, O_RECDIR, 0))
@@ -804,7 +810,7 @@ rcv_gets(char *buf, size_t len, int fd)
  *	Paranoid make temporary file routine.
  */
 static int
-rcv_mktemp(SCR *sp, char *path, char *dname, int perms)
+rcv_mktemp(SCR *sp, char *path, const char *dname, int perms)
 {
 	int fd;
 

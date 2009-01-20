@@ -12,6 +12,7 @@
 #include <fcntl.h>
 
 #include "../common/db.h"
+#include "../common/dbinternal.h"
 
 /*
  * DB_ENV emulation
@@ -118,7 +119,7 @@ db_create(DB **dbp, DB_ENV *dbenv, u_int32_t flags) {
 	return 0;
 }
 
-char *
+const char *
 db_strerror(int error) {
 	return error > 0? strerror(error) : "record not found";
 }
@@ -154,11 +155,11 @@ db1_db_open(DB *db, const char *file, const char *database, DBTYPE type,
 		oldflags |= O_TRUNC;
 
 	if (type == DB_RECNO) {
-		char *tmp = (char *) file;
+		const char *tmp = file;
 
 		/* The interface is reversed in DB3 */
 		file = db->_recno_info.bfname;
-		db->_recno_info.bfname = tmp;
+		db->_recno_info.bfname = __UNCONST(tmp);
 
 		/* ... and so, we should avoid to truncate the main file! */
 		oldflags &= ~O_TRUNC;
@@ -219,13 +220,14 @@ db1_db_put(DB *db, DB_TXN *txnid, DBT *key, DBT *data, u_int32_t flags) {
 	key1 = *key;
 
 	if (flags & DB_APPEND) {
-		if (db_v1->seq(db_v1,
-			    (DBT_v1 *) key, (DBT_v1 *) &data1, R_LAST) == 1) {
+		if (db_v1->seq(db_v1, (DBT_v1 *)(void *)key,
+		    (DBT_v1 *)(void *)&data1, R_LAST) == 1) {
 			key1.data = &recno;
 			key1.size = sizeof recno;
 		}
 	}
-	err = db_v1->put(db_v1, (DBT_v1 *) &key1, (DBT_v1 *) data, 0);
+	err = db_v1->put(db_v1, (DBT_v1 *)(void *)&key1, (DBT_v1 *)(void *)data,
+	    0);
 
 	return err == -1? errno : err;
 }
@@ -270,7 +272,7 @@ db1_db_set_re_delim(DB *db, int re_delim) {
 
 static int
 db1_db_set_re_source(DB *db, const char *re_source) {
-	db->_recno_info.bfname = (char *) re_source;
+	db->_recno_info.bfname = __UNCONST(re_source);
 
 	return 0;
 }
@@ -306,6 +308,7 @@ db1_db_cursor(DB *db, DB_TXN *txn, DBC **cursorp, u_int32_t flags) {
 static int
 db1_dbc_close(DBC *cursor) {
 	free(cursor);
+	return 0;
 }
 
 static int
@@ -346,7 +349,6 @@ static int
 db1_dbc_put(DBC *cursor, DBT *key, DBT *data, u_int32_t flags) {
 	DB *db = cursor->db;
 	DB_old *db_v1 = db->actual_db;
-	DBT data1;
 	int ret = 0;
 
 	assert((flags & ~(DB_BEFORE | DB_AFTER)) == 0);

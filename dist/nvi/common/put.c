@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.1.1.2 2008/05/18 14:29:50 aymeric Exp $ */
+/*	$NetBSD: put.c,v 1.1.1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -44,7 +44,7 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 	CHAR_T *bp, *t;
 	CHAR_T *p;
 
-	if (cbp == NULL)
+	if (cbp == NULL) {
 		if (namep == NULL) {
 			cbp = sp->wp->dcbp;
 			if (cbp == NULL) {
@@ -61,6 +61,7 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 				return (1);
 			}
 		}
+	}
 	tp = cbp->textq.cqh_first;
 
 	/*

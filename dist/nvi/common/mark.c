@@ -1,4 +1,4 @@
-/*	$NetBSD: mark.c,v 1.1.1.2 2008/05/18 14:29:47 aymeric Exp $ */
+/*	$NetBSD: mark.c,v 1.1.1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -221,12 +221,13 @@ mark_insdel(SCR *sp, lnop_t op, db_recno_t lno)
 	case LINE_DELETE:
 		for (lmp = sp->ep->marks.lh_first;
 		    lmp != NULL; lmp = lmp->q.le_next)
-			if (lmp->lno >= lno)
+			if (lmp->lno >= lno) {
 				if (lmp->lno == lno) {
 					F_SET(lmp, MARK_DELETED);
 					(void)log_mark(sp, lmp);
 				} else
 					--lmp->lno;
+			}
 		break;
 	case LINE_INSERT:
 		/*

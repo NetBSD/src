@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.h,v 1.1.1.2 2008/05/18 14:29:40 aymeric Exp $ */
+/*	$NetBSD: conv.h,v 1.1.1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 #define KEY_COL(sp, ch)							\
 	(INTISWIDE(ch) ? CHAR_WIDTH(sp, ch) ? CHAR_WIDTH(sp, ch) : 	\
@@ -11,9 +11,9 @@ struct _conv_win {
 };
 
 typedef int (*char2wchar_t) 
-    (SCR *, const char *, ssize_t, struct _conv_win *, size_t *, CHAR_T **);
+    (SCR *, const char *, ssize_t, struct _conv_win *, size_t *, const CHAR_T **);
 typedef int (*wchar2char_t) 
-    (SCR *, const CHAR_T *, ssize_t, struct _conv_win *, size_t *, char **);
+    (SCR *, const CHAR_T *, ssize_t, struct _conv_win *, size_t *, const char **);
 
 struct _conv {
 	char2wchar_t	sys2int;
@@ -23,3 +23,5 @@ struct _conv {
 	char2wchar_t	input2int;
 	wchar2char_t	int2disp;
 };
+void conv_init __P((SCR *, SCR *));
+int conv_enc __P((SCR *, int, const char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_display.c,v 1.1.1.2 2008/05/18 14:31:14 aymeric Exp $ */
+/*	$NetBSD: ex_display.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -28,7 +28,7 @@ static const char sccsid[] = "Id: ex_display.c,v 10.15 2001/06/25 15:19:15 skimo
 #include "tag.h"
 
 static int	bdisplay __P((SCR *));
-static void	db __P((SCR *, CB *, u_char *));
+static void	db __P((SCR *, CB *, const char *));
 
 /*
  * ex_display -- :display b[uffers] | c[onnections] | s[creens] | t[ags]
@@ -118,12 +118,13 @@ bdisplay(SCR *sp)
  *	Display a buffer.
  */
 static void
-db(SCR *sp, CB *cbp, u_char *name)
+db(SCR *sp, CB *cbp, const char *np)
 {
 	CHAR_T *p;
 	GS *gp;
 	TEXT *tp;
 	size_t len;
+	const unsigned char *name = (const void *)np;
 
 	gp = sp->gp;
 	(void)ex_printf(sp, "********** %s%s\n",
@@ -132,7 +133,7 @@ db(SCR *sp, CB *cbp, u_char *name)
 	for (tp = cbp->textq.cqh_first;
 	    tp != (void *)&cbp->textq; tp = tp->q.cqe_next) {
 		for (len = tp->len, p = tp->lb; len--; ++p) {
-			(void)ex_puts(sp, KEY_NAME(sp, *p));
+			(void)ex_puts(sp, (char *)KEY_NAME(sp, *p));
 			if (INTERRUPTED(sp))
 				return;
 		}

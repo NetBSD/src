@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.2 2008/05/18 14:29:46 aymeric Exp $ */
+/*	$NetBSD: log.c,v 1.1.1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -28,6 +28,7 @@ static const char sccsid[] = "Id: log.c,v 10.26 2002/03/02 23:12:13 skimo Exp (B
 #include <string.h>
 
 #include "common.h"
+#include "dbinternal.h"
 
 /*
  * The log consists of records, each containing a type byte and a variable
@@ -67,9 +68,9 @@ static const char sccsid[] = "Id: log.c,v 10.26 2002/03/02 23:12:13 skimo Exp (B
 
 static int	vi_log_get __P((SCR *sp, db_recno_t *lnop, size_t *size));
 static int	log_cursor1 __P((SCR *, int));
-static void	log_err __P((SCR *, char *, int));
+static void	log_err __P((SCR *, const char *, int));
 #if defined(DEBUG) && 0
-static void	log_trace __P((SCR *, char *, db_recno_t, u_char *));
+static void	log_trace __P((SCR *, const char *, db_recno_t, u_char *));
 #endif
 
 /* Try and restart the log on failure, i.e. if we run out of memory. */
@@ -741,7 +742,7 @@ err:	F_CLR(ep, F_NOLOG);
  *	Try and restart the log on failure, i.e. if we run out of memory.
  */
 static void
-log_err(SCR *sp, char *file, int line)
+log_err(SCR *sp, const char *file, int line)
 {
 	EXF *ep;
 
@@ -754,11 +755,7 @@ log_err(SCR *sp, char *file, int line)
 
 #if defined(DEBUG) && 0
 static void
-log_trace(sp, msg, rno, p)
-	SCR *sp;
-	char *msg;
-	db_recno_t rno;
-	u_char *p;
+log_trace(SCR *sp, const char *msg, db_recno_t rno, u_char *p)
 {
 	LMARK lm;
 	MARK m;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_at.c,v 1.1.1.2 2008/05/18 14:31:12 aymeric Exp $ */
+/*	$NetBSD: ex_at.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -64,7 +64,7 @@ ex_at(SCR *sp, EXCMD *cmdp)
 
 	CBNAME(sp, cbp, name);
 	if (cbp == NULL) {
-		ex_emsg(sp, KEY_NAME(sp, name), EXM_EMPTYBUF);
+		ex_emsg(sp, (char *)KEY_NAME(sp, name), EXM_EMPTYBUF);
 		return (1);
 	}
 
