@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.2 2008/05/07 08:48:11 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.3 2009/01/20 15:13:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.2 2008/05/07 08:48:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.3 2009/01/20 15:13:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,12 @@ typedef struct {
 	struct work c_work;
 	callout_t c_callout;
 } __aligned(CACHE_LINE_SIZE) tprof_cpu_t;
+
+/*
+ * locking order:
+ *	tprof_reader_lock -> tprof_lock
+ *	tprof_startstop_lock -> tprof_lock
+ */
 
 static kmutex_t tprof_lock;
 static bool tprof_running;
