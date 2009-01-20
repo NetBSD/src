@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2008/07/16 13:19:20 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.17 2009/01/20 13:35:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Izumi Tsutsui.  All rights reserved.
@@ -83,6 +83,7 @@ boot(uint32_t d4, uint32_t d5, uint32_t d6, uint32_t d7)
 	u_long marks[MARK_MAX];
 	static char devname[32], file[32];
 	void (*entry)(void);
+	int loadflag;
 
 	printf("%s Secondary Boot, Revision %s (from NetBSD %s)\n",
 	    bootprog_name, bootprog_rev, bootprog_kernrev);
@@ -122,10 +123,15 @@ boot(uint32_t d4, uint32_t d5, uint32_t d6, uint32_t d7)
 		kernels[1] = NULL;
 	}
 
+	/* disable LOAD_NOTE on floppy to avoid backward seek across volumes */
+	loadflag = LOAD_KERNEL;
+	if (devname[0] == 'f')	/* XXX */
+		loadflag &= ~LOAD_NOTE;
+
 	for (i = 0; kernels[i]; i++) {
 		sprintf(file, "%s%s", devname, kernels[i]);
 		DPRINTF("trying %s...\n", file);
-		fd = loadfile(file, marks, LOAD_KERNEL);
+		fd = loadfile(file, marks, loadflag);
 		if (fd != -1)
 			break;
 	}
