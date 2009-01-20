@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.31 2008/10/31 00:36:22 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.32 2009/01/20 01:57:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.31 2008/10/31 00:36:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.32 2009/01/20 01:57:35 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -318,11 +318,11 @@ sys__sched_setaffinity(struct lwp *l,
 		syscallarg(const cpuset_t *) cpuset;
 	} */
 	kcpuset_t *cpuset, *cpulst = NULL;
-	struct cpu_info *ci = NULL;
+	struct cpu_info *ici, *ci;
 	struct proc *p;
 	struct lwp *t;
 	CPU_INFO_ITERATOR cii;
-	bool offline_in_set;
+	bool alloff;
 	lwpid_t lid;
 	u_int lcnt;
 	int error;
@@ -332,27 +332,41 @@ sys__sched_setaffinity(struct lwp *l,
 		return error;
 
 	/*
-	 * Look for a CPU in the set, however, skip offline CPUs.
+	 * Traverse _each_ CPU to:
+	 *  - Check that CPUs in the mask have no assigned processor set.
+	 *  - Check that at least one CPU from the mask is online.
+	 *  - Find the first target CPU to migrate.
 	 *
-	 * To avoid the race with CPU online/offline calls, cpu_lock will
-	 * be locked for the entire operation.
+	 * To avoid the race with CPU online/offline calls and processor sets,
+	 * cpu_lock will be locked for the entire operation.
 	 */
-	offline_in_set = false;
+	ci = NULL;
+	alloff = false;
 	mutex_enter(&cpu_lock);
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		struct schedstate_percpu *spc;
+	for (CPU_INFO_FOREACH(cii, ici)) {
+		struct schedstate_percpu *ispc;
 
-		if (kcpuset_isset(cpu_index(ci), cpuset) == 0)
+		if (kcpuset_isset(cpu_index(ici), cpuset) == 0)
 			continue;
-		spc = &ci->ci_schedstate;
-		if (spc->spc_flags & SPCF_OFFLINE) {
-			offline_in_set = true;
+
+		ispc = &ici->ci_schedstate;
+		/* Check that CPU is not in the processor-set */
+		if (ispc->spc_psid != PS_NONE) {
+			error = EPERM;
+			goto out;
+		}
+		/* Skip offline CPUs */
+		if (ispc->spc_flags & SPCF_OFFLINE) {
+			alloff = true;
 			continue;
 		}
-		break;
+		/* Target CPU to migrate */
+		if (ci == NULL) {
+			ci = ici;
+		}
 	}
 	if (ci == NULL) {
-		if (offline_in_set) {
+		if (alloff) {
 			/* All CPUs in the set are offline */
 			error = EPERM;
 			goto out;
