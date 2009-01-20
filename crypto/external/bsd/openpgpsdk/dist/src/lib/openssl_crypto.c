@@ -41,7 +41,7 @@
 
 static int debug=0;
 
-void test_secret_key(const ops_secret_key_t *skey)
+static void test_secret_key(const ops_secret_key_t *skey)
     {
     RSA* test=RSA_new();
 
@@ -388,6 +388,7 @@ ops_boolean_t ops_dsa_verify(const unsigned char *hash,size_t hash_length,
     DSA_SIG *osig;
     DSA *odsa;
     int ret;
+    unsigned int qlen;
 
     osig=DSA_SIG_new();
     osig->r=sig->r;
@@ -401,8 +402,8 @@ ops_boolean_t ops_dsa_verify(const unsigned char *hash,size_t hash_length,
 
     if (debug)
         {
-        fprintf(stderr,"hash passed in:\n");
         unsigned i;
+        fprintf(stderr,"hash passed in:\n");
         for (i=0; i<hash_length; i++)
             {
             fprintf(stderr,"%02x ", hash[i]);
@@ -411,7 +412,7 @@ ops_boolean_t ops_dsa_verify(const unsigned char *hash,size_t hash_length,
         }
     //printf("hash_length=%ld\n", hash_length);
     //printf("Q=%d\n", BN_num_bytes(odsa->q));
-    unsigned int qlen=BN_num_bytes(odsa->q);
+    qlen=BN_num_bytes(odsa->q);
     if (qlen < hash_length)
         hash_length=qlen;
     //    ret=DSA_do_verify(hash,hash_length,osig,odsa);
@@ -637,6 +638,8 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
     ops_secret_key_t *skey=NULL;
     RSA *rsa=NULL;
     BN_CTX *ctx=BN_CTX_new();
+    ops_create_info_t *cinfo;
+    ops_memory_t *mem;
 
     ops_keydata_init(keydata,OPS_PTAG_CT_SECRET_KEY);
     skey=ops_get_writable_secret_key_from_data(keydata);
@@ -677,8 +680,8 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
 
     // Generate checksum
 
-    ops_create_info_t *cinfo=NULL;
-    ops_memory_t *mem=NULL;
+    cinfo=NULL;
+    mem=NULL;
 
     ops_setup_memory_write(&cinfo, &mem, 128);
 

@@ -382,8 +382,8 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
         
         if (debug)
             {
-            printf("\n*** hashed data:\n");
             unsigned int zzz=0;
+            printf("\n*** hashed data:\n");
             for (zzz=0; zzz<content->signature.info.v4_hashed_data_length; zzz++)
                 printf("0x%02x ", content->signature.info.v4_hashed_data[zzz]);
             printf("\n");

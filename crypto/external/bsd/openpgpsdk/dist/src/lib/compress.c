@@ -72,10 +72,11 @@ static int zlib_compressed_data_reader(void *dest,size_t length,
 				  ops_parse_cb_info_t *cbinfo)
     {
     z_decompress_arg_t *arg=ops_reader_get_arg(rinfo);
-    assert(arg->type==OPS_C_ZIP || arg->type==OPS_C_ZLIB);
 
     //ops_parser_content_t content;
     int saved=length;
+
+    assert(arg->type==OPS_C_ZIP || arg->type==OPS_C_ZLIB);
 
     if(/*arg->region->indeterminate && */ arg->inflate_ret == Z_STREAM_END
        && arg->zstream.next_out == &arg->out[arg->offset])
@@ -158,10 +159,11 @@ static int bzip2_compressed_data_reader(void *dest,size_t length,
 				  ops_parse_cb_info_t *cbinfo)
     {
     bz_decompress_arg_t *arg=ops_reader_get_arg(rinfo);
-    assert(arg->type==OPS_C_BZIP2);
 
     //ops_parser_content_t content;
     int saved=length;
+
+    assert(arg->type==OPS_C_BZIP2);
 
     if(arg->inflate_ret == BZ_STREAM_END
        && arg->bzstream.next_out == &arg->out[arg->offset])

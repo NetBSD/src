@@ -27,6 +27,7 @@
 #include <openpgpsdk/crypto.h>
 #include <openpgpsdk/create.h>
 #include <openpgpsdk/errors.h>
+#include <openpgpsdk/readerwriter.h>
 #include <stdio.h>
 #include <assert.h>
 

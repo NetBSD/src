@@ -382,6 +382,8 @@ static ops_boolean_t armoured_finaliser(ops_armor_type_t type, ops_error_t **err
 
     char* tail=NULL;
     unsigned int sz_tail=0;
+    base64_arg_t *arg;
+    unsigned char c[3];
 
     switch(type)
         {
@@ -399,8 +401,7 @@ static ops_boolean_t armoured_finaliser(ops_armor_type_t type, ops_error_t **err
         assert(0);
         }
 
-    base64_arg_t *arg=ops_writer_get_arg(winfo);
-    unsigned char c[3];
+    arg=ops_writer_get_arg(winfo);
 
     if(arg->pos)
 	{
@@ -455,7 +456,9 @@ void ops_writer_push_armoured(ops_create_info_t *info, ops_armor_type_t type)
     char* header=NULL;
     unsigned int sz_hdr=0;
     ops_boolean_t (* finaliser)(ops_error_t **errors, ops_writer_info_t *winfo);
+    base64_arg_t *arg;
 
+    finaliser = NULL;
     switch(type)
         {
     case OPS_PGP_PUBLIC_KEY_BLOCK:
@@ -479,7 +482,7 @@ void ops_writer_push_armoured(ops_create_info_t *info, ops_armor_type_t type)
     ops_writer_push(info,linebreak_writer,NULL,ops_writer_generic_destroyer,
 		    ops_mallocz(sizeof(linebreak_arg_t)));
 
-    base64_arg_t *arg=ops_mallocz(sizeof *arg);
+    arg=ops_mallocz(sizeof *arg);
     arg->checksum=CRC24_INIT;
     ops_writer_push(info,base64_writer,finaliser,ops_writer_generic_destroyer,arg);
     }
