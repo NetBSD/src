@@ -38,7 +38,7 @@ ops_boolean_t ops_validate_key_signatures(ops_validate_result_t *result,
                                  ops_parse_cb_return_t cb (const ops_parser_content_t *, ops_parse_cb_info_t *));
 ops_boolean_t ops_validate_all_signatures(ops_validate_result_t *result,
                                  const ops_keyring_t *ring,
-                                 ops_parse_cb_return_t (const ops_parser_content_t *, ops_parse_cb_info_t *));
+                                 ops_parse_cb_return_t cb (const ops_parser_content_t *, ops_parse_cb_info_t *));
 
 void ops_keydata_reader_set(ops_parse_info_t *pinfo,
 			     const ops_keydata_t *key);
@@ -98,5 +98,9 @@ ops_validate_key_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cb
 
 ops_boolean_t ops_validate_file(ops_validate_result_t* result, const char* filename, const int armoured, const ops_keyring_t* keyring);
 ops_boolean_t ops_validate_mem(ops_validate_result_t *result, ops_memory_t* mem, const int armoured, const ops_keyring_t* keyring);
+
+ops_parse_cb_return_t
+validate_data_cb(const ops_parser_content_t *,ops_parse_cb_info_t *);
+ops_boolean_t validate_result_status(ops_validate_result_t *);
 
 // EOF
