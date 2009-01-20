@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.77 2009/01/20 02:14:45 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.78 2009/01/20 03:35:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2671,4 +2671,130 @@ distrib/sets/lists/xserver/md.netwinder		1.14
 
 	Fix set lists for XFree86 on netwinder.
 	[jmcneill, ticket #290]
+
+dist/nvi/ex/version.h				1.2
+dist/nvi/common/options.c			1.5
+dist/nvi/docs/vi.man/vi.1			1.4
+dist/nvi/docs/vi.ref/set.opt.texi		1.4
+dist/nvi/ex/ex_shift.c				1.2
+dist/nvi/ex/ex_txt.c				1.3
+dist/nvi/vi/v_txt.c				1.3
+doc/CHANGES					1.1152 via patch
+
+	Implement "expandtab" option and bump version to 1.81.6nb1.
+	[lukem, ticket #196]
+
+dist/nvi/common/key.c				1.4
+dist/nvi/common/multibyte.h			1.2
+dist/nvi/regex/engine.c				1.3
+dist/nvi/regex/regcomp.c			1.3
+dist/nvi/regex/regex2.h				1.2
+dist/nvi/regex/regfree.c			1.2
+
+	Make CHAR_T/RCHAR_T 32bit clean.
+	[tnozaki, ticket #223]
+
+dist/nvi/cl/cl_bsd.c				1.3
+dist/nvi/cl/cl_funcs.c				1.2
+dist/nvi/cl/cl_main.c				1.2
+dist/nvi/cl/cl_read.c				1.2
+dist/nvi/cl/cl_screen.c				1.2
+dist/nvi/cl/cl_term.c				1.2
+dist/nvi/cl/extern.h				1.2
+dist/nvi/common/api.c				1.2
+dist/nvi/common/conv.c				1.4, 1.5
+dist/nvi/common/conv.h				1.2
+dist/nvi/common/cut.c				1.2
+dist/nvi/common/cut.h				1.2
+dist/nvi/common/db.c				1.2, 1.3
+dist/nvi/common/db1.c				1.4
+dist/nvi/common/dbinternal.h			1.1
+dist/nvi/common/exf.c				1.2, 1.3
+dist/nvi/common/extern.h			1.2
+dist/nvi/common/gs.h				1.3
+dist/nvi/common/key.c				1.3
+dist/nvi/common/log.c				1.2
+dist/nvi/common/main.c				1.3
+dist/nvi/common/mark.c				1.2
+dist/nvi/common/mem.h				1.2
+dist/nvi/common/msg.c				1.2
+dist/nvi/common/options.c			1.4
+dist/nvi/common/options.h			1.3
+dist/nvi/common/options_f.c			1.3
+dist/nvi/common/put.c				1.2
+dist/nvi/common/recover.c			1.2
+dist/nvi/common/search.c			1.2
+dist/nvi/common/seq.c				1.2
+dist/nvi/common/util.c				1.3
+dist/nvi/ex/ex.c				1.2, 1.3
+dist/nvi/ex/ex.h				1.3
+dist/nvi/ex/ex_append.c				1.2
+dist/nvi/ex/ex_args.c				1.2
+dist/nvi/ex/ex_argv.c				1.2, 1.3
+dist/nvi/ex/ex_at.c				1.2
+dist/nvi/ex/ex_bang.c				1.2
+dist/nvi/ex/ex_cd.c				1.2
+dist/nvi/ex/ex_cmd.c				1.3
+dist/nvi/ex/ex_cscope.c				1.2, 1.3
+dist/nvi/ex/ex_display.c			1.2
+dist/nvi/ex/ex_edit.c				1.2
+dist/nvi/ex/ex_file.c				1.2
+dist/nvi/ex/ex_filter.c				1.2
+dist/nvi/ex/ex_global.c				1.2
+dist/nvi/ex/ex_init.c				1.2
+dist/nvi/ex/ex_join.c				1.2
+dist/nvi/ex/ex_mkexrc.c				1.2
+dist/nvi/ex/ex_preserve.c			1.2
+dist/nvi/ex/ex_print.c				1.2
+dist/nvi/ex/ex_read.c				1.2
+dist/nvi/ex/ex_script.c				1.3
+dist/nvi/ex/ex_shell.c				1.2
+dist/nvi/ex/ex_source.c				1.2
+dist/nvi/ex/ex_subst.c				1.2
+dist/nvi/ex/ex_tag.c				1.4, 1.5
+dist/nvi/ex/ex_txt.c				1.2
+dist/nvi/ex/ex_usage.c				1.2
+dist/nvi/ex/ex_util.c				1.2
+dist/nvi/ex/ex_visual.c				1.2
+dist/nvi/ex/ex_write.c				1.2
+dist/nvi/ex/ex_z.c				1.2
+dist/nvi/ex/extern.h				1.3
+dist/nvi/regex/cclass.h				1.2
+dist/nvi/regex/cname.h				1.2
+dist/nvi/regex/engine.c				1.2
+dist/nvi/regex/regcomp.c			1.2
+dist/nvi/regex/regerror.c			1.2
+dist/nvi/regex/regexec.c			1.2
+dist/nvi/vi/extern.h				1.2
+dist/nvi/vi/getc.c				1.2
+dist/nvi/vi/v_at.c				1.2
+dist/nvi/vi/v_cmd.c				1.2
+dist/nvi/vi/v_event.c				1.2
+dist/nvi/vi/v_ex.c				1.3
+dist/nvi/vi/v_increment.c			1.2
+dist/nvi/vi/v_init.c				1.2
+dist/nvi/vi/v_mark.c				1.2
+dist/nvi/vi/v_match.c				1.3
+dist/nvi/vi/v_paragraph.c			1.2
+dist/nvi/vi/v_replace.c				1.2
+dist/nvi/vi/v_scroll.c				1.2
+dist/nvi/vi/v_search.c				1.2
+dist/nvi/vi/v_section.c				1.2
+dist/nvi/vi/v_sentence.c			1.2
+dist/nvi/vi/v_txt.c				1.2
+dist/nvi/vi/v_util.c				1.2
+dist/nvi/vi/v_word.c				1.2
+dist/nvi/vi/vi.c				1.2
+dist/nvi/vi/vi.h				1.3
+dist/nvi/vi/vs_line.c				1.2, 1.3
+dist/nvi/vi/vs_msg.c				1.2
+dist/nvi/vi/vs_refresh.c			1.2
+dist/nvi/vi/vs_relative.c			1.2
+dist/nvi/vi/vs_split.c				1.2
+dist/nvi/vi/v_txt.c				1.4
+usr.bin/nvi/build/Makefile			1.10
+usr.bin/nvi/docs/info/Makefile			1.2
+
+	Numerous vi bug fixes.
+	[lukem, ticket #292]
 
