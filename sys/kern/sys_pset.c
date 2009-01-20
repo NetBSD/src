@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.9 2008/09/30 16:28:45 rmind Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.10 2009/01/20 01:57:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.9 2008/09/30 16:28:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.10 2009/01/20 01:57:35 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -282,8 +282,9 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 		syscallarg(cpuid_t) cpuid;
 		syscallarg(psetid_t) *opsid;
 	} */
-	struct cpu_info *ci;
+	struct cpu_info *ici, *ci = NULL;
 	struct schedstate_percpu *spc = NULL;
+	struct lwp *t;
 	psetid_t psid = SCARG(uap, psid), opsid = 0;
 	CPU_INFO_ITERATOR cii;
 	int error = 0, nnone = 0;
@@ -296,12 +297,16 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 
 	/* Find the target CPU */
 	mutex_enter(&cpu_lock);
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (cpu_index(ci) == SCARG(uap, cpuid))
-			spc = &ci->ci_schedstate;
-		nnone += (ci->ci_schedstate.spc_psid == PS_NONE);
+	for (CPU_INFO_FOREACH(cii, ici)) {
+		struct schedstate_percpu *ispc;
+		ispc = &ici->ci_schedstate;
+		if (cpu_index(ici) == SCARG(uap, cpuid)) {
+			ci = ici;
+			spc = ispc;
+		}
+		nnone += (ispc->spc_psid == PS_NONE);
 	}
-	if (spc == NULL) {
+	if (ci == NULL) {
 		mutex_exit(&cpu_lock);
 		return EINVAL;
 	}
@@ -327,7 +332,38 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 			mutex_exit(&cpu_lock);
 			return EBUSY;
 		}
+		mutex_enter(proc_lock);
+		/*
+		 * Ensure that none of the threads are using affinity mask
+		 * with this target CPU in it.
+		 */
+		LIST_FOREACH(t, &alllwp, l_list) {
+			if ((t->l_flag & LW_AFFINITY) == 0)
+				continue;
+			if (kcpuset_isset(cpu_index(ci), t->l_affinity)) {
+				mutex_exit(proc_lock);
+				mutex_exit(&cpu_lock);
+				return EPERM;
+			}
+		}
+		/*
+		 * Set the processor-set ID.
+		 * Migrate out any threads running on this CPU.
+		 */
 		spc->spc_psid = psid;
+
+		LIST_FOREACH(t, &alllwp, l_list) {
+			struct cpu_info *tci;
+			if (t->l_cpu != ci)
+				continue;
+			if (t->l_pflag & (LP_BOUND | LP_INTR))
+				continue;
+			lwp_lock(t);
+			tci = sched_takecpu(t);
+			KASSERT(tci != ci);
+			lwp_migrate(t, tci);
+		}
+		mutex_exit(proc_lock);
 		break;
 	}
 	mutex_exit(&cpu_lock);
