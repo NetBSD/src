@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/01/20 07:12:16 agc Exp $
+# $NetBSD: Makefile,v 1.2 2009/01/20 19:48:23 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,22 @@ CPPFLAGS+= -I${EXTDIST}/include
 NOMAN= # defined
 WARNS=1
 
-EXTDIST=	${NETBSDSRCDIR}/crypto/external/bsd/openpgpsdk/dist
-.PATH:	${EXTDIST}/src/lib
+EXTDIST=${NETBSDSRCDIR}/crypto/external/bsd/openpgpsdk/dist
+
+.PATH: ${EXTDIST}/include/openpgpsdk ${EXTDIST}/src/lib
+
+INCS+= accumulate.h armour.h callback.h compress.h configure.h
+INCS+= create.h crypto.h defs.h errors.h
+INCS+= final.h hash.h keyring.h lists.h memory.h
+INCS+= packet-parse.h packet-show-cast.h packet-show.h packet.h
+INCS+= random.h readerwriter.h signature.h std_print.h
+INCS+= streamwriter.h types.h util.h
+INCS+= validate.h version.h writer.h writer_armoured.h
+INCSDIR=/usr/include/openpgpsdk
+
+LDADD+=		-lcrypto -lz -lbz2
+LIBDPLIBS+=     crypto  ${NETBSDSRCDIR}/lib/libcrypto
+LIBDPLIBS+=     z  ${NETBSDSRCDIR}/lib/libz
+LIBDPLIBS+=     bz2  ${NETBSDSRCDIR}/lib/libbz2
 
 .include <bsd.lib.mk>
