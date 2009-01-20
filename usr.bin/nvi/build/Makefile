@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2008/10/19 22:05:24 apb Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2009/01/20 02:45:36 snj Exp $
 
 .include <bsd.own.mk>
 
 USE_WIDECHAR?=yes
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
-WARNS=0
+WARNS=4
 #DBG=-g
 
 #CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
