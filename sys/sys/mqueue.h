@@ -1,4 +1,4 @@
-/*	$NetBSD: mqueue.h,v 1.5 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.6 2009/01/20 02:15:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #define	MQ_OPEN_MAX		512
 
 /* Maximal priority of the message */
-#define	MQ_PRIO_MAX		64
+#define	MQ_PRIO_MAX		32
 
 struct mq_attr {
 	long	mq_flags;	/* Flags of message queue */
@@ -69,10 +69,10 @@ struct mq_attr {
 
 /* Structure of the message queue */
 struct mqueue {
+	char			mq_name[MQ_NAMELEN];
 	kmutex_t		mq_mtx;
 	kcondvar_t		mq_send_cv;
 	kcondvar_t		mq_recv_cv;
-	char			mq_name[MQ_NAMELEN];
 	struct mq_attr		mq_attrib;
 	/* Notification */
 	struct selinfo		mq_rsel;
