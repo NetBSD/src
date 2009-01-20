@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.9 2008/07/24 12:09:56 njoly Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.10 2009/01/20 20:47:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.9 2008/07/24 12:09:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.10 2009/01/20 20:47:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -55,6 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.9 2008/07/24 12:09:56 njoly Exp
 
 extern const int native_to_linux32_signo[];
 extern const int linux32_to_native_signo[];
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)      uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 void
 linux32_to_native_sigset(sigset_t *bss, const linux32_sigset_t *lss)
@@ -205,19 +211,27 @@ linux32_sys_rt_sigaction(struct lwp *l, const struct linux32_sys_rt_sigaction_ar
 	int vers = 0;
 	void *tramp = NULL;
 
-	if (SCARG(uap, sigsetsize) != sizeof(linux32_sigset_t))
+	if (SCARG(uap, sigsetsize) != sizeof(linux32_sigset_t)) {
+		DPRINTF(("rt_sigaction: Inconsistent sigsetsize %u %zu\n", 
+		    SCARG(uap, sigsetsize), sizeof(linux32_sigset_t)));
 		return EINVAL;
+	}
 
 	if (SCARG_P32(uap, nsa) != NULL) {
 		if ((error = copyin(SCARG_P32(uap, nsa), 
-		    &nls32, sizeof(nls32))) != 0)
+		    &nls32, sizeof(nls32))) != 0) {
+			DPRINTF(("rt_sigaction: Copyin %d\n", error));
 			return error;
+		}
 		linux32_to_native_sigaction(&ns, &nls32);
 	}
 
 	sig = SCARG(uap, signum);
-	if (sig < 0 || sig >= LINUX32__NSIG)
+	if (sig < 0 || sig >= LINUX32__NSIG) {
+		DPRINTF(("rt_sigaction: Bad signal number %d %d\n", 
+		    sig, LINUX32__NSIG));
 		return EINVAL;
+	}
 	if (sig > 0 && !linux32_to_native_signo[sig]) {
 		/* unknown signal... */
 		os.sa_handler = SIG_IGN;
@@ -228,16 +242,20 @@ linux32_sys_rt_sigaction(struct lwp *l, const struct linux32_sys_rt_sigaction_ar
 		    linux32_to_native_signo[sig],	
 		    SCARG_P32(uap, nsa) ? &ns : NULL,
 		    SCARG_P32(uap, osa) ? &os : NULL,
-		    tramp, vers)) != 0)
+		    tramp, vers)) != 0) {
+			DPRINTF(("rt_sigaction: sigaction %d\n", error));
 			return error;
+		}
 	}
 
 	if (SCARG_P32(uap, osa) != NULL) {
 		native_to_linux32_sigaction(&ols32, &os);
 
 		if ((error = copyout(&ols32, SCARG_P32(uap, osa),
-		    sizeof(ols32))) != 0)
+		    sizeof(ols32))) != 0) {
+			DPRINTF(("rt_sigaction: Copyout %d\n", error));
 			return error;
+		}
 	}
 
 	return 0;
