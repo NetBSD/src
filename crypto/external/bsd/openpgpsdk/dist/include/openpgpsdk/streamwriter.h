@@ -24,7 +24,7 @@
 
 #include <openpgpsdk/readerwriter.h>
 
-void ops_writer_push_stream_encrypt_se_ip(ops_create_info_t *cinfo,
-                                          const ops_key_data_t *pub_key);
+void ops_writer_push_stream_encrypt_se_ip(ops_create_info_t *,
+                                          const ops_keydata_t *);
 
 #endif /*__OPS_STREAMWRITER_H__*/
