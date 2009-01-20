@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdevmajor.3,v 1.3 2004/12/16 17:29:55 wiz Exp $
+.\"	$NetBSD: getdevmajor.3,v 1.4 2009/01/20 20:08:12 drochner Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 15, 2004
+.Dd January 20, 2009
 .Dt GETDEVMAJOR 3
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .In stdlib.h
 .In sys/stat.h
-.Ft dev_t
+.Ft devmajor_t
 .Fn getdevmajor "const char *name" "mode_t type"
 .Sh DESCRIPTION
 The
@@ -58,7 +58,7 @@ or
 .Sh RETURN VALUES
 If no device matches the specified values, no information is
 available, or an error occurs,
-.Dv (dev_t)~0
+.Dv NODEVMAJOR
 is returned and
 .Va errno
 is set to indicate the error.
@@ -70,7 +70,7 @@ slave devices (aka pts devices):
 #include \*[Lt]stdlib.h\*[Gt]
 #include \*[Lt]sys/stat.h\*[Gt]
 .sp
-dev_t pts;
+devmajor_t pts;
 pts = getdevmajor("pts", S_IFCHR);
 .Ed
 .Pp
@@ -81,7 +81,7 @@ devices:
 #include \*[Lt]stdlib.h\*[Gt]
 #include \*[Lt]sys/stat.h\*[Gt]
 .sp
-dev_t c, b;
+devmajor_t c, b;
 c = getdevmajor("wd", S_IFCHR);
 b = getdevmajor("wd", S_IFBLK);
 .Ed
