@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.3.2.1 2009/01/20 02:41:12 snj Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.3.2.2 2009/01/20 02:47:43 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -348,7 +348,7 @@ int
 ex_tag_pop(SCR *sp, EXCMD *cmdp)
 {
 	EX_PRIVATE *exp;
-	TAGQ *tqp, *dtqp;
+	TAGQ *tqp, *dtqp = NULL;
 	size_t arglen;
 	long off;
 	const char *arg;
