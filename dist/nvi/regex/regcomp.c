@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
+/*	$NetBSD: regcomp.c,v 1.1.1.2.6.2 2009/01/20 03:14:17 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -66,6 +66,7 @@ struct parse {
 	RCHAR_T *end;		/* end of string (-> NUL normally) */
 	int error;		/* has an error been seen? */
 	sop *strip;		/* malloced strip */
+	RCHAR_T *stripdata;	/* malloced stripdata */
 	sopno ssize;		/* malloced strip size (allocated) */
 	sopno slen;		/* malloced strip length (used) */
 	int ncsalloc;		/* number of csets allocated */
@@ -213,11 +214,17 @@ regcomp(regex_t *preg, const RCHAR_T *pattern, int cflags)
 		return(REG_ESPACE);
 	p->ssize = len/(size_t)2*(size_t)3 + (size_t)1;	/* ugh */
 	p->strip = (sop *)malloc(p->ssize * sizeof(sop));
-	p->slen = 0;
 	if (p->strip == NULL) {
 		free((char *)g);
 		return(REG_ESPACE);
 	}
+	p->stripdata = (RCHAR_T *)malloc(p->ssize * sizeof(RCHAR_T));
+	if (p->stripdata == NULL) {
+		free((char *)p->strip);
+		free((char *)g);
+		return(REG_ESPACE);
+	}
+	p->slen = 0;
 
 	/* set things up */
 	p->g = g;
@@ -542,7 +549,6 @@ p_simp_re(register struct parse *p, int starordinary)
 	register sopno pos;
 	register int i;
 	register sopno subno;
-#	define	BACKSL	(1<<RCHAR_BIT)
 
 	pos = HERE();		/* repetion op, if any, covers from here */
 
@@ -550,70 +556,76 @@ p_simp_re(register struct parse *p, int starordinary)
 	c = GETNEXT();
 	if (c == '\\') {
 		(void)REQUIRE(MORE(), REG_EESCAPE);
-		c = BACKSL | (unsigned char)GETNEXT();
-	}
-	switch (c) {
-	case '.':
-		if (p->g->cflags&REG_NEWLINE)
-			nonnewline(p);
-		else
-			EMIT(OANY, 0);
-		break;
-	case '[':
-		p_bracket(p);
-		break;
-	case BACKSL|'{':
-		SETERROR(REG_BADRPT);
-		break;
-	case BACKSL|'(':
-		p->g->nsub++;
-		subno = p->g->nsub;
-		if (subno < NPAREN)
-			p->pbegin[subno] = HERE();
-		EMIT(OLPAREN, subno);
-		/* the MORE here is an error heuristic */
-		if (MORE() && !SEETWO('\\', ')'))
-			p_bre(p, '\\', ')');
-		if (subno < NPAREN) {
-			p->pend[subno] = HERE();
-			assert(p->pend[subno] != 0);
+		c = (unsigned char)GETNEXT();
+		switch (c) {
+		case '{':
+			SETERROR(REG_BADRPT);
+			break;
+		case '(':
+			p->g->nsub++;
+			subno = p->g->nsub;
+			if (subno < NPAREN)
+				p->pbegin[subno] = HERE();
+			EMIT(OLPAREN, subno);
+			/* the MORE here is an error heuristic */
+			if (MORE() && !SEETWO('\\', ')'))
+				p_bre(p, '\\', ')');
+			if (subno < NPAREN) {
+				p->pend[subno] = HERE();
+				assert(p->pend[subno] != 0);
+			}
+			EMIT(ORPAREN, subno);
+			(void)REQUIRE(EATTWO('\\', ')'), REG_EPAREN);
+			break;
+		case ')':	/* should not get here -- must be user */
+		case '}':
+			SETERROR(REG_EPAREN);
+			break;
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			i = c - '0';
+			assert(i < NPAREN);
+			if (p->pend[i] != 0) {
+				assert(i <= p->g->nsub);
+				EMIT(OBACK_, i);
+				assert(p->pbegin[i] != 0);
+				assert(p->strip[p->pbegin[i]] == OLPAREN);
+				assert(p->strip[p->pend[i]] == ORPAREN);
+				(void) dupl(p, p->pbegin[i]+1, p->pend[i]);
+				EMIT(O_BACK, i);
+			} else
+				SETERROR(REG_ESUBREG);
+			p->g->backrefs = 1;
+			break;
+		default:
+			ordinary(p, c);
+			break;
 		}
-		EMIT(ORPAREN, subno);
-		(void)REQUIRE(EATTWO('\\', ')'), REG_EPAREN);
-		break;
-	case BACKSL|')':	/* should not get here -- must be user */
-	case BACKSL|'}':
-		SETERROR(REG_EPAREN);
-		break;
-	case BACKSL|'1':
-	case BACKSL|'2':
-	case BACKSL|'3':
-	case BACKSL|'4':
-	case BACKSL|'5':
-	case BACKSL|'6':
-	case BACKSL|'7':
-	case BACKSL|'8':
-	case BACKSL|'9':
-		i = (c&~BACKSL) - '0';
-		assert(i < NPAREN);
-		if (p->pend[i] != 0) {
-			assert(i <= p->g->nsub);
-			EMIT(OBACK_, i);
-			assert(p->pbegin[i] != 0);
-			assert(OP(p->strip[p->pbegin[i]]) == OLPAREN);
-			assert(OP(p->strip[p->pend[i]]) == ORPAREN);
-			(void) dupl(p, p->pbegin[i]+1, p->pend[i]);
-			EMIT(O_BACK, i);
-		} else
-			SETERROR(REG_ESUBREG);
-		p->g->backrefs = 1;
-		break;
-	case '*':
-		(void)REQUIRE(starordinary, REG_BADRPT);
-		/* FALLTHROUGH */
-	default:
-		ordinary(p, c &~ BACKSL);
-		break;
+	} else {
+		switch (c) {
+		case '.':
+			if (p->g->cflags&REG_NEWLINE)
+				nonnewline(p);
+			else
+				EMIT(OANY, 0);
+			break;
+		case '[':
+			p_bracket(p);
+			break;
+		case '*':
+			(void)REQUIRE(starordinary, REG_BADRPT);
+			/* FALLTHROUGH */
+		default:
+			ordinary(p, c);
+			break;
+		}
 	}
 
 	if (EAT('*')) {		/* implemented as +? */
@@ -1409,6 +1421,8 @@ dupl(register struct parse *p, sopno start, sopno finish)
 	assert(p->ssize >= p->slen + len);
 	(void) memcpy((char *)(p->strip + p->slen),
 		(char *)(p->strip + start), (size_t)len*sizeof(sop));
+	(void) memcpy((char *)(p->stripdata + p->slen),
+		(char *)(p->stripdata + start), (size_t)len*sizeof(RCHAR_T));
 	p->slen += len;
 	return(ret);
 }
@@ -1429,7 +1443,7 @@ doemit(register struct parse *p, sop op, size_t opnd)
 		return;
 
 	/* deal with oversize operands ("can't happen", more or less) */
-	assert(opnd < 1<<OPSHIFT);
+	assert(opnd < 1);
 
 	/* deal with undersized strip */
 	if (p->slen >= p->ssize)
@@ -1437,7 +1451,9 @@ doemit(register struct parse *p, sop op, size_t opnd)
 	assert(p->slen < p->ssize);
 
 	/* finally, it's all reduced to the easy case */
-	p->strip[p->slen++] = SOP(op, opnd);
+	p->strip[p->slen] = op;
+	p->stripdata[p->slen] = opnd;
+	p->slen++;
 }
 
 /*
@@ -1449,6 +1465,7 @@ doinsert(register struct parse *p, sop op, size_t opnd, sopno pos)
 {
 	register sopno sn;
 	register sop s;
+	register RCHAR_T d;
 	register int i;
 
 	/* avoid making error situations worse */
@@ -1459,6 +1476,7 @@ doinsert(register struct parse *p, sop op, size_t opnd, sopno pos)
 	EMIT(op, opnd);		/* do checks, ensure space */
 	assert(HERE() == sn+1);
 	s = p->strip[sn];
+	d = p->stripdata[sn];
 
 	/* adjust paren pointers */
 	assert(pos > 0);
@@ -1473,7 +1491,10 @@ doinsert(register struct parse *p, sop op, size_t opnd, sopno pos)
 
 	memmove((char *)&p->strip[pos+1], (char *)&p->strip[pos],
 						(HERE()-pos-1)*sizeof(sop));
+	memmove((char *)&p->stripdata[pos+1], (char *)&p->stripdata[pos],
+						(HERE()-pos-1)*sizeof(RCHAR_T));
 	p->strip[pos] = s;
+	p->stripdata[pos] = d;
 }
 
 /*
@@ -1487,8 +1508,8 @@ dofwd(register struct parse *p, register sopno pos, sop value)
 	if (p->error != 0)
 		return;
 
-	assert(value < 1<<OPSHIFT);
-	p->strip[pos] = OP(p->strip[pos]) | value;
+	assert(value < 1);
+	p->stripdata[pos] = value;
 }
 
 /*
@@ -1499,6 +1520,7 @@ static void
 enlarge(register struct parse *p, register sopno size)
 {
 	register sop *sp;
+	register RCHAR_T *dp;
 
 	if (p->ssize >= size)
 		return;
@@ -1509,6 +1531,12 @@ enlarge(register struct parse *p, register sopno size)
 		return;
 	}
 	p->strip = sp;
+	dp = (RCHAR_T *)realloc(p->stripdata, size*sizeof(RCHAR_T));
+	if (dp == NULL) {
+		SETERROR(REG_ESPACE);
+		return;
+	}
+	p->stripdata = dp;
 	p->ssize = size;
 }
 
@@ -1520,10 +1548,17 @@ static void
 stripsnug(register struct parse *p, register struct re_guts *g)
 {
 	g->nstates = p->slen;
-	g->strip = (sop *)realloc((char *)p->strip, p->slen * sizeof(sop));
+	g->strip = (sop *)realloc((char *)p->strip,
+	    p->slen * sizeof(sop));
 	if (g->strip == NULL) {
 		SETERROR(REG_ESPACE);
 		g->strip = p->strip;
+	}
+	g->stripdata = (RCHAR_T *)realloc((char *)p->stripdata,
+	    p->slen * sizeof(RCHAR_T));
+	if (g->stripdata == NULL) {
+		SETERROR(REG_ESPACE);
+		g->stripdata = p->stripdata;
 	}
 }
 
@@ -1540,11 +1575,15 @@ stripsnug(register struct parse *p, register struct re_guts *g)
 static void
 findmust(struct parse *p, register struct re_guts *g)
 {
-	register sop *scan;
-	sop *start = 0;
-	register sop *newstart = 0;
+	register sop *scans;
+	register RCHAR_T *scand;
+	sop *starts = 0;
+	RCHAR_T *startd = NULL;
+	register sop *newstarts = 0;
+	register RCHAR_T *newstartd = NULL;
 	register sopno newlen;
 	register sop s;
+	register RCHAR_T d;
 	register RCHAR_T *cp;
 	register sopno i;
 
@@ -1554,13 +1593,17 @@ findmust(struct parse *p, register struct re_guts *g)
 
 	/* find the longest OCHAR sequence in strip */
 	newlen = 0;
-	scan = g->strip + 1;
+	scans = g->strip + 1;
+	scand = g->stripdata + 1;
 	do {
-		s = *scan++;
-		switch (OP(s)) {
+		s = *scans++;
+		d = *scand++;
+		switch (s) {
 		case OCHAR:		/* sequence member */
-			if (newlen == 0)		/* new sequence */
-				newstart = scan - 1;
+			if (newlen == 0) {		/* new sequence */
+				newstarts = scans - 1;
+				newstartd = scand - 1;
+			}
 			newlen++;
 			break;
 		case OPLUS_:		/* things that don't break one */
@@ -1569,27 +1612,30 @@ findmust(struct parse *p, register struct re_guts *g)
 			break;
 		case OQUEST_:		/* things that must be skipped */
 		case OCH_:
-			scan--;
+			scans--;
+			scand--;
 			do {
-				scan += OPND(s);
-				s = *scan;
+				scans += d;
+				scand += d;
+				s = *scans;
+				d = *scand;
 				/* assert() interferes w debug printouts */
-				if (OP(s) != O_QUEST && OP(s) != O_CH &&
-							OP(s) != OOR2) {
+				if (s != O_QUEST && s != O_CH && s != OOR2) {
 					g->iflags |= BAD;
 					return;
 				}
-			} while (OP(s) != O_QUEST && OP(s) != O_CH);
+			} while (s != O_QUEST && s != O_CH);
 			/* fallthrough */
 		default:		/* things that break a sequence */
 			if (newlen > g->mlen) {		/* ends one */
-				start = newstart;
+				starts = newstarts;
+				startd = newstartd;
 				g->mlen = newlen;
 			}
 			newlen = 0;
 			break;
 		}
-	} while (OP(s) != OEND);
+	} while (s != OEND);
 
 	if (g->mlen == 0)		/* there isn't one */
 		return;
@@ -1601,12 +1647,17 @@ findmust(struct parse *p, register struct re_guts *g)
 		return;
 	}
 	cp = g->must;
-	scan = start;
+	scans = starts;
+	scand = startd;
 	for (i = g->mlen; i > 0; i--) {
-		while (OP(s = *scan++) != OCHAR)
-			continue;
+		for (;;) {
+			s = *scans++;
+			d = *scand++;
+			if (s == OCHAR)
+				break;
+		}
 		assert(cp < g->must + g->mlen);
-		*cp++ = (RCHAR_T)OPND(s);
+		*cp++ = d;
 	}
 	assert(cp == g->must + g->mlen);
 	*cp++ = '\0';		/* just on general principles */
@@ -1630,7 +1681,7 @@ pluscount(struct parse *p, register struct re_guts *g)
 	scan = g->strip + 1;
 	do {
 		s = *scan++;
-		switch (OP(s)) {
+		switch (s) {
 		case OPLUS_:
 			plusnest++;
 			break;
@@ -1640,7 +1691,7 @@ pluscount(struct parse *p, register struct re_guts *g)
 			plusnest--;
 			break;
 		}
-	} while (OP(s) != OEND);
+	} while (s != OEND);
 	if (plusnest != 0)
 		g->iflags |= BAD;
 	return(maxnest);
