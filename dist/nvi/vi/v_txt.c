@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
+/*	$NetBSD: v_txt.c,v 1.1.1.2.6.2 2009/01/20 02:56:07 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1723,13 +1723,19 @@ txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 	/*
 	 * If there are no spaces, or no tabs after spaces and less than
 	 * ts spaces, it's already minimal.
+	 * Keep analysing if expandtabs is set.
 	 */
-	if (!spaces || (!tab_after_sp && spaces < ts))
+	if ((!spaces || (!tab_after_sp && spaces < ts)) &&
+	    !O_ISSET(sp, O_EXPANDTABS))
 		return;
 
 	/* Count up spaces/tabs needed to get to the target. */
-	for (cno = 0, tabs = 0; cno + COL_OFF(cno, ts) <= scno; ++tabs)
-		cno += COL_OFF(cno, ts);
+	cno = 0;
+	tabs = 0;
+	if (!O_ISSET(sp, O_EXPANDTABS)) {
+		for (; cno + COL_OFF(cno, ts) <= scno; ++tabs)
+			cno += COL_OFF(cno, ts);
+	}
 	spaces = scno - cno;
 
 	/*
@@ -1935,6 +1941,7 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 	 * "0^D" and "^D" are different.)
 	 */
 	ai_reset = !isindent || tp->cno == tp->ai + tp->offset;
+/* XXXX: consider O_EXPANDTABS when calculating ai_reset ? */
 
 	/*
 	 * Back up over any previous <blank> characters, changing them into
@@ -1963,9 +1970,12 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 	if (current >= target)
 		spaces = tabs = 0;
 	else {
-		for (cno = current,
-		    tabs = 0; cno + COL_OFF(cno, ts) <= target; ++tabs)
-			cno += COL_OFF(cno, ts);
+		cno = current;
+		tabs = 0;
+		if (!O_ISSET(sp, O_EXPANDTABS)) {
+			for (; cno + COL_OFF(cno, ts) <= target; ++tabs)
+				cno += COL_OFF(cno, ts);
+		}
 		spaces = target - cno;
 	}
 
