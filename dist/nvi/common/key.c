@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
+/*	$NetBSD: key.c,v 1.2.6.2 2009/01/20 03:14:17 snj Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -628,7 +628,8 @@ newmap:	evp = &wp->i_event[wp->i_next];
 	 */
 	if (istimeout || FL_ISSET(evp->e_flags, CH_NOMAP) ||
 	    !LF_ISSET(EC_MAPCOMMAND | EC_MAPINPUT) ||
-	    (evp->e_c < MAX_BIT_SEQ && !bit_test(gp->seqb, evp->e_c)))
+	    ((UCHAR_T)evp->e_c < MAX_BIT_SEQ &&
+	    !bit_test(gp->seqb, (UCHAR_T)evp->e_c)))
 		goto nomap;
 
 	/* Search the map. */
