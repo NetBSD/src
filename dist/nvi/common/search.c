@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.1.1.2 2008/05/18 14:29:51 aymeric Exp $ */
+/*	$NetBSD: search.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -203,7 +203,8 @@ f_search(SCR *sp, MARK *fm, MARK *rm, CHAR_T *ptrn, size_t plen, CHAR_T **eptrn,
 			}
 			cnt = INTERRUPT_CHECK;
 		}
-		if (wrapped && lno > fm->lno || db_get(sp, lno, 0, &l, &len)) {
+		if ((wrapped && lno > fm->lno) ||
+		    db_get(sp, lno, 0, &l, &len)) {
 			if (wrapped) {
 				if (LF_ISSET(SEARCH_MSG))
 					search_msg(sp, S_NOTFOUND);
@@ -334,7 +335,7 @@ b_search(SCR *sp, MARK *fm, MARK *rm, CHAR_T *ptrn, size_t plen, CHAR_T **eptrn,
 			}
 			cnt = INTERRUPT_CHECK;
 		}
-		if (wrapped && lno < fm->lno || lno == 0) {
+		if ((wrapped && lno < fm->lno) || lno == 0) {
 			if (wrapped) {
 				if (LF_ISSET(SEARCH_MSG))
 					search_msg(sp, S_NOTFOUND);

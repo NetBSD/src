@@ -1,4 +1,4 @@
-/*	$NetBSD: v_event.c,v 1.1.1.2 2008/05/18 14:31:41 aymeric Exp $ */
+/*	$NetBSD: v_event.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1996
@@ -95,7 +95,7 @@ static int
 v_editopt(SCR *sp, VICMD *vp)
 {
 	int rval;
-	char *np;
+	const char *np;
 	size_t nlen;
 	char *p2;
 
@@ -210,7 +210,7 @@ v_erepaint(SCR *sp, EVENT *evp)
  * v_sel_end --
  *	End selection.
  */
-int
+static int
 v_sel_end(SCR *sp, EVENT *evp)
 {
 	SMAP *smp;
@@ -233,7 +233,7 @@ v_sel_end(SCR *sp, EVENT *evp)
  * v_sel_start --
  *	Start selection.
  */
-int
+static int
 v_sel_start(SCR *sp, EVENT *evp)
 {
 	SMAP *smp;
@@ -314,33 +314,34 @@ int
 v_event(SCR *sp, VICMD *vp)
 {
 	/* This array maps events to vi command functions. */
+#define VIKEYDEF(a, b) { a, b, NULL, NULL }
 	static VIKEYS const vievents[] = {
 #define	V_C_SETTOP	 0				/* VI_C_SETTOP */
-		{v_c_settop,	0},
+		VIKEYDEF(v_c_settop,	0),
 #define	V_EDIT		 1				/* VI_EDIT */
-		{v_edit,	0},
+		VIKEYDEF(v_edit,	0),
 #define	V_EDITOPT	 2				/* VI_EDITOPT */
-		{v_editopt,	0},
+		VIKEYDEF(v_editopt,	0),
 #define	V_EDITSPLIT	 3				/* VI_EDITSPLIT */
-		{v_editsplit,	0},
+		VIKEYDEF(v_editsplit,	0),
 #define	V_EMARK		 4				/* VI_MOUSE_MOVE */
-		{v_emark,	V_ABS_L|V_MOVE},
+		VIKEYDEF(v_emark,	V_ABS_L|V_MOVE),
 #define	V_QUIT		 5				/* VI_QUIT */
-		{v_quit,	0},
+		VIKEYDEF(v_quit,	0),
 #define	V_SEARCH	 6				/* VI_SEARCH */
-		{v_esearch,	V_ABS_L|V_MOVE},
+		VIKEYDEF(v_esearch,	V_ABS_L|V_MOVE),
 #define	V_TAG		 7				/* VI_TAG */
-		{v_tag,	0},
+		VIKEYDEF(v_tag,	0),
 #define	V_TAGAS	 8					/* VI_TAGAS */
-		{v_tagas,	0},
+		VIKEYDEF(v_tagas,	0),
 #define	V_TAGSPLIT	 9				/* VI_TAGSPLIT */
-		{v_tagsplit,	0},
+		VIKEYDEF(v_tagsplit,	0),
 #define	V_WQ		10				/* VI_WQ */
-		{v_wq,		0},
+		VIKEYDEF(v_wq,		0),
 #define	V_WRITE	11					/* VI_WRITE */
-		{v_write,	0},
+		VIKEYDEF(v_write,	0),
 #define	V_WRITEAS	12				/* VI_WRITEAS */
-		{v_writeas,	0},
+		VIKEYDEF(v_writeas,	0),
 	};
 
 	switch (vp->ev.e_ipcom) {

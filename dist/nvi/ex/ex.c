@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.1.1.2 2008/05/18 14:31:11 aymeric Exp $ */
+/*	$NetBSD: ex.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -80,7 +80,7 @@ ex(SCR **spp)
 	/* If reading from a file, errors should have name and line info. */
 	if (F_ISSET(gp, G_SCRIPTED)) {
 		wp->excmd.if_lno = 1;
-		wp->excmd.if_name = "script";
+		wp->excmd.if_name = strdup("script");
 	}
 
 	/*
@@ -213,8 +213,8 @@ ex_cmd(SCR *sp)
 	int newscreen, notempty, tmp, vi_address;
 	CHAR_T *arg1, *s, *p, *t;
 	CHAR_T ch;
-	CHAR_T *n;
-	char *np;
+	const CHAR_T *n;
+	const char *np;
 
 	gp = sp->gp;
 	wp = sp->wp;
@@ -784,16 +784,16 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 	for (p = ecp->cp; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
 		ch = ecp->cp[0];
 		if (IS_ESCAPE(sp, ecp, ch) && ecp->clen > 1) {
-			CHAR_T tmp = ecp->cp[1];
-			if (tmp == '\n' || tmp == '|') {
-				if (tmp == '\n') {
+			CHAR_T tmp1 = ecp->cp[1];
+			if (tmp1 == '\n' || tmp1 == '|') {
+				if (tmp1 == '\n') {
 					++wp->if_lno;
 					++ecp->if_lno;
 				}
 				++discard;
 				--ecp->clen;
 				++ecp->cp;
-				ch = tmp;
+				ch = tmp1;
 			}
 		} else if (ch == '\n' || ch == '|') {
 			if (ch == '\n')
@@ -1896,7 +1896,7 @@ ex_line(SCR *sp, EXCMD *ecp, MARK *mp, int *isaddrp, int *errp)
 		 * difference.  C'est la vie.
 		 */
 		if (ecp->clen < 2 ||
-		    ecp->cp[1] != '/' && ecp->cp[1] != '?') {
+		    (ecp->cp[1] != '/' && ecp->cp[1] != '?')) {
 			msgq(sp, M_ERR, "096|\\ not followed by / or ?");
 			*errp = 1;
 			return (0);
@@ -2002,9 +2002,9 @@ search:		mp->lno = sp->lno;
 		for (;;) {
 			for (; ecp->clen > 0 && ISBLANK(ecp->cp[0]);
 			    ++ecp->cp, --ecp->clen);
-			if (ecp->clen == 0 || !ISDIGIT(ecp->cp[0]) &&
+			if (ecp->clen == 0 || (!ISDIGIT(ecp->cp[0]) &&
 			    ecp->cp[0] != '+' && ecp->cp[0] != '-' &&
-			    ecp->cp[0] != '^')
+			    ecp->cp[0] != '^'))
 				break;
 			if (!ISDIGIT(ecp->cp[0]) &&
 			    !ISDIGIT(ecp->cp[1])) {
@@ -2120,7 +2120,7 @@ ex_load(SCR *sp)
 
 			/* If it's a global/v command, fix up the last line. */
 			if (FL_ISSET(ecp->agv_flags,
-			    AGV_GLOBAL | AGV_V) && ecp->range_lno != OOBLNO)
+			    AGV_GLOBAL | AGV_V) && ecp->range_lno != OOBLNO) {
 				if (db_exist(sp, ecp->range_lno))
 					sp->lno = ecp->range_lno;
 				else {
@@ -2129,6 +2129,7 @@ ex_load(SCR *sp)
 					if (sp->lno == 0)
 						sp->lno = 1;
 				}
+			}
 			free(ecp->o_cp);
 		}
 

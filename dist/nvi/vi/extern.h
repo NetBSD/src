@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1.1.1 2008/05/18 14:31:53 aymeric Exp $ */
+/*	$NetBSD: extern.h,v 1.1.1.1.8.1 2009/01/20 02:41:13 snj Exp $ */
 
 /* Do not edit: automatically built by build/distrib. */
 int cs_init __P((SCR *, VCS *));
@@ -33,7 +33,7 @@ int v_ecl_exec __P((SCR *));
 int v_increment __P((SCR *, VICMD *));
 int v_screen_copy __P((SCR *, SCR *));
 int v_screen_end __P((SCR *));
-int v_optchange __P((SCR *, int, char *, u_long *));
+int v_optchange __P((SCR *, int, const char *, u_long *));
 int v_iA __P((SCR *, VICMD *));
 int v_ia __P((SCR *, VICMD *));
 int v_iI __P((SCR *, VICMD *));
@@ -55,7 +55,7 @@ int v_emark __P((SCR *, VICMD *));
 int v_match __P((SCR *, VICMD *));
 int v_paragraphf __P((SCR *, VICMD *));
 int v_paragraphb __P((SCR *, VICMD *));
-int v_buildps __P((SCR *, char *, char *));
+int v_buildps __P((SCR *, const char *, const char *));
 int v_Put __P((SCR *, VICMD *));
 int v_put __P((SCR *, VICMD *));
 int v_redraw __P((SCR *, VICMD *));
@@ -102,7 +102,7 @@ void v_nomove __P((SCR *));
 void v_sof __P((SCR *, MARK *));
 void v_sol __P((SCR *));
 int v_isempty __P((CHAR_T *, size_t));
-void v_emsg __P((SCR *, char *, vim_t));
+void v_emsg __P((SCR *, const char *, vim_t));
 int v_wordW __P((SCR *, VICMD *));
 int v_wordw __P((SCR *, VICMD *));
 int v_wordE __P((SCR *, VICMD *));
@@ -146,5 +146,5 @@ int vs_vsplit __P((SCR *, SCR *));
 int vs_discard __P((SCR *, SCR **));
 int vs_fg __P((SCR *, SCR **, CHAR_T *, int));
 int vs_bg __P((SCR *));
-int vs_swap __P((SCR *, SCR **, char *));
+int vs_swap __P((SCR *, SCR **, const char *));
 int vs_resize __P((SCR *, long, adj_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.2 2008/10/01 21:20:09 christos Exp $ */
+/*	$NetBSD: options.h,v 1.2.4.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -53,7 +53,7 @@
 struct _option {
 	union {
 		u_long	 val;		/* Value or boolean. */
-		char	*str;		/* String. */
+		const char *str;	/* String. */
 	} o_cur;
 #define	O_CLR(sp, o)		o_set(sp, o, 0, NULL, 0)
 #define	O_SET(sp, o)		o_set(sp, o, 0, NULL, 1)
@@ -63,7 +63,7 @@ struct _option {
 
 	union {
 		u_long	 val;		/* Value or boolean. */
-		char	*str;		/* String. */
+		const char *str;	/* String. */
 	} o_def;
 #define	O_D_CLR(sp, o)		o_set(sp, o, OS_DEF, NULL, 0)
 #define	O_D_SET(sp, o)		o_set(sp, o, OS_DEF, NULL, 1)
@@ -78,9 +78,9 @@ struct _option {
 
 /* List of option names, associated update functions and information. */
 struct _optlist {
-	CHAR_T	*name;			/* Name. */
+	const CHAR_T *name;		/* Name. */
 					/* Change function. */
-	int	(*func) __P((SCR *, OPTION *, char *, u_long *));
+	int	(*func) __P((SCR *, OPTION *, const char *, u_long *));
 					/* Type of object. */
 	enum { OPT_0BOOL, OPT_1BOOL, OPT_NUM, OPT_STR } type;
 

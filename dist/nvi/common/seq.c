@@ -1,4 +1,4 @@
-/*	$NetBSD: seq.c,v 1.1.1.2 2008/05/18 14:29:52 aymeric Exp $ */
+/*	$NetBSD: seq.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -284,14 +284,14 @@ seq_dump(SCR *sp, seq_t stype, int isname)
 		++cnt;
 		for (p = qp->input,
 		    olen = qp->ilen, len = 0; olen > 0; --olen, ++p)
-			len += ex_puts(sp, KEY_NAME(sp, *p));
+			len += ex_puts(sp, (char *)KEY_NAME(sp, *p));
 		for (len = STANDARD_TAB - len % STANDARD_TAB; len > 0;)
 			len -= ex_puts(sp, " ");
 
 		if (qp->output != NULL)
 			for (p = qp->output,
 			    olen = qp->olen, len = 0; olen > 0; --olen, ++p)
-				len += ex_puts(sp, KEY_NAME(sp, *p));
+				len += ex_puts(sp, (char *)KEY_NAME(sp, *p));
 		else
 			len = 0;
 
@@ -300,7 +300,7 @@ seq_dump(SCR *sp, seq_t stype, int isname)
 				len -= ex_puts(sp, " ");
 			for (p = qp->name,
 			    olen = qp->nlen; olen > 0; --olen, ++p)
-				(void)ex_puts(sp, KEY_NAME(sp, *p));
+				(void)ex_puts(sp, (char *)KEY_NAME(sp, *p));
 		}
 		(void)ex_puts(sp, "\n");
 	}
@@ -314,7 +314,7 @@ seq_dump(SCR *sp, seq_t stype, int isname)
  * PUBLIC: int seq_save __P((SCR *, FILE *, char *, seq_t));
  */
 int
-seq_save(SCR *sp, FILE *fp, char *prefix, seq_t stype)
+seq_save(SCR *sp, FILE *fp, const char *prefix, seq_t stype)
 {
 	CHAR_T *p;
 	SEQ *qp;

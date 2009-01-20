@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_util.c,v 1.1.1.2 2008/05/18 14:31:20 aymeric Exp $ */
+/*	$NetBSD: ex_util.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -150,9 +150,9 @@ ex_init(SCR *sp)
  * PUBLIC: void ex_wemsg __P((SCR *, CHAR_T *, exm_t));
  */
 void
-ex_wemsg(SCR* sp, CHAR_T *p, exm_t which)
+ex_wemsg(SCR* sp, const CHAR_T *p, exm_t which)
 {
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	if (p) INT2CHAR(sp, p, STRLEN(p), np, nlen);
@@ -167,7 +167,7 @@ ex_wemsg(SCR* sp, CHAR_T *p, exm_t which)
  * PUBLIC: void ex_emsg __P((SCR *, char *, exm_t));
  */
 void
-ex_emsg(SCR *sp, char *p, exm_t which)
+ex_emsg(SCR *sp, const char *p, exm_t which)
 {
 	switch (which) {
 	case EXM_EMPTYBUF:

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.1.1.2 2008/05/18 14:31:47 aymeric Exp $ */
+/*	$NetBSD: v_txt.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -252,7 +252,7 @@ v_txt(SCR *sp, VICMD *vp, MARK *tm, const CHAR_T *lp, size_t len, ARG_CHAR_T pro
 	              		/* Replay count. */
 	                	/* TXT_* flags. */
 {
-	EVENT ev, *evp;		/* Current event. */
+	EVENT ev, *evp = NULL;	/* Current event. */
 	EVENT fc;		/* File name completion event. */
 	GS *gp;
 	TEXT *ntp, *tp;		/* Input text structures. */
@@ -281,6 +281,7 @@ v_txt(SCR *sp, VICMD *vp, MARK *tm, const CHAR_T *lp, size_t len, ARG_CHAR_T pro
 
 	gp = sp->gp;
 	vip = VIP(sp);
+	memset(&wmt, 0, sizeof(wmt));
 
 	/*
 	 * Set the input flag, so tabs get displayed correctly
@@ -1559,7 +1560,7 @@ txt_abbrev(SCR *sp, TEXT *tp, CHAR_T *pushcp, int isinfoline, int *didsubp, int 
 	 *
 	 * This makes the layering look like a Nachos Supreme.
 	 */
-search:	if (isinfoline)
+search:	if (isinfoline) {
 		if (off == tp->ai || off == tp->offset)
 			if (ex_is_abbrev(sp, p, len)) {
 				*turnoffp = 1;
@@ -1569,6 +1570,7 @@ search:	if (isinfoline)
 		else
 			if (*turnoffp)
 				return (0);
+	}
 
 	/* Check for any abbreviations. */
 	if ((qp = seq_find(sp, NULL, NULL, p, len, SEQ_ABBREV, NULL)) == NULL)
@@ -1677,7 +1679,7 @@ static void
 txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 {
 	u_long ts;
-	int del;
+	int delc;
 	size_t cno, len, new, old, scno, spaces, tab_after_sp, tabs;
 	CHAR_T *p;
 
@@ -1722,7 +1724,7 @@ txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 	 * If there are no spaces, or no tabs after spaces and less than
 	 * ts spaces, it's already minimal.
 	 */
-	if (!spaces || !tab_after_sp && spaces < ts)
+	if (!spaces || (!tab_after_sp && spaces < ts))
 		return;
 
 	/* Count up spaces/tabs needed to get to the target. */
@@ -1740,10 +1742,10 @@ txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 		return;
 
 	/* Shift the rest of the characters down, adjust the counts. */
-	del = old - new;
-	MEMMOVEW(p - del, p, tp->len - old);
-	tp->len -= del;
-	tp->cno -= del;
+	delc = old - new;
+	MEMMOVEW(p - delc, p, tp->len - old);
+	tp->len -= delc;
+	tp->cno -= delc;
 
 	/* Fill in space/tab characters. */
 	for (p = tp->lb; tabs--;)
@@ -1890,7 +1892,7 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 {
 	CHAR_T ch;
 	u_long sw, ts;
-	size_t cno, current, spaces, target, tabs, off;
+	size_t cno, current, spaces, target, tabs;
 	int ai_reset;
 
 	ts = O_VAL(sp, O_TABSTOP);
@@ -1919,8 +1921,10 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 	target = current;
 	if (isindent)
 		target += COL_OFF(target, sw);
-	else
-		target -= --target % sw;
+	else {
+		--target;
+		target -= target % sw;
+	}
 
 	/*
 	 * The AI characters will be turned into overwrite characters if the
@@ -1994,7 +1998,7 @@ txt_fc(SCR *sp, TEXT *tp, int *redrawp)
 	size_t indx, len, nlen, off;
 	int argc, trydir;
 	CHAR_T *p, *t;
-	char *np;
+	const char *np;
 	size_t nplen;
 
 	trydir = 0;
@@ -2148,7 +2152,8 @@ txt_fc_col(SCR *sp, int argc, ARGS **argv)
 	GS *gp;
 	size_t base, cnt, col, colwidth, numrows, numcols, prefix, row;
 	int ac, nf, reset;
-	char *np, *pp;
+	const char *np;
+	char *pp;
 	size_t nlen;
 
 	gp = sp->gp;
@@ -2261,7 +2266,7 @@ static int
 txt_emark(SCR *sp, TEXT *tp, size_t cno)
 {
 	CHAR_T ch;
-	char *kp;
+	unsigned char *kp;
 	size_t chlen, nlen, olen;
 	CHAR_T *p;
 
@@ -2424,7 +2429,7 @@ nothex:		tp->lb[tp->cno] = savec;
 static int
 txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
 {
-	char *kp;
+	unsigned char *kp;
 	CHAR_T savech;
 	size_t chlen, cno, copydown, olen, nlen;
 	CHAR_T *p;
@@ -2678,7 +2683,7 @@ txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 	else
 		changed = 0;
 	if (db_set(sp, tp->lno, tp->lb, tp->len) ||
-	    changed && vs_change(sp, tp->lno, LINE_RESET))
+	    (changed && vs_change(sp, tp->lno, LINE_RESET)))
 		return (1);
 
 	for (lno = tp->lno; (tp = tp->q.cqe_next) != (void *)&sp->tiq; ++lno) {
@@ -2687,7 +2692,7 @@ txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 		else
 			changed = 0;
 		if (db_append(sp, 0, lno, tp->lb, tp->len) ||
-		    changed && vs_change(sp, tp->lno, LINE_RESET))
+		    (changed && vs_change(sp, tp->lno, LINE_RESET)))
 			return (1);
 	}
 
@@ -2760,7 +2765,7 @@ txt_showmatch(SCR *sp, TEXT *tp)
 	}
 
 	/* If the match is on the screen, move to it. */
-	if (cs.cs_lno < m.lno || cs.cs_lno == m.lno && cs.cs_cno < m.cno)
+	if (cs.cs_lno < m.lno || (cs.cs_lno == m.lno && cs.cs_cno < m.cno))
 		return (0);
 	sp->lno = cs.cs_lno;
 	sp->cno = cs.cs_cno;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_source.c,v 1.1.1.2 2008/05/18 14:31:18 aymeric Exp $ */
+/*	$NetBSD: ex_source.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -42,9 +42,10 @@ ex_source(SCR *sp, EXCMD *cmdp)
 	struct stat sb;
 	int fd, len;
 	char *bp;
-	char *name;
+	const char *name;
 	size_t nlen;
-	CHAR_T *wp, *dp;
+	const CHAR_T *wp;
+	CHAR_T *dp;
 	size_t wlen;
 
 	INT2CHAR(sp, cmdp->argv[0]->bp, cmdp->argv[0]->len + 1, name, nlen);

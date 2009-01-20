@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_relative.c,v 1.1.1.2 2008/05/18 14:31:41 aymeric Exp $ */
+/*	$NetBSD: vs_relative.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -100,7 +100,7 @@ vs_screens(SCR *sp, db_recno_t lno, size_t *cnop)
 size_t
 vs_columns(SCR *sp, CHAR_T *lp, db_recno_t lno, size_t *cnop, size_t *diffp)
 {
-	size_t chlen, cno, curoff, last, len, scno;
+	size_t chlen, cno, curoff, last = 0, len, scno;
 	int ch, leftright, listset;
 	CHAR_T *p;
 
@@ -150,12 +150,13 @@ done:		if (diffp != NULL)		/* XXX */
 	 */
 #define	TAB_RESET {							\
 	curoff += chlen;						\
-	if (!leftright && curoff >= sp->cols)				\
+	if (!leftright && curoff >= sp->cols) {				\
 		if (ch == '\t') {					\
 			curoff = 0;					\
 			scno -= scno % sp->cols;			\
 		} else							\
 			curoff -= sp->cols;				\
+	}								\
 }
 	if (cnop == NULL)
 		while (len--) {
@@ -226,7 +227,7 @@ size_t
 vs_colpos(SCR *sp, db_recno_t lno, size_t cno)
 {
 	size_t chlen, curoff, len, llen, off, scno;
-	int ch, leftright, listset;
+	int ch = 0, leftright, listset;
 	CHAR_T *lp, *p;
 
 	/* Need the line to go any further. */

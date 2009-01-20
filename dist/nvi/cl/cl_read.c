@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_read.c,v 1.1.1.2 2008/05/18 14:29:37 aymeric Exp $ */
+/*	$NetBSD: cl_read.c,v 1.1.1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -56,8 +56,8 @@ cl_event(SCR *sp, EVENT *evp, u_int32_t flags, int ms)
 	struct timeval t, *tp;
 	CL_PRIVATE *clp;
 	size_t lines, columns;
-	int changed, nr;
-	CHAR_T *wp;
+	int changed, nr = 0;
+	const CHAR_T *wp;
 	size_t wlen;
 	int rc;
 
@@ -112,7 +112,7 @@ read:
 	case INP_OK:
 		rc = INPUT2INT5(sp, clp->cw, clp->ibuf, nr + clp->skip, 
 				wp, wlen);
-		evp->e_csp = wp;
+		evp->e_csp = __UNCONST(wp);
 		evp->e_len = wlen;
 		evp->e_event = E_STRING;
 		if (rc < 0) {
@@ -154,7 +154,6 @@ cl_read(SCR *sp, u_int32_t flags, char *bp, size_t blen, int *nrp, struct timeva
 	struct timeval poll;
 	CL_PRIVATE *clp;
 	GS *gp;
-	SCR *tsp;
 	fd_set rdfd;
 	input_t rval;
 	int maxfd, nr, term_reset;

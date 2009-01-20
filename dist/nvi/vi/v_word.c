@@ -1,4 +1,4 @@
-/*	$NetBSD: v_word.c,v 1.1.1.2 2008/05/18 14:31:48 aymeric Exp $ */
+/*	$NetBSD: v_word.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -120,7 +120,7 @@ fword(SCR *sp, VICMD *vp, enum which type)
 	 *	counts as a single word move.  If it's a motion command,
 	 *	don't move off the end of the line.
 	 */
-	if (cs.cs_flags == CS_EMP || cs.cs_flags == 0 && isblank(cs.cs_ch)) {
+	if (cs.cs_flags == CS_EMP || (cs.cs_flags == 0 && isblank(cs.cs_ch))) {
 		if (ISMOTION(vp) && cs.cs_flags != CS_EMP && cnt == 1) {
 			if (ISCMD(vp->rkp, 'c'))
 				return (0);

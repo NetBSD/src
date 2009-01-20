@@ -1,4 +1,4 @@
-/*	$NetBSD: api.c,v 1.1.1.2 2008/05/18 14:29:40 aymeric Exp $ */
+/*	$NetBSD: api.c,v 1.1.1.2.6.1 2009/01/20 02:41:11 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -82,7 +82,7 @@ int
 api_aline(SCR *sp, db_recno_t lno, char *line, size_t len)
 {
 	size_t wblen;
-	CHAR_T *wbp;
+	const CHAR_T *wbp;
 
 	CHAR2INT(sp, line, len, wbp, wblen);
 
@@ -257,7 +257,7 @@ api_setcursor(SCR *sp, MARK *mp)
 
 	if (db_get(sp, mp->lno, DBG_FATAL, NULL, &len))
 		return (1);
-	if (mp->cno < 0 || mp->cno > len) {
+	if (mp->cno > len) {
 		msgq(sp, M_ERR, "Cursor set to nonexistent column");
 		return (1);
 	}
@@ -304,7 +304,7 @@ api_edit(SCR *sp, char *file, SCR **spp, int newscreen)
 {
 	EXCMD cmd;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	if (file) {
 		ex_cinit(sp, &cmd, C_EDIT, 0, OOBLNO, OOBLNO, 0);
@@ -371,7 +371,7 @@ api_map(SCR *sp, char *name, char *map, size_t len)
 {
 	EXCMD cmd;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	ex_cinit(sp, &cmd, C_MAP, 0, OOBLNO, OOBLNO, 0);
 	CHAR2INT(sp, name, strlen(name) + 1, wp, wlen);
@@ -392,7 +392,7 @@ api_unmap(SCR *sp, char *name)
 {
 	EXCMD cmd;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	ex_cinit(sp, &cmd, C_UNMAP, 0, OOBLNO, OOBLNO, 0);
 	CHAR2INT(sp, name, strlen(name) + 1, wp, wlen);
@@ -409,7 +409,7 @@ api_unmap(SCR *sp, char *name)
  * PUBLIC: int api_opts_get __P((SCR *, CHAR_T *, char **, int *));
  */
 int
-api_opts_get(SCR *sp, CHAR_T *name, char **value, int *boolvalue)
+api_opts_get(SCR *sp, const CHAR_T *name, char **value, int *boolvalue)
 {
 	OPTLIST const *op;
 	int offset;
@@ -456,8 +456,8 @@ api_opts_get(SCR *sp, CHAR_T *name, char **value, int *boolvalue)
  * PUBLIC: int api_opts_set __P((SCR *, CHAR_T *, char *, u_long, int));
  */
 int
-api_opts_set(SCR *sp, CHAR_T *name, 
-	     char *str_value, u_long num_value, int bool_value)
+api_opts_set(SCR *sp, const CHAR_T *name, 
+	     const char *str_value, u_long num_value, int bool_value)
 {
 	ARGS *ap[2], a, b;
 	OPTLIST const *op;
@@ -511,7 +511,7 @@ int
 api_run_str(SCR *sp, char *cmd)
 {
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	CHAR2INT(sp, cmd, strlen(cmd)+1, wp, wlen);
 	return (ex_run_str(sp, NULL, wp, wlen - 1, 0, 0));
@@ -546,7 +546,7 @@ void
 api_tagq_add(SCR *sp, TAGQ *tqp, char *filename, char *search, char *msg)
 {
 	TAG *tp;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 	size_t flen = strlen(filename);
 	size_t slen = strlen(search);
