@@ -1,8 +1,0 @@
-The source code previously found in this directory has been moved to
-the sub-directory "original".
-
-For examples of usage, we recommend that you refer to the command line
-application in openpgpsdk/src/app and the test suite in openpgpsdk/tests.
-
-Rachel Willmer
-August 2008
