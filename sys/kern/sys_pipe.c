@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.103 2008/09/17 14:00:41 pooka Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.104 2009/01/20 14:50:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.103 2008/09/17 14:00:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.104 2009/01/20 14:50:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,11 +411,9 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 	case POLL_HUP:
 		band = POLLHUP;
 		break;
-#if POLL_HUP != POLL_ERR
 	case POLL_ERR:
 		band = POLLERR;
 		break;
-#endif
 	default:
 		band = 0;
 #ifdef DIAGNOSTIC
