@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.64 2009/01/11 21:57:14 wiz Exp $
+.\"	$NetBSD: mount.8,v 1.65 2009/01/20 09:07:04 apb Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.8	8.8 (Berkeley) 6/16/94
 .\"
-.Dd January 11, 2009
+.Dd January 20, 2009
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Op Fl t Ar type
 .Nm
 .Op Fl dfruvw
-.Ar special | node
+.Brq Ar special | Ar node
 .Nm
 .Op Fl dfruvw
 .Op Fl o Ar options
@@ -52,14 +52,40 @@ The
 .Nm
 command invokes a file system-specific program to prepare and graft the
 .Ar special
-device or remote node (rhost:path) on to the file system tree at the point
-.Ar node .
+device on to the file system tree at the point
+.Ar node ,
+or to update options for an already-mounted file system.
 .Pp
-If either
+The
+.Ar node
+argument is always interpreted as a directory in the name space of
+currently mounted file systems.
+The
+.Ar special
+argument is interpreted in different ways
+by the programs that handle different file system types;
+for example,
+.Xr mount_ffs 8
+interprets it as a device node,
+.Xr mount_null 8
+interprets it as a directory name,
+and
+.Xr mount_nfs 8
+interprets it as reference to a remote host and a directory on that host.
+.Pp
+The system maintains a list of currently mounted file systems.
+This list is printed if
+.Nm
+is invoked with no arguments, and with no options that require some
+other behaviour.
+.Pp
+If exactly one of
 .Ar special
 or
 .Ar node
-are not provided, the appropriate information is taken from the
+is provided, then the missing information
+(including the file system type)
+is taken from the
 .Xr fstab 5
 file.
 The provided argument is looked up first in the
@@ -77,12 +103,33 @@ field, the device or remote file system already mounted at
 the location specified by
 .Dq fs_spec
 will be used.
+.\" XXX The above paragraph doesn't address the use of "-u"
 .Pp
 If both
 .Ar special
 and
 .Ar node
-are given, the disklabel is checked for the file system type.
+are provided, then
+.Xr fstab 5
+is not used.
+In this case, if the file system type is not specified
+via the
+.Fl t
+flag, then
+.Nm
+may determine the type from the disk label (see
+.Xr disklabel 8 ) .
+In addition, if
+.Ar special
+contains a colon
+.Pq Ql \&:
+or at sign
+.Pq Ql \&@ ,
+then the
+.Li nfs
+type is inferred, but this behaviour is deprecated, and will be
+removed in a future version of
+.Nm .
 .Pp
 In
 .Nx ,
@@ -103,11 +150,6 @@ Finally, the flags
 and
 .Cm nodev
 must be given for non-superuser mounts.
-.Pp
-The system maintains a list of currently mounted file systems.
-If no arguments are given to
-.Nm ,
-this list is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -425,7 +467,7 @@ mount -t cd9660 -r /dev/cd0a /cdrom
 mount -t msdos /dev/fd0a /floppy
 .It Tn NFS
 .br
-mount nfs-server-host:/directory/path /mount-point
+mount -t nfs nfs-server-host:/directory/path /mount-point
 .It Tn MFS (32 megabyte)
 .br
 mount -t mfs -o nosuid,-s=32m swap /tmp
