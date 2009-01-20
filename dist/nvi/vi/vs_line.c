@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.1.1.2.6.1 2009/01/20 02:41:13 snj Exp $ */
+/*	$NetBSD: vs_line.c,v 1.1.1.2.6.2 2009/01/20 02:48:58 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -45,7 +45,7 @@ vs_line(SCR *sp, SMAP *smp, size_t *yp, size_t *xp)
 	unsigned char *kp;
 	GS *gp;
 	SMAP *tsmp;
-	size_t chlen, cno_cnt, cols_per_screen, len, nlen;
+	size_t chlen = 0, cno_cnt, cols_per_screen, len, nlen;
 	size_t offset_in_char, offset_in_line, oldx, oldy;
 	size_t scno, skip_cols, skip_screens;
 	int dne, is_cached, is_partial, is_tab, no_draw;
