@@ -124,10 +124,11 @@ ops_boolean_t ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 			      const ops_public_key_t *pkey,
 			      ops_pk_session_key_parameters_t *skp)
     {
-    assert(sz_encoded_m_buf==(size_t) BN_num_bytes(pkey->key.rsa.n));
 
     unsigned char encmpibuf[8192];
     int n=0;
+
+    assert(sz_encoded_m_buf==(size_t) BN_num_bytes(pkey->key.rsa.n));
 
     n=ops_rsa_public_encrypt(encmpibuf, encoded_m_buf, sz_encoded_m_buf, &pkey->key.rsa);
     assert(n!=-1);
@@ -170,6 +171,10 @@ ops_boolean_t ops_encrypt_file(const char* input_filename, const char* output_fi
 
     ops_create_info_t *cinfo;
 
+    unsigned char* buf;
+    size_t bufsz;
+    int done;
+
 #ifdef WIN32
     fd_in=open(input_filename,O_RDONLY | O_BINARY);
 #else
@@ -194,15 +199,15 @@ ops_boolean_t ops_encrypt_file(const char* input_filename, const char* output_fi
 
     // Do the writing
 
-    unsigned char* buf=NULL;
-    size_t bufsz=16;
-    int done=0;
+    buf=NULL;
+    bufsz=16;
+    done=0;
     for (;;)
         {
-        buf=realloc(buf,done+bufsz);
-        
 	    int n=0;
 
+        buf=realloc(buf,done+bufsz);
+        
 	    n=read(fd_in,buf+done,bufsz);
 	    if (!n)
 		    break;

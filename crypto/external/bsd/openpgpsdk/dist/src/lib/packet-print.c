@@ -47,7 +47,7 @@ static void print_hexdump(const char *name,
 static void print_hexdump_data(const char *name,
 			       const unsigned char *data,
 			       unsigned int len);
-static void print_indent();
+static void print_indent(void);
 static void print_name(const char *name);
 static void print_string_and_value(char *name,
 				   const char *str,
@@ -217,7 +217,7 @@ ops_print_secret_key_verbose(const ops_secret_key_t* skey)
 \param type
 \param skey
 */
-void 
+static void 
 ops_print_secret_key_verbose(const ops_content_tag_t type, const ops_secret_key_t* skey)
     {
     printf("------- SECRET KEY or ENCRYPTED SECRET KEY ------\n");
@@ -367,7 +367,7 @@ static void print_name(const char *name)
 	printf("%s: ",name);
     }
 
-static void print_indent()
+static void print_indent(void)
     {
     int i=0;
 
@@ -384,7 +384,7 @@ static void print_hex(const unsigned char *src,size_t length)
 
 static void showtime(const char *name,time_t t)
     {
-    printf("%s=" TIME_T_FMT " (%.24s)",name,t,ctime(&t));
+    printf("%s=" TIME_T_FMT " (%.24s)",name,(long long)t,ctime(&t));
     }
 static void showtime_short(time_t t)
     {
@@ -456,7 +456,7 @@ static void print_duration(char *name, time_t time)
 
     print_indent();
     printf("%s: ",name);
-    printf("duration " TIME_T_FMT " seconds",time);
+    printf("duration " TIME_T_FMT " seconds",(long long)time);
 
     mins=time/60;
     hours=mins/60;
@@ -610,7 +610,7 @@ static void start_subpacket(unsigned type)
 	   type-OPS_PTAG_SIGNATURE_SUBPACKET_BASE);
     }
  
-static void end_subpacket()
+static void end_subpacket(void)
     {
     indent--;
     }
@@ -1000,7 +1000,7 @@ int ops_print_packet(const ops_parser_content_t *content_)
 
  case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
      start_subpacket(content_->tag);
-     end_subpacket(content_->tag); // \todo print out contents?
+     end_subpacket(); // \todo print out contents?
      break;
 
     case OPS_PTAG_SS_USERDEFINED00:
