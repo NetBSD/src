@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.24 2008/12/23 03:22:29 jmorse Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.25 2009/01/20 20:15:15 drochner Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.24 2008/12/23 03:22:29 jmorse Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.25 2009/01/20 20:15:15 drochner Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -233,7 +233,6 @@ struct uvideo_stream {
 
 	/* current video format */
 	uint32_t		vs_max_payload_size;
-	uint32_t		vs_max_frame_size;
 	uint32_t		vs_frame_interval;
 	SLIST_ENTRY(uvideo_stream) entries;
 };
