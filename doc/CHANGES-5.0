@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.78 2009/01/20 03:35:18 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.79 2009/01/20 21:29:08 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2797,4 +2797,17 @@ usr.bin/nvi/docs/info/Makefile			1.2
 
 	Numerous vi bug fixes.
 	[lukem, ticket #292]
+
+crypto/dist/openssl/apps/speed.c		1.9
+crypto/dist/openssl/apps/spkac.c		1.5
+crypto/dist/openssl/apps/verify.c		1.2
+crypto/dist/openssl/apps/x509.c			1.2
+crypto/dist/openssl/ssl/s2_clnt.c		1.12
+crypto/dist/openssl/ssl/s2_srvr.c		1.10
+crypto/dist/openssl/ssl/s3_clnt.c		1.13
+crypto/dist/openssl/ssl/s3_srvr.c		1.16
+crypto/dist/openssl/ssl/ssltest.c		1.11
+
+	Correct error checking for DSA and ECDSA keys (from FreeBSD)
+	[tron, ticket #294]
 
