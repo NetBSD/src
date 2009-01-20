@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.35 2009/01/20 13:04:55 joerg Exp $ */
+/* $NetBSD: expr.y,v 1.36 2009/01/20 14:22:37 joerg Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.35 2009/01/20 13:04:55 joerg Exp $");
+__RCSID("$NetBSD: expr.y,v 1.36 2009/01/20 14:22:37 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -440,25 +440,19 @@ yyerror(const char *fmt, ...)
 	va_end(arg);
 }
 
-static void
-usage(void)
-{
-	(void)fprintf(stderr, "usage: %s expression\n", getprogname());
-	exit(2);
-}
-
 int
 main(int argc, const char * const *argv)
 {
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	if (argc > 1 && strcmp(argv[1], "--"))
-		av = argv + 1;
-	else if (argc > 2)
-		av = argv + 2;
-	else
-		usage();
+	if (argc == 1) {
+		(void)fprintf(stderr, "usage: %s expression\n",
+		    getprogname());
+		exit(2);
+	}
+
+	av = argv + 1;
 
 	exit(yyparse());
 	/* NOTREACHED */
