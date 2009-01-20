@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.76 2009/01/17 23:01:15 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.77 2009/01/20 02:14:45 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2665,4 +2665,10 @@ sys/arch/mac68k/nubus/if_ae_nubus.c		1.41
 	Also use aprint_*(), and remove unnecessary casts against void *
 	variables.
 	[tsutsui, ticket #280]
+
+distrib/sets/lists/xcomp/md.netwinder		1.5
+distrib/sets/lists/xserver/md.netwinder		1.14
+
+	Fix set lists for XFree86 on netwinder.
+	[jmcneill, ticket #290]
 
