@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
+/*	$NetBSD: ex.c,v 1.1.1.2.6.2 2009/01/20 03:01:03 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -219,6 +219,7 @@ ex_cmd(SCR *sp)
 	gp = sp->gp;
 	wp = sp->wp;
 	exp = EXP(sp);
+	ch = '\0';	/* XXX: gcc -O1 -Wuninitialized */
 
 	/*
 	 * We always start running the command on the top of the stack.
