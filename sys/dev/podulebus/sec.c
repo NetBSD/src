@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.11 2008/06/12 22:46:10 cegger Exp $ */
+/* $NetBSD: sec.c,v 1.12 2009/01/20 20:45:11 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.11 2008/06/12 22:46:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.12 2009/01/20 20:45:11 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -91,8 +91,8 @@ struct sec_softc {
 #define SEC_DMAMODE	MODE_TMODE_DMD
 
 /* autoconfiguration glue */
-static int sec_match(struct device *, struct cfdata *, void *);
-static void sec_attach(struct device *, struct device *, void *);
+static int sec_match(device_t, cfdata_t, void *);
+static void sec_attach(device_t, device_t, void *);
 
 /* shutdown hook */
 static void sec_shutdown(void *);
@@ -144,7 +144,7 @@ dmac_read(struct sec_softc *sc, int reg)
 }
 
 static int
-sec_match(struct device *parent, struct cfdata *cf, void *aux)
+sec_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -163,7 +163,7 @@ sec_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sec_attach(struct device *parent, struct device *self, void *aux)
+sec_attach(device_t parent, device_t self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	struct sec_softc *sc = device_private(self);
