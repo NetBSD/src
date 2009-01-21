@@ -160,7 +160,7 @@ static ops_map_t sig_type_map[] =
     { OPS_SIG_TEXT,		"Signature of a canonical text document" },
     { OPS_SIG_STANDALONE,	"Standalone signature" },
     { OPS_CERT_GENERIC,		"Generic certification of a User ID and Public Key packet" },
-    { OPS_CERT_PERSONA,		"Persona certification of a User ID and Public Key packet" },
+    { OPS_CERT_PERSONA,		"Personal certification of a User ID and Public Key packet" },
     { OPS_CERT_CASUAL,		"Casual certification of a User ID and Public Key packet" },
     { OPS_CERT_POSITIVE,	"Positive certification of a User ID and Public Key packet" },
     { OPS_SIG_SUBKEY,		"Subkey Binding Signature" },
