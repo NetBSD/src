@@ -54,8 +54,8 @@ static void print_string_and_value(char *name,
 				   unsigned char value);
 static void print_tagname(const char *str);
 static void print_time( char *name, 
-			time_t time);
-static void print_time_short(time_t time);
+			time_t t);
+static void print_time_short(time_t t);
 static void print_unsigned_int(char *name, 
 			       unsigned int val);
 static void showtime(const char *name,time_t t);
@@ -290,17 +290,17 @@ static void print_unsigned_int(char *name, unsigned int val)
     printf("%d\n", val);
     }
 
-static void print_time( char *name, time_t time)
+static void print_time( char *name, time_t t)
     {
     print_indent();
     printf("%s: ",name);
-    showtime("time",time);
+    showtime("time",t);
     printf("\n");
     }
 
-static void print_time_short(time_t time)
+static void print_time_short(time_t t)
     {
-    showtime_short(time);
+    showtime_short(t);
     }
 
 static void print_string_and_value(char *name,const char *str,
@@ -450,15 +450,15 @@ static void print_utf8_string(const char *name,const unsigned char *str)
     print_string(name,(const char *)str);
     }
 
-static void print_duration(char *name, time_t time)
+static void print_duration(char *name, time_t t)
     {
     int mins, hours, days, years;
 
     print_indent();
     printf("%s: ",name);
-    printf("duration " TIME_T_FMT " seconds",(long long)time);
+    printf("duration " TIME_T_FMT " seconds",(long long)t);
 
-    mins=time/60;
+    mins=t/60;
     hours=mins/60;
     days=hours/24;
     years=days/365;
