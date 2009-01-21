@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.5 2009/01/21 07:08:10 agc Exp $
+# $NetBSD: Makefile,v 1.6 2009/01/21 15:35:01 agc Exp $
 
 .include <bsd.own.mk>
 
-#USE_FORT?= yes	# network protocol library
-USE_FORT?= no	# network protocol library
+USE_FORT?= yes	# network protocol library
 
 LIB= openpgpsdk
 SRCS+= accumulate.c compress.c create.c crypto.c errors.c fingerprint.c

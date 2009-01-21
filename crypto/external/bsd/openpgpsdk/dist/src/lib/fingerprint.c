@@ -29,13 +29,6 @@
 #include <string.h>
 
 #include <openpgpsdk/configure.h>
-#ifdef HAVE_ALLOCA_H
-# include <alloca.h>
-#endif
-
-#ifdef WIN32
-#define alloca _alloca
-#endif
 
 #include <openpgpsdk/final.h>
 #include <openpgpsdk/util.h>
@@ -63,14 +56,16 @@ void ops_fingerprint(ops_fingerprint_t *fp,const ops_public_key_t *key)
 	md5.init(&md5);
 
 	n=BN_num_bytes(key->key.rsa.n);
-	bn=alloca(n);
+	bn=ops_mallocz(n);
 	BN_bn2bin(key->key.rsa.n,bn);
 	md5.add(&md5,bn,n);
+	(void) free(bn);
 
 	n=BN_num_bytes(key->key.rsa.e);
-	bn=alloca(n);
+	bn=ops_mallocz(n);
 	BN_bn2bin(key->key.rsa.e,bn);
 	md5.add(&md5,bn,n);
+	(void) free(bn);
 
 	md5.finish(&md5,fp->fingerprint);
 	fp->length=16;
