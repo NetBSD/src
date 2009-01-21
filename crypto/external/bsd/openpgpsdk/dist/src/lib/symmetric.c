@@ -297,7 +297,7 @@ static void tripledes_block_encrypt(ops_crypt_t *crypt,void *out,
     {
     DES_key_schedule *keys=crypt->encrypt_key;
 
-    DES_ecb3_encrypt((void *)in,out,&keys[0],&keys[1],&keys[2],DES_ENCRYPT);
+    DES_ecb3_encrypt(__UNCONST(in),out,&keys[0],&keys[1],&keys[2],DES_ENCRYPT);
     }
 
 static void tripledes_block_decrypt(ops_crypt_t *crypt,void *out,
@@ -305,7 +305,7 @@ static void tripledes_block_decrypt(ops_crypt_t *crypt,void *out,
     {
     DES_key_schedule *keys=crypt->encrypt_key;
 
-    DES_ecb3_encrypt((void *)in,out,&keys[0],&keys[1],&keys[2],DES_DECRYPT);
+    DES_ecb3_encrypt(__UNCONST(in),out,&keys[0],&keys[1],&keys[2],DES_DECRYPT);
     }
 
 static void tripledes_cfb_encrypt(ops_crypt_t *crypt ATTRIBUTE_UNUSED,void *out ATTRIBUTE_UNUSED,const void *in ATTRIBUTE_UNUSED, size_t count ATTRIBUTE_UNUSED)

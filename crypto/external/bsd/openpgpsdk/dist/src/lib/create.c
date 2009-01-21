@@ -105,7 +105,7 @@ ops_boolean_t ops_write_user_id(const unsigned char *user_id,ops_create_info_t *
     {
     ops_user_id_t id;
 
-    id.user_id=(unsigned char *)user_id;
+    id.user_id=__UNCONST(user_id);
     return ops_write_struct_user_id(&id,info);
     }
 
@@ -253,7 +253,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 
     case OPS_S2KS_SALTED:
         // 8-octet salt value
-        ops_random((void *)&key->salt[0],OPS_SALT_SIZE);
+        ops_random(__UNCONST(&key->salt[0]),OPS_SALT_SIZE);
         if (!ops_write(key->salt, OPS_SALT_SIZE, info))
             return ops_false;
         break;
@@ -594,8 +594,7 @@ ops_boolean_t ops_write_rsa_public_key(time_t t,const BIGNUM *n,
     {
     ops_public_key_t key;
 
-    ops_fast_create_rsa_public_key(&key,t,DECONST(BIGNUM,n),
-				   DECONST(BIGNUM,e));
+    ops_fast_create_rsa_public_key(&key, t, __UNCONST(n), __UNCONST(e));
     return ops_write_struct_public_key(&key,info);
     }
 

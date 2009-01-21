@@ -96,7 +96,7 @@ static ops_errcode_name_map_t errcode_name_map[] =
  * \param errcode
  * \return error code name or "Unknown"
  */
-char *ops_errcode(const ops_errcode_t errcode)
+const char *ops_errcode(const ops_errcode_t errcode)
     {
     return(ops_str_from_map((int) errcode, (ops_map_t *) errcode_name_map));
     }

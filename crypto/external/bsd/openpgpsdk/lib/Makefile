@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2009/01/21 03:32:08 agc Exp $
+# $NetBSD: Makefile,v 1.4 2009/01/21 05:50:21 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ SRCS+= writer_encrypt_se_ip.c writer_fd.c writer_memory.c
 SRCS+= writer_skey_checksum.c writer_stream_encrypt_se_ip.c
 CPPFLAGS+= -I${EXTDIST}/include
 NOMAN= # defined
-WARNS=2
+WARNS=3
 
 EXTDIST=${NETBSDSRCDIR}/crypto/external/bsd/openpgpsdk/dist
 

@@ -268,12 +268,12 @@ static ops_boolean_t rsa_verify(ops_hash_algorithm_t type,
     unsigned char hashbuf_from_sig[8192];
     unsigned n;
     unsigned keysize;
-    unsigned char *prefix;
+    const unsigned char *prefix;
     int plen;
     int debug_len_decrypted;
 
     plen = 0;
-    prefix = (unsigned char *) "";
+    prefix = (const unsigned char *) "";
     keysize=BN_num_bytes(rsa->n);
     /* RSA key can't be bigger than 65535 bits, so... */
     assert(keysize <= sizeof hashbuf_from_sig);

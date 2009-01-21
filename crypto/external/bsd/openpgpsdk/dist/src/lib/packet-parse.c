@@ -2291,7 +2291,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 	    hashes[n].init(&hashes[n]);
 	    // preload hashes with zeroes...
 	    for(i=0 ; i < n ; ++i)
-		hashes[n].add(&hashes[n],(unsigned char *)"",1);
+		hashes[n].add(&hashes[n],(const unsigned char *)"",1);
 	    }
 
 	l=strlen(passphrase);

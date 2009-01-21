@@ -49,14 +49,14 @@ static void print_hexdump_data(const char *name,
 			       unsigned int len);
 static void print_indent(void);
 static void print_name(const char *name);
-static void print_string_and_value(char *name,
+static void print_string_and_value(const char *name,
 				   const char *str,
 				   unsigned char value);
 static void print_tagname(const char *str);
-static void print_time( char *name, 
+static void print_time( const char *name, 
 			time_t t);
 static void print_time_short(time_t t);
-static void print_unsigned_int(char *name, 
+static void print_unsigned_int(const char *name, 
 			       unsigned int val);
 static void showtime(const char *name,time_t t);
 static void showtime_short(time_t t);
@@ -284,13 +284,13 @@ ops_print_secret_keydata_verbose(const ops_keydata_t *key)
 
 // static functions
 
-static void print_unsigned_int(char *name, unsigned int val)
+static void print_unsigned_int(const char *name, unsigned int val)
     {
     print_name(name);
     printf("%d\n", val);
     }
 
-static void print_time( char *name, time_t t)
+static void print_time( const char *name, time_t t)
     {
     print_indent();
     printf("%s: ",name);
@@ -303,7 +303,7 @@ static void print_time_short(time_t t)
     showtime_short(t);
     }
 
-static void print_string_and_value(char *name,const char *str,
+static void print_string_and_value(const char *name,const char *str,
 				   unsigned char value)
     {
     print_name(name);
@@ -440,7 +440,7 @@ static void print_escaped(const unsigned char *data,size_t length)
 static void print_string(const char *name,const char *str)
     {
     print_name(name);
-    print_escaped((unsigned char *)str,strlen(str));
+    print_escaped((const unsigned char *)str,strlen(str));
     putchar('\n');
     }
 
@@ -450,7 +450,7 @@ static void print_utf8_string(const char *name,const unsigned char *str)
     print_string(name,(const char *)str);
     }
 
-static void print_duration(char *name, time_t t)
+static void print_duration(const char *name, time_t t)
     {
     int mins, hours, days, years;
 
@@ -489,7 +489,7 @@ static void print_boolean(const char *name, unsigned char bool)
 static void print_text_breakdown( ops_text_t *text)
     {
     unsigned i;
-    char *prefix=".. ";
+    const char *prefix=".. ";
 
     /* these were recognised */
 

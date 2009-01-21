@@ -268,7 +268,7 @@ void ops_teardown_file_read(ops_parse_info_t *pinfo, int fd)
 ops_parse_cb_return_t
 callback_literal_data(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
     {
-    ops_parser_content_union_t* content=(ops_parser_content_union_t *)&content_->content;
+    const ops_parser_content_union_t* content=&content_->content;
 
     OPS_USED(cbinfo);
 
@@ -307,7 +307,7 @@ callback_literal_data(const ops_parser_content_t *content_,ops_parse_cb_info_t *
 ops_parse_cb_return_t
 callback_pk_session_key(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
     {
-    ops_parser_content_union_t* content=(ops_parser_content_union_t *)&content_->content;
+    const ops_parser_content_union_t* content=&content_->content;
     
     OPS_USED(cbinfo);
 
@@ -350,7 +350,7 @@ callback_pk_session_key(const ops_parser_content_t *content_,ops_parse_cb_info_t
 ops_parse_cb_return_t
 callback_cmd_get_secret_key(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
     {
-    ops_parser_content_union_t* content=(ops_parser_content_union_t *)&content_->content;
+    const ops_parser_content_union_t* content=&content_->content;
     const ops_secret_key_t *secret;
     ops_parser_content_t pc;
 
@@ -421,7 +421,7 @@ char *ops_malloc_passphrase(char *pp)
 ops_parse_cb_return_t
 callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
     {
-    ops_parser_content_union_t* content=(ops_parser_content_union_t *)&content_->content;
+    const ops_parser_content_union_t* content=&content_->content;
 
     OPS_USED(cbinfo);
 
