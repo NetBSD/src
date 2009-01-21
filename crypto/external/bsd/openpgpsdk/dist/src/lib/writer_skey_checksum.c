@@ -26,8 +26,7 @@
 #include <openpgpsdk/readerwriter.h>
 
 #include <openpgpsdk/final.h>
-
-//static int debug=0;
+#include <openpgpsdk/util.h>
 
 typedef struct
     {

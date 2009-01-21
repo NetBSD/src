@@ -183,3 +183,62 @@ unsigned short ops_reader_pop_sum16(ops_parse_info_t *pinfo)
 
     return sum;
     }
+
+/* small useful functions for setting the file-level debugging levels */
+/* saves editing the static variable for every source file */
+/* if the debugv list contains the filename in question, we're debugging it */
+
+enum {
+	MAX_DEBUG_NAMES	= 32
+};
+
+static int 	 debugc;
+static char	*debugv[MAX_DEBUG_NAMES];
+
+/* set the debugging level per filename */
+int
+ops_set_debug_level(const char *f)
+{
+	const char	*name;
+	int		 i;
+
+	if (f == NULL) {
+		f = "all";
+	}
+	if ((name = strrchr(f, '/')) == NULL) {
+		name = f;
+	} else {
+		name += 1;
+	}
+	for (i = 0 ; i < debugc && i < MAX_DEBUG_NAMES ; i++) {
+		if (strcmp(debugv[i], name) == 0) {
+			return 1;
+		}
+	}
+	if (i == MAX_DEBUG_NAMES) {
+		return 0;
+	}
+	debugv[debugc++] = strdup(name);
+	return 1;
+}
+
+/* get the debugging level per filename */
+int
+ops_get_debug_level(const char *f)
+{
+	const char	*name;
+	int		 i;
+
+	if ((name = strrchr(f, '/')) == NULL) {
+		name = f;
+	} else {
+		name += 1;
+	}
+	for (i = 0 ; i < debugc ; i++) {
+		if (strcmp(debugv[i], "all") == 0 ||
+		    strcmp(debugv[i], name) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}

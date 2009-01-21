@@ -52,8 +52,6 @@
 
 #include <openpgpsdk/final.h>
 
-static int debug=0;
-
 /**
  * limited_read_data reads the specified amount of the subregion's data 
  * into a data_t structure
@@ -1751,7 +1749,7 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
     ops_parser_content_t content;
     
     //debug=1;
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "\nparse_v4_signature\n"); }
     
     // clear signature
@@ -1768,8 +1766,8 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
     if(!limited_read(c,1,region,pinfo))
 	return 0;
     C.signature.info.type=c[0];
-    if (debug)
-        { fprintf(stderr, "signature type=%d\n", C.signature.info.type); }
+    if (ops_get_debug_level(__FILE__))
+        { fprintf(stderr, "signature type=%d (%s)\n", C.signature.info.type, ops_show_sig_type(C.signature.info.type)); }
 
     /* XXX: check signature type */
 
@@ -1777,14 +1775,14 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
 	return 0;
     C.signature.info.key_algorithm=c[0];
     /* XXX: check algorithm */
-    if (debug)
-        { fprintf(stderr, "key_algorithm=%d\n", C.signature.info.key_algorithm); }
+    if (ops_get_debug_level(__FILE__))
+        { fprintf(stderr, "key_algorithm=%d (%s)\n", C.signature.info.key_algorithm, ops_show_pka(C.signature.info.key_algorithm)); }
 
     if(!limited_read(c,1,region,pinfo))
 	return 0;
     C.signature.info.hash_algorithm=c[0];
     /* XXX: check algorithm */
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "hash_algorithm=%d %s\n", C.signature.info.hash_algorithm, ops_show_hash_algorithm(C.signature.info.hash_algorithm)); }
 
     CBP(pinfo,OPS_PTAG_CT_SIGNATURE_HEADER,&content);
@@ -2168,7 +2166,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
     int blocksize;
     ops_boolean_t crypted;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr,"\n---------\nparse_secret_key:\n"); 
         fprintf(stderr,"region length=%d, length_read=%d, remainder=%d\n", region->length, region->length_read, region->length-region->length_read);
         }
@@ -2177,7 +2175,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
     if(!parse_public_key_data(&C.secret_key.public_key,region,pinfo))
 	return 0;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"parse_secret_key: public key parsed\n");
         ops_print_public_key(&C.secret_key.public_key);
@@ -2259,7 +2257,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 	CBP(pinfo,OPS_PARSER_CMD_GET_SK_PASSPHRASE,&pc);
 	if(!passphrase)
 	    {
-        if (debug)
+        if (ops_get_debug_level(__FILE__))
             {
             // \todo make into proper error
             fprintf(stderr,"parse_secret_key: can't get passphrase\n");
@@ -2331,7 +2329,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 	free(passphrase);
 
 	ops_crypt_any(&decrypt,C.secret_key.algorithm);
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"\nREADING:\niv=");
@@ -2402,7 +2400,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
         //	assert(0);
 	}
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"4 MPIs read\n");
         //        ops_print_secret_key_verbose(OPS_PTAG_CT_SECRET_KEY, &C.secret_key);
@@ -2467,7 +2465,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 
     CBP(pinfo,OPS_PTAG_CT_SECRET_KEY,&content);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "--- end of parse_secret_key\n\n"); }
 
     return 1;
@@ -2512,7 +2510,7 @@ static int parse_pk_session_key(ops_region_t *region,
 		     sizeof C.pk_session_key.key_id,region,pinfo))
 	return 0;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         int i;
         int x=sizeof C.pk_session_key.key_id;
@@ -2599,7 +2597,7 @@ static int parse_pk_session_key(ops_region_t *region,
 
     memcpy(C.pk_session_key.key,unencoded_m_buf+1,k);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int j;
         printf("session key recovered (len=%d):\n",k);
@@ -2609,7 +2607,7 @@ static int parse_pk_session_key(ops_region_t *region,
         }
 
     C.pk_session_key.checksum=unencoded_m_buf[k+1]+(unencoded_m_buf[k+2] << 8);
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         printf("session key checksum: %2x %2x\n", unencoded_m_buf[k+1], unencoded_m_buf[k+2]);
         }

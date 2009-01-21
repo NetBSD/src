@@ -44,8 +44,6 @@
 #include <openpgpsdk/writer.h>
 #include <openpgpsdk/final.h>
 
-static int debug=0;
-
 /** 
  * \ingroup Core_Create
  * \param length
@@ -340,7 +338,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
     crypt.set_key(&crypt, session_key);
     ops_encrypt_init(&crypt);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"\nWRITING:\niv=");
@@ -378,7 +376,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 	   || !ops_write_mpi(key->key.rsa.q,info)
 	   || !ops_write_mpi(key->key.rsa.u,info))
         {
-        if (debug)
+        if (ops_get_debug_level(__FILE__))
             { fprintf(stderr,"4 x mpi not written - problem\n"); }
 	    return ops_false;
         }
@@ -878,7 +876,7 @@ ops_boolean_t encode_m_buf(const unsigned char *M, size_t mLen,
     memcpy(EM+i, M, mLen);
     
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"Encoded Message: \n");
@@ -924,7 +922,7 @@ ops_pk_session_key_t *ops_create_pk_session_key(const ops_keydata_t *key)
     session_key->version=OPS_PKSK_V3;
     memcpy(session_key->key_id, key->key_id, sizeof session_key->key_id);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"Encrypting for RSA key id : ");
@@ -940,7 +938,7 @@ ops_pk_session_key_t *ops_create_pk_session_key(const ops_keydata_t *key)
     session_key->symmetric_algorithm=OPS_SA_CAST5;
     ops_random(session_key->key, CAST_KEY_LENGTH);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"CAST5 session key created (len=%d):\n ", CAST_KEY_LENGTH);
@@ -955,7 +953,7 @@ ops_pk_session_key_t *ops_create_pk_session_key(const ops_keydata_t *key)
         return NULL;
         }
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         printf("unencoded m buf:\n");
@@ -1242,7 +1240,7 @@ ops_boolean_t ops_write_one_pass_sig(const ops_secret_key_t* skey,
                                      ops_create_info_t* info)
     {
     unsigned char keyid[OPS_KEY_ID_SIZE];
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr,"calling ops_keyid in write_one_pass_sig: this calls sha1_init\n"); }
     ops_keyid(keyid,&skey->public_key);
 

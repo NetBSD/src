@@ -38,8 +38,7 @@
 #include <openpgpsdk/std_print.h>
 
 #include <openpgpsdk/final.h>
-
-static int debug=0;
+#include <openpgpsdk/util.h>
 
 static void test_secret_key(const ops_secret_key_t *skey)
     {
@@ -91,7 +90,7 @@ void ops_hash_md5(ops_hash_t *hash)
 
 static void sha1_init(ops_hash_t *hash)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"***\n***\nsha1_init\n***\n");
         }
@@ -103,7 +102,7 @@ static void sha1_init(ops_hash_t *hash)
 static void sha1_add(ops_hash_t *hash,const unsigned char *data,
 		     unsigned length)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"adding %d to hash:\n ", length);
@@ -123,7 +122,7 @@ static void sha1_add(ops_hash_t *hash,const unsigned char *data,
 static unsigned sha1_finish(ops_hash_t *hash,unsigned char *out)
     {
     SHA1_Final(out,hash->data);
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned i=0;
         fprintf(stderr,"***\n***\nsha1_finish\n***\n");
@@ -151,7 +150,7 @@ void ops_hash_sha1(ops_hash_t *hash)
 
 static void sha256_init(ops_hash_t *hash)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"***\n***\nsha256_init\n***\n");
         }
@@ -163,7 +162,7 @@ static void sha256_init(ops_hash_t *hash)
 static void sha256_add(ops_hash_t *hash,const unsigned char *data,
 		     unsigned length)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"adding %d to hash:\n ", length);
@@ -183,7 +182,7 @@ static void sha256_add(ops_hash_t *hash,const unsigned char *data,
 static unsigned sha256_finish(ops_hash_t *hash,unsigned char *out)
     {
     SHA256_Final(out,hash->data);
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned i=0;
         fprintf(stderr,"***\n***\nsha1_finish\n***\n");
@@ -210,7 +209,7 @@ void ops_hash_sha256(ops_hash_t *hash)
 
 static void sha384_init(ops_hash_t *hash)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"***\n***\nsha384_init\n***\n");
         }
@@ -222,7 +221,7 @@ static void sha384_init(ops_hash_t *hash)
 static void sha384_add(ops_hash_t *hash,const unsigned char *data,
 		     unsigned length)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"adding %d to hash:\n ", length);
@@ -242,7 +241,7 @@ static void sha384_add(ops_hash_t *hash,const unsigned char *data,
 static unsigned sha384_finish(ops_hash_t *hash,unsigned char *out)
     {
     SHA384_Final(out,hash->data);
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned i=0;
         fprintf(stderr,"***\n***\nsha1_finish\n***\n");
@@ -269,7 +268,7 @@ void ops_hash_sha384(ops_hash_t *hash)
 
 static void sha512_init(ops_hash_t *hash)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"***\n***\nsha512_init\n***\n");
         }
@@ -281,7 +280,7 @@ static void sha512_init(ops_hash_t *hash)
 static void sha512_add(ops_hash_t *hash,const unsigned char *data,
 		     unsigned length)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"adding %d to hash:\n ", length);
@@ -301,7 +300,7 @@ static void sha512_add(ops_hash_t *hash,const unsigned char *data,
 static unsigned sha512_finish(ops_hash_t *hash,unsigned char *out)
     {
     SHA512_Final(out,hash->data);
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned i=0;
         fprintf(stderr,"***\n***\nsha1_finish\n***\n");
@@ -328,7 +327,7 @@ void ops_hash_sha512(ops_hash_t *hash)
 
 static void sha224_init(ops_hash_t *hash)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"***\n***\nsha1_init\n***\n");
         }
@@ -340,7 +339,7 @@ static void sha224_init(ops_hash_t *hash)
 static void sha224_add(ops_hash_t *hash,const unsigned char *data,
 		     unsigned length)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"adding %d to hash:\n ", length);
@@ -360,7 +359,7 @@ static void sha224_add(ops_hash_t *hash,const unsigned char *data,
 static unsigned sha224_finish(ops_hash_t *hash,unsigned char *out)
     {
     SHA224_Final(out,hash->data);
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned i=0;
         fprintf(stderr,"***\n***\nsha1_finish\n***\n");
@@ -400,7 +399,7 @@ ops_boolean_t ops_dsa_verify(const unsigned char *hash,size_t hash_length,
     odsa->g=dsa->g;
     odsa->pub_key=dsa->y;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned i;
         fprintf(stderr,"hash passed in:\n");
@@ -417,7 +416,7 @@ ops_boolean_t ops_dsa_verify(const unsigned char *hash,size_t hash_length,
         hash_length=qlen;
     //    ret=DSA_do_verify(hash,hash_length,osig,odsa);
     ret=DSA_do_verify(hash,hash_length,osig,odsa);
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"ret=%d\n",ret);
         }
@@ -717,7 +716,7 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
     // should now have checksum in skey struct
 
     // test
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         test_secret_key(skey);
 
     return ops_true;

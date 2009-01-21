@@ -38,8 +38,7 @@
 #include <openpgpsdk/keyring.h>
 #include <openpgpsdk/random.h>
 #include <openpgpsdk/readerwriter.h>
-
-static int debug=0;
+#include <openpgpsdk/util.h>
 
 typedef struct 
     {
@@ -177,7 +176,7 @@ ops_boolean_t ops_write_se_ip_pktset(const unsigned char *data,
     preamble[crypt->blocksize]=preamble[crypt->blocksize-2];
     preamble[crypt->blocksize+1]=preamble[crypt->blocksize-1];
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"\npreamble: ");
@@ -194,7 +193,7 @@ ops_boolean_t ops_write_se_ip_pktset(const unsigned char *data,
 
     ops_write_mdc(hashed, cinfo_mdc);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         size_t sz_plaintext=len;
@@ -218,7 +217,7 @@ ops_boolean_t ops_write_se_ip_pktset(const unsigned char *data,
     ops_writer_push_encrypt_crypt(cinfo, crypt);
 
 #ifdef DEBUG
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"writing %ld + %d + %ld\n", sz_preamble, len, ops_memory_get_length(mem_mdc));
         }

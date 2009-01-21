@@ -31,8 +31,7 @@
 #include <openpgpsdk/version.h>
 
 #include <openpgpsdk/final.h>
-
-static int debug=0;
+#include <openpgpsdk/util.h>
 
 /**
  * \struct dash_escaped_arg_t
@@ -53,7 +52,7 @@ static ops_boolean_t dash_escaped_writer(const unsigned char *src,
     dash_escaped_arg_t *arg=ops_writer_get_arg(winfo);
     unsigned n;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"dash_escaped_writer writing %d:\n", length);
