@@ -53,4 +53,7 @@ void *ops_mallocz(size_t n);
 
 char *ops_str_from_map(int, ops_map_t *);
 
+int ops_set_debug_level(const char *);
+int ops_get_debug_level(const char *);
+
 #endif

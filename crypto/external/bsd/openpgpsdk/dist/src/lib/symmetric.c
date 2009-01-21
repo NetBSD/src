@@ -32,8 +32,7 @@
 
 #include <openpgpsdk/packet-show.h>
 #include <openpgpsdk/final.h>
-
-//static int debug=0;
+#include <openpgpsdk/util.h>
 
 #ifndef ATTRIBUTE_UNUSED
 

@@ -25,8 +25,7 @@
 #include <assert.h>
 #include <string.h>
 #include <openpgpsdk/readerwriter.h>
-
-static int debug=0;
+#include <openpgpsdk/util.h>
 
 typedef struct 
     {
@@ -62,7 +61,7 @@ static ops_boolean_t encrypt_writer(const unsigned char *src,
         
         arg->crypt->cfb_encrypt(arg->crypt, encbuf, src+done, len);
 
-        if (debug)
+        if (ops_get_debug_level(__FILE__))
             {
             int i=0;
             fprintf(stderr,"WRITING:\nunencrypted: ");
@@ -77,7 +76,7 @@ static ops_boolean_t encrypt_writer(const unsigned char *src,
 
         if (!ops_stacked_write(encbuf,len,errors,winfo))
             {
-            if (debug)
+            if (ops_get_debug_level(__FILE__))
                 { fprintf(stderr, "encrypted_writer got error from stacked write, returning\n"); }
             return ops_false;
             }

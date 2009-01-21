@@ -44,8 +44,6 @@
 
 #include <openpgpsdk/final.h>
 
-//static int debug=0;
-
 /*
  * return true if OK, otherwise false
  */

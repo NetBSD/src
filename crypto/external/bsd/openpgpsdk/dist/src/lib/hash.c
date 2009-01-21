@@ -28,8 +28,7 @@
 
 #include <openpgpsdk/hash.h>
 #include <openpgpsdk/final.h>
-
-static int debug=0;
+#include <openpgpsdk/util.h>
 
 /**
 \ingroup Core_Hashes
@@ -183,7 +182,7 @@ void ops_calc_mdc_hash(const unsigned char* preamble, const size_t sz_preamble, 
     ops_hash_t hash;
     unsigned char c[1];
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"ops_calc_mdc_hash():\n");
@@ -217,7 +216,7 @@ void ops_calc_mdc_hash(const unsigned char* preamble, const size_t sz_preamble, 
     //finish
     hash.finish(&hash,hashed);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
         fprintf(stderr,"\nhashed (len=%d): ",OPS_SHA1_HASH_SIZE);
