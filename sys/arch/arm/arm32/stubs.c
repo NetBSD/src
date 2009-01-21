@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.19 2009/01/11 23:27:47 cegger Exp $	*/
+/*	$NetBSD: stubs.c,v 1.20 2009/01/21 16:24:34 he Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.19 2009/01/11 23:27:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.20 2009/01/21 16:24:34 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,12 +236,12 @@ dodumpsys()
 		cpu_dumpconf();
 	}
 	if (dumplo <= 0 || dumpsize == 0) {
-		printf("\ndump to dev %"PRIu64",%"PRIu64" not possible\n",
+		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		delay(5000000);
 		return;
 	}
-	printf("\ndumping to dev %"PRIu64",%"PRIu64" offset %ld\n",
+	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
 
