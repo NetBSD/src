@@ -114,12 +114,27 @@ void ops_print_errors(ops_error_t *errstack);
 void ops_free_errors(ops_error_t *errstack);
 int ops_has_error(ops_error_t *errstack, ops_errcode_t errcode);
 
-#define OPS_SYSTEM_ERROR_1(err,code,syscall,fmt,arg)	do { ops_push_error(err,OPS_E_SYSTEM_ERROR,errno,__FILE__,__LINE__,syscall); ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg); } while(0)
-#define OPS_MEMORY_ERROR(err) {fprintf(stderr, "Memory error\n");} // \todo placeholder for better error handling
-#define OPS_ERROR(err,code,fmt)	do { ops_push_error(err,code,0,__FILE__,__LINE__,fmt); } while(0)
-#define OPS_ERROR_1(err,code,fmt,arg)	do { ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg); } while(0)
-#define OPS_ERROR_2(err,code,fmt,arg,arg2)	do { ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg,arg2); } while(0)
-#define OPS_ERROR_3(err,code,fmt,arg,arg2,arg3)	do { ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg,arg2,arg3); } while(0)
-#define OPS_ERROR_4(err,code,fmt,arg,arg2,arg3,arg4)	do { ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg,arg2,arg3,arg4); } while(0)
+#define OPS_SYSTEM_ERROR_1(err,code,syscall,fmt,arg)	do {		\
+	ops_push_error(err,OPS_E_SYSTEM_ERROR,errno,__FILE__,__LINE__,syscall);\
+	ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg);		\
+} while(/*CONSTCOND*/0)
+#define OPS_MEMORY_ERROR(err) {						\
+	fprintf(stderr, "Memory error\n");				\
+} // \todo placeholder for better error handling
+#define OPS_ERROR(err,code,fmt)	do {					\
+	ops_push_error(err,code,0,__FILE__,__LINE__,fmt);		\
+} while(/*CONSTCOND*/0)
+#define OPS_ERROR_1(err,code,fmt,arg)	do {				\
+	ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg);		\
+} while(/*CONSTCOND*/0)
+#define OPS_ERROR_2(err,code,fmt,arg,arg2)	do {			\
+	ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg,arg2);	\
+} while(/*CONSTCOND*/0)
+#define OPS_ERROR_3(err,code,fmt,arg,arg2,arg3)	do {			\
+	ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg,arg2,arg3);	\
+} while(/*CONSTCOND*/0)
+#define OPS_ERROR_4(err,code,fmt,arg,arg2,arg3,arg4)	do {		\
+	ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg,arg2,arg3,arg4); \
+} while(/*CONSTCOND*/0)
 
 #endif /* OPS_ERRORS */

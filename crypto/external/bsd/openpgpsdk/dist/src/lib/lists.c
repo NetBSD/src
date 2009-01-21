@@ -94,13 +94,13 @@ static unsigned int ops_ulong_list_resize(ops_ulong_list_t *list)
  *
  * \return 1 if success, else 0
  */
-unsigned int ops_ulong_list_add(ops_ulong_list_t *list, unsigned long *ulong)
+unsigned int ops_ulong_list_add(ops_ulong_list_t *list, unsigned long *ulongp)
     {
     if (list->size==list->used) 
 	if (!ops_ulong_list_resize(list))
 	    return 0;
 
-    list->ulongs[list->used]=*ulong;
+    list->ulongs[list->used]=*ulongp;
     list->used++;
     return 1;
     }
