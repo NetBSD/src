@@ -31,12 +31,13 @@
 #include <libgen.h>
 #include <unistd.h>
 
-#include "openpgpsdk/keyring.h"
-#include "openpgpsdk/crypto.h"
-#include "openpgpsdk/signature.h"
-#include "openpgpsdk/validate.h"
-#include "openpgpsdk/readerwriter.h"
-#include "openpgpsdk/std_print.h"
+#include <openpgpsdk/keyring.h>
+#include <openpgpsdk/crypto.h>
+#include <openpgpsdk/signature.h>
+#include <openpgpsdk/validate.h>
+#include <openpgpsdk/readerwriter.h>
+#include <openpgpsdk/std_print.h>
+#include <openpgpsdk/util.h>
 
 #define DEFAULT_NUMBITS 1024
 
@@ -79,8 +80,14 @@ PASSPHRASE,
 FILENAME,
 ARMOUR,
 HOMEDIR,
-NUMBITS
+NUMBITS,
+
+/* debug */
+OPS_DEBUG
+
 };
+
+#define EXIT_ERROR	2
 
 static struct option long_options[]=
     {
@@ -107,6 +114,10 @@ static struct option long_options[]=
     { "homedir", required_argument, NULL, HOMEDIR },
     { "armour", no_argument, NULL, ARMOUR },
     { "numbits", required_argument, NULL, NUMBITS },
+
+    /* debug */
+    { "debug", required_argument, NULL, OPS_DEBUG },
+
     { 0,0,0,0},
     };
 
@@ -161,7 +172,7 @@ int main(int argc, char **argv)
     if (argc<2)
         {
         print_usage(usage,pname);
-        exit(EXIT_FAILURE);
+        exit(EXIT_ERROR);
         }
     
     // what does the user want to do?
@@ -263,6 +274,10 @@ int main(int argc, char **argv)
             got_numbits=1;
             break;
 
+	case OPS_DEBUG:
+		ops_set_debug_level(optarg);
+		break;
+
         default:
             printf("shouldn't be here: option=%d\n", long_options[optindex].val);
             break;
@@ -292,14 +307,14 @@ int main(int argc, char **argv)
     if (!ops_keyring_read_from_file(pubring,ops_false,pubring_name))
         {
         fprintf(stderr, "Cannot read keyring %s\n", pubring_name);
-        exit(EXIT_FAILURE);
+        exit(EXIT_ERROR);
         }
     snprintf(secring_name, MAXBUF, "%s/secring.gpg", dir);
     secring=ops_mallocz(sizeof *secring);
     if (!ops_keyring_read_from_file(secring,ops_false,secring_name))
         {
         fprintf(stderr, "Cannot read keyring %s\n", secring_name);
-        exit(EXIT_FAILURE);
+        exit(EXIT_ERROR);
         }
 
     if (got_keyring)
@@ -309,7 +324,7 @@ int main(int argc, char **argv)
         if (!ops_keyring_read_from_file(myring,ops_false,myring_name))
             {
             fprintf(stderr, "Cannot read keyring %s\n", myring_name);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         }
 
@@ -321,7 +336,7 @@ int main(int argc, char **argv)
         if (!got_keyring)
             {
             print_usage(usage_list_keys,pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         
         ops_keyring_list(myring);
@@ -334,7 +349,7 @@ int main(int argc, char **argv)
         if (!got_userid)
             {
             print_usage(usage_find_key,pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         
         //        fprintf(stderr,"userid: %s\n", opt_userid);
@@ -346,7 +361,7 @@ int main(int argc, char **argv)
         //        ops_keyring_free(&keyring);
         if (keydata)
             { 
-            exit (EXIT_FAILURE); 
+            exit(EXIT_FAILURE); 
             }
         else
             { 
@@ -358,7 +373,7 @@ int main(int argc, char **argv)
         if (!got_keyring || !got_userid)
             {
             print_usage(usage_export_key,pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         
         if (got_keyring)
@@ -368,7 +383,7 @@ int main(int argc, char **argv)
         if (!keydata)
             {
             fprintf(stderr,"Cannot find key in keyring\n");
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         ops_setup_memory_write(&cinfo, &mem, 128);
@@ -385,7 +400,7 @@ int main(int argc, char **argv)
         if (!got_filename)
             {
             print_usage(usage_import_key, pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         fprintf(stderr,"before:\n");
         ops_keyring_list(pubring);
@@ -394,7 +409,7 @@ int main(int argc, char **argv)
         if (!ops_keyring_read_from_file(pubring, armour, opt_filename))
             {
             fprintf(stderr,"Cannot import key from file %s\n", opt_filename);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         fprintf(stderr,"after:\n");
@@ -406,7 +421,7 @@ int main(int argc, char **argv)
         if (!got_userid)
             {
             print_usage(usage_generate_key,pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         
         uid.user_id=(unsigned char *)opt_userid;
@@ -414,7 +429,7 @@ int main(int argc, char **argv)
         if (!mykeydata)
             {
             fprintf(stderr,"Cannot generate key\n");
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         // write public key
@@ -427,7 +442,7 @@ int main(int argc, char **argv)
         if (!ops_keyring_read_from_file(pubring,ops_false,pubring_name))
             {
             fprintf(stderr, "Cannot re-read keyring %s\n", pubring_name);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         fd=ops_setup_file_append(&cinfo, secring_name);
@@ -437,7 +452,7 @@ int main(int argc, char **argv)
         if (!ops_keyring_read_from_file(secring,ops_false,secring_name))
             {
             fprintf(stderr, "Cannot re-read keyring %s\n", secring_name);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         ops_keydata_free(mykeydata);
@@ -447,13 +462,13 @@ int main(int argc, char **argv)
         if (!got_filename)
             {
             print_usage(usage_encrypt,pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         if (!got_userid)
             {
             print_usage(usage_encrypt,pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         suffix=armour ? ".asc" : ".gpg";
@@ -462,7 +477,7 @@ int main(int argc, char **argv)
             {
             fprintf(stderr,"Userid '%s' not found in keyring\n",
                     opt_userid);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         // outputfilename
@@ -476,7 +491,7 @@ int main(int argc, char **argv)
         if (!got_filename)
             {
             print_usage(usage_decrypt,pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         overwrite=ops_true;
@@ -487,7 +502,7 @@ int main(int argc, char **argv)
         if (!got_filename || !got_userid)
             {
             print_usage(usage_sign, pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         // get key with which to sign
@@ -496,7 +511,7 @@ int main(int argc, char **argv)
             {
             fprintf(stderr,"Userid '%s' not found in keyring\n",
                     opt_userid);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         // now decrypt key
         skey=ops_decrypt_secret_key_from_data(keydata,opt_passphrase);
@@ -511,7 +526,7 @@ int main(int argc, char **argv)
         if (!got_filename || !got_userid)
             {
             print_usage(usage_clearsign, pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         // get key with which to sign
@@ -520,7 +535,7 @@ int main(int argc, char **argv)
             {
             fprintf(stderr,"Userid '%s' not found in keyring\n",
                     opt_userid);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         skey=ops_decrypt_secret_key_from_data(keydata,opt_passphrase);
         assert(skey);
@@ -534,7 +549,7 @@ int main(int argc, char **argv)
         if (!got_filename)
             {
             print_usage(usage_verify, pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
 
         validate_result=ops_mallocz(sizeof (ops_validate_result_t));
@@ -554,14 +569,14 @@ int main(int argc, char **argv)
         if (!got_filename)
             {
             print_usage(usage_list_packets, pname);
-            exit(EXIT_FAILURE);
+            exit(EXIT_ERROR);
             }
         ops_list_packets(opt_filename, armour, pubring, callback_cmd_get_passphrase_from_cmdline);
         break;
 
     default:
         print_usage(usage,pname);
-        exit(EXIT_FAILURE);
+        exit(EXIT_ERROR);
         ;
         }
     
