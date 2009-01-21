@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.20 2005/12/11 12:24:00 christos Exp $
+$NetBSD: tcdevs,v 1.21 2009/01/21 14:34:18 jnemeth Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -29,6 +29,10 @@ $NetBSD: tcdevs,v 1.20 2005/12/11 12:24:00 christos Exp $
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Use "make -f Makefile.tcdevs" to regenerate tcdevs.h and tcdevs_data.h
  */
 
 device	AV01B-AA	lofi	DecAudio \"LoFi\" audio/isdn
