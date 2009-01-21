@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234 2009/01/11 10:43:17 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.235 2009/01/21 09:18:32 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2009/01/11 10:43:17 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2009/01/21 09:18:32 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -751,11 +751,11 @@ dumpsys()
 		return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible ("
+		printf("\ndump to dev %" PRId32 ",%" PRId32 " not possible ("
 		    "partition too small?)\n", major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n",
+	printf("\ndumping to dev %" PRId32 ",%" PRId32 " offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
