@@ -1,10 +1,13 @@
-# $NetBSD: acpidevs,v 1.11 2006/07/09 19:25:18 christos Exp $
+# $NetBSD: acpidevs,v 1.12 2009/01/21 14:15:43 jnemeth Exp $
 #
 # Extracted from:
 # http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/devids.txt
 # XXX we should rig it up to make importation simpler, though we
 # probably need to add IDs that are not in that file, too. The list is
 # far from comprehensive :(
+#
+# Use "make -f Makefile.acpidevs" to regenerate acpidevs_data.h
+#
 #
 # ***** System Devices - PNP0xxx **************************
 # --Interrupt Controllers--
