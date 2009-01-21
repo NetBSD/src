@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2009/01/16 17:31:22 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2009/01/21 13:13:26 christos Exp $
 
 .include <bsd.own.mk>
 
-AMD_SUPPORT=no	# XXX: Off since we don't have the sync umount patch in yet.
+AMD_SUPPORT?=no	# XXX: Off since we don't have the sync umount patch in yet.
 
 PROG=	eject
 SRCS=	eject.c
