@@ -1,4 +1,4 @@
-$NetBSD: onewiredevs,v 1.1 2006/04/07 18:55:22 riz Exp $
+$NetBSD: onewiredevs,v 1.2 2009/01/21 14:27:58 jnemeth Exp $
 /* $OpenBSD: onewiredevs,v 1.1 2006/03/04 16:27:03 grange Exp $ */
 
 /*
@@ -15,6 +15,11 @@ $NetBSD: onewiredevs,v 1.1 2006/04/07 18:55:22 riz Exp $
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * Use "make -f Makefile.onewiredevs" to regenerate onewiredevs.h and
+ * onewiredevs_data.h
  */
 
 /*
