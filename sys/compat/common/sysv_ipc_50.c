@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc_50.c,v 1.1 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: sysv_ipc_50.c,v 1.2 2009/01/21 16:12:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.1 2009/01/19 19:39:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.2 2009/01/21 16:12:20 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.1 2009/01/19 19:39:41 christos Exp
 #endif
 #ifdef SYSVSHM
 #include <compat/sys/shm.h>
-#endif
 #endif
 
 /*
@@ -214,3 +213,4 @@ sysctl_kern_sysvipc50(SYSCTLFN_ARGS)
 		free(bf, M_TEMP);
 	return error;
 }
+#endif
