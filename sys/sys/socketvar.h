@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.117 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.118 2009/01/21 06:59:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ bool	solocked(struct socket *);
 bool	solocked2(struct socket *, struct socket *);
 int	sblock(struct sockbuf *, int);
 void	sbunlock(struct sockbuf *);
-int	sowait(struct socket *, int);
+int	sowait(struct socket *, bool, int);
 void	solockretry(struct socket *, kmutex_t *);
 void	sosetlock(struct socket *);
 void	solockreset(struct socket *, kmutex_t *);
