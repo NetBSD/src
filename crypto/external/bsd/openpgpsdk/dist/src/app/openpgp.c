@@ -121,10 +121,10 @@ static struct option long_options[]=
     { 0,0,0,0},
     };
 
-void print_usage(const char* usage, char* pname)
+static void print_usage(const char* usagemsg, char* progname)
     {
     fprintf(stderr, "\nUsage: ");
-    fprintf(stderr, usage, basename(pname));
+    fprintf(stderr, usagemsg, basename(progname));
     }
 
 int main(int argc, char **argv)
