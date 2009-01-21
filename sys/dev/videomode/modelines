@@ -1,4 +1,4 @@
-// $NetBSD: modelines,v 1.6 2008/10/21 06:03:39 macallan Exp $
+// $NetBSD: modelines,v 1.7 2009/01/21 14:40:25 jnemeth Exp $
 //
 // This file was imported from XFree86, and is made of the contents of both
 // the vesamodes and extramodes files.  As a result these should correspond
@@ -11,7 +11,9 @@
 //  $XFree86: xc/programs/Xserver/hw/xfree86/etc/vesamodes,v 1.3 1999/11/16 03:28:03 tsi Exp $
 // $XFree86: xc/programs/Xserver/hw/xfree86/etc/extramodes,v 1.5 2002/06/05 19:43:05 dawes Exp $
 //
-
+//
+// Use "make -f Makefile.videomode" to regenerate videomode.c
+//
 
 # 640x350 @ 85Hz (VESA) hsync: 37.9kHz
 ModeLine "640x350"    31.5  640  672  736  832    350  382  385  445 +hsync -vsync
