@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.23 2009/01/16 20:16:47 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.24 2009/01/21 09:55:53 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.23 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.24 2009/01/21 09:55:53 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -423,7 +423,7 @@ xbdback_xenbus_destroy(void *arg)
 	}
 	/* close device */
 	if (xbdi->xbdi_size) {
-		printf("xbd backend: detach device %s%"PRId64"%c for domain %d\n",
+		printf("xbd backend: detach device %s%"PRId32"%c for domain %d\n",
 		    devsw_blk2name(major(xbdi->xbdi_dev)),
 		    DISKUNIT(xbdi->xbdi_dev),
 		    (char)DISKPART(xbdi->xbdi_dev) + 'a',
@@ -708,7 +708,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 			return;
 		}
 		xbdi->xbdi_size = dpart.part->p_size;
-		printf("xbd backend: attach device %s%"PRId64
+		printf("xbd backend: attach device %s%"PRId32
 		    "%c (size %" PRIu64 ") for domain %d\n",
 		    devname, DISKUNIT(xbdi->xbdi_dev),
 		    (char)DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
