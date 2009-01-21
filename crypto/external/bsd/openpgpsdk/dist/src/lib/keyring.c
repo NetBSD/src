@@ -302,9 +302,9 @@ unsigned ops_get_user_id_count(const ops_keydata_t *key)
 \param index Which key to get
 \return Pointer to requested user id
 */
-const unsigned char* ops_get_user_id(const ops_keydata_t *key, unsigned index)
+const unsigned char* ops_get_user_id(const ops_keydata_t *key, unsigned subscript)
     {
-    return key->uids[index].user_id;
+    return key->uids[subscript].user_id;
     }
 
 /**
@@ -354,11 +354,11 @@ ops_boolean_t ops_is_key_supported(const ops_keydata_t *keydata)
     \endcode
 */
 
-const ops_keydata_t* ops_keyring_get_key_by_index(const ops_keyring_t *keyring, int index)
+const ops_keydata_t* ops_keyring_get_key_by_index(const ops_keyring_t *keyring, int subscript)
     {
-    if (index >= keyring->nkeys)
+    if (subscript >= keyring->nkeys)
         return NULL;
-    return &keyring->keys[index]; 
+    return &keyring->keys[subscript]; 
     }
 
 // \todo check where userid pointers are copied
