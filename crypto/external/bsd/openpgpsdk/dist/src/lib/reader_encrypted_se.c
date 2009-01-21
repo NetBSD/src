@@ -32,8 +32,7 @@
 
 #include <openpgpsdk/packet-show.h>
 #include <openpgpsdk/final.h>
-
-static int debug=0;
+#include <openpgpsdk/util.h>
 
 #ifndef ATTRIBUTE_UNUSED
 
@@ -155,7 +154,7 @@ static int encrypted_data_reader(void *dest,size_t length,ops_error_t **errors,
                                   arg->decrypted,
                                   buffer,n);
 
-                if (debug)
+                if (ops_get_debug_level(__FILE__))
                     {
                     int i=0;
                     fprintf(stderr,"READING:\nencrypted: ");

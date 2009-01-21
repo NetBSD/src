@@ -35,10 +35,10 @@
 #include <unistd.h>
 
 #include <openpgpsdk/final.h>
+#include <openpgpsdk/util.h>
 
 #include <openssl/dsa.h>
 
-static int debug=0;
 #define MAXBUF 1024 /*<! Standard buffer size to use */
 
 /** \ingroup Core_Create
@@ -170,7 +170,7 @@ static ops_boolean_t encode_hash_buf(const unsigned char *M, size_t mLen,
 
     // \todo test n for OK response?
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"Encoded Message: \n");
         for (i=0; i<encoded_msg_sz; i++)
@@ -205,7 +205,7 @@ static void rsa_sign(ops_hash_t *hash,const ops_rsa_public_key_t *rsa,
 
     hashbuf[0]=0;
     hashbuf[1]=1;
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { printf("rsa_sign: PS is %d\n", keysize-hashsize-1-2); }
     for(n=2 ; n < keysize-hashsize-1 ; ++n)
 	hashbuf[n]=0xff;
@@ -309,7 +309,7 @@ static ops_boolean_t rsa_verify(ops_hash_algorithm_t type,
     if(hashbuf_from_sig[n++] != 0)
 	return ops_false;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         int zz;
         unsigned uu;
@@ -672,7 +672,7 @@ static void ops_signature_start_signature(ops_create_signature_t *sig,
 
     sig->hashed_data_length=-1;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr,"initialising hash for sig in mem\n"); }
     initialise_hash(&sig->hash,&sig->sig);
     start_signature_in_mem(sig);
@@ -714,7 +714,7 @@ void ops_signature_start_message_signature(ops_create_signature_t *sig,
 void ops_signature_add_data(ops_create_signature_t *sig,const void *buf,
 			    size_t length)
     {
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr,"ops_signature_add_data adds to hash\n"); }
     sig->hash.add(&sig->hash,buf,length);
     }
@@ -781,7 +781,7 @@ ops_boolean_t ops_write_signature(ops_create_signature_t *sig, const ops_public_
 
     // add the packet from version number to end of hashed subpackets
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "--- Adding packet to hash from version number to hashed subpkts\n"); }
 
     sig->hash.add(&sig->hash,ops_memory_get_data(sig->mem),
@@ -793,7 +793,7 @@ ops_boolean_t ops_write_signature(ops_create_signature_t *sig, const ops_public_
     // +6 for version, type, pk alg, hash alg, hashed subpacket length
     ops_hash_add_int(&sig->hash,sig->hashed_data_length+6,4);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "--- Finished adding packet to hash from version number to hashed subpkts\n"); }
 
     // XXX: technically, we could figure out how big the signature is
@@ -1176,7 +1176,7 @@ ops_boolean_t ops_sign_file(const char* input_filename, const char* output_filen
     if (use_armour)
         ops_writer_push_armoured_message(cinfo);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "** Writing out one pass sig\n"); } 
 
     // write one_pass_sig
@@ -1188,12 +1188,12 @@ ops_boolean_t ops_sign_file(const char* input_filename, const char* output_filen
     
     // output file contents as Literal Data packet
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr,"** Writing out data now\n"); }
 
     ops_write_literal_data_from_buf(ops_memory_get_data(mem_buf), ops_memory_get_length(mem_buf), OPS_LDT_BINARY, cinfo);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr,"** After Writing out data now\n");}
 
     // add subpackets to signature
@@ -1285,7 +1285,7 @@ ops_memory_t* ops_sign_buf(const void* input, const size_t input_len, const ops_
     if (use_armour)
         ops_writer_push_armoured_message(cinfo);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "** Writing out one pass sig\n"); } 
 
     // write one_pass_sig
@@ -1297,12 +1297,12 @@ ops_memory_t* ops_sign_buf(const void* input, const size_t input_len, const ops_
     
     // output file contents as Literal Data packet
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr,"** Writing out data now\n"); }
 
     ops_write_literal_data_from_buf(input, input_len, ld_type, cinfo);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         { fprintf(stderr,"** After Writing out data now\n");}
 
     // add subpackets to signature
