@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.5 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: hardware,v 1.6 2009/01/21 14:43:14 he Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,8 +98,6 @@ SVEC FD1000-TP
 .It
 Znyx ZX34X
 .bullet)
-.It
-Qlogic ISP [12]0x0 SCSI/FibreChannel boards
 .It
 Adaptec AHA-2910, 2915, 2920, and 2930C adapters
 .It
