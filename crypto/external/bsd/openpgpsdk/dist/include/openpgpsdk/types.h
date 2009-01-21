@@ -36,7 +36,7 @@ typedef void (*ops_void_fptr)(void);
 typedef struct 
     {
     int type;
-    char *string;
+    const char *string;
     } ops_map_t;
 
 /** Boolean type */
