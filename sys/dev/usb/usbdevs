@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.521 2009/01/16 13:31:01 jmcneill Exp $
+$NetBSD: usbdevs,v 1.522 2009/01/21 14:36:10 jnemeth Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -28,6 +28,10 @@ $NetBSD: usbdevs,v 1.521 2009/01/16 13:31:01 jmcneill Exp $
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Use "make -f Makefile.usbdevs" to regenerate usbdevs.h and usbdevs_data.h
  */
 
 /*
