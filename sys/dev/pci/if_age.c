@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.8 2009/01/18 21:24:44 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.9 2009/01/21 07:48:54 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.8 2009/01/18 21:24:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.9 2009/01/21 07:48:54 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -129,6 +129,7 @@ CFATTACH_DECL_NEW(age, sizeof(struct age_softc),
 int agedebug = 0;
 #define	DPRINTF(x)	do { if (agedebug) printf x; } while (0)
 
+#define ETHER_ALIGN 2
 #define AGE_CSUM_FEATURES	(M_CSUM_TCPv4 | M_CSUM_UDPv4)
 
 static int
@@ -1537,8 +1538,8 @@ age_rxintr(struct age_softc *sc, int rr_prod)
 		 * I'm not sure whether this check is really needed.
 		 */
 		pktlen = AGE_RX_BYTES(le32toh(rxrd->len));
-		if (nsegs != ((pktlen + (MCLBYTES - ETHER_HDR_LEN - ETHER_CRC_LEN)) /
-		    (MCLBYTES - ETHER_HDR_LEN)))
+		if (nsegs != ((pktlen + (MCLBYTES - ETHER_ALIGN - 1)) /
+		    (MCLBYTES - ETHER_ALIGN)))
 			break;
 
 		/* Received a frame. */
@@ -2209,7 +2210,7 @@ age_newbuf(struct age_softc *sc, struct age_rxdesc *rxd, int init)
 	}
 
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
-	m_adj(m, PAGE_SIZE);
+	m_adj(m, ETHER_ALIGN);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat,
 	    sc->age_cdata.age_rx_sparemap, m, BUS_DMA_NOWAIT);
