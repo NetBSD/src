@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.17 2005/12/11 12:23:28 christos Exp $
+$NetBSD: podules,v 1.18 2009/01/21 14:31:04 jnemeth Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,6 +29,10 @@ $NetBSD: podules,v 1.17 2005/12/11 12:23:28 christos Exp $
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Use "make -f Makefile.podules" to regenerate podules.h and podule_data.h
  */
 
 /*
