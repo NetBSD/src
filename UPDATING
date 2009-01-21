@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.189 2009/01/14 15:53:29 hubertf Exp $
+$NetBSD: UPDATING,v 1.190 2009/01/21 14:19:58 apb Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -35,10 +35,18 @@ Recent changes:
 	   that depend on it.
 	5. Next time you run pwd_mkdb with the new binary, the file
 	   will be upgraded and it will not be backwards compatible.
-	6. The utmpx/wtmpx files have been versioned, and there is
-	   a heuristic for utmp. You are better off removing the
-	   old files after upgrading. The accounting file has not
-	   been versioned, and will need to be removed.
+	6. The utmpx/wtmpx files (/var/run/utmpx and /var/log/wtmpx, see
+	   lastlogx(5)) have been versioned, and there is a heuristic
+	   for utmp. You are better off removing the old files after
+	   upgrading.  The automated clearing of /var/run during
+	   boot, and the automated rotating of files in /var/log by
+	   newsyslog(8), may mean that you do not have to remove the
+	   files manually.
+	7. The optional accounting file (/var/account/acct, see
+	   accton(8)) has not been versioned, and will need to be
+	   removed.  The automatic rotation of the accounting file by
+	   /etc/daily limits the bad consequences of failure to remove
+	   the file.
 
 20081219:
 	config(1) has been updated, and one of the files it creates -
