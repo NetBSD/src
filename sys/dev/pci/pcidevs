@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.973 2009/01/19 15:03:50 jmcneill Exp $
+$NetBSD: pcidevs,v 1.974 2009/01/21 14:10:10 jnemeth Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -44,6 +44,10 @@ $NetBSD: pcidevs,v 1.973 2009/01/19 15:03:50 jmcneill Exp $
  * 2.) Commit "src/sys/dev/pci/pcidevs".
  * 3.) Execute "make -f Makefile.pcidevs" in "src/sys/dev/pci".
  * 4.) Commit "src/sys/dev/pci/pcidevs.h" and "src/sys/dev/pci/pcidevs_data.h".
+ */
+
+/*
+ * Use "make -f Makefile.pcidevs" to regenerate pcidevs.h and pcidevs_data.h
  */
 
 /*
