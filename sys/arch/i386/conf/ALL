@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.187 2008/12/28 15:18:21 jmcneill Exp $
+# $NetBSD: ALL,v 1.188 2009/01/21 14:26:25 tsutsui Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.187 $"
+#ident 		"ALL-$Revision: 1.188 $"
 
 maxusers	32		# estimated number of users
 
@@ -758,6 +758,7 @@ njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
+esp*	at mca? slot ?			# NCR 53C90 SCSI Adapter
 
 # SCSI bus support
 scsibus* at scsi?
