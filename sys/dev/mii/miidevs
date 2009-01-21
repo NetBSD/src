@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.81 2009/01/16 20:41:39 cegger Exp $
+$NetBSD: miidevs,v 1.82 2009/01/21 14:08:03 jnemeth Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,6 +43,10 @@ $NetBSD: miidevs,v 1.81 2009/01/16 20:41:39 cegger Exp $
  * The MII_OUI() macro in "mii.h" reflects this.
  * If a vendor uses a different mapping, an "xx" prefixed OUI is defined here
  * which is mangled accordingly to compensate.
+ */
+
+/*
+ * Use "make -f Makefile.miidevs" to regenerate miidevs.h and miidevs_data.h
  */
 
 oui AGERE			0x00053d	Agere
