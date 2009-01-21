@@ -42,8 +42,6 @@
 
 #include <openpgpsdk/final.h>
 
-static int debug=0;
-
 #define CRC24_POLY 0x1864cfbL
 
 /**
@@ -173,7 +171,7 @@ static int set_lastseen_headerline(dearmour_arg_t* arg, char* buf, ops_error_t *
         return 0;
         }
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         printf("set header: buf=%s, arg->lastseen=%d, prev=%d\n", buf, arg->lastseen, prev);
 
     switch (arg->lastseen) 
@@ -425,7 +423,7 @@ static int process_dash_escaped(dearmour_arg_t *arg,ops_error_t **errors,
 	    if(body->data[0] == '\n')
 		hash->add(hash,(unsigned char *)"\r",1);
 	    hash->add(hash,body->data,body->length);
-            if (debug)
+            if (ops_get_debug_level(__FILE__))
                 { fprintf(stderr,"Got body:\n%s\n",body->data); }
 	    CB(cbinfo,OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY,&content);
 	    body->length=0;
@@ -435,7 +433,7 @@ static int process_dash_escaped(dearmour_arg_t *arg,ops_error_t **errors,
 	++total;
 	if(body->length == sizeof body->data)
 	    {
-            if (debug)
+            if (ops_get_debug_level(__FILE__))
                 { fprintf(stderr,"Got body (2):\n%s\n",body->data); }
 	    CB(cbinfo,OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY,&content);
 	    body->length=0;

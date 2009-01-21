@@ -35,8 +35,6 @@
 
 #include <openpgpsdk/final.h>
 
-static int debug=0;
-
 static ops_boolean_t check_binary_signature(const unsigned len,
                                             const unsigned char *data,
                                             const ops_signature_t *sig, 
@@ -198,7 +196,7 @@ ops_validate_key_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cb
     const ops_keydata_t *signer;
     ops_boolean_t valid=ops_false;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         printf("%s\n",ops_show_packet_tag(content_->tag));
 
     switch(content_->tag)
@@ -348,7 +346,7 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
     ops_boolean_t valid=ops_false;
     ops_memory_t* mem=NULL;
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         printf("%s\n",ops_show_packet_tag(content_->tag));
 
     switch(content_->tag)
@@ -380,7 +378,7 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
     case OPS_PTAG_CT_SIGNATURE: // V3 sigs
     case OPS_PTAG_CT_SIGNATURE_FOOTER: // V4 sigs
         
-        if (debug)
+        if (ops_get_debug_level(__FILE__))
             {
             unsigned int zzz=0;
             printf("\n*** hashed data:\n");
@@ -674,7 +672,7 @@ ops_boolean_t ops_validate_file(ops_validate_result_t *result, const char* filen
 
     ops_parse(pinfo);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         printf("valid=%d, invalid=%d, unknown=%d\n",
                result->valid_count,
@@ -727,7 +725,7 @@ ops_boolean_t ops_validate_mem(ops_validate_result_t *result, ops_memory_t* mem,
 
     ops_parse(pinfo);
 
-    if (debug)
+    if (ops_get_debug_level(__FILE__))
         {
         printf("valid=%d, invalid=%d, unknown=%d\n",
                result->valid_count,

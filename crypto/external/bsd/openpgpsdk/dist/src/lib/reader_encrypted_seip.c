@@ -52,8 +52,6 @@
 
 #include <openpgpsdk/final.h>
 
-static int debug=0;
-
 typedef struct
     {
     // boolean: false once we've done the preamble/MDC checks
@@ -117,7 +115,7 @@ static int se_ip_data_reader(void *dest_, size_t len, ops_error_t **errors,
             return -1;
             }
 
-        if (debug)
+        if (ops_get_debug_level(__FILE__))
             {
             unsigned int i=0;
             fprintf(stderr,"\n\nentire SE IP packet (len=%d):\n",decrypted_region.length);
@@ -133,7 +131,7 @@ static int se_ip_data_reader(void *dest_, size_t len, ops_error_t **errors,
 
         // verify leading preamble
 
-        if (debug)
+        if (ops_get_debug_level(__FILE__))
             {
             unsigned int i=0;
             fprintf(stderr,"\npreamble: ");
@@ -165,7 +163,7 @@ static int se_ip_data_reader(void *dest_, size_t len, ops_error_t **errors,
         mdc_hash=mdc+2;
     
 #ifdef DEBUG
-        if (debug)
+        if (ops_get_debug_level(__FILE__))
             {
             unsigned int i=0;
 
