@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.134 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.135 2009/01/21 06:59:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.134 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.135 2009/01/21 06:59:29 yamt Exp $");
 
 #include "opt_pipe.h"
 
@@ -199,7 +199,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 			so->so_error = ECONNABORTED;
 			break;
 		}
-		error = sowait(so, 0);
+		error = sowait(so, true, 0);
 		if (error) {
 			goto bad;
 		}
@@ -313,7 +313,7 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 		goto out;
 	}
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		error = sowait(so, 0);
+		error = sowait(so, true, 0);
 		if (error) {
 			if (error == EINTR || error == ERESTART)
 				interrupted = 1;
