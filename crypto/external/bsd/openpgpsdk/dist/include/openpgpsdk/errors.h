@@ -105,7 +105,7 @@ typedef struct ops_error
     struct ops_error *next;
     } ops_error_t;
 
-char *ops_errcode(const ops_errcode_t errcode);
+const char *ops_errcode(const ops_errcode_t errcode);
 
 void ops_push_error(ops_error_t **errstack,ops_errcode_t errcode,int sys_errno,
 		const char *file,int line,const char *comment,...);

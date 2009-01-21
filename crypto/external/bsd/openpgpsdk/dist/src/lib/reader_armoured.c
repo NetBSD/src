@@ -124,19 +124,19 @@ static void push_back(dearmour_arg_t *arg,const unsigned char *buf,
     
 static int set_lastseen_headerline(dearmour_arg_t* arg, char* buf, ops_error_t **errors)
     {
-    char* begin_msg="BEGIN PGP MESSAGE";
-    char* begin_public="BEGIN PGP PUBLIC KEY BLOCK";
-    char* begin_private="BEGIN PGP PRIVATE KEY BLOCK";
-    char* begin_multi="BEGIN PGP MESSAGE, PART ";
-    char* begin_sig="BEGIN PGP SIGNATURE";
+    const char* begin_msg="BEGIN PGP MESSAGE";
+    const char* begin_public="BEGIN PGP PUBLIC KEY BLOCK";
+    const char* begin_private="BEGIN PGP PRIVATE KEY BLOCK";
+    const char* begin_multi="BEGIN PGP MESSAGE, PART ";
+    const char* begin_sig="BEGIN PGP SIGNATURE";
 
-    char* end_msg="END PGP MESSAGE";
-    char* end_public="END PGP PUBLIC KEY BLOCK";
-    char* end_private="END PGP PRIVATE KEY BLOCK";
-    char* end_multi="END PGP MESSAGE, PART ";
-    char* end_sig="END PGP SIGNATURE";
+    const char* end_msg="END PGP MESSAGE";
+    const char* end_public="END PGP PUBLIC KEY BLOCK";
+    const char* end_private="END PGP PRIVATE KEY BLOCK";
+    const char* end_multi="END PGP MESSAGE, PART ";
+    const char* end_sig="END PGP SIGNATURE";
 
-    char* begin_signed_msg="BEGIN PGP SIGNED MESSAGE";
+    const char* begin_signed_msg="BEGIN PGP SIGNED MESSAGE";
 
     int prev=arg->lastseen;
 
@@ -421,7 +421,7 @@ static int process_dash_escaped(dearmour_arg_t *arg,ops_error_t **errors,
 	    {
 	    assert(memchr(body->data+1,'\n',body->length-1) == NULL);
 	    if(body->data[0] == '\n')
-		hash->add(hash,(unsigned char *)"\r",1);
+		hash->add(hash,(const unsigned char *)"\r",1);
 	    hash->add(hash,body->data,body->length);
             if (ops_get_debug_level(__FILE__))
                 { fprintf(stderr,"Got body:\n%s\n",body->data); }
