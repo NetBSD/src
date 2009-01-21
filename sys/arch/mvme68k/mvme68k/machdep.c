@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2009/01/17 19:38:52 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 2009/01/21 16:24:33 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2009/01/17 19:38:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2009/01/21 16:24:33 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -976,11 +976,11 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n",
+		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n",
+	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
