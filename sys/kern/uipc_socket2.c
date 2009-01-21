@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.100 2008/10/24 22:23:20 dyoung Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.101 2009/01/21 06:59:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.100 2008/10/24 22:23:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.101 2009/01/21 06:59:29 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -190,7 +190,8 @@ soisconnected(struct socket *so)
 			so->so_upcallarg = head->so_accf->so_accept_filter_arg;
 			so->so_rcv.sb_flags |= SB_UPCALL;
 			so->so_options &= ~SO_ACCEPTFILTER;
-			(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);		}
+			(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
+		}
 	} else {
 		cv_broadcast(&so->so_cv);
 		sorwakeup(so);
@@ -1428,15 +1429,19 @@ sbunlock(struct sockbuf *sb)
 }
 
 int
-sowait(struct socket *so, int timo)
+sowait(struct socket *so, bool catch, int timo)
 {
 	kmutex_t *lock;
 	int error;
 
 	KASSERT(solocked(so));
+	KASSERT(catch || timo != 0);
 
 	lock = so->so_lock;
-	error = cv_timedwait_sig(&so->so_cv, lock, timo);
+	if (catch)
+		error = cv_timedwait_sig(&so->so_cv, lock, timo);
+	else
+		error = cv_timedwait(&so->so_cv, lock, timo);
 	if (__predict_false(lock != so->so_lock))
 		solockretry(so, lock);
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.39 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.40 2009/01/21 06:59:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.39 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.40 2009/01/21 06:59:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct lwp *l)
 		goto bad;
 	}
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		sowait(so, 2 * hz);
+		sowait(so, false, 2 * hz);
 		if ((so->so_state & SS_ISCONNECTING) && so->so_error == 0 &&
 			(error = nb_intr(nbp, l)) != 0) {
 			so->so_state &= ~SS_ISCONNECTING;
