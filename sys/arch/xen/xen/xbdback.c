@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.37 2009/01/16 20:16:47 jym Exp $      */
+/*      $NetBSD: xbdback.c,v 1.38 2009/01/21 22:34:55 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.37 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.38 2009/01/21 22:34:55 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -618,7 +618,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_VBD_NOT_FOUND;
 			goto end;
 		}
-		printf("xbd backend: detach device %s%" PRIu64 "%" PRIu64 " "
+		printf("xbd backend: detach device %s%" PRIu32 "%" PRIu32 " "
 		    "for domain %d\n", devsw_blk2name(major(vbd->dev)),
 		    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
 		    xbdi->domid);
