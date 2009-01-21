@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2009/01/12 08:22:37 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2009/01/21 16:24:34 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,7 +153,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2009/01/12 08:22:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2009/01/21 16:24:34 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -687,7 +687,7 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %"PRIu64",%"PRIu64" not possible\n",
+		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
 	}
@@ -699,7 +699,7 @@ dumpsys(void)
 		return;
 	}
 
-	printf("\ndumping to dev %"PRIu64",%"PRIu64" offset %ld\n",
+	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
 	/*
