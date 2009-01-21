@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.38 2009/01/21 22:34:55 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.39 2009/01/21 23:52:58 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.38 2009/01/21 22:34:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.39 2009/01/21 23:52:58 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -493,8 +493,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			goto end;
 		}
 		if (vbd->size) {
-			printf("xbd backend: detach device %s%" PRIu64
-			       "%" PRIu64 " "
+			printf("xbd backend: detach device %s%" PRIu32
+			       "%" PRIu32 " "
 			    "for domain %d\n", devsw_blk2name(major(vbd->dev)),
 			    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
 			    xbdi->domid);
@@ -591,7 +591,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		vbd->size = req->extent.sector_length * (512 / DEV_BSIZE);
 		if (vbd->size == 0 || vbd->size > dpart.part->p_size);
 			vbd->size = dpart.part->p_size;
-		printf("xbd backend: attach device %s%" PRIu64 "%" PRIu64
+		printf("xbd backend: attach device %s%" PRIu32 "%" PRIu32
 		       " (size %d) "
 		    "for domain %d\n", devname, DISKUNIT(vbd->dev),
 		    DISKPART(vbd->dev) + 'a', vbd->size, xbdi->domid);
