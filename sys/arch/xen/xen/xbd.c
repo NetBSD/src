@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.51 2009/01/16 20:16:47 jym Exp $ */
+/* $NetBSD: xbd.c,v 1.52 2009/01/21 20:40:40 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.51 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.52 2009/01/21 20:40:40 bouyer Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -499,7 +499,7 @@ getxbd_softc(dev_t dev)
 {
 	int	unit = XBDUNIT(dev);
 
-	DPRINTF_FOLLOW(("getxbd_softc(0x%" PRIu64 "): major = %" PRIu64
+	DPRINTF_FOLLOW(("getxbd_softc(0x%" PRIu64 "): major = %" PRIu32
 	    "unit = %d\n", dev, major(dev), unit));
 #if NXBD_HYPERVISOR > 0
 	if (major(dev) == xbd_major)
