@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.23 2008/04/28 20:23:53 martin Exp $
+$NetBSD: mcadevs,v 1.24 2009/01/21 14:24:52 jnemeth Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,10 @@ $NetBSD: mcadevs,v 1.23 2008/04/28 20:23:53 martin Exp $
  *	http://members.aol.com/mcapage1/adflist1.htm
  * [11] http://www.geocities.com/SiliconValley/Lab/6370/adapters.html
  * [12] IBM RS6000 Website http://www.ibm.com
+ */
+
+/*
+ * Use "make -f Makefile.mcadevs" to regenerate mcadevs.h and mcadevs_data.h
  */
 
 /*
