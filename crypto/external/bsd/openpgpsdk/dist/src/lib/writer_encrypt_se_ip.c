@@ -60,7 +60,7 @@ static void encrypt_se_ip_destroyer (ops_writer_info_t *winfo);
 void ops_writer_push_encrypt_se_ip(ops_create_info_t *cinfo,
                              const ops_keydata_t *pub_key)
     {
-    ops_crypt_t* encrypt;
+    ops_crypt_t* encrypted;
     unsigned char *iv=NULL;
 
     // Create arg to be used with this writer
@@ -73,14 +73,14 @@ void ops_writer_push_encrypt_se_ip(ops_create_info_t *cinfo,
     ops_write_pk_session_key(cinfo,encrypted_pk_session_key);
 
     // Setup the arg
-    encrypt=ops_mallocz(sizeof *encrypt);
-    ops_crypt_any(encrypt, encrypted_pk_session_key->symmetric_algorithm);
-    iv=ops_mallocz(encrypt->blocksize);
-    encrypt->set_iv(encrypt, iv);
-    encrypt->set_key(encrypt, &encrypted_pk_session_key->key[0]);
-    ops_encrypt_init(encrypt);
+    encrypted=ops_mallocz(sizeof *encrypted);
+    ops_crypt_any(encrypted, encrypted_pk_session_key->symmetric_algorithm);
+    iv=ops_mallocz(encrypted->blocksize);
+    encrypted->set_iv(encrypted, iv);
+    encrypted->set_key(encrypted, &encrypted_pk_session_key->key[0]);
+    ops_encrypt_init(encrypted);
 
-    arg->crypt=encrypt;
+    arg->crypt=encrypted;
 
     // And push writer on stack
     ops_writer_push(cinfo,encrypt_se_ip_writer,NULL,encrypt_se_ip_destroyer,arg);
@@ -150,13 +150,13 @@ static void encrypt_se_ip_destroyer (ops_writer_info_t *winfo)
 
 ops_boolean_t ops_write_se_ip_pktset(const unsigned char *data,
                                    const unsigned int len,
-                                   ops_crypt_t *crypt,
+                                   ops_crypt_t *crypted,
                                    ops_create_info_t *cinfo)
     {
     unsigned char hashed[SHA_DIGEST_LENGTH];
     const size_t sz_mdc=1+1+SHA_DIGEST_LENGTH;
 
-    size_t sz_preamble=crypt->blocksize+2;
+    size_t sz_preamble=crypted->blocksize+2;
     unsigned char* preamble=ops_mallocz(sz_preamble);
 
     size_t sz_buf=sz_preamble+len+sz_mdc;
@@ -172,9 +172,9 @@ ops_boolean_t ops_write_se_ip_pktset(const unsigned char *data,
         return 0;
         }
 
-    ops_random(preamble, crypt->blocksize);
-    preamble[crypt->blocksize]=preamble[crypt->blocksize-2];
-    preamble[crypt->blocksize+1]=preamble[crypt->blocksize-1];
+    ops_random(preamble, crypted->blocksize);
+    preamble[crypted->blocksize]=preamble[crypted->blocksize-2];
+    preamble[crypted->blocksize+1]=preamble[crypted->blocksize-1];
 
     if (ops_get_debug_level(__FILE__))
         {
@@ -197,7 +197,7 @@ ops_boolean_t ops_write_se_ip_pktset(const unsigned char *data,
         {
         unsigned int i=0;
         size_t sz_plaintext=len;
-        size_t sz_mdc=1+1+OPS_SHA1_HASH_SIZE;
+        size_t sz_mdc2=1+1+OPS_SHA1_HASH_SIZE;
         unsigned char* mdc=NULL;
 
         fprintf(stderr,"\nplaintext: ");
@@ -207,14 +207,14 @@ ops_boolean_t ops_write_se_ip_pktset(const unsigned char *data,
         
         fprintf(stderr,"\nmdc: ");
         mdc=ops_memory_get_data(mem_mdc);
-        for (i=0; i<sz_mdc;i++)
+        for (i=0; i<sz_mdc2;i++)
             fprintf(stderr," 0x%02x", mdc[i]);
         fprintf(stderr,"\n");
         }
     
     // and write it out
 
-    ops_writer_push_encrypt_crypt(cinfo, crypt);
+    ops_writer_push_encrypt_crypt(cinfo, crypted);
 
 #ifdef DEBUG
     if (ops_get_debug_level(__FILE__))

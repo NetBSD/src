@@ -358,17 +358,17 @@ ops_boolean_t ops_write_compressed(const unsigned char *data,
     int r=0;
     int sz_in=0;
     int sz_out=0;
-    compress_arg_t* compress=ops_mallocz(sizeof *compress);
+    compress_arg_t* compression=ops_mallocz(sizeof(compress_arg_t));
 
     // compress the data
     const int level=Z_DEFAULT_COMPRESSION; // \todo allow varying levels
-    compress->stream.zalloc=Z_NULL;
-    compress->stream.zfree=Z_NULL;
-    compress->stream.opaque=NULL;
+    compression->stream.zalloc=Z_NULL;
+    compression->stream.zfree=Z_NULL;
+    compression->stream.opaque=NULL;
 
     // all other fields set to zero by use of ops_mallocz
 
-    if (deflateInit(&compress->stream,level) != Z_OK)
+    if (deflateInit(&compression->stream,level) != Z_OK)
         {
         // can't initialise
         assert(0);
@@ -376,32 +376,32 @@ ops_boolean_t ops_write_compressed(const unsigned char *data,
 
     // do necessary transformation
     // copy input to maintain const'ness of src
-    assert(compress->src==NULL);
-    assert(compress->dst==NULL);
+    assert(compression->src==NULL);
+    assert(compression->dst==NULL);
 
     sz_in=len * sizeof (unsigned char);
     sz_out= (sz_in * 1.01) + 12; // from zlib webpage
-    compress->src=ops_mallocz(sz_in);
-    compress->dst=ops_mallocz(sz_out);
-    memcpy(compress->src,data,len);
+    compression->src=ops_mallocz(sz_in);
+    compression->dst=ops_mallocz(sz_out);
+    memcpy(compression->src,data,len);
 
     // setup stream
-    compress->stream.next_in=compress->src;
-    compress->stream.avail_in=sz_in;
-    compress->stream.total_in=0;
+    compression->stream.next_in=compression->src;
+    compression->stream.avail_in=sz_in;
+    compression->stream.total_in=0;
 
-    compress->stream.next_out=compress->dst;
-    compress->stream.avail_out=sz_out;
-    compress->stream.total_out=0;
+    compression->stream.next_out=compression->dst;
+    compression->stream.avail_out=sz_out;
+    compression->stream.total_out=0;
 
-    r=deflate(&compress->stream, Z_FINISH);
+    r=deflate(&compression->stream, Z_FINISH);
     assert(r==Z_STREAM_END); // need to loop if not
 
     // write it out
     return (ops_write_ptag(OPS_PTAG_CT_COMPRESSED, cinfo)
-            && ops_write_length(1+compress->stream.total_out, cinfo)
+            && ops_write_length(1+compression->stream.total_out, cinfo)
             && ops_write_scalar(OPS_C_ZLIB,1,cinfo)
-            && ops_write(compress->dst, compress->stream.total_out,cinfo));
+            && ops_write(compression->dst, compression->stream.total_out,cinfo));
     }
 
 // EOF

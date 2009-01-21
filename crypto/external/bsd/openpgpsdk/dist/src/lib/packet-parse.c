@@ -1395,7 +1395,7 @@ static int parse_one_signature_subpacket(ops_signature_t *sig,
     unsigned char c[1]="";
     ops_parser_content_t content;
     unsigned t8,t7;
-    ops_boolean_t read=ops_true;
+    ops_boolean_t doread=ops_true;
     unsigned char bool[1]="";
 
     ops_init_subregion(&subregion,region);
@@ -1594,7 +1594,7 @@ static int parse_one_signature_subpacket(ops_signature_t *sig,
 	if(pinfo->ss_parsed[t8]&t7)
 	    OPS_ERROR_1(&pinfo->errors, OPS_E_PROTO_UNKNOWN_SS,
                         "Unknown signature subpacket type (%d)", c[0]&0x7f);
-	read=ops_false;
+	doread=ops_false;
 	break;
 	}
 
@@ -1605,15 +1605,15 @@ static int parse_one_signature_subpacket(ops_signature_t *sig,
 	    OPS_ERROR_1(&pinfo->errors,OPS_E_PROTO_CRITICAL_SS_IGNORED,
                         "Critical signature subpacket ignored (%d)",
                         c[0]&0x7f);
-	if(!read && !limited_skip(subregion.length-1,&subregion,pinfo))
+	if(!doread && !limited_skip(subregion.length-1,&subregion,pinfo))
 	    return 0;
 	//	printf("skipped %d length %d\n",c[0]&0x7f,subregion.length);
-	if(read)
+	if(doread)
 	    ops_parser_content_free(&content);
 	return 1;
 	}
 
-    if(read && subregion.length_read != subregion.length)
+    if(doread && subregion.length_read != subregion.length)
         {
 	OPS_ERROR_1(&pinfo->errors,OPS_E_R_UNCONSUMED_DATA,
                     "Unconsumed data (%d)", 
@@ -1767,7 +1767,9 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
 	return 0;
     C.signature.info.type=c[0];
     if (ops_get_debug_level(__FILE__))
-        { fprintf(stderr, "signature type=%d (%s)\n", C.signature.info.type, ops_show_sig_type(C.signature.info.type)); }
+        { fprintf(stderr, "signature type=%d (%s)\n",
+		C.signature.info.type,
+		ops_show_sig_type(C.signature.info.type)); }
 
     /* XXX: check signature type */
 
@@ -1776,14 +1778,18 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
     C.signature.info.key_algorithm=c[0];
     /* XXX: check algorithm */
     if (ops_get_debug_level(__FILE__))
-        { fprintf(stderr, "key_algorithm=%d (%s)\n", C.signature.info.key_algorithm, ops_show_pka(C.signature.info.key_algorithm)); }
+        { fprintf(stderr, "key_algorithm=%d (%s)\n",
+		C.signature.info.key_algorithm,
+		ops_show_pka(C.signature.info.key_algorithm)); }
 
     if(!limited_read(c,1,region,pinfo))
 	return 0;
     C.signature.info.hash_algorithm=c[0];
     /* XXX: check algorithm */
     if (ops_get_debug_level(__FILE__))
-        { fprintf(stderr, "hash_algorithm=%d %s\n", C.signature.info.hash_algorithm, ops_show_hash_algorithm(C.signature.info.hash_algorithm)); }
+        { fprintf(stderr, "hash_algorithm=%d %s\n",
+		C.signature.info.hash_algorithm,
+		ops_show_hash_algorithm(C.signature.info.hash_algorithm)); }
 
     CBP(pinfo,OPS_PTAG_CT_SIGNATURE_HEADER,&content);
 

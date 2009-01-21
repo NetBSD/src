@@ -72,7 +72,7 @@ static void stream_encrypt_se_ip_destroyer (ops_writer_info_t *winfo);
 void ops_writer_push_stream_encrypt_se_ip(ops_create_info_t *cinfo,
                                           const ops_keydata_t *pub_key)
     {
-    ops_crypt_t* encrypt;
+    ops_crypt_t* encrypted;
     unsigned char *iv=NULL;
 
     const unsigned int bufsz=1024; // initial value; gets expanded as necessary
@@ -87,14 +87,14 @@ void ops_writer_push_stream_encrypt_se_ip(ops_create_info_t *cinfo,
     ops_write_pk_session_key(cinfo,encrypted_pk_session_key);
 
     // Setup the arg
-    encrypt=ops_mallocz(sizeof *encrypt);
-    ops_crypt_any(encrypt, encrypted_pk_session_key->symmetric_algorithm);
-    iv=ops_mallocz(encrypt->blocksize);
-    encrypt->set_iv(encrypt, iv);
-    encrypt->set_key(encrypt, &encrypted_pk_session_key->key[0]);
-    ops_encrypt_init(encrypt);
+    encrypted=ops_mallocz(sizeof *encrypted);
+    ops_crypt_any(encrypted, encrypted_pk_session_key->symmetric_algorithm);
+    iv=ops_mallocz(encrypted->blocksize);
+    encrypted->set_iv(encrypted, iv);
+    encrypted->set_key(encrypted, &encrypted_pk_session_key->key[0]);
+    ops_encrypt_init(encrypted);
 
-    arg->crypt=encrypt;
+    arg->crypt=encrypted;
 
     arg->mem_data=ops_memory_new();
     ops_memory_init(arg->mem_data,bufsz); 

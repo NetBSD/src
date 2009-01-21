@@ -153,15 +153,15 @@ static unsigned secret_key_length(const ops_secret_key_t *key)
 /** 
  * \ingroup Core_Create
  * \param key
- * \param time
+ * \param t
  * \param n
  * \param e
 */
-void ops_fast_create_rsa_public_key(ops_public_key_t *key,time_t time,
+void ops_fast_create_rsa_public_key(ops_public_key_t *key,time_t t,
 				    BIGNUM *n,BIGNUM *e)
     {
     key->version=4;
-    key->creation_time=time;
+    key->creation_time=t;
     key->algorithm=OPS_PKA_RSA;
     key->key.rsa.n=n;
     key->key.rsa.e=e;
@@ -219,7 +219,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
     {
     /* RFC4880 Section 5.5.3 Secret-Key Packet Formats */
 
-    ops_crypt_t crypt;
+    ops_crypt_t crypted;
     ops_hash_t hash;
     unsigned char hashed[OPS_SHA1_HASH_SIZE];
     unsigned char session_key[CAST_KEY_LENGTH];
@@ -333,25 +333,25 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 
     /* use this session key to encrypt */
 
-    ops_crypt_any(&crypt,key->algorithm);
-    crypt.set_iv(&crypt, key->iv);
-    crypt.set_key(&crypt, session_key);
-    ops_encrypt_init(&crypt);
+    ops_crypt_any(&crypted,key->algorithm);
+    crypted.set_iv(&crypted, key->iv);
+    crypted.set_key(&crypted, session_key);
+    ops_encrypt_init(&crypted);
 
     if (ops_get_debug_level(__FILE__))
         {
-        unsigned int i=0;
+        unsigned int i2=0;
         fprintf(stderr,"\nWRITING:\niv=");
-        for (i=0; i<ops_block_size(key->algorithm); i++)
+        for (i2=0; i2<ops_block_size(key->algorithm); i2++)
             {
-            fprintf(stderr, "%02x ", key->iv[i]);
+            fprintf(stderr, "%02x ", key->iv[i2]);
             }
         fprintf(stderr,"\n");
 
         fprintf(stderr,"key=");
-        for (i=0; i<CAST_KEY_LENGTH; i++)
+        for (i2=0; i2<CAST_KEY_LENGTH; i2++)
             {
-            fprintf(stderr, "%02x ", session_key[i]);
+            fprintf(stderr, "%02x ", session_key[i2]);
             }
         fprintf(stderr,"\n");
 
@@ -360,7 +360,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
         fprintf(stderr,"turning encryption on...\n");
         }
 
-    ops_writer_push_encrypt_crypt(info, &crypt);
+    ops_writer_push_encrypt_crypt(info, &crypted);
 
     switch(key->public_key.algorithm)
 	{
@@ -580,7 +580,7 @@ ops_boolean_t ops_write_struct_public_key(const ops_public_key_t *key,
 /**
  * \ingroup Core_WritePackets
  * \brief Writes one RSA public key packet.
- * \param time Creation time
+ * \param t Creation time
  * \param n RSA public modulus
  * \param e RSA public encryption exponent
  * \param info Writer settings
@@ -588,13 +588,13 @@ ops_boolean_t ops_write_struct_public_key(const ops_public_key_t *key,
  * \return ops_true if OK, otherwise ops_false
  */
 
-ops_boolean_t ops_write_rsa_public_key(time_t time,const BIGNUM *n,
+ops_boolean_t ops_write_rsa_public_key(time_t t,const BIGNUM *n,
 				       const BIGNUM *e,
 				       ops_create_info_t *info)
     {
     ops_public_key_t key;
 
-    ops_fast_create_rsa_public_key(&key,time,DECONST(BIGNUM,n),
+    ops_fast_create_rsa_public_key(&key,t,DECONST(BIGNUM,n),
 				   DECONST(BIGNUM,e));
     return ops_write_struct_public_key(&key,info);
     }
@@ -635,7 +635,7 @@ void ops_build_public_key(ops_memory_t *out,const ops_public_key_t *key,
  * freed.
  *
  * \param key The key structure to be initialised.
- * \param time
+ * \param t
  * \param d The RSA parameter d (=e^-1 mod (p-1)(q-1)) [OPTIONAL]
  * \param p The RSA parameter p
  * \param q The RSA parameter q (q > p)
@@ -643,11 +643,11 @@ void ops_build_public_key(ops_memory_t *out,const ops_public_key_t *key,
  * \param n The RSA public parameter n (=p*q) [OPTIONAL]
  * \param e The RSA public parameter e */
 
-void ops_fast_create_rsa_secret_key(ops_secret_key_t *key,time_t time,
+void ops_fast_create_rsa_secret_key(ops_secret_key_t *key,time_t t,
 				    BIGNUM *d,BIGNUM *p,BIGNUM *q,BIGNUM *u,
 				    BIGNUM *n,BIGNUM *e)
     {
-    ops_fast_create_rsa_public_key(&key->public_key,time,n,e);
+    ops_fast_create_rsa_public_key(&key->public_key,t,n,e);
 
     // XXX: calculate optionals
     key->key.rsa.d=d;
@@ -878,10 +878,10 @@ ops_boolean_t encode_m_buf(const unsigned char *M, size_t mLen,
 
     if (ops_get_debug_level(__FILE__))
         {
-        unsigned int i=0;
+        unsigned int i2=0;
         fprintf(stderr,"Encoded Message: \n");
-        for (i=0; i<mLen; i++)
-            fprintf(stderr,"%2x ", EM[i]);
+        for (i2=0; i2<mLen; i2++)
+            fprintf(stderr,"%2x ", EM[i2]);
         fprintf(stderr,"\n");
         }
 
@@ -925,6 +925,7 @@ ops_pk_session_key_t *ops_create_pk_session_key(const ops_keydata_t *key)
     if (ops_get_debug_level(__FILE__))
         {
         unsigned int i=0;
+
         fprintf(stderr,"Encrypting for RSA key id : ");
         for (i=0; i<sizeof session_key->key_id; i++)
             fprintf(stderr,"%2x ", key->key_id[i]);
