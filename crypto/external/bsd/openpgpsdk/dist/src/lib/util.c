@@ -48,7 +48,7 @@
  * error case sensibly (i.e. don't just print out the return string.
  * 
  */
-static char *str_from_map_or_null(int type, ops_map_t *map)
+static const char *str_from_map_or_null(int type, ops_map_t *map)
     {
     ops_map_t *row;
 
@@ -65,9 +65,9 @@ static char *str_from_map_or_null(int type, ops_map_t *map)
  * Returns a readable string if found, "Unknown" if not.
  */
 
-char *ops_str_from_map(int type, ops_map_t *map)
+const char *ops_str_from_map(int type, ops_map_t *map)
     {
-    char *str;
+    const char *str;
     str=str_from_map_or_null(type,map);
     if (str)
 	return(str);

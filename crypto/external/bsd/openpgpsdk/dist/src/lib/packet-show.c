@@ -328,18 +328,19 @@ static unsigned int list_resize(ops_list_t *list)
 	}
     }
 
-static unsigned int add_str(ops_list_t *list,char *str)
+static unsigned int add_str(ops_list_t *list, const char *str)
     {
     if (list->size==list->used) 
 	if (!list_resize(list))
 	    return 0;
 
-    list->strings[list->used]=str;
+    list->strings[list->used]=__UNCONST(str);
     list->used++;
     return 1;
     }
 
-static char *str_from_bitfield_or_null(unsigned char octet, ops_bit_map_t *map)
+static const char *
+str_from_bitfield_or_null(unsigned char octet, ops_bit_map_t *map)
     {
     ops_bit_map_t *row;
 
@@ -350,9 +351,10 @@ static char *str_from_bitfield_or_null(unsigned char octet, ops_bit_map_t *map)
     return NULL;
     }
 
-static char *str_from_bitfield(unsigned char octet, ops_bit_map_t *map)
+static const char *
+str_from_bitfield(unsigned char octet, ops_bit_map_t *map)
     {
-    char *str;
+    const char *str;
     str=str_from_bitfield_or_null(octet,map);
     if (str)
 	return str;
@@ -411,9 +413,9 @@ static unsigned int add_str_from_octet_map(ops_text_t *text,char *str,
     }
 
 /*! generic function which adds text derived from single bit map to text */
-static unsigned int add_str_from_bit_map(ops_text_t *text, char *str, unsigned char bit)
+static unsigned int add_str_from_bit_map(ops_text_t *text, const char *str, unsigned char bit)
     {
-    char *fmt_unknown="Unknown bit(0x%x)";
+    const char *fmt_unknown="Unknown bit(0x%x)";
 
     if (str && !add_str(&text->known,str)) 
 	{
@@ -430,7 +432,7 @@ static unsigned int add_str_from_bit_map(ops_text_t *text, char *str, unsigned c
     unsigned len=strlen(fmt_unknown)+1;  
 	str=malloc(len);
 
-	snprintf(str,len,fmt_unknown,bit);
+	snprintf(__UNCONST(str),len,fmt_unknown,bit);
 	if (!add_str(&text->unknown,str))
 	    return 0;
 	}
@@ -489,7 +491,7 @@ static ops_text_t *showall_octets_bits(ops_data_t *data,ops_bit_map_t **map,
 				       size_t nmap)
     {
     ops_text_t *text=NULL;
-    char *str;
+    const char *str;
     unsigned i;
     int j=0;
     unsigned char mask, bit;
@@ -537,7 +539,7 @@ static ops_text_t *showall_octets_bits(ops_data_t *data,ops_bit_map_t **map,
 */
 const char *ops_show_packet_tag(ops_packet_tag_t packet_tag)
     {
-    char *rtn=NULL;
+    const char *rtn=NULL;
     rtn=show_packet_tag(packet_tag,packet_tag_map);
 
     if (!rtn)
@@ -682,7 +684,7 @@ ops_text_t *ops_showall_ss_preferred_ska(ops_ss_preferred_ska_t ss_preferred_ska
  * \param octet
  * \return string or "Unknown"
 */
-static char *ops_show_ss_feature(unsigned char octet,unsigned offset)
+static const char *ops_show_ss_feature(unsigned char octet,unsigned offset)
     {
     if(offset >= OPS_ARRAY_SIZE(ss_feature_map))
 	return "Unknown";
@@ -701,7 +703,7 @@ static char *ops_show_ss_feature(unsigned char octet,unsigned offset)
 ops_text_t *ops_showall_ss_features(ops_ss_features_t ss_features)
     {
     ops_text_t *text=NULL;
-    char *str;
+    const char *str;
     unsigned i;
     int j=0;
     unsigned char mask, bit;

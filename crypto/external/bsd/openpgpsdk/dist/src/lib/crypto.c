@@ -273,8 +273,8 @@ ops_boolean_t ops_decrypt_file(const char* input_filename, const char* output_fi
     else
         {
         int suffixlen=4;
-        char *defaultsuffix=".decrypted";
-        const char *suffix=input_filename+strlen((char *)input_filename)-suffixlen;
+        const char *defaultsuffix=".decrypted";
+        const char *suffix=input_filename+strlen(input_filename)-suffixlen;
         if (!strcmp(suffix,".gpg") || !strcmp(suffix,".asc"))
             {
             myfilename=ops_mallocz(strlen(input_filename)-suffixlen+1);
@@ -332,7 +332,7 @@ ops_boolean_t ops_decrypt_file(const char* input_filename, const char* output_fi
 static ops_parse_cb_return_t
 callback_write_parsed(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
     {
-    ops_parser_content_union_t* content=(ops_parser_content_union_t *)&content_->content;
+    const ops_parser_content_union_t* content=&content_->content;
     static ops_boolean_t skipping;
     //    ops_boolean_t write=ops_true;
 
