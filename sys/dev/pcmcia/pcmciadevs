@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.227 2008/09/06 22:07:11 rmind Exp $
+$NetBSD: pcmciadevs,v 1.228 2009/01/21 14:13:09 jnemeth Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -28,6 +28,11 @@ $NetBSD: pcmciadevs,v 1.227 2008/09/06 22:07:11 rmind Exp $
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Use "make -f Makefile.pcmicadevs" to regenerate pcmicadevs.h and
+ * pcmicadevs_data.h
  */
 
 /*
