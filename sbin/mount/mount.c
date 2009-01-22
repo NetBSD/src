@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.86.2.1 2009/01/16 22:22:52 bouyer Exp $	*/
+/*	$NetBSD: mount.c,v 1.86.2.2 2009/01/22 20:27:59 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.86.2.1 2009/01/16 22:22:52 bouyer Exp $");
+__RCSID("$NetBSD: mount.c,v 1.86.2.2 2009/01/22 20:27:59 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,7 +430,10 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	if (argv == NULL)
 		err(1, "malloc");
 
-	(void) snprintf(execbase, sizeof(execbase), "mount_%s", vfstype);
+	if (hasopt(optbuf, "rump"))
+		(void)snprintf(execbase, sizeof(execbase), "rump_%s", vfstype);
+	else
+		(void)snprintf(execbase, sizeof(execbase), "mount_%s", vfstype);
 	argc = 0;
 	argv[argc++] = execbase;
 	if (optbuf)
