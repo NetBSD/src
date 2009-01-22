@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.93 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.94 2009/01/22 14:38:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,11 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.93 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.94 2009/01/22 14:38:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
@@ -202,18 +202,13 @@ disk_attach(struct disk *diskp)
 {
 
 	/*
-	 * Allocate and initialize the disklabel structures.  Note that
-	 * it's not safe to sleep here, since we're probably going to be
-	 * called during autoconfiguration.
+	 * Allocate and initialize the disklabel structures.
 	 */
-	diskp->dk_label = malloc(sizeof(struct disklabel), M_DEVBUF, M_NOWAIT);
-	diskp->dk_cpulabel = malloc(sizeof(struct cpu_disklabel), M_DEVBUF,
-	    M_NOWAIT);
+	diskp->dk_label = kmem_zalloc(sizeof(struct disklabel), KM_SLEEP);
+	diskp->dk_cpulabel = kmem_zalloc(sizeof(struct cpu_disklabel),
+	    KM_SLEEP);
 	if ((diskp->dk_label == NULL) || (diskp->dk_cpulabel == NULL))
 		panic("disk_attach: can't allocate storage for disklabel");
-
-	memset(diskp->dk_label, 0, sizeof(struct disklabel));
-	memset(diskp->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	/*
 	 * Set up the stats collection.
@@ -244,8 +239,8 @@ disk_detach(struct disk *diskp)
 	/*
 	 * Free the space used by the disklabel structures.
 	 */
-	free(diskp->dk_label, M_DEVBUF);
-	free(diskp->dk_cpulabel, M_DEVBUF);
+	kmem_free(diskp->dk_label, sizeof(*diskp->dk_label));
+	kmem_free(diskp->dk_cpulabel, sizeof(*diskp->dk_cpulabel));
 }
 
 void
