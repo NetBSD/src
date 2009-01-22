@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.228 2008/11/19 18:36:07 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.229 2009/01/22 14:38:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.228 2008/11/19 18:36:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.229 2009/01/22 14:38:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.228 2008/11/19 18:36:07 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>

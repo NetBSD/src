@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.9 2009/01/11 02:45:52 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.10 2009/01/22 14:38:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.9 2009/01/11 02:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.10 2009/01/22 14:38:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.9 2009/01/11 02:45:52 christos Exp
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>

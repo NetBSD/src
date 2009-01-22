@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.144 2008/11/19 18:36:07 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.145 2009/01/22 14:38:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.144 2008/11/19 18:36:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.145 2009/01/22 14:38:35 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -128,7 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.144 2008/11/19 18:36:07 ad Exp $")
 #include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/ras.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -162,6 +162,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	int signo;
 	ksiginfo_t ksi;
 	char *path;
+	int len;
 
 	error = 0;
 	req = SCARG(uap, req);
@@ -474,14 +475,15 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	case  PT_DUMPCORE:
 		if ((path = SCARG(uap, addr)) != NULL) {
 			char *dst;
-			int len = SCARG(uap, data);
+			len = SCARG(uap, data);
+
 			if (len < 0 || len >= MAXPATHLEN) {
 				error = EINVAL;
 				break;
 			}
-			dst = malloc(len + 1, M_TEMP, M_WAITOK);
+			dst = kmem_alloc(len + 1, KM_SLEEP);
 			if ((error = copyin(path, dst, len)) != 0) {
-				free(dst, M_TEMP);
+				kmem_free(dst, len + 1);
 				break;
 			}
 			path = dst;
@@ -489,7 +491,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		}
 		error = (*coredump_vec)(lt, path);
 		if (path)
-			free(path, M_TEMP);
+			kmem_free(path, len + 1);
 		break;
 
 #ifdef PT_STEP
