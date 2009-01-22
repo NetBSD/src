@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.4 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.5 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1151,6 +1151,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[darran 20081030]
 	fxp(4): Add a workaround for hardware ip4csum-tx bug.
 		[tsutsui 20081203]
+	httpd(8): Add rc.d script to control httpd daemon [mishka 20081211]
 	nvi(1): Added "expandtab" option.  [lukem 20081212]
 	ntp:	import ntp 4.2.4p6.
 		openssl API related security fix.  [kardel 20090108]
