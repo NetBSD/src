@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.10 2009/01/22 09:37:44 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.11 2009/01/22 09:39:28 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.10 2009/01/22 09:37:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.11 2009/01/22 09:39:28 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -328,7 +328,7 @@ age_detach(device_t self, int flags)
  *	Read a PHY register on the MII of the L1.
  */
 static int
-age_miibus_readreg(struct device *dev, int phy, int reg)
+age_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct age_softc *sc = device_private(dev);
 	uint32_t v;
@@ -359,7 +359,7 @@ age_miibus_readreg(struct device *dev, int phy, int reg)
  * 	Write a PHY register on the MII of the L1.
  */
 static void
-age_miibus_writereg(struct device *dev, int phy, int reg, int val)
+age_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
 	struct age_softc *sc = device_private(dev);
 	uint32_t v;
