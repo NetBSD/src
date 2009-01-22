@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.63 2009/01/11 11:06:08 cegger Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.64 2009/01/22 16:12:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.63 2009/01/11 11:06:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.64 2009/01/22 16:12:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,7 @@ uscannerclose(dev_t dev, int flag, int mode,
 
 	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
 
-	DPRINTFN(5, ("uscannerclose: flag=%d, mode=%d, unit=%"PRId64"\n",
+	DPRINTFN(5, ("uscannerclose: flag=%d, mode=%d, unit=%"PRId32"\n",
 		     flag, mode, USCANNERUNIT(dev)));
 
 #ifdef DIAGNOSTIC
