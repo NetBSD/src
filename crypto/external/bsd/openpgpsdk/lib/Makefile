@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2009/01/21 15:35:01 agc Exp $
+# $NetBSD: Makefile,v 1.7 2009/01/22 00:20:58 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -30,9 +30,8 @@ INCS+= streamwriter.h types.h util.h
 INCS+= validate.h version.h writer.h writer_armoured.h
 INCSDIR=/usr/include/openpgpsdk
 
-LDADD+=		-lcrypto -lz -lbz2
-LIBDPLIBS+=     crypto  ${NETBSDSRCDIR}/lib/libcrypto
-LIBDPLIBS+=     z  ${NETBSDSRCDIR}/lib/libz
-LIBDPLIBS+=     bz2  ${NETBSDSRCDIR}/lib/libbz2
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/lib/libcrypto
+LIBDPLIBS+=	z	${NETBSDSRCDIR}/lib/libz
+LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2
 
 .include <bsd.lib.mk>
