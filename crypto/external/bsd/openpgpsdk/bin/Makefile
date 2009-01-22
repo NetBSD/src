@@ -1,12 +1,19 @@
-# $NetBSD: Makefile,v 1.3 2009/01/20 19:48:23 agc Exp $
+#	$NetBSD: Makefile,v 1.4 2009/01/22 00:22:20 lukem Exp $
 
-PROG=openpgp
-LDADD+=-lopenpgpsdk
-CPPFLAGS+=-I${.CURDIR}/../dist/include
-WARNS=0
-NOMAN= # defined
+NOMAN=	# defined
 
-BINDIR=/usr/bin
+.include <bsd.own.mk>
+
+PROG=		openpgp
+BINDIR=		/usr/bin
+
+CPPFLAGS+=	-I${.CURDIR}/../dist/include
+
+LIBOPSOBJDIR!=	cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
+LDADD+=		-L${LIBOPSOBJDIR} -lopenpgpsdk
+DPADD+=		${LIBOPSOBJDIR}/libopenpgpsdk.a
+
+WARNS=		0
 
 .PATH: ${.CURDIR}/../dist/src/app
 
