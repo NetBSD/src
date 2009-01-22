@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.4 2009/01/16 00:46:12 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.5 2009/01/22 04:56:06 agc Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ dmdestroy(void)
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	aprint_debug("open routine called %llu\n", minor(dev));
+	aprint_debug("open routine called %" PRIu32 "\n", minor(dev));
 	return 0;
 }
 
