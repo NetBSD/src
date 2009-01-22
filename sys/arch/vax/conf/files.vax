@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.114 2009/01/13 23:56:13 mjf Exp $
+#	$NetBSD: files.vax,v 1.115 2009/01/22 18:49:02 christos Exp $
 #
 # new style config file for vax architecture
 #
@@ -55,7 +55,15 @@ file	arch/vax/vax/cmi.c		cmi
 
 attach	mem at cmi with mem_cmi
 file	arch/vax/vax/ka750.c		vax750 | mem_cmi | vaxany
-file	arch/vax/vax/ctu.c		vax750 | mem_cmi | vaxany
+file	arch/vax/vax/ctu.c		vax750 | vax730 | mem_cmi | vaxany
+
+# Direct unibus interface
+device	ubi { tr=-1 }
+attach	ubi at mainbus
+file	arch/vax/vax/ubi.c		ubi
+
+attach	mem at ubi with mem_ubi
+file	arch/vax/vax/ka730.c		vax730 | mem_ubi | vaxany
 
 device	vsbus { csr }: bus
 attach	vsbus at mainbus
@@ -108,6 +116,8 @@ attach	uba at sbi with uba_sbi
 file	arch/vax/uba/uba_sbi.c		uba_sbi
 attach	uba at cmi with uba_cmi
 file	arch/vax/uba/uba_cmi.c		uba_cmi
+attach	uba at ubi with uba_ubi
+file	arch/vax/uba/uba_ubi.c		uba_ubi
 
 # BI bus definitions
 include "dev/bi/files.bi"
