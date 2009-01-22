@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.17.8.1 2008/12/27 03:47:55 snj Exp $ */
+/* $NetBSD: video.c,v 1.17.8.2 2009/01/22 23:21:19 snj Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.17.8.1 2008/12/27 03:47:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.17.8.2 2009/01/22 23:21:19 snj Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -970,6 +970,10 @@ video_dequeue_buf(struct video_softc *sc, struct v4l2_buffer *buf)
 		} else {
 			/* Block until we have sample */
 			while ((vb = video_stream_dequeue(vs)) == NULL) {
+				if (!vs->vs_streaming) {
+					mutex_exit(&vs->vs_lock);
+					return EINVAL;
+				}
 				err = cv_wait_sig(&vs->vs_sample_cv,
 						  &vs->vs_lock);
 				if (err != 0) {
@@ -1564,10 +1568,12 @@ videopoll(dev_t dev, int events, struct lwp *l)
 			return POLLERR;
 	}
 
+	mutex_enter(&vs->vs_lock);
 	if (!SIMPLEQ_EMPTY(&sc->sc_stream_in.vs_egress))
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
 		selrecord(l, &vs->vs_sel);
+	mutex_exit(&vs->vs_lock);
 
 	return (revents);
 }
@@ -1644,7 +1650,7 @@ video_stream_setup_bufs(struct video_stream *vs,
 	/* Ensure that all allocated buffers are queued and not under
 	 * userspace control. */
 	for (i = 0; i < vs->vs_nbufs; ++i) {
-		if (!(vs->vs_buf[i]->vb_buf->flags | V4L2_BUF_FLAG_QUEUED)) {
+		if (!(vs->vs_buf[i]->vb_buf->flags & V4L2_BUF_FLAG_QUEUED)) {
 			mutex_exit(&vs->vs_lock);
 			return EBUSY;
 		}
