@@ -819,8 +819,10 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
         {
         for(i=0; i<keyring->keys[n].nuids; i++)
             {
-            //printf("[%d][%d] userid %s\n",n,i,keyring->keys[n].uids[i].user_id);
-            if(!strncmp((char *)keyring->keys[n].uids[i].user_id,userid,strlen(userid)))
+            if (ops_get_debug_level(__FILE__)) {
+		printf("[%d][%d] userid %s\n",n,i,keyring->keys[n].uids[i].user_id);
+	    }
+            if(strncmp((char *)keyring->keys[n].uids[i].user_id,userid,strlen(userid)) == 0)
                 return &keyring->keys[n];
             }
         }
