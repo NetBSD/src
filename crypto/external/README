@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2009/01/20 07:15:30 agc Exp $
+$NetBSD: README,v 1.2 2009/01/22 00:01:52 lukem Exp $
 
 Organization of Sources:
 
@@ -12,7 +12,7 @@ This README file is derived from the README file in src/external.
 The hierarchy is grouped by license, and then package per license,
 and is organized as follows:
 
-	external/
+	crypto/external/
 
 	    Makefile
 			Descend into the license sub-directories.
@@ -66,7 +66,7 @@ directories) and src/gnu will be migrated to this hierarchy.
 
 Maintenance Strategy:
 
-The sources under src/external/<license>/<package>/dist/ are
+The sources under src/crypto/external/<license>/<package>/dist/ are
 generally a combination of a published distribution plus changes
 that we submit to the maintainers and that are not yet published
 by them.
