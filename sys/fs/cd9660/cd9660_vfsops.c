@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.64 2009/01/11 10:07:54 cegger Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.65 2009/01/22 16:05:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.64 2009/01/11 10:07:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.65 2009/01/22 16:05:03 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -381,7 +381,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 			sess = 0;	/* never mind */
 	}
 #ifdef ISO_DEBUG
-	printf("isofs: session offset (part %"PRId64") %d\n", DISKPART(dev), sess);
+	printf("isofs: session offset (part %"PRId32") %d\n", DISKPART(dev), sess);
 #endif
 
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
