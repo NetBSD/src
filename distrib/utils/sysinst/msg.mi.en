@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.149.14.1 2009/01/22 22:13:32 snj Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.149.14.2 2009/01/22 22:16:17 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -449,7 +449,7 @@ must be nfs mountable.
 
 message floppysource
 {Enter the floppy device to be used and transfer directory on the target
-filesystem.  The set files must be in the root directory of the floppies.
+file system.  The set files must be in the root directory of the floppies.
 
 }
 
