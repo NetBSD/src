@@ -1,4 +1,4 @@
-.\"	$NetBSD: pset.3,v 1.7 2008/10/18 03:37:41 rmind Exp $
+.\"	$NetBSD: pset.3,v 1.7.2.1 2009/01/22 20:42:46 snj Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -152,11 +152,10 @@ bound to different processor sets.
 In such a case it is unspecified which thread will be used to return
 the information.
 .Pp
-If processor sets are used together with the thread affinity, see
-.Xr affinity 3 ,
-then affinity mask takes precedence over the assignment to processor
-set.
-However, it is not recomended to combine these interfaces together.
+There is an alternative thread affinity interface, see
+.Xr affinity 3 .
+However, processor sets and thread affinity are mutually exclusive,
+hence mixing of these interfaces is prohibited.
 .Sh RETURN VALUES
 Upon successful completion these functions return 0.
 Otherwise, \-1 is returned and

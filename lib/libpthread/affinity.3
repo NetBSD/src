@@ -1,4 +1,4 @@
-.\"	$NetBSD: affinity.3,v 1.3 2008/10/18 03:37:41 rmind Exp $
+.\"	$NetBSD: affinity.3,v 1.3.2.1 2009/01/22 20:42:46 snj Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,11 +113,10 @@ No thread could be found corresponding to the one specified by
 .Fa thread .
 .El
 .Sh NOTES
-If thread affinity is used together with the processor sets, see
-.Xr pset 3 ,
-then affinity mask takes precedence over the assignment to processor
-sets.
-However, it is not recomended to combine these interfaces together.
+There is an alternative processor sets interface, see
+.Xr pset 3 .
+However, thread affinity and processor sets are mutually exclusive,
+hence mixing of these interfaces is prohibited.
 .Sh SEE ALSO
 .Xr cpuset 3 ,
 .Xr pset 3 ,
