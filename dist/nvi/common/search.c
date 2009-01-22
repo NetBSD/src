@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: search.c,v 1.3 2009/01/22 10:33:58 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -371,7 +371,7 @@ b_search(SCR *sp, MARK *fm, MARK *rm, CHAR_T *ptrn, size_t plen, CHAR_T **eptrn,
 #endif
 		/* Search the line. */
 		eval = regexec(&sp->re_c, l, 1, match,
-		    (match[0].rm_eo == len ? 0 : REG_NOTEOL) | REG_STARTEND);
+		    ((size_t)match[0].rm_eo == len ? 0 : REG_NOTEOL) | REG_STARTEND);
 		if (eval == REG_NOMATCH)
 			continue;
 		if (eval != 0) {
@@ -383,7 +383,7 @@ b_search(SCR *sp, MARK *fm, MARK *rm, CHAR_T *ptrn, size_t plen, CHAR_T **eptrn,
 		}
 
 		/* Check for a match starting past the cursor. */
-		if (coff != 0 && match[0].rm_so >= coff)
+		if (coff != 0 && (size_t)match[0].rm_so >= coff)
 			continue;
 
 		/* Warn if the search wrapped. */
@@ -402,7 +402,7 @@ b_search(SCR *sp, MARK *fm, MARK *rm, CHAR_T *ptrn, size_t plen, CHAR_T **eptrn,
 		 */
 		for (;;) {
 			last = match[0].rm_so++;
-			if (match[0].rm_so >= len)
+			if ((size_t)match[0].rm_so >= len)
 				break;
 			match[0].rm_eo = len;
 			eval = regexec(&sp->re_c, l, 1, match,
@@ -417,7 +417,7 @@ b_search(SCR *sp, MARK *fm, MARK *rm, CHAR_T *ptrn, size_t plen, CHAR_T **eptrn,
 					(void)sp->gp->scr_bell(sp);
 				goto err;
 			}
-			if (coff && match[0].rm_so >= coff)
+			if (coff && (size_t)match[0].rm_so >= coff)
 				break;
 		}
 		rm->lno = lno;
