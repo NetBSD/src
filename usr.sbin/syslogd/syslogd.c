@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.97 2009/01/22 10:45:35 lukem Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.98 2009/01/22 21:10:52 mschuett Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.97 2009/01/22 10:45:35 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.98 2009/01/22 21:10:52 mschuett Exp $");
 #endif
 #endif /* not lint */
 
@@ -3390,7 +3390,9 @@ init(int fd, short event, void *ev)
 	/*
 	 *  Free old log files.
 	 */
-	for (f = Files; f != NULL; f = f->f_next) {
+	for (f = Files; f != NULL;) {
+		struct filed *ftmp;
+
 		/* check if a new logfile is equal, if so pass the queue */
 		for (f2 = newf; f2 != NULL; f2 = f2->f_next) {
 			if (f->f_type == f2->f_type
@@ -3421,7 +3423,10 @@ init(int fd, short event, void *ev)
 		FREEPTR(f->f_program);
 		FREEPTR(f->f_host);
 		DEL_EVENT(f->f_sq_event);
+
+		ftmp = f->f_next;
 		free((char *)f);
+		f = ftmp;
 	}
 	Files = newf;
 	Initialized = 1;
