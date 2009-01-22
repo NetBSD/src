@@ -42,7 +42,7 @@
  /*#define ERR(err)	do { content.content.error.error=err; content.tag=OPS_PARSER_ERROR; ops_parse_cb(&content,cbinfo); return -1; } while(0)*/
 
 #define ERRP(info,err)	do {						\
-	C.error.error=err;						\
+	content.content.error.error=err;				\
 	CBP(info,OPS_PARSER_ERROR,&content);				\
 	return ops_false;						\
 } while(/*CONSTCOND*/0)
