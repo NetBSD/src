@@ -60,7 +60,9 @@ accumulate_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
     case OPS_PTAG_CT_PUBLIC_KEY:
     case OPS_PTAG_CT_SECRET_KEY:
     case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
-	//	printf("New key\n");
+	if (ops_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "New key - tag %d\n", content_->tag);
+	}
 	++keyring->nkeys;
 	EXPAND_ARRAY(keyring,keys);
 
@@ -84,7 +86,9 @@ accumulate_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
 	return OPS_KEEP_MEMORY;
 
     case OPS_PTAG_CT_USER_ID:
-	//	printf("User ID: %s\n",content->user_id.user_id);
+	if (ops_get_debug_level(__FILE__)) {
+		(void)fprintf(stderr, "User ID: %s\n",content->user_id.user_id);
+	}
         if (!cur)
             {
             OPS_ERROR(cbinfo->errors,OPS_E_P_NO_USERID, "No user id found");
