@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.85 2009/01/22 14:38:34 yamt Exp $	*/
+/*	$NetBSD: tty.h,v 1.86 2009/01/22 20:40:20 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -271,6 +271,7 @@ void	 ttyflush(struct tty *, int);
 void	 ttygetinfo(struct tty *, int, char *, size_t);
 void	 ttyputinfo(struct tty *, char *);
 int	 ttyinput(int, struct tty *);
+int	 ttyinput_wlock(int, struct tty *); /* XXX see wsdisplay.c */
 int	 ttylclose(struct tty *, int);
 int	 ttylopen(dev_t, struct tty *);
 int	 ttykqfilter(dev_t, struct knote *);
