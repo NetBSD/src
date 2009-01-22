@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.42 2008/10/24 21:09:24 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.42.4.1 2009/01/22 20:17:13 snj Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42 2008/10/24 21:09:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.1 2009/01/22 20:17:13 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,12 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42 2008/10/24 21:09:24 jym Exp $");
 #endif
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>       
-#endif
-#ifdef PCI_BUS_FIXUP
-#include <arch/i386/pci/pci_bus_fixup.h>
-#ifdef PCI_ADDR_FIXUP
-#include <arch/i386/pci/pci_addr_fixup.h>
-#endif  
 #endif
 #endif /* NPCI */
 
@@ -243,9 +237,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	int i, j, busnum;
 #endif
 
-#ifdef PCI_BUS_FIXUP
-	int pci_maxbus = 0;
-#endif
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
