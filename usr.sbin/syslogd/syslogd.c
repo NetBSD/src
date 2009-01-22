@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.96 2009/01/18 10:35:26 lukem Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.97 2009/01/22 10:45:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.96 2009/01/18 10:35:26 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.97 2009/01/22 10:45:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -4323,9 +4323,9 @@ message_queue_purge(struct filed *f, size_t del_entries, int strategy)
 
 	while (removed < del_entries
 	    || (TypeInfo[f->f_type].queue_length != -1
-	    && TypeInfo[f->f_type].queue_length > f->f_qelements)
+	    && (size_t)TypeInfo[f->f_type].queue_length > f->f_qelements)
 	    || (TypeInfo[f->f_type].queue_size != -1
-	    && TypeInfo[f->f_type].queue_size > f->f_qsize)) {
+	    && (size_t)TypeInfo[f->f_type].queue_size > f->f_qsize)) {
 		qentry = find_qentry_to_delete(&f->f_qhead, strategy, 0);
 		if (message_queue_remove(f, qentry))
 			removed++;
