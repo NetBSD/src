@@ -1841,7 +1841,11 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
 
     case OPS_PKA_DSA:
 	if(!limited_read_mpi(&C.signature.info.signature.dsa.r,region,pinfo)) {
-	    (void) fprintf(stderr, "Error reading DSA r field in signature");
+		/* usually if this fails, it just means we've reached
+		 * the end of the keyring */
+	    if (ops_get_debug_level(__FILE__)) {
+		    (void) fprintf(stderr, "Error reading DSA r field in signature");
+	    }
 	    return 0;
 	}
 	if (!limited_read_mpi(&C.signature.info.signature.dsa.s,region,pinfo))
