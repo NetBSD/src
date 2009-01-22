@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_ctype.c,v 1.2.2.2 2009/01/15 03:24:06 snj Exp $ */
+/* $NetBSD: citrus_lc_ctype.c,v 1.2.2.3 2009/01/22 22:04:28 snj Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.2.2.2 2009/01/15 03:24:06 snj Exp $");
+__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.2.2.3 2009/01/22 22:04:28 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -109,6 +109,14 @@ _citrus_LC_CTYPE_create_impl(const char * __restrict root,
 		_NukeRune(data);
 		return EINVAL;
 	}
+	data->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name = "tolower";
+	data->rl_wctrans[_WCTRANS_INDEX_LOWER].te_cached = &data->rl_maplower[0];
+	data->rl_wctrans[_WCTRANS_INDEX_LOWER].te_extmap = &data->rl_maplower_ext;
+
+	data->rl_wctrans[_WCTRANS_INDEX_UPPER].te_name = "toupper";
+	data->rl_wctrans[_WCTRANS_INDEX_UPPER].te_cached = &data->rl_mapupper[0];
+	data->rl_wctrans[_WCTRANS_INDEX_UPPER].te_extmap = &data->rl_mapupper_ext;
+
 	*pdata = data;
 	return 0;
 }

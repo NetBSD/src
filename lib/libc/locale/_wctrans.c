@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans.c,v 1.6.32.1 2009/01/15 03:24:07 snj Exp $	*/
+/*	$NetBSD: _wctrans.c,v 1.6.32.2 2009/01/22 22:04:28 snj Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -60,32 +60,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctrans.c,v 1.6.32.1 2009/01/15 03:24:07 snj Exp $");
+__RCSID("$NetBSD: _wctrans.c,v 1.6.32.2 2009/01/22 22:04:28 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
+#include <assert.h>
 #include <wctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include "rune.h"
 #include "rune_local.h"
 #include "_wctrans_local.h"
-
-/*
- * _wctrans_init:
- */
-
-void
-_wctrans_init(_RuneLocale *rl)
-{
-	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name = "tolower";
-	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_cached = rl->rl_maplower;
-	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_extmap = &rl->rl_maplower_ext;
-	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_name = "toupper";
-	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_cached = rl->rl_mapupper;
-	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_extmap = &rl->rl_mapupper_ext;
-}
 
 /*
  * _towctrans_ext:
