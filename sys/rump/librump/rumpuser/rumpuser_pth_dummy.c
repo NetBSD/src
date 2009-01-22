@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.1 2009/01/20 21:43:13 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.2 2009/01/22 16:05:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.1 2009/01/20 21:43:13 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.2 2009/01/22 16:05:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -87,6 +87,7 @@ int
 rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
 {
 
+	fprintf(stderr, "rumpuser: threads not available\n");
 	abort();
 	return 0;
 }
