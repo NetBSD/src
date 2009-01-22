@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.34 2008/07/16 18:27:49 drochner Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.35 2009/01/22 14:38:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,16 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.34 2008/07/16 18:27:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.35 2009/01/22 14:38:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/malloc.h>
-
-MALLOC_DEFINE(M_TTYS, "ttys", "allocated tty structures");
+#include <sys/kmem.h>
 
 /*
  * At compile time, choose:
@@ -73,22 +71,20 @@ int
 clalloc(struct clist *clp, int size, int quot)
 {
 
-	clp->c_cs = malloc(size, M_TTYS, M_WAITOK);
+	clp->c_cs = kmem_zalloc(size, KM_SLEEP);
 	if (!clp->c_cs)
 		return (-1);
-	memset(clp->c_cs, 0, size);
 
 	if(quot) {
-		clp->c_cq = malloc(QMEM(size), M_TTYS, M_WAITOK);
+		clp->c_cq = kmem_zalloc(QMEM(size), KM_SLEEP);
 		if (!clp->c_cq) {
-			free(clp->c_cs, M_TTYS);
+			kmem_free(clp->c_cs, size);
 			return (-1);
 		}
-		memset(clp->c_cq, 0, QMEM(size));
 	} else
-		clp->c_cq = (u_char *)0;
+		clp->c_cq = NULL;
 
-	clp->c_cf = clp->c_cl = (u_char *)0;
+	clp->c_cf = clp->c_cl = NULL;
 	clp->c_ce = clp->c_cs + size;
 	clp->c_cn = size;
 	clp->c_cc = 0;
@@ -100,10 +96,10 @@ void
 clfree(struct clist *clp)
 {
 	if(clp->c_cs)
-		free(clp->c_cs, M_TTYS);
+		kmem_free(clp->c_cs, clp->c_cn);
 	if(clp->c_cq)
-		free(clp->c_cq, M_TTYS);
-	clp->c_cs = clp->c_cq = (u_char *)0;
+		kmem_free(clp->c_cq, QMEM(clp->c_cn));
+	clp->c_cs = clp->c_cq = NULL;
 }
 
 /*
