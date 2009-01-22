@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.h,v 1.4 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: dev_hppa.h,v 1.5 2009/01/22 07:57:17 skrll Exp $	*/
 
 /*	$OpenBSD: dev_hppa.h,v 1.3 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -9,7 +9,7 @@
 
 struct disklabel;
 struct hppa_dev {
-	dev_t	bootdev;
+	btdev_t	bootdev;
 	struct pz_device *pz_dev;	/* device descriptor */
 	u_long	last_blk;		/* byte offset for last read blk */
 	size_t	last_read;		/* amount read last time */

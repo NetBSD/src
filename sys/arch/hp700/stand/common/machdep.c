@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2009/01/22 07:57:17 skrll Exp $	*/
 
 /*	$OpenBSD: machdep.c,v 1.6 2001/06/04 22:25:52 mickey Exp $	*/
 
@@ -43,7 +43,7 @@
 
 extern struct	stable_storage sstor;	/* contents of Stable Storage */
 int howto;
-dev_t bootdev;
+btdev_t bootdev;
 
 void
 machdep(void)

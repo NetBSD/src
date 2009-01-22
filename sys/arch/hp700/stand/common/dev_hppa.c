@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.8 2008/05/10 19:11:59 skrll Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.9 2009/01/22 07:57:17 skrll Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -139,7 +139,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 }
 
 void
-devboot(dev_t dev, char *p)
+devboot(btdev_t dev, char *p)
 {
 	const char *q;
 	if (!dev) {
