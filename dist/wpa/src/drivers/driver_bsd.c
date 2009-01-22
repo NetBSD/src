@@ -21,7 +21,12 @@
 #include "ieee802_11_defs.h"
 
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#endif
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>
@@ -32,6 +37,7 @@ struct wpa_driver_bsd_data {
 	int	route;			/* routing socket for events */
 	char	ifname[IFNAMSIZ+1];	/* interface name */
 	unsigned int ifindex;		/* interface index */
+	int	flags;			/* interface flags */
 	void	*ctx;
 	int	prev_roaming;		/* roaming state to restore on deinit */
 	int	prev_privacy;		/* privacy state to restore on deinit */
@@ -145,9 +151,18 @@ static int
 wpa_driver_bsd_get_bssid(void *priv, u8 *bssid)
 {
 	struct wpa_driver_bsd_data *drv = priv;
+#ifdef SIOCG80211BSSID
+	struct ieee80211_bssid bs;
 
+	strlcpy(bs.i_name, drv->ifname, sizeof(bs.i_name));
+	if (ioctl(drv->sock, SIOCG80211BSSID, &bs) < 0)
+		return -1;
+	os_memcpy(bssid, bs.i_bssid, IEEE80211_ADDR_LEN);
+	return 0;
+#else
 	return get80211var(drv, IEEE80211_IOC_BSSID,
 		bssid, IEEE80211_ADDR_LEN) < 0 ? -1 : 0;
+#endif
 }
 
 #if 0
@@ -155,9 +170,16 @@ static int
 wpa_driver_bsd_set_bssid(void *priv, const char *bssid)
 {
 	struct wpa_driver_bsd_data *drv = priv;
-
+#ifdef SIOCS80211BSSID
+	struct ieee80211_bssid bs;
+ 
+	strlcpy(bs.i_name, drv->ifname, sizeof(bs.i_name);
+	os_memcpy(bs.i_bssid, bssid, sizeof(bs.i_bssid));
+	return ioctl(drv->sock, SIOCS80211BSSID, &bs);
+#else
 	return set80211var(drv, IEEE80211_IOC_BSSID,
 		bssid, IEEE80211_ADDR_LEN);
+#endif
 }
 #endif
 
@@ -165,9 +187,22 @@ static int
 wpa_driver_bsd_get_ssid(void *priv, u8 *ssid)
 {
 	struct wpa_driver_bsd_data *drv = priv;
-
+#ifdef SIOCG80211NWID
+	struct ieee80211_nwid nwid;
+	struct ifreq ifr;
+ 
+	os_memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, drv->ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (void *)&nwid;
+	if (ioctl(drv->sock, SIOCG80211NWID, &ifr) < 0 ||
+	    nwid.i_len > IEEE80211_NWID_LEN)
+		return -1;
+	os_memcpy(ssid, nwid.i_nwid, nwid.i_len);
+	return nwid.i_len;
+#else
 	return get80211var(drv, IEEE80211_IOC_SSID,
 		ssid, IEEE80211_NWID_LEN);
+#endif
 }
 
 static int
@@ -175,8 +210,19 @@ wpa_driver_bsd_set_ssid(void *priv, const char *ssid,
 			     size_t ssid_len)
 {
 	struct wpa_driver_bsd_data *drv = priv;
-
+#ifdef SIOCS80211NWID
+	struct ieee80211_nwid nwid;
+	struct ifreq ifr;
+ 
+	os_memcpy(nwid.i_nwid, ssid, ssid_len);
+	nwid.i_len = ssid_len;
+	os_memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, drv->ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (void *)&nwid;
+	return ioctl(drv->sock, SIOCS80211NWID, &ifr);
+#else
 	return set80211var(drv, IEEE80211_IOC_SSID, ssid, ssid_len);
+#endif
 }
 
 static int
@@ -226,11 +272,11 @@ wpa_driver_bsd_del_key(struct wpa_driver_bsd_data *drv, int key_idx,
 
 		os_memcpy(&ea, addr, IEEE80211_ADDR_LEN);
 		wpa_printf(MSG_DEBUG, "%s: addr=%s keyidx=%d",
-			__func__, ether_ntoa(&ea), key_idx);
+			__FUNCTION__, ether_ntoa(&ea), key_idx);
 		os_memcpy(wk.idk_macaddr, addr, IEEE80211_ADDR_LEN);
 		wk.idk_keyix = (uint8_t) IEEE80211_KEYIX_NONE;
 	} else {
-		wpa_printf(MSG_DEBUG, "%s: keyidx=%d", __func__, key_idx);
+		wpa_printf(MSG_DEBUG, "%s: keyidx=%d", __FUNCTION__, key_idx);
 		wk.idk_keyix = key_idx;
 	}
 	return set80211var(drv, IEEE80211_IOC_DELKEY, &wk, sizeof(wk));
@@ -266,24 +312,24 @@ wpa_driver_bsd_set_key(void *priv, wpa_alg alg,
 		break;
 	default:
 		wpa_printf(MSG_DEBUG, "%s: unknown/unsupported algorithm %d",
-			__func__, alg);
+			__FUNCTION__, alg);
 		return -1;
 	}
 
 	os_memcpy(&ea, addr, IEEE80211_ADDR_LEN);
 	wpa_printf(MSG_DEBUG,
 		"%s: alg=%s addr=%s key_idx=%d set_tx=%d seq_len=%zu key_len=%zu",
-		__func__, alg_name, ether_ntoa(&ea), key_idx, set_tx,
+		__FUNCTION__, alg_name, ether_ntoa(&ea), key_idx, set_tx,
 		seq_len, key_len);
 
 	if (seq_len > sizeof(u_int64_t)) {
 		wpa_printf(MSG_DEBUG, "%s: seq_len %zu too big",
-			__func__, seq_len);
+			__FUNCTION__, seq_len);
 		return -2;
 	}
 	if (key_len > sizeof(wk.ik_keydata)) {
 		wpa_printf(MSG_DEBUG, "%s: key length %zu too big",
-			__func__, key_len);
+			__FUNCTION__, key_len);
 		return -3;
 	}
 
@@ -308,6 +354,10 @@ wpa_driver_bsd_set_key(void *priv, wpa_alg alg,
 		wk.ik_flags |= IEEE80211_KEY_DEFAULT;
 	wk.ik_keylen = key_len;
 	os_memcpy(&wk.ik_keyrsc, seq, seq_len);
+#ifdef notdef
+	/* Is this needed? */
+	wk.ik_keyrsc = le64toh(wk.ik_keyrsc);
+#endif
 	os_memcpy(wk.ik_keydata, key, key_len);
 
 	return set80211var(drv, IEEE80211_IOC_WPAKEY, &wk, sizeof(wk));
@@ -318,7 +368,7 @@ wpa_driver_bsd_set_countermeasures(void *priv, int enabled)
 {
 	struct wpa_driver_bsd_data *drv = priv;
 
-	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __func__, enabled);
+	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __FUNCTION__, enabled);
 	return set80211param(drv, IEEE80211_IOC_COUNTERMEASURES, enabled);
 }
 
@@ -328,7 +378,7 @@ wpa_driver_bsd_set_drop_unencrypted(void *priv, int enabled)
 {
 	struct wpa_driver_bsd_data *drv = priv;
 
-	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __func__, enabled);
+	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __FUNCTION__, enabled);
 	return set80211param(drv, IEEE80211_IOC_DROPUNENCRYPTED, enabled);
 }
 
@@ -338,7 +388,7 @@ wpa_driver_bsd_deauthenticate(void *priv, const u8 *addr, int reason_code)
 	struct wpa_driver_bsd_data *drv = priv;
 	struct ieee80211req_mlme mlme;
 
-	wpa_printf(MSG_DEBUG, "%s", __func__);
+	wpa_printf(MSG_DEBUG, "%s", __FUNCTION__);
 	os_memset(&mlme, 0, sizeof(mlme));
 	mlme.im_op = IEEE80211_MLME_DEAUTH;
 	mlme.im_reason = reason_code;
@@ -352,7 +402,7 @@ wpa_driver_bsd_disassociate(void *priv, const u8 *addr, int reason_code)
 	struct wpa_driver_bsd_data *drv = priv;
 	struct ieee80211req_mlme mlme;
 
-	wpa_printf(MSG_DEBUG, "%s", __func__);
+	wpa_printf(MSG_DEBUG, "%s", __FUNCTION__);
 	os_memset(&mlme, 0, sizeof(mlme));
 	mlme.im_op = IEEE80211_MLME_DISASSOC;
 	mlme.im_reason = reason_code;
@@ -369,7 +419,7 @@ wpa_driver_bsd_associate(void *priv, struct wpa_driver_associate_params *params)
 
 	wpa_printf(MSG_DEBUG,
 		"%s: ssid '%.*s' wpa ie len %u pairwise %u group %u key mgmt %u"
-		, __func__
+		, __FUNCTION__
 		, params->ssid_len, params->ssid
 		, params->wpa_ie_len
 		, params->pairwise_suite
@@ -389,7 +439,7 @@ wpa_driver_bsd_associate(void *priv, struct wpa_driver_associate_params *params)
 	    params->group_suite == CIPHER_NONE &&
 	    params->key_mgmt_suite == KEY_MGMT_NONE &&
 	    params->wpa_ie_len == 0);
-	wpa_printf(MSG_DEBUG, "%s: set PRIVACY %u", __func__, privacy);
+	wpa_printf(MSG_DEBUG, "%s: set PRIVACY %u", __FUNCTION__, privacy);
 
 	if (set80211param(drv, IEEE80211_IOC_PRIVACY, privacy) < 0)
 		return -1;
@@ -449,7 +499,11 @@ wpa_driver_bsd_scan(void *priv, const u8 *ssid, size_t ssid_len)
 }
 
 #include <net/route.h>
+#if defined(__FreeBSD__)
 #include <net80211/ieee80211_freebsd.h>
+#elif defined(__NetBSD__)
+#include <net80211/ieee80211_netbsd.h>
+#endif
 
 static void
 wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
@@ -487,15 +541,17 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		switch (ifan->ifan_what) {
 		case IFAN_DEPARTURE:
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
+			break;
 		default:
-			return;
+			event.interface_status.ievent = EVENT_INTERFACE_ADDED;
+			break;
 		}
-		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s",
+		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s (%d)",
 			   event.interface_status.ifname,
 			   ifan->ifan_what == IFAN_DEPARTURE ?
-				"removed" : "added");
+				"removed" : "added", ifan->ifan_what);
 		wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
-		break;
+		return;
 	case RTM_IEEE80211:
 		ifan = (struct if_announcemsghdr *) rtm;
 		if (ifan->ifan_index != drv->ifindex)
@@ -503,15 +559,23 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		switch (ifan->ifan_what) {
 		case RTM_IEEE80211_ASSOC:
 		case RTM_IEEE80211_REASSOC:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: (re)assoc (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_ASSOC, NULL);
 			break;
 		case RTM_IEEE80211_DISASSOC:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: disassoc (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_DISASSOC, NULL);
 			break;
 		case RTM_IEEE80211_SCAN:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: scan result (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_SCAN_RESULTS, NULL);
 			break;
 		case RTM_IEEE80211_REPLAY:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: replay (%d)",
+			    ifan->ifan_what);
 			/* ignore */
 			break;
 		case RTM_IEEE80211_MICHAEL:
@@ -527,20 +591,44 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			wpa_supplicant_event(ctx, EVENT_MICHAEL_MIC_FAILURE,
 				&event);
 			break;
+		default:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: ??? (%d)",
+			    ifan->ifan_what);
+			break;
 		}
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *) rtm;
 		if (ifm->ifm_index != drv->ifindex)
 			break;
-		if ((rtm->rtm_flags & RTF_UP) == 0) {
+		if ((ifm->ifm_flags & IFF_UP) == 0 &&
+		    (drv->flags & IFF_UP) != 0) {
 			strlcpy(event.interface_status.ifname, drv->ifname,
 				sizeof(event.interface_status.ifname));
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
 			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' DOWN",
 				   event.interface_status.ifname);
 			wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
+		} else if ((ifm->ifm_flags & IFF_UP) != 0 &&
+		    (drv->flags & IFF_UP) == 0) {
+			strlcpy(event.interface_status.ifname, drv->ifname,
+				sizeof(event.interface_status.ifname));
+			event.interface_status.ievent = EVENT_INTERFACE_ADDED;
+			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' UP",
+				   event.interface_status.ifname);
+			wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
+		} else {
+			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' "
+			    "if=%x drv=%x", event.interface_status.ifname,
+			    ifm->ifm_flags, drv->flags);
 		}
+		drv->flags = ifm->ifm_flags;
+		break;
+	case RTM_LOSING:
+		wpa_printf(MSG_DEBUG, "RTM_LOSING: %d", rtm->rtm_type);
+		break;
+	default:
+		wpa_printf(MSG_DEBUG, "RTM_???: %d", rtm->rtm_type);
 		break;
 	}
 }
@@ -696,7 +784,7 @@ wpa_driver_bsd_init(void *ctx, const char *ifname)
 	drv->ifindex = if_nametoindex(ifname);
 	if (drv->ifindex == 0) {
 		wpa_printf(MSG_DEBUG, "%s: interface %s does not exist",
-			   __func__, ifname);
+			   __FUNCTION__, ifname);
 		goto fail1;
 	}
 	drv->sock = socket(PF_INET, SOCK_DGRAM, 0);
@@ -713,28 +801,28 @@ wpa_driver_bsd_init(void *ctx, const char *ifname)
 
 	if (!GETPARAM(drv, IEEE80211_IOC_ROAMING, drv->prev_roaming)) {
 		wpa_printf(MSG_DEBUG, "%s: failed to get roaming state: %s",
-			__func__, strerror(errno));
+			__FUNCTION__, strerror(errno));
 		goto fail;
 	}
 	if (!GETPARAM(drv, IEEE80211_IOC_PRIVACY, drv->prev_privacy)) {
 		wpa_printf(MSG_DEBUG, "%s: failed to get privacy state: %s",
-			__func__, strerror(errno));
+			__FUNCTION__, strerror(errno));
 		goto fail;
 	}
 	if (!GETPARAM(drv, IEEE80211_IOC_WPA, drv->prev_wpa)) {
 		wpa_printf(MSG_DEBUG, "%s: failed to get wpa state: %s",
-			__func__, strerror(errno));
+			__FUNCTION__, strerror(errno));
 		goto fail;
 	}
 	if (set80211param(drv, IEEE80211_IOC_ROAMING, IEEE80211_ROAMING_MANUAL) < 0) {
 		wpa_printf(MSG_DEBUG, "%s: failed to set wpa_supplicant-based "
-			   "roaming: %s", __func__, strerror(errno));
+			   "roaming: %s", __FUNCTION__, strerror(errno));
 		goto fail;
 	}
 
 	if (set80211param(drv, IEEE80211_IOC_WPA, 1+2) < 0) {
 		wpa_printf(MSG_DEBUG, "%s: failed to enable WPA support %s",
-			   __func__, strerror(errno));
+			   __FUNCTION__, strerror(errno));
 		goto fail;
 	}
 
@@ -762,7 +850,7 @@ wpa_driver_bsd_deinit(void *priv)
 	wpa_driver_bsd_set_wpa_internal(drv, drv->prev_wpa, drv->prev_privacy);
 	if (set80211param(drv, IEEE80211_IOC_ROAMING, drv->prev_roaming) < 0)
 		wpa_printf(MSG_DEBUG, "%s: failed to restore roaming state",
-			__func__);
+			__FUNCTION__);
 
 	(void) close(drv->route);		/* ioctl socket */
 	(void) close(drv->sock);		/* event socket */
