@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.114 2008/11/15 05:58:33 mrg Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.115 2009/01/22 14:38:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.114 2008/11/15 05:58:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.115 2009/01/22 14:38:35 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.114 2008/11/15 05:58:33 mrg Exp $");
 #include <sys/filedesc.h>
 #include <sys/conf.h>
 #include <sys/poll.h>
-#include <sys/malloc.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
 
@@ -151,13 +150,20 @@ pty_isfree(int minor, int lock)
  * Allocate and zero array of nelem elements.
  */
 static struct pt_softc **
-ptyarralloc(nelem)
-	int nelem;
+ptyarralloc(int nelem)
 {
 	struct pt_softc **pt;
 	nelem += 10;
-	pt = malloc(nelem * sizeof *pt, M_DEVBUF, M_WAITOK | M_ZERO);
+	pt = kmem_zalloc(nelem * sizeof(*pt), KM_SLEEP);
 	return pt;
+}
+
+static void
+ptyarrfree(struct pt_softc **pt, int nelem)
+{
+
+	nelem += 10;
+	kmem_free(pt, nelem * sizeof(*pt));
 }
 
 /*
@@ -172,6 +178,7 @@ pty_check(int ptn)
 	if (ptn >= npty) {
 		struct pt_softc **newpt, **oldpt;
 		int newnpty;
+		int oldnpty;
 
 		/* check if the requested pty can be granted */
 		if (ptn >= maxptys) {
@@ -197,12 +204,12 @@ pty_check(int ptn)
 
 		if (newnpty >= maxptys) {
 			/* limit cut away beneath us... */
-			newnpty = maxptys;
-			if (ptn >= newnpty) {
+			if (ptn >= maxptys) {
 				mutex_exit(&pt_softc_mutex);
-				free(newpt, M_DEVBUF);
+				ptyarrfree(newpt, newnpty);
 				goto limit_reached;
 			}
+			newnpty = maxptys;
 		}
 
 		/*
@@ -213,15 +220,17 @@ pty_check(int ptn)
 		if (newnpty > npty) {
 			memcpy(newpt, pt_softc, npty*sizeof(struct pt_softc *));
 			oldpt = pt_softc;
+			oldnpty = npty;
 			pt_softc = newpt;
 			npty = newnpty;
 		} else {
 			/* was enlarged when waited for lock, free new space */
 			oldpt = newpt;
+			oldnpty = newnpty;
 		}
 
 		mutex_exit(&pt_softc_mutex);
-		free(oldpt, M_DEVBUF);
+		ptyarrfree(oldpt, oldnpty);
 	}
 
 	/*
@@ -230,8 +239,7 @@ pty_check(int ptn)
 	 * in case it has been lengthened above.
 	 */
 	if (!pt_softc[ptn]) {
-		pti = malloc(sizeof(struct pt_softc),
-		    M_DEVBUF, M_WAITOK | M_ZERO);
+		pti = kmem_zalloc(sizeof(*pti), KM_SLEEP);
 
 		selinit(&pti->pt_selr);
 		selinit(&pti->pt_selw);
@@ -248,7 +256,7 @@ pty_check(int ptn)
 			ttyfree(pti->pt_tty);
 			seldestroy(&pti->pt_selr);
 			seldestroy(&pti->pt_selw);
-			free(pti, M_DEVBUF);
+			kmem_free(pti, sizeof(*pti));
 			return (0);
 		}
 		tty_attach(pti->pt_tty);
