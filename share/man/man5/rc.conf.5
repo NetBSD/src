@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.120.2.1 2008/11/12 23:43:49 snj Exp $
+.\"	$NetBSD: rc.conf.5,v 1.120.2.2 2009/01/22 21:28:26 snj Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -843,6 +843,42 @@ or
 .Sq NO .
 Run
 .Xr cron 8 .
+.It Sy httpd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr httpd 8
+daemon and passes
+.Sy httpd_flags .
+.It Sy httpd_wwwdir
+A string.
+The 
+.Xr httpd 8
+WWW root directory.
+Used only if 
+.Sy httpd
+is set to
+.Sq YES .
+The default setting is
+.Dq Pa /var/www .
+.It Sy httpd_wwwuser
+A string.
+If non-blank and
+.Sy httpd
+is
+.Sq YES ,
+run
+.Xr httpd 8
+and cause it to switch to the specified user and the groups of the
+user after initialization.
+It is preferred to
+.Sy httpd_user
+because
+.Xr httpd 8
+is requiring extra privileges to start listen on default port 80.
+The default setting is
+.Dq Dv _httpd .
 .It Sy lpd
 .Sq YES
 or
