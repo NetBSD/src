@@ -575,6 +575,7 @@ static int limited_read_mpi(BIGNUM **pbn,ops_region_t *region,
     pinfo->reading_mpi_length=ops_true;
     ret=limited_read_scalar(&length,2,region,pinfo);
 
+
     pinfo->reading_mpi_length=ops_false;
     if(!ret)
 	return 0;
@@ -583,6 +584,14 @@ static int limited_read_mpi(BIGNUM **pbn,ops_region_t *region,
     if(!nonzero)
 	nonzero=8;
     length=(length+7)/8;
+
+	if (length == 0) {
+		/* if we try to read a length of 0, then fail */
+		if (ops_get_debug_level(__FILE__)) {
+			(void) fprintf(stderr, "limited_read_mpi: 0 length\n");
+		}
+		return 0;
+	}
 
     assert(length <= 8192);
     if(!limited_read(buf,length,region,pinfo))
@@ -1769,7 +1778,8 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
     if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "signature type=%d (%s)\n",
 		C.signature.info.type,
-		ops_show_sig_type(C.signature.info.type)); }
+		ops_show_sig_type(C.signature.info.type));
+	}
 
     /* XXX: check signature type */
 
@@ -1792,6 +1802,7 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
 		ops_show_hash_algorithm(C.signature.info.hash_algorithm)); }
 
     CBP(pinfo,OPS_PTAG_CT_SIGNATURE_HEADER,&content);
+
 
     if(!parse_signature_subpackets(&C.signature,region,pinfo))
 	return 0;
@@ -1829,8 +1840,10 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
 	break;
 
     case OPS_PKA_DSA:
-	if(!limited_read_mpi(&C.signature.info.signature.dsa.r,region,pinfo)) 
-	    ERRP(pinfo,"Error reading DSA r field in signature");
+	if(!limited_read_mpi(&C.signature.info.signature.dsa.r,region,pinfo)) {
+	    (void) fprintf(stderr, "Error reading DSA r field in signature");
+	    return 0;
+	}
 	if (!limited_read_mpi(&C.signature.info.signature.dsa.s,region,pinfo))
 	    ERRP(pinfo,"Error reading DSA s field in signature");
 	break;
@@ -2820,6 +2833,10 @@ static int ops_parse_one_packet(ops_parse_info_t *pinfo,
 
     r=base_read(ptag,1,pinfo);
 
+    if (ops_get_debug_level(__FILE__)) {
+	(void) fprintf(stderr, "ops_parse_one_packet: base_read returned %d\n",
+		r);
+    }
     // errors in the base read are effectively EOF.
     if(r <= 0)
 	return -1;
@@ -2878,6 +2895,10 @@ static int ops_parse_one_packet(ops_parse_info_t *pinfo,
     ops_init_subregion(&region,NULL);
     region.length=C.ptag.length;
     region.indeterminate=indeterminate;
+    if (ops_get_debug_level(__FILE__)) {
+	(void) fprintf(stderr, "ops_parse_one_packet: content_tag %d\n",
+		C.ptag.content_tag);
+    }
     switch(C.ptag.content_tag)
 	{
     case OPS_PTAG_CT_SIGNATURE:
