@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.117 2008/03/29 15:19:53 reed Exp $	*/
+/*	$NetBSD: net.c,v 1.117.8.1 2009/01/22 22:13:32 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,6 +63,7 @@
 
 #include <sys/wait.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 
 int network_up = 0;
 /* Access to network information */
@@ -477,6 +478,43 @@ get_v6wait(void)
 }
 #endif
 
+static int
+handle_license(const char *dev)
+{
+	static struct {
+		const char *dev;
+		const char *lic;
+	} licdev[] = {
+		{ "iwi", "/libdata/firmware/if_iwi/LICENSE.ipw2200-fw" },
+		{ "ipw", "/libdata/firmware/if_ipw/LICENSE" },
+	};
+
+	size_t i;
+
+	for (i = 0; i < __arraycount(licdev); i++)
+		if (strncmp(dev, licdev[i].dev, 3) == 0) {
+			char buf[64];
+			int val;
+			size_t len = sizeof(int);
+			(void)snprintf(buf, sizeof(buf), "hw.%s.accept_eula",
+			    licdev[i].dev);
+			if (sysctlbyname(buf, &val, &len, NULL, 0) != -1
+			    && val != 0)
+				return 1;
+			msg_display(MSG_license, dev, licdev[i].lic);
+			process_menu(MENU_yesno, NULL);
+			if (yesno) {
+				val = 1;
+				if (sysctlbyname(buf, NULL, NULL, &val,
+				    0) == -1)
+					return 0;
+				return 1;
+			} else
+				return 0;
+		}
+	return 1;
+}
+
 /*
  * Get the information to configure the network, configure it and
  * make sure both the gateway and the name server are up.
@@ -491,7 +529,7 @@ config_network(void)
 	int  octet0;
 	int  dhcp_config;
 
- 	int  slip;
+ 	int  slip = 0;
  	int  pid, status;
  	char **ap, *slcmd[10], *in_buf;
  	char buffer[STRSIZE];
@@ -545,6 +583,8 @@ again:
 		break;
 	}
 	free(defname);
+	if (!handle_license(net_dev))
+		goto done;
 
 	slip = net_dev[0] == 's' && net_dev[1] == 'l' &&
 	    isdigit((unsigned char)net_dev[2]);
@@ -733,6 +773,7 @@ again:
 			(v6config ? "yes" : "no"),
 		     *net_namesvr6 == '\0' ? "<none>" : net_namesvr6);
 #endif
+done:
 	process_menu(MENU_yesno, deconst(MSG_netok_ok));
 	if (!yesno)
 		msg_display(MSG_netagain);
