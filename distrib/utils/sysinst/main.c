@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2006/10/23 19:45:56 he Exp $	*/
+/*	$NetBSD: main.c,v 1.52.28.1 2009/01/22 22:45:15 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <locale.h>
 
 #include "defs.h"
 #include "md.h"
@@ -307,6 +308,13 @@ select_language(void)
 	}
 	free(lang_msg);
 	free(fnames);
+
+	/* set locale according to selected language */
+	cp = msg_string(MSG_sysinst_message_locale);
+	if (cp) {
+		setlocale(LC_CTYPE, cp);
+		setenv("LC_CTYPE", cp, 1);
+	}
 }
 
 /* toplevel menu handler ... */

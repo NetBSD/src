@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.60.14.1 2009/01/22 22:13:32 snj Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.60.14.2 2009/01/22 22:45:15 snj Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -46,6 +46,9 @@ message usage
 
 message sysinst_message_language
 {Komunikaty instalacyjne w jezyku polskim}
+
+message sysinst_message_locale
+{pl_PL.ISO8859-2}
 
 message Yes {Tak}
 message No {Nie}
