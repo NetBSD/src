@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.207 2009/01/11 19:58:29 rumble Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.208 2009/01/22 11:01:32 dogcow Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.207 2009/01/11 19:58:29 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.208 2009/01/22 11:01:32 dogcow Exp $");
 
 #include "opt_cputype.h"
 
@@ -1392,11 +1392,11 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %llu,%llu not possible\n", major(dumpdev),
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %llu,%llu offset %ld\n", major(dumpdev),
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
