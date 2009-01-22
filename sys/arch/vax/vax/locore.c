@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.75 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: locore.c,v 1.76 2009/01/22 18:49:03 christos Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.75 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.76 2009/01/22 18:49:03 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -70,6 +70,7 @@ struct user *proc0paddr;
  */
 extern const struct cpu_dep ka780_calls;
 extern const struct cpu_dep ka750_calls;
+extern const struct cpu_dep ka730_calls;
 extern const struct cpu_dep ka860_calls;
 extern const struct cpu_dep ka820_calls;
 extern const struct cpu_dep ka6400_calls;
@@ -123,6 +124,12 @@ _start(struct rpb *prpb)
 	case VAX_BTYP_750:
 		dep_call = &ka750_calls;
 		strcpy(cpu_model, "VAX 11/750");
+		break;
+#endif
+#if VAX730 || VAXANY
+	case VAX_BTYP_730:
+		dep_call = &ka730_calls;
+		strcpy(cpu_model, "VAX 11/730");
 		break;
 #endif
 #if VAX8600 || VAXANY
