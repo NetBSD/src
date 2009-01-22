@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.10 2008/10/18 14:40:48 scw Exp $
+# $NetBSD: Makefile,v 1.10.2.1 2009/01/22 22:58:01 snj Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 PROG=	wpa_supplicant
 SRCS=	aes.c aes_wrap.c base64.c blacklist.c common.c config.c config_file.c \
-	ctrl_iface.c ctrl_iface_unix.c driver_netbsd.c drivers.c eap_common.c \
+	ctrl_iface.c ctrl_iface_unix.c driver_bsd.c drivers.c eap_common.c \
 	eap_methods.c eapol_supp_sm.c eloop.c events.c l2_packet_freebsd.c \
 	main.c md5.c os_unix.c pmksa_cache.c preauth.c rc4.c scan.c \
 	scan_helpers.c sha1.c wpa.c wpa_common.c wpa_debug.c wpa_ie.c \
