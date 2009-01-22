@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.9 2009/01/21 07:48:54 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.10 2009/01/22 09:37:44 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.9 2009/01/21 07:48:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.10 2009/01/22 09:37:44 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -476,13 +476,15 @@ age_intr(void *arg)
 	
 	status = CSR_READ_4(sc, AGE_INTR_STATUS);
 	if (status == 0 || (status & AGE_INTRS) == 0)
-		return (0);
+		return 0;
+
+	cmb = sc->age_rdata.age_cmb_block;
+	if (cmb == NULL)
+		return 0;
 
 	/* Disable interrupts. */
 	CSR_WRITE_4(sc, AGE_INTR_STATUS, status | INTR_DIS_INT);
 		
-	cmb = sc->age_rdata.age_cmb_block;
-
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
 	    sc->age_cdata.age_cmb_block_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	status = le32toh(cmb->intr_status);
