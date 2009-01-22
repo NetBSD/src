@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.79 2009/01/20 21:29:08 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.80 2009/01/22 23:30:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1955,8 +1955,6 @@ sys/net/rtsock.c				1.119
 	move the flag to the new assoicated address.
 	[roy, ticket #239]
 
-        sys/net/rtsock.c: revision 1.119
-
 doc/3RDPARTY					1.654
 external/bsd/dhcpcd/dist/README			dhcpcd-4-0-7
 external/bsd/dhcpcd/dist/client.c		dhcpcd-4-0-7
@@ -2810,4 +2808,178 @@ crypto/dist/openssl/ssl/ssltest.c		1.11
 
 	Correct error checking for DSA and ECDSA keys (from FreeBSD)
 	[tron, ticket #294]
+
+sys/arch/i386/stand/Makefile.booters		1.77
+
+	Stop the full path of newvers_stand.sh from showing up in
+	pxeboot_ia32.bin.
+	[jakllsch, ticket #281]
+
+share/man/man5/ifconfig.if.5			1.12, 1.13
+
+	Move the 'dhcp' example so it doesn't disrput flow into the note
+	about use of 'create'.  Move explanatory text above the
+	"dynamically-created" example, to match other examples.
+	[jakllsch, ticket #282]
+
+sys/dev/isa/fd.c				1.90
+
+	fdcintr1 requires the mutex to be held.
+	[tsutsui, ticket #283]
+
+sys/kern/kern_runq.c				1.24
+
+	- Avoid calling sched_catchlwp() if CPUs have different
+	  processor-sets.
+	- sched_takecpu: check for psid earlier (be more strict).
+	Addresses PR/40419.
+	[rmind, ticket #284]
+
+sbin/newfs_msdos/newfs_msdos.c			1.28
+
+	The kernel now accepts BPB with heads > 255, so don't limit the
+	number of drive heads.
+	[jmcneill, ticket #285]
+
+sys/arch/xen/conf/files.xen			1.92
+sys/arch/xen/x86/mainbus.c			1.7 via patch
+sys/arch/xen/xen/hypervisor.c			1.43
+
+	The Xen PCI_BUS_FIXUP/PCI_ADDR_FIXUP has rotted, catch up with
+	x86 changes.  Addresses PR/40356.
+	[bouyer, ticket #286]
+
+share/misc/bsd-family-tree			1.41
+
+	Recover tls' change in rev1.33 that was clobbered in 1.40.
+	[cyber, ticket #287]
+
+include/mntopts.h				1.12, 1.13
+sbin/mount/mount.8				1.63, 1.64
+sbin/mount/mount.c				1.88
+
+	Support mount -o rump, which uses the rump server instead of using
+	the kernel service.
+	[pooka, ticket #288]
+
+share/man/man4/wpi.4				1.9
+
+	Remove note about 11a mode not working properly.
+	[jmcneill, ticket #289]
+
+lib/libpthread/affinity.3			1.4
+lib/librt/pset.3				1.8
+sys/kern/sys_pset.c				1.10
+sys/kern/sys_sched.c				1.32
+
+	- Make thread-affinity and processor-set interfaces mutually
+	  exlusive.
+	- pset_assign: when CPU is assigned, migrate out all LWPs from
+	  it.
+	[rmind, ticket #291]
+
+sys/sys/mqueue.h				1.6
+
+	Reduce MQ_PRIO_MAX to 32.
+	[rmind, ticket #293]
+
+distrib/cats/ramdisk/list			1.10
+distrib/notes/cats/hardware			1.6
+sys/arch/cats/conf/INSTALL			1.71 via patch
+
+	Pare down the size of the INSTALL kernel images.  The INSTALL
+	kernel images should once again be usable.
+	[he, ticket #295]
+
+sys/dev/usb/u3g.c				1.5
+
+	Remove { 0, 0 } from the list of u3g devices. This entry is no
+	longer required in modern device lists due to sizeof() tricks.
+	Keeping it makes u3g attach to HP ServerWorks mice and keyboards.
+	[joerg, ticket #296]
+
+distrib/sets/lists/etc/mi			1.203
+doc/CHANGES					1.1151 via patch
+etc/defaults/rc.conf				1.97
+etc/mtree/special				1.123
+etc/rc.d/Makefile				1.71
+etc/rc.d/httpd					1.1
+share/man/man5/rc.conf.5			1.123
+usr.sbin/postinstall/postinstall		1.80
+
+	Import rc.d/httpd script for httpd(8) daemon control.
+	[rafal, #297]
+
+lib/libc/citrus/citrus_lc_ctype.c		1.3
+lib/libc/locale/_wctrans.c			1.13
+lib/libc/locale/_wctrans_local.h		1.7 via patch
+lib/libc/locale/_wctype.c			1.5
+lib/libc/locale/global_locale.c			1.3
+lib/libc/locale/iswctype_mb.c			1.5
+lib/libc/locale/runeglue.c			1.13
+lib/libc/locale/runetable.c			1.21 via patch
+
+	Fix diagassert argument.
+	--
+	PR lib/40411, nuke wctrans_init(). lazy initialization is not
+	a good idea.  Statically initialize _DefaultRuneLocale.rl_wctrans
+	so we can re-const-ify _DefaultRuneLocale.
+	[christos, ticket #299]
+
+distrib/utils/sysinst/main.c			1.53
+distrib/utils/sysinst/msg.mi.de			1.44-1.46
+distrib/utils/sysinst/msg.mi.en			1.150-1.152
+distrib/utils/sysinst/msg.mi.es			1.22, 1.23
+distrib/utils/sysinst/msg.mi.fr			1.102, 1.103
+distrib/utils/sysinst/msg.mi.pl			1.61, 1.62
+distrib/utils/sysinst/net.c			1.118, 1.121
+distrib/utils/sysinst/run.c			1.65
+
+	Allow installation for computers using ipw and iwi.
+	Don't clobber network settings if / is on NFS.
+	Put sysinst log files into /tmp.
+	Set an apropriate locale depending on the selected language.
+	[christos, ticket #300]
+
+dist/wpa/src/drivers/driver_bsd.c		1.3
+usr.sbin/wpa/wpa_supplicant/Makefile		1.11
+usr.sbin/wpa/wpa_supplicant/driver_netbsd.c	delete
+
+	Merge NetBSD changes into driver_bsd.c.
+	[christos, ticket #301]
+
+dist/wpa/src/drivers/driver_bsd.c		1.4
+
+	Revert __func__ -> __FUNCTION__.
+	[christos, ticket #302]
+
+sbin/mount/mount.8				1.65
+
+	* Say that type "nfs" is inferred if the path contains a
+	  ":" or "@".  (Amazingly, this was not documented before).
+	* Say that the "nfs" inference is deprecated.  (It was deprecated in
+	  revision 1.87 of mount.c, dated 2009-01-11.)
+	* Add "-t nfs" in an example, so as not to rely on the automatic
+	  inference of nfs when the path contains a colon.
+	* Try to improve the description of how the arguments are interpreted.
+	[apb, ticket #303]
+
+compat/external/bsd/openldap/lib/Makefile	1.3
+compat/gnu/lib/Makefile				1.3
+compat/gnu/lib/libgcc4/Makefile			1.3
+compat/lib/Makefile				1.3
+compat/lib/i18n_module/Makefile			1.3
+compat/lib/libpam/modules/Makefile		1.3
+usr.bin/ldd/elf32/Makefile			1.5
+
+	Include "bsd.own.mk" to get the definition of "NETBSDSRCDIR" via
+	"/etc/mk.conf". This fixes manual use of "make cleandir".
+	[tron, ticket #304]
+
+sys/dev/video.c					1.19
+
+	- Avoid eternal block if device is not streaming
+	- Apply locking to avoid race in poll()
+	- Fix an obviously wrong flag check
+	[drochner, ticket #305]
 
