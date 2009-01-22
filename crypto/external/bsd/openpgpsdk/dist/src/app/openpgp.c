@@ -127,6 +127,18 @@ static void print_usage(const char* usagemsg, char* progname)
     fprintf(stderr, usagemsg, basename(progname));
     }
 
+/* wrapper to get a pass phrase from the user */
+static void
+get_pass_phrase(char *phrase, size_t size)
+{
+	char	*p;
+
+	if ((p = getpass("openpgp pass phrase: ")) == NULL) {
+		exit(EXIT_ERROR);
+	}
+	(void) snprintf(phrase, size, "%s", p);
+}
+
 int main(int argc, char **argv)
     {
     int optindex=0;
@@ -149,6 +161,7 @@ int main(int argc, char **argv)
     int got_filename=0;
     int got_numbits=0;
     int numbits=DEFAULT_NUMBITS;
+    int ex;
     char outputfilename[MAXBUF+1]="";
     ops_keyring_t* myring=NULL;
     char myring_name[MAXBUF+1]="";
@@ -241,6 +254,9 @@ int main(int argc, char **argv)
             
         case USERID:
             assert(optarg);
+	    if (ops_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "user_id is '%s'\n", optarg);
+	    }
             snprintf(opt_userid,MAXBUF,"%s",optarg);
             got_userid=1;
             break;
@@ -345,21 +361,13 @@ int main(int argc, char **argv)
             exit(EXIT_ERROR);
             }
         
-        //        fprintf(stderr,"userid: %s\n", opt_userid);
-        //keydata=ops_keydata_new();
-        if (!got_keyring)
-            keydata=ops_keyring_find_key_by_userid(pubring, opt_userid);
-        else
-            keydata=ops_keyring_find_key_by_userid(myring, opt_userid);
+	if (ops_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr,"userid: %s\n", opt_userid);
+	}
+        keydata = ops_keyring_find_key_by_userid((got_keyring) ?
+				myring : pubring, opt_userid);
+	exit((keydata) ? EXIT_FAILURE : EXIT_SUCCESS);
         //        ops_keyring_free(&keyring);
-        if (keydata)
-            { 
-            exit(EXIT_FAILURE); 
-            }
-        else
-            { 
-            exit(EXIT_SUCCESS); 
-            }
         break;
 
     case EXPORT_KEY:
@@ -506,6 +514,12 @@ int main(int argc, char **argv)
                     opt_userid);
             exit(EXIT_ERROR);
             }
+
+	/* get the passphrase */
+	if (opt_passphrase[0] == 0x0) {
+		get_pass_phrase(opt_passphrase, sizeof(opt_passphrase));
+	}
+
         // now decrypt key
         skey=ops_decrypt_secret_key_from_data(keydata,opt_passphrase);
         assert(skey);
@@ -549,13 +563,16 @@ int main(int argc, char **argv)
 
         if (ops_validate_file(validate_result, opt_filename, armour, pubring)==ops_true)
             {
-            fprintf(stdout, "Verify OK\n");
+            printf("Good signature for \"%s\"\n", opt_filename);
+	    ex = EXIT_SUCCESS;
             }
         else
             {
-            fprintf(stdout, "Verify FAIL: %d invalid signatures, %d unknown signatures\n", validate_result->invalid_count, validate_result->unknown_signer_count);
+            printf("\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n", opt_filename, validate_result->invalid_count, validate_result->unknown_signer_count);
+	    ex = EXIT_FAILURE;
             }
         ops_validate_result_free(validate_result);
+	exit(ex);
         break;
 
     case LIST_PACKETS:
