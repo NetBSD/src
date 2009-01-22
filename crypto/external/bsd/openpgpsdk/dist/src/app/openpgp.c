@@ -333,14 +333,7 @@ int main(int argc, char **argv)
     switch(cmd)
         {
     case LIST_KEYS:
-        if (!got_keyring)
-            {
-            print_usage(usage_list_keys,pname);
-            exit(EXIT_ERROR);
-            }
-        
-        ops_keyring_list(myring);
-        //        ops_keyring_free(&kering);
+	ops_keyring_list((got_keyring) ? myring : pubring);
         break;
         
         //case LIST_PACKETS:
