@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2008/10/26 07:38:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2009/01/22 23:17:34 snj Exp $
 
 _CURDIR:= ${.CURDIR}
 
+.include <bsd.own.mk>
 .CURDIR:=${NETBSDSRCDIR}/lib/i18n_module
 
 .include "${.CURDIR}/Makefile"
