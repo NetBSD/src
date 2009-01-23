@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.23 2008/12/05 06:02:20 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.24 2009/01/23 08:27:24 tteras Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2495,6 +2495,8 @@ get_proposal_r(iph2)
 		set_secctx_in_proposal(iph2, spidx);
 	}
 #endif /* HAVE_SECCTX */
+
+	iph2->spid = sp_in->id;
 
 	return 0;
 }
