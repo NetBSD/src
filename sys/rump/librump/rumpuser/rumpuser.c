@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.28 2009/01/07 20:24:12 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.29 2009/01/23 12:47:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.28 2009/01/07 20:24:12 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.29 2009/01/23 12:47:32 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -43,8 +43,10 @@ __RCSID("$NetBSD: rumpuser.c,v 1.28 2009/01/07 20:24:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/uio.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -119,6 +121,31 @@ rumpuser_free(void *ptr)
 {
 
 	free(ptr);
+}
+
+void *
+rumpuser_anonmmap(size_t size, int alignbit, int exec, int *error)
+{
+	void *rv;
+	int prot;
+
+	prot = PROT_READ|PROT_WRITE;
+	if (exec)
+		prot |= PROT_EXEC;
+	/* XXX: MAP_ALIGNED() is not portable */
+	rv = mmap(NULL, size, prot, MAP_ANON | MAP_ALIGNED(alignbit), -1, 0);
+	if (rv == MAP_FAILED)
+		return NULL;
+	return rv;
+}
+
+void
+rumpuser_unmap(void *addr, size_t len)
+{
+	int rv;
+
+	rv = munmap(addr, len);
+	assert(rv == 0);
 }
 
 int
