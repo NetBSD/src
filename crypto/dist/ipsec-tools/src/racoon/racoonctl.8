@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.18 2008/06/18 07:40:16 wiz Exp $
+.\"	$NetBSD: racoonctl.8,v 1.19 2009/01/23 11:44:08 tteras Exp $
 .\"
 .\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 18, 2008
+.Dd January 23, 2009
 .Dt RACOONCTL 8
 .Os
 .\"
@@ -39,38 +39,48 @@
 .\"
 .Sh SYNOPSIS
 .Nm
+.Op opts
 reload-config
 .Nm
+.Op opts
 show-schedule
 .Nm
-.Op Fl l Op Fl l
+.Op opts
 show-sa
 .Op isakmp|esp|ah|ipsec
 .Nm
+.Op opts
 get-sa-cert
 .Op inet|inet6
 .Ar src dst
 .Nm
+.Op opts
 flush-sa
 .Op isakmp|esp|ah|ipsec
 .Nm
+.Op opts
 delete-sa
 .Ar saopts
 .Nm
+.Op opts
 establish-sa
 .Op Fl u Ar identity
 .Op Fl w
 .Ar saopts
 .Nm
+.Op opts
 vpn-connect
 .Op Fl u Ar identity
 .Ar vpn_gateway
 .Nm
+.Op opts
 vpn-disconnect
 .Ar vpn_gateway
 .Nm
+.Op opts
 show-event
 .Nm
+.Op opts
 logout-user
 .Ar login
 .\"
@@ -88,6 +98,19 @@ By changing the default mode and ownership
 of the socket, you can allow non-root users to alter
 .Xr racoon 8
 behavior, so do that with caution.
+
+.Pp
+The following general options are available:
+.Bl -tag -width Ds
+.It Fl l
+Increase verbosity. Mainly for show-sa command.
+.It Fl d
+Debug mode. Hexdump sent admin port commands.
+.It Fl s Ar socket
+Specify unix socket name used to connecting racoon.
+.El
+.\"
+
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
