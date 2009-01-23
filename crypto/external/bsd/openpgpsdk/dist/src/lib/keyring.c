@@ -809,23 +809,64 @@ const ops_keydata_t *
 ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 				 const char *userid)
     {
+    char	*cp;
     int n=0;
     unsigned int i=0;
+    size_t len;
 
     if (!keyring)
         return NULL;
 
+    len = strlen(userid);
     for(n=0 ; n < keyring->nkeys ; ++n)
         {
         for(i=0; i<keyring->keys[n].nuids; i++)
             {
             if (ops_get_debug_level(__FILE__)) {
-		printf("[%d][%d] userid %s\n",n,i,keyring->keys[n].uids[i].user_id);
+		printf("[%d][%d] userid %s, last '%d'\n",n,i,keyring->keys[n].uids[i].user_id, keyring->keys[n].uids[i].user_id[len]);
 	    }
-            if(strncmp((char *)keyring->keys[n].uids[i].user_id,userid,strlen(userid)) == 0)
+            if (strncmp((char *)keyring->keys[n].uids[i].user_id,userid,len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ')
                 return &keyring->keys[n];
             }
         }
+
+	if (strchr(userid, '@') == NULL) {
+		/* no '@' sign found, match on name */
+		for (n = 0 ; n < keyring->nkeys ; n++) {
+			for (i = 0; i < keyring->keys[n].nuids; i++) {
+				if (ops_get_debug_level(__FILE__)) {
+					printf("keyid ,%s, len %d, keyid[len] %c\n",
+						(char *)keyring->keys[n].uids[i].user_id, len, keyring->keys[n].uids[i].user_id[len]);
+				}
+				if (strncasecmp((char *)keyring->keys[n].uids[i].user_id, userid, len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ') {
+					return &keyring->keys[n];
+				}
+			}
+		}
+	}
+
+	/* match on <email@address> */
+	for (n = 0 ; n < keyring->nkeys ; n++) {
+		for (i = 0; i < keyring->keys[n].nuids; i++) {
+			/*
+			 * look for the rightmost '<', in case there is one
+			 * in the comment field
+			 */
+			if ((cp = strrchr((char *)keyring->keys[n].uids[i].user_id, '<')) != NULL) {
+				if (ops_get_debug_level(__FILE__)) {
+					printf("cp ,%s, userid ,%s, len %d ,%c,\n",
+						cp + 1, userid, len, *(cp + len + 1));
+				}
+				if (strncasecmp(cp + 1, userid, len) == 0 &&
+				    *(cp + len + 1) == '>') {
+					return &keyring->keys[n];
+				}
+			}
+		}
+	}
+
+	/* XXX - match on userid */
+
 
     //printf("end: n=%d,i=%d\n",n,i);
     return NULL;
