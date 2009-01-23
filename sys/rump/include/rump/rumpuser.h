@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.10 2009/01/23 12:47:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.11 2009/01/23 19:19:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -83,6 +83,8 @@ int rumpuser_poll(struct pollfd *, int, int, int *);
 int rumpuser_putchar(int, int *);
 
 void rumpuser_panic(void);
+
+void rumpuser_seterrno(int);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
