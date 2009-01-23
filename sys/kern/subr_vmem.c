@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.52 2008/12/15 10:26:10 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.53 2009/01/23 13:45:06 pooka Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.52 2008/12/15 10:26:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.53 2009/01/23 13:45:06 pooka Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -92,7 +92,7 @@ void vmem_dump(const vmem_t *);
 
 #define	VMEM_HASHSIZE_MIN	1	/* XXX */
 #define	VMEM_HASHSIZE_MAX	8192	/* XXX */
-#define	VMEM_HASHSIZE_INIT	VMEM_HASHSIZE_MIN
+#define	VMEM_HASHSIZE_INIT	128
 
 #define	VM_FITMASK	(VM_BESTFIT | VM_INSTANTFIT)
 
