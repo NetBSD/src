@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.27 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.28 2009/01/23 08:05:58 tteras Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -739,7 +739,7 @@ admin_init()
 		return -1;
 	}
 
-	monitor_fd(lcconf->sock_admin, FALSE, admin_handler, NULL);
+	monitor_fd(lcconf->sock_admin, admin_handler, NULL);
 	plog(LLV_DEBUG, LOCATION, NULL,
 	     "open %s as racoon management.\n", sunaddr.sun_path);
 
