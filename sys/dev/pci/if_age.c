@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.11 2009/01/22 09:39:28 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.12 2009/01/23 22:59:30 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.11 2009/01/22 09:39:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.12 2009/01/23 22:59:30 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1206,15 +1206,22 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 			    device_xname(sc->sc_dev));
 			m_freem(*m_head);
 			*m_head = NULL;
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 
-		MCLGET(m, M_DONTWAIT);
-		if (!(m->m_flags & M_EXT)) {
-			m_freem(m);
-			*m_head = NULL;
-			return (ENOBUFS);
+		M_COPY_PKTHDR(m, *m_head);
+		if ((*m_head)->m_pkthdr.len > MHLEN) {
+			MCLGET(m, M_DONTWAIT);
+			if (!(m->m_flags & M_EXT)) {
+				m_freem(*m_head);
+				m_freem(m);
+				*m_head = NULL;
+				return ENOBUFS;
+			}
 		}
+		m_copydata(*m_head, 0, (*m_head)->m_pkthdr.len,
+		    mtod(m, void *));
+		m_freem(*m_head);
 		m->m_len = m->m_pkthdr.len;
 		*m_head = m;
 
