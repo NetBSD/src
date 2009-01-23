@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.31 2005/01/31 05:19:19 erh Exp $
+.\" $NetBSD: mount_msdos.8,v 1.32 2009/01/23 12:48:49 jmcneill Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 7, 2003
+.Dd January 23, 2009
 .Dt MOUNT_MSDOS 8
 .Os
 .Sh NAME
@@ -104,7 +104,7 @@ are given,
 .Nm
 searches the root directory of the filesystem to
 be mounted for any existing Win'95 long filenames.
-If no such entries are found,
+If the filesystem is not empty and no such entries are found,
 .Fl s
 is the default.
 Otherwise
