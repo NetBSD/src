@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.h,v 1.5 2008/07/21 06:26:06 tteras Exp $	*/
+/*	$NetBSD: vendorid.h,v 1.6 2009/01/23 08:06:56 tteras Exp $	*/
 
 /* Id: vendorid.h,v 1.11 2006/02/17 14:09:10 vanhu Exp */
 
@@ -34,25 +34,26 @@
 #ifndef _VENDORID_H
 #define _VENDORID_H
 
-/* The unknown vendor ID. */
-#define	VENDORID_UNKNOWN	-1
+#ifndef BIT
+#define BIT(x) (1 << (x))
+#endif
 
+/* The unknown vendor ID. */
+#define VENDORID_UNKNOWN	-1
 
 /* Our default vendor ID. */
-#define	VENDORID_DEFAULT	VENDORID_IPSEC_TOOLS
+#define VENDORID_DEFAULT	VENDORID_IPSEC_TOOLS
 
-#define	VENDORID_IPSEC_TOOLS 0		
+#define VENDORID_IPSEC_TOOLS	0
 
-/*
- * Refer to draft-ietf-ipsec-isakmp-gss-auth-06.txt.
- */
-#define	VENDORID_GSSAPI_LONG	1
-#define	VENDORID_GSSAPI		2
-#define	VENDORID_MS_NT5		3
-#define	VENDOR_SUPPORTS_GSSAPI(x)					\
-	((x) == VENDORID_GSSAPI_LONG ||					\
-	 (x) == VENDORID_GSSAPI ||					\
-	 (x) == VENDORID_MS_NT5)
+/* Refer to draft-ietf-ipsec-isakmp-gss-auth-06.txt. */
+#define VENDORID_GSSAPI_LONG	1
+#define VENDORID_GSSAPI		2
+#define VENDORID_MS_NT5		3
+
+#define VENDORID_GSSAPI_MASK	(BIT(VENDORID_GSSAPI_LONG) | \
+				 BIT(VENDORID_GSSAPI) | \
+				 BIT(VENDORID_MS_NT5))
 
 /* NAT-T support */
 #define VENDORID_NATT_00	4
@@ -70,8 +71,7 @@
 #define VENDORID_NATT_FIRST	VENDORID_NATT_00
 #define VENDORID_NATT_LAST	VENDORID_NATT_RFC
 
-
-#define MAX_NATT_VID_COUNT	(VENDORID_NATT_LAST - VENDORID_NATT_FIRST + 1 )
+#define MAX_NATT_VID_COUNT	(VENDORID_NATT_LAST - VENDORID_NATT_FIRST + 1)
 
 /* Hybrid auth */
 #define VENDORID_XAUTH		15
@@ -88,8 +88,7 @@
  * XXX: do some cleanup to have separate lists for "real" vendors (to complete)
  * and "features" VendorIDs
  */
-#define	VENDORID_KAME		19
-
+#define VENDORID_KAME		19
 
 struct vendor_id {
 	int		id;
@@ -98,8 +97,7 @@ struct vendor_id {
 };
 
 vchar_t *set_vendorid __P((int));
-int check_vendorid __P((struct isakmp_gen *));
-void handle_vendorid __P((struct ph1handle *, int vid_numeric));
+int handle_vendorid __P((struct ph1handle *, struct isakmp_gen *));
 
 void compute_vendorids __P((void));
 const char *vid_string_by_id __P((int id));

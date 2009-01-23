@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.9 2008/07/21 06:26:06 tteras Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.10 2009/01/23 08:06:56 tteras Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -297,7 +297,6 @@ base_i2recv(iph1, msg)
 	struct isakmp_parse_t *pa;
 	vchar_t *satmp = NULL;
 	int error = -1;
-	int vid_numeric;
 #ifdef ENABLE_HYBRID
 	vchar_t *unity_vid;
 	vchar_t *xauth_vid;
@@ -342,8 +341,7 @@ base_i2recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+			handle_vendorid(iph1, pa->ptr);
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -588,8 +586,7 @@ base_i3recv(iph1, msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
-	int error = -1;
-	int ptype, vid_numeric;
+	int error = -1, ptype;
 #ifdef ENABLE_NATT
 	vchar_t	*natd_received;
 	int natd_seq = 0, natd_verified;
@@ -628,8 +625,7 @@ base_i3recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+			handle_vendorid(iph1, pa->ptr);
 			break;
 
 #ifdef ENABLE_NATT
@@ -834,8 +830,7 @@ base_r1recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+			vid_numeric = handle_vendorid(iph1, pa->ptr);
 #ifdef ENABLE_FRAG
 			if ((vid_numeric == VENDORID_FRAG) &&
 			    (vendorid_frag_cap(pa->ptr) & VENDORID_FRAG_BASE))
@@ -1075,8 +1070,7 @@ base_r2recv(iph1, msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
-	int error = -1;
-	int ptype, vid_numeric;
+	int error = -1, ptype;
 #ifdef ENABLE_NATT
 	int natd_seq = 0;
 #endif
@@ -1116,8 +1110,7 @@ base_r2recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+			handle_vendorid(iph1, pa->ptr);
 			break;
 
 #ifdef ENABLE_NATT
