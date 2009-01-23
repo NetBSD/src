@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.54 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.55 2009/01/23 21:58:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.54 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.55 2009/01/23 21:58:27 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.54 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.55 2009/01/23 21:58:27 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -141,12 +141,12 @@ typedef enum {
  */
 static void CondPushBack(Token);
 static int CondGetArg(char **, char **, const char *, Boolean);
-static Boolean CondDoDefined(int, char *);
-static int CondStrMatch(void *, void *);
-static Boolean CondDoMake(int, char *);
-static Boolean CondDoExists(int, char *);
-static Boolean CondDoTarget(int, char *);
-static Boolean CondDoCommands(int, char *);
+static Boolean CondDoDefined(int, const char *);
+static int CondStrMatch(const void *, const void *);
+static Boolean CondDoMake(int, const char *);
+static Boolean CondDoExists(int, const char *);
+static Boolean CondDoTarget(int, const char *);
+static Boolean CondDoCommands(int, const char *);
 static Boolean CondCvtArg(char *, double *);
 static Token CondToken(Boolean);
 static Token CondT(Boolean);
@@ -157,7 +157,7 @@ static const struct If {
     const char	*form;	      /* Form of if */
     int		formlen;      /* Length of form */
     Boolean	doNot;	      /* TRUE if default function should be negated */
-    Boolean	(*defProc)(int, char *); /* Default function to apply */
+    Boolean	(*defProc)(int, const char *); /* Default function to apply */
 } ifs[] = {
     { "def",	  3,	  FALSE,  CondDoDefined },
     { "ndef",	  4,	  TRUE,	  CondDoDefined },
@@ -168,7 +168,7 @@ static const struct If {
 };
 
 static Boolean	  condInvert;	    	/* Invert the default function */
-static Boolean	  (*condDefProc)(int, char *);	/* Default function to apply */
+static Boolean	  (*condDefProc)(int, const char *);	/* Default function to apply */
 static char 	  *condExpr;	    	/* The expression to parse */
 static Token	  condPushBack=None;	/* Single push-back token used in
 					 * parsing */
@@ -320,7 +320,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
  *-----------------------------------------------------------------------
  */
 static Boolean
-CondDoDefined(int argLen, char *arg)
+CondDoDefined(int argLen, const char *arg)
 {
     char    *p1;
     Boolean result;
@@ -350,7 +350,7 @@ CondDoDefined(int argLen, char *arg)
  *-----------------------------------------------------------------------
  */
 static int
-CondStrMatch(void *string, void *pattern)
+CondStrMatch(const void *string, const void *pattern)
 {
     return(!Str_Match(string, pattern));
 }
@@ -369,7 +369,7 @@ CondStrMatch(void *string, void *pattern)
  *-----------------------------------------------------------------------
  */
 static Boolean
-CondDoMake(int argLen, char *arg)
+CondDoMake(int argLen, const char *arg)
 {
     return Lst_Find(create, arg, CondStrMatch) != NULL;
 }
@@ -388,7 +388,7 @@ CondDoMake(int argLen, char *arg)
  *-----------------------------------------------------------------------
  */
 static Boolean
-CondDoExists(int argLen, char *arg)
+CondDoExists(int argLen, const char *arg)
 {
     Boolean result;
     char    *path;
@@ -421,7 +421,7 @@ CondDoExists(int argLen, char *arg)
  *-----------------------------------------------------------------------
  */
 static Boolean
-CondDoTarget(int argLen, char *arg)
+CondDoTarget(int argLen, const char *arg)
 {
     GNode   *gn;
 
@@ -445,7 +445,7 @@ CondDoTarget(int argLen, char *arg)
  *-----------------------------------------------------------------------
  */
 static Boolean
-CondDoCommands(int argLen, char *arg)
+CondDoCommands(int argLen, const char *arg)
 {
     GNode   *gn;
 
@@ -813,7 +813,7 @@ get_mpt_arg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 }
 
 static Boolean
-CondDoEmpty(int arglen, char *arg)
+CondDoEmpty(int arglen, const char *arg)
 {
     return arglen == 1;
 }
@@ -825,7 +825,7 @@ compare_function(Boolean doEval)
 	const char  *fn_name;
 	int         fn_name_len;
         int         (*fn_getarg)(char **, char **, const char *, Boolean);
-	Boolean     (*fn_proc)(int, char *);
+	Boolean     (*fn_proc)(int, const char *);
     } fn_defs[] = {
 	{ "defined",   7, CondGetArg, CondDoDefined },
 	{ "make",      4, CondGetArg, CondDoMake },
