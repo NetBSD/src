@@ -1,4 +1,4 @@
-/*	$NetBSD: lstFindFrom.c,v 1.14 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: lstFindFrom.c,v 1.15 2009/01/23 21:58:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstFindFrom.c,v 1.14 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstFindFrom.c,v 1.15 2009/01/23 21:58:28 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstFindFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstFindFrom.c,v 1.14 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: lstFindFrom.c,v 1.15 2009/01/23 21:58:28 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -68,11 +68,10 @@ __RCSID("$NetBSD: lstFindFrom.c,v 1.14 2009/01/23 21:26:30 dsl Exp $");
  *-----------------------------------------------------------------------
  */
 LstNode
-Lst_FindFrom(Lst l, LstNode ln, void *d,
-	     int (*cProc)(void *, void *))
+Lst_FindFrom(Lst l, LstNode ln, const void *d,
+	     int (*cProc)(const void *, const void *))
 {
     ListNode	tln;
-    Boolean		found = FALSE;
 
     if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
 	return NULL;
@@ -81,18 +80,11 @@ Lst_FindFrom(Lst l, LstNode ln, void *d,
     tln = ln;
 
     do {
-	if ((*cProc) (tln->datum, d) == 0) {
-	    found = TRUE;
-	    break;
-	} else {
-	    tln = tln->nextPtr;
-	}
+	if ((*cProc)(tln->datum, d) == 0)
+	    return (tln);
+	tln = tln->nextPtr;
     } while (tln != ln && tln != NULL);
 
-    if (found) {
-	return (tln);
-    } else {
-	return NULL;
-    }
+    return NULL;
 }
 

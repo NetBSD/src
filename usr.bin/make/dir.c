@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.59 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: dir.c,v 1.60 2009/01/23 21:58:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.59 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.60 2009/01/23 21:58:27 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.59 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.60 2009/01/23 21:58:27 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -244,7 +244,7 @@ static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 			     * should be ok, but... */
 
 
-static int DirFindName(void *, void *);
+static int DirFindName(const void *, const void *);
 static int DirMatchFiles(const char *, Path *, Lst);
 static void DirExpandCurly(const char *, const char *, Lst, Lst);
 static void DirExpandInt(const char *, Lst, Lst);
@@ -448,9 +448,9 @@ Dir_SetPATH(void)
  *-----------------------------------------------------------------------
  */
 static int
-DirFindName(void *p, void *dname)
+DirFindName(const void *p, const void *dname)
 {
-    return (strcmp(((Path *)p)->name, (char *)dname));
+    return (strcmp(((const Path *)p)->name, dname));
 }
 
 /*-
@@ -1512,7 +1512,7 @@ Dir_AddDir(Lst path, const char *name)
     struct dirent *dp;	      /* entry in directory */
 
     if (strcmp(name, ".DOTLAST") == 0) {
-	ln = Lst_Find(path, UNCONST(name), DirFindName);
+	ln = Lst_Find(path, name, DirFindName);
 	if (ln != NULL)
 	    return (Path *)Lst_Datum(ln);
 	else {
@@ -1522,7 +1522,7 @@ Dir_AddDir(Lst path, const char *name)
     }
 
     if (path)
-	ln = Lst_Find(openDirectories, UNCONST(name), DirFindName);
+	ln = Lst_Find(openDirectories, name, DirFindName);
     if (ln != NULL) {
 	p = (Path *)Lst_Datum(ln);
 	if (path && Lst_Member(path, p) == NULL) {
