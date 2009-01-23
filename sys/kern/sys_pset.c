@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.10 2009/01/20 01:57:35 rmind Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.11 2009/01/23 13:58:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.10 2009/01/20 01:57:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.11 2009/01/23 13:58:08 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -481,7 +481,7 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 		lwp_lock(t);
 		opsid = t->l_psid;
 		t->l_psid = psid;
-		ci = sched_takecpu(l);
+		ci = sched_takecpu(t);
 		/* Unlocks LWP */
 		lwp_migrate(t, ci);
 		lcnt++;
