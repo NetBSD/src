@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.38 2009/01/18 20:42:11 he Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.39 2009/01/23 13:14:16 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -45,9 +45,11 @@ SRCS+=	vnode_if.c
 # sys/dev
 SRCS+=	clock_subr.c
 
-# uncomment these lines if you want to use the real kmem code
-#CPPFLAGS+=	-DRUMP_USE_REAL_KMEM
-#SRCS+=		subr_kmem.c subr_vmem.c
+# Comment these if you want to use malloc(3) directly instead of
+# the kernel allocators.  It's a few percent faster, but doesn't
+# emulate all kernel corner cases as well.
+CPPFLAGS+=	-DRUMP_USE_REAL_ALLOCATORS
+SRCS+=		subr_kmem.c subr_pool.c subr_vmem.c
 
 # no shlib_version because this is automatically in sync with lib/librump
 SHLIB_MAJOR=    0

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.88 2009/01/13 02:03:13 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.89 2009/01/23 13:14:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.88 2009/01/13 02:03:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.89 2009/01/23 13:14:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.88 2009/01/13 02:03:13 pooka Exp $");
 #include <sys/sysctl.h>
 #include <sys/tty.h>
 #include <sys/uidinfo.h>
+#include <sys/vmem.h>
 
 #include <rump/rumpuser.h>
 
@@ -152,10 +153,13 @@ rump__init(int rump_version)
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpuser_mutex_recursive_init(&rump_giantlock);
 	ksyms_init();
-
 	rumpvm_init();
+
+	once_init();
+	pool_subsystem_init();
+
 	rump_sleepers_init();
-#ifdef RUMP_USE_REAL_KMEM
+#ifdef RUMP_USE_REAL_ALLOCATORS
 	kmem_init();
 #endif
 	kprintf_init();
@@ -185,7 +189,6 @@ rump__init(int rump_version)
 	callout_startup();
 	callout_init_cpu(&rump_cpu);
 
-	once_init();
 	iostat_init();
 	uid_init();
 	percpu_init();
@@ -213,6 +216,11 @@ rump__init(int rump_version)
 	sigemptyset(&sigcantmask);
 
 	lwp0.l_fd = proc0.p_fd = fd_init(&rump_filedesc0);
+
+#ifdef RUMP_USE_REAL_ALLOCATORS
+	if (rump_threads)
+		vmem_rehash_start();
+#endif
 
 	return 0;
 }
