@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.16 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: lst.h,v 1.17 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,8 +92,8 @@
 typedef	struct List	*Lst;
 typedef	struct ListNode	*LstNode;
 
-typedef ClientData	DuplicateProc(ClientData);
-typedef void		FreeProc(ClientData);
+typedef void		*DuplicateProc(void *);
+typedef void		FreeProc(void *);
 
 #define LST_CONCNEW	0   /* create new LstNode's when using Lst_Concat */
 #define LST_CONCLINK	1   /* relink LstNode's when using Lst_Concat */
@@ -114,17 +114,17 @@ Boolean		Lst_IsEmpty(Lst);
  * Functions to modify a list
  */
 /* Insert an element before another */
-ReturnStatus	Lst_InsertBefore(Lst, LstNode, ClientData);
+ReturnStatus	Lst_InsertBefore(Lst, LstNode, void *);
 /* Insert an element after another */
-ReturnStatus	Lst_InsertAfter(Lst, LstNode, ClientData);
+ReturnStatus	Lst_InsertAfter(Lst, LstNode, void *);
 /* Place an element at the front of a lst. */
-ReturnStatus	Lst_AtFront(Lst, ClientData);
+ReturnStatus	Lst_AtFront(Lst, void *);
 /* Place an element at the end of a lst. */
-ReturnStatus	Lst_AtEnd(Lst, ClientData);
+ReturnStatus	Lst_AtEnd(Lst, void *);
 /* Remove an element */
 ReturnStatus	Lst_Remove(Lst, LstNode);
 /* Replace a node with a new value */
-ReturnStatus	Lst_Replace(LstNode, ClientData);
+ReturnStatus	Lst_Replace(LstNode, void *);
 /* Concatenate two lists */
 ReturnStatus	Lst_Concat(Lst, Lst, int);
 
@@ -140,30 +140,30 @@ LstNode		Lst_Succ(LstNode);
 /* Return predecessor to given element */
 LstNode		Lst_Prev(LstNode);
 /* Get datum from LstNode */
-ClientData	Lst_Datum(LstNode);
+void		*Lst_Datum(LstNode);
 
 /*
  * Functions for entire lists
  */
 /* Find an element in a list */
-LstNode		Lst_Find(Lst, ClientData, int (*)(ClientData, ClientData));
+LstNode		Lst_Find(Lst, void *, int (*)(void *, void *));
 /* Find an element starting from somewhere */
-LstNode		Lst_FindFrom(Lst, LstNode, ClientData,
-			     int (*cProc)(ClientData, ClientData));
+LstNode		Lst_FindFrom(Lst, LstNode, void *,
+			     int (*cProc)(void *, void *));
 /*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum
  */
-LstNode		Lst_Member(Lst, ClientData);
+LstNode		Lst_Member(Lst, void *);
 /* Apply a function to all elements of a lst */
-int		Lst_ForEach(Lst, int (*)(ClientData, ClientData), ClientData);
+int		Lst_ForEach(Lst, int (*)(void *, void *), void *);
 /*
  * Apply a function to all elements of a lst starting from a certain point.
  * If the list is circular, the application will wrap around to the
  * beginning of the list again.
  */
-int		Lst_ForEachFrom(Lst, LstNode, int (*)(ClientData, ClientData),
-				ClientData);
+int		Lst_ForEachFrom(Lst, LstNode, int (*)(void *, void *),
+				void *);
 /*
  * these functions are for dealing with a list as a table, of sorts.
  * An idea of the "current element" is kept and used by all the functions
@@ -182,8 +182,8 @@ void		Lst_Close(Lst);
  * for using the list as a queue
  */
 /* Place an element at tail of queue */
-ReturnStatus	Lst_EnQueue(Lst, ClientData);
+ReturnStatus	Lst_EnQueue(Lst, void *);
 /* Remove an element from head of queue */
-ClientData	Lst_DeQueue(Lst);
+void		*Lst_DeQueue(Lst);
 
 #endif /* _LST_H_ */

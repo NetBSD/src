@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDupl.c,v 1.15 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: lstDupl.c,v 1.16 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstDupl.c,v 1.15 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstDupl.c,v 1.16 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDupl.c,v 1.15 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: lstDupl.c,v 1.16 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -56,12 +56,12 @@ __RCSID("$NetBSD: lstDupl.c,v 1.15 2008/12/13 15:19:29 dsl Exp $");
 /*-
  *-----------------------------------------------------------------------
  * Lst_Duplicate --
- *	Duplicate an entire list. If a function to copy a ClientData is
+ *	Duplicate an entire list. If a function to copy a void *is
  *	given, the individual client elements will be duplicated as well.
  *
  * Input:
  *	l		the list to duplicate
- *	copyProc	A function to duplicate each ClientData
+ *	copyProc	A function to duplicate each void *
  *
  * Results:
  *	The new Lst structure or NULL if failure.
