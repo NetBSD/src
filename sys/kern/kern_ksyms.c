@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.49 2009/01/01 19:10:17 pooka Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.50 2009/01/23 09:22:25 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.49 2009/01/01 19:10:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.50 2009/01/23 09:22:25 jmmv Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -210,6 +210,14 @@ void
 ksyms_init()
 {
 
+#ifdef SYMTAB_SPACE
+	if (!ksyms_initted &&
+	    strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
+		ksyms_addsyms_elf(db_symtabsize, db_symtab,
+		    db_symtab + db_symtabsize);
+	}
+#endif
+
 	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -347,14 +355,6 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 	size_t strsize = 0;
 	Elf_Ehdr *ehdr;
 
-#ifdef SYMTAB_SPACE
-	if (symsize <= 0 &&
-	    strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
-		symsize = db_symtabsize;
-		start = db_symtab;
-		end = db_symtab + db_symtabsize;
-	}
-#endif
 	if (symsize <= 0) {
 		printf("[ Kernel symbol table missing! ]\n");
 		return;
