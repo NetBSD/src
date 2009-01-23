@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.h,v 1.5 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: oakley.h,v 1.6 2009/01/23 08:23:51 tteras Exp $	*/
 
 /* Id: oakley.h,v 1.13 2005/05/30 20:12:43 fredsen Exp */
 
@@ -89,21 +89,18 @@
 #define OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_R	65010
 #endif
 
-					/*	65500 -> still private
-					 * to avoid clash with GSSAPI_KRB below 
-					 */
-#define FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I	65500
+/*
+ * The following are valid when the Vendor ID is one of
+ * the following:
+ *
+ *	MD5("A GSS-API Authentication Method for IKE")
+ *	MD5("GSSAPI") (recognized by Windows 2000)
+ *	MD5("MS NT5 ISAKMPOAKLEY") (sent by Windows 2000)
+ */
 
+#define OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB	(65001 + 0x10000)
+#define OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB_REAL	65001
 
-	/*
-	 * The following are valid when the Vendor ID is one of
-	 * the following:
-	 *
-	 *	MD5("A GSS-API Authentication Method for IKE")
-	 *	MD5("GSSAPI") (recognized by Windows 2000)
-	 *	MD5("MS NT5 ISAKMPOAKLEY") (sent by Windows 2000)
-	 */
-#define   OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB	65001
 #define OAKLEY_ATTR_GRP_DESC		4 /* B */
 #define   OAKLEY_ATTR_GRP_DESC_MODP768		1
 #define   OAKLEY_ATTR_GRP_DESC_MODP1024		2
@@ -223,21 +220,5 @@ extern vchar_t *oakley_do_decrypt __P((struct ph1handle *,
 	vchar_t *, vchar_t *, vchar_t *));
 extern vchar_t *oakley_do_encrypt __P((struct ph1handle *,
 	vchar_t *, vchar_t *, vchar_t *));
-
-#ifdef ENABLE_HYBRID
-#define AUTHMETHOD(iph1)						     \
-    (((iph1)->rmconf->xauth &&						     \
-    (iph1)->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I) ? \
-	FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I : (iph1)->approval->authmethod)
-#define RMAUTHMETHOD(iph1)						     \
-    (((iph1)->rmconf->xauth &&						     \
-    (iph1)->rmconf->proposal->authmethod ==                                  \
-	OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I) ?                             \
-	FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I :                                  \
-	(iph1)->rmconf->proposal->authmethod)
-#else
-#define AUTHMETHOD(iph1) (iph1)->approval->authmethod
-#define RMAUTHMETHOD(iph1) (iph1)->rmconf->proposal->authmethod
-#endif /* ENABLE_HYBRID */
 
 #endif /* _OAKLEY_H */

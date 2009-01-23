@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.12 2008/03/06 17:00:03 vanhu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.13 2009/01/23 08:23:51 tteras Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -858,7 +858,7 @@ oakley_ph1hash_common(iph1, sw)
 		+ (sw == GENERATE ? iph1->id->l : iph1->id_p->l);
 
 #ifdef HAVE_GSSAPI
-	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
 		if (iph1->gi_i != NULL && iph1->gi_r != NULL) {
 			bp = (sw == GENERATE ? iph1->gi_i : iph1->gi_r);
 			len += bp->l;
@@ -919,7 +919,7 @@ oakley_ph1hash_common(iph1, sw)
 	p += bp->l;
 
 #ifdef HAVE_GSSAPI
-	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
 		if (iph1->gi_i != NULL && iph1->gi_r != NULL) {
 			bp = (sw == GENERATE ? iph1->gi_i : iph1->gi_r);
 			memcpy(p, bp->v, bp->l);
@@ -980,7 +980,7 @@ oakley_ph1hash_base_i(iph1, sw)
 		return NULL;
 	}
 
-	switch (AUTHMETHOD(iph1)) {
+	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
@@ -989,7 +989,7 @@ oakley_ph1hash_base_i(iph1, sw)
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_R:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_R:
-	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
 #endif
 		if (iph1->skeyid == NULL) {
@@ -1121,7 +1121,7 @@ oakley_ph1hash_base_r(iph1, sw)
 		return NULL;
 	}
 
-	switch(AUTHMETHOD(iph1)) {
+	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
 	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
 #ifdef ENABLE_HYBRID
@@ -1133,7 +1133,7 @@ oakley_ph1hash_base_r(iph1, sw)
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_R:
-	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
 #endif
 		break;
 	default:
@@ -1249,10 +1249,10 @@ oakley_validate_auth(iph1)
 	gettimeofday(&start, NULL);
 #endif
 
-	switch (AUTHMETHOD(iph1)) {
+	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 #ifdef ENABLE_HYBRID
-	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
 #endif
 		/* validate HASH */
@@ -1265,7 +1265,7 @@ oakley_validate_auth(iph1)
 			return ISAKMP_NTYPE_PAYLOAD_MALFORMED;
 		}
 #ifdef ENABLE_HYBRID
-		if (AUTHMETHOD(iph1) == FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I &&
+		if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I &&
 		    ((iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH) == 0))
 		{
 			plog(LLV_ERROR, LOCATION, NULL, "No SIG was passed, "
@@ -1412,7 +1412,7 @@ oakley_validate_auth(iph1)
 		 && iph1->rmconf->getcert_method == ISAKMP_GETCERT_PAYLOAD) {
 			certtype = iph1->rmconf->certtype;
 #ifdef ENABLE_HYBRID
-			switch (AUTHMETHOD(iph1)) {
+			switch (iph1->approval->authmethod) {
 			case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 			case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
 				certtype = iph1->cert_p->type;
@@ -1485,7 +1485,7 @@ oakley_validate_auth(iph1)
 
 		certtype = iph1->rmconf->certtype;
 #ifdef ENABLE_HYBRID
-		switch (AUTHMETHOD(iph1)) {
+		switch (iph1->approval->authmethod) {
 		case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 		case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
 			certtype = iph1->cert_p->type;
@@ -2467,10 +2467,10 @@ oakley_skeyid(iph1)
 	int error = -1;
 	
 	/* SKEYID */
-	switch (AUTHMETHOD(iph1)) {
+	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 #ifdef ENABLE_HYBRID
-	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
 #endif
 		if (iph1->etype != ISAKMP_ETYPE_IDENT) {

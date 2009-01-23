@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.39 2008/12/23 14:04:42 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.40 2009/01/23 08:23:51 tteras Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -101,9 +101,9 @@ int verbose_proposal_check = 1;
 
 static vchar_t *get_ph1approval __P((struct ph1handle *, struct prop_pair **));
 static struct isakmpsa *get_ph1approvalx __P((struct prop_pair *,
-	struct isakmpsa *, struct isakmpsa *, int));
-static void print_ph1mismatched __P((struct prop_pair *, struct isakmpsa *));
-static int t2isakmpsa __P((struct isakmp_pl_t *, struct isakmpsa *));
+	struct isakmpsa *, struct isakmpsa *, int, u_int32_t));
+static void print_ph1mismatched __P((struct prop_pair *, struct isakmpsa *, u_int32_t));
+static int t2isakmpsa __P((struct isakmp_pl_t *, struct isakmpsa *, u_int32_t));
 static int cmp_aproppair_i __P((struct prop_pair *, struct prop_pair *));
 static struct prop_pair *get_ph2approval __P((struct ph2handle *,
 	struct prop_pair **));
@@ -229,8 +229,9 @@ get_ph1approval(iph1, pair)
 			/* compare proposal and select one */
 			for (p = s; p; p = p->tnext) {
 				if ((sa = get_ph1approvalx(p, 
-				    iph1->rmconf->proposal, &tsa, 
-				    iph1->rmconf->pcheck_level)) != NULL)
+						iph1->rmconf->proposal, &tsa,
+						iph1->rmconf->pcheck_level,
+						iph1->vendorid_mask)) != NULL)
 					goto found;
 			}
 		}
@@ -249,7 +250,8 @@ get_ph1approval(iph1, pair)
 						+ s->prop->spi_size;
 				for (p = s; p; p = p->tnext) {
 					print_ph1mismatched(p,
-						iph1->rmconf->proposal);
+						iph1->rmconf->proposal,
+						iph1->vendorid_mask);
 				}
 			}
 		}
@@ -329,10 +331,11 @@ saok:
  * proposal: my proposals.
  */
 static struct isakmpsa *
-get_ph1approvalx(p, proposal, sap, check_level)
+get_ph1approvalx(p, proposal, sap, check_level, vendorid_mask)
 	struct prop_pair *p;
 	struct isakmpsa *proposal, *sap;
 	int check_level;
+	u_int32_t vendorid_mask;
 {
 	struct isakmp_pl_p *prop = p->prop;
 	struct isakmp_pl_t *trns = p->trns;
@@ -352,7 +355,7 @@ get_ph1approvalx(p, proposal, sap, check_level)
 	tsap = sap != NULL ? sap : &sa;
 
 	memset(tsap, 0, sizeof(*tsap));
-	if (t2isakmpsa(trns, tsap) < 0)
+	if (t2isakmpsa(trns, tsap, vendorid_mask) < 0)
 		return NULL;
 	for (s = proposal; s != NULL; s = s->next) {
 #ifdef ENABLE_HYBRID
@@ -474,14 +477,15 @@ found:
  * proposal: my proposals.
  */
 static void
-print_ph1mismatched(p, proposal)
+print_ph1mismatched(p, proposal, vendorid_mask)
 	struct prop_pair *p;
 	struct isakmpsa *proposal;
+	u_int32_t vendorid_mask;
 {
 	struct isakmpsa sa, *s;
 
 	memset(&sa, 0, sizeof(sa));
-	if (t2isakmpsa(p->trns, &sa) < 0)
+	if (t2isakmpsa(p->trns, &sa, vendorid_mask) < 0)
 		return;
 	for (s = proposal; s ; s = s->next) {
 		if (sa.enctype != s->enctype) {
@@ -544,9 +548,10 @@ print_ph1mismatched(p, proposal)
  * get ISAKMP data attributes
  */
 static int
-t2isakmpsa(trns, sa)
+t2isakmpsa(trns, sa, vendorid_mask)
 	struct isakmp_pl_t *trns;
 	struct isakmpsa *sa;
+	u_int32_t vendorid_mask;
 {
 	struct isakmp_data *d, *prev;
 	int flag, type;
@@ -616,6 +621,11 @@ t2isakmpsa(trns, sa)
 
 		case OAKLEY_ATTR_AUTH_METHOD:
 			sa->authmethod = ntohs(d->lorv);
+#ifdef HAVE_GSSAPI
+			if (sa->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB_REAL &&
+			    (vendorid_mask & VENDORID_GSSAPI_MASK))
+				sa->authmethod = OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB;
+#endif
 			break;
 
 		case OAKLEY_ATTR_GRP_DESC:
@@ -2218,11 +2228,12 @@ check_attr_isakmp(trns)
 #ifdef ENABLE_HYBRID
 			case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 			case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I:
-#if 0 /* Clashes with OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB */
+#endif
+#if defined(ENABLE_HYBRID) || defined(HAVE_GSSAPI)
+				/* These two authentication method IDs overlap. */
 			case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
+			/*case OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB:*/
 #endif
-#endif
-			case OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB:
 				break;
 			case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
 #ifdef ENABLE_HYBRID
@@ -2903,6 +2914,7 @@ setph1attr(sa, buf)
 #else
 		authmethod = sa->authmethod;
 #endif
+		authmethod &= 0xffff;
 		attrlen += sizeof(struct isakmp_data);
 		if (buf)
 			p = isakmp_set_attr_l(p, OAKLEY_ATTR_AUTH_METHOD, authmethod);

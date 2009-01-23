@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.48 2009/01/23 08:05:58 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.49 2009/01/23 08:23:51 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -886,7 +886,7 @@ ph1_main(iph1, msg)
 
 #ifdef ENABLE_HYBRID
 		if (iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH) {
-			switch(AUTHMETHOD(iph1)) {
+			switch (iph1->approval->authmethod) {
 			case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
 			case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R:
 			case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
@@ -936,7 +936,7 @@ ph1_main(iph1, msg)
 		 */
 		if ((iph1->status == PHASE1ST_ESTABLISHED) &&
 		    !iph1->rmconf->mode_cfg) { 
-			switch (AUTHMETHOD(iph1)) {
+			switch (iph1->approval->authmethod) {
 #ifdef ENABLE_HYBRID
 			case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
 			case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
