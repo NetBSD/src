@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.44 2009/01/23 04:36:13 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.45 2009/01/23 16:54:14 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.44 2009/01/23 04:36:13 uch Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.45 2009/01/23 16:54:14 uwe Exp $")
 
 
 /*
@@ -181,7 +181,6 @@ NENTRY(sh3_vector_tlbmiss)
 .L3_kernel_va:
 	mov.l	.L3_VM_MIN_KERNEL_ADDRESS, r0
 	mov.l	.L3_kernptd,  r1 ! pmap_kernel()->pm_ptp
-	mov.l	@r1, r1		! kernel_pmap_ptr is pointer.
 	bra	.L3_fetch_pte
 	 sub	r0, r2		! vpn -= VM_MIN_KERNEL_ADDRESS
 
@@ -280,7 +279,7 @@ NENTRY(sh3_vector_tlbmiss)
 	.align	4
 .L3_VPN_cleanup:		.long	~0x00000c00
 .L3_curptd:			.long	_C_LABEL(curptd)
-.L3_kernptd:			.long	_C_LABEL(kernel_pmap_ptr)
+.L3_kernptd:			.long	_C_LABEL(__pmap_kernel)
 .L3_VM_MIN_KERNEL_ADDRESS:	.long	VM_MIN_KERNEL_ADDRESS
 .L3_ptp_index_mask:		.long	0x1ff
 .L3_ptp_offset_mask:		.long	0x3ff << 2
@@ -332,7 +331,6 @@ NENTRY(sh4_vector_tlbmiss)
 .L4_kernel_va:
 	mov.l	.L4_VM_MIN_KERNEL_ADDRESS, r0
 	mov.l	.L4_kernptd,  r1 ! pmap_kernel()->pm_ptp
-	mov.l	@r1, r1		! kernel_pmap_ptr is pointer.
 	bra	.L4_fetch_pte
 	 sub	r0, r2		! vpn -= VM_MIN_KERNEL_ADDRESS
 
@@ -433,7 +431,7 @@ NENTRY(sh4_vector_tlbmiss)
 .L4_SH4_PTEH:			.long	SH4_PTEH
 .L4_VPN_cleanup:		.long	~0x00000c00
 .L4_curptd:			.long	_C_LABEL(curptd)
-.L4_kernptd:			.long	_C_LABEL(kernel_pmap_ptr)
+.L4_kernptd:			.long	_C_LABEL(__pmap_kernel)
 .L4_VM_MIN_KERNEL_ADDRESS:	.long	VM_MIN_KERNEL_ADDRESS
 .L4_ptp_index_mask:		.long	0x1ff
 .L4_ptp_offset_mask:		.long	0x3ff << 2
