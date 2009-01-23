@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.52 2009/01/18 17:30:19 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.53 2009/01/23 20:22:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.52 2009/01/18 17:30:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.53 2009/01/23 20:22:50 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.52 2009/01/18 17:30:19 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.53 2009/01/23 20:22:50 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -322,11 +322,9 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 static Boolean
 CondDoDefined(int argLen, char *arg)
 {
-    char    savec = arg[argLen];
     char    *p1;
     Boolean result;
 
-    arg[argLen] = '\0';
     if (Var_Value(arg, VAR_CMD, &p1) != NULL) {
 	result = TRUE;
     } else {
@@ -334,7 +332,6 @@ CondDoDefined(int argLen, char *arg)
     }
     if (p1)
 	free(p1);
-    arg[argLen] = savec;
     return (result);
 }
 
@@ -374,17 +371,7 @@ CondStrMatch(ClientData string, ClientData pattern)
 static Boolean
 CondDoMake(int argLen, char *arg)
 {
-    char    savec = arg[argLen];
-    Boolean result;
-
-    arg[argLen] = '\0';
-    if (Lst_Find(create, arg, CondStrMatch) == NULL) {
-	result = FALSE;
-    } else {
-	result = TRUE;
-    }
-    arg[argLen] = savec;
-    return (result);
+    return Lst_Find(create, arg, CondStrMatch) != NULL;
 }
 
 /*-
@@ -403,11 +390,9 @@ CondDoMake(int argLen, char *arg)
 static Boolean
 CondDoExists(int argLen, char *arg)
 {
-    char    savec = arg[argLen];
     Boolean result;
     char    *path;
 
-    arg[argLen] = '\0';
     path = Dir_FindFile(arg, dirSearchPath);
     if (path != NULL) {
 	result = TRUE;
@@ -415,7 +400,6 @@ CondDoExists(int argLen, char *arg)
     } else {
 	result = FALSE;
     }
-    arg[argLen] = savec;
     if (DEBUG(COND)) {
 	fprintf(debug_file, "exists(%s) result is \"%s\"\n",
 	       arg, path ? path : "");
@@ -439,19 +423,10 @@ CondDoExists(int argLen, char *arg)
 static Boolean
 CondDoTarget(int argLen, char *arg)
 {
-    char    savec = arg[argLen];
-    Boolean result;
     GNode   *gn;
 
-    arg[argLen] = '\0';
     gn = Targ_FindNode(arg, TARG_NOCREATE);
-    if ((gn != NULL) && !OP_NOP(gn->type)) {
-	result = TRUE;
-    } else {
-	result = FALSE;
-    }
-    arg[argLen] = savec;
-    return (result);
+    return (gn != NULL) && !OP_NOP(gn->type);
 }
 
 /*-
@@ -472,19 +447,10 @@ CondDoTarget(int argLen, char *arg)
 static Boolean
 CondDoCommands(int argLen, char *arg)
 {
-    char    savec = arg[argLen];
-    Boolean result;
     GNode   *gn;
 
-    arg[argLen] = '\0';
     gn = Targ_FindNode(arg, TARG_NOCREATE);
-    if ((gn != NULL) && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands)) {
-	result = TRUE;
-    } else {
-	result = FALSE;
-    }
-    arg[argLen] = savec;
-    return (result);
+    return (gn != NULL) && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands);
 }
 
 /*-
