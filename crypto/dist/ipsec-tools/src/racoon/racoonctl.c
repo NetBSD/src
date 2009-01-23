@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.13 2008/07/15 00:47:09 mgrooms Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.14 2009/01/23 11:44:08 tteras Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -210,17 +210,23 @@ usage()
 {
 	printf(
 "Usage:\n"
-"  %s reload-config\n"
-"  %s show-schedule\n"
-"  %s [-l [-l]] show-sa [protocol]\n"
-"  %s flush-sa [protocol]\n"
-"  %s delete-sa <saopts>\n"
-"  %s establish-sa [-u identity] [-w] <saopts>\n"
-"  %s vpn-connect [-u identity] vpn_gateway\n"
-"  %s vpn-disconnect vpn_gateway\n"
-"  %s show-event\n"
-"  %s logout-user login\n"
+"  %s [opts] reload-config\n"
+"  %s [opts] show-schedule\n"
+"  %s [opts] show-sa [protocol]\n"
+"  %s [opts] flush-sa [protocol]\n"
+"  %s [opts] delete-sa <saopts>\n"
+"  %s [opts] establish-sa [-u identity] [-w] <saopts>\n"
+"  %s [opts] vpn-connect [-u identity] vpn_gateway\n"
+"  %s [opts] vpn-disconnect vpn_gateway\n"
+"  %s [opts] show-event\n"
+"  %s [opts] logout-user login\n"
 "\n"
+"General options:\n"
+"  -l		Increase output verbosity (mainly for show-sa)\n"
+"  -d		Debug: hexdump admin messages before sending\n"
+"  -s <socket>	Specify adminport socket to use (default: %s)\n"
+"\n"
+"Parameter specifications:\n"
 "    <protocol>: \"isakmp\", \"esp\" or \"ah\".\n"
 "        In the case of \"show-sa\" or \"flush-sa\", you can use \"ipsec\".\n"
 "\n"
@@ -228,8 +234,10 @@ usage()
 "            : {\"esp\",\"ah\"} <family> <src/prefixlen/port> <dst/prefixlen/port>\n"
 "                              <ul_proto>\n"
 "    <family>: \"inet\" or \"inet6\"\n"
-"    <ul_proto>: \"icmp\", \"tcp\", \"udp\", \"gre\" or \"any\"\n",
-	pname, pname, pname, pname, pname, pname, pname, pname, pname, pname);
+"    <ul_proto>: \"icmp\", \"tcp\", \"udp\", \"gre\" or \"any\"\n"
+"\n",
+		pname, pname, pname, pname, pname, pname, pname, pname, pname, pname,
+		ADMINSOCK_PATH);
 }
 
 /*
