@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.10 2009/01/23 08:06:56 tteras Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.11 2009/01/23 08:23:51 tteras Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -156,8 +156,8 @@ ident_i1send(iph1, msg)
 #endif
 #ifdef ENABLE_HYBRID
 	/* Do we need Xauth VID? */
-	switch (RMAUTHMETHOD(iph1)) {
-	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	switch (iph1->rmconf->proposal->authmethod) {
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I:
@@ -175,7 +175,7 @@ ident_i1send(iph1, msg)
 			plog(LLV_ERROR, LOCATION, NULL,
 			     "Unity vendor ID generation failed\n");
 		else
-                	plist = isakmp_plist_append(plist,
+			plist = isakmp_plist_append(plist,
 			    vid_unity, ISAKMP_NPTYPE_VID);
 		break;
 	default:
@@ -377,7 +377,7 @@ ident_i2send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
 	    gssapi_get_itoken(iph1, NULL) < 0)
 		goto end;
 #endif
@@ -606,7 +606,7 @@ ident_i3send(iph1, msg0)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
 	    gssapi_more_tokens(iph1)) {
 		plog(LLV_DEBUG, LOCATION, NULL, "calling get_itoken\n");
 		if (gssapi_get_itoken(iph1, &len) < 0)
@@ -1277,7 +1277,7 @@ ident_r2send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		gssapi_get_rtoken(iph1, NULL);
 #endif
 
@@ -1424,7 +1424,7 @@ ident_r3recv(iph1, msg0)
     {
 	int ng = 0;
 
-	switch (AUTHMETHOD(iph1)) {
+	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 #ifdef ENABLE_HYBRID
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
@@ -1576,7 +1576,7 @@ ident_r3send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
 	    gssapi_more_tokens(iph1)) {
 		gssapi_get_rtoken(iph1, &len);
 		if (len != 0)
@@ -1670,7 +1670,7 @@ ident_ir2mx(iph1)
 	}
 
 #ifdef HAVE_GSSAPI
-	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		gssapi_get_token_to_send(iph1, &gsstoken);
 #endif
 
@@ -1681,7 +1681,7 @@ ident_ir2mx(iph1)
 	plist = isakmp_plist_append(plist, iph1->nonce, ISAKMP_NPTYPE_NONCE);
 
 #ifdef HAVE_GSSAPI
-	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		plist = isakmp_plist_append(plist, gsstoken, ISAKMP_NPTYPE_GSS);
 #endif
 
@@ -1774,10 +1774,10 @@ ident_ir3mx(iph1)
 	vchar_t *gsshash = NULL;
 #endif
 
-	switch (AUTHMETHOD(iph1)) {
+	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 #ifdef ENABLE_HYBRID
-	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
