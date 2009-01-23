@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.43 2009/01/23 08:05:58 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.44 2009/01/23 08:29:34 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.43 2009/01/23 08:05:58 tteras Exp $ */
+/* $Id: pfkey.c,v 1.44 2009/01/23 08:29:34 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2839,6 +2839,57 @@ struct migrate_args {
 	struct sockaddr *remote;
 };
 
+/*
+ * Update local and remote addresses of given Phase 1.
+ *
+ * -1 is returned on error. 0 if everything went right.
+ * Note: we do need to maintain port information here. --arno
+ */
+static int
+migrate_ph1_ike_addresses(iph1, arg)
+        struct ph1handle *iph1;
+        void *arg;
+{
+	struct migrate_args *ma = (struct migrate_args *) arg;
+	u_int16_t port;
+
+	if (iph1->local != NULL) {
+		plog(LLV_DEBUG, LOCATION, NULL, "Migrating Phase 1 local "
+		     "address from %s to %s\n", saddr2str(iph1->local),
+		     saddr2str(ma->local));
+		port = extract_port(iph1->local);
+		racoon_free(iph1->local);
+	} else
+		port = 0;
+
+	iph1->local = dupsaddr(ma->local);
+	if (iph1->local == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "unable to allocate "
+		     "Phase 1 local address.\n");
+		return -1;
+	}
+	set_port(iph1->local, port);
+
+	if (iph1->remote != NULL) {
+		plog(LLV_DEBUG, LOCATION, NULL, "Migrating Phase 1 remote "
+		     "address from %s to %s\n", saddr2str(iph1->remote),
+		     saddr2str(ma->remote));
+		port = extract_port(iph1->remote);
+		racoon_free(iph1->remote);
+	} else
+		port = 0;
+
+	iph1->remote = dupsaddr(ma->remote);
+	if (iph1->remote == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "unable to allocate "
+		     "Phase 1 remote address.\n");
+		return -1;
+	}
+	set_port(iph1->remote, port);
+
+	return 0;
+}
+
 /* Update src and dst of all current Phase 2 handles.
  * with provided local and remote addresses.
  * Our intent is NOT to modify IPsec SA endpoints but IKE
@@ -2855,6 +2906,11 @@ migrate_ph2_ike_addresses(iph2, arg)
 	void *arg;
 {
 	struct migrate_args *ma = (struct migrate_args *) arg;
+	struct ph1handle *iph1;
+
+	/* If Phase 2 has an associated Phase 1, migrate addresses */
+	if (iph2->ph1)
+		migrate_ph1_ike_addresses(iph2->ph1, arg);
 
 	/* Already up-to-date? */
 	if (CMPSADDR(iph2->src, ma->local) == 0 &&
@@ -2977,57 +3033,6 @@ migrate_sp_ike_addresses(sp, local, remote)
 		     "remote hint for SP.\n");
 		return -1;
 	}
-
-	return 0;
-}
-
-/*
- * Update local and remote addresses of given Phase 1.
- *
- * -1 is returned on error. 0 if everything went right.
- * Note: we do need to maintain port information here. --arno
- */
-static int
-migrate_ph1_ike_addresses(iph1, arg)
-        struct ph1handle *iph1;
-        void *arg;
-{
-	struct migrate_args *ma = (struct migrate_args *) arg;
-	u_int16_t port;
-
-	if (iph1->local != NULL) {
-		plog(LLV_DEBUG, LOCATION, NULL, "Migrating Phase 1 local "
-		     "address from %s to %s\n", saddr2str(iph1->local),
-		     saddr2str(ma->local));
-		port = extract_port(iph1->local);
-		racoon_free(iph1->local);
-	} else
-		port = 0;
-
-	iph1->local = dupsaddr(ma->local);
-	if (iph1->local == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, "unable to allocate "
-		     "Phase 1 local address.\n");
-		return -1;
-	}
-	set_port(iph1->local, port);
-
-	if (iph1->remote != NULL) {
-		plog(LLV_DEBUG, LOCATION, NULL, "Migrating Phase 1 remote "
-		     "address from %s to %s\n", saddr2str(iph1->remote),
-		     saddr2str(ma->remote));
-		port = extract_port(iph1->remote);
-		racoon_free(iph1->remote);
-	} else
-		port = 0;
-
-	iph1->remote = dupsaddr(ma->remote);
-	if (iph1->remote == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, "unable to allocate "
-		     "Phase 1 remote address.\n");
-		return -1;
-	}
-	set_port(iph1->remote, port);
 
 	return 0;
 }
@@ -3397,21 +3402,31 @@ pk_recvmigrate(mhp)
 	ph1sel.local = old_local;
 	ph1sel.remote = old_remote;
 
-	/* have matching Phase 1 founds and addresses updated */
-	if (enumph1(&ph1sel, migrate_ph1_ike_addresses, &ma) < 0) {
+
+	/* Have matching Phase 1 found and addresses updated. As this is a
+	 * time consuming task on a busy responder, and MIGRATE messages
+	 * are always sent for *both* inbound and outbound (and possibly
+	 * forward), we only do that for outbound SP. */
+	if (xpl->sadb_x_policy_dir == IPSEC_DIR_OUTBOUND &&
+	    enumph1(&ph1sel, migrate_ph1_ike_addresses, &ma) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: Unable "
 		     "to migrate Phase 1 addresses.\n");
 		return -1;
 	}
 
-	/* We can now update IKE addresses in Phase 1 handle, Phase 2
-	 * handles and _then_ in SP. */
+	/* We can now update IKE addresses in Phase 2 handle. */
 	memset(&ph2sel, 0, sizeof(ph2sel));
 	ph2sel.spid = sp->id;
-	if ((enumph2(&ph2sel, migrate_ph2_ike_addresses, &ma) < 0) ||
-	    (migrate_sp_ike_addresses(sp, local, remote) < 0)) {
+	if (enumph2(&ph2sel, migrate_ph2_ike_addresses, &ma) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: Unable "
+		     "to migrate Phase 2 IKE addresses.\n");
+		return -1;
+	}
+
+	/* and _then_ in SP. */
+	if (migrate_sp_ike_addresses(sp, local, remote) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-		     "SADB_X_MIGRATE: Unable to migrate IKE addresses.\n");
+		     "SADB_X_MIGRATE: Unable to migrate SP IKE addresses.\n");
 		return -1;
 	}
 
