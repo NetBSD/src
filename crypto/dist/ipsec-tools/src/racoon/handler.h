@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.17 2008/12/05 06:02:20 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.18 2009/01/23 08:06:56 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -134,6 +134,7 @@ struct ph1handle {
 	u_int8_t flags;			/* Flags */
 	u_int32_t msgid;		/* message id */
 
+	u_int32_t vendorid_mask;	/* bitmask of received supported vendor ids*/
 #ifdef ENABLE_NATT
 	struct ph1natt_options *natt_options;	/* Selected NAT-T IKE version */
 	u_int32_t natt_flags;		/* NAT-T related flags */
