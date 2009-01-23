@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.49 2009/01/04 20:30:21 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.50 2009/01/23 13:14:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.49 2009/01/04 20:30:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.50 2009/01/23 13:14:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -76,6 +76,8 @@ struct uvm uvm;
 
 struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
+static struct vm_map_kernel kmem_map_store;
+struct vm_map *kmem_map = &kmem_map_store.vmk_map;
 const struct rb_tree_ops uvm_page_tree_ops;
 
 static struct vm_map_kernel kernel_map_store;
@@ -244,6 +246,8 @@ uao_detach(struct uvm_object *uobj)
  * Misc routines
  */
 
+static kmutex_t cachepgmtx;
+
 void
 rumpvm_init()
 {
@@ -254,8 +258,12 @@ rumpvm_init()
 
 	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
+	mutex_init(&cachepgmtx, MUTEX_DEFAULT, 0);
 
+	kernel_map->pmap = pmap_kernel();
 	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
+	kmem_map->pmap = pmap_kernel();
+	callback_head_init(&kmem_map_store.vmk_reclaim_callback, IPL_VM);
 }
 
 void
@@ -435,7 +443,7 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
  * Kmem
  */
 
-#ifndef RUMP_USE_REAL_KMEM
+#ifndef RUMP_USE_REAL_ALLOCATORS
 void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {
@@ -461,7 +469,7 @@ kmem_free(void *p, size_t size)
 
 	rumpuser_free(p);
 }
-#endif /* RUMP_USE_REAL_KMEM */
+#endif /* RUMP_USE_REAL_ALLOCATORS */
 
 /*
  * UVM km
@@ -471,9 +479,23 @@ vaddr_t
 uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 {
 	void *rv;
+	int alignbit, error;
 
-	rv = rumpuser_malloc(size, flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT));
-	if (rv && flags & UVM_KMF_ZERO)
+	alignbit = 0;
+	if (align) {
+		if (size <= PAGE_SIZE)
+		alignbit = ffs(align)-1;
+	}
+
+	rv = rumpuser_anonmmap(size, alignbit, flags & UVM_KMF_EXEC, &error);
+	if (rv == NULL) {
+		if (flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT))
+			return 0;
+		else
+			panic("uvm_km_alloc failed");
+	}
+
+	if (flags & UVM_KMF_ZERO)
 		memset(rv, 0, size);
 
 	return (vaddr_t)rv;
@@ -483,7 +505,7 @@ void
 uvm_km_free(struct vm_map *map, vaddr_t vaddr, vsize_t size, uvm_flag_t flags)
 {
 
-	rumpuser_free((void *)vaddr);
+	rumpuser_unmap((void *)vaddr, size);
 }
 
 struct vm_map *
@@ -505,5 +527,25 @@ void
 uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 
-	rumpuser_free((void *)addr);
+	rumpuser_unmap((void *)addr, PAGE_SIZE);
+}
+
+vaddr_t
+uvm_km_alloc_poolpage_cache(struct vm_map *map, bool waitok)
+{
+	void *rv;
+	int error;
+
+	rv = rumpuser_anonmmap(PAGE_SIZE, PAGE_SHIFT, 0, &error);
+	if (rv == NULL && waitok)
+		panic("fixme: poolpage alloc failed");
+
+	return (vaddr_t)rv;
+}
+
+void
+uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
+{
+
+	rumpuser_unmap((void *)vaddr, PAGE_SIZE);
 }
