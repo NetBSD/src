@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.5 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: schedule.c,v 1.6 2009/01/23 08:25:07 tteras Exp $	*/
 
 /*	$KAME: schedule.c,v 1.19 2001/11/05 10:53:19 sakane Exp $	*/
 
@@ -41,6 +41,7 @@
 #include <sys/socket.h>
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -52,24 +53,46 @@
 #include "var.h"
 #include "gcmalloc.h"
 
-#define FIXY2038PROBLEM
-
 #ifndef TAILQ_FOREACH
 #define TAILQ_FOREACH(elm, head, field) \
         for (elm = TAILQ_FIRST(head); elm; elm = TAILQ_NEXT(elm, field))
 #endif
 
-static struct timeval timeout;
-
-#ifdef FIXY2038PROBLEM
-#define Y2038TIME_T	0x7fffffff
-static time_t launched;		/* time when the program launched. */
-static time_t deltaY2038;
-#endif
-
 static TAILQ_HEAD(_schedtree, sched) sctree;
 
-static time_t current_time __P((void));
+void
+sched_get_monotonic_time(tv)
+	struct timeval *tv;
+{
+#ifdef HAVE_CLOCK_MONOTONIC
+	struct timespec ts;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	tv->tv_sec = ts.tv_sec;
+	tv->tv_usec = ts.tv_nsec / 1000;
+#else
+	gettimeofday(tv, NULL);
+#endif
+}
+
+time_t
+sched_monotonic_to_time_t(tv, now)
+	struct timeval *tv, *now;
+{
+#ifdef HAVE_CLOCK_MONOTONIC
+	struct timeval mynow, res;
+
+	if (now == NULL) {
+		sched_get_monotonic_time(&mynow);
+		now = &mynow;
+	}
+	timersub(now, tv, &res);
+
+	return time(NULL) + res.tv_sec;
+#else
+	return tv->tv_sec;
+#endif
+}
 
 /*
  * schedule handler
@@ -80,11 +103,13 @@ static time_t current_time __P((void));
 struct timeval *
 schedular()
 {
-	time_t now, delta;
+	static struct timeval timeout;
+	struct timeval now;
 	struct sched *p;
 
-	now = current_time();
-	while (!TAILQ_EMPTY(&sctree) && TAILQ_FIRST(&sctree)->xtime <= now) {
+	sched_get_monotonic_time(&now);
+	while (!TAILQ_EMPTY(&sctree) &&
+		timercmp(&TAILQ_FIRST(&sctree)->xtime, &now, <=)) {
 		void (*func)(struct sched *);
 
 		p = TAILQ_FIRST(&sctree);
@@ -97,10 +122,8 @@ schedular()
 	if (p == NULL)
 		return NULL;
 
-	now = current_time();
-	delta = p->xtime - now;
-	timeout.tv_sec = delta < 0 ? 0 : delta;
-	timeout.tv_usec = 0;
+	sched_get_monotonic_time(&now);
+	timersub(&p->xtime, &now, &timeout);
 
 	return &timeout;
 }
@@ -116,17 +139,20 @@ sched_schedule(sc, tick, func)
 {
 	static long id = 1;
 	struct sched *p;
+	struct timeval now;
 
 	sched_cancel(sc);
+
 	sc->func = func;
 	sc->id = id++;
-	time(&sc->created);
-	sc->tick = tick;
-	sc->xtime = current_time() + tick;
+	sc->tick.tv_sec = tick;
+	sc->tick.tv_usec = 0;
+	sched_get_monotonic_time(&now);
+	timeradd(&now, &sc->tick, &sc->xtime);
 
 	/* add to schedule table */
 	TAILQ_FOREACH(p, &sctree, chain) {
-		if (sc->xtime < p->xtime)
+		if (timercmp(&sc->xtime, &p->xtime, <))
 			break;
 	}
 	if (p == NULL)
@@ -148,29 +174,6 @@ sched_cancel(sc)
 	}
 }
 
-
-/* get current time.
- * if defined FIXY2038PROBLEM, base time is the time when called sched_init().
- * Otherwise, conform to time(3).
- */
-static time_t
-current_time()
-{
-	time_t n;
-#ifdef FIXY2038PROBLEM
-	time_t t;
-
-	time(&n);
-	t = n - launched;
-	if (t < 0)
-		t += deltaY2038;
-
-	return t;
-#else
-	return time(&n);
-#endif
-}
-
 /*
  * for debug
  */
@@ -182,6 +185,7 @@ sched_dump(buf, len)
 	caddr_t new;
 	struct sched *p;
 	struct scheddump *dst;
+	struct timeval now, created;
 	int cnt = 0;
 
 	/* initialize */
@@ -202,12 +206,14 @@ sched_dump(buf, len)
 		return -1;
 	dst = (struct scheddump *)new;
 
-        p = TAILQ_FIRST(&sctree);
+	sched_get_monotonic_time(&now);
+	p = TAILQ_FIRST(&sctree);
 	while (p) {
-		dst->xtime = p->xtime;
+		timersub(&p->xtime, &p->tick, &created);
+		dst->xtime = p->xtime.tv_sec;
 		dst->id = p->id;
-		dst->created = p->created;
-		dst->tick = p->tick;
+		dst->created = sched_monotonic_to_time_t(&created, &now);
+		dst->tick = p->tick.tv_sec;
 
 		p = TAILQ_NEXT(p, chain);
 		if (p == NULL)
@@ -224,12 +230,6 @@ sched_dump(buf, len)
 void
 sched_init()
 {
-#ifdef FIXY2038PROBLEM
-	time(&launched);
-
-	deltaY2038 = Y2038TIME_T - launched;
-#endif
-
 	TAILQ_INIT(&sctree);
 }
 
