@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.18 2009/01/23 08:23:51 tteras Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.19 2009/01/23 08:25:06 tteras Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -312,7 +312,7 @@ xauth_attr_reply(iph1, attr, id)
 		 * On failure, throttle the connexion for the remote host
 		 * in order to make password attacks more difficult.
 		 */
-		throttle_delay = throttle_host(iph1->remote, res) - time(NULL);
+		throttle_delay = throttle_host(iph1->remote, res);
 		if (throttle_delay > 0) {
 			char *str;
 

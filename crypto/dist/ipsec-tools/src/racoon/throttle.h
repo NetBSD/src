@@ -1,4 +1,4 @@
-/*	$NetBSD: throttle.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: throttle.h,v 1.5 2009/01/23 08:25:07 tteras Exp $	*/
 
 /* Id: throttle.h,v 1.1 2004/11/30 00:46:09 manubsd Exp */
 
@@ -34,8 +34,10 @@
 #ifndef _THROTTLE_H
 #define _THROTTLE_H
 
+#include "schedule.h"
+
 struct throttle_entry {
-	int penalty;
+	struct timeval penalty_ends;
 	TAILQ_ENTRY(throttle_entry) next;
 	struct sockaddr_storage host;
 };

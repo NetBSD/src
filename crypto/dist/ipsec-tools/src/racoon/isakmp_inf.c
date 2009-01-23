@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.35 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.36 2009/01/23 08:25:06 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1556,10 +1556,6 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
 	}
 
 	iph1->dpd_fails = 0;
-
-	/* Useless ??? */
-	iph1->dpd_lastack = time(NULL);
-
 	sched_cancel(&iph1->dpd_r_u);
 	isakmp_sched_r_u(iph1, 0);
 

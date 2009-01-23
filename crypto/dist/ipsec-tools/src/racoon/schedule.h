@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.h,v 1.6 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: schedule.h,v 1.7 2009/01/23 08:25:07 tteras Exp $	*/
 
 /* Id: schedule.h,v 1.5 2006/05/03 21:53:42 vanhu Exp */
 
@@ -36,6 +36,16 @@
 #define _SCHEDULE_H
 
 #include <sys/queue.h>
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
 #include "gnuc.h"
 
 #ifndef offsetof
@@ -56,21 +66,14 @@
 /* scheduling table */
 /* the head is the nearest event. */
 struct sched {
-	time_t xtime;		/* event time which is as time(3). */
-				/*
-				 * if defined FIXY2038PROBLEM, this time
-				 * is from the time when called sched_init().
-				 */
-	void (*func) __P((struct sched *)); /* call this function when timeout. */
-
-	long id;		/* for debug */
-	time_t created;		/* for debug */
-	time_t tick;		/* for debug */
-
+	void (*func) __P((struct sched *));	/* callback on timeout */
+	struct timeval xtime;			/* expiration time */
+	struct timeval tick;			/* relative timeout */
 	TAILQ_ENTRY(sched) chain;
+	long id;				/* for debug */
 };
 
-#define SCHED_INITIALIZER() { 0, NULL, }
+#define SCHED_INITIALIZER() { NULL, }
 
 struct scheddump {
 	time_t xtime;
@@ -78,6 +81,10 @@ struct scheddump {
 	time_t created;
 	time_t tick;
 };
+
+time_t sched_monotonic_to_time_t __P((struct timeval *tv,
+				      struct timeval *now));
+void sched_get_monotonic_time __P((struct timeval *tv));
 
 struct timeval *schedular __P((void));
 void sched_schedule __P((struct sched *, time_t,

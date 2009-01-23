@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.18 2009/01/23 08:06:56 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.19 2009/01/23 08:25:06 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -202,7 +202,6 @@ struct ph1handle {
 
 #ifdef ENABLE_DPD
 	int		dpd_support;	/* Does remote supports DPD ? */
-	time_t		dpd_lastack;	/* Last ack received */
 	u_int16_t	dpd_seq;		/* DPD seq number to receive */
 	u_int8_t	dpd_fails;		/* number of failures */
 	struct sched	dpd_r_u;
@@ -379,8 +378,7 @@ struct recvdpkt {
 	vchar_t *hash;			/* hash of the received packet */
 	vchar_t *sendbuf;		/* buffer for the response */
 	int retry_counter;		/* how many times to send */
-	time_t time_send;		/* timestamp to send a packet */
-	time_t created;			/* timestamp to create a queue */
+	struct timeval time_send;	/* timestamp of previous send */
 
 	LIST_ENTRY(recvdpkt) chain;
 };
