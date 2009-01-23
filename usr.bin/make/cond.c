@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.53 2009/01/23 20:22:50 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.54 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.53 2009/01/23 20:22:50 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.54 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.53 2009/01/23 20:22:50 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.54 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -142,7 +142,7 @@ typedef enum {
 static void CondPushBack(Token);
 static int CondGetArg(char **, char **, const char *, Boolean);
 static Boolean CondDoDefined(int, char *);
-static int CondStrMatch(ClientData, ClientData);
+static int CondStrMatch(void *, void *);
 static Boolean CondDoMake(int, char *);
 static Boolean CondDoExists(int, char *);
 static Boolean CondDoTarget(int, char *);
@@ -350,9 +350,9 @@ CondDoDefined(int argLen, char *arg)
  *-----------------------------------------------------------------------
  */
 static int
-CondStrMatch(ClientData string, ClientData pattern)
+CondStrMatch(void *string, void *pattern)
 {
-    return(!Str_Match((char *)string,(char *)pattern));
+    return(!Str_Match(string, pattern));
 }
 
 /*-

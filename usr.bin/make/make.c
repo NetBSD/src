@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.77 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.78 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.77 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.78 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.77 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.78 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -127,17 +127,17 @@ static Lst     	toBeMade;	/* The current fringe of the graph. These
 				 * Make_Update and subtracted from by
 				 * MakeStartJobs */
 
-static int MakeAddChild(ClientData, ClientData);
-static int MakeFindChild(ClientData, ClientData);
-static int MakeUnmark(ClientData, ClientData);
-static int MakeAddAllSrc(ClientData, ClientData);
-static int MakeTimeStamp(ClientData, ClientData);
-static int MakeHandleUse(ClientData, ClientData);
+static int MakeAddChild(void *, void *);
+static int MakeFindChild(void *, void *);
+static int MakeUnmark(void *, void *);
+static int MakeAddAllSrc(void *, void *);
+static int MakeTimeStamp(void *, void *);
+static int MakeHandleUse(void *, void *);
 static Boolean MakeStartJobs(void);
-static int MakePrintStatus(ClientData, ClientData);
-static int MakeCheckOrder(ClientData, ClientData);
-static int MakeBuildChild(ClientData, ClientData);
-static int MakeBuildParent(ClientData, ClientData);
+static int MakePrintStatus(void *, void *);
+static int MakeCheckOrder(void *, void *);
+static int MakeBuildChild(void *, void *);
+static int MakeBuildParent(void *, void *);
 
 static void
 make_abort(GNode *gn, int line)
@@ -185,7 +185,7 @@ Make_TimeStamp(GNode *pgn, GNode *cgn)
  *
  */
 static int
-MakeTimeStamp(ClientData pgn, ClientData cgn)
+MakeTimeStamp(void *pgn, void *cgn)
 {
     return Make_TimeStamp((GNode *)pgn, (GNode *)cgn);
 }
@@ -362,7 +362,7 @@ Make_OODate(GNode *gn)
  *-----------------------------------------------------------------------
  */
 static int
-MakeAddChild(ClientData gnp, ClientData lp)
+MakeAddChild(void *gnp, void *lp)
 {
     GNode          *gn = (GNode *)gnp;
     Lst            l = (Lst) lp;
@@ -394,7 +394,7 @@ MakeAddChild(ClientData gnp, ClientData lp)
  *-----------------------------------------------------------------------
  */
 static int
-MakeFindChild(ClientData gnp, ClientData pgnp)
+MakeFindChild(void *gnp, void *pgnp)
 {
     GNode          *gn = (GNode *)gnp;
     GNode          *pgn = (GNode *)pgnp;
@@ -518,7 +518,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
  *-----------------------------------------------------------------------
  */
 static int
-MakeHandleUse(ClientData cgnp, ClientData pgnp)
+MakeHandleUse(void *cgnp, void *pgnp)
 {
     GNode	*cgn = (GNode *)cgnp;
     GNode	*pgn = (GNode *)pgnp;
@@ -860,7 +860,7 @@ Make_Update(GNode *cgn)
  *-----------------------------------------------------------------------
  */
 static int
-MakeUnmark(ClientData cgnp, ClientData pgnp __unused)
+MakeUnmark(void *cgnp, void *pgnp __unused)
 {
     GNode	*cgn = (GNode *)cgnp;
 
@@ -876,7 +876,7 @@ MakeUnmark(ClientData cgnp, ClientData pgnp __unused)
  *
  */
 static int
-MakeAddAllSrc(ClientData cgnp, ClientData pgnp)
+MakeAddAllSrc(void *cgnp, void *pgnp)
 {
     GNode	*cgn = (GNode *)cgnp;
     GNode	*pgn = (GNode *)pgnp;
@@ -994,7 +994,7 @@ Make_DoAllVar(GNode *gn)
  */
 
 static int
-MakeCheckOrder(ClientData v_bn, ClientData ignore __unused)
+MakeCheckOrder(void *v_bn, void *ignore __unused)
 {
     GNode *bn = v_bn;
 
@@ -1007,7 +1007,7 @@ MakeCheckOrder(ClientData v_bn, ClientData ignore __unused)
 }
 
 static int
-MakeBuildChild(ClientData v_cn, ClientData toBeMade_next)
+MakeBuildChild(void *v_cn, void *toBeMade_next)
 {
     GNode *cn = v_cn;
 
@@ -1046,7 +1046,7 @@ MakeBuildChild(ClientData v_cn, ClientData toBeMade_next)
 
 /* When a .ORDER RHS node completes we do this on each LHS */
 static int
-MakeBuildParent(ClientData v_pn, ClientData toBeMade_next)
+MakeBuildParent(void *v_pn, void *toBeMade_next)
 {
     GNode *pn = v_pn;
 
@@ -1165,7 +1165,7 @@ MakeStartJobs(void)
  *-----------------------------------------------------------------------
  */
 static int
-MakePrintStatusOrder(ClientData ognp, ClientData gnp)
+MakePrintStatusOrder(void *ognp, void *gnp)
 {
     GNode *ogn = ognp;
     GNode *gn = gnp;
@@ -1187,7 +1187,7 @@ MakePrintStatusOrder(ClientData ognp, ClientData gnp)
 }
 
 static int
-MakePrintStatus(ClientData gnp, ClientData v_errors)
+MakePrintStatus(void *gnp, void *v_errors)
 {
     GNode   	*gn = (GNode *)gnp;
     int 	*errors = v_errors;
@@ -1359,7 +1359,7 @@ Make_ExpandUse(Lst targs)
  */
 
 static int
-link_parent(ClientData cnp, ClientData pnp)
+link_parent(void *cnp, void *pnp)
 {
     GNode *cn = cnp;
     GNode *pn = pnp;

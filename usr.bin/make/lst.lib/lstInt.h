@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.17 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.18 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -51,7 +51,7 @@ typedef struct ListNode {
 				     * node may not be deleted until count
 				     * goes to 0 */
  	    	    	flags:8;    /* Node status flags */
-	ClientData	datum;	    /* datum associated with this element */
+	void		*datum;	    /* datum associated with this element */
 } *ListNode;
 /*
  * Flags required for synchronization

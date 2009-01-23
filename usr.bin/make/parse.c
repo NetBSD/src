@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.156 2009/01/16 20:50:24 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.157 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.156 2009/01/16 20:50:24 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.157 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.156 2009/01/16 20:50:24 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.157 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -288,15 +288,15 @@ static void ParseErrorInternal(const char *, size_t, int, const char *, ...)
 static void ParseVErrorInternal(FILE *, const char *, size_t, int, const char *, va_list)
      __attribute__((__format__(__printf__, 5, 0)));
 static int ParseFindKeyword(const char *);
-static int ParseLinkSrc(ClientData, ClientData);
-static int ParseDoOp(ClientData, ClientData);
+static int ParseLinkSrc(void *, void *);
+static int ParseDoOp(void *, void *);
 static void ParseDoSrc(int, const char *);
-static int ParseFindMain(ClientData, ClientData);
-static int ParseAddDir(ClientData, ClientData);
-static int ParseClearPath(ClientData, ClientData);
+static int ParseFindMain(void *, void *);
+static int ParseAddDir(void *, void *);
+static int ParseClearPath(void *, void *);
 static void ParseDoDependency(char *);
-static int ParseAddCmd(ClientData, ClientData);
-static void ParseHasCommands(ClientData);
+static int ParseAddCmd(void *, void *);
+static void ParseHasCommands(void *);
 static void ParseDoInclude(char *);
 static void ParseSetParseFile(const char *);
 #ifdef SYSVINCLUDE
@@ -518,7 +518,7 @@ Parse_Error(int type, const char *fmt, ...)
  *---------------------------------------------------------------------
  */
 static int
-ParseLinkSrc(ClientData pgnp, ClientData cgnp)
+ParseLinkSrc(void *pgnp, void *cgnp)
 {
     GNode          *pgn = (GNode *)pgnp;
     GNode          *cgn = (GNode *)cgnp;
@@ -558,7 +558,7 @@ ParseLinkSrc(ClientData pgnp, ClientData cgnp)
  *---------------------------------------------------------------------
  */
 static int
-ParseDoOp(ClientData gnp, ClientData opp)
+ParseDoOp(void *gnp, void *opp)
 {
     GNode          *gn = (GNode *)gnp;
     int             op = *(int *)opp;
@@ -754,7 +754,7 @@ ParseDoSrc(int tOp, const char *src)
  *-----------------------------------------------------------------------
  */
 static int
-ParseFindMain(ClientData gnp, ClientData dummy)
+ParseFindMain(void *gnp, void *dummy)
 {
     GNode   	  *gn = (GNode *)gnp;
     if ((gn->type & OP_NOTARGET) == 0) {
@@ -780,7 +780,7 @@ ParseFindMain(ClientData gnp, ClientData dummy)
  *-----------------------------------------------------------------------
  */
 static int
-ParseAddDir(ClientData path, ClientData name)
+ParseAddDir(void *path, void *name)
 {
     (void)Dir_AddDir((Lst) path, (char *)name);
     return(0);
@@ -800,7 +800,7 @@ ParseAddDir(ClientData path, ClientData name)
  *-----------------------------------------------------------------------
  */
 static int
-ParseClearPath(ClientData path, ClientData dummy)
+ParseClearPath(void *path, void *dummy)
 {
     Dir_ClearPath((Lst) path);
     return(dummy ? 0 : 0);
@@ -1625,7 +1625,7 @@ Parse_DoVar(char *line, GNode *ctxt)
  *	A new element is added to the commands list of the node.
  */
 static int
-ParseAddCmd(ClientData gnp, ClientData cmd)
+ParseAddCmd(void *gnp, void *cmd)
 {
     GNode *gn = (GNode *)gnp;
 
@@ -1677,7 +1677,7 @@ ParseAddCmd(ClientData gnp, ClientData cmd)
  *-----------------------------------------------------------------------
  */
 static void
-ParseHasCommands(ClientData gnp)
+ParseHasCommands(void *gnp)
 {
     GNode *gn = (GNode *)gnp;
     if (!Lst_IsEmpty(gn->commands)) {

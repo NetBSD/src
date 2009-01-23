@@ -1,4 +1,4 @@
-/*	$NetBSD: sprite.h,v 1.10 2008/12/20 17:42:01 dsl Exp $	*/
+/*	$NetBSD: sprite.h,v 1.11 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -112,15 +112,5 @@ typedef int  ReturnStatus;
 
 #define	SUCCESS			0x00000000
 #define	FAILURE			0x00000001
-
-
-/*
- * ClientData is an uninterpreted word.  It is defined as an int so that
- * kdbx will not interpret client data as a string. The
- * client data will generally not be used in arithmetic.
- * But we don't have kdbx anymore so we define it as void (christos)
- */
-
-typedef void *ClientData;
 
 #endif /* _SPRITE */
