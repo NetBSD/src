@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.163 2009/01/17 13:29:37 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.164 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.163 2009/01/17 13:29:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.164 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.163 2009/01/17 13:29:37 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.164 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -177,7 +177,7 @@ static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
 static char *		Check_Cwd_av(int, char **, int);
 static void		MainParseArgs(int, char **);
-static int		ReadMakefile(ClientData, ClientData);
+static int		ReadMakefile(void *, void *);
 static void		usage(void);
 
 static char curdir[MAXPATHLEN + 1];	/* startup directory */
@@ -661,7 +661,7 @@ Main_SetObjdir(const char *path)
  *	TRUE if ok, FALSE on error
  */
 static int
-ReadAllMakefiles(ClientData p, ClientData q)
+ReadAllMakefiles(void *p, void *q)
 {
 	return (ReadMakefile(p, q) == 0);
 }
@@ -1168,7 +1168,7 @@ main(int argc, char **argv)
  *	lots
  */
 static int
-ReadMakefile(ClientData p, ClientData q __unused)
+ReadMakefile(void *p, void *q __unused)
 {
 	char *fname = p;		/* makefile to read */
 	int fd;
@@ -1840,7 +1840,7 @@ usage(void)
 
 
 int
-PrintAddr(ClientData a, ClientData b)
+PrintAddr(void *a, void *b)
 {
     printf("%lx ", (unsigned long) a);
     return b ? 0 : 0;

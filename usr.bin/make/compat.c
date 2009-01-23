@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.74 2009/01/16 21:14:30 dsl Exp $	*/
+/*	$NetBSD: compat.c,v 1.75 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.74 2009/01/16 21:14:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.75 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.74 2009/01/16 21:14:30 dsl Exp $");
+__RCSID("$NetBSD: compat.c,v 1.75 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -202,7 +202,7 @@ CompatInterrupt(int signo)
  *-----------------------------------------------------------------------
  */
 int
-CompatRunCommand(ClientData cmdp, ClientData gnp)
+CompatRunCommand(void *cmdp, void *gnp)
 {
     char    	  *cmdStart;	/* Start of expanded command */
     char 	  *cp, *bp;
@@ -463,7 +463,7 @@ again:
  *-----------------------------------------------------------------------
  */
 int
-Compat_Make(ClientData gnp, ClientData pgnp)
+Compat_Make(void *gnp, void *pgnp)
 {
     GNode *gn = (GNode *)gnp;
     GNode *pgn = (GNode *)pgnp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.147 2009/01/18 01:31:12 lukem Exp $	*/
+/*	$NetBSD: var.c,v 1.148 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.147 2009/01/18 01:31:12 lukem Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.148 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.147 2009/01/18 01:31:12 lukem Exp $");
+__RCSID("$NetBSD: var.c,v 1.148 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -232,7 +232,7 @@ typedef struct {
 				 * several space-separated words). */
 } Var_Parse_State;
 
-/* struct passed as ClientData to VarSubstitute() for ":S/lhs/rhs/",
+/* struct passed as 'void *' to VarSubstitute() for ":S/lhs/rhs/",
  * to VarSYSVMatch() for ":lhs=rhs". */
 typedef struct {
     const char   *lhs;	    /* String to match */
@@ -242,7 +242,7 @@ typedef struct {
     int		  flags;
 } VarPattern;
 
-/* struct passed as ClientData to VarLoopExpand() for ":@tvar@str@" */
+/* struct passed as 'void *' to VarLoopExpand() for ":@tvar@str@" */
 typedef struct {
     GNode	*ctxt;		/* variable context */
     char	*tvar;		/* name of temp var */
@@ -253,7 +253,7 @@ typedef struct {
 } VarLoop_t;
 
 #ifndef NO_REGEX
-/* struct passed as ClientData to VarRESubstitute() for ":C///" */
+/* struct passed as 'void *' to VarRESubstitute() for ":C///" */
 typedef struct {
     regex_t	   re;
     int		   nsub;
@@ -272,30 +272,30 @@ typedef struct {
 static Var *VarFind(const char *, GNode *, int);
 static void VarAdd(const char *, const char *, GNode *);
 static Boolean VarHead(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 static Boolean VarTail(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 static Boolean VarSuffix(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 static Boolean VarRoot(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 static Boolean VarMatch(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 #ifdef SYSVVARSUB
 static Boolean VarSYSVMatch(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 #endif
 static Boolean VarNoMatch(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 #ifndef NO_REGEX
 static void VarREError(int, regex_t *, const char *);
 static Boolean VarRESubstitute(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 #endif
 static Boolean VarSubstitute(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 static Boolean VarLoopExpand(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, ClientData);
+			char *, Boolean, Buffer *, void *);
 static char *VarGetPattern(GNode *, Var_Parse_State *,
 			   int, const char **, int, int *, int *,
 			   VarPattern *);
@@ -303,12 +303,12 @@ static char *VarQuote(char *);
 static char *VarChangeCase(char *, int);
 static char *VarModify(GNode *, Var_Parse_State *,
     const char *,
-    Boolean (*)(GNode *, Var_Parse_State *, char *, Boolean, Buffer *, ClientData),
-    ClientData);
+    Boolean (*)(GNode *, Var_Parse_State *, char *, Boolean, Buffer *, void *),
+    void *);
 static char *VarOrder(const char *, const char);
 static char *VarUniq(const char *);
 static int VarWordCompare(const void *, const void *);
-static void VarPrintVar(ClientData);
+static void VarPrintVar(void *);
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -984,7 +984,7 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
 static Boolean
 VarHead(GNode *ctx __unused, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
-	ClientData dummy)
+	void *dummy)
 {
     char *slash;
 
@@ -1032,7 +1032,7 @@ VarHead(GNode *ctx __unused, Var_Parse_State *vpstate,
 static Boolean
 VarTail(GNode *ctx __unused, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
-	ClientData dummy)
+	void *dummy)
 {
     char *slash;
 
@@ -1074,7 +1074,7 @@ VarTail(GNode *ctx __unused, Var_Parse_State *vpstate,
 static Boolean
 VarSuffix(GNode *ctx __unused, Var_Parse_State *vpstate,
 	  char *word, Boolean addSpace, Buffer *buf,
-	  ClientData dummy)
+	  void *dummy)
 {
     char *dot;
 
@@ -1115,7 +1115,7 @@ VarSuffix(GNode *ctx __unused, Var_Parse_State *vpstate,
 static Boolean
 VarRoot(GNode *ctx __unused, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
-	ClientData dummy)
+	void *dummy)
 {
     char *dot;
 
@@ -1159,7 +1159,7 @@ VarRoot(GNode *ctx __unused, Var_Parse_State *vpstate,
 static Boolean
 VarMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 	 char *word, Boolean addSpace, Buffer *buf,
-	 ClientData pattern)
+	 void *pattern)
 {
     if (DEBUG(VAR))
 	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, (char *)pattern);
@@ -1200,7 +1200,7 @@ VarMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 static Boolean
 VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
 	     char *word, Boolean addSpace, Buffer *buf,
-	     ClientData patp)
+	     void *patp)
 {
     int len;
     char *ptr;
@@ -1250,7 +1250,7 @@ VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
 static Boolean
 VarNoMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 	   char *word, Boolean addSpace, Buffer *buf,
-	   ClientData pattern)
+	   void *pattern)
 {
     if (!Str_Match(word, (char *)pattern)) {
 	if (addSpace && vpstate->varSpace) {
@@ -1287,7 +1287,7 @@ VarNoMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 static Boolean
 VarSubstitute(GNode *ctx __unused, Var_Parse_State *vpstate,
 	      char *word, Boolean addSpace, Buffer *buf,
-	      ClientData patternp)
+	      void *patternp)
 {
     int  	wordLen;    /* Length of word */
     char 	*cp;	    /* General pointer */
@@ -1483,7 +1483,7 @@ VarREError(int errnum, regex_t *pat, const char *str)
 static Boolean
 VarRESubstitute(GNode *ctx __unused, Var_Parse_State *vpstate __unused,
 		char *word, Boolean addSpace, Buffer *buf,
-		ClientData patternp)
+		void *patternp)
 {
     VarREPattern *pat;
     int xrv;
@@ -1623,7 +1623,7 @@ VarRESubstitute(GNode *ctx __unused, Var_Parse_State *vpstate __unused,
 static Boolean
 VarLoopExpand(GNode *ctx __unused, Var_Parse_State *vpstate __unused,
 	      char *word, Boolean addSpace, Buffer *buf,
-	      ClientData loopp)
+	      void *loopp)
 {
     VarLoop_t	*loop = (VarLoop_t *)loopp;
     char *s;
@@ -1755,8 +1755,8 @@ static char *
 VarModify(GNode *ctx, Var_Parse_State *vpstate,
     const char *str,
     Boolean (*modProc)(GNode *, Var_Parse_State *, char *,
-		       Boolean, Buffer *, ClientData),
-    ClientData datum)
+		       Boolean, Buffer *, void *),
+    void *datum)
 {
     Buffer  	  buf;		    /* Buffer for the new string */
     Boolean 	  addSpace; 	    /* TRUE if need to add a space to the
@@ -3825,7 +3825,7 @@ Var_End(void)
 
 /****************** PRINT DEBUGGING INFO *****************/
 static void
-VarPrintVar(ClientData vp)
+VarPrintVar(void *vp)
 {
     Var    *v = (Var *)vp;
     fprintf(debug_file, "%-16s = %s\n", v->name, Buf_GetAll(&v->val, NULL));

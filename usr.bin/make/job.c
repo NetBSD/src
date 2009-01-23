@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.143 2008/12/19 22:03:41 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.144 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.143 2008/12/19 22:03:41 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.144 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.143 2008/12/19 22:03:41 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.144 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -345,8 +345,8 @@ static sigset_t caught_signals;	/* Set of signals we handle */
 static void JobChildSig(int);
 static void JobContinueSig(int);
 static Job *JobFindPid(int, int);
-static int JobPrintCommand(ClientData, ClientData);
-static int JobSaveCommand(ClientData, ClientData);
+static int JobPrintCommand(void *, void *);
+static int JobSaveCommand(void *, void *);
 static void JobClose(Job *);
 static void JobExec(Job *, char **);
 static void JobMakeArgv(Job *, char **);
@@ -661,7 +661,7 @@ JobFindPid(int pid, int status)
  *-----------------------------------------------------------------------
  */
 static int
-JobPrintCommand(ClientData cmdp, ClientData jobp)
+JobPrintCommand(void *cmdp, void *jobp)
 {
     Boolean	  noSpecials;	    /* true if we shouldn't worry about
 				     * inserting special commands into
@@ -894,7 +894,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
  *-----------------------------------------------------------------------
  */
 static int
-JobSaveCommand(ClientData cmd, ClientData gn)
+JobSaveCommand(void *cmd, void *gn)
 {
     cmd = Var_Subst(NULL, (char *)cmd, (GNode *)gn, FALSE);
     (void)Lst_AtEnd(postCommands->commands, cmd);

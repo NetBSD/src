@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.13 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.14 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -102,7 +102,7 @@ void Dir_ClearPath(Lst);
 void Dir_Concat(Lst, Lst);
 void Dir_PrintDirectories(void);
 void Dir_PrintPath(Lst);
-void Dir_Destroy(ClientData);
-ClientData Dir_CopyDir(ClientData);
+void Dir_Destroy(void *);
+void * Dir_CopyDir(void *);
 
 #endif /* _DIR */

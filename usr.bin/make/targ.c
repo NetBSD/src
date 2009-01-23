@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.54 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: targ.c,v 1.55 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.54 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.55 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.54 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: targ.c,v 1.55 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -144,13 +144,13 @@ static Hash_Table targets;	/* a hash table of same */
 
 #define HTSIZE	191		/* initial size of hash table */
 
-static int TargPrintOnlySrc(ClientData, ClientData);
-static int TargPrintName(ClientData, ClientData);
+static int TargPrintOnlySrc(void *, void *);
+static int TargPrintName(void *, void *);
 #ifdef CLEANUP
-static void TargFreeGN(ClientData);
+static void TargFreeGN(void *);
 #endif
-static int TargPropagateCohort(ClientData, ClientData);
-static int TargPropagateNode(ClientData, ClientData);
+static int TargPropagateCohort(void *, void *);
+static int TargPropagateNode(void *, void *);
 
 /*-
  *-----------------------------------------------------------------------
@@ -285,7 +285,7 @@ Targ_NewGN(const char *name)
  *-----------------------------------------------------------------------
  */
 static void
-TargFreeGN(ClientData gnp)
+TargFreeGN(void *gnp)
 {
     GNode *gn = (GNode *)gnp;
 
@@ -511,7 +511,7 @@ Targ_SetMain(GNode *gn)
 }
 
 static int
-TargPrintName(ClientData gnp, ClientData pflags __unused)
+TargPrintName(void *gnp, void *pflags __unused)
 {
     GNode *gn = (GNode *)gnp;
 
@@ -522,7 +522,7 @@ TargPrintName(ClientData gnp, ClientData pflags __unused)
 
 
 int
-Targ_PrintCmd(ClientData cmd, ClientData dummy)
+Targ_PrintCmd(void *cmd, void *dummy)
 {
     fprintf(debug_file, "\t%s\n", (char *)cmd);
     return (dummy ? 0 : 0);
@@ -623,7 +623,7 @@ made_name(enum enum_made made)
  *-----------------------------------------------------------------------
  */
 int
-Targ_PrintNode(ClientData gnp, ClientData passp)
+Targ_PrintNode(void *gnp, void *passp)
 {
     GNode         *gn = (GNode *)gnp;
     int	    	  pass = passp ? *(int *)passp : 0;
@@ -716,7 +716,7 @@ Targ_PrintNode(ClientData gnp, ClientData passp)
  *-----------------------------------------------------------------------
  */
 static int
-TargPrintOnlySrc(ClientData gnp, ClientData dummy __unused)
+TargPrintOnlySrc(void *gnp, void *dummy __unused)
 {
     GNode   	  *gn = (GNode *)gnp;
     if (!OP_NOP(gn->type))
@@ -789,7 +789,7 @@ Targ_PrintGraph(int pass)
  *-----------------------------------------------------------------------
  */
 static int
-TargPropagateNode(ClientData gnp, ClientData junk __unused)
+TargPropagateNode(void *gnp, void *junk __unused)
 {
     GNode	  *gn = (GNode *)gnp;
 
@@ -817,7 +817,7 @@ TargPropagateNode(ClientData gnp, ClientData junk __unused)
  *-----------------------------------------------------------------------
  */
 static int
-TargPropagateCohort(ClientData cgnp, ClientData pgnp)
+TargPropagateCohort(void *cgnp, void *pgnp)
 {
     GNode	  *cgn = (GNode *)cgnp;
     GNode	  *pgn = (GNode *)pgnp;

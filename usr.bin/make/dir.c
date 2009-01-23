@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.58 2008/12/28 18:32:54 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.59 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.58 2008/12/28 18:32:54 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.59 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.58 2008/12/28 18:32:54 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.59 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -244,12 +244,12 @@ static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 			     * should be ok, but... */
 
 
-static int DirFindName(ClientData, ClientData);
+static int DirFindName(void *, void *);
 static int DirMatchFiles(const char *, Path *, Lst);
 static void DirExpandCurly(const char *, const char *, Lst, Lst);
 static void DirExpandInt(const char *, Lst, Lst);
-static int DirPrintWord(ClientData, ClientData);
-static int DirPrintDir(ClientData, ClientData);
+static int DirPrintWord(void *, void *);
+static int DirPrintDir(void *, void *);
 static char *DirLookup(Path *, const char *, const char *, Boolean);
 static char *DirLookupSubdir(Path *, const char *);
 static char *DirFindDot(Boolean, const char *, const char *);
@@ -448,7 +448,7 @@ Dir_SetPATH(void)
  *-----------------------------------------------------------------------
  */
 static int
-DirFindName(ClientData p, ClientData dname)
+DirFindName(void *p, void *dname)
 {
     return (strcmp(((Path *)p)->name, (char *)dname));
 }
@@ -724,7 +724,7 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static int
-DirPrintWord(ClientData word, ClientData dummy)
+DirPrintWord(void *word, void *dummy)
 {
     fprintf(debug_file, "%s ", (char *)word);
 
@@ -928,7 +928,7 @@ DirLookupSubdir(Path *p, const char *name)
 		    file);
 	}
 	entry = Hash_CreateEntry(&mtimes, (char *)file, NULL);
-	Hash_SetValue(entry, (long)stb.st_mtime);
+	Hash_SetValue(entry, (void *)(long)stb.st_mtime);
 	nearmisses += 1;
 	return (file);
     }
@@ -1309,7 +1309,7 @@ Dir_FindFile(const char *name, Lst path)
 	    fprintf(debug_file, "   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    name);
 	}
-	Hash_SetValue(entry, (long)stb.st_mtime);
+	Hash_SetValue(entry, (void *)(long)stb.st_mtime);
 	return (bmake_strdup(name));
     } else {
 	if (DEBUG(DIR)) {
@@ -1580,8 +1580,8 @@ Dir_AddDir(Lst path, const char *name)
  *
  *-----------------------------------------------------------------------
  */
-ClientData
-Dir_CopyDir(ClientData p)
+void *
+Dir_CopyDir(void *p)
 {
     ((Path *)p)->refCount += 1;
 
@@ -1652,7 +1652,7 @@ Dir_MakeFlags(const char *flag, Lst path)
  *-----------------------------------------------------------------------
  */
 void
-Dir_Destroy(ClientData pp)
+Dir_Destroy(void *pp)
 {
     Path    	  *p = (Path *)pp;
     p->refCount -= 1;
@@ -1753,7 +1753,7 @@ Dir_PrintDirectories(void)
 }
 
 static int
-DirPrintDir(ClientData p, ClientData dummy)
+DirPrintDir(void *p, void *dummy)
 {
     fprintf(debug_file, "%s ", ((Path *)p)->name);
     return (dummy ? 0 : 0);
