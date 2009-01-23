@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.20 2008/12/24 20:20:52 christos Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.21 2009/01/23 08:05:58 tteras Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -298,7 +298,7 @@ myaddr_init()
 		lcconf->rtsock = kernel_open_socket();
 		if (lcconf->rtsock < 0)
 			return -1;
-		monitor_fd(lcconf->rtsock, TRUE, kernel_receive, NULL);
+		monitor_fd(lcconf->rtsock, kernel_receive, NULL);
 	} else {
 		lcconf->rtsock = -1;
 		if (!myaddr_open_all_configured(NULL))

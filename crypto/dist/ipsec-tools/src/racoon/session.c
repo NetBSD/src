@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.23 2009/01/05 06:00:27 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.24 2009/01/23 08:05:58 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -110,31 +110,25 @@ static void initfds __P((void));
 static void init_signal __P((void));
 static int set_signal __P((int sig, RETSIGTYPE (*func) __P((int))));
 static void check_sigreq __P((void));
-static void check_flushsa_stub __P((struct sched *));
 static void check_flushsa __P((void));
 static int close_sockets __P((void));
 
-static fd_set mask0;
-static fd_set maskdying;
+static fd_set mask;
 static struct fd_monitor fd_monitors[FD_SETSIZE];
 static int nfds = 0;
 
 static volatile sig_atomic_t sigreq[NSIG + 1];
-static int dying = 0;
 static struct sched scflushsa = SCHED_INITIALIZER();
 
 void
-monitor_fd(int fd, int when_dying, int (*callback)(void *, int), void *ctx)
+monitor_fd(int fd, int (*callback)(void *, int), void *ctx)
 {
 	if (fd < 0 || fd >= FD_SETSIZE) {
 		plog(LLV_ERROR, LOCATION, NULL, "fd_set overrun");
 		exit(1);
 	}
 
-	FD_SET(fd, &mask0);
-	if (when_dying)
-		FD_SET(fd, &maskdying);
-
+	FD_SET(fd, &mask);
 	if (fd > nfds)
 		nfds = fd;
 
@@ -150,8 +144,7 @@ unmonitor_fd(int fd)
 		exit(1);
 	}
 
-	FD_CLR(fd, &mask0);
-	FD_CLR(fd, &maskdying);
+	FD_CLR(fd, &mask);
 	fd_monitors[fd].callback = NULL;
 	fd_monitors[fd].ctx = NULL;
 }
@@ -168,8 +161,7 @@ session(void)
 	int i;
 
 	nfds = 0;
-	FD_ZERO(&mask0);
-	FD_ZERO(&maskdying);
+	FD_ZERO(&mask);
 
 	/* initialize schedular */
 	sched_init();
@@ -280,10 +272,7 @@ session(void)
 
 		/* schedular can change select() mask, so we reset
 		 * the working copy here */
-		if (dying)
-			rfds = maskdying;
-		else
-			rfds = mask0;
+		rfds = mask;
 
 		error = select(nfds + 1, &rfds, NULL, NULL, timeout);
 		if (error < 0) {
@@ -310,9 +299,9 @@ session(void)
 static void
 close_session()
 {
-#ifdef ENABLE_FASTQUIT
+	evt_generic(EVT_RACOON_QUIT, NULL);
+	pfkey_send_flush(lcconf->sock_pfkey, SADB_SATYPE_UNSPEC);
 	flushph2();
-#endif
 	flushph1();
 	close_sockets();
 	backupsa_clean();
@@ -446,15 +435,7 @@ check_sigreq()
 		case SIGTERM:
 			plog(LLV_INFO, LOCATION, NULL, 
 			    "caught signal %d\n", sig);
-			evt_generic(EVT_RACOON_QUIT, NULL);
-			pfkey_send_flush(lcconf->sock_pfkey, 
-			    SADB_SATYPE_UNSPEC);
-#ifdef ENABLE_FASTQUIT
 			close_session();
-#else
-			sched_schedule(&scflushsa, 1, check_flushsa_stub);
-#endif
-			dying = 1;
 			break;
 
 		default:
@@ -463,81 +444,6 @@ check_sigreq()
 			break;
 		}
 	}
-}
-
-/*
- * waiting the termination of processing until sending DELETE message
- * for all inbound SA will complete.
- */
-static void
-check_flushsa_stub(p)
-	struct sched *p;
-{
-
-	check_flushsa();
-}
-
-static void
-check_flushsa()
-{
-	vchar_t *buf;
-	struct sadb_msg *msg, *end, *next;
-	struct sadb_sa *sa;
-	caddr_t mhp[SADB_EXT_MAX + 1];
-	int n;
-
-	buf = pfkey_dump_sadb(SADB_SATYPE_UNSPEC);
-	if (buf == NULL) {
-		plog(LLV_DEBUG, LOCATION, NULL,
-		    "pfkey_dump_sadb: returned nothing.\n");
-		return;
-	}
-
-	msg = (struct sadb_msg *)buf->v;
-	end = (struct sadb_msg *)(buf->v + buf->l);
-
-	/* counting SA except of dead one. */
-	n = 0;
-	while (msg < end) {
-		if (PFKEY_UNUNIT64(msg->sadb_msg_len) < sizeof(*msg))
-			break;
-		next = (struct sadb_msg *)((caddr_t)msg + PFKEY_UNUNIT64(msg->sadb_msg_len));
-		if (msg->sadb_msg_type != SADB_DUMP) {
-			msg = next;
-			continue;
-		}
-
-		if (pfkey_align(msg, mhp) || pfkey_check(mhp)) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"pfkey_check (%s)\n", ipsec_strerror());
-			msg = next;
-			continue;
-		}
-
-		sa = (struct sadb_sa *)(mhp[SADB_EXT_SA]);
-		if (!sa) {
-			msg = next;
-			continue;
-		}
-
-		if (sa->sadb_sa_state != SADB_SASTATE_DEAD) {
-			n++;
-			msg = next;
-			continue;
-		}
-
-		msg = next;
-	}
-
-	if (buf != NULL)
-		vfree(buf);
-
-	if (n) {
-		sched_schedule(&scflushsa, 1, check_flushsa_stub);
-		return;
-	}
-
-	close_session();
 }
 
 static void

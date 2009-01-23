@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.47 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.48 2009/01/23 08:05:58 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1735,7 +1735,7 @@ isakmp_open(struct sockaddr *addr, int udp_encap)
 	     "%s used as isakmp port (fd=%d)\n",
 	     saddr2str(addr), fd);
 
-	monitor_fd(fd, FALSE, isakmp_handler, NULL);
+	monitor_fd(fd, isakmp_handler, NULL);
 	return fd;
 
 err:

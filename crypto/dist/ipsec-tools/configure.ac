@@ -556,16 +556,6 @@ if test "x$enable_dpd" = "xyes"; then
 fi
 AC_MSG_RESULT($enable_dpd)
 
-AC_MSG_CHECKING(if --enable-fastquit option is specified)
-AC_ARG_ENABLE(fastquit,
-        [  --enable-fastquit            enable new faster code to flush SAs when stopping racoon],
-        [], [enable_fastquit=no])
-if test "x$enable_fastquit" = "xyes"; then
-	AC_DEFINE([ENABLE_FASTQUIT], [], [Enable fast SA flush code])
-fi
-AC_MSG_RESULT($enable_fastquit)
-
-
 AC_MSG_CHECKING(if --enable-samode-unspec option is specified)
 AC_ARG_ENABLE(samode-unspec,
         [  --enable-samode-unspec  enable to use unspecified a mode of SA],
