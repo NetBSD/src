@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.58 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: arch.c,v 1.59 2009/01/23 21:58:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.58 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.59 2009/01/23 21:58:27 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.58 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: arch.c,v 1.59 2009/01/23 21:58:27 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -165,7 +165,7 @@ typedef struct Arch {
     size_t	  fnamesize;  /* Size of the string table */
 } Arch;
 
-static int ArchFindArchive(void *, void *);
+static int ArchFindArchive(const void *, const void *);
 #ifdef CLEANUP
 static void ArchFree(void *);
 #endif
@@ -493,9 +493,9 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
  *-----------------------------------------------------------------------
  */
 static int
-ArchFindArchive(void *ar, void *archName)
+ArchFindArchive(const void *ar, const void *archName)
 {
-    return (strcmp((char *)archName, ((Arch *)ar)->name));
+    return (strcmp(archName, ((const Arch *)ar)->name));
 }
 
 /*-

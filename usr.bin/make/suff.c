@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.66 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: suff.c,v 1.67 2009/01/23 21:58:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.66 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.67 2009/01/23 21:58:28 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.66 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: suff.c,v 1.67 2009/01/23 21:58:28 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -212,12 +212,12 @@ static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
 				 * single-suffix transformation rules */
 
 
-static char *SuffStrIsPrefix(char *, char *);
-static char *SuffSuffIsSuffix(Suff *, SuffixCmpData *);
-static int SuffSuffIsSuffixP(void *, void *);
-static int SuffSuffHasNameP(void *, void *);
-static int SuffSuffIsPrefix(void *, void *);
-static int SuffGNHasNameP(void *, void *);
+static const char *SuffStrIsPrefix(const char *, const char *);
+static char *SuffSuffIsSuffix(const Suff *, const SuffixCmpData *);
+static int SuffSuffIsSuffixP(const void *, const void *);
+static int SuffSuffHasNameP(const void *, const void *);
+static int SuffSuffIsPrefix(const void *, const void *);
+static int SuffGNHasNameP(const void *, const void *);
 static void SuffUnRef(void *, void *);
 static void SuffFree(void *);
 static void SuffInsert(Lst, Suff *);
@@ -257,8 +257,8 @@ static int SuffPrintTrans(void *, void *);
  *	None
  *-----------------------------------------------------------------------
  */
-static char    *
-SuffStrIsPrefix(char *pref, char *str)
+static const char *
+SuffStrIsPrefix(const char *pref, const char *str)
 {
     while (*str && *pref == *str) {
 	pref++;
@@ -287,7 +287,7 @@ SuffStrIsPrefix(char *pref, char *str)
  *-----------------------------------------------------------------------
  */
 static char *
-SuffSuffIsSuffix(Suff *s, SuffixCmpData *sd)
+SuffSuffIsSuffix(const Suff *s, const SuffixCmpData *sd)
 {
     char  *p1;	    	/* Pointer into suffix name */
     char  *p2;	    	/* Pointer into string being examined */
@@ -321,9 +321,9 @@ SuffSuffIsSuffix(Suff *s, SuffixCmpData *sd)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffIsSuffixP(void *s, void *sd)
+SuffSuffIsSuffixP(const void *s, const void *sd)
 {
-    return(!SuffSuffIsSuffix((Suff *)s, (SuffixCmpData *)sd));
+    return(!SuffSuffIsSuffix(s, sd));
 }
 
 /*-
@@ -344,9 +344,9 @@ SuffSuffIsSuffixP(void *s, void *sd)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffHasNameP(void *s, void *sname)
+SuffSuffHasNameP(const void *s, const void *sname)
 {
-    return (strcmp((char *)sname, ((Suff *)s)->name));
+    return (strcmp(sname, ((const Suff *)s)->name));
 }
 
 /*-
@@ -369,9 +369,9 @@ SuffSuffHasNameP(void *s, void *sname)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffIsPrefix(void *s, void *str)
+SuffSuffIsPrefix(const void *s, const void *str)
 {
-    return (SuffStrIsPrefix(((Suff *)s)->name, (char *)str) == NULL ? 1 : 0);
+    return SuffStrIsPrefix(((const Suff *)s)->name, str) == NULL;
 }
 
 /*-
@@ -391,9 +391,9 @@ SuffSuffIsPrefix(void *s, void *str)
  *-----------------------------------------------------------------------
  */
 static int
-SuffGNHasNameP(void *gn, void *name)
+SuffGNHasNameP(const void *gn, const void *name)
 {
-    return (strcmp((char *)name, ((GNode *)gn)->name));
+    return (strcmp(name, ((const GNode *)gn)->name));
 }
 
  	    /*********** Maintenance Functions ************/
@@ -835,7 +835,7 @@ SuffRebuildGraph(void *transformp, void *sp)
     /*
      * First see if it is a transformation from this suffix.
      */
-    cp = SuffStrIsPrefix(s->name, transform->name);
+    cp = UNCONST(SuffStrIsPrefix(s->name, transform->name));
     if (cp != NULL) {
 	ln = Lst_Find(sufflist, cp, SuffSuffHasNameP);
 	if (ln != NULL) {
@@ -1452,8 +1452,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	 * The node matches the prefix ok, see if it has a known
 	 * suffix.
 	 */
-	ln = Lst_Find(sufflist, &cp[prefLen],
-		       SuffSuffHasNameP);
+	ln = Lst_Find(sufflist, &cp[prefLen], SuffSuffHasNameP);
 	if (ln == NULL)
 	    continue;
 	/*
@@ -2435,8 +2434,7 @@ SuffFindDeps(GNode *gn, Lst slst)
 	LstNode	ln;
 	Suff	*s;
 
-	ln = Lst_Find(sufflist, UNCONST(LIBSUFF),
-	    SuffSuffHasNameP);
+	ln = Lst_Find(sufflist, LIBSUFF, SuffSuffHasNameP);
 	if (gn->suffix)
 	    gn->suffix->refCount--;
 	if (ln != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.164 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.165 2009/01/23 21:58:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.164 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.165 2009/01/23 21:58:27 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.164 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.165 2009/01/23 21:58:27 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -177,7 +177,7 @@ static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
 static char *		Check_Cwd_av(int, char **, int);
 static void		MainParseArgs(int, char **);
-static int		ReadMakefile(void *, void *);
+static int		ReadMakefile(const void *, const void *);
 static void		usage(void);
 
 static char curdir[MAXPATHLEN + 1];	/* startup directory */
@@ -661,7 +661,7 @@ Main_SetObjdir(const char *path)
  *	TRUE if ok, FALSE on error
  */
 static int
-ReadAllMakefiles(void *p, void *q)
+ReadAllMakefiles(const void *p, const void *q)
 {
 	return (ReadMakefile(p, q) == 0);
 }
@@ -1006,13 +1006,13 @@ main(int argc, char **argv)
 		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname, 
 			    (char *)Lst_Datum(ln));
-	} else if (ReadMakefile(UNCONST("makefile"), NULL) != 0)
-		(void)ReadMakefile(UNCONST("Makefile"), NULL);
+	} else if (ReadMakefile("makefile", NULL) != 0)
+		(void)ReadMakefile("Makefile", NULL);
 
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!noBuiltins || !printVars) {
 		doing_depend = TRUE;
-		(void)ReadMakefile(UNCONST(".depend"), NULL);
+		(void)ReadMakefile(".depend", NULL);
 		doing_depend = FALSE;
 	}
 
@@ -1168,9 +1168,9 @@ main(int argc, char **argv)
  *	lots
  */
 static int
-ReadMakefile(void *p, void *q __unused)
+ReadMakefile(const void *p, const void *q __unused)
 {
-	char *fname = p;		/* makefile to read */
+	const char *fname = p;		/* makefile to read */
 	int fd;
 	size_t len = MAXPATHLEN;
 	char *name, *path = bmake_malloc(len);
