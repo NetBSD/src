@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.7 2009/01/13 22:35:57 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.8 2009/01/23 19:07:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -169,22 +169,10 @@ main(int argc, char *argv[])
 {
 	char buf[65536];
 	struct sockaddr_in sin;
+	struct timeval tv;
 	ssize_t n;
 	size_t off;
 	int s, error;
-
-	/*
-	 * The following demonstrates in a less-than-amusing way how
-	 * the current binary interfaces are somewhat unflexible.
-	 * If we happen to have old userland and are calling a new
-	 * rumpkernel, timeval passed by this program is too small.
-	 * ... sigh
-	 */
-#ifdef TEH_HACK
-	struct { uint64_t tv_sec; long tv_usec; } tv;
-#else
-	struct timeval tv;
-#endif
 
 	if (rump_init())
 		errx(1, "rump_init failed");
