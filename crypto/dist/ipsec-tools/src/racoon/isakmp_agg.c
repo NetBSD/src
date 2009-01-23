@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.13 2009/01/23 08:06:56 tteras Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.14 2009/01/23 08:23:51 tteras Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -180,8 +180,8 @@ agg_i1send(iph1, msg)
 
 #ifdef ENABLE_HYBRID
 	/* Do we need Xauth VID? */
-	switch (RMAUTHMETHOD(iph1)) {
-	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	switch (iph1->rmconf->proposal->authmethod) {
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I:
@@ -228,7 +228,7 @@ agg_i1send(iph1, msg)
 	plog(LLV_DEBUG, LOCATION, NULL, "authmethod is %s\n",
 		s_oakley_attr_method(iph1->rmconf->proposal->authmethod));
 #ifdef HAVE_GSSAPI
-	if (RMAUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (iph1->rmconf->proposal->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		gssapi_get_itoken(iph1, &len);
 #endif
 
@@ -245,7 +245,7 @@ agg_i1send(iph1, msg)
 	plist = isakmp_plist_append(plist, iph1->id, ISAKMP_NPTYPE_ID);
 
 #ifdef HAVE_GSSAPI
-	if (RMAUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
+	if (iph1->rmconf->proposal->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
 		gssapi_get_token_to_send(iph1, &gsstoken);
 		plist = isakmp_plist_append(plist, gsstoken, ISAKMP_NPTYPE_GSS);
 	}
@@ -642,10 +642,10 @@ agg_i2send(iph1, msg)
 		goto end;
 	}
 
-	switch (AUTHMETHOD(iph1)) {
+	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 #ifdef ENABLE_HYBRID
-	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
 #endif  
@@ -1000,7 +1000,7 @@ agg_r1send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (RMAUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (iph1->rmconf->proposal->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		gssapi_get_rtoken(iph1, &gsslen);
 #endif
 
@@ -1067,7 +1067,7 @@ agg_r1send(iph1, msg)
 	}
 #endif
 
-	switch (AUTHMETHOD(iph1)) {
+	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 #ifdef ENABLE_HYBRID
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
