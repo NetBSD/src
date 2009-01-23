@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.6 2009/01/23 08:25:07 tteras Exp $	*/
+/*	$NetBSD: schedule.c,v 1.7 2009/01/23 09:10:13 tteras Exp $	*/
 
 /*	$KAME: schedule.c,v 1.19 2001/11/05 10:53:19 sakane Exp $	*/
 
@@ -122,7 +122,6 @@ schedular()
 	if (p == NULL)
 		return NULL;
 
-	sched_get_monotonic_time(&now);
 	timersub(&p->xtime, &now, &timeout);
 
 	return &timeout;
