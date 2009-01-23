@@ -1,4 +1,4 @@
-/*	$NetBSD: lstForEachFrom.c,v 1.16 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: lstForEachFrom.c,v 1.17 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.16 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.17 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstForEachFrom.c,v 1.16 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: lstForEachFrom.c,v 1.17 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -70,8 +70,8 @@ __RCSID("$NetBSD: lstForEachFrom.c,v 1.16 2008/12/13 15:19:29 dsl Exp $");
  */
 /*VARARGS2*/
 int
-Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(ClientData, ClientData),
-		ClientData d)
+Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
+		void *d)
 {
     ListNode	tln = ln;
     List 	list = l;

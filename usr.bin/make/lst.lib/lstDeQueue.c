@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDeQueue.c,v 1.13 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: lstDeQueue.c,v 1.14 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstDeQueue.c,v 1.13 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstDeQueue.c,v 1.14 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDeQueue.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDeQueue.c,v 1.13 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: lstDeQueue.c,v 1.14 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -66,10 +66,10 @@ __RCSID("$NetBSD: lstDeQueue.c,v 1.13 2008/12/13 15:19:29 dsl Exp $");
  *
  *-----------------------------------------------------------------------
  */
-ClientData
+void *
 Lst_DeQueue(Lst l)
 {
-    ClientData	  rd;
+    void *rd;
     ListNode	tln;
 
     tln = Lst_First(l);

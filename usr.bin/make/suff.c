@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.65 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: suff.c,v 1.66 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.65 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.66 2009/01/23 21:26:30 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.65 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: suff.c,v 1.66 2009/01/23 21:26:30 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -214,18 +214,18 @@ static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
 
 static char *SuffStrIsPrefix(char *, char *);
 static char *SuffSuffIsSuffix(Suff *, SuffixCmpData *);
-static int SuffSuffIsSuffixP(ClientData, ClientData);
-static int SuffSuffHasNameP(ClientData, ClientData);
-static int SuffSuffIsPrefix(ClientData, ClientData);
-static int SuffGNHasNameP(ClientData, ClientData);
-static void SuffUnRef(ClientData, ClientData);
-static void SuffFree(ClientData);
+static int SuffSuffIsSuffixP(void *, void *);
+static int SuffSuffHasNameP(void *, void *);
+static int SuffSuffIsPrefix(void *, void *);
+static int SuffGNHasNameP(void *, void *);
+static void SuffUnRef(void *, void *);
+static void SuffFree(void *);
 static void SuffInsert(Lst, Suff *);
 static void SuffRemove(Lst, Suff *);
 static Boolean SuffParseTransform(char *, Suff **, Suff **);
-static int SuffRebuildGraph(ClientData, ClientData);
-static int SuffScanTargets(ClientData, ClientData);
-static int SuffAddSrc(ClientData, ClientData);
+static int SuffRebuildGraph(void *, void *);
+static int SuffScanTargets(void *, void *);
+static int SuffAddSrc(void *, void *);
 static int SuffRemoveSrc(Lst);
 static void SuffAddLevel(Lst, Src *);
 static Src *SuffFindThem(Lst, Lst);
@@ -236,9 +236,9 @@ static Boolean SuffApplyTransform(GNode *, GNode *, Suff *, Suff *);
 static void SuffFindDeps(GNode *, Lst);
 static void SuffFindArchiveDeps(GNode *, Lst);
 static void SuffFindNormalDeps(GNode *, Lst);
-static int SuffPrintName(ClientData, ClientData);
-static int SuffPrintSuff(ClientData, ClientData);
-static int SuffPrintTrans(ClientData, ClientData);
+static int SuffPrintName(void *, void *);
+static int SuffPrintSuff(void *, void *);
+static int SuffPrintTrans(void *, void *);
 
 	/*************** Lst Predicates ****************/
 /*-
@@ -321,7 +321,7 @@ SuffSuffIsSuffix(Suff *s, SuffixCmpData *sd)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffIsSuffixP(ClientData s, ClientData sd)
+SuffSuffIsSuffixP(void *s, void *sd)
 {
     return(!SuffSuffIsSuffix((Suff *)s, (SuffixCmpData *)sd));
 }
@@ -344,7 +344,7 @@ SuffSuffIsSuffixP(ClientData s, ClientData sd)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffHasNameP(ClientData s, ClientData sname)
+SuffSuffHasNameP(void *s, void *sname)
 {
     return (strcmp((char *)sname, ((Suff *)s)->name));
 }
@@ -369,7 +369,7 @@ SuffSuffHasNameP(ClientData s, ClientData sname)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffIsPrefix(ClientData s, ClientData str)
+SuffSuffIsPrefix(void *s, void *str)
 {
     return (SuffStrIsPrefix(((Suff *)s)->name, (char *)str) == NULL ? 1 : 0);
 }
@@ -391,7 +391,7 @@ SuffSuffIsPrefix(ClientData s, ClientData str)
  *-----------------------------------------------------------------------
  */
 static int
-SuffGNHasNameP(ClientData gn, ClientData name)
+SuffGNHasNameP(void *gn, void *name)
 {
     return (strcmp((char *)name, ((GNode *)gn)->name));
 }
@@ -399,7 +399,7 @@ SuffGNHasNameP(ClientData gn, ClientData name)
  	    /*********** Maintenance Functions ************/
 
 static void
-SuffUnRef(ClientData lp, ClientData sp)
+SuffUnRef(void *lp, void *sp)
 {
     Lst l = (Lst) lp;
 
@@ -423,7 +423,7 @@ SuffUnRef(ClientData lp, ClientData sp)
  *-----------------------------------------------------------------------
  */
 static void
-SuffFree(ClientData sp)
+SuffFree(void *sp)
 {
     Suff           *s = (Suff *)sp;
 
@@ -749,7 +749,7 @@ Suff_AddTransform(char *line)
  *-----------------------------------------------------------------------
  */
 int
-Suff_EndTransform(ClientData gnp, ClientData dummy)
+Suff_EndTransform(void *gnp, void *dummy)
 {
     GNode *gn = (GNode *)gnp;
 
@@ -823,7 +823,7 @@ Suff_EndTransform(ClientData gnp, ClientData dummy)
  *-----------------------------------------------------------------------
  */
 static int
-SuffRebuildGraph(ClientData transformp, ClientData sp)
+SuffRebuildGraph(void *transformp, void *sp)
 {
     GNode   	*transform = (GNode *)transformp;
     Suff    	*s = (Suff *)sp;
@@ -896,7 +896,7 @@ SuffRebuildGraph(ClientData transformp, ClientData sp)
  *-----------------------------------------------------------------------
  */
 static int
-SuffScanTargets(ClientData targetp, ClientData gsp)
+SuffScanTargets(void *targetp, void *gsp)
 {
     GNode   	*target = (GNode *)targetp;
     GNodeSuff	*gs = (GNodeSuff *)gsp;
@@ -1174,7 +1174,7 @@ Suff_AddLib(char *sname)
  *-----------------------------------------------------------------------
  */
 static int
-SuffAddSrc(ClientData sp, ClientData lsp)
+SuffAddSrc(void *sp, void *lsp)
 {
     Suff	*s = (Suff *)sp;
     LstSrc      *ls = (LstSrc *)lsp;
@@ -2574,14 +2574,14 @@ Suff_End(void)
 
 /********************* DEBUGGING FUNCTIONS **********************/
 
-static int SuffPrintName(ClientData s, ClientData dummy)
+static int SuffPrintName(void *s, void *dummy)
 {
     fprintf(debug_file, "%s ", ((Suff *)s)->name);
     return (dummy ? 0 : 0);
 }
 
 static int
-SuffPrintSuff(ClientData sp, ClientData dummy)
+SuffPrintSuff(void *sp, void *dummy)
 {
     Suff    *s = (Suff *)sp;
     int	    flags;
@@ -2623,7 +2623,7 @@ SuffPrintSuff(ClientData sp, ClientData dummy)
 }
 
 static int
-SuffPrintTrans(ClientData tp, ClientData dummy)
+SuffPrintTrans(void *tp, void *dummy)
 {
     GNode   *t = (GNode *)tp;
 

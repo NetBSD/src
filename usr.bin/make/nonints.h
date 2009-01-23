@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.53 2009/01/17 13:29:37 dsl Exp $	*/
+/*	$NetBSD: nonints.h,v 1.54 2009/01/23 21:26:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -90,9 +90,9 @@ void Arch_End(void);
 int Arch_IsLib(GNode *);
 
 /* compat.c */
-int CompatRunCommand(ClientData, ClientData);
+int CompatRunCommand(void *, void *);
 void Compat_Run(Lst);
-int Compat_Make(ClientData, ClientData);
+int Compat_Make(void *, void *);
 
 /* cond.c */
 int Cond_EvalExpression(int, char *, Boolean *, int);
@@ -115,7 +115,7 @@ void Fatal(const char *, ...)
 void Punt(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2),__noreturn__));
 void DieHorribly(void) __attribute__((__noreturn__));
-int PrintAddr(ClientData, ClientData);
+int PrintAddr(void *, void *);
 void Finish(int);
 #ifndef USE_EMALLOC
 void *bmake_malloc(size_t);
@@ -157,7 +157,7 @@ void Str_SYSVSubst(Buffer *, char *, char *, int);
 void Suff_ClearSuffixes(void);
 Boolean Suff_IsTransform(char *);
 GNode *Suff_AddTransform(char *);
-int Suff_EndTransform(ClientData, ClientData);
+int Suff_EndTransform(void *, void *);
 void Suff_AddSuffix(char *, GNode **);
 Lst Suff_GetPath(char *);
 void Suff_DoPaths(void);
@@ -181,8 +181,8 @@ Boolean Targ_Ignore(GNode *);
 Boolean Targ_Silent(GNode *);
 Boolean Targ_Precious(GNode *);
 void Targ_SetMain(GNode *);
-int Targ_PrintCmd(ClientData, ClientData);
-int Targ_PrintNode(ClientData, ClientData);
+int Targ_PrintCmd(void *, void *);
+int Targ_PrintNode(void *, void *);
 char *Targ_FmtTime(time_t);
 void Targ_PrintType(int);
 void Targ_PrintGraph(int);
