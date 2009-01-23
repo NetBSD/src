@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.79 2009/01/14 19:40:30 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.80 2009/01/23 19:27:18 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -213,6 +213,7 @@ NR == 1 {
 	printf "#include <sys/param.h>\n" > rumpcalls
 	printf "#include <sys/proc.h>\n" > rumpcalls
 	printf "#include <sys/syscallargs.h>\n" > rumpcalls
+	printf "#include <rump/rumpuser.h>\n" > rumpcalls
 	printf "#include \"rump_private.h\"\n\n" > rumpcalls
 	printf "#if\tBYTE_ORDER == BIG_ENDIAN\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.be.datum)\n" > rumpcalls
@@ -434,6 +435,7 @@ function parseline() {
 			parserr($f, "argument definition")
 		isvarargs = 0;
 		varargc = 0;
+		argtype[0]="void";
 		return
 	}
 
@@ -501,9 +503,10 @@ function printproto(wrap) {
 		return
 
 	printf("%s rump_%s(", returntype, funcstdname) > rumpcallshdr
-	for (i = 1; i <= argc; i++)
+	for (i = 1; i < argc; i++)
 		printf("%s, ", argtype[i]) > rumpcallshdr
-	printf("int *)") > rumpcallshdr
+	print argtype[argc]
+	printf("%s)", argtype[argc]) > rumpcallshdr
 	if (wantrename)
 		printf(" __RENAME(rump_%s)", funcname) > rumpcallshdr
 	printf(";\n") > rumpcallshdr
@@ -583,17 +586,17 @@ function putent(type, compatwrap) {
 
 	# need a local prototype, we export the re-re-named one in .h
 	printf("\n%s rump_%s(", returntype, funcname) > rumpcalls
-	for (i = 1; i <= argc; i++) {
+	for (i = 1; i < argc; i++) {
 		printf("%s, ", argtype[i]) > rumpcalls
 	}
-	printf("int *);") > rumpcalls
+	printf("%s);", argtype[argc]) > rumpcalls
 
 	printf("\n%s\nrump_%s(", returntype, funcname) > rumpcalls
-	for (i = 1; i <= argc; i++) {
+	for (i = 1; i < argc; i++) {
 		printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
 	}
-	printf("int *error)\n") > rumpcalls
-	printf("{\n\tregister_t retval = 0;\n") > rumpcalls
+	printf("%s %s)\n", argtype[argc], argname[argc]) > rumpcalls
+	printf("{\n\tregister_t retval = 0;\n\tint error = 0;\n") > rumpcalls
 
 	argarg = "NULL"
 	if (argc) {
@@ -608,11 +611,15 @@ function putent(type, compatwrap) {
 	} else {
 		printf("\n") > rumpcalls
 	}
-	printf("\t*error = %s(curlwp, %s, &retval);\n", funcname, argarg) \
+	printf("\terror = %s(curlwp, %s, &retval);\n", funcname, argarg) \
 	    > rumpcalls
-	printf("\tif (*error)\n\t\tretval = -1;\n") > rumpcalls
-	if (returntype != "void")
+	printf("\tif (error) {\n\t\tretval = -1;\n") > rumpcalls
+	if (returntype != "void") {
+		printf("\t\trumpuser_seterrno(error);\n\t}\n") > rumpcalls
 		printf("\treturn retval;\n") > rumpcalls
+	} else {
+		printf("\t}\n") > rumpcalls
+	}
 	printf("}\n") > rumpcalls
 	printf("__weak_alias(%s,rump_enosys);\n", funcname) > rumpcalls
 }
