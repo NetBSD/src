@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.19 2009/01/13 22:33:11 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.20 2009/01/23 15:06:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -92,6 +92,13 @@ ukfs_getrvp(struct ukfs *ukfs)
 
 	return rvp;
 }
+
+#ifdef DONT_WANT_PTHREAD_LINKAGE
+#define pthread_spin_lock(a)
+#define pthread_spin_unlock(a)
+#define pthread_spin_init(a,b)
+#define pthread_spin_destroy(a)
+#endif
 
 static pid_t
 nextpid(struct ukfs *ukfs)
