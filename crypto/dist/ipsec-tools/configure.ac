@@ -784,6 +784,16 @@ if test "$enable_security_context" = "yes"; then
 	fi
 fi
 
+RACOON_PATH_LIBS([clock_gettime], [rt])
+
+AC_MSG_CHECKING(for monotonic system clock)
+AC_TRY_COMPILE(
+	[#include <time.h>],
+	[clock_gettime(CLOCK_MONOTONIC, NULL);],
+	[AC_DEFINE([HAVE_CLOCK_MONOTONIC], [], [Have a monotonic clock])
+	 AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(no)])
+
 CFLAGS="$CFLAGS $CFLAGS_ADD"
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_ADD"
 

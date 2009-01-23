@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.23 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.24 2009/01/23 08:25:06 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -342,7 +342,6 @@ newph1()
 
 #ifdef ENABLE_DPD
 	iph1->dpd_support = 0;
-	iph1->dpd_lastack = 0;
 	iph1->dpd_seq = 0;
 	iph1->dpd_fails = 0;
 #endif
@@ -960,11 +959,8 @@ check_recvdpkt(remote, local, rbuf)
 {
 	vchar_t *hash;
 	struct recvdpkt *r;
-	time_t t;
+	struct timeval now, diff;
 	int len, s;
-
-	/* set current time */
-	t = time(NULL);
 
 	hash = eay_md5_one(rbuf);
 	if (!hash) {
@@ -995,7 +991,9 @@ check_recvdpkt(remote, local, rbuf)
 	 */
 
 	/* check the previous time to send */
-	if (t - r->time_send < 1) {
+	sched_get_monotonic_time(&now);
+	timersub(&now, &r->time_send, &diff);
+	if (diff.tv_sec == 0) {
 		plog(LLV_WARNING, LOCATION, NULL,
 			"the packet retransmitted in a short time from %s\n",
 			saddr2str(remote));
@@ -1024,7 +1022,7 @@ check_recvdpkt(remote, local, rbuf)
 			"deleted the retransmission packet to %s.\n",
 			saddr2str(remote));
 	} else
-		r->time_send = t;
+		r->time_send = now;
 
 	return 1;
 }
@@ -1081,8 +1079,7 @@ add_recvdpkt(remote, local, sbuf, rbuf)
 	}
 
 	new->retry_counter = lcconf->retry_counter;
-	new->time_send = 0;
-	new->created = time(NULL);
+	sched_get_monotonic_time(&new->time_send);
 
 	LIST_INSERT_HEAD(&rcptree, new, chain);
 
@@ -1116,24 +1113,25 @@ sweep_recvdpkt(dummy)
 	struct sched *dummy;
 {
 	struct recvdpkt *r, *next;
-	time_t t, lt;
+	struct timeval now, diff, sweep;
 
-	/* set current time */
-	t = time(NULL);
+	sched_get_monotonic_time(&now);
 
-	/* set the lifetime of the retransmission */
-	lt = lcconf->retry_counter * lcconf->retry_interval;
+	/* calculate sweep time; delete entries older than this */
+	diff.tv_sec = lcconf->retry_counter * lcconf->retry_interval;
+	diff.tv_usec = 0;
+	timersub(&now, &diff, &sweep);
 
 	for (r = LIST_FIRST(&rcptree); r; r = next) {
 		next = LIST_NEXT(r, chain);
 
-		if (t - r->created > lt) {
+		if (timercmp(&r->time_send, &sweep, <)) {
 			rem_recvdpkt(r);
 			del_recvdpkt(r);
 		}
 	}
 
-	sched_schedule(&sc_sweep, lt, sweep_recvdpkt);
+	sched_schedule(&sc_sweep, diff.tv_sec, sweep_recvdpkt);
 }
 
 void
