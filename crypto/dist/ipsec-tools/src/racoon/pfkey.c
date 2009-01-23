@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.44 2009/01/23 08:29:34 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.45 2009/01/23 08:32:58 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.44 2009/01/23 08:29:34 tteras Exp $ */
+/* $Id: pfkey.c,v 1.45 2009/01/23 08:32:58 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2840,10 +2840,10 @@ struct migrate_args {
 };
 
 /*
- * Update local and remote addresses of given Phase 1.
+ * Update local and remote addresses of given Phase 1. Schedule removal
+ * if negotiation was going on and restart a one from updated address.
  *
  * -1 is returned on error. 0 if everything went right.
- * Note: we do need to maintain port information here. --arno
  */
 static int
 migrate_ph1_ike_addresses(iph1, arg)
@@ -2851,12 +2851,55 @@ migrate_ph1_ike_addresses(iph1, arg)
         void *arg;
 {
 	struct migrate_args *ma = (struct migrate_args *) arg;
+	struct remoteconf *rmconf;
 	u_int16_t port;
+
+	/* Already up-to-date? */
+	if (cmpsaddrwop(iph1->local, ma->local) == 0 &&
+	    cmpsaddrwop(iph1->remote, ma->remote) == 0)
+		return 0;
+
+	if (iph1->status < PHASE1ST_ESTABLISHED) {
+		/* Bad luck! We received a MIGRATE *while* negotiating
+		 * Phase 1 (i.e. it was not established yet). If we act as
+		 * initiator we need to restart the negotiation. As
+		 * responder, our best bet is to update our addresses
+		 * and wait for the initiator to do something */
+		plog(LLV_WARNING, LOCATION, NULL, "MIGRATE received *during* "
+		     "Phase 1 negotiation (%s).\n",
+		     saddr2str_fromto("%s => %s", ma->local, ma->remote));
+
+		/* If we are not acting as initiator, let's just leave and
+		 * let the remote peer handle the restart */
+		rmconf = getrmconf(ma->remote);
+		if (rmconf == NULL || !rmconf->passive) {
+			iph1->status = PHASE1ST_EXPIRED;
+			sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
+
+			/* This is unlikely, but let's just check if a Phase 1
+			 * for the new addresses already exist */
+			if (getph1byaddr(ma->local, ma->remote, 0)) {
+				plog(LLV_WARNING, LOCATION, NULL, "No need "
+				     "to start a new Phase 1 negotiation. One "
+				     "already exists.\n");
+				return 0;
+			}
+
+			plog(LLV_WARNING, LOCATION, NULL, "As initiator, "
+			     "restarting it.\n");
+			 /* Note that the insertion of the new Phase 1 will not
+			  * interfere with the fact we are called from enumph1,
+			  * because it is inserted as first element. --arno */
+			isakmp_ph1begin_i(rmconf, ma->local, ma->remote);
+
+			return 0;
+		}
+	}
 
 	if (iph1->local != NULL) {
 		plog(LLV_DEBUG, LOCATION, NULL, "Migrating Phase 1 local "
-		     "address from %s to %s\n", saddr2str(iph1->local),
-		     saddr2str(ma->local));
+		     "address from %s\n",
+		     saddr2str_fromto("%s to %s", iph1->local, ma->local));
 		port = extract_port(iph1->local);
 		racoon_free(iph1->local);
 	} else
@@ -2872,8 +2915,8 @@ migrate_ph1_ike_addresses(iph1, arg)
 
 	if (iph1->remote != NULL) {
 		plog(LLV_DEBUG, LOCATION, NULL, "Migrating Phase 1 remote "
-		     "address from %s to %s\n", saddr2str(iph1->remote),
-		     saddr2str(ma->remote));
+		     "address from %s\n",
+		     saddr2str_fromto("%s to %s", iph1->remote, ma->remote));
 		port = extract_port(iph1->remote);
 		racoon_free(iph1->remote);
 	} else
@@ -2950,15 +2993,11 @@ migrate_ph2_ike_addresses(iph2, arg)
  * and destination addresses for SA. As racoon does not support bundles, if
  * we modify multiple occurrences, this probably imply rekeying has happened.
  *
- * Note that the code below tries to automatically garbage collect
- * iph2->sa_src and iph2->sa_dst when possible (when new SA addresses
- * (sa_src and sa_dst) match current iph2->src and iph2->dst)
- *
  * Both addresses passed to the function are expected not to be NULL and of
  * same family. -1 is returned on error. 0 if everything went right.
  *
- * XXX We do not check Phase 2 status yet in order to deal with (postpone?)
- *     some ongoing rekeying --arno
+ * Specific care is needed to support Phase 2 for which negotiation has
+ * already started but are which not yet established.
  */
 static int
 migrate_ph2_sa_addresses(iph2, args)
@@ -2977,11 +3016,6 @@ migrate_ph2_sa_addresses(iph2, args)
 		iph2->sa_dst = NULL;
 	}
 
-	/* IKE addresses and Phase 2 addresses up-to-date? */
-	if (CMPSADDR(iph2->src, ma->local) == 0 &&
-	    CMPSADDR(iph2->dst, ma->remote) == 0)
-		return 0;
-
 	iph2->sa_src = dupsaddr(ma->local);
 	if (iph2->sa_src == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -2994,6 +3028,52 @@ migrate_ph2_sa_addresses(iph2, args)
 		plog(LLV_ERROR, LOCATION, NULL,
 		     "unable to allocate Phase 2 sa_dst address.\n");
 		return -1;
+	}
+
+	if (iph2->status < PHASE2ST_ESTABLISHED) {
+		struct remoteconf *rmconf;
+		/* We were negotiating for that SA when we received the MIGRATE.
+		 * We cannot simply update the addresses and let the exchange
+		 * go on. We have to restart the whole negotiation if we are
+		 * the initiator. Otherwise (acting as responder), we just need
+		 * to delete our ph2handle and wait for the initiator to start
+		 * a new negotiation. */
+
+		if (iph2->ph1 && iph2->ph1->rmconf)
+			rmconf = iph2->ph1->rmconf;
+		else
+			rmconf = getrmconf(iph2->dst);
+
+		if (rmconf && !rmconf->passive) {
+			plog(LLV_WARNING, LOCATION, iph2->dst, "MIGRATE received "
+			     "*during* IPsec SA negotiation. As initiator, "
+			     "restarting it.\n");
+
+			/* Turn off expiration timer ...*/
+			sched_cancel(&iph2->sce);
+			iph2->status = PHASE2ST_EXPIRED;
+
+			/* ... clean Phase 2 handle ... */
+			initph2(iph2);
+			iph2->status = PHASE2ST_STATUS2;
+
+			/* and start a new negotiation */
+			if (isakmp_post_acquire(iph2) < 0) {
+				plog(LLV_ERROR, LOCATION, iph2->dst, "failed "
+				     "to begin IPsec SA renegotiation after "
+				     "MIGRATE reception.\n");
+				remph2(iph2);
+				delph2(iph2);
+				return -1;
+			}
+		} else {
+			plog(LLV_WARNING, LOCATION, iph2->dst, "MIGRATE received "
+			     "*during* IPsec SA negotiation. As responder, let's"
+			     "wait for the initiator to act.\n");
+
+			/* Simply schedule deletion */
+			isakmp_ph2expire(iph2);
+		}
 	}
 
 	return 0;
