@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.43 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.44 2009/01/23 04:36:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.43 2008/12/09 20:45:45 pooka Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.44 2009/01/23 04:36:13 uch Exp $")
 
 
 /*
@@ -181,6 +181,7 @@ NENTRY(sh3_vector_tlbmiss)
 .L3_kernel_va:
 	mov.l	.L3_VM_MIN_KERNEL_ADDRESS, r0
 	mov.l	.L3_kernptd,  r1 ! pmap_kernel()->pm_ptp
+	mov.l	@r1, r1		! kernel_pmap_ptr is pointer.
 	bra	.L3_fetch_pte
 	 sub	r0, r2		! vpn -= VM_MIN_KERNEL_ADDRESS
 
@@ -331,6 +332,7 @@ NENTRY(sh4_vector_tlbmiss)
 .L4_kernel_va:
 	mov.l	.L4_VM_MIN_KERNEL_ADDRESS, r0
 	mov.l	.L4_kernptd,  r1 ! pmap_kernel()->pm_ptp
+	mov.l	@r1, r1		! kernel_pmap_ptr is pointer.
 	bra	.L4_fetch_pte
 	 sub	r0, r2		! vpn -= VM_MIN_KERNEL_ADDRESS
 
