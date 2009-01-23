@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.11 2009/01/17 15:53:15 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.12 2009/01/23 13:14:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,13 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.11 2009/01/17 15:53:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.12 2009/01/23 13:14:16 pooka Exp $");
 
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
 
-struct pmap *const kernel_pmap_ptr;
+struct pmap *const kernel_pmap_ptr = (struct pmap *const)0x66;
 
 /*
  * Provide a userspace pmap with the headers the kernel gives us.
