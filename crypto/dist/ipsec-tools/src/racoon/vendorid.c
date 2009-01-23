@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.c,v 1.5 2008/07/21 06:26:06 tteras Exp $	*/
+/*	$NetBSD: vendorid.c,v 1.6 2009/01/23 08:06:56 tteras Exp $	*/
 
 /* Id: vendorid.c,v 1.10 2006/02/22 16:10:21 vanhu Exp */
 
@@ -215,7 +215,7 @@ set_vendorid(int vendorid)
  *
  * gen ... points to Vendor ID payload.
  */
-int
+static int
 check_vendorid(struct isakmp_gen *gen)
 {
 	vchar_t vid, *vidhash;
@@ -248,9 +248,17 @@ unknown:
 	return (VENDORID_UNKNOWN);
 }
 
-void
-handle_vendorid(struct ph1handle *iph1, int vid_numeric)
+int
+handle_vendorid(struct ph1handle *iph1, struct isakmp_gen *gen)
 {
+	int vid_numeric;
+
+	vid_numeric = check_vendorid(gen);
+	if (vid_numeric == VENDORID_UNKNOWN)
+		return vid_numeric;
+
+	iph1->vendorid_mask |= BIT(vid_numeric);
+
 #ifdef ENABLE_NATT
 	if (iph1->rmconf->nat_traversal && natt_vendorid(vid_numeric))
 		natt_handle_vendorid(iph1, vid_numeric);
@@ -273,6 +281,8 @@ handle_vendorid(struct ph1handle *iph1, int vid_numeric)
 		plog(LLV_DEBUG, LOCATION, NULL, "remote supports DPD\n");
 	}
 #endif
+
+	return vid_numeric;
 }
 
 static vchar_t * 

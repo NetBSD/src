@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.12 2008/07/21 06:26:06 tteras Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.13 2009/01/23 08:06:56 tteras Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -343,7 +343,6 @@ agg_i2recv(iph1, msg)
 	struct isakmp_parse_t *pa;
 	vchar_t *satmp = NULL;
 	int error = -1;
-	int vid_numeric;
 	int ptype;
 #ifdef ENABLE_HYBRID
 	vchar_t *unity_vid;
@@ -425,8 +424,7 @@ agg_i2recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+			handle_vendorid(iph1, pa->ptr);
 			break;
 		case ISAKMP_NPTYPE_N:
 			isakmp_log_notify(iph1,
@@ -835,8 +833,7 @@ agg_r1recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+			vid_numeric = handle_vendorid(iph1, pa->ptr);
 #ifdef ENABLE_FRAG
 			if ((vid_numeric == VENDORID_FRAG) &&
 			    (vendorid_frag_cap(pa->ptr) & VENDORID_FRAG_AGG))
@@ -1324,9 +1321,7 @@ agg_r2recv(iph1, msg0)
 	vchar_t *msg = NULL;
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
-	int error = -1;
-	int ptype, vid_numeric;
-
+	int error = -1, ptype;
 #ifdef ENABLE_NATT
 	int natd_seq = 0;
 #endif
@@ -1364,8 +1359,7 @@ agg_r2recv(iph1, msg0)
 			iph1->pl_hash = (struct isakmp_pl_hash *)pa->ptr;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+			handle_vendorid(iph1, pa->ptr);
 			break;
 		case ISAKMP_NPTYPE_CERT:
 			if (oakley_savecert(iph1, pa->ptr) < 0)
