@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.50 2009/01/23 13:14:17 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.51 2009/01/23 14:24:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.50 2009/01/23 13:14:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.51 2009/01/23 14:24:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -483,7 +483,6 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 
 	alignbit = 0;
 	if (align) {
-		if (size <= PAGE_SIZE)
 		alignbit = ffs(align)-1;
 	}
 
