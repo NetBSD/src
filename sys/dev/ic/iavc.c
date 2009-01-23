@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc.c,v 1.7 2008/04/08 12:07:26 cegger Exp $	*/
+/*	$NetBSD: iavc.c,v 1.8 2009/01/23 19:49:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.7 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.8 2009/01/23 19:49:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -892,7 +892,7 @@ static void iavc_handle_rx(iavc_softc_t *sc)
     u_int8_t *dmabuf = 0, cmd;
 
     if (sc->sc_dma) {
-	dmabuf = amcc_get_byte(&sc->sc_recvbuf[0], &cmd);
+	dmabuf = amcc_get_byte(sc->sc_recvbuf, &cmd);
     } else {
 	cmd = iavc_get_byte(sc);
     }
@@ -1004,9 +1004,9 @@ iavc_tx_capimsg(iavc_softc_t *sc, struct mbuf *m)
 	/* Copy message to DMA buffer. */
 
 	if (m->m_next)
-	    dmabuf = amcc_put_byte(&sc->sc_sendbuf[0], SEND_DATA_B3_REQ);
+	    dmabuf = amcc_put_byte(sc->sc_sendbuf, SEND_DATA_B3_REQ);
 	else
-	    dmabuf = amcc_put_byte(&sc->sc_sendbuf[0], SEND_MESSAGE);
+	    dmabuf = amcc_put_byte(sc->sc_sendbuf, SEND_MESSAGE);
 
 	dmabuf = amcc_put_word(dmabuf, m->m_len);
 	memcpy(dmabuf, m->m_data, m->m_len);
@@ -1061,7 +1061,7 @@ iavc_tx_ctrlmsg(iavc_softc_t *sc, struct mbuf *m)
     uint8_t *dmabuf;
 
     if (sc->sc_dma) {
-	memcpy(&sc->sc_sendbuf[0], m->m_data + 2, m->m_len - 2);
+	memcpy(sc->sc_sendbuf, m->m_data + 2, m->m_len - 2);
 	txlen = m->m_len - 2;
     } else {
 
