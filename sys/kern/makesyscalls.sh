@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.80 2009/01/23 19:27:18 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.81 2009/01/23 19:29:38 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -505,7 +505,6 @@ function printproto(wrap) {
 	printf("%s rump_%s(", returntype, funcstdname) > rumpcallshdr
 	for (i = 1; i < argc; i++)
 		printf("%s, ", argtype[i]) > rumpcallshdr
-	print argtype[argc]
 	printf("%s)", argtype[argc]) > rumpcallshdr
 	if (wantrename)
 		printf(" __RENAME(rump_%s)", funcname) > rumpcallshdr
