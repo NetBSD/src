@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2009/01/23 11:28:27 tteras Exp $	*/
 
 /* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
@@ -89,128 +89,76 @@ static char version[] = "@(#)" TOP_PACKAGE_STRING " (" TOP_PACKAGE_URL ")";
 static char version[] = "@(#) racoon / IPsec-tools";
 #endif /* TOP_PACKAGE */
 
-int main __P((int, char **));
-static void usage __P((void));
-static void parse __P((int, char **));
-
-void
-usage()
+static void
+print_version()
 {
-	printf("usage: racoon [-BdFv%s] %s[-f (file)] [-l (file)] [-p (port)]\n",
+	printf("%s\n"
+	       "\n"
+	       "Compiled with:\n"
+	       "- %s (http://www.openssl.org/)\n"
 #ifdef INET6
-		"46",
-#else
-		"",
+	       "- IPv6 support\n"
+#endif
+#ifdef ENABLE_DPD
+	       "- Dead Peer Detection\n"
+#endif
+#ifdef ENABLE_FRAG
+	       "- IKE fragmentation\n"
+#endif
+#ifdef ENABLE_HYBRID
+	       "- Hybrid authentication\n"
+#endif
+#ifdef ENABLE_GSSAPI
+	       "- GSS-API authentication\n"
+#endif
+#ifdef ENABLE_NATT
+	       "- NAT Traversal\n"
+#endif
+#ifdef ENABLE_STATS
+	       "- Timing statistics\n"
 #endif
 #ifdef ENABLE_ADMINPORT
-		"[-a (port)] "
-#else
-		""
+	       "- Admin port\n"
 #endif
-		);
-	printf("   -B: install SA to the kernel from the file "
-		"specified by the configuration file.\n");
-	printf("   -d: debug level, more -d will generate more debug message.\n");
-	printf("   -C: dump parsed config file.\n");
-	printf("   -L: include location in debug messages\n");
-	printf("   -F: run in foreground, do not become daemon.\n");
-	printf("   -v: be more verbose\n");
-#ifdef INET6
-	printf("   -4: IPv4 mode.\n");
-	printf("   -6: IPv6 mode.\n");
+#ifdef HAVE_CLOCK_MONOTONIC
+	       "- Monotonic clock\n"
 #endif
-#ifdef ENABLE_ADMINPORT
-	printf("   -a: port number for admin port.\n");
+#ifdef HAVE_SECCTX
+	       "- Security context\n"
 #endif
-	printf("   -f: pathname for configuration file.\n");
-	printf("   -l: pathname for log file.\n");
-	printf("   -p: port number for isakmp (default: %d).\n", PORT_ISAKMP);
-	printf("   -P: port number for NAT-T (default: %d).\n", PORT_ISAKMP_NATT);
-	exit(1);
+	       "\n",
+	       version,
+	       eay_version());
+	exit(0);
 }
 
-int
-main(ac, av)
-	int ac;
-	char **av;
+static void
+usage()
 {
-	int error;
-
-	if (geteuid() != 0) {
-		errx(1, "must be root to invoke this program.");
-		/* NOTREACHED*/
-	}
-
-	/*
-	 * Don't let anyone read files I write.  Although some files (such as
-	 * the PID file) can be other readable, we dare to use the global mask,
-	 * because racoon uses fopen(3), which can't specify the permission
-	 * at the creation time.
-	 */
-	umask(077);
-	if (umask(077) != 077) {
-		errx(1, "could not set umask");
-		/* NOTREACHED*/
-	}
-
-#ifdef DEBUG_RECORD_MALLOCATION
-	DRM_init();
+	printf("usage: racoon [-BdFv"
+#ifdef INET6
+		"46"
 #endif
-
-#ifdef HAVE_SECCTX
-	init_avc();
+		"] [-f (file)] [-l (file)] [-p (port)] [-P (natt port)]\n"
+		"   -B: install SA to the kernel from the file "
+		"specified by the configuration file.\n"
+		"   -d: debug level, more -d will generate more debug message.\n"
+		"   -C: dump parsed config file.\n"
+		"   -L: include location in debug messages\n"
+		"   -F: run in foreground, do not become daemon.\n"
+		"   -v: be more verbose\n"
+		"   -V: print version and exit\n"
+#ifdef INET6
+		"   -4: IPv4 mode.\n"
+		"   -6: IPv6 mode.\n"
 #endif
-	eay_init();
-	initlcconf();
-	initrmconf();
-	oakley_dhinit();
-	compute_vendorids();
-
-	parse(ac, av);
-
-	ploginit();
-
-	plog(LLV_INFO, LOCATION, NULL, "%s\n", version);
-	plog(LLV_INFO, LOCATION, NULL, "@(#)"
-	    "This product linked %s (http://www.openssl.org/)"
-	    "\n", eay_version());
-	plog(LLV_INFO, LOCATION, NULL, "Reading configuration from \"%s\"\n", 
-	    lcconf->racoon_conf);
-
-	/*
-	 * install SAs from the specified file.  If the file is not specified
-	 * by the configuration file, racoon will exit.
-	 */
-	if (loading_sa && !f_local) {
-		if (backupsa_from_file() != 0)
-			errx(1, "something error happened "
-				"SA recovering.");
-	}
-
-	if (f_foreground)
-		close(0);
-	else {
-		if (daemon(0, 0) < 0) {
-			errx(1, "failed to be daemon. (%s)",
-				strerror(errno));
-		}
-#ifndef __linux__
-		/*
-		 * In case somebody has started inetd manually, we need to
-		 * clear the logname, so that old servers run as root do not
-		 * get the user's logname..
-		 */
-		if (setlogin("") < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"cannot clear logname: %s\n", strerror(errno));
-			/* no big deal if it fails.. */
-		}
-#endif
-	}
-
-	session();
-
-	exit(0);
+		"   -f: pathname for configuration file.\n"
+		"   -l: pathname for log file.\n"
+		"   -p: port number for isakmp (default: %d).\n"
+		"   -P: port number for NAT-T (default: %d).\n"
+		"\n",
+		PORT_ISAKMP, PORT_ISAKMP_NATT);
+	exit(1);
 }
 
 static void
@@ -231,7 +179,7 @@ parse(ac, av)
 	else
 		pname = *av;
 
-	while ((c = getopt(ac, av, "dLFp:P:a:f:l:vZBC"
+	while ((c = getopt(ac, av, "dLFp:P:f:l:vVZBC"
 #ifdef YYDEBUG
 			"y"
 #endif
@@ -264,6 +212,9 @@ parse(ac, av)
 			break;
 		case 'v':
 			vflag++;
+			break;
+		case 'V':
+			print_version();
 			break;
 		case 'Z':
 			/*
@@ -310,6 +261,89 @@ parse(ac, av)
 		usage();
 		/* NOTREACHED */
 	}
-
-	return;
 }
+
+int
+main(ac, av)
+	int ac;
+	char **av;
+{
+	int error;
+
+	parse(ac, av);
+
+	if (geteuid() != 0) {
+		errx(1, "must be root to invoke this program.");
+		/* NOTREACHED*/
+	}
+
+	/*
+	 * Don't let anyone read files I write.  Although some files (such as
+	 * the PID file) can be other readable, we dare to use the global mask,
+	 * because racoon uses fopen(3), which can't specify the permission
+	 * at the creation time.
+	 */
+	umask(077);
+	if (umask(077) != 077) {
+		errx(1, "could not set umask");
+		/* NOTREACHED*/
+	}
+
+#ifdef DEBUG_RECORD_MALLOCATION
+	DRM_init();
+#endif
+
+#ifdef HAVE_SECCTX
+	init_avc();
+#endif
+	eay_init();
+	initlcconf();
+	initrmconf();
+	oakley_dhinit();
+	compute_vendorids();
+
+	ploginit();
+
+	plog(LLV_INFO, LOCATION, NULL, "%s\n", version);
+	plog(LLV_INFO, LOCATION, NULL, "@(#)"
+	    "This product linked %s (http://www.openssl.org/)"
+	    "\n", eay_version());
+	plog(LLV_INFO, LOCATION, NULL, "Reading configuration from \"%s\"\n", 
+	    lcconf->racoon_conf);
+
+	/*
+	 * install SAs from the specified file.  If the file is not specified
+	 * by the configuration file, racoon will exit.
+	 */
+	if (loading_sa && !f_local) {
+		if (backupsa_from_file() != 0)
+			errx(1, "something error happened "
+				"SA recovering.");
+	}
+
+	if (f_foreground)
+		close(0);
+	else {
+		if (daemon(0, 0) < 0) {
+			errx(1, "failed to be daemon. (%s)",
+				strerror(errno));
+		}
+#ifndef __linux__
+		/*
+		 * In case somebody has started inetd manually, we need to
+		 * clear the logname, so that old servers run as root do not
+		 * get the user's logname..
+		 */
+		if (setlogin("") < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"cannot clear logname: %s\n", strerror(errno));
+			/* no big deal if it fails.. */
+		}
+#endif
+	}
+
+	session();
+
+	return 0;
+}
+
