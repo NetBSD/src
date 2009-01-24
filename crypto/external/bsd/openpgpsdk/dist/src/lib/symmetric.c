@@ -98,14 +98,14 @@ static void cast5_block_decrypt(ops_crypt_t *crypt,void *out,const void *in)
 static void cast5_cfb_encrypt(ops_crypt_t *crypt,void *out,const void *in, size_t count)
     { 
     CAST_cfb64_encrypt(in,out,count,
-                       crypt->encrypt_key, crypt->iv, (int *)&crypt->num,
+                       crypt->encrypt_key, crypt->iv, &crypt->num,
                        CAST_ENCRYPT); 
     }
 
 static void cast5_cfb_decrypt(ops_crypt_t *crypt,void *out,const void *in, size_t count)
     { 
     CAST_cfb64_encrypt(in,out,count,
-                       crypt->encrypt_key, crypt->iv, (int *)&crypt->num,
+                       crypt->encrypt_key, crypt->iv, &crypt->num,
                        CAST_DECRYPT); 
     }
 
@@ -156,14 +156,14 @@ static void idea_block_decrypt(ops_crypt_t *crypt,void *out,const void *in)
 static void idea_cfb_encrypt(ops_crypt_t *crypt,void *out,const void *in, size_t count)
     { 
     idea_cfb64_encrypt(in,out,count,
-                       crypt->encrypt_key, crypt->iv, (int *)&crypt->num,
+                       crypt->encrypt_key, crypt->iv, &crypt->num,
                        CAST_ENCRYPT); 
     }
 
 static void idea_cfb_decrypt(ops_crypt_t *crypt,void *out,const void *in, size_t count)
     { 
     idea_cfb64_encrypt(in,out,count,
-                       crypt->decrypt_key, crypt->iv, (int *)&crypt->num,
+                       crypt->decrypt_key, crypt->iv, &crypt->num,
                        CAST_DECRYPT); 
     }
 
@@ -213,14 +213,14 @@ static void aes_block_decrypt(ops_crypt_t *crypt,void *out,const void *in)
 static void aes_cfb_encrypt(ops_crypt_t *crypt,void *out,const void *in, size_t count)
     { 
     AES_cfb128_encrypt(in,out,count,
-                       crypt->encrypt_key, crypt->iv, (int *)&crypt->num,
+                       crypt->encrypt_key, crypt->iv, &crypt->num,
                        AES_ENCRYPT); 
     }
 
 static void aes_cfb_decrypt(ops_crypt_t *crypt,void *out,const void *in, size_t count)
     { 
     AES_cfb128_encrypt(in,out,count,
-                       crypt->encrypt_key, crypt->iv, (int *)&crypt->num,
+                       crypt->encrypt_key, crypt->iv, &crypt->num,
                        AES_DECRYPT); 
     }
 
@@ -312,7 +312,7 @@ static void tripledes_cfb_encrypt(ops_crypt_t *crypt ATTRIBUTE_UNUSED,void *out 
     { 
     DES_key_schedule *keys=crypt->encrypt_key;
     DES_ede3_cfb64_encrypt(in,out,count,
-                           &keys[0],&keys[1],&keys[2], (DES_cblock *)crypt->iv, (int *)&crypt->num,
+                           &keys[0],&keys[1],&keys[2], (DES_cblock *)crypt->iv, &crypt->num,
                        DES_ENCRYPT); 
     }
 
@@ -320,7 +320,7 @@ static void tripledes_cfb_decrypt(ops_crypt_t *crypt ATTRIBUTE_UNUSED,void *out 
     { 
     DES_key_schedule *keys=crypt->encrypt_key;
     DES_ede3_cfb64_encrypt(in,out,count,
-                           &keys[0],&keys[1],&keys[2], (DES_cblock *)crypt->iv, (int *)&crypt->num,
+                           &keys[0],&keys[1],&keys[2], (DES_cblock *)crypt->iv, &crypt->num,
                        DES_DECRYPT); 
     }
 
