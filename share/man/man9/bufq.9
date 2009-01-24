@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.17 2009/01/13 13:33:58 yamt Exp $
+.\"     $NetBSD: bufq.9,v 1.18 2009/01/24 05:54:35 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -165,6 +165,8 @@ Returns
 if the element can not be found on the queue or 
 .Fa bp
 if it has been found and removed.
+This operation can be computationally expensive if there are
+a lot of buffers queued.
 .El
 .Sh CODE REFERENCES
 The actual code implementing the device buffer queues can be found
