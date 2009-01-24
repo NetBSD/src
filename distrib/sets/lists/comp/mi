@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1226 2009/01/19 07:19:35 jmmv Exp $
+#	$NetBSD: mi,v 1.1227 2009/01/24 01:15:25 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1663,6 +1663,35 @@
 ./usr/include/objc/sarray.h			comp-c-include
 ./usr/include/objc/thr.h			comp-c-include
 ./usr/include/objc/typedstream.h		comp-c-include
+./usr/include/openpgpsdk/accumulate.h		comp-c-include		crypto
+./usr/include/openpgpsdk/armour.h		comp-c-include		crypto
+./usr/include/openpgpsdk/callback.h		comp-c-include		crypto
+./usr/include/openpgpsdk/compress.h		comp-c-include		crypto
+./usr/include/openpgpsdk/configure.h		comp-c-include		crypto
+./usr/include/openpgpsdk/create.h		comp-c-include		crypto
+./usr/include/openpgpsdk/crypto.h		comp-c-include		crypto
+./usr/include/openpgpsdk/defs.h			comp-c-include		crypto
+./usr/include/openpgpsdk/errors.h		comp-c-include		crypto
+./usr/include/openpgpsdk/final.h		comp-c-include		crypto
+./usr/include/openpgpsdk/hash.h			comp-c-include		crypto
+./usr/include/openpgpsdk/keyring.h		comp-c-include		crypto
+./usr/include/openpgpsdk/lists.h		comp-c-include		crypto
+./usr/include/openpgpsdk/memory.h		comp-c-include		crypto
+./usr/include/openpgpsdk/packet-parse.h		comp-c-include		crypto
+./usr/include/openpgpsdk/packet-show-cast.h	comp-c-include		crypto
+./usr/include/openpgpsdk/packet-show.h		comp-c-include		crypto
+./usr/include/openpgpsdk/packet.h		comp-c-include		crypto
+./usr/include/openpgpsdk/random.h		comp-c-include		crypto
+./usr/include/openpgpsdk/readerwriter.h		comp-c-include		crypto
+./usr/include/openpgpsdk/signature.h		comp-c-include		crypto
+./usr/include/openpgpsdk/std_print.h		comp-c-include		crypto
+./usr/include/openpgpsdk/streamwriter.h		comp-c-include		crypto
+./usr/include/openpgpsdk/types.h		comp-c-include		crypto
+./usr/include/openpgpsdk/util.h			comp-c-include		crypto
+./usr/include/openpgpsdk/validate.h		comp-c-include		crypto
+./usr/include/openpgpsdk/version.h		comp-c-include		crypto
+./usr/include/openpgpsdk/writer.h		comp-c-include		crypto
+./usr/include/openpgpsdk/writer_armoured.h	comp-c-include		crypto
 ./usr/include/openssl/aes.h			comp-c-include		crypto
 ./usr/include/openssl/asn1.h			comp-c-include		crypto
 ./usr/include/openssl/asn1_mac.h		comp-c-include		crypto
@@ -2420,6 +2449,9 @@
 ./usr/lib/libobjc_g.a		-unknown-	debuglib
 ./usr/lib/libobjc_p.a				comp-objc-proflib	profile
 ./usr/lib/libopcodes_g.a		-unknown-	debuglib
+./usr/lib/libopenpgpsdk.a			comp-c-lib		crypto
+./usr/lib/libopenpgpsdk_g.a	-unknown-	debuglib
+./usr/lib/libopenpgpsdk_p.a			comp-c-proflib		profile,crypto
 ./usr/lib/libossaudio.a				comp-c-lib
 ./usr/lib/libossaudio_g.a		-unknown-	debuglib
 ./usr/lib/libossaudio_p.a			comp-c-proflib		profile
@@ -3510,6 +3542,7 @@
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
+./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam

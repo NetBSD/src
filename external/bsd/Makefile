@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/01/19 07:14:06 jmmv Exp $
+#	$NetBSD: Makefile,v 1.9 2009/01/24 01:15:26 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,9 @@ SUBDIR+= atf
 .endif
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
+.endif
+.if (${MKCRYPTO} != "no")
+SUBDIR+= ../../crypto/external/bsd
 .endif
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
