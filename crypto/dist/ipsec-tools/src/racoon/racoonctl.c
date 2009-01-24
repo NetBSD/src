@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.14 2009/01/23 11:44:08 tteras Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.15 2009/01/24 10:43:47 wiz Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -222,8 +222,8 @@ usage()
 "  %s [opts] logout-user login\n"
 "\n"
 "General options:\n"
-"  -l		Increase output verbosity (mainly for show-sa)\n"
 "  -d		Debug: hexdump admin messages before sending\n"
+"  -l		Increase output verbosity (mainly for show-sa)\n"
 "  -s <socket>	Specify adminport socket to use (default: %s)\n"
 "\n"
 "Parameter specifications:\n"
