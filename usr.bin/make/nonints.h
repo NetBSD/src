@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.54 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: nonints.h,v 1.55 2009/01/24 11:59:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -117,18 +117,6 @@ void Punt(const char *, ...)
 void DieHorribly(void) __attribute__((__noreturn__));
 int PrintAddr(void *, void *);
 void Finish(int);
-#ifndef USE_EMALLOC
-void *bmake_malloc(size_t);
-void *bmake_realloc(void *, size_t);
-char *bmake_strdup(const char *);
-char *bmake_strndup(const char *, size_t);
-#else
-#include <util.h>
-#define	bmake_malloc(x)		emalloc(x)
-#define	bmake_realloc(x,y)	erealloc(x,y)
-#define bmake_strdup(x)		estrdup(x)
-#define	bmake_strndup(x,y)	estrndup(x,y)
-#endif
 int eunlink(const char *);
 void execError(const char *, const char *);
 
