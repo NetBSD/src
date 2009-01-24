@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.19 2009/01/23 11:44:08 tteras Exp $
+.\"	$NetBSD: racoonctl.8,v 1.20 2009/01/24 10:43:38 wiz Exp $
 .\"
 .\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
@@ -98,19 +98,19 @@ By changing the default mode and ownership
 of the socket, you can allow non-root users to alter
 .Xr racoon 8
 behavior, so do that with caution.
-
 .Pp
 The following general options are available:
 .Bl -tag -width Ds
-.It Fl l
-Increase verbosity. Mainly for show-sa command.
 .It Fl d
-Debug mode. Hexdump sent admin port commands.
+Debug mode.
+Hexdump sent admin port commands.
+.It Fl l
+Increase verbosity.
+Mainly for show-sa command.
 .It Fl s Ar socket
 Specify unix socket name used to connecting racoon.
 .El
 .\"
-
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
