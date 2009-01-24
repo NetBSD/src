@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.32 2009/01/23 12:48:49 jmcneill Exp $
+.\" $NetBSD: mount_msdos.8,v 1.33 2009/01/24 10:45:44 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -112,7 +112,8 @@ Otherwise
 is assumed.
 .It Fl M Ar mask
 Specify the maximum file permissions for directories
-in the file system. The value of
+in the file system.
+The value of
 .Fl m
 is used if it is supplied and
 .Fl M
@@ -130,10 +131,11 @@ See
 for more information about octal file modes.)
 Only the nine low-order bits of
 .Ar mask
-are used. The value of
+are used.
+The value of
 .Fl M
 is used if it is supplied and
-.Fl m 
+.Fl m
 is omitted.
 The default mask is taken from the
 directory on which the file system is being mounted.
