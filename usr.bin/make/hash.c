@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.18 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: hash.c,v 1.19 2009/01/24 10:59:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.18 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.19 2009/01/24 10:59:09 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.18 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: hash.c,v 1.19 2009/01/24 10:59:09 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -291,7 +291,7 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	hp = &t->bucketPtr[h & t->mask];
 	e->next = *hp;
 	*hp = e;
-	e->clientData = NULL;
+	Hash_SetValue(e, NULL);
 	e->namehash = h;
 	(void)strcpy(e->name, p);
 	t->numEntries++;
