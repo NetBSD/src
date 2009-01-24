@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.457 2009/01/18 00:44:34 agc Exp $
+# $NetBSD: shl.mi,v 1.458 2009/01/24 01:15:25 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -98,6 +98,7 @@
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
+./usr/lib/libopenpgpsdk.so.0.9			base-crypto-shlib	crypto
 ./usr/lib/libossaudio.so.1.0			base-sys-shlib
 ./usr/lib/libp2k.so.1.0				base-puffs-shlib
 ./usr/lib/libpam.so.2.0				base-sys-shlib		pam
