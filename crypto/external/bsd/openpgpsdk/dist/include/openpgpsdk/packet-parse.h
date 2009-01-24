@@ -44,7 +44,7 @@ void ops_init_subregion(ops_region_t *subregion,ops_region_t *region);
 
 #if 0
 /** Return values for reader functions e.g. ops_packet_reader_t() */
-enum ops_reader_ret_t
+typedef enum
     {
     OPS_R_OK		=0,	/*!< success */
     OPS_R_EOF		=1,	/*!< reached end of file, no data has been returned */
@@ -56,8 +56,8 @@ enum ops_reader_ret_t
 				  armoured block) */
     OPS_R_PARTIAL_READ	=3,	/*!< if OPS_RETURN_LENGTH is set and
 				  the buffer was not filled */
-    OPS_R_ERROR		=4,	/*!< if there was an error reading */
-    };
+    OPS_R_ERROR		=4	/*!< if there was an error reading */
+    } ops_reader_ret_t;
 #endif
 
 /** ops_parse_callback_return_t */
@@ -134,12 +134,12 @@ void ops_parse_and_validate(ops_parse_info_t *parse_info);
 
 /** Used to specify whether subpackets should be returned raw, parsed or ignored.
  */
-enum ops_parse_type_t
+typedef enum
     {
     OPS_PARSE_RAW,	/*!< Callback Raw */
     OPS_PARSE_PARSED,	/*!< Callback Parsed */
-    OPS_PARSE_IGNORE, 	/*!< Don't callback */
-    };
+    OPS_PARSE_IGNORE 	/*!< Don't callback */
+    } ops_parse_type_t;
 
 void ops_parse_options(ops_parse_info_t *pinfo,ops_content_tag_t tag,
 		       ops_parse_type_t type);
