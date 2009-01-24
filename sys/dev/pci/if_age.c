@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.12 2009/01/23 22:59:30 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.13 2009/01/24 08:31:03 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.12 2009/01/23 22:59:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.13 2009/01/24 08:31:03 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1479,11 +1479,11 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			 * proven to work on L1 I'll enable it.
 			 */
 			if (status & AGE_RRD_IPV4) {
-				if (!(status & AGE_RRD_IPCSUM_NOK))
+				if (status & AGE_RRD_IPCSUM_NOK)
 					m->m_pkthdr.csum_flags |= 
 					    M_CSUM_IPv4_BAD;
-				if (!((status & (AGE_RRD_TCP | AGE_RRD_UDP)) &&
-				    (status & AGE_RRD_TCP_UDPCSUM_NOK) == 0)) {
+				if ((status & (AGE_RRD_TCP | AGE_RRD_UDP)) &&
+				    (status & AGE_RRD_TCP_UDPCSUM_NOK)) {
 					m->m_pkthdr.csum_flags |=
 					    M_CSUM_TCP_UDP_BAD;
 				}
