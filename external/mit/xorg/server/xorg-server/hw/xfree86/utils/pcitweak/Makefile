@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2009/01/24 17:24:52 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,9 @@ DPADD+=	${LIBI386}
 .elif ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
+.elif ${MACHINE_ARCH} == "alpha"
+LDADD+=	-lalpha
+DPADD+=	${LIBALPHA}
 .endif
 
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/${PROG}
