@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.39 2009/01/20 20:12:41 drochner Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.40 2009/01/24 00:29:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.39 2009/01/20 20:12:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.40 2009/01/24 00:29:12 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -147,10 +147,10 @@ module_init(void)
 #endif
 
 #if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
-	snprintf(module_base, sizeof(module_base), "/stand/%s/%s/modules",
+	snprintf(module_base, sizeof(module_base), "/kernel/%s/%s/modules",
 	    machine, osrelease);
 #else						/* release */
-	snprintf(module_base, sizeof(module_base), "/stand/%s/%d.%d/modules",
+	snprintf(module_base, sizeof(module_base), "/kernel/%s/%d.%d/modules",
 	    machine, __NetBSD_Version__ / 100000000,
 	    __NetBSD_Version__ / 1000000 % 100);
 #endif
