@@ -4,4 +4,4 @@
 #define TIME_T_FMT	"%lld"
 
 /* for silencing unused parameter warnings */
-#define OPS_USED(x)	(x)=(x)
+#define OPS_USED(x)	/*LINTED*/(void)&(x)
