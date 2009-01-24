@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.151 2009/01/12 09:28:10 dholland Exp $
+.\"	$NetBSD: make.1,v 1.152 2009/01/24 11:56:41 dsl Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd December 21, 2008
+.Dd January 24, 2009
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1021,45 +1021,16 @@ Remove adjacent duplicate words (like
 .Sm off
 .It Cm \&:\&? Ar true_string Cm \&: Ar false_string
 .Sm on
-If the variable (actually an expression; see below)
-evaluates to true, return as its value the
+If the variable name (not its value), when parsed as a .if conditional
+expression, evaluates to true, return as its value the
 .Ar true_string ,
 otherwise return the
 .Ar false_string .
-The expression parser needs careful feeding to avoid surprises.
-For example the following all do what one might expect,
-.Dl ${"${NUMBERS:M42}":?match:no}
-.Dl ${${NUMBER:U0} > 0:?set:zero}
-.Dl ${empty(NUMBER):?empty:set}
-The first case expands to
-.Ql match
-if
-.Dv NUMBERS
-contains the value 42 (the quotes are important).
-The second expands to
-.Ql zero
-unless
-.Dv NUMBER
-is set to a value greater than 0.
-The last case expands to
-.Ql empty
-or
-.Ql set
-depending on whether
-.Dv NUMBER
-is empty.
-In this example, use of
-.Ql {}
-rather than
-.Ql ()
-is important to avoid the parser getting confused.
-By contrast, the following examples will
-.Em not
-behave as expected.
-.Dl ${"1 < 0":?always:no}
-.Dl ${NUMBERS:M42:?always:no}
-in both cases the expansion will always be
-.Ql always .
+Since the variable name is used as the expression, \&:\&? must be the
+first modifier after the variable name itself - which will, of course,
+usually contain variable expansions.
+If the expression is a single token, it will likely be treated as a check
+for the name being defined.
 .It Ar :old_string=new_string
 This is the
 .At V
@@ -1831,6 +1802,23 @@ The way that parallel makes are scheduled changed in
 .Nx 4.0
 so that .ORDER and .WAIT apply recursively to the dependant nodes.
 The algorithms used may change again in the future.
+.Pp
+The way that .for loop variables are substituted changed after
+.Nx 5.0
+so that they still appear to be variable expansions.
+In particular this stops them being treated as syntax, and removes some
+obscure problems using them in .if statements.
+.Sh BUGS
+The
+.Nm
+syntax is difficult to parse without actually acting of the data.
+For instance finding the end of a variable use should involve scanning each
+the modifiers using the correct terminator for each field.
+In many places
+.Nm
+just counts {} and () in order to find the end of a variable expansion.
+.Pp
+There is no way of escaping a space character is a filename.
 .Sh SEE ALSO
 .Xr mkdep 1
 .Sh HISTORY
