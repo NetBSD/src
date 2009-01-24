@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.13 2008/12/18 12:19:02 cegger Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.14 2009/01/24 19:03:12 bouyer Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.13 2008/12/18 12:19:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14 2009/01/24 19:03:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		res.extent_order = 0;
 		res.domid = DOMID_SELF;
 		if (HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res)
-		    < 0) {
+		    != 1) {
 #ifdef DEBUG
 			printf("xen_alloc_contig: XENMEM_decrease_reservation "
 			    "failed!\n");
@@ -132,10 +132,12 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	res.extent_order = order;
 	res.address_bits = get_order(high) + PAGE_SHIFT;
 	res.domid = DOMID_SELF;
-	if (HYPERVISOR_memory_op(XENMEM_increase_reservation, &res) < 0) {
+	error = HYPERVISOR_memory_op(XENMEM_increase_reservation, &res);
+	if (error != 1) {
 #ifdef DEBUG
 		printf("xen_alloc_contig: XENMEM_increase_reservation "
-		    "failed!\n");
+		    "failed: %d (order %d address_bits %d)\n",
+		    error, order, res.address_bits);
 #endif
 		error = ENOMEM;
 		pg = NULL;
@@ -166,7 +168,6 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 			TAILQ_REMOVE(mlistp, pg, pageq.queue);
 			uvm_pagefree(pg);
 		}
-
 	}
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
@@ -305,7 +306,8 @@ badaddr:
 	if (curaddr < low) {
 		/* no way to enforce this */
 		printf("_xen_bus_dmamem_alloc_range: no way to "
-		    "enforce address range\n");
+		    "enforce address range (0x%" PRIx64 " - 0x%" PRIx64 ")\n",
+		    (uint64_t)low, (uint64_t)high);
 		uvm_pglistfree(&mlist);
 		return EINVAL;
 	}
