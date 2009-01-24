@@ -204,15 +204,15 @@ static ops_parse_cb_return_t decrypt_cb(const ops_parser_content_t *content_,
 	default:
 	    fprintf(stderr,"parse error: %s\n",
 		    ops_errcode(content->errcode.errcode));
-	    assert(0);
+	    assert(/*CONSTCOND*/0);
 	    break;
 	    }
 
 	break;
 
     case OPS_PARSER_ERROR:
-	printf("parse error: %s\n",content->error.error);
-	assert(0);
+	fprintf(stderr,"parse error: %s\n",content->error.error);
+	assert(/*CONSTCOND*/0);
 	break;
 
     case OPS_PTAG_CT_SECRET_KEY:
@@ -227,7 +227,7 @@ static ops_parse_cb_return_t decrypt_cb(const ops_parser_content_t *content_,
     default:
 	fprintf(stderr,"Unexpected tag %d (0x%x)\n",content_->tag,
 		content_->tag);
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
 
  done:
@@ -371,7 +371,7 @@ const ops_keydata_t* ops_keyring_get_key_by_index(const ops_keyring_t *keyring, 
 */
 void ops_copy_userid(ops_user_id_t* dst, const ops_user_id_t* src)
     {
-    int len=strlen((char *)src->user_id);
+    size_t len=strlen((char *)src->user_id);
     if (dst->user_id)
         free(dst->user_id);
     dst->user_id=ops_mallocz(len+1);

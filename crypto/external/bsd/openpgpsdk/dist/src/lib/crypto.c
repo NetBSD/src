@@ -361,20 +361,16 @@ callback_write_parsed(const ops_parser_content_t *content_,ops_parse_cb_info_t *
 
     case OPS_PTAG_CT_PK_SESSION_KEY:
         return callback_pk_session_key(content_,cbinfo);
-        break;
 
     case OPS_PARSER_CMD_GET_SECRET_KEY:
         return callback_cmd_get_secret_key(content_,cbinfo);
-        break;
 
     case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
         //        return callback_cmd_get_secret_key_passphrase(content_,cbinfo);
         return cbinfo->cryptinfo.cb_get_passphrase(content_,cbinfo);
-        break;
 
     case OPS_PTAG_CT_LITERAL_DATA_BODY:
         return callback_literal_data(content_,cbinfo);
-		break;
 
     case OPS_PTAG_CT_ARMOUR_HEADER:
     case OPS_PTAG_CT_ARMOUR_TRAILER:

@@ -83,7 +83,7 @@ void ops_hash_any(ops_hash_t *hash,ops_hash_algorithm_t alg)
 	break;
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
     }
 
@@ -116,7 +116,7 @@ unsigned ops_hash_size(ops_hash_algorithm_t alg)
      return 48;
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
 
     return 0;

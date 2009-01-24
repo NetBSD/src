@@ -140,7 +140,7 @@ ops_print_public_key(const ops_public_key_t *pkey)
 	break;
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
 
     printf("------- end of PUBLIC KEY ------\n");
@@ -259,7 +259,7 @@ ops_print_secret_key_verbose(const ops_content_tag_t type, const ops_secret_key_
 	break;
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
 
     if(skey->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED)
@@ -589,7 +589,7 @@ void ops_print_pk_session_key(ops_content_tag_t tag,
 	break;
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
 
     if(tag != OPS_PTAG_CT_PK_SESSION_KEY)
@@ -760,7 +760,7 @@ int ops_print_packet(const ops_parser_content_t *content_)
 	    break;
 
 	default:
-	    assert(0);
+	    assert(/*CONSTCOND*/0);
 	    }
 
 	if(content->signature.hash)
@@ -1122,7 +1122,7 @@ int ops_print_packet(const ops_parser_content_t *content_)
 	    break;
 
 	default:
-	    assert(0);
+	    assert(/*CONSTCOND*/0);
 	    }
 	break;
 

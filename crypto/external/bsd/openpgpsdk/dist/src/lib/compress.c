@@ -95,7 +95,7 @@ static int zlib_compressed_data_reader(void *dest,size_t length,
 
     while(length > 0)
 	{
-	unsigned len;
+	size_t len;
 
 	if(&arg->out[arg->offset] == arg->zstream.next_out)
 	    {
@@ -161,7 +161,7 @@ static int bzip2_compressed_data_reader(void *dest,size_t length,
     bz_decompress_arg_t *arg=ops_reader_get_arg(rinfo);
 
     //ops_parser_content_t content;
-    int saved=length;
+    size_t saved=length;
 
     assert(arg->type==OPS_C_BZIP2);
 
@@ -177,7 +177,7 @@ static int bzip2_compressed_data_reader(void *dest,size_t length,
 
     while(length > 0)
 	{
-	unsigned len;
+	size_t len;
 
 	if(&arg->out[arg->offset] == arg->bzstream.next_out)
 	    {

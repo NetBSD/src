@@ -931,7 +931,7 @@ void ops_parser_content_free(ops_parser_content_t *c)
 
     default:
 	fprintf(stderr,"Can't free %d (0x%x)\n",c->tag,c->tag);
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
     }
 
@@ -963,7 +963,7 @@ void ops_pk_session_key_free(ops_pk_session_key_t *sk)
 	break;
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
     }
 
@@ -1002,7 +1002,7 @@ void ops_public_key_free(ops_public_key_t *p)
      break;
      
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
     }
 
@@ -1275,7 +1275,7 @@ void ops_signature_free(ops_signature_t *sig)
 	break;
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	}
     }
 
@@ -1819,7 +1819,7 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
         {
         /* We must accumulate, else we can't check the signature */
         fprintf(stderr,"*** ERROR: must set accumulate to true\n");
-        assert(0);
+        assert(/*CONSTCOND*/0);
         }
 
     memcpy(C.signature.info.v4_hashed_data,
@@ -2321,7 +2321,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 		{
 	    case OPS_S2KS_SALTED:
 		hashes[n].add(&hashes[n],C.secret_key.salt,OPS_SALT_SIZE);
-		// flow through...
+		/*FALLTHROUGH*/
 	    case OPS_S2KS_SIMPLE:
 		hashes[n].add(&hashes[n],(unsigned char*)passphrase,l);
 		break;
