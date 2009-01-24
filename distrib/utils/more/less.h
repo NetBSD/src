@@ -1,4 +1,4 @@
-/*	$NetBSD: less.h,v 1.5 2003/10/13 14:34:25 agc Exp $	*/
+/*	$NetBSD: less.h,v 1.6 2009/01/24 13:58:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -43,7 +43,7 @@
 #define	BO_CHAR		'\203'		/* Enter boldface mode */
 #define	BE_CHAR		'\204'		/* Exit boldface mode */
 
-#define	CONTROL_CHAR(c)		(iscntrl(c))
+#define	CONTROL_CHAR(c)		(iscntrl((unsigned char)c))
 #define	CARAT_CHAR(c)		((c == '\177') ? '?' : (c | 0100))
 
 #define	TOP		(0)
