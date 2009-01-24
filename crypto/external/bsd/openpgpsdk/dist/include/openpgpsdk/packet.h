@@ -31,6 +31,7 @@
 #include <time.h>
 #include <openssl/bn.h>
 #include <openssl/sha.h>
+
 #include "types.h"
 #include "errors.h"
 
@@ -126,8 +127,6 @@ typedef enum
  */
 #define OPS_PTAG_NF_CONTENT_TAG_SHIFT	0
 
-
-
 /* PTag Content Tags */
 /***************************/
 
@@ -138,7 +137,7 @@ typedef enum
  * \see RFC4880 4.3
  * \see RFC4880 5.2.3.1
  */
-enum ops_content_tag_t
+typedef enum
     {
     OPS_PTAG_CT_RESERVED		= 0,	/*!< Reserved - a packet tag must not have this value */
     OPS_PTAG_CT_PK_SESSION_KEY		= 1,	/*!< Public-Key Encrypted Session Key Packet */
@@ -235,8 +234,11 @@ enum ops_content_tag_t
 
     /* Errors */
     OPS_PARSER_ERROR			=0x500,	/*!< Internal Use: Parser Error */
-    OPS_PARSER_ERRCODE			=0x500+1, /*! < Internal Use: Parser Error with errcode returned */
-    };
+    OPS_PARSER_ERRCODE			=0x500+1 /*! < Internal Use: Parser Error with errcode returned */
+    } ops_content_tag_t;
+
+typedef ops_content_tag_t ops_packet_tag_t;
+typedef ops_content_tag_t ops_ss_type_t;
 
 /** Structure to hold one parse error string. */
 typedef struct
@@ -292,7 +294,7 @@ typedef enum
     OPS_PKA_PRIVATE07		=107,	/*!< Private/Experimental Algorithm */
     OPS_PKA_PRIVATE08		=108,	/*!< Private/Experimental Algorithm */
     OPS_PKA_PRIVATE09		=109,	/*!< Private/Experimental Algorithm */
-    OPS_PKA_PRIVATE10		=110,	/*!< Private/Experimental Algorithm */
+    OPS_PKA_PRIVATE10		=110	/*!< Private/Experimental Algorithm */
     } ops_public_key_algorithm_t;
 
 /** Structure to hold one DSA public key parameters.
@@ -345,7 +347,7 @@ typedef enum
     {
     OPS_V2=2,	/*<! Version 2 (essentially the same as v3) */
     OPS_V3=3,	/*<! Version 3 */
-    OPS_V4=4,	/*<! Version 4 */
+    OPS_V4=4	/*<! Version 4 */
     } ops_version_t;
 
 /** Structure to hold one pgp public key */
@@ -390,7 +392,7 @@ typedef enum
     {
     OPS_S2KU_NONE=0,
     OPS_S2KU_ENCRYPTED_AND_HASHED=254,
-    OPS_S2KU_ENCRYPTED=255,
+    OPS_S2KU_ENCRYPTED=255
     } ops_s2k_usage_t;
 
 /** s2k_specifier_t
@@ -419,7 +421,7 @@ typedef enum
     OPS_SA_AES_128	=7, /*!< AES with 128-bit key (AES) */
     OPS_SA_AES_192	=8, /*!< AES with 192-bit key */
     OPS_SA_AES_256	=9, /*!< AES with 256-bit key */
-    OPS_SA_TWOFISH	=10, /*!< Twofish with 256-bit key (TWOFISH) */
+    OPS_SA_TWOFISH	=10 /*!< Twofish with 256-bit key (TWOFISH) */
     } ops_symmetric_algorithm_t;
 
 /** Hashing Algorithm Numbers.
@@ -439,7 +441,7 @@ typedef enum
     OPS_HASH_SHA256	= 8,	/*!< SHA256 */
     OPS_HASH_SHA384	= 9,	/*!< SHA384 */
     OPS_HASH_SHA512	=10,	/*!< SHA512 */
-    OPS_HASH_SHA224 = 11,   /*!< SHA224 */
+    OPS_HASH_SHA224 	=11     /*!< SHA224 */
     } ops_hash_algorithm_t;
 
 // Maximum block size for symmetric crypto
@@ -528,7 +530,7 @@ typedef enum
 
     OPS_SIG_TIMESTAMP	=0x40,	/*<! Timestamp signature */
 
-    OPS_SIG_3RD_PARTY	=0x50,	/*<! Third-Party Confirmation signature */
+    OPS_SIG_3RD_PARTY	=0x50	/*<! Third-Party Confirmation signature */
     } ops_sig_type_t;
 
 /** Struct to hold parameters of an RSA signature */
@@ -719,7 +721,7 @@ typedef enum
     OPS_C_NONE=0,
     OPS_C_ZIP=1,
     OPS_C_ZLIB=2,
-    OPS_C_BZIP2=3,
+    OPS_C_BZIP2=3
     } ops_compression_type_t;
 
 /* unlike most structures, this will feed its data as a stream

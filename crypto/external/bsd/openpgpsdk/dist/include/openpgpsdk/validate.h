@@ -59,7 +59,7 @@ typedef struct
     enum
 	{
 	ATTRIBUTE=1,
-	ID,
+	ID
 	} last_seen;
     ops_user_id_t user_id;
     ops_user_attribute_t user_attribute;

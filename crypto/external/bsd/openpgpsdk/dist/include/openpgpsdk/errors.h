@@ -25,7 +25,6 @@
 #ifndef OPS_ERRORS
 #define OPS_ERRORS
 
-#include "openpgpsdk/types.h"
 #include <errno.h> 
 
 /** error codes */
@@ -88,11 +87,8 @@ typedef enum
     OPS_E_PROTO_BAD_ONE_PASS_SIG_VRSN	=OPS_E_PROTO+7,
     OPS_E_PROTO_BAD_PKSK_VRSN		=OPS_E_PROTO+8,
     OPS_E_PROTO_DECRYPTED_MSG_WRONG_LEN =OPS_E_PROTO+9,
-    OPS_E_PROTO_BAD_SK_CHECKSUM		=OPS_E_PROTO+10,
+    OPS_E_PROTO_BAD_SK_CHECKSUM		=OPS_E_PROTO+10
     } ops_errcode_t;
-
-/** ops_errcode_name_map_t */
-typedef ops_map_t ops_errcode_name_map_t;
 
 /** one entry in a linked list of errors */
 typedef struct ops_error

@@ -45,6 +45,7 @@
 	content.content.error.error=err;				\
 	CBP(info,OPS_PARSER_ERROR,&content);				\
 	return ops_false;						\
+	/*NOTREACHED*/							\
 } while(/*CONSTCOND*/0)
 
 
