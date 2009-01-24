@@ -89,7 +89,7 @@ struct _ops_crypt_t
     unsigned char civ[OPS_MAX_BLOCK_SIZE];
     unsigned char siv[OPS_MAX_BLOCK_SIZE]; /* Needed for weird v3 resync */
     unsigned char key[OPS_MAX_KEY_SIZE];
-    size_t num; /* Offset - see openssl _encrypt doco */
+    int num; /* Offset - see openssl _encrypt doco */
     void *encrypt_key;
     void *decrypt_key;
     };
