@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2002/02/09 13:49:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2009/01/24 13:58:21 tsutsui Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
+WARNS?=		1
 PROG=		more
 NOMAN=		# defined
 

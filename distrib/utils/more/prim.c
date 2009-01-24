@@ -1,4 +1,4 @@
-/*	$NetBSD: prim.c,v 1.9 2003/10/13 14:34:25 agc Exp $	*/
+/*	$NetBSD: prim.c,v 1.10 2009/01/24 13:58:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)prim.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: prim.c,v 1.9 2003/10/13 14:34:25 agc Exp $");
+__RCSID("$NetBSD: prim.c,v 1.10 2009/01/24 13:58:21 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -638,8 +638,8 @@ search(search_forward, pattern, n, wantmatch)
 	 */
 	if (caseless && pattern != NULL)
 		for (p = pattern;  *p;  p++)
-			if (isupper(*p))
-				*p = tolower(*p);
+			if (isupper((unsigned char)*p))
+				*p = tolower((unsigned char)*p);
 #ifdef RECOMP
 
 	/*
@@ -791,7 +791,8 @@ search(search_forward, pattern, n, wantmatch)
 		 */
 		if (caseless)
 			for (p = q = line;  *p;  p++, q++)
-				*q = isupper(*p) ? tolower(*p) : *p;
+				*q = isupper((unsigned char)*p) ?
+				    tolower((unsigned char)*p) : *p;
 
 		/*
 		 * Remove any backspaces along with the preceding char.
