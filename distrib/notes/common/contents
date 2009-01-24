@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.145 2009/01/24 18:15:16 he Exp $
+.\"	$NetBSD: contents,v 1.146 2009/01/24 21:20:22 abs Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,21 +140,22 @@ A kernel intended for Acorn Network Computers.
 .\}
 .
 .if \n[atari] \{\
-.			It Pa netbsd-ATARITT.gz
-A kernel specifically tuned for the Atari TT030.
 .			It Pa netbsd-SMALL030.gz
-A kernel for both the Falcon and TT030.
-It is kept pretty small, so you
-can use it to boot the system for installation on memory-tight systems.
+A kernel for memory-tight 68030 Falcon and TT030 machines.
 This is the kernel supplied on the boot.fs floppy.
+.			It Pa netbsd-ATARITT.gz
+A kernel for the Atari TT030.
 .			It Pa netbsd-FALCON.gz
-A kernel specifically tuned for the Atari Falcon.
+A kernel for the Atari Falcon, including support for 68060
+processor cards.
 .			It Pa netbsd-HADES.gz
-A kernel specifically tuned for the Hades.
+A kernel for 68040 or 68060 Hades.
 .			It Pa netbsd-MILAN-ISAIDE.gz
-A kernel specifically tuned for the MILAN using IDE in ISA mode.
+A kernel for 68040 or 68060 MILAN using IDE in ISA mode - for
+use with disks not marked byteswapped by HDDRIVER.
 .			It Pa netbsd-MILAN-PCIIDE.gz
-A kernel specifically tuned for the MILAN using IDE in PCI mode.
+A kernel for 68040 or 68060 MILAN using IDE in PCI mode - for
+use with disks marked byteswapped by HDDRIVER.
 .\}
 .
 .if \n[hpcmips] \{\

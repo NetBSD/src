@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.7 2003/06/12 11:20:04 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.8 2009/01/24 21:20:22 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,10 +62,14 @@ the 'id' of the partition you wish to use for swap to 'SWP'.
 Do you want AHDI compatible partitioning? }
 
 message set_kernel_1
-{Kernel (TT030/Falcon)}
+{Kernel (ATARITT)}
 message set_kernel_2
-{Kernel (Hades)}
-message set_kernel_3 
-{Kernel (Milan ISA)}
+{Kernel (FALCON)}
+message set_kernel_3
+{Kernel (SMALL030)}
 message set_kernel_4
-{Kernel (Milan PCI)}
+{Kernel (HADES)}
+message set_kernel_5 
+{Kernel (MILAN-ISAIDE)}
+message set_kernel_6
+{Kernel (MILAN-PCIIDE)}

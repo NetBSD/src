@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.18 2007/11/12 15:07:34 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.19 2009/01/24 21:20:22 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,10 +63,12 @@
  *  or upgrade. The standard sets are:
  *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
-#define SET_KERNEL_1_NAME	"kern-BOOT"
-#define SET_KERNEL_2_NAME	"kern-HADES"
-#define SET_KERNEL_3_NAME	"kern-MILAN-ISAIDE"
-#define SET_KERNEL_4_NAME	"kern-MILAN-PCIIDE"
+#define SET_KERNEL_1_NAME	"kern-ATARITT"
+#define SET_KERNEL_2_NAME	"kern-FALCON"
+#define SET_KERNEL_3_NAME	"kern-SMALL030"
+#define SET_KERNEL_4_NAME	"kern-HADES"
+#define SET_KERNEL_5_NAME	"kern-MILAN-ISAIDE"
+#define SET_KERNEL_6_NAME	"kern-MILAN-PCIIDE"
 
 /*
  * Machine-specific command to write a new label to a disk.
