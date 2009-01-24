@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1173 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1174 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -117,3 +117,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		been changed. Previously, msdosfs would assume the -s flag
 		(short filenames) in this case; now msdosfs will assume the
 		-l flag (long filenames). [jmcneill 20090122]
+	openpgpsdk: Imported openpgpsdk 0.9 library (BSD-licensed) into
+		src/crypto/external. The command-line driver program, openpgp,
+		which is shipped with it has been mostly rewritten to be more
+		user-friendly. [agc 20090123]
