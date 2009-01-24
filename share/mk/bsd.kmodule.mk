@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.17 2009/01/24 00:29:13 rmind Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.18 2009/01/24 22:14:45 rmind Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -50,10 +50,10 @@ ${PROG}: ${OBJS} ${DPADD}
 .if !defined(KMODULEDIR)
 _OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh
 # Ensure these are recorded properly in METALOG on unprived installes:
-_INST_DIRS=	${DESTDIR}/kernel/${MACHINE}
-_INST_DIRS+=	${DESTDIR}/kernel/${MACHINE}/${_OSRELEASE}
-_INST_DIRS+=	${DESTDIR}/kernel/${MACHINE}/${_OSRELEASE}/modules
-KMODULEDIR=	${DESTDIR}/kernel/${MACHINE}/${_OSRELEASE}/modules/${KMOD}
+_INST_DIRS=	${DESTDIR}/stand/${MACHINE}
+_INST_DIRS+=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}
+_INST_DIRS+=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules
+KMODULEDIR=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules/${KMOD}
 .endif
 _PROG:=		${KMODULEDIR}/${PROG} # installed path
 
