@@ -1,9 +1,9 @@
-# $NetBSD: module.mi,v 1.5 2009/01/24 00:29:12 rmind Exp $
+# $NetBSD: module.mi,v 1.6 2009/01/24 22:14:45 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./kernel/@MACHINE@				base-kernel-modules
-./kernel/@MACHINE@/@OSRELEASE@			base-kernel-modules
+./stand/@MACHINE@				base-kernel-modules
+./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules
 ./@MODULEDIR@					base-kernel-modules
 ./@MODULEDIR@/accf_dataready			base-kernel-modules
 ./@MODULEDIR@/accf_dataready/accf_dataready.kmod	base-kernel-modules
