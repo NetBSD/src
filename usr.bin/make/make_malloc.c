@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.c,v 1.1 2009/01/24 11:59:39 dsl Exp $	*/
+/*	$NetBSD: make_malloc.c,v 1.2 2009/01/24 13:06:16 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,11 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: make_malloc.c,v 1.1 2009/01/24 11:59:39 dsl Exp $");
+__RCSID("$NetBSD: make_malloc.c,v 1.2 2009/01/24 13:06:16 cegger Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 #ifndef USE_EMALLOC
 /*
@@ -41,7 +43,7 @@ __RCSID("$NetBSD: make_malloc.c,v 1.1 2009/01/24 11:59:39 dsl Exp $");
 static void
 enomem(void)
 {
-	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
+	(void)fprintf(stderr, "%s.\n", strerror(errno));
 	exit(2);
 }
 
