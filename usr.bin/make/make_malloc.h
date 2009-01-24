@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.h,v 1.3 2009/01/24 13:06:16 cegger Exp $	*/
+/*	$NetBSD: make_malloc.h,v 1.4 2009/01/24 14:43:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,8 +27,6 @@
  */
 
 #ifndef USE_EMALLOC
-#include <sys/types.h>
-
 void *bmake_malloc(size_t);
 void *bmake_realloc(void *, size_t);
 char *bmake_strdup(const char *);

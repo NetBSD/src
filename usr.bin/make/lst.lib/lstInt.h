@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.19 2009/01/24 11:59:39 dsl Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.20 2009/01/24 14:43:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -41,8 +41,8 @@
 #ifndef _LSTINT_H_
 #define _LSTINT_H_
 
-#include	  "../make_malloc.h"
 #include	  "../lst.h"
+#include	  "../make_malloc.h"
 
 typedef struct ListNode {
 	struct ListNode	*prevPtr;   /* previous element in list */

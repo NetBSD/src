@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.77 2009/01/24 11:59:39 dsl Exp $	*/
+/*	$NetBSD: make.h,v 1.78 2009/01/24 14:43:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -116,6 +116,7 @@
 #include "hash.h"
 #include "config.h"
 #include "buf.h"
+#include "make_malloc.h"
 
 /*-
  * The structure for an individual graph node. Each node has several
@@ -429,7 +430,6 @@ extern int debug;
 #define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
 
 #include "nonints.h"
-#include "make_malloc.h"
 
 int Make_TimeStamp(GNode *, GNode *);
 Boolean Make_OODate(GNode *);
