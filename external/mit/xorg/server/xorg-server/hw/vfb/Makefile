@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/12/22 01:04:27 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.6 2009/01/24 17:24:52 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -99,6 +99,11 @@ DPADD+=	${LIBI386}
 .if ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
+.endif
+
+.if ${MACHINE_ARCH} == "alpha"
+LDADD+=	-lalpha
+DPADD+=	${LIBALPHA}
 .endif
 
 .include <bsd.x11.mk>

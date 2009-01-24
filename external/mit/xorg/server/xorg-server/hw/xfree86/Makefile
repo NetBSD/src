@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2008/12/22 01:04:27 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.24 2009/01/24 17:24:52 bouyer Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
 		xf86modes exa \
@@ -76,6 +76,9 @@ DPADD+=	${LIBI386}
 .elif ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
+.elif ${MACHINE_ARCH} == "alpha"
+LDADD+=	-lalpha
+DPADD+=	${LIBALPHA}
 .endif
 
 LDADD+=	-lm

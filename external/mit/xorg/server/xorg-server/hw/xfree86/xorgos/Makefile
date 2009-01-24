@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/11/06 22:10:47 macallan Exp $
+#	$NetBSD: Makefile,v 1.12 2009/01/24 17:24:52 bouyer Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -39,6 +39,13 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
+.if ${MACHINE} == "alpha"
+SRCS.bsd+=	alpha_video.c bsd_ev56.c bsdResource.c pm_noop.c agp_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_ALPHA_PIO
+.endfor
+.endif
+
 .if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c agp_noop.c
 SRCS.bus+=	netbsdSbus.c
@@ -76,7 +83,7 @@ SRCS.bus+=	ix86Pci.c
 .if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
     ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64"
+    ${MACHINE} == "sparc64" || ${MACHINE} == "alpha"
 SRCS.bus+=	netbsdPci.c
 .endif
 
@@ -100,7 +107,8 @@ CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 .if     ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
 	${MACHINE} == "sgimips" || ${MACHINE} == "sparc64" || \
 	${MACHINE} == "sparc" || ${MACHINE} == "netwinder" || \
-	${MACHINE} == "shark" || ${MACHINE} == "ofppc"
+	${MACHINE} == "shark" || ${MACHINE} == "ofppc" || \
+	${MACHINE} == "alpha"
 SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 

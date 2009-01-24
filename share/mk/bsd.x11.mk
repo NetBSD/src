@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.71 2008/11/09 23:02:29 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.72 2009/01/24 17:24:53 bouyer Exp $
 
 .include <bsd.init.mk>
 
@@ -85,7 +85,7 @@ X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
 			-DDDXOSVERRORF -DDDXTIME -DUSB_HID
 
 .if !(${MACHINE} == "acorn32"	|| \
-    ${MACHINE} == "alpha"	|| \
+    (${MACHINE} == "alpha"  && ${X11FLAVOUR} != "Xorg")	|| \
     ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "pmax"	|| \
     ${MACHINE} == "sun3"	|| \
