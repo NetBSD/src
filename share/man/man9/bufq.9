@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.18 2009/01/24 05:54:35 yamt Exp $
+.\"     $NetBSD: bufq.9,v 1.19 2009/01/24 10:39:58 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 13, 2009
+.Dd January 24, 2009
 .Dt BUFQ 9
 .Os
 .Sh NAME
@@ -162,7 +162,7 @@ Cancel the buf
 issued earlier on the queue.
 Returns
 .Dv NULL
-if the element can not be found on the queue or 
+if the element can not be found on the queue or
 .Fa bp
 if it has been found and removed.
 This operation can be computationally expensive if there are
