@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.85 2008/11/12 19:47:18 uwe Exp $
+# $NetBSD: GENERIC,v 1.86 2009/01/24 05:06:06 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -103,6 +103,7 @@ options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

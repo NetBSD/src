@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 2008/11/24 11:41:15 ad Exp $
+#	$NetBSD: GENERIC,v 1.16 2009/01/24 05:06:07 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -91,6 +91,7 @@ options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
