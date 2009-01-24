@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.37 2009/01/24 00:29:13 rmind Exp $	 */
+/*	$NetBSD: exec.c,v 1.38 2009/01/24 22:14:45 rmind Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -381,14 +381,14 @@ module_init(void)
 	if (netbsd_version / 1000000 % 100 == 99) {
 		/* -current */
 		snprintf(module_base, sizeof(module_base),
-		    "/kernel/%s/%d.%d.%d/modules", machine,
+		    "/stand/%s/%d.%d.%d/modules", machine,
 		    netbsd_version / 100000000,
 		    netbsd_version / 1000000 % 100,
 		    netbsd_version / 100 % 100);
 	} else if (netbsd_version != 0) {
 		/* release */
 		snprintf(module_base, sizeof(module_base),
-		    "/kernel/%s/%d.%d/modules", machine,
+		    "/stand/%s/%d.%d/modules", machine,
 		    netbsd_version / 100000000,
 		    netbsd_version / 1000000 % 100);
 	}
