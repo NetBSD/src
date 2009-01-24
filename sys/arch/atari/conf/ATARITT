@@ -1,12 +1,11 @@
 #
-# $NetBSD: ATARITT,v 1.91 2008/11/24 11:41:08 ad Exp $
+# $NetBSD: ATARITT,v 1.92 2009/01/24 00:22:12 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: ATARITT.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.76 2008/11/15 21:21:23 abs Exp $
+#		NetBSD: GENERIC.in,v 1.78 2009/01/24 00:19:47 abs Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
