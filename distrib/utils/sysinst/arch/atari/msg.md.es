@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2009/01/24 21:20:22 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,10 +62,14 @@ a 'NBD'. Cambie la 'id' de la partición en la que quiera usar swap a 'SWP'.
 Quiere un particionaje compatible con AHDI? }
 
 message set_kernel_1
-{Núcleo (TT030/Falcon)}
+{Núcleo (ATARITT)}
 message set_kernel_2
-{Núcleo (Hades)}
-message set_kernel_3 
-{Núcleo (Milan ISA)}
+{Núcleo (FALCON)}
+message set_kernel_3
+{Núcleo (SMALL030)}
 message set_kernel_4
-{Núcleo (Milan PCI)}
+{Núcleo (HADES)}
+message set_kernel_5 
+{Núcleo (MILAN-ISAIDE)}
+message set_kernel_6
+{Núcleo (MILAN-PCIIDE)}
