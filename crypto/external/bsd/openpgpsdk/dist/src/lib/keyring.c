@@ -835,7 +835,7 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 		for (n = 0 ; n < keyring->nkeys ; n++) {
 			for (i = 0; i < keyring->keys[n].nuids; i++) {
 				if (ops_get_debug_level(__FILE__)) {
-					printf("keyid ,%s, len %d, keyid[len] %c\n",
+					printf("keyid ,%s, len %zd, keyid[len] %c\n",
 						(char *)keyring->keys[n].uids[i].user_id, len, keyring->keys[n].uids[i].user_id[len]);
 				}
 				if (strncasecmp((char *)keyring->keys[n].uids[i].user_id, userid, len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ') {
@@ -854,7 +854,7 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 			 */
 			if ((cp = strrchr((char *)keyring->keys[n].uids[i].user_id, '<')) != NULL) {
 				if (ops_get_debug_level(__FILE__)) {
-					printf("cp ,%s, userid ,%s, len %d ,%c,\n",
+					printf("cp ,%s, userid ,%s, len %zd ,%c,\n",
 						cp + 1, userid, len, *(cp + len + 1));
 				}
 				if (strncasecmp(cp + 1, userid, len) == 0 &&
