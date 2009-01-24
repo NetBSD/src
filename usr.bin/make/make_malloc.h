@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.h,v 1.1 2009/01/24 11:59:39 dsl Exp $	*/
+/*	$NetBSD: make_malloc.h,v 1.2 2009/01/24 12:59:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -25,9 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: make_malloc.h,v 1.1 2009/01/24 11:59:39 dsl Exp $");
 
 #ifndef USE_EMALLOC
 void *bmake_malloc(size_t);
