@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/01/20 19:42:56 agc Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.2 2009/01/24 01:15:24 agc Exp $
 
 SUBDIR+= openpgpsdk
 

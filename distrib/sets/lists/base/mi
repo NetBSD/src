@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.790 2009/01/19 07:19:35 jmmv Exp $
+# $NetBSD: mi,v 1.791 2009/01/24 01:15:25 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -844,6 +844,7 @@
 ./usr/bin/nvi					base-obsolete		obsolete
 ./usr/bin/nview					base-obsolete		obsolete
 ./usr/bin/od					base-util-bin
+./usr/bin/openpgp				base-crypto-bin		crypto
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
 ./usr/bin/pagesize				base-util-bin
@@ -1106,6 +1107,7 @@
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
 ./usr/include/objc				base-objc-usr
+./usr/include/openpgpsdk			base-c-usr
 ./usr/include/openssl				base-c-usr
 ./usr/include/prop				base-c-usr
 ./usr/include/protocols				base-c-usr
