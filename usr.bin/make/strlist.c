@@ -1,4 +1,4 @@
-/*	$NetBSD: strlist.c,v 1.3 2009/01/16 21:15:34 dsl Exp $	*/
+/*	$NetBSD: strlist.c,v 1.4 2009/01/24 11:59:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 - 2009 The NetBSD Foundation, Inc.
@@ -33,18 +33,18 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: strlist.c,v 1.3 2009/01/16 21:15:34 dsl Exp $";
+static char rcsid[] = "$NetBSD: strlist.c,v 1.4 2009/01/24 11:59:39 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: strlist.c,v 1.3 2009/01/16 21:15:34 dsl Exp $");
+__RCSID("$NetBSD: strlist.c,v 1.4 2009/01/24 11:59:39 dsl Exp $");
 #endif /* not lint */
 #endif
 
 #include <stddef.h>
 #include <stdlib.h>
 #include "strlist.h"
-#include "make.h"
+#include "make_malloc.h"
 
 void
 strlist_init(strlist_t *sl)

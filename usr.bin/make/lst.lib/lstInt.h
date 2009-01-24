@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.18 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.19 2009/01/24 11:59:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -41,7 +41,7 @@
 #ifndef _LSTINT_H_
 #define _LSTINT_H_
 
-#include	  "../make.h"
+#include	  "../make_malloc.h"
 #include	  "../lst.h"
 
 typedef struct ListNode {

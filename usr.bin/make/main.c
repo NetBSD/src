@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.165 2009/01/23 21:58:27 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.166 2009/01/24 11:59:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.165 2009/01/23 21:58:27 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.166 2009/01/24 11:59:39 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.165 2009/01/23 21:58:27 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.166 2009/01/24 11:59:39 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1694,84 +1694,6 @@ Finish(int errors)
 {
 	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
 }
-
-#ifndef USE_EMALLOC
-/*
- * enomem --
- *	die when out of memory.
- */
-static void
-enomem(void)
-{
-	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
-	exit(2);
-}
-
-/*
- * bmake_malloc --
- *	malloc, but die on error.
- */
-void *
-bmake_malloc(size_t len)
-{
-	void *p;
-
-	if ((p = malloc(len)) == NULL)
-		enomem();
-	return(p);
-}
-
-/*
- * bmake_strdup --
- *	strdup, but die on error.
- */
-char *
-bmake_strdup(const char *str)
-{
-	size_t len;
-	char *p;
-
-	len = strlen(str) + 1;
-	if ((p = malloc(len)) == NULL)
-		enomem();
-	return memcpy(p, str, len);
-}
-
-/*
- * bmake_strndup --
- *	strndup, but die on error.
- */
-char *
-bmake_strndup(const char *str, size_t max_len)
-{
-	size_t len;
-	char *p;
-
-	if (str == NULL)
-		return NULL;
-
-	len = strlen(str);
-	if (len > max_len)
-		len = max_len;
-	p = bmake_malloc(len + 1);
-	memcpy(p, str, len);
-	p[len] = '\0';
-
-	return(p);
-}
-
-/*
- * bmake_realloc --
- *	realloc, but die on error.
- */
-void *
-bmake_realloc(void *ptr, size_t size)
-{
-	if ((ptr = realloc(ptr, size)) == NULL)
-		enomem();
-	return(ptr);
-}
-#endif
 
 /*
  * enunlink --

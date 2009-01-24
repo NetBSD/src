@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.76 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: make.h,v 1.77 2009/01/24 11:59:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -428,11 +428,8 @@ extern int debug;
 
 #define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
 
-/*
- * Since there are so many, all functions that return non-integer values are
- * extracted by means of a sed script or two and stuck in the file "nonints.h"
- */
 #include "nonints.h"
+#include "make_malloc.h"
 
 int Make_TimeStamp(GNode *, GNode *);
 Boolean Make_OODate(GNode *);
