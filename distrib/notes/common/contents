@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.144 2008/11/15 04:11:51 snj Exp $
+.\"	$NetBSD: contents,v 1.145 2009/01/24 18:15:16 he Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,14 +142,11 @@ A kernel intended for Acorn Network Computers.
 .if \n[atari] \{\
 .			It Pa netbsd-ATARITT.gz
 A kernel specifically tuned for the Atari TT030.
-.			It Pa netbsd-BOOT.gz
+.			It Pa netbsd-SMALL030.gz
 A kernel for both the Falcon and TT030.
 It is kept pretty small, so you
 can use it to boot the system for installation on memory-tight systems.
 This is the kernel supplied on the boot.fs floppy.
-.			It Pa netbsd-BOOTX.gz
-Same as the BOOT kernel, but it has slightly more features.
-You can run X11 with it.
 .			It Pa netbsd-FALCON.gz
 A kernel specifically tuned for the Atari Falcon.
 .			It Pa netbsd-HADES.gz
