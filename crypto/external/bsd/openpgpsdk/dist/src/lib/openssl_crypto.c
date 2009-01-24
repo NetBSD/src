@@ -705,7 +705,7 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
 	//	return ops_write_mpi(key->key.elgamal.x,info);
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	break;
 	}
 

@@ -106,7 +106,7 @@ accumulate_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
 
     case OPS_PARSER_ERROR:
 	fprintf(stderr,"Error: %s\n",content->error.error);
-	assert(0);
+	assert(/*CONSTCOND*/);
 	break;
 
     case OPS_PARSER_ERRCODE:
@@ -115,7 +115,7 @@ accumulate_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
 	default:
 	    fprintf(stderr,"parse error: %s\n",
 		    ops_errcode(content->errcode.errcode));
-	    //assert(0);
+	    //assert(/*CONSTCOND*/0);
 	    }
 	break;
 

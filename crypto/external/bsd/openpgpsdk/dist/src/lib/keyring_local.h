@@ -29,7 +29,7 @@
 				{ \
 				str->n##arr##_allocated=str->n##arr##_allocated*2+10; \
 				str->arr=realloc(str->arr,str->n##arr##_allocated*sizeof *str->arr); \
-				} while(0)
+				} while(/*CONSTCOND*/0)
 
 /** ops_keydata_key_t
  */

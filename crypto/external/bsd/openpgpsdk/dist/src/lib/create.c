@@ -202,7 +202,7 @@ static ops_boolean_t write_public_key_body(const ops_public_key_t *key,
 	    && ops_write_mpi(key->key.elgamal.y,info);
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	break;
 	}
 
@@ -267,7 +267,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 
     default:
         fprintf(stderr,"invalid/unsupported s2k specifier %d\n", key->s2k_specifier);
-        assert(0);
+        assert(/*CONSTCOND*/0);
         }
 
     if (!ops_write(&key->iv[0],ops_block_size(key->algorithm),info))
@@ -328,7 +328,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 
     default:
         fprintf(stderr,"invalid/unsupported s2k specifier %d\n", key->s2k_specifier);
-        assert(0);
+        assert(/*CONSTCOND*/0);
         }
 
     /* use this session key to encrypt */
@@ -387,7 +387,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 	//	return ops_write_mpi(key->key.elgamal.x,info);
 
     default:
-	assert(0);
+	assert(/*CONSTCOND*/0);
 	break;
 	}
 
@@ -712,12 +712,12 @@ ops_boolean_t ops_write_struct_secret_key(const ops_secret_key_t *key,
             break;
 
         default:
-            assert(0);
+            assert(/*CONSTCOND*/0);
             }
         break;
 
     default:
-        assert(0);
+        assert(/*CONSTCOND*/0);
         }
 
     // IV
@@ -739,7 +739,7 @@ ops_boolean_t ops_write_struct_secret_key(const ops_secret_key_t *key,
         break;
 
     default:
-        assert(0);
+        assert(/*CONSTCOND*/0);
         }
 
     // secret key and public key MPIs
