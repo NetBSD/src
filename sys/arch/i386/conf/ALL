@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.189 2009/01/24 14:11:07 cegger Exp $
+# $NetBSD: ALL,v 1.190 2009/01/24 14:19:04 haad Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.189 $"
+#ident 		"ALL-$Revision: 1.190 $"
 
 maxusers	32		# estimated number of users
 
@@ -1468,6 +1468,8 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
+
+pseudo-device 	dm			# device-mapper disk driver
 
 # network pseudo-devices
 pseudo-device	agr			# Link aggregation agr(4)
