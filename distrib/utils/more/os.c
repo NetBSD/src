@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.7 2003/10/13 14:34:25 agc Exp $	*/
+/*	$NetBSD: os.c,v 1.8 2009/01/24 13:58:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)os.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: os.c,v 1.7 2003/10/13 14:34:25 agc Exp $");
+__RCSID("$NetBSD: os.c,v 1.8 2009/01/24 13:58:21 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,6 @@ glob(filename)
 	int ch;
 	char *cmd;
 	static char buffer[MAXPATHLEN];
-	size_t l;
 
 	if (filename[0] == '#')
 		return (filename);

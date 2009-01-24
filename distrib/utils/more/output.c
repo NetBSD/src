@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.7 2003/10/13 14:34:25 agc Exp $	*/
+/*	$NetBSD: output.c,v 1.8 2009/01/24 13:58:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.7 2003/10/13 14:34:25 agc Exp $");
+__RCSID("$NetBSD: output.c,v 1.8 2009/01/24 13:58:21 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ putchr(c)
 	if (ob >= &obuf[sizeof(obuf)])
 		flush();
 	*ob++ = c;
+	return c;
 }
 
 /*

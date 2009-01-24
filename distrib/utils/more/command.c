@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.11 2004/09/01 01:46:56 chs Exp $	*/
+/*	$NetBSD: command.c,v 1.12 2009/01/24 13:58:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)command.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: command.c,v 1.11 2004/09/01 01:46:56 chs Exp $");
+__RCSID("$NetBSD: command.c,v 1.12 2009/01/24 13:58:21 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,9 +120,9 @@ cmd_char(c)
 	/* in this order, in case werase == erase_char */
 	if (c == werase_char) {
 		if (cp > cmdbuf) {
-			while (isspace(cp[-1]) && !cmd_erase());
-			while (!isspace(cp[-1]) && !cmd_erase());
-			while (isspace(cp[-1]) && !cmd_erase());
+			while (isspace((unsigned char)cp[-1]) && !cmd_erase());
+			while (!isspace((unsigned char)cp[-1]) && !cmd_erase());
+			while (isspace((unsigned char)cp[-1]) && !cmd_erase());
 		}
 		return(cp == cmdbuf);
 	}
@@ -273,7 +273,7 @@ exec_mca()
 		(void)search(0, cmdbuf, number, wsearch);
 		break;
 	case A_EXAMINE:
-		for (p = cmdbuf; isspace(*p); ++p);
+		for (p = cmdbuf; isspace((unsigned char)*p); ++p);
 		(void)edit(glob(p));
 		break;
 	}
