@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.45 2008/12/20 22:41:53 dsl Exp $
+#	$NetBSD: Makefile,v 1.46 2009/01/24 11:59:39 dsl Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
 SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c \
 	make.c parse.c str.c suff.c targ.c trace.c var.c util.c 
 SRCS+=  strlist.c
+SRCS+=  make_malloc.c
 SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 	lstDatum.c lstDeQueue.c lstDestroy.c lstDupl.c lstEnQueue.c \
 	lstFind.c lstFindFrom.c lstFirst.c lstForEach.c lstForEachFrom.c \
