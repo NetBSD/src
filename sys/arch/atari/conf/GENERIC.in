@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.77 2008/11/24 11:41:08 ad Exp $
+#	$NetBSD: GENERIC.in,v 1.78 2009/01/24 00:19:47 abs Exp $
 #
 # Generic atari
 #
@@ -10,9 +10,16 @@ include "arch/atari/conf/std.atari"
 include "arch/atari/conf/std.hades"
 #elif defined (MILAN_KERNEL)
 include "arch/atari/conf/std.milan"
-#endif
+#endif /* TT030_KERNEL / FALCON_KERNEL / HADES_KERNEL / MILAN_KERNEL */
 
+#if !defined(SMALL030_KERNEL)
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#endif /* !SMALL030_KERNEL */
+
+#if defined(SMALL030_KERNEL) || \
+  (!defined(TT030_KERNEL) && !defined(HADES_KERNEL) && !defined(MILAN_KERNEL))
+#define       NO_PHYS_NETWORK 1
+#endif /* SMALL030_KERNEL || ... */
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -37,21 +44,21 @@ options 	INSECURE	# disable kernel security levels
 #if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
 options 	M68030		# support for 030
 options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
-#endif
-#if defined(HADES_KERNEL) || defined(MILAN_KERNEL) || ( defined(FALCON_KERNEL) \
-	&& (defined(INSTALLX_KERNEL) || !defined(INSTALL_KERNEL) ))
+#endif /* TT030_KERNEL || FALCON_KERNEL */
+#if (defined(FALCON_KERNEL) && !defined(SMALL030_KERNEL)) || \
+	defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 options 	M68040		# support for 040
 options 	M68060		# support for 060
 options 	FPSP		# 68040 Floatingpoint support
 options 	M060SP		# MC68060 software support (Required for 060)
-#endif
+#endif /* ! FALCON_KERNEL & ! SMALL030_KERNEL ... */
 
 #
 # Networking options
 #
 options 	INET		# IP + ICMP + TCP + UDP
 
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
@@ -62,16 +69,16 @@ options 	INET6		# IPV6
 #options 	PIM		# Protocol Independent Multicast
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#ifndef NO_PHYS_NETWORK
+#if !defined(NO_PHYS_NETWORK)
 options 	NETATALK	# AppleTalk networking protocols
-#endif
-#endif
+#endif /* NO_PHYS_NETWORK */
+#endif /* !SMALL030_KERNEL */
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
@@ -91,7 +98,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
-#endif
+#endif /* !SMALL030_KERNEL */
 
 # File systems
 file-system 	FFS		# Berkeley fast file system
@@ -102,7 +109,7 @@ file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	NFS		# Network File System client side code
 file-system 	PROCFS		# Process filesystem
@@ -115,28 +122,28 @@ file-system 	PORTAL		# portal file system
 file-system 	EXT2FS		# second extended file system (linux)
 file-system 	LFS		# log-structured file system
 file-system	PTYFS		# /dev/pts/N support
-#endif
+#endif /* !SMALL030_KERNEL */
 
 # File system options
 options 	WAPBL		# File system journaling support - Experimental
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-#endif
+#endif /* !SMALL030_KERNEL */
 
 #
 # Misc. debugging options
 #
 options 	PANICWAIT	# Require keystroke to dump/reboot
+#if !defined(SMALL030_KERNEL)
 options 	DDB		# Kernel debugger
-#ifndef INSTALL_KERNEL
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	DEBUG		# expensive debugging checks/support
-#endif
+#endif /* !SMALL030_KERNEL */
 
 #
 # Compatibility options for various existing systems
@@ -152,18 +159,18 @@ options 	COMPAT_16	# Compatibility with NetBSD 1.6
 options 	COMPAT_20	# Compatibility with NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-#endif
 options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
 options 	EXEC_AOUT	# a.out format executables
+#endif /* !SMALL030_KERNEL */
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 #
 # Support for System V IPC facilities.
 #
@@ -171,9 +178,9 @@ options 	SYSVSHM			# System V shared memory
 options 	SYSVMSG			# System V messages
 options 	SYSVSEM			# System V semaphores
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-#endif
+#endif /* !SMALL030_KERNEL */
 
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 #
 # Support for various kernel options
 #
@@ -182,15 +189,15 @@ options 	KTRACE			# Add kernel tracing system call
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-#else /* INSTALL_KERNEL */
+#else /* SMALL030_KERNEL */
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
-#endif
+#endif /* !SMALL030_KERNEL */
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 options 	SCSIVERBOSE		# human readable SCSI error messages
-#endif
+#endif /* !SMALL030_KERNEL */
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	PCIVERBOSE		# verbose PCI device autoconfig messages
@@ -207,26 +214,26 @@ options 	TT_SCSI			# SCSI-support for TT
 options 	TT_VIDEO		# Graphics support for TT
 #options	ET4000_HAS_2MB_MEM	# et4000 with 2 MB video memory
 #endif
-#ifdef FALCON_KERNEL
+#if defined(FALCON_KERNEL)
 options 	FALCON_SCSI		# SCSI-support for Falcon
 options 	FALCON_VIDEO		# Graphics support for FALCON
-#endif
+#endif /* FALCON_KERNEL */
 options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
-#ifndef INSTALL_KERNEL
-#ifndef FALCON_KERNEL
+#if !defined(SMALL030_KERNEL)
+#if !defined(FALCON_KERNEL)
 options 	SERCONSOLE		# modem1 console support, breaks Falcon
-#endif
+#endif /* !FALCON_KERNEL */
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
 options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
 #options 	STATCLOCK	        # Separate {stat,prof}clock
-#endif
+#endif /* !SMALL030_KERNEL */
 
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 # Try linked commands on all targets
 options 	TRY_SCSI_LINKED_COMMANDS=0x7f
-#endif
+#endif /* !SMALL030_KERNEL */
 
 #
 # Build one kernel that can boot from any disk.
@@ -235,16 +242,16 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-#ifndef NO_PHYS_NETWORK
+#if !defined(NO_PHYS_NETWORK)
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#endif
+#endif /* NO_PHYS_NETWORK */
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd			# 3 pseudo disks (see vnconfig)
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	md		3	# Boot memory disk
 
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 pseudo-device	bpfilter		# berkeley packet filters
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	tun			# network tunnel
@@ -253,11 +260,11 @@ pseudo-device	tap			# virtual Ethernet
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-#ifndef NO_PHYS_NETWORK
+#if !defined(NO_PHYS_NETWORK)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-#endif
+#endif /* NO_PHYS_NETWORK */
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	cgd		4	# cryptographic disk driver
 pseudo-device	raid		8	# RAIDframe disk driver
@@ -276,7 +283,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-#endif
+#endif /* !SMALL030_KERNEL */
 
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 
@@ -301,5 +308,65 @@ audio*	at eso?
 #endif /* defined(HADES_KERNEL) || defined(MILAN_KERNEL) */
 
 #
-# Hardware options for GENERIC are in the various machine type specific files
+# Hardware options for HADES and MILAN are in their machine type specific files
 #
+
+#if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
+
+pseudo-device	view	4	# View (graphics mapping)
+#if !defined (SMALL030_KERNEL)
+pseudo-device	mouse	1	# mouse
+#endif /* ! SMALL030_KERNEL */
+
+#
+# The following sections describe various hardware options.
+#
+ncrscsi0	at mainbus0	# NCR5380 SCSI driver
+scsibus0	at ncrscsi0	# SCSI bus
+zs0		at mainbus0	# Serial support through 8530
+grfbus0 	at mainbus0	# bitmapped display's
+grfcc0		at grfbus0	# graphics driver
+ite0		at grfcc0	# console
+nvr0		at mainbus0	# nvram driver
+
+#if !defined(SMALL030_KERNEL)
+grfcc1		at grfbus0	# 2nd graphics driver
+ite1		at grfcc1	# 2nd tty
+grfcc2		at grfbus0	# 3rd graphics driver
+ite2		at grfcc2	# 3rd tty
+lp0		at mainbus0	# centronics printer
+ser0		at mainbus0	# UART on first 68901 (ttyB0)
+
+#if defined(TT030_KERNEL)
+avmebus0	at mainbus0	# VME bus
+vme0		at avmebus0
+le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
+le0		at vme0 irq 4	# Lance ethernet (BVME410).
+et0		at vme0		# Crazy Dots II
+#endif /* TT030_KERNEL */
+#endif /* SMALL030_KERNEL */
+
+#if defined(FALCON_KERNEL)
+wdc0		at mainbus0	# IDE-bus
+atabus*		at wdc? channel ?
+wd*		at atabus? drive ?
+
+ # ATAPI bus support
+atapibus*	at atabus?
+
+# ATAPI devices
+cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
+#endif /* FALCON_KERNEL */
+
+# SCSI devices
+sd* 	at scsibus? target ? lun ?	# SCSI disk drives
+st* 	at scsibus? target ? lun ?	# SCSI tape drives
+cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#if !defined (SMALL030_KERNEL)
+ch* 	at scsibus? target ? lun ?	# SCSI autochangers
+ss* 	at scsibus? target ? lun ?	# SCSI scanners
+se* 	at scsibus? target ? lun ?	# SCSI ethernet
+uk* 	at scsibus? target ? lun ?	# SCSI unknown
+#endif /* ! SMALL030_KERNEL */
+
+#endif /* TT030_KERNEL || FALCON_KERNEL */
