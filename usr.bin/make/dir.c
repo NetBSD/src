@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.60 2009/01/23 21:58:27 dsl Exp $	*/
+/*	$NetBSD: dir.c,v 1.61 2009/01/24 10:59:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.60 2009/01/23 21:58:27 dsl Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.61 2009/01/24 10:59:09 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.60 2009/01/23 21:58:27 dsl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.61 2009/01/24 10:59:09 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -918,7 +918,7 @@ DirLookupSubdir(Path *p, const char *name)
 
     if (stat(file, &stb) == 0) {
 	if (stb.st_mtime == 0)
-		stb.st_mtime++;
+		stb.st_mtime = 1;
 	/*
 	 * Save the modification time so if it's needed, we don't have
 	 * to fetch it again.
@@ -927,8 +927,8 @@ DirLookupSubdir(Path *p, const char *name)
 	    fprintf(debug_file, "   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    file);
 	}
-	entry = Hash_CreateEntry(&mtimes, (char *)file, NULL);
-	Hash_SetValue(entry, (void *)(long)stb.st_mtime);
+	entry = Hash_CreateEntry(&mtimes, file, NULL);
+	Hash_SetTimeValue(entry, stb.st_mtime);
 	nearmisses += 1;
 	return (file);
     }
@@ -1303,13 +1303,13 @@ Dir_FindFile(const char *name, Lst path)
 	return(bmake_strdup(name));
     } else if (stat(name, &stb) == 0) {
 	if (stb.st_mtime == 0)
-		stb.st_mtime++;
+		stb.st_mtime = 1;
 	entry = Hash_CreateEntry(&mtimes, name, NULL);
 	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    name);
 	}
-	Hash_SetValue(entry, (void *)(long)stb.st_mtime);
+	Hash_SetTimeValue(entry, stb.st_mtime);
 	return (bmake_strdup(name));
     } else {
 	if (DEBUG(DIR)) {
@@ -1455,9 +1455,9 @@ Dir_MTime(GNode *gn)
 	 */
 	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "Using cached time %s for %s\n",
-		    Targ_FmtTime((time_t)(long)Hash_GetValue(entry)), fullName);
+		    Targ_FmtTime(Hash_GetTimeValue(entry)), fullName);
 	}
-	stb.st_mtime = (time_t)(long)Hash_GetValue(entry);
+	stb.st_mtime = Hash_GetTimeValue(entry);
 	Hash_DeleteEntry(&mtimes, entry);
     } else if (stat(fullName, &stb) < 0) {
 	if (gn->type & OP_MEMBER) {
@@ -1472,7 +1472,7 @@ Dir_MTime(GNode *gn)
 	 * 0 handled specially by the code, if the time is really 0, return
 	 * something else instead
 	 */
-	stb.st_mtime++;
+	stb.st_mtime = 1;
     }
 	
     if (fullName && gn->path == NULL) {
