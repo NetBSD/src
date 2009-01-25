@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.8 2009/01/19 13:16:14 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.9 2009/01/25 10:28:29 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -37,6 +37,7 @@
 
 #include <sys/mutex.h>
 #include <machine/pte.h>
+#include <machine/cpufunc.h>
 
 #include <uvm/uvm_pglist.h>
 #include <uvm/uvm_object.h>
@@ -81,8 +82,20 @@ extern struct pdc_hwtlb pdc_hwtlb;
 /*
  * pool quickmaps
  */
-#define	PMAP_MAP_POOLPAGE(pa)	(pa)
-#define	PMAP_UNMAP_POOLPAGE(va)	(va)
+static inline vaddr_t hppa_map_poolpage(paddr_t pa)
+{
+	return (vaddr_t)pa;
+}
+
+static inline paddr_t hppa_unmap_poolpage(vaddr_t va)
+{
+	pdcache(HPPA_SID_KERNEL, va, PAGE_SIZE);
+
+	return (paddr_t)va;
+}
+
+#define	PMAP_MAP_POOLPAGE(pa)	hppa_map_poolpage(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)	hppa_unmap_poolpage(va)
 
 /*
  * according to the parisc manual aliased va's should be
