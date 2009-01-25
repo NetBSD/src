@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2008/05/06 15:32:07 dyoung Exp $
+#	$NetBSD: list,v 1.9 2009/01/25 22:08:38 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/sgimips/stand
 
@@ -69,7 +69,7 @@ COPY	${DESTDIR}/usr/mdec/ip3xboot		usr/mdec/ip3xboot
 COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script 555
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
-COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 

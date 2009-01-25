@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.19 2008/05/06 15:32:06 dyoung Exp $
+#	$NetBSD: list,v 1.20 2009/01/25 22:08:38 abs Exp $
 
 SRCDIRS bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin gnu/usr.bin/binutils
 
@@ -72,7 +72,7 @@ LIBS    libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz -lprop
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
-COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 

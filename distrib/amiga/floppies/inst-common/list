@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2007/03/03 06:40:05 apb Exp $
+#	$NetBSD: list,v 1.14 2009/01/25 22:08:37 abs Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -65,14 +65,14 @@ SPECIAL	/bin/rm dev/MAKEDEV
 COPY	${DESTDIR}/usr/mdec/*	usr/mdec
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group		etc
-COPY	${DESTDIR}/etc/master.passwd	etc
-COPY	${DESTDIR}/etc/passwd		etc
-COPY	${DESTDIR}/etc/protocols	etc
-COPY	${DESTDIR}/etc/netconfig	etc
-COPY	${DESTDIR}/etc/pwd.db		etc
-COPY	${DESTDIR}/etc/services		etc
-COPY	${DESTDIR}/etc/spwd.db		etc
+COPY	${DESTDIR}/etc/group				etc
+COPY	${DESTDIR}/etc/master.passwd			etc
+COPY	${DESTDIR}/etc/passwd				etc
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc
+COPY	${DESTDIR}/etc/netconfig			etc
+COPY	${DESTDIR}/etc/pwd.db				etc
+COPY	${NETBSDSRCDIR}/distrib/common/services		etc
+COPY	${DESTDIR}/etc/spwd.db				etc
 
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils

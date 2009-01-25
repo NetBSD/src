@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2008/02/02 04:23:06 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.17 2009/01/25 22:08:37 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,7 +19,7 @@ MAKEDEVTARGETS=	minimal
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
 		${NETBSDSRCDIR}/distrib/common/services \
 		${NETBSDSRCDIR}/distrib/common/termcap.mini
 SMALLPROG_INET6=1

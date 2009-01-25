@@ -1,12 +1,12 @@
-#	$NetBSD: list,v 1.5 2007/03/03 06:40:06 apb Exp $
+#	$NetBSD: list,v 1.6 2009/01/25 22:08:37 abs Exp $
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/master.passwd		etc/master.passwd
 #COPY	${CURDIR}/../../../../etc/etc.evbsh3/rc		etc/rc
 COPY	${CURDIR}/../../../../etc/group			etc/group
-COPY	${CURDIR}/../../../../etc/protocols		etc/protocols
-COPY	${CURDIR}/../../../../etc/services 		etc/services
-COPY	${CURDIR}/../../../../etc/gettytab			etc/gettytab
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
+COPY	${CURDIR}/../../../../etc/gettytab		etc/gettytab
 #COPY	${CURDIR}/localtime				etc/localtime
 COPY	${CURDIR}/../../../../etc/hosts			etc/hosts
 COPY	${CURDIR}/../../../../etc/etc.evbsh3/ttys	etc/ttys
