@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.20 2009/01/20 20:57:26 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.21 2009/01/25 15:23:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.20 2009/01/20 20:57:26 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.21 2009/01/25 15:23:42 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -189,7 +189,7 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	struct scsipi_adapter *adapt = &dev->sc_adapter;
 	struct scsipi_channel *chan = &dev->sc_channel;
 
-	adapt->adapt_dev = &dev->sc_dev;
+	adapt->adapt_dev = dev->sc_dev;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 256;
 	adapt->adapt_max_periph = 256; /* Max tags per device */
@@ -212,11 +212,11 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	 * config_found() to make sure the adatper is disabled.
 	 */
 	if (scsipi_adapter_addref(&dev->sc_adapter) != 0) {
-		aprint_error_dev(&dev->sc_dev, "unable to enable controller\n");
+		aprint_error_dev(dev->sc_dev, "unable to enable controller\n");
 		return;
 	}
 
-	dev->sc_cfflags = device_cfdata(&dev->sc_dev)->cf_flags;
+	dev->sc_cfflags = device_cfdata(dev->sc_dev)->cf_flags;
 	wd33c93_init(dev);
 	
 	aprint_normal(": %s (%d.%d MHz clock, %s, SCSI ID %d)\n",
@@ -227,14 +227,14 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	    (dev->sc_dmamode == SBIC_CTL_BURST_DMA) ? "BURST DMA" : "PIO",
 	    dev->sc_channel.chan_id);
 	if (dev->sc_chip == SBIC_CHIP_WD33C93B) {
-		aprint_normal_dev(&dev->sc_dev, "microcode revision 0x%02x",
+		aprint_normal_dev(dev->sc_dev, "microcode revision 0x%02x",
 		    dev->sc_rev);
 		if (dev->sc_minsyncperiod < 50)
 			aprint_normal(", Fast SCSI");
 		aprint_normal("\n");
 	}
 
-	dev->sc_child = config_found(&dev->sc_dev, &dev->sc_channel,
+	dev->sc_child = config_found(dev->sc_dev, &dev->sc_channel,
 				     scsiprint);
 	scsipi_adapter_delref(&dev->sc_adapter);
 }
@@ -549,7 +549,8 @@ wd33c93_dma_stop(struct wd33c93_softc *dev)
 void
 wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
-	struct wd33c93_softc *dev = (void *)chan->chan_adapter->adapt_dev;
+	struct wd33c93_softc *dev =
+	    device_private(chan->chan_adapter->adapt_dev);
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
 	struct wd33c93_acb *acb;
@@ -1545,7 +1546,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 			case SEND_TAG:
 				printf("%s: tagged queuing rejected: "
 				    "target %d\n",
-				    device_xname(&dev->sc_dev), dev->target);
+				    device_xname(dev->sc_dev), dev->target);
 				ti->flags &= ~T_TAG;
 				li = TINFO_LUN(ti, dev->lun);
 				if (acb->tag_type &&
@@ -1560,7 +1561,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 
 			case SEND_SDTR:
 				printf("%s: sync transfer rejected: target %d\n",
-				    device_xname(&dev->sc_dev), dev->target);
+				    device_xname(dev->sc_dev), dev->target);
 
 				dev->sc_flags &= ~SBICF_SYNCNEGO;
 				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
@@ -1730,7 +1731,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 		if ((msgaddr[0]!=MSG_SIMPLE_Q_TAG) || (dev->sc_msgify==0)) {
 			printf("%s: TAG reselect without IDENTIFY;"
 			    " MSG %x; sending DEVICE RESET\n",
-			    device_xname(&dev->sc_dev), msgaddr[0]);
+			    device_xname(dev->sc_dev), msgaddr[0]);
 			goto reset;
 		}
 		SBIC_DEBUG(TAGS, ("TAG %x/%x\n", msgaddr[0], msgaddr[1]));
@@ -1751,7 +1752,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 			printf("%s: reselect without IDENTIFY;"
 			    " MSG %x;"
 			    " sending DEVICE RESET\n",
-			    device_xname(&dev->sc_dev), msgaddr[0]);
+			    device_xname(dev->sc_dev), msgaddr[0]);
 			goto reset;
 		}
 		break;
@@ -1832,7 +1833,7 @@ wd33c93_msgout(struct wd33c93_softc *dev)
 		case SEND_IDENTIFY:
 			if (dev->sc_state != SBIC_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
-				    device_xname(&dev->sc_dev), __LINE__);
+				    device_xname(dev->sc_dev), __LINE__);
 			}
 			dev->sc_omsg[0] =
 			    MSG_IDENTIFY(acb->xs->xs_periph->periph_lun, 0);
@@ -1840,7 +1841,7 @@ wd33c93_msgout(struct wd33c93_softc *dev)
 		case SEND_TAG:
 			if (dev->sc_state != SBIC_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
-				    device_xname(&dev->sc_dev), __LINE__);
+				    device_xname(dev->sc_dev), __LINE__);
 			}
 			dev->sc_omsg[0] = acb->tag_type;
 			dev->sc_omsg[1] = acb->tag_id;
@@ -2095,7 +2096,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 			/* If we didn't get an interrupt, somethink's up */
 			if ((asr & SBIC_ASR_INT) == 0) {
 				printf("%s: Reselect without identify? asr %x\n",
-				    device_xname(&dev->sc_dev), asr);
+				    device_xname(dev->sc_dev), asr);
 				newlun = 0; /* XXXX */
 			} else {
 				/*
@@ -2178,7 +2179,7 @@ wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, i
 		 * for the best.
 		 */
 		SBIC_DEBUG(RSEL, ("%s: reselect with active command\n",
-			       device_xname(&dev->sc_dev)));
+			       device_xname(dev->sc_dev)));
 		ti = &dev->sc_tinfo[dev->target];
 		li = TINFO_LUN(ti, dev->lun);
 		li->state = L_STATE_IDLE;
@@ -2214,7 +2215,7 @@ wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, i
 	if (acb == NULL) {
 		printf("%s: reselect from target %d lun %d tag %x:%x "
 		    "with no nexus; sending ABORT\n",
-		    device_xname(&dev->sc_dev), target, lun, tag_type, tag_id);
+		    device_xname(dev->sc_dev), target, lun, tag_type, tag_id);
 		goto abort;
 	}
 
@@ -2279,7 +2280,7 @@ wd33c93_timeout(void *arg)
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct wd33c93_softc *dev =
-	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	int s, asr;
 
 	s = splbio();
@@ -2289,7 +2290,7 @@ wd33c93_timeout(void *arg)
 	scsipi_printaddr(periph);
 	printf("%s: timed out; asr=0x%02x [acb %p (flags 0x%x, dleft %zx)], "
 	    "<state %d, nexus %p, resid %lx, msg(q %x,o %x)>",
-	    device_xname(&dev->sc_dev), asr, acb, acb->flags, acb->dleft,
+	    device_xname(dev->sc_dev), asr, acb, acb->flags, acb->dleft,
 	    dev->sc_state, dev->sc_nexus, (long)dev->sc_dleft,
 	    dev->sc_msgpriq, dev->sc_msgout);
 

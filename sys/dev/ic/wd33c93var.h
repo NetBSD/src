@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.7 2007/05/21 19:25:55 rumble Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.8 2009/01/25 15:23:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,7 +118,7 @@ struct wd33c93_tinfo {
 #define TINFO_LUN(t, l) 	((t)->lun[(l)])
 
 struct wd33c93_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	struct scsipi_channel sc_channel; /* proto for sub devices */
 	struct scsipi_adapter sc_adapter;
