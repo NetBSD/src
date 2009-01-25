@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.44 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.45 2009/01/25 04:45:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.44 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.45 2009/01/25 04:45:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -436,7 +436,7 @@ mutex_onproc(uintptr_t owner, struct cpu_info **cip)
 /*
  * mutex_vector_enter:
  *
- *	Support routine for mutex_enter() that must handles all cases.  In
+ *	Support routine for mutex_enter() that must handle all cases.  In
  *	the LOCKDEBUG case, mutex_enter() is always aliased here, even if
  *	fast-path stubs are available.  If an mutex_spin_enter() stub is
  *	not available, then it is also aliased directly here.
@@ -543,9 +543,9 @@ mutex_vector_enter(kmutex_t *mtx)
 			continue;
 		}
 
-		if (panicstr != NULL)
+		if (__predict_false(panicstr != NULL))
 			return;
-		if (MUTEX_OWNER(owner) == curthread)
+		if (__predict_false(MUTEX_OWNER(owner) == curthread))
 			MUTEX_ABORT(mtx, "locking against myself");
 
 #ifdef MULTIPROCESSOR
