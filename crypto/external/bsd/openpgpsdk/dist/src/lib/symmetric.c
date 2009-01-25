@@ -55,7 +55,7 @@ static void std_set_key(ops_crypt_t *crypt,const unsigned char *key)
 
 static void std_resync(ops_crypt_t *decrypt)
     {
-    if(decrypt->num == decrypt->blocksize)
+    if((size_t)decrypt->num == decrypt->blocksize)
 	return;
 
     memmove(decrypt->civ+decrypt->blocksize-decrypt->num,decrypt->civ,
@@ -433,7 +433,7 @@ size_t ops_decrypt_se
 	{
 	unsigned char t;
 
-	if(decrypt->num == decrypt->blocksize)
+	if((size_t)decrypt->num == decrypt->blocksize)
 	    {
 	    memcpy(decrypt->siv,decrypt->civ,decrypt->blocksize);
 	    decrypt->block_decrypt(decrypt,decrypt->civ,decrypt->civ);
@@ -457,7 +457,7 @@ size_t ops_encrypt_se(ops_crypt_t *encrypt,void *out_,const void *in_,
        ourselves */
     while(count-- > 0)
 	{
-	if(encrypt->num == encrypt->blocksize)
+	if((size_t)encrypt->num == encrypt->blocksize)
 	    {
 	    memcpy(encrypt->siv,encrypt->civ,encrypt->blocksize);
 	    encrypt->block_encrypt(encrypt,encrypt->civ,encrypt->civ);
