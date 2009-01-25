@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.25 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.26 2009/01/25 15:23:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.25 2008/05/10 15:31:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.26 2009/01/25 15:23:42 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct wdsc_softc {
 void	wdsc_attach	(struct device *, struct device *, void *);
 int	wdsc_match	(struct device *, struct cfdata *, void *);
 
-CFATTACH_DECL(wdsc, sizeof(struct wdsc_softc),
+CFATTACH_DECL_NEW(wdsc, sizeof(struct wdsc_softc),
     wdsc_match, wdsc_attach, NULL, NULL);
 
 int	wdsc_dmasetup	(struct wd33c93_softc *, void **,size_t *,
@@ -138,11 +138,12 @@ wdsc_match(struct device *pdp, struct cfdata *cf, void *auxp)
 void
 wdsc_attach(struct device *pdp, struct device *dp, void *auxp)
 {
-	struct wd33c93_softc *sc = (void *)dp;
-	struct wdsc_softc *wsc = (void *)dp;
+	struct wdsc_softc *wsc = device_private(dp);
+	struct wd33c93_softc *sc = &wsc->sc_wd33c93;
 	struct hpc_attach_args *haa = auxp;
 	int err;
 
+	sc->sc_dev = dp;
 	sc->sc_regt = haa->ha_st;
 	wsc->sc_dmat = haa->ha_dmat;
 
@@ -180,7 +181,7 @@ wdsc_attach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_dmamode = SBIC_CTL_BURST_DMA;
 
 	evcnt_attach_dynamic(&wsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-			     sc->sc_dev.dv_xname, "intr");
+	    device_xname(sc->sc_dev), "intr");
 
 	if ((cpu_intr_establish(haa->ha_irq, IPL_BIO,
 	     wdsc_scsiintr, sc)) == NULL) {
@@ -219,7 +220,7 @@ wdsc_dmasetup(struct wd33c93_softc *dev, void **addr, size_t *len, int datain, s
 				NULL /* kernel address */,
 				BUS_DMA_NOWAIT)) != 0)
 			panic("%s: bus_dmamap_load err=%d",
-			      dev->sc_dev.dv_xname, err);
+			    device_xname(dev->sc_dev), err);
 
 		hpcdma_sglist_create(dsc, wsc->sc_dmamap);
 		wsc->sc_flags |= WDSC_DMA_MAPLOADED;
