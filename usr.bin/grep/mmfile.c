@@ -1,4 +1,4 @@
-/*	$NetBSD: mmfile.c,v 1.4 2007/12/06 20:33:48 cjep Exp $	*/
+/*	$NetBSD: mmfile.c,v 1.5 2009/01/25 14:06:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mmfile.c,v 1.4 2007/12/06 20:33:48 cjep Exp $");
+__RCSID("$NetBSD: mmfile.c,v 1.5 2009/01/25 14:06:00 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,7 @@ mmopen(const char *fn, const char *mode)
 		goto ouch1;
 	if (fstat(mmf->fd, &st) == -1)
 		goto ouch2;
-	if (st.st_size > MAX_MAP_LEN)		/* too big to mmap */		
+	if (st.st_size > (off_t)(MAX_MAP_LEN))	/* too big to mmap */		
 		goto ouch2;
 	if ((st.st_mode & S_IFREG) == 0)	/* only mmap regular files */
 		goto ouch2;

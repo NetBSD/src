@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 2007/12/06 20:33:49 cjep Exp $	*/
+/*	$NetBSD: util.c,v 1.6 2009/01/25 14:06:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.5 2007/12/06 20:33:49 cjep Exp $");
+__RCSID("$NetBSD: util.c,v 1.6 2009/01/25 14:06:00 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -219,7 +219,7 @@ procline(str_t *l, int nottext)
 	
 	t = vflag ? REG_NOMATCH : 0;
 
-	while (st <= l->len) {
+	while (st >= 0 && (size_t)st <= l->len) {
 		pmatch.rm_so = st;
 		pmatch.rm_eo = l->len;
 		for (i = 0; i < patterns; i++) {
@@ -229,11 +229,11 @@ procline(str_t *l, int nottext)
 			if (r == 0) {
 				if (wflag) {
 					if ((pmatch.rm_so != 0 && isword((unsigned char)l->dat[pmatch.rm_so - 1]))
-					    || (pmatch.rm_eo != l->len && isword((unsigned char)l->dat[pmatch.rm_eo])))
+					    || ((size_t)pmatch.rm_eo != l->len && isword((unsigned char)l->dat[pmatch.rm_eo])))
 						r = REG_NOMATCH;
 				}
 				if (xflag) {
-					if (pmatch.rm_so != 0 || pmatch.rm_eo != l->len)
+					if (pmatch.rm_so != 0 || (size_t)pmatch.rm_eo != l->len)
 						r = REG_NOMATCH;
 				}
 			}
