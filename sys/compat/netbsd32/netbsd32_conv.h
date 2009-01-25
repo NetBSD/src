@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.21 2009/01/11 02:45:49 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.22 2009/01/25 01:22:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -427,19 +427,19 @@ netbsd32_from___stat50(const struct stat *sbp, struct netbsd32_stat50 *sb32p)
 static __inline void
 netbsd32_from_stat(const struct stat *sbp, struct netbsd32_stat *sb32p)
 {
-	sb32p->st_dev = (uint32_t)sbp->st_dev;
+	sb32p->st_dev = sbp->st_dev;
 	sb32p->st_ino = sbp->st_ino;
 	sb32p->st_mode = sbp->st_mode;
 	sb32p->st_nlink = sbp->st_nlink;
 	sb32p->st_uid = sbp->st_uid;
 	sb32p->st_gid = sbp->st_gid;
-	sb32p->st_rdev = (uint32_t)sbp->st_rdev;
+	sb32p->st_rdev = sbp->st_rdev;
 	sb32p->st_size = sbp->st_size;
-	sb32p->st_atimespec.tv_sec = (int32_t)sbp->st_atimespec.tv_sec;
+	sb32p->st_atimespec.tv_sec = (netbsd32_time_t)sbp->st_atimespec.tv_sec;
 	sb32p->st_atimespec.tv_nsec = (netbsd32_long)sbp->st_atimespec.tv_nsec;
-	sb32p->st_mtimespec.tv_sec = (int32_t)sbp->st_mtimespec.tv_sec;
+	sb32p->st_mtimespec.tv_sec = (netbsd32_time_t)sbp->st_mtimespec.tv_sec;
 	sb32p->st_mtimespec.tv_nsec = (netbsd32_long)sbp->st_mtimespec.tv_nsec;
-	sb32p->st_ctimespec.tv_sec = (int32_t)sbp->st_ctimespec.tv_sec;
+	sb32p->st_ctimespec.tv_sec = (netbsd32_time_t)sbp->st_ctimespec.tv_sec;
 	sb32p->st_ctimespec.tv_nsec = (netbsd32_long)sbp->st_ctimespec.tv_nsec;
 	sb32p->st_blksize = sbp->st_blksize;
 	sb32p->st_blocks = sbp->st_blocks;
