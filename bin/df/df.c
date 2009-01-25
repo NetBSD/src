@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.84 2009/01/18 00:30:17 lukem Exp $ */
+/*	$NetBSD: df.c,v 1.85 2009/01/25 14:18:21 lukem Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.84 2009/01/18 00:30:17 lukem Exp $");
+__RCSID("$NetBSD: df.c,v 1.85 2009/01/25 14:18:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ prthuman(struct statvfs *sfsp, int64_t used, int64_t bavail)
 #define fsbtoblk(num, fsbs, bs)					\
 	(((fsbs) != 0 && (uint64_t)(fsbs) < (uint64_t)(bs)) ?	\
 	    (int64_t)(num) / (int64_t)((bs) / (fsbs)) :		\
-	    (int64_t)(num) * ((fsbs) / (bs)))
+	    (int64_t)(num) * (int64_t)((fsbs) / (bs)))
 
 /*
  * Print out status about a filesystem.
