@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtest.c,v 1.16 2008/07/21 14:33:31 lukem Exp $	*/
+/*	$NetBSD: dbtest.c,v 1.17 2009/01/25 13:40:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: dbtest.c,v 1.16 2008/07/21 14:33:31 lukem Exp $");
+__RCSID("$NetBSD: dbtest.c,v 1.17 2009/01/25 13:40:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 			/* Don't display the newline, if CR at EOL. */
 			if (p[len - 2] == '\r')
 				--len;
-			if (write(ofd, p + 1, len - 1) != len - 1 ||
+			if ((size_t)write(ofd, p + 1, len - 1) != (len - 1) ||
 			    write(ofd, "\n", 1) != 1)
 				err(1, "write failed");
 			break;
