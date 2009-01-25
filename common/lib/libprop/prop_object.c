@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.24 2009/01/03 18:31:34 pooka Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.25 2009/01/25 14:22:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -918,7 +918,7 @@ _prop_object_internalize_map_file(const char *fname)
 		return (NULL);
 	}
 	mf->poimf_mapsize = ((size_t)sb.st_size + pgmask) & ~pgmask;
-	if (mf->poimf_mapsize < sb.st_size) {
+	if (mf->poimf_mapsize < (size_t)sb.st_size) {
 		(void) close(fd);
 		_PROP_FREE(mf, M_TEMP);
 		return (NULL);
