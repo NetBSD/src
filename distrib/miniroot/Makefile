@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2008/09/19 17:23:32 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.67 2009/01/25 22:08:38 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,7 +15,7 @@ IMAGE=		miniroot.fs
 IMAGEDEPENDS=	${CRUNCHBIN} install.sub install.sh upgrade.sh \
 		${KERNSRCDIR}/conf/osrelease.sh \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
 		${NETBSDSRCDIR}/distrib/common/services
 PARSELISTENV=	ARCHDIR=${ARCHDIR:Q} \
 		DISTRIBREV=${DISTRIBREV:Q} \

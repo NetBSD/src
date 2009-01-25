@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2008/10/25 22:27:34 apb Exp $
+#	$NetBSD: Makefile,v 1.28 2009/01/25 22:08:39 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -28,8 +28,9 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${DESTDIR}/dev/MAKEDEV ${DESTDIR}/dev/MAKEDEV.local \
 		${DESTDIR}/etc/disktab ${DESTDIR}/etc/group \
 		${DESTDIR}/etc/master.passwd ${DESTDIR}/etc/netconfig \
-		${DESTDIR}/etc/passwd ${DESTDIR}/etc/protocols \
-		${DESTDIR}/etc/pwd.db ${DESTDIR}/etc/services \
+		${DESTDIR}/etc/passwd \
+		${NETBSDSRCDIR}/distrib/common/protocols \
+		${DESTDIR}/etc/pwd.db ${NETBSDSRCDIR}/distrib/common/services \
 		${DESTDIR}/etc/spwd.db \
 		${DESTDIR}/usr/mdec/bootxx ${DESTDIR}/usr/mdec/bootyy \
 		${DESTDIR}/usr/mdec/netboot ${DESTDIR}/usr/mdec/tapeboot \
