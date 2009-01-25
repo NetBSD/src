@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.6 2007/08/14 18:52:48 agc Exp $ */
+/* $NetBSD: conffile.c,v 1.7 2009/01/25 14:25:27 lukem Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -175,7 +175,7 @@ int
 conffile_get_by_field(conffile_t *sp, ent_t *ep, int f, char *val)
 {
 	while (conffile_getent(sp, ep)) {
-		if (ep->sv.c > f && strcmp(ep->sv.v[f], val) == 0) {
+		if (ep->sv.c > (uint32_t)f && strcmp(ep->sv.v[f], val) == 0) {
 			return 1;
 		}
 	}
@@ -247,7 +247,7 @@ conffile_putent(conffile_t *sp, int f, char *val, char *newent)
 			}
 		}
 		(void) conffile_split(sp, &e, from);
-		if (val != NULL && f < e.sv.c && strcmp(val, e.sv.v[f]) == 0) {
+		if (val != NULL && (uint32_t)f < e.sv.c && strcmp(val, e.sv.v[f]) == 0) {
 			/* replace it */
 			if (!safe_write(fp, newent, strlen(newent))) {
 				return report_error(fp, name, "Short write 2 to `%s' (%s)\n", name, strerror(errno));
@@ -272,7 +272,7 @@ conffile_putent(conffile_t *sp, int f, char *val, char *newent)
 void
 conffile_printent(ent_t *ep)
 {
-	int	i;
+	uint32_t	i;
 
 	for (i = 0 ; i < ep->sv.c ; i++) {
 		printf("(%d `%s') ", i, ep->sv.v[i]);

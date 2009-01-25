@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.10 2007/12/20 23:17:05 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.11 2009/01/25 14:25:27 lukem Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -97,7 +97,7 @@ allow_netmask(const char *netmaskarg, const char *addr)
 		(void) strlcpy(maskaddr, netmask, sizeof(maskaddr));
 		slash = 32;
 	} else {
-		(void) strlcpy(maskaddr, netmask, MIN(sizeof(maskaddr), (int)(cp - netmask) + 1));
+		(void) strlcpy(maskaddr, netmask, MIN(sizeof(maskaddr), (size_t)(cp - netmask) + 1));
 		slash = atoi(cp + 1);
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.38 2008/04/30 20:28:30 agc Exp $ */
+/* $NetBSD: disk.c,v 1.39 2009/01/25 14:25:27 lukem Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -181,7 +181,7 @@ static int      disk_write(target_session_t * , iscsi_scsi_cmd_args_t * , uint8_
 
 /* return the de index and offset within the device for RAID0 */
 static int
-raid0_getoff(disc_device_t *dp, uint64_t off, int *d, uint64_t *de_off)
+raid0_getoff(disc_device_t *dp, uint64_t off, uint32_t *d, uint64_t *de_off)
 {
 	uint64_t	o;
 
@@ -206,7 +206,7 @@ static int
 device_open(disc_device_t *dp, int flags, int mode)
 {
 	int	fd;
-	int	i;
+	uint32_t i;
 
 	for (fd = -1, i = 0 ; i < dp->c ; i++) {
 		switch (dp->xv[i].type) {
@@ -254,7 +254,7 @@ device_lseek(disc_device_t *dp, off_t off, int whence)
 {
 	uint64_t	suboff;
 	off_t		ret;
-	int		d;
+	uint32_t	d;
 
 	ret = -1;
 	switch(dp->raid) {
@@ -331,7 +331,7 @@ device_fsync_range(disc_device_t *dp, int how, off_t from, off_t len)
 {
 	uint64_t	suboff;
 	int		ret;
-	int		d;
+	uint32_t	d;
 
 	ret = -1;
 	switch(dp->raid) {
@@ -408,7 +408,7 @@ device_read(disc_device_t *dp, void *buf, size_t cc)
 	ssize_t		ret;
 	size_t		subcc;
 	char		*cbuf;
-	int		d;
+	uint32_t	d;
 
 	ret = -1;
 	switch(dp->raid) {
@@ -494,7 +494,7 @@ device_write(disc_device_t *dp, void *buf, size_t cc)
 	ssize_t		ret;
 	size_t		subcc;
 	char		*cbuf;
-	int		d;
+	uint32_t	d;
 
 	ret = -1;
 	switch(dp->raid) {
@@ -585,7 +585,7 @@ static uint64_t
 device_getsize(disc_device_t *dp)
 {
 	uint64_t	size;
-	int		d;
+	uint32_t	d;
 
 	size = 0;
 	switch(dp->raid) {
@@ -686,7 +686,7 @@ de_allocate(disc_de_t *de, char *filename)
 static int
 allocate_space(disc_target_t *tp)
 {
-	int	i;
+	uint32_t	i;
 
 	/* Don't perform check for writability in the target here, as the
 	following write() in de_allocate is non-destructive */
@@ -710,7 +710,7 @@ allocate_space(disc_target_t *tp)
 static void
 strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen, char pad)
 {
-	int	i;
+	size_t	i;
 
 	if (srclen < dstlen) {
 		(void) memcpy(dst, src, srclen);
@@ -729,7 +729,7 @@ report_luns(uint64_t *data, int64_t luns)
 	uint64_t	lun;
 	int32_t		off;
 
-	for (lun = 0, off = 8 ; lun < luns ; lun++, off += sizeof(lun)) {
+	for (lun = 0, off = 8 ; lun < (uint64_t)luns ; lun++, off += sizeof(lun)) {
 		data[(int)lun] = ISCSI_HTONLL(lun);
 	}
 	return off;
@@ -1245,7 +1245,7 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 		iscsi_trace_error(__FILE__, __LINE__, "write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "[READONLY TARGET]\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[lun].de));
 		return -1;
 	}
-	if (de_write(&disks.v[sess->d].tv->v[lun].de, ptr, (unsigned) num_bytes) != num_bytes) {
+	if ((uint64_t)de_write(&disks.v[sess->d].tv->v[lun].de, ptr, (unsigned) num_bytes) != num_bytes) {
 		iscsi_trace_error(__FILE__, __LINE__, "write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[lun].de));
 		return -1;
 	}

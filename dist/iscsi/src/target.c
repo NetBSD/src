@@ -107,7 +107,7 @@ static iscsi_mutex_t	g_session_q_mutex;
  *********************/
 
 static char *
-get_iqn(target_session_t *sess, int t, char *buf, size_t size)
+get_iqn(target_session_t *sess, uint32_t t, char *buf, size_t size)
 {
 	if (sess->globals->tv->v[t].iqn != NULL) {
 		(void) strlcpy(buf, sess->globals->tv->v[t].iqn, size);
@@ -215,7 +215,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 		uint8_t   ahs_type;
 
 		scsi_cmd.ahs = NULL;
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "reading %d bytes AHS\n", scsi_cmd.ahs_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "reading %u bytes AHS\n", scsi_cmd.ahs_len);
 		if ((scsi_cmd.ahs = iscsi_malloc_atomic((unsigned)scsi_cmd.ahs_len)) == NULL) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 			return -1;
@@ -230,7 +230,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 			AHS_CLEANUP;
 			return -1;
 		}
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "read %d bytes AHS\n", scsi_cmd.ahs_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "read %u bytes AHS\n", scsi_cmd.ahs_len);
 		for (ahs_ptr = scsi_cmd.ahs; ahs_ptr < (scsi_cmd.ahs + scsi_cmd.ahs_len - 1) ; ahs_ptr += ahs_len) {
 			ahs_len = ISCSI_NTOHS(*((uint16_t *) (void *)ahs_ptr));
 			RETURN_EQUAL("AHS Length", ahs_len, 0, AHS_CLEANUP, -1);
@@ -250,7 +250,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 				return -1;
 			}
 		}
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "done parsing %d bytes AHS\n", scsi_cmd.ahs_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "done parsing %u bytes AHS\n", scsi_cmd.ahs_len);
 	} else {
 		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "no AHS to read\n");
 		scsi_cmd.ahs = NULL;
@@ -296,7 +296,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 		} else {
 			trans_len = scsi_cmd.trans_len;
 		}
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending %d bytes input data as separate PDUs\n", trans_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending %u bytes input data as separate PDUs\n", trans_len);
 
 		if (scsi_cmd.send_sg_len) {
 			sg_orig = (struct iovec *) (void *) scsi_cmd.send_data;
@@ -364,7 +364,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 				AHS_CLEANUP;
 				return -1;
 			}
-			if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN, sg, data.length, sg_len)
+			if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN, sg, data.length, sg_len)
 			    != ISCSI_HEADER_LEN + data.length) {
 				iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_send_header_and_data() failed\n");
 				SG_CLEANUP;
@@ -375,7 +375,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sent read data PDU ok (offset %u, len %u)\n", data.offset, data.length);
 		}
 		SG_CLEANUP;
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "successfully sent %d bytes read data\n", trans_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "successfully sent %u bytes read data\n", trans_len);
 	}
 	/*
          * Send a response PDU if
@@ -405,7 +405,7 @@ response:
 			AHS_CLEANUP;
 			return -1;
 		}
-		if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
+		if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
 		  scsi_cmd.send_data, scsi_rsp.length, scsi_cmd.send_sg_len)
 		    != ISCSI_HEADER_LEN + scsi_rsp.length) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_send_header_and_data() failed\n");
@@ -529,26 +529,26 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 	/* sess->MaxCmdSN++;  */
 
 	if (nop_out.length) {
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "reading %d bytes ping data\n", nop_out.length);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "reading %u bytes ping data\n", nop_out.length);
 		if ((ping_data = iscsi_malloc(nop_out.length)) == NULL) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
 			return -1;
 		}
-		if (iscsi_sock_msg(sess->sock, 0, nop_out.length, ping_data, 0) != nop_out.length) {
+		if ((uint32_t)iscsi_sock_msg(sess->sock, 0, nop_out.length, ping_data, 0) != nop_out.length) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			if (ping_data) {
 				iscsi_free(ping_data);
 			}
 			return -1;
 		}
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "successfully read %d bytes ping data:\n", nop_out.length);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "successfully read %u bytes ping data:\n", nop_out.length);
 		iscsi_print_buffer(ping_data, nop_out.length);
 	}
 	if (nop_out.tag != 0xffffffff) {
 		iscsi_nop_in_args_t  nop_in;
 		uint8_t   rsp_header[ISCSI_HEADER_LEN];
 
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending %d bytes ping response\n", nop_out.length);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending %u bytes ping response\n", nop_out.length);
 		(void) memset(&nop_in, 0x0, sizeof(nop_in));
 		nop_in.length = nop_out.length;
 		nop_in.lun = nop_out.lun;
@@ -565,7 +565,7 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 			}
 			return -1;
 		}
-		if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
+		if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
 						    ping_data, nop_in.length, 0) != ISCSI_HEADER_LEN + nop_in.length) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_send_header_and_data() failed\n");
 			if (ping_data) {
@@ -573,7 +573,7 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 			}
 			return -1;
 		}
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "successfully sent %d bytes ping response\n", nop_out.length);
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "successfully sent %u bytes ping response\n", nop_out.length);
 	}
 	if (ping_data) {
 		iscsi_free(ping_data);
@@ -596,7 +596,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 	unsigned		 len_in;
 	char			 buf[BUFSIZ];
 	int			 len_out = 0;
-	int			 i;
+	uint32_t		 i;
 
 #define TC_CLEANUP do {							\
 	if (text_in != NULL) {						\
@@ -637,8 +637,8 @@ text_command_t(target_session_t * sess, uint8_t *header)
 			TC_CLEANUP;
 			return -1;
 		}
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "reading %d bytes text parameters\n", len_in);
-		if (iscsi_sock_msg(sess->sock, 0, len_in, text_in, 0) != len_in) {
+		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "reading %u bytes text parameters\n", len_in);
+		if ((unsigned)iscsi_sock_msg(sess->sock, 0, len_in, text_in, 0) != len_in) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			TC_CLEANUP;
 			return -1;
@@ -722,7 +722,7 @@ int
 find_target_iqn(target_session_t *sess)
 {
 	char	buf[BUFSIZ];
-	int	i;
+	uint32_t	i;
 
 	for (i = 0 ; i < sess->globals->tv->c ; i++) {
 		if (param_equiv(sess->params, "TargetName",
@@ -737,7 +737,7 @@ find_target_iqn(target_session_t *sess)
 int
 find_target_tsih(globals_t *globals, int tsih)
 {
-	int	i;
+	uint32_t	i;
 
 	for (i = 0 ; i < globals->tv->c ; i++) {
 		if (globals->tv->v[i].tsih == tsih) {
@@ -962,7 +962,7 @@ response:
 		return -1;
 	}
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending login response\n");
-	if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
+	if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
 		text_out, rsp.length, 0) != ISCSI_HEADER_LEN + rsp.length) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_send_header_and_data() failed\n");
 		LC_CLEANUP;
@@ -1102,7 +1102,7 @@ verify_cmd_t(target_session_t * sess, uint8_t *header)
 			return -1;
 		}
 		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending login response\n");
-		if (iscsi_sock_send_header_and_data(sess->sock, rsp_header,
+		if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header,
 			 ISCSI_HEADER_LEN, NULL, 0, 0) != ISCSI_HEADER_LEN +
 		    rsp.length) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_send_header_and_data() failed\n");
@@ -1390,13 +1390,13 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 			TTD_CLEANUP;
 			return -1;
 		}
-		iscsi_trace(TRACE_SCSI_DATA, __FILE__, __LINE__, "reading %d bytes immediate write data\n", args->length);
-		if (iscsi_sock_msg(sess->sock, 0, args->length, iov, iov_len) != args->length) {
+		iscsi_trace(TRACE_SCSI_DATA, __FILE__, __LINE__, "reading %u bytes immediate write data\n", args->length);
+		if ((uint32_t)iscsi_sock_msg(sess->sock, 0, args->length, iov, iov_len) != args->length) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			TTD_CLEANUP;
 			return -1;
 		}
-		iscsi_trace(TRACE_SCSI_DATA, __FILE__, __LINE__, "successfully read %d bytes immediate write data\n", args->length);
+		iscsi_trace(TRACE_SCSI_DATA, __FILE__, __LINE__, "successfully read %u bytes immediate write data\n", args->length);
 		args->bytes_recv += args->length;
 	}
 	/*
@@ -1479,7 +1479,7 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 			}
 			/* Scatter into destination buffers */
 
-			if (iscsi_sock_msg(sess->sock, 0, data.length, iov, iov_len) != data.length) {
+			if ((uint32_t)iscsi_sock_msg(sess->sock, 0, data.length, iov, iov_len) != data.length) {
 				iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 				TTD_CLEANUP;
 				return -1;
@@ -1488,7 +1488,7 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 			args->bytes_recv += data.length;
 			desired_xfer_len -= data.length;
 			if ((!r2t_flag) && (args->bytes_recv > sess->sess_params.first_burst_length)) {
-				iscsi_trace_error(__FILE__, __LINE__, "Received unsolicited data (%d) more than first_burst_length (%d)\n", args->bytes_recv, sess->sess_params.first_burst_length);
+				iscsi_trace_error(__FILE__, __LINE__, "Received unsolicited data (%u) more than first_burst_length (%u)\n", args->bytes_recv, sess->sess_params.first_burst_length);
 				args->status = 0x02;
 				TTD_CLEANUP;
 				return -1;
@@ -1529,6 +1529,7 @@ int
 target_init(globals_t *gp, targv_t *tv, char *TargetName)
 {
 	int             i;
+	uint32_t	j;
 
 	NEWARRAY(target_session_t, g_session, gp->max_sessions, "target_init", return -1);
 	(void) strlcpy(gp->targetname, TargetName, sizeof(gp->targetname));
@@ -1549,8 +1550,8 @@ target_init(globals_t *gp, targv_t *tv, char *TargetName)
 			return -1;
 		}
 	}
-	for (i = 0 ; i < tv->c ; i++) {
-		if ((g_session[i].d  = device_init(gp, tv, &tv->v[i])) < 0) {
+	for (j = 0 ; j < tv->c ; j++) {
+		if ((g_session[j].d  = device_init(gp, tv, &tv->v[j])) < 0) {
 			iscsi_trace_error(__FILE__, __LINE__, "device_init() failed\n");
 			return -1;
 		}
