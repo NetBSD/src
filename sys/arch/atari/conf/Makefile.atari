@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.72 2008/01/25 20:02:06 joerg Exp $
+#	$NetBSD: Makefile.atari,v 1.73 2009/01/25 22:25:08 abs Exp $
 
 # Makefile for NetBSD
 #
@@ -27,10 +27,9 @@ GENASSYM_CONF=	${ATARI}/atari/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Datari
-.if empty(IDENT:M-DM68060)
-CMACHFLAGS=	-m68020
-.else
-CMACHFLAGS=	-m68060 -Wa,-m68030
+.if !defined(CMACHFLAGS)
+.include "$S/arch/m68k/Makefile.cmachflags"
+CMACHFLAGS+= -Wa,-m68030
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
