@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.20 2009/01/19 13:16:14 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.21 2009/01/25 10:29:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.20 2009/01/19 13:16:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.21 2009/01/25 10:29:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,10 +285,9 @@ pmap_sdir_set(pa_space_t space, volatile uint32_t *pd)
 	volatile uint32_t *vtop;
 
 	mfctl(CR_VTOP, vtop);
-#ifdef PMAPDEBUG
-	if (!vtop)
-		panic("pmap_sdir_set: zero vtop");
-#endif
+
+	KASSERT(vtop != NULL);
+
 	vtop[space] = (uint32_t)pd;
 }
 
@@ -312,12 +311,10 @@ static inline void
 pmap_pde_set(pmap_t pm, vaddr_t va, paddr_t ptp)
 {
 
-#ifdef PMAPDEBUG
-	if (ptp & PGOFSET)
-		panic("pmap_pde_set, unaligned ptp 0x%x", (int)ptp);
-#endif
 	DPRINTF(PDB_FOLLOW|PDB_VP,
 	    ("pmap_pde_set(%p, 0x%x, 0x%x)\n", pm, (int)va, (int)ptp));
+
+	KASSERT((ptp & PGOFSET) == 0);
 
 	pm->pm_pdir[va >> 22] = ptp;
 }
@@ -406,13 +403,8 @@ pmap_pte_set(volatile pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pte_set(%p, 0x%x, 0x%x)\n",
 	    pde, (int)va, (int)pte));
 
-#ifdef PMAPDEBUG
-	if (!pde)
-		panic("pmap_pte_set: zero pde");
-
-	if ((paddr_t)pde & PGOFSET)
-		panic("pmap_pte_set, unaligned pde %p", pde);
-#endif
+	KASSERT(pde != NULL);
+	KASSERT(((paddr_t)pde & PGOFSET) == 0);
 
 	pde[(va >> 12) & 0x3ff] = pte;
 }
@@ -577,6 +569,7 @@ pmap_pv_remove(struct vm_page *pg, pmap_t pmap, vaddr_t va)
 	struct pv_entry **pve, *pv;
 
 	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
+
 	for (pv = *(pve = &pg->mdpage.pvh_list);
 	    pv; pv = *(pve = &(*pve)->pv_next))
 		if (pv->pv_pmap == pmap && pv->pv_va == va) {
