@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2007/05/10 23:22:30 dogcow Exp $
+#	$NetBSD: Makefile,v 1.4 2009/01/25 22:08:38 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,7 +19,7 @@ MAKEDEVTARGETS=	std md0 pty0 ttyv0
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile termcap.src \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
 		${NETBSDSRCDIR}/distrib/common/services
 SMALLPROG_INET6=1
 
