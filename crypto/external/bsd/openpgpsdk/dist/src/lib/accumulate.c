@@ -106,7 +106,7 @@ accumulate_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
 
     case OPS_PARSER_ERROR:
 	fprintf(stderr,"Error: %s\n",content->error.error);
-	assert(/*CONSTCOND*/);
+	assert(/*CONSTCOND*/0);
 	break;
 
     case OPS_PARSER_ERRCODE:
