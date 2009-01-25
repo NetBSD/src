@@ -1,0 +1,50 @@
+#	$NetBSD: Makefile.cmachflags,v 1.1 2009/01/25 22:25:08 abs Exp $
+
+# Set CMACHFLAGS best target the specific CPU combination, based on
+# -DM68020, -DM68030, -DM68040, and -DM68060
+
+# This should typically be included iff the config file has not already set
+# CMACHFLAGS, eg:
+#   .if !defined(CMACHFLAGS)
+#   .include "$S/arch/m68k/Makefile.cmachflags"
+#   CMACHFLAGS+=    -Wa,-m68030 -Wa,-m68851
+#   .endif
+
+# Table of CPUs targetted vs gcc flags. Note: -m68020 and -m68030 are
+# ~identical, but they are both included for completeness.
+
+# 020 030 040 060 -m68020-60
+# 030 040 060     -m68020-60
+# 020 040 060     -m68020-60
+# 020 030 060     -m68020-60
+# 040 060         -m68020-60 (Would have been nice to have a -m68040-60)
+# 030 060         -m68020-60
+# 020 060         -m68020-60
+# 060             -m68060
+#
+# 020 030 040     -m68020-40
+# 030 040         -m68020-40
+# 020 040         -m68020-40
+# 040             -m68040
+#
+# 020 030         -m68020
+# 030             -m68030
+# 020             -m68020
+
+.if !empty(IDENT:M-DM68060)
+.if empty(IDENT:M-DM68020) && empty(IDENT:M-DM68030) && empty(IDENT:M-DM68040)
+CMACHFLAGS=	-m68060
+.else
+CMACHFLAGS=	-m68020-60
+.endif
+.elif !empty(IDENT:M-DM68040)
+.if empty(IDENT:M-DM68020) && empty(IDENT:M-DM68030)
+CMACHFLAGS=	-m68040
+.else /* !-DM68060 */
+CMACHFLAGS=	-m68020-40
+.endif
+.elif !empty(IDENT:M-DM68020)
+CMACHFLAGS=	-m68020
+.else
+CMACHFLAGS=	-m68030
+.endif /* !-DM68060 */
