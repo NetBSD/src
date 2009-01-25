@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.11 2008/04/11 08:22:37 agc Exp $ */
+/* $NetBSD: storage.c,v 1.12 2009/01/25 14:25:27 lukem Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -85,7 +85,7 @@ enum {
 static disc_extent_t *
 find_extent(extv_t *evp, char *s)
 {
-	int	i;
+	size_t	i;
 
 	for (i = 0 ; i < evp->c ; i++) {
 		if (strcmp(evp->v[i].extent, s) == 0) {
@@ -142,7 +142,7 @@ do_extent(conffile_t *cf, extv_t *evp, ent_t *ep)
 static disc_device_t *
 find_device(devv_t *devvp, char *s)
 {
-	int	i;
+	size_t	i;
 
 	for (i = 0 ; i < devvp->c ; i++) {
 		if (strcmp(devvp->v[i].dev, s) == 0) {
@@ -236,7 +236,7 @@ do_device(conffile_t *cf, devv_t *devvp, extv_t *evp, ent_t *ep)
 static disc_target_t *
 find_target(targv_t *tvp, char *s)
 {
-	int	i;
+	size_t	i;
 
 	for (i = 0 ; i < tvp->c ; i++) {
 		if (strcmp(tvp->v[i].target, s) == 0) {
@@ -344,7 +344,7 @@ static void
 pdevice(disc_device_t *dp, int indent)
 {
 	int	i;
-	int	j;
+	size_t	j;
 
 	for (i = 0 ; i < indent ; i++) {
 		(void) fputc('\t', stdout);
@@ -372,7 +372,7 @@ ptarget(disc_target_t *tp, int indent)
 static void
 ptargets(targv_t *tvp)
 {
-	int	i;
+	size_t	i;
 
 	for (i = 0 ; i < tvp->c ; i++) {
 		ptarget(&tvp->v[i], 0);

@@ -303,7 +303,7 @@ void
 iscsi_print_buffer(const char *buf, const size_t len)
 {
 #ifdef CONFIG_ISCSI_DEBUG
-	int	i;
+	size_t	i;
 
 	if (iscsi_debug_level & TRACE_NET_BUFF) {
 		for (i=0 ; i < len; i++) {
@@ -311,7 +311,7 @@ iscsi_print_buffer(const char *buf, const size_t len)
 				if (i) {
 					printf("\n");
 				}
-				printf("%4i:", i);
+				printf("%4zu:", i);
 			}
 			printf("%2x ", (uint8_t) (buf)[i]);
 		}
@@ -423,7 +423,7 @@ hash_destroy(hash_t * h)
 int 
 modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 {
-	int             len;
+	size_t		len;
 	int             disp = offset;
 	int             i;
 	struct iovec   *iov = *iov_ptr;
@@ -821,7 +821,8 @@ iscsi_sock_connect(iscsi_socket_t sock, char *hostname, int port)
 int 
 iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc)
 {
-	int             i, n = 0;
+	int             i;
+	unsigned	n = 0;
 	int		rc;
 	struct iovec   *iov;
 	struct iovec    singleton;
@@ -829,7 +830,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 	struct iovec   *iov_padding = NULL;
 	uint32_t        remainder;
 	uint32_t        padding_len = 0;
-	int             total_len = 0;
+	size_t		total_len = 0;
 
 	iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "%s %d bytes on sock\n", xmit ? "sending" : "receiving", len);
 	if (iovc == 0) {
@@ -878,7 +879,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 			total_len += iov[i].iov_len;
 		}
 		if (total_len != len - n) {
-			iscsi_trace_error(__FILE__, __LINE__, "iovcs sum to %d != total len of %d\n", total_len, len - n);
+			iscsi_trace_error(__FILE__, __LINE__, "iovcs sum to %u != total len of %u\n", total_len, len - n);
 			iscsi_trace_error(__FILE__, __LINE__, "iov = %p\n", iov);
 			for (i = 0; i < iovc; i++) {
 				iscsi_trace_error(__FILE__, __LINE__, "iov[%d].iov_base = %p, len %u\n",
@@ -896,7 +897,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 		}
 		n += rc;
 		if (n < len) {
-			iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "Got partial %s: %d bytes of %d\n", (xmit) ? "send" : "recv", rc, len - n + rc);
+			iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "Got partial %s: %d bytes of %u\n", (xmit) ? "send" : "recv", rc, len - n + rc);
 
 			total_len = 0;
 			for (i = 0; i < iovc; i++) {
@@ -920,7 +921,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 	if (remainder) {
 		iscsi_free_atomic(iov_padding);
 	}
-	iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "successfully %s %d bytes on sock (%d bytes padding)\n", xmit ? "sent" : "received", n, padding_len);
+	iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "successfully %s %u bytes on sock (%u bytes padding)\n", xmit ? "sent" : "received", n, padding_len);
 	return n - padding_len;
 }
 
@@ -959,16 +960,16 @@ iscsi_sock_send_header_and_data(iscsi_socket_t sock,
 			(void) memcpy(&iov[1], data, sizeof(struct iovec) * iovc);
 			iovc += 1;
 		}
-		if (iscsi_sock_msg(sock, Transmit, header_len + data_len, iov, iovc) != header_len + data_len) {
+		if ((unsigned)iscsi_sock_msg(sock, Transmit, header_len + data_len, iov, iovc) != header_len + data_len) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			return -1;
 		}
 	} else {
-		if (iscsi_sock_msg(sock, Transmit, header_len, header, 0) != header_len) {
+		if ((unsigned)iscsi_sock_msg(sock, Transmit, header_len, header, 0) != header_len) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			return -1;
 		}
-		if (data_len != 0 && iscsi_sock_msg(sock, Transmit, data_len, __UNCONST((const char *) data), iovc) != data_len) {
+		if (data_len != 0 && (unsigned)iscsi_sock_msg(sock, Transmit, data_len, __UNCONST((const char *) data), iovc) != data_len) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			return -1;
 		}
