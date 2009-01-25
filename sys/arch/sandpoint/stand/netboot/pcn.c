@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.15 2009/01/12 09:41:59 tsutsui Exp $ */
+/* $NetBSD: pcn.c,v 1.16 2009/01/25 03:39:28 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,10 +44,10 @@
  * - no vtophys() translation, vaddr_t == paddr_t. 
  * - PIPT writeback cache aware.
  */
-#define CSR_WRITE_2(l, r, v)	out16rb((l)->csr+(r), (v))
-#define CSR_READ_2(l, r)	in16rb((l)->csr+(r))
-#define CSR_WRITE_4(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
+#define CSR_WRITE_4(l, r, v) 	out32rb((l)->csr+(r), (v))
+#define CSR_READ_2(l, r)	in16rb((l)->csr+(r))
+#define CSR_WRITE_2(l, r, v)	out16rb((l)->csr+(r), (v))
 #define VTOPHYS(va) 		(uint32_t)(va)
 #define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
