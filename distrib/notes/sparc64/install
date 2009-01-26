@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.30 2008/09/07 05:09:47 tsutsui Exp $
+.\"	$NetBSD: install,v 1.30.2.1 2009/01/26 01:20:58 snj Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,8 +33,8 @@ this document in hand it shouldn't be too much trouble.
 There are several ways to install
 .Nx
 onto a disk.
-The easiest way in terms of preliminary setup is to install from CDROM.
-If you don't have access to a CDROM or CDROM burner, you
+The easiest way in terms of preliminary setup is to install from CD-ROM.
+If you don't have access to a CD-ROM or CD-ROM burner, you
 can use a miniroot image that can be booted off your local disk's swap
 partition.
 Alternatively, if your UltraSPARC is hooked up in a network
@@ -51,12 +51,9 @@ onto the same disk as
 see the section below on
 .Sx "Manual Installation of NetBSD using Solaris"
 .
-.Ss2 Installing NetBSD from CDROM
+.Ss2 Installing NetBSD from CD-ROM
 .
-Installing from CDROM, whether it has the full distribution or just
-a kernel and
-.Ic sysinst
-is the least painful way to install
+Installing from CD-ROM is the least painful way to install
 .Nx .
 Simply insert the CD-ROM in the drive, power up the computer, and type:
 .(disp
@@ -403,8 +400,8 @@ for the first time.
 You will boot from your disk using similar syntax as described above in
 .Sx "Setting up Open Firmware" 
 and
-.Sx "Determining how to boot from an SBUS or PCI card"
-That is, boot from your first disk:
+.Sx "Determining how to boot from an SBUS or PCI card" .
+To boot from your first disk, type:
 .(disp
 .No ok Ic "boot disk"
 .disp)
