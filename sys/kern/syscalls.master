@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.221 2009/01/13 22:27:44 pooka Exp $
+	$NetBSD: syscalls.master,v 1.222 2009/01/26 12:20:05 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -97,18 +97,18 @@
 25	STD 		{ uid_t|sys||geteuid(void); }
 26	STD 		{ int|sys||ptrace(int req, pid_t pid, void *addr, \
 			    int data); }
-27	STD 		{ ssize_t|sys||recvmsg(int s, struct msghdr *msg, \
+27	STD 	RUMP	{ ssize_t|sys||recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
-28	STD 		{ ssize_t|sys||sendmsg(int s, \
+28	STD 	RUMP	{ ssize_t|sys||sendmsg(int s, \
 			    const struct msghdr *msg, int flags); }
-29	STD 		{ ssize_t|sys||recvfrom(int s, void *buf, size_t len, \
+29	STD 	RUMP	{ ssize_t|sys||recvfrom(int s, void *buf, size_t len, \
 			    int flags, struct sockaddr *from, \
 			    unsigned int *fromlenaddr); }
 30	STD	RUMP	{ int|sys||accept(int s, struct sockaddr *name, \
 			    unsigned int *anamelen); }
-31	STD		{ int|sys||getpeername(int fdes, struct sockaddr *asa, \
+31	STD	RUMP	{ int|sys||getpeername(int fdes, struct sockaddr *asa, \
 			    unsigned int *alen); }
-32	STD		{ int|sys||getsockname(int fdes, struct sockaddr *asa, \
+32	STD	RUMP	{ int|sys||getsockname(int fdes, struct sockaddr *asa, \
 			    unsigned int *alen); }
 33	STD 		{ int|sys||access(const char *path, int flags); }
 34	STD 	 RUMP	{ int|sys||chflags(const char *path, u_long flags); }
@@ -256,11 +256,11 @@
 130	COMPAT_43 MODULAR { int|sys||ftruncate(int fd, long length); } oftruncate
 131	STD 		{ int|sys||flock(int fd, int how); }
 132	STD 	 RUMP	{ int|sys||mkfifo(const char *path, mode_t mode); }
-133	STD 		{ ssize_t|sys||sendto(int s, const void *buf, \
+133	STD 	 RUMP	{ ssize_t|sys||sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    unsigned int tolen); }
-134	STD		{ int|sys||shutdown(int s, int how); }
-135	STD		{ int|sys||socketpair(int domain, int type, \
+134	STD	 RUMP	{ int|sys||shutdown(int s, int how); }
+135	STD	 RUMP	{ int|sys||socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
 136	STD 	 RUMP	{ int|sys||mkdir(const char *path, mode_t mode); }
 137	STD 	 RUMP	{ int|sys||rmdir(const char *path); }
