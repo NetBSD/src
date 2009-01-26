@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.3 2009/01/03 07:20:57 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.4 2009/01/26 05:53:10 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.3 2009/01/03 07:20:57 yamt Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.4 2009/01/26 05:53:10 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 	} else {
 		outfd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 		if (outfd == -1) {
-			err(EXIT_FAILURE, "%s", optarg);
+			err(EXIT_FAILURE, "%s", outfile);
 		}
 	}
 
