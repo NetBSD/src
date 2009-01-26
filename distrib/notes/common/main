@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.432 2009/01/03 12:01:24 shattered Exp $
+.\"	$NetBSD: main,v 1.433 2009/01/26 00:14:42 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,7 +118,7 @@ Option 1: bootable CD-ROM images containing the full distribution.
 .Pp
 These can be found
 on an FTP site near you, usually located in the
-.Pa /pub/NetBSD/iso
+.Pa /pub/NetBSD/iso/
 directory.
 Check the NetBSD website for details.
 .Pp
@@ -126,7 +126,7 @@ Option 2: bootable CD-ROM images from
 .Pa \*M/installation/cdrom/ .
 .Pp
 These images are bootable, but do not contain binary sets.
-They are intended for network installs, or system repair.
+They are intended for network installs or system repair.
 .Pa boot.iso
 is for VGA console installation, and
 .Pa boot-com.iso
@@ -206,7 +206,7 @@ When you boot the install
 .if \n[sparc] floppies or CD-ROM,
 .if \n[sparc64] CD-ROM or installation kernel,
 the installation program
-can fetch these files for you (using e.g. ftp),
+can fetch these files for you (using e.g. ftp)
 if you have a network connection.
 There are several other methods to get the binary sets onto
 your machine.
@@ -482,18 +482,6 @@ files in the top level directory of the NetBSD 5.0 release tree. Some highlights
 .Ss2 File systems
 .
 .Ss2 Drivers
-.(bullet
-Networking:
-.(bullet
-.Xr iwn 4 :
-new driver for Intel Wireless 4965AGN IEEE network cards, from OpenBSD.
-.It
-.Xr jme 4 :
-new driver for JMicron Technologies JME250 Gigabit Ethernet and JME260 Fast
-Ethernet controllers.
-.bullet)
-.
-.bullet)
 .
 .Ss2 Platforms
 .
@@ -547,10 +535,22 @@ In this release of NetBSD, some software components known from previous releases
 .\} \" \n[FOR_RELEASE]
 .
 .Ss "Features to be removed in a later release"
-The following features are to be removed in the future from
+The following features are to be removed from
 .Nx
-: 
+in the future:
 .(bullet
+Support for soft dependencies.
+.Nx
+\*V
+includes an experimental preview of WAPBL
+.Pq Write Ahead Physical Block Logging ,
+which will replace soft dependencies in the next major release.
+See
+.Xr wapbl 4
+and
+.Lk http://mail-index.netbsd.org/netbsd-announce/2008/12/14/msg000051.html
+for details.
+.It
 Support for Xen 2.0.x. The Xen-3 and hypervisor interface is diverging
 from Xen-2 as development is ongoing, increasing the maintenance cost
 for NetBSD. It is expected that the netbsd-5 branch will get support for
@@ -708,10 +708,9 @@ or
 .It Sy syssrc
 This set contains the sources to the
 .Nx
-\*V kernel for all architectures;
-.Xr config 1 ;
-and
-.Xr dbsym 8 .
+\*V kernel for all architectures as well as the
+.Xr config 1
+utility.
 .showsize 33 165
 .It Sy xsrc
 This set contains the sources to the X Window System.
@@ -859,84 +858,14 @@ and thus all issues that are fixed by
 .Ic postinstall
 by default (see below) will be handled.
 .
-.Ss2 Issues affecting an upgrade from NetBSD 2.1 and older releases.
-See the sections below on upgrading from NetBSD 3.x and upgrading from
-NetBSD 4.x as well.
-.Pp
-It is
-.Sy very important
-that you populate the directory
-.Pa /etc/pam.d
-with appropriate configuration files for Pluggable Authentication Modules
-(PAM) because you will not be able to login any more otherwise. Using
-.Em postinstall
-as described below will take care of this. Please refer to
-.Lk http://www.NetBSD.org/docs/guide/en/chap-pam.html
-for documentation about PAM.
-.Pp
-The following issues can generally be resolved by running
-.Em postinstall
-with the
-.Sy etc
-set :
-.(disp
-postinstall -s /path/to/etc.tgz check
-postinstall -s /path/to/etc.tgz fix
-.disp)
-.Pp
-Issues fixed by
-.Em postinstall :
-.(bullet -offset indent
-Various files in
-.Pa /etc
-need upgrading.
-These include:
-.(bullet -compact -offset indent
-.Pa /etc/defaults/*
-.It
-.Pa /etc/mtree/*
-.It
-.Pa /etc/pam.d/*
-.It
-.Pa /etc/daily
-.It
-.Pa /etc/weekly
-.It
-.Pa /etc/monthly
-.It
-.Pa /etc/security
-.It
-.Pa /etc/rc.subr
-.It
-.Pa /etc/rc
-.It
-.Pa /etc/rc.shutdown
-.It
-.Pa /etc/rc.d/*
-.bullet)
-.bullet)
-.
-.Pp
-The following issues need to be resolved manually:
-.
-.(bullet -offset indent
-The user
-.Sq _pflogd
-and the groups
-.Sq _pflogd
-and
-.Sq authpf 
-need to be created.
-.bullet)
-.
-.Ss2 Issues affecting an upgrade from NetBSD 3.x releases.
+.Ss2 Issues affecting an upgrade from NetBSD 3.x releases
 See the section below on upgrading from NetBSD 4.x as well.
 .Pp
 The following issues can generally be resolved by running
 .Em postinstall
 with the
 .Sy etc
-set :
+set:
 .(disp
 postinstall -s /path/to/etc.tgz check
 postinstall -s /path/to/etc.tgz fix
@@ -992,13 +921,13 @@ need to be created and the user
 .Sq uucp
 needs to be updated.
 .It
-A number of things have been removed from the
+A number of things were removed in the
 .Nx
-\*V release
-including: the evbsh5 port, the Fortran 77 compiler (g77), NETCCITT,
+4.0
+release, including: the evbsh5 port, the Fortran 77 compiler (g77), NETCCITT,
 NETNS, Sendmail, Sushi, UUCP, and Vinum.  If you were using any of these,
-then please see the "Components removed from NetBSD" section near the
-beginning of this document.
+please see the "Components removed from NetBSD" at
+.Lk http://www.NetBSD.org/releases/formal-4/NetBSD-4.0.html#removals .
 .It
 The replacement of Sendmail by Postfix can be handled automatically by
 .Em postinstall
@@ -1018,7 +947,7 @@ Sendmail setup, you need to set up Postfix in an equivalent way; there
 is no tool for automatic conversion of Sendmail configuration to a
 Postfix one.
 .Pp
-Postfix will be started up automatically when the system boots.
+Postfix will be started automatically when the system boots.
 You may see messages like "$sendmail is not set properly" at boot.
 You can suppress them by removing
 .Pa /etc/rc.d/sendmail
@@ -1037,13 +966,13 @@ postinstall -s /path/to/etc.tgz fix sendmail
 .disp)
 .bullet)
 .
-.Ss2 Issues affecting an upgrade from NetBSD 4.x releases.
+.Ss2 Issues affecting an upgrade from NetBSD 4.x releases
 .Pp
 The following issues can generally be resolved by running
 .Em postinstall
 with the
 .Sy etc
-set :
+set:
 .(disp
 postinstall -s /path/to/etc.tgz check
 postinstall -s /path/to/etc.tgz fix
@@ -1090,17 +1019,16 @@ The users
 and
 .Sq _timedc
 and the groups
-.Sq _httpd ,
+.Sq _httpd
+and
 .Sq _timedc
 need to be created.
 .It
 A number of things have been removed from the
 .Nx
-\*V release
-including: the pc532 port.
-If you were using any of these,
-then please see the "Components removed from NetBSD" section near the
-beginning of this document.
+\*V release.
+See the "Components removed from NetBSD" section near the beginning of
+this document for a list.
 .bullet)
 .
 .Ss "Using online NetBSD documentation"
@@ -1133,7 +1061,8 @@ are in section 5, and administrative information is in section 8.
 .No The Em man
 command is used to view the documentation on a topic, and is
 started by entering
-.Ic man Op Ar section
+.Ic man
+.Op Ar section
 .Ar topic .
 The brackets
 .Op \&
@@ -1175,7 +1104,9 @@ server at
 .Mt majordomo@NetBSD.org .
 To get help on using the mailing
 list server, send mail to that address with an empty body, and it will
-reply with instructions.
+reply with instructions.  See
+.Lk http://www.NetBSD.org/mailinglists/
+for a web interface.
 .Pp
 There are various mailing lists set up to deal with comments and
 questions about this release.
@@ -1198,6 +1129,8 @@ are entered into the
 .Nx
 bugs database, and thus can't slip through
 the cracks.
+Bugs also can be submitted and queried with the web interface at
+.Lk http://www.NetBSD.org/support/send-pr.html .
 .Pp
 There are also port-specific mailing lists, to discuss aspects of
 each port of
@@ -1267,7 +1200,7 @@ We list the individuals and organizations
 that have made donations or loans of hardware and/or money, to support
 .Nx
 development, and deserve credit for it at
-.Lk http://www.NetBSD.org/donations/.
+.Lk http://www.NetBSD.org/donations/ .
 (If you're not on that list and should be, tell us!
 We probably were not able to get in touch with you, to verify that you
 wanted to be listed.)
@@ -1363,7 +1296,6 @@ If you're one of them, and would like to be mentioned, tell us!)
 .br_ne 1i
 .It Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
-.It Ta Grant Beattie Ta Mt grant@NetBSD.org
 .It Ta Manuel Bouyer Ta Mt bouyer@NetBSD.org
 .It Ta David Brownlee Ta Mt abs@NetBSD.org
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
@@ -1373,7 +1305,6 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
 .It Ta Soren Jacobsen Ta Mt snj@NetBSD.org
-.It Ta Daniel de Kok Ta Mt daniel@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
 .It Ta Jeff Rizzo Ta Mt riz@NetBSD.org
 .It Ta Ta
