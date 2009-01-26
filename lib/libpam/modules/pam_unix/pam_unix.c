@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.11 2006/05/30 19:48:07 jnemeth Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.12 2009/01/26 04:01:14 lukem Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.11 2006/05/30 19:48:07 jnemeth Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.12 2009/01/26 04:01:14 lukem Exp $");
 #endif
 
 
@@ -566,7 +566,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				pam_info(pamh, "Password unchanged.");
 				return (PAM_SUCCESS);
 			}
-			if (min_pw_len > 0 && strlen(new_pass) < min_pw_len) {
+			if (min_pw_len > 0 && strlen(new_pass) < (size_t)min_pw_len) {
 				pam_error(pamh, "Password is too short.");
 				continue;
 			}
