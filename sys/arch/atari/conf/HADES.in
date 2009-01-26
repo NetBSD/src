@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES.in,v 1.8 2005/12/11 12:16:54 christos Exp $
+#	$NetBSD: HADES.in,v 1.8.88.1 2009/01/26 03:07:52 snj Exp $
 #
 # Medusa-Hades
 #
@@ -54,14 +54,14 @@ cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
 sd* 	at scsibus? target ? lun ?	# SCSI disk drives
 st* 	at scsibus? target ? lun ?	# SCSI tape drives
 cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 ch* 	at scsibus? target ? lun ?	# SCSI autochangers
 ss* 	at scsibus? target ? lun ?	# SCSI scanners
 se* 	at scsibus? target ? lun ?	# SCSI ethernet
 uk* 	at scsibus? target ? lun ?	# SCSI unknown
-#endif
+#endif /* SMALL030_KERNEL */
 
-#ifndef INSTALL_KERNEL
+#if !defined(SMALL030_KERNEL)
 # Networking...
 ne0	at isa0 port 0x300 irq 5	# NE2000 ethernet
 ep*	at pci0 dev ? function 0	# 3Com 3c59x/3c90x Ethernet
@@ -69,4 +69,4 @@ ep*	at pci0 dev ? function 0	# 3Com 3c59x/3c90x Ethernet
 # Sound...
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 audio*	at eso?
-#endif
+#endif /* SMALL030_KERNEL */

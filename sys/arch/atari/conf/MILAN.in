@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.21 2006/09/03 13:51:24 bjh21 Exp $
+#	$NetBSD: MILAN.in,v 1.21.70.1 2009/01/26 03:07:52 snj Exp $
 #
 # Milan
 #
@@ -73,7 +73,7 @@ fdisa0 		at fdcisa0 drive 0
 # wdc on ISA with flags = WDC_OPTIONS_ATA_NOSTREAM!
 wdc0 		at isa? port 0x1f0 irq 14 flags 0x04	# 1st IDE controller
 wdc1 		at isa? port 0x170 irq 15 flags 0x04	# 2nd IDE controller
-#endif
+#endif /* MILAN_ISAIDE */
 
 #if defined(MILAN_PCIIDE)
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
@@ -90,7 +90,7 @@ satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-#endif
+#endif /* MILAN_ISAIDE */
 
 atabus*		at ata? channel ?
 
