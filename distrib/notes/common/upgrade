@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.25 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: upgrade,v 1.25.4.1 2009/01/26 01:20:58 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,10 @@
 .
 .
 .Pp
-The upgrade to
+The easiest way to upgrade to
 .Nx
 \*V
-is a binary upgrade; it can be quite difficult to update the system
-from an earlier version by recompiling from source, primarily due to
-interdependencies in the various components.
+is with binaries, and that is the method documented here.
 .Pp
 .ie \n[atari] \{\
 To do the upgrade, you must first boot the system as described in the
@@ -41,7 +39,7 @@ section.
 .\}
 .el \{\
 .ie \n[mac68k]:\n[macppc]:\n[sparc]:\n[sparc64] \{\
-To do the upgrade, you must boot from the installer kernel using one of
+To do the upgrade, you must boot the install kernel using one of
 the methods described above.
 .\}
 .el \{\
@@ -109,12 +107,11 @@ will attempt to merge the settings stored in your
 .Pa /etc
 directory with the new version of
 .Nx .
+Also, file systems are checked before unpacking the sets.
 Getting the binary
 sets is done in the same manner as the installation procedure;
 refer to the installation part of the document
 for how to do this.
-Also, some sanity checks are done, i.e.
-file systems are checked before unpacking the sets.
 .Pp
 After a new kernel has been copied to your hard disk, your
 machine is a complete
