@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.12 2009/01/11 15:00:23 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.13 2009/01/26 17:32:41 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.12 2009/01/11 15:00:23 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.13 2009/01/26 17:32:41 apb Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -208,10 +208,10 @@ fn_filename_completion_function(const char *text, int state)
 		/* otherwise, get first entry where first */
 		/* filename_len characters are equal	  */
 		if (entry->d_name[0] == filename[0]
-#if defined(__SVR4) || defined(__linux__)
-		    && strlen(entry->d_name) >= filename_len
-#else
+#if HAVE_STRUCT_DIRENT_D_NAMLEN
 		    && entry->d_namlen >= filename_len
+#else
+		    && strlen(entry->d_name) >= filename_len
 #endif
 		    && strncmp(entry->d_name, filename,
 			filename_len) == 0)
@@ -220,10 +220,10 @@ fn_filename_completion_function(const char *text, int state)
 
 	if (entry) {		/* match found */
 
-#if defined(__SVR4) || defined(__linux__)
-		len = strlen(entry->d_name);
-#else
+#if HAVE_STRUCT_DIRENT_D_NAMLEN
 		len = entry->d_namlen;
+#else
+		len = strlen(entry->d_name);
 #endif
 
 		temp = malloc(strlen(dirname) + len + 1);
