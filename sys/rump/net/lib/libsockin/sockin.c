@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.9 2009/01/26 10:43:21 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.10 2009/01/26 13:44:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.9 2009/01/26 10:43:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.10 2009/01/26 13:44:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -138,6 +138,29 @@ registersock(struct socket *so, int news)
 }
 
 static void
+removesock(struct socket *so)
+{
+	struct sockin_unit *su_iter;
+	int error;
+
+	mutex_enter(&su_mtx);
+	LIST_FOREACH(su_iter, &su_ent, su_entries) {
+		if (su_iter->su_so == so)
+			break;
+	}
+	if (!su_iter)
+		panic("no such socket");
+
+	LIST_REMOVE(su_iter, su_entries);
+	nsock--;
+	rebuild = true;
+	mutex_exit(&su_mtx);
+
+	rumpuser_close(SO2S(su_iter->su_so), &error);
+	kmem_free(su_iter, sizeof(*su_iter));
+}
+
+static void
 sockin_process(struct socket *so)
 {
 	struct sockaddr_in from;
@@ -163,6 +186,12 @@ sockin_process(struct socket *so)
 	n = rumpuser_net_recvmsg(SO2S(so), &rmsg, 0, &error);
 	if (n <= 0) {
 		m_freem(m);
+
+		/* Treat a TCP socket a goner */
+		if (so->so_proto->pr_type == SOCK_STREAM && error != EAGAIN) {
+			soisdisconnected(so);
+			removesock(so);
+		}
 		return;
 	}
 	m->m_len = m->m_pkthdr.len = n;
@@ -345,7 +374,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		    mtod(nam, struct sockaddr *), sizeof(struct sockaddr_in),
 		    &error);
 		if (rv == 0)
-		soisconnected(so);
+			soisconnected(so);
 		break;
 
 	case PRU_LISTEN:
@@ -394,26 +423,25 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_SHUTDOWN:
-	{
-		struct sockin_unit *su_iter;
-
-		mutex_enter(&su_mtx);
-		LIST_FOREACH(su_iter, &su_ent, su_entries) {
-			if (su_iter->su_so == so)
-				break;
-		}
-		if (!su_iter)
-			panic("no such socket");
-
-		LIST_REMOVE(su_iter, su_entries);
-		nsock--;
-		rebuild = true;
-		mutex_exit(&su_mtx);
-
-		rumpuser_close(SO2S(su_iter->su_so), &error);
-		kmem_free(su_iter, sizeof(*su_iter));
-	}
+		removesock(so);
 		break;
+
+	case PRU_SOCKADDR:
+	case PRU_PEERADDR:
+	{
+		int slen = nam->m_len;
+		enum rumpuser_getnametype which;
+
+		if (req == PRU_SOCKADDR)
+			which = RUMPUSER_SOCKNAME;
+		else
+			which = RUMPUSER_PEERNAME;
+		rumpuser_net_getname(SO2S(so),
+		    mtod(nam, struct sockaddr *), &slen, which, &error);
+		if (error == 0)
+			nam->m_len = slen;
+		break;
+	}
 
 	default:
 		panic("sockin_usrreq: IMPLEMENT ME, req %d not supported", req);
