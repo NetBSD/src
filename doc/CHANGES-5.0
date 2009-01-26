@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.81 2009/01/24 23:08:09 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.82 2009/01/26 01:40:01 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -2988,4 +2988,111 @@ distrib/news68k/floppies/ramdisk/list		1.23
 
 	Use small src/distrib/common/protocols.
 	[tsutsui, ticket #314]
+
+sys/arch/newsmips/stand/boot/boot.c		1.17
+sys/arch/news68k/stand/boot/boot.c		1.17
+
+	Disable LOAD_NOTE on floppy boot.  Fixes PR install/38943 on
+	newsmips and news68k.
+	[tsutsui, ticket #307]
+
+sys/arch/m68k/fpe/fpu_emulate.c			1.28
+
+	In fpu_emul_arith(), check lower 7 bits in word1 rather than
+	only 6 bits to check 040/060 FP instructions, and don't call
+	fpu_implode() and fpu_upd_fpsr() if no vaild emulated result
+	is set otherwise these functions cause NULL pointer dereference.
+
+	Fixes panics triggered by 040/060's FDADD instruction on 020/030
+	machines (even with 68881/68882) running kernels with options
+	FPU_EMULATE.
+	[tsutsui, ticket #308]
+
+lib/libc/net/getaddrinfo.c			1.92
+
+	Cause getaddrinfo() without socktype specification to work
+	correctly for numeric addresses.
+
+	This change also causes getaddrinfo() with NULL hint to work
+	properly for numeric addresses.
+	[tls, ticket #306]
+
+share/mk/bsd.README				1.246
+
+	Document USE_FORT.
+	[christos, ticket #309]
+
+sys/dev/mca/esp_mca.c				1.20
+
+	Fix obvious errors in conversion to device_t.
+	[tsutsui, ticket #310]
+
+sbin/gpt/gpt.h					1.3
+sys/sys/disklabel_gpt.h				1.7
+
+	Don't use sizeof(struct gpt_hdr).  It will pad the structure on
+	x86-64, which causes some systems to reject the GPT.
+	Fixes kern/38997
+	[jakllsch, ticket #311]
+
+sys/kern/sys_pset.c				1.11
+
+	sys__pset_bind: obviously, sched_takecpu() should take "t" LWP,
+	not "l".
+	[rmind, ticket #312]
+
+xsrc/external/mit/xterm/dist/XTerm.ad		1.3
+
+	Set pointerMode to 0 instead of never, which is not a valid value.
+	[christos, ticket #313]
+
+usr.bin/locale/locale.c				1.7
+
+	Fix off-by-one.
+	[tnozaki, ticket #315]
+
+common/lib/libprop/prop_data.c			1.14
+
+	Properly handle empty data nodes. They are in the form of
+	<data></data>, whereas the original code path only checked for
+	empty being <data/>.
+
+	This causes an assert to be triggered when trying to access the node's
+	content.
+	[cyber, ticket #316]
+
+share/misc/bsd-family-tree			1.42
+
+	Sync with Rev. 1.124 from FreeBSD
+	[hubertf, ticket #317]
+
+lib/libc/arch/hppa/gen/fpsetmask.c		1.5
+lib/libc/arch/hppa/gen/fpsetround.c		1.5
+lib/libc/arch/hppa/gen/fpsetsticky.c		1.5
+
+	Sprinkle the "memory" clobber register so the fpsr manipulation
+	actually happens.  Fixes the ieeefp/except regresion test.
+	[skrll, ticket #318]
+
+usr.sbin/btpand/server.c			1.2
+
+	The "Service Availability" value in the SDP record should be a
+	number from 0-255 indicating how much availability the service
+	has, rather than the "Load Factor (0-7)" as used in the "Class
+	of Device" setting.
+	[plunky, ticket #319]
+
+distrib/notes/common/contents			1.144, 1.149
+distrib/notes/common/main			1.428, 1.429, 1.433
+distrib/notes/common/netboot			1.34
+distrib/notes/common/postinstall		1.72
+distrib/notes/common/sysinst			1.96
+distrib/notes/common/upgrade			1.26
+distrib/notes/i386/hardware			1.125, 1.126
+distrib/notes/sparc64/hardware			1.25-1.27
+distrib/notes/sparc64/install			1.31
+distrib/notes/sparc64/prep			1.14
+
+	Numerous updates to the install notes.
+	[jmcneill, ticket #321]
 
