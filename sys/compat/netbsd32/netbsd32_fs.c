@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.56 2009/01/11 02:45:49 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.57 2009/01/26 13:00:05 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.56 2009/01/11 02:45:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.57 2009/01/26 13:00:05 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,16 +543,11 @@ netbsd32___fstat50(struct lwp *l, const struct netbsd32___fstat50_args *uap, reg
 		syscallarg(int) fd;
 		syscallarg(netbsd32_statp_t) sb;
 	} */
-	int fd = SCARG(uap, fd);
-	file_t *fp;
 	struct netbsd32_stat sb32;
 	struct stat ub;
-	int error = 0;
+	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(fd);
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	if (error == 0) {
 		netbsd32_from_stat(&ub, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));

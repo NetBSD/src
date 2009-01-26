@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.26 2008/03/21 21:54:58 ad Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.27 2009/01/26 13:00:05 njoly Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.27 2009/01/26 13:00:05 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,16 +216,11 @@ osf1_sys_fpathconf(struct lwp *l, const struct osf1_sys_fpathconf_args *uap, reg
 int
 osf1_sys_fstat(struct lwp *l, const struct osf1_sys_fstat_args *uap, register_t *retval)
 {
-	file_t *fp;
 	struct stat ub;
 	struct osf1_stat oub;
 	int error;
 
-	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(SCARG(uap, fd));
-
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	osf1_cvt_stat_from_native(&ub, &oub);
 	if (error == 0)
 		error = copyout(&oub, SCARG(uap, sb), sizeof(oub));
@@ -239,16 +234,11 @@ osf1_sys_fstat(struct lwp *l, const struct osf1_sys_fstat_args *uap, register_t 
 int
 osf1_sys_fstat2(struct lwp *l, const struct osf1_sys_fstat2_args *uap, register_t *retval)
 {
-	file_t *fp;
 	struct stat ub;
 	struct osf1_stat2 oub;
 	int error;
 
-	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(SCARG(uap, fd));
-
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	osf1_cvt_stat2_from_native(&ub, &oub);
 	if (error == 0)
 		error = copyout(&oub, SCARG(uap, sb), sizeof(oub));
