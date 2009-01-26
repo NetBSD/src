@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.1.6.1 2009/01/26 00:56:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.1.6.1 2009/01/26 00:56:15 snj Exp $");
 
 #include <sys/ioctl.h>
 
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: server.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
 
 static struct event	server_ev;
 static int		server_fd;
-static int		server_load;
+static int		server_avail;
 
 static void *		server_ss;
 static uint32_t		server_handle;
@@ -71,13 +71,13 @@ server_update(int count)
 
 	log_debug("count %d", count);
 
-	server_load = (count - 1) * 100 / server_limit;
-	log_info("server_load: %d%%", server_load);
+	server_avail = UINT8_MAX - (count - 1) * UINT8_MAX / server_limit;
+	log_info("Service Availability: %d/%d", server_avail, UINT8_MAX);
 
-	if (server_load > 99 && server_fd != -1)
+	if (server_avail == 0 && server_fd != -1)
 		server_close();
 
-	if (server_load < 100 && server_fd == -1)
+	if (server_avail > 0 && server_fd == -1)
 		server_open();
 
 	if (service_name)
@@ -260,20 +260,10 @@ server_register(void)
 		}
 	}
 
-					memset(&p, 0, sizeof(p));
-
-					p.psm = l2cap_psm;
-
-	if (server_load < 1)		p.load_factor = 0;
-	else if (server_load <= 17)	p.load_factor = 1;
-	else if (server_load <= 33)	p.load_factor = 2;
-	else if (server_load <= 50)	p.load_factor = 3;
-	else if (server_load <= 67)	p.load_factor = 4;
-	else if (server_load <= 83)	p.load_factor = 5;
-	else if (server_load <= 99)	p.load_factor = 6;
-	else				p.load_factor = 7;
-
-	if (l2cap_mode != 0)		p.security_description = 0x0001;
+	memset(&p, 0, sizeof(p));
+	p.psm = l2cap_psm;
+	p.load_factor = server_avail;
+	p.security_description = (l2cap_mode == 0 ? 0x0000 : 0x0001);
 
 	if (server_handle)
 		rv = sdp_change_service(server_ss, server_handle,
