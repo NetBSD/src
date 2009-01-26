@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.19 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.19.10.1 2009/01/26 00:31:57 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.19 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.19.10.1 2009/01/26 00:31:57 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ static int esp_mca_debug = 0;
 static int	esp_mca_match(device_t, cfdata_t, void *);
 static void	esp_mca_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NWE(esp_mca, sizeof(struct esp_softc),
+CFATTACH_DECL_NEW(esp_mca, sizeof(struct esp_softc),
     esp_mca_match, esp_mca_attach, NULL, NULL);
 
 /*
@@ -189,7 +189,7 @@ esp_mca_attach(device_t parent, device_t self, void *aux)
 
 	/* Map the 86C01 registers */
 	if (bus_space_map(ma->ma_iot, iobase, ESP_MCA_IOSIZE, 0, &ioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
+		aprint_error_dev(sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -199,7 +199,7 @@ esp_mca_attach(device_t parent, device_t self, void *aux)
 	/* Submap the 'esp' registers */
 	if (bus_space_subregion(ma->ma_iot, ioh, ESP_REG_OFFSET,
 	    ESP_MCA_IOSIZE-ESP_REG_OFFSET, &esc->sc_esp_ioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't subregion i/o space\n");
+		aprint_error_dev(sc->sc_dev, "can't subregion i/o space\n");
 		return;
 	}
 
@@ -208,7 +208,7 @@ esp_mca_attach(device_t parent, device_t self, void *aux)
 	if ((error = mca_dmamap_create(esc->sc_dmat, MAXPHYS,
             BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | MCABUS_DMA_IOPORT,
 	    &esc->sc_xfer, drq)) != 0){
-                aprint_error_dev(&sc->sc_dev,
+                aprint_error_dev(sc->sc_dev,
 		    "couldn't create DMA map - error %d\n", error);
                 return;
         }
@@ -232,7 +232,7 @@ esp_mca_attach(device_t parent, device_t self, void *aux)
 	esc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_BIO, ncr53c9x_intr,
 	    esc);
 	if (esc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 
