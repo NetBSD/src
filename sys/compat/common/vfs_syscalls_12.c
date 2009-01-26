@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.27 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.28 2009/01/26 13:00:04 njoly Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.27 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.28 2009/01/26 13:00:04 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,16 +179,11 @@ compat_12_sys_fstat(struct lwp *l, const struct compat_12_sys_fstat_args *uap, r
 		syscallarg(int) fd;
 		syscallarg(struct stat12 *) sb;
 	} */
-	int fd = SCARG(uap, fd);
-	struct file *fp;
 	struct stat ub;
 	struct stat12 oub;
 	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(fd);
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	if (error == 0) {
 		compat_12_stat_conv(&ub, &oub);
 		error = copyout(&oub, SCARG(uap, sb), sizeof (oub));

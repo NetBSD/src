@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.29 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.30 2009/01/26 13:00:04 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.29 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.30 2009/01/26 13:00:04 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,16 +180,11 @@ compat_30_sys___fstat13(struct lwp *l, const struct compat_30_sys___fstat13_args
 		syscallarg(int) fd;
 		syscallarg(struct stat13 *) sb;
 	} */
-	int fd = SCARG(uap, fd);
-	struct file *fp;
 	struct stat sb;
 	struct stat13 osb;
 	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
-	error = (*fp->f_ops->fo_stat)(fp, &sb);
-	fd_putfile(fd);
+	error = do_sys_fstat(SCARG(uap, fd), &sb);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);

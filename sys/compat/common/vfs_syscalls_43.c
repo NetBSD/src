@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.48 2008/11/19 18:36:02 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.49 2009/01/26 13:00:04 njoly Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.48 2008/11/19 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.49 2009/01/26 13:00:04 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -206,22 +206,16 @@ compat_43_sys_fstat(struct lwp *l, const struct compat_43_sys_fstat_args *uap, r
 		syscallarg(int) fd;
 		syscallarg(struct stat43 *) sb;
 	} */
-	int fd = SCARG(uap, fd);
-	struct file *fp;
 	struct stat ub;
 	struct stat43 oub;
 	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(fd);
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	if (error == 0) {
 		cvtstat(&ub, &oub);
 		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
 		    sizeof (oub));
 	}
-
 
 	return (error);
 }
