@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1227 2009/01/24 01:15:25 agc Exp $
+#	$NetBSD: mi,v 1.1228 2009/01/26 14:14:12 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2973,6 +2973,7 @@
 ./usr/libdata/debug/usr/bin/nvi.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/objcopy.debug	comp-util-debug		bfd,debug
 ./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/openpgp.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/passwd.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/paste.debug		comp-util-debug		debug
