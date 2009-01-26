@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.24 2009/01/10 22:28:42 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.25 2009/01/26 19:34:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.24 2009/01/10 22:28:42 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.25 2009/01/26 19:34:12 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -73,37 +73,40 @@ struct rumpuser_mtx {
 	unsigned recursion;
 };
 
+#define RURW_AMWRITER(rw) (pthread_equal(rw->writer, pthread_self())	\
+				&& rw->readers == -1)
+#define RURW_HASREAD(rw)  (rw->readers > 0)
+
 #define RURW_SETWRITE(rw)						\
 do {									\
-	assert(rw->readers == 0 && rw->writer == NULL);			\
+	assert(rw->readers == 0);					\
 	rw->writer = pthread_self();					\
+	rw->readers = -1;						\
 } while (/*CONSTCOND*/0)
 #define RURW_CLRWRITE(rw)						\
 do {									\
-	assert(rw->readers == 0 && rw->writer != NULL);			\
-	rw->writer = NULL;						\
+	assert(rw->readers == -1 && RURW_AMWRITER(rw));			\
+	rw->readers = 0;						\
 } while (/*CONSTCOND*/0)
 #define RURW_INCREAD(rw)						\
 do {									\
-	assert(rw->writer == NULL);					\
 	pthread_spin_lock(&rw->spin);					\
-	((rw)->readers++);						\
+	assert(rw->readers >= 0);					\
+	++(rw)->readers;						\
 	pthread_spin_unlock(&rw->spin);					\
 } while (/*CONSTCOND*/0)
 #define RURW_DECREAD(rw)						\
 do {									\
-	assert(rw->readers > 0 && rw->writer == NULL);			\
 	pthread_spin_lock(&rw->spin);					\
-	((rw)->readers--);						\
+	assert(rw->readers > 0);					\
+	--(rw)->readers;						\
 	pthread_spin_unlock(&rw->spin);					\
 } while (/*CONSTCOND*/0)
-#define RURW_AMWRITER(rw)	(rw->writer == pthread_self())
-#define RURW_HASREAD(rw)	(rw->readers != 0)
 
 struct rumpuser_rw {
 	pthread_rwlock_t pthrw;
 	pthread_spinlock_t spin;
-	unsigned readers;
+	int readers;
 	pthread_t writer;
 };
 
@@ -160,6 +163,7 @@ rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 	pthread_mutex_init(&rumpuser_aio_mtx.pthmtx, NULL);
 	pthread_cond_init(&rumpuser_aio_cv.pthcv, NULL);
 	pthread_rwlock_init(&rumpspl.pthrw, NULL);
+	pthread_spin_init(&rumpspl.spin, PTHREAD_PROCESS_SHARED);
 
 	pthread_key_create(&curlwpkey, NULL);
 	pthread_key_create(&isintr, NULL);
@@ -244,7 +248,7 @@ mtxenter(struct rumpuser_mtx *mtx)
 		assert(mtx->owner == NULL);
 		mtx->owner = pthread_self();
 	} else {
-		assert(mtx->owner == pthread_self());
+		assert(pthread_equal(mtx->owner, pthread_self()));
 	}
 }
 
@@ -298,7 +302,7 @@ int
 rumpuser_mutex_held(struct rumpuser_mtx *mtx)
 {
 
-	return mtx->owner == pthread_self();
+	return mtx->recursion && pthread_equal(mtx->owner, pthread_self());
 }
 
 void
@@ -347,10 +351,10 @@ void
 rumpuser_rw_exit(struct rumpuser_rw *rw)
 {
 
-	if (RURW_AMWRITER(rw))
-		RURW_CLRWRITE(rw);
-	else
+	if (RURW_HASREAD(rw))
 		RURW_DECREAD(rw);
+	else
+		RURW_CLRWRITE(rw);
 	NOFAIL_ERRNO(pthread_rwlock_unlock(&rw->pthrw));
 }
 
@@ -367,7 +371,7 @@ int
 rumpuser_rw_held(struct rumpuser_rw *rw)
 {
 
-	return rw->readers || rw->writer;
+	return rw->readers != 0;
 }
 
 int
