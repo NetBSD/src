@@ -1,4 +1,4 @@
-/*	$NetBSD: evdns.c,v 1.1 2008/05/16 20:24:57 peter Exp $ */
+/*	$NetBSD: evdns.c,v 1.2 2009/01/26 15:09:56 christos Exp $ */
 
 /* The original version of this module was written by Adam Langley; for
  * a history of modifications, check out the subversion logs.
@@ -74,7 +74,9 @@
 #include <openssl/rand.h>
 #endif
 
+#ifndef _FORTIFY_SOURCE
 #define _FORTIFY_SOURCE 3
+#endif
 
 #include <string.h>
 #include <fcntl.h>
