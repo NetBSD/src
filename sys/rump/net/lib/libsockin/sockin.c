@@ -1,7 +1,7 @@
-/*	$NetBSD: sockin.c,v 1.8 2008/12/18 00:24:13 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.9 2009/01/26 10:43:21 pooka Exp $	*/
 
 /*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.8 2008/12/18 00:24:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.9 2009/01/26 10:43:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.8 2008/12/18 00:24:13 pooka Exp $");
 #include <netinet/ip.h>
 
 #include <rump/rumpuser.h>
+
+#include "rump_private.h"
 
 /*
  * An inet communication domain which uses the socket interface.
@@ -100,11 +102,6 @@ struct domain sockindomain = {
 	.dom_rtcache = { NULL },
 	.dom_sockaddr_cmp = NULL
 };
-
-/* only for testing */
-#if 0
-#define SOCKIN_NOTHREAD
-#endif
 
 #define SO2S(so) ((intptr_t)(so->so_internal))
 #define SOCKIN_SBSIZE 65536
@@ -181,7 +178,6 @@ sockin_process(struct socket *so)
 	sorwakeup(so);
 }
 
-#ifndef SOCKIN_NOTHREAD
 static void
 sockin_accept(struct socket *so)
 {
@@ -286,18 +282,19 @@ sockinworker(void *arg)
 	}
 	
 }
-#endif /* SOCKIN_NOTHREAD */
 
 static void
 sockin_init()
 {
-#ifndef SOCKIN_NOTHREAD
 	int rv;
 
-	if ((rv = kthread_create(PRI_NONE, 0, NULL, sockinworker,
-	    NULL, NULL, "sockwork")) != 0)
-		panic("sockin_init: could not create worker thread\n");
-#endif
+	if (rump_threads) {
+		if ((rv = kthread_create(PRI_NONE, 0, NULL, sockinworker,
+		    NULL, NULL, "sockwork")) != 0)
+			panic("sockin_init: could not create worker thread\n");
+	} else {
+		printf("sockin_init: no threads => no worker thread\n");
+	}
 	mutex_init(&su_mtx, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -389,10 +386,10 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		m_freem(m);
 		m_freem(control);
-#ifdef SOCKIN_NOTHREAD
+
 		/* this assumes too many things to list.. buthey, testing */
-		sockin_process(so);
-#endif
+		if (!rump_threads)
+			sockin_process(so);
 	}
 		break;
 
