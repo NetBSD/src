@@ -40,7 +40,7 @@
 #endif
 #ifdef __NetBSD__
 #include <sys/disklabel_gpt.h>
-#define GPT_SIZE sizeof(struct gpt_hdr)
+#define GPT_SIZE GPT_HDR_SIZE
 #define hdr_uuid hdr_guid
 #define ent_uuid ent_guid
 #endif
