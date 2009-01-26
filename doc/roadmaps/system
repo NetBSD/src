@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.4 2008/03/21 08:53:06 spz Exp $
+$NetBSD: system,v 1.5 2009/01/26 05:09:25 agc Exp $
 
 NetBSD System Roadmap
 =====================
@@ -22,33 +22,23 @@ NetBSD 5.0 will ship with the following main changes to the system:
 12. Improved observability: minidumps, lockstat and tprof
 13. Power management framework
 
-We are working on the following elements, and expect them to be in 5.0:
+The following element has been added to the NetBSD-current tree, and will be
+in NetBSD 6.0
 
-14. Full kernel preemption for real-time threads
-15. 64-bit time values supported
-16. POSIX shared memory
-17. namei() tactical changes
+14. 64-bit time values supported
 
 The following projects are expected to be included in NetBSD 6.0
 
+15. Full kernel preemption for real-time threads
+16. POSIX shared memory
+17. namei() tactical changes
 18. Better resource controls
 19. Improved observability: online crashdumps, remote debugging
 20. Processor and cache topology aware scheduler
 
-We expect to branch for the 5.0 release in April or May 2008, which would
-put a NetBSD 5.0 Release date in Q4 2008. An annual release cycle would
-thus mean that 6.0 would be branched in April or May 2009.
-
-Pictorially, this looks like:
-
- 2008                                        2009
- Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec Jan Feb Mar Apr May Jun Jul Aug
-|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|
-
-                | ------- 5.0 --------- |                       | ------- 6.0
-              branch                  release                 branch
-
- 1-8  11,15-17,18 9,10,12-14                 19      20
+The timescales for 6.0 are not known at the present time, but we would
+expect to branch 6.0 late in 2009, with a view to a 6.0 release in
+early 2010.
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
@@ -195,15 +185,7 @@ Fujitsu, Toshiba, and Sony.
 
 Responsible: jmcneill, joerg
 
-14. Full kernel preemption for real-time threads
-------------------------------------------------
-
-With the revamp of the kernel concurrency model, much of the kernel is fully
-multi-threaded and can therefore be preempted at any time. In support of
-lower context switch and dispatch times for real-time threads, full kernel
-preemption is being implemented.
-
-15. 64-bit time_t support
+14. 64-bit time_t support
 -------------------------
 
 The Unix 32-bit time_t value will overflow in 2037 - any mortgage calculations
@@ -212,6 +194,14 @@ and to address this, 64-bit time_t values will be used to contain the number
 of seconds since 1970.
 
 Responsible: christos
+
+15. Full kernel preemption for real-time threads
+------------------------------------------------
+
+With the revamp of the kernel concurrency model, much of the kernel is fully
+multi-threaded and can therefore be preempted at any time. In support of
+lower context switch and dispatch times for real-time threads, full kernel
+preemption is being implemented.
 
 16. POSIX shared memory
 -----------------------
@@ -268,4 +258,5 @@ Responsible: dholland
 
 
 Andrew Doran
-Wed Mar 19 18:26:49 GMT 2008
+Alistair Crooks
+Sun 25 Jan 2009 21:03:04 PST
