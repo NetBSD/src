@@ -1,26 +1,28 @@
 #!/bin/sh
-#	$NetBSD: makeconf,v 1.6 2001/11/20 11:26:10 lukem Exp $
+#	$NetBSD: makeconf,v 1.6.132.1 2009/01/26 03:07:52 snj Exp $
 
 emit_file() {
 	echo "Generating $1"
 	echo '#
-# $NetBSD: makeconf,v 1.6 2001/11/20 11:26:10 lukem Exp $
+# $NetBSD: makeconf,v 1.6.132.1 2009/01/26 03:07:52 snj Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:' > $1
-	grep -h '$NetBSD' $2 GENERIC.in | sed -e 's/\$NetBSD/	NetBSD/' >> $1
+	if [ $2 != GENERIC.in ] ; then
+		grep -h '$NetBSD' $2 GENERIC.in | sed -e 's/\$NetBSD/	NetBSD/' >> $1
+	else
+		grep -h '$NetBSD' GENERIC.in | sed -e 's/\$NetBSD/	NetBSD/' >> $1
+	fi
 	cpp -undef -P $3 2>/dev/null < $2 |
 		sed -e '/\$NetBSD:/d' |
 		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' >> $1
 }
 
-emit_file BOOT FALCON.in "-DINSTALL_KERNEL -DTT030_KERNEL -DFALCON_KERNEL"
-emit_file BOOTX FALCON.in \
-	"-DINSTALL_KERNEL -DINSTALLX_KERNEL -DTT030_KERNEL -DFALCON_KERNEL"
-emit_file ATARITT ATARITT.in "-DTT030_KERNEL"
-emit_file FALCON FALCON.in "-DFALCON_KERNEL"
+emit_file SMALL030 GENERIC.in "-DSMALL030_KERNEL -DTT030_KERNEL -DFALCON_KERNEL"
+emit_file ATARITT GENERIC.in "-DTT030_KERNEL"
+emit_file FALCON GENERIC.in "-DFALCON_KERNEL"
 emit_file HADES HADES.in "-DHADES_KERNEL"
 emit_file MILAN-ISAIDE MILAN.in "-DMILAN_KERNEL -DMILAN_ISAIDE"
 emit_file MILAN-PCIIDE MILAN.in "-DMILAN_KERNEL -DMILAN_PCIIDE"
