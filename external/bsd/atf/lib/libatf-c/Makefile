@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/01/19 07:13:04 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2009/01/26 16:30:14 christos Exp $
 
 NOLINT=		# defined
 
@@ -23,7 +23,7 @@ CPPFLAGS+=	-DATF_PKGDATADIR=\"/usr/share/atf\"
 CPPFLAGS+=	-DATF_SHELL=\"/bin/sh\"
 CPPFLAGS+=	-DATF_WORKDIR=\"/tmp\"
 
-WARNS?=		2
+WARNS?=		4
 
 SRCS=		check.c \
 		config.c \
@@ -80,8 +80,9 @@ MAN=		# empty
 CLEANFILES+=	defs.h
 
 defs.h: defs.h.in
-	sed -e 's,@ATTRIBUTE_NORETURN@,__attribute__((noreturn)),g' \
-		<${SRCDIR}/atf-c/defs.h.in >defs.h.tmp
-	mv defs.h.tmp defs.h
+	${TOOL_SED} -e \
+	    's,@ATTRIBUTE_NORETURN@,__attribute__((__noreturn__)),g' \
+	    < ${.ALLSRC} > ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
 
 .include <bsd.lib.mk>
