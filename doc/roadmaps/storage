@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.2.2.1 2009/01/26 05:15:53 snj Exp $
+$NetBSD: storage,v 1.2.2.2 2009/01/26 05:17:44 snj Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -33,6 +33,7 @@ The timescales for 6.0 are not known at the present time, but we would
 expect to branch 6.0 late in 2009, with a view to a 6.0 release in
 early 2010.
 
+We'll continue to update this roadmap as features and dates get firmed up.
 
 Some explanations
 =================
