@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgrcv.2,v 1.17 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: msgrcv.2,v 1.18 2009/01/26 13:08:48 njoly Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -173,7 +173,8 @@ The message queue was removed while
 was waiting for a message of the requested type to become available in it.
 .Pp
 .Fa msgsz
-is less than 0.
+is greater than
+.Dv SSIZE_MAX .
 .It Bq Er E2BIG
 A matching message was received, but its size was greater than
 .Fa msgsz

@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgsnd.2,v 1.15 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: msgsnd.2,v 1.16 2009/01/26 13:08:48 njoly Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -141,8 +141,10 @@ was waiting for a resource to become available in order to deliver the
 message.
 .Pp
 .Fa msgsz
-is less than 0, or greater than
-.Va msg_qbytes .
+is greater than
+.Va msg_qbytes
+or
+.Dv SSIZE_MAX .
 .It Bq Er EACCES
 The calling process does not have write access to the message queue.
 .It Bq Er EAGAIN

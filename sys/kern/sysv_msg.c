@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.59 2009/01/11 02:45:53 christos Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.60 2009/01/26 13:08:48 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.59 2009/01/11 02:45:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.60 2009/01/26 13:08:48 njoly Exp $");
 
 #define SYSVMSG
 
@@ -653,6 +653,10 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
 	    (long long)msgsz, msgflg));
+
+	if ((ssize_t)msgsz < 0)
+		return EINVAL;
+
 restart:
 	msqid = IPCID_TO_IX(msqidr);
 
@@ -959,6 +963,10 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
 	    user_msgp, (long long)msgsz, msgtyp, msgflg));
+
+	if ((ssize_t)msgsz < 0)
+		return EINVAL;
+
 restart:
 	msqid = IPCID_TO_IX(msqidr);
 
