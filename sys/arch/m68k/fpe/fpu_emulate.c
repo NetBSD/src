@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.27 2007/03/09 16:23:01 tsutsui Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.27.54.1 2009/01/26 00:24:55 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.27 2007/03/09 16:23:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.27.54.1 2009/01/26 00:24:55 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -753,8 +753,8 @@ fpu_emul_arith(fe, insn)
      * pointer to the result.
      
      */
-    res = 0;
-    switch (word1 & 0x3f) {
+    res = NULL;
+    switch (word1 & 0x7f) {
     case 0x00:			/* fmove */
 	res = &fe->fe_f2;
 	break;
@@ -910,7 +910,7 @@ fpu_emul_arith(fe, insn)
 	discard_result = 1;
 	break;
 
-    default:
+    default:			/* possibly 040/060 instructions */
 #ifdef DEBUG
 	printf("fpu_emul_arith: bad opcode=0x%x, word1=0x%x\n",
 	       insn->is_opcode, insn->is_word1);
@@ -918,8 +918,15 @@ fpu_emul_arith(fe, insn)
 	sig = SIGILL;
     } /* switch (word1 & 0x3f) */
 
+    /* for sanity */
+    if (res == NULL)
+	sig = SIGILL;
+
     if (!discard_result && sig == 0) {
 	fpu_implode(fe, res, FTYPE_EXT, &fpregs[regnum * 3]);
+
+	/* update fpsr according to the result of operation */
+	fpu_upd_fpsr(fe, res);
 #if DEBUG_FPE
 	printf("fpu_emul_arith: %08x,%08x,%08x stored in FP%d\n",
 	       fpregs[regnum*3], fpregs[regnum*3+1],
@@ -936,9 +943,6 @@ fpu_emul_arith(fe, insn)
 	printf("fpu_emul_arith: received signal %d\n", sig);
 #endif
     }
-
-    /* update fpsr according to the result of operation */
-    fpu_upd_fpsr(fe, res);
 
 #if DEBUG_FPE
     printf("fpu_emul_arith: FPSR = %08x, FPCR = %08x\n",
