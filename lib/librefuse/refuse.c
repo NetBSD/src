@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.90 2009/01/19 10:01:38 lukem Exp $	*/
+/*	$NetBSD: refuse.c,v 1.91 2009/01/26 04:00:40 lukem Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.90 2009/01/19 10:01:38 lukem Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.91 2009/01/26 04:00:40 lukem Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1140,7 +1140,7 @@ puffs_fuse_node_readdir(struct puffs_usermount *pu, void *opc,
 	}
 
 	/* now, stuff results into the kernel buffers */
-	while (*readoff < dirh->bufsize - dirh->reslen) {
+	while (*readoff < (off_t)(dirh->bufsize - dirh->reslen)) {
 		/*LINTED*/
 		fromdent = (struct dirent *)((uint8_t *)dirh->dbuf + *readoff);
 
