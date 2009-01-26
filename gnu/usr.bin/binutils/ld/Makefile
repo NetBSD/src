@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2009/01/06 03:08:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2009/01/26 00:44:32 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -76,10 +76,10 @@ CLEANFILES+=	.depend.${f} e${f}.c
 
 # XXX super hack
 . if (${MACHINE_ARCH} == "x86_64" && \
-      (${f} == "elf_i386" || ${f} == "i386nbsd"))
+      ("${f}" == "elf_i386" || "${f}" == "i386nbsd"))
 EMUL_LIB_PATH.${f}=/usr/lib/i386
 . elif (${MACHINE_ARCH} == "sparc64" && \
-      (${f} == "elf32_sparc" || ${f} == "sparcnbsd"))
+      ("${f}" == "elf32_sparc" || "${f}" == "sparcnbsd"))
 EMUL_LIB_PATH.${f}=/usr/lib/sparc
 . else
 EMUL_LIB_PATH.${f}=/usr/lib
