@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.11 2009/01/23 19:19:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.12 2009/01/26 12:08:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -163,5 +163,8 @@ int  rumpuser_net_connect(int, const struct sockaddr *, int, int *);
 int  rumpuser_net_bind(int, const struct sockaddr *, int, int *);
 int  rumpuser_net_accept(int, struct sockaddr *, int *, int *);
 int  rumpuser_net_listen(int, int, int *);
+enum rumpuser_getnametype { RUMPUSER_SOCKNAME, RUMPUSER_PEERNAME };
+int  rumpuser_net_getname(int, struct sockaddr *, int *,
+			      enum rumpuser_getnametype, int *);
 
 #endif /* _RUMP_RUMPUSER_H_ */
