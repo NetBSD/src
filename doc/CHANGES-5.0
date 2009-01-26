@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.82 2009/01/26 01:40:01 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.83 2009/01/26 03:37:14 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3095,4 +3095,35 @@ distrib/notes/sparc64/prep			1.14
 
 	Numerous updates to the install notes.
 	[jmcneill, ticket #321]
+
+distrib/notes/common/contents			1.145, 1.146, 1.147
+distrib/utils/sysinst/arch/atari/md.h		1.19
+distrib/utils/sysinst/arch/atari/msg.md.de	1.4
+distrib/utils/sysinst/arch/atari/msg.md.en	1.8
+distrib/utils/sysinst/arch/atari/msg.md.es	1.3
+etc/etc.atari/Makefile.inc			1.18, 1.19
+sys/arch/atari/conf/ATARITT			regen
+sys/arch/atari/conf/ATARITT.in			delete
+sys/arch/atari/conf/BOOT			delete
+sys/arch/atari/conf/BOOTX			delete
+sys/arch/atari/conf/FALCON			regen
+sys/arch/atari/conf/FALCON.in			delete
+sys/arch/atari/conf/GENERIC.in			1.78 via patch
+sys/arch/atari/conf/HADES.in			regen
+sys/arch/atari/conf/HADES.in			1.9
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
+sys/arch/atari/conf/MILAN.in			1.22
+sys/arch/atari/conf/SMALL030			added
+sys/arch/atari/conf/makeconf			1.7
+
+	- Merge ATARITT.in and FALCON.in into GENERIC.in so we can generate
+	   a sane kernel config which defines both of them
+	- Cleanup all the #if defined(FOO) entries to be consistent and have
+	   a matching /* FOO */ on the #endif line
+	- No change to generated ATARITT/FALCON/HADES/MILAN-ISAIDE/MILAN-PCIIDE
+	- Rename BOOT to SMALL030 and trim a little more to save space.
+	- Drop BOOTX
+	- Update release notes.
+	[abs, ticket #320]
 
