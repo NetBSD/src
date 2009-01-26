@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.148 2009/01/25 17:48:05 abs Exp $
+.\"	$NetBSD: contents,v 1.149 2009/01/26 00:14:42 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@ This kernel runs on Vr41xx and TX3922 CPUs only.
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.  This 
-kernel also supports SMP on systems with more than one CPU.
+kernel supports SMP on systems with more than one CPU.
 .\}
 .
 .if \n[hp300] \{\
@@ -465,7 +465,7 @@ The
 binary distribution sets contain the binaries which
 comprise the
 .Nx
-\*V release for the \*M.
+\*V release for \*M.
 The binary distribution sets can be found in the
 .Pa \*M/binary/sets
 subdirectory
@@ -476,7 +476,7 @@ of the
 distribution tree.  
 .(Note
 If you want to install 32-bit only binaries, you will 
-still need to boot using the sparc64 installation tools.  When it 
+still need to boot using the sparc64 installation tools.  When sysinst
 asks you for the distribution set to install, provide the
 .Nx Ns /sparc
 .Pa binary/sets .
@@ -1075,12 +1075,16 @@ all related programs, and their manual pages.
 .Nx
 maintains its own set of sources for the X Window System in order to
 assure tight integration and compatibility.
-.ie \n[hp700]:\n[hpcsh]:\n[next68k]:\n[sun2] \{\
+.ie \n[sun2] \{\
 .Nx*M
 currently does not ship with an X server or X clients.
 .\}
 .el \{\
-Depending on the port, these sources are based on either Xorg 7.0 or
+These sources are based on
+.ie \n[i386]:\n[amd64]:\n[macppc]:\n[sparc64]:\n[shark] \{\
+X.Org 7.3.
+.\}
+.el \{\
 XFree86 4.5.0.
 .\}
 Binary sets for the X Window System are distributed with

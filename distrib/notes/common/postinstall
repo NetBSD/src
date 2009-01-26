@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.71 2008/09/27 01:26:28 tsutsui Exp $
+.\"	$NetBSD: postinstall,v 1.72 2009/01/26 00:14:42 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -147,8 +147,8 @@ Other values that need to be set in
 for a networked environment are
 .Ar hostname
 and possibly
-.Ar defaultroute ,
-furthermore add an
+.Ar defaultroute .
+You may also need to add an
 .Ar ifconfig_int
 for your
 .Aq int
@@ -286,8 +286,7 @@ Unless you've set a password in
 .Ic sysinst ,
 there
 is no initial password.
-If you're using the machine in a networked environment,
-you should create an account for yourself (see below) and protect it and the
+You should create an account for yourself (see below) and protect it and the
 .Dq root
 account with good passwords.
 By default, root login from the network is disabled (even via
@@ -320,13 +319,13 @@ directly! See
 and
 .Xr pwd_mkdb 8
 if you want to edit the password database.
-.if !\n[hp700]:\n[next68k] \{\
+.if !\n[sun2] \{\
 .It
 The X Window System
 .Pp
-If you have installed the X Window System, look at the files in
-.Pa /usr/X11R6/lib/X11/doc
-for information.
+If you installed the X Window System, you may want to read the
+chapter about X in the NetBSD Guide:
+.Lk http://netbsd.org/docs/guide/en/chap-x.html
 .if \n[hp300] \{\
 Also, you may want to read through the
 .Nx*M
@@ -334,25 +333,6 @@ FAQ entry on X11.
 .br
 .Lk http://www.NetBSD.org/ports/hp300/faq.html#x11
 .\}
-.if \n[macppc] \{\
-Also, you may want to read through the
-.Nx*M
-X11R6 FAQ.
-.br
-.Lk http://www.NetBSD.org/ports/macppc/x11.html
-.\}
-.\} \" ! !\n[next68k]
-.if \n[i386]:\n[shark] \{\
-.Pp
-You will need to set up a configuration file, see
-.Pa /usr/X11R6/lib/X11/XF86Config.eg
-for an example.
-The
-.Xr xf86cfg 1
-and
-.Xr xf86config 1
-utilities can interactively create a first version of such a configuration
-file for you.
 .if \n[mac68k] \{\
 .(tag [Color_X]
 .It [Color_X]
@@ -364,24 +344,17 @@ installed at this point and the Booter options can be
 modified to match the resolution depth.
 .tag)
 .\}
-See
-.Lk http://www.xfree86.org/
-and the XFree86 manual page for more information.
 .\}
-.Pp
-Don't forget to add
-.Pa /usr/X11R6/bin
-to your path in your shell's dot file so that you have access to the X binaries.
 .It
 Installing third party packages
 .Pp
 If you wish to install any of the software freely available for
 .Ul
-systems
-you are strongly advised to first check the
+systems you are strongly advised to first check the
 .Nx
-package system.
-This automatically handles any changes necessary to make the software run on
+package system, pkgsrc.
+pkgsrc automatically handles any changes necessary to make the
+software run on
 .Nx ,
 retrieval and installation of any other packages on which the software
 may depend, and simplifies installation (and deinstallation), both
@@ -420,7 +393,6 @@ then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
 .Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
-\&...
 .Ed
 .(Note
 Some mirror sites don't mirror
@@ -436,38 +408,36 @@ the Perl programming language, Apache web server, KDE desktop
 environment and the Firefox web browser 
 as well as all the packages they depend on.
 .(Note
-In some case the
+In some cases the
 .Xr pkg_add 1
 command will complain about a version mismatch of packages with a message
 like the following:
 .Dl Warning: package `foo' was built for a different version of the OS:
 .Dl NetBSD/i386 M.N (pkg) vs. NetBSD/i386 \*V (this host) ,
-This warning would be harmless if the formal major release numbers are same
+This warning is harmless if the formal major release numbers are the same
 between the pkg and your host.
-Please refer
+Please refer to
 .Dq the NetBSD release glossary and graphs :
 .Lk http://www.NetBSD.org/releases/release-map.html
-for details of the release numbering scheme of
+for details of the release numbering scheme used with
 .Nx .
 .Note)
 .It
-Package sources for compiling packages on your own can be obtained by
+The framework for compiling packages can be obtained by
 retrieving the file
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc.tar.gz
-They are typically extracted into
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc.tar.gz .
+It is typically extracted into
 .Pa /usr/pkgsrc
-(though other locations work fine), with the commands:
+(though other locations work fine) with the commands:
 .Pp
 .Dl # Ic "mkdir /usr/pkgsrc"
-.Dl # Ic "cd /usr/pkgsrc"
+.Dl # Ic "cd /usr"
 .Dl # Ic "tar -zxpf pkgsrc.tar.gz"
 .Pp
 After extracting, see the
-.Pa README
-and
 .Pa doc/pkgsrc.txt
-files in the extraction directory (e.g.
-.Pa /usr/pkgsrc/README )
+file in the extraction directory (e.g.,
+.Pa /usr/pkgsrc/doc/pkgsrc.txt )
 for more information.
 .bullet)
 .It
@@ -483,9 +453,8 @@ afterwards.
 The
 .Pa /etc/postfix/main.cf
 file will almost definitely need to be adjusted.
-If you prefer a different MTA, then install it using the
-.Nx
-package system or by hand and adjust
+If you prefer a different MTA, then install it using
+pkgsrc or by hand and adjust
 .Pa /etc/mailer.conf .
 .It
 Edit

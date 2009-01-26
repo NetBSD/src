@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.13 2008/11/20 20:52:17 jdc Exp $
+.\"	$NetBSD: prep,v 1.14 2009/01/26 00:14:43 snj Exp $
 .
 .Ss2 Deciding on partition sizes
 .
@@ -35,8 +35,8 @@ Assuming a classic partition scheme with
 file systems, a comfortable size for the
 .Nx
 .Pa /
-partition is about 100 MB.
-A full binary installation including X11R6 takes nearly 350 MB in
+partition is about 200 MB.
+A full binary installation including X takes over 600 MB in
 .Pa /usr .
 Since the pkgsrc binaries are typically installed in
 .Pa /usr/pkg 
@@ -88,7 +88,7 @@ If you are using a serial console, the
 .Nx*M
 installer defaults to using 9600 bps, 8N1 settings.  You may want to 
 configure your system and serial terminal like this prior to booting the 
-installer.  Additionally, a new installation of
+installer.  A new installation of
 .Nx*M
 will default to these settings as well.
 .Pp
@@ -113,7 +113,7 @@ one would use:
 .No ok Ic "boot cdrom"
 .disp)
 .Pp
-And, to boot from a kernel named
+And to boot from a kernel named
 .Li netbsd-GENERIC
 on the fourth partition (
 .Sq Li d ,
@@ -137,10 +137,10 @@ OpenBoot PROM version and moon phase.
 .
 .Ss2 Determining how to boot from an SBUS or PCI card
 .
-Some SBUS and PCI cards have firmware that lets you use them as a boot 
-device.  These cards do not automatically create a
+Some SBUS and PCI cards have firmware that lets you use them as boot 
+devices.  These cards do not automatically create
 .Ic devalias
-entry, so you must traverse the device tree to figure out what
+entries, so you must traverse the device tree to figure out what
 Open Firmware calls your card.  You will be using Open Firmware commands
 at the 
 .Sq Li ok
@@ -193,7 +193,9 @@ block-size    dma-free      dma-alloc     spin-down     spin-up
 .disp)
 Great!
 Also, in case you're interested in further details about your
-hardware, you can use the `.properties' command.
+hardware, you can use the 
+.Ic .properties
+command.
 .Pp
 So, when it's time to type in a boot command, use the shortened version of 
 the
@@ -226,10 +228,12 @@ use one of: hme0 sd0[a-h] wd0[a-h] halt
 .No "file system (default generic):" Ic "ffs"
 root on wd0a
 .disp)
+.Pp
+The root device can also be specified in your kernel config file.
 .
 .Ss2 Configuration of network interfaces
 .
-Some network devices (i.e. certain SBus cards)
+Some network devices (i.e., certain SBus cards)
 allow a choice between operating on a UTP or a AUI port.
 The
 .Li le
