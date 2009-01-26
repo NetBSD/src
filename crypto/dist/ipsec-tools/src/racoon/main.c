@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2009/01/23 11:28:27 tteras Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2009/01/26 18:13:06 tteras Exp $	*/
 
 /* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
@@ -270,6 +270,7 @@ main(ac, av)
 {
 	int error;
 
+	initlcconf();
 	parse(ac, av);
 
 	if (geteuid() != 0) {
@@ -297,7 +298,6 @@ main(ac, av)
 	init_avc();
 #endif
 	eay_init();
-	initlcconf();
 	initrmconf();
 	oakley_dhinit();
 	compute_vendorids();
