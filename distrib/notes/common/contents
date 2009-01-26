@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.143.2.3 2009/01/26 03:28:40 snj Exp $
+.\"	$NetBSD: contents,v 1.143.2.4 2009/01/26 03:30:53 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -690,7 +690,7 @@ This set includes the games and their manual pages.
 .\" Kernel set(s)
 .
 .ie \n[atari] \{\
-.It Sy kern-BOOT , kern-HADES , kern-MILAN-ISAIDE , kern-MILAN-PCIIDE
+.It Sy kern-SMALL030, kern-ATARITT, kern-FALCON, kern-HADES , kern-MILAN-ISAIDE , kern-MILAN-PCIIDE
 These sets contain a
 .Nx*M
 \*V
