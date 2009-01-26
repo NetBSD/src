@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.26 2008/11/28 23:38:04 snj Exp $
+.\"	$NetBSD: hardware,v 1.27 2009/01/26 00:14:42 snj Exp $
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~120 MB of disk space.
@@ -117,17 +117,29 @@ On-board, PCI, and Sbus HME ethernet
 PCI ERI
 .Pq Em gem
 .It
-Many other PCI and PCMCIA Ethernet interfaces, such as
+Many other PCI and PCMCIA Ethernet interfaces, including:
+.(bullet -compact
 Tulip-compatible
-.Pq Em tlp ,
+.Pq Em tlp
+.It
 Intel
-.Pq Em fxp ,
+.Pq Em fxp
+.It
 Intel gigabit
-.Pq Em wm ,
+.Pq Em wm
+.It
 NE2000-compatible
-.Pq Em ne ,
-and Realtek
-.Pq Em rtk No or Em re .
+.Pq Em ne
+.It
+Realtek
+.Pq Em rtk No or Em re
+.It
+SysKonnect XMAC II
+.Pq Em sk
+.It
+Marvell GMAC
+.Pq Em msk
+.bullet)
 .It
 Several USB Ethernet interfaces, such as
 .Pq Em aue , cue , No and Em kue
