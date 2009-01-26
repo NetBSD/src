@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.12 2006/11/03 18:55:40 christos Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.13 2009/01/26 04:01:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.12 2006/11/03 18:55:40 christos Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.13 2009/01/26 04:01:14 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -284,7 +284,7 @@ doutmpx(const char *username, const char *hostname, const char *tty,
 	utmpx.ut_type = USER_PROCESS;
 	utmpx.ut_pid = getpid();
 	t = tty + strlen(tty);
-	if (t - tty >= sizeof(utmpx.ut_id)) {
+	if ((size_t)(t - tty) >= sizeof(utmpx.ut_id)) {
 		(void)strncpy(utmpx.ut_id, t - sizeof(utmpx.ut_id),
 		    sizeof(utmpx.ut_id));
 	} else {
