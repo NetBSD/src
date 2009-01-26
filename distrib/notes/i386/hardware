@@ -1,27 +1,31 @@
-.\"	$NetBSD: hardware,v 1.124 2008/09/27 23:15:21 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.124.2.1 2009/01/26 01:20:58 snj Exp $
 .
 .Nx
 \*V
-runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
-with 386-family processors, with or without math coprocessors.
-The minimal configuration is said to require 4 MB of RAM and 50 MB of disk
-space, though we do not know of anyone running with a system quite
-this minimal today.
-To install the entire system requires much more disk space
-(the unpacked binary distribution, without sources,
-requires at least 65 MB without counting space needed for swap space,
-etc), and to run X or compile the system, more RAM is recommended.
-(4 MB of RAM will actually allow you to run X and/or compile, but it
-won't be speedy.
-Note that until you have around 16 MB of RAM, getting
-more RAM is more important than getting a faster CPU.)
+runs on all i486 or later PC-compatible systems with 1 to 32 processors.
+The minimal configuration for a full, standard installation is 32MB of RAM
+and 250MB of disk space.
+.Pp
+NetBSD requires a numeric co-processor.
+The target system must
+have one of the following processors:
+.(bullet
+an i486DX or compatible
+.It
+an i486SX with an i487 numeric co-processor installed
+.It
+a Pentium compatible or later processor
+.bullet)
+On systems with under 32MB of memory, a custom
+installation of NetBSD can be performed manually.
+That procedure is not documented here.
 .
 .Ss2 Supported devices
-Explanation of bracketted footnote tags [] follows this listing.
+Explanation of bracketed footnote tags [] follows this listing.
 .(bullet -offset indent
 .Te 2 "Floppy controllers."
 .It
-.Te 2 "MFM, ESDI, IDE, and RLL hard disk controllers."
+.Te 2 "MFM, ESDI, IDE, and RLL hard disk controllers"
 .br
 There is complete support (including IDE DMA or Ultra-DMA) for the following
 PCI controllers
@@ -42,7 +46,7 @@ IBM ESDI Fixed Disk Controllers [m]
 .It
 Intel PIIX, PIIX3, and PIIX4 IDE Controllers
 .It
-Intel 82801 (ICH/ICH0/ICH2/ICH4/ICH5/ICH6) IDE Controllers
+Intel 82801 (ICH/ICH0/ICH2/ICH4/ICH5/ICH6/ICH7/ICH8/ICH9) IDE/SATA Controllers
 .It
 Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66), PDC20265/PDC20267 (Ultra/100),
 PDC20268 (Ultra/100TX2 and Ultra/100TX2v2), Ultra/133, Ultra/133TX2,
@@ -55,6 +59,10 @@ Silicon Integrated System 5597/5598 IDE controller
 .It
 VIA Technologies VT82C586, VT82C586A, VT82C596A, VT82C686A, and VT8233A IDE
 Controllers
+.It
+Silicon Image SATALink controllers
+.It
+Silicon Image SteelVine SATA controllers [*] [+]
 .bullet)
 .Pp
 Most of these controllers are only available in multifunction PCI chips.
@@ -147,12 +155,13 @@ Ultrastor 14f, 34f, and (possibly) 24f
 Western Digital WD7000 SCSI and TMC-7000 host adapters (ISA cards only)
 .bullet)
 .It
-.Te 2 "MDA, CGA, VGA, SVGA, and HGC Display Adapters."
+.Te 2 "MDA, CGA, VGA, SVGA, and HGC Display Adapters"
 .(Note
 Not all of the display adapters
 .Nx*M
 can work with are supported by X.
-See the XFree86 FAQ for more information.
+See the NetBSD Guide chapter on X for more information:
+.Lk http://www.NetBSD.org/docs/guide/en/chap-x.html
 .Note)
 .Pp
 .It
@@ -223,6 +232,8 @@ X/Lan Add-On Adapter
 .It
 AT\*[Am]T StarLAN 10, EN100, and StarLAN Fiber
 .It
+Attansic/Atheros L2 Fast-Ethernet card
+.It
 3COM 3c501
 .It
 3COM 3c503
@@ -265,6 +276,8 @@ PCI Ethernet/Fast Ethernet adapters (all)
 DLINK DFE500-TX
 .It
 JCIS Condor JC1260
+.It
+JMicron Technologies JMC250/JMC260 controllers [*] [+]
 .It
 Linksys PCI Fast Ethernet
 .It
@@ -397,6 +410,8 @@ Auto 16/4 Token-Ring ISA Adapter [+]
 .It
 .Te 2 "Wireless network adapters"
 .(bullet -compact
+Many Atheros 802.11 cards
+.It
 3Com AirConnect Wireless LAN
 .It
 AT\*[Am]T/Lucent/Agere WaveLAN/ORiNOCO IEEE (802.11) PCMCIA cards
@@ -410,6 +425,8 @@ Corega Wireless LAN PCC-11 cards [*] [+]
 DEC/Cabletron RoamAbout 802.11 DS High Rate cards [*] [+]
 .It
 ELSA AirLancer MC-11 card [*] [+]
+.It
+Intel 2100/2200BG/2915ABG/4965AGN cards [*] [+]
 .It
 Intersil Prism II
 .It
@@ -531,13 +548,17 @@ Printers [*] [+]
 .It
 Modems using Abstract Control Model [*] [+]
 .It
+3G wireless modems [*] [+]
+.It
 Generic support for HID devices [*] [+]
 .It
 Ethernet adapters [*] [+]
 .It
 Audio devices [*] [+]
 .It
-driver for FTDI based serial adapters [*] [+]
+FTDI based serial adapters [*] [+]
+.It
+Silicon Labs CP210x serial adapters [*] [+]
 .It
 Mass storage devices such as disks, ZIP drives and digital cameras [*] [+]
 .It

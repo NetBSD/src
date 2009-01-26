@@ -1,7 +1,7 @@
-.\"	$NetBSD: hardware,v 1.24 2008/03/15 18:21:15 martin Exp $
+.\"	$NetBSD: hardware,v 1.24.6.1 2009/01/26 01:20:58 snj Exp $
 .
 .Ss2 Supported machines
-The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
+The minimal configuration requires 32 MB of RAM and ~120 MB of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended, as
 .Nx
@@ -117,20 +117,38 @@ On-board, PCI, and Sbus HME ethernet
 PCI ERI
 .Pq Em gem
 .It
-Many other PCI and PCMCIA Ethernet interfaces, such as
+Many other PCI and PCMCIA Ethernet interfaces, including:
+.(bullet -compact
 Tulip-compatible
-.Pq Em tlp ,
+.Pq Em tlp
+.It
 Intel
-.Pq Em fxp ,
+.Pq Em fxp
+.It
 Intel gigabit
-.Pq Em wm ,
+.Pq Em wm
+.It
 NE2000-compatible
-.Pq Em ne ,
-and Realtek
-.Pq Em rtk .
+.Pq Em ne
+.It
+Realtek
+.Pq Em rtk No or Em re
+.It
+SysKonnect XMAC II
+.Pq Em sk
+.It
+Marvell GMAC
+.Pq Em msk
+.bullet)
 .It
 Several USB Ethernet interfaces, such as
 .Pq Em aue , cue , No and Em kue
+.bullet)
+.It
+Wireless network adapters
+.(bullet -compact
+Atheros wireless cards
+.Pq Em ath
 .bullet)
 .It
 Video devices
@@ -145,12 +163,15 @@ On-board and SBUS card
 .Pq Em cgsix
 .br
 8 bpp accelerated framebuffer.
-Accelerated X via the integrated XFree.
+Accelerated X via the integrated Xorg.
 .It
 UPA devices
 .Pq ffb and afb, also called Creator3D
 24 bpp accelerated framebuffer.
-Accelerated X via the integrated XFree.
+Accelerated X via the integrated Xorg.
+.br
+.It
+On-board ATI mach64 framebuffers (found in Ultra 5/10).
 .bullet)
 .It
 SCSI host controllers
@@ -190,7 +211,7 @@ Acard ATP-850/860 based IDE controllers
 CMD Tech PCI064[3689] and Silicon Image 0680 IDE Controllers
 .Pq Em cmdide
 .It
-Silicon Image 3112 SATA Controller
+Silicon Image 3112, 3114, and 3512 SATA Controller
 .Pq Em satalink
 .(Note
 Some IDE cards that support booting on
@@ -235,6 +256,14 @@ Audio devices
 On-board, PCI, and SBus based CS4231-based 44 KHz, 16 bit, stereo, PCM audio
 .Pq Em audiocs
 .bullet)
+.It
+Other PCI devices
+.(bullet -compact
+PCI
+.Dq universal
+communications cards
+.Pq Em puc
+.bullet)
 .bullet)
 .Pp
 There are a large number of untested PCI drivers that have never
@@ -242,4 +271,4 @@ been tested on UltraSPARC PCI systems that may
 .Sq "just work" .
 .
 .Ss2 Unsupported devices
-smart card reader
+Smart card readers.

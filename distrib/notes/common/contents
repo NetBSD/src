@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.143 2008/09/08 16:10:14 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.143.2.1 2009/01/26 01:20:58 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@ This kernel runs on Vr41xx and TX3922 CPUs only.
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.  This 
-kernel also supports SMP on systems with more than one CPU.
+kernel supports SMP on systems with more than one CPU.
 .\}
 .
 .if \n[hp300] \{\
@@ -464,7 +464,7 @@ The
 binary distribution sets contain the binaries which
 comprise the
 .Nx
-\*V release for the \*M.
+\*V release for \*M.
 The binary distribution sets can be found in the
 .Pa \*M/binary/sets
 subdirectory
@@ -475,7 +475,7 @@ of the
 distribution tree.  
 .(Note
 If you want to install 32-bit only binaries, you will 
-still need to boot using the sparc64 installation tools.  When it 
+still need to boot using the sparc64 installation tools.  When sysinst
 asks you for the distribution set to install, provide the
 .Nx Ns /sparc
 .Pa binary/sets .
@@ -1067,13 +1067,17 @@ all related programs, and their manual pages.
 .Nx
 maintains its own set of sources for the X Window System in order to
 assure tight integration and compatibility.
-.ie \n[hp700]:\n[hpcsh]:\n[next68k]:\n[sun2] \{\
+.ie \n[sun2] \{\
 .Nx*M
 currently does not ship with an X server or X clients.
 .\}
 .el \{\
-These sources are based on XFree86, and tightly track XFree86 releases.
-They are currently equivalent to XFree86 4.5.0.
+These sources are based on
+.ie \n[i386]:\n[amd64]:\n[macppc]:\n[sparc64]:\n[shark] \{\
+X.Org 7.3.
+.\}
+.el \{\
+XFree86 4.5.0.
 .\}
 Binary sets for the X Window System are distributed with
 .Nx .
@@ -1261,11 +1265,7 @@ you should use.
 This includes the Xhpc server which supports 256 and 65536 colors, with man pages.
 .\}
 .if \n[i386] \{\
-This includes all XFree86 X servers.
-Because all of them are included, this set is large.
-However, you will only need one of the servers provided in this set.
-(Typically,
-.Ic XFree86 ) .
+This includes the modular Xorg server.
 .\}
 .if \n[mac68k] \{\
 This includes the Xmac68k
@@ -1273,28 +1273,18 @@ This includes the Xmac68k
 server with man pages.
 .\}
 .if \n[macppc] \{\
-This includes both the XFree86 and Xmacppc servers.
-.br
-The XFree86 server supports acceleration, switchable resolutions and 
-bit-depths.  This server supports only known video cards, such as
-ATI and Nvidia and can be difficult to configure.
-.br
-The Xmacppc server supports all on-board video and Open 
-Firmware-compatible video cards.  Acceleration and depths 
-greater than 256 colors are not supported.  
-.Pp
-See the X11 FAQ for help using X on macppc systems.
-.Lk http://www.NetBSD.org/ports/macppc/x11.html
+This includes the modular Xorg server.
 .\}
 .if \n[pmax] \{\
 This includes the Xpmax server with man page.
 .\}
+.if \n[shark] \{\
+This includes the modular Xorg and Xvfb servers.
 .if \n[sparc] \{\
 This includes Xsun, Xsun24, XsunMono and Xvfb servers with man pages.
 .\}
 .if \n[sparc64] \{\
-This includes Xsun, Xsun24, XsunMono and Xvfb
-servers with man pages.
+This includes the modular Xorg and Xvfb servers.
 .\}
 .if \n[x68k] \{\
 This includes the X68k and Xprt
@@ -1376,7 +1366,7 @@ the files are extracted
 .Em below the current directory .
 Therefore, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
-.Ic "tar -xpf"
+.Ic "tar -xzpf"
 command from the root directory (
 .Pa / 
 ) of your system.
@@ -1719,7 +1709,6 @@ If you need them, the sources for these utilities are in the
 .Pa src
 subdirectory.
 .\}
-This utility is used only in a Traditional method installation.
 .
 .if \n[mvme68k] \{\
 .Pp
