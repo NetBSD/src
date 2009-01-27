@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.1 2009/01/13 01:57:35 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.2 2009/01/27 09:14:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.1 2009/01/13 01:57:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.2 2009/01/27 09:14:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -233,16 +233,7 @@ rumpblk_strategy(struct buf *bp)
 	if (async && rump_threads) {
 		struct rumpuser_aio *rua;
 
-		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
-		rua->rua_fd = rblk->rblk_fd;
-		rua->rua_data = bp->b_data;
-		rua->rua_dlen = bp->b_bcount;
-		rua->rua_off = off;
-		rua->rua_bp = bp;
-		rua->rua_op = BUF_ISREAD(bp);
-
 		rumpuser_mutex_enter(&rumpuser_aio_mtx);
-
 		/*
 		 * Check if our buffer is full.  Doing it this way
 		 * throttles the I/O a bit if we have a massive
@@ -253,13 +244,20 @@ rumpblk_strategy(struct buf *bp)
 		 * so for now set N_AIOS high and FIXXXME some day.
 		 */
 		if ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail) {
-			kmem_free(rua, sizeof(*rua));
 			rumpuser_mutex_exit(&rumpuser_aio_mtx);
 			goto syncfallback;
 		}
 
+		rua = &rumpuser_aios[rumpuser_aio_head];
+		KASSERT(rua->rua_bp == NULL);
+		rua->rua_fd = rblk->rblk_fd;
+		rua->rua_data = bp->b_data;
+		rua->rua_dlen = bp->b_bcount;
+		rua->rua_off = off;
+		rua->rua_bp = bp;
+		rua->rua_op = BUF_ISREAD(bp);
+
 		/* insert into queue & signal */
-		rumpuser_aios[rumpuser_aio_head] = rua;
 		rumpuser_aio_head = (rumpuser_aio_head+1) % (N_AIOS-1);
 		rumpuser_cv_signal(&rumpuser_aio_cv);
 		rumpuser_mutex_exit(&rumpuser_aio_mtx);

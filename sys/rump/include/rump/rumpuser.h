@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.12 2009/01/26 12:08:38 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.13 2009/01/27 09:14:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -142,7 +142,7 @@ struct rumpuser_aio {
 #define N_AIOS 128
 extern struct rumpuser_mtx rumpuser_aio_mtx;
 extern struct rumpuser_cv rumpuser_aio_cv;
-extern struct rumpuser_aio *rumpuser_aios[N_AIOS];
+extern struct rumpuser_aio rumpuser_aios[N_AIOS];
 extern int rumpuser_aio_head, rumpuser_aio_tail;
 
 extern struct rumpuser_rw rumpspl;
