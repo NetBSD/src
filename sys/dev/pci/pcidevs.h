@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.975 2009/01/19 15:04:24 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.976 2009/01/27 08:07:43 markd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.973 2009/01/19 15:03:50 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.975 2009/01/27 08:04:54 markd Exp
  */
 
 /*
@@ -51,6 +51,10 @@
  * 2.) Commit "src/sys/dev/pci/pcidevs".
  * 3.) Execute "make -f Makefile.pcidevs" in "src/sys/dev/pci".
  * 4.) Commit "src/sys/dev/pci/pcidevs.h" and "src/sys/dev/pci/pcidevs_data.h".
+ */
+
+/*
+ * Use "make -f Makefile.pcidevs" to regenerate pcidevs.h and pcidevs_data.h
  */
 
 /*
@@ -2247,6 +2251,7 @@
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN Controller */
+#define	PCI_PRODUCT_INTEL_82567LM_3	0x10de		/* i82567LM-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I Mobile (AMT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
