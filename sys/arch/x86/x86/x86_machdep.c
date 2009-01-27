@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.27 2008/12/15 22:20:52 cegger Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.28 2009/01/27 21:59:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.27 2008/12/15 22:20:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.28 2009/01/27 21:59:24 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -776,3 +776,47 @@ initx86_load_memmap(paddr_t first_avail)
 	return 0;
 }
 #endif
+
+void
+x86_reset(void)
+{
+	uint8_t b;
+	/*
+	 * The keyboard controller has 4 random output pins, one of which is
+	 * connected to the RESET pin on the CPU in many PCs.  We tell the
+	 * keyboard controller to pulse this line a couple of times.
+	 */
+	outb(IO_KBD + KBCMDP, KBC_PULSE0);
+	delay(100000);
+	outb(IO_KBD + KBCMDP, KBC_PULSE0);
+	delay(100000);
+
+	/*
+	 * Attempt to force a reset via the Reset Control register at
+	 * I/O port 0xcf9.  Bit 2 forces a system reset when it
+	 * transitions from 0 to 1.  Bit 1 selects the type of reset
+	 * to attempt: 0 selects a "soft" reset, and 1 selects a
+	 * "hard" reset.  We try a "hard" reset.  The first write sets
+	 * bit 1 to select a "hard" reset and clears bit 2.  The
+	 * second write forces a 0 -> 1 transition in bit 2 to trigger
+	 * a reset.
+	 */
+	outb(0xcf9, 0x2);
+	outb(0xcf9, 0x6);
+	DELAY(500000);  /* wait 0.5 sec to see if that did it */
+
+	/*
+	 * Attempt to force a reset via the Fast A20 and Init register
+	 * at I/O port 0x92.  Bit 1 serves as an alternate A20 gate.
+	 * Bit 0 asserts INIT# when set to 1.  We are careful to only
+	 * preserve bit 1 while setting bit 0.  We also must clear bit
+	 * 0 before setting it if it isn't already clear.
+	 */
+	b = inb(0x92);
+	if (b != 0xff) {
+		if ((b & 0x1) != 0)
+			outb(0x92, b & 0xfe);
+		outb(0x92, b | 0x1);
+		DELAY(500000);  /* wait 0.5 sec to see if that did it */
+	}
+}

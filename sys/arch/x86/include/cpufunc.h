@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.10 2008/12/19 15:11:55 cegger Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11 2009/01/27 21:59:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -105,6 +105,8 @@ void	x86_write_psl(u_long);
 /* Use read_flags, write_flags to adjust other members of %eflags. */
 u_long	x86_read_flags(void);
 void	x86_write_flags(u_long);
+
+void	x86_reset(void);
 
 /* 
  * Some of the undocumented AMD64 MSRs need a 'passcode' to access.
