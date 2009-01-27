@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.16 2009/01/11 02:46:29 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.17 2009/01/27 05:13:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.18.10.1 2008/01/27 02:06:46 marka Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.16 2009/01/11 02:46:29 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.17 2009/01/27 05:13:23 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -358,7 +358,7 @@ res_nsend(res_state statp,
 				if (EXT(statp).nssocks[ns] == -1)
 					continue;
 				peerlen = sizeof(peer);
-				if (getsockname(EXT(statp).nssocks[ns],
+				if (getpeername(EXT(statp).nssocks[ns],
 				    (struct sockaddr *)(void *)&peer, &peerlen) < 0) {
 					needclose++;
 					break;
