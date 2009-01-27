@@ -35,10 +35,11 @@
 
 #include <openpgpsdk/final.h>
 
-static ops_boolean_t check_binary_signature(const unsigned len,
-                                            const unsigned char *data,
-                                            const ops_signature_t *sig, 
-                                            const ops_public_key_t *signer __attribute__((unused)))
+static ops_boolean_t
+check_binary_signature(const unsigned len,
+		    const unsigned char *data,
+		    const ops_signature_t *sig, 
+		    const ops_public_key_t *signer __attribute__((unused)))
     {
     // Does the signed hash match the given hash?
 
@@ -83,6 +84,10 @@ static ops_boolean_t check_binary_signature(const unsigned len,
         }
 
     n=hash.finish(&hash,hashout);
+
+if (ops_get_debug_level(__FILE__)) {
+	printf("check_binary_signature: hash length %d\n", hash.size);
+}
 
     //    return ops_false;
     return ops_check_signature(hashout,n,sig,signer);
@@ -235,11 +240,6 @@ ops_validate_key_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cb
 
     case OPS_PTAG_CT_SIGNATURE: // V3 sigs
     case OPS_PTAG_CT_SIGNATURE_FOOTER: // V4 sigs
-        /*
-        printf("  type=%02x signer_id=",content->signature.type);
-        hexdump(content->signature.signer_id,
-		sizeof content->signature.signer_id);
-        */
 
 	signer=ops_keyring_find_key_by_id(arg->keyring,
 					   content->signature.info.signer_id);
@@ -258,16 +258,16 @@ ops_validate_key_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cb
 	case OPS_SIG_REV_CERT:
 	    if(arg->last_seen == ID)
 		valid=ops_check_user_id_certification_signature(&arg->pkey,
-								&arg->user_id,
-								&content->signature,
-								ops_get_public_key_from_data(signer),
-								arg->rarg->key->packets[arg->rarg->packet].raw);
+				&arg->user_id,
+				&content->signature,
+				ops_get_public_key_from_data(signer),
+				arg->rarg->key->packets[arg->rarg->packet].raw);
 	    else
 		valid=ops_check_user_attribute_certification_signature(&arg->pkey,
-								       &arg->user_attribute,
-								       &content->signature,
-								       ops_get_public_key_from_data(signer),
-								       arg->rarg->key->packets[arg->rarg->packet].raw);
+			       &arg->user_attribute,
+			       &content->signature,
+			       ops_get_public_key_from_data(signer),
+			       arg->rarg->key->packets[arg->rarg->packet].raw);
 		
 	    break;
 
@@ -302,15 +302,11 @@ ops_validate_key_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cb
 
 	if(valid)
 	    {
-        //	    printf(" validated\n");
-	    //++arg->result->valid_count;
         add_sig_to_valid_list(arg->result, &content->signature.info);
 	    }
 	else
 	    {
         OPS_ERROR(errors,OPS_E_V_BAD_SIGNATURE,"Bad Signature");
-        //	    printf(" BAD SIGNATURE\n");
-        //	    ++arg->result->invalid_count;
         add_sig_to_invalid_list(arg->result, &content->signature.info);
 	    }
 	break;
@@ -344,10 +340,10 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
     ops_error_t **errors=ops_parse_cb_get_errors(cbinfo);
     const ops_keydata_t *signer;
     ops_boolean_t valid=ops_false;
-    ops_memory_t* mem=NULL;
 
-    if (ops_get_debug_level(__FILE__))
-        printf("%s\n",ops_show_packet_tag(content_->tag));
+    if (ops_get_debug_level(__FILE__)) {
+        printf("validate_data_cb: %s\n",ops_show_packet_tag(content_->tag));
+    }
 
     switch(content_->tag)
 	{
@@ -362,14 +358,16 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
     case OPS_PTAG_CT_LITERAL_DATA_BODY:
         arg->data.literal_data_body=content->literal_data_body;
         arg->use=LITERAL_DATA;
+	ops_memory_add(arg->mem, arg->data.literal_data_body.data,
+                               arg->data.literal_data_body.length);
         return OPS_KEEP_MEMORY;
-        break;
 
     case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
         arg->data.signed_cleartext_body=content->signed_cleartext_body;
         arg->use=SIGNED_CLEARTEXT;
+	ops_memory_add(arg->mem, arg->data.literal_data_body.data,
+                               arg->data.literal_data_body.length);
         return OPS_KEEP_MEMORY;
-        break;
 
     case OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER:
         // this gives us an ops_hash_t struct
@@ -388,6 +386,7 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
             printf("  type=%02x signer_id=",content->signature.info.type);
             hexdump(content->signature.info.signer_id,
                     sizeof content->signature.info.signer_id);
+            printf("\n");
             }
 
         signer=ops_keyring_find_key_by_id(arg->keyring,
@@ -399,35 +398,13 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
             break;
             }
         
-        mem=ops_memory_new();
-        ops_memory_init(mem,128);
-        
         switch(content->signature.info.type)
             {
         case OPS_SIG_BINARY:
         case OPS_SIG_TEXT:
-            switch(arg->use)
-                {
-            case LITERAL_DATA:
-                ops_memory_add(mem,
-                               arg->data.literal_data_body.data,
-                               arg->data.literal_data_body.length);
-                break;
-                
-            case SIGNED_CLEARTEXT:
-                ops_memory_add(mem,
-                               arg->data.signed_cleartext_body.data,
-                               arg->data.signed_cleartext_body.length);
-                break;
-                
-            default:
-                OPS_ERROR_1(errors,OPS_E_UNIMPLEMENTED,"Unimplemented Sig Use %d", arg->use);
-                printf(" Unimplemented Sig Use %d\n", arg->use);
-                break;
-                }
             
-            valid=check_binary_signature(ops_memory_get_length(mem), 
-                                         ops_memory_get_data(mem),
+            valid=check_binary_signature(ops_memory_get_length(arg->mem), 
+                                         ops_memory_get_data(arg->mem),
                                          &content->signature,
                                          ops_get_public_key_from_data(signer));
             break;
@@ -438,7 +415,8 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
             break;
             
 	    }
-    ops_memory_free(mem);
+
+	ops_memory_free(arg->mem);
 
 	if(valid)
 	    {
@@ -452,12 +430,12 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
 	break;
 
 	// ignore these
- case OPS_PARSER_PTAG:
- case OPS_PTAG_CT_SIGNATURE_HEADER:
- case OPS_PTAG_CT_ARMOUR_HEADER:
- case OPS_PTAG_CT_ARMOUR_TRAILER:
- case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
- case OPS_PARSER_PACKET_END:
+     case OPS_PARSER_PTAG:
+     case OPS_PTAG_CT_SIGNATURE_HEADER:
+     case OPS_PTAG_CT_ARMOUR_HEADER:
+     case OPS_PTAG_CT_ARMOUR_TRAILER:
+     case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
+     case OPS_PARSER_PACKET_END:
 	break;
 
     default:
@@ -661,6 +639,8 @@ ops_boolean_t ops_validate_file(ops_validate_result_t *result, const char* filen
     memset(&validate_arg,'\0',sizeof validate_arg);
     validate_arg.result=result;
     validate_arg.keyring=keyring;
+    validate_arg.mem=ops_memory_new();
+    ops_memory_init(validate_arg.mem, 128);
     // Note: Coverity incorrectly reports an error that carg.rarg
     // is never used.
     validate_arg.rarg=ops_reader_get_arg_from_pinfo(pinfo);
@@ -714,6 +694,8 @@ ops_boolean_t ops_validate_mem(ops_validate_result_t *result, ops_memory_t* mem,
     memset(&validate_arg,'\0',sizeof validate_arg);
     validate_arg.result=result;
     validate_arg.keyring=keyring;
+    validate_arg.mem = ops_memory_new();
+    ops_memory_init(validate_arg.mem, 128);
     // Note: Coverity incorrectly reports an error that carg.rarg
     // is never used.
     validate_arg.rarg=ops_reader_get_arg_from_pinfo(pinfo);

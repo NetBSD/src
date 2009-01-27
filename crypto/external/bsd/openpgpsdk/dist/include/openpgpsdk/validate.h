@@ -84,6 +84,7 @@ typedef struct
         ops_signed_cleartext_body_t signed_cleartext_body; /*<! Used to hold Signed Cleartext */
         } data; /*<! the data itself */
     unsigned char hash[OPS_MAX_HASH_SIZE]; /*<! the hash */
+    ops_memory_t	*mem;
     const ops_keyring_t *keyring; /*<! keyring to use */
     validate_reader_arg_t *rarg; /*<! reader-specific arg */
     ops_validate_result_t *result; /*<! where to put the result */
