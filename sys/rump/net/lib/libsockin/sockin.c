@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.11 2009/01/27 11:37:42 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.12 2009/01/27 13:40:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.11 2009/01/27 11:37:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.12 2009/01/27 13:40:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -171,9 +171,18 @@ sockin_process(struct socket *so)
 	size_t plen;
 	int error;
 
-	plen = IP_MAXPACKET;
 	m = m_gethdr(M_WAIT, MT_DATA);
-	MEXTMALLOC(m, plen, M_WAIT);
+	if (so->so_proto->pr_type == SOCK_DGRAM) {
+		plen = IP_MAXPACKET;
+		MEXTMALLOC(m, plen, M_DONTWAIT);
+	} else {
+		plen = MCLBYTES;
+		MCLGET(m, M_DONTWAIT);
+	}
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return;
+	}
 
 	memset(&rmsg, 0, sizeof(rmsg));
 	io.iov_base = mtod(m, void *);
@@ -342,7 +351,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 	case PRU_ATTACH:
 	{
-		int news;
+		int news, dummy;
 
 		sosetlock(so);
 		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
@@ -357,7 +366,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			break;
 
 		if ((error = registersock(so, news)) != 0)
-			rumpuser_close(news, &error);
+			rumpuser_close(news, &dummy);
 
 		break;
 	}
