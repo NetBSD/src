@@ -146,6 +146,9 @@
 /* Define to 1 if you have the `iswblank' function. */
 #define HAVE_ISWBLANK 1
 
+/* Define to 1 if you have the `memcpy' function. */
+#define HAVE_MEMCOPY 1
+
 /* Define to 1 if you have the `memchr' function. */
 #define HAVE_MEMCHR 1
 
