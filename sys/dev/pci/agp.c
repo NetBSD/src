@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.64 2008/11/29 23:48:12 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.65 2009/01/27 08:39:33 markd Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.64 2008/11/29 23:48:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.65 2009/01/27 08:39:33 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +185,12 @@ const struct agp_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82946GZ_HB,
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82GM45_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82IGD_E_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82Q45_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82G45_HB,
 	  NULL, 		agp_i810_attach },
 #endif
 
