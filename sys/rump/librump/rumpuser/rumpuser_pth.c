@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.25 2009/01/26 19:34:12 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.26 2009/01/27 09:14:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.25 2009/01/26 19:34:12 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.26 2009/01/27 09:14:01 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -118,7 +118,7 @@ struct rumpuser_cv {
 struct rumpuser_mtx rumpuser_aio_mtx;
 struct rumpuser_cv rumpuser_aio_cv;
 int rumpuser_aio_head, rumpuser_aio_tail;
-struct rumpuser_aio *rumpuser_aios[N_AIOS];
+struct rumpuser_aio rumpuser_aios[N_AIOS];
 
 struct rumpuser_rw rumpspl;
 
@@ -140,8 +140,8 @@ iothread(void *arg)
 			    &rumpuser_aio_mtx.pthmtx));
 		}
 
-		rua = rumpuser_aios[rumpuser_aio_tail];
-		rumpuser_aio_tail = (rumpuser_aio_tail+1) % (N_AIOS-1);
+		rua = &rumpuser_aios[rumpuser_aio_tail];
+		assert(rua->rua_bp != NULL);
 		pthread_mutex_unlock(&rumpuser_aio_mtx.pthmtx);
 
 		if (rua->rua_op)
@@ -150,9 +150,10 @@ iothread(void *arg)
 		else
 			rumpuser_write_bio(rua->rua_fd, rua->rua_data,
 			    rua->rua_dlen, rua->rua_off, biodone, rua->rua_bp);
+		rua->rua_bp = NULL;
 
-		free(rua);
 		NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
+		rumpuser_aio_tail = (rumpuser_aio_tail+1) % (N_AIOS-1);
 	}
 }
 
