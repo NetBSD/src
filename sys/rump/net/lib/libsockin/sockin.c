@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.10 2009/01/26 13:44:51 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.11 2009/01/27 11:37:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.10 2009/01/26 13:44:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.11 2009/01/27 11:37:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -189,13 +189,16 @@ sockin_process(struct socket *so)
 
 		/* Treat a TCP socket a goner */
 		if (so->so_proto->pr_type == SOCK_STREAM && error != EAGAIN) {
+			mutex_enter(softnet_lock);
 			soisdisconnected(so);
+			mutex_exit(softnet_lock);
 			removesock(so);
 		}
 		return;
 	}
 	m->m_len = m->m_pkthdr.len = n;
 
+	mutex_enter(softnet_lock);
 	if (so->so_proto->pr_type == SOCK_DGRAM) {
 		if (!sbappendaddr(&so->so_rcv, rmsg.msg_name, m, NULL)) {
 			m_freem(m);
@@ -205,6 +208,7 @@ sockin_process(struct socket *so)
 	}
 
 	sorwakeup(so);
+	mutex_exit(softnet_lock);
 }
 
 static void
@@ -220,16 +224,20 @@ sockin_accept(struct socket *so)
 	if (news == -1)
 		return;
 
-	if ((nso = sonewconn(so, SS_ISCONNECTED)) == NULL)
+	mutex_enter(softnet_lock);
+	nso = sonewconn(so, SS_ISCONNECTED);
+	if (nso == NULL)
 		goto errout;
 	if (registersock(nso, news) != 0)
 		goto errout;
+	mutex_exit(softnet_lock);
 	return;
 
  errout:
 	rumpuser_close(news, &error);
 	if (nso)
 		soclose(nso);
+	mutex_exit(softnet_lock);
 }
 
 #define POLLTIMEOUT 100	/* check for new entries every 100ms */
@@ -282,12 +290,10 @@ sockinworker(void *arg)
 					if (SO2S(su_iter->su_so)==pfds[i].fd) {
 						so = su_iter->su_so;
 						mutex_exit(&su_mtx);
-						mutex_enter(softnet_lock);
 						if(so->so_options&SO_ACCEPTCONN)
 							sockin_accept(so);
 						else
 							sockin_process(so);
-						mutex_exit(softnet_lock);
 						mutex_enter(&su_mtx);
 						break;
 					}
