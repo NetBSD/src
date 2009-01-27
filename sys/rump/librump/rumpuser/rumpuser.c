@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.30 2009/01/23 19:19:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.30 2009/01/23 19:19:32 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -134,8 +134,10 @@ rumpuser_anonmmap(size_t size, int alignbit, int exec, int *error)
 		prot |= PROT_EXEC;
 	/* XXX: MAP_ALIGNED() is not portable */
 	rv = mmap(NULL, size, prot, MAP_ANON | MAP_ALIGNED(alignbit), -1, 0);
-	if (rv == MAP_FAILED)
+	if (rv == MAP_FAILED) {
+		*error = errno;
 		return NULL;
+	}
 	return rv;
 }
 
