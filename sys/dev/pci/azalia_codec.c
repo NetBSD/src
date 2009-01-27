@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.73 2009/01/18 10:40:40 cegger Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.74 2009/01/27 08:23:00 markd Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.73 2009/01/18 10:40:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.74 2009/01/27 08:23:00 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -262,6 +262,14 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x11d41984:
 		/* http://www.analog.com/en/prod/0,2877,AD1984,00.html */
 		this->name = "Analog Devices AD1984";
+		this->init_dacgroup = ad1984_init_dacgroup;
+		this->init_widget = ad1984_init_widget;
+		this->mixer_init = ad1984_mixer_init;
+		this->unsol_event = ad1984_unsol_event;
+		break;
+	case 0x11d4194a:
+		/* http://www.analog.com/static/imported-files/data_sheets/AD1984A.pdf */
+		this->name = "Analog Devices AD1984A";
 		this->init_dacgroup = ad1984_init_dacgroup;
 		this->init_widget = ad1984_init_widget;
 		this->mixer_init = ad1984_mixer_init;
@@ -3540,6 +3548,7 @@ ad1983_unsol_event(codec_t *this, int tag)
 
 #define AD1984_THINKPAD			0x20ac17aa
 #define AD1984_DELL_OPTIPLEX_755	0x02111028
+#define AD1984A_DELL_OPTIPLEX_760	0x027f1028
 
 static int
 ad1984_init_dacgroup(codec_t *this)
@@ -3567,7 +3576,8 @@ ad1984_mixer_init(codec_t *this)
 	if (err)
 		return err;
 
-	if (this->subid == AD1984_DELL_OPTIPLEX_755) {
+	if (this->subid == AD1984_DELL_OPTIPLEX_755 ||
+	    this->subid == AD1984A_DELL_OPTIPLEX_760) {
 		/* setup a unsolicited event for the headphones and speaker */
 		this->comresp(this, 0x12, CORB_SET_UNSOLICITED_RESPONSE,
 			      CORB_UNSOL_ENABLE | AD198X_EVENT_SPEAKER, NULL);
