@@ -86,7 +86,7 @@ check_binary_signature(const unsigned len,
     n=hash.finish(&hash,hashout);
 
 if (ops_get_debug_level(__FILE__)) {
-	printf("check_binary_signature: hash length %zd\n", hash.size);
+	printf("check_binary_signature: hash length %zu\n", hash.size);
 }
 
     //    return ops_false;
