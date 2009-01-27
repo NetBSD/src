@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2009/01/27 21:13:57 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2009/01/27 21:59:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2009/01/27 21:13:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2009/01/27 21:59:25 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1546,44 +1546,7 @@ cpu_reset(void)
 	HYPERVISOR_reboot();
 #else
 
-	/*
-	 * The keyboard controller has 4 random output pins, one of which is
-	 * connected to the RESET pin on the CPU in many PCs.  We tell the
-	 * keyboard controller to pulse this line a couple of times.
-	 */
-	outb(IO_KBD + KBCMDP, KBC_PULSE0);
-	delay(100000);
-	outb(IO_KBD + KBCMDP, KBC_PULSE0);
-	delay(100000);
-
- 	/*
-	 * Attempt to force a reset via the Reset Control register at
-	 * I/O port 0xcf9.  Bit 2 forces a system reset when it
-	 * transitions from 0 to 1.  Bit 1 selects the type of reset
-	 * to attempt: 0 selects a "soft" reset, and 1 selects a
-	 * "hard" reset.  We try a "hard" reset.  The first write sets
-	 * bit 1 to select a "hard" reset and clears bit 2.  The
-	 * second write forces a 0 -> 1 transition in bit 2 to trigger
-	 * a reset.
-	 */
-	outb(0xcf9, 0x2);
-	outb(0xcf9, 0x6);
-	delay(500000);  /* wait 0.5 sec to see if that did it */
-
-	/*
-	 * Attempt to force a reset via the Fast A20 and Init register
-	 * at I/O port 0x92.  Bit 1 serves as an alternate A20 gate.
-	 * Bit 0 asserts INIT# when set to 1.  We are careful to only
-	 * preserve bit 1 while setting bit 0.  We also must clear bit
-	 * 0 before setting it if it isn't already clear.
-	 */
-	b = inb(0x92);
-	if (b != 0xff) {
-		if ((b & 0x1) != 0)
-			outb(0x92, b & 0xfe);
-		outb(0x92, b | 0x1);
-		delay(500000);  /* wait 0.5 sec to see if that did it */
-	}
+	x86_reset();
 
 	/*
 	 * Try to cause a triple fault and watchdog reset by making the IDT
