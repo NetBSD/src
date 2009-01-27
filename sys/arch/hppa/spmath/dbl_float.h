@@ -1,6 +1,6 @@
-/*	$NetBSD: dbl_float.h,v 1.2 2008/04/06 08:03:36 skrll Exp $	*/
+/*	$NetBSD: dbl_float.h,v 1.3 2009/01/27 11:49:54 skrll Exp $	*/
 
-/*	$OpenBSD: dbl_float.h,v 1.5 2001/03/29 03:58:17 mickey Exp $	*/
+/*	$OpenBSD: dbl_float.h,v 1.10 2004/01/02 14:39:01 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.
@@ -343,16 +343,16 @@
     Deposit_dexponent(dbl_value,(exponent op DBL_WRAP))
 
 #define Dbl_setlargestpositive(dbl_valueA,dbl_valueB)			\
-    Dallp1(dbl_valueA) = ((DBL_MAX_EXP+DBL_BIAS) << (32-(1+DBL_EXP_LENGTH))) \
+    Dallp1(dbl_valueA) = ((DBL_EMAX+DBL_BIAS) << (32-(1+DBL_EXP_LENGTH))) \
 			| ((1<<(32-(1+DBL_EXP_LENGTH))) - 1 );		\
     Dallp2(dbl_valueB) = 0xFFFFFFFF
 #define Dbl_setlargestnegative(dbl_valueA,dbl_valueB)			\
-    Dallp1(dbl_valueA) = ((DBL_MAX_EXP+DBL_BIAS) << (32-(1+DBL_EXP_LENGTH))) \
+    Dallp1(dbl_valueA) = ((DBL_EMAX+DBL_BIAS) << (32-(1+DBL_EXP_LENGTH))) \
 			| ((1<<(32-(1+DBL_EXP_LENGTH))) - 1 ) | (1<<31); \
     Dallp2(dbl_valueB) = 0xFFFFFFFF
 #define Dbl_setlargest_exponentmantissa(dbl_valueA,dbl_valueB)		\
     Deposit_dexponentmantissap1(dbl_valueA,				\
-	(((DBL_MAX_EXP+DBL_BIAS) << (32-(1+DBL_EXP_LENGTH)))		\
+	(((DBL_EMAX+DBL_BIAS) << (32-(1+DBL_EXP_LENGTH)))		\
 			| ((1<<(32-(1+DBL_EXP_LENGTH))) - 1 )));	\
     Dallp2(dbl_valueB) = 0xFFFFFFFF
 
@@ -362,7 +362,7 @@
     Dallp2(dbl_valueB) = 0
 #define Dbl_setlargest(dbl_valueA,dbl_valueB,sign)			\
     Dallp1(dbl_valueA) = (sign << 31) |					\
-	((DBL_MAX_EXP+DBL_BIAS) << (32-(1+DBL_EXP_LENGTH))) |		\
+	((DBL_EMAX+DBL_BIAS) << (32-(1+DBL_EXP_LENGTH))) |		\
 	 ((1 << (32-(1+DBL_EXP_LENGTH))) - 1 );				\
     Dallp2(dbl_valueB) = 0xFFFFFFFF
 
@@ -454,11 +454,11 @@
 
 /* Need to Initialize */
 #define Dbl_makequietnan(desta,destb)					\
-    Dallp1(desta) = ((DBL_MAX_EXP+DBL_BIAS)+1)<< (32-(1+DBL_EXP_LENGTH))	\
+    Dallp1(desta) = ((DBL_EMAX+DBL_BIAS)+1)<< (32-(1+DBL_EXP_LENGTH))	\
 		| (1<<(32-(1+DBL_EXP_LENGTH+2)));			\
     Dallp2(destb) = 0
 #define Dbl_makesignalingnan(desta,destb)				\
-    Dallp1(desta) = ((DBL_MAX_EXP+DBL_BIAS)+1)<< (32-(1+DBL_EXP_LENGTH))	\
+    Dallp1(desta) = ((DBL_EMAX+DBL_BIAS)+1)<< (32-(1+DBL_EXP_LENGTH))	\
 		| (1<<(32-(1+DBL_EXP_LENGTH+1)));			\
     Dallp2(destb) = 0
 
