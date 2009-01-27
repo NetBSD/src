@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.135 2009/01/11 21:09:13 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.136 2009/01/27 20:30:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2009/01/11 21:09:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2009/01/27 20:30:13 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -269,22 +269,6 @@ machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
-}
-
-static u_int
-fpsr2siginfocode(u_int fpsr)
-{
-	if (fpsr & (1 << 10))
-		return FPE_FLTDIV;
-	if (fpsr & (1 << 11))
-		return FPE_FLTUND;
-	if (fpsr & (1 << 12))
-		return FPE_FLTOVF;
-	if (fpsr & (1 << 13))
-		return FPE_FLTINV;
-	if (fpsr & (1 << 9))
-		return FPE_FLTRES;
-	return 0;
 }
 
 /*

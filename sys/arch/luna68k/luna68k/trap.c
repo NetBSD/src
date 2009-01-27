@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.54 2008/12/19 15:20:10 njoly Exp $ */
+/* $NetBSD: trap.c,v 1.55 2009/01/27 20:30:13 martin Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2008/12/19 15:20:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2009/01/27 20:30:13 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -398,15 +398,10 @@ trap(fp, type, code, v)
 	case T_FPERR|T_USER:	/* 68881 exceptions */
 	/*
 	 * We pass along the 68881 status register which locore stashed
-	 * in code for us.  Note that there is a possibility that the
-	 * bit pattern of this register will conflict with one of the
-	 * FPE_* codes defined in signal.h.  Fortunately for us, the
-	 * only such codes we use are all in the range 1-7 and the low
-	 * 3 bits of the status register are defined as 0 so there is
-	 * no clash.
+	 * in code for us.
 	 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 
 #ifdef M68040
