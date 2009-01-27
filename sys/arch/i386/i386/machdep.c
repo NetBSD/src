@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.657 2009/01/27 21:59:24 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.658 2009/01/27 22:00:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.657 2009/01/27 21:59:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.658 2009/01/27 22:00:12 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1628,8 +1628,6 @@ init386(paddr_t first_avail)
 void
 cpu_reset()
 {
-	uint8_t b;
-
 #ifdef XEN
 	HYPERVISOR_reboot();
 	for (;;);
