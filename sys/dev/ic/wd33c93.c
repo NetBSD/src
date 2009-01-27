@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.21 2009/01/25 15:23:42 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.22 2009/01/27 11:26:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.21 2009/01/25 15:23:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.22 2009/01/27 11:26:15 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -184,12 +184,12 @@ static const char *wd33c93_chip_names[] = SBIC_CHIP_LIST;
  * Attach instance of driver and probe for sub devices
  */
 void
-wd33c93_attach(struct wd33c93_softc *dev)
+wd33c93_attach(struct wd33c93_softc *sc)
 {
-	struct scsipi_adapter *adapt = &dev->sc_adapter;
-	struct scsipi_channel *chan = &dev->sc_channel;
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 
-	adapt->adapt_dev = dev->sc_dev;
+	adapt->adapt_dev = sc->sc_dev;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 256;
 	adapt->adapt_max_periph = 256; /* Max tags per device */
@@ -198,52 +198,52 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	/* adapt_minphys initialized by MD interface */
 
 	memset(chan, 0, sizeof(*chan));
-	chan->chan_adapter = &dev->sc_adapter;
+	chan->chan_adapter = &sc->sc_adapter;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
 	chan->chan_ntargets = SBIC_NTARG;
 	chan->chan_nluns = SBIC_NLUN;
-	chan->chan_id = dev->sc_id;
+	chan->chan_id = sc->sc_id;
 
-	callout_init(&dev->sc_watchdog, 0);
+	callout_init(&sc->sc_watchdog, 0);
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
 	 * config_found() to make sure the adatper is disabled.
 	 */
-	if (scsipi_adapter_addref(&dev->sc_adapter) != 0) {
-		aprint_error_dev(dev->sc_dev, "unable to enable controller\n");
+	if (scsipi_adapter_addref(&sc->sc_adapter) != 0) {
+		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");
 		return;
 	}
 
-	dev->sc_cfflags = device_cfdata(dev->sc_dev)->cf_flags;
-	wd33c93_init(dev);
+	sc->sc_cfflags = device_cfdata(sc->sc_dev)->cf_flags;
+	wd33c93_init(sc);
 	
 	aprint_normal(": %s (%d.%d MHz clock, %s, SCSI ID %d)\n",
-	    wd33c93_chip_names[dev->sc_chip],
-	    dev->sc_clkfreq / 10, dev->sc_clkfreq % 10,
-	    (dev->sc_dmamode == SBIC_CTL_DMA) ? "DMA" :
-	    (dev->sc_dmamode == SBIC_CTL_DBA_DMA) ? "DBA" :
-	    (dev->sc_dmamode == SBIC_CTL_BURST_DMA) ? "BURST DMA" : "PIO",
-	    dev->sc_channel.chan_id);
-	if (dev->sc_chip == SBIC_CHIP_WD33C93B) {
-		aprint_normal_dev(dev->sc_dev, "microcode revision 0x%02x",
-		    dev->sc_rev);
-		if (dev->sc_minsyncperiod < 50)
+	    wd33c93_chip_names[sc->sc_chip],
+	    sc->sc_clkfreq / 10, sc->sc_clkfreq % 10,
+	    (sc->sc_dmamode == SBIC_CTL_DMA) ? "DMA" :
+	    (sc->sc_dmamode == SBIC_CTL_DBA_DMA) ? "DBA" :
+	    (sc->sc_dmamode == SBIC_CTL_BURST_DMA) ? "BURST DMA" : "PIO",
+	    sc->sc_channel.chan_id);
+	if (sc->sc_chip == SBIC_CHIP_WD33C93B) {
+		aprint_normal_dev(sc->sc_dev, "microcode revision 0x%02x",
+		    sc->sc_rev);
+		if (sc->sc_minsyncperiod < 50)
 			aprint_normal(", Fast SCSI");
 		aprint_normal("\n");
 	}
 
-	dev->sc_child = config_found(dev->sc_dev, &dev->sc_channel,
+	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel,
 				     scsiprint);
-	scsipi_adapter_delref(&dev->sc_adapter);
+	scsipi_adapter_delref(&sc->sc_adapter);
 }
 
 /*
  * Initialize driver-private structures
  */
 void
-wd33c93_init(struct wd33c93_softc *dev)
+wd33c93_init(struct wd33c93_softc *sc)
 {
 	u_int i;
 
@@ -254,23 +254,23 @@ wd33c93_init(struct wd33c93_softc *dev)
 		++wd33c93_pool_initialized;
 	}
 
-	if (dev->sc_state == 0) {
-		TAILQ_INIT(&dev->ready_list);
+	if (sc->sc_state == 0) {
+		TAILQ_INIT(&sc->ready_list);
 
-		dev->sc_nexus = NULL;
-		dev->sc_disc  = 0;
-		memset(dev->sc_tinfo, 0, sizeof(dev->sc_tinfo));
+		sc->sc_nexus = NULL;
+		sc->sc_disc  = 0;
+		memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 
-		callout_reset(&dev->sc_watchdog, 60 * hz, wd33c93_watchdog, dev);
+		callout_reset(&sc->sc_watchdog, 60 * hz, wd33c93_watchdog, sc);
 	} else
 		panic("wd33c93: reinitializing driver!");
 
-	dev->sc_flags = 0;
-	dev->sc_state = SBIC_IDLE;
-	wd33c93_reset(dev);
+	sc->sc_flags = 0;
+	sc->sc_state = SBIC_IDLE;
+	wd33c93_reset(sc);
 
 	for (i = 0; i < 8; i++) {
-		struct wd33c93_tinfo *ti = &dev->sc_tinfo[i];
+		struct wd33c93_tinfo *ti = &sc->sc_tinfo[i];
 		/*
 		 * cf_flags = 0xTTSSRR
 		 *
@@ -279,124 +279,124 @@ wd33c93_init(struct wd33c93_softc *dev)
 		 *   RR = Bitmask to disable disconnect/reselect
 		 */
 		ti->flags = T_NEED_RESET;
-		if (CFFLAGS_NOSYNC(dev->sc_cfflags, i))
+		if (CFFLAGS_NOSYNC(sc->sc_cfflags, i))
 			ti->flags |= T_NOSYNC;
-		if (CFFLAGS_NODISC(dev->sc_cfflags, i) || wd33c93_nodisc)
+		if (CFFLAGS_NODISC(sc->sc_cfflags, i) || wd33c93_nodisc)
 			ti->flags |= T_NODISC;
-		ti->period = dev->sc_minsyncperiod;
+		ti->period = sc->sc_minsyncperiod;
 		ti->offset = 0;
 	}
 }
 
 void
-wd33c93_reset(struct wd33c93_softc *dev)
+wd33c93_reset(struct wd33c93_softc *sc)
 {
 	u_int	my_id, s, div, i;
 	u_char	csr, reg;
 
-	SET_SBIC_cmd(dev, SBIC_CMD_ABORT);
-	WAIT_CIP(dev);
+	SET_SBIC_cmd(sc, SBIC_CMD_ABORT);
+	WAIT_CIP(sc);
 
 	s = splbio();
 
-	if (dev->sc_reset != NULL)
-		(*dev->sc_reset)(dev);
+	if (sc->sc_reset != NULL)
+		(*sc->sc_reset)(sc);
 
-	my_id = dev->sc_channel.chan_id & SBIC_ID_MASK;
+	my_id = sc->sc_channel.chan_id & SBIC_ID_MASK;
 
 	/* Enable advanced features and really(!) advanced features */
 #if 1
 	my_id |= (SBIC_ID_EAF | SBIC_ID_RAF);	/* XXX - MD Layer */
 #endif
 
-	SET_SBIC_myid(dev, my_id);
+	SET_SBIC_myid(sc, my_id);
 
 	/* Reset the chip */
-	SET_SBIC_cmd(dev, SBIC_CMD_RESET);
+	SET_SBIC_cmd(sc, SBIC_CMD_RESET);
 	DELAY(25);
-	SBIC_WAIT(dev, SBIC_ASR_INT, 0);
+	SBIC_WAIT(sc, SBIC_ASR_INT, 0);
 
 	/* Set up various chip parameters */
-	SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
+	SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
 
-	GET_SBIC_csr(dev, csr);			/* clears interrupt also */
-	GET_SBIC_cdb1(dev, dev->sc_rev);	/* valid with RAF on wd33c93b */
+	GET_SBIC_csr(sc, csr);			/* clears interrupt also */
+	GET_SBIC_cdb1(sc, sc->sc_rev);		/* valid with RAF on wd33c93b */
 
 	switch (csr) {
 	case SBIC_CSR_RESET:
-		dev->sc_chip = SBIC_CHIP_WD33C93;
+		sc->sc_chip = SBIC_CHIP_WD33C93;
 		break;
 	case SBIC_CSR_RESET_AM:
-		SET_SBIC_queue_tag(dev, 0x55);
-		GET_SBIC_queue_tag(dev, reg);
-		dev->sc_chip = (reg == 0x55) ?
+		SET_SBIC_queue_tag(sc, 0x55);
+		GET_SBIC_queue_tag(sc, reg);
+		sc->sc_chip = (reg == 0x55) ?
 		    	       SBIC_CHIP_WD33C93B : SBIC_CHIP_WD33C93A;
-		SET_SBIC_queue_tag(dev, 0x0);
+		SET_SBIC_queue_tag(sc, 0x0);
 		break;
 	default:
-		dev->sc_chip = SBIC_CHIP_UNKNOWN;
+		sc->sc_chip = SBIC_CHIP_UNKNOWN;
 	}
 
 	/*
 	 * Choose a suitable clock divisor and work out the resulting
 	 * sync transfer periods in 4ns units.
 	 */
-	if (dev->sc_clkfreq < 110) {
+	if (sc->sc_clkfreq < 110) {
 		my_id |= SBIC_ID_FS_8_10;
 		div = 2;
-	} else if (dev->sc_clkfreq < 160) {
+	} else if (sc->sc_clkfreq < 160) {
 		my_id |= SBIC_ID_FS_12_15;
 		div = 3;
-	} else if (dev->sc_clkfreq < 210) {
+	} else if (sc->sc_clkfreq < 210) {
 		my_id |= SBIC_ID_FS_16_20;
 		div = 4;
 	} else
-		panic("wd33c93: invalid clock speed %d", dev->sc_clkfreq);
+		panic("wd33c93: invalid clock speed %d", sc->sc_clkfreq);
 
 	for (i = 0; i < 7; i++)
-		dev->sc_syncperiods[i] =
-		    (i + 2) * div * 1250 / dev->sc_clkfreq;
-	dev->sc_minsyncperiod = dev->sc_syncperiods[0];
+		sc->sc_syncperiods[i] =
+		    (i + 2) * div * 1250 / sc->sc_clkfreq;
+	sc->sc_minsyncperiod = sc->sc_syncperiods[0];
 	SBIC_DEBUG(SYNC, ("available sync periods: %d %d %d %d %d %d %d\n",
-	    dev->sc_syncperiods[0], dev->sc_syncperiods[1],
-	    dev->sc_syncperiods[2], dev->sc_syncperiods[3],
-	    dev->sc_syncperiods[4], dev->sc_syncperiods[5],
-	    dev->sc_syncperiods[6]));
+	    sc->sc_syncperiods[0], sc->sc_syncperiods[1],
+	    sc->sc_syncperiods[2], sc->sc_syncperiods[3],
+	    sc->sc_syncperiods[4], sc->sc_syncperiods[5],
+	    sc->sc_syncperiods[6]));
 
-	if (dev->sc_clkfreq >= 160 && dev->sc_chip == SBIC_CHIP_WD33C93B) {
+	if (sc->sc_clkfreq >= 160 && sc->sc_chip == SBIC_CHIP_WD33C93B) {
 		for (i = 0; i < 3; i++)
-			dev->sc_fsyncperiods[i] =
-			    (i + 2) * 2 * 1250 / dev->sc_clkfreq;
+			sc->sc_fsyncperiods[i] =
+			    (i + 2) * 2 * 1250 / sc->sc_clkfreq;
 		SBIC_DEBUG(SYNC, ("available fast sync periods: %d %d %d\n",
-		    dev->sc_fsyncperiods[0], dev->sc_fsyncperiods[1],
-		    dev->sc_fsyncperiods[2]));
-		dev->sc_minsyncperiod = dev->sc_fsyncperiods[0];
+		    sc->sc_fsyncperiods[0], sc->sc_fsyncperiods[1],
+		    sc->sc_fsyncperiods[2]));
+		sc->sc_minsyncperiod = sc->sc_fsyncperiods[0];
 	}
 
 	/* Max Sync Offset */
-	if (dev->sc_chip == SBIC_CHIP_WD33C93A ||
-	    dev->sc_chip == SBIC_CHIP_WD33C93B)
-		dev->sc_maxoffset = SBIC_SYN_93AB_MAX_OFFSET;
+	if (sc->sc_chip == SBIC_CHIP_WD33C93A ||
+	    sc->sc_chip == SBIC_CHIP_WD33C93B)
+		sc->sc_maxoffset = SBIC_SYN_93AB_MAX_OFFSET;
 	else
-		dev->sc_maxoffset = SBIC_SYN_93_MAX_OFFSET;
+		sc->sc_maxoffset = SBIC_SYN_93_MAX_OFFSET;
 
 	/*
 	 * don't allow Selection (SBIC_RID_ES)
 	 * until we can handle target mode!!
 	 */
-	SET_SBIC_rselid(dev, SBIC_RID_ER);
+	SET_SBIC_rselid(sc, SBIC_RID_ER);
 
 	/* Asynchronous for now */
-	SET_SBIC_syn(dev, 0);
+	SET_SBIC_syn(sc, 0);
 
-	dev->sc_flags = 0;
-	dev->sc_state = SBIC_IDLE;
+	sc->sc_flags = 0;
+	sc->sc_state = SBIC_IDLE;
 
 	splx(s);
 }
 
 void
-wd33c93_error(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
+wd33c93_error(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 {
 	struct scsipi_xfer *xs = acb->xs;
 
@@ -414,19 +414,19 @@ wd33c93_error(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
  * given the period and offset values in *ti.
  */
 u_char
-wd33c93_stp2syn(struct wd33c93_softc *dev, struct wd33c93_tinfo *ti)
+wd33c93_stp2syn(struct wd33c93_softc *sc, struct wd33c93_tinfo *ti)
 {
 	unsigned i;
 
 	/* see if we can handle fast scsi (100-200ns) first */
-	if (ti->period < 50 && dev->sc_minsyncperiod < 50) {
+	if (ti->period < 50 && sc->sc_minsyncperiod < 50) {
 		for (i = 0; i < 3; i++)
-			if (dev->sc_fsyncperiods[i] >= ti->period)
+			if (sc->sc_fsyncperiods[i] >= ti->period)
 				return (SBIC_SYN(ti->offset, i + 2, 1));
 	}
 
 	for (i = 0; i < 7; i++) {
-		if (dev->sc_syncperiods[i] >= ti->period) {
+		if (sc->sc_syncperiods[i] >= ti->period) {
 			if (i == 6)
 				return (SBIC_SYN(0, 0, 0));
 			else
@@ -442,17 +442,17 @@ wd33c93_stp2syn(struct wd33c93_softc *dev, struct wd33c93_tinfo *ti)
  * Setup sync mode for given target
  */
 void
-wd33c93_setsync(struct wd33c93_softc *dev, struct wd33c93_tinfo *ti)
+wd33c93_setsync(struct wd33c93_softc *sc, struct wd33c93_tinfo *ti)
 {
 	u_char syncreg;
 
 	if (ti->flags & T_SYNCMODE)
-		syncreg = wd33c93_stp2syn(dev, ti);
+		syncreg = wd33c93_stp2syn(sc, ti);
 	else
 		syncreg = SBIC_SYN(0, 0, 0);
 
 	SBIC_DEBUG(SYNC, ("wd33c93_setsync: sync reg = 0x%02x\n", syncreg));
-	SET_SBIC_syn(dev, syncreg);
+	SET_SBIC_syn(sc, syncreg);
 }
 
 /*
@@ -461,7 +461,7 @@ wd33c93_setsync(struct wd33c93_softc *dev, struct wd33c93_tinfo *ti)
  * returns 1 if DMA OK, 0 for polled I/O transfer
  */
 int
-wd33c93_dmaok(struct wd33c93_softc *dev, struct scsipi_xfer *xs)
+wd33c93_dmaok(struct wd33c93_softc *sc, struct scsipi_xfer *xs)
 {
 	if (wd33c93_nodma || (xs->xs_control & XS_CTL_POLL) || xs->datalen == 0)
 		return (0);
@@ -472,19 +472,19 @@ wd33c93_dmaok(struct wd33c93_softc *dev, struct scsipi_xfer *xs)
  * Setup for DMA transfer
  */
 void
-wd33c93_dma_setup(struct wd33c93_softc *dev, int datain)
+wd33c93_dma_setup(struct wd33c93_softc *sc, int datain)
 {
-	struct wd33c93_acb *acb = dev->sc_nexus;
+	struct wd33c93_acb *acb = sc->sc_nexus;
 	int s;
 
-	dev->sc_daddr = acb->daddr;
-	dev->sc_dleft = acb->dleft;
+	sc->sc_daddr = acb->daddr;
+	sc->sc_dleft = acb->dleft;
 
 	s = splbio();
 	/* Indicate that we're in DMA mode */
-	if (dev->sc_dleft) {
-		dev->sc_dmasetup(dev, &dev->sc_daddr, &dev->sc_dleft,
-		    datain, &dev->sc_dleft);
+	if (sc->sc_dleft) {
+		sc->sc_dmasetup(sc, &sc->sc_daddr, &sc->sc_dleft,
+		    datain, &sc->sc_dleft);
 	}
 	splx(s);
 	return;
@@ -495,14 +495,14 @@ wd33c93_dma_setup(struct wd33c93_softc *dev, int datain)
  * Save DMA pointers.  Take into account partial transfer. Shut down DMA.
  */
 void
-wd33c93_dma_stop(struct wd33c93_softc *dev)
+wd33c93_dma_stop(struct wd33c93_softc *sc)
 {
 	size_t count;
 	int asr;
 
 	/* Wait until WD chip is idle */
 	do {
-		GET_SBIC_asr(dev, asr);	/* XXX */
+		GET_SBIC_asr(sc, asr);	/* XXX */
 		if (asr & SBIC_ASR_DBR) {
 			printf("wd33c93_dma_stop: asr %02x canceled!\n", asr);
 			break;
@@ -510,27 +510,27 @@ wd33c93_dma_stop(struct wd33c93_softc *dev)
 	} while (asr & (SBIC_ASR_BSY|SBIC_ASR_CIP));
 
 	/* Only need to save pointers if DMA was active */
-	if (dev->sc_flags & SBICF_INDMA) {
+	if (sc->sc_flags & SBICF_INDMA) {
 		int s = splbio();
 
 		/* Shut down DMA and flush FIFO's */
-		dev->sc_dmastop(dev);
+		sc->sc_dmastop(sc);
 
 		/* Fetch the residual count */
-		SBIC_TC_GET(dev, count);
+		SBIC_TC_GET(sc, count);
 
 		/* Work out how many bytes were actually transferred */
-		count = dev->sc_tcnt - count;
+		count = sc->sc_tcnt - count;
 
-		if (dev->sc_dleft < count)
+		if (sc->sc_dleft < count)
 			printf("xfer too large: dleft=%zu resid=%zu\n",
-			    dev->sc_dleft, count);
+			    sc->sc_dleft, count);
 
 		/* Fixup partial xfers */
-		dev->sc_daddr = (char*)dev->sc_daddr + count;
-		dev->sc_dleft -= count;
-		dev->sc_tcnt   = 0;
-		dev->sc_flags &= ~SBICF_INDMA;
+		sc->sc_daddr = (char *)sc->sc_daddr + count;
+		sc->sc_dleft -= count;
+		sc->sc_tcnt   = 0;
+		sc->sc_flags &= ~SBICF_INDMA;
 		splx(s);
 		SBIC_DEBUG(DMA, ("dma_stop\n"));
 	}
@@ -538,8 +538,8 @@ wd33c93_dma_stop(struct wd33c93_softc *dev)
 	 * Ensure the WD chip is back in polled I/O mode, with nothing to
 	 * transfer.
 	 */
-	SBIC_TC_PUT(dev, 0);
-	SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
+	SBIC_TC_PUT(sc, 0);
+	SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
 }
 
 
@@ -549,7 +549,7 @@ wd33c93_dma_stop(struct wd33c93_softc *dev)
 void
 wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
-	struct wd33c93_softc *dev =
+	struct wd33c93_softc *sc =
 	    device_private(chan->chan_adapter->adapt_dev);
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -567,7 +567,7 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 		if (flags & XS_CTL_DATA_UIO)
 			panic("wd33c93: scsi data uio requested");
 
-		if (dev->sc_nexus && (flags & XS_CTL_POLL))
+		if (sc->sc_nexus && (flags & XS_CTL_POLL))
 			panic("wd33c93_scsicmd: busy");
 
 		s = splbio();
@@ -595,25 +595,25 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 			 * Complete currently active command(s) before
 			 * issuing an immediate command
 			 */
-			while (dev->sc_nexus)
-				wd33c93_poll(dev, dev->sc_nexus);
+			while (sc->sc_nexus)
+				wd33c93_poll(sc, sc->sc_nexus);
 		}
 
 		s = splbio();
-		TAILQ_INSERT_TAIL(&dev->ready_list, acb, chain);
+		TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 		acb->flags |= ACB_READY;
 
 		/* If nothing is active, try to start it now. */
-		if (dev->sc_state == SBIC_IDLE)
-			wd33c93_sched(dev);
+		if (sc->sc_state == SBIC_IDLE)
+			wd33c93_sched(sc);
 		splx(s);
 
 		if ((flags & XS_CTL_POLL) == 0)
 			return;
 
-		if (wd33c93_poll(dev, acb)) {
+		if (wd33c93_poll(sc, acb)) {
 			wd33c93_timeout(acb);
-			if (wd33c93_poll(dev, acb)) /* 2nd retry for ABORT */
+			if (wd33c93_poll(sc, acb)) /* 2nd retry for ABORT */
 				wd33c93_timeout(acb);
 		}
 		return;
@@ -627,10 +627,10 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 		struct wd33c93_tinfo *ti;
 		struct scsipi_xfer_mode *xm = arg;
 
-		ti = &dev->sc_tinfo[xm->xm_target];
+		ti = &sc->sc_tinfo[xm->xm_target];
 		ti->flags &= ~T_WANTSYNC;
 
-		if ((CFFLAGS_NOTAGS(dev->sc_cfflags, xm->xm_target) == 0) &&
+		if ((CFFLAGS_NOTAGS(sc->sc_cfflags, xm->xm_target) == 0) &&
 		    (xm->xm_mode & PERIPH_CAP_TQING) && !wd33c93_notags)
 			ti->flags |= T_TAG;
 		else
@@ -648,7 +648,7 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 		 * now, since it won't happen later.
 		 */
 		if (!(ti->flags & T_WANTSYNC) == !(ti->flags & T_SYNCMODE))
-			wd33c93_update_xfer_mode(dev, xm->xm_target);
+			wd33c93_update_xfer_mode(sc, xm->xm_target);
 		else
 			ti->flags |= T_NEGOTIATE;
 		return;
@@ -661,7 +661,7 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
  * attempt to start the next available command
  */
 void
-wd33c93_sched(struct wd33c93_softc *dev)
+wd33c93_sched(struct wd33c93_softc *sc)
 {
 	struct scsipi_periph *periph = NULL; /* Gag the compiler */
 	struct wd33c93_acb *acb;
@@ -669,16 +669,16 @@ wd33c93_sched(struct wd33c93_softc *dev)
 	struct wd33c93_linfo *li;
 	int lun, tag, flags;
 
-	if (dev->sc_state != SBIC_IDLE)
+	if (sc->sc_state != SBIC_IDLE)
 		return;
 
-	KASSERT(dev->sc_nexus == NULL);
+	KASSERT(sc->sc_nexus == NULL);
 
 	/* Loop through the ready list looking for work to do... */
-	TAILQ_FOREACH(acb, &dev->ready_list, chain) {
+	TAILQ_FOREACH(acb, &sc->ready_list, chain) {
 		periph = acb->xs->xs_periph;
 		lun = periph->periph_lun;
-		ti = &dev->sc_tinfo[periph->periph_target];
+		ti = &sc->sc_tinfo[periph->periph_target];
 		li = TINFO_LUN(ti, lun);
 
 		KASSERT(acb->flags & ACB_READY);
@@ -752,17 +752,17 @@ wd33c93_sched(struct wd33c93_softc *dev)
 	SBIC_DEBUG(ACBS, ("wd33c93_sched(%d,%d)\n", periph->periph_target,
 		       periph->periph_lun));
 
-	TAILQ_REMOVE(&dev->ready_list, acb, chain);
+	TAILQ_REMOVE(&sc->ready_list, acb, chain);
 	acb->flags &= ~ACB_READY;
 
 	flags = acb->xs->xs_control;
 	if (flags & XS_CTL_RESET)
-		wd33c93_reset(dev);
+		wd33c93_reset(sc);
 
 	/* XXX - Implicitly call scsidone on select timeout */
-	if (wd33c93_go(dev, acb) != 0 || acb->xs->error == XS_SELTIMEOUT) {
-		acb->dleft = dev->sc_dleft;
-		wd33c93_scsidone(dev, acb, dev->sc_status);
+	if (wd33c93_go(sc, acb) != 0 || acb->xs->error == XS_SELTIMEOUT) {
+		acb->dleft = sc->sc_dleft;
+		wd33c93_scsidone(sc, acb, sc->sc_status);
 		return;
 	}
 
@@ -770,7 +770,7 @@ wd33c93_sched(struct wd33c93_softc *dev)
 }
 
 void
-wd33c93_scsidone(struct wd33c93_softc *dev, struct wd33c93_acb *acb, int status)
+wd33c93_scsidone(struct wd33c93_softc *sc, struct wd33c93_acb *acb, int status)
 {
 	struct scsipi_xfer	*xs = acb->xs;
 	struct wd33c93_tinfo	*ti;
@@ -778,18 +778,18 @@ wd33c93_scsidone(struct wd33c93_softc *dev, struct wd33c93_acb *acb, int status)
 	int			s;
 
 #ifdef DIAGNOSTIC
-	KASSERT(dev->target == xs->xs_periph->periph_target);
-	KASSERT(dev->lun    == xs->xs_periph->periph_lun);
+	KASSERT(sc->target == xs->xs_periph->periph_target);
+	KASSERT(sc->lun    == xs->xs_periph->periph_lun);
 	if (acb == NULL || xs == NULL) {
 		panic("wd33c93_scsidone -- (%d,%d) no scsipi_xfer",
-		    dev->target, dev->lun);
+		    sc->target, sc->lun);
 	}
 	KASSERT(acb->flags != ACB_FREE);
 #endif
 
 	SBIC_DEBUG(ACBS, ("scsidone: (%d,%d)->(%d,%d)%02x\n",
 		       xs->xs_periph->periph_target, xs->xs_periph->periph_lun,
-		       dev->target, dev->lun, status));
+		       sc->target, sc->lun, status));
 	callout_stop(&xs->xs_callout);
 
 	xs->status = status & SCSI_STATUS_MASK;
@@ -808,41 +808,41 @@ wd33c93_scsidone(struct wd33c93_softc *dev, struct wd33c93_acb *acb, int status)
 		}
 	}
 
-	ti = &dev->sc_tinfo[dev->target];
-	li = TINFO_LUN(ti, dev->lun);
+	ti = &sc->sc_tinfo[sc->target];
+	li = TINFO_LUN(ti, sc->lun);
 	ti->cmds++;
 	if (xs->error == XS_SELTIMEOUT) {
 		/* Selection timeout -- discard this LUN if empty */
 		if (li->untagged == NULL && li->used == 0) {
-			if (dev->lun < SBIC_NLUN)
-				ti->lun[dev->lun] = NULL;
+			if (sc->lun < SBIC_NLUN)
+				ti->lun[sc->lun] = NULL;
 			free(li, M_DEVBUF);
 		}
 	}
 
-	wd33c93_dequeue(dev, acb);
-	if (dev->sc_nexus == acb) {
-		dev->sc_state = SBIC_IDLE;
-		dev->sc_nexus = NULL;
-		dev->sc_flags = 0;
+	wd33c93_dequeue(sc, acb);
+	if (sc->sc_nexus == acb) {
+		sc->sc_state = SBIC_IDLE;
+		sc->sc_nexus = NULL;
+		sc->sc_flags = 0;
 
-		if (!TAILQ_EMPTY(&dev->ready_list))
-			wd33c93_sched(dev);
+		if (!TAILQ_EMPTY(&sc->ready_list))
+			wd33c93_sched(sc);
 	}
 
 	/* place control block back on free list. */
 	s = splbio();
 	acb->flags = ACB_FREE;
-	pool_put(&wd33c93_pool, (void *)acb);
+	pool_put(&wd33c93_pool, acb);
 	splx(s);
 
 	scsipi_done(xs);
 }
 
 void
-wd33c93_dequeue(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
+wd33c93_dequeue(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 {
-	struct wd33c93_tinfo *ti = &dev->sc_tinfo[acb->xs->xs_periph->periph_target];
+	struct wd33c93_tinfo *ti = &sc->sc_tinfo[acb->xs->xs_periph->periph_target];
 	struct wd33c93_linfo *li;
 	int lun = acb->xs->xs_periph->periph_lun;
 
@@ -871,17 +871,17 @@ wd33c93_dequeue(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 
 
 int
-wd33c93_wait(struct wd33c93_softc *dev, u_char until, int timeo, int line)
+wd33c93_wait(struct wd33c93_softc *sc, u_char until, int timeo, int line)
 {
 	u_char val;
 
 	if (timeo == 0)
 		timeo = 1000000;	/* some large value.. */
-	GET_SBIC_asr(dev, val);
+	GET_SBIC_asr(sc, val);
 	while ((val & until) == 0) {
 		if (timeo-- == 0) {
 			int csr;
-			GET_SBIC_csr(dev, csr);
+			GET_SBIC_csr(sc, csr);
 			printf("wd33c93_wait: TIMEO @%d with asr=x%x csr=x%x\n",
 			    line, val, csr);
 #if defined(DDB) && defined(DEBUG)
@@ -891,19 +891,19 @@ wd33c93_wait(struct wd33c93_softc *dev, u_char until, int timeo, int line)
 			break;
 		}
 		DELAY(1);
-		GET_SBIC_asr(dev, val);
+		GET_SBIC_asr(sc, val);
 	}
 	return(val);
 }
 
 int
-wd33c93_abort(struct wd33c93_softc *dev, struct wd33c93_acb *acb,
+wd33c93_abort(struct wd33c93_softc *sc, struct wd33c93_acb *acb,
      const char *where)
 {
 	u_char csr, asr;
 
-	GET_SBIC_asr(dev, asr);
-	GET_SBIC_csr(dev, csr);
+	GET_SBIC_asr(sc, asr);
+	GET_SBIC_csr(sc, csr);
 
 	scsipi_printaddr(acb->xs->xs_periph);
 	printf ("ABORT in %s: csr=0x%02x, asr=0x%02x\n", where, csr, asr);
@@ -914,7 +914,7 @@ wd33c93_abort(struct wd33c93_softc *dev, struct wd33c93_acb *acb,
 	/*
 	 * Clean up chip itself
 	 */
-	if (dev->sc_nexus == acb) {
+	if (sc->sc_nexus == acb) {
 		/* Reschedule timeout. */
 		callout_reset(&acb->xs->xs_callout, mstohz(acb->timeout),
 		    wd33c93_timeout, acb);
@@ -924,23 +924,23 @@ wd33c93_abort(struct wd33c93_softc *dev, struct wd33c93_acb *acb,
 			 * wd33c93 is jammed w/data. need to clear it
 			 * But we don't know what direction it needs to go
 			 */
-			GET_SBIC_data(dev, asr);
+			GET_SBIC_data(sc, asr);
 			printf("abort %s: clearing data buffer 0x%02x\n",
 			       where, asr);
-			GET_SBIC_asr(dev, asr);
+			GET_SBIC_asr(sc, asr);
 			if (asr & SBIC_ASR_DBR) /* Not the read direction */
-				SET_SBIC_data(dev, asr);
-			GET_SBIC_asr(dev, asr);
+				SET_SBIC_data(sc, asr);
+			GET_SBIC_asr(sc, asr);
 		}
 
 		scsipi_printaddr(acb->xs->xs_periph);
 		printf("sending ABORT command\n");
 
-		WAIT_CIP(dev);
-		SET_SBIC_cmd(dev, SBIC_CMD_ABORT);
-		WAIT_CIP(dev);
+		WAIT_CIP(sc);
+		SET_SBIC_cmd(sc, SBIC_CMD_ABORT);
+		WAIT_CIP(sc);
 
-		GET_SBIC_asr(dev, asr);
+		GET_SBIC_asr(sc, asr);
 
 		scsipi_printaddr(acb->xs->xs_periph);
 		if (asr & (SBIC_ASR_BSY|SBIC_ASR_LCI)) {
@@ -948,24 +948,24 @@ wd33c93_abort(struct wd33c93_softc *dev, struct wd33c93_acb *acb,
 			 * ok, get more drastic..
 			 */
 			printf("Resetting bus\n");
-			wd33c93_reset(dev);
+			wd33c93_reset(sc);
 		} else {
 			printf("sending DISCONNECT to target\n");
-			SET_SBIC_cmd(dev, SBIC_CMD_DISC);
-			WAIT_CIP(dev);
+			SET_SBIC_cmd(sc, SBIC_CMD_DISC);
+			WAIT_CIP(sc);
 
 			do {
-				SBIC_WAIT (dev, SBIC_ASR_INT, 0);
-				GET_SBIC_asr(dev, asr);
-				GET_SBIC_csr(dev, csr);
+				SBIC_WAIT (sc, SBIC_ASR_INT, 0);
+				GET_SBIC_asr(sc, asr);
+				GET_SBIC_csr(sc, csr);
 				SBIC_DEBUG(MISC, ("csr: 0x%02x, asr: 0x%02x\n",
 					       csr, asr));
 			} while ((csr != SBIC_CSR_DISC) &&
 			    (csr != SBIC_CSR_DISC_1) &&
 			    (csr != SBIC_CSR_CMD_INVALID));
 		}
-		dev->sc_state = SBIC_ERROR;
-		dev->sc_flags = 0;
+		sc->sc_state = SBIC_ERROR;
+		sc->sc_flags = 0;
 	}
 	return SBIC_STATE_ERROR;
 }
@@ -979,21 +979,21 @@ wd33c93_abort(struct wd33c93_softc *dev, struct wd33c93_acb *acb,
  * If the return value is 0, some error happened.
  */
 u_char
-wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
+wd33c93_selectbus(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 {
 	struct scsipi_xfer *xs = acb->xs;
 	struct wd33c93_tinfo *ti;
 	u_char target, lun, asr, csr, id;
 
-	KASSERT(dev->sc_state == SBIC_IDLE);
+	KASSERT(sc->sc_state == SBIC_IDLE);
 
 	target = xs->xs_periph->periph_target;
 	lun    = xs->xs_periph->periph_lun;
-	ti     = &dev->sc_tinfo[target];
+	ti     = &sc->sc_tinfo[target];
 
-	dev->sc_state = SBIC_SELECTING;
-	dev->target    = target;
-	dev->lun       = lun;
+	sc->sc_state = SBIC_SELECTING;
+	sc->target    = target;
+	sc->lun       = lun;
 
 	SBIC_DEBUG(PHASE, ("wd33c93_selectbus %d: ", target));
 
@@ -1004,33 +1004,33 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 	/*
 	 * issue select
 	 */
-	SBIC_TC_PUT(dev, 0);
-	SET_SBIC_selid(dev, target);
-	SET_SBIC_timeo(dev, SBIC_TIMEOUT(250, dev->sc_clkfreq));
+	SBIC_TC_PUT(sc, 0);
+	SET_SBIC_selid(sc, target);
+	SET_SBIC_timeo(sc, SBIC_TIMEOUT(250, sc->sc_clkfreq));
 
-	GET_SBIC_asr(dev, asr);
+	GET_SBIC_asr(sc, asr);
 	if (asr & (SBIC_ASR_INT|SBIC_ASR_BSY)) {
 		/* This means we got ourselves reselected upon */
 		SBIC_DEBUG(PHASE, ("WD busy (reselect?) ASR=%02x\n", asr));
 		return 0;
 	}
 
-	SET_SBIC_cmd(dev, SBIC_CMD_SEL_ATN);
-	WAIT_CIP(dev);
+	SET_SBIC_cmd(sc, SBIC_CMD_SEL_ATN);
+	WAIT_CIP(sc);
 
 	/*
 	 * wait for select (merged from separate function may need
 	 * cleanup)
 	 */
 	do {
-		asr = SBIC_WAIT(dev, SBIC_ASR_INT | SBIC_ASR_LCI, 0);
+		asr = SBIC_WAIT(sc, SBIC_ASR_INT | SBIC_ASR_LCI, 0);
 		if (asr & SBIC_ASR_LCI) {
 			QPRINTF(("late LCI: asr %02x\n", asr));
 			return 0;
 		}
 
 		/* Clear interrupt */
-		GET_SBIC_csr (dev, csr);
+		GET_SBIC_csr (sc, csr);
 
 		/* Reselected from under our feet? */
 		if (csr == SBIC_CSR_RSLT_NI || csr == SBIC_CSR_RSLT_IFY) {
@@ -1038,7 +1038,7 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 			/*
 			 * We need to handle this now so we don't lock up later
 			 */
-			wd33c93_nextstate(dev, acb, csr, asr);
+			wd33c93_nextstate(sc, acb, csr, asr);
 			return 0;
 		}
 
@@ -1062,7 +1062,7 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 	SBIC_DEBUG(PHASE, ("Selection Complete\n"));
 
 	/* Assume we're now selected */
-	GET_SBIC_selid(dev, id);
+	GET_SBIC_selid(sc, id);
 	if (id != target) {
 		/* Something went wrong - wrong target was select */
 		printf("wd33c93_selectbus: wrong target selected;"
@@ -1070,16 +1070,16 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 		return 0;      /* XXX: Need to call nexstate to handle? */
 	}
 
-	dev->sc_flags |= SBICF_SELECTED;
-	dev->sc_state  = SBIC_CONNECTED;
+	sc->sc_flags |= SBICF_SELECTED;
+	sc->sc_state  = SBIC_CONNECTED;
 
 	/* setup correct sync mode for this target */
-	wd33c93_setsync(dev, ti);
+	wd33c93_setsync(sc, ti);
 
-	if (ti->flags & T_NODISC && dev->sc_disc == 0)
-		SET_SBIC_rselid (dev, 0); /* Not expecting a reselect */
+	if (ti->flags & T_NODISC && sc->sc_disc == 0)
+		SET_SBIC_rselid (sc, 0); /* Not expecting a reselect */
 	else
-		SET_SBIC_rselid (dev, SBIC_RID_ER);
+		SET_SBIC_rselid (sc, SBIC_RID_ER);
 
 	/*
 	 * We only really need to do anything when the target goes to MSG out
@@ -1093,53 +1093,53 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 			/* Inititae a SDTR message */
 			SBIC_DEBUG(SYNC, ("Sending SDTR to target %d\n", id));
 			if (ti->flags & T_WANTSYNC) {
-				ti->period = dev->sc_minsyncperiod;
-				ti->offset = dev->sc_maxoffset;
+				ti->period = sc->sc_minsyncperiod;
+				ti->offset = sc->sc_maxoffset;
 			} else {
 				ti->period = 0;
 				ti->offset = 0;
 			}
 			/* Send Sync negotiation message */
-			dev->sc_omsg[0] = MSG_IDENTIFY(lun, 0); /* No Disc */
-			dev->sc_omsg[1] = MSG_EXTENDED;
-			dev->sc_omsg[2] = MSG_EXT_SDTR_LEN;
-			dev->sc_omsg[3] = MSG_EXT_SDTR;
+			sc->sc_omsg[0] = MSG_IDENTIFY(lun, 0); /* No Disc */
+			sc->sc_omsg[1] = MSG_EXTENDED;
+			sc->sc_omsg[2] = MSG_EXT_SDTR_LEN;
+			sc->sc_omsg[3] = MSG_EXT_SDTR;
 			if (ti->flags & T_WANTSYNC) {
-				dev->sc_omsg[4] = dev->sc_minsyncperiod;
-				dev->sc_omsg[5] = dev->sc_maxoffset;
+				sc->sc_omsg[4] = sc->sc_minsyncperiod;
+				sc->sc_omsg[5] = sc->sc_maxoffset;
 			} else {
-				dev->sc_omsg[4] = 0;
-				dev->sc_omsg[5] = 0;
+				sc->sc_omsg[4] = 0;
+				sc->sc_omsg[5] = 0;
 			}
-			wd33c93_xfout(dev, 6, dev->sc_omsg);
-			dev->sc_msgout |= SEND_SDTR; /* may be rejected */
-			dev->sc_flags  |= SBICF_SYNCNEGO;
+			wd33c93_xfout(sc, 6, sc->sc_omsg);
+			sc->sc_msgout |= SEND_SDTR; /* may be rejected */
+			sc->sc_flags  |= SBICF_SYNCNEGO;
 		} else {
-			if (dev->sc_nexus->tag_type != 0) {
+			if (sc->sc_nexus->tag_type != 0) {
 				/* Use TAGS */
 				SBIC_DEBUG(TAGS, ("<select %d:%d TAG=%x>\n",
-					       dev->target, dev->lun,
-					       dev->sc_nexus->tag_id));
-				dev->sc_omsg[0] = MSG_IDENTIFY(lun, 1);
-				dev->sc_omsg[1] = dev->sc_nexus->tag_type;
-				dev->sc_omsg[2] = dev->sc_nexus->tag_id;
-				wd33c93_xfout(dev, 3, dev->sc_omsg);
-				dev->sc_msgout |= SEND_TAG;
+					       sc->target, sc->lun,
+					       sc->sc_nexus->tag_id));
+				sc->sc_omsg[0] = MSG_IDENTIFY(lun, 1);
+				sc->sc_omsg[1] = sc->sc_nexus->tag_type;
+				sc->sc_omsg[2] = sc->sc_nexus->tag_id;
+				wd33c93_xfout(sc, 3, sc->sc_omsg);
+				sc->sc_msgout |= SEND_TAG;
 			} else {
 				int no_disc;
 
 				/* Setup LUN nexus and disconnect privilege */
 				no_disc = xs->xs_control & XS_CTL_POLL ||
 					  ti->flags & T_NODISC;
-				SEND_BYTE(dev, MSG_IDENTIFY(lun, !no_disc));
+				SEND_BYTE(sc, MSG_IDENTIFY(lun, !no_disc));
 			}
 		}
 		/*
 		 * There's one interrupt still to come:
 		 * the change to CMD phase...
 		 */
-		SBIC_WAIT(dev, SBIC_ASR_INT , 0);
-		GET_SBIC_csr(dev, csr);
+		SBIC_WAIT(sc, SBIC_ASR_INT , 0);
+		GET_SBIC_csr(sc, csr);
 	}
 
 	return csr;
@@ -1160,7 +1160,7 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
  * since we don't allow disconnection for them (yet).
  */
 int
-wd33c93_xfout(struct wd33c93_softc *dev, int len, void *bp)
+wd33c93_xfout(struct wd33c93_softc *sc, int len, void *bp)
 {
 	int wait = wd33c93_data_wait;
 	u_char asr, *buf = bp;
@@ -1176,25 +1176,25 @@ wd33c93_xfout(struct wd33c93_softc *dev, int len, void *bp)
 	 * it's slightly slower due to the overhead
 	 */
 
-	SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
-	SBIC_TC_PUT (dev, (unsigned)len);
+	SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
+	SBIC_TC_PUT (sc, (unsigned)len);
 
-	WAIT_CIP (dev);
-	SET_SBIC_cmd (dev, SBIC_CMD_XFER_INFO);
+	WAIT_CIP (sc);
+	SET_SBIC_cmd (sc, SBIC_CMD_XFER_INFO);
 
 	/*
 	 * Loop for each byte transferred
 	 */
 	do {
-		GET_SBIC_asr (dev, asr);
+		GET_SBIC_asr (sc, asr);
 
 		if (asr & SBIC_ASR_DBR) {
 			if (len) {
-				SET_SBIC_data (dev, *buf);
+				SET_SBIC_data (sc, *buf);
 				buf++;
 				len--;
 			} else {
-				SET_SBIC_data (dev, 0);
+				SET_SBIC_data (sc, 0);
 			}
 			wait = wd33c93_data_wait;
 		}
@@ -1213,7 +1213,7 @@ wd33c93_xfout(struct wd33c93_softc *dev, int len, void *bp)
  * returns # bytes left to read
  */
 int
-wd33c93_xfin(struct wd33c93_softc *dev, int len, void *bp)
+wd33c93_xfin(struct wd33c93_softc *sc, int len, void *bp)
 {
 	int     wait = wd33c93_data_wait;
 	u_char  *buf = bp;
@@ -1221,26 +1221,26 @@ wd33c93_xfin(struct wd33c93_softc *dev, int len, void *bp)
 #ifdef  DEBUG
 	u_char  *obp = bp;
 #endif
-	SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
-	SBIC_TC_PUT (dev, (unsigned)len);
+	SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
+	SBIC_TC_PUT (sc, (unsigned)len);
 
-	WAIT_CIP (dev);
-	SET_SBIC_cmd (dev, SBIC_CMD_XFER_INFO);
+	WAIT_CIP (sc);
+	SET_SBIC_cmd (sc, SBIC_CMD_XFER_INFO);
 
 	/*
 	 * Loop for each byte transferred
 	 */
 	do {
-		GET_SBIC_asr (dev, asr);
+		GET_SBIC_asr (sc, asr);
 
 		if (asr & SBIC_ASR_DBR) {
 			if (len) {
-				GET_SBIC_data (dev, *buf);
+				GET_SBIC_data (sc, *buf);
 				buf++;
 				len--;
 			} else {
 				u_char foo;
-				GET_SBIC_data (dev, foo);
+				GET_SBIC_data (sc, foo);
 			}
 			wait = wd33c93_data_wait;
 		}
@@ -1251,7 +1251,7 @@ wd33c93_xfin(struct wd33c93_softc *dev, int len, void *bp)
 		    "%02x %02x %02x %02x\n", len, obp[0], obp[1], obp[2],
 		    obp[3], obp[4], obp[5], obp[6], obp[7], obp[8], obp[9]));
 
-	SBIC_TC_PUT (dev, 0);
+	SBIC_TC_PUT (sc, 0);
 
 	/*
 	 * this leaves with one csr to be read
@@ -1266,7 +1266,7 @@ wd33c93_xfin(struct wd33c93_softc *dev, int len, void *bp)
  * programmed i/o.
  */
 void
-wd33c93_xferdone(struct wd33c93_softc *dev)
+wd33c93_xferdone(struct wd33c93_softc *sc)
 {
 	u_char	phase, csr;
 	int	s;
@@ -1277,95 +1277,95 @@ wd33c93_xferdone(struct wd33c93_softc *dev)
 	/*
 	 * have the wd33c93 complete on its own
 	 */
-	SBIC_TC_PUT(dev, 0);
-	SET_SBIC_cmd_phase(dev, 0x46);
-	SET_SBIC_cmd(dev, SBIC_CMD_SEL_ATN_XFER);
+	SBIC_TC_PUT(sc, 0);
+	SET_SBIC_cmd_phase(sc, 0x46);
+	SET_SBIC_cmd(sc, SBIC_CMD_SEL_ATN_XFER);
 
 	do {
-		SBIC_WAIT (dev, SBIC_ASR_INT, 0);
-		GET_SBIC_csr (dev, csr);
+		SBIC_WAIT (sc, SBIC_ASR_INT, 0);
+		GET_SBIC_csr (sc, csr);
 		QPRINTF(("%02x:", csr));
 	} while ((csr != SBIC_CSR_DISC) &&
 		 (csr != SBIC_CSR_DISC_1) &&
 		 (csr != SBIC_CSR_S_XFERRED));
 
-	dev->sc_flags &= ~SBICF_SELECTED;
-	dev->sc_state = SBIC_DISCONNECT;
+	sc->sc_flags &= ~SBICF_SELECTED;
+	sc->sc_state = SBIC_DISCONNECT;
 
-	GET_SBIC_cmd_phase (dev, phase);
+	GET_SBIC_cmd_phase (sc, phase);
 	QPRINTF(("}%02x", phase));
 
 	if (phase == 0x60)
-		GET_SBIC_tlun(dev, dev->sc_status);
+		GET_SBIC_tlun(sc, sc->sc_status);
 	else
-		wd33c93_error(dev, dev->sc_nexus);
+		wd33c93_error(sc, sc->sc_nexus);
 
-	QPRINTF(("=STS:%02x=\n", dev->sc_status));
+	QPRINTF(("=STS:%02x=\n", sc->sc_status));
 	splx(s);
 }
 
 
 int
-wd33c93_go(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
+wd33c93_go(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 {
 	struct scsipi_xfer	*xs = acb->xs;
 	int			i, dmaok;
 	u_char			csr, asr;
 
-	SBIC_DEBUG(ACBS, ("wd33c93_go(%d:%d)\n", dev->target, dev->lun));
+	SBIC_DEBUG(ACBS, ("wd33c93_go(%d:%d)\n", sc->target, sc->lun));
 
-	dev->sc_nexus = acb;
+	sc->sc_nexus = acb;
 
-	dev->target = xs->xs_periph->periph_target;
-	dev->lun    = xs->xs_periph->periph_lun;
+	sc->target = xs->xs_periph->periph_target;
+	sc->lun    = xs->xs_periph->periph_lun;
 
-	dev->sc_status = STATUS_UNKNOWN;
-	dev->sc_daddr = acb->daddr;
-	dev->sc_dleft = acb->dleft;
+	sc->sc_status = STATUS_UNKNOWN;
+	sc->sc_daddr = acb->daddr;
+	sc->sc_dleft = acb->dleft;
 
-	dev->sc_msgpriq = dev->sc_msgout = dev->sc_msgoutq = 0;
-	dev->sc_flags = 0;
+	sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
+	sc->sc_flags = 0;
 
-	dmaok = wd33c93_dmaok(dev, xs);
+	dmaok = wd33c93_dmaok(sc, xs);
 
 	if (dmaok == 0)
-		dev->sc_flags |= SBICF_NODMA;
+		sc->sc_flags |= SBICF_NODMA;
 
 	SBIC_DEBUG(DMA, ("wd33c93_go dmago:%d(tcnt=%zx) dmaok=%dx\n",
-		       dev->target, dev->sc_tcnt, dmaok));
+		       sc->target, sc->sc_tcnt, dmaok));
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
-	if ((csr = wd33c93_selectbus(dev, acb)) == 0)
+	if ((csr = wd33c93_selectbus(sc, acb)) == 0)
 		return(0); /* Not done: needs to be rescheduled */
 
 	/*
 	 * Lets cycle a while then let the interrupt handler take over.
 	 */
-	GET_SBIC_asr(dev, asr);
+	GET_SBIC_asr(sc, asr);
 	do {
 		QPRINTF(("go[0x%x] ", csr));
 
 		/* Handle the new phase */
-		i = wd33c93_nextstate(dev, acb, csr, asr);
-		WAIT_CIP(dev);		/* XXX */
-		if (dev->sc_state == SBIC_CONNECTED) {
+		i = wd33c93_nextstate(sc, acb, csr, asr);
+		WAIT_CIP(sc);		/* XXX */
+		if (sc->sc_state == SBIC_CONNECTED) {
 
-			GET_SBIC_asr(dev, asr);
+			GET_SBIC_asr(sc, asr);
 
 			if (asr & SBIC_ASR_LCI)
 				printf("wd33c93_go: LCI asr:%02x csr:%02x\n", asr, csr);
 
 			if (asr & SBIC_ASR_INT)
-				GET_SBIC_csr(dev, csr);
+				GET_SBIC_csr(sc, csr);
 		}
 
-	} while (dev->sc_state == SBIC_CONNECTED &&
+	} while (sc->sc_state == SBIC_CONNECTED &&
 	    	 asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
 
-	QPRINTF(("> done i=%d stat=%02x\n", i, dev->sc_status));
+	QPRINTF(("> done i=%d stat=%02x\n", i, sc->sc_status));
 
 	if (i == SBIC_STATE_DONE) {
-		if (dev->sc_status == STATUS_UNKNOWN) {
+		if (sc->sc_status == STATUS_UNKNOWN) {
 			printf("wd33c93_go: done & stat == UNKNOWN\n");
 			return 1;  /* Did we really finish that fast? */
 		}
@@ -1375,7 +1375,7 @@ wd33c93_go(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 
 
 int
-wd33c93_intr(struct wd33c93_softc *dev)
+wd33c93_intr(struct wd33c93_softc *sc)
 {
 	u_char	asr, csr;
 	int	i;
@@ -1383,28 +1383,28 @@ wd33c93_intr(struct wd33c93_softc *dev)
 	/*
 	 * pending interrupt?
 	 */
-	GET_SBIC_asr (dev, asr);
+	GET_SBIC_asr (sc, asr);
 	if ((asr & SBIC_ASR_INT) == 0)
 		return(0);
 
-	GET_SBIC_csr(dev, csr);
+	GET_SBIC_csr(sc, csr);
 
 	do {
 		SBIC_DEBUG(INTS, ("intr[csr=0x%x]", csr));
 
-		i = wd33c93_nextstate(dev, dev->sc_nexus, csr, asr);
-		WAIT_CIP(dev);		/* XXX */
-		if (dev->sc_state == SBIC_CONNECTED) {
-			GET_SBIC_asr(dev, asr);
+		i = wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
+		WAIT_CIP(sc);		/* XXX */
+		if (sc->sc_state == SBIC_CONNECTED) {
+			GET_SBIC_asr(sc, asr);
 
 			if (asr & SBIC_ASR_LCI)
 				printf("wd33c93_intr: LCI asr:%02x csr:%02x\n",
 				    asr, csr);
 
 			if (asr & SBIC_ASR_INT)
-				GET_SBIC_csr(dev, csr);
+				GET_SBIC_csr(sc, csr);
 		}
-	} while (dev->sc_state == SBIC_CONNECTED &&
+	} while (sc->sc_state == SBIC_CONNECTED &&
 	    	 asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
 
 	SBIC_DEBUG(INTS, ("intr done. state=%d, asr=0x%02x\n", i, asr));
@@ -1419,23 +1419,23 @@ wd33c93_intr(struct wd33c93_softc *dev)
  * Polled I/O is very processor intensive
  */
 int
-wd33c93_poll(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
+wd33c93_poll(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 {
 	u_char			asr, csr=0;
 	int			i, count;
 	struct scsipi_xfer	*xs = acb->xs;
 
-	SBIC_WAIT(dev, SBIC_ASR_INT, wd33c93_cmd_wait);
+	SBIC_WAIT(sc, SBIC_ASR_INT, wd33c93_cmd_wait);
 	for (count=acb->timeout; count;) {
-		GET_SBIC_asr (dev, asr);
+		GET_SBIC_asr (sc, asr);
 		if (asr & SBIC_ASR_LCI)
 			printf("wd33c93_poll: LCI; asr:%02x csr:%02x\n",
 			    asr, csr);
 		if (asr & SBIC_ASR_INT) {
-			GET_SBIC_csr(dev, csr);
-			dev->sc_flags |= SBICF_NODMA;
-			i = wd33c93_nextstate(dev, dev->sc_nexus, csr, asr);
-			WAIT_CIP(dev);		/* XXX */
+			GET_SBIC_csr(sc, csr);
+			sc->sc_flags |= SBICF_NODMA;
+			i = wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
+			WAIT_CIP(sc);		/* XXX */
 		} else {
 			DELAY(1000);
 			count--;
@@ -1444,9 +1444,9 @@ wd33c93_poll(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 		if ((xs->xs_status & XS_STS_DONE) != 0)
 			return (0);
 
-		if (dev->sc_state == SBIC_IDLE) {
+		if (sc->sc_state == SBIC_IDLE) {
 			SBIC_DEBUG(ACBS, ("[poll: rescheduling] "));
-			wd33c93_sched(dev);
+			wd33c93_sched(sc);
 		}
 	}
 	return (1);
@@ -1470,85 +1470,85 @@ __verify_msg_format(u_char *p, int len)
  * Handle message_in phase
  */
 int
-wd33c93_msgin_phase(struct wd33c93_softc *dev, int reselect)
+wd33c93_msgin_phase(struct wd33c93_softc *sc, int reselect)
 {
 	int len;
 	u_char asr, csr, *msg;
 
-	GET_SBIC_asr(dev, asr);
+	GET_SBIC_asr(sc, asr);
 
 	SBIC_DEBUG(MSGS, ("wd33c93msgin asr=%02x\n", asr));
 
-	GET_SBIC_selid (dev, csr);
-	SET_SBIC_selid (dev, csr | SBIC_SID_FROM_SCSI);
+	GET_SBIC_selid (sc, csr);
+	SET_SBIC_selid (sc, csr | SBIC_SID_FROM_SCSI);
 
-	SBIC_TC_PUT(dev, 0);
+	SBIC_TC_PUT(sc, 0);
 
-	SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
+	SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
 
-	msg = dev->sc_imsg;
+	msg = sc->sc_imsg;
 	len = 0;
 
 	do {
 		/* Fetch the next byte of the message */
-		RECV_BYTE(dev, *msg++);
+		RECV_BYTE(sc, *msg++);
 		len++;
 
 		/*
 		 * get the command completion interrupt, or we
 		 * can't send a new command (LCI)
 		 */
-		SBIC_WAIT(dev, SBIC_ASR_INT, 0);
-		GET_SBIC_csr(dev, csr);
+		SBIC_WAIT(sc, SBIC_ASR_INT, 0);
+		GET_SBIC_csr(sc, csr);
 
-		if (__verify_msg_format(dev->sc_imsg, len))
+		if (__verify_msg_format(sc->sc_imsg, len))
 			break; /* Complete message recieved */
 
 		/*
 		 * Clear ACK, and wait for the interrupt
 		 * for the next byte or phase change
 		 */
-		SET_SBIC_cmd(dev, SBIC_CMD_CLR_ACK);
-		SBIC_WAIT(dev, SBIC_ASR_INT, 0);
+		SET_SBIC_cmd(sc, SBIC_CMD_CLR_ACK);
+		SBIC_WAIT(sc, SBIC_ASR_INT, 0);
 
-		GET_SBIC_csr(dev, csr);
+		GET_SBIC_csr(sc, csr);
 	} while (len < SBIC_MAX_MSGLEN);
 
-	if (__verify_msg_format(dev->sc_imsg, len))
-		wd33c93_msgin(dev, dev->sc_imsg, len);
+	if (__verify_msg_format(sc->sc_imsg, len))
+		wd33c93_msgin(sc, sc->sc_imsg, len);
 
 	/*
 	 * Clear ACK, and wait for the interrupt
 	 * for the phase change
 	 */
-	SET_SBIC_cmd(dev, SBIC_CMD_CLR_ACK);
-	SBIC_WAIT(dev, SBIC_ASR_INT, 0);
+	SET_SBIC_cmd(sc, SBIC_CMD_CLR_ACK);
+	SBIC_WAIT(sc, SBIC_ASR_INT, 0);
 
 	/* Should still have one CSR to read */
 	return SBIC_STATE_RUNNING;
 }
 
 
-void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
+void wd33c93_msgin(struct wd33c93_softc *sc, u_char *msgaddr, int msglen)
 {
-	struct wd33c93_acb    *acb = dev->sc_nexus;
-	struct wd33c93_tinfo  *ti = &dev->sc_tinfo[dev->target];
+	struct wd33c93_acb    *acb = sc->sc_nexus;
+	struct wd33c93_tinfo  *ti = &sc->sc_tinfo[sc->target];
 	struct wd33c93_linfo  *li;
 	u_char asr;
 
-	switch (dev->sc_state) {
+	switch (sc->sc_state) {
 	case SBIC_CONNECTED:
 		switch (msgaddr[0]) {
 		case MSG_MESSAGE_REJECT:
 			SBIC_DEBUG(MSGS, ("msgin: MSG_REJECT, "
-				       "last msgout=%x\n", dev->sc_msgout));
-			switch (dev->sc_msgout) {
+				       "last msgout=%x\n", sc->sc_msgout));
+			switch (sc->sc_msgout) {
 			case SEND_TAG:
 				printf("%s: tagged queuing rejected: "
 				    "target %d\n",
-				    device_xname(dev->sc_dev), dev->target);
+				    device_xname(sc->sc_dev), sc->target);
 				ti->flags &= ~T_TAG;
-				li = TINFO_LUN(ti, dev->lun);
+				li = TINFO_LUN(ti, sc->lun);
 				if (acb->tag_type &&
 				    li->queued[acb->tag_id] != NULL) {
 					li->queued[acb->tag_id] = NULL;
@@ -1561,13 +1561,13 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 
 			case SEND_SDTR:
 				printf("%s: sync transfer rejected: target %d\n",
-				    device_xname(dev->sc_dev), dev->target);
+				    device_xname(sc->sc_dev), sc->target);
 
-				dev->sc_flags &= ~SBICF_SYNCNEGO;
+				sc->sc_flags &= ~SBICF_SYNCNEGO;
 				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
-				wd33c93_update_xfer_mode(dev,
+				wd33c93_update_xfer_mode(sc,
 				    acb->xs->xs_periph->periph_target);
-				wd33c93_setsync(dev, ti);
+				wd33c93_setsync(sc, ti);
 
 			case SEND_INIT_DET_ERR:
 				goto abort;
@@ -1576,7 +1576,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 				SBIC_DEBUG(MSGS, ("Unexpected MSG_REJECT\n"));
 				break;
 			}
-			dev->sc_msgout = 0;
+			sc->sc_msgout = 0;
 			break;
 
 		case MSG_HEAD_OF_Q_TAG:
@@ -1584,7 +1584,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 		case MSG_SIMPLE_Q_TAG:
 			printf("-- Out of phase TAG;"
 			    "Nexus=%d:%d Tag=%02x/%02x\n",
-			    dev->target, dev->lun, msgaddr[0], msgaddr[1]);
+			    sc->target, sc->lun, msgaddr[0], msgaddr[1]);
 			break;
 
 		case MSG_DISCONNECT:
@@ -1595,15 +1595,15 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 			 * at this stage. This flag will set the residual
 			 * count to zero on MSG COMPLETE.
 			 */
-			if (dev->sc_dleft == 0)
+			if (sc->sc_dleft == 0)
 				acb->flags |= ACB_COMPLETE;
 
 			if (acb->xs->xs_control & XS_CTL_POLL)
 				/* Don't allow disconnect in immediate mode */
 				goto reject;
 			else {  /* Allow disconnect */
-				dev->sc_flags &= ~SBICF_SELECTED;
-				dev->sc_state = SBIC_DISCONNECT;
+				sc->sc_flags &= ~SBICF_SELECTED;
+				sc->sc_state = SBIC_DISCONNECT;
 			}
 			if ((acb->xs->xs_periph->periph_quirks &
 				PQUIRK_AUTOSAVE) == 0)
@@ -1612,14 +1612,14 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 
 		case MSG_SAVEDATAPOINTER:
 			SBIC_DEBUG(MSGS, ("msgin: SAVEDATAPTR"));
-			acb->daddr = dev->sc_daddr;
-			acb->dleft = dev->sc_dleft;
+			acb->daddr = sc->sc_daddr;
+			acb->dleft = sc->sc_dleft;
 			break;
 
 		case MSG_RESTOREPOINTERS:
 			SBIC_DEBUG(MSGS, ("msgin: RESTOREPTR"));
-			dev->sc_daddr = acb->daddr;
-			dev->sc_dleft = acb->dleft;
+			sc->sc_daddr = acb->daddr;
+			sc->sc_dleft = acb->dleft;
 			break;
 
 		case MSG_CMDCOMPLETE:
@@ -1643,16 +1643,16 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 			SBIC_DEBUG(SYNC, ("GOT MSG %d! target %d"
 				       " acting weird.."
 				       " waiting for disconnect...\n",
-				       msgaddr[0], dev->target));
+				       msgaddr[0], sc->target));
 
 			/* Check to see if wd33c93 is handling this */
-			GET_SBIC_asr(dev, asr);
+			GET_SBIC_asr(sc, asr);
 			if (asr & SBIC_ASR_BSY)
 				break;
 
 			/* XXX: Assume it works and set status to 00 */
-			dev->sc_status = 0;
-			dev->sc_state = SBIC_CMDCOMPLETE;
+			sc->sc_status = 0;
+			sc->sc_state = SBIC_CMDCOMPLETE;
 			break;
 
 		case MSG_EXTENDED:
@@ -1665,8 +1665,8 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 					goto reject;
 
 				ti->period =
-				    MAX(msgaddr[3], dev->sc_minsyncperiod);
-				ti->offset = MIN(msgaddr[4], dev->sc_maxoffset);
+				    MAX(msgaddr[3], sc->sc_minsyncperiod);
+				ti->offset = MIN(msgaddr[4], sc->sc_maxoffset);
 
 				/*
 				 * <SGI, IBM DORS-32160, WA6A> will do nothing
@@ -1674,7 +1674,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 				 * what it wants. To avoid an infinite loop set
 				 * off by the identify request, oblige them.
 				 */
-				if ((dev->sc_flags&SBICF_SYNCNEGO) == 0 &&
+				if ((sc->sc_flags&SBICF_SYNCNEGO) == 0 &&
 				    msgaddr[3] != 0)
 					ti->flags |= T_WANTSYNC;
 
@@ -1689,16 +1689,16 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 					ti->flags |= T_SYNCMODE; /* Sync */
 
 				/* target initiated negotiation */
-				if ((dev->sc_flags&SBICF_SYNCNEGO) == 0)
-					wd33c93_sched_msgout(dev, SEND_SDTR);
-				dev->sc_flags &= ~SBICF_SYNCNEGO;
+				if ((sc->sc_flags&SBICF_SYNCNEGO) == 0)
+					wd33c93_sched_msgout(sc, SEND_SDTR);
+				sc->sc_flags &= ~SBICF_SYNCNEGO;
 
 				SBIC_DEBUG(SYNC, ("msgin(%d): SDTR(o=%d,p=%d)",
-					       dev->target, ti->offset,
+					       sc->target, ti->offset,
 					       ti->period));
-				wd33c93_update_xfer_mode(dev,
+				wd33c93_update_xfer_mode(sc,
 				    acb->xs->xs_periph->periph_target);
-				wd33c93_setsync(dev, ti);
+				wd33c93_setsync(sc, ti);
 				break;
 
 			case MSG_EXT_WDTR:
@@ -1719,7 +1719,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 
 		reject:
 			/* We don't support whatever this message is... */
-			wd33c93_sched_msgout(dev, SEND_REJECT);
+			wd33c93_sched_msgout(sc, SEND_REJECT);
 			break;
 		}
 		break;
@@ -1728,16 +1728,16 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 		/*
 		 * IDENTIFY message was received and queue tag is expected now
 		 */
-		if ((msgaddr[0]!=MSG_SIMPLE_Q_TAG) || (dev->sc_msgify==0)) {
+		if ((msgaddr[0]!=MSG_SIMPLE_Q_TAG) || (sc->sc_msgify==0)) {
 			printf("%s: TAG reselect without IDENTIFY;"
 			    " MSG %x; sending DEVICE RESET\n",
-			    device_xname(dev->sc_dev), msgaddr[0]);
+			    device_xname(sc->sc_dev), msgaddr[0]);
 			goto reset;
 		}
 		SBIC_DEBUG(TAGS, ("TAG %x/%x\n", msgaddr[0], msgaddr[1]));
-		if (dev->sc_nexus)
+		if (sc->sc_nexus)
 			printf("*TAG Recv with active nexus!!\n");
-		wd33c93_reselect(dev, dev->target, dev->lun,
+		wd33c93_reselect(sc, sc->target, sc->lun,
 		    	      msgaddr[0], msgaddr[1]);
 		break;
 
@@ -1747,136 +1747,136 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 		 */
 		if (MSG_ISIDENTIFY(msgaddr[0])) {
 			SBIC_DEBUG(PHASE, ("IFFY[%x] ", msgaddr[0]));
-			dev->sc_msgify = msgaddr[0];
+			sc->sc_msgify = msgaddr[0];
 		} else {
 			printf("%s: reselect without IDENTIFY;"
 			    " MSG %x;"
 			    " sending DEVICE RESET\n",
-			    device_xname(dev->sc_dev), msgaddr[0]);
+			    device_xname(sc->sc_dev), msgaddr[0]);
 			goto reset;
 		}
 		break;
 
 	default:
 		printf("Unexpected MESSAGE IN.  State=%d - Sending RESET\n",
-		    dev->sc_state);
+		    sc->sc_state);
 	reset:
-		wd33c93_sched_msgout(dev, SEND_DEV_RESET);
+		wd33c93_sched_msgout(sc, SEND_DEV_RESET);
 		break;
 	abort:
-		wd33c93_sched_msgout(dev, SEND_ABORT);
+		wd33c93_sched_msgout(sc, SEND_ABORT);
 		break;
 	}
 }
 
 void
-wd33c93_sched_msgout(struct wd33c93_softc *dev, u_short msg)
+wd33c93_sched_msgout(struct wd33c93_softc *sc, u_short msg)
 {
 	u_char	asr;
 
 	SBIC_DEBUG(SYNC,("sched_msgout: %04x\n", msg));
-	dev->sc_msgpriq |= msg;
+	sc->sc_msgpriq |= msg;
 
 	/* Schedule MSGOUT Phase to send message */
 
-	WAIT_CIP(dev);
-	SET_SBIC_cmd(dev, SBIC_CMD_SET_ATN);
-	WAIT_CIP(dev);
-	GET_SBIC_asr(dev, asr);
+	WAIT_CIP(sc);
+	SET_SBIC_cmd(sc, SBIC_CMD_SET_ATN);
+	WAIT_CIP(sc);
+	GET_SBIC_asr(sc, asr);
 	if (asr & SBIC_ASR_LCI) {
 		printf("MSGOUT Failed!\n");
 	}
-	SET_SBIC_cmd(dev, SBIC_CMD_CLR_ACK);
-	WAIT_CIP(dev);
+	SET_SBIC_cmd(sc, SBIC_CMD_CLR_ACK);
+	WAIT_CIP(sc);
 }
 
 /*
  * Send the highest priority, scheduled message
  */
 void
-wd33c93_msgout(struct wd33c93_softc *dev)
+wd33c93_msgout(struct wd33c93_softc *sc)
 {
 	struct wd33c93_tinfo *ti;
-	struct wd33c93_acb *acb = dev->sc_nexus;
+	struct wd33c93_acb *acb = sc->sc_nexus;
 
 	if (acb == NULL)
 		panic("MSGOUT with no nexus");
 
-	if (dev->sc_omsglen == 0) {
+	if (sc->sc_omsglen == 0) {
 		/* Pick up highest priority message */
-		dev->sc_msgout   = dev->sc_msgpriq & -dev->sc_msgpriq;
-		dev->sc_msgoutq |= dev->sc_msgout;
-		dev->sc_msgpriq &= ~dev->sc_msgout;
-		dev->sc_omsglen = 1;		/* "Default" message len */
-		switch (dev->sc_msgout) {
+		sc->sc_msgout   = sc->sc_msgpriq & -sc->sc_msgpriq;
+		sc->sc_msgoutq |= sc->sc_msgout;
+		sc->sc_msgpriq &= ~sc->sc_msgout;
+		sc->sc_omsglen = 1;		/* "Default" message len */
+		switch (sc->sc_msgout) {
 		case SEND_SDTR:
-			ti = &dev->sc_tinfo[acb->xs->xs_periph->periph_target];
-			dev->sc_omsg[0] = MSG_EXTENDED;
-			dev->sc_omsg[1] = MSG_EXT_SDTR_LEN;
-			dev->sc_omsg[2] = MSG_EXT_SDTR;
+			ti = &sc->sc_tinfo[acb->xs->xs_periph->periph_target];
+			sc->sc_omsg[0] = MSG_EXTENDED;
+			sc->sc_omsg[1] = MSG_EXT_SDTR_LEN;
+			sc->sc_omsg[2] = MSG_EXT_SDTR;
 			if (ti->flags & T_WANTSYNC) {
-				dev->sc_omsg[3] = ti->period;
-				dev->sc_omsg[4] = ti->offset;
+				sc->sc_omsg[3] = ti->period;
+				sc->sc_omsg[4] = ti->offset;
 			} else {
-				dev->sc_omsg[3] = 0;
-				dev->sc_omsg[4] = 0;
+				sc->sc_omsg[3] = 0;
+				sc->sc_omsg[4] = 0;
 			}
-			dev->sc_omsglen = 5;
-			if ((dev->sc_flags & SBICF_SYNCNEGO) == 0) {
+			sc->sc_omsglen = 5;
+			if ((sc->sc_flags & SBICF_SYNCNEGO) == 0) {
 				if (ti->flags & T_WANTSYNC)
 					ti->flags |= T_SYNCMODE;
 				else
 					ti->flags &= ~T_SYNCMODE;
-				wd33c93_setsync(dev, ti);
+				wd33c93_setsync(sc, ti);
 			}
 			break;
 		case SEND_IDENTIFY:
-			if (dev->sc_state != SBIC_CONNECTED) {
+			if (sc->sc_state != SBIC_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
-				    device_xname(dev->sc_dev), __LINE__);
+				    device_xname(sc->sc_dev), __LINE__);
 			}
-			dev->sc_omsg[0] =
+			sc->sc_omsg[0] =
 			    MSG_IDENTIFY(acb->xs->xs_periph->periph_lun, 0);
 			break;
 		case SEND_TAG:
-			if (dev->sc_state != SBIC_CONNECTED) {
+			if (sc->sc_state != SBIC_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
-				    device_xname(dev->sc_dev), __LINE__);
+				    device_xname(sc->sc_dev), __LINE__);
 			}
-			dev->sc_omsg[0] = acb->tag_type;
-			dev->sc_omsg[1] = acb->tag_id;
-			dev->sc_omsglen = 2;
+			sc->sc_omsg[0] = acb->tag_type;
+			sc->sc_omsg[1] = acb->tag_id;
+			sc->sc_omsglen = 2;
 			break;
 		case SEND_DEV_RESET:
-			dev->sc_omsg[0] = MSG_BUS_DEV_RESET;
-			ti = &dev->sc_tinfo[dev->target];
+			sc->sc_omsg[0] = MSG_BUS_DEV_RESET;
+			ti = &sc->sc_tinfo[sc->target];
 			ti->flags &= ~T_SYNCMODE;
-			wd33c93_update_xfer_mode(dev, dev->target);
+			wd33c93_update_xfer_mode(sc, sc->target);
 			if ((ti->flags & T_NOSYNC) == 0)
 				/* We can re-start sync negotiation */
 				ti->flags |= T_NEGOTIATE;
 			break;
 		case SEND_PARITY_ERROR:
-			dev->sc_omsg[0] = MSG_PARITY_ERROR;
+			sc->sc_omsg[0] = MSG_PARITY_ERROR;
 			break;
 		case SEND_ABORT:
-			dev->sc_flags  |= SBICF_ABORTING;
-			dev->sc_omsg[0] = MSG_ABORT;
+			sc->sc_flags  |= SBICF_ABORTING;
+			sc->sc_omsg[0] = MSG_ABORT;
 			break;
 		case SEND_INIT_DET_ERR:
-			dev->sc_omsg[0] = MSG_INITIATOR_DET_ERR;
+			sc->sc_omsg[0] = MSG_INITIATOR_DET_ERR;
 			break;
 		case SEND_REJECT:
-			dev->sc_omsg[0] = MSG_MESSAGE_REJECT;
+			sc->sc_omsg[0] = MSG_MESSAGE_REJECT;
 			break;
 		default:
 			/* Wasn't expecting MSGOUT Phase */
-			dev->sc_omsg[0] = MSG_NOOP;
+			sc->sc_omsg[0] = MSG_NOOP;
 			break;
 		}
 	}
 
-	wd33c93_xfout(dev, dev->sc_omsglen, dev->sc_omsg);
+	wd33c93_xfout(sc, sc->sc_omsglen, sc->sc_omsg);
 }
 
 
@@ -1889,7 +1889,7 @@ wd33c93_msgout(struct wd33c93_softc *dev)
  *	SBIC_STATE_ERROR	== error
  */
 int
-wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr, u_char asr)
+wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr, u_char asr)
 {
 	SBIC_DEBUG(PHASE, ("next[a=%02x,c=%02x]: ",asr,csr));
 
@@ -1900,7 +1900,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 	case SBIC_CSR_MIS_1   | CMD_PHASE:
 	case SBIC_CSR_MIS_2   | CMD_PHASE:
 
-		if (wd33c93_xfout(dev, acb->clen, &acb->cmd))
+		if (wd33c93_xfout(sc, acb->clen, &acb->cmd))
 			goto abort;
 		break;
 
@@ -1909,25 +1909,25 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 	case SBIC_CSR_MIS_1   | STATUS_PHASE:
 	case SBIC_CSR_MIS_2   | STATUS_PHASE:
 
-		SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
+		SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
 
 		/*
 		 * this should be the normal i/o completion case.
 		 * get the status & cmd complete msg then let the
 		 * device driver look at what happened.
 		 */
-		wd33c93_xferdone(dev);
+		wd33c93_xferdone(sc);
 
-		wd33c93_dma_stop(dev);
+		wd33c93_dma_stop(sc);
 
 		/* Fixup byte count to be passed to higher layer */
 		acb->dleft = (acb->flags & ACB_COMPLETE) ? 0 :
-		    	      dev->sc_dleft;
+		    	      sc->sc_dleft;
 
 		/*
 		 * Indicate to the upper layers that the command is done
 		 */
-		wd33c93_scsidone(dev, acb, dev->sc_status);
+		wd33c93_scsidone(sc, acb, sc->sc_status);
 
 		return SBIC_STATE_DONE;
 
@@ -1953,47 +1953,47 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 		 * Should we transfer using PIO or DMA ?
 		 */
 		if (acb->xs->xs_control & XS_CTL_POLL ||
-		    dev->sc_flags & SBICF_NODMA) {
+		    sc->sc_flags & SBICF_NODMA) {
 			/* Perfrom transfer using PIO */
 			int resid;
 
-			SBIC_DEBUG(DMA, ("PIO xfer: %d(%p:%zx)\n", dev->target,
-				       dev->sc_daddr, dev->sc_dleft));
+			SBIC_DEBUG(DMA, ("PIO xfer: %d(%p:%zx)\n", sc->target,
+				       sc->sc_daddr, sc->sc_dleft));
 
 			if (SBIC_PHASE(csr) == DATA_IN_PHASE)
 				/* data in */
-				resid = wd33c93_xfin(dev, dev->sc_dleft,
-				    		 dev->sc_daddr);
+				resid = wd33c93_xfin(sc, sc->sc_dleft,
+				    		 sc->sc_daddr);
 			else	/* data out */
-				resid = wd33c93_xfout(dev, dev->sc_dleft,
-				    		  dev->sc_daddr);
+				resid = wd33c93_xfout(sc, sc->sc_dleft,
+				    		  sc->sc_daddr);
 
-			dev->sc_daddr = (char*)dev->sc_daddr +
+			sc->sc_daddr = (char *)sc->sc_daddr +
 				(acb->dleft - resid);
-			dev->sc_dleft = resid;
+			sc->sc_dleft = resid;
 		} else {
 			int datain = SBIC_PHASE(csr) == DATA_IN_PHASE;
 
 			/* Perform transfer using DMA */
-			wd33c93_dma_setup(dev, datain);
+			wd33c93_dma_setup(sc, datain);
 
-			SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI |
-			    dev->sc_dmamode);
+			SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI |
+			    sc->sc_dmamode);
 
-			SBIC_DEBUG(DMA, ("DMA xfer: %d(%p:%zx)\n", dev->target,
-				       dev->sc_daddr, dev->sc_dleft));
+			SBIC_DEBUG(DMA, ("DMA xfer: %d(%p:%zx)\n", sc->target,
+				       sc->sc_daddr, sc->sc_dleft));
 
 			/* Setup byte count for transfer */
-			SBIC_TC_PUT(dev, (unsigned)dev->sc_dleft);
+			SBIC_TC_PUT(sc, (unsigned)sc->sc_dleft);
 
 			/* Start the transfer */
-			SET_SBIC_cmd(dev, SBIC_CMD_XFER_INFO);
+			SET_SBIC_cmd(sc, SBIC_CMD_XFER_INFO);
 
 			/* Start the DMA chip going */
-			dev->sc_tcnt = dev->sc_dmago(dev);
+			sc->sc_tcnt = sc->sc_dmago(sc);
 
 			/* Indicate that we're in DMA mode */
-			dev->sc_flags |= SBICF_INDMA;
+			sc->sc_flags |= SBICF_INDMA;
 		}
 		break;
 
@@ -2002,10 +2002,10 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 	case SBIC_CSR_MIS_1   | MESG_IN_PHASE:
 	case SBIC_CSR_MIS_2   | MESG_IN_PHASE:
 
-		wd33c93_dma_stop(dev);
+		wd33c93_dma_stop(sc);
 
 		/* Handle a single message in... */
-		return wd33c93_msgin_phase(dev, 0);
+		return wd33c93_msgin_phase(sc, 0);
 
 	case SBIC_CSR_MSGIN_W_ACK:
 
@@ -2013,7 +2013,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 		 * We should never see this since it's handled in
 		 * 'wd33c93_msgin_phase()' but just for the sake of paranoia...
 		 */
-		SET_SBIC_cmd(dev, SBIC_CMD_CLR_ACK);
+		SET_SBIC_cmd(sc, SBIC_CMD_CLR_ACK);
 
 		printf("Acking unknown msgin CSR:%02x",csr);
 		break;
@@ -2026,28 +2026,28 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 		/*
 		 * Message out phase.  ATN signal has been asserted
 		 */
-		wd33c93_dma_stop(dev);
-		wd33c93_msgout(dev);
+		wd33c93_dma_stop(sc);
+		wd33c93_msgout(sc);
 		return SBIC_STATE_RUNNING;
 
 	case SBIC_CSR_DISC:
 	case SBIC_CSR_DISC_1:
 		SBIC_DEBUG(RSEL, ("wd33c93next target %d disconnected\n",
-			       dev->target));
-		wd33c93_dma_stop(dev);
+			       sc->target));
+		wd33c93_dma_stop(sc);
 
-		dev->sc_nexus = NULL;
-		dev->sc_state = SBIC_IDLE;
-		dev->sc_flags = 0;
+		sc->sc_nexus = NULL;
+		sc->sc_state = SBIC_IDLE;
+		sc->sc_flags = 0;
 
-		++dev->sc_tinfo[dev->target].dconns;
-		++dev->sc_disc;
+		++sc->sc_tinfo[sc->target].dconns;
+		++sc->sc_disc;
 
 		if (acb->xs->xs_control & XS_CTL_POLL || wd33c93_nodisc)
 			return SBIC_STATE_DISCONNECT;
 
 		/* Try to schedule another target */
-		wd33c93_sched(dev);
+		wd33c93_sched(sc);
 
 		return SBIC_STATE_DISCONNECT;
 
@@ -2064,30 +2064,30 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 		 */
 		u_char  newtarget, newlun;
 
-		if (dev->sc_flags & SBICF_INDMA) {
+		if (sc->sc_flags & SBICF_INDMA) {
 			printf("**** RESELECT WHILE DMA ACTIVE!!! ***\n");
-			wd33c93_dma_stop(dev);
+			wd33c93_dma_stop(sc);
 		}
 
-		dev->sc_state = SBIC_RESELECTED;
-		GET_SBIC_rselid(dev, newtarget);
+		sc->sc_state = SBIC_RESELECTED;
+		GET_SBIC_rselid(sc, newtarget);
 
 		/* check SBIC_RID_SIV? */
 		newtarget &= SBIC_RID_MASK;
 
 		if (csr == SBIC_CSR_RSLT_IFY) {
 			/* Read Identify msg to avoid lockup */
-			GET_SBIC_data(dev, newlun);
-			WAIT_CIP(dev);
+			GET_SBIC_data(sc, newlun);
+			WAIT_CIP(sc);
 			newlun &= SBIC_TLUN_MASK;
-			dev->sc_msgify = MSG_IDENTIFY(newlun, 0);
+			sc->sc_msgify = MSG_IDENTIFY(newlun, 0);
 		} else {
 			/*
 			 * Need to read Identify message the hard way, assuming
 			 * the target even sends us one...
 			 */
 			for (newlun = 255; newlun; --newlun) {
-				GET_SBIC_asr(dev, asr);
+				GET_SBIC_asr(sc, asr);
 				if (asr & SBIC_ASR_INT)
 					break;
 				DELAY(10);
@@ -2096,7 +2096,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 			/* If we didn't get an interrupt, somethink's up */
 			if ((asr & SBIC_ASR_INT) == 0) {
 				printf("%s: Reselect without identify? asr %x\n",
-				    device_xname(dev->sc_dev), asr);
+				    device_xname(sc->sc_dev), asr);
 				newlun = 0; /* XXXX */
 			} else {
 				/*
@@ -2104,7 +2104,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 				 * change to message in phase, and if so
 				 * read the message.
 				 */
-				GET_SBIC_csr(dev,csr);
+				GET_SBIC_csr(sc,csr);
 
 				if (csr == (SBIC_CSR_MIS   | MESG_IN_PHASE) ||
 				    csr == (SBIC_CSR_MIS_1 | MESG_IN_PHASE) ||
@@ -2113,9 +2113,9 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 					 * Yup, gone to message in.
 					 * Fetch the target LUN
 					 */
-					dev->sc_msgify = 0;
-					wd33c93_msgin_phase(dev, 1);
-					newlun = dev->sc_msgify & SBIC_TLUN_MASK;
+					sc->sc_msgify = 0;
+					wd33c93_msgin_phase(sc, 1);
+					newlun = sc->sc_msgify & SBIC_TLUN_MASK;
 				} else {
 					/*
 					 * Whoops! Target didn't go to msg_in
@@ -2130,11 +2130,11 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 		/* Ok, we have the identity of the reselecting target. */
 		SBIC_DEBUG(RSEL, ("wd33c93next: reselect from targ %d lun %d",
 			       newtarget, newlun));
-		wd33c93_reselect(dev, newtarget, newlun, 0, 0);
-		dev->sc_disc--;
+		wd33c93_reselect(sc, newtarget, newlun, 0, 0);
+		sc->sc_disc--;
 
 		if (csr == SBIC_CSR_RSLT_IFY)
-			SET_SBIC_cmd(dev, SBIC_CMD_CLR_ACK);
+			SET_SBIC_cmd(sc, SBIC_CMD_CLR_ACK);
 		break;
 	}
 
@@ -2147,14 +2147,14 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 		Debugger();
 #endif
 
-		SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
+		SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
 		if (acb->xs)
-			wd33c93_error(dev, acb);
-		wd33c93_abort(dev, acb, "next");
+			wd33c93_error(sc, acb);
+		wd33c93_abort(sc, acb, "next");
 
-		if (dev->sc_flags & SBICF_INDMA) {
-			wd33c93_dma_stop(dev);
-			wd33c93_scsidone(dev, acb, STATUS_UNKNOWN);
+		if (sc->sc_flags & SBICF_INDMA) {
+			wd33c93_dma_stop(sc);
+			wd33c93_scsidone(sc, acb, STATUS_UNKNOWN);
 		}
 		return SBIC_STATE_ERROR;
 	}
@@ -2163,14 +2163,14 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 
 
 void
-wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, int tag_id)
+wd33c93_reselect(struct wd33c93_softc *sc, int target, int lun, int tag_type, int tag_id)
 {
 
 	struct wd33c93_tinfo *ti;
 	struct wd33c93_linfo *li;
 	struct wd33c93_acb *acb;
 
-	if (dev->sc_nexus) {
+	if (sc->sc_nexus) {
 		/*
 		 * Whoops! We've been reselected with a
 		 * command in progress!
@@ -2179,24 +2179,24 @@ wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, i
 		 * for the best.
 		 */
 		SBIC_DEBUG(RSEL, ("%s: reselect with active command\n",
-			       device_xname(dev->sc_dev)));
-		ti = &dev->sc_tinfo[dev->target];
-		li = TINFO_LUN(ti, dev->lun);
+			       device_xname(sc->sc_dev)));
+		ti = &sc->sc_tinfo[sc->target];
+		li = TINFO_LUN(ti, sc->lun);
 		li->state = L_STATE_IDLE;
 
-		wd33c93_dequeue(dev, dev->sc_nexus);
-		TAILQ_INSERT_HEAD(&dev->ready_list, dev->sc_nexus, chain);
-		dev->sc_nexus->flags |= ACB_READY;
+		wd33c93_dequeue(sc, sc->sc_nexus);
+		TAILQ_INSERT_HEAD(&sc->ready_list, sc->sc_nexus, chain);
+		sc->sc_nexus->flags |= ACB_READY;
 
-		dev->sc_nexus = NULL;
+		sc->sc_nexus = NULL;
 	}
 
 	/* Setup state for new nexus */
 	acb = NULL;
-	dev->sc_flags = SBICF_SELECTED;
-	dev->sc_msgpriq = dev->sc_msgout = dev->sc_msgoutq = 0;
+	sc->sc_flags = SBICF_SELECTED;
+	sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 
-	ti = &dev->sc_tinfo[target];
+	ti = &sc->sc_tinfo[target];
 	li = TINFO_LUN(ti, lun);
 
 	if (li != NULL) {
@@ -2204,9 +2204,9 @@ wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, i
 			acb = li->untagged;
 		else if (tag_type != MSG_SIMPLE_Q_TAG) {
 			/* Wait for tag to come by during MESG_IN Phase */
-			dev->target    = target; /* setup I_T_L nexus */
-			dev->lun       = lun;
-			dev->sc_state  = SBIC_IDENTIFIED;
+			sc->target    = target; /* setup I_T_L nexus */
+			sc->lun       = lun;
+			sc->sc_state  = SBIC_IDENTIFIED;
 			return;
 		} else if (tag_type)
 			acb = li->queued[tag_id];
@@ -2215,33 +2215,33 @@ wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, i
 	if (acb == NULL) {
 		printf("%s: reselect from target %d lun %d tag %x:%x "
 		    "with no nexus; sending ABORT\n",
-		    device_xname(dev->sc_dev), target, lun, tag_type, tag_id);
+		    device_xname(sc->sc_dev), target, lun, tag_type, tag_id);
 		goto abort;
 	}
 
-	dev->target    = target;
-	dev->lun       = lun;
-	dev->sc_nexus  = acb;
-	dev->sc_state  = SBIC_CONNECTED;
+	sc->target    = target;
+	sc->lun       = lun;
+	sc->sc_nexus  = acb;
+	sc->sc_state  = SBIC_CONNECTED;
 
-	if (!wd33c93_dmaok(dev, acb->xs))
-		dev->sc_flags |= SBICF_NODMA;
+	if (!wd33c93_dmaok(sc, acb->xs))
+		sc->sc_flags |= SBICF_NODMA;
 
 	/* Do an implicit RESTORE POINTERS. */
-	dev->sc_daddr = acb->daddr;
-	dev->sc_dleft = acb->dleft;
+	sc->sc_daddr = acb->daddr;
+	sc->sc_dleft = acb->dleft;
 
 	/* Set sync modes for new target */
-	wd33c93_setsync(dev, ti);
+	wd33c93_setsync(sc, ti);
 
 	if (acb->flags & ACB_RESET)
-		wd33c93_sched_msgout(dev, SEND_DEV_RESET);
+		wd33c93_sched_msgout(sc, SEND_DEV_RESET);
 	else if (acb->flags & ACB_ABORT)
-		wd33c93_sched_msgout(dev, SEND_ABORT);
+		wd33c93_sched_msgout(sc, SEND_ABORT);
 	return;
 
 abort:
-	wd33c93_sched_msgout(dev, SEND_ABORT);
+	wd33c93_sched_msgout(sc, SEND_ABORT);
 	return;
 
 }
@@ -2279,26 +2279,26 @@ wd33c93_timeout(void *arg)
 	struct wd33c93_acb *acb = arg;
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
-	struct wd33c93_softc *dev =
+	struct wd33c93_softc *sc =
 	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	int s, asr;
 
 	s = splbio();
 
-	GET_SBIC_asr(dev, asr);
+	GET_SBIC_asr(sc, asr);
 
 	scsipi_printaddr(periph);
 	printf("%s: timed out; asr=0x%02x [acb %p (flags 0x%x, dleft %zx)], "
 	    "<state %d, nexus %p, resid %lx, msg(q %x,o %x)>",
-	    device_xname(dev->sc_dev), asr, acb, acb->flags, acb->dleft,
-	    dev->sc_state, dev->sc_nexus, (long)dev->sc_dleft,
-	    dev->sc_msgpriq, dev->sc_msgout);
+	    device_xname(sc->sc_dev), asr, acb, acb->flags, acb->dleft,
+	    sc->sc_state, sc->sc_nexus, (long)sc->sc_dleft,
+	    sc->sc_msgpriq, sc->sc_msgout);
 
 	if (asr & SBIC_ASR_INT) {
 		/* We need to service a missed IRQ */
-		wd33c93_intr(dev);
+		wd33c93_intr(sc);
 	} else {
-		(void) wd33c93_abort(dev, dev->sc_nexus, "timeout");
+		(void) wd33c93_abort(sc, sc->sc_nexus, "timeout");
 	}
 	splx(s);
 }
@@ -2307,7 +2307,7 @@ wd33c93_timeout(void *arg)
 void
 wd33c93_watchdog(void *arg)
 {
-	struct wd33c93_softc *dev = arg;
+	struct wd33c93_softc *sc = arg;
 	struct wd33c93_tinfo *ti;
 	struct wd33c93_linfo *li;
 	int t, s, l;
@@ -2315,7 +2315,7 @@ wd33c93_watchdog(void *arg)
 	time_t old = time_second - (10 * 60);
 
 	for (t = 0; t < SBIC_NTARG; t++) {
-		ti = &dev->sc_tinfo[t];
+		ti = &sc->sc_tinfo[t];
 		for (l = 0; l < SBIC_NLUN; l++) {
 			s = splbio();
 			li = TINFO_LUN(ti, l);
@@ -2327,7 +2327,7 @@ wd33c93_watchdog(void *arg)
 			splx(s);
 		}
 	}
-	callout_reset(&dev->sc_watchdog, 60 * hz, wd33c93_watchdog, dev);
+	callout_reset(&sc->sc_watchdog, 60 * hz, wd33c93_watchdog, sc);
 }
 
 
