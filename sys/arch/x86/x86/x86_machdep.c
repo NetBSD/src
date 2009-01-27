@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.28 2009/01/27 21:59:24 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.29 2009/01/27 22:36:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.28 2009/01/27 21:59:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29 2009/01/27 22:36:48 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,8 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.28 2009/01/27 21:59:24 christos Ex
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 #include <x86/machdep.h>
+#include <x86/pio.h>
 
 #include <dev/isa/isareg.h>
+#include <dev/ic/i8042reg.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
