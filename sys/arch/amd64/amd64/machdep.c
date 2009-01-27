@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 2009/01/27 21:59:25 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 2009/01/27 22:00:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2009/01/27 21:59:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2009/01/27 22:00:42 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1538,8 +1538,6 @@ init_x86_64(paddr_t first_avail)
 void
 cpu_reset(void)
 {
-	uint8_t b;
-
 	x86_disable_intr();
 
 #ifdef XEN
