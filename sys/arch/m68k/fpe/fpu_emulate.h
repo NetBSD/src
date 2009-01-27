@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.12 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.13 2009/01/27 20:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -39,6 +39,7 @@
 #include <sys/time.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
+#include <machine/fpreg.h>
 
 /*
  * Floating point emulator (tailored for SPARC/modified for m68k, but
@@ -206,57 +207,6 @@ struct instruction {
 #define FTYPE_WRD 4 /* Word Integer */
 #define FTYPE_DBL 5 /* Double Prec */
 #define FTYPE_BYT 6 /* Byte Integer */
-
-/*
- * MC68881/68882 FPcr bit definitions (should these go to <m68k/reg.h>
- * or <m68k/fpu.h> or something?)
- */
-
-/* fpsr */
-#define FPSR_CCB    0xff000000
-# define FPSR_NEG   0x08000000
-# define FPSR_ZERO  0x04000000
-# define FPSR_INF   0x02000000
-# define FPSR_NAN   0x01000000
-#define FPSR_QTT    0x00ff0000
-# define FPSR_QSG   0x00800000
-# define FPSR_QUO   0x007f0000
-#define FPSR_EXCP   0x0000ff00
-# define FPSR_BSUN  0x00008000
-# define FPSR_SNAN  0x00004000
-# define FPSR_OPERR 0x00002000
-# define FPSR_OVFL  0x00001000
-# define FPSR_UNFL  0x00000800
-# define FPSR_DZ    0x00000400
-# define FPSR_INEX2 0x00000200
-# define FPSR_INEX1 0x00000100
-#define FPSR_AEX    0x000000ff
-# define FPSR_AIOP  0x00000080
-# define FPSR_AOVFL 0x00000040
-# define FPSR_AUNFL 0x00000020
-# define FPSR_ADZ   0x00000010
-# define FPSR_AINEX 0x00000008
-
-/* fpcr */
-#define FPCR_EXCP   FPSR_EXCP
-# define FPCR_BSUN  FPSR_BSUN
-# define FPCR_SNAN  FPSR_SNAN
-# define FPCR_OPERR FPSR_OPERR
-# define FPCR_OVFL  FPSR_OVFL
-# define FPCR_UNFL  FPSR_UNFL
-# define FPCR_DZ    FPSR_DZ
-# define FPCR_INEX2 FPSR_INEX2
-# define FPCR_INEX1 FPSR_INEX1
-#define FPCR_MODE   0x000000ff
-# define FPCR_PREC  0x000000c0
-#  define FPCR_EXTD 0x00000000
-#  define FPCR_SNGL 0x00000040
-#  define FPCR_DBL  0x00000080
-# define FPCR_ROUND 0x00000030
-#  define FPCR_NEAR 0x00000000
-#  define FPCR_ZERO 0x00000010
-#  define FPCR_MINF 0x00000020
-#  define FPCR_PINF 0x00000030
 
 /*
  * Other functions.
