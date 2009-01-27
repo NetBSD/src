@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.61 2008/12/13 20:12:13 sketch Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.62 2009/01/27 08:39:34 markd Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.61 2008/12/13 20:12:13 sketch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.62 2009/01/27 08:39:34 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,9 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82946GZ_IGD:
 	case PCI_PRODUCT_INTEL_82GM45_IGD:
 	case PCI_PRODUCT_INTEL_82GM45_IGD_1:
+	case PCI_PRODUCT_INTEL_82IGD_E_IGD:
+	case PCI_PRODUCT_INTEL_82Q45_IGD:
+	case PCI_PRODUCT_INTEL_82G45_IGD:
 		return (1);
 	}
 
@@ -292,6 +295,9 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		isc->chiptype = CHIP_G33;
 	case PCI_PRODUCT_INTEL_82GM45_IGD:
 	case PCI_PRODUCT_INTEL_82GM45_IGD_1:
+	case PCI_PRODUCT_INTEL_82IGD_E_IGD:
+	case PCI_PRODUCT_INTEL_82Q45_IGD:
+	case PCI_PRODUCT_INTEL_82G45_IGD:
 		isc->chiptype = CHIP_G4X;
 		break;
 	}
@@ -608,8 +614,7 @@ static int agp_i810_init(struct agp_softc *sc)
 		}
 
 		/* BIOS space */
-		if (isc->chiptype != CHIP_G4X)
-			gtt_size += 4;
+		gtt_size += 4;
 
 		isc->stolen = (stolen - gtt_size) * 1024 / 4096;
 
