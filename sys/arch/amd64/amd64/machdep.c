@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2009/01/27 16:17:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2009/01/27 21:13:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2009/01/27 16:17:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2009/01/27 21:13:57 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1538,6 +1538,7 @@ init_x86_64(paddr_t first_avail)
 void
 cpu_reset(void)
 {
+	uint8_t b;
 
 	x86_disable_intr();
 
@@ -1567,7 +1568,7 @@ cpu_reset(void)
 	 */
 	outb(0xcf9, 0x2);
 	outb(0xcf9, 0x6);
-	DELAY(500000);  /* wait 0.5 sec to see if that did it */
+	delay(500000);  /* wait 0.5 sec to see if that did it */
 
 	/*
 	 * Attempt to force a reset via the Fast A20 and Init register
@@ -1581,7 +1582,7 @@ cpu_reset(void)
 		if ((b & 0x1) != 0)
 			outb(0x92, b & 0xfe);
 		outb(0x92, b | 0x1);
-		DELAY(500000);  /* wait 0.5 sec to see if that did it */
+		delay(500000);  /* wait 0.5 sec to see if that did it */
 	}
 
 	/*
