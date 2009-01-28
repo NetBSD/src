@@ -29,13 +29,6 @@
 
 #include <openpgpsdk/final.h>
 
-struct ops_memory
-    {
-    unsigned char *buf;
-    size_t length;
-    size_t allocated;
-    };
-
 /**
 \ingroup HighLevel_Memory
 \brief Memory to initialise
