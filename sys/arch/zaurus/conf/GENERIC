@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.18 2009/01/28 11:28:00 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.19 2009/01/28 11:53:46 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -131,7 +131,7 @@ options 	WSEMUL_VT100
 #options 	WS_DEFAULT_BG=WSCOL_BLACK
 #options 	WS_DEFAULT_COLATTR="(0)"
 #options 	WS_DEFAULT_MONOATTR="(0)"
-#options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""
 #options 	WS_KERNEL_MONOATTR=""
@@ -150,7 +150,7 @@ options 	DDB             # in-kernel debugger
 options 	DDB_HISTORY_SIZE=100    # Enable history editing in DDB
 #options 	KGDB
 #makeoptions 	DEBUG="-g"  # compile full symbol table
-#options 	SYMTAB_SPACE=512000
+options 	SYMTAB_SPACE=512000
 
 
 # Kernel root file system and dump configuration.
