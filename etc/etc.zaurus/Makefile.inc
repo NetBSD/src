@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2009/01/28 11:21:55 nonaka Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2009/01/28 11:43:28 nonaka Exp $
 #
 #	etc.zaurus/Makefile.inc -- zaurus-specific etc Makefile targets
 #
@@ -13,4 +13,4 @@ INSTALLATION_DIRS+=	installation/kernel
 snap_md_post:
 	cd ${KERNSRCDIR}/arch/zaurus/stand/zbsdmod && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation '*'
-	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/kernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/kernel '*'
