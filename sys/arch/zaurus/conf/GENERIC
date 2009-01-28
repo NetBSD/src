@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.17 2009/01/28 11:19:20 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.18 2009/01/28 11:28:00 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -168,8 +168,12 @@ pxaip0 at mainbus?
 
 pxaintc0 at pxaip?	# interrupt controller
 pxagpio0 at pxaip?	# GPIO
-pxadmac0 at pxaip?	# DMA controller
 pxartc0 at pxaip?	# RTC
+
+# DMAC support
+pxadmac0 at pxaip? addr 0x40000000 intr 25
+options		PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
+#options	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
 
 # Power management
 zapm0 at pxaip?		# power management
