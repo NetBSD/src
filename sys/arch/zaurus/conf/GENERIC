@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20 2009/01/28 11:55:38 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.21 2009/01/28 13:39:41 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -266,6 +266,14 @@ uhid* at uhidev? reportid ?
 # USB Mass Storage
 umass* at uhub? port ? configuration ? interface ?
 wd* at umass?
+
+# SCSI bus support
+scsibus* at scsi?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # USB audio
 #uaudio* at uhub? port ? configuration ?
