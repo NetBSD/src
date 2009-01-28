@@ -79,6 +79,11 @@ enum optdefs {
 
 };
 
+enum {
+	USERID_RAW_LEN		= OPS_KEY_ID_SIZE,
+	USERID_FORMATTED	= USERID_RAW_LEN * 2
+};
+
 #define EXIT_ERROR	2
 
 static struct option long_options[] = {
@@ -108,7 +113,7 @@ static struct option long_options[] = {
 	/* debug */
 	{"debug", required_argument, NULL, OPS_DEBUG},
 
-	{0, 0, 0, 0},
+	{ NULL, 0, NULL, 0},
 };
 
 /* gather up program variables into one struct */
@@ -127,7 +132,7 @@ typedef struct prog_t {
 	int             armour;				/* ASCII armor */
 	int             cmd;				/* openpgp command */
 	int             ex;				/* exit code */
-}               prog_t;
+} prog_t;
 
 
 
@@ -146,24 +151,24 @@ get_pass_phrase(char *phrase, size_t size)
 {
 	char           *p;
 
-	if ((p = getpass("openpgp pass phrase: ")) == NULL) {
+	if ((p = getpass("openpgp passphrase: ")) == NULL) {
 		exit(EXIT_ERROR);
 	}
 	(void) snprintf(phrase, size, "%s", p);
 }
 
-/* small function to pretty print an 8character raw userid */
+/* small function to pretty print an 8-character raw userid */
 static char    *
 userid_to_id(const unsigned char *userid, char *id)
 {
 	static const char *hexes = "0123456789ABCDEF";
-	int             i;
+	int		   i;
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < USERID_RAW_LEN ; i++) {
 		id[i * 2] = hexes[(userid[i] & 0xf0) >> 4];
 		id[(i * 2) + 1] = hexes[userid[i] & 0xf];
 	}
-	id[16] = 0x0;
+	id[USERID_FORMATTED] = 0x0;
 	return id;
 }
 
@@ -172,7 +177,7 @@ static void
 psuccess(char *f, ops_validate_result_t * results, ops_keyring_t *pubring)
 {
 	const ops_keydata_t *pubkey;
-	char            id[17];
+	char            id[USERID_FORMATTED + 1];
 	int             i;
 
 	for (i = 0; i < results->valid_count; i++) {
@@ -412,6 +417,7 @@ main(int argc, char **argv)
 	char            homedir[MAXBUF + 1];
 	char            default_homedir[MAXBUF + 1];
 	char           *dir;
+	int		zeroargs;
 	int             optindex = 0;
 	int             ch = 0;
 	int             i;
@@ -419,6 +425,7 @@ main(int argc, char **argv)
 	pname = argv[0];
 	(void) memset(&p, 0x0, sizeof(p));
 	(void) memset(homedir, 0x0, sizeof(homedir));
+	zeroargs = 0;
 	p.numbits = DEFAULT_NUMBITS;
 	p.overwrite = ops_true;
 	if (argc < 2) {
@@ -434,6 +441,9 @@ main(int argc, char **argv)
 		switch (long_options[optindex].val) {
 			/* commands */
 		case LIST_KEYS:
+			zeroargs = 1;
+			p.cmd = long_options[optindex].val;
+			break;
 		case FIND_KEY:
 		case EXPORT_KEY:
 		case IMPORT_KEY:
@@ -516,9 +526,9 @@ main(int argc, char **argv)
          * We will then have variables pubring, secring and myring.
          */
 
-	if (homedir[0])
+	if (homedir[0]) {
 		dir = homedir;
-	else {
+	} else {
 		(void) snprintf(default_homedir, MAXBUF, "%s/.gnupg",
 			getenv("HOME"));
 		if (ops_get_debug_level(__FILE__)) {
@@ -547,12 +557,17 @@ main(int argc, char **argv)
 			exit(EXIT_ERROR);
 		}
 	}
+
 	/*
 	 * now do the required action for each of the files on the command
 	 * line
 	 */
-	for (p.ex = EXIT_SUCCESS, i = optind; i < argc; i++) {
-		openpgp(&p, argv[i]);
+	if (zeroargs) {
+		openpgp(&p, NULL);
+	} else {
+		for (p.ex = EXIT_SUCCESS, i = optind; i < argc; i++) {
+			openpgp(&p, argv[i]);
+		}
 	}
 
 	if (p.pubring) {
