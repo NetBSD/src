@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2008/11/11 06:46:44 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2009/01/28 13:43:40 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2008/11/11 06:46:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2009/01/28 13:43:40 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -971,12 +971,13 @@ initarm(void *arg)
 	}
 #endif
 
-#ifdef DDB
-	db_machine_init();
-
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* Firmware doesn't load symbols. */
 	ddb_init(0, NULL, NULL);
+#endif
 
+#ifdef DDB
+	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
