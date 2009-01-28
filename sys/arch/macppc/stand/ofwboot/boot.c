@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.22 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.23 2009/01/28 15:03:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
+#include <sys/disklabel.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
@@ -91,9 +92,10 @@ extern void __syncicache(void *, size_t); /* in libkern */
 # define DPRINTF while (0) printf
 #endif
 
-char bootdev[128];
-char bootfile[128];
+char bootdev[MAXBOOTPATHLEN];
+char bootfile[MAXBOOTPATHLEN];
 int boothowto;
+bool floppyboot;
 
 static int ofw_version = 0;
 static const char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.macppc", NULL };
@@ -142,6 +144,35 @@ found:
 	*cp++ = 0;
 	while (*cp)
 		BOOT_FLAG(*cp++, *howtop);
+}
+
+static bool
+is_floppyboot(const char *path, const char *defaultdev)
+{
+	char dev[MAXBOOTPATHLEN];
+	char nam[16];
+	int handle, rv;
+
+	if (parsefilepath(path, dev, NULL, NULL)) {
+		if (dev[0] == '\0' && defaultdev != NULL)
+			strlcpy(dev, defaultdev, sizeof(dev));
+
+		/* check properties */
+		handle = OF_finddevice(dev);
+		if (handle != -1) {
+			rv = OF_getprop(handle, "name", nam, sizeof(nam));
+			if (rv >= 0 &&
+			    (strcmp(nam, "swim3") == 0 ||
+			     strcmp(nam, "floppy") == 0))
+				return true;
+		}
+
+		/* also check devalias */
+		if (strcmp(dev, "fd") == 0)
+			return true;
+	}
+
+	return false;
 }
 
 static void
@@ -236,7 +267,7 @@ main(void)
 	DPRINTF("bootline=%s\n", bootline);
 
 	for (;;) {
-		int i;
+		int i, loadflag;
 
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
@@ -250,10 +281,17 @@ main(void)
 		}
 
 		for (i = 0; kernels[i]; i++) {
-			DPRINTF("Trying %s\n", kernels[i]);
+			floppyboot = is_floppyboot(kernels[i], bootdev);
+
+			DPRINTF("Trying %s%s\n", kernels[i],
+			    floppyboot ? " (floppyboot)" : "");
+
+			loadflag = LOAD_KERNEL;
+			if (floppyboot)
+				loadflag &= ~LOAD_NOTE;
 
 			marks[MARK_START] = 0;
-			if (loadfile(kernels[i], marks, LOAD_KERNEL) >= 0)
+			if (loadfile(kernels[i], marks, loadflag) >= 0)
 				goto loaded;
 		}
 		boothowto |= RB_ASKNAME;
