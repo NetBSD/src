@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.13 2009/01/12 11:32:44 tsutsui Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.14 2009/01/28 13:10:05 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -143,7 +143,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
 		struct ether_header *eh;
 
 		printf("netif_put: desc=0x%x pkt=0x%x len=%d\n",
-		       desc, pkt, len);
+		       (u_int)desc, (u_int)pkt, len);
 		eh = pkt;
 		printf("dst: %s ", ether_sprintf(eh->ether_dhost));
 		printf("src: %s ", ether_sprintf(eh->ether_shost));
@@ -187,7 +187,7 @@ netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: pkt=0x%x, maxlen=%d, tmo=%d\n",
-	       pkt, maxlen, timo);
+	       (u_int)pkt, maxlen, timo);
 #endif
 
 	tmo_ms = timo * 1000;
