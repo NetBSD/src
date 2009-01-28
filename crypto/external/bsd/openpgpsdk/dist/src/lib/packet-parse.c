@@ -2516,7 +2516,7 @@ static int parse_pk_session_key(ops_region_t *region,
     // \todo FIXME RW
     //    const size_t sz_unencoded_m_buf=CAST_KEY_LENGTH+1+2;
     unsigned char unencoded_m_buf[1024];
-    
+
     if(!limited_read(c,1,region,pinfo))
 	return 0;
     C.pk_session_key.version=c[0];
@@ -2529,8 +2529,9 @@ static int parse_pk_session_key(ops_region_t *region,
         }
 
     if(!limited_read(C.pk_session_key.key_id,
-		     sizeof C.pk_session_key.key_id,region,pinfo))
+		     sizeof C.pk_session_key.key_id,region,pinfo)) {
 	return 0;
+    }
 
     if (ops_get_debug_level(__FILE__))
         {
@@ -2549,8 +2550,9 @@ static int parse_pk_session_key(ops_region_t *region,
 	{
     case OPS_PKA_RSA:
 	if(!limited_read_mpi(&C.pk_session_key.parameters.rsa.encrypted_m,
-			     region,pinfo))
+			     region,pinfo)) {
 	    return 0;
+	}
 	enc_m=C.pk_session_key.parameters.rsa.encrypted_m;
 	break;
 
@@ -2558,8 +2560,9 @@ static int parse_pk_session_key(ops_region_t *region,
 	if(!limited_read_mpi(&C.pk_session_key.parameters.elgamal.g_to_k,
 			     region,pinfo)
 	   || !limited_read_mpi(&C.pk_session_key.parameters.elgamal.encrypted_m,
-			     region,pinfo))
+			     region,pinfo)) {
 	    return 0;
+	}
 	enc_m=C.pk_session_key.parameters.elgamal.encrypted_m;
 	break;
 

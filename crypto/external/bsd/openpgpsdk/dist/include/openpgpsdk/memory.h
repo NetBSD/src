@@ -31,7 +31,12 @@
 
 /** ops_memory_t
  */
-typedef struct ops_memory ops_memory_t;
+typedef struct ops_memory_t {
+	unsigned char	*buf;
+	size_t		 length;
+	size_t		 allocated;
+} ops_memory_t;
+
 
 ops_memory_t *ops_memory_new(void);
 void ops_memory_free(ops_memory_t *mem);

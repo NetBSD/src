@@ -23,6 +23,7 @@
 #include <openpgpsdk/random.h>
 #include <openpgpsdk/readerwriter.h>
 #include <openpgpsdk/writer_armoured.h>
+#include <openpgpsdk/std_print.h>
 #include "parse_local.h"
 
 #include <assert.h>
@@ -57,33 +58,33 @@ int ops_decrypt_and_unencode_mpi(unsigned char *buf,unsigned buflen,const BIGNUM
 
     assert(skey->public_key.algorithm == OPS_PKA_RSA);
 
-    /*
-    fprintf(stderr,"\nDECRYPTING\n");
-    fprintf(stderr,"encrypted data     : ");
-    for (i=0; i<16; i++)
-        fprintf(stderr,"%2x ", encmpibuf[i]);
-    fprintf(stderr,"\n");
-    */
+	if (ops_get_debug_level(__FILE__)) {
+		fprintf(stderr,"\nDECRYPTING\n");
+		fprintf(stderr,"encrypted data     : ");
+		for (i=0; i<16; i++)
+			fprintf(stderr,"%2x ", encmpibuf[i]);
+		fprintf(stderr,"\n");
+	}
 
     n=ops_rsa_private_decrypt(mpibuf,encmpibuf,(BN_num_bits(encmpi)+7)/8,
 			      &skey->key.rsa,&skey->public_key.key.rsa);
     assert(n!=-1);
 
-    /*
-    fprintf(stderr,"decrypted encoded m buf     : ");
-    for (i=0; i<16; i++)
-        fprintf(stderr,"%2x ", mpibuf[i]);
-    fprintf(stderr,"\n");
-    */
+	if (ops_get_debug_level(__FILE__)) {
+		fprintf(stderr,"decrypted encoded m buf     : ");
+		for (i=0; i<16; i++)
+			fprintf(stderr,"%2x ", mpibuf[i]);
+		fprintf(stderr,"\n");
+	}
 
     if(n <= 0)
 	return -1;
 
-    /*
-    printf(" decrypted=%d ",n);
-    hexdump(mpibuf,n);
-    printf("\n");
-    */
+	if (ops_get_debug_level(__FILE__)) {
+		printf(" decrypted=%d ",n);
+		hexdump(mpibuf,n);
+		printf("\n");
+	}
 
     // Decode EME-PKCS1_V1_5 (RFC 2437).
 
@@ -104,13 +105,14 @@ int ops_decrypt_and_unencode_mpi(unsigned char *buf,unsigned buflen,const BIGNUM
     if((unsigned)(n-i) <= buflen)
         memcpy(buf,mpibuf+i,n-i);
 
-    /*
-    printf("decoded m buf:\n");
-    int j;
-    for (j=0; j<n-i; j++)
-        printf("%2x ",buf[j]);
-    printf("\n");
-    */
+	if (ops_get_debug_level(__FILE__)) {
+		int j;
+
+		printf("decoded m buf:\n");
+		for (j=0; j<n-i; j++)
+			printf("%2x ",buf[j]);
+		printf("\n");
+	}
 
     return n-i;
     }
@@ -138,13 +140,13 @@ ops_boolean_t ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 
     skp->rsa.encrypted_m=BN_bin2bn(encmpibuf, n, NULL);
 
-    /*
-    fprintf(stderr,"encrypted mpi buf     : ");
-    int i;
-    for (i=0; i<16; i++)
-        fprintf(stderr,"%2x ", encmpibuf[i]);
-    fprintf(stderr,"\n");
-    */
+	if (ops_get_debug_level(__FILE__)) {
+		int i;
+		fprintf(stderr,"encrypted mpi buf     : ");
+		for (i=0; i<16; i++)
+			fprintf(stderr,"%2x ", encmpibuf[i]);
+		fprintf(stderr,"\n");
+	}
 
     return ops_true;
     }
@@ -338,7 +340,9 @@ callback_write_parsed(const ops_parser_content_t *content_,ops_parse_cb_info_t *
 
     OPS_USED(cbinfo);
 
-//    ops_print_packet(content_);
+	if (ops_get_debug_level(__FILE__)) {
+		ops_print_packet(content_);
+	}
 
     if(content_->tag != OPS_PTAG_CT_UNARMOURED_TEXT && skipping)
 	{
@@ -389,10 +393,12 @@ callback_write_parsed(const ops_parser_content_t *content_,ops_parse_cb_info_t *
 
     default:
         //        return callback_general(content_,cbinfo);
+	if (ops_get_debug_level(__FILE__)) {
+		fprintf(stderr,"Unexpected packet tag=%d (0x%x)\n",
+			content_->tag,
+			content_->tag);
+	}
         break;
-        //	fprintf(stderr,"Unexpected packet tag=%d (0x%x)\n",content_->tag,
-        //		content_->tag);
-        //	assert(0);
 	}
 
     return OPS_RELEASE_MEMORY;

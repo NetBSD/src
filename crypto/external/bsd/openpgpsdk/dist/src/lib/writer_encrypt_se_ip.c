@@ -219,7 +219,7 @@ ops_boolean_t ops_write_se_ip_pktset(const unsigned char *data,
 #ifdef DEBUG
     if (ops_get_debug_level(__FILE__))
         {
-        fprintf(stderr,"writing %zu + %d + %zu\n", sz_preamble, len, ops_memory_get_length(mem_mdc));
+        fprintf(stderr,"writing %" PRIsize "u + %d + %" PRIsize "u\n", sz_preamble, len, ops_memory_get_length(mem_mdc));
         }
 #endif /*DEBUG*/
 
