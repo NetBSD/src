@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.57 2008/06/11 14:35:53 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.58 2009/01/28 19:55:51 tjam Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.57 2008/06/11 14:35:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.58 2009/01/28 19:55:51 tjam Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ struct zs_softc {
     struct	zs_chanstate	zi_cs[2];  /* chan A and B software state */
 };
 
-static u_char	cb_scheduled = 0;	/* Already asked for callback? */
+static void	*zs_softint_cookie;	/* for callback */
 /*
  * Define the registers for a closed port
  */
@@ -260,8 +260,6 @@ static int	zs_modem __P((struct zs_chanstate *, int, int));
 static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 static void	zs_shutdown __P((struct zs_chanstate *));
 
-static int zsshortcuts;	/* number of "shortcut" software interrupts */
-
 static int
 zsmatch(pdp, cfp, auxp)
 struct device	*pdp;
@@ -352,6 +350,9 @@ void		*aux;
 	cs++;
 	cs->cs_unit  = 1;
 	cs->cs_zc    = &addr->zs_chan[ZS_CHAN_B];
+
+	zs_softint_cookie = softint_establish(SOFTINT_SERIAL,
+	    (void (*)(void *))zssoft, 0);
 
 	printf(": serial2 on channel a and modem2 on channel b\n");
 }
@@ -629,17 +630,9 @@ long sr;
 	} while(intflags & 4);
 #undef b
 
-	if(intflags & 1) {
-		if(BASEPRI(sr)) {
-			spl1();
-			zsshortcuts++;
-			return(zssoft(sr));
-		}
-		else if(!cb_scheduled) {
-			cb_scheduled++;
-			add_sicallback((si_farg)zssoft, 0, 0);
-		}
-	}
+	if(intflags & 1)
+		softint_schedule(zs_softint_cookie);
+
 	return(intflags & 2);
 }
 
@@ -747,7 +740,6 @@ long sr;
     register int			get, n, c, cc, unit, s;
  	     int			retval = 0;
 
-    cb_scheduled = 0;
     s = spltty();
     for(cs = zslist; cs != NULL; cs = cs->cs_next) {
 	get = cs->cs_rbget;
