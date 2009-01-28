@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.148 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.149 2009/01/28 21:38:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.148 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.149 2009/01/28 21:38:13 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.148 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.149 2009/01/28 21:38:13 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2931,7 +2931,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 		termc = *--cp;
 		delim = '\0';
-		if (Cond_EvalExpression(1, v->name, &value, 0)
+		if (Cond_EvalExpression(NULL, v->name, &value, 0)
 		    == COND_INVALID) {
 		    Error("Bad conditional expression `%s' in %s?%s:%s",
 			  v->name, v->name, pattern.lhs, pattern.rhs);

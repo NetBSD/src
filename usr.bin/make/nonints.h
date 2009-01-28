@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.55 2009/01/24 11:59:39 dsl Exp $	*/
+/*	$NetBSD: nonints.h,v 1.56 2009/01/28 21:38:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -95,7 +95,8 @@ void Compat_Run(Lst);
 int Compat_Make(void *, void *);
 
 /* cond.c */
-int Cond_EvalExpression(int, char *, Boolean *, int);
+struct If;
+int Cond_EvalExpression(const struct If *, char *, Boolean *, int);
 int Cond_Eval(char *);
 void Cond_restore_depth(unsigned int);
 unsigned int Cond_save_depth(void);
