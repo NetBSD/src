@@ -321,8 +321,8 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 
         /* \todo
     case OPS_S2KS_ITERATED_AND_SALTED:
-    /* 8-octet salt value
-    /* 1-octet count
+       8-octet salt value
+       1-octet count
         break;
         */
 
