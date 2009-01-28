@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.46 2008/12/21 11:02:42 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.47 2009/01/28 16:31:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,10 @@ message usage
 {Aufruf: sysinst [-r Release] [-f Definitionsdatei]
 }
 
+/*
+ * We can not use non ascii characters in this message - it is displayed
+ * before the locale is set up!
+ */
 message sysinst_message_language
 {Installation auf Deutsch}
 

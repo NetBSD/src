@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.62 2008/12/21 11:02:42 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.63 2009/01/28 16:31:49 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -44,6 +44,10 @@ message usage
 {uzycie: sysinst [-r wersja] [-f plik-definicji]
 }
 
+/*
+ * We can not use non ascii characters in this message - it is displayed
+ * before the locale is set up!
+ */
 message sysinst_message_language
 {Komunikaty instalacyjne w jezyku polskim}
 

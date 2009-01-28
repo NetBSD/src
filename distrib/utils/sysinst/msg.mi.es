@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.23 2008/12/21 11:02:42 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.24 2009/01/28 16:31:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,8 +42,12 @@ message usage
 {uso: sysinst [-r versión] [-f fichero-definición]
 }
 
+/*
+ * We can not use non ascii characters in this message - it is displayed
+ * before the locale is set up!
+ */
 message sysinst_message_language
-{Mensajes de instalación en castellano}
+{Mensajes de instalacion en castellano}
 
 message sysinst_message_locale
 {es_ES.ISO8859-15}
