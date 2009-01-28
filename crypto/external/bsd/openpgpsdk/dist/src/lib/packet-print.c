@@ -384,7 +384,7 @@ static void print_hex(const unsigned char *src,size_t length)
 
 static void showtime(const char *name,time_t t)
     {
-    printf("%s=" TIME_T_FMT " (%.24s)",name,(long long)t,ctime(&t));
+    printf("%s=%" PRItime "d (%.24s)",name,(int64_t)t,ctime(&t));
     }
 static void showtime_short(time_t t)
     {
@@ -456,7 +456,7 @@ static void print_duration(const char *name, time_t t)
 
     print_indent();
     printf("%s: ",name);
-    printf("duration " TIME_T_FMT " seconds",(long long)t);
+    printf("duration %" PRItime "d seconds",(long long)t);
 
     mins=t/60;
     hours=mins/60;
