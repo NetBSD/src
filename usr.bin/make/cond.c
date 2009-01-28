@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.55 2009/01/23 21:58:27 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.56 2009/01/28 21:38:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.55 2009/01/23 21:58:27 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.56 2009/01/28 21:38:12 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.55 2009/01/23 21:58:27 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.56 2009/01/28 21:38:12 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -140,7 +140,7 @@ typedef enum {
  * last two fields are stored in condInvert and condDefProc, respectively.
  */
 static void CondPushBack(Token);
-static int CondGetArg(char **, char **, const char *, Boolean);
+static int CondGetArg(char **, char **, const char *);
 static Boolean CondDoDefined(int, const char *);
 static int CondStrMatch(const void *, const void *);
 static Boolean CondDoMake(int, const char *);
@@ -152,6 +152,7 @@ static Token CondToken(Boolean);
 static Token CondT(Boolean);
 static Token CondF(Boolean);
 static Token CondE(Boolean);
+static int do_Cond_EvalExpression(Boolean *);
 
 static const struct If {
     const char	*form;	      /* Form of if */
@@ -167,8 +168,7 @@ static const struct If {
     { NULL,	  0,	  FALSE,  NULL }
 };
 
-static Boolean	  condInvert;	    	/* Invert the default function */
-static Boolean	  (*condDefProc)(int, const char *);	/* Default function to apply */
+static const struct If *if_info;        /* Info for current statement */
 static char 	  *condExpr;	    	/* The expression to parse */
 static Token	  condPushBack=None;	/* Single push-back token used in
 					 * parsing */
@@ -223,21 +223,18 @@ CondPushBack(Token t)
  *-----------------------------------------------------------------------
  */
 static int
-CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
+CondGetArg(char **linePtr, char **argPtr, const char *func)
 {
     char	  *cp;
     int	    	  argLen;
     Buffer	  buf;
+    int           paren_depth;
+    char          ch;
 
     cp = *linePtr;
-    if (parens) {
-	while (*cp != '(' && *cp != '\0') {
-	    cp++;
-	}
-	if (*cp == '(') {
-	    cp++;
-	}
-    }
+    if (func != NULL)
+	/* Skip opening '(' - verfied by caller */
+	cp++;
 
     if (*cp == '\0') {
 	/*
@@ -260,7 +257,13 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
      */
     Buf_Init(&buf, 16);
 
-    while ((strchr(" \t)&|", *cp) == NULL) && (*cp != '\0')) {
+    paren_depth = 0;
+    for (;;) {
+	ch = *cp;
+	if (ch == 0 || ch == ' ' || ch == '\t')
+	    break;
+	if ((ch == '&' || ch == '|') && paren_depth == 0)
+	    break;
 	if (*cp == '$') {
 	    /*
 	     * Parse the variable spec and install it as part of the argument
@@ -277,10 +280,15 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 	    if (freeIt)
 		free(freeIt);
 	    cp += len;
-	} else {
-	    Buf_AddByte(&buf, *cp);
-	    cp++;
+	    continue;
 	}
+	if (ch == '(')
+	    paren_depth++;
+	else
+	    if (ch == ')' && --paren_depth < 0)
+		break;
+	Buf_AddByte(&buf, *cp);
+	cp++;
     }
 
     *argPtr = Buf_GetAll(&buf, &argLen);
@@ -289,17 +297,11 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
     while (*cp == ' ' || *cp == '\t') {
 	cp++;
     }
-    if (parens && *cp != ')') {
+
+    if (func != NULL && *cp++ != ')') {
 	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
 		     func);
 	return (0);
-    }
-
-    if (parens) {
-	/*
-	 * Advance pointer past close parenthesis.
-	 */
-	cp++;
     }
 
     *linePtr = cp;
@@ -772,7 +774,7 @@ error:
 }
 
 static int
-get_mpt_arg(char **linePtr, char **argPtr, const char *func, Boolean parens)
+get_mpt_arg(char **linePtr, char **argPtr, const char *func)
 {
     /*
      * Use Var_Parse to parse the spec in parens and return
@@ -824,7 +826,7 @@ compare_function(Boolean doEval)
     static const struct fn_def {
 	const char  *fn_name;
 	int         fn_name_len;
-        int         (*fn_getarg)(char **, char **, const char *, Boolean);
+        int         (*fn_getarg)(char **, char **, const char *);
 	Boolean     (*fn_proc)(int, const char *);
     } fn_defs[] = {
 	{ "defined",   7, CondGetArg, CondDoDefined },
@@ -852,7 +854,7 @@ compare_function(Boolean doEval)
 	if (*cp != '(')
 	    break;
 
-	arglen = fn_def->fn_getarg(&cp, &arg, fn_def->fn_name, TRUE);
+	arglen = fn_def->fn_getarg(&cp, &arg, fn_def->fn_name);
 	if (arglen <= 0) {
 	    condExpr = cp;
 	    return arglen < 0 ? Err : False;
@@ -879,7 +881,7 @@ compare_function(Boolean doEval)
      * would be invalid if we did "defined(a)" - so instead treat as an
      * expression.
      */
-    arglen = CondGetArg(&cp, &arg, "", FALSE);
+    arglen = CondGetArg(&cp, &arg, NULL);
     for (cp1 = cp; isspace(*(unsigned char *)cp1); cp1++)
 	continue;
     if (*cp1 == '=' || *cp1 == '!')
@@ -890,7 +892,7 @@ compare_function(Boolean doEval)
      * Evaluate the argument using the default function. If invert
      * is TRUE, we invert the sense of the result.
      */
-    t = !doEval || (* condDefProc)(arglen, arg) != condInvert ? True : False;
+    t = !doEval || if_info->defProc(arglen, arg) != if_info->doNot ? True : False;
     if (arg)
 	free(arg);
     return t;
@@ -1116,18 +1118,44 @@ CondE(Boolean doEval)
  *-----------------------------------------------------------------------
  */
 int
-Cond_EvalExpression(int dosetup, char *line, Boolean *value, int eprint)
+Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprint)
 {
-    if (dosetup) {
-	condDefProc = CondDoDefined;
-	condInvert = 0;
-    }
+    static const struct If *dflt_info;
+    const struct If *sv_if_info = if_info;
+    char *sv_condExpr = condExpr;
+    Token sv_condPushBack = condPushBack;
+    int rval;
 
     while (*line == ' ' || *line == '\t')
 	line++;
 
+    if (info == NULL && (info = dflt_info) == NULL) {
+	/* Scan for the entry for .if - it can't be first */
+	for (info = ifs; ; info++)
+	    if (ifs->form[0] == 0)
+		break;
+	dflt_info = info;
+    }
+
+    if_info = info != NULL ? info : ifs + 4;
     condExpr = line;
     condPushBack = None;
+
+    rval = do_Cond_EvalExpression(value);
+
+    if (rval == COND_INVALID && eprint)
+	Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", line);
+
+    if_info = sv_if_info;
+    condExpr = sv_condExpr;
+    condPushBack = sv_condPushBack;
+
+    return rval;
+}
+
+static int
+do_Cond_EvalExpression(Boolean *value)
+{
 
     switch (CondE(TRUE)) {
     case True:
@@ -1142,14 +1170,11 @@ Cond_EvalExpression(int dosetup, char *line, Boolean *value, int eprint)
 	    return COND_PARSE;
 	}
 	break;
+    default:
     case Err:
 	break;
-    default:
-	return COND_PARSE;
     }
 
-    if (eprint)
-	Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", line);
     return COND_INVALID;
 }
 
@@ -1313,12 +1338,8 @@ Cond_Eval(char *line)
 	}
     }
 
-    /* Initialize file-global variables for parsing the expression */
-    condDefProc = ifp->defProc;
-    condInvert = ifp->doNot;
-
     /* And evaluate the conditional expresssion */
-    if (Cond_EvalExpression(0, line, &value, 1) == COND_INVALID) {
+    if (Cond_EvalExpression(ifp, line, &value, 1) == COND_INVALID) {
 	/* Syntax error in conditional, error message already output. */
 	/* Skip everything to matching .endif */
 	cond_state[cond_depth] = SKIP_TO_ELSE;
