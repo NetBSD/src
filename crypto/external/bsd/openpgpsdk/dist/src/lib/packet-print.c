@@ -384,7 +384,7 @@ static void print_hex(const unsigned char *src,size_t length)
 
 static void showtime(const char *name,time_t t)
     {
-    printf("%s=%" PRItime "d (%.24s)",name,(int64_t)t,ctime(&t));
+    printf("%s=%" PRItime "d (%.24s)",name,(long long)t,ctime(&t));
     }
 static void showtime_short(time_t t)
     {
