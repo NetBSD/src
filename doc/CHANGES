@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1175 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1176 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -123,3 +123,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		user-friendly. [agc 20090123]
 	X11: added support for X11FLAVOUR=xorg for NetBSD/alpha.  No support
 		for turbochannel graphic cards yet. [bouyer 20090124]
+	dhcpcd(8): Import 4.0.8 [roy 20090128]
