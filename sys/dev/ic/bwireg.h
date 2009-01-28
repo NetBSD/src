@@ -1,4 +1,4 @@
-/*	$NetBSD: bwireg.h,v 1.2 2009/01/09 20:49:42 macallan Exp $	*/
+/*	$NetBSD: bwireg.h,v 1.3 2009/01/28 14:49:10 sborrill Exp $	*/
 /*	$OpenBSD: bwireg.h,v 1.7 2007/11/17 16:50:02 mglocker Exp $	*/
 
 /*
@@ -272,7 +272,8 @@
 #define BWI_PHYINFO_TYPE_11A		0
 #define BWI_PHYINFO_TYPE_11B		1
 #define BWI_PHYINFO_TYPE_11G		2
-#define BWI_PHYINFO_TYPE_11N		5
+#define BWI_PHYINFO_TYPE_11N		4
+#define BWI_PHYINFO_TYPE_11LP		5
 #define BWI_PHYINFO_VER_MASK		0xf000
 
 #define BWI_RF_ANTDIV			0x03e2	/* Antenna Diversity ?? */
