@@ -56,6 +56,3 @@ void ops_writer_set_memory(ops_create_info_t *info,ops_memory_t *mem)
     {
     ops_writer_set(info,memory_writer,NULL,NULL,mem);
     }
-
-
-// EOF

@@ -58,5 +58,3 @@ void ops_reader_push_hash(ops_parse_info_t *pinfo,ops_hash_t *hash)
 */
 void ops_reader_pop_hash(ops_parse_info_t *pinfo)
     { ops_reader_pop(pinfo); }
-
-// EOF

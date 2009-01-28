@@ -192,7 +192,7 @@ static int sub_base_read(void *dest,size_t length,ops_error_t **errors,
 
 	assert(r <= (int)(length-n));
 
-	// XXX: should we save the error and return what was read so far?
+	/* XXX: should we save the error and return what was read so far? */
 	if(r < 0)
 	    return r;
 
@@ -216,9 +216,9 @@ static int sub_base_read(void *dest,size_t length,ops_error_t **errors,
 	assert(rinfo->asize >= rinfo->alength+n);
 	memcpy(rinfo->accumulated+rinfo->alength,dest,n);
 	}
-    // we track length anyway, because it is used for packet offsets
+    /* we track length anyway, because it is used for packet offsets */
     rinfo->alength+=n;
-    // and also the position
+    /* and also the position */
     rinfo->position+=n;
 
     return n;
@@ -625,14 +625,14 @@ static ops_boolean_t read_new_length(unsigned *length,ops_parse_info_t *pinfo)
 	return ops_false;
     if(c[0] < 192)
 	{
-    // 1. One-octet packet
+    /* 1. One-octet packet */
 	*length=c[0];
 	return ops_true;
 	}
 
     else if (c[0]>=192 && c[0]<=223)
         {
-        // 2. Two-octet packet
+        /* 2. Two-octet packet */
         unsigned t=(c[0]-192) << 8;
         
         if(base_read(c,1,pinfo) != 1)
@@ -643,13 +643,13 @@ static ops_boolean_t read_new_length(unsigned *length,ops_parse_info_t *pinfo)
 
     else if (c[0]==255)
         {
-        // 3. Five-Octet packet
+        /* 3. Five-Octet packet */
         return _read_scalar(length,4,pinfo);
         }
 
     else if (c[0]>=224 && c[0]<255)
         {
-        // 4. Partial Body Length
+        /* 4. Partial Body Length */
         OPS_ERROR(&pinfo->errors,OPS_E_UNIMPLEMENTED,
                     "New format Partial Body Length fields not yet implemented");
         return ops_false;
@@ -998,7 +998,7 @@ void ops_public_key_free(ops_public_key_t *p)
 	break;
 
  case 0:
-     // nothing to free
+     /* nothing to free */
      break;
      
     default:
@@ -1097,7 +1097,7 @@ static int parse_public_key(ops_content_tag_t tag,ops_region_t *region,
     if(!parse_public_key_data(&C.public_key,region,pinfo))
 	return 0;
 
-    // XXX: this test should be done for all packets, surely?
+    /* XXX: this test should be done for all packets, surely? */
     if(region->length_read != region->length)
         {
         OPS_ERROR_1(&pinfo->errors,OPS_E_R_UNCONSUMED_DATA,
@@ -1300,7 +1300,7 @@ static int parse_v3_signature(ops_region_t *region,
     unsigned char c[1]="";
     ops_parser_content_t content;
 
-    // clear signature
+    /* clear signature */
     memset(&C.signature,'\0',sizeof C.signature);
 
     C.signature.info.version=OPS_V3;
@@ -1511,7 +1511,7 @@ static int parse_one_signature_subpacket(ops_signature_t *sig,
 	break;
 
  case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
-     // \todo should do something with this sig?
+     /* \todo should do something with this sig? */
      if (!read_data(&C.ss_embedded_signature.sig,&subregion,pinfo))
          return 0;
      break;
@@ -1616,7 +1616,7 @@ static int parse_one_signature_subpacket(ops_signature_t *sig,
                         c[0]&0x7f);
 	if(!doread && !limited_skip(subregion.length-1,&subregion,pinfo))
 	    return 0;
-	//	printf("skipped %d length %d\n",c[0]&0x7f,subregion.length);
+	/*	printf("skipped %d length %d\n",c[0]&0x7f,subregion.length); */
 	if(doread)
 	    ops_parser_content_free(&content);
 	return 1;
@@ -1757,11 +1757,11 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
     unsigned char c[1]="";
     ops_parser_content_t content;
     
-    //debug=1;
+    /*debug=1; */
     if (ops_get_debug_level(__FILE__))
         { fprintf(stderr, "\nparse_v4_signature\n"); }
     
-    // clear signature
+    /* clear signature */
     memset(&C.signature,'\0',sizeof C.signature);
 
     /* We need to hash the packet data from version through the hashed subpacket data */
@@ -1810,7 +1810,7 @@ static int parse_v4_signature(ops_region_t *region,ops_parse_info_t *pinfo)
     C.signature.info.v4_hashed_data_length=pinfo->rinfo.alength
         -C.signature.v4_hashed_data_start;
 
-    // copy hashed subpackets
+    /* copy hashed subpackets */
     if (C.signature.info.v4_hashed_data)
         free(C.signature.info.v4_hashed_data);
     C.signature.info.v4_hashed_data=ops_mallocz(C.signature.info.v4_hashed_data_length);
@@ -1991,7 +1991,7 @@ static int parse_one_pass(ops_region_t *region,ops_parse_info_t *pinfo)
 
     CBP(pinfo,OPS_PTAG_CT_ONE_PASS_SIGNATURE,&content);
 
-    // XXX: we should, perhaps, let the app choose whether to hash or not
+    /* XXX: we should, perhaps, let the app choose whether to hash or not */
     ops_parse_hash_init(pinfo,C.one_pass_signature.hash_algorithm,
 			C.one_pass_signature.keyid);
 
@@ -2139,7 +2139,7 @@ void ops_secret_key_free(ops_secret_key_t *key)
 
     default:
         fprintf(stderr,"ops_secret_key_free: Unknown algorithm: %d (%s)\n",key->public_key.algorithm, ops_show_pka(key->public_key.algorithm));
-        //assert(0);
+        /*assert(0); */
 	}
 
     ops_public_key_free(&key->public_key);
@@ -2246,7 +2246,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 	}
     else if(C.secret_key.s2k_usage != OPS_S2KU_NONE)
 	{
-	// this is V3 style, looks just like a V4 simple hash
+	/* this is V3 style, looks just like a V4 simple hash */
 	C.secret_key.algorithm=C.secret_key.s2k_usage;
 	C.secret_key.s2k_usage=OPS_S2KU_ENCRYPTED;
 	C.secret_key.s2k_specifier=OPS_S2KS_SIMPLE;
@@ -2282,7 +2282,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 	    {
         if (ops_get_debug_level(__FILE__))
             {
-            // \todo make into proper error
+            /* \todo make into proper error */
             fprintf(stderr,"parse_secret_key: can't get passphrase\n");
             }
 
@@ -2306,7 +2306,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 
 	    ops_hash_any(&hashes[n],C.secret_key.hash_algorithm);
 	    hashes[n].init(&hashes[n]);
-	    // preload hashes with zeroes...
+	    /* preload hashes with zeroes... */
 	    for(i=0 ; i < n ; ++i)
 		hashes[n].add(&hashes[n],(const unsigned char *)"",1);
 	    }
@@ -2371,7 +2371,7 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
 	decrypt.set_iv(&decrypt,C.secret_key.iv);
 	decrypt.set_key(&decrypt,key);
 
-    // now read encrypted data
+    /* now read encrypted data */
 
     ops_reader_push_decrypt(pinfo,&decrypt,region);
 
@@ -2420,13 +2420,13 @@ static int parse_secret_key(ops_region_t *region,ops_parse_info_t *pinfo)
     default:
         OPS_ERROR_2(&pinfo->errors,OPS_E_ALG_UNSUPPORTED_PUBLIC_KEY_ALG,"Unsupported Public Key algorithm %d (%s)",C.secret_key.public_key.algorithm,ops_show_pka(C.secret_key.public_key.algorithm));
         ret=0;
-        //	assert(0);
+        /*	assert(0); */
 	}
 
     if (ops_get_debug_level(__FILE__))
         {
         fprintf(stderr,"4 MPIs read\n");
-        //        ops_print_secret_key_verbose(OPS_PTAG_CT_SECRET_KEY, &C.secret_key);
+        /*        ops_print_secret_key_verbose(OPS_PTAG_CT_SECRET_KEY, &C.secret_key); */
         }
 
     pinfo->reading_v3_secret=ops_false;
@@ -2512,9 +2512,9 @@ static int parse_pk_session_key(ops_region_t *region,
     unsigned char cs[2];
     unsigned char* iv;
 
-    // Can't rely on it being CAST5
-    // \todo FIXME RW
-    //    const size_t sz_unencoded_m_buf=CAST_KEY_LENGTH+1+2;
+    /* Can't rely on it being CAST5 */
+    /* \todo FIXME RW */
+    /*    const size_t sz_unencoded_m_buf=CAST_KEY_LENGTH+1+2; */
     unsigned char unencoded_m_buf[1024];
 
     if(!limited_read(c,1,region,pinfo))
@@ -2587,7 +2587,7 @@ static int parse_pk_session_key(ops_region_t *region,
 	return 1;
 	}
 
-    //    n=ops_decrypt_mpi(buf,sizeof buf,enc_m,secret);
+    /*    n=ops_decrypt_mpi(buf,sizeof buf,enc_m,secret); */
     n=ops_decrypt_and_unencode_mpi(unencoded_m_buf,sizeof unencoded_m_buf,enc_m,secret);
 
     if(n < 1)
@@ -2596,12 +2596,12 @@ static int parse_pk_session_key(ops_region_t *region,
         return 0;
         }
 
-    // PKA
+    /* PKA */
     C.pk_session_key.symmetric_algorithm=unencoded_m_buf[0];
 
     if (!ops_is_sa_supported(C.pk_session_key.symmetric_algorithm))
         {
-        // ERR1P
+        /* ERR1P */
         OPS_ERROR_1(&pinfo->errors,OPS_E_ALG_UNSUPPORTED_SYMMETRIC_ALG,
                     "Symmetric algorithm %s not supported", 
                     ops_show_symmetric_algorithm(C.pk_session_key.symmetric_algorithm));
@@ -2637,7 +2637,7 @@ static int parse_pk_session_key(ops_region_t *region,
         printf("session key checksum: %2x %2x\n", unencoded_m_buf[k+1], unencoded_m_buf[k+2]);
         }
 
-    // Check checksum
+    /* Check checksum */
 
     ops_calc_session_key_checksum(&C.pk_session_key, &cs[0]);
     if (unencoded_m_buf[k+1]!=cs[0] || unencoded_m_buf[k+2]!=cs[1])
@@ -2648,7 +2648,7 @@ static int parse_pk_session_key(ops_region_t *region,
         return 0;
         }
 
-    // all is well
+    /* all is well */
     CBP(pinfo,OPS_PTAG_CT_PK_SESSION_KEY,&content);
 
     ops_crypt_any(&pinfo->decrypt,C.pk_session_key.symmetric_algorithm);
@@ -2670,7 +2670,7 @@ static int ops_decrypt_se_data(ops_content_tag_t tag,ops_region_t *region,
 	{
 	unsigned char buf[OPS_MAX_BLOCK_SIZE+2]="";
 	size_t b=decrypt->blocksize;
-        //	ops_parser_content_t content;
+        /*	ops_parser_content_t content; */
 	ops_region_t encregion;
 
 
@@ -2738,7 +2738,7 @@ static int ops_decrypt_se_ip_data(ops_content_tag_t tag,ops_region_t *region,
 
         r=ops_parse(pinfo);
 
-        //        assert(0);
+        /*        assert(0); */
         ops_reader_pop_se_ip_data(pinfo);
         ops_reader_pop_decrypt(pinfo);
         }
@@ -2844,7 +2844,7 @@ static int ops_parse_one_packet(ops_parse_info_t *pinfo,
 	(void) fprintf(stderr, "ops_parse_one_packet: base_read returned %d\n",
 		r);
     }
-    // errors in the base read are effectively EOF.
+    /* errors in the base read are effectively EOF. */
     if(r <= 0)
 	return -1;
 
@@ -2977,9 +2977,9 @@ static int ops_parse_one_packet(ops_parse_info_t *pinfo,
 	if(!consume_packet(&region,pinfo,ops_false))
 	    r=-1;
 
-    // also consume it if there's been an error?
-    // \todo decide what to do about an error on an
-    //       indeterminate packet
+    /* also consume it if there's been an error? */
+    /* \todo decide what to do about an error on an */
+    /*       indeterminate packet */
     if (r==0)
         {
         if (!consume_packet(&region,pinfo,ops_false))
@@ -3253,8 +3253,8 @@ ops_crypt_t *ops_parse_get_decrypt(ops_parse_info_t *pinfo)
     return NULL;
     }
 
-// XXX: this could be improved by sharing all hashes that are the
-// same, then duping them just before checking the signature.
+/* XXX: this could be improved by sharing all hashes that are the */
+/* same, then duping them just before checking the signature. */
 void ops_parse_hash_init(ops_parse_info_t *pinfo,ops_hash_algorithm_t type,
 			 const unsigned char *keyid)
     {
