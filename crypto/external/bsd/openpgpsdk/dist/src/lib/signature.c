@@ -260,7 +260,8 @@ static void dsa_sign(ops_hash_t *hash,
     }
 
 static ops_boolean_t rsa_verify(ops_hash_algorithm_t type,
-				const unsigned char *hash,size_t hash_length,
+				const unsigned char *hash,
+				size_t hash_length,
 				const ops_rsa_signature_t *sig,
 				const ops_rsa_public_key_t *rsa)
     {
@@ -291,12 +292,22 @@ static ops_boolean_t rsa_verify(ops_hash_algorithm_t type,
     if(hashbuf_from_sig[0] != 0 || hashbuf_from_sig[1] != 1)
 	return ops_false;
 
-    switch(type)
-	{
-    case OPS_HASH_MD5: prefix=prefix_md5; plen=sizeof prefix_md5; break;
-    case OPS_HASH_SHA1: prefix=prefix_sha1; plen=sizeof prefix_sha1; break;
-    case OPS_HASH_SHA256: prefix=prefix_sha256; plen=sizeof prefix_sha256; break;
-    default: assert(0); break;
+	switch(type) {
+	case OPS_HASH_MD5:
+		prefix=prefix_md5;
+		plen=sizeof(prefix_md5);
+		break;
+	case OPS_HASH_SHA1:
+		prefix=prefix_sha1;
+		plen=sizeof(prefix_sha1);
+		break;
+	case OPS_HASH_SHA256:
+		prefix=prefix_sha256;
+		plen=sizeof(prefix_sha256);
+		break;
+	default:
+		(void) fprintf(stderr, "Unknown hash algorithm: %d\n", type);
+		return ops_false;
 	}
 
     if(keysize-plen-hash_length < 10)
@@ -334,8 +345,8 @@ static ops_boolean_t rsa_verify(ops_hash_algorithm_t type,
             { printf("%02x ", hash[uu]); }
         printf("\n");
         }
-    if(memcmp(&hashbuf_from_sig[n],prefix,plen)
-       || memcmp(&hashbuf_from_sig[n+plen],hash,hash_length))
+    if(memcmp(&hashbuf_from_sig[n],prefix,plen) != 0
+       || memcmp(&hashbuf_from_sig[n+plen],hash,hash_length) != 0)
 	return ops_false;
 
     return ops_true;
@@ -403,11 +414,11 @@ ops_boolean_t ops_check_signature(const unsigned char *hash,unsigned length,
     {
     ops_boolean_t ret;
 
-    /*
-    printf(" hash=");
-    //    hashout[0]=0;
-    hexdump(hash,length);
-    */
+    if (ops_get_debug_level(__FILE__)) {
+	    printf("ops_check_signature: (length %d) hash=", length);
+	    //    hashout[0]=0;
+	    hexdump(hash, length);
+    }
 
     ret = 0;
     switch(sig->info.key_algorithm)
@@ -714,8 +725,9 @@ void ops_signature_start_message_signature(ops_create_signature_t *sig,
 void ops_signature_add_data(ops_create_signature_t *sig,const void *buf,
 			    size_t length)
     {
-    if (ops_get_debug_level(__FILE__))
-        { fprintf(stderr,"ops_signature_add_data adds to hash\n"); }
+	if (ops_get_debug_level(__FILE__)) {
+		fprintf(stderr,"ops_signature_add_data adds to hash\n");
+	}
     sig->hash.add(&sig->hash,buf,length);
     }
 

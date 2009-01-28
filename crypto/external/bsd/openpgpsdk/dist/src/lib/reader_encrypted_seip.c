@@ -167,12 +167,12 @@ static int se_ip_data_reader(void *dest_, size_t len, ops_error_t **errors,
             {
             unsigned int i=0;
 
-            fprintf(stderr,"\nplaintext (len=%zu): ",sz_plaintext);
+            fprintf(stderr,"\nplaintext (len=%" PRIsize "u): ",sz_plaintext);
             for (i=0; i<sz_plaintext;i++)
                 fprintf(stderr," 0x%02x", plaintext[i]);
             fprintf(stderr,"\n");
 
-            fprintf(stderr,"\nmdc (len=%zu): ",sz_mdc);
+            fprintf(stderr,"\nmdc (len=%" PRIsize "u): ",sz_mdc);
             for (i=0; i<sz_mdc;i++)
                 fprintf(stderr," 0x%02x", mdc[i]);
             fprintf(stderr,"\n");

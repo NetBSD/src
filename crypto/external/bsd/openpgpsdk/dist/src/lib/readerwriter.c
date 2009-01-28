@@ -31,6 +31,7 @@
 #include <stdio.h>
 
 #include <openpgpsdk/readerwriter.h>
+#include <openpgpsdk/std_print.h>
 #include <openpgpsdk/callback.h>
 
 #include "parse_local.h"
@@ -89,7 +90,7 @@ void ops_setup_memory_read(ops_parse_info_t **pinfo, ops_memory_t *mem,
                            ops_boolean_t accumulate)
     {
     /*
-     * initialise needed uctures for reading
+     * initialise needed structures for reading
      */
 
     *pinfo=ops_parse_info_new();
@@ -249,6 +250,9 @@ int ops_setup_file_read(ops_parse_info_t **pinfo, const char *filename,
     if (accumulate)
         (*pinfo)->rinfo.accumulate=ops_true;
 
+	if (ops_get_debug_level(__FILE__)) {
+		printf("ops_setup_file_read: accumulate %d\n", accumulate);
+	}
     return fd;
     }
 
@@ -272,7 +276,9 @@ callback_literal_data(const ops_parser_content_t *content_,ops_parse_cb_info_t *
 
     OPS_USED(cbinfo);
 
-    //    ops_print_packet(content_);
+	if (ops_get_debug_level(__FILE__)) {
+		ops_print_packet(content_);
+	}
 
     // Read data from packet into static buffer
     switch(content_->tag)
@@ -311,13 +317,17 @@ callback_pk_session_key(const ops_parser_content_t *content_,ops_parse_cb_info_t
     
     OPS_USED(cbinfo);
 
-    //    ops_print_packet(content_);
+	if (ops_get_debug_level(__FILE__)) {
+		ops_print_packet(content_);
+	}
     
     // Read data from packet into static buffer
     switch(content_->tag)
         {
     case OPS_PTAG_CT_PK_SESSION_KEY:
-		//	printf ("OPS_PTAG_CT_PK_SESSION_KEY\n");
+	if (ops_get_debug_level(__FILE__)) {
+		printf ("OPS_PTAG_CT_PK_SESSION_KEY\n");
+	}
         assert(cbinfo->cryptinfo.keyring);
         cbinfo->cryptinfo.keydata=ops_keyring_find_key_by_id(cbinfo->cryptinfo.keyring,
                                              content->pk_session_key.key_id);
@@ -356,7 +366,9 @@ callback_cmd_get_secret_key(const ops_parser_content_t *content_,ops_parse_cb_in
 
     OPS_USED(cbinfo);
 
-//    ops_print_packet(content_);
+	if (ops_get_debug_level(__FILE__)) {
+		ops_print_packet(content_);
+	}
 
     switch(content_->tag)
 	{
@@ -425,7 +437,9 @@ callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t *content_,op
 
     OPS_USED(cbinfo);
 
-//    ops_print_packet(content_);
+	if (ops_get_debug_level(__FILE__)) {
+		ops_print_packet(content_);
+	}
 
     switch(content_->tag)
         {
