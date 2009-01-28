@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.80 2009/01/28 00:02:39 njoly Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.81 2009/01/28 00:43:04 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -169,7 +169,7 @@ struct netbsd32_iovec {
 /* from <sys/time.h> */
 typedef int32_t netbsd32_timer_t;
 typedef	int32_t netbsd32_time50_t;
-typedef	int64_t netbsd32_time_t;
+typedef	netbsd32_int64 netbsd32_time_t;
 typedef netbsd32_pointer_t netbsd32_timerp_t;
 
 typedef netbsd32_pointer_t netbsd32_timespec50p_t;
@@ -182,7 +182,7 @@ typedef netbsd32_pointer_t netbsd32_timespecp_t;
 struct netbsd32_timespec {
 	netbsd32_time_t tv_sec;			/* seconds */
 	netbsd32_long	tv_nsec;	/* and nanoseconds */
-} __packed;
+};
 
 typedef netbsd32_pointer_t netbsd32_timeval50p_t;
 struct netbsd32_timeval50 {
@@ -194,7 +194,7 @@ typedef netbsd32_pointer_t netbsd32_timevalp_t;
 struct netbsd32_timeval {
 	netbsd32_time_t	tv_sec;		/* seconds */
 	netbsd32_long	tv_usec;	/* and microseconds */
-} __packed;
+};
 
 typedef netbsd32_pointer_t netbsd32_timezonep_t;
 struct netbsd32_timezone {
