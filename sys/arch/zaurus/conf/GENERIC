@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.16 2009/01/24 05:06:07 mrg Exp $
+#	$NetBSD: GENERIC,v 1.17 2009/01/28 11:19:20 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -230,47 +230,82 @@ wd* at atabus? drive ? flags 0x0000
 
 
 # USB Controller and Devices
-pxaudc0 at pxaip?	# USB Device Controller
-#ohci0 at pxaip?	# USB Host Controller
+zusb* at pxaip?
+#pxaudc0 at pxaip?	# USB Device Controller
+ohci0 at pxaip?	# USB Host Controller
 
 # PCMCIA USB controllers
 #slhci* at pcmcia? function ?	# ScanLogic SL811HS
 
 # USB bus support
-#usb* at ohci?
+usb* at ohci?
 #usb* at slhci?
 
 # USB Hubs
-#uhub* at usb?
-#uhub* at uhub? port ?
+uhub* at usb?
+uhub* at uhub? port ?
 
 # USB HID device
-#uhidev* at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
-#ums* at uhidev? reportid ?
-#wsmouse* at ums? mux 0
+ums* at uhidev? reportid ?
+wsmouse* at ums? mux 0
 
 # USB Keyboards
-#ukbd* at uhidev? reportid ?
-#wskbd* at ukbd? console ? mux 1
+ukbd* at uhidev? reportid ?
+wskbd* at ukbd? console ? mux 1
 
 # USB Generic HID devices
-#uhid* at uhidev? reportid ?
+uhid* at uhidev? reportid ?
 
 # USB Mass Storage
-#umass* at uhub? port ? configuration ? interface ?
-#wd* at umass?
+umass* at uhub? port ? configuration ? interface ?
+wd* at umass?
 
 # USB audio
 #uaudio* at uhub? port ? configuration ?
+
+# USB Ethernet adapters
+aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
+axe*    at uhub? port ?         # ASIX AX88172 based adapters
+cdce*   at uhub? port ?         # CDC, Ethernet Networking Control Model
+cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
+kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
+udav*   at uhub? port ?         # Davicom DM9601 based adapters
+url*    at uhub? port ?         # Realtek RTL8150L based adapters
 
 # Kyocera AIR-EDGE PHONE
 #ukyopon* at uhub? port ?
 #ucom* at ukyopon? portno ?
 
 # USB Generic driver
-#ugen*   at uhub? port ?
+ugen*   at uhub? port ?
+
+# MII/PHY support
+acphy*  at mii? phy ?                   # DAltima AC101 and AMD Am79c874 PHYs
+amhphy* at mii? phy ?                   # AMD 79c901 Ethernet PHYs
+bmtphy* at mii? phy ?                   # Broadcom BCM5201 and BCM5202 PHYs
+brgphy* at mii? phy ?                   # Broadcom BCM5400-family PHYs
+dmphy*  at mii? phy ?                   # Davicom DM9101 PHYs
+exphy*  at mii? phy ?                   # 3Com internal PHYs
+glxtphy* at mii? phy ?                  # Level One LXT-1000 PHYs
+gphyter* at mii? phy ?                  # NS83861 Gig-E PHY
+icsphy* at mii? phy ?                   # Integrated Circuit Systems ICS189x
+inphy*  at mii? phy ?                   # Intel 82555 PHYs
+iophy*  at mii? phy ?                   # Intel 82553 PHYs
+lxtphy* at mii? phy ?                   # Level One LXT-970 PHYs
+makphy* at mii? phy ?                   # Marvell Semiconductor 88E1000 PHYs
+nsphy*  at mii? phy ?                   # NS83840 PHYs
+nsphyter* at mii? phy ?                 # NS83843 PHYs
+pnaphy* at mii? phy ?                   # generic HomePNA PHYs
+qsphy*  at mii? phy ?                   # Quality Semiconductor QS6612 PHYs
+sqphy*  at mii? phy ?                   # Seeq 80220/80221/80223 PHYs
+tlphy*  at mii? phy ?                   # ThunderLAN PHYs
+tqphy*  at mii? phy ?                   # TDK Semiconductor PHYs
+ukphy*  at mii? phy ?                   # generic unknown PHYs
+urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
+
 
 
 # integrated MMC/SD contoller
@@ -280,13 +315,7 @@ pxaudc0 at pxaip?	# USB Device Controller
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 
-# SCSI bus support
-#scsibus* at scsi?
-
-# SCSI devices
-#sd* at scsibus? target ? lun ?	# SCSI disk drives
-#cd* at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#uk* at scsibus? target ? lun ?	# SCSI unknown
+#ld* at sdmmc?				# MMC/SD/SDHC card
 
 
 # Pseudo-Devices
@@ -301,8 +330,8 @@ pseudo-device	loop			# network loopback
 
 #
 # accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
