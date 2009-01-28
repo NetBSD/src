@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.163 2008/07/27 20:12:47 dsl Exp $	*/
+/*	$NetBSD: key.c,v 1.164 2009/01/28 19:06:03 skd Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163 2008/07/27 20:12:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.164 2009/01/28 19:06:03 skd Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -657,7 +657,7 @@ key_allocsa_policy(saidx)
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx_withmode(&sah->saidx, saidx))
+		if (key_cmpsaidx_withmode(&sah->saidx, saidx) == 0)
 			goto found;
 	}
 
@@ -2950,7 +2950,7 @@ key_getsah(saidx)
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx_exactly(&sah->saidx, saidx))
+		if (key_cmpsaidx_exactly(&sah->saidx, saidx) == 0)
 			return (sah);
 	}
 
