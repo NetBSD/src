@@ -1,4 +1,4 @@
-/*	$NetBSD: zusb.c,v 1.2 2009/01/28 14:06:15 nonaka Exp $	*/
+/*	$NetBSD: zusb.c,v 1.3 2009/01/28 14:15:56 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2008 Christopher Gilbert
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.2 2009/01/28 14:06:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.3 2009/01/28 14:15:56 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.2 2009/01/28 14:06:15 nonaka Exp $");
 
 
 struct zusb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -64,7 +64,7 @@ struct zusb_softc {
 static int	zusb_match(struct device *, struct cfdata *, void *);
 static void	zusb_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(zusb, sizeof(struct zusb_softc), 
+CFATTACH_DECL_NEW(zusb, sizeof(struct zusb_softc), 
     zusb_match, zusb_attach, NULL, NULL);
 
 static int	zusb_client_intr(void *);
@@ -72,7 +72,7 @@ static int	zusb_host_intr(void *);
 static void	zusb_test_and_enabled_host_port(struct zusb_softc *);
 
 static int
-zusb_match(struct device *parent, struct cfdata *cf, void *aux)
+zusb_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (ZAURUS_ISC3000)
@@ -81,19 +81,20 @@ zusb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-zusb_attach(struct device *parent, struct device *self, void *aux)
+zusb_attach(device_t parent, device_t self, void *aux)
 {
-	struct zusb_softc *sc = (struct zusb_softc *)self;
+	struct zusb_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
 
 	aprint_normal(": USB Mode detection\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;
 
 	/* Map I/O space */
 	if (bus_space_map(sc->sc_iot, PXA2X0_USBDC_BASE, PXA270_USBDC_SIZE, 0,
 				&sc->sc_ioh)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map memory space\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map memory space\n");
 		return;
 	}
 
@@ -118,7 +119,7 @@ zusb_client_intr(void *v)
 {
 	struct zusb_softc *sc = v;
 
-	DPRINTF(("%s: USB client cable changed\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: USB client cable changed\n", device_xname(sc->sc_dev)));
 	zusb_test_and_enabled_host_port(sc);
 
 	return 1;
@@ -129,7 +130,7 @@ zusb_host_intr(void *v)
 {
 	struct zusb_softc *sc = v;
 
-	DPRINTF(("%s: USB host cable changed\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: USB host cable changed\n", device_xname(sc->sc_dev)));
 	zusb_test_and_enabled_host_port(sc);
 
 	return 1;
@@ -144,17 +145,17 @@ zusb_test_and_enabled_host_port(struct zusb_softc *sc)
 #endif
 
 	DPRINTF(("%s: USB cable: host %d, client %d\n",
-	    device_xname(&sc->sc_dev), host_cable, client_cable));
+	    device_xname(sc->sc_dev), host_cable, client_cable));
 
 	if (!host_cable) {
 		pxa2x0_gpio_set_function(C3000_USB_HOST_POWER_PIN,
 		    GPIO_OUT | GPIO_SET);
 		DPRINTF(("%s: USB host power enabled\n",
-		    device_xname(&sc->sc_dev)));
+		    device_xname(sc->sc_dev)));
 	} else {
 		pxa2x0_gpio_set_function(C3000_USB_HOST_POWER_PIN,
 		    GPIO_OUT | GPIO_CLR);
 		DPRINTF(("%s: USB host power disabled\n",
-		    device_xname(&sc->sc_dev)));
+		    device_xname(sc->sc_dev)));
 	}
 }
