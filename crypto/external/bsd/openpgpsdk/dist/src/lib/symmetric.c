@@ -40,7 +40,7 @@
 #define ATTRIBUTE_UNUSED __attribute__ ((__unused__))
 #else
 #define ATTRIBUTE_UNUSED 
-#endif // #ifndef WIN32
+#endif /* #ifndef WIN32 */
 
 #endif /* ATTRIBUTE_UNUSED */
 
@@ -137,7 +137,7 @@ static void idea_init(ops_crypt_t *crypt)
         free(crypt->encrypt_key);
     crypt->encrypt_key=malloc(sizeof(IDEA_KEY_SCHEDULE));
 
-    // note that we don't invert the key when decrypting for CFB mode
+    /* note that we don't invert the key when decrypting for CFB mode */
     idea_set_encrypt_key(crypt->key,crypt->encrypt_key);
 
     if (crypt->decrypt_key)
@@ -185,7 +185,7 @@ static const ops_crypt_t idea=
     };
 #endif /* OPENSSL_NO_IDEA */
 
-// AES with 128-bit key (AES)
+/* AES with 128-bit key (AES) */
 
 #define KEYBITS_AES128 128
 
@@ -241,7 +241,7 @@ static const ops_crypt_t aes128=
     TRAILER
     };
 
-// AES with 256-bit key
+/* AES with 256-bit key */
 
 #define KEYBITS_AES256 256
 
@@ -277,7 +277,7 @@ static const ops_crypt_t aes256=
     TRAILER
     };
 
-// Triple DES
+/* Triple DES */
 
 static void tripledes_init(ops_crypt_t *crypt)
     {
@@ -364,7 +364,7 @@ static const ops_crypt_t *get_proto(ops_symmetric_algorithm_t alg)
 
     default:
         fprintf(stderr,"Unknown algorithm: %d (%s)\n",alg,ops_show_symmetric_algorithm(alg));
-        //	assert(0);
+        /*	assert(0); */
 	}
 
     return NULL;
@@ -407,7 +407,7 @@ unsigned ops_key_size(ops_symmetric_algorithm_t alg)
 
 void ops_encrypt_init(ops_crypt_t * encrypt)
     {
-    // \todo should there be a separate ops_encrypt_init?
+    /* \todo should there be a separate ops_encrypt_init? */
     ops_decrypt_init(encrypt);
     }
 
@@ -505,7 +505,7 @@ size_t ops_encrypt_se_ip(ops_crypt_t *crypt,void *out_,const void *in_,
 
     crypt->cfb_encrypt(crypt, out_, in_, count);
 
-    // \todo test this number was encrypted
+    /* \todo test this number was encrypted */
     return count;
     }
 
@@ -517,8 +517,6 @@ size_t ops_decrypt_se_ip(ops_crypt_t *crypt,void *out_,const void *in_,
 
     crypt->cfb_decrypt(crypt, out_, in_, count);
 
-    // \todo check this number was in fact decrypted
+    /* \todo check this number was in fact decrypted */
     return count;
     }
-
-// EOF

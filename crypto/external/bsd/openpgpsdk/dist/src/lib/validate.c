@@ -41,7 +41,7 @@ check_binary_signature(const unsigned len,
 		    const ops_signature_t *sig, 
 		    const ops_public_key_t *signer __attribute__((unused)))
     {
-    // Does the signed hash match the given hash?
+    /* Does the signed hash match the given hash? */
 
     int n=0;
     ops_hash_t hash;
@@ -49,7 +49,7 @@ check_binary_signature(const unsigned len,
     unsigned char trailer[6];
     unsigned int hashedlen;
 
-    //common_init_signature(&hash,sig);
+    /*common_init_signature(&hash,sig); */
     ops_hash_any(&hash,sig->info.hash_algorithm);
     hash.init(&hash);
     hash.add(&hash,data,len);
@@ -67,7 +67,7 @@ check_binary_signature(const unsigned len,
     case OPS_V4:
         hash.add(&hash,sig->info.v4_hashed_data,sig->info.v4_hashed_data_length);
 
-        trailer[0]=0x04; // version
+        trailer[0]=0x04; /* version */
         trailer[1]=0xFF;
         hashedlen=sig->info.v4_hashed_data_length;
         trailer[2]=hashedlen >> 24;
@@ -89,7 +89,7 @@ if (ops_get_debug_level(__FILE__)) {
 	printf("check_binary_signature: hash length %zu\n", hash.size);
 }
 
-    //    return ops_false;
+    /*    return ops_false; */
     return ops_check_signature(hashout,n,sig,signer);
     }
 
@@ -110,7 +110,7 @@ static int keydata_reader(void *dest,size_t length,ops_error_t **errors,
     if(arg->packet == arg->key->npackets)
 	return 0;
 
-    // we should never be asked to cross a packet boundary in a single read
+    /* we should never be asked to cross a packet boundary in a single read */
     assert(arg->key->packets[arg->packet].length >= arg->offset+length);
 
     memcpy(dest,&arg->key->packets[arg->packet].raw[arg->offset],length);
@@ -137,17 +137,17 @@ static void add_sig_to_valid_list(ops_validate_result_t * result, const ops_sign
     size_t newsize;
     size_t start;
 
-    // increment count
+    /* increment count */
     ++result->valid_count;
 
-    // increase size of array
+    /* increase size of array */
     newsize=(sizeof *sig) * result->valid_count;
     if (!result->valid_sigs)
         result->valid_sigs=malloc(newsize);
     else
         result->valid_sigs=realloc(result->valid_sigs, newsize);
 
-    // copy key ptr to array
+    /* copy key ptr to array */
     start=(sizeof *sig) * (result->valid_count-1);
     copy_signature_info(result->valid_sigs+start,sig);
     }
@@ -157,17 +157,17 @@ static void add_sig_to_invalid_list(ops_validate_result_t * result, const ops_si
     size_t newsize;
     size_t start;
 
-    // increment count
+    /* increment count */
     ++result->invalid_count;
 
-    // increase size of array
+    /* increase size of array */
     newsize=(sizeof *sig) * result->invalid_count;
     if (!result->invalid_sigs)
         result->invalid_sigs=malloc(newsize);
     else
         result->invalid_sigs=realloc(result->invalid_sigs, newsize);
 
-    // copy key ptr to array
+    /* copy key ptr to array */
     start=(sizeof *sig) * (result->invalid_count-1);
     copy_signature_info(result->invalid_sigs+start, sig);
     }
@@ -177,17 +177,17 @@ static void add_sig_to_unknown_list(ops_validate_result_t * result, const ops_si
     size_t newsize;
     size_t start;
 
-    // increment count
+    /* increment count */
     ++result->unknown_signer_count;
 
-    // increase size of array
+    /* increase size of array */
     newsize=(sizeof *sig) * result->unknown_signer_count;
     if (!result->unknown_sigs)
         result->unknown_sigs=malloc(newsize);
     else
         result->unknown_sigs=realloc(result->unknown_sigs, newsize);
 
-    // copy key id to array
+    /* copy key id to array */
     start=OPS_KEY_ID_SIZE * (result->unknown_signer_count-1);
     copy_signature_info(result->unknown_sigs+start, sig);
     }
@@ -238,8 +238,8 @@ ops_validate_key_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cb
 	arg->last_seen=ATTRIBUTE;
 	return OPS_KEEP_MEMORY;
 
-    case OPS_PTAG_CT_SIGNATURE: // V3 sigs
-    case OPS_PTAG_CT_SIGNATURE_FOOTER: // V4 sigs
+    case OPS_PTAG_CT_SIGNATURE: /* V3 sigs */
+    case OPS_PTAG_CT_SIGNATURE_FOOTER: /* V4 sigs */
 
 	signer=ops_keyring_find_key_by_id(arg->keyring,
 					   content->signature.info.signer_id);
@@ -272,7 +272,7 @@ ops_validate_key_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cb
 	    break;
 
 	case OPS_SIG_SUBKEY:
-	    // XXX: we should also check that the signer is the key we are validating, I think.
+	    /* XXX: we should also check that the signer is the key we are validating, I think. */
 	    valid=ops_check_subkey_signature(&arg->pkey,&arg->subkey,
 	     	    &content->signature,
 		    ops_get_public_key_from_data(signer),
@@ -311,7 +311,7 @@ ops_validate_key_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cb
 	    }
 	break;
 
-	// ignore these
+	/* ignore these */
     case OPS_PARSER_PTAG:
     case OPS_PTAG_CT_SIGNATURE_HEADER:
     case OPS_PARSER_PACKET_END:
@@ -348,11 +348,11 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
     switch(content_->tag)
 	{
     case OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
-        // ignore - this gives us the "Armor Header" line "Hash: SHA1" or similar
+        /* ignore - this gives us the "Armor Header" line "Hash: SHA1" or similar */
         break;
 
     case OPS_PTAG_CT_LITERAL_DATA_HEADER:
-        // ignore
+        /* ignore */
         break;
 
     case OPS_PTAG_CT_LITERAL_DATA_BODY:
@@ -370,11 +370,11 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
         return OPS_KEEP_MEMORY;
 
     case OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER:
-        // this gives us an ops_hash_t struct
+        /* this gives us an ops_hash_t struct */
         break;
 
-    case OPS_PTAG_CT_SIGNATURE: // V3 sigs
-    case OPS_PTAG_CT_SIGNATURE_FOOTER: // V4 sigs
+    case OPS_PTAG_CT_SIGNATURE: /* V3 sigs */
+    case OPS_PTAG_CT_SIGNATURE_FOOTER: /* V4 sigs */
         
         if (ops_get_debug_level(__FILE__))
             {
@@ -429,7 +429,7 @@ validate_data_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinf
 	    }
 	break;
 
-	// ignore these
+	/* ignore these */
      case OPS_PARSER_PTAG:
      case OPS_PTAG_CT_SIGNATURE_HEADER:
      case OPS_PTAG_CT_ARMOUR_HEADER:
@@ -518,7 +518,7 @@ ops_boolean_t ops_validate_key_signatures(ops_validate_result_t *result,const op
     carg.cb_get_passphrase=cb_get_passphrase;
 
     pinfo=ops_parse_info_new();
-    //    ops_parse_options(&opt,OPS_PTAG_CT_SIGNATURE,OPS_PARSE_PARSED);
+    /*    ops_parse_options(&opt,OPS_PTAG_CT_SIGNATURE,OPS_PARSE_PARSED); */
 
     carg.keyring=keyring;
 
@@ -526,8 +526,8 @@ ops_boolean_t ops_validate_key_signatures(ops_validate_result_t *result,const op
     pinfo->rinfo.accumulate=ops_true;
     ops_keydata_reader_set(pinfo,key);
 
-    // Note: Coverity incorrectly reports an error that carg.rarg
-    // is never used.
+    /* Note: Coverity incorrectly reports an error that carg.rarg */
+    /* is never used. */
     carg.rarg=ops_reader_get_arg_from_pinfo(pinfo);
 
     ops_parse(pinfo);
@@ -629,26 +629,26 @@ ops_boolean_t ops_validate_file(ops_validate_result_t *result, const char* filen
 
     int fd=0;
 
-    //
+    /* */
     fd=ops_setup_file_read(&pinfo, filename, &validate_arg, validate_data_cb, ops_true);
     if (fd < 0)
         return ops_false;
 
-    // Set verification reader and handling options
+    /* Set verification reader and handling options */
 
     memset(&validate_arg,'\0',sizeof validate_arg);
     validate_arg.result=result;
     validate_arg.keyring=keyring;
     validate_arg.mem=ops_memory_new();
     ops_memory_init(validate_arg.mem, 128);
-    // Note: Coverity incorrectly reports an error that carg.rarg
-    // is never used.
+    /* Note: Coverity incorrectly reports an error that carg.rarg */
+    /* is never used. */
     validate_arg.rarg=ops_reader_get_arg_from_pinfo(pinfo);
 
     if (armoured)
         ops_reader_push_dearmour(pinfo);
     
-    // Do the verification
+    /* Do the verification */
 
     ops_parse(pinfo);
 
@@ -660,7 +660,7 @@ ops_boolean_t ops_validate_file(ops_validate_result_t *result, const char* filen
                result->unknown_signer_count);
         }
 
-    // Tidy up
+    /* Tidy up */
     if (armoured)
         ops_reader_pop_dearmour(pinfo);
     ops_teardown_file_read(pinfo, fd);
@@ -686,24 +686,24 @@ ops_boolean_t ops_validate_mem(ops_validate_result_t *result, ops_memory_t* mem,
     ops_parse_info_t *pinfo=NULL;
     validate_data_cb_arg_t validate_arg;
 
-    //
+    /* */
     ops_setup_memory_read(&pinfo, mem, &validate_arg, validate_data_cb, ops_true);
 
-    // Set verification reader and handling options
+    /* Set verification reader and handling options */
 
     memset(&validate_arg,'\0',sizeof validate_arg);
     validate_arg.result=result;
     validate_arg.keyring=keyring;
     validate_arg.mem = ops_memory_new();
     ops_memory_init(validate_arg.mem, 128);
-    // Note: Coverity incorrectly reports an error that carg.rarg
-    // is never used.
+    /* Note: Coverity incorrectly reports an error that carg.rarg */
+    /* is never used. */
     validate_arg.rarg=ops_reader_get_arg_from_pinfo(pinfo);
 
     if (armoured)
         ops_reader_push_dearmour(pinfo);
     
-    // Do the verification
+    /* Do the verification */
 
     ops_parse(pinfo);
 
@@ -715,12 +715,10 @@ ops_boolean_t ops_validate_mem(ops_validate_result_t *result, ops_memory_t* mem,
                result->unknown_signer_count);
         }
 
-    // Tidy up
+    /* Tidy up */
     if (armoured)
         ops_reader_pop_dearmour(pinfo);
     ops_teardown_memory_read(pinfo, mem);
 
     return validate_result_status(result);
     }
-
-// eof

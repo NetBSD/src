@@ -85,12 +85,12 @@ ops_print_public_keydata(const ops_keydata_t *key)
 
     if (key->nuids==1)
 	{
-	// print on same line as other info
+	/* print on same line as other info */
 	printf ("%s\n", key->uids[0].user_id);
 	}
     else
 	{
-	// print all uids on separate line 
+	/* print all uids on separate line  */
 	unsigned int i;
 	printf("\n");
 	for (i=0; i<key->nuids; i++)
@@ -185,12 +185,12 @@ ops_print_secret_keydata(const ops_keydata_t *key)
 
     if (key->nuids==1)
 	{
-	// print on same line as other info
+	/* print on same line as other info */
 	printf ("%s\n", key->uids[0].user_id);
 	}
     else
 	{
-	// print all uids on separate line 
+	/* print all uids on separate line  */
 	unsigned int i;
 	printf("\n");
 	for (i=0; i<key->nuids; i++)
@@ -225,7 +225,7 @@ ops_print_secret_key_verbose(const ops_content_tag_t type, const ops_secret_key_
 	print_tagname("SECRET_KEY");
     else
 	print_tagname("ENCRYPTED_SECRET_KEY");
-    //    ops_print_public_key(key);
+    /*    ops_print_public_key(key); */
     printf("S2K Usage: %d\n",skey->s2k_usage);
     if(skey->s2k_usage != OPS_S2KU_NONE)
 	{
@@ -282,7 +282,7 @@ ops_print_secret_keydata_verbose(const ops_keydata_t *key)
     ops_print_secret_key_verbose(key->type,skey);
     }
 
-// static functions
+/* static functions */
 
 static void print_unsigned_int(const char *name, unsigned int val)
     {
@@ -446,7 +446,7 @@ static void print_string(const char *name,const char *str)
 
 static void print_utf8_string(const char *name,const unsigned char *str)
     {
-    // \todo Do this better for non-English character sets
+    /* \todo Do this better for non-English character sets */
     print_string(name,(const char *)str);
     }
 
@@ -1000,7 +1000,7 @@ int ops_print_packet(const ops_parser_content_t *content_)
 
  case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
      start_subpacket(content_->tag);
-     end_subpacket(); // \todo print out contents?
+     end_subpacket(); /* \todo print out contents? */
      break;
 
     case OPS_PTAG_SS_USERDEFINED00:
@@ -1150,7 +1150,7 @@ int ops_print_packet(const ops_parser_content_t *content_)
 	break;
 
     case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
-	//	print_secret_key(content_->tag,&content->secret_key);
+	/*	print_secret_key(content_->tag,&content->secret_key); */
 	print_tagname("OPS_PTAG_CT_ENCRYPTED_SECRET_KEY");
 	ops_print_secret_key_verbose(content_->tag,&content->secret_key);
 	break;

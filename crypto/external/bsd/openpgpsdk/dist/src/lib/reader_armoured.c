@@ -90,23 +90,23 @@ typedef struct
 						 where we wouldn't
 						 strictly expect it */
 
-    // it is an error to get a cleartext message without a sig
+    /* it is an error to get a cleartext message without a sig */
     ops_boolean_t expect_sig:1;
     ops_boolean_t got_sig:1;
 
-    // base64 stuff
+    /* base64 stuff */
     unsigned buffered;
     unsigned char buffer[3];
     ops_boolean_t eof64;
     unsigned long checksum;
     unsigned long read_checksum;
-    // unarmoured text blocks
+    /* unarmoured text blocks */
     unsigned char unarmoured[8192];
     size_t num_unarmoured;
-    // pushed back data (stored backwards)
+    /* pushed back data (stored backwards) */
     unsigned char *pushed_back;
     unsigned npushed_back;
-    // armoured block headers
+    /* armoured block headers */
     ops_headers_t headers;
     } dearmour_arg_t;
 
@@ -483,7 +483,7 @@ static int parse_headers(dearmour_arg_t *arg,ops_error_t **errors,
     unsigned nbuf;
     unsigned size;
     ops_boolean_t first=ops_true;
-    //ops_parser_content_t content;
+    /*ops_parser_content_t content; */
 
     buf=NULL;
     nbuf=size=0;
@@ -513,7 +513,7 @@ static int parse_headers(dearmour_arg_t *arg,ops_error_t **errors,
 	    if(!s)
 		if(!first && !arg->allow_headers_without_gap)
             {
-		    // then we have seriously malformed armour
+		    /* then we have seriously malformed armour */
 		    OPS_ERROR(errors,OPS_E_R_BAD_FORMAT,"No colon in armour header");
             rtn=-1;
             break;
@@ -524,8 +524,8 @@ static int parse_headers(dearmour_arg_t *arg,ops_error_t **errors,
 		       !(arg->allow_headers_without_gap || arg->allow_no_gap))
                 {
                 OPS_ERROR(errors,OPS_E_R_BAD_FORMAT,"No colon in armour header (2)");
-                // then we have a nasty armoured block with no
-                // headers, not even a blank line.
+                /* then we have a nasty armoured block with no */
+                /* headers, not even a blank line. */
                 buf[nbuf]='\n';
                 push_back(arg,(unsigned char *)buf,nbuf+1);
                 rtn=-1;
@@ -690,7 +690,7 @@ static int decode64(dearmour_arg_t *arg,ops_error_t **errors,
 
     if(arg->buffered < 3 && arg->buffered > 0)
 	{
-	// then we saw padding
+	/* then we saw padding */
 	assert(c == '=');
 	c=read_and_eat_whitespace(arg,errors,rinfo,cbinfo,ops_true);
 	if(c != '\n')
@@ -708,7 +708,7 @@ static int decode64(dearmour_arg_t *arg,ops_error_t **errors,
 
     if(c == '=')
 	{
-	// now we are at the checksum
+	/* now we are at the checksum */
 	ret=read4(arg,errors,rinfo,cbinfo,&c,&n,&arg->read_checksum);
 	if(ret < 0 || n != 4)
         {
@@ -770,9 +770,9 @@ static void base64(dearmour_arg_t *arg)
     arg->buffered=0;
     }
 
-// This reader is rather strange in that it can generate callbacks for
-// content - this is because plaintext is not encapsulated in PGP
-// packets... it also calls back for the text between the blocks.
+/* This reader is rather strange in that it can generate callbacks for */
+/* content - this is because plaintext is not encapsulated in PGP */
+/* packets... it also calls back for the text between the blocks. */
 
 static int armoured_data_reader(void *dest_,size_t length,ops_error_t **errors,
 				ops_reader_info_t *rinfo,
@@ -1040,5 +1040,3 @@ void ops_reader_pop_dearmour(ops_parse_info_t *pinfo)
     free(arg);
     ops_reader_pop(pinfo);
     }
-
-// EOF
