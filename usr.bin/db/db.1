@@ -1,6 +1,6 @@
-.\" 	$NetBSD: db.1,v 1.23 2008/09/05 09:05:13 wiz Exp $
+.\" 	$NetBSD: db.1,v 1.24 2009/01/28 05:31:18 lukem Exp $
 .\"
-.\" Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -43,12 +43,13 @@ databases
 .
 .Sh SYNOPSIS
 .Nm
-.Op Fl KiNqV
+.Op Fl DKiNqV
 .Op Fl E Ar endian
 .Op Fl f Ar infile
 .Op Fl O Ar outsep
 .Op Fl S Ar visitem
 .Op Fl T Ar visspec
+.Op Fl U Ar unvisitem
 .Op Fl X Ar extravis
 .Ar type
 .Ar dbfile
@@ -233,12 +234,32 @@ and
 .Xr strsvisx 3
 for more detail on the flags.
 .
+.It Fl U Ar unvisitem
+Specify items to
+.Xr strunvisx 3
+decode.
+The
+.Ar unvisitem
+option-argument is a character specifying if the key
+.Pq Ar k ,
+the value
+.Pq Ar v
+or both
+.Pq Ar b
+should be decoded.
+.
 .El
 .
 .Pp
 Read mode specific options are:
 .
 .Bl -tag -width Fl -offset indent
+.
+.It Fl D
+Display duplicate entries in
+.Sy btree
+databases.
+.
 .It Fl K
 Display key.
 .
@@ -260,7 +281,6 @@ the value
 or both
 .Pq Ar b
 should be encoded.
-.
 .
 .It Fl V
 Display value.
@@ -291,7 +311,9 @@ Write mode specific options are:
 Create new database, and truncate existing databases.
 .
 .It Fl D
-Allow duplicate entries.
+Allow duplicate entries in
+.Sy btree
+databases.
 (Requires
 .Fl R
 to be useful.)
@@ -321,25 +343,6 @@ Defaults to
 .It Fl R
 Overwrite existing entries.
 If not specified, writing to an existing entry raises an error.
-.
-.El
-.Pp
-Write and delete mode specific options are:
-.Bl -tag -width Fl -offset indent
-.
-.It Fl U Ar unvisitem
-Specify items to
-.Xr strunvisx 3
-decode.
-The
-.Ar unvisitem
-option-argument is a character specifying if the key
-.Pq Ar k ,
-the value
-.Pq Ar v
-or both
-.Pq Ar b
-should be decoded.
 .
 .El
 .
