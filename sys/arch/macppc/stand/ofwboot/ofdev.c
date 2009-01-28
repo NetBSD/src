@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.21 2009/01/12 07:05:22 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.22 2009/01/28 15:03:28 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,55 +56,11 @@
 #include "hfs.h"
 #include "net.h"
 
-extern char bootdev[];
-
-static char *
-filename(char *str, char *ppart)
-{
-	char *cp, *lp;
-	char savec;
-	int dhandle;
-	char devtype[16];
-
-	lp = str;
-	devtype[0] = 0;
-	*ppart = 0;
-	for (cp = str; *cp; lp = cp) {
-		/* For each component of the path name... */
-		while (*++cp && *cp != '/')
-			continue;
-		savec = *cp;
-		*cp = 0;
-		/* ...look whether there is a device with this name */
-		dhandle = OF_finddevice(str);
-		*cp = savec;
-		if (dhandle == -1) {
-			/*
-			 * if not, lp is the delimiter between device and path
-			 */
-			/* if the last component was a block device... */
-			if (!strcmp(devtype, "block")) {
-				/* search for arguments */
-				for (cp = lp;
-				    --cp >= str && *cp != '/' && *cp != ':';)
-					continue;
-				if (cp >= str && *cp == ':') {
-					/* found arguments */
-					for (cp = lp;
-					    *--cp != ':' && *cp != ',';)
-						continue;
-					if (*++cp >= 'a' &&
-					    *cp <= 'a' + MAXPARTITIONS)
-						*ppart = *cp;
-				}
-			}
-			return lp;
-		} else if (OF_getprop(dhandle, "device_type", devtype,
-		    sizeof devtype) < 0)
-			devtype[0] = 0;
-	}
-	return 0;
-}
+#ifdef DEBUG
+# define DPRINTF printf
+#else
+# define DPRINTF while (0) printf
+#endif
 
 static int
 strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
@@ -174,8 +130,7 @@ static struct of_dev ofdev = {
 	-1,
 };
 
-char opened_name[256];
-int floppyboot;
+char opened_name[MAXBOOTPATHLEN];
 
 static u_long
 get_long(const void *p)
@@ -247,12 +202,101 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	return ERDLAB;
 }
 
+
+bool
+parsefilepath(const char *path, char *devname, char *fname, char *ppart)
+{
+	char *cp, *lp;  
+	char savec;     
+	int dhandle;            
+	char str[MAXBOOTPATHLEN];
+	char devtype[16];
+
+	DPRINTF("%s: path = %s\n", __func__, path);
+
+	devtype[0] = '\0';
+
+	if (devname != NULL)
+		devname[0] = '\0';
+	if (fname != NULL)
+		fname[0] = '\0';
+	if (ppart != NULL)
+		*ppart = 0;
+
+	strlcpy(str, path, sizeof(str));
+	lp = str;               
+	for (cp = str; *cp != '\0'; lp = cp) {      
+		/* For each component of the path name... */
+		while (*++cp != '\0' && *cp != '/')
+			continue;
+		savec = *cp;
+		*cp = '\0';
+		/* ...look whether there is a device with this name */
+		dhandle = OF_finddevice(str);
+		DPRINTF("%s: Checking %s: dhandle = %d\n",
+		    __func__, str, dhandle);
+		*cp = savec;
+		if (dhandle != -1) {
+			/*
+			 * If it's a vaild device, lp is a delimiter
+			 * in the OF device path.
+			 */
+			if (OF_getprop(dhandle, "device_type", devtype,
+			    sizeof devtype) < 0)
+				devtype[0] = '\0';
+			continue;
+		}
+		
+		/*
+		 * If not, lp is the delimiter between OF device path
+		 * and the specified filename.
+		 */
+
+		/* Check if the last component was a block device... */
+		if (strcmp(devtype, "block") == 0) {
+			/* search for arguments */
+			for (cp = lp;
+			    --cp >= str && *cp != '/' && *cp != ':';)
+				continue;
+			if (cp >= str && *cp == ':') {
+				/* found arguments */
+				for (cp = lp;
+				    *--cp != ':' && *cp != ',';)
+					continue;
+				if (*++cp >= 'a' &&
+				    *cp <= 'a' + MAXPARTITIONS &&
+				    ppart != NULL)
+					*ppart = *cp;
+			}
+		}
+		if (*lp != '\0') {
+			/* set filename */
+			DPRINTF("%s: filename = %s\n", __func__, lp);
+			if (fname != NULL)
+				strcpy(fname, lp);
+			if (str != lp) {
+				/* set device path */
+				*lp = '\0';
+				DPRINTF("%s: device path = %s\n",
+				    __func__, str);
+				if (devname != NULL)
+					strcpy(devname, str);
+			}
+		}
+		return true;
+	}
+
+	DPRINTF("%s: invalid path?\n", __func__);
+	return false;
+}
+
 int
 devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
 	char partition;
-	char fname[256];
+	char devname[MAXBOOTPATHLEN];
+	char filename[MAXBOOTPATHLEN];
 	char buf[DEV_BSIZE];
 	struct disklabel label;
 	int handle, part;
@@ -263,32 +307,37 @@ devopen(struct open_file *of, const char *name, char **file)
 		panic("devopen");
 	if (of->f_flags != F_READ)
 		return EPERM;
-	strcpy(fname, name);
-	cp = filename(fname, &partition);
-	if (cp) {
-		strcpy(buf, cp);
-		*cp = 0;
-	}
-	if (!cp || !*buf)
+
+	if (!parsefilepath(name, devname, filename, &partition))
 		return ENOENT;
-	if (!*fname)
-		strcpy(fname, bootdev);
-	strcpy(opened_name, fname);
+
+	if (filename[0] == '\0')
+		/* no filename */
+		return ENOENT;
+
+	if (devname[0] == '\0')
+		/* no device, use default bootdev */
+		strlcpy(devname, bootdev, sizeof(devname));
+
+	DPRINTF("%s: devname =  %s, filename = %s\n",
+	    __func__, devname, filename);
+
+	strlcpy(opened_name, devname, sizeof(opened_name));
 	if (partition) {
 		cp = opened_name + strlen(opened_name);
 		*cp++ = ':';
 		*cp++ = partition;
 		*cp = 0;
 	}
-	if (*buf != '/')
-		strcat(opened_name, "/");
-	strcat(opened_name, buf);
-	*file = opened_name + strlen(fname) + 1;
-	if ((handle = OF_finddevice(fname)) == -1)
+	if (filename[0] != '/')
+		strlcat(opened_name, "/", sizeof(opened_name));
+	strlcat(opened_name, filename, sizeof(opened_name));
+
+	DPRINTF("%s: opened_name =  %s\n", __func__, opened_name);
+
+	*file = opened_name + strlen(devname) + 1;
+	if ((handle = OF_finddevice(devname)) == -1)
 		return ENOENT;
-	if (OF_getprop(handle, "name", buf, sizeof buf) < 0)
-		return ENXIO;
-	floppyboot = !strcmp(buf, "floppy");
 	if (OF_getprop(handle, "device_type", buf, sizeof buf) < 0)
 		return ENXIO;
 #if 0
@@ -297,9 +346,9 @@ devopen(struct open_file *of, const char *name, char **file)
 		 * For block devices, indicate raw partition
 		 * (:0 in OpenFirmware)
 		 */
-		strcat(fname, ":0");
+		strlcat(devname, ":0", sizeof(devname));
 #endif
-	if ((handle = OF_open(fname)) == -1)
+	if ((handle = OF_open(devname)) == -1)
 		return ENXIO;
 	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
