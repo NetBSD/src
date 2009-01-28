@@ -947,24 +947,24 @@ static int bind_dhcp(struct if_state *state, const struct options *options)
 			state->state = STATE_BOUND;
 			timerclear(&state->stop);
 		} else {
-			if (lease->rebindtime >= lease->leasetime) {
+			if (lease->rebindtime == 0)
+				lease->rebindtime = lease->leasetime * T2;
+			else if (lease->rebindtime >= lease->leasetime) {
 				lease->rebindtime = lease->leasetime * T2;
 				logger(LOG_ERR,
 				       "rebind time greater than lease "
 				       "time, forcing to %u seconds",
 				       lease->rebindtime);
 			}
-			if (lease->renewaltime > lease->rebindtime) {
+			if (lease->renewaltime == 0)
+				lease->renewaltime = lease->leasetime * T1;
+			else if (lease->renewaltime > lease->rebindtime) {
 				lease->renewaltime = lease->leasetime * T1;
 				logger(LOG_ERR,
 				       "renewal time greater than rebind time, "
 				       "forcing to %u seconds",
 				       lease->renewaltime);
 			}
-			if (!lease->renewaltime)
-				lease->renewaltime = lease->leasetime * T1;
-			if (!lease->rebindtime)
-				lease->rebindtime = lease->leasetime * T2;
 			logger(LOG_INFO,
 			       "leased %s for %u seconds",
 			       inet_ntoa(lease->addr), lease->leasetime);

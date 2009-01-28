@@ -79,7 +79,7 @@ remove_markers()
 }
 
 # Compare two files
-# It different, replace first with second otherwise remove second
+# If different, replace first with second otherwise remove second
 change_file()
 {
 	if type cmp >/dev/null 2>&1; then
@@ -127,7 +127,7 @@ for hook in \
 do
 	for skip in ${skip_hooks}; do
 		case "${hook}" in
-			"${skip}")			continue 2;;
+			*/"${skip}")			continue 2;;
 			*/[0-9][0-9]"-${skip}")		continue 2;;
 			*/[0-9][0-9]"-${skip}.sh")	continue 2;;
 		esac

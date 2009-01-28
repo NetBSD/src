@@ -316,7 +316,7 @@ parse_option(int opt, char *oarg, struct options *options)
 		break;
 	case 'h':
 		if (oarg)
-			s = parse_string(options->hostname + 1,
+			s = parse_string(options->hostname,
 					 HOSTNAME_MAX_LEN, oarg);
 		else
 			s = 0;
@@ -324,11 +324,11 @@ parse_option(int opt, char *oarg, struct options *options)
 			logger(LOG_ERR, "hostname: %s", strerror(errno));
 			return -1;
 		}
-		if (s != 0 && options->hostname[1] == '.') {
+		if (s != 0 && options->hostname[0] == '.') {
 			logger(LOG_ERR, "hostname cannot begin with a .");
 			return -1;
 		}
-		options->hostname[0] = (uint8_t)s;
+		options->hostname[s] = '\0';
 		break;
 	case 'i':
 		if (oarg)
@@ -648,11 +648,12 @@ main(int argc, char **argv)
 	}
 #endif
 
-	gethostname(options->hostname + 1, sizeof(options->hostname));
-	if (strcmp(options->hostname + 1, "(none)") == 0 ||
-	    strcmp(options->hostname + 1, "localhost") == 0)
-		options->hostname[1] = '\0';
-	*options->hostname = strlen(options->hostname + 1);
+	gethostname(options->hostname, HOSTNAME_MAX_LEN);
+	/* Ensure that the hostname is NULL terminated */ 
+	options->hostname[HOSTNAME_MAX_LEN] = '\0';
+	if (strcmp(options->hostname, "(none)") == 0 ||
+	    strcmp(options->hostname, "localhost") == 0)
+		options->hostname[0] = '\0';
 
 	while ((opt = getopt_long(argc, argv, OPTS EXTRA_OPTS,
 				  longopts, &option_index)) != -1)
