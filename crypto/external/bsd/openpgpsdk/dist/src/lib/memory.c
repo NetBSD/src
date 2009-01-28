@@ -82,8 +82,8 @@ void ops_memory_add(ops_memory_t *mem,const unsigned char *src,size_t length)
     mem->length+=length;
     }
 
-// XXX: this could be refactored via the writer, but an awful lot of
-// hoops to jump through for 2 lines of code!
+/* XXX: this could be refactored via the writer, but an awful lot of */
+/* hoops to jump through for 2 lines of code! */
 void ops_memory_place_int(ops_memory_t *mem,unsigned offset,unsigned n,
 			  size_t length)
     {
@@ -193,5 +193,3 @@ size_t ops_memory_get_length(const ops_memory_t *mem)
 */
 void *ops_memory_get_data(ops_memory_t *mem)
     { return mem->buf; }
-
-// EOF

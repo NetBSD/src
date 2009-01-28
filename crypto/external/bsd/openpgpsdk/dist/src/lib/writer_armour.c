@@ -67,7 +67,7 @@ static ops_boolean_t dash_escaped_writer(const unsigned char *src,
         fprintf(stderr,"\n");
         }
 
-    // XXX: make this efficient
+    /* XXX: make this efficient */
     for(n=0 ; n < length ; ++n)
 	{
 	unsigned l;
@@ -324,7 +324,7 @@ ops_boolean_t ops_writer_switch_to_armoured_signature(ops_create_info_t *info)
 static ops_boolean_t armoured_message_finaliser(ops_error_t **errors,
 					 ops_writer_info_t *winfo)
     {
-    // TODO: This is same as signature_finaliser apart from trailer.
+    /* TODO: This is same as signature_finaliser apart from trailer. */
     base64_arg_t *arg=ops_writer_get_arg(winfo);
     static char trailer[]="\r\n-----END PGP MESSAGE-----\r\n";
     unsigned char c[3];
@@ -360,7 +360,7 @@ static ops_boolean_t armoured_message_finaliser(ops_error_t **errors,
  \todo replace with generic function
 */
 void ops_writer_push_armoured_message(ops_create_info_t *info)
-//				  ops_create_signature_t *sig)
+/*				  ops_create_signature_t *sig) */
     {
     static char header[]="-----BEGIN PGP MESSAGE-----\r\n";
 
@@ -440,7 +440,7 @@ static ops_boolean_t armoured_private_key_finaliser(ops_error_t **errors,
     return armoured_finaliser(OPS_PGP_PRIVATE_KEY_BLOCK,errors,winfo);
     }
 
-// \todo use this for other armoured types
+/* \todo use this for other armoured types */
 /**
  \ingroup Core_WritersNext
  \brief Push Armoured Writer on stack (generic)
@@ -485,6 +485,3 @@ void ops_writer_push_armoured(ops_create_info_t *info, ops_armor_type_t type)
     arg->checksum=CRC24_INIT;
     ops_writer_push(info,base64_writer,finaliser,ops_writer_generic_destroyer,arg);
     }
-
-
-// EOF

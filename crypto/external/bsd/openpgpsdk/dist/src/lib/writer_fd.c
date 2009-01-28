@@ -84,5 +84,3 @@ void ops_writer_set_fd(ops_create_info_t *info,int fd)
     arg->fd=fd;
     ops_writer_set(info,fd_writer,NULL,fd_destroyer,arg);
     }
-
-// EOF

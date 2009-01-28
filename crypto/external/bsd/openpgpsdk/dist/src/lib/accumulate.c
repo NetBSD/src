@@ -94,7 +94,7 @@ accumulate_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
             OPS_ERROR(cbinfo->errors,OPS_E_P_NO_USERID, "No user id found");
             return OPS_KEEP_MEMORY;
             }
-        //	assert(cur);
+        /*	assert(cur); */
     ops_add_userid_to_keydata(cur, &content->user_id);
 	return OPS_KEEP_MEMORY;
 
@@ -115,7 +115,7 @@ accumulate_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
 	default:
 	    fprintf(stderr,"parse error: %s\n",
 		    ops_errcode(content->errcode.errcode));
-	    //assert(/*CONSTCOND*/0);
+	    /*assert(0); */
 	    }
 	break;
 
@@ -123,8 +123,8 @@ accumulate_cb(const ops_parser_content_t *content_,ops_parse_cb_info_t *cbinfo)
 	break;
 	}
 
-    // XXX: we now exclude so many things, we should either drop this or
-    // do something to pass on copies of the stuff we keep
+    /* XXX: we now exclude so many things, we should either drop this or */
+    /* do something to pass on copies of the stuff we keep */
     return ops_parse_stacked_cb(content_,cbinfo);
     }
 
@@ -187,7 +187,7 @@ static void dump_one_keydata(const ops_keydata_t *key)
     printf("\n\n");
     }
 
-// XXX: not a maintained part of the API - use ops_keyring_list()
+/* XXX: not a maintained part of the API - use ops_keyring_list() */
 /** ops_dump_keyring
 */
 void ops_dump_keyring(const ops_keyring_t *keyring)
