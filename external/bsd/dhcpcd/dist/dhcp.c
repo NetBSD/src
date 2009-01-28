@@ -719,28 +719,26 @@ get_option_routes(const struct dhcp_message *dhcp)
 }
 
 static size_t
-encode_rfc1035(const char *src, uint8_t *dst, size_t len)
+encode_rfc1035(const char *src, uint8_t *dst)
 {
-	const char *c = src;
 	uint8_t *p = dst;
 	uint8_t *lp = p++;
 
-	if (len == 0)
+	if (*src == '\0')
 		return 0;
-	while (c < src + len) {
-		if (*c == '\0')
+	for (; *src; src++) {
+		if (*src == '\0')
 			break;
-		if (*c == '.') {
+		if (*src == '.') {
 			/* Skip the trailing . */
-			if (c == src + len - 1)
+			if (src[1] == '\0')
 				break;
 			*lp = p - lp - 1;
 			if (*lp == '\0')
 				return p - dst;
 			lp = p++;
 		} else
-			*p++ = (uint8_t) *c;
-		c++;
+			*p++ = (uint8_t)*src;
 	}
 	*lp = p - lp - 1;
 	*p++ = '\0';
@@ -767,6 +765,7 @@ make_message(struct dhcp_message **message,
 	uint16_t sz;
 	const struct dhcp_opt *opt;
 	size_t len;
+	const char *hp;
 
 	dhcp = xzalloc(sizeof (*dhcp));
 	m = (uint8_t *)dhcp;
@@ -886,10 +885,20 @@ make_message(struct dhcp_message **message,
 			}
 		}
 
+		/* Regardless of RFC2132, we should always send a hostname
+		 * upto the first dot (the short hostname) as otherwise
+		 * confuses some DHCP servers when updating DNS.
+		 * The FQDN option should be used if a FQDN is required. */
 		if (options->hostname[0]) {
 			*p++ = DHO_HOSTNAME;
-			memcpy(p, options->hostname, options->hostname[0] + 1);
-			p += options->hostname[0] + 1;
+			hp = strchr(options->hostname, '.');
+			if (hp)
+				len = hp - options->hostname;
+			else
+				len = strlen(options->hostname);
+			*p++ = len;
+			memcpy(p, options->hostname, len);
+			p += len;
 		}
 		if (options->fqdn != FQDN_DISABLE) {
 			/* IETF DHC-FQDN option (81), RFC4702 */
@@ -909,8 +918,7 @@ make_message(struct dhcp_message **message,
 			*p++ = (options->fqdn & 0x09) | 0x04;
 			*p++ = 0; /* from server for PTR RR */
 			*p++ = 0; /* from server for A RR if S=1 */
-			ul = encode_rfc1035(options->hostname + 1, p,
-					options->hostname[0]);
+			ul = encode_rfc1035(options->hostname, p);
 			*lp += ul;
 			p += ul;
 		}
@@ -1232,7 +1240,7 @@ configure_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 		setvar(&ep, prefix, "subnet_cidr", cidr);
 		if (get_option_addr(&brd.s_addr, dhcp, DHO_BROADCAST) == -1) {
 			brd.s_addr = addr.s_addr | ~net.s_addr;
-			setvar(&ep, prefix, "broadcast_address", inet_ntoa(net));
+			setvar(&ep, prefix, "broadcast_address", inet_ntoa(brd));
 		}
 		addr.s_addr = dhcp->yiaddr & net.s_addr;
 		setvar(&ep, prefix, "network_number", inet_ntoa(addr));
