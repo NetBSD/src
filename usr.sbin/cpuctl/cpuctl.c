@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.12 2008/11/19 20:56:08 cegger Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.13 2009/01/28 22:37:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.12 2008/11/19 20:56:08 cegger Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.13 2009/01/28 22:37:09 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -207,10 +207,10 @@ cpu_list(char **argv)
 
 	for (i = 0; i < cnt; i++) {
 		cs.cs_id = i;
-		if (ioctl(fd, IOC_CPU_MAPID, &cs.cs_id) < 0)
-			err(EXIT_FAILURE, "IOC_CPU_MAPID");
 		if (ioctl(fd, IOC_CPU_GETSTATE, &cs) < 0)
 			err(EXIT_FAILURE, "IOC_CPU_GETINFO");
+		if (ioctl(fd, IOC_CPU_MAPID, &cs.cs_id) < 0)
+			err(EXIT_FAILURE, "IOC_CPU_MAPID");
 		if (cs.cs_online)
 			state = "online";
 		else
