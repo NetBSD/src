@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strdup.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strdup.3,v 1.16 2008/06/22 11:02:07 wiz Exp $
+.\"	$NetBSD: strdup.3,v 1.17 2009/01/28 19:12:40 gdt Exp $
 .\"
 .Dd June 22, 2008
 .Dt STRDUP 3
@@ -93,6 +93,11 @@ for any of the errors specified for the library function
 .Xr malloc 3 ,
 .Xr strcpy 3 ,
 .Xr strlen 3
+.Sh STANDARDS
+The
+.Fn strdup
+function conforms to
+.St -p1003.1-2001 .
 .Sh HISTORY
 The
 .Fn strdup
