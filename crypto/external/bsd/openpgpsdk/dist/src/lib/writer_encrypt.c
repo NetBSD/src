@@ -44,7 +44,7 @@ static ops_boolean_t encrypt_writer(const unsigned char *src,
 				      ops_writer_info_t *winfo)
     {
 
-#define BUFSZ 1024 // arbitrary number
+#define BUFSZ 1024 /* arbitrary number */
     unsigned char encbuf[BUFSZ];
     unsigned remaining=length;
     unsigned done=0; 
@@ -52,12 +52,12 @@ static ops_boolean_t encrypt_writer(const unsigned char *src,
     crypt_arg_t *arg=(crypt_arg_t *)ops_writer_get_arg(winfo);
 
     if (!ops_is_sa_supported(arg->crypt->algorithm))
-        assert(0); // \todo proper error handling
+        assert(0); /* \todo proper error handling */
 
     while (remaining)
         {
         unsigned len = remaining < BUFSZ ? remaining : BUFSZ;
-        //        memcpy(buf,src,len); // \todo copy needed here?
+        /*        memcpy(buf,src,len); // \todo copy needed here? */
         
         arg->crypt->cfb_encrypt(arg->crypt, encbuf, src+done, len);
 
@@ -103,19 +103,17 @@ static void encrypt_destroyer (ops_writer_info_t *winfo)
 void ops_writer_push_encrypt_crypt(ops_create_info_t *cinfo,
                                    ops_crypt_t *crypt)
     {
-    // Create arg to be used with this writer
-    // Remember to free this in the destroyer
+    /* Create arg to be used with this writer */
+    /* Remember to free this in the destroyer */
 
     crypt_arg_t *arg=ops_mallocz(sizeof *arg);
 
-    // Setup the arg
+    /* Setup the arg */
 
     arg->crypt=crypt;
     arg->free_crypt=0;
 
-    // And push writer on stack
+    /* And push writer on stack */
     ops_writer_push(cinfo,encrypt_writer,NULL,encrypt_destroyer,arg);
 
     }
-
-// EOF

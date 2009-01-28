@@ -221,7 +221,7 @@ static ops_parse_cb_return_t decrypt_cb(const ops_parser_content_t *content_,
 	return OPS_KEEP_MEMORY;
 
  case OPS_PARSER_PACKET_END:
-     // nothing to do
+     /* nothing to do */
      break;
 
     default:
@@ -361,7 +361,7 @@ const ops_keydata_t* ops_keyring_get_key_by_index(const ops_keyring_t *keyring, 
     return &keyring->keys[subscript]; 
     }
 
-// \todo check where userid pointers are copied
+/* \todo check where userid pointers are copied */
 /**
 \ingroup Core_Keys
 \brief Copy user id, including contents
@@ -379,7 +379,7 @@ void ops_copy_userid(ops_user_id_t* dst, const ops_user_id_t* src)
     memcpy(dst->user_id, src->user_id, len);
     }
 
-// \todo check where pkt pointers are copied
+/* \todo check where pkt pointers are copied */
 /**
 \ingroup Core_Keys
 \brief Copy packet, including contents
@@ -410,12 +410,12 @@ ops_user_id_t* ops_add_userid_to_keydata(ops_keydata_t* keydata, const ops_user_
 
     EXPAND_ARRAY(keydata, uids);
 
-    // initialise new entry in array
+    /* initialise new entry in array */
     new_uid=&keydata->uids[keydata->nuids];
 
     new_uid->user_id=NULL;
 
-    // now copy it
+    /* now copy it */
     ops_copy_userid(new_uid,userid);
     keydata->nuids++;
 
@@ -435,12 +435,12 @@ ops_packet_t* ops_add_packet_to_keydata(ops_keydata_t* keydata, const ops_packet
 
     EXPAND_ARRAY(keydata, packets);
 
-    // initialise new entry in array
+    /* initialise new entry in array */
     new_pkt=&keydata->packets[keydata->npackets];
     new_pkt->length=0;
     new_pkt->raw=NULL;
 
-    // now copy it
+    /* now copy it */
     ops_copy_packet(new_pkt, packet);
     keydata->npackets++;
 
@@ -456,7 +456,7 @@ ops_packet_t* ops_add_packet_to_keydata(ops_keydata_t* keydata, const ops_packet
 */
 void ops_add_signed_userid_to_keydata(ops_keydata_t* keydata, const ops_user_id_t* user_id, const ops_packet_t* sigpacket)
     {
-    //int i=0;
+    /*int i=0; */
     ops_user_id_t * uid=NULL;
     ops_packet_t * pkt=NULL;
 
@@ -467,10 +467,10 @@ void ops_add_signed_userid_to_keydata(ops_keydata_t* keydata, const ops_user_id_
      * add entry in sigs array to link the userid and sigpacket
      */
 
-    // and add ptr to it from the sigs array
+    /* and add ptr to it from the sigs array */
     EXPAND_ARRAY(keydata, sigs);
 
-    // setup new entry in array
+    /**setup new entry in array */
 
     keydata->sigs[keydata->nsigs].userid=uid;
     keydata->sigs[keydata->nsigs].packet=pkt;
@@ -501,11 +501,11 @@ ops_boolean_t ops_add_selfsigned_userid_to_keydata(ops_keydata_t* keydata, ops_u
      * create signature packet for this userid
      */
 
-    // create userid pkt
+    /* create userid pkt */
     ops_setup_memory_write(&cinfo_userid, &mem_userid, 128);
     ops_write_struct_user_id(userid, cinfo_userid);
 
-    // create sig for this pkt
+    /* create sig for this pkt */
 
     sig=ops_create_signature_new();
     ops_signature_start_key_signature(sig, &keydata->key.skey.public_key, userid, OPS_CERT_POSITIVE);
@@ -517,15 +517,15 @@ ops_boolean_t ops_add_selfsigned_userid_to_keydata(ops_keydata_t* keydata, ops_u
     ops_setup_memory_write(&cinfo_sig, &mem_sig, 128);
     ops_write_signature(sig,&keydata->key.skey.public_key,&keydata->key.skey, cinfo_sig);
 
-    // add this packet to keydata
+    /* add this packet to keydata */
 
     sigpacket.length=ops_memory_get_length(mem_sig);
     sigpacket.raw=ops_memory_get_data(mem_sig);
 
-    // add userid to keydata
+    /* add userid to keydata */
     ops_add_signed_userid_to_keydata(keydata, userid, &sigpacket);
 
-    // cleanup
+    /* cleanup */
     ops_create_signature_delete(sig);
     ops_create_info_delete(cinfo_userid);
     ops_create_info_delete(cinfo_sig);
@@ -615,10 +615,10 @@ ops_boolean_t ops_keyring_read_from_file(ops_keyring_t *keyring, const ops_boole
 
     pinfo=ops_parse_info_new();
 
-    // add this for the moment,
-    // \todo need to fix the problems with reading signature subpackets later
+    /* add this for the moment, */
+    /* \todo need to fix the problems with reading signature subpackets later */
 
-    //    ops_parse_options(pinfo,OPS_PTAG_SS_ALL,OPS_PARSE_RAW);
+    /*    ops_parse_options(pinfo,OPS_PTAG_SS_ALL,OPS_PARSE_RAW); */
     ops_parse_options(pinfo,OPS_PTAG_SS_ALL,OPS_PARSE_PARSED);
 
 #ifdef WIN32
@@ -719,7 +719,7 @@ ops_boolean_t ops_keyring_read_from_mem(ops_keyring_t *keyring, const ops_boolea
     if (armour)
         ops_reader_pop_dearmour(pinfo);
 
-    // don't call teardown_memory_read because memory was passed in
+    /* don't call teardown_memory_read because memory was passed in */
     ops_parse_info_delete(pinfo);
 
     return res;
@@ -868,7 +868,7 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 	/* XXX - match on userid */
 
 
-    //printf("end: n=%d,i=%d\n",n,i);
+    /*printf("end: n=%d,i=%d\n",n,i); */
     return NULL;
     }
 
@@ -935,7 +935,7 @@ cb_keyring_read(const ops_parser_content_t *content_,
     switch(content_->tag)
         {
     case OPS_PARSER_PTAG:
-    case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY: // we get these because we didn't prompt
+    case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY: /* we get these because we didn't prompt */
     case OPS_PTAG_CT_SIGNATURE_HEADER:
     case OPS_PTAG_CT_SIGNATURE_FOOTER:
     case OPS_PTAG_CT_SIGNATURE:
@@ -951,5 +951,3 @@ cb_keyring_read(const ops_parser_content_t *content_,
     }
 
 /*\@}*/
-
-// eof

@@ -409,12 +409,12 @@ ops_boolean_t ops_dsa_verify(const unsigned char *hash,size_t hash_length,
             }
         fprintf(stderr,"\n");
         }
-    //printf("hash_length=%ld\n", hash_length);
-    //printf("Q=%d\n", BN_num_bytes(odsa->q));
+    /*printf("hash_length=%ld\n", hash_length); */
+    /*printf("Q=%d\n", BN_num_bytes(odsa->q)); */
     qlen=BN_num_bytes(odsa->q);
     if (qlen < hash_length)
         hash_length=qlen;
-    //    ret=DSA_do_verify(hash,hash_length,osig,odsa);
+    /*    ret=DSA_do_verify(hash,hash_length,osig,odsa); */
     ret=DSA_do_verify(hash,hash_length,osig,odsa);
     if (ops_get_debug_level(__FILE__))
         {
@@ -476,16 +476,16 @@ int ops_rsa_private_encrypt(unsigned char *out,const unsigned char *in,
     int n;
 
     orsa=RSA_new();
-    orsa->n=rsa->n;	// XXX: do we need n?
+    orsa->n=rsa->n;	/* XXX: do we need n? */
     orsa->d=srsa->d;
     orsa->p=srsa->q;
     orsa->q=srsa->p;
 
     /* debug */
     orsa->e=rsa->e;
-    // If this isn't set, it's very likely that the programmer hasn't
-    // decrypted the secret key. RSA_check_key segfaults in that case.
-    // Use ops_decrypt_secret_key_from_data() to do that.
+    /* If this isn't set, it's very likely that the programmer hasn't */
+    /* decrypted the secret key. RSA_check_key segfaults in that case. */
+    /* Use ops_decrypt_secret_key_from_data() to do that. */
     assert(orsa->d);
     assert(RSA_check_key(orsa) == 1);
     orsa->e=NULL;
@@ -518,7 +518,7 @@ int ops_rsa_private_decrypt(unsigned char *out,const unsigned char *in,
     char errbuf[1024];
 
     orsa=RSA_new();
-    orsa->n=rsa->n;	// XXX: do we need n?
+    orsa->n=rsa->n;	/* XXX: do we need n? */
     orsa->d=srsa->d;
     orsa->p=srsa->q;
     orsa->q=srsa->p;
@@ -531,7 +531,7 @@ int ops_rsa_private_decrypt(unsigned char *out,const unsigned char *in,
 
     n=RSA_private_decrypt(length,in,out,orsa,RSA_NO_PADDING);
 
-    //    printf("ops_rsa_private_decrypt: n=%d\n",n);
+    /*    printf("ops_rsa_private_decrypt: n=%d\n",n); */
 
     errbuf[0]='\0';
     if (n==-1)
@@ -560,15 +560,15 @@ int ops_rsa_public_encrypt(unsigned char *out,const unsigned char *in,
     RSA *orsa;
     int n;
 
-    //    printf("ops_rsa_public_encrypt: length=%ld\n", length);
+    /*    printf("ops_rsa_public_encrypt: length=%ld\n", length); */
 
     orsa=RSA_new();
     orsa->n=rsa->n;
     orsa->e=rsa->e;
 
-    //    printf("len: %ld\n", length);
-    //    ops_print_bn("n: ", orsa->n);
-    //    ops_print_bn("e: ", orsa->e);
+    /*    printf("len: %ld\n", length); */
+    /*    ops_print_bn("n: ", orsa->n); */
+    /*    ops_print_bn("e: ", orsa->e); */
     n=RSA_public_encrypt(length,in,out,orsa,RSA_NO_PADDING);
 
     if (n==-1)
@@ -643,11 +643,11 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
     ops_keydata_init(keydata,OPS_PTAG_CT_SECRET_KEY);
     skey=ops_get_writable_secret_key_from_data(keydata);
 
-    // generate the key pair
+    /* generate the key pair */
 
     rsa=RSA_generate_key(numbits,e,NULL,NULL);
 
-    // populate ops key from ssl key
+    /* populate ops key from ssl key */
 
     skey->public_key.version=4;
     skey->public_key.creation_time=time(NULL);
@@ -659,9 +659,9 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
 
     skey->s2k_usage=OPS_S2KU_ENCRYPTED_AND_HASHED;
     skey->s2k_specifier=OPS_S2KS_SALTED;
-    //skey->s2k_specifier=OPS_S2KS_SIMPLE;
-    skey->algorithm=OPS_SA_CAST5; // \todo make param
-    skey->hash_algorithm=OPS_HASH_SHA1; // \todo make param
+    /*skey->s2k_specifier=OPS_S2KS_SIMPLE; */
+    skey->algorithm=OPS_SA_CAST5; /* \todo make param */
+    skey->hash_algorithm=OPS_HASH_SHA1; /* \todo make param */
     skey->octet_count=0;
     skey->checksum=0;
 
@@ -677,7 +677,7 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
     ops_keyid(keydata->key_id, &keydata->key.skey.public_key);
     ops_fingerprint(&keydata->fingerprint, &keydata->key.skey.public_key);
 
-    // Generate checksum
+    /* Generate checksum */
 
     cinfo=NULL;
     mem=NULL;
@@ -688,8 +688,8 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
 
     switch(skey->public_key.algorithm)
 	{
-	//    case OPS_PKA_DSA:
-	//	return ops_write_mpi(key->key.dsa.x,info);
+	/*    case OPS_PKA_DSA: */
+	/*	return ops_write_mpi(key->key.dsa.x,info); */
 
     case OPS_PKA_RSA:
     case OPS_PKA_RSA_ENCRYPT_ONLY:
@@ -701,21 +701,21 @@ ops_boolean_t ops_rsa_generate_keypair(const int numbits, const unsigned long e,
 	    return ops_false;
 	break;
 
-	//    case OPS_PKA_ELGAMAL:
-	//	return ops_write_mpi(key->key.elgamal.x,info);
+	/*    case OPS_PKA_ELGAMAL: */
+	/*	return ops_write_mpi(key->key.elgamal.x,info); */
 
     default:
 	assert(/*CONSTCOND*/0);
 	break;
 	}
 
-    // close rather than pop, since its the only one on the stack
+    /* close rather than pop, since its the only one on the stack */
     ops_writer_close(cinfo);
     ops_teardown_memory_write(cinfo, mem);
 
-    // should now have checksum in skey struct
+    /* should now have checksum in skey struct */
 
-    // test
+    /* test */
     if (ops_get_debug_level(__FILE__))
         test_secret_key(skey);
 
@@ -790,5 +790,3 @@ DSA_SIG* ops_dsa_sign(unsigned char* hashbuf, unsigned hashsize, const ops_dsa_s
 
     return dsasig;
     }
-
-// eof

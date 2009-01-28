@@ -42,7 +42,7 @@ typedef struct
     ops_region_t *region;
     unsigned char in[DECOMPRESS_BUFFER];
     unsigned char out[DECOMPRESS_BUFFER];
-    z_stream zstream; // ZIP and ZLIB
+    z_stream zstream; /* ZIP and ZLIB */
     size_t offset;
     int inflate_ret;
     } z_decompress_arg_t;
@@ -53,7 +53,7 @@ typedef struct
     ops_region_t *region;
     char in[DECOMPRESS_BUFFER];
     char out[DECOMPRESS_BUFFER];
-    bz_stream bzstream; // BZIP2
+    bz_stream bzstream; /* BZIP2 */
     size_t offset;
     int inflate_ret;
     } bz_decompress_arg_t;
@@ -65,7 +65,7 @@ typedef struct
     unsigned char *dst;
     } compress_arg_t;
 
-// \todo remove code duplication between this and bzip2_compressed_data_reader
+/* \todo remove code duplication between this and bzip2_compressed_data_reader */
 static int zlib_compressed_data_reader(void *dest,size_t length,
 				  ops_error_t **errors,
 				  ops_reader_info_t *rinfo,
@@ -73,7 +73,7 @@ static int zlib_compressed_data_reader(void *dest,size_t length,
     {
     z_decompress_arg_t *arg=ops_reader_get_arg(rinfo);
 
-    //ops_parser_content_t content;
+    /*ops_parser_content_t content; */
     int saved=length;
 
     assert(arg->type==OPS_C_ZIP || arg->type==OPS_C_ZLIB);
@@ -152,7 +152,7 @@ static int zlib_compressed_data_reader(void *dest,size_t length,
     return saved;
     }
 
-// \todo remove code duplication between this and zlib_compressed_data_reader
+/* \todo remove code duplication between this and zlib_compressed_data_reader */
 static int bzip2_compressed_data_reader(void *dest,size_t length,
 				  ops_error_t **errors,
 				  ops_reader_info_t *rinfo,
@@ -160,7 +160,7 @@ static int bzip2_compressed_data_reader(void *dest,size_t length,
     {
     bz_decompress_arg_t *arg=ops_reader_get_arg(rinfo);
 
-    //ops_parser_content_t content;
+    /*ops_parser_content_t content; */
     size_t saved=length;
 
     assert(arg->type==OPS_C_BZIP2);
@@ -360,32 +360,32 @@ ops_boolean_t ops_write_compressed(const unsigned char *data,
     int sz_out=0;
     compress_arg_t* compression=ops_mallocz(sizeof(compress_arg_t));
 
-    // compress the data
-    const int level=Z_DEFAULT_COMPRESSION; // \todo allow varying levels
+    /* compress the data */
+    const int level=Z_DEFAULT_COMPRESSION; /* \todo allow varying levels */
     compression->stream.zalloc=Z_NULL;
     compression->stream.zfree=Z_NULL;
     compression->stream.opaque=NULL;
 
-    // all other fields set to zero by use of ops_mallocz
+    /* all other fields set to zero by use of ops_mallocz */
 
     if (deflateInit(&compression->stream,level) != Z_OK)
         {
-        // can't initialise
+        /* can't initialise */
         assert(0);
         }
 
-    // do necessary transformation
-    // copy input to maintain const'ness of src
+    /* do necessary transformation */
+    /* copy input to maintain const'ness of src */
     assert(compression->src==NULL);
     assert(compression->dst==NULL);
 
     sz_in=len * sizeof (unsigned char);
-    sz_out= (sz_in * 1.01) + 12; // from zlib webpage
+    sz_out= (sz_in * 1.01) + 12; /* from zlib webpage */
     compression->src=ops_mallocz(sz_in);
     compression->dst=ops_mallocz(sz_out);
     memcpy(compression->src,data,len);
 
-    // setup stream
+    /* setup stream */
     compression->stream.next_in=compression->src;
     compression->stream.avail_in=sz_in;
     compression->stream.total_in=0;
@@ -395,13 +395,11 @@ ops_boolean_t ops_write_compressed(const unsigned char *data,
     compression->stream.total_out=0;
 
     r=deflate(&compression->stream, Z_FINISH);
-    assert(r==Z_STREAM_END); // need to loop if not
+    assert(r==Z_STREAM_END); /* need to loop if not */
 
-    // write it out
+    /* write it out */
     return (ops_write_ptag(OPS_PTAG_CT_COMPRESSED, cinfo)
             && ops_write_length(1+compression->stream.total_out, cinfo)
             && ops_write_scalar(OPS_C_ZLIB,1,cinfo)
             && ops_write(compression->dst, compression->stream.total_out,cinfo));
     }
-
-// EOF

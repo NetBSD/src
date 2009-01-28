@@ -172,7 +172,7 @@ ops_boolean_t writer_info_finalise(ops_error_t **errors,
 
 void writer_info_delete(ops_writer_info_t *winfo)
     {
-    // we should have finalised before deleting
+    /* we should have finalised before deleting */
     assert(!winfo->finaliser);
     if(winfo->next)
 	{
@@ -245,9 +245,9 @@ void ops_writer_pop(ops_create_info_t *info)
     { 
     ops_writer_info_t *next;
 
-    // Make sure the finaliser has been called.
+    /* Make sure the finaliser has been called. */
     assert(!info->winfo.finaliser);
-    // Make sure this is a stacked writer
+    /* Make sure this is a stacked writer */
     assert(info->winfo.next);
     if(info->winfo.destroyer)
 	info->winfo.destroyer(&info->winfo);
@@ -324,6 +324,3 @@ ops_boolean_t ops_writer_passthrough(const unsigned char *src,
 				     ops_error_t **errors,
 				     ops_writer_info_t *winfo)
     { return ops_stacked_write(src,length,errors,winfo); }
-
-
-// EOF

@@ -389,7 +389,7 @@ void ops_text_free(ops_text_t *text)
     free(text);
     }
 
-// XXX: should this (and many others) be ops_boolean_t?
+/* XXX: should this (and many others) be ops_boolean_t? */
 /*! generic function which adds text derived from single octet map to text */
 static unsigned int add_str_from_octet_map(ops_text_t *text,char *str,
 					   unsigned char octet)

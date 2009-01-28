@@ -54,8 +54,8 @@
 
 typedef struct
     {
-    // boolean: false once we've done the preamble/MDC checks
-    // and are reading from the plaintext
+    /* boolean: false once we've done the preamble/MDC checks */
+    /* and are reading from the plaintext */
     int passed_checks; 
     unsigned char *plaintext;
     size_t plaintext_available;
@@ -107,7 +107,7 @@ static int se_ip_data_reader(void *dest_, size_t len, ops_error_t **errors,
         decrypted_region.length = arg->region->length - arg->region->length_read;
         buf=ops_mallocz(decrypted_region.length);
 
-        // read entire SE IP packet
+        /* read entire SE IP packet */
         
         if (!ops_stacked_limited_read(buf,decrypted_region.length, &decrypted_region,errors,rinfo,cbinfo))
             {
@@ -129,7 +129,7 @@ static int se_ip_data_reader(void *dest_, size_t len, ops_error_t **errors,
             fprintf(stderr,"\n");
             }
 
-        // verify leading preamble
+        /* verify leading preamble */
 
         if (ops_get_debug_level(__FILE__))
             {
@@ -150,7 +150,7 @@ static int se_ip_data_reader(void *dest_, size_t len, ops_error_t **errors,
             return -1;
             }
 
-        // Verify trailing MDC hash
+        /* Verify trailing MDC hash */
 
         sz_preamble=arg->decrypt->blocksize+2;
         sz_mdc_hash=OPS_SHA1_HASH_SIZE;
@@ -188,8 +188,8 @@ static int se_ip_data_reader(void *dest_, size_t len, ops_error_t **errors,
             return 0;
             }
 
-        // all done with the checks
-        // now can start reading from the plaintext
+        /* all done with the checks */
+        /* now can start reading from the plaintext */
         assert(!arg->plaintext);
         arg->plaintext=ops_mallocz(sz_plaintext);
         memcpy(arg->plaintext, plaintext, sz_plaintext);
@@ -217,7 +217,7 @@ static void se_ip_data_destroyer(ops_reader_info_t *rinfo)
     decrypt_se_ip_arg_t* arg=ops_reader_get_arg(rinfo);
     free (arg->plaintext);
     free (arg);
-    //    free(ops_reader_get_arg(rinfo));
+    /*    free(ops_reader_get_arg(rinfo)); */
     }
 
 /**
@@ -238,9 +238,7 @@ void ops_reader_push_se_ip_data(ops_parse_info_t *pinfo, ops_crypt_t *decrypt,
  */
 void ops_reader_pop_se_ip_data(ops_parse_info_t* pinfo)
     {
-    //    decrypt_se_ip_arg_t *arg=ops_reader_get_arg(ops_parse_get_rinfo(pinfo));
-    //    free(arg);
+    /*    decrypt_se_ip_arg_t *arg=ops_reader_get_arg(ops_parse_get_rinfo(pinfo)); */
+    /*    free(arg); */
     ops_reader_pop(pinfo);
     }
-
-// eof

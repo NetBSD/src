@@ -40,14 +40,14 @@
 #define ATTRIBUTE_UNUSED __attribute__ ((__unused__))
 #else
 #define ATTRIBUTE_UNUSED 
-#endif // #ifndef WIN32
+#endif /* #ifndef WIN32 */
 
 #endif /* ATTRIBUTE_UNUSED */
 
 
-// \todo there's also a encrypted_arg_t in adv_create.c 
-// which is used for *encrypting* whereas this is used
-// for *decrypting*
+/* \todo there's also a encrypted_arg_t in adv_create.c  */
+/* which is used for *encrypting* whereas this is used */
+/* for *decrypting* */
 
 typedef struct
     {
@@ -67,7 +67,7 @@ static int encrypted_data_reader(void *dest,size_t length,ops_error_t **errors,
     int saved=length;
     char	*cdest;
 
-    // V3 MPIs have the count plain and the cipher is reset after each count
+    /* V3 MPIs have the count plain and the cipher is reset after each count */
     if(arg->prev_read_was_plain && !rinfo->pinfo->reading_mpi_length)
 	{
 	assert(rinfo->pinfo->reading_v3_secret);
@@ -87,8 +87,8 @@ static int encrypted_data_reader(void *dest,size_t length,ops_error_t **errors,
 
 	    unsigned n;
 
-	    // if we are reading v3 we should never read more than
-	    // we're asked for
+	    /* if we are reading v3 we should never read more than */
+	    /* we're asked for */
 	    assert(length >= arg->decrypted_count
 		   || (!rinfo->pinfo->reading_v3_secret
 		       && !rinfo->pinfo->exact_read));
@@ -135,8 +135,8 @@ static int encrypted_data_reader(void *dest,size_t length,ops_error_t **errors,
 		n=sizeof buffer;
             }
 
-	    // we can only read as much as we're asked for in v3 keys
-	    // because they're partially unencrypted!
+	    /* we can only read as much as we're asked for in v3 keys */
+	    /* because they're partially unencrypted! */
 	    if((rinfo->pinfo->reading_v3_secret || rinfo->pinfo->exact_read)
 	       && n > length)
 		n=length;
@@ -217,5 +217,3 @@ void ops_reader_pop_decrypt(ops_parse_info_t *pinfo)
     
     ops_reader_pop(pinfo);
     }
-
-// eof

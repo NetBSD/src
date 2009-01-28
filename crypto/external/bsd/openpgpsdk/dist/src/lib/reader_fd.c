@@ -106,5 +106,3 @@ void ops_reader_set_fd(ops_parse_info_t *pinfo,int fd)
     arg->fd=fd;
     ops_reader_set(pinfo,fd_reader,fd_destroyer,arg);
     }
-
-// eof

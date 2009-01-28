@@ -198,22 +198,22 @@ void ops_calc_mdc_hash(const unsigned char* preamble, const size_t sz_preamble, 
         fprintf(stderr,"\n");
         }
 
-    // init
+    /* init */
     ops_hash_any(&hash, OPS_HASH_SHA1);
     hash.init(&hash);
 
-    // preamble
+    /* preamble */
     hash.add(&hash,preamble,sz_preamble);
-    // plaintext
+    /* plaintext */
     hash.add(&hash,plaintext,sz_plaintext); 
-    // MDC packet tag
+    /* MDC packet tag */
     c[0]=0xD3;
     hash.add(&hash,&c[0],1);   
-    // MDC packet len
+    /* MDC packet len */
     c[0]=0x14;
     hash.add(&hash,&c[0],1);   
 
-    //finish
+    /*finish */
     hash.finish(&hash,hashed);
 
     if (ops_get_debug_level(__FILE__))
@@ -245,5 +245,3 @@ ops_boolean_t ops_is_hash_alg_supported(const ops_hash_algorithm_t *hash_alg)
         return ops_false;
         }
     }
-
-// EOF

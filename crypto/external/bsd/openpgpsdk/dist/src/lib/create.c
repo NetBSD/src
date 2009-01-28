@@ -237,7 +237,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
     if (!ops_write_scalar(key->algorithm,1,info))
         return ops_false;
 
-    assert(key->s2k_specifier==OPS_S2KS_SIMPLE || key->s2k_specifier==OPS_S2KS_SALTED); // = 1 \todo could also be iterated-and-salted
+    assert(key->s2k_specifier==OPS_S2KS_SIMPLE || key->s2k_specifier==OPS_S2KS_SALTED); /* = 1 \todo could also be iterated-and-salted */
     if (!ops_write_scalar(key->s2k_specifier,1,info))
         return ops_false;
     
@@ -248,11 +248,11 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
     switch(key->s2k_specifier)
         {
     case OPS_S2KS_SIMPLE:
-        // nothing more to do
+        /* nothing more to do */
         break;
 
     case OPS_S2KS_SALTED:
-        // 8-octet salt value
+        /* 8-octet salt value */
         ops_random(__UNCONST(&key->salt[0]),OPS_SALT_SIZE);
         if (!ops_write(key->salt, OPS_SALT_SIZE, info))
             return ops_false;
@@ -279,7 +279,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
         {
     case OPS_S2KS_SIMPLE:
     case OPS_S2KS_SALTED:
-        // RFC4880: section 3.7.1.1 and 3.7.1.2
+        /* RFC4880: section 3.7.1.1 and 3.7.1.2 */
 
         done=0;
         for (i=0; done<CAST_KEY_LENGTH; i++ )
@@ -292,7 +292,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
             ops_hash_any(&hash, key->hash_algorithm);
             hash.init(&hash);
             
-            // preload if iterating 
+            /* preload if iterating  */
             for (j=0; j<i; j++)
                 {
                 /* 
@@ -311,7 +311,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
             hash.add(&hash, passphrase, pplen);
             hash.finish(&hash, hashed);
 
-            // if more in hash than is needed by session key, use the leftmost octets
+            /* if more in hash than is needed by session key, use the leftmost octets */
             memcpy(session_key+(i*SHA_DIGEST_LENGTH), hashed, use);
             done += use;
             assert(done<=CAST_KEY_LENGTH);
@@ -321,8 +321,8 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 
         /* \todo
     case OPS_S2KS_ITERATED_AND_SALTED:
-    // 8-octet salt value
-    // 1-octet count
+    /* 8-octet salt value
+    /* 1-octet count
         break;
         */
 
@@ -355,7 +355,7 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
             }
         fprintf(stderr,"\n");
 
-        //ops_print_secret_key(OPS_PTAG_CT_SECRET_KEY,key);
+        /*ops_print_secret_key(OPS_PTAG_CT_SECRET_KEY,key); */
 
         fprintf(stderr,"turning encryption on...\n");
         }
@@ -364,8 +364,8 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 
     switch(key->public_key.algorithm)
 	{
-	//    case OPS_PKA_DSA:
-	//	return ops_write_mpi(key->key.dsa.x,info);
+	/*    case OPS_PKA_DSA: */
+	/*	return ops_write_mpi(key->key.dsa.x,info); */
 
     case OPS_PKA_RSA:
     case OPS_PKA_RSA_ENCRYPT_ONLY:
@@ -383,8 +383,8 @@ static ops_boolean_t write_secret_key_body(const ops_secret_key_t *key,
 
 	break;
 
-	//    case OPS_PKA_ELGAMAL:
-	//	return ops_write_mpi(key->key.elgamal.x,info);
+	/*    case OPS_PKA_ELGAMAL: */
+	/*	return ops_write_mpi(key->key.elgamal.x,info); */
 
     default:
 	assert(/*CONSTCOND*/0);
@@ -435,14 +435,14 @@ ops_boolean_t ops_write_transferable_public_key(const ops_keydata_t *keydata, op
     if (armoured)
         { ops_writer_push_armoured(info, OPS_PGP_PUBLIC_KEY_BLOCK); }
 
-    // public key
+    /* public key */
     rtn=ops_write_struct_public_key(&keydata->key.skey.public_key,info);
     if (rtn!=ops_true)
         return rtn;
 
-    // TODO: revocation signatures go here
+    /* TODO: revocation signatures go here */
 
-    // user ids and corresponding signatures
+    /* user ids and corresponding signatures */
     for (i=0; i<keydata->nuids; i++)
         {
         ops_user_id_t* uid=&keydata->uids[i];
@@ -452,7 +452,7 @@ ops_boolean_t ops_write_transferable_public_key(const ops_keydata_t *keydata, op
         if (!rtn)
             return rtn;
 
-        // find signature for this packet if it exists
+        /* find signature for this packet if it exists */
         for (j=0; j<keydata->nsigs; j++)
             {
             sigpacket_t* sig=&keydata->sigs[i];
@@ -465,9 +465,9 @@ ops_boolean_t ops_write_transferable_public_key(const ops_keydata_t *keydata, op
             }
         }
 
-        // TODO: user attributes and corresponding signatures
+        /* TODO: user attributes and corresponding signatures */
 
-        // subkey packets and corresponding signatures and optional revocation
+        /* subkey packets and corresponding signatures and optional revocation */
 
     if (armoured)
         { 
@@ -517,14 +517,14 @@ ops_boolean_t ops_write_transferable_secret_key(const ops_keydata_t *keydata, co
     if (armoured)
         { ops_writer_push_armoured(info,OPS_PGP_PRIVATE_KEY_BLOCK); }
 
-    // public key
+    /* public key */
     rtn=ops_write_struct_secret_key(&keydata->key.skey,passphrase,pplen,info);
     if (rtn!=ops_true)
         return rtn;
 
-    // TODO: revocation signatures go here
+    /* TODO: revocation signatures go here */
 
-    // user ids and corresponding signatures
+    /* user ids and corresponding signatures */
     for (i=0; i<keydata->nuids; i++)
         {
         ops_user_id_t* uid=&keydata->uids[i];
@@ -534,7 +534,7 @@ ops_boolean_t ops_write_transferable_secret_key(const ops_keydata_t *keydata, co
         if (!rtn)
             return rtn;
 
-        // find signature for this packet if it exists
+        /* find signature for this packet if it exists */
         for (j=0; j<keydata->nsigs; j++)
             {
             sigpacket_t* sig=&keydata->sigs[i];
@@ -547,9 +547,9 @@ ops_boolean_t ops_write_transferable_secret_key(const ops_keydata_t *keydata, co
             }
         }
 
-        // TODO: user attributes and corresponding signatures
+        /* TODO: user attributes and corresponding signatures */
 
-        // subkey packets and corresponding signatures and optional revocation
+        /* subkey packets and corresponding signatures and optional revocation */
 
     if (armoured)
         { 
@@ -648,7 +648,7 @@ void ops_fast_create_rsa_secret_key(ops_secret_key_t *key,time_t t,
     {
     ops_fast_create_rsa_public_key(&key->public_key,t,n,e);
 
-    // XXX: calculate optionals
+    /* XXX: calculate optionals */
     key->key.rsa.d=d;
     key->key.rsa.p=p;
     key->key.rsa.q=q;
@@ -656,7 +656,7 @@ void ops_fast_create_rsa_secret_key(ops_secret_key_t *key,time_t t,
 
     key->s2k_usage=OPS_S2KU_NONE;
 
-    // XXX: sanity check and add errors...
+    /* XXX: sanity check and add errors... */
     }
 
 /**
@@ -677,38 +677,38 @@ ops_boolean_t ops_write_struct_secret_key(const ops_secret_key_t *key,
 
     assert(key->public_key.version == 4);
 
-    // Ref: RFC4880 Section 5.5.3
+    /* Ref: RFC4880 Section 5.5.3 */
 
-    // public_key, excluding MPIs
+    /* public_key, excluding MPIs */
     length += 1+4+1+1;
 
-    // s2k usage
+    /* s2k usage */
     length+=1;
 
     switch (key->s2k_usage)
         {
     case OPS_S2KU_NONE:
-        // nothing to add
+        /* nothing to add */
         break;
 
-    case OPS_S2KU_ENCRYPTED_AND_HASHED: // 254
-    case OPS_S2KU_ENCRYPTED: // 255
+    case OPS_S2KU_ENCRYPTED_AND_HASHED: /* 254 */
+    case OPS_S2KU_ENCRYPTED: /* 255 */
 
-        // Ref: RFC4880 Section 3.7
-        length+=1; // s2k_specifier
+        /* Ref: RFC4880 Section 3.7 */
+        length+=1; /* s2k_specifier */
 
         switch(key->s2k_specifier)
             {
         case OPS_S2KS_SIMPLE:
-            length+=1; // hash algorithm
+            length+=1; /* hash algorithm */
             break;
 
         case OPS_S2KS_SALTED:
-            length+=1+8; // hash algorithm + salt
+            length+=1+8; /* hash algorithm + salt */
             break;
 
         case OPS_S2KS_ITERATED_AND_SALTED:
-            length+=1+8+1; // hash algorithm, salt + count
+            length+=1+8+1; /* hash algorithm, salt + count */
             break;
 
         default:
@@ -720,13 +720,13 @@ ops_boolean_t ops_write_struct_secret_key(const ops_secret_key_t *key,
         assert(/*CONSTCOND*/0);
         }
 
-    // IV
+    /* IV */
     if (key->s2k_usage != 0)
         {
         length += ops_block_size(key->algorithm);
         }
 
-    // checksum or hash
+    /* checksum or hash */
     switch (key->s2k_usage)
         {
     case 0:
@@ -742,11 +742,11 @@ ops_boolean_t ops_write_struct_secret_key(const ops_secret_key_t *key,
         assert(/*CONSTCOND*/0);
         }
 
-    // secret key and public key MPIs
+    /* secret key and public key MPIs */
     length += secret_key_length(key);
 
     return ops_write_ptag(OPS_PTAG_CT_SECRET_KEY,info)
-        //	&& ops_write_length(1+4+1+1+secret_key_length(key)+2,info)
+        /*	&& ops_write_length(1+4+1+1+secret_key_length(key)+2,info) */
         && ops_write_length(length,info)
         && write_secret_key_body(key,passphrase,pplen,info);
     }
@@ -803,20 +803,20 @@ ops_boolean_t ops_calc_session_key_checksum(ops_pk_session_key_t *session_key, u
     cs[1]=checksum & 0xFF;
 
     return ops_true;
-    //    fprintf(stderr,"\nm buf checksum: ");
-    //    fprintf(stderr," %2x",cs[0]);
-    //    fprintf(stderr," %2x\n",cs[1]);
+    /*    fprintf(stderr,"\nm buf checksum: "); */
+    /*    fprintf(stderr," %2x",cs[0]); */
+    /*    fprintf(stderr," %2x\n",cs[1]); */
     }    
 
 static ops_boolean_t create_unencoded_m_buf(ops_pk_session_key_t *session_key, unsigned char *m_buf)
     {
     int i=0;
-    //    unsigned long checksum=0;
+    /*    unsigned long checksum=0; */
 
-    // m_buf is the buffer which will be encoded in PKCS#1 block
-    // encoding to form the "m" value used in the 
-    // Public Key Encrypted Session Key Packet
-    // as defined in RFC Section 5.1 "Public-Key Encrypted Session Key Packet"
+    /* m_buf is the buffer which will be encoded in PKCS#1 block */
+    /* encoding to form the "m" value used in the  */
+    /* Public Key Encrypted Session Key Packet */
+    /* as defined in RFC Section 5.1 "Public-Key Encrypted Session Key Packet" */
 
     m_buf[0]=session_key->symmetric_algorithm;
 
@@ -846,7 +846,7 @@ ops_boolean_t encode_m_buf(const unsigned char *M, size_t mLen,
     unsigned int k;
     unsigned i;
 
-    // implementation of EME-PKCS1-v1_5-ENCODE, as defined in OpenPGP RFC
+    /* implementation of EME-PKCS1-v1_5-ENCODE, as defined in OpenPGP RFC */
     
     assert(pkey->algorithm == OPS_PKA_RSA);
 
@@ -858,11 +858,11 @@ ops_boolean_t encode_m_buf(const unsigned char *M, size_t mLen,
         return ops_false;
         }
 
-    // these two bytes defined by RFC
+    /* these two bytes defined by RFC */
     EM[0]=0x00;
     EM[1]=0x02;
 
-    // add non-zero random bytes of length k - mLen -3
+    /* add non-zero random bytes of length k - mLen -3 */
     for(i=2 ; i < k-mLen-1 ; ++i)
         do
             ops_random(EM+i, 1);
@@ -934,7 +934,7 @@ ops_pk_session_key_t *ops_create_pk_session_key(const ops_keydata_t *key)
     assert(key->key.pkey.algorithm == OPS_PKA_RSA);
     session_key->algorithm=key->key.pkey.algorithm;
 
-    // \todo allow user to specify other algorithm
+    /* \todo allow user to specify other algorithm */
     session_key->symmetric_algorithm=OPS_SA_CAST5;
     ops_random(session_key->key, CAST_KEY_LENGTH);
 
@@ -963,7 +963,7 @@ ops_pk_session_key_t *ops_create_pk_session_key(const ops_keydata_t *key)
         }
     encode_m_buf(&unencoded_m_buf[0], SZ_UNENCODED_M_BUF, pub_key, &encoded_m_buf[0]);
     
-    // and encrypt it
+    /* and encrypt it */
     if(!ops_rsa_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pub_key, &session_key->parameters))
         {
         free (encoded_m_buf);
@@ -993,7 +993,7 @@ ops_boolean_t ops_write_pk_session_key(ops_create_info_t *info,
 	&& ops_write(pksk->key_id, 8, info)
 	&& ops_write_scalar(pksk->algorithm, 1, info)
 	&& ops_write_mpi(pksk->parameters.rsa.encrypted_m, info)
-        //??	&& ops_write_scalar(0, 2, info);
+        /*??	&& ops_write_scalar(0, 2, info); */
         ;
     }
 
@@ -1008,7 +1008,7 @@ ops_boolean_t ops_write_pk_session_key(ops_create_info_t *info,
 ops_boolean_t ops_write_mdc(const unsigned char *hashed,
                             ops_create_info_t* info)
     {
-    // write it out
+    /* write it out */
     return ops_write_ptag(OPS_PTAG_CT_MDC, info)
         && ops_write_length(OPS_SHA1_HASH_SIZE,info)
         && ops_write(hashed, OPS_SHA1_HASH_SIZE, info);
@@ -1033,7 +1033,7 @@ ops_boolean_t ops_write_literal_data_from_buf(const unsigned char *data,
      * It is implementation-dependent.
      * We will not implement them.
      */
-    // \todo do we need to check text data for <cr><lf> line endings ?
+    /* \todo do we need to check text data for <cr><lf> line endings ? */
     return ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info)
         && ops_write_length(1+1+4+maxlen,info)
         && ops_write_scalar(type, 1, info)
@@ -1082,13 +1082,13 @@ ops_boolean_t ops_write_literal_data_from_file(const char *filename,
         }
     close(fd);    
 
-    // \todo do we need to check text data for <cr><lf> line endings ?
+    /* \todo do we need to check text data for <cr><lf> line endings ? */
     len=ops_memory_get_length(mem);
     rtn=ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info)
         && ops_write_length(1+1+4+len,info)
         && ops_write_scalar(type, 1, info)
-        && ops_write_scalar(0, 1, info) // filename
-        && ops_write_scalar(0, 4, info) // date
+        && ops_write_scalar(0, 1, info) /* filename */
+        && ops_write_scalar(0, 4, info) /* date */
         && ops_write(ops_memory_get_data(mem), len, info);
 
     ops_memory_free(mem);
@@ -1206,10 +1206,10 @@ ops_boolean_t ops_write_symmetrically_encrypted_data(const unsigned char *data,
     {
     int done=0;
     ops_crypt_t crypt_info;
-    int encrypted_sz=0;// size of encrypted data
-    unsigned char *encrypted=(unsigned char *)NULL; // buffer to write encrypted data to
+    int encrypted_sz=0;/* size of encrypted data */
+    unsigned char *encrypted=(unsigned char *)NULL; /* buffer to write encrypted data to */
     
-    // \todo assume AES256 for now
+    /* \todo assume AES256 for now */
     ops_crypt_any(&crypt_info, OPS_SA_AES_256);
     ops_encrypt_init(&crypt_info);
 
@@ -1218,7 +1218,7 @@ ops_boolean_t ops_write_symmetrically_encrypted_data(const unsigned char *data,
 
     done=ops_encrypt_se(&crypt_info, encrypted, data, len);
     assert(done==len);
-    //    printf("len=%d, done: %d\n", len, done);
+    /*    printf("len=%d, done: %d\n", len, done); */
 
     return ops_write_ptag(OPS_PTAG_CT_SE_DATA, info)
         && ops_write_length(1+encrypted_sz,info)
@@ -1246,12 +1246,10 @@ ops_boolean_t ops_write_one_pass_sig(const ops_secret_key_t* skey,
 
     return ops_write_ptag(OPS_PTAG_CT_ONE_PASS_SIGNATURE, info)
         && ops_write_length(1+1+1+1+8+1, info)
-        && ops_write_scalar (3, 1, info) // version
+        && ops_write_scalar (3, 1, info) /* version */
         && ops_write_scalar (sig_type, 1, info)
         && ops_write_scalar (hash_alg, 1, info)
         && ops_write_scalar (skey->public_key.algorithm,  1, info)
         && ops_write(keyid, 8, info)
         && ops_write_scalar (1, 1, info);
     }
-
-// EOF

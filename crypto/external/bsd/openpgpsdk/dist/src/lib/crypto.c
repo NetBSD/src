@@ -86,22 +86,22 @@ int ops_decrypt_and_unencode_mpi(unsigned char *buf,unsigned buflen,const BIGNUM
 		printf("\n");
 	}
 
-    // Decode EME-PKCS1_V1_5 (RFC 2437).
+    /* Decode EME-PKCS1_V1_5 (RFC 2437). */
 
     if(mpibuf[0] != 0 || mpibuf[1] != 2)
         return ops_false;
 
-    // Skip the random bytes.
+    /* Skip the random bytes. */
     for(i=2 ; i < n && mpibuf[i] ; ++i)
         ;
 
     if(i == n || i < 10)
         return ops_false;
 
-    // Skip the zero
+    /* Skip the zero */
     ++i;
 
-    // this is the unencoded m buf
+    /* this is the unencoded m buf */
     if((unsigned)(n-i) <= buflen)
         memcpy(buf,mpibuf+i,n-i);
 
@@ -192,14 +192,14 @@ ops_boolean_t ops_encrypt_file(const char* input_filename, const char* output_fi
     if (fd_out < 0)
         return ops_false;
 
-    // set armoured/not armoured here
+    /* set armoured/not armoured here */
     if (use_armour)
         ops_writer_push_armoured_message(cinfo);
 
-    // Push the encrypted writer
+    /* Push the encrypted writer */
     ops_writer_push_encrypt_se_ip(cinfo,pub_key);
 
-    // Do the writing
+    /* Do the writing */
 
     buf=NULL;
     bufsz=16;
@@ -217,10 +217,10 @@ ops_boolean_t ops_encrypt_file(const char* input_filename, const char* output_fi
         done+=n;
         }
 
-    // This does the writing
+    /* This does the writing */
     ops_write(buf,done,cinfo);
 
-    // tidy up
+    /* tidy up */
     close(fd_in);
     free(buf);
     ops_teardown_file_write(cinfo,fd_out);
@@ -245,10 +245,10 @@ ops_boolean_t ops_decrypt_file(const char* input_filename, const char* output_fi
     int fd_out=0;
     char* myfilename=NULL;
 
-    //
+    /* */
     ops_parse_info_t *pinfo=NULL;
 
-    // setup for reading from given input file
+    /* setup for reading from given input file */
     fd_in=ops_setup_file_read(&pinfo, input_filename, 
                         NULL,
                         callback_write_parsed,
@@ -259,7 +259,7 @@ ops_boolean_t ops_decrypt_file(const char* input_filename, const char* output_fi
         return ops_false;
         }
 
-    // setup output filename
+    /* setup output filename */
 
     if (output_filename)
         {
@@ -302,31 +302,31 @@ ops_boolean_t ops_decrypt_file(const char* input_filename, const char* output_fi
         free (myfilename);
         }
 
-    // \todo check for suffix matching armour param
+    /* \todo check for suffix matching armour param */
 
-    // setup for writing decrypted contents to given output file
+    /* setup for writing decrypted contents to given output file */
 
-    // setup keyring and passphrase callback
+    /* setup keyring and passphrase callback */
     pinfo->cbinfo.cryptinfo.keyring=keyring;
     pinfo->cbinfo.cryptinfo.cb_get_passphrase=cb_get_passphrase;
 
-    // Set up armour/passphrase options
+    /* Set up armour/passphrase options */
 
     if (use_armour)
         ops_reader_push_dearmour(pinfo);
     
-    // Do it
+    /* Do it */
 
     ops_parse_and_print_errors(pinfo);
 
-    // Unsetup
+    /* Unsetup */
 
     if (use_armour)
         ops_reader_pop_dearmour(pinfo);
 
     ops_teardown_file_write(pinfo->cbinfo.cinfo, fd_out);
     ops_teardown_file_read(pinfo, fd_in);
-    // \todo cleardown crypt
+    /* \todo cleardown crypt */
 
     return ops_true;
     }
@@ -336,7 +336,7 @@ callback_write_parsed(const ops_parser_content_t *content_,ops_parse_cb_info_t *
     {
     const ops_parser_content_union_t* content=&content_->content;
     static ops_boolean_t skipping;
-    //    ops_boolean_t write=ops_true;
+    /*    ops_boolean_t write=ops_true; */
 
     OPS_USED(cbinfo);
 
@@ -370,7 +370,7 @@ callback_write_parsed(const ops_parser_content_t *content_,ops_parse_cb_info_t *
         return callback_cmd_get_secret_key(content_,cbinfo);
 
     case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-        //        return callback_cmd_get_secret_key_passphrase(content_,cbinfo);
+        /*        return callback_cmd_get_secret_key_passphrase(content_,cbinfo); */
         return cbinfo->cryptinfo.cb_get_passphrase(content_,cbinfo);
 
     case OPS_PTAG_CT_LITERAL_DATA_BODY:
@@ -386,13 +386,13 @@ callback_write_parsed(const ops_parser_content_t *content_,ops_parse_cb_info_t *
     case OPS_PTAG_CT_SE_DATA_BODY:
     case OPS_PTAG_CT_SE_DATA_HEADER:
 
-	// Ignore these packets 
-	// They're handled in ops_parse_one_packet()
-	// and nothing else needs to be done
+	/* Ignore these packets  */
+	/* They're handled in ops_parse_one_packet() */
+	/* and nothing else needs to be done */
 	break;
 
     default:
-        //        return callback_general(content_,cbinfo);
+        /*        return callback_general(content_,cbinfo); */
 	if (ops_get_debug_level(__FILE__)) {
 		fprintf(stderr,"Unexpected packet tag=%d (0x%x)\n",
 			content_->tag,
@@ -403,5 +403,3 @@ callback_write_parsed(const ops_parser_content_t *content_,ops_parse_cb_info_t *
 
     return OPS_RELEASE_MEMORY;
     }
-
-// EOF

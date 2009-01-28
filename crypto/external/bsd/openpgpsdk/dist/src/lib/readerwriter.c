@@ -68,7 +68,7 @@ void ops_setup_memory_write(ops_create_info_t **cinfo, ops_memory_t **mem, size_
 */
 void ops_teardown_memory_write(ops_create_info_t *cinfo, ops_memory_t *mem)
     {
-    ops_writer_close(cinfo); // new
+    ops_writer_close(cinfo); /* new */
     ops_create_info_delete(cinfo);
     ops_memory_free(mem);
     }
@@ -280,11 +280,11 @@ callback_literal_data(const ops_parser_content_t *content_,ops_parse_cb_info_t *
 		ops_print_packet(content_);
 	}
 
-    // Read data from packet into static buffer
+    /* Read data from packet into static buffer */
     switch(content_->tag)
         {
     case OPS_PTAG_CT_LITERAL_DATA_BODY:
-        // if writer enabled, use it
+        /* if writer enabled, use it */
         if (cbinfo->cinfo)
             {
             ops_write(content->literal_data_body.data,
@@ -299,11 +299,11 @@ callback_literal_data(const ops_parser_content_t *content_,ops_parse_cb_info_t *
         break;
 
     case OPS_PTAG_CT_LITERAL_DATA_HEADER:
-        // ignore
+        /* ignore */
         break;
 
     default:
-        //        return callback_general(content_,cbinfo);
+        /*        return callback_general(content_,cbinfo); */
         break;
         }
 
@@ -321,7 +321,7 @@ callback_pk_session_key(const ops_parser_content_t *content_,ops_parse_cb_info_t
 		ops_print_packet(content_);
 	}
     
-    // Read data from packet into static buffer
+    /* Read data from packet into static buffer */
     switch(content_->tag)
         {
     case OPS_PTAG_CT_PK_SESSION_KEY:
@@ -336,7 +336,7 @@ callback_pk_session_key(const ops_parser_content_t *content_,ops_parse_cb_info_t
         break;
 
     default:
-        //        return callback_general(content_,cbinfo);
+        /*        return callback_general(content_,cbinfo); */
         break;
         }
 
@@ -400,7 +400,7 @@ callback_cmd_get_secret_key(const ops_parser_content_t *content_,ops_parse_cb_in
         break;
 
     default:
-        //        return callback_general(content_,cbinfo);
+        /*        return callback_general(content_,cbinfo); */
         break;
 	}
     
@@ -449,7 +449,7 @@ callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t *content_,op
         break;
         
     default:
-        //        return callback_general(content_,cbinfo);
+        /*        return callback_general(content_,cbinfo); */
         break;
 	}
     
@@ -461,5 +461,3 @@ ops_boolean_t ops_reader_set_accumulate(ops_parse_info_t* pinfo, ops_boolean_t s
     pinfo->rinfo.accumulate=state;
     return state;
     }
-
-// EOF

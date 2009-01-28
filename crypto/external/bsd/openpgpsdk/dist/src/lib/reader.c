@@ -67,7 +67,7 @@ void ops_reader_push(ops_parse_info_t *pinfo,ops_reader_t *reader,ops_reader_des
     pinfo->rinfo.next=rinfo;
     pinfo->rinfo.pinfo=pinfo;
 
-    // should copy accumulate flags from other reader? RW
+    /* should copy accumulate flags from other reader? RW */
     pinfo->rinfo.accumulate=rinfo->accumulate;
     
     ops_reader_set(pinfo,reader,destroyer,arg);
@@ -103,5 +103,3 @@ void *ops_reader_get_arg(ops_reader_info_t *rinfo)
  */
 void *ops_reader_get_arg_from_pinfo(ops_parse_info_t *pinfo)
     { return pinfo->rinfo.arg; }
-
-// EOF
