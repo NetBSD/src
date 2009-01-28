@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2008/10/25 22:27:34 apb Exp $
+# $NetBSD: Makefile,v 1.39 2009/01/28 17:11:54 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -416,10 +416,10 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 .endif
 	@size=$$((`cd ${STAGEDIR}/${image} && \
 		   ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} \
-			-print-size . 2>&1
+			-print-size . 2>&1 \
 		   | tee /dev/stderr \
-		   | ${TOOL_SED} '/=/!d;s/^[^=]*=//'`
-	       * 2048)) && \
+		   | ${TOOL_SED} '/=/!d;s/^[^=]*=//'` \
+	       \* 2048)) && \
 	if [ "${SUN_BOOT_ARGS.${image}}" != "" ]; then \
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
 		bootfiles=`for f in ${SUN_BOOT_ARGS.${image}:N-:O}; do echo $$f; done | uniq` && \
