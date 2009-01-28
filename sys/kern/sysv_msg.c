@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.60 2009/01/26 13:08:48 njoly Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.61 2009/01/28 00:59:03 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.60 2009/01/26 13:08:48 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.61 2009/01/28 00:59:03 njoly Exp $");
 
 #define SYSVMSG
 
@@ -1175,7 +1175,7 @@ restart:
 		else
 			tlen = msgsz - len;
 		mutex_exit(&msgmutex);
-		error = (*put_type)(&msgpool[next * msginfo.msgssz],
+		error = copyout(&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
 		mutex_enter(&msgmutex);
 		if (error != 0) {
