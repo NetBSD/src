@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.6 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.7 2009/01/29 14:22:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.6 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.7 2009/01/29 14:22:09 joerg Exp $");
 
 #include "opt_xen.h"
 
@@ -179,7 +179,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-	extern char __data_start;
+	extern int __data_start;
 	char *dst;
 
 	dst = (char *)addr;
