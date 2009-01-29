@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_kthread.c,v 1.24 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.25 2009/01/29 22:00:26 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.24 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.25 2009/01/29 22:00:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,12 +63,18 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	bool inmem;
 	int error;
 	va_list ap;
+	int lc;
 
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (uaddr == 0)
 		return ENOMEM;
+	if ((flags & KTHREAD_TS) != 0) {
+		lc = SCHED_OTHER;
+	} else {
+		lc = SCHED_RR;
+	}
 	error = lwp_create(&lwp0, &proc0, uaddr, inmem, LWP_DETACHED, NULL,
-	    0, func, arg, &l, SCHED_FIFO);
+	    0, func, arg, &l, lc);
 	if (error) {
 		uvm_uarea_free(uaddr, curcpu());
 		return error;
@@ -93,8 +99,13 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	}
 
 	if (pri == PRI_NONE) {
-		/* Minimum kernel priority level. */
-		pri = PRI_KTHREAD;
+		if ((flags & KTHREAD_TS) != 0) {
+			/* Maximum user priority level. */
+			pri = MAXPRI_USER;
+		} else {
+			/* Minimum kernel priority level. */
+			pri = PRI_KTHREAD;
+		}
 	}
 	mutex_enter(proc0.p_lock);
 	lwp_lock(l);
