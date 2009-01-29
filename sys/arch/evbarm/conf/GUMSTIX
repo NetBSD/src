@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.31 2008/11/24 11:41:09 ad Exp $
+#	$NetBSD: GUMSTIX,v 1.32 2009/01/29 10:28:37 nonaka Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -155,7 +155,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=400000
+options 	SYMTAB_SPACE=420000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -208,18 +208,13 @@ audio*	at audiobus?
 pxaudc0	at pxaip?				# USB Device Controller
 
 # integrated MMC/SD contoller
-#pxamci0	at pxaip? addr 0x41100000 size 0x48
-#sdmmc*	at pxamci?
+pxamci0	at pxaip? addr 0x41100000 size 0x48
+sdmmc*	at pxamci?
 #options 	PXAMCI_DEBUG
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 
-# SCSI bus support
-#scsibus* at scsi?
-
-# SCSI devices
-#sd*	at scsibus? target ? lun ? # SCSI disk drives
-#uk*	at scsibus? target ? lun ? # SCSI unknown
+ld*	at sdmmc?
 
 # gumstix device support
 gxio0	at pxaip?
@@ -414,6 +409,9 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
 #btbc*	at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
+# Bluetooth SDIO Controllers
+#sbt*	at sdmmc?
+
 # Bluetooth USB Controllers
 #ubt*	at uhub? port ?
 
@@ -422,6 +420,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #bthub*	at bt3c?
 #bthub*	at btbc?
 bthub*	at btuart?
+#bthub*	at sbt?
 #bthub*	at ubt?
 
 # Bluetooth HID support
