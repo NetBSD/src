@@ -6,15 +6,15 @@
  * be recorded as the authors of this copyright work.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. 
- * 
- * You may obtain a copy of the License at 
- *     http://www.apache.org/licenses/LICENSE-2.0 
- * 
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * 
+ * use this file except in compliance with the License.
+ *
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -33,7 +33,7 @@
 #define ops_false	0
 #define ops_true	1
 
-void hexdump(const unsigned char *src,size_t length);
+void            hexdump(const unsigned char *, size_t, const char *);
 
 /*
  * These macros code ensures that you are casting what you intend to cast.
@@ -42,19 +42,19 @@ void hexdump(const unsigned char *src,size_t length);
  */
 #ifndef CHECKED_PTR_OF
 #define CHECKED_PTR_OF(type, p) ((void*) (1 ? p : (type *)0))
-#endif 
-#define CHECKED_INSTANCE_OF(type, p) (1 ? p : (type)0) 
+#endif
+#define CHECKED_INSTANCE_OF(type, p) (1 ? p : (type)0)
 #define DECONST(type,p) ((type *)CHECKED_PTR_OF(const type, p))
 
 /* number of elements in an array */
 #define OPS_ARRAY_SIZE(a)	(sizeof(a)/sizeof(*(a)))
 
-void *ops_mallocz(size_t n);
+void           *ops_mallocz(size_t n);
 
-const char *ops_str_from_map(int, ops_map_t *);
+const char     *ops_str_from_map(int, ops_map_t *);
 
-int ops_set_debug_level(const char *);
-int ops_get_debug_level(const char *);
+int             ops_set_debug_level(const char *);
+int             ops_get_debug_level(const char *);
 
 #ifndef __UNCONST
 #define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))

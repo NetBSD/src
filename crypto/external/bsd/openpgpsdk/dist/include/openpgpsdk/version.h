@@ -6,15 +6,15 @@
  * be recorded as the authors of this copyright work.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. 
- * 
- * You may obtain a copy of the License at 
- *     http://www.apache.org/licenses/LICENSE-2.0 
- * 
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * 
+ * use this file except in compliance with the License.
+ *
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -28,9 +28,9 @@
 #define OPS_VERSION		((OPS_VERSION_MAJOR << 16)+(OPS_VERSION_MINOR << 1)+OPS_VERSION_RELEASE)
 
 #if OPS_VERSION_RELEASE
-# define OPS_DEV_STRING ""
+#define OPS_DEV_STRING ""
 #else
-# define OPS_DEV_STRING " (dev)"
+#define OPS_DEV_STRING " (dev)"
 #endif
 
 
