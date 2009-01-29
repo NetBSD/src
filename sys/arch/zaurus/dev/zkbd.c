@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.8 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.9 2009/01/29 16:00:33 nonaka Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.8 2009/01/29 12:28:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.9 2009/01/29 16:00:33 nonaka Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"
@@ -116,7 +116,6 @@ struct zkbd_softc {
 	char sc_rep[MAXKEYS];
 	int sc_nrep;
 #endif
-	void *sc_powerhook;
 };
 
 static struct zkbd_softc *zkbd_sc;
@@ -132,7 +131,7 @@ static void	zkbd_poll(void *v);
 static int	zkbd_on(void *v);
 static int	zkbd_sync(void *v);
 static int	zkbd_hinge(void *v);
-static void	zkbd_power(int why, void *arg);
+static bool	zkbd_resume(device_t dv PMF_FN_ARGS);
 
 int zkbd_modstate;
 
@@ -215,12 +214,9 @@ zkbd_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
-	    zkbd_power, sc);
-	if (sc->sc_powerhook == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish powerhook\n");
-		return;
-	}
+	if (!pmf_device_register(sc->sc_dev, NULL, zkbd_resume))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	sc->sc_okeystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
 	    M_DEVBUF, M_NOWAIT);
@@ -597,9 +593,12 @@ zkbd_cnpollc(void *v, int on)
 {
 }
 
-static void
-zkbd_power(int why, void *arg)
+static bool
+zkbd_resume(device_t dv PMF_FN_ARGS)
 {
+	struct zkbd_softc *sc = device_private(dv);
 
-	zkbd_hinge(arg);
+	zkbd_hinge(sc);
+
+	return true;
 }
