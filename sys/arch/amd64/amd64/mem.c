@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 2008/11/12 12:35:56 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.17 2009/01/29 14:20:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16 2008/11/12 12:35:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.17 2009/01/29 14:20:50 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16 2008/11/12 12:35:56 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-extern char *vmmap;            /* poor name! */
+extern void *vmmap;            /* poor name! */
 void *zeropage;
 static kmutex_t mm_lock;
 extern int start, end, __data_start;
