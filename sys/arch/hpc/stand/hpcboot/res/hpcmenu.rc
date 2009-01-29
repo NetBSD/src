@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcmenu.rc,v 1.16 2008/04/28 20:23:20 martin Exp $	*/
+/*	$NetBSD: hpcmenu.rc,v 1.17 2009/01/29 21:27:35 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@ STRINGTABLE DISCARDABLE
 	IDS_DIR_CARD_JP1		L"\\\xFF92\xFF93\xFF98 \xFF76\xFF70\xFF84\xFF9E1\\"
 	IDS_DIR_CARD_JP2		L"\\\xFF92\xFF93\xFF98 \xFF76\xFF70\xFF84\xFF9E2\\"
 	IDS_DIR_CARD_MMCARD		"\\Multimedia Card\\"
+	IDS_DIR_CARD_MINISD_JP		L"\\miniSD\xFF76\xFF70\xFF84\xFF9E\\"
+	IDS_DIR_CARD_MICROSD_JP		L"\\microSD\x30AB\x30FC\x30C9\\"
 	IDS_DIR_USER_DEFINED		"user defined"
 }
 
