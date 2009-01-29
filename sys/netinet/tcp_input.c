@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.291 2008/08/04 04:08:47 tls Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.292 2009/01/29 20:38:22 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.291 2008/08/04 04:08:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.292 2009/01/29 20:38:22 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -404,8 +404,15 @@ static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
 #endif /* defined(MBUFTRACE) */
 
-static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
-    NULL, IPL_VM);
+static struct pool tcpipqent_pool;
+
+void
+tcpipqent_init()
+{
+
+	pool_init(&tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
+	    NULL, IPL_VM);
+}
 
 struct ipqent *
 tcpipqent_alloc(void)
@@ -3305,8 +3312,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 #endif /* INET6 */
 
-POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL,
-    IPL_SOFTNET);
+static struct pool syn_cache_pool;
 
 /*
  * We don't estimate RTT with SYNs, so each packet starts with the default
@@ -3353,6 +3359,9 @@ void
 syn_cache_init(void)
 {
 	int i;
+
+	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
+	    "synpl", NULL, IPL_SOFTNET);
 
 	/* Initialize the hash buckets. */
 	for (i = 0; i < tcp_syn_cache_size; i++)
