@@ -6,15 +6,15 @@
  * be recorded as the authors of this copyright work.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. 
- * 
- * You may obtain a copy of the License at 
- *     http://www.apache.org/licenses/LICENSE-2.0 
- * 
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * 
+ * use this file except in compliance with the License.
+ *
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -49,7 +49,7 @@
 
 /**
    \ingroup HighLevel_Keyring
-   
+
    \brief Creates a new ops_keydata_t struct
 
    \return A new ops_keydata_t struct, initialised to zero.
@@ -57,8 +57,11 @@
    \note The returned ops_keydata_t struct must be freed after use with ops_keydata_free.
 */
 
-ops_keydata_t *ops_keydata_new(void)
-    { return ops_mallocz(sizeof(ops_keydata_t)); }
+ops_keydata_t  *
+ops_keydata_new(void)
+{
+	return ops_mallocz(sizeof(ops_keydata_t));
+}
 
 
 /**
@@ -68,31 +71,32 @@ ops_keydata_t *ops_keydata_new(void)
 
  \param keydata Key to be freed.
 
- \note This frees the keydata itself, as well as any other memory alloc-ed by it. 
+ \note This frees the keydata itself, as well as any other memory alloc-ed by it.
 */
-void ops_keydata_free(ops_keydata_t *keydata)
-    {
-    unsigned n;
+void 
+ops_keydata_free(ops_keydata_t * keydata)
+{
+	unsigned        n;
 
-    for(n=0 ; n < keydata->nuids ; ++n)
-	ops_user_id_free(&keydata->uids[n]);
-    free(keydata->uids);
-    keydata->uids=NULL;
-    keydata->nuids=0;
+	for (n = 0; n < keydata->nuids; ++n)
+		ops_user_id_free(&keydata->uids[n]);
+	free(keydata->uids);
+	keydata->uids = NULL;
+	keydata->nuids = 0;
 
-    for(n=0 ; n < keydata->npackets ; ++n)
-	ops_packet_free(&keydata->packets[n]);
-    free(keydata->packets);
-    keydata->packets=NULL;
-    keydata->npackets=0;
+	for (n = 0; n < keydata->npackets; ++n)
+		ops_packet_free(&keydata->packets[n]);
+	free(keydata->packets);
+	keydata->packets = NULL;
+	keydata->npackets = 0;
 
-    if(keydata->type == OPS_PTAG_CT_PUBLIC_KEY)
-	ops_public_key_free(&keydata->key.pkey);
-    else
-	ops_secret_key_free(&keydata->key.skey);
+	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY)
+		ops_public_key_free(&keydata->key.pkey);
+	else
+		ops_secret_key_free(&keydata->key.skey);
 
-    free(keydata);
-    }
+	free(keydata);
+}
 
 /**
  \ingroup HighLevel_KeyGeneral
@@ -106,12 +110,12 @@ void ops_keydata_free(ops_keydata_t *keydata)
 */
 
 const ops_public_key_t *
-ops_get_public_key_from_data(const ops_keydata_t *keydata)
-    {
-    if(keydata->type == OPS_PTAG_CT_PUBLIC_KEY)
-	return &keydata->key.pkey;
-    return &keydata->key.skey.public_key;
-    }
+ops_get_public_key_from_data(const ops_keydata_t * keydata)
+{
+	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY)
+		return &keydata->key.pkey;
+	return &keydata->key.skey.public_key;
+}
 
 /**
 \ingroup HighLevel_KeyGeneral
@@ -119,8 +123,11 @@ ops_get_public_key_from_data(const ops_keydata_t *keydata)
 \brief Check whether this is a secret key or not.
 */
 
-ops_boolean_t ops_is_key_secret(const ops_keydata_t *data)
-    { return data->type != OPS_PTAG_CT_PUBLIC_KEY; }
+ops_boolean_t 
+ops_is_key_secret(const ops_keydata_t * data)
+{
+	return data->type != OPS_PTAG_CT_PUBLIC_KEY;
+}
 
 /**
  \ingroup HighLevel_KeyGeneral
@@ -133,13 +140,13 @@ ops_boolean_t ops_is_key_secret(const ops_keydata_t *data)
 */
 
 const ops_secret_key_t *
-ops_get_secret_key_from_data(const ops_keydata_t *data)
-    {
-    if(data->type != OPS_PTAG_CT_SECRET_KEY)
-        return NULL;
+ops_get_secret_key_from_data(const ops_keydata_t * data)
+{
+	if (data->type != OPS_PTAG_CT_SECRET_KEY)
+		return NULL;
 
-    return &data->key.skey;
-    }
+	return &data->key.skey;
+}
 
 /**
  \ingroup HighLevel_KeyGeneral
@@ -152,87 +159,85 @@ ops_get_secret_key_from_data(const ops_keydata_t *data)
 */
 
 ops_secret_key_t *
-ops_get_writable_secret_key_from_data(ops_keydata_t *data)
-    {
-    if (data->type != OPS_PTAG_CT_SECRET_KEY)
-        return NULL;
+ops_get_writable_secret_key_from_data(ops_keydata_t * data)
+{
+	if (data->type != OPS_PTAG_CT_SECRET_KEY)
+		return NULL;
 
-    return &data->key.skey;
-    }
+	return &data->key.skey;
+}
 
-typedef struct
-    {
-    const ops_keydata_t *key;
-    char *pphrase;
-    ops_secret_key_t *skey;
-    } decrypt_arg_t;
+typedef struct {
+	const ops_keydata_t *key;
+	char           *pphrase;
+	ops_secret_key_t *skey;
+}               decrypt_arg_t;
 
-static ops_parse_cb_return_t decrypt_cb(const ops_parser_content_t *content_,
-					ops_parse_cb_info_t *cbinfo)
-    {
-    const ops_parser_content_union_t *content=&content_->content;
-    decrypt_arg_t *arg=ops_parse_cb_get_arg(cbinfo);
+static ops_parse_cb_return_t 
+decrypt_cb(const ops_parser_content_t * content_,
+	   ops_parse_cb_info_t * cbinfo)
+{
+	const ops_parser_content_union_t *content = &content_->content;
+	decrypt_arg_t  *arg = ops_parse_cb_get_arg(cbinfo);
 
-    OPS_USED(cbinfo);
+	OPS_USED(cbinfo);
 
-    switch(content_->tag)
-	{
-    case OPS_PARSER_PTAG:
-    case OPS_PTAG_CT_USER_ID:
-    case OPS_PTAG_CT_SIGNATURE:
-    case OPS_PTAG_CT_SIGNATURE_HEADER:
-    case OPS_PTAG_CT_SIGNATURE_FOOTER:
-    case OPS_PTAG_CT_TRUST:
-	break;
+	switch (content_->tag) {
+	case OPS_PARSER_PTAG:
+	case OPS_PTAG_CT_USER_ID:
+	case OPS_PTAG_CT_SIGNATURE:
+	case OPS_PTAG_CT_SIGNATURE_HEADER:
+	case OPS_PTAG_CT_SIGNATURE_FOOTER:
+	case OPS_PTAG_CT_TRUST:
+		break;
 
-    case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-	*content->secret_key_passphrase.passphrase=arg->pphrase;
-	return OPS_KEEP_MEMORY;
+	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
+		*content->secret_key_passphrase.passphrase = arg->pphrase;
+		return OPS_KEEP_MEMORY;
 
-    case OPS_PARSER_ERRCODE:
-	switch(content->errcode.errcode)
-	    {
-	case OPS_E_P_MPI_FORMAT_ERROR:
-	    /* Generally this means a bad passphrase */
-	    fprintf(stderr,"Bad passphrase!\n");
-	    goto done;
+	case OPS_PARSER_ERRCODE:
+		switch (content->errcode.errcode) {
+		case OPS_E_P_MPI_FORMAT_ERROR:
+			/* Generally this means a bad passphrase */
+			fprintf(stderr, "Bad passphrase!\n");
+			goto done;
 
-	case OPS_E_P_PACKET_CONSUMED:
-	    /* And this is because of an error we've accepted */
-	    goto done;
+		case OPS_E_P_PACKET_CONSUMED:
+			/* And this is because of an error we've accepted */
+			goto done;
+
+		default:
+			fprintf(stderr, "parse error: %s\n",
+				ops_errcode(content->errcode.errcode));
+			assert( /* CONSTCOND */ 0);
+			break;
+		}
+
+		break;
+
+	case OPS_PARSER_ERROR:
+		fprintf(stderr, "parse error: %s\n", content->error.error);
+		assert( /* CONSTCOND */ 0);
+		break;
+
+	case OPS_PTAG_CT_SECRET_KEY:
+		arg->skey = malloc(sizeof *arg->skey);
+		*arg->skey = content->secret_key;
+		return OPS_KEEP_MEMORY;
+
+	case OPS_PARSER_PACKET_END:
+		/* nothing to do */
+		break;
 
 	default:
-	    fprintf(stderr,"parse error: %s\n",
-		    ops_errcode(content->errcode.errcode));
-	    assert(/*CONSTCOND*/0);
-	    break;
-	    }
-
-	break;
-
-    case OPS_PARSER_ERROR:
-	fprintf(stderr,"parse error: %s\n",content->error.error);
-	assert(/*CONSTCOND*/0);
-	break;
-
-    case OPS_PTAG_CT_SECRET_KEY:
-	arg->skey=malloc(sizeof *arg->skey);
-	*arg->skey=content->secret_key;
-	return OPS_KEEP_MEMORY;
-
- case OPS_PARSER_PACKET_END:
-     /* nothing to do */
-     break;
-
-    default:
-	fprintf(stderr,"Unexpected tag %d (0x%x)\n",content_->tag,
-		content_->tag);
-	assert(/*CONSTCOND*/0);
+		fprintf(stderr, "Unexpected tag %d (0x%x)\n", content_->tag,
+			content_->tag);
+		assert( /* CONSTCOND */ 0);
 	}
 
- done:
-    return OPS_RELEASE_MEMORY;
-    }
+done:
+	return OPS_RELEASE_MEMORY;
+}
 
 /**
 \ingroup Core_Keys
@@ -241,37 +246,39 @@ static ops_parse_cb_return_t decrypt_cb(const ops_parser_content_t *content_,
 \param pphrase Passphrase to use to decrypt secret key
 \return secret key
 */
-ops_secret_key_t *ops_decrypt_secret_key_from_data(const ops_keydata_t *key,
-						   const char *pphrase)
-    {
-    ops_parse_info_t *pinfo;
-    decrypt_arg_t arg;
+ops_secret_key_t *
+ops_decrypt_secret_key_from_data(const ops_keydata_t * key,
+				 const char *pphrase)
+{
+	ops_parse_info_t *pinfo;
+	decrypt_arg_t   arg;
 
-    memset(&arg,'\0',sizeof arg);
-    arg.key=key;
-    arg.pphrase=strdup(pphrase);
+	memset(&arg, '\0', sizeof arg);
+	arg.key = key;
+	arg.pphrase = strdup(pphrase);
 
-    pinfo=ops_parse_info_new();
+	pinfo = ops_parse_info_new();
 
-    ops_keydata_reader_set(pinfo,key);
-    ops_parse_cb_set(pinfo,decrypt_cb,&arg);
-    pinfo->rinfo.accumulate=ops_true;
+	ops_keydata_reader_set(pinfo, key);
+	ops_parse_cb_set(pinfo, decrypt_cb, &arg);
+	pinfo->rinfo.accumulate = ops_true;
 
-    ops_parse(pinfo);
+	ops_parse(pinfo);
 
-    return arg.skey;
-    }
+	return arg.skey;
+}
 
-/** 
+/**
 \ingroup Core_Keys
 \brief Set secret key in content
 \param content Content to be set
 \param key Keydata to get secret key from
 */
-void ops_set_secret_key(ops_parser_content_union_t* content,const ops_keydata_t *key)
-    {
-    *content->get_secret_key.secret_key=&key->key.skey;
-    }
+void 
+ops_set_secret_key(ops_parser_content_union_t * content, const ops_keydata_t * key)
+{
+	*content->get_secret_key.secret_key = &key->key.skey;
+}
 
 /**
 \ingroup Core_Keys
@@ -279,10 +286,11 @@ void ops_set_secret_key(ops_parser_content_union_t* content,const ops_keydata_t 
 \param key Keydata to get Key ID from
 \return Pointer to Key ID inside keydata
 */
-const unsigned char* ops_get_key_id(const ops_keydata_t *key)
-    {
-    return key->key_id;
-    }
+const unsigned char *
+ops_get_key_id(const ops_keydata_t * key)
+{
+	return key->key_id;
+}
 
 /**
 \ingroup Core_Keys
@@ -290,10 +298,11 @@ const unsigned char* ops_get_key_id(const ops_keydata_t *key)
 \param key Keydata to check
 \return Num of user ids
 */
-unsigned ops_get_user_id_count(const ops_keydata_t *key)
-    {
-    return key->nuids;
-    }
+unsigned 
+ops_get_user_id_count(const ops_keydata_t * key)
+{
+	return key->nuids;
+}
 
 /**
 \ingroup Core_Keys
@@ -302,10 +311,11 @@ unsigned ops_get_user_id_count(const ops_keydata_t *key)
 \param index Which key to get
 \return Pointer to requested user id
 */
-const unsigned char* ops_get_user_id(const ops_keydata_t *key, unsigned subscript)
-    {
-    return key->uids[subscript].user_id;
-    }
+const unsigned char *
+ops_get_user_id(const ops_keydata_t * key, unsigned subscript)
+{
+	return key->uids[subscript].user_id;
+}
 
 /**
    \ingroup HighLevel_Supported
@@ -314,22 +324,23 @@ const unsigned char* ops_get_user_id(const ops_keydata_t *key, unsigned subscrip
    \return ops_true if key algorithm and type are supported by OpenPGP::SDK; ops_false if not
 */
 
-ops_boolean_t ops_is_key_supported(const ops_keydata_t *keydata)
-    {
-    if ( keydata->type == OPS_PTAG_CT_PUBLIC_KEY ) {
-        if ( keydata->key.pkey.algorithm == OPS_PKA_RSA ) {
-            return ops_true;
-        }
-    } else if ( keydata->type == OPS_PTAG_CT_PUBLIC_KEY ) {
-        if ( keydata->key.skey.algorithm == OPS_PKA_RSA ) {
-            return ops_true;
-        }
-    }
-    return ops_false;
-    }
+ops_boolean_t 
+ops_is_key_supported(const ops_keydata_t * keydata)
+{
+	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
+		if (keydata->key.pkey.algorithm == OPS_PKA_RSA) {
+			return ops_true;
+		}
+	} else if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
+		if (keydata->key.skey.algorithm == OPS_PKA_RSA) {
+			return ops_true;
+		}
+	}
+	return ops_false;
+}
 
 
-/** 
+/**
     \ingroup HighLevel_KeyringFind
 
     \brief Returns key inside a keyring, chosen by index
@@ -354,12 +365,13 @@ ops_boolean_t ops_is_key_supported(const ops_keydata_t *keydata)
     \endcode
 */
 
-const ops_keydata_t* ops_keyring_get_key_by_index(const ops_keyring_t *keyring, int subscript)
-    {
-    if (subscript >= keyring->nkeys)
-        return NULL;
-    return &keyring->keys[subscript]; 
-    }
+const ops_keydata_t *
+ops_keyring_get_key_by_index(const ops_keyring_t * keyring, int subscript)
+{
+	if (subscript >= keyring->nkeys)
+		return NULL;
+	return &keyring->keys[subscript];
+}
 
 /* \todo check where userid pointers are copied */
 /**
@@ -369,15 +381,16 @@ const ops_keydata_t* ops_keyring_get_key_by_index(const ops_keyring_t *keyring, 
 \param src Source User ID
 \note If dst already has a user_id, it will be freed.
 */
-void ops_copy_userid(ops_user_id_t* dst, const ops_user_id_t* src)
-    {
-    size_t len=strlen((char *)src->user_id);
-    if (dst->user_id)
-        free(dst->user_id);
-    dst->user_id=ops_mallocz(len+1);
+void 
+ops_copy_userid(ops_user_id_t * dst, const ops_user_id_t * src)
+{
+	size_t          len = strlen((char *) src->user_id);
+	if (dst->user_id)
+		free(dst->user_id);
+	dst->user_id = ops_mallocz(len + 1);
 
-    memcpy(dst->user_id, src->user_id, len);
-    }
+	memcpy(dst->user_id, src->user_id, len);
+}
 
 /* \todo check where pkt pointers are copied */
 /**
@@ -387,15 +400,16 @@ void ops_copy_userid(ops_user_id_t* dst, const ops_user_id_t* src)
 \param src Source packet
 \note If dst already has a packet, it will be freed.
 */
-void ops_copy_packet(ops_packet_t* dst, const ops_packet_t* src)
-    {
-    if (dst->raw)
-        free(dst->raw);
-    dst->raw=ops_mallocz(src->length);
+void 
+ops_copy_packet(ops_packet_t * dst, const ops_packet_t * src)
+{
+	if (dst->raw)
+		free(dst->raw);
+	dst->raw = ops_mallocz(src->length);
 
-    dst->length=src->length;
-    memcpy(dst->raw, src->raw, src->length);
-    }
+	dst->length = src->length;
+	memcpy(dst->raw, src->raw, src->length);
+}
 
 /**
 \ingroup Core_Keys
@@ -404,23 +418,24 @@ void ops_copy_packet(ops_packet_t* dst, const ops_packet_t* src)
 \param userid User ID to add
 \return Pointer to new User ID
 */
-ops_user_id_t* ops_add_userid_to_keydata(ops_keydata_t* keydata, const ops_user_id_t* userid)
-    {
-    ops_user_id_t* new_uid=NULL;
+ops_user_id_t  *
+ops_add_userid_to_keydata(ops_keydata_t * keydata, const ops_user_id_t * userid)
+{
+	ops_user_id_t  *new_uid = NULL;
 
-    EXPAND_ARRAY(keydata, uids);
+	EXPAND_ARRAY(keydata, uids);
 
-    /* initialise new entry in array */
-    new_uid=&keydata->uids[keydata->nuids];
+	/* initialise new entry in array */
+	new_uid = &keydata->uids[keydata->nuids];
 
-    new_uid->user_id=NULL;
+	new_uid->user_id = NULL;
 
-    /* now copy it */
-    ops_copy_userid(new_uid,userid);
-    keydata->nuids++;
+	/* now copy it */
+	ops_copy_userid(new_uid, userid);
+	keydata->nuids++;
 
-    return new_uid;
-    }
+	return new_uid;
+}
 
 /**
 \ingroup Core_Keys
@@ -429,23 +444,24 @@ ops_user_id_t* ops_add_userid_to_keydata(ops_keydata_t* keydata, const ops_user_
 \param packet Packet to add
 \return Pointer to new packet
 */
-ops_packet_t* ops_add_packet_to_keydata(ops_keydata_t* keydata, const ops_packet_t* packet)
-    {
-    ops_packet_t* new_pkt=NULL;
+ops_packet_t   *
+ops_add_packet_to_keydata(ops_keydata_t * keydata, const ops_packet_t * packet)
+{
+	ops_packet_t   *new_pkt = NULL;
 
-    EXPAND_ARRAY(keydata, packets);
+	EXPAND_ARRAY(keydata, packets);
 
-    /* initialise new entry in array */
-    new_pkt=&keydata->packets[keydata->npackets];
-    new_pkt->length=0;
-    new_pkt->raw=NULL;
+	/* initialise new entry in array */
+	new_pkt = &keydata->packets[keydata->npackets];
+	new_pkt->length = 0;
+	new_pkt->raw = NULL;
 
-    /* now copy it */
-    ops_copy_packet(new_pkt, packet);
-    keydata->npackets++;
+	/* now copy it */
+	ops_copy_packet(new_pkt, packet);
+	keydata->npackets++;
 
-    return new_pkt;
-    }
+	return new_pkt;
+}
 
 /**
 \ingroup Core_Keys
@@ -454,29 +470,30 @@ ops_packet_t* ops_add_packet_to_keydata(ops_keydata_t* keydata, const ops_packet
 \param user_id User ID to add
 \param sigpacket Packet to add
 */
-void ops_add_signed_userid_to_keydata(ops_keydata_t* keydata, const ops_user_id_t* user_id, const ops_packet_t* sigpacket)
-    {
-    /*int i=0; */
-    ops_user_id_t * uid=NULL;
-    ops_packet_t * pkt=NULL;
+void 
+ops_add_signed_userid_to_keydata(ops_keydata_t * keydata, const ops_user_id_t * user_id, const ops_packet_t * sigpacket)
+{
+	/* int i=0; */
+	ops_user_id_t  *uid = NULL;
+	ops_packet_t   *pkt = NULL;
 
-    uid=ops_add_userid_to_keydata(keydata, user_id);
-    pkt=ops_add_packet_to_keydata(keydata, sigpacket);
+	uid = ops_add_userid_to_keydata(keydata, user_id);
+	pkt = ops_add_packet_to_keydata(keydata, sigpacket);
 
-    /*
-     * add entry in sigs array to link the userid and sigpacket
-     */
+	/*
+         * add entry in sigs array to link the userid and sigpacket
+         */
 
-    /* and add ptr to it from the sigs array */
-    EXPAND_ARRAY(keydata, sigs);
+	/* and add ptr to it from the sigs array */
+	EXPAND_ARRAY(keydata, sigs);
 
-    /**setup new entry in array */
+	/**setup new entry in array */
 
-    keydata->sigs[keydata->nsigs].userid=uid;
-    keydata->sigs[keydata->nsigs].packet=pkt;
+	keydata->sigs[keydata->nsigs].userid = uid;
+	keydata->sigs[keydata->nsigs].packet = pkt;
 
-    keydata->nsigs++;
-    }
+	keydata->nsigs++;
+}
 
 /**
 \ingroup Core_Keys
@@ -485,55 +502,56 @@ void ops_add_signed_userid_to_keydata(ops_keydata_t* keydata, const ops_user_id_
 \param userid Self-signed User ID to add
 \return ops_true if OK; else ops_false
 */
-ops_boolean_t ops_add_selfsigned_userid_to_keydata(ops_keydata_t* keydata, ops_user_id_t* userid)
-    {
-    ops_packet_t sigpacket;
+ops_boolean_t 
+ops_add_selfsigned_userid_to_keydata(ops_keydata_t * keydata, ops_user_id_t * userid)
+{
+	ops_packet_t    sigpacket;
 
-    ops_memory_t* mem_userid=NULL;
-    ops_create_info_t* cinfo_userid=NULL;
+	ops_memory_t   *mem_userid = NULL;
+	ops_create_info_t *cinfo_userid = NULL;
 
-    ops_memory_t* mem_sig=NULL;
-    ops_create_info_t* cinfo_sig=NULL;
+	ops_memory_t   *mem_sig = NULL;
+	ops_create_info_t *cinfo_sig = NULL;
 
-    ops_create_signature_t *sig=NULL;
+	ops_create_signature_t *sig = NULL;
 
-    /*
-     * create signature packet for this userid
-     */
+	/*
+         * create signature packet for this userid
+         */
 
-    /* create userid pkt */
-    ops_setup_memory_write(&cinfo_userid, &mem_userid, 128);
-    ops_write_struct_user_id(userid, cinfo_userid);
+	/* create userid pkt */
+	ops_setup_memory_write(&cinfo_userid, &mem_userid, 128);
+	ops_write_struct_user_id(userid, cinfo_userid);
 
-    /* create sig for this pkt */
+	/* create sig for this pkt */
 
-    sig=ops_create_signature_new();
-    ops_signature_start_key_signature(sig, &keydata->key.skey.public_key, userid, OPS_CERT_POSITIVE);
-    ops_signature_add_creation_time(sig,time(NULL));
-    ops_signature_add_issuer_key_id(sig,keydata->key_id);
-    ops_signature_add_primary_user_id(sig, ops_true);
-    ops_signature_hashed_subpackets_end(sig);
+	sig = ops_create_signature_new();
+	ops_signature_start_key_signature(sig, &keydata->key.skey.public_key, userid, OPS_CERT_POSITIVE);
+	ops_signature_add_creation_time(sig, time(NULL));
+	ops_signature_add_issuer_key_id(sig, keydata->key_id);
+	ops_signature_add_primary_user_id(sig, ops_true);
+	ops_signature_hashed_subpackets_end(sig);
 
-    ops_setup_memory_write(&cinfo_sig, &mem_sig, 128);
-    ops_write_signature(sig,&keydata->key.skey.public_key,&keydata->key.skey, cinfo_sig);
+	ops_setup_memory_write(&cinfo_sig, &mem_sig, 128);
+	ops_write_signature(sig, &keydata->key.skey.public_key, &keydata->key.skey, cinfo_sig);
 
-    /* add this packet to keydata */
+	/* add this packet to keydata */
 
-    sigpacket.length=ops_memory_get_length(mem_sig);
-    sigpacket.raw=ops_memory_get_data(mem_sig);
+	sigpacket.length = ops_memory_get_length(mem_sig);
+	sigpacket.raw = ops_memory_get_data(mem_sig);
 
-    /* add userid to keydata */
-    ops_add_signed_userid_to_keydata(keydata, userid, &sigpacket);
+	/* add userid to keydata */
+	ops_add_signed_userid_to_keydata(keydata, userid, &sigpacket);
 
-    /* cleanup */
-    ops_create_signature_delete(sig);
-    ops_create_info_delete(cinfo_userid);
-    ops_create_info_delete(cinfo_sig);
-    ops_memory_free(mem_userid);
-    ops_memory_free(mem_sig);
+	/* cleanup */
+	ops_create_signature_delete(sig);
+	ops_create_info_delete(cinfo_userid);
+	ops_create_info_delete(cinfo_sig);
+	ops_memory_free(mem_userid);
+	ops_memory_free(mem_sig);
 
-    return ops_true;
-    }
+	return ops_true;
+}
 
 /**
 \ingroup Core_Keys
@@ -541,15 +559,16 @@ ops_boolean_t ops_add_selfsigned_userid_to_keydata(ops_keydata_t* keydata, ops_u
 \param keydata Keydata to initialise
 \param type OPS_PTAG_CT_PUBLIC_KEY or OPS_PTAG_CT_SECRET_KEY
 */
-void ops_keydata_init(ops_keydata_t* keydata, const ops_content_tag_t type)
-    {
-    assert(keydata->type==OPS_PTAG_CT_RESERVED);
-    assert(type==OPS_PTAG_CT_PUBLIC_KEY || type==OPS_PTAG_CT_SECRET_KEY);
+void 
+ops_keydata_init(ops_keydata_t * keydata, const ops_content_tag_t type)
+{
+	assert(keydata->type == OPS_PTAG_CT_RESERVED);
+	assert(type == OPS_PTAG_CT_PUBLIC_KEY || type == OPS_PTAG_CT_SECRET_KEY);
 
-    keydata->type=type;
-    }
+	keydata->type = type;
+}
 
-/** 
+/**
     Example Usage:
     \code
 
@@ -560,23 +579,23 @@ void ops_keydata_init(ops_keydata_t* keydata, const ops_content_tag_t type)
     // Read keyring from file
     ops_keyring_read_from_file(&keyring,filename);
 
-    // do actions using keyring   
-    ... 
+    // do actions using keyring
+    ...
 
     // Free memory alloc-ed in ops_keyring_read_from_file()
     ops_keyring_free(keyring);
     \endcode
 */
 
-static ops_parse_cb_return_t
-cb_keyring_read(const ops_parser_content_t *content_,
-		ops_parse_cb_info_t *cbinfo);
+static          ops_parse_cb_return_t
+cb_keyring_read(const ops_parser_content_t * content_,
+		ops_parse_cb_info_t * cbinfo);
 
 /**
    \ingroup HighLevel_KeyringRead
-   
+
    \brief Reads a keyring from a file
-   
+
    \param keyring Pointer to an existing ops_keyring_t struct
    \param armour ops_true if file is armoured; else ops_false
    \param filename Filename of keyring to be read
@@ -603,71 +622,71 @@ cb_keyring_read(const ops_parser_content_t *content_,
    ...
    ops_keyring_free(keyring);
    free (keyring);
-   
+
    \endcode
 */
 
-ops_boolean_t ops_keyring_read_from_file(ops_keyring_t *keyring, const ops_boolean_t armour, const char *filename)
-    {
-    ops_parse_info_t *pinfo;
-    int fd;
-    ops_boolean_t res = ops_true;
+ops_boolean_t 
+ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, const char *filename)
+{
+	ops_parse_info_t *pinfo;
+	int             fd;
+	ops_boolean_t   res = ops_true;
 
-    pinfo=ops_parse_info_new();
+	pinfo = ops_parse_info_new();
 
-    /* add this for the moment, */
-    /* \todo need to fix the problems with reading signature subpackets later */
+	/* add this for the moment, */
+	/*
+	 * \todo need to fix the problems with reading signature subpackets
+	 * later
+	 */
 
-    /*    ops_parse_options(pinfo,OPS_PTAG_SS_ALL,OPS_PARSE_RAW); */
-    ops_parse_options(pinfo,OPS_PTAG_SS_ALL,OPS_PARSE_PARSED);
+	/* ops_parse_options(pinfo,OPS_PTAG_SS_ALL,OPS_PARSE_RAW); */
+	ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 
 #ifdef WIN32
-    fd=open(filename,O_RDONLY|O_BINARY);
+	fd = open(filename, O_RDONLY | O_BINARY);
 #else
-    fd=open(filename,O_RDONLY);
+	fd = open(filename, O_RDONLY);
 #endif
-    if(fd < 0)
-        {
-        ops_parse_info_delete(pinfo);
-        perror(filename);
-        return ops_false;
-        }
+	if (fd < 0) {
+		ops_parse_info_delete(pinfo);
+		perror(filename);
+		return ops_false;
+	}
+	ops_reader_set_fd(pinfo, fd);
 
-    ops_reader_set_fd(pinfo,fd);
+	ops_parse_cb_set(pinfo, cb_keyring_read, NULL);
 
-    ops_parse_cb_set(pinfo,cb_keyring_read,NULL);
+	if (armour) {
+		ops_reader_push_dearmour(pinfo);
+	}
+	if (ops_parse_and_accumulate(keyring, pinfo) == 0) {
+		res = ops_false;
+	} else {
+		res = ops_true;
+	}
+	ops_print_errors(ops_parse_info_get_errors(pinfo));
 
-    if (armour)
-        { ops_reader_push_dearmour(pinfo); }
+	if (armour)
+		ops_reader_pop_dearmour(pinfo);
 
-    if ( ops_parse_and_accumulate(keyring,pinfo) == 0 ) {
-        res = ops_false; 
-    }
-    else
-        {
-        res = ops_true;
-        }
-    ops_print_errors(ops_parse_info_get_errors(pinfo));
+	close(fd);
 
-    if (armour)
-        ops_reader_pop_dearmour(pinfo);
+	ops_parse_info_delete(pinfo);
 
-    close(fd);
-
-    ops_parse_info_delete(pinfo);
-
-    return res;
-    }
+	return res;
+}
 
 /**
    \ingroup HighLevel_KeyringRead
-   
+
    \brief Reads a keyring from memory
-   
+
    \param keyring Pointer to existing ops_keyring_t struct
    \param armour ops_true if file is armoured; else ops_false
    \param mem Pointer to a ops_memory_t struct containing keyring to be read
-   
+
    \return ops true if OK; ops_false on error
 
    \note Keyring struct must already exist.
@@ -693,54 +712,53 @@ ops_boolean_t ops_keyring_read_from_file(ops_keyring_t *keyring, const ops_boole
    free (keyring);
    \endcode
 */
-ops_boolean_t ops_keyring_read_from_mem(ops_keyring_t *keyring, const ops_boolean_t armour, ops_memory_t* mem)
-    {
-    ops_parse_info_t *pinfo=NULL;
-    ops_boolean_t res = ops_true;
+ops_boolean_t 
+ops_keyring_read_from_mem(ops_keyring_t * keyring, const ops_boolean_t armour, ops_memory_t * mem)
+{
+	ops_parse_info_t *pinfo = NULL;
+	ops_boolean_t   res = ops_true;
 
-    pinfo=ops_parse_info_new();
-    ops_parse_options(pinfo,OPS_PTAG_SS_ALL,OPS_PARSE_PARSED);
+	pinfo = ops_parse_info_new();
+	ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 
-    ops_setup_memory_read(&pinfo, mem, NULL, cb_keyring_read, OPS_ACCUMULATE_NO);
+	ops_setup_memory_read(&pinfo, mem, NULL, cb_keyring_read, OPS_ACCUMULATE_NO);
 
-    if (armour)
-        { ops_reader_push_dearmour(pinfo); }
+	if (armour) {
+		ops_reader_push_dearmour(pinfo);
+	}
+	if (ops_parse_and_accumulate(keyring, pinfo) == 0) {
+		res = ops_false;
+	} else {
+		res = ops_true;
+	}
+	ops_print_errors(ops_parse_info_get_errors(pinfo));
 
-    if ( ops_parse_and_accumulate(keyring,pinfo) == 0 ) 
-        {
-        res = ops_false; 
-        } 
-    else 
-        {
-        res = ops_true;
-        }
-    ops_print_errors(ops_parse_info_get_errors(pinfo));
+	if (armour)
+		ops_reader_pop_dearmour(pinfo);
 
-    if (armour)
-        ops_reader_pop_dearmour(pinfo);
+	/* don't call teardown_memory_read because memory was passed in */
+	ops_parse_info_delete(pinfo);
 
-    /* don't call teardown_memory_read because memory was passed in */
-    ops_parse_info_delete(pinfo);
-
-    return res;
-    }
+	return res;
+}
 
 /**
    \ingroup HighLevel_KeyringRead
- 
+
    \brief Frees keyring's contents (but not keyring itself)
- 
+
    \param keyring Keyring whose data is to be freed
-   
+
    \note This does not free keyring itself, just the memory alloc-ed in it.
  */
-void ops_keyring_free(ops_keyring_t *keyring)
-    {
-    free(keyring->keys);
-    keyring->keys=NULL;
-    keyring->nkeys=0;
-    keyring->nkeys_allocated=0;
-    }
+void 
+ops_keyring_free(ops_keyring_t * keyring)
+{
+	free(keyring->keys);
+	keyring->keys = NULL;
+	keyring->nkeys = 0;
+	keyring->nkeys_allocated = 0;
+}
 
 /**
    \ingroup HighLevel_KeyringFind
@@ -753,7 +771,7 @@ void ops_keyring_free(ops_keyring_t *keyring)
    \return Pointer to key, if found; NULL, if not found
 
    \note This returns a pointer to the key inside the given keyring, not a copy. Do not free it after use.
-   
+
    Example code:
    \code
    void example(ops_keyring_t* keyring)
@@ -766,22 +784,21 @@ void ops_keyring_free(ops_keyring_t *keyring)
    \endcode
 */
 const ops_keydata_t *
-ops_keyring_find_key_by_id(const ops_keyring_t *keyring,
+ops_keyring_find_key_by_id(const ops_keyring_t * keyring,
 			   const unsigned char keyid[OPS_KEY_ID_SIZE])
-    {
-    int n;
+{
+	int             n;
 
-    if (!keyring)
-        return NULL;
+	if (!keyring)
+		return NULL;
 
-    for(n=0 ; n < keyring->nkeys ; ++n)
-        {
-        if(!memcmp(keyring->keys[n].key_id,keyid,OPS_KEY_ID_SIZE))
-            return &keyring->keys[n];
-        }
+	for (n = 0; n < keyring->nkeys; ++n) {
+		if (!memcmp(keyring->keys[n].key_id, keyid, OPS_KEY_ID_SIZE))
+			return &keyring->keys[n];
+	}
 
-    return NULL;
-    }
+	return NULL;
+}
 
 /**
    \ingroup HighLevel_KeyringFind
@@ -806,56 +823,53 @@ ops_keyring_find_key_by_id(const ops_keyring_t *keyring,
    \endcode
 */
 const ops_keydata_t *
-ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
-				 const char *userid)
-    {
-    char	*cp;
-    int n=0;
-    unsigned int i=0;
-    size_t len;
+ops_keyring_find_key_by_userid(const ops_keyring_t * keyring,
+			       const char *userid)
+{
+	char           *cp;
+	int             n = 0;
+	unsigned int    i = 0;
+	size_t          len;
 
-    if (!keyring)
-        return NULL;
+	if (!keyring)
+		return NULL;
 
-    len = strlen(userid);
-    for(n=0 ; n < keyring->nkeys ; ++n)
-        {
-        for(i=0; i<keyring->keys[n].nuids; i++)
-            {
-            if (ops_get_debug_level(__FILE__)) {
-		printf("[%d][%d] userid %s, last '%d'\n",n,i,keyring->keys[n].uids[i].user_id, keyring->keys[n].uids[i].user_id[len]);
-	    }
-            if (strncmp((char *)keyring->keys[n].uids[i].user_id,userid,len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ')
-                return &keyring->keys[n];
-            }
-        }
+	len = strlen(userid);
+	for (n = 0; n < keyring->nkeys; ++n) {
+		for (i = 0; i < keyring->keys[n].nuids; i++) {
+			if (ops_get_debug_level(__FILE__)) {
+				printf("[%d][%d] userid %s, last '%d'\n", n, i, keyring->keys[n].uids[i].user_id, keyring->keys[n].uids[i].user_id[len]);
+			}
+			if (strncmp((char *) keyring->keys[n].uids[i].user_id, userid, len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ')
+				return &keyring->keys[n];
+		}
+	}
 
 	if (strchr(userid, '@') == NULL) {
 		/* no '@' sign found, match on name */
-		for (n = 0 ; n < keyring->nkeys ; n++) {
+		for (n = 0; n < keyring->nkeys; n++) {
 			for (i = 0; i < keyring->keys[n].nuids; i++) {
 				if (ops_get_debug_level(__FILE__)) {
 					printf("keyid ,%s, len %" PRIsize "u, keyid[len] %c\n",
-						(char *)keyring->keys[n].uids[i].user_id, len, keyring->keys[n].uids[i].user_id[len]);
+					       (char *) keyring->keys[n].uids[i].user_id, len, keyring->keys[n].uids[i].user_id[len]);
 				}
-				if (strncasecmp((char *)keyring->keys[n].uids[i].user_id, userid, len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ') {
+				if (strncasecmp((char *) keyring->keys[n].uids[i].user_id, userid, len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ') {
 					return &keyring->keys[n];
 				}
 			}
 		}
 	}
-
 	/* match on <email@address> */
-	for (n = 0 ; n < keyring->nkeys ; n++) {
+	for (n = 0; n < keyring->nkeys; n++) {
 		for (i = 0; i < keyring->keys[n].nuids; i++) {
 			/*
 			 * look for the rightmost '<', in case there is one
 			 * in the comment field
 			 */
-			if ((cp = strrchr((char *)keyring->keys[n].uids[i].user_id, '<')) != NULL) {
+			if ((cp = strrchr((char *) keyring->keys[n].uids[i].user_id, '<')) != NULL) {
 				if (ops_get_debug_level(__FILE__)) {
 					printf("cp ,%s, userid ,%s, len %" PRIsize "u ,%c,\n",
-						cp + 1, userid, len, *(cp + len + 1));
+					       cp + 1, userid, len, *(cp + len + 1));
 				}
 				if (strncasecmp(cp + 1, userid, len) == 0 &&
 				    *(cp + len + 1) == '>') {
@@ -868,9 +882,9 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 	/* XXX - match on userid */
 
 
-    /*printf("end: n=%d,i=%d\n",n,i); */
-    return NULL;
-    }
+	/* printf("end: n=%d,i=%d\n",n,i); */
+	return NULL;
+}
 
 /**
    \ingroup HighLevel_KeyringList
@@ -888,9 +902,9 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
    ops_keyring_t* keyring=ops_mallocz(sizeof *keyring);
    ops_boolean_t armoured=ops_false;
    ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
-   
+
    ops_keyring_list(keyring);
-   
+
    ops_keyring_free(keyring);
    free (keyring);
    }
@@ -898,56 +912,51 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 */
 
 void
-ops_keyring_list(const ops_keyring_t* keyring)
-    {
-    int n;
-    unsigned int i;
-    ops_keydata_t* key;
+ops_keyring_list(const ops_keyring_t * keyring)
+{
+	int             n;
+	ops_keydata_t  *key;
 
-    printf ("%d keys\n", keyring->nkeys);
-    for(n=0,key=&keyring->keys[n] ; n < keyring->nkeys ; ++n,++key)
-	{
-	for(i=0; i<key->nuids; i++)
-	    {
-	    if (ops_is_key_secret(key))
-		ops_print_secret_keydata(key);
-	    else
-		ops_print_public_keydata(key);
-	    }
-
+	printf("%d keys\n", keyring->nkeys);
+	for (n = 0, key = &keyring->keys[n]; n < keyring->nkeys; ++n, ++key) {
+		if (ops_is_key_secret(key))
+			ops_print_secret_keydata(key);
+		else
+			ops_print_public_keydata(key);
+		(void) fputc('\n', stdout);
 	}
-    }
+}
 
 unsigned
-ops_get_keydata_content_type(const ops_keydata_t *keydata)
+ops_get_keydata_content_type(const ops_keydata_t * keydata)
 {
 	return keydata->type;
 }
 
 /* Static functions */
 
-static ops_parse_cb_return_t
-cb_keyring_read(const ops_parser_content_t *content_,
-		ops_parse_cb_info_t *cbinfo)
-    {
-    OPS_USED(cbinfo);
+static          ops_parse_cb_return_t
+cb_keyring_read(const ops_parser_content_t * content_,
+		ops_parse_cb_info_t * cbinfo)
+{
+	OPS_USED(cbinfo);
 
-    switch(content_->tag)
-        {
-    case OPS_PARSER_PTAG:
-    case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY: /* we get these because we didn't prompt */
-    case OPS_PTAG_CT_SIGNATURE_HEADER:
-    case OPS_PTAG_CT_SIGNATURE_FOOTER:
-    case OPS_PTAG_CT_SIGNATURE:
-    case OPS_PTAG_CT_TRUST:
-    case OPS_PARSER_ERRCODE:
-        break;
+	switch (content_->tag) {
+	case OPS_PARSER_PTAG:
+	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:	/* we get these because we
+						 * didn't prompt */
+	case OPS_PTAG_CT_SIGNATURE_HEADER:
+	case OPS_PTAG_CT_SIGNATURE_FOOTER:
+	case OPS_PTAG_CT_SIGNATURE:
+	case OPS_PTAG_CT_TRUST:
+	case OPS_PARSER_ERRCODE:
+		break;
 
-    default:
-	;
+	default:
+		;
 	}
 
-    return OPS_RELEASE_MEMORY;
-    }
+	return OPS_RELEASE_MEMORY;
+}
 
-/*\@}*/
+/* \@} */

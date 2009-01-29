@@ -6,20 +6,20 @@
  * be recorded as the authors of this copyright work.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. 
- * 
- * You may obtain a copy of the License at 
- *     http://www.apache.org/licenses/LICENSE-2.0 
- * 
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * 
+ * use this file except in compliance with the License.
+ *
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
-/** \file 
+/** \file
  */
 
 #include <openpgpsdk/util.h>
@@ -41,15 +41,14 @@
 
 /** Arguments for reader_fd
  */
-typedef struct
-    {
-    int fd; /*!< file descriptor */
-    } reader_fd_arg_t;
+typedef struct {
+	int             fd;	/* !< file descriptor */
+}               reader_fd_arg_t;
 
 /**
  * \ingroup Core_Readers
  *
- * ops_reader_fd() attempts to read up to "plength" bytes from the file 
+ * ops_reader_fd() attempts to read up to "plength" bytes from the file
  * descriptor in "parse_info" into the buffer starting at "dest" using the
  * rules contained in "flags"
  *
@@ -68,41 +67,44 @@ typedef struct
  *
  * \sa enum opt_reader_ret_t
  *
- * \todo change arg_ to typesafe? 
+ * \todo change arg_ to typesafe?
  */
-static int fd_reader(void *dest,size_t length,ops_error_t **errors,
-		     ops_reader_info_t *rinfo,ops_parse_cb_info_t *cbinfo)
-    {
-    reader_fd_arg_t *arg=ops_reader_get_arg(rinfo);
-    int n=read(arg->fd,dest,length);
+static int 
+fd_reader(void *dest, size_t length, ops_error_t ** errors,
+	  ops_reader_info_t * rinfo, ops_parse_cb_info_t * cbinfo)
+{
+	reader_fd_arg_t *arg = ops_reader_get_arg(rinfo);
+	int             n = read(arg->fd, dest, length);
 
-    OPS_USED(cbinfo);
+	OPS_USED(cbinfo);
 
-    if(n == 0)
-	return 0;
+	if (n == 0)
+		return 0;
 
-    if(n < 0)
-	{
-	OPS_SYSTEM_ERROR_1(errors,OPS_E_R_READ_FAILED,"read",
-			   "file descriptor %d",arg->fd);
-	return -1;
+	if (n < 0) {
+		OPS_SYSTEM_ERROR_1(errors, OPS_E_R_READ_FAILED, "read",
+				   "file descriptor %d", arg->fd);
+		return -1;
 	}
+	return n;
+}
 
-    return n;
-    }
-
-static void fd_destroyer(ops_reader_info_t *rinfo)
-    { free(ops_reader_get_arg(rinfo)); }
+static void 
+fd_destroyer(ops_reader_info_t * rinfo)
+{
+	free(ops_reader_get_arg(rinfo));
+}
 
 /**
    \ingroup Core_Readers_First
    \brief Starts stack with file reader
 */
 
-void ops_reader_set_fd(ops_parse_info_t *pinfo,int fd)
-    {
-    reader_fd_arg_t *arg=malloc(sizeof *arg);
+void 
+ops_reader_set_fd(ops_parse_info_t * pinfo, int fd)
+{
+	reader_fd_arg_t *arg = malloc(sizeof *arg);
 
-    arg->fd=fd;
-    ops_reader_set(pinfo,fd_reader,fd_destroyer,arg);
-    }
+	arg->fd = fd;
+	ops_reader_set(pinfo, fd_reader, fd_destroyer, arg);
+}
