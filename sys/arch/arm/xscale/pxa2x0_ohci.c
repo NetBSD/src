@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.3 2008/04/04 17:44:43 drochner Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.4 2009/01/29 14:26:09 nonaka Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -84,10 +84,13 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
 
+	aprint_normal("\n");
+	aprint_naive("\n");
+
 	/* Map I/O space */
 	if (bus_space_map(sc->sc.iot, PXA2X0_USBHC_BASE, PXA2X0_USBHC_SIZE, 0,
 	    &sc->sc.ioh)) {
-		aprint_error(": couldn't map memory space\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map memory space\n");
 		return;
 	}
 	sc->sc.sc_size = PXA2X0_USBHC_SIZE;
@@ -107,15 +110,14 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_USBH1, IPL_USB,
 	    ohci_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error(": unable to establish interrupt\n");
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 		goto free_map;
 	}
 
 	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error("%s: init failed, error=%d\n",
-		    devname, r);
+		aprint_error_dev(sc->sc_dev"init failed, error=%d\n", r);
 		goto free_intr;
 	}
 
