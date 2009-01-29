@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.26 2007/10/17 19:53:44 garbled Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.27 2009/01/29 12:28:15 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.26 2007/10/17 19:53:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.27 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,8 @@ pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *sc,
 	    | (4 << 24) /* 16bpp */
 	    | ((info->panel_info & LCDPANEL_DPC) ? (1<<27) : 0)
 	    );
+
+	bus_space_write_4(iot, ioh, LCDC_LCCR4, (info->pcd_div << 31));
 }
 
 /*
@@ -185,7 +187,8 @@ pxa2x0_lcd_initialize(struct pxa2x0_lcd_softc *sc,
 	pxa2x0_gpio_set_function(74, GPIO_ALT_FN_2_OUT);
 	pxa2x0_gpio_set_function(75, GPIO_ALT_FN_2_OUT);
 	pxa2x0_gpio_set_function(76, GPIO_ALT_FN_2_OUT);
-	pxa2x0_gpio_set_function(77, GPIO_ALT_FN_2_OUT);
+	if (!ISSET(sc->flags, FLAG_NOUSE_ACBIAS))
+		pxa2x0_gpio_set_function(77, GPIO_ALT_FN_2_OUT);
 
 	if ((geom->panel_info & LCDPANEL_ACTIVE) ||
 	    ((geom->panel_info & (LCDPANEL_MONOCHROME|LCDPANEL_DUAL)) ==
@@ -218,14 +221,17 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 	bus_space_handle_t ioh;
 	int error;
 
+	aprint_normal(": PXA2x0 LCD controller\n");
+	aprint_naive("\n");
+
 	sc->n_screens = 0;
 	LIST_INIT(&sc->screens);
 
 	/* map controller registers */
-	error = bus_space_map(iot, PXA2X0_LCDC_BASE,
-			       PXA2X0_LCDC_SIZE, 0, &ioh);
+	error = bus_space_map(iot, PXA2X0_LCDC_BASE, PXA2X0_LCDC_SIZE, 0, &ioh);
 	if (error) {
-		printf(": failed to map registers (errno=%d)\n", error);
+		aprint_error_dev(sc->dev,
+		    "failed to map registers (errno=%d)\n", error);
 		return;
 	}
 
@@ -235,12 +241,11 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 
 	sc->ih = pxa2x0_intr_establish(PXA2X0_INT_LCD, IPL_BIO, lcdintr, sc);
 	if (sc->ih == NULL) {
-		printf(": unable to establish interrupt at irq %d\n",
+		aprint_error_dev(sc->dev,
+		    "unable to establish interrupt at irq %d\n",
 		    PXA2X0_INT_LCD);
 		return;
 	}
-
-	printf(": PXA2x0 LCD controller\n");
 
 	pxa2x0_lcd_initialize(sc, geom);
 
@@ -252,8 +257,8 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 
 		error = pxa2x0_lcd_new_screen(sc, descr->depth, &scr);
 		if (error) {
-			printf("%s: unable to create new screen (errno=%d)",
-			    sc->dev.dv_xname, error);
+			aprint_error_dev(sc->dev,
+			"unable to create new screen (errno=%d)", error);
 			return;
 		}
 
@@ -271,7 +276,7 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		wsdisplay_cnattach(&descr->c, ri, ri->ri_ccol, ri->ri_crow,
 		    defattr);
 
-		printf("%s: console\n", sc->dev.dv_xname);
+		aprint_normal_dev(sc->dev, "console\n");
 	}
 }
 
@@ -491,12 +496,10 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 		break;
 	case 19:
 	case 25:
-		printf("%s: Not supported depth (%d)\n",
-		    sc->dev.dv_xname, depth);
+		aprint_error_dev(sc->dev, "Not supported depth (%d)\n", depth);
 		return EINVAL;
 	default:
-		printf("%s: Unknown depth (%d)\n",
-		    sc->dev.dv_xname, depth);
+		aprint_error_dev(sc->dev, "Unknown depth (%d)\n", depth);
 		return EINVAL;
 	}
 

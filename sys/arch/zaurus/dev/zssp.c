@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.3 2007/10/17 19:58:35 garbled Exp $	*/
+/*	$NetBSD: zssp.c,v 1.4 2009/01/29 12:28:15 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.3 2007/10/17 19:58:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.4 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,15 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.3 2007/10/17 19:58:35 garbled Exp $");
 #define	SSCR0_LZ9JG18		0x01ab
 
 struct zssp_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
 
-static int	zssp_match(struct device *, struct cfdata *, void *);
-static void	zssp_attach(struct device *, struct device *, void *);
+static int	zssp_match(device_t, cfdata_t, void *);
+static void	zssp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zssp, sizeof(struct zssp_softc),
+CFATTACH_DECL_NEW(zssp, sizeof(struct zssp_softc),
 	zssp_match, zssp_attach, NULL, NULL);
 
 static void	zssp_init(void);
@@ -59,7 +59,7 @@ static void	zssp_powerhook(int, void *);
 static struct zssp_softc *zssp_sc;
 
 static int
-zssp_match(struct device *parent, struct cfdata *cf, void *aux)
+zssp_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (zssp_sc != NULL)
@@ -69,25 +69,26 @@ zssp_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-zssp_attach(struct device *parent, struct device *self, void *aux)
+zssp_attach(device_t parent, device_t self, void *aux)
 {
-	struct zssp_softc *sc = (struct zssp_softc *)self;
+	struct zssp_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
+	zssp_sc = sc;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	sc->sc_iot = &pxa2x0_bs_tag;
 	if (bus_space_map(sc->sc_iot, PXA2X0_SSP1_BASE, PXA2X0_SSP_SIZE,
 	    0, &sc->sc_ioh)) {
-		printf(": can't map bus space\n");
+		aprint_error_dev(sc->sc_dev, "can't map bus space\n");
 		return;
 	}
 
-	zssp_sc = sc;
-
-	printf("\n");
-
-	if (powerhook_establish(sc->sc_dev.dv_xname, zssp_powerhook, sc)
+	if (powerhook_establish(device_xname(sc->sc_dev), zssp_powerhook, sc)
 	    == NULL) {
-		printf("%s: can't establish power hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "can't establish power hook\n");
 	}
 
 	zssp_init();
@@ -211,6 +212,10 @@ zssp_ic_stop(int ic)
 uint32_t
 zssp_ic_send(int ic, uint32_t data)
 {
+	struct zssp_softc *sc;
+
+	KASSERT(zssp_sc != NULL);
+	sc = zssp_sc;
 
 	switch (ic) {
 	case ZSSP_IC_MAX1111:
@@ -221,7 +226,8 @@ zssp_ic_send(int ic, uint32_t data)
 		zssp_write_lz9jg18(data);
 		return 0;
 	default:
-		printf("zssp_ic_send: invalid IC %d\n", ic);
+		aprint_error_dev(sc->sc_dev,
+		    "zssp_ic_send: invalid IC %d\n", ic);
 		return 0;
 	}
 }
