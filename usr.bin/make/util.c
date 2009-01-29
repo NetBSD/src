@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.47 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.48 2009/01/29 09:03:04 dholland Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.47 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.48 2009/01/29 09:03:04 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.47 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: util.c,v 1.48 2009/01/29 09:03:04 dholland Exp $");
 #endif
 #endif
 
@@ -486,10 +486,10 @@ strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
 			s = snprintf(buf, len, "%s", months[tm->tm_mon]);
 			break;
 		case 'd':
-			s = snprintf(buf, len, "%s", tm->tm_mday);
+			s = snprintf(buf, len, "%02d", tm->tm_mday);
 			break;
 		case 'Y':
-			s = snprintf(buf, len, "%s", 1900 + tm->tm_year);
+			s = snprintf(buf, len, "%d", 1900 + tm->tm_year);
 			break;
 		default:
 			s = snprintf(buf, len, "Unsupported format %c",
