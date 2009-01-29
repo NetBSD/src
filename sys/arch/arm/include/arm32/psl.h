@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.17 2008/06/11 23:31:35 rafal Exp $	*/
+/*	$NetBSD: psl.h,v 1.18 2009/01/29 20:54:52 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -66,7 +66,7 @@
 #ifndef _LOCORE
 int raisespl	(int);
 int lowerspl	(int);
-int splx	(int);
+void splx	(int);
 
 #ifdef __HAVE_FAST_SOFTINTS
 void _setsoftintr	(int si);
