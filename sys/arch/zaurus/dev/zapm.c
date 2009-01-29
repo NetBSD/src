@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $	*/
+/*	$NetBSD: zapm.c,v 1.4 2009/01/29 12:28:15 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.4 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $");
 #endif
 
 struct zapm_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_apmdev;
 
 	struct callout sc_cyclic_poll;
@@ -76,10 +76,10 @@ struct zapm_softc {
 	int minutes_left;
 };
 
-static int	zapm_match(struct device *, struct cfdata *, void *);
-static void	zapm_attach(struct device *, struct device *, void *);
+static int	zapm_match(device_t, cfdata_t, void *);
+static void	zapm_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zapm, sizeof(struct zapm_softc),
+CFATTACH_DECL_NEW(zapm, sizeof(struct zapm_softc),
     zapm_match, zapm_attach, NULL, NULL);
 
 static int	zapm_hook(void *, int, long, void *);
@@ -118,7 +118,7 @@ static void	zapm_poll1(void *, int);
 #define	CYCLIC_TIME	(60 * hz)	/* 60s */
 
 static int
-zapm_match(struct device *parent, struct cfdata *cf, void *aux)
+zapm_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (!ZAURUS_ISC3000)
@@ -127,12 +127,15 @@ zapm_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-zapm_attach(struct device *parent, struct device *self, void *aux)
+zapm_attach(device_t parent, device_t self, void *aux)
 {
 	struct zapm_softc *sc = device_private(self);
 	struct apmdev_attach_args aaa;
 
+	sc->sc_dev = self;
+
 	aprint_normal(": pseudo power management module\n");
+	aprint_naive("\n");
 
 	/* machine-depent part */
 	callout_init(&sc->sc_cyclic_poll, 0);
