@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.236 2009/01/11 02:45:45 christos Exp $
+# $NetBSD: GENERIC,v 1.237 2009/01/29 21:48:13 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.236 $"
+#ident 		"GENERIC-$Revision: 1.237 $"
 
 maxusers	64		# estimated number of users
 
@@ -81,10 +81,10 @@ options 	POWERNOW_K8
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 # options       INTEL_ONDEMAND_CLOCKMOD
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
