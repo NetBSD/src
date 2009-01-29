@@ -6,15 +6,15 @@
  * be recorded as the authors of this copyright work.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. 
- * 
- * You may obtain a copy of the License at 
- *     http://www.apache.org/licenses/LICENSE-2.0 
- * 
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * 
+ * use this file except in compliance with the License.
+ *
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -36,24 +36,26 @@
  * \brief Initialises ulong list
  * \param *list	Pointer to existing list structure
  */
-void ops_ulong_list_init(ops_ulong_list_t *list)
-    {
-    list->size=0;
-    list->used=0;
-    list->ulongs=NULL;
-    }
- 
+void 
+ops_ulong_list_init(ops_ulong_list_t * list)
+{
+	list->size = 0;
+	list->used = 0;
+	list->ulongs = NULL;
+}
+
 /**
  * \ingroup Core_Lists
  * \brief Frees allocated memory in ulong list. Does not free *list itself.
  * \param *list
  */
-void ops_ulong_list_free(ops_ulong_list_t *list)
-    {
-    if (list->ulongs)
-	free(list->ulongs);
-    ops_ulong_list_init(list);
-    }
+void 
+ops_ulong_list_free(ops_ulong_list_t * list)
+{
+	if (list->ulongs)
+		free(list->ulongs);
+	ops_ulong_list_init(list);
+}
 
 /**
  * \ingroup Core_Lists
@@ -66,24 +68,22 @@ void ops_ulong_list_free(ops_ulong_list_t *list)
  * \return 1 if success, else 0
  */
 
-static unsigned int ops_ulong_list_resize(ops_ulong_list_t *list)
-    {
+static unsigned int 
+ops_ulong_list_resize(ops_ulong_list_t * list)
+{
 
-    int newsize=0;
+	int             newsize = 0;
 
-    newsize=list->size*2 + 1;
-    list->ulongs=realloc(list->ulongs,newsize*sizeof *list->ulongs);
-    if (list->ulongs)
-	{
-	list->size=newsize;
-	return 1;
+	newsize = list->size * 2 + 1;
+	list->ulongs = realloc(list->ulongs, newsize * sizeof *list->ulongs);
+	if (list->ulongs) {
+		list->size = newsize;
+		return 1;
+	} else {
+		/* xxx - realloc failed. error message? - rachel */
+		return 0;
 	}
-    else
-	{
-	/* xxx - realloc failed. error message? - rachel */
-	return 0;
-	}
-    }
+}
 
 /**
  * \ingroup Core_Lists
@@ -94,14 +94,14 @@ static unsigned int ops_ulong_list_resize(ops_ulong_list_t *list)
  *
  * \return 1 if success, else 0
  */
-unsigned int ops_ulong_list_add(ops_ulong_list_t *list, unsigned long *ulongp)
-    {
-    if (list->size==list->used) 
-	if (!ops_ulong_list_resize(list))
-	    return 0;
+unsigned int 
+ops_ulong_list_add(ops_ulong_list_t * list, unsigned long *ulongp)
+{
+	if (list->size == list->used)
+		if (!ops_ulong_list_resize(list))
+			return 0;
 
-    list->ulongs[list->used]=*ulongp;
-    list->used++;
-    return 1;
-    }
-
+	list->ulongs[list->used] = *ulongp;
+	list->used++;
+	return 1;
+}
