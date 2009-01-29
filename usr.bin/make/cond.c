@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.56 2009/01/28 21:38:12 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.57 2009/01/29 07:48:39 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.56 2009/01/28 21:38:12 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.57 2009/01/29 07:48:39 enami Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.56 2009/01/28 21:38:12 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.57 2009/01/29 07:48:39 enami Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1132,7 +1132,7 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprin
     if (info == NULL && (info = dflt_info) == NULL) {
 	/* Scan for the entry for .if - it can't be first */
 	for (info = ifs; ; info++)
-	    if (ifs->form[0] == 0)
+	    if (info->form[0] == 0)
 		break;
 	dflt_info = info;
     }
