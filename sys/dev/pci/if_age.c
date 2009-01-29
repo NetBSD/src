@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.13 2009/01/24 08:31:03 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.14 2009/01/29 17:03:37 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.13 2009/01/24 08:31:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.14 2009/01/29 17:03:37 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -292,8 +292,12 @@ age_attach(device_t parent, device_t self, void *aux)
 		pmf_class_network_register(self, ifp);
 
 	return;
+
 fail:
-	age_detach(sc->sc_dev, 0);
+	if (sc->sc_irq_handle != NULL) {
+		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
+		sc->sc_irq_handle = NULL;
+	}
 }
 
 static int
