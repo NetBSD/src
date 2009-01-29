@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.4 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: zssp.c,v 1.5 2009/01/29 12:51:15 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.4 2009/01/29 12:28:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.5 2009/01/29 12:51:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,10 +212,6 @@ zssp_ic_stop(int ic)
 uint32_t
 zssp_ic_send(int ic, uint32_t data)
 {
-	struct zssp_softc *sc;
-
-	KASSERT(zssp_sc != NULL);
-	sc = zssp_sc;
 
 	switch (ic) {
 	case ZSSP_IC_MAX1111:
@@ -226,8 +222,7 @@ zssp_ic_send(int ic, uint32_t data)
 		zssp_write_lz9jg18(data);
 		return 0;
 	default:
-		aprint_error_dev(sc->sc_dev,
-		    "zssp_ic_send: invalid IC %d\n", ic);
+		aprint_error("zssp: zssp_ic_send: invalid IC %d\n", ic);
 		return 0;
 	}
 }
