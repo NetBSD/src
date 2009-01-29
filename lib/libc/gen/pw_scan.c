@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.21 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.22 2009/01/29 10:41:39 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.21 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.22 2009/01/29 10:41:39 enami Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: pw_scan.c,v 1.21 2009/01/11 02:46:27 christos Exp $");
 #endif /* ! HAVE_NBTOOL_CONFIG_H */
 
 static int
-gettime(time_t *res, const char *p, int *flags, int dowarn, int flag)
+gettime(long long *res, const char *p, int *flags, int dowarn, int flag)
 {
 	long long l;
 	char *ep;
@@ -81,7 +81,7 @@ gettime(time_t *res, const char *p, int *flags, int dowarn, int flag)
 		goto done;
 	}
 
-	*res = (time_t)l;
+	*res = l;
 	return 1;
 done:
 	if (dowarn) {
@@ -135,6 +135,7 @@ pw_scan( char *bp, struct passwd *pw, int *flags)
 #endif
 {
 	unsigned long id;
+	long long ti;
 	int root, inflags;
 	int dowarn;
 	const char *p, *sh;
@@ -198,13 +199,15 @@ pw_scan( char *bp, struct passwd *pw, int *flags)
 		pw->pw_class = strsep(&bp, ":");	/* class */
 		if (!(p = strsep(&bp, ":")))		/* change */
 			goto fmt;
-		if (!gettime(&pw->pw_change, p, flags, dowarn, _PASSWORD_NOCHG))
+		if (!gettime(&ti, p, flags, dowarn, _PASSWORD_NOCHG))
 			return 0;
+		pw->pw_change = ti;
 
 		if (!(p = strsep(&bp, ":")))		/* expire */
 			goto fmt;
-		if (!gettime(&pw->pw_expire, p, flags, dowarn, _PASSWORD_NOEXP))
+		if (!gettime(&ti, p, flags, dowarn, _PASSWORD_NOEXP))
 			return 0;
+		pw->pw_expire = ti;
 	}
 
 	pw->pw_gecos = strsep(&bp, ":");		/* gecos */
