@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.233 2008/10/13 19:44:21 pooka Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.234 2009/01/29 20:38:22 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.233 2008/10/13 19:44:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.234 2009/01/29 20:38:22 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -406,6 +406,9 @@ tcp_init(void)
 
 	/* Initialize the TCPCB template. */
 	tcp_tcpcb_template();
+
+	/* Initialize reassembly queue */
+	tcpipqent_init();
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
