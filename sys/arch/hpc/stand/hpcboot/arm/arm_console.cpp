@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_console.cpp,v 1.6 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_console.cpp,v 1.7 2009/01/29 21:23:38 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ ARMConsole::Instance(MemoryManager *&mem, ArchitectureOps arch)
 			break;
 
 		    case ARCHITECTURE_ARM_PXA250:
+		    case ARCHITECTURE_ARM_PXA270:
 			_instance = new PXA2x0Console(mem);
 			break;
 		}
