@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.18 2009/01/29 22:00:26 ad Exp $
+.\"     $NetBSD: kthread.9,v 1.19 2009/01/29 22:33:31 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,7 +71,7 @@ Flags that can be logically ORed together to alter the thread's behaviour.
 causes the thread to be created in the
 .Dv LSIDL
 (idle) state.
-By default, the threads are created in the 
+By default, the threads are created in the
 .Dv LSRUN
 (runnable) state, meaning they will begin execution shortly after creation.
 .Pp
@@ -86,18 +86,25 @@ This flag is intended for kernel internal use and should not normally be
 specified.
 .Pp
 .Dv KTHREAD_TS :
-Causes the kthread to be created in the SCHED_OTHER class (timeshared).
+Causes the kthread to be created in the
+.Dv SCHED_OTHER
+class (timeshared).
 The threads' priority will be dynamically adjusted by the scheduler.
 Increased activity by the kthread will cause its priority to fall;
 decreased activity will cause its priority to rise.
-By default, kthreads are created in the SCHED_RR class, with a fixed
+By default, kthreads are created in the
+.Dv SCHED_RR
+class, with a fixed
 priority specified by
 .Ar pri .
-Threads in the SCHED_RR class do not have their priority dynamically
+Threads in the
+.Dv SCHED_RR
+class do not have their priority dynamically
 adjusted by the scheduler.
 .It Fa ci
-If non-NULL, the thread will be created bound to the CPU specified
-by
+If
+.No non- Ns Dv NULL ,
+the thread will be created bound to the CPU specified by
 .Fa ci ,
 meaning that it will only ever execute on that CPU.
 By default, the threads are free to execute on any CPU in the system.
@@ -110,14 +117,19 @@ to properly terminate itself.
 .It Fa arg
 An argument to be passed to
 .Fn func .
-May be NULL if not required.
+May be
+.Dv NULL
+if not required.
 .It Fa newpl
 A pointer to receive the new lwp structure for the kernel thread.
-May be NULL if not required.
+May be
+.Dv NULL
+if not required.
 .It Fa fmt
 A string containing format information used to display the kernel
 thread name.
-Must not be NULL.
+Must not be
+.Dv NULL .
 .El
 .It Fn kthread_destroy "l"
 From another thread executing in the kernel, cause a kthread to exit.
