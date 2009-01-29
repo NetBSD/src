@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.158 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.159 2009/01/29 20:38:22 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -860,6 +860,7 @@ void	 tcp6_quench(struct in6pcb *, int);
 #endif
 void	 tcp_mtudisc(struct inpcb *, int);
 
+void	tcpipqent_init(void);
 struct ipqent *tcpipqent_alloc(void);
 void	 tcpipqent_free(struct ipqent *);
 
