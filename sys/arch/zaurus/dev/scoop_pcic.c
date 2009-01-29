@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop_pcic.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: scoop_pcic.c,v 1.3 2009/01/29 12:28:15 nonaka Exp $	*/
 /*	$OpenBSD: scoop_pcic.c,v 1.1 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop_pcic.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop_pcic.c,v 1.3 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,11 +35,11 @@ __KERNEL_RCSID(0, "$NetBSD: scoop_pcic.c,v 1.2 2006/12/17 16:07:11 peter Exp $")
 
 #include <zaurus/dev/scoopreg.h>
 
-static int	scoop_pcic_match(struct device *, struct cfdata *, void *);
-static void	scoop_pcic_attach(struct device *, struct device *, void *);
+static int	scoop_pcic_match(device_t, cfdata_t, void *);
+static void	scoop_pcic_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pxapcic_scoop, sizeof(struct pxapcic_softc),
-	scoop_pcic_match, scoop_pcic_attach, NULL, NULL);
+CFATTACH_DECL_NEW(pxapcic_scoop, sizeof(struct pxapcic_softc),
+    scoop_pcic_match, scoop_pcic_attach, NULL, NULL);
 
 static void	scoop_pcic_socket_setup(struct pxapcic_socket *);
 static u_int	scoop_pcic_read(struct pxapcic_socket *, int);
@@ -50,7 +50,7 @@ static void 	*scoop_pcic_intr_establish(struct pxapcic_socket *, int,
 		    int (*)(void *), void *);
 static void	scoop_pcic_intr_disestablish(struct pxapcic_socket *, void *);
 
-struct pxapcic_tag scoop_pcic_functions = {
+static struct pxapcic_tag scoop_pcic_functions = {
 	scoop_pcic_read,
 	scoop_pcic_write,
 	scoop_pcic_set_power,
@@ -60,18 +60,19 @@ struct pxapcic_tag scoop_pcic_functions = {
 };
 
 static int
-scoop_pcic_match(struct device *parent, struct cfdata *cf, void *aux)
+scoop_pcic_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (ZAURUS_ISC860 || ZAURUS_ISC3000);
 }
 
 static void
-scoop_pcic_attach(struct device *parent, struct device *self, void *aux)
+scoop_pcic_attach(device_t parent, device_t self, void *aux)
 {
-	struct pxapcic_softc *sc = (struct pxapcic_softc *)self;
+	struct pxapcic_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = (struct pxaip_attach_args *)aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;
 
 	if (ZAURUS_ISC860) {
@@ -108,7 +109,7 @@ scoop_pcic_socket_setup(struct pxapcic_socket *so)
 	} else if (so->socket == 1) {
 		pa = C3000_SCOOP1_BASE;
 	} else {
-		panic("%s: invalid CF slot %d", sc->sc_dev.dv_xname,
+		panic("%s: invalid CF slot %d", device_xname(sc->sc_dev),
 		    so->socket);
 	}
 
@@ -116,7 +117,7 @@ scoop_pcic_socket_setup(struct pxapcic_socket *so)
 	    0, &scooph);
 	if (error) {
 		panic("%s: failed to map memory %x for scoop",
-		    sc->sc_dev.dv_xname, (uint32_t)pa);
+		    device_xname(sc->sc_dev), (uint32_t)pa);
 	}
 	scooph += pa - trunc_page(pa);
 	

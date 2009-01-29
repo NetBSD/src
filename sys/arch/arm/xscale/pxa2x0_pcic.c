@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.4 2007/10/17 19:53:44 garbled Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.5 2009/01/29 12:28:15 nonaka Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.4 2007/10/17 19:53:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.5 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,13 +341,13 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 	printf(": %d slot%s\n", sc->sc_nslots, sc->sc_nslots < 2 ? "" : "s");
 
 	if (sc->sc_nslots == 0) {
-		aprint_error("%s: can't attach\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "can't attach\n");
 		return;
 	}
 
 	if (bus_space_map(sc->sc_iot, PXA2X0_MEMCTL_BASE, PXA2X0_MEMCTL_SIZE,
 	    0, &sc->sc_memctl_ioh)) {
-		aprint_error("%s: failed to map MEMCTL\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "failed to map MEMCTL\n");
 		return;
 	}
 
@@ -379,7 +379,7 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 		paa.iobase = 0;
 		paa.iosize = 0x4000000;
 
-		so->pcmcia = config_found_ia(&sc->sc_dev, "pcmciabus", &paa,
+		so->pcmcia = config_found_ia(sc->sc_dev, "pcmciabus", &paa,
 		    pxapcic_print);
 
 		pxa2x0_gpio_set_function(sc->sc_irqpin[s[i]], GPIO_IN);
@@ -398,10 +398,11 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 			pxapcic_attach_card(so);
 
 		if (kthread_create(PRI_NONE, 0, NULL, pxapcic_event_thread,
-		    so, &so->event_thread, "%s,%d", sc->sc_dev.dv_xname,
+		    so, &so->event_thread, "%s,%d", device_xname(sc->sc_dev),
 		    so->socket)) {
-			printf("%s: unable to create event thread for %d\n",
-			     sc->sc_dev.dv_xname, so->socket);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create event thread for %d\n",
+			    so->socket);
 		}
 	}
 }

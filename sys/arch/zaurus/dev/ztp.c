@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.5 2007/10/17 19:58:35 garbled Exp $	*/
+/*	$NetBSD: ztp.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.5 2007/10/17 19:58:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $");
 
 #include "lcd.h"
 
@@ -96,7 +96,7 @@ struct ztp_pos {
 };
 
 struct ztp_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct callout sc_tp_poll;
 	void *sc_gh;
 	void *sc_powerhook;
@@ -109,10 +109,10 @@ struct ztp_softc {
 	struct tpcalib_softc sc_tpcalib;
 };
 
-static int	ztp_match(struct device *, struct cfdata *, void *);
-static void	ztp_attach(struct device *, struct device *, void *);
+static int	ztp_match(device_t, cfdata_t, void *);
+static void	ztp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ztp, sizeof(struct ztp_softc),
+CFATTACH_DECL_NEW(ztp, sizeof(struct ztp_softc),
 	ztp_match, ztp_attach, NULL, NULL);
 
 static int	ztp_enable(void *);
@@ -129,19 +129,22 @@ static const struct wsmouse_accessops ztp_accessops = {
 };
 
 static int
-ztp_match(struct device *parent, struct cfdata *cf, void *aux)
+ztp_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-ztp_attach(struct device *parent, struct device *self, void *aux)
+ztp_attach(device_t parent, device_t self, void *aux)
 {
-	struct ztp_softc *sc = (struct ztp_softc *)self;
+	struct ztp_softc *sc = device_private(self);
 	struct wsmousedev_attach_args a;  
 
-	printf("\n");
+	sc->sc_dev = self;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	callout_init(&sc->sc_tp_poll, 0);
 	callout_setfunc(&sc->sc_tp_poll, ztp_poll, sc);
@@ -184,19 +187,19 @@ ztp_enable(void *v)
 {
 	struct ztp_softc *sc = (struct ztp_softc *)v;
 
-	DPRINTF(("%s: ztp_enable()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: ztp_enable()\n", device_xname(sc->sc_dev)));
 
 	if (sc->sc_enabled) {
-		DPRINTF(("%s: already enabled\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: already enabled\n", device_xname(sc->sc_dev)));
 		return EBUSY;
 	}
 
 	callout_stop(&sc->sc_tp_poll);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname, ztp_power,
-	    sc);
+	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
+	    ztp_power, sc);
 	if (sc->sc_powerhook == NULL) {
-		printf("%s: enable failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "couldn't establish powerhook\n");
 		return ENOMEM;
 	}
 
@@ -222,7 +225,7 @@ ztp_disable(void *v)
 {
 	struct ztp_softc *sc = (struct ztp_softc *)v;
 
-	DPRINTF(("%s: ztp_disable()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: ztp_disable()\n", device_xname(sc->sc_dev)));
 
 	callout_stop(&sc->sc_tp_poll);
 
@@ -249,7 +252,7 @@ ztp_power(int why, void *v)
 {
 	struct ztp_softc *sc = (struct ztp_softc *)v;
 
-	DPRINTF(("%s: ztp_power()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: ztp_power()\n", device_xname(sc->sc_dev)));
 
 	switch (why) {
 	case PWR_STANDBY:
@@ -469,15 +472,15 @@ ztp_irq(void *v)
 	s = splhigh();
 
 	pindown = pxa2x0_gpio_get_bit(GPIO_TP_INT_C3K) ? 0 : 1;
-	DPRINTF(("%s: pindown = %d\n", sc->sc_dev.dv_xname, pindown));
+	DPRINTF(("%s: pindown = %d\n", device_xname(sc->sc_dev), pindown));
 	if (pindown) {
 		pxa2x0_gpio_intr_mask(sc->sc_gh);
 		callout_schedule(&sc->sc_tp_poll, POLL_TIMEOUT_RATE1);
 	}
 
 	down = ztp_readpos(&tp);
-	DPRINTF(("%s: x = %d, y = %d, z = %d, down = %d\n", sc->sc_dev.dv_xname,
-	    tp.x, tp.y, tp.z, down));
+	DPRINTF(("%s: x = %d, y = %d, z = %d, down = %d\n",
+	    device_xname(sc->sc_dev), tp.x, tp.y, tp.z, down));
 
 	if (!pindown) {
 		pxa2x0_gpio_intr_unmask(sc->sc_gh);
@@ -490,8 +493,8 @@ ztp_irq(void *v)
 	if (down) {
 		if (!ztp_rawmode) {
 			tpcalib_trans(&sc->sc_tpcalib, tp.x, tp.y, &x, &y);
-			DPRINTF(("%s: x = %d, y = %d\n", sc->sc_dev.dv_xname,
-			    x, y));
+			DPRINTF(("%s: x = %d, y = %d\n",
+			    device_xname(sc->sc_dev), x, y));
 			tp.x = x;
 			tp.y = y;
 		}

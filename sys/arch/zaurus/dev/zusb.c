@@ -1,4 +1,4 @@
-/*	$NetBSD: zusb.c,v 1.3 2009/01/28 14:15:56 nonaka Exp $	*/
+/*	$NetBSD: zusb.c,v 1.4 2009/01/29 12:28:15 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2008 Christopher Gilbert
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.3 2009/01/28 14:15:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.4 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,8 +61,8 @@ struct zusb_softc {
 	void *sc_host_ih;
 };
 
-static int	zusb_match(struct device *, struct cfdata *, void *);
-static void	zusb_attach(struct device *, struct device *, void *);
+static int	zusb_match(device_t, cfdata_t, void *);
+static void	zusb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(zusb, sizeof(struct zusb_softc), 
     zusb_match, zusb_attach, NULL, NULL);
@@ -87,6 +87,7 @@ zusb_attach(device_t parent, device_t self, void *aux)
 	struct pxaip_attach_args *pxa = aux;
 
 	aprint_normal(": USB Mode detection\n");
+	aprint_naive("\n");
 
 	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.8 2008/05/11 08:23:17 kiyohara Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.9 2009/01/29 12:28:15 nonaka Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -115,7 +115,7 @@ __inline void gxpcic_cpld_clk(void);
 __inline u_char gxpcic_cpld_read_bits(int bits);
 static	int	gxpcic_count_slot(struct pxapcic_softc *);
 
-CFATTACH_DECL(pxapcic_gxpcic, sizeof(struct pxapcic_softc),
+CFATTACH_DECL_NEW(pxapcic_gxpcic, sizeof(struct pxapcic_softc),
     gxpcic_match, gxpcic_attach, NULL, NULL);
 
 static struct pxapcic_tag gxpcic_pcic_functions = {
@@ -166,6 +166,7 @@ gxpcic_attach(device_t parent, device_t self, void *aux)
 	struct pxaip_attach_args *pxa = (struct pxaip_attach_args *)aux;
 	int nslot, i;
 
+	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;
 
 	nslot = gxpcic_count_slot(sc);

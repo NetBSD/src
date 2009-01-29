@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.7 2007/10/17 19:58:35 garbled Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.8 2009/01/29 12:28:15 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.7 2007/10/17 19:58:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.8 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,10 +148,10 @@ const struct sharp_lcd_backlight sharp_zaurus_C3000_bl[] = {
 	{  -1, -1, -1 },	/* 7: Invalid */
 };
 
-static int	lcd_match(struct device *, struct cfdata *, void *);
-static void	lcd_attach(struct device *, struct device *, void *);
+static int	lcd_match(device_t, cfdata_t, void *);
+static void	lcd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zlcd, sizeof(struct pxa2x0_lcd_softc),
+CFATTACH_DECL_NEW(zlcd, sizeof(struct pxa2x0_lcd_softc),
 	lcd_match, lcd_attach, NULL, NULL);
 
 void	lcd_cnattach(void);
@@ -165,17 +165,19 @@ void	lcd_blank(int);
 void	lcd_power(int, void *);
 
 static int
-lcd_match(struct device *parent, struct cfdata *cf, void *aux)
+lcd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-lcd_attach(struct device *parent, struct device *self, void *aux)
+lcd_attach(device_t parent, device_t self, void *aux)
 {
-	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
+	struct pxa2x0_lcd_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args aa;
+
+	sc->dev = self;
 
 	pxa2x0_lcd_attach_sub(sc, aux, CURRENT_DISPLAY);
 
@@ -189,7 +191,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	/* Start with approximately 40% of full brightness. */
 	lcd_set_brightness(3);
 
-	(void) powerhook_establish(sc->dev.dv_xname, lcd_power, sc);
+	(void) powerhook_establish(device_xname(sc->dev), lcd_power, sc);
 }
 
 void

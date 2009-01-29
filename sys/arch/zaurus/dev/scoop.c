@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.5 2008/06/13 13:58:21 cegger Exp $	*/
+/*	$NetBSD: scoop.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.5 2008/06/13 13:58:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.5 2008/06/13 13:58:21 cegger Exp $");
 #include "ioconf.h"
 
 struct scoop_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -47,17 +47,17 @@ struct scoop_softc {
 	uint16_t		sc_gpwr;	/* GPIO state before suspend */
 };
 
-static int	scoopmatch(struct device *, struct cfdata *, void *);
-static void	scoopattach(struct device *, struct device *, void *);
+static int	scoopmatch(device_t, cfdata_t, void *);
+static void	scoopattach(device_t, device_t, void *);
 
-CFATTACH_DECL(scoop, sizeof(struct scoop_softc),
-	scoopmatch, scoopattach, NULL, NULL);
+CFATTACH_DECL_NEW(scoop, sizeof(struct scoop_softc),
+    scoopmatch, scoopattach, NULL, NULL);
 
 #if 0
-static int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
+static int	scoop_gpio_pin_read(struct scoop_softc *, int);
 #endif
-static void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
-static void	scoop_gpio_pin_ctl(struct scoop_softc *sc, int, int);
+static void	scoop_gpio_pin_write(struct scoop_softc *, int, int);
+static void	scoop_gpio_pin_ctl(struct scoop_softc *, int, int);
 
 enum scoop_card {
 	SD_CARD,
@@ -67,7 +67,7 @@ enum scoop_card {
 static void	scoop0_set_card_power(enum scoop_card card, int new_cpr);
 
 static int
-scoopmatch(struct device *parent, struct cfdata *cf, void *aux)
+scoopmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/*
@@ -79,18 +79,22 @@ scoopmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-scoopattach(struct device *parent, struct device *self, void *aux)
+scoopattach(device_t parent, device_t self, void *aux)
 {
+	struct scoop_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = (struct pxaip_attach_args *)aux;
-	struct scoop_softc *sc = (struct scoop_softc *)self;
 	bus_addr_t addr;
 	bus_size_t size;
 
+	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;
+
+	aprint_normal(": PCMCIA/GPIO controller\n");
+	aprint_naive("\n");
 
 	if (pxa->pxa_addr != -1)
 		addr = pxa->pxa_addr;
-	else if (sc->sc_dev.dv_unit == 0)
+	else if (sc->sc_dev->dv_unit == 0)
 		addr = C3000_SCOOP0_BASE;
 	else
 		addr = C3000_SCOOP1_BASE;
@@ -98,11 +102,11 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 	size = pxa->pxa_size < SCOOP_SIZE ? SCOOP_SIZE : pxa->pxa_size;
 
 	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh) != 0) {
-		printf(": failed to map %s\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "couldn't map registers\n");
 		return;
 	}
 
-	if (ZAURUS_ISC3000 && sc->sc_dev.dv_unit == 1) {
+	if (ZAURUS_ISC3000 && sc->sc_dev->dv_unit == 1) {
 		scoop_gpio_pin_ctl(sc, SCOOP1_AKIN_PULLUP, GPIO_PIN_OUTPUT);
 		scoop_gpio_pin_write(sc, SCOOP1_AKIN_PULLUP, GPIO_PIN_LOW);
 	} else if (!ZAURUS_ISC3000) {
@@ -110,7 +114,6 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 		scoop_gpio_pin_write(sc, SCOOP0_AKIN_PULLUP, GPIO_PIN_LOW);
 	}
 
-	printf(": PCMCIA/GPIO controller\n");
 }
 
 #if 0
