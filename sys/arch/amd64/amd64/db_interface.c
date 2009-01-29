@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.19 2008/10/15 08:13:17 ad Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20 2009/01/29 13:52:20 joerg Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.19 2008/10/15 08:13:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.20 2009/01/29 13:52:20 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.19 2008/10/15 08:13:17 ad Exp $")
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
 
-extern char *trap_type[];
+extern const char *trap_type[];
 extern int trap_types;
 
 int	db_active;
