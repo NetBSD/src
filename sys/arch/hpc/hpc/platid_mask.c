@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.22 2008/05/10 15:31:04 martin Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.23 2009/01/29 21:26:14 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -161,6 +161,10 @@ platid_t platid_mask_CPU_ARM_XSCALE = {{
 }};
 platid_t platid_mask_CPU_ARM_XSCALE_PXA250 = {{
 	PLATID_CPU_ARM_XSCALE_PXA250,
+	PLATID_WILD
+}};
+platid_t platid_mask_CPU_ARM_XSCALE_PXA270 = {{
+	PLATID_CPU_ARM_XSCALE_PXA270,
 	PLATID_WILD
 }};
 #endif /* hpcarm */
