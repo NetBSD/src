@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.6 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.7 2009/01/29 16:00:33 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD");
 
 static int	zaudio_match(device_t, cfdata_t, void *);
 static void	zaudio_attach(device_t, device_t, void *);
-static int	zaudio_detach(device_t, int);
-static void	zaudio_power(int, void *);
+static bool	zaudio_suspend(device_t dv PMF_FN_ARGS);
+static bool	zaudio_resume(device_t dv PMF_FN_ARGS);
 
 #define ZAUDIO_OP_SPKR	0
 #define ZAUDIO_OP_HP	1
@@ -89,7 +89,6 @@ struct zaudio_softc {
 	/* i2c device softc */
 	struct pxa2x0_i2c_softc	sc_i2c;
 
-	void			*sc_powerhook;
 	int			sc_playing;
 
 	struct zaudio_volume	sc_volume[2];
@@ -101,7 +100,7 @@ struct zaudio_softc {
 };
 
 CFATTACH_DECL_NEW(zaudio, sizeof(struct zaudio_softc), 
-    zaudio_match, zaudio_attach, zaudio_detach, NULL);
+    zaudio_match, zaudio_attach, NULL, NULL);
 
 static struct audio_device wm8750_device = {
 	"WM8750",
@@ -221,12 +220,9 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": I2C, I2S, WM8750 Audio\n");
 	aprint_naive("\n");
 
-	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
-	    zaudio_power, sc);
-	if (sc->sc_powerhook == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish powerhook\n");
-		return;
-	}
+	if (!pmf_device_register(sc->sc_dev, zaudio_suspend, zaudio_resume))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	sc->sc_i2s.sc_iot = pxa->pxa_iot;
 	sc->sc_i2s.sc_dmat = pxa->pxa_dmat;
@@ -247,7 +243,6 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 	pxa2x0_i2c_open(&sc->sc_i2c);
 	rv = wm8750_write(sc, RESET_REG, 0);
 	pxa2x0_i2c_close(&sc->sc_i2c);
-
 	if (rv) {
 		aprint_error_dev(sc->sc_dev, "codec failed to respond\n");
 		goto fail_probe;
@@ -279,43 +274,30 @@ fail_probe:
 fail_i2c:
 	pxa2x0_i2s_detach_sub(&sc->sc_i2s);
 fail_i2s:
-	powerhook_disestablish(sc->sc_powerhook);
+	pmf_device_deregister(self);
 }
 
-static int
-zaudio_detach(device_t self, int flags)
+static bool
+zaudio_suspend(device_t dv PMF_FN_ARGS)
 {
-	struct zaudio_softc *sc = device_private(self);
+	struct zaudio_softc *sc = device_private(dv);
 
-	if (sc->sc_powerhook != NULL) {
-		powerhook_disestablish(sc->sc_powerhook);
-		sc->sc_powerhook = NULL;
-	}
+	callout_stop(&sc->sc_to);
+	zaudio_standby(sc);
 
-	pxa2x0_i2c_detach_sub(&sc->sc_i2c);
-	pxa2x0_i2s_detach_sub(&sc->sc_i2s);
-
-	return 0;
+	return true;
 }
 
-static void
-zaudio_power(int why, void *arg)
+static bool
+zaudio_resume(device_t dv PMF_FN_ARGS)
 {
-	struct zaudio_softc *sc = arg;
+	struct zaudio_softc *sc = device_private(dv);
 
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-		callout_stop(&sc->sc_to);
-		zaudio_standby(sc);
-		break;
+	pxa2x0_i2s_init(&sc->sc_i2s);
+	pxa2x0_i2c_init(&sc->sc_i2c);
+	zaudio_init(sc);
 
-	case PWR_RESUME:
-		pxa2x0_i2s_init(&sc->sc_i2s);
-		pxa2x0_i2c_init(&sc->sc_i2c);
-		zaudio_init(sc);
-		break;
-	}
+	return true;
 }
 
 void
@@ -345,7 +327,6 @@ zaudio_init(struct zaudio_softc *sc)
 
 	/* Assume that the jack state has changed. */ 
 	zaudio_jack(sc);
-
 }
 
 static int

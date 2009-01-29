@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.5 2009/01/29 12:51:15 nonaka Exp $	*/
+/*	$NetBSD: zssp.c,v 1.6 2009/01/29 16:00:33 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.5 2009/01/29 12:51:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.6 2009/01/29 16:00:33 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ CFATTACH_DECL_NEW(zssp, sizeof(struct zssp_softc),
 	zssp_match, zssp_attach, NULL, NULL);
 
 static void	zssp_init(void);
-static void	zssp_powerhook(int, void *);
+static bool	zssp_resume(device_t dv PMF_FN_ARGS);
 
 static struct zssp_softc *zssp_sc;
 
@@ -86,10 +86,9 @@ zssp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (powerhook_establish(device_xname(sc->sc_dev), zssp_powerhook, sc)
-	    == NULL) {
-		aprint_error_dev(sc->sc_dev, "can't establish power hook\n");
-	}
+	if (!pmf_device_register(sc->sc_dev, NULL, zssp_resume))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	zssp_init();
 }
@@ -116,16 +115,16 @@ zssp_init(void)
 	pxa2x0_gpio_set_function(GPIO_TG_CS_C3000, GPIO_OUT|GPIO_SET);
 }
 
-static void
-zssp_powerhook(int why, void *arg)
+static bool
+zssp_resume(device_t dv PMF_FN_ARGS)
 {
 	int s;
 
-	if (why == PWR_RESUME) {
-		s = splhigh();
-		zssp_init();
-		splx(s);
-	}
+	s = splhigh();
+	zssp_init();
+	splx(s);
+
+	return true;
 }
 
 /*
