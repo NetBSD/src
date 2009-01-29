@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.4 2009/01/29 14:26:09 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.5 2009/01/29 14:46:06 nonaka Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -68,7 +68,6 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	struct pxaohci_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
 	usbd_status r;
-	const char *devname = device_xname(self);
 
 #ifdef USB_DEBUG
 	{
@@ -90,7 +89,7 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	/* Map I/O space */
 	if (bus_space_map(sc->sc.iot, PXA2X0_USBHC_BASE, PXA2X0_USBHC_SIZE, 0,
 	    &sc->sc.ioh)) {
-		aprint_error_dev(sc->sc_dev, "couldn't map memory space\n");
+		aprint_error_dev(sc->sc.sc_dev, "couldn't map memory space\n");
 		return;
 	}
 	sc->sc.sc_size = PXA2X0_USBHC_SIZE;
@@ -110,14 +109,15 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_USBH1, IPL_USB,
 	    ohci_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+		aprint_error_dev(sc->sc.sc_dev,
+		    "unable to establish interrupt\n");
 		goto free_map;
 	}
 
 	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(sc->sc_dev"init failed, error=%d\n", r);
+		aprint_error_dev(sc->sc.sc_dev, "init failed, error=%d\n", r);
 		goto free_intr;
 	}
 
@@ -126,7 +126,7 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	    pxaohci_power, sc);
 	if (sc->sc.sc_powerhook == NULL) {
 		aprint_error("%s: cannot establish powerhook\n",
-		    sc->sc.sc_bus.bdev.dv_xname);
+		    sc->sc.sc_dev->sc_bus.bdev.dv_xname);
 	}
 #endif
 
