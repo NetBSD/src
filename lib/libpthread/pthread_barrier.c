@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_barrier.c,v 1.18 2008/05/25 17:05:28 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.19 2009/01/29 21:19:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2003, 2006, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.18 2008/05/25 17:05:28 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.19 2009/01/29 21:19:35 ad Exp $");
 
 #include <errno.h>
 
@@ -41,85 +41,30 @@ int
 pthread_barrier_init(pthread_barrier_t *barrier,
 		     const pthread_barrierattr_t *attr, unsigned int count)
 {
-	pthread_mutex_t *interlock;
 	
-#ifdef ERRORCHECK
-	if ((barrier == NULL) ||
-	    (attr && (attr->ptba_magic != _PT_BARRIERATTR_MAGIC)))
+	if (attr != NULL && attr->ptba_magic != _PT_BARRIERATTR_MAGIC)
 		return EINVAL;
-#endif
-
 	if (count == 0)
 		return EINVAL;
-
-	if (barrier->ptb_magic == _PT_BARRIER_MAGIC) {
-		interlock = pthread__hashlock(barrier);
-
-		/*
-		 * We're simply reinitializing the barrier to a
-		 * new count.
-		 */
-		pthread_mutex_lock(interlock);
-
-		if (barrier->ptb_magic != _PT_BARRIER_MAGIC) {
-			pthread_mutex_unlock(interlock);
-			return EINVAL;
-		}
-
-		if (!PTQ_EMPTY(&barrier->ptb_waiters)) {
-			pthread_mutex_unlock(interlock);
-			return EBUSY;
-		}
-
-		barrier->ptb_initcount = count;
-		barrier->ptb_curcount = 0;
-		barrier->ptb_generation = 0;
-
-		pthread_mutex_unlock(interlock);
-
-		return 0;
-	}
 
 	barrier->ptb_magic = _PT_BARRIER_MAGIC;
 	PTQ_INIT(&barrier->ptb_waiters);
 	barrier->ptb_initcount = count;
 	barrier->ptb_curcount = 0;
 	barrier->ptb_generation = 0;
-
 	return 0;
 }
-
 
 int
 pthread_barrier_destroy(pthread_barrier_t *barrier)
 {
-	pthread_mutex_t *interlock;
 
-#ifdef ERRORCHECK
-	if ((barrier == NULL) || (barrier->ptb_magic != _PT_BARRIER_MAGIC))
+	if (barrier->ptb_magic != _PT_BARRIER_MAGIC)
 		return EINVAL;
-#endif
-
-	interlock = pthread__hashlock(barrier);
-	pthread_mutex_lock(interlock);
-
-	if (barrier->ptb_magic != _PT_BARRIER_MAGIC) {
-		pthread_mutex_unlock(interlock);
-		return EINVAL;
-	}
-
-	if (!PTQ_EMPTY(&barrier->ptb_waiters)) {
-		pthread_mutex_unlock(interlock);
+	if (barrier->ptb_curcount != 0)
 		return EBUSY;
-	}
-
-	barrier->ptb_magic = _PT_BARRIER_DEAD;
-
-	pthread_mutex_unlock(interlock);
-
 	return 0;
 }
-
 
 int
 pthread_barrier_wait(pthread_barrier_t *barrier)
@@ -128,14 +73,8 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	pthread_t self;
 	unsigned int gen;
 
-#ifdef ERRORCHECK
-	if ((barrier == NULL) || (barrier->ptb_magic != _PT_BARRIER_MAGIC))
+	if (barrier->ptb_magic != _PT_BARRIER_MAGIC)
 		return EINVAL;
-#endif
-	self = pthread__self();
-	interlock = pthread__hashlock(barrier);
-
-	pthread_mutex_lock(interlock);
 
 	/*
 	 * A single arbitrary thread is supposed to return
@@ -147,24 +86,33 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	 * that this final thread does not actually need to block,
 	 * but instead is responsible for waking everyone else up.
 	 */
+	self = pthread__self();
+	interlock = pthread__hashlock(barrier);
+	pthread_mutex_lock(interlock);
 	if (barrier->ptb_curcount + 1 == barrier->ptb_initcount) {
 		barrier->ptb_generation++;
+		barrier->ptb_curcount = 0;
 		pthread__unpark_all(&barrier->ptb_waiters, self,
 		    interlock);
 		pthread_mutex_unlock(interlock);
 		return PTHREAD_BARRIER_SERIAL_THREAD;
 	}
-
 	barrier->ptb_curcount++;
 	gen = barrier->ptb_generation;
-	while (gen == barrier->ptb_generation) {
+	for (;;) {
 		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
 		self->pt_sleepobj = &barrier->ptb_waiters;
 		(void)pthread__park(self, interlock, &barrier->ptb_waiters,
 		    NULL, 0, __UNVOLATILE(&interlock->ptm_waiters));
+		if (__predict_true(gen != barrier->ptb_generation)) {
+			break;
+		}
 		pthread_mutex_lock(interlock);
+		if (gen != barrier->ptb_generation) {
+			pthread_mutex_unlock(interlock);
+			break;
+		}
 	}
-	pthread_mutex_unlock(interlock);
 
 	return 0;
 }
@@ -174,28 +122,16 @@ int
 pthread_barrierattr_init(pthread_barrierattr_t *attr)
 {
 
-#ifdef ERRORCHECK
-	if (attr == NULL)
-		return EINVAL;
-#endif
-
 	attr->ptba_magic = _PT_BARRIERATTR_MAGIC;
-
 	return 0;
 }
-
 
 int
 pthread_barrierattr_destroy(pthread_barrierattr_t *attr)
 {
 
-#ifdef ERRORCHECK
-	if ((attr == NULL) ||
-	    (attr->ptba_magic != _PT_BARRIERATTR_MAGIC))
+	if (attr->ptba_magic != _PT_BARRIERATTR_MAGIC)
 		return EINVAL;
-#endif
-
 	attr->ptba_magic = _PT_BARRIERATTR_DEAD;
-
 	return 0;
 }
