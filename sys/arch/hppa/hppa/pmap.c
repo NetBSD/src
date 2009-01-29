@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.21 2009/01/25 10:29:27 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.22 2009/01/29 23:29:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.21 2009/01/25 10:29:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.22 2009/01/29 23:29:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1329,14 +1329,14 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	struct vm_page *pg;
 	volatile pt_entry_t *pde = NULL;
 	pt_entry_t pte;
-	u_int tlbprot, pdemask;
+	u_int pteprot, pdemask;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP,
 	    ("pmap_write_protect(%p, %x, %x, %x)\n", pmap, (int)sva, (int)eva,
 	    prot));
 
 	sva = trunc_page(sva);
-	tlbprot = PTE_PROT(pmap_prot(pmap, prot));
+	pteprot = PTE_PROT(pmap_prot(pmap, prot));
 
 	PMAP_LOCK(pmap);
 
@@ -1357,7 +1357,7 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			 * Determine if mapping is changing.
 			 * If not, nothing to do.
 			 */
-			if ((pte & PTE_PROT(TLB_AR_MASK)) == tlbprot)
+			if ((pte & PTE_PROT(TLB_AR_MASK)) == pteprot)
 				continue;
 
 			pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
@@ -1367,7 +1367,7 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 			pmap_pte_flush(pmap, sva, pte);
 			pte &= ~PTE_PROT(TLB_AR_MASK);
-			pte |= tlbprot;
+			pte |= pteprot;
 			pmap_pte_set(pde, sva, pte);
 		}
 	}
