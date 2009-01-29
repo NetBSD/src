@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_generated.h,v 1.22 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: platid_generated.h,v 1.23 2009/01/29 21:20:42 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -157,6 +157,10 @@
 #define PLATID_CPU_ARM_XSCALE_PXA250_NUM	1
 #define PLATID_CPU_ARM_XSCALE_PXA250	\
   ((PLATID_CPU_ARM_XSCALE_PXA250_NUM << PLATID_CPU_MODEL_SHIFT)| \
+    PLATID_CPU_ARM_XSCALE)
+#define PLATID_CPU_ARM_XSCALE_PXA270_NUM	2
+#define PLATID_CPU_ARM_XSCALE_PXA270	\
+  ((PLATID_CPU_ARM_XSCALE_PXA270_NUM << PLATID_CPU_MODEL_SHIFT)| \
     PLATID_CPU_ARM_XSCALE)
 #endif /* hpcarm */
 #ifdef hpcmips
