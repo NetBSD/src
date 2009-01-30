@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.154 2008/11/10 22:50:18 cegger Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.155 2009/01/30 15:01:19 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.154 2008/11/10 22:50:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.155 2009/01/30 15:01:19 he Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2845,6 +2845,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 			    0, NULL);
 		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		ifmedia_set(&sc->bge_ifmedia, IFM_ETHER|IFM_AUTO);
+		/* Pretend the user requested this setting */
+		sc->bge_ifmedia.ifm_media =
+			sc->bge_ifmedia.ifm_cur->ifm_media;
 	} else {
 		/*
 		 * Do transceiver setup.
