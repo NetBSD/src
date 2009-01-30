@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.1 2003/03/01 04:20:54 thorpej Exp $	*/
+/*	$NetBSD: atexit.c,v 1.2 2009/01/30 23:19:12 ad Exp $	*/
 
 /*
  * Program to test atexit(3) and __cxa_atexit()/__cxa_finalize().
@@ -48,7 +48,7 @@ static void
 my_abort(void)
 {
 
-	kill(getpid(), SIGABRT);
+	(void)raise(SIGABRT);
 	/* NOTREACHED */
 }
 
