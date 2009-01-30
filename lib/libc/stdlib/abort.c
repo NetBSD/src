@@ -1,4 +1,4 @@
-/*	$NetBSD: abort.c,v 1.12 2003/08/07 16:43:37 agc Exp $	*/
+/*	$NetBSD: abort.c,v 1.13 2009/01/30 23:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)abort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: abort.c,v 1.12 2003/08/07 16:43:37 agc Exp $");
+__RCSID("$NetBSD: abort.c,v 1.13 2009/01/30 23:21:03 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ abort()
 			(*__cleanup)();
 	}
 
-	(void)kill(getpid(), SIGABRT);
+	(void)raise(SIGABRT);
 
 	/*
 	 * if SIGABRT ignored, or caught and the handler returns, do
@@ -79,6 +79,6 @@ abort()
 	 */
 	(void)signal(SIGABRT, SIG_DFL);
 	(void)sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-	(void)kill(getpid(), SIGABRT);
+	(void)raise(SIGABRT);
 	_exit(1);
 }
