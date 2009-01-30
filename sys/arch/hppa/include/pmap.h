@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.9 2009/01/25 10:28:29 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.10 2009/01/30 08:21:59 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -57,6 +57,15 @@ struct pmap {
 };
 
 #define	PMAP_NC		0x100
+
+/*
+ * Flags that indicate attributes of pages or mappings of pages.
+ */
+
+#define	PVF_MOD		PTE_PROT(TLB_DIRTY)	/* page/mapping is modified */
+#define	PVF_REF		PTE_PROT(TLB_REFTRAP)	/* page/mapping (inv) is referenced */
+
+#define	PVF_UNCACHEABLE	0x1000			/* page is uncacheable */
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
