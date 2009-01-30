@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.39 2008/08/28 16:41:21 christos Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.40 2009/01/30 23:48:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfscanf.c,v 1.41 2007/01/09 00:28:07 imp Exp $");
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.39 2008/08/28 16:41:21 christos Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.40 2009/01/30 23:48:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -818,7 +818,7 @@ literal:
 					float res = strtof(buf, &p);
 					*va_arg(ap, float *) = res;
 				}
-				if (__scanfdebug && p - buf != width)
+				if (__scanfdebug && (size_t)(p - buf) != width)
 					abort();
 				nassigned++;
 			}
