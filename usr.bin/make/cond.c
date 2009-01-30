@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.57 2009/01/29 07:48:39 enami Exp $	*/
+/*	$NetBSD: cond.c,v 1.58 2009/01/30 22:35:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.57 2009/01/29 07:48:39 enami Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.58 2009/01/30 22:35:10 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.57 2009/01/29 07:48:39 enami Exp $");
+__RCSID("$NetBSD: cond.c,v 1.58 2009/01/30 22:35:10 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -632,7 +632,9 @@ compare_expression(Boolean doEval)
     void	*rhsFree;
     Boolean lhsQuoted;
     Boolean rhsQuoted;
+    double  	left, right;
 
+    t = Err;
     rhs = NULL;
     lhsFree = rhsFree = FALSE;
     lhsQuoted = rhsQuoted = FALSE;
@@ -641,13 +643,10 @@ compare_expression(Boolean doEval)
      * Parse the variable spec and skip over it, saving its
      * value in lhs.
      */
-    t = Err;
     lhs = CondGetString(doEval, &lhsQuoted, &lhsFree);
-    if (!lhs) {
-	if (lhsFree)
-	    free(lhsFree);
-	return Err;
-    }
+    if (!lhs)
+	goto done;
+
     /*
      * Skip whitespace to get to the operator
      */
@@ -672,37 +671,49 @@ compare_expression(Boolean doEval)
 	    }
 	    break;
 	default:
-	    op = UNCONST("!=");
-	    if (lhsQuoted)
-		rhs = UNCONST("");
-	    else
-		rhs = UNCONST("0");
+	    if (!doEval) {
+		t = False;
+		goto done;
+	    }
+	    /* For .ifxxx "..." check for non-empty string. */
+	    if (lhsQuoted) {
+		t = lhs[0] != 0 ? True : False;
+		goto done;
+	    }
+	    /* For .ifxxx <number> compare against zero */
+	    if (CondCvtArg(lhs, &left)) { 
+		t = left != 0.0 ? True : False;
+		goto done;
+	    }
+	    /* For .if ${...} check for non-empty string (defProc is ifdef). */
+	    if (if_info->form[0] == 0) {
+		t = lhs[0] != 0 ? True : False;
+		goto done;
+	    }
+	    /* Otherwise action default test ... */
+	    t = if_info->defProc(strlen(lhs), lhs) != if_info->doNot ? True : False;
+	    goto done;
+    }
 
-	    goto do_compare;
-    }
-    while (isspace((unsigned char) *condExpr)) {
+    while (isspace((unsigned char)*condExpr))
 	condExpr++;
-    }
+
     if (*condExpr == '\0') {
 	Parse_Error(PARSE_WARNING,
 		    "Missing right-hand-side of operator");
-	goto error;
+	goto done;
     }
+
     rhs = CondGetString(doEval, &rhsQuoted, &rhsFree);
-    if (!rhs) {
-	if (lhsFree)
-	    free(lhsFree);
-	if (rhsFree)
-	    free(rhsFree);
-	return Err;
-    }
-do_compare:
+    if (!rhs)
+	goto done;
+
     if (rhsQuoted || lhsQuoted) {
 do_string_compare:
 	if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
 	    Parse_Error(PARSE_WARNING,
     "String comparison operator should be either == or !=");
-	    goto error;
+	    goto done;
 	}
 
 	if (DEBUG(COND)) {
@@ -723,7 +734,6 @@ do_string_compare:
 	 * rhs is either a float or an integer. Convert both the
 	 * lhs and the rhs to a double and compare the two.
 	 */
-	double  	left, right;
     
 	if (!CondCvtArg(lhs, &left) || !CondCvtArg(rhs, &right))
 	    goto do_string_compare;
@@ -737,7 +747,7 @@ do_string_compare:
 	    if (op[1] != '=') {
 		Parse_Error(PARSE_WARNING,
 			    "Unknown operator");
-		goto error;
+		goto done;
 	    }
 	    t = (left != right ? True : False);
 	    break;
@@ -745,7 +755,7 @@ do_string_compare:
 	    if (op[1] != '=') {
 		Parse_Error(PARSE_WARNING,
 			    "Unknown operator");
-		goto error;
+		goto done;
 	    }
 	    t = (left == right ? True : False);
 	    break;
@@ -765,7 +775,8 @@ do_string_compare:
 	    break;
 	}
     }
-error:
+
+done:
     if (lhsFree)
 	free(lhsFree);
     if (rhsFree)
@@ -875,8 +886,7 @@ compare_function(Boolean doEval)
     /*
      * Most likely we have a naked token to apply the default function to.
      * However ".if a == b" gets here when the "a" is unquoted and doesn't
-     * start with a '$'. This surprises people - especially given the way
-     * that for loops get expanded.
+     * start with a '$'. This surprises people.
      * If what follows the function argument is a '=' or '!' then the syntax
      * would be invalid if we did "defined(a)" - so instead treat as an
      * expression.
@@ -889,8 +899,10 @@ compare_function(Boolean doEval)
     condExpr = cp;
 
     /*
-     * Evaluate the argument using the default function. If invert
-     * is TRUE, we invert the sense of the result.
+     * Evaluate the argument using the default function.
+     * This path always treats .if as .ifdef. To get here the character
+     * after .if must have been taken literally, so the argument cannot
+     * be empty - even if it contained a variable expansion.
      */
     t = !doEval || if_info->defProc(arglen, arg) != if_info->doNot ? True : False;
     if (arg)
