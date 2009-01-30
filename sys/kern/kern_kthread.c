@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.25 2009/01/29 22:00:26 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.26 2009/01/30 04:09:35 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.25 2009/01/29 22:00:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.26 2009/01/30 04:09:35 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (uaddr == 0)
 		return ENOMEM;
-	if ((flags & KTHREAD_TS) != 0) {
+	if ((flag & KTHREAD_TS) != 0) {
 		lc = SCHED_OTHER;
 	} else {
 		lc = SCHED_RR;
@@ -99,7 +99,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	}
 
 	if (pri == PRI_NONE) {
-		if ((flags & KTHREAD_TS) != 0) {
+		if ((flag & KTHREAD_TS) != 0) {
 			/* Maximum user priority level. */
 			pri = MAXPRI_USER;
 		} else {
