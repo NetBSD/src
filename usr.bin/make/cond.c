@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.58 2009/01/30 22:35:10 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.59 2009/01/30 23:07:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.58 2009/01/30 22:35:10 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.59 2009/01/30 23:07:17 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.58 2009/01/30 22:35:10 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.59 2009/01/30 23:07:17 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -124,15 +124,16 @@ __RCSID("$NetBSD: cond.c,v 1.58 2009/01/30 22:35:10 dsl Exp $");
  * is applied.
  *
  * Tokens are scanned from the 'condExpr' string. The scanner (CondToken)
- * will return And for '&' and '&&', Or for '|' and '||', Not for '!',
- * LParen for '(', RParen for ')' and will evaluate the other terminal
+ * will return TOK_AND for '&' and '&&', TOK_OR for '|' and '||', TOK_NOT for '!',
+ * TOK_LPAREN for '(', TOK_RPAREN for ')' and will evaluate the other terminal
  * symbols, using either the default function or the function given in the
- * terminal, and return the result as either True or False.
+ * terminal, and return the result as either TOK_TRUE or TOK_FALSE.
  *
- * All Non-Terminal functions (CondE, CondF and CondT) return Err on error.
+ * All Non-Terminal functions (CondE, CondF and CondT) return TOK_ERROR on error.
  */
 typedef enum {
-    And, Or, Not, True, False, LParen, RParen, EndOfFile, None, Err
+    TOK_AND, TOK_OR, TOK_NOT, TOK_TRUE, TOK_FALSE, TOK_LPAREN, TOK_RPAREN,
+    TOK_EOF, TOK_NONE, TOK_ERROR
 } Token;
 
 /*-
@@ -170,7 +171,7 @@ static const struct If {
 
 static const struct If *if_info;        /* Info for current statement */
 static char 	  *condExpr;	    	/* The expression to parse */
-static Token	  condPushBack=None;	/* Single push-back token used in
+static Token	  condPushBack=TOK_NONE;	/* Single push-back token used in
 					 * parsing */
 
 static unsigned int	cond_depth = 0;  	/* current .if nesting level */
@@ -617,7 +618,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
  *	A Token for the next lexical token in the stream.
  *
  * Side Effects:
- *	condPushback will be set back to None if it is used.
+ *	condPushback will be set back to TOK_NONE if it is used.
  *
  *-----------------------------------------------------------------------
  */
@@ -634,7 +635,7 @@ compare_expression(Boolean doEval)
     Boolean rhsQuoted;
     double  	left, right;
 
-    t = Err;
+    t = TOK_ERROR;
     rhs = NULL;
     lhsFree = rhsFree = FALSE;
     lhsQuoted = rhsQuoted = FALSE;
@@ -672,26 +673,26 @@ compare_expression(Boolean doEval)
 	    break;
 	default:
 	    if (!doEval) {
-		t = False;
+		t = TOK_FALSE;
 		goto done;
 	    }
 	    /* For .ifxxx "..." check for non-empty string. */
 	    if (lhsQuoted) {
-		t = lhs[0] != 0 ? True : False;
+		t = lhs[0] != 0 ? TOK_TRUE : TOK_FALSE;
 		goto done;
 	    }
 	    /* For .ifxxx <number> compare against zero */
 	    if (CondCvtArg(lhs, &left)) { 
-		t = left != 0.0 ? True : False;
+		t = left != 0.0 ? TOK_TRUE : TOK_FALSE;
 		goto done;
 	    }
 	    /* For .if ${...} check for non-empty string (defProc is ifdef). */
 	    if (if_info->form[0] == 0) {
-		t = lhs[0] != 0 ? True : False;
+		t = lhs[0] != 0 ? TOK_TRUE : TOK_FALSE;
 		goto done;
 	    }
 	    /* Otherwise action default test ... */
-	    t = if_info->defProc(strlen(lhs), lhs) != if_info->doNot ? True : False;
+	    t = if_info->defProc(strlen(lhs), lhs) != if_info->doNot ? TOK_TRUE : TOK_FALSE;
 	    goto done;
     }
 
@@ -725,9 +726,9 @@ do_string_compare:
 	 * t is set to the result.
 	 */
 	if (*op == '=') {
-	    t = strcmp(lhs, rhs) ? False : True;
+	    t = strcmp(lhs, rhs) ? TOK_FALSE : TOK_TRUE;
 	} else {
-	    t = strcmp(lhs, rhs) ? True : False;
+	    t = strcmp(lhs, rhs) ? TOK_TRUE : TOK_FALSE;
 	}
     } else {
 	/*
@@ -749,7 +750,7 @@ do_string_compare:
 			    "Unknown operator");
 		goto done;
 	    }
-	    t = (left != right ? True : False);
+	    t = (left != right ? TOK_TRUE : TOK_FALSE);
 	    break;
 	case '=':
 	    if (op[1] != '=') {
@@ -757,20 +758,20 @@ do_string_compare:
 			    "Unknown operator");
 		goto done;
 	    }
-	    t = (left == right ? True : False);
+	    t = (left == right ? TOK_TRUE : TOK_FALSE);
 	    break;
 	case '<':
 	    if (op[1] == '=') {
-		t = (left <= right ? True : False);
+		t = (left <= right ? TOK_TRUE : TOK_FALSE);
 	    } else {
-		t = (left < right ? True : False);
+		t = (left < right ? TOK_TRUE : TOK_FALSE);
 	    }
 	    break;
 	case '>':
 	    if (op[1] == '=') {
-		t = (left >= right ? True : False);
+		t = (left >= right ? TOK_TRUE : TOK_FALSE);
 	    } else {
-		t = (left > right ? True : False);
+		t = (left > right ? TOK_TRUE : TOK_FALSE);
 	    }
 	    break;
 	}
@@ -789,7 +790,7 @@ get_mpt_arg(char **linePtr, char **argPtr, const char *func)
 {
     /*
      * Use Var_Parse to parse the spec in parens and return
-     * True if the resulting string is empty.
+     * TOK_TRUE if the resulting string is empty.
      */
     int	    length;
     void    *freeIt;
@@ -868,10 +869,10 @@ compare_function(Boolean doEval)
 	arglen = fn_def->fn_getarg(&cp, &arg, fn_def->fn_name);
 	if (arglen <= 0) {
 	    condExpr = cp;
-	    return arglen < 0 ? Err : False;
+	    return arglen < 0 ? TOK_ERROR : TOK_FALSE;
 	}
 	/* Evaluate the argument using the required function. */
-	t = !doEval || fn_def->fn_proc(arglen, arg) ? True : False;
+	t = !doEval || fn_def->fn_proc(arglen, arg) ? TOK_TRUE : TOK_FALSE;
 	if (arg)
 	    free(arg);
 	condExpr = cp;
@@ -904,7 +905,7 @@ compare_function(Boolean doEval)
      * after .if must have been taken literally, so the argument cannot
      * be empty - even if it contained a variable expansion.
      */
-    t = !doEval || if_info->defProc(arglen, arg) != if_info->doNot ? True : False;
+    t = !doEval || if_info->defProc(arglen, arg) != if_info->doNot ? TOK_TRUE : TOK_FALSE;
     if (arg)
 	free(arg);
     return t;
@@ -916,8 +917,8 @@ CondToken(Boolean doEval)
     Token t;
 
     t = condPushBack;
-    if (t != None) {
-	condPushBack = None;
+    if (t != TOK_NONE) {
+	condPushBack = TOK_NONE;
 	return t;
     }
 
@@ -929,34 +930,34 @@ CondToken(Boolean doEval)
 
     case '(':
 	condExpr++;
-	return LParen;
+	return TOK_LPAREN;
 
     case ')':
 	condExpr++;
-	return RParen;
+	return TOK_RPAREN;
 
     case '|':
 	if (condExpr[1] == '|') {
 	    condExpr++;
 	}
 	condExpr++;
-	return Or;
+	return TOK_OR;
 
     case '&':
 	if (condExpr[1] == '&') {
 	    condExpr++;
 	}
 	condExpr++;
-	return And;
+	return TOK_AND;
 
     case '!':
 	condExpr++;
-	return Not;
+	return TOK_NOT;
 
     case '#':
     case '\n':
     case '\0':
-	return EndOfFile;
+	return TOK_EOF;
 
     case '"':
     case '$':
@@ -971,13 +972,13 @@ CondToken(Boolean doEval)
  *-----------------------------------------------------------------------
  * CondT --
  *	Parse a single term in the expression. This consists of a terminal
- *	symbol or Not and a terminal symbol (not including the binary
+ *	symbol or TOK_NOT and a terminal symbol (not including the binary
  *	operators):
  *	    T -> defined(variable) | make(target) | exists(file) | symbol
  *	    T -> ! T | ( E )
  *
  * Results:
- *	True, False or Err.
+ *	TOK_TRUE, TOK_FALSE or TOK_ERROR.
  *
  * Side Effects:
  *	Tokens are consumed.
@@ -991,28 +992,28 @@ CondT(Boolean doEval)
 
     t = CondToken(doEval);
 
-    if (t == EndOfFile) {
+    if (t == TOK_EOF) {
 	/*
 	 * If we reached the end of the expression, the expression
 	 * is malformed...
 	 */
-	t = Err;
-    } else if (t == LParen) {
+	t = TOK_ERROR;
+    } else if (t == TOK_LPAREN) {
 	/*
 	 * T -> ( E )
 	 */
 	t = CondE(doEval);
-	if (t != Err) {
-	    if (CondToken(doEval) != RParen) {
-		t = Err;
+	if (t != TOK_ERROR) {
+	    if (CondToken(doEval) != TOK_RPAREN) {
+		t = TOK_ERROR;
 	    }
 	}
-    } else if (t == Not) {
+    } else if (t == TOK_NOT) {
 	t = CondT(doEval);
-	if (t == True) {
-	    t = False;
-	} else if (t == False) {
-	    t = True;
+	if (t == TOK_TRUE) {
+	    t = TOK_FALSE;
+	} else if (t == TOK_FALSE) {
+	    t = TOK_TRUE;
 	}
     }
     return (t);
@@ -1025,7 +1026,7 @@ CondT(Boolean doEval)
  *	    F -> T && F | T
  *
  * Results:
- *	True, False or Err
+ *	TOK_TRUE, TOK_FALSE or TOK_ERROR
  *
  * Side Effects:
  *	Tokens are consumed.
@@ -1038,18 +1039,18 @@ CondF(Boolean doEval)
     Token   l, o;
 
     l = CondT(doEval);
-    if (l != Err) {
+    if (l != TOK_ERROR) {
 	o = CondToken(doEval);
 
-	if (o == And) {
+	if (o == TOK_AND) {
 	    /*
 	     * F -> T && F
 	     *
-	     * If T is False, the whole thing will be False, but we have to
+	     * If T is TOK_FALSE, the whole thing will be TOK_FALSE, but we have to
 	     * parse the r.h.s. anyway (to throw it away).
-	     * If T is True, the result is the r.h.s., be it an Err or no.
+	     * If T is TOK_TRUE, the result is the r.h.s., be it an TOK_ERROR or no.
 	     */
-	    if (l == True) {
+	    if (l == TOK_TRUE) {
 		l = CondF(doEval);
 	    } else {
 		(void)CondF(FALSE);
@@ -1071,7 +1072,7 @@ CondF(Boolean doEval)
  *	    E -> F || E | F
  *
  * Results:
- *	True, False or Err.
+ *	TOK_TRUE, TOK_FALSE or TOK_ERROR.
  *
  * Side Effects:
  *	Tokens are, of course, consumed.
@@ -1084,19 +1085,19 @@ CondE(Boolean doEval)
     Token   l, o;
 
     l = CondF(doEval);
-    if (l != Err) {
+    if (l != TOK_ERROR) {
 	o = CondToken(doEval);
 
-	if (o == Or) {
+	if (o == TOK_OR) {
 	    /*
 	     * E -> F || E
 	     *
 	     * A similar thing occurs for ||, except that here we make sure
-	     * the l.h.s. is False before we bother to evaluate the r.h.s.
-	     * Once again, if l is False, the result is the r.h.s. and once
-	     * again if l is True, we parse the r.h.s. to throw it away.
+	     * the l.h.s. is TOK_FALSE before we bother to evaluate the r.h.s.
+	     * Once again, if l is TOK_FALSE, the result is the r.h.s. and once
+	     * again if l is TOK_TRUE, we parse the r.h.s. to throw it away.
 	     */
-	    if (l == False) {
+	    if (l == TOK_FALSE) {
 		l = CondE(doEval);
 	    } else {
 		(void)CondE(FALSE);
@@ -1151,7 +1152,7 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprin
 
     if_info = info != NULL ? info : ifs + 4;
     condExpr = line;
-    condPushBack = None;
+    condPushBack = TOK_NONE;
 
     rval = do_Cond_EvalExpression(value);
 
@@ -1170,20 +1171,20 @@ do_Cond_EvalExpression(Boolean *value)
 {
 
     switch (CondE(TRUE)) {
-    case True:
-	if (CondToken(TRUE) == EndOfFile) {
+    case TOK_TRUE:
+	if (CondToken(TRUE) == TOK_EOF) {
 	    *value = TRUE;
 	    return COND_PARSE;
 	}
 	break;
-    case False:
-	if (CondToken(TRUE) == EndOfFile) {
+    case TOK_FALSE:
+	if (CondToken(TRUE) == TOK_EOF) {
 	    *value = FALSE;
 	    return COND_PARSE;
 	}
 	break;
     default:
-    case Err:
+    case TOK_ERROR:
 	break;
     }
 
