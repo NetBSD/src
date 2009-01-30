@@ -39,7 +39,7 @@
 #include <openpgpsdk/packet-show.h>
 #include <openpgpsdk/util.h>
 
-#define DEFAULT_NUMBITS 1024
+#define DEFAULT_NUMBITS 2048
 
 #define MAXBUF 1024
 
@@ -107,6 +107,7 @@ static struct option long_options[] = {
 	{"userid", required_argument, NULL, USERID},
 	{"passphrase", required_argument, NULL, PASSPHRASE},
 	{"homedir", required_argument, NULL, HOMEDIR},
+	{"armor", no_argument, NULL, ARMOUR},
 	{"armour", no_argument, NULL, ARMOUR},
 	{"numbits", required_argument, NULL, NUMBITS},
 
