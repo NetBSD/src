@@ -1,4 +1,4 @@
-.\"	$NetBSD: raise.3,v 1.7 2003/08/07 16:42:55 agc Exp $
+.\"	$NetBSD: raise.3,v 1.8 2009/01/30 23:26:54 ad Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,12 +33,12 @@
 .\"
 .\"     @(#)raise.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd January 29, 2009
 .Dt RAISE 3
 .Os
 .Sh NAME
 .Nm raise
-.Nd send a signal to the current process
+.Nd send a signal to the current thread
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -50,7 +50,7 @@ The
 .Fn raise
 function sends the signal
 .Fa sig
-to the current process.
+to the current thread.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, a value of \-1 is returned and the global variable
@@ -64,9 +64,9 @@ may fail and set
 .Va errno
 for any of the errors specified for the
 library functions
-.Xr getpid 2
+.Xr _lwp_self 2
 and
-.Xr kill 2 .
+.Xr _lwp_kill 2 .
 .Sh SEE ALSO
 .Xr kill 2
 .Sh STANDARDS
@@ -74,4 +74,7 @@ The
 .Fn raise
 function
 conforms to
-.St -ansiC .
+.St -ansiC
+and
+.St -susv2 .
+
