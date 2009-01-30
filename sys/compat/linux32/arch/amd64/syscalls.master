@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.49 2009/01/20 12:00:58 njoly Exp $
+	$NetBSD: syscalls.master,v 1.50 2009/01/30 13:55:51 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -368,7 +368,8 @@
 215	STD	{ int|linux32_sys||setfsuid(uid_t uid); }
 216	STD	{ int|linux32_sys||setfsgid(gid_t gid); }
 217	UNIMPL	pivot_root
-218	UNIMPL	mincore
+218	NOARGS	{ int|netbsd32||mincore(netbsd32_voidp addr, \
+		    netbsd32_size_t len, netbsd32_charp vec); }
 219	NOARGS	{ int|netbsd32||madvise(netbsd32_voidp addr, \
 		    netbsd32_size_t len, int behav); }
 220	STD	{ int|linux32_sys||getdents64(int fd, \
