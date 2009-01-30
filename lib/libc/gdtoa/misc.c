@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.4 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: misc.c,v 1.5 2009/01/30 23:35:35 lukem Exp $ */
 
 /****************************************************************
 
@@ -67,7 +67,7 @@ Balloc
 #else
 		len = (sizeof(Bigint) + (x-1)*sizeof(ULong) + sizeof(double) - 1)
 			/sizeof(double);
-		if (pmem_next - private_mem + len <= PRIVATE_mem) {
+		if ((double *)(pmem_next - private_mem + len) <= (double *)PRIVATE_mem) {
 			rv = (Bigint*)(void *)pmem_next;
 			pmem_next += len;
 			}
