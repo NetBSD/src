@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.6 2008/03/27 21:50:30 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.7 2009/01/30 23:46:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.6 2008/03/27 21:50:30 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.7 2009/01/30 23:46:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -204,7 +204,7 @@ strfmon(char * __restrict s, size_t maxsize, const char * __restrict format,
 			 * required width ?
 			 */
 
-			if (d + width >= maxsize)
+			if ((size_t)(d + width) >= maxsize)
 				goto e2big_error;
 		}
 

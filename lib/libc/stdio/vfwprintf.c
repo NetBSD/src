@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.13 2008/06/05 19:55:47 aymeric Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.14 2009/01/30 23:46:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.13 2008/06/05 19:55:47 aymeric Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.14 2009/01/30 23:46:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -510,7 +510,7 @@ __wcsconv(wchar_t *wcsarg, int prec)
 			for (;;) {
 				clen = wcrtomb(buf, *p++, &mbs);
 				if (clen == 0 || clen == (size_t)-1 ||
-				    nbytes + clen > prec)
+				    nbytes + clen > (size_t)prec)
 					break;
 				nbytes += clen;
 			}
