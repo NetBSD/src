@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.11 2006/05/05 00:03:21 rpaulo Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.12 2009/01/30 23:43:30 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ip6opt.c,v 1.11 2006/05/05 00:03:21 rpaulo Exp $");
+__RCSID("$NetBSD: ip6opt.c,v 1.12 2009/01/30 23:43:30 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -498,7 +498,7 @@ inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 	/* The option must fit in the extension header buffer. */
 	currentlen += padlen;
 	if (extlen &&		/* XXX: right? */
-	    currentlen > extlen)
+	    (socklen_t)currentlen > extlen)
 		return (-1);
 
 	if (extbuf) {
@@ -528,13 +528,13 @@ inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 int
 inet6_opt_finish(void *extbuf, socklen_t extlen, int offset)
 {
-	int updatelen = offset > 0 ? (1 + ((offset - 1) | 7)) : 0;;
+	int updatelen = offset > 0 ? (1 + ((offset - 1) | 7)) : 0;
 
 	if (extbuf) {
 		u_int8_t *padp;
 		size_t padlen = updatelen - offset;
 
-		if (updatelen > extlen)
+		if ((socklen_t)updatelen > extlen)
 			return (-1);
 
 		padp = (u_int8_t *)extbuf + offset;
