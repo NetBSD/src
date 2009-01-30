@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.18 2009/01/11 02:46:30 christos Exp $	*/
+/*	$NetBSD: qsort.c,v 1.19 2009/01/30 23:38:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.18 2009/01/11 02:46:30 christos Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.19 2009/01/30 23:38:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -168,7 +168,7 @@ loop:	SWAPINIT(a, es);
 	pn = (char *) a + n * es;
 	r = min(pa - (char *) a, pb - pa);
 	vecswap(a, pb - r, r);
-	r = min(pd - pc, pn - pd - es);
+	r = min((size_t)(pd - pc), pn - pd - es);
 	vecswap(pb, pn - r, r);
 	if ((r = pb - pa) > es)
 		qsort(a, r / es, es, cmp);
