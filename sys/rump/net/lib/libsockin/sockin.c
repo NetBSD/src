@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.12 2009/01/27 13:40:16 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.13 2009/01/30 21:13:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.12 2009/01/27 13:40:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.13 2009/01/30 21:13:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -381,10 +381,6 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
-		/* don't bother to connect udp sockets, always sendmsg */
-		if (so->so_proto->pr_type == SOCK_DGRAM)
-			break;
-
 		rv = rumpuser_net_connect(SO2S(so),
 		    mtod(nam, struct sockaddr *), sizeof(struct sockaddr_in),
 		    &error);
@@ -398,7 +394,6 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_SEND:
 	{
-		struct sockaddr *saddr;
 		struct msghdr mhdr;
 		struct iovec iov[16];
 		struct mbuf *m2;
@@ -419,12 +414,6 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		mhdr.msg_iov = iov;
 		mhdr.msg_iovlen = i;
 		s = SO2S(so);
-
-		if (so->so_proto->pr_type == SOCK_DGRAM) {
-			saddr = mtod(nam, struct sockaddr *);
-			mhdr.msg_name = saddr;
-			mhdr.msg_namelen = saddr->sa_len;
-		}
 
 		rumpuser_net_sendmsg(s, &mhdr, 0, &error);
 
