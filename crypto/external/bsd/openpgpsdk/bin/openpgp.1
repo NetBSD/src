@@ -1,3 +1,4 @@
+.\" $NetBSD: openpgp.1,v 1.2 2009/01/30 22:59:37 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,10 +41,10 @@
 .Op Fl -sign
 .Op Fl -clearsign
 .Op Fl -verify
-.Op Fl -keyring=<keyring>
-.Op Fl -userid=<user-id>
+.Op Fl -keyring Ns = Ns Aq keyring
+.Op Fl -userid Ns = Ns Aq user-id
 .Op Fl -armour
-.Op Fl -homedir=<home-directory>
+.Op Fl -homedir Ns = Ns Aq home-directory
 .Op Fl -list-packets
 .Ar file ...
 .Sh DESCRIPTION
@@ -121,7 +122,7 @@ extension to the original file name.
 The user will be prompted for their pass phrase using
 .Xr getpass 3 .
 .It Fl -clearsign
-The signature of the file named on the command line is calculated 
+The signature of the file named on the command line is calculated
 in the same manner as the
 .Fl -sign
 command described above, but the text is added to the file such that
@@ -157,7 +158,7 @@ user identities - email addresses and names are provided as aliases.
 This option, however it is spelled, wraps the signature as an
 ASCII-encoded piece of text, for ease of use.
 .It Fl -homedir
-Keyrings are normally located, for historical reasons, within 
+Keyrings are normally located, for historical reasons, within
 the user's home directory in a subdirectory called
 .Dq .gnupg
 and this option specifies an alternative location in which to
@@ -172,7 +173,6 @@ be reviewed, and increased when it becomes easier to factor 2048
 bit numbers.
 .El
 .Sh PASS PHRASES
-.Pp
 The pass phrase cannot be changed once it has been chosen, and will
 be used for the life of the key, so a wise choice is advised.
 The pass phrase should not be an easily guessable word or phrase,
@@ -211,26 +211,25 @@ The
 option is deprecated, and will be removed in future versions
 of the tool.
 .Sh SIGNING AND VERIFICATION
-.Pp
 Signing and verification of a file is best viewed using the following example:
 .nf
 % openpgp --sign --userid=agc@netbsd.org a
 pub RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
 Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid                              Alistair Crooks <agc@netbsd.org>
-uid                              Alistair Crooks <agc@pkgsrc.org>
-uid                              Alistair Crooks <agc@alistaircrooks.com>
-uid                              Alistair Crooks <alistair@hockley-crooks.com>
+uid                              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid                              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid                              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid                              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
 openpgp passphrase:
 % openpgp --verify a.gpg
 Good signature for a.gpg made Thu Jan 29 03:06:00 2009
 using RSA (Encrypt or Sign) key 1B68DCFCC0596823
 pub RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
 Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid                              Alistair Crooks <alistair@hockley-crooks.com>
-uid                              Alistair Crooks <agc@pkgsrc.org>
-uid                              Alistair Crooks <agc@netbsd.org>
-uid                              Alistair Crooks <agc@alistaircrooks.com>
+uid                              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid                              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid                              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid                              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
 %
 .fi
 .Pp
@@ -249,7 +248,7 @@ The time and user identity of the signatory is displayed,
 followed by a fuller description of the public key of
 the signatory.
 In both cases, the exit value from the utility was a successful one.
-.Sh EXIT VALUES
+.Sh RETURN VALUES
 The
 .Nm
 utility will return 0 for success,
@@ -259,15 +258,15 @@ or 2 if any other error occurs.
 .Xr getpass 3 ,
 .Xr libbz2 3 ,
 .Xr libz 3 ,
-.Xr openssl 3
+.Xr ssl 3
+.Sh STANDARDS
+The
+.Nm
+utility is designed to conform to IETF RFC 4880.
 .Sh HISTORY
 The
 .Nm
 command first appeared in
 .Nx 6.0
-.Sh STANDARDS
-The
-.Nm
-utility is designed to conform to IETF RFC 4880.
 .Sh AUTHORS
 Ben Laurie and Rachel Willmer.
