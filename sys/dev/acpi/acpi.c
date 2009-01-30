@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.122 2009/01/03 03:43:22 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.123 2009/01/30 12:51:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.122 2009/01/03 03:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.123 2009/01/30 12:51:03 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -137,6 +137,7 @@ CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
  */
 int	acpi_active;
 int	acpi_force_load;
+int	acpi_suspended = 0;
 
 /*
  * Pointer to the ACPI subsystem's state.  There can be only
@@ -189,6 +190,9 @@ static void		acpi_enable_fixed_events(struct acpi_softc *);
 static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
 static void		acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 static int		is_available_state(struct acpi_softc *, int);
+
+static bool		acpi_suspend(device_t PMF_FN_PROTO);
+static bool		acpi_resume(device_t PMF_FN_PROTO);
 
 /*
  * acpi_probe:
@@ -440,7 +444,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Register null power management handler
 	 */
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, acpi_suspend, acpi_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
@@ -519,6 +523,20 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_dbgr & ACPI_DBGR_RUNNING)
 		acpi_osd_debugger();
 #endif
+}
+
+static bool
+acpi_suspend(device_t dv PMF_FN_ARGS)
+{
+	acpi_suspended = 1;
+	return true;
+}
+
+static bool
+acpi_resume(device_t dv PMF_FN_ARGS)
+{
+	acpi_suspended = 0;
+	return true;
 }
 
 #if 0
