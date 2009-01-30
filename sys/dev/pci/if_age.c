@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.15 2009/01/30 08:46:25 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.16 2009/01/30 08:57:35 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.15 2009/01/30 08:46:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.16 2009/01/30 08:57:35 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -707,8 +707,8 @@ age_dma_alloc(struct age_softc *sc)
 	    PAGE_SIZE, 0, &sc->age_rdata.age_tx_ring_seg, 1, 
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: could not allocate DMA'able memory for Tx ring.\n",
-		    device_xname(sc->sc_dev));
+		printf("%s: could not allocate DMA'able memory for Tx ring, "
+		    "error = %i\n", device_xname(sc->sc_dev), error);
 		return error;
 	}
 
@@ -724,8 +724,8 @@ age_dma_alloc(struct age_softc *sc)
 	error = bus_dmamap_load(sc->sc_dmat, sc->age_cdata.age_tx_ring_map,
 	    sc->age_rdata.age_tx_ring, AGE_TX_RING_SZ, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: could not load DMA'able memory for Tx ring.\n",
-		    device_xname(sc->sc_dev));
+		printf("%s: could not load DMA'able memory for Tx ring, "
+		    "error = %i\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat, 
 		    (bus_dma_segment_t *)&sc->age_rdata.age_tx_ring, 1);
 		return error;
@@ -747,8 +747,8 @@ age_dma_alloc(struct age_softc *sc)
 	    PAGE_SIZE, 0, &sc->age_rdata.age_rx_ring_seg, 1, 
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: could not allocate DMA'able memory for Rx ring.\n",
-		    device_xname(sc->sc_dev));
+		printf("%s: could not allocate DMA'able memory for Rx ring, "
+		    "error = %i.\n", device_xname(sc->sc_dev), error);
 		return error;
 	}
 
@@ -764,8 +764,8 @@ age_dma_alloc(struct age_softc *sc)
 	error = bus_dmamap_load(sc->sc_dmat, sc->age_cdata.age_rx_ring_map,
 	    sc->age_rdata.age_rx_ring, AGE_RX_RING_SZ, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: could not load DMA'able memory for Rx ring.\n",
-		    device_xname(sc->sc_dev));
+		printf("%s: could not load DMA'able memory for Rx ring, "
+		    "error = %i.\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat,
 		    (bus_dma_segment_t *)sc->age_rdata.age_rx_ring, 1);
 		return error;
@@ -788,7 +788,8 @@ age_dma_alloc(struct age_softc *sc)
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx "
-		    "return ring.\n", device_xname(sc->sc_dev));
+		    "return ring, error = %i.\n",
+		    device_xname(sc->sc_dev), error);
 		return error;
 	}
 
@@ -804,8 +805,8 @@ age_dma_alloc(struct age_softc *sc)
 	error = bus_dmamap_load(sc->sc_dmat, sc->age_cdata.age_rr_ring_map,
 	    sc->age_rdata.age_rr_ring, AGE_RR_RING_SZ, NULL, BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: could not load DMA'able memory for Rx return ring."
-		    "\n", device_xname(sc->sc_dev));
+		printf("%s: could not load DMA'able memory for Rx return ring, "
+		    "error = %i\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat,
 		    (bus_dma_segment_t *)&sc->age_rdata.age_rr_ring, 1);
 		return error;
@@ -829,7 +830,7 @@ age_dma_alloc(struct age_softc *sc)
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
-		    "CMB block\n", device_xname(sc->sc_dev));
+		    "CMB block, error = %i\n", device_xname(sc->sc_dev), error);
 		return error;
 	}
 
@@ -846,8 +847,8 @@ age_dma_alloc(struct age_softc *sc)
 	    sc->age_rdata.age_cmb_block, AGE_CMB_BLOCK_SZ, NULL, 
 	    BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: could not load DMA'able memory for CMB block\n",
-		    device_xname(sc->sc_dev));
+		printf("%s: could not load DMA'able memory for CMB block, "
+		    "error = %i\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat,
 		    (bus_dma_segment_t *)&sc->age_rdata.age_cmb_block, 1);
 		return error;
@@ -871,7 +872,7 @@ age_dma_alloc(struct age_softc *sc)
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
-		    "SMB block\n", device_xname(sc->sc_dev));
+		    "SMB block, error = %i\n", device_xname(sc->sc_dev), error);
 		return error;
 	}
 
@@ -888,8 +889,8 @@ age_dma_alloc(struct age_softc *sc)
 	    sc->age_rdata.age_smb_block, AGE_SMB_BLOCK_SZ, NULL, 
 	    BUS_DMA_WAITOK);
 	if (error) {
-		printf("%s: could not load DMA'able memory for SMB block\n",
-		    device_xname(sc->sc_dev));
+		printf("%s: could not load DMA'able memory for SMB block, "
+		    "error = %i\n", device_xname(sc->sc_dev), error);
 		bus_dmamem_free(sc->sc_dmat,
 		    (bus_dma_segment_t *)&sc->age_rdata.age_smb_block, 1);
 		return error;
@@ -907,8 +908,8 @@ age_dma_alloc(struct age_softc *sc)
 		    AGE_MAXTXSEGS, AGE_TSO_MAXSEGSIZE, 0, BUS_DMA_NOWAIT,
 		    &txd->tx_dmamap);
 		if (error) {
-			printf("%s: could not create Tx dmamap.\n",
-			    device_xname(sc->sc_dev));
+			printf("%s: could not create Tx dmamap, error = %i.\n",
+			    device_xname(sc->sc_dev), error);
 			return error;
 		}
 	}
@@ -917,8 +918,8 @@ age_dma_alloc(struct age_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 	    BUS_DMA_NOWAIT, &sc->age_cdata.age_rx_sparemap);
 	if (error) {
-		printf("%s: could not create spare Rx dmamap.\n", 
-		    device_xname(sc->sc_dev));
+		printf("%s: could not create spare Rx dmamap, error = %i.\n", 
+		    device_xname(sc->sc_dev), error);
 		return error;
 	}
 	for (i = 0; i < AGE_RX_RING_CNT; i++) {
@@ -928,8 +929,8 @@ age_dma_alloc(struct age_softc *sc)
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &rxd->rx_dmamap);
 		if (error) {
-			printf("%s: could not create Rx dmamap.\n",
-			    device_xname(sc->sc_dev));
+			printf("%s: could not create Rx dmamap, error = %i.\n",
+			    device_xname(sc->sc_dev), error);
 			return error;
 		}
 	}
