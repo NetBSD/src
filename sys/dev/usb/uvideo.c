@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.25 2009/01/20 20:15:15 drochner Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.26 2009/01/30 12:55:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.25 2009/01/20 20:15:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.26 2009/01/30 12:55:46 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1607,7 +1607,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 			isoc->i_buf = usbd_alloc_buffer(isoc->i_xfer,
 					       nframes * uframe_len);
 
-			if (isoc->i_xfer == NULL) {
+			if (isoc->i_buf == NULL) {
 				DPRINTF(("uvideo: failed to alloc buf: %s"
 				 " (%d)\n",
 				 usbd_errstr(err), err));
