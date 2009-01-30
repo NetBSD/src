@@ -30,6 +30,11 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#if defined(__APPLE__)
+#define COMMON_DIGEST_FOR_OPENSSL	1
+#include <CommonCrypto/CommonDigest.h>
+#endif
+
 #include <openpgpsdk/configure.h>
 #include <openpgpsdk/crypto.h>
 #include <openpgpsdk/keyring.h>
