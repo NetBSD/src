@@ -1,4 +1,4 @@
-/*      $NetBSD: filter_netbsd.c,v 1.1 2008/12/22 00:56:58 haad Exp $        */
+/*      $NetBSD: filter_netbsd.c,v 1.2 2009/01/30 09:59:46 haad Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -71,6 +71,7 @@ static const device_info_t device_info[] = {
 	{"raid", 64},
 	{"cgd", 1},
 	{"ccd", 1},	
+	{"xbd", 64},
 	{NULL, -1}
 };
 
