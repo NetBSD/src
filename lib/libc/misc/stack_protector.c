@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.2 2008/06/03 19:22:37 ad Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.3 2009/01/30 23:21:02 ad Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.2 2008/06/03 19:22:37 ad Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.3 2009/01/30 23:21:02 ad Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -105,7 +105,7 @@ __fail(const char *msg)
 	sa.sa_flags = 0;
 	sa.sa_handler = SIG_DFL;
 	(void)sigaction(SIGABRT, &sa, NULL);
-	(void)kill(getpid(), SIGABRT);
+	(void)raise(SIGABRT);
 	_exit(127);
 }
 
