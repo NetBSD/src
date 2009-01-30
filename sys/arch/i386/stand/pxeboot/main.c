@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2008/12/13 23:30:54 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2009/01/30 14:09:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -108,7 +108,6 @@ main(void)
         char c;
 
 	twiddle_toggle = 1;	/* no twiddling until we're ready */
-	printf("\f");		/* clear screen (hopefully) */
 
 #ifdef SUPPORT_SERIAL
 	initio(SUPPORT_SERIAL);
