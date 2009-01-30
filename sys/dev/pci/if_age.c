@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.16 2009/01/30 08:57:35 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.17 2009/01/30 16:16:36 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.16 2009/01/30 08:57:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.17 2009/01/30 16:16:36 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -704,7 +704,7 @@ age_dma_alloc(struct age_softc *sc)
 
 	/* Allocate DMA'able memory for TX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_TX_RING_SZ, 
-	    PAGE_SIZE, 0, &sc->age_rdata.age_tx_ring_seg, 1, 
+	    ETHER_ALIGN, 0, &sc->age_rdata.age_tx_ring_seg, 1, 
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx ring, "
@@ -744,7 +744,7 @@ age_dma_alloc(struct age_softc *sc)
 
 	/* Allocate DMA'able memory for RX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_RX_RING_SZ, 
-	    PAGE_SIZE, 0, &sc->age_rdata.age_rx_ring_seg, 1, 
+	    ETHER_ALIGN, 0, &sc->age_rdata.age_rx_ring_seg, 1, 
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx ring, "
@@ -784,7 +784,7 @@ age_dma_alloc(struct age_softc *sc)
 
 	/* Allocate DMA'able memory for RX return ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_RR_RING_SZ, 
-	    PAGE_SIZE, 0, &sc->age_rdata.age_rr_ring_seg, 1, 
+	    ETHER_ALIGN, 0, &sc->age_rdata.age_rr_ring_seg, 1, 
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx "
@@ -826,7 +826,7 @@ age_dma_alloc(struct age_softc *sc)
 
 	/* Allocate DMA'able memory for CMB block */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_CMB_BLOCK_SZ, 
-	    PAGE_SIZE, 0, &sc->age_rdata.age_cmb_block_seg, 1, 
+	    ETHER_ALIGN, 0, &sc->age_rdata.age_cmb_block_seg, 1, 
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
@@ -868,7 +868,7 @@ age_dma_alloc(struct age_softc *sc)
 
 	/* Allocate DMA'able memory for SMB block */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_SMB_BLOCK_SZ, 
-	    PAGE_SIZE, 0, &sc->age_rdata.age_smb_block_seg, 1, 
+	    ETHER_ALIGN, 0, &sc->age_rdata.age_smb_block_seg, 1, 
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
