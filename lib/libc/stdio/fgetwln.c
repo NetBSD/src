@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetwln.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
+/*	$NetBSD: fgetwln.c,v 1.2 2009/01/31 06:08:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/fgetwln.c,v 1.2 2004/08/06 17:00:09 tjr Exp $");
 #else
-__RCSID("$NetBSD: fgetwln.c,v 1.1 2005/05/14 23:51:02 christos Exp $");
+__RCSID("$NetBSD: fgetwln.c,v 1.2 2009/01/31 06:08:28 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 	len = 0;
 	while ((wc = __fgetwc_unlock(fp)) != WEOF) {
 #define	GROW	512
-		if (len * sizeof(wchar_t) >= fp->_lb._size &&
+		if (len * sizeof(wchar_t) >= (size_t)fp->_lb._size &&
 		    __slbexpand(fp, (len + GROW) * sizeof(wchar_t)))
 			goto error;
 		*((wchar_t *)(void *)fp->_lb._base + len++) = wc;
