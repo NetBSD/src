@@ -159,7 +159,7 @@ sum16_destroyer(ops_reader_info_t * rinfo)
 void 
 ops_reader_push_sum16(ops_parse_info_t * pinfo)
 {
-	sum16_arg_t    *arg = calloc(1, sizeof *arg);
+	sum16_arg_t    *arg = calloc(1, sizeof(*arg));
 
 	ops_reader_push(pinfo, sum16_reader, sum16_destroyer, arg);
 }

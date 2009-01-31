@@ -54,7 +54,7 @@ ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM *
 
 	mpisize = BN_num_bytes(encmpi);
 	/* MPI can't be more than 65,536 */
-	assert(mpisize <= sizeof encmpibuf);
+	assert(mpisize <= sizeof(encmpibuf));
 	BN_bn2bin(encmpi, encmpibuf);
 
 	assert(skey->public_key.algorithm == OPS_PKA_RSA);

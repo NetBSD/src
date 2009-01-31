@@ -136,7 +136,7 @@ encode_hash_buf(const unsigned char *M, size_t mLen,
 	switch (hash_alg) {
 	case OPS_HASH_SHA1:
 		prefix = prefix_sha1;
-		prefix_sz = sizeof prefix_sha1;
+		prefix_sz = sizeof(prefix_sha1);
 		hash_sz = OPS_SHA1_HASH_SIZE;
 		encoded_hash_sz = hash_sz + prefix_sz;
 		/* \todo why is Ben using a PS size of 90 in rsa_sign? */
@@ -199,10 +199,10 @@ rsa_sign(ops_hash_t * hash, const ops_rsa_public_key_t * rsa,
 	BIGNUM         *bn;
 
 	/* XXX: we assume hash is sha-1 for now */
-	hashsize = 20 + sizeof prefix_sha1;
+	hashsize = 20 + sizeof(prefix_sha1);
 
 	keysize = (BN_num_bits(rsa->n) + 7) / 8;
-	assert(keysize <= sizeof hashbuf);
+	assert(keysize <= sizeof(hashbuf));
 	assert(10 + hashsize <= keysize);
 
 	hashbuf[0] = 0;
@@ -214,8 +214,8 @@ rsa_sign(ops_hash_t * hash, const ops_rsa_public_key_t * rsa,
 		hashbuf[n] = 0xff;
 	hashbuf[n++] = 0;
 
-	memcpy(&hashbuf[n], prefix_sha1, sizeof prefix_sha1);
-	n += sizeof prefix_sha1;
+	memcpy(&hashbuf[n], prefix_sha1, sizeof(prefix_sha1));
+	n += sizeof(prefix_sha1);
 
 	t = hash->finish(hash, &hashbuf[n]);
 	assert(t == 20);
@@ -282,8 +282,8 @@ rsa_verify(ops_hash_algorithm_t type,
 	prefix = (const unsigned char *) "";
 	keysize = BN_num_bytes(rsa->n);
 	/* RSA key can't be bigger than 65535 bits, so... */
-	assert(keysize <= sizeof hashbuf_from_sig);
-	assert((unsigned) BN_num_bits(sig->sig) <= 8 * sizeof sigbuf);
+	assert(keysize <= sizeof(hashbuf_from_sig));
+	assert((unsigned) BN_num_bits(sig->sig) <= 8 * sizeof(sigbuf));
 	BN_bn2bin(sig->sig, sigbuf);
 
 	n = ops_rsa_public_decrypt(hashbuf_from_sig, sigbuf, (BN_num_bits(sig->sig) + 7) / 8, rsa);

@@ -73,7 +73,7 @@ ops_push_skey_checksum_writer(ops_create_info_t * cinfo, ops_secret_key_t * skey
 {
 	/* OPS_USED(info); */
 	/* XXX: push a SHA-1 checksum writer (and change s2k to 254). */
-	skey_checksum_arg_t *arg = calloc(1, sizeof *arg);
+	skey_checksum_arg_t *arg = calloc(1, sizeof(*arg));
 
 	/* configure the arg */
 	arg->hash_algorithm = skey->hash_algorithm;

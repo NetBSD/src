@@ -224,7 +224,7 @@ ops_print_secret_key_verbose(const ops_content_tag_t type, const ops_secret_key_
 		printf("Hash algorithm: %d (%s)\n", skey->hash_algorithm,
 		       ops_show_hash_algorithm(skey->hash_algorithm));
 		if (skey->s2k_specifier != OPS_S2KS_SIMPLE)
-			print_hexdump("Salt", skey->salt, sizeof skey->salt);
+			print_hexdump("Salt", skey->salt, sizeof(skey->salt));
 		if (skey->s2k_specifier == OPS_S2KS_ITERATED_AND_SALTED)
 			printf("Octet count: %d\n", skey->octet_count);
 		print_hexdump("IV", skey->iv, ops_block_size(skey->algorithm));
@@ -575,7 +575,7 @@ ops_print_pk_session_key(ops_content_tag_t tag,
 		print_tagname("ENCRYPTED PUBLIC KEY SESSION KEY");
 
 	printf("Version: %d\n", key->version);
-	print_hexdump("Key ID", key->key_id, sizeof key->key_id);
+	print_hexdump("Key ID", key->key_id, sizeof(key->key_id));
 	printf("Algorithm: %d (%s)\n", key->algorithm,
 	       ops_show_pka(key->algorithm));
 	switch (key->algorithm) {
@@ -723,7 +723,7 @@ ops_print_packet(const ops_parser_content_t * content_)
 		if (content->signature.info.signer_id_set)
 			print_hexdump_data("Signer ID",
 					   content->signature.info.signer_id,
-				  sizeof content->signature.info.signer_id);
+				  sizeof(content->signature.info.signer_id));
 
 		print_string_and_value("Public Key Algorithm",
 			ops_show_pka(content->signature.info.key_algorithm),
@@ -782,7 +782,7 @@ ops_print_packet(const ops_parser_content_t * content_)
 				 content->one_pass_signature.key_algorithm);
 		print_hexdump_data("Signer ID",
 				   content->one_pass_signature.keyid,
-				   sizeof content->one_pass_signature.keyid);
+				   sizeof(content->one_pass_signature.keyid));
 
 		print_unsigned_int("Nested",
 				   content->one_pass_signature.nested);
@@ -858,7 +858,7 @@ ops_print_packet(const ops_parser_content_t * content_)
 		start_subpacket(content_->tag);
 		print_hexdump("Issuer Key Id",
 			      &content->ss_issuer_key_id.key_id[0],
-			      sizeof content->ss_issuer_key_id.key_id);
+			      sizeof(content->ss_issuer_key_id.key_id));
 		end_subpacket();
 		break;
 
@@ -1069,7 +1069,7 @@ ops_print_packet(const ops_parser_content_t * content_)
 		if (content->signature.info.signer_id_set)
 			print_hexdump_data("Signer ID",
 					   content->signature.info.signer_id,
-				  sizeof content->signature.info.signer_id);
+				  sizeof(content->signature.info.signer_id));
 
 		print_string_and_value("Public Key Algorithm",
 			ops_show_pka(content->signature.info.key_algorithm),
@@ -1302,7 +1302,7 @@ cb_list_packets(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbi
 		if (content->signature.info.signer_id_set)
 			print_hexdump_data("Signer ID",
 					   content->signature.info.signer_id,
-				  sizeof content->signature.info.signer_id);
+				  sizeof(content->signature.info.signer_id));
 
 		print_string_and_value("Public Key Algorithm",
 			ops_show_pka(content->signature.info.key_algorithm),
@@ -1360,7 +1360,7 @@ cb_list_packets(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbi
 				 content->one_pass_signature.key_algorithm);
 		print_hexdump_data("Signer ID",
 				   content->one_pass_signature.keyid,
-				   sizeof content->one_pass_signature.keyid);
+				   sizeof(content->one_pass_signature.keyid));
 
 		print_unsigned_int("Nested",
 				   content->one_pass_signature.nested);
@@ -1436,7 +1436,7 @@ cb_list_packets(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbi
 		start_subpacket(content_->tag);
 		print_hexdump("Issuer Key Id",
 			      &content->ss_issuer_key_id.key_id[0],
-			      sizeof content->ss_issuer_key_id.key_id);
+			      sizeof(content->ss_issuer_key_id.key_id));
 		end_subpacket();
 		break;
 
@@ -1642,7 +1642,7 @@ cb_list_packets(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbi
 		if (content->signature.info.signer_id_set)
 			print_hexdump_data("Signer ID",
 					   content->signature.info.signer_id,
-				  sizeof content->signature.info.signer_id);
+				  sizeof(content->signature.info.signer_id));
 
 		print_string_and_value("Public Key Algorithm",
 			ops_show_pka(content->signature.info.key_algorithm),

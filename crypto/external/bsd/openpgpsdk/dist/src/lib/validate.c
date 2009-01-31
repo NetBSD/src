@@ -129,7 +129,7 @@ free_signature_info(ops_signature_info_t * sig)
 static void 
 copy_signature_info(ops_signature_info_t * dst, const ops_signature_info_t * src)
 {
-	memcpy(dst, src, sizeof *src);
+	memcpy(dst, src, sizeof(*src));
 	dst->v4_hashed_data = calloc(1, src->v4_hashed_data_length);
 	memcpy(dst->v4_hashed_data, src->v4_hashed_data, src->v4_hashed_data_length);
 }
@@ -144,14 +144,14 @@ add_sig_to_valid_list(ops_validate_result_t * result, const ops_signature_info_t
 	++result->valid_count;
 
 	/* increase size of array */
-	newsize = (sizeof *sig) * result->valid_count;
+	newsize = (sizeof(*sig)) * result->valid_count;
 	if (!result->valid_sigs)
 		result->valid_sigs = malloc(newsize);
 	else
 		result->valid_sigs = realloc(result->valid_sigs, newsize);
 
 	/* copy key ptr to array */
-	start = (sizeof *sig) * (result->valid_count - 1);
+	start = (sizeof(*sig)) * (result->valid_count - 1);
 	copy_signature_info(result->valid_sigs + start, sig);
 }
 
@@ -165,14 +165,14 @@ add_sig_to_invalid_list(ops_validate_result_t * result, const ops_signature_info
 	++result->invalid_count;
 
 	/* increase size of array */
-	newsize = (sizeof *sig) * result->invalid_count;
+	newsize = (sizeof(*sig)) * result->invalid_count;
 	if (!result->invalid_sigs)
 		result->invalid_sigs = malloc(newsize);
 	else
 		result->invalid_sigs = realloc(result->invalid_sigs, newsize);
 
 	/* copy key ptr to array */
-	start = (sizeof *sig) * (result->invalid_count - 1);
+	start = (sizeof(*sig)) * (result->invalid_count - 1);
 	copy_signature_info(result->invalid_sigs + start, sig);
 }
 
@@ -186,7 +186,7 @@ add_sig_to_unknown_list(ops_validate_result_t * result, const ops_signature_info
 	++result->unknown_signer_count;
 
 	/* increase size of array */
-	newsize = (sizeof *sig) * result->unknown_signer_count;
+	newsize = (sizeof(*sig)) * result->unknown_signer_count;
 	if (!result->unknown_sigs)
 		result->unknown_sigs = malloc(newsize);
 	else
@@ -385,7 +385,7 @@ validate_data_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cb
 			printf("\n");
 			printf("  type=%02x signer_id=", content->signature.info.type);
 			hexdump(content->signature.info.signer_id,
-				sizeof content->signature.info.signer_id, "");
+				sizeof(content->signature.info.signer_id), "");
 			printf("\n");
 		}
 		signer = ops_keyring_find_key_by_id(arg->keyring,
@@ -448,9 +448,7 @@ keydata_destroyer(ops_reader_info_t * rinfo)
 void 
 ops_keydata_reader_set(ops_parse_info_t * pinfo, const ops_keydata_t * key)
 {
-	validate_reader_arg_t *arg = malloc(sizeof *arg);
-
-	memset(arg, '\0', sizeof *arg);
+	validate_reader_arg_t *arg = calloc(1, sizeof(*arg));
 
 	arg->key = key;
 	arg->packet = 0;
@@ -512,7 +510,7 @@ ops_validate_key_signatures(ops_validate_result_t * result, const ops_keydata_t 
 	ops_parse_info_t *pinfo;
 	validate_key_cb_arg_t carg;
 
-	memset(&carg, '\0', sizeof carg);
+	memset(&carg, '\0', sizeof(carg));
 	carg.result = result;
 	carg.cb_get_passphrase = cb_get_passphrase;
 
@@ -561,7 +559,7 @@ ops_validate_all_signatures(ops_validate_result_t * result,
 {
 	int             n;
 
-	memset(result, '\0', sizeof *result);
+	memset(result, '\0', sizeof(*result));
 	for (n = 0; n < ring->nkeys; ++n)
 		ops_validate_key_signatures(result, &ring->keys[n], ring, cb_get_passphrase);
 	return validate_result_status(result);
@@ -606,7 +604,7 @@ Example code:
 \code
 void example(const char* filename, const int armoured, const ops_keyring_t* keyring)
 {
-  ops_validate_result_t* result=calloc(1, sizeof *result);
+  ops_validate_result_t* result=calloc(1, sizeof(*result));
 
   if (ops_validate_file(result, filename, armoured, keyring)==ops_true)
   {
@@ -638,7 +636,7 @@ ops_validate_file(ops_validate_result_t * result, const char *filename, const in
 
 	/* Set verification reader and handling options */
 
-	memset(&validate_arg, '\0', sizeof validate_arg);
+	memset(&validate_arg, '\0', sizeof(validate_arg));
 	validate_arg.result = result;
 	validate_arg.keyring = keyring;
 	validate_arg.mem = ops_memory_new();
@@ -692,7 +690,7 @@ ops_validate_mem(ops_validate_result_t * result, ops_memory_t * mem, const int a
 
 	/* Set verification reader and handling options */
 
-	memset(&validate_arg, '\0', sizeof validate_arg);
+	memset(&validate_arg, '\0', sizeof(validate_arg));
 	validate_arg.result = result;
 	validate_arg.keyring = keyring;
 	validate_arg.mem = ops_memory_new();

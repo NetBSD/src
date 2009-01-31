@@ -103,7 +103,7 @@ fd_destroyer(ops_reader_info_t * rinfo)
 void 
 ops_reader_set_fd(ops_parse_info_t * pinfo, int fd)
 {
-	reader_fd_arg_t *arg = malloc(sizeof *arg);
+	reader_fd_arg_t *arg = malloc(sizeof(*arg));
 
 	arg->fd = fd;
 	ops_reader_set(pinfo, fd_reader, fd_destroyer, arg);

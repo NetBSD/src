@@ -925,17 +925,17 @@ ops_create_pk_session_key(const ops_keydata_t * key)
 	const size_t    sz_encoded_m_buf = BN_num_bytes(pub_key->key.rsa.n);
 	unsigned char  *encoded_m_buf = calloc(1, sz_encoded_m_buf);
 
-	ops_pk_session_key_t *session_key = calloc(1, sizeof *session_key);
+	ops_pk_session_key_t *session_key = calloc(1, sizeof(*session_key));
 
 	assert(key->type == OPS_PTAG_CT_PUBLIC_KEY);
 	session_key->version = OPS_PKSK_V3;
-	memcpy(session_key->key_id, key->key_id, sizeof session_key->key_id);
+	memcpy(session_key->key_id, key->key_id, sizeof(session_key->key_id));
 
 	if (ops_get_debug_level(__FILE__)) {
 		unsigned int    i = 0;
 
 		fprintf(stderr, "Encrypting for RSA key id : ");
-		for (i = 0; i < sizeof session_key->key_id; i++)
+		for (i = 0; i < sizeof(session_key->key_id); i++)
 			fprintf(stderr, "%2x ", key->key_id[i]);
 		fprintf(stderr, "\n");
 	}

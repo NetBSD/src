@@ -75,7 +75,7 @@ ops_ulong_list_resize(ops_ulong_list_t * list)
 	int             newsize = 0;
 
 	newsize = list->size * 2 + 1;
-	list->ulongs = realloc(list->ulongs, newsize * sizeof *list->ulongs);
+	list->ulongs = realloc(list->ulongs, newsize * sizeof(*list->ulongs));
 	if (list->ulongs) {
 		list->size = newsize;
 		return 1;
