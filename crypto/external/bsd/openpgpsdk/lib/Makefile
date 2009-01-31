@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2009/01/22 00:20:58 lukem Exp $
+# $NetBSD: Makefile,v 1.8 2009/01/31 00:48:19 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ SRCS+= util.c validate.c writer.c writer_armour.c writer_encrypt.c
 SRCS+= writer_encrypt_se_ip.c writer_fd.c writer_memory.c
 SRCS+= writer_skey_checksum.c writer_stream_encrypt_se_ip.c
 CPPFLAGS+= -I${EXTDIST}/include
-NOMAN= # defined
+MAN= openpgpsdk.3
 WARNS=4
 
 EXTDIST=${NETBSDSRCDIR}/crypto/external/bsd/openpgpsdk/dist
@@ -28,6 +28,7 @@ INCS+= packet-parse.h packet-show-cast.h packet-show.h packet.h
 INCS+= random.h readerwriter.h signature.h std_print.h
 INCS+= streamwriter.h types.h util.h
 INCS+= validate.h version.h writer.h writer_armoured.h
+INCS+= openpgpsdk.h
 INCSDIR=/usr/include/openpgpsdk
 
 LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/lib/libcrypto
