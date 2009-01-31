@@ -217,7 +217,8 @@ daemonise(struct if_state *state, const struct options *options)
 			setsid();
 			/* Notify parent it's safe to exit as we've detached. */
 			close(sidpipe[0]);
-			write(sidpipe[1], &buf, 1);
+			if (write(sidpipe[1], &buf, 1) != 1)
+				logger(LOG_ERR, "write: %s", strerror(errno));
 			close(sidpipe[1]);
 			close_fds();
 			break;
@@ -226,7 +227,8 @@ daemonise(struct if_state *state, const struct options *options)
 			signal_reset();
 			/* Wait for child to detach */
 			close(sidpipe[1]);
-			read(sidpipe[0], &buf, 1);
+			if (read(sidpipe[0], &buf, 1) != 1)
+				logger(LOG_ERR, "read: %s", strerror(errno));
 			close(sidpipe[0]);
 			break;
 	}
@@ -1529,7 +1531,6 @@ handle_dhcp_packet(struct if_state *state, const struct options *options)
 	struct interface *iface = state->interface;
 	struct dhcp_message *dhcp = NULL;
 	const uint8_t *pp;
-	uint8_t *p;
 	ssize_t bytes;
 	int retval = -1;
 
@@ -1554,7 +1555,7 @@ handle_dhcp_packet(struct if_state *state, const struct options *options)
 			continue;
 		}
 		if (!dhcp)
-			dhcp = xmalloc(sizeof(*dhcp));
+			dhcp = xzalloc(sizeof(*dhcp));
 		memcpy(dhcp, pp, bytes);
 		if (dhcp->cookie != htonl(MAGIC_COOKIE)) {
 			logger(LOG_DEBUG, "bogus cookie, ignoring");
@@ -1576,15 +1577,6 @@ handle_dhcp_packet(struct if_state *state, const struct options *options)
 			       dhcp->xid,
 			       hwaddr_ntoa(dhcp->chaddr, sizeof(dhcp->chaddr)));
 			continue;
-		}
-		/* We should ensure that the packet is terminated correctly
-		 * if we have space for the terminator */
-		if ((size_t)bytes < sizeof(struct dhcp_message)) {
-			p = (uint8_t *)dhcp + bytes - 1;
-			while (p > dhcp->options && *p == DHO_PAD)
-				p--;
-			if (*p != DHO_END)
-				*++p = DHO_END;
 		}
 		retval = handle_dhcp(state, &dhcp, options);
 		if (retval == 0 && state->options & DHCPCD_TEST)

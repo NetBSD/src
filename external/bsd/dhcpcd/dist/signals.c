@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "common.h"
@@ -50,7 +51,8 @@ signal_handler(int sig)
 {
 	int serrno = errno;
 
-	write(signal_pipe[1], &sig, sizeof(sig));
+	if (write(signal_pipe[1], &sig, sizeof(sig)) != sizeof(sig))
+		syslog(LOG_ERR, "write signal %d: %s", sig, strerror(errno));
 	/* Restore errno */
 	errno = serrno;
 }
