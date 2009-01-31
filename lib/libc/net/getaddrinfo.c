@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.87 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.87.2.1 2009/01/31 21:43:33 bouyer Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.87 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.87.2.1 2009/01/31 21:43:33 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -905,7 +905,12 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly)
 		allownumeric = 1;
 		break;
 	case ANY:
-		allownumeric = 0;
+		/*
+		 * This was 0.  It is now 1 so that queries specifying
+		 * a NULL hint, or hint without socktype (but, hopefully,
+		 * with protocol) and numeric address actually work.
+		 */
+		allownumeric = 1;
 		break;
 	default:
 		return EAI_SOCKTYPE;
