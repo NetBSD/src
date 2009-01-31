@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.7 2008/03/13 15:40:00 christos Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.8 2009/01/31 00:08:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.7 2008/03/13 15:40:00 christos Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.8 2009/01/31 00:08:05 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -203,7 +203,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	 * skip this; see fgetln.c.)
 	 */
 	if ((fp->_flags & __SMOD) == 0 &&
-	    target >= curoff && target < curoff + n) {
+	    target >= curoff && target < (fpos_t)(curoff + n)) {
 		int o = (int)(target - curoff);
 
 		fp->_p = fp->_bf._base + o;
@@ -233,7 +233,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	fp->_flags &= ~__SEOF;
 	n = (int)(target - curoff);
 	if (n) {
-		if (__srefill(fp) || fp->_r < n)
+		if (__srefill(fp) || (size_t)fp->_r < n)
 			goto dumb;
 		fp->_p += n;
 		fp->_r -= n;
