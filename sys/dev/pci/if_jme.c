@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.5 2009/01/16 19:56:06 bouyer Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.6 2009/01/31 13:57:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.5 2009/01/16 19:56:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.6 2009/01/31 13:57:03 bouyer Exp $");
 
 
 #include <sys/param.h>
@@ -920,7 +920,8 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 	reg |= (sc->jme_intrxct << PCCRX_COAL_PKT_SHIFT) & PCCRX_COAL_PKT_MASK;
 	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc, JME_PCCRX0, reg);
 
-	/* Disable Timer 1 and Timer 2. */
+	/* Disable Timers */
+	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc, JME_TMCSR, 0);
 	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc, JME_TIMER1, 0);
 	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc, JME_TIMER2, 0);
 
@@ -1199,11 +1200,18 @@ jme_intr(void *v)
 	jme_softc_t *sc = v;
 	uint32_t istatus;
 
-again:
 	istatus = bus_space_read_4(sc->jme_bt_misc, sc->jme_bh_misc,
 	     JME_INTR_STATUS);
-
-	if ((istatus & JME_INTRS_CHECK) == 0 || istatus == 0xFFFFFFFF)
+	if (istatus == 0 || istatus == 0xFFFFFFFF)
+		return 0;
+	/* Disable interrupts. */
+	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc,
+	    JME_INTR_MASK_CLR, 0xFFFFFFFF);
+again:
+	/* and update istatus */
+	istatus = bus_space_read_4(sc->jme_bt_misc, sc->jme_bh_misc,
+	     JME_INTR_STATUS);
+	if ((istatus & JME_INTRS_CHECK) == 0)
 		goto done;
 	/* Reset PCC counter/timer and Ack interrupts. */
 	if ((istatus & (INTR_TXQ_COMP | INTR_TXQ_COAL | INTR_TXQ_COAL_TO)) != 0)
@@ -1253,6 +1261,9 @@ again:
 	goto again;
 
 done:
+	/* enable interrupts. */
+	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc,
+	    JME_INTR_MASK_SET, JME_INTRS_ENABLE);
 	return 1;
 }
 
