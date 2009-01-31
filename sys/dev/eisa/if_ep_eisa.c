@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.39 2008/08/27 05:33:47 christos Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.40 2009/01/31 13:54:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.39 2008/08/27 05:33:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.40 2009/01/31 13:54:10 martin Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -141,9 +141,10 @@ static const struct ep_eisa_product {
 	int		eep_flags;	/* initial softc flags */
 	const char	*eep_name;	/* device name */
 } ep_eisa_products[] = {
+	{ "TCM5090",			ELINK_CHIPSET_3C509,
+	  0,				EISA_PRODUCT_TCM5090 },
 	{ "TCM5091",			ELINK_CHIPSET_3C509,
 	  0,				EISA_PRODUCT_TCM5091 },
-
 	{ "TCM5092",			ELINK_CHIPSET_3C509,
 	  0,				EISA_PRODUCT_TCM5092 },
 	{ "TCM5093",			ELINK_CHIPSET_3C509,
