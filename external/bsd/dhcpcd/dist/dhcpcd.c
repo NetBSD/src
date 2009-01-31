@@ -137,14 +137,15 @@ static pid_t
 read_pid(const char *pidfile)
 {
 	FILE *fp;
-	pid_t pid = 0;
+	pid_t pid;
 
 	if ((fp = fopen(pidfile, "r")) == NULL) {
 		errno = ENOENT;
 		return 0;
 	}
 
-	fscanf(fp, "%d", &pid);
+	if (fscanf(fp, "%d", &pid) != 1)
+		pid = 0;
 	fclose(fp);
 
 	return pid;
@@ -878,7 +879,8 @@ main(int argc, char **argv)
 		goto abort;
 	}
 
-	chdir("/");
+	if (chdir("/") == -1)
+		logger(LOG_ERR, "chdir `/': %s", strerror(errno));
 	umask(022);
 
 	if (sig != 0 && !(options->options & DHCPCD_DAEMONISED)) {
