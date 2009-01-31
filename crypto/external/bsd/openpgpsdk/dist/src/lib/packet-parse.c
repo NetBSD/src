@@ -1836,7 +1836,7 @@ parse_v4_signature(ops_region_t * region, ops_parse_info_t * pinfo)
 	/* copy hashed subpackets */
 	if (C.signature.info.v4_hashed_data)
 		free(C.signature.info.v4_hashed_data);
-	C.signature.info.v4_hashed_data = ops_mallocz(C.signature.info.v4_hashed_data_length);
+	C.signature.info.v4_hashed_data = calloc(1, C.signature.info.v4_hashed_data_length);
 
 	if (!pinfo->rinfo.accumulate) {
 		/* We must accumulate, else we can't check the signature */
@@ -2625,7 +2625,7 @@ parse_pk_session_key(ops_region_t * region,
 	CBP(pinfo, OPS_PTAG_CT_PK_SESSION_KEY, &content);
 
 	ops_crypt_any(&pinfo->decrypt, C.pk_session_key.symmetric_algorithm);
-	iv = ops_mallocz(pinfo->decrypt.blocksize);
+	iv = calloc(1, pinfo->decrypt.blocksize);
 	pinfo->decrypt.set_iv(&pinfo->decrypt, iv);
 	pinfo->decrypt.set_key(&pinfo->decrypt, C.pk_session_key.key);
 	ops_encrypt_init(&pinfo->decrypt);
@@ -3103,7 +3103,7 @@ ops_parse_options(ops_parse_info_t * pinfo,
 ops_parse_info_t *
 ops_parse_info_new(void)
 {
-	return ops_mallocz(sizeof(ops_parse_info_t));
+	return calloc(1, sizeof(ops_parse_info_t));
 }
 
 /**

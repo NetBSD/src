@@ -127,7 +127,7 @@ ops_writer_push_clearsigned(ops_create_info_t * info,
 {
 	static char     header[] = "-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: ";
 	const char     *hash = ops_text_from_hash(ops_signature_get_hash(sig));
-	dash_escaped_arg_t *arg = ops_mallocz(sizeof *arg);
+	dash_escaped_arg_t *arg = calloc(1, sizeof *arg);
 
 	ops_boolean_t   rtn;
 
@@ -288,9 +288,9 @@ ops_writer_switch_to_armoured_signature(ops_create_info_t * info)
 		return ops_false;
 	}
 	ops_writer_push(info, linebreak_writer, NULL, ops_writer_generic_destroyer,
-			ops_mallocz(sizeof(linebreak_arg_t)));
+			calloc(1, sizeof(linebreak_arg_t)));
 
-	base64 = ops_mallocz(sizeof *base64);
+	base64 = calloc(1, sizeof *base64);
 	if (!base64) {
 		OPS_MEMORY_ERROR(&info->errors);
 		return ops_false;
@@ -349,7 +349,7 @@ ops_writer_push_armoured_message(ops_create_info_t * info)
 
 	ops_write(header, sizeof header - 1, info);
 	ops_write("\r\n", 2, info);
-	base64 = ops_mallocz(sizeof *base64);
+	base64 = calloc(1, sizeof *base64);
 	base64->checksum = CRC24_INIT;
 	ops_writer_push(info, base64_writer, armoured_message_finaliser, ops_writer_generic_destroyer, base64);
 }
@@ -460,9 +460,9 @@ ops_writer_push_armoured(ops_create_info_t * info, ops_armor_type_t type)
 	ops_write(header, sz_hdr, info);
 
 	ops_writer_push(info, linebreak_writer, NULL, ops_writer_generic_destroyer,
-			ops_mallocz(sizeof(linebreak_arg_t)));
+			calloc(1, sizeof(linebreak_arg_t)));
 
-	arg = ops_mallocz(sizeof *arg);
+	arg = calloc(1, sizeof *arg);
 	arg->checksum = CRC24_INIT;
 	ops_writer_push(info, base64_writer, finaliser, ops_writer_generic_destroyer, arg);
 }

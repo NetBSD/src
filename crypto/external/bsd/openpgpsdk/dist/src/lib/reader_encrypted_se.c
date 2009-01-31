@@ -187,7 +187,7 @@ void
 ops_reader_push_decrypt(ops_parse_info_t * pinfo, ops_crypt_t * decrypt,
 			ops_region_t * region)
 {
-	encrypted_arg_t *arg = ops_mallocz(sizeof *arg);
+	encrypted_arg_t *arg = calloc(1, sizeof *arg);
 
 	arg->decrypt = decrypt;
 	arg->region = region;
