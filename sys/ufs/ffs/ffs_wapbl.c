@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.9 2008/11/30 16:20:44 joerg Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.10 2009/01/31 09:14:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.9 2008/11/30 16:20:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.10 2009/01/31 09:14:15 yamt Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -588,7 +588,7 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	error = wapbl_create_infs_log(mp, fs, devvp, startp, countp, blksizep,
 	    extradatap);
 
-	ffs_sync(mp, 1, FSCRED);
+	ffs_sync(mp, MNT_WAIT, FSCRED);
 
 	return error;
 }
