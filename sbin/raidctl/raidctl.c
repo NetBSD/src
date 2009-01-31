@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.36.2.1 2005/05/28 13:50:16 tron Exp $   */
+/*      $NetBSD: raidctl.c,v 1.36.2.2 2009/01/31 21:24:11 bouyer Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.36.2.1 2005/05/28 13:50:16 tron Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.36.2.2 2009/01/31 21:24:11 bouyer Exp $");
 #endif
 
 
@@ -631,7 +631,7 @@ get_component_label(int fd, char *component)
 	printf("   sectPerSU: %d, SUsPerPU: %d, SUsPerRU: %d\n",
 	       component_label.sectPerSU, component_label.SUsPerPU, 
 	       component_label.SUsPerRU);
-	printf("   Queue size: %d, blocksize: %d, numBlocks: %d\n",
+	printf("   Queue size: %d, blocksize: %d, numBlocks: %u\n",
 	       component_label.maxOutstanding, component_label.blockSize,
 	       component_label.numBlocks);
 	printf("   RAID Level: %c\n", (char) component_label.parityConfig);
