@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.38 2009/01/15 21:45:23 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.39 2009/01/31 21:27:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -1231,4 +1231,13 @@ sys/arch/sparc/stand/bootblk/bootblk.fth	1.8
 	Fixes the problem where disks would be unbootable if partitioned
 	normally and then converted to RAID 1 without being zeroed first.
 	[jdc, ticket #1986]
+
+sbin/raidctl/raidctl.c				1.40
+
+	Use correct format to print the "numBlocks" element in a RAIDframe
+	component label. raidctl(8) should now print the correct number of
+	blocks for RAID sets larger than 1TB.
+
+	Patch supplied by Bernhard Moellemann in PR bin/40479.
+	[tron, ticket #1989]
 
