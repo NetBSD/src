@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: bnep.c,v 1.2 2009/01/31 07:21:15 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.2 2009/01/31 07:21:15 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -340,11 +340,11 @@ bnep_recv_setup_connection_req(channel_t *chan, uint8_t *ptr, size_t size)
 
 	ptr += len;
 
-	if (memcmp(ptr, PANU_UUID + off, len) == 0)
+	if (memcmp(ptr, NAP_UUID + off, len) == 0)
 		src = SDP_SERVICE_CLASS_NAP;
 	else if (memcmp(ptr, GN_UUID + off, len) == 0)
 		src = SDP_SERVICE_CLASS_GN;
-	else if (memcmp(ptr, NAP_UUID + off, len) == 0)
+	else if (memcmp(ptr, PANU_UUID + off, len) == 0)
 		src = SDP_SERVICE_CLASS_PANU;
 	else
 		src = 0;
