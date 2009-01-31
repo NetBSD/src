@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/10/03 03:52:15 cube Exp $
+#	$NetBSD: Makefile,v 1.2 2009/01/31 21:23:45 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ xft-config:	xft-config.in
 		s,@includedir@,$${prefix}/include,; \
 		s,@VERSION@,2.1.12,; \
 		s,@FREETYPE_LIBS@,-lfreetype -lz,; \
-		s,@FREETYPE_CFLAGS@,, ; \
+		s,@FREETYPE_CFLAGS@,-I$${includedir}/freetype2, ; \
 		s,@FONTCONFIG_LIBS@,-lfontconfig,; \
 		s,@FONTCONFIG_CFLAGS@,,; \
 		s,@XRENDER_LIBS@,-lXrender,; \
@@ -24,6 +24,8 @@ xft-config:	xft-config.in
 		s%-L\([^ 	]*\)%-Wl,-R\1 &%g' \
 		< ${.ALLSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
+
+xft-config.in: Makefile
 
 CLEANFILES+=	xft-config xft-config.tmp
 
