@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.76.2.2 2007/08/24 17:21:45 liamjfoy Exp $ */
+/*	$NetBSD: if_gre.c,v 1.76.2.3 2009/01/31 21:40:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.76.2.2 2007/08/24 17:21:45 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.76.2.3 2009/01/31 21:40:46 bouyer Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -890,7 +890,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s;
 	struct sockaddr_in si;
 	struct sockaddr *sa = NULL;
-	int error;
+	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
@@ -908,7 +908,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (EPERM);
 		break;
 	default:
-		error = 0;
 		break;
 	}
 
