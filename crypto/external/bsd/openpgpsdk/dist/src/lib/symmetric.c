@@ -415,7 +415,7 @@ ops_crypt_any(ops_crypt_t * crypt, ops_symmetric_algorithm_t alg)
 		*crypt = *ptr;
 		return 1;
 	} else {
-		memset(crypt, '\0', sizeof *crypt);
+		memset(crypt, '\0', sizeof(*crypt));
 		return 0;
 	}
 }

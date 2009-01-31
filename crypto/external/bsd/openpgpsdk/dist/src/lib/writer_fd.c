@@ -77,7 +77,7 @@ fd_destroyer(ops_writer_info_t * winfo)
 void 
 ops_writer_set_fd(ops_create_info_t * info, int fd)
 {
-	writer_fd_arg_t *arg = malloc(sizeof *arg);
+	writer_fd_arg_t *arg = malloc(sizeof(*arg));
 
 	arg->fd = fd;
 	ops_writer_set(info, fd_writer, NULL, fd_destroyer, arg);
