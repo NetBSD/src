@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.16 2009/01/16 21:23:47 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.17 2009/01/31 21:56:46 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -128,4 +128,26 @@ share/misc/airport				1.31
 
 	PR/40404 - Robert Elz -- Thailand airport updates
 	[jnemeth, ticket #1265]
+
+sys/arch/m68k/fpe/fpu_emulate.c			1.28
+
+	In fpu_emul_arith(), check lower 7 bits in word1 rather than only
+	6 bits to check 040/060 FP instructions, and don't call fpu_implode()
+	and fpu_upd_fpsr() if no vaild emulated result is set otherwise these
+	functions cause NULL pointer dereference.
+	[tsutsui, ticket #1268]
+
+usr.bin/locale/locale.c				1.7
+
+	Fix off-by-one in malloc().
+	[tnozaki, ticket #1269]
+
+sbin/raidctl/raidctl.c				1.40
+
+	Use correct format to print the "numBlocks" element in a RAIDframe
+	component label. raidctl(8) should now print the correct number of
+	blocks for RAID sets larger than 1TB.
+
+	Patch supplied by Bernhard Moellemann in PR bin/40479.
+	[tron, ticket #1270]
 
