@@ -135,67 +135,18 @@ copy_signature_info(ops_signature_info_t * dst, const ops_signature_info_t * src
 }
 
 static void 
-add_sig_to_valid_list(ops_validate_result_t * result, const ops_signature_info_t * sig)
+add_sig_to_list(const ops_signature_info_t *sig, ops_signature_info_t **sigs,
+		unsigned *count)
 {
-	size_t          newsize;
-	size_t          start;
-
-	/* increment count */
-	++result->valid_count;
-
-	/* increase size of array */
-	newsize = (sizeof(*sig)) * result->valid_count;
-	if (!result->valid_sigs)
-		result->valid_sigs = malloc(newsize);
-	else
-		result->valid_sigs = realloc(result->valid_sigs, newsize);
-
-	/* copy key ptr to array */
-	start = (sizeof(*sig)) * (result->valid_count - 1);
-	copy_signature_info(result->valid_sigs + start, sig);
+	if (*count == 0) {
+		*sigs = calloc(*count + 1, sizeof(ops_signature_info_t));
+	} else {
+		*sigs = realloc(*sigs, (*count + 1) * sizeof(ops_signature_info_t));
+	}
+	copy_signature_info(&(*sigs)[*count], sig);
+	*count += 1;
 }
 
-static void 
-add_sig_to_invalid_list(ops_validate_result_t * result, const ops_signature_info_t * sig)
-{
-	size_t          newsize;
-	size_t          start;
-
-	/* increment count */
-	++result->invalid_count;
-
-	/* increase size of array */
-	newsize = (sizeof(*sig)) * result->invalid_count;
-	if (!result->invalid_sigs)
-		result->invalid_sigs = malloc(newsize);
-	else
-		result->invalid_sigs = realloc(result->invalid_sigs, newsize);
-
-	/* copy key ptr to array */
-	start = (sizeof(*sig)) * (result->invalid_count - 1);
-	copy_signature_info(result->invalid_sigs + start, sig);
-}
-
-static void 
-add_sig_to_unknown_list(ops_validate_result_t * result, const ops_signature_info_t * sig)
-{
-	size_t          newsize;
-	size_t          start;
-
-	/* increment count */
-	++result->unknown_signer_count;
-
-	/* increase size of array */
-	newsize = (sizeof(*sig)) * result->unknown_signer_count;
-	if (!result->unknown_sigs)
-		result->unknown_sigs = malloc(newsize);
-	else
-		result->unknown_sigs = realloc(result->unknown_sigs, newsize);
-
-	/* copy key id to array */
-	start = OPS_KEY_ID_SIZE * (result->unknown_signer_count - 1);
-	copy_signature_info(result->unknown_sigs + start, sig);
-}
 
 ops_parse_cb_return_t
 ops_validate_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
@@ -248,7 +199,9 @@ ops_validate_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t *
 		signer = ops_keyring_find_key_by_id(arg->keyring,
 					 content->signature.info.signer_id);
 		if (!signer) {
-			add_sig_to_unknown_list(arg->result, &content->signature.info);
+			add_sig_to_list(&content->signature.info,
+					&arg->result->unknown_sigs,
+					&arg->result->unknown_signer_count);
 			break;
 		}
 		switch (content->signature.info.type) {
@@ -305,10 +258,14 @@ ops_validate_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t *
 		}
 
 		if (valid) {
-			add_sig_to_valid_list(arg->result, &content->signature.info);
+			add_sig_to_list(&content->signature.info,
+				&arg->result->valid_sigs,
+				&arg->result->valid_count);
 		} else {
 			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE, "Bad Signature");
-			add_sig_to_invalid_list(arg->result, &content->signature.info);
+			add_sig_to_list(&content->signature.info,
+					&arg->result->invalid_sigs,
+					&arg->result->invalid_count);
 		}
 		break;
 
@@ -392,7 +349,9 @@ validate_data_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cb
 					 content->signature.info.signer_id);
 		if (!signer) {
 			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER, "Unknown Signer");
-			add_sig_to_unknown_list(arg->result, &content->signature.info);
+			add_sig_to_list(&content->signature.info,
+					&arg->result->unknown_sigs,
+					&arg->result->unknown_signer_count);
 			break;
 		}
 		switch (content->signature.info.type) {
@@ -415,10 +374,14 @@ validate_data_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cb
 		ops_memory_free(arg->mem);
 
 		if (valid) {
-			add_sig_to_valid_list(arg->result, &content->signature.info);
+			add_sig_to_list(&content->signature.info,
+					&arg->result->valid_sigs,
+					&arg->result->valid_count);
 		} else {
 			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE, "Bad Signature");
-			add_sig_to_invalid_list(arg->result, &content->signature.info);
+			add_sig_to_list(&content->signature.info,
+					&arg->result->invalid_sigs,
+					&arg->result->invalid_count);
 		}
 		break;
 
