@@ -1,4 +1,4 @@
-.\" $NetBSD: openpgp.1,v 1.2 2009/01/30 22:59:37 wiz Exp $
+.\" $NetBSD: openpgp.1,v 1.3 2009/01/31 14:14:10 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,40 +32,46 @@
 .Os
 .Sh NAME
 .Nm openpgp
-.Nd signing, verification, encryption and decryption utility
+.Nd signing, verification, encryption, and decryption utility
 .Sh SYNOPSIS
 .Nm openpgp
-.Op Fl -list-keys
-.Op Fl -encrypt
-.Op Fl -decrypt
-.Op Fl -sign
-.Op Fl -clearsign
-.Op Fl -verify
-.Op Fl -keyring Ns = Ns Aq keyring
-.Op Fl -userid Ns = Ns Aq user-id
 .Op Fl -armour
-.Op Fl -homedir Ns = Ns Aq home-directory
+.Op Fl -clearsign
+.Op Fl -decrypt
+.Op Fl -encrypt
+.Op Fl -export-key
+.Op Fl -find-key
+.Op Fl -generate-key
+.Op Fl -homedir Ns = Ns Ar home-directory
+.Op Fl -import-key
+.Op Fl -keyring Ns = Ns Ar keyring
+.Op Fl -list-keys
 .Op Fl -list-packets
+.Op Fl -numbits Ns = Ns Ar numbits
+.Op Fl -passphrase Ns = Ns Ar passphrase
+.Op Fl -sign
+.Op Fl -userid Ns = Ns Ar userid
+.Op Fl -verify
 .Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
-command can digitally sign files, and verify that the signatures
+command can digitally sign files and verify that the signatures
 attached to files were signed by a given user identifier.
-It can also encrypt files using the public or private keys of
-users, and, in the same manner decrypt files which were encrypted.
+.Nm
+can also encrypt files using the public or private keys of
+users and, in the same manner, decrypt files which were encrypted.
 .Pp
 The
 .Nm
 utility can also be used to generate a new key-pair for a user.
 This key is in two parts, the public key (which can be
-used by other people), and a private key
+used by other people) and a private key.
 .Pp
 In addition to these primary uses, the third way of using
 .Nm
 is to maintain keyrings.
-Keyrings are collections
-of public keys belonging to other users.
+Keyrings are collections of public keys belonging to other users.
 By using other means of identification, it is possible to establish
 the bona fides of other users.
 Once trust has been established, the public key of the other
@@ -73,75 +79,98 @@ user will be signed.
 The other user's public key can be added to our keyring.
 The other user will add our public key to their keyring.
 .Pp
-Keys can be listed, exported (i.e. made available to others)
+Keys can be listed, exported (i.e. made available to others),
 and imported (i.e. users who have signed our public key).
 .Pp
 One of the following commands must be present:
 .Bl -tag -width Ar
-.It Fl -list-keys
-List all the public keys in the current keyring.
-If no keyring is
-provided, the user's public keyring is used.
-.It Fl -find-key
-Find the appropriate public key from the current keyring.
-If no keyring is
-provided, the user's public keyring is used.
-.It Fl -export-key
-Display the current public key in a format suitable
-for export.
-This can be used to place the keyring on one of the
-public key servers, for example.
-.It Fl -import-key
-Import a public key as retrieved from one of the public key
-servers.
-aThis is in the form of a file which has previously been
-retrieved from elsewhere.
-.It Fl -generate-key
-This command is used to generate a new public and private key pair.
-The user id is taken from the command line, and the user will be
-prompted to provide a suitable pass phrase.
-.It Fl -encrypt
-Use the user's public key to encrypt the files named on the command line.
+.It Fl -clearsign
+The signature of the file named on the command line is calculated
+in the same manner as the
+.Fl -sign
+command, but the text is added to the file such that
+the text itself is not in binary format, but can be read by mere mortals.
 .It Fl -decrypt
 Decrypt the file using the user's private key.
 The pass phrase will be optained by prompting the user
 to type it in, using
 .Xr getpass 3 .
-.It Fl -sign
-The private key is used to digitally sign the files named on the command
-line.
-Extra text is added to the file.
-In rough terms, this text is a digest of the file's contents, encrypted with
-the user's private key.
-Since together, the private and public keys identify the user uniquely,
-the added text can be used to identify the exact version of the file,
-and any changes made to the file will mean that the signature no longer matches.
-The file and its attached signature are created with a
-.Dq .gpg
-extension to the original file name.
-The user will be prompted for their pass phrase using
-.Xr getpass 3 .
-.It Fl -clearsign
-The signature of the file named on the command line is calculated
-in the same manner as the
-.Fl -sign
-command described above, but the text is added to the file such that
-the text itself is not in binary format, but can be read by mere mortals.
-.It Fl -verify
-For each of the files named on the command line, the signature of the file
-is verified, checking the contents against the user's public signature.
+.It Fl -encrypt
+Use the user's public key to encrypt the files named on the command line.
+.It Fl -export-key
+Display the current public key in a format suitable for export.
+This can be used to place the keyring on one of the
+public key servers, for example.
+.It Fl -find-key
+Find the appropriate public key from the current keyring.
+If no keyring is provided, the user's public keyring is used.
+.It Fl -generate-key
+This command is used to generate a new public and private key pair.
+The user id is taken from the command line, and the user will be
+prompted to provide a suitable pass phrase.
+.It Fl -import-key
+Import a public key as retrieved from one of the public key servers.
+This is in the form of a file which has previously been
+retrieved from elsewhere.
+.It Fl -list-keys
+List all the public keys in the current keyring.
+If no keyring is provided, the user's public keyring is used.
 .It Fl -list-packets
 Primarily used as a debugging aid, this command can be used to help
 dump the contents of the files read, and the computations made.
+.It Fl -sign
+The private key is used to digitally sign the files named on the
+command line.
+Extra text is added to the file.
+In rough terms, this text is a digest of the file's contents,
+encrypted with the user's private key.
+Since together, the private and public keys identify the user
+uniquely, the added text can be used to identify the exact version
+of the file, and any changes made to the file will mean that the
+signature no longer matches.
+The file and its attached signature are created with a
+.Dq Pa .gpg
+extension to the original file name.
+The user will be prompted for their pass phrase using
+.Xr getpass 3 .
+.It Fl -verify
+For each of the files named on the command line, the signature of the file
+is verified, checking the contents against the user's public signature.
 .El
 .Pp
 In addition to one of the preceding commands, a number of qualifiers
 or options may be given.
 .Bl -tag -width Ar
-.It Fl -keyring
+.It Fl -armour , -armor
+This option, however it is spelled, wraps the signature as an
+ASCII-encoded piece of text, for ease of use.
+.It Fl -homedir Ar home-directory
+Keyrings are normally located, for historical reasons, within
+the user's home directory in a subdirectory called
+.Dq Pa .gnupg
+and this option specifies an alternative location in which to
+find that sub-directory.
+.It Fl -keyring Ar keyring
 This option specifies an alternative keyring to be used.
 All keyring operations will be relative to this alternative keyring.
-.It Fl -userid
+.It Fl -numbits Ar numbits
+specifies the number of bits to be used when generating a key.
+The default number of bits is 2048.
+This is considered the absolute
+minimum which should be chosen at the time of writing (2009).
+Due to advances in computing power every year, this number should
+be reviewed, and increased when it becomes easier to factor 2048
+bit numbers.
+.It Fl -passphrase Ar passphrase
+Provide the pass phrase on the command line.
+This is not recommended, see
+.Sx PASS PHRASES
+below.
+The
+.Fl -passphrase
+option is deprecated, and will be removed in future versions of
+.Nm .
+.It Fl -userid Ar userid
 This option specifies the user identity to be used for all operations.
 This identity can either be in the form of the full name, or as an
 email address.
@@ -150,27 +179,9 @@ since the
 .Nm
 utility has no way of verifying that an email address is valid, or
 that a key belongs to a certain individual.
-The trust for a signed key is given by the other signers of
-that key.
+The trust for a signed key is given by the other signers of that key.
 The 16 hexadecimal digit user identity should be used when specifying
 user identities - email addresses and names are provided as aliases.
-.It Fl -armour , -armor
-This option, however it is spelled, wraps the signature as an
-ASCII-encoded piece of text, for ease of use.
-.It Fl -homedir
-Keyrings are normally located, for historical reasons, within
-the user's home directory in a subdirectory called
-.Dq .gnupg
-and this option specifies an alternative location in which to
-find that sub-directory.
-.It Fl -numbits
-specifies the number of bits to be used when generating a key.
-The default number of bits is 2048.
-This is considered the absolute
-minimum which should be chosen at the time of writing (2009).
-Due to advances in computing power every year, this number should
-be reviewed, and increased when it becomes easier to factor 2048
-bit numbers.
 .El
 .Sh PASS PHRASES
 The pass phrase cannot be changed once it has been chosen, and will
@@ -178,11 +189,11 @@ be used for the life of the key, so a wise choice is advised.
 The pass phrase should not be an easily guessable word or phrase,
 or related to information that can be gained through
 .Dq social engineering
-using search engines, or other public information retrieval mathods.
-Extract files from archive.
-If any files are named on the
-command line, only those files will be extracted from the
-archive.
+using search engines, or other public information retrieval methods.
+.\" ???
+.\" Extract files from archive.
+.\" If any files are named on the command line, only those files will
+.\" be extracted from the archive.
 .Pp
 The
 .Nm
@@ -212,7 +223,7 @@ option is deprecated, and will be removed in future versions
 of the tool.
 .Sh SIGNING AND VERIFICATION
 Signing and verification of a file is best viewed using the following example:
-.nf
+.Bd -literal
 % openpgp --sign --userid=agc@netbsd.org a
 pub RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
 Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
@@ -231,7 +242,7 @@ uid                              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
 uid                              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
 uid                              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
 %
-.fi
+.Ed
 .Pp
 In the example above, a signature is made on a single file called
 .Dq a
@@ -244,9 +255,8 @@ The resulting file, called
 is placed in the same directory.
 The second part of the example shows a verification of the signed file
 taking place.
-The time and user identity of the signatory is displayed,
-followed by a fuller description of the public key of
-the signatory.
+The time and user identity of the signatory is displayed, followed
+by a fuller description of the public key of the signatory.
 In both cases, the exit value from the utility was a successful one.
 .Sh RETURN VALUES
 The
@@ -267,6 +277,7 @@ utility is designed to conform to IETF RFC 4880.
 The
 .Nm
 command first appeared in
-.Nx 6.0
+.Nx 6.0 .
 .Sh AUTHORS
-Ben Laurie and Rachel Willmer.
+.An Ben Laurie
+.An Rachel Willmer
