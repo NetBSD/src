@@ -123,23 +123,6 @@ typedef struct {
 }               reader_mem_arg_t;
 
 
-/**
-   \ingroup HighLevel_Misc
-   \brief mallocs and zeros memory
-   \param n Number of bytes to be alloc-ed.
-   \return Pointer to new memory.
-   \note Should be freed after use with free().
-*/
-void           *
-ops_mallocz(size_t n)
-{
-	void           *m = malloc(n);
-
-	memset(m, '\0', n);
-
-	return m;
-}
-
 typedef struct {
 	unsigned short  sum;
 }               sum16_arg_t;
@@ -176,7 +159,7 @@ sum16_destroyer(ops_reader_info_t * rinfo)
 void 
 ops_reader_push_sum16(ops_parse_info_t * pinfo)
 {
-	sum16_arg_t    *arg = ops_mallocz(sizeof *arg);
+	sum16_arg_t    *arg = calloc(1, sizeof *arg);
 
 	ops_reader_push(pinfo, sum16_reader, sum16_destroyer, arg);
 }

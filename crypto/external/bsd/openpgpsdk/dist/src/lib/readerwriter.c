@@ -404,7 +404,7 @@ callback_cmd_get_secret_key(const ops_parser_content_t * content_, ops_parse_cb_
 char           *
 ops_get_passphrase(void)
 {
-	return ops_malloc_passphrase(getpass("Passphrase: "));
+	return ops_malloc_passphrase(getpass("openpgp passphrase: "));
 }
 
 char           *

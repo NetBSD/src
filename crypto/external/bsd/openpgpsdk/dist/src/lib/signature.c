@@ -64,7 +64,7 @@ struct ops_create_signature {
 ops_create_signature_t *
 ops_create_signature_new()
 {
-	return ops_mallocz(sizeof(ops_create_signature_t));
+	return calloc(1, sizeof(ops_create_signature_t));
 }
 
 /**
@@ -938,7 +938,7 @@ open_output_file(ops_create_info_t ** cinfo, const char *input_filename, const c
 	} else {
 		char           *myfilename = NULL;
 		unsigned        filenamelen = strlen(input_filename) + 4 + 1;
-		myfilename = ops_mallocz(filenamelen);
+		myfilename = calloc(1, filenamelen);
 		if (use_armour)
 			snprintf(myfilename, filenamelen, "%s.asc", input_filename);
 		else

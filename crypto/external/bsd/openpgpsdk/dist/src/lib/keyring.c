@@ -60,7 +60,7 @@
 ops_keydata_t  *
 ops_keydata_new(void)
 {
-	return ops_mallocz(sizeof(ops_keydata_t));
+	return calloc(1, sizeof(ops_keydata_t));
 }
 
 
@@ -387,7 +387,7 @@ ops_copy_userid(ops_user_id_t * dst, const ops_user_id_t * src)
 	size_t          len = strlen((char *) src->user_id);
 	if (dst->user_id)
 		free(dst->user_id);
-	dst->user_id = ops_mallocz(len + 1);
+	dst->user_id = calloc(1, len + 1);
 
 	memcpy(dst->user_id, src->user_id, len);
 }
@@ -405,7 +405,7 @@ ops_copy_packet(ops_packet_t * dst, const ops_packet_t * src)
 {
 	if (dst->raw)
 		free(dst->raw);
-	dst->raw = ops_mallocz(src->length);
+	dst->raw = calloc(1, src->length);
 
 	dst->length = src->length;
 	memcpy(dst->raw, src->raw, src->length);
@@ -616,7 +616,7 @@ cb_keyring_read(const ops_parser_content_t * content_,
 
    Example code:
    \code
-   ops_keyring_t* keyring=ops_mallocz(sizeof *keyring);
+   ops_keyring_t* keyring=calloc(1, sizeof *keyring);
    ops_boolean_t armoured=ops_false;
    ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
    ...
@@ -704,7 +704,7 @@ ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, 
    Example code:
    \code
    ops_memory_t* mem; // Filled with keyring packets
-   ops_keyring_t* keyring=ops_mallocz(sizeof *keyring);
+   ops_keyring_t* keyring=calloc(1, sizeof *keyring);
    ops_boolean_t armoured=ops_false;
    ops_keyring_read_from_mem(keyring, armoured, mem);
    ...
@@ -899,7 +899,7 @@ ops_keyring_find_key_by_userid(const ops_keyring_t * keyring,
    \code
    void example()
    {
-   ops_keyring_t* keyring=ops_mallocz(sizeof *keyring);
+   ops_keyring_t* keyring=calloc(1, sizeof *keyring);
    ops_boolean_t armoured=ops_false;
    ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
 
