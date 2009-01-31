@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.5 2008/12/18 00:24:13 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.6 2009/01/31 15:13:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.5 2008/12/18 00:24:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.6 2009/01/31 15:13:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -133,7 +133,7 @@ genfs_getpages(void *v)
 		/* found?  busy it and be happy */
 		if (pg) {
 			if (pg->flags & PG_BUSY) {
-				pg->flags = PG_WANTED;
+				pg->flags |= PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 				    "getpg2", 0);
 				mutex_enter(&uobj->vmobjlock);
