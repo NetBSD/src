@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.129 2009/01/31 21:47:06 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.130 2009/01/31 21:56:31 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2707,4 +2707,26 @@ sys/dev/eisa/if_ep_eisa.c			1.40
 	Add id for 5090 variant - reported in PR kern/40524 by
 	Andrew Daugherity.
 	[martin, ticket #1271]
+
+sys/arch/m68k/fpe/fpu_emulate.c			1.28
+
+	In fpu_emul_arith(), check lower 7 bits in word1 rather than only
+	6 bits to check 040/060 FP instructions, and don't call fpu_implode()
+	and fpu_upd_fpsr() if no vaild emulated result is set otherwise these
+	functions cause NULL pointer dereference.
+	[tsutsui, ticket #1268]
+
+usr.bin/locale/locale.c				1.7
+
+	Fix off-by-one in malloc().
+	[tnozaki, ticket #1269]
+
+sbin/raidctl/raidctl.c				1.40
+
+	Use correct format to print the "numBlocks" element in a RAIDframe
+	component label. raidctl(8) should now print the correct number of
+	blocks for RAID sets larger than 1TB.
+
+	Patch supplied by Bernhard Moellemann in PR bin/40479.
+	[tron, ticket #1270]
 
