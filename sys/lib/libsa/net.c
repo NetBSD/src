@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.32 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: net.c,v 1.33 2009/01/31 04:11:28 isaki Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -55,6 +55,8 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
+#include "net.h"
+
 #ifdef _STANDALONE
 #include "stand.h"
 #define delay()
@@ -67,7 +69,6 @@
 #define getsecs() time(NULL)
 #endif
 
-#include "net.h"
 
 /*
  * Send a packet and wait for a reply, with exponential backoff.
