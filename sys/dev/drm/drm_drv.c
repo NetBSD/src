@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.21 2009/01/20 18:20:48 drochner Exp $ */
+/* $NetBSD: drm_drv.c,v 1.22 2009/01/31 13:49:29 bouyer Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.21 2009/01/20 18:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.22 2009/01/31 13:49:29 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -413,7 +413,7 @@ static int drm_lastclose(drm_device_t *dev)
 
 	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
 		if (dev->pci_map_data[i].mapped > 1) {
-			bus_space_unmap(dev->pci_map_data[i].maptype,
+			bus_space_unmap(dev->pa.pa_memt,
 					dev->pci_map_data[i].bsh,
 					dev->pci_map_data[i].size);
 			dev->pci_map_data[i].mapped = 0;
