@@ -143,7 +143,7 @@ read_string(char **str, ops_region_t * subregion, ops_parse_info_t * pinfo)
 void 
 ops_init_subregion(ops_region_t * subregion, ops_region_t * region)
 {
-	memset(subregion, '\0', sizeof *subregion);
+	memset(subregion, '\0', sizeof(*subregion));
 	subregion->parent = region;
 }
 
@@ -1325,7 +1325,7 @@ parse_v3_signature(ops_region_t * region,
 	ops_parser_content_t content;
 
 	/* clear signature */
-	memset(&C.signature, '\0', sizeof C.signature);
+	memset(&C.signature, '\0', sizeof(C.signature));
 
 	C.signature.info.version = OPS_V3;
 
@@ -1783,7 +1783,7 @@ parse_v4_signature(ops_region_t * region, ops_parse_info_t * pinfo)
 		fprintf(stderr, "\nparse_v4_signature\n");
 	}
 	/* clear signature */
-	memset(&C.signature, '\0', sizeof C.signature);
+	memset(&C.signature, '\0', sizeof(C.signature));
 
 	/*
 	 * We need to hash the packet data from version through the hashed
@@ -1935,7 +1935,7 @@ parse_signature(ops_region_t * region, ops_parse_info_t * pinfo)
 	assert(region->length_read == 0);	/* We should not have read
 						 * anything so far */
 
-	memset(&content, '\0', sizeof content);
+	memset(&content, '\0', sizeof(content));
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
@@ -2006,7 +2006,7 @@ parse_one_pass(ops_region_t * region, ops_parse_info_t * pinfo)
 	C.one_pass_signature.key_algorithm = c[0];
 
 	if (!limited_read(C.one_pass_signature.keyid,
-			  sizeof C.one_pass_signature.keyid, region, pinfo))
+			  sizeof(C.one_pass_signature.keyid), region, pinfo))
 		return 0;
 
 	if (!limited_read(c, 1, region, pinfo))
@@ -2125,8 +2125,8 @@ parse_literal_data(ops_region_t * region, ops_parse_info_t * pinfo)
 	while (region->length_read < region->length) {
 		unsigned        l = region->length - region->length_read;
 
-		if (l > sizeof C.literal_data_body.data)
-			l = sizeof C.literal_data_body.data;
+		if (l > sizeof(C.literal_data_body.data))
+			l = sizeof(C.literal_data_body.data);
 
 		if (!limited_read(C.literal_data_body.data, l, region, pinfo))
 			return 0;
@@ -2222,7 +2222,7 @@ parse_secret_key(ops_region_t * region, ops_parse_info_t * pinfo)
 		fprintf(stderr, "\n---------\nparse_secret_key:\n");
 		fprintf(stderr, "region length=%d, length_read=%d, remainder=%d\n", region->length, region->length_read, region->length - region->length_read);
 	}
-	memset(&content, '\0', sizeof content);
+	memset(&content, '\0', sizeof(content));
 	if (!parse_public_key_data(&C.secret_key.public_key, region, pinfo))
 		return 0;
 
@@ -2291,7 +2291,7 @@ parse_secret_key(ops_region_t * region, ops_parse_info_t * pinfo)
 		if (!limited_read(C.secret_key.iv, blocksize, region, pinfo))
 			return 0;
 
-		memset(&pc, '\0', sizeof pc);
+		memset(&pc, '\0', sizeof(pc));
 		passphrase = NULL;
 		pc.content.secret_key_passphrase.passphrase = &passphrase;
 		pc.content.secret_key_passphrase.secret_key = &C.secret_key;
@@ -2520,12 +2520,12 @@ parse_pk_session_key(ops_region_t * region,
 		return 0;
 	}
 	if (!limited_read(C.pk_session_key.key_id,
-			  sizeof C.pk_session_key.key_id, region, pinfo)) {
+			  sizeof(C.pk_session_key.key_id), region, pinfo)) {
 		return 0;
 	}
 	if (ops_get_debug_level(__FILE__)) {
 		int             i;
-		int             x = sizeof C.pk_session_key.key_id;
+		int             x = sizeof(C.pk_session_key.key_id);
 		printf("session key: public key id: x=%d\n", x);
 		for (i = 0; i < x; i++)
 			printf("%2x ", C.pk_session_key.key_id[i]);
@@ -2560,7 +2560,7 @@ parse_pk_session_key(ops_region_t * region,
 		return 0;
 	}
 
-	memset(&pc, '\0', sizeof pc);
+	memset(&pc, '\0', sizeof(pc));
 	secret = NULL;
 	pc.content.get_secret_key.secret_key = &secret;
 	pc.content.get_secret_key.pk_session_key = &C.pk_session_key;
@@ -2572,8 +2572,9 @@ parse_pk_session_key(ops_region_t * region,
 
 		return 1;
 	}
-	/* n=ops_decrypt_mpi(buf,sizeof buf,enc_m,secret); */
-	n = ops_decrypt_and_unencode_mpi(unencoded_m_buf, sizeof unencoded_m_buf, enc_m, secret);
+	/* n=ops_decrypt_mpi(buf,sizeof(buf),enc_m,secret); */
+	n = ops_decrypt_and_unencode_mpi(unencoded_m_buf,
+		sizeof(unencoded_m_buf), enc_m, secret);
 
 	if (n < 1) {
 		ERRP(pinfo, "decrypted message too short");
@@ -2597,7 +2598,7 @@ parse_pk_session_key(ops_region_t * region,
 			    n, k + 3);
 		return 0;
 	}
-	assert(k <= sizeof C.pk_session_key.key);
+	assert(k <= sizeof(C.pk_session_key.key));
 
 	memcpy(C.pk_session_key.key, unencoded_m_buf + 1, k);
 
@@ -2675,8 +2676,8 @@ ops_decrypt_se_data(ops_content_tag_t tag, ops_region_t * region,
 		while (region->length_read < region->length) {
 			unsigned        l = region->length - region->length_read;
 
-			if (l > sizeof C.se_data_body.data)
-				l = sizeof C.se_data_body.data;
+			if (l > sizeof(C.se_data_body.data))
+				l = sizeof(C.se_data_body.data);
 
 			if (!limited_read(C.se_data_body.data, l, region, pinfo))
 				return 0;
@@ -2712,8 +2713,8 @@ ops_decrypt_se_ip_data(ops_content_tag_t tag, ops_region_t * region,
 		while (region->length_read < region->length) {
 			unsigned        l = region->length - region->length_read;
 
-			if (l > sizeof C.se_data_body.data)
-				l = sizeof C.se_data_body.data;
+			if (l > sizeof(C.se_data_body.data))
+				l = sizeof(C.se_data_body.data);
 
 			if (!limited_read(C.se_data_body.data, l, region, pinfo))
 				return 0;
@@ -3162,7 +3163,7 @@ ops_parse_cb_set(ops_parse_info_t * pinfo, ops_parse_cb_t * cb, void *arg)
 void 
 ops_parse_cb_push(ops_parse_info_t * pinfo, ops_parse_cb_t * cb, void *arg)
 {
-	ops_parse_cb_info_t *cbinfo = malloc(sizeof *cbinfo);
+	ops_parse_cb_info_t *cbinfo = malloc(sizeof(*cbinfo));
 
 	*cbinfo = pinfo->cbinfo;
 	pinfo->cbinfo.next = cbinfo;
@@ -3244,12 +3245,12 @@ ops_parse_hash_init(ops_parse_info_t * pinfo, ops_hash_algorithm_t type,
 	ops_parse_hash_info_t *hash;
 
 	pinfo->hashes = realloc(pinfo->hashes,
-			      (pinfo->nhashes + 1) * sizeof *pinfo->hashes);
+			      (pinfo->nhashes + 1) * sizeof(*pinfo->hashes));
 	hash = &pinfo->hashes[pinfo->nhashes++];
 
 	ops_hash_any(&hash->hash, type);
 	hash->hash.init(&hash->hash);
-	memcpy(hash->keyid, keyid, sizeof hash->keyid);
+	memcpy(hash->keyid, keyid, sizeof(hash->keyid));
 }
 
 void 

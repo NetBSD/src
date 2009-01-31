@@ -70,7 +70,7 @@ accumulate_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinf
 			pkey = &content->secret_key.public_key;
 
 		memset(&keyring->keys[keyring->nkeys], '\0',
-		       sizeof keyring->keys[keyring->nkeys]);
+		       sizeof(keyring->keys[keyring->nkeys]));
 
 		ops_keyid(keyring->keys[keyring->nkeys].key_id,
 			OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, pkey);
@@ -146,7 +146,7 @@ ops_parse_and_accumulate(ops_keyring_t * keyring,
 
 	assert(!parse_info->rinfo.accumulate);
 
-	memset(&arg, '\0', sizeof arg);
+	memset(&arg, '\0', sizeof(arg));
 
 	arg.keyring = keyring;
 	/* Kinda weird, but to do with counting, and we put it back after */

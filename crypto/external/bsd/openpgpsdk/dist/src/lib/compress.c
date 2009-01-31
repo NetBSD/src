@@ -99,17 +99,17 @@ zlib_compressed_data_reader(void *dest, size_t length,
 			int             ret;
 
 			arg->zstream.next_out = arg->out;
-			arg->zstream.avail_out = sizeof arg->out;
+			arg->zstream.avail_out = sizeof(arg->out);
 			arg->offset = 0;
 			if (arg->zstream.avail_in == 0) {
 				unsigned        n = arg->region->length;
 
 				if (!arg->region->indeterminate) {
 					n -= arg->region->length_read;
-					if (n > sizeof arg->in)
-						n = sizeof arg->in;
+					if (n > sizeof(arg->in))
+						n = sizeof(arg->in);
 				} else
-					n = sizeof arg->in;
+					n = sizeof(arg->in);
 
 				if (!ops_stacked_limited_read(arg->in, n, arg->region,
 						     errors, rinfo, cbinfo))
@@ -171,17 +171,17 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 			int             ret;
 
 			arg->bzstream.next_out = (char *) arg->out;
-			arg->bzstream.avail_out = sizeof arg->out;
+			arg->bzstream.avail_out = sizeof(arg->out);
 			arg->offset = 0;
 			if (arg->bzstream.avail_in == 0) {
 				unsigned        n = arg->region->length;
 
 				if (!arg->region->indeterminate) {
 					n -= arg->region->length_read;
-					if (n > sizeof arg->in)
-						n = sizeof arg->in;
+					if (n > sizeof(arg->in))
+						n = sizeof(arg->in);
 				} else
-					n = sizeof arg->in;
+					n = sizeof(arg->in);
 
 				if (!ops_stacked_limited_read((unsigned char *) arg->in, n, arg->region,
 						     errors, rinfo, cbinfo))
@@ -232,7 +232,7 @@ ops_decompress(ops_region_t * region, ops_parse_info_t * parse_info,
 	switch (type) {
 	case OPS_C_ZIP:
 	case OPS_C_ZLIB:
-		memset(&z_arg, '\0', sizeof z_arg);
+		memset(&z_arg, '\0', sizeof(z_arg));
 
 		z_arg.region = region;
 		z_arg.offset = 0;
@@ -247,7 +247,7 @@ ops_decompress(ops_region_t * region, ops_parse_info_t * parse_info,
 		break;
 
 	case OPS_C_BZIP2:
-		memset(&bz_arg, '\0', sizeof bz_arg);
+		memset(&bz_arg, '\0', sizeof(bz_arg));
 
 		bz_arg.region = region;
 		bz_arg.offset = 0;
