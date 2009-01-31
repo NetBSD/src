@@ -104,7 +104,7 @@ ops_writer_push_encrypt_crypt(ops_create_info_t * cinfo,
 	/* Create arg to be used with this writer */
 	/* Remember to free this in the destroyer */
 
-	crypt_arg_t    *arg = ops_mallocz(sizeof *arg);
+	crypt_arg_t    *arg = calloc(1, sizeof *arg);
 
 	/* Setup the arg */
 

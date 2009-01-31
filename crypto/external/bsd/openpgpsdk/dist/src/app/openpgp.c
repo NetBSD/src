@@ -389,7 +389,7 @@ openpgp(prog_t * p, char *f)
 
 	case VERIFY:
 
-		validate_result = ops_mallocz(sizeof(ops_validate_result_t));
+		validate_result = calloc(1, sizeof(ops_validate_result_t));
 
 		if (ops_validate_file(validate_result, f, p->armour, p->pubring) == ops_true) {
 			psuccess(f, validate_result, p->pubring);
@@ -539,20 +539,20 @@ main(int argc, char **argv)
 	}
 
 	(void) snprintf(p.pubring_name, MAXBUF, "%s/pubring.gpg", dir);
-	p.pubring = ops_mallocz(sizeof *p.pubring);
+	p.pubring = calloc(1, sizeof(*p.pubring));
 	if (!ops_keyring_read_from_file(p.pubring, ops_false, p.pubring_name)) {
 		fprintf(stderr, "Cannot read keyring %s\n", p.pubring_name);
 		exit(EXIT_ERROR);
 	}
 	snprintf(p.secring_name, MAXBUF, "%s/secring.gpg", dir);
-	p.secring = ops_mallocz(sizeof *p.secring);
+	p.secring = calloc(1, sizeof(*p.secring));
 	if (!ops_keyring_read_from_file(p.secring, ops_false, p.secring_name)) {
 		fprintf(stderr, "Cannot read keyring %s\n", p.secring_name);
 		exit(EXIT_ERROR);
 	}
 	if (p.keyring[0] != 0x0) {
 		snprintf(p.myring_name, MAXBUF, "%s/%s", homedir, p.keyring);
-		p.myring = ops_mallocz(sizeof *p.myring);
+		p.myring = calloc(1, sizeof(*p.myring));
 		if (!ops_keyring_read_from_file(p.myring, ops_false, p.myring_name)) {
 			fprintf(stderr, "Cannot read keyring %s\n", p.myring_name);
 			exit(EXIT_ERROR);

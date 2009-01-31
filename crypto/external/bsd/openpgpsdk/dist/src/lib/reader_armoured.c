@@ -970,7 +970,7 @@ ops_reader_push_dearmour(ops_parse_info_t * parse_info)
 {
 	dearmour_arg_t *arg;
 
-	arg = ops_mallocz(sizeof *arg);
+	arg = calloc(1, sizeof *arg);
 	arg->seen_nl = ops_true;
 	/*
 	    arg->allow_headers_without_gap=without_gap;

@@ -104,7 +104,7 @@ se_ip_data_reader(void *dest_, size_t len, ops_error_t ** errors,
 
 		ops_init_subregion(&decrypted_region, NULL);
 		decrypted_region.length = arg->region->length - arg->region->length_read;
-		buf = ops_mallocz(decrypted_region.length);
+		buf = calloc(1, decrypted_region.length);
 
 		/* read entire SE IP packet */
 
@@ -178,7 +178,7 @@ se_ip_data_reader(void *dest_, size_t len, ops_error_t ** errors,
 		/* all done with the checks */
 		/* now can start reading from the plaintext */
 		assert(!arg->plaintext);
-		arg->plaintext = ops_mallocz(sz_plaintext);
+		arg->plaintext = calloc(1, sz_plaintext);
 		memcpy(arg->plaintext, plaintext, sz_plaintext);
 		arg->plaintext_available = sz_plaintext;
 
@@ -214,7 +214,7 @@ void
 ops_reader_push_se_ip_data(ops_parse_info_t * pinfo, ops_crypt_t * decrypt,
 			   ops_region_t * region)
 {
-	decrypt_se_ip_arg_t *arg = ops_mallocz(sizeof *arg);
+	decrypt_se_ip_arg_t *arg = calloc(1, sizeof *arg);
 	arg->region = region;
 	arg->decrypt = decrypt;
 

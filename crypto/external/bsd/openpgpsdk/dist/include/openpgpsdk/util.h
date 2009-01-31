@@ -44,12 +44,9 @@ void            hexdump(const unsigned char *, size_t, const char *);
 #define CHECKED_PTR_OF(type, p) ((void*) (1 ? p : (type *)0))
 #endif
 #define CHECKED_INSTANCE_OF(type, p) (1 ? p : (type)0)
-#define DECONST(type,p) ((type *)CHECKED_PTR_OF(const type, p))
 
 /* number of elements in an array */
 #define OPS_ARRAY_SIZE(a)	(sizeof(a)/sizeof(*(a)))
-
-void           *ops_mallocz(size_t n);
 
 const char     *ops_str_from_map(int, ops_map_t *);
 

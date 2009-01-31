@@ -66,7 +66,7 @@ ops_writer_push_encrypt_se_ip(ops_create_info_t * cinfo,
 
 	/* Create arg to be used with this writer */
 	/* Remember to free this in the destroyer */
-	encrypt_se_ip_arg_t *arg = ops_mallocz(sizeof *arg);
+	encrypt_se_ip_arg_t *arg = calloc(1, sizeof *arg);
 
 	/* Create and write encrypted PK session key */
 	ops_pk_session_key_t *encrypted_pk_session_key;
@@ -74,9 +74,9 @@ ops_writer_push_encrypt_se_ip(ops_create_info_t * cinfo,
 	ops_write_pk_session_key(cinfo, encrypted_pk_session_key);
 
 	/* Setup the arg */
-	encrypted = ops_mallocz(sizeof *encrypted);
+	encrypted = calloc(1, sizeof *encrypted);
 	ops_crypt_any(encrypted, encrypted_pk_session_key->symmetric_algorithm);
-	iv = ops_mallocz(encrypted->blocksize);
+	iv = calloc(1, encrypted->blocksize);
 	encrypted->set_iv(encrypted, iv);
 	encrypted->set_key(encrypted, &encrypted_pk_session_key->key[0]);
 	ops_encrypt_init(encrypted);
@@ -161,7 +161,7 @@ ops_write_se_ip_pktset(const unsigned char *data,
 	const size_t    sz_mdc = 1 + 1 + SHA_DIGEST_LENGTH;
 
 	size_t          sz_preamble = crypted->blocksize + 2;
-	unsigned char  *preamble = ops_mallocz(sz_preamble);
+	unsigned char  *preamble = calloc(1, sz_preamble);
 
 	size_t          sz_buf = sz_preamble + len + sz_mdc;
 
