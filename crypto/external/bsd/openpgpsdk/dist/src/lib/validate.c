@@ -130,7 +130,7 @@ static void
 copy_signature_info(ops_signature_info_t * dst, const ops_signature_info_t * src)
 {
 	memcpy(dst, src, sizeof *src);
-	dst->v4_hashed_data = ops_mallocz(src->v4_hashed_data_length);
+	dst->v4_hashed_data = calloc(1, src->v4_hashed_data_length);
 	memcpy(dst->v4_hashed_data, src->v4_hashed_data, src->v4_hashed_data_length);
 }
 
@@ -606,7 +606,7 @@ Example code:
 \code
 void example(const char* filename, const int armoured, const ops_keyring_t* keyring)
 {
-  ops_validate_result_t* result=ops_mallocz(sizeof *result);
+  ops_validate_result_t* result=calloc(1, sizeof *result);
 
   if (ops_validate_file(result, filename, armoured, keyring)==ops_true)
   {

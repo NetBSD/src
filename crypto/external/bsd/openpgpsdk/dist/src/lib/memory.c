@@ -167,7 +167,7 @@ ops_memory_make_packet(ops_memory_t * out, ops_content_tag_t tag)
 ops_memory_t   *
 ops_memory_new()
 {
-	return ops_mallocz(sizeof(ops_memory_t));
+	return calloc(1, sizeof(ops_memory_t));
 }
 
 /**

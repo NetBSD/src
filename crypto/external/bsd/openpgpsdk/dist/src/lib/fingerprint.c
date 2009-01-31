@@ -56,13 +56,13 @@ ops_fingerprint(ops_fingerprint_t * fp, const ops_public_key_t * key)
 		md5.init(&md5);
 
 		n = BN_num_bytes(key->key.rsa.n);
-		bn = ops_mallocz(n);
+		bn = calloc(1, n);
 		BN_bn2bin(key->key.rsa.n, bn);
 		md5.add(&md5, bn, n);
 		(void) free(bn);
 
 		n = BN_num_bytes(key->key.rsa.e);
-		bn = ops_mallocz(n);
+		bn = calloc(1, n);
 		BN_bn2bin(key->key.rsa.e, bn);
 		md5.add(&md5, bn, n);
 		(void) free(bn);

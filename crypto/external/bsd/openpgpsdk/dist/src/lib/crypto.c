@@ -266,12 +266,13 @@ ops_decrypt_file(const char *input_filename, const char *output_filename, ops_ke
 		int             suffixlen = 4;
 		const char     *defaultsuffix = ".decrypted";
 		const char     *suffix = input_filename + strlen(input_filename) - suffixlen;
-		if (!strcmp(suffix, ".gpg") || !strcmp(suffix, ".asc")) {
-			myfilename = ops_mallocz(strlen(input_filename) - suffixlen + 1);
+		if (strcmp(suffix, ".gpg") == 0 ||
+		    strcmp(suffix, ".asc") == 0) {
+			myfilename = calloc(1, strlen(input_filename) - suffixlen + 1);
 			strncpy(myfilename, input_filename, strlen(input_filename) - suffixlen);
 		} else {
 			unsigned        filenamelen = strlen(input_filename) + strlen(defaultsuffix) + 1;
-			myfilename = ops_mallocz(filenamelen);
+			myfilename = calloc(1, filenamelen);
 			snprintf(myfilename, filenamelen, "%s%s", input_filename, defaultsuffix);
 		}
 

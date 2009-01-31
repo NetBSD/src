@@ -768,7 +768,7 @@ ops_write_struct_secret_key(const ops_secret_key_t * key,
 ops_create_info_t *
 ops_create_info_new(void)
 {
-	return ops_mallocz(sizeof(ops_create_info_t));
+	return calloc(1, sizeof(ops_create_info_t));
 }
 
 /**
@@ -923,9 +923,9 @@ ops_create_pk_session_key(const ops_keydata_t * key)
 	unsigned char   unencoded_m_buf[SZ_UNENCODED_M_BUF];
 
 	const size_t    sz_encoded_m_buf = BN_num_bytes(pub_key->key.rsa.n);
-	unsigned char  *encoded_m_buf = ops_mallocz(sz_encoded_m_buf);
+	unsigned char  *encoded_m_buf = calloc(1, sz_encoded_m_buf);
 
-	ops_pk_session_key_t *session_key = ops_mallocz(sizeof *session_key);
+	ops_pk_session_key_t *session_key = calloc(1, sizeof *session_key);
 
 	assert(key->type == OPS_PTAG_CT_PUBLIC_KEY);
 	session_key->version = OPS_PKSK_V3;
@@ -1216,7 +1216,7 @@ ops_write_symmetrically_encrypted_data(const unsigned char *data,
 	ops_encrypt_init(&crypt_info);
 
 	encrypted_sz = len + crypt_info.blocksize + 2;
-	encrypted = ops_mallocz(encrypted_sz);
+	encrypted = calloc(1, encrypted_sz);
 
 	done = ops_encrypt_se(&crypt_info, encrypted, data, len);
 	assert(done == len);

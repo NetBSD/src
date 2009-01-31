@@ -335,7 +335,7 @@ ops_write_compressed(const unsigned char *data,
 	int             r = 0;
 	int             sz_in = 0;
 	int             sz_out = 0;
-	compress_arg_t *compression = ops_mallocz(sizeof(compress_arg_t));
+	compress_arg_t *compression = calloc(1, sizeof(compress_arg_t));
 
 	/* compress the data */
 	const int       level = Z_DEFAULT_COMPRESSION;	/* \todo allow varying
@@ -344,7 +344,7 @@ ops_write_compressed(const unsigned char *data,
 	compression->stream.zfree = Z_NULL;
 	compression->stream.opaque = NULL;
 
-	/* all other fields set to zero by use of ops_mallocz */
+	/* all other fields set to zero by use of calloc */
 
 	if (deflateInit(&compression->stream, level) != Z_OK) {
 		/* can't initialise */
@@ -357,8 +357,8 @@ ops_write_compressed(const unsigned char *data,
 
 	sz_in = len * sizeof(unsigned char);
 	sz_out = (sz_in * 1.01) + 12;	/* from zlib webpage */
-	compression->src = ops_mallocz(sz_in);
-	compression->dst = ops_mallocz(sz_out);
+	compression->src = calloc(1, sz_in);
+	compression->dst = calloc(1, sz_out);
 	memcpy(compression->src, data, len);
 
 	/* setup stream */
