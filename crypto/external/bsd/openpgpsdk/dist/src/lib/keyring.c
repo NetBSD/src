@@ -221,7 +221,7 @@ decrypt_cb(const ops_parser_content_t * content_,
 		break;
 
 	case OPS_PTAG_CT_SECRET_KEY:
-		arg->skey = malloc(sizeof *arg->skey);
+		arg->skey = malloc(sizeof(*arg->skey));
 		*arg->skey = content->secret_key;
 		return OPS_KEEP_MEMORY;
 
@@ -253,7 +253,7 @@ ops_decrypt_secret_key_from_data(const ops_keydata_t * key,
 	ops_parse_info_t *pinfo;
 	decrypt_arg_t   arg;
 
-	memset(&arg, '\0', sizeof arg);
+	memset(&arg, '\0', sizeof(arg));
 	arg.key = key;
 	arg.pphrase = strdup(pphrase);
 
@@ -616,7 +616,7 @@ cb_keyring_read(const ops_parser_content_t * content_,
 
    Example code:
    \code
-   ops_keyring_t* keyring=calloc(1, sizeof *keyring);
+   ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
    ops_boolean_t armoured=ops_false;
    ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
    ...
@@ -704,7 +704,7 @@ ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, 
    Example code:
    \code
    ops_memory_t* mem; // Filled with keyring packets
-   ops_keyring_t* keyring=calloc(1, sizeof *keyring);
+   ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
    ops_boolean_t armoured=ops_false;
    ops_keyring_read_from_mem(keyring, armoured, mem);
    ...
@@ -899,7 +899,7 @@ ops_keyring_find_key_by_userid(const ops_keyring_t * keyring,
    \code
    void example()
    {
-   ops_keyring_t* keyring=calloc(1, sizeof *keyring);
+   ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
    ops_boolean_t armoured=ops_false;
    ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
 

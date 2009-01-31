@@ -214,7 +214,7 @@ void
 ops_reader_push_se_ip_data(ops_parse_info_t * pinfo, ops_crypt_t * decrypt,
 			   ops_region_t * region)
 {
-	decrypt_se_ip_arg_t *arg = calloc(1, sizeof *arg);
+	decrypt_se_ip_arg_t *arg = calloc(1, sizeof(*arg));
 	arg->region = region;
 	arg->decrypt = decrypt;
 

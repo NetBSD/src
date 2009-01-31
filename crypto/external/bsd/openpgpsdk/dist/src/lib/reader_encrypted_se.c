@@ -122,10 +122,10 @@ encrypted_data_reader(void *dest, size_t length, ops_error_t ** errors,
 				n -= arg->region->length_read;
 				if (n == 0)
 					return saved - length;
-				if (n > sizeof buffer)
-					n = sizeof buffer;
+				if (n > sizeof(buffer))
+					n = sizeof(buffer);
 			} else {
-				n = sizeof buffer;
+				n = sizeof(buffer);
 			}
 
 			/*
@@ -187,7 +187,7 @@ void
 ops_reader_push_decrypt(ops_parse_info_t * pinfo, ops_crypt_t * decrypt,
 			ops_region_t * region)
 {
-	encrypted_arg_t *arg = calloc(1, sizeof *arg);
+	encrypted_arg_t *arg = calloc(1, sizeof(*arg));
 
 	arg->decrypt = decrypt;
 	arg->region = region;

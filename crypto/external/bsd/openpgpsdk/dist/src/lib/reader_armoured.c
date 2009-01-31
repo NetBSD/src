@@ -302,7 +302,7 @@ unarmoured_read_char(dearmour_arg_t * arg, ops_error_t ** errors,
 		if (c < 0)
 			return c;
 		arg->unarmoured[arg->num_unarmoured++] = c;
-		if (arg->num_unarmoured == sizeof arg->unarmoured)
+		if (arg->num_unarmoured == sizeof(arg->unarmoured))
 			flush(arg, cbinfo);
 	}
 	while (skip && c == '\r');
@@ -336,7 +336,7 @@ ops_dup_headers(ops_headers_t * dest, const ops_headers_t * src)
 {
 	unsigned        n;
 
-	dest->headers = malloc(src->nheaders * sizeof *dest->headers);
+	dest->headers = malloc(src->nheaders * sizeof(*dest->headers));
 	dest->nheaders = src->nheaders;
 
 	for (n = 0; n < src->nheaders; ++n) {
@@ -363,7 +363,7 @@ process_dash_escaped(dearmour_arg_t * arg, ops_error_t ** errors,
 	ops_hash_t     *hash;
 	int             total;
 
-	hash = malloc(sizeof *hash);
+	hash = malloc(sizeof(*hash));
 	hashstr = ops_find_header(&arg->headers, "Hash");
 	if (hashstr) {
 		ops_hash_algorithm_t alg;
@@ -427,7 +427,7 @@ process_dash_escaped(dearmour_arg_t * arg, ops_error_t ** errors,
 		}
 		body->data[body->length++] = c;
 		++total;
-		if (body->length == sizeof body->data) {
+		if (body->length == sizeof(body->data)) {
 			if (ops_get_debug_level(__FILE__)) {
 				fprintf(stderr, "Got body (2):\n%s\n", body->data);
 			}
@@ -458,7 +458,7 @@ add_header(dearmour_arg_t * arg, const char *key, const char
 	    || !strcmp(key, "Charset")) {
 		arg->headers.headers = realloc(arg->headers.headers,
 					       (arg->headers.nheaders + 1)
-					    * sizeof *arg->headers.headers);
+					    * sizeof(*arg->headers.headers));
 		arg->headers.headers[arg->headers.nheaders].key = strdup(key);
 		arg->headers.headers[arg->headers.nheaders].value = strdup(value);
 		++arg->headers.nheaders;
@@ -784,7 +784,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 			}
 
 			/* Now find the block type */
-			for (n = 0; n < sizeof buf - 1;) {
+			for (n = 0; n < sizeof(buf) - 1;) {
 				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
 					return 0;
 				if (c == '-')
@@ -842,7 +842,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 			} else {
 				content.content.armour_header.type = buf;
 				content.content.armour_header.headers = arg->headers;
-				memset(&arg->headers, '\0', sizeof arg->headers);
+				memset(&arg->headers, '\0', sizeof(arg->headers));
 				CB(cbinfo, OPS_PTAG_CT_ARMOUR_HEADER, &content);
 				base64(arg);
 			}
@@ -877,7 +877,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 			break;
 
 		case AT_TRAILER_NAME:
-			for (n = 0; n < sizeof buf - 1;) {
+			for (n = 0; n < sizeof(buf) - 1;) {
 				if ((c = read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
 					return -1;
 				if (c == '-')
@@ -921,7 +921,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 					return ret;
 				content.content.armour_header.type = buf;
 				content.content.armour_header.headers = arg->headers;
-				memset(&arg->headers, '\0', sizeof arg->headers);
+				memset(&arg->headers, '\0', sizeof(arg->headers));
 				CB(cbinfo, OPS_PTAG_CT_ARMOUR_HEADER, &content);
 				base64(arg);
 			} else {
@@ -970,7 +970,7 @@ ops_reader_push_dearmour(ops_parse_info_t * parse_info)
 {
 	dearmour_arg_t *arg;
 
-	arg = calloc(1, sizeof *arg);
+	arg = calloc(1, sizeof(*arg));
 	arg->seen_nl = ops_true;
 	/*
 	    arg->allow_headers_without_gap=without_gap;

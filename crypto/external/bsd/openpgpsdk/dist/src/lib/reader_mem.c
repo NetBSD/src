@@ -84,7 +84,7 @@ void
 ops_reader_set_memory(ops_parse_info_t * pinfo, const void *buffer,
 		      size_t length)
 {
-	reader_mem_arg_t *arg = malloc(sizeof *arg);
+	reader_mem_arg_t *arg = malloc(sizeof(*arg));
 
 	arg->buffer = buffer;
 	arg->length = length;

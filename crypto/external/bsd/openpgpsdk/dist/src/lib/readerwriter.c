@@ -378,7 +378,7 @@ callback_cmd_get_secret_key(const ops_parser_content_t * content_, ops_parse_cb_
 		secret = ops_get_secret_key_from_data(cbinfo->cryptinfo.keydata);
 		while (!secret) {
 			if (!cbinfo->cryptinfo.passphrase) {
-				memset(&pc, '\0', sizeof pc);
+				memset(&pc, '\0', sizeof(pc));
 				pc.content.secret_key_passphrase.passphrase = &cbinfo->cryptinfo.passphrase;
 				CB(cbinfo, OPS_PARSER_CMD_GET_SK_PASSPHRASE, &pc);
 				if (!cbinfo->cryptinfo.passphrase) {

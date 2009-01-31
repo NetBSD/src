@@ -113,7 +113,7 @@ ops_keyid(unsigned char *keyid, const size_t idlen, const int last,
 		unsigned char   bn[8192];
 		unsigned        n = BN_num_bytes(key->key.rsa.n);
 
-		assert(n <= sizeof bn);
+		assert(n <= sizeof(bn));
 		assert(key->algorithm == OPS_PKA_RSA
 		       || key->algorithm == OPS_PKA_RSA_ENCRYPT_ONLY
 		       || key->algorithm == OPS_PKA_RSA_SIGN_ONLY);

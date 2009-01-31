@@ -62,10 +62,10 @@ ops_reader_set(ops_parse_info_t * pinfo, ops_reader_t * reader, ops_reader_destr
 void 
 ops_reader_push(ops_parse_info_t * pinfo, ops_reader_t * reader, ops_reader_destroyer_t * destroyer, void *arg)
 {
-	ops_reader_info_t *rinfo = malloc(sizeof *rinfo);
+	ops_reader_info_t *rinfo = malloc(sizeof(*rinfo));
 
 	*rinfo = pinfo->rinfo;
-	memset(&pinfo->rinfo, '\0', sizeof pinfo->rinfo);
+	memset(&pinfo->rinfo, '\0', sizeof(pinfo->rinfo));
 	pinfo->rinfo.next = rinfo;
 	pinfo->rinfo.pinfo = pinfo;
 

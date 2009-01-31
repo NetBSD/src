@@ -232,7 +232,7 @@ ops_writer_push(ops_create_info_t * info,
 		ops_writer_destroyer_t * destroyer,
 		void *arg)
 {
-	ops_writer_info_t *copy = calloc(1, sizeof *copy);
+	ops_writer_info_t *copy = calloc(1, sizeof(*copy));
 
 	assert(info->winfo.writer);
 	*copy = info->winfo;
