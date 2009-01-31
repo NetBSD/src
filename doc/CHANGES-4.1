@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.128 2009/01/16 21:22:07 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.129 2009/01/31 21:47:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2688,4 +2688,23 @@ share/misc/airport				1.31
 
 	PR/40404 - Robert Elz -- Thailand airport updates
 	[jnemeth, ticket #1265]
+
+sys/net/if_gre.c				1.80
+
+	initialize error, cause gcc3 says so.
+	[dholland, ticket #1266]
+
+lib/libc/net/getaddrinfo.c			1.92
+
+	Cause getaddrinfo() without socktype specification to work correctly
+	for numeric addresses.  The documentation appears to say this works.
+	This change also causes getaddrinfo() with NULL hint (expressly
+	documented as working) to work properly for numeric addresses.
+	[tls, ticket #1267]
+
+sys/dev/eisa/if_ep_eisa.c			1.40
+
+	Add id for 5090 variant - reported in PR kern/40524 by
+	Andrew Daugherity.
+	[martin, ticket #1271]
 
