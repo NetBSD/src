@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.16 2003/08/07 16:43:25 agc Exp $	*/
+/*	$NetBSD: fread.c,v 1.17 2009/01/31 00:09:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.16 2003/08/07 16:43:25 agc Exp $");
+__RCSID("$NetBSD: fread.c,v 1.17 2009/01/31 00:09:58 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ fread(buf, size, count, fp)
 		fp->_r = 0;
 	total = resid;
 	p = buf;
-	while (resid > (r = fp->_r)) {
+	while (resid > (size_t)(r = fp->_r)) {
 		(void)memcpy((void *)p, (void *)fp->_p, (size_t)r);
 		fp->_p += r;
 		/* fp->_r = 0 ... done in __srefill */
