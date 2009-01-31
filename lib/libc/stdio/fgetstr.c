@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetstr.c,v 1.4 2006/11/24 19:46:58 christos Exp $	*/
+/*	$NetBSD: fgetstr.c,v 1.5 2009/01/31 06:14:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetstr.c,v 1.4 2006/11/24 19:46:58 christos Exp $");
+__RCSID("$NetBSD: fgetstr.c,v 1.5 2009/01/31 06:14:13 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ __slbexpand(fp, newsize)
 #endif
 	_DIAGASSERT(fp != NULL);
 
-	if (fp->_lb._size >= newsize)
+	if ((size_t)fp->_lb._size >= newsize)
 		return (0);
 	if ((p = realloc(fp->_lb._base, newsize)) == NULL)
 		return (-1);
