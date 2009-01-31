@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.158 2009/01/30 23:11:27 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.159 2009/01/31 15:53:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.158 2009/01/30 23:11:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.159 2009/01/31 15:53:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -132,8 +132,6 @@ static int
 settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 {
 	struct timespec delta, now;
-	struct bintime btdelta;
-	lwp_t *l;
 	int s;
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
@@ -159,19 +157,6 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 
 	timespecadd(&boottime, &delta, &boottime);
 
-	/*
-	 * XXXSMP: There is a short race between setting the time above
-	 * and adjusting LWP's run times.  Fixing this properly means
-	 * pausing all CPUs while we adjust the clock.
-	 */
-	timespec2bintime(&delta, &btdelta);
-	mutex_enter(proc_lock);
-	LIST_FOREACH(l, &alllwp, l_list) {
-		lwp_lock(l);
-		bintime_add(&l->l_stime, &btdelta);
-		lwp_unlock(l);
-	}
-	mutex_exit(proc_lock);
 	resettodr();
 	splx(s);
 
