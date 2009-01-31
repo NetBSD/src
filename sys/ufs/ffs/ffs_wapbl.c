@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.10 2009/01/31 09:14:15 yamt Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.11 2009/01/31 09:22:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.10 2009/01/31 09:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.11 2009/01/31 09:22:08 yamt Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -308,7 +308,7 @@ ffs_wapbl_start(struct mount *mp)
 	uint64_t extradata;
 	int error;
 
-	if (mp->mnt_wapbl == 0) {
+	if (mp->mnt_wapbl == NULL) {
 		if (fs->fs_journal_flags & UFS_WAPBL_FLAGS_CLEAR_LOG) {
 			/* Clear out any existing journal file */
 			error = wapbl_remove_log(mp);
@@ -435,7 +435,7 @@ ffs_wapbl_stop(struct mount *mp, int force)
 			return error;
 		}
 		fs->fs_flags &= ~FS_DOWAPBL; /* Repeat in case of forced error */
-		mp->mnt_wapbl = 0;
+		mp->mnt_wapbl = NULL;
 
 #ifdef WAPBL_DEBUG
 		printf("%s: disabled logging\n", fs->fs_fsmnt);
