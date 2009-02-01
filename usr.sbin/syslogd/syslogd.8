@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.44 2008/11/07 07:36:38 minskim Exp $
+.\"	$NetBSD: syslogd.8,v 1.45 2009/02/01 07:55:42 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,6 +51,9 @@
 .Op Fl m Ar mark_interval
 .Ek
 .Bk -words
+.Op Fl o Ar output_format
+.Ek
+.Bk -words
 .Op Fl P Ar file_list
 .Ek
 .Bk -words
@@ -91,7 +94,7 @@ Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
 .It Fl n
 Do not perform hostname lookups; report only numeric addresses.
-.It Fl o
+.It Fl o Ar output_format
 Select output message format.
 .Bl -hang
 .It Em rfc3164
