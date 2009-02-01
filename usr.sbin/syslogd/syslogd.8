@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.45 2009/02/01 07:55:42 yamt Exp $
+.\"	$NetBSD: syslogd.8,v 1.46 2009/02/01 08:12:25 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ which corresponds to it is used.
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
-.It Fl f
+.It Fl f Ar config_file
 Specify the pathname of an alternative configuration file;
 the default is
 .Pa /etc/syslog.conf .
@@ -89,7 +89,7 @@ the default is
 Set GID to
 .Ar group
 after the sockets and log files have been opened.
-.It Fl m
+.It Fl m Ar mark_interval
 Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
 .It Fl n
@@ -106,7 +106,7 @@ new syslog-protocol format
 Specify the pathname of a file containing a list of sockets to be
 created.
 The format of the file is simply one socket per line.
-.It Fl p
+.It Fl p Ar log_socket
 Specify the pathname of a log socket.
 Multiple
 .Fl p
