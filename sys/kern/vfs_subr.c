@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.357 2008/09/24 09:33:40 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357.4.1 2009/02/01 23:43:31 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357 2008/09/24 09:33:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.1 2009/02/01 23:43:31 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2184,7 +2184,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			}
 			memcpy(&vbuf, vp, VNODESZ);
 			mutex_exit(&mntvnode_lock);
-			if ((error = copyout(vp, bp, VPTRSZ)) ||
+			if ((error = copyout(&vp, bp, VPTRSZ)) ||
 			   (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
 			   	mutex_enter(&mntvnode_lock);
 				(void)vunmark(mvp);
