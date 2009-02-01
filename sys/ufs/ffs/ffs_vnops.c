@@ -1,11 +1,11 @@
-/*	$NetBSD: ffs_vnops.c,v 1.108 2008/12/28 16:27:00 christos Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.109 2009/02/01 17:36:43 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Wasabi Systems, Inc.
+ * by Wasabi Systems, Inc, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.108 2008/12/28 16:27:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.109 2009/02/01 17:36:43 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -401,22 +401,18 @@ out:
 int
 ffs_full_fsync(struct vnode *vp, int flags)
 {
-	extern struct vfsops ffs_vfsops;
 	struct buf *bp, *nbp;
 	int error, passes, skipmeta, inodedeps_only, waitfor;
 	struct mount *mp;
-	bool ffsino;
 
 	error = 0;
 
 	if ((flags & FSYNC_VFS) != 0) {
 		KASSERT(vp->v_specmountpoint != NULL);
 		mp = vp->v_specmountpoint;
-		ffsino = (mp->mnt_op == &ffs_vfsops);
 		KASSERT(vp->v_type == VBLK);
 	} else {
 		mp = vp->v_mount;
-		ffsino = true;
 		KASSERT(vp->v_tag == VT_UFS);
 	}
 
@@ -455,9 +451,9 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		if (flags & FSYNC_DATAONLY)
 			return error;
 
-		if (ffsino && VTOI(vp) && (VTOI(vp)->i_flag &
-		    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY |
-				 IN_MODIFIED | IN_ACCESSED))) {
+		if ((flags & FSYNC_VFS) == 0 && VTOI(vp) != NULL &&
+		    (VTOI(vp)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE
+		    | IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) != 0) {
 			error = UFS_WAPBL_BEGIN(mp);
 			if (error)
 				return error;
@@ -472,19 +468,13 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		 * Don't flush the log if the vnode being flushed
 		 * contains no dirty buffers that could be in the log.
 		 */
-		if (!((flags & FSYNC_RECLAIM) &&
-		    LIST_EMPTY(&vp->v_dirtyblkhd))) {
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			error = wapbl_flush(mp->mnt_wapbl, 0);
 			if (error)
 				return error;
 		}
 
-		/*
-		 * XXX temporary workaround for "dirty bufs" panic in
-		 * vinvalbuf.  need a full fix for the v_numoutput
-		 * waiters issues.
-		 */
-		if (flags & FSYNC_WAIT) {
+		if ((flags & FSYNC_WAIT) != 0) {
 			mutex_enter(&vp->v_interlock);
 			while (vp->v_numoutput)
 				cv_wait(&vp->v_cv, &vp->v_interlock);
@@ -537,7 +527,7 @@ loop:
 		goto loop;
 	}
 
-	if (flags & FSYNC_WAIT) {
+	if ((flags & FSYNC_WAIT) != 0) {
 		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput) {
 			cv_wait(&vp->v_cv, &vp->v_interlock);
@@ -574,12 +564,12 @@ loop:
 	if (inodedeps_only)
 		waitfor = 0;
 	else
-		waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
+		waitfor = (flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0;
 
-	if (ffsino && vp->v_tag == VT_UFS)
+	if ((flags & FSYNC_VFS) == 0)
 		error = ffs_update(vp, NULL, NULL, waitfor);
 
-	if (error == 0 && flags & FSYNC_CACHE) {
+	if (error == 0 && (flags & FSYNC_CACHE) != 0) {
 		int i = 0;
 		if ((flags & FSYNC_VFS) == 0) {
 			KASSERT(VTOI(vp) != NULL);
