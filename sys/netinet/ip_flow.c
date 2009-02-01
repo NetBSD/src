@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.56 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.57 2009/02/01 17:04:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.56 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.57 2009/02/01 17:04:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,7 @@ struct ipflow {
 
 #define	IPFLOW_HASHBITS		6	/* should not be a multiple of 8 */
 
-POOL_INIT(ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl", NULL,
-    IPL_NET);
+static struct pool ipflow_pool;
 
 LIST_HEAD(ipflowhead, ipflow);
 
@@ -139,6 +138,14 @@ ipflow_lookup(const struct ip *ip)
 			break;
 	}
 	return ipf;
+}
+
+void
+ipflow_poolinit()
+{
+
+	pool_init(&ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl",
+	    NULL, IPL_NET);
 }
 
 int

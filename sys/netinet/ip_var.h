@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.90 2008/10/12 11:15:54 plunky Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.91 2009/02/01 17:04:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -236,6 +236,7 @@ int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 int	ipflow_init(int);
+void	ipflow_poolinit(void);
 void	ipflow_prune(void);
 void	ipflow_create(const struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
