@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.95 2008/11/25 18:28:05 pooka Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.96 2009/02/01 17:04:11 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.95 2008/11/25 18:28:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.96 2009/02/01 17:04:11 pooka Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -258,6 +258,7 @@ const struct protosw inetsw[] = {
 {	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_IP,
 	.pr_slowtimo = ipflow_slowtimo,
+	.pr_init = ipflow_poolinit,
 },
 #endif /* GATEWAY */
 #ifdef IPSEC
