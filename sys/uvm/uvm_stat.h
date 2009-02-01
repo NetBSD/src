@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.44 2008/08/08 17:09:28 skrll Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.45 2009/02/01 14:25:11 skrll Exp $	*/
 
 /*
  *
@@ -197,7 +197,7 @@ static __inline void
 uvmhist_entry_print(e)
 	struct uvm_history_ent *e;
 {
-	printf("%06ld.%06ld ", e->tv.tv_sec, e->tv.tv_usec);
+	printf("%06" PRIu64 ".%06d ", e->tv.tv_sec, e->tv.tv_usec);
 	printf("%s#%ld@%d: ", e->fn, e->call, e->cpunum);
 	printf(e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 	printf("\n");
