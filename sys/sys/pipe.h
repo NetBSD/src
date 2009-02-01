@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.24 2008/02/29 12:04:48 yamt Exp $ */
+/* $NetBSD: pipe.h,v 1.25 2009/02/01 18:23:04 ad Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -115,7 +115,8 @@ struct pipe {
 	pid_t	pipe_pgid;		/* process group for sigio */
 	struct	pipe *pipe_peer;	/* link with other direction */
 	u_int	pipe_state;		/* pipe status info */
-	int	pipe_busy;		/* busy flag, mostly to handle rundown sanely */
+	int	pipe_busy;		/* busy flag, to handle rundown */
+	vaddr_t	pipe_kmem;		/* preallocated PIPE_SIZE buffer */
 };
 
 /*
