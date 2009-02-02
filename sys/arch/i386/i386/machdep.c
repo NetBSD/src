@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644.4.5 2009/02/02 21:38:50 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.4.6 2009/02/02 21:42:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.5 2009/02/02 21:38:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.6 2009/02/02 21:42:07 snj Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2080,8 +2080,6 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 void
 cpu_reset()
 {
-	uint8_t b;
-
 #ifdef XEN
 	HYPERVISOR_reboot();
 	for (;;);
