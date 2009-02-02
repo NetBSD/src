@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644.4.3 2009/02/02 21:24:31 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.4.4 2009/02/02 21:26:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.3 2009/02/02 21:24:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.4 2009/02/02 21:26:18 snj Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2080,6 +2080,8 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 void
 cpu_reset()
 {
+	uint8_t b;
+
 #ifdef XEN
 	HYPERVISOR_reboot();
 	for (;;);
@@ -2143,7 +2145,7 @@ cpu_reset()
 	 */
 	outb(0xcf9, 0x2);
 	outb(0xcf9, 0x6);
-	DELAY(500000);  /* wait 0.5 sec to see if that did it */
+	delay(500000);  /* wait 0.5 sec to see if that did it */
 
 	/*
 	 * Attempt to force a reset via the Fast A20 and Init register
@@ -2157,7 +2159,7 @@ cpu_reset()
 		if ((b & 0x1) != 0)
 			outb(0x92, b & 0xfe);
 		outb(0x92, b | 0x1);
-		DELAY(500000);  /* wait 0.5 sec to see if that did it */
+		delay(500000);  /* wait 0.5 sec to see if that did it */
 	}
 
 	/*
