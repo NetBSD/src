@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.104.4.1 2009/02/02 21:14:03 snj Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.104.4.2 2009/02/02 21:14:50 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.104.4.1 2009/02/02 21:14:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.104.4.2 2009/02/02 21:14:50 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -295,9 +295,6 @@ ffs_fsync(void *v)
 	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(vp) ||
 	    (vp->v_type != VREG)) {
 		int flags = ap->a_flags;
-
-		if (vp->v_type == VBLK)
-			flags |= FSYNC_VFS;
 		error = ffs_full_fsync(vp, flags);
 		goto out;
 	}
@@ -468,6 +465,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		}
 		if (error || (flags & FSYNC_NOLOG))
 			return error;
+
 		/*
 		 * Don't flush the log if the vnode being flushed
 		 * contains no dirty buffers that could be in the log.
