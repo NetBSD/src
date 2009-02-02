@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.88 2009/02/02 22:24:34 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.89 2009/02/02 23:49:21 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3656,10 +3656,10 @@ sys/ufs/ffs/ffs_vnops.c				1.105-1.109
 sys/arch/amd64/amd64/machdep.c			1.120-1.123
 sys/arch/i386/i386/machdep.c			1.655-1.658
 sys/arch/x86/include/cpufunc.h			1.11
-sys/arch/x86/x86/x86_machdep.c			1.28, 1.29 via patch
+sys/arch/x86/x86/x86_machdep.c			1.28-1.29 via patch, patch
 
 	Fix PR kern/40488: Unable to reboot Dell PE 2970.
-	[ad, ticket #396]
+	[ad/he, ticket #396]
 
 share/man/man9/kthread.9			1.18
 sys/kern/kern_kthread.c				1.25
