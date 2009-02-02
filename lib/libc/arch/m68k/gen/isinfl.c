@@ -1,4 +1,4 @@
-/*	$NetBSD: isinfl.c,v 1.5 2008/01/10 00:34:27 martin Exp $	*/
+/*	$NetBSD: isinfl.c,v 1.5.10.1 2009/02/02 20:45:51 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinfl.c,v 1.5 2008/01/10 00:34:27 martin Exp $");
+__RCSID("$NetBSD: isinfl.c,v 1.5.10.1 2009/02/02 20:45:51 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,5 +60,5 @@ __isinfl(long double x)
 
 	/* Note: the explicit integer bit is "don't care". */
 	return (u.extu_ext.ext_exp == EXT_EXP_INFNAN &&
-	    (u.extu_ext.ext_frach == 0x80000000 && u.extu_ext.ext_fracl == 0));
+	    ((u.extu_ext.ext_frach & 0x7fffffff) == 0 && u.extu_ext.ext_fracl == 0));
 }
