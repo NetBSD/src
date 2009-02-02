@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.254 2008/10/29 21:35:27 smb Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.254.2.1 2009/02/02 18:28:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.254 2008/10/29 21:35:27 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.254.2.1 2009/02/02 18:28:23 snj Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -925,7 +925,6 @@ setrunnable(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	struct cpu_info *ci;
-	sigset_t *ss;
 
 	KASSERT((l->l_flag & LW_IDLE) == 0);
 	KASSERT(mutex_owned(p->p_lock));
@@ -938,14 +937,8 @@ setrunnable(struct lwp *l)
 		 * If we're being traced (possibly because someone attached us
 		 * while we were stopped), check for a signal from the debugger.
 		 */
-		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xstat != 0) {
-			if ((sigprop[p->p_xstat] & SA_TOLWP) != 0)
-				ss = &l->l_sigpend.sp_set;
-			else
-				ss = &p->p_sigpend.sp_set;
-			sigaddset(ss, p->p_xstat);
+		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xstat != 0)
 			signotify(l);
-		}
 		p->p_nrlwps++;
 		break;
 	case LSSUSPENDED:
