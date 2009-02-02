@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.68 2008/10/22 11:36:06 matt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.68.4.1 2009/02/02 03:11:02 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,6 +41,7 @@
 #include <sys/condvar.h>
 #include <sys/mutex.h>
 #include <sys/rb.h>
+#include <sys/workqueue.h>
 
 #ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>
@@ -53,6 +54,7 @@
  * can be removed by nfs_inactive()
  */
 struct sillyrename {
+	struct work	s_work;
 	kauth_cred_t	s_cred;
 	struct	vnode *s_dvp;
 	long	s_namlen;
@@ -281,7 +283,6 @@ int	nfs_pathconf	__P((void *));
 int	nfs_advlock	__P((void *));
 int	nfs_getpages	__P((void *));
 int	nfs_putpages	__P((void *));
-int	nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	nfs_kqfilter	__P((void *));
 
 extern int (**nfsv2_vnodeop_p) __P((void *));
