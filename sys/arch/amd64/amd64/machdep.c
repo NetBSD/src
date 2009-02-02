@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.4.4 2008/11/20 03:45:29 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.4.5 2009/02/02 21:25:21 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.4 2008/11/20 03:45:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.5 2009/02/02 21:25:21 snj Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1921,6 +1921,35 @@ cpu_reset(void)
 	delay(100000);
 	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
+
+ 	/*
+	 * Attempt to force a reset via the Reset Control register at
+	 * I/O port 0xcf9.  Bit 2 forces a system reset when it
+	 * transitions from 0 to 1.  Bit 1 selects the type of reset
+	 * to attempt: 0 selects a "soft" reset, and 1 selects a
+	 * "hard" reset.  We try a "hard" reset.  The first write sets
+	 * bit 1 to select a "hard" reset and clears bit 2.  The
+	 * second write forces a 0 -> 1 transition in bit 2 to trigger
+	 * a reset.
+	 */
+	outb(0xcf9, 0x2);
+	outb(0xcf9, 0x6);
+	DELAY(500000);  /* wait 0.5 sec to see if that did it */
+
+	/*
+	 * Attempt to force a reset via the Fast A20 and Init register
+	 * at I/O port 0x92.  Bit 1 serves as an alternate A20 gate.
+	 * Bit 0 asserts INIT# when set to 1.  We are careful to only
+	 * preserve bit 1 while setting bit 0.  We also must clear bit
+	 * 0 before setting it if it isn't already clear.
+	 */
+	b = inb(0x92);
+	if (b != 0xff) {
+		if ((b & 0x1) != 0)
+			outb(0x92, b & 0xfe);
+		outb(0x92, b | 0x1);
+		DELAY(500000);  /* wait 0.5 sec to see if that did it */
+	}
 
 	/*
 	 * Try to cause a triple fault and watchdog reset by making the IDT
