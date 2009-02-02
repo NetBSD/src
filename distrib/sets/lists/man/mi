@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1120 2009/01/30 04:14:20 agc Exp $
+# $NetBSD: mi,v 1.1121 2009/02/02 20:47:20 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -64,7 +64,7 @@
 ./usr/share/man/cat1/audioctl.0			man-audio-catman	.cat
 ./usr/share/man/cat1/audioplay.0		man-audio-catman	.cat
 ./usr/share/man/cat1/audiorecord.0		man-audio-catman	.cat
-./usr/share/man/cat1/audit-packages.0		man-pkgutil-catman	.cat
+./usr/share/man/cat1/audit-packages.0		man-obsolete		obsolete
 ./usr/share/man/cat1/awk.0			man-util-catman		.cat
 ./usr/share/man/cat1/banner.0			man-util-catman		.cat
 ./usr/share/man/cat1/basename.0			man-util-catman		.cat
@@ -130,7 +130,7 @@
 ./usr/share/man/cat1/dnskeygen.0		man-obsolete		obsolete
 ./usr/share/man/cat1/dnsquery.0			man-obsolete		obsolete
 ./usr/share/man/cat1/domainname.0		man-nis-catman		.cat
-./usr/share/man/cat1/download-vulnerability-list.0	man-pkgutil-catman	.cat
+./usr/share/man/cat1/download-vulnerability-list.0	man-obsolete		obsolete
 ./usr/share/man/cat1/dtmfdecode.0		man-isdn-catman		.cat
 ./usr/share/man/cat1/du.0			man-util-catman		.cat
 ./usr/share/man/cat1/echo.0			man-util-catman		.cat
@@ -240,7 +240,7 @@
 ./usr/share/man/cat1/less.0			man-util-catman		.cat
 ./usr/share/man/cat1/lesskey.0			man-util-catman		.cat
 ./usr/share/man/cat1/limit.0			man-util-catman		.cat
-./usr/share/man/cat1/linkfarm.0			man-pkgutil-catman	.cat
+./usr/share/man/cat1/linkfarm.0			man-obsolete		obsolete
 ./usr/share/man/cat1/ln.0			man-util-catman		.cat
 ./usr/share/man/cat1/locale.0			man-util-catman		.cat
 ./usr/share/man/cat1/locate.0			man-util-catman		.cat
@@ -367,7 +367,7 @@
 ./usr/share/man/cat1/pkg_create.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat1/pkg_delete.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat1/pkg_info.0			man-pkgutil-catman	.cat
-./usr/share/man/cat1/pkg_view.0			man-pkgutil-catman	.cat
+./usr/share/man/cat1/pkg_view.0			man-obsolete		obsolete
 ./usr/share/man/cat1/pkill.0			man-util-catman		.cat
 ./usr/share/man/cat1/pmap.0			man-util-catman		.cat
 ./usr/share/man/cat1/pmc.0			man-util-catman		.cat
@@ -1685,7 +1685,7 @@
 ./usr/share/man/cat5/amd.conf.0			man-amd-catman		.cat
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
 ./usr/share/man/cat5/atf-formats.0		man-atf-catman		.cat
-./usr/share/man/cat5/audit-packages.conf.0	man-pkgutil-catman	.cat
+./usr/share/man/cat5/audit-packages.conf.0	man-obsolete		obsolete
 ./usr/share/man/cat5/bluetooth.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/boot.cfg.0			man-sys-catman		.cat
@@ -2725,7 +2725,7 @@
 ./usr/share/man/html1/audioctl.html		man-audio-htmlman	html
 ./usr/share/man/html1/audioplay.html		man-audio-htmlman	html
 ./usr/share/man/html1/audiorecord.html		man-audio-htmlman	html
-./usr/share/man/html1/audit-packages.html	man-pkgutil-htmlman	html
+./usr/share/man/html1/audit-packages.html	man-obsolete		obsolete
 ./usr/share/man/html1/awk.html			man-util-htmlman	html
 ./usr/share/man/html1/banner.html		man-util-htmlman	html
 ./usr/share/man/html1/basename.html		man-util-htmlman	html
@@ -2789,7 +2789,7 @@
 ./usr/share/man/html1/dirname.html		man-util-htmlman	html
 ./usr/share/man/html1/dirs.html			man-util-htmlman	html
 ./usr/share/man/html1/domainname.html		man-nis-htmlman		html
-./usr/share/man/html1/download-vulnerability-list.html	man-pkgutil-htmlman	html
+./usr/share/man/html1/download-vulnerability-list.html	man-obsolete		obsolete
 ./usr/share/man/html1/dtmfdecode.html		man-isdn-htmlman	html
 ./usr/share/man/html1/du.html			man-util-htmlman	html
 ./usr/share/man/html1/echo.html			man-util-htmlman	html
@@ -2886,7 +2886,7 @@
 ./usr/share/man/html1/less.html			man-util-htmlman	html
 ./usr/share/man/html1/lesskey.html		man-util-htmlman	html
 ./usr/share/man/html1/limit.html		man-util-htmlman	html
-./usr/share/man/html1/linkfarm.html		man-pkgutil-htmlman	html
+./usr/share/man/html1/linkfarm.html		man-obsolete		obsolete
 ./usr/share/man/html1/ln.html			man-util-htmlman	html
 ./usr/share/man/html1/locale.html		man-util-htmlman	html
 ./usr/share/man/html1/locate.html		man-util-htmlman	html
@@ -3010,7 +3010,7 @@
 ./usr/share/man/html1/pkg_create.html		man-pkgutil-htmlman	html
 ./usr/share/man/html1/pkg_delete.html		man-pkgutil-htmlman	html
 ./usr/share/man/html1/pkg_info.html		man-pkgutil-htmlman	html
-./usr/share/man/html1/pkg_view.html		man-pkgutil-htmlman	html
+./usr/share/man/html1/pkg_view.html		man-obsolete		obsolete
 ./usr/share/man/html1/pkill.html		man-util-htmlman	html
 ./usr/share/man/html1/pmap.html			man-util-htmlman	html
 ./usr/share/man/html1/pmc.html			man-util-htmlman	html
@@ -4185,7 +4185,7 @@
 ./usr/share/man/html5/amd.conf.html		man-amd-htmlman		html
 ./usr/share/man/html5/ar.html			man-sys-htmlman		html
 ./usr/share/man/html5/atf-formats.html		man-atf-htmlman		html
-./usr/share/man/html5/audit-packages.conf.html	man-pkgutil-htmlman	html
+./usr/share/man/html5/audit-packages.conf.html	man-obsolete		obsolete
 ./usr/share/man/html5/body_checks.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/boot.cfg.html		man-sys-htmlman		html
 ./usr/share/man/html5/bootparams.html		man-bootserver-htmlman	html
@@ -5002,7 +5002,7 @@
 ./usr/share/man/man1/audioctl.1			man-audio-man		.man
 ./usr/share/man/man1/audioplay.1		man-audio-man		.man
 ./usr/share/man/man1/audiorecord.1		man-audio-man		.man
-./usr/share/man/man1/audit-packages.1		man-pkgutil-man		.man
+./usr/share/man/man1/audit-packages.1		man-obsolete		obsolete
 ./usr/share/man/man1/awk.1			man-util-man		.man
 ./usr/share/man/man1/banner.1			man-util-man		.man
 ./usr/share/man/man1/basename.1			man-util-man		.man
@@ -5068,7 +5068,7 @@
 ./usr/share/man/man1/dnskeygen.1		man-obsolete		obsolete
 ./usr/share/man/man1/dnsquery.1			man-obsolete		obsolete
 ./usr/share/man/man1/domainname.1		man-nis-man		.man
-./usr/share/man/man1/download-vulnerability-list.1	man-pkgutil-man		.man
+./usr/share/man/man1/download-vulnerability-list.1	man-obsolete		obsolete
 ./usr/share/man/man1/dtmfdecode.1		man-isdn-man		.man
 ./usr/share/man/man1/du.1			man-util-man		.man
 ./usr/share/man/man1/echo.1			man-util-man		.man
@@ -5178,7 +5178,7 @@
 ./usr/share/man/man1/less.1			man-util-man		.man
 ./usr/share/man/man1/lesskey.1			man-util-man		.man
 ./usr/share/man/man1/limit.1			man-util-man		.man
-./usr/share/man/man1/linkfarm.1			man-pkgutil-man		.man
+./usr/share/man/man1/linkfarm.1			man-obsolete		obsolete
 ./usr/share/man/man1/ln.1			man-util-man		.man
 ./usr/share/man/man1/locale.1			man-util-man		.man
 ./usr/share/man/man1/locate.1			man-util-man		.man
@@ -5305,7 +5305,7 @@
 ./usr/share/man/man1/pkg_create.1		man-pkgutil-man		.man
 ./usr/share/man/man1/pkg_delete.1		man-pkgutil-man		.man
 ./usr/share/man/man1/pkg_info.1			man-pkgutil-man		.man
-./usr/share/man/man1/pkg_view.1			man-pkgutil-man		.man
+./usr/share/man/man1/pkg_view.1			man-obsolete		obsolete
 ./usr/share/man/man1/pkill.1			man-util-man		.man
 ./usr/share/man/man1/pmap.1			man-util-man		.man
 ./usr/share/man/man1/pmc.1			man-util-man		.man
@@ -6623,7 +6623,7 @@
 ./usr/share/man/man5/amd.conf.5			man-amd-man		.man
 ./usr/share/man/man5/ar.5			man-sys-man		.man
 ./usr/share/man/man5/atf-formats.5		man-atf-man		.man
-./usr/share/man/man5/audit-packages.conf.5	man-pkgutil-man		.man
+./usr/share/man/man5/audit-packages.conf.5	man-obsolete		obsolete
 ./usr/share/man/man5/bluetooth.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/boot.cfg.5			man-sys-man		.man
