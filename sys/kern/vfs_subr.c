@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.357.4.2 2009/02/02 03:42:08 snj Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357.4.3 2009/02/02 19:53:34 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.2 2009/02/02 03:42:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.3 2009/02/02 19:53:34 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1302,7 +1302,7 @@ vput(vnode_t *vp)
 
 /*
  * Try to drop reference on a vnode.  Abort if we are releasing the
- * last reference.
+ * last reference.  Note: this _must_ succeed if not the last reference.
  */
 static inline bool
 vtryrele(vnode_t *vp)
@@ -1334,7 +1334,8 @@ vrelel(vnode_t *vp, int flags)
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 	KASSERT(vp->v_freelisthd == NULL);
 
-	if (vp->v_op == dead_vnodeop_p && (vp->v_iflag & VI_CLEAN) == 0) {
+	if (__predict_false(vp->v_op == dead_vnodeop_p &&
+	    (vp->v_iflag & (VI_CLEAN|VI_XLOCK)) == 0)) {
 		vpanic(vp, "dead but not clean");
 	}
 
@@ -1348,8 +1349,10 @@ vrelel(vnode_t *vp, int flags)
 		return;
 	}
 	if (vp->v_usecount <= 0 || vp->v_writecount != 0) {
-		vpanic(vp, "vput: bad ref count");
+		vpanic(vp, "vrelel: bad ref count");
 	}
+
+	KASSERT((vp->v_iflag & VI_XLOCK) == 0);
 
 	/*
 	 * If not clean, deactivate the vnode, but preserve
