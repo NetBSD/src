@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23.4.1 2008/11/13 00:04:07 snj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23.4.2 2009/02/02 03:18:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -29,6 +29,8 @@
 #ifndef _SYS_CPU_H_
 #define _SYS_CPU_H_
 
+#ifndef _LOCORE
+
 #include <machine/cpu.h>
 
 #include <sys/lwp.h>
@@ -51,10 +53,6 @@ void cpu_need_resched(struct cpu_info *, int);
 #ifndef cpu_did_resched
 #define	cpu_did_resched(l)	/* nothing */
 #endif
-
-/* flags for cpu_need_resched */
-#define	RESCHED_IMMED		1
-#define	RESCHED_KPREEMPT	2
 
 #ifndef CPU_INFO_ITERATOR
 #define	CPU_INFO_ITERATOR		int
@@ -89,5 +87,12 @@ cpu_index(struct cpu_info *ci)
 {
 	return ci->ci_index;
 }
+
+#endif	/* !_LOCORE */
+
+/* flags for cpu_need_resched */
+#define	RESCHED_LAZY		0x01
+#define	RESCHED_IMMED		0x02
+#define	RESCHED_KPREEMPT	0x03
 
 #endif	/* !_SYS_CPU_H_ */
