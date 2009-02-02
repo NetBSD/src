@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.121 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.122 2009/02/02 14:00:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.121 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.122 2009/02/02 14:00:27 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.121 2009/01/11 02:45:54 christos Ex
 #include <sys/tty.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -353,12 +354,17 @@ spec_open(void *v)
 	specnode_t *sn;
 	specdev_t *sd;
 
+	u_int gen;
+	const char *name;
+	
 	l = curlwp;
 	vp = ap->a_vp;
 	dev = vp->v_rdev;
 	sn = vp->v_specnode;
 	sd = sn->sn_dev;
-
+	name = NULL;
+	gen = 0;
+	
 	/*
 	 * Don't allow open if fs is mounted -nodev.
 	 */
@@ -398,7 +404,22 @@ spec_open(void *v)
 		if (cdev_type(dev) == D_TTY)
 			vp->v_vflag |= VV_ISTTY;
 		VOP_UNLOCK(vp, 0);
-		error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
+		do {
+			gen = module_gen;
+			error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
+			if (error != ENXIO)
+				break;
+			
+			/* Get device name from devsw_conv array */
+			if ((name = cdevsw_getname(major(dev))) == NULL)
+				break;
+			
+			/* Try to autoload device module */
+			mutex_enter(&module_lock);
+			(void) module_autoload(name, MODULE_CLASS_DRIVER);
+			mutex_exit(&module_lock);
+		} while (gen != module_gen);
+
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -425,8 +446,26 @@ spec_open(void *v)
 		sd->sd_opencnt = 1;
 		sd->sd_bdevvp = vp;
 		mutex_exit(&device_lock);
+		do {
+			gen = module_gen;
+			error = bdev_open(dev, ap->a_mode, S_IFBLK, l);
+			if (error != ENXIO)
+				break;
 
-		error = bdev_open(dev, ap->a_mode, S_IFBLK, l);
+			/* Get device name from devsw_conv array */
+			if ((name = bdevsw_getname(major(dev))) == NULL)
+				break;
+
+			VOP_UNLOCK(vp, 0);
+
+                        /* Try to autoload device module */
+			mutex_enter(&module_lock);
+			(void) module_autoload(name, MODULE_CLASS_DRIVER);
+			mutex_exit(&module_lock);
+			
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		} while (gen != module_gen);
+
 		break;
 
 	case VNON:
