@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.254.2.2 2009/02/02 19:32:39 snj Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.254.2.3 2009/02/02 19:33:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.254.2.2 2009/02/02 19:32:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.254.2.3 2009/02/02 19:33:32 snj Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -129,7 +129,6 @@ kcondvar_t	lbolt;			/* once a second sleep address */
 /* Preemption event counters */
 static struct evcnt kpreempt_ev_crit;
 static struct evcnt kpreempt_ev_klock;
-static struct evcnt kpreempt_ev_ipl;
 static struct evcnt kpreempt_ev_immed;
 
 /*
@@ -154,8 +153,6 @@ sched_init(void)
 	   "kpreempt", "defer: critical section");
 	evcnt_attach_dynamic(&kpreempt_ev_klock, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: kernel_lock");
-	evcnt_attach_dynamic(&kpreempt_ev_ipl, EVCNT_TYPE_MISC, NULL,
-	   "kpreempt", "defer: IPL");
 	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "immediate");
 
@@ -377,7 +374,6 @@ preempt(void)
  */
 static char	in_critical_section;
 static char	kernel_lock_held;
-static char	spl_raised;
 static char	is_softint;
 
 bool
@@ -398,15 +394,6 @@ kpreempt(uintptr_t where)
 			 * context switch.
 			 */
 			l->l_dopreempt = 0;
-			return true;
-		}
-		if (cpu_intr_p()) {
-			/*
-			 * Don't record a failure event if handling
-			 * a hardware interrupt.  We're probably
-			 * here from _kernel_unlock().  The
-			 * preemption will be processed at EOI.
-			 */
 			return true;
 		}
 		if (__predict_false((l->l_flag & LW_IDLE) != 0)) {
@@ -446,10 +433,6 @@ kpreempt(uintptr_t where)
 			 * interrupt to retry later.
 			 */
 			splx(s);
-			if ((dop & DOPREEMPT_COUNTED) == 0) {
-				kpreempt_ev_ipl.ev_count++;
-			}
-			failed = (uintptr_t)&spl_raised;
 			break;
 		}
 		/* Do it! */
