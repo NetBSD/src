@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.289.4.1 2009/02/02 18:28:23 snj Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.289.4.2 2009/02/02 19:46:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289.4.1 2009/02/02 18:28:23 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289.4.2 2009/02/02 19:46:11 snj Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1704,9 +1704,6 @@ sigchecktrace(void)
  *
  * We will also return -1 if the process is exiting and the current LWP must
  * follow suit.
- *
- * Note that we may be called while on a sleep queue, so MUST NOT sleep.  We
- * can switch away, though.
  */
 int
 issignal(struct lwp *l)
