@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.263.4.1 2008/12/27 18:26:22 snj Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.263.4.2 2009/02/02 18:31:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.1 2008/12/27 18:26:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.2 2009/02/02 18:31:37 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4475,7 +4475,6 @@ uvmspace_fork(struct vmspace *vm1)
 					     old_entry->end,
 					     old_entry->protection &
 					     ~VM_PROT_WRITE);
-				pmap_update(old_map->pmap);
 			      }
 			      old_entry->etype |= UVM_ET_NEEDSCOPY;
 			  }
@@ -4485,6 +4484,7 @@ uvmspace_fork(struct vmspace *vm1)
 		old_entry = old_entry->next;
 	}
 
+	pmap_update(old_map->pmap);
 	vm_map_unlock(old_map);
 
 #ifdef SYSVSHM
