@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2008/10/01 07:53:27 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2009/02/02 20:47:21 joerg Exp $
 
-SUBDIR=		audit-packages bpm pkg_add pkg_admin pkg_create \
-		pkg_delete pkg_info pkg_view
+SUBDIR=		bpm pkg_add pkg_admin pkg_create \
+		pkg_delete pkg_info
 
 .include <bsd.subdir.mk>
