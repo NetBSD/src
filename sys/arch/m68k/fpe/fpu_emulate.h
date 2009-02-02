@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.12.88.1 2009/02/02 00:32:23 snj Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.12.88.2 2009/02/02 00:33:48 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -39,7 +39,7 @@
 #include <sys/time.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
-#include <machine/fpreg.h>
+#include <m68k/fpreg.h>
 
 /*
  * Floating point emulator (tailored for SPARC/modified for m68k, but
