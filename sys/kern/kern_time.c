@@ -1,11 +1,11 @@
-/*	$NetBSD: kern_time.c,v 1.155 2008/10/16 18:21:45 wrstuden Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.155.4.1 2009/02/02 22:10:39 snj Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christopher G. Demetriou.
+ * by Christopher G. Demetriou, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.155 2008/10/16 18:21:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.155.4.1 2009/02/02 22:10:39 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1440,6 +1440,7 @@ timer_intr(void *cookie)
 	struct ptimer *pt;
 	proc_t *p;
 	
+	mutex_enter(proc_lock);
 	mutex_spin_enter(&timer_lock);
 	while ((pt = TAILQ_FIRST(&timer_queue)) != NULL) {
 		TAILQ_REMOVE(&timer_queue, pt, pt_chain);
@@ -1471,12 +1472,9 @@ timer_intr(void *cookie)
 		pt->pt_poverruns = pt->pt_overruns;
 		pt->pt_overruns = 0;
 		mutex_spin_exit(&timer_lock);
-
-		mutex_enter(proc_lock);
 		kpsignal(p, &ksi, NULL);
-		mutex_exit(proc_lock);
-
 		mutex_spin_enter(&timer_lock);
 	}
 	mutex_spin_exit(&timer_lock);
+	mutex_exit(proc_lock);
 }
