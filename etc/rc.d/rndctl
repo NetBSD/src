@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rndctl,v 1.1 2009/01/04 12:10:30 apb Exp $
+# $NetBSD: rndctl,v 1.2 2009/02/02 09:24:47 apb Exp $
 #
 
 # PROVIDE: rndctl
@@ -56,9 +56,11 @@ rndctl_startcmd()
 					# Then perform the command with the
 					# specified device or type name.
 					#
+					# Note that -d/-t flag must be last.
+					#
 					case "${flags}" in
 					*[cCeE]*) ;;
-					*)	flags="${flags} -c -e" ;;
+					*)	flags="-c -e ${flags}" ;;
 					esac
 					case "${flags}" in
 					*[dt]*) ;;
