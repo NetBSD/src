@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.39 2008/10/18 13:38:42 martin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.39.4.1 2009/02/02 00:48:56 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.39 2008/10/18 13:38:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.39.4.1 2009/02/02 00:48:56 snj Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.39 2008/10/18 13:38:42 martin Exp 
 
 #include <m68k/m68k.h>
 #include <m68k/saframe.h>
+#include <m68k/fpreg.h>
 
 extern short exframesize[];
 struct fpframe m68k_cached_fpu_idle_frame;
@@ -136,6 +137,23 @@ int sigpid = 0;
 #define FPFRAME_IS_NULL(fp) \
 	    (((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL)
 #endif
+
+/* convert 68881 %fpsr code into siginfo ksi_code */
+u_int
+fpsr2siginfocode(u_int fpsr)
+{
+	if (fpsr & FPSR_DZ)
+		return FPE_FLTDIV;
+	if (fpsr & FPSR_UNFL)
+		return FPE_FLTUND;
+	if (fpsr & FPSR_OVFL)
+		return FPE_FLTOVF;
+	if (fpsr & FPSR_OPERR)
+		return FPE_FLTINV;
+	if (fpsr & (FPSR_INEX1|FPSR_INEX2))
+		return FPE_FLTRES;
+	return 0;
+}
 
 void *
 getframe(struct lwp *l, int sig, int *onstack)
