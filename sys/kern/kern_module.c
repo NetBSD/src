@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.24 2008/10/22 11:19:15 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.24.4.1 2009/02/02 22:15:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.24 2008/10/22 11:19:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.24.4.1 2009/02/02 22:15:15 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,9 @@ module_autoload(const char *filename, modclass_t class)
 	int error;
 
 	KASSERT(mutex_owned(&module_lock));
+
+	/* Not yet for 5.0. */
+	return EPERM;
 
 	/* Authorize. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
