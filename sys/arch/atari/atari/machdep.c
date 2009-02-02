@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150.6.1 2009/01/08 22:19:14 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.6.2 2009/02/02 03:30:32 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.6.1 2009/01/08 22:19:14 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.6.2 2009/02/02 03:30:32 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -573,7 +573,7 @@ dumpsys(void)
 		 */
 		n = nbytes - i;
 		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+			printf_nolog("%d ", n / (1024 * 1024));
 
 		/*
 		 * Limit transfer to BYTES_PER_DUMP

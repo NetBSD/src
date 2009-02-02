@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.307 2008/10/15 06:51:17 wrstuden Exp $ */
+/* $NetBSD: machdep.c,v 1.307.4.1 2009/02/02 03:30:32 snj Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307.4.1 2009/02/02 03:30:32 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1251,7 +1251,8 @@ dumpsys()
 
 			/* Print out how many MBs we to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%ld ", totalbytesleft / (1024 * 1024));
+				printf_nolog("%ld ",
+				    totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;
