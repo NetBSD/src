@@ -1,4 +1,4 @@
-/*	$NetBSD: pl.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: pl.c,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
-#else
-__RCSID("$NetBSD: pl.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: pl.c,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -98,22 +92,18 @@ reorder(package_t *pkg, int dirc)
 	char  **dirv;
 	int     i;
 
-	if ((dirv = (char **) calloc(dirc, sizeof(char *))) == (char **) NULL) {
-		warn("No directory re-ordering will be done");
-	} else {
-		for (p = pkg->head, i = 0; p; p = p->next) {
-			if (p->type == PLIST_DIR_RM) {
-				dirv[i++] = p->name;
-			}
-		}
-		qsort(dirv, dirc, sizeof(char *), dircmp);
-		for (p = pkg->head, i = 0; p; p = p->next) {
-			if (p->type == PLIST_DIR_RM) {
-				p->name = dirv[i++];
-			}
-		}
-		(void) free(dirv);
+	dirv = xcalloc(dirc, sizeof(char *));
+
+	for (p = pkg->head, i = 0; p; p = p->next) {
+		if (p->type == PLIST_DIR_RM)
+			dirv[i++] = p->name;
 	}
+	qsort(dirv, dirc, sizeof(char *), dircmp);
+	for (p = pkg->head, i = 0; p; p = p->next) {
+		if (p->type == PLIST_DIR_RM)
+			p->name = dirv[i++];
+	}
+	free(dirv);
 }
 
 /*
@@ -169,17 +159,11 @@ check_list(package_t *pkg, const char *PkgName)
 					p->name);
 
 				s = pkgdb_retrieve(t);
-#ifdef PKGDB_DEBUG
-				fprintf(stderr, "pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s);	/* pkgdb-debug - HF */
-#endif
 				if (s && PlistOnly)
 					warnx("Overwriting %s - "
 					    "pkg %s bogus/conflicting?", t, s);
 				else {
 					pkgdb_store(t, PkgName);
-#ifdef PKGDB_DEBUG
-					fprintf(stderr, "pkgdb_store(\"%s\", \"%s\")\n", t, PkgName);	/* pkgdb-debug - HF */
-#endif
 				}
 			}
 
@@ -210,7 +194,7 @@ check_list(package_t *pkg, const char *PkgName)
 				}
 				target[SymlinkHeaderLen + cc] = 0x0;
 				tmp = new_plist_entry();
-				tmp->name = strdup(target);
+				tmp->name = xstrdup(target);
 				tmp->type = PLIST_COMMENT;
 				tmp->next = p->next;
 				tmp->prev = p;
@@ -231,7 +215,7 @@ check_list(package_t *pkg, const char *PkgName)
 				    sizeof(buf));
 				if (MD5File(name, &buf[ChecksumHeaderLen]) != (char *) NULL) {
 					tmp = new_plist_entry();
-					tmp->name = strdup(buf);
+					tmp->name = xstrdup(buf);
 					tmp->type = PLIST_COMMENT;	/* PLIST_MD5 - HF */
 					tmp->next = p->next;
 					tmp->prev = p;
