@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.87 2009/02/02 03:44:50 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.88 2009/02/02 22:24:34 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3315,9 +3315,9 @@ sys/arch/i386/i386/lock_stubs.S			1.22
 	[ad, ticket #342]
 
 common/lib/libc/arch/i386/atomic/atomic.S	1.14
-sys/arch/x86/include/cpufunc.h			1.9
+sys/arch/x86/include/cpufunc.h			1.9, 1.10
 sys/arch/x86/x86/cpu.c				1.60
-sys/arch/x86/x86/identcpu.c			1.12
+sys/arch/x86/x86/identcpu.c			1.12, 1.13
 sys/arch/x86/x86/patch.c			1.15
 
 	- Patch in atomic_cas_64() twice. The first patch is early and
@@ -3326,7 +3326,7 @@ sys/arch/x86/x86/patch.c			1.15
 	- Fix the i486 atomic_cas_64() to not unconditionally enable
 	interrupts.
 	Fixes PR kern/40213.
-	[ad, ticket #343]
+	[ad/bouyer, ticket #343]
 
 sys/nfs/nfs_node.c				1.108
 sys/nfs/nfsnode.h				1.69, 1.70
@@ -3391,4 +3391,328 @@ sys/kern/vfs_subr.c				1.360
 	v_interlock.  FS code could check their values while scrolling
 	through mnt_vnodelist.
 	[ad, ticket #350]
+
+sys/ufs/ufs/ufs_quota.c				1.61
+
+	Print a warning message and return EOPNOTSUPP if the user tries
+	to enable quotas on a file system that is using logging.
+	[ad, ticket #351]
+
+share/man/man7/sysctl.7				1.18
+
+	Improve wording.
+	[ad, ticket #352]
+
+sys/kern/kern_sig.c				1.293
+sys/kern/kern_synch.c				1.256
+
+	Partial fix for the "gdb + threads = panic" problem.  Also, fix
+	a revivesa merge botch.  Addresses PR kern/36183.
+	[ad, ticket #353]
+
+sys/uvm/uvm_fault.c				1.126
+sys/uvm/uvm_map.c				1.268
+
+	Move a couple of calls to pmap_update().
+	[ad, ticket #354]
+
+share/man/man9/kmem_alloc.9			1.7
+
+	Add a bunch of new text, in particular:
+	Use of KM_NOSLEEP is strongly discouraged as it can create
+	transient, hard to debug failures that occur when the system
+	is under memory pressure.
+        In situations where it is not possible to sleep, for example
+	because locks are held by the caller, the code path should be
+	restructured to allow the allocation to be made in another place.
+	[ad, ticket #356]
+
+sys/uvm/uvm_amap.c				patch
+sys/uvm/uvm_pdaemon.c				patch
+
+	Make adjustment of some critical variables atomic.
+	[ad, ticket #357]
+
+sys/kern/kern_descrip.c				1.185
+
+	- Fix a bug where we trashed descriptor zero in the old open
+	files array while ironically trying to preserve the same during
+	copy. Would only have occurred if a multithreaded program
+	expanded the descriptor table and, within a tiny window of
+	exposure, another thread in the program tried to access
+	descriptor zero.
+	- Convert to use kmem_alloc/kmem_free.
+	[ad, ticket #358]
+
+sys/kern/kern_synch.c				1.257, 1.258
+
+	Don't count kpreempt deferrals due to raised IPL. It's not that
+	meaningful.
+	[ad, ticket #360]
+
+share/man/man9/kpreempt.9			1.2
+
+	Sync with reality.
+	[ad, ticket #361]
+
+sys/arch/x86/x86/tsc.c				1.21-1.24
+
+	Fix bugs with TSC sync: spuriously reported a dud TSC.
+	[ad, ticket #362]
+
+sys/sys/mman.h					1.42
+
+	Put mremap into the _NETBSD_SOURCE section.
+	[ad, ticket #363]
+
+sys/kern/kern_sig.c				1.294
+
+	Fix a comment.
+	[ad, ticket #364]
+
+sys/kern/kern_sig.c				1.292
+
+	sigchecktrace: process SIGKILL before everything else.
+	[ad, ticket #365]
+
+sys/kern/subr_prf.c				1.125
+
+	Don't try to sync if panicing.
+	[ad, ticket #366]
+
+sys/kern/vfs_subr.c				1.359
+
+	- vrelel: fix broken "dead but not clean" assertion. The vnode
+	can be dead and dirty if cleaning is in progress.
+	- Add an assertion, fix some text.
+	[ad, ticket #367]
+
+share/man/man9/malloc.9				1.45 via patch
+
+	Tweak text.
+	[ad, ticket #368]
+
+sys/kern/sysv_msg.c				1.61
+
+	Do not call put_type() but use copyout() when returning the
+	message segments to the user.
+	[njoly, ticket #369]
+
+sys/arch/atari/dev/zsvar.h			1.13
+sys/arch/atari/dev/zs.c				1.58
+
+	Use 8KB buffer for ZLRB_RING_SIZE to prevent overruns
+	Remove sicallback to use the MI softint(9) APIs directly.
+	[tjam, ticket #370]
+
+sys/arch/x86/x86/cpu.c				1.59
+
+	Top was displaying the wrong cpu numbers, fix it.
+	[ad, ticket #371]
+
+sys/kern/kern_synch.c				1.259
+
+	Fix for negative runtime; assert that signaling not a
+	system-process.
+	[rmind, ticket #372]
+
+lib/librt/pset.3				1.9, 1.10
+
+	Improve description of pset(3).
+	[rmind, ticket #373]
+
+lib/libc/sys/Makefile.inc			1.200
+
+	__posix_fadvise50() does not use the standard errno behaviour,
+	but returns the error value itself - so move it from ASM to NOERR.
+	Fixes the sys/fs/posix_fadvise regression test.
+	[martin, ticket #374]
+
+sys/dev/ic/icpvar.h				1.11
+sys/dev/ic/ld_icp.c				1.23
+
+	As ic_ident is from 2 to ICP_NCCBS + 2, we need more than just
+	ICP_NCCBS sense structures in icp_scr map; otherwise we'll compute
+	an offset past the allocated memory (and past the end of the dmap
+	map) from the ic_ident.  To be safe use ICP_NCCB_RESERVE instead
+	of 2.
+	One more device_t/softc split fallout (a missing device_private()).
+	[bouyer, ticket #375]
+
+dist/wpa/src/drivers/driver_bsd.c		1.5
+
+	Use rssi for level (instead of qual) in scan result.
+	Fixes PR#39364.
+	[jmcneill, ticket #376]
+
+lib/libpthread/pthread_barrier.c		1.19
+
+	pthread_barrier: Fix numerous stupid bugs.
+	[ad, ticket #379]
+
+lib/libc/gen/raise.c				1.8
+
+	Change raise(3) to be thread-aware - send the signal to current LWP.
+	Fixes PR/40341.
+	[rmind, ticket #380]
+
+sys/dev/acpi/acpi.c				1.123
+sys/dev/acpi/acpica/OsdSchedule.c		1.9
+sys/dev/acpi/acpica/OsdSynch.c			1.11
+
+	Switch to polling mode after the acpi(4) device has been suspended
+	as interrupts will be disabled later on and we may still need to
+	execute AML that tries to sleep or wait on a semaphore.
+	Addresses PR kern/38817.
+	[jmcneill, ticket #381]
+
+sys/dev/usb/uvideo.c				1.26
+
+	When setting up isochronous transfers, fix a typo in an
+	out-of-memory test that could lead to a NULL pointer dereference.
+	[jmcneill, ticket #382]
+
+sys/fs/msdosfs/msdosfs_lookup.c			1.17
+
+	Now empty DOS filesystems default to long file names. Non-empty
+	filesystems without traces of Win95 default to short file names.
+	[jmcneill, ticket #383]
+
+sys/dev/pci/if_bge.c				1.155
+
+	Make fibre cards, at least 5701 models, work, by initializing the
+	bge_ifmedia.ifm_media field, which is not done by ifmedia_set().
+	[he, ticket #384]
+
+lib/libc/arch/m68k/gen/isinfl.c			1.6
+
+	The explicit integer bit is "don't care" for infinity, and now
+	that it's included in ext_frach, it needs to be masked off when
+	testing for an infinity value.  Fixes the ieeefp/infinity
+	regression test on the 68060 which clears the explicity integer
+	bit when loading an infinity value.
+	[mhitch, ticket #385]
+
+sys/dev/eisa/if_ep_eisa.c			1.40
+
+	Add id for 5090 variant. Fixes PR kern/40524.
+	[martin, ticket #387]
+
+sys/dev/pci/if_jme.c				1.6
+
+	Avoid an interrupt storm.
+	[bouyer, ticket #388]
+
+sbin/newfs_msdos/newfs_msdos.c			1.29
+
+	Do not erroneously leave a truncated 16-bit sector count on
+	"large" (>=32MB) file systems when fetching the geometry from
+	the medium.  This confuses some software (which is to say Windows)
+	when a device newfs(8)ed under NetBSD is transported to another
+	system.
+	[mrg, ticket #389]
+
+sys/nfs/nfs_socket.c				1.176
+
+	Actually enforce the maximum timeout (60s by default) rather
+	than backing off to 256*SRTT.  This is why it sometimes could take
+	hours for a NFS mount to come back when the server returned.
+	[mrg, ticket #390]
+
+external/mit/xorg/bin/xft-config/Makefile	1.2
+
+	Fill in cflags for freetype.  Make xft-config.in depend on
+	Makefile, so that changes to the Makefile cause rebuilds.
+	Fixes PR#40285.
+	[mrg, ticket #391]
+
+usr.sbin/syslogd/syslogd.8			patch
+
+	Fix typo: LOT_NOTICE -> LOG_NOTICE.
+	[bouyer, ticket #392]
+
+sys/kern/uipc_socket.c				1.185
+sys/kern/uipc_socket2.c				1.101
+sys/kern/uipc_syscalls.c			1.135
+sys/miscfs/portal/portal_vnops.c		1.81
+sys/netsmb/smb_trantcp.c			1.40
+sys/nfs/nfs_socket.c				1.177
+sys/sys/socketvar.h				1.118
+
+	Restore the pre socket locking patch signal behavior.  This
+	fixes a busy-loop in nfs_connect.
+	[yamt, ticket #393]
+
+sys/kern/sys_pipe.c				1.105
+
+	Fix inverted POLL_ directions.
+	[yamt, ticket #394]
+
+sys/ufs/ffs/ffs_vnops.c				1.105-1.109
+
+	Fix various problems when /dev is not on an ffs file system.
+	[ad, ticket #395]
+
+sys/arch/amd64/amd64/machdep.c			1.120-1.123
+sys/arch/i386/i386/machdep.c			1.655-1.658
+sys/arch/x86/include/cpufunc.h			1.11
+sys/arch/x86/x86/x86_machdep.c			1.28, 1.29 via patch
+
+	Fix PR kern/40488: Unable to reboot Dell PE 2970.
+	[ad, ticket #396]
+
+share/man/man9/kthread.9			1.18
+sys/kern/kern_kthread.c				1.25
+sys/sys/kthread.h				1.8
+
+- Allow creating timeshard kthreads. To be used to fix the RAIDframe
+  parity rewrite issue.
+- Create kthreads in the SCHED_RR class by default, not SCHED_FIFO.
+	[ad, ticket #397]
+
+regress/lib/libc/atexit/atexit.c		1.2
+
+	signal(getpid(), SIGFOO) -> raise(SIGFOO)
+	[ad, ticket #398]
+
+lib/libc/misc/stack_protector.c			1.3
+lib/libc/stdlib/abort.c				1.13
+lib/libc/thread-stub/thread-stub.c		1.21
+
+	Make threaded programs die correctly:
+	kill(getpid(), SIGFOO) -> raise(SIGFOO)
+	[ad, ticket #399]
+
+lib/libc/gen/raise.3				1.8
+
+	Update for SUSv2 compliance.
+	[ad, ticket #400]
+
+sys/kern/kern_time.c				1.158
+
+	timer_intr: hold proc_lock across the loop, otherwise the process
+	we are about to signal could disappear.
+	[ad, ticket #401]
+
+sys/arch/amd64/conf/GENERIC			1.237
+sys/arch/i386/conf/GENERIC			1.924
+
+	Enable BUFQ_PRIOCSCAN by default.
+	[ad, ticket #402]
+
+sys/kern/kern_module.c				patch
+
+	Disable module autoload in 5.0. It's not well enough tested with
+	this version of the code.
+	[ad, ticket #403]
+
+sys/arch/macppc/stand/ofwboot/boot.c		1.23
+sys/arch/macppc/stand/ofwboot/boot.h		1.3
+sys/arch/macppc/stand/ofwboot/ofdev.c		1.22
+sys/arch/macppc/stand/ofwboot/ofdev.h		1.6
+sys/arch/macppc/stand/ofwboot/version		1.12
+sys/arch/x68k/stand/boot/boot.c			1.14
+
+	Fix PR install/38943 on macppc and x68k.
+	[tsutsui, ticket #407]
 
