@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.29 2008/09/02 02:25:42 lukem Exp $
+# $NetBSD: mi,v 1.29.2.1 2009/02/02 00:03:54 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8429,6 +8429,8 @@
 ./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-9.pcf.gz	xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/10x20-KOI8-R.pcf.gz	xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/12x13ja.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/misc/12x24.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/misc/12x24rk.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/18x18ja.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/18x18ko.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/4x6-ISO8859-1.pcf.gz	xfont	share,xorg
@@ -8683,6 +8685,8 @@
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-7.pcf.gz	xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-9.pcf.gz	xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/8x13O.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/misc/8x16.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/misc/8x16rk.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/9x15-ISO8859-1.pcf.gz	xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/9x15-ISO8859-10.pcf.gz	xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/9x15-ISO8859-11.pcf.gz	xfont	share,xorg
