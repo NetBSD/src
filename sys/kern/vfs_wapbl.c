@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.19 2009/02/02 00:07:06 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.20 2009/02/02 00:10:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.19 2009/02/02 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.20 2009/02/02 00:10:18 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -172,7 +172,7 @@ struct wapbl {
 #endif
 
 	daddr_t *wl_deallocblks;/* l:	address of block */
-	int *wl_dealloclens;	/* l:	size of block (fragments, kom ihåg) */
+	int *wl_dealloclens;	/* l:	size of block */
 	int wl_dealloccnt;	/* l:	total count */
 	int wl_dealloclim;	/* l:	max count */
 
