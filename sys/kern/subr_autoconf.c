@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.163 2008/09/07 22:36:36 cube Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.163.4.1 2009/02/02 02:38:32 snj Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163 2008/09/07 22:36:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163.4.1 2009/02/02 02:38:32 snj Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -479,9 +479,6 @@ configure(void)
 
 	/* Get the threads going and into any sleeps before continuing. */
 	yield();
-
-	/* Lock the kernel on behalf of lwp0. */
-	KERNEL_LOCK(1, NULL);
 }
 
 /*
@@ -1804,6 +1801,8 @@ config_finalize(void)
 		cv_wait(&config_misc_cv, &config_misc_lock);
 	mutex_exit(&config_misc_lock);
 
+	KERNEL_LOCK(1, NULL);
+
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		(*pdev->pdev_attach)(pdev->pdev_count);
@@ -1822,6 +1821,8 @@ config_finalize(void)
 		TAILQ_REMOVE(&config_finalize_list, f, f_list);
 		kmem_free(f, sizeof(*f));
 	}
+
+	KERNEL_UNLOCK_ONE(NULL);
 
 	errcnt = aprint_get_error_count();
 	if ((boothowto & (AB_QUIET|AB_SILENT)) != 0 &&
