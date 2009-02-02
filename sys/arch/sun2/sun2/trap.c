@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 2008/10/15 06:51:19 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.36.4.1 2009/02/02 00:48:56 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36.4.1 2009/02/02 00:48:56 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -368,15 +368,10 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 	case T_FPERR|T_USER:	/* 68881 exceptions */
 		/*
 		 * We pass along the 68881 status register which locore stashed
-		 * in code for us.  Note that there is a possibility that the
-		 * bit pattern of this register will conflict with one of the
-		 * FPE_* codes defined in signal.h.  Fortunately for us, the
-		 * only such codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so there is
-		 * no clash.
+		 * in code for us.
 		 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 
 	case T_FPEMULI:		/* FPU faults in supervisor mode */

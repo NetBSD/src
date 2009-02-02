@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.23 2006/04/01 18:03:55 oster Exp $	*/
+/*	$NetBSD: signal.h,v 1.23.76.1 2009/02/02 00:48:56 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -100,6 +100,9 @@ struct sigstate {
 #define	SS_RTEFRAME	0x01
 #define	SS_FPSTATE	0x02
 #define	SS_USERREGS	0x04
+
+u_int fpsr2siginfocode(u_int fpsr);
+
 #endif
 
 #if defined(__M68K_SIGNAL_PRIVATE)
