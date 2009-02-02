@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.23.8.3 2009/02/02 21:45:18 snj Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.23.8.4 2009/02/02 23:47:35 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.23.8.3 2009/02/02 21:45:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.23.8.4 2009/02/02 23:47:35 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.23.8.3 2009/02/02 21:45:18 snj Exp
 #include <x86/pio.h>
 
 #include <dev/ic/i8042reg.h>
+#include <dev/isa/isareg.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
