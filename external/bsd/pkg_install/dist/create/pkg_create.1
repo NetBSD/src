@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd August 10, 2007
+.Dd July 28, 2008
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -514,13 +514,3 @@ refined it for
 .Nx
 wildcard dependency processing, pkgdb, pkg size recording etc.
 .El
-.Sh BUGS
-Hard links between files in a distribution must be bracketed by
-.Cm @cwd
-directives in order to be preserved as hard links when the package is
-extracted.
-They additionally must not end up being split between
-.Cm tar
-invocations due to exec argument-space limitations (this depends on the
-value returned by
-.Fn sysconf _SC_ARG_MAX ) .
