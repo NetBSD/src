@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.25 2008/03/18 20:46:36 cube Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.25.14.1 2009/02/02 00:57:44 snj Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.25 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.25.14.1 2009/02/02 00:57:44 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,9 +61,9 @@ CFATTACH_DECL_NEW(wdc_upc, sizeof(struct wdc_upc_softc),
 static int
 wdc_upc_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct upc_attach_args *ua = aux;
 
-	/* upc_submatch does it all anyway */
-	return 1;
+	return !strcmp(ua->ua_devtype, "wdc");
 }
 
 static void
