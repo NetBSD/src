@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.38 2009/02/02 14:12:01 joerg Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.39 2009/02/02 18:15:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef _USBDI_UTIL_H_
 #define _USBDI_UTIL_H_
 
-#include <dev/usb/usbdi.h>
+#include <dev/usb/usbhid.h>
 
 usbd_status	usbd_get_desc(usbd_device_handle dev, int type,
 			      int index, int len, void *desc);
