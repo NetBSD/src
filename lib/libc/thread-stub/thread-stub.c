@@ -1,7 +1,7 @@
-/*	$NetBSD: thread-stub.c,v 1.20 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.20.6.1 2009/02/02 22:07:40 snj Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.20 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.20.6.1 2009/02/02 22:07:40 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: thread-stub.c,v 1.20 2008/04/28 20:23:01 martin Exp $");
 
 extern int __isthreaded;
 
-#define	DIE()	(void)kill(getpid(), SIGABRT)
+#define	DIE()	(void)raise(SIGABRT)
 
 #define	CHECK_NOT_THREADED_ALWAYS()	\
 do {					\
