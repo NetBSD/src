@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.2 2008/11/07 15:24:44 joerg Exp $
+# $NetBSD: prepare-import.sh,v 1.3 2009/02/02 20:47:20 joerg Exp $
 #
 # Copy new pkgsrc/pkg_install/files to dist.
 # Run this script and check for additional files and
@@ -10,4 +10,4 @@ set -e
 cd dist
 rm -f Makefile.in README config* install-sh tkpkg
 rm -f */Makefile.in */*.cat*
-rm -rf CVS */CVS
+rm -rf CVS */CVS view

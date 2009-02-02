@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1229 2009/01/31 00:50:13 agc Exp $
+#	$NetBSD: mi,v 1.1230 2009/02/02 20:47:19 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3251,7 +3251,7 @@
 ./usr/libdata/debug/usr/sbin/amd.debug		comp-amd-debug		debug
 ./usr/libdata/debug/usr/sbin/amq.debug		comp-amd-debug		debug
 ./usr/libdata/debug/usr/sbin/arp.debug		comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/audit-packages.debug	comp-pkgutil-debug	debug
+./usr/libdata/debug/usr/sbin/audit-packages.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/authpf.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/sbin/bootpd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootpef.debug	comp-bootserver-debug	debug
