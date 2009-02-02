@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.16 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.16.8.1 2009/02/02 20:42:44 snj Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.16 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.16.8.1 2009/02/02 20:42:44 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1135,22 +1135,23 @@ findwin95(dep)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;
-	int blsize;
+	int blsize, win95;
 	u_long cn;
 	daddr_t bn;
 	struct buf *bp;
 
+	win95 = 1;
 	/*
 	 * Read through the directory looking for Win'95 entries
 	 * XXX Note: Error currently handled just as EOF
 	 */
 	for (cn = 0;; cn++) {
 		if (pcbmap(dep, cn, &bn, 0, &blsize))
-			return 0;
+			return win95;
 		if (bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
 		    0, &bp)) {
 			brelse(bp, 0);
-			return 0;
+			return win95;
 		}
 		for (dentp = (struct direntry *)bp->b_data;
 		     (char *)dentp < (char *)bp->b_data + blsize;
@@ -1160,7 +1161,7 @@ findwin95(dep)
 				 * Last used entry and not found
 				 */
 				brelse(bp, 0);
-				return 0;
+				return win95;
 			}
 			if (dentp->deName[0] == SLOT_DELETED) {
 				/*
@@ -1174,6 +1175,7 @@ findwin95(dep)
 				brelse(bp, 0);
 				return 1;
 			}
+			win95 = 0;
 		}
 		brelse(bp, 0);
 	}
