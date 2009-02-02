@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.25 2009/02/02 11:19:29 enami Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.26 2009/02/02 14:00:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.25 2009/02/02 11:19:29 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.26 2009/02/02 14:00:27 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -455,6 +455,56 @@ devsw_blk2name(devmajor_t bmajor)
 		name = devsw_conv[i].d_name;
 	mutex_exit(&device_lock);
 
+	return (name);
+}
+
+/*
+ * Convert char major number to device driver name.
+ */
+const char*
+cdevsw_getname(devmajor_t major)
+{
+	const char *name;
+	int i;
+
+	name = NULL;
+
+	if (major < 0)
+		return (NULL);
+  
+	mutex_enter(&device_lock);
+	for (i = 0 ; i < max_devsw_convs; i++) {
+		if (devsw_conv[i].d_cmajor == major) {
+			name = devsw_conv[i].d_name;
+			break;
+		}
+	}
+	mutex_exit(&device_lock);
+	return (name);
+}
+
+/*
+ * Convert block major number to device driver name.
+ */
+const char*
+bdevsw_getname(devmajor_t major)
+{
+	const char *name;
+	int i;
+
+	name = NULL;
+
+	if (major < 0)
+		return (NULL);
+  
+	mutex_enter(&device_lock);
+	for (i = 0 ; i < max_devsw_convs; i++) {
+		if (devsw_conv[i].d_bmajor == major) {
+			name = devsw_conv[i].d_name;
+			break;
+		}
+	}
+	mutex_exit(&device_lock);
 	return (name);
 }
 
