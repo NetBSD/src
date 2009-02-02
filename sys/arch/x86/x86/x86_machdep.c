@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.23 2008/05/09 21:25:43 joerg Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.23.8.1 2009/02/02 03:22:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.23 2008/05/09 21:25:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.23.8.1 2009/02/02 03:22:55 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,7 +170,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	KASSERT(kpreempt_disabled());
 	cur = curcpu();
 	l = ci->ci_data.cpu_onproc;
-	ci->ci_want_resched = 1;
+	ci->ci_want_resched |= flags;
 
 	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
 		/*
