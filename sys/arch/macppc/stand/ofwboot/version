@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.11 2005/12/11 12:18:06 christos Exp $
+$NetBSD: version,v 1.11.88.1 2009/02/02 22:19:09 snj Exp $
 
 1.1:		Initial revision from NetBSD/powerpc.
 1.2:		Use MI loadfile().
@@ -11,3 +11,4 @@ $NetBSD: version,v 1.11 2005/12/11 12:18:06 christos Exp $
 1.8:		Change load address to E00000 to support kernels over 5MB big
 1.9:		Zero out the stack before we call into C code.
 1.10:		Support userconf(4).
+1.11:		Check floppyboot and disable LOAD_NOTE to avoid backward seek.

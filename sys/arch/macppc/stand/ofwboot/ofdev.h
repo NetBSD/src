@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.h,v 1.5 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: ofdev.h,v 1.5.88.1 2009/02/02 22:19:09 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,7 +47,8 @@ struct of_dev {
 #define OFDEV_NET	1
 #define OFDEV_DISK	2
 
+bool parsefilepath(const char *, char *, char *, char *);
+
 extern char opened_name[];
-extern int floppyboot;
 
 #endif
