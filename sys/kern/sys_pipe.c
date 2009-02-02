@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.103 2008/09/17 14:00:41 pooka Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.103.4.1 2009/02/02 21:08:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.103 2008/09/17 14:00:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.103.4.1 2009/02/02 21:08:15 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,7 +556,7 @@ again:
 		/*
 		 * We want to read more, wake up select/poll.
 		 */
-		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_IN);
+		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_OUT);
 
 		/*
 		 * If the "write-side" is blocked, wake it up now.
@@ -985,7 +985,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			 * wake up select/poll.
 			 */
 			if (bp->cnt)
-				pipeselwakeup(wpipe, wpipe, POLL_OUT);
+				pipeselwakeup(wpipe, wpipe, POLL_IN);
 
 			pipeunlock(wpipe);
 			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
@@ -1026,7 +1026,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	 * is only done synchronously), so check only wpipe->pipe_buffer.cnt
 	 */
 	if (bp->cnt)
-		pipeselwakeup(wpipe, wpipe, POLL_OUT);
+		pipeselwakeup(wpipe, wpipe, POLL_IN);
 
 	/*
 	 * Arrange for next read(2) to do a signal.
