@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.76.4.1 2008/11/17 18:53:54 snj Exp $
+#	$NetBSD: genassym.cf,v 1.76.4.2 2009/02/02 03:22:55 snj Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@ include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_compat_netbsd.h"
-include "opt_multiprocessor.h"
 include	"opt_xen.h"
 endif
 
@@ -83,6 +82,7 @@ include <sys/user.h>
 include <sys/mbuf.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
+include <sys/cpu.h>
 
 include <netinet/in.h>
 include <netinet/in_systm.h>
@@ -131,10 +131,6 @@ endif
 
 ifdef COMPAT_FREEBSD
 include <machine/freebsd_machdep.h>
-endif
-
-ifdef MULTIPROCESSOR
-include <machine/cpu.h>
 endif
 
 if NIOAPIC > 0
@@ -192,6 +188,7 @@ define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_NCSW			offsetof(struct lwp, l_ncsw)
 define	L_NOPREEMPT		offsetof(struct lwp, l_nopreempt)
 define	L_DOPREEMPT		offsetof(struct lwp, l_dopreempt)
+define	L_KPRIORITY		offsetof(struct lwp, l_kpriority)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
@@ -453,6 +450,8 @@ define	L2_SHIFT		L2_SHIFT
 define	L2_FRAME		L2_FRAME
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
+
+define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
