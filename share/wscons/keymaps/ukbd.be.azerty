@@ -1,4 +1,4 @@
-# $NetBSD: ukbd.be.azerty,v 1.1 2009/01/30 23:12:16 ghen Exp $
+# $NetBSD: ukbd.be.azerty,v 1.2 2009/02/02 21:37:05 ghen Exp $
 #
 # This is a Belgian AZERTY keyboard map for USB keyboards
 
@@ -27,6 +27,7 @@ keycode  52 = ugrave percent dead_acute
 keycode  53 = twosuperior threesuperior
 keycode  54 = semicolon period
 keycode  55 = colon slash
-keycode  56 = equal plus asciitilde
+keycode  56 = equal plus dead_tilde
 keycode  57 = Caps_Lock
 keycode 100 = less greater backslash
+keycode 230 = Mode_switch Multi_key
