@@ -53,6 +53,12 @@ const char     *ops_str_from_map(int, ops_map_t *);
 int             ops_set_debug_level(const char *);
 int             ops_get_debug_level(const char *);
 
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION	"20090201"
+#endif
+
+const char     *ops_get_version(void);
+
 #ifndef __UNCONST
 #define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))
 #endif

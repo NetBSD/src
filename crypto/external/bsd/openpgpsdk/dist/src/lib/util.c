@@ -239,3 +239,10 @@ ops_get_debug_level(const char *f)
 	}
 	return 0;
 }
+
+/* return the version for the library */
+const char *
+ops_get_version(void)
+{
+	return PACKAGE_VERSION;
+}
