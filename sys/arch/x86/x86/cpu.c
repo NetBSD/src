@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.57.4.2 2009/02/02 03:06:12 snj Exp $	*/
+/*	$NetBSD: cpu.c,v 1.57.4.3 2009/02/02 20:10:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57.4.2 2009/02/02 03:06:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57.4.3 2009/02/02 20:10:16 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -399,9 +399,14 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
+			struct cpu_info *tmp;
+
 			cpu_identify(ci);
-			ci->ci_next = cpu_info_list->ci_next;
-			cpu_info_list->ci_next = ci;
+			tmp = cpu_info_list;
+			while (tmp->ci_next)
+				tmp = tmp->ci_next;
+
+			tmp->ci_next = ci;
 		}
 		break;
 
