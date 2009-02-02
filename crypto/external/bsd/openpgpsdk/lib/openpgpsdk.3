@@ -1,4 +1,4 @@
-.\" $NetBSD: openpgpsdk.3,v 1.2 2009/01/31 14:16:34 wiz Exp $
+.\" $NetBSD: openpgpsdk.3,v 1.3 2009/02/02 20:21:26 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 30, 2009
+.Dd February 1, 2009
 .Dt LIBOPENPGPSDK 3
 .Os
 .Sh NAME
@@ -151,6 +151,10 @@
 .Fo ops_write_transferable_secret_key
 .Fa "const ops_keydata_t *keydata" "const unsigned char *passphrase"
 .Fa "const size_t pplen" "ops_boolean_t armoured" "ops_create_info_t *info"
+.Fc
+.Ft const char *
+.Fo ops_get_version
+.Fa "void"
 .Fc
 .Sh DESCRIPTION
 .Nm
