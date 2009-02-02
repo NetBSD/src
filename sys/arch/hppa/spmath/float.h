@@ -1,6 +1,6 @@
-/*	$NetBSD: float.h,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: float.h,v 1.3.88.1 2009/02/02 00:13:47 snj Exp $	*/
 
-/*	$OpenBSD: float.h,v 1.4 2001/03/29 03:58:18 mickey Exp $	*/
+/*	$OpenBSD: float.h,v 1.7 2004/01/02 14:39:01 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.
@@ -333,25 +333,28 @@ typedef struct dint dbl_integer;
  * Define the different precisions' parameters.
  */
 #define SGL_BITLENGTH 32
+#define SGL_EMAX 127
 #define SGL_BIAS 127
 #define SGL_WRAP 192
-#define SGL_INFINITY_EXPONENT (FLT_MAX_EXP+SGL_BIAS+1)
+#define SGL_INFINITY_EXPONENT (SGL_EMAX+SGL_BIAS+1)
 #define SGL_THRESHOLD 32
 #define SGL_EXP_LENGTH 8
 #define SGL_P 24
 
 #define DBL_BITLENGTH 64
+#define DBL_EMAX 1023
 #define DBL_BIAS 1023
 #define DBL_WRAP 1536
-#define DBL_INFINITY_EXPONENT (DBL_MAX_EXP+DBL_BIAS+1)
+#define DBL_INFINITY_EXPONENT (DBL_EMAX+DBL_BIAS+1)
 #define DBL_THRESHOLD 64
 #define DBL_EXP_LENGTH 11
 #define DBL_P 53
 
 #define QUAD_BITLENGTH 128
+#define QUAD_EMAX 16383
 #define QUAD_BIAS 16383
 #define QUAD_WRAP 24576
-#define QUAD_INFINITY_EXPONENT (LDBL_MAX_EXP+QUAD_BIAS+1)
+#define QUAD_INFINITY_EXPONENT (QUAD_EMAX+QUAD_BIAS+1)
 #define QUAD_P 113
 
 /* Boolean Values etc. */
