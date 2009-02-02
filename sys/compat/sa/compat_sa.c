@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.6 2008/10/28 22:11:36 wrstuden Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.6.2.1 2009/02/02 02:32:57 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.6 2008/10/28 22:11:36 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.6.2.1 2009/02/02 02:32:57 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1863,7 +1863,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	p->p_nlwps--;
 	l->l_prflag |= LPR_DETACHED;
 #endif
-	l->l_flag |= (LW_SA | LW_SINTR);
+	l->l_flag |= LW_SA;
 	membar_producer();
 	DPRINTFN(5,("sa_putcachelwp(%d.%d) Adding LWP %d to cache\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
@@ -2528,7 +2528,6 @@ sa_unblock_userret(struct lwp *l)
 	sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
 	sleepq_enqueue(&vp->savp_woken, &vp->savp_woken, sa_lwpwoken_wmesg,
 	    &sa_sobj);
-	l->l_flag |= LW_SINTR;
 	uvm_lwp_hold(l);
 	vp->savp_woken_count++;
 	//l->l_stat = LSSUSPENDED;
