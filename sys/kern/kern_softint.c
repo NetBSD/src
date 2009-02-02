@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.23.4.1 2009/02/02 03:39:18 snj Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.23.4.2 2009/02/02 03:40:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.23.4.1 2009/02/02 03:39:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.23.4.2 2009/02/02 03:40:11 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -426,7 +426,7 @@ softint_disestablish(void *arg)
 			break;
 		}
 		/* Oops, still active.  Wait for it to clear. */
-		(void)kpause("softdis", false, 1, &softint_lock);
+		(void)kpause("softdis", false, 1, NULL);
 	}
 
 	/* Clear the handler on each CPU. */
