@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.1.1.2 2009/02/02 20:44:08 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,9 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
-#endif
+__RCSID("$NetBSD: pkgdb.c,v 1.1.1.2 2009/02/02 20:44:08 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -341,10 +339,5 @@ _pkgdb_setPKGDB_DIR(const char *dir)
 char *
 pkgdb_pkg_file(const char *pkg, const char *file)
 {
-	char *buf;
-
-	if (asprintf(&buf, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), pkg, file) == -1)
-		err(EXIT_FAILURE, "asprintf failed");
-
-	return buf;
+	return xasprintf("%s/%s/%s", _pkgdb_getPKGDB_DIR(), pkg, file);
 }

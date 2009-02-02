@@ -1,4 +1,4 @@
-/*	$NetBSD: path.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: path.c,v 1.1.1.2 2009/02/02 20:44:07 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -33,9 +33,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-__RCSID("$NetBSD: path.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
-#endif
+__RCSID("$NetBSD: path.c,v 1.1.1.2 2009/02/02 20:44:07 joerg Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
@@ -113,29 +111,18 @@ path_new_entry(const char *cp, size_t len)
 {
 	struct path *new;
 
-	new = malloc(sizeof(*new));
-	if (new == NULL)
-		err(EXIT_FAILURE, "path_create");
+	new = xmalloc(sizeof(*new));
 
 	if (!IS_FULLPATH(cp) && !IS_URL(cp)) {
 		/* this is a relative path */
-		size_t total;
 		char cwd[MaxPathSize];
-		size_t cwdlen;
 
 		if (getcwd(cwd, sizeof(cwd)) == NULL)
 			err(EXIT_FAILURE, "getcwd");
-		cwdlen = strlen(cwd);
-		total = cwdlen + 1 + len + 1;
-		new->pl_path = malloc(total);
-		if (new->pl_path == NULL)
-			err(EXIT_FAILURE, "path_create");
-		snprintf(new->pl_path, total, "%s/%*.*s", cwd, (int)len, (int)len, cp);
+		new->pl_path = xasprintf("%s/%*.*s", cwd, (int)len, (int)len, cp);
 	}
 	else {
-		new->pl_path = malloc(len + 1);
-		if (new->pl_path == NULL)
-			err(EXIT_FAILURE, "path_create");
+		new->pl_path = xmalloc(len + 1);
 		memcpy(new->pl_path, cp, len);
 		new->pl_path[len] = '\0';
 	}
@@ -183,9 +170,7 @@ path_setenv(const char *envname)
 	TAILQ_FOREACH(p, &PkgPath, pl_entry)
 		len += strlen(p->pl_path) + 1;
 
-	env = malloc(len);
-	if (env == NULL)
-		err(EXIT_FAILURE, "path_setenv");
+	env = xmalloc(len);
 
 	env0 = env;
 	envend = env + len;
