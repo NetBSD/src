@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.36 2009/01/16 10:42:36 jmmv Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.37 2009/02/02 04:24:18 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.36 2009/01/16 10:42:36 jmmv Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.37 2009/02/02 04:24:18 uebayasi Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -708,7 +708,7 @@ checkversion(DB *dp)
 uint32_t
 getversion(void)
 {
-	uint32_t version = sizeof(time_t) != sizeof(int32_t);
+	uint32_t version = sizeof(((struct passwd *)NULL)->pw_change) != sizeof(int32_t);
 	if (lorder != BYTE_ORDER)
 		version = SWAP(version);
 	return version;
