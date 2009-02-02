@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.86 2009/02/02 01:00:03 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.87 2009/02/02 03:44:50 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3267,4 +3267,128 @@ sys/dev/ic/wdc_upc.c				1.26
 	attached.  Since this didn't really belong in the submatch function
 	anyway, reintroduce it in the match functions for upc's children.
 	[bjh21, ticket #335]
+
+sys/kern/subr_kobj.c				1.27 via patch
+
+	Use NOCHROOT when doing the lookup against the standard module
+	path.  Prevents abuse of chroots to load tainted kernel modules.
+	[ad, ticket #336]
+
+share/man/man5/boot.cfg.5			1.13
+
+	ramdisk.kmod -> miniroot.kmod
+	[ad, ticket #337]
+
+sys/compat/sa/compat_sa.c			1.7
+sys/kern/kern_exit.c				1.215
+
+	Adjust the sleeps in lwpcache and lwpublk. Make them
+	uninterruptable for now. This will prevent signals from waking
+	them. Adjust exit_lwps() to explicitly add LW_SINTR to all of
+	them, so that the process exit code can wake them up.
+	[cube, ticket #338]
+
+sys/kern/subr_autoconf.c			1.167
+
+	Don't need to hold kernel_lock for most of this (and not into
+	the swapper!).
+	[ad, ticket #339]
+
+sys/kern/subr_vmem.c				1.52
+
+	Put vm_lock into its own cache line.
+	[ad, ticket #340]
+
+sys/kern/sys_descrip.c				1.8
+
+	Prevent a potential deadlock from a multithreaded process doing:
+	t1	dup2(0, 1)
+	t2	dup2(1, 0)
+	[ad, ticket #341]
+
+sys/arch/amd64/amd64/lock_stubs.S		1.21
+sys/arch/i386/i386/lock_stubs.S			1.22
+
+	- Fix a bug in amd64 rw_tryenter() where it could return failure
+	even after acquiring a lock, if aligned on a 4GB boundary.
+	- Microoptimize more.
+	[ad, ticket #342]
+
+common/lib/libc/arch/i386/atomic/atomic.S	1.14
+sys/arch/x86/include/cpufunc.h			1.9
+sys/arch/x86/x86/cpu.c				1.60
+sys/arch/x86/x86/identcpu.c			1.12
+sys/arch/x86/x86/patch.c			1.15
+
+	- Patch in atomic_cas_64() twice. The first patch is early and
+	makes it the MP-atomic version available if we have cmpxchg8b.
+	The second patch strips the lock prefix if ncpu==1.
+	- Fix the i486 atomic_cas_64() to not unconditionally enable
+	interrupts.
+	Fixes PR kern/40213.
+	[ad, ticket #343]
+
+sys/nfs/nfs_node.c				1.108
+sys/nfs/nfsnode.h				1.69, 1.70
+
+	- Don't vput() a vnode that we do not hold locked.
+	- Eliminate one of the few remaining uses of LK_CANRECURSE.
+	[ad, ticket #344]
+
+sys/arch/amd64/amd64/genassym.cf		1.39
+sys/arch/amd64/amd64/locore.S			1.50
+sys/arch/i386/i386/genassym.cf			1.79
+sys/arch/i386/i386/locore.S			1.82
+sys/arch/x86/x86/x86_machdep.c			1.26
+sys/kern/kern_runq.c				1.23
+sys/sys/cpu.h					1.25, 1.26
+
+	Don't abort pageidlezero unless a realtime thread wants to run.
+	[ad, ticket #345]
+
+sys/arch/alpha/alpha/machdep.c			1.311
+sys/arch/amiga/amiga/machdep.c			1.211
+sys/arch/atari/atari/machdep.c			1.153
+sys/arch/hp700/hp700/machdep.c			1.53
+sys/arch/i386/i386/dumpsys.c			1.5
+sys/arch/mips/mips/mips_machdep.c		1.206
+sys/arch/mvme68k/mvme68k/machdep.c		1.132
+sys/arch/news68k/news68k/machdep.c		1.75
+sys/arch/next68k/next68k/machdep.c		1.88
+sys/arch/sparc/sparc/machdep.c			1.285
+sys/arch/sparc64/sparc64/machdep.c		1.230
+sys/arch/sun2/sun2/machdep.c			1.56
+sys/arch/sun3/sun3/machdep.c			1.188
+sys/arch/sun3/sun3x/machdep.c			1.114
+sys/arch/x68k/x68k/machdep.c			1.153
+
+	dumpsys: don't spew numbers into the log.
+	[ad, ticket #346]
+
+usr.sbin/makefs/cd9660.c			1.23
+
+	Make the allow-multidot option useful.
+	[ad, ticket #347]
+
+sys/kern/subr_percpu.c				1.9
+
+	Start percpu allocation at (ALIGNBYTES + 1) to avoid problem with
+	importing offset zero to vmem.
+	[ad, ticket #348]
+
+sys/kern/kern_softint.c				1.24, 1.25
+sys/sys/intr.h					1.8
+
+	softint_disestablish: the soft interrupt could still be running
+	on a CPU somewhere in the system. If it is, wait for it to
+	complete before tearing it down. The caller commits to not
+	trigger the interrupt again once disestablish is set in motion.
+	[ad, ticket #349]
+
+sys/kern/vfs_subr.c				1.360
+
+	vclean: be paranoid and set v_tag, v_op while holding
+	v_interlock.  FS code could check their values while scrolling
+	through mnt_vnodelist.
+	[ad, ticket #350]
 
