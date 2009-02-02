@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.915.2.1 2008/11/18 01:56:58 snj Exp $
+# $NetBSD: GENERIC,v 1.915.2.2 2009/02/02 22:12:34 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.915.2.1 $"
+#ident 		"GENERIC-$Revision: 1.915.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -110,10 +110,10 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	BEEP_ONHALT_PITCH=1500	# Default frequency (in Hz)
 #options 	BEEP_ONHALT_PERIOD=250	# Default duration (in msecs)
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Likely stable but not yet the default.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
