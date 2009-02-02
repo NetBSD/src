@@ -30,14 +30,7 @@
 #include <libgen.h>
 #include <unistd.h>
 
-#include <openpgpsdk/keyring.h>
-#include <openpgpsdk/crypto.h>
-#include <openpgpsdk/signature.h>
-#include <openpgpsdk/validate.h>
-#include <openpgpsdk/readerwriter.h>
-#include <openpgpsdk/std_print.h>
-#include <openpgpsdk/packet-show.h>
-#include <openpgpsdk/util.h>
+#include <openpgpsdk/openpgpsdk.h>
 
 #define DEFAULT_NUMBITS 2048
 
@@ -65,6 +58,7 @@ enum optdefs {
 	CLEARSIGN,
 	VERIFY,
 	LIST_PACKETS,
+	VERSION,
 
 	/* options */
 	KEYRING,
@@ -101,6 +95,8 @@ static struct option long_options[] = {
 	{"verify", no_argument, NULL, VERIFY},
 
 	{"list-packets", no_argument, NULL, LIST_PACKETS},
+
+	{"version", no_argument, NULL, VERSION},
 
 	/* options */
 	{"keyring", required_argument, NULL, KEYRING},
@@ -457,6 +453,10 @@ main(int argc, char **argv)
 		case LIST_PACKETS:
 			p.cmd = long_options[optindex].val;
 			break;
+
+		case VERSION:
+			printf("%s version: %s\n", *argv, ops_get_version());
+			exit(EXIT_SUCCESS);
 
 			/* option */
 
