@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.42 2008/03/17 08:27:50 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.42.14.1 2009/02/02 02:40:27 snj Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.42 2008/03/17 08:27:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.42.14.1 2009/02/02 02:40:27 snj Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -64,7 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.42 2008/03/17 08:27:50 yamt Exp $");
 #endif /* defined(_KERNEL) */
 
 #if defined(_KERNEL)
-#define	LOCK_DECL(name)		kmutex_t name
+#define	LOCK_DECL(name)		\
+    kmutex_t name; char lockpad[COHERENCY_UNIT - sizeof(kmutex_t)]
 #else /* defined(_KERNEL) */
 #include <errno.h>
 #include <assert.h>
