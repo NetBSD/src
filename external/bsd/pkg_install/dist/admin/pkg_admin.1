@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2007
+.Dd May 30, 2008
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -166,6 +166,10 @@ Check format and hashes in the pkg-vulnerabilties file
 If
 .Fl s
 is given, also check the embedded signature.
+.It Cm check-signature Ar file ...
+Reports if
+.Ar file
+is a correctly signed package.
 .It Cm config-var Ar variable
 Print the current value of
 .Ar variable
@@ -261,6 +265,20 @@ to remove a variable.
 Packages that are not installed directly by the user but pulled in as
 dependencies are marked by setting
 .Dq automatic=YES .
+.It Cm gpg-sign-package pkg
+Sign the binary package
+.Ar pkg
+using GPG.
+.It Cm x509-sign-package pkg spkg key cert
+Sign the binary package
+.Ar pkg
+using the key
+.Ar key
+and the certificate
+.Ar cert ,
+using
+.Ar spkg
+as output file.
 .It Cm unset Ar variable pkg ...
 Remove an installation variable.
 .El
@@ -275,6 +293,20 @@ is the location of the package database directory.
 The default package database directory is
 .Pa /var/db/pkg .
 .El
+.Sh CONFIGURATION VARIABLES
+The following variables change the behaviour of
+.Nm
+and are described in
+.Xr pkg_install.conf 5 :
+.Bl -tag -width CERTIFICATE_ANCHOR_PKGS
+.It Ev CERTIFICATE_ANCHOR_PKGS
+.It Ev CERTIFICATE_ANCHOR_PKGVULN
+.It Ev CERTIFICATE_CHAIN
+.It Ev GPG
+.It Ev PKGVULNDIR
+.It Ev PKGVULNURL
+.It Ev IGNORE_URL
+.El
 .Sh FILES
 .Bl -tag -width /var/db/pkg/pkgdb.byfile.db -compact
 .It Pa /var/db/pkg/pkgdb.byfile.db
@@ -286,6 +318,7 @@ The default package database directory is
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
 .Xr pkg_view 1 ,
+.Xr pkg_install.conf 5 ,
 .Xr pkgsrc 7
 .Sh HISTORY
 The

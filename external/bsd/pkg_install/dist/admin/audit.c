@@ -1,4 +1,4 @@
-/*	$NetBSD: audit.c,v 1.1.1.2 2008/10/02 20:49:40 joerg Exp $	*/
+/*	$NetBSD: audit.c,v 1.1.1.3 2009/02/02 20:44:02 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,9 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-__RCSID("$NetBSD: audit.c,v 1.1.1.2 2008/10/02 20:49:40 joerg Exp $");
-#endif
+__RCSID("$NetBSD: audit.c,v 1.1.1.3 2009/02/02 20:44:02 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -117,66 +115,10 @@ parse_options(int argc, char **argv)
 }
 
 static int
-check_ignored_entry(size_t i)
-{
-	const char *iter, *next;
-	size_t entry_len, url_len;
-
-	if (ignore_advisories == NULL)
-		return 0;
-
-	url_len = strlen(pv->advisory[i]);
-
-	for (iter = ignore_advisories; *iter; iter = next) {
-		if ((next = strchr(iter, '\n')) == NULL) {
-			entry_len = strlen(iter);
-			next = iter + entry_len;
-		} else {
-			entry_len = next - iter;
-			++next;
-		}
-		if (url_len != entry_len)
-			continue;
-		if (strncmp(pv->advisory[i], iter, entry_len) == 0)
-			return 1;
-	}
-	return 0;
-}
-
-static int
 check_exact_pkg(const char *pkg)
 {
-	int ret;
-	size_t i;
-
-	ret = 0;
-	for (i = 0; i < pv->entries; ++i) {
-		if (check_ignored_entry(i))
-			continue;
-		if (limit_vul_types != NULL &&
-		    strcmp(limit_vul_types, pv->classification[i]))
-			continue;
-		if (!pkg_match(pv->vulnerability[i], pkg))
-			continue;
-		if (strcmp("eol", pv->classification[i]) == 0) {
-			if (!check_eol)
-				continue;
-			if (quiet)
-				puts(pkg);
-			else
-				printf("Package %s has reached end-of-life (eol), "
-				    "see %s/eol-packages\n", pkg,
-				    tnf_vulnerability_base);
-			continue;
-		}
-		if (quiet)
-			puts(pkg);
-		else
-			printf("Package %s has a %s vulnerability, see %s\n",
-			    pkg, pv->classification[i], pv->advisory[i]);
-		ret = 1;
-	}
-	return ret;
+	return audit_package(pv, pkg, limit_vul_types, check_eol,
+	    quiet ? 0 : 1);
 }
 
 static int
@@ -343,7 +285,8 @@ fetch_pkg_vulnerabilities(int argc, char **argv)
 {
 	struct pkg_vulnerabilities *pv_check;
 	char *buf, *decompressed_input;
-	size_t buf_len, decompressed_len;
+	size_t buf_len, buf_fetched, decompressed_len;
+	ssize_t cur_fetched;
 	struct url_stat st;
 	fetchIO *f;
 	int fd;
@@ -355,7 +298,7 @@ fetch_pkg_vulnerabilities(int argc, char **argv)
 	if (verbose >= 2)
 		fprintf(stderr, "Fetching %s\n", pkg_vulnerabilities_url);
 
-	f = fetchXGetURL(pkg_vulnerabilities_url, &st, "");
+	f = fetchXGetURL(pkg_vulnerabilities_url, &st, fetch_flags);
 	if (f == NULL)
 		errx(EXIT_FAILURE, "Could not fetch vulnerability file: %s",
 		    fetchLastErrString);
@@ -364,13 +307,22 @@ fetch_pkg_vulnerabilities(int argc, char **argv)
 		errx(EXIT_FAILURE, "pkg-vulnerabilities is too large");
 
 	buf_len = st.size;
-	if ((buf = malloc(buf_len + 1)) == NULL)
-		err(EXIT_FAILURE, "malloc failed");
+	buf = xmalloc(buf_len + 1);
+	buf_fetched = 0;
 
-	if (fetchIO_read(f, buf, buf_len) != buf_len)
-		errx(EXIT_FAILURE,
-		    "Failure during fetch of pkg-vulnerabilities: %s",
-		    fetchLastErrString);
+	while (buf_fetched < buf_len) {
+		cur_fetched = fetchIO_read(f, buf + buf_fetched,
+		    buf_len - buf_fetched);
+		if (cur_fetched == 0)
+			errx(EXIT_FAILURE,
+			    "Truncated pkg-vulnerabilities received");
+		else if (cur_fetched == -1)
+			errx(EXIT_FAILURE,
+			    "IO error while fetching pkg-vulnerabilities: %s",
+			    fetchLastErrString);
+		buf_fetched += cur_fetched;
+	}
+	
 	buf[buf_len] = '\0';
 
 	if (decompress_buffer(buf, buf_len, &decompressed_input,
@@ -458,9 +410,7 @@ check_pkg_history1(const char *pkg, const char *pattern)
 		open_brace = inner_brace;
 	}
 
-	expanded_pkg = malloc(strlen(pattern)); /* {} are going away... */
-	if (expanded_pkg == NULL)
-		err(EXIT_FAILURE, "malloc failed");
+	expanded_pkg = xmalloc(strlen(pattern)); /* {} are going away... */
 
 	prefix_len = open_brace - pattern;
 	suffix = close_brace + 1;
@@ -495,6 +445,8 @@ check_pkg_history(const char *pkg)
 	size_t i;
 
 	for (i = 0; i < pv->entries; ++i) {
+		if (!quick_pkg_match(pv->vulnerability[i], pkg))
+			continue;
 		if (strcmp("eol", pv->classification[i]) == 0)
 			continue;
 		if (check_pkg_history1(pkg, pv->vulnerability[i]) == 0)
