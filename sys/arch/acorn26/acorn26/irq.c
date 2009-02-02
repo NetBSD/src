@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.8.28.1 2009/01/16 21:37:53 bouyer Exp $ */
+/* $NetBSD: irq.c,v 1.8.28.2 2009/02/02 00:29:10 snj Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8.28.1 2009/01/16 21:37:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8.28.2 2009/02/02 00:29:10 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8.28.1 2009/01/16 21:37:53 bouyer Exp $");
 #include <arch/acorn26/iobus/iocreg.h>
 #include <arch/acorn26/iobus/iocvar.h>
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_flashything.h"
 #include "fiq.h"
@@ -201,6 +202,24 @@ handled:
 
 	hardsplx(s);
 	current_intr_depth--;
+
+	/* Check if we're in the kernel restartable atomic sequence. */
+	if ((irqf->if_r15 & R15_MODE) != R15_MODE_USR) {
+		char *pc = (char *)(irqf->if_r15 & R15_PC);
+		extern char _lock_cas[], _lock_cas_end[];
+#ifdef ARM_LOCK_CAS_DEBUG
+		extern struct evcnt _lock_cas_restart;
+#endif
+
+		if (pc >= _lock_cas && pc < _lock_cas_end) {
+			irqf->if_r15 = (irqf->if_r15 & ~R15_PC) | 
+			    (register_t)_lock_cas;
+#ifdef ARM_LOCK_CAS_DEBUG
+			_lock_cas_restart.ev_count++;
+#endif
+		}
+	}
+	    
 }
 
 bool
