@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.542.2.4 2009/01/16 21:41:10 bouyer Exp $
+#	$NetBSD: bsd.own.mk,v 1.542.2.5 2009/02/02 00:03:54 snj Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -852,7 +852,7 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 	font-bitstream-100dpi font-bitstream-75dpi font-bitstream-type1 \
 	font-cursor-misc font-daewoo-misc font-dec-misc font-ibm-type1 \
 	font-isas-misc font-jis-misc font-misc-misc font-mutt-misc \
-	font-util ttf-bitstream-vera encodings
+	font-sony-misc font-util ttf-bitstream-vera encodings
 X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
 .endfor
 
