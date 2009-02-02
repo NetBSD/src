@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47.8.1 2008/11/17 18:53:53 snj Exp $	*/
+/*	$NetBSD: locore.S,v 1.47.8.2 2009/02/02 03:24:05 snj Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1260,7 +1260,7 @@ ENTRY(sse2_idlezero_page)
 	xorq	%rax, %rax
 	.align	16
 1:
-	cmpl	$0, CPUVAR(RESCHED)
+	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
 	jnz	2f
 	movnti	%rax, 0(%rdi)
 	movnti	%rax, 8(%rdi)
