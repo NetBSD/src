@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.8 2008/04/30 00:16:30 cegger Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.8.10.1 2009/02/02 03:06:12 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ void	x86_lfence(void);
 void	x86_sfence(void);
 void	x86_mfence(void);
 void	x86_flush(void);
-void	x86_patch(void);
+void	x86_patch(bool);
 void	invlpg(vaddr_t);
 void	lidt(struct region_descriptor *);
 void	lldt(u_short);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.57.4.1 2008/11/13 00:04:07 snj Exp $	*/
+/*	$NetBSD: cpu.c,v 1.57.4.2 2009/02/02 03:06:12 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57.4.1 2008/11/13 00:04:07 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57.4.2 2009/02/02 03:06:12 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -508,7 +508,7 @@ cpu_boot_secondary_processors(void)
 	u_long i;
 
 	/* Now that we know the number of CPUs, patch the text segment. */
-	x86_patch();
+	x86_patch(false);
 
 	for (i=0; i < maxcpus; i++) {
 		ci = cpu_lookup(i);
