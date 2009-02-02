@@ -1,4 +1,4 @@
-.\" $NetBSD: openpgp.1,v 1.4 2009/01/31 16:00:18 agc Exp $
+.\" $NetBSD: openpgp.1,v 1.5 2009/02/02 20:24:36 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 29, 2009
+.Dd February 1, 2009
 .Dt OPENPGP 1
 .Os
 .Sh NAME
@@ -52,6 +52,7 @@
 .Op Fl -sign
 .Op Fl -userid Ns = Ns Ar userid
 .Op Fl -verify
+.Op Fl -version
 .Ar file ...
 .Sh DESCRIPTION
 The
@@ -136,6 +137,10 @@ The user will be prompted for their pass phrase using
 .It Fl -verify
 For each of the files named on the command line, the signature of the file
 is verified, checking the contents against the user's public signature.
+.It Fl -version
+Print the version information from the
+.Xr libopenpgpsdk 3
+library.
 .El
 .Pp
 In addition to one of the preceding commands, a number of qualifiers
@@ -263,6 +268,7 @@ or 2 if any other error occurs.
 .Sh SEE ALSO
 .Xr getpass 3 ,
 .Xr libbz2 3 ,
+.Xr libopenpgpsdk 3 ,
 .Xr libz 3 ,
 .Xr ssl 3
 .Sh STANDARDS
