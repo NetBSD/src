@@ -1,4 +1,4 @@
-/*	$NetBSD: raise.c,v 1.7 2003/08/07 16:42:55 agc Exp $	*/
+/*	$NetBSD: raise.c,v 1.7.38.1 2009/02/02 20:34:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,16 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)raise.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: raise.c,v 1.7 2003/08/07 16:42:55 agc Exp $");
+__RCSID("$NetBSD: raise.c,v 1.7.38.1 2009/02/02 20:34:18 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <lwp.h>
 #include <signal.h>
-#include <unistd.h>
 
 int
-raise(s)
-	int s;
+raise(int s)
 {
-	return(kill(getpid(), s));
+
+	return _lwp_kill(_lwp_self(), s);
 }
