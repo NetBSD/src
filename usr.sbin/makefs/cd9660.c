@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.22 2008/10/30 18:43:13 ahoka Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.22.2.1 2009/02/02 03:32:34 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.22 2008/10/30 18:43:13 ahoka Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.22.2.1 2009/02/02 03:32:34 snj Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -452,6 +452,9 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	if (diskStructure.verbose_level > 0)
 		printf("cd9660_makefs: ISO level is %i\n",
 		    diskStructure.isoLevel);
+	if (diskStructure.isoLevel < 2 &&
+	    diskStructure.allow_multidot)
+		errx(1, "allow-multidot requires iso level of 2\n");
 
 	assert(image != NULL);
 	assert(dir != NULL);
@@ -1677,7 +1680,11 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 		/* Handle period first, as it is special */
 		if (*oldname == '.') {
 			if (found_ext) {
-				*newname++ = '_';
+				if (diskStructure.allow_multidot) {
+					*newname++ = '.';
+				} else {
+					*newname++ = '_';
+				}
 				extlen ++;
 			}
 			else {
@@ -1693,8 +1700,12 @@ cd9660_level2_convert_filename(const char *oldname, char *newname, int is_file)
 			else if (isupper((unsigned char)*oldname) ||
 			    isdigit((unsigned char)*oldname))
 				*newname++ = *oldname;
-			else
+			else if (diskStructure.allow_multidot &&
+			    *oldname == '.') {
+			    	*newname++ = '.';
+			} else {
 				*newname++ = '_';
+			}
 
 			if (found_ext)
 				extlen++;
