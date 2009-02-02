@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.46 2009/02/01 22:37:22 hubertf Exp $
+.\"	$NetBSD: mtree.8,v 1.47 2009/02/02 03:27:37 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -184,13 +184,15 @@ keyword is not desired, suppress it with
 Do
 .Dq loose
 permissions checks, in which more stringent permissions
-will match less stringent ones. For example, a file marked mode 0444
+will match less stringent ones.
+For example, a file marked mode 0444
 will pass a check for mode 0644.
 .Dq Loose
 checks apply only to read, write and execute permissions -- in
 particular, if other bits like the sticky bit or suid/sgid bits are
 set either in the specification or the file, exact checking will be
-performed. This flag may not be set at the same time as the
+performed.
+This flag may not be set at the same time as the
 .Fl u
 or
 .Fl U
@@ -198,9 +200,11 @@ flags.
 .It Fl L
 Follow all symbolic links in the file hierarchy.
 .It Fl m
-If the schg and/or sappnd flags are specified, reset these flags. Note that
-this is only possible with securelevel less than 1 (i.e. in single user mode
-or while the system is running in insecure mode). See
+If the schg and/or sappnd flags are specified, reset these flags.
+Note that this is only possible with securelevel less than 1 (i.e.,
+in single user mode or while the system is running in insecure
+mode).
+See
 .Xr init 8
 for information on security levels.
 .It Fl M
@@ -251,7 +255,8 @@ to be created.
 Note that unless the
 .Fl i
 option is given, the schg and sappnd flags will not be set, even if
-specified. If
+specified.
+If
 .Fl m
 is given, these flags will be reset.
 Exit with a status of 0 on success,
@@ -371,9 +376,11 @@ See
 .Xr mknod 8
 for more details.
 .It Sy flags
-The file flags as a symbolic name.  See
+The file flags as a symbolic name.
+See
 .Xr chflags 1
-for information on these names.  If no flags are to be set the string
+for information on these names.
+If no flags are to be set the string
 .Ql none
 may be used to override the current default.
 Note that the schg and sappnd flags are treated specially (see the
@@ -531,7 +538,8 @@ they match.
 uses
 .Xr strsvis 3
 (in VIS_CSTYLE format) to encode path names containing
-non-printable characters. Whitespace characters are encoded as
+non-printable characters.
+Whitespace characters are encoded as
 .Ql \es
 (space),
 .Ql \et
