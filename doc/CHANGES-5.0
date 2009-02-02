@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.85 2009/01/26 06:23:39 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.86 2009/02/02 01:00:03 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3142,4 +3142,129 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.0_RC1!
 	[snj]
+
+sbin/raidctl/raidctl.c				1.40
+
+	Use correct format to print the "numBlocks" element in a RAIDframe
+	component label. raidctl(8) should now print the correct number of
+	blocks for RAID sets larger than 1TB.  Fixes PR bin/40479.
+	[tron, ticket #323]
+
+sys/kern/vfs_subr.c				1.367
+
+	Make the kern.vnode sysctl to expose correct address of each vnode
+	to userland again.
+	[enami, ticket #324]
+
+share/man/man8/security.8			1.18
+
+	Fix mistake in the Veriexec example, the command name is
+	"veriexecctl", not "veriexec".
+	[elad, ticket #325]
+
+lib/libevent/evdns.c				1.2
+
+	Don't redefine _FORTIFY_SOURCE if it is already defined.
+	Fixes PR/40480.
+	[christos, ticket #326]
+
+distrib/sets/lists/xfont/mi			1.34
+external/mit/xorg/share/fonts/misc/Makefile	1.2
+external/mit/xorg/share/fonts/misc/font-sony-misc/Makefile 1.1
+share/mk/bsd.own.mk				1.554
+xsrc/external/mit/font-sony-misc/dist/12x24.bdf font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/12x24rk.bdf font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/8x16.bdf	font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/8x16rk.bdf font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/AUTHORS	font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/COPYING	font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/ChangeLog font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/INSTALL	font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/Makefile.am font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/Makefile.in font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/NEWS	font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/README	font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/aclocal.m4 font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/autogen.sh font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/configure font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/configure.ac font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/install-sh font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/missing	font-sony-misc-1-0-0
+xsrc/external/mit/font-sony-misc/dist/mkinstalldirs font-sony-misc-1-0-0
+
+	Install the "sony-misc" font from the X.org distribution.
+	Fixes PR xsrc/40476.
+	[tron, ticket #327]
+
+usr.sbin/postinstall/postinstall		1.84
+
+	Added MAKEDEV.local to postinstall's makedev check. Upgraded systems
+	were not getting an updated MAKEDEV.local file.
+	[jklos, ticket #328]
+
+regress/lib/csu/initfini/arch/hppa/initfini_asm.S 1.2
+
+	Don't corrupt %r4 - it's a callee save.
+	Fixes regress/lib/csu/initfini on hppa.
+	[skrll, ticket #329]
+
+sys/arch/hppa/spmath/dbl_float.h		1.3
+sys/arch/hppa/spmath/float.h			1.4
+sys/arch/hppa/spmath/sgl_float.h		1.3
+
+	Fix regress/lib/libc/ieeefp/nan.
+	[skrll, ticket #330]
+
+dist/nvi/dist/configure.in			1.2
+usr.bin/nvi/build/config.h			1.3, 1.4
+
+	Fix nvi build with USE_FORT.
+	[christos, ticket #331]
+
+sys/arch/amiga/amiga/trap.c			1.122
+sys/arch/atari/atari/trap.c			1.99
+sys/arch/cesfic/cesfic/trap.c			1.43
+sys/arch/hp300/hp300/trap.c			1.140
+sys/arch/luna68k/luna68k/trap.c			1.55
+sys/arch/m68k/fpe/fpu_emulate.h			1.13, 1.14
+sys/arch/m68k/include/fpreg.h			1.1
+sys/arch/m68k/include/ieeefp.h			1.7
+sys/arch/m68k/include/signal.h			1.25
+sys/arch/m68k/m68k/sig_machdep.c		1.41
+sys/arch/mac68k/mac68k/trap.c			1.136 via patch
+sys/arch/mvme68k/mvme68k/trap.c			1.98
+sys/arch/news68k/news68k/trap.c			1.60
+sys/arch/next68k/next68k/trap.c			1.75
+sys/arch/sun2/sun2/trap.c			1.37
+sys/arch/sun3/sun3/trap.c			1.136
+sys/arch/x68k/x68k/trap.c			1.97
+
+	Fix floating point handling regressions for m68k architectures:
+	siginfo signals reported the wrong exception code and the rounding
+	modes "to positive infinity" and "to negative infinity" had been
+	accidently swapped.
+	[martin, ticket #332]
+
+sys/arch/acorn26/acorn26/irq.c			1.11
+
+	Make the restartable atomic sequence for _lock_cas() actually
+	atomic and restartable on acorn26.
+	[bjh21, ticket #333]
+
+
+sys/arch/acorn26/podulebus/if_eh.c		1.15
+
+	Make sure that dp8390_intr() gets passed the softc pointer, not
+	the device pointer, when it's called.
+	[bjh21, ticket #334]
+
+sys/dev/ic/com_upc.c				1.11
+sys/dev/ic/lpt_upc.c				1.10
+sys/dev/ic/wdc_upc.c				1.26
+
+	The introduction of config_stdsubmatch() lost an important feature
+	of upc_submatch() whereby it made sure that the correct driver
+	attached.  Since this didn't really belong in the submatch function
+	anyway, reintroduce it in the match functions for upc's children.
+	[bjh21, ticket #335]
 
