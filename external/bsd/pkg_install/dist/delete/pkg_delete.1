@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $
+.\" $NetBSD: pkg_delete.1,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd March 2, 2007
+.Dd July 30, 2008
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -30,6 +30,7 @@
 .Op Fl K Ar pkg_dbdir
 .Ek
 .Bk -words
+.Op Fl P Ar destdir
 .Op Fl p Ar prefix
 .Ek
 .Ar pkg-name ...
@@ -133,6 +134,11 @@ would be taken if it were.
 .It Fl O
 Only delete the package's entries from the package database, do not
 touch the package or its files itself.
+.It Fl p Ar destdir
+Prefix all file and directory names with
+.Ar destdir .
+For packages without install scripts this has the same behavior as
+using chroot.
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -256,6 +262,13 @@ meta-data files, and with the
 .Ev PKG_REFCOUNT_DBDIR
 environment variable set to the location of the package reference counts
 database directory.
+If the
+.Fl P
+flag was given to
+.Nm ,
+.Ev PKG_DESTDIR
+will be set to
+.Ar destdir .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DBDIR
 .It Ev PKG_DBDIR

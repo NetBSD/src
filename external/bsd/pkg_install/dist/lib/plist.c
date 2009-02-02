@@ -1,4 +1,4 @@
-/*	$NetBSD: plist.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: plist.c,v 1.1.1.2 2009/02/02 20:44:08 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
-#else
-__RCSID("$NetBSD: plist.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: plist.c,v 1.1.1.2 2009/02/02 20:44:08 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -118,7 +112,7 @@ add_plist(package_t *p, pl_ent_t type, const char *arg)
 	plist_t *tmp;
 
 	tmp = new_plist_entry();
-	tmp->name = (arg == (char *) NULL) ? (char *) NULL : strdup(arg);
+	tmp->name = (arg == NULL) ? NULL : xstrdup(arg);
 	tmp->type = type;
 	if (!p->head) {
 		p->head = p->tail = tmp;
@@ -138,7 +132,7 @@ add_plist_top(package_t *p, pl_ent_t type, const char *arg)
 	plist_t *tmp;
 
 	tmp = new_plist_entry();
-	tmp->name = (arg == (char *) NULL) ? (char *) NULL : strdup(arg);
+	tmp->name = (arg == NULL) ? NULL : xstrdup(arg);
 	tmp->type = type;
 	if (!p->head) {
 		p->head = p->tail = tmp;
@@ -239,13 +233,7 @@ delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name)
 plist_t *
 new_plist_entry(void)
 {
-	plist_t *ret;
-
-	if ((ret = (plist_t *) malloc(sizeof(plist_t))) == (plist_t *) NULL) {
-		err(EXIT_FAILURE, "can't allocate %ld bytes", (long) sizeof(plist_t));
-	}
-	memset(ret, 0, sizeof(plist_t));
-	return ret;
+	return xcalloc(1, sizeof(plist_t));
 }
 
 /*
@@ -290,9 +278,7 @@ plist_cmd(const char *s, char **arg)
 
 	while (isspace((unsigned char)*sp))
 		++sp;
-	*arg = strdup(sp);
-	if (*arg == NULL)
-		err(2, "strdup failed");
+	*arg = xstrdup(sp);
 	if (*sp) {
 		sp2 = *arg + strlen(*arg) - 1;
 		/*
@@ -317,6 +303,9 @@ parse_plist(package_t *pkg, const char *buf)
 	const char *eol, *next;
 	size_t len;
 
+	pkg->head = NULL;
+	pkg->tail = NULL;
+
 	for (; *buf; buf = next) {
 		/* Until add_plist can deal with trailing whitespace. */
 		if ((eol = strchr(buf, '\n')) != NULL) {
@@ -333,9 +322,7 @@ parse_plist(package_t *pkg, const char *buf)
 		if (len == 0)
 			continue;
 
-		line = malloc(len + 1);
-		if (line == NULL)
-			err(2, "malloc failed");
+		line = xmalloc(len + 1);
 		memcpy(line, buf, len);
 		line[len] = '\0';
 
@@ -439,7 +426,8 @@ write_plist(package_t *pkg, FILE * fp, char *realprefix)
  * Like write_plist, but compute memory string.
  */
 void
-stringify_plist(package_t *pkg, char **real_buf, size_t *real_len, char *realprefix)
+stringify_plist(package_t *pkg, char **real_buf, size_t *real_len,
+    const char *realprefix)
 {
 	plist_t *p;
 	const cmd_t *cmdp;
@@ -468,8 +456,7 @@ stringify_plist(package_t *pkg, char **real_buf, size_t *real_len, char *realpre
 	}
 
 	/* Pass Two: build actual string. */
-	if ((buf = malloc(len + 1)) == NULL)
-		err(2, "malloc failed");
+	buf = xmalloc(len + 1);
 	*real_buf = buf;
 	*real_len = len;
 	++len;
@@ -517,7 +504,8 @@ do {									\
  * run it too in cases of failure.
  */
 int
-delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDeleteFiles)
+delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg,
+    Boolean NoDeleteFiles, const char *destdir)
 {
 	plist_t *p;
 	char   *Where = ".", *last_file = "";
@@ -550,6 +538,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 			if (NoDeleteFiles)
 				break;
 			format_cmd(tmp, sizeof(tmp), p->name, Where, last_file);
+			/* XXX cleanup(0); */
 			printf("Executing `%s'\n", tmp);
 			if (!Fake && system(tmp)) {
 				warnx("unexec command for `%s' failed", tmp);
@@ -559,7 +548,9 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 
 		case PLIST_FILE:
 			last_file = p->name;
-			(void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
+			(void) snprintf(tmp, sizeof(tmp), "%s%s%s/%s",
+			    destdir ? destdir : "", destdir ? "/" : "",
+			    Where, p->name);
 			if (isdir(tmp)) {
 				warnx("attempting to delete directory `%s' as a file\n"
 				    "this packing list is incorrect - ignoring delete request", tmp);
@@ -577,7 +568,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 								    Force ? "deleting anyway" : "not deleting", tmp);
 								if (!Force) {
 									fail = FAIL;
-									continue;
+									goto pkgdb_cleanup;
 								}
 							}
 						}
@@ -590,7 +581,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 						if ((cc = readlink(tmp, &buf[SymlinkHeaderLen],
 							  sizeof(buf) - SymlinkHeaderLen - 1)) < 0) {
 							warn("can't readlink `%s'", tmp);
-							continue;
+							goto pkgdb_cleanup;
 						}
 						buf[SymlinkHeaderLen + cc] = 0x0;
 						if (strcmp(buf, p->next->name) != 0) {
@@ -600,7 +591,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 								    buf, Force ? "deleting anyway" : "not deleting", tmp);
 								if (!Force) {
 									fail = FAIL;
-									continue;
+									goto pkgdb_cleanup;
 								}
 							}
 							buf[SymlinkHeaderLen + cc] = 0x0;
@@ -609,7 +600,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 								    buf, Force ? "deleting anyway" : "not deleting", tmp);
 								if (!Force) {
 									fail = FAIL;
-									continue;
+									goto pkgdb_cleanup;
 								}
 							}
 						}
@@ -635,21 +626,12 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 					}
 				}
 
+pkgdb_cleanup:
 				if (!Fake) {
 					if (!restored) {
-#ifdef PKGDB_DEBUG
-						printf("pkgdb_remove(\"%s\")\n", tmp);	/* HF */
-#endif
 						errno = 0;
-						if (pkgdb_remove(tmp)) {
-							if (errno) {
-								perror("pkgdb_remove");
-							}
-						} else {
-#ifdef PKGDB_DEBUG
-							printf("pkgdb_remove: ok\n");
-#endif
-						}
+						if (pkgdb_remove(tmp) && errno)
+							perror("pkgdb_remove");
 					}
 				}
 			}
@@ -659,7 +641,9 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 			if (NoDeleteFiles)
 				break;
 
-			(void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
+			(void) snprintf(tmp, sizeof(tmp), "%s%s%s/%s",
+			    destdir ? destdir : "", destdir ? "/" : "",
+			    Where, p->name);
 			if (fexists(tmp)) {
 			    if (!isdir(tmp)) {
 				warnx("cannot remove `%s' as a directory\n"
@@ -686,14 +670,6 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDele
 	return fail;
 }
 
-#ifdef DEBUG
-#define RMDIR(dir) fexec(RMDIR_CMD, dir, NULL)
-#define REMOVE(dir,ie) fexec_skipemtpy(REMOVE_CMD, (ie) ? "-f " : "", dir, NULL)
-#else
-#define RMDIR rmdir
-#define	REMOVE(file,ie) (remove(file) && !(ie))
-#endif
-
 /*
  * Selectively delete a hierarchy
  * Returns 1 on error, 0 else.
@@ -710,13 +686,15 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
 			    isdir(dir) ? "directory" : "file", dir);
 		return !ign_err;
 	} else if (nukedirs) {
-		if (fexec_skipempty(REMOVE_CMD, "-r", ign_err ? "-f" : "", dir, NULL))
+		if (recursive_remove(dir, ign_err)) {
+			warn("Couldn't remove %s", dir);
 			return 1;
+		}
 	} else if (isdir(dir)) {
-		if (RMDIR(dir) && !ign_err)
+		if (rmdir(dir) && !ign_err)
 			return 1;
 	} else {
-		if (REMOVE(dir, ign_err))
+		if (remove(dir) && !ign_err)
 			return 1;
 	}
 
@@ -727,7 +705,7 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
 			*cp2 = '\0';
 		if (!isemptydir(dir))
 			return 0;
-		if (RMDIR(dir) && !ign_err) {
+		if (rmdir(dir) && !ign_err) {
 			if (!fexists(dir))
 				warnx("directory `%s' doesn't really exist", dir);
 			else
