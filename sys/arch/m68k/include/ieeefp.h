@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.6 2008/08/05 16:47:42 matt Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.6.4.1 2009/02/02 00:26:25 snj Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -26,8 +26,8 @@ typedef int fexcept_t;
 
 #define	FE_TONEAREST	0	/* round to nearest representable number */
 #define	FE_TOWARDZERO	1	/* round to zero (truncate) */
-#define	FE_UPWARD	2	/* round toward positive infinity */
-#define	FE_DOWNWARD	3	/* round toward negative infinity */
+#define	FE_DOWNWARD	2	/* round toward negative infinity */
+#define	FE_UPWARD	3	/* round toward positive infinity */
 
 #if !defined(_ISOC99_SOURCE)
 
