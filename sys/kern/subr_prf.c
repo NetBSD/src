@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.124 2008/09/23 22:20:24 pooka Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.124.4.1 2009/02/02 19:47:47 snj Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.124 2008/09/23 22:20:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.124.4.1 2009/02/02 19:47:47 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -201,11 +201,9 @@ panic(const char *fmt, ...)
 		ci->ci_schedstate.spc_flags |= SPCF_OFFLINE;
 	}
 
-	bootopt = RB_AUTOBOOT;
+	bootopt = RB_AUTOBOOT | RB_NOSYNC;
 	if (dumponpanic)
 		bootopt |= RB_DUMP;
-	if (doing_shutdown)
-		bootopt |= RB_NOSYNC;
 	if (!panicstr)
 		panicstr = fmt;
 	doing_shutdown = 1;
