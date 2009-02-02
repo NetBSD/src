@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.196 2008/10/26 07:43:07 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.196.2.1 2009/02/02 20:21:09 snj Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -97,7 +97,6 @@ ASM=	access.S acct.S \
 		msgget.S munlock.S munlockall.S munmap.S \
 	nfssvc.S __ntp_gettime30.S \
 	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
-		__posix_fadvise50.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
 	quotactl.S \
 	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
@@ -138,7 +137,7 @@ WEAKASM= accept.S aio_suspend.S close.S connect.S execve.S \
 	wait4.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
-	issetugid.S sync.S
+	issetugid.S sync.S __posix_fadvise50.S
 
 PSEUDONOERR=	_exit.S
 
