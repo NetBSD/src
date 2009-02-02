@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.6.1 2009/02/02 03:30:33 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.6.1 2009/02/02 03:30:33 snj Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1630,7 +1630,7 @@ dumpsys(void)
 			/* Print out how many MBs we are to go. */
 			n = bytes - i;
 			if (n && (n % (1024*1024)) == 0)
-				printf("%d ", n / (1024 * 1024));
+				printf_nolog("%d ", n / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 
