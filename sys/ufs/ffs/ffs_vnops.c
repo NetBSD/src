@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.104.4.3 2009/02/02 21:15:40 snj Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.104.4.4 2009/02/02 21:16:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.104.4.3 2009/02/02 21:15:40 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.104.4.4 2009/02/02 21:16:18 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -576,7 +576,7 @@ loop:
 	else
 		waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
 
-	if (ffsino)
+	if (ffsino && vp->v_tag == VT_UFS)
 		error = ffs_update(vp, NULL, NULL, waitfor);
 
 	if (error == 0 && flags & FSYNC_CACHE) {
