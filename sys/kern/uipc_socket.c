@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.177 2008/10/14 13:45:26 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.177.4.1 2009/02/02 21:04:45 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177 2008/10/14 13:45:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177.4.1 2009/02/02 21:04:45 snj Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -669,7 +669,7 @@ soclose(struct socket *so)
 			if ((so->so_state & SS_ISDISCONNECTING) && so->so_nbio)
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
-				error = sowait(so, so->so_linger * hz);
+				error = sowait(so, true, so->so_linger * hz);
 				if (error)
 					break;
 			}

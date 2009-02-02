@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.173.4.1 2009/02/02 20:56:15 snj Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.173.4.2 2009/02/02 21:04:45 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.1 2009/02/02 20:56:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.2 2009/02/02 21:04:45 snj Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -283,7 +283,7 @@ nfs_connect(nmp, rep, l)
 		 * that interruptible mounts don't hang here for a long time.
 		 */
 		while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-			(void)sowait(so, 2 * hz);
+			(void)sowait(so, false, 2 * hz);
 			if ((so->so_state & SS_ISCONNECTING) &&
 			    so->so_error == 0 && rep &&
 			    (error = nfs_sigintr(nmp, rep, rep->r_lwp)) != 0){
