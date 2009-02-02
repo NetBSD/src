@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.20.4.3 2009/02/02 19:41:10 snj Exp $	*/
+/*	$NetBSD: tsc.c,v 1.20.4.4 2009/02/02 19:41:50 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.20.4.3 2009/02/02 19:41:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.20.4.4 2009/02/02 19:41:50 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,9 @@ u_int	tsc_get_timecount(struct timecounter *);
 uint64_t	tsc_freq;
 int64_t		tsc_drift_max = 250;	/* max cycles */
 int64_t		tsc_drift_observed;
+
+static volatile int64_t	tsc_sync_val;
+static volatile struct cpu_info	*tsc_sync_cpu;
 
 static struct timecounter tsc_timecounter = {
 	.tc_get_timecount = tsc_get_timecount,
@@ -168,8 +171,9 @@ tsc_sync_bp(struct cpu_info *ci)
 {
 	uint64_t tsc;
 
-	/* Clear remote result, pending later update. */
-	ci->ci_data.cpu_cc_skew = 0x7fffffffffffffffLL;
+	if (atomic_swap_ptr(&tsc_sync_cpu, ci) != NULL) {
+		panic("tsc_sync_bp: 1");
+	}
 
 	/* Flag it and read our TSC. */
 	atomic_or_uint(&ci->ci_flags, CPUF_SYNCTSC);
@@ -182,12 +186,15 @@ tsc_sync_bp(struct cpu_info *ci)
 	tsc += (rdmsr(MSR_TSC) >> 1);
 
 	/* Wait for the results to come in. */
-	while (ci->ci_data.cpu_cc_skew == 0x7fffffffffffffffLL) {
+	while (tsc_sync_cpu == ci) {
 		x86_pause();
+	}
+	if (tsc_sync_cpu != NULL) {
+		panic("tsc_sync_bp: 2");
 	}
 
 	/* Compute final value to adjust for skew. */
-	ci->ci_data.cpu_cc_skew = tsc - ci->ci_data.cpu_cc_skew;
+	ci->ci_data.cpu_cc_skew = tsc - tsc_sync_val;
 }
 
 /*
@@ -210,7 +217,11 @@ tsc_sync_ap(struct cpu_info *ci)
 	tsc += (rdmsr(MSR_TSC) >> 1);
 
 	/* Post result.  Ensure the whole value goes out atomically. */
-	(void)atomic_swap_64(&ci->ci_data.cpu_cc_skew, tsc);
+	(void)atomic_swap_64(&tsc_sync_val, tsc);
+
+	if (atomic_swap_ptr(&tsc_sync_cpu, NULL) != ci) {
+		panic("tsc_sync_ap");
+	}
 }
 
 uint64_t
