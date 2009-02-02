@@ -721,8 +721,8 @@ wpa_driver_bsd_get_scan_results(void *priv,
 		wsr->ssid_len = sr->isr_ssid_len;
 		wsr->freq = sr->isr_freq;
 		wsr->noise = sr->isr_noise;
-		wsr->qual = sr->isr_rssi;
-		wsr->level = 0;		/* XXX? */
+		wsr->qual = 0;
+		wsr->level = sr->isr_rssi;
 		wsr->caps = sr->isr_capinfo;
 		wsr->maxrate = getmaxrate(sr->isr_rates, sr->isr_nrates);
 		vp = (u_int8_t *)(sr+1);
