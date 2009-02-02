@@ -597,7 +597,7 @@ VI_CV_REPLACE_FUNCS(bsearch gethostname memchr memset)
 VI_CV_REPLACE_FUNCS(mkstemp mmap strdup strpbrk)
 VI_CV_REPLACE_FUNCS(snprintf vsnprintf)
 
-AC_CHECK_FUNCS(select)
+AC_CHECK_FUNCS(select memcpy)
 AC_CHECK_FUNCS(setenv, [need_env=no], [need_env=yes])
 AC_CHECK_FUNCS(strsep, [need_strsep=no], [need_strsep=yes])
 AC_CHECK_FUNCS(unsetenv,, [need_env=yes])
