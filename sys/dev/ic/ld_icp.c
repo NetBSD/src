@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.22 2008/09/09 12:45:39 tron Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.22.4.1 2009/02/02 20:24:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.22 2008/09/09 12:45:39 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.22.4.1 2009/02/02 20:24:38 snj Exp $");
 
 #include "rnd.h"
 
@@ -298,7 +298,7 @@ ld_icp_intr(struct icp_ccb *ic)
 	struct icp_softc *icp;
 
 	bp = ic->ic_context;
-	sc = (struct ld_icp_softc *)ic->ic_dv;
+	sc = (struct ld_icp_softc *)device_private(ic->ic_dv);
 	icp = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	if (ic->ic_status != ICP_S_OK) {
