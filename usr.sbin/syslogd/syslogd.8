@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.42 2006/09/15 20:32:59 christos Exp $
+.\"	$NetBSD: syslogd.8,v 1.42.24.1 2009/02/02 21:00:47 snj Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd September 15, 2006
+.Dd February 1, 2008
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -238,7 +238,7 @@ and priority
 All other untagged messages receive the default facility
 .Dv LOG_USER
 and priority
-.Dv LOT_NOTICE .
+.Dv LOG_NOTICE .
 .Sh FILES
 .Bl -tag -width /var/run/syslogd.pid -compact
 .It Pa /etc/syslog.conf
