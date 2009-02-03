@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.21 2009/01/18 12:58:49 tnn Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.22 2009/02/03 17:50:28 ghen Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.21 2009/01/18 12:58:49 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.22 2009/02/03 17:50:28 ghen Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -223,34 +223,57 @@ Static const keysym_t ukbd_keydesc_us_dvorak[] = {
 
 Static const keysym_t ukbd_keydesc_us_colemak[] = {
 /*  pos      command		normal		shifted */
-    KC(4), 			KS_a,
-    KC(5), 			KS_b,
-    KC(6), 			KS_c,
-    KC(7), 			KS_s,
-    KC(8), 			KS_f,
-    KC(9), 			KS_t,
-    KC(10), 			KS_d,
-    KC(11), 			KS_h,
-    KC(12), 			KS_u,
-    KC(13), 			KS_n,
-    KC(14), 			KS_e,
-    KC(15), 			KS_i,
-    KC(16), 			KS_m,
-    KC(17), 			KS_k,
-    KC(18), 			KS_y,
-    KC(19), 			KS_semicolon,	KS_colon,
-    KC(20), 			KS_q,
-    KC(21), 			KS_p,
-    KC(22), 			KS_r,
-    KC(23), 			KS_g,
-    KC(24), 			KS_l,
-    KC(25), 			KS_v,
-    KC(26), 			KS_w,
-    KC(27), 			KS_x,
-    KC(28), 			KS_j,
-    KC(29), 			KS_z,
-    KC(51), 			KS_o,
+    KC(4), 			KS_a,		KS_A,		KS_aacute,	KS_Aacute,
+    KC(5), 			KS_b,		KS_B,		KS_asciitilde,	KS_asciitilde,
+    KC(6), 			KS_c,		KS_C,		KS_ccedilla,	KS_Ccedilla,
+    KC(7), 			KS_s,		KS_S,		KS_ssharp,	KS_asciitilde,
+    KC(8), 			KS_f,		KS_F,		KS_atilde,	KS_Atilde,
+    KC(9), 			KS_t,		KS_T,		KS_dead_acute,	KS_asciitilde,
+    KC(10), 			KS_d,		KS_D,		KS_dead_diaeresis, KS_asciitilde,
+    KC(11), 			KS_h,		KS_H,		KS_asciitilde,	KS_asciitilde,
+    KC(12), 			KS_u,		KS_U,		KS_uacute,	KS_Uacute,
+    KC(13), 			KS_n,		KS_N,		KS_ntilde,	KS_Ntilde,
+    KC(14), 			KS_e,		KS_E,		KS_eacute,	KS_Eacute,
+    KC(15), 			KS_i,		KS_I,		KS_iacute,	KS_Iacute,
+    KC(16), 			KS_m,		KS_M,		KS_asciitilde,	KS_asciitilde,
+    KC(17), 			KS_k,		KS_K,		KS_asciitilde,	KS_asciitilde,
+    KC(18), 			KS_y,		KS_Y,		KS_udiaeresis,	KS_Udiaeresis,
+    KC(19), 			KS_semicolon,	KS_colon,	KS_odiaeresis,	KS_Odiaeresis,
+    KC(20), 			KS_q,		KS_Q,		KS_adiaeresis,	KS_Adiaeresis,
+    KC(21), 			KS_p,		KS_P,		KS_oslash,	KS_Ooblique,
+    KC(22), 			KS_r,		KS_R,		KS_dead_grave,	KS_asciitilde,
+    KC(23), 			KS_g,		KS_G,		KS_asciitilde,	KS_asciitilde,
+    KC(24), 			KS_l,		KS_L,		KS_asciitilde,	KS_asciitilde,
+    KC(25), 			KS_v,		KS_V,		KS_asciitilde,	KS_asciitilde,
+    KC(26), 			KS_w,		KS_W,		KS_aring,	KS_Aring,
+    KC(27), 			KS_x,		KS_X,		KS_dead_circumflex, KS_asciitilde,
+    KC(28), 			KS_j,		KS_J,		KS_asciitilde,	KS_asciitilde,
+    KC(29), 			KS_z,		KS_Z,		KS_ae,		KS_AE,
+    KC(30),  			KS_1,		KS_exclam,	KS_exclamdown,	KS_onesuperior,
+    KC(31),  			KS_2,		KS_at,		KS_masculine,	KS_twosuperior,
+    KC(32),  			KS_3,		KS_numbersign,	KS_ordfeminine,	KS_threesuperior,
+    KC(33),  			KS_4,		KS_dollar,	KS_cent,	KS_sterling,
+    KC(34),  			KS_5,		KS_percent,	KS_asciitilde,	KS_yen,
+    KC(35),  			KS_6,		KS_asciicircum,	KS_asciitilde,	KS_asciitilde,
+    KC(36),  			KS_7,		KS_ampersand,	KS_eth,		KS_ETH,
+    KC(37),  			KS_8,		KS_asterisk,	KS_thorn,	KS_THORN,
+    KC(38), 			KS_9,		KS_parenleft,	KS_asciitilde,	KS_asciitilde,
+    KC(39), 			KS_0,		KS_parenright,	KS_asciitilde,	KS_asciitilde,
+    KC(44), 			KS_space,	KS_space,	KS_space,	KS_nobreakspace,
+    KC(45), 			KS_minus,	KS_underscore,	KS_asciitilde,	KS_asciitilde,
+    KC(46), 			KS_equal,	KS_plus,	KS_multiply,	KS_division,
+    KC(47), 			KS_bracketleft,	KS_braceleft,	KS_guillemotleft, KS_asciitilde,
+    KC(48), 			KS_bracketright, KS_braceright,	KS_guillemotright, KS_asciitilde,
+    KC(49), 			KS_backslash,	KS_bar,		KS_asciitilde,	KS_asciitilde,
+    KC(50), 			KS_backslash,	KS_bar,		KS_asciitilde,	KS_asciitilde,
+    KC(51), 			KS_o,		KS_O,		KS_oacute,	KS_Oacute,
+    KC(52), 			KS_apostrophe,	KS_quotedbl,	KS_otilde,	KS_Otilde,
+    KC(53), 			KS_grave,	KS_asciitilde,	KS_dead_tilde,	KS_asciitilde,
+    KC(54), 			KS_comma,	KS_less,	KS_dead_cedilla, KS_asciitilde,
+    KC(55), 			KS_period,	KS_greater,	KS_asciitilde,	KS_asciitilde,
+    KC(56), 			KS_slash,	KS_question,	KS_questiondown, KS_asciitilde,
     KC(57), 			KS_BackSpace,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
 };
 
 Static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
