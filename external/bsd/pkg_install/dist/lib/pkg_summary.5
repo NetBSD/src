@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_summary.5,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $
+.\"	$NetBSD: pkg_summary.5,v 1.2 2009/02/03 05:16:08 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation
 .\"
@@ -67,8 +67,10 @@ If missing, this package has no dependencies.
 (required) A more detailed description of the package.
 .\" DIGEST
 .It Ev FILE_NAME
-(optional) The name of the binary package file.  If not given,
-PKGNAME.tgz can be assumed.
+(optional) The name of the binary package file.
+If not given,
+.Pa PKGNAME.tgz
+can be assumed.
 .It Ev FILE_SIZE
 (optional) The size of the binary package file, in bytes.
 .It Ev HOMEPAGE
