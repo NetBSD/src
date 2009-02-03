@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_elfxx.c,v 1.1 2009/01/06 03:59:56 mrg Exp $	*/
+/*	$NetBSD: ldd_elfxx.c,v 1.2 2009/02/03 03:01:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_elfxx.c,v 1.1 2009/01/06 03:59:56 mrg Exp $");
+__RCSID("$NetBSD: ldd_elfxx.c,v 1.2 2009/02/03 03:01:02 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,19 +90,13 @@ __RCSID("$NetBSD: ldd_elfxx.c,v 1.1 2009/01/06 03:59:56 mrg Exp $");
  * returns 0 on success and -1 on failure.
  */
 int
-ELFNAME(ldd)(char *path, char *fmt1, char *fmt2)
+ELFNAME(ldd)(int fd, char *path, char *fmt1, char *fmt2)
 {
 	struct stat st;
-	int fd;
 
-	fd = open(path, O_RDONLY);
-	if (fd == -1) {
-		warn("%s", path);
-		return -1;
-	}
-	if (fstat(fd, &st) < 0) {
-		warn("%s", path);
-		close(fd);
+	if (lseek(fd, 0, SEEK_SET) < 0 ||
+	    fstat(fd, &st) < 0) {
+		_rtld_error("%s: %s", path, strerror(errno));
 		return -1;
 	}
 
@@ -121,11 +115,8 @@ ELFNAME(ldd)(char *path, char *fmt1, char *fmt2)
 
 	_rtld_process_hints(path, &_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
 	_rtld_objmain = _rtld_map_object(xstrdup(path), fd, &st);
-	if (_rtld_objmain == NULL) {
-		close(fd);
+	if (_rtld_objmain == NULL)
 		return -1;
-	}
-	close(fd);
 
 	_rtld_objmain->path = xstrdup(path);
 	_rtld_digest_dynamic(path, _rtld_objmain);
