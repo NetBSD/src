@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.70 2009/01/18 21:59:19 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.71 2009/02/03 05:18:42 dbj Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -38,7 +38,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <grp.h>
 #include <limits.h>
 #include <paths.h>
 #include <stdarg.h>
@@ -75,6 +74,9 @@
 
 /* We don't include <pwd.h> here, so that "compat_pwd.h" works. */
 struct passwd;
+
+/* We don't include <grp.h> either */
+struct group;
 
 /* Assume an ANSI compiler for the host. */
 
@@ -327,6 +329,9 @@ int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
 #endif
 /* Make them use our version */
 #  define heapsort __nbcompat_heapsort
+
+char	       *flags_to_string(unsigned long, const char *);
+int		string_to_flags(char **, unsigned long *, unsigned long *);
 
 /*
  * HAVE_X_FROM_Y and HAVE_PWCACHE_FOODB go together, because we cannot
