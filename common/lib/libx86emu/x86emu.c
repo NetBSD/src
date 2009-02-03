@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.5 2008/10/27 00:20:22 joerg Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.6 2009/02/03 19:14:52 joerg Exp $	*/
 
 /****************************************************************************
 *
@@ -809,7 +809,7 @@ decode_sib_address(struct X86EMU *emu, int sib, int mod)
 		if (mod == 0) {
 			base = fetch_long_imm(emu);
 		} else {
-			base = emu->x86.R_ESP;
+			base = emu->x86.R_EBP;
 			emu->x86.mode |= SYSMODE_SEG_DS_SS;
 		}
 		break;
@@ -884,10 +884,12 @@ decode_rl_address(struct X86EMU *emu)
 			offset = decode_sib_address(emu, sib, 0);
 			break;
 		case 5:
-			if (emu->cur_mod == 0)
+			if (emu->cur_mod == 0) {
 				offset = fetch_long_imm(emu);
-			else
+			} else {
+				emu->x86.mode |= SYSMODE_SEG_DS_SS;
 				offset = emu->x86.R_EBP;
+			}
 			break;
 		case 6:
 			offset = emu->x86.R_ESI;
@@ -929,10 +931,12 @@ decode_rl_address(struct X86EMU *emu)
 			offset = emu->x86.R_DI;
 			break;
 		case 6:
-			if (emu->cur_mod == 0)
+			if (emu->cur_mod == 0) {
 				offset = fetch_word_imm(emu);
-			else
+			} else {
+				emu->x86.mode |= SYSMODE_SEG_DS_SS;
 				offset = emu->x86.R_BP;
+			}
 			break;
 		case 7:
 			offset = emu->x86.R_BX;
