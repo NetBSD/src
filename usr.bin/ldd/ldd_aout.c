@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_aout.c,v 1.2 2009/01/11 00:06:55 mrg Exp $	*/
+/*	$NetBSD: ldd_aout.c,v 1.3 2009/02/03 03:01:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_aout.c,v 1.2 2009/01/11 00:06:55 mrg Exp $");
+__RCSID("$NetBSD: ldd_aout.c,v 1.3 2009/02/03 03:01:02 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,37 +69,22 @@ struct netbsd32_exec {
  * XXX put this here, rather than a separate ldd_aout.h
 #include "ldd.h"
  */
-int aout_ldd(char *, char *, char *);
+int aout_ldd(int, char *, char *, char *);
 
 int
-aout_ldd(char *file, char *fmt1, char *fmt2)
+aout_ldd(int fd, char *file, char *fmt1, char *fmt2)
 {
-	struct stat st;
 	struct netbsd32_exec hdr;
 	int status, rval;
-	int fd;
 
-	fd = open(file, O_RDONLY);
-	if (fd == -1) {
-		warn("%s", file);
-		return -1;
-	}
-	if (fstat(fd, &st) < 0) {
-		warn("%s", file);
-		close(fd);
-		return -1;
-	}
-
-	lseek(fd, 0, SEEK_SET);
-	if (read(fd, &hdr, sizeof hdr) != sizeof hdr
-	    || (N_GETFLAG(hdr) & EX_DPMASK) != EX_DYNAMIC
+	if (lseek(fd, 0, SEEK_SET) < 0 ||
+	    read(fd, &hdr, sizeof hdr) != sizeof hdr
 #if 1 /* Compatibility */
 	    || hdr.a_entry < N_PAGSIZ(hdr)
 #endif
-	    ) {
+	    || (N_GETFLAG(hdr) & EX_DPMASK) != EX_DYNAMIC)
 		/* calling function prints warning */
 		return -1;
-	}
 
 	setenv("LD_TRACE_LOADED_OBJECTS", "", 1);
 	if (fmt1)
