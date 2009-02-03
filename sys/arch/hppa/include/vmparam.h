@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12.18.1 2008/10/27 08:02:41 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12.18.2 2009/02/03 09:18:15 skrll Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -121,7 +121,7 @@ struct vm_page_md {
 
 #define	VM_MDPAGE_INIT(pg) \
 do {									\
-	mutex_init(&(pg)->mdpage.pvh_lock, MUTEX_SPIN, IPL_VM);	\
+	mutex_init(&(pg)->mdpage.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
 	(pg)->mdpage.pvh_list = NULL;					\
 	(pg)->mdpage.pvh_attrs = 0;					\
 } while (0)
