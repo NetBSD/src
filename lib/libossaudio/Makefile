@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2003/11/18 22:42:04 grant Exp $
+#	$NetBSD: Makefile,v 1.7 2009/02/03 12:46:13 jmcneill Exp $
 
 LIB=	ossaudio
 MAN=	ossaudio.3
+USETBL=	1
 
 SRCS=	ossaudio.c
 
