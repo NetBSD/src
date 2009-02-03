@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbusreg.h,v 1.1 2006/02/19 02:24:20 tls Exp $ */
+/*	$NetBSD: amdpm_smbusreg.h,v 1.2 2009/02/03 16:27:13 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -41,6 +41,7 @@
 #define AMDPM_8111_SMBUS_HOSTDATA    0xE6  /* SMBus 1.x Host data register */
 #define AMDPM_8111_SMBUS_HOSTCMD     0xE8  /* SMBus 1.x Host command field register */
 
+#define AMDPM_8111_SMBUS_GSR_QUICK   0x0008 /* GSR contents for quick op */
 #define AMDPM_8111_SMBUS_GSR_SB      0x0009 /* GSR contents to send a byte */
 #define AMDPM_8111_SMBUS_GSR_RXB     0x0009 /* GSR contents to receive a byte */
 #define AMDPM_8111_SMBUS_GSR_RB      0x000A /* GSR contents to read a byte */
