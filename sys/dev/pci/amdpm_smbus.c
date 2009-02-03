@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.15 2008/04/10 19:13:36 cegger Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.16 2009/02/03 16:27:13 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.15 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.16 2009/02/03 16:27:13 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ static int       amdpm_smbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 static int       amdpm_smbus_check_done(struct amdpm_softc *, i2c_op_t);
 static void      amdpm_smbus_clear_gsr(struct amdpm_softc *);
 static uint16_t	amdpm_smbus_get_gsr(struct amdpm_softc *);
+static int       amdpm_smbus_quick(struct amdpm_softc *, i2c_op_t);
 static int       amdpm_smbus_send_1(struct amdpm_softc *, uint8_t, i2c_op_t);
 static int       amdpm_smbus_write_1(struct amdpm_softc *, uint8_t,
 				     uint8_t, i2c_op_t);
@@ -187,6 +188,9 @@ amdpm_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 	uint8_t *p = vbuf;
 	int rv;
 	
+	if ((cmdlen == 0) && (buflen == 0))
+		return amdpm_smbus_quick(sc, op);
+
 	if (I2C_OP_READ_P(op) && (cmdlen == 0) && (buflen == 1)) {
 		rv = amdpm_smbus_receive_1(sc, op);
 		if (rv == -1)
@@ -250,6 +254,32 @@ amdpm_smbus_get_gsr(struct amdpm_softc *sc)
 	int off = (sc->sc_nforce ? 0xe0 : 0);
         return bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 	    AMDPM_8111_SMBUS_STAT - off);
+}
+
+static int
+amdpm_smbus_quick(struct amdpm_softc *sc, i2c_op_t op)
+{
+	uint16_t data = 0;
+	int off = (sc->sc_nforce ? 0xe0 : 0);
+
+	/* first clear gsr */
+	amdpm_smbus_clear_gsr(sc);
+
+	/* write smbus slave address and read/write bit to register */
+	data = sc->sc_smbus_slaveaddr;
+	data <<= 1;
+	if (I2C_OP_READ_P(op))
+		data |= AMDPM_8111_SMBUS_READ;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTADDR - off, data);
+
+	/* host start */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_CTRL - off,
+	    AMDPM_8111_SMBUS_GSR_QUICK);	
+
+	return amdpm_smbus_check_done(sc, op);
 }
 
 static int
