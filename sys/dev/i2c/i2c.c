@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.22 2008/09/29 22:55:08 pgoyette Exp $	*/
+/*	$NetBSD: i2c.c,v 1.23 2009/02/03 16:41:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.22 2008/09/29 22:55:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.23 2009/02/03 16:41:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,17 +131,54 @@ iic_attach(device_t parent, device_t self, void *aux)
 
 #if I2C_SCAN
 	if (sc->sc_type == I2C_TYPE_SMBUS) {
+		int err;
 		int found = 0;
 		i2c_addr_t addr;
-		uint8_t cmd = 0, val;
+		uint8_t val;
 
-		for (addr = 0x0; addr < 0x80; addr++) {
-			/* Skip i2c Alert Response Address */
-			if (addr == 0x0c)
+		for (addr = 0x09; addr < 0x78; addr++) {
+			/*
+			 * Skip certain i2c addresses:
+			 *	0x00		General Call / START
+			 *	0x01		CBUS Address
+			 *	0x02		Different Bus format
+			 *	0x03 - 0x07	Reserved
+			 *	0x08		Host Address
+			 *	0x0c		Alert Response Address
+			 *	0x28		ACCESS.Bus host
+			 *	0x37		ACCESS.Bus default address
+			 *	0x48 - 0x4b	Prototypes
+			 *	0x61		Device Default Address
+			 *	0x78 - 0x7b	10-bit addresses
+			 *	0x7c - 0x7f	Reserved
+			 *
+			 * Some of these are skipped by judicious selection
+			 * of the range of the above for (;;) statement.
+			 *
+			 * if (addr <= 0x08 || addr >= 0x78)
+			 *	continue;
+			 */
+			if (addr == 0x0c || addr == 0x28 || addr == 0x37 ||
+			    addr == 0x61 || (addr & 0x7c) == 0x48)
 				continue;
+
 			iic_acquire_bus(ic, 0);
-			if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
-			    &cmd, 1, &val, 1, 0) == 0) {
+			/*
+			 * Use SMBus quick_write command to detect most
+			 * addresses;  should avoid hanging the bus on
+			 * some write-only devices (like clocks that show
+			 * up at address 0x69)
+			 *
+			 * XXX The quick_write() is allegedly known to
+			 * XXX corrupt the Atmel AT24RF08 EEPROM found
+			 * XXX on some IBM Thinkpads!
+			 */
+			if ((addr & 0xf8) == 0x30 ||
+			    (addr & 0xf0) == 0x50)
+				err = iic_smbus_receive_byte(ic, addr, &val, 0);
+			else
+				err = iic_smbus_quick_write(ic, addr, 0);
+			if (err == 0) {
 				if (found == 0)
 					aprint_normal("%s: devices at",
 							ic->ic_devname);
