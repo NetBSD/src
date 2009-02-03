@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.17 2009/01/30 16:16:36 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.18 2009/02/03 16:13:34 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.17 2009/01/30 16:16:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.18 2009/02/03 16:13:34 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -116,7 +116,7 @@ static void	age_rxeof(struct age_softc *sc, struct rx_rdesc *);
 static void	age_rxintr(struct age_softc *, int);
 static void	age_tick(void *);
 static void	age_reset(struct age_softc *);
-static void	age_stop(struct age_softc *);
+static void	age_stop(struct ifnet *, int);
 static void	age_stats_update(struct age_softc *);
 static void	age_stop_txmac(struct age_softc *);
 static void	age_stop_rxmac(struct age_softc *);
@@ -246,6 +246,7 @@ age_attach(device_t parent, device_t self, void *aux)
 	ifp->if_init = age_init;
 	ifp->if_ioctl = age_ioctl;
 	ifp->if_start = age_start;
+	ifp->if_stop = age_stop;
 	ifp->if_watchdog = age_watchdog;
 	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, AGE_TX_RING_CNT - 1);
@@ -308,7 +309,7 @@ age_detach(device_t self, int flags)
 	int s;
 
 	s = splnet();
-	age_stop(sc);
+	age_stop(ifp, 0);
 	splx(s);
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -1636,7 +1637,7 @@ age_init(struct ifnet *ifp)
 	/*
 	 * Cancel any pending I/O.
 	 */
-	age_stop(sc);
+	age_stop(ifp, 0);
 
 	/*
 	 * Reset the chip to a known state.
@@ -1647,7 +1648,7 @@ age_init(struct ifnet *ifp)
 	error = age_init_rx_ring(sc);
         if (error != 0) {
 		printf("%s: no memory for Rx buffers.\n", device_xname(sc->sc_dev));
-                age_stop(sc);
+		age_stop(ifp, 0);
 		return error;
         }
 	age_init_rr_ring(sc);
@@ -1901,9 +1902,9 @@ age_init(struct ifnet *ifp)
 }
 
 static void
-age_stop(struct age_softc *sc)
+age_stop(struct ifnet *ifp, int disable)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct age_softc *sc = ifp->if_softc;
 	struct age_txdesc *txd;
 	struct age_rxdesc *rxd;
 	uint32_t reg;
