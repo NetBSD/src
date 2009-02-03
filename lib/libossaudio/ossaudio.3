@@ -1,4 +1,4 @@
-.\"	$NetBSD: ossaudio.3,v 1.17 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: ossaudio.3,v 1.18 2009/02/03 12:46:13 jmcneill Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,30 @@ interface.
 .Pp
 Use the native interface for new programs and the emulation
 library only for porting programs.
+.Ss Mixer Control Map
+The following table summarizes the mappings from native interface
+device names to OSS mixer controls.
+.Pp
+.TS
+box tab(:);
+l | l.
+Native Device Name:OSS Mixer Control
+_
+*.mic:SOUND_MIXER_MIC
+*.line:SOUND_MIXER_LINE
+*.cd:SOUND_MIXER_CD
+*.dac:SOUND_MIXER_PCM
+*.aux:SOUND_MIXER_LINE1
+*.record:SOUND_MIXER_IMIX
+*.master:SOUND_MIXER_VOLUME
+*.treble:SOUND_MIXER_TREBLE
+*.bass:SOUND_MIXER_BASS
+*.speaker:SOUND_MIXER_SPEAKER
+*.output:SOUND_MIXER_OGAIN
+*.input:SOUND_MIXER_IGAIN
+*.fmsynth:SOUND_MIXER_SYNTH
+*.midi:SOUND_MIXER_SYNTH
+.TE
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr midi 4
