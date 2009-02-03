@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_lookup.c,v 1.5 2006/03/27 01:09:11 christos Exp $	*/
+/*	$NetBSD: citrus_lookup.c,v 1.6 2009/02/03 04:58:38 lukem Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lookup.c,v 1.5 2006/03/27 01:09:11 christos Exp $");
+__RCSID("$NetBSD: citrus_lookup.c,v 1.6 2009/02/03 04:58:38 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -193,7 +193,7 @@ retry:
 	q = _bcs_skip_nonws_len(p, &len);
 	if (p==q)
 		goto retry;
-	if (cl->cl_key && (q-p != cl->cl_keylen ||
+	if (cl->cl_key && ((size_t)(q-p) != cl->cl_keylen ||
 			   memcmp(p, cl->cl_key, (size_t)(q-p)) != 0))
 		goto retry;
 
