@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.107 2008/12/28 19:50:22 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.108 2009/02/03 17:33:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.107 2008/12/28 19:50:22 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.108 2009/02/03 17:33:42 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,10 +383,8 @@ groups(void *arg, VARENT *ve, int mode)
 	} else
 		left = -1;
 
-	if (ki->p_ngroups == 0) {
+	if (ki->p_ngroups == 0)
 		fmt_putc('-', &left);
-		return;
-	}
 
 	for (i = 0; i < ki->p_ngroups; i++) {
 		(void)snprintf(buf, sizeof(buf), "%d", ki->p_groups[i]);
