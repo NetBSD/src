@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.6 2007/12/11 12:09:22 lukem Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.7 2009/02/03 16:17:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.6 2007/12/11 12:09:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.7 2009/02/03 16:17:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,17 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 			if ((error = iic_write_byte(tag, *cmd++, flags)) != 0)
 				goto bad;
 		}
+	} else if (buflen == 0) {
+		/*
+		 * This is a quick_read()/quick_write() command with
+		 * neither command nor data bytes
+		 */
+		if (I2C_OP_STOP_P(op))
+			flags |= I2C_F_STOP;
+		if (I2C_OP_READ_P(op))
+			flags |= I2C_F_READ;
+		if ((error = iic_initiate_xfer(tag, addr, flags)) != 0)
+			goto bad;
 	}
 
 	if (I2C_OP_READ_P(op))
