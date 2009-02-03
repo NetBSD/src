@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_statfs.c,v 1.4 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: compat_statfs.c,v 1.5 2009/02/03 05:04:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_statfs.c,v 1.4 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: compat_statfs.c,v 1.5 2009/02/03 05:04:52 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -90,7 +90,7 @@ static const struct {
 static void
 vfs2fs(struct statfs12 *bfs, const struct statvfs *fs) 
 {
-	int i = 0;
+	size_t i = 0;
 	bfs->f_type = 0;
 	bfs->f_oflags = (short)fs->f_flag;
 
