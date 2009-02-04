@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.17 2009/01/16 02:33:14 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.18 2009/02/04 20:32:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.17 2009/01/16 02:33:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.18 2009/02/04 20:32:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,8 +573,6 @@ loopdone:
 	if (bp != NULL) {
 		error = biowait(mbp);
 	}
-	putiobuf(mbp);
-	uvm_pagermapout(kva, npages);
 
 	/*
 	 * if this we encountered a hole then we have to do a little more work.
@@ -615,6 +613,10 @@ loopdone:
 		}
 	}
 	rw_exit(&gp->g_glock);
+
+	putiobuf(mbp);
+	uvm_pagermapout(kva, npages);
+
 	mutex_enter(&uobj->vmobjlock);
 
 	/*
