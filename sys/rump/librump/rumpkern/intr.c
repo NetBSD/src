@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 2009/01/13 02:03:13 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.13 2009/02/04 19:40:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2009/01/13 02:03:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2009/02/04 19:40:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -73,8 +73,8 @@ makeworker(bool bootstrap)
 		    INTRTHREAD_MAX);
 		return;
 	}
-	rv = kthread_create(PRI_NONE, 0, NULL, sithread,
-	    NULL, NULL, "rumpsi");
+	rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_INTR, NULL,
+	    sithread, NULL, NULL, "rumpsi");
 	if (rv) {
 		if (bootstrap)
 			panic("intr thread creation failed %d", rv);
@@ -158,7 +158,7 @@ softint_init(struct cpu_info *ci)
 
 	/* XXX: should have separate "wanttimer" control */
 	if (rump_threads) {
-		rv = kthread_create(PRI_NONE, 0, NULL, doclock,
+		rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, doclock,
 		    NULL, NULL, "rumpclk");
 		if (rv)
 			panic("clock thread creation failed: %d", rv);
