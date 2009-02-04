@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1230 2009/02/02 20:47:19 joerg Exp $
+#	$NetBSD: mi,v 1.1231 2009/02/04 13:33:02 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2324,7 +2324,7 @@
 ./usr/lib/libdes_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libdevmapper.a			comp-lvm-lib		lvm
 ./usr/lib/libdevmapper_g.a	-unknown-	debuglib
-./usr/lib/libdevmapper_p.a			comp-lvm-proflib	lvm
+./usr/lib/libdevmapper_p.a			comp-lvm-proflib	profile,lvm
 ./usr/lib/libdns.a				comp-bind-lib
 ./usr/lib/libdns_g.a		-unknown-	debuglib
 ./usr/lib/libdns_p.a				comp-bind-proflib	profile
