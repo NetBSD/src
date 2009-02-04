@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.6 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: disk.c,v 1.7 2009/02/04 15:22:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #include "local.h"
 #include "common.h"
 
+#if defined(LIBSA_NO_TWIDDLE)
+#define twiddle()
+#endif
+
 int dkopen(struct open_file *, ...);
 int dkclose(struct open_file *);
 int dkstrategy(void *, int, daddr_t, size_t, void *, size_t *);
@@ -62,7 +66,11 @@ bool __sector_rw(uint8_t *, int, int, int);
 int __hd_rw(uint8_t *, int, int, int);
 int __fd_2d_rw(uint8_t *, int, int, int);
 int __fd_2hd_rw(uint8_t *, int, int, int);
+#ifdef DEBUG
 void __fd_progress_msg(int);
+#else
+#define __fd_progress_msg(pos)	twiddle()
+#endif
 
 bool
 device_attach(int type, int unit, int partition)
@@ -219,19 +227,27 @@ __hd_rw(uint8_t *buf, int block, int flag, int count)
 int
 __fd_2d_rw(uint8_t *buf, int block, int flag, int count)
 {
-	int cnt, i, err;
+	int cnt, err;
 	uint32_t pos;
 
-	if (!blk_to_2d_position(block, &pos, &cnt)) {
-		printf("%s: invalid block #%d.\n", __func__, block);
-		return -1;
-	}
-	__fd_progress_msg(pos);
+	while (count > 0) {
+		if (!blk_to_2d_position(block, &pos, &cnt)) {
+			printf("%s: invalid block #%d.\n", __func__, block);
+			return -1;
+		}
 
-	for (i = 0; i < count; i++, buf += DEV_BSIZE) {
-		err = ROM_FD_RW(flag | __disk.unit, pos, cnt, buf);
+		__fd_progress_msg(pos);
+
+		if (cnt > count)
+			cnt = count;
+
+		err = ROM_FD_RW(flag | __disk.unit, pos, cnt * 2, buf);
 		if (err)
 			return err;
+
+		count -= cnt;
+		block += cnt;
+		buf += DEV_BSIZE * cnt;
 	}
 	return 0;
 }
@@ -239,30 +255,39 @@ __fd_2d_rw(uint8_t *buf, int block, int flag, int count)
 int
 __fd_2hd_rw(uint8_t *buf, int block, int flag, int count)
 {
-	int cnt, i, err;
+	int cnt, err;
 	uint32_t pos;
 
-	if (!blk_to_2hd_position(block, &pos, &cnt)) {
-		printf("%s: invalid block #%d.\n", __func__, block);
-		return -1;
-	}
-	__fd_progress_msg(pos);
+	while (count > 0) {
+		if (!blk_to_2hd_position(block, &pos, &cnt)) {
+			printf("%s: invalid block #%d.\n", __func__, block);
+			return -1;
+		}
+		if (cnt > count)
+			cnt = count;
 
-	for (i = 0; i < count; i++, buf += DEV_BSIZE) {
+		__fd_progress_msg(pos);
+
 		err = ROM_FD_RW(flag | __disk.unit | 0x1000000, pos, cnt, buf);
 		if (err)
 			return err;
+
+		count -= cnt;
+		block += cnt;
+		buf += DEV_BSIZE * cnt;
 	}
 	return 0;
 }
 
+#ifdef DEBUG
 void
 __fd_progress_msg(int pos)
 {
 	char msg[16];
 
 	memset(msg, 0, sizeof msg);
-	sprintf(msg, "C%d H%d S%d\r", (pos >> 16) & 0xff, (pos >> 8) & 0xff,
+	sprintf(msg, "C%d H%d S%d  \r", (pos >> 16) & 0xff, (pos >> 8) & 0xff,
 	    pos & 0xff);
 	printf("%s", msg);
 }
+#endif
