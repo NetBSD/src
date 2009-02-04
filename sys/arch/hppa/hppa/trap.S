@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.5 2008/12/15 18:13:14 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.6 2009/02/04 00:05:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1320,7 +1320,7 @@ itlb_c:
  * %r24 = undefined
  * %r25 = undefined
  */
-LEAF_ENTRY($tlbd_s)
+LEAF_ENTRY_NOPROFILE($tlbd_s)
 ALTENTRY($tlbd_t)
 ALTENTRY($tlbd_x)
 	TLB_STATS_PRE(tlbd)
@@ -1350,7 +1350,7 @@ EXIT($tlbd_s)
  * %r24 = undefined
  * %r25 = undefined
  */
-LEAF_ENTRY($itlb_s)
+LEAF_ENTRY_NOPROFILE($itlb_s)
 ALTENTRY($itlb_t)
 ALTENTRY($itlb_x)
 	TLB_STATS_PRE(itlb)
@@ -1382,7 +1382,7 @@ EXIT($itlb_s)
  * %r24 = undefined
  * %r25 = undefined
  */
-LEAF_ENTRY($dtlb_s)
+LEAF_ENTRY_NOPROFILE($dtlb_s)
 ALTENTRY($dtlb_t)
 ALTENTRY($dtlb_x)
 	TLB_STATS_PRE(dtlb)
@@ -1397,7 +1397,7 @@ ALTENTRY($dtlb_x)
 	nop
 EXIT($dtlb_s)
 
-LEAF_ENTRY($dtlbna_s)
+LEAF_ENTRY_NOPROFILE($dtlbna_s)
 ALTENTRY($itlbna_s)
 ALTENTRY($dtlbna_t)
 ALTENTRY($itlbna_t)
@@ -1505,7 +1505,7 @@ EXIT($dtlbna_s)
  */
 
 	.align	32
-LEAF_ENTRY($tlbd_l)
+LEAF_ENTRY_NOPROFILE($tlbd_l)
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL_L(1, TLABEL(all))
 	IDTLBAF(17)
@@ -1543,7 +1543,7 @@ EXIT($tlbd_l)
  * we found a post-silicon bug that makes cr28
  * unreliable for the itlb miss handler
  */
-LEAF_ENTRY($itlb_l)
+LEAF_ENTRY_NOPROFILE($itlb_l)
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
 	extru,=	%r25, 5, 1, %r0	/* gate needs a kernel pid */
@@ -1555,7 +1555,7 @@ LEAF_ENTRY($itlb_l)
 	nop
 EXIT($itlb_l)
 
-LEAF_ENTRY($dtlbna_l)
+LEAF_ENTRY_NOPROFILE($dtlbna_l)
 ALTENTRY($itlbna_l)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, $dtlbna_l_fake)
@@ -1584,7 +1584,7 @@ $dtlbna_l_fake:
 	nop
 EXIT($dtlbna_l)
 
-LEAF_ENTRY($dtlb_l)
+LEAF_ENTRY_NOPROFILE($dtlb_l)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, TLABEL(all))
 	IDTLBAF(17)
@@ -1656,7 +1656,7 @@ EXIT($dtlb_l)
 	depdi	0, 44, 30, %r25			! \
 	depd	%r16, 14, 15, %r25
 
-LEAF_ENTRY($tlbd_u)
+LEAF_ENTRY_NOPROFILE($tlbd_u)
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL_L(1, TLABEL(all))
 	TLB_PCX2PCXU
@@ -1666,7 +1666,7 @@ LEAF_ENTRY($tlbd_u)
 	nop
 EXIT($tlbd_u)
 
-LEAF_ENTRY($itlb_u)
+LEAF_ENTRY_NOPROFILE($itlb_u)
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
 	extru,=	%r25, 5, 1, %r0	/* gate needs a kernel pid */
@@ -1678,7 +1678,7 @@ LEAF_ENTRY($itlb_u)
 	nop
 EXIT($itlb_u)
 
-LEAF_ENTRY($dtlbna_u)
+LEAF_ENTRY_NOPROFILE($dtlbna_u)
 ALTENTRY($itlbna_u)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, $dtlbna_u_fake)
@@ -1706,7 +1706,7 @@ $dtlbna_u_fake:
 	nop
 EXIT($dtlbna_u)
 
-LEAF_ENTRY($dtlb_u)
+LEAF_ENTRY_NOPROFILE($dtlb_u)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, TLABEL(all))
 	TLB_PCX2PCXU
@@ -1749,7 +1749,7 @@ EXIT(desidhash_s)
 /*
  * void desidhash_t(void)
  */
-LEAF_ENTRY(desidhash_t)
+LEAF_ENTRY_NOPROFILE(desidhash_t)
 	sync
 	MFCPU_T(DR_CPUCFG,22)	/* %t1 */
 	MFCPU_T(DR_CPUCFG,22)
@@ -1787,7 +1787,7 @@ EXIT(ibtlb_l)
  * void
  * hpti_l(addr,size)
 */
-LEAF_ENTRY(hpti_l)
+LEAF_ENTRY_NOPROFILE(hpti_l)
 	ldo	-1(%arg1), %arg1
 	depi	0, 31, 12, %arg1
 	ldi	0x1c0, %t1		/* cache size assumed 128k XXX */
@@ -1885,7 +1885,7 @@ EXIT(desidhash_l)
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
 	.level	2.0w
-LEAF_ENTRY(desidhash_u)
+LEAF_ENTRY_NOPROFILE(desidhash_u)
 	MFCPU_U(2,28)
 	depdi	0, 54, 1, %r28
 	MTCPU_U(28,2)
@@ -1893,13 +1893,13 @@ LEAF_ENTRY(desidhash_u)
 	copy	%r0, %ret0	/* XXX dunno how to get chip rev */
 EXIT(desidhash_u)
 
-LEAF_ENTRY(ibtlb_u)
+LEAF_ENTRY_NOPROFILE(ibtlb_u)
 	/* TODO insert a locked large tlb entry */
 	bv	0(%rp)
 	nop
 EXIT(ibtlb_u)
 
-LEAF_ENTRY(pbtlb_u)
+LEAF_ENTRY_NOPROFILE(pbtlb_u)
 	/* TODO purge a locked tlb entry */
 	bv	0(%rp)
 	nop
