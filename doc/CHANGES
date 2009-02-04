@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1177 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1178 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -125,3 +125,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		for turbochannel graphic cards yet. [bouyer 20090124]
 	dhcpcd(8): Import 4.0.8 [roy 20090128]
 	dhcpcd(8): Import 4.0.9 [roy 20090131]
+	dhcpcd(8): Import 4.0.10 [roy 20090204]
+
