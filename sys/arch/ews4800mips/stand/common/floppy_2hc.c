@@ -1,4 +1,4 @@
-/*	$NetBSD: floppy_2hc.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: floppy_2hc.c,v 1.5 2009/02/04 15:22:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -50,12 +50,12 @@ blk_to_2hc_position(uint32_t logical_block_number, uint32_t *position,
 
 	cylinder = logical_block_number / (15 * 2);
 	side = logical_block_number - (cylinder * 15 * 2) > 14;
-	sector = logical_block_number - (side + cylinder * 2) * 15 + 1;
+	sector = logical_block_number - (side + cylinder * 2) * 15;
 
 	if (position)
-		*position = (cylinder << 16) | (side << 8) | sector;
+		*position = (cylinder << 16) | (side << 8) | (sector + 1);
 	if (count)
-		*count = 1;
+		*count = 15 - sector;
 
 	return true;
 }
