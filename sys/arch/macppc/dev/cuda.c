@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.12 2009/01/11 18:26:21 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.13 2009/02/04 16:11:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.12 2009/01/11 18:26:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.13 2009/02/04 16:11:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -925,7 +925,19 @@ cuda_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 	DPRINTF("cuda_i2c_exec(%02x)\n", addr);
 	command[2] = addr;
 
-	memcpy(&command[3], send, min((int)send_len, 12));
+	/* Copy command and output data bytes, if any, to buffer */
+	if (send_len > 0)
+		memcpy(&command[3], send, min((int)send_len, 12));
+	else if (I2C_OP_READ_P(op) && (recv_len == 0)) {
+		/*
+		 * If no data bytes in either direction, it's a "quick"
+		 * i2c operation.  We don't know how to do a quick_read
+		 * since that requires us to set the low bit of the
+		 * address byte after it has been left-shifted.
+		 */
+		sc->sc_error = 0;
+		return -1;
+	}
 
 	sc->sc_iic_done = 0;
 	cuda_send(sc, sc->sc_polling, send_len + 3, command);
