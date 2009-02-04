@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.8 2008/11/06 06:38:43 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.9 2009/02/04 22:55:58 tls Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -93,7 +93,7 @@ process_cgi(http_req *request)
 	char	buf[WRSZ];
 	struct	headers *headp;
 	const char *type, *clen, *info, *cgihandler;
-	char	*query, *s, *t, *path, *env, *command, *url;
+	char	*query, *s, *t, *path, *env, *command, *file, *url;
 	char	**envp, **curenvp, *argv[4];
 	size_t	len;
 	ssize_t rbytes;
@@ -104,45 +104,45 @@ process_cgi(http_req *request)
 	if (!cgibin && !Cflag)
 		return;
 
-	debug((DEBUG_NORMAL, "process_cgi: url `%s'", request->hr_url));
+	file = bozostrdup(request->hr_file);
+	if (request->hr_query && strlen(request->hr_query)) {
+	  query = bozostrdup(request->hr_query);
+	} else {
+	  query = NULL;
+	}
+	
+	asprintf(&url, "%s%c%s", file, query?'?':0, query);
+	debug((DEBUG_NORMAL, "process_cgi: url `%s'", url));
 
-	url = bozostrdup(request->hr_url);
-	if ((s = strchr(url, '?')) != NULL) {
-		*s++ = '\0';
-		query = s;
-	} else
-		query = NULL;
 	path = NULL;
 	envp = NULL;
 	cgihandler = NULL;
 	command = NULL;
 	info = NULL;
-
 	len = strlen(url);
 
 	auth_check(request, url + 1);
-
 	if (!cgibin || strncmp(url + 1, CGIBIN_PREFIX, CGIBIN_PREFIX_LEN) != 0) {
-		cgihandler = content_cgihandler(request, url + 1);
+		cgihandler = content_cgihandler(request, file + 1);
 		if (cgihandler == NULL) {
+		        debug((DEBUG_FAT, "process_cgi: no handler, returning"));
 			free(url);
 			return;
 		}
-		if (len == 0 || url[len - 1] == '/')
-			append_index_html(&url);
+		if (len == 0 || file[len - 1] == '/')
+			append_index_html(&file);
 		debug((DEBUG_NORMAL, "process_cgi: cgihandler `%s'",
 		    cgihandler));
 	} else if (len - 1 == CGIBIN_PREFIX_LEN)	/* url is "/cgi-bin/" */
-		append_index_html(&url);
-
+		append_index_html(&file);
 	ix = 0;
 	if (cgihandler) {
-		command = url + 1;
+		command = file + 1;
 		path = bozostrdup(cgihandler);
 		argv[ix++] = path;
 			/* argv[] = [ path, command, query, NULL ] */
 	} else {
-		command = url + CGIBIN_PREFIX_LEN + 1;
+		command = file + CGIBIN_PREFIX_LEN + 1;
 		if ((s = strchr(command, '/')) != NULL) {
 			info = bozostrdup(s);
 			*s = '\0';
@@ -202,7 +202,7 @@ process_cgi(http_req *request)
 		spsetenv(env, headp->h_value, curenvp++);
 		free(env);
 	}
-		
+
 #ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH "/usr/bin:/bin"
 #endif
@@ -216,7 +216,7 @@ process_cgi(http_req *request)
 	spsetenv("SCRIPT_NAME", url, curenvp++);
 	spsetenv("SCRIPT_FILENAME", url + 1, curenvp++);
 	spsetenv("SERVER_SOFTWARE", server_software, curenvp++);
-	spsetenv("REQUEST_URI", request->hr_url, curenvp++);
+	spsetenv("REQUEST_URI", url, curenvp++);
 	spsetenv("DATE_GMT", http_date(), curenvp++);
 	if (query && *query)
 		spsetenv("QUERY_STRING", query, curenvp++);
@@ -421,6 +421,8 @@ static const char *
 content_cgihandler(http_req *request, const char *file)
 {
 	struct	content_map	*map;
+
+	debug((DEBUG_FAT, "content_cgihandler: trying file %s", file));
 
 	map = match_content_map(file, 0);
 	if (map)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.3 2008/03/03 22:15:09 mrg Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.4 2009/02/04 22:55:58 tls Exp $	*/
 
 /*	$eterna: tilde-luzah-bozo.c,v 1.5 2008/03/03 03:36:12 mrg Exp $	*/
 
@@ -70,14 +70,14 @@ user_transform(request, isindex)
 
 	*isindex = 0;
 
-	if ((s = strchr(request->hr_url + 2, '/')) != NULL) {
+	if ((s = strchr(request->hr_file + 2, '/')) != NULL) {
 		*s++ = '\0';
 		c = s[strlen(s)-1];
 		*isindex = (c == '/' || c == '\0');
 	}
 
-	debug((DEBUG_OBESE, "looking for user %s", request->hr_url + 2));
-	pw = getpwnam(request->hr_url + 2);
+	debug((DEBUG_OBESE, "looking for user %s", request->hr_file + 2));
+	pw = getpwnam(request->hr_file + 2);
 	/* fix this up immediately */
 	if (s)
 		s[-1] = '/';
