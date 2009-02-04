@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.177 2009/01/21 06:59:29 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.178 2009/02/04 20:36:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.177 2009/01/21 06:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.178 2009/02/04 20:36:54 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -1650,12 +1650,12 @@ nfs_timer(void *arg)
 	struct socket *so;
 	struct nfsmount *nmp;
 	int timeo;
-	int s, error;
+	int error;
 	bool more = false;
 
 	nfs_timer_ev.ev_count++;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);	/* XXX PR 40491 */
 	TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 		more = true;
 		nmp = rep->r_nmp;
@@ -1709,7 +1709,7 @@ nfs_timer(void *arg)
 		 *	Resend it
 		 * Set r_rtt to -1 in case we fail to send it now.
 		 */
-		solock(so);
+		/* solock(so);		XXX PR 40491 */
 		rep->r_rtt = -1;
 		if (sbspace(&so->so_snd) >= rep->r_mreq->m_pkthdr.len &&
 		   ((nmp->nm_flag & NFSMNT_DUMBTIMR) ||
@@ -1753,9 +1753,9 @@ nfs_timer(void *arg)
 				rep->r_rtt = 0;
 			}
 		}
-		sounlock(so);
+		/* sounlock(so);	XXX PR 40491 */
 	}
-	splx(s);
+	mutex_exit(softnet_lock);	/* XXX PR 40491 */
 
 	mutex_enter(&nfs_timer_lock);
 	if (nfs_timer_srvvec != NULL) {
