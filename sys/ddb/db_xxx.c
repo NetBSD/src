@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.54 2008/11/25 15:14:07 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.55 2009/02/04 20:17:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.54 2008/11/25 15:14:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.55 2009/02/04 20:17:58 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_aio.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.54 2008/11/25 15:14:07 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
-
 #include <sys/callout.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -59,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.54 2008/11/25 15:14:07 ad Exp $");
 #include <sys/mqueue.h>
 #include <sys/vnode.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 
 #include <machine/db_machdep.h>
 
@@ -190,13 +190,15 @@ db_show_all_procs(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 	const char *mode;
-	struct proc *p, *pp, *cp;
+	struct proc *p, *pp;
 	struct lwp *l, *cl;
 	const struct proclist_desc *pd;
 	char db_nbuf[MAXCOMLEN + 1];
+	bool run;
+	int cpuno;
 
 	if (modif[0] == 0)
-		mode = "n";			/* default == normal mode */
+		mode = "l";			/* default == lwp mode */
 	else
 		mode = strchr("mawln", modif[0]);
 
@@ -211,27 +213,25 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 
 	switch (*mode) {
 	case 'a':
-		db_printf(" PID       %10s %18s %18s %18s\n",
+		db_printf("PID  %10s %18s %18s %18s\n",
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'l':
-		db_printf(" PID        %4s S %9s %18s %18s %-8s\n",
-		    "LID", "FLAGS", "STRUCT LWP *", "NAME", "WAIT");
+		db_printf("PID   %4s S %3s %9s %18s %18s %-8s\n",
+		    "LID", "CPU", "FLAGS", "STRUCT LWP *", "NAME", "WAIT");
 		break;
 	case 'n':
-		db_printf(" PID       %8s %8s %10s S %7s %4s %16s %7s\n",
+		db_printf("PID  %8s %8s %10s S %7s %4s %16s %7s\n",
 		    "PPID", "PGRP", "UID", "FLAGS", "LWPS", "COMMAND", "WAIT");
 		break;
 	case 'w':
-		db_printf(" PID       %4s %16s %8s %4s %-12s%s\n",
+		db_printf("PID  %4s %16s %8s %4s %-12s%s\n",
 		    "LID", "COMMAND", "EMUL", "PRI", "WAIT-MSG",
 		    "WAIT-CHANNEL");
 		break;
 	}
 
-	/* XXX LOCKING XXX */
 	pd = proclists;
-	cp = curproc;
 	cl = curlwp;
 	for (pd = proclists; pd->pd_list != NULL; pd++) {
 		LIST_FOREACH(p, pd->pd_list, p_list) {
@@ -240,7 +240,7 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 				continue;
 			}
 			l = LIST_FIRST(&p->p_lwps);
-			db_printf("%c%-10d", (cp == p ? '>' : ' '), p->p_pid);
+			db_printf("%-5d", p->p_pid);
 
 			switch (*mode) {
 
@@ -260,10 +260,16 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 				 		snprintf(db_nbuf,
 						    sizeof(db_nbuf),
 				 		    "%s", p->p_comm);
-					db_printf("%c%4d %d %9x %18lx %18s %-8s\n",
-					    (cl == l ? '>' : ' '), l->l_lid,
-					    l->l_stat, l->l_flag, (long)l,
-						  db_nbuf,
+					run = (l->l_stat == LSONPROC ||
+					    (l->l_pflag & LP_RUNNING) != 0);
+					if (l->l_cpu != NULL)
+						cpuno = cpu_index(l->l_cpu);
+					else
+						cpuno = -1;
+					db_printf("%c%4d %d %3d %9x %18lx %18s %-8s\n",
+					    (run ? '>' : ' '), l->l_lid,
+					    l->l_stat, cpuno, l->l_flag, (long)l,
+					    db_nbuf,
 					    (l->l_wchan && l->l_wmesg) ?
 					    l->l_wmesg : "");
 
@@ -291,10 +297,8 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 					    (l->l_wchan && l->l_wmesg) ?
 					    l->l_wmesg : "", (long)l->l_wchan);
 					l = LIST_NEXT(l, l_sibling);
-					if (l != NULL) {
-						db_printf("%c%-10d", (cp == p ?
-						    '>' : ' '), p->p_pid);
-					}
+					if (l)
+						db_printf("%11s","");
 				}
 				break;
 			}
