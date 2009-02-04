@@ -1,6 +1,6 @@
-.\"	$NetBSD: ddb.4,v 1.121 2009/01/11 16:15:37 skrll Exp $
+.\"	$NetBSD: ddb.4,v 1.122 2009/02/04 20:17:58 ad Exp $
 .\"
-.\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd January 11, 2009
+.Dd Febuary 2, 2009
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -645,7 +645,7 @@ Valid modifiers:
 .It Cm /n
 show process information in a
 .Xr ps 1
-style format (this is the default).
+style format.
 Information printed includes: process ID, parent process ID,
 process group, UID, process status, process flags, process
 command name, and process wait channel message.
@@ -662,6 +662,7 @@ address, and wait channel message.
 .It Cm /l
 show each process' associated LWP information, including each LWP's
 LID, flags, kernel LWP structure address, u-area, and wait channel.
+This is the default.
 .El
 .It Ic show arptab
 Dump the entire
