@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.122 2009/02/04 20:17:58 ad Exp $
+.\"	$NetBSD: ddb.4,v 1.123 2009/02/04 20:45:17 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd Febuary 2, 2009
+.Dd February 2, 2009
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -1189,7 +1189,8 @@ for 32 bit or
 .Dq L
 for 64 bit.
 .It Ic window
-Print register window information. Argument is a stack frame number (0 is
+Print register window information.
+Argument is a stack frame number (0 is
 top of stack, which is used when no index is given).
 .El
 .Ss SUN3 and SUN3X
