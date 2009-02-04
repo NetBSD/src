@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.5 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.6 2009/02/04 13:53:19 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.5 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.6 2009/02/04 13:53:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,6 +230,8 @@ motoi2c_initiate_xfer(void *v, i2c_addr_t addr, int flags)
 	rd_req = !!(flags & I2C_F_READ);
 	CSR_WRITE(I2CCR, CR_MIEN | CR_MEN | CR_MSTA | CR_MTX);
 	CSR_WRITE(I2CDR, (addr << 1) | rd_req);
+	if (flags & I2C_F_STOP)
+		CSR_WRITE(I2CCR, CR_MIEN | CR_MEN | CR_TXAK);
 	waitxferdone(SR_MIF);
 	return 0;
 }
