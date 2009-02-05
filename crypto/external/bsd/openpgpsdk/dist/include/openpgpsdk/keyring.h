@@ -52,7 +52,7 @@ ops_keyring_find_key_by_id(const ops_keyring_t * keyring,
 	void            ops_dump_keyring(const ops_keyring_t * keyring);
 	const ops_public_key_t *
 	                ops_get_public_key_from_data(const ops_keydata_t * data);
-	ops_boolean_t   ops_is_key_secret(const ops_keydata_t * data);
+	bool   ops_is_key_secret(const ops_keydata_t * data);
 	const ops_secret_key_t *
 	                ops_get_secret_key_from_data(const ops_keydata_t * data);
 	ops_secret_key_t *
@@ -60,8 +60,8 @@ ops_keyring_find_key_by_id(const ops_keyring_t * keyring,
 	ops_secret_key_t *ops_decrypt_secret_key_from_data(const ops_keydata_t * key,
 				                       const char *pphrase);
 
-	ops_boolean_t   ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, const char *filename);
-	ops_boolean_t   ops_keyring_read_from_mem(ops_keyring_t * keyring, const ops_boolean_t armour, ops_memory_t * mem);
+	bool   ops_keyring_read_from_file(ops_keyring_t * keyring, const bool armour, const char *filename);
+	bool   ops_keyring_read_from_mem(ops_keyring_t * keyring, const bool armour, ops_memory_t * mem);
 
 	char           *ops_malloc_passphrase(char *passphrase);
 	char           *ops_get_passphrase(void);
@@ -73,14 +73,14 @@ ops_keyring_find_key_by_id(const ops_keyring_t * keyring,
 	const unsigned char *ops_get_key_id(const ops_keydata_t * key);
 	unsigned        ops_get_user_id_count(const ops_keydata_t * key);
 	const unsigned char *ops_get_user_id(const ops_keydata_t * key, unsigned index);
-	ops_boolean_t   ops_is_key_supported(const ops_keydata_t * key);
+	bool   ops_is_key_supported(const ops_keydata_t * key);
 	const ops_keydata_t *ops_keyring_get_key_by_index(const ops_keyring_t * keyring, int index);
 
 	ops_user_id_t  *ops_add_userid_to_keydata(ops_keydata_t * keydata, const ops_user_id_t * userid);
 	ops_packet_t   *ops_add_packet_to_keydata(ops_keydata_t * keydata, const ops_packet_t * packet);
 	void            ops_add_signed_userid_to_keydata(ops_keydata_t * keydata, const ops_user_id_t * userid, const ops_packet_t * packet);
 
-	ops_boolean_t   ops_add_selfsigned_userid_to_keydata(ops_keydata_t * keydata, ops_user_id_t * userid);
+	bool   ops_add_selfsigned_userid_to_keydata(ops_keydata_t * keydata, ops_user_id_t * userid);
 
 	ops_keydata_t  *ops_keydata_new(void);
 	void            ops_keydata_init(ops_keydata_t * keydata, const ops_content_tag_t type);

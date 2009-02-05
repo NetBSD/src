@@ -37,13 +37,13 @@
  * \struct dash_escaped_arg_t
  */
 typedef struct {
-	ops_boolean_t   seen_nl:1;
-	ops_boolean_t   seen_cr:1;
+	unsigned   seen_nl:1;
+	unsigned   seen_cr:1;
 	ops_create_signature_t *sig;
 	ops_memory_t   *trailing;
 }               dash_escaped_arg_t;
 
-static ops_boolean_t 
+static bool 
 dash_escaped_writer(const unsigned char *src,
 		    unsigned length,
 		    ops_error_t ** errors,
@@ -70,20 +70,20 @@ dash_escaped_writer(const unsigned char *src,
 
 		if (arg->seen_nl) {
 			if (src[n] == '-' && !ops_stacked_write("- ", 2, errors, winfo))
-				return ops_false;
-			arg->seen_nl = ops_false;
+				return false;
+			arg->seen_nl = false;
 		}
 		arg->seen_nl = src[n] == '\n';
 
 		if (arg->seen_nl && !arg->seen_cr) {
 			if (!ops_stacked_write("\r", 1, errors, winfo))
-				return ops_false;
+				return false;
 			ops_signature_add_data(arg->sig, "\r", 1);
 		}
 		arg->seen_cr = src[n] == '\r';
 
 		if (!ops_stacked_write(&src[n], 1, errors, winfo))
-			return ops_false;
+			return false;
 
 		/* trailing whitespace isn't included in the signature */
 		if (src[n] == ' ' || src[n] == '\t')
@@ -100,7 +100,7 @@ dash_escaped_writer(const unsigned char *src,
 		}
 	}
 
-	return ops_true;
+	return true;
 }
 
 /**
@@ -121,7 +121,7 @@ dash_escaped_destroyer(ops_writer_info_t * winfo)
  * \param info
  * \param sig
  */
-ops_boolean_t 
+bool 
 ops_writer_push_clearsigned(ops_create_info_t * info,
 			    ops_create_signature_t * sig)
 {
@@ -129,18 +129,18 @@ ops_writer_push_clearsigned(ops_create_info_t * info,
 	const char     *hash = ops_text_from_hash(ops_signature_get_hash(sig));
 	dash_escaped_arg_t *arg = calloc(1, sizeof(*arg));
 
-	ops_boolean_t   rtn;
+	bool   rtn;
 
 	rtn = (ops_write(header, sizeof(header) - 1, info)
 	       && ops_write(hash, strlen(hash), info)
 	       && ops_write("\r\n\r\n", 4, info));
 
-	if (rtn == ops_false) {
+	if (rtn == false) {
 		OPS_ERROR(&info->errors, OPS_E_W, "Error pushing clearsigned header");
 		free(arg);
 		return rtn;
 	}
-	arg->seen_nl = ops_true;
+	arg->seen_nl = true;
 	arg->sig = sig;
 	arg->trailing = ops_memory_new();
 	ops_writer_push(info, dash_escaped_writer, NULL, dash_escaped_destroyer, arg);
@@ -160,7 +160,7 @@ typedef struct {
 static char     b64map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 "0123456789+/";
 
-static ops_boolean_t 
+static bool 
 base64_writer(const unsigned char *src,
 	      unsigned length, ops_error_t ** errors,
 	      ops_writer_info_t * winfo)
@@ -173,7 +173,7 @@ base64_writer(const unsigned char *src,
 		if (arg->pos == 0) {
 			/* XXXXXX00 00000000 00000000 */
 			if (!ops_stacked_write(&b64map[src[n] >> 2], 1, errors, winfo))
-				return ops_false;
+				return false;
 
 			/* 000000XX xxxx0000 00000000 */
 			arg->t = (src[n++] & 3) << 4;
@@ -182,7 +182,7 @@ base64_writer(const unsigned char *src,
 			/* 000000xx XXXX0000 00000000 */
 			arg->t += src[n] >> 4;
 			if (!ops_stacked_write(&b64map[arg->t], 1, errors, winfo))
-				return ops_false;
+				return false;
 
 			/* 00000000 0000XXXX xx000000 */
 			arg->t = (src[n++] & 0xf) << 2;
@@ -191,20 +191,20 @@ base64_writer(const unsigned char *src,
 			/* 00000000 0000xxxx XX000000 */
 			arg->t += src[n] >> 6;
 			if (!ops_stacked_write(&b64map[arg->t], 1, errors, winfo))
-				return ops_false;
+				return false;
 
 			/* 00000000 00000000 00XXXXXX */
 			if (!ops_stacked_write(&b64map[src[n++] & 0x3f], 1, errors, winfo))
-				return ops_false;
+				return false;
 
 			arg->pos = 0;
 		}
 	}
 
-	return ops_true;
+	return true;
 }
 
-static ops_boolean_t 
+static bool 
 signature_finaliser(ops_error_t ** errors,
 		    ops_writer_info_t * winfo)
 {
@@ -214,15 +214,15 @@ signature_finaliser(ops_error_t ** errors,
 
 	if (arg->pos) {
 		if (!ops_stacked_write(&b64map[arg->t], 1, errors, winfo))
-			return ops_false;
+			return false;
 		if (arg->pos == 1 && !ops_stacked_write("==", 2, errors, winfo))
-			return ops_false;
+			return false;
 		if (arg->pos == 2 && !ops_stacked_write("=", 1, errors, winfo))
-			return ops_false;
+			return false;
 	}
 	/* Ready for the checksum */
 	if (!ops_stacked_write("\r\n=", 3, errors, winfo))
-		return ops_false;
+		return false;
 
 	arg->pos = 0;		/* get ready to write the checksum */
 
@@ -231,7 +231,7 @@ signature_finaliser(ops_error_t ** errors,
 	c[2] = arg->checksum;
 	/* push the checksum through our own writer */
 	if (!base64_writer(c, 3, errors, winfo))
-		return ops_false;
+		return false;
 
 	return ops_stacked_write(trailer, sizeof(trailer) - 1, errors, winfo);
 }
@@ -245,7 +245,7 @@ typedef struct {
 
 #define BREAKPOS	76
 
-static ops_boolean_t 
+static bool 
 linebreak_writer(const unsigned char *src,
 		 unsigned length,
 		 ops_error_t ** errors,
@@ -260,14 +260,14 @@ linebreak_writer(const unsigned char *src,
 
 		if (arg->pos == BREAKPOS) {
 			if (!ops_stacked_write("\r\n", 2, errors, winfo))
-				return ops_false;
+				return false;
 			arg->pos = 0;
 		}
 		if (!ops_stacked_write(&src[n], 1, errors, winfo))
-			return ops_false;
+			return false;
 	}
 
-	return ops_true;
+	return true;
 }
 
 /**
@@ -275,7 +275,7 @@ linebreak_writer(const unsigned char *src,
  * \brief Push armoured signature on stack
  * \param info
  */
-ops_boolean_t 
+bool 
 ops_writer_switch_to_armoured_signature(ops_create_info_t * info)
 {
 	static char     header[] = "\r\n-----BEGIN PGP SIGNATURE-----\r\nVersion: "
@@ -283,9 +283,9 @@ ops_writer_switch_to_armoured_signature(ops_create_info_t * info)
 	base64_arg_t   *base64;
 
 	ops_writer_pop(info);
-	if (ops_write(header, sizeof(header) - 1, info) == ops_false) {
+	if (ops_write(header, sizeof(header) - 1, info) == false) {
 		OPS_ERROR(&info->errors, OPS_E_W, "Error switching to armoured signature");
-		return ops_false;
+		return false;
 	}
 	ops_writer_push(info, linebreak_writer, NULL, ops_writer_generic_destroyer,
 			calloc(1, sizeof(linebreak_arg_t)));
@@ -293,15 +293,15 @@ ops_writer_switch_to_armoured_signature(ops_create_info_t * info)
 	base64 = calloc(1, sizeof(*base64));
 	if (!base64) {
 		OPS_MEMORY_ERROR(&info->errors);
-		return ops_false;
+		return false;
 	}
 	base64->checksum = CRC24_INIT;
 	ops_writer_push(info, base64_writer, signature_finaliser,
 			ops_writer_generic_destroyer, base64);
-	return ops_true;
+	return true;
 }
 
-static ops_boolean_t 
+static bool 
 armoured_message_finaliser(ops_error_t ** errors,
 			   ops_writer_info_t * winfo)
 {
@@ -312,15 +312,15 @@ armoured_message_finaliser(ops_error_t ** errors,
 
 	if (arg->pos) {
 		if (!ops_stacked_write(&b64map[arg->t], 1, errors, winfo))
-			return ops_false;
+			return false;
 		if (arg->pos == 1 && !ops_stacked_write("==", 2, errors, winfo))
-			return ops_false;
+			return false;
 		if (arg->pos == 2 && !ops_stacked_write("=", 1, errors, winfo))
-			return ops_false;
+			return false;
 	}
 	/* Ready for the checksum */
 	if (!ops_stacked_write("\r\n=", 3, errors, winfo))
-		return ops_false;
+		return false;
 
 	arg->pos = 0;		/* get ready to write the checksum */
 
@@ -329,7 +329,7 @@ armoured_message_finaliser(ops_error_t ** errors,
 	c[2] = arg->checksum;
 	/* push the checksum through our own writer */
 	if (!base64_writer(c, 3, errors, winfo))
-		return ops_false;
+		return false;
 
 	return ops_stacked_write(trailer, sizeof(trailer) - 1, errors, winfo);
 }
@@ -354,7 +354,7 @@ ops_writer_push_armoured_message(ops_create_info_t * info)
 	ops_writer_push(info, base64_writer, armoured_message_finaliser, ops_writer_generic_destroyer, base64);
 }
 
-static ops_boolean_t 
+static bool 
 armoured_finaliser(ops_armor_type_t type, ops_error_t ** errors,
 		   ops_writer_info_t * winfo)
 {
@@ -385,15 +385,15 @@ armoured_finaliser(ops_armor_type_t type, ops_error_t ** errors,
 
 	if (arg->pos) {
 		if (!ops_stacked_write(&b64map[arg->t], 1, errors, winfo))
-			return ops_false;
+			return false;
 		if (arg->pos == 1 && !ops_stacked_write("==", 2, errors, winfo))
-			return ops_false;
+			return false;
 		if (arg->pos == 2 && !ops_stacked_write("=", 1, errors, winfo))
-			return ops_false;
+			return false;
 	}
 	/* Ready for the checksum */
 	if (!ops_stacked_write("\r\n=", 3, errors, winfo))
-		return ops_false;
+		return false;
 
 	arg->pos = 0;		/* get ready to write the checksum */
 
@@ -402,19 +402,19 @@ armoured_finaliser(ops_armor_type_t type, ops_error_t ** errors,
 	c[2] = arg->checksum;
 	/* push the checksum through our own writer */
 	if (!base64_writer(c, 3, errors, winfo))
-		return ops_false;
+		return false;
 
 	return ops_stacked_write(tail, sz_tail, errors, winfo);
 }
 
-static ops_boolean_t 
+static bool 
 armoured_public_key_finaliser(ops_error_t ** errors,
 			      ops_writer_info_t * winfo)
 {
 	return armoured_finaliser(OPS_PGP_PUBLIC_KEY_BLOCK, errors, winfo);
 }
 
-static ops_boolean_t 
+static bool 
 armoured_private_key_finaliser(ops_error_t ** errors,
 			       ops_writer_info_t * winfo)
 {
@@ -436,7 +436,7 @@ ops_writer_push_armoured(ops_create_info_t * info, ops_armor_type_t type)
 
 	char           *header = NULL;
 	unsigned int    sz_hdr = 0;
-	ops_boolean_t(*finaliser) (ops_error_t ** errors, ops_writer_info_t * winfo);
+	bool(*finaliser) (ops_error_t ** errors, ops_writer_info_t * winfo);
 	base64_arg_t   *arg;
 
 	finaliser = NULL;

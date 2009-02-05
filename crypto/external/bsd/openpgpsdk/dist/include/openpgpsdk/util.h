@@ -28,10 +28,8 @@
 #include "openpgpsdk/types.h"
 #include "openpgpsdk/create.h"
 #include "openpgpsdk/packet-parse.h"
-#include <stdlib.h>
 
-#define ops_false	0
-#define ops_true	1
+#include <stdlib.h>
 
 void            hexdump(const unsigned char *, size_t, const char *);
 

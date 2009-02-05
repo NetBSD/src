@@ -41,10 +41,10 @@ ops_reader_push_se_ip_data(ops_parse_info_t * pinfo, ops_crypt_t * decrypt,
 void            ops_reader_pop_se_ip_data(ops_parse_info_t * pinfo);
 
 /* */
-ops_boolean_t 
+bool 
 ops_write_mdc(const unsigned char *hashed,
 	      ops_create_info_t * info);
-ops_boolean_t 
+bool 
 ops_write_se_ip_pktset(const unsigned char *data,
 		       const unsigned int len,
 		       ops_crypt_t * crypt,
@@ -58,7 +58,7 @@ ops_writer_push_encrypt_se_ip(ops_create_info_t * cinfo,
 /* Secret Key checksum */
 
 void            ops_push_skey_checksum_writer(ops_create_info_t * cinfo, ops_secret_key_t * skey);
-ops_boolean_t   ops_pop_skey_checksum_writer(ops_create_info_t * cinfo);
+bool   ops_pop_skey_checksum_writer(ops_create_info_t * cinfo);
 
 
 /* memory writing */
@@ -69,11 +69,11 @@ void            ops_teardown_memory_write(ops_create_info_t * cinfo, ops_memory_
 void 
 ops_setup_memory_read(ops_parse_info_t ** pinfo, ops_memory_t * mem,
 		      void *arg,
-		      ops_parse_cb_return_t callback(const ops_parser_content_t *, ops_parse_cb_info_t *), ops_boolean_t accumulate);
+		      ops_parse_cb_return_t callback(const ops_parser_content_t *, ops_parse_cb_info_t *), bool accumulate);
 	void            ops_teardown_memory_read(ops_parse_info_t * pinfo, ops_memory_t * mem);
 
 /* file writing */
-	int             ops_setup_file_write(ops_create_info_t ** cinfo, const char *filename, ops_boolean_t allow_overwrite);
+	int             ops_setup_file_write(ops_create_info_t ** cinfo, const char *filename, bool allow_overwrite);
 	void            ops_teardown_file_write(ops_create_info_t * cinfo, int fd);
 
 /* file appending */
@@ -82,10 +82,10 @@ ops_setup_memory_read(ops_parse_info_t ** pinfo, ops_memory_t * mem,
 
 /* file reading */
 	int             ops_setup_file_read(ops_parse_info_t ** pinfo, const char *filename, void *arg,
-					                    ops_parse_cb_return_t callback(const ops_parser_content_t *, ops_parse_cb_info_t *), ops_boolean_t accumulate);
+					                    ops_parse_cb_return_t callback(const ops_parser_content_t *, ops_parse_cb_info_t *), bool accumulate);
 	void            ops_teardown_file_read(ops_parse_info_t * pinfo, int fd);
 
-	ops_boolean_t   ops_reader_set_accumulate(ops_parse_info_t * pinfo, ops_boolean_t state);
+	bool   ops_reader_set_accumulate(ops_parse_info_t * pinfo, bool state);
 
 /* useful callbacks */
 ops_parse_cb_return_t

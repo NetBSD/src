@@ -123,7 +123,7 @@ ops_get_public_key_from_data(const ops_keydata_t * keydata)
 \brief Check whether this is a secret key or not.
 */
 
-ops_boolean_t 
+bool 
 ops_is_key_secret(const ops_keydata_t * data)
 {
 	return data->type != OPS_PTAG_CT_PUBLIC_KEY;
@@ -261,7 +261,7 @@ ops_decrypt_secret_key_from_data(const ops_keydata_t * key,
 
 	ops_keydata_reader_set(pinfo, key);
 	ops_parse_cb_set(pinfo, decrypt_cb, &arg);
-	pinfo->rinfo.accumulate = ops_true;
+	pinfo->rinfo.accumulate = true;
 
 	ops_parse(pinfo);
 
@@ -321,22 +321,22 @@ ops_get_user_id(const ops_keydata_t * key, unsigned subscript)
    \ingroup HighLevel_Supported
    \brief Checks whether key's algorithm and type are supported by OpenPGP::SDK
    \param keydata Key to be checked
-   \return ops_true if key algorithm and type are supported by OpenPGP::SDK; ops_false if not
+   \return true if key algorithm and type are supported by OpenPGP::SDK; false if not
 */
 
-ops_boolean_t 
+bool 
 ops_is_key_supported(const ops_keydata_t * keydata)
 {
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
 		if (keydata->key.pkey.algorithm == OPS_PKA_RSA) {
-			return ops_true;
+			return true;
 		}
 	} else if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
 		if (keydata->key.skey.algorithm == OPS_PKA_RSA) {
-			return ops_true;
+			return true;
 		}
 	}
-	return ops_false;
+	return false;
 }
 
 
@@ -500,9 +500,9 @@ ops_add_signed_userid_to_keydata(ops_keydata_t * keydata, const ops_user_id_t * 
 \brief Add selfsigned User ID to key
 \param keydata Key to which to add user ID
 \param userid Self-signed User ID to add
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
-ops_boolean_t 
+bool 
 ops_add_selfsigned_userid_to_keydata(ops_keydata_t * keydata, ops_user_id_t * userid)
 {
 	ops_packet_t    sigpacket;
@@ -529,7 +529,7 @@ ops_add_selfsigned_userid_to_keydata(ops_keydata_t * keydata, ops_user_id_t * us
 	ops_signature_start_key_signature(sig, &keydata->key.skey.public_key, userid, OPS_CERT_POSITIVE);
 	ops_signature_add_creation_time(sig, time(NULL));
 	ops_signature_add_issuer_key_id(sig, keydata->key_id);
-	ops_signature_add_primary_user_id(sig, ops_true);
+	ops_signature_add_primary_user_id(sig, true);
 	ops_signature_hashed_subpackets_end(sig);
 
 	ops_setup_memory_write(&cinfo_sig, &mem_sig, 128);
@@ -550,7 +550,7 @@ ops_add_selfsigned_userid_to_keydata(ops_keydata_t * keydata, ops_user_id_t * us
 	ops_memory_free(mem_userid);
 	ops_memory_free(mem_sig);
 
-	return ops_true;
+	return true;
 }
 
 /**
@@ -597,10 +597,10 @@ cb_keyring_read(const ops_parser_content_t * content_,
    \brief Reads a keyring from a file
 
    \param keyring Pointer to an existing ops_keyring_t struct
-   \param armour ops_true if file is armoured; else ops_false
+   \param armour true if file is armoured; else false
    \param filename Filename of keyring to be read
 
-   \return ops true if OK; ops_false on error
+   \return ops true if OK; false on error
 
    \note Keyring struct must already exist.
 
@@ -617,7 +617,7 @@ cb_keyring_read(const ops_parser_content_t * content_,
    Example code:
    \code
    ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
-   ops_boolean_t armoured=ops_false;
+   bool armoured=false;
    ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
    ...
    ops_keyring_free(keyring);
@@ -626,12 +626,12 @@ cb_keyring_read(const ops_parser_content_t * content_,
    \endcode
 */
 
-ops_boolean_t 
-ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, const char *filename)
+bool 
+ops_keyring_read_from_file(ops_keyring_t * keyring, const bool armour, const char *filename)
 {
 	ops_parse_info_t *pinfo;
 	int             fd;
-	ops_boolean_t   res = ops_true;
+	bool   res = true;
 
 	pinfo = ops_parse_info_new();
 
@@ -652,7 +652,7 @@ ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, 
 	if (fd < 0) {
 		ops_parse_info_delete(pinfo);
 		perror(filename);
-		return ops_false;
+		return false;
 	}
 	ops_reader_set_fd(pinfo, fd);
 
@@ -662,9 +662,9 @@ ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, 
 		ops_reader_push_dearmour(pinfo);
 	}
 	if (ops_parse_and_accumulate(keyring, pinfo) == 0) {
-		res = ops_false;
+		res = false;
 	} else {
-		res = ops_true;
+		res = true;
 	}
 	ops_print_errors(ops_parse_info_get_errors(pinfo));
 
@@ -684,10 +684,10 @@ ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, 
    \brief Reads a keyring from memory
 
    \param keyring Pointer to existing ops_keyring_t struct
-   \param armour ops_true if file is armoured; else ops_false
+   \param armour true if file is armoured; else false
    \param mem Pointer to a ops_memory_t struct containing keyring to be read
 
-   \return ops true if OK; ops_false on error
+   \return ops true if OK; false on error
 
    \note Keyring struct must already exist.
 
@@ -705,18 +705,18 @@ ops_keyring_read_from_file(ops_keyring_t * keyring, const ops_boolean_t armour, 
    \code
    ops_memory_t* mem; // Filled with keyring packets
    ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
-   ops_boolean_t armoured=ops_false;
+   bool armoured=false;
    ops_keyring_read_from_mem(keyring, armoured, mem);
    ...
    ops_keyring_free(keyring);
    free (keyring);
    \endcode
 */
-ops_boolean_t 
-ops_keyring_read_from_mem(ops_keyring_t * keyring, const ops_boolean_t armour, ops_memory_t * mem)
+bool 
+ops_keyring_read_from_mem(ops_keyring_t * keyring, const bool armour, ops_memory_t * mem)
 {
 	ops_parse_info_t *pinfo = NULL;
-	ops_boolean_t   res = ops_true;
+	bool   res = true;
 
 	pinfo = ops_parse_info_new();
 	ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
@@ -727,9 +727,9 @@ ops_keyring_read_from_mem(ops_keyring_t * keyring, const ops_boolean_t armour, o
 		ops_reader_push_dearmour(pinfo);
 	}
 	if (ops_parse_and_accumulate(keyring, pinfo) == 0) {
-		res = ops_false;
+		res = false;
 	} else {
-		res = ops_true;
+		res = true;
 	}
 	ops_print_errors(ops_parse_info_get_errors(pinfo));
 
@@ -948,7 +948,7 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
    void example()
    {
    ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
-   ops_boolean_t armoured=ops_false;
+   bool armoured=false;
    ops_keyring_read_from_file(keyring, armoured, "~/.gnupg/pubring.gpg");
 
    ops_keyring_list(keyring);
