@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.658 2009/01/27 22:00:12 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.659 2009/02/05 22:26:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.658 2009/01/27 22:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659 2009/02/05 22:26:53 dyoung Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -289,7 +289,7 @@ void (*initclock_func)(void) = i8254_initclocks;
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt;
+int	mem_cluster_cnt = 0;
 
 void	init386(paddr_t);
 void	initgdt(union descriptor *);
