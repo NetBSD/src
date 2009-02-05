@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1232 2009/02/05 10:18:49 haad Exp $
+#	$NetBSD: mi,v 1.1233 2009/02/05 19:32:08 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3508,7 +3508,7 @@
 ./usr/libdata/debug/usr/sbin/ypxfr.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
-./usr/libdata/ldscripts/kmodule			comp-util-share
+./usr/libdata/ldscripts/kmodule			comp-util-share		bfd
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
