@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.55 2008/12/12 18:52:40 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.56 2009/02/05 16:04:00 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -234,7 +234,9 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bh;
 	int node, ramsize;
 	volatile uint32_t *lut;
-	int i, isconsole;
+	int i, isconsole, items;
+	uint32_t fbva[2] = {0, 0};
+	uint32_t *ptr = fbva;
 
 	sc->sc_dev = self;
 	sc->sc_opens = 0;
@@ -363,15 +365,20 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NWSDISPLAY > 0
-	if (sbus_bus_map( sc->sc_bustag,
-	    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
-	    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
-	    ramsize, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map pixels\n", device_xname(sc->sc_dev));
-		return;
+	prom_getprop(sa->sa_node, "address", 4, &items, &ptr);
+	if (fbva[1] == 0) {
+		if (sbus_bus_map( sc->sc_bustag,
+		    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
+		    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
+		    ramsize, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+			printf("%s: cannot map pixels\n", device_xname(sc->sc_dev));
+			return;
+		}
+		sc->sc_fb.fb_pixels = bus_space_vaddr(sc->sc_bustag, bh);
+	} else {
+		sc->sc_fb.fb_pixels = (void *)fbva[1];
 	}
 
-	sc->sc_fb.fb_pixels = bus_space_vaddr(sc->sc_bustag, bh);
 	sc->sc_shadowfb = kmem_alloc(ramsize, KM_NOSLEEP);
 
 	if (isconsole)
@@ -400,7 +407,6 @@ cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct cgfourteen_softc *sc;
 	int oldopens;
 
-if (1) return EINVAL;             
 	sc = device_lookup_private(&cgfourteen_cd, minor(dev));
 	if (sc == NULL)
 		return(ENXIO);
