@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1121 2009/02/02 20:47:20 joerg Exp $
+# $NetBSD: mi,v 1.1122 2009/02/05 18:03:30 sborrill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -799,6 +799,7 @@
 ./usr/share/man/cat4/btms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btsco.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btuart.0			man-sys-catman		.cat
+./usr/share/man/cat4/bwi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ca.0			man-obsolete		obsolete
 ./usr/share/man/cat4/cac.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cardbus.0			man-sys-catman		.cat
@@ -3380,6 +3381,7 @@
 ./usr/share/man/html4/btms.html			man-sys-htmlman		html
 ./usr/share/man/html4/btsco.html		man-sys-htmlman		html
 ./usr/share/man/html4/btuart.html		man-sys-htmlman		html
+./usr/share/man/html4/bwi.html			man-sys-htmlman		html
 ./usr/share/man/html4/cac.html			man-sys-htmlman		html
 ./usr/share/man/html4/cardbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/cardslot.html		man-sys-htmlman		html
@@ -5737,6 +5739,7 @@
 ./usr/share/man/man4/btms.4			man-sys-man		.man
 ./usr/share/man/man4/btsco.4			man-sys-man		.man
 ./usr/share/man/man4/btuart.4			man-sys-man		.man
+./usr/share/man/man4/bwi.4			man-sys-man		.man
 ./usr/share/man/man4/ca.4			man-obsolete		obsolete
 ./usr/share/man/man4/cac.4			man-sys-man		.man
 ./usr/share/man/man4/cardbus.4			man-sys-man		.man
