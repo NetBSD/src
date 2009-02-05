@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.6 2009/01/24 22:14:45 rmind Exp $
+# $NetBSD: module.mi,v 1.7 2009/02/05 17:32:10 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -95,3 +95,5 @@
 ./@MODULEDIR@/umap/umap.kmod			base-kernel-modules
 ./@MODULEDIR@/union				base-kernel-modules
 ./@MODULEDIR@/union/union.kmod			base-kernel-modules
+./@MODULEDIR@/vnd 				base-kernel-modules
+./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules

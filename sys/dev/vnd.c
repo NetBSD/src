@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.192 2009/01/13 13:35:52 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.193 2009/02/05 17:32:10 haad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.192 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.193 2009/02/05 17:32:10 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1912,3 +1912,59 @@ vnd_set_properties(struct vnd_softc *vnd)
 	if (odisk_info)
 		prop_object_release(odisk_info);
 }
+
+#ifdef _MODULE
+
+#include <sys/module.h>
+
+MODULE(MODULE_CLASS_DRIVER, vnd, NULL);
+CFDRIVER_DECL(vnd, DV_DISK, NULL);
+
+static int
+vnd_modcmd(modcmd_t cmd, void *arg)
+{
+	int bmajor = -1, cmajor = -1,  error = 0;
+	
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_cfdriver_attach(&vnd_cd);
+		if (error)
+			break;
+
+		error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
+	        if (error) {
+			config_cfdriver_detach(&vnd_cd);
+			aprint_error("%s: unable to register cfattach\n",
+			    vnd_cd.cd_name);
+			break;
+		}
+		
+		error = devsw_attach("vnd", &vnd_bdevsw, &bmajor,
+		    &vnd_cdevsw, &cmajor);
+		if (error) {
+			config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
+			config_cfdriver_detach(&vnd_cd);
+			break;
+		}
+		
+		break;
+
+	case MODULE_CMD_FINI:
+		error = config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
+		if (error)
+			break;
+		config_cfdriver_detach(&vnd_cd);
+		devsw_detach(&vnd_bdevsw, &vnd_cdevsw);
+		break;
+
+	case MODULE_CMD_STAT:
+		return ENOTTY;
+
+	default:
+		return ENOTTY;
+	}
+
+	return error;
+}
+
+#endif
