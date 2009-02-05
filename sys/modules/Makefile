@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2009/01/05 15:36:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.25 2009/02/05 17:32:10 haad Exp $
 
 # For all platforms
 
@@ -6,7 +6,9 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
+SUBDIR+=	ccd
 SUBDIR+=	cd9660
+SUBDIR+=	cgd
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
@@ -45,6 +47,7 @@ SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
+SUBDIR+=	vnd
 .if (defined(NOTYET))
 SUBDIR+=	unionfs
 .endif
