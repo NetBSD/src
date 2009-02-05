@@ -793,11 +793,48 @@ ops_keyring_find_key_by_id(const ops_keyring_t * keyring,
 		return NULL;
 
 	for (n = 0; n < keyring->nkeys; ++n) {
-		if (!memcmp(keyring->keys[n].key_id, keyid, OPS_KEY_ID_SIZE))
+		if (ops_get_debug_level(__FILE__)) {
+			printf("keyid %02x%02x%02x%02x%02x%02x%02x%02x\n",
+				keyring->keys[n].key_id[0],
+				keyring->keys[n].key_id[1],
+				keyring->keys[n].key_id[2],
+				keyring->keys[n].key_id[3],
+				keyring->keys[n].key_id[4],
+				keyring->keys[n].key_id[5],
+				keyring->keys[n].key_id[6],
+				keyring->keys[n].key_id[7]);
+		}
+		if (!memcmp(keyring->keys[n].key_id, keyid, OPS_KEY_ID_SIZE)) {
 			return &keyring->keys[n];
+		}
+		if (!memcmp(&keyring->keys[n].key_id[OPS_KEY_ID_SIZE / 2],
+				keyid, OPS_KEY_ID_SIZE / 2)) {
+			return &keyring->keys[n];
+		}
 	}
 
 	return NULL;
+}
+
+/* convert a string keyid into a binary keyid */
+static void
+str2keyid(const char *userid, unsigned char *keyid, size_t len)
+{
+	static const char	*hexes = "0123456789abcdef";
+	const char		*hi;
+	const char		*lo;
+	int			 i;
+	int			 j;
+
+	for (i = j = 0 ; j < len && userid[i] && userid[i + 1] ; i += 2, j++) {
+		if ((hi = strchr(hexes, userid[i])) == NULL ||
+		    (lo = strchr(hexes, userid[i + 1])) == NULL) {
+			break;
+		}
+		keyid[j] = (unsigned char)((hi - hexes) << 4) |
+				(unsigned char)(lo - hexes);
+	}
+	keyid[j] = 0x0;
 }
 
 /**
@@ -823,13 +860,15 @@ ops_keyring_find_key_by_id(const ops_keyring_t * keyring,
    \endcode
 */
 const ops_keydata_t *
-ops_keyring_find_key_by_userid(const ops_keyring_t * keyring,
+ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 			       const char *userid)
 {
-	char           *cp;
-	int             n = 0;
-	unsigned int    i = 0;
-	size_t          len;
+	const ops_keydata_t	*kp;
+	unsigned char		 keyid[OPS_KEY_ID_SIZE + 1];
+	unsigned int    	 i = 0;
+	size_t          	 len;
+	char	                *cp;
+	int             	 n = 0;
 
 	if (!keyring)
 		return NULL;
@@ -846,7 +885,19 @@ ops_keyring_find_key_by_userid(const ops_keyring_t * keyring,
 	}
 
 	if (strchr(userid, '@') == NULL) {
-		/* no '@' sign found, match on name */
+		/* no '@' sign */
+		/* first try userid as a keyid */
+		(void) memset(keyid, 0x0, sizeof(keyid));
+		str2keyid(userid, keyid, sizeof(keyid));
+		if (ops_get_debug_level(__FILE__)) {
+			printf("userid \"%s\", keyid %02x%02x%02x%02x\n",
+				userid,
+				keyid[0], keyid[1], keyid[2], keyid[3]);
+		}
+		if ((kp = ops_keyring_find_key_by_id(keyring, keyid)) != NULL) {
+			return kp;
+		}
+		/* match on full name */
 		for (n = 0; n < keyring->nkeys; n++) {
 			for (i = 0; i < keyring->keys[n].nuids; i++) {
 				if (ops_get_debug_level(__FILE__)) {
@@ -878,9 +929,6 @@ ops_keyring_find_key_by_userid(const ops_keyring_t * keyring,
 			}
 		}
 	}
-
-	/* XXX - match on userid */
-
 
 	/* printf("end: n=%d,i=%d\n",n,i); */
 	return NULL;
