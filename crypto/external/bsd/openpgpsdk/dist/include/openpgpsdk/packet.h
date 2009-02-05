@@ -609,8 +609,8 @@ typedef struct {
 	ops_signature_union_t signature;	/* !< signature parameters */
 	size_t          v4_hashed_data_length;
 	unsigned char  *v4_hashed_data;
-	ops_boolean_t   creation_time_set:1;
-	ops_boolean_t   signer_id_set:1;
+	unsigned   creation_time_set:1;
+	unsigned   signer_id_set:1;
 }               ops_signature_info_t;
 
 /** Struct used when parsing a signature */
@@ -642,7 +642,7 @@ typedef struct {
 
 /** Signature Subpacket : Revocable */
 typedef struct {
-	ops_boolean_t   revocable;
+	bool   revocable;
 }               ops_ss_revocable_t;
 
 /** Signature Subpacket : Time */
@@ -749,12 +749,12 @@ typedef struct {
 	ops_hash_algorithm_t hash_algorithm;
 	ops_public_key_algorithm_t key_algorithm;
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
-	ops_boolean_t   nested;
+	bool   nested;
 }               ops_one_pass_signature_t;
 
 /** Signature Subpacket : Primary User ID */
 typedef struct {
-	ops_boolean_t   primary_user_id;
+	bool   primary_user_id;
 }               ops_ss_primary_user_id_t;
 
 /** Signature Subpacket : Regexp */

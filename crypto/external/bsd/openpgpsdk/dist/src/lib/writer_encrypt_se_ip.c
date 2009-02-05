@@ -44,7 +44,7 @@ typedef struct {
 	ops_crypt_t    *crypt;
 }               encrypt_se_ip_arg_t;
 
-static ops_boolean_t 
+static bool 
 encrypt_se_ip_writer(const unsigned char *src,
 		     unsigned length,
 		     ops_error_t ** errors,
@@ -90,7 +90,7 @@ ops_writer_push_encrypt_se_ip(ops_create_info_t * cinfo,
 	free(iv);
 }
 
-static ops_boolean_t 
+static bool 
 encrypt_se_ip_writer(const unsigned char *src,
 		     unsigned length,
 		     ops_error_t ** errors,
@@ -98,7 +98,7 @@ encrypt_se_ip_writer(const unsigned char *src,
 {
 	encrypt_se_ip_arg_t *arg = ops_writer_get_arg(winfo);
 
-	ops_boolean_t   rtn = ops_true;
+	bool   rtn = true;
 
 	ops_memory_t   *mem_literal;
 	ops_create_info_t *cinfo_literal;
@@ -151,7 +151,7 @@ encrypt_se_ip_destroyer(ops_writer_info_t * winfo)
 	free(arg);
 }
 
-ops_boolean_t 
+bool 
 ops_write_se_ip_pktset(const unsigned char *data,
 		       const unsigned int len,
 		       ops_crypt_t * crypted,

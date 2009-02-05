@@ -324,10 +324,10 @@ ops_decompress(ops_region_t * region, ops_parse_info_t * parse_info,
 \param data Data to write out
 \param len Length of data
 \param cinfo Write settings
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
 
-ops_boolean_t 
+bool 
 ops_write_compressed(const unsigned char *data,
 		     const unsigned int len,
 		     ops_create_info_t * cinfo)

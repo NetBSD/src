@@ -118,7 +118,7 @@ ops_hash(unsigned char *out, ops_hash_algorithm_t alg, const void *in,
 
 void            ops_hash_add_int(ops_hash_t * hash, unsigned n, unsigned length);
 
-ops_boolean_t 
+bool 
 ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 	       const ops_dsa_signature_t * sig,
 	       const ops_dsa_public_key_t * dsa);
@@ -159,7 +159,7 @@ ops_decrypt_se_ip(ops_crypt_t * decrypt, void *out, const void *in,
 size_t 
 ops_encrypt_se_ip(ops_crypt_t * encrypt, void *out, const void *in,
 		  size_t count);
-ops_boolean_t   ops_is_sa_supported(ops_symmetric_algorithm_t alg);
+bool   ops_is_sa_supported(ops_symmetric_algorithm_t alg);
 
 void 
 ops_reader_push_decrypt(ops_parse_info_t * pinfo, ops_crypt_t * decrypt,
@@ -173,7 +173,7 @@ void            ops_reader_pop_hash(ops_parse_info_t * pinfo);
 int 
 ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM * encmpi,
 			     const ops_secret_key_t * skey);
-ops_boolean_t 
+bool 
 ops_rsa_encrypt_mpi(const unsigned char *buf, const size_t buflen,
 		    const ops_public_key_t * pkey,
 		    ops_pk_session_key_parameters_t * spk);
@@ -185,11 +185,11 @@ void
 ops_writer_push_encrypt(ops_create_info_t * info,
 			const struct ops_key_data * key);
 
-ops_boolean_t   ops_encrypt_file(const char *input_filename, const char *output_filename, const ops_keydata_t * pub_key, const ops_boolean_t use_armour, const ops_boolean_t allow_overwrite);
-ops_boolean_t   ops_decrypt_file(const char *input_filename, const char *output_filename, ops_keyring_t * keyring, const ops_boolean_t use_armour, const ops_boolean_t allow_overwrite, ops_parse_cb_t * cb_get_passphrase);
+bool   ops_encrypt_file(const char *input_filename, const char *output_filename, const ops_keydata_t * pub_key, const bool use_armour, const bool allow_overwrite);
+bool   ops_decrypt_file(const char *input_filename, const char *output_filename, ops_keyring_t * keyring, const bool use_armour, const bool allow_overwrite, ops_parse_cb_t * cb_get_passphrase);
 
 /* Keys */
-ops_boolean_t   ops_rsa_generate_keypair(const int numbits, const unsigned long e, ops_keydata_t * keydata);
+bool   ops_rsa_generate_keypair(const int numbits, const unsigned long e, ops_keydata_t * keydata);
 ops_keydata_t  *ops_rsa_create_selfsigned_keypair(const int numbits, const unsigned long e, ops_user_id_t * userid);
 
 int             ops_dsa_size(const ops_dsa_public_key_t * dsa);

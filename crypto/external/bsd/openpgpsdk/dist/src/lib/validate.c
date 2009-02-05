@@ -35,7 +35,7 @@
 
 #include <openpgpsdk/final.h>
 
-static          ops_boolean_t
+static          bool
 check_binary_signature(const unsigned len,
 		       const unsigned char *data,
 		       const ops_signature_t * sig,
@@ -79,7 +79,7 @@ check_binary_signature(const unsigned len,
 
 	default:
 		fprintf(stderr, "Invalid signature version %d\n", sig->info.version);
-		return ops_false;
+		return false;
 	}
 
 	n = hash.finish(&hash, hashout);
@@ -87,7 +87,7 @@ check_binary_signature(const unsigned len,
 	if (ops_get_debug_level(__FILE__)) {
 		printf("check_binary_signature: hash length %zu\n", hash.size);
 	}
-	/* return ops_false; */
+	/* return false; */
 	return ops_check_signature(hashout, n, sig, signer);
 }
 
@@ -155,7 +155,7 @@ ops_validate_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t *
 	validate_key_cb_arg_t *arg = ops_parse_cb_get_arg(cbinfo);
 	ops_error_t   **errors = ops_parse_cb_get_errors(cbinfo);
 	const ops_keydata_t *signer;
-	ops_boolean_t   valid = ops_false;
+	bool   valid = false;
 
 	if (ops_get_debug_level(__FILE__))
 		printf("%s\n", ops_show_packet_tag(content_->tag));
@@ -296,7 +296,7 @@ validate_data_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cb
 	validate_data_cb_arg_t *arg = ops_parse_cb_get_arg(cbinfo);
 	ops_error_t   **errors = ops_parse_cb_get_errors(cbinfo);
 	const ops_keydata_t *signer;
-	ops_boolean_t   valid = ops_false;
+	bool   valid = false;
 
 	if (ops_get_debug_level(__FILE__)) {
 		printf("validate_data_cb: %s\n", ops_show_packet_tag(content_->tag));
@@ -424,15 +424,15 @@ ops_keydata_reader_set(ops_parse_info_t * pinfo, const ops_keydata_t * key)
  * \ingroup HighLevel_Verify
  * \brief Indicicates whether any errors were found
  * \param result Validation result to check
- * \return ops_false if any invalid signatures or unknown signers or no valid signatures; else ops_true
+ * \return false if any invalid signatures or unknown signers or no valid signatures; else true
  */
-ops_boolean_t 
+bool 
 validate_result_status(ops_validate_result_t * result)
 {
 	if (result->invalid_count || result->unknown_signer_count || !result->valid_count)
-		return ops_false;
+		return false;
 	else
-		return ops_true;
+		return true;
 }
 
 /**
@@ -442,7 +442,7 @@ validate_result_status(ops_validate_result_t * result)
  * \param key Key to validate
  * \param keyring Keyring to use for validation
  * \param cb_get_passphrase Callback to use to get passphrase
- * \return ops_true if all signatures OK; else ops_false
+ * \return true if all signatures OK; else false
  * \note It is the caller's responsiblity to free result after use.
  * \sa ops_validate_result_free()
 
@@ -451,7 +451,7 @@ validate_result_status(ops_validate_result_t * result)
 void example(const ops_keydata_t* key, const ops_keyring_t *keyring)
 {
   ops_validate_result_t *result=NULL;
-  if (ops_validate_key_signatures(result, key, keyring, callback_cmd_get_passphrase_from_cmdline)==ops_true)
+  if (ops_validate_key_signatures(result, key, keyring, callback_cmd_get_passphrase_from_cmdline)==true)
     printf("OK");
   else
     printf("ERR");
@@ -464,7 +464,7 @@ void example(const ops_keydata_t* key, const ops_keyring_t *keyring)
 
 \endcode
  */
-ops_boolean_t 
+bool 
 ops_validate_key_signatures(ops_validate_result_t * result, const ops_keydata_t * key,
 			    const ops_keyring_t * keyring,
 			    ops_parse_cb_return_t cb_get_passphrase(const ops_parser_content_t *, ops_parse_cb_info_t *)
@@ -483,7 +483,7 @@ ops_validate_key_signatures(ops_validate_result_t * result, const ops_keydata_t 
 	carg.keyring = keyring;
 
 	ops_parse_cb_set(pinfo, ops_validate_key_cb, &carg);
-	pinfo->rinfo.accumulate = ops_true;
+	pinfo->rinfo.accumulate = true;
 	ops_keydata_reader_set(pinfo, key);
 
 	/* Note: Coverity incorrectly reports an error that carg.rarg */
@@ -501,9 +501,9 @@ ops_validate_key_signatures(ops_validate_result_t * result, const ops_keydata_t 
 	ops_parse_info_delete(pinfo);
 
 	if (result->invalid_count || result->unknown_signer_count || !result->valid_count)
-		return ops_false;
+		return false;
 	else
-		return ops_true;
+		return true;
 }
 
 /**
@@ -514,7 +514,7 @@ ops_validate_key_signatures(ops_validate_result_t * result, const ops_keydata_t 
    \note It is the caller's responsibility to free result after use.
    \sa ops_validate_result_free()
 */
-ops_boolean_t 
+bool 
 ops_validate_all_signatures(ops_validate_result_t * result,
 			    const ops_keyring_t * ring,
 			    ops_parse_cb_return_t cb_get_passphrase(const ops_parser_content_t *, ops_parse_cb_info_t *)
@@ -558,7 +558,7 @@ ops_validate_result_free(ops_validate_result_t * result)
    \param filename Name of file to be validated
    \param armoured Treat file as armoured, if set
    \param keyring Keyring to use
-   \return ops_true if signatures validate successfully; ops_false if signatures fail or there are no signatures
+   \return true if signatures validate successfully; false if signatures fail or there are no signatures
    \note After verification, result holds the details of all keys which
    have passed, failed and not been recognised.
    \note It is the caller's responsiblity to call ops_validate_result_free(result) after use.
@@ -569,7 +569,7 @@ void example(const char* filename, const int armoured, const ops_keyring_t* keyr
 {
   ops_validate_result_t* result=calloc(1, sizeof(*result));
 
-  if (ops_validate_file(result, filename, armoured, keyring)==ops_true)
+  if (ops_validate_file(result, filename, armoured, keyring)==true)
   {
     printf("OK");
     // look at result for details of keys with good signatures
@@ -584,7 +584,7 @@ void example(const char* filename, const int armoured, const ops_keyring_t* keyr
 }
 \endcode
 */
-ops_boolean_t 
+bool 
 ops_validate_file(ops_validate_result_t * result, const char *filename, const int armoured, const ops_keyring_t * keyring)
 {
 	ops_parse_info_t *pinfo = NULL;
@@ -593,9 +593,9 @@ ops_validate_file(ops_validate_result_t * result, const char *filename, const in
 	int             fd = 0;
 
 	/* */
-	fd = ops_setup_file_read(&pinfo, filename, &validate_arg, validate_data_cb, ops_true);
+	fd = ops_setup_file_read(&pinfo, filename, &validate_arg, validate_data_cb, true);
 	if (fd < 0)
-		return ops_false;
+		return false;
 
 	/* Set verification reader and handling options */
 
@@ -636,20 +636,20 @@ ops_validate_file(ops_validate_result_t * result, const char *filename, const in
    \param mem Memory to be validated
    \param armoured Treat data as armoured, if set
    \param keyring Keyring to use
-   \return ops_true if signature validates successfully; ops_false if not
+   \return true if signature validates successfully; false if not
    \note After verification, result holds the details of all keys which
    have passed, failed and not been recognised.
    \note It is the caller's responsiblity to call ops_validate_result_free(result) after use.
 */
 
-ops_boolean_t 
+bool 
 ops_validate_mem(ops_validate_result_t * result, ops_memory_t * mem, const int armoured, const ops_keyring_t * keyring)
 {
 	ops_parse_info_t *pinfo = NULL;
 	validate_data_cb_arg_t validate_arg;
 
 	/* */
-	ops_setup_memory_read(&pinfo, mem, &validate_arg, validate_data_cb, ops_true);
+	ops_setup_memory_read(&pinfo, mem, &validate_arg, validate_data_cb, true);
 
 	/* Set verification reader and handling options */
 

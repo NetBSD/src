@@ -90,7 +90,7 @@ void
 ops_setup_memory_read(ops_parse_info_t ** pinfo, ops_memory_t * mem,
 		      void *arg,
 		      ops_parse_cb_return_t callback(const ops_parser_content_t *, ops_parse_cb_info_t *),
-		      ops_boolean_t accumulate)
+		      bool accumulate)
 {
 	/*
          * initialise needed structures for reading
@@ -103,7 +103,7 @@ ops_setup_memory_read(ops_parse_info_t ** pinfo, ops_memory_t * mem,
 			      ops_memory_get_length(mem));
 
 	if (accumulate)
-		(*pinfo)->rinfo.accumulate = ops_true;
+		(*pinfo)->rinfo.accumulate = true;
 }
 
 /**
@@ -131,7 +131,7 @@ ops_teardown_memory_read(ops_parse_info_t * pinfo, ops_memory_t * mem)
  \sa ops_teardown_file_write()
 */
 int 
-ops_setup_file_write(ops_create_info_t ** cinfo, const char *filename, ops_boolean_t allow_overwrite)
+ops_setup_file_write(ops_create_info_t ** cinfo, const char *filename, bool allow_overwrite)
 {
 	int             fd = 0;
 	int             flags = 0;
@@ -141,7 +141,7 @@ ops_setup_file_write(ops_create_info_t ** cinfo, const char *filename, ops_boole
          */
 
 	flags = O_WRONLY | O_CREAT;
-	if (allow_overwrite == ops_true)
+	if (allow_overwrite == true)
 		flags |= O_TRUNC;
 	else
 		flags |= O_EXCL;
@@ -230,7 +230,7 @@ int
 ops_setup_file_read(ops_parse_info_t ** pinfo, const char *filename,
 		    void *arg,
 		    ops_parse_cb_return_t callback(const ops_parser_content_t *, ops_parse_cb_info_t *),
-		    ops_boolean_t accumulate)
+		    bool accumulate)
 {
 	int             fd = 0;
 	/*
@@ -251,7 +251,7 @@ ops_setup_file_read(ops_parse_info_t ** pinfo, const char *filename,
 	ops_reader_set_fd(*pinfo, fd);
 
 	if (accumulate)
-		(*pinfo)->rinfo.accumulate = ops_true;
+		(*pinfo)->rinfo.accumulate = true;
 
 	if (ops_get_debug_level(__FILE__)) {
 		printf("ops_setup_file_read: accumulate %d\n", accumulate);
@@ -450,8 +450,8 @@ callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t * content_, 
 	return OPS_RELEASE_MEMORY;
 }
 
-ops_boolean_t 
-ops_reader_set_accumulate(ops_parse_info_t * pinfo, ops_boolean_t state)
+bool 
+ops_reader_set_accumulate(ops_parse_info_t * pinfo, bool state)
 {
 	pinfo->rinfo.accumulate = state;
 	return state;

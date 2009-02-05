@@ -34,7 +34,7 @@ typedef struct {
 	int             fd;
 }               writer_fd_arg_t;
 
-static ops_boolean_t 
+static bool 
 fd_writer(const unsigned char *src, unsigned length,
 	  ops_error_t ** errors,
 	  ops_writer_info_t * winfo)
@@ -45,14 +45,14 @@ fd_writer(const unsigned char *src, unsigned length,
 	if (n == -1) {
 		OPS_SYSTEM_ERROR_1(errors, OPS_E_W_WRITE_FAILED, "write",
 				   "file descriptor %d", arg->fd);
-		return ops_false;
+		return false;
 	}
 	if ((unsigned) n != length) {
 		OPS_ERROR_1(errors, OPS_E_W_WRITE_TOO_SHORT,
 			    "file descriptor %d", arg->fd);
-		return ops_false;
+		return false;
 	}
-	return ops_true;
+	return true;
 }
 
 static void 

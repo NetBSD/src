@@ -42,12 +42,12 @@
  */
 
 typedef struct ops_writer_info ops_writer_info_t;
-typedef ops_boolean_t 
+typedef bool 
 ops_writer_t(const unsigned char *src,
 	     unsigned length,
 	     ops_error_t ** errors,
 	     ops_writer_info_t * winfo);
-typedef ops_boolean_t 
+typedef bool 
 ops_writer_finaliser_t(ops_error_t ** errors,
 		       ops_writer_info_t * winfo);
 typedef void    ops_writer_destroyer_t(ops_writer_info_t * winfo);
@@ -62,7 +62,7 @@ struct ops_writer_info {
 
 
 void           *ops_writer_get_arg(ops_writer_info_t * winfo);
-ops_boolean_t 
+bool 
 ops_stacked_write(const void *src, unsigned length,
 		  ops_error_t ** errors,
 		  ops_writer_info_t * winfo);
@@ -81,27 +81,27 @@ ops_writer_push(ops_create_info_t * info,
 		void *arg);
 void            ops_writer_pop(ops_create_info_t * info);
 void            ops_writer_generic_destroyer(ops_writer_info_t * winfo);
-ops_boolean_t 
+bool 
 ops_writer_passthrough(const unsigned char *src,
 		       unsigned length,
 		       ops_error_t ** errors,
 		       ops_writer_info_t * winfo);
 
 void            ops_writer_set_fd(ops_create_info_t * info, int fd);
-ops_boolean_t   ops_writer_close(ops_create_info_t * info);
+bool   ops_writer_close(ops_create_info_t * info);
 
-ops_boolean_t 
+bool 
 ops_write(const void *src, unsigned length,
 	  ops_create_info_t * opt);
-ops_boolean_t   ops_write_length(unsigned length, ops_create_info_t * opt);
-ops_boolean_t   ops_write_ptag(ops_content_tag_t tag, ops_create_info_t * opt);
-ops_boolean_t 
+bool   ops_write_length(unsigned length, ops_create_info_t * opt);
+bool   ops_write_ptag(ops_content_tag_t tag, ops_create_info_t * opt);
+bool 
 ops_write_scalar(unsigned n, unsigned length,
 		 ops_create_info_t * opt);
-ops_boolean_t   ops_write_mpi(const BIGNUM * bn, ops_create_info_t * opt);
-ops_boolean_t   ops_write_encrypted_mpi(const BIGNUM * bn, ops_crypt_t * crypt, ops_create_info_t * info);
+bool   ops_write_mpi(const BIGNUM * bn, ops_create_info_t * opt);
+bool   ops_write_encrypted_mpi(const BIGNUM * bn, ops_crypt_t * crypt, ops_create_info_t * info);
 
 void            writer_info_delete(ops_writer_info_t * winfo);
-ops_boolean_t   writer_info_finalise(ops_error_t ** errors, ops_writer_info_t * winfo);
+bool   writer_info_finalise(ops_error_t ** errors, ops_writer_info_t * winfo);
 
 #endif

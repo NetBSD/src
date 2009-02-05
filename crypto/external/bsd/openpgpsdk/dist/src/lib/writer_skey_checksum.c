@@ -34,11 +34,11 @@ typedef struct {
 	unsigned char  *hashed;
 }               skey_checksum_arg_t;
 
-static ops_boolean_t 
+static bool 
 skey_checksum_writer(const unsigned char *src, const unsigned length, ops_error_t ** errors, ops_writer_info_t * winfo)
 {
 	skey_checksum_arg_t *arg = ops_writer_get_arg(winfo);
-	ops_boolean_t   rtn = ops_true;
+	bool   rtn = true;
 
 	/* add contents to hash */
 	arg->hash.add(&arg->hash, src, length);
@@ -50,10 +50,12 @@ skey_checksum_writer(const unsigned char *src, const unsigned length, ops_error_
 	return rtn;
 }
 
-static ops_boolean_t skey_checksum_finaliser(ops_error_t ** errors __attribute__((unused)), ops_writer_info_t * winfo) {
+static bool
+skey_checksum_finaliser(ops_error_t ** errors __attribute__((unused)), ops_writer_info_t * winfo)
+{
 	skey_checksum_arg_t *arg = ops_writer_get_arg(winfo);
 	arg->hash.finish(&arg->hash, arg->hashed);
-	return ops_true;
+	return true;
 }
 
 static void 

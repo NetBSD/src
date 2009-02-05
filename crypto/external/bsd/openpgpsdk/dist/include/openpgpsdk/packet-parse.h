@@ -37,7 +37,7 @@ typedef struct ops_region {
 	unsigned        length_read;
 	unsigned        last_read;	/* !< length of last read, only valid
 					 * in deepest child */
-	ops_boolean_t   indeterminate:1;
+	unsigned   indeterminate:1;
 }               ops_region_t;
 
 void            ops_init_subregion(ops_region_t * subregion, ops_region_t * region);
@@ -145,12 +145,12 @@ void
 ops_parse_options(ops_parse_info_t * pinfo, ops_content_tag_t tag,
 		  ops_parse_type_t type);
 
-ops_boolean_t 
+bool 
 ops_limited_read(unsigned char *dest, size_t length,
 		 ops_region_t * region, ops_error_t ** errors,
 		 ops_reader_info_t * rinfo,
 		 ops_parse_cb_info_t * cbinfo);
-ops_boolean_t 
+bool 
 ops_stacked_limited_read(unsigned char *dest, unsigned length,
 			 ops_region_t * region,
 			 ops_error_t ** errors,

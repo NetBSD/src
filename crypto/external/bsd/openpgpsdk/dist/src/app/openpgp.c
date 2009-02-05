@@ -124,7 +124,7 @@ typedef struct prog_t {
 	ops_keyring_t  *pubring;			/* public keyring */
 	char            secring_name[MAXBUF + 1];	/* secret ring file */
 	ops_keyring_t  *secring;			/* secret keyring */
-	ops_boolean_t   overwrite;			/* overwrite files? */
+	bool		overwrite;			/* overwrite files? */
 	int             numbits;			/* # of bits */
 	int             armour;				/* ASCII armor */
 	int             cmd;				/* openpgp command */
@@ -239,11 +239,11 @@ openpgp(prog_t * p, char *f)
 		ops_setup_memory_write(&cinfo, &mem, 128);
 		if (ops_get_keydata_content_type(keydata) == OPS_PTAG_CT_PUBLIC_KEY) {
 			ops_write_transferable_public_key(keydata,
-							  ops_true, cinfo);
+							  true, cinfo);
 		} else {
 			ops_write_transferable_secret_key(keydata,
 					    (unsigned char *) p->passphrase,
-				    strlen(p->passphrase), ops_true, cinfo);
+				    strlen(p->passphrase), true, cinfo);
 		}
 		printf("%s", (char *) ops_memory_get_data(mem));
 		ops_teardown_memory_write(cinfo, mem);
@@ -273,19 +273,19 @@ openpgp(prog_t * p, char *f)
 		/* write public key */
 		/* append to keyrings */
 		fd = ops_setup_file_append(&cinfo, p->pubring_name);
-		ops_write_transferable_public_key(mykeydata, ops_false, cinfo);
+		ops_write_transferable_public_key(mykeydata, false, cinfo);
 		ops_teardown_file_write(cinfo, fd);
 
 		ops_keyring_free(p->pubring);
-		if (!ops_keyring_read_from_file(p->pubring, ops_false, p->pubring_name)) {
+		if (!ops_keyring_read_from_file(p->pubring, false, p->pubring_name)) {
 			(void) fprintf(stderr, "Cannot re-read keyring %s\n", p->pubring_name);
 			exit(EXIT_ERROR);
 		}
 		fd = ops_setup_file_append(&cinfo, p->secring_name);
-		ops_write_transferable_secret_key(mykeydata, NULL, 0, ops_false, cinfo);
+		ops_write_transferable_secret_key(mykeydata, NULL, 0, false, cinfo);
 		ops_teardown_file_write(cinfo, fd);
 		ops_keyring_free(p->secring);
-		if (!ops_keyring_read_from_file(p->secring, ops_false, p->secring_name)) {
+		if (!ops_keyring_read_from_file(p->secring, false, p->secring_name)) {
 			fprintf(stderr, "Cannot re-read keyring %s\n", p->secring_name);
 			exit(EXIT_ERROR);
 		}
@@ -306,13 +306,13 @@ openpgp(prog_t * p, char *f)
 		}
 		/* outputfilename */
 		(void) snprintf(outputfilename, MAXBUF, "%s%s", f, suffix);
-		p->overwrite = ops_true;
+		p->overwrite = true;
 		ops_encrypt_file(f, outputfilename, keydata, p->armour,
 				 p->overwrite);
 		break;
 
 	case DECRYPT:
-		p->overwrite = ops_true;
+		p->overwrite = true;
 		ops_decrypt_file(f, NULL, p->secring, p->armour,
 		    p->overwrite, callback_cmd_get_passphrase_from_cmdline);
 		break;
@@ -345,7 +345,7 @@ openpgp(prog_t * p, char *f)
 		} while (skey == NULL);
 
 		/* sign file */
-		p->overwrite = ops_true;
+		p->overwrite = true;
 		ops_sign_file(f, NULL, skey, p->armour, p->overwrite);
 		break;
 
@@ -379,7 +379,7 @@ openpgp(prog_t * p, char *f)
 		} while (skey == NULL);
 
 		/* sign file */
-		p->overwrite = ops_true;
+		p->overwrite = true;
 		ops_sign_file_as_cleartext(f, NULL, skey, p->overwrite);
 		break;
 
@@ -387,7 +387,7 @@ openpgp(prog_t * p, char *f)
 
 		validate_result = calloc(1, sizeof(ops_validate_result_t));
 
-		if (ops_validate_file(validate_result, f, p->armour, p->pubring) == ops_true) {
+		if (ops_validate_file(validate_result, f, p->armour, p->pubring) == true) {
 			psuccess(f, validate_result, p->pubring);
 		} else {
 			printf("\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n", f, validate_result->invalid_count, validate_result->unknown_signer_count);
@@ -424,7 +424,7 @@ main(int argc, char **argv)
 	(void) memset(homedir, 0x0, sizeof(homedir));
 	zeroargs = 0;
 	p.numbits = DEFAULT_NUMBITS;
-	p.overwrite = ops_true;
+	p.overwrite = true;
 	if (argc < 2) {
 		print_usage(usage, pname);
 		exit(EXIT_ERROR);
@@ -540,20 +540,20 @@ main(int argc, char **argv)
 
 	(void) snprintf(p.pubring_name, MAXBUF, "%s/pubring.gpg", dir);
 	p.pubring = calloc(1, sizeof(*p.pubring));
-	if (!ops_keyring_read_from_file(p.pubring, ops_false, p.pubring_name)) {
+	if (!ops_keyring_read_from_file(p.pubring, false, p.pubring_name)) {
 		fprintf(stderr, "Cannot read keyring %s\n", p.pubring_name);
 		exit(EXIT_ERROR);
 	}
 	snprintf(p.secring_name, MAXBUF, "%s/secring.gpg", dir);
 	p.secring = calloc(1, sizeof(*p.secring));
-	if (!ops_keyring_read_from_file(p.secring, ops_false, p.secring_name)) {
+	if (!ops_keyring_read_from_file(p.secring, false, p.secring_name)) {
 		fprintf(stderr, "Cannot read keyring %s\n", p.secring_name);
 		exit(EXIT_ERROR);
 	}
 	if (p.keyring[0] != 0x0) {
 		snprintf(p.myring_name, MAXBUF, "%s/%s", homedir, p.keyring);
 		p.myring = calloc(1, sizeof(*p.myring));
-		if (!ops_keyring_read_from_file(p.myring, ops_false, p.myring_name)) {
+		if (!ops_keyring_read_from_file(p.myring, false, p.myring_name)) {
 			fprintf(stderr, "Cannot read keyring %s\n", p.myring_name);
 			exit(EXIT_ERROR);
 		}

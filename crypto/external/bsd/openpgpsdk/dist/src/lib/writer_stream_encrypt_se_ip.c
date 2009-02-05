@@ -51,13 +51,13 @@ typedef struct {
 }               stream_encrypt_se_ip_arg_t;
 
 
-static ops_boolean_t 
+static bool 
 stream_encrypt_se_ip_writer(const unsigned char *src,
 			    unsigned length,
 			    ops_error_t ** errors,
 			    ops_writer_info_t * winfo);
 
-static ops_boolean_t 
+static bool 
 stream_encrypt_se_ip_finaliser(ops_error_t ** errors,
 			       ops_writer_info_t * winfo);
 
@@ -137,7 +137,7 @@ ops_calc_partial_data_length(unsigned int len)
 	return mask;
 }
 
-static ops_boolean_t 
+static bool 
 ops_write_partial_data_length(unsigned int len,
 			      ops_create_info_t * info)
 {
@@ -154,7 +154,7 @@ ops_write_partial_data_length(unsigned int len,
 	return ops_write(c, 1, info);
 }
 
-static ops_boolean_t 
+static bool 
 ops_stream_write_literal_data(const unsigned char *data,
 			      unsigned int len,
 			      ops_create_info_t * info)
@@ -166,10 +166,10 @@ ops_stream_write_literal_data(const unsigned char *data,
 		data += pdlen;
 		len -= pdlen;
 	}
-	return ops_true;
+	return true;
 }
 
-static          ops_boolean_t
+static          bool
 ops_stream_write_literal_data_first(const unsigned char *data,
 				    unsigned int len,
 				    const ops_literal_data_type_t type,
@@ -194,20 +194,20 @@ ops_stream_write_literal_data_first(const unsigned char *data,
 	sz_towrite -= sz_pd;
 
 	ops_stream_write_literal_data(data, sz_towrite, info);
-	return ops_true;
+	return true;
 }
 
-static          ops_boolean_t
+static          bool
 ops_stream_write_literal_data_last(const unsigned char *data,
 				   unsigned int len,
 				   ops_create_info_t * info)
 {
 	ops_write_length(len, info);
 	ops_write(data, len, info);
-	return ops_true;
+	return true;
 }
 
-static          ops_boolean_t
+static          bool
 ops_stream_write_se_ip(const unsigned char *data,
 		       unsigned int len,
 		       stream_encrypt_se_ip_arg_t * arg,
@@ -226,10 +226,10 @@ ops_stream_write_se_ip(const unsigned char *data,
 		data += pdlen;
 		len -= pdlen;
 	}
-	return ops_true;
+	return true;
 }
 
-static          ops_boolean_t
+static          bool
 ops_stream_write_se_ip_first(const unsigned char *data,
 			     unsigned int len,
 			     stream_encrypt_se_ip_arg_t * arg,
@@ -270,10 +270,10 @@ ops_stream_write_se_ip_first(const unsigned char *data,
 
 	free(preamble);
 
-	return ops_true;
+	return true;
 }
 
-static          ops_boolean_t
+static          bool
 ops_stream_write_se_ip_last(const unsigned char *data,
 			    unsigned int len,
 			    stream_encrypt_se_ip_arg_t * arg,
@@ -316,10 +316,10 @@ ops_stream_write_se_ip_last(const unsigned char *data,
 
 	ops_teardown_memory_write(cinfo_mdc, mem_mdc);
 
-	return ops_true;
+	return true;
 }
 
-static ops_boolean_t 
+static bool 
 stream_encrypt_se_ip_writer(const unsigned char *src,
 			    unsigned length,
 			    ops_error_t ** errors,
@@ -327,7 +327,7 @@ stream_encrypt_se_ip_writer(const unsigned char *src,
 {
 	stream_encrypt_se_ip_arg_t *arg = ops_writer_get_arg(winfo);
 
-	ops_boolean_t   rtn = ops_true;
+	bool   rtn = true;
 
 	if (arg->cinfo_literal == NULL) {	/* first literal data chunk
 						 * is not yet written */
@@ -339,7 +339,7 @@ stream_encrypt_se_ip_writer(const unsigned char *src,
 		/* 4.2.2.4. Partial Body Lengths */
 		/* The first partial length MUST be at least 512 octets long. */
 		if (datalength < 512) {
-			return ops_true;	/* will wait for more data or
+			return true;	/* will wait for more data or
 						 * end of stream             */
 		}
 		ops_setup_memory_write(&arg->cinfo_literal, &arg->mem_literal, datalength + 32);
@@ -369,7 +369,7 @@ stream_encrypt_se_ip_writer(const unsigned char *src,
 	return rtn;
 }
 
-static ops_boolean_t 
+static bool 
 stream_encrypt_se_ip_finaliser(ops_error_t ** errors,
 			       ops_writer_info_t * winfo)
 {

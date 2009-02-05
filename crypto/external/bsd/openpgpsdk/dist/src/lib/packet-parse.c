@@ -288,9 +288,9 @@ full_read(unsigned char *dest, size_t length, int *last_read,
  * \param *result	The scalar value is stored here
  * \param *reader	Our reader
  * \param length	How many bytes to read
- * \return		ops_true on success, ops_false on failure
+ * \return		true on success, false on failure
  */
-static ops_boolean_t 
+static bool 
 _read_scalar(unsigned *result, unsigned length,
 	     ops_parse_info_t * pinfo)
 {
@@ -304,12 +304,12 @@ _read_scalar(unsigned *result, unsigned length,
 
 		r = base_read(c, 1, pinfo);
 		if (r != 1)
-			return ops_false;
+			return false;
 		t = (t << 8) + c[0];
 	}
 
 	*result = t;
-	return ops_true;
+	return true;
 }
 
 /**
@@ -336,9 +336,9 @@ _read_scalar(unsigned *result, unsigned length,
  * \param errors    Error stack
  * \param rinfo		Reader info
  * \param cbinfo	Callback info
- * \return		ops_true on success, ops_false on error
+ * \return		true on success, false on error
  */
-ops_boolean_t 
+bool 
 ops_limited_read(unsigned char *dest, size_t length,
 		 ops_region_t * region, ops_error_t ** errors,
 		 ops_reader_info_t * rinfo,
@@ -349,17 +349,17 @@ ops_limited_read(unsigned char *dest, size_t length,
 
 	if (!region->indeterminate && region->length_read + length > region->length) {
 		OPS_ERROR(errors, OPS_E_P_NOT_ENOUGH_DATA, "Not enough data");
-		return ops_false;
+		return false;
 	}
 	r = full_read(dest, length, &lr, errors, rinfo, cbinfo);
 
 	if (lr < 0) {
 		OPS_ERROR(errors, OPS_E_R_READ_FAILED, "Read failed");
-		return ops_false;
+		return false;
 	}
 	if (!region->indeterminate && r != length) {
 		OPS_ERROR(errors, OPS_E_R_READ_FAILED, "Read failed");
-		return ops_false;
+		return false;
 	}
 	region->last_read = r;
 	do {
@@ -368,14 +368,14 @@ ops_limited_read(unsigned char *dest, size_t length,
 	}
 	while ((region = region->parent));
 
-	return ops_true;
+	return true;
 }
 
 /**
    \ingroup Core_ReadPackets
    \brief Call ops_limited_read on next in stack
 */
-ops_boolean_t 
+bool 
 ops_stacked_limited_read(unsigned char *dest, unsigned length,
 			 ops_region_t * region,
 			 ops_error_t ** errors,
@@ -385,7 +385,7 @@ ops_stacked_limited_read(unsigned char *dest, unsigned length,
 	return ops_limited_read(dest, length, region, errors, rinfo->next, cbinfo);
 }
 
-static ops_boolean_t 
+static bool 
 limited_read(unsigned char *dest, unsigned length,
 	     ops_region_t * region, ops_parse_info_t * info)
 {
@@ -393,16 +393,16 @@ limited_read(unsigned char *dest, unsigned length,
 				&info->rinfo, &info->cbinfo);
 }
 
-static ops_boolean_t 
+static bool 
 exact_limited_read(unsigned char *dest, unsigned length,
 		   ops_region_t * region,
 		   ops_parse_info_t * pinfo)
 {
-	ops_boolean_t   ret;
+	bool   ret;
 
-	pinfo->exact_read = ops_true;
+	pinfo->exact_read = true;
 	ret = limited_read(dest, length, region, pinfo);
-	pinfo->exact_read = ops_false;
+	pinfo->exact_read = false;
 
 	return ret;
 }
@@ -584,13 +584,13 @@ limited_read_mpi(BIGNUM ** pbn, ops_region_t * region,
 					 * Length is given in bits, so the
 					 * largest we should ever need for
 					 * the buffer is 8192 bytes. */
-	ops_boolean_t   ret;
+	bool   ret;
 
-	pinfo->reading_mpi_length = ops_true;
+	pinfo->reading_mpi_length = true;
 	ret = limited_read_scalar(&length, 2, region, pinfo);
 
 
-	pinfo->reading_mpi_length = ops_false;
+	pinfo->reading_mpi_length = false;
 	if (!ret)
 		return 0;
 
@@ -629,29 +629,29 @@ limited_read_mpi(BIGNUM ** pbn, ops_region_t * region,
  *
  * \param *length	Where the decoded length will be put
  * \param *pinfo	How to parse
- * \return		ops_true if OK, else ops_false
+ * \return		true if OK, else false
  *
  */
 
-static ops_boolean_t 
+static bool 
 read_new_length(unsigned *length, ops_parse_info_t * pinfo)
 {
 	unsigned char   c[1];
 
 	if (base_read(c, 1, pinfo) != 1)
-		return ops_false;
+		return false;
 	if (c[0] < 192) {
 		/* 1. One-octet packet */
 		*length = c[0];
-		return ops_true;
+		return true;
 	} else if (c[0] >= 192 && c[0] <= 223) {
 		/* 2. Two-octet packet */
 		unsigned        t = (c[0] - 192) << 8;
 
 		if (base_read(c, 1, pinfo) != 1)
-			return ops_false;
+			return false;
 		*length = t + c[0] + 192;
-		return ops_true;
+		return true;
 	} else if (c[0] == 255) {
 		/* 3. Five-Octet packet */
 		return _read_scalar(length, 4, pinfo);
@@ -659,9 +659,9 @@ read_new_length(unsigned *length, ops_parse_info_t * pinfo)
 		/* 4. Partial Body Length */
 		OPS_ERROR(&pinfo->errors, OPS_E_UNIMPLEMENTED,
 		"New format Partial Body Length fields not yet implemented");
-		return ops_false;
+		return false;
 	}
-	return ops_false;
+	return false;
 }
 
 /** Read the length information for a new format Packet Tag.
@@ -1342,11 +1342,11 @@ parse_v3_signature(ops_region_t * region,
 
 	if (!limited_read_time(&C.signature.info.creation_time, region, pinfo))
 		return 0;
-	C.signature.info.creation_time_set = ops_true;
+	C.signature.info.creation_time_set = true;
 
 	if (!limited_read(C.signature.info.signer_id, OPS_KEY_ID_SIZE, region, pinfo))
 		return 0;
-	C.signature.info.signer_id_set = ops_true;
+	C.signature.info.signer_id_set = true;
 
 	if (!limited_read(c, 1, region, pinfo))
 		return 0;
@@ -1426,8 +1426,8 @@ parse_one_signature_subpacket(ops_signature_t * sig,
 	unsigned char   c[1] = "";
 	ops_parser_content_t content;
 	unsigned        t8, t7;
-	ops_boolean_t   doread = ops_true;
-	unsigned char   bool[1] = "";
+	bool   doread = true;
+	unsigned char   bools[1] = "";
 
 	ops_init_subregion(&subregion, region);
 	if (!limited_read_new_length(&subregion.length, region, pinfo))
@@ -1463,7 +1463,7 @@ parse_one_signature_subpacket(ops_signature_t * sig,
 			return 0;
 		if (content.tag == OPS_PTAG_SS_CREATION_TIME) {
 			sig->info.creation_time = C.ss_time.time;
-			sig->info.creation_time_set = ops_true;
+			sig->info.creation_time_set = true;
 		}
 		break;
 
@@ -1474,9 +1474,9 @@ parse_one_signature_subpacket(ops_signature_t * sig,
 		break;
 
 	case OPS_PTAG_SS_REVOCABLE:
-		if (!limited_read(bool, 1, &subregion, pinfo))
+		if (!limited_read(bools, 1, &subregion, pinfo))
 			return 0;
-		C.ss_revocable.revocable = !!bool[0];
+		C.ss_revocable.revocable = !!bools[0];
 		break;
 
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
@@ -1484,7 +1484,7 @@ parse_one_signature_subpacket(ops_signature_t * sig,
 				  &subregion, pinfo))
 			return 0;
 		memcpy(sig->info.signer_id, C.ss_issuer_key_id.key_id, OPS_KEY_ID_SIZE);
-		sig->info.signer_id_set = ops_true;
+		sig->info.signer_id_set = true;
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_SKA:
@@ -1503,9 +1503,9 @@ parse_one_signature_subpacket(ops_signature_t * sig,
 		break;
 
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
-		if (!limited_read(bool, 1, &subregion, pinfo))
+		if (!limited_read(bools, 1, &subregion, pinfo))
 			return 0;
-		C.ss_primary_user_id.primary_user_id = !!bool[0];
+		C.ss_primary_user_id.primary_user_id = !!bools[0];
 		break;
 
 	case OPS_PTAG_SS_KEY_FLAGS:
@@ -1619,7 +1619,7 @@ parse_one_signature_subpacket(ops_signature_t * sig,
 		if (pinfo->ss_parsed[t8] & t7)
 			OPS_ERROR_1(&pinfo->errors, OPS_E_PROTO_UNKNOWN_SS,
 				    "Unknown signature subpacket type (%d)", c[0] & 0x7f);
-		doread = ops_false;
+		doread = false;
 		break;
 	}
 
@@ -2177,7 +2177,7 @@ ops_secret_key_free(ops_secret_key_t * key)
 
 static int 
 consume_packet(ops_region_t * region, ops_parse_info_t * pinfo,
-	       ops_boolean_t warn)
+	       bool warn)
 {
 	ops_data_t      remainder;
 	ops_parser_content_t content;
@@ -2216,7 +2216,7 @@ parse_secret_key(ops_region_t * region, ops_parse_info_t * pinfo)
 	size_t          checksum_length = 2;
 	ops_hash_t      checkhash;
 	int             blocksize;
-	ops_boolean_t   crypted;
+	bool   crypted;
 
 	if (ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "\n---------\nparse_secret_key:\n");
@@ -2301,7 +2301,7 @@ parse_secret_key(ops_region_t * region, ops_parse_info_t * pinfo)
 				/* \todo make into proper error */
 				fprintf(stderr, "parse_secret_key: can't get passphrase\n");
 			}
-			if (!consume_packet(region, pinfo, ops_false))
+			if (!consume_packet(region, pinfo, false))
 				return 0;
 
 			CBP(pinfo, OPS_PTAG_CT_ENCRYPTED_SECRET_KEY, &content);
@@ -2432,7 +2432,7 @@ parse_secret_key(ops_region_t * region, ops_parse_info_t * pinfo)
 		 * &C.secret_key);
 		 */
 	}
-	pinfo->reading_v3_secret = ops_false;
+	pinfo->reading_v3_secret = false;
 
 	if (C.secret_key.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
 		unsigned char   hash[20];
@@ -2805,7 +2805,7 @@ ops_parse_one_packet(ops_parse_info_t * pinfo,
 	ops_parser_content_t content;
 	int             r;
 	ops_region_t    region;
-	ops_boolean_t   indeterminate = ops_false;
+	bool   indeterminate = false;
 
 	C.ptag.position = pinfo->rinfo.position;
 
@@ -2834,9 +2834,9 @@ ops_parse_one_packet(ops_parse_info_t * pinfo,
 			return 0;
 
 	} else {
-		ops_boolean_t   rb;
+		bool   rb;
 
-		rb = ops_false;
+		rb = false;
 		C.ptag.content_tag = (*ptag & OPS_PTAG_OF_CONTENT_TAG_MASK)
 			>> OPS_PTAG_OF_CONTENT_TAG_SHIFT;
 		C.ptag.length_type = *ptag & OPS_PTAG_OF_LENGTH_TYPE_MASK;
@@ -2855,8 +2855,8 @@ ops_parse_one_packet(ops_parse_info_t * pinfo,
 
 		case OPS_PTAG_OF_LT_INDETERMINATE:
 			C.ptag.length = 0;
-			indeterminate = ops_true;
-			rb = ops_true;
+			indeterminate = true;
+			rb = true;
 			break;
 		}
 		if (!rb)
@@ -2939,14 +2939,14 @@ ops_parse_one_packet(ops_parse_info_t * pinfo,
 	/* Ensure that the entire packet has been consumed */
 
 	if (region.length != region.length_read && !region.indeterminate)
-		if (!consume_packet(&region, pinfo, ops_false))
+		if (!consume_packet(&region, pinfo, false))
 			r = -1;
 
 	/* also consume it if there's been an error? */
 	/* \todo decide what to do about an error on an */
 	/* indeterminate packet */
 	if (r == 0) {
-		if (!consume_packet(&region, pinfo, ops_false))
+		if (!consume_packet(&region, pinfo, false))
 			r = -1;
 	}
 	/* set pktlen */
@@ -3005,7 +3005,7 @@ void example()
  char *filename="pubring.gpg";
 
  // setup pinfo to read from file with example callback
- fd=ops_setup_file_read(&pinfo, filename, NULL, example_callback, ops_false);
+ fd=ops_setup_file_read(&pinfo, filename, NULL, example_callback, false);
 
  // specify how we handle signature subpackets
  ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);

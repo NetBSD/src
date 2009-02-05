@@ -49,10 +49,10 @@
  * \param length
  * \param type
  * \param info
- * \return ops_true if OK, otherwise ops_false
+ * \return true if OK, otherwise false
  */
 
-ops_boolean_t 
+bool 
 ops_write_ss_header(unsigned length, ops_content_tag_t type,
 		    ops_create_info_t * info)
 {
@@ -86,9 +86,9 @@ ops_fast_create_user_id(ops_user_id_t * id, unsigned char *user_id)
  * \brief Writes a User Id packet
  * \param id
  * \param info
- * \return ops_true if OK, otherwise ops_false
+ * \return true if OK, otherwise false
  */
-ops_boolean_t 
+bool 
 ops_write_struct_user_id(ops_user_id_t * id,
 			 ops_create_info_t * info)
 {
@@ -105,7 +105,7 @@ ops_write_struct_user_id(ops_user_id_t * id,
  *
  * \return return value from ops_write_struct_user_id()
  */
-ops_boolean_t 
+bool 
 ops_write_user_id(const unsigned char *user_id, ops_create_info_t * info)
 {
 	ops_user_id_t   id;
@@ -178,19 +178,19 @@ ops_fast_create_rsa_public_key(ops_public_key_t * key, time_t t,
  * Note that we support v3 keys here because they're needed for for
  * verification - the writer doesn't allow them, though
  */
-static ops_boolean_t 
+static bool 
 write_public_key_body(const ops_public_key_t * key,
 		      ops_create_info_t * info)
 {
 	if (!(ops_write_scalar(key->version, 1, info)
 	      && ops_write_scalar(key->creation_time, 4, info)))
-		return ops_false;
+		return false;
 
 	if (key->version != 4 && !ops_write_scalar(key->days_valid, 2, info))
-		return ops_false;
+		return false;
 
 	if (!ops_write_scalar(key->algorithm, 1, info))
-		return ops_false;
+		return false;
 
 	switch (key->algorithm) {
 	case OPS_PKA_DSA:
@@ -216,14 +216,14 @@ write_public_key_body(const ops_public_key_t * key,
 	}
 
 	/* not reached */
-	return ops_false;
+	return false;
 }
 
 /*
  * Note that we support v3 keys here because they're needed for for
  * verification - the writer doesn't allow them, though
  */
-static ops_boolean_t 
+static bool 
 write_secret_key_body(const ops_secret_key_t * key,
 		      const unsigned char *passphrase,
 		      const size_t pplen,
@@ -239,25 +239,25 @@ write_secret_key_body(const ops_secret_key_t * key,
 	unsigned int    i = 0;
 
 	if (!write_public_key_body(&key->public_key, info))
-		return ops_false;
+		return false;
 
 	assert(key->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED);	/* = 254 */
 	if (!ops_write_scalar(key->s2k_usage, 1, info))
-		return ops_false;
+		return false;
 
 	assert(key->algorithm == OPS_SA_CAST5);
 	if (!ops_write_scalar(key->algorithm, 1, info))
-		return ops_false;
+		return false;
 
 	assert(key->s2k_specifier == OPS_S2KS_SIMPLE || key->s2k_specifier == OPS_S2KS_SALTED);	/* = 1 \todo could also
 												 * be
 												 * iterated-and-salted */
 	if (!ops_write_scalar(key->s2k_specifier, 1, info))
-		return ops_false;
+		return false;
 
 	assert(key->hash_algorithm == OPS_HASH_SHA1);
 	if (!ops_write_scalar(key->hash_algorithm, 1, info))
-		return ops_false;
+		return false;
 
 	switch (key->s2k_specifier) {
 	case OPS_S2KS_SIMPLE:
@@ -268,7 +268,7 @@ write_secret_key_body(const ops_secret_key_t * key,
 		/* 8-octet salt value */
 		ops_random(__UNCONST(&key->salt[0]), OPS_SALT_SIZE);
 		if (!ops_write(key->salt, OPS_SALT_SIZE, info))
-			return ops_false;
+			return false;
 		break;
 
 		/*
@@ -282,7 +282,7 @@ write_secret_key_body(const ops_secret_key_t * key,
 	}
 
 	if (!ops_write(&key->iv[0], ops_block_size(key->algorithm), info))
-		return ops_false;
+		return false;
 
 	/*
 	 * create the session key for encrypting the algorithm-specific
@@ -385,7 +385,7 @@ write_secret_key_body(const ops_secret_key_t * key,
 			if (ops_get_debug_level(__FILE__)) {
 				fprintf(stderr, "4 x mpi not written - problem\n");
 			}
-			return ops_false;
+			return false;
 		}
 		break;
 
@@ -398,11 +398,11 @@ write_secret_key_body(const ops_secret_key_t * key,
 	}
 
 	if (!ops_write(key->checkhash, OPS_CHECKHASH_SIZE, info))
-		return ops_false;
+		return false;
 
 	ops_writer_pop(info);
 
-	return ops_true;
+	return true;
 }
 
 
@@ -419,11 +419,11 @@ write_secret_key_body(const ops_secret_key_t * key,
    \code
    void example(const ops_keydata_t* keydata)
    {
-   ops_boolean_t armoured=ops_true;
+   bool armoured=true;
    char* filename="/tmp/testkey.asc";
 
    int fd;
-   ops_boolean_t overwrite=ops_true;
+   bool overwrite=true;
    ops_create_info_t* cinfo;
 
    fd=ops_setup_file_write(&cinfo, filename, overwrite);
@@ -433,10 +433,10 @@ write_secret_key_body(const ops_secret_key_t * key,
    \endcode
 */
 
-ops_boolean_t 
-ops_write_transferable_public_key(const ops_keydata_t * keydata, ops_boolean_t armoured, ops_create_info_t * info)
+bool 
+ops_write_transferable_public_key(const ops_keydata_t * keydata, bool armoured, ops_create_info_t * info)
 {
-	ops_boolean_t   rtn;
+	bool   rtn;
 	unsigned int    i = 0, j = 0;
 
 	if (armoured) {
@@ -444,7 +444,7 @@ ops_write_transferable_public_key(const ops_keydata_t * keydata, ops_boolean_t a
 	}
 	/* public key */
 	rtn = ops_write_struct_public_key(&keydata->key.skey.public_key, info);
-	if (rtn != ops_true)
+	if (rtn != true)
 		return rtn;
 
 	/* TODO: revocation signatures go here */
@@ -500,11 +500,11 @@ ops_write_transferable_public_key(const ops_keydata_t * keydata, ops_boolean_t a
    {
    const unsigned char* passphrase=NULL;
    const size_t passphraselen=0;
-   ops_boolean_t armoured=ops_true;
+   bool armoured=true;
 
    int fd;
    char* filename="/tmp/testkey.asc";
-   ops_boolean_t overwrite=ops_true;
+   bool overwrite=true;
    ops_create_info_t* cinfo;
 
    fd=ops_setup_file_write(&cinfo, filename, overwrite);
@@ -514,10 +514,10 @@ ops_write_transferable_public_key(const ops_keydata_t * keydata, ops_boolean_t a
    \endcode
 */
 
-ops_boolean_t 
-ops_write_transferable_secret_key(const ops_keydata_t * keydata, const unsigned char *passphrase, const size_t pplen, ops_boolean_t armoured, ops_create_info_t * info)
+bool 
+ops_write_transferable_secret_key(const ops_keydata_t * keydata, const unsigned char *passphrase, const size_t pplen, bool armoured, ops_create_info_t * info)
 {
-	ops_boolean_t   rtn;
+	bool   rtn;
 	unsigned int    i = 0, j = 0;
 
 	if (armoured) {
@@ -525,7 +525,7 @@ ops_write_transferable_secret_key(const ops_keydata_t * keydata, const unsigned 
 	}
 	/* public key */
 	rtn = ops_write_struct_secret_key(&keydata->key.skey, passphrase, pplen, info);
-	if (rtn != ops_true)
+	if (rtn != true)
 		return rtn;
 
 	/* TODO: revocation signatures go here */
@@ -569,9 +569,9 @@ ops_write_transferable_secret_key(const ops_keydata_t * keydata, const unsigned 
  * \brief Writes a Public Key packet
  * \param key
  * \param info
- * \return ops_true if OK, otherwise ops_false
+ * \return true if OK, otherwise false
  */
-ops_boolean_t 
+bool 
 ops_write_struct_public_key(const ops_public_key_t * key,
 			    ops_create_info_t * info)
 {
@@ -590,10 +590,10 @@ ops_write_struct_public_key(const ops_public_key_t * key,
  * \param e RSA public encryption exponent
  * \param info Writer settings
  *
- * \return ops_true if OK, otherwise ops_false
+ * \return true if OK, otherwise false
  */
 
-ops_boolean_t 
+bool 
 ops_write_rsa_public_key(time_t t, const BIGNUM * n,
 			 const BIGNUM * e,
 			 ops_create_info_t * info)
@@ -613,7 +613,7 @@ ops_write_rsa_public_key(time_t t, const BIGNUM * n,
 
 void 
 ops_build_public_key(ops_memory_t * out, const ops_public_key_t * key,
-		     ops_boolean_t make_packet)
+		     bool make_packet)
 {
 	ops_create_info_t *info;
 
@@ -674,9 +674,9 @@ ops_fast_create_rsa_secret_key(ops_secret_key_t * key, time_t t,
  * \param passphrase The passphrase
  * \param pplen Length of passphrase
  * \param info
- * \return ops_true if OK; else ops_false
+ * \return true if OK; else false
  */
-ops_boolean_t 
+bool 
 ops_write_struct_secret_key(const ops_secret_key_t * key,
 			    const unsigned char *passphrase,
 			    const size_t pplen,
@@ -792,16 +792,16 @@ ops_create_info_delete(ops_create_info_t * info)
  \brief Calculate the checksum for a session key
  \param session_key Session Key to use
  \param cs Checksum to be written
- \return ops_true if OK; else ops_false
+ \return true if OK; else false
 */
-ops_boolean_t 
+bool 
 ops_calc_session_key_checksum(ops_pk_session_key_t * session_key, unsigned char cs[2])
 {
 	unsigned int    i = 0;
 	unsigned long   checksum = 0;
 
 	if (!ops_is_sa_supported(session_key->symmetric_algorithm))
-		return ops_false;
+		return false;
 
 	for (i = 0; i < ops_key_size(session_key->symmetric_algorithm); i++) {
 		checksum += session_key->key[i];
@@ -811,13 +811,13 @@ ops_calc_session_key_checksum(ops_pk_session_key_t * session_key, unsigned char 
 	cs[0] = checksum >> 8;
 	cs[1] = checksum & 0xFF;
 
-	return ops_true;
+	return true;
 	/* fprintf(stderr,"\nm buf checksum: "); */
 	/* fprintf(stderr," %2x",cs[0]); */
 	/* fprintf(stderr," %2x\n",cs[1]); */
 }
 
-static ops_boolean_t 
+static bool 
 create_unencoded_m_buf(ops_pk_session_key_t * session_key, unsigned char *m_buf)
 {
 	int             i = 0;
@@ -848,9 +848,9 @@ create_unencoded_m_buf(ops_pk_session_key_t * session_key, unsigned char *m_buf)
 \param mLen
 \param pkey
 \param EM
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
-ops_boolean_t 
+bool 
 encode_m_buf(const unsigned char *M, size_t mLen,
 	     const ops_public_key_t * pkey,
 	     unsigned char *EM
@@ -867,7 +867,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 	assert(mLen <= k - 11);
 	if (mLen > k - 11) {
 		fprintf(stderr, "message too long\n");
-		return ops_false;
+		return false;
 	}
 	/* these two bytes defined by RFC */
 	EM[0] = 0x00;
@@ -893,7 +893,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 			fprintf(stderr, "%2x ", EM[i2]);
 		fprintf(stderr, "\n");
 	}
-	return ops_true;
+	return true;
 }
 
 /**
@@ -953,7 +953,7 @@ ops_create_pk_session_key(const ops_keydata_t * key)
 			fprintf(stderr, "%2x ", session_key->key[i]);
 		fprintf(stderr, "\n");
 	}
-	if (create_unencoded_m_buf(session_key, &unencoded_m_buf[0]) == ops_false) {
+	if (create_unencoded_m_buf(session_key, &unencoded_m_buf[0]) == false) {
 		free(encoded_m_buf);
 		return NULL;
 	}
@@ -980,9 +980,9 @@ ops_create_pk_session_key(const ops_keydata_t * key)
 \brief Writes Public Key Session Key packet
 \param info Write settings
 \param pksk Public Key Session Key to write out
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
-ops_boolean_t 
+bool 
 ops_write_pk_session_key(ops_create_info_t * info,
 			 ops_pk_session_key_t * pksk)
 {
@@ -1004,10 +1004,10 @@ ops_write_pk_session_key(ops_create_info_t * info,
 \brief Writes MDC packet
 \param hashed Hash for MDC
 \param info Write settings
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
 
-ops_boolean_t 
+bool 
 ops_write_mdc(const unsigned char *hashed,
 	      ops_create_info_t * info)
 {
@@ -1024,9 +1024,9 @@ ops_write_mdc(const unsigned char *hashed,
 \param maxlen Max length of buffer
 \param type Literal Data Type
 \param info Write settings
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
-ops_boolean_t 
+bool 
 ops_write_literal_data_from_buf(const unsigned char *data,
 				const int maxlen,
 				const ops_literal_data_type_t type,
@@ -1052,17 +1052,17 @@ ops_write_literal_data_from_buf(const unsigned char *data,
 \param filename Name of file to read from
 \param type Literal Data Type
 \param info Write settings
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
 
-ops_boolean_t 
+bool 
 ops_write_literal_data_from_file(const char *filename,
 				 const ops_literal_data_type_t type,
 				 ops_create_info_t * info)
 {
 	size_t          initial_size = 1024;
 	int             fd = 0;
-	ops_boolean_t   rtn;
+	bool   rtn;
 	unsigned char   buf[1024];
 	ops_memory_t   *mem = NULL;
 	size_t          len = 0;
@@ -1073,7 +1073,7 @@ ops_write_literal_data_from_file(const char *filename,
 	fd = open(filename, O_RDONLY);
 #endif
 	if (fd < 0)
-		return ops_false;
+		return false;
 
 	mem = ops_memory_new();
 	ops_memory_init(mem, initial_size);
@@ -1130,7 +1130,7 @@ ops_write_mem_from_file(const char *filename, int *errnum)
 #endif
 	if (fd < 0) {
 		*errnum = errno;
-		return ops_false;
+		return false;
 	}
 	mem = ops_memory_new();
 	ops_memory_init(mem, initial_size);
@@ -1162,14 +1162,14 @@ ops_write_mem_from_file(const char *filename, int *errnum)
 */
 
 int 
-ops_write_file_from_buf(const char *filename, const char *buf, const size_t len, const ops_boolean_t overwrite)
+ops_write_file_from_buf(const char *filename, const char *buf, const size_t len, const bool overwrite)
 {
 	int             fd = 0;
 	size_t          n = 0;
 	int             flags = 0;
 
 	flags = O_WRONLY | O_CREAT;
-	if (overwrite == ops_true)
+	if (overwrite == true)
 		flags |= O_TRUNC;
 	else
 		flags |= O_EXCL;
@@ -1197,10 +1197,10 @@ ops_write_file_from_buf(const char *filename, const char *buf, const size_t len,
 \param data Data to encrypt
 \param len Length of data
 \param info Write settings
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 \note Hard-coded to use AES256
 */
-ops_boolean_t 
+bool 
 ops_write_symmetrically_encrypted_data(const unsigned char *data,
 				       const int len,
 				       ops_create_info_t * info)
@@ -1234,9 +1234,9 @@ ops_write_symmetrically_encrypted_data(const unsigned char *data,
 \param hash_alg Hash Algorithm to use
 \param sig_type Signature type
 \param info Write settings
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
-ops_boolean_t 
+bool 
 ops_write_one_pass_sig(const ops_secret_key_t * skey,
 		       const ops_hash_algorithm_t hash_alg,
 		       const ops_sig_type_t sig_type,

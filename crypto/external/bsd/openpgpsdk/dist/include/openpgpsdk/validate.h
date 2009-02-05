@@ -31,12 +31,12 @@ typedef struct {
 
 void            ops_validate_result_free(ops_validate_result_t * result);
 
-ops_boolean_t 
+bool 
 ops_validate_key_signatures(ops_validate_result_t * result,
 			    const ops_keydata_t * keydata,
 			    const ops_keyring_t * ring,
 			    ops_parse_cb_return_t cb(const ops_parser_content_t *, ops_parse_cb_info_t *));
-	ops_boolean_t   ops_validate_all_signatures(ops_validate_result_t * result,
+	bool   ops_validate_all_signatures(ops_validate_result_t * result,
 				                 const ops_keyring_t * ring,
 						                    ops_parse_cb_return_t cb(const ops_parser_content_t *, ops_parse_cb_info_t *));
 
@@ -88,16 +88,16 @@ ops_validate_key_signatures(ops_validate_result_t * result,
 	}               validate_data_cb_arg_t;	/* <! used with
 						 * validate_data_cb callback */
 
-	ops_boolean_t   ops_check_signature(const unsigned char *hash,
+	bool   ops_check_signature(const unsigned char *hash,
 					                    unsigned length,
 				                const ops_signature_t * sig,
 			                   const ops_public_key_t * signer);
 ops_parse_cb_return_t
 ops_validate_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo);
 
-	ops_boolean_t   ops_validate_file(ops_validate_result_t * result, const char *filename, const int armoured, const ops_keyring_t * keyring);
-	ops_boolean_t   ops_validate_mem(ops_validate_result_t * result, ops_memory_t * mem, const int armoured, const ops_keyring_t * keyring);
+	bool   ops_validate_file(ops_validate_result_t * result, const char *filename, const int armoured, const ops_keyring_t * keyring);
+	bool   ops_validate_mem(ops_validate_result_t * result, ops_memory_t * mem, const int armoured, const ops_keyring_t * keyring);
 
 ops_parse_cb_return_t
 validate_data_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
-	ops_boolean_t   validate_result_status(ops_validate_result_t *);
+	bool   validate_result_status(ops_validate_result_t *);

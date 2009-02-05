@@ -154,7 +154,7 @@ ops_parse_and_accumulate(ops_keyring_t * keyring,
 
 	ops_parse_cb_push(parse_info, accumulate_cb, &arg);
 
-	parse_info->rinfo.accumulate = ops_true;
+	parse_info->rinfo.accumulate = true;
 
 	rtn = ops_parse(parse_info);
 	++keyring->nkeys;

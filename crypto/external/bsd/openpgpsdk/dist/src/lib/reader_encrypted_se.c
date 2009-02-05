@@ -55,7 +55,7 @@ typedef struct {
 	size_t          decrypted_offset;
 	ops_crypt_t    *decrypt;
 	ops_region_t   *region;
-	ops_boolean_t   prev_read_was_plain:1;
+	unsigned   prev_read_was_plain:1;
 }               encrypted_arg_t;
 
 static int 
@@ -74,10 +74,10 @@ encrypted_data_reader(void *dest, size_t length, ops_error_t ** errors,
 	if (arg->prev_read_was_plain && !rinfo->pinfo->reading_mpi_length) {
 		assert(rinfo->pinfo->reading_v3_secret);
 		arg->decrypt->decrypt_resync(arg->decrypt);
-		arg->prev_read_was_plain = ops_false;
+		arg->prev_read_was_plain = false;
 	} else if (rinfo->pinfo->reading_v3_secret
 		   && rinfo->pinfo->reading_mpi_length) {
-		arg->prev_read_was_plain = ops_true;
+		arg->prev_read_was_plain = true;
 	}
 	while (length > 0) {
 		if (arg->decrypted_count) {

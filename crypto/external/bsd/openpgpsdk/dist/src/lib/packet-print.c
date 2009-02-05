@@ -478,15 +478,10 @@ print_duration(const char *name, time_t t)
 }
 
 static void 
-print_boolean(const char *name, unsigned char bool)
+print_boolean(const char *name, unsigned char boolval)
 {
 	print_name(name);
-
-	if (bool)
-		printf("Yes");
-	else
-		printf("No");
-	printf("\n");
+	printf("%s\n", (boolval) ? "Yes" : "No");
 }
 
 static void 
@@ -627,10 +622,10 @@ ops_print_packet(const ops_parser_content_t * content_)
 	const ops_parser_content_union_t *content = &content_->content;
 	ops_text_t     *text;
 	const char     *str;
-	static ops_boolean_t unarmoured;
+	static bool unarmoured;
 
 	if (unarmoured && content_->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
-		unarmoured = ops_false;
+		unarmoured = false;
 		puts("UNARMOURED TEXT ends");
 	}
 	if (content_->tag == OPS_PARSER_PTAG) {
@@ -1174,7 +1169,7 @@ ops_print_packet(const ops_parser_content_t * content_)
 	case OPS_PTAG_CT_UNARMOURED_TEXT:
 		if (!unarmoured) {
 			print_tagname("UNARMOURED TEXT");
-			unarmoured = ops_true;
+			unarmoured = true;
 		}
 		putchar('[');
 		print_escaped(content->unarmoured_text.data,
@@ -1214,7 +1209,7 @@ cb_list_packets(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbi
 	ops_print_packet(content_);
 #ifdef XXX
 	if (unarmoured && content_->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
-		unarmoured = ops_false;
+		unarmoured = false;
 		puts("UNARMOURED TEXT ends");
 	}
 	switch (content_->tag) {
@@ -1740,7 +1735,7 @@ cb_list_packets(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbi
 	case OPS_PTAG_CT_UNARMOURED_TEXT:
 		if (!unarmoured) {
 			print_tagname("UNARMOURED TEXT");
-			unarmoured = ops_true;
+			unarmoured = true;
 		}
 		putchar('[');
 		print_escaped(content->unarmoured_text.data,
@@ -1802,11 +1797,11 @@ cb_list_packets(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbi
 \param cb_get_passphrase
 */
 void 
-ops_list_packets(char *filename, ops_boolean_t armour, ops_keyring_t * keyring, ops_parse_cb_t * cb_get_passphrase)
+ops_list_packets(char *filename, bool armour, ops_keyring_t * keyring, ops_parse_cb_t * cb_get_passphrase)
 {
 	int             fd = 0;
 	ops_parse_info_t *pinfo = NULL;
-	const ops_boolean_t accumulate = ops_true;
+	const bool accumulate = true;
 
 	fd = ops_setup_file_read(&pinfo, filename, NULL, cb_list_packets, accumulate);
 	ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);

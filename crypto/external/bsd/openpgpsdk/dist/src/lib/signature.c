@@ -100,9 +100,9 @@ static unsigned char prefix_sha256[] = {0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60
    \param mLen
    \param hash_alg Hash algorithm to use
    \param EM
-   \return ops_true if OK; else ops_false
+   \return true if OK; else false
 */
-static ops_boolean_t 
+static bool 
 encode_hash_buf(const unsigned char *M, size_t mLen,
 		const ops_hash_algorithm_t hash_alg,
 		unsigned char *EM
@@ -179,7 +179,7 @@ encode_hash_buf(const unsigned char *M, size_t mLen,
 			fprintf(stderr, "%2x ", EM[i]);
 		fprintf(stderr, "\n");
 	}
-	return ops_true;
+	return true;
 }
 #endif
 
@@ -263,7 +263,7 @@ dsa_sign(ops_hash_t * hash,
 	DSA_SIG_free(dsasig);
 }
 
-static ops_boolean_t 
+static bool 
 rsa_verify(ops_hash_algorithm_t type,
 	   const unsigned char *hash,
 	   size_t hash_length,
@@ -290,12 +290,12 @@ rsa_verify(ops_hash_algorithm_t type,
 	debug_len_decrypted = n;
 
 	if (n != keysize)	/* obviously, this includes error returns */
-		return ops_false;
+		return false;
 
 	/* XXX: why is there a leading 0? The first byte should be 1... */
 	/* XXX: because the decrypt should use keysize and not sigsize? */
 	if (hashbuf_from_sig[0] != 0 || hashbuf_from_sig[1] != 1)
-		return ops_false;
+		return false;
 
 	switch (type) {
 	case OPS_HASH_MD5:
@@ -312,18 +312,18 @@ rsa_verify(ops_hash_algorithm_t type,
 		break;
 	default:
 		(void) fprintf(stderr, "Unknown hash algorithm: %d\n", type);
-		return ops_false;
+		return false;
 	}
 
 	if (keysize - plen - hash_length < 10)
-		return ops_false;
+		return false;
 
 	for (n = 2; n < keysize - plen - hash_length - 1; ++n)
 		if (hashbuf_from_sig[n] != 0xff)
-			return ops_false;
+			return false;
 
 	if (hashbuf_from_sig[n++] != 0)
-		return ops_false;
+		return false;
 
 	if (ops_get_debug_level(__FILE__)) {
 		int             zz;
@@ -355,9 +355,9 @@ rsa_verify(ops_hash_algorithm_t type,
 	}
 	if (memcmp(&hashbuf_from_sig[n], prefix, plen) != 0
 	    || memcmp(&hashbuf_from_sig[n + plen], hash, hash_length) != 0)
-		return ops_false;
+		return false;
 
-	return ops_true;
+	return true;
 }
 
 static void 
@@ -366,7 +366,7 @@ hash_add_key(ops_hash_t * hash, const ops_public_key_t * key)
 	ops_memory_t   *mem = ops_memory_new();
 	size_t          l;
 
-	ops_build_public_key(mem, key, ops_false);
+	ops_build_public_key(mem, key, false);
 
 	l = ops_memory_get_length(mem);
 	ops_hash_add_int(hash, 0x99, 1);
@@ -415,14 +415,14 @@ hash_add_trailer(ops_hash_t * hash, const ops_signature_t * sig,
    \param length Signature Length
    \param sig The Signature to be checked
    \param signer The signer's public key
-   \return ops_true if good; else ops_false
+   \return true if good; else false
 */
-ops_boolean_t 
+bool 
 ops_check_signature(const unsigned char *hash, unsigned length,
 		    const ops_signature_t * sig,
 		    const ops_public_key_t * signer)
 {
-	ops_boolean_t   ret;
+	bool   ret;
 
 	if (ops_get_debug_level(__FILE__)) {
 		printf("ops_check_signature: (length %d) hash=", length);
@@ -447,7 +447,7 @@ ops_check_signature(const unsigned char *hash, unsigned length,
 	return ret;
 }
 
-static ops_boolean_t 
+static bool 
 hash_and_check_signature(ops_hash_t * hash,
 			 const ops_signature_t * sig,
 			 const ops_public_key_t * signer)
@@ -460,7 +460,7 @@ hash_and_check_signature(ops_hash_t * hash,
 	return ops_check_signature(hashout, n, sig, signer);
 }
 
-static ops_boolean_t 
+static bool 
 finalise_signature(ops_hash_t * hash,
 		   const ops_signature_t * sig,
 		   const ops_public_key_t * signer,
@@ -480,9 +480,9 @@ finalise_signature(ops_hash_t * hash,
  * \param sig The signature.
  * \param signer The public key of the signer.
  * \param raw_packet The raw signature packet.
- * \return ops_true if OK; else ops_false
+ * \return true if OK; else false
  */
-ops_boolean_t
+bool
 ops_check_user_id_certification_signature(const ops_public_key_t * key,
 					  const ops_user_id_t * id,
 					  const ops_signature_t * sig,
@@ -513,9 +513,9 @@ ops_check_user_id_certification_signature(const ops_public_key_t * key,
  * \param sig The signature.
  * \param signer The public key of the signer.
  * \param raw_packet The raw signature packet.
- * \return ops_true if OK; else ops_false
+ * \return true if OK; else false
  */
-ops_boolean_t
+bool
 ops_check_user_attribute_certification_signature(const ops_public_key_t * key,
 				     const ops_user_attribute_t * attribute,
 						 const ops_signature_t * sig,
@@ -545,9 +545,9 @@ ops_check_user_attribute_certification_signature(const ops_public_key_t * key,
  * \param sig The signature.
  * \param signer The public key of the signer.
  * \param raw_packet The raw signature packet.
- * \return ops_true if OK; else ops_false
+ * \return true if OK; else false
  */
-ops_boolean_t
+bool
 ops_check_subkey_signature(const ops_public_key_t * key,
 			   const ops_public_key_t * subkey,
 			   const ops_signature_t * sig,
@@ -571,9 +571,9 @@ ops_check_subkey_signature(const ops_public_key_t * key,
  * \param sig The signature.
  * \param signer The public key of the signer.
  * \param raw_packet The raw signature packet.
- * \return ops_true if OK; else ops_false
+ * \return true if OK; else false
  */
-ops_boolean_t
+bool
 ops_check_direct_signature(const ops_public_key_t * key,
 			   const ops_signature_t * sig,
 			   const ops_public_key_t * signer,
@@ -595,15 +595,15 @@ ops_check_direct_signature(const ops_public_key_t * key,
  * the material to be signed. This MUST NOT have been finalised.
  * \param sig The signature to be verified.
  * \param signer The public key of the signer.
- * \return ops_true if OK; else ops_false
+ * \return true if OK; else false
  */
-ops_boolean_t
+bool
 ops_check_hash_signature(ops_hash_t * hash,
 			 const ops_signature_t * sig,
 			 const ops_public_key_t * signer)
 {
 	if (sig->info.hash_algorithm != hash->algorithm)
-		return ops_false;
+		return false;
 
 	return finalise_signature(hash, sig, signer, NULL);
 }
@@ -760,7 +760,7 @@ ops_signature_add_data(ops_create_signature_t * sig, const void *buf,
  * \param sig
  */
 
-ops_boolean_t 
+bool 
 ops_signature_hashed_subpackets_end(ops_create_signature_t * sig)
 {
 	sig->hashed_data_length = ops_memory_get_length(sig->mem)
@@ -784,11 +784,11 @@ ops_signature_hashed_subpackets_end(ops_create_signature_t * sig)
  *
  */
 
-ops_boolean_t 
+bool 
 ops_write_signature(ops_create_signature_t * sig, const ops_public_key_t * key,
 		    const ops_secret_key_t * skey, ops_create_info_t * info)
 {
-	ops_boolean_t   rtn = ops_false;
+	bool   rtn = false;
 	size_t          l = ops_memory_get_length(sig->mem);
 
 	/* check key not decrypted */
@@ -851,14 +851,14 @@ ops_write_signature(ops_create_signature_t * sig, const ops_public_key_t * key,
 
 
 	rtn = ops_write_ptag(OPS_PTAG_CT_SIGNATURE, info);
-	if (rtn != ops_false) {
+	if (rtn != false) {
 		l = ops_memory_get_length(sig->mem);
 		rtn = ops_write_length(l, info)
 			&& ops_write(ops_memory_get_data(sig->mem), l, info);
 	}
 	ops_memory_free(sig->mem);
 
-	if (rtn == ops_false) {
+	if (rtn == false) {
 		OPS_ERROR(&info->errors, OPS_E_W, "Cannot write signature");
 	}
 	return rtn;
@@ -872,7 +872,7 @@ ops_write_signature(ops_create_signature_t * sig, const ops_public_key_t * key,
  * \param sig
  * \param when
  */
-ops_boolean_t 
+bool 
 ops_signature_add_creation_time(ops_create_signature_t * sig, time_t when)
 {
 	return ops_write_ss_header(5, OPS_PTAG_SS_CREATION_TIME, sig->info)
@@ -888,7 +888,7 @@ ops_signature_add_creation_time(ops_create_signature_t * sig, time_t when)
  * \param keyid
  */
 
-ops_boolean_t 
+bool 
 ops_signature_add_issuer_key_id(ops_create_signature_t * sig,
 				const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
@@ -906,7 +906,7 @@ ops_signature_add_issuer_key_id(ops_create_signature_t * sig,
  */
 void 
 ops_signature_add_primary_user_id(ops_create_signature_t * sig,
-				  ops_boolean_t primary)
+				  bool primary)
 {
 	ops_write_ss_header(2, OPS_PTAG_SS_PRIMARY_USER_ID, sig->info);
 	ops_write_scalar(primary, 1, sig->info);
@@ -927,7 +927,7 @@ ops_signature_get_hash(ops_create_signature_t * sig)
 }
 
 static int 
-open_output_file(ops_create_info_t ** cinfo, const char *input_filename, const char *output_filename, const ops_boolean_t use_armour, const ops_boolean_t overwrite)
+open_output_file(ops_create_info_t ** cinfo, const char *input_filename, const char *output_filename, const bool use_armour, const bool overwrite)
 {
 	int             fd_out;
 
@@ -957,21 +957,21 @@ open_output_file(ops_create_info_t ** cinfo, const char *input_filename, const c
    \param output_filename Filename to be created. If NULL, filename will be constructed from the input_filename.
    \param skey Secret Key to sign with
    \param overwrite Allow output file to be overwritten, if set
-   \return ops_true if OK, else ops_false
+   \return true if OK, else false
 
    Example code:
    \code
-   void example(const ops_secret_key_t *skey, ops_boolean_t overwrite)
+   void example(const ops_secret_key_t *skey, bool overwrite)
    {
-   if (ops_sign_file_as_cleartext("mytestfile.txt",NULL,skey,overwrite)==ops_true)
+   if (ops_sign_file_as_cleartext("mytestfile.txt",NULL,skey,overwrite)==true)
        printf("OK");
    else
        printf("ERR");
    }
    \endcode
 */
-ops_boolean_t 
-ops_sign_file_as_cleartext(const char *input_filename, const char *output_filename, const ops_secret_key_t * skey, const ops_boolean_t overwrite)
+bool 
+ops_sign_file_as_cleartext(const char *input_filename, const char *output_filename, const ops_secret_key_t * skey, const bool overwrite)
 {
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
@@ -984,8 +984,8 @@ ops_sign_file_as_cleartext(const char *input_filename, const char *output_filena
 	ops_create_info_t *cinfo = NULL;
 	unsigned char   buf[MAXBUF];
 	/* int flags=0; */
-	ops_boolean_t   rtn = ops_false;
-	ops_boolean_t   use_armour = ops_true;
+	bool   rtn = false;
+	bool   use_armour = true;
 
 	/* open file to sign */
 #ifdef WIN32
@@ -994,7 +994,7 @@ ops_sign_file_as_cleartext(const char *input_filename, const char *output_filena
 	fd_in = open(input_filename, O_RDONLY);
 #endif
 	if (fd_in < 0) {
-		return ops_false;
+		return false;
 	}
 	/* set up output file */
 
@@ -1002,19 +1002,19 @@ ops_sign_file_as_cleartext(const char *input_filename, const char *output_filena
 
 	if (fd_out < 0) {
 		close(fd_in);
-		return ops_false;
+		return false;
 	}
 	/* set up signature */
 	sig = ops_create_signature_new();
 	if (!sig) {
 		close(fd_in);
 		ops_teardown_file_write(cinfo, fd_out);
-		return ops_false;
+		return false;
 	}
 	/* \todo could add more error detection here */
 	ops_signature_start_cleartext_signature(sig, skey, OPS_HASH_SHA1, OPS_SIG_BINARY);
-	if (ops_writer_push_clearsigned(cinfo, sig) != ops_true) {
-		return ops_false;
+	if (ops_writer_push_clearsigned(cinfo, sig) != true) {
+		return false;
 	}
 	/* Do the signing */
 
@@ -1034,9 +1034,9 @@ ops_sign_file_as_cleartext(const char *input_filename, const char *output_filena
 	/* - key id */
 	rtn = ops_writer_switch_to_armoured_signature(cinfo)
 		&& ops_signature_add_creation_time(sig, time(NULL));
-	if (rtn == ops_false) {
+	if (rtn == false) {
 		ops_teardown_file_write(cinfo, fd_out);
-		return ops_false;
+		return false;
 	}
 	ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &skey->public_key);
 
@@ -1046,7 +1046,7 @@ ops_sign_file_as_cleartext(const char *input_filename, const char *output_filena
 
 	ops_teardown_file_write(cinfo, fd_out);
 
-	if (rtn == ops_false) {
+	if (rtn == false) {
 		OPS_ERROR(&cinfo->errors, OPS_E_W, "Cannot sign file as cleartext");
 	}
 	return rtn;
@@ -1060,7 +1060,7 @@ ops_sign_file_as_cleartext(const char *input_filename, const char *output_filena
  * \param len Length of text
  * \param signed_cleartext ops_memory_t struct in which to write the signed cleartext
  * \param skey Secret key with which to sign the cleartext
- * \return ops_true if OK; else ops_false
+ * \return true if OK; else false
 
  * \note It is the calling function's responsibility to free signed_cleartext
  * \note signed_cleartext should be a NULL pointer when passed in
@@ -1072,7 +1072,7 @@ ops_sign_file_as_cleartext(const char *input_filename, const char *output_filena
    ops_memory_t* mem=NULL;
    const char* buf="Some example text";
    size_t len=strlen(buf);
-   if (ops_sign_buf_as_cleartext(buf,len, &mem, skey)==ops_true)
+   if (ops_sign_buf_as_cleartext(buf,len, &mem, skey)==true)
      printf("OK");
    else
      printf("ERR");
@@ -1081,10 +1081,10 @@ ops_sign_file_as_cleartext(const char *input_filename, const char *output_filena
  }
  \endcode
  */
-ops_boolean_t 
+bool 
 ops_sign_buf_as_cleartext(const char *cleartext, const size_t len, ops_memory_t ** signed_cleartext, const ops_secret_key_t * skey)
 {
-	ops_boolean_t   rtn = ops_false;
+	bool   rtn = false;
 
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
@@ -1099,7 +1099,7 @@ ops_sign_buf_as_cleartext(const char *cleartext, const size_t len, ops_memory_t 
 	/* set up signature */
 	sig = ops_create_signature_new();
 	if (!sig) {
-		return ops_false;
+		return false;
 	}
 	/* \todo could add more error detection here */
 	ops_signature_start_cleartext_signature(sig, skey, OPS_HASH_SHA1, OPS_SIG_BINARY);
@@ -1116,8 +1116,8 @@ ops_sign_buf_as_cleartext(const char *cleartext, const size_t len, ops_memory_t 
 		&& ops_writer_switch_to_armoured_signature(cinfo)
 		&& ops_signature_add_creation_time(sig, time(NULL));
 
-	if (rtn == ops_false) {
-		return ops_false;
+	if (rtn == false) {
+		return false;
 	}
 	ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &skey->public_key);
 
@@ -1140,24 +1140,24 @@ ops_sign_buf_as_cleartext(const char *cleartext, const size_t len, ops_memory_t 
 \param skey Secret Key to use for signing
 \param use_armour Write armoured text, if set.
 \param overwrite May overwrite existing file, if set.
-\return ops_true if OK; else ops_false;
+\return true if OK; else false;
 
 Example code:
 \code
 void example(const ops_secret_key_t *skey)
 {
   const char* filename="mytestfile";
-  const ops_boolean_t use_armour=ops_false;
-  const ops_boolean_t overwrite=ops_false;
-  if (ops_sign_file(filename, NULL, skey, use_armour, overwrite)==ops_true)
+  const bool use_armour=false;
+  const bool overwrite=false;
+  if (ops_sign_file(filename, NULL, skey, use_armour, overwrite)==true)
     printf("OK");
   else
     printf("ERR");
 }
 \endcode
 */
-ops_boolean_t 
-ops_sign_file(const char *input_filename, const char *output_filename, const ops_secret_key_t * skey, const ops_boolean_t use_armour, const ops_boolean_t overwrite)
+bool 
+ops_sign_file(const char *input_filename, const char *output_filename, const ops_secret_key_t * skey, const bool use_armour, const bool overwrite)
 {
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
@@ -1179,7 +1179,7 @@ ops_sign_file(const char *input_filename, const char *output_filename, const ops
 	int             errnum;
 	mem_buf = ops_write_mem_from_file(input_filename, &errnum);
 	if (errnum)
-		return ops_false;
+		return false;
 
 	/* setup output file */
 
@@ -1187,7 +1187,7 @@ ops_sign_file(const char *input_filename, const char *output_filename, const ops
 
 	if (fd_out < 0) {
 		ops_memory_free(mem_buf);
-		return ops_false;
+		return false;
 	}
 	/* set up signature */
 	sig = ops_create_signature_new();
@@ -1237,7 +1237,7 @@ ops_sign_file(const char *input_filename, const char *output_filename, const ops
 	ops_create_signature_delete(sig);
 	ops_memory_free(mem_buf);
 
-	return ops_true;
+	return true;
 }
 
 /**
@@ -1257,7 +1257,7 @@ void example(const ops_secret_key_t *skey)
 {
   const char* buf="Some example text";
   const size_t len=strlen(buf);
-  const ops_boolean_t use_armour=ops_true;
+  const bool use_armour=true;
 
   ops_memory_t* mem=NULL;
 
@@ -1275,7 +1275,7 @@ void example(const ops_secret_key_t *skey)
 \endcode
 */
 ops_memory_t   *
-ops_sign_buf(const void *input, const size_t input_len, const ops_sig_type_t sig_type, const ops_secret_key_t * skey, const ops_boolean_t use_armour)
+ops_sign_buf(const void *input, const size_t input_len, const ops_sig_type_t sig_type, const ops_secret_key_t * skey, const bool use_armour)
 {
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */

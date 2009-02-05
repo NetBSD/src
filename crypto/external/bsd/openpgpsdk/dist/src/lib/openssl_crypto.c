@@ -390,7 +390,7 @@ ops_hash_sha224(ops_hash_t * hash)
 	*hash = sha224;
 }
 
-ops_boolean_t 
+bool 
 ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 	       const ops_dsa_signature_t * sig,
 	       const ops_dsa_public_key_t * dsa)
@@ -645,10 +645,10 @@ ops_text_from_hash(ops_hash_t * hash)
  \param numbits Modulus size
  \param e Public Exponent
  \param keydata Pointer to keydata struct to hold new key
- \return ops_true if key generated successfully; otherwise ops_false
+ \return true if key generated successfully; otherwise false
  \note It is the caller's responsibility to call ops_keydata_free(keydata)
 */
-ops_boolean_t 
+bool 
 ops_rsa_generate_keypair(const int numbits, const unsigned long e, ops_keydata_t * keydata)
 {
 	ops_secret_key_t *skey = NULL;
@@ -715,7 +715,7 @@ ops_rsa_generate_keypair(const int numbits, const unsigned long e, ops_keydata_t
 		    || !ops_write_mpi(skey->key.rsa.p, cinfo)
 		    || !ops_write_mpi(skey->key.rsa.q, cinfo)
 		    || !ops_write_mpi(skey->key.rsa.u, cinfo))
-			return ops_false;
+			return false;
 		break;
 
 		/* case OPS_PKA_ELGAMAL: */
@@ -736,7 +736,7 @@ ops_rsa_generate_keypair(const int numbits, const unsigned long e, ops_keydata_t
 	if (ops_get_debug_level(__FILE__))
 		test_secret_key(skey);
 
-	return ops_true;
+	return true;
 }
 
 /**
@@ -758,8 +758,8 @@ ops_rsa_create_selfsigned_keypair(const int numbits, const unsigned long e, ops_
 
 	keydata = ops_keydata_new();
 
-	if (ops_rsa_generate_keypair(numbits, e, keydata) != ops_true
-	    || ops_add_selfsigned_userid_to_keydata(keydata, userid) != ops_true) {
+	if (ops_rsa_generate_keypair(numbits, e, keydata) != true
+	    || ops_add_selfsigned_userid_to_keydata(keydata, userid) != true) {
 		ops_keydata_free(keydata);
 		return NULL;
 	}
