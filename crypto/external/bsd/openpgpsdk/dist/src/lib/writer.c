@@ -47,7 +47,7 @@
 /*
  * return true if OK, otherwise false
  */
-static ops_boolean_t 
+static bool 
 base_write(const void *src, unsigned length,
 	   ops_create_info_t * info)
 {
@@ -63,7 +63,7 @@ base_write(const void *src, unsigned length,
  * \return 1 if OK, otherwise 0
  */
 
-ops_boolean_t 
+bool 
 ops_write(const void *src, unsigned length,
 	  ops_create_info_t * info)
 {
@@ -75,10 +75,10 @@ ops_write(const void *src, unsigned length,
  * \param n
  * \param length
  * \param info
- * \return ops_true if OK, otherwise ops_false
+ * \return true if OK, otherwise false
  */
 
-ops_boolean_t 
+bool 
 ops_write_scalar(unsigned n, unsigned length,
 		 ops_create_info_t * info)
 {
@@ -87,9 +87,9 @@ ops_write_scalar(unsigned n, unsigned length,
 
 		c[0] = n >> (length * 8);
 		if (!base_write(c, 1, info))
-			return ops_false;
+			return false;
 	}
-	return ops_true;
+	return true;
 }
 
 /**
@@ -99,7 +99,7 @@ ops_write_scalar(unsigned n, unsigned length,
  * \return 1 if OK, otherwise 0
  */
 
-ops_boolean_t 
+bool 
 ops_write_mpi(const BIGNUM * bn, ops_create_info_t * info)
 {
 	unsigned char   buf[8192];
@@ -118,7 +118,7 @@ ops_write_mpi(const BIGNUM * bn, ops_create_info_t * info)
  * \return 1 if OK, otherwise 0
  */
 
-ops_boolean_t 
+bool 
 ops_write_ptag(ops_content_tag_t tag, ops_create_info_t * info)
 {
 	unsigned char   c[1];
@@ -135,7 +135,7 @@ ops_write_ptag(ops_content_tag_t tag, ops_create_info_t * info)
  * \return 1 if OK, otherwise 0
  */
 
-ops_boolean_t 
+bool 
 ops_write_length(unsigned length, ops_create_info_t * info)
 {
 	unsigned char   c[2];
@@ -155,11 +155,11 @@ ops_write_length(unsigned length, ops_create_info_t * info)
  * Note that we finalise from the top down, so we don't use writers below
  * that have already been finalised
  */
-ops_boolean_t 
+bool 
 writer_info_finalise(ops_error_t ** errors,
 		     ops_writer_info_t * winfo)
 {
-	ops_boolean_t   ret = ops_true;
+	bool   ret = true;
 
 	if (winfo->finaliser) {
 		ret = winfo->finaliser(errors, winfo);
@@ -167,7 +167,7 @@ writer_info_finalise(ops_error_t ** errors,
 	}
 	if (winfo->next && !writer_info_finalise(errors, winfo->next)) {
 		winfo->finaliser = NULL;
-		return ops_false;
+		return false;
 	}
 	return ret;
 }
@@ -269,10 +269,10 @@ ops_writer_pop(ops_create_info_t * info)
  *
  * \param info The info structure
  */
-ops_boolean_t 
+bool 
 ops_writer_close(ops_create_info_t * info)
 {
-	ops_boolean_t   ret = writer_info_finalise(&info->errors, &info->winfo);
+	bool   ret = writer_info_finalise(&info->errors, &info->winfo);
 
 	writer_info_delete(&info->winfo);
 
@@ -302,9 +302,9 @@ ops_writer_get_arg(ops_writer_info_t * winfo)
  * \param length The length of src.
  * \param errors A place to store errors.
  * \param winfo The writer_info structure.
- * \return Success - if ops_false, then errors should contain the error.
+ * \return Success - if false, then errors should contain the error.
  */
-ops_boolean_t 
+bool 
 ops_stacked_write(const void *src, unsigned length,
 		  ops_error_t ** errors, ops_writer_info_t * winfo)
 {
@@ -331,7 +331,7 @@ ops_writer_generic_destroyer(ops_writer_info_t * winfo)
  * A writer that just writes to the next one down. Useful for when you
  * want to insert just a finaliser into the stack.
  */
-ops_boolean_t 
+bool 
 ops_writer_passthrough(const unsigned char *src,
 		       unsigned length,
 		       ops_error_t ** errors,

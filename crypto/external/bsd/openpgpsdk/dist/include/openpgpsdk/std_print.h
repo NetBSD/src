@@ -43,6 +43,6 @@ void            ops_print_public_key(const ops_public_key_t * pkey);
 void            ops_print_secret_keydata(const ops_keydata_t * key);
 void            ops_print_secret_keydata_verbose(const ops_keydata_t * key);
 int             ops_print_packet(const ops_parser_content_t * content_);
-void            ops_list_packets(char *filename, ops_boolean_t armour, ops_keyring_t * pubring, ops_parse_cb_t * cb_get_passphrase);
+void            ops_list_packets(char *filename, bool armour, ops_keyring_t * pubring, ops_parse_cb_t * cb_get_passphrase);
 
 #endif

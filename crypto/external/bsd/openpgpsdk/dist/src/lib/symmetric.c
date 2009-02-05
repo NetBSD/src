@@ -513,9 +513,9 @@ ops_encrypt_se(ops_crypt_t * encrypt, void *out_, const void *in_,
 \ingroup HighLevel_Supported
 \brief Is this Symmetric Algorithm supported?
 \param alg Symmetric Algorithm to check
-\return ops_true if supported; else ops_false
+\return true if supported; else false
 */
-ops_boolean_t 
+bool 
 ops_is_sa_supported(ops_symmetric_algorithm_t alg)
 {
 	switch (alg) {
@@ -526,13 +526,13 @@ ops_is_sa_supported(ops_symmetric_algorithm_t alg)
 #ifndef OPENSSL_NO_IDEA
 	case OPS_SA_IDEA:
 #endif
-		return ops_true;
+		return true;
 		break;
 
 	default:
 		fprintf(stderr, "\nWarning: %s not supported\n",
 			ops_show_symmetric_algorithm(alg));
-		return ops_false;
+		return false;
 	}
 }
 

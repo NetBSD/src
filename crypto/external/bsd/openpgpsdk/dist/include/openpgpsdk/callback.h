@@ -56,7 +56,7 @@
 #define ERRP(info,err)	do {						\
 	content.content.error.error=err;				\
 	CBP(info,OPS_PARSER_ERROR,&content);				\
-	return ops_false;						\
+	return false;							\
 	/*NOTREACHED*/							\
 } while(/*CONSTCOND*/0)
 

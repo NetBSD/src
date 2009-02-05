@@ -87,13 +87,13 @@ ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM *
 	/* Decode EME-PKCS1_V1_5 (RFC 2437). */
 
 	if (mpibuf[0] != 0 || mpibuf[1] != 2)
-		return ops_false;
+		return false;
 
 	/* Skip the random bytes. */
 	for (i = 2; i < n && mpibuf[i]; ++i);
 
 	if (i == n || i < 10)
-		return ops_false;
+		return false;
 
 	/* Skip the zero */
 	++i;
@@ -117,7 +117,7 @@ ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM *
 \ingroup Core_MPI
 \brief RSA-encrypt an MPI
 */
-ops_boolean_t 
+bool 
 ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 		    const size_t sz_encoded_m_buf,
 		    const ops_public_key_t * pkey,
@@ -133,7 +133,7 @@ ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 	assert(n != -1);
 
 	if (n <= 0)
-		return ops_false;
+		return false;
 
 	skp->rsa.encrypted_m = BN_bin2bn(encmpibuf, n, NULL);
 
@@ -144,7 +144,7 @@ ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 			fprintf(stderr, "%2x ", encmpibuf[i]);
 		fprintf(stderr, "\n");
 	}
-	return ops_true;
+	return true;
 }
 
 #define MAXBUF 1024
@@ -160,10 +160,10 @@ Encrypt a file
 \param pub_key Public Key to encrypt file for
 \param use_armour Write armoured text, if set
 \param allow_overwrite Allow output file to be overwrwritten if it exists
-\return ops_true if OK; else ops_false
+\return true if OK; else false
 */
-ops_boolean_t 
-ops_encrypt_file(const char *input_filename, const char *output_filename, const ops_keydata_t * pub_key, const ops_boolean_t use_armour, const ops_boolean_t allow_overwrite)
+bool 
+ops_encrypt_file(const char *input_filename, const char *output_filename, const ops_keydata_t * pub_key, const bool use_armour, const bool allow_overwrite)
 {
 	int             fd_in = 0;
 	int             fd_out = 0;
@@ -181,11 +181,11 @@ ops_encrypt_file(const char *input_filename, const char *output_filename, const 
 #endif
 	if (fd_in < 0) {
 		perror(input_filename);
-		return ops_false;
+		return false;
 	}
 	fd_out = ops_setup_file_write(&cinfo, output_filename, allow_overwrite);
 	if (fd_out < 0)
-		return ops_false;
+		return false;
 
 	/* set armoured/not armoured here */
 	if (use_armour)
@@ -219,7 +219,7 @@ ops_encrypt_file(const char *input_filename, const char *output_filename, const 
 	free(buf);
 	ops_teardown_file_write(cinfo, fd_out);
 
-	return ops_true;
+	return true;
 }
 
 /**
@@ -233,8 +233,8 @@ ops_encrypt_file(const char *input_filename, const char *output_filename, const 
    \param cb_get_passphrase Callback to use to get passphrase
 */
 
-ops_boolean_t 
-ops_decrypt_file(const char *input_filename, const char *output_filename, ops_keyring_t * keyring, const ops_boolean_t use_armour, const ops_boolean_t allow_overwrite, ops_parse_cb_t * cb_get_passphrase)
+bool 
+ops_decrypt_file(const char *input_filename, const char *output_filename, ops_keyring_t * keyring, const bool use_armour, const bool allow_overwrite, ops_parse_cb_t * cb_get_passphrase)
 {
 	int             fd_in = 0;
 	int             fd_out = 0;
@@ -247,10 +247,10 @@ ops_decrypt_file(const char *input_filename, const char *output_filename, ops_ke
 	fd_in = ops_setup_file_read(&pinfo, input_filename,
 				    NULL,
 				    callback_write_parsed,
-				    ops_false);
+				    false);
 	if (fd_in < 0) {
 		perror(input_filename);
-		return ops_false;
+		return false;
 	}
 	/* setup output filename */
 
@@ -260,7 +260,7 @@ ops_decrypt_file(const char *input_filename, const char *output_filename, ops_ke
 		if (fd_out < 0) {
 			perror(output_filename);
 			ops_teardown_file_read(pinfo, fd_in);
-			return ops_false;
+			return false;
 		}
 	} else {
 		int             suffixlen = 4;
@@ -282,7 +282,7 @@ ops_decrypt_file(const char *input_filename, const char *output_filename, ops_ke
 			perror(myfilename);
 			free(myfilename);
 			ops_teardown_file_read(pinfo, fd_in);
-			return ops_false;
+			return false;
 		}
 		free(myfilename);
 	}
@@ -313,15 +313,15 @@ ops_decrypt_file(const char *input_filename, const char *output_filename, ops_ke
 	ops_teardown_file_read(pinfo, fd_in);
 	/* \todo cleardown crypt */
 
-	return ops_true;
+	return true;
 }
 
 static          ops_parse_cb_return_t
 callback_write_parsed(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
 {
 	const ops_parser_content_union_t *content = &content_->content;
-	static ops_boolean_t skipping;
-	/* ops_boolean_t write=ops_true; */
+	static bool skipping;
+	/* bool write=true; */
 
 	OPS_USED(cbinfo);
 
@@ -330,14 +330,14 @@ callback_write_parsed(const ops_parser_content_t * content_, ops_parse_cb_info_t
 	}
 	if (content_->tag != OPS_PTAG_CT_UNARMOURED_TEXT && skipping) {
 		puts("...end of skip");
-		skipping = ops_false;
+		skipping = false;
 	}
 	switch (content_->tag) {
 	case OPS_PTAG_CT_UNARMOURED_TEXT:
 		printf("OPS_PTAG_CT_UNARMOURED_TEXT\n");
 		if (!skipping) {
 			puts("Skipping...");
-			skipping = ops_true;
+			skipping = true;
 		}
 		fwrite(content->unarmoured_text.data, 1,
 		       content->unarmoured_text.length, stdout);

@@ -25,13 +25,13 @@
 #ifndef OPS_DEFS_H
 #define OPS_DEFS_H
 
-#define OPS_ARMOURED ops_true
-#define OPS_UNARMOURED ops_false
+#define OPS_ARMOURED true
+#define OPS_UNARMOURED false
 
-#define OPS_OVERWRITE_YES ops_true
-#define OPS_OVERWRITE_NO ops_false
+#define OPS_OVERWRITE_YES true
+#define OPS_OVERWRITE_NO false
 
-#define OPS_ACCUMULATE_YES ops_true
-#define OPS_ACCUMULATE_NO ops_false
+#define OPS_ACCUMULATE_YES true
+#define OPS_ACCUMULATE_NO false
 
 #endif				/* OPS_DEFS_H */

@@ -88,6 +88,7 @@ hexdump(const unsigned char *src, size_t length, const char *sep)
 	}
 }
 
+
 /**
  * \ingroup HighLevel_Functions
  * \brief Initialises OpenPGP::SDK. To be called before any other OPS function.

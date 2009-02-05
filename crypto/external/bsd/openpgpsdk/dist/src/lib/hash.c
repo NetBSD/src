@@ -230,18 +230,18 @@ ops_calc_mdc_hash(const unsigned char *preamble, const size_t sz_preamble, const
 \ingroup HighLevel_Supported
 \brief Is this Hash Algorithm supported?
 \param hash_alg Hash Algorithm to check
-\return ops_true if supported; else ops_false
+\return true if supported; else false
 */
-ops_boolean_t 
+bool 
 ops_is_hash_alg_supported(const ops_hash_algorithm_t * hash_alg)
 {
 	switch (*hash_alg) {
 	case OPS_HASH_MD5:
 	case OPS_HASH_SHA1:
 	case OPS_HASH_SHA256:
-		return ops_true;
+		return true;
 
 	default:
-		return ops_false;
+		return false;
 	}
 }

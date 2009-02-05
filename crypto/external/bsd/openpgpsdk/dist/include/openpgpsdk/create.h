@@ -46,52 +46,52 @@ ops_create_info_t *ops_create_info_new(void);
 void            ops_create_info_delete(ops_create_info_t * info);
 
 ops_memory_t   *ops_write_mem_from_file(const char *filename, int *errnum);
-int             ops_write_file_from_buf(const char *filename, const char *buf, const size_t len, const ops_boolean_t overwrite);
+int             ops_write_file_from_buf(const char *filename, const char *buf, const size_t len, const bool overwrite);
 
-ops_boolean_t   ops_calc_session_key_checksum(ops_pk_session_key_t * session_key, unsigned char *cs);
+bool   ops_calc_session_key_checksum(ops_pk_session_key_t * session_key, unsigned char *cs);
 void 
 ops_build_public_key(ops_memory_t * out, const ops_public_key_t * key,
-		     ops_boolean_t make_packet);
-ops_boolean_t 
+		     bool make_packet);
+bool 
 ops_write_struct_user_id(ops_user_id_t * id,
 			 ops_create_info_t * info);
-ops_boolean_t 
+bool 
 ops_write_struct_public_key(const ops_public_key_t * key,
 			    ops_create_info_t * info);
 
-ops_boolean_t 
+bool 
 ops_write_ss_header(unsigned length, ops_content_tag_t type,
 		    ops_create_info_t * info);
-ops_boolean_t 
+bool 
 ops_write_struct_secret_key(const ops_secret_key_t * key,
 			    const unsigned char *passphrase,
 			    const size_t pplen,
 			    ops_create_info_t * info);
-ops_boolean_t 
+bool 
 ops_write_one_pass_sig(const ops_secret_key_t * skey,
 		       const ops_hash_algorithm_t hash_alg,
 		       const ops_sig_type_t sig_type,
 		       ops_create_info_t * info);
-ops_boolean_t 
+bool 
 ops_write_literal_data_from_buf(const unsigned char *data,
 				const int maxlen,
 				const ops_literal_data_type_t type,
 				ops_create_info_t * info);
 ops_pk_session_key_t *ops_create_pk_session_key(const ops_keydata_t * key);
-ops_boolean_t 
+bool 
 ops_write_pk_session_key(ops_create_info_t * info,
 			 ops_pk_session_key_t * pksk);
-ops_boolean_t   ops_write_transferable_public_key(const ops_keydata_t * key, ops_boolean_t armoured, ops_create_info_t * info);
-ops_boolean_t   ops_write_transferable_secret_key(const ops_keydata_t * key, const unsigned char *passphrase, const size_t pplen, ops_boolean_t armoured, ops_create_info_t * info);
+bool   ops_write_transferable_public_key(const ops_keydata_t * key, bool armoured, ops_create_info_t * info);
+bool   ops_write_transferable_secret_key(const ops_keydata_t * key, const unsigned char *passphrase, const size_t pplen, bool armoured, ops_create_info_t * info);
 
 void            ops_fast_create_user_id(ops_user_id_t *, unsigned char *);
-ops_boolean_t   ops_write_user_id(const unsigned char *, ops_create_info_t *);
+bool   ops_write_user_id(const unsigned char *, ops_create_info_t *);
 void            ops_fast_create_rsa_public_key(ops_public_key_t *, time_t, BIGNUM *, BIGNUM *);
-ops_boolean_t   ops_write_rsa_public_key(time_t, const BIGNUM *, const BIGNUM *, ops_create_info_t *);
+bool   ops_write_rsa_public_key(time_t, const BIGNUM *, const BIGNUM *, ops_create_info_t *);
 void            ops_fast_create_rsa_secret_key(ops_secret_key_t *, time_t, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *);
-ops_boolean_t   encode_m_buf(const unsigned char *, size_t, const ops_public_key_t *, unsigned char *);
-ops_boolean_t   ops_write_literal_data_from_file(const char *, const ops_literal_data_type_t, ops_create_info_t *);
-ops_boolean_t   ops_write_symmetrically_encrypted_data(const unsigned char *, const int, ops_create_info_t *);
+bool   encode_m_buf(const unsigned char *, size_t, const ops_public_key_t *, unsigned char *);
+bool   ops_write_literal_data_from_file(const char *, const ops_literal_data_type_t, ops_create_info_t *);
+bool   ops_write_symmetrically_encrypted_data(const unsigned char *, const int, ops_create_info_t *);
 
 
 #endif				/* OPS_CREATE_H */

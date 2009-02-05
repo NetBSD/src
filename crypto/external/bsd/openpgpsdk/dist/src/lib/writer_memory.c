@@ -29,7 +29,7 @@
 
 #include <openpgpsdk/final.h>
 
-static ops_boolean_t 
+static bool 
 memory_writer(const unsigned char *src, unsigned length,
 	      ops_error_t ** errors,
 	      ops_writer_info_t * winfo)
@@ -38,7 +38,7 @@ memory_writer(const unsigned char *src, unsigned length,
 
 	OPS_USED(errors);
 	ops_memory_add(mem, src, length);
-	return ops_true;
+	return true;
 }
 
 /**
