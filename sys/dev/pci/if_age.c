@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.19 2009/02/05 21:40:46 dyoung Exp $ */
+/*	$NetBSD: if_age.c,v 1.20 2009/02/05 23:56:57 dyoung Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.19 2009/02/05 21:40:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.20 2009/02/05 23:56:57 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1190,10 +1190,6 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head, BUS_DMA_NOWAIT);
 
-	if (error != 0) {
-		bus_dmamap_unload(sc->sc_dmat, map);
-		error = EFBIG;
-	}
 	if (error == EFBIG) {
 		error = 0;
 
