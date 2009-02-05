@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.458 2009/01/24 01:15:25 agc Exp $
+# $NetBSD: shl.mi,v 1.459 2009/02/05 19:29:48 dyoung Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -115,28 +115,28 @@
 ./usr/lib/libroken.so.14.0			base-krb5-shlib		kerberos
 ./usr/lib/librpcsvc.so.1.0			base-net-shlib
 ./usr/lib/librt.so.1.0				base-sys-shlib
-./usr/lib/librump.so.0.0			base-sys-shlib
-./usr/lib/librumpfs_cd9660.so.0.0		base-sys-shlib
-./usr/lib/librumpfs_efs.so.0.0			base-sys-shlib
-./usr/lib/librumpfs_ext2fs.so.0.0		base-sys-shlib
-./usr/lib/librumpfs_ffs.so.0.0			base-sys-shlib
-./usr/lib/librumpfs_hfs.so.0.0			base-sys-shlib
-./usr/lib/librumpfs_lfs.so.0.0			base-sys-shlib
-./usr/lib/librumpfs_msdos.so.0.0		base-sys-shlib
-./usr/lib/librumpfs_nfs.so.0.0			base-sys-shlib
-./usr/lib/librumpfs_ntfs.so.0.0			base-sys-shlib
-./usr/lib/librumpfs_syspuffs.so.0.0		base-sys-shlib
-./usr/lib/librumpfs_sysvbfs.so.0.0		base-sys-shlib
-./usr/lib/librumpfs_tmpfs.so.0.0		base-sys-shlib
-./usr/lib/librumpfs_udf.so.0.0			base-sys-shlib
-./usr/lib/librumpfs_ufs.so.0.0			base-sys-shlib
-./usr/lib/librumpnet.so.0.0			base-sys-shlib
-./usr/lib/librumpnet_net.so.0.0			base-sys-shlib
-./usr/lib/librumpnet_netinet.so.0.0		base-sys-shlib
-./usr/lib/librumpnet_sockin.so.0.0		base-sys-shlib
-./usr/lib/librumpnet_virtif.so.0.0		base-sys-shlib
-./usr/lib/librumpuser.so.0.0			base-sys-shlib
-./usr/lib/librumpvfs.so.0.0			base-sys-shlib
+./usr/lib/librump.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_cd9660.so.0.0		base-rump-shlib
+./usr/lib/librumpfs_efs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_ext2fs.so.0.0		base-rump-shlib
+./usr/lib/librumpfs_ffs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_hfs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_lfs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_msdos.so.0.0		base-rump-shlib
+./usr/lib/librumpfs_nfs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_ntfs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_syspuffs.so.0.0		base-rump-shlib
+./usr/lib/librumpfs_sysvbfs.so.0.0		base-rump-shlib
+./usr/lib/librumpfs_tmpfs.so.0.0		base-rump-shlib
+./usr/lib/librumpfs_udf.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_ufs.so.0.0			base-rump-shlib
+./usr/lib/librumpnet.so.0.0			base-rump-shlib
+./usr/lib/librumpnet_net.so.0.0			base-rump-shlib
+./usr/lib/librumpnet_netinet.so.0.0		base-rump-shlib
+./usr/lib/librumpnet_sockin.so.0.0		base-rump-shlib
+./usr/lib/librumpnet_virtif.so.0.0		base-rump-shlib
+./usr/lib/librumpuser.so.0.0			base-rump-shlib
+./usr/lib/librumpvfs.so.0.0			base-rump-shlib
 ./usr/lib/libsdp.so.3.0				base-sys-shlib
 ./usr/lib/libskey.so.2.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.4.0				base-krb5-shlib		kerberos
