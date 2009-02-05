@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.c,v 1.8 2009/01/11 02:46:27 christos Exp $	 */
+/*	$NetBSD: utmp.c,v 1.9 2009/02/05 23:52:55 lukem Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmp.c,v 1.8 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: utmp.c,v 1.9 2009/02/05 23:52:55 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -69,7 +69,7 @@ getutent(void)
 		 * If we have a an old version utmp file bail.
 		 */
 		numentries = st.st_size / sizeof(utmp);
-		if (numentries * sizeof(utmp) != st.st_size)
+		if ((off_t)(numentries * sizeof(utmp)) != st.st_size)
 			goto out;
 	}
 	if (fread(&utmp, sizeof(utmp), 1, ut) == 1)
