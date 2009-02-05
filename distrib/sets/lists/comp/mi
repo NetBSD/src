@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1231 2009/02/04 13:33:02 haad Exp $
+#	$NetBSD: mi,v 1.1232 2009/02/05 10:18:49 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2679,6 +2679,7 @@
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkscan_bsdlabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dmesg.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/dmsetup.debug		comp-sysutil-debug	lvm,debug
 ./usr/libdata/debug/sbin/drvctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump_lfs.debug		comp-sysutil-debug	debug
@@ -2694,6 +2695,7 @@
 ./usr/libdata/debug/sbin/ifconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/init.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/ipf.debug		comp-ipf-debug		ipfilter,debug
+./usr/libdata/debug/sbin/lvm.debug		comp-sysutil-debug	lvm,debug
 ./usr/libdata/debug/sbin/mbrlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mknod.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/modload.debug		comp-sysutil-debug	debug
