@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2009/02/05 17:32:10 haad Exp $
+#	$NetBSD: Makefile,v 1.26 2009/02/05 21:07:19 haad Exp $
 
 # For all platforms
 
@@ -6,9 +6,7 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
-SUBDIR+=	ccd
 SUBDIR+=	cd9660
-SUBDIR+=	cgd
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
