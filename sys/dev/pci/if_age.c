@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.18 2009/02/03 16:13:34 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.19 2009/02/05 21:40:46 dyoung Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.18 2009/02/03 16:13:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.19 2009/02/05 21:40:46 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -271,6 +271,7 @@ age_attach(device_t parent, device_t self, void *aux)
 	sc->sc_miibus.mii_writereg = age_miibus_writereg;
 	sc->sc_miibus.mii_statchg = age_miibus_statchg;
 
+	sc->sc_ec.ec_mii = &sc->sc_miibus;
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, age_mediachange,
 	    age_mediastatus);
 	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
@@ -1096,25 +1097,15 @@ static int
 age_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct age_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->sc_miibus;
-	struct ifreq *ifr = (struct ifreq *)data;
-	int s, error = 0;
+	int s, error;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
-		break;
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				age_rxfilter(sc);
-			error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			age_rxfilter(sc);
+		error = 0;
 	}
 
 	splx(s);
@@ -1168,8 +1159,8 @@ age_resume(device_t dv PMF_FN_ARGS)
 	 * is set in resume event. From Linux.
 	 */
 	cmd = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
-	if ((cmd & 0x0400) != 0) {
-		cmd &= ~0x0400;
+	if ((cmd & PCI_COMMAND_INTERRUPT_DISABLE) != 0) {
+		cmd &= ~PCI_COMMAND_INTERRUPT_DISABLE;
 		pci_conf_write(sc->sc_pct, sc->sc_pcitag,
 		    PCI_COMMAND_STATUS_REG, cmd);
 	}
