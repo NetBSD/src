@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.21 2007/06/03 17:39:26 christos Exp $	*/
+/*	$NetBSD: fgets.c,v 1.22 2009/02/05 03:22:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.21 2007/06/03 17:39:26 christos Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.22 2009/02/05 03:22:37 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,7 +97,7 @@ fgets(buf, n, fp)
 		 * newline, and stop.  Otherwise, copy entire chunk
 		 * and loop.
 		 */
-		if (len > n)
+		if (len > (size_t)n)
 			len = n;
 		t = memchr((void *)p, '\n', len);
 		if (t != NULL) {
