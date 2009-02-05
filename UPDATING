@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.190 2009/01/21 14:19:58 apb Exp $
+$NetBSD: UPDATING,v 1.191 2009/02/05 20:00:58 joerg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20090202:
+	pkg_install now depends on the pkgdb cache for automatic conflict
+	detection.  It is recommented to rebuild the cache with
+	``pkg_admin rebuild''.
 
 20090110:
 	time_t and dev_t have been bumped to 64 bit quantities. To upgrade:
