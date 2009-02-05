@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.33 2008/08/17 10:51:19 gmcgarry Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.34 2009/02/05 13:21:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.33 2008/08/17 10:51:19 gmcgarry Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.34 2009/02/05 13:21:11 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -401,7 +401,7 @@ _nsdbtaddsrc(ns_dbt *dbt, const ns_src *src)
 void
 _nsdbtdump(const ns_dbt *dbt)
 {
-	int	i;
+	unsigned int	i;
 
 	_DIAGASSERT(dbt != NULL);
 
