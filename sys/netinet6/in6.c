@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.145 2009/01/15 20:32:59 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.146 2009/02/05 22:32:24 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.145 2009/01/15 20:32:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.146 2009/02/05 22:32:24 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -143,7 +143,7 @@ const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
 static int in6_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *, struct lwp *);
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
-	struct sockaddr_in6 *, int);
+	const struct sockaddr_in6 *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 
 /*
@@ -1302,7 +1302,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				    mindelay;
 			}
 		}
-		nd6_dad_start((struct ifaddr *)ia, dad_delay);
+		nd6_dad_start(&ia->ia_ifa, dad_delay);
 	}
 
 	return error;
@@ -1479,6 +1479,7 @@ static int
 in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data, 
 	struct ifnet *ifp, struct lwp *l)
 {
+	struct in6_ifaddr *ia;
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
 	struct sockaddr *sa;
@@ -1536,10 +1537,10 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			 * address.  xhostid points to the first link-local
 			 * address attached to the interface.
 			 */
-			ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp, 0);
-			if (!ifa)
+			ia = in6ifa_ifpforlinklocal(ifp, 0);
+			if (ia == NULL)
 				return EADDRNOTAVAIL;
-			xhostid = IFA_IN6(ifa);
+			xhostid = IFA_IN6(&ia->ia_ifa);
 
 		 	/* prefixlen must be <= 64. */
 			if (64 < iflr->prefixlen)
@@ -1591,7 +1592,6 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
 	    {
-		struct in6_ifaddr *ia;
 		struct in6_addr mask, candidate, match;
 		struct sockaddr_in6 *sin6;
 		int cmp;
@@ -1713,7 +1713,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
  */
 static int
 in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia, 
-	struct sockaddr_in6 *sin6, int newhost)
+	const struct sockaddr_in6 *sin6, int newhost)
 {
 	int	error = 0, plen, ifacount = 0;
 	int	s = splnet();
@@ -1753,7 +1753,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	 */
 	plen = in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL); /* XXX */
 	if (plen == 128 && ia->ia_dstaddr.sin6_family == AF_INET6) {
-		if ((error = rtinit(&(ia->ia_ifa), (int)RTM_ADD,
+		if ((error = rtinit(&ia->ia_ifa, RTM_ADD,
 				    RTF_UP | RTF_HOST)) != 0)
 			return error;
 		ia->ia_flags |= IFA_ROUTE;
@@ -1763,7 +1763,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	if (newhost) {
 		/* set the rtrequest function to create llinfo */
 		ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
-		in6_ifaddloop(&(ia->ia_ifa));
+		in6_ifaddloop(&ia->ia_ifa);
 	}
 
 	if (ifp->if_flags & IFF_MULTICAST)
