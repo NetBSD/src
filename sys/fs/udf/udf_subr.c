@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.83 2008/12/19 18:49:39 cegger Exp $ */
+/* $NetBSD: udf_subr.c,v 1.84 2009/02/05 19:39:08 pooka Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.83 2008/12/19 18:49:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.84 2009/02/05 19:39:08 pooka Exp $");
 #endif /* not lint */
 
 
@@ -5787,7 +5787,7 @@ udf_read_fid_stream(struct vnode *vp, uint64_t *offset,
 brokendir:
 	if (error) {
 		/* note that is sometimes a bit quick to report */
-		printf("BROKEN DIRECTORY ENTRY\n");
+		printf("UDF: BROKEN DIRECTORY ENTRY\n");
 		/* RESYNC? */
 		/* TODO: use udf_resync_fid_stream */
 		return EIO;
