@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.16 2006/05/05 00:03:21 rpaulo Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.17 2009/02/05 23:22:39 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rthdr.c,v 1.16 2006/05/05 00:03:21 rpaulo Exp $");
+__RCSID("$NetBSD: rthdr.c,v 1.17 2009/02/05 23:22:39 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -452,7 +452,7 @@ inet6_rth_getaddr(const void *bp, int idx)
 		    (addrs = (rh0->ip6r0_len / 2)) < rh0->ip6r0_segleft)
 			return (NULL);
 
-		if (idx < 0 || addrs <= idx)
+		if (idx < 0 || addrs <= (unsigned int)idx)
 			return (NULL);
 
 		return (((struct in6_addr *)(void *)__UNCONST(rh0 + 1)) + idx);
