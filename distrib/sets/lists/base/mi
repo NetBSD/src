@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.795 2009/02/02 20:47:19 joerg Exp $
+# $NetBSD: mi,v 1.796 2009/02/05 19:35:48 dyoung Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -119,40 +119,40 @@
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
 ./libdata					base-sys-root
-./libdata/firmware				base-sys-root
-./libdata/firmware/if_ipw			base-sys-root
-./libdata/firmware/if_ipw/LICENSE		base-sys-root
-./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-sys-root
-./libdata/firmware/if_ipw/ipw2100-1.2-p.fw	base-sys-root
-./libdata/firmware/if_ipw/ipw2100-1.2.fw	base-sys-root
-./libdata/firmware/if_iwi			base-sys-root
-./libdata/firmware/if_iwi/LICENSE.ipw2200-fw	base-sys-root
-./libdata/firmware/if_iwi/ipw2200-bss.fw	base-sys-root
-./libdata/firmware/if_iwi/ipw2200-ibss.fw	base-sys-root
-./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-sys-root
-./libdata/firmware/if_iwn			base-sys-root
-./libdata/firmware/if_iwn/LICENSE.iwlwifi-4965-ucode	base-sys-root
-./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-sys-root
-./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-sys-root
-./libdata/firmware/if_wpi			base-sys-root
+./libdata/firmware				base-firmware-root
+./libdata/firmware/if_ipw			base-firmware-root
+./libdata/firmware/if_ipw/LICENSE		base-firmware-root
+./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-firmware-root
+./libdata/firmware/if_ipw/ipw2100-1.2-p.fw	base-firmware-root
+./libdata/firmware/if_ipw/ipw2100-1.2.fw	base-firmware-root
+./libdata/firmware/if_iwi			base-firmware-root
+./libdata/firmware/if_iwi/LICENSE.ipw2200-fw	base-firmware-root
+./libdata/firmware/if_iwi/ipw2200-bss.fw	base-firmware-root
+./libdata/firmware/if_iwi/ipw2200-ibss.fw	base-firmware-root
+./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root
+./libdata/firmware/if_iwn			base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-4965-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-firmware-root
+./libdata/firmware/if_wpi			base-firmware-root
 ./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-sys-root obsolete
 ./libdata/firmware/if_wpi/README.ipw3945-ucode	base-sys-root obsolete
 ./libdata/firmware/if_wpi/ipw3945.ucode		base-sys-root obsolete
-./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-sys-root
-./libdata/firmware/if_wpi/README.iwlwifi-3945-ucode	base-sys-root
-./libdata/firmware/if_wpi/iwlwifi-3945.ucode		base-sys-root
-./libdata/firmware/ral				base-sys-root
-./libdata/firmware/ral/ral-license		base-sys-root
-./libdata/firmware/ral/ral-rt2561		base-sys-root
-./libdata/firmware/ral/ral-rt2561s		base-sys-root
-./libdata/firmware/ral/ral-rt2661		base-sys-root
-./libdata/firmware/rum				base-sys-root
-./libdata/firmware/rum/rum-license		base-sys-root
-./libdata/firmware/rum/rum-rt2573		base-sys-root
-./libdata/firmware/zyd				base-sys-root
-./libdata/firmware/zyd/zd1211-licence		base-sys-root
-./libdata/firmware/zyd/zyd-zd1211		base-sys-root
-./libdata/firmware/zyd/zyd-zd1211b		base-sys-root
+./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root
+./libdata/firmware/if_wpi/README.iwlwifi-3945-ucode	base-firmware-root
+./libdata/firmware/if_wpi/iwlwifi-3945.ucode		base-firmware-root
+./libdata/firmware/ral				base-firmware-root
+./libdata/firmware/ral/ral-license		base-firmware-root
+./libdata/firmware/ral/ral-rt2561		base-firmware-root
+./libdata/firmware/ral/ral-rt2561s		base-firmware-root
+./libdata/firmware/ral/ral-rt2661		base-firmware-root
+./libdata/firmware/rum				base-firmware-root
+./libdata/firmware/rum/rum-license		base-firmware-root
+./libdata/firmware/rum/rum-rt2573		base-firmware-root
+./libdata/firmware/zyd				base-firmware-root
+./libdata/firmware/zyd/zd1211-licence		base-firmware-root
+./libdata/firmware/zyd/zyd-zd1211		base-firmware-root
+./libdata/firmware/zyd/zyd-zd1211b		base-firmware-root
 ./libexec					base-sys-root
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
@@ -775,7 +775,7 @@
 ./usr/bin/lam					base-util-bin
 ./usr/bin/last					base-util-bin
 ./usr/bin/lastcomm				base-util-bin
-./usr/bin/ld					comp-util-bin		bfd
+./usr/bin/ld					base-util-bin		bfd
 ./usr/bin/ldapadd				base-ldap-bin		ldap
 ./usr/bin/ldapcompare				base-ldap-bin		ldap
 ./usr/bin/ldapdelete				base-ldap-bin		ldap
@@ -3276,7 +3276,7 @@
 ./usr/share/locale/sk/LC_MESSAGES		base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2		base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2/LC_CTYPE	base-locale-sk		nls
-./usr/share/locale/sk_SK.ISO8859-2/LC_MESSAGES	base-locale-sk		nls
+./usr/share/locale/sk_SK.ISO8859-2/LC_MESSAGES	base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sk	nls
 ./usr/share/locale/sk_SK.ISO8859-2/LC_MONETARY	base-locale-sk		nls
 ./usr/share/locale/sk_SK.ISO8859-2/LC_NUMERIC	base-locale-sk		nls
@@ -3808,40 +3808,40 @@
 ./usr/share/misc/usb_hid_usages			base-reference-share	share
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
 ./usr/share/mk					base-util-share
-./usr/share/mk/bsd.README			comp-util-share		share
-./usr/share/mk/bsd.crypto.mk			comp-obsolete		obsolete
-./usr/share/mk/bsd.dep.mk			comp-util-share		share
-./usr/share/mk/bsd.depall.mk			comp-obsolete		obsolete
-./usr/share/mk/bsd.doc.mk			comp-util-share		share
-./usr/share/mk/bsd.endian.mk			comp-util-share		share
-./usr/share/mk/bsd.files.mk			comp-util-share		share
-./usr/share/mk/bsd.gcc.mk			comp-util-share		share
-./usr/share/mk/bsd.hostlib.mk			comp-util-share		share
-./usr/share/mk/bsd.hostprog.mk			comp-util-share		share
-./usr/share/mk/bsd.inc.mk			comp-util-share		share
-./usr/share/mk/bsd.info.mk			comp-util-share		share
-./usr/share/mk/bsd.init.mk			comp-util-share		share
-./usr/share/mk/bsd.kernobj.mk			comp-util-share		share
-./usr/share/mk/bsd.kinc.mk			comp-util-share		share
-./usr/share/mk/bsd.klinks.mk			comp-util-share		share
-./usr/share/mk/bsd.kmod.mk			comp-obsolete		obsolete
-./usr/share/mk/bsd.kmodule.mk			comp-util-share		share
-./usr/share/mk/bsd.lib.mk			comp-util-share		share
-./usr/share/mk/bsd.links.mk			comp-util-share		share
-./usr/share/mk/bsd.man.mk			comp-util-share		share
-./usr/share/mk/bsd.nls.mk			comp-util-share		share
-./usr/share/mk/bsd.obj.mk			comp-util-share		share
-./usr/share/mk/bsd.own.mk			comp-util-share		share
-./usr/share/mk/bsd.port.mk			comp-obsolete		obsolete
-./usr/share/mk/bsd.port.subdir.mk		comp-obsolete		obsolete
-./usr/share/mk/bsd.prog.mk			comp-util-share		share
-./usr/share/mk/bsd.rpc.mk			comp-util-share		share
-./usr/share/mk/bsd.shlib.mk			comp-util-share		share
-./usr/share/mk/bsd.subdir.mk			comp-util-share		share
-./usr/share/mk/bsd.sys.mk			comp-util-share		share
-./usr/share/mk/bsd.test.mk			comp-util-share		share
-./usr/share/mk/bsd.x11.mk			comp-util-share		share
-./usr/share/mk/sys.mk				base-util-share		share
+./usr/share/mk/bsd.README			base-mk-share		share
+./usr/share/mk/bsd.crypto.mk			base-obsolete		obsolete
+./usr/share/mk/bsd.dep.mk			base-mk-share		share
+./usr/share/mk/bsd.depall.mk			base-obsolete		obsolete
+./usr/share/mk/bsd.doc.mk			base-mk-share		share
+./usr/share/mk/bsd.endian.mk			base-mk-share		share
+./usr/share/mk/bsd.files.mk			base-mk-share		share
+./usr/share/mk/bsd.gcc.mk			base-mk-share		share
+./usr/share/mk/bsd.hostlib.mk			base-mk-share		share
+./usr/share/mk/bsd.hostprog.mk			base-mk-share		share
+./usr/share/mk/bsd.inc.mk			base-mk-share		share
+./usr/share/mk/bsd.info.mk			base-mk-share		share
+./usr/share/mk/bsd.init.mk			base-mk-share		share
+./usr/share/mk/bsd.kernobj.mk			base-mk-share		share
+./usr/share/mk/bsd.kinc.mk			base-mk-share		share
+./usr/share/mk/bsd.klinks.mk			base-mk-share		share
+./usr/share/mk/bsd.kmod.mk			base-obsolete		obsolete
+./usr/share/mk/bsd.kmodule.mk			base-mk-share		share
+./usr/share/mk/bsd.lib.mk			base-mk-share		share
+./usr/share/mk/bsd.links.mk			base-mk-share		share
+./usr/share/mk/bsd.man.mk			base-mk-share		share
+./usr/share/mk/bsd.nls.mk			base-mk-share		share
+./usr/share/mk/bsd.obj.mk			base-mk-share		share
+./usr/share/mk/bsd.own.mk			base-mk-share		share
+./usr/share/mk/bsd.port.mk			base-obsolete		obsolete
+./usr/share/mk/bsd.port.subdir.mk		base-obsolete		obsolete
+./usr/share/mk/bsd.prog.mk			base-mk-share		share
+./usr/share/mk/bsd.rpc.mk			base-mk-share		share
+./usr/share/mk/bsd.shlib.mk			base-mk-share		share
+./usr/share/mk/bsd.subdir.mk			base-mk-share		share
+./usr/share/mk/bsd.sys.mk			base-mk-share		share
+./usr/share/mk/bsd.test.mk			base-mk-share		share
+./usr/share/mk/bsd.x11.mk			base-mk-share		share
+./usr/share/mk/sys.mk				base-mk-share		share
 ./usr/share/ms					base-groff-share
 ./usr/share/nls					base-locale-share
 # C locale is required by POSIX, so is installed if any locales are.
