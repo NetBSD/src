@@ -31,7 +31,7 @@ struct ops_reader_info {
 	ops_reader_destroyer_t *destroyer;
 	void           *arg;	/* !< the args to pass to the reader function */
 
-	ops_boolean_t   accumulate:1;	/* !< set to accumulate packet data */
+	unsigned   accumulate:1;	/* !< set to accumulate packet data */
 	unsigned char  *accumulated;	/* !< the accumulated data */
 	unsigned        asize;	/* !< size of the buffer */
 	unsigned        alength;/* !< used buffer */
@@ -115,7 +115,7 @@ struct ops_parse_info {
 	ops_crypt_info_t cryptinfo;
 	size_t          nhashes;
 	ops_parse_hash_info_t *hashes;
-	ops_boolean_t   reading_v3_secret:1;
-	ops_boolean_t   reading_mpi_length:1;
-	ops_boolean_t   exact_read:1;
+	unsigned   reading_v3_secret:1;
+	unsigned   reading_mpi_length:1;
+	unsigned   exact_read:1;
 };

@@ -37,7 +37,7 @@ typedef struct {
  * encrypts it with the given key
  * and outputs the resulting encrypted text
  */
-static ops_boolean_t 
+static bool 
 encrypt_writer(const unsigned char *src,
 	       unsigned length,
 	       ops_error_t ** errors,
@@ -75,13 +75,13 @@ encrypt_writer(const unsigned char *src,
 			if (ops_get_debug_level(__FILE__)) {
 				fprintf(stderr, "encrypted_writer got error from stacked write, returning\n");
 			}
-			return ops_false;
+			return false;
 		}
 		remaining -= len;
 		done += len;
 	}
 
-	return ops_true;
+	return true;
 }
 
 static void 

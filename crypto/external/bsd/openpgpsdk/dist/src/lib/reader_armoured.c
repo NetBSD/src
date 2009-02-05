@@ -72,29 +72,29 @@ typedef struct {
 	}               lastseen;
 
 	ops_parse_info_t *parse_info;
-	ops_boolean_t   seen_nl:1;
-	ops_boolean_t   prev_nl:1;
-	ops_boolean_t   allow_headers_without_gap:1;	/* !< allow headers in
+	unsigned   seen_nl:1;
+	unsigned   prev_nl:1;
+	unsigned   allow_headers_without_gap:1;	/* !< allow headers in
 							 * armoured data that
 							 * are not separated
 							 * from the data by a
 							 * blank line */
-	ops_boolean_t   allow_no_gap:1;	/* !< allow no blank line at the
+	unsigned   allow_no_gap:1;	/* !< allow no blank line at the
 					 * start of armoured data */
-	ops_boolean_t   allow_trailing_whitespace:1;	/* !< allow armoured
+	unsigned   allow_trailing_whitespace:1;	/* !< allow armoured
 							 * stuff to have
 							 * trailing whitespace
 							 * where we wouldn't
 							 * strictly expect it */
 
 	/* it is an error to get a cleartext message without a sig */
-	ops_boolean_t   expect_sig:1;
-	ops_boolean_t   got_sig:1;
+	unsigned   expect_sig:1;
+	unsigned   got_sig:1;
 
 	/* base64 stuff */
 	unsigned        buffered;
 	unsigned char   buffer[3];
-	ops_boolean_t   eof64;
+	bool   eof64;
 	unsigned long   checksum;
 	unsigned long   read_checksum;
 	/* unarmoured text blocks */
@@ -217,7 +217,7 @@ static int
 read_char(dearmour_arg_t * arg, ops_error_t ** errors,
 	  ops_reader_info_t * rinfo,
 	  ops_parse_cb_info_t * cbinfo,
-	  ops_boolean_t skip)
+	  bool skip)
 {
 	unsigned char   c[1];
 
@@ -249,7 +249,7 @@ eat_whitespace(int first,
 	       dearmour_arg_t * arg, ops_error_t ** errors,
 	       ops_reader_info_t * rinfo,
 	       ops_parse_cb_info_t * cbinfo,
-	       ops_boolean_t skip)
+	       bool skip)
 {
 	int             c = first;
 
@@ -264,7 +264,7 @@ read_and_eat_whitespace(dearmour_arg_t * arg,
 			ops_error_t ** errors,
 			ops_reader_info_t * rinfo,
 			ops_parse_cb_info_t * cbinfo,
-			ops_boolean_t skip)
+			bool skip)
 {
 	int             c;
 
@@ -293,12 +293,12 @@ static int
 unarmoured_read_char(dearmour_arg_t * arg, ops_error_t ** errors,
 		     ops_reader_info_t * rinfo,
 		     ops_parse_cb_info_t * cbinfo,
-		     ops_boolean_t skip)
+		     bool skip)
 {
 	int             c;
 
 	do {
-		c = read_char(arg, errors, rinfo, cbinfo, ops_false);
+		c = read_char(arg, errors, rinfo, cbinfo, false);
 		if (c < 0)
 			return c;
 		arg->unarmoured[arg->num_unarmoured++] = c;
@@ -392,17 +392,17 @@ process_dash_escaped(dearmour_arg_t * arg, ops_error_t ** errors,
 		int             c;
 		unsigned        count;
 
-		if ((c = read_char(arg, errors, rinfo, cbinfo, ops_true)) < 0)
+		if ((c = read_char(arg, errors, rinfo, cbinfo, true)) < 0)
 			return -1;
 		if (arg->prev_nl && c == '-') {
-			if ((c = read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
+			if ((c = read_char(arg, errors, rinfo, cbinfo, false)) < 0)
 				return -1;
 			if (c != ' ') {
 				/* then this had better be a trailer! */
 				if (c != '-')
 					OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Bad dash-escaping");
 				for (count = 2; count < 5; ++count) {
-					if ((c = read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
+					if ((c = read_char(arg, errors, rinfo, cbinfo, false)) < 0)
 						return -1;
 					if (c != '-')
 						OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Bad dash-escaping (2)");
@@ -411,7 +411,7 @@ process_dash_escaped(dearmour_arg_t * arg, ops_error_t ** errors,
 				break;
 			}
 			/* otherwise we read the next character */
-			if ((c = read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
+			if ((c = read_char(arg, errors, rinfo, cbinfo, false)) < 0)
 				return -1;
 		}
 		if (c == '\n' && body->length) {
@@ -477,7 +477,7 @@ parse_headers(dearmour_arg_t * arg, ops_error_t ** errors,
 	char           *buf;
 	unsigned        nbuf;
 	unsigned        size;
-	ops_boolean_t   first = ops_true;
+	bool   first = true;
 	/* ops_parser_content_t content; */
 
 	buf = NULL;
@@ -486,7 +486,7 @@ parse_headers(dearmour_arg_t * arg, ops_error_t ** errors,
 	for (;;) {
 		int             c;
 
-		if ((c = read_char(arg, errors, rinfo, cbinfo, ops_true)) < 0) {
+		if ((c = read_char(arg, errors, rinfo, cbinfo, true)) < 0) {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Unexpected EOF");
 			rtn = -1;
 			break;
@@ -542,7 +542,7 @@ parse_headers(dearmour_arg_t * arg, ops_error_t ** errors,
 				}
 				nbuf = 0;
 			}
-			first = ops_false;
+			first = false;
 		} else {
 			if (size <= nbuf + 1) {
 				size += size + 80;
@@ -567,9 +567,9 @@ read4(dearmour_arg_t * arg, ops_error_t ** errors,
 	unsigned long   l = 0;
 
 	for (n = 0; n < 4; ++n) {
-		c = read_char(arg, errors, rinfo, cbinfo, ops_true);
+		c = read_char(arg, errors, rinfo, cbinfo, true);
 		if (c < 0) {
-			arg->eof64 = ops_true;
+			arg->eof64 = true;
 			return -1;
 		}
 		if (c == '-')
@@ -637,7 +637,7 @@ decode64(dearmour_arg_t * arg, ops_error_t ** errors,
 			return 0;
 		}
 		arg->buffered = 2;
-		arg->eof64 = ops_true;
+		arg->eof64 = true;
 		l >>= 2;
 	} else if (n == 2) {
 		if (c != '=') {
@@ -645,9 +645,9 @@ decode64(dearmour_arg_t * arg, ops_error_t ** errors,
 			return 0;
 		}
 		arg->buffered = 1;
-		arg->eof64 = ops_true;
+		arg->eof64 = true;
 		l >>= 4;
-		c = read_char(arg, errors, rinfo, cbinfo, ops_false);
+		c = read_char(arg, errors, rinfo, cbinfo, false);
 		if (c != '=') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Badly terminated base64");
 			return 0;
@@ -667,12 +667,12 @@ decode64(dearmour_arg_t * arg, ops_error_t ** errors,
 	if (arg->buffered < 3 && arg->buffered > 0) {
 		/* then we saw padding */
 		assert(c == '=');
-		c = read_and_eat_whitespace(arg, errors, rinfo, cbinfo, ops_true);
+		c = read_and_eat_whitespace(arg, errors, rinfo, cbinfo, true);
 		if (c != '\n') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "No newline at base64 end");
 			return 0;
 		}
-		c = read_char(arg, errors, rinfo, cbinfo, ops_false);
+		c = read_char(arg, errors, rinfo, cbinfo, false);
 		if (c != '=') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "No checksum at base64 end");
 			return 0;
@@ -685,14 +685,14 @@ decode64(dearmour_arg_t * arg, ops_error_t ** errors,
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Error in checksum");
 			return 0;
 		}
-		c = read_char(arg, errors, rinfo, cbinfo, ops_true);
+		c = read_char(arg, errors, rinfo, cbinfo, true);
 		if (arg->allow_trailing_whitespace)
-			c = eat_whitespace(c, arg, errors, rinfo, cbinfo, ops_true);
+			c = eat_whitespace(c, arg, errors, rinfo, cbinfo, true);
 		if (c != '\n') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Badly terminated checksum");
 			return 0;
 		}
-		c = read_char(arg, errors, rinfo, cbinfo, ops_false);
+		c = read_char(arg, errors, rinfo, cbinfo, false);
 		if (c != '-') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Bad base64 trailer (2)");
 			return 0;
@@ -700,11 +700,11 @@ decode64(dearmour_arg_t * arg, ops_error_t ** errors,
 	}
 	if (c == '-') {
 		for (n = 0; n < 4; ++n)
-			if (read_char(arg, errors, rinfo, cbinfo, ops_false) != '-') {
+			if (read_char(arg, errors, rinfo, cbinfo, false) != '-') {
 				OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Bad base64 trailer");
 				return 0;
 			}
-		arg->eof64 = ops_true;
+		arg->eof64 = true;
 	} else
 		assert(arg->buffered);
 
@@ -728,7 +728,7 @@ base64(dearmour_arg_t * arg)
 {
 	arg->state = BASE64;
 	arg->checksum = CRC24_INIT;
-	arg->eof64 = ops_false;
+	arg->eof64 = false;
 	arg->buffered = 0;
 }
 
@@ -744,7 +744,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 	dearmour_arg_t *arg = ops_reader_get_arg(rinfo);
 	ops_parser_content_t content;
 	int             ret;
-	ops_boolean_t   first;
+	bool   first;
 	unsigned char  *dest = dest_;
 	int             saved = length;
 
@@ -766,7 +766,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 			 * it is just an EOF (and not a BLOCK_END)
 			 */
 			while (!arg->seen_nl)
-				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, ops_true)) < 0)
+				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, true)) < 0)
 					return 0;
 
 			/*
@@ -777,7 +777,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 			flush(arg, cbinfo);
 			/* Find and consume the 5 leading '-' */
 			for (count = 0; count < 5; ++count) {
-				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
+				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, false)) < 0)
 					return 0;
 				if (c != '-')
 					goto reloop;
@@ -785,7 +785,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 
 			/* Now find the block type */
 			for (n = 0; n < sizeof(buf) - 1;) {
-				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
+				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, false)) < 0)
 					return 0;
 				if (c == '-')
 					goto got_minus;
@@ -799,7 +799,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 
 			/* Consume trailing '-' */
 			for (count = 1; count < 5; ++count) {
-				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
+				if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, false)) < 0)
 					return 0;
 				if (c != '-')
 					/* wasn't a header after all */
@@ -807,11 +807,11 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 			}
 
 			/* Consume final NL */
-			if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, ops_true)) < 0)
+			if ((c = unarmoured_read_char(arg, errors, rinfo, cbinfo, true)) < 0)
 				return 0;
 			if (arg->allow_trailing_whitespace)
 				if ((c = eat_whitespace(c, arg, errors, rinfo, cbinfo,
-							ops_true)) < 0)
+							true)) < 0)
 					return 0;
 			if (c != '\n')
 				/* wasn't a header line after all */
@@ -849,7 +849,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 			break;
 
 		case BASE64:
-			first = ops_true;
+			first = true;
 			while (length > 0) {
 				if (!arg->buffered) {
 					if (!arg->eof64) {
@@ -870,7 +870,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 				*dest = arg->buffer[--arg->buffered];
 				++dest;
 				--length;
-				first = ops_false;
+				first = false;
 			}
 			if (arg->eof64 && !arg->buffered)
 				arg->state = AT_TRAILER_NAME;
@@ -878,7 +878,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 
 		case AT_TRAILER_NAME:
 			for (n = 0; n < sizeof(buf) - 1;) {
-				if ((c = read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
+				if ((c = read_char(arg, errors, rinfo, cbinfo, false)) < 0)
 					return -1;
 				if (c == '-')
 					goto got_minus2;
@@ -896,7 +896,7 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 
 			/* Consume trailing '-' */
 			for (count = 1; count < 5; ++count) {
-				if ((c = read_char(arg, errors, rinfo, cbinfo, ops_false)) < 0)
+				if ((c = read_char(arg, errors, rinfo, cbinfo, false)) < 0)
 					return -1;
 				if (c != '-')
 					/* wasn't a trailer after all */
@@ -904,11 +904,11 @@ armoured_data_reader(void *dest_, size_t length, ops_error_t ** errors,
 			}
 
 			/* Consume final NL */
-			if ((c = read_char(arg, errors, rinfo, cbinfo, ops_true)) < 0)
+			if ((c = read_char(arg, errors, rinfo, cbinfo, true)) < 0)
 				return -1;
 			if (arg->allow_trailing_whitespace)
 				if ((c = eat_whitespace(c, arg, errors, rinfo, cbinfo,
-							ops_true)) < 0)
+							true)) < 0)
 					return 0;
 			if (c != '\n')
 				/* wasn't a trailer line after all */
@@ -960,25 +960,25 @@ ops_reader_push_dearmour(ops_parse_info_t * parse_info)
  * be fixed so that these flags work correctly.
  * 
  * // Allow headers in armoured data that are not separated from the data by a
- * blank line ops_boolean_t without_gap,
+ * blank line bool without_gap,
  * 
- * // Allow no blank line at the start of armoured data ops_boolean_t no_gap,
+ * // Allow no blank line at the start of armoured data bool no_gap,
  * 
  * //Allow armoured data to have trailing whitespace where we strictly would not
- * expect it			      ops_boolean_t trailing_whitespace
+ * expect it			      bool trailing_whitespace
  */
 {
 	dearmour_arg_t *arg;
 
 	arg = calloc(1, sizeof(*arg));
-	arg->seen_nl = ops_true;
+	arg->seen_nl = true;
 	/*
 	    arg->allow_headers_without_gap=without_gap;
 	    arg->allow_no_gap=no_gap;
 	    arg->allow_trailing_whitespace=trailing_whitespace;
 	*/
-	arg->expect_sig = ops_false;
-	arg->got_sig = ops_false;
+	arg->expect_sig = false;
+	arg->got_sig = false;
 
 	ops_reader_push(parse_info, armoured_data_reader, armoured_data_destroyer, arg);
 }

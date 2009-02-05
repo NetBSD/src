@@ -74,7 +74,7 @@ ops_fingerprint(ops_fingerprint_t * fp, const ops_public_key_t * key)
 		ops_hash_t      sha1;
 		size_t          l;
 
-		ops_build_public_key(mem, key, ops_false);
+		ops_build_public_key(mem, key, false);
 
 		if (ops_get_debug_level(__FILE__)) {
 			fprintf(stderr, "--- creating key fingerprint\n");

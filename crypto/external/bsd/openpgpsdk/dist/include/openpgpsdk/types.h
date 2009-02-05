@@ -25,6 +25,8 @@
 #ifndef OPS_TYPES_H
 #define OPS_TYPES_H
 
+#include <stdbool.h>
+
 /** Special type for intermediate function casting, avoids warnings on
     some platforms
 */
@@ -40,10 +42,6 @@ typedef struct {
 
 /** ops_errcode_name_map_t */
 typedef ops_map_t ops_errcode_name_map_t;
-
-/** Boolean type */
-typedef unsigned ops_boolean_t;
-
 
 typedef struct _ops_crypt_t ops_crypt_t;
 
