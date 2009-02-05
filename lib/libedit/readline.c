@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.77 2009/01/18 12:17:24 lukem Exp $	*/
+/*	$NetBSD: readline.c,v 1.78 2009/02/05 19:15:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.77 2009/01/18 12:17:24 lukem Exp $");
+__RCSID("$NetBSD: readline.c,v 1.78 2009/02/05 19:15:26 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -223,6 +223,22 @@ _getc_function(EditLine *el, char *c)
  */
 
 /*
+ * Set the prompt
+ */
+int
+rl_set_prompt(const char *prompt)
+{
+	if (!prompt)
+		prompt = "";
+	if (rl_prompt != NULL && strcmp(rl_prompt, prompt) == 0) 
+		return 0;
+	if (rl_prompt)
+		free(rl_prompt);
+	rl_prompt = strdup(prompt);
+	return rl_prompt == NULL ? -1 : 0;
+}
+
+/*
  * initialize rl compat stuff
  */
 int
@@ -268,8 +284,7 @@ rl_initialize(void)
 		el_set(e, EL_GETCFN, _getc_function);
 
 	/* for proper prompt printing in readline() */
-	rl_prompt = strdup("");
-	if (rl_prompt == NULL) {
+	if (rl_set_prompt("") == -1) {
 		history_end(h);
 		el_end(e);
 		return -1;
@@ -343,14 +358,8 @@ readline(const char *p)
 	(void)setjmp(topbuf);
 
 	/* update prompt accordingly to what has been passed */
-	if (!prompt)
-		prompt = "";
-	if (strcmp(rl_prompt, prompt) != 0) {
-		free(rl_prompt);
-		rl_prompt = strdup(prompt);
-		if (rl_prompt == NULL)
-			return NULL;
-	}
+	if (rl_set_prompt(prompt) == -1)
+		return NULL;
 
 	if (rl_pre_input_hook)
 		(*rl_pre_input_hook)(NULL, 0);
@@ -1680,9 +1689,7 @@ rl_callback_handler_install(const char *prompt, VCPFunction *linefunc)
 	if (e == NULL) {
 		rl_initialize();
 	}
-	if (rl_prompt)
-		free(rl_prompt);
-	rl_prompt = prompt ? strdup(strchr(prompt, *prompt)) : NULL;
+	(void)rl_set_prompt(prompt);
 	rl_linefunc = linefunc;
 	el_set(e, EL_UNBUFFERED, 1);
 }   
