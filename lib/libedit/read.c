@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.42 2009/01/18 12:17:24 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.43 2009/02/05 19:15:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.42 2009/01/18 12:17:24 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.43 2009/02/05 19:15:44 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -213,7 +213,7 @@ read_preread(EditLine *el)
  *	Push a macro
  */
 public void
-el_push(EditLine *el, char *str)
+el_push(EditLine *el, const char *str)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 

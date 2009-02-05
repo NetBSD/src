@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.34 2008/04/05 23:53:26 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.35 2009/02/05 19:15:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -92,7 +92,7 @@ void		 el_reset(EditLine *);
  */
 const char	*el_gets(EditLine *, int *);
 int		 el_getc(EditLine *, char *);
-void		 el_push(EditLine *, char *);
+void		 el_push(EditLine *, const char *);
 
 /*
  * Beep!
