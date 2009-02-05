@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.6 2009/01/31 15:13:18 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.7 2009/02/05 19:59:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.6 2009/01/31 15:13:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.7 2009/02/05 19:59:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -84,6 +84,9 @@ genfs_getpages(void *v)
 	int async;
 	int i, error;
 
+	DPRINTF(("genfs_getpages: vnode %p, off %lld, count %d\n",
+	    vp, (long long)ap->a_offset, *ap->a_count));
+
 	/*
 	 * Ignore async for now, the structure of this routine
 	 * doesn't exactly allow for it ...
@@ -100,8 +103,11 @@ genfs_getpages(void *v)
 	for (i = 0; i < count; i++, curoff += PAGE_SIZE) {
  retrylookup:
 		pg = uvm_pagelookup(uobj, curoff);
-		if (pg == NULL)
+		if (pg == NULL || pg->flags & PG_FAKE)
 			break;
+
+		DPRINTF(("found page %p (off %lld), flags 0x%x\n",
+		    pg, (long long)curoff, pg->flags));
 
 		/* page is busy?  we need to wait until it's released */
 		if (pg->flags & PG_BUSY) {
@@ -111,8 +117,6 @@ genfs_getpages(void *v)
 			goto retrylookup;
 		}
 		pg->flags |= PG_BUSY;
-		if (pg->flags & PG_FAKE)
-			break;
 		ap->a_m[i] = pg;
 	}
 
@@ -214,8 +218,6 @@ genfs_getpages(void *v)
 		}
 
 		VOP_STRATEGY(devvp, bp);
-		if (bp->b_error)
-			panic("%s: VOP_STRATEGY, lazy bum", __func__);
 		
 		if (!async)
 			putiobuf(bp);
@@ -236,14 +238,12 @@ genfs_getpages(void *v)
 		pg = uvm_pagelookup(&vp->v_uobj, curoff + bufoff);
 		KASSERT(pg);
 		DPRINTF(("got page %p (off 0x%x)\n", pg, (int)(curoff+bufoff)));
-		if (pg->flags & PG_FAKE) {
+		if (pg->flags & PG_FAKE && bufoff < bufsize) {
 			memcpy((void *)pg->uanon, tmpbuf+bufoff, PAGE_SIZE);
 			pg->flags &= ~PG_FAKE;
 			pg->flags |= PG_CLEAN;
 		}
-		ap->a_m[i] = pg;
 	}
-	*ap->a_count = i;
 
 	kmem_free(tmpbuf, bufsize);
 
@@ -301,6 +301,9 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 #else
 	int async = 0;
 #endif
+
+	DPRINTF(("genfs_do_putpages: vnode %p, startoff %lld, endoff %lld\n",
+	    vp, (long long)startoff, (long long)endoff));
 
  restart:
 	/* check if all pages are clean */
