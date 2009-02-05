@@ -1,4 +1,4 @@
-/*	$NetBSD: sprintf_chk.c,v 1.5 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: sprintf_chk.c,v 1.6 2009/02/05 05:40:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sprintf_chk.c,v 1.5 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: sprintf_chk.c,v 1.6 2009/02/05 05:40:36 lukem Exp $");
 
 /*LINTLIBRARY*/
 
@@ -54,7 +54,7 @@ __sprintf_chk(char * __restrict buf, int flags, size_t slen,
 	if (slen > (size_t)INT_MAX)
 		rv = vsprintf(buf, fmt, ap);
 	else {
-		if ((rv = vsnprintf(buf, slen, fmt, ap)) >= 0 && rv >= slen)
+		if ((rv = vsnprintf(buf, slen, fmt, ap)) >= 0 && (size_t)rv >= slen)
 			__chk_fail();
 	}
 	va_end(ap);

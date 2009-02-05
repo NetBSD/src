@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets_chk.c,v 1.5 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: fgets_chk.c,v 1.6 2009/02/05 05:41:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgets_chk.c,v 1.5 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: fgets_chk.c,v 1.6 2009/02/05 05:41:51 lukem Exp $");
 
 /*LINTLIBRARY*/
 
@@ -48,7 +48,7 @@ __fgets_chk(char * __restrict buf, int len, size_t slen, FILE *fp)
 	if (slen >= (size_t)INT_MAX)
 		return fgets(buf, len, fp);
 
-	if (len >= 0 && len > slen)
+	if (len >= 0 && (size_t)len > slen)
 		__chk_fail();
 
 	return fgets(buf, len, fp);
