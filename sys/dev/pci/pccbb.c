@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.181 2009/01/11 02:45:51 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.182 2009/02/06 01:15:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.181 2009/01/11 02:45:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.182 2009/02/06 01:15:53 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1045,6 +1045,17 @@ pccbbintr(void *arg)
 		    sockevent);
 	}
 
+	/* XXX sockevent == CB_SOCKET_EVENT_CSTS|CB_SOCKET_EVENT_POWER
+	 * does occur in the wild.  Check for a _POWER event before
+	 * possibly exiting because of an _CSTS event.
+	 */
+	if (sockevent & CB_SOCKET_EVENT_POWER) {
+		DPRINTF(("Powercycling because of socket event\n"));
+		/* XXX: Does not happen when attaching a 16-bit card */
+		sc->sc_pwrcycle++;
+		wakeup(&sc->sc_pwrcycle);
+	}
+
 	/* Sometimes a change of CSTSCHG# accompanies the first
 	 * interrupt from an Atheros WLAN.  That generates a
 	 * CB_SOCKET_EVENT_CSTS event on the bridge.  The event
@@ -1102,14 +1113,6 @@ pccbbintr(void *arg)
 			callout_schedule(&sc->sc_insert_ch, hz / 5);
 			sc->sc_flags |= CBB_INSERTING;
 		}
-	}
-
-	/* XXX sockevent == 9 does occur in the wild.  handle it. */
-	if (sockevent & CB_SOCKET_EVENT_POWER) {
-		DPRINTF(("Powercycling because of socket event\n"));
-		/* XXX: Does not happen when attaching a 16-bit card */
-		sc->sc_pwrcycle++;
-		wakeup(&sc->sc_pwrcycle);
 	}
 
 	return (1);
