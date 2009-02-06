@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.22 2008/10/07 10:03:47 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.22.2.1 2009/02/06 00:45:43 snj Exp $	*/
 
 /*-
- * Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.22 2008/10/07 10:03:47 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.22.2.1 2009/02/06 00:45:43 snj Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ void	db_print(DBT *, DBT *);
 int	db_dump(void);
 int	db_del(char *);
 int	db_get(char *);
+int	db_seq(char *);
 int	db_put(char *, char *);
 int	parseline(FILE *, const char *, char **, char **);
 int	encode_data(size_t, char *, char **);
@@ -98,7 +99,7 @@ main(int argc, char *argv[])
 		char		*type;
 		DBTYPE	 	dbtype;
 		void		*info;
-		int	 	flags;
+		int	 	dbflags;
 		mode_t	 	mode;
 		unsigned int	pagesize;
 	} oi;
@@ -264,9 +265,9 @@ main(int argc, char *argv[])
 			usage();
 		if (0 != (visflags & ~(VIS_HTTPSTYLE)))
 			errx(1, "Unsupported decoding option provided to -T");
-		oi.flags = O_RDWR | O_CREAT | O_EXLOCK;
+		oi.dbflags = O_RDWR | O_CREAT | O_EXLOCK;
 		if (flags & F_CREATENEW)
-			oi.flags |= O_TRUNC;
+			oi.dbflags |= O_TRUNC;
 	} else if (flags & F_DELETE) {
 		if (flags & (F_SHOW_KEY | F_SHOW_VALUE | F_WRITE))
 			usage();
@@ -274,11 +275,11 @@ main(int argc, char *argv[])
 			usage();
 		if (0 != (visflags & ~(VIS_HTTPSTYLE)))
 			errx(1, "Unsupported decoding option provided to -T");
-		oi.flags = O_RDWR | O_CREAT | O_EXLOCK;
+		oi.dbflags = O_RDWR | O_CREAT | O_EXLOCK;
 	} else {
 		if (! (flags & (F_SHOW_KEY | F_SHOW_VALUE)))
 			flags |= (F_SHOW_KEY | F_SHOW_VALUE);
-		oi.flags = O_RDONLY | O_SHLOCK;
+		oi.dbflags = O_RDONLY | O_SHLOCK;
 	}
 
 				/* validate oi.type */
@@ -317,7 +318,7 @@ main(int argc, char *argv[])
 	}
 
 				/* open database */
-	db = dbopen(oi.file, oi.flags, oi.mode, oi.dbtype, oi.info);
+	db = dbopen(oi.file, oi.dbflags, oi.mode, oi.dbtype, oi.info);
 	if (db == NULL)
 		err(1, "Opening database `%s'", oi.file);
 
@@ -345,8 +346,13 @@ main(int argc, char *argv[])
 
 		if (flags & F_DELETE)
 			dbop = db_del;
-		else
+		else if (DB_BTREE == oi.dbtype)
+			dbop = db_seq;
+		else if (DB_HASH == oi.dbtype)
 			dbop = db_get;
+		else
+			errx(5, "internal error: unsupported dbtype %d",
+			    oi.dbtype);
 		for (ch = 0; ch < argc; ch++) {
 			if ((rv = dbop(argv[ch])))
 				goto cleanup;
@@ -464,7 +470,7 @@ db_del(char *keystr)
 			warnx("Unknown key `%s'", keystr);
 		break;
 	default:
-		abort();
+		errx(5, "%s: unexpected result %d from db", __func__, r);
 	}
 	if (flags & F_DECODE_KEY)
 		free(key.data);
@@ -475,19 +481,49 @@ int
 db_get(char *keystr)
 {
 	DBT	key, val;
-	char	*wantkey;
+	int	r;
+
+	db_makekey(&key, keystr, 1, (flags & F_DECODE_KEY ? 1 : 0));
+
+	r = db->get(db, &key, &val, 0);
+	switch (r) {
+	case -1:
+		warn("Error reading key `%s'", keystr);
+		r = 1;
+		break;
+	case 0:
+		db_print(&key, &val);
+		break;
+	case 1:
+		if (! (flags & F_QUIET)) {
+			warnx("Unknown key `%s'", keystr);
+		}
+		break;
+	default:
+		errx(5, "%s: unexpected result %d from db", __func__, r);
+	}
+	if (flags & F_DECODE_KEY)
+		free(key.data);
+	return (r);
+}
+
+int
+db_seq(char *keystr)
+{
+	DBT	key, val, want;
 	int	r, found;
 	u_int	seqflags;
 
 	db_makekey(&key, keystr, 1, (flags & F_DECODE_KEY ? 1 : 0));
-	wantkey = strdup(key.data);
-	if (wantkey == NULL)
-		err(1, "Cannot allocate key buffer");
+		/* remember key in want, since db->seq() changes key */
+	want.data = key.data;
+	want.size = key.size;
 
 	found = 0;
 	seqflags = R_CURSOR;
 	while ((r = db->seq(db, &key, &val, seqflags)) == 0) {
-		if (strcmp((char *)key.data, wantkey) != 0) {
+		if (key.size != want.size ||
+		    0 != strcmp((char *)key.data, (char *)want.data)) {
 			r = 1;
 			break;
 		}
@@ -515,11 +551,10 @@ db_get(char *keystr)
 		}
 		break;
 	default:
-		abort();
+		errx(5, "%s: unexpected result %d from db", __func__, r);
 	}
 	if (flags & F_DECODE_KEY)
-		free(key.data);
-	free(wantkey);
+		free(want.data);
 	return (r);
 }
 
@@ -546,7 +581,7 @@ db_put(char *keystr, char *valstr)
 			warnx("Key `%s' already exists", keystr);
 		break;
 	default:
-		abort();
+		errx(5, "Unexpected result %d in %s", r, __func__);
 	}
 	if (flags & F_DECODE_KEY)
 		free(key.data);
@@ -683,8 +718,8 @@ usage(void)
 	const char *p = getprogname();
 
 	fprintf(stderr,
-"usage: %s    [-KiNqV] [-E endian] [-f infile] [-O outsep] [-S visitem]\n"
-"             [-T visspec] [-X extravis] type dbfile [key [...]]\n"
+"usage: %s    [-DKiNqV] [-E endian] [-f infile] [-O outsep] [-S visitem]\n"
+"             [-T visspec] [-U unvisitem] [-X extravis] type dbfile [key [...]]\n"
 "       %s -d [-iNq] [-E endian] [-f infile] [-T visspec] [-U unvisitem]\n"
 "             type dbfile [key [...]]\n"
 "       %s -w [-CDiNqR] [-E endian] [-F isep] [-f infile] [-m mode]\n"
