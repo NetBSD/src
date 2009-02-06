@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.24 2008/07/09 20:07:19 joerg Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.25 2009/02/06 02:00:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.24 2008/07/09 20:07:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.25 2009/02/06 02:00:50 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -94,19 +94,20 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.24 2008/07/09 20:07:19 joerg Ex
 #define	ATW_PCI_MMBA		0x14	/* memory mapped base */
 
 struct atw_cardbus_softc {
-	struct atw_softc sc_atw;	/* real ADM8211 softc */
+	struct atw_softc sc_atw;
 
 	/* CardBus-specific goo. */
-	void	*sc_ih;			/* interrupt handle */
-	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	cardbustag_t sc_tag;		/* our CardBus tag */
-	int	sc_csr;			/* CSR bits */
-	bus_size_t sc_mapsize;		/* the size of mapped bus space
-					   region */
+	void			*sc_ih;		/* interrupt handle */
+	cardbus_devfunc_t	sc_ct;		/* our CardBus devfuncs */
+	cardbustag_t		sc_tag;		/* our CardBus tag */
+	cardbusreg_t		sc_csr;		/* CSR bits */
+	bus_size_t		sc_mapsize;	/* the size of mapped bus space
+						 * region
+						 */
 
-	int	sc_cben;		/* CardBus enables */
-	int	sc_bar_reg;		/* which BAR to use */
-	pcireg_t sc_bar_val;		/* value of the BAR */
+	int			sc_cben;	/* CardBus enables */
+	int			sc_bar_reg;	/* which BAR to use */
+	cardbusreg_t		sc_bar_val;	/* value of the BAR */
 
 	cardbus_intr_line_t sc_intrline; /* interrupt line */
 };
@@ -122,8 +123,6 @@ static void	atw_cardbus_setup(struct atw_cardbus_softc *);
 
 static int	atw_cardbus_enable(struct atw_softc *);
 static void	atw_cardbus_disable(struct atw_softc *);
-
-static void	atw_cardbus_intr_ack(struct atw_softc *);
 
 static const struct atw_cardbus_product *atw_cardbus_lookup
    (const struct cardbus_attach_args *);
@@ -144,14 +143,12 @@ atw_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct atw_cardbus_product *acp;
 
-	for (acp = atw_cardbus_products;
-	     acp->acp_product_name != NULL;
-	     acp++) {
+	for (acp = atw_cardbus_products; acp->acp_product_name != NULL; acp++) {
 		if (PCI_VENDOR(ca->ca_id) == acp->acp_vendor &&
 		    PCI_PRODUCT(ca->ca_id) == acp->acp_product)
-			return (acp);
+			return acp;
 	}
-	return (NULL);
+	return NULL;
 }
 
 static int
@@ -160,9 +157,9 @@ atw_cardbus_match(device_t parent, cfdata_t match, void *aux)
 	struct cardbus_attach_args *ca = aux;
 
 	if (atw_cardbus_lookup(ca) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -173,6 +170,18 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct atw_cardbus_product *acp;
+#if 0
+	int i;
+#define	FUNCREG(__x)	{#__x, (__x)}
+	struct {
+		const char *name;
+		bus_size_t ofs;
+	} funcregs[] = {
+		FUNCREG(ATW_FER), FUNCREG(ATW_FEMR), FUNCREG(ATW_FPSR),
+		FUNCREG(ATW_FFER)
+	};
+#undef FUNCREG
+#endif
 	bus_addr_t adr;
 
 	sc->sc_dev = self;
@@ -191,8 +200,6 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_enable = atw_cardbus_enable;
 	sc->sc_disable = atw_cardbus_disable;
-
-	sc->sc_intr_ack = atw_cardbus_intr_ack;
 
 	/* Get revision info. */
 	sc->sc_rev = PCI_REVISION(ca->ca_class);
@@ -268,18 +275,19 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	atw_attach(sc);
 
-	ATW_WRITE(sc, ATW_FER, ATW_FER_INTR);
+#if 0
+	for (i = 0; i < __arraycount(funcregs); i++) {
+		aprint_error_dev(sc->sc_dev, "%s %" PRIx32 "\n",
+		    funcregs[i].name, ATW_READ(sc, funcregs[i].ofs));
+	}
+#endif
+	ATW_WRITE(sc, ATW_FEMR, 0);
+	ATW_WRITE(sc, ATW_FER, ATW_READ(sc, ATW_FER));
 
 	/*
 	 * Power down the socket.
 	 */
 	Cardbus_function_disable(csc->sc_ct);
-}
-
-static void
-atw_cardbus_intr_ack(struct atw_softc *sc)
-{
-	ATW_WRITE(sc, ATW_FER, ATW_FER_INTR);
 }
 
 static int
@@ -296,8 +304,8 @@ atw_cardbus_detach(device_t self, int flags)
 #endif
 
 	rv = atw_detach(sc);
-	if (rv)
-		return (rv);
+	if (rv != 0)
+		return rv;
 
 	/*
 	 * Unhook the interrupt handler.
@@ -312,7 +320,7 @@ atw_cardbus_detach(device_t self, int flags)
 		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg,
 		    sc->sc_st, sc->sc_sh, csc->sc_mapsize);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -342,10 +350,10 @@ atw_cardbus_enable(struct atw_softc *sc)
 		aprint_error_dev(sc->sc_dev,
 				 "unable to establish interrupt\n");
 		Cardbus_function_disable(csc->sc_ct);
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -370,7 +378,7 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	pcireg_t reg;
+	cardbusreg_t csr;
 
 	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
 
@@ -383,21 +391,10 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
+	csr = cardbus_conf_read(cc, cf, csc->sc_tag,
 	    CARDBUS_COMMAND_STATUS_REG);
-	reg &= ~(CARDBUS_COMMAND_IO_ENABLE|CARDBUS_COMMAND_MEM_ENABLE);
-	reg |= csc->sc_csr;
+	csr &= ~(CARDBUS_COMMAND_IO_ENABLE|CARDBUS_COMMAND_MEM_ENABLE);
+	csr |= csc->sc_csr;
 	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
-	    reg);
-
-	/*
-	 * Make sure the latency timer is set to some reasonable
-	 * value.
-	 */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(reg) < 0x20) {
-		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
-	}
+	    csr);
 }
