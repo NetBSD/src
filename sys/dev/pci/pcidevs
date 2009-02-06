@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.975 2009/01/27 08:04:54 markd Exp $
+$NetBSD: pcidevs,v 1.976 2009/02/06 19:36:35 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3843,6 +3843,11 @@ product TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
 product TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
+product TI	PCIXX12CB	0x8039	PCIXX12 Cardbus Controller
+product TI	PCIXX12FW	0x803a	PCIXX12 IEEE 1394 Host Controller
+product TI	PCIXX12FM	0x803b	PCIXX12 Integrated FlashMedia Controller
+product TI	PCIXX12SD	0x803c	PCIXX12 Secure Digital Host Controller
+product TI	PCIXX12SM	0x803d	PCIXX12 Smart Card
 product TI	ACX100A		0x8400	ACX100A 802.11b
 product TI	ACX100B		0x8401	ACX100B 802.11b
 product TI	ACX111		0x9066	ACX111 802.11b/g
