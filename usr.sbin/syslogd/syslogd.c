@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.98 2009/01/22 21:10:52 mschuett Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.99 2009/02/06 21:09:46 mschuett Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.98 2009/01/22 21:10:52 mschuett Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.99 2009/02/06 21:09:46 mschuett Exp $");
 #endif
 #endif /* not lint */
 
@@ -2817,6 +2817,12 @@ die(int fd, short event, void *ev)
 	/* prevent recursive signals */
 	BLOCK_SIGNALS(omask, newmask);
 
+	errno = 0;
+	if (ev != NULL)
+		logerror("Exiting on signal %d", fd);
+	else
+		logerror("Fatal error, exiting");
+
 	/*
 	 *  flush any pending output
 	 */
@@ -2907,11 +2913,6 @@ die(int fd, short event, void *ev)
 #endif /* !DISABLE_TLS */
 
 	FREEPTR(funix);
-	errno = 0;
-	if (ev != NULL)
-		logerror("Exiting on signal %d", fd);
-	else
-		logerror("Fatal error, exiting");
 	for (p = LogPaths; p && *p; p++)
 		unlink(*p);
 	exit(0);
