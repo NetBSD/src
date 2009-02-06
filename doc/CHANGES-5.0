@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.89 2009/02/02 23:49:21 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.90 2009/02/06 02:39:30 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3715,4 +3715,131 @@ sys/arch/x68k/stand/boot/boot.c			1.14
 
 	Fix PR install/38943 on macppc and x68k.
 	[tsutsui, ticket #407]
+
+usr.bin/db/db.1					1.24
+usr.bin/db/db.1					1.25
+usr.bin/db/db.c					1.24
+
+	Rework how reading keys functions so that key lookups from hash
+	databases works again.
+	Update documentation to reflect reality:
+	* read mode supports -D for btree
+	* all modes support -U
+	[lukem, ticket #404]
+
+distrib/sets/lists/etc/mi			1.205
+etc/defaults/rc.conf				1.99
+etc/mtree/special				1.125
+etc/rc.d/Makefile				1.73
+etc/rc.d/rndctl					1.1, 1.2
+share/man/man5/rc.conf.5			1.127
+usr.sbin/postinstall/postinstall		1.82
+
+	Add etc/rc.d/rndctl script. This allows you to invoke rndctl
+	during the boot.
+	[apb, ticket #406]
+
+sys/net/if_tap.c				1.52
+
+	Drop splnet() *after* tsleep instead of before.  Fixes a race
+	condition between sleep and wakeup.
+	[pooka, ticket #405]
+
+distrib/evbppc/ramdisk/dot.hdprofile		1.1
+distrib/evbppc/ramdisk/list			1.6
+distrib/notes/common/contents			1.148
+distrib/utils/sysinst/arch/evbppc/msg.md.de	1.6
+distrib/utils/sysinst/arch/evbppc/msg.md.en	1.10
+distrib/utils/sysinst/arch/evbppc/msg.md.es	1.5
+distrib/utils/sysinst/arch/evbppc/msg.md.fr	1.10
+distrib/utils/sysinst/arch/evbppc/msg.md.pl	1.10
+
+	Switch evbpcc sysinst and install notes to referencing
+	WALNUT/OPENBLOCKS266 kernels, rather than (nonexistant) GENERIC.
+	[abs, ticket #408]
+
+usr.sbin/cpuctl/cpuctl.c			1.13
+
+	cpuctl list: map hardware id after getting state. Avoids screwed
+	up display when ci_cpuid != cpu_index().
+	[rmind, ticket #409]
+
+usr.sbin/btpand/bnep.c				1.2
+
+	Fix a problem which prevents remote parties connecting to our
+	NAP service, we got the services mixed up.
+	[plunky, ticket #411]
+
+sys/nfs/nfs_socket.c				1.178
+
+	PR kern/40491: nfs timer can crash/break on smp
+	Hack around it by acquiring softnet_lock around the client-side
+	timer loop.
+	[ad, ticket #412]
+
+sys/kern/kern_lwp.c				1.127
+sys/kern/sys_process.c				1.146
+sys/sys/lwp.h					1.117
+
+	Fix the crashy test case that Thor provided in PR kern/36183.
+	[ad, ticket #414]
+
+sys/kern/kern_synch.c				1.260
+
+	Warn once and no more about backwards monotonic clock.
+	[ad, ticket #415]
+
+share/man/man4/iwi.4				1.14
+share/man/man4/iwn.4				1.5
+share/man/man4/wpi.4				1.10, 1.11
+
+	Bring up to speed with firmware reality.
+	[plunky, ticket #416]
+
+sys/dev/wscons/wsdisplay.c			1.126
+sys/kern/tty.c					1.230
+sys/sys/tty.h					1.86
+
+	Avoid deadlock in tty code if a terminal emulation responds to
+	type/status/etc inquiries.  Addresses PR kern/37915.
+	[drochner, ticket #417]
+
+sys/arch/alpha/stand/Makefile.bootprogs		1.28
+sys/arch/alpha/stand/common/boot.c		1.29, 1.30
+sys/arch/alpha/stand/ustarboot/Makefile		1.7
+
+	Disable LOAD_NOTE on ustarboot to avoid backward seek on loading
+	a kernel.  Fixes PR install/38943 on alpha.
+	[tsutsui, ticket #418]
+
+sys/arch/ews4800mips/stand/common/ether_if.c	1.4
+sys/arch/ews4800mips/stand/boot/version		1.3
+sys/arch/ews4800mips/stand/common/bootxx.c	1.5
+sys/arch/ews4800mips/stand/common/disk.c	1.7
+sys/arch/ews4800mips/stand/common/floppy_2d.c	1.5
+sys/arch/ews4800mips/stand/common/floppy_2hc.c	1.5
+sys/arch/ews4800mips/stand/common/floppy_2hd_ibmpc.c 1.5
+sys/arch/ews4800mips/stand/common/ustarfs.c	1.8
+
+	- Fix getsecs() to return more proper values.
+	- use multiple sector read on floppy boot
+	  (speeds up ustarfs floppy boot from ~840sec to ~100sec)
+	- use twiddle() rather than printing CHS numbers on reading
+	  floppy sectors
+	- make ustarfs_load() work with more than two volumes
+	[tsutsui, ticket #419]
+
+doc/3RDPARTY					patch
+doc/CHANGES					patch
+external/bsd/dhcpcd/dist/client.c		dhcpcd-4-0-10
+external/bsd/dhcpcd/dist/common.c		dhcpcd-4-0-10
+external/bsd/dhcpcd/dist/config.h		dhcpcd-4-0-10
+external/bsd/dhcpcd/dist/dhcp.c			dhcpcd-4-0-10
+external/bsd/dhcpcd/dist/dhcpcd.c		dhcpcd-4-0-10
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in	dhcpcd-4-0-10
+external/bsd/dhcpcd/dist/dhcpcd.h		dhcpcd-4-0-10
+external/bsd/dhcpcd/dist/signals.c		dhcpcd-4-0-10
+
+	Update dhcpcd to 4.0.10.
+	[roy, ticket #386]
 
