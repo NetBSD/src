@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.32 2006/09/28 13:52:51 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.33 2009/02/06 14:40:32 sketch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.32 2006/09/28 13:52:51 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.33 2009/02/06 14:40:32 sketch Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -716,8 +716,8 @@ history_load(History *h, const char *fname)
 		(void) strunvis(ptr, line);
 		line[sz] = c;
 		if (HENTER(h, &ev, ptr) == -1) {
-			h_free((ptr_t)ptr);
-			return -1;
+			i = -1;
+			goto oomem;
 		}
 	}
 oomem:
