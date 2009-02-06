@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpspl.c,v 1.1 2009/01/01 16:50:30 pooka Exp $	*/
+/*	$NetBSD: rumpspl.c,v 1.2 2009/02/06 20:01:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpspl.c,v 1.1 2009/01/01 16:50:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpspl.c,v 1.2 2009/02/06 20:01:41 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -41,12 +41,11 @@ void
 spllower(int s)
 {
 
-	rump_splx(s);
 }
 
 int
 splraise(int s)
 {
 
-	return rump_splfoo();
+	return 0;
 }

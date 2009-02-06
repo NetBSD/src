@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.13 2009/01/27 09:14:01 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.14 2009/02/06 20:01:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -144,15 +144,6 @@ extern struct rumpuser_mtx rumpuser_aio_mtx;
 extern struct rumpuser_cv rumpuser_aio_cv;
 extern struct rumpuser_aio rumpuser_aios[N_AIOS];
 extern int rumpuser_aio_head, rumpuser_aio_tail;
-
-extern struct rumpuser_rw rumpspl;
-
-#define RUMPUSER_IPL_SPLFOO 1
-#define RUMPUSER_IPL_INTR (-1)
-
-void rumpuser_set_ipl(int);
-int  rumpuser_whatis_ipl(void);
-void rumpuser_clear_ipl(int);
 
 /* rumpuser_net */
 
