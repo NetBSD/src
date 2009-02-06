@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN2_DOMU,v 1.18 2008/03/01 15:09:14 joerg Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.19 2009/02/06 18:50:27 jym Exp $
 #
 #	INSTALL_XEN2_DOMU - Installation kernel for Xen 2/DomU.
 #
@@ -7,9 +7,10 @@
 
 include	"arch/i386/conf/XEN2_DOMU"
 
-#ident 		"INSTALL-$Revision: 1.18 $"
+#ident 		"INSTALL-$Revision: 1.19 $"
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
 options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

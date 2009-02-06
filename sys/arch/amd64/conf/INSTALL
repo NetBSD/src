@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.80 2008/05/02 15:26:38 ad Exp $
+# $NetBSD: INSTALL,v 1.81 2009/02/06 18:50:26 jym Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,11 +7,12 @@
 
 include	"arch/amd64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.80 $"
+#ident 		"INSTALL-$Revision: 1.81 $"
 
 no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
 options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 no options	MTRR

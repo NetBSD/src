@@ -1,4 +1,4 @@
-#       $NetBSD: NAPPI_MD,v 1.1 2002/12/02 14:26:52 ichiro Exp $
+#       $NetBSD: NAPPI_MD,v 1.2 2009/02/06 18:50:27 jym Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -11,6 +11,7 @@ include "arch/evbarm/conf/NAPPI"
 options		MEMORY_DISK_HOOKS
 options		MEMORY_DISK_IS_ROOT		# Force root on ram-disk
 options		MEMORY_DISK_ROOT_SIZE=8192	# 2 Megabytes
+options		MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # disk/mass storage pseudo-devices
 pseudo-device	md	1	# memory disk device

@@ -1,8 +1,8 @@
-# $NetBSD: INSTALL_OMSAL400,v 1.1 2006/03/30 15:30:59 shige Exp $
+# $NetBSD: INSTALL_OMSAL400,v 1.2 2009/02/06 18:50:27 jym Exp $
 
 include		"arch/evbmips/conf/OMSAL400"
 
-#ident 		"INSTALL_OMSAL400-$Revision: 1.1 $"
+#ident 		"INSTALL_OMSAL400-$Revision: 1.2 $"
 
 # Enable the hooks used for initializing the root memory-disk.
 #     The ramdisk size must be kept in sync manually with the size of
@@ -12,3 +12,4 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
 options 	MEMORY_DISK_SERVER=0		# no userspace memory disk
 options 	MEMORY_DISK_ROOT_SIZE=8192	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.39 2008/11/12 12:36:06 ad Exp $
+#	$NetBSD: INSTALL,v 1.40 2009/02/06 18:50:28 jym Exp $
 #
 #	Shark installation kernel
 #
@@ -111,6 +111,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_ROOT_SIZE=7000	# Size in blocks (3.5MB)
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	INSECURE		# disable kernel securelevel
 

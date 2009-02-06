@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL_OPENBLOCKS266,v 1.4 2006/10/02 03:28:30 chs Exp $
+# 	$NetBSD: INSTALL_OPENBLOCKS266,v 1.5 2009/02/06 18:50:27 jym Exp $
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
 
-#ident 		"INSTALL_OPENBLOCKS266-$Revision: 1.4 $"
+#ident 		"INSTALL_OPENBLOCKS266-$Revision: 1.5 $"
 
 #
 # DEBUG options turned on:
@@ -24,5 +24,6 @@ options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
 options 	MEMORY_DISK_SERVER=0		# no userspace memory disk
 #options 	MEMORY_DISK_ROOT_SIZE=8192	# size of memory disk, in blocks
 options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 pseudo-device	md		1	# memory disk device

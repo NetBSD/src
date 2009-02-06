@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.26 2008/07/31 07:41:01 simonb Exp $
+#	$NetBSD: KZSH401,v 1.27 2009/02/06 18:50:27 jym Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -15,6 +15,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=2880	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	16		# estimated number of users
 

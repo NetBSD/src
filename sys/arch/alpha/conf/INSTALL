@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.96 2008/07/31 07:40:59 simonb Exp $
+# $NetBSD: INSTALL,v 1.97 2009/02/06 18:50:26 jym Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -14,6 +14,7 @@ maxusers 8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_ROOT_SIZE=9300	# 4 Megabytes
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # CPU Support
 options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)

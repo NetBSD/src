@@ -108,6 +108,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_DYNAMIC
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)

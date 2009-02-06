@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.15 2008/05/02 13:02:31 ad Exp $	*/
+/*	$NetBSD: md_root.c,v 1.16 2009/02/06 18:50:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.15 2008/05/02 13:02:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.16 2009/02/06 18:50:29 jym Exp $");
 
 #include "opt_md.h"
 
@@ -75,8 +75,8 @@ char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 #endif /* MEMORY_DISK_IMAGE */
 #endif /* MEMORY_DISK_DYNAMIC */
 
-#ifndef MEMORY_RBFLAGS
-#define MEMORY_RBFLAGS	RB_SINGLE	/* force single user */
+#ifndef MEMORY_DISK_RBFLAGS
+#define MEMORY_DISK_RBFLAGS	RB_AUTOBOOT	/* default boot mode */
 #endif
 
 #ifdef MEMORY_DISK_DYNAMIC
@@ -115,7 +115,6 @@ md_open_hook(int unit, struct md_conf *md)
 {
 
 	if (unit == 0 && md_is_root) {
-		/* The root ramdisk only works single-user. */
-		boothowto |= MEMORY_RBFLAGS;
+		boothowto |= MEMORY_DISK_RBFLAGS;
 	}
 }

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.24 2008/11/24 11:41:07 ad Exp $
+# $NetBSD: INSTALL,v 1.25 2009/02/06 18:50:26 jym Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -113,6 +113,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096 # size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # WS console uses DUMB, SUN or VT100 terminal emulation
 options 	WSEMUL_NODUMB
