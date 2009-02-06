@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.143.2.4 2009/01/26 03:30:53 snj Exp $
+.\"	$NetBSD: contents,v 1.143.2.5 2009/02/06 01:06:58 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -211,11 +211,14 @@ A kernel suitable for booting on O2.
 .\}
 .
 .if \n[evbppc] \{\
+.			It Pa netbsd-OPENBLOCKS266.gz
+A gzipped
+.Nx
+kernel (in ELF format) for the Plat'Home OpenBlockS266 microserver.
 .			It Pa netbsd-WALNUT.gz
 A gzipped
 .Nx
-kernel (in ELF format) containing code for everything supported
-in this release.
+kernel (in ELF format) for the IBM PowerPC 405GP based Walnut evaluation board.
 .			It Pa netbsd.img-WALNUT.gz
 Same as the above, but in the format expected by the firmware.
 .			It Pa netbsd-INSTALL_WALNUT.gz
@@ -899,6 +902,16 @@ kernel, which will use multiple processors (if present), named
 .\}
 .el \{\
 .ie \n[evbppc] \{\
+.It Sy kern-OPENBLOCKS266
+This set contains a
+.Nx*M
+\*V
+kernel in ELF format named
+.Pa /netbsd
+and the same kernel in the format needed by the bootloader as
+.Pa /netbsd.img .
+These kernels are specific to the Plat'Home OpenBlockS266 microserver.
+.showsize 5 9
 .It Sy kern-WALNUT
 This set contains a
 .Nx*M
@@ -908,9 +921,6 @@ kernel in ELF format named
 and the same kernel in the format needed by the bootloader as
 .Pa /netbsd.img .
 These kernels are specific to the IBM 405GP based Walnut evaluation board.
-You
-.Em must
-install this distribution set.
 .showsize 5 9
 .\}
 .el \{\

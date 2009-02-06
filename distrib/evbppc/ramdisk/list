@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2008/05/06 15:32:06 dyoung Exp $
+#	$NetBSD: list,v 1.5.4.1 2009/02/06 01:06:58 snj Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -81,3 +81,5 @@ COPY	${CURDIR}/disktab.preinstall	etc/disktab.preinstall
 # and the boot script
 COPY	${CURDIR}/dot.profile		.profile
 MTREE	./.profile	type=file uname=root gname=wheel mode=0644
+COPY   ${CURDIR}/dot.hdprofile         tmp/.hdprofile
+
