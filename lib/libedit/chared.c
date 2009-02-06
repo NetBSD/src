@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.25 2005/08/08 01:41:30 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.26 2009/02/06 12:45:25 sketch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.25 2005/08/08 01:41:30 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.26 2009/02/06 12:45:25 sketch Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: chared.c,v 1.25 2005/08/08 01:41:30 christos Exp $");
 #include <stdlib.h>
 #include "el.h"
 
-private void ch__clearmacro __P((EditLine *));
+private void ch__clearmacro (EditLine *);
 
 /* value to leave unused in line buffer */
 #define	EL_LEAVE	2
