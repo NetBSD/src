@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.45 2009/02/06 18:34:19 jym Exp $
+#	$NetBSD: INSTALL,v 1.46 2009/02/06 18:50:26 jym Exp $
 #
 # First try for BEBOX config file
 #
@@ -16,6 +16,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet

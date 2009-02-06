@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.107 2008/07/31 07:41:02 simonb Exp $
+#	$NetBSD: INSTALL,v 1.108 2009/02/06 18:50:28 jym Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -18,6 +18,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

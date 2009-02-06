@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.48 2009/01/17 01:19:18 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.49 2009/02/06 18:50:28 jym Exp $
 
 #	config for bootable floppy kernel
 #
@@ -19,6 +19,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=3000	# 1.50 Megabytes
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Standard system options
 #options 	KTRACE			# system call tracing support

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.35 2008/08/10 15:31:21 tls Exp $
+#	$NetBSD: GENERIC,v 1.36 2009/02/06 18:50:27 jym Exp $
 #
 #
 
@@ -18,6 +18,7 @@ options		CONSOLE_ADDR=0x3f8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
 options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	8
 

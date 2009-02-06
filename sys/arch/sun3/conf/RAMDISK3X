@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.37 2008/05/16 15:16:15 he Exp $
+# $NetBSD: RAMDISK3X,v 1.38 2009/02/06 18:50:28 jym Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -44,6 +44,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=1200	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

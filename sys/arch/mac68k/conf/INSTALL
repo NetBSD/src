@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.43 2008/07/31 07:41:02 simonb Exp $
+#	$NetBSD: INSTALL,v 1.44 2009/02/06 18:50:27 jym Exp $
 #
 # INSTALL
 
@@ -14,6 +14,7 @@ maxusers	8		# estimated number of users
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT 	# Force root on ram-disk
 options 	MEMORY_DISK_ROOT_SIZE=5120	# 2.5 MB
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # CPU support.  At least one is REQUIRED.
 options 	M68040

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.122 2008/12/20 12:41:19 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.123 2009/02/06 18:50:27 jym Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -19,6 +19,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=3100	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	2		# estimated number of users
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.10 2009/01/18 12:51:25 he Exp $
+# 	$NetBSD: RAMDISK,v 1.11 2009/02/06 18:50:28 jym Exp $
 #
 # Install kernel with ramdisk added.
 # The ramdisk is be too big to netboot directly via ECOFF on some machines,
@@ -15,6 +15,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=6800	# size of memory disk, in blocks (3400kB)
 #options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # File systems: need MFS
 file-system 	MFS		# memory file system

@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.16 2002/04/02 05:30:38 lukem Exp $
+# $NetBSD: RAMDISK,v 1.17 2009/02/06 18:50:26 jym Exp $
 #
 # Generic Alpha kernel with built-in RAM disk image.
 
@@ -8,3 +8,4 @@ include	"arch/alpha/conf/GENERIC"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_ROOT_SIZE=8192	# 4 Megabytes!
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

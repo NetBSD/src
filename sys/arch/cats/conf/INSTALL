@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.71 2009/01/21 14:43:14 he Exp $
+#	$NetBSD: INSTALL,v 1.72 2009/02/06 18:50:26 jym Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -110,6 +110,7 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 options 	MEMORY_DISK_ROOT_SIZE=4200	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)

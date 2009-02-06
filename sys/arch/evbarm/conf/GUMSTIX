@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.33 2009/01/29 10:33:22 nonaka Exp $
+#	$NetBSD: GUMSTIX,v 1.34 2009/02/06 18:50:27 jym Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -128,7 +128,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 #options 	MEMORY_DISK_DYNAMIC
 #options 	MEMORY_DISK_ROOT_SIZE=22528	# Size in blocks
-#options 	MEMORY_RBFLAGS=RB_AUTOBOOT
 
 # Miscellaneous kernel options
 
