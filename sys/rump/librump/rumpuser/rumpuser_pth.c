@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.26 2009/01/27 09:14:01 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.27 2009/02/06 20:01:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.26 2009/01/27 09:14:01 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.27 2009/02/06 20:01:41 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: rumpuser_pth.c,v 1.26 2009/01/27 09:14:01 pooka Exp $");
 #include "rumpuser_int.h"
 
 static pthread_key_t curlwpkey;
-static pthread_key_t isintr;
 
 #define NOFAIL(a) do {if (!(a)) abort();} while (/*CONSTCOND*/0)
 #define NOFAIL_ERRNO(a)							\
@@ -120,8 +119,6 @@ struct rumpuser_cv rumpuser_aio_cv;
 int rumpuser_aio_head, rumpuser_aio_tail;
 struct rumpuser_aio rumpuser_aios[N_AIOS];
 
-struct rumpuser_rw rumpspl;
-
 kernel_lockfn	rumpuser__klock;
 kernel_unlockfn	rumpuser__kunlock;
 int		rumpuser__wantthreads;
@@ -163,11 +160,8 @@ rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 
 	pthread_mutex_init(&rumpuser_aio_mtx.pthmtx, NULL);
 	pthread_cond_init(&rumpuser_aio_cv.pthcv, NULL);
-	pthread_rwlock_init(&rumpspl.pthrw, NULL);
-	pthread_spin_init(&rumpspl.spin, PTHREAD_PROCESS_SHARED);
 
 	pthread_key_create(&curlwpkey, NULL);
-	pthread_key_create(&isintr, NULL);
 
 	rumpuser__klock = lockfn;
 	rumpuser__kunlock = unlockfn;
@@ -482,42 +476,4 @@ rumpuser_get_curlwp()
 {
 
 	return pthread_getspecific(curlwpkey);
-}
-
-/*
- * I am the interrupt
- */
-
-void
-rumpuser_set_ipl(int what)
-{
-	int cur;
-
-	if (what == RUMPUSER_IPL_INTR) {
-		pthread_setspecific(isintr, (void *)RUMPUSER_IPL_INTR);
-	} else  {
-		cur = (int)(intptr_t)pthread_getspecific(isintr);
-		pthread_setspecific(isintr, (void *)(intptr_t)(cur+1));
-	}
-}
-
-int
-rumpuser_whatis_ipl()
-{
-
-	return (int)(intptr_t)pthread_getspecific(isintr);
-}
-
-void
-rumpuser_clear_ipl(int what)
-{
-	int cur;
-
-	if (what == RUMPUSER_IPL_INTR)
-		cur = 1;
-	else
-		cur = (int)(intptr_t)pthread_getspecific(isintr);
-	cur--;
-
-	pthread_setspecific(isintr, (void *)(intptr_t)cur);
 }

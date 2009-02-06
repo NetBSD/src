@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.92 2009/02/06 19:49:13 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.93 2009/02/06 20:01:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.92 2009/02/06 19:49:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.93 2009/02/06 20:01:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -348,44 +348,6 @@ rump_get_curlwp()
 		l = &lwp0;
 
 	return l;
-}
-
-int
-rump_splfoo()
-{
-
-	if (rumpuser_whatis_ipl() != RUMPUSER_IPL_INTR) {
-		rumpuser_rw_enter(&rumpspl, 0);
-		rumpuser_set_ipl(RUMPUSER_IPL_SPLFOO);
-	}
-
-	return 0;
-}
-
-void
-rump_intr_enter(void)
-{
-
-	rumpuser_set_ipl(RUMPUSER_IPL_INTR);
-	rumpuser_rw_enter(&rumpspl, 1);
-}
-
-void
-rump_intr_exit(void)
-{
-
-	rumpuser_rw_exit(&rumpspl);
-	rumpuser_clear_ipl(RUMPUSER_IPL_INTR);
-}
-
-void
-rump_splx(int dummy)
-{
-
-	if (rumpuser_whatis_ipl() != RUMPUSER_IPL_INTR) {
-		rumpuser_clear_ipl(RUMPUSER_IPL_SPLFOO);
-		rumpuser_rw_exit(&rumpspl);
-	}
 }
 
 kauth_cred_t

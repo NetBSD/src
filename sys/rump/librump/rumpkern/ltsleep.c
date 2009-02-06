@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.9 2008/12/18 00:24:12 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.10 2009/02/06 20:01:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.9 2008/12/18 00:24:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.10 2009/02/06 20:01:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,7 +56,6 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	volatile struct simplelock *slock)
 {
 	struct ltsleeper lts;
-	int iplrecurse;
 
 	if (__predict_false(slock))
 		panic("simplelock not supported by rump, convert code");
@@ -67,18 +66,8 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	mutex_enter(&sleepermtx);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
 
-	/* release spl */
-	iplrecurse = rumpuser_whatis_ipl();
-	while (iplrecurse--)
-		rumpuser_rw_exit(&rumpspl);
-
 	/* protected by sleepermtx */
 	cv_wait(&lts.cv, &sleepermtx);
-
-	/* retake ipl */
-	iplrecurse = rumpuser_whatis_ipl();
-	while (iplrecurse--)
-		rumpuser_rw_enter(&rumpspl, 0);
 
 	LIST_REMOVE(&lts, entries);
 	mutex_exit(&sleepermtx);
@@ -93,7 +82,6 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	kmutex_t *lock)
 {
 	struct ltsleeper lts;
-	int iplrecurse;
 
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
@@ -101,19 +89,9 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	mutex_enter(&sleepermtx);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
 
-	/* release spl */
-	iplrecurse = rumpuser_whatis_ipl();
-	while (iplrecurse--)
-		rumpuser_rw_exit(&rumpspl);
-
 	/* protected by sleepermtx */
 	mutex_exit(lock);
 	cv_wait(&lts.cv, &sleepermtx);
-
-	/* retake ipl */
-	iplrecurse = rumpuser_whatis_ipl();
-	while (iplrecurse--)
-		rumpuser_rw_enter(&rumpspl, 0);
 
 	LIST_REMOVE(&lts, entries);
 	mutex_exit(&sleepermtx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2009/01/24 12:34:04 he Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2009/02/06 20:01:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,17 +49,14 @@ ipl_cookie_t makeiplcookie(ipl_t ipl)
 
 #endif /* !_LOCORE */
 
-int  rump_splfoo(void);
-void rump_splx(int);
-
-#define spllower(x) ((void)0)
+#define spllower(x) ((void)x)
 #define splraise(x) 0
-#define splsoftnet() rump_splfoo()
-#define splsoftclock() rump_splfoo()
-#define splhigh() rump_splfoo()
-#define splsched() rump_splfoo()
-#define splvm() rump_splfoo()
-#define splx(x) rump_splx(x)
+#define splsoftnet() 0
+#define splsoftclock() 0
+#define splhigh() 0
+#define splsched() 0
+#define splvm() 0
+#define splx(x) ((void)x)
 #define spl0() ((void)0)
 
 #define IPL_NONE 0
