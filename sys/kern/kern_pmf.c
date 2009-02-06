@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.20 2008/06/17 16:17:21 tsutsui Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.21 2009/02/06 01:19:33 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.20 2008/06/17 16:17:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.21 2009/02/06 01:19:33 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -498,14 +498,11 @@ pmf_device_recursive_resume(device_t dv PMF_FN_ARGS)
 }
 
 bool
-pmf_device_resume_subtree(device_t dv PMF_FN_ARGS)
+pmf_device_resume_descendants(device_t dv PMF_FN_ARGS)
 {
 	bool rv = true;
 	device_t curdev;
 	deviter_t di;
-
-	if (!pmf_device_recursive_resume(dv PMF_FN_CALL))
-		return false;
 
 	for (curdev = deviter_first(&di, 0); curdev != NULL;
 	     curdev = deviter_next(&di)) {
@@ -518,6 +515,15 @@ pmf_device_resume_subtree(device_t dv PMF_FN_ARGS)
 	}
 	deviter_release(&di);
 	return rv;
+}
+
+bool
+pmf_device_resume_subtree(device_t dv PMF_FN_ARGS)
+{
+	if (!pmf_device_recursive_resume(dv PMF_FN_CALL))
+		return false;
+
+	return pmf_device_resume_descendants(dv PMF_FN_CALL);
 }
 
 #include <net/if.h>
