@@ -1,4 +1,4 @@
-.\" $NetBSD: wpi.4,v 1.6.18.3 2009/01/22 20:38:00 snj Exp $
+.\" $NetBSD: wpi.4,v 1.6.18.4 2009/02/06 01:58:21 snj Exp $
 .\"
 .\" Copyright (c) 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -172,17 +172,8 @@ The driver needs at least version 2.14.4 of the following firmware file,
 which is loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /usr/pkg/libdata/if_wpi/iwlwifi-3945.ucode
+.It Pa /libdata/if_wpi/iwlwifi-3945.ucode
 .El
-.Pp
-This firmware file is not free because Intel refuses to grant
-distribution rights without contractual obligations.
-As a result, even though
-.Nx
-includes the driver, the firmware file cannot be included and
-users have to download this file on their own.
-The official person to state your views to about this issue is
-peter.engelbrecht@intel.com at +1 (858) 391 1857.
 .Sh EXAMPLES
 .Bd -literal -offset indent
 # ifconfig wpi0 nwkey 0x1deadbeef1
