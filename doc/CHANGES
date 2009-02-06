@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.5 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.6 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1155,3 +1155,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	nvi(1): Added "expandtab" option.  [lukem 20081212]
 	ntp:	import ntp 4.2.4p6.
 		openssl API related security fix.  [kardel 20090108]
+	dhcpcd(8): Import 4.0.10 [roy 20090204]
