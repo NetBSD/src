@@ -521,8 +521,8 @@ ops_rsa_private_encrypt(unsigned char *out, const unsigned char *in,
 */
 int 
 ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
-			size_t length, const ops_rsa_secret_key_t * srsa,
-			const ops_rsa_public_key_t * rsa)
+			size_t length, const ops_rsa_secret_key_t *srsa,
+			const ops_rsa_public_key_t *rsa)
 {
 	RSA            *orsa;
 	int             n;
@@ -537,7 +537,6 @@ ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
 	/* debug */
 	orsa->e = rsa->e;
 	assert(RSA_check_key(orsa) == 1);
-	orsa->e = NULL;
 	/* end debug */
 
 	n = RSA_private_decrypt(length, in, out, orsa, RSA_NO_PADDING);
