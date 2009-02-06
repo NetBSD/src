@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.9 2006/02/04 02:59:19 rpaulo Exp $
+# 	$NetBSD: LCARD,v 1.10 2009/02/06 18:34:19 jym Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -20,7 +20,7 @@ options		MEMSIZE=16		# memory size, in MB
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options		MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
 
 options 	DDB			# in-kernel debugger
 
