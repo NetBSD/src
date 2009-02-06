@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.11 2009/01/13 11:40:55 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.12 2009/02/06 20:01:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -527,9 +527,7 @@ rump_biodone(void *arg, size_t count, int error)
 	KASSERT(bp->b_resid >= 0);
 	bp->b_error = error;
 
-	rump_intr_enter();
 	biodone(bp);
-	rump_intr_exit();
 }
 
 static void
