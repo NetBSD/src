@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.2 2009/01/22 16:05:34 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.3 2009/02/06 23:35:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.2 2009/01/22 16:05:34 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.3 2009/02/06 23:35:27 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -57,8 +57,6 @@ struct rumpuser_mtx rumpuser_aio_mtx;
 struct rumpuser_cv rumpuser_aio_cv;
 int rumpuser_aio_head, rumpuser_aio_tail;
 struct rumpuser_aio *rumpuser_aios[N_AIOS];
-
-struct rumpuser_rw rumpspl;
 
 void donada(int);
 void donada(int arg) {}
