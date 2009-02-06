@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.4.10.1 2009/02/06 02:14:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ const char *boottab[] = {
 	0		/* terminate */
 };
 
-int __dk_unit, __dk_type;
+int __dk_unit, __dk_type, __spb;
 bool (*fd_position)(uint32_t, uint32_t *, int *);
 
 int
@@ -106,9 +106,13 @@ main(void)
 
 	if (__dk_type == NVSRAM_BOOTDEV_FLOPPYDISK) {
 		fd_position = blk_to_2d_position;
-		if (fd_format == FD_FORMAT_2HD) {
+		if (fd_format == FD_FORMAT_2D) {
+			fd_position = blk_to_2d_position;
+			__spb = 2;		/* 256bytes/sector */
+		} else {
 			fd_position = blk_to_2hd_position;
 			__dk_unit |= 0x1000000;		/* | 2HD flag */
+			__spb = 1;
 		}
 	}
 #else
@@ -239,7 +243,7 @@ int
 dk_read(int sector, int count, void *buf)
 {
 #ifdef _STANDALONE
-	int i, cnt;
+	int cnt;
 	uint32_t pos;
 	uint8_t *p = buf;
 
@@ -247,10 +251,16 @@ dk_read(int sector, int count, void *buf)
 		if ((ROM_DK_READ(__dk_unit, sector, count, p) & 0x7f) != 0)
 			return 1;
 	} else {	/* FD */
-		for (i = 0; i < count; i++, p += 512) {
-			fd_position(sector + i, &pos, &cnt);
-			if ((ROM_FD_READ(__dk_unit, pos, cnt, p) & 0x7f) != 0)
+		while (count > 0) {
+			fd_position(sector, &pos, &cnt);
+			if (cnt > count)
+				cnt = count;
+			if ((ROM_FD_READ(__dk_unit, pos, cnt * __spb, p)
+			    & 0x7f) != 0)
 				return 1;
+			count -= cnt;
+			sector += cnt;
+			p += 512 * cnt;
 		}
 	}
 #else

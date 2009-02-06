@@ -1,4 +1,5 @@
-$NetBSD: version,v 1.2 2008/07/16 14:45:17 tsutsui Exp $
+$NetBSD: version,v 1.2.4.1 2009/02/06 02:14:58 snj Exp $
 
 0.0:	Initial revision
 0.1:	Change boot messages to replace build date and maker with kernrev.
+0.2:	Enable multiple sector read on floppy boot.
