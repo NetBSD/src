@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_if.c,v 1.3 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: ether_if.c,v 1.3.10.1 2009/02/06 02:12:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -140,6 +140,13 @@ _rtt(void)
 time_t
 getsecs(void)
 {
+	volatile uint8_t *mkclock;
+	u_int t;
 
-	return (time_t)*(RTC_MK48T18_ADDR + 4);
+	mkclock = RTC_MK48T18_ADDR;
+	t =  bcdtobin(*(mkclock +  4));
+	t += bcdtobin(*(mkclock +  8)) * 60;
+	t += bcdtobin(*(mkclock + 12)) * 60 * 60;
+
+	return (time_t)t;
 }
