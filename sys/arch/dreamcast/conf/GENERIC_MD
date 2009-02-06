@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_MD,v 1.1 2002/10/30 12:22:55 tsutsui Exp $
+# $NetBSD: GENERIC_MD,v 1.2 2009/02/06 18:50:26 jym Exp $
 #
 # GENERIC_MD config file (GENERIC with memory disk root)
 #
@@ -11,3 +11,4 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=2880	# size of memory disk, in blocks
 #options 	MEMORY_DISK_ROOT_SIZE=6000
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

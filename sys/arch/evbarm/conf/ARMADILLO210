@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.10 2008/11/24 11:41:09 ad Exp $
+#	$NetBSD: ARMADILLO210,v 1.11 2009/02/06 18:50:26 jym Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -101,7 +101,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
-options		MEMORY_RBFLAGS=0
 
 # Console options. The default console is speed is 115200 baud.
 options 	CONSPEED=115200		# Console speed

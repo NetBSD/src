@@ -1,7 +1,7 @@
 #
 # kernel config file for memory(RAM) disk
 #
-# 	$NetBSD: RAMDISK,v 1.19 2006/02/05 05:01:50 cube Exp $
+# 	$NetBSD: RAMDISK,v 1.20 2009/02/06 18:50:27 jym Exp $
 #
 
 include		"arch/hpcmips/conf/GENERIC"
@@ -16,3 +16,4 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=8704	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

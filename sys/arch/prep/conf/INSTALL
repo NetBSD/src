@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.51 2008/07/31 07:41:03 simonb Exp $
+#	$NetBSD: INSTALL,v 1.52 2009/02/06 18:50:28 jym Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -14,6 +14,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_ROOT_SIZE=4096	# 2mb
 options 	MEMORY_DISK_SERVER=0	# don't need for install
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	8
 
