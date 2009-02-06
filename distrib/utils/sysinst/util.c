@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.153 2008/11/21 15:31:20 ad Exp $	*/
+/*	$NetBSD: util.c,v 1.154 2009/02/06 00:24:29 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -655,12 +655,26 @@ extract_file(distinfo *dist, int update, int verbose)
 
 	/* check tarfile exists */
 	if (!file_exists_p(path)) {
+
+#ifdef SUPPORT_8_3_SOURCE_FILESYSTEM
+	/*
+	 * Update path to use dist->name tuncated to the first eight
+	 * characters and check again 
+	 */
+	(void)snprintf(path, sizeof path, "%s/%.8s%.3s",
+	    ext_dir, dist->name, dist_postfix);
+		if (!file_exists_p(path)) {
+#endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
+
 		tarstats.nnotfound++;
 
 		msg_display(MSG_notarfile, path);
 		process_menu(MENU_ok, NULL);
 		return SET_RETRY;
 	}
+#ifdef SUPPORT_8_3_SOURCE_FILESYSTEM
+	}
+#endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
 
 	tarstats.nfound++;	
 	/* cd to the target root. */
