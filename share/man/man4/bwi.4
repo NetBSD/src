@@ -1,10 +1,11 @@
+.\" $NetBSD: bwi.4,v 1.3 2009/02/06 14:44:44 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The DragonFly Project.  All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
-.\" 
+.\"
 .\" 1. Redistributions of source code must retain the above copyright
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. Redistributions in binary form must reproduce the above copyright
@@ -14,7 +15,7 @@
 .\" 3. Neither the name of The DragonFly Project nor the names of its
 .\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific, prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 .\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -29,7 +30,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $DragonFly: src/share/man/man4/bwi.4,v 1.10 2008/07/26 16:25:40 swildner Exp $
-.\" $NetBSD: bwi.4,v 1.2 2009/02/06 08:42:07 sborrill Exp $
 .\"
 .Dd February 6, 2009
 .Dt BWI 4
@@ -88,7 +88,8 @@ http://leaf.dragonflybsd.org/~sephe/bwi/v3.tbz
 The firmware files conventionally reside in
 .Pa /libdata/firmware/bwi
 and will be loaded when the interface is brought up.
-N.B. the v3 subdirectory in the above firmware archive should exist
+.Em Note :
+the v3 subdirectory in the above firmware archive should exist
 in the firmware folder.
 The full list of paths checked for firmware can be found in the
 .Va hw.firmware.path
@@ -112,16 +113,18 @@ driver first appeared in
 The
 .Nm
 driver was written by
-.An Sepherosa Ziehau for Dragonfly BSD.
+.An Sepherosa Ziehau
+for Dragonfly BSD.
 It was ported to
 .Nx
-by Taylor R. Campbell (campbell@mumble.net).
+by
+.An Taylor R. Campbell Aq campbell@mumble.net .
 .Pp
 The hardware specification was reverse engineered by the people at
 .Pa http://bcm-specs.sipsolutions.net .
 Thanks go also to johill and mb on the #bcm-specs channel.
 .Sh BUGS
-BCM4306 and BCM4309 chips do not work properly on channel 1, 2 and 3.
+BCM4306 and BCM4309 chips do not work properly on channel 1, 2, and 3.
 .Pp
 The
 .Nx
