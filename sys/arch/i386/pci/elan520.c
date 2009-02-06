@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.36 2009/02/06 01:38:28 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.37 2009/02/06 01:40:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.36 2009/02/06 01:38:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.37 2009/02/06 01:40:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -897,6 +897,10 @@ elansc_detach(device_t self, int flags)
 
 	/* ...and clear it. */
 	elansc_wdogctl_reset(sc);
+
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_PICICR, sc->sc_picicr);
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_MPICMODE,
+	    sc->sc_mpicmode);
 
 	mutex_exit(&sc->sc_mtx);
 	mutex_destroy(&sc->sc_mtx);
