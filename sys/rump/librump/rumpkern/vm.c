@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.51 2009/01/23 14:24:43 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.52 2009/02/06 18:29:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.51 2009/01/23 14:24:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.52 2009/02/06 18:29:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -155,7 +155,7 @@ rumpvm_flushva(struct uvm_object *uobj)
 		rva_next = LIST_NEXT(rva, entries);
 		if (rva->pg->uobject == uobj) {
 			LIST_REMOVE(rva, entries);
-			rva->pg->flags &= ~PG_BUSY;
+			uvm_page_unbusy(&rva->pg, 1);
 			kmem_free(rva, sizeof(*rva));
 		}
 	}
