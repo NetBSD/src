@@ -82,12 +82,12 @@ struct options {
 	char script[PATH_MAX];
 	char pidfile[PATH_MAX];
 
-	char hostname[HOSTNAME_MAX_LEN + 1];
+	char hostname[HOSTNAME_MAX_LEN + 1]; /* We don't store the lenth */
 	int fqdn;
-	uint8_t vendorclassid[VENDORCLASSID_MAX_LEN + 1];
-	char clientid[CLIENTID_MAX_LEN + 1];
-	uint8_t userclass[USERCLASS_MAX_LEN + 1];
-	uint8_t vendor[VENDOR_MAX_LEN + 1];
+	uint8_t vendorclassid[VENDORCLASSID_MAX_LEN + 2];
+	char clientid[CLIENTID_MAX_LEN + 2];
+	uint8_t userclass[USERCLASS_MAX_LEN + 2];
+	uint8_t vendor[VENDOR_MAX_LEN + 2];
 
 	size_t blacklist_len;
 	in_addr_t *blacklist;
