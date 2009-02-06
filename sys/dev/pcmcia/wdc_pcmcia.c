@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.112 2008/06/05 20:34:00 uwe Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.113 2009/02/06 13:43:11 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.112 2008/06/05 20:34:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.113 2009/02/06 13:43:11 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -351,6 +351,9 @@ wdc_pcmcia_enable(struct device *self, int onoff)
 {
 	struct wdc_pcmcia_softc *sc = device_private(self);
 	int error;
+
+	if (cold || doing_shutdown)
+		return (EIO);
 
 	if (onoff) {
 		/* Establish the interrupt handler. */
