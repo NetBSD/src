@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $DragonFly: src/share/man/man4/bwi.4,v 1.10 2008/07/26 16:25:40 swildner Exp $
-.\" $NetBSD: bwi.4,v 1.1 2009/02/05 18:03:30 sborrill Exp $
+.\" $NetBSD: bwi.4,v 1.2 2009/02/06 08:42:07 sborrill Exp $
 .\"
-.Dd February 4, 2009
+.Dd February 6, 2009
 .Dt BWI 4
 .Os
 .Sh NAME
@@ -68,14 +68,13 @@ The following cards are among those supported by the
 .Nm
 driver:
 .Pp
-.Bl -column -compact "Buffalo WLI-PCI-G54S" "BCM4318" "CardBus" "b/g" -offset 6n
+.Bl -column -compact "Apple AirPort Extreme" "BCM4318" "Mini PCI" "b/g" -offset 6n
 .Em "Card	Chip	Bus	Standard"
-Linksys WPC54Gv3	BCM4318	CardBus	b/g
-Linksys WPC54GSv2	BCM4318	CardBus	b/g
-Buffalo WLI-CB-G54S	BCM4318	CardBus	b/g
 Buffalo WLI-PCI-G54S	BCM4306	PCI	b/g
 Dell Wireless 1470	BCM4318	Mini PCI	b/g
 Dell Truemobile 1400	BCM4309	Mini PCI	b/g
+Dell Latitude D505	BCM4306	PCI	b/g
+Apple AirPort Extreme			b/g
 .El
 .Sh FILES
 The firmware for the adapter is not shipped with
@@ -86,16 +85,22 @@ An archive with firmware files that are known to work can be found at:
 http://leaf.dragonflybsd.org/~sephe/bwi/v3.tbz
 .Ed
 .Pp
-The firmware files have to reside in
+The firmware files conventionally reside in
 .Pa /libdata/firmware/bwi
 and will be loaded when the interface is brought up.
+N.B. the v3 subdirectory in the above firmware archive should exist
+in the firmware folder.
+The full list of paths checked for firmware can be found in the
+.Va hw.firmware.path
+.Xr sysctl 3
+node.
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr cardbus 4 ,
 .Xr ifmedia 4 ,
 .Xr pci 4 ,
 .Xr wiconfig 4 ,
 .Xr ifconfig 8 ,
+.Xr sysctl 8 ,
 .Xr wpa_supplicant 8
 .Sh HISTORY
 The
@@ -110,10 +115,14 @@ driver was written by
 .An Sepherosa Ziehau for Dragonfly BSD.
 It was ported to
 .Nx
-by Taylor R. Campbell (campbell@rumble.net).
+by Taylor R. Campbell (campbell@mumble.net).
 .Pp
 The hardware specification was reverse engineered by the people at
 .Pa http://bcm-specs.sipsolutions.net .
 Thanks go also to johill and mb on the #bcm-specs channel.
 .Sh BUGS
 BCM4306 and BCM4309 chips do not work properly on channel 1, 2 and 3.
+.Pp
+The
+.Nx
+driver does not yet support cardbus devices.
