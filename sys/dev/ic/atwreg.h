@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.22 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.23 2009/02/06 02:02:26 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -329,6 +329,10 @@
 
 #define ATW_LPC_LPCO		__BIT(16)	/* lost packet counter overflow */
 #define ATW_LPC_LPC_MASK	__BITS(0, 15)	/* lost packet counter */
+
+#define	ATW_TEST1_RRA_MASK	__BITS(20,12)
+#define	ATW_TEST1_RWA_MASK	__BITS(10,2)
+#define	ATW_TEST1_RXPKT1IN	__BIT(1)
 
 #define	ATW_TEST1_CONTROL	__BIT(31)	/* "0: read from dxfer_control,
 						 * 1: read from dxfer_state"
