@@ -1,7 +1,7 @@
-/*	$NetBSD: lwp.h,v 1.114 2008/10/21 12:22:00 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.114.4.1 2009/02/06 01:54:09 snj Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -285,6 +285,8 @@ int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
 void	lwp_delref(lwp_t *);
 void	lwp_drainrefs(lwp_t *);
+bool	lwp_alive(lwp_t *);
+lwp_t	*lwp_find_first(proc_t *);
 
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001

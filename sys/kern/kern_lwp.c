@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lwp.c,v 1.126 2008/10/28 22:11:36 wrstuden Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.126.2.1 2009/02/06 01:54:09 snj Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.126 2008/10/28 22:11:36 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.126.2.1 2009/02/06 01:54:09 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1386,6 +1386,47 @@ lwp_drainrefs(struct lwp *l)
 	l->l_refcnt--;
 	while (l->l_refcnt != 0)
 		cv_wait(&p->p_lwpcv, p->p_lock);
+}
+
+/*
+ * Return true if the specified LWP is 'alive'.  Only p->p_lock need
+ * be held.
+ */
+bool
+lwp_alive(lwp_t *l)
+{
+
+	KASSERT(mutex_owned(l->l_proc->p_lock));
+
+	switch (l->l_stat) {
+	case LSSLEEP:
+	case LSRUN:
+	case LSONPROC:
+	case LSSTOP:
+	case LSSUSPENDED:
+		return true;
+	default:
+		return false;
+	}
+}
+
+/*
+ * Return first live LWP in the process.
+ */
+lwp_t *
+lwp_find_first(proc_t *p)
+{
+	lwp_t *l;
+
+	KASSERT(mutex_owned(p->p_lock));
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (lwp_alive(l)) {
+			return l;
+		}
+	}
+
+	return NULL;
 }
 
 /*
