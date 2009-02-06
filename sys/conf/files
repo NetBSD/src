@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.938 2009/01/18 23:29:33 christos Exp $
+#	$NetBSD: files,v 1.939 2009/02/06 18:50:29 jym Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20081219
@@ -193,6 +193,9 @@ obsolete defflag		LLC		# obsolete
 obsolete defflag opt_ns.h	NS NSIP		# obsolete
 obsolete defflag		IPX		# obsolete
 obsolete defflag opt_iso.h	TPCONS
+obsolete defparam opt_md.h	MEMORY_RBFLAGS	# superseded by
+						# MEMORY_DISK_RBFLAGS
+
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
@@ -253,7 +256,7 @@ defflag	opt_kstack.h		KSTACK_CHECK_MAGIC
 defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER=1 MEMORY_DISK_ROOT_SIZE
-				MEMORY_RBFLAGS
+				MEMORY_DISK_RBFLAGS
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
