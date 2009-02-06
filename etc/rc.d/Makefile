@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.68.2.2 2009/01/22 21:28:26 snj Exp $
+# $NetBSD: Makefile,v 1.68.2.3 2009/02/06 00:51:41 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -24,8 +24,8 @@ CONFIGFILES=\
 		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
 		perusertmp pf pf_boot pflogd poffd postfix powerd ppp pwcheck \
 		quota \
-		racoon rpcbind raidframe raidframeparity rarpd rbootd root \
-		route6d routed rtadvd rtclocaltime rtsold rwho \
+		racoon rpcbind raidframe raidframeparity rarpd rbootd rndctl \
+		root route6d routed rtadvd rtclocaltime rtsold rwho \
 		savecore screenblank sdpd securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
