@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.27 2008/06/24 19:44:52 drochner Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.28 2009/02/06 01:55:19 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.27 2008/06/24 19:44:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.28 2009/02/06 01:55:19 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -197,12 +197,6 @@ rtw_cardbus_match(device_t parent, struct cfdata *match, void *aux)
 }
 
 static void
-rtw_cardbus_intr_ack(struct rtw_regs *regs)
-{
-	RTW_WRITE(regs, RTW_FER, RTW_FER_INTR);
-}
-
-static void
 rtw_cardbus_funcregen(struct rtw_regs *regs, int enable)
 {
 	u_int32_t reg;
@@ -237,8 +231,6 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 		printf("\n");
 		panic("rtw_cardbus_attach: impossible");
 	}
-
-	sc->sc_intr_ack = rtw_cardbus_intr_ack;
 
 	/* Get revision info. */
 	rev = PCI_REVISION(ca->ca_class);
@@ -301,8 +293,8 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	rtw_cardbus_funcregen(regs, 1);
 
-	RTW_WRITE(regs, RTW_FEMR, RTW_FEMR_INTR);
-	RTW_WRITE(regs, RTW_FER, RTW_FER_INTR);
+	RTW_WRITE(regs, RTW_FEMR, 0);
+	RTW_WRITE(regs, RTW_FER, RTW_READ(regs, RTW_FER));
 
 	if (!pmf_device_register(self, rtw_cardbus_suspend, rtw_cardbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
