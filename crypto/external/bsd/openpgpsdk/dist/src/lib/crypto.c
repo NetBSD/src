@@ -90,7 +90,8 @@ ops_decrypt_and_unencode_mpi(unsigned char *buf, unsigned buflen, const BIGNUM *
 		return false;
 
 	/* Skip the random bytes. */
-	for (i = 2; i < n && mpibuf[i]; ++i);
+	for (i = 2; i < n && mpibuf[i]; ++i) {
+	}
 
 	if (i == n || i < 10)
 		return false;
