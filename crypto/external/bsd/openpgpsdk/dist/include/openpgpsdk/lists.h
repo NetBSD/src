@@ -32,8 +32,8 @@ typedef struct {
 	unsigned long  *ulongs;
 }               ops_ulong_list_t;
 
-void            ops_ulong_list_init(ops_ulong_list_t * list);
-void            ops_ulong_list_free(ops_ulong_list_t * list);
-unsigned int    ops_ulong_list_add(ops_ulong_list_t * list, unsigned long *ulong);
+void            ops_ulong_list_init(ops_ulong_list_t *);
+void            ops_ulong_list_free(ops_ulong_list_t *);
+unsigned int    ops_ulong_list_add(ops_ulong_list_t *, unsigned long *);
 
 #endif				/* OPS_LISTS_H */

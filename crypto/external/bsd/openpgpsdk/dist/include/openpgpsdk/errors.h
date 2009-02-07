@@ -102,15 +102,15 @@ typedef struct ops_error {
 	struct ops_error *next;
 }               ops_error_t;
 
-const char     *ops_errcode(const ops_errcode_t errcode);
+const char     *ops_errcode(const ops_errcode_t);
 
 void 
-ops_push_error(ops_error_t ** errstack, ops_errcode_t errcode, int sys_errno,
-	       const char *file, int line, const char *comment,...);
-void            ops_print_error(ops_error_t * err);
-void            ops_print_errors(ops_error_t * errstack);
-void            ops_free_errors(ops_error_t * errstack);
-int             ops_has_error(ops_error_t * errstack, ops_errcode_t errcode);
+ops_push_error(ops_error_t **, ops_errcode_t, int,
+	       const char *, int, const char *, ...);
+void            ops_print_error(ops_error_t *);
+void            ops_print_errors(ops_error_t *);
+void            ops_free_errors(ops_error_t *);
+int             ops_has_error(ops_error_t *, ops_errcode_t);
 
 #define OPS_SYSTEM_ERROR_1(err,code,syscall,fmt,arg)	do {		\
 	ops_push_error(err,OPS_E_SYSTEM_ERROR,errno,__FILE__,__LINE__,syscall);\

@@ -40,7 +40,7 @@ typedef struct ops_region {
 	unsigned   indeterminate:1;
 }               ops_region_t;
 
-void            ops_init_subregion(ops_region_t * subregion, ops_region_t * region);
+void            ops_init_subregion(ops_region_t *, ops_region_t *);
 
 #if 0
 /** Return values for reader functions e.g. ops_packet_reader_t() */
@@ -69,8 +69,8 @@ typedef enum {
 typedef struct ops_parse_cb_info ops_parse_cb_info_t;
 
 typedef         ops_parse_cb_return_t
-ops_parse_cb_t(const ops_parser_content_t * content,
-	       ops_parse_cb_info_t * cbinfo);
+ops_parse_cb_t(const ops_parser_content_t *,
+	       ops_parse_cb_info_t *);
 
 typedef struct ops_parse_info ops_parse_info_t;
 typedef struct ops_reader_info ops_reader_info_t;
@@ -97,41 +97,39 @@ typedef struct ops_crypt_info ops_crypt_info_t;
  */
 
 typedef int 
-ops_reader_t(void *dest, size_t length, ops_error_t ** errors,
-	     ops_reader_info_t * rinfo, ops_parse_cb_info_t * cbinfo);
+ops_reader_t(void *, size_t, ops_error_t **,
+	     ops_reader_info_t *, ops_parse_cb_info_t *);
 
-typedef void    ops_reader_destroyer_t(ops_reader_info_t * rinfo);
+typedef void    ops_reader_destroyer_t(ops_reader_info_t *);
 
 ops_parse_info_t *ops_parse_info_new(void);
-void            ops_parse_info_delete(ops_parse_info_t * pinfo);
-ops_error_t    *ops_parse_info_get_errors(ops_parse_info_t * pinfo);
-ops_crypt_t    *ops_parse_get_decrypt(ops_parse_info_t * pinfo);
+void            ops_parse_info_delete(ops_parse_info_t *);
+ops_error_t    *ops_parse_info_get_errors(ops_parse_info_t *);
+ops_crypt_t    *ops_parse_get_decrypt(ops_parse_info_t *);
 
-void            ops_parse_cb_set(ops_parse_info_t * pinfo, ops_parse_cb_t * cb, void *arg);
-void            ops_parse_cb_push(ops_parse_info_t * pinfo, ops_parse_cb_t * cb, void *arg);
-void           *ops_parse_cb_get_arg(ops_parse_cb_info_t * cbinfo);
-void           *ops_parse_cb_get_errors(ops_parse_cb_info_t * cbinfo);
-void            ops_reader_set(ops_parse_info_t * pinfo, ops_reader_t * reader, ops_reader_destroyer_t * destroyer, void *arg);
-void            ops_reader_push(ops_parse_info_t * pinfo, ops_reader_t * reader, ops_reader_destroyer_t * destroyer, void *arg);
-void            ops_reader_pop(ops_parse_info_t * pinfo);
-void           *ops_reader_get_arg_from_pinfo(ops_parse_info_t * pinfo);
+void            ops_parse_cb_set(ops_parse_info_t *, ops_parse_cb_t *, void *);
+void            ops_parse_cb_push(ops_parse_info_t *, ops_parse_cb_t *, void *);
+void           *ops_parse_cb_get_arg(ops_parse_cb_info_t *);
+void           *ops_parse_cb_get_errors(ops_parse_cb_info_t *);
+void            ops_reader_set(ops_parse_info_t *, ops_reader_t *, ops_reader_destroyer_t *, void *);
+void            ops_reader_push(ops_parse_info_t *, ops_reader_t *, ops_reader_destroyer_t *, void *);
+void            ops_reader_pop(ops_parse_info_t *);
+void           *ops_reader_get_arg_from_pinfo(ops_parse_info_t *);
 
-void           *ops_reader_get_arg(ops_reader_info_t * rinfo);
+void           *ops_reader_get_arg(ops_reader_info_t *);
 
 ops_parse_cb_return_t 
-ops_parse_cb(const ops_parser_content_t * content,
-	     ops_parse_cb_info_t * cbinfo);
+ops_parse_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
 ops_parse_cb_return_t 
-ops_parse_stacked_cb(const ops_parser_content_t * content,
-		     ops_parse_cb_info_t * cbinfo);
-ops_reader_info_t *ops_parse_get_rinfo(ops_parse_info_t * pinfo);
+ops_parse_stacked_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
+ops_reader_info_t *ops_parse_get_rinfo(ops_parse_info_t *);
 
-int             ops_parse(ops_parse_info_t * parse_info);
-int             ops_parse_and_print_errors(ops_parse_info_t * parse_info);
-int             ops_parse_and_save_errs(ops_parse_info_t * parse_info, ops_ulong_list_t * errs);
-int             ops_parse_errs(ops_parse_info_t * parse_info, ops_ulong_list_t * errs);
+int             ops_parse(ops_parse_info_t *);
+int             ops_parse_and_print_errors(ops_parse_info_t *);
+int             ops_parse_and_save_errs(ops_parse_info_t *, ops_ulong_list_t *);
+int             ops_parse_errs(ops_parse_info_t *, ops_ulong_list_t *);
 
-void            ops_parse_and_validate(ops_parse_info_t * parse_info);
+void            ops_parse_and_validate(ops_parse_info_t *);
 
 /** Used to specify whether subpackets should be returned raw, parsed or ignored.
  */
@@ -142,35 +140,29 @@ typedef enum {
 }               ops_parse_type_t;
 
 void 
-ops_parse_options(ops_parse_info_t * pinfo, ops_content_tag_t tag,
-		  ops_parse_type_t type);
+ops_parse_options(ops_parse_info_t *, ops_content_tag_t, ops_parse_type_t);
 
 bool 
-ops_limited_read(unsigned char *dest, size_t length,
-		 ops_region_t * region, ops_error_t ** errors,
-		 ops_reader_info_t * rinfo,
-		 ops_parse_cb_info_t * cbinfo);
+ops_limited_read(unsigned char *, size_t,
+		 ops_region_t *, ops_error_t **,
+		 ops_reader_info_t *,
+		 ops_parse_cb_info_t *);
 bool 
-ops_stacked_limited_read(unsigned char *dest, unsigned length,
-			 ops_region_t * region,
-			 ops_error_t ** errors,
-			 ops_reader_info_t * rinfo,
-			 ops_parse_cb_info_t * cbinfo);
+ops_stacked_limited_read(unsigned char *, unsigned,
+			 ops_region_t *,
+			 ops_error_t **,
+			 ops_reader_info_t *,
+			 ops_parse_cb_info_t *);
 void 
-ops_parse_hash_init(ops_parse_info_t * pinfo, ops_hash_algorithm_t type,
-		    const unsigned char *keyid);
+ops_parse_hash_init(ops_parse_info_t *, ops_hash_algorithm_t,
+		    const unsigned char *);
 void 
-ops_parse_hash_data(ops_parse_info_t * pinfo, const void *data,
-		    size_t length);
-void            ops_parse_hash_finish(ops_parse_info_t * pinfo);
+ops_parse_hash_data(ops_parse_info_t *, const void *, size_t);
+void            ops_parse_hash_finish(ops_parse_info_t *);
 ops_hash_t     *
-ops_parse_hash_find(ops_parse_info_t * pinfo,
+ops_parse_hash_find(ops_parse_info_t *,
 		    const unsigned char keyid[OPS_KEY_ID_SIZE]);
 
-	ops_reader_t    ops_stacked_read;
-
-/* vim:set textwidth=120: */
-/* vim:set ts=8: */
-
+ops_reader_t    ops_stacked_read;
 
 #endif

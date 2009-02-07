@@ -999,38 +999,35 @@ typedef struct {
 	unsigned        length;
 }               ops_fingerprint_t;
 
-void            ops_init(void);
-void            ops_finish(void);
-void		ops_keyid(unsigned char *, const size_t, const int,
+void	ops_init(void);
+void	ops_finish(void);
+void	ops_keyid(unsigned char *, const size_t, const int,
 				const ops_public_key_t *);
-void            ops_fingerprint(ops_fingerprint_t *, const ops_public_key_t *);
-void            ops_public_key_free(ops_public_key_t *);
-void            ops_user_id_free(ops_user_id_t *);
-void            ops_user_attribute_free(ops_user_attribute_t *);
-void            ops_signature_free(ops_signature_t *);
-void            ops_trust_free(ops_trust_t *);
-void            ops_ss_preferred_ska_free(ops_ss_preferred_ska_t *);
-void            ops_ss_preferred_hash_free(ops_ss_preferred_hash_t *);
-void            ops_ss_preferred_compression_free(ops_ss_preferred_compression_t *);
-void            ops_ss_key_flags_free(ops_ss_key_flags_t *);
-void            ops_ss_key_server_prefs_free(ops_ss_key_server_prefs_t *);
-void            ops_ss_features_free(ops_ss_features_t *);
-void            ops_ss_notation_data_free(ops_ss_notation_data_t *);
-void            ops_ss_policy_url_free(ops_ss_policy_url_t *);
-void            ops_ss_preferred_key_server_free(ops_ss_preferred_key_server_t *);
-void            ops_ss_regexp_free(ops_ss_regexp_t *);
-void            ops_ss_userdefined_free(ops_ss_userdefined_t *);
-void            ops_ss_reserved_free(ops_ss_unknown_t *);
-void            ops_ss_revocation_reason_free(ops_ss_revocation_reason_t *);
-void            ops_ss_signature_target_free(ops_ss_signature_target_t *);
-void            ops_ss_embedded_signature_free(ops_ss_embedded_signature_t *);
+void	ops_fingerprint(ops_fingerprint_t *, const ops_public_key_t *);
+void	ops_public_key_free(ops_public_key_t *);
+void	ops_user_id_free(ops_user_id_t *);
+void	ops_user_attribute_free(ops_user_attribute_t *);
+void	ops_signature_free(ops_signature_t *);
+void	ops_trust_free(ops_trust_t *);
+void	ops_ss_preferred_ska_free(ops_ss_preferred_ska_t *);
+void	ops_ss_preferred_hash_free(ops_ss_preferred_hash_t *);
+void	ops_ss_preferred_compression_free(ops_ss_preferred_compression_t *);
+void	ops_ss_key_flags_free(ops_ss_key_flags_t *);
+void	ops_ss_key_server_prefs_free(ops_ss_key_server_prefs_t *);
+void	ops_ss_features_free(ops_ss_features_t *);
+void	ops_ss_notation_data_free(ops_ss_notation_data_t *);
+void	ops_ss_policy_url_free(ops_ss_policy_url_t *);
+void	ops_ss_preferred_key_server_free(ops_ss_preferred_key_server_t *);
+void	ops_ss_regexp_free(ops_ss_regexp_t *);
+void	ops_ss_userdefined_free(ops_ss_userdefined_t *);
+void	ops_ss_reserved_free(ops_ss_unknown_t *);
+void	ops_ss_revocation_reason_free(ops_ss_revocation_reason_t *);
+void	ops_ss_signature_target_free(ops_ss_signature_target_t *);
+void	ops_ss_embedded_signature_free(ops_ss_embedded_signature_t *);
 
-void            ops_packet_free(ops_packet_t *);
-void            ops_parser_content_free(ops_parser_content_t *);
-void            ops_secret_key_free(ops_secret_key_t *);
-void            ops_pk_session_key_free(ops_pk_session_key_t *);
-
-/* vim:set textwidth=120: */
-/* vim:set ts=8: */
+void	ops_packet_free(ops_packet_t *);
+void	ops_parser_content_free(ops_parser_content_t *);
+void	ops_secret_key_free(ops_secret_key_t *);
+void	ops_pk_session_key_free(ops_pk_session_key_t *);
 
 #endif

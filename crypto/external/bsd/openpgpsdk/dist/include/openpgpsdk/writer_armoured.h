@@ -22,9 +22,8 @@
 #include <openpgpsdk/armour.h>
 
 bool 
-ops_writer_push_clearsigned(ops_create_info_t * info,
-			    ops_create_signature_t * sig);
-void            ops_writer_push_armoured_message(ops_create_info_t * info);
-bool   ops_writer_switch_to_armoured_signature(ops_create_info_t * info);
+ops_writer_push_clearsigned(ops_create_info_t *, ops_create_signature_t *);
+void            ops_writer_push_armoured_message(ops_create_info_t *);
+bool   ops_writer_switch_to_armoured_signature(ops_create_info_t *);
 
-void            ops_writer_push_armoured(ops_create_info_t * info, ops_armor_type_t type);
+void            ops_writer_push_armoured(ops_create_info_t *, ops_armor_type_t);
