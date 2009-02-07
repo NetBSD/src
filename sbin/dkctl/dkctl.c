@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.16 2006/06/17 02:16:19 christos Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.17 2009/02/07 17:13:32 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.16 2006/06/17 02:16:19 christos Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.17 2009/02/07 17:13:32 uebayasi Exp $");
 #endif
 
 
@@ -78,14 +78,17 @@ struct command {
 	int open_flags;
 };
 
+struct command *lookup(const char *);
 void	usage(void);
+void	run(int, char *[]);
+void	showall(void);
 
 int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
 char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 const	char *cmdname;			/* command user issued */
-const	char *argnames;			/* helpstring; expected arguments */
 
+int dkw_sort(const void *, const void *);
 int yesno(const char *);
 
 void	disk_getcache(int, char *[]);
@@ -99,6 +102,10 @@ void	disk_delwedge(int, char *[]);
 void	disk_getwedgeinfo(int, char *[]);
 void	disk_listwedges(int, char *[]);
 void	disk_strategy(int, char *[]);
+
+void	disk_foreachwedges(int, char *[], void (*)(struct dkwedge_list *));
+void	disk_listwedges_cb(struct dkwedge_list *);
+void	disk_getwedgeinfo_cb(struct dkwedge_info *);
 
 struct command commands[] = {
 	{ "getcache",
@@ -160,37 +167,58 @@ struct command commands[] = {
 int
 main(int argc, char *argv[])
 {
-	int i;
 
 	/* Must have at least: device command */
-	if (argc < 3)
+	if (argc < 2)
 		usage();
 
-	/* Skip program name, get and skip device name and command. */
 	dvname = argv[1];
-	cmdname = argv[2];
-	argv += 3;
-	argc -= 3;
+	if (argc == 2)
+		showall();
+	else {
+		/* Skip program name, get and skip device name and command. */
+		cmdname = argv[2];
+		argv += 3;
+		argc -= 3;
+		run(argc, argv);
+	}
 
-	/* Look up and call the command. */
-	for (i = 0; commands[i].cmd_name != NULL; i++)
-		if (strcmp(cmdname, commands[i].cmd_name) == 0)
-			break;
-	if (commands[i].cmd_name == NULL)
-		errx(1, "unknown command: %s", cmdname);
+	exit(0);
+}
 
-	argnames = commands[i].arg_names;
+void
+run(int argc, char *argv[])
+{
+	struct command *command;
+
+	command = lookup(cmdname);
 
 	/* Open the device. */
-	fd = opendisk(dvname, commands[i].open_flags, dvname_store,
+	fd = opendisk(dvname, command->open_flags, dvname_store,
 	    sizeof(dvname_store), 0);
 	if (fd == -1)
 		err(1, "%s", dvname);
-
 	dvname = dvname_store;
 
-	(*commands[i].cmd_func)(argc, argv);
-	exit(0);
+	(*command->cmd_func)(argc, argv);
+
+	/* Close the device. */
+	(void)close(fd);
+}
+
+struct command *
+lookup(const char *name)
+{
+	int i;
+
+	/* Look up the command. */
+	for (i = 0; commands[i].cmd_name != NULL; i++)
+		if (strcmp(name, commands[i].cmd_name) == 0)
+			break;
+	if (commands[i].cmd_name == NULL)
+		errx(1, "unknown command: %s", name);
+
+	return &commands[i];
 }
 
 void
@@ -198,8 +226,10 @@ usage(void)
 {
 	int i;
 
-	fprintf(stderr, "usage: %s device command [arg [...]]\n",
-	    getprogname());
+	fprintf(stderr,
+	    "usage: %s device\n"
+	    "       %s device command [arg [...]]\n",
+	    getprogname(), getprogname());
 
 	fprintf(stderr, "   Available commands:\n");
 	for (i = 0; commands[i].cmd_name != NULL; i++)
@@ -207,6 +237,26 @@ usage(void)
 		    commands[i].arg_names);
 
 	exit(1);
+}
+
+void
+showall(void)
+{
+	printf("strategy:\n");
+	cmdname = "strategy";
+	run(0, NULL);
+
+	putchar('\n');
+
+	printf("cache:\n");
+	cmdname = "getcache";
+	run(0, NULL);
+
+	putchar('\n');
+
+	printf("wedges:\n");
+	cmdname = "listwedges";
+	run(0, NULL);
 }
 
 void
@@ -605,6 +655,8 @@ disk_listwedges(int argc, char *argv[])
 		return;
 	}
 
+	qsort(dkw, dkwl.dkwl_nwedges, sizeof(*dkw), dkw_sort);
+
 	printf("%s: %u wedge%s:\n", dvname, dkwl.dkwl_nwedges,
 	    dkwl.dkwl_nwedges == 1 ? "" : "s");
 	for (i = 0; i < dkwl.dkwl_nwedges; i++) {
@@ -613,6 +665,15 @@ disk_listwedges(int argc, char *argv[])
 		    dkw[i].dkw_wname,	/* XXX Unicode */
 		    dkw[i].dkw_size, dkw[i].dkw_offset, dkw[i].dkw_ptype);
 	}
+}
+
+int
+dkw_sort(const void *a, const void *b)
+{
+	const struct dkwedge_info *dkwa = a, *dkwb = b;
+	const daddr_t oa = dkwa->dkw_offset, ob = dkwb->dkw_offset;
+
+	return (oa < ob) ? -1 : (oa > ob) ? 1 : 0;
 }
 
 /*
