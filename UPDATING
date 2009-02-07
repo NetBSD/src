@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.191 2009/02/05 20:00:58 joerg Exp $
+$NetBSD: UPDATING,v 1.192 2009/02/07 13:44:48 skrll Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20090126:
+	The posix_fadvise system call changed assembly stub type. You need to
+	'rm -f posix_fadvise.*' in the libc build directory to avoid using
+	the old assembly stub.
 
 20090202:
 	pkg_install now depends on the pkgdb cache for automatic conflict
