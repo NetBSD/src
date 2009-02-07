@@ -43,5 +43,6 @@
 #include <openpgpsdk/std_print.h>
 #include <openpgpsdk/packet-show.h>
 #include <openpgpsdk/util.h>
+#include <openpgpsdk/version.h>
 
 #endif
