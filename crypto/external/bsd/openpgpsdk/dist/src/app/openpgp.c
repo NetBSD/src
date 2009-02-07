@@ -23,11 +23,12 @@
  \file Command line program to perform openpgp operations
 */
 
+#include <getopt.h>
+#include <libgen.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
-#include <libgen.h>
 #include <unistd.h>
 
 #include <openpgpsdk/openpgpsdk.h>
@@ -58,7 +59,7 @@ enum optdefs {
 	CLEARSIGN,
 	VERIFY,
 	LIST_PACKETS,
-	VERSION,
+	VERSION_CMD,
 
 	/* options */
 	KEYRING,
@@ -96,7 +97,7 @@ static struct option long_options[] = {
 
 	{"list-packets", no_argument, NULL, LIST_PACKETS},
 
-	{"version", no_argument, NULL, VERSION},
+	{"version", no_argument, NULL, VERSION_CMD},
 
 	/* options */
 	{"keyring", required_argument, NULL, KEYRING},
@@ -140,6 +141,39 @@ print_usage(const char *usagemsg, char *progname)
 {
 	(void) fprintf(stderr, "\nUsage: ");
 	(void) fprintf(stderr, usagemsg, basename(progname));
+}
+
+#ifndef MIN
+#define MIN(a,b)	(((a) < (b)) ? (a) : (b))
+#endif
+
+/* read any gpg config file */
+static int
+conf_file(prog_t *p, char *homedir)
+{
+	regmatch_t	 matchv[10];
+	regex_t		 r;
+	char		 buf[BUFSIZ];
+	FILE		*fp;
+
+	(void) snprintf(buf, sizeof(buf), "%s/gpg.conf", homedir);
+	if ((fp = fopen(buf, "r")) == NULL) {
+		return 0;
+	}
+	(void) regcomp(&r, "^[ \t]*default-key[ \t]+([0-9a-zA-F]+)",
+		REG_EXTENDED);
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		if (regexec(&r, buf, 10, matchv, 0) == 0) {
+			(void) memcpy(p->userid, &buf[(int)matchv[1].rm_so],
+				MIN(matchv[1].rm_eo - matchv[1].rm_so,
+					sizeof(p->userid)));
+			printf("setting default key to \"%.*s\"\n",
+				(int)(matchv[1].rm_eo - matchv[1].rm_so),
+				&buf[(int)matchv[1].rm_so]);
+		}
+	}
+	(void) fclose(fp);
+	return 1;
 }
 
 /* wrapper to get a pass phrase from the user */
@@ -192,7 +226,7 @@ psuccess(char *f, ops_validate_result_t * results, ops_keyring_t *pubring)
 
 /* do a command once for a specified file 'f' */
 static void
-openpgp(prog_t * p, char *f)
+openpgp(prog_t *p, char *f)
 {
 	const ops_keydata_t *keydata;
 	ops_validate_result_t *validate_result;
@@ -202,7 +236,7 @@ openpgp(prog_t * p, char *f)
 	ops_secret_key_t *skey;
 	ops_user_id_t   uid;
 	const char     *suffix;
-	char            outputfilename[MAXBUF + 1];
+	char            outname[MAXBUF + 1];
 	int             fd;
 
 	(void) memset(&uid, 0x0, sizeof(uid));
@@ -304,11 +338,9 @@ openpgp(prog_t * p, char *f)
 				p->userid);
 			exit(EXIT_ERROR);
 		}
-		/* outputfilename */
-		(void) snprintf(outputfilename, MAXBUF, "%s%s", f, suffix);
+		(void) snprintf(outname, sizeof(outname), "%s%s", f, suffix);
 		p->overwrite = true;
-		ops_encrypt_file(f, outputfilename, keydata, p->armour,
-				 p->overwrite);
+		ops_encrypt_file(f, outname, keydata, p->armour, p->overwrite);
 		break;
 
 	case DECRYPT:
@@ -334,10 +366,12 @@ openpgp(prog_t * p, char *f)
 			ops_print_public_keydata(keydata);
 			/* get the passphrase */
 			if (p->passphrase[0] == 0x0) {
-				get_pass_phrase(p->passphrase, sizeof(p->passphrase));
+				get_pass_phrase(p->passphrase,
+					sizeof(p->passphrase));
 			}
 			/* now decrypt key */
-			skey = ops_decrypt_secret_key_from_data(keydata, p->passphrase);
+			skey = ops_decrypt_secret_key_from_data(keydata,
+				p->passphrase);
 			if (skey == NULL) {
 				(void) fprintf(stderr, "Bad passphrase\n");
 				p->passphrase[0] = 0x0;
@@ -384,13 +418,12 @@ openpgp(prog_t * p, char *f)
 		break;
 
 	case VERIFY:
-
 		validate_result = calloc(1, sizeof(ops_validate_result_t));
-
-		if (ops_validate_file(validate_result, f, p->armour, p->pubring) == true) {
+		if (ops_validate_file(validate_result, f, p->armour,
+					p->pubring) == true) {
 			psuccess(f, validate_result, p->pubring);
 		} else {
-			printf("\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n", f, validate_result->invalid_count, validate_result->unknown_signer_count);
+			(void) fprintf(stderr, "\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n", f, validate_result->invalid_count, validate_result->unknown_signer_count);
 			p->ex = EXIT_FAILURE;
 		}
 		ops_validate_result_free(validate_result);
@@ -412,8 +445,6 @@ main(int argc, char **argv)
 {
 	prog_t          p;
 	char            homedir[MAXBUF + 1];
-	char            default_homedir[MAXBUF + 1];
-	char           *dir;
 	int		zeroargs;
 	int             optindex = 0;
 	int             ch = 0;
@@ -429,7 +460,15 @@ main(int argc, char **argv)
 		print_usage(usage, pname);
 		exit(EXIT_ERROR);
 	}
-	/* what does the user want to do? */
+
+	/* set default homedir */
+	(void) snprintf(homedir, sizeof(homedir), "%s/.gnupg", getenv("HOME"));
+	if (ops_get_debug_level(__FILE__)) {
+		printf("homedir: %s\n", homedir);
+	}
+
+	/* read any settings in the conf file */
+	(void) conf_file(&p, homedir);
 
 	while ((ch = getopt_long(argc, argv, "", long_options, &optindex)) != -1) {
 
@@ -454,18 +493,19 @@ main(int argc, char **argv)
 			p.cmd = long_options[optindex].val;
 			break;
 
-		case VERSION:
-			printf("%s version: %s\n", *argv, ops_get_version());
+		case VERSION_CMD:
+			printf("%s version: %s using %s\n",
+				*argv, ops_get_version(),
+				OPS_VERSION_STRING);
 			exit(EXIT_SUCCESS);
 
-			/* option */
-
+			/* options */
 		case KEYRING:
 			if (optarg == NULL) {
 				(void) fprintf(stderr, "No keyring argument provided\n");
 				exit(EXIT_ERROR);
 			}
-			snprintf(p.keyring, MAXBUF, "%s", optarg);
+			snprintf(p.keyring, sizeof(p.keyring), "%s", optarg);
 			break;
 
 		case USERID:
@@ -476,7 +516,7 @@ main(int argc, char **argv)
 			if (ops_get_debug_level(__FILE__)) {
 				(void) fprintf(stderr, "user_id is '%s'\n", optarg);
 			}
-			snprintf(p.userid, MAXBUF, "%s", optarg);
+			snprintf(p.userid, sizeof(p.userid), "%s", optarg);
 			break;
 
 		case PASSPHRASE:
@@ -484,7 +524,7 @@ main(int argc, char **argv)
 				(void) fprintf(stderr, "No passphrase argument provided\n");
 				exit(EXIT_ERROR);
 			}
-			snprintf(p.passphrase, MAXBUF, "%s", optarg);
+			snprintf(p.passphrase, sizeof(p.passphrase), "%s", optarg);
 			break;
 
 		case ARMOUR:
@@ -496,7 +536,8 @@ main(int argc, char **argv)
 				(void) fprintf(stderr, "No home directory argument provided\n");
 				exit(EXIT_ERROR);
 			}
-			snprintf(homedir, MAXBUF, "%s", optarg);
+			(void) snprintf(homedir, sizeof(homedir), "%s", optarg);
+			conf_file(&p, homedir);
 			break;
 
 
@@ -527,31 +568,20 @@ main(int argc, char **argv)
          * We will then have variables pubring, secring and myring.
          */
 
-	if (homedir[0]) {
-		dir = homedir;
-	} else {
-		(void) snprintf(default_homedir, MAXBUF, "%s/.gnupg",
-			getenv("HOME"));
-		if (ops_get_debug_level(__FILE__)) {
-			printf("dir: %s\n", default_homedir);
-		}
-		dir = default_homedir;
-	}
-
-	(void) snprintf(p.pubring_name, MAXBUF, "%s/pubring.gpg", dir);
+	(void) snprintf(p.pubring_name, sizeof(p.pubring_name), "%s/pubring.gpg", homedir);
 	p.pubring = calloc(1, sizeof(*p.pubring));
 	if (!ops_keyring_read_from_file(p.pubring, false, p.pubring_name)) {
 		fprintf(stderr, "Cannot read keyring %s\n", p.pubring_name);
 		exit(EXIT_ERROR);
 	}
-	snprintf(p.secring_name, MAXBUF, "%s/secring.gpg", dir);
+	snprintf(p.secring_name, sizeof(p.secring_name), "%s/secring.gpg", homedir);
 	p.secring = calloc(1, sizeof(*p.secring));
 	if (!ops_keyring_read_from_file(p.secring, false, p.secring_name)) {
 		fprintf(stderr, "Cannot read keyring %s\n", p.secring_name);
 		exit(EXIT_ERROR);
 	}
 	if (p.keyring[0] != 0x0) {
-		snprintf(p.myring_name, MAXBUF, "%s/%s", homedir, p.keyring);
+		snprintf(p.myring_name, sizeof(p.myring_name), "%s/%s", homedir, p.keyring);
 		p.myring = calloc(1, sizeof(*p.myring));
 		if (!ops_keyring_read_from_file(p.myring, false, p.myring_name)) {
 			fprintf(stderr, "Cannot read keyring %s\n", p.myring_name);
