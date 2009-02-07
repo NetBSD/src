@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.22 2008/06/08 12:23:18 ad Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.22.8.1 2009/02/07 02:32:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.22 2008/06/08 12:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.22.8.1 2009/02/07 02:32:37 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -118,6 +118,7 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 	struct devsw_conv *conv;
 	char *name;
 	int error, i;
+	size_t len;
 
 	if (devname == NULL || cdev == NULL)
 		return (EINVAL);
@@ -193,13 +194,14 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 		max_devsw_convs = new;
 	}
 
-	i = strlen(devname) + 1;
-	name = kmem_alloc(i, KM_NOSLEEP);
+	len = strlen(devname) + 1;
+	name = kmem_alloc(len, KM_NOSLEEP);
 	if (name == NULL) {
 		devsw_detach_locked(bdev, cdev);
+		error = ENOMEM;
 		goto fail;
 	}
-	strlcpy(name, devname, i);
+	strlcpy(name, devname, len);
 
 	devsw_conv[i].d_name = name;
 	devsw_conv[i].d_bmajor = *bmajor;
