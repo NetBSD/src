@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.8 2008/02/24 18:38:10 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.9 2009/02/07 18:12:22 uebayasi Exp $");
 #endif
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: gpt.c,v 1.8 2008/02/24 18:38:10 christos Exp $");
 #include "gpt.h"
 
 char	device_path[MAXPATHLEN];
+const char *device_arg;
 char	*device_name;
 
 off_t	mediasz;
@@ -661,7 +662,7 @@ gpt_open(const char *dev)
 
 	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
 
-	device_name = device_path;
+	device_arg = dev;
 #ifdef __FreeBSD__
 	strlcpy(device_path, dev, sizeof(device_path));
 	if ((fd = open(device_path, mode)) != -1)
