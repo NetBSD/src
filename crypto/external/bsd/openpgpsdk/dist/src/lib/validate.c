@@ -451,7 +451,7 @@ validate_result_status(ops_validate_result_t * result)
 void example(const ops_keydata_t* key, const ops_keyring_t *keyring)
 {
   ops_validate_result_t *result=NULL;
-  if (ops_validate_key_signatures(result, key, keyring, callback_cmd_get_passphrase_from_cmdline)==true)
+  if (ops_validate_key_signatures(result, key, keyring, get_passphrase_cb)==true)
     printf("OK");
   else
     printf("ERR");

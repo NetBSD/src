@@ -346,7 +346,7 @@ openpgp(prog_t *p, char *f)
 	case DECRYPT:
 		p->overwrite = true;
 		ops_decrypt_file(f, NULL, p->secring, p->armour,
-		    p->overwrite, callback_cmd_get_passphrase_from_cmdline);
+		    p->overwrite, get_passphrase_cb);
 		break;
 
 	case SIGN:
@@ -430,8 +430,7 @@ openpgp(prog_t *p, char *f)
 		break;
 
 	case LIST_PACKETS:
-		ops_list_packets(f, p->armour, p->pubring,
-				 callback_cmd_get_passphrase_from_cmdline);
+		ops_list_packets(f, p->armour, p->pubring, get_passphrase_cb);
 		break;
 
 	default:

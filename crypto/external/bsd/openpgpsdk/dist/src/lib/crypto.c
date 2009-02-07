@@ -151,7 +151,7 @@ ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 #define MAXBUF 1024
 
 static          ops_parse_cb_return_t
-                callback_write_parsed(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo);
+write_parsed_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
 
 /**
 \ingroup HighLevel_Crypto
@@ -247,7 +247,7 @@ ops_decrypt_file(const char *input_filename, const char *output_filename, ops_ke
 	/* setup for reading from given input file */
 	fd_in = ops_setup_file_read(&pinfo, input_filename,
 				    NULL,
-				    callback_write_parsed,
+				    write_parsed_cb,
 				    false);
 	if (fd_in < 0) {
 		perror(input_filename);
@@ -318,7 +318,7 @@ ops_decrypt_file(const char *input_filename, const char *output_filename, ops_ke
 }
 
 static          ops_parse_cb_return_t
-callback_write_parsed(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
+write_parsed_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
 {
 	const ops_parser_content_union_t *content = &content_->content;
 	static bool skipping;
@@ -345,20 +345,16 @@ callback_write_parsed(const ops_parser_content_t * content_, ops_parse_cb_info_t
 		break;
 
 	case OPS_PTAG_CT_PK_SESSION_KEY:
-		return callback_pk_session_key(content_, cbinfo);
+		return pk_session_key_cb(content_, cbinfo);
 
 	case OPS_PARSER_CMD_GET_SECRET_KEY:
-		return callback_cmd_get_secret_key(content_, cbinfo);
+		return get_secret_key_cb(content_, cbinfo);
 
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-		/*
-		 * return
-		 * callback_cmd_get_secret_key_passphrase(content_,cbinfo);
-		 */
 		return cbinfo->cryptinfo.cb_get_passphrase(content_, cbinfo);
 
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
-		return callback_literal_data(content_, cbinfo);
+		return literal_data_cb(content_, cbinfo);
 
 	case OPS_PTAG_CT_ARMOUR_HEADER:
 	case OPS_PTAG_CT_ARMOUR_TRAILER:
@@ -376,7 +372,6 @@ callback_write_parsed(const ops_parser_content_t * content_, ops_parse_cb_info_t
 		break;
 
 	default:
-		/* return callback_general(content_,cbinfo); */
 		if (ops_get_debug_level(__FILE__)) {
 			fprintf(stderr, "Unexpected packet tag=%d (0x%x)\n",
 				content_->tag,
