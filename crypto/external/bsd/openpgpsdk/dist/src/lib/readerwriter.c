@@ -146,7 +146,7 @@ ops_setup_file_write(ops_create_info_t ** cinfo, const char *filename, bool allo
 	else
 		flags |= O_EXCL;
 
-#ifdef WIN32
+#ifdef O_BINARY
 	flags |= O_BINARY;
 #endif
 
@@ -188,7 +188,7 @@ ops_setup_file_append(ops_create_info_t ** cinfo, const char *filename)
          * initialise needed structures for writing to file
          */
 
-#ifdef WIN32
+#ifdef O_BINARY
 	fd = open(filename, O_WRONLY | O_APPEND | O_BINARY, 0600);
 #else
 	fd = open(filename, O_WRONLY | O_APPEND, 0600);
@@ -237,7 +237,7 @@ ops_setup_file_read(ops_parse_info_t ** pinfo, const char *filename,
          * initialise needed structures for reading
          */
 
-#ifdef WIN32
+#ifdef O_BINARY
 	fd = open(filename, O_RDONLY | O_BINARY);
 #else
 	fd = open(filename, O_RDONLY);
@@ -274,13 +274,14 @@ ops_teardown_file_read(ops_parse_info_t * pinfo, int fd)
 }
 
 ops_parse_cb_return_t
-callback_literal_data(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
+callback_literal_data(const ops_parser_content_t *content_, ops_parse_cb_info_t *cbinfo)
 {
 	const ops_parser_content_union_t *content = &content_->content;
 
 	OPS_USED(cbinfo);
 
 	if (ops_get_debug_level(__FILE__)) {
+		printf("callback_literal_data: ");
 		ops_print_packet(content_);
 	}
 	/* Read data from packet into static buffer */
@@ -288,9 +289,20 @@ callback_literal_data(const ops_parser_content_t * content_, ops_parse_cb_info_t
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
 		/* if writer enabled, use it */
 		if (cbinfo->cinfo) {
+			/* XXX - agc - add to mem */
+			if (ops_get_debug_level(__FILE__)) {
+				printf("callback_literal_data: length is %d\n",
+				  content->literal_data_body.length);
+			}
+#if 1
 			ops_write(content->literal_data_body.data,
 				  content->literal_data_body.length,
 				  cbinfo->cinfo);
+#else
+			ops_memory_add(mem_literal_data,
+	                       content->literal_data_body.data,
+	                       content->literal_data_body.length);
+#endif
 		}
 		/*
 	        ops_memory_add(mem_literal_data,
@@ -427,20 +439,19 @@ ops_malloc_passphrase(char *pp)
  \param cbinfo
 */
 ops_parse_cb_return_t
-callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
+callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t *content_, ops_parse_cb_info_t *cbinfo)
 {
 	const ops_parser_content_union_t *content = &content_->content;
 
 	OPS_USED(cbinfo);
-
 	if (ops_get_debug_level(__FILE__)) {
 		ops_print_packet(content_);
 	}
 	switch (content_->tag) {
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-		*(content->secret_key_passphrase.passphrase) = ops_get_passphrase();
+		*(content->secret_key_passphrase.passphrase) =
+					ops_get_passphrase();
 		return OPS_KEEP_MEMORY;
-		break;
 
 	default:
 		/* return callback_general(content_,cbinfo); */
