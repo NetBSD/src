@@ -274,14 +274,14 @@ ops_teardown_file_read(ops_parse_info_t * pinfo, int fd)
 }
 
 ops_parse_cb_return_t
-callback_literal_data(const ops_parser_content_t *content_, ops_parse_cb_info_t *cbinfo)
+literal_data_cb(const ops_parser_content_t *content_, ops_parse_cb_info_t *cbinfo)
 {
 	const ops_parser_content_union_t *content = &content_->content;
 
 	OPS_USED(cbinfo);
 
 	if (ops_get_debug_level(__FILE__)) {
-		printf("callback_literal_data: ");
+		printf("literal_data_cb: ");
 		ops_print_packet(content_);
 	}
 	/* Read data from packet into static buffer */
@@ -291,7 +291,7 @@ callback_literal_data(const ops_parser_content_t *content_, ops_parse_cb_info_t 
 		if (cbinfo->cinfo) {
 			/* XXX - agc - add to mem */
 			if (ops_get_debug_level(__FILE__)) {
-				printf("callback_literal_data: length is %d\n",
+				printf("literal_data_cb: length is %d\n",
 				  content->literal_data_body.length);
 			}
 #if 1
@@ -324,7 +324,7 @@ callback_literal_data(const ops_parser_content_t *content_, ops_parse_cb_info_t 
 }
 
 ops_parse_cb_return_t
-callback_pk_session_key(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
+pk_session_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
 {
 	const ops_parser_content_union_t *content = &content_->content;
 
@@ -369,7 +369,7 @@ callback_pk_session_key(const ops_parser_content_t * content_, ops_parse_cb_info
 */
 
 ops_parse_cb_return_t
-callback_cmd_get_secret_key(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
+get_secret_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo)
 {
 	const ops_parser_content_union_t *content = &content_->content;
 	const ops_secret_key_t *secret;
@@ -414,12 +414,6 @@ callback_cmd_get_secret_key(const ops_parser_content_t * content_, ops_parse_cb_
 }
 
 char           *
-ops_get_passphrase(void)
-{
-	return ops_malloc_passphrase(getpass("openpgp passphrase: "));
-}
-
-char           *
 ops_malloc_passphrase(char *pp)
 {
 	char           *passphrase;
@@ -428,7 +422,6 @@ ops_malloc_passphrase(char *pp)
 	n = strlen(pp);
 	passphrase = malloc(n + 1);
 	strncpy(passphrase, pp, n + 1);
-
 	return passphrase;
 }
 
@@ -439,7 +432,7 @@ ops_malloc_passphrase(char *pp)
  \param cbinfo
 */
 ops_parse_cb_return_t
-callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t *content_, ops_parse_cb_info_t *cbinfo)
+get_passphrase_cb(const ops_parser_content_t *content_, ops_parse_cb_info_t *cbinfo)
 {
 	const ops_parser_content_union_t *content = &content_->content;
 
@@ -450,7 +443,7 @@ callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t *content_, o
 	switch (content_->tag) {
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
 		*(content->secret_key_passphrase.passphrase) =
-					ops_get_passphrase();
+			ops_malloc_passphrase(getpass("openpgp passphrase: "));
 		return OPS_KEEP_MEMORY;
 
 	default:
