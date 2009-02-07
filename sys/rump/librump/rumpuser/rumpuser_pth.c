@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.27 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.28 2009/02/07 01:50:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.27 2009/02/06 20:01:41 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.28 2009/02/07 01:50:29 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -414,20 +414,13 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 
 int
 rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
-	int stdticks)
+	struct timespec *ts)
 {
-	struct timespec ts;
 	int rv;
-
-	clock_gettime(CLOCK_REALTIME, &ts);
-	ts.tv_sec  += stdticks / 100;
-	ts.tv_nsec += (stdticks % 100) * 10000000;
-	ts.tv_sec  += ts.tv_nsec / 1000000000;
-	ts.tv_nsec %= 1000000000;
 
 	cv->nwaiters++;
 	mtxexit(mtx);
-	KLOCK_WRAP(rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts));
+	KLOCK_WRAP(rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, ts));
 	mtxenter(mtx);
 	cv->nwaiters--;
 	if (rv != 0 && rv != ETIMEDOUT)
