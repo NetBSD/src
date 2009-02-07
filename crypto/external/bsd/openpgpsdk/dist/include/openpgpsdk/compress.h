@@ -25,10 +25,8 @@
 #include "packet-parse.h"
 
 int 
-ops_decompress(ops_region_t * region, ops_parse_info_t * parse_info,
-	       ops_compression_type_t type);
+ops_decompress(ops_region_t *, ops_parse_info_t *, ops_compression_type_t);
 
 bool 
-ops_write_compressed(const unsigned char *data,
-		     const unsigned int len,
-		     ops_create_info_t * cinfo);
+ops_write_compressed(const unsigned char *, const unsigned int,
+		     ops_create_info_t *);

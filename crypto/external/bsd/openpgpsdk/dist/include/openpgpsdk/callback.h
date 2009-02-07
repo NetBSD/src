@@ -27,16 +27,6 @@
 	if(ops_parse_cb((pc),(cbinfo)) == OPS_RELEASE_MEMORY)		\
 		ops_parser_content_free(pc);				\
 } while(/* CONSTCOND */0)
-/*
- * #define CB(cbinfo,t,pc)	do { (pc)->tag=(t);
- * if((cbinfo)->cb(pc,(cbinfo)) == OPS_RELEASE_MEMORY)
- * ops_parser_content_free(pc); } while(0)
- */
-/*
- * #define CB(cbinfo,t,pc)	do { (pc)->tag=(t);
- * if((cbinfo)->cb(pc,(cbinfo)) == OPS_RELEASE_MEMORY)
- * ops_parser_content_free(pc); } while(0)
- */
 
 #define CBP(info,t,pc) CB(&(info)->cbinfo,t,pc)
 
@@ -47,11 +37,6 @@
 	OPS_ERROR(errors,code,err);					\
 	return -1;							\
 } while(/*CONSTCOND*/0)
-/*
- * #define ERR(err)	do { content.content.error.error=err;
- * content.tag=OPS_PARSER_ERROR; ops_parse_cb(&content,cbinfo); return -1; }
- * while(0)
- */
 
 #define ERRP(info,err)	do {						\
 	content.content.error.error=err;				\

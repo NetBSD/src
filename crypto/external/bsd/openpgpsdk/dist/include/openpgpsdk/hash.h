@@ -21,9 +21,10 @@
 
 #ifndef __OPS_HASH_H__
 #define __OPS_HASH_H__
+
 #include "openpgpsdk/packet.h"
 
-void            ops_calc_mdc_hash(const unsigned char *preamble, const size_t sz_preamble, const unsigned char *plaintext, const unsigned int sz_plaintext, unsigned char *hashed);
-bool   ops_is_hash_alg_supported(const ops_hash_algorithm_t * hash_alg);
+void            ops_calc_mdc_hash(const unsigned char *, const size_t, const unsigned char *, const unsigned int, unsigned char *);
+bool   ops_is_hash_alg_supported(const ops_hash_algorithm_t *);
 
 #endif				/* __OPS_HASH_H__ */
