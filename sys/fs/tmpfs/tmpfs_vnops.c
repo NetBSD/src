@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.52 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.53 2009/02/07 19:42:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.52 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.53 2009/02/07 19:42:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -806,6 +806,11 @@ tmpfs_rename(void *v)
 	tnode = (tvp == NULL) ? NULL : VP_TO_TMPFS_NODE(tvp);
 	tdnode = VP_TO_TMPFS_DIR(tdvp);
 	tmp = VFS_TO_TMPFS(tdvp->v_mount);
+
+	if (fdvp == tvp) {
+		error = 0;
+		goto out_unlocked;
+	}
 
 	/* If we need to move the directory between entries, lock the
 	 * source so that we can safely operate on it. */
