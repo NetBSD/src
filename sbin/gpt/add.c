@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.6 2007/12/28 19:53:10 riz Exp $");
+__RCSID("$NetBSD: add.c,v 1.7 2009/02/07 17:21:44 uebayasi Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ static uuid_t type;
 static off_t block, size;
 static unsigned int entry;
 
-const char addmsg[] = "add [-b lba] [-i index] [-s lba] [-t uuid] "
+const char addmsg[] = "add [-b lba] [-i index] [-s lba] [-t type] "
 	"device ...";
 
 static void
