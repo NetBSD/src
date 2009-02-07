@@ -154,6 +154,10 @@ ops_init_subregion(ops_region_t * subregion, ops_region_t * region)
  * XXX: replace ops_ptag_t with something more appropriate for limiting reads
  */
 
+#ifndef MB
+#define MB(x)	((x) * 1024 * 1024)
+#endif
+
 /**
  * low-level function to read data from reader function
  *
@@ -217,7 +221,17 @@ sub_base_read(void *dest, size_t length, ops_error_t ** errors,
 	if (rinfo->accumulate) {
 		assert(rinfo->asize >= rinfo->alength);
 		if (rinfo->alength + n > rinfo->asize) {
-			rinfo->asize = rinfo->asize * 2 + n;
+			/*
+			 * be a bit smarter about allocation sizes.
+			 * if we've reached an arbitrary point (here,
+			 * we default to 8MB), then just add 1MB on
+			 * instead of doubling the allocation size
+			 */
+			if (rinfo->asize >= MB(8)) {
+				rinfo->asize += MB(1);
+			} else {
+				rinfo->asize = rinfo->asize * 2 + n;
+			}
 			rinfo->accumulated = realloc(rinfo->accumulated, rinfo->asize);
 		}
 		assert(rinfo->asize >= rinfo->alength + n);
