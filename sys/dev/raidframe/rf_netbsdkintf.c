@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.254 2009/01/18 16:37:19 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.255 2009/02/07 20:36:49 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.254 2009/01/18 16:37:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.255 2009/02/07 20:36:49 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3683,8 +3683,9 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 			e = VOP_IOCTL(raidPtr->raid_cinfo[c].ci_vp, DIOCCACHESYNC, 
 					  &force, FWRITE, NOCRED);
 			if (e) {
-				printf("raid%d: cache flush to component %s failed.\n",
-				       raidPtr->raidid, raidPtr->Disks[c].devname);
+				if (e != ENODEV)
+					printf("raid%d: cache flush to component %s failed.\n",
+					       raidPtr->raidid, raidPtr->Disks[c].devname);
 				if (error == 0) {
 					error = e;
 				}
@@ -3699,8 +3700,9 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 			e = VOP_IOCTL(raidPtr->raid_cinfo[sparecol].ci_vp,
 					  DIOCCACHESYNC, &force, FWRITE, NOCRED);
 			if (e) {
-				printf("raid%d: cache flush to component %s failed.\n",
-				       raidPtr->raidid, raidPtr->Disks[sparecol].devname);
+				if (e != ENODEV)
+					printf("raid%d: cache flush to component %s failed.\n",
+					       raidPtr->raidid, raidPtr->Disks[sparecol].devname);
 				if (error == 0) {
 					error = e;
 				}
