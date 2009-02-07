@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.7 2009/02/07 17:21:44 uebayasi Exp $");
+__RCSID("$NetBSD: add.c,v 1.8 2009/02/07 18:12:22 uebayasi Exp $");
 #endif
 
 #include <sys/types.h>
@@ -164,7 +164,7 @@ add(int fd)
 #ifdef __NetBSD__
 	printf("Partition added, use:\n");
 	printf("\tdkctl %s addwedge dk<N> %" PRIu64 " %" PRIu64 " <type>\n",
-	    device_name, map->map_start, map->map_size);
+	    device_arg, map->map_start, map->map_size);
 	printf("to create a wedge for it\n");
 #endif
 }
