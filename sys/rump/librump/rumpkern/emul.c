@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.76 2009/01/13 01:57:35 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.77 2009/02/07 01:50:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.76 2009/01/13 01:57:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.77 2009/02/07 01:50:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -283,8 +283,12 @@ nanotime(struct timespec *ts)
 	struct timeval tv;
 	int error;
 
-	rumpuser_gettimeofday(&tv, &error);
-	TIMEVAL_TO_TIMESPEC(&tv, ts);
+	if (rump_threads) {
+		rump_gettime(ts);
+	} else {
+		rumpuser_gettimeofday(&tv, &error);
+		TIMEVAL_TO_TIMESPEC(&tv, ts);
+	}
 }
 
 /* hooray for mick, so what if I do */
@@ -298,17 +302,22 @@ getnanotime(struct timespec *ts)
 void
 microtime(struct timeval *tv)
 {
+	struct timespec ts;
 	int error;
 
-	rumpuser_gettimeofday(tv, &error);
+	if (rump_threads) {
+		rump_gettime(&ts);
+		TIMESPEC_TO_TIMEVAL(tv, &ts);
+	} else {
+		rumpuser_gettimeofday(tv, &error);
+	}
 }
 
 void
 getmicrotime(struct timeval *tv)
 {
-	int error;
 
-	rumpuser_gettimeofday(tv, &error);
+	microtime(tv);
 }
 
 struct kthdesc {
