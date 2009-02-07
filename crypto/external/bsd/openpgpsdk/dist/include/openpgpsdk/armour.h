@@ -25,16 +25,16 @@
 #include "packet-parse.h"
 #include "signature.h"
 
-unsigned        ops_crc24(unsigned checksum, unsigned char c);
+unsigned        ops_crc24(unsigned, unsigned char);
 
-void            ops_reader_push_dearmour(ops_parse_info_t * parse_info);
+void            ops_reader_push_dearmour(ops_parse_info_t *);
 
-void            ops_reader_pop_dearmour(ops_parse_info_t * parse_info);
+void            ops_reader_pop_dearmour(ops_parse_info_t *);
 bool 
-ops_writer_push_clearsigned(ops_create_info_t * info,
-			    ops_create_signature_t * sig);
-void            ops_writer_push_armoured_message(ops_create_info_t * info);
-bool   ops_writer_switch_to_armoured_signature(ops_create_info_t * info);
+ops_writer_push_clearsigned(ops_create_info_t *,
+			    ops_create_signature_t *);
+void            ops_writer_push_armoured_message(ops_create_info_t *);
+bool   ops_writer_switch_to_armoured_signature(ops_create_info_t *);
 
 typedef enum {
 	OPS_PGP_MESSAGE = 1,
@@ -45,10 +45,8 @@ typedef enum {
 	OPS_PGP_SIGNATURE
 }               ops_armor_type_t;
 
-void            ops_writer_push_armoured(ops_create_info_t * info, ops_armor_type_t type);
+void            ops_writer_push_armoured(ops_create_info_t *, ops_armor_type_t);
 
 #define CRC24_INIT 0xb704ceL
 
 #endif				/* __OPS_ARMOUR_H__ */
-
-//EOF

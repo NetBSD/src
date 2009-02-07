@@ -51,40 +51,36 @@ typedef struct {
 	const char     *string;
 }               ops_bit_map_t;
 
-void            ops_text_init(ops_text_t * text);
-void            ops_text_free(ops_text_t * text);
+void            ops_text_init(ops_text_t *);
+void            ops_text_free(ops_text_t *);
 
-const char     *ops_show_packet_tag(ops_packet_tag_t packet_tag);
-const char     *ops_show_ss_type(ops_ss_type_t ss_type);
+const char     *ops_show_packet_tag(ops_packet_tag_t);
+const char     *ops_show_ss_type(ops_ss_type_t);
 
-const char     *ops_show_sig_type(ops_sig_type_t sig_type);
-const char     *ops_show_pka(ops_public_key_algorithm_t pka);
+const char     *ops_show_sig_type(ops_sig_type_t);
+const char     *ops_show_pka(ops_public_key_algorithm_t);
 
-ops_text_t     *ops_showall_ss_preferred_compression(ops_ss_preferred_compression_t ss_preferred_compression);
-const char     *ops_show_ss_preferred_compression(unsigned char octet);
+ops_text_t     *ops_showall_ss_preferred_compression(ops_ss_preferred_compression_t);
+const char     *ops_show_ss_preferred_compression(unsigned char);
 
-ops_text_t     *ops_showall_ss_preferred_hash(ops_ss_preferred_hash_t ss_preferred_hash);
-const char     *ops_show_hash_algorithm(unsigned char octet);
-const char     *ops_show_symmetric_algorithm(unsigned char hash);
+ops_text_t     *ops_showall_ss_preferred_hash(ops_ss_preferred_hash_t);
+const char     *ops_show_hash_algorithm(unsigned char);
+const char     *ops_show_symmetric_algorithm(unsigned char);
 
-ops_text_t     *ops_showall_ss_preferred_ska(ops_ss_preferred_ska_t ss_preferred_ska);
-const char     *ops_show_ss_preferred_ska(unsigned char octet);
+ops_text_t     *ops_showall_ss_preferred_ska(ops_ss_preferred_ska_t);
+const char     *ops_show_ss_preferred_ska(unsigned char);
 
-const char     *ops_show_ss_rr_code(ops_ss_rr_code_t ss_rr_code);
+const char     *ops_show_ss_rr_code(ops_ss_rr_code_t);
 
-ops_text_t     *ops_showall_ss_features(ops_ss_features_t ss_features);
+ops_text_t     *ops_showall_ss_features(ops_ss_features_t);
 
-ops_text_t     *ops_showall_ss_key_flags(ops_ss_key_flags_t ss_key_flags);
-const char     *ops_show_ss_key_flag(unsigned char octet, ops_bit_map_t * map);
+ops_text_t     *ops_showall_ss_key_flags(ops_ss_key_flags_t);
+const char     *ops_show_ss_key_flag(unsigned char, ops_bit_map_t *);
 
-ops_text_t     *ops_showall_ss_key_server_prefs(ops_ss_key_server_prefs_t ss_key_server_prefs);
+ops_text_t     *ops_showall_ss_key_server_prefs(ops_ss_key_server_prefs_t);
 const char     *
-ops_show_ss_key_server_prefs(unsigned char octet,
-			     ops_bit_map_t * map);
+ops_show_ss_key_server_prefs(unsigned char, ops_bit_map_t *);
 
-ops_text_t     *ops_showall_ss_notation_data_flags(ops_ss_notation_data_t ss_notation_data);
-
-/* vim:set textwidth=120: */
-/* vim:set ts=8: */
+ops_text_t     *ops_showall_ss_notation_data_flags(ops_ss_notation_data_t);
 
 #endif				/* OPS_PACKET_TO_TEXT_H */

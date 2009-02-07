@@ -42,51 +42,48 @@ typedef struct {
 }               ops_keyring_t;
 
 const ops_keydata_t *
-ops_keyring_find_key_by_id(const ops_keyring_t * keyring,
+ops_keyring_find_key_by_id(const ops_keyring_t * ,
 			   const unsigned char keyid[OPS_KEY_ID_SIZE]);
-	const ops_keydata_t *
-	                ops_keyring_find_key_by_userid(const ops_keyring_t * keyring,
-					                const char *userid);
-	void            ops_keydata_free(ops_keydata_t * key);
-	void            ops_keyring_free(ops_keyring_t * keyring);
-	void            ops_dump_keyring(const ops_keyring_t * keyring);
-	const ops_public_key_t *
-	                ops_get_public_key_from_data(const ops_keydata_t * data);
-	bool   ops_is_key_secret(const ops_keydata_t * data);
-	const ops_secret_key_t *
-	                ops_get_secret_key_from_data(const ops_keydata_t * data);
-	ops_secret_key_t *
-	                ops_get_writable_secret_key_from_data(ops_keydata_t * data);
-	ops_secret_key_t *ops_decrypt_secret_key_from_data(const ops_keydata_t * key,
-				                       const char *pphrase);
+const ops_keydata_t *ops_keyring_find_key_by_userid(const ops_keyring_t *,
+					                const char *);
+void            ops_keydata_free(ops_keydata_t *);
+void            ops_keyring_free(ops_keyring_t *);
+void            ops_dump_keyring(const ops_keyring_t *);
+const ops_public_key_t *
+ops_get_public_key_from_data(const ops_keydata_t *);
+bool   ops_is_key_secret(const ops_keydata_t *);
+const ops_secret_key_t *ops_get_secret_key_from_data(const ops_keydata_t *);
+ops_secret_key_t *ops_get_writable_secret_key_from_data(ops_keydata_t *);
+ops_secret_key_t *ops_decrypt_secret_key_from_data(const ops_keydata_t *,
+					       const char *);
 
-	bool   ops_keyring_read_from_file(ops_keyring_t * keyring, const bool armour, const char *filename);
-	bool   ops_keyring_read_from_mem(ops_keyring_t * keyring, const bool armour, ops_memory_t * mem);
+bool   ops_keyring_read_from_file(ops_keyring_t *, const bool, const char *);
+bool   ops_keyring_read_from_mem(ops_keyring_t *, const bool, ops_memory_t *);
 
-	char           *ops_malloc_passphrase(char *passphrase);
-	char           *ops_get_passphrase(void);
+char           *ops_malloc_passphrase(char *);
+char           *ops_get_passphrase(void);
 
-	void            ops_keyring_list(const ops_keyring_t * keyring);
+void            ops_keyring_list(const ops_keyring_t *);
 
-	void            ops_set_secret_key(ops_parser_content_union_t * content, const ops_keydata_t * key);
+void            ops_set_secret_key(ops_parser_content_union_t *, const ops_keydata_t *);
 
-	const unsigned char *ops_get_key_id(const ops_keydata_t * key);
-	unsigned        ops_get_user_id_count(const ops_keydata_t * key);
-	const unsigned char *ops_get_user_id(const ops_keydata_t * key, unsigned index);
-	bool   ops_is_key_supported(const ops_keydata_t * key);
-	const ops_keydata_t *ops_keyring_get_key_by_index(const ops_keyring_t * keyring, int index);
+const unsigned char *ops_get_key_id(const ops_keydata_t *);
+unsigned        ops_get_user_id_count(const ops_keydata_t *);
+const unsigned char *ops_get_user_id(const ops_keydata_t *, unsigned);
+bool   ops_is_key_supported(const ops_keydata_t *);
+const ops_keydata_t *ops_keyring_get_key_by_index(const ops_keyring_t *, int);
 
-	ops_user_id_t  *ops_add_userid_to_keydata(ops_keydata_t * keydata, const ops_user_id_t * userid);
-	ops_packet_t   *ops_add_packet_to_keydata(ops_keydata_t * keydata, const ops_packet_t * packet);
-	void            ops_add_signed_userid_to_keydata(ops_keydata_t * keydata, const ops_user_id_t * userid, const ops_packet_t * packet);
+ops_user_id_t  *ops_add_userid_to_keydata(ops_keydata_t *, const ops_user_id_t *);
+ops_packet_t   *ops_add_packet_to_keydata(ops_keydata_t *, const ops_packet_t *);
+void            ops_add_signed_userid_to_keydata(ops_keydata_t *, const ops_user_id_t *, const ops_packet_t *);
 
-	bool   ops_add_selfsigned_userid_to_keydata(ops_keydata_t * keydata, ops_user_id_t * userid);
+bool   ops_add_selfsigned_userid_to_keydata(ops_keydata_t *, ops_user_id_t *);
 
-	ops_keydata_t  *ops_keydata_new(void);
-	void            ops_keydata_init(ops_keydata_t * keydata, const ops_content_tag_t type);
+ops_keydata_t  *ops_keydata_new(void);
+void            ops_keydata_init(ops_keydata_t *, const ops_content_tag_t);
 
-	void            ops_copy_userid(ops_user_id_t *, const ops_user_id_t *);
-	void            ops_copy_packet(ops_packet_t *, const ops_packet_t *);
-	unsigned        ops_get_keydata_content_type(const ops_keydata_t *);
+void            ops_copy_userid(ops_user_id_t *, const ops_user_id_t *);
+void            ops_copy_packet(ops_packet_t *, const ops_packet_t *);
+unsigned        ops_get_keydata_content_type(const ops_keydata_t *);
 
 #endif
