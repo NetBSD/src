@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.86 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.87 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9762,8 +9762,101 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Technologies, ported from vendor FreeBSD SDK and integrated
 		with opencrypto by CoyotePoint Systems.
 		[darran 20081030]
+	etherip(4), tap(4): Allow etherip(4) and tap(4) to suspend and resume.
+		[hans 20081103]
+	bge(4): Fix constant freeze on BCM5906M. [cegger 20081110]
+	rc.d(8): Import rc.d/httpd script for httpd(8) daemon control.
+		[mishka 20081211]
+	amd64, i386: Add support for enhanced speedstep on Intel Atom CPUs.
+		[jmcneill 20081112]
+	azalia(4): Add support for Realtek ALC269 as found in Eee PC 1000HA.
+		[jmcneill 20081112]
+	compat_linux(8), compat_linux32: Fix nanosleep(2) on 64-bit archs.
+		[njoly 20081112]
+	compat_osf1(8): Make dynamic executables work again. [njoly 20081115]
+	man.conf(5): Also search /usr/X11R7, and do it before X11R6.
+		[hubertf 20081117]
+	atari: Fix atari sysinst based miniroot image, and retire old miniroot.
+		[abs 20081117]
+	i386: Add i386 specific COMPAT_30_PTHREAD option, which restore
+		binary compatibility with netbsd-3 libpthread.
+		[bouyer 20081118]
+	msk(4): Fix Yukon EC Ultra cold power up issue.
+		Also increase stability. [chris 20081118]
+	uplcom(4): Recognize Corega CG-USBRS232R as a serial device.
+		[jnemeth 20081120]
+	aic(4): Work around rbus resource allocation problem so aic PCMCIA
+		cards work again. [jnemeth 20081120]
+	vax: Fix Unibus support on VAX11/780 and 8600 models. [hans 20081120]
+	gcc(1): Fix jump table addressing in the M68k codegen. [phx, 20081120]
+	makefs(8): Make the allow-multidot option for cd9660 useful.
+		[ad 20081121]
+	compat_netbsd32(8): Implement netbsd32__sched_setparam(),
+		netbsd32__sched_getparam(), netbsd32__sched_setaffinity()
+		and netbsd32__sched_getaffinity(). [mrg 20081122]
+	ext2fs: Add support for 32 bit uid/gid fields in ext2. [mrg 20081123]
+	altq(4): Always use binuptime(9) and emulate 1GiHz counter instead of
+		MD cpu_counter() which isn't MP-safe. [tsutsui 20081125]
+	vge(4): Add ifconfig down and ALTQ support. [joerg 20081126]
 	wscons(4): Add wscons/vcons support for Sun cg3. [jdc 20081128]
+	ehci(4): Fix high-speed isoc USB transfers and add dma-sync of
+		data buffer before scheduling transfers. [jmorse 20081128]
+	sparc64: Fix boot device matching on U5/U10 machines to properly
+	        distinguish cd0 from wd0. [martin 20081201]
+	efs: Improve stability of efs by adding specfs/fifofs support.
+		[rumble 20081201]
+	wm(4): Fix nasty EEPROM-trashing bug on ICH8 and ICH9 chipsets.
+		[sketch 20081202]
 	fxp(4): Add a workaround for hardware ip4csum-tx bug.
 		[tsutsui 20081203]
 	wscons(4): Add wscons/vcons support for Sun bw2. [jdc 20081205]
+	fss(4): Make persistent snapshots work again [hannken 20081207]
+	dhcpcd(8): Import 4.0.7. [roy 20081209]
+	mc146818(4): Fix an inverted logic which could cause possible
+		1 second spin on reading/updating clock. [kenh 20081211]
+	umass(4), usbdi(4): Fix PR#39651: two problems in umass(4).
+		[jmorse 20081212]
 	nvi(1): Added "expandtab" option.  [lukem 20081212]
+	wapbl(4): Don't deadlock on rename("foo/foo", "foo") in the case
+		where foo/foo is a directory. [dholland 20081213]
+	veriexec(4): Fix a NULL pointer dereference described in PR/39559.
+		[elad 20081214]
+	uvm(9): Fix PR kern/40027: pagedaemon loops on memory shortage.
+		[ad 20081213]
+	msdosfs: Remove pm_Head check to make an 8GB Memory Stick Pro Duo
+		formatted with a PSP work. [jmcneill 20081226]
+	newfs_msdos(8): Don't limit the number of drive heads with 255.
+		[jmcneill 20081226]
+	restore(8): Make restore work for Linux dump volumes by ignoring
+		extended attribute records on these volumes. [hannken 20081226]
+	atari: Fix hangup problem on loading md_root from floppy during
+		installation. [tsutsui 20081228]
+	atari: Numerous fixes to atari pmap, including a sync with amiga.
+		[tsutsui,tjam 20090101]
+	acorn26: Initialise cpu_info_store so that acorn26 kernel works.
+		[bjh21 20090103]
+	atari: Fix lost interrupt problem on Falcon wdc(4). [tsutsui 20090103]
+	evbarm: Misc fixes to make i80321-based boards booting.
+		[briggs 20090105]
+	openssl(1):  Correct error checking for DSA and ECDSA keys
+		(from FreeBSD). [tron 20090107]
+	atari: Fix bootloader issue caused by aggressive gcc4.
+		[tsutsui 20090106]
+	ntp: Import ntp 4.2.4p6. openssl API related security fix.
+		[kardel 20090108]
+	openssl(1): Fix CVE-2009-0025 from the official 9.5.1-P1 release.
+		[drochner 20090109]
+	mount(8): Warn that autoselecting nfs based on : or @ in the device
+		path will be removed in a future release. [pooka 20090111]
+	mount(8): Support mount -o rump, which uses the rump server instead of
+		using the kernel service. [pooka 20090111]
+	raid(4): Implement DIOCACHESYNC for RAIDframe. [oster 20090111]
+	dbcool(4): Add ADT7460 support. [pgoyette 20090114]
+	xen: Fix PCI_BUS_FIXUP/PCI_ADDR_FIXUP support on Xen. [bouyer 20090118]
+	m68k: Fix panic in FPE code caused by 040/060 specific FDADD
+		instruction on 020/030 machines.
+		[tsutsui 20090120]
+	atari: Merge ATARITT.in and FALCON.in, rename BOOT to SMALL030, and
+		remove BOOTX kernel. [abs 20090124]
+	m68k: Fix floating point handling regressions for m68k.
+		[martin 20090127]

@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1178 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1179 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -95,9 +95,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[christos 20090103]
 	rc.d(8): Add a script for rndctl(8). [apb 20090104]
 	module: Add sysvbfs module. [pooka 20090105]
-	ntp:	import ntp 4.2.4p6
-		openssl API related security fix. [kardel 20090108]
-	bwi:	Add a driver for Broadcom AirForce / Apple Airport Extreme
+	bwi(4): Add a driver for Broadcom AirForce / Apple Airport Extreme
 		wireless network controllers. From Taylor Campbell.
 		[macallan 20090109]
 	rgephy(4): Support for RTL8211C(L) phy. From FreeBSD. [cegger 20090109]
