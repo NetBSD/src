@@ -89,13 +89,13 @@ ops_setup_memory_read(ops_parse_info_t ** pinfo, ops_memory_t * mem,
 
 /* useful callbacks */
 ops_parse_cb_return_t
-callback_literal_data(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo);
+literal_data_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
 ops_parse_cb_return_t
-callback_pk_session_key(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo);
+pk_session_key_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
 ops_parse_cb_return_t
-callback_cmd_get_secret_key(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo);
+get_secret_key_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
 ops_parse_cb_return_t
-callback_cmd_get_passphrase_from_cmdline(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo);
+get_passphrase_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo);
 
 /* from reader_fd.c */
 	void            ops_reader_set_fd(ops_parse_info_t *, int);
