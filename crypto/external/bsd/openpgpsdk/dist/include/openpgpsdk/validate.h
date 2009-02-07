@@ -29,75 +29,74 @@ typedef struct {
 	ops_signature_info_t *unknown_sigs;
 }               ops_validate_result_t;
 
-void            ops_validate_result_free(ops_validate_result_t * result);
+void            ops_validate_result_free(ops_validate_result_t *);
 
 bool 
-ops_validate_key_signatures(ops_validate_result_t * result,
-			    const ops_keydata_t * keydata,
-			    const ops_keyring_t * ring,
+ops_validate_key_signatures(ops_validate_result_t *,
+			    const ops_keydata_t *,
+			    const ops_keyring_t *,
 			    ops_parse_cb_return_t cb(const ops_parser_content_t *, ops_parse_cb_info_t *));
-	bool   ops_validate_all_signatures(ops_validate_result_t * result,
-				                 const ops_keyring_t * ring,
-						                    ops_parse_cb_return_t cb(const ops_parser_content_t *, ops_parse_cb_info_t *));
+bool   ops_validate_all_signatures(ops_validate_result_t *,
+	const ops_keyring_t *,
+	ops_parse_cb_return_t cb(const ops_parser_content_t *, ops_parse_cb_info_t *));
 
-	void            ops_keydata_reader_set(ops_parse_info_t * pinfo,
-				                 const ops_keydata_t * key);
+void        ops_keydata_reader_set(ops_parse_info_t *, const ops_keydata_t *);
 
-	typedef struct {
-		const ops_keydata_t *key;
-		unsigned        packet;
-		unsigned        offset;
-	}               validate_reader_arg_t;
+typedef struct {
+	const ops_keydata_t *key;
+	unsigned        packet;
+	unsigned        offset;
+}               validate_reader_arg_t;
 
 /** Struct used with the validate_key_cb callback */
-	typedef struct {
-		ops_public_key_t pkey;
-		ops_public_key_t subkey;
-		ops_secret_key_t skey;
-		enum {
-			ATTRIBUTE = 1,
-			ID
-		}               last_seen;
-		ops_user_id_t   user_id;
-		ops_user_attribute_t user_attribute;
-		unsigned char   hash[OPS_MAX_HASH_SIZE];
-		const ops_keyring_t *keyring;
-		validate_reader_arg_t *rarg;
-		ops_validate_result_t *result;
-		                ops_parse_cb_return_t(*cb_get_passphrase) (const ops_parser_content_t *, ops_parse_cb_info_t *);
-	}               validate_key_cb_arg_t;
+typedef struct {
+	ops_public_key_t pkey;
+	ops_public_key_t subkey;
+	ops_secret_key_t skey;
+	enum {
+		ATTRIBUTE = 1,
+		ID
+	}               last_seen;
+	ops_user_id_t   user_id;
+	ops_user_attribute_t user_attribute;
+	unsigned char   hash[OPS_MAX_HASH_SIZE];
+	const ops_keyring_t *keyring;
+	validate_reader_arg_t *rarg;
+	ops_validate_result_t *result;
+			ops_parse_cb_return_t(*cb_get_passphrase) (const ops_parser_content_t *, ops_parse_cb_info_t *);
+}               validate_key_cb_arg_t;
 
 /** Struct use with the validate_data_cb callback */
-	typedef struct {
-		enum {
-			LITERAL_DATA,
-			SIGNED_CLEARTEXT
-		}               use;	/* <! this is set to indicate what
-					 * kind of data we have */
-		union {
-			ops_literal_data_body_t literal_data_body;	/* <! Used to hold
-									 * Literal Data */
-			ops_signed_cleartext_body_t signed_cleartext_body;	/* <! Used to hold
-										 * Signed Cleartext */
-		}               data;	/* <! the data itself */
-		unsigned char   hash[OPS_MAX_HASH_SIZE];	/* <! the hash */
-		ops_memory_t   *mem;
-		const ops_keyring_t *keyring;	/* <! keyring to use */
-		validate_reader_arg_t *rarg;	/* <! reader-specific arg */
-		ops_validate_result_t *result;	/* <! where to put the result */
-	}               validate_data_cb_arg_t;	/* <! used with
-						 * validate_data_cb callback */
+typedef struct {
+	enum {
+		LITERAL_DATA,
+		SIGNED_CLEARTEXT
+	}               use;	/* <! this is set to indicate what
+				 * kind of data we have */
+	union {
+		ops_literal_data_body_t literal_data_body;
+			/* <! Used to hold Literal Data */
+		ops_signed_cleartext_body_t signed_cleartext_body;
+			/* <! Used to hold * Signed Cleartext */
+	}               data;	/* <! the data itself */
+	unsigned char   hash[OPS_MAX_HASH_SIZE];	/* <! the hash */
+	ops_memory_t   *mem;
+	const ops_keyring_t *keyring;	/* <! keyring to use */
+	validate_reader_arg_t *rarg;	/* <! reader-specific arg */
+	ops_validate_result_t *result;	/* <! where to put the result */
+}               validate_data_cb_arg_t;	/* <! used with
+					 * validate_data_cb callback */
 
-	bool   ops_check_signature(const unsigned char *hash,
-					                    unsigned length,
-				                const ops_signature_t * sig,
-			                   const ops_public_key_t * signer);
+bool   ops_check_signature(const unsigned char *, unsigned,
+					const ops_signature_t *,
+				   const ops_public_key_t *);
 ops_parse_cb_return_t
-ops_validate_key_cb(const ops_parser_content_t * content_, ops_parse_cb_info_t * cbinfo);
+ops_validate_key_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
 
-	bool   ops_validate_file(ops_validate_result_t * result, const char *filename, const int armoured, const ops_keyring_t * keyring);
-	bool   ops_validate_mem(ops_validate_result_t * result, ops_memory_t * mem, const int armoured, const ops_keyring_t * keyring);
+bool   ops_validate_file(ops_validate_result_t *, const char *, const int, const ops_keyring_t *);
+bool   ops_validate_mem(ops_validate_result_t *, ops_memory_t *, const int, const ops_keyring_t *);
 
 ops_parse_cb_return_t
 validate_data_cb(const ops_parser_content_t *, ops_parse_cb_info_t *);
-	bool   validate_result_status(ops_validate_result_t *);
+
+bool   validate_result_status(ops_validate_result_t *);

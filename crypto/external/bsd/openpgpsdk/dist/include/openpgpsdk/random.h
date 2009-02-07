@@ -25,4 +25,4 @@
 #include <unistd.h>
 #endif
 
-void            ops_random(void *dest, size_t length);
+void            ops_random(void *, size_t);
