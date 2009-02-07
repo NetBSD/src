@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.90 2009/02/06 02:39:30 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.91 2009/02/07 02:35:43 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3842,4 +3842,41 @@ external/bsd/dhcpcd/dist/signals.c		dhcpcd-4-0-10
 
 	Update dhcpcd to 4.0.10.
 	[roy, ticket #386]
+
+xsrc/external/mit/xf86-video-sunffb/dist/src/ffb_driver.c 1.2
+
+	Turn off the hw cursor on exit.
+	[macallan, ticket #423]
+
+xsrc/external/mit/xf86-video-sunffb/dist/src/ffb.h 1.2
+xsrc/external/mit/xf86-video-sunffb/dist/src/ffb_dac.c 1.2
+xsrc/external/mit/xf86-video-sunffb/dist/src/ffb_driver.c 1.3
+
+	On older FFBs we need to redraw the screen after unblanking.
+	[macallan, ticket #424]
+
+xsrc/external/mit/xf86-video-sunffb/dist/src/ffb_driver.c 1.4
+
+	Get rid of gratuitious calls to FFBSaveScreen() during driver
+	setup.  This should avoid a crash on ffb1 boards where we need
+	to redraw the screen on unblank which would happen when we're
+	not ready to do so with above mentioned calls in place.
+	[macallan, ticket #425]
+
+xsrc/external/mit/xf86-video-sunffb/dist/src/ffb_accel.c 1.2
+
+	Catch up with changes in XAA that rendered our RENDER
+	acceleration code non-functional. While there, fix VSCROLL support
+	to disable alpha blending in order to avoid those bluish-greenish
+	artifacts we'd get otherwise when doing a VSCROLL right after a
+	RENDER op.
+	[macallan, ticket #426]
+
+sys/kern/subr_devsw.c				1.25
+
+	- An errno is missed in rev. 1.11 while converting return
+	  statement to goto statement.
+	- A local variable still in use is intercepted in rev. 1.6.
+	  Define and use variable of its own.
+	[enami, ticket #422]
 
