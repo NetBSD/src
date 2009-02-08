@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1179 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1180 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -124,4 +124,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import 4.0.8 [roy 20090128]
 	dhcpcd(8): Import 4.0.9 [roy 20090131]
 	dhcpcd(8): Import 4.0.10 [roy 20090204]
+	udf, mount_udf(8): add support for session opening/closing on
+		sequential media. Media can be closed on request on unmount by
+		passing the '-c' flag as mount option. [reinoud 20090208]
 
