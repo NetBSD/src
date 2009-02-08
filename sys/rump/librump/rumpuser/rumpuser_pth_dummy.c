@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.3 2009/02/06 23:35:27 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.4 2009/02/08 16:18:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.3 2009/02/06 23:35:27 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.4 2009/02/08 16:18:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -56,11 +56,13 @@ struct rumpuser_rw {
 struct rumpuser_mtx rumpuser_aio_mtx;
 struct rumpuser_cv rumpuser_aio_cv;
 int rumpuser_aio_head, rumpuser_aio_tail;
-struct rumpuser_aio *rumpuser_aios[N_AIOS];
+struct rumpuser_aio rumpuser_aios[N_AIOS];
 
 void donada(int);
+/*ARGSUSED*/
 void donada(int arg) {}
 void dounnada(int, int *);
+/*ARGSUSED*/
 void dounnada(int arg, int *ap) {}
 kernel_lockfn   rumpuser__klock = donada;
 kernel_unlockfn rumpuser__kunlock = dounnada;
@@ -237,16 +239,10 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 /*ARGSUSED*/
 int
 rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
-	int stdticks)
+	struct timespec *ts)
 {
-	struct timespec ts;
 
-	ts.tv_sec  = stdticks / 100;
-	ts.tv_nsec = (stdticks % 100) * 10000000;
-	ts.tv_sec  += ts.tv_nsec / 1000000000;
-	ts.tv_nsec %= 1000000000;
-
-	nanosleep(&ts, NULL);
+	nanosleep(ts, NULL);
 	return 0;
 }
 
@@ -289,26 +285,4 @@ rumpuser_get_curlwp()
 {
 
 	return curlwp;
-}
-
-/*ARGSUSED*/
-void
-rumpuser_set_ipl(int what)
-{
-
-}
-
-/*ARGSUSED*/
-int
-rumpuser_whatis_ipl()
-{
-
-	return 0;
-}
-
-/*ARGSUSED*/
-void
-rumpuser_clear_ipl(int what)
-{
-
 }
