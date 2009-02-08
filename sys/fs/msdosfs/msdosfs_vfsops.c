@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.68.6.1 2009/01/02 21:00:27 snj Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.68.6.2 2009/02/08 19:10:44 snj Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.68.6.1 2009/01/02 21:00:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.68.6.2 2009/02/08 19:10:44 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -203,7 +203,7 @@ update_mp(mp, argp)
 	pmp->pm_flags |= argp->flags & MSDOSFSMNT_MNTOPT;
 
 	/*
-	 * GEMDOS knows nothing (yet) about win95
+	 * GEMDOS knows nothing about win95 long filenames
 	 */
 	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)
 		pmp->pm_flags |= MSDOSFSMNT_NOWIN95;
@@ -529,8 +529,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	}
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		bsize = secsize;
-		if (bsize != 512 ||
-		    (dtype != DTYPE_FLOPPY && fstype != FS_MSDOS)) {
+		if (bsize != 512) {
 			DPRINTF(("bsize %d dtype %d fstype %d\n", bsize, dtype,
 			    fstype));
 			error = EINVAL;
