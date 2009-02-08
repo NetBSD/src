@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.7 2009/01/13 13:35:54 yamt Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.8 2009/02/08 19:14:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.7 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.8 2009/02/08 19:14:52 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -281,13 +281,8 @@ udf_queuebuf_seq(struct udf_strat_args *args)
 	if ((nestbuf->b_flags & B_READ) == 0) {
 		/* writing */
 		queue = UDF_SHED_SEQWRITING;
-		if (what == UDF_C_DSCR)
+		if (what == UDF_C_ABSOLUTE)
 			queue = UDF_SHED_WRITING;
-#if 0
-		if (queue == UDF_SHED_SEQWRITING) {
-			/* TODO do add sector to uncommitted space */
-		}
-#endif
 	}
 
 	/* use our own sheduler lists for more complex sheduling */
@@ -366,6 +361,7 @@ udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf, uint32_t lb_map)
 static void
 udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 {
+	union dscrptr *dscr;
 	struct long_ad *node_ad_cpy;
 	struct part_desc *pdesc;
 	uint64_t *lmapping, *lmappos, blknr;
@@ -395,23 +391,9 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 			"type %d, b_resid %d, b_bcount %d, b_bufsize %d\n",
 			buf, (uint32_t) buf->b_blkno / blks, buf->b_udf_c_type,
 			buf->b_resid, buf->b_bcount, buf->b_bufsize));
-		/* if we have FIDs fixup using buffer's sector number(s) */
-		if (buf->b_udf_c_type == UDF_C_FIDS) {
-			panic("UDF_C_FIDS in SHED_WRITING!\n");
-			buf_len = buf->b_bcount;
-			sectornr = our_sectornr;
-			bpos = 0;
-			while (buf_len) {
-				len = MIN(buf_len, sector_size);
-				fidblk = (uint8_t *) buf->b_data + bpos;
-				udf_fixup_fid_block(fidblk, sector_size,
-					0, len, sectornr);
-				sectornr++;
-				bpos += len;
-				buf_len -= len;
-			}
-		}
-		udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
+		KASSERT(buf->b_udf_c_type == UDF_C_ABSOLUTE);
+
+		// udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
 		VOP_STRATEGY(ump->devvp, buf);
 		return;
 	}
@@ -434,9 +416,6 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 	/* logically allocate buf and map it in the file */
 	udf_late_allocate_buf(ump, buf, lmapping, node_ad_cpy, &vpart_num);
 
-	/* update mapping in the VAT */
-	udf_VAT_mapping_update(ump, buf, *lmapping);
-
 	/*
 	 * NOTE We are using the knowledge here that sequential media will
 	 * always be mapped linearly. Thus no use to explicitly translate the
@@ -449,6 +428,20 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 
 	/* set buffers blkno to the physical block number */
 	buf->b_blkno = (*lmapping + ptov) * blks;
+
+	/* fixate floating descriptors */
+	if (buf->b_udf_c_type == UDF_C_FLOAT_DSCR) {
+		/* set our tag location to the absolute position */
+		dscr = (union dscrptr *) buf->b_data;
+		dscr->tag.tag_loc = udf_rw32(*lmapping + ptov);
+		udf_validate_tag_and_crc_sums(dscr);
+	}
+
+	/* update mapping in the VAT */
+	if (buf->b_udf_c_type == UDF_C_NODE) {
+		udf_VAT_mapping_update(ump, buf, *lmapping);
+		udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
+	}
 
 	/* if we have FIDs, fixup using the new allocation table */
 	if (buf->b_udf_c_type == UDF_C_FIDS) {
@@ -466,9 +459,6 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 		}
 	}
 
-	/* NOTE we can't have metadata space bitmap descriptors here */
-
-	udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
 	VOP_STRATEGY(ump->devvp, buf);
 }
 
