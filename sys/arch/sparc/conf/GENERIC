@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.210 2009/01/27 06:57:59 mrg Exp $
+# $NetBSD: GENERIC,v 1.211 2009/02/08 13:05:51 jdc Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.210 $"
+#ident 		"GENERIC-$Revision: 1.211 $"
 
 maxusers	32
 
@@ -51,19 +51,19 @@ options 	SUN4_MMU3L	# sun4/400 3-level MMU
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 # wscons stuff
-options		WSEMUL_SUN
-#options		WSEMUL_VT100
-options		WSDISPLAY_COMPAT_RAWKBD
-options		WSDISPLAY_CUSTOM_OUTPUT
-options		WS_DEFAULT_FG=WSCOL_BLACK
-options		WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
-options		WS_KERNEL_FG=WSCOL_GREEN
-options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-options		WSDISPLAY_COMPAT_PCVT
+options 	WSEMUL_SUN
+#options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_CUSTOM_OUTPUT
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_PCVT
 options 	WSDISPLAY_COMPAT_SYSCONS
-options		WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_USL
 
-options		WSDISPLAY_SCROLLSUPPORT
+options 	WSDISPLAY_SCROLLSUPPORT
 
 # generic options vlid for both wscons and RASTERCONSOLE
 options 	FONT_GALLANT12x22	# the console font
@@ -182,7 +182,7 @@ options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_50	# NetBSD 5.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -209,7 +209,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 ## Network protocol support.  In most environments, INET is required.
@@ -641,8 +641,8 @@ audioamd0	at sbus0 slot ? offset ?		# sun4m
 
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 
-#options	DBRI_DEBUG	# noisy debug output from the dbri driver
-#options	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
+#options 	DBRI_DEBUG	# noisy debug output from the dbri driver
+#options 	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri*		at sbus? slot ? offset ?		# SUNW,DBRI[s3|e]
 
 audio*		at audiobus?
@@ -731,7 +731,7 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont
 
-#options	FILEASSOC		# fileassoc(9)
+#options 	FILEASSOC		# fileassoc(9)
 
 # Veriexec
 #
