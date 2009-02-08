@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65 2009/02/06 18:50:28 jym Exp $
+#	$NetBSD: INSTALL,v 1.66 2009/02/08 13:05:51 jdc Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -49,14 +49,14 @@ options 	SUN4_MMU3L	# 3-level MMU on sun4/400
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 # wscons stuff
-options		WSEMUL_SUN
-#options		WSEMUL_VT100
-options		WSDISPLAY_COMPAT_RAWKBD
-options		WSDISPLAY_CUSTOM_OUTPUT
-options		WS_DEFAULT_FG=WSCOL_BLACK
-options		WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
-options		WS_KERNEL_FG=WSCOL_GREEN
-options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSEMUL_SUN
+#options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_CUSTOM_OUTPUT
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
 
 #### System options that are the same for all ports
 
@@ -84,7 +84,7 @@ config		netbsd	root on ? type ?
 ## Loadable kernel module support; still under development.
 
 options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
@@ -163,7 +163,7 @@ options 	INSECURE
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 #options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
