@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.91 2009/02/07 02:35:43 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.92 2009/02/08 19:00:35 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3665,9 +3665,9 @@ share/man/man9/kthread.9			1.18
 sys/kern/kern_kthread.c				1.25
 sys/sys/kthread.h				1.8
 
-- Allow creating timeshard kthreads. To be used to fix the RAIDframe
-  parity rewrite issue.
-- Create kthreads in the SCHED_RR class by default, not SCHED_FIFO.
+	- Allow creating timeshard kthreads. To be used to fix the RAIDframe
+	  parity rewrite issue.
+	- Create kthreads in the SCHED_RR class by default, not SCHED_FIFO.
 	[ad, ticket #397]
 
 regress/lib/libc/atexit/atexit.c		1.2
@@ -3879,4 +3879,87 @@ sys/kern/subr_devsw.c				1.25
 	- A local variable still in use is intercepted in rev. 1.6.
 	  Define and use variable of its own.
 	[enami, ticket #422]
+
+crypto/dist/ipsec-tools/ChangeLog		ipsec-tools-0_7_1
+crypto/dist/ipsec-tools/NEWS			ipsec-tools-0_7_1
+crypto/dist/ipsec-tools/configure.ac 		ipsec-tools-0_7_1
+crypto/dist/ipsec-tools/netbsd-import.sh 	ipsec-tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/ipsec_dump_policy.c ipsec-tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/ipsec_get_policylen.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/ipsec_strerror.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/key_debug.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/libpfkey.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/pfkey.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/pfkey_dump.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/policy_parse.y ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/policy_token.l ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/libipsec/test-policy-priority.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/Makefile.am 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/admin.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/admin.h 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/backupsa.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/cfparse.y 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/cftoken.l 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/crypto_openssl.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/eaytest.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/evt.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/evt.h 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/grabmyaddr.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/handler.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/handler.h 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.h 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_agg.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_base.c ipsec_tools-0_7_1 
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_ident.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_quick.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_unity.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_unity.h ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_var.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_xauth.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/isakmp_xauth.h ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/kmpstat.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/main.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/misc.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/misc.h 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/nattraversal.c ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/oakley.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/pfkey.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/pfkey.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/plog.c 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/plog.h 	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/policy.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/policy.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/privsep.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/privsep.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/proposal.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5 ipsec_tools-0_7_1 
+crypto/dist/ipsec-tools/src/racoon/racoonctl.8	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/racoonctl.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/remoteconf.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/remoteconf.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/sainfo.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/sainfo.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/schedule.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/schedule.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/session.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/session.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/sockmisc.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/sockmisc.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/strnames.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/var.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/vendorid.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/vendorid.h	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/racoon/doc/README.privsep removed
+crypto/dist/ipsec-tools/src/setkey/parse.y	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/setkey/setkey.c	ipsec_tools-0_7_1
+crypto/dist/ipsec-tools/src/setkey/token.l	ipsec_tools-0_7_1
+lib/libipsec/package_version.h			patch
+
+	Downgrade ipsec-tools to 0.7.1nb1.
+	[manu/spz, ticket #378]
 
