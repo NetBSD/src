@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.23 2009/02/03 09:18:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.24 2009/02/08 11:25:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.23 2009/02/03 09:18:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.24 2009/02/08 11:25:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,9 +552,9 @@ pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
 
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pv_enter(%p, %p, %p, 0x%x, %p)\n",
 	    pg, pve, pm, (int)va, pdep));
-	pve->pv_pmap	= pm;
-	pve->pv_va	= va;
-	pve->pv_ptp	= pdep;
+	pve->pv_pmap = pm;
+	pve->pv_va = va;
+	pve->pv_ptp = pdep;
 	pve->pv_next = pg->mdpage.pvh_list;
 	pg->mdpage.pvh_list = pve;
 #ifdef PMAPDEBUG
