@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.32 2009/01/16 20:16:47 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.33 2009/02/08 19:05:50 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -60,8 +60,42 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This file contains the xennet frontend code required for the network
+ * communication between two Xen domains.
+ * It ressembles xbd, but is a little more complex as it must deal with two
+ * rings:
+ * - the TX ring, to transmit packets to backend (inside => outside)
+ * - the RX ring, to receive packets from backend (outside => inside)
+ *
+ * Principles are following.
+ *
+ * For TX:
+ * Purpose is to transmit packets to the outside. The start of day is in
+ * xennet_start() (default output routine of xennet) that schedules a softint,
+ * xennet_softstart(). xennet_softstart() generates the requests associated
+ * to the TX mbufs queued (see altq(9)).
+ * The backend's responses are processed by xennet_tx_complete(), called either
+ * from:
+ * - xennet_start()
+ * - xennet_handler(), during an asynchronous event notification from backend
+ *   (similar to an IRQ).
+ *
+ * for RX:
+ * Purpose is to process the packets received from the outside. RX buffers
+ * are pre-allocated through xennet_alloc_rx_buffer(), during xennet autoconf
+ * attach. During pre-allocation, frontend pushes requests in the I/O ring, in
+ * preparation for incoming packets from backend.
+ * When RX packets need to be processed, backend takes the requests previously
+ * offered by frontend and pushes the associated responses inside the I/O ring.
+ * When done, it notifies frontend through an event notification, which will
+ * asynchronously call xennet_handler() in frontend.
+ * xennet_handler() processes the responses, generates the associated mbuf, and
+ * passes it to the MI layer for further processing.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.32 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33 2009/02/08 19:05:50 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -260,10 +294,11 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		printf("%s/\n", xa->xa_xbusd->xbusd_path);
 		for (i = 0; i < dir_n; i++) {
 			printf("\t/%s", dir[i]);
-			err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path, dir[i],
-			    NULL, &val);
+			err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path,
+				          dir[i], NULL, &val);
 			if (err) {
-				aprint_error_dev(self, "xenbus_read err %d\n", err);
+				aprint_error_dev(self, "xenbus_read err %d\n",
+					         err);
 			} else {
 				printf(" = %s\n", val);
 				free(val, M_DEVBUF);
@@ -310,11 +345,11 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't read mac address, err %d\n", err);
 		return;
 	}
-	/* read mac address */
 	for (i = 0, p = val; i < 6; i++) {
 		sc->sc_enaddr[i] = strtoul(p, &e, 16);
 		if ((e[0] == '\0' && i != 5) && e[0] != ':') {
-			aprint_error_dev(self, "%s is not a valid mac address\n", val);
+			aprint_error_dev(self,
+			    "%s is not a valid mac address\n", val);
 			free(val, M_DEVBUF);
 			return;
 		}
@@ -487,7 +522,8 @@ abort_transaction:
 static void xennet_backend_changed(void *arg, XenbusState new_state)
 {
 	struct xennet_xenbus_softc *sc = device_private((device_t)arg);
-	DPRINTF(("%s: new backend state %d\n", device_xname(sc->sc_dev), new_state));
+	DPRINTF(("%s: new backend state %d\n",
+	    device_xname(sc->sc_dev), new_state));
 
 	switch (new_state) {
 	case XenbusStateInitialising:
@@ -505,6 +541,12 @@ static void xennet_backend_changed(void *arg, XenbusState new_state)
 		panic("bad backend state %d", new_state);
 	}
 }
+
+/*
+ * Allocate RX buffers and put the associated request structures
+ * in the ring. This allows the backend to use them to communicate with
+ * frontend when some data is destined to frontend
+ */
 
 static void
 xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
@@ -577,6 +619,9 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	return;
 }
 
+/*
+ * Reclaim all RX buffers used by the I/O ring between frontend and backend
+ */
 static void
 xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 {
@@ -654,6 +699,9 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 	DPRINTF(("%s: xennet_free_rx_buffer done\n", device_xname(sc->sc_dev)));
 }
 
+/*
+ * Clears a used RX request when its associated mbuf has been processed
+ */
 static void
 xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 {
@@ -662,9 +710,14 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 
 	int s = splnet();
 
+	/* puts back the RX request in the list of free RX requests */
 	SLIST_INSERT_HEAD(&sc->sc_rxreq_head, req, rxreq_next);
 	sc->sc_free_rxreql++;
 
+	/*
+	 * ring needs more requests to be pushed in, allocate some
+	 * RX buffers to catch-up with backend's consumption
+	 */
 	req->rxreq_gntref = GRANT_INVALID_REF;
 	if (sc->sc_free_rxreql >= SC_NLIVEREQ(sc) &&
 	    __predict_true(sc->sc_backend_status == BEST_CONNECTED)) {
@@ -676,7 +729,11 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 	splx(s);
 }
 
-
+/*
+ * Process responses associated to the TX mbufs sent previously through
+ * xennet_softstart()
+ * Called at splnet.
+ */
 static void
 xennet_tx_complete(struct xennet_xenbus_softc *sc)
 {
@@ -725,6 +782,12 @@ end:
 	}
 }
 
+/*
+ * Xennet event handler.
+ * Get outstanding responses of TX packets, then collect all responses of
+ * pending RX packets
+ * Called at splnet.
+ */
 static int
 xennet_handler(void *arg)
 {
@@ -871,6 +934,7 @@ again:
 }
 
 /* 
+ * The output routine of a xennet interface
  * Called at splnet.
  */
 void
@@ -902,7 +966,8 @@ xennet_start(struct ifnet *ifp)
 }
 
 /*
- * called at splsoftnet
+ * Prepares mbufs for TX, and notify backend when finished
+ * Called at splsoftnet
  */
 void
 xennet_softstart(void *arg)
@@ -970,14 +1035,16 @@ xennet_softstart(void *arg)
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
 			if (__predict_false(new_m == NULL)) {
-				printf("xennet: no mbuf\n");
+				printf("%s: cannot allocate new mbuf\n",
+				       device_xname(sc->sc_dev));
 				break;
 			}
 			if (m->m_pkthdr.len > MHLEN) {
 				MCLGET(new_m, M_DONTWAIT);
 				if (__predict_false(
 				    (new_m->m_flags & M_EXT) == 0)) {
-					DPRINTF(("xennet: no mbuf cluster\n"));
+					DPRINTF(("%s: no mbuf cluster\n",
+					    device_xname(sc->sc_dev)));
 					m_freem(new_m);
 					break;
 				}
@@ -1034,7 +1101,8 @@ xennet_softstart(void *arg)
 		DPRINTFN(XEDB_MBUF, ("xennet_start pa %p ma %p/%p\n",
 		    (void *)pa, (void *)xpmap_ptom_masked(pa), (void *)pa2));
 #ifdef XENNET_DEBUG_DUMP
-		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s", req->txreq_id);
+		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s",
+			       	req->txreq_id);
 #endif
 
 		txreq = RING_GET_REQUEST(&sc->sc_tx_ring, req_prod);
@@ -1092,7 +1160,8 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl()\n", device_xname(sc->sc_dev)));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl()\n",
+	    device_xname(sc->sc_dev)));
 	error = ether_ioctl(ifp, cmd, data);
 	if (error == ENETRESET)
 		error = 0;
@@ -1116,7 +1185,8 @@ xennet_init(struct ifnet *ifp)
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
 	int s = splnet();
 
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n", device_xname(sc->sc_dev)));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n",
+	    device_xname(sc->sc_dev)));
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		sc->sc_rx_ring.sring->rsp_event =
@@ -1148,7 +1218,8 @@ void
 xennet_reset(struct xennet_xenbus_softc *sc)
 {
 
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n", device_xname(sc->sc_dev)));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n",
+	    device_xname(sc->sc_dev)));
 }
 
 #if defined(NFS_BOOT_BOOTSTATIC)
