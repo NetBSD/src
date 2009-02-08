@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.155.4.1 2009/02/02 22:10:39 snj Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.155.4.2 2009/02/08 20:38:49 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.155.4.1 2009/02/02 22:10:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.155.4.2 2009/02/08 20:38:49 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -134,8 +134,6 @@ settime1(struct proc *p, struct timespec *ts, bool check_kauth)
 	struct timeval delta, tv;
 	struct timeval now;
 	struct timespec ts1;
-	struct bintime btdelta;
-	lwp_t *l;
 	int s;
 
 	TIMESPEC_TO_TIMEVAL(&tv, ts);
@@ -164,19 +162,6 @@ settime1(struct proc *p, struct timespec *ts, bool check_kauth)
 
 	timeradd(&boottime, &delta, &boottime);
 
-	/*
-	 * XXXSMP: There is a short race between setting the time above
-	 * and adjusting LWP's run times.  Fixing this properly means
-	 * pausing all CPUs while we adjust the clock.
-	 */
-	timeval2bintime(&delta, &btdelta);
-	mutex_enter(proc_lock);
-	LIST_FOREACH(l, &alllwp, l_list) {
-		lwp_lock(l);
-		bintime_add(&l->l_stime, &btdelta);
-		lwp_unlock(l);
-	}
-	mutex_exit(proc_lock);
 	resettodr();
 	splx(s);
 
