@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.4 2008/03/03 22:15:09 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.4.8.1 2009/02/08 20:30:20 snj Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.10 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -108,8 +108,8 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	}
 
 	bozoprintf("<html><head><title>Index of %s</title></head>\r\n",
-	    request->hr_url);
-	bozoprintf("<body><h1>Index of %s</h1>\r\n", request->hr_url);
+	    request->hr_file);
+	bozoprintf("<body><h1>Index of %s</h1>\r\n", request->hr_file);
 	bozoprintf("<pre>\r\n");
 #define NAMELEN 40
 #define LMODLEN 19
