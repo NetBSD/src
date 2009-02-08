@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.11 2007/12/06 17:00:33 ad Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.12 2009/02/08 01:13:39 pgoyette Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -428,11 +428,51 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
     size_t cmdlen, void *vbuf, size_t buflen, int flags)
 {
 	struct ki2c_softc *sc = cookie;
-	
+	int i;
+	size_t w_len;
+	uint8_t *wp;
+	uint8_t wrbuf[I2C_EXEC_MAX_CMDLEN + I2C_EXEC_MAX_CMDLEN];
+
+	/*
+	 * We don't have any idea if the ki2c controller can execute
+	 * i2c quick_{read,write} operations, so if someone tries one,
+	 * return an error.
+	 */
+	if (cmdlen == 0 && buflen == 0)
+		return -1;
+
 	/* we handle the subaddress stuff ourselves */
 	ki2c_setmode(sc, I2C_STDMODE);	
 
-	if (ki2c_write(sc, addr, 0, __UNCONST(vcmd), cmdlen) !=0 )
+	/* Write-buffer defaults to vcmd */
+	wp = (uint8_t *)(__UNCONST(vcmd));
+	w_len = cmdlen;
+
+	/*
+	 * Concatenate vcmd and vbuf for write operations
+	 *
+	 * Drivers written specifically for ki2c might already do this,
+	 * but "generic" i2c drivers still provide separate arguments
+	 * for the cmd and buf parts of iic_smbus_write_{byte,word}.
+	 */
+	if (I2C_OP_WRITE_P(op) && buflen != 0) {
+		if (cmdlen == 0) {
+			wp = (uint8_t *)vbuf;
+			w_len = buflen;
+		} else {
+			KASSERT((cmdlen + buflen) <= sizeof(wrbuf));
+			wp = (uint8_t *)(__UNCONST(vcmd));
+			w_len = 0;
+			for (i = 0; i < cmdlen; i++)
+				wrbuf[w_len++] = *wp++;
+			wp = (uint8_t *)vbuf;
+			for (i = 0; i < buflen; i++)
+				wrbuf[w_len++] = *wp++;
+			wp = wrbuf;
+		}
+	}
+
+	if (ki2c_write(sc, addr, 0, wp, w_len) !=0 )
 		return -1;
 
 	if (I2C_OP_READ_P(op)) {
