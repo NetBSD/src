@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.12 2008/08/05 20:57:45 pooka Exp $ */
+/* $NetBSD: mount_udf.c,v 1.13 2009/02/08 19:28:49 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.12 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.13 2009/02/08 19:28:49 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -131,11 +131,9 @@ mount_udf_parseargs(int argc, char **argv,
 
 	while ((ch = getopt(argc, argv, "cg:o:s:t:u:")) != -1) {
 		switch (ch) {
-#ifdef notyet
 		case 'c' :
 			args->udfmflags |= UDFMNT_CLOSESESSION;
 			break;
-#endif
 		case 'g' :
 			/* convert groupname or numeric equiv. */
 			anon_gid = a_gid(optarg);

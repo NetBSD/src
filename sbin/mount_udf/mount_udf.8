@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_udf.8,v 1.9 2008/08/08 22:48:24 wiz Exp $
+.\" $NetBSD: mount_udf.8,v 1.10 2009/02/08 19:28:49 reinoud Exp $
 .\"
 .\" Copyright (c) 2006, 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nd mount an UDF file system
 .Sh SYNOPSIS
 .Nm
-.\".Op Fl c
+.Op Fl c
 .Op Fl g Ar gid
 .Op Fl o Ar options
 .Op Fl t Ar gmtoff
@@ -62,8 +62,11 @@ If unspecified, it will default to nobody:nobody.
 Both uid and gid can be either specified with their names as with
 their numerical equivalents.
 .Bl -tag -width XXXoptions
-.\" .It Fl c
-.\" Close the CD/DVD session after unmount (writing).
+.It Fl c
+Close the session after unmount creating remountable snapshots. Closing a
+session also allows -ROM devices to read the disc created. Note that this
+option only makes sense when mounting sequential recordable media like CD-R
+and DVD*R.
 .It Fl g Ar gid
 Set the group of anonymous files on the file system.
 The default group is the nobody group.
@@ -75,7 +78,8 @@ as specified in
 .It Fl s Ar session
 Select the session
 .Ar session
-to be mounted instead of the default last one.
+to be mounted instead of the default last one. Implements readonly snapshots
+on sequential media.
 Positive
 .Ar session
 values indicate an absolute session number.
