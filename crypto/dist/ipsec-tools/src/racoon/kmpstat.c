@@ -1,4 +1,4 @@
-/*	$NetBSD: kmpstat.c,v 1.6 2007/10/02 09:47:45 vanhu Exp $	*/
+/*	$NetBSD: kmpstat.c,v 1.6.12.1 2009/02/08 18:42:17 snj Exp $	*/
 
 /*	$KAME: kmpstat.c,v 1.33 2004/08/16 08:20:28 itojun Exp $	*/
 

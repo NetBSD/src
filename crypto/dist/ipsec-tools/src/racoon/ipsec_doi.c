@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.37 2008/10/29 18:49:45 spz Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.37.2.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -316,7 +316,7 @@ saok:
 	}
 
 	newsa = get_sabyproppair(p, iph1);
-	if (newsa == NULL && iph1->approval != NULL){
+	if (newsa == NULL){
 		delisakmpsa(iph1->approval);
 		iph1->approval = NULL;
 	}
@@ -1824,96 +1824,6 @@ ipsecdoi_set_ld(buf)
 	return ld;
 }
 
-/*
- * parse responder-lifetime attributes from payload
- */
-int
-ipsecdoi_parse_responder_lifetime(notify, lifetime_sec, lifetime_kb)
-	struct isakmp_pl_n *notify;
-	u_int32_t *lifetime_sec;
-	u_int32_t *lifetime_kb;
-{
-	struct isakmp_data *d;
-	int flag, type, tlen, ld_type = -1;
-	u_int16_t lorv;
-	u_int32_t value;
-
-	tlen = ntohs(notify->h.len) - sizeof(*notify) - notify->spi_size;
-        d = (struct isakmp_data *)((char *)(notify + 1) +
-		notify->spi_size);
-
-	while (tlen >= sizeof(struct isakmp_data)) {
-		type = ntohs(d->type) & ~ISAKMP_GEN_MASK;
-		flag = ntohs(d->type) & ISAKMP_GEN_MASK;
-		lorv = ntohs(d->lorv);
-
-		plog(LLV_DEBUG, LOCATION, NULL,
-			"type=%s, flag=0x%04x, lorv=%s\n",
-			s_ipsecdoi_attr(type), flag,
-			s_ipsecdoi_attr_v(type, lorv));
-
-		switch (type) {
-		case IPSECDOI_ATTR_SA_LD_TYPE:
-			if (! flag) {
-				plog(LLV_ERROR, LOCATION, NULL,
-					"must be TV when LD_TYPE.\n");
-				return -1;
-			}
-			ld_type = lorv;
-			break;
-		case IPSECDOI_ATTR_SA_LD:
-			if (flag)
-				value = lorv;
-			else if (lorv == 2)
-				value = ntohs(*(u_int16_t *)(d + 1));
-			else if (lorv == 4)
-				value = ntohl(*(u_int32_t *)(d + 1));
-			else {
-				plog(LLV_ERROR, LOCATION, NULL,
-					"payload length %d for lifetime "
-					"data length is unsupported.\n", lorv);
-				return -1;
-			}
-
-			switch (ld_type) {
-			case IPSECDOI_ATTR_SA_LD_TYPE_SEC:
-				if (lifetime_sec != NULL)
-					*lifetime_sec = value;
-				plog(LLV_INFO, LOCATION, NULL,
-					"received RESPONDER-LIFETIME: %d "
-					"seconds\n", value);
-				break;
-			case IPSECDOI_ATTR_SA_LD_TYPE_KB:
-				if (lifetime_kb != NULL)
-					*lifetime_kb = value;
-				plog(LLV_INFO, LOCATION, NULL,
-					"received RESPONDER-LIFETIME: %d "
-					"kbytes\n", value);
-				break;
-			default:
-				plog(LLV_ERROR, LOCATION, NULL,
-					"lifetime data received without "
-					"lifetime data type.\n");
-				return -1;
-			}
-			break;
-		}
-
-		if (flag) {
-			tlen -= sizeof(*d);
-			d = (struct isakmp_data *)((char *)d
-				+ sizeof(*d));
-		} else {
-			tlen -= (sizeof(*d) + lorv);
-			d = (struct isakmp_data *)((char *)d
-				+ sizeof(*d) + lorv);
-		}
-	}
-
-	return 0;
-}
-
-
 /*%%%*/
 /*
  * check DOI
@@ -3327,9 +3237,7 @@ ipsecdoi_transportmode(pp)
 
 	for (; pp; pp = pp->next) {
 		for (pr = pp->head; pr; pr = pr->next) {
-			if (pr->encmode != IPSECDOI_ATTR_ENC_MODE_TRNS &&
-			    pr->encmode != IPSECDOI_ATTR_ENC_MODE_UDPTRNS_RFC &&
-			    pr->encmode != IPSECDOI_ATTR_ENC_MODE_UDPTRNS_DRAFT)
+			if (pr->encmode != IPSECDOI_ATTR_ENC_MODE_TRNS)
 				return 0;
 		}
 	}
@@ -4142,12 +4050,8 @@ ipsecdoi_setid2(iph2)
 		return -1;
 	}
 
-	if (!ipsecdoi_transportmode(iph2->proposal))
-		iph2->id = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.src,
-				sp->spidx.prefs, sp->spidx.ul_proto);
-	else
-		iph2->id = ipsecdoi_sockaddr2id(iph2->src, IPSECDOI_PREFIX_HOST,
-				sp->spidx.ul_proto);
+	iph2->id = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.src,
+					sp->spidx.prefs, sp->spidx.ul_proto);
 	if (iph2->id == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get ID for %s\n",
@@ -4158,12 +4062,8 @@ ipsecdoi_setid2(iph2)
 		s_ipsecdoi_ident(((struct ipsecdoi_id_b *)iph2->id->v)->type));
 
 	/* remote side */
-	if (!ipsecdoi_transportmode(iph2->proposal))
-		iph2->id_p = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.dst,
+	iph2->id_p = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.dst,
 				sp->spidx.prefd, sp->spidx.ul_proto);
-	else
-		iph2->id_p = ipsecdoi_sockaddr2id(iph2->dst, IPSECDOI_PREFIX_HOST,
-			sp->spidx.ul_proto);
 	if (iph2->id_p == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get ID for %s\n",
@@ -4200,7 +4100,7 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 	switch (saddr->sa_family) {
 	case AF_INET:
 		len1 = sizeof(struct in_addr);
-		if (prefixlen >= (sizeof(struct in_addr) << 3)) {
+		if (prefixlen == (sizeof(struct in_addr) << 3)) {
 			type = IPSECDOI_ID_IPV4_ADDR;
 			len2 = 0;
 		} else {
@@ -4213,7 +4113,7 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 #ifdef INET6
 	case AF_INET6:
 		len1 = sizeof(struct in6_addr);
-		if (prefixlen >= (sizeof(struct in6_addr) << 3)) {
+		if (prefixlen == (sizeof(struct in6_addr) << 3)) {
 			type = IPSECDOI_ID_IPV6_ADDR;
 			len2 = 0;
 		} else {

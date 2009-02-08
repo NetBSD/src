@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.h,v 1.5 2008/03/28 04:18:52 manu Exp $	*/
+/*	$NetBSD: privsep.h,v 1.5.8.1 2009/02/08 18:42:18 snj Exp $	*/
 
 /* Id: privsep.h,v 1.5 2005/06/07 12:22:11 fredsen Exp */
 
@@ -42,9 +42,6 @@
 #define PRIVSEP_XAUTH_LOGIN_PAM		0x0807	/* admin_com_bufs follows */
 #define PRIVSEP_CLEANUP_PAM		0x0808	/* admin_com_bufs follows */
 #define PRIVSEP_ACCOUNTING_SYSTEM	0x0809	/* admin_com_bufs follows */
-#define PRIVSEP_SETSOCKOPTS		0x080A	/* admin_com_bufs follows */
-#define PRIVSEP_BIND			0x080B	/* admin_com_bufs follows */
-#define PRIVSEP_SOCKET			0x080C	/* admin_com_bufs follows */
 
 #define PRIVSEP_NBUF_MAX 24
 #define PRIVSEP_BUFLEN_MAX 4096
@@ -64,9 +61,6 @@ vchar_t *privsep_eay_get_pkcs1privkey __P((char *));
 int privsep_pfkey_open __P((void));
 void privsep_pfkey_close __P((int));
 int privsep_script_exec __P((char *, int, char * const *));
-int privsep_setsockopt __P((int, int, int, const void *, socklen_t));
-int privsep_socket __P((int, int, int));
-int privsep_bind __P((int, const struct sockaddr *, socklen_t));
 vchar_t *privsep_getpsk __P((const char *, const int));
 int privsep_xauth_login_system __P((char *, char *));
 #ifdef HAVE_LIBPAM

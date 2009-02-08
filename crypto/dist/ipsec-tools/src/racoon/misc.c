@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 2008/07/15 00:47:09 mgrooms Exp $	*/
+/*	$NetBSD: misc.c,v 1.6.4.1 2009/02/08 18:42:17 snj Exp $	*/
 
 /*	$KAME: misc.c,v 1.23 2001/08/16 14:37:29 itojun Exp $	*/
 
@@ -44,7 +44,6 @@
 #include <errno.h>
 #include <syslog.h>
 #include <ctype.h>
-#include <fcntl.h>
 
 #include "var.h"
 #include "misc.h"
@@ -152,16 +151,6 @@ getfsize(path)
                 return -1;
         else
                 return st.st_size;
-}
-
-/*
- * set the close-on-exec flag for file descriptor fd.
- */
-void
-close_on_exec(fd)
-	int fd;
-{
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
 }
 
 /*

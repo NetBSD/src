@@ -2,7 +2,7 @@ dnl -*- mode: m4 -*-
 dnl Id: configure.ac,v 1.77 2006/07/20 19:19:27 manubsd Exp
 
 AC_PREREQ(2.52)
-AC_INIT(ipsec-tools, CVS)
+AC_INIT(ipsec-tools, 0.7.1)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 
@@ -242,7 +242,7 @@ AC_CHECK_HEADER(openssl/sha2.h, [], [
 	    CRYPTOBJS="$CRYPTOBJS sha2.o"
 	])
 
-	CPPFLAGS_ADD="$CPPFLAGS_ADD -I\${top_srcdir}/src/racoon/missing"
+	CPPFLAGS_ADD="$CPPFLAGS_ADD -I./\${top_srcdir}/src/racoon/missing"
 ])
 AC_SUBST(CRYPTOBJS)
 

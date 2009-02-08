@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.17 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.17.4.1 2009/02/08 18:42:17 snj Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -40,7 +40,6 @@
 
 #include <netinet/in.h>
 
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -96,9 +95,9 @@
 
 #ifdef HAVE_LIBRADIUS
 #include <radlib.h>
+
 struct rad_handle *radius_auth_state = NULL;
 struct rad_handle *radius_acct_state = NULL;
-struct xauth_rad_config xauth_rad_config;
 #endif
 
 #ifdef HAVE_LIBPAM
@@ -130,7 +129,7 @@ xauth_sendreq(iph1)
 	size_t tlen;
 
 	/* Status checks */
-	if (iph1->status < PHASE1ST_ESTABLISHED) {
+	if (iph1->status != PHASE1ST_ESTABLISHED) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "Xauth request while phase 1 is not completed\n");
 		return;
@@ -330,7 +329,7 @@ skip_auth:
 		if (throttle_delay != 0) {
 			struct xauth_reply_arg *xra;
 
-			if ((xra = racoon_calloc(1, sizeof(*xra))) == NULL) {
+			if ((xra = racoon_malloc(sizeof(*xra))) == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL, 
 				    "malloc failed, bypass throttling\n");
 				return xauth_reply(iph1, port, id, res);
@@ -345,8 +344,7 @@ skip_auth:
 			xra->port = port;
 			xra->id = id;
 			xra->res = res;
-			sched_schedule(&xra->sc, throttle_delay,
-				       xauth_reply_stub);
+			sched_new(throttle_delay, xauth_reply_stub, xra);
 		} else {
 			return xauth_reply(iph1, port, id, res);
 		}
@@ -356,10 +354,10 @@ skip_auth:
 }
 
 void 
-xauth_reply_stub(sc)
-	struct sched *sc;
+xauth_reply_stub(args)
+	void *args;
 {
-	struct xauth_reply_arg *xra = container_of(sc, struct xauth_reply_arg, sc);
+	struct xauth_reply_arg *xra = (struct xauth_reply_arg *)args;
 	struct ph1handle *iph1;
 
 	if ((iph1 = getph1byindex(&xra->index)) != NULL)
@@ -369,6 +367,7 @@ xauth_reply_stub(sc)
 		    "Delayed Xauth reply: phase 1 no longer exists.\n"); 
 
 	racoon_free(xra);
+	return;
 }
 
 int
@@ -391,7 +390,7 @@ xauth_reply(iph1, port, id, res)
 		xst->status = XAUTHST_NOTYET;
 
 		/* Delete Phase 1 SA */
-		if (iph1->status >= PHASE1ST_ESTABLISHED)
+		if (iph1->status == PHASE1ST_ESTABLISHED)
 			isakmp_info_send_d1(iph1);
 		remph1(iph1);
 		delph1(iph1);
@@ -448,31 +447,6 @@ xauth_sendstatus(iph1, status, id)
 
 #ifdef HAVE_LIBRADIUS
 int
-xauth_radius_init_conf(int free)
-{
-	/* free radius config resources */
-	if (free) {
-		int i;
-		for (i = 0; i < xauth_rad_config.auth_server_count; i++) {
-			vfree(xauth_rad_config.auth_server_list[i].host);
-			vfree(xauth_rad_config.auth_server_list[i].secret);
-		}
-		for (i = 0; i < xauth_rad_config.acct_server_count; i++) {
-			vfree(xauth_rad_config.acct_server_list[i].host);
-			vfree(xauth_rad_config.acct_server_list[i].secret);
-		}
-		if (radius_auth_state != NULL)
-			rad_close(radius_auth_state);
-		if (radius_acct_state != NULL)
-			rad_close(radius_acct_state);
-	}
-
-	/* initialize radius config */
-	memset(&xauth_rad_config, 0, sizeof(xauth_rad_config));
-	return 0;
-}
-
-int
 xauth_radius_init(void)
 {
 	/* For first time use, initialize Radius */
@@ -484,35 +458,13 @@ xauth_radius_init(void)
 			return -1;
 		}
 
-		int auth_count = xauth_rad_config.auth_server_count;
-		int auth_added = 0;
-		if (auth_count) {
-			int i;
-			for (i = 0; i < auth_count; i++) {
-				if(!rad_add_server(
-					radius_auth_state,
-					xauth_rad_config.auth_server_list[i].host->v,
-					xauth_rad_config.auth_server_list[i].port,
-					xauth_rad_config.auth_server_list[i].secret->v,
-					xauth_rad_config.timeout,
-					xauth_rad_config.retries ))
-					auth_added++;
-				else
-					plog(LLV_WARNING, LOCATION, NULL,
-						"could not add radius auth server %s\n",
-						xauth_rad_config.auth_server_list[i].host->v);
-			}
-		}
-
-		if (!auth_added) {
-			if (rad_config(radius_auth_state, NULL) != 0) {
-				plog(LLV_ERROR, LOCATION, NULL, 
-				    "Cannot open librarius config file: %s\n", 
-				    rad_strerror(radius_auth_state));
-				rad_close(radius_auth_state);
-				radius_auth_state = NULL;
-				return -1;
-			}
+		if (rad_config(radius_auth_state, NULL) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot open librarius config file: %s\n", 
+			    rad_strerror(radius_auth_state));
+			rad_close(radius_auth_state);
+			radius_auth_state = NULL;
+			return -1;
 		}
 	}
 
@@ -524,35 +476,13 @@ xauth_radius_init(void)
 			return -1;
 		}
 
-		int acct_count = xauth_rad_config.acct_server_count;
-		int acct_added = 0;
-		if (acct_count) {
-			int i;
-			for (i = 0; i < acct_count; i++) {
-				if(!rad_add_server(
-					radius_acct_state,
-					xauth_rad_config.acct_server_list[i].host->v,
-					xauth_rad_config.acct_server_list[i].port,
-					xauth_rad_config.acct_server_list[i].secret->v,
-					xauth_rad_config.timeout,
-					xauth_rad_config.retries ))
-					acct_added++;
-				else
-					plog(LLV_WARNING, LOCATION, NULL,
-						"could not add radius account server %s\n",
-						xauth_rad_config.acct_server_list[i].host->v);
-			}
-		}
-
-		if (!acct_added) {
-			if (rad_config(radius_acct_state, NULL) != 0) {
-				plog(LLV_ERROR, LOCATION, NULL, 
-				    "Cannot open librarius config file: %s\n", 
-				    rad_strerror(radius_acct_state));
-				rad_close(radius_acct_state);
-				radius_acct_state = NULL;
-				return -1;
-			}
+		if (rad_config(radius_acct_state, NULL) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot open librarius config file: %s\n", 
+			    rad_strerror(radius_acct_state));
+			rad_close(radius_acct_state);
+			radius_acct_state = NULL;
+			return -1;
 		}
 	}
 
@@ -740,15 +670,8 @@ xauth_login_pam(port, raddr, usr, pwd)
 		    "cannot allocate memory: %s\n", strerror(errno)); 
 		goto out;
 	}
-
+	
 	if ((error = pam_set_item(pam, PAM_RHOST, remote)) != 0) {
-		plog(LLV_ERROR, LOCATION, NULL, 
-		    "pam_set_item failed: %s\n", 
-		    pam_strerror(pam, error));
-		goto out;
-	}
-
-	if ((error = pam_set_item(pam, PAM_RUSER, usr)) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "pam_set_item failed: %s\n", 
 		    pam_strerror(pam, error));
@@ -797,7 +720,7 @@ out:
 
 #ifdef HAVE_LIBLDAP
 int 
-xauth_ldap_init_conf(void)
+xauth_ldap_init(void)
 {
 	int tmplen;
 	int error = -1;
@@ -1647,11 +1570,13 @@ isakmp_xauth_set(iph1, attr)
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "Xauth authentication failed\n");
 
-			evt_phase1(iph1, EVT_PHASE1_XAUTH_FAILED, NULL);
+			EVT_PUSH(iph1->local, iph1->remote, 
+			    EVTT_XAUTH_FAILED, NULL);
 
 			iph1->mode_cfg->flags |= ISAKMP_CFG_DELETE_PH1;
 		} else {
-			evt_phase1(iph1, EVT_PHASE1_XAUTH_SUCCESS, NULL);
+			EVT_PUSH(iph1->local, iph1->remote, 
+			    EVTT_XAUTH_SUCCESS, NULL);
 		}
 
 

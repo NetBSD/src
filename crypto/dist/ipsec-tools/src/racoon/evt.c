@@ -1,10 +1,9 @@
-/*	$NetBSD: evt.c,v 1.6 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: evt.c,v 1.6.8.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: evt.c,v 1.5 2006/06/22 20:11:35 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
- * Copyright (C) 2008 Timo Teras
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -47,54 +46,14 @@
 #include "plog.h"
 #include "misc.h"
 #include "admin.h"
-#include "handler.h"
 #include "gcmalloc.h"
 #include "evt.h"
 
 #ifdef ENABLE_ADMINPORT
+struct evtlist evtlist = TAILQ_HEAD_INITIALIZER(evtlist);
+int evtlist_len = 0;
 
-static EVT_LISTENER_LIST(evt_listeners);
-static EVT_LISTENER_LIST(evt_fds);
-
-struct evt_message {
-	struct admin_com adm;
-	struct evt_async evt;
-};
-
-struct evt {
-	struct evtdump *dump;
-	TAILQ_ENTRY(evt) next;
-};
-
-TAILQ_HEAD(evtlist, evt);
-
-#define EVTLIST_MAX	32
-
-static struct evtlist evtlist = TAILQ_HEAD_INITIALIZER(evtlist);
-static int evtlist_len = 0;
-static int evtlist_inuse = 0;
-
-static struct {
-	int newtype, oldtype;
-} evttype_map[] = {
-	{ EVT_RACOON_QUIT,		EVTT_RACOON_QUIT },
-	{ EVT_PHASE1_UP,		EVTT_PHASE1_UP },
-	{ EVT_PHASE1_DOWN,		EVTT_PHASE1_DOWN },
-	{ EVT_PHASE1_NO_RESPONSE,	EVTT_PEER_NO_RESPONSE },
-	{ EVT_PHASE1_NO_PROPOSAL,	EVTT_PEERPH1_NOPROP },
-	{ EVT_PHASE1_AUTH_FAILED,	EVTT_PEERPH1AUTH_FAILED },
-	{ EVT_PHASE1_DPD_TIMEOUT,	EVTT_DPD_TIMEOUT },
-	{ EVT_PHASE1_PEER_DELETED,	EVTT_PEER_DELETE },
-	{ EVT_PHASE1_MODE_CFG,		EVTT_ISAKMP_CFG_DONE },
-	{ EVT_PHASE1_XAUTH_SUCCESS,	EVTT_XAUTH_SUCCESS },
-	{ EVT_PHASE1_XAUTH_FAILED,	EVTT_XAUTH_FAILED },
-	{ EVT_PHASE2_NO_PHASE1,		-1 },
-	{ EVT_PHASE2_UP,		EVTT_PHASE2_UP },
-	{ EVT_PHASE2_DOWN,		EVTT_PHASE2_DOWN },
-	{ EVT_PHASE2_NO_RESPONSE,	EVTT_PEER_NO_RESPONSE },
-};
-
-static void
+void
 evt_push(src, dst, type, optdata)
 	struct sockaddr *src;
 	struct sockaddr *dst;
@@ -104,21 +63,9 @@ evt_push(src, dst, type, optdata)
 	struct evtdump *evtdump;
 	struct evt *evt;
 	size_t len;
-	int i;
 
 	/* If admin socket is disabled, silently discard anything */
-	if (adminsock_path == NULL || !evtlist_inuse)
-		return;
-
-	/* Map the event type to old */
-	for (i = 0; i < sizeof(evttype_map) / sizeof(evttype_map[0]); i++)
-		if (evttype_map[i].newtype == type)
-			break;
-	if (i >= sizeof(evttype_map) / sizeof(evttype_map[0]))
-		return;
-
-	type = evttype_map[i].oldtype;
-	if (type < 0)
+	if (adminsock_path == NULL)
 		return;
 
 	/* If we are above the limit, don't record anything */
@@ -174,7 +121,7 @@ evt_push(src, dst, type, optdata)
 	return;
 }
 
-static struct evtdump *
+struct evtdump *
 evt_pop(void) {
 	struct evtdump *evtdump;
 	struct evt *evt;
@@ -195,12 +142,6 @@ evt_dump(void) {
 	struct evtdump *evtdump;
 	vchar_t *buf = NULL;
 
-	if (!evtlist_inuse) {
-		evtlist_inuse = 1;
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "evt_dump: deprecated event polling used\n");
-	}
-
 	if ((evtdump = evt_pop()) != NULL) {
 		if ((buf = vmalloc(evtdump->len)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, 
@@ -213,209 +154,5 @@ evt_dump(void) {
 
 	return buf;
 }
-
-static struct evt_message *
-evtmsg_create(type, optdata)
-	int type;
-	vchar_t *optdata;
-{
-	struct evt_message *e;
-	size_t len;
-
-	len = sizeof(struct evt_message);
-	if (optdata != NULL)
-		len += optdata->l;
-
-	if ((e = racoon_malloc(len)) == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, "Cannot allocate event: %s\n",
-		     strerror(errno));
-		return NULL;
-	}
-
-	memset(e, 0, sizeof(struct evt_message));
-	e->adm.ac_len = len;
-	e->adm.ac_cmd = ADMIN_SHOW_EVT;
-	e->adm.ac_errno = 0;
-	e->adm.ac_proto = 0;
-	e->evt.ec_type = type;
-	time(&e->evt.ec_timestamp);
-	if (optdata != NULL)
-		memcpy(e + 1, optdata->v, optdata->l);
-
-	return e;
-}
-
-static void
-evt_unsubscribe(l)
-	struct evt_listener *l;
-{
-	plog(LLV_DEBUG, LOCATION, NULL,
-	     "[%d] admin connection released\n", l->fd);
-
-	LIST_REMOVE(l, ll_chain);
-	LIST_REMOVE(l, fd_chain);
-	close(l->fd);
-	racoon_free(l);
-}
-
-static void
-evtmsg_broadcast(ll, e)
-	const struct evt_listener_list *ll;
-	struct evt_message *e;
-{
-	struct evt_listener *l, *nl;
-
-	for (l = LIST_FIRST(ll); l != NULL; l = nl) {
-		nl = LIST_NEXT(l, ll_chain);
-
-		if (send(l->fd, e, e->adm.ac_len,
-			 MSG_NOSIGNAL | MSG_DONTWAIT) < 0) {
-			plog(LLV_DEBUG, LOCATION, NULL, "Cannot send event to fd: %s\n",
-				strerror(errno));
-			evt_unsubscribe(l);
-		}
-	}
-}
-
-void
-evt_generic(type, optdata)
-	int type;
-	vchar_t *optdata;
-{
-	struct evt_message *e;
-
-	if ((e = evtmsg_create(type, optdata)) == NULL)
-		return;
-
-	evtmsg_broadcast(&evt_listeners, e);
-	evt_push(&e->evt.ec_ph1src, &e->evt.ec_ph1dst, type, optdata);
-
-	racoon_free(e);
-}
-
-void
-evt_phase1(ph1, type, optdata)
-	const struct ph1handle *ph1;
-	int type;
-	vchar_t *optdata;
-{
-	struct evt_message *e;
-
-	if ((e = evtmsg_create(type, optdata)) == NULL)
-		return;
-
-	if (ph1->local)
-		memcpy(&e->evt.ec_ph1src, ph1->local, sysdep_sa_len(ph1->local));
-	if (ph1->remote)
-		memcpy(&e->evt.ec_ph1dst, ph1->remote, sysdep_sa_len(ph1->remote));
-
-	evtmsg_broadcast(&ph1->evt_listeners, e);
-	evtmsg_broadcast(&evt_listeners, e);
-	evt_push(&e->evt.ec_ph1src, &e->evt.ec_ph1dst, type, optdata);
-
-	racoon_free(e);
-}
-
-void
-evt_phase2(ph2, type, optdata)
-	const struct ph2handle *ph2;
-	int type;
-	vchar_t *optdata;
-{
-	struct evt_message *e;
-	struct ph1handle *ph1 = ph2->ph1;
-
-	if ((e = evtmsg_create(type, optdata)) == NULL)
-		return;
-
-	if (ph1) {
-		if (ph1->local)
-			memcpy(&e->evt.ec_ph1src, ph1->local, sysdep_sa_len(ph1->local));
-		if (ph1->remote)
-			memcpy(&e->evt.ec_ph1dst, ph1->remote, sysdep_sa_len(ph1->remote));
-	}
-	e->evt.ec_ph2msgid = ph2->msgid;
-
-	evtmsg_broadcast(&ph2->evt_listeners, e);
-	if (ph1)
-		evtmsg_broadcast(&ph1->evt_listeners, e);
-	evtmsg_broadcast(&evt_listeners, e);
-	evt_push(&e->evt.ec_ph1src, &e->evt.ec_ph1dst, type, optdata);
-
-	racoon_free(e);
-}
-
-int
-evt_subscribe(list, fd)
-	struct evt_listener_list *list;
-	int fd;
-{
-	struct evt_listener *l;
-
-	if ((l = racoon_malloc(sizeof(*l))) == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "Cannot allocate event listener: %s\n",
-		     strerror(errno));
-		return errno;
-	}
-
-	if (list == NULL)
-		list = &evt_listeners;
-
-	LIST_INSERT_HEAD(list, l, ll_chain);
-	LIST_INSERT_HEAD(&evt_fds, l, fd_chain);
-	l->fd = fd;
-
-	plog(LLV_DEBUG, LOCATION, NULL,
-	     "[%d] admin connection is polling events\n", fd);
-
-	return -2;
-}
-
-void
-evt_list_init(list)
-	struct evt_listener_list *list;
-{
-	LIST_INIT(list);
-}
-
-void
-evt_list_cleanup(list)
-	struct evt_listener_list *list;
-{
-	while (!LIST_EMPTY(list))
-		evt_unsubscribe(LIST_FIRST(list));
-}
-
-int
-evt_get_fdmask(nfds, fdset)
-	int nfds;
-	fd_set *fdset;
-{
-	struct evt_listener *l;
-
-	LIST_FOREACH(l, &evt_fds, fd_chain) {
-		FD_SET(l->fd, fdset);
-		if (l->fd + 1 > nfds)
-			nfds = l->fd + 1;
-	}
-
-	return nfds;
-}
-
-void
-evt_handle_fdmask(fdset)
-	fd_set *fdset;
-{
-	struct evt_listener *l, *nl;
-
-	for (l = LIST_FIRST(&evt_fds); l != NULL; l = nl) {
-		nl = LIST_NEXT(l, ll_chain);
-
-		if (FD_ISSET(l->fd, fdset))
-			evt_unsubscribe(l);
-	}
-}
-
 
 #endif /* ENABLE_ADMINPORT */

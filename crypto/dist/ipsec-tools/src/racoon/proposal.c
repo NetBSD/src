@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.17 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: proposal.c,v 1.17.4.1 2009/02/08 18:42:18 snj Exp $	*/
 
-/* $Id: proposal.c,v 1.17 2008/09/19 11:14:49 tteras Exp $ */
+/* $Id: proposal.c,v 1.17.4.1 2009/02/08 18:42:18 snj Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1186,10 +1186,10 @@ set_proposal_from_proposal(iph2)
 	 * make my proposal according as the client proposal.
 	 * XXX assumed there is only one proposal even if it's the SA bundle.
 	 */
-	for (i = 0; i < MAXPROPPAIRLEN; i++) {
-		if (pair[i] == NULL)
-			continue;
-		
+        for (i = 0; i < MAXPROPPAIRLEN; i++) {
+                if (pair[i] == NULL)
+                        continue;
+
 		if (pp_peer != NULL)
 			flushsaprop(pp_peer);
 
@@ -1226,6 +1226,8 @@ set_proposal_from_proposal(iph2)
 
 		for (pr = pp_peer->head; pr; pr = pr->next)
 		{
+			struct remoteconf *conf;
+
 			newpr = newsaproto();
 			if (newpr == NULL)
 			{
@@ -1242,7 +1244,9 @@ set_proposal_from_proposal(iph2)
 			newpr->reqid_in = 0;
 			newpr->reqid_out = 0;
 
-			if (iph2->ph1->rmconf->gen_policy == GENERATE_POLICY_UNIQUE){
+			conf = getrmconf(iph2->dst);
+			if (conf != NULL &&
+				conf->gen_policy == GENERATE_POLICY_UNIQUE){
 				newpr->reqid_in = g_nextreqid ;
 				newpr->reqid_out = g_nextreqid ++;
 				/* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.10 2007/07/18 12:07:50 vanhu Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.10.18.1 2009/02/08 18:42:15 snj Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 

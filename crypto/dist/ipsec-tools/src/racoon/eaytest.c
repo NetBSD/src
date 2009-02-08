@@ -1,4 +1,4 @@
-/*	$NetBSD: eaytest.c,v 1.9 2008/07/15 00:47:09 mgrooms Exp $	*/
+/*	$NetBSD: eaytest.c,v 1.9.4.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: eaytest.c,v 1.22 2005/06/19 18:02:54 manubsd Exp */
 

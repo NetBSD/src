@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.10 2008/10/27 06:24:27 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.10.2.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -403,10 +403,10 @@ grab_myaddrs()
 #endif
 #endif
 		if (getnameinfo(p->addr, sysdep_sa_len(p->addr),
-				addr1, sizeof(addr1), NULL, 0,
+				addr1, sizeof(addr1),
+				NULL, 0,
 				NI_NUMERICHOST | niflags))
-			strlcpy(addr1, "(invalid)", sizeof(addr1));
-
+		strlcpy(addr1, "(invalid)", sizeof(addr1));
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"my interface: %s (%s)\n",
 			addr1, ifap->ifa_name);
@@ -519,10 +519,10 @@ grab_myaddrs()
 #endif
 #endif
 			if (getnameinfo(p->addr, sysdep_sa_len(p->addr),
-					addr1, sizeof(addr1), NULL, 0,
+					addr1, sizeof(addr1),
+					NULL, 0,
 					NI_NUMERICHOST | niflags))
-				strlcpy(addr1, "(invalid)", sizeof(addr1));
-
+			strlcpy(addr1, "(invalid)", sizeof(addr1));
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"my interface: %s (%s)\n",
 				addr1, ifr->ifr_name);
@@ -667,9 +667,6 @@ update_myaddrs()
 	case RTM_DELADDR:
 	case RTM_DELETE:
 	case RTM_IFINFO:
-#ifdef RTM_IFANNOUNCE
-	case RTM_IFANNOUNCE:
-#endif
 		break;
 	case RTM_MISS:
 		/* ignore this message silently */
@@ -834,7 +831,6 @@ initmyaddr()
 			strerror(errno));
 		return -1;
 	}
-	close_on_exec(lcconf->rtsock);
 
 #ifdef __linux__
    {
