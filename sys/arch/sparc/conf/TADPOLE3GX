@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.43 2008/11/12 12:36:06 ad Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.44 2009/02/08 13:05:51 jdc Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -39,7 +39,7 @@ options 	WSDISPLAY_COMPAT_USL		# VT handling
 
 options 	WSDISPLAY_DEFAULTSCREENS=1
 
-options		SPARCBOOK_CMD		# enable screen switching with lAlt-Fn
+options 	SPARCBOOK_CMD		# enable screen switching with lAlt-Fn
 #options 	FONT_GALLANT12x22	# the console font
 options 	FONT_BOLD8x16		# a somewhat smaller font
 
@@ -69,7 +69,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
@@ -146,7 +146,7 @@ options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -342,14 +342,14 @@ pseudo-device	ipfilter
 
 ## /dev/audio support
 
-#options	DBRI_DEBUG	# noisy debug output from the dbri driver
-options		DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
+#options 	DBRI_DEBUG	# noisy debug output from the dbri driver
+options 	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
 audio*		at audiobus?
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
 pnozz0 at sbus? slot ? offset ?
-#options	PNOZZ_EMUL_CG3		# emulate a CG3 for Xsun instead of 
+#options 	PNOZZ_EMUL_CG3		# emulate a CG3 for Xsun instead of 
 					# running natively
 
 wsdisplay* 	at wsemuldisplaydev? console ?
