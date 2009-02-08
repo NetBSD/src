@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.9 2009/02/08 14:34:40 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.10 2009/02/08 17:48:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.9 2009/02/08 14:34:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.10 2009/02/08 17:48:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,7 +701,14 @@ dbcool_readreg(struct dbcool_softc *sc, uint8_t reg)
 	if (iic_acquire_bus(sc->sc_tag, 0) != 0)
 		goto bad;
 
-	(void)iic_smbus_read_byte(sc->sc_tag, sc->sc_addr, reg, &data, 0);
+	if (sc->sc_chip->flags & DBCFLAG_ADM1027) {
+		/* ADM1027 doesn't support i2c read_byte protocol */
+		if (iic_smbus_send_byte(sc->sc_tag, sc->sc_addr, reg, 0) != 0)
+			goto bad;
+		(void)iic_smbus_receive_byte(sc->sc_tag, sc->sc_addr, &data, 0);
+	} else
+		(void)iic_smbus_read_byte(sc->sc_tag, sc->sc_addr, reg, &data,
+					  0);
 
 bad:
 	iic_release_bus(sc->sc_tag, 0);
