@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.8 2009/01/14 13:54:29 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.9 2009/02/08 14:34:40 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.8 2009/01/14 13:54:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.9 2009/02/08 14:34:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,12 +701,8 @@ dbcool_readreg(struct dbcool_softc *sc, uint8_t reg)
 	if (iic_acquire_bus(sc->sc_tag, 0) != 0)
 		goto bad;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		     sc->sc_addr, NULL, 0, &reg, 1, 0) != 0)
-		goto bad;
+	(void)iic_smbus_read_byte(sc->sc_tag, sc->sc_addr, reg, &data, 0);
 
-	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		 sc->sc_addr, NULL, 0, &data, 1, 0);
 bad:
 	iic_release_bus(sc->sc_tag, 0);
 	return data;
@@ -715,14 +711,13 @@ bad:
 void 
 dbcool_writereg(struct dbcool_softc *sc, uint8_t reg, uint8_t val)
 {
-        if (iic_acquire_bus(sc->sc_tag, 0) != 0)
-                return;
+	if (iic_acquire_bus(sc->sc_tag, 0) != 0)
+		return;
         
-        iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-                 sc->sc_addr, &reg, 1, &val, 1, 0);
+	(void)iic_smbus_write_byte(sc->sc_tag, sc->sc_addr, reg, val, 0);
 
-        iic_release_bus(sc->sc_tag, 0);
-        return;
+	iic_release_bus(sc->sc_tag, 0);
+	return;
 }       
 
 static bool
