@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.7 2008/03/07 18:20:20 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.7.8.1 2009/02/08 20:30:20 snj Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.142 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -194,7 +194,7 @@ static	void	usage(void);
 static	void	alarmer(int);
 volatile sig_atomic_t	alarmhit;
 
-static	void	parse_request(char *, char **, char **, char **);
+static	void	parse_request(char *, char **, char **, char **, char **);
 static	http_req *read_request(void);
 static	struct headers *addmerge_header(http_req *request, char *val,
 					char *str, ssize_t len);
@@ -559,12 +559,12 @@ http_date(void)
  * convert "in" into the three parts of a request (first line)
  */
 static void
-parse_request(char *in, char **method, char **url, char **proto)
+parse_request(char *in, char **method, char **file, char **query, char **proto)
 {
 	ssize_t	len;
 	char	*val;
 	
-	*method = *url = *proto = NULL;		/* set them up */
+	*method = *file = *query = *proto = NULL;		/* set them up */
 
 	len = (ssize_t)strlen(in);
 	val = bozostrnsep(&in, " \t\n\r", &len);
@@ -576,18 +576,28 @@ parse_request(char *in, char **method, char **url, char **proto)
 	val = bozostrnsep(&in, " \t\n\r", &len);
 	if (len < 1) {
 		if (len == 0)
-			*url = val;
+			*file = val;
 		else
-			*url = in;
+			*file = in;
 		return;
 	}
-	*url = val;
+
+	*file = val;
+	*query = strchr(*file, '?');
+	if (*query)  {
+	  *query = *query + 1;
+	  *(*query - 1) = '\0';
+	}
+
 	if (in) {
 		while (*in && (*in == ' ' || *in == '\t'))
 			in++;
 		if (*in)
 			*proto = in;
-	}
+	}	
+	debug((DEBUG_FAT, "URL INFO: |m: %s |f: %s |q: %s |p: %s |", 
+	       *method, *file, *query, *proto));
+
 }
 
 /*
@@ -608,7 +618,7 @@ static http_req *
 read_request(void)
 {
 	struct	sigaction	sa;
-	char	*str, *val, *method, *url, *proto;
+	char	*str, *val, *method, *file, *proto, *query;
 	char	*host, *addr, *port;
 	char	bufport[10];
 	char	hbuf[NI_MAXHOST], abuf[NI_MAXHOST];
@@ -692,17 +702,20 @@ read_request(void)
 			debug((DEBUG_FAT, "read_req, getting request: ``%s''",
 			    str));
 
-			parse_request(str, &method, &url, &proto);
+			parse_request(str, &method, &file, &query, &proto);
+
 			if (method == NULL)
 				http_error(404, NULL, "null method");
-			if (url == NULL)
-				http_error(404, NULL, "null url");
+			if (file == NULL)
+				http_error(404, NULL, "null file");
 
 			/*
 			 * note that we parse the proto first, so that we
 			 * can more properly parse the method and the url.
 			 */
-			request->hr_url = url;
+			request->hr_file = file;
+			request->hr_query = query;
+
 			process_proto(request, proto);
 			process_method(request, method);
 
@@ -793,7 +806,8 @@ next_header:
 		}
 	}
 
-	debug((DEBUG_FAT, "read_request returns url %s in request", request->hr_url));
+	debug((DEBUG_FAT, "read_request returns url %s in request", 
+	       request->hr_file));
 	return (request);
 }
 
@@ -956,7 +970,7 @@ process_request(http_req *request)
 static void
 check_virtual(http_req *request)
 {
-	char *url = request->hr_url, *s;
+	char *file = request->hr_file, *s;
 	struct dirent **list;
 	size_t len;
 	int i;
@@ -967,16 +981,16 @@ check_virtual(http_req *request)
 	/*
 	 * convert http://virtual.host/ to request->hr_host
 	 */
-	debug((DEBUG_OBESE, "checking for http:// virtual host in ``%s''", url));
-	if (strncasecmp(url, "http://", 7) == 0) {
+	debug((DEBUG_OBESE, "checking for http:// virtual host in ``%s''", file));
+	if (strncasecmp(file, "http://", 7) == 0) {
 		/* we would do virtual hosting here? */
-		url += 7;
-		s = strchr(url, '/');
+		file += 7;
+		s = strchr(file, '/');
 		/* HTTP/1.1 draft rev-06, 5.2: URI takes precedence over Host: */
-		request->hr_host = url;
-		request->hr_url = bozostrdup(s ? s : "/");
-		debug((DEBUG_OBESE, "got host ``%s'' url is now ``%s''",
-		    request->hr_host, request->hr_url));
+		request->hr_host = file;
+		request->hr_file = bozostrdup(s ? s : "/");
+		debug((DEBUG_OBESE, "got host ``%s'' file is now ``%s''",
+		    request->hr_host, request->hr_file));
 	} else if (!request->hr_host)
 		goto use_slashdir;
 
@@ -989,8 +1003,8 @@ check_virtual(http_req *request)
 	 */
 	len = strlen(request->hr_host);
 	debug((DEBUG_OBESE,
-	    "check_virtual: checking host `%s' under vpath `%s' for url `%s'",
-	    request->hr_host, vpath, request->hr_url));
+	    "check_virtual: checking host `%s' under vpath `%s' for file `%s'",
+	    request->hr_host, vpath, request->hr_file));
 	if (strncasecmp(myname, request->hr_host, len) != 0) {
 		s = 0;
 		for (i = scandir(vpath, &list, 0, 0); i--; list++) {
@@ -1054,7 +1068,7 @@ check_bzredirect(http_req *request)
 	 * if this pathname is really a directory, but doesn't end in /,
 	 * use it as the directory to look for the redir file.
 	 */
-	snprintf(dir, sizeof(dir), "%s", request->hr_url + 1);
+	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
 	debug((DEBUG_FAT, "check_bzredirect: dir %s", dir));
 	basename = strrchr(dir, '/');
 
@@ -1110,7 +1124,7 @@ check_direct_access(http_req *request)
 	struct stat sb;
 	char dir[MAXPATHLEN], dirfile[MAXPATHLEN], *basename;
 
-	snprintf(dir, sizeof(dir), "%s", request->hr_url + 1);
+	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
 	debug((DEBUG_FAT, "check_bzredirect: dir %s", dir));
 	basename = strrchr(dir, '/');
 
@@ -1150,18 +1164,18 @@ check_direct_access(http_req *request)
 static char *
 transform_request(http_req *request, int *isindex)
 {
-	char	*file;
-	char	*url;
+        char	*new_file;  // the new file name we're going to fetch
+	char	*req_file;  // the original file in the request
 	size_t	len;
 
-	file = NULL;
+	new_file = NULL;
 	*isindex = 0;
-	debug((DEBUG_FAT, "tf_req: url %s", request->hr_url));
+	debug((DEBUG_FAT, "tf_req: url %s", request->hr_file));
 	fix_url_percent(request);
 	check_virtual(request);
-	url = request->hr_url;
+	req_file = request->hr_file;
 
-	if (url[0] != '/')
+	if (req_file[0] != '/')
 		http_error(404, request, "unknown URL");
 
 	check_bzredirect(request);
@@ -1189,14 +1203,14 @@ transform_request(http_req *request, int *isindex)
 			   "checking referrer \"%s\" vs myname %s", r, myname));
 			if (strncmp(r, "http://", 7) != 0 ||
 			    (strncasecmp(r + 7, myname, strlen(myname)) != 0 &&
-			     !TOP_PAGE(url)))
+			     !TOP_PAGE(req_file)))
 				to_indexhtml = 1;
 		} else {
 			const char *h = request->hr_host;
 
 			debug((DEBUG_FAT, "url has no referrer at all"));
 			/* if there's no referrer, let / or /index.html past */
-			if (!TOP_PAGE(url) ||
+			if (!TOP_PAGE(req_file) ||
 			    (h && strncasecmp(h, myname, strlen(myname)) != 0))
 				to_indexhtml = 1;
 		}
@@ -1206,44 +1220,42 @@ transform_request(http_req *request, int *isindex)
 
 			if (asprintf(&slashindexhtml, "/%s", index_html) < 0)
 				error(1, "asprintf");
-			debug((DEBUG_FAT, "rflag: redirecting %s to %s", url, slashindexhtml));
+			debug((DEBUG_FAT, "rflag: redirecting %s to %s", req_file, slashindexhtml));
 			handle_redirect(request, slashindexhtml, 0);
 			/* NOTREACHED */
 		}
 	}
 
-	process_cgi(request);
-
-	len = strlen(url);
+	len = strlen(req_file);
 	if (0) {
 #ifndef NO_USER_SUPPORT
-	} else if (len > 1 && uflag && url[1] == '~') {
-		if (url[2] == '\0')
+	} else if (len > 1 && uflag && req_file[1] == '~') {
+		if (req_file[2] == '\0')
 			http_error(404, request, "missing username");
-		if (strchr(url + 2, '/') == NULL)
+		if (strchr(req_file + 2, '/') == NULL)
 			handle_redirect(request, NULL, 0);
 			/* NOTREACHED */
 		debug((DEBUG_FAT, "calling user_transform"));
 		return (user_transform(request, isindex));
 #endif /* NO_USER_SUPPORT */
 	} else if (len > 1) {
-		debug((DEBUG_FAT, "url[len-1] == %c", url[len-1]));
-		if (url[len-1] == '/') {	/* append index.html */
+		debug((DEBUG_FAT, "url[len-1] == %c", req_file[len-1]));
+		if (req_file[len-1] == '/') {	/* append index.html */
 			*isindex = 1;
 			debug((DEBUG_FAT, "appending index.html"));
-			file = bozomalloc(len + strlen(index_html) + 1);
-			strcpy(file, url + 1);
-			strcat(file, index_html);
+			new_file = bozomalloc(len + strlen(index_html) + 1);
+			strcpy(new_file, req_file + 1);
+			strcat(new_file, index_html);
 		} else
-			file = bozostrdup(url + 1);
+			new_file = bozostrdup(req_file + 1);
 	} else if (len == 1) {
 		debug((DEBUG_EXPLODING, "tf_req: len == 1"));
-		file = bozostrdup(index_html);
+		new_file = bozostrdup(index_html);
 		*isindex = 1;
 	} else		/* len == 0 ? */
-		http_error(500, request, "request->hr_url is nul?");
+		http_error(500, request, "request->hr_file is nul?");
 
-	if (file == NULL)
+	if (new_file == NULL)
 		http_error(500, request, "internal failure");
 
 	/*
@@ -1256,30 +1268,44 @@ transform_request(http_req *request, int *isindex)
 	 * XXX true security only comes from our parent using chroot(2)
 	 * before execve(2)'ing us.  or our own built in chroot(2) support.
 	 */
-	if (*file == '/' || strcmp(file, "..") == 0 ||
-	    strstr(file, "/..") || strstr(file, "../"))
+	if (*new_file == '/' || strcmp(new_file, "..") == 0 ||
+	    strstr(new_file, "/..") || strstr(new_file, "../"))
 		http_error(403, request, "illegal request");
 
-	auth_check(request, file);
+	auth_check(request, new_file);
 
-	debug((DEBUG_FAT, "transform_request returned: %s", file));
-	return (file);
+	if (new_file && strlen(new_file)) {
+	  free(request->hr_file);
+	  request->hr_file = new_file;
+	}
+
+	process_cgi(request);	
+	
+	debug((DEBUG_FAT, "transform_request returned: %s", new_file));
+	return (new_file);
 }
 
 /*
- * do automatic redirection
+ * do automatic redirection -- if there are query parameters for the URL
+ * we will tack these on to the new (redirected) URL.
  */
 static void
 handle_redirect(http_req *request, const char *url, int absolute)
 {
 	char *urlbuf;
 	char portbuf[20];
-	
+	int query = 0;
+
 	if (url == NULL) {
-		if (asprintf(&urlbuf, "%s/", request->hr_url) < 0)
+		if (asprintf(&urlbuf, "%s/", request->hr_file) < 0)
 			error(1, "asprintf");
 		url = urlbuf;
 	}
+	
+	if (strlen(request->hr_query)) {
+	  query = 1;
+	}
+
 	if (request->hr_serverport && strcmp(request->hr_serverport, "80") != 0)
 		snprintf(portbuf, sizeof(portbuf), ":%s",
 		    request->hr_serverport);
@@ -1294,7 +1320,11 @@ handle_redirect(http_req *request, const char *url, int absolute)
 		bozoprintf("Location: http://");
 		if (absolute == 0)
 			bozoprintf("%s%s", myname, portbuf);
-		bozoprintf("%s\r\n", url);
+		if (query) {
+		  bozoprintf("%s?%s\r\n", url, request->hr_query);
+		} else {
+		  bozoprintf("%s\r\n", url);
+		}
 	}
 	bozoprintf("\r\n");
 	if (request->hr_method == HTTP_HEAD)
@@ -1302,10 +1332,17 @@ handle_redirect(http_req *request, const char *url, int absolute)
 	bozoprintf("<html><head><title>Document Moved</title></head>\n");
 	bozoprintf("<body><h1>Document Moved</h1>\n");
 	bozoprintf("This document had moved <a href=\"http://");
-	if (absolute)
-		bozoprintf("%s", url);
-	else
-		bozoprintf("%s%s%s", myname, portbuf, url);
+	if (query) {
+	  if (absolute)
+	    bozoprintf("%s?%s", url, request->hr_query);
+	  else
+	    bozoprintf("%s%s%s?%s", myname, portbuf, url, request->hr_query);
+        } else {
+	  if (absolute)
+	    bozoprintf("%s", url);
+	  else
+	    bozoprintf("%s%s%s", myname, portbuf, url);
+	}
 	bozoprintf("\">here</a>\n");
 	bozoprintf("</body></html>\n");
 head:
@@ -1358,7 +1395,7 @@ static void
 escape_html(http_req *request)
 {
 	int	i, j;
-	char	*url = request->hr_url, *tmp;
+	char	*url = request->hr_file, *tmp;
 
 	for (i = 0, j = 0; url[i]; i++) {
 		switch (url[i]) {
@@ -1408,7 +1445,7 @@ escape_html(http_req *request)
 	 * original "url" is a substring of an allocation, so we
 	 * can't touch it.  so, ignore it and replace the request.
 	 */
-	request->hr_url = tmp;
+	request->hr_file = tmp;
 }
 
 /* this fixes the %HH hack that RFC2396 requires.  */
@@ -1418,10 +1455,9 @@ fix_url_percent(http_req *request)
 	char	*s, *t, buf[3], *url;
 	char	*end;	/* if end is not-zero, we don't translate beyond that */
 
-	url = request->hr_url;
+	url = request->hr_file;
 
-	/* make sure we don't translate *too* much */
-	end = strchr(request->hr_url, '?');
+	end = url + strlen(url);
 
 	/* fast forward to the first % */
 	if ((s = strchr(url, '%')) == NULL)
@@ -1461,7 +1497,7 @@ fix_url_percent(http_req *request)
 		}
 	} while (*s);
 	*t = '\0';
-	debug((DEBUG_FAT, "fix_url_percent returns %s in url", request->hr_url));
+	debug((DEBUG_FAT, "fix_url_percent returns %s in url", request->hr_file));
 }
 
 /*
@@ -1515,7 +1551,7 @@ process_proto(http_req *request, const char *proto)
 	if (proto == NULL) {
 got_proto_09:
 		request->hr_proto = http_09;
-		debug((DEBUG_FAT, "request %s is http/0.9", request->hr_url));
+		debug((DEBUG_FAT, "request %s is http/0.9", request->hr_file));
 		return;
 	}
 
@@ -1544,7 +1580,7 @@ got_proto_09:
 		else
 			break;
 
-		debug((DEBUG_FAT, "request %s is %s", request->hr_url,
+		debug((DEBUG_FAT, "request %s is %s", request->hr_file,
 		    request->hr_proto));
 		SIMPLEQ_INIT(&request->hr_headers);
 		request->hr_nheaders = 0;
@@ -1630,7 +1666,7 @@ http_error(int code, http_req *request, const char *msg)
 	else
 		portbuf[0] = '\0';
 
-	if (request && request->hr_url) {
+	if (request && request->hr_file) {
 		escape_html(request);
 		size = snprintf(buf, sizeof buf,
 		    "<html><head><title>%s</title></head>\n"
@@ -1638,7 +1674,7 @@ http_error(int code, http_req *request, const char *msg)
 		    "%s: <pre>%s</pre>\n"
  		    "<hr><address><a href=\"http://%s%s/\">%s%s</a></address>\n"
 		    "</body></html>\n",
-		    header, header, request->hr_url, reason,
+		    header, header, request->hr_file, reason,
 		    myname, portbuf, myname, portbuf);
 		if (size >= sizeof buf)
 			warning("http_error buffer too small, truncated");
