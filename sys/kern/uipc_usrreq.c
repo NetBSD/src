@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.119 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.120 2009/02/08 16:38:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.119 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.120 2009/02/08 16:38:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1293,7 +1293,7 @@ unp_internalize(struct mbuf **controlp)
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
 		if ((fp = fd_getfile(fd)) == NULL) {
-			nfds = i + 1;
+			nfds = i;
 			error = EBADF;
 			goto out;
 		}
