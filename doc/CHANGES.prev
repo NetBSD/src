@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.87 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.88 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9802,7 +9802,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ehci(4): Fix high-speed isoc USB transfers and add dma-sync of
 		data buffer before scheduling transfers. [jmorse 20081128]
 	sparc64: Fix boot device matching on U5/U10 machines to properly
-	        distinguish cd0 from wd0. [martin 20081201]
+		distinguish cd0 from wd0. [martin 20081201]
 	efs: Improve stability of efs by adding specfs/fifofs support.
 		[rumble 20081201]
 	wm(4): Fix nasty EEPROM-trashing bug on ICH8 and ICH9 chipsets.
