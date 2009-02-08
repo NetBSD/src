@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.275 2009/01/11 14:49:48 christos Exp $
+#	$NetBSD: BRANCHES,v 1.276 2009/02/08 21:46:04 jym Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -345,6 +345,19 @@ Notes:		To check out the kernel source tree,
 			cvs checkout -ritohy-usb1 src/sys/dev/usb/filelist
 		2. update files in the branch
 			sh -e src/sys/dev/usb/filelist
+
+Branch:		jym-xensuspend
+Description:	Implement xm save/restore/migrate for NetBSD domU
+Status:		Active
+Start Date:	2009-02-08
+End Date:
+Base Tag:	jym-xensuspend-base
+Maintainer:	Jean-Yves Migeon <jym@NetBSD.org>
+Scope:		kernel
+Notes:		This branch contains the code required to support the Xen
+		save/restore/migrate facilities. It affects domU frontend
+		drivers (xbd, xennet, xencons, hypervisor), autoconf(9)
+		machinery, as well as MD code (mostly pmap(9)).
 
 Branch:		kame
 Description:	KAME Project
