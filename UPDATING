@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.192 2009/02/07 13:44:48 skrll Exp $
+$NetBSD: UPDATING,v 1.193 2009/02/08 11:58:25 skrll Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -17,8 +17,8 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20090126:
-	The posix_fadvise system call changed assembly stub type. You need to
-	'rm -f posix_fadvise.*' in the libc build directory to avoid using
+	The __posix_fadvise50 system call changed assembly stub type. You need to
+	'rm -f __posix_fadvise50.*' in the libc build directory to avoid using
 	the old assembly stub.
 
 20090202:
