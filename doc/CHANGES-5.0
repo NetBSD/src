@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.92 2009/02/08 19:00:35 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.93 2009/02/08 20:54:08 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3962,4 +3962,75 @@ lib/libipsec/package_version.h			patch
 
 	Downgrade ipsec-tools to 0.7.1nb1.
 	[manu/spz, ticket #378]
+
+sys/ufs/ufs/ufs_inode.c				1.77
+
+	Break hold-and-wait which happens in ufs_balloc_range() when we
+	have pages busied and are trying to get the genfs node lock.
+	This causes a lock order reversal described in PR kern/40389.
+	This is not a proper fix and only a workaround for NetBSD 5.0.
+	[pooka, ticket #413]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.71
+
+	Remove additional GEMDOS only check on fstype.
+	[abs, ticket #420]
+
+distrib/atari/floppies/common/list.images	1.5
+distrib/atari/floppies/common/mount_gemdos	1.1
+distrib/utils/sysinst/arch/atari/Makefile	1.10
+distrib/utils/sysinst/util.c			1.154
+
+	- Support gemdos as a type of unmounted filesystem during
+	  set selection
+	- Add -DSUPPORT_8_3_SOURCE_FILESYSTEM option - currently *only
+	  enabled on atari* which if a set file cannot be found will
+	  attempt to truncate down to 8.3 and check again. Required for
+	  install with sets from GEMDOS filesystem.
+	[abs, ticket #421]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.255
+
+	Be consistent with wd.c and don't complain loudly if the
+	underlying device doesn't support flushing the cache.  Fixes an
+	issue where ST39120A drives are not capable of flushing the
+	cache, and RAIDFrame was incessantly complaining.
+	[oster, ticket #430]
+
+libexec/httpd/bozohttpd.c			1.9
+libexec/httpd/bozohttpd.h			1.6
+libexec/httpd/cgi-bozo.c			1.9
+libexec/httpd/dir-index-bozo.c			1.5
+libexec/httpd/tilde-luzah-bozo.c		1.4
+
+	Fix bugs in request transformation and CGI handling, including
+	bin/40355.
+
+	1) Now it is possible to have a default cgi handler catch a
+	request for a path that was produced by transformation, e.g. by
+	index generation -- so now the index can be "generated" by a CGI
+	if that is what the user desires.
+
+	2) More clearly distinguish "file" from "query" portions of the
+	request URL, so we do not feed ?-suffixed "arguments" to plain
+	files, fail to match filename extensions due to ?-suffixes, etc.
+
+	After this change, there are only two cases which use the "query"
+	portion of the request (the portion after the ?):
+	a) A redirect issued by HTTPD will redirect to the new file, but
+	with the same query string.
+	b) process_cgi() will, of course continue to use the query string.
+	[tls, ticket #428]
+
+sys/kern/kern_time.c				1.159 via patch
+
+	Fix "negative runtime; monotonic clock has gone backwards"
+	warnings, noted in PR kern/40511.
+	[rmind, ticket #429]
+
+external/mit/xorg/server/drivers/xf86-video-sunffb/Makefile 1.2
+
+	Remove artifacts of the xfree reachover build - this makes it
+	use the proper includes.
+	[oster, ticket #434]
 
