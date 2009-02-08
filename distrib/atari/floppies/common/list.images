@@ -1,4 +1,4 @@
-#	$NetBSD: list.images,v 1.4 2008/05/11 19:21:02 he Exp $
+#	$NetBSD: list.images,v 1.4.2.1 2009/02/08 19:14:11 snj Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/atari/stand
 LIBS	libhack.o -lprop -lrmt -ledit -lz -lbz2 -lutil -lcurses -ltermcap -lcrypt -lkvm -ll -lm
@@ -13,7 +13,8 @@ COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 # the termcap file
 COPY	${CURDIR}/../common/termcap.mini	usr/share/misc/termcap
 
-COPY	${CURDIR}/../common/dot.profile .profile
+COPY	${CURDIR}/../common/dot.profile 	.profile
+COPY	${CURDIR}/../common/mount_gemdos	sbin/mount_gemdos	555
 
 # and the keyboard maps
 MTREE	./usr/share/keymaps	type=dir uname=root gname=wheel mode=0755

@@ -1,0 +1,3 @@
+#!/bin/sh
+# $NetBSD: mount_gemdos,v 1.1.2.2 2009/02/08 19:14:11 snj Exp $
+exec mount_msdos -G "$@"
