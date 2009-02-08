@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.163 2009/02/05 19:28:43 dyoung Exp $
+# $NetBSD: shl.elf,v 1.164 2009/02/08 16:30:48 pooka Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -248,6 +248,8 @@
 ./usr/lib/librumpfs_ufs.so.0			base-rump-shlib
 ./usr/lib/librumpnet.so				base-rump-shlib
 ./usr/lib/librumpnet.so.0			base-rump-shlib
+./usr/lib/librumpnet_local.so			base-rump-shlib
+./usr/lib/librumpnet_local.so.0			base-rump-shlib
 ./usr/lib/librumpnet_net.so			base-rump-shlib
 ./usr/lib/librumpnet_net.so.0			base-rump-shlib
 ./usr/lib/librumpnet_netinet.so			base-rump-shlib
