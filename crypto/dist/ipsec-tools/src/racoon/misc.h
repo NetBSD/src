@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.6 2008/07/15 00:47:09 mgrooms Exp $	*/
+/*	$NetBSD: misc.h,v 1.6.4.1 2009/02/08 18:42:17 snj Exp $	*/
 
 /* Id: misc.h,v 1.9 2006/04/06 14:00:06 manubsd Exp */
 
@@ -50,7 +50,6 @@ extern int getfsize __P((char *));
 struct timeval;
 extern double timedelta __P((struct timeval *, struct timeval *));
 char *strdup __P((const char *));
-extern void close_on_exec __P((int fd));
 
 #if defined(__APPLE__) && defined(__MACH__)
 #define RACOON_TAILQ_FOREACH_REVERSE(var, head, headname ,field)	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_unity.c,v 1.9 2007/10/19 03:37:19 manu Exp $	*/
+/*	$NetBSD: isakmp_unity.c,v 1.9.12.1 2009/02/08 18:42:17 snj Exp $	*/
 
 /* Id: isakmp_unity.c,v 1.10 2006/07/31 04:49:23 manubsd Exp */
 
@@ -305,41 +305,32 @@ int  splitnet_list_add(list, network, count)
 	struct unity_network * network;
 	int *count;
 {
-	struct unity_netentry * nentry;
-
-	/*
-	 * search for network in current list
-	 * to avoid adding duplicates
-	 */
-	for (nentry = *list; nentry != NULL; nentry = nentry->next)
-		if (memcmp(&nentry->network, network,
-			   sizeof(struct unity_network)) == 0)
-			return 0;	/* it's a dupe */
+	struct unity_netentry * newentry;
 
 	/*
 	 * allocate new netentry and copy
-	 * new splitnet network data
+         * new splitnet network data
 	 */
-	nentry = (struct unity_netentry *)
+	newentry = (struct unity_netentry *)
 		racoon_malloc(sizeof(struct unity_netentry));
-	if (nentry == NULL)
+	if (newentry == NULL)
 		return -1;
 
-	memcpy(&nentry->network,network,
+	memcpy(&newentry->network,network,
 		sizeof(struct unity_network));
-	nentry->next = NULL;
+	newentry->next = NULL;
 
 	/*
 	 * locate the last netentry in our
 	 * splitnet list and add our entry
 	 */
 	if (*list == NULL)
-		*list = nentry;
+		*list = newentry;
 	else {
 		struct unity_netentry * tmpentry = *list;
 		while (tmpentry->next != NULL)
 			tmpentry = tmpentry->next;
-		tmpentry->next = nentry;
+		tmpentry->next = newentry;
 	}
 
 	(*count)++;
@@ -363,9 +354,8 @@ void splitnet_list_free(list, count)
 	}
 }
 
-char * splitnet_list_2str(list, splitnet_ipaddr)
+char * splitnet_list_2str(list)
 	struct unity_netentry * list;
-	enum splinet_ipaddr splitnet_ipaddr;
 {
 	struct unity_netentry * netentry;
 	char tmp1[40];
@@ -399,17 +389,8 @@ char * splitnet_list_2str(list, splitnet_ipaddr)
 
 		inet_ntop(AF_INET, &netentry->network.addr4, tmp1, 40);
 		inet_ntop(AF_INET, &netentry->network.mask4, tmp2, 40);
-		if (splitnet_ipaddr == CIDR) {
-			uint32_t tmp3;
-			int cidrmask;
 
-			tmp3 = ntohl(netentry->network.mask4.s_addr);
-			for (cidrmask = 0; tmp3 != 0; cidrmask++)
-				tmp3 <<= 1;
-			len += sprintf(str+len, "%s/%d ", tmp1, cidrmask);
-		} else {
-			len += sprintf(str+len, "%s/%s ", tmp1, tmp2);
-		}
+		len += sprintf(str+len, "%s/%s ", tmp1, tmp2);
 
 		netentry = netentry->next;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.h,v 1.6 2007/09/12 23:39:51 mgrooms Exp $	*/
+/*	$NetBSD: sainfo.h,v 1.6.12.1 2009/02/08 18:42:19 snj Exp $	*/
 
 /* Id: sainfo.h,v 1.5 2006/07/09 17:19:38 manubsd Exp */
 
@@ -36,9 +36,6 @@
 
 #include <sys/queue.h>
 
-#define SAINFO_ANONYMOUS	((void *)NULL)
-#define	SAINFO_CLIENTADDR	((void *)~0)
-
 /* SA info */
 struct sainfo {
 	vchar_t *idsrc;
@@ -47,7 +44,6 @@ struct sainfo {
 		 * idsrc and iddst are constructed body of ID payload.
 		 * that is (struct ipsecdoi_id_b) + ID value.
 		 * If idsrc == NULL, that is anonymous entry.
-		 * If idsrc == ~0, that is client address entry.
 		 */
 
 #ifdef ENABLE_HYBRID
@@ -73,7 +69,7 @@ struct sainfoalg {
 };
 
 extern struct sainfo *getsainfo __P((const vchar_t *,
-	const vchar_t *, const vchar_t *, const vchar_t *, int));
+	const vchar_t *, const vchar_t *, int));
 extern struct sainfo *newsainfo __P((void));
 extern void delsainfo __P((struct sainfo *));
 extern void inssainfo __P((struct sainfo *));

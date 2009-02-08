@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.18 2008/10/27 06:18:09 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.18.2.1 2009/02/08 18:42:19 snj Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -78,7 +78,6 @@
 #include "cfparse_proto.h"
 #include "isakmp_var.h"
 #include "isakmp_xauth.h"
-#include "isakmp_xauth.h"
 #include "isakmp_cfg.h"
 #include "admin_var.h"
 #include "admin.h"
@@ -104,7 +103,7 @@ static void initfds __P((void));
 static void init_signal __P((void));
 static int set_signal __P((int sig, RETSIGTYPE (*func) __P((int))));
 static void check_sigreq __P((void));
-static void check_flushsa_stub __P((struct sched *));
+static void check_flushsa_stub __P((void *));
 static void check_flushsa __P((void));
 static int close_sockets __P((void));
 
@@ -113,7 +112,6 @@ static fd_set maskdying;
 static int nfds = 0;
 static volatile sig_atomic_t sigreq[NSIG + 1];
 static int dying = 0;
-static struct sched scflushsa = SCHED_INITIALIZER();
 
 int
 session(void)
@@ -148,7 +146,14 @@ session(void)
 	natt_keepalive_init ();
 #endif
 
+	if (privsep_init() != 0)
+		exit(1);
+
+	for (i = 0; i <= NSIG; i++)
+		sigreq[i] = 0;
+
 	/* write .pid file */
+	racoon_pid = getpid();
 	if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE] == NULL) 
 		strlcpy(pid_file, _PATH_VARRUN "racoon.pid", MAXPATHLEN);
 	else if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE][0] == '/') 
@@ -165,24 +170,12 @@ session(void)
 			fclose(fp);
 			exit(1);
 		}
+		fprintf(fp, "%ld\n", (long)racoon_pid);
+		fclose(fp);
 	} else {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"cannot open %s", pid_file);
 	}
-
-	if (privsep_init() != 0)
-		exit(1);
-
-	/*
-	 * The fork()'ed privileged side will close its copy of fp.  We wait
-	 * until here to get the correct child pid.
-	 */
-	racoon_pid = getpid();
-	fprintf(fp, "%ld\n", (long)racoon_pid);
-	fclose(fp);
-
-	for (i = 0; i <= NSIG; i++)
-		sigreq[i] = 0;
 
 	while (1) {
 		if (dying)
@@ -199,7 +192,6 @@ session(void)
 		/* scheduling */
 		timeout = schedular();
 
-		nfds = evt_get_fdmask(nfds, &rfds);
 		error = select(nfds, &rfds, (fd_set *)0, (fd_set *)0, timeout);
 		if (error < 0) {
 			switch (errno) {
@@ -219,7 +211,6 @@ session(void)
 		    (FD_ISSET(lcconf->sock_admin, &rfds)))
 			admin_handler();
 #endif
-		evt_handle_fdmask(&rfds);
 
 		for (p = lcconf->myaddrs; p; p = p->next) {
 			if (!p->addr)
@@ -234,6 +225,8 @@ session(void)
 		if (lcconf->rtsock >= 0 && FD_ISSET(lcconf->rtsock, &rfds)) {
 			if (update_myaddrs() && lcconf->autograbaddr)
 				check_rtsock(NULL);
+			else
+				initfds();
 		}
 	}
 }
@@ -249,8 +242,7 @@ close_session()
 	close_sockets();
 	backupsa_clean();
 
-	plog(LLV_INFO, LOCATION, NULL, "racoon process %d shutdown\n", getpid());
-
+	plog(LLV_INFO, LOCATION, NULL, "racoon shutdown\n");
 	exit(0);
 }
 
@@ -369,13 +361,10 @@ static void reload_conf(){
 	save_rmconf();
 	initrmconf();
 
-#ifdef HAVE_LIBRADIUS
-	/* free and init radius configuration */
-	xauth_radius_init_conf(1);
-#endif
-
-	pfkey_reload();
-
+	/* Do a part of pfkey_init() ?
+	 * SPD reload ?
+	 */
+	
 	save_params();
 	error = cfparse();
 	if (error != 0){
@@ -388,11 +377,6 @@ static void reload_conf(){
 #if 0	
 	if (dump_config)
 		dumprmconf ();
-#endif
-
-#ifdef HAVE_LIBRADIUS
-	/* re-initialize radius state */
-	xauth_radius_init();
 #endif
 
 	/* 
@@ -467,13 +451,13 @@ check_sigreq()
 		case SIGTERM:			
 			plog(LLV_INFO, LOCATION, NULL, 
 			    "caught signal %d\n", sig);
-			evt_generic(EVT_RACOON_QUIT, NULL);
+			EVT_PUSH(NULL, NULL, EVTT_RACOON_QUIT, NULL);
 			pfkey_send_flush(lcconf->sock_pfkey, 
 			    SADB_SATYPE_UNSPEC);
 #ifdef ENABLE_FASTQUIT
 			close_session();
 #else
-			sched_schedule(&scflushsa, 1, check_flushsa_stub);
+			sched_new(1, check_flushsa_stub, NULL);
 #endif
 			dying = 1;
 			break;
@@ -492,7 +476,7 @@ check_sigreq()
  */
 static void
 check_flushsa_stub(p)
-	struct sched *p;
+	void *p;
 {
 
 	check_flushsa();
@@ -554,7 +538,7 @@ check_flushsa()
 		vfree(buf);
 
 	if (n) {
-		sched_schedule(&scflushsa, 1, check_flushsa_stub);
+		sched_new(1, check_flushsa_stub, NULL);
 		return;
 	}
 

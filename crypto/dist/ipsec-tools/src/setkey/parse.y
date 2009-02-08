@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.10.18.1 2009/01/06 23:16:11 snj Exp $	*/
+/*	$NetBSD: parse.y,v 1.10.18.2 2009/02/08 18:42:19 snj Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -565,11 +565,10 @@ spdadd_command
 			last_msg_type = SADB_X_SPDADD;
 #endif
 
-			/* fixed port fields if ulp is icmp */
+			/* fixed port fields if ulp is icmpv6 */
 			if ($10.buf != NULL) {
-				if (($9 != IPPROTO_ICMPV6) &&
-					($9 != IPPROTO_ICMP) &&
-					($9 != IPPROTO_MH))
+				if ( ($9 != IPPROTO_ICMPV6) &&
+					 ($9 != IPPROTO_MH))
 					return -1;
 				free($5.buf);
 				free($8.buf);
@@ -614,10 +613,9 @@ spddelete_command
 			int status;
 			struct addrinfo *src, *dst;
 
-			/* fixed port fields if ulp is icmp */
+			/* fixed port fields if ulp is icmpv6 */
 			if ($10.buf != NULL) {
 				if (($9 != IPPROTO_ICMPV6) &&
-					($9 != IPPROTO_ICMP) &&
 					($9 != IPPROTO_MH))
 					return -1;
 				free($5.buf);

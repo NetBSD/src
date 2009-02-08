@@ -1,10 +1,9 @@
-/*	$NetBSD: evt.h,v 1.6 2008/08/29 00:31:00 gmcgarry Exp $	*/
+/*	$NetBSD: evt.h,v 1.6.4.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: evt.h,v 1.5 2006/01/19 10:24:09 fredsen Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
- * Copyright (C) 2008 Timo Teras
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -34,10 +33,6 @@
 
 #ifndef _EVT_H
 #define _EVT_H
-
-/*
- * Old style (deprecated) events which are polled.
- */
 
 struct evtdump {
 	size_t len;	
@@ -69,81 +64,25 @@ struct evtdump {
 #define EVTT_PEERPH1_NOPROP	14	/* NO_PROPOSAL_CHOSEN & friends */
 #define EVTT_NO_ISAKMP_CFG	15	/* no need to wait for mode_cfg */
 
-/*
- * New style, asynchronous events.
- */
-
-struct evt_async {
-	uint32_t ec_type;
-	time_t ec_timestamp;
-
-	struct sockaddr_storage ec_ph1src;
-	struct sockaddr_storage ec_ph1dst;
-	u_int32_t ec_ph2msgid;
-
-	/*
-	 * Optionnal list of struct isakmp_data
-	 * for type EVTT_ISAKMP_CFG_DONE
-	 */
+struct evt {
+	struct evtdump *dump;
+	TAILQ_ENTRY(evt) next;
 };
 
-/* type */
-#define EVT_RACOON_QUIT			0x0001
+TAILQ_HEAD(evtlist, evt);
 
-#define EVT_PHASE1_UP			0x0100
-#define EVT_PHASE1_DOWN			0x0101
-#define EVT_PHASE1_NO_RESPONSE		0x0102
-#define EVT_PHASE1_NO_PROPOSAL		0x0103
-#define EVT_PHASE1_AUTH_FAILED		0x0104
-#define EVT_PHASE1_DPD_TIMEOUT		0x0105
-#define EVT_PHASE1_PEER_DELETED		0x0106
-#define EVT_PHASE1_MODE_CFG		0x0107
-#define EVT_PHASE1_XAUTH_SUCCESS	0x0108
-#define EVT_PHASE1_XAUTH_FAILED		0x0109
-
-#define EVT_PHASE2_NO_PHASE1		0x0200
-#define EVT_PHASE2_UP			0x0201
-#define EVT_PHASE2_DOWN			0x0202
-#define EVT_PHASE2_NO_RESPONSE		0x0203
+#define EVTLIST_MAX	32
 
 #ifdef ENABLE_ADMINPORT
+struct evtdump *evt_pop(void);
+vchar_t *evt_dump(void);
+void evt_push(struct sockaddr *, struct sockaddr *, int, vchar_t *);
+#endif
 
-struct ph1handle;
-struct ph2handle;
-
-struct evt_listener {
-	LIST_ENTRY(evt_listener) ll_chain;
-	LIST_ENTRY(evt_listener) fd_chain;
-	int fd;
-};
-LIST_HEAD(evt_listener_list, evt_listener);
-#define EVT_LISTENER_LIST(x) struct evt_listener_list x
-
-void evt_generic __P((int type, vchar_t *optdata));
-void evt_phase1 __P((const struct ph1handle *ph1, int type, vchar_t *optdata));
-void evt_phase2 __P((const struct ph2handle *ph2, int type, vchar_t *optdata));
-vchar_t *evt_dump __P((void));
-
-int  evt_subscribe __P((struct evt_listener_list *list, int fd));
-void evt_list_init __P((struct evt_listener_list *list));
-void evt_list_cleanup __P((struct evt_listener_list *list));
-int  evt_get_fdmask __P((int nfds, fd_set *fdset));
-void evt_handle_fdmask __P((fd_set *fdset));
-
+#ifdef ENABLE_ADMINPORT
+#define EVT_PUSH(src, dst, type, optdata) evt_push(src, dst, type, optdata);
 #else
-
-#define EVT_LISTENER_LIST(x)
-
-#define evt_generic(type, optdata) ;
-#define evt_phase1(ph1, type, optdata) ;
-#define evt_phase2(ph2, type, optdata) ;
-
-#define evt_subscribe(eventlist, fd) ;
-#define evt_list_init(eventlist) ;
-#define evt_list_cleanup(eventlist) ;
-#define evt_get_fdmask(nfds, fdset) nfds
-#define evt_handle_fdmask(fdset) ;
-
-#endif /* ENABLE_ADMINPORT */
+#define EVT_PUSH(src, dst, type, optdata) ;
+#endif
 
 #endif /* _EVT_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.16 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.16.4.1 2009/02/08 18:42:15 snj Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -214,15 +214,6 @@ hexstring	0x{hexdigit}+
 <S_LST>strict_address	{ YYD; return(STRICT_ADDRESS); }
 <S_LST>{ecl}		{ BEGIN S_INI; return(EOC); }
 
-	/* radius config */
-<S_INI>radiuscfg	{ BEGIN S_LDAP; YYDB; return(RADCFG); }
-<S_LDAP>{bcl}		{ return(BOC); }
-<S_LDAP>auth		{ YYD; return(RAD_AUTH); }
-<S_LDAP>acct		{ YYD; return(RAD_ACCT); }
-<S_LDAP>timeout		{ YYD; return(RAD_TIMEOUT); }
-<S_LDAP>retries		{ YYD; return(RAD_RETRIES); }
-<S_LDAP>{ecl}		{ BEGIN S_INI; return(EOC); }
-
 	/* ldap config */
 <S_INI>ldapcfg		{ BEGIN S_LDAP; YYDB; return(LDAPCFG); }
 <S_LDAP>{bcl}		{ return(BOC); }
@@ -286,7 +277,6 @@ hexstring	0x{hexdigit}+
 	/* sainfo */
 <S_INI>sainfo		{ BEGIN S_SAINF; YYDB; return(SAINFO); }
 <S_SAINF>anonymous	{ YYD; return(ANONYMOUS); }
-<S_SAINF>clientaddr	{ YYD; return(CLIENTADDR); }
 <S_SAINF>{blcl}any{elcl}	{ YYD; return(PORTANY); }
 <S_SAINF>any		{ YYD; return(ANY); }
 <S_SAINF>from		{ YYD; return(FROM); }
@@ -371,7 +361,6 @@ hexstring	0x{hexdigit}+
 <S_RMTS>phase1_down	{ YYD; return(PHASE1_DOWN); }
 <S_RMTS>mode_cfg	{ YYD; return(MODE_CFG); }
 <S_RMTS>weak_phase1_check { YYD; return(WEAK_PHASE1_CHECK); }
-<S_RMTS>rekey		{ YYD; return(REKEY); }
 	/* remote proposal */
 <S_RMTS>proposal	{ BEGIN S_RMTP; YYDB; return(PROPOSAL); }
 <S_RMTP>{bcl}		{ return(BOC); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.h,v 1.6 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: isakmp_xauth.h,v 1.6.4.1 2009/02/08 18:42:17 snj Exp $	*/
 
 /*	$KAME$ */
 
@@ -33,8 +33,6 @@
 
 #ifndef _ISAKMP_XAUTH_H
 #define _ISAKMP_XAUTH_H
-
-#include "schedule.h"
 
 /* ISAKMP mode config attribute types specific to the Xauth vendor ID */
 #define	XAUTH_TYPE                16520
@@ -92,7 +90,6 @@ struct xauth_rmconf {
 #define XAUTHST_OK	2
 
 struct xauth_reply_arg {
-	struct sched sc;
 	isakmp_index index;
 	int port;
 	int id;
@@ -110,40 +107,18 @@ int group_check(struct ph1handle *, char **, int);
 vchar_t *isakmp_xauth_req(struct ph1handle *, struct isakmp_data *);
 vchar_t *isakmp_xauth_set(struct ph1handle *, struct isakmp_data *);
 void xauth_rmstate(struct xauth_state *);
-void xauth_reply_stub(struct sched *);
+void xauth_reply_stub(void *);
 int xauth_reply(struct ph1handle *, int, int, int);
 int xauth_rmconf_used(struct xauth_rmconf **);
 void xauth_rmconf_delete(struct xauth_rmconf **);
 
-#ifdef HAVE_LIBPAM
-int xauth_login_pam(int, struct sockaddr *, char *, char *);
+#ifdef HAVE_LIBRADIUS
+int xauth_login_radius(struct ph1handle *, char *, char *);
+int xauth_radius_init(void);
 #endif
 
-#ifdef HAVE_LIBRADIUS
-
-#define RADIUS_MAX_SERVERS 5
-
-struct rad_serv {
-	vchar_t		*host;
-	int		port;
-	vchar_t		*secret;
-};
-
-struct xauth_rad_config {
-	struct rad_serv	auth_server_list[RADIUS_MAX_SERVERS];
-	int		auth_server_count;
-	struct rad_serv	acct_server_list[RADIUS_MAX_SERVERS];
-	int		acct_server_count;
-	int		timeout;
-	int		retries;
-};
-
-extern struct xauth_rad_config xauth_rad_config;
-
-int xauth_radius_init_conf(int free);
-int xauth_radius_init(void);
-int xauth_login_radius(struct ph1handle *, char *, char *);
-
+#ifdef HAVE_LIBPAM
+int xauth_login_pam(int, struct sockaddr *, char *, char *);
 #endif
 
 #ifdef HAVE_LIBLDAP
@@ -173,9 +148,8 @@ struct xauth_ldap_config {
 
 extern struct xauth_ldap_config xauth_ldap_config;
 
-int xauth_ldap_init_conf(void);
+int xauth_ldap_init(void);
 int xauth_login_ldap(struct ph1handle *, char *, char *);
-
 #endif
 
 #endif /* _ISAKMP_XAUTH_H */
