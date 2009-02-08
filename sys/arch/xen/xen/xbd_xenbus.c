@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.37 2009/01/16 20:16:47 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.38 2009/02/08 19:05:50 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.37 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38 2009/02/08 19:05:50 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -215,10 +215,11 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		printf("%s/\n", xa->xa_xbusd->xbusd_path);
 		for (i = 0; i < dir_n; i++) {
 			printf("\t/%s", dir[i]);
-			err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path, dir[i],
-			    NULL, &val);
+			err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path,
+					  dir[i], NULL, &val);
 			if (err) {
-				aprint_error_dev(self, "xenbus_read err %d\n", err);
+				aprint_error_dev(self, "xenbus_read err %d\n",
+						 err);
 			} else {
 				printf(" = %s\n", val);
 				free(val, M_DEVBUF);
@@ -320,6 +321,10 @@ xbd_xenbus_resume(void *p)
 	SHARED_RING_INIT(ring);
 	FRONT_RING_INIT(&sc->sc_ring, ring, PAGE_SIZE);
 
+	/*
+	 * get MA address of the ring, and use it to set up the grant entry
+	 * for the block device
+	 */
 	(void)pmap_extract_ma(pmap_kernel(), (vaddr_t)ring, &ma);
 	error = xenbus_grant_ring(sc->sc_xbusd, ma, &sc->sc_ring_gntref);
 	if (error)
@@ -380,7 +385,8 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 	struct dk_geom *pdg;
 	char buf[9];
 	int s;
-	DPRINTF(("%s: new backend state %d\n", device_xname(sc->sc_dev), new_state));
+	DPRINTF(("%s: new backend state %d\n",
+	    device_xname(sc->sc_dev), new_state));
 
 	switch (new_state) {
 	case XenbusStateUnknown:
@@ -614,7 +620,8 @@ xbdsize(dev_t dev)
 int
 xbdread(dev_t dev, struct uio *uio, int flags)
 {
-	struct xbd_xenbus_softc *sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
+	struct xbd_xenbus_softc *sc = 
+	    device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	struct  dk_softc *dksc = &sc->sc_dksc;
 
 	if ((dksc->sc_flags & DKF_INITED) == 0)
@@ -625,7 +632,8 @@ xbdread(dev_t dev, struct uio *uio, int flags)
 int
 xbdwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct xbd_xenbus_softc *sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
+	struct xbd_xenbus_softc *sc =
+	    device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	struct  dk_softc *dksc = &sc->sc_dksc;
 
 	if ((dksc->sc_flags & DKF_INITED) == 0)
@@ -638,7 +646,8 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 int
 xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct xbd_xenbus_softc *sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
+	struct xbd_xenbus_softc *sc =
+	    device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	struct	dk_softc *dksc;
 	int	error;
 	struct	disk *dk;
