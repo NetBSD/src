@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.29 2008/12/09 17:17:02 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.30 2009/02/08 19:14:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -128,6 +128,8 @@ extern int udf_verbose;
 #define UDF_VAT_CHUNKSIZE	(64*1024)		/* picked */
 #define UDF_SYMLINKBUFLEN	(64*1024)		/* picked */
 
+#define UDF_ISO_VRS_SIZE	(32*2048)		/* 32 ISO `sectors' */
+
 
 /* structure space */
 #define UDF_ANCHORS		4	/* 256, 512, N-256, N */
@@ -147,14 +149,15 @@ extern int udf_verbose;
 
 
 /* RW content hint for allocation and other purposes */
-#define UDF_C_INVALID		 0	/* not relevant */
+#define UDF_C_ABSOLUTE		 0	/* blob to write at absolute */
 #define UDF_C_PROCESSED		 0	/* not relevant */
 #define UDF_C_USERDATA		 1	/* all but userdata is metadata */
 #define UDF_C_DSCR		 2	/* update sectornr and CRC */
-#define UDF_C_NODE		 3	/* file/dir node, update sectornr and CRC */
-#define UDF_C_FIDS		 4	/* update all contained fids */
-#define UDF_C_METADATA_SBM	 5	/* space bitmap, update sectornr and CRC */
-#define UDF_C_EXTATTRS		 6	/* dunno what to do yet */
+#define UDF_C_FLOAT_DSCR	 3	/* update sectornr and CRC; sequential */
+#define UDF_C_NODE		 4	/* file/dir node, update sectornr and CRC */
+#define UDF_C_FIDS		 5	/* update all contained fids */
+#define UDF_C_METADATA_SBM	 6	/* space bitmap, update sectornr and CRC */
+#define UDF_C_EXTATTRS		 7	/* dunno what to do yet */
 
 /* use unused b_freelistindex for our UDF_C_TYPE */
 #define b_udf_c_type	b_freelistindex
@@ -184,12 +187,14 @@ extern int udf_verbose;
 /* logical volume open/close actions */
 #define UDF_OPEN_SESSION	  0x01  /* if needed writeout VRS + VDS	     */
 #define UDF_CLOSE_SESSION	  0x02	/* close session after writing VAT   */
-#define UDF_WRITE_VAT		  0x04	/* sequential VAT filesystem         */
-#define UDF_WRITE_LVINT		  0x08	/* write out open lvint              */
-#define UDF_WRITE_PART_BITMAPS	  0x10	/* write out partition space bitmaps */
-#define UDF_APPENDONLY_LVINT	  0x20	/* no shifting, only appending       */
-#define UDFLOGVOL_BITS "\20\1OPENSESSION\2CLOSESESSION\3WRITEVAT\4WRITELVINT"\
-			  "\5APPENDONLY"
+#define UDF_FINALISE_DISC	  0x04	/* close session after writing VAT   */
+#define UDF_WRITE_VAT		  0x08	/* sequential VAT filesystem         */
+#define UDF_WRITE_LVINT		  0x10	/* write out open lvint              */
+#define UDF_WRITE_PART_BITMAPS	  0x20	/* write out partition space bitmaps */
+#define UDF_APPENDONLY_LVINT	  0x40	/* no shifting, only appending       */
+#define UDFLOGVOL_BITS "\20\1OPEN_SESSION\2CLOSE_SESSION\3FINALISE_DISC" \
+			"\4WRITE_VAT\5WRITE_LVINT\6WRITE_PART_BITMAPS" \
+			"\7APPENDONLY_LVINT"
 
 /* logical volume error handling actions */
 #define UDF_UPDATE_TRACKINFO	  0x01	/* update trackinfo and re-shedule   */

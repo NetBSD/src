@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.84 2009/02/05 19:39:08 pooka Exp $ */
+/* $NetBSD: udf_subr.c,v 1.85 2009/02/08 19:14:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.84 2009/02/05 19:39:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.85 2009/02/08 19:14:52 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -151,8 +151,33 @@ udf_dump_discinfo(struct udf_mount *ump)
 	snprintb(bits, sizeof(bits), MMC_CAP_FLAGBITS, di->mmc_cap);
 	printf("\tcapabilities cap   %s\n", bits);
 }
+
+static void
+udf_dump_trackinfo(struct mmc_trackinfo *trackinfo)
+{
+	char   bits[128];
+
+	if ((udf_verbose & UDF_DEBUG_VOLUMES) == 0)
+		return;
+
+	printf("Trackinfo for track %d:\n", trackinfo->tracknr);
+	printf("\tsessionnr           %d\n", trackinfo->sessionnr);
+	printf("\ttrack mode          %d\n", trackinfo->track_mode);
+	printf("\tdata mode           %d\n", trackinfo->data_mode);
+	snprintb(bits, sizeof(bits), MMC_TRACKINFO_FLAGBITS, trackinfo->flags);
+	printf("\tflags               %s\n", bits);
+
+	printf("\ttrack start         %d\n", trackinfo->track_start);
+	printf("\tnext_writable       %d\n", trackinfo->next_writable);
+	printf("\tfree_blocks         %d\n", trackinfo->free_blocks);
+	printf("\tpacket_size         %d\n", trackinfo->packet_size);
+	printf("\ttrack size          %d\n", trackinfo->track_size);
+	printf("\tlast recorded block %d\n", trackinfo->last_recorded);
+}
+
 #else
 #define udf_dump_discinfo(a);
+#define udf_dump_trackinfo(a);
 #endif
 
 
@@ -489,7 +514,7 @@ udf_search_writing_tracks(struct udf_mount *ump)
 {
 	struct vnode *devvp = ump->devvp;
 	struct mmc_trackinfo trackinfo;
-	struct mmc_op        op;
+	struct mmc_op        mmc_op;
 	struct part_desc *part;
 	uint32_t tracknr, start_track, num_tracks;
 	uint32_t track_start, track_end, part_start, part_end;
@@ -503,6 +528,11 @@ udf_search_writing_tracks(struct udf_mount *ump)
 	 * data track and the metadata track. Note that the reserved track is
 	 * troublesome but can be detected by its small size of < 512 sectors.
 	 */
+
+	/* update discinfo since it might have changed */
+	error = udf_update_discinfo(ump);
+	if (error)
+		return error;
 
 	num_tracks  = ump->discinfo.num_tracks;
 	start_track = ump->discinfo.first_track;
@@ -533,11 +563,11 @@ udf_search_writing_tracks(struct udf_mount *ump)
 		 * optional command, so ignore its error but report warning.
 		 */
 		if (trackinfo.flags & MMC_TRACKINFO_DAMAGED) {
-			memset(&op, 0, sizeof(op));
-			op.operation   = MMC_OP_REPAIRTRACK;
-			op.mmc_profile = ump->discinfo.mmc_profile;
-			op.tracknr     = tracknr;
-			error = VOP_IOCTL(devvp, MMCOP, &op, FKIOCTL, NOCRED);
+			memset(&mmc_op, 0, sizeof(mmc_op));
+			mmc_op.operation   = MMC_OP_REPAIRTRACK;
+			mmc_op.mmc_profile = ump->discinfo.mmc_profile;
+			mmc_op.tracknr     = tracknr;
+			error = VOP_IOCTL(devvp, MMCOP, &mmc_op, FKIOCTL, NOCRED);
 			if (error)
 				(void)printf("Drive can't explicitly repair "
 					"damaged track %d, but it might "
@@ -550,7 +580,7 @@ udf_search_writing_tracks(struct udf_mount *ump)
 		}
 		if ((trackinfo.flags & MMC_TRACKINFO_NWA_VALID) == 0)
 			continue;
-	
+
 		track_start = trackinfo.track_start;
 		track_end   = track_start + trackinfo.track_size;
 
@@ -1975,7 +2005,7 @@ udf_process_vds(struct udf_mount *ump) {
 	/* determine logical volume open/closure actions */
 	if (n_virt) {
 		ump->lvopen  = 0;
-		if (ump->discinfo.last_session_state == MMC_STATE_CLOSED)
+		if (ump->discinfo.last_session_state == MMC_STATE_EMPTY)
 			ump->lvopen |= UDF_OPEN_SESSION ;
 		ump->lvclose = UDF_WRITE_VAT;
 		if (ump->mount_args.udfmflags & UDFMNT_CLOSESESSION)
@@ -3424,6 +3454,196 @@ udf_deregister_node(struct udf_node *node)
 
 /* --------------------------------------------------------------------- */
 
+static int
+udf_validate_session_start(struct udf_mount *ump)
+{
+	struct mmc_trackinfo trackinfo;
+	struct vrs_desc *vrs;
+	uint32_t tracknr, sessionnr, sector, sector_size;
+	uint32_t iso9660_vrs, write_track_start;
+	uint8_t *buffer, *blank, *pos;
+	int blks, max_sectors, vrs_len;
+	int error;
+
+	/* disc appendable? */
+	if (ump->discinfo.disc_state == MMC_STATE_FULL)
+		return EROFS;
+
+	/* already written here? if so, there should be an ISO VDS */
+	if (ump->discinfo.last_session_state == MMC_STATE_INCOMPLETE)
+		return 0;
+
+	/*
+	 * Check if the first track of the session is blank and if so, copy or
+	 * create a dummy ISO descriptor so the disc is valid again.
+	 */
+
+	tracknr = ump->discinfo.first_track_last_session;
+	memset(&trackinfo, 0, sizeof(struct mmc_trackinfo));
+	trackinfo.tracknr = tracknr;
+	error = udf_update_trackinfo(ump, &trackinfo);
+	if (error)
+		return error;
+
+	udf_dump_trackinfo(&trackinfo);
+	KASSERT(trackinfo.flags & (MMC_TRACKINFO_BLANK | MMC_TRACKINFO_RESERVED));
+	KASSERT(trackinfo.sessionnr > 1);
+
+	KASSERT(trackinfo.flags & MMC_TRACKINFO_NWA_VALID);
+	write_track_start = trackinfo.next_writable;
+
+	/* we have to copy the ISO VRS from a former session */
+	DPRINTF(VOLUMES, ("validate_session_start: "
+			"blank or reserved track, copying VRS\n"));
+
+	/* sessionnr should be the session we're mounting */
+	sessionnr = ump->mount_args.sessionnr;
+
+	/* start at the first track */
+	tracknr   = ump->discinfo.first_track;
+	while (tracknr <= ump->discinfo.num_tracks) {
+		trackinfo.tracknr = tracknr;
+		error = udf_update_trackinfo(ump, &trackinfo);
+		if (error) {
+			DPRINTF(VOLUMES, ("failed to get trackinfo; aborting\n"));
+			return error;
+		}
+		if (trackinfo.sessionnr == sessionnr)
+			break;
+		tracknr++;
+	}
+	if (trackinfo.sessionnr != sessionnr) {
+		DPRINTF(VOLUMES, ("failed to get trackinfo; aborting\n"));
+		return ENOENT;
+	}
+
+	DPRINTF(VOLUMES, ("found possible former ISO VRS at\n"));
+	udf_dump_trackinfo(&trackinfo);
+
+        /*
+         * location of iso9660 vrs is defined as first sector AFTER 32kb,
+         * minimum ISO `sector size' 2048
+         */
+	sector_size = ump->discinfo.sector_size;
+	iso9660_vrs = ((32*1024 + sector_size - 1) / sector_size)
+		 + trackinfo.track_start;
+
+	buffer = malloc(UDF_ISO_VRS_SIZE, M_TEMP, M_WAITOK);
+	max_sectors = UDF_ISO_VRS_SIZE / sector_size;
+	blks = MAX(1, 2048 / sector_size);
+
+	error = 0;
+	for (sector = 0; sector < max_sectors; sector += blks) {
+		pos = buffer + sector * sector_size;
+		error = udf_read_phys_sectors(ump, UDF_C_DSCR, pos,
+			iso9660_vrs + sector, blks);
+		if (error)
+			break;
+		/* check this ISO descriptor */
+		vrs = (struct vrs_desc *) pos;
+		DPRINTF(VOLUMES, ("got VRS id `%4s`\n", vrs->identifier));
+		if (strncmp(vrs->identifier, VRS_CD001, 5) == 0)
+			continue;
+		if (strncmp(vrs->identifier, VRS_CDW02, 5) == 0)
+			continue;
+		if (strncmp(vrs->identifier, VRS_BEA01, 5) == 0)
+			continue;
+		if (strncmp(vrs->identifier, VRS_NSR02, 5) == 0)
+			continue;
+		if (strncmp(vrs->identifier, VRS_NSR03, 5) == 0)
+			continue;
+		if (strncmp(vrs->identifier, VRS_TEA01, 5) == 0)
+			break;
+		/* now what? for now, end of sequence */
+		break;
+	}
+	vrs_len = sector + blks;
+	if (error) {
+		DPRINTF(VOLUMES, ("error reading old ISO VRS\n"));
+		DPRINTF(VOLUMES, ("creating minimal ISO VRS\n"));
+
+		memset(buffer, 0, UDF_ISO_VRS_SIZE);
+
+		vrs = (struct vrs_desc *) (buffer);
+		vrs->struct_type = 0;
+		vrs->version     = 1;
+		memcpy(vrs->identifier,VRS_BEA01, 5);
+
+		vrs = (struct vrs_desc *) (buffer + 2048);
+		vrs->struct_type = 0;
+		vrs->version     = 1;
+		if (ump->logical_vol->tag.descriptor_ver == 2) {
+			memcpy(vrs->identifier,VRS_NSR02, 5);
+		} else {
+			memcpy(vrs->identifier,VRS_NSR03, 5);
+		}
+
+		vrs = (struct vrs_desc *) (buffer + 4096);
+		vrs->struct_type = 0;
+		vrs->version     = 1;
+		memcpy(vrs->identifier, VRS_TEA01, 5);
+
+		vrs_len = 3*blks;
+	}
+
+	DPRINTF(VOLUMES, ("Got VRS of %d sectors long\n", vrs_len));
+
+        /*
+         * location of iso9660 vrs is defined as first sector AFTER 32kb,
+         * minimum ISO `sector size' 2048
+         */
+	sector_size = ump->discinfo.sector_size;
+	iso9660_vrs = ((32*1024 + sector_size - 1) / sector_size)
+		 + write_track_start;
+
+	/* write out 32 kb */
+	blank = malloc(sector_size, M_TEMP, M_WAITOK);
+	memset(blank, 0, sector_size);
+	error = 0;
+	for (sector = write_track_start; sector < iso9660_vrs; sector ++) {
+		error = udf_write_phys_sectors(ump, UDF_C_ABSOLUTE,
+			blank, sector, 1);
+		if (error)
+			break;
+	}
+	if (!error) {
+		/* write out our ISO VRS */
+		KASSERT(sector == iso9660_vrs);
+		error = udf_write_phys_sectors(ump, UDF_C_ABSOLUTE, buffer,
+				sector, vrs_len);
+		sector += vrs_len;
+	}
+	if (!error) {
+		/* fill upto the first anchor at S+256 */
+		for (; sector < write_track_start+256; sector++) {
+			error = udf_write_phys_sectors(ump, UDF_C_ABSOLUTE,
+				blank, sector, 1);
+			if (error)
+				break;
+		}
+	}
+	if (!error) {
+		/* write out anchor; write at ABSOLUTE place! */
+		error = udf_write_phys_dscr_sync(ump, NULL, UDF_C_ABSOLUTE,
+			(union dscrptr *) ump->anchors[0], sector, sector);
+		if (error)
+			printf("writeout of anchor failed!\n");
+	}
+
+	free(blank, M_TEMP);
+	free(buffer, M_TEMP);
+
+	if (error)
+		printf("udf_open_session: error writing iso vrs! : "
+				"leaving disc in compromised state!\n");
+
+	/* synchronise device caches */
+	(void) udf_synchronise_caches(ump);
+
+	return error;
+}
+
+
 int
 udf_open_logvol(struct udf_mount *ump)
 {
@@ -3455,10 +3675,10 @@ udf_open_logvol(struct udf_mount *ump)
 	/* writeout/update lvint on disc or only in memory */
 	DPRINTF(VOLUMES, ("Opening logical volume\n"));
 	if (ump->lvopen & UDF_OPEN_SESSION) {
-		/* TODO implement writeout of VRS + VDS */
-		printf( "udf_open_logvol:Opening a closed session not yet "
-			"implemented\n");
-		return EROFS;
+		/* TODO optional track reservation opening */
+		error = udf_validate_session_start(ump);
+		if (error)
+			return error;
 
 		/* determine data and metadata tracks again */
 		error = udf_search_writing_tracks(ump);
@@ -3485,9 +3705,12 @@ udf_open_logvol(struct udf_mount *ump)
 int
 udf_close_logvol(struct udf_mount *ump, int mntflags)
 {
+	struct vnode *devvp = ump->devvp;
+	struct mmc_op mmc_op;
 	int logvol_integrity;
 	int error = 0, error1 = 0, error2 = 0;
-	int n;
+	int tracknr;
+	int nvats, n, nok;
 
 	/* already/still closed? */
 	logvol_integrity = udf_rw32(ump->logvol_integrity->integrity_type);
@@ -3495,26 +3718,126 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		return 0;
 
 	/* writeout/update lvint or write out VAT */
-	DPRINTF(VOLUMES, ("Closing logical volume\n"));
+	DPRINTF(VOLUMES, ("udf_close_logvol: closing logical volume\n"));
+#ifdef DIAGNOSTIC
+	if (ump->lvclose & UDF_CLOSE_SESSION)
+		KASSERT(ump->lvclose & UDF_WRITE_VAT);
+#endif
+
 	if (ump->lvclose & UDF_WRITE_VAT) {
 		DPRINTF(VOLUMES, ("lvclose & UDF_WRITE_VAT\n"));
 
-		/* write out the VAT node */
+		/* write out the VAT data and all its descriptors */
 		DPRINTF(VOLUMES, ("writeout vat_node\n"));
 		udf_writeout_vat(ump);
-
 		vflushbuf(ump->vat_node->vnode, 1 /* sync */);
-		for (n = 0; n < 16; n++) {
+
+		(void) VOP_FSYNC(ump->vat_node->vnode,
+				FSCRED, FSYNC_WAIT, 0, 0);
+
+		if (ump->lvclose & UDF_CLOSE_SESSION) {
+			DPRINTF(VOLUMES, ("udf_close_logvol: closing session "
+				"as requested\n"));
+		}
+
+		/* at least two DVD packets and 3 CD-R packets */
+		nvats = 32;
+
+#if notyet
+		/*
+		 * TODO calculate the available space and if the disc is
+		 * allmost full, write out till end-256-1 with banks, write
+		 * AVDP and fill up with VATs, then close session and close
+		 * disc.
+		 */
+		if (ump->lvclose & UDF_FINALISE_DISC) {
+			error = udf_write_phys_dscr_sync(ump, NULL,
+					UDF_C_FLOAT_DSCR,
+					(union dscrptr *) ump->anchors[0],
+					0, 0);
+			if (error)
+				printf("writeout of anchor failed!\n");
+
+			/* pad space with VAT ICBs */
+			nvats = 256;
+		}
+#endif
+
+		/* write out a number of VAT nodes */
+		nok = 0;
+		for (n = 0; n < nvats; n++) {
+			/* will now only write last FE/EFE */
 			ump->vat_node->i_flags |= IN_MODIFIED;
 			error = VOP_FSYNC(ump->vat_node->vnode,
 					FSCRED, FSYNC_WAIT, 0, 0);
+			if (!error)
+				nok++;
 		}
-		if (error) {
-			printf("udf_close_logvol: writeout of VAT failed\n");
+		if (nok < 14) {
+			/* arbitrary; but at least one or two CD frames */
+			printf("writeout of at least 14 VATs failed\n");
 			return error;
 		}
 	}
 
+	/* NOTE the disc is in a (minimal) valid state now; no erroring out */
+
+	/* finish closing of session */
+	if (ump->lvclose & UDF_CLOSE_SESSION) {
+		error = udf_validate_session_start(ump);
+		if (error)
+			return error;
+
+		/* close all associated tracks */
+		tracknr = ump->discinfo.first_track_last_session;
+		error = 0;
+		while (tracknr <= ump->discinfo.last_track_last_session) {
+			DPRINTF(VOLUMES, ("\tclosing possible open "
+				"track %d\n", tracknr));
+			memset(&mmc_op, 0, sizeof(mmc_op));
+			mmc_op.operation   = MMC_OP_CLOSETRACK;
+			mmc_op.mmc_profile = ump->discinfo.mmc_profile;
+			mmc_op.tracknr     = tracknr;
+			error = VOP_IOCTL(devvp, MMCOP, &mmc_op,
+					FKIOCTL, NOCRED);
+			if (error)
+				printf("udf_close_logvol: closing of "
+					"track %d failed\n", tracknr);
+			tracknr ++;
+		}
+		if (!error) {
+			DPRINTF(VOLUMES, ("closing session\n"));
+			memset(&mmc_op, 0, sizeof(mmc_op));
+			mmc_op.operation   = MMC_OP_CLOSESESSION;
+			mmc_op.mmc_profile = ump->discinfo.mmc_profile;
+			mmc_op.sessionnr   = ump->discinfo.num_sessions;
+			error = VOP_IOCTL(devvp, MMCOP, &mmc_op,
+					FKIOCTL, NOCRED);
+			if (error)
+				printf("udf_close_logvol: closing of session"
+						"failed\n");
+		}
+		if (!error)
+			ump->lvopen |= UDF_OPEN_SESSION;
+		if (error) {
+			printf("udf_close_logvol: leaving disc as it is\n");
+			ump->lvclose &= ~UDF_FINALISE_DISC;
+		}
+	}
+
+	if (ump->lvclose & UDF_FINALISE_DISC) {
+		memset(&mmc_op, 0, sizeof(mmc_op));
+		mmc_op.operation   = MMC_OP_FINALISEDISC;
+		mmc_op.mmc_profile = ump->discinfo.mmc_profile;
+		mmc_op.sessionnr   = ump->discinfo.num_sessions;
+		error = VOP_IOCTL(devvp, MMCOP, &mmc_op,
+				FKIOCTL, NOCRED);
+		if (error)
+			printf("udf_close_logvol: finalising disc"
+					"failed\n");
+	}
+
+	/* write out partition bitmaps if requested */
 	if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
 		/* sync writeout metadata spacetable if existing */
 		error1 = udf_write_metadata_partition_spacetable(ump, true);
@@ -3534,16 +3857,10 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
 	}
 
-	if (ump->lvclose & UDF_CLOSE_SESSION) {
-		printf("TODO: Closing a session is not yet implemented\n");
-		return EROFS;
-		ump->lvopen |= UDF_OPEN_SESSION;
-	}
-
 	/* mark it closed */
 	ump->logvol_integrity->integrity_type = udf_rw32(UDF_INTEGRITY_CLOSED);
 
-	/* do we need to write out the logical volume integrity */
+	/* do we need to write out the logical volume integrity? */
 	if (ump->lvclose & UDF_WRITE_LVINT)
 		error = udf_writeout_lvint(ump, ump->lvopen);
 	if (error) {

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.7 2008/12/16 16:18:25 pooka Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.8 2009/02/08 19:14:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.7 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.8 2009/02/08 19:14:52 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -268,6 +268,8 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	if ((buf->b_flags & B_READ) == 0) {
 		/* writing */
 		queue = UDF_SHED_SEQWRITING;
+		if (what == UDF_C_ABSOLUTE)
+			queue = UDF_SHED_WRITING;
 		if (what == UDF_C_DSCR)
 			queue = UDF_SHED_WRITING;
 		if (what == UDF_C_NODE)

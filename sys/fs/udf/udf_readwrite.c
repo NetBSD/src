@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.9 2008/12/16 16:18:25 pooka Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.10 2009/02/08 19:14:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.9 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.10 2009/02/08 19:14:52 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -281,8 +281,7 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 
 
 /* SYNC reading of n blocks from specified sector */
-/* NOTE only used by udf_read_phys_dscr */
-static int
+int
 udf_read_phys_sectors(struct udf_mount *ump, int what, void *blob,
 	uint32_t start, uint32_t sectors)
 {
@@ -477,6 +476,41 @@ udf_write_phys_buf(struct udf_mount *ump, int what, struct buf *buf)
 		buf_offset += piece * sector_size;
 		sectors    -= piece;
 	}
+}
+
+
+/* SYNC writing of n blocks from specified sector */
+int
+udf_write_phys_sectors(struct udf_mount *ump, int what, void *blob,
+	uint32_t start, uint32_t sectors)
+{
+	struct vnode *vp;
+	struct buf *buf;
+	int sector_size = ump->discinfo.sector_size;
+	int blks = sector_size / DEV_BSIZE;
+	int error;
+
+	/* get transfer buffer */
+	vp = ump->devvp;
+	buf = getiobuf(vp, true);
+	buf->b_flags    = B_WRITE;
+	buf->b_cflags   = BC_BUSY;	/* needed? */
+	buf->b_iodone   = NULL;
+	buf->b_data     = blob;
+	buf->b_bcount   = sectors * sector_size;
+	buf->b_resid    = buf->b_bcount;
+	buf->b_bufsize  = buf->b_bcount;
+	buf->b_private  = NULL;	/* not needed yet */
+	BIO_SETPRIO(buf, BPRIO_DEFAULT);
+	buf->b_lblkno   = buf->b_blkno = buf->b_rawblkno = start * blks;
+	buf->b_proc     = NULL;
+
+	/* do the write, wait and return error */
+	udf_write_phys_buf(ump, what, buf);
+	error = biowait(buf);
+	putiobuf(buf);
+
+	return error;
 }
 
 

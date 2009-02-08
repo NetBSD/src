@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.12 2008/08/06 13:41:12 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.13 2009/02/08 19:14:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -51,6 +51,10 @@ void udf_validate_tag_and_crc_sums(void *blob);
 int udf_tagsize(union dscrptr *dscr, uint32_t udf_sector_size);
 
 /* read/write descriptors */
+int udf_read_phys_sectors(struct udf_mount *ump, int what, void *blob,
+	uint32_t start, uint32_t sectors);
+int udf_write_phys_sectors(struct udf_mount *ump, int what, void *blob,
+	uint32_t start, uint32_t sectors);
 int udf_read_phys_dscr(
 		struct udf_mount *ump,
 		uint32_t sector,
