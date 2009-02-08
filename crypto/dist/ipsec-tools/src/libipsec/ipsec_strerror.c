@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.c,v 1.5 2007/07/18 12:07:50 vanhu Exp $	*/
+/*	$NetBSD: ipsec_strerror.c,v 1.5.18.1 2009/02/08 18:42:15 snj Exp $	*/
 
 /*	$KAME: ipsec_strerror.c,v 1.7 2000/07/30 00:45:12 itojun Exp $	*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.21 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.21.4.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -85,10 +85,10 @@ static LIST_HEAD(_ph1tree_, ph1handle) ph1tree;
 static LIST_HEAD(_ph2tree_, ph2handle) ph2tree;
 static LIST_HEAD(_ctdtree_, contacted) ctdtree;
 static LIST_HEAD(_rcptree_, recvdpkt) rcptree;
-static struct sched sc_sweep = SCHED_INITIALIZER();
 
 static void del_recvdpkt __P((struct recvdpkt *));
 static void rem_recvdpkt __P((struct recvdpkt *));
+static void sweep_recvdpkt __P((void *));
 
 /*
  * functions about management of the isakmp status table
@@ -107,7 +107,7 @@ getph1byindex(index)
 	struct ph1handle *p;
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status >= PHASE1ST_EXPIRED)
+		if (p->status == PHASE1ST_EXPIRED)
 			continue;
 		if (memcmp(&p->index, index, sizeof(*index)) == 0)
 			return p;
@@ -127,7 +127,7 @@ getph1byindex0(index)
 	struct ph1handle *p;
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status >= PHASE1ST_EXPIRED)
+		if (p->status == PHASE1ST_EXPIRED)
 			continue;
 		if (memcmp(&p->index, index, sizeof(cookie_t)) == 0)
 			return p;
@@ -153,12 +153,12 @@ getph1byaddr(local, remote, established)
 	plog(LLV_DEBUG2, LOCATION, NULL, "remote: %s\n", saddr2str(remote));
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status >= PHASE1ST_DYING)
+		if (p->status == PHASE1ST_EXPIRED)
 			continue;
 		plog(LLV_DEBUG2, LOCATION, NULL, "p->local: %s\n", saddr2str(p->local));
 		plog(LLV_DEBUG2, LOCATION, NULL, "p->remote: %s\n", saddr2str(p->remote));
 
-		if (established && p->status != PHASE1ST_ESTABLISHED) {
+		if(established && p->status != PHASE1ST_ESTABLISHED){
 			plog(LLV_DEBUG2, LOCATION, NULL, "status %d, skipping\n", p->status);
 			continue;
 		}
@@ -181,7 +181,7 @@ getph1byaddrwop(local, remote)
 	struct ph1handle *p;
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status >= PHASE1ST_DYING)
+		if (p->status == PHASE1ST_EXPIRED)
 			continue;
 		if (cmpsaddrwop(local, p->local) == 0
 		 && cmpsaddrwop(remote, p->remote) == 0)
@@ -203,7 +203,7 @@ getph1bydstaddrwop(remote)
 	struct ph1handle *p;
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status >= PHASE1ST_DYING)
+		if (p->status == PHASE1ST_EXPIRED)
 			continue;
 		if (cmpsaddrwop(remote, p->remote) == 0)
 			return p;
@@ -211,48 +211,6 @@ getph1bydstaddrwop(remote)
 
 	return NULL;
 }
-
-/*
- * move phase2s from old_iph1 to new_iph1
- */
-void
-migrate_ph12(old_iph1, new_iph1)
-	struct ph1handle *old_iph1, *new_iph1;
-{
-	struct ph2handle *p, *next;
-
-	/* Relocate phase2s to better phase1s or request a new phase1. */
-	for (p = LIST_FIRST(&old_iph1->ph2tree); p; p = next) {
-		next = LIST_NEXT(p, ph1bind);
-
-		if (p->status != PHASE2ST_ESTABLISHED)
-			continue;
-
-		unbindph12(p);
-		bindph12(new_iph1, p);
-	}
-}
-
-/*
- * the iph1 is new, migrate all phase2s that belong to a dying or dead ph1
- */
-void migrate_dying_ph12(iph1)
-	struct ph1handle *iph1;
-{
-	struct ph1handle *p;
-
-	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p == iph1)
-			continue;
-		if (p->status < PHASE1ST_DYING)
-			continue;
-
-		if (CMPSADDR(iph1->local, p->local) == 0
-		 && CMPSADDR(iph1->remote, p->remote) == 0)
-			migrate_ph12(p, iph1);
-	}
-}
-
 
 /*
  * dump isakmp-sa
@@ -313,8 +271,8 @@ newph1()
 	iph1->dpd_lastack = 0;
 	iph1->dpd_seq = 0;
 	iph1->dpd_fails = 0;
+	iph1->dpd_r_u = NULL;
 #endif
-	evt_list_init(&iph1->evt_listeners);
 
 	return iph1;
 }
@@ -331,7 +289,8 @@ delph1(iph1)
 
 	/* SA down shell script hook */
 	script_hook(iph1, SCRIPT_PHASE1_DOWN);
-	evt_list_cleanup(&iph1->evt_listeners);
+
+	EVT_PUSH(iph1->local, iph1->remote, EVTT_PHASE1_DOWN, NULL);
 
 #ifdef ENABLE_NATT
 	if (iph1->natt_flags & NAT_KA_QUEUED)
@@ -349,10 +308,8 @@ delph1(iph1)
 #endif
 
 #ifdef ENABLE_DPD
-	sched_cancel(&iph1->dpd_r_u);
+	SCHED_KILL(iph1->dpd_r_u);
 #endif
-	sched_cancel(&iph1->sce);
-	sched_cancel(&iph1->scr);
 
 	if (iph1->remote) {
 		racoon_free(iph1->remote);
@@ -368,7 +325,13 @@ delph1(iph1)
 	}
 
 	VPTRINIT(iph1->authstr);
+
+	sched_scrub_param(iph1);
+	iph1->sce = NULL;
+	iph1->scr = NULL;
+
 	VPTRINIT(iph1->sendbuf);
+
 	VPTRINIT(iph1->dhpriv);
 	VPTRINIT(iph1->dhpub);
 	VPTRINIT(iph1->dhpub_p);
@@ -452,7 +415,7 @@ flushph1()
 		next = LIST_NEXT(p, chain);
 
 		/* send delete information */
-		if (p->status >= PHASE1ST_ESTABLISHED)
+		if (p->status == PHASE1ST_ESTABLISHED) 
 			isakmp_info_send_d1(p);
 
 		remph1(p);
@@ -532,8 +495,8 @@ getph2byid(src, dst, spid)
 
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (spid == p->spid &&
-		    cmpsaddrwild(src, p->src) == 0 &&
-		    cmpsaddrwild(dst, p->dst) == 0){
+		    CMPSADDR(src, p->src) == 0 &&
+		    CMPSADDR(dst, p->dst) == 0){
 			/* Sanity check to detect zombie handlers
 			 * XXX Sould be done "somewhere" more interesting,
 			 * because we have lots of getph2byxxxx(), but this one
@@ -541,7 +504,7 @@ getph2byid(src, dst, spid)
 			 */
 			if(p->status < PHASE2ST_ESTABLISHED &&
 			   p->retry_counter == 0
-			   && p->sce.func == NULL && p->scr.func == NULL) {
+			   && p->sce == NULL && p->scr == NULL){
 				plog(LLV_DEBUG, LOCATION, NULL,
 					 "Zombie ph2 found, expiring it\n");
 				isakmp_ph2expire(p);
@@ -619,7 +582,6 @@ newph2()
 		return NULL;
 
 	iph2->status = PHASE1ST_SPAWN;
-	evt_list_init(&iph2->evt_listeners);
 
 	return iph2;
 }
@@ -633,11 +595,9 @@ void
 initph2(iph2)
 	struct ph2handle *iph2;
 {
-	evt_list_cleanup(&iph2->evt_listeners);
-	unbindph12(iph2);
-
-	sched_cancel(&iph2->sce);
-	sched_cancel(&iph2->scr);
+	sched_scrub_param(iph2);
+	iph2->sce = NULL;
+	iph2->scr = NULL;
 
 	VPTRINIT(iph2->sendbuf);
 	VPTRINIT(iph2->msg1);
@@ -702,23 +662,13 @@ delph2(iph2)
 		iph2->dst = NULL;
 	}
 	if (iph2->src_id) {
-		racoon_free(iph2->src_id);
-		iph2->src_id = NULL;
+	      racoon_free(iph2->src_id);
+	      iph2->src_id = NULL;
 	}
 	if (iph2->dst_id) {
-		racoon_free(iph2->dst_id);
-		iph2->dst_id = NULL;
+	      racoon_free(iph2->dst_id);
+	      iph2->dst_id = NULL;
 	}
-#ifdef ENABLE_NATT
-	if (iph2->natoa_src) {
-		racoon_free(iph2->natoa_src);
-		iph2->natoa_src = NULL;
-	}
-	if (iph2->natoa_dst) {
-		racoon_free(iph2->natoa_dst);
-		iph2->natoa_dst = NULL;
-	}
-#endif
 
 	if (iph2->proposal) {
 		flushsaprop(iph2->proposal);
@@ -744,7 +694,6 @@ void
 remph2(iph2)
 	struct ph2handle *iph2;
 {
-	unbindph12(iph2);
 	LIST_REMOVE(iph2, chain);
 }
 
@@ -776,6 +725,7 @@ flushph2()
 		}
 
 		delete_spd(p, 0);
+		unbindph12(p);
 		remph2(p);
 		delph2(p);
 	}
@@ -813,6 +763,7 @@ deleteallph2(src, dst, proto_id)
 		}
 		continue;
  zap_it:
+		unbindph12(iph2);
 		remph2(iph2);
 		delph2(iph2);
 	}
@@ -824,10 +775,7 @@ bindph12(iph1, iph2)
 	struct ph1handle *iph1;
 	struct ph2handle *iph2;
 {
-	unbindph12(iph2);
-
 	iph2->ph1 = iph1;
-	iph1->ph2cnt++;
 	LIST_INSERT_HEAD(&iph1->ph2tree, iph2, ph1bind);
 }
 
@@ -836,9 +784,8 @@ unbindph12(iph2)
 	struct ph2handle *iph2;
 {
 	if (iph2->ph1 != NULL) {
-		LIST_REMOVE(iph2, ph1bind);
-		iph2->ph1->ph2cnt--;
 		iph2->ph1 = NULL;
+		LIST_REMOVE(iph2, ph1bind);
 	}
 }
 
@@ -1060,9 +1007,9 @@ rem_recvdpkt(r)
 	LIST_REMOVE(r, chain);
 }
 
-static void
+void
 sweep_recvdpkt(dummy)
-	struct sched *dummy;
+	void *dummy;
 {
 	struct recvdpkt *r, *next;
 	time_t t, lt;
@@ -1082,7 +1029,7 @@ sweep_recvdpkt(dummy)
 		}
 	}
 
-	sched_schedule(&sc_sweep, lt, sweep_recvdpkt);
+	sched_new(lt, sweep_recvdpkt, NULL);
 }
 
 void
@@ -1092,7 +1039,7 @@ init_recvdpkt()
 
 	LIST_INIT(&rcptree);
 
-	sched_schedule(&sc_sweep, lt, sweep_recvdpkt);
+	sched_new(lt, sweep_recvdpkt, NULL);
 }
 
 #ifdef ENABLE_HYBRID
@@ -1139,7 +1086,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 	if (iph2->sainfo != NULL) {
 		iph2->sainfo = getsainfo(iph2->sainfo->idsrc, 
 					  iph2->sainfo->iddst, iph2->sainfo->id_i,
-					  NULL, iph2->sainfo->remoteid);
+					  iph2->sainfo->remoteid);
 	}
 	approval = iph2->approval;
 	sainfo = iph2->sainfo;
@@ -1342,6 +1289,7 @@ remove_ph2(struct ph2handle *iph2)
 		purge_ipsec_spi(iph2->dst, iph2->approval->head->proto_id,
 						spis, 2);
 	}else{
+		unbindph12(iph2);
 		remph2(iph2);
 		delph2(iph2);
 	}
@@ -1356,8 +1304,7 @@ static void remove_ph1(struct ph1handle *iph1){
 	plog(LLV_DEBUG, LOCATION, NULL,
 		 "Removing PH1...\n");
 
-	if (iph1->status == PHASE1ST_ESTABLISHED ||
-	    iph1->status == PHASE1ST_DYING) {
+	if (iph1->status == PHASE1ST_ESTABLISHED){
 		for (iph2 = LIST_FIRST(&iph1->ph2tree); iph2; iph2 = iph2_next) {
 			iph2_next = LIST_NEXT(iph2, chain);
 			remove_ph2(iph2);
@@ -1365,7 +1312,7 @@ static void remove_ph1(struct ph1handle *iph1){
 		isakmp_info_send_d1(iph1);
 	}
 	iph1->status = PHASE1ST_EXPIRED;
-	sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
+	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
 }
 
 
@@ -1376,10 +1323,10 @@ static int revalidate_ph1tree_rmconf(void){
 	for (p = LIST_FIRST(&ph1tree); p; p = next) {
 		next = LIST_NEXT(p, chain);
 
-		if (p->status >= PHASE1ST_EXPIRED)
+		if (p->status == PHASE1ST_EXPIRED)
 			continue;
 
-		newrmconf = getrmconf(p->remote);
+		newrmconf=getrmconf(p->remote);
 		if(newrmconf == NULL){
 			p->rmconf = NULL;
 			remove_ph1(p);
@@ -1543,10 +1490,10 @@ static int revalidate_ph1tree(void){
 	for (p = LIST_FIRST(&ph1tree); p; p = next) {
 		next = LIST_NEXT(p, chain);
 
-		if (p->status >= PHASE1ST_EXPIRED)
+		if (p->status == PHASE1ST_EXPIRED)
 			continue;
 
-		if (!revalidate_ph1(p))
+		if(!revalidate_ph1(p))
 			remove_ph1(p);
 	}
 
@@ -1612,10 +1559,7 @@ purgeph1bylogin(login)
 		if (p->mode_cfg == NULL)
 			continue;
 		if (strncmp(p->mode_cfg->login, login, LOGINLEN) == 0) {
-			if (p->status >= PHASE1ST_EXPIRED)
-				continue;
-
-			if (p->status >= PHASE1ST_ESTABLISHED)
+			if (p->status == PHASE1ST_ESTABLISHED)
 				isakmp_info_send_d1(p);
 			purge_remote(p);
 			found++;

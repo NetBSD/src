@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.7 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.7.4.1 2009/02/08 18:42:17 snj Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -77,7 +77,6 @@ struct natt_ka_addrs {
 };
 
 static TAILQ_HEAD(_natt_ka_addrs, natt_ka_addrs) ka_tree;
-static struct sched sc_natt = SCHED_INITIALIZER();
 
 /*
  * check if the given vid is NAT-T.
@@ -322,7 +321,7 @@ natt_handle_vendorid (struct ph1handle *iph1, int vid_numeric)
 
 /* NAT keepalive functions */
 static void
-natt_keepalive_send (struct sched *param)
+natt_keepalive_send (void *param)
 {
   struct natt_ka_addrs	*ka, *next = NULL;
   char keepalive_packet[] = { 0xff };
@@ -347,7 +346,7 @@ natt_keepalive_send (struct sched *param)
 	   strerror (errno));
   }
   
-  sched_schedule (&sc_natt, lcconf->natt_ka_interval, natt_keepalive_send);
+  sched_new (lcconf->natt_ka_interval, natt_keepalive_send, NULL);
 }
 
 void
@@ -357,7 +356,7 @@ natt_keepalive_init (void)
 
   /* To disable sending KAs set natt_ka_interval=0 */
   if (lcconf->natt_ka_interval > 0)
-    sched_schedule (&sc_natt, lcconf->natt_ka_interval, natt_keepalive_send);
+    sched_new (lcconf->natt_ka_interval, natt_keepalive_send, NULL);
 }
 
 int

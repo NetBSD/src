@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.31 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.31.4.1 2009/02/08 18:42:15 snj Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -196,8 +196,6 @@ static int fix_lifebyte __P((u_long));
 	/* ldap config */
 %token LDAPCFG LDAP_HOST LDAP_PORT LDAP_PVER LDAP_BASE LDAP_BIND_DN LDAP_BIND_PW LDAP_SUBTREE
 %token LDAP_ATTR_USER LDAP_ATTR_ADDR LDAP_ATTR_MASK LDAP_ATTR_GROUP LDAP_ATTR_MEMBER
-	/* radius config */
-%token RADCFG RAD_AUTH RAD_ACCT RAD_TIMEOUT RAD_RETRIES
 	/* modecfg */
 %token MODECFG CFG_NET4 CFG_MASK4 CFG_DNS4 CFG_NBNS4 CFG_DEFAULT_DOMAIN
 %token CFG_AUTH_SOURCE CFG_AUTH_GROUPS CFG_SYSTEM CFG_RADIUS CFG_PAM CFG_LDAP CFG_LOCAL CFG_NONE
@@ -213,7 +211,7 @@ static int fix_lifebyte __P((u_long));
 	/* sainfo */
 %token SAINFO FROM
 	/* remote */
-%token REMOTE ANONYMOUS CLIENTADDR INHERIT
+%token REMOTE ANONYMOUS INHERIT
 %token EXCHANGE_MODE EXCHANGETYPE DOI DOITYPE SITUATION SITUATIONTYPE
 %token CERTIFICATE_TYPE CERTTYPE PEERS_CERTFILE CA_TYPE
 %token VERIFY_CERT SEND_CERT SEND_CR
@@ -231,7 +229,6 @@ static int fix_lifebyte __P((u_long));
 %token DPD DPD_DELAY DPD_RETRY DPD_MAXFAIL
 %token PH1ID
 %token XAUTH_LOGIN WEAK_PHASE1_CHECK
-%token REKEY
 
 %token PREFIX PORT PORTANY UL_PROTO ANY IKE_FRAG ESP_FRAG MODE_CFG
 %token PFS_GROUP LIFETIME LIFETYPE_TIME LIFETYPE_BYTE STRENGTH REMOTEID
@@ -274,7 +271,6 @@ statement
 	|	padding_statement
 	|	listen_statement
 	|	ldapcfg_statement
-	|	radcfg_statement
 	|	modecfg_statement
 	|	timer_statement
 	|	sainfo_statement
@@ -508,122 +504,6 @@ ike_addrinfo_port
 ike_port
 	:	/* nothing */	{ $$ = PORT_ISAKMP; }
 	|	PORT		{ $$ = $1; }
-	;
-
-	/* radius configuration */
-radcfg_statement
-	:	RADCFG {
-#ifndef ENABLE_HYBRID
-			yyerror("racoon not configured with --enable-hybrid");
-			return -1;
-#endif
-#ifndef HAVE_LIBRADIUS
-			yyerror("racoon not configured with --with-libradius");
-			return -1;
-#endif
-#ifdef ENABLE_HYBRID
-#ifdef HAVE_LIBRADIUS
-			xauth_rad_config.timeout = 3;
-			xauth_rad_config.retries = 3;
-#endif
-#endif
-		} BOC radcfg_stmts EOC
-	;
-radcfg_stmts
-	:	/* nothing */
-	|	radcfg_stmts radcfg_stmt
-	;
-radcfg_stmt
-	:	RAD_AUTH QUOTEDSTRING QUOTEDSTRING
-		{
-#ifdef ENABLE_HYBRID
-#ifdef HAVE_LIBRADIUS
-			int i = xauth_rad_config.auth_server_count;
-			if (i == RADIUS_MAX_SERVERS) {
-				yyerror("maximum radius auth servers exceeded");
-				return -1;
-			}
-
-			xauth_rad_config.auth_server_list[i].host = vdup($2);
-			xauth_rad_config.auth_server_list[i].secret = vdup($3);
-			xauth_rad_config.auth_server_list[i].port = 0; // default port
-			xauth_rad_config.auth_server_count++;
-#endif
-#endif
-		}
-		EOS
-	|	RAD_AUTH QUOTEDSTRING NUMBER QUOTEDSTRING
-		{
-#ifdef ENABLE_HYBRID
-#ifdef HAVE_LIBRADIUS
-			int i = xauth_rad_config.auth_server_count;
-			if (i == RADIUS_MAX_SERVERS) {
-				yyerror("maximum radius auth servers exceeded");
-				return -1;
-			}
-
-			xauth_rad_config.auth_server_list[i].host = vdup($2);
-			xauth_rad_config.auth_server_list[i].secret = vdup($4);
-			xauth_rad_config.auth_server_list[i].port = $3;
-			xauth_rad_config.auth_server_count++;
-#endif
-#endif
-		}
-		EOS
-	|	RAD_ACCT QUOTEDSTRING QUOTEDSTRING
-		{
-#ifdef ENABLE_HYBRID
-#ifdef HAVE_LIBRADIUS
-			int i = xauth_rad_config.acct_server_count;
-			if (i == RADIUS_MAX_SERVERS) {
-				yyerror("maximum radius account servers exceeded");
-				return -1;
-			}
-
-			xauth_rad_config.acct_server_list[i].host = vdup($2);
-			xauth_rad_config.acct_server_list[i].secret = vdup($3);
-			xauth_rad_config.acct_server_list[i].port = 0; // default port
-			xauth_rad_config.acct_server_count++;
-#endif
-#endif
-		}
-		EOS
-	|	RAD_ACCT QUOTEDSTRING NUMBER QUOTEDSTRING
-		{
-#ifdef ENABLE_HYBRID
-#ifdef HAVE_LIBRADIUS
-			int i = xauth_rad_config.acct_server_count;
-			if (i == RADIUS_MAX_SERVERS) {
-				yyerror("maximum radius account servers exceeded");
-				return -1;
-			}
-
-			xauth_rad_config.acct_server_list[i].host = vdup($2);
-			xauth_rad_config.acct_server_list[i].secret = vdup($4);
-			xauth_rad_config.acct_server_list[i].port = $3;
-			xauth_rad_config.acct_server_count++;
-#endif
-#endif
-		}
-		EOS
-	|	RAD_TIMEOUT NUMBER
-		{
-#ifdef ENABLE_HYBRID
-#ifdef HAVE_LIBRADIUS
-			xauth_rad_config.timeout = $2;
-#endif
-#endif
-		}
-		EOS
-	|	RAD_RETRIES NUMBER
-		{
-#ifdef ENABLE_HYBRID
-#ifdef HAVE_LIBRADIUS
-			xauth_rad_config.retries = $2;
-#endif
-#endif
-		}
-		EOS
 	;
 
 	/* ldap configuration */
@@ -1135,16 +1015,12 @@ authgroup
 
 			grouplist = racoon_realloc(icc->grouplist,
 					sizeof(char**)*(icc->groupcount+1));
-			if (grouplist == NULL) {
+			if (grouplist == NULL)
 				yyerror("unable to allocate auth group list");
-				return -1;
-			}
 
 			groupname = racoon_malloc($1->l+1);
-			if (groupname == NULL) {
+			if (groupname == NULL)
 				yyerror("unable to allocate auth group name");
-				return -1;
-			}
 
 			memcpy(groupname,$1->v,$1->l);
 			groupname[$1->l]=0;
@@ -1172,10 +1048,8 @@ splitdns
 			if (!icc->splitdns_len)
 			{
 				icc->splitdns_list = racoon_malloc($1->l);
-				if(icc->splitdns_list == NULL) {
+				if(icc->splitdns_list == NULL)
 					yyerror("error allocating splitdns list buffer");
-					return -1;
-				}
 				memcpy(icc->splitdns_list,$1->v,$1->l);
 				icc->splitdns_len = $1->l;
 			}
@@ -1183,10 +1057,8 @@ splitdns
 			{
 				int len = icc->splitdns_len + $1->l + 1;
 				icc->splitdns_list = racoon_realloc(icc->splitdns_list,len);
-				if(icc->splitdns_list == NULL) {
+				if(icc->splitdns_list == NULL)
 					yyerror("error allocating splitdns list buffer");
-					return -1;
-				}
 				icc->splitdns_list[icc->splitdns_len] = ',';
 				memcpy(icc->splitdns_list + icc->splitdns_len + 1, $1->v, $1->l);
 				icc->splitdns_len = len;
@@ -1282,16 +1154,12 @@ sainfo_statement
 			check = getsainfo(cur_sainfo->idsrc,
 					  cur_sainfo->iddst,
 					  cur_sainfo->id_i,
-					  NULL,
 					  cur_sainfo->remoteid);
-
-			if (check && ((check->idsrc != SAINFO_ANONYMOUS) &&
-				      (cur_sainfo->idsrc != SAINFO_ANONYMOUS))) {
+			if (check && (!check->idsrc && !cur_sainfo->idsrc)) {
 				yyerror("duplicated sainfo: %s",
 					sainfo2str(cur_sainfo));
 				return -1;
 			}
-
 			inssainfo(cur_sainfo);
 		}
 		EOC
@@ -1299,28 +1167,18 @@ sainfo_statement
 sainfo_name
 	:	ANONYMOUS
 		{
-			cur_sainfo->idsrc = SAINFO_ANONYMOUS;
-			cur_sainfo->iddst = SAINFO_ANONYMOUS;
-		}
-	|	ANONYMOUS CLIENTADDR
-		{
-			cur_sainfo->idsrc = SAINFO_ANONYMOUS;
-			cur_sainfo->iddst = SAINFO_CLIENTADDR;
+			cur_sainfo->idsrc = NULL;
+			cur_sainfo->iddst = NULL;
 		}
 	|	ANONYMOUS sainfo_id
 		{
-			cur_sainfo->idsrc = SAINFO_ANONYMOUS;
+			cur_sainfo->idsrc = NULL;
 			cur_sainfo->iddst = $2;
 		}
 	|	sainfo_id ANONYMOUS
 		{
 			cur_sainfo->idsrc = $1;
-			cur_sainfo->iddst = SAINFO_ANONYMOUS;
-		}
-	|	sainfo_id CLIENTADDR
-		{
-			cur_sainfo->idsrc = $1;
-			cur_sainfo->iddst = SAINFO_CLIENTADDR;
+			cur_sainfo->iddst = NULL;
 		}
 	|	sainfo_id sainfo_id
 		{
@@ -2037,8 +1895,6 @@ remote_spec
 #endif
 		}
 		EOS
-	|	REKEY SWITCH { cur_rmconf->rekey = $2; } EOS
-	|	REKEY REMOTE_FORCE_LEVEL { cur_rmconf->rekey = REKEY_FORCE; } EOS
 	|	PH1ID NUMBER
 		{
 			cur_rmconf->ph1id = $2;

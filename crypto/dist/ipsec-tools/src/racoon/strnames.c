@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.c,v 1.9 2008/07/14 05:40:13 tteras Exp $	*/
+/*	$NetBSD: strnames.c,v 1.9.4.1 2009/02/08 18:42:19 snj Exp $	*/
 
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
@@ -276,8 +276,6 @@ static struct ksmap name_isakmp_notify_msg[] = {
 { ISAKMP_NTYPE_RESPONDER_LIFETIME,	"RESPONDER-LIFETIME",		NULL },
 { ISAKMP_NTYPE_REPLAY_STATUS,		"REPLAY-STATUS",		NULL },
 { ISAKMP_NTYPE_INITIAL_CONTACT,		"INITIAL-CONTACT",		NULL },
-{ ISAKMP_NTYPE_R_U_THERE,		"R-U-THERE",			NULL },
-{ ISAKMP_NTYPE_R_U_THERE_ACK,		"R-U-THERE-ACK",		NULL },
 #ifdef ENABLE_HYBRID
 { ISAKMP_NTYPE_UNITY_HEARTBEAT,		"HEARTBEAT (Unity)",		NULL },
 #endif

@@ -1,10 +1,9 @@
-/*	$NetBSD: schedule.h,v 1.6 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: schedule.h,v 1.6.4.1 2009/02/08 18:42:19 snj Exp $	*/
 
 /* Id: schedule.h,v 1.5 2006/05/03 21:53:42 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
- * Copyright (C) 2008 Timo Teras.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -38,21 +37,6 @@
 #include <sys/queue.h>
 #include "gnuc.h"
 
-#ifndef offsetof
-#ifdef __compiler_offsetof
-#define offsetof(TYPE,MEMBER) __compiler_offsetof(TYPE,MEMBER)
-#else
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
-#endif
-#endif
-
-#ifndef container_of
-#define container_of(ptr, type, member) ({                      \
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
-#endif
-
-
 /* scheduling table */
 /* the head is the nearest event. */
 struct sched {
@@ -61,8 +45,10 @@ struct sched {
 				 * if defined FIXY2038PROBLEM, this time
 				 * is from the time when called sched_init().
 				 */
-	void (*func) __P((struct sched *)); /* call this function when timeout. */
+	void (*func) __P((void *)); /* call this function when timeout. */
+	void *param;		/* pointer to parameter */
 
+	int dead;		/* dead or alive */
 	long id;		/* for debug */
 	time_t created;		/* for debug */
 	time_t tick;		/* for debug */
@@ -70,7 +56,17 @@ struct sched {
 	TAILQ_ENTRY(sched) chain;
 };
 
-#define SCHED_INITIALIZER() { 0, NULL, }
+/* cancel schedule */
+#define SCHED_KILL(s)                                                          \
+do {                                                                           \
+	if(s != NULL){	   														\
+		sched_kill(s);                                                         \
+		s = NULL;                                                              \
+	}\
+} while(0)
+
+/* must be called after it's called from scheduler. */
+#define SCHED_INIT(s)	(s) = NULL
 
 struct scheddump {
 	time_t xtime;
@@ -80,11 +76,10 @@ struct scheddump {
 };
 
 struct timeval *schedular __P((void));
-void sched_schedule __P((struct sched *, time_t,
-			 void (*func) __P((struct sched *))));
-void sched_cancel __P((struct sched *));
-
+struct sched *sched_new __P((time_t, void (*func) __P((void *)), void *));
+void sched_kill __P((struct sched *));
 int sched_dump __P((caddr_t *, int *));
 void sched_init __P((void));
+void sched_scrub_param __P((void *));
 
 #endif /* _SCHEDULE_H */

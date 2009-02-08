@@ -1,4 +1,4 @@
-/*	$NetBSD: session.h,v 1.6 2008/10/23 10:56:10 tteras Exp $	*/
+/*	$NetBSD: session.h,v 1.6.2.1 2009/02/08 18:42:19 snj Exp $	*/
 
 /* Id: session.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 

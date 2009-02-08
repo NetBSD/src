@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.16 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.16.4.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -41,8 +41,6 @@
 
 #include "isakmp_var.h"
 #include "oakley.h"
-#include "schedule.h"
-#include "evt.h"
 
 /* Phase 1 handler */
 /*
@@ -95,9 +93,8 @@
 #define PHASE1ST_MSG3SENT		7
 #define PHASE1ST_MSG4RECEIVED		8
 #define PHASE1ST_ESTABLISHED		9
-#define PHASE1ST_DYING			10
-#define PHASE1ST_EXPIRED		11
-#define PHASE1ST_MAX			12
+#define PHASE1ST_EXPIRED		10
+#define PHASE1ST_MAX			11
 
 /* About address semantics in each case.
  *			initiator(addr=I)	responder(addr=R)
@@ -143,9 +140,9 @@ struct ph1handle {
 	struct isakmp_frag_item *frag_chain;	/* Received fragments */
 #endif
 
-	struct sched sce;		/* schedule for expire */
+	struct sched *sce;		/* schedule for expire */
 
-	struct sched scr;		/* schedule for resend */
+	struct sched *scr;		/* schedule for resend */
 	int retry_counter;		/* for resend. */
 	vchar_t *sendbuf;		/* buffer for re-sending */
 
@@ -193,7 +190,6 @@ struct ph1handle {
 	struct isakmp_pl_hash *pl_hash;	/* pointer to hash payload */
 
 	time_t created;			/* timestamp for establish */
-	int initial_contact_received;	/* set if initial contact received */
 #ifdef ENABLE_STATS
 	struct timeval start;
 	struct timeval end;
@@ -204,7 +200,7 @@ struct ph1handle {
 	time_t		dpd_lastack;	/* Last ack received */
 	u_int16_t	dpd_seq;		/* DPD seq number to receive */
 	u_int8_t	dpd_fails;		/* number of failures */
-	struct sched	dpd_r_u;
+	struct sched	*dpd_r_u;
 #endif
 
 	u_int32_t msgid2;		/* msgid counter for Phase 2 */
@@ -215,7 +211,7 @@ struct ph1handle {
 #ifdef ENABLE_HYBRID
 	struct isakmp_cfg_state *mode_cfg;	/* ISAKMP mode config state */
 #endif       
-	EVT_LISTENER_LIST(evt_listeners);
+
 };
 
 /* Phase 2 handler */
@@ -257,18 +253,14 @@ struct ph2handle {
 		 */
 	struct sockaddr *src_id;
 	struct sockaddr *dst_id;
-#ifdef ENABLE_NATT
-	struct sockaddr *natoa_src;	/* peer's view of my address */
-	struct sockaddr *natoa_dst;	/* peer's view of his address */
-#endif
 
 	u_int32_t spid;			/* policy id by kernel */
 
 	int status;			/* ipsec sa status */
 	u_int8_t side;			/* INITIATOR or RESPONDER */
 
-	struct sched sce;		/* schedule for expire */
-	struct sched scr;		/* schedule for resend */
+	struct sched *sce;		/* schedule for expire */
+	struct sched *scr;		/* schedule for resend */
 	int retry_counter;		/* for resend. */
 	vchar_t *sendbuf;		/* buffer for re-sending */
 	vchar_t *msg1;			/* buffer for re-sending */
@@ -296,8 +288,6 @@ struct ph2handle {
 	struct sainfo *sainfo;		/* place holder of sainfo */
 	struct saprop *proposal;	/* SA(s) proposal. */
 	struct saprop *approval;	/* SA(s) approved. */
-	u_int32_t lifetime_secs;	/* responder lifetime (seconds) */
-	u_int32_t lifetime_kb;		/* responder lifetime (kbytes) */
 	caddr_t spidx_gen;		/* policy from peer's proposal */
 
 	struct dhgroup *pfsgrp;		/* DH; prime number */
@@ -330,7 +320,6 @@ struct ph2handle {
 
 	LIST_ENTRY(ph2handle) chain;
 	LIST_ENTRY(ph2handle) ph1bind;	/* chain to ph1handle */
-	EVT_LISTENER_LIST(evt_listeners);
 };
 
 /*
@@ -352,6 +341,8 @@ struct recvdpkt {
 	int retry_counter;		/* how many times to send */
 	time_t time_send;		/* timestamp to send a packet */
 	time_t created;			/* timestamp to create a queue */
+
+	struct sched *scr;		/* schedule for resend, may not used */
 
 	LIST_ENTRY(recvdpkt) chain;
 };
@@ -435,16 +426,14 @@ struct policyindex;
 extern struct ph1handle *getph1byindex __P((isakmp_index *));
 extern struct ph1handle *getph1byindex0 __P((isakmp_index *));
 extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
-					   struct sockaddr *, int));
+										   struct sockaddr *, int));
 extern struct ph1handle *getph1byaddrwop __P((struct sockaddr *,
-					      struct sockaddr *));
+	struct sockaddr *));
 extern struct ph1handle *getph1bydstaddrwop __P((struct sockaddr *));
 #ifdef ENABLE_HYBRID
 struct ph1handle *getph1bylogin __P((char *));
 int purgeph1bylogin __P((char *));
 #endif
-extern void migrate_ph12 __P((struct ph1handle *old_iph1, struct ph1handle *new_iph1));
-extern void migrate_dying_ph12 __P((struct ph1handle *iph1));
 extern vchar_t *dumpph1 __P((void));
 extern struct ph1handle *newph1 __P((void));
 extern void delph1 __P((struct ph1handle *));

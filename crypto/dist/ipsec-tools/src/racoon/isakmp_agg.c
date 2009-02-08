@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.12 2008/07/21 06:26:06 tteras Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.12.4.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -426,12 +426,36 @@ agg_i2recv(iph1, msg)
 			break;
 		case ISAKMP_NPTYPE_VID:
 			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+#ifdef ENABLE_NATT
+			if (iph1->rmconf->nat_traversal && 
+			    natt_vendorid(vid_numeric))
+				natt_handle_vendorid(iph1, vid_numeric);
+#endif
+#ifdef ENABLE_HYBRID
+			switch (vid_numeric) {
+			case VENDORID_XAUTH:
+				iph1->mode_cfg->flags |= 
+				    ISAKMP_CFG_VENDORID_XAUTH;
+				break;
+
+			case VENDORID_UNITY:
+				iph1->mode_cfg->flags |= 
+				    ISAKMP_CFG_VENDORID_UNITY;
+				break;
+			default:
+				break;
+			}
+#endif
+#ifdef ENABLE_DPD
+			if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd) {
+				iph1->dpd_support=1;
+				plog(LLV_DEBUG, LOCATION, NULL,
+					 "remote supports DPD\n");
+			}
+#endif
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_log_notify(iph1,
-				(struct isakmp_pl_n *) pa->ptr,
-				"aggressive exchange");
+			isakmp_check_notify(pa->ptr, iph1);
 			break;
 #ifdef HAVE_GSSAPI
 		case ISAKMP_NPTYPE_GSS:
@@ -563,7 +587,8 @@ agg_i2recv(iph1, msg)
 			/* message printed inner oakley_validate_auth() */
 			goto end;
 		}
-		evt_phase1(iph1, EVT_PHASE1_AUTH_FAILED, NULL);
+		EVT_PUSH(iph1->local, iph1->remote, 
+		    EVTT_PEERPH1AUTH_FAILED, NULL);
 		isakmp_info_send_n1(iph1, ptype, NULL);
 		goto end;
 	}
@@ -836,7 +861,36 @@ agg_r1recv(iph1, msg)
 			break;
 		case ISAKMP_NPTYPE_VID:
 			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+
+#ifdef ENABLE_NATT
+			if (iph1->rmconf->nat_traversal &&
+			    natt_vendorid(vid_numeric)) {
+				natt_handle_vendorid(iph1, vid_numeric);
+				break;
+			}
+#endif
+#ifdef ENABLE_HYBRID
+			switch (vid_numeric) {
+			case VENDORID_XAUTH:
+				iph1->mode_cfg->flags |= 
+				    ISAKMP_CFG_VENDORID_XAUTH;
+				break;
+
+			case VENDORID_UNITY:
+				iph1->mode_cfg->flags |= 
+				    ISAKMP_CFG_VENDORID_UNITY;
+				break;
+			default:
+				break;
+			}
+#endif
+#ifdef ENABLE_DPD
+			if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd) {
+				iph1->dpd_support=1;
+				plog(LLV_DEBUG, LOCATION, NULL,
+					 "remote supports DPD\n");
+			}
+#endif
 #ifdef ENABLE_FRAG
 			if ((vid_numeric == VENDORID_FRAG) &&
 			    (vendorid_frag_cap(pa->ptr) & VENDORID_FRAG_AGG))
@@ -1325,7 +1379,7 @@ agg_r2recv(iph1, msg0)
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
 	int error = -1;
-	int ptype, vid_numeric;
+	int ptype;
 
 #ifdef ENABLE_NATT
 	int natd_seq = 0;
@@ -1364,8 +1418,7 @@ agg_r2recv(iph1, msg0)
 			iph1->pl_hash = (struct isakmp_pl_hash *)pa->ptr;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			vid_numeric = check_vendorid(pa->ptr);
-			handle_vendorid(iph1, vid_numeric);
+			(void)check_vendorid(pa->ptr);
 			break;
 		case ISAKMP_NPTYPE_CERT:
 			if (oakley_savecert(iph1, pa->ptr) < 0)
@@ -1376,9 +1429,7 @@ agg_r2recv(iph1, msg0)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_log_notify(iph1,
-				(struct isakmp_pl_n *) pa->ptr,
-				"aggressive exchange");
+			isakmp_check_notify(pa->ptr, iph1);
 			break;
 
 #ifdef ENABLE_NATT
@@ -1435,7 +1486,8 @@ agg_r2recv(iph1, msg0)
 			/* message printed inner oakley_validate_auth() */
 			goto end;
 		}
-		evt_phase1(iph1, EVT_PHASE1_AUTH_FAILED, NULL);
+		EVT_PUSH(iph1->local, iph1->remote, 
+		    EVTT_PEERPH1AUTH_FAILED, NULL);
 		isakmp_info_send_n1(iph1, ptype, NULL);
 		goto end;
 	}

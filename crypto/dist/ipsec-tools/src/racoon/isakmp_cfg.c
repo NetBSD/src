@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.19 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.19.4.1 2009/02/08 18:42:16 snj Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -473,7 +473,8 @@ isakmp_cfg_reply(iph1, attrpl)
 			    "Cannot allocate memory: %s\n", strerror(errno));
 		} else {
 			memcpy(buf->v, attrpl + 1, buf->l);
-			evt_phase1(iph1, EVT_PHASE1_MODE_CFG, buf);
+			EVT_PUSH(iph1->local, iph1->remote, 
+			    EVTT_ISAKMP_CFG_DONE, buf);
 			vfree(buf);
 		}
 	}
@@ -730,8 +731,7 @@ isakmp_cfg_set(iph1, attrpl)
 	    ISAKMP_NPTYPE_ATTR, ISAKMP_FLAG_E, 0);
 
 	if (iph1->mode_cfg->flags & ISAKMP_CFG_DELETE_PH1) {
-		if (iph1->status == PHASE1ST_ESTABLISHED ||
-		    iph1->status == PHASE1ST_DYING)
+		if (iph1->status == PHASE1ST_ESTABLISHED)
 			isakmp_info_send_d1(iph1);
 		remph1(iph1);
 		delph1(iph1);
@@ -1127,7 +1127,7 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 	struct isakmp_cfg_state *ics = iph1->mode_cfg;
 
 	/* Check if phase 1 is established */
-	if ((iph1->status < PHASE1ST_ESTABLISHED) ||
+	if ((iph1->status != PHASE1ST_ESTABLISHED) || 
 	    (iph1->local == NULL) ||
 	    (iph1->remote == NULL)) {
 		plog(LLV_ERROR, LOCATION, NULL, 
@@ -1160,6 +1160,7 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 		goto end;
 	}
 #endif
+	iph2->ph1 = iph1;
 	iph2->side = INITIATOR;
 	iph2->status = PHASE2ST_START;
 
@@ -1178,7 +1179,7 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 		}
 
 		/* generate HASH(1) */
-		hash = oakley_compute_hash1(iph1, iph2->msgid, payload);
+		hash = oakley_compute_hash1(iph2->ph1, iph2->msgid, payload);
 		if (hash == NULL) {
 			delph2(iph2);
 			goto end;
@@ -1277,6 +1278,7 @@ err:
 	if (iph2->sendbuf != NULL)
 		vfree(iph2->sendbuf);
 
+	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 end:
@@ -1490,6 +1492,24 @@ isakmp_cfg_accounting_radius(iph1, inout)
 	struct ph1handle *iph1;
 	int inout;
 {
+	/* For first time use, initialize Radius */
+	if (radius_acct_state == NULL) {
+		if ((radius_acct_state = rad_acct_open()) == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "Cannot init librradius\n");
+			return -1;
+		}
+
+		if (rad_config(radius_acct_state, NULL) != 0) {
+			 plog(LLV_ERROR, LOCATION, NULL,
+			     "Cannot open librarius config file: %s\n",
+			     rad_strerror(radius_acct_state));
+			  rad_close(radius_acct_state);
+			  radius_acct_state = NULL;
+			  return -1;
+		}
+	}
+
 	if (rad_create_request(radius_acct_state, 
 	    RAD_ACCOUNTING_REQUEST) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -1845,7 +1865,6 @@ isakmp_cfg_setenv(iph1, envp, envc)
 	char addrstr[IP_MAX];
 	char addrlist[IP_MAX * MAXNS + MAXNS];
 	char *splitlist = addrlist;
-	char *splitlist_cidr;
 	char defdom[MAXPATHLEN + 1];
 	int cidr, tmp;
 	char cidrstr[4];
@@ -1986,14 +2005,10 @@ isakmp_cfg_setenv(iph1, envp, envc)
 	}
 
 	/* Split networks */
-	if (iph1->mode_cfg->flags & ISAKMP_CFG_GOT_SPLIT_INCLUDE) {
-		splitlist = 
-		    splitnet_list_2str(iph1->mode_cfg->split_include, NETMASK);
-		splitlist_cidr = 
-		    splitnet_list_2str(iph1->mode_cfg->split_include, CIDR);
-	} else {
+	if (iph1->mode_cfg->flags & ISAKMP_CFG_GOT_SPLIT_INCLUDE)
+		splitlist = splitnet_list_2str(iph1->mode_cfg->split_include);
+	else {
 		splitlist = addrlist;
-		splitlist_cidr = addrlist;
 		addrlist[0] = '\0';
 	}
 
@@ -2001,25 +2016,13 @@ isakmp_cfg_setenv(iph1, envp, envc)
 		plog(LLV_ERROR, LOCATION, NULL, "Cannot set SPLIT_INCLUDE\n");
 		return -1;
 	}
-	if (script_env_append(envp, envc, 
-	    "SPLIT_INCLUDE_CIDR", splitlist_cidr) != 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "Cannot set SPLIT_INCLUDE_CIDR\n");
-		return -1;
-	}
 	if (splitlist != addrlist)
 		racoon_free(splitlist);
-	if (splitlist_cidr != addrlist)
-		racoon_free(splitlist_cidr);
 
-	if (iph1->mode_cfg->flags & ISAKMP_CFG_GOT_SPLIT_LOCAL) {
-		splitlist =
-		    splitnet_list_2str(iph1->mode_cfg->split_local, NETMASK);
-		splitlist_cidr =
-		    splitnet_list_2str(iph1->mode_cfg->split_local, CIDR);
-	} else {
+	if (iph1->mode_cfg->flags & ISAKMP_CFG_GOT_SPLIT_LOCAL)
+		splitlist = splitnet_list_2str(iph1->mode_cfg->split_local);
+	else {
 		splitlist = addrlist;
-		splitlist_cidr = addrlist;
 		addrlist[0] = '\0';
 	}
 
@@ -2027,16 +2030,8 @@ isakmp_cfg_setenv(iph1, envp, envc)
 		plog(LLV_ERROR, LOCATION, NULL, "Cannot set SPLIT_LOCAL\n");
 		return -1;
 	}
-	if (script_env_append(envp, envc,
-	    "SPLIT_LOCAL_CIDR", splitlist_cidr) != 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "Cannot set SPLIT_LOCAL_CIDR\n");
-		return -1;
-	}
 	if (splitlist != addrlist)
 		racoon_free(splitlist);
-	if (splitlist_cidr != addrlist)
-		racoon_free(splitlist_cidr);
 	
 	return 0;
 }

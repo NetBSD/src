@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.c,v 1.5 2007/10/02 09:47:40 vanhu Exp $	*/
+/*	$NetBSD: plog.c,v 1.5.12.1 2009/02/08 18:42:18 snj Exp $	*/
 
 /* Id: plog.c,v 1.11 2006/06/20 09:57:31 vanhu Exp */
 

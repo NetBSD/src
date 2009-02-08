@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.8 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.8.4.1 2009/02/08 18:42:19 snj Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -108,12 +108,7 @@ struct remoteconf {
 	int dpd;				/* Negociate DPD support ? */
 	int dpd_retry;			/* in seconds */
 	int dpd_interval;		/* in seconds */
-	int dpd_maxfails;
-
-	int rekey;			/* rekey ph1 when active ph2s? */
-#define REKEY_OFF		FALSE
-#define REKEY_ON		TRUE
-#define REKEY_FORCE		2
+	int dpd_maxfails; 
 
 	int ph1id; /* ph1id to be matched with sainfo sections */
 

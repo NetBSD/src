@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.35 2008/10/27 06:27:05 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.35.2.1 2009/02/08 18:42:18 snj Exp $	*/
 
-/* $Id: pfkey.c,v 1.35 2008/10/27 06:27:05 tteras Exp $ */
+/* $Id: pfkey.c,v 1.35.2.1 2009/02/08 18:42:18 snj Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -92,7 +92,6 @@
 #include "algorithm.h"
 #include "sainfo.h"
 #include "admin.h"
-#include "evt.h"
 #include "privsep.h"
 #include "strnames.h"
 #include "backupsa.h"
@@ -270,7 +269,7 @@ pfkey_handler()
 	if ((pkrecvf[msg->sadb_msg_type])(mhp) < 0)
 		goto end;
 
-	error = 1;
+	error = 0;
 end:
 	if (msg)
 		racoon_free(msg);
@@ -446,24 +445,6 @@ pfkey_init()
 		return -1;
 	}
 #endif
-	return 0;
-}
-
-int
-pfkey_reload()
-{
-	flushsp();
-
-	if (pfkey_send_spddump(lcconf->sock_pfkey) < 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"libipsec sending spddump failed: %s\n",
-			ipsec_strerror());
-		return -1;
-	}
-
-	while (pfkey_handler() > 0)
-		continue;
-
 	return 0;
 }
 
@@ -815,6 +796,35 @@ pfkey_convertfromipsecdoi(proto_id, t_id, hashtype,
 	return -1;
 }
 
+/* called from scheduler */
+void
+pfkey_timeover_stub(p)
+	void *p;
+{
+
+	pfkey_timeover((struct ph2handle *)p);
+}
+
+void
+pfkey_timeover(iph2)
+	struct ph2handle *iph2;
+{
+	plog(LLV_ERROR, LOCATION, NULL,
+		"%s give up to get IPsec-SA due to time up to wait.\n",
+		saddrwop2str(iph2->dst));
+	SCHED_KILL(iph2->sce);
+
+	/* If initiator side, send error to kernel by SADB_ACQUIRE. */
+	if (iph2->side == INITIATOR)
+		pk_sendeacquire(iph2);
+
+	unbindph12(iph2);
+	remph2(iph2);
+	delph2(iph2);
+
+	return;
+}
+
 /*%%%*/
 /* send getspi message per ipsec protocol per remote address */
 /*
@@ -845,19 +855,13 @@ pk_sendgetspi(iph2)
 	/* for mobile IPv6 */
 	if (proxy && iph2->src_id && iph2->dst_id &&
 	    ipsecdoi_transportmode(pp)) {
-		src = dupsaddr(iph2->src_id);
-		dst = dupsaddr(iph2->dst_id);
+		src = iph2->src_id;
+		dst = iph2->dst_id;
 	} else {
-		src = dupsaddr(iph2->src);
-		dst = dupsaddr(iph2->dst);
+		src = iph2->src;
+		dst = iph2->dst;
 	}
-	
-	if (src == NULL || dst == NULL) {
-		racoon_free(src);
-		racoon_free(dst);
-		return -1;
-	}
-	
+
 	for (pr = pp->head; pr != NULL; pr = pr->next) {
 
 		/* validity check */
@@ -865,8 +869,6 @@ pk_sendgetspi(iph2)
 		if (satype == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid proto_id %d\n", pr->proto_id);
-			racoon_free(src);
-			racoon_free(dst);
 			return -1;
 		}
 		/* this works around a bug in Linux kernel where it allocates 4 byte
@@ -883,16 +885,16 @@ pk_sendgetspi(iph2)
 		if (mode == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid encmode %d\n", pr->encmode);
-			racoon_free(src);
-			racoon_free(dst);
 			return -1;
 		}
 
 #ifdef ENABLE_NATT
+		/* XXX should we do a copy of src/dst for each pr ?
+		 */
 		if (! pr->udp_encap) {
 			/* Remove port information, that SA doesn't use it */
-			set_port(iph2->src, 0);
-			set_port(iph2->dst, 0);
+			set_port(src, 0);
+			set_port(dst, 0);
 		}
 #endif
 		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_getspi\n");
@@ -907,8 +909,6 @@ pk_sendgetspi(iph2)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"ipseclib failed send getspi (%s)\n",
 				ipsec_strerror());
-			racoon_free(src);
-			racoon_free(dst);
 			return -1;
 		}
 		plog(LLV_DEBUG, LOCATION, NULL,
@@ -916,8 +916,6 @@ pk_sendgetspi(iph2)
 			sadbsecas2str(dst, src, satype, 0, mode));
 	}
 
-	racoon_free(src);
-	racoon_free(dst);
 	return 0;
 }
 
@@ -1008,6 +1006,7 @@ pk_recvgetspi(mhp)
 		if (isakmp_post_getspi(iph2) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to start post getspi.\n");
+			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
 			iph2 = NULL;
@@ -1033,7 +1032,6 @@ pk_sendupdate(iph2)
 	if (iph2->approval == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"no approvaled SAs found.\n");
-		return -1;
 	}
 
 	if (iph2->side == INITIATOR)
@@ -1044,27 +1042,18 @@ pk_sendupdate(iph2)
 	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
 	sa_args.so = lcconf->sock_pfkey;
-	if (iph2->lifetime_secs)
-		sa_args.l_addtime = iph2->lifetime_secs;
-	else
-		sa_args.l_addtime = iph2->approval->lifetime;
+	sa_args.l_addtime = iph2->approval->lifetime;
 	sa_args.seq = iph2->seq; 
 	sa_args.wsize = 4;
 
 	/* for mobile IPv6 */
 	if (proxy && iph2->src_id && iph2->dst_id &&
 	    ipsecdoi_transportmode(iph2->approval)) {
-		sa_args.dst = dupsaddr(iph2->src_id);
-		sa_args.src = dupsaddr(iph2->dst_id);
+		sa_args.dst = iph2->src_id;
+		sa_args.src = iph2->dst_id;
 	} else {
-		sa_args.dst = dupsaddr(iph2->src);
-		sa_args.src = dupsaddr(iph2->dst);
-	}
-
-	if (sa_args.src == NULL || sa_args.dst == NULL) {
-		racoon_free(sa_args.src);
-		racoon_free(sa_args.dst);
-		return -1;
+		sa_args.dst = iph2->src;
+		sa_args.src = iph2->dst;
 	}
 
 	for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
@@ -1073,8 +1062,6 @@ pk_sendupdate(iph2)
 		if (sa_args.satype == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid proto_id %d\n", pr->proto_id);
-			racoon_free(sa_args.src);
-			racoon_free(sa_args.dst);
 			return -1;
 		}
 		else if (sa_args.satype == SADB_X_SATYPE_IPCOMP) {
@@ -1088,8 +1075,6 @@ pk_sendupdate(iph2)
 		if (sa_args.mode == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid encmode %d\n", pr->encmode);
-			racoon_free(sa_args.src);
-			racoon_free(sa_args.dst);
 			return -1;
 		}
 #endif
@@ -1101,11 +1086,8 @@ pk_sendupdate(iph2)
 				pr->head->authtype,
 				&sa_args.e_type, &sa_args.e_keylen,
 				&sa_args.a_type, &sa_args.a_keylen, 
-				&sa_args.flags) < 0){
-			racoon_free(sa_args.src);
-			racoon_free(sa_args.dst);
+				&sa_args.flags) < 0)
 			return -1;
-		}
 
 #if 0
 		sa_args.l_bytes = iph2->approval->lifebyte * 1024,
@@ -1127,7 +1109,7 @@ pk_sendupdate(iph2)
 			sa_args.l_natt_type = iph2->ph1->natt_options->encaps_type;
 			sa_args.l_natt_sport = extract_port (iph2->ph1->remote);
 			sa_args.l_natt_dport = extract_port (iph2->ph1->local);
-			sa_args.l_natt_oa = iph2->natoa_src;
+			sa_args.l_natt_oa = NULL;  // FIXME: Here comes OA!!!
 #ifdef SADB_X_EXT_NAT_T_FRAG
 			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
 #endif
@@ -1148,8 +1130,6 @@ pk_sendupdate(iph2)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send update (%s)\n",
 				ipsec_strerror());
-			racoon_free(sa_args.src);
-			racoon_free(sa_args.dst);
 			return -1;
 		}
 
@@ -1179,8 +1159,6 @@ pk_sendupdate(iph2)
 			sa_args.satype, sa_args.spi, sa_args.mode));
 	}
 
-	racoon_free(sa_args.src);
-	racoon_free(sa_args.dst);
 	return 0;
 }
 
@@ -1284,11 +1262,10 @@ pk_recvupdate(mhp)
 		return 0;
 
 	/* turn off the timer for calling pfkey_timeover() */
-	sched_cancel(&iph2->sce);
-
+	SCHED_KILL(iph2->sce);
+	
 	/* update status */
 	iph2->status = PHASE2ST_ESTABLISHED;
-	evt_phase2(iph2, EVT_PHASE2_UP, NULL);
 
 #ifdef ENABLE_STATS
 	gettimeofday(&iph2->end, NULL);
@@ -1296,8 +1273,11 @@ pk_recvupdate(mhp)
 		"phase2", "quick", timedelta(&iph2->start, &iph2->end));
 #endif
 
+	/* count up */
+	iph2->ph1->ph2cnt++;
+
 	/* turn off schedule */
-	sched_cancel(&iph2->scr);
+	SCHED_KILL(iph2->scr);
 
 	/* Force the update of ph2's ports, as there is at least one
 	 * situation where they'll mismatch with ph1's values
@@ -1312,8 +1292,10 @@ pk_recvupdate(mhp)
 	 * since we are going to reuse the phase2 handler, we need to
 	 * remain it and refresh all the references between ph1 and ph2 to use.
 	 */
-	sched_schedule(&iph2->sce, iph2->approval->lifetime,
-		       isakmp_ph2expire_stub);
+	unbindph12(iph2);
+
+	iph2->sce = sched_new(iph2->approval->lifetime,
+	    isakmp_ph2expire_stub, iph2);
 
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
 	return 0;
@@ -1345,28 +1327,19 @@ pk_sendadd(iph2)
 	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
 	sa_args.so = lcconf->sock_pfkey;
-	if (iph2->lifetime_secs)
-		sa_args.l_addtime = iph2->lifetime_secs;
-	else
-		sa_args.l_addtime = iph2->approval->lifetime;
+	sa_args.l_addtime = iph2->approval->lifetime;
 	sa_args.seq = iph2->seq;
 	sa_args.wsize = 4;
 
 	/* for mobile IPv6 */
 	if (proxy && iph2->src_id && iph2->dst_id &&
 	    ipsecdoi_transportmode(iph2->approval)) {
-		sa_args.src = dupsaddr(iph2->src_id);
-		sa_args.dst = dupsaddr(iph2->dst_id);
+		sa_args.src = iph2->src_id;
+		sa_args.dst = iph2->dst_id;
 	} else {
-		sa_args.src = dupsaddr(iph2->src);
-		sa_args.dst = dupsaddr(iph2->dst);
+		sa_args.src = iph2->src;
+		sa_args.dst = iph2->dst;
 	}
-
-	if (sa_args.src == NULL || sa_args.dst == NULL) {
-		racoon_free(sa_args.src);
-		racoon_free(sa_args.dst);
-		return -1;
- 	}
 
 	for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
 		/* validity check */
@@ -1374,8 +1347,6 @@ pk_sendadd(iph2)
 		if (sa_args.satype == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid proto_id %d\n", pr->proto_id);
-			racoon_free(sa_args.src);
-			racoon_free(sa_args.dst);
 			return -1;
 		}
 		else if (sa_args.satype == SADB_X_SATYPE_IPCOMP) {
@@ -1389,8 +1360,6 @@ pk_sendadd(iph2)
 		if (sa_args.mode == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid encmode %d\n", pr->encmode);
-			racoon_free(sa_args.src);
-			racoon_free(sa_args.dst);
 			return -1;
 		}
 #endif
@@ -1403,11 +1372,8 @@ pk_sendadd(iph2)
 				pr->head->authtype,
 				&sa_args.e_type, &sa_args.e_keylen,
 				&sa_args.a_type, &sa_args.a_keylen, 
-				&sa_args.flags) < 0){
-			racoon_free(sa_args.src);
-			racoon_free(sa_args.dst);
+				&sa_args.flags) < 0)
 			return -1;
-		}
 
 #if 0
 		sa_args.l_bytes = iph2->approval->lifebyte * 1024,
@@ -1432,7 +1398,7 @@ pk_sendadd(iph2)
 			sa_args.l_natt_type = UDP_ENCAP_ESPINUDP;
 			sa_args.l_natt_sport = extract_port(iph2->ph1->local);
 			sa_args.l_natt_dport = extract_port(iph2->ph1->remote);
-			sa_args.l_natt_oa = iph2->natoa_dst;
+			sa_args.l_natt_oa = NULL; // FIXME: Here comes OA!!!
 #ifdef SADB_X_EXT_NAT_T_FRAG
 			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
 #endif
@@ -1458,8 +1424,6 @@ pk_sendadd(iph2)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send add (%s)\n",
 				ipsec_strerror());
-			racoon_free(sa_args.src);
-			racoon_free(sa_args.dst);
 			return -1;
 		}
 
@@ -1483,8 +1447,6 @@ pk_sendadd(iph2)
 			sadbsecas2str(sa_args.src, sa_args.dst,
 			sa_args.satype, sa_args.spi, sa_args.mode));
 	}
-	racoon_free(sa_args.src);
-	racoon_free(sa_args.dst);
 	return 0;
 }
 
@@ -1625,7 +1587,7 @@ pk_recvexpire(mhp)
 	}
 
 	/* turn off the timer for calling isakmp_ph2expire() */ 
-	sched_cancel(&iph2->sce);
+	SCHED_KILL(iph2->sce);
 
 	iph2->status = PHASE2ST_EXPIRED;
 
@@ -1643,6 +1605,7 @@ pk_recvexpire(mhp)
 			plog(LLV_ERROR, LOCATION, iph2->dst,
 				"failed to begin ipsec sa "
 				"re-negotication.\n");
+			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
 			return -1;
@@ -1655,6 +1618,7 @@ pk_recvexpire(mhp)
 	/* If not received SADB_EXPIRE, INITIATOR delete ph2handle. */
 	/* RESPONDER always delete ph2handle, keep silent.  RESPONDER doesn't
 	 * manage IPsec SA, so delete the list */
+	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 
@@ -1672,6 +1636,7 @@ pk_recvacquire(mhp)
 	struct ph2handle *iph2[MAXNESTEDSA];
 	struct sockaddr *src, *dst;
 	int n;	/* # of phase 2 handler */
+	int remoteid=0;
 #ifdef HAVE_SECCTX
 	struct sadb_x_sec_ctx *m_sec_ctx;
 #endif /* HAVE_SECCTX */
@@ -1860,12 +1825,63 @@ pk_recvacquire(mhp)
 		return -1;
 	}
 
-	if (isakmp_get_sainfo(iph2[n], sp_out, sp_in) < 0) {
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"new acquire %s\n", spidx2str(&sp_out->spidx));
+
+	/* get sainfo */
+    {
+	vchar_t *idsrc, *iddst;
+
+	idsrc = ipsecdoi_sockaddr2id((struct sockaddr *)&sp_out->spidx.src,
+				sp_out->spidx.prefs, sp_out->spidx.ul_proto);
+	if (idsrc == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to get ID for %s\n",
+			spidx2str(&sp_out->spidx));
 		delph2(iph2[n]);
 		return -1;
 	}
+	iddst = ipsecdoi_sockaddr2id((struct sockaddr *)&sp_out->spidx.dst,
+				sp_out->spidx.prefd, sp_out->spidx.ul_proto);
+	if (iddst == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to get ID for %s\n",
+			spidx2str(&sp_out->spidx));
+		vfree(idsrc);
+		delph2(iph2[n]);
+		return -1;
+	}
+	{
+		struct remoteconf *conf;
+		conf = getrmconf(iph2[n]->dst);
+		if (conf != NULL)
+			remoteid=conf->ph1id;
+		else{
+			plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
+			remoteid=0;
+		}
+	}
+	iph2[n]->sainfo = getsainfo(idsrc, iddst, NULL, remoteid);
+	vfree(idsrc);
+	vfree(iddst);
+	if (iph2[n]->sainfo == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to get sainfo.\n");
+		delph2(iph2[n]);
+		return -1;
+		/* XXX should use the algorithm list from register message */
+	}
 
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"selected sainfo: %s\n", sainfo2str(iph2[n]->sainfo));
+    }
 
+	if (set_proposal_from_policy(iph2[n], sp_out, sp_in) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to create saprop.\n");
+		delph2(iph2[n]);
+		return -1;
+	}
 #ifdef HAVE_SECCTX
 	if (m_sec_ctx) {
 		set_secctx_in_proposal(iph2[n], spidx);
@@ -1886,6 +1902,7 @@ pk_recvacquire(mhp)
 
 err:
 	while (n >= 0) {
+		unbindph12(iph2[n]);
 		remph2(iph2[n]);
 		delph2(iph2[n]);
 		iph2[n] = NULL;
@@ -1957,6 +1974,7 @@ pk_recvdelete(mhp)
 	if (iph2->status == PHASE2ST_ESTABLISHED)
 		isakmp_info_send_d2(iph2);
 
+	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 
@@ -2813,11 +2831,6 @@ pk_recv(so, lenp)
 		return NULL;
 
 	reallen = PFKEY_UNUNIT64(buf.sadb_msg_len);
-	if (reallen < sizeof(buf)) {
-		*lenp = -1;
-		errno = EIO;
-		return NULL;    /*fatal*/
-	}
 	if ((newmsg = racoon_calloc(1, reallen)) == NULL)
 		return NULL;
 

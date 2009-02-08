@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.12 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.12.4.1 2009/02/08 18:42:19 snj Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -214,8 +214,6 @@ newrmconf()
 	new->dpd_interval = 0; /* Disable DPD checks by default */
 	new->dpd_retry = 5;
 	new->dpd_maxfails = 5;
-
-	new->rekey = REKEY_ON;
 
 	new->weak_phase1_check = 0;
 

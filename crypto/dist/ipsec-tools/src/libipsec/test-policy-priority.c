@@ -1,4 +1,4 @@
-/*	$NetBSD: test-policy-priority.c,v 1.4 2007/07/18 12:07:51 vanhu Exp $	*/
+/*	$NetBSD: test-policy-priority.c,v 1.4.18.1 2009/02/08 18:42:15 snj Exp $	*/
 
 /*	$KAME: test-policy.c,v 1.16 2003/08/26 03:24:08 itojun Exp $	*/
 

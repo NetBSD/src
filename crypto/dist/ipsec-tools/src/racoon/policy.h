@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.7 2007/05/31 19:54:55 manu Exp $	*/
+/*	$NetBSD: policy.h,v 1.7.18.1 2009/02/08 18:42:18 snj Exp $	*/
 
 /* Id: policy.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 

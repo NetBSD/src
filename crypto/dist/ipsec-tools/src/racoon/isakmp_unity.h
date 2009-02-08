@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_unity.h,v 1.5 2007/10/19 03:37:19 manu Exp $	*/
+/*	$NetBSD: isakmp_unity.h,v 1.5.12.1 2009/02/08 18:42:17 snj Exp $	*/
 
 /*	$KAME$ */
 
@@ -30,8 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-enum splinet_ipaddr { NETMASK, CIDR }; 
 
 /* ISAKMP notifies specific to the Unity vendor Id */
 /* Sent during xauth if the user types his password too slowly */
@@ -68,7 +66,7 @@ struct unity_netentry {
 
 int	splitnet_list_add(struct unity_netentry **, struct unity_network *, int *);
 void	splitnet_list_free(struct unity_netentry *, int *);
-char *	splitnet_list_2str(struct unity_netentry *, enum splinet_ipaddr);
+char *	splitnet_list_2str(struct unity_netentry *);
 
 vchar_t *isakmp_unity_req(struct ph1handle *, struct isakmp_data *);
 void isakmp_unity_reply(struct ph1handle *, struct isakmp_data *);
