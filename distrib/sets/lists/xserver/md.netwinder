@@ -1,7 +1,6 @@
-# $NetBSD: md.netwinder,v 1.14 2009/01/19 02:57:50 snj Exp $
+# $NetBSD: md.netwinder,v 1.15 2009/02/09 16:28:54 abs Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
-./usr/X11R6/bin/Xvfb					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
 ./usr/X11R6/bin/kbd_mode				-unknown-	x11
 ./usr/X11R6/bin/mmapr					-unknown-	x11
@@ -162,7 +161,6 @@
 ./usr/X11R6/lib/modules/libxf8_16bpp.a			-unknown-	x11
 ./usr/X11R6/lib/modules/libxf8_32bpp.a			-unknown-	x11
 ./usr/X11R6/man/cat1/XFree86.0				-unknown-	.cat,x11
-./usr/X11R6/man/cat1/Xvfb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/gtf.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/kbd_mode.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/pcitweak.0				-unknown-	.cat,x11
@@ -193,7 +191,6 @@
 ./usr/X11R6/man/cat4/wsfb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat5/XF86Config.0			-unknown-	.cat,x11
 ./usr/X11R6/man/html1/XFree86.html			-unknown-	html,x11
-./usr/X11R6/man/html1/Xvfb.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/gtf.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/kbd_mode.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/pcitweak.html			-unknown-	html,x11
@@ -224,7 +221,6 @@
 ./usr/X11R6/man/html4/wsfb.html				-unknown-	html,x11
 ./usr/X11R6/man/html5/XF86Config.html			-unknown-	html,x11
 ./usr/X11R6/man/man1/XFree86.1				-unknown-	.man,x11
-./usr/X11R6/man/man1/Xvfb.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/gtf.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/kbd_mode.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/pcitweak.1				-unknown-	.man,x11
@@ -257,7 +253,6 @@
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
-./usr/X11R7/bin/Xvfb					-unknown-	xorg
 ./usr/X11R7/bin/pcitweak				-unknown-	xorg
 ./usr/X11R7/bin/scanpci					-unknown-	xorg
 ./usr/X11R7/bin/xorgconfig				-unknown-	xorg
