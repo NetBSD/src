@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.29 2008/11/13 18:44:51 cegger Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.29.4.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -153,6 +153,7 @@ void hypervisor_clear_event(unsigned int);
 void hypervisor_enable_ipl(unsigned int);
 void hypervisor_set_ipending(uint32_t, int, int);
 void hypervisor_machdep_attach(void);
+void hypervisor_machdep_resume(void);
 
 /* 
  * Force a proper event-channel callback from Xen after clearing the

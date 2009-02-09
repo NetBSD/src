@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.14 2009/01/24 19:03:12 bouyer Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.14.2.1 2009/02/09 00:03:55 jym Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14 2009/01/24 19:03:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,6 +262,9 @@ _xen_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
+
+	xen_acquire_reader_ptom_lock();
+
 again:
 
 	/*
@@ -297,6 +300,7 @@ again:
 	}
 
 	*rsegs = curseg + 1;
+	xen_release_ptom_lock();
 	return (0);
 
 badaddr:
@@ -309,6 +313,7 @@ badaddr:
 		    "enforce address range (0x%" PRIx64 " - 0x%" PRIx64 ")\n",
 		    (uint64_t)low, (uint64_t)high);
 		uvm_pglistfree(&mlist);
+		xen_release_ptom_lock();
 		return EINVAL;
 	}
 	printf("xen_bus_dmamem_alloc_range: "
@@ -325,6 +330,7 @@ badaddr:
 	printf("_xen_bus_dmamem_alloc_range: no way to "
 	    "enforce address range\n");
 	uvm_pglistfree(&mlist);
+	xen_release_ptom_lock();
 	return EINVAL;
 #endif /* XEN3 */
 dorealloc:
@@ -345,7 +351,9 @@ dorealloc:
 	}
 	error = _xen_alloc_contig(size, alignment,
 	    boundary, &mlist, flags, low, high);
-	if (error)
+	if (error) {
+		xen_release_ptom_lock();
 		return error;
+	}
 	goto again;
 }

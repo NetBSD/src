@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.31 2009/01/16 20:16:47 jym Exp $	*/
+/*	$NetBSD: xencons.c,v 1.31.2.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -152,6 +152,9 @@ const struct cdevsw xencons_cdevsw = {
 
 #ifdef XEN3
 static int xencons_handler(void *);
+/* power management, for save/restore */
+static bool xencons_suspend(device_t PMF_FN_PROTO);
+static bool xencons_resume(device_t PMF_FN_PROTO);
 #else
 static void xencons_rx(ctrl_msg_t *, unsigned long);
 #endif
@@ -210,31 +213,72 @@ xencons_attach(device_t parent, device_t self, void *aux)
 		/* Set db_max_line to avoid paging. */
 		db_max_line = 0x7fffffff;
 #endif
-
-		if (xendomain_is_dom0()) {
-			int evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
-			aprint_verbose_dev(self, "using event channel %d\n",
-			    evtch);
-			if (event_set_handler(evtch, xencons_intr, sc,
-			    IPL_TTY, "xencons") != 0)
-				printf("console: "
-				    "can't register xencons_intr\n");
-			hypervisor_enable_event(evtch);
-		} else {
-#ifdef XEN3
-			printf("%s: using event channel %d\n",
-			    device_xname(self), xen_start_info.console.domU.evtchn);
-			event_set_handler(xen_start_info.console.domU.evtchn,
-			    xencons_handler, sc, IPL_TTY, "xencons");
-			hypervisor_enable_event(xen_start_info.console.domU.evtchn);
-#else
-			(void)ctrl_if_register_receiver(CMSG_CONSOLE,
-			    xencons_rx, 0);
-#endif
-		}
 		xencons_console_device = sc;
+
+		xencons_resume(self, PMF_F_NONE);
 	}
 	sc->polling = 0;
+
+	if (!pmf_device_register(self, xencons_suspend, xencons_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static bool
+xencons_suspend(device_t dev PMF_FN_ARGS) {
+
+	int evtch;
+
+	if (xen_start_info.flags & SIF_INITDOMAIN) {
+		evtch = unbind_virq_from_evtch(VIRQ_CONSOLE);
+		hypervisor_mask_event(evtch);
+		if (event_remove_handler(evtch, xencons_intr,
+		    xencons_console_device) != 0)
+			aprint_error_dev(dev,
+				       	 "can't remove handler: xencons_intr\n");
+	} else {
+#ifdef XEN3
+		evtch = xen_start_info.console_evtchn;
+		hypervisor_mask_event(evtch);
+		if (event_remove_handler(evtch, xencons_handler,
+		    xencons_console_device) != 0)
+			aprint_error_dev(dev,
+				       	 "can't remove handler: xencons_handler\n");
+#endif
+	}
+
+	aprint_verbose_dev(dev, "removed event channel %d\n", evtch);
+
+	return true;
+}
+
+static bool
+xencons_resume(device_t dev PMF_FN_ARGS) {
+
+	int evtch = -1;
+
+	if (xendomain_is_dom0()) {
+		evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
+		if (event_set_handler(evtch, xencons_intr,
+		    xencons_console_device, IPL_TTY, "xencons") != 0)
+			aprint_error_dev(dev, "can't register xencons_intr\n");
+	} else {
+#ifdef XEN3
+		evtch = xen_start_info.console_evtchn;
+		if (event_set_handler(evtch, xencons_handler,
+		    xencons_console_device, IPL_TTY, "xencons") != 0)
+			aprint_error_dev(dev, "can't register xencons_handler\n");
+#else
+		(void)ctrl_if_register_receiver(CMSG_CONSOLE,
+		    xencons_rx, 0);
+#endif
+	}
+
+	if (evtch != -1) {
+		aprint_verbose_dev(dev, "using event channel %d\n", evtch);
+		hypervisor_enable_event(evtch);
+	}
+
+	return true;
 }
 
 int
