@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_time.c,v 1.2 2009/01/11 02:46:24 christos Exp $ */
+/* $NetBSD: citrus_lc_time.c,v 1.3 2009/02/09 14:39:48 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_time.c,v 1.2 2009/01/11 02:46:24 christos Exp $");
+__RCSID("$NetBSD: citrus_lc_time.c,v 1.3 2009/02/09 14:39:48 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -146,7 +146,7 @@ static const struct _citrus_LC_TIME_key keys[] = {
   { _CITRUS_LC_TIME_SYM_D_T_FMT,  OFFSET(d_t_fmt                   ) },
   { _CITRUS_LC_TIME_SYM_D_FMT,    OFFSET(d_fmt                     ) },
   { _CITRUS_LC_TIME_SYM_T_FMT,    OFFSET(t_fmt                     ) },
-  { _CITRUS_LC_TIME_SYM_T_FMT,    OFFSET(t_fmt_ampm                ) },
+  { _CITRUS_LC_TIME_SYM_T_FMT_AMPM, OFFSET(t_fmt_ampm                ) },
   { NULL, 0 }
 };
 
