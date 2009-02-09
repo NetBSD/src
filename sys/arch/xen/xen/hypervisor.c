@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.43 2009/01/18 20:50:43 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.43.2.1 2009/02/09 00:03:55 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43 2009/01/18 20:50:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,12 @@ static struct sysmon_pswitch hysw_reboot = {
 	.smpsw_type = PSWITCH_TYPE_RESET,
 	.smpsw_name = "hypervisor",
 };
+#endif
+
+#ifdef XEN3
+/* power management, for save/restore */
+static bool hypervisor_suspend(device_t PMF_FN_PROTO);
+static bool hypervisor_resume(device_t PMF_FN_PROTO);
 #endif
 
 /*
@@ -390,7 +396,36 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	hypervisor_machdep_attach();
+
+#ifdef XEN3
+	if (!pmf_device_register(self, hypervisor_suspend, hypervisor_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+#endif
+
 }
+
+#ifdef XEN3
+static bool
+hypervisor_suspend(device_t dev PMF_FN_ARGS) {
+
+	events_suspend();
+	xengnt_suspend();
+	
+	return true;
+}
+
+static bool
+hypervisor_resume(device_t dev PMF_FN_ARGS) {
+
+	hypervisor_machdep_resume();
+
+	xengnt_resume();
+	events_resume();
+
+	return true;
+}
+#endif
+
 
 static int
 hypervisor_print(void *aux, const char *parent)

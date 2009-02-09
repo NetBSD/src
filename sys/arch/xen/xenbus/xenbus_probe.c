@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.27 2009/01/09 22:26:25 jym Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.27.2.1 2009/02/09 00:03:55 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27 2009/01/09 22:26:25 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -69,6 +69,10 @@ static void xenbus_probe_init(void *);
 
 static struct xenbus_device *xenbus_lookup_device_path(const char *);
 
+/* power management, for save/restore */
+static bool xenbus_suspend(device_t PMF_FN_PROTO);
+static bool xenbus_resume(device_t PMF_FN_PROTO);
+
 CFATTACH_DECL_NEW(xenbus, 0, xenbus_match, xenbus_attach,
     NULL, NULL);
 
@@ -102,6 +106,28 @@ xenbus_attach(device_t parent, device_t self, void *aux)
 	if (err)
 		aprint_error_dev(xenbus_dev,
 				"kthread_create(xenbus_probe): %d\n", err);
+
+	if (!pmf_device_register(self, xenbus_suspend, xenbus_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+}
+
+static bool
+xenbus_suspend(device_t dev PMF_FN_ARGS) {
+
+	xs_suspend();
+	xb_suspend_comms(dev);
+
+	return true;
+}
+
+static bool
+xenbus_resume(device_t dev PMF_FN_ARGS) {
+
+	xb_init_comms(dev);
+	xs_resume();
+
+	return true;
 }
 
 void

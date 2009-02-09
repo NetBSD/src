@@ -7,8 +7,6 @@
 #
 #	For Mips RISC/os 4.52.
 #
-#	@(#)Makefile.RISCos	8.3 (Berkeley) 4/11/94
-#
 
 # use O=-O (usual) or O=-g (debugging)
 O=	-O
@@ -69,7 +67,7 @@ BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
 
-ALL=	sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
+ALL=	sendmail aliases.0 newaliases.0 sendmail.0
 
 all: ${ALL}
 
@@ -83,19 +81,14 @@ dirent.h:
 	echo "#include <sys/dir.h>" > dirent.h
 	echo "#define dirent	direct" >> dirent.h
 
-NROFF=	nroff -h
-
 aliases.0: aliases.5
-	${NROFF} -mandoc aliases.5 > aliases.0
-
-mailq.0: mailq.1
-	${NROFF} -mandoc mailq.1 > mailq.0
+	nroff -h -mandoc aliases.5 > aliases.0
 
 newaliases.0: newaliases.1
-	${NROFF} -mandoc newaliases.1 > newaliases.0
+	nroff -h -mandoc newaliases.1 > newaliases.0
 
 sendmail.0: sendmail.8
-	${NROFF} -mandoc sendmail.8 > sendmail.0
+	nroff -h -mandoc sendmail.8 > sendmail.0
 
 install: install-sendmail install-docs
 
@@ -107,10 +100,10 @@ install-sendmail: sendmail
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
-install-docs: aliases.0 mailq.0 newaliases.0 sendmail.0
+install-docs: aliases.0 newaliases.0 sendmail.0
 
 clean:
-	rm -f ${OBJS} sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
+	rm -f ${OBJS} sendmail aliases.0 newaliases.0 sendmail.0
 
 # dependencies
 #   gross overkill, and yet still not quite enough....

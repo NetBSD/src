@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.21 2008/10/24 22:06:06 jym Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.21.8.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*
  *
@@ -67,6 +67,11 @@ extern unsigned long *xpmap_phys_to_machine_mapping;
 
 #define mfn_to_pfn(mfn) (machine_to_phys_mapping[(mfn)])
 #define pfn_to_mfn(pfn) (xpmap_phys_to_machine_mapping[(pfn)])
+
+void xen_init_ptom_lock(void);
+void xen_acquire_reader_ptom_lock(void);
+void xen_acquire_writer_ptom_lock(void);
+void xen_release_ptom_lock(void);
 
 static __inline paddr_t
 xpmap_mtop(paddr_t mpa)

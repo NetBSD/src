@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.42 2008/12/17 20:51:33 cegger Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.42.2.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42 2008/12/17 20:51:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -202,6 +202,32 @@ events_init(void)
 	hypervisor_enable_event(debug_port);
 
 	x86_enable_intr();		/* at long last... */
+}
+
+bool
+events_suspend (void) {
+
+	int evtch;
+
+	x86_disable_intr();
+
+	/* VIRQ_DEBUG is the last interrupt to remove */
+	evtch = unbind_virq_from_evtch(VIRQ_DEBUG);
+	hypervisor_mask_event(evtch);
+	/* Remove the non-NULL value set in events_init() */
+	evtsource[evtch] = NULL;
+	aprint_verbose("VIRQ_DEBUG interrupt disabled, event channel %d removed\n",
+	    evtch);
+
+	return true;
+}
+
+bool
+events_resume (void)
+{
+	events_init();
+
+	return true;
 }
 
 unsigned int

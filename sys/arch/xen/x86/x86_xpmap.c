@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12 2008/11/13 18:44:51 cegger Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.12.4.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12 2008/11/13 18:44:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.1 2009/02/09 00:03:55 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12 2008/11/13 18:44:51 cegger Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm.h>
 
@@ -127,6 +128,41 @@ volatile shared_info_t *HYPERVISOR_shared_info;
 union start_info_union start_info_union __aligned(PAGE_SIZE);
 unsigned long *xpmap_phys_to_machine_mapping;
 
+/*
+ * We should avoid the domU to manipulate MFNs when it is suspending
+ * or migrating, as they could be invalid once domU resumes operations.
+ *
+ * We use a read/write lock for that: when a thread is expected to
+ * manipulate MFNs, it should first acquire a reader lock, then proceed
+ * to MFN's manipulation. Once it has finished with it, the reader lock is
+ * released.
+ *
+ * The thread responsible for the domU suspension will acquire an exclusive
+ * (writer) lock.
+ */
+static krwlock_t xen_ptom_lock;
+
+void
+xen_init_ptom_lock(void) {
+	xen_suspending = 0;
+	rw_init(&xen_ptom_lock);
+}
+
+void
+xen_release_ptom_lock(void) {
+	rw_exit(&xen_ptom_lock);
+}
+
+void
+xen_acquire_reader_ptom_lock(void) {
+	rw_enter(&xen_ptom_lock, RW_READER);
+}
+
+void
+xen_acquire_writer_ptom_lock(void) {
+	rw_enter(&xen_ptom_lock, RW_WRITER);
+}
+
 void xen_failsafe_handler(void);
 
 #ifdef XEN3
@@ -159,6 +195,10 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 	end = base + entries * sizeof(union descriptor);
 #endif
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	for (va = base; va < end; va += PAGE_SIZE) {
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
@@ -169,6 +209,11 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 	s = splvm();
 	xpq_queue_set_ldt(base, entries);
 	xpq_flush_queue();
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 	splx(s);
 }
 
@@ -985,10 +1030,14 @@ xen_bt_set_readonly (vaddr_t page)
 {
 	pt_entry_t entry;
 
+	xen_acquire_reader_ptom_lock();
+
 	entry = xpmap_ptom_masked(page - KERNBASE);
 	entry |= PG_k | PG_V;
 
 	HYPERVISOR_update_va_mapping (page, entry, UVMF_INVLPG);
+
+	xen_release_ptom_lock();
 }
 
 #ifdef __x86_64__
@@ -1000,10 +1049,16 @@ xen_set_user_pgd(paddr_t page)
 
 	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
-	op.arg1.mfn = xpmap_phys_to_machine_mapping[page >> PAGE_SHIFT];
+
+	xen_acquire_reader_ptom_lock();
+
+	op.arg1.mfn = pfn_to_mfn(page >> PAGE_SHIFT);
         if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic("xen_set_user_pgd: failed to install new user page"
 			" directory %lx", page);
+
+	xen_release_ptom_lock();
+
 	splx(s);
 }
 #endif /* __x86_64__ */

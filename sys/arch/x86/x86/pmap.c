@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2008/12/18 12:18:20 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2008/12/18 12:18:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -913,6 +913,11 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		return;
 	}
 	KASSERT(kpreempt_disabled());
+
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	if (pmap2 == NULL) {
 		mutex_exit(&pmap->pm_lock);
 	} else {
@@ -931,6 +936,11 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		mutex_exit(&pmap2->pm_lock);
 		pmap_destroy(pmap2);
 	}
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 }
 
 inline static void
@@ -1022,6 +1032,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	KASSERT(!(prot & ~VM_PROT_ALL));
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
 	else
@@ -1049,6 +1063,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
 		kpreempt_enable();
 	}
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 }
 
 #ifdef XEN
@@ -1105,6 +1124,10 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 
 	KASSERT(kpreempt_disabled());
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
 	else
@@ -1122,6 +1145,11 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 		pmap_pte_flush();
 		invlpg(va);
 	}
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 }
 #endif /* defined(__x86_64__) */
 
@@ -1146,6 +1174,10 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 	eva = sva + len;
 	xpte = 0;
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		if (va < VM_MIN_KERNEL_ADDRESS)
 			pte = vtopte(va);
@@ -1166,6 +1198,11 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
 		kpreempt_enable();
 	}
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 }
 
 /*
@@ -1584,6 +1621,9 @@ pmap_init(void)
 		mutex_init(&pv_hash_locks[i].lock, MUTEX_NODEBUG, IPL_VM);
 	}
 
+#ifdef XEN3
+	xen_init_ptom_lock();
+#endif
 	/*
 	 * done: pmap module is up (and ready for business)
 	 */
@@ -1989,6 +2029,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #endif
 #ifdef XEN
 	int s;
+
+	xen_acquire_reader_ptom_lock();
 #endif
 
 	/*
@@ -2070,6 +2112,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #endif
 	xpq_flush_queue();
 	splx(s);
+
+	xen_release_ptom_lock();
 #endif /* XEN */
 
 	return (0);
@@ -2089,6 +2133,8 @@ pmap_pdp_dtor(void *arg, void *v)
 	int s = splvm();
 	pt_entry_t *pte;
 
+	xen_acquire_reader_ptom_lock();
+
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		/* fetch the physical address of the page directory. */
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
@@ -2103,6 +2149,9 @@ pmap_pdp_dtor(void *arg, void *v)
 		xpq_queue_invlpg((vaddr_t)object);
 	}
 	xpq_flush_queue();
+
+	xen_release_ptom_lock();
+
 	splx(s);
 #endif  /* XEN */
 }
@@ -2178,12 +2227,20 @@ pmap_create(void)
 		goto try_again;
 	}
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 #ifdef PAE
 	for (i = 0; i < PDP_SIZE; i++)
 		pmap->pm_pdirpa[i] =
 		    pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE + i]);
 #else
 	pmap->pm_pdirpa = pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE]);
+#endif
+
+#ifdef XEN3
+	xen_release_ptom_lock();
 #endif
 
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
@@ -2237,6 +2294,7 @@ pmap_destroy(struct pmap *pmap)
 	 * Xen lazy APDP handling:
 	 * clear APDP_PDE if pmap is the currently mapped
 	 */
+	xen_acquire_reader_ptom_lock();
 	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
 		kpreempt_disable();
 		for (i = 0; i < PDP_SIZE; i++) {
@@ -2250,6 +2308,7 @@ pmap_destroy(struct pmap *pmap)
 	        pmap_apte_flush(pmap_kernel());
 	        kpreempt_enable();
 	}
+	xen_release_ptom_lock();
 #endif
 
 	/*
@@ -2324,6 +2383,10 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 	size_t len;
 	int sel;
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
  retry:
 	if (pmap1->pm_flags & PMF_USER_LDT) {
 		len = pmap1->pm_ldt_len * sizeof(union descriptor);
@@ -2373,6 +2436,11 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
 		    UVM_KMF_WIRED);
 	}
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 #endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
@@ -2543,11 +2611,19 @@ pmap_load(void)
 	struct pcb *pcb;
 	uint64_t ncsw;
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	kpreempt_disable();
+
  retry:
 	ci = curcpu();
 	if (!ci->ci_want_pmapload) {
 		kpreempt_enable();
+#ifdef XEN3
+		xen_release_ptom_lock();
+#endif
 		return;
 	}
 	cpumask = ci->ci_cpumask;
@@ -2584,6 +2660,9 @@ pmap_load(void)
 
 		ci->ci_want_pmapload = 0;
 		kpreempt_enable();
+#ifdef XEN3
+		xen_release_ptom_lock();
+#endif
 		return;
 	}
 
@@ -2712,6 +2791,10 @@ pmap_load(void)
 		goto retry;
 	}
 
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 	kpreempt_enable();
 }
 
@@ -2764,6 +2847,10 @@ pmap_deactivate(struct lwp *l)
 		return;
 	}
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #elif defined(PAE)
@@ -2772,6 +2859,10 @@ pmap_deactivate(struct lwp *l)
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
 
 	/*
 	 * we aren't interested in TLB invalidations for this pmap,
@@ -2829,6 +2920,11 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	l = curlwp;
 
 	KPREEMPT_DISABLE(l);
+
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	ci = l->l_cpu;
 	if (__predict_true(!ci->ci_want_pmapload && ci->ci_pmap == pmap) ||
 	    pmap == pmap_kernel()) {
@@ -2866,6 +2962,11 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	if (pap != NULL) {
 		*pap = pa;
 	}
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 	return rv;
 }
 
@@ -2890,6 +2991,10 @@ vtophys(vaddr_t va)
  * pmap_extract_ma: extract a MA for the given VA
  */
 
+/*
+ * XXX JYM replace functions calling pmap_extract_ma by wrappers, as they are
+ * NOT safe in regards to ptom locking
+ */
 bool
 pmap_extract_ma(pmap, va, pap)
 	struct pmap *pmap;
@@ -2900,7 +3005,11 @@ pmap_extract_ma(pmap, va, pap)
 	pd_entry_t pde;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
- 
+
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	if (!pmap_pdes_valid(va, pdes, &pde)) {
@@ -2913,9 +3022,14 @@ pmap_extract_ma(pmap, va, pap)
 	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
  
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+ 
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
+
 		return true;
 	}
 				 
@@ -2993,6 +3107,10 @@ pmap_zero_page(paddr_t pa)
 		panic("pmap_zero_page: lock botch");
 #endif
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
@@ -3003,6 +3121,11 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 	kpreempt_enable();
 }
 
@@ -3027,6 +3150,10 @@ pmap_pageidlezero(paddr_t pa)
 	KASSERT(cpu_feature & CPUID_SSE2);
 	KASSERT(*zpte == 0);
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
@@ -3036,6 +3163,10 @@ pmap_pageidlezero(paddr_t pa)
 #if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
+#endif
+
+#ifdef XEN3
+	xen_release_ptom_lock();
 #endif
 
 	return rv;
@@ -3063,6 +3194,10 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	
 	KASSERT(*spte == 0 && *dpte == 0);
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	pmap_pte_set(spte, pmap_pa2pte(srcpa) | PG_V | PG_RW | PG_U | PG_k);
 	pmap_pte_set(dpte,
 	    pmap_pa2pte(dstpa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
@@ -3076,6 +3211,11 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_pte_set(dpte, 0);
 	pmap_pte_flush();
 #endif
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 	kpreempt_enable();
 }
 
@@ -3095,11 +3235,16 @@ pmap_map_ptp(struct vm_page *ptp)
 	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 	    PG_RW | PG_U | PG_k);
 #else
+	xen_acquire_reader_ptom_lock();
 	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 	    PG_U | PG_k);
 #endif
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)ptpva);
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
 
 	return (pt_entry_t *)ptpva;
 }
@@ -3112,11 +3257,20 @@ pmap_unmap_ptp(void)
 
 	KASSERT(kpreempt_disabled());
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	pte = PTESLEW(ptp_pte, cpu_number());
 	if (*pte != 0) {
 		pmap_pte_set(pte, 0);
 		pmap_pte_flush();
 	}
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 #endif
 }
 
@@ -3340,7 +3494,13 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 void
 pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
 	pmap_do_remove(pmap, sva, eva, PMAP_REMOVE_ALL);
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
 }
 
 /*
@@ -3591,6 +3751,10 @@ pmap_page_remove(struct vm_page *pg)
 		panic("pmap_page_remove: unmanaged page?");
 #endif
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	l = curlwp;
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
@@ -3667,6 +3831,10 @@ startover:
 
 	/* Now free unused pvs. */
 	pmap_free_pvs(killlist);
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
 }
 
 /*
@@ -3700,6 +3868,9 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	if ((pp->pp_attrs & testbits) != 0) {
 		return true;
 	}
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	pp_lock(pp);
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
@@ -3717,6 +3888,9 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	result = pp->pp_attrs & testbits;
 	pp_unlock(pp);
 
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
 	/*
 	 * note that we will exit the for loop with a non-null pve if
 	 * we have found the bits we are testing for.
@@ -3747,6 +3921,10 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 		panic("pmap_change_attrs: unmanaged page?");
 #endif
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
@@ -3772,6 +3950,10 @@ startover:
 	pp->pp_attrs &= ~clearbits;
 	pp_unlock(pp);
 	kpreempt_enable();
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
 
 	return result != 0;
 }
@@ -3813,6 +3995,10 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	struct pmap *pmap2;
 
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
+
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
 
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
@@ -3875,6 +4061,11 @@ next:;
 
 	pmap_unmap_ptes(pmap, pmap2);	/* unlocks pmap */
 	kpreempt_enable();
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 }
 
 /*
@@ -3893,6 +4084,10 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	pt_entry_t *ptes;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
+
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
 
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
@@ -3925,6 +4120,11 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	}
 #endif
 	kpreempt_enable();
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 }
 
 /*
@@ -3937,6 +4137,9 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 void
 pmap_collect(struct pmap *pmap)
 {
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
 	/*
 	 * free all of the pt pages by removing the physical mappings
 	 * for its entire address space.
@@ -3944,6 +4147,10 @@ pmap_collect(struct pmap *pmap)
 
 	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS,
 	    PMAP_REMOVE_SKIPWIRED);
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
 }
 
 /*
@@ -4188,7 +4395,12 @@ out2:
 int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
+	int ret;
         paddr_t ma;
+
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
 
 	if (__predict_false(pa < pmap_pa_start || pmap_pa_end <= pa)) {
 		ma = pa; /* XXX hack */
@@ -4196,7 +4408,13 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		ma = xpmap_ptom(pa);
 	}
 
-	return pmap_enter_ma(pmap, va, ma, pa, prot, flags, DOMID_SELF);
+	ret = pmap_enter_ma(pmap, va, ma, pa, prot, flags, DOMID_SELF);
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
+	return ret;
 }
 #endif /* XEN */
 
@@ -4332,6 +4550,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		return pmap_maxkvaddr;
 	}
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	maxkvaddr = x86_round_pdr(maxkvaddr);
 	old = nkptp[PTP_LEVELS - 1];
 	/*
@@ -4389,6 +4611,11 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		invalidate = true;
 	}
 	pmap_maxkvaddr = maxkvaddr;
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 	mutex_exit(&kpm->pm_lock);
 	splx(s);
 
@@ -4425,6 +4652,10 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	if (eva > VM_MAXUSER_ADDRESS || eva <= sva)
 		eva = VM_MAXUSER_ADDRESS;
 
+#ifdef XEN3
+	xen_acquire_reader_ptom_lock();
+#endif
+
 	/*
 	 * we lock in the pmap => pv_head direction
 	 */
@@ -4458,6 +4689,11 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	}
 	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
+
+#ifdef XEN3
+	xen_release_ptom_lock();
+#endif
+
 }
 #endif
 

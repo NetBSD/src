@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.30 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: xen.h,v 1.30.8.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*
  *
@@ -66,6 +66,9 @@ void	xenevt_setipending(int, int);
 void	xenevt_notify(void);
 
 void	idle_block(void);
+
+/* xen_machdep.c */
+void sysctl_xen_sleepstate_setup(void);
 
 #if defined(XENDEBUG) || 1 /* XXX */
 void printk(const char *, ...);

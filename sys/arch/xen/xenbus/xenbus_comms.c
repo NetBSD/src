@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.12 2009/01/16 20:16:47 jym Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.12.2.1 2009/02/09 00:03:55 jym Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.12 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.12.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.12 2009/01/16 20:16:47 jym Exp $"
 #endif
 
 struct xenstore_domain_interface *xenstore_interface;
-
-static int xenbus_irq = 0;
 
 extern int xenstored_ready; 
 // static DECLARE_WORK(probe_work, xenbus_probe, NULL);
@@ -219,21 +217,42 @@ int
 xb_init_comms(device_t dev)
 {
 	int err;
+	int evtchn;
+	
+	evtchn = xen_start_info.store_evtchn;
 
-	if (xenbus_irq)
-		event_remove_handler(xenbus_irq, wake_waiting, NULL);
-
-	err = event_set_handler(xen_start_info.store_evtchn, wake_waiting,
-	    NULL, IPL_TTY, "xenbus");
+	err = event_set_handler(evtchn, wake_waiting, NULL, IPL_TTY, "xenbus");
 	if (err) {
 		aprint_error_dev(dev, "request irq failed %i\n", err);
 		return err;
 	}
-	xenbus_irq = xen_start_info.store_evtchn;
-	aprint_verbose_dev(dev, "using event channel %d\n", xenbus_irq);
-	hypervisor_enable_event(xenbus_irq);
+
+	hypervisor_enable_event(evtchn);
+	aprint_verbose_dev(dev, "using event channel %d\n", evtchn);
+
 	return 0;
 }
+
+void
+xb_suspend_comms(device_t dev) {
+
+	int err;
+	int evtchn;
+
+	evtchn = xen_start_info.store_evtchn;
+
+	hypervisor_mask_event(evtchn);
+
+	err = event_remove_handler(evtchn, wake_waiting, NULL);
+	if (err) {
+		aprint_error_dev(dev,
+				 "can't remove handler: wake_waiting\n");
+	}
+
+	aprint_verbose_dev(dev, "removed event channel %d\n", evtchn);
+
+}
+
 
 /*
  * Local variables:

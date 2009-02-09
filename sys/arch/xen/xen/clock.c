@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49 2009/01/16 20:16:47 jym Exp $	*/
+/*	$NetBSD: clock.c,v 1.49.2.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,6 +484,20 @@ xen_initclocks(void)
 		    &xen_timepush, &xen_timepush_co);
 	}
 #endif
+}
+
+void
+xen_suspendclocks(void) {
+
+	int evtch;
+
+	evtch = unbind_virq_from_evtch(VIRQ_TIMER);
+	hypervisor_mask_event(evtch);
+	event_remove_handler(evtch, (int (*)(void *))xen_timer_handler, NULL);
+
+	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
+
+	tc_detach(&xen_timecounter);
 }
 
 /* ARGSUSED */

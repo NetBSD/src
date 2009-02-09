@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.31 2008/12/23 20:06:16 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.31.2.1 2009/02/09 00:03:55 jym Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2008/12/23 20:06:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -298,6 +298,9 @@ vcpu_attach(device_t parent, device_t self, void *aux)
 	struct vcpu_attach_args *vcaa = aux;
 
 	cpu_attach_common(parent, self, &vcaa->vcaa_caa);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 #endif
 

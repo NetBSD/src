@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2009/01/18 20:50:43 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7.2.1 2009/02/09 00:03:55 jym Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2009/01/18 20:50:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7.2.1 2009/02/09 00:03:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,11 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_haa.haa_busname = "hypervisor";
 	config_found_ia(self, "hypervisorbus", &mba.mba_haa, mainbus_print);
 #endif
+
+	/* save/restore for Xen */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 }
 
 int
