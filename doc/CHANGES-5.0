@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.94 2009/02/09 00:22:08 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.95 2009/02/09 03:14:35 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -3195,12 +3195,6 @@ xsrc/external/mit/font-sony-misc/dist/mkinstalldirs font-sony-misc-1-0-0
 	Install the "sony-misc" font from the X.org distribution.
 	Fixes PR xsrc/40476.
 	[tron, ticket #327]
-
-usr.sbin/postinstall/postinstall		1.84
-
-	Added MAKEDEV.local to postinstall's makedev check. Upgraded systems
-	were not getting an updated MAKEDEV.local file.
-	[jklos, ticket #328]
 
 regress/lib/csu/initfini/arch/hppa/initfini_asm.S 1.2
 

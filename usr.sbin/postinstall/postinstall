@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.5 2009/02/06 00:54:25 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.6 2009/02/09 03:14:35 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -768,7 +768,6 @@ do_makedev()
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV
-	compare_dir "$1" "${SRC_DIR}/etc" "${DEST_DIR}/dev" 555 MAKEDEV.local
 }
 
 #
