@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.9 2009/02/04 22:55:58 tls Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.10 2009/02/09 17:06:11 joerg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.142 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -640,6 +640,7 @@ read_request(void)
 	request->hr_allow = request->hr_host = NULL;
 	request->hr_content_type = request->hr_content_length = NULL;
 	request->hr_range = NULL;
+	request->hr_if_modified_since = NULL;
 	request->hr_last_byte_pos = -1;
 
 	slen = sizeof(ss);
@@ -758,6 +759,8 @@ read_request(void)
 				request->hr_referrer = hdr->h_value;
 			else if (strcasecmp(hdr->h_header, "range") == 0)
 				request->hr_range = hdr->h_value;
+			else if (strcasecmp(hdr->h_header, "if-modified-since") == 0)
+				request->hr_if_modified_since = hdr->h_value;
 
 			debug((DEBUG_FAT, "adding header %s: %s",
 			    hdr->h_header, hdr->h_value));
@@ -856,6 +859,24 @@ addmerge_header(http_req *request, char *val, char *str, ssize_t len)
 	return hdr;
 }
 
+static int
+parse_http_date(const char *val, time_t *timestamp)
+{
+	char *remainder;
+	struct tm tm;
+
+	if ((remainder = strptime(val, "%a, %d %b %Y %T GMT", &tm)) == NULL &&
+	    (remainder = strptime(val, "%a, %d-%b-%y %T GMT", &tm)) == NULL &&
+	    (remainder = strptime(val, "%a %b %d %T %Y", &tm)) == NULL)
+		return 0; /* Invalid HTTP date format */
+
+	if (*remainder)
+		return 0; /* No trailing garbage */
+
+	*timestamp = timegm(&tm);
+	return 1;
+}
+
 /*
  * process_request does the following:
  *	- check the request is valid
@@ -867,6 +888,7 @@ static void
 process_request(http_req *request)
 {
 	struct	stat sb;
+	time_t timestamp;
 	char	*file;
 	const char *type, *encoding;
 	int	fd, isindex;
@@ -897,7 +919,15 @@ process_request(http_req *request)
 	if (S_ISDIR(sb.st_mode))
 		handle_redirect(request, NULL, 0);
 		/* NOTREACHED */
-	/* XXX RFC1945 10.9 If-Modified-Since (http code 304) */
+	if (request->hr_if_modified_since &&
+	    parse_http_date(request->hr_if_modified_since, &timestamp) &&
+	    timestamp >= sb.st_mtime) {
+		/* XXX ignore subsecond of timestamp */
+		bozoprintf("%s 304 Not Modified\r\n", request->hr_proto);
+		bozoprintf("\r\n");
+		bozoflush(stdout);
+		exit(0);
+	}
 
 	/* validate requested range */
 	if (request->hr_last_byte_pos == -1 ||
