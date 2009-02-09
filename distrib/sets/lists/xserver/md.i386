@@ -1,7 +1,6 @@
-# $NetBSD: md.i386,v 1.57 2008/12/25 12:45:56 jmmv Exp $
+# $NetBSD: md.i386,v 1.58 2009/02/09 16:28:54 abs Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
-./usr/X11R6/bin/Xvfb					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
 ./usr/X11R6/bin/inb					-unknown-	x11
 ./usr/X11R6/bin/inl					-unknown-	x11
@@ -205,7 +204,6 @@
 ./usr/X11R6/lib/modules/v10002d.uc			-unknown-	x11
 ./usr/X11R6/lib/modules/v20002d.uc			-unknown-	x11
 ./usr/X11R6/man/cat1/XFree86.0				-unknown-	.cat,x11
-./usr/X11R6/man/cat1/Xvfb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/gtf.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/kbd_mode.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/pcitweak.0				-unknown-	.cat,x11
@@ -262,7 +260,6 @@
 ./usr/X11R6/man/cat4/wsfb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat5/XF86Config.0			-unknown-	.cat,x11
 ./usr/X11R6/man/html1/XFree86.html			-unknown-	html,x11
-./usr/X11R6/man/html1/Xvfb.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/gtf.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/kbd_mode.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/pcitweak.html			-unknown-	html,x11
@@ -319,7 +316,6 @@
 ./usr/X11R6/man/html4/wsfb.html				-unknown-	html,x11
 ./usr/X11R6/man/html5/XF86Config.html			-unknown-	html,x11
 ./usr/X11R6/man/man1/XFree86.1				-unknown-	.man,x11
-./usr/X11R6/man/man1/Xvfb.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/gtf.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/kbd_mode.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/pcitweak.1				-unknown-	.man,x11
@@ -378,7 +374,6 @@
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
-./usr/X11R7/bin/Xvfb					-unknown-	xorg
 ./usr/X11R7/bin/inb					-unknown-	xorg
 ./usr/X11R7/bin/inl					-unknown-	xorg
 ./usr/X11R7/bin/inw					-unknown-	xorg
