@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.93 2009/02/08 20:54:08 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.94 2009/02/09 00:22:08 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4033,4 +4033,10 @@ external/mit/xorg/server/drivers/xf86-video-sunffb/Makefile 1.2
 	Remove artifacts of the xfree reachover build - this makes it
 	use the proper includes.
 	[oster, ticket #434]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h					patched by hand
+
+	Welcome to 5.0_RC2!
+	[snj]
 
