@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.58 2009/01/28 19:06:03 skd Exp $	*/
+/*	$NetBSD: key.c,v 1.59 2009/02/09 15:06:37 skd Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.58 2009/01/28 19:06:03 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.59 2009/02/09 15:06:37 skd Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3079,7 +3079,7 @@ key_getsah(struct secasindex *saidx)
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx(&sah->saidx, saidx, CMP_REQID) == 0)
+		if (key_cmpsaidx(&sah->saidx, saidx, CMP_REQID))
 			return sah;
 	}
 
