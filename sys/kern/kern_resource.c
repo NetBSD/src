@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.149 2009/01/29 22:27:23 drochner Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.150 2009/02/09 11:13:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.149 2009/01/29 22:27:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.150 2009/02/09 11:13:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,9 +267,6 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	int error;
 
 	if ((u_int)which >= RLIM_NLIMITS)
-		return (EINVAL);
-
-	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
 		return (EINVAL);
 
 	if (limp->rlim_cur > limp->rlim_max) {
