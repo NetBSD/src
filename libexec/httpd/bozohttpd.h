@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.6 2009/02/04 22:55:58 tls Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.7 2009/02/09 17:06:11 joerg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -64,6 +64,7 @@ typedef struct {
 	const char *hr_host;		/* HTTP/1.1 Host: */
 	const char *hr_referrer;
 	const char *hr_range;
+	const char *hr_if_modified_since;
 	int         hr_have_range;
 	off_t       hr_first_byte_pos;
 	off_t       hr_last_byte_pos;
