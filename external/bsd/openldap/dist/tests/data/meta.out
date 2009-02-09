@@ -404,7 +404,6 @@ telephoneNumber: +1 313 555 4177
 dn: ou=Meta,o=Example,c=US
 objectClass: organizationalUnit
 ou: Meta
-seeAlso: dc=OpenLDAP,dc=org
 
 dn: ou=People,o=Example,c=US
 objectClass: organizationalUnit
@@ -448,7 +447,6 @@ description: Joliet Jack Blues
 dn: ou=Meta,o=Example,c=US
 objectClass: organizationalUnit
 ou: Meta
-seeAlso: dc=OpenLDAP,dc=org
 
 # refldap://localhost:9016/cn=Somewhere,ou=Meta,dc=example,dc=com??sub
 
@@ -877,7 +875,6 @@ telephoneNumber: +1 313 555 4177
 dn: ou=Meta,o=Example,c=US
 objectClass: organizationalUnit
 ou: Meta
-seeAlso: dc=OpenLDAP,dc=org
 description: added to "ou=Meta,o=Example,c=US"
 
 dn: ou=People,o=Example,c=US
@@ -1341,7 +1338,6 @@ telephoneNumber: +1 313 555 4177
 dn: ou=Meta,o=Example,c=US
 objectClass: organizationalUnit
 ou: Meta
-seeAlso: dc=OpenLDAP,dc=org
 description: added to "ou=Meta,o=Example,c=US"
 
 dn: ou=People,o=Example,c=US

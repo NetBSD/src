@@ -1,4 +1,4 @@
-/*	$Id: shutdown_xenbus.c,v 1.5 2008/10/24 18:02:58 jym Exp $	*/
+/*	$Id: shutdown_xenbus.c,v 1.5.8.1 2009/02/09 00:03:55 jym Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.5 2008/10/24 18:02:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.5.8.1 2009/02/09 00:03:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -80,6 +80,10 @@ static struct sysmon_pswitch xenbus_power = {
 };
 static struct sysmon_pswitch xenbus_reset = {
 	.smpsw_type = PSWITCH_TYPE_RESET,
+	.smpsw_name = "xenbus",
+};
+static struct sysmon_pswitch xenbus_sleep = {
+	.smpsw_type = PSWITCH_TYPE_SLEEP,
 	.smpsw_name = "xenbus",
 };
 
@@ -130,8 +134,9 @@ again:
 		sysmon_pswitch_event(&xenbus_power, PSWITCH_EVENT_PRESSED);
 	} else if (strcmp(reqstr, "reboot") == 0) {
 		sysmon_pswitch_event(&xenbus_reset, PSWITCH_EVENT_PRESSED);
+	} else if (strcmp(reqstr, "suspend") == 0) {
+		sysmon_pswitch_event(&xenbus_sleep, PSWITCH_EVENT_PRESSED);
 	} else {
-		/* XXX suspend */
 		printf("ignore shutdown request: %s\n", reqstr);
 	}
 	free(reqstr, M_DEVBUF);
@@ -147,7 +152,8 @@ shutdown_xenbus_setup(void)
 {
 
 	if (sysmon_pswitch_register(&xenbus_power) != 0 ||
-	    sysmon_pswitch_register(&xenbus_reset) != 0) {
+	    sysmon_pswitch_register(&xenbus_reset) != 0 ||
+	    sysmon_pswitch_register(&xenbus_sleep) != 0) {
 		aprint_error("%s: unable to register with sysmon\n", __func__);
 		return;
 	}

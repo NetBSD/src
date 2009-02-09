@@ -403,7 +403,6 @@ telephoneNumber: +1 313 555 4177
 dn: ou=Meta,o=Example,c=US
 objectClass: organizationalUnit
 ou: Meta
-seeAlso: dc=OpenLDAP,dc=org
 
 dn: ou=People,o=Example,c=US
 objectClass: organizationalUnit
