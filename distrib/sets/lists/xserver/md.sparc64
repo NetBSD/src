@@ -1,10 +1,9 @@
-# $NetBSD: md.sparc64,v 1.28 2008/12/25 12:45:57 jmmv Exp $	x11
+# $NetBSD: md.sparc64,v 1.29 2009/02/09 16:28:54 abs Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
 ./usr/X11R6/bin/Xsun24					-unknown-	x11
 ./usr/X11R6/bin/XsunMono				-unknown-	x11
-./usr/X11R6/bin/Xvfb					-unknown-	x11
 ./usr/X11R6/bin/constype				-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
 ./usr/X11R6/bin/kbd_mode				-unknown-	x11
@@ -147,7 +146,6 @@
 ./usr/X11R6/man/cat1/Xsun.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/Xsun24.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/XsunMono.0				-unknown-	.cat,x11
-./usr/X11R6/man/cat1/Xvfb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/constype.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/gtf.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/kbd_mode.0				-unknown-	.cat,x11
@@ -192,7 +190,6 @@
 ./usr/X11R6/man/html1/Xsun.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/Xsun24.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/XsunMono.html			-unknown-	html,x11
-./usr/X11R6/man/html1/Xvfb.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/constype.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/gtf.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/kbd_mode.html			-unknown-	html,x11
@@ -236,7 +233,6 @@
 ./usr/X11R6/man/man1/Xsun.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/Xsun24.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/XsunMono.1				-unknown-	.man,x11
-./usr/X11R6/man/man1/Xvfb.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/constype.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/gtf.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/kbd_mode.1				-unknown-	.man,x11
@@ -280,7 +276,6 @@
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
-./usr/X11R7/bin/Xvfb					-unknown-	xorg
 ./usr/X11R7/bin/dga					-unknown-	xorg
 ./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/pcitweak				-unknown-	xorg
