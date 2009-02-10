@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.34 2008/12/16 14:28:34 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.35 2009/02/10 21:24:27 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.34 2008/12/16 14:28:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.35 2009/02/10 21:24:27 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -273,8 +273,9 @@ udf_write(void *v)
 	struct udf_node      *udf_node = VTOI(vp);
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
-	uint64_t file_size, old_size;
+	uint64_t file_size, old_size, old_offset;
 	vsize_t len;
+	int async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	int error;
 	int resid, extended;
 
@@ -342,10 +343,22 @@ udf_write(void *v)
 			break;
 
 		/* ubc, here we come, prepare to trap */
+		old_offset = uio->uio_offset;
 		error = ubc_uiomove(uobj, uio, len, advice,
 		    UBC_WRITE | UBC_UNMAP_FLAG(vp));
 		if (error)
 			break;
+
+		/*
+		 * flush what we just wrote if necessary.
+		 * XXXUBC simplistic async flushing.
+		 */
+
+		if (!async && old_offset >> 16 != uio->uio_offset >> 16) {
+			mutex_enter(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp, (old_offset >> 16) << 16,
+			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
+		}
 	}
 	uvm_vnp_setsize(vp, file_size);
 
