@@ -1,4 +1,4 @@
-/*	$NetBSD: foldit.c,v 1.6 2003/08/07 11:17:09 agc Exp $	*/
+/*	$NetBSD: foldit.c,v 1.7 2009/02/10 23:06:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,19 +34,17 @@
 #if 0
 static char sccsid[] = "@(#)foldit.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: foldit.c,v 1.6 2003/08/07 11:17:09 agc Exp $");
+__RCSID("$NetBSD: foldit.c,v 1.7 2009/02/10 23:06:31 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
-
-int foldit __P((char *, int, int));
+#include <vis.h>
+#include "extern.h"
 
 int
-foldit(chunk, col, max)
-	char *chunk;
-	int col, max;
+foldit(const char *chunk, int col, int max, int flags)
 {
-	char *cp;
+	const char *cp;
 
 	/*
 	 * Keep track of column position. Insert hidden newline
@@ -70,7 +68,7 @@ again:
 			col++;
 		}
 		if (col > (max - 2)) {
-			printf("\\\n");
+			printf(flags & VIS_MIMESTYLE ? "=\n" : "\\\n");
 			col = 0;
 			goto again;
 		} 
