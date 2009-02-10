@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.2 2009/01/27 09:14:01 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.3 2009/02/10 20:43:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.2 2009/01/27 09:14:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.3 2009/02/10 20:43:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,6 +66,7 @@ dev_type_read(rumpblk_read);
 dev_type_write(rumpblk_write);
 dev_type_ioctl(rumpblk_ioctl);
 dev_type_strategy(rumpblk_strategy);
+dev_type_strategy(rumpblk_strategy_fail);
 dev_type_dump(rumpblk_dump);
 dev_type_size(rumpblk_size);
 
@@ -74,20 +75,53 @@ static const struct bdevsw rumpblk_bdevsw = {
 	nodump, nosize, D_DISK
 };
 
+static const struct bdevsw rumpblk_bdevsw_fail = {
+	rumpblk_open, rumpblk_close, rumpblk_strategy_fail, rumpblk_ioctl,
+	nodump, nosize, D_DISK
+};
+
 static const struct cdevsw rumpblk_cdevsw = {
 	rumpblk_open, rumpblk_close, rumpblk_read, rumpblk_write,
 	rumpblk_ioctl, nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-/* XXX: not mpsafe */
+/* fail every n out of BLKFAIL_MAX */
+#define BLKFAIL_MAX 10000
+static int blkfail;
+static unsigned randstate;
 
 int
 rumpblk_init()
 {
+	char buf[64];
 	int rumpblk = RUMPBLK;
+	int error;
 
-	return devsw_attach("rumpblk", &rumpblk_bdevsw, &rumpblk,
-	    &rumpblk_cdevsw, &rumpblk);
+	if (rumpuser_getenv("RUMP_BLKFAIL", buf, sizeof(buf), &error) == 0) {
+		blkfail = strtoul(buf, NULL, 10);
+		/* fail everything */
+		if (blkfail > BLKFAIL_MAX)
+			blkfail = BLKFAIL_MAX;
+		if (rumpuser_getenv("RUMP_BLKFAIL_SEED", buf, sizeof(buf),
+		    &error) == 0) {
+			randstate = strtoul(buf, NULL, 10);
+		} else {
+			randstate = arc4random(); /* XXX: not enough entropy */
+		}
+		printf("rumpblk: FAULT INJECTION ACTIVE!  every %d out of"
+		    " %d I/O will fail.  key %u\n", blkfail, BLKFAIL_MAX,
+		    randstate);
+	} else {
+		blkfail = 0;
+	}
+
+	if (blkfail) {
+		return devsw_attach("rumpblk", &rumpblk_bdevsw_fail, &rumpblk,
+		    &rumpblk_cdevsw, &rumpblk);
+	} else {
+		return devsw_attach("rumpblk", &rumpblk_bdevsw, &rumpblk,
+		    &rumpblk_cdevsw, &rumpblk);
+	}
 }
 
 int
@@ -203,8 +237,8 @@ rumpblk_write(dev_t dev, struct uio *uio, int flags)
 	panic("%s: unimplemented", __func__);
 }
 
-void
-rumpblk_strategy(struct buf *bp)
+static void
+dostrategy(struct buf *bp)
 {
 	struct rblkdev *rblk = &minors[minor(bp->b_dev)];
 	off_t off;
@@ -276,5 +310,42 @@ rumpblk_strategy(struct buf *bp)
 			if (BUF_ISWRITE(bp))
 				rumpuser_fsync(rblk->rblk_fd, &error);
 		}
+	}
+}
+
+void
+rumpblk_strategy(struct buf *bp)
+{
+
+	dostrategy(bp);
+}
+
+/*
+ * <mlelstv> pooka, rand()
+ * <mlelstv> [paste]
+ */
+static unsigned
+gimmerand(void)
+{
+
+	return (randstate = randstate * 1103515245 + 12345) % (0x80000000L);
+}
+
+/*
+ * Block device with very simple fault injection.  Fails every
+ * n out of BLKFAIL_MAX I/O with EIO.  n is determined by the env
+ * variable RUMP_BLKFAIL.
+ */
+void
+rumpblk_strategy_fail(struct buf *bp)
+{
+
+	if (gimmerand() % BLKFAIL_MAX >= blkfail) {
+		dostrategy(bp);
+	} else { 
+		printf("block fault injection: failing I/O on block %lld\n",
+		    (long long)bp->b_blkno);
+		bp->b_error = EIO;
+		biodone(bp);
 	}
 }
