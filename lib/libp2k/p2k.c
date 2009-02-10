@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.7 2008/12/12 19:50:27 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.8 2009/02/10 14:36:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -185,6 +185,9 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	dodaemon = true;
 	if (getenv("P2K_DEBUG") != NULL) {
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
+		dodaemon = false;
+	}
+	if (getenv("P2K_NODETACH") != NULL) {
 		dodaemon = false;
 	}
 
