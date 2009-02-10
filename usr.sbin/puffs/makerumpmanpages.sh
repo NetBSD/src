@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.6 2009/01/11 22:02:38 wiz Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.7 2009/02/10 15:04:35 pooka Exp $
 #
 
 IFS=' '
@@ -32,7 +32,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 11, 2009
+.Dd February 10, 2009
 .Dt RUMP_XXXFSXXX 8
 .Os
 .Sh NAME
@@ -63,6 +63,16 @@ not require kernel support except
 Apart from a minor speed penalty (starting from 10% and depending
 on the workload and file system in question), there is no difference
 to using in-kernel code.
+.Pp
+In case mounting a file system image from a regular file,
+.Nm
+does not require the use of
+.Xr vnconfig 8
+unlike kernel file systems.
+Instead, the image path can be directly passed as the special file path.
+The exception is if the image contains a disklabel.
+In this case vnconfig is required to resolve the start offset for the
+correct partition within the image.
 .Pp
 It is recommended that untrusted file system images be mounted with
 .Nm
