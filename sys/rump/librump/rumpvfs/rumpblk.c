@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.3 2009/02/10 20:43:01 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.4 2009/02/10 20:44:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.3 2009/02/10 20:43:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.4 2009/02/10 20:44:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -321,6 +321,9 @@ rumpblk_strategy(struct buf *bp)
 }
 
 /*
+ * Simple random number generator.  This is private so that we can
+ * very repeatedly control which blocks will fail.
+ *
  * <mlelstv> pooka, rand()
  * <mlelstv> [paste]
  */
