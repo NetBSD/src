@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12.18.2 2009/02/03 09:18:15 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12.18.3 2009/02/11 12:08:12 skrll Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -117,6 +117,7 @@ struct vm_page_md {
 	kmutex_t	pvh_lock;	/* locks every pv on this list */
 	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
 	u_int		pvh_attrs;	/* to preserve ref/mod */
+	int		pvh_aliases;	/* alias counting */
 };
 
 #define	VM_MDPAGE_INIT(pg) \
@@ -124,6 +125,7 @@ do {									\
 	mutex_init(&(pg)->mdpage.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
 	(pg)->mdpage.pvh_list = NULL;					\
 	(pg)->mdpage.pvh_attrs = 0;					\
+	(pg)->mdpage.pvh_aliases = 0;					\
 } while (0)
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.10 2009/01/30 08:21:59 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.11 2009/02/11 12:08:12 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -60,12 +60,34 @@ struct pmap {
 
 /*
  * Flags that indicate attributes of pages or mappings of pages.
+ *
+ * We need two flags for cacheability because pages/mappings can be marked
+ * uncacheable for two reasons,
+ *
+ *	1) A page's contents may change under our feet and can never be
+ *	   cacheable, e.g. I/O space, DMA buffers.
+ *	2) A page has non-equivalent aliases and must be (temporarily)
+ *	   marked uncachable.
+ *
+ * A page that is marked PVF_NC can *never* be marked cacheable and will have
+ * all mappings marked PVF_UNCACHEABLE. A page marked PVF_UNCACHEABLE only
+ * is done so due to non-equivalent aliases this maybe removed is the non-
+ * equivalent aliases are removed. 
+ *
  */
 
-#define	PVF_MOD		PTE_PROT(TLB_DIRTY)	/* page/mapping is modified */
-#define	PVF_REF		PTE_PROT(TLB_REFTRAP)	/* page/mapping (inv) is referenced */
+#define	PVF_NC		0x2000			/* pg is never cacheable */
+#define	PVF_KENTER	0x4000			/* pg has unmanaged mapping */
 
-#define	PVF_UNCACHEABLE	0x1000			/* page is uncacheable */
+#define	PVF_MOD		PTE_PROT(TLB_DIRTY)	/* pg/mp is modified */
+#define	PVF_REF		PTE_PROT(TLB_REFTRAP)	/* pg/mp (inv) is referenced */
+#define	PVF_WRITE	PTE_PROT(TLB_WRITE)	/* pg/mp is writable */
+#define	PVF_UNCACHEABLE	PTE_PROT(TLB_UNCACHEABLE)
+						/* pg/mp is uncacheable */
+
+#define	pmap_is_aliased(pg)	\
+	(((pg)->mdpage.pvh_attrs & PVF_NC) == 0 && \
+	 ((pg)->mdpage.pvh_attrs & PVF_UNCACHEABLE) != 0)
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
