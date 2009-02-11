@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.130 2009/01/31 21:56:31 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.131 2009/02/11 04:45:58 ober Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2729,4 +2729,14 @@ sbin/raidctl/raidctl.c				1.40
 
 	Patch supplied by Bernhard Moellemann in PR bin/40479.
 	[tron, ticket #1270]
+
+sbin/rndctl/rndctl.8				1.16
+sbin/rndctl/rndctl.c				1.18
+
+	Adjust synopsis and description to make it clear that -d devname and 
+	-t devtype are mutually exclusive.
+	Instead of silently ignoring extra args, print a usage error.  This
+	adddresses the silent failure reported in PR 39862 by Brian A. Seklecki
+	Adjust usage message to match the synopsis in the man page.
+	[dholland, ticket #1274]
 
