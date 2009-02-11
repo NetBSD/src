@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.45 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.46 2009/02/11 05:25:17 lukem Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.45 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.46 2009/02/11 05:25:17 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -402,7 +402,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 #ifdef NI_NUMERICSCOPE
 	if ((flags & NI_NUMERICSCOPE) != 0) {
 		n = snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id);
-		if (n < 0 || n >= bufsiz)
+		if (n < 0 || (size_t)n >= bufsiz)
 			return -1;
 		else
 			return n;
