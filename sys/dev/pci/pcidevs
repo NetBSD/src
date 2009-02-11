@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.976 2009/02/06 19:36:35 jakllsch Exp $
+$NetBSD: pcidevs,v 1.977 2009/02/11 06:35:16 markd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2537,6 +2537,8 @@ product INTEL 82801I_SATA_AHCI4	0x2923	82801I AHCI SATA Controller w/ 4 ports
 product INTEL 82801I_SATA_3	0x2926	82801I SATA Controller w/ 2 ports
 product INTEL 82801I_SATA_4	0x2928	82801I Mobile AHCI SATA Controller with 2 ports
 product INTEL 82801I_SATA_5	0x2929	82801I Mobile AHCI SATA Controller with 4 ports
+product INTEL 82801I_SATA_6	0x292d	82801I Mobile AHCI SATA Controller with 2 ports
+product INTEL 82801I_SATA_7	0x292e	82801I Mobile AHCI SATA Controller
 product INTEL 82801I_SMB	0x2930	82801I SMBus Controller
 product INTEL 82801I_THERMAL	0x2932	82801I Thermal Controller
 product INTEL 82801I_USB_1	0x2934	82801I USB UHCI Controller
