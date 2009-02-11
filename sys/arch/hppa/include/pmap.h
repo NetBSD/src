@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.11 2009/02/11 12:08:12 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.12 2009/02/11 22:00:38 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -102,8 +102,6 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 	vaddr_t		pv_va;		/* the virtual address */
 	struct vm_page	*pv_ptp;	/* the vm_page of the PTP */
 };
-
-extern struct pmap kernel_pmap_store;
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 extern int pmap_hptsize;
