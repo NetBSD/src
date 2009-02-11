@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.17 2009/02/11 19:10:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.17 2009/02/11 19:10:08 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <stringlist.h>
+#include <termcap.h>
 #include <util.h>
 
 #include <sys/param.h>
@@ -1172,13 +1173,20 @@ init_el_mode(
 	struct name *keys,
 	int history_size)
 {
+	FILE *nullfp;
 	el_mode_t em;
+
 	(void)memset(&em, 0, sizeof(em));
 
-	if ((em.el = el_init(getprogname(), stdin, stdout, stderr)) == NULL) {
+	if ((nullfp = fopen(_PATH_DEVNULL, "w")) == NULL)
+		err(EXIT_FAILURE, "Cannot open `%s'" _PATH_DEVNULL);
+
+	if ((em.el = el_init(getprogname(), stdin, stdout, nullfp)) == NULL) {
 		warn("el_init");
 		return em;
 	}
+	(void)fflush(nullfp);
+	(void)dup2(STDERR_FILENO, fileno(nullfp));
 
 	(void)el_set(em.el, EL_PROMPT, show_prompt);
 	(void)el_set(em.el, EL_SIGNAL, 1); /* editline handles the signals. */
