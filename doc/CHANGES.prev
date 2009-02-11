@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.88 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.89 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9860,3 +9860,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		remove BOOTX kernel. [abs 20090124]
 	m68k: Fix floating point handling regressions for m68k.
 		[martin 20090127]
+	dhcpcd(8): Import 4.0.8. [roy 20090128]
+	dhcpcd(8): Import 4.0.9. [roy 20090131]
+	dhcpcd(8): Import 4.0.10. [roy 20090204]
