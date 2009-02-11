@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.84 2009/01/16 20:42:19 cegger Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.85 2009/02/11 14:42:52 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.81 2009/01/16 20:41:39 cegger Exp
+ *	NetBSD: miidevs,v 1.83 2009/02/11 14:41:56 cegger Exp
  */
 
 /*-
@@ -52,10 +52,15 @@
  * which is mangled accordingly to compensate.
  */
 
+/*
+ * Use "make -f Makefile.miidevs" to regenerate miidevs.h and miidevs_data.h
+ */
+
 #define	MII_OUI_AGERE	0x00053d	/* Agere */
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
-#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
+#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
+#define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
 #define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
@@ -121,6 +126,12 @@
 #define	MII_STR_ATHEROS_F1	"F1 10/100/1000 PHY"
 #define	MII_MODEL_ATHEROS_F2	0x0002
 #define	MII_STR_ATHEROS_F2	"F2 10/100 PHY"
+
+/* Attansic PHYs */
+#define	MII_MODEL_ATTANSIC_L1	0x0001
+#define	MII_STR_ATTANSIC_L1	"L1 10/100/1000 PHY"
+#define	MII_MODEL_ATTANSIC_L2	0x0002
+#define	MII_STR_ATTANSIC_L2	"L2 10/100 PHY"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
