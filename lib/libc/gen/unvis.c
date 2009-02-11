@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.29 2009/02/10 23:06:31 christos Exp $	*/
+/*	$NetBSD: unvis.c,v 1.30 2009/02/11 13:51:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.29 2009/02/10 23:06:31 christos Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.30 2009/02/11 13:51:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -260,7 +260,6 @@ unvis(char *cp, int c, int *astate, int flag)
 			*astate = S_MIME2;
 			return UNVIS_NOCHAR;
 		}
-fprintf(stderr, "Bad hex digit1 %c\n", uc);
 		*astate = S_GROUND;
 		return UNVIS_SYNBAD;
 
@@ -270,7 +269,6 @@ fprintf(stderr, "Bad hex digit1 %c\n", uc);
 			*cp = XTOD(uc) | (*cp << 4);
 			return UNVIS_VALID;
 		}
-fprintf(stderr, "Bad hex digit2 %c\n", uc);
 		*astate = S_GROUND;
 		return UNVIS_SYNBAD;
 
