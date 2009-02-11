@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.112 2009/01/17 07:02:35 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.113 2009/02/11 00:19:11 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.112 2009/01/17 07:02:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.113 2009/02/11 00:19:11 enami Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -287,10 +287,10 @@ namei(struct nameidata *ndp)
 					ndp->ni_erootdir = dp;
 				}
 			}
-		} else if (cnp->cn_flags & NOCHROOT) {
-			ndp->ni_rootdir = rootvnode;
 		} else {
 			ndp->ni_erootdir = NULL;
+			if (cnp->cn_flags & NOCHROOT)
+				dp = ndp->ni_rootdir = rootvnode;
 		}
 	} else {
 		dp = cwdi->cwdi_cdir;
