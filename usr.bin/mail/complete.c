@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.17 2009/02/11 19:10:08 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.18 2009/02/11 19:22:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.17 2009/02/11 19:10:08 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.18 2009/02/11 19:22:22 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1179,7 +1179,7 @@ init_el_mode(
 	(void)memset(&em, 0, sizeof(em));
 
 	if ((nullfp = fopen(_PATH_DEVNULL, "w")) == NULL)
-		err(EXIT_FAILURE, "Cannot open `%s'" _PATH_DEVNULL);
+		err(EXIT_FAILURE, "Cannot open `%s'", _PATH_DEVNULL);
 
 	if ((em.el = el_init(getprogname(), stdin, stdout, nullfp)) == NULL) {
 		warn("el_init");
