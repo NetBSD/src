@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.89 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.90 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9836,6 +9836,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	acorn26: Initialise cpu_info_store so that acorn26 kernel works.
 		[bjh21 20090103]
 	atari: Fix lost interrupt problem on Falcon wdc(4). [tsutsui 20090103]
+	rc.d(8): Add etc/rc.d/rndctl script. [apb 20090104]
 	evbarm: Misc fixes to make i80321-based boards booting.
 		[briggs 20090105]
 	openssl(1):  Correct error checking for DSA and ECDSA keys
@@ -9858,8 +9859,14 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[tsutsui 20090120]
 	atari: Merge ATARITT.in and FALCON.in, rename BOOT to SMALL030, and
 		remove BOOTX kernel. [abs 20090124]
+	evbppc: Fix sysinst(8) to refer proper WALNUT and OPENBLOCKS266
+		kernels. [abs 20090125]
 	m68k: Fix floating point handling regressions for m68k.
 		[martin 20090127]
 	dhcpcd(8): Import 4.0.8. [roy 20090128]
+	amd64, i386: Enable BUFQ_PRIOCSCAN by default. [ad 20090129]
+	bge(4): Make fibre cards work. [he 20090130]
 	dhcpcd(8): Import 4.0.9. [roy 20090131]
 	dhcpcd(8): Import 4.0.10. [roy 20090204]
+	atari: Add support for installation from GEMDOS partition.
+		[abs 20090206]
