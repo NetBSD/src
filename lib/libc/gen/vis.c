@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.39 2009/02/10 23:06:31 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.40 2009/02/11 13:52:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.39 2009/02/10 23:06:31 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.40 2009/02/11 13:52:28 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -245,7 +245,7 @@ getvisfun(int flag)
 {
 	if (flag & VIS_HTTPSTYLE)
 		return do_hvis;
-	if (flag * VIS_MIMESTYLE)
+	if (flag & VIS_MIMESTYLE)
 		return do_mvis;
 	return do_svis;
 }
