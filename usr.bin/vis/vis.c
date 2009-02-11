@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.14 2009/02/11 03:04:52 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.15 2009/02/11 06:42:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.14 2009/02/11 03:04:52 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.15 2009/02/11 06:42:31 wiz Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			(void)fprintf(stderr, 
-			    "Usage: %s [-bcfhlmmnostw] [-e extra]" 
+			    "Usage: %s [-bcfhlmnostw] [-e extra]" 
 			    " [-F foldwidth] [file ...]\n", getprogname());
 			return 1;
 		}
