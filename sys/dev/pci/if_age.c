@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.20 2009/02/05 23:56:57 dyoung Exp $ */
+/*	$NetBSD: if_age.c,v 1.21 2009/02/11 16:15:59 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.20 2009/02/05 23:56:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.21 2009/02/11 16:15:59 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1015,6 +1015,8 @@ age_dma_free(struct age_softc *sc)
 	    sc->age_rdata.age_smb_block != NULL)
 		bus_dmamem_free(sc->sc_dmat, 
 		    (bus_dma_segment_t *)sc->age_rdata.age_smb_block, 1);
+	sc->age_rdata.age_smb_block = NULL;
+	sc->age_cdata.age_smb_block_map = NULL;
 }
 
 static void
@@ -1906,6 +1908,8 @@ age_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 
 	sc->age_flags &= ~AGE_FLAG_LINK;
+
+	mii_down(&sc->sc_miibus);
 
 	/*
 	 * Disable interrupts.
