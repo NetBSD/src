@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.25 2009/01/14 19:24:32 cegger Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.26 2009/02/11 23:01:07 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.25 2009/01/14 19:24:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.26 2009/02/11 23:01:07 cegger Exp $");
 
 
 /*
@@ -593,17 +593,20 @@ rgephy_reset(struct mii_softc *sc)
 	struct rgephy_softc *rsc;
 	uint16_t ssr;
 
+	mii_phy_reset(sc);
+	DELAY(1000);
+
 	rsc = (struct rgephy_softc *)sc;
-	if (rsc->mii_revision == 3) {
+	if (rsc->mii_revision < 2) {
+		rgephy_load_dspcode(sc);
+	} else if (rsc->mii_revision == 3) {
 		/* RTL8211C(L) */
 		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
 		if ((ssr & RGEPHY_SSR_ALDPS) != 0) {
 			ssr &= ~RGEPHY_SSR_ALDPS;
 			PHY_WRITE(sc, RGEPHY_MII_SSR, ssr);
 		}
-	}
-#if 0
-	else {
+	} else {
 		PHY_WRITE(sc, 0x1F, 0x0001);
 		PHY_WRITE(sc, 0x09, 0x273a);
 		PHY_WRITE(sc, 0x0e, 0x7bfb);
@@ -629,9 +632,4 @@ rgephy_reset(struct mii_softc *sc)
 	/* NWay enable and Restart NWay */
 	PHY_WRITE(sc, RGEPHY_MII_BMCR,
 	    RGEPHY_BMCR_RESET | RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
-#endif
-
-	mii_phy_reset(sc);
-	DELAY(1000);
-	rgephy_load_dspcode(sc);
 }
