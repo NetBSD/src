@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.70 2008/12/25 12:12:17 ghen Exp $
+# $NetBSD: mi,v 1.71 2009/02/11 10:25:14 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1305,6 +1305,11 @@
 ./usr/X11R7/bin/xwd					-unknown-	xorg
 ./usr/X11R7/bin/xwininfo				-unknown-	xorg
 ./usr/X11R7/bin/xwud					-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-bw.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-inv.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/xorg-bw.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/xorg.xpm		-unknown-	xorg
 ./usr/X11R7/lib/X11/XErrorDB				-unknown-	xorg
 ./usr/X11R7/lib/X11/XKeysymDB				-unknown-	xorg
 ./usr/X11R7/lib/X11/Xcms.txt				-unknown-	xorg
