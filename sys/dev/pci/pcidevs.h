@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.977 2009/02/06 19:40:31 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.978 2009/02/11 06:36:21 markd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.976 2009/02/06 19:36:35 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.977 2009/02/11 06:35:16 markd Exp
  */
 
 /*
@@ -2544,6 +2544,8 @@
 #define	PCI_PRODUCT_INTEL_82801I_SATA_3	0x2926		/* 82801I SATA Controller w/ 2 ports */
 #define	PCI_PRODUCT_INTEL_82801I_SATA_4	0x2928		/* 82801I Mobile AHCI SATA Controller with 2 ports */
 #define	PCI_PRODUCT_INTEL_82801I_SATA_5	0x2929		/* 82801I Mobile AHCI SATA Controller with 4 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_6	0x292d		/* 82801I Mobile AHCI SATA Controller with 2 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_7	0x292e		/* 82801I Mobile AHCI SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801I_SMB	0x2930		/* 82801I SMBus Controller */
 #define	PCI_PRODUCT_INTEL_82801I_THERMAL	0x2932		/* 82801I Thermal Controller */
 #define	PCI_PRODUCT_INTEL_82801I_USB_1	0x2934		/* 82801I USB UHCI Controller */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.976 2009/02/06 19:40:31 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.977 2009/02/11 06:36:21 markd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.976 2009/02/06 19:36:35 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.977 2009/02/11 06:35:16 markd Exp
  */
 
 /*
@@ -3924,6 +3924,10 @@ static const uint16_t pci_products[] = {
 	    14968, 14651, 15865, 8491, 6000, 16106, 5969, 16034, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_5, 
 	    14968, 14651, 15865, 8491, 6000, 16106, 9818, 16034, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_6, 
+	    14968, 14651, 15865, 8491, 6000, 16106, 5969, 16034, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_7, 
+	    14968, 14651, 15865, 8491, 6000, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SMB, 
 	    14968, 7727, 6000, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_THERMAL, 
@@ -7598,14 +7602,14 @@ static const char pci_words[] = { "."
 	    "DELTA\0" /* 1 refs @ 5948 */
 	    "Permedia\0" /* 5 refs @ 5954 */
 	    "500MX\0" /* 1 refs @ 5963 */
-	    "2\0" /* 27 refs @ 5969 */
+	    "2\0" /* 28 refs @ 5969 */
 	    "GAMMA\0" /* 1 refs @ 5971 */
 	    "2V\0" /* 1 refs @ 5977 */
 	    "3\0" /* 7 refs @ 5980 */
 	    "Escalade\0" /* 2 refs @ 5982 */
 	    "ATA\0" /* 51 refs @ 5991 */
 	    "RAID\0" /* 26 refs @ 5995 */
-	    "Controller\0" /* 662 refs @ 6000 */
+	    "Controller\0" /* 664 refs @ 6000 */
 	    "7000/8000\0" /* 1 refs @ 6011 */
 	    "Series\0" /* 27 refs @ 6021 */
 	    "9000\0" /* 5 refs @ 6028 */
@@ -7962,7 +7966,7 @@ static const char pci_words[] = { "."
 	    "USB2\0" /* 8 refs @ 8474 */
 	    "SB300\0" /* 2 refs @ 8479 */
 	    "SB400\0" /* 10 refs @ 8485 */
-	    "SATA\0" /* 61 refs @ 8491 */
+	    "SATA\0" /* 63 refs @ 8491 */
 	    "SB600\0" /* 14 refs @ 8496 */
 	    "Azalia\0" /* 1 refs @ 8502 */
 	    "SB600/SB700/SB800\0" /* 1 refs @ 8509 */
@@ -8837,7 +8841,7 @@ static const char pci_words[] = { "."
 	    "i82541EI\0" /* 2 refs @ 14624 */
 	    "i82541ER\0" /* 2 refs @ 14633 */
 	    "i82540EP\0" /* 3 refs @ 14642 */
-	    "Mobile\0" /* 12 refs @ 14651 */
+	    "Mobile\0" /* 14 refs @ 14651 */
 	    "i82547EI\0" /* 2 refs @ 14658 */
 	    "i82545GM\0" /* 3 refs @ 14667 */
 	    "(SERDES)\0" /* 6 refs @ 14676 */
@@ -8878,7 +8882,7 @@ static const char pci_words[] = { "."
 	    "i82573L\0" /* 1 refs @ 14944 */
 	    "(KSP3)\0" /* 1 refs @ 14952 */
 	    "i82571GB\0" /* 1 refs @ 14959 */
-	    "82801I\0" /* 32 refs @ 14968 */
+	    "82801I\0" /* 34 refs @ 14968 */
 	    "(G)\0" /* 2 refs @ 14975 */
 	    "(GT)\0" /* 2 refs @ 14979 */
 	    "IFE\0" /* 2 refs @ 14984 */
@@ -9000,7 +9004,7 @@ static const char pci_words[] = { "."
 	    "High\0" /* 19 refs @ 15841 */
 	    "Definition\0" /* 19 refs @ 15846 */
 	    "63xxESB\0" /* 20 refs @ 15857 */
-	    "AHCI\0" /* 46 refs @ 15865 */
+	    "AHCI\0" /* 48 refs @ 15865 */
 	    "#3\0" /* 5 refs @ 15870 */
 	    "#4\0" /* 5 refs @ 15873 */
 	    "82945G/P\0" /* 3 refs @ 15876 */
@@ -9022,7 +9026,7 @@ static const char pci_words[] = { "."
 	    "82801HH\0" /* 1 refs @ 16009 */
 	    "82801HO\0" /* 1 refs @ 16017 */
 	    "82801HBM\0" /* 2 refs @ 16025 */
-	    "ports\0" /* 9 refs @ 16034 */
+	    "ports\0" /* 10 refs @ 16034 */
 	    "82081HBM\0" /* 1 refs @ 16040 */
 	    "Thermal\0" /* 2 refs @ 16049 */
 	    "82801IH\0" /* 1 refs @ 16057 */
@@ -9031,7 +9035,7 @@ static const char pci_words[] = { "."
 	    "82801IEM\0" /* 1 refs @ 16081 */
 	    "82801IB\0" /* 1 refs @ 16090 */
 	    "82801IM\0" /* 1 refs @ 16098 */
-	    "with\0" /* 2 refs @ 16106 */
+	    "with\0" /* 3 refs @ 16106 */
 	    "(C)\0" /* 1 refs @ 16111 */
 	    "82946GZ\0" /* 2 refs @ 16115 */
 	    "82G35\0" /* 3 refs @ 16123 */
