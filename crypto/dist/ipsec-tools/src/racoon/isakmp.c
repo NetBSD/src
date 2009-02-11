@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.50 2009/02/03 20:21:45 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.51 2009/02/11 15:18:59 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -3322,12 +3322,22 @@ purge_remote(iph1)
 		 * check in/outbound SAs.
 		 * Select only SAs where src == local and dst == remote (outgoing)
 		 * or src == remote and dst == local (incoming).
+		 * XXX we sometime have src/dst ports set to 0 and want to match
+		 * iph1->local/remote with ports set to 500. This is a bug, see trac:2
 		 */
+#ifdef ENABLE_NATT
+		if ((cmpsaddrmagic(iph1->local, src) || cmpsaddrmagic(iph1->remote, dst)) &&
+			(cmpsaddrmagic(iph1->local, dst) || cmpsaddrmagic(iph1->remote, src))) {
+			msg = next;
+			continue;
+		}
+#else
 		if ((CMPSADDR(iph1->local, src) || CMPSADDR(iph1->remote, dst)) &&
 			(CMPSADDR(iph1->local, dst) || CMPSADDR(iph1->remote, src))) {
 			msg = next;
 			continue;
 		}
+#endif
 
 		proto_id = pfkey2ipsecdoi_proto(msg->sadb_msg_satype);
 		iph2 = getph2bysaidx(src, dst, proto_id, sa->sadb_sa_spi);
