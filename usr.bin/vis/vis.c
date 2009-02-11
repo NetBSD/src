@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.13 2009/02/10 23:06:31 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.14 2009/02/11 03:04:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.13 2009/02/10 23:06:31 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.14 2009/02/11 03:04:52 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 			return 1;
 		}
 
-	if (eflags & (VIS_HTTPSTYLE|VIS_MIMESTYLE) ==
+	if ((eflags & (VIS_HTTPSTYLE|VIS_MIMESTYLE)) ==
 	    (VIS_HTTPSTYLE|VIS_MIMESTYLE))
 		errx(1, "Can't specify -m and -h at the same time");
 
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 			argv++;
 		}
 	else
-		process(stdin, "<stdin>");
+		process(stdin);
 	return rval;
 }
 	
