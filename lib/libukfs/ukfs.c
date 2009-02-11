@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.21 2009/01/23 19:36:01 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.22 2009/02/11 14:35:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -163,6 +163,7 @@ struct ukfs *
 ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen)
 {
+	struct stat sb;
 	struct ukfs *fs = NULL;
 	struct vfsops *vfsops;
 	struct mount *mp = NULL;
@@ -190,13 +191,30 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	rdonly = mntflags & MNT_RDONLY;
 	devfd = open(devpath, rdonly ? O_RDONLY : O_RDWR);
 	if (devfd != -1) {
-		if (flock(devfd, LOCK_NB | (rdonly ? LOCK_SH:LOCK_EX)) == -1) {
-			warnx("ukfs_mount: cannot get %s lock on device",
-			    rdonly ? "shared" : "exclusive");
+		if (fstat(devfd, &sb) == -1) {
 			close(devfd);
 			devfd = -1;
 			rv = errno;
 			goto out;
+		}
+
+		/*
+		 * We do this only for non-block device since the
+		 * (NetBSD) kernel allows block device open only once.
+		 */
+		if (!S_ISBLK(sb.st_mode)) {
+			if (flock(devfd, LOCK_NB | (rdonly ? LOCK_SH:LOCK_EX))
+			    == -1) {
+				warnx("ukfs_mount: cannot get %s lock on "
+				    "device", rdonly ? "shared" : "exclusive");
+				close(devfd);
+				devfd = -1;
+				rv = errno;
+				goto out;
+			}
+		} else {
+			close(devfd);
+			devfd = -1;
 		}
 	}
 
