@@ -1,4 +1,4 @@
-/*	$NetBSD: int1reg.h,v 1.1 2009/02/10 06:04:56 rumble Exp $	*/
+/*	$NetBSD: int1reg.h,v 1.2 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -32,7 +32,7 @@
 
 /*
  * NB: The STATUS register is backwards w.r.t. INT2: a bit set implies
- *     no pending interrupt. The MASK register is like INT2; a bit
+ *     no pending interrupt. The MASK register is like INT2: a bit
  *     set implies that the interrupt is enabled.
  */
 #define INT1_LOCAL_STATUS	0x000002	/* 16-bit */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.10 2006/09/05 01:38:59 rumble Exp $	*/
+/*	$NetBSD: dsclock.c,v 1.1 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsclock_hpc.c,v 1.10 2006/09/05 01:38:59 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.1 2009/02/12 06:33:57 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,13 +42,13 @@ __KERNEL_RCSID(0, "$NetBSD: dsclock_hpc.c,v 1.10 2006/09/05 01:38:59 rumble Exp 
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <machine/sysconf.h>
 #include <machine/machtype.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/ds1286reg.h>
 
-#include <sgimips/hpc/hpcvar.h>
 #include <sgimips/sgimips/clockvar.h>
 
 struct dsclock_softc {
@@ -79,9 +79,9 @@ CFATTACH_DECL(dsclock, sizeof(struct dsclock_softc),
 static int
 dsclock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct hpc_attach_args *ha = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_name) == 0)
+	if (mach_type == MACH_SGI_IP22 && ma->ma_addr == 0x1fbe0000)
 		return (1);
 
 	return (0);
@@ -91,15 +91,14 @@ static void
 dsclock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dsclock_softc *sc = (void *)self;
-	struct hpc_attach_args *haa = aux;
+	struct mainbus_attach_args *ma = aux;
 	int err;
 
 	printf("\n");
 
-	sc->sc_rtct = haa->ha_st;
-	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-				       haa->ha_devoff, 0x1ffff,
-				       &sc->sc_rtch)) != 0) {
+	sc->sc_rtct = SGIMIPS_BUS_SPACE_HPC;
+	if ((err = bus_space_map(sc->sc_rtct, ma->ma_addr, 0x1ffff,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_rtch)) != 0) {
 		printf(": unable to map RTC registers, error = %d\n", err);
 		return;
 	}
