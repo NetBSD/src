@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.36 2007/04/12 13:10:59 jmcneill Exp $	*/
+/*	$NetBSD: console.c,v 1.37 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36 2007/04/12 13:10:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.37 2009/02/12 06:33:57 rumble Exp $");
 
 #include "opt_kgdb.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36 2007/04/12 13:10:59 jmcneill Exp $"
 #include <sgimips/mace/macereg.h>
 
 #include "com.h"
+#include "scn.h"
 #include "zsc.h"
 #include "gio.h"
 #include "pckbc.h"
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.36 2007/04/12 13:10:59 jmcneill Exp $"
 #endif
 int comcnmode = CONMODE;
 
+extern struct consdev scn_cn;
 extern struct consdev zs_cn;
 
 extern void	zs_kgdb_init(void);
@@ -73,6 +75,7 @@ extern int	crmfb_probe(void);
 #endif
 
 void		kgdb_port_init(void);
+static int	scn_serial_init(const char *);
 static int	zs_serial_init(const char *);
 static int	gio_video_init(const char *);
 static int	mace_serial_init(const char *);
@@ -91,6 +94,11 @@ consinit()
 	}
 
 	switch (mach_type) {
+	case MACH_SGI_IP6 | MACH_SGI_IP10:
+		if (scn_serial_init(consdev))
+			return;
+		break;
+
 	case MACH_SGI_IP12:
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
@@ -124,6 +132,22 @@ consinit()
 	}
 
 	printf("Using ARCS for console I/O.\n");
+}
+
+static int
+scn_serial_init(const char *consdev)
+{
+#if (NSCN > 0)
+	if ((strlen(consdev) == 9) && (!strncmp(consdev, "serial", 6)) &&
+	    (consdev[7] == '0' || consdev[7] == '1')) {
+		cn_tab = &scn_cn;
+		(*cn_tab->cn_init)(cn_tab);
+			
+		return (1);
+	}
+#endif
+	
+	return (0);
 }
 
 static int

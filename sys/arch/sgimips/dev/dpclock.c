@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock_hpc.c,v 1.3 2006/09/05 01:38:59 rumble Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.1 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -40,13 +40,13 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <machine/sysconf.h>
 #include <machine/machtype.h>
 
 #include <dev/clock_subr.h>
-#include <sgimips/hpc/dp8573areg.h>
+#include <sgimips/dev/dp8573areg.h>
 
-#include <sgimips/hpc/hpcvar.h>
 #include <sgimips/sgimips/clockvar.h>
 
 struct dpclock_softc {
@@ -72,10 +72,20 @@ CFATTACH_DECL(dpclock, sizeof(struct dpclock_softc),
 static int
 dpclock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct hpc_attach_args *ha = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_name) == 0)
-		return (1);
+	switch (mach_type) {
+	case MACH_SGI_IP6 | MACH_SGI_IP10:
+		if (ma->ma_addr == 0x1fbc0000)
+			return (1);
+		break;
+
+	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
+		if (ma->ma_addr == 0x1fb80e00)
+			return (1);
+		break;
+	}
 
 	return (0);
 }
@@ -84,15 +94,22 @@ static void
 dpclock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dpclock_softc *sc = (void *)self;
-	struct hpc_attach_args *haa = aux;
+	struct mainbus_attach_args *ma = aux;
 	int err;
 
 	printf("\n");
 
-	sc->sc_rtct = haa->ha_st;
-	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-				       haa->ha_devoff, 0x1ffff,
-				       &sc->sc_rtch)) != 0) {
+	/*
+	 * All machines have one byte register per word. IP6/IP10 use
+	 * the MSB, others the LSB.
+	 */
+	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20)
+		sc->sc_rtct = SGIMIPS_BUS_SPACE_HPC;
+	else
+		sc->sc_rtct = SGIMIPS_BUS_SPACE_IP6_DPCLOCK;
+
+	if ((err = bus_space_map(sc->sc_rtct, ma->ma_addr, 0x1ffff,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_rtch)) != 0) {
 		printf(": unable to map RTC registers, error = %d\n", err);
 		return;
 	}

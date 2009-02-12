@@ -1,11 +1,11 @@
-# $NetBSD: files.gio,v 1.10 2009/02/12 02:29:58 macallan Exp $
+# $NetBSD: files.gio,v 1.11 2009/02/12 06:33:57 rumble Exp $
 
 device	gio {[slot = -1], [addr = -1]}
 attach	gio at giobus
 
 file	arch/sgimips/gio/gio.c		gio needs-flag
 
-device	hpc {[offset = -1]}
+device	hpc {[offset = -1]}: smc93cx6
 attach	hpc at gio
 file	arch/sgimips/hpc/hpc.c		hpc
 
@@ -30,7 +30,5 @@ file	arch/sgimips/gio/light.c	light needs-flag
 device	giopci: pcibus
 attach	giopci at gio
 file	arch/sgimips/gio/pci_gio.c	giopci
-
-# Challenge/S mezzanine I/O board..
 
 # Other GIO boards..
