@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.3 2009/02/11 14:44:25 cegger Exp $ */
+/*	$NetBSD: atphy.c,v 1.4 2009/02/12 13:38:49 cegger Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.3 2009/02/11 14:44:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.4 2009/02/12 13:38:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,9 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
+	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
+	aprint_normal("\n");
 }
 
 int
