@@ -823,8 +823,8 @@ str2keyid(const char *userid, unsigned char *keyid, size_t len)
 	static const char	*hexes = "0123456789ABCDEF";
 	const char		*hi;
 	const char		*lo;
-	int			 i;
-	int			 j;
+	size_t			 i;
+	size_t			 j;
 
 	for (i = j = 0 ; j < len && userid[i] && userid[i + 1] ; i += 2, j++) {
 		if ((hi = strchr(hexes, userid[i])) == NULL ||
