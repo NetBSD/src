@@ -423,7 +423,7 @@ atf_fs_path_branch_path(const atf_fs_path_t *p, atf_fs_path_t *bp)
     const ssize_t endpos = atf_dynstr_rfind_ch(&p->m_data, '/');
     atf_error_t err;
 
-    if (endpos == atf_dynstr_npos)
+    if ((size_t)endpos == atf_dynstr_npos)
         err = atf_fs_path_init_fmt(bp, ".");
     else if (endpos == 0)
         err = atf_fs_path_init_fmt(bp, "/");
@@ -452,7 +452,7 @@ atf_fs_path_leaf_name(const atf_fs_path_t *p, atf_dynstr_t *ln)
     ssize_t begpos = atf_dynstr_rfind_ch(&p->m_data, '/');
     atf_error_t err;
 
-    if (begpos == atf_dynstr_npos)
+    if ((size_t)begpos == atf_dynstr_npos)
         begpos = 0;
     else
         begpos++;

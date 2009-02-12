@@ -80,7 +80,7 @@ atf_io_write_ap(int fd, const char *fmt, va_list ap)
                                  "descriptor %d", atf_dynstr_cstring(&str),
                                  fd);
         else {
-            INV(cnt == atf_dynstr_length(&str));
+            INV((size_t)cnt == atf_dynstr_length(&str));
             err = atf_no_error();
         }
 

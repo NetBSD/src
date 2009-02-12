@@ -162,7 +162,7 @@ atf_dynstr_init_ap(atf_dynstr_t *ad, const char *fmt, va_list ap)
             if (ret < 0) {
                 err = atf_libc_error(errno, "Cannot format string");
             } else {
-                if (ret >= ad->m_datasize) {
+                if ((size_t)ret >= ad->m_datasize) {
                     free(ad->m_data);
                     ad->m_data = NULL;
                 }
