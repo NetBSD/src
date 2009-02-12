@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.29 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.30 2009/02/12 04:57:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.29 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.30 2009/02/12 04:57:46 lukem Exp $");
 #endif
 #endif
 
@@ -255,11 +255,11 @@ _m_gmon_merge_two(struct gmonparam *p, struct gmonparam *q)
 	u_long fromindex;
 	u_short *frompcindex, qtoindex, toindex;
 	u_long selfpc;
-	int endfrom;
+	u_long endfrom;
 	long count;
 	struct tostruct *top;
 	
-	endfrom = (int)(q->fromssize / sizeof(*q->froms));
+	endfrom = (q->fromssize / sizeof(*q->froms));
 	for (fromindex = 0; fromindex < endfrom; fromindex++) {
 		if (q->froms[fromindex] == 0)
 			continue;
@@ -422,7 +422,7 @@ _mcleanup()
 			return;
 
 		if (snprintf(buf, sizeof buf, "%s/%d.%s",
-			    profdir, getpid(), getprogname()) >= sizeof buf) {
+			    profdir, getpid(), getprogname()) >= (int)(sizeof buf)) {
 			warnx("_mcleanup: internal buffer overflow, PROFDIR too long");
 			return;
 		}
