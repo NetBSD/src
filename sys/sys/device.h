@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.115 2008/11/13 21:15:01 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.116 2009/02/12 18:24:18 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -396,6 +396,7 @@ int config_handle_wedges(struct device *, int);
 void	config_init(void);
 void	drvctl_init(void);
 void	configure(void);
+void	configure2(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
 int	config_cfdriver_detach(struct cfdriver *);
