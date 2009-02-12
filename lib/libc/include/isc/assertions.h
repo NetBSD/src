@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.2 2008/06/21 20:41:48 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.3 2009/02/12 16:24:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -49,6 +49,7 @@ const char *assertion_type_to_text(assertion_type type);
 #define CHECK_INVARIANT		0
 #endif
 
+#ifdef _DIAGNOSTIC
 #ifndef CHECK_REQUIRE
 #define CHECK_REQUIRE		1
 #endif
@@ -64,6 +65,7 @@ const char *assertion_type_to_text(assertion_type type);
 #ifndef CHECK_INVARIANT
 #define CHECK_INVARIANT		1
 #endif
+#endif	/* _DIAGNOSTIC */
 
 #if CHECK_REQUIRE != 0
 #define REQUIRE(cond) \
