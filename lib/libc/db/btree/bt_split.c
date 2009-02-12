@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_split.c,v 1.17 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: bt_split.c,v 1.18 2009/02/12 06:41:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_split.c,v 1.17 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: bt_split.c,v 1.18 2009/02/12 06:41:40 lukem Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -215,7 +215,7 @@ __bt_split(BTREE *t, PAGE *sp, const DBT *key, const DBT *data, int flags,
 		}
 
 		/* Split the parent page if necessary or shift the indices. */
-		if (h->upper - h->lower < nbytes + sizeof(indx_t)) {
+		if ((uint32_t)h->upper - (uint32_t)h->lower < nbytes + sizeof(indx_t)) {
 			sp = h;
 			h = h->pgno == P_ROOT ?
 			    bt_root(t, h, &l, &r, &skip, nbytes) :
