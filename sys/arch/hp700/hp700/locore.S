@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30.2.2 2008/11/17 07:02:26 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.30.2.3 2009/02/12 21:26:07 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ hppa_vtop:			/* a vtop translation table addr (pa=va) */
 #endif
 
 	.text
-	.import $kernel_setup, entry
+	.import kernel_setup, entry
 
 /*
  * This is the starting location for the kernel
@@ -276,7 +276,7 @@ $start_zero_tf:
 	ldil	L%$qisnowon, %rp
 	ldo	R%$qisnowon(%rp), %rp
 
-	b	$kernel_setup
+	b	kernel_setup
 	ldi	PSW_Q|PSW_I, %arg2
 
 $qisnowon:
@@ -340,7 +340,7 @@ $noddb:
 EXIT(start)
 
 
-LEAF_ENTRY_NOPROFILE($kernel_setup)
+LEAF_ENTRY_NOPROFILE(kernel_setup)
 
 	/*
 	 * disable interrupts and turn off all bits in the psw so that
@@ -414,7 +414,7 @@ LEAF_ENTRY_NOPROFILE($kernel_setup)
 	rfi
 	nop
 	nop
-EXIT($kernel_setup)
+EXIT(kernel_setup)
 
 /*
  * int pdc_call(iodcio_t func,int pdc_flag, ...)
