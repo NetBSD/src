@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.93 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.94 2009/02/12 14:46:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.93 2009/02/06 20:01:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.94 2009/02/12 14:46:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -183,6 +183,7 @@ rump__init(int rump_version)
 	p->p_fd = &rump_filedesc0;
 	p->p_vmspace = &rump_vmspace;
 	p->p_emul = &emul_rump;
+	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = 1;
@@ -386,17 +387,26 @@ rump_cred_suserget()
 	return rump_susercred;
 }
 
-/* XXX: if they overflow, we're screwed */
+/*
+ * Return the next system lwpid
+ */
 lwpid_t
 rump_nextlid()
 {
-	static unsigned lwpid = 2;
+	lwpid_t retid;
 
-	do {
-		lwpid = atomic_inc_uint_nv(&lwpid);
-	} while (lwpid == 0);
+	mutex_enter(proc0.p_lock);
+	/*
+	 * Take next one, don't return 0
+	 * XXX: most likely we'll have collisions in case this
+	 * wraps around.
+	 */
+	if (++proc0.p_nlwpid == 0)
+		++proc0.p_nlwpid;
+	retid = proc0.p_nlwpid;
+	mutex_exit(proc0.p_lock);
 
-	return (lwpid_t)lwpid;
+	return retid;
 }
 
 int
