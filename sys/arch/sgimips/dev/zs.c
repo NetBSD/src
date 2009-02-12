@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.35 2008/06/13 12:27:26 cegger Exp $	*/
+/*	$NetBSD: zs.c,v 1.36 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.35 2008/06/13 12:27:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.36 2009/02/12 06:33:57 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -127,7 +127,12 @@ struct consdev zs_cn = {
 	zscninit,
 	zscngetc,
 	zscnputc,
-	zscnpollc
+	zscnpollc,
+	NULL,
+	NULL,
+	NULL,
+	NODEV,
+	CN_NORMAL
 };
 
 /* Flags from cninit() */

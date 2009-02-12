@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 2006/12/29 07:00:11 rumble Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2006/12/29 07:00:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2009/02/12 06:33:57 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -126,6 +126,7 @@ cpu_initclocks()
 
 	switch (mach_type) {
 #if defined(MIPS1)
+	case MACH_SGI_IP6 | MACH_SGI_IP10:
 	case MACH_SGI_IP12:
 		/* int(4) will take care of our clocks */
 		/* enable hardware interrupts including hardclock(9) */
