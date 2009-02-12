@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1181 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1182 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -124,4 +124,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	udf, mount_udf(8): add support for session opening/closing on
 		sequential media. Media can be closed on request on unmount by
 		passing the '-c' flag as mount option. [reinoud 20090208]
+	share/mk: Enable -Wsign-compare for $WARNS>=4.  [lukem 20090212]
 
