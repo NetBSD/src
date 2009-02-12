@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans_local.h,v 1.7 2009/01/18 22:03:19 tnozaki Exp $	*/
+/*	$NetBSD: _wctrans_local.h,v 1.8 2009/02/12 05:00:46 lukem Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -36,8 +36,9 @@ __END_DECLS
 static __inline wint_t
 _towctrans(wint_t c, _WCTransEntry *te)
 {
-	return (_RUNE_ISCACHED(c) ?
-		te->te_cached[(__nbrune_t)c]:_towctrans_ext(c, te));
+	return (_RUNE_ISCACHED(c)
+		? (wint_t)te->te_cached[(size_t)c]
+		: _towctrans_ext(c, te));
 }
 
 static __inline struct _WCTransEntry *
