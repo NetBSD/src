@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8573areg.h,v 1.2 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: dp8573areg.h,v 1.1 2009/02/12 06:33:57 rumble Exp $	*/
 
 /*
  * Copyright (c) 2003 Steve Rumble
