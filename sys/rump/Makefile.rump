@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.rump,v 1.32 2009/01/23 19:14:30 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.33 2009/02/12 13:23:17 lukem Exp $
 #
 
-WARNS?=		4
+WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
 NOLINT=		# kernel code
 
 .include <bsd.own.mk>
