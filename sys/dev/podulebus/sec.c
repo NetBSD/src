@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.13 2009/01/25 15:23:42 bjh21 Exp $ */
+/* $NetBSD: sec.c,v 1.14 2009/02/12 06:24:45 rumble Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.13 2009/01/25 15:23:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.14 2009/02/12 06:24:45 rumble Exp $");
 
 #include <sys/param.h>
 
@@ -179,8 +179,10 @@ sec_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_mod_h);
 
 	sc->sc_sbic.sc_regt = sc->sc_mod_t;
-	bus_space_subregion(sc->sc_mod_t, sc->sc_mod_h, SEC_SBIC,
-	    0x1000 - SEC_SBIC, &sc->sc_sbic.sc_regh);
+	bus_space_subregion(sc->sc_mod_t, sc->sc_mod_h, SEC_SBIC + 0, 1,
+	    &sc->sc_sbic.sc_asr_regh);
+	bus_space_subregion(sc->sc_mod_t, sc->sc_mod_h, SEC_SBIC + 1, 1,
+	    &sc->sc_sbic.sc_data_regh);
 
 	sc->sc_sbic.sc_id = 7;
 	sc->sc_sbic.sc_clkfreq = SEC_CLKFREQ;
