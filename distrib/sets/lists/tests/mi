@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.26 2009/01/19 07:19:36 jmmv Exp $
+# $NetBSD: mi,v 1.27 2009/02/12 16:14:32 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -75,6 +75,7 @@
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug
 ./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-net-debug		debug
+./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-util-debug	debug
@@ -405,6 +406,9 @@
 ./usr/tests/net/sys/Atffile			tests-net-tests
 ./usr/tests/net/sys/t_connect			tests-net-tests
 ./usr/tests/net/sys/t_listen			tests-net-tests
+./usr/tests/syscall				tests-syscall-tests
+./usr/tests/syscall/Atffile			tests-syscall-tests
+./usr/tests/syscall/t_cmsg			tests-syscall-tests
 ./usr/tests/util				tests-util-tests
 ./usr/tests/util/Atffile			tests-util-tests
 ./usr/tests/util/df				tests-util-tests
