@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.39 2009/01/18 11:21:06 cegger Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.40 2009/02/12 10:33:23 cegger Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.39 2009/01/18 11:21:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.40 2009/02/12 10:33:23 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -224,6 +224,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	bus_size_t memsize;
 	pcireg_t memtype;
 	char devinfo[256];
+	int mii_flags = 0;
 
 	sc->sc_dev = self;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
@@ -311,6 +312,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN4:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR |
 		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
+		mii_flags = MIIF_DOPAUSE;
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN2:
@@ -388,8 +390,10 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
+
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, mii_flags);
+
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
