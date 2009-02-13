@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1234 2009/02/08 16:30:48 pooka Exp $
+#	$NetBSD: mi,v 1.1235 2009/02/13 20:42:41 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5833,7 +5833,7 @@
 ./usr/share/man/cat3/keyname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/keypad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/killchar.0			comp-c-catman		.cat
-./usr/share/man/cat3/killpg.0			comp-c-catman		.cat,obsolete
+./usr/share/man/cat3/killpg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/krb5.0			comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb524_convert_creds_kdc.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb524_convert_creds_kdc_ccache.0	comp-krb5-catman	kerberos,.cat
@@ -11161,7 +11161,7 @@
 ./usr/share/man/html3/keyname.html		comp-c-htmlman		html
 ./usr/share/man/html3/keypad.html		comp-c-htmlman		html
 ./usr/share/man/html3/killchar.html		comp-c-htmlman		html
-./usr/share/man/html3/killpg.html		comp-c-htmlman		html,obsolete
+./usr/share/man/html3/killpg.html		comp-c-htmlman		html
 ./usr/share/man/html3/krb5.html			comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb524_convert_creds_kdc.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb524_convert_creds_kdc_ccache.html	comp-krb5-htmlman	kerberos,html
@@ -16410,7 +16410,7 @@
 ./usr/share/man/man3/keyname.3			comp-c-man		.man
 ./usr/share/man/man3/keypad.3			comp-c-man		.man
 ./usr/share/man/man3/killchar.3			comp-c-man		.man
-./usr/share/man/man3/killpg.3			comp-c-man		.man,obsolete
+./usr/share/man/man3/killpg.3			comp-c-man		.man
 ./usr/share/man/man3/krb5.3			comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb524_convert_creds_kdc.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb524_convert_creds_kdc_ccache.3	comp-krb5-man		kerberos,.man
