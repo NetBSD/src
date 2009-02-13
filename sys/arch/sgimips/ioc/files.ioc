@@ -1,4 +1,4 @@
-# $NetBSD: files.ioc,v 1.3 2009/02/12 06:33:57 rumble Exp $
+# $NetBSD: files.ioc,v 1.4 2009/02/13 23:55:33 he Exp $
 
 device	ioc {[offset = -1], [intr = -1] }
 attach	ioc at mainbus
@@ -9,7 +9,7 @@ attach	oioc at mainbus
 file	arch/sgimips/ioc/oioc.c			oioc
 
 attach	le at oioc: le24
-file	arch/sgimips/ioc/if_le_oioc.c		le
+file	arch/sgimips/ioc/if_le_oioc.c		le24
 
 device	oiocsc: wd33c93, scsi
 attach	oiocsc at oioc
