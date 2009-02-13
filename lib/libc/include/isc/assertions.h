@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.3 2009/02/12 16:24:59 uebayasi Exp $	*/
+/*	$NetBSD: assertions.h,v 1.4 2009/02/13 04:01:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -105,8 +105,13 @@ const char *assertion_type_to_text(assertion_type type);
 		 ((__assertion_failed)(__FILE__, __LINE__, assert_insist, \
 				       #cond, 1), 0)))
 #else
+#if !defined(__lint__)
 #define INSIST(cond)		((void) (cond))
 #define INSIST_ERR(cond)	((void) (cond))
+#else /* !__lint__ */
+#define INSIST(cond)
+#define INSIST_ERR(cond)
+#endif /* !__lint__ */
 #endif /* CHECK_INSIST */
 
 #if CHECK_INVARIANT != 0
