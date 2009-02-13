@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 2009/01/27 22:00:42 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124 2009/02/13 20:42:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2009/01/27 22:00:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2009/02/13 20:42:24 bouyer Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -126,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2009/01/27 22:00:42 christos Exp $
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
+#include "isa.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +360,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-#if !defined(XEN) || defined(DOM0OPS)
+#if NISA > 0 || NPCI > 0
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
 #endif
@@ -384,12 +386,10 @@ x86_64_switch_context(struct pcb *new)
 	struct cpu_info *ci;
 	ci = curcpu();
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
-	if (xendomain_is_privileged()) {
-		struct physdev_op physop;
-		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = new->pcb_iopl;
-		HYPERVISOR_physdev_op(&physop);
-	}
+	struct physdev_op physop;
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = new->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
 	if (new->pcb_fpcpu != ci) {
 		HYPERVISOR_fpu_taskswitch(1);
 	}
@@ -422,10 +422,16 @@ x86_64_proc0_tss_ldt_init(void)
 #if !defined(XEN)
 	lldt(pcb->pcb_ldt_sel);
 #else
+	{
+	struct physdev_op physop;
 	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
 	HYPERVISOR_fpu_taskswitch(1);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
+	}
 #endif /* XEN */
 }
 
@@ -1268,7 +1274,7 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
 #endif
 
-#if !defined(XEN) || defined(DOM0OPS)
+#if NISA > 0 || NPCI > 0
 	x86_bus_space_init();
 #endif
 
