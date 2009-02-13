@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1183 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1184 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -126,5 +126,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		passing the '-c' flag as mount option. [reinoud 20090208]
 	share/mk: Enable -Wsign-compare for $WARNS>=4.  [lukem 20090212]
 	tests: Converted the awk, basename, bzip2, config, cut, dirname, grep,
-		gzip, m4, make and sdiff to ATF.  Initial work from the GSoC
-		2008 project by Lukasz Strzygowski.  [jmmv 20090213]
+		gzip, libcrypto, m4, make and sdiff tests to ATF.  Initial
+		work from the GSoC 2008 project by Lukasz Strzygowski.
+		[jmmv 20090213]
