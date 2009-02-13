@@ -1,4 +1,4 @@
-# $NetBSD: t_libcrypto.in,v 1.1 2009/02/13 20:58:14 jmmv Exp $
+# $NetBSD: t_libcrypto.in,v 1.2 2009/02/13 22:01:49 jmmv Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -133,6 +133,20 @@ lhash_body()
 {
 	atf_check -o ignore -e ignore -x \
 		"echo hoge | $(atf_get_srcdir)/h_lhashtest"
+}
+
+atf_test_case threads
+threads_head()
+{
+	atf_set "descr" "Checks threading"
+}
+threads_body()
+{
+	$(atf_get_srcdir)/h_threadstest \
+	    -cert $(atf_get_srcdir)/d_server.pem \
+	    -ccert $(atf_get_srcdir)/d_client.pem \
+	    2>&1 | tee out
+	atf_check -s eq:1 -o empty -e empty grep :error: out
 }
 
 atf_init_test_cases()
