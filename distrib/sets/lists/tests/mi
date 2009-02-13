@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.29 2009/02/13 20:58:13 jmmv Exp $
+# $NetBSD: mi,v 1.30 2009/02/13 22:01:48 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -94,6 +94,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
@@ -392,6 +393,8 @@
 ./usr/tests/crypto/libcrypto/Atffile		tests-crypto-tests
 ./usr/tests/crypto/libcrypto/d_conf.out		tests-crypto-tests
 ./usr/tests/crypto/libcrypto/d_conf_ssleay.cnf	tests-crypto-tests
+./usr/tests/crypto/libcrypto/d_client.pem	tests-crypto-tests
+./usr/tests/crypto/libcrypto/d_server.pem	tests-crypto-tests
 ./usr/tests/crypto/libcrypto/h_bftest		tests-crypto-tests
 ./usr/tests/crypto/libcrypto/h_bntest		tests-crypto-tests
 ./usr/tests/crypto/libcrypto/h_casttest		tests-crypto-tests
@@ -420,6 +423,7 @@
 ./usr/tests/crypto/libcrypto/h_rsatest		tests-crypto-tests
 ./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests
 ./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_threadstest	tests-crypto-tests
 ./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests
 ./usr/tests/crypto/libcrypto/t_libcrypto	tests-crypto-tests
 ./usr/tests/fs					tests-fs-tests
