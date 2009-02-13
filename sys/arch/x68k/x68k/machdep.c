@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.160 2009/01/21 16:24:34 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.161 2009/02/13 22:41:03 apb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2009/01/21 16:24:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2009/02/13 22:41:03 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2009/01/21 16:24:34 he Exp $");
 #include "opt_m680x0.h"
 #include "opt_fpu_emulate.h"
 #include "opt_m060sp.h"
+#include "opt_modular.h"
 #include "opt_panicbutton.h"
 #include "opt_extmem.h"
 

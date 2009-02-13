@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.37 2008/11/30 18:21:33 martin Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.38 2009/02/13 22:41:01 apb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.37 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.38 2009/02/13 22:41:01 apb Exp $");
 
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>

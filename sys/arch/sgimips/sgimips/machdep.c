@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 2009/02/12 06:33:57 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 2009/02/13 22:41:03 apb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2009/02/12 06:33:57 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2009/02/13 22:41:03 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_execfmt.h"
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

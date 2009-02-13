@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.173 2009/01/21 16:24:34 he Exp $	 */
+/* $NetBSD: machdep.c,v 1.174 2009/02/13 22:41:03 apb Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,11 +83,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2009/01/21 16:24:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2009/02/13 22:41:03 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_compat_ibcs2.h"

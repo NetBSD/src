@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 2009/01/21 16:24:33 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137 2009/02/13 22:41:02 apb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,10 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2009/01/21 16:24:33 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2009/02/13 22:41:02 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
+#include "opt_modular.h"
 #include "opt_panicbutton.h"
 
 #include <sys/param.h>

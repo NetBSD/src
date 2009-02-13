@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.40 2008/11/30 18:21:33 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.41 2009/02/13 22:41:01 apb Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,12 +107,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2009/02/13 22:41:01 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include "opt_memsize.h"
+#include "opt_modular.h"
 #include "opt_ethaddr.h"
 
 #include <sys/param.h>

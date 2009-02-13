@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.35 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.36 2009/02/13 22:41:04 apb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -108,6 +108,7 @@ __END_DECLS
 #include "opt_compat_43.h"
 #include "opt_compat_osf1.h"
 #include "opt_compat_ibcs2.h"
+#include "opt_modular.h"
 #endif
 
 #if defined(USE_OLD_TTY) || defined(COMPAT_43) || defined(COMPAT_SUNOS) || \

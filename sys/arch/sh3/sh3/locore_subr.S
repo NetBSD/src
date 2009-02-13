@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.49 2008/11/22 01:51:22 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.50 2009/02/13 22:41:03 apb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "assym.h"
 
 #include <sys/syscall.h>	/* SYS___sigreturn14, SYS_exit */
@@ -39,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.49 2008/11/22 01:51:22 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.50 2009/02/13 22:41:03 apb Exp $")
 
 
 /*

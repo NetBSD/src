@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2008/12/17 20:51:32 cegger Exp $	   */
+/*	$NetBSD: pmap.c,v 1.165 2009/02/13 22:41:03 apb Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2008/12/17 20:51:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2009/02/13 22:41:03 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_pipe.h"

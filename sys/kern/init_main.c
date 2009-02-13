@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.381 2009/02/12 18:24:18 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.382 2009/02/13 22:41:04 apb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,10 +97,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.381 2009/02/12 18:24:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.382 2009/02/13 22:41:04 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
+#include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"
