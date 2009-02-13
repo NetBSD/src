@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.6 2009/02/04 00:05:09 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.7 2009/02/13 11:39:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -882,6 +882,9 @@ $check_do_rfi:
 
 	blr	0, %rp
 	rfi
+	nop
+	nop
+	nop
 	nop
 	nop
 	nop
