@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.940 2009/02/12 18:24:18 christos Exp $
+#	$NetBSD: files,v 1.941 2009/02/13 22:41:04 apb Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20081219
@@ -23,6 +23,7 @@ defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
 defflag				COREDUMP
+defflag				MODULAR
 
 defparam			DEFCORENAME
 defparam			HZ

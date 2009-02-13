@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.284 2008/12/17 20:51:36 cegger Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.285 2009/02/13 22:41:04 apb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,9 +59,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.284 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.285 2009/02/13 22:41:04 apb Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_modular.h"
 #include "opt_syscall_debug.h"
 #include "veriexec.h"
 #include "opt_pax.h"

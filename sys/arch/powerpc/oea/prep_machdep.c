@@ -1,4 +1,4 @@
-/* $NetBSD: prep_machdep.c,v 1.5 2008/11/30 18:21:35 martin Exp $ */
+/* $NetBSD: prep_machdep.c,v 1.6 2009/02/13 22:41:03 apb Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.5 2008/11/30 18:21:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.6 2009/02/13 22:41:03 apb Exp $");
+
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>

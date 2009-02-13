@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2009/02/13 22:41:02 apb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2008/12/19 17:11:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/02/13 22:41:02 apb Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"

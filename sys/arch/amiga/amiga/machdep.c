@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2009/01/21 16:24:34 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215 2009/02/13 22:41:01 apb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -82,10 +82,11 @@
 #include "opt_fpu_emulate.h"
 #include "opt_lev6_defer.h"
 #include "opt_m060sp.h"
+#include "opt_modular.h"
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2009/01/21 16:24:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2009/02/13 22:41:01 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
