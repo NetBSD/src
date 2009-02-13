@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.28 2009/02/13 05:20:26 jmmv Exp $
+# $NetBSD: mi,v 1.29 2009/02/13 20:58:13 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -64,6 +64,37 @@
 ./usr/libdata/debug/usr/tests/atf/units/t_text.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_user.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_utils.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/crypto					tests-crypto-debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto				tests-crypto-debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_bftest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_bntest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_casttest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_conftest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_destest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_dhtest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_divtest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_dsatest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ecdhtest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ecdsatest.debug	tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ectest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_enginetest.debug	tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_exptest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,idea
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_hmactest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md2test.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_mdc2test.debug		tests-crypto-debug	debug,mdc2
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc2test.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc4test.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc5test.debug		tests-crypto-debug	debug,rc5
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug
@@ -355,6 +386,42 @@
 ./usr/tests/atf/units/t_text			tests-obsolete		obsolete
 ./usr/tests/atf/units/t_user			tests-obsolete		obsolete
 ./usr/tests/atf/units/t_utils			tests-obsolete		obsolete
+./usr/tests/crypto				tests-crypto-tests
+./usr/tests/crypto/Atffile			tests-crypto-tests
+./usr/tests/crypto/libcrypto			tests-crypto-tests
+./usr/tests/crypto/libcrypto/Atffile		tests-crypto-tests
+./usr/tests/crypto/libcrypto/d_conf.out		tests-crypto-tests
+./usr/tests/crypto/libcrypto/d_conf_ssleay.cnf	tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_bftest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_bntest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_casttest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_conftest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_destest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_dhtest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_divtest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_dsatest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_ecdhtest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_ecdsatest	tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_ectest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_enginetest	tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_exptest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_hmactest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_ideatest		tests-crypto-tests	idea
+./usr/tests/crypto/libcrypto/h_lhashtest	tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_md2test		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_md4test		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_md5test		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_mdc2test		tests-crypto-tests	mdc2
+./usr/tests/crypto/libcrypto/h_randtest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_rc2test		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_rc4test		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_rc5test		tests-crypto-tests	rc5
+./usr/tests/crypto/libcrypto/h_ripemdtest	tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_rsatest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests
+./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests
+./usr/tests/crypto/libcrypto/t_libcrypto	tests-crypto-tests
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests

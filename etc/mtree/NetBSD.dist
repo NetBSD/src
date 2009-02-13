@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.390 2009/02/13 05:20:47 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.391 2009/02/13 20:58:13 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -542,6 +542,8 @@
 ./usr/libdata/debug/usr/tests/atf/formats
 ./usr/libdata/debug/usr/tests/atf/test_programs
 ./usr/libdata/debug/usr/tests/atf/tools
+./usr/libdata/debug/usr/tests/crypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/puffs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
@@ -1400,6 +1402,8 @@
 ./usr/tests/atf/formats
 ./usr/tests/atf/test_programs
 ./usr/tests/atf/tools
+./usr/tests/crypto
+./usr/tests/crypto/libcrypto
 ./usr/tests/fs
 ./usr/tests/fs/puffs
 ./usr/tests/fs/tmpfs
