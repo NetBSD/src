@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.389 2009/02/12 16:14:32 uebayasi Exp $
+#	$NetBSD: NetBSD.dist,v 1.390 2009/02/13 05:20:47 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1409,9 +1409,22 @@
 ./usr/tests/net/sys
 ./usr/tests/syscall
 ./usr/tests/util
+./usr/tests/util/awk
+./usr/tests/util/bzip2
+./usr/tests/util/config
+./usr/tests/util/config/support
+./usr/tests/util/config/support/arch
+./usr/tests/util/config/support/arch/regress
+./usr/tests/util/config/support/arch/regress/conf
+./usr/tests/util/config/support/conf
+./usr/tests/util/cut
 ./usr/tests/util/df
+./usr/tests/util/grep
 ./usr/tests/util/id
+./usr/tests/util/m4
+./usr/tests/util/make
 ./usr/tests/util/ps
+./usr/tests/util/sdiff
 ./usr/tests/util/sh
 ./var
 ./var/account
