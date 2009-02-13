@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.32 2009/01/16 15:14:11 yamt Exp $ */
+/* $NetBSD: wsevent.c,v 1.33 2009/02/13 22:41:04 apb Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,9 +104,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.32 2009/01/16 15:14:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.33 2009/02/13 22:41:04 apb Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

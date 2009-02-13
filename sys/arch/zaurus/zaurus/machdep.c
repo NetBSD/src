@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2009/01/28 13:43:40 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2009/02/13 22:41:04 apb Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,10 +107,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2009/01/28 13:43:40 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2009/02/13 22:41:04 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"

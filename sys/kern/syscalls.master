@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.222 2009/01/26 12:20:05 pooka Exp $
+	$NetBSD: syscalls.master,v 1.223 2009/02/13 22:41:04 apb Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -40,6 +40,7 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
+#include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 

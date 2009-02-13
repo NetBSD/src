@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.660 2009/02/13 20:42:24 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.661 2009/02/13 22:41:02 apb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.660 2009/02/13 20:42:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.661 2009/02/13 22:41:02 apb Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.660 2009/02/13 20:42:24 bouyer Exp $")
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
 #include "opt_mtrr.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_physmem.h"
 #include "opt_realmem.h"

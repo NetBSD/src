@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2009/01/12 07:57:55 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 2009/02/13 22:41:02 apb Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,10 +79,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2009/01/12 07:57:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2009/02/13 22:41:02 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

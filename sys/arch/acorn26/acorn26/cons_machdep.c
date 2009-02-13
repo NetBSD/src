@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.10 2009/01/14 23:14:48 bjh21 Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.11 2009/02/13 22:41:00 apb Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.10 2009/01/14 23:14:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.11 2009/02/13 22:41:00 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/syslog.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.10 2009/01/14 23:14:48 bjh21 Exp 
 
 #include "arcvideo.h"
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "ksyms.h"
 
 #ifdef DDB
