@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.7 2009/02/13 11:39:08 mjf Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.8 2009/02/13 12:38:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1725,7 +1725,7 @@ EXIT($dtlb_u)
 #if defined(HP7000_CPU) || defined(HP7100_CPU)
 /*
  * int desidhash_s(void)
- * int desidhash_t(void)
+ * int desidhash_x(void)
  */
 LEAF_ENTRY_NOPROFILE(desidhash_s)
 ALTENTRY(desidhash_x)
