@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.30 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: xen.h,v 1.31 2009/02/13 21:03:59 bouyer Exp $	*/
 
 /*
  *
@@ -44,12 +44,14 @@ union xen_cmdline_parseinfo {
 	char			xcp_bootdev[16]; /* sizeof(dv_xname) */
 	struct xen_netinfo	xcp_netinfo;
 	char			xcp_console[16];
+	char			xcp_pcidevs[64];
 };
 
 #define	XEN_PARSE_BOOTDEV	0
 #define	XEN_PARSE_NETINFO	1
 #define	XEN_PARSE_CONSOLE	2
 #define	XEN_PARSE_BOOTFLAGS	3
+#define	XEN_PARSE_PCIBACK	4
 
 void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 
