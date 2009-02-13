@@ -1,4 +1,4 @@
-/* $NetBSD: pciif.h,v 1.4 2008/08/22 14:14:04 cegger Exp $ */
+/* $NetBSD: pciif.h,v 1.5 2009/02/13 10:35:48 cegger Exp $ */
 /*
  * PCI Backend/Frontend Common Data Structures & Macros
  *
@@ -30,7 +30,7 @@
 
 /* xen_pci_sharedinfo flags */
 #define _XEN_PCIF_active     (0)
-#define XEN_PCIF_active      (1<<_XEN_PCI_active)
+#define XEN_PCIF_active      (1<<_XEN_PCIF_active)
 
 /* xen_pci_op commands */
 #define XEN_PCI_OP_conf_read    (0)
