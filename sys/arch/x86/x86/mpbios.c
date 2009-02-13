@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.52 2009/01/14 19:31:25 cegger Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.53 2009/02/13 20:51:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.52 2009/01/14 19:31:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.53 2009/02/13 20:51:19 bouyer Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -332,8 +332,8 @@ mpbios_probe(device_t self)
 
  found:
 	if (mp_verbose)
-		aprint_verbose_dev(self, "MP floating pointer found in %s at 0x%lx\n",
-		    loc_where[scan_loc], mp_fp_map.pa);
+		aprint_verbose_dev(self, "MP floating pointer found in %s at 0x%jx\n",
+		    loc_where[scan_loc], (uintmax_t)mp_fp_map.pa);
 
 	if (mp_fps->pap == 0) {
 		if (mp_fps->mpfb1 == 0) {
@@ -356,8 +356,8 @@ mpbios_probe(device_t self)
 	mp_cth = mpbios_map (cthpa, cthlen, &mp_cfg_table_map);
 
 	if (mp_verbose)
-		aprint_verbose_dev(self, "MP config table at 0x%lx, %d bytes long\n",
-		    cthpa, cthlen);
+		aprint_verbose_dev(self, "MP config table at 0x%jx, %d bytes long\n",
+		    (uintmax_t)cthpa, cthlen);
 
 	if (mp_cth->signature != MP_CT_SIG) {
 		aprint_error_dev(self, "MP signature mismatch (%x vs %x)\n",
@@ -421,8 +421,8 @@ mpbios_search(device_t self, paddr_t start, int count,
 	const uint8_t *base = mpbios_map (start, count, &t);
 
 	if (mp_verbose)
-		aprint_verbose_dev(self, "scanning 0x%lx to 0x%lx for MP signature\n",
-		    start, start+count-sizeof(*m));
+		aprint_verbose_dev(self, "scanning 0x%jx to 0x%jx for MP signature\n",
+		    (uintmax_t)start, (uintmax_t)(start+count-sizeof(*m)));
 
 	for (i = 0; i <= end; i += 4) {
 		m = (const struct mpbios_fps *)&base[i];
