@@ -1,12 +1,10 @@
-# $NetBSD: Makefile,v 1.14 2005/01/20 16:39:23 xtraeme Exp $
+# $NetBSD: Makefile,v 1.15 2009/02/14 11:33:56 abs Exp $
 # edlabel (Edit Disk LABEL)
 
 NOMAN=	# defined
 
-.if (${MACHINE} == "sun3") || (${MACHINE} == "sun3x") || \
-    (${MACHINE} == "atari") || (${MACHINE} == "sparc") || \
-    (${MACHINE} == "sparc64") || (${MACHINE} == "mvme68k") || \
-    (${MACHINE} == "sun2")
+.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "sparc" || \
+    ${MACHINE_ARCH} == "sparc64"
 PROG=	edlabel
 LDADD+=-lutil
 DPADD+=${LIBUTIL}

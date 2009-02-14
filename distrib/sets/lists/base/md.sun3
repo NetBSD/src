@@ -1,5 +1,4 @@
-# $NetBSD: md.sun3,v 1.45 2008/11/29 17:57:34 tsutsui Exp $
-./sbin/edlabel					base-sysutil-bin
+# $NetBSD: md.sun3,v 1.46 2009/02/14 11:33:56 abs Exp $
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/bootyy				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete
