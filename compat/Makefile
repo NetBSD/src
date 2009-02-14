@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/10/26 07:38:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/02/14 13:24:32 abs Exp $
 
 # Build 32-bit compat versions of:
 #	src/gnu/lib/libgcc4 into ${DESTDIR}/usr/lib/<32arch>
@@ -10,7 +10,7 @@
 .include <bsd.own.mk>
 
 .if ${MKCOMPAT} != "no" && \
-    (${MACHINE} == "sparc64" || ${MACHINE} == "amd64")
+    (${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "x86_64")
 
 .if !make(includes)
 SUBDIR=	gnu/lib/crtstuff4 .WAIT \
