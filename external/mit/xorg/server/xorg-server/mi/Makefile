@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/10/24 19:50:39 macallan Exp $
+#	$NetBSD: Makefile,v 1.6 2009/02/14 13:32:13 abs Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -33,7 +33,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/../include \
 CPPFLAGS.miscrinit.c=	${X11FLAGS.EXTENSION}
 
 .if 0
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64" || ${MACHINE} == "mac68k"
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "mac68k"
 SRCS+=  miinitext.c
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.miinitext.c+=   -UXF86MISC -UXINPUT -UXF86VIDMODE -UXFreeXDGA
