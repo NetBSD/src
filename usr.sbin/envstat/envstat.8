@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.48 2008/10/29 17:26:57 jkunz Exp $
+.\"	$NetBSD: envstat.8,v 1.49 2009/02/14 16:08:22 ahoka Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,6 +92,9 @@ See the individual devices manual page for meaningful values for
 If not specified, or specified as 0,
 .Nm
 produces one round of values and exits.
+.It Fl k
+Display temperature values in Kelvin.
+The default is to display temperature values in degrees Celsius.
 .It Fl l
 List the names of all supported sensors, one per line.
 Use of this flag causes
