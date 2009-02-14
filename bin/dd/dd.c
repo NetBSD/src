@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.42 2008/07/20 00:52:39 lukem Exp $	*/
+/*	$NetBSD: dd.c,v 1.43 2009/02/14 07:13:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.42 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: dd.c,v 1.43 2009/02/14 07:13:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -355,7 +355,7 @@ dd_in(void)
 			++st.in_full;
 
 		/* Handle full input blocks. */
-		} else if (n == in.dbsz) {
+		} else if ((uint64_t)n == in.dbsz) {
 			in.dbcnt += in.dbrcnt = n;
 			++st.in_full;
 
@@ -509,7 +509,7 @@ dd_out(int force)
 			outp += nw;
 			st.bytes += nw;
 			if (nw == n) {
-				if (n != out.dbsz)
+				if ((uint64_t)n != out.dbsz)
 					++st.out_part;
 				else
 					++st.out_full;
