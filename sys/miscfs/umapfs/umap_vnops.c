@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.44 2009/02/13 22:29:00 plunky Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.45 2009/02/14 16:57:05 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.44 2009/02/13 22:29:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.45 2009/02/14 16:57:05 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ umap_bypass(v)
 	int reles, i, flags;
 	struct componentname **compnamepp = 0;
 
-#ifdef SAFETY
+#ifdef DIAGNOSTIC
 	/*
 	 * We require at least one vp.
 	 */
