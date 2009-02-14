@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28.2.3 2009/02/14 13:46:21 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28.2.4 2009/02/14 13:57:13 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -96,15 +96,7 @@ struct hppa_cpu_info {
 #define	HPPA_FTRS_HVT		0x00000004
 #define	HPPA_FTRS_W32B		0x00000008
 
-	unsigned short hci_pa_spec;
-#define HPPA_PA_SPEC_MAKE(major, minor, letter) \
-  (((major) << 8) | \
-   ((minor) << 4) | \
-   ((letter) == '\0' ? 0 : ((letter) + 0xa - 'a')))
-#define HPPA_PA_SPEC_MAJOR(x) (((x) >> 8) & 0xf)
-#define HPPA_PA_SPEC_MINOR(x) (((x) >> 4) & 0xf)
-#define HPPA_PA_SPEC_LETTER(x) \
-  (((x) & 0xf) == 0 ? '\0' : 'a' + ((x) & 0xf) - 0xa)
+	const char *hci_chip_spec; 
 
 	int (*desidhash)(void);
 	const u_int *itlbh, *dtlbh, *itlbnah, *dtlbnah, *tlbdh;
