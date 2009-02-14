@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.121 2009/01/11 04:34:16 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.122 2009/02/14 20:48:46 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.121 2009/01/11 04:34:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.122 2009/02/14 20:48:46 christos Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -530,7 +530,7 @@ rt_setmetrics(u_long which, const struct rt_metrics *in, struct nrt_metrics *out
 	metric(RTV_RTTVAR, rmx_rttvar);
 	metric(RTV_HOPCOUNT, rmx_hopcount);
 	metric(RTV_MTU, rmx_mtu);
-	/* XXX time_t: Will not work after 2038 */
+	/* XXX time_t: Will not work after February 2145 (u_long time) */
 	metric(RTV_EXPIRE, rmx_expire);
 #undef metric
 }
