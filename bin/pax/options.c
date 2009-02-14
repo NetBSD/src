@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.102 2008/11/23 10:08:50 dholland Exp $	*/
+/*	$NetBSD: options.c,v 1.103 2009/02/14 08:10:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.102 2008/11/23 10:08:50 dholland Exp $");
+__RCSID("$NetBSD: options.c,v 1.103 2009/02/14 08:10:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,7 +254,7 @@ static void
 pax_options(int argc, char **argv)
 {
 	int c;
-	int i;
+	size_t i;
 	u_int64_t flg = 0;
 	u_int64_t bflg = 0;
 	char *pt;
@@ -1473,7 +1473,8 @@ cpio_options(int argc, char **argv)
 	FSUB tmp;
 	u_int64_t flg = 0;
 	u_int64_t bflg = 0;
-	int c, i;
+	int c;
+	size_t i;
 	FILE *fp;
 	char *str;
 
