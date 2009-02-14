@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/11/29 16:49:18 skrll Exp $
+#	$NetBSD: Makefile,v 1.3 2009/02/14 13:48:17 abs Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ CPPFLAGS+=	-DWSCONS_SUPPORT
 CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
 
