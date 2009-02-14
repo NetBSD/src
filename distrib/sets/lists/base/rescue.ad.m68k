@@ -1,1 +1,2 @@
-# $NetBSD: rescue.ad.m68k,v 1.1 2009/02/14 11:33:56 abs Exp $
+# $NetBSD: rescue.ad.m68k,v 1.2 2009/02/14 19:29:30 abs Exp $
+./rescue/edlabel				base-rescue-root
