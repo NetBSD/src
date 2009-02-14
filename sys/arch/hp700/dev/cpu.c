@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10.86.1 2008/10/27 08:02:40 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.86.2 2009/02/14 13:57:13 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.86.1 2008/10/27 08:02:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.86.2 2009/02/14 13:57:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 
 	struct cpu_softc *sc = (struct cpu_softc *)self;
 	struct confargs *ca = aux;
-	char c;
 	const char lvls[4][4] = { "0", "1", "1.5", "2" };
 	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
 
@@ -101,13 +100,10 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	printf(" rev %d", (*hppa_cpu_info->desidhash)());
 
 	/* Print the CPU type, spec, level, category, and speed. */
-	printf("\n%s: %s, PA-RISC %d.%d",
+	printf("\n%s: %s, PA-RISC %s",
 		self->dv_xname,
 		hppa_cpu_info->hci_chip_type,
-		HPPA_PA_SPEC_MAJOR(hppa_cpu_info->hci_pa_spec),
-		HPPA_PA_SPEC_MINOR(hppa_cpu_info->hci_pa_spec));
-	c = HPPA_PA_SPEC_LETTER(hppa_cpu_info->hci_pa_spec);
-	if (c != '\0') printf("%c", c);
+		hppa_cpu_info->hci_chip_spec);
 	printf(", lev %s, cat %c, ",
 		lvls[pdc_model.pa_lvl], "AB"[pdc_model.mc]);
 

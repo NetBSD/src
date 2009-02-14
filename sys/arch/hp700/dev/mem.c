@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16.4.3 2009/01/19 13:16:13 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.16.4.4 2009/02/14 13:57:13 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.4.3 2009/01/19 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.4.4 2009/02/14 13:57:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,9 +263,7 @@ memattach(struct device *parent, struct device *self, void *aux)
 	printf ("MB");
 
 	/* L2 cache controller is a part of the memory controller on PCXL2 */
-	if (HPPA_PA_SPEC_MAJOR(hppa_cpu_info->hci_pa_spec) == 1 &&
-	    HPPA_PA_SPEC_MINOR(hppa_cpu_info->hci_pa_spec) == 1 &&
-	    HPPA_PA_SPEC_LETTER(hppa_cpu_info->hci_pa_spec) == 'e') {
+	if (hppa_cpu_info->hci_type == hpcxl2) {
 		sc->sc_l2 = (struct l2_mioc *)ca->ca_hpa;
 #ifdef DEBUG
 		snprintb(bits, sizeof(bits), SLTCV_BITS, sc->sc_l2->sltcv);

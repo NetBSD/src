@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.7.12.1 2008/10/27 08:02:40 skrll Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.7.12.2 2009/02/14 13:57:13 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.7.12.1 2008/10/27 08:02:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.7.12.2 2009/02/14 13:57:13 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -206,7 +206,7 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 	struct iee_gsc_softc *sc_gsc = device_private(self);
 	struct iee_softc *sc = &sc_gsc->iee_sc;
 	struct gsc_attach_args *ga = aux;
-	char cpu_spec;
+	enum hppa_cpu_type cpu_type;
 	int media[2];
 	int rsegs;
 
@@ -222,8 +222,8 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 	 * descriptors align to cache lines. Needed to avoid race conditions 
 	 * caused by flushing cache lines that overlap multiple descriptors. 
 	 */
-        cpu_spec = HPPA_PA_SPEC_LETTER(hppa_cpu_info->hci_pa_spec);
-	if (cpu_spec == '\0' || cpu_spec == 'a' || cpu_spec == 'b')
+        cpu_type = hppa_cpu_info->hci_type;
+	if (cpu_type == hpcx || cpu_type == hpcxs || cpu_type == hpcxt)
 		sc->sc_cl_align = 32;
 	else
 		sc->sc_cl_align = 1;
