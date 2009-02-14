@@ -1,4 +1,4 @@
-/* $NetBSD: exp.c,v 1.19 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: exp.c,v 1.20 2009/02/14 07:12:29 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: exp.c,v 1.19 2007/07/16 18:26:10 christos Exp $");
+__RCSID("$NetBSD: exp.c,v 1.20 2009/02/14 07:12:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -523,7 +523,7 @@ exp6(Char ***vp, int ignore)
 #endif
 		break;
 	    case 'o':
-		i = stb.st_uid == uid;
+		i = stb.st_uid == (uid_t)uid;
 		break;
 	    case 'p':
 #ifdef S_ISFIFO
