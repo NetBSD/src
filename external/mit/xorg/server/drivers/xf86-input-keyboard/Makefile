@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/12/21 21:20:03 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.9 2009/02/14 13:32:13 abs Exp $
 
 DRIVER=		xf86-input-keyboard
 DRIVER_NAME=	kbd_drv
@@ -6,7 +6,7 @@ DRIVER_NAME=	kbd_drv
 SRCS=		kbd.c bsd_KbdMap.c bsd_kbd.c at_scancode.c
 MAN=		kbd.4
 
-.if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
 CPPFLAGS+=	-DWSCONS_SUPPORT
