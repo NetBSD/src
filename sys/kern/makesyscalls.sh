@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.81 2009/01/23 19:29:38 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.82 2009/02/14 16:21:23 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -679,7 +679,7 @@ END {
 			syscall++
 		}
 	}
-	printf("};\n\n") > sysent
+	printf("};\n") > sysent
 	printf("};\n") > sysnamesbottom
 	printf("#define\t%sMAXSYSCALL\t%d\n", constprefix, maxsyscall) > sysnumhdr
 	if (nsysent)
