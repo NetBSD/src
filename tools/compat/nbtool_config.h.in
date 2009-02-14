@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.15.2.2 2008/11/18 21:08:40 snj Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.15.2.3 2009/02/14 19:50:28 snj Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -92,6 +92,14 @@
    don't. */
 #undef HAVE_DECL_FSTATVFS
 
+/* Define to 1 if you have the declaration of `gid_from_group', and to 0 if
+   you don't. */
+#undef HAVE_DECL_GID_FROM_GROUP
+
+/* Define to 1 if you have the declaration of `group_from_gid', and to 0 if
+   you don't. */
+#undef HAVE_DECL_GROUP_FROM_GID
+
 /* Define to 1 if you have the declaration of `htobe16', and to 0 if you
    don't. */
 #undef HAVE_DECL_HTOBE16
@@ -115,6 +123,18 @@
 /* Define to 1 if you have the declaration of `htole64', and to 0 if you
    don't. */
 #undef HAVE_DECL_HTOLE64
+
+/* Define to 1 if you have the declaration of `lchflags', and to 0 if you
+   don't. */
+#undef HAVE_DECL_LCHFLAGS
+
+/* Define to 1 if you have the declaration of `lchmod', and to 0 if you don't.
+   */
+#undef HAVE_DECL_LCHMOD
+
+/* Define to 1 if you have the declaration of `lchown', and to 0 if you don't.
+   */
+#undef HAVE_DECL_LCHOWN
 
 /* Define to 1 if you have the declaration of `le16dec', and to 0 if you
    don't. */
@@ -160,6 +180,14 @@
    don't. */
 #undef HAVE_DECL_OPTRESET
 
+/* Define to 1 if you have the declaration of `pwcache_groupdb', and to 0 if
+   you don't. */
+#undef HAVE_DECL_PWCACHE_GROUPDB
+
+/* Define to 1 if you have the declaration of `pwcache_userdb', and to 0 if
+   you don't. */
+#undef HAVE_DECL_PWCACHE_USERDB
+
 /* Define to 1 if you have the declaration of `setgroupent', and to 0 if you
    don't. */
 #undef HAVE_DECL_SETGROUPENT
@@ -168,6 +196,10 @@
    don't. */
 #undef HAVE_DECL_SETPASSENT
 
+/* Define to 1 if you have the declaration of `strndup', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNDUP
+
 /* Define to 1 if you have the declaration of `strsuftoll', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRSUFTOLL
@@ -175,6 +207,14 @@
 /* Define to 1 if you have the declaration of `sys_signame', and to 0 if you
    don't. */
 #undef HAVE_DECL_SYS_SIGNAME
+
+/* Define to 1 if you have the declaration of `uid_from_user', and to 0 if you
+   don't. */
+#undef HAVE_DECL_UID_FROM_USER
+
+/* Define to 1 if you have the declaration of `user_from_uid', and to 0 if you
+   don't. */
+#undef HAVE_DECL_USER_FROM_UID
 
 /* Define if you have the `devname' function. */
 #undef HAVE_DEVNAME
@@ -229,6 +269,9 @@
 
 /* Define if you have the `getopt_long' function. */
 #undef HAVE_GETOPT_LONG
+
+/* Define if you have the `gid_from_group' function. */
+#undef HAVE_GID_FROM_GROUP
 
 /* Define if you have the `group_from_gid' function. */
 #undef HAVE_GROUP_FROM_GID
@@ -319,6 +362,9 @@
 
 /* Define if you have the `putc_unlocked' function. */
 #undef HAVE_PUTC_UNLOCKED
+
+/* Define if you have the `pwcache_groupdb' function. */
+#undef HAVE_PWCACHE_GROUPDB
 
 /* Define if you have the `pwcache_userdb' function. */
 #undef HAVE_PWCACHE_USERDB
@@ -478,6 +524,9 @@
 
 /* Define if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
+
+/* Define if you have the `uid_from_user' function. */
+#undef HAVE_UID_FROM_USER
 
 /* Define if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
