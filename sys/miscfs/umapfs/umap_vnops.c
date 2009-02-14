@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.45 2009/02/14 16:57:05 plunky Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.46 2009/02/14 17:29:11 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.45 2009/02/14 16:57:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.46 2009/02/14 17:29:11 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.45 2009/02/14 16:57:05 plunky Exp $
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/layer_extern.h>
+
+/*
+ * Note: If the LAYERFS_MBYPASSDEBUG flag is set, it is possible
+ * that the debug printing will bomb out, because kauth routines
+ * do not handle NOCRED or FSCRED like other credentials and end
+ * up dereferencing an inappropriate pointer.
+ *
+ * That should be fixed in kauth rather than here.
+ */
 
 int	umap_lookup(void *);
 int	umap_getattr(void *);
