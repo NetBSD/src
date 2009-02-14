@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2009/02/13 22:01:49 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2009/02/14 05:07:54 cube Exp $
 
 HELPER_NAME=	threadstest
-HELPER_DIR=	md5
+HELPER_DIR=	threads
 HELPER_SRCS=	mttest.c
 
 CPPFLAGS+=	-DPTHREADS
