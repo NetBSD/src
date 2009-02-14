@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2009/02/13 01:27:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.41 2009/02/14 14:05:58 uebayasi Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCS=		cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
 MAN=		lint.7
 WARNS=		3	# this code is by no means -Wsign-compare friendly
 YHEADER=
-CFLAGS+=-g
+#CFLAGS+=-g
 
 CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
 
