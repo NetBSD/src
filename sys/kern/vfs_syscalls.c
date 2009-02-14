@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.386 2009/02/14 16:55:25 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.387 2009/02/14 17:06:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.386 2009/02/14 16:55:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.387 2009/02/14 17:06:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -882,25 +882,29 @@ done:
 			return error;
 		}
 		len = strlen(bp);
-		/*
-		 * for mount points that are below our root, we can see
-		 * them, so we fix up the pathname and return them. The
-		 * rest we cannot see, so we don't allow viewing the
-		 * data.
-		 */
-		if (strncmp(bp, sp->f_mntonname, len) == 0 && (len <= 1 ||
-		    (c = sp->f_mntonname[len]) == '/' || c == '\0')) {
-			(void)strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
-			    sizeof(sp->f_mntonname));
-			if (sp->f_mntonname[0] == '\0')
-				(void)strlcpy(sp->f_mntonname, "/",
+		if (len != 1) {
+			/*
+			 * for mount points that are below our root, we can see
+			 * them, so we fix up the pathname and return them. The
+			 * rest we cannot see, so we don't allow viewing the
+			 * data.
+			 */
+			if (strncmp(bp, sp->f_mntonname, len) == 0 &&
+			    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
+
+				(void)strlcpy(sp->f_mntonname,
+				    &sp->f_mntonname[len],
 				    sizeof(sp->f_mntonname));
-		} else {
-			if (root)
-				(void)strlcpy(sp->f_mntonname, "/",
-				    sizeof(sp->f_mntonname));
-			else
-				error = EPERM;
+				if (sp->f_mntonname[0] == '\0')
+					(void)strlcpy(sp->f_mntonname, "/",
+					    sizeof(sp->f_mntonname));
+			} else {
+				if (root)
+					(void)strlcpy(sp->f_mntonname, "/",
+					    sizeof(sp->f_mntonname));
+				else
+					error = EPERM;
+			}
 		}
 		PNBUF_PUT(path);
 	}
