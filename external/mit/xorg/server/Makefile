@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile,v 1.5 2008/11/09 23:02:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2009/02/14 12:42:48 abs Exp $
 
 # Makefile for modular-xorg-server and drivers
 
 .include <bsd.own.mk>
 
-SUBDIR=	xorg-server drivers
+.include "xorg-server/Makefile.common"
+
+SUBDIR=	xorg-server
+.if ${XSERVER_XFREE86} != "no"
+SUBDIR+= drivers
+.endif
 
 .include <bsd.subdir.mk>
