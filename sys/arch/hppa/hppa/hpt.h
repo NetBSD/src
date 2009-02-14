@@ -1,4 +1,4 @@
-/*	$NetBSD: hpt.h,v 1.3.8.2 2008/12/15 18:03:11 skrll Exp $	*/
+/*	$NetBSD: hpt.h,v 1.3.8.3 2009/02/14 14:40:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -108,32 +108,9 @@
  *	Pmap header for hppa.
  */
 
-#if 0
-/* Predeclare struct hpt_entry. */
-struct hpt_entry;
-
 /*
- * keep it at 32 bytes for the cache overall satisfaction
- * also, align commonly used pairs on double-word boundary
- */
-struct pv_entry {
-	struct pv_entry	*pv_next;	/* list of mappings of a given PA */
-	pmap_t		pv_pmap;	/* back link to pmap */
-	u_int		pv_va;		/* virtual page number */
-	u_int		pv_space;	/* copy of space id from pmap */
-	u_int		pv_tlbpage;	/* physical page (for TLB load) */
-	u_int		pv_tlbprot;	/* TLB format protection */
-	struct pv_entry *pv_hash;	/* VTOP hash bucket list */
-	struct hpt_entry *pv_hpt;	/* pointer to HPT entry */
-};
-#endif
-
-/*
- * If HPT is defined, we cache the last miss for each bucket using a
- * structure defined for the 7100 hardware TLB walker.
+ * HPT structure as used in the 7100LC/7300LC hardware TLB walker.
  *
- * The pv_entry pointer is the address of the associated hash bucket
- * list for fast tlbmiss search.
  */
 struct hpt_entry {
 	u_int	hpt_valid:1,	/* Valid bit */
@@ -141,7 +118,7 @@ struct hpt_entry {
 		hpt_space:16;	/* Space ID */
 	u_int	hpt_tlbprot;	/* prot/access rights (for TLB load) */
 	u_int	hpt_tlbpage;	/* physical page (<<5 for TLB load) */
-	struct pv_entry	*hpt_entry;	/* Pointer to associated hash list */
+	struct pv_entry	*hpt_next;	/* Pointer to associated hash list */
 };
 
 #define	KERNEL_ACCESS_ID 1
