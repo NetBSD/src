@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.522 2009/01/21 14:36:10 jnemeth Exp $
+$NetBSD: usbdevs,v 1.523 2009/02/14 17:01:23 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -264,6 +264,7 @@ vendor EICON		0x0734	Eicon Networks
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
+vendor CYBERPOWER	0x0764  CyberPower Systems, Inc.
 vendor SURECOM		0x0769	Surecom Technology
 vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
@@ -896,6 +897,9 @@ product CSR BLUETOOTH_NF	0xffff	Bluetooth USB Adapter
 
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub
+
+/* CyberPower Systems, Inc. products */
+product CYBERPOWER UPS		0x0501	Uninterruptible Power Supply
 
 /* CyberTAN Technology products */
 product CYBERTAN TG54USB	0x1666	TG54USB
