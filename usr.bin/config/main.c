@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2009/02/14 21:28:58 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -420,7 +420,7 @@ main(int argc, char **argv)
 	 * Ready to go.  Build all the various files.
 	 */
 	if (mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
-	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident())
+	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident() || errors)
 		stop();
 	(void)printf("Build directory is %s\n", builddir);
 	(void)printf("Don't forget to run \"make depend\"\n");
