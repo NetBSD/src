@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.1.1.3 2008/10/29 16:18:14 joerg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.1.1.4 2009/02/14 19:37:00 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
- * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
+ * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,11 @@
  * $ftpioId: ftpio.c,v 1.30 1998/04/11 07:28:53 phk Exp $
  *
  */
+
+#ifdef __linux__
+/* Keep this down to Linux, it can create surprises else where. */
+#define _GNU_SOURCE
+#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -1122,7 +1127,8 @@ ftp_request(struct url *url, const char *op, const char *op_arg,
 	fetchIO *f;
 	char *path;
 	conn_t *conn;
-	int oflag;
+	int if_modified_since, oflag;
+	struct url_stat local_us;
 
 	/* check if we should use HTTP instead */
 	if (purl && strcasecmp(purl->scheme, SCHEME_HTTP) == 0) {
@@ -1154,12 +1160,23 @@ ftp_request(struct url *url, const char *op, const char *op_arg,
 		return (NULL);
 	}
 
+	if_modified_since = CHECK_FLAG('i');
+	if (if_modified_since && us == NULL)
+		us = &local_us;
+
 	/* stat file */
 	if (us && ftp_stat(conn, path, us) == -1
 	    && fetchLastErrCode != FETCH_PROTO
 	    && fetchLastErrCode != FETCH_UNAVAIL) {
 		free(path);
 		return (NULL);
+	}
+
+	if (if_modified_since && url->last_modified > 0 &&
+	    url->last_modified >= us->mtime) {
+		fetchLastErrCode = FETCH_UNCHANGED;
+		snprintf(fetchLastErrString, MAXERRSTRING, "Unchanged");
+		return NULL;
 	}
 
 	/* just a stat */
