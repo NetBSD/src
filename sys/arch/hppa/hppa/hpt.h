@@ -1,4 +1,4 @@
-/*	$NetBSD: hpt.h,v 1.3.8.3 2009/02/14 14:40:37 skrll Exp $	*/
+/*	$NetBSD: hpt.h,v 1.3.8.4 2009/02/14 14:43:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -120,5 +120,3 @@ struct hpt_entry {
 	u_int	hpt_tlbpage;	/* physical page (<<5 for TLB load) */
 	struct pv_entry	*hpt_next;	/* Pointer to associated hash list */
 };
-
-#define	KERNEL_ACCESS_ID 1
