@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.39 2008/04/28 20:22:51 martin Exp $	*/
+/*	$NetBSD: ftree.c,v 1.40 2009/02/14 08:10:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -71,7 +71,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.39 2008/04/28 20:22:51 martin Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.40 2009/02/14 08:10:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -435,7 +435,7 @@ next_file(ARCHD *arcn)
 						/* get current name */
 		if (snprintf(curpath, sizeof(curpath), "%s%s%s",
 		    curdir, curdirlen ? "/" : "", ftnode->name)
-		    >= sizeof(curpath)) {
+		    >= (int)sizeof(curpath)) {
 			tty_warn(1, "line %lu: %s: %s", (u_long)ftnode->lineno,
 			    curdir, strerror(ENAMETOOLONG));
 			return (-1);
