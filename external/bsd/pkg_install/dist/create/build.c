@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $	*/
+/*	$NetBSD: build.c,v 1.1.1.3 2009/02/14 17:19:13 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: build.c,v 1.1.1.2 2009/02/02 20:44:03 joerg Exp $");
+__RCSID("$NetBSD: build.c,v 1.1.1.3 2009/02/14 17:19:13 joerg Exp $");
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -320,7 +320,6 @@ make_dist(const char *pkg, const char *suffix, const package_t *plist)
 		errx(2, "cannot finish archive: %s", archive_error_string(archive));
 	archive_write_finish(archive);
 
-	chdir(initial_cwd);
 	free(initial_cwd);
 }
 
