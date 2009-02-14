@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.3 2009/02/14 17:19:25 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.3 2009/02/14 17:19:25 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -298,9 +298,7 @@ pkg_do(const char *pkg)
 #else
 		struct archive *archive;
 		void *archive_cookie;
-#  ifdef HAVE_SSL
 		void *signature_cookie;
-#  endif
 		struct archive_entry *entry;
 		char *pkgname;
 
@@ -311,17 +309,15 @@ pkg_do(const char *pkg)
 		}
 		pkgname = NULL;
 		entry = NULL;
-#  ifdef HAVE_SSL
 		pkg_verify_signature(&archive, &entry, &pkgname,
 		    &signature_cookie);
-#  endif
+		if (archive == NULL)
+			return -1;
 		free(pkgname);
 
 		meta = read_meta_data_from_archive(archive, entry);
 		close_archive(archive_cookie);
-#  ifdef HAVE_SSL
 		pkg_free_signature(signature_cookie);
-#  endif
 		if (!IS_URL(pkg))
 			binpkgfile = pkg;
 #endif
@@ -363,10 +359,17 @@ pkg_do(const char *pkg)
 		show_index(meta->meta_comment, tmp);
 	} else if (Flags & SHOW_BI_VAR) {
 		if (strcspn(BuildInfoVariable, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-		    == strlen(BuildInfoVariable))
-			show_var(meta->meta_installed_info, BuildInfoVariable);
-		else
-			show_var(meta->meta_build_info, BuildInfoVariable);
+		    == strlen(BuildInfoVariable)) {
+			if (meta->meta_installed_info)
+				show_var(meta->meta_installed_info, BuildInfoVariable);
+			else
+				warnx("Installation information missing");
+		} else {
+			if (meta->meta_build_info)
+				show_var(meta->meta_build_info, BuildInfoVariable);
+			else
+				warnx("Build information missing");
+		}
 	} else {
 		package_t plist;
 		
