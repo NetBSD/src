@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.27 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: file.c,v 1.28 2009/02/14 07:12:29 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.27 2007/07/16 18:26:10 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.28 2009/02/14 07:12:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -516,7 +516,7 @@ again:				/* search for matches */
 	    !looking_for_lognames)
 	    continue;
 	if (command == LIST) {
-	    if (numitems >= maxitems) {
+	    if ((size_t)numitems >= maxitems) {
 		maxitems += 1024;
 		if (items == NULL)
 			items = (Char **) xmalloc(sizeof(*items) * maxitems);
