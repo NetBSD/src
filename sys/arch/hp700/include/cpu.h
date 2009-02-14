@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28.2.2 2008/11/18 14:09:39 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28.2.3 2009/02/14 13:46:21 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -73,7 +73,7 @@ enum hppa_cpu_type {
 	hpcxw,	/* PA8500 (w)		PA 2.0 */
 	hpcxwp,	/* PA8600 (w+)		PA 2.0 */
 	hpcxw2, /* PA8700 (piranha)	PA 2.0 */
-	mako	/* PA8800 (mako)	PA 2.0  */
+	mako	/* PA8800 (mako)	PA 2.0 */
 };
 
 /*
