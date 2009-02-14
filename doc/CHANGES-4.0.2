@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.17 2009/01/31 21:56:46 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.18 2009/02/14 19:49:17 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -150,4 +150,12 @@ sbin/raidctl/raidctl.c				1.40
 
 	Patch supplied by Bernhard Moellemann in PR bin/40479.
 	[tron, ticket #1270]
+
+tools/compat/compat_defs.h
+tools/compat/configure
+tools/compat/configure.ac
+tools/compat/nbtool_config.h.in
+
+	Fix build on netbsd-5 amd64 hosts.
+	[adrianp, ticket #1278]
 
