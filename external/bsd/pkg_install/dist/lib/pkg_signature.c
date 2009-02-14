@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.1.1.2 2009/02/14 17:19:32 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.2 2009/02/14 17:19:32 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -178,10 +178,12 @@ read_file_from_archive(struct archive *archive, struct archive_entry **entry,
 retry:
 	if (*entry == NULL &&
 	    (r = archive_read_next_header(archive, entry)) != ARCHIVE_OK) {
-		if (r == ARCHIVE_FATAL)
+		if (r == ARCHIVE_FATAL) {
 			warnx("Cannot read from archive: %s",
 			    archive_error_string(archive));
-		return -1;
+			return -1;
+		}
+		return 1;
 	}
 	if (strcmp(archive_entry_pathname(*entry), "//") == 0) {
 		archive_read_data_skip(archive);
@@ -190,7 +192,7 @@ retry:
 	}
 
 	if (strcmp(fname, archive_entry_pathname(*entry)) != 0)
-		return -1;
+		return 1;
 
 	if (archive_entry_size(*entry) > SSIZE_MAX - 1) {
 		warnx("signature too large to process");
@@ -329,6 +331,8 @@ pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
 	r = read_file_from_archive(*archive, entry, HASH_FNAME,
 	    &hash_file, &hash_len);
 	if (r == -1) {
+		archive_read_finish(*archive);
+		*archive = NULL;
 		free(state);
 		goto no_valid_signature;
 	} else if (r == 1) {
@@ -341,12 +345,24 @@ pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
 
 	r = read_file_from_archive(*archive, entry, SIGNATURE_FNAME,
 	    &signature_file, &signature_len);
-	if (r != 0) {
+	if (r == -1) {
+		archive_read_finish(*archive);
+		*archive = NULL;
+		free(state);
+		free(hash_file);
+		goto no_valid_signature;
+	} else if (r != 0) {
 		if (*entry != NULL)
 			r = read_file_from_archive(*archive, entry,
 			    GPG_SIGNATURE_FNAME,
 			    &signature_file, &signature_len);
-		if (r != 0) {
+		if (r == -1) {
+			archive_read_finish(*archive);
+			*archive = NULL;
+			free(state);
+			free(hash_file);
+			goto no_valid_signature;
+		} else if (r != 0) {
 			free(hash_file);
 			free(state);
 			goto no_valid_signature;
@@ -356,10 +372,16 @@ pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
 
 		free(signature_file);
 	} else {
+#ifdef HAVE_SSL
 		has_sig = !easy_pkcs7_verify(hash_file, hash_len, signature_file,
 		    signature_len, certs_packages, 1);
 
 		free(signature_file);
+#else
+		warnx("No OpenSSL support compiled in, skipping signature");
+		has_sig = 0;
+		free(signature_file);
+#endif
 	}
 
 	r = archive_read_next_header(*archive, &my_entry);
@@ -398,21 +420,21 @@ no_valid_signature:
 }
 
 int
-pkg_full_signature_check(struct archive *archive)
+pkg_full_signature_check(struct archive **archive)
 {
 	struct archive_entry *entry = NULL;
 	char *pkgname;
 	void *cookie;
 	int r;
 
-	if (pkg_verify_signature(&archive, &entry, &pkgname, &cookie))
+	if (pkg_verify_signature(archive, &entry, &pkgname, &cookie))
 		return -1;
 	if (pkgname == NULL)
 		return 0;
 
 	/* XXX read PLIST and compare pkgname */
-	while ((r = archive_read_next_header(archive, &entry)) == ARCHIVE_OK)
-		archive_read_data_skip(archive);
+	while ((r = archive_read_next_header(*archive, &entry)) == ARCHIVE_OK)
+		archive_read_data_skip(*archive);
 
 	pkg_free_signature(cookie);
 	free(pkgname);
@@ -503,6 +525,7 @@ static const char hash_template[] =
 
 static const char hash_trailer[] = "end pkgsrc signature\n";
 
+#ifdef HAVE_SSL
 void
 pkg_sign_x509(const char *name, const char *output, const char *key_file, const char *cert_file)
 {
@@ -593,6 +616,7 @@ pkg_sign_x509(const char *name, const char *output, const char *key_file, const 
 
 	exit(0);
 }
+#endif
 
 void
 pkg_sign_gpg(const char *name, const char *output)

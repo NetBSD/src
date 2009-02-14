@@ -135,9 +135,6 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
-/* Define to 1 if you have the `tgetent' function. */
-#undef HAVE_TGETENT
-
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
 

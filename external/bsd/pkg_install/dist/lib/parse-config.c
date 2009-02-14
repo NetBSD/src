@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.2 2009/02/14 17:19:30 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.2 2009/02/14 17:19:30 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: parse-config.c,v 1.1.1.1 2009/02/02 20:44:07 joerg Exp $");
 
 const char     *config_file = SYSCONFDIR"/pkg_install.conf";
 
-char fetch_flags[10];
+char fetch_flags[10] = ""; /* Workaround Mac OS X linker issues with BSS */
 static const char *active_ftp;
 static const char *verbose_netio;
 static const char *ignore_proxy;

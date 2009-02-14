@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.2 2009/02/02 20:44:06 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.3 2009/02/14 17:19:30 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -308,7 +308,7 @@ Boolean isempty(const char *);
 int     URLlength(const char *);
 Boolean make_preserve_name(char *, size_t, char *, char *);
 void    remove_files(const char *, const char *);
-int     delete_hierarchy(char *, Boolean, Boolean);
+int     delete_hierarchy(const char *, Boolean, Boolean);
 int     format_cmd(char *, size_t, const char *, const char *, const char *);
 
 int	recursive_remove(const char *, int);
@@ -376,12 +376,12 @@ void pkg_install_config(void);
 /* Print configuration variable */
 void pkg_install_show_variable(const char *);
 
-#ifdef HAVE_SSL
 /* Package signature creation and validation */
 int pkg_verify_signature(struct archive **, struct archive_entry **, char **,
     void **);
-int pkg_full_signature_check(struct archive *);
+int pkg_full_signature_check(struct archive **);
 void pkg_free_signature(void *);
+#ifdef HAVE_SSL
 void pkg_sign_x509(const char *, const char *, const char *, const char *);
 #endif
 

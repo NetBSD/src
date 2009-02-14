@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.3 2009/02/14 17:19:22 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.3 2009/02/14 17:19:22 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -79,7 +79,6 @@ static int require_delete(int);
 static void require_print(void);
 static int undepend(const char *, void *);
 
-static char LogDir[MaxPathSize];
 static char linebuf[MaxPathSize];
 
 static package_t Plist;
@@ -705,7 +704,9 @@ pkg_do(char *pkg)
 	if (Destdir != NULL)
 		setenv(PKG_DESTDIR_VNAME, Destdir, 1);
 	setenv(PKG_PREFIX_VNAME, p->name, 1);
-	setenv(PKG_METADATA_DIR_VNAME, LogDir, 1);
+	fname = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	setenv(PKG_METADATA_DIR_VNAME, fname, 1);
+	free(fname);
 	/*
 	 * Ensure that we don't do VIEW-DEINSTALL action for old packages
 	 * or for the package in its depot directory.

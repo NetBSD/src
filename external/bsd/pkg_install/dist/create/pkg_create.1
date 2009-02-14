@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.2 2009/02/02 20:44:04 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.1.1.3 2009/02/14 17:19:16 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -257,7 +257,7 @@ as the initial directory
 to start from in selecting files for
 the package.
 .It Fl R
-Re-order any directories in the pkg/PLIST file into reverse alphabetic
+Re-order any directories in the PLIST file into reverse alphabetic
 order, so that child directories will automatically be removed before
 parent directories.
 .It Fl S Ar size-all-file
@@ -419,7 +419,7 @@ Set default group ownership for all subsequently extracted files to
 Use without an arg to set back to default (extraction)
 group ownership.
 .It Cm @comment Ar string
-Imbed a comment in the packing list.
+Embed a comment in the packing list.
 Useful in trying to document some particularly hairy sequence that
 may trip someone up later.
 .It Cm @ignore

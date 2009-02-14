@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.2 2009/02/02 20:44:02 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.3 2009/02/14 17:19:03 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -172,7 +172,7 @@ you know what you are doing!
 If the package that's being installed is already installed,
 an update is performed.
 It is currently not possible to update to an identical version.
-If this is specified twice, then any dependant packages that are
+If this is specified twice, then any dependent packages that are
 too old will also be updated to fulfill the dependency.
 See below for a more detailed description of the process.
 .It Fl V
@@ -294,7 +294,7 @@ conflicts with the package.
 If it is, installation is terminated.
 .It
 The file list of the package is compared to the file lists of the
-installed packeges.
+installed packages.
 If there is any overlap, the installation is terminated.
 .It
 All package dependencies (from
@@ -311,7 +311,7 @@ If the
 option was specified twice, any required packages that are installed,
 but which have a version number that is considered to be too old,
 are also updated.
-The dependant packages are found according to the normal
+The dependent packages are found according to the normal
 .Ev PKG_PATH
 rules.
 .It
@@ -330,7 +330,7 @@ If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
 .It
-The files from the file list are extracted to the choosen prefix.
+The files from the file list are extracted to the chosen prefix.
 .It
 If an
 .Ar install
@@ -490,7 +490,7 @@ If you do this, consider installing and using the
 package and running it after every
 .Nm .
 .Sh CONFIGURATION VARIABLES
-The following variables change the behaviour of
+The following variables change the behavior of
 .Nm
 and are described in
 .Xr pkg_install.conf 5 :

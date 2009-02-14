@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:01 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.3 2009/02/14 17:18:56 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:01 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.3 2009/02/14 17:18:56 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -45,6 +45,9 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.2 2009/02/02 20:44:01 joerg Exp $");
 #include <err.h>
 #endif
 #include <errno.h>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -455,7 +458,7 @@ read_buildinfo(struct pkg_task *pkg)
 
 	data = pkg->meta_data.meta_build_info;
 
-	for (; *data != '\0'; data = next_line) {
+	for (; data != NULL && *data != '\0'; data = next_line) {
 		if ((eol = strchr(data, '\n')) == NULL) {
 			eol = data + strlen(data);
 			next_line = eol;
@@ -887,9 +890,30 @@ run_install_script(struct pkg_task *pkg, const char *argument)
 	return ret;
 }
 
+struct find_conflict_data {
+	const char *pkg;
+	const char *old_pkg;
+	const char *pattern;
+};
+
+static int
+check_explicit_conflict_iter(const char *cur_pkg, void *cookie)
+{
+	struct find_conflict_data *data = cookie;
+
+	if (strcmp(data->old_pkg, cur_pkg) == 0)
+		return 0;
+
+	warnx("Package `%s' conflicts with `%s', and `%s' is installed.",
+	    data->pkg, data->pattern, cur_pkg);
+
+	return 1;
+}
+
 static int
 check_explicit_conflict(struct pkg_task *pkg)
 {
+	struct find_conflict_data data;
 	char *installed, *installed_pattern;
 	plist_t *p;
 	int status;
@@ -900,15 +924,14 @@ check_explicit_conflict(struct pkg_task *pkg)
 		if (p->type == PLIST_IGNORE) {
 			p = p->next;
 			continue;
-		} else if (p->type != PLIST_PKGCFL)
-			continue;
-		installed = find_best_matching_installed_pkg(p->name);
-		if (installed) {
-			warnx("Package `%s' conflicts with `%s', and `%s' is installed.",
-			    pkg->pkgname, p->name, installed);
-			free(installed);
-			status = -1;
 		}
+		if (p->type != PLIST_PKGCFL)
+			continue;
+		data.pkg = pkg->pkgname;
+		data.old_pkg = pkg->other_version;
+		data.pattern = p->name;
+		status |= match_installed_pkgs(p->name,
+		    check_explicit_conflict_iter, &data);
 	}
 
 	if (some_installed_package_conflicts_with(pkg->pkgname,
@@ -917,7 +940,7 @@ check_explicit_conflict(struct pkg_task *pkg)
 			installed, installed_pattern, pkg->pkgname);
 		free(installed);
 		free(installed_pattern);
-		status = -1;
+		status |= -1;
 	}
 
 	return status;
@@ -1232,13 +1255,11 @@ pkg_do(const char *pkgpath, int mark_automatic)
 		goto clean_find_archive;
 	}
 
-#ifdef HAVE_SSL
 	invalid_sig = pkg_verify_signature(&pkg->archive, &pkg->entry,
 	    &pkg->pkgname, &signature_cookie);
-#else
-	invalid_sig = 1;
-	signature_cookie = NULL;
-#endif
+
+	if (pkg->archive == NULL)
+		goto clean_memory;
 
 	if (read_meta_data(pkg))
 		goto clean_memory;
@@ -1397,9 +1418,7 @@ clean_memory:
 	}
 	free(pkg->other_version);
 	free(pkg->pkgname);
-#ifdef HAVE_SSL
 	pkg_free_signature(signature_cookie);
-#endif
 clean_find_archive:
 	free(pkg);
 	return status;

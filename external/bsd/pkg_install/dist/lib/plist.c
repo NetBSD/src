@@ -1,4 +1,4 @@
-/*	$NetBSD: plist.c,v 1.1.1.2 2009/02/02 20:44:08 joerg Exp $	*/
+/*	$NetBSD: plist.c,v 1.1.1.3 2009/02/14 17:19:39 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: plist.c,v 1.1.1.2 2009/02/02 20:44:08 joerg Exp $");
+__RCSID("$NetBSD: plist.c,v 1.1.1.3 2009/02/14 17:19:39 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -638,7 +638,7 @@ pkgdb_cleanup:
 			break;
 
 		case PLIST_DIR_RM:
-			if (NoDeleteFiles)
+			if (NoDeleteFiles || nukedirs)
 				break;
 
 			(void) snprintf(tmp, sizeof(tmp), "%s%s%s/%s",
@@ -675,11 +675,10 @@ pkgdb_cleanup:
  * Returns 1 on error, 0 else.
  */
 int
-delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
+delete_hierarchy(const char *dir, Boolean ign_err, Boolean nukedirs)
 {
-	char   *cp1, *cp2;
+	char   *cp1, *cp2, *tmp_dir;
 
-	cp1 = cp2 = dir;
 	if (!fexists(dir)) {
 		if (!ign_err)
 			warnx("%s `%s' doesn't really exist",
@@ -700,21 +699,26 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
 
 	if (!nukedirs)
 		return 0;
+
+	cp1 = cp2 = tmp_dir = xstrdup(dir);;
+
 	while (cp2) {
 		if ((cp2 = strrchr(cp1, '/')) != NULL)
 			*cp2 = '\0';
-		if (!isemptydir(dir))
-			return 0;
-		if (rmdir(dir) && !ign_err) {
-			if (!fexists(dir))
-				warnx("directory `%s' doesn't really exist", dir);
-			else
+		if (!isemptydir(tmp_dir))
+			break;
+		if (rmdir(tmp_dir) && !ign_err) {
+			if (fexists(tmp_dir)) {
+				free(tmp_dir);
 				return 1;
+			}
+			warnx("directory `%s' doesn't really exist", tmp_dir);
 		}
 		/* back up the pathname one component */
 		if (cp2) {
-			cp1 = dir;
+			cp1 = tmp_dir;
 		}
 	}
+	free(tmp_dir);
 	return 0;
 }
