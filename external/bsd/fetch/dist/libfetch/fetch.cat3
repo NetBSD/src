@@ -157,10 +157,12 @@ DDEESSCCRRIIPPTTIIOONN
          char        *doc;
          off_t        offset;
          size_t       length;
+         time_t       last_modified;
      };
 
      The pointer returned by ffeettcchhMMaakkeeUURRLL(), ffeettcchhCCooppyyUURRLL(), and
-     ffeettcchhPPaarrsseeUURRLL() should be freed using ffeettcchhFFrreeeeUURRLL().
+     ffeettcchhPPaarrsseeUURRLL() should be freed using ffeettcchhFFrreeeeUURRLL().  The size of _s_t_r_u_c_t
+     _U_R_L is not part of the ABI.
 
      ffeettcchhXXGGeettUURRLL(), ffeettcchhGGeettUURRLL(), and ffeettcchhPPuuttUURRLL() constitute the recom-
      mended interface to the ffeettcchh library.  They examine the URL passed to
@@ -224,6 +226,12 @@ DDEESSCCRRIIPPTTIIOONN
      erally be assumed that a stream returned by one of the ffeettcchhXXGGeettXXXXXX() or
      ffeettcchhGGeettXXXXXX() functions is read-only, and that a stream returned by one
      of the ffeettcchhPPuuttXXXXXX() functions is write-only.
+
+PPRROOTTOOCCOOLL IINNDDEEPPEENNDDEENNTT FFLLAAGGSS
+     If the `i' (if-modified-since) flag is specified, the library will try to
+     fetch the content only if it is newer than _l_a_s_t___m_o_d_i_f_i_e_d.  For HTTP an
+     If-Modified-Since HTTP header is sent.  For FTP a MTDM command is sent
+     first and compared locally.  For FILE the source file is compared.
 
 FFIILLEE SSCCHHEEMMEE
      ffeettcchhXXGGeettFFiillee(), ffeettcchhGGeettFFiillee(), and ffeettcchhPPuuttFFiillee() provide access to
@@ -495,4 +503,4 @@ BBUUGGSS
 
      Some parts of the code are not fully reentrant.
 
-NetBSD 4.0                      April 25, 2008                      NetBSD 4.0
+NetBSD 5.0                     February 4, 2009                     NetBSD 5.0
