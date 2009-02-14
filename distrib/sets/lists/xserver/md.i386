@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.58 2009/02/09 16:28:54 abs Exp $
+# $NetBSD: md.i386,v 1.59 2009/02/14 11:23:13 abs Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -372,8 +372,9 @@
 ./usr/X11R6/man/man4/wsfb.4				-unknown-	.man,x11
 ./usr/X11R6/man/man5/XF86Config.5			-unknown-	.man,x11
 ./usr/X11R7/bin/X					-unknown-	xorg
-./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
+./usr/X11R7/bin/cvt					-unknown-	xorg
+./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/inb					-unknown-	xorg
 ./usr/X11R7/bin/inl					-unknown-	xorg
 ./usr/X11R7/bin/inw					-unknown-	xorg
@@ -642,6 +643,9 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	xorg
+./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/pcitweak.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/scanpci.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xorgconfig.0			-unknown-	.cat,xorg
@@ -678,6 +682,10 @@
 ./usr/X11R7/man/cat4/vmmouse.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vmware.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
+./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
+./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
+./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/pcitweak.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/scanpci.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xorgconfig.html			-unknown-	html,xorg
@@ -714,6 +722,10 @@
 ./usr/X11R7/man/html4/vmmouse.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/vmware.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
+./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
+./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/gtf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/pcitweak.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/scanpci.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xorgconfig.1			-unknown-	.man,xorg
@@ -750,3 +762,4 @@
 ./usr/X11R7/man/man4/vmmouse.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vmware.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
+./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg

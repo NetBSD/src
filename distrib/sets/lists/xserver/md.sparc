@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.31 2009/02/09 16:28:54 abs Exp $
+# $NetBSD: md.sparc,v 1.32 2009/02/14 11:23:14 abs Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -275,8 +275,8 @@
 ./usr/X11R6/man/man4/wsfb.4				-unknown-	.man,x11
 ./usr/X11R6/man/man5/XF86Config.5			-unknown-	.man,x11
 ./usr/X11R7/bin/X					-unknown-	xorg
-./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
+./usr/X11R7/bin/cvt					-unknown-	xorg
 ./usr/X11R7/bin/dga					-unknown-	xorg
 ./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/pcitweak				-unknown-	xorg
@@ -457,6 +457,7 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	xorg
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/dga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/pcitweak.0				-unknown-	.cat,xorg
@@ -475,7 +476,9 @@
 ./usr/X11R7/man/cat4/sunffb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
+./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/dga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/pcitweak.html			-unknown-	html,xorg
@@ -494,7 +497,9 @@
 ./usr/X11R7/man/html4/sunffb.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
+./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/dga.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/pcitweak.1				-unknown-	.man,xorg
@@ -513,3 +518,4 @@
 ./usr/X11R7/man/man4/sunffb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
+./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
