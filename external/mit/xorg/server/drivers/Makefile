@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2009/02/14 03:17:24 macallan Exp $
+#	$NetBSD: Makefile,v 1.24 2009/02/14 10:44:41 abs Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -49,7 +49,8 @@ SUBDIR+= \
 	xf86-video-crime \
 	xf86-video-wsfb \
 	xf86-video-newport
-.else
+.elif ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
+      ${MACHINE} == "i386"
 
 SUBDIR+= \
 	xf86-video-apm \
