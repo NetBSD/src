@@ -1,5 +1,4 @@
-# $NetBSD: md.sparc64,v 1.32 2009/01/13 05:43:39 jnemeth Exp $
-./sbin/edlabel					base-sysutil-root
+# $NetBSD: md.sparc64,v 1.33 2009/02/14 11:33:56 abs Exp $
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
 ./usr/lib/sparc/i18n				base-compat-lib		compat
