@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.11 2008/05/05 11:42:45 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.12 2009/02/14 20:33:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.11 2008/05/05 11:42:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.12 2009/02/14 20:33:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,13 +91,17 @@ static int
 pci_genfb_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	int matchlvl = 1;
+
+	if (genfb_is_console())
+		matchlvl = 5;	/* beat VGA */
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_CONTROL)
-		return 1;
+		return matchlvl;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY)
-		return 1;
+		return matchlvl;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.6 2008/04/29 06:53:03 martin Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.7 2009/02/14 20:33:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.6 2008/04/29 06:53:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.7 2009/02/14 20:33:59 jmcneill Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -75,6 +75,8 @@ struct genfb_softc {
 	u_char sc_cmap_blue[256];
 };
 
+void	genfb_cnattach(void);
+int	genfb_is_console(void);
 void	genfb_init(struct genfb_softc *);
 int	genfb_attach(struct genfb_softc *, struct genfb_ops *);
 
