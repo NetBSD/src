@@ -1,8 +1,6 @@
-#	$NetBSD: files.xen,v 1.93 2009/02/13 21:03:59 bouyer Exp $
+#	$NetBSD: files.xen,v 1.94 2009/02/14 20:22:59 cube Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
-
-version 20071109
 
 maxpartitions 8
 
