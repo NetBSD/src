@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.6 2009/02/08 00:50:07 abs Exp $
+#	$NetBSD: Makefile.common,v 1.7 2009/02/14 13:32:13 abs Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -29,6 +29,7 @@ XSERVER_XDECNETBSD=	yes
 
 .if ${MACHINE} == "atari"
 XSERVER_HAS_IPLAN?=	yes
+XSERVER_NEEDS_MIEXT=	yes
 #XSERVER_XFREE68=	yes
 .endif
 
