@@ -1,10 +1,10 @@
-# $NetBSD: md.alpha,v 1.14 2009/02/09 16:28:54 abs Exp $
+# $NetBSD: md.alpha,v 1.15 2009/02/14 11:23:13 abs Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
 ./usr/X11R7/bin/X					-unknown-	xorg
-./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
+./usr/X11R7/bin/cvt					-unknown-	xorg
 ./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/pcitweak				-unknown-	xorg
 ./usr/X11R7/bin/scanpci					-unknown-	xorg
@@ -206,6 +206,8 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	xorg
+./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/pcitweak.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/scanpci.0				-unknown-	.cat,xorg
@@ -258,6 +260,9 @@
 ./usr/X11R7/man/cat4/vga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
+./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
+./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/pcitweak.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/scanpci.html			-unknown-	html,xorg
@@ -310,6 +315,9 @@
 ./usr/X11R7/man/html4/vga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
+./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
+./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/pcitweak.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/scanpci.1				-unknown-	.man,xorg
@@ -362,3 +370,4 @@
 ./usr/X11R7/man/man4/vga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
+./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
