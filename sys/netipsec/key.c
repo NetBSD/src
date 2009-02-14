@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.59 2009/02/09 15:06:37 skd Exp $	*/
+/*	$NetBSD: key.c,v 1.60 2009/02/14 20:53:58 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.59 2009/02/09 15:06:37 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.60 2009/02/14 20:53:58 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4457,7 +4457,6 @@ key_bbcmp(const void *a1, const void *a2, u_int bits)
  * time handler.
  * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
- * XXX2038: year 2038 problem may remain.
  */
 void
 key_timehandler(void* arg)
