@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2009/01/24 17:24:52 bouyer Exp $
+# $NetBSD: Makefile,v 1.9 2009/02/14 10:48:49 abs Exp $
 
 SUBDIR=	libmesa .WAIT
 
@@ -11,7 +11,7 @@ SUBDIR+=	mach64 mga r128 r200 r300 radeon
 .elif ${MACHINE} == "shark" || ${MACHINE} == "ibmnws" || \
       ${MACHINE} == "sgimips" || ${MACHINE} == "netwinder"
 SUBDIR=
-.else
++.elif ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 SUBDIR+=	i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
 	savage sis tdfx trident unichrome
 .endif
