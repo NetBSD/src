@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.385 2009/02/05 13:37:24 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.386 2009/02/14 16:55:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.385 2009/02/05 13:37:24 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.386 2009/02/14 16:55:25 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -888,8 +888,8 @@ done:
 		 * rest we cannot see, so we don't allow viewing the
 		 * data.
 		 */
-		if (strncmp(bp, sp->f_mntonname, len) == 0 &&
-		    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
+		if (strncmp(bp, sp->f_mntonname, len) == 0 && (len <= 1 ||
+		    (c = sp->f_mntonname[len]) == '/' || c == '\0')) {
 			(void)strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
 			    sizeof(sp->f_mntonname));
 			if (sp->f_mntonname[0] == '\0')
