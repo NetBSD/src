@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.41 2008/11/13 10:51:23 ad Exp $
+#	$NetBSD: Makefile.powerpc,v 1.42 2009/02/14 16:53:55 apb Exp $
 #
 # Makefile for NetBSD
 #
@@ -48,7 +48,9 @@ AFLAGS+=	${AOPTS}
 ##
 ## (3) libkern and compat
 ##
-.if !empty(IDENT:M-DMODULAR)
+OPT_MODULAR != ${TOOL_AWK} '/^\#define[ \t]MODULAR/ {x=$$3} END {print x}' \
+	opt_modular.h
+.if !empty(OPT_MODULAR)
 KERN_AS=	obj
 .endif
 
