@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2005/03/21 00:49:17 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2009/02/14 13:48:16 abs Exp $
 
 LIB=		ext
 SRCS=		EVI.c appgroup.c bigreq.c cup.c dpms.c fontcache.c mitmisc.c \
@@ -7,7 +7,7 @@ SRCS=		EVI.c appgroup.c bigreq.c cup.c dpms.c fontcache.c mitmisc.c \
 		xcmisc.c xf86bigfont.c xprint.c xres.c xtest.c xtest1dd.c \
 		xtest1di.c xvdisp.c xvmain.c xvmc.c dmx.c
 
-.if ${MACHINE} != "sparc"
+.if ${MACHINE_ARCH} != "sparc"
 SRCS+=	xf86vmode.c xf86misc.c xf86dga.c xf86dga2.c
 .endif
 

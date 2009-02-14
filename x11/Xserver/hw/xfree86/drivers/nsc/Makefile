@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2009/02/14 13:48:17 abs Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -13,7 +13,7 @@ SRCS=	nsc_driver.c nsc_gx1_driver.c nsc_gx1_dga.c nsc_gx1_accel.c \
 	nsc_gx2_driver.c nsc_gx2_accel.c nsc_gx2_cursor.c nsc_gx2_dga.c \
 	nsc_gx2_video.c nsc_gx2_shadow.c durango.c panel.c
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 SRCS+=	nsc_msr_asm.S
 .endif
 
