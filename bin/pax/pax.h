@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.28 2008/02/24 20:42:46 joerg Exp $	*/
+/*	$NetBSD: pax.h,v 1.29 2009/02/14 08:10:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -285,5 +285,5 @@ typedef struct oplist {
 #define	OFFT_ASC(w,x,y,z)	ull_asc((unsigned long long)w,x,y,z)
 #define	OFFT_OCT(w,x,y,z)	ull_oct((unsigned long long)w,x,y,z)
 #define	STRTOOFFT(x,y,z)	strtoll(x,y,z)
-#define	OFFT_MAX		ULLONG_MAX
+#define	OFFT_MAX		LLONG_MAX
 #endif
