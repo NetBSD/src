@@ -1,2 +1,3 @@
-# $NetBSD: ad.m68k,v 1.16 2009/02/14 11:33:56 abs Exp $
+# $NetBSD: ad.m68k,v 1.17 2009/02/14 22:46:05 abs Exp $
 ./sbin/edlabel					base-sysutil-root
+./usr/bin/fdformat				base-util-bin
