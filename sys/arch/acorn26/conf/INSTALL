@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.25 2009/02/06 18:50:26 jym Exp $
+# $NetBSD: INSTALL,v 1.26 2009/02/14 10:20:55 bjh21 Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -138,10 +138,8 @@ iic0		at iociic0
 pcfrtc0		at iic0 addr 0x50	# Real-time clock
 
 arckbd0 	at ioc0 bank 0 offset 0x04 # System keyboard
-arcwskbd0	at arckbd0		# Logical devices...
-wskbd0		at arcwskbd0
-#arcwsmouse0	at arckbd0
-#wsmouse0	at arcwsmouse0
+wskbd0		at arckbd0
+#wsmouse0	at arckbd0
 
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
 latches0	at ioc0 bank 5		# Printer/FDC control latches (Arc)

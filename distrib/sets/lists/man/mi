@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1122 2009/02/05 18:03:30 sborrill Exp $
+# $NetBSD: mi,v 1.1123 2009/02/14 10:20:56 bjh21 Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -567,8 +567,8 @@
 ./usr/share/man/cat4/acardide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aceride.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acorn26/arckbd.0		man-sys-catman		.cat
-./usr/share/man/cat4/acorn26/arcwskbd.0		man-sys-catman		.cat
-./usr/share/man/cat4/acorn26/arcwsmouse.0	man-sys-catman		.cat
+./usr/share/man/cat4/acorn26/arcwskbd.0		man-obsolete		obsolete
+./usr/share/man/cat4/acorn26/arcwsmouse.0	man-obsolete		obsolete
 ./usr/share/man/cat4/acorn26/cpu.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn26/eca.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn26/eh.0		man-sys-catman		.cat
@@ -3196,8 +3196,8 @@
 ./usr/share/man/html4/acardide.html		man-sys-htmlman		html
 ./usr/share/man/html4/aceride.html		man-sys-htmlman		html
 ./usr/share/man/html4/acorn26/arckbd.html	man-sys-htmlman		html
-./usr/share/man/html4/acorn26/arcwskbd.html	man-sys-htmlman		html
-./usr/share/man/html4/acorn26/arcwsmouse.html	man-sys-htmlman		html
+./usr/share/man/html4/acorn26/arcwskbd.html	man-obsolete		obsolete
+./usr/share/man/html4/acorn26/arcwsmouse.html	man-obsolete		obsolete
 ./usr/share/man/html4/acorn26/cpu.html		man-sys-htmlman		html
 ./usr/share/man/html4/acorn26/eca.html		man-sys-htmlman		html
 ./usr/share/man/html4/acorn26/eh.html		man-sys-htmlman		html
@@ -5507,8 +5507,8 @@
 ./usr/share/man/man4/acardide.4			man-sys-man		.man
 ./usr/share/man/man4/aceride.4			man-sys-man		.man
 ./usr/share/man/man4/acorn26/arckbd.4		man-sys-man		.man
-./usr/share/man/man4/acorn26/arcwskbd.4		man-sys-man		.man
-./usr/share/man/man4/acorn26/arcwsmouse.4	man-sys-man		.man
+./usr/share/man/man4/acorn26/arcwskbd.4		man-obsolete		obsolete
+./usr/share/man/man4/acorn26/arcwsmouse.4	man-obsolete		obsolete
 ./usr/share/man/man4/acorn26/cpu.4		man-sys-man		.man
 ./usr/share/man/man4/acorn26/eca.4		man-sys-man		.man
 ./usr/share/man/man4/acorn26/eh.4		man-sys-man		.man
