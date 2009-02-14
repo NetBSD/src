@@ -4,7 +4,7 @@ WARNS?=	4
 
 .PATH:	${.CURDIR}/../../sys/compat/ndis
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 PROG=	ndiscvt
 .endif
 
