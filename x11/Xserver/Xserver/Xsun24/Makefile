@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/05/25 01:46:18 rtr Exp $
+#	$NetBSD: Makefile,v 1.7 2009/02/14 13:48:16 abs Exp $
 
 NOMAN=	# defined (must come before bsd.own.mk)
 
@@ -16,7 +16,7 @@ LDADD=  ${LIBDIR.hw/sun}/sunInitMulti.o ${LDADD.dix} ${LDADD.hw/sun} \
 	${LDADD.cfb} ${LDADD.mfb} ${LDADD.dix/xpstubs} ${LDADD.mi} \
 	${LDADD.Xext/ext} ${LDADD.xkb}
 
-.if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
+.if ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
 LDADD+= ${LDADD.xinput}
 DPADD=	${DPADD.xinput}
 .endif
