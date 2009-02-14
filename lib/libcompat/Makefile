@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2005/07/06 14:43:24 drochner Exp $
+#	$NetBSD: Makefile,v 1.29 2009/02/14 13:52:51 abs Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ AFLAGS+=-nostdinc -idirafter ${DESTDIR}/usr/include
 # missing: getpw.c tell.c vlimit.c vtimes.c
 SRCS=	gtty.c ftime.c stty.c
 
-.if (${MACHINE} == "vax")
+.if (${MACHINE_ARCH} == "vax")
 # missing: (for vax) reset.s
 .endif
 
