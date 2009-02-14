@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.26 2009/02/14 20:29:09 jmcneill Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -10,7 +10,8 @@ SUBDIR= \
 SUBDIR+= \
 	xf86-input-vmmouse \
 	xf86-video-vmware \
-	xf86-video-vesa
+	xf86-video-vesa \
+	xf86-video-wsfb
 .endif
 
 .if ${MACHINE} == "macppc"
