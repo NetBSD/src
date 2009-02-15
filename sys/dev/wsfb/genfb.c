@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.18 2009/02/14 20:33:59 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.19 2009/02/15 18:41:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.18 2009/02/14 20:33:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.19 2009/02/15 18:41:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,8 @@ struct wsdisplay_accessops genfb_accessops = {
 	NULL,	/* pollc */
 	NULL	/* scroll */
 };
+
+static struct genfb_softc *genfb_softc = NULL;
 
 void
 genfb_init(struct genfb_softc *sc)
@@ -206,6 +208,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		    rasops_cmap[j + 2]);
 		j += 3;
 	}
+
+	if (genfb_softc == NULL)
+		genfb_softc = sc;
 
 	aa.console = console;
 	aa.scrdata = &sc->sc_screenlist;
@@ -419,4 +424,14 @@ int
 genfb_is_console(void)
 {
 	return genfb_cnattach_called;
+}
+
+int
+genfb_borrow(bus_addr_t addr, bus_space_handle_t *hdlp)
+{
+	struct genfb_softc *sc = genfb_softc;
+
+	if (sc && sc->sc_ops.genfb_borrow)
+		return sc->sc_ops.genfb_borrow(sc, addr, hdlp);
+	return 0;
 }
