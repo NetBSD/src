@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.19 2006/03/23 20:22:51 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.20 2009/02/15 21:55:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.19 2006/03/23 20:22:51 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.20 2009/02/15 21:55:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -619,7 +619,7 @@ key_kprint(EditLine *el, const char *key, key_value_t *val, int ntype)
  *	Put a printable form of char in buf.
  */
 protected int
-key__decode_char(char *buf, int cnt, int off, int ch)
+key__decode_char(char *buf, size_t cnt, size_t off, int ch)
 {
 	char *sb = buf + off;
 	char *eb = buf + cnt;
@@ -627,7 +627,7 @@ key__decode_char(char *buf, int cnt, int off, int ch)
 	if (ch == 0) {
 		ADDC('^');
 		ADDC('@');
-		return b - sb;
+		return (int)(b - sb);
 	}
 	if (iscntrl(ch)) {
 		ADDC('^');
@@ -649,7 +649,7 @@ key__decode_char(char *buf, int cnt, int off, int ch)
 		ADDC((((unsigned int) ch >> 3) & 7) + '0');
 		ADDC((ch & 7) + '0');
 	}
-	return b - sb;
+	return (int)(b - sb);
 }
 
 
@@ -657,7 +657,7 @@ key__decode_char(char *buf, int cnt, int off, int ch)
  *	Make a printable version of the ey
  */
 protected int
-key__decode_str(const char *str, char *buf, int len, const char *sep)
+key__decode_str(const char *str, char *buf, size_t len, const char *sep)
 {
 	char *b = buf, *eb = b + len;
 	const char *p;
@@ -702,5 +702,5 @@ done:
 	ADDC('\0');
 	if (b - buf >= len)
 	    buf[len - 1] = '\0';
-	return b - buf;
+	return (int)(b - buf);
 }
