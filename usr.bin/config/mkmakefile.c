@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.8 2009/02/15 01:39:54 cube Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.9 2009/02/15 03:45:44 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,7 +189,8 @@ mkmakefile(void)
 static void
 emitsubs(FILE *fp, const char *line, const char *file, int lineno)
 {
-	char *nextpct, *optname;
+	char *nextpct;
+	const char *optname;
 	struct nvlist *option;
 
 	while (*line != '\0') {
