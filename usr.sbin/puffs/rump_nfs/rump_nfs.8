@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_nfs.8,v 1.5 2009/02/10 15:08:40 pooka Exp $
+.\"	$NetBSD: rump_nfs.8,v 1.6 2009/02/15 18:01:26 pooka Exp $
 .\"
 .\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 10, 2009
+.Dd February 15, 2009
 .Dt RUMP_NFS 8
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Nd mount the nfs file system using a userspace server
 .Sh SYNOPSIS
 .Cd "file-system PUFFS"
+.Cd "pseudo-device putter"
 .Pp
 .Nm
 .Op options
@@ -108,3 +109,4 @@ The
 .Nm
 utility first appeared in
 .Nx 5.0 .
+It is currently considered experimental.
