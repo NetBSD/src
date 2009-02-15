@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.60 2009/02/14 20:29:21 jmcneill Exp $
+# $NetBSD: md.i386,v 1.61 2009/02/15 19:00:22 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -399,6 +399,8 @@
 ./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/mesa_dri.so			-unknown-	xorg
+./usr/X11R7/lib/modules/dri/mesa_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	xorg
