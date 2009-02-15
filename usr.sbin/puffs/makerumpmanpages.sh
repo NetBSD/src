@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.7 2009/02/10 15:04:35 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.8 2009/02/15 18:00:16 pooka Exp $
 #
 
 IFS=' '
@@ -32,7 +32,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 10, 2009
+.Dd February 15, 2009
 .Dt RUMP_XXXFSXXX 8
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .Nd mount the xxxfsxxx file system using a userspace server
 .Sh SYNOPSIS
 .Cd "file-system PUFFS"
+.Cd "pseudo-device putter"
 .Pp
 .Nm
 .Op options
@@ -113,7 +114,8 @@ for a full description of the available command line options.
 The
 .Nm
 utility first appeared in
-.Nx 5.0 .'
+.Nx 5.0 .
+It is currently considered experimental.'
 
 # generate the manual pages
 #
