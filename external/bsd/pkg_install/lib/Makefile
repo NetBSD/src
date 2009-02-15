@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/02/02 20:47:21 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2009/02/15 18:24:49 joerg Exp $
 # Original from FreeBSD, no rcs id.
 
 LIBISPRIVATE=	yes
@@ -9,7 +9,7 @@ SRCS=		automatic.c conflicts.c decompress.c dewey.c \
 		opattern.c path.c parse-config.c pkcs7.c pkg_signature.c \
 		pkgdb.c pkg_io.c plist.c remove.c \
 		str.c version.c var.c vulnerabilities-file.c xwrapper.c
-MAN=		pkg_summary.5
+MAN=		pkg_install.conf.5 pkg_summary.5
 
 version.o: version.h version.c
 

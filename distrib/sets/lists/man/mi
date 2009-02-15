@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1123 2009/02/14 10:20:56 bjh21 Exp $
+# $NetBSD: mi,v 1.1124 2009/02/15 18:24:49 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1803,6 +1803,7 @@
 ./usr/share/man/cat5/phones.0			man-sys-man		.cat
 ./usr/share/man/cat5/pim6dd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/pim6sd.conf.0		man-obsolete		obsolete
+./usr/share/man/cat5/pkg_install.conf.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat5/pkg_summary.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat5/postconf.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/primes.0			man-obsolete		obsolete
@@ -4292,6 +4293,7 @@
 ./usr/share/man/html5/pf.conf.html		man-pf-htmlman		pf,html
 ./usr/share/man/html5/pf.os.html		man-pf-htmlman		pf,html
 ./usr/share/man/html5/phones.html		man-sys-man		html
+./usr/share/man/html5/pkg_install.conf.html	man-pkgutil-htmlman	html
 ./usr/share/man/html5/pkg_summary.html		man-pkgutil-htmlman	html
 ./usr/share/man/html5/postconf.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/printcap.html		man-lpr-htmlman		html
@@ -6743,6 +6745,7 @@
 ./usr/share/man/man5/phones.5			man-sys-man		.man
 ./usr/share/man/man5/pim6dd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/pim6sd.conf.5		man-obsolete		obsolete
+./usr/share/man/man5/pkg_install.conf.5		man-pkgutil-man		.man
 ./usr/share/man/man5/pkg_summary.5		man-pkgutil-man		.man
 ./usr/share/man/man5/postconf.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/primes.5			man-obsolete		obsolete
