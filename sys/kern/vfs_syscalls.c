@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.387 2009/02/14 17:06:35 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.388 2009/02/15 03:52:49 enami Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.387 2009/02/14 17:06:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.388 2009/02/15 03:52:49 enami Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -891,13 +891,9 @@ done:
 			 */
 			if (strncmp(bp, sp->f_mntonname, len) == 0 &&
 			    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
-
 				(void)strlcpy(sp->f_mntonname,
-				    &sp->f_mntonname[len],
+				    c == '\0' ? "/" : &sp->f_mntonname[len],
 				    sizeof(sp->f_mntonname));
-				if (sp->f_mntonname[0] == '\0')
-					(void)strlcpy(sp->f_mntonname, "/",
-					    sizeof(sp->f_mntonname));
 			} else {
 				if (root)
 					(void)strlcpy(sp->f_mntonname, "/",
