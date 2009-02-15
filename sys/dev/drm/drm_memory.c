@@ -1,4 +1,4 @@
-/* $NetBSD: drm_memory.c,v 1.15 2009/02/15 18:42:20 jmcneill Exp $ */
+/* $NetBSD: drm_memory.c,v 1.16 2009/02/15 20:21:24 jmcneill Exp $ */
 
 /* drm_memory.h -- Memory management wrappers for DRM -*- linux-c -*-
  * Created: Thu Feb  4 14:00:34 1999 by faith@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.15 2009/02/15 18:42:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.16 2009/02/15 20:21:24 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -54,9 +54,13 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anhol
 #endif
 #endif
 
+#if defined(_KERNEL_OPT)
 #include "genfb.h"
 #if NGENFB > 0
 #include <dev/wsfb/genfbvar.h>
+#endif
+#else
+#define NGENFB 0	/* XXX */
 #endif
 
 #if !defined(_MODULE)
