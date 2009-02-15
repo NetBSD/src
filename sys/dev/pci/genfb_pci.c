@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.12 2009/02/14 20:33:58 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.13 2009/02/15 18:41:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.12 2009/02/14 20:33:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.13 2009/02/15 18:41:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,8 @@ static void	pci_genfb_attach(struct device *, struct device *, void *);
 static int	pci_genfb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	pci_genfb_mmap(void *, void *, off_t, int);
+static int	pci_genfb_borrow(void *, bus_addr_t, bus_space_handle_t *);
 static int	pci_genfb_drm_print(void *, const char *);
-
 
 CFATTACH_DECL(genfb_pci, sizeof(struct pci_genfb_softc),
     pci_genfb_match, pci_genfb_attach, NULL, NULL);
@@ -163,6 +163,7 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 
 	ops.genfb_ioctl = pci_genfb_ioctl;
 	ops.genfb_mmap = pci_genfb_mmap;
+	ops.genfb_borrow = pci_genfb_borrow;
 
 	if (genfb_attach(&sc->sc_gen, &ops) == 0) {
 
@@ -289,4 +290,19 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	}
 
 	return -1;
+}
+
+int
+pci_genfb_borrow(void *opaque, bus_addr_t addr, bus_space_handle_t *hdlp)
+{
+	struct pci_genfb_softc *sc = opaque;
+
+	if (sc == NULL)
+		return 0;
+	if (!sc->sc_gen.sc_fboffset)
+		return 0;
+	if (sc->sc_gen.sc_fboffset != addr)
+		return 0;
+	*hdlp = sc->sc_memh;
+	return 1;
 }
