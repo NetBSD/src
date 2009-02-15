@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.44 2009/02/15 21:24:13 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.45 2009/02/15 21:55:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.44 2009/02/15 21:24:13 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.45 2009/02/15 21:55:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -291,7 +291,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 private int
 read_char(EditLine *el, char *cp)
 {
-	int num_read;
+	ssize_t num_read;
 	int tried = 0;
 
 	while ((num_read = read(el->el_infd, cp, 1)) == -1)
@@ -302,7 +302,7 @@ read_char(EditLine *el, char *cp)
 			return (-1);
 		}
 
-	return (num_read);
+	return (int)num_read;
 }
 
 /* read_pop():
@@ -435,7 +435,7 @@ el_gets(EditLine *el, int *nread)
 		el->el_line.cursor = el->el_line.lastchar = cp;
 		*cp = '\0';
 		if (nread)
-			*nread = el->el_line.cursor - el->el_line.buffer;
+			*nread = (int)(el->el_line.cursor - el->el_line.buffer);
 		return (*nread ? el->el_line.buffer : NULL);
 	}
 
@@ -492,7 +492,7 @@ el_gets(EditLine *el, int *nread)
 		el->el_line.cursor = el->el_line.lastchar = cp;
 		*cp = '\0';
 		if (nread)
-			*nread = el->el_line.cursor - el->el_line.buffer;
+			*nread = (int)(el->el_line.cursor - el->el_line.buffer);
 		return (*nread ? el->el_line.buffer : NULL);
 	}
 
@@ -598,7 +598,7 @@ el_gets(EditLine *el, int *nread)
 			break;
 
 		case CC_NEWLINE:	/* normal end of line */
-			num = el->el_line.lastchar - el->el_line.buffer;
+			num = (int)(el->el_line.lastchar - el->el_line.buffer);
 			break;
 
 		case CC_FATAL:	/* fatal error, reset to known state */
@@ -637,7 +637,8 @@ el_gets(EditLine *el, int *nread)
 			*nread = num;
 	} else {
 		if (nread)
-			*nread = el->el_line.lastchar - el->el_line.buffer;
+			*nread =
+			    (int)(el->el_line.lastchar - el->el_line.buffer);
 	}
 	return (num ? el->el_line.buffer : NULL);
 }
