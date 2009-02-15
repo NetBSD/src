@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.49 2009/02/12 13:39:49 sketch Exp $	*/
+/*	$NetBSD: term.c,v 1.50 2009/02/15 21:55:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.49 2009/02/12 13:39:49 sketch Exp $");
+__RCSID("$NetBSD: term.c,v 1.50 2009/02/15 21:55:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -387,7 +387,7 @@ private void
 term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 {
 	char termbuf[TC_BUFSIZE];
-	int tlen, clen;
+	size_t tlen, clen;
 	char **tlist = el->el_term.t_str;
 	char **tmp, **str = &tlist[t - tstr];
 
@@ -414,7 +414,7 @@ term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 						/* XXX strcpy is safe */
 		(void) strcpy(*str = &el->el_term.t_buf[el->el_term.t_loc],
 		    cap);
-		el->el_term.t_loc += clen + 1;	/* one for \0 */
+		el->el_term.t_loc += (int)clen + 1;	/* one for \0 */
 		return;
 	}
 	/*
@@ -431,7 +431,7 @@ term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 			termbuf[tlen++] = '\0';
 		}
 	memcpy(el->el_term.t_buf, termbuf, TC_BUFSIZE);
-	el->el_term.t_loc = tlen;
+	el->el_term.t_loc = (int)tlen;
 	if (el->el_term.t_loc + 3 >= TC_BUFSIZE) {
 		(void) fprintf(el->el_errfile,
 		    "Out of termcap string space.\n");
@@ -439,7 +439,7 @@ term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 	}
 					/* XXX strcpy is safe */
 	(void) strcpy(*str = &el->el_term.t_buf[el->el_term.t_loc], cap);
-	el->el_term.t_loc += clen + 1;	/* one for \0 */
+	el->el_term.t_loc += (int)clen + 1;	/* one for \0 */
 	return;
 }
 

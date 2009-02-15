@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.79 2009/02/12 13:39:49 sketch Exp $	*/
+/*	$NetBSD: readline.c,v 1.80 2009/02/15 21:55:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.79 2009/02/12 13:39:49 sketch Exp $");
+__RCSID("$NetBSD: readline.c,v 1.80 2009/02/15 21:55:23 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -984,11 +984,11 @@ history_arg_extract(int start, int end, const char *str)
 	max--;
 
 	if (start == '$')
-		start = max;
+		start = (int)max;
 	if (end == '$')
-		end = max;
+		end = (int)max;
 	if (end < 0)
-		end = max + end + 1;
+		end = (int)max + end + 1;
 	if (start < 0)
 		start = end;
 
@@ -1280,7 +1280,8 @@ int
 history_total_bytes(void)
 {
 	HistEvent ev;
-	int curr_num, size;
+	int curr_num;
+	size_t size;
 
 	if (history(h, &ev, H_CURR) != 0)
 		return (-1);
@@ -1295,7 +1296,7 @@ history_total_bytes(void)
 	/* get to the same position as before */
 	history(h, &ev, H_PREV_EVENT, curr_num);
 
-	return (size);
+	return (int)(size);
 }
 
 
@@ -1774,7 +1775,8 @@ rl_stuff_char(int c)
 static int
 _rl_event_read_char(EditLine *el, char *cp)
 {
-	int	n, num_read = 0;
+	int	n;
+	ssize_t num_read = 0;
 
 	*cp = '\0';
 	while (rl_event_hook) {
@@ -1810,7 +1812,7 @@ _rl_event_read_char(EditLine *el, char *cp)
 	}
 	if (!rl_event_hook)
 		el_set(el, EL_GETCFN, EL_BUILTIN_GETCFN);
-	return(num_read);
+	return (int)num_read;
 }
 
 static void
@@ -1818,8 +1820,8 @@ _rl_update_pos(void)
 {
 	const LineInfo *li = el_line(e);
 
-	rl_point = li->cursor - li->buffer;
-	rl_end = li->lastchar - li->buffer;
+	rl_point = (int)(li->cursor - li->buffer);
+	rl_end = (int)(li->lastchar - li->buffer);
 }
 
 void
