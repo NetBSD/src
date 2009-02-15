@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.2.3 2009/01/25 10:27:17 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.2.4 2009/02/15 14:43:45 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.2.3 2009/01/25 10:27:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.2.4 2009/02/15 14:43:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	mfctl(CR_EIEM, tf->tf_eiem);
 	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
-	    (kpsw | PSW_O);
+	    (kpsw & PSW_O);
 	pcbp->pcb_fpregs[HPPA_NFPREGS] = 0;
 
 	/*
