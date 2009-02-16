@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.925 2009/02/07 09:58:10 mrg Exp $
+# $NetBSD: GENERIC,v 1.926 2009/02/16 22:43:47 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.925 $"
+#ident 		"GENERIC-$Revision: 1.926 $"
 
 maxusers	64		# estimated number of users
 
@@ -533,22 +533,14 @@ options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+genfb*		at pci? def ? function ?
 #machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
+wsdisplay*	at wsemuldisplaydev?
 #wsdisplay* 	at machfb? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-
-# VESA framebuffer console
-#options 	KVM86			# required for vesabios
-#vesabios*	at vesabiosbus?
-#vesafb* 	at vesabios?
-#options 	VESAFB_WIDTH=640
-#options 	VESAFB_HEIGHT=480
-#options 	VESAFB_DEPTH=8
-#options 	VESAFB_PM		# power management support
-#wsdisplay*	at vesafb? console ?
 
 # VIA Unichrome framebuffer console
 #unichromefb* 	at pci? dev ? function ?
