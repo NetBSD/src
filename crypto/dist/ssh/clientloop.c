@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.35 2009/02/16 20:53:54 christos Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.36 2009/02/16 22:50:17 christos Exp $	*/
 /* $OpenBSD: clientloop.c,v 1.201 2008/07/16 11:51:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.35 2009/02/16 20:53:54 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.36 2009/02/16 22:50:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -846,8 +846,7 @@ process_cmdline(void)
 		if (local) {
 			if (channel_setup_local_fwd_listener(fwd.listen_host,
 			    fwd.listen_port, fwd.connect_host,
-			    fwd.connect_port, options.gateway_ports, 
-			    options.hpn_disabled, options.hpn_buffer_size) < 0) {
+			    fwd.connect_port, options.gateway_ports) < 0) {
 				logit("Port forwarding failed.");
 				goto out;
 			}
