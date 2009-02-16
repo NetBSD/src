@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.6 2006/10/25 20:43:49 uwe Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.7 2009/02/16 10:40:45 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.6 2006/10/25 20:43:49 uwe Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.7 2009/02/16 10:40:45 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -108,7 +108,7 @@ __fdnlist_coff(fd, list)
 	/*
 	 * Map the file in its entirety.
 	 */
-	if (st.st_size > SIZE_T_MAX) {
+	if ((uintmax_t)st.st_size > (uintmax_t)SIZE_T_MAX) {
 		errno = EFBIG;
 		BAD;
 	}
