@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.14 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.15 2009/02/16 00:15:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.14 2009/02/15 21:55:23 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.15 2009/02/16 00:15:45 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -383,7 +383,7 @@ fn_complete(EditLine *el,
 	char *(*complet_func)(const char *, int),
 	char **(*attempted_completion_function)(const char *, int, int),
 	const char *word_break, const char *special_prefixes,
-	const char *(*app_func)(const char *), int query_items,
+	const char *(*app_func)(const char *), size_t query_items,
 	int *completion_type, int *over, int *point, int *end)
 {
 	const LineInfo *li;

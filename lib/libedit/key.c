@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.20 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.21 2009/02/16 00:15:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.20 2009/02/15 21:55:23 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.21 2009/02/16 00:15:45 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -700,7 +700,7 @@ key__decode_str(const char *str, char *buf, size_t len, const char *sep)
 	}
 done:
 	ADDC('\0');
-	if (b - buf >= len)
+	if ((size_t)(b - buf) >= len)
 	    buf[len - 1] = '\0';
 	return (int)(b - buf);
 }
