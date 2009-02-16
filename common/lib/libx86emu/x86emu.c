@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.5.2.1 2009/02/16 03:12:47 snj Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.5.2.2 2009/02/16 03:14:20 snj Exp $	*/
 
 /****************************************************************************
 *
@@ -243,6 +243,8 @@ X86EMU_exec(struct X86EMU *emu)
 				x86emu_intr_handle(emu);
 			}
 		}
+		if (emu->x86.R_CS == 0 && emu->x86.R_IP == 0)
+			return;
 		X86EMU_exec_one_byte(emu);
 		++emu->cur_cycles;
 	}
