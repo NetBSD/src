@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 2008/10/19 03:39:26 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34.4.1 2009/02/16 03:04:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 2008/10/19 03:39:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34.4.1 2009/02/16 03:04:38 snj Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -308,11 +308,13 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 static void
 setredzone(struct lwp *l)
 {
+#ifdef DIAGNOSTIC
 	vaddr_t addr;
 
 	addr = USER_TO_UAREA(l->l_addr);
 	pmap_remove(pmap_kernel(), addr, addr + PAGE_SIZE);
 	pmap_update(pmap_kernel());
+#endif
 }
 
 /*
