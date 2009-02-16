@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.21 2009/02/11 16:15:59 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.22 2009/02/16 09:38:41 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.21 2009/02/11 16:15:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.22 2009/02/16 09:38:41 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1179,7 +1179,9 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, nsegs, prod;
+#if NVLAN > 0
 	struct m_tag *mtag;
+#endif
 
 	m = *m_head;
 	cflags = vtag = 0;
@@ -1371,7 +1373,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 	struct age_rxdesc *rxd;
 	struct rx_desc *desc;
 	struct mbuf *mp, *m;
-	uint32_t status, index, vtag;
+	uint32_t status, index;
 	int count, nsegs, pktlen;
 	int rx_cons;
 
@@ -1491,7 +1493,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 #if NVLAN > 0
 			/* Check for VLAN tagged frames. */
 			if (status & AGE_RRD_VLAN) {
-				vtag = AGE_RX_VLAN(le32toh(rxrd->vtags));
+				uint32_t vtag = AGE_RX_VLAN(le32toh(rxrd->vtags));
 				VLAN_INPUT_TAG(ifp, m, AGE_RX_VLAN_TAG(vtag),
 					continue);
 			}
