@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2008/08/29 00:02:22 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.17 2009/02/16 20:55:45 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SRCS=	authfd.c authfile.c bufaux.c bufbn.c buffer.c canohost.c channels.c \
 	key.c dispatch.c kex.c mac.c uuencode.c misc.c \
 	ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
 	kexdhc.c kexgexc.c scard.c msg.c progressmeter.c \
-	monitor_fdpass.c uidswap.c
+	monitor_fdpass.c uidswap.c addrmatch.c
 #	umac.c
 SRCS+=	random.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
