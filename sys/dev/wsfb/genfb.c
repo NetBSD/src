@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.19 2009/02/15 18:41:49 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.20 2009/02/16 22:24:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.19 2009/02/15 18:41:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.20 2009/02/16 22:24:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,7 @@ static int 	genfb_putpalreg(struct genfb_softc *, uint8_t, uint8_t,
 extern const u_char rasops_cmap[768];
 
 static int genfb_cnattach_called = 0;
+static int genfb_enabled = 1;
 
 struct wsdisplay_accessops genfb_accessops = {
 	genfb_ioctl,
@@ -420,10 +421,22 @@ genfb_cnattach(void)
 	genfb_cnattach_called = 1;
 }
 
+void
+genfb_disable(void)
+{
+	genfb_enabled = 0;
+}
+
 int
 genfb_is_console(void)
 {
 	return genfb_cnattach_called;
+}
+
+int
+genfb_is_enabled(void)
+{
+	return genfb_enabled;
 }
 
 int
