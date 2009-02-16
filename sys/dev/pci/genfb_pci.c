@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.13 2009/02/15 18:41:49 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.14 2009/02/16 22:24:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.13 2009/02/15 18:41:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.14 2009/02/16 22:24:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,9 @@ pci_genfb_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int matchlvl = 1;
+
+	if (!genfb_is_enabled())
+		return 0;	/* explicitly disabled by MD code */
 
 	if (genfb_is_console())
 		matchlvl = 5;	/* beat VGA */
