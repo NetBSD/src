@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.67.30.1 2009/02/16 03:03:37 snj Exp $	*/
+/*	$NetBSD: param.h,v 1.67.30.2 2009/02/16 03:05:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,10 +72,6 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#if defined(_KERNEL_OPT)
-#include "opt_kernbase.h"
-#endif /* defined(_KERNEL_OPT) */
-
 #ifdef KERNBASE_LOCORE
 #error "You should only re-define KERNBASE"
 #endif
@@ -97,9 +93,6 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#ifdef _KERNEL_OPT
-#include "opt_noredzone.h"
-#endif
 #ifndef UPAGES
 # ifdef DIAGNOSTIC
 #  define	UPAGES		3	/* 2 + 1 page for redzone */
