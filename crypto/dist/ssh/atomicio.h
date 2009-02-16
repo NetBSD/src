@@ -1,6 +1,5 @@
-/*	$NetBSD: atomicio.h,v 1.8 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: atomicio.h,v 1.9 2009/02/16 20:53:54 christos Exp $	*/
 /* $OpenBSD: atomicio.h,v 1.10 2006/08/03 03:34:41 deraadt Exp $ */
-
 /*
  * Copyright (c) 2006 Damien Miller.  All rights reserved.
  * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
