@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.2 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.3 2009/02/16 03:23:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ __longjmp14(jmp_buf env, int val)
 	ucontext_t uc;
 
 	/* Ensure non-zero SP and sigcontext magic number is present */
-	if (sc->sc_regs[_R_SP] == 0 || sc->sc_regs[_R_ZERO] != 0xACEDBADE)
+	if (sc->sc_regs[_R_SP] == 0 || sc->sc_regs[_R_ZERO] != (mips_reg_t)0xACEDBADE)
 		goto err;
 
 	/* Ensure non-zero return value */
