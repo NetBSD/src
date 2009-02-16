@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.15 2007/11/14 17:55:00 ad Exp $	*/
+/*	$NetBSD: consinit.c,v 1.16 2009/02/16 22:29:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15 2007/11/14 17:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2009/02/16 22:29:33 jmcneill Exp $");
 
 #include "opt_kgdb.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15 2007/11/14 17:55:00 ad Exp $");
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
 
+#include "genfb.h"
 #include "vga.h"
 #include "ega.h"
 #include "pcdisplay.h"
@@ -63,6 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15 2007/11/14 17:55:00 ad Exp $");
 #include <dev/pckbport/pckbportvar.h>
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
+
+#if (NGENFB > 0)
+#include <dev/wsfb/genfbvar.h>
+#endif
 
 #ifdef __i386__
 #include "vesafb.h"
@@ -150,6 +155,7 @@ void
 consinit()
 {
 	const struct btinfo_console *consinfo;
+	const struct btinfo_framebuffer *fbinfo;
 	static int initted;
 
 	if (initted)
@@ -162,9 +168,17 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0) || (NVESAFB > 0) || (NXBOXFB > 0)
+	fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
+
 	if (!strcmp(consinfo->devname, "pc")) {
 		int error;
+#if (NGENFB > 0)
+		if (fbinfo && fbinfo->physaddr > 0) {
+			genfb_cnattach();
+			goto dokbd;
+		} else
+			genfb_disable();
+#endif
 #if (NVESAFB > 0)
 		if (!vesafb_cnattach())
 			goto dokbd;
@@ -210,7 +224,6 @@ dokbd:
 			       error);
 		return;
 	}
-#endif /* PC | VT | VGA | PCDISPLAY | VESAFB | XBOXFB */
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = X86_BUS_SPACE_IO;
