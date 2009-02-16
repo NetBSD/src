@@ -1,4 +1,3 @@
-/*	$NetBSD: hostfile.c,v 1.1.1.13 2006/09/28 21:15:08 christos Exp $	*/
 /* $OpenBSD: hostfile.c,v 1.45 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

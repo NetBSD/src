@@ -1,5 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.1.1.19 2008/04/06 21:18:06 christos Exp $	*/
-/* $OpenBSD: auth1.c,v 1.71 2007/09/21 08:15:29 djm Exp $ */
+/* $OpenBSD: auth1.c,v 1.73 2008/07/04 23:30:16 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,6 +11,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -261,6 +261,8 @@ do_authloop(Authctxt *authctxt)
 
 		/* Get a packet from the client. */
 		type = packet_read();
+		if (authctxt->failures >= options.max_authtries)
+			goto skip;
 		if ((meth = lookup_authmethod1(type)) == NULL) {
 			logit("Unknown message during authentication: "
 			    "type %d", type);
@@ -296,7 +298,7 @@ do_authloop(Authctxt *authctxt)
 		if (authenticated)
 			return;
 
-		if (authctxt->failures++ > options.max_authtries)
+		if (++authctxt->failures >= options.max_authtries)
 			packet_disconnect(AUTH_FAIL_MSG, authctxt->user);
 
 		packet_start(SSH_SMSG_FAILURE);

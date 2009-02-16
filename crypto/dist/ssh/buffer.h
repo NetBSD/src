@@ -1,5 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.1.1.9 2006/09/28 21:15:01 christos Exp $	*/
-/* $OpenBSD: buffer.h,v 1.16 2006/08/03 03:34:41 deraadt Exp $ */
+/* $OpenBSD: buffer.h,v 1.17 2008/05/08 06:59:01 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -67,6 +66,7 @@ int     buffer_get_char(Buffer *);
 void    buffer_put_char(Buffer *, int);
 
 void   *buffer_get_string(Buffer *, u_int *);
+void   *buffer_get_string_ptr(Buffer *, u_int *);
 void    buffer_put_string(Buffer *, const void *, u_int);
 void	buffer_put_cstring(Buffer *, const char *);
 

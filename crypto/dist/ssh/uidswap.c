@@ -1,4 +1,3 @@
-/*	$NetBSD: uidswap.c,v 1.1.1.12 2006/09/28 21:15:35 christos Exp $	*/
 /* $OpenBSD: uidswap.c,v 1.35 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

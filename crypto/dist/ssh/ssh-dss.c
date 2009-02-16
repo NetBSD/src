@@ -1,4 +1,3 @@
-/*	$NetBSD: ssh-dss.c,v 1.1.1.15 2007/03/10 22:35:49 christos Exp $	*/
 /* $OpenBSD: ssh-dss.c,v 1.24 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.

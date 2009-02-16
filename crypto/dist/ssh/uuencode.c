@@ -1,4 +1,3 @@
-/*	$NetBSD: uuencode.c,v 1.1.1.10 2006/09/28 21:15:35 christos Exp $	*/
 /* $OpenBSD: uuencode.c,v 1.24 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.

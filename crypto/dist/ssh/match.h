@@ -1,5 +1,4 @@
-/*	$NetBSD: match.h,v 1.1.1.9 2006/09/28 21:15:10 christos Exp $	*/
-/* $OpenBSD: match.h,v 1.13 2006/03/25 22:22:43 djm Exp $ */
+/* $OpenBSD: match.h,v 1.14 2008/06/10 03:57:27 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -21,5 +20,8 @@ int	 match_hostname(const char *, const char *, u_int);
 int	 match_host_and_ip(const char *, const char *, const char *);
 int	 match_user(const char *, const char *, const char *, const char *);
 char	*match_list(const char *, const char *, u_int *);
+
+/* addrmatch.c */
+int	 addr_match_list(const char *, const char *);
 
 #endif

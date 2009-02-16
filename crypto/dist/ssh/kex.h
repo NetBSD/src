@@ -1,4 +1,3 @@
-/*	$NetBSD: kex.h,v 1.1.1.17 2007/12/17 20:15:13 christos Exp $	*/
 /* $OpenBSD: kex.h,v 1.46 2007/06/07 19:37:34 pvalchev Exp $ */
 
 /*

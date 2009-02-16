@@ -1,4 +1,3 @@
-/*	$NetBSD: atomicio.c,v 1.1.1.10 2007/12/17 20:15:04 christos Exp $	*/
 /* $OpenBSD: atomicio.c,v 1.25 2007/06/25 12:02:27 dtucker Exp $ */
 /*
  * Copyright (c) 2006 Damien Miller. All rights reserved.

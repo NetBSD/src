@@ -1,4 +1,3 @@
-/*	$NetBSD: sshconnect1.c,v 1.1.1.20 2007/03/10 22:35:55 christos Exp $	*/
 /* $OpenBSD: sshconnect1.c,v 1.70 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
