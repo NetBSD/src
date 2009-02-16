@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.357.4.3 2009/02/02 19:53:34 snj Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357.4.4 2009/02/16 03:33:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.3 2009/02/02 19:53:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.4 2009/02/16 03:33:16 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1992,6 +1992,11 @@ vrevoke(vnode_t *vp)
 	mutex_enter(&vp->v_interlock);
 	if ((vp->v_iflag & VI_CLEAN) != 0) {
 		mutex_exit(&vp->v_interlock);
+		return;
+	} else if (vp->v_type != VBLK && vp->v_type != VCHR) {
+		atomic_inc_uint(&vp->v_usecount);
+		vclean(vp, DOCLOSE);
+		vrelel(vp, 0);
 		return;
 	} else {
 		dev = vp->v_rdev;
