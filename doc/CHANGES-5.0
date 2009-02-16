@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.95 2009/02/09 03:14:35 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.96 2009/02/16 03:36:13 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4033,4 +4033,73 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.0_RC2!
 	[snj]
+
+sys/arch/amd64/amd64/vm_machdep.c		1.37
+sys/arch/amd64/include/param.h			1.10
+sys/arch/i386/conf/GENERIC_TINY			1.116
+sys/arch/i386/conf/INSTALL_TINY			1.122
+sys/arch/i386/conf/files.i386			1.341
+sys/arch/i386/i386/vm_machdep.c			1.142, 1.143
+sys/arch/i386/include/proc.h			1.37
+sys/arch/i386/include/param.h			1.68-1.70
+sys/arch/xen/conf/files.xen			1.91
+
+	- Kill NOREDZONE.
+	- Make the redzone conditional on DIAGNOSTIC.
+	- Give amd64 an additional page for the uarea. 2 is not enough.
+	[ad, ticket #355]
+
+common/lib/libx86emu/x86emu.c			1.6, 1.7
+
+	Fix three bugs in the instruction decoder:
+	(1) Mode 5 for SIB uses EBP as base, not ESP.
+	(2) RM register mode 5 needs a segment override for SS when not
+	    using an immediate in 32bit mode.
+	(3) Same for mode 6 in 16bit mode.
+
+	0:0 is the adress x86emu_call pushes on the stack, so check for
+	it here explicitly to stop processing again. As this is the start
+	of the IDT, normal code is not likely to override it.
+	[joerg, ticket #410]
+
+distrib/sets/lists/base/mi			1.794
+share/wscons/keymaps/Makefile			1.15
+share/wscons/keymaps/ukbd.be.azerty		1.1, 1.2
+sys/dev/pckbport/wskbdmap_mfii.c		1.16
+sys/dev/usb/ukbdmap.c				1.22
+
+	- Add Belgian Azerty keymap for ukbd(4).
+	- Enable Colemak altgr keys.
+	[ghen, ticket #427]
+
+distrib/sets/lists/xserver/md.vax		1.6
+distrib/sets/lists/xserver/md.x68k		1.16
+external/mit/xorg/server/xorg-server/Makefile.common 1.6
+x11/Xserver/Makefile.common			1.35
+
+	Enable Xvfb build on vax and x68k to match every other port.
+	[abs, ticket #431]
+
+sys/fs/tmpfs/tmpfs_vnops.c			1.53
+
+	If fdvp is tvp, do nothing.  Prevents local DoS panic described in
+	PR kern/38219.
+	[pooka, ticket #432]
+
+sys/kern/uipc_usrreq.c				1.120
+
+	Don't try to fd_putfile() descriptors we didn't manage to
+	fd_getfile().  Fixes local DoS panic described in kern/40570.
+	[pooka, ticket #433]
+
+sys/kern/vfs_subr.c				1.368
+sys/kern/vfs_syscalls.c				1.385
+
+	Make revoke(2) works as before:
+	- vfs_syscalls.c rev. 1.342 fails to invert condition correcly
+	  when then-clause and else-clause is swapped.  Since then,
+	  revoke(2) fails if it is issued by file owner.
+	- Probably since rev. 1.160 of genfs_vnops.c, revoke(2) fails if
+	  it is applied to non-device file and drops kernel into ddb.
+	[enami, ticket #435]
 
