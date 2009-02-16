@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2006/09/23 08:09:23 wiz Exp $
+# $NetBSD: Makefile,v 1.14.24.1 2009/02/16 03:18:33 snj Exp $
 
 NOOBJ=	# defined
 
@@ -13,6 +13,7 @@ FILES=	\
 	pckbd.pl.iso8859-2 \
 	pckbd.ru.koi8-r \
 	pckbd.sv.svascii \
+	ukbd.be.azerty \
 
 FILESDIR= /usr/share/wscons/keymaps
 
