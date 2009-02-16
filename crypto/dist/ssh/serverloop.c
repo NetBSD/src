@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.32 2009/02/16 20:53:55 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.33 2009/02/16 22:50:17 christos Exp $	*/
 /* $OpenBSD: serverloop.c,v 1.153 2008/06/30 12:15:39 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.32 2009/02/16 20:53:55 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.33 2009/02/16 22:50:17 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -1120,8 +1120,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 		} else {
 			/* Start listening on the port */
 			success = channel_setup_remote_fwd_listener(
-			    listen_address, listen_port, options.gateway_ports, 
-           		    options.hpn_disabled, options.hpn_buffer_size);
+			    listen_address, listen_port, options.gateway_ports);
 		}
 		xfree(listen_address);
 	} else if (strcmp(rtype, "cancel-tcpip-forward") == 0) {
