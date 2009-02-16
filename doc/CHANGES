@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1185 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1186 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -132,3 +132,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	newport(4): Imported and adapted to NetBSD Xorg's xf86-video-newport
 		0.2.1 driver for SGI's NG1 / Newport graphics boards found
 		mostly in Indys. [macallan 20090213]
+	openssh: Import 5.1. [christos 20090216]
