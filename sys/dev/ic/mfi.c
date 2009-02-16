@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.20 2009/01/03 03:43:22 yamt Exp $ */
+/* $NetBSD: mfi.c,v 1.21 2009/02/16 18:05:19 mlelstv Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.20 2009/01/03 03:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.21 2009/02/16 18:05:19 mlelstv Exp $");
 
 #include "bio.h"
 
@@ -1106,7 +1106,6 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			/* XXX check for sense in ccb->ccb_sense? */
 			printf("%s: mfi_scsipi_request poll failed\n",
 			    DEVNAME(sc));
-			mfi_put_ccb(ccb);
 			bzero(&xs->sense, sizeof(xs->sense));
 			xs->sense.scsi_sense.response_code =
 			    SSD_RCODE_VALID | SSD_RCODE_CURRENT;
