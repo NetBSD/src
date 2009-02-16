@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.114.8.1 2008/11/18 01:56:58 snj Exp $
+#	$NetBSD: GENERIC_TINY,v 1.114.8.2 2009/02/16 03:03:36 snj Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -27,9 +27,6 @@ maxusers	8		# estimated number of users
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
-
-# Save a physical page per process by not setting a kernel stack red zone.
-options 	NOREDZONE
 
 # Standard system options
 
