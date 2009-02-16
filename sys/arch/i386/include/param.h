@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.67.30.2 2009/02/16 03:05:30 snj Exp $	*/
+/*	$NetBSD: param.h,v 1.67.30.3 2009/02/16 03:06:21 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,6 +71,10 @@
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
+
+#if defined(_KERNEL_OPT)
+#include "opt_kernbase.h"
+#endif /* defined(_KERNEL_OPT) */
 
 #ifdef KERNBASE_LOCORE
 #error "You should only re-define KERNBASE"
