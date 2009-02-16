@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.37 2006/10/07 10:24:48 elad Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.38 2009/02/16 20:36:11 is Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.37 2006/10/07 10:24:48 elad Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.38 2009/02/16 20:36:11 is Exp $");
 #endif
 #endif
 
@@ -883,7 +883,7 @@ main(argc, argv)
 						break;
 					case ICMP6_DST_UNREACH_ADMIN:
 						++unreachable;
-						printf(" !P");
+						printf(" !X");
 						break;
 					case ICMP6_DST_UNREACH_NOTNEIGHBOR:
 						++unreachable;
@@ -891,7 +891,7 @@ main(argc, argv)
 						break;
 					case ICMP6_DST_UNREACH_ADDR:
 						++unreachable;
-						printf(" !A");
+						printf(" !H");
 						break;
 					case ICMP6_DST_UNREACH_NOPORT:
 						if (rcvhlim >= 0 &&
