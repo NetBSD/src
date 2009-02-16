@@ -1,3 +1,4 @@
+/*	$NetBSD: addrmatch.c,v 1.2 2009/02/16 20:53:54 christos Exp $	*/
 /*	$OpenBSD: addrmatch.c,v 1.3 2008/06/10 23:06:19 djm Exp $ */
 
 /*
@@ -15,7 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include "includes.h"
+__RCSID("$NetBSD: addrmatch.c,v 1.2 2009/02/16 20:53:54 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

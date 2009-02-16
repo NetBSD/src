@@ -1,3 +1,4 @@
+/*	$NetBSD: mux.c,v 1.2 2009/02/16 20:53:54 christos Exp $	*/
 /* $OpenBSD: mux.c,v 1.7 2008/06/13 17:21:20 dtucker Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
@@ -33,7 +34,8 @@
  *   9. If we ever support the "signal" channel request, send signals on
  *      sessions in master.
  */
-
+#include "includes.h"
+__RCSID("$NetBSD: mux.c,v 1.2 2009/02/16 20:53:54 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
