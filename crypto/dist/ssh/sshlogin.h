@@ -1,5 +1,5 @@
-/*	$NetBSD: sshlogin.h,v 1.4 2006/09/28 21:22:15 christos Exp $	*/
-/*	$OpenBSD: sshlogin.h,v 1.4 2002/08/29 15:57:25 stevesk Exp $	*/
+/*	$NetBSD: sshlogin.h,v 1.5 2009/02/16 20:53:55 christos Exp $	*/
+/* $OpenBSD: sshlogin.h,v 1.8 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
