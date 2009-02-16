@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.36 2008/10/20 03:02:07 christos Exp $
+# $NetBSD: Makefile.boot,v 1.37 2009/02/16 22:39:30 jmcneill Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -83,7 +83,7 @@ CPPFLAGS+= -DEPIA_HACK
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
 # XXX The heap values should be determined from _end.
-SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x50000
+SAMISCCPPFLAGS+= -DHEAP_START=0x30000 -DHEAP_LIMIT=0x50000
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 

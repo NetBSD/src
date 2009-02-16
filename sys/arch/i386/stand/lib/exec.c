@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.38 2009/01/24 22:14:45 rmind Exp $	 */
+/*	$NetBSD: exec.c,v 1.39 2009/02/16 22:39:30 jmcneill Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -128,12 +128,25 @@ boot_module_t *boot_modules;
 bool boot_modules_enabled = true;
 bool kernel_loaded;
 
+static struct btinfo_framebuffer btinfo_framebuffer;
+
 static struct btinfo_modulelist *btinfo_modulelist;
 static size_t btinfo_modulelist_size;
 static uint32_t image_end;
 static char module_base[64] = "/";
 
 static void	module_init(void);
+
+void
+framebuffer_configure(struct btinfo_framebuffer *fb)
+{
+	if (fb)
+		btinfo_framebuffer = *fb;
+	else {
+		btinfo_framebuffer.physaddr = 0;
+		btinfo_framebuffer.flags = 0;
+	}
+}
 
 void
 module_add(char *name)
@@ -270,6 +283,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 	BI_ALLOC(32); /* ??? */
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
+	BI_ADD(&btinfo_framebuffer, BTINFO_FRAMEBUFFER,
+	    sizeof(struct btinfo_framebuffer));
 
 	if (common_load_kernel(file, &basemem, &extmem, loadaddr, floppy, marks))
 		goto out;
