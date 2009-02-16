@@ -1,4 +1,3 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.1.1.8 2008/04/06 21:18:05 christos Exp $	*/
 /* $OpenBSD: auth-bsdauth.c,v 1.11 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.

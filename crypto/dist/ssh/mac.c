@@ -1,5 +1,4 @@
-/*	$NetBSD: mac.c,v 1.1.1.8 2007/12/17 20:15:16 christos Exp $	*/
-/* $OpenBSD: mac.c,v 1.14 2007/06/07 19:37:34 pvalchev Exp $ */
+/* $OpenBSD: mac.c,v 1.15 2008/06/13 00:51:47 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -126,7 +125,7 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 
 	if (mac->mac_len > sizeof(m))
 		fatal("mac_compute: mac too long %u %lu",
-		    mac->mac_len, sizeof(m));
+		    mac->mac_len, (u_long)sizeof(m));
 
 	switch (mac->type) {
 	case SSH_EVP:

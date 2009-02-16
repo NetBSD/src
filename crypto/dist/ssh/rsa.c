@@ -1,4 +1,3 @@
-/*	$NetBSD: rsa.c,v 1.1.1.8 2007/03/10 22:35:43 christos Exp $	*/
 /* $OpenBSD: rsa.c,v 1.29 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

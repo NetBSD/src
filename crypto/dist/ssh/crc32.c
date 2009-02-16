@@ -1,4 +1,3 @@
-/*	$NetBSD: crc32.c,v 1.1.1.6 2006/09/28 21:15:07 christos Exp $	*/
 /* $OpenBSD: crc32.c,v 1.11 2006/04/22 18:29:33 stevesk Exp $ */
 
 /*

@@ -1,4 +1,3 @@
-#	$NetBSD: ssh_config,v 1.1.1.12 2007/12/17 20:15:32 christos Exp $
 #	$OpenBSD: ssh_config,v 1.23 2007/06/08 04:40:40 pvalchev Exp $
 
 # This is the ssh client system-wide configuration file.  See

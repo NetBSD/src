@@ -1,4 +1,3 @@
-/*	$NetBSD: compress.c,v 1.1.1.10 2006/09/28 21:15:07 christos Exp $	*/
 /* $OpenBSD: compress.c,v 1.25 2006/08/06 01:13:32 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

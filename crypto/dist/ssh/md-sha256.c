@@ -1,4 +1,3 @@
-/*	$NetBSD: md-sha256.c,v 1.1.1.1 2006/09/28 21:15:10 christos Exp $	*/
 /* $OpenBSD: md-sha256.c,v 1.5 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Damien Miller <djm@openbsd.org>

@@ -1,4 +1,3 @@
-/*	$NetBSD: sftp-glob.c,v 1.1.1.9 2006/09/28 21:15:21 christos Exp $	*/
 /* $OpenBSD: sftp-glob.c,v 1.22 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>

@@ -1,4 +1,3 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.1.1.2 2006/09/28 21:15:00 christos Exp $	*/
 /* $OpenBSD: auth2-kbdint.c,v 1.5 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.

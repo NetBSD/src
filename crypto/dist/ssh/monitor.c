@@ -1,5 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.1.1.13 2008/04/06 21:18:18 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.94 2007/10/29 04:08:08 dtucker Exp $ */
+/* $OpenBSD: monitor.c,v 1.99 2008/07/10 18:08:11 markus Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -31,6 +30,7 @@
 #include <sys/socket.h>
 #include <sys/tree.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 
 #include <openssl/dh.h>
 
@@ -742,6 +742,8 @@ mm_answer_keyallowed(int sock, Buffer *m)
 			allowed = options.pubkey_authentication &&
 			    user_key_allowed(authctxt->pw, key);
 			auth_method = "publickey";
+			if (options.pubkey_authentication && allowed != 1)
+				auth_clear_options();
 			break;
 		case MM_HOSTKEY:
 			allowed = options.hostbased_authentication &&
@@ -754,6 +756,8 @@ mm_answer_keyallowed(int sock, Buffer *m)
 			allowed = options.rhosts_rsa_authentication &&
 			    auth_rhosts_rsa_key_allowed(authctxt->pw,
 			    cuser, chost, key);
+			if (options.rhosts_rsa_authentication && allowed != 1)
+				auth_clear_options();
 			auth_method = "rsa";
 			break;
 		default:
@@ -783,7 +787,7 @@ mm_answer_keyallowed(int sock, Buffer *m)
 	}
 
 	debug3("%s: key %p is %s",
-	    __func__, key, allowed ? "allowed" : "disallowed");
+	    __func__, key, allowed ? "allowed" : "not allowed");
 
 	buffer_clear(m);
 	buffer_put_int(m, allowed);
@@ -1000,7 +1004,7 @@ mm_session_close(Session *s)
 		debug3("%s: tty %s ptyfd %d", __func__, s->tty, s->ptyfd);
 		session_pty_cleanup2(s);
 	}
-	s->used = 0;
+	session_unused(s->self);
 }
 
 int
@@ -1381,7 +1385,7 @@ mm_get_keystate(struct monitor *pmonitor)
 	u_char *blob, *p;
 	u_int bloblen, plen;
 	u_int32_t seqnr, packets;
-	u_int64_t blocks;
+	u_int64_t blocks, bytes;
 
 	debug3("%s: Waiting for new keys", __func__);
 
@@ -1414,11 +1418,13 @@ mm_get_keystate(struct monitor *pmonitor)
 	seqnr = buffer_get_int(&m);
 	blocks = buffer_get_int64(&m);
 	packets = buffer_get_int(&m);
-	packet_set_state(MODE_OUT, seqnr, blocks, packets);
+	bytes = buffer_get_int64(&m);
+	packet_set_state(MODE_OUT, seqnr, blocks, packets, bytes);
 	seqnr = buffer_get_int(&m);
 	blocks = buffer_get_int64(&m);
 	packets = buffer_get_int(&m);
-	packet_set_state(MODE_IN, seqnr, blocks, packets);
+	bytes = buffer_get_int64(&m);
+	packet_set_state(MODE_IN, seqnr, blocks, packets, bytes);
 
  skip:
 	/* Get the key context */

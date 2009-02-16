@@ -1,4 +1,3 @@
-/*	$NetBSD: scard.h,v 1.1.1.6 2006/09/28 21:15:16 christos Exp $	*/
 /* $OpenBSD: scard.h,v 1.14 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*

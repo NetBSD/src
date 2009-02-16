@@ -1,4 +1,3 @@
-/*	$NetBSD: compat.c,v 1.1.1.17 2007/03/10 22:35:35 christos Exp $	*/
 /* $OpenBSD: compat.c,v 1.77 2006/12/12 03:58:42 djm Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.

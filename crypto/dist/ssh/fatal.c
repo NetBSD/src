@@ -1,4 +1,3 @@
-/*	$NetBSD: fatal.c,v 1.1.1.3 2006/09/28 21:15:07 christos Exp $	*/
 /* $OpenBSD: fatal.c,v 1.7 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.

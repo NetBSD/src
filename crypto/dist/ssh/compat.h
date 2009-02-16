@@ -1,4 +1,3 @@
-/*	$NetBSD: compat.h,v 1.1.1.16 2007/03/10 22:35:35 christos Exp $	*/
 /* $OpenBSD: compat.h,v 1.41 2006/12/12 03:58:42 djm Exp $ */
 
 /*

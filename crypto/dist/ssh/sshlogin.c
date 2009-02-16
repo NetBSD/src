@@ -1,4 +1,3 @@
-/*	$NetBSD: sshlogin.c,v 1.1.1.8 2008/04/06 21:18:38 christos Exp $	*/
 /* $OpenBSD: sshlogin.c,v 1.26 2007/09/11 15:47:17 gilles Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

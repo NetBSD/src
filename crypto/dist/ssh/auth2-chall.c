@@ -1,4 +1,3 @@
-/*	$NetBSD: auth2-chall.c,v 1.1.1.16 2008/04/06 21:18:06 christos Exp $	*/
 /* $OpenBSD: auth2-chall.c,v 1.33 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.

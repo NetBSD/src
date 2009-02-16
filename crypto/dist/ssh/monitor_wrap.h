@@ -1,4 +1,3 @@
-/*	$NetBSD: monitor_wrap.h,v 1.1.1.5 2006/09/28 21:15:13 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.h,v 1.20 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*

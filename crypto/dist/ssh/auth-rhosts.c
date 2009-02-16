@@ -1,5 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.1.1.12 2006/09/28 21:14:58 christos Exp $	*/
-/* $OpenBSD: auth-rhosts.c,v 1.41 2006/08/03 03:34:41 deraadt Exp $ */
+/* $OpenBSD: auth-rhosts.c,v 1.43 2008/06/13 14:18:51 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -18,11 +17,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <fcntl.h>
 #include <netgroup.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "packet.h"
 #include "buffer.h"
@@ -34,6 +35,7 @@
 #include "key.h"
 #include "hostfile.h"
 #include "auth.h"
+#include "misc.h"
 
 /* import */
 extern ServerOptions options;
@@ -52,12 +54,27 @@ check_rhosts_file(const char *filename, const char *hostname,
 {
 	FILE *f;
 	char buf[1024];	/* Must not be larger than host, user, dummy below. */
+	int fd;
+	struct stat st;
 
 	/* Open the .rhosts file, deny if unreadable */
-	f = fopen(filename, "r");
-	if (!f)
+	if ((fd = open(filename, O_RDONLY|O_NONBLOCK)) == -1)
 		return 0;
-
+	if (fstat(fd, &st) == -1) {
+		close(fd);
+		return 0;
+	}
+	if (!S_ISREG(st.st_mode)) {
+		logit("User %s hosts file %s is not a regular file",
+		    server_user, filename);
+		close(fd);
+		return 0;
+	}
+	unset_nonblock(fd);
+	if ((f = fdopen(fd, "r")) == NULL) {
+		close(fd);
+		return 0;
+	}
 	while (fgets(buf, sizeof(buf), f)) {
 		/* All three must be at least as big as buf to avoid overflows. */
 		char hostbuf[1024], userbuf[1024], dummy[1024], *host, *user, *cp;

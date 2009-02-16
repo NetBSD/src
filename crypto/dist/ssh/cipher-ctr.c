@@ -1,4 +1,3 @@
-/*	$NetBSD: cipher-ctr.c,v 1.1.1.4 2006/09/28 21:15:05 christos Exp $	*/
 /* $OpenBSD: cipher-ctr.c,v 1.10 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>

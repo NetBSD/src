@@ -1,5 +1,4 @@
-/*	$NetBSD: log.h,v 1.1.1.8 2006/09/28 21:15:10 christos Exp $	*/
-/* $OpenBSD: log.h,v 1.15 2006/08/18 09:13:25 deraadt Exp $ */
+/* $OpenBSD: log.h,v 1.17 2008/06/13 00:12:02 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -47,11 +46,15 @@ typedef enum {
 void     log_init(char *, LogLevel, SyslogFacility, int);
 
 SyslogFacility	log_facility_number(char *);
-LogLevel log_level_number(char *);
+const char * 	log_facility_name(SyslogFacility);
+LogLevel	log_level_number(char *);
+const char *	log_level_name(LogLevel);
 
-void     fatal(const char *, ...) __dead __attribute__((format(printf, 1, 2)));
+void     fatal(const char *, ...) __attribute__((noreturn))
+    __attribute__((format(printf, 1, 2)));
 void     error(const char *, ...) __attribute__((format(printf, 1, 2)));
-void     sigdie(const char *, ...) __attribute__((format(printf, 1, 2)));
+void     sigdie(const char *, ...)  __attribute__((noreturn))
+    __attribute__((format(printf, 1, 2)));
 void     logit(const char *, ...) __attribute__((format(printf, 1, 2)));
 void     verbose(const char *, ...) __attribute__((format(printf, 1, 2)));
 void     debug(const char *, ...) __attribute__((format(printf, 1, 2)));
@@ -59,5 +62,5 @@ void     debug2(const char *, ...) __attribute__((format(printf, 1, 2)));
 void     debug3(const char *, ...) __attribute__((format(printf, 1, 2)));
 
 void	 do_log(LogLevel, const char *, va_list);
-void	 cleanup_exit(int) __dead;
+void	 cleanup_exit(int) __attribute__((noreturn));
 #endif

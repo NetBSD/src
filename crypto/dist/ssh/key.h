@@ -1,5 +1,4 @@
-/*	$NetBSD: key.h,v 1.1.1.12 2006/09/28 21:15:10 christos Exp $	*/
-/* $OpenBSD: key.h,v 1.26 2006/08/03 03:34:42 deraadt Exp $ */
+/* $OpenBSD: key.h,v 1.27 2008/06/11 21:01:35 grunk Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -43,7 +42,8 @@ enum fp_type {
 };
 enum fp_rep {
 	SSH_FP_HEX,
-	SSH_FP_BUBBLEBABBLE
+	SSH_FP_BUBBLEBABBLE,
+	SSH_FP_RANDOMART
 };
 
 /* key is stored in external hardware */

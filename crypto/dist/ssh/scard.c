@@ -1,4 +1,3 @@
-/*	$NetBSD: scard.c,v 1.1.1.8 2007/03/10 22:35:44 christos Exp $	*/
 /* $OpenBSD: scard.c,v 1.36 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
