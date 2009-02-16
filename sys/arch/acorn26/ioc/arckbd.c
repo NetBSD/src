@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.17 2009/02/14 10:20:55 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.18 2009/02/16 21:36:09 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.17 2009/02/14 10:20:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.18 2009/02/16 21:36:09 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,7 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.17 2009/02/14 10:20:55 bjh21 Exp $");
 #include <arch/acorn26/ioc/arckbdreg.h>
 #include <arch/acorn26/ioc/arckbdvar.h>
 
-#include "locators.h"
+#include "wskbd.h"
+#include "wsmouse.h"
 
 #include "rnd.h"
 #if NRND > 0
@@ -105,8 +106,10 @@ static int arckbd_led_decode(int);
 static void arckbd_set_leds(void *cookie, int new_state);
 static int arckbd_ioctl(void *cookie, u_long cmd, void *data, int flag,
     struct lwp *l);
+#if NWSKBD > 0
 static void arckbd_getc(void *cookie, u_int *typep, int *valuep);
 static void arckbd_pollc(void *cookie, int poll);
+#endif
 
 static int arcmouse_enable(void *cookie);
 static int arcmouse_ioctl(void *cookie, u_long cmd, void *data, int flag,
@@ -153,9 +156,11 @@ static struct wskbd_accessops arckbd_accessops = {
 	arckbd_enable, arckbd_set_leds, arckbd_ioctl
 };
 
+#if NWSKBD > 0
 static struct wskbd_consops arckbd_consops = {
 	arckbd_getc, arckbd_pollc
 };
+#endif
 
 static struct wsmouse_accessops arcmouse_accessops = {
 	arcmouse_enable, arcmouse_ioctl, arcmouse_disable
@@ -213,8 +218,6 @@ arckbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mapdata = arckbd_mapdata_default;
 	sc->sc_mapdata.layout = KB_UK; /* Reasonable default */
 
-	/* XXX set the LEDs to a known state? (or will wskbd do this?) */
-
 	/* Attach the wskbd console */
 	arckbd_cnattach(self);
 
@@ -262,11 +265,14 @@ arckbd_pick_layout(int kbid)
 void
 arckbd_cnattach(device_t self)
 {
+#if NWSKBD > 0
 	struct arckbd_softc *sc = device_private(self);
 
 	wskbd_cnattach(&arckbd_consops, sc, &arckbd_mapdata_default);
+#endif
 }
 
+#if NWSKBD > 0
 static void
 arckbd_getc(void *cookie, u_int *typep, int *valuep)
 {
@@ -308,6 +314,7 @@ arckbd_pollc(void *cookie, int poll)
 	}
 	splx(s);
 }
+#endif
 
 static int
 arckbd_send(device_t self, int data, enum arckbd_state newstate, int waitok)
@@ -453,13 +460,17 @@ arckbd_rint(void *cookie)
 static void
 arckbd_mousemoved(device_t self, int byte1, int byte2)
 {
+#if NRND > 0 || NWSMOUSE > 0
 	struct arckbd_softc *sc = device_private(self);
-	int dx, dy;
+#endif
 
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, byte1);
 #endif
+#if NWSMOUSE > 0
 	if (sc->sc_wsmousedev != NULL) {
+		int dx, dy;
+
 		/* deltas are 7-bit signed */
 		dx = byte1 < 0x40 ? byte1 : byte1 - 0x80;
 		dy = byte2 < 0x40 ? byte2 : byte2 - 0x80;
@@ -468,6 +479,7 @@ arckbd_mousemoved(device_t self, int byte1, int byte2)
 				dx, dy, 0, 0,
 				WSMOUSE_INPUT_DELTA);
 	}
+#endif
 }
 
 static void
@@ -494,11 +506,13 @@ arckbd_keyupdown(device_t self, int byte1, int byte2)
 			sc->sc_mouse_buttons |= (1 << (byte2 & 0x0f));
 		else
 			sc->sc_mouse_buttons &= ~(1 << (byte2 & 0x0f));
+#if NWSMOUSE > 0
 		if (sc->sc_wsmousedev != NULL)
 			wsmouse_input(sc->sc_wsmousedev,
 					sc->sc_mouse_buttons,
 					0, 0, 0, 0,
 					WSMOUSE_INPUT_DELTA);
+#endif
 	} else {
 		type = ARCKBD_IS_KDDA(byte1) ?
 			WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
@@ -506,8 +520,11 @@ arckbd_keyupdown(device_t self, int byte1, int byte2)
 		if (sc->sc_flags & AKF_POLLING) {
 			sc->sc_poll_type = type;
 			sc->sc_poll_value = value;
-		} else if (sc->sc_wskbddev != NULL)
+		}
+#if NWSKBD > 0
+		else if (sc->sc_wskbddev != NULL)
 			wskbd_input(sc->sc_wskbddev, type, value);
+#endif
 	}
 }
 
