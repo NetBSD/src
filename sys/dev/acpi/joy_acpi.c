@@ -1,4 +1,4 @@
-/* $NetBSD: joy_acpi.c,v 1.8 2008/03/26 18:27:07 xtraeme Exp $ */
+/* $NetBSD: joy_acpi.c,v 1.9 2009/02/17 12:46:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.8 2008/03/26 18:27:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.9 2009/02/17 12:46:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,9 +92,6 @@ joy_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_resources res;
 	struct acpi_io *io;
 	ACPI_STATUS rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	sc->sc_dev = self;
 

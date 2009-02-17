@@ -1,4 +1,4 @@
-/* $NetBSD: hpet_acpi.c,v 1.3 2008/03/21 13:28:14 xtraeme Exp $ */
+/* $NetBSD: hpet_acpi.c,v 1.4 2009/02/17 12:46:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.3 2008/03/21 13:28:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.4 2009/02/17 12:46:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,6 @@ hpet_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	ACPI_STATUS rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	/* parse resources */
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
