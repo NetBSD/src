@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.1 2009/02/16 22:39:30 jmcneill Exp $ */
+/* $NetBSD: vbe.c,v 1.2 2009/02/17 23:17:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -336,17 +336,20 @@ command_vesa(char *cmd)
 
 	if (strcmp(arg, "enabled") == 0 || strcmp(arg, "on") == 0)
 		modenum = VBE_DEFAULT_MODE;
+	else if (strncmp(arg, "0x", 2) == 0)
+		modenum = strtoul(arg, NULL, 0);
 	else if (strchr(arg, 'x') != NULL) {
 		modenum = vbe_find_mode(arg);
 		if (modenum == 0)
 			return;
 	} else
-		modenum = strtoul(arg, NULL, 0);
+		modenum = 0;
+
 	if (modenum >= 0x100) {
 		vbe_set_mode(modenum);
 		return;
 	}
 
 	printf("invalid flag, must be 'enabled', 'disabled', "
-	    "or a valid VESA VBE mode number.\n");
+	    "a display mode, or a valid VESA VBE mode number.\n");
 }
