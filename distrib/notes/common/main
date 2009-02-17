@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.433 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: main,v 1.434 2009/02/17 21:41:20 imil Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1415,6 +1415,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Ross Harvey Ta Mt ross@NetBSD.org
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.org
 .It Ta John Hawkinson Ta Mt jhawk@NetBSD.org
+.It Ta Emile Heitor Ta Mt imil@NetBSD.org
 .It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.org
 .It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
