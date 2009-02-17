@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.24 2009/02/06 22:58:49 enami Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.25 2009/02/17 21:54:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.24 2009/02/06 22:58:49 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.25 2009/02/17 21:54:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -119,7 +119,7 @@ static void kmem_poison_check(void *, size_t);
 #endif /* defined(KMEM_REDZONE) */
 
 #if defined(KMEM_SIZE)
-#define	SIZE_SIZE	(min(KMEM_QUANTUM_SIZE, sizeof(size_t)))
+#define	SIZE_SIZE	(max(KMEM_QUANTUM_SIZE, sizeof(size_t)))
 static void kmem_size_set(void *, size_t);
 static void kmem_size_check(void *, size_t);
 #else
