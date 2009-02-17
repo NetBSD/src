@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/14 07:06:40 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/02/17 19:05:22 christos Exp $
 
-SUBDIR+= sigalrm sigchld sigsegv
+SUBDIR+= sigalrm sigchld sigfpe sigsegv
 
 .include <bsd.subdir.mk>
