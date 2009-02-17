@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.22 2009/02/17 02:41:11 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.23 2009/02/17 17:01:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.22 2009/02/17 02:41:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.23 2009/02/17 17:01:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.22 2009/02/17 02:41:11 jmcneill Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -182,8 +182,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	memcpy(&sc->sc_ops, ops, sizeof(struct genfb_ops));
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
-	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK);
-	if (sc->sc_want_clear == false)
+	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
+	if (sc->sc_want_clear == false && sc->sc_shadowfb != NULL)
 		memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
