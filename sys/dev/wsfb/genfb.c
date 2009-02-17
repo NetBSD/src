@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.20 2009/02/16 22:24:40 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.21 2009/02/17 02:19:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.20 2009/02/16 22:24:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.21 2009/02/17 02:19:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,12 +144,19 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t dict;
 	struct rasops_info *ri;
+	uint16_t crow;
 	long defattr;
 	int i, j;
 	bool console;
 
 	dict = device_properties(&sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &console);
+
+	if (prop_dictionary_get_uint16(dict, "cursor-row", &crow) == false)
+		crow = 0;
+	if (prop_dictionary_get_bool(dict, "clear-screen", &sc->sc_want_clear)
+	    == false)
+		sc->sc_want_clear = true;
 
 	/* do not attach when we're not console */
 	if (!console) {
@@ -175,6 +182,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK);
+	if (sc->sc_want_clear == false)
+		memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &genfb_accessops);
@@ -193,11 +202,12 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-	wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
+	wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, crow,
 	    defattr);
 
 	/* Clear the whole screen to bring it to a known state. */
-	(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
+	if (sc->sc_want_clear)
+		(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
 
 	j = 0;
 	for (i = 0; i < (1 << sc->sc_depth); i++) {
@@ -305,7 +315,9 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER;
+	if (sc->sc_want_clear)
+		ri->ri_flg |= RI_FULLCLEAR;
 
 	if (sc->sc_shadowfb != NULL) {
 
@@ -314,7 +326,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	} else
 		ri->ri_bits = (char *)sc->sc_fbaddr;
 
-	if (existing) {
+	if (existing && sc->sc_want_clear) {
 		ri->ri_flg |= RI_CLEAR;
 	}
 
