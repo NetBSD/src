@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.21 2009/02/17 02:19:33 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.22 2009/02/17 02:41:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.21 2009/02/17 02:19:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.22 2009/02/17 02:41:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	}
 
 	aprint_verbose_dev(&sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
-	    "stride %d\n", sc->sc_fbaddr,
+	    "stride %d\n",
+	    sc->sc_fboffset ? (void *)sc->sc_fboffset : sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
