@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.34 2008/03/16 13:58:22 yamt Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.35 2009/02/17 12:46:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.34 2008/03/16 13:58:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.35 2009/02/17 12:46:01 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -117,9 +117,6 @@ fdc_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_drq *drq;
 	struct acpi_resources res;
 	ACPI_STATUS rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	sc->sc_dev = self;
 	sc->sc_ic = aa->aa_ic;
