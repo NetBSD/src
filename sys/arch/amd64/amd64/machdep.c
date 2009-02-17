@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.126 2009/02/17 00:09:50 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127 2009/02/17 01:39:25 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2009/02/17 00:09:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 2009/02/17 01:39:25 jmcneill Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -308,6 +308,12 @@ cpu_startup(void)
 	vaddr_t minaddr, maxaddr;
 	psize_t sz;
 	char pbuf[9];
+
+	/*
+	 * For console drivers that require uvm and pmap to be initialized,
+	 * we'll give them one more chance here...
+	 */
+	consinit();
 
 	/*
 	 * Initialize error message buffer (et end of core).
