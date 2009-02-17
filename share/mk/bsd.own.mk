@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.554 2009/01/25 23:11:16 tron Exp $
+#	$NetBSD: bsd.own.mk,v 1.555 2009/02/17 00:02:32 abs Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -673,12 +673,18 @@ ${var}?=no
 #
 # Do we default to XFree86 or Xorg for this platform?
 #
-.if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || \
-    ${MACHINE} == "macppc" || ${MACHINE} == "shark" || \
-    ${MACHINE} == "sparc64"
-X11FLAVOUR?=	Xorg
-.else
+.if ${MACHINE} == "acorn32" || ${MACHINE} == "amiga" || \
+    ${MACHINE} == "cats" || ${MACHINE} == "dreamcast" || \
+    ${MACHINE} == "ews4800mips" || ${MACHINE} == "hpcarm" || \
+    ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh" || \
+    ${MACHINE} == "mac68k" || ${MACHINE} == "netwinder" || \
+    ${MACHINE} == "newsmips" || ${MACHINE} == "ofppc" || \
+    ${MACHINE} == "pmax" || ${MACHINE} == "sgimips" || \
+    ${MACHINE} == "sparc" || ${MACHINE} == "sun3" || \
+    ${MACHINE} == "x68k" 
 X11FLAVOUR?=	XFree86
+.else
+X11FLAVOUR?=	Xorg
 .endif
 
 #
