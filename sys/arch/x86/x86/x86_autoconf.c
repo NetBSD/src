@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.36 2009/02/16 22:29:33 jmcneill Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.37 2009/02/17 02:21:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.36 2009/02/16 22:29:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.37 2009/02/17 02:21:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,6 +557,8 @@ device_register(struct device *dev, void *aux)
 		prop_dictionary_t dict;
 
 		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY) {
+			extern struct vcons_screen x86_genfb_console_screen;
+
 			fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
 			if (fbinfo == NULL || fbinfo->physaddr == 0)
 				return;
@@ -572,6 +574,9 @@ device_register(struct device *dev, void *aux)
 			prop_dictionary_set_uint16(dict, "linebytes",
 			    fbinfo->stride);
 			prop_dictionary_set_bool(dict, "is_console", true);
+			prop_dictionary_set_bool(dict, "clear-screen", false);
+			prop_dictionary_set_uint16(dict, "cursor-row",
+			    x86_genfb_console_screen.scr_ri.ri_crow);
 #if notyet
 			prop_dictionary_set_bool(dict, "splash",
 			    fbinfo->flags & BI_FB_SPLASH ? true : false);
