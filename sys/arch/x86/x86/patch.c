@@ -1,7 +1,7 @@
-/*	$NetBSD: patch.c,v 1.15 2008/12/19 11:21:24 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.16 2009/02/17 21:20:49 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.15 2008/12/19 11:21:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.16 2009/02/17 21:20:49 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -120,13 +120,19 @@ patchbytes(void *addr, const int byte1, const int byte2)
 void
 x86_patch(bool early)
 {
-	static int again;
+	static bool first, second;
 	u_long psl;
 	u_long cr0;
 
-	if (again)
-		return;
-	again = 1;
+	if (early) {
+		if (first)
+			return;
+		first = true;
+	} else {
+		if (second)
+			return;
+		second = true;
+	}
 
 	/* Disable interrupts. */
 	psl = x86_read_psl();
