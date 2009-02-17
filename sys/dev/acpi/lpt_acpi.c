@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.17 2008/05/31 14:07:03 jmcneill Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.18 2009/02/17 12:46:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.17 2008/05/31 14:07:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.18 2009/02/17 12:46:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,9 +94,6 @@ lpt_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_io *io;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	sc->sc_dev = self;
 
