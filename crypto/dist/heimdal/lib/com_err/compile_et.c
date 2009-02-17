@@ -36,7 +36,7 @@
 #include <getarg.h>
 
 __RCSID("$Heimdal: compile_et.c 15426 2005-06-16 19:21:42Z lha $"
-        "$NetBSD: compile_et.c,v 1.4 2008/03/22 08:37:06 mlelstv Exp $");
+        "$NetBSD: compile_et.c,v 1.5 2009/02/17 05:24:14 uebayasi Exp $");
 
 #include <roken.h>
 #include <err.h>
@@ -224,7 +224,8 @@ main(int argc, char **argv)
 	p = filename;
     strlcpy(Basename, p, sizeof(Basename));
     
-    Basename[strcspn(Basename, ".")] = '\0';
+    p = strrchr(Basename, '.');
+    *p = '\0';
     
     snprintf(hfn, sizeof(hfn), "%s.h", Basename);
     snprintf(cfn, sizeof(cfn), "%s.c", Basename);
