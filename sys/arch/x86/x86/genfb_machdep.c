@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.1 2009/02/17 01:42:52 jmcneill Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.2 2009/02/17 02:21:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.1 2009/02/17 01:42:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.2 2009/02/17 02:21:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.1 2009/02/17 01:42:52 jmcneill E
 #include "genfb.h"
 
 #if NWSDISPLAY > 0 && NGENFB > 0
-static struct vcons_screen x86_genfb_console_screen;
+struct vcons_screen x86_genfb_console_screen;
 
 static struct wsscreen_descr x86_genfb_stdscreen = {
 	"std",
@@ -111,7 +111,7 @@ x86_genfb_cnattach(void)
 	ri->ri_depth = fbinfo->depth;
 	ri->ri_stride = fbinfo->stride;
 	ri->ri_bits = bits;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_CLEAR;
 	rasops_init(ri, ri->ri_width / 8, ri->ri_height / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
