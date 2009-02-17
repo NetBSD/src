@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.31 2009/02/17 15:03:13 njoly Exp $
+# $NetBSD: mi,v 1.32 2009/02/17 17:30:27 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -45,6 +45,7 @@
 ./usr/libdata/debug/usr/tests/atf/formats/h_parser.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/formats/t_writers.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/test_programs				tests-atf-debug
+./usr/libdata/debug/usr/tests/atf/test_programs/h_c.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/test_programs/h_cpp.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/tools					tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/tools/h_fail.debug			tests-atf-debug		debug
@@ -350,6 +351,7 @@
 ./usr/tests/atf/sh_interface/t_tp		tests-obsolete		obsolete
 ./usr/tests/atf/test_programs			tests-atf-tests
 ./usr/tests/atf/test_programs/Atffile		tests-atf-tests
+./usr/tests/atf/test_programs/h_c		tests-atf-tests
 ./usr/tests/atf/test_programs/h_cpp		tests-atf-tests
 ./usr/tests/atf/test_programs/h_sh		tests-atf-tests
 ./usr/tests/atf/test_programs/t_cleanup		tests-atf-tests
