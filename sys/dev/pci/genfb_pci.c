@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.14 2009/02/16 22:24:40 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.15 2009/02/17 20:36:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.14 2009/02/16 22:24:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.15 2009/02/17 20:36:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,8 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s\n", devinfo);
+	aprint_naive("\n");
+	aprint_normal(": %s\n", devinfo);
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;	
