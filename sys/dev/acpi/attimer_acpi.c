@@ -1,4 +1,4 @@
-/* $NetBSD: attimer_acpi.c,v 1.11 2008/04/28 20:23:47 martin Exp $ */
+/* $NetBSD: attimer_acpi.c,v 1.12 2009/02/17 12:46:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.11 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.12 2009/02/17 12:46:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,6 @@ attimer_acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 
 	sc->sc_dev = self;
-
-	aprint_naive(": AT Timer\n");
-	aprint_normal(": AT Timer\n");
 
 	/* parse resources */
 	rv = acpi_resource_parse(sc->sc_dev, aa->aa_node->ad_handle, "_CRS",

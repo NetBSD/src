@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.19 2008/04/05 21:44:50 cegger Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.20 2009/02/17 12:46:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.19 2008/04/05 21:44:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.20 2009/02/17 12:46:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,9 +124,6 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct audio_attach_args arg;
 	ACPI_STATUS rv;
 	struct wss_acpi_hint *wah;
-
-	aprint_naive(": NeoMagic 256AV audio\n");
-	aprint_normal(": NeoMagic 256AV audio\n");
 
 	wah = &wss_acpi_hints[
 	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.Value)];
