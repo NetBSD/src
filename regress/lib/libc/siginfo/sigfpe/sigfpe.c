@@ -1,4 +1,4 @@
-/* $NetBSD: sigfpe.c,v 1.1 2009/02/17 19:05:22 christos Exp $ */
+/* $NetBSD: sigfpe.c,v 1.2 2009/02/17 19:22:43 christos Exp $ */
 
 #include <sys/time.h>
 #include <sys/ucontext.h>
@@ -23,7 +23,7 @@ sigfpe(int signo, siginfo_t *info, void *ptr)
 		printf("si_signo=%d\n", info->si_signo);
 		printf("si_errno=%d\n", info->si_errno);
 		printf("si_code=%d\n", info->si_code);
-		printf("si_sigval.sival_int=%d\n", info->si_sigval.sival_int);
+		printf("si_value.sival_int=%d\n", info->si_value.sival_int);
 	}
 	if (ptr != NULL) {
 		ucontext_t *ctx = ptr;
