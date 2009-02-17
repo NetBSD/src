@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2008/12/18 12:18:20 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.78 2009/02/17 00:09:50 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2008/12/18 12:18:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2009/02/17 00:09:50 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -408,8 +408,6 @@ paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */
 
 #ifdef XEN
-/* First avail vaddr in bootstrap space, needed by pmap_bootstrap() */
-vaddr_t first_bt_vaddr;
 #ifdef __x86_64__
 /* Dummy PGD for user cr3, used between pmap_deacivate() and pmap_activate() */
 static paddr_t xen_dummy_user_pgd;
