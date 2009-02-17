@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.16 2009/02/16 22:29:33 jmcneill Exp $	*/
+/*	$NetBSD: consinit.c,v 1.17 2009/02/17 01:42:52 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2009/02/16 22:29:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.17 2009/02/17 01:42:52 jmcneill Exp $");
 
 #include "opt_kgdb.h"
 
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2009/02/16 22:29:33 jmcneill Exp $
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
+#include <arch/x86/include/genfb_machdep.h>
 
 #include "genfb.h"
 #include "vga.h"
@@ -174,10 +175,14 @@ consinit()
 		int error;
 #if (NGENFB > 0)
 		if (fbinfo && fbinfo->physaddr > 0) {
+			if (x86_genfb_cnattach() == -1) {
+				initted = 0;	/* defer */
+				return;
+			}
 			genfb_cnattach();
 			goto dokbd;
-		} else
-			genfb_disable();
+		}
+		genfb_disable();
 #endif
 #if (NVESAFB > 0)
 		if (!vesafb_cnattach())
