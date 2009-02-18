@@ -1,4 +1,4 @@
-/* $NetBSD: power.c,v 1.8.18.1 2008/10/27 08:02:40 skrll Exp $ */
+/* $NetBSD: power.c,v 1.8.18.2 2009/02/18 23:12:25 skrll Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.8.18.1 2008/10/27 08:02:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.8.18.2 2009/02/18 23:12:25 skrll Exp $");
 
 
 /*
@@ -108,11 +108,11 @@ static int pwr_sw_sysctl_ctrl(SYSCTLFN_PROTO);
 static void pwr_sw_sysmon_cb(void *);
 static void pwr_sw_poll(void *);
 
+static struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
 
 void
 pwr_sw_init(bus_space_tag_t bst)
 {
-	struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
 	struct sysctllog *sysctl_log = NULL;
 	const struct sysctlnode *pwr_sw_node;
 	int error, stage;
@@ -252,7 +252,6 @@ pwr_sw_poll(void *not_used)
 void
 pwr_sw_ctrl(int enable)
 {
-	struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
 	int error;
 
 #ifdef DEBUG
