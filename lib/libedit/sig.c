@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.13 2009/02/15 21:25:01 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.14 2009/02/18 15:04:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.13 2009/02/15 21:25:01 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.14 2009/02/18 15:04:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -160,12 +160,12 @@ sig_set(EditLine *el)
 	struct sigaction osa, nsa;
 
 	nsa.sa_handler = sig_handler;
-	nsa.sa_flags = 0;
 	sigemptyset(&nsa.sa_mask);
 
 	(void) sigprocmask(SIG_BLOCK, &el->el_signal->sig_set, &oset);
 
 	for (i = 0; sighdl[i] != -1; i++) {
+		nsa.sa_flags = SIGINT ? 0 : SA_RESTART;
 		/* This could happen if we get interrupted */
 		if (sigaction(sighdl[i], &nsa, &osa) != -1 &&
 		    osa.sa_handler != sig_handler)
