@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.1.1.1 2008/12/22 00:19:04 haad Exp $	*/
+/*	$NetBSD: lvm.c,v 1.1.1.2 2009/02/18 11:17:44 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -20,7 +20,7 @@
 
 int main(int argc, char **argv)
 {
-	return lvm2_main(argc, argv, 0);
+	return lvm2_main(argc, argv);
 }
 
 #ifdef READLINE_SUPPORT
