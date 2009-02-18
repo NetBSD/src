@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30.2.3 2009/02/12 21:26:07 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.30.2.4 2009/02/18 22:33:50 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -211,28 +211,29 @@ ENTRY_NOPROFILE(start,0)
 	ldil	L%esym,%r1
 	stw	%arg3,R%esym(%r1)
 
-	/* bootinfo struct address for hppa_init, if bootapiver is > 2 */
-	ldw	HPPA_FRAME_ARG(4)(%sp), %arg0
-	ldw	HPPA_FRAME_ARG(5)(%sp), %arg1
-	comiclr,< 2, %arg0, %r0
-	copy	%r0, %arg1
+	/* Put page aligned %arg3 into %t3. It is the start of available memory. */
+	ldo	NBPG-1(%arg3), %t3
+	dep	%r0, 31, PGSHIFT, %t3
 
-	/* Align arg3, which is the start of available memory */
-	ldo	NBPG-1(%arg3), %arg3
-	dep	%r0, 31, PGSHIFT, %arg3
+	/* bootinfo struct address for hppa_init, if bootapiver is > 2 */
+	ldw	HPPA_FRAME_ARG(4)(%sp), %t1
+	ldw	HPPA_FRAME_ARG(5)(%sp), %r5
+	comiclr,< 2, %t1, %r0
+	copy	%r0, %r5
 
 	/* assuming size being page-aligned */
 #define STACK_ALLOC(n,s)		\
 	ldil	L%(n), %t1		! \
 	ldil	L%(s), %t2		! \
-	stw	%arg3, R%(n)(%t1)	! \
-	add	%arg3, %t2, %arg3
+	stw	%t3, R%(n)(%t1)		! \
+	add	%t3, %t2, %t3		! \
+	ldo	NBPG(%t3), %t3		/* red zone */
 
 	STACK_ALLOC(pdc_stack, PDC_STACKSIZE)
 
 	/* zero fake trapframe and lwp0 u-area */
 	/* XXX - we should create a real trapframe for lwp0 */
-	copy	%arg3, %t2
+	copy	%t3, %t2
 	ldi	NBPG+TRAPFRAME_SIZEOF, %t1
 $start_zero_tf:
 	stws,ma %r0, 4(%t2)
@@ -240,28 +241,35 @@ $start_zero_tf:
 	stws,ma %r0, 4(%t2)	/* XXX could use ,bc here, but gas is broken */
 
 	/*
-	 * kernel stack lives here (arg3 is page-aligned esym)
-	 * initialize the pcb
-	 * arg0 will be available space for hppa_init()
+	 * kernel stack starts a page and a trapframe above l_addr.
 	 */
-	ldo	NBPG+TRAPFRAME_SIZEOF(%arg3), %sp
-	mtctl	%arg3, CR_UPADDR
-	stw	%r0, U_PCB+PCB_ONFAULT(%arg3)
-	stw	%r0, U_PCB+PCB_SPACE(%arg3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	%arg3, U_PCB+PCB_UVA(%arg3)
-						/* XXXNH test this */
-	ldil	L%(USPACE+NBPG), %arg0		/* normal U plus red zone */
-	add	%arg3, %arg0, %arg0
+	ldo	NBPG+TRAPFRAME_SIZEOF(%t3), %sp
+	mtctl	%t3, CR_UPADDR
+
+	/* initialize the pcb */
+	stw	%r0, U_PCB+PCB_ONFAULT(%t3)
+	stw	%r0, U_PCB+PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
+	stw	%t3, U_PCB+PCB_UVA(%t3)
+
+	/*
+	 * Setup various pointers.
+	 *
+	 * First free memory is %t3 plus normal U space, plus trapframe and pcb
+	 * page. The last page of USPACE is the redzone.
+	 */
+	ldil	L%(USPACE+NBPG), %r4
+	add	%t3, %r4, %r4
+
 	ldil	L%proc0paddr, %t1
-	stw	%arg3, R%proc0paddr(%t1)
+	stw	%t3, R%proc0paddr(%t1)
 	ldil	L%lwp0, %t2
-	stw	%arg3, R%lwp0+L_ADDR(%t2)
-	ldo	NBPG(%arg3), %t1
+	stw	%t3, R%lwp0+L_ADDR(%t2)
+	ldo	NBPG(%t3), %t1
 	stw	%t1, R%lwp0+L_MD_REGS(%t2)
 
 	ldil	L%TFF_LAST, %t1
 	stw	%t1, TF_FLAGS-TRAPFRAME_SIZEOF(%sp)
-	stw	%arg3, TF_CR30-TRAPFRAME_SIZEOF(%sp)
+	stw	%t3, TF_CR30-TRAPFRAME_SIZEOF(%sp)
 
 	/*
 	 * disable all coprocessors
@@ -272,14 +280,16 @@ $start_zero_tf:
 	 * We need to set the Q bit so that we can take TLB misses after we
 	 * turn on virtual memory.
 	 */
-	copy	%sp, %arg1
+	copy	%sp, %arg0
 	ldil	L%$qisnowon, %rp
 	ldo	R%$qisnowon(%rp), %rp
 
 	b	kernel_setup
-	ldi	PSW_Q|PSW_I, %arg2
+	ldi	PSW_Q|PSW_I, %arg1
 
 $qisnowon:
+	copy	%r4, %arg0
+	copy	%r5, %arg1
 	/*
 	 * call C routine hppa_init() to initialize VM
 	 */
@@ -340,6 +350,9 @@ $noddb:
 EXIT(start)
 
 
+/*
+ * void kernel_setup(register_t sp, register_t psw)
+ */
 LEAF_ENTRY_NOPROFILE(kernel_setup)
 
 	/*
@@ -394,8 +407,8 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	 * Create a stack frame for us to call C with. Clear out the previous
 	 * sp marker to mark that this is the first frame on the stack.
 	 */
-	copy	%arg1, %sp
-	ldo	0(%arg1), %r3
+	copy	%arg0, %sp
+	ldo	0(%arg0), %r3
 	stw,ma	%r0, HPPA_FRAME_SIZE(%sp)
 	stw	%r0, HPPA_FRAME_CRP(%sp)
 	stw	%r0, HPPA_FRAME_PSP(%sp)
@@ -410,7 +423,7 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	mtctl	%rp, %pcoq
 	ldo	4(%rp),%rp
 	mtctl	%rp, %pcoq
-	mtctl	%arg2, %ipsw
+	mtctl	%arg1, %ipsw
 	rfi
 	nop
 	nop
