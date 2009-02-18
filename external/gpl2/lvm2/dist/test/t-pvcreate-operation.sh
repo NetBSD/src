@@ -14,6 +14,14 @@ aux prepare_devs 4
 
 for mdatype in 1 2
 do
+# pvcreate (lvm$mdatype) refuses to overwrite an mounted filesystem (bz168330)
+	test ! -d $G_root_/mnt && mkdir $G_root_/mnt 
+	if mke2fs $dev1; then
+		mount $dev1 $G_root_/mnt
+		not pvcreate -M$mdatype $dev1 2>err
+		grep "Can't open $dev1 exclusively.  Mounted filesystem?" err
+		umount $dev1
+	fi
 
 # pvcreate (lvm$mdatype) succeeds when run repeatedly (pv not in a vg) (bz178216)
     pvcreate -M$mdatype $dev1
@@ -74,7 +82,7 @@ for i in 0 1 2 3
 do
 # pvcreate (lvm2) succeeds writing LVM label at sector $i
     pvcreate --labelsector $i $dev1
-    dd if=$dev1 bs=512 skip=$i count=1 status=noxfer 2>&1 | strings | grep -q LABELONE;
+    dd if=$dev1 bs=512 skip=$i count=1 2>/dev/null | strings | grep -q LABELONE;
     pvremove -f $dev1
 done
 
