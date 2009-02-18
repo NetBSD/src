@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.30 2008/04/28 20:24:16 martin Exp $ */
+/* $NetBSD: i386.c,v 1.31 2009/02/18 20:06:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.30 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.31 2009/02/18 20:06:27 christos Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -112,8 +112,11 @@ pwrite_validate(int fd, const void *buf, size_t n_bytes, off_t offset)
 		return -1;
 	}
 	fsync(fd);
-	if (pread(fd, r_buf, rv, offset) == rv && memcmp(r_buf, buf, rv) == 0)
+	if (pread(fd, r_buf, rv, offset) == rv && memcmp(r_buf, buf, rv) == 0) {
+		free(r_buf);
 		return rv;
+	}
+	free(r_buf);
 	errno = EROFS;
 	return -1;
 }
