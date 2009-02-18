@@ -34,7 +34,7 @@
 #include "gen_locl.h"
 
 __RCSID("$Heimdal: gen.c 22429 2008-01-13 10:25:50Z lha $"
-        "$NetBSD: gen.c,v 1.10 2008/08/03 07:16:58 veego Exp $");
+        "$NetBSD: gen.c,v 1.11 2009/02/18 20:10:23 christos Exp $");
 
 FILE *headerfile, *codefile, *logfile;
 
@@ -337,6 +337,7 @@ generate_constant (const Symbol *s)
 		 s->gen_name, s->gen_name);
 
 	close_codefile();
+	free(list);
 
 	break;
     }
