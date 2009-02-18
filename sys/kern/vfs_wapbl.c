@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.21 2009/02/18 13:12:00 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.22 2009/02/18 13:22:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.21 2009/02/18 13:12:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.22 2009/02/18 13:22:10 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -260,7 +260,7 @@ void
 wapbl_init()
 {
 
-	/* nothing */
+	malloc_type_attach(M_WAPBL);
 }
 
 static int
