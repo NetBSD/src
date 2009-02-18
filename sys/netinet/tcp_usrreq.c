@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.150 2008/11/06 03:34:37 dyoung Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.151 2009/02/18 13:18:32 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.150 2008/11/06 03:34:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.151 2009/02/18 13:18:32 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1108,6 +1108,7 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 	 */
 	switch (rnode->sysctl_num) {
 	case IPCTL_ANONPORTMIN:
+	case IPV6CTL_ANONPORTMIN:
 		if (tmp >= apmax)
 			return (EINVAL);
 #ifndef IPNOPRIVPORTS
@@ -1117,6 +1118,7 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 		break;
 
 	case IPCTL_ANONPORTMAX:
+	case IPV6CTL_ANONPORTMAX:
                 if (apmin >= tmp)
 			return (EINVAL);
 #ifndef IPNOPRIVPORTS
@@ -1127,6 +1129,7 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 
 #ifndef IPNOPRIVPORTS
 	case IPCTL_LOWPORTMIN:
+	case IPV6CTL_LOWPORTMIN:
 		if (tmp >= lpmax ||
 		    tmp > IPPORT_RESERVEDMAX ||
 		    tmp < IPPORT_RESERVEDMIN)
@@ -1134,6 +1137,7 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 		break;
 
 	case IPCTL_LOWPORTMAX:
+	case IPV6CTL_LOWPORTMAX:
 		if (lpmin >= tmp ||
 		    tmp > IPPORT_RESERVEDMAX ||
 		    tmp < IPPORT_RESERVEDMIN)
