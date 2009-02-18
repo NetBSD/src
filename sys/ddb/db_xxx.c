@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.55 2009/02/04 20:17:58 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.56 2009/02/18 13:31:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.55 2009/02/04 20:17:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.56 2009/02/18 13:31:59 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_aio.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.55 2009/02/04 20:17:58 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/module.h>
 #include <sys/cpu.h>
+#include <sys/vmem.h>
 
 #include <machine/db_machdep.h>
 
@@ -312,6 +313,14 @@ db_show_all_pools(db_expr_t addr, bool haddr,
 {
 
 	pool_printall(modif, db_printf);
+}
+
+void
+db_show_all_vmems(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+
+	vmem_printall(modif, db_printf);
 }
 
 void
