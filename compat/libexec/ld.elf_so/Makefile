@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/02/14 13:50:50 abs Exp $
+#	$NetBSD: Makefile,v 1.5 2009/02/18 06:09:55 uebayasi Exp $
 
 NOMAN=	# defined
 
@@ -30,8 +30,8 @@ PROG=		ld.elf_so-i386
 ARCHSUBDIR=	i386
 .endif
 
-# XXX why do i need this?
-dependall: ${PROG}
+## XXX why do i need this?
+#dependall: ${PROG}
 
 .include "${.CURDIR}/Makefile"
 
