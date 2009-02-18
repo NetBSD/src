@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.26 2008/11/04 03:14:46 ginsbach Exp $	*/
+/*	$NetBSD: gencat.c,v 1.27 2009/02/18 20:04:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.26 2008/11/04 03:14:46 ginsbach Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.27 2009/02/18 20:04:43 christos Exp $");
 #endif
 
 /***********************************************************
@@ -346,7 +346,7 @@ getmsg(int fd, char *cptr, char quote)
 {
 	static char *msg = NULL;
 	static long msglen = 0;
-	long    clen, i;
+	size_t    clen, i;
 	char   *tptr;
 
 	if (quote && *cptr == quote) {
@@ -559,7 +559,6 @@ MCReadCat(int fd)
 		errx(1, "%s: bad magic number (%#x)", CORRUPT, cat_hdr.__magic);
 
 	cat_hdr.__mem = ntohl(cat_hdr.__mem);
-	msgcat = xmalloc(cat_hdr.__mem);
 
 	cat_hdr.__nsets = ntohl(cat_hdr.__nsets);
 	cat_hdr.__msg_hdr_offset = ntohl(cat_hdr.__msg_hdr_offset);
@@ -571,6 +570,8 @@ MCReadCat(int fd)
 	    (cat_hdr.__mem < cat_hdr.__msg_hdr_offset) ||
 	    (cat_hdr.__mem < cat_hdr.__msg_txt_offset))
 		errx(1, "%s: catalog header", CORRUPT);
+
+	msgcat = xmalloc(cat_hdr.__mem);
 
 	n = read(fd, msgcat, cat_hdr.__mem);
 	if (n < cat_hdr.__mem) {
