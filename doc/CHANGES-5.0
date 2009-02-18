@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.96 2009/02/16 03:36:13 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.97 2009/02/18 01:21:42 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4102,4 +4102,111 @@ sys/kern/vfs_syscalls.c				1.385
 	- Probably since rev. 1.160 of genfs_vnops.c, revoke(2) fails if
 	  it is applied to non-device file and drops kernel into ddb.
 	[enami, ticket #435]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/os-support/bsd/bsd_mouse.c 1.5
+
+	Add horizontal mouse-wheel functionality to USB and WSMOUSE
+	drivers.
+	[plunky, ticket #436]
+
+lib/libc/citrus/citrus_lc_time.c		1.3
+
+	Fix typo, don't overwrite LC_TIME's t_fmt_ampm by t_fmt.
+	[tnozaki, ticket #437]
+
+libexec/httpd/bozohttpd.c			1.10
+libexec/httpd/bozohttpd.h			1.7
+
+	Add If-Modified-Since support.
+	[joerg, ticket #438]
+
+sys/dev/ata/wd.c				1.368
+sys/dev/pcmcia/wdc_pcmcia.c			1.113
+
+	-in the wdc@pcmcia driver, don't try to powerup/down while
+	cold or shutting down -- this is only supposed to happen from
+	the pcmcia kernel thread while the system is running
+	-in wd_shutdown, call ata_addref first, so that the adapter
+	is either active or we know that it isn't
+	
+	This fixes a hang on shutdown -p, reported in PR kern/40531.
+	[drochner, ticket #441]
+
+tools/gettext/Makefile				1.5
+
+	Explicitly disable C# support. Mono is known to have issues, so
+	don't try to look for it.
+	[apb, ticket #442]
+
+sbin/newfs_udf/newfs_udf.8			1.5
+sbin/newfs_udf/newfs_udf.c			1.6, 1.7
+sbin/newfs_udf/udf_create.c			1.13, 1.14
+sbin/newfs_udf/udf_create.h			1.3
+
+	Fix -Wsign-compare issues and use KiB MiB GiB instead of
+	Kb Mb Gb.
+	[reinoud, ticket #444]
+
+sys/sys/cdio.h					1.33
+
+	Fix flagbits for MMC_TRACKINFO flags printing; it had an illegal
+	escape code in it.
+	[reinoud, ticket #445]
+
+sys/fs/udf/udf_vfsops.c				1.55
+
+	If mounting for read-write dont allow a session number to be
+	specified since it's currently still misbehaving. If supported
+	later, it would allow one or a series of sessions on a sequential
+	recordable media to be ignored as if they never were created.
+
+	Also fix a small comment: it's not the direct but the bootstrap
+	disc strategy that we close down.
+	[reinoud, ticket #446]
+
+sbin/mount_udf/mount_udf.8			1.10, 1.11
+sbin/mount_udf/mount_udf.c			1.13
+sys/fs/udf/udf.h				1.30
+sys/fs/udf/udf_readwrite.c			1.10
+sys/fs/udf/udf_strat_direct.c			1.8
+sys/fs/udf/udf_strat_rmw.c			1.18
+sys/fs/udf/udf_strat_sequential.c		1.8
+sys/fs/udf/udf_subr.c				1.85
+sys/fs/udf/udf_subr.h				1.13
+
+	Implement session closure on sequential media when requested
+	on mount. It will allow CD-ROM/DVD-ROM/DB-ROM drives to read
+	the media while still allowing them to be appended later. It
+	can also be seen as a way to make mountable snapshots.
+
+	Before this, a 5.0 kernel could screw up a disc closed by a
+	-current kernel or some other implementation.
+
+	Add mount_udf(8) option '-c' requesting session closure on
+	unmount.
+	[reinoud, ticket #447]
+
+distrib/sets/lists/xbase/mi			1.71
+distrib/sets/lists/xetc/mi			1.12
+external/mit/xorg/bin/xdm/config/Makefile	1.4, 1.5
+external/mit/xorg/bin/xdm/config/NetBSD-bw.xpm	1.1
+external/mit/xorg/bin/xdm/config/NetBSD-inv.xpm	1.1
+external/mit/xorg/bin/xdm/config/NetBSD.xpm	1.1
+
+	Restore NetBSD branding to xdm login widget:
+	- add NetBSD banner pixmaps and have Xdm use them by default.
+	- also, move the pixmap files back to X11BASE/include/X11/pixmaps/
+	[plunky, ticket #450]
+
+lib/libcurses/getch.c				1.52
+
+	Fix bug where a single ESC was not recognised when in
+	keypad() mode.
+	[jdc, ticket #451]
+
+distrib/utils/sysinst/util.c			1.155
+
+	Fix over enthusiastic length limit in
+	SUPPORT_8_3_SOURCE_FILESYSTEM block
+	[abs, ticket #452]
 
