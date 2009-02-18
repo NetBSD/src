@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.25 2009/02/17 21:54:30 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.26 2009/02/18 13:04:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.25 2009/02/17 21:54:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.26 2009/02/18 13:04:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -294,7 +294,7 @@ kmem_init(void)
 		kc->kc_pa.pa_pagesz = sz;
 		kc->kc_pa.pa_alloc = kmem_poolpage_alloc;
 		kc->kc_pa.pa_free = kmem_poolpage_free;
-		sprintf(kc->kc_name, "kmem-%zd", sz);
+		sprintf(kc->kc_name, "kmem-%zu", sz);
 		kc->kc_cache = pool_cache_init(sz,
 		    KMEM_QUANTUM_SIZE, 0, PR_NOALIGN | PR_NOTOUCH,
 		    kc->kc_name, &kc->kc_pa, IPL_NONE,
