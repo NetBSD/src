@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.126 2009/01/05 22:19:40 haad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.127 2009/02/18 13:31:59 yamt Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.126 2009/01/05 22:19:40 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.127 2009/02/18 13:31:59 yamt Exp $");
 
 #include "opt_aio.h"
 #include "opt_ddb.h"
@@ -220,7 +220,6 @@ static void	db_uvmhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
-static void	db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
 	/*added from all sub cmds*/
@@ -1108,15 +1107,8 @@ static void
 db_vmem_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	vmem_print((uintptr_t) addr, modif, db_printf);
-}
 
-/*ARGSUSED*/
-static void
-db_show_all_vmems(db_expr_t addr, bool have_addr,
-    db_expr_t count, const char *modif)
-{
-	vmem_print((uintptr_t)addr, "a", db_printf);
+	vmem_print((uintptr_t) addr, modif, db_printf);
 }
 
 static void
