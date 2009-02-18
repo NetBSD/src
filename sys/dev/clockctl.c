@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.25 2009/02/18 05:17:56 mrg Exp $ */
+/*      $NetBSD: clockctl.c,v 1.26 2009/02/18 17:57:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.25 2009/02/18 05:17:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.26 2009/02/18 17:57:11 mrg Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -109,13 +109,10 @@ clockctlioctl(
 		struct clockctl_clock_settime *args = data;
 		struct timespec ts;
 
-		if (args->tp) {
-			error = copyin(args->tp, &ts, sizeof ts);
-			if (error)
-				return (error);
-			error = clock_settime1(l->l_proc, args->clock_id,
-				    &ts, false);
-		}
+		error = copyin(args->tp, &ts, sizeof ts);
+		if (error)
+			return (error);
+		error = clock_settime1(l->l_proc, args->clock_id, &ts, false);
 		break;
 	}
 #ifdef NTP
