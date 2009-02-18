@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.5.4.1 2009/02/18 00:34:51 snj Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.5.4.2 2009/02/18 00:37:00 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -1016,7 +1016,7 @@ udf_do_newfs(void)
 	wrtrack_skew = ti.track_start % blockingnr;
 
 	if (mmc_discinfo.mmc_class == MMC_CLASS_CD) {
-		/* not too much for CD-RW, still 20Mb */
+		/* not too much for CD-RW, still 20MiB */
 		sparable_blocks = 32;
 	} else {
 		/* take a value for DVD*RW mainly, BD is `defect free' */
