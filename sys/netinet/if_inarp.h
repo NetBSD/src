@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.41 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.42 2009/02/18 13:17:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,7 +39,6 @@ struct llinfo_arp {
 	struct	rtentry *la_rt;
 	struct	mbuf *la_hold;		/* last packet until resolved/timeout */
 	long	la_asked;		/* last time we QUERIED for this addr */
-#define la_timer la_rt->rt_rmx.rmx_expire /* deletion time in seconds */
 };
 
 struct sockaddr_inarp {
