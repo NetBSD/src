@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.20 2009/02/02 00:10:18 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.21 2009/02/18 13:12:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.20 2009/02/02 00:10:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.21 2009/02/18 13:12:00 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -263,7 +263,7 @@ wapbl_init()
 	/* nothing */
 }
 
-static  int
+static int
 wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
 {
 	int error, i;
