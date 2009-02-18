@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.83 2009/02/18 13:24:18 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.84 2009/02/18 13:36:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.83 2009/02/18 13:24:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.84 2009/02/18 13:36:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -258,6 +258,7 @@ cache_lookup_entry(const struct vnode *dvp, const struct componentname *cnp)
 	struct nchashhead *ncpp;
 	struct namecache *ncp;
 
+	KASSERT(dvp != NULL);
 	ncpp = &nchashtbl[NCHASH(cnp, dvp)];
 
 	LIST_FOREACH(ncp, ncpp, nc_hash) {
