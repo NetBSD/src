@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.150 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.151 2009/02/18 13:16:58 yamt Exp $	*/
 
 /*
  *
@@ -559,9 +559,7 @@ void		cpu_swapout(struct lwp *);
 /* uvm_aobj.c */
 struct uvm_object	*uao_create(vsize_t, int);
 void			uao_detach(struct uvm_object *);
-void			uao_detach_locked(struct uvm_object *);
 void			uao_reference(struct uvm_object *);
-void			uao_reference_locked(struct uvm_object *);
 
 /* uvm_bio.c */
 void			ubc_init(void);
