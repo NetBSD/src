@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.8.1 2008/11/11 02:04:13 snj Exp $
+#	$NetBSD: Makefile,v 1.2.8.2 2009/02/18 01:06:04 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ DEFAULTVT=	# defined empty
 
 CPPSCRIPTS=	Xresources Xservers.ws Xsession xdm-config 
 
-CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11INCDIR}/X11/pixmaps \
+CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${XDMDIR} \
 				-DXDM_PIXMAP=xorg.xpm \
 				-DXDM_BWPIXMAP=xorg-bw.xpm
 CPPSCRIPTFLAGS_Xservers.ws=	-DBINDIR=${X11BINDIR} -DDEFAULTVT=${DEFAULTVT}
