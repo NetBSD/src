@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
-# Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
 #
 # This file is part of LVM2.
 #
@@ -16,74 +16,95 @@ srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
 
-ifeq ("@FSADM@", "yes")
-FSADMMAN = fsadm.8
+SUBDIRS = doc include man scripts
+
+ifeq ("@INTL@", "yes")
+  SUBDIRS += po
+endif
+
+SUBDIRS += lib tools daemons libdm
+
+ifeq ($(MAKECMDGOALS),distclean)
+  SUBDIRS += daemons/clvmd \
+	     daemons/dmeventd/plugins \
+	     lib/format1 \
+	     lib/format_pool \
+	     lib/locking \
+	     lib/mirror \
+	     lib/snapshot \
+	     test \
+	     po
+  DISTCLEAN_TARGETS += lib/misc/configure.h
+  DISTCLEAN_DIRS += lcov_reports*
+endif
+
+include make.tmpl
+
+libdm: include
+lib: libdm
+daemons: lib tools
+tools: lib device-mapper
+po: tools daemons
+
+libdm.device-mapper: include.device-mapper
+daemons.device-mapper: libdm.device-mapper
+tools.device-mapper: libdm.device-mapper
+device-mapper: tools.device-mapper daemons.device-mapper man.device-mapper
+
+ifeq ("@INTL@", "yes")
+lib.pofile: include.pofile
+tools.pofile: lib.pofile
+daemons.pofile: lib.pofile
+po.pofile: tools.pofile daemons.pofile
+pofile: po.pofile
+endif
+
+ifneq ("@CFLOW_CMD@", "")
+tools.cflow: lib.cflow
+cflow: tools.cflow
+endif
+
+ifneq ("@CSCOPE_CMD@", "")
+cscope.out: tools
+	@CSCOPE_CMD@ -b -R
+all: cscope.out
+endif
+
+check: all
+	$(MAKE) -C test all
+
+ifneq ("@LCOV@", "")
+.PHONY: lcov-reset lcov lcov-dated
+
+ifeq ($(MAKECMDGOALS),lcov-dated)
+LCOV_REPORTS_DIR=$(top_srcdir)/lcov_reports-$(shell date +%Y%m%d%k%M%S)
 else
-FSADMMAN =
+LCOV_REPORTS_DIR=$(top_srcdir)/lcov_reports
 endif
 
-MAN5=lvm.conf.5
-MAN8=lvchange.8 lvconvert.8 lvcreate.8 lvdisplay.8 lvextend.8 lvm.8 \
-	lvmchange.8 lvmdiskscan.8 lvmdump.8 \
-	lvreduce.8 lvremove.8 lvrename.8 lvresize.8 lvs.8 \
-	lvscan.8 pvchange.8 pvck.8 pvcreate.8 pvdisplay.8 pvmove.8 pvremove.8 \
-	pvresize.8 pvs.8 pvscan.8 vgcfgbackup.8 vgcfgrestore.8 vgchange.8 \
-	vgck.8 vgcreate.8 vgconvert.8 vgdisplay.8 vgexport.8 vgextend.8 \
-	vgimport.8 vgmerge.8 vgmknodes.8 vgreduce.8 vgremove.8 vgrename.8 \
-	vgs.8 vgscan.8 vgsplit.8 $(FSADMMAN)
-MAN8CLUSTER=clvmd.8
-MAN8DM=dmsetup.8
-MAN5DIR=${mandir}/man5
-MAN8DIR=${mandir}/man8
+lcov-reset:
+	$(LCOV) -d $(top_srcdir)/dmeventd --zerocounters
+	$(LCOV) -d $(top_srcdir)/libdm --zerocounters
+	$(LCOV) -d $(top_srcdir)/lib --zerocounters
+	$(LCOV) -d $(top_srcdir)/tools --zerocounters
 
-CLEAN_TARGETS=$(MAN5) $(MAN8) $(MAN8CLUSTER) $(FSADMMAN) $(MAN8DM)
-
-include $(top_srcdir)/make.tmpl
-
-ifneq ("@CLVMD@", "none")
-  install: install_cluster
+lcov: all
+	$(RM) -rf $(LCOV_REPORTS_DIR)
+	$(MKDIR_P) $(LCOV_REPORTS_DIR)
+	$(LCOV) -b ${top_srcdir}/libdm -d $(top_srcdir)/libdm -c -o $(LCOV_REPORTS_DIR)/libdm.info
+	$(LCOV) -b $(top_srcdir)/lib -d $(top_srcdir)/lib -c -o $(LCOV_REPORTS_DIR)/lib.info
+	$(LCOV) -b $(top_srcdir)/tools -d $(top_srcdir)/tools -c -o $(LCOV_REPORTS_DIR)/tools.info
+	DMEVENTD_INFO="$(LCOV_REPORTS_DIR)/dmeventd.info" ;\
+	DMEVENTD_INFO_A="-a $$DMEVENTDINFO" ;\
+	$(LCOV) -b $(top_srcdir)/dmeventd -d $(top_srcdir)/dmeventd -c -o $$DMEVENTD_INFO || DMEVENTD_INFO_A="" ;\
+	$(LCOV) $$DMEVENTD_INFO_A -a $(LCOV_REPORTS_DIR)/lib.info \
+		-a $(LCOV_REPORTS_DIR)/libdm.info \
+		-a $(LCOV_REPORTS_DIR)/tools.info \
+		-o $(LCOV_REPORTS_DIR)/lvm.info
+ifneq ("@GENHTML@", "")
+	$(GENHTML) -o $(LCOV_REPORTS_DIR) -p $(top_srcdir) $(LCOV_REPORTS_DIR)/lvm.info
 endif
 
-all: man
+lcov-dated: lcov
 
-.PHONY: man
-
-device-mapper: $(MAN8DM)
-
-man: $(MAN5) $(MAN8) $(MAN8CLUSTER)
-
-$(MAN5) $(MAN8) $(MAN8CLUSTER):	Makefile
-
-%: %.in
-	$(SED) -e "s/#VERSION#/$(LVM_VERSION)/" $< > $@
-
-install: install_device-mapper
-	@echo "Installing $(MAN8) in $(MAN8DIR)"
-	@for f in $(MAN8); \
-	do \
-	   $(RM) $(MAN8DIR)/$$f; \
-	   @INSTALL@ -D $(OWNER) $(GROUP) -m 444 $$f $(MAN8DIR)/$$f; \
-	done
-
-	@echo "Installing $(MAN5) in $(MAN5DIR)"
-	@for f in $(MAN5); \
-	do \
-	   $(RM) $(MAN5DIR)/$$f; \
-	   @INSTALL@ -D $(OWNER) $(GROUP) -m 444 $$f $(MAN5DIR)/$$f; \
-	done
-
-install_cluster:
-	@echo "Installing $(MAN8CLUSTER) in $(MAN8DIR)"
-	@for f in $(MAN8CLUSTER); \
-	do \
-	   $(RM) $(MAN8DIR)/$$f; \
-	   @INSTALL@ -D $(OWNER) $(GROUP) -m 444 $$f $(MAN8DIR)/$$f; \
-	done
-
-install_device-mapper:
-	@echo "Installing $(MAN8DM) in $(MAN8DIR)"
-	@for f in $(MAN8DM); \
-	do \
-	   $(RM) $(MAN8DIR)/$$f; \
-	   @INSTALL@ -D $(OWNER) $(GROUP) -m 444 $$f $(MAN8DIR)/$$f; \
-	done
+endif
