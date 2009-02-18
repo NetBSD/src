@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: devmapper-event
+Description: device-mapper event library
+Version: "1.02.30 (2009-01-26)"
+Requires: devmapper
+Cflags: -I${includedir}
+Libs: -L${libdir} -ldevmapper-event
+Libs.private: -lpthread -ldl

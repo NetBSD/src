@@ -1,3 +1,9 @@
+Version 1.02.30 - 26th January 2009
+====================================
+  Add "all" field to reports expanding to all fields of report type.
+  Enforce device name length and character limitations in libdm.
+  Replace _dm_snprintf with EMIT_PARAMS macro for creating target lines.
+
 Version 1.02.29 - 10th November 2008
 ====================================
   Merge device-mapper into the LVM2 tree.

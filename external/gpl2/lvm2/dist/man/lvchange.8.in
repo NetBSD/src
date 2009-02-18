@@ -4,27 +4,27 @@ lvchange \- change attributes of a logical volume
 .SH SYNOPSIS
 .B lvchange
 [\-\-addtag Tag]
-[\-A/\-\-autobackup y/n] [\-a/\-\-available y/n/ey/en/ly/ln]
+[\-A|\-\-autobackup y|n] [\-a|\-\-available y|n|ey|en|ly|ln]
 [\-\-alloc AllocationPolicy]
-[\-C/\-\-contiguous y/n] [\-d/\-\-debug] [\-\-deltag Tag]
+[\-C|\-\-contiguous y|n] [\-d|\-\-debug] [\-\-deltag Tag]
 [\-\-resync]
-[\-h/\-?/\-\-help]
+[\-h|\-?|\-\-help]
 [\-\-ignorelockingfailure]
 [\-\-ignoremonitoring]
 [\-\-monitor {y|n}]
-[\-M/\-\-persistent y/n] [\-\-minor minor]
-[\-P/\-\-partial]
-[\-p/\-\-permission r|rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
+[\-M|\-\-persistent y|n] [\-\-minor minor]
+[\-P|\-\-partial]
+[\-p|\-\-permission r|rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
 [\-\-refresh]
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
 .SH DESCRIPTION
 lvchange allows you to change the attributes of a logical volume
 including making them known to the kernel ready for use.
 .SH OPTIONS
 See \fBlvm\fP for common options.
 .TP
-.I \-a, \-\-available y/n/ey/en/ly/ln
+.I \-a, \-\-available y|n|ey|en|ly|ln
 Controls the availability of the logical volumes for use.
 Communicates with the kernel device-mapper driver via
 libdevmapper to activate (-ay) or deactivate (-an) the 
@@ -36,7 +36,7 @@ To deactivate only on the local node use -aln.
 Logical volumes with single-host snapshots are always activated 
 exclusively because they can only be used on one node at once.
 .TP
-.I \-C, \-\-contiguous y/n
+.I \-C, \-\-contiguous y|n
 Tries to set or reset the contiguous allocation policy for
 logical volumes. It's only possible to change a non-contiguous
 logical volume's allocation policy to contiguous, if all of the
@@ -53,7 +53,7 @@ of your data.
 .I \-\-minor minor
 Set the minor number.
 .TP
-.I \-\-monitor y/n
+.I \-\-monitor y|n
 Controls whether or not a mirrored logical volume is monitored by
 dmeventd, if it is installed.
 If a device used by a monitored mirror reports an I/O error,
@@ -66,7 +66,7 @@ Make no attempt to interact with dmeventd unless \-\-monitor
 is specified.
 Do not use this if dmeventd is already monitoring a device.
 .TP
-.I \-M, \-\-persistent y/n
+.I \-M, \-\-persistent y|n
 Set to y to make the minor number specified persistent.
 .TP
 .I \-p, \-\-permission r|rw

@@ -79,13 +79,13 @@ endif
 
 LVMLIBS = -llvm
 
-CLEAN_TARGETS = liblvm2cmd.so liblvm2cmd.a liblvm2cmd-static.a lvm lvm.o \
+CLEAN_TARGETS = liblvm2cmd.$(LIB_SUFFIX) liblvm2cmd.a liblvm2cmd-static.a lvm lvm.o \
 		lvm2cmd.o lvm2cmd-static.o lvm2cmdlib.o lvm.static \
 		lvm.cflow lvm.xref lvm.tree lvm.rxref lvm.rtree \
 		lvmcmdlib.o lvm-static.o dmsetup.o
 
 ifeq ("@CMDLIB@", "yes")
-	TARGETS += liblvm2cmd.so
+	TARGETS += liblvm2cmd.$(LIB_SUFFIX)
 	INSTALL_LVM_TARGETS += $(INSTALL_CMDLIB_TARGETS)
 endif
 
@@ -129,7 +129,7 @@ liblvm2cmd-static.a: $(top_srcdir)/lib/liblvm.a $(OBJECTS) lvmcmdlib.o lvm2cmd-s
 	cat $(top_srcdir)/lib/liblvm.a > $@
 	$(AR) rs $@ $(OBJECTS) lvmcmdlib.o lvm2cmd-static.o
 
-liblvm2cmd.so: liblvm2cmd.a $(LDDEPS)
+liblvm2cmd.$(LIB_SUFFIX): liblvm2cmd.a $(LDDEPS)
 
 .commands: commands.h cmdnames.h Makefile
 	$(CC) -E -P cmdnames.h 2> /dev/null | \
@@ -155,17 +155,17 @@ lvm.tree: $(SOURCES)
 cflow: lvm.cflow lvm.xref lvm.tree lvm.rtree lvm.rxref
 endif
 
-install_cmdlib_dynamic: liblvm2cmd.so
-	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) liblvm2cmd.so \
-		$(libdir)/liblvm2cmd.so.$(LIB_VERSION)
-	$(LN_S) -f liblvm2cmd.so.$(LIB_VERSION) $(libdir)/liblvm2cmd.so
+install_cmdlib_dynamic: liblvm2cmd.$(LIB_SUFFIX)
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) liblvm2cmd.$(LIB_SUFFIX) \
+		$(libdir)/liblvm2cmd.$(LIB_SUFFIX).$(LIB_VERSION_LVM)
+	$(LN_S) -f liblvm2cmd.$(LIB_SUFFIX).$(LIB_VERSION_LVM) $(libdir)/liblvm2cmd.$(LIB_SUFFIX)
 	$(INSTALL) -D $(OWNER) $(GROUP) -m 444 lvm2cmd.h \
 		$(includedir)/lvm2cmd.h
 
 install_cmdlib_static: liblvm2cmd-static.a
 	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) liblvm2cmd-static.a \
-		$(libdir)/liblvm2cmd.a.$(LIB_VERSION)
-	$(LN_S) -f liblvm2cmd.a.$(LIB_VERSION) $(libdir)/liblvm2cmd.a
+		$(libdir)/liblvm2cmd.a.$(LIB_VERSION_LVM)
+	$(LN_S) -f liblvm2cmd.a.$(LIB_VERSION_LVM) $(libdir)/liblvm2cmd.a
 	$(INSTALL) -D $(OWNER) $(GROUP) -m 444 lvm2cmd.h \
 		$(includedir)/lvm2cmd.h
 

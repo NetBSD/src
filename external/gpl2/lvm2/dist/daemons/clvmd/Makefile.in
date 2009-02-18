@@ -39,6 +39,14 @@ ifeq ("@CLVMD@", "all")
 	GULM = yes
 	CMAN = yes
 	OPENAIS = no
+	COROSYNC = no
+endif
+
+ifeq ("@CLVMD@", "corosync")
+	GULM = no
+	CMAN = no
+	OPENAIS = no
+	COROSYNC = yes
 endif
 
 ifeq ("@DEBUG@", "yes")
@@ -62,6 +70,13 @@ ifeq ("$(OPENAIS)", "yes")
 	LMLIBS += -lSaLck -lcpg
 	DEFS += -DUSE_OPENAIS
 endif
+
+ifeq ("$(COROSYNC)", "yes")
+        SOURCES += clvmd-corosync.c
+        LMLIBS += -lquorum -lcpg -ldlm
+        DEFS += -DUSE_COROSYNC
+endif
+
 
 TARGETS = \
 	clvmd

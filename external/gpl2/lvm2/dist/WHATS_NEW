@@ -1,3 +1,37 @@
+Version 2.02.44 - 26th January 2009
+===================================
+  Fix --enable-static_link after the recent repository changes.
+  Add corosync/DLM cluster interface to clvmd.
+  Add --nameprefixes, --unquoted, --rows to pvs, vgs, lvs man pages.
+  Fix lvresize size conversion for fsadm when block size is not 1K.
+  Fix pvs segfault when run with orphan PV and some VG fields.
+  Display a 'dev_size' of zero for missing devices in reports.
+  Add pv_mda_size to pvs and vg_mda_size to vgs.
+  Fix lvmdump /sys listing to include virtual devices directory.
+  Add "--refresh" functionality to vgchange and vgmknodes.
+  Avoid exceeding LV size when wiping device.
+  Calculate mirror log size instead of using 1 extent.
+  Ensure requested device number is available before activating with it.
+  Fix incorrect exit status from 'help <command>'.
+  Fix vgrename using UUID if there are VGs with identical names.
+  Fix segfault when invalid field given in reporting commands.
+  Move is_static from cmd to global is_static().
+  Refactor init_lvm() for lvmcmdline and clvmd.
+  Add liblvm interactive test infrastructure to build.
+  Add skeleton lvm2.h file in preparation for a shared library interface.
+  Use better random seed value in temp file creation.
+  Add read_urandom to read /dev/urandom. Use in uuid calculation.
+  Use displayable_lvs_in_vg and lv_is_displayable for consistency throughout.
+  Fix race in vgcreate that would result in second caller overwriting first.
+  Fix uninitialised lv_count in vgdisplay -c.
+  Don't skip updating pvid hash when lvmcache_info struct got swapped.
+  Add tinfo to termcap search path for pld-linux.
+  Fix startup race in clvmd.
+  Generate Red Hat clvmd startup script at config time with correct paths.
+  Fix clvmd & dmeventd builds after tree restructuring.
+  Cope with snapshot dependencies when removing a whole VG with lvremove.
+  Make man pages and tool help text consistent using | for alternative options.
+
 Version 2.02.43 - 10th November 2008
 ====================================
   Merge device-mapper into the lvm2 tree.

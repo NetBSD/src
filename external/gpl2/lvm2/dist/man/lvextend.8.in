@@ -4,12 +4,12 @@ lvextend \- extend the size of a logical volume
 .SH SYNOPSIS
 .B lvextend
 [\-\-alloc AllocationPolicy]
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-h/\-?/\-\-help]
-[\-i/\-\-stripes Stripes [\-I/\-\-stripesize StripeSize]]
-{\-l/\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
-\-L/\-\-size [+]LogicalVolumeSize[kKmMgGtT]}
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolumePath [PhysicalVolumePath...]
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-i|\-\-stripes Stripes [\-I|\-\-stripesize StripeSize]]
+{\-l|\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
+\-L|\-\-size [+]LogicalVolumeSize[kKmMgGtT]}
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolumePath [PhysicalVolumePath...]
 .SH DESCRIPTION
 lvextend allows you to extend the size of a logical volume.
 Extension of snapshot logical volumes (see

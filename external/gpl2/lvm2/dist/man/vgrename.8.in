@@ -3,11 +3,11 @@
 vgrename \- rename a volume group
 .SH SYNOPSIS
 .B vgrename
-[\-A/\-\-autobackup y/n]
-[\-d/\-\-debug]
-[\-h/\-?/\-\-help]
-[\-t/\-\-test]
-[\-v/\-\-verbose]
+[\-A|\-\-autobackup y|n]
+[\-d|\-\-debug]
+[\-h|\-?|\-\-help]
+[\-t|\-\-test]
+[\-v|\-\-verbose]
 .IR OldVolumeGroup { Path | Name | UUID }
 .IR NewVolumeGroup { Path | Name }
 .SH DESCRIPTION

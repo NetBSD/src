@@ -30,6 +30,14 @@ lvextend $vg/$lv $dev1 >out
 grep "^  Logical volume $lv successfully resized\$" out
 check_pv_field_ $dev1 pv_free "0"
 
+lvremove -f $vg/$lv 
+
+# 'lvextend computes necessary free space correctly - bz213552'
+vgsize=$(vgs -o vg_extent_count --noheadings)
+lvcreate -l $vgsize  -n $lv $vg
+yes | lvreduce -l $(( $vgsize / 2 )) $vg/$lv
+lvextend -l $vgsize $vg/$lv
+
 # 'Reset LV to original size' 
 lvremove -f $vg/$lv 
 lvcreate -L 64M -n $lv $vg

@@ -64,7 +64,7 @@ if test "$verbose" = "t"
 then
   echo "compare_vg_field_ VG1: $val1 VG2: $val2"
 fi
-  return $(test $val1 == $val2 )
+  test $val1 = $val2
 }
 
 check_vg_field_()
@@ -79,7 +79,7 @@ if test "$verbose" = "t"
 then
   echo "check_vg_field_ VG=$vg, field=$field, actual=$actual, expected=$expected"
 fi
-  return $(test $actual == $expected)
+  test $actual = $expected
 }
 
 check_pv_field_()
@@ -94,7 +94,7 @@ if test "$verbose" = "t"
 then
   echo "check_pv_field_ PV=$pv, field=$field, actual=$actual, expected=$expected"
 fi
-  return $(test $actual == $expected)
+    test $actual = $expected
 }
 
 check_lv_field_()
@@ -109,7 +109,7 @@ if test "$verbose" = "t"
 then
   echo "check_lv_field_ LV=$lv, field=$field, actual=$actual, expected=$expected"
 fi
-  return $(test $actual == $expected)
+  test $actual = $expected
 }
 
 vg_validate_pvlv_counts_()
@@ -185,6 +185,4 @@ init_root_dir_()
 EOF
 }
 
-if test $(this_test_) != 000-basic; then
-  init_root_dir_
-fi
+init_root_dir_

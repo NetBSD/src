@@ -42,7 +42,7 @@ include make.tmpl
 
 libdm: include
 lib: libdm
-daemons: lib
+daemons: lib tools
 tools: lib device-mapper
 po: tools daemons
 

@@ -3,8 +3,8 @@
 pvdisplay \- display attributes of a physical volume
 .SH SYNOPSIS
 .B pvdisplay
-[\-c/\-\-colon] [\-d/\-\-debug] [\-h/\-?/\-\-help] [\-s/\-\-short]
-[\-v[v]/\-\-verbose [\-\-verbose]]
+[\-c|\-\-colon] [\-d|\-\-debug] [\-h|\-?|\-\-help] [\-s|\-\-short]
+[\-v[v]|\-\-verbose [\-\-verbose]]
 PhysicalVolumePath [PhysicalVolumePath...]
 .SH DESCRIPTION
 pvdisplay allows you to see the attributes of one or more physical volumes

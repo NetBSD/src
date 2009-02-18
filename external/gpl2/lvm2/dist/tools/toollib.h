@@ -1,4 +1,4 @@
-/*	$NetBSD: toollib.h,v 1.1.1.1 2008/12/22 00:19:08 haad Exp $	*/
+/*	$NetBSD: toollib.h,v 1.1.1.2 2009/02/18 11:17:49 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved. 
@@ -102,4 +102,7 @@ int is_reserved_lvname(const char *name);
 int fill_vg_create_params(struct cmd_context *cmd,
 			  char *vg_name, struct vgcreate_params *vp_new,
 			  struct vgcreate_params *vp_def);
+
+int lv_refresh(struct cmd_context *cmd, struct logical_volume *lv);
+int vg_refresh_visible(struct cmd_context *cmd, struct volume_group *vg);
 #endif

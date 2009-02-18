@@ -3,7 +3,7 @@
 vgck \- check volume group metadata
 .SH SYNOPSIS
 .B vgck
-[\-d/\-\-debug] [\-h/\-?/\-\-help] [\-v/\-\-verbose] [VolumeGroupName...]
+[\-d|\-\-debug] [\-h|\-?|\-\-help] [\-v|\-\-verbose] [VolumeGroupName...]
 .SH DESCRIPTION
 vgck checks LVM metadata for each named volume group for consistency.
 .SH OPTIONS

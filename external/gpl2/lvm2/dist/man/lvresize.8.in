@@ -4,12 +4,12 @@ lvresize \- resize a logical volume
 .SH SYNOPSIS
 .B lvresize
 [\-\-alloc AllocationPolicy]
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-h/\-?/\-\-help]
-[\-i/\-\-stripes Stripes [\-I/\-\-stripesize StripeSize]]
-{\-l/\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
-\-L/\-\-size [+]LogicalVolumeSize[kKmMgGtT]}
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolumePath [PhysicalVolumePath...]
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-i|\-\-stripes Stripes [\-I|\-\-stripesize StripeSize]]
+{\-l|\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
+\-L|\-\-size [+]LogicalVolumeSize[kKmMgGtT]}
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolumePath [PhysicalVolumePath...]
 .SH DESCRIPTION
 lvresize allows you to resize a logical volume.
 Be careful when reducing a logical volume's size, because data in the reduced
@@ -25,7 +25,7 @@ volume use
 .SH OPTIONS
 See \fBlvm\fP for common options.
 .TP
-.I \-l, \-\-extents [+/-]LogicalExtentsNumber[%{VG|LV|PVS|FREE}]
+.I \-l, \-\-extents [+|-]LogicalExtentsNumber[%{VG|LV|PVS|FREE}]
 Change or set the logical volume size in units of logical extents.
 With the + or - sign the value is added to or subtracted from the actual size
 of the logical volume and without it, the value is taken as an absolute one.
@@ -36,7 +36,7 @@ the remaining free space of the PhysicalVolumes on the command line with the
 suffix %PVS, or as a percentage of the remaining free space in the
 Volume Group with the suffix %FREE.
 .TP
-.I \-L, \-\-size [+/-]LogicalVolumeSize[kKmMgGtTpPeE]
+.I \-L, \-\-size [+|-]LogicalVolumeSize[kKmMgGtTpPeE]
 Change or set the logical volume size in units of megabytes.
 A size suffix of M for megabytes,
 G for gigabytes, T for terabytes, P for petabytes 

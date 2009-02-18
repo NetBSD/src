@@ -3,9 +3,9 @@
 vgimport \- make exported volume groups known to the system
 .SH SYNOPSIS
 .B vgimport
-[\-a/\-\-all]
-[\-d/\-\-debug] [\-h/\-?/\-\-help] 
-[\-v/\-\-verbose]
+[\-a|\-\-all]
+[\-d|\-\-debug] [\-h|\-?|\-\-help] 
+[\-v|\-\-verbose]
 VolumeGroupName [VolumeGroupName...]
 .SH DESCRIPTION
 .B vgimport
