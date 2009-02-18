@@ -25,8 +25,11 @@ abs_builddir = @abs_builddir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 
-all: init.sh
+all: bin/not init.sh
 	sh harness.sh
+
+bin/not: .bin-dir-stamp
+	$(CC) -o bin/not not.c
 
 init.sh: Makefile.in .bin-dir-stamp
 	rm -f $@-t $@
@@ -49,7 +52,7 @@ T = $(wildcard t-*.sh)
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
-$(T): init.sh
+$(T): bin/not init.sh
 	sh harness.sh $@
 
 .bin-dir-stamp: lvm-wrapper

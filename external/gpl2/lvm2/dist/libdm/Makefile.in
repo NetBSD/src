@@ -95,8 +95,8 @@ install_ioctl_static: ioctl/libdevmapper.a
 $(VERSIONED_SHLIB): %.$(LIB_SUFFIX).$(LIB_VERSION_DM): $(interface)/%.$(LIB_SUFFIX)
 	rm -f $@
 	$(LN_S) $< $@
-	rm -f libdevmapper.so
-	$(LN_S) $< libdevmapper.so
+	rm -f libdevmapper.$(LIB_SUFFIX)
+	$(LN_S) $< libdevmapper.$(LIB_SUFFIX)
 
 .PHONY: distclean_lib distclean
 

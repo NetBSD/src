@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-iface.c,v 1.1.1.1 2008/12/22 00:18:36 haad Exp $	*/
+/*	$NetBSD: libdm-iface.c,v 1.1.1.2 2009/02/18 11:17:26 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -1020,6 +1020,16 @@ int dm_task_suppress_identical_reload(struct dm_task *dmt)
 
 int dm_task_set_newname(struct dm_task *dmt, const char *newname)
 {
+	if (strchr(newname, '/')) {
+		log_error("Name \"%s\" invalid. It contains \"/\".", newname);
+		return 0;
+	}
+
+	if (strlen(newname) >= DM_NAME_LEN) {
+		log_error("Name \"%s\" too long", newname);
+		return 0;
+	}
+
 	if (!(dmt->newname = dm_strdup(newname))) {
 		log_error("dm_task_set_newname: strdup(%s) failed", newname);
 		return 0;

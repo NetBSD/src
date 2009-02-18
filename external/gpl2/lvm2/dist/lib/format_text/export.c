@@ -1,4 +1,4 @@
-/*	$NetBSD: export.c,v 1.1.1.1 2008/12/22 00:18:16 haad Exp $	*/
+/*	$NetBSD: export.c,v 1.1.1.2 2009/02/18 11:17:05 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -594,14 +594,14 @@ static int _print_lvs(struct formatter *f, struct volume_group *vg)
 	 * Write visible LVs first
 	 */
 	dm_list_iterate_items(lvl, &vg->lvs) {
-		if (!(lvl->lv->status & VISIBLE_LV))
+		if (!(lv_is_displayable(lvl->lv)))
 			continue;
 		if (!_print_lv(f, lvl->lv))
 			return_0;
 	}
 
 	dm_list_iterate_items(lvl, &vg->lvs) {
-		if ((lvl->lv->status & VISIBLE_LV))
+		if ((lv_is_displayable(lvl->lv)))
 			continue;
 		if (!_print_lv(f, lvl->lv))
 			return_0;
