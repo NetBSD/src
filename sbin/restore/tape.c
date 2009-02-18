@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.61 2008/12/26 19:26:04 hannken Exp $	*/
+/*	$NetBSD: tape.c,v 1.62 2009/02/18 13:13:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.61 2008/12/26 19:26:04 hannken Exp $");
+__RCSID("$NetBSD: tape.c,v 1.62 2009/02/18 13:13:27 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1195,7 +1195,7 @@ gethead(struct s_spcl *buf)
 		swap_old_header(&u_ospcl.s_ospcl);
 	}
 
-	memset(buf, 0, (long)TP_BSIZE);
+	memset(buf, 0, TP_BSIZE);
 	buf->c_type = u_ospcl.s_ospcl.c_type;
 	buf->c_date = u_ospcl.s_ospcl.c_date;
 	buf->c_ddate = u_ospcl.s_ospcl.c_ddate;

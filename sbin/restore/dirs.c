@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.46 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: dirs.c,v 1.47 2009/02/18 13:14:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.46 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.47 2009/02/18 13:14:12 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -441,7 +441,7 @@ static void
 dcvt(struct odirect *odp, struct direct *ndp)
 {
 
-	memset(ndp, 0, (size_t)(sizeof *ndp));
+	memset(ndp, 0, sizeof(*ndp));
 	if (Bcvt)
 		ndp->d_ino = bswap16(odp->d_ino);
 	else
