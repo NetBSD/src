@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.33 2009/02/13 22:41:04 apb Exp $ */
+/* $NetBSD: wsevent.c,v 1.34 2009/02/18 13:20:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.33 2009/02/13 22:41:04 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.34 2009/02/18 13:20:02 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
@@ -214,7 +214,7 @@ wsevent_copyout_events50(const struct wscons_event *events, int cnt,
     struct uio *uio)
 {
 
-	panic("%s: unexpected version", __func__);
+	return EINVAL;
 }
 #endif /* defined(COMPAT_50) || defined(MODULAR) */
 
