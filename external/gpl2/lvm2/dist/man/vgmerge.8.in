@@ -3,8 +3,8 @@
 vgmerge \- merge two volume groups
 .SH SYNOPSIS
 .B vgmerge
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-h/\-?/\-\-help] [\-l/\-\-list]
-[\-t/\-\-test] [\-v/\-\-verbose] DestinationVolumeGroupName
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-h|\-?|\-\-help] [\-l|\-\-list]
+[\-t|\-\-test] [\-v|\-\-verbose] DestinationVolumeGroupName
 SourceVolumeGroupName
 .SH DESCRIPTION
 vgmerge merges two existing volume groups. The inactive SourceVolumeGroupName

@@ -197,7 +197,8 @@ myecho "Gathering /dev listing..."
 log "$LS -laR /dev > \"$dir/dev_listing\" 2>> \"$log\""
 
 myecho "Gathering /sys/block listing..."
-log "$LS -laR /sys/block > \"$dir/sysblock_listing\""
+log "$LS -laR /sys/block > \"$dir/sysblock_listing\"  2>> \"$log\""
+log "$LS -laR /sys/devices/virtual/block >> \"$dir/sysblock_listing\"  2>> \"$log\""
 
 if (( $metadata )); then
 	myecho "Gathering LVM metadata from Physical Volumes..."

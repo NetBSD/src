@@ -1,4 +1,4 @@
-/*	$NetBSD: archive.c,v 1.1.1.1 2008/12/22 00:18:15 haad Exp $	*/
+/*	$NetBSD: archive.c,v 1.1.1.2 2009/02/18 11:17:05 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -238,7 +238,8 @@ int archive_vg(struct volume_group *vg,
 	/*
 	 * Write the vg out to a temporary file.
 	 */
-	if (!create_temp_name(dir, temp_file, sizeof(temp_file), &fd)) {
+	if (!create_temp_name(dir, temp_file, sizeof(temp_file), &fd,
+			      &vg->cmd->rand_seed)) {
 		log_err("Couldn't create temporary archive name.");
 		return 0;
 	}

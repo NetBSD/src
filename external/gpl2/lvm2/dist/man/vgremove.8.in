@@ -3,8 +3,8 @@
 vgremove \- remove a volume group
 .SH SYNOPSIS
 .B vgremove
-[\-d/\-\-debug] [\-f/\-\-force] [\-h/\-?/\-\-help]
-[\-t/\-\-test] [\-v/\-\-verbose]
+[\-d|\-\-debug] [\-f|\-\-force] [\-h|\-?|\-\-help]
+[\-t|\-\-test] [\-v|\-\-verbose]
 VolumeGroupName [VolumeGroupName...]
 .SH DESCRIPTION
 vgremove allows you to remove one or more volume groups.

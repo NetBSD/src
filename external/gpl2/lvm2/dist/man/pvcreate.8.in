@@ -17,7 +17,7 @@ pvcreate \- initialize a disk or partition for use by LVM
 .RB [ \-\-setphysicalvolumesize size ]
 .RB [ \-u | \-\-uuid uuid ]
 .RB [ \-\-version ]
-.RB [ \-Z | \-\-zero y/n ]
+.RB [ \-Z | \-\-zero y|n ]
 .IR PhysicalVolume " [" PhysicalVolume ...]
 .SH DESCRIPTION
 .B pvcreate
@@ -62,7 +62,7 @@ onto a replacement device - see \fBvgcfgrestore\fP(8).
 .BR \-y ", " \-\-yes
 Answer yes to all questions.
 .TP
-.BR \-Z ", " \-\-zero " y/n"
+.BR \-Z ", " \-\-zero " y|n"
 Whether or not the first 4 sectors (2048 bytes) of the device should be 
 wiped.
 If this option is not given, the 
