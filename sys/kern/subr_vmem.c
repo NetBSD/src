@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.55 2009/02/18 13:31:59 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.56 2009/02/18 13:33:46 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.55 2009/02/18 13:31:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.56 2009/02/18 13:33:46 yamt Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -1175,8 +1175,6 @@ vmem_rehash_all(struct work *wk, void *dummy)
 			desired = VMEM_HASHSIZE_MIN;
 		}
 		if (desired > current * 2 || desired * 2 < current) {
-			printf("vmem %s rehash %zu -> %zu\n",
-			    vm->vm_name, current, desired);
 			vmem_rehash(vm, desired, VM_NOSLEEP);
 		}
 	}
