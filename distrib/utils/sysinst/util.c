@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.151.14.1 2009/02/08 19:16:46 snj Exp $	*/
+/*	$NetBSD: util.c,v 1.151.14.2 2009/02/18 01:17:23 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -652,7 +652,7 @@ extract_file(distinfo *dist, int update, int verbose)
 	 * Update path to use dist->name tuncated to the first eight
 	 * characters and check again 
 	 */
-	(void)snprintf(path, sizeof path, "%s/%.8s%.3s",
+	(void)snprintf(path, sizeof path, "%s/%.8s%.4s", /* 4 as includes '.' */
 	    ext_dir, dist->name, dist_postfix);
 		if (!file_exists_p(path)) {
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
