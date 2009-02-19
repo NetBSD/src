@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.46 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.46.8.1 2009/02/19 20:33:39 snj Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.46 2008/05/20 07:08:07 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.46.8.1 2009/02/19 20:33:39 snj Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.59 2008/03/01 23:16:38 darrenr Exp";
@@ -1561,9 +1561,9 @@ frdest_t *fdp;
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 			*mpp = NULL;
 # if __NetBSD_Version__ >= 499001100
-			error = nd6_output(ifp, ifp, *mpp, satocsin6(dst), rt);
+			error = nd6_output(ifp, ifp, m0, satocsin6(dst), rt);
 # else
-			error = nd6_output(ifp, ifp, *mpp, dst6, rt);
+			error = nd6_output(ifp, ifp, m0, dst6, rt);
 # endif
 		} else {
 			error = EMSGSIZE;
