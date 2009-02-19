@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.104 2008/10/29 17:29:45 jkunz Exp $
+# $NetBSD: GENERIC,v 1.104.2.1 2009/02/19 20:23:46 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104 $"
+#ident 		"GENERIC-$Revision: 1.104.2.1 $"
 
 maxusers	64
 
@@ -182,6 +182,7 @@ file-system	PTYFS		# /dev/pts/N support
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -944,6 +945,9 @@ pseudo-device   nsmb		# experimental - SMB requester
 
 # drvctl - needed to show device dictionary via drvctl(8)
 pseudo-device	drvctl
+
+# Pass-to-Userspace TransporTER, required for puffs(4) and pud(4)
+pseudo-device	putter
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 					# (for static binaries only for now)
