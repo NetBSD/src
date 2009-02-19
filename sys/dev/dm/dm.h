@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.8 2009/01/16 11:19:02 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.9 2009/02/19 23:07:32 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -255,6 +255,7 @@ int dm_table_status_ioctl(prop_dictionary_t);
 
 /* dm_target.c */
 dm_target_t* dm_target_alloc(const char *);
+dm_target_t* dm_target_autoload(const char *);
 int dm_target_destroy(void);
 int dm_target_insert(dm_target_t *);
 prop_array_t dm_target_prop_list(void);
