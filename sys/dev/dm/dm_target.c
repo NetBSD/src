@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.7 2009/02/19 23:07:33 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.8 2009/02/19 23:20:27 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,15 +74,19 @@ dm_target_unbusy(dm_target_t *target)
 dm_target_t *
 dm_target_autoload(const char *dm_target_name)
 {
+	char name[30];
 	u_int gen;
 	dm_target_t *dmt;
 
+	snprintf(name, sizeof(name), "dm_target_%s", dm_target_name);
+	name[29]='\0';
+	
 	do {
 		gen = module_gen;
 		
 		/* Try to autoload target module */
 		mutex_enter(&module_lock);
-		(void) module_autoload(dm_target_name, MODULE_CLASS_MISC);
+		(void) module_autoload(name, MODULE_CLASS_MISC);
 		mutex_exit(&module_lock);
 	} while (gen != module_gen);	
 
