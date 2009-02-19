@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.231.4.1 2009/02/02 22:12:34 snj Exp $
+# $NetBSD: GENERIC,v 1.231.4.2 2009/02/19 20:23:46 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.231.4.1 $"
+#ident 		"GENERIC-$Revision: 1.231.4.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -153,6 +153,7 @@ file-system 	PTYFS		# /dev/pts/N support
 file-system 	TMPFS		# Efficient memory file-system
 #file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system 	HFS		# experimental - Apple HFS+ (read-only)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -1091,6 +1092,9 @@ pseudo-device	pad
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
+
+# Pass-to-Userspace TransporTER, required for puffs(4) and pud(4)
+pseudo-device	putter
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 
