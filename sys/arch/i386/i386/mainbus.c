@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.79 2008/11/10 14:36:59 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.80 2009/02/19 00:54:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79 2008/11/10 14:36:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.80 2009/02/19 00:54:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79 2008/11/10 14:36:59 cegger Exp $");
 #include "apmbios.h"
 #include "pnpbios.h"
 #include "acpi.h"
-#include "vesabios.h"
 #include "ipmi.h"
 
 #include "opt_acpi.h"
@@ -80,10 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79 2008/11/10 14:36:59 cegger Exp $");
 
 #if NMCA > 0
 #include <dev/mca/mcavar.h>
-#endif
-
-#if NVESABIOS > 0
-#include <arch/i386/bios/vesabios.h>
 #endif
 
 #if NIPMI > 0
@@ -255,11 +250,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 			config_found_ia(self, "cpubus", &caa, mainbus_print);
 		}
 	}
-
-#if NVESABIOS > 0
-	if (vbeprobe())
-		config_found_ia(self, "vesabiosbus", 0, 0);
-#endif
 
 #if NISADMA > 0 && (NACPI > 0 || NPNPBIOS > 0)
 	/*
