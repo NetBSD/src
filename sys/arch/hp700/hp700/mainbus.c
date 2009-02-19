@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.45.4.3 2008/11/27 21:59:26 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.45.4.4 2009/02/19 14:28:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45.4.3 2008/11/27 21:59:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45.4.4 2009/02/19 14:28:41 mjf Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1537,12 +1537,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
 
-	/*
-	 * Scan mainbus for monarch CPU and attach it.
-	 */
-	nca.ca_iot = &hppa_bustag;
-	nca.ca_dmatag = &hppa_dmatag;
-
 	switch (cpu_hvers) {
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
@@ -1574,7 +1568,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	/* Search and attach additional CPUs and memory controller. */
+	/* Search and attach all CPUs and memory controllers. */
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
