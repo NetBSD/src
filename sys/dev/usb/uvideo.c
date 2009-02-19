@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.21.10.4 2009/02/02 20:39:46 snj Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.21.10.5 2009/02/19 20:18:56 snj Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.21.10.4 2009/02/02 20:39:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.21.10.5 2009/02/19 20:18:56 snj Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1070,16 +1070,20 @@ uvideo_stream_init(struct uvideo_stream *vs,
 	/* Initialize probe and commit data size.  This value is
 	 * dependent on the version of the spec the hardware
 	 * implements. */
-	err = uvideo_stream_probe(vs, UR_GET_LEN, len);
+	err = uvideo_stream_probe(vs, UR_GET_LEN, &len);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_stream_init: "
 			 "error getting probe data len: "
 			 "%s (%d)\n",
 			 usbd_errstr(err), err));
 		vs->vs_probelen = 26; /* conservative v1.0 length */
-	} else {
+	} else if (UGETW(len) <= sizeof(uvideo_probe_and_commit_data_t)) {
 		DPRINTFN(15,("uvideo_stream_init: probelen=%d\n", UGETW(len)));
 		vs->vs_probelen = UGETW(len);
+	} else {
+		DPRINTFN(15,("uvideo_stream_init: device returned invalid probe"
+				" len %d, using default\n", UGETW(len)));
+		vs->vs_probelen = 26;
 	}
 	
 	return USBD_NORMAL_COMPLETION;
