@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.8 2009/02/13 12:38:13 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.9 2009/02/19 21:34:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -675,7 +675,8 @@ LDILDO(tlbd_u)
 	mfctl	%isr, %r8		/* Space  */
 	/* CR28XXX according to a popular belief cr28 should be read here */
 
-#define	HPMCPRE	nop
+#define	HPMCPRE	\
+	nop
 
 	.align NBPG
 	.export $ivaaddr, entry
@@ -1297,7 +1298,7 @@ itlb_c:
 	extru	%r9, 19, 10, %r16	/* r16 = r9[22..12] */		! \
 	combt,=,n %r0, %r24, lbl					! \
 	ldwax,s	%r16(%r24), %r17	/* va -> pa:prot */		! \
-	sh2addl	%r16, %r24, %r25	/* r25 = r16 << 2 + r24 */				! \
+	sh2addl	%r16, %r24, %r25	/* r25 = r16 << 2 + r24 */	! \
 	combt,=,n %r0, %r17, lbl					! \
 	copy	%r17, %r16						! \
 	depi	(bits), 21+bits, 1+bits, %r17				! \
