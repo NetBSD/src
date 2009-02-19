@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.978 2009/02/11 06:36:21 markd Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.979 2009/02/19 17:26:21 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.977 2009/02/11 06:35:16 markd Exp
+ *	NetBSD: pcidevs,v 1.978 2009/02/19 17:25:46 sborrill Exp
  */
 
 /*
@@ -2251,6 +2251,7 @@
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN Controller */
+#define	PCI_PRODUCT_INTEL_82574L	0x10d3		/* i82574L 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82567LM_3	0x10de		/* i82567LM-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I Mobile (AMT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
