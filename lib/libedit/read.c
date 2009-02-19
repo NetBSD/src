@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.45 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.46 2009/02/19 15:20:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.45 2009/02/15 21:55:23 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.46 2009/02/19 15:20:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -294,14 +294,21 @@ read_char(EditLine *el, char *cp)
 	ssize_t num_read;
 	int tried = 0;
 
-	while ((num_read = read(el->el_infd, cp, 1)) == -1)
+ again:
+	el->el_signal->sig_no = 0;
+	while ((num_read = read(el->el_infd, cp, 1)) == -1) {
+		if (el->el_signal->sig_no == SIGCONT) {
+			sig_set(el);
+			el_set(el, EL_REFRESH);
+			goto again;
+		}
 		if (!tried && read__fixio(el->el_infd, errno) == 0)
 			tried = 1;
 		else {
 			*cp = '\0';
 			return (-1);
 		}
-
+	}
 	return (int)num_read;
 }
 

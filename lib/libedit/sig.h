@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.h,v 1.7 2009/02/15 21:25:01 christos Exp $	*/
+/*	$NetBSD: sig.h,v 1.8 2009/02/19 15:20:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@
 typedef struct {
 	struct sigaction sig_action[ALLSIGSNO];
 	sigset_t sig_set;
+	volatile sig_atomic_t sig_no;
 } *el_signal_t;
 
 protected void	sig_end(EditLine*);
