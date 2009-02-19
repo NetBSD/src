@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.73.4.8 2009/02/18 00:51:27 snj Exp $ */
+/* $NetBSD: udf_subr.c,v 1.73.4.9 2009/02/19 03:39:56 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.8 2009/02/18 00:51:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.9 2009/02/19 03:39:56 snj Exp $");
 #endif /* not lint */
 
 
@@ -166,7 +166,8 @@ udf_dump_trackinfo(struct mmc_trackinfo *trackinfo)
 	printf("\tsessionnr           %d\n", trackinfo->sessionnr);
 	printf("\ttrack mode          %d\n", trackinfo->track_mode);
 	printf("\tdata mode           %d\n", trackinfo->data_mode);
-	snprintb(bits, sizeof(bits), MMC_TRACKINFO_FLAGBITS, trackinfo->flags);
+	bitmask_snprintf(trackinfo->flags, MMC_TRACKINFO_FLAGBITS, bits,
+		sizeof(bits));
 	printf("\tflags               %s\n", bits);
 
 	printf("\ttrack start         %d\n", trackinfo->track_start);
