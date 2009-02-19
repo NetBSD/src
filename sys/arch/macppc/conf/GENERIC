@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.271 2008/10/07 12:43:32 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.271.4.1 2009/02/19 20:23:46 snj Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.271 $"
+#ident 		"GENERIC-$Revision: 1.271.4.1 $"
 
 maxusers	32
 
@@ -107,6 +107,7 @@ file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -596,6 +597,7 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	nsmb			# SMB requester
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	putter			# for puffs(4) and pud(4)
 
 # Veriexec
 #
