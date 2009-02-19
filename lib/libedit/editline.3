@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.58 2009/02/19 01:18:02 christos Exp $
+.\"	$NetBSD: editline.3,v 1.59 2009/02/19 09:48:08 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -219,7 +219,7 @@ Define prompt printing function as
 which is to return a string that contains the prompt.
 The optional argument
 .Fa arg ,
-get be retrieved with
+can be retrieved with
 .Fn el_get .
 .It Dv EL_REFRESH
 Re-display the current line on the next terminal line.
@@ -393,7 +393,8 @@ This function is called internally by
 and
 .Fn el_getc .
 The builtin function can be set or restored with the special function
-name ``EL_BUILTIN_GETCFN''.
+name
+.Dq Dv EL_BUILTIN_GETCFN .
 .It Dv EL_CLIENTDATA , Fa "void *data"
 Register
 .Fa data
@@ -463,7 +464,8 @@ above).
 Return non-zero if editing is enabled.
 .It Dv EL_GETCFN , Fa "int (**f)(EditLine *, char *)"
 Return a pointer to the function that read characters, which is equal to
-``EL_BUILTIN_GETCFN'' in the case of the default builtin function.
+.Dq Dv EL_BUILTIN_GETCFN
+in the case of the default builtin function.
 .It Dv EL_CLIENTDATA , Fa "void **data"
 Retrieve
 .Fa data
