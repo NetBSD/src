@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.98 2009/02/19 03:45:38 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.99 2009/02/19 20:51:20 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4209,4 +4209,64 @@ distrib/utils/sysinst/util.c			1.155
 	Fix over enthusiastic length limit in
 	SUPPORT_8_3_SOURCE_FILESYSTEM block
 	[abs, ticket #452]
+
+sys/dev/usb/uvideo.c				1.27 via patch
+
+	Fix uvideo_stream_init uninitialized variable / bad argument,
+	leading to panic when opening video stream.
+	[jmorse, ticket #440]
+
+sys/arch/amd64/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/macppc/conf/GENERIC			patch
+sys/arch/sparc64/conf/GENERIC			patch
+
+	Enable puffs and putter on amd64, i386, macppc, and sparc64.
+	[pooka, ticket #453]
+
+sys/dev/raidframe/rf_reconstruct.c		1.107
+
+	If we see a RF_RECON_WRITE_ERROR event we know a write has
+	finished and we need to account for that.  Failure to do so
+	means we can end up waiting forever for writes we think are
+	outstanding, but which have already completed.
+
+	Addresses the RAIDframe part of PR#40569.
+	[oster, ticket #454]
+
+sys/dev/ic/ahcisata_core.c			1.19
+
+	When an error is reported on a write, data may have been
+	transfered to the device's cache anyway and so cmdh_prdbc
+	reports a completed transfer. If we use it to update
+	ata_bio->bcount this has 2 conseqences:
+	- the automatic LBA48 workaround doesn't qick in because
+	bcount is used to compute the last sector of the transfer
+	(wd(4) part of kern/40569)
+	- wd(4) will report a B_ERROR buffer with a b_resid of 0,
+	which panics a DIAGNOSTIC kernel
+	Fix by ignoring cmdh_prdbc if we had a write with errors, and
+	in this case leave ata_bio->bcount at its initial value.
+
+	While there use NOERROR instead of 0 for ata_bio->error (cosmetic).
+	[bouyer, ticket #455]
+
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.48
+
+	Avoid a NULL pointer defereference when using 'return-rst' or
+	'return-icmp' in ipf6.conf.
+	[bouyer, ticket #456]
+
+sys/arch/arm/xscale/pxa2x0_pcic.c		1.6
+
+	Processing that installed the card first was moved from
+	pxapcic_attach_common() to the head of pxapcic_event_thread().
+
+	Fixes detection of the built-in CF card.
+	[nonaka, ticket #457]
+
+sys/arch/x86/x86/patch.c			1.16
+
+	Repair x86_patch to install optimized routines.
+	[ad, ticket #471]
 
