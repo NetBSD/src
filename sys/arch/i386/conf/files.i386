@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.343 2009/02/19 00:54:09 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.344 2009/02/19 13:06:49 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -490,6 +490,11 @@ file	arch/i386/acpi/spic_acpi.c		spic_acpi
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi
 file	arch/i386/acpi/npx_acpi.c		npx_acpi
+
+# Obsolete vesabios/vesafb flags
+obsolete	defflag	opt_vesabios.h	VESABIOSVERBOSE
+obsolete	defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+obsolete	defflag	opt_vesafb.h	VESAFB_PM
 
 # AMD PowerNow K7
 file	arch/i386/i386/powernow_k7.c	powernow_k7
