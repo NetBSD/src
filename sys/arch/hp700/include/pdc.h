@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.7.12.2 2008/11/22 15:14:56 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.7.12.3 2009/02/19 17:01:09 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -95,7 +95,7 @@
 #define	IODC_MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
 
 #define	PDC_ALIGNMENT	__attribute__ ((__aligned__(64)))
-#define	PDC_STACKSIZE	(4*NBPG)
+#define	PDC_STACKSIZE	(2*NBPG)	/* PDC spec says 7K. */
 
 
 /*
