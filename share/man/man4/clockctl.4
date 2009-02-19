@@ -1,4 +1,4 @@
-.\"	$NetBSD: clockctl.4,v 1.6 2009/02/19 03:18:19 enami Exp $
+.\"	$NetBSD: clockctl.4,v 1.7 2009/02/19 09:44:41 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,8 +38,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface brings clock control to non-root users. Any user with write access
-to
+interface brings clock control to non-root users.
+Any user with write access to
 .Pa /dev/clockctl
 will be able to perform operations such as
 .Xr settimeofday 2 ,
@@ -47,7 +47,8 @@ will be able to perform operations such as
 .Xr adjtime 2 ,
 or
 .Xr ntp_adjtime 2 ,
-which are normally restricted to the super-user. Using the
+which are normally restricted to the super-user.
+Using the
 .Nm
 pseudo-device, it is possible to run daemons such as
 .Xr ntpd 8
@@ -58,8 +59,8 @@ The
 .Nm
 pseudo-device driver provides an
 .Xr ioctl 2
-call for each privileged clock-related system call. The system
-call stubs in C library will use the
+call for each privileged clock-related system call.
+The system call stubs in C library will use the
 .Xr ioctl 2
 on
 .Pa /dev/clockctl
@@ -74,7 +75,8 @@ calls are defined in
 .It Dv CLOCKCTL_SETTIMEOFDAY
 This will run the
 .Xr settimeofday 2
-system call. Argument should be a pointer to a
+system call.
+Argument should be a pointer to a
 .Va struct clockctl_settimeofday :
 .Bd -literal
 struct clockctl_settimeofday {
@@ -85,7 +87,8 @@ struct clockctl_settimeofday {
 .It Dv CLOCKCTL_CLOCK_SETTIME
 This will run the
 .Xr clock_settime 2
-system call. Argument should be a pointer to a
+system call.
+Argument should be a pointer to a
 .Va struct clockctl_clock_settime :
 .Bd -literal
 struct clockctl_clock_settime {
@@ -96,7 +99,8 @@ struct clockctl_clock_settime {
 .It Dv CLOCKCTL_ADJTIME
 This will run the
 .Xr adjtime 2
-system call. Argument should be a pointer to a
+system call.
+Argument should be a pointer to a
 .Va struct clockctl_adjtime :
 .Bd -literal
 struct clockctl_adjtime {
@@ -107,7 +111,8 @@ struct clockctl_adjtime {
 .It Dv CLOCKCTL_NTP_ADJTIME
 This will run the
 .Xr ntp_adjtime 2
-system call. Argument should be a pointer to a
+system call.
+Argument should be a pointer to a
 .Va struct clockctl_ntp_adjtime :
 .Bd -literal
 struct clockctl_ntp_adjtime {
