@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57.2.2 2008/11/22 16:54:29 mjf Exp $	*/
+/*	$NetBSD: trap.c,v 1.57.2.3 2009/02/19 18:23:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57.2.2 2008/11/22 16:54:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57.2.3 2009/02/19 18:23:35 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -456,11 +456,7 @@ do {							\
 		SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_tail < (u_int) &etext);
 
-#ifdef HPPA_REDZONE
-		maxsp = (u_int)(l->l_addr) + HPPA_REDZONE;
-#else
-		maxsp = (u_int)(l->l_addr) + USPACE;
-#endif
+		maxsp = (u_int)(l->l_addr) + USPACE + PAGE_SIZE;
 		minsp = (u_int)(l->l_addr) + PAGE_SIZE;
 
 		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));

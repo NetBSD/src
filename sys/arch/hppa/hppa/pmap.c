@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.25 2009/02/11 12:08:12 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.26 2009/02/19 18:23:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.25 2009/02/11 12:08:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.26 2009/02/19 18:23:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1004,24 +1004,23 @@ pmap_bootstrap(vaddr_t vstart)
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* TODO optimize/inline the kenter */
-	for (va = 0; va < ptoa(physmem); va += PAGE_SIZE) {
-		int opmapdebug;
+	for (va = 0 /* PAGE_SIZE */; va < ptoa(physmem); va += PAGE_SIZE) {
 		vm_prot_t prot = UVM_PROT_RW;
-#if 0
 		extern struct user *proc0paddr;
-#endif
+
 		if (va < resvmem)
 			prot = UVM_PROT_RX;
 		else if (va >= ksrx && va < kerx)
 			prot = UVM_PROT_RX;
 		else if (va >= ksro && va < kero)
 			prot = UVM_PROT_R;
-#if 0
-		else if (va == (vaddr_t)proc0paddr + USPACE)
+#ifdef DIAGNOSTIC
+		else if (va == (vaddr_t)proc0paddr + USPACE - PAGE_SIZE)
 			prot = UVM_PROT_NONE;
 #endif
 		opmapdebug = pmapdebug;
-		pmapdebug = 0;
+		if (prot != UVM_PROT_NONE)
+			pmapdebug = 0;
 		pmap_kenter_pa(va, va, prot);
 		pmapdebug = opmapdebug;
 	}
@@ -1862,37 +1861,6 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	pmapdebug = opmapdebug;
 #endif /* PMAPDEBUG */
 }
-
-/*
- * pmap_redzone(sva, eva, create)
- *	creates or removes a red zone in already mapped and wired memory, 
- *	from [sva, eva) in the kernel map.
- */
-#if XXXNH
-void
-pmap_redzone(vaddr_t sva, vaddr_t eva, int create)
-{
-	vaddr_t va;
-	struct pv_entry *pv;
-	u_int tlbprot;
-	int s;
-	
-	sva = trunc_page(sva);
-	tlbprot = (create ? TLB_AR_NA : TLB_AR_KRW);
-	s = splvm();
-	for (va = sva; va < eva; va += PAGE_SIZE) {
-		pv = pmap_pv_find_va(HPPA_SID_KERNEL, va);
-		KASSERT(pv != NULL);
-		/*
-		 * Compare new protection with old to see if
-		 * anything needs to be changed.
-		 */
-		if ((pv->pv_tlbprot & TLB_AR_MASK) != tlbprot)
-			pmap_pv_update(pv, TLB_AR_MASK, tlbprot);
-	}
-	splx(s);
-}
-#endif
 
 #if defined(USE_HPT)
 #if defined(DDB)
