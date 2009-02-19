@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30.2.4 2009/02/18 22:33:50 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.30.2.5 2009/02/19 18:23:35 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -254,10 +254,10 @@ $start_zero_tf:
 	/*
 	 * Setup various pointers.
 	 *
-	 * First free memory is %t3 plus normal U space, plus trapframe and pcb
-	 * page. The last page of USPACE is the redzone.
+	 * First free memory is %t3 plus normal U space. The last page of USPACE
+	 * is the redzone if DIAGNOSTIC (see param.h).
 	 */
-	ldil	L%(USPACE+NBPG), %r4
+	ldil	L%USPACE, %r4
 	add	%t3, %r4, %r4
 
 	ldil	L%proc0paddr, %t1
