@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.9 2009/02/04 22:55:58 tls Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.10 2009/02/19 22:33:39 tls Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -104,7 +104,7 @@ process_cgi(http_req *request)
 	if (!cgibin && !Cflag)
 		return;
 
-	file = bozostrdup(request->hr_file);
+	asprintf(&file, "/%s", request->hr_file);
 	if (request->hr_query && strlen(request->hr_query)) {
 	  query = bozostrdup(request->hr_query);
 	} else {
@@ -126,6 +126,7 @@ process_cgi(http_req *request)
 		cgihandler = content_cgihandler(request, file + 1);
 		if (cgihandler == NULL) {
 		        debug((DEBUG_FAT, "process_cgi: no handler, returning"));
+			free(file);
 			free(url);
 			return;
 		}
@@ -176,6 +177,9 @@ process_cgi(http_req *request)
 	    auth_cgi_count(request) +
 	    (request->hr_serverport && *request->hr_serverport ? 1 : 0);
 
+	debug((DEBUG_FAT,
+	       "process_cgi: envpsize `%d'", envpsize));
+
 	envp = bozomalloc(sizeof(*envp) * envpsize);
 	for (ix = 0; ix < envpsize; ix++)
 		envp[ix] = NULL;
@@ -213,8 +217,8 @@ process_cgi(http_req *request)
 	spsetenv("GATEWAY_INTERFACE", "CGI/1.1", curenvp++);
 	spsetenv("SERVER_PROTOCOL", request->hr_proto, curenvp++);
 	spsetenv("REQUEST_METHOD", request->hr_methodstr, curenvp++);
-	spsetenv("SCRIPT_NAME", url, curenvp++);
-	spsetenv("SCRIPT_FILENAME", url + 1, curenvp++);
+	spsetenv("SCRIPT_NAME", file, curenvp++);
+	spsetenv("SCRIPT_FILENAME", file + 1, curenvp++);
 	spsetenv("SERVER_SOFTWARE", server_software, curenvp++);
 	spsetenv("REQUEST_URI", url, curenvp++);
 	spsetenv("DATE_GMT", http_date(), curenvp++);
@@ -234,8 +238,8 @@ process_cgi(http_req *request)
 		spsetenv("REMOTE_ADDR", request->hr_remoteaddr, curenvp++);
 	auth_cgi_setenv(request, &curenvp);
 
-	debug((DEBUG_FAT, "process_cgi: going exec %s, %s %s %s",
-	    path, argv[0], strornull(argv[1]), strornull(argv[2])));
+	free(file);
+	free(url);
 
 	if (-1 == socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sv))
 		error(1, "child socketpair failed: %s", strerror(errno));
@@ -253,6 +257,9 @@ process_cgi(http_req *request)
 		close(sv[0]);
 		dup2(sv[1], STDIN_FILENO);
 		dup2(sv[1], STDOUT_FILENO);
+
+		debug((DEBUG_FAT, "process_cgi: going exec %s, %s %s %s",
+		       path, argv[0], strornull(argv[1]), strornull(argv[2])));
 
 		if (-1 == execve(path, argv, envp))
 			error(1, "child exec failed: %s", path);
