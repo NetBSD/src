@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.17 2009/02/17 01:42:52 jmcneill Exp $	*/
+/*	$NetBSD: consinit.c,v 1.18 2009/02/19 01:14:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.17 2009/02/17 01:42:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.18 2009/02/19 01:14:43 jmcneill Exp $");
 
 #include "opt_kgdb.h"
 
@@ -68,13 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.17 2009/02/17 01:42:52 jmcneill Exp $
 
 #if (NGENFB > 0)
 #include <dev/wsfb/genfbvar.h>
-#endif
-
-#ifdef __i386__
-#include "vesafb.h"
-#if (NVESAFB > 0)
-#include <arch/i386/bios/vesafbvar.h>
-#endif
 #endif
 
 #ifdef __i386__
@@ -183,10 +176,6 @@ consinit()
 			goto dokbd;
 		}
 		genfb_disable();
-#endif
-#if (NVESAFB > 0)
-		if (!vesafb_cnattach())
-			goto dokbd;
 #endif
 #if (NXBOXFB > 0)
 		switch (xboxfb_cnattach()) {
