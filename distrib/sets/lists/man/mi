@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1124 2009/02/15 18:24:49 joerg Exp $
+# $NetBSD: mi,v 1.1125 2009/02/19 00:58:59 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1042,7 +1042,7 @@
 ./usr/share/man/cat4/i386/speaker.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/spic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/vald.0		man-sys-catman		.cat
-./usr/share/man/cat4/i386/vesafb.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/vesafb.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i4b.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i4bctl.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i4bipr.0			man-obsolete		obsolete
@@ -3602,7 +3602,7 @@
 ./usr/share/man/html4/i386/pnpbios.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/spic.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/vald.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/vesafb.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/vesafb.html		man-obsolete		obsolete
 ./usr/share/man/html4/i915drm.html		man-sys-htmlman		html
 ./usr/share/man/html4/iavc.html			man-sys-htmlman		html
 ./usr/share/man/html4/ichlpcib.html		man-sys-htmlman		html
@@ -5984,7 +5984,7 @@
 ./usr/share/man/man4/i386/speaker.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/spic.4		man-sys-man		.man
 ./usr/share/man/man4/i386/vald.4		man-sys-man		.man
-./usr/share/man/man4/i386/vesafb.4		man-sys-man		.man
+./usr/share/man/man4/i386/vesafb.4		man-obsolete		obsolete
 ./usr/share/man/man4/i4b.4			man-obsolete		obsolete
 ./usr/share/man/man4/i4bctl.4			man-obsolete		obsolete
 ./usr/share/man/man4/i4bipr.4			man-obsolete		obsolete
