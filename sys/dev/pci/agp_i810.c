@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.62 2009/01/27 08:39:34 markd Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.63 2009/02/19 05:58:37 markd Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.62 2009/01/27 08:39:34 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.63 2009/02/19 05:58:37 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,6 +293,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82Q33_IGD:
 	case PCI_PRODUCT_INTEL_82Q33_IGD_1:
 		isc->chiptype = CHIP_G33;
+		break;
 	case PCI_PRODUCT_INTEL_82GM45_IGD:
 	case PCI_PRODUCT_INTEL_82GM45_IGD_1:
 	case PCI_PRODUCT_INTEL_82IGD_E_IGD:
