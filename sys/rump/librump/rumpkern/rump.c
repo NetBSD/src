@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.95 2009/02/20 17:58:22 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.96 2009/02/20 18:08:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.95 2009/02/20 17:58:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.96 2009/02/20 18:08:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.95 2009/02/20 17:58:22 pooka Exp $");
 #include <sys/resourcevar.h>
 #include <sys/select.h>
 #include <sys/sysctl.h>
+#include <sys/syscall.h>
 #include <sys/tty.h>
 #include <sys/uidinfo.h>
 #include <sys/vmem.h>
