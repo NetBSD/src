@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1125 2009/02/19 00:58:59 jmcneill Exp $
+# $NetBSD: mi,v 1.1126 2009/02/20 13:17:58 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -985,6 +985,7 @@
 ./usr/share/man/cat4/hp700/lasi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/mem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/mongoose.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/pdc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/phantomas.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/wax.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcarm/intro.0		man-sys-catman		.cat
@@ -3557,6 +3558,7 @@
 ./usr/share/man/html4/hp700/lasi.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/mongoose.html	man-sys-htmlman		html
+./usr/share/man/html4/hp700/pdc.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/phantomas.html	man-sys-htmlman		html
 ./usr/share/man/html4/hp700/wax.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpcarm/intro.html		man-sys-htmlman		html
@@ -5927,6 +5929,7 @@
 ./usr/share/man/man4/hp700/lasi.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/mem.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/mongoose.4		man-sys-man		.man
+./usr/share/man/man4/hp700/pdc.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/phantomas.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/wax.4		man-sys-man		.man
 ./usr/share/man/man4/hpcarm/intro.4		man-sys-man		.man
