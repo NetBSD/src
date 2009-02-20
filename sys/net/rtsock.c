@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.122 2009/02/14 20:48:46 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.123 2009/02/20 10:54:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.122 2009/02/14 20:48:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.123 2009/02/20 10:54:57 yamt Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -109,9 +109,9 @@ static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
 static int sysctl_dumpentry(struct rtentry *, void *);
 static int sysctl_iflist(int, struct rt_walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
-static inline void rt_adjustcount(int, int);
+static void rt_adjustcount(int, int);
 
-static inline void
+static void
 rt_adjustcount(int af, int cnt)
 {
 	route_cb.any_count += cnt;
@@ -135,7 +135,8 @@ rt_adjustcount(int af, int cnt)
 		return;
 	}
 }
-static inline void
+
+static void
 cvtmetrics(struct rt_metrics *ortm, const struct nrt_metrics *rtm)
 {
 	ortm->rmx_locks = rtm->rmx_locks;
