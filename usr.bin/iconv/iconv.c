@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.13 2008/03/22 10:30:21 yamt Exp $ */
+/*	$NetBSD: iconv.c,v 1.14 2009/02/20 15:25:31 yamt Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.13 2008/03/22 10:30:21 yamt Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.14 2009/02/20 15:25:31 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -97,7 +97,7 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 	const char *in;
 	size_t inbytes, outbytes, ret, invalids;
 	iconv_t cd;
-	u_int32_t flags = 0;
+	uint32_t flags = 0;
 
 	if (hide_invalid)
 		flags |= __ICONV_F_HIDE_INVALID;
