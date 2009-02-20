@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.42 2009/01/18 10:37:04 mrg Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.43 2009/02/20 05:49:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -222,7 +222,6 @@ struct fxp_softc {
 #define	FXPF_EXT_TXCB		0x0080	/* enable extended TxCB */
 #define	FXPF_UCODE_LOADED	0x0100	/* microcode is loaded */
 #define	FXPF_EXT_RFA		0x0200	/* enable extended RFD */
-#define	FXPF_IPCB		0x0400	/* use IPCB */
 #define	FXPF_RECV_WORKAROUND	0x0800	/* receiver lock-up workaround */
 #define	FXPF_FC			0x1000	/* has flow control */
 
