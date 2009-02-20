@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.114 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.115 2009/02/20 10:57:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.114 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.115 2009/02/20 10:57:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -358,12 +358,6 @@ ifafree(struct ifaddr *ifa)
 	free(ifa, M_IFADDR);
 }
 
-static inline int
-equal(const struct sockaddr *sa1, const struct sockaddr *sa2)
-{
-	return sockaddr_cmp(sa1, sa2) == 0;
-}
-
 /*
  * Force a routing table entry to the specified
  * destination to go through the given gateway.
@@ -396,7 +390,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 	 * going down recently.
 	 */
 	if (!(flags & RTF_DONE) && rt &&
-	     (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
+	     (sockaddr_cmp(src, rt->rt_gateway) != 0 || rt->rt_ifa != ifa))
 		error = EINVAL;
 	else if (ifa_ifwithaddr(gateway))
 		error = EHOSTUNREACH;
