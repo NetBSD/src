@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.9 2009/02/15 03:45:44 enami Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.10 2009/02/20 05:20:25 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,7 +114,7 @@ mkmakefile(void)
 	lineno = 0;
 	while (fgets(line, sizeof(line), ifp) != NULL) {
 		lineno++;
-		if (version < 20090214 && line[0] != '%') {
+		if ((version < 20090214 && line[0] != '%') || line[0] == '#') {
 			fputs(line, ofp);
 			continue;
 		}
