@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1188 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1189 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -138,3 +138,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		x86 ports to work with the genfb(4) driver, and obsoletes
 		the i386-only vesafb(4) driver. [jmcneill 20090216]
 	i386: The vesafb(4) driver has been retired. [jmcneill 20090218]
+	crime(4): add an Xorg driver for the CRIME rendering engine found in
+		SGI's O2 workstations. [macallan 20090219]
