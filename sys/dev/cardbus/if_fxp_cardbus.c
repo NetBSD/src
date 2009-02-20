@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.35 2009/01/18 10:37:03 mrg Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.36 2009/02/20 05:49:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.35 2009/01/18 10:37:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.36 2009/02/20 05:49:34 mrg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -168,7 +168,7 @@ fxp_cardbus_attach(struct device *parent, struct device *self,
 	if (sc->sc_rev >= FXP_REV_82558_A4)
 		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 	if (sc->sc_rev >= FXP_REV_82550)
-		sc->sc_flags |= FXPF_EXT_RFA|FXPF_IPCB;
+		sc->sc_flags |= FXPF_EXT_RFA;
 
 	sc->sc_dmat = ca->ca_dmat;
 	sc->sc_enable = fxp_cardbus_enable;
