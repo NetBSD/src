@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.391 2009/02/13 20:58:13 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.392 2009/02/20 21:45:09 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -547,6 +547,11 @@
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/puffs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
+./usr/libdata/debug/usr/tests/ipf
+./usr/libdata/debug/usr/tests/kernel
+./usr/libdata/debug/usr/tests/kernel/kqueue
+./usr/libdata/debug/usr/tests/kernel/kqueue/read
+./usr/libdata/debug/usr/tests/kernel/kqueue/write
 ./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/sys
@@ -1408,6 +1413,14 @@
 ./usr/tests/fs/puffs
 ./usr/tests/fs/tmpfs
 ./usr/tests/games
+./usr/tests/ipf
+./usr/tests/ipf/expected
+./usr/tests/ipf/input
+./usr/tests/ipf/regress
+./usr/tests/kernel
+./usr/tests/kernel/kqueue
+./usr/tests/kernel/kqueue/read
+./usr/tests/kernel/kqueue/write
 ./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/sys
