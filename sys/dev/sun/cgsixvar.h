@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.11 2008/12/22 23:46:22 macallan Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.12 2009/02/20 22:55:26 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "wsdisplay.h"
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 /*
  * color display (cgsix) driver; common definitions.
