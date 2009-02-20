@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.47 2009/02/19 23:34:14 cegger Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.48 2009/02/20 05:54:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47 2009/02/19 23:34:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.48 2009/02/20 05:54:40 cegger Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -282,10 +282,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 	error = _bus_dma_alloc_bouncebuf(t, map, size, flags);
  out:
-	if (error) {
+	if (error)
 		_bus_dmamap_destroy(t, map);
-		*dmamp = NULL;
-	}
 
 	return (error);
 }
