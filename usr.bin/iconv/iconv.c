@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.14 2009/02/20 15:25:31 yamt Exp $ */
+/*	$NetBSD: iconv.c,v 1.15 2009/02/20 15:27:08 yamt Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.14 2009/02/20 15:25:31 yamt Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.15 2009/02/20 15:27:08 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -150,7 +150,7 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 	outbytes = OUTBUFSIZE;
 	out = outbuf;
 	ret = iconv(cd, NULL, NULL, &out, &outbytes);
-	if (ret == -1)
+	if (ret == (size_t)-1)
 		err(EXIT_FAILURE, "iconv()");
 	if (outbytes < OUTBUFSIZE)
 		(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes, stdout);
