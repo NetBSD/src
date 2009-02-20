@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.52 2007/11/17 08:59:51 skrll Exp $
+#	$NetBSD: newvers.sh,v 1.53 2009/02/20 13:41:27 yamt Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ if [ ! -e version ]; then
 fi
 
 v=$(cat version)
-t=$(date)
+t=$(LC_ALL=C date)
 u=${USER-root}
 h=$(hostname)
 d=$(pwd)
