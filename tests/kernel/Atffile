@@ -1,0 +1,19 @@
+Content-Type: application/X-atf-atffile; version="1"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.1 2009/02/20 21:39:57 jmmv Exp $"
+
+prop: test-suite = "NetBSD"
+
+tp: ipf
+tp: kqueue
+
+tp: t_extent
+tp: t_lock
+tp: t_lwpctl
+tp: t_mkdir
+tp: t_pipe
+tp: t_poll3w
+tp: t_posix_fadvise
+tp: t_time
+tp: t_ucontext
+tp: t_umount
+tp: t_writev
