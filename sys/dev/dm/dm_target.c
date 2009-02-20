@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.8 2009/02/19 23:20:27 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.9 2009/02/20 11:14:11 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -92,9 +92,9 @@ dm_target_autoload(const char *dm_target_name)
 
 	mutex_enter(&dm_target_mutex);
 	dmt = dm_target_lookup_name(dm_target_name);
+	if (dmt != NULL)
+		dm_target_busy(dmt);
 	mutex_exit(&dm_target_mutex);
-	
-	dm_target_busy(dmt);
 	
 	return dmt;
 }
@@ -115,7 +115,6 @@ dm_target_lookup(const char *dm_target_name)
 	mutex_enter(&dm_target_mutex);
 
 	dmt = dm_target_lookup_name(dm_target_name);
-
 	if (dmt != NULL)
 		dm_target_busy(dmt);
 	
@@ -137,7 +136,6 @@ dm_target_lookup_name(const char *dm_target_name)
 
 	TAILQ_FOREACH(dm_target, &dm_target_list, dm_target_next) {
 		dlen = strlen(dm_target->name) + 1;
-
 		if (dlen != slen)
 			continue;
 		
