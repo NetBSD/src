@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.23 2009/02/17 17:01:41 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.24 2009/02/20 00:08:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.23 2009/02/17 17:01:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.24 2009/02/20 00:08:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,9 +242,9 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct genfb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
+	int new_mode, error;
 
 	switch (cmd) {
-
 		case WSDISPLAYIO_GINFO:
 			if (ms == NULL)
 				return ENODEV;
@@ -268,20 +268,21 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 
 		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
+			new_mode = *(int *)data;
 
-				/* notify the bus backend */
-				if (sc->sc_ops.genfb_ioctl)
-					return sc->sc_ops.genfb_ioctl(sc, vs,
+			/* notify the bus backend */
+			error = 0;
+			if (sc->sc_ops.genfb_ioctl)
+				error = sc->sc_ops.genfb_ioctl(sc, vs,
 					    cmd, data, flag, l);
+			if (error)
+				return error;
 
-				if (new_mode != sc->sc_mode) {
-					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-						genfb_restore_palette(sc);
-						vcons_redraw_screen(ms);
-					}
+			if (new_mode != sc->sc_mode) {
+				sc->sc_mode = new_mode;
+				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+					genfb_restore_palette(sc);
+					vcons_redraw_screen(ms);
 				}
 			}
 			return 0;
