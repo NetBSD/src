@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.7 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.8 2009/02/20 17:59:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -138,5 +138,7 @@ struct vnode 	*rump_cdir_get(void);
 
 /* I picked the wrong header to stop sniffin' glue */
 int rump_syspuffs_glueinit(int, int *);
+
+typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 
 #endif /* _RUMP_RUMP_H_ */
