@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.94 2009/02/12 14:46:58 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.95 2009/02/20 17:58:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.94 2009/02/12 14:46:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.95 2009/02/20 17:58:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -427,3 +427,40 @@ _syspuffs_stub(int fd, int *newfd)
 	return ENODEV;
 }
 __weak_alias(rump_syspuffs_glueinit,_syspuffs_stub);
+
+static int
+rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
+	register_t *retval)
+{
+	struct lwp *l;
+	struct sysent *callp;
+
+	if (__predict_false(num >= SYS_NSYSENT))
+		return ENOSYS;
+
+	l = curlwp;
+	callp = rump_sysent + num;
+	return callp->sy_call(l, (void *)data, retval);
+}
+
+rump_sysproxy_t rump_sysproxy = rump_sysproxy_local;
+void *rump_sysproxy_arg;
+
+/*
+ * This whole syscall-via-rpc is still taking form.  For example, it
+ * may be necessary to set syscalls individually instead of lobbing
+ * them all to the same place.  So don't think this interface is
+ * set in stone.
+ */
+int
+rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
+{
+
+	if (rump_sysproxy_arg)
+		return EBUSY;
+
+	rump_sysproxy_arg = arg;
+	rump_sysproxy = proxy;
+
+	return 0;
+}
