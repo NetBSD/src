@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.12 2009/02/17 21:34:26 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.13 2009/02/21 00:05:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.12 2009/02/17 21:34:26 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.13 2009/02/21 00:05:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -132,7 +132,7 @@ prompt_end(EditLine *el __attribute__((__unused__)))
  *	Install a prompt printing function
  */
 protected int
-prompt_set(EditLine *el, el_pfunc_t prf, void *arg, int op)
+prompt_set(EditLine *el, el_pfunc_t prf, int op)
 {
 	el_prompt_t *p;
 
@@ -140,18 +140,13 @@ prompt_set(EditLine *el, el_pfunc_t prf, void *arg, int op)
 		p = &el->el_prompt;
 	else
 		p = &el->el_rprompt;
-
 	if (prf == NULL) {
 		if (op == EL_PROMPT)
 			p->p_func = prompt_default;
 		else
 			p->p_func = prompt_default_r;
-		p->p_arg = NULL;
-	} else {
+	} else
 		p->p_func = prf;
-		p->p_arg = arg;
-	}
-
 	p->p_pos.v = 0;
 	p->p_pos.h = 0;
 	return (0);
@@ -162,21 +157,14 @@ prompt_set(EditLine *el, el_pfunc_t prf, void *arg, int op)
  *	Retrieve the prompt printing function
  */
 protected int
-prompt_get(EditLine *el, el_pfunc_t *prf, void **arg, int op)
+prompt_get(EditLine *el, el_pfunc_t *prf, int op)
 {
-	el_prompt_t *p;
 
 	if (prf == NULL)
 		return (-1);
-
 	if (op == EL_PROMPT)
-		p = &el->el_prompt;
+		*prf = el->el_prompt.p_func;
 	else
-		p = &el->el_rprompt;
-
-	*prf = p->p_func;
-
-	if (arg)
-		*arg = p->p_arg;
+		*prf = el->el_rprompt.p_func;
 	return (0);
 }
