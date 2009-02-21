@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.200 2009/01/03 08:23:00 apb Exp $
+#	$NetBSD: build.sh,v 1.201 2009/02/21 22:04:35 plunky Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -596,7 +596,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
     -w wrapper  Create ${toolprefix}make script as wrapper.
                 [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
     -X x11src   Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
-    -x          Set MKX11=yes; build X11R6 from X11SRCDIR
+    -x          Set MKX11=yes; build X11 from X11SRCDIR
     -Z v        Unset ("zap") variable \`v'.
 
 _usage_
@@ -1202,7 +1202,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.200 2009/01/03 08:23:00 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.201 2009/02/21 22:04:35 plunky Exp $
 # with these arguments: ${_args}
 #
 
