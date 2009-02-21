@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1190 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1191 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -143,3 +143,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	tests: Converted some of the kernel tests, including kqueue and ipf,
 		to ATF.  Initial work from the GSoC 2008 project by Lukasz
 		Strzygowski.  [jmmv 20090220]
+	dhcpcd(8): Import dhcpcd-4.0.11. [roy 20090221]
