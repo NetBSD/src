@@ -685,7 +685,9 @@ send_message(struct if_state *state, int type, const struct options *options)
 	if (r == -1) {
 		state->state = STATE_INIT;
 		timerclear(&state->timeout);
-		timerclear(&state->stop);
+		/* We need to set a timeout so we fall through gracefully */
+		state->stop.tv_sec = 1;
+		state->stop.tv_usec = 0;
 		do_socket(state, SOCKET_CLOSED);
 	}
 	return r;
@@ -1039,6 +1041,7 @@ handle_timeout_fail(struct if_state *state, const struct options *options)
 		{
 			logger(LOG_INFO, "probing for an IPV4LL address");
 			free(state->offer);
+			lease->frominfo = 0;
 			state->offer = ipv4ll_get_dhcp(0);
 			gotlease = 0;
 		}
