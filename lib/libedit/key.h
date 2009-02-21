@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.11 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: key.h,v 1.12 2009/02/21 23:31:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,8 +74,8 @@ protected int		 key_delete(EditLine *, const char *);
 protected void		 key_print(EditLine *, const char *);
 protected void	         key_kprint(EditLine *, const char *, key_value_t *,
     int);
-protected int		 key__decode_str(const char *, char *, size_t,
+protected size_t	 key__decode_str(const char *, char *, size_t,
     const char *);
-protected int		 key__decode_char(char *, size_t, size_t, int);
+protected size_t	 key__decode_char(char *, size_t, size_t, int);
 
 #endif /* _h_el_key */
