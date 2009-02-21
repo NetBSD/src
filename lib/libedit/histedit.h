@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.37 2009/02/19 01:18:24 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.38 2009/02/21 00:05:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #define	_HISTEDIT_H_
 
 #define	LIBEDIT_MAJOR 2
-#define	LIBEDIT_MINOR 12
+#define	LIBEDIT_MINOR 11
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -115,7 +115,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 /*
  * el_set/el_get parameters
  */
-#define	EL_PROMPT	0	/* , el_pfunc_t, void *);	*/
+#define	EL_PROMPT	0	/* , el_pfunc_t);		*/
 #define	EL_TERMINAL	1	/* , const char *);		*/
 #define	EL_EDITOR	2	/* , const char *);		*/
 #define	EL_SIGNAL	3	/* , int);			*/
