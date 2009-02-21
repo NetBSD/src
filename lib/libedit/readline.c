@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.80 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.81 2009/02/21 23:31:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.80 2009/02/15 21:55:23 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.81 2009/02/21 23:31:56 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1488,7 +1488,7 @@ void
 rl_display_match_list(char **matches, int len, int max)
 {
 
-	fn_display_match_list(e, matches, len, max);
+	fn_display_match_list(e, matches, (size_t)len, (size_t)max);
 }
 
 static const char *
@@ -1526,7 +1526,8 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 	    (CPFunction *)rl_completion_entry_function,
 	    rl_attempted_completion_function,
 	    rl_basic_word_break_characters, rl_special_prefixes,
-	    _rl_completion_append_character_function, rl_completion_query_items,
+	    _rl_completion_append_character_function,
+	    (size_t)rl_completion_query_items,
 	    &rl_completion_type, &rl_attempted_completion_over,
 	    &rl_point, &rl_end);
 }

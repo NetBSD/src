@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.29 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.30 2009/02/21 23:31:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.29 2009/02/15 21:55:23 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.30 2009/02/21 23:31:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -92,12 +92,12 @@ private el_action_t
 cv_paste(EditLine *el, int c)
 {
 	c_kill_t *k = &el->el_chared.c_kill;
-	int len = (int)(k->last - k->buf);
+	size_t len = (size_t)(k->last - k->buf);
 
 	if (k->buf == NULL || len == 0)
 		return (CC_ERROR);
 #ifdef DEBUG_PASTE
-	(void) fprintf(el->el_errfile, "Paste: \"%.*s\"\n", len, k->buf);
+	(void) fprintf(el->el_errfile, "Paste: \"%.*s\"\n", (int)len, k->buf);
 #endif
 
 	cv_undo(el);
@@ -105,7 +105,7 @@ cv_paste(EditLine *el, int c)
 	if (!c && el->el_line.cursor < el->el_line.lastchar)
 		el->el_line.cursor++;
 
-	c_insert(el, len);
+	c_insert(el, (int)len);
 	if (el->el_line.cursor + len > el->el_line.lastchar)
 		return (CC_ERROR);
 	(void) memcpy(el->el_line.cursor, k->buf, len);
