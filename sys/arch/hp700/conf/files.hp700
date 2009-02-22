@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.20.12.1 2008/11/27 21:59:25 skrll Exp $
+#	$NetBSD: files.hp700,v 1.20.12.2 2009/02/22 19:38:14 mjf Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -11,7 +11,6 @@ maxusers 2 8 64
 
 # Status LEDs
 defflag 			USELEDS
-defflag				POWER_SWITCH
 
 include "dev/pckbport/files.pckbport"
 
@@ -73,6 +72,10 @@ file	arch/hp700/hp700/mainbus.c	mainbus
 device	pdc
 attach	pdc at gedoens
 file	arch/hp700/dev/pdc.c		pdc
+
+device	power
+attach	power at gedoens
+file	arch/hp700/dev/power.c		power needs-flag
 
 device	mem
 attach	mem at gedoens
@@ -245,7 +248,6 @@ file	arch/hp700/hp700/disksubr.c		disk
 file	arch/hp700/hp700/intr.c
 file	arch/hp700/hp700/machdep.c
 file	arch/hp700/hp700/sys_machdep.c
-file	arch/hp700/hp700/power.c		power_switch
 file	arch/hp700/dev/clock.c
 
 file	dev/cons.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.11.12.1 2008/11/27 21:59:25 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.11.12.2 2009/02/22 19:38:14 mjf Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -33,11 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.12.1 2008/11/27 21:59:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.12.2 2009/02/22 19:38:14 mjf Exp $");
 
 #undef LASIDEBUG
-
-#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.12.1 2008/11/27 21:59:25 skrll Exp $")
 #include <hp700/dev/cpudevs.h>
 
 #include <hp700/gsc/gscbusvar.h>
-#include <hp700/hp700/power.h>
 
 struct lasi_hwr {
 	u_int32_t lasi_power;
+#define	LASI_BLINK	0x01
+#define	LASI_OFF	0x02
 	u_int32_t lasi_error;
 	u_int32_t lasi_version;
 	u_int32_t lasi_reset;
@@ -87,6 +86,10 @@ void	lasiattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lasi, sizeof(struct lasi_softc),
     lasimatch, lasiattach, NULL, NULL);
+
+extern struct cfdriver lasi_cd;
+
+void	lasi_cold_hook(int);
 
 /*
  * Before a module is matched, this fixes up its gsc_attach_args.
@@ -193,11 +196,6 @@ lasiattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
 	sc->sc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
 
-#ifdef POWER_SWITCH
-	/* Tell power switch handling code about the Power Control Register */
-	lasi_pwr_sw_reg = &sc->sc_hw->lasi_power;
-#endif /* POWER_SWITCH */
-
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
 	if (strcmp(parent->dv_xname, "mainbus0") == 0) {
@@ -216,4 +214,29 @@ lasiattach(struct device *parent, struct device *self, void *aux)
 	ga.ga_fix_args_cookie = sc;
 	ga.ga_scsi_target = 7; /* XXX */
 	config_found(self, &ga, gscprint);
+
+	/* could be already set by power(4) */
+	if (!cold_hook)
+		cold_hook = lasi_cold_hook;
+}
+
+void
+lasi_cold_hook(int on)
+{
+	struct lasi_softc *sc = device_private(lasi_cd.cd_devs[0]);
+
+	if (!sc)
+		return;
+
+	switch (on) {
+	case HPPA_COLD_COLD:
+		sc->sc_hw->lasi_power = LASI_BLINK;
+		break;
+	case HPPA_COLD_HOT:
+		sc->sc_hw->lasi_power = 0;
+		break;
+	case HPPA_COLD_OFF:
+		sc->sc_hw->lasi_power = LASI_OFF;
+		break;
+	}
 }

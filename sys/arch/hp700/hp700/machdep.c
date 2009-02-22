@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.11 2009/02/14 13:57:13 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.12 2009/02/22 19:38:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,13 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.11 2009/02/14 13:57:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.12 2009/02/22 19:38:14 mjf Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
-#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,10 +121,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.11 2009/02/14 13:57:13 skrll Exp 
 #include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/pim.h>
-#include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
 
-#define PMAPDEBUG
 #ifdef PMAPDEBUG
 #include <hppa/hppa/hpt.h>
 #endif
@@ -1344,10 +1341,6 @@ int waittime = -1;
 __dead void
 cpu_reboot(int howto, char *user_boot_string)
 {
-#ifdef POWER_SWITCH
-	int i;
-#endif /* POWER_SWITCH */
-
 	boothowto = howto | (boothowto & RB_HALT);
 
 	if (!(howto & RB_NOSYNC) && waittime < 0) {
@@ -1375,22 +1368,18 @@ cpu_reboot(int howto, char *user_boot_string)
 
 	pmf_system_shutdown(boothowto);
 
-#ifdef POWER_SWITCH
-	if (pwr_sw_state == 0 &&
-	    (howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		printf("Soft power down in 10 seconds...");
-		for (i = 10; i > 0; i--) {
-			printf(" %d", i);
-			DELAY(1000000);
-		}
-		printf("\n");
-		howto &= ~RB_HALT;
-	}
-	pwr_sw_ctrl(PWR_SW_CTRL_DISABLE);
-	DELAY(1000000);
-#endif /* POWER_SWITCH */
+	/* in case we came on powerfail interrupt */
+	if (cold_hook)
+		(*cold_hook)(HPPA_COLD_COLD);
 
 	if (howto & RB_HALT) {
+		if (howto && RB_POWERDOWN && cold_hook) {
+			printf("Powering off...");
+			DELAY(1000000);
+			(*cold_hook)(HPPA_COLD_OFF);
+			DELAY(1000000);
+		}
+
 		printf("System halted!\n");
 		DELAY(1000000);
 		__asm volatile("stwas %0, 0(%1)"
@@ -1400,6 +1389,12 @@ cpu_reboot(int howto, char *user_boot_string)
 		DELAY(1000000);
 		__asm volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (LBCAST_ADDR + iomod_command));
+
+		/* ask firmware to reset */
+		pdc_call((iodcio_t)pdc, 0, PDC_BROADCAST_RESET, PDC_DO_RESET);
+		/* forcably reset module if that fails */
+		__asm __volatile("stwas %0, 0(%1)"
+		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
 
 	for (;;)
