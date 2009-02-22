@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.12 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.13 2009/02/22 20:28:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -508,14 +508,6 @@ rump_vfs_syncwait(struct mount *mp)
 	n = buf_syncwait();
 	if (n)
 		printf("syncwait: unsynced buffers: %d\n", n);
-}
-
-void
-rump_bioops_sync()
-{
-
-	if (bioopsp)
-		bioopsp->io_sync(NULL);
 }
 
 void
