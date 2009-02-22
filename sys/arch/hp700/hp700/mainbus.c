@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.45.4.4 2009/02/19 14:28:41 mjf Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.45.4.5 2009/02/22 19:38:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,10 +63,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45.4.4 2009/02/19 14:28:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45.4.5 2009/02/22 19:38:14 mjf Exp $");
 
 #include "locators.h"
-#include "opt_power_switch.h"
+#include "power.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45.4.4 2009/02/19 14:28:41 mjf Exp $")
 
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/intr.h>
-#include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
 
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
@@ -1537,6 +1536,15 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
 
+#if NPOWER > 0
+	/* get some power */
+	memset(&nca, 0, sizeof(nca));
+	nca.ca_name = "power";
+	nca.ca_irq = -1;
+	nca.ca_iot = &hppa_bustag;
+	config_found(self, &nca, mbprint);
+#endif
+
 	switch (cpu_hvers) {
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
@@ -1595,16 +1603,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 	nca.ca_dp.dp_mod = -1;
 	pdc_scanbus(self, &nca, mb_module_callback);
-
-#ifdef POWER_SWITCH
-	/*
-	 * Initialize soft power switch code. This may need to bus_space_map(9)
-	 * the power switch status register. So call it from here to give it
-	 * a bus space tag. This may need to use the lasi_pwr_sw_reg so call
-	 * it after all IO hardware is found.
-	 */
-	pwr_sw_init(&hppa_bustag);
-#endif /* POWER_SWITCH */
 }
 
 /*
