@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.50 2008/04/24 04:09:27 thorpej Exp $	*/
+/*	$NetBSD: inet6.c,v 1.51 2009/02/22 07:43:01 dholland Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.50 2008/04/24 04:09:27 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.51 2009/02/22 07:43:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,6 +273,9 @@ ip6protopr(u_long off, char *name)
 			memcpy(&src, &pcblist[i].ki_s, sizeof(src));
 			memcpy(&dst, &pcblist[i].ki_d, sizeof(dst));
 
+			if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&dst.sin6_addr))
+				continue;
+
 			if (first) {
 				ip6protoprhdr();
 				first = 0;
@@ -309,7 +312,7 @@ ip6protopr(u_long off, char *name)
 		if (in6pcb.in6p_af != AF_INET6)
 			continue;
 
-		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr))
+		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_faddr))
 			continue;
 		kread((u_long)in6pcb.in6p_socket, (char *)&sockb, 
 		    sizeof (sockb));
