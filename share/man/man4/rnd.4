@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.12 2005/12/26 19:48:12 perry Exp $
+.\"	$NetBSD: rnd.4,v 1.13 2009/02/22 11:04:03 plunky Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 12, 1997
+.Dd February 22, 2009 
 .Dt RND 4
 .Os
 .Sh NAME
@@ -152,6 +152,24 @@ file, along with the data types and constants.
 .It Dv RNDGETENTCNT
 .Pq Li "uint32_t"
 Return the current entropy count (in bits).
+.It Dv RNDGETPOOLSTAT
+.Pq Li "rndpoolstat_t"
+.Bd -literal -offset indent
+typedef struct
+{
+	uint32_t	poolsize;
+	uint32_t 	threshold;
+	uint32_t	maxentropy;
+
+	uint32_t	added;
+	uint32_t	curentropy;
+	uint32_t	removed;
+	uint32_t	discarded;
+	uint32_t	generated;
+} rndpoolstat_t;
+.Ed
+.Pp
+Return statistics on the current state of the random collection pool.
 .It Dv RNDGETSRCNUM
 .Pq Li "rndstat_t"
 .Bd -literal -offset indent
