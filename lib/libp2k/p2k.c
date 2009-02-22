@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.8 2009/02/10 14:36:19 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.9 2009/02/22 20:28:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -304,8 +304,6 @@ p2k_fs_sync(struct puffs_usermount *pu, int waitfor,
 	cred = cred_create(pcr);
 	rv = rump_vfs_sync(mp, waitfor, (kauth_cred_t)cred);
 	cred_destroy(cred);
-
-	rump_bioops_sync();
 
 	return rv;
 }

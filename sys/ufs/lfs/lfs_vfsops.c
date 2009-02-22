@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.269 2008/11/13 11:10:41 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.270 2009/02/22 20:28:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.269 2008/11/13 11:10:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.270 2009/02/22 20:28:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1854,7 +1854,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	int i;
 
 	ip->i_mode = ip->i_ffs1_mode;
-	ip->i_ffs_effnlink = ip->i_nlink = ip->i_ffs1_nlink;
+	ip->i_nlink = ip->i_ffs1_nlink;
 	ip->i_lfs_osize = ip->i_size = ip->i_ffs1_size;
 	ip->i_flags = ip->i_ffs1_flags;
 	ip->i_gen = ip->i_ffs1_gen;
