@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.137 2008/11/06 15:30:23 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.138 2009/02/22 11:21:55 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -187,7 +187,7 @@ typedef struct _partinfo {
 #define PIF_NODEVMTIME	0x0080		/* mount -o nodevmtime */
 #define PIF_NOEXEC	0x0100		/* mount -o noexec */
 #define PIF_NOSUID	0x0200		/* mount -o nosuid */
-#define PIF_SOFTDEP	0x0400		/* mount -o softdep */
+#define PIF__UNUSED	0x0400		/* unused */
 #define PIF_LOG		0x0800		/* mount -o log */
 #define PIF_MOUNT_OPTS	0x0ff0		/* all above mount flags */
 #define PIF_RESET	0x1000		/* internal - restore previous values */
