@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.26 2009/02/18 17:57:11 mrg Exp $ */
+/*      $NetBSD: clockctl.c,v 1.27 2009/02/22 13:06:59 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.26 2009/02/18 17:57:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.27 2009/02/22 13:06:59 nakayama Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -94,7 +94,7 @@ clockctlioctl(
 		struct clockctl_adjtime *args = data;
 
 		if (args->delta) {
-			error = copyin(args->delta, &atv, sizeof(*args->delta));
+			error = copyin(args->delta, &atv, sizeof(atv));
 			if (error)
 				return (error);
 		}
@@ -102,7 +102,7 @@ clockctlioctl(
 		    args->olddelta ? &oldatv : NULL, l->l_proc);
 		if (args->olddelta)
 			error = copyout(&oldatv, args->olddelta,
-			    sizeof(args->olddelta));
+			    sizeof(oldatv));
 		break;
 	}
 	case CLOCKCTL_CLOCK_SETTIME: {
@@ -130,6 +130,7 @@ clockctlioctl(
 		error = copyout(&ntv, args->tp, sizeof(ntv));
 		if (error == 0)
 			error = copyout(&retval, &args->retval, sizeof(retval));
+		break;
 	}
 #endif /* NTP */
 	default:
