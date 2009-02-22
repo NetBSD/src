@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.100 2008/08/08 02:54:06 simonb Exp $ */
+/*	$NetBSD: disks.c,v 1.101 2009/02/22 11:21:55 ad Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -506,10 +506,9 @@ make_fstab(void)
 			s = "# ";
 
  		scripting_fprintf(f,
-		  "%s/dev/%s%c\t\t%s\t%s\trw%s%s%s%s%s%s%s%s%s\t\t %d %d\n",
+		  "%s/dev/%s%c\t\t%s\t%s\trw%s%s%s%s%s%s%s%s\t\t %d %d\n",
 		   s, diskdev, 'a' + i, mp, fstype,
 		   bsdlabel[i].pi_flags & PIF_LOG ? ",log" : "",
-		   bsdlabel[i].pi_flags & PIF_SOFTDEP ? ",softdep" : "",
 		   bsdlabel[i].pi_flags & PIF_MOUNT ? "" : ",noauto",
 		   bsdlabel[i].pi_flags & PIF_ASYNC ? ",async" : "",
 		   bsdlabel[i].pi_flags & PIF_NOATIME ? ",noatime" : "",
