@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.23 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.24 2009/02/22 15:28:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.23 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.24 2009/02/22 15:28:43 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ addentry(const char *name, ino_t inum, int type)
 	}
 	np = freelist;
 	freelist = np->e_next;
-	memset(np, 0, (long)sizeof(struct entry));
+	memset(np, 0, sizeof(struct entry));
 
 	np->e_type = type & ~LINK;
 	ep = lookupparent(name);
