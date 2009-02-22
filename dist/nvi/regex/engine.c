@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: engine.c,v 1.5 2009/02/22 11:34:53 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -105,7 +105,7 @@ static states step __P((struct re_guts *g, sopno start, sopno stop, states bef, 
 #define	BOW	(BOL+4)
 #define	EOW	(BOL+5)
 #define	CODEMAX	(BOL+5)		/* highest code used */
-#define	NONCHAR(c)	((RCHAR_T)(c) > (RCHAR_T)RCHAR_T_MAX)
+#define	NONCHAR(c)	((UCHAR_T)(c) > (UCHAR_T)RCHAR_T_MAX)
 #define	NNONCHAR	(CODEMAX-CHAR_MAX)
 #ifdef REDEBUG
 static void print __P((struct match *m, char *caption, states st, int ch, FILE *d));
