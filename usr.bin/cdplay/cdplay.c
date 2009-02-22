@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.40 2008/12/29 00:50:06 christos Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.41 2009/02/22 08:32:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.40 2008/12/29 00:50:06 christos Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.41 2009/02/22 08:32:25 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1347,7 +1347,7 @@ openaudio()
 	int rc, aei;
 
 	if (da.afd > -1)
-	return (1);
+		return (1);
 	da.afd = open(da.auname, O_WRONLY);
 	if (da.afd < 0) {
 		warn("openaudio");
