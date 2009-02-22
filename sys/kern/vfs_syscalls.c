@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.388 2009/02/15 03:52:49 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.389 2009/02/22 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.388 2009/02/15 03:52:49 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.389 2009/02/22 20:28:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3139,9 +3139,6 @@ sys_fsync(struct lwp *l, const struct sys_fsync_args *uap, register_t *retval)
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0);
-	if (error == 0 && bioopsp != NULL &&
-	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioopsp->io_fsync)(vp, 0);
 	VOP_UNLOCK(vp, 0);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -3210,11 +3207,6 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e);
-
-	if (error == 0 && bioopsp != NULL &&
-	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioopsp->io_fsync)(vp, nflags);
-
 	VOP_UNLOCK(vp, 0);
 out:
 	fd_putfile(SCARG(uap, fd));

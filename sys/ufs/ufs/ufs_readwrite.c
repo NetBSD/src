@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.93 2008/12/08 11:48:03 pooka Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.94 2009/02/22 20:28:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.93 2008/12/08 11:48:03 pooka Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.94 2009/02/22 20:28:07 ad Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -413,7 +413,6 @@ WRITE(void *v)
 		 * copied the data into the vnode's pages.
 		 *
 		 * we should update the size even when uiomove failed.
-		 * otherwise ffs_truncate can't flush soft update states.
 		 */
 
 		if (vp->v_size < newoff) {

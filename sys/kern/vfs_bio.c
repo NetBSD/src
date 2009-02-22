@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.215 2008/12/07 20:58:46 pooka Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.216 2009/02/22 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.215 2008/12/07 20:58:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.216 2009/02/22 20:28:06 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -187,7 +187,6 @@ static void sysctl_vm_buf_setup(void);
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
 struct bqueue bufqueues[BQUEUES];
-const struct bio_ops *bioopsp;	/* I/O operation notification */
 
 static kcondvar_t needbuffer_cv;
 
@@ -1049,9 +1048,6 @@ brelsel(buf_t *bp, int set)
 		 * If it's invalid or empty, dissociate it from its vnode
 		 * and put on the head of the appropriate queue.
 		 */
-		if (bioopsp != NULL)
-			(*bioopsp->io_deallocate)(bp);
-
 		if (ISSET(bp->b_flags, B_LOCKED)) {
 			if (wapbl_vphaswapbl(vp = bp->b_vp)) {
 				struct mount *mp = wapbl_vptomp(vp);
@@ -1098,14 +1094,7 @@ brelsel(buf_t *bp, int set)
 			bufq = &bufqueues[BQ_LRU];
 		} else {
 			/* stale but valid data */
-			int has_deps;
-
-			if (bioopsp != NULL)
-				has_deps = (*bioopsp->io_countdeps)(bp, 0);
-			else
-				has_deps = 0;
-			bufq = has_deps ? &bufqueues[BQ_LRU] :
-			    &bufqueues[BQ_AGE];
+			bufq = &bufqueues[BQ_AGE];
 		}
 		binstailfree(bp, bufq);
 	}
@@ -1422,8 +1411,6 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 	}
 
 	vp = bp->b_vp;
-	if (bioopsp != NULL)
-		(*bioopsp->io_deallocate)(bp);
 
 	/* clear out various other fields */
 	bp->b_cflags = BC_BUSY;
@@ -1555,9 +1542,6 @@ biodone2(buf_t *bp)
 {
 	void (*callout)(buf_t *);
 
-	if (bioopsp != NULL)
-		(*bioopsp->io_complete)(bp);
-
 	mutex_enter(bp->b_objlock);
 	/* Note that the transfer is done. */
 	if (ISSET(bp->b_oflags, BO_DONE))
@@ -1645,26 +1629,6 @@ buf_syncwait(void)
 		    LIST_FOREACH(bp, &bufhashtbl[ihash], b_hash) {
 			if ((bp->b_cflags & (BC_BUSY|BC_INVAL)) == BC_BUSY)
 				nbusy += ((bp->b_flags & B_READ) == 0);
-			/*
-			 * With soft updates, some buffers that are
-			 * written will be remarked as dirty until other
-			 * buffers are written.
-			 */
-			if (bp->b_vp && bp->b_vp->v_tag != VT_NON
-			    && bp->b_vp->v_mount
-			    && (bp->b_vp->v_mount->mnt_flag & MNT_SOFTDEP)
-			    && (bp->b_oflags & BO_DELWRI)) {
-				bremfree(bp);
-				bp->b_cflags |= BC_BUSY;
-				nbusy++;
-				mutex_exit(&bufcache_lock);
-				bawrite(bp);
-				if (dcount-- <= 0) {
-					printf("softdep ");
-					goto fail;
-				}
-				mutex_enter(&bufcache_lock);
-			}
 		    }
 		}
 		mutex_exit(&bufcache_lock);
@@ -1682,7 +1646,6 @@ buf_syncwait(void)
 	}
 
 	if (nbusy) {
-fail:;
 #if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
 		printf("giving up\nPrinting vnodes for busy buffers\n");
 		for (ihash = 0; ihash < bufhash+1; ihash++) {
@@ -2068,7 +2031,6 @@ void
 buf_init(buf_t *bp)
 {
 
-	LIST_INIT(&bp->b_dep);
 	cv_init(&bp->b_busy, "biolock");
 	cv_init(&bp->b_done, "biowait");
 	bp->b_dev = NODEV;

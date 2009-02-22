@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1191 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1192 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -144,3 +144,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		to ATF.  Initial work from the GSoC 2008 project by Lukasz
 		Strzygowski.  [jmmv 20090220]
 	dhcpcd(8): Import dhcpcd-4.0.11. [roy 20090221]
+	softdep: The soft dependences / soft updates feature of the fast
+		file system (FFS) has been supplanted by meta data
+		journalling (logging).  Logging provides better reliability
+		and better performance for most applications.  Soft
+		dependencies will no longer be available from NetBSD 6.0
+		onwards.  We encourage users to enable logging on FFS file
+		systems. [ad 20090222]
