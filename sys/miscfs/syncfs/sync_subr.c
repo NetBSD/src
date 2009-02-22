@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.37 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.38 2009/02/22 22:26:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.37 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.38 2009/02/22 22:26:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,12 +291,11 @@ sched_sync(void *v)
 				    synced ? syncdelay : lockdelay);
 			}
 		}
+		mutex_exit(&syncer_mutex);
 
 		/*
 		 * Wait until there are more workitems to process.
 		 */
-		mutex_exit(&syncer_mutex);
-		mutex_enter(&syncer_data_lock);
 		if (rushjob > 0) {
 			/*
 			 * The variable rushjob allows the kernel to speed
