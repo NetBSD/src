@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.120 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.121 2009/02/22 20:10:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.120 2009/01/11 02:45:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.121 2009/02/22 20:10:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1284,7 +1284,7 @@ retry:
 	if (ibp != NULL &&
 	    initediblk != ufs_rw32(cgp->cg_initediblk, needswap)) {
 		/* Another thread allocated more inodes so we retry the test. */
-		brelse(ibp, BC_INVAL);
+		brelse(ibp, 0);
 		ibp = NULL;
 	}
 	/*
@@ -1396,7 +1396,7 @@ gotit:
 	if (bp != NULL)
 		brelse(bp, 0);
 	if (ibp != NULL)
-		brelse(ibp, BC_INVAL);
+		brelse(ibp, 0);
 	mutex_enter(&ump->um_lock);
 	return (0);
 }
