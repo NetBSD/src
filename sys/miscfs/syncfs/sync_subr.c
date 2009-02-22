@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.36 2009/02/22 20:10:25 ad Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.37 2009/02/22 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.36 2009/02/22 20:10:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.37 2009/02/22 20:28:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,14 +291,6 @@ sched_sync(void *v)
 				    synced ? syncdelay : lockdelay);
 			}
 		}
-
-		mutex_exit(&syncer_data_lock);
-
-		/*
-		 * Do soft update processing.
-		 */
-		if (bioopsp != NULL)
-			(*bioopsp->io_sync)(NULL);
 
 		/*
 		 * Wait until there are more workitems to process.

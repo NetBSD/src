@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.122 2009/02/02 14:00:27 haad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.123 2009/02/22 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.122 2009/02/02 14:00:27 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.123 2009/02/22 20:28:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -843,9 +843,6 @@ spec_strategy(void *v)
 
 	error = 0;
 	bp->b_dev = vp->v_rdev;
-	if (!(bp->b_flags & B_READ) &&
-	    (LIST_FIRST(&bp->b_dep)) != NULL && bioopsp)
-		bioopsp->io_start(bp);
 
 	if (!(bp->b_flags & B_READ))
 		error = fscow_run(bp, false);
