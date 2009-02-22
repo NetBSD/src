@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.85 2009/02/08 19:14:52 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.86 2009/02/22 15:26:51 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.85 2009/02/08 19:14:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.86 2009/02/22 15:26:51 yamt Exp $");
 #endif /* not lint */
 
 
@@ -6491,7 +6491,6 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 	uint32_t    buf_offset, lb_num, rbuflen, rblk;
 	uint32_t    from, lblkno;
 	uint32_t    num_lb;
-	uint8_t    *buf_pos;
 	int error, run_length, isdir, what, s;
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
@@ -6543,7 +6542,6 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 	buf->b_resid = buf->b_bcount;
 	for (lb_num = 0; lb_num < num_lb; lb_num++) {
 		buf_offset = lb_num * lb_size;
-		buf_pos    = (uint8_t *) buf->b_data + buf_offset;
 		DPRINTF(WRITE, ("\tprocessing rel lb_num %d\n", lb_num));
 
 		/*
