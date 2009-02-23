@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.15 2009/02/17 20:36:07 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.16 2009/02/23 23:45:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.15 2009/02/17 20:36:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.16 2009/02/23 23:45:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,7 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	genfb_init(&sc->sc_gen);
 
 	if ((sc->sc_gen.sc_width == 0) || (sc->sc_gen.sc_fbsize == 0)) {
-		aprint_error("%s: bogus parameters, unable to continue\n", 
-		    device_xname(self));
+		aprint_debug_dev(self, "not configured by firmware\n");
 		return;
 	}
 
