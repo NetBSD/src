@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.22 2009/02/16 09:38:41 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.23 2009/02/23 13:39:41 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.22 2009/02/16 09:38:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.23 2009/02/23 13:39:41 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -182,7 +182,7 @@ age_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(self, "could not map interrupt\n");
-		return;
+		goto fail;
 	}
 
 	/*
@@ -196,7 +196,7 @@ age_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal_dev(self, "%s\n", intrstr);
 
@@ -296,9 +296,14 @@ age_attach(device_t parent, device_t self, void *aux)
 	return;
 
 fail:
+	age_dma_free(sc);
 	if (sc->sc_irq_handle != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
 		sc->sc_irq_handle = NULL;
+	}
+	if (sc->sc_mem_size) {
+		bus_space_unmap(sc->sc_mem_bt, sc->sc_mem_bh, sc->sc_mem_size);
+		sc->sc_mem_size = 0;
 	}
 }
 
