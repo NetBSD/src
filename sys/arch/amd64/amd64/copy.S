@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.12 2008/09/18 21:35:17 dsl Exp $	*/
+/*	$NetBSD: copy.S,v 1.13 2009/02/23 20:27:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -514,5 +514,82 @@ ENTRY(fusufailure)
 ENTRY(fusuaddrfault)
 	movl	$-1,%eax
 	ret
+
+/*
+ * Compare-and-swap the 64-bit integer in the user-space.
+ *
+ * int	ucas_64(volatile int64_t *uptr, int64_t old, int64_t new, int64_t *ret);
+ */
+ENTRY(ucas_64)
+	DEFERRED_SWITCH_CHECK
+	/* Fail if kernel-space */
+	movq	$VM_MAXUSER_ADDRESS-8, %r8
+	cmpq	%r8, %rdi
+	ja	1f
+	/* Set the fault handler */
+	GET_CURPCB(%r8)
+	leaq	_C_LABEL(ucas_fault)(%rip), %r9
+	movq	%r9, PCB_ONFAULT(%r8)
+	/* Perform the CAS */
+	lock
+	cmpxchgq %rdx, (%rdi)
+	/* Clear the fault handler */
+	movq	%rax, PCB_ONFAULT(%r8)
+	/*
+	 * Note: %rax is "old" value.
+	 * Set the return values.
+	 */
+	movq	%rax, (%rcx)
+	xorq	%rax, %rax
+	/* Clear the fault handler */
+	movq	%rax, PCB_ONFAULT(%r8)
+1:
+	/* Failure case */
+	movq	$EFAULT, %rax
+	ret
+	DEFERRED_SWITCH_CALL
+
+/*
+ * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ */
+ENTRY(ucas_32)
+	DEFERRED_SWITCH_CHECK
+	/* Fail if kernel-space */
+	movq	$VM_MAXUSER_ADDRESS-4, %r8
+	cmpq	%r8, %rdi
+	ja	1f
+	/* Set the fault handler */
+	GET_CURPCB(%r8)
+	leaq	_C_LABEL(ucas_fault)(%rip), %r9
+	movq	%r9, PCB_ONFAULT(%r8)
+	/* Perform the CAS */
+	lock
+	cmpxchgl %edx, (%rdi)
+	/*
+	 * Note: %eax is "old" value.
+	 * Set the return values.
+	 */
+	movl	%eax, (%rcx)
+	xorq	%rax, %rax
+1:
+	/* Failure case */
+	movq	$EFAULT, %rax
+	ret
+	DEFERRED_SWITCH_CALL
+
+/*
+ * Fault handler for ucas_32() and ucas_64().
+ * Unset the handler and return the failure.
+ */
+NENTRY(ucas_fault)
+	movq	$0, PCB_ONFAULT(%r8)
+	movq	$EFAULT, %rax
+	ret
+
+/*
+ * int	ucas_ptr(volatile void *uptr, void *old, void *new, void *ret);
+ */
+STRONG_ALIAS(ucas_ptr, ucas_64)
+STRONG_ALIAS(ucas_int, ucas_32)
 
 x86_copyfunc_end:	.globl	x86_copyfunc_end
