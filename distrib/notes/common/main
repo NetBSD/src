@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.436 2009/02/22 14:32:54 apb Exp $
+.\"	$NetBSD: main,v 1.437 2009/02/23 16:42:58 weinem Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1630,6 +1630,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.org
 .It Ta Mike M. Volokhov Ta Mt mishka@NetBSD.org
 .It Ta Krister Walfridsson Ta Mt kristerw@NetBSD.org
+.lt Ta Mark Weinem Ta Mt weinem@NetBSD.org
 .It Ta Lex Wennmacher Ta Mt wennmach@NetBSD.org
 .It Ta Leo Weppelman Ta Mt leo@NetBSD.org
 .It Ta Assar Westerlund Ta Mt assar@NetBSD.org
