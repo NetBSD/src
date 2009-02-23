@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.1.2.2 2009/02/23 13:04:43 skrll Exp $	*/
+/*	$NetBSD: power.c,v 1.1.2.3 2009/02/23 13:24:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -179,7 +179,7 @@ powerattach(device_t parent, device_t self, void *aux)
 			return;
 
 		pswitch_on = true;
-		pwr_sw_ctrl(PWR_SW_CTRL_ENABLE);
+		pwr_sw_control = PWR_SW_CTRL_ENABLE;
 	}
 }
 
@@ -349,12 +349,6 @@ pwr_sw_ctrl(int enable)
 #ifdef DEBUG
 	printf("pwr_sw_control=%d enable=%d\n", pwr_sw_control, enable);
 #endif /* DEBUG */
-
-	if (cold != 0) {
-		if (panicstr)
-			return;
-		panic("pwr_sw_ctrl can only be called when machine is warm!");
-	}
 
 	if (cold_hook == NULL)
 		return;
