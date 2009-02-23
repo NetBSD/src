@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.22 2009/01/08 12:46:23 njoly Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.23 2009/02/23 20:28:58 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.22 2009/01/08 12:46:23 njoly Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.23 2009/02/23 20:28:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -107,13 +107,6 @@ static void futex_put(struct futex *);
 static int futex_sleep(struct futex *, lwp_t *, unsigned long);
 static int futex_wake(struct futex *, int, struct futex *, int);
 static int futex_atomic_op(lwp_t *, int, void *);
-
-/* from linux_support.S */
-int	futex_xchgl(int, void *, int *);
-int	futex_addl(int, void *, int *);
-int	futex_orl(int, void *, int *);
-int	futex_andl(int, void *, int *);
-int	futex_xorl(int, void *, int *);
 
 int
 linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t *retval)
@@ -436,40 +429,52 @@ futex_wake(struct futex *f, int n, struct futex *newf, int n2)
 static int
 futex_atomic_op(lwp_t *l, int encoded_op, void *uaddr)
 {
-	int op = (encoded_op >> 28) & 7;
-	int cmp = (encoded_op >> 24) & 15;
+	const int op = (encoded_op >> 28) & 7;
+	const int cmp = (encoded_op >> 24) & 15;
+	const int cmparg = (encoded_op << 20) >> 20;
 	int oparg = (encoded_op << 8) >> 20;
-	int cmparg = (encoded_op << 20) >> 20;
-	int oldval = 0, ret;
+	int error, oldval, cval;
 
 	if (encoded_op & (FUTEX_OP_OPARG_SHIFT << 28))
 		oparg = 1 << oparg;
 
 	/* XXX: linux verifies access here and returns EFAULT */
 
-	switch (op) {
-	case FUTEX_OP_SET:
-		ret = futex_xchgl(oparg, uaddr, &oldval);
-		break;
-	case FUTEX_OP_ADD:
-		ret = futex_addl(oparg, uaddr, &oldval);
-		break;
-	case FUTEX_OP_OR:
-		ret = futex_orl(oparg, uaddr, &oldval);
-		break;
-	case FUTEX_OP_ANDN:
-		ret = futex_andl(~oparg, uaddr, &oldval);
-		break;
-	case FUTEX_OP_XOR:
-		ret = futex_xorl(oparg, uaddr, &oldval);
-		break;
-	default:
-		ret = -ENOSYS;
-		break;
+	if (copyin(uaddr, &cval, sizeof(int)) != 0)
+		return -EFAULT;
+
+	for (;;) {
+		int nval;
+
+		switch (op) {
+		case FUTEX_OP_SET:
+			nval = oparg;
+			break;
+		case FUTEX_OP_ADD:
+			nval = cval + oparg;
+			break;
+		case FUTEX_OP_OR:
+			nval = cval | oparg;
+			break;
+		case FUTEX_OP_ANDN:
+			nval = cval & ~oparg;
+			break;
+		case FUTEX_OP_XOR:
+			nval = cval ^ oparg;
+			break;
+		default:
+			return -ENOSYS;
+		}
+
+		error = ucas_int(uaddr, cval, nval, &oldval);
+		if (oldval == cval || error) {
+			break;
+		}
+		cval = oldval;
 	}
 
-	if (ret)
-		return ret;
+	if (error)
+		return -EFAULT;
 
 	switch (cmp) {
 	case FUTEX_OP_CMP_EQ:
