@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.4 2009/01/10 13:03:19 cegger Exp $	*/
+/*	$NetBSD: bwi.c,v 1.5 2009/02/23 00:05:44 cube Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.4 2009/01/10 13:03:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.5 2009/02/23 00:05:44 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -7293,6 +7293,8 @@ bwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING)) {
 			struct bwi_mac *mac;
