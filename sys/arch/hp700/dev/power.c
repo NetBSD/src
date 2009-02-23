@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.1.2.1 2009/02/22 19:38:14 mjf Exp $	*/
+/*	$NetBSD: power.c,v 1.1.2.2 2009/02/23 13:04:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -94,8 +94,8 @@ struct power_softc {
 	int sc_dr_cnt;
 };
 
-int	powermatch(struct device *, struct cfdata *, void *);
-void	powerattach(struct device *, struct device *, void *);
+int	powermatch(device_t, cfdata_t, void *);
+void	powerattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(power, sizeof(struct power_softc),
     powermatch, powerattach, NULL, NULL);
@@ -117,7 +117,7 @@ void power_thread_reg(void *v);
 void power_cold_hook_reg(int);
 
 int
-powermatch(struct device *parent, struct cfdata *cf, void *aux)
+powermatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -128,7 +128,7 @@ powermatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-powerattach(struct device *parent, struct device *self, void *aux)
+powerattach(device_t parent, device_t self, void *aux)
 {
 	struct power_softc *sc = device_private(self);
 	struct confargs *ca = aux;
@@ -151,7 +151,7 @@ powerattach(struct device *parent, struct device *self, void *aux)
 		/* Diag Reg. needs software dampening, poll at 0.2 Hz.*/
 		sc->sc_timeout = hz / 5;
 
-		printf(": DR25\n");
+		aprint_normal(": DR25\n");
 		break;
 
 	default:
@@ -159,7 +159,8 @@ powerattach(struct device *parent, struct device *self, void *aux)
 			sc->sc_bst = ca->ca_iot;
 			if (bus_space_map(sc->sc_bst, ca->ca_hpa, 4, 0,
 			    &sc->sc_bsh) != 0)
-				printf("Can't map power switch status reg.\n");
+				aprint_error_dev(self,
+				    "Can't map power switch status reg.\n");
 
 			cold_hook = power_cold_hook_reg;
 			sc->sc_kicker = power_thread_reg;
@@ -167,9 +168,9 @@ powerattach(struct device *parent, struct device *self, void *aux)
 			/* Power Reg. is hardware dampened, poll at 1 Hz. */
 			sc->sc_timeout = hz;
 
-			printf("\n");
+			aprint_normal("\n");
 		} else
-			printf(": not available\n");
+			aprint_normal(": not available\n");
 		break;
 	}
 
@@ -250,7 +251,7 @@ power_cold_hook_reg(int on)
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER,
 	    PDC_SOFT_POWER_ENABLE, &pdc_power_info,
 	    on == HPPA_COLD_HOT)))
-		printf("power_cold_hook_reg: failed (%d)\n", error);
+		aprint_error("PDC_SOFT_POWER_ENABLE failed (%d)\n", error);
 }
 
 static int
@@ -265,7 +266,7 @@ pwr_sw_init(struct power_softc *sc)
 	 * 712 style machine.
 	 */
 	if (pdc_power_info.addr == 0 && hppa_cpu_info->hci_type != hpcxl) {
-		printf("No soft power available.\n");
+		aprint_error_dev(sc->sc_dev, "No soft power available.\n");
 		return error;
 	}
 
@@ -319,14 +320,16 @@ pwr_sw_init(struct power_softc *sc)
 	return error;
 
 err_sysmon:
-	printf("Can't register power switch with sysmon.\n");
+	aprint_error_dev(sc->sc_dev,
+	    "Can't register power switch with sysmon.\n");
 
 err_kmem:
-	printf("Can't alloc sysmon power switch.\n");
+	aprint_error_dev(sc->sc_dev, "Can't alloc sysmon power switch.\n");
 	kmem_free(pwr_sw_sysmon, sizeof(*pwr_sw_sysmon));
 
 err_sysctl:
-	printf("Can't create sysctl machdep.power_switch\n");
+	aprint_error_dev(sc->sc_dev,
+	    "Can't create sysctl machdep.power_switch\n");
 	sysctl_teardown(&sysctl_log);
 
 	return error;
