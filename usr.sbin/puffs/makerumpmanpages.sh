@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.4 2008/10/16 10:30:17 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.4.2.1 2009/02/23 09:02:59 snj Exp $
 #
 
 IFS=' '
@@ -32,7 +32,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 6, 2008
+.Dd February 15, 2009
 .Dt RUMP_XXXFSXXX 8
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .Nd mount the xxxfsxxx file system using a userspace server
 .Sh SYNOPSIS
 .Cd "file-system PUFFS"
+.Cd "pseudo-device putter"
 .Pp
 .Nm
 .Op options
@@ -64,6 +65,16 @@ Apart from a minor speed penalty (starting from 10% and depending
 on the workload and file system in question), there is no difference
 to using in-kernel code.
 .Pp
+In case mounting a file system image from a regular file,
+.Nm
+does not require the use of
+.Xr vnconfig 8
+unlike kernel file systems.
+Instead, the image path can be directly passed as the special file path.
+The exception is if the image contains a disklabel.
+In this case vnconfig is required to resolve the start offset for the
+correct partition within the image.
+.Pp
 It is recommended that untrusted file system images be mounted with
 .Nm
 instead of
@@ -72,6 +83,24 @@ Corrupt file system images commonly cause the file system
 to crash the entire kernel, but with
 .Nm
 only the userspace server process will dump core.
+.Pp
+To use
+.Nm
+via
+.Xr mount 8 ,
+the flags
+.Fl o Ar rump
+and
+.Fl t Ar xxxfsxxx
+should be given.
+Similarly,
+.Nm
+is run instead of
+.Xr mount_xxxfsxxx 8
+if
+.Dq rump
+is added to the options field of
+.Xr fstab 5 .
 .Pp
 Please see
 .Xr mount_xxxfsxxx 8
@@ -86,13 +115,7 @@ The
 .Nm
 utility first appeared in
 .Nx 5.0 .
-.Sh BUGS
-.Nm
-cannot be used via
-.Xr mount 8 .
-Instead,
-.Nm
-must be run directly.'
+It is currently considered experimental.'
 
 # generate the manual pages
 #
