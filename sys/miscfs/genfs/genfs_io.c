@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.18 2009/02/04 20:32:19 rmind Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.19 2009/02/23 21:27:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.18 2009/02/04 20:32:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.19 2009/02/23 21:27:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,6 +574,9 @@ loopdone:
 		error = biowait(mbp);
 	}
 
+	/* Remove the mapping (make KVA available as soon as possible) */
+	uvm_pagermapout(kva, npages);
+
 	/*
 	 * if this we encountered a hole then we have to do a little more work.
 	 * for read faults, we marked the page PG_RDONLY so that future
@@ -615,7 +618,6 @@ loopdone:
 	rw_exit(&gp->g_glock);
 
 	putiobuf(mbp);
-	uvm_pagermapout(kva, npages);
 
 	mutex_enter(&uobj->vmobjlock);
 
