@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.57 2009/02/22 20:04:21 christos Exp $
+.\"	$NetBSD: curses.3,v 1.58 2009/02/23 08:27:13 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,17 +63,6 @@ should be called before exiting.
 The routine
 .Fn start_color
 must be called before any of the other routines that deal with color are used.
-.Sh SEE ALSO
-.Xr ioctl 2 ,
-.Xr getenv 3 ,
-.Xr tty 4 ,
-.Xr termcap 5
-.Rs
-.%T Screen Updating and Cursor Movement Optimization: A Library Package
-.%A Ken Arnold
-.Re
-.Sh AUTHORS
-.An Ken Arnold
 .Sh FUNCTIONS
 .Bl -column "subwin(win,lines,cols,begin_y,begin_x)"
 .It Sy "Function Name" Ta Sy "Manual Page Name"
@@ -324,6 +313,15 @@ is usually automatically configured by querying the kernel.
 .It TERM
 The terminal type of the current terminal.
 .El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr getenv 3 ,
+.Xr tty 4 ,
+.Xr termcap 5
+.Rs
+.%T Screen Updating and Cursor Movement Optimization: A Library Package
+.%A Ken Arnold
+.Re
 .Sh STANDARDS
 The
 .Nx
@@ -332,3 +330,5 @@ Single Unix Specification.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
+.Sh AUTHORS
+.An Ken Arnold
