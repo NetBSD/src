@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.25 2007/06/30 15:27:03 dsl Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.25.44.1 2009/02/23 08:36:04 snj Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.25 2007/06/30 15:27:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.25.44.1 2009/02/23 08:36:04 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ umap_mapids(v_mount, credp)
 	gid_t groups[NGROUPS];
 	uint16_t ngroups;
 
-	if (credp == NOCRED)
+	if (credp == NOCRED || credp == FSCRED)
 		return;
 
 	unentries =  MOUNTTOUMAPMOUNT(v_mount)->info_nentries;
