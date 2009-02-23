@@ -1,13 +1,11 @@
-/*	$NetBSD: vfs_bio.c,v 1.216 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.217 2009/02/23 20:33:30 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
- * This code is derived from software contributed to The NetBSD Foundation
- * by Wasabi Systems, Inc.
+ * by Andrew Doran, and by Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -109,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.216 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.217 2009/02/23 20:33:30 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -146,7 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.216 2009/02/22 20:28:06 ad Exp $");
 # define BUFCACHE 15
 #endif
 
-u_int	nbuf;			/* XXX - for softdep_lockedbufs */
+u_int	nbuf;			/* desired number of buffer headers */
 u_int	bufpages = BUFPAGES;	/* optional hardwired count */
 u_int	bufcache = BUFCACHE;	/* max % of RAM to use for buffer cache */
 
@@ -961,9 +959,6 @@ bawrite(buf_t *bp)
 /*
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
  * Call with the buffer interlock held.
- *
- * Note: called only from biodone() through ffs softdep's io_complete()
- * Note2: smbfs also learned about bdirty().
  */
 void
 bdirty(buf_t *bp)
@@ -982,7 +977,6 @@ bdirty(buf_t *bp)
 		reassignbuf(bp, bp->b_vp);
 	}
 }
-
 
 /*
  * Release a buffer on to the free lists.
