@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.26 2009/02/19 18:23:35 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.27 2009/02/23 14:25:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.26 2009/02/19 18:23:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.27 2009/02/23 14:25:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1018,11 +1018,7 @@ pmap_bootstrap(vaddr_t vstart)
 		else if (va == (vaddr_t)proc0paddr + USPACE - PAGE_SIZE)
 			prot = UVM_PROT_NONE;
 #endif
-		opmapdebug = pmapdebug;
-		if (prot != UVM_PROT_NONE)
-			pmapdebug = 0;
 		pmap_kenter_pa(va, va, prot);
-		pmapdebug = opmapdebug;
 	}
 
 	/* XXXNH update */
