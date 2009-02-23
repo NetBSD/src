@@ -1,8 +1,11 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.389 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.390 2009/02/23 20:33:30 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.389 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.390 2009/02/23 20:33:30 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -710,10 +713,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 
 	/*
 	 * XXX Syncer must be frozen when we get here.  This should really
-	 * be done on a per-mountpoint basis, but especially the softdep
-	 * code possibly called from the syncer doesn't exactly work on a
-	 * per-mountpoint basis, so the softdep code would become a maze
-	 * of vfs_busy() calls.
+	 * be done on a per-mountpoint basis, but the syncer doesn't work
+	 * like that.
 	 *
 	 * The caller of dounmount() must acquire syncer_mutex because
 	 * the syncer itself acquires locks in syncer_mutex -> vfs_busy
