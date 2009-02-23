@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.51 2008/07/31 08:49:47 simonb Exp $	*/
+/*	$NetBSD: fs.h,v 1.52 2009/02/23 03:01:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -80,7 +80,7 @@
  *
  * The ffsv2 superblock layout (which might contain an ffsv1 filesystem)
  * can be detected by checking for sb->fs_old_flags & FS_FLAGS_UPDATED.
- * This is the default suberblock type for NetBSD since ffsv2 support was added.
+ * This is the default superblock type for NetBSD since ffsv2 support was added.
  */
 #define	BBSIZE		8192
 #define	BBOFF		((off_t)(0))
