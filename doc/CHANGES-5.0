@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.99 2009/02/19 20:51:20 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.100 2009/02/23 09:15:32 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4269,4 +4269,68 @@ sys/arch/x86/x86/patch.c			1.16
 
 	Repair x86_patch to install optimized routines.
 	[ad, ticket #471]
+
+sys/arch/xen/x86/autoconf.c			1.9
+
+	Make Xen Dom0/DomU boot with root-on-nfs when the 'bootdev'
+	parameter is missing or wrong.  In this case, we get prompted
+	for the root device.
+
+	Make sure that nfs_bootstatic_callback is initialized or we
+	will miss the nfsroot bootparameter, causing a boot failure even
+	when root device is correct.
+	[cegger, ticket #460]
+
+sys/miscfs/umapfs/umap_subr.c			1.26
+sys/miscfs/umapfs/umap_vnops.c			1.44
+
+	While we remap credentials we should ignore cred == FSCRED
+	as well as cred == NOCRED.
+
+	This fixes a page fault occurring when a union is mounted
+	over a umap, as FSCRED is passed by union filesystem.
+	[plunky, ticket #461]
+
+usr.bin/netstat/netstat.1			1.49
+
+	Sort option descriptions, and options in usage.
+	Covers PR 40627.
+	[wiz, ticket #462]
+
+etc/root/dot.cshrc				patch
+etc/root/dot.profile				patch
+
+	Fix PKG_PATH examples, which were missing /pub.
+	[erh, ticket #463]
+
+etc/shrc					1.5
+
+	Set PS1 correctly for ksh.
+	[ad, ticket #464]
+
+usr.sbin/puffs/makerumpmanpages.sh		1.5-1.8
+usr.sbin/puffs/rump_cd9660/rump_cd9660.8	regen
+usr.sbin/puffs/rump_efs/rump_efs.8		regen
+usr.sbin/puffs/rump_ext2fs/rump_ext2fs.8	regen
+usr.sbin/puffs/rump_ffs/rump_ffs.8		regen
+usr.sbin/puffs/rump_hfs/rump_hfs.8		regen
+usr.sbin/puffs/rump_lfs/rump_lfs.8		regen
+usr.sbin/puffs/rump_msdos/rump_msdos.8		regen
+usr.sbin/puffs/rump_nfs/rump_nfs.8		regen
+usr.sbin/puffs/rump_ntfs/rump_ntfs.8		regen
+usr.sbin/puffs/rump_sysvbfs/rump_sysvbfs.8	regen
+usr.sbin/puffs/rump_tmpfs/rump_tmpfs.8		regen
+usr.sbin/puffs/rump_udf/rump_udf.8		regen
+
+	- Note mount -o rump support
+	- Note that vnconfig is not required
+	- Fix SYNOPSIS 
+	- Markup fixes
+	[pooka, ticket #465]
+
+share/man/man3/tree.3				1.5
+
+	Document that the element argument of RB_REMOVE must be present
+	in the tree. Minor adjoining grammar fix. PR 39684.
+	[dholland, ticket #466]
 
