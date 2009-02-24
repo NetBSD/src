@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1192 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1193 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -151,3 +151,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		dependencies will no longer be available from NetBSD 6.0
 		onwards.  We encourage users to enable logging on FFS file
 		systems. [ad 20090222]
+	sgimips: build Xorg by default [macallan 20080223]
