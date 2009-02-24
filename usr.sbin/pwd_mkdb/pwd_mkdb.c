@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.37 2009/02/02 04:24:18 uebayasi Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.38 2009/02/24 22:25:24 sketch Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.37 2009/02/02 04:24:18 uebayasi Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.38 2009/02/24 22:25:24 sketch Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -195,7 +195,7 @@ static __inline uint64_t swap64(uint64_t sw) {
 #define SWAP(sw) \
     ((sizeof(sw) == 2 ? (typeof(sw))swap16((uint16_t)sw) : \
     (sizeof(sw) == 4 ? (typeof(sw))swap32((uint32_t)sw) : \
-    (sizeof(sw) == 8 ? (typeof(sw))swap64((uint64_t)sw) : abort(), 0))))
+    (sizeof(sw) == 8 ? (typeof(sw))swap64((uint64_t)sw) : (abort(), 0)))))
 
 int
 main(int argc, char *argv[])
