@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.2.5 2009/02/19 18:23:35 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.2.6 2009/02/24 15:45:20 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.2.5 2009/02/19 18:23:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.2.6 2009/02/24 15:45:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,9 @@ cpu_swapin(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	vaddr_t pcb = (vaddr_t)l->l_addr;
+#ifdef DIAGNOSTIC
 	vaddr_t maxsp = pcb + USPACE;
+#endif
 
 	KASSERT(tf == (void *)(pcb + PAGE_SIZE));
 	/*
@@ -66,7 +68,7 @@ cpu_swapin(struct lwp *l)
 	tf->tf_cr30 = kvtop((void *)pcb);
 	fdcache(HPPA_SID_KERNEL, pcb, sizeof(l->l_addr->u_pcb));
 
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	/* Create the kernel stack red zone. */
 	pmap_remove(pmap_kernel(), maxsp - PAGE_SIZE, maxsp);
 	pmap_update(pmap_kernel());
