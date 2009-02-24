@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof.h,v 1.2 2009/02/24 06:03:54 yamt Exp $	*/
+/*	$Id: nmi.h,v 1.1 2009/02/24 06:03:54 yamt Exp $	*/
 
 /*-
- * Copyright (c)2008 YAMAMOTO Takashi,
+ * Copyright (c)2009 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,9 +26,15 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _X86_TPROF_H_
-#define	_X86_TPROF_H_
+#ifndef _X86_NMI_H_
+#define	_X86_NMI_H_
 
-/* XXX nothing */
+typedef struct nmi_handler nmi_handler_t;
+struct trapframe;
 
-#endif /* _X86_TPROF_H_ */
+nmi_handler_t *nmi_establish(int (*)(const struct trapframe *, void *), void *);
+void nmi_disestablish(nmi_handler_t *);
+int nmi_dispatch(const struct trapframe *);
+void nmi_init(void);
+
+#endif /* _X86_NMI_H_ */

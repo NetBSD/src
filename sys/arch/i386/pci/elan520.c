@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.37 2009/02/06 01:40:36 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.38 2009/02/24 06:03:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.37 2009/02/06 01:40:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.38 2009/02/24 06:03:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.37 2009/02/06 01:40:36 dyoung Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+
+#include <x86/nmi.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -422,6 +424,13 @@ elanpar_intr(void *arg)
 }
 
 static int
+elanpar_nmi(const struct trapframe *tf, void *arg)
+{
+
+	return elanpar_intr(arg);
+}
+
+static int
 elanpex_intr(void *arg)
 {
 	static struct {
@@ -519,6 +528,13 @@ elanpex_intr(void *arg)
 		    mstack);
 	}
 	return fatal ? 0 : (handled ? 1 : 0);
+}
+
+static int
+elanpex_nmi(const struct trapframe *tf, void *arg)
+{
+
+	return elanpex_intr(arg);
 }
 
 #define	elansc_print_1(__dev, __sc, __reg)				\
@@ -1004,7 +1020,7 @@ elanpex_intr_establish(device_t self, struct elansc_softc *sc)
 	tgtirq |= MMCR_HBTGTIRQCTL_T_DPER_IRQ_ENB;
 
 	if (elansc_pcinmi) {
-		sc->sc_eih = nmi_establish(elanpex_intr, sc);
+		sc->sc_eih = nmi_establish(elanpex_nmi, sc);
 
 		/* Activate NMI instead of maskable interrupts for
 		 * all PCI exceptions:
@@ -1134,7 +1150,7 @@ elanpar_intr_establish(device_t self, struct elansc_softc *sc)
 
 	/* establish interrupt */
 	if (elansc_wpvnmi)
-		sc->sc_pih = nmi_establish(elanpar_intr, sc);
+		sc->sc_pih = nmi_establish(elanpar_nmi, sc);
 	else
 		sc->sc_pih = elansc_intr_establish(self, elanpar_intr, sc);
 
