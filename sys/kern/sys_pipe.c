@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.103.4.2 2009/02/24 02:34:47 snj Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.103.4.3 2009/02/24 02:36:34 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.103.4.2 2009/02/24 02:34:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.103.4.3 2009/02/24 02:36:34 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,10 +199,9 @@ pipe_ctor(void *arg, void *obj, int flags)
 	memset(pipe, 0, sizeof(struct pipe));
 	if (arg != NULL) {
 		/* Preallocate space. */
-		va = uvm_km_alloc(kernel_map, PIPE_SIZE, 0, UVM_KMF_PAGEABLE);
-		if (va == 0) {
-			return ENOMEM;
-		}
+		va = uvm_km_alloc(kernel_map, PIPE_SIZE, 0,
+		    UVM_KMF_PAGEABLE | UVM_KMF_WAITVA);
+		KASSERT(va != 0);
 		pipe->pipe_kmem = va;
 		atomic_add_int(&amountpipekva, PIPE_SIZE);
 	}
@@ -340,6 +339,7 @@ pipe_create(struct pipe **pipep, pool_cache_t cache, kmutex_t *mutex)
 	int error;
 
 	pipe = pool_cache_get(cache, PR_WAITOK);
+	KASSERT(pipe != NULL);
 	*pipep = pipe;
 	error = 0;
 	getmicrotime(&pipe->pipe_ctime);
