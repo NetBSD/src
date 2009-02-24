@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.14 2008/05/14 11:44:09 tron Exp $	*/
+/*	$NetBSD: getent.c,v 1.15 2009/02/24 06:10:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.14 2008/05/14 11:44:09 tron Exp $");
+__RCSID("$NetBSD: getent.c,v 1.15 2009/02/24 06:10:52 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -101,7 +101,7 @@ static struct getentdb {
 	{	"netgroup",	netgroup,	},
 	{	"networks",	networks,	},
 	{	"passwd",	passwd,		},
-	{	"princap",	printcap,	},
+	{	"printcap",	printcap,	},
 	{	"protocols",	protocols,	},
 	{	"rpc",		rpc,		},
 	{	"services",	services,	},
