@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.103.4.3 2009/02/24 02:36:34 snj Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.103.4.4 2009/02/24 02:37:49 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.103.4.3 2009/02/24 02:36:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.103.4.4 2009/02/24 02:37:49 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1282,6 +1282,13 @@ pipeclose(struct file *fp, struct pipe *pipe)
 		cv_broadcast(&ppipe->pipe_rcv);
 		ppipe->pipe_peer = NULL;
 	}
+
+	/*
+	 * Any knote objects still left in the list are
+	 * the one attached by peer.  Since no one will
+	 * traverse this list, we just clear it.
+	 */
+	SLIST_INIT(&pipe->pipe_sel.sel_klist);
 
 	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
 	mutex_exit(lock);
