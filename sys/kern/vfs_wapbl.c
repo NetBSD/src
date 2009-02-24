@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.3 2008/08/11 02:45:27 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.3.8.1 2009/02/24 04:13:35 snj Exp $	*/
 
 /*-
- * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3 2008/08/11 02:45:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.1 2009/02/24 04:13:35 snj Exp $");
 
 #include <sys/param.h>
 
@@ -772,26 +772,8 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 {
 	int doflush;
 	unsigned lockcount;
-	krw_t op;
 
 	KDASSERT(wl);
-
-/*
- *	XXX: The original code calls for the use of a RW_READER lock 
- *	here, but it turns out there are performance issues with high 
- *	metadata-rate workloads (e.g. multiple simultaneous tar
- *	extractions).  For now, we force the lock to be RW_WRITER, 
- *	since that currently has the best performance characteristics 
- *	(even for a single tar-file extraction). 
- *	
- */
-#define WAPBL_DEBUG_SERIALIZE 1
-
-#ifdef WAPBL_DEBUG_SERIALIZE
-	op = RW_WRITER;
-#else
-	op = RW_READER;
-#endif
 
 	/*
 	 * XXX this needs to be made much more sophisticated.
@@ -822,12 +804,12 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 			return error;
 	}
 
-	rw_enter(&wl->wl_rwlock, op);
+	rw_enter(&wl->wl_rwlock, RW_READER);
 	mutex_enter(&wl->wl_mtx);
 	wl->wl_lock_count++;
 	mutex_exit(&wl->wl_mtx);
 
-#if defined(WAPBL_DEBUG_PRINT) && defined(WAPBL_DEBUG_SERIALIZE)
+#if defined(WAPBL_DEBUG_PRINT)
 	WAPBL_PRINTF(WAPBL_PRINT_TRANSACTION,
 	    ("wapbl_begin thread %d.%d with bufcount=%zu "
 	    "bufbytes=%zu bcount=%zu at %s:%d\n",
@@ -842,7 +824,7 @@ void
 wapbl_end(struct wapbl *wl)
 {
 
-#if defined(WAPBL_DEBUG_PRINT) && defined(WAPBL_DEBUG_SERIALIZE)
+#if defined(WAPBL_DEBUG_PRINT)
 	WAPBL_PRINTF(WAPBL_PRINT_TRANSACTION,
 	     ("wapbl_end thread %d.%d with bufcount=%zu "
 	      "bufbytes=%zu bcount=%zu\n",
@@ -1555,20 +1537,14 @@ void
 wapbl_jlock_assert(struct wapbl *wl)
 {
 
-#ifdef WAPBL_DEBUG_SERIALIZE
-	KASSERT(rw_write_held(&wl->wl_rwlock));
-#else
-	KASSERT(rw_read_held(&wl->wl_rwlock) || rw_write_held(&wl->wl_rwlock));
-#endif
+	KASSERT(rw_lock_held(&wl->wl_rwlock));
 }
 
 void
 wapbl_junlock_assert(struct wapbl *wl)
 {
 
-#ifdef WAPBL_DEBUG_SERIALIZE
 	KASSERT(!rw_write_held(&wl->wl_rwlock));
-#endif
 }
 
 /****************************************************************/
