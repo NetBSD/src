@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.201 2009/02/21 22:04:35 plunky Exp $
+#	$NetBSD: build.sh,v 1.202 2009/02/24 22:25:24 sketch Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -171,6 +171,8 @@ initdefaults()
 	uname_r=$(uname -r 2>/dev/null)
 	uname_m=$(uname -m 2>/dev/null)
 	uname_p=$(uname -p 2>/dev/null || uname -m 2>/dev/null)
+
+	id_u=$(id -u 2>/dev/null || /usr/xpg4/bin/id -u 2>/dev/null)
 
 	# If $PWD is a valid name of the current directory, POSIX mandates
 	# that pwd return it by default which causes problems in the
@@ -1107,7 +1109,7 @@ validatemakeparams()
 	fi
 	if ${do_build} || ${do_distribution} || ${do_release}; then
 		if ! ${do_expertmode} && \
-		    [ "$(id -u 2>/dev/null)" -ne 0 ] && \
+		    [ "$id_u" -ne 0 ] && \
 		    [ "${MKUNPRIVED}" = "no" ] ; then
 			bomb "-U or -E must be set for build as an unprivileged user."
 		fi
@@ -1118,7 +1120,7 @@ validatemakeparams()
 
 	# Install as non-root is a bad idea.
 	#
-	if ${do_install} && [ "$(id -u 2>/dev/null)" -ne 0 ] ; then
+	if ${do_install} && [ "$id_u" -ne 0 ] ; then
 		if ${do_expertmode}; then
 			warning "Will install as an unprivileged user."
 		else
@@ -1202,7 +1204,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.201 2009/02/21 22:04:35 plunky Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.202 2009/02/24 22:25:24 sketch Exp $
 # with these arguments: ${_args}
 #
 
