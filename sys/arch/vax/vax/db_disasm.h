@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.h,v 1.5.14.1 2009/02/24 03:01:10 snj Exp $ */
+/*	$NetBSD: db_disasm.h,v 1.5.14.2 2009/02/24 03:02:20 snj Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -61,3 +61,18 @@ extern vax_instr_t vax_inst[256];
 extern vax_instr_t vax_inst2[0x56];
 
 long skip_opcode(long);
+
+/*
+ * reasonably simple macro to gather all the reserved two-byte opcodes
+ * into only a few table entries...
+ */
+#define	INDEX_OPCODE(x)	\
+	(((x) & 0xff00) == 0xfe00) ? 0 : \
+	((x) < 0xfd30) ? 0 : \
+	((x) < 0xfd80) ? (x) - 0xfd30 : \
+	((x) == 0xfd98) ? 0x50 : \
+	((x) == 0xfd99) ? 0x51 : \
+	((x) == 0xfdf6) ? 0x52 : \
+	((x) == 0xfdf7) ? 0x53 : \
+	((x) == 0xfffd) ? 0x54 : \
+	((x) == 0xfffe) ? 0x55 : 0
