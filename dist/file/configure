@@ -23717,7 +23717,7 @@ _ACEOF
 echo $ECHO_N "checking for gcc compiler warnings... $ECHO_C" >&6; }
 # Check whether --enable-warnings was given.
 if test "${enable_warnings+set}" = set; then
-  enableval=$enable_warnings; if test "${enableval}" = no -o $GCC = no; then
+  enableval=$enable_warnings; if test "${enableval}" = no -o "$GCC" = no; then
    { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
    WARNINGS=
@@ -23731,7 +23731,7 @@ echo "${ECHO_T}yes" >&6; }
 fi
 else
 
-if test $GCC = no; then
+if test "$GCC" = no; then
    WARNINGS=
    { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
