@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116.4.1 2009/02/24 03:01:10 snj Exp $     */
+/*	$NetBSD: trap.c,v 1.116.4.2 2009/02/24 03:03:05 snj Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116.4.1 2009/02/24 03:01:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116.4.2 2009/02/24 03:03:05 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -325,7 +325,6 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		ksi.ksi_trap = frame->trap;
 		ksi.ksi_addr = (void *)frame->code;
 		ksi.ksi_code = code;
-		trapsignal(l, &ksi);
 
 		/*
 		 * Arithmetic exceptions can be of two kinds:
@@ -340,6 +339,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		 */
 		if (type == (T_ARITHFLT | T_USER) && (frame->code & 8))
 			frame->pc = skip_opcode(frame->pc);
+
+		trapsignal(l, &ksi);
 	}
 
 	if (!usermode)
