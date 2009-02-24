@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.100 2009/02/23 09:15:32 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.101 2009/02/24 04:25:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4333,4 +4333,160 @@ share/man/man3/tree.3				1.5
 	Document that the element argument of RB_REMOVE must be present
 	in the tree. Minor adjoining grammar fix. PR 39684.
 	[dholland, ticket #466]
+
+sys/net/if.c					1.233
+
+	PR/40603: unprivileged users can add and delete interface
+	link addresses. Fixed by centralizing the test as suggested.
+	[christos, ticket #459]
+
+usr.sbin/btpand/client.c			1.2
+usr.sbin/btpand/sdp.c				1.2
+usr.sbin/btpand/sdp.h				1.2
+
+	Modify some SDP data parsing function names to avoid conflicts
+	with similar functions that are intended to be imported to
+	libsdp.
+	[plunky, ticket #467]
+
+sys/kern/sys_pipe.c				1.106-1.108
+sys/sys/pipe.h					1.25
+
+	Fix the occasional hanging of the process writing to a pipe
+	when the reader is already dying.
+	[enami/joerg, ticket #468]
+
+usr.sbin/traceroute6/traceroute6.c		1.38
+
+	Synchronize error flags with own comment and with traceroute.
+	[is, ticket #469]
+
+sys/dist/acpica/dsfield.c			1.5
+
+	Fix PR port-i386/40676 by allowing zero-length ASL field
+	declarations.
+	[jmcneill, ticket #472]
+
+usr.bin/newsyslog/newsyslog.c			1.57
+
+	Fix a bug that can cause newsyslog to overwrite the wrong
+	file when the P flag is specified.  PR bin/40635.
+	[dogcow, ticket #473]
+
+external/mit/xdm/dist/config/Xresources.cpp	1.3
+
+	Add missing endif.
+	[plunky, ticket #475]
+
+sys/dev/acpi/acpi_quirks.c			1.10
+
+	ASUS CUR-DLS board found on HP NetServer E800 box
+	has broken ACPI BIOS. Disable it.  Addresses PR/40471.
+	[christos, ticket #476]
+
+sys/arch/vax/conf/files.vax			1.116
+sys/arch/vax/include/trap.h			1.22
+sys/arch/vax/vax/db_disasm.h			1.6, 1.7
+sys/arch/vax/vax/opcodes.c			1.1
+sys/arch/vax/vax/trap.c				1.117, 1.118
+sys/arch/vax/vax/trap.c				1.118
+
+	Fix vax native build hang when lint processes catan.c.  Skip the
+	faulting floating point instruction to avoid infinite loops on
+	SIGFPE.
+	[mhitch, ticket #479]
+
+libexec/httpd/cgi-bozo.c			1.10
+
+	- Fix an issue where the cgi-script name was being cut off
+	by one character.
+	- Work around a bug in PHP reported by lukem in 2004,
+	but stubbornly never fixed by the PHP maintainers:
+	  Change the SCRIPT_NAME and SCRIPT_FILENAME variables
+	  contain the file name only, not the query if one exists.
+	  Having the query in SCRIPT_FILENAME causes php-cgi to not
+	  work, as per the bug information here:
+	  http://bugs.php.net/bug.php?id=28227
+	- Fix a memory leak because URL wasn't being freed.
+	[tls, ticket #480]
+
+share/man/man9/bus_dma.9			1.46
+
+	Clarify that dmamp is undefined if bus_dmamap_create(9) fails.
+	[dyoung, ticket #481]
+
+share/man/man9/bus_dma.9			1.47
+
+	Update date.
+	[dyoung, ticket #482]
+
+lib/libpuffs/puffs.3				1.46
+lib/libpuffs/puffs_cc.3				1.13
+lib/libpuffs/puffs_cred.3			1.4
+lib/libpuffs/puffs_flush.3			1.8
+lib/libpuffs/puffs_framebuf.3			1.26
+lib/libpuffs/puffs_node.3			1.4
+lib/libpuffs/puffs_ops.3			1.23
+lib/libpuffs/puffs_path.3			1.4
+lib/libpuffs/puffs_suspend.3			1.3
+
+	Remove the paragraph saying interfaces will change without
+	warning.  Note that a stable version of puffs first appeared
+	in NetBSD 5.0.
+	[pooka, ticket #484]
+
+sys/dev/pci/pci_subr.c				1.77
+
+	Decode and display PCI Power Management registers when available.
+	[jmcneill, ticket #485]
+
+sys/ddb/db_variables.c				1.40
+
+	Default DDB_ONPANIC to zero.
+	[ad, ticket #487]
+
+share/man/man4/ddb.4				1.122
+sys/ddb/db_xxx.c				1.55 via patch
+
+	Default 'show all procs' to /l.
+	[ad, ticket #488]
+
+sys/kern/vfs_wapbl.c				1.23
+sys/miscfs/syncfs/sync_subr.c			1.36
+sys/miscfs/syncfs/sync_vnops.c			1.26
+sys/ufs/ffs/ffs_alloc.c				1.121
+sys/ufs/ffs/ffs_vfsops.c			1.242
+sys/ufs/ffs/ffs_vnops.c				1.110
+
+	- If the syncer fails to lazily sync a vnode due to lock
+	contention, retry 1 second later instead of 30 seconds later.
+
+	- Flush inode atime updates every ~10 seconds (this makes most
+	sense with logging). Presently they didn't hit the disk for
+	read-only files or devices until the file system was unmounted.
+
+	- Fix issues with file system corruption, busy looping and other
+	nasty problems when logging and non-logging file systems are
+	intermixed, with one being the root file system.
+
+	- For logging, do not flush metadata on an inode-at-a-time basis
+	if the sync has been requested by ioflush.  Burst out metadata and
+	log flushes at a minimum interval of every 10 seconds on an active
+	file system (happens more often if the log becomes full). Note this
+	does not change the operation of fsync() etc.
+
+	- With the flush issue fixed, re-enable concurrent metadata updates
+	in vfs_wapbl.c.
+
+	Fixes PR kern/39564, PR kern/40361, PR kern/40361, PR kern/40470,
+	PR kern/40562, and PR kern/40525.
+	[ad, ticket #490]
+
+sys/dev/pci/azalia_codec.c			1.75
+
+	* Realtek ALC885: Use generic_mixer_autoinit/init_widget
+	* generic_mixer_create_virtual: if the front l/r DAC doesn't have
+	a volume capability, enumerate all peer widgets and search for a
+	volume mixer there.
+	[jmcneill, ticket #491]
 
