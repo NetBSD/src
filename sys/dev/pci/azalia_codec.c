@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.71.4.1 2008/11/14 02:56:18 snj Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.71.4.2 2009/02/24 04:21:05 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.71.4.1 2008/11/14 02:56:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.71.4.2 2009/02/24 04:21:05 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -241,6 +241,8 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0885:
 		this->name = "Realtek ALC885";
 		this->init_dacgroup = alc885_init_dacgroup;
+		this->mixer_init = generic_mixer_autoinit;
+		this->init_widget = generic_mixer_init_widget;
 		break;
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
@@ -1343,6 +1345,37 @@ generic_mixer_create_virtual(codec_t *this)
 		if (madc < 0 && this->adcs.ngroups > 0 && cgadc->nconv > 0) {
 			if (this->mixers[i].nid == cgadc->conv[0])
 				madc = i;
+		}
+	}
+
+	if (mdac == -1) {
+		/*
+		 * no volume mixer found on the DAC; enumerate peer widgets
+		 * and try to find a volume mixer on them
+		 */
+		widget_t *w;
+		int j;
+		FOR_EACH_WIDGET(this, i) {
+			w = &this->w[i];
+			for (j = 0; j < w->nconnections; j++)
+				if (w->connections[j] == cgdac->conv[0])
+					break;
+
+			if (j == w->nconnections)
+				continue;
+
+			for (j = 0; j < this->nmixers; j++) {
+				if (this->mixers[j].devinfo.type !=
+				    AUDIO_MIXER_VALUE)
+					continue;
+				if (this->mixers[j].nid == w->nid) {
+					mdac = mmaster = j;
+					break;
+				}
+			}
+
+			if (mdac == -1)
+				break;
 		}
 	}
 
