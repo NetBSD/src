@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 2008/11/14 15:03:44 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 2009/02/24 06:03:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,16 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2008/11/14 15:03:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2009/02/24 06:03:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_xen.h"
-#if !defined(XEN)
-#include "tprof.h"
-#else /* !defined(XEN) */
-#define	NTPROF	0
-#endif /* !defined(XEN) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,10 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2008/11/14 15:03:44 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#if NTPROF > 0
-#include <x86/tprof.h>
-#endif /* NTPROF > 0 */
-
 #include <machine/cpufunc.h>
 #include <machine/fpu.h>
 #include <machine/psl.h>
@@ -110,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2008/11/14 15:03:44 ad Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
+
+#include <x86/nmi.h>
 
 #ifndef XEN
 #include "isa.h"
@@ -595,10 +588,10 @@ faultcommon:
 		break;
 
 	case T_NMI:
-#if NTPROF > 0
-		if (tprof_pmi_nmi(frame))
+#if !defined(XEN)
+		if (nmi_dispatch(frame))
 			return;
-#endif /* NTPROF > 0 */
+#endif /* !defined(XEN) */
 #if	NISA > 0
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
