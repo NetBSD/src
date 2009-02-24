@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.12 2009/02/22 19:38:14 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.13 2009/02/24 22:54:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.12 2009/02/22 19:38:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.13 2009/02/24 22:54:53 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1373,7 +1373,7 @@ cpu_reboot(int howto, char *user_boot_string)
 		(*cold_hook)(HPPA_COLD_COLD);
 
 	if (howto & RB_HALT) {
-		if (howto && RB_POWERDOWN && cold_hook) {
+		if ((howto & RB_POWERDOWN) == RB_POWERDOWN && cold_hook) {
 			printf("Powering off...");
 			DELAY(1000000);
 			(*cold_hook)(HPPA_COLD_OFF);
