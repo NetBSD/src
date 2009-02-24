@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16.4.4 2009/02/14 13:57:13 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.16.4.5 2009/02/24 15:01:10 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.4.4 2009/02/14 13:57:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.4.5 2009/02/24 15:01:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			rw = (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE;
-			/* XXXNH or not and? */
 			if (atop(v) > physmem && !uvm_kernacc((void *)v, c, rw)) {
 				error = EFAULT;
 				/* this will break us out of the loop */
