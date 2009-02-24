@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.555 2009/02/17 00:02:32 abs Exp $
+#	$NetBSD: bsd.own.mk,v 1.556 2009/02/24 04:04:40 macallan Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -679,7 +679,7 @@ ${var}?=no
     ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh" || \
     ${MACHINE} == "mac68k" || ${MACHINE} == "netwinder" || \
     ${MACHINE} == "newsmips" || ${MACHINE} == "ofppc" || \
-    ${MACHINE} == "pmax" || ${MACHINE} == "sgimips" || \
+    ${MACHINE} == "pmax" || \
     ${MACHINE} == "sparc" || ${MACHINE} == "sun3" || \
     ${MACHINE} == "x68k" 
 X11FLAVOUR?=	XFree86
