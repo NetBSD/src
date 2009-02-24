@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.27 2009/02/23 14:25:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.28 2009/02/24 15:38:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.27 2009/02/23 14:25:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.28 2009/02/24 15:38:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1006,7 +1006,9 @@ pmap_bootstrap(vaddr_t vstart)
 	/* TODO optimize/inline the kenter */
 	for (va = 0 /* PAGE_SIZE */; va < ptoa(physmem); va += PAGE_SIZE) {
 		vm_prot_t prot = UVM_PROT_RW;
+#ifdef DIAGNOSTIC
 		extern struct user *proc0paddr;
+#endif
 
 		if (va < resvmem)
 			prot = UVM_PROT_RX;
