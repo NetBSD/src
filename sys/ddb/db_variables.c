@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.39 2007/02/22 04:38:06 matt Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.39.54.1 2009/02/24 03:59:08 snj Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.39 2007/02/22 04:38:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.39.54.1 2009/02/24 03:59:08 snj Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.39 2007/02/22 04:38:06 matt Exp $
  * panics.  Initialize it so that it's patchable.
  */
 #ifndef DDB_ONPANIC
-#define DDB_ONPANIC	1
+#define DDB_ONPANIC	0
 #endif
 int		db_onpanic = DDB_ONPANIC;
 
