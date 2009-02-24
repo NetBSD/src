@@ -1,4 +1,4 @@
-/*	$Id: nmi.c,v 1.1 2009/02/24 06:03:55 yamt Exp $	*/
+/*	$Id: nmi.c,v 1.2 2009/02/24 10:37:27 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.1 2009/02/24 06:03:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.2 2009/02/24 10:37:27 yamt Exp $");
 
 /*
  * nmi dispatcher.
@@ -131,7 +131,7 @@ nmi_disestablish(nmi_handler_t *handle)
 	 * in the middle of nmi_dispatch.
 	 */
 
-	if (!mp_online) {
+	if (mp_online) {
 		uint64_t h;
 
 		h = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
