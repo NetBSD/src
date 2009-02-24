@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.21 2008/08/12 19:44:39 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.21.4.1 2009/02/24 03:45:56 snj Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -194,15 +194,6 @@
 .Ft void
 .Fn puffs_newinfo_setrdev "struct puffs_newinfo *pni" "dev_t rdev"
 .Sh DESCRIPTION
-.Em IMPORTANT NOTE!
-This document describes interfaces which are not yet guaranteed to be
-stable.
-In case you update your system sources, please recompile everything
-and fix compilation errors.
-If your sources are out-of-sync, incorrect operation may result.
-The interfaces in this document will most likely be hugely simplified
-in later versions or made transparent to the implementation.
-.Pp
 The operations
 .Nm puffs
 requires to function can be divided into two categories: file system
