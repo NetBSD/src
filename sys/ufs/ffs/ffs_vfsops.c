@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.239 2008/10/30 17:03:09 joerg Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.239.2.1 2009/02/24 04:13:35 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.239 2008/10/30 17:03:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.239.2.1 2009/02/24 04:13:35 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -111,6 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.239 2008/10/30 17:03:09 joerg Exp $
 
 MODULE(MODULE_CLASS_VFS, ffs, NULL);
 
+static int	ffs_vfs_fsync(vnode_t *, int);
+
 static struct sysctllog *ffs_sysctl_log;
 
 /* how many times ffs_init() was called */
@@ -151,7 +153,7 @@ struct vfsops ffs_vfsops = {
 	ffs_suspendctl,
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
-	ffs_full_fsync,
+	ffs_vfs_fsync,
 	ffs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -1697,11 +1699,22 @@ loop:
 			continue;
 		mutex_enter(&vp->v_interlock);
 		ip = VTOI(vp);
-		/* XXXpooka: why wapbl check? */
+
+		/*
+		 * We deliberately update inode times here.  This will
+		 * prevent a massive queue of updates accumulating, only
+		 * to be handled by a call to unmount.
+		 *
+		 * XXX It would be better to have the syncer trickle these
+		 * out.  Adjustment needed to allow registering vnodes for
+		 * sync when the vnode is clean, but the inode dirty.  Or
+		 * have ufs itself trickle out inode updates.
+		 */
 		if (ip == NULL || (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
 		    vp->v_type == VNON || ((ip->i_flag &
-		    (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
-		    (LIST_EMPTY(&vp->v_dirtyblkhd) || (mp->mnt_wapbl)) &&
+		    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY |
+		    IN_MODIFIED | IN_ACCESSED)) == 0 &&
+		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
 			mutex_exit(&vp->v_interlock);
@@ -2137,4 +2150,153 @@ ffs_suspendctl(struct mount *mp, int cmd)
 	default:
 		return EINVAL;
 	}
+}
+
+/*
+ * Synch vnode for a mounted file system.  This is called for foreign
+ * vnodes, i.e. non-ffs.
+ */
+static int
+ffs_vfs_fsync(vnode_t *vp, int flags)
+{
+	int error, passes, skipmeta, i, pflags;
+	buf_t *bp, *nbp;
+	struct mount *mp;
+
+	KASSERT(vp->v_type == VBLK);
+	KASSERT(vp->v_specmountpoint != NULL);
+
+	mp = vp->v_specmountpoint;
+	if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
+		softdep_fsync_mountdev(vp);
+
+	/*
+	 * Flush all dirty data associated with the vnode.
+	 */
+	pflags = PGO_ALLPAGES | PGO_CLEANIT;
+	if ((flags & FSYNC_WAIT) != 0)
+		pflags |= PGO_SYNCIO;
+	mutex_enter(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, 0, 0, pflags);
+	if (error)
+		return error;
+
+#ifdef WAPBL
+	if (mp && mp->mnt_wapbl) {
+		/*
+		 * Don't bother writing out metadata if the syncer is
+		 * making the request.  We will let the sync vnode
+		 * write it out in a single burst through a call to
+		 * VFS_SYNC().
+		 */
+		if ((flags & (FSYNC_DATAONLY | FSYNC_LAZY | FSYNC_NOLOG)) != 0)
+			return 0;
+
+		/*
+		 * Don't flush the log if the vnode being flushed
+		 * contains no dirty buffers that could be in the log.
+		 */
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
+			error = wapbl_flush(mp->mnt_wapbl, 0);
+			if (error)
+				return error;
+		}
+
+		if ((flags & FSYNC_WAIT) != 0) {
+			mutex_enter(&vp->v_interlock);
+			while (vp->v_numoutput)
+				cv_wait(&vp->v_cv, &vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
+		}
+
+		return 0;
+	}
+#endif /* WAPBL */
+
+	/*
+	 * Write out metadata for non-logging file systems.  This block can
+	 * be simplified once softdep goes.
+	 */
+	passes = NIADDR + 1;
+	skipmeta = 0;
+	if (flags & FSYNC_WAIT)
+		skipmeta = 1;
+
+loop:
+	mutex_enter(&bufcache_lock);
+	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
+		bp->b_cflags &= ~BC_SCANNED;
+	}
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_cflags & (BC_BUSY | BC_SCANNED))
+			continue;
+		if ((bp->b_oflags & BO_DELWRI) == 0)
+			panic("ffs_fsync: not dirty");
+		if (skipmeta && bp->b_lblkno < 0)
+			continue;
+		bp->b_cflags |= BC_BUSY | BC_VFLUSH | BC_SCANNED;
+		mutex_exit(&bufcache_lock);
+		/*
+		 * On our final pass through, do all I/O synchronously
+		 * so that we can find out if our flush is failing
+		 * because of write errors.
+		 */
+		if (passes > 0 || !(flags & FSYNC_WAIT))
+			(void) bawrite(bp);
+		else if ((error = bwrite(bp)) != 0)
+			return (error);
+		/*
+		 * Since we unlocked during the I/O, we need
+		 * to start from a known point.
+		 */
+		mutex_enter(&bufcache_lock);
+		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
+	}
+	mutex_exit(&bufcache_lock);
+	if (skipmeta) {
+		skipmeta = 0;
+		goto loop;
+	}
+
+	if ((flags & FSYNC_WAIT) != 0) {
+		mutex_enter(&vp->v_interlock);
+		while (vp->v_numoutput) {
+			cv_wait(&vp->v_cv, &vp->v_interlock);
+		}
+		mutex_exit(&vp->v_interlock);
+
+		/*
+		 * Ensure that any filesystem metadata associated
+		 * with the vnode has been written.
+		 */
+		if ((error = softdep_sync_metadata(vp)) != 0)
+			return (error);
+
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
+			/*
+			* Block devices associated with filesystems may
+			* have new I/O requests posted for them even if
+			* the vnode is locked, so no amount of trying will
+			* get them clean. Thus we give block devices a
+			* good effort, then just give up. For all other file
+			* types, go around and try again until it is clean.
+			*/
+			if (passes > 0) {
+				passes--;
+				goto loop;
+			}
+#ifdef DIAGNOSTIC
+			if (vp->v_type != VBLK)
+				vprint("ffs_fsync: dirty", vp);
+#endif
+		}
+	}
+
+	if (error == 0 && (flags & FSYNC_CACHE) != 0) {
+		(void)VOP_IOCTL(vp, DIOCCACHESYNC, &i, FWRITE,
+		    kauth_cred_get());
+	}
+
+	return error;
 }
