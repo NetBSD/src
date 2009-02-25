@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.23.2.2 2009/02/25 20:05:46 snj Exp $	x11
+# $NetBSD: md.sgimips,v 1.23.2.3 2009/02/25 20:07:38 snj Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -562,6 +562,7 @@
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/kbd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/newport.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/xorgconfig.html			-unknown-	html,xorg
@@ -569,6 +570,7 @@
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/newport.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
 ./usr/X11R7/man/man1/xorgconfig.1			-unknown-	.man,xorg
@@ -576,6 +578,6 @@
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/newport.4				-unknown-	.man,xo
+./usr/X11R7/man/man4/newport.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
