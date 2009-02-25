@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.2.3 2009/02/25 19:57:43 snj Exp $
+#	$NetBSD: Makefile,v 1.18.2.4 2009/02/25 19:59:32 snj Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -46,8 +46,8 @@ SUBDIR+= \
 .elif ${MACHINE} == "sgimips"
 SUBDIR+= \
 	xf86-video-crime \
-	xf86-video-wsfb
-#	xf86-video-newport
+	xf86-video-wsfb \
+	xf86-video-newport
 .else
 
 SUBDIR+= \
