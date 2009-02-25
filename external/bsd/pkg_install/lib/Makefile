@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2009/02/15 18:24:49 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2009/02/25 21:23:17 joerg Exp $
 # Original from FreeBSD, no rcs id.
 
 LIBISPRIVATE=	yes
@@ -14,6 +14,10 @@ MAN=		pkg_install.conf.5 pkg_summary.5
 version.o: version.h version.c
 
 .include <bsd.init.mk>
+
+pkg_install.conf.5: ${DIST}/lib/pkg_install.conf.5.in
+	${TOOL_SED} -e 's,@SYSCONFDIR@,/etc,' \
+	    ${DIST}/lib/pkg_install.conf.5.in > ${.TARGET}
 
 .PATH:	${DIST}/lib
 
