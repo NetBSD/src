@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.101 2009/02/24 04:25:18 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.102 2009/02/25 03:28:31 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4489,4 +4489,49 @@ sys/dev/pci/azalia_codec.c			1.75
 	a volume capability, enumerate all peer widgets and search for a
 	volume mixer there.
 	[jmcneill, ticket #491]
+
+distrib/sets/lists/xserver/md.amd64		1.46
+distrib/sets/lists/xserver/md.i386		1.61
+distrib/sets/lists/xserver/md.macppc		1.45
+distrib/sets/lists/xserver/md.sparc64		1.31
+external/mit/xorg/lib/Makefile			1.9
+external/mit/xorg/lib/dri/dri.mk		1.5
+external/mit/xorg/lib/dri/libmesa/Makefile	1.2
+
+	- Build mesa_dri.so, saving ~1.8MB per module
+	- Use the right includes so that dri & mesa use the same headers
+	- Correct LIBDPLIBS for libdri
+	[jmcneill, ticket #470]
+
+usr.bin/ldd/ldd.c				1.5
+usr.bin/ldd/ldd.h				1.2
+usr.bin/ldd/ldd_aout.c				1.2, 1.3
+usr.bin/ldd/ldd_elfxx.c				1.2
+
+	Rework the main loop and handlers:
+	- open() and close() the file in the main loop
+	- pass the fd down into the handlers
+	- use _rtld_error() in ELFNAME(ldd)
+
+	This fixes PR#40543 and also makes error messages look better.
+	[mrg, ticket #483]
+
+sys/net/if_pppoe.c				1.94
+
+	PR/40690: pppoe(4) doesn't work when PPPoE relays are present.
+	Add support for sending the session id tag back.
+	[christos, ticket #478]
+
+sys/arch/i386/i386/machdep.c			patch
+
+	Add missing opt_multiboot.h.  Fixes issues when using a
+	multiboot bootloader, like GRUB:
+	- dmesg did not contain the information about the loader
+	- /dev/ksyms did not work
+	[ahoka, ticket #489]
+
+lib/libc/stdio/vfwprintf.c			1.15
+
+	printf("%zi\n", (ssize_t)-1); now correcly prints -1 on i386
+	[roy, ticket #492]
 
