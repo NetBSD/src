@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.41.2.1 2009/01/16 01:43:11 snj Exp $
+# $NetBSD: md.amd64,v 1.41.2.2 2009/02/25 03:02:19 snj Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xvfb					-unknown-	x11
@@ -369,6 +369,8 @@
 ./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/mesa_dri.so			-unknown-	xorg
+./usr/X11R7/lib/modules/dri/mesa_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	xorg
