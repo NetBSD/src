@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.102 2009/02/25 03:28:31 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.103 2009/02/25 20:55:06 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4534,4 +4534,147 @@ lib/libc/stdio/vfwprintf.c			1.15
 
 	printf("%zi\n", (ssize_t)-1); now correcly prints -1 on i386
 	[roy, ticket #492]
+
+xsrc/external/mit/xf86-video-newport/COPYING	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/ChangeLog	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/Makefile.am xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/Makefile.in xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/README	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/README.sgml xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/XF86Config.indy xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/aclocal.m4	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/config.guess xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/config.h.in xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/config.sub	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/configure	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/configure.ac xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/depcomp	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/install-sh	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/ltmain.sh	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/missing	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/man/Makefile.am xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/man/Makefile.in xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/man/newport.man xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/Makefile.am xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/Makefile.in xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/newport.h xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/newport_accel.c xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/newport_cmap.c xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/newport_cursor.c xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/newport_driver.c xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/newport_regs.c xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/newport_regs.h	xf86-video-newport-0-2-1
+xsrc/external/mit/xf86-video-newport/src/newport_shadow.c xf86-video-newport-0-2-1
+
+	Add X.Org's driver for Newport / NG 1 graphics boards found
+	in SGI Indy and others.
+	[macallan, ticket #499]
+
+external/mit/xorg/server/drivers/xf86-video-newport/Makefile 1.1
+
+	Add reachover build Makefile for newport driver.
+	[macallan, ticket #500]
+
+external/mit/xorg/server/drivers/Makefile	1.20
+
+	Build sgimips servers.
+	[macallan, ticket #513]
+
+external/mit/xorg/server/drivers/Makefile	1.23
+
+	Build the newport driver on sgimips.
+	[macallan, ticket #503]
+
+distrib/sets/lists/xcomp/md.sgimips		1.4
+
+	Add X.Org bits.
+	[macallan, ticket #512]
+
+distrib/sets/lists/xserver/md.sgimips		1.24
+
+	Add X.Org bits.
+	[macallan, ticket #509]
+
+distrib/sets/lists/xserver/md.sgimips		1.26
+
+	Add the newport driver.
+	[macallan, ticket #502]
+
+distrib/sets/lists/xserver/md.sgimips		1.28
+
+	Add the newport man page.
+	[macallan, ticket #505]
+
+xsrc/external/mit/xf86-video-newport/dist/src/newport.h 1.2
+xsrc/external/mit/xf86-video-newport/dist/src/newport_driver.c 1.2
+
+	Add NetBSD-specific bits.
+	[macallan, ticket #504]
+
+xsrc/external/mit/xf86-video-newport/dist/src/newport_driver.c 1.3
+
+	In 24bit write a linear colour map into the DAC.  Now colours
+	look right.
+	[macallan, ticket #501]
+
+external/mit/xorg/server/xorg-server/hw/xfree86/xorgos/Makefile 1.11
+
+	Use ppc_video.c on sgimips since mips_video.c is just another
+	subset of ppc_video.c
+	[macallan, ticket #506]
+
+sys/arch/sgimips/dev/crmfbreg.h			1.9
+
+	Add a couple more registers
+	[macallan, ticket #507]
+
+external/mit/xorg/server/drivers/xf86-video-crime/Makefile 1.1
+
+	Add a reachover build Makefile for the crime driver.
+	[macallan, ticket #508]
+
+sys/arch/sgimips/include/Makefile		1.18
+
+	Install crmfbreg.h.
+	[macallan, ticket #510]
+
+external/mit/xf86-video-crime/dist/configure	1.1
+external/mit/xf86-video-crime/dist/man/crime.man 1.1
+external/mit/xf86-video-crime/dist/src/crime.h	1.1
+external/mit/xf86-video-crime/dist/src/crime_accel.c 1.1
+external/mit/xf86-video-crime/dist/src/crime_cursor.c 1.1
+external/mit/xf86-video-crime/dist/src/crime_driver.c 1.1
+
+	Add driver for the rendering engine found in SGI's O2.
+	[macallan, ticket #511]
+
+external/mit/xf86-video-crime/dist/src/crime.h	1.2
+external/mit/xf86-video-crime/dist/src/crime_accel.c 1.2
+external/mit/xf86-video-crime/dist/src/crime_driver.c 1.2
+
+	Adapt crime to X.Org.
+	[macallan, ticket #514]
+
+share/mk/bsd.own.mk				1.543
+
+	Add a couple driver names for Xorg
+	[macallan, ticket #516]
+
+external/mit/xorg/lib/dri/Makefile		1.5
+
+	Don't build DRI drivers on sgimips.
+	[macallan, ticket #517]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/xaa/xaaFillRect.c 1.2
+xsrc/external/mit/xorg-server/dist/hw/xfree86/xaa/xaaInitAccel.c 1.2
+xsrc/external/mit/xorg-server/dist/hw/xfree86/xaa/xaalocal.h 1.2
+
+	Actually use scanline image writes to upload images if
+	available.
+	[macallan, ticket #518]
+
+sys/arch/sparc64/dev/ffb.c			1.36
+
+	Make ffb work right with WSDISPLAY_SCROLLSUPPORT.
+	[macallan, ticket #515]
 
