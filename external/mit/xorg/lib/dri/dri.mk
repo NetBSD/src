@@ -1,4 +1,4 @@
-# $NetBSD: dri.mk,v 1.3.4.1 2008/12/01 00:46:22 snj Exp $
+# $NetBSD: dri.mk,v 1.3.4.2 2009/02/25 03:02:19 snj Exp $
 
 # XXX DRI_LIB_DEPS
 
@@ -37,17 +37,11 @@ SRCS+=	dri_util.c drirenderbuffer.c driverfuncs.c texmem.c utils.c vblank.c \
 LIB=		${MODULE}_dri
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
-.if !defined(_LIBMESAOBJDIR)
-_LIBMESAOBJDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/lib/dri/libmesa \
-			&& ${PRINTOBJDIR}
-.endif
-
-.if ${MKPICLIB} != "no"
-LIBMESA=	mesa_pic
-.else
-LIBMESA=	mesa
-.endif
-LDADD+=	-L${_LIBMESAOBJDIR} -l${LIBMESA}
-DPADD+=	${_LIBMESAOBJDIR}/lib${LIBMESA}.a
+LIBDPLIBS+= 	drm		${.CURDIR}/../../libdrm
+LIBDPLIBS+=	expat		${.CURDIR}/../../expat
+LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
+LIBDPLIBS+= 	mesa_dri	${.CURDIR}/../libmesa
+# to find mesa_dri.so
+LDFLAGS+=	-Wl,-rpath,${LIBDIR}
 
 .include <bsd.lib.mk>
