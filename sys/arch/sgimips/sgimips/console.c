@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.37 2009/02/12 06:33:57 rumble Exp $	*/
+/*	$NetBSD: console.c,v 1.38 2009/02/25 09:37:22 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.37 2009/02/12 06:33:57 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.38 2009/02/25 09:37:22 sekiya Exp $");
 
 #include "opt_kgdb.h"
 
@@ -224,7 +224,7 @@ mace_serial_init(const char *consdev)
 		delay(10000);
 
 		/* XXX: hardcoded MACE iotag */
-		if (comcnattach(3, MIPS_PHYS_TO_KSEG1(MACE_BASE + base),
+		if (comcnattach(SGIMIPS_BUS_SPACE_MACE, MIPS_PHYS_TO_KSEG1(MACE_BASE + base),
 		    speed, COM_FREQ, COM_TYPE_NORMAL, comcnmode) == 0)
 			return (1);
 	}
@@ -240,7 +240,7 @@ kgdb_port_init()
 # if (NCOM > 0)
 #  define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
 	if (mach_type == MACH_SGI_IP32)
-		com_kgdb_attach(3, 0xbf398000, 9600, COM_FREQ, COM_TYPE_NORMAL,
+		com_kgdb_attach(SGIMIPS_BUS_SPACE_MACE, 0xbf398000, 9600, COM_FREQ, COM_TYPE_NORMAL,
 		    KGDB_DEVMODE);
 # endif	/* (NCOM > 0) */
 
