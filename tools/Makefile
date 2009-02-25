@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.125 2009/02/14 13:56:41 abs Exp $
+#	$NetBSD: Makefile,v 1.126 2009/02/25 20:36:45 sketch Exp $
 
 .include <bsd.own.mk>
 
@@ -44,7 +44,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	lex .WAIT \
 	${TOOLCHAIN_BITS} \
 		asn1_compile atf-compile cat cksum compile_et config db \
-		file lint1 \
+		file grep lint1 \
 		makefs menuc mkcsmapper mkesdb mklocale mknod msgc \
 		pax .WAIT \
 		disklabel .WAIT \

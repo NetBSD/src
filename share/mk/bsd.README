@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.246 2009/01/22 14:04:15 christos Exp $
+#	$NetBSD: bsd.README,v 1.247 2009/02/25 20:36:45 sketch Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -655,6 +655,8 @@ TOOL_GENASSYM		Generate constants for assembly files.  [genassym]
 TOOL_GENCAT		Generate NLS message catalogs.  [gencat]
 
 TOOL_GMAKE		GNU make utility.  [gmake]
+
+TOOL_GREP		Print lines matching a pattern.  [grep]
 
 TOOL_GROFF		Front end for groff document formatting system.  [groff]
 
