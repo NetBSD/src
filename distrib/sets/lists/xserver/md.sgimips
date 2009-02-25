@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.23.2.1 2009/02/25 20:03:26 snj Exp $	x11
+# $NetBSD: md.sgimips,v 1.23.2.2 2009/02/25 20:05:46 snj Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -419,6 +419,8 @@
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/newport_drv.so		-unknown-	xorg   
+./usr/X11R7/lib/modules/drivers/newport_drv.so.0	-unknown-	xorg   
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg
@@ -574,5 +576,6 @@
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/newport.4				-unknown-	.man,xo
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
