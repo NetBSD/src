@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.202 2009/02/24 22:25:24 sketch Exp $
+#	$NetBSD: build.sh,v 1.203 2009/02/25 23:34:10 lukem Exp $
 #
-# Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -1204,7 +1204,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.202 2009/02/24 22:25:24 sketch Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.203 2009/02/25 23:34:10 lukem Exp $
 # with these arguments: ${_args}
 #
 
@@ -1233,23 +1233,30 @@ EOF
 	statusmsg "Updated ${makewrapper}"
 }
 
+make_in_dir()
+{
+	dir="$1"
+	op="$2"
+	${runcmd} cd "${dir}" ||
+	    bomb "Failed to cd to \"${dir}\""
+	${runcmd} "${makewrapper}" ${parallel} ${op} ||
+	    bomb "Failed to make ${op} in \"${dir}\""
+	${runcmd} cd "${TOP}" ||
+	    bomb "Failed to cd back to \"${TOP}\""
+}
+
 buildtools()
 {
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		${runcmd} "${makewrapper}" ${parallel} obj-tools ||
 		    bomb "Failed to make obj-tools"
 	fi
-	${runcmd} cd tools
 	if [ "${MKUPDATE}" = "no" ]; then
-		${runcmd} "${makewrapper}" ${parallel} cleandir ||
-		    bomb "Failed to make cleandir tools"
+		make_in_dir tools cleandir
 	fi
-	${runcmd} "${makewrapper}" ${parallel} dependall ||
-	    bomb "Failed to make dependall tools"
-	${runcmd} "${makewrapper}" ${parallel} install ||
-	    bomb "Failed to make install tools"
+	make_in_dir tools dependall
+	make_in_dir tools install
 	statusmsg "Tools built to ${TOOLDIR}"
-	${runcmd} cd "${TOP}"
 }
 
 getkernelconf()
@@ -1262,10 +1269,7 @@ getkernelconf()
 		#
 		KERNSRCDIR="$(getmakevar KERNSRCDIR)"
 		KERNARCHDIR="$(getmakevar KERNARCHDIR)"
-		${runcmd} cd "${KERNSRCDIR}/${KERNARCHDIR}/compile"
-		${runcmd} "${makewrapper}" ${parallel} obj ||
-		    bomb "Failed to make obj in ${KERNSRCDIR}/${KERNARCHDIR}/compile"
-		${runcmd} cd "${TOP}"
+		make_in_dir "${KERNSRCDIR}/${KERNARCHDIR}/compile" obj
 	fi
 	KERNCONFDIR="$(getmakevar KERNCONFDIR)"
 	KERNOBJDIR="$(getmakevar KERNOBJDIR)"
@@ -1300,22 +1304,15 @@ buildkernel()
 	${runcmd} mkdir -p "${kernelbuildpath}" ||
 	    bomb "Cannot mkdir: ${kernelbuildpath}"
 	if [ "${MKUPDATE}" = "no" ]; then
-		${runcmd} cd "${kernelbuildpath}"
-		${runcmd} "${makewrapper}" ${parallel} cleandir ||
-		    bomb "Failed to make cleandir in ${kernelbuildpath}"
-		${runcmd} cd "${TOP}"
+		make_in_dir "${kernelbuildpath}" cleandir
 	fi
 	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] \
 	|| bomb "${TOOLDIR}/bin/${toolprefix}config does not exist. You need to \"$0 tools\" first."
 	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernelbuildpath}" \
 		-s "${TOP}/sys" "${kernelconfpath}" ||
 	    bomb "${toolprefix}config failed for ${kernelconf}"
-	${runcmd} cd "${kernelbuildpath}"
-	${runcmd} "${makewrapper}" ${parallel} depend ||
-	    bomb "Failed to make depend in ${kernelbuildpath}"
-	${runcmd} "${makewrapper}" ${parallel} all ||
-	    bomb "Failed to make all in ${kernelbuildpath}"
-	${runcmd} cd "${TOP}"
+	make_in_dir "${kernelbuildpath}" depend
+	make_in_dir "${kernelbuildpath}" all
 
 	if [ "${runcmd}" != "echo" ]; then
 		statusmsg "Kernels built from ${kernelconf}:"
