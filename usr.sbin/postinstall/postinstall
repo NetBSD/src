@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.86 2009/02/25 01:11:50 dyoung Exp $
+# $NetBSD: postinstall,v 1.87 2009/02/25 20:38:30 sketch Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,6 +45,10 @@
 #	- install moduli into usr/share/examples/ssh and use from there?
 #	- differentiate between "needs fix" versus "can't fix" issues
 #
+
+: ${AWK:=awk}
+: ${GREP:=grep}
+: ${MAKE:=make}
 
 #
 #	helper functions
@@ -183,7 +187,7 @@ check_ids()
 	if [ "${_op}" = "fix" ]; then
 		_notfixed="${NOT_FIXED}"
 	fi
-	_missing="$(awk -F: '
+	_missing="$(${AWK} -F: '
 		BEGIN {
 			for (x = 1; x < ARGC; x++)
 				idlist[ARGV[x]]++
@@ -414,7 +418,7 @@ file_exists_exact()
 		_dirname="$(dirname "${_path}" 2>/dev/null)"
 		_basename="$(basename "${_path}" 2>/dev/null)"
 		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
-			| grep -q -x -F "${_basename}" \
+			| ${GREP} -q -x -F "${_basename}" \
 			|| return 1
 		_path="${_dirname}"
 	done
@@ -481,7 +485,7 @@ obsolete_libs()
 	cd "${DEST_DIR}/${dir}" || err 2 "can't cd to ${DEST_DIR}/${dir}"
 	echo lib*.so.* \
 	| tr ' ' '\n' \
-	| awk -v LibDir="${dir}/" '
+	| ${AWK} -v LibDir="${dir}/" '
 #{
 
 function digit(v, c, n) { return (n <= c) ? v[n] : 0 }
@@ -542,7 +546,7 @@ modify_file()
 	_mfprog="$4"
 	_mffailed=0
 
-	awk "${_mfprog}" < "${_mffile}" > "${_mfscratch}"
+	${AWK} "${_mfprog}" < "${_mffile}" > "${_mfscratch}"
 	if ! cmp -s "${_mffile}" "${_mfscratch}"; then
 		diff "${_mffile}" "${_mfscratch}" > "${_mfscratch}.diffs"
 		if [ "${_mfop}" = "check" ]; then
@@ -601,7 +605,7 @@ get_makevar()
 
 	for _var in "$@"; do
 		_value="$(echo '.include <bsd.own.mk>' | \
-		    ${MAKE:-make} -f - -V "${_var}")"
+		    ${MAKE} -f - -V "${_var}")"
 
 		eval ${_var}=\"${_value}\"
 	done
@@ -759,7 +763,7 @@ do_makedev()
 		env MACHINE="${MACHINE}" \
 		    MACHINE_ARCH="${MACHINE_ARCH}" \
 		    NETBSDSRCDIR="${SRC_DIR}" \
-		    awk -f "${SRC_DIR}/etc/MAKEDEV.awk" \
+		    ${AWK} -f "${SRC_DIR}/etc/MAKEDEV.awk" \
 		    "${SRC_DIR}/etc/MAKEDEV.tmpl" > "${SCRATCHDIR}/MAKEDEV"
 	fi
 
@@ -783,9 +787,9 @@ do_motd()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_motd  fix|check"
 
-	if grep -i 'http://www.NetBSD.org/Misc/send-pr.html' \
+	if ${GREP} -i 'http://www.NetBSD.org/Misc/send-pr.html' \
 		"${DEST_DIR}/etc/motd" >/dev/null 2>&1 \
-	    || grep -i 'http://www.NetBSD.org/support/send-pr.html' \
+	    || ${GREP} -i 'http://www.NetBSD.org/support/send-pr.html' \
 		"${DEST_DIR}/etc/motd" >/dev/null 2>&1
 	then
 		tmp1="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
@@ -1061,7 +1065,7 @@ do_mailerconf()
 	op="$1"
 
 	failed=0
-	mta_path="$(awk '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)"
+	mta_path="$(${AWK} '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)"
 	old_sendmail_path="/usr/libexec/sendmail/sendmail"
 	if [ "${mta_path}" = "${old_sendmail_path}" ]; then
 	    if [ "$op" = check ]; then
