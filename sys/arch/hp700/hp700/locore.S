@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30.2.5 2009/02/19 18:23:35 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.30.2.6 2009/02/25 20:41:44 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -226,8 +226,7 @@ ENTRY_NOPROFILE(start,0)
 	ldil	L%(n), %t1		! \
 	ldil	L%(s), %t2		! \
 	stw	%t3, R%(n)(%t1)		! \
-	add	%t3, %t2, %t3		! \
-	ldo	NBPG(%t3), %t3		/* red zone */
+	add	%t3, %t2, %t3
 
 	STACK_ALLOC(pdc_stack, PDC_STACKSIZE)
 
