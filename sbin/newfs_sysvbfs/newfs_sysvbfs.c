@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_sysvbfs.c,v 1.2 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: newfs_sysvbfs.c,v 1.3 2009/02/25 23:59:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ main(int argc, char **argv)
 	exit(EXIT_FAILURE);
 }
 
-int
+static int
 bfs_newfs(int fd, uint32_t nsectors)
 {
 	uint8_t buf[DEV_BSIZE];
@@ -162,7 +162,7 @@ bfs_newfs(int fd, uint32_t nsectors)
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
 
