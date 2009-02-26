@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.32 2009/02/26 00:32:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.32 2009/02/26 00:32:49 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -63,25 +63,55 @@ __RCSID("$NetBSD: rumpuser.c,v 1.31 2009/01/27 10:05:08 pooka Exp $");
 #include "rumpuser_int.h"
 
 int
-rumpuser_stat(const char *path, struct stat *sb, int *error)
+rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 {
+	struct stat sb;
+	int rv;
 
-	DOCALL(int, (stat(path, sb)));
+	rv = stat(path, &sb);
+	if (rv == -1) {
+		*error = errno;
+		return rv;
+	}
+
+	*size = sb.st_size;
+	switch (sb.st_mode & S_IFMT) {
+	case S_IFDIR:
+		*ft = RUMPUSER_FT_DIR;
+		break;
+	case S_IFREG:
+		*ft = RUMPUSER_FT_REG;
+		break;
+	case S_IFBLK:
+		*ft = RUMPUSER_FT_BLK;
+		break;
+	default:
+		*ft = RUMPUSER_FT_OTHER;
+		break;
+	}
+
+	return rv;
 }
 
 int
-rumpuser_lstat(const char *path, struct stat *sb, int *error)
+rumpuser_nanosleep(uint64_t *sec, uint64_t *nsec, int *error)
 {
+	struct timespec rqt, rmt;
+	int rv;
 
-	DOCALL(int, (lstat(path, sb)));
-}
+	/*LINTED*/
+	rqt.tv_sec = *sec;
+	/*LINTED*/
+	rqt.tv_nsec = *nsec;
 
-int
-rumpuser_nanosleep(const struct timespec *rqtp, struct timespec *rmtp, 
-		   int *error)
-{
+	KLOCK_WRAP(rv = nanosleep(&rqt, &rmt));
+	if (rv == -1)
+		*error = errno;
 
-	DOCALL_KLOCK(int, (nanosleep(rqtp, rmtp)));
+	*sec = rmt.tv_sec;
+	*nsec = rmt.tv_nsec;
+
+	return rv;
 }
 
 void *
