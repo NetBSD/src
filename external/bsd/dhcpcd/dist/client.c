@@ -837,12 +837,24 @@ wait_for_fd(struct if_state *state, int *fd)
 	}
 
 	/* We configured our array in the order we should deal with them */
-	for (i = 0; i < nfds; i++)
-		if (fds[i].revents & POLLIN) {
+	for (i = 0; i < nfds; i++) {
+		if (fds[i].revents & POLLERR) {
+			syslog(LOG_ERR, "poll: POLLERR on fd %d", fds[i].fd);
+			errno = EBADF;
+			return -1;
+		}
+		if (fds[i].revents & POLLNVAL) {
+			syslog(LOG_ERR, "poll: POLLNVAL on fd %d", fds[i].fd);
+			errno = EINVAL;
+			return -1;
+		}
+		if (fds[i].revents & (POLLIN | POLLHUP)) {
 			*fd = fds[i].fd;
 			return r;
 		}
-	return r;
+	}
+	/* We should never get here. */
+	return 0;
 }
 
 static int
@@ -1249,6 +1261,8 @@ handle_timeout(struct if_state *state, const struct options *options)
 		timerclear(&state->stop);
 		/* FALLTHROUGH */
 	case STATE_INIT:
+		if (state->carrier == LINK_DOWN)
+			return 0;
 		do_socket(state, SOCKET_OPEN);
 		state->xid = arc4random();
 		iface->start_uptime = uptime();
@@ -1272,8 +1286,6 @@ handle_timeout(struct if_state *state, const struct options *options)
 		}
 		/* FALLTHROUGH */
 	case STATE_INIT:
-		if (state->carrier == LINK_DOWN)
-			return 0;
 		if (lease->addr.s_addr == 0 ||
 		    IN_LINKLOCAL(ntohl(iface->addr.s_addr)))
 		{
