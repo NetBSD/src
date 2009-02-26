@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.104 2009/02/26 07:56:30 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.105 2009/02/26 20:44:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4725,4 +4725,20 @@ sbin/mount_procfs/mount_procfs.c		1.23
 	sensible default.  People who absolutely do not want the extra
 	files in their /proc can do -o nolinux.
 	[pooka, ticket #495]
+
+sys/arch/amd64/amd64/copy.S			1.13
+sys/arch/i386/i386/copy.S			1.17
+sys/compat/linux/arch/amd64/files.linux_amd64	1.4
+sys/compat/linux/arch/amd64/linux_support.S	delete
+sys/compat/linux/arch/i386/files.linux_i386	1.10
+sys/compat/linux/arch/i386/linux_support.S	delete
+sys/compat/linux/common/linux_futex.c		1.23
+sys/sys/systm.h					1.234
+
+	Add ucas (CAS for user-space address) support for i386 and
+	amd64.  API provides ucas_int() and ucas_ptr() for now.
+	Switch Linux futex emulation to native ucas_int(), remove
+	unecessary futex-specific assembler routines.
+	Fixes PR/40490.
+	[rmind, ticket #493]
 
