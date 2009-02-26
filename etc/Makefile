@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.364 2009/02/25 20:38:30 sketch Exp $
+#	$NetBSD: Makefile,v 1.365 2009/02/26 19:43:39 joerg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -88,7 +88,7 @@ INSTALLATION_DIRS=	binary binary/sets binary/kernel installation
 BINOWN= root
 BINGRP= wheel
 UTMPGRP= utmp
-BIN1+=	audit-packages.conf bootptab changelist csh.cshrc csh.login \
+BIN1+=	bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf dm.conf envsys.conf floppytab ftpchroot \
 	ftpusers gettytab group hosts hosts.lpd inetd.conf \
 	locate.conf login.conf mailer.conf man.conf monthly monthly.conf \
