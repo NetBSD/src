@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.6 2009/02/26 15:25:11 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.7 2009/02/26 15:25:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.6 2009/02/26 15:25:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.7 2009/02/26 15:25:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -279,7 +279,6 @@ dostrategy(struct buf *bp)
 			rumpuser_mutex_exit(&rumpuser_aio_mtx);
 			goto syncfallback;
 		}
-		printf("selected slot %d\n", rumpuser_aio_head);
 
 		rua = &rumpuser_aios[rumpuser_aio_head];
 		KASSERT(rua->rua_bp == NULL);
