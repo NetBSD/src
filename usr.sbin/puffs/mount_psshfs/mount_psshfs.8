@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.18 2009/02/25 18:05:32 pooka Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.19 2009/02/26 07:14:36 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -159,7 +159,9 @@ utility first appeared in
 Permissions are not handled.
 Do not expect the file system to behave except for a single user.
 .Pp
-Depending on if the server supports the sftp stavfs protocol extension,
+Depending on if the server supports the
+.Xr sftp 1
+stavfs protocol extension,
 free disk space may be displayed for the mount by
 .Xr df 1 .
 This information reflects the status at the server's mountpoint
