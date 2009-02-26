@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.39 2009/01/31 21:27:22 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.40 2009/02/26 08:22:26 snj Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -1240,4 +1240,9 @@ sbin/raidctl/raidctl.c				1.40
 
 	Patch supplied by Bernhard Moellemann in PR bin/40479.
 	[tron, ticket #1989]
+
+usr.sbin/syslogd/syslogd.8			patch
+
+	Fix typo: LOT_NOTICE -> LOG_NOTICE.
+	[bouyer, ticket #1990]       
 
