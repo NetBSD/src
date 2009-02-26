@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 2008/07/23 11:59:43 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 2009/02/26 17:30:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.2 2008/07/23 11:59:43 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.3 2009/02/26 17:30:51 christos Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -76,6 +76,8 @@ static struct nlist nl[] = {
 #define NL_MAX		8
     { .n_name = NULL }
 };
+
+extern int vflg;
 
 
 static int
@@ -143,7 +145,7 @@ pmisc(struct file *f, const char *name)
 		if ((n = KVM_NLIST(nl)) == -1)
 			errx(1, "Cannot list kernel symbols (%s)",
 			    KVM_GETERR());
-		else if (n != 0)
+		else if (n != 0 && vflg)
 			warnx("Could not find %d symbols", n);
 	}
 	for (i = 0; i < NL_MAX; i++)
