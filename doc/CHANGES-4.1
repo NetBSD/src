@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.132 2009/02/14 19:51:59 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.133 2009/02/26 08:33:47 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2747,4 +2747,42 @@ tools/compat/nbtool_config.h.in			patch
 
 	Fix build on netbsd-5 amd64 hosts.
 	[adrianp, ticket #1278]
+
+usr.sbin/syslogd/syslogd.8			patch
+
+	Fix typo: LOT_NOTICE -> LOG_NOTICE.
+	[bouyer, ticket #1272]
+
+sys/dev/raidframe/rf_reconstruct.c		1.107
+
+	If we see a RF_RECON_WRITE_ERROR event we know a write has
+	finished and we need to account for that.  Failure to do so
+	means we can end up waiting forever for writes we think are
+	outstanding, but which have already completed.
+
+	Addresses the RAIDframe part of PR#40569.
+	[oster, ticket #1276]
+
+sys/dev/ic/ahcisata_core.c			1.19
+
+	When an error is reported on a write, data may have been
+	transfered to the device's cache anyway and so cmdh_prdbc
+	reports a completed transfer. If we use it to update
+	ata_bio->bcount this has 2 conseqences:
+	- the automatic LBA48 workaround doesn't qick in because bcount
+	is used to compute the last sector of the transfer (wd(4) part
+	of kern/40569)
+	- wd(4) will report a B_ERROR buffer with a b_resid of 0, which
+	panics a DIAGNOSTIC kernel
+	Fix by ignoring cmdh_prdbc if we had a write with errors, and in
+	this case leave ata_bio->bcount at its initial value.
+
+	While there use NOERROR instead of 0 for ata_bio->error (cosmetic).
+	[bouyer, ticket #1277]
+
+bin/sh/redir.c					1.30
+
+	Conform to XCU Section 2.8.2 (Exit Status for Commands) reported
+	by Oki.  Fixes PR#36822.
+	[msaitoh, ticket #1281]
 
