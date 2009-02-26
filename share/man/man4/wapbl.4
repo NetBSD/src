@@ -1,4 +1,4 @@
-.\"     $NetBSD: wapbl.4,v 1.7 2009/02/25 22:14:04 plunky Exp $
+.\"     $NetBSD: wapbl.4,v 1.8 2009/02/26 07:21:06 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Feburary 25, 2009
+.Dd February 25, 2009
 .Dt WAPBL 4
 .Os
 .Sh NAME
@@ -37,9 +37,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides meta-data journaling for file systems.  In
-particular, it is used with the fast file system (FFS) to provide
-rapid file system consistency checking after a system outage.  
+driver provides meta-data journaling for file systems.
+In particular, it is used with the fast file system (FFS) to provide
+rapid file system consistency checking after a system outage.
 It also provides better general-use performance over regular FFS.
 .Pp
 WAPBL currently maintains its journal in one of two locations:
@@ -54,13 +54,13 @@ The journal file is not visible via normal file system access.
 .El
 .Pp
 A new journal is created automatically when a file system is mounted
-via 
+via
 .Xr mount 8
 with the
-.Pa -o log
+.Fl o Ar log
 option.
 If no journal size has been specified with
-.Xr tunefs 8 , 
+.Xr tunefs 8 ,
 then the size of the journal
 will be based on 1MB of journal per 1GB of file system, to a maximum
 journal size of 64MB.
@@ -125,7 +125,7 @@ mount -o log /dev/rwd0a /mnt
 will remove the log and then re-create it with the default size.
 This method can also be used to grow or shrink the size of the journal.
 .Pp
-With the journal, 
+With the journal,
 .Xr fsck 8
 is no longer required at system boot.
 If the system has been shutdown in an unclean fashion then the journal
@@ -134,30 +134,41 @@ will be replayed when the file system is mounted.
 can still be used to force a consistency check of the file system
 should that be desired.
 .Pp
-.Xr WAPBL 8
+.Nm
 has a number of debugging options.
 The option
-.Bd -unfilled -offset indent
-options WAPBL_DEBUG
-.Ed
-.Pp
+.Dv WAPBL_DEBUG
 turns on general debugging.
 The option
-.Bd -unfilled -offset indent
-options WAPBL_DEBUG_SERIALIZE
-.Ed
-.Pp
+.Dv WAPBL_DEBUG_SERIALIZE
 forces the serialization of all IO.
 This is currently be used to help alleviate a performance issue
 seen on multi-core machines, where multiple simultaneous extractions
 of tar-files can cause degenerate performance.
-.Pp
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr fsck 8 ,
-.Xr newfs 8 ,
 .Xr mount 8 ,
+.Xr newfs 8 ,
 .Xr umount 8
+.Sh HISTORY
+.An -nosplit
+.Nm
+was originally written by
+.An Darrin B. Jewell
+while at Wasabi Systems Inc.
+Wasabi Systems contributed the code to
+.Nx
+and was integrated by
+.An Simon Burge ,
+.An Antti Kantee ,
+.An Andy Doran ,
+and
+.An Greg Oster .
+.Pp
+.Nm
+first appeared in
+.Nx 5.0 .
 .Sh CAVEATS
 An unreplayed
 .Nm
@@ -193,37 +204,23 @@ that calls
 often.
 .Pp
 File system snapshots
-.Xr ( fss 4 )
+.Pq Xr fss 4
 currently do not work with
 .Nm .
 .Pp
 There are some pending issues with high metadata-rate workloads (like
 multiple simultaneous tar-file extractions) resulting in degenerate file
 system performance.
-The current work-around is to use
-.Bd -unfilled -offset indent
-options WAPBL_DEBUG_SERIALIZE
-.Ed
-.Pp
-as mentioned above.
+The current work-around is to use the
+.Dv WAPBL_DEBUG_SERIALIZE
+option, as mentioned above.
 .Pp
 In-file system log allocation should be done on a relatively quiet
-file system.  The error path for log allocation failures could result
-in a
+file system.
+The error path for log allocation failures could result in a
 .Dq dangling inode
 issue, requiring an
 .Xr fsck 8
 to fix.
 .Pp
 If the file system is full or close to full then making a journal can fail.
-.Sh HISTORY
-.Nm
-was originally written by Darrin B. Jewell while at Wasabi Systems Inc.
-Wasabi Systems contributed the code to
-.Nx
-and was integrated by Simon Burge, Antti Kantee, Andy Doran, and
-Greg Oster.
-.Pp
-.Nm
-first appeared in
-.Nx 5.0 .
