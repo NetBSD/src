@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.18.6.3 2009/01/08 21:46:02 snj Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.18.6.4 2009/02/26 07:42:06 snj Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.18.6.3 2009/01/08 21:46:02 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.18.6.4 2009/02/26 07:42:06 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,20 +96,18 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.18.6.3 2009/01/08 21:46:02 snj Exp $");
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 
-#include "wsdisplay.h"
-#if NWSDISPLAY > 0
-#include <dev/wscons/wsconsio.h>
-#include <dev/wsfont/wsfont.h>
-#include <dev/rasops/rasops.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
-
-#include "opt_wsemul.h"
-#endif
-
 #include <dev/sun/btreg.h>
 #include <dev/sun/bwtworeg.h>
 #include <dev/sun/bwtwovar.h>
 #include <dev/sun/pfourreg.h>
+
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsconsio.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+
+#include "opt_wsemul.h"
+#endif
 
 extern struct cfdriver bwtwo_cd;
 
