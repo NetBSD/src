@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.89 2009/02/26 08:25:50 apb Exp $
+# $NetBSD: postinstall,v 1.90 2009/02/26 10:32:43 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,7 @@
 # This script is executed as part of a cross build.  Allow the build
 # environment to override the locations of some tools.
 : ${AWK:=awk}
+: ${FGREP:=fgrep}
 : ${GREP:=grep}
 : ${MAKE:=make}
 
@@ -423,7 +424,7 @@ file_exists_exact()
 		_dirname="$(dirname "${_path}" 2>/dev/null)"
 		_basename="$(basename "${_path}" 2>/dev/null)"
 		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
-			| ${GREP} -x -F "${_basename}" >/dev/null \
+			| ${FGREP} -x "${_basename}" >/dev/null \
 			|| return 1
 		_path="${_dirname}"
 	done
