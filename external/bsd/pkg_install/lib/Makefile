@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2009/02/25 21:23:17 joerg Exp $
+# $NetBSD: Makefile,v 1.5 2009/02/26 18:35:13 joerg Exp $
 # Original from FreeBSD, no rcs id.
 
 LIBISPRIVATE=	yes
@@ -20,6 +20,8 @@ pkg_install.conf.5: ${DIST}/lib/pkg_install.conf.5.in
 	    ${DIST}/lib/pkg_install.conf.5.in > ${.TARGET}
 
 .PATH:	${DIST}/lib
+
+CLEANFILES+=	pkg_install.conf.5
 
 CPPFLAGS+=	-DNETBSD
 COPTS.plist.c+=	-Wno-pointer-sign
