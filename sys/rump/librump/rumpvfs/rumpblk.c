@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.5 2009/02/26 00:37:48 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.6 2009/02/26 15:25:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.5 2009/02/26 00:37:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.6 2009/02/26 15:25:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -274,15 +274,12 @@ dostrategy(struct buf *bp)
 		 * Check if our buffer is full.  Doing it this way
 		 * throttles the I/O a bit if we have a massive
 		 * async I/O burst.
-		 *
-		 * XXX: this actually leads to deadlocks with spl()
-		 * (caller maybe be at splbio() legally for async I/O),
-		 * so for now set N_AIOS high and FIXXXME some day.
 		 */
 		if ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail) {
 			rumpuser_mutex_exit(&rumpuser_aio_mtx);
 			goto syncfallback;
 		}
+		printf("selected slot %d\n", rumpuser_aio_head);
 
 		rua = &rumpuser_aios[rumpuser_aio_head];
 		KASSERT(rua->rua_bp == NULL);
@@ -294,7 +291,7 @@ dostrategy(struct buf *bp)
 		rua->rua_op = BUF_ISREAD(bp);
 
 		/* insert into queue & signal */
-		rumpuser_aio_head = (rumpuser_aio_head+1) % (N_AIOS-1);
+		rumpuser_aio_head = (rumpuser_aio_head+1) % N_AIOS;
 		rumpuser_cv_signal(&rumpuser_aio_cv);
 		rumpuser_mutex_exit(&rumpuser_aio_mtx);
 	} else {
