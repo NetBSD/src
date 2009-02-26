@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.33 2009/02/20 21:45:09 jmmv Exp $
+# $NetBSD: mi,v 1.34 2009/02/26 12:43:15 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -103,34 +103,32 @@
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
-./usr/libdata/debug/usr/tests/ipf/t_ipf					tests-ipf-tests	debug
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read			tests-kernel-tests
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_fifo			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file2		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_pipe			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_ttypty		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/t_ioctl			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc1			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc2			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/t_sig			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_fifo.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file2.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_pipe.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_ttypty.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_ioctl.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc1.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc2.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_sig.debug			tests-kernel-tests	debug
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write			tests-kernel-tests
-./usr/libdata/debug/usr/tests/kernel/kqueue/write/Atffile		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_extent				tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_lock				tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_lwpctl				tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_mkdir				tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_pipe				tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_poll3w				tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_time				tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_ucontext				tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_writev				tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty.debug	tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_pipe.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-kernel-tests	debug
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
 ./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
