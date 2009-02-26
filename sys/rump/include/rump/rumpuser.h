@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.15 2009/02/07 01:50:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.16 2009/02/26 00:32:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,9 +41,12 @@ struct sockaddr;
 typedef void (*kernel_lockfn)(int);
 typedef void (*kernel_unlockfn)(int, int *);
 
-int rumpuser_stat(const char *, struct stat *, int *);
-int rumpuser_lstat(const char *, struct stat *, int *);
-int rumpuser_nanosleep(const struct timespec *, struct timespec *, int *);
+int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
+#define RUMPUSER_FT_DIR 1
+#define RUMPUSER_FT_REG 2
+#define RUMPUSER_FT_BLK 3
+#define RUMPUSER_FT_OTHER 4
+int rumpuser_nanosleep(uint64_t *, uint64_t *, int *);
 
 #define rumpuser_malloc(a,b) rumpuser__malloc(a,b,__func__,__LINE__);
 #define rumpuser_realloc(a,b,c) rumpuser__realloc(a,b,c,__func__,__LINE__);
