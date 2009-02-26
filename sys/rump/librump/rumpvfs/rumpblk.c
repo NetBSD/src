@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.4 2009/02/10 20:44:57 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.5 2009/02/26 00:37:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.4 2009/02/10 20:44:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.5 2009/02/26 00:37:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -151,7 +151,8 @@ int
 rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rblkdev *rblk = &minors[minor(dev)];
-	struct stat sb;
+	uint64_t fsize;
+	int ft;
 	int error, fd;
 
 	KASSERT(rblk->rblk_fd == -1);
@@ -174,13 +175,14 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 		memset(&rblk->rblk_dl, 0, sizeof(rblk->rblk_dl));
 
-		if (rumpuser_stat(rblk->rblk_path, &sb, &error) == -1) {
+		if (rumpuser_getfileinfo(rblk->rblk_path, &fsize,
+		    &ft, &error) == -1) {
 			int dummy;
 
 			rumpuser_close(fd, &dummy);
 			return error;
 		}
-		rblk->rblk_pi.p_size = sb.st_size >> DEV_BSHIFT;
+		rblk->rblk_pi.p_size = fsize >> DEV_BSHIFT;
 		rblk->rblk_dl.d_secsize = DEV_BSIZE;
 		rblk->rblk_curpi = &rblk->rblk_pi;
 	}
