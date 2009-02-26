@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ssp.c,v 1.1 2009/02/12 18:24:18 christos Exp $	*/
+/*	$NetBSD: kern_ssp.c,v 1.2 2009/02/26 05:50:54 kenh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.1 2009/02/12 18:24:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.2 2009/02/26 05:50:54 kenh Exp $");
 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/intr.h>
 
