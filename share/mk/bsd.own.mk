@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.542.2.6 2009/02/25 20:33:49 snj Exp $
+#	$NetBSD: bsd.own.mk,v 1.542.2.7 2009/02/26 07:36:05 snj Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -670,8 +670,8 @@ ${var}?=no
 # Do we default to XFree86 or Xorg for this platform?
 #
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || \
-    ${MACHINE} == "macppc" || ${MACHINE} == "shark" || \
-    ${MACHINE} == "sparc64"
+    ${MACHINE} == "macppc" || ${MACHINE} == "sgimips" || \
+    ${MACHINE} == "shark" || ${MACHINE} == "sparc64"
 X11FLAVOUR?=	Xorg
 .else
 X11FLAVOUR?=	XFree86
