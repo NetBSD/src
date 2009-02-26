@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2009/02/26 07:31:58 snj Exp $
 
 # Makefile for sgimips tags file
 
@@ -37,6 +37,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	compile include stand
+SUBDIR=	compile include dev stand
 
 .include <bsd.subdir.mk>
