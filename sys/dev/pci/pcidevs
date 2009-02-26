@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.978 2009/02/19 17:25:46 sborrill Exp $
+$NetBSD: pcidevs,v 1.979 2009/02/26 19:13:38 mjf Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2114,6 +2114,7 @@ product IDT RC32332	0x0205	RC32332 System Controller
 product INDCOMPSRC WDT50x	0x22c0	PCI-WDT50x Watchdog Timer
 
 /* Initio products */
+product INITIO 1622	0x1622	INIC-1622 SATA
 product INITIO I920	0x0002	INIC-920 SCSI
 product INITIO I850	0x0850	INIC-850 SCSI
 product INITIO I1060	0x1060	INIC-1060 SCSI
