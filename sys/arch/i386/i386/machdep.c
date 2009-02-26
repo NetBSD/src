@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.662 2009/02/22 18:05:42 ahoka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.663 2009/02/26 13:56:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.662 2009/02/22 18:05:42 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.663 2009/02/26 13:56:46 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -946,6 +946,10 @@ haltsys:
 	}
 
 	if (howto & RB_HALT) {
+#if NACPI > 0
+		AcpiDisable();
+#endif
+
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
