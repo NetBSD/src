@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.979 2009/02/19 17:26:21 sborrill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.980 2009/02/26 19:17:01 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2121,6 +2121,7 @@
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* PCI-WDT50x Watchdog Timer */
 
 /* Initio products */
+#define	PCI_PRODUCT_INITIO_1622	0x1622		/* INIC-1622 SATA */
 #define	PCI_PRODUCT_INITIO_I920	0x0002		/* INIC-920 SCSI */
 #define	PCI_PRODUCT_INITIO_I850	0x0850		/* INIC-850 SCSI */
 #define	PCI_PRODUCT_INITIO_I1060	0x1060		/* INIC-1060 SCSI */
