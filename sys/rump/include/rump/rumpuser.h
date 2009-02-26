@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.16 2009/02/26 00:32:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.17 2009/02/26 00:59:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,9 +33,6 @@
 struct stat;
 struct msghdr;
 struct pollfd;
-struct iovec;
-struct timespec;
-struct timeval;
 struct sockaddr;
 
 typedef void (*kernel_lockfn)(int);
@@ -67,12 +64,17 @@ typedef void (*rump_biodone_fn)(void *, size_t, int);
 
 ssize_t rumpuser_read(int, void *, size_t, int *);
 ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
-ssize_t rumpuser_readv(int, const struct iovec *, int, int *);
 ssize_t rumpuser_write(int, const void *, size_t, int *);
 ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
-ssize_t rumpuser_writev(int, const struct iovec *, int, int *);
 void rumpuser_read_bio(int, void *, size_t, off_t, rump_biodone_fn, void *);
 void rumpuser_write_bio(int, const void *, size_t, off_t,rump_biodone_fn,void*);
+
+struct rumpuser_iovec {
+	void *iov_base;
+	uint64_t iov_len;
+};
+ssize_t rumpuser_readv(int, const struct rumpuser_iovec *, int, int *);
+ssize_t rumpuser_writev(int, const struct rumpuser_iovec *, int, int *);
 
 int rumpuser_gettimeofday(struct timeval *, int *);
 int rumpuser_getenv(const char *, char *, size_t, int *);

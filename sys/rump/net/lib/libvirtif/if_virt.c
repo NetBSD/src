@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.5 2008/12/18 00:24:13 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.6 2009/02/26 01:03:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.5 2008/12/18 00:24:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.6 2009/02/26 01:03:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -190,7 +190,7 @@ static void
 virtif_start(struct ifnet *ifp)
 {
 	struct virtif_sc *sc = ifp->if_softc;
-	struct iovec io[16];
+	struct rumpuser_iovec io[16];
 	struct mbuf *m, *m0;
 	int s, i, error;
 
