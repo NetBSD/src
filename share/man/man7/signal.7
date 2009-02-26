@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.7,v 1.12 2009/02/26 17:42:29 christos Exp $
+.\"	$NetBSD: signal.7,v 1.13 2009/02/26 19:07:13 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -208,6 +208,25 @@ below is unsafe to use in signal handlers.
 .Xr wait 2 ,
 .Xr waitpid 2 ,
 .Xr write 2 .
+.Sh SEE ALSO
+.Xr kill 1 ,
+.Xr kill 2 ,
+.Xr ptrace 2 ,
+.Xr sigaction 2 ,
+.Xr sigaltstack 2 ,
+.Xr sigprocmask 2 ,
+.Xr sigstack 2 ,
+.Xr sigsuspend 2 ,
+.Xr fpgetmask 3 ,
+.Xr fpsetmask 3 ,
+.Xr setjmp 3 ,
+.Xr sigblock 3 ,
+.Xr siginterrupt 3 ,
+.Xr signal 3 ,
+.Xr sigpause 3 ,
+.Xr sigsetmask 3 ,
+.Xr sigsetops 3 ,
+.Xr tty 4
 .Sh STANDARDS
 These signals conform to
 .St -p1003.1-90 ,
@@ -240,22 +259,3 @@ The current
 kernel never generates the
 .Dv SIGPWR
 signal.
-.Sh SEE ALSO
-.Xr kill 1 ,
-.Xr kill 2 ,
-.Xr ptrace 2 ,
-.Xr sigaction 2 ,
-.Xr sigaltstack 2 ,
-.Xr sigprocmask 2 ,
-.Xr sigstack 2 ,
-.Xr sigsuspend 2 ,
-.Xr fpgetmask 3 ,
-.Xr fpsetmask 3 ,
-.Xr setjmp 3 ,
-.Xr sigblock 3 ,
-.Xr siginterrupt 3 ,
-.Xr signal 3 ,
-.Xr sigpause 3 ,
-.Xr sigsetmask 3 ,
-.Xr sigsetops 3 ,
-.Xr tty 4
