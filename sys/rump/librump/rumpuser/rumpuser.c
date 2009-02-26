@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.32 2009/02/26 00:32:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.33 2009/02/26 00:59:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.32 2009/02/26 00:32:49 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.33 2009/02/26 00:59:31 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -232,18 +232,6 @@ rumpuser_pread(int fd, void *data, size_t size, off_t offset, int *error)
 	return rv;
 }
 
-ssize_t 
-rumpuser_readv(int fd, const struct iovec *iov, int iovcnt, int *error)
-{
-	ssize_t rv;
-
-	KLOCK_WRAP(rv = readv(fd, iov, iovcnt));
-	if (rv == -1)
-		*error = errno;
-
-	return rv;
-}
-
 void
 rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	rump_biodone_fn biodone, void *biodonecookie)
@@ -284,18 +272,6 @@ rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
 	return rv;
 }
 
-ssize_t 
-rumpuser_writev(int fd, const struct iovec *iov, int iovcnt, int *error)
-{
-	ssize_t rv;
-
-	KLOCK_WRAP(rv = writev(fd, iov, iovcnt));
-	if (rv == -1)
-		*error = errno;
-
-	return rv;
-}
-
 void
 rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	rump_biodone_fn biodone, void *biodonecookie)
@@ -310,6 +286,60 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 
 	/* LINTED: see above */
 	biodone(biodonecookie, rv, error);
+}
+
+ssize_t 
+rumpuser_readv(int fd, const struct rumpuser_iovec *riov, int iovcnt,
+	int *error)
+{
+	struct iovec *iovp;
+	ssize_t rv;
+	int i;
+
+	iovp = malloc(iovcnt * sizeof(struct iovec));
+	if (iovp == NULL) {
+		*error = ENOMEM;
+		return -1;
+	}
+	for (i = 0; i < iovcnt; i++) {
+		iovp[i].iov_base = riov[i].iov_base;
+		/*LINTED*/
+		iovp[i].iov_len = riov[i].iov_len;
+	}
+
+	KLOCK_WRAP(rv = readv(fd, iovp, iovcnt));
+	if (rv == -1)
+		*error = errno;
+	free(iovp);
+
+	return rv;
+}
+
+ssize_t 
+rumpuser_writev(int fd, const struct rumpuser_iovec *riov, int iovcnt,
+	int *error)
+{
+	struct iovec *iovp;
+	ssize_t rv;
+	int i;
+
+	iovp = malloc(iovcnt * sizeof(struct iovec));
+	if (iovp == NULL) {
+		*error = ENOMEM;
+		return -1;
+	}
+	for (i = 0; i < iovcnt; i++) {
+		iovp[i].iov_base = riov[i].iov_base;
+		/*LINTED*/
+		iovp[i].iov_len = riov[i].iov_len;
+	}
+
+	KLOCK_WRAP(rv = writev(fd, iovp, iovcnt));
+	if (rv == -1)
+		*error = errno;
+	free(iovp);
+
+	return rv;
 }
 
 int
