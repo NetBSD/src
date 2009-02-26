@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.4.12.4 2007/09/16 15:29:05 xtraeme Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.4.12.4.4.1 2009/02/26 08:12:29 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.12.4 2007/09/16 15:29:05 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.12.4.4.1 2009/02/26 08:12:29 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -935,7 +935,7 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 		ata_bio->error = TIMEOUT;
 	} else {
 		callout_stop(&chp->ch_callout);
-		ata_bio->error = 0;
+		ata_bio->error = NOERROR;
 	}
 
 	chp->ch_queue->active_xfer = NULL;
@@ -965,7 +965,14 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	AHCIDEBUG_PRINT(("ahci_bio_complete bcount %ld",
 	    ata_bio->bcount), DEBUG_XFERS);
-	ata_bio->bcount -= le32toh(achp->ahcic_cmdh[slot].cmdh_prdbc);
+	/* 
+	 * if it was a write, complete data buffer may have been transfered
+	 * before error detection; in this case don't use cmdh_prdbc
+	 * as it won't reflect what was written to media. Assume nothing
+	 * was transfered and leave bcount as-is.
+	 */
+	if ((ata_bio->flags & ATA_READ) || ata_bio->error == NOERROR)
+		ata_bio->bcount -= le32toh(achp->ahcic_cmdh[slot].cmdh_prdbc);
 	AHCIDEBUG_PRINT((" now %ld\n", ata_bio->bcount), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
 	atastart(chp);
