@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.88 2009/02/26 08:05:09 apb Exp $
+# $NetBSD: postinstall,v 1.89 2009/02/26 08:25:50 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -406,13 +406,16 @@ stat()
 }
 
 # file_exists_exact path
-#	Returns true if file exists matching exact case for path
-#	Each path is relative to ${DEST_DIR}, and should
-#	be an absolute path or start with `./'.
+#	Returns true if a file exists in the ${DEST_DIR} whose name
+#	is exactly ${path}, interpreted in a case-sensitive way
+#	even if the underlying file system is case-insensitive.
+#
+#	The path must begin with '/' or './', and is interpreted as
+#	being relative to ${DEST_DIR}.
 #
 file_exists_exact()
 {
-	[ -n "1" ] || err 3 "USAGE: file_exists_exact path"
+	[ -n "$1" ] || err 3 "USAGE: file_exists_exact path"
 	_path="${1#.}"
 	[ -h "${DEST_DIR}${_path}" ] || \
         	[ -e "${DEST_DIR}${_path}" ] || return 1
