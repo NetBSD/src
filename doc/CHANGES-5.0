@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.103 2009/02/25 20:55:06 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.104 2009/02/26 07:56:30 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4633,6 +4633,7 @@ external/mit/xorg/server/drivers/xf86-video-crime/Makefile 1.1
 	Add a reachover build Makefile for the crime driver.
 	[macallan, ticket #508]
 
+distrib/sets/lists/comp/md.sgimips		1.13
 sys/arch/sgimips/include/Makefile		1.18
 
 	Install crmfbreg.h.
@@ -4677,4 +4678,51 @@ sys/arch/sparc64/dev/ffb.c			1.36
 
 	Make ffb work right with WSDISPLAY_SCROLLSUPPORT.
 	[macallan, ticket #515]
+
+xsrc/external/mit/xf86-video-crime/dist/src/crime_accel.c 1.3
+
+	Implement ARGB alpha masks.
+	[macallan, ticket #522]
+
+
+sys/arch/sgimips/Makefile			1.7
+sys/arch/sgimips/dev/Makefile			1.1
+sys/arch/sgimips/include/Makefile		1.19
+
+	Don't be lazy and let one directory's Makefile install an
+	include file from another directory, as that only causes
+	problems with mtree later on when encountering the /.. path
+	component.  Instead, descend into dev/ and use the Makefile
+	there to install dev/crmfbreg.h in the appropriate directory.
+	[macallan, ticket #523]
+
+share/mk/bsd.own.mk				patch
+
+	Switch sgimips over to Xorg
+	[macallan, ticket #524]
+
+sys/dev/sun/cgsix.c				1.44 via patch
+sys/dev/sun/cgsixvar.h				1.12
+
+	Include wsdisplay.h directly in the header to avoid different
+	sizes of cgsix_softc depending on proper previous includes by
+	the includer due to #ifdef NWSDISPLAY.
+	[martin, ticket #486]
+
+sys/dev/sun/bwtwo.c				1.22
+sys/dev/sun/bwtwovar.h				1.8
+sys/dev/sun/cgthree.c				1.20
+sys/dev/sun/cgthreevar.h			1.7
+
+	Mimic cgsix memory corruption fix (bwtwo and cgthree wscons
+	code is based on cgsix).
+	[jdc, ticket #494]
+
+sbin/mount_procfs/mount_procfs.c		1.23
+
+	Default to -o linux.  This prevents programs from not working
+	just because the -o linux flag was not supplied, i.e. it is the
+	sensible default.  People who absolutely do not want the extra
+	files in their /proc can do -o nolinux.
+	[pooka, ticket #495]
 
