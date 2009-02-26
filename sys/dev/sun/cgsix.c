@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.38.6.2 2008/12/29 14:38:06 jdc Exp $ */
+/*	$NetBSD: cgsix.c,v 1.38.6.3 2009/02/26 07:47:44 snj Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.2 2008/12/29 14:38:06 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.3 2009/02/26 07:47:44 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.2 2008/12/29 14:38:06 jdc Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
-#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include "opt_wsemul.h"
 #include "rasops_glue.h"
