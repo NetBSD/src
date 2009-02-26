@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.663 2009/02/26 13:56:46 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.664 2009/02/26 15:07:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.663 2009/02/26 13:56:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.664 2009/02/26 15:07:33 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -907,10 +907,6 @@ haltsys:
 		splhigh();
 	}
 
-#ifdef MULTIPROCESSOR
-	x86_broadcast_ipi(X86_IPI_HALT);
-#endif
-
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifdef XEN
 		HYPERVISOR_shutdown();
@@ -944,6 +940,10 @@ haltsys:
 		 */
 #endif
 	}
+
+#ifdef MULTIPROCESSOR
+	x86_broadcast_ipi(X86_IPI_HALT);
+#endif
 
 	if (howto & RB_HALT) {
 #if NACPI > 0
