@@ -1,4 +1,5 @@
-/* config.h.in.  Generated from configure.ac by autoheader.  */
+/* config.h.in.  Generated from configure.in by autoheader.  */
+/*	$NetBSD: config.h.in,v 1.17 2009/02/27 03:01:57 kenh Exp $	*/
 
 /* Define in built-in ELF support is used */
 #undef BUILTIN_ELF
