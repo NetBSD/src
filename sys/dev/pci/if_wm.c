@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.164 2009/01/27 08:18:04 markd Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.165 2009/02/27 13:17:01 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.164 2009/01/27 08:18:04 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.165 2009/02/27 13:17:01 sborrill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -250,6 +250,7 @@ typedef enum {
 	WM_T_82571,			/* i82571 */
 	WM_T_82572,			/* i82572 */
 	WM_T_82573,			/* i82573 */
+	WM_T_82574,			/* i82574 */
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
@@ -791,6 +792,10 @@ static const struct wm_product {
 	  "Intel i82573L Gigabit Ethernet",
 	  WM_T_82573,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82574L,
+	  "Intel i82574L",
+	  WM_T_82574,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT,
 	  "i80003 dual 1000baseT Ethernet",
 	  WM_T_80003,		WMP_F_1000T },
@@ -1290,6 +1295,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR |  WM_F_SWFW_SYNC;
 	else if (sc->sc_type == WM_T_82573)
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
+	else if (sc->sc_type == WM_T_82574)
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
 	else if (sc->sc_type > WM_T_82544)
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 
@@ -1308,7 +1315,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
 		} else
 			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
-	} else if ((sc->sc_type == WM_T_82573) &&
+	} else if ((sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574) &&
 	    (wm_is_onboard_nvm_eeprom(sc) == 0)) {
 		sc->sc_flags |= WM_F_EEPROM_FLASH;
 	} else {
@@ -1483,7 +1490,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * media structures accordingly.
 	 */
 	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_ICH9
-	    || sc->sc_type == WM_T_82573) {
+	    || sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
 		wm_gmii_mediainit(sc);
 	} else if (sc->sc_type < WM_T_82543 ||
@@ -1512,7 +1519,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_ICH8)
+	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_82574 &&
+	    sc->sc_type != WM_T_ICH8)
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	/*
@@ -2869,6 +2877,7 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_pba = PBA_32K;
 		break;
 	case WM_T_82573:
+	case WM_T_82574:
 		sc->sc_pba = PBA_12K;
 		break;
 	case WM_T_ICH8:
@@ -2973,6 +2982,7 @@ wm_reset(struct wm_softc *sc)
 		delay(20000);
 		break;
 	case WM_T_82573:
+	case WM_T_82574:
 		if (sc->sc_flags & WM_F_EEPROM_FLASH) {
 			delay(10);
 			reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
@@ -3278,7 +3288,8 @@ wm_init(struct ifnet *ifp)
 	    | RCTL_MO(sc->sc_mchash_type);
 
 	/* 82573 doesn't support jumbo frame */
-	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_ICH8)
+	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_82574 &&
+	    sc->sc_type != WM_T_ICH8)
 		sc->sc_rctl |= RCTL_LPE;
 
 	if (MCLBYTES == 2048) {
@@ -3406,6 +3417,7 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82571:
 	case WM_T_82572:
 	case WM_T_82573:
+	case WM_T_82574:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -3425,7 +3437,7 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	}
 
 	/* Phy configuration starts after EECD_AUTO_RD is set */
-	if (sc->sc_type == WM_T_82573)
+	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574)
 		delay(25000);
 }
 
@@ -4772,7 +4784,7 @@ wm_is_onboard_nvm_eeprom(struct wm_softc *sc)
 {
 	uint32_t eecd = 0;
 
-	if (sc->sc_type == WM_T_82573) {
+	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574) {
 		eecd = CSR_READ(sc, WMREG_EECD);
 
 		/* Isolate bits 15 & 16 */
