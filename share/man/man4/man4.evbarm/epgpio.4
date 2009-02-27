@@ -1,4 +1,4 @@
-.\" $NetBSD: epgpio.4,v 1.1 2009/02/27 03:13:55 kenh Exp $
+.\" $NetBSD: epgpio.4,v 1.2 2009/02/27 10:39:03 wiz Exp $
 .\"
 .\" Copyright (c) 2009 Ken Hornstein.
 .\" All rights reserved
@@ -46,7 +46,8 @@
 The
 .Nm
 driver provides support for the on-board General Purpose I/O (GPIO) pins on
-the Cirrus Logic EP93xx series of processors.  There are 8 GPIO ports (Ports
+the Cirrus Logic EP93xx series of processors.
+There are 8 GPIO ports (Ports
 A though H) each having 8 GPIO pins available (note: early revisions of
 some EP9301 processors have some ports with less than eight pins available
 on each port; check the documentation for your specific processor).
@@ -57,7 +58,8 @@ driver provides a
 .Xr gpio 4
 controller interface and will attach each port as a separate
 .Xr gpio 4
-device with 8 pins available.  All pins are bidirectional; when used
+device with 8 pins available.
+All pins are bidirectional; when used
 as inputs they should not be driven beyond TTL voltage levels, but
 for exact details on the electrical interface the documentation for
 the specific evbarm board should be consulted.
@@ -79,18 +81,19 @@ driver.
 .Pp
 Each of these options is a bitmask specifying the pins available to the
 .Xr gpio 4
-controller for the corresponding port.  Pins should be disabled if they
+controller for the corresponding port.
+Pins should be disabled if they
 are not available or are being used by the hardware for other purposes.
 The default mask is
 .Dq 0xff
 for all ports.
-.Pp
 .Sh IMPLEMENTATION NOTES
 When a port bitmask configures less than 8 pins available, the remaining
 pins will appear as sequentially numbered pins to the
 .Xr gpio 4
-interface.  For example, if
-.Em EPGPIO_PORT_A_MASK
+interface.
+For example, if
+.Dv EPGPIO_PORT_A_MASK
 is set to
 .Dq 0x2c ,
 Port A pins 1, 3, and 5 will appear as
