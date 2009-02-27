@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.19 2007/07/30 22:48:47 alc Exp $
+.\"	$NetBSD: scsipi.9,v 1.20 2009/02/27 12:55:15 mjf Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -81,14 +81,14 @@ A high-level command (command sent from the high-level SCSI/ATAPI
 layer to the low-level HBA layer) is described by a
 .Va struct scsipi_xfer .
 .Pp
-A request is sent to the HBA driver though the
+A request is sent to the HBA driver through the
 .Fn adapt_request
 callback.
 The HBA driver signals completion (with or without errors) of the
-request though
+request through
 .Fn scsipi_done .
 .Nm
-knows the resources limits of the HBA (max number of concurrent requests per
+knows the resource's limits of the HBA (max number of concurrent requests per
 adapter of channel, and per periph), and will make sure the HBA won't receive
 more requests than it can handle.
 .Pp
@@ -206,7 +206,7 @@ The HBA driver attaches the SCSI or ATAPI bus (depending on the setting of
 by passing a pointer to the
 .Va struct scsipi_channel
 to the
-.Xr autoconf 4
+.Xr autoconf 9
 machinery.
 The print function shall be either
 .Fn scsiprint
