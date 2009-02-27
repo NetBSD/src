@@ -1,9 +1,8 @@
 Content-Type: application/X-atf-atffile; version="1"
-X-NetBSD-Id: "$NetBSD: Atffile,v 1.1 2009/02/20 21:39:57 jmmv Exp $"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.2 2009/02/27 07:32:33 jmmv Exp $"
 
 prop: test-suite = "NetBSD"
 
-tp: ipf
 tp: kqueue
 
 tp: t_extent
