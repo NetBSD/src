@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.6 2009/02/12 15:37:12 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.7 2009/02/27 16:45:17 nonaka Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.6 2009/02/12 15:37:12 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.7 2009/02/27 16:45:17 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.6 2009/02/12 15:37:12 nonaka Exp $
 #include <arm/xscale/pxa2x0_pcic.h>
 
 static int	pxapcic_print(void *, const char *);
+
+static void	pxapcic_doattach(struct device *);
 
 static void	pxapcic_event_thread(void *);
 static void	pxapcic_event_process(struct pxapcic_socket *);
@@ -399,6 +401,37 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 			    so->socket);
 		}
 	}
+
+	config_interrupts(sc->sc_dev, pxapcic_doattach);
+}
+
+void
+pxapcic_doattach(struct device *self)
+{
+	struct pxapcic_softc *sc = device_private(self);
+	struct pxapcic_socket *sock;
+	int s[PXAPCIC_NSLOT];
+	int i;
+	u_int cs;
+
+	if (sc->sc_flags & PPF_REVERSE_ORDER) {
+		for (i = 0; i < sc->sc_nslots; i++) {
+			s[i] = sc->sc_nslots - 1 - i;
+		}
+	} else {
+		for (i = 0; i < sc->sc_nslots; i++) {
+			s[i] = i;
+		}
+	}
+
+	for (i = 0; i < sc->sc_nslots; i++) {
+		sock = &sc->sc_socket[s[i]];
+
+		/* If there's a card there, attach it. */
+		cs = (*sock->pcictag->read)(sock, PXAPCIC_CARD_STATUS);
+		if (cs == PXAPCIC_CARD_VALID)
+			pxapcic_attach_card(sock);
+	}
 }
 
 /*
@@ -421,11 +454,6 @@ pxapcic_event_thread(void *arg)
 	struct pxapcic_socket *sock = (struct pxapcic_socket *)arg;
 	u_int cs;
 	int present;
-
-	/* If there's a card there, attach it. */
-	cs = (*sock->pcictag->read)(sock, PXAPCIC_CARD_STATUS);
-	if (cs == PXAPCIC_CARD_VALID)
-		pxapcic_attach_card(sock);
 
 	while (sock->sc->sc_shutdown == 0) {
 		(void) tsleep(sock, PWAIT, "pxapcicev", 0);
