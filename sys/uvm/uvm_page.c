@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.143 2009/02/26 18:18:14 drochner Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.144 2009/02/27 23:29:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.143 2009/02/26 18:18:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.144 2009/02/27 23:29:08 drochner Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1639,6 +1639,7 @@ uvm_pageidlezero(void)
 					 */
 
 					mutex_spin_enter(&uvm_fpageqlock);
+					pg->pqflags = PQ_FREE;
 					LIST_INSERT_HEAD(&gpgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
 					    PGFL_UNKNOWN], pg, pageq.list);
