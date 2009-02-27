@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.14 2009/02/07 01:50:29 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.15 2009/02/27 15:15:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2009/02/07 01:50:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15 2009/02/27 15:15:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -96,6 +96,7 @@ rump_gettime(struct timespec *ts)
 {
 	struct timespec attempt;
 
+	/* XXX: this is completely bogus */
 	do {
 		attempt = rump_clock;
 	} while (memcmp(&attempt, &rump_clock, sizeof(struct timespec)) != 0);
@@ -109,14 +110,15 @@ rump_gettime(struct timespec *ts)
 static void
 doclock(void *noarg)
 {
-	struct timeval realclock;
 	struct timespec tick;
+	uint64_t sec, nsec;
 	static int ticks = 0;
 	extern int hz;
 	int error;
 
-	rumpuser_gettimeofday(&realclock, &error);
-	TIMEVAL_TO_TIMESPEC(&realclock, &rump_clock);
+	rumpuser_gettime(&sec, &nsec, &error);
+	rump_clock.tv_sec = sec;
+	rump_clock.tv_nsec = nsec;
 	tick.tv_sec = 0;
 	tick.tv_nsec = 1000000000/hz;
 
