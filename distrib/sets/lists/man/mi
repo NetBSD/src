@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1126 2009/02/20 13:17:58 mjf Exp $
+# $NetBSD: mi,v 1.1127 2009/02/27 03:13:55 kenh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -894,6 +894,7 @@
 ./usr/share/man/cat4/esp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ess.0			man-sys-catman		.cat
 ./usr/share/man/cat4/etherip.0			man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/epgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopaau.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopwdog.0		man-sys-catman		.cat
@@ -3477,6 +3478,7 @@
 ./usr/share/man/html4/esp.html			man-sys-htmlman		html
 ./usr/share/man/html4/ess.html			man-sys-htmlman		html
 ./usr/share/man/html4/etherip.html		man-sys-htmlman		html
+./usr/share/man/html4/evbarm/epgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/iopaau.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/iopwdog.html	man-sys-htmlman		html
@@ -5838,6 +5840,7 @@
 ./usr/share/man/man4/esp.4			man-sys-man		.man
 ./usr/share/man/man4/ess.4			man-sys-man		.man
 ./usr/share/man/man4/etherip.4			man-sys-man		.man
+./usr/share/man/man4/evbarm/epgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/intro.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopaau.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopwdog.4		man-sys-man		.man
