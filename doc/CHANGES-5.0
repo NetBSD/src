@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.105 2009/02/26 20:44:00 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.106 2009/02/27 00:50:37 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4741,4 +4741,9 @@ sys/sys/systm.h					1.234
 	unecessary futex-specific assembler routines.
 	Fixes PR/40490.
 	[rmind, ticket #493]
+
+distrib/sets/lists/xserver/md.sgimips		1.25
+
+	One more adjustment for sgimips now that it uses X.Org.
+	[jmcneill, ticket #530]
 
