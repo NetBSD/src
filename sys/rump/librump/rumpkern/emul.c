@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.78 2009/02/26 00:32:49 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.79 2009/02/27 15:15:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.78 2009/02/26 00:32:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.79 2009/02/27 15:15:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -232,9 +232,13 @@ device_class(device_t dev)
 void
 getmicrouptime(struct timeval *tvp)
 {
+	uint64_t sec, nsec;
 	int error;
 
-	rumpuser_gettimeofday(tvp, &error);
+	/* XXX: this is wrong, does not report *uptime* */
+	rumpuser_gettime(&sec, &nsec, &error);
+	tvp->tv_sec = sec;
+	tvp->tv_usec = nsec / 1000;
 }
 
 void
@@ -277,17 +281,25 @@ kern_free(void *ptr, struct malloc_type *type)
 	rumpuser_free(ptr);
 }
 
+static void
+gettime(struct timespec *ts)
+{
+	uint64_t sec, nsec;
+	int error;
+
+	rumpuser_gettime(&sec, &nsec, &error);
+	ts->tv_sec = sec;
+	ts->tv_nsec = nsec;
+}
+
 void
 nanotime(struct timespec *ts)
 {
-	struct timeval tv;
-	int error;
 
 	if (rump_threads) {
 		rump_gettime(ts);
 	} else {
-		rumpuser_gettimeofday(&tv, &error);
-		TIMEVAL_TO_TIMESPEC(&tv, ts);
+		gettime(ts);
 	}
 }
 
@@ -303,13 +315,13 @@ void
 microtime(struct timeval *tv)
 {
 	struct timespec ts;
-	int error;
 
 	if (rump_threads) {
 		rump_gettime(&ts);
 		TIMESPEC_TO_TIMEVAL(tv, &ts);
 	} else {
-		rumpuser_gettimeofday(tv, &error);
+		gettime(&ts);
+		TIMESPEC_TO_TIMEVAL(tv, &ts);
 	}
 }
 

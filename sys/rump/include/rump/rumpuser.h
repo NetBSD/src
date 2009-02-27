@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.17 2009/02/26 00:59:31 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.18 2009/02/27 15:15:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,6 @@
 #ifndef _RUMP_RUMPUSER_H_
 #define _RUMP_RUMPUSER_H_
 
-struct stat;
 struct msghdr;
 struct pollfd;
 struct sockaddr;
@@ -76,7 +75,7 @@ struct rumpuser_iovec {
 ssize_t rumpuser_readv(int, const struct rumpuser_iovec *, int, int *);
 ssize_t rumpuser_writev(int, const struct rumpuser_iovec *, int, int *);
 
-int rumpuser_gettimeofday(struct timeval *, int *);
+int rumpuser_gettime(uint64_t *, uint64_t *, int *);
 int rumpuser_getenv(const char *, char *, size_t, int *);
 
 int rumpuser_gethostname(char *, size_t, int *);

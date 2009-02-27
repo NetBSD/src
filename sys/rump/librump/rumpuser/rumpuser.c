@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.33 2009/02/26 00:59:31 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.34 2009/02/27 15:15:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.33 2009/02/26 00:59:31 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.34 2009/02/27 15:15:19 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -343,10 +343,21 @@ rumpuser_writev(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 }
 
 int
-rumpuser_gettimeofday(struct timeval *tv, int *error)
+rumpuser_gettime(uint64_t *sec, uint64_t *nsec, int *error)
 {
+	struct timeval tv;
+	int rv;
 
-	DOCALL(int, gettimeofday(tv, NULL));
+	rv = gettimeofday(&tv, NULL);
+	if (rv == -1) {
+		*error = errno;
+		return rv;
+	}
+
+	*sec = tv.tv_sec;
+	*nsec = tv.tv_usec * 1000;
+
+	return 0;
 }
 
 int
