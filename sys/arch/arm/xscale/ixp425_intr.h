@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.8 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.9 2009/02/27 03:56:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,6 +42,7 @@
 
 #ifndef _LOCORE
 
+#include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
