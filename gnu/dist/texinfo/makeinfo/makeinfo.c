@@ -1,4 +1,4 @@
-/*	$NetBSD: makeinfo.c,v 1.15 2009/02/28 19:14:15 joerg Exp $	*/
+/*	$NetBSD: makeinfo.c,v 1.16 2009/02/28 19:51:13 joerg Exp $	*/
 
 /* makeinfo -- convert Texinfo source into other formats.
    Id: makeinfo.c,v 1.74 2004/12/19 17:15:42 karl Exp
@@ -381,8 +381,8 @@ General output options:\n\
                               also, write to standard output by default.\n\
       --no-split            suppress splitting of Info or HTML output,\n\
                             generate only one output file.\n\
-      --no-version-headers  suppress header with makeinfo version and\n
-                            source path.\n
+      --no-version-headers  suppress header with makeinfo version and\n\
+                            source path.\n\
       --number-sections     output chapter and sectioning numbers.\n\
   -o, --output=FILE         output to FILE (directory if split HTML),\n\
 "));
