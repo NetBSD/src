@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1235 2009/02/13 20:42:41 jmmv Exp $
+#	$NetBSD: mi,v 1.1236 2009/02/28 15:32:29 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2560,6 +2560,9 @@
 ./usr/lib/librumpnet_netinet.a			comp-c-lib
 ./usr/lib/librumpnet_netinet_g.a	-unknown-	debuglib
 ./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile
+./usr/lib/librumpnet_shmif.a			comp-c-lib
+./usr/lib/librumpnet_shmif_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_sockin.a			comp-c-lib
 ./usr/lib/librumpnet_sockin_g.a		-unknown-	debuglib
 ./usr/lib/librumpnet_sockin_p.a			comp-c-proflib		profile
