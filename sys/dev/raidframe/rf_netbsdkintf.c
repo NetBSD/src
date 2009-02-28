@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.256 2009/02/28 22:02:17 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.257 2009/02/28 23:11:11 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.256 2009/02/28 22:02:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.257 2009/02/28 23:11:11 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2074,15 +2074,6 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 	struct buf *bp;
 
 	req->queue = queue;
-
-#if DIAGNOSTIC
-	if (queue->raidPtr->raidid >= numraid) {
-		printf("Invalid unit number: %d %d\n", queue->raidPtr->raidid,
-		    numraid);
-		panic("Invalid Unit number in rf_DispatchKernelIO");
-	}
-#endif
-
 	bp = req->bp;
 
 	switch (req->type) {
