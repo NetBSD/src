@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.1 2009/02/28 15:28:46 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.2 2009/02/28 16:15:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.1 2009/02/28 15:28:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.2 2009/02/28 16:15:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -82,6 +82,11 @@ static void shmif_rcv(void *);
 
 static uint32_t numif;
 
+/*
+ * This locking needs work and will misbehave severely if:
+ * 1) the backing memory has to be paged in
+ * 2) some lockholder exits while holding the lock
+ */
 static void
 lockbus(struct shmif_sc *sc)
 {
@@ -229,7 +234,8 @@ rump_shmif_create(const char *path, int *ifnum)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
-	*ifnum = mynum;
+	if (ifnum)
+		*ifnum = mynum;
 	return 0;
 
  fail:
