@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.2 2009/02/14 17:19:30 joerg Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.3 2009/02/28 19:33:45 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.2 2009/02/14 17:19:30 joerg Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.3 2009/02/28 19:33:45 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,6 +57,7 @@ const char *cert_chain_file;
 const char *certs_packages;
 const char *certs_pkg_vulnerabilities;
 const char *check_vulnerabilities;
+const char *config_pkg_path;
 const char *verified_installation;
 const char *gpg_cmd;
 const char *gpg_keyring_pkgvuln;
@@ -86,6 +87,7 @@ static struct config_variable {
 	{ "GPG_SIGN_AS", &gpg_sign_as },
 	{ "IGNORE_PROXY", &ignore_proxy },
 	{ "IGNORE_URL", &ignore_advisories },
+	{ "PKG_PATH", &config_pkg_path },
 	{ "PKGVULNDIR", &pkg_vulnerabilities_dir },
 	{ "PKGVULNURL", &pkg_vulnerabilities_url },
 	{ "VERBOSE_NETIO", &verbose_netio },
@@ -118,6 +120,9 @@ pkg_install_config(void)
 
 	if (check_vulnerabilities == NULL)
 		check_vulnerabilities = "never";
+
+	if ((value = getenv("PKG_PATH")) != NULL)
+		config_pkg_path = value;
 
 	snprintf(fetch_flags, sizeof(fetch_flags), "%s%s%s",
 	    (verbose_netio && *verbose_netio) ? "v" : "",
