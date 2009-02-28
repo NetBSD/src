@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.3 2009/02/14 17:18:56 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.4 2009/02/28 19:33:36 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.3 2009/02/14 17:18:56 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.4 2009/02/28 19:33:36 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -123,7 +123,7 @@ static const struct pkg_meta_desc {
 	{ 0, NULL, 0 },
 };
 
-static int pkg_do(const char *, int);
+static int pkg_do(const char *, int, int);
 
 static int
 mkdir_p(const char *path)
@@ -901,7 +901,7 @@ check_explicit_conflict_iter(const char *cur_pkg, void *cookie)
 {
 	struct find_conflict_data *data = cookie;
 
-	if (strcmp(data->old_pkg, cur_pkg) == 0)
+	if (data->old_pkg && strcmp(data->old_pkg, cur_pkg) == 0)
 		return 0;
 
 	warnx("Package `%s' conflicts with `%s', and `%s' is installed.",
@@ -1024,7 +1024,7 @@ check_dependencies(struct pkg_task *pkg)
 				    p->name);
 				continue;
 			}
-			if (pkg_do(p->name, 1)) {
+			if (pkg_do(p->name, 1, 0)) {
 				warnx("Can't install dependency %s", p->name);
 				status = -1;
 				break;
@@ -1111,8 +1111,7 @@ start_replacing(struct pkg_task *pkg)
 	if (preserve_meta_data_file(pkg, REQUIRED_BY_FNAME))
 		return -1;
 
-	if (pkg->meta_data.meta_preserve == NULL &&
-	    preserve_meta_data_file(pkg, PRESERVE_FNAME))
+	if (preserve_meta_data_file(pkg, PRESERVE_FNAME))
 		return -1;
 
 	if (pkg->meta_data.meta_installed_info == NULL &&
@@ -1239,7 +1238,7 @@ check_vulnerable(struct pkg_task *pkg)
  * Install a single package.
  */
 static int
-pkg_do(const char *pkgpath, int mark_automatic)
+pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 {
 	int status, invalid_sig;
 	void *archive_cookie;
@@ -1250,7 +1249,8 @@ pkg_do(const char *pkgpath, int mark_automatic)
 
 	status = -1;
 
-	if ((pkg->archive = find_archive(pkgpath, &archive_cookie)) == NULL) {
+	pkg->archive = find_archive(pkgpath, &archive_cookie, top_level);
+	if (pkg->archive == NULL) {
 		warnx("no pkg found for '%s', sorry.", pkgpath);
 		goto clean_find_archive;
 	}
@@ -1427,25 +1427,15 @@ clean_find_archive:
 int
 pkg_perform(lpkg_head_t *pkgs)
 {
-	int     oldcwd, errors = 0;
+	int     errors = 0;
 	lpkg_t *lpp;
 
-	if ((oldcwd = open(".", O_RDONLY, 0)) == -1)
-		err(EXIT_FAILURE, "unable to open cwd");
-
 	while ((lpp = TAILQ_FIRST(pkgs)) != NULL) {
-		path_prepend_from_pkgname(lpp->lp_name);
-		if (pkg_do(lpp->lp_name, Automatic))
+		if (pkg_do(lpp->lp_name, Automatic, 1))
 			++errors;
-		path_prepend_clear();
 		TAILQ_REMOVE(pkgs, lpp, lp_link);
 		free_lpkg(lpp);
-
-		if (fchdir(oldcwd) == -1)
-			err(EXIT_FAILURE, "unable to restore cwd");
 	}
-
-	close(oldcwd);
 
 	return errors;
 }
