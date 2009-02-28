@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.76 2009/02/08 16:30:48 pooka Exp $
+# $NetBSD: shl.mi,v 1.77 2009/02/28 15:32:29 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -98,6 +98,7 @@
 ./usr/lib/librumpnet_local_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_net_pic.a			comp-c-piclib
 ./usr/lib/librumpnet_netinet_pic.a		comp-c-piclib
+./usr/lib/librumpnet_shmif_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_sockin_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib
 ./usr/lib/librumpuser_pic.a			comp-c-piclib
