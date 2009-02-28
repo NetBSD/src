@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.3 2009/02/28 19:34:05 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2009/02/02 20:44:05 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.3 2009/02/28 19:34:05 joerg Exp $");
 
 /*
  *
@@ -241,14 +241,6 @@ main(int argc, char **argv)
 		warnx("can't use both -a/-u and package name");
 		usage();
 	}
-
-	/* Don't do FTP stuff when operating on all pkgs */
-	if (Which != WHICH_LIST && getenv("PKG_PATH") != 0) {
-		warnx("disabling PKG_PATH when operating on all packages.");
-		unsetenv("PKG_PATH");
-	}
-
-	path_create(getenv("PKG_PATH"));
 
 	/* Set some reasonable defaults */
 	if (!Flags)

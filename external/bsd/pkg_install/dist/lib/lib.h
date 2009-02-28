@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.3 2009/02/14 17:19:30 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.4 2009/02/28 19:33:43 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -63,8 +63,6 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#include "path.h"
 
 /* Macros */
 #define SUCCESS	(0)
@@ -319,7 +317,8 @@ struct archive_entry;
 
 struct archive *open_archive(const char *, void **);
 void	close_archive(void *);
-struct archive *find_archive(const char *, void **);
+struct archive *find_archive(const char *, void **, int);
+void	process_pkg_path(void);
 
 /* Packing list */
 plist_t *new_plist_entry(void);
@@ -416,6 +415,7 @@ extern const char *certs_packages;
 extern const char *certs_pkg_vulnerabilities;
 extern const char *check_vulnerabilities;
 extern const char *config_file;
+extern const char *config_pkg_path;
 extern const char *verified_installation;
 extern const char *gpg_cmd;
 extern const char *gpg_keyring_pkgvuln;

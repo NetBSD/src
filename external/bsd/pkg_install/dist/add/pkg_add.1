@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.3 2009/02/14 17:19:03 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.4 2009/02/28 19:33:37 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd October 10, 2008
+.Dd February 27, 2009
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -87,19 +87,18 @@ The following command line arguments are supported:
 .Bl -tag -width indent
 .It Ar pkg-name [ ... ]
 The named packages are installed.
+.Nm
+will first try to use
 .Ar pkg-name
-may be either a URL or a local pathname,
-a package name of "-" will cause
+as full URL or path name without any wildcard processing.
+If that fails,
 .Nm
-to read from stdin.
-If the packages are not found in the current
-working directory,
-.Nm
-will search them in each directory named by the
-.Ev PKG_PATH
-environment variable.
-Any dependencies required by the installed package will be searched
-in the same location that the original package was installed from.
+will try to match packages using wildcard processing.
+If that fails as well and
+.Ar pkg-name
+does not contain any /, the entries of the
+.Dv PKG_PATH
+variable are searched using the wildcard processing rules.
 .It Fl A
 Mark package as installed automatically, as dependency of another
 package.
@@ -414,14 +413,16 @@ The default package database directory is
 .It Ev PKG_PATH
 The value of the
 .Ev PKG_PATH
-is used if a given package can't be found, it's usually set to
+variable overrides the
+.Xr pkg_install.conf 5
+variable of the same name.
+It is used if a given package can't be found, it's usually set to
 .Pa /usr/pkgsrc/packages/All .
 The environment variable
 should be a series of entries separated by semicolons.
 Each entry consists of a directory name or URL.
 The current directory may be indicated implicitly by an empty directory
 name, or explicitly by a single period.
-FTP URLs may not end with a slash.
 .It Ev PKG_REFCOUNT_DBDIR
 Location of the package reference counts database directory.
 The default location is the path to the package database directory with
