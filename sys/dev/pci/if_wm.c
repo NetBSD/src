@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.165 2009/02/27 13:17:01 sborrill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.166 2009/02/28 15:06:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.165 2009/02/27 13:17:01 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.166 2009/02/28 15:06:43 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3882,7 +3882,7 @@ wm_mchash(struct wm_softc *sc, const uint8_t *enaddr)
 	static const int ich8_hi_shift[4] = { 2, 3, 4, 6 };
 	uint32_t hash;
 
-	if (sc->sc_type == WM_T_ICH8) {
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
 		hash = (enaddr[4] >> ich8_lo_shift[sc->sc_mchash_type]) |
 		    (((uint16_t) enaddr[5]) << ich8_hi_shift[sc->sc_mchash_type]);
 		return (hash & 0x3ff);
@@ -3927,7 +3927,7 @@ wm_set_filter(struct wm_softc *sc)
 	 * Set the station address in the first RAL slot, and
 	 * clear the remaining slots.
 	 */
-	if (sc->sc_type == WM_T_ICH8)
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
 		size = WM_ICH8_RAL_TABSIZE;
 	else
 		size = WM_RAL_TABSIZE;
