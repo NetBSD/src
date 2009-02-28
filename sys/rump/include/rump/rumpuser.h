@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.18 2009/02/27 15:15:19 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.19 2009/02/28 15:49:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,8 @@
 #ifndef _RUMP_RUMPUSER_H_
 #define _RUMP_RUMPUSER_H_
 
+#include <sys/stdint.h>
+
 struct msghdr;
 struct pollfd;
 struct sockaddr;
@@ -52,6 +54,7 @@ void *rumpuser__realloc(void *, size_t, int, const char *, int);
 void rumpuser_free(void *);
 
 void *rumpuser_anonmmap(size_t, int, int, int *);
+void *rumpuser_filemmap(int fd, off_t, size_t, int, int, int *);
 void  rumpuser_unmap(void *, size_t);
 
 int rumpuser_open(const char *, int, int *);
@@ -89,6 +92,9 @@ int rumpuser_putchar(int, int *);
 void rumpuser_panic(void);
 
 void rumpuser_seterrno(int);
+
+int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
+int rumpuser_writewatchfile_wait(int, intptr_t *, int *);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.34 2009/02/27 15:15:19 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.35 2009/02/28 15:49:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.34 2009/02/27 15:15:19 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.35 2009/02/28 15:49:12 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.34 2009/02/27 15:15:19 pooka Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
@@ -180,11 +181,37 @@ rumpuser_unmap(void *addr, size_t len)
 	assert(rv == 0);
 }
 
+void *
+rumpuser_filemmap(int fd, off_t offset, size_t len, int shared,
+	int dotruncate, int *error)
+{
+	void *rv;
+	int flags;
+
+	if (dotruncate)
+		ftruncate(fd, offset + len);
+
+	flags = MAP_FILE;
+	if (shared)
+		flags |= MAP_SHARED;
+	else
+		flags |= MAP_PRIVATE;
+
+	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, flags, fd, offset);
+	if (rv == MAP_FAILED) {
+		*error = errno;
+		return NULL;
+	}
+
+	*error = 0;
+	return rv;
+}
+
 int
 rumpuser_open(const char *path, int flags, int *error)
 {
 
-	DOCALL(int, (open(path, flags)));
+	DOCALL(int, (open(path, flags, 0644)));
 }
 
 int
@@ -399,7 +426,7 @@ int
 rumpuser_putchar(int c, int *error)
 {
 
-	DOCALL(int, (putchar_unlocked(c)));
+	DOCALL(int, (putchar(c)));
 }
 
 void
@@ -414,4 +441,44 @@ rumpuser_seterrno(int error)
 {
 
 	errno = error;
+}
+
+int
+rumpuser_writewatchfile_setup(int kq, int fd, intptr_t opaque, int *error)
+{
+	struct kevent kev;
+
+	if (kq == -1) {
+		kq = kqueue();
+		if (kq == -1) {
+			*error = errno;
+			return -1;
+		}
+	}
+
+	EV_SET(&kev, fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR,
+	    NOTE_WRITE, 0, opaque);
+	if (kevent(kq, &kev, 1, NULL, 0, NULL) == -1) {
+		*error = errno;
+		return -1;
+	}
+
+	return kq;
+}
+
+int
+rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
+{
+	struct kevent kev;
+	int rv;
+
+	KLOCK_WRAP(rv = kevent(kq, NULL, 0, &kev, 1, NULL));
+	if (rv == -1) {
+		*error = errno;
+		return -1;
+	}
+
+	if (opaque)
+		*opaque = kev.udata;
+	return rv;
 }
