@@ -1,4 +1,4 @@
-/*	$NetBSD: alphasort.c,v 1.1 2005/08/19 02:04:54 christos Exp $	*/
+/*	$NetBSD: alphasort.c,v 1.2 2009/03/01 19:59:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: alphasort.c,v 1.1 2005/08/19 02:04:54 christos Exp $");
+__RCSID("$NetBSD: alphasort.c,v 1.2 2009/03/01 19:59:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,10 +43,6 @@ __RCSID("$NetBSD: alphasort.c,v 1.1 2005/08/19 02:04:54 christos Exp $");
 #include <assert.h>
 #include <dirent.h>
 #include <string.h>
-
-#ifdef __weak_alias
-__weak_alias(alphasort,_alphasort)
-#endif
 
 /*
  * Alphabetic order comparison routine for those who want it.
