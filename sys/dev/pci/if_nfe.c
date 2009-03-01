@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.41 2009/03/01 08:29:25 cegger Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.42 2009/03/01 13:34:10 cegger Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.41 2009/03/01 08:29:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.42 2009/03/01 13:34:10 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -245,7 +245,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(self, "could not map interrupt\n");
-		return;
+		goto fail;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
@@ -255,7 +255,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -345,7 +345,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (nfe_alloc_tx_ring(sc, &sc->txq) != 0) {
 		aprint_error_dev(self, "could not allocate Tx ring\n");
-		return;
+		goto fail;
 	}
 
 	mutex_init(&sc->rxq.mtx, MUTEX_DEFAULT, IPL_NET);
@@ -353,7 +353,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	if (nfe_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		aprint_error_dev(self, "could not allocate Rx ring\n");
 		nfe_free_tx_ring(sc, &sc->txq);
-		return;
+		goto fail;
 	}
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -416,6 +416,16 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
+
+	return;
+
+fail:
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (memsize)
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
 }
 
 void
@@ -1362,6 +1372,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create desc DMA map\n");
+		ring->map = NULL;
 		goto fail;
 	}
 
@@ -1430,6 +1441,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 			if (error != 0) {
 				aprint_error_dev(sc->sc_dev,
 				    "could not create DMA map\n");
+				data->map = NULL;
 				goto fail;
 			}
 			MCLGET(data->m, M_DONTWAIT);
@@ -1599,6 +1611,7 @@ nfe_jpool_alloc(struct nfe_softc *sc)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create jumbo DMA map\n");
+		ring->jmap = NULL;
 		goto fail;
 	}
 
@@ -1690,6 +1703,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not create desc DMA map\n");
+		ring->map = NULL;
 		goto fail;
 	}
 
@@ -1726,6 +1740,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not create DMA map\n");
+			ring->data[i].map = NULL;
 			goto fail;
 		}
 	}
