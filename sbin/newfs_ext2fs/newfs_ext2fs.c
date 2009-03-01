@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.5 2009/03/01 19:21:09 christos Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.6 2009/03/01 21:54:31 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.5 2009/03/01 19:21:09 christos Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.6 2009/03/01 21:54:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -456,21 +456,21 @@ strsuftoi64(const char *desc, const char *arg, int64_t min, int64_t max,
 }
 
 static const char help_strings[] =
+	"\t-b bsize\tblock size\n"
 	"\t-D inodesize\tsize of an inode in bytes (128 or 256)\n"
 	"\t-F \t\tcreate file system image in regular file\n"
-	"\t-I \t\tdo not check that the file system type is `Linux Ext2'\n"
-	"\t-N \t\tdo not create file system, just print out parameters\n"
-	"\t-O N\t\tfilesystem revision: 0 ==> REV0, 1 ==> REV1 (default 0)\n"
-	"\t-S secsize\tsector size\n"
-	"\t-V verbose\toutput verbosity: 0 ==> none, 4 ==> max\n"
-	"\t-Z \t\tpre-zero the image file\n"
-	"\t-b bsize\tblock size\n"
 	"\t-f fsize\tfragment size\n"
+	"\t-I \t\tdo not check that the file system type is `Linux Ext2'\n"
 	"\t-i density\tnumber of bytes per inode\n"
 	"\t-m minfree\tminimum free space %\n"
+	"\t-N \t\tdo not create file system, just print out parameters\n"
 	"\t-n inodes\tnumber of inodes (overrides -i density)\n"
+	"\t-O N\t\tfilesystem revision: 0 ==> REV0, 1 ==> REV1 (default 0)\n"
+	"\t-S secsize\tsector size\n"
 	"\t-s fssize\tfile system size (sectors)\n"
-	"\t-v volname\text2fs volume name\n";
+	"\t-V verbose\toutput verbosity: 0 ==> none, 4 ==> max\n"
+	"\t-v volname\text2fs volume name\n"
+	"\t-Z \t\tpre-zero the image file\n";
 
 static void
 usage(void)
