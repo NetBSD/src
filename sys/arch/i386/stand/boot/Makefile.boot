@@ -1,10 +1,8 @@
-# $NetBSD: Makefile.boot,v 1.37 2009/02/16 22:39:30 jmcneill Exp $
+# $NetBSD: Makefile.boot,v 1.38 2009/03/01 09:23:27 isaki Exp $
 
 S=	${.CURDIR}/../../../../../
 
 NOMAN=
-BINDIR= /usr/mdec
-BINMODE= 0444
 PROG?= boot
 NEWVERSWHAT?= "BIOS Boot"
 VERSIONFILE?= ${.CURDIR}/../version
