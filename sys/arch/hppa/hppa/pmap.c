@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.31 2009/03/01 23:23:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.32 2009/03/01 23:25:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.31 2009/03/01 23:23:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.32 2009/03/01 23:25:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ pmap_pde_release(pmap_t pmap, vaddr_t va, struct vm_page *ptp)
 			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
 		ptp->wire_count = 0;
 
-		KASSERT((ptp->flags & PG_BUSY) == 0)
+		KASSERT((ptp->flags & PG_BUSY) == 0);
 
 		pmap_pagefree(ptp);
 	}
