@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.30 2009/02/25 20:43:30 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.31 2009/03/01 23:23:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.30 2009/02/25 20:43:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.31 2009/03/01 23:23:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,10 +382,9 @@ pmap_pde_release(pmap_t pmap, vaddr_t va, struct vm_page *ptp)
 		if (pmap->pm_ptphint == ptp)
 			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
 		ptp->wire_count = 0;
-#ifdef DIAGNOSTIC
-		if (ptp->flags & PG_BUSY)
-			panic("pmap_pde_release: busy page table page");
-#endif
+
+		KASSERT((ptp->flags & PG_BUSY) == 0)
+
 		pmap_pagefree(ptp);
 	}
 }
@@ -1511,6 +1510,8 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
 		pte = pmap_pte_get(pde, va);
 
+		KASSERT(pte);
+
 		if (pte & PTE_PROT(TLB_WIRED)) {
 			pte &= ~PTE_PROT(TLB_WIRED);
 			pmap->pm_stats.wired_count--;
@@ -1520,11 +1521,6 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	PMAP_UNLOCK(pmap);
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_unwire: leaving\n"));
-
-#ifdef DIAGNOSTIC
-	if (!pte)
-		panic("pmap_unwire: invalid va 0x%lx", va);
-#endif
 }
 
 bool
