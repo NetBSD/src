@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.5 2008/11/19 12:36:41 ad Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.6 2009/03/01 19:37:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -431,7 +431,7 @@ read_sblock(struct open_file *f, struct m_ext2fs *fs)
 	if (ext2fs.e2fs_rev > E2FS_REV1 ||
 	    (ext2fs.e2fs_rev == E2FS_REV1 &&
 	     (ext2fs.e2fs_first_ino != EXT2_FIRSTINO ||
-	      ext2fs.e2fs_inode_size != EXT2_DINODE_SIZE ||
+	     (ext2fs.e2fs_inode_size != 128 && ext2fs.e2fs_inode_size != 256) ||
 	      ext2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP))) {
 		return ENODEV;
 	}
@@ -449,7 +449,7 @@ read_sblock(struct open_file *f, struct m_ext2fs *fs)
 	fs->e2fs_bmask = ~fs->e2fs_qbmask;
 	fs->e2fs_ngdb =
 	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE;
+	fs->e2fs_ipb = fs->e2fs_bsize / ext2fs.e2fs_inode_size;
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
 
 	return 0;
