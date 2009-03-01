@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.4 2009/02/19 23:07:33 haad Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.5 2009/03/01 23:16:51 haad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -98,7 +98,11 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 
 #endif
 
-/* Init function called from dm_table_load_ioctl. */
+/*
+ * Init function called from dm_table_load_ioctl.
+ * start length mirror log_type #logargs logarg1 ... logargN #devs device1 offset1 ... deviceN offsetN
+ * 0 52428800 mirror clustered_disk 4 253:2 1024 UUID block_on_error 3 253:3 0 253:4 0 253:5 0
+ */
 int
 dm_target_mirror_init(dm_dev_t *dmv, void **target_config, char *argv)
 {
