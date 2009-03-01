@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.17 2008/11/23 10:09:25 mrg Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.18 2009/03/01 15:59:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -154,7 +154,7 @@ struct ext2fs_dinode {
 #define EXT2_NODUMP		0x00000040	/* do not dump file */
 
 /* Size of on-disk inode. */
-#define	EXT2_DINODE_SIZE	(sizeof(struct ext2fs_dinode))	/* 128 */
+#define EXT2_DINODE_SIZE(s)	(s)->e2fs.e2fs_inode_size
 
 /*
  * The e2di_blocks fields may be overlaid with other information for
