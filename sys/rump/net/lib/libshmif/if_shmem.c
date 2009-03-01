@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.2 2009/02/28 16:15:19 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.3 2009/03/01 07:10:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.2 2009/02/28 16:15:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.3 2009/03/01 07:10:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.2 2009/02/28 16:15:19 pooka Exp $");
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
