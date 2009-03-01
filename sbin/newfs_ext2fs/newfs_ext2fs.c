@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.4 2008/07/20 01:20:23 lukem Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.5 2009/03/01 19:21:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.4 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.5 2009/03/01 19:21:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ int	verbosity;		/* amount of printf() output */
 #define DEFAULT_VERBOSITY 3	/* 4 is traditional behavior of newfs(8) */
 int64_t fssize;			/* file system size */
 uint	sectorsize;		/* bytes/sector */
+uint16_t inodesize = 128;	/* inode size */
 uint	fsize = 0;		/* fragment size */
 uint	bsize = 0;		/* block size */
 uint	minfree = MINFREE;	/* free space threshold */
@@ -133,10 +134,16 @@ main(int argc, char *argv[])
 	fsi = fso = -1;
 	Fflag = Iflag = Zflag = 0;
 	verbosity = -1;
-	opstring = "FINO:S:V:Zb:f:i:l:m:n:s:v:";
+	opstring = "D:FINO:S:V:Zb:f:i:l:m:n:s:v:";
 	byte_sized = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
+		case 'D':
+			inodesize = (uint16_t)strtol(optarg, &s1, 0);
+			if (*s1 || inodesize != 128 || inodesize != 256)
+				errx(1, "Bad inode size %d "
+				    "(only 128 and 256 supported)", inodesize);
+			break;
 		case 'F':
 			Fflag = 1;
 			break;
@@ -449,6 +456,7 @@ strsuftoi64(const char *desc, const char *arg, int64_t min, int64_t max,
 }
 
 static const char help_strings[] =
+	"\t-D inodesize\tsize of an inode in bytes (128 or 256)\n"
 	"\t-F \t\tcreate file system image in regular file\n"
 	"\t-I \t\tdo not check that the file system type is `Linux Ext2'\n"
 	"\t-N \t\tdo not create file system, just print out parameters\n"

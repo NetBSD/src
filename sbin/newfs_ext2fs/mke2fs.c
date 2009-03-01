@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.9 2008/08/28 16:29:24 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.10 2009/03/01 19:21:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -106,7 +106,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.9 2008/08/28 16:29:24 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.10 2009/03/01 19:21:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,11 +248,12 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs.e2fs_fsize = ilog2(fsize) - LOG_MINBSIZE;
 
 	sblock.e2fs_bsize = bsize;
+	sblock.e2fs.e2fs_inode_size = inodesize;
 	sblock.e2fs_bshift = sblock.e2fs.e2fs_log_bsize + LOG_MINBSIZE;
 	sblock.e2fs_qbmask = sblock.e2fs_bsize - 1;
 	sblock.e2fs_bmask = ~sblock.e2fs_qbmask;
 	sblock.e2fs_fsbtodb = ilog2(sblock.e2fs_bsize) - ilog2(sectorsize);
-	sblock.e2fs_ipb = sblock.e2fs_bsize / EXT2_DINODE_SIZE;
+	sblock.e2fs_ipb = sblock.e2fs_bsize / inodesize;
 
 	/*
 	 * Ext2fs preserves BBSIZE (1024 bytes) space at the top for
@@ -301,7 +302,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		num_inodes = UINT16_MAX * ncg;	/* ext2bgd_nifree is uint16_t */
 
 	inodes_per_cg = num_inodes / ncg;
-	iblocks_per_cg = howmany(EXT2_DINODE_SIZE * inodes_per_cg, bsize);
+	iblocks_per_cg = howmany(inodesize * inodes_per_cg, bsize);
 
 	/* Check that the last cylinder group has enough space for inodes */
 	minblocks_per_cg =
@@ -404,7 +405,6 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs.e2fs_rgid = getegid();
 
 	sblock.e2fs.e2fs_first_ino = EXT2_FIRSTINO;
-	sblock.e2fs.e2fs_inode_size = EXT2_DINODE_SIZE;
 
 	/* e2fs_block_group_nr is set on writing superblock to each group */
 
