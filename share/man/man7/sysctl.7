@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.19 2009/03/01 17:35:09 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.20 2009/03/01 21:50:55 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,7 @@ The top level names are defined with a CTL_ prefix in
 and are as follows.
 The next and subsequent levels down are found in the include files
 listed here, and described in separate sections below.
-.Bl -column securityXX CTLXSECURITYXX "Next level namesXX"
+.Bl -column securityXX CTLXSECURITYXX "Next level namesXX" DescriptionXX
 .It Sy Name	Constant	Next level names	Description
 .It kern	CTL\_KERN	sys/sysctl.h	High kernel limits
 .It vm	CTL\_VM	uvm/uvm_param.h	Virtual memory
@@ -1867,7 +1867,6 @@ The version of POSIX 1003.2 with which the system attempts to comply.
 .It Li user.re_dup_max ( USER_RE_DUP_MAX )
 The maximum number of repeated occurrences of a regular expression
 permitted when using interval notation.
-.ne 1i
 .It Li user.stream_max ( USER_STREAM_MAX )
 The minimum maximum number of streams that a process may have open
 at any one time.
