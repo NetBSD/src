@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.127 2009/02/18 13:31:59 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.128 2009/03/01 12:13:12 haad Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.127 2009/02/18 13:31:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.128 2009/03/01 12:13:12 haad Exp $");
 
 #include "opt_aio.h"
 #include "opt_ddb.h"
@@ -824,7 +824,7 @@ static void
 db_command(const struct db_command **last_cmdp)
 {
 	const struct db_command *command;
-	static db_expr_t last_count;
+	static db_expr_t last_count = 0;
 	db_expr_t	addr, count;
 	char		modif[TOK_STRING_SIZE];
 	
@@ -832,7 +832,6 @@ db_command(const struct db_command **last_cmdp)
 	bool		have_addr = false;
 
 	command = NULL;
-	last_count = 0;
 	
 	t = db_read_token();
 	if ((t == tEOL) || (t == tCOMMA)) {
