@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.40 2009/02/12 10:33:23 cegger Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.41 2009/03/01 08:29:25 cegger Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.40 2009/02/12 10:33:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.41 2009/03/01 08:29:25 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -293,11 +293,14 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP77_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP77_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP77_LAN4:
+		sc->sc_flags |= NFE_40BIT_ADDR | NFE_HW_CSUM |
+		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
+		break;
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN4:
-		sc->sc_flags |= NFE_40BIT_ADDR | NFE_HW_CSUM |
+		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
 		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
 		break;
 	case PCI_PRODUCT_NVIDIA_CK804_LAN1:
