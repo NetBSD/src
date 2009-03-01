@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.3 2009/03/01 07:10:41 martin Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.4 2009/03/01 20:50:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,10 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.3 2009/03/01 07:10:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.4 2009/03/01 20:50:04 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/condvar.h>
 #include <sys/fcntl.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -213,16 +212,6 @@ rump_shmif_create(const char *path, int *ifnum)
 	if (sc->sc_kq == -1)
 		goto fail;
 
-	if (rump_threads) {
-		error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-		    shmif_rcv, ifp, NULL, "shmif");
-		if (error) {
-			goto fail;
-		}
-	} else {
-		printf("WARNING: threads not enabled, shmif NOT working\n");
-	}
-
 	sprintf(ifp->if_xname, "shmif%d", mynum);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -246,9 +235,17 @@ rump_shmif_create(const char *path, int *ifnum)
 static int
 shmif_init(struct ifnet *ifp)
 {
+	int error = 0;
+
+	if (rump_threads) {
+		error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+		    shmif_rcv, ifp, NULL, "shmif");
+	} else {
+		printf("WARNING: threads not enabled, shmif NOT working\n");
+	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	return 0;
+	return error;
 }
 
 static int
