@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.149 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: contents,v 1.150 2009/03/01 01:13:28 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1081,8 +1081,8 @@ currently does not ship with an X server or X clients.
 .\}
 .el \{\
 These sources are based on
-.ie \n[i386]:\n[amd64]:\n[macppc]:\n[sparc64]:\n[shark] \{\
-X.Org 7.3.
+.ie \n[i386]:\n[amd64]:\n[macppc]:\n[sgimips]:\n[sparc64]:\n[shark] \{\
+X.Org.
 .\}
 .el \{\
 XFree86 4.5.0.
