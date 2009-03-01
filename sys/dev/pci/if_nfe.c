@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.42 2009/03/01 13:34:10 cegger Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.43 2009/03/01 13:44:54 cegger Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.42 2009/03/01 13:34:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.43 2009/03/01 13:44:54 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1399,7 +1399,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 		goto fail;
 	}
 
-	bzero(*desc, NFE_RX_RING_COUNT * descsize);
+	memset(*desc, 0, NFE_RX_RING_COUNT * descsize);
 	ring->physaddr = ring->map->dm_segs[0].ds_addr;
 
 	if (sc->sc_flags & NFE_USE_JUMBO) {
@@ -1730,7 +1730,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		goto fail;
 	}
 
-	bzero(*desc, NFE_TX_RING_COUNT * descsize);
+	memset(*desc, 0, NFE_TX_RING_COUNT * descsize);
 	ring->physaddr = ring->map->dm_segs[0].ds_addr;
 
 	for (i = 0; i < NFE_TX_RING_COUNT; i++) {
@@ -1837,20 +1837,20 @@ nfe_setmulti(struct nfe_softc *sc)
 	int i;
 
 	if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
-		bzero(addr, ETHER_ADDR_LEN);
-		bzero(mask, ETHER_ADDR_LEN);
+		memset(addr, 0, ETHER_ADDR_LEN);
+		memset(mask, 0, ETHER_ADDR_LEN);
 		goto done;
 	}
 
-	bcopy(etherbroadcastaddr, addr, ETHER_ADDR_LEN);
-	bcopy(etherbroadcastaddr, mask, ETHER_ADDR_LEN);
+	memcpy(addr, etherbroadcastaddr, ETHER_ADDR_LEN);
+	memcpy(mask, etherbroadcastaddr, ETHER_ADDR_LEN);
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
-			bzero(addr, ETHER_ADDR_LEN);
-			bzero(mask, ETHER_ADDR_LEN);
+			memset(addr, 0, ETHER_ADDR_LEN);
+			memset(mask, 0, ETHER_ADDR_LEN);
 			goto done;
 		}
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
