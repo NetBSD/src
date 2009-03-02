@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.28 2007/12/15 19:44:43 perry Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.29 2009/03/02 07:17:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.28 2007/12/15 19:44:43 perry Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.29 2009/03/02 07:17:24 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
+#include <err.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -82,8 +83,7 @@ void
 initscreen(void)
 {
 	if (!SCREENTEST()) {
-		printf("Can't sail on this terminal.\n");
-		exit(1);
+		errx(1, "Can't sail on this terminal.");
 	}
 	/* initscr() already done in SCREENTEST() */
 	view_w = newwin(VIEW_Y, VIEW_X, VIEW_T, VIEW_L);
