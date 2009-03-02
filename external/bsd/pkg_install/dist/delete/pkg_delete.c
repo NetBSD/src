@@ -34,7 +34,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.1 2009/02/25 21:21:44 joerg Exp $");
+__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.2 2009/03/02 22:31:20 joerg Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
@@ -292,9 +292,9 @@ sort_and_recurse(lpkg_head_t *pkgs, lpkg_head_t *sorted_pkgs)
 		    "Package `%s' is still required by other packages:\n",
 		    lpp->lp_name);		
 		process_required_by(lpp->lp_name, NULL, sorted_pkgs, 2);
-		if (Force)
+		if (Force) {
 			TAILQ_INSERT_TAIL(sorted_pkgs, lpp, lp_link);
-		else
+		} else
 			free_lpkg(lpp);
 	}
 

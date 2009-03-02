@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1.1.3 2009/02/14 17:19:26 joerg Exp $	*/
+/*	$NetBSD: show.c,v 1.1.1.4 2009/03/02 22:31:21 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: show.c,v 1.1.1.3 2009/02/14 17:19:26 joerg Exp $");
+__RCSID("$NetBSD: show.c,v 1.1.1.4 2009/03/02 22:31:21 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -404,4 +404,22 @@ print_string_as_var(const char *var, const char *str)
 		printf("%s=%s\n", var, str);
 
 	return 0;
+}
+
+void
+show_list(lpkg_head_t *pkghead, const char *title)
+{
+	lpkg_t *lpp;
+
+	if (!Quiet)
+		printf("%s%s", InfoPrefix, title);
+
+	while ((lpp = TAILQ_FIRST(pkghead)) != NULL) {
+		TAILQ_REMOVE(pkghead, lpp, lp_link);
+		puts(lpp->lp_name);
+		free_lpkg(lpp);
+	}
+
+	if (!Quiet)
+		printf("\n");
 }

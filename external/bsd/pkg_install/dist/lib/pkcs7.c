@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs7.c,v 1.1.1.2 2009/02/25 21:21:41 joerg Exp $	*/
+/*	$NetBSD: pkcs7.c,v 1.1.1.3 2009/03/02 22:31:17 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkcs7.c,v 1.1.1.2 2009/02/25 21:21:41 joerg Exp $");
+__RCSID("$NetBSD: pkcs7.c,v 1.1.1.3 2009/03/02 22:31:17 joerg Exp $");
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ file_to_certs(const char *file)
 			}
 			sk_X509_free(certs);
 			warnx("Can't read certificate in file: %s", file);
+			fclose(f);
 			return NULL;
 		}
 		sk_X509_insert(certs, cert, sk_X509_num(certs));
