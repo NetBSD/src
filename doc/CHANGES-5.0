@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.106 2009/02/27 00:50:37 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.107 2009/03/02 21:08:22 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4746,4 +4746,154 @@ distrib/sets/lists/xserver/md.sgimips		1.25
 
 	One more adjustment for sgimips now that it uses X.Org.
 	[jmcneill, ticket #530]
+
+distrib/utils/sysinst/disks.c			1.102
+
+	Mount /proc automatically.
+	[ad, ticket #496]
+
+distrib/utils/sysinst/disks.c			1.103
+
+	Restore mounting /kern by default.
+	[ad, ticket #497]
+
+sbin/mount_procfs/mount_procfs.8		1.34
+
+	Note change with linux compat.
+	[pooka, ticket #519]
+
+sys/kern/kern_runq.c				1.25
+
+	Make sched_getrq() inline (gcc does not optimize it), avoids call.
+	[rmind, ticket #520]
+
+sys/dev/pci/azalia.c				1.67
+
+	In azalia_stream_halt, invalidate the intr ptr to prevent a
+	race condition where azalia_stream_intr can jump off into lala
+	land during stream shutdown.
+	[jmcneill, ticket #521]
+
+sys/dev/sun/cgsix.c				1.42, 1.43
+
+	On old chip revisions, clear the screen explicitly when attaching.
+	[jdc, ticket #525]
+
+sys/arch/amd64/amd64/machdep.c			1.128
+sys/arch/i386/i386/machdep.c			1.663
+
+	Transfer the system from ACPI to Legacy mode if RB_HALT is set.
+	Fixes PR port-i386/40751 and PR kern/37506.
+	[jmcneill, ticket #526]
+
+sys/arch/vax/vax/trap.c				1.119
+
+	The ci_want_resched check and preempt() call had been removed
+	from userret() which resulted in no process preemption (and
+	probably contributed to the signal trap loop locking up the
+	machine that was recently fixed).  Put the check and preempt()
+	call in the AST trap handler to restore process preemption.
+	[mhitch, ticket #527]
+
+sys/sys/userret.h				1.20
+
+	Remove outdated comment:  vax does now user mi_userret().
+	[mhitch, ticket #528]
+
+sys/arch/i386/i386/machdep.c			1.664
+
+
+	In cpu_reboot(), only halt the other CPUs after we've done the
+	powerdown stuff.  The ACPI code may end up removing some pmap
+	entries, which wants the other CPUs to still be running to
+	handle TLB invalidations.  Fixes PR port-i386/38936.
+	[jmcneill, ticket #529]
+
+external/bsd/top/dist/display.c			1.5
+
+	On a multi-cpu/core machine, running 'top' and pressing '1'
+	resulted in n-1 blank lines at the bottom of the display.  On the
+	same machine, running 'top -1' and pressing '1' resulted in a
+	garbled display that would just get progressively worse.  Invert
+	the values returned by display_setmulti() to correct both issues.
+	[oster, ticket #531]
+
+sys/arch/macppc/conf/GENERIC			patch
+
+	Disable radeonfb.
+	[macallan, ticket #532]
+
+sys/dev/pci/azalia_codec.c			1.76
+
+	Add proper Realtek ALC268 support. While we're here, fix a
+	comment in the ALC262 quirk section.
+	[jmcneill, ticket #533]
+
+doc/3RDPARTY					1.675
+
+	xtraeme is not responsible for bsd-family-tree anymore.
+	[jmcneill, ticket #537]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/xaa/xaaInitAccel.c 1.3
+
+	Apply the following patches from Xorg head:
+	- XAA: Disable offscreen pixmaps by default.
+	  Say Option "XaaOffscreenPixmaps" to turn them back on.
+	- Don't enable XAA offscreen pixmaps with Option
+	  "XaaOffscreenPixmaps" "no".
+	  xf86IsOptionSet is rarely the right function to use for
+	  boolean options because it returns TRUE whenever the option
+	  is present, even if its value is "no", "off", "0", etc.
+
+	Fixes PR xsrc/40939.
+	[jmcneill, ticket #539]
+
+sys/dev/pci/if_nfe.c				1.42
+
+	When nfe_attach() fails, free all resources including interrupt
+	map, interrupt handler and dma maps.  Also prevent call to
+	bus_dmamap_destroy() when bus_dmamap_create() failed.
+	The nfe_free_* routines assume the map pointers are NULL but they
+	are actually undefined. Make the assumption true by making them
+	NULL in the error path of bus_dmamap_create().
+	All together, this fixes crashes when nfe_attach() fails.
+	[cegger, ticket #540]
+
+sys/uvm/uvm_page.c				1.143, 1.144
+
+	- Fix two conditions where PQ_FREE was still/already set while
+	the page was not anymore/yet on the freelist and uvm_fpageqlock
+	was not held
+	- Clear PQ_FREE while the page is in the works of pageidlezero
+	This avoids that the DMA memory allocator (pglistalloc) grabs a
+	page which is not on the freelist, leading to a diagnostic panic
+	(with DEBUG) or freelist corruption. (mostly on X server
+	activation after a VT switch or suspend/resume because this can
+	allocate megabytes of AGP memory)
+	--
+	oops - missed a case with PMAP_PAGEIDLEZERO if md code aborts the
+	zeroing process.
+	[drochner, ticket #541]
+
+sys/kern/kern_descrip.c				1.186
+
+	PR/40625: fd_copy: fix off-by-one bug in a race condition path
+	and assert.
+	[rmind, ticket #542]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.256
+
+	It seems that some SCSI drivers can block while the spinlock on
+	a given disk queue is being held.  Work around this by dropping
+	the lock before bdev_strategy(), and re-grabbing the lock
+	afterwards.
+
+	There has been some success with this in addressing PR#39993.
+	[oster, ticket #543]
+
+doc/CHANGES					patch
+
+	Note that mount(2) and unmount(2) use kauth(9) for security
+	policy.
+	[apb, ticket #477]
 
