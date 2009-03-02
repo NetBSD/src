@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.44 2008/11/16 07:06:37 dholland Exp $ */
+/* $NetBSD: decl.c,v 1.45 2009/03/02 20:53:10 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.44 2008/11/16 07:06:37 dholland Exp $");
+__RCSID("$NetBSD: decl.c,v 1.45 2009/03/02 20:53:10 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1994,6 +1994,31 @@ isredec(sym_t *dsym, int *dowarn)
 	return (0);
 }
 
+static int
+chkqual(type_t *tp1, type_t *tp2, int ignqual)
+{
+	if (tp1->t_const != tp2->t_const && !ignqual && !tflag)
+		return 0;
+
+	if (tp1->t_volatile != tp2->t_volatile && !ignqual && !tflag)
+		return 0;
+
+	return 1;
+}
+
+int
+eqptrtype(type_t *tp1, type_t *tp2, int ignqual)
+{
+	if (tp1->t_tspec != VOID && tp2->t_tspec != VOID)
+		return 0;
+
+	if (!chkqual(tp1, tp2, ignqual))
+		return 0;
+
+	return 1;
+}
+
+
 /*
  * Checks if two types are compatible. Returns 0 if not, otherwise 1.
  *
@@ -2029,11 +2054,8 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
 		if (t != tp2->t_tspec)
 			return (0);
 
-		if (tp1->t_const != tp2->t_const && !ignqual && !tflag)
-			return (0);
-
-		if (tp1->t_volatile != tp2->t_volatile && !ignqual && !tflag)
-			return (0);
+		if (!chkqual(tp1, tp2, ignqual))
+			return 0;
 
 		if (t == STRUCT || t == UNION)
 			return (tp1->t_str == tp2->t_str);
