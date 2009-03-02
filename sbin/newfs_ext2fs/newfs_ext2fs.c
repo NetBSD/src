@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.6 2009/03/01 21:54:31 wiz Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.7 2009/03/02 10:16:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.6 2009/03/01 21:54:31 wiz Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.7 2009/03/02 10:16:49 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: newfs_ext2fs.c,v 1.6 2009/03/01 21:54:31 wiz Exp $");
 #include <sys/mount.h>
 
 #include <ufs/ext2fs/ext2fs.h>
+#include <ufs/ext2fs/ext2fs_dinode.h>
 
 #include <disktab.h>
 #include <err.h>
@@ -104,7 +105,7 @@ int	verbosity;		/* amount of printf() output */
 #define DEFAULT_VERBOSITY 3	/* 4 is traditional behavior of newfs(8) */
 int64_t fssize;			/* file system size */
 uint	sectorsize;		/* bytes/sector */
-uint16_t inodesize = 128;	/* inode size */
+uint16_t inodesize = EXT2_REV0_DINODE_SIZE;	/* inode size */
 uint	fsize = 0;		/* fragment size */
 uint	bsize = 0;		/* block size */
 uint	minfree = MINFREE;	/* free space threshold */
