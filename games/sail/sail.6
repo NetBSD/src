@@ -1,4 +1,4 @@
-.\"	$NetBSD: sail.6,v 1.17 2009/03/02 10:14:41 dholland Exp $
+.\"	$NetBSD: sail.6,v 1.18 2009/03/02 10:16:54 dholland Exp $
 .\"
 .\" Copyright (c) 1988, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -177,62 +177,6 @@ each other, in a sense.
 Quite a few.
 .Pp
 It should be thrown out and replaced with something socket-based.
-.Sh HISTORY
-Dave Riggle wrote the first version of
-.Nm
-on a PDP\-11/70 in the fall of 1980.
-Needless to say, the code was horrendous,
-not portable in any sense of the word, and didn't work.
-The program was not
-very modular and had
-.Xr fseek 3
-and
-.Xr fwrite 3
-calls every few lines.
-After a tremendous rewrite from the top down,
-the first working version was up and running by 1981.
-There were several annoying bugs concerning firing broadsides and
-finding angles.
-.\" No longer true...
-.\" .Nm
-.\" uses no floating point, by the way, so the direction routines are rather
-.\" tricky.
-Ed Wang rewrote the
-.Fn angle
-routine in 1981 to be more correct.
-He also added code to let a player select
-which ship he wanted at the start of the game, instead of always
-taking the first one available.
-.Pp
-Captain Happy (Craig Leres) is responsible for making
-.Nm
-portable for the first time.
-This was no easy task.
-Constants like 2 and 10 were very frequent in the code.
-The
-.Nm
-code was also notorious for the use of
-.Dq Riggle Memorial Structures .
-Many structure references were so long that they ran off the line
-printer page.
-Here is an example, if you promise not to laugh:
-.Bd -literal -offset indent
-specs[scene[flog.fgamenum].ship[flog.fshipnum].shipnum].pts
-.Ed
-.Pp
-.Nm
-received its fourth and most thorough rewrite in the summer and fall
-of 1983.
-Ed Wang rewrote and modularized the code (a monumental feat)
-almost from scratch.
-Although he introduced many new bugs, the final result was very much
-cleaner and (?) faster.
-He added window movement commands and find ship commands.
-.Pp
-At some currently unknown time,
-.Nm
-was imported into
-.Bx .
 .Sh HISTORICAL INFO
 Old square-riggers were very maneuverable ships capable of intricate
 sailing.
@@ -1067,6 +1011,63 @@ Wind from the S, blowing a fresh breeze.
 (o) Red Orion         450 gun Ship of the Line (elite crew) (75 pts)
 (o) Blue Orion        450 gun Ship of the Line (elite crew) (75 pts)
 .Ed
+.Sh HISTORY
+Dave Riggle wrote the first version of
+.Nm
+on a PDP\-11/70 in the fall of 1980.
+Needless to say, the code was horrendous,
+not portable in any sense of the word, and didn't work.
+The program was not
+very modular and had
+.Xr fseek 3
+and
+.Xr fwrite 3
+calls every few lines.
+After a tremendous rewrite from the top down,
+the first working version was up and running by 1981.
+There were several annoying bugs concerning firing broadsides and
+finding angles.
+.\" No longer true...
+.\" .Nm
+.\" uses no floating point, by the way, so the direction routines are rather
+.\" tricky.
+.Pp
+Ed Wang rewrote the
+.Fn angle
+routine in 1981 to be more correct.
+He also added code to let a player select
+which ship he wanted at the start of the game, instead of always
+taking the first one available.
+.Pp
+Captain Happy (Craig Leres) is responsible for making
+.Nm
+portable for the first time.
+This was no easy task.
+Constants like 2 and 10 were very frequent in the code.
+The
+.Nm
+code was also notorious for the use of
+.Dq Riggle Memorial Structures .
+Many structure references were so long that they ran off the line
+printer page.
+Here is an example, if you promise not to laugh:
+.Bd -literal -offset indent
+specs[scene[flog.fgamenum].ship[flog.fshipnum].shipnum].pts
+.Ed
+.Pp
+.Nm
+received its fourth and most thorough rewrite in the summer and fall
+of 1983.
+Ed Wang rewrote and modularized the code (a monumental feat)
+almost from scratch.
+Although he introduced many new bugs, the final result was very much
+cleaner and (?) faster.
+He added window movement commands and find ship commands.
+.Pp
+At some currently unknown time,
+.Nm
+was imported into
+.Bx .
 .Sh AUTHORS
 .Nm
 has been a group effort.
