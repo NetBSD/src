@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2009/03/02 06:54:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,10 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2009/03/02 06:54:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <err.h>
 #include <fcntl.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -101,8 +102,7 @@ main(int argc, char **argv)
 			nobells++;
 			break;
 		default:
-			fprintf(stderr, "SAIL: Unknown flag %s.\n", p);
-			exit(1);
+			errx(1, "Unknown flag %s", p);
 		}
 
 	argc -= optind;
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	case MODE_LOGGER:
 		return lo_main();
 	default:
-		fprintf(stderr, "SAIL: Unknown mode %d.\n", mode);
+		warnx("Unknown mode %d", mode);
 		abort();
 	}
 	/*NOTREACHED*/
