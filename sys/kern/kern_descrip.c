@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.182.6.1 2009/02/02 19:27:31 snj Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.182.6.2 2009/03/02 20:56:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182.6.1 2009/02/02 19:27:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182.6.2 2009/03/02 20:56:14 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1373,7 +1373,7 @@ fd_copy(void)
 				i /= 2;
 			}
 			newfdp->fd_ofiles = fd_ofile_alloc(i);
-			KASSERT(i >= NDFILE);
+			KASSERT(i > NDFILE);
 		}
 		if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
 			newfdp->fd_himap = newfdp->fd_dhimap;
@@ -1402,7 +1402,7 @@ fd_copy(void)
 			break;
 		}
 		mutex_exit(&fdp->fd_lock);
-		if (i >= NDFILE) {
+		if (i > NDFILE) {
 			fd_ofile_free(i, newfdp->fd_ofiles);
 		}
 		if (NDHISLOTS(i) > NDHISLOTS(NDFILE)) {
