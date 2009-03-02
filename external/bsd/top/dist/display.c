@@ -765,7 +765,7 @@ display_setmulti(int m)
 	    y_idlecursor++;
 	    y_procs++;
 	}
-	return (ncpu - 1);
+	return -(ncpu - 1);
     } else {
 	for (i = 1; i < ncpu; i++)
 	{
@@ -778,7 +778,7 @@ display_setmulti(int m)
 	    y_idlecursor--;
 	    y_procs--;
 	}
-	return -(ncpu - 1);
+	return (ncpu - 1);
     }
 }
 
