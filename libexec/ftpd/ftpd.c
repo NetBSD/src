@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpd.c,v 1.191 2009/01/08 18:47:49 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.192 2009/03/02 03:47:44 lukem Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.191 2009/01/08 18:47:49 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.192 2009/03/02 03:47:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -3587,8 +3587,8 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 			    " %s", r2);
 		if (elapsed != NULL)
 			len += snprintf(buf + len, sizeof(buf) - len,
-			    " in %lld.%.03ld seconds",
-			    (long long)elapsed->tv_sec,
+			    " in " LLF ".%.03ld seconds",
+			    (LLT)elapsed->tv_sec,
 			    (long)(elapsed->tv_usec / 1000));
 		if (error != NULL)
 			len += snprintf(buf + len, sizeof(buf) - len,
@@ -3611,7 +3611,7 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 
 	time(&now);
 	len = snprintf(buf, sizeof(buf),
-	    "%.24s %lld %s " LLF " %s %c %s %c %c %s FTP 0 * %c\n",
+	    "%.24s " LLF " %s " LLF " %s %c %s %c %c %s FTP 0 * %c\n",
 
 /*
  * XXX: wu-ftpd puts ' (send)' or ' (recv)' in the syslog message, and removes
@@ -3619,7 +3619,7 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
  *	given that syslog messages don't contain the full date.
  */
 	    ctime(&now),
-	    (long long)
+	    (LLT)
 	    (elapsed == NULL ? 0 : elapsed->tv_sec + (elapsed->tv_usec > 0)),
 	    remotehost,
 	    (LLT) bytes,
@@ -3660,9 +3660,9 @@ logrusage(const struct rusage *rusage_before,
 
 	timersub(&rusage_after->ru_utime, &rusage_before->ru_utime, &usrtime);
 	timersub(&rusage_after->ru_stime, &rusage_before->ru_stime, &systime);
-	syslog(LOG_INFO, "%lld.%.03ldu %lld.%.03lds %ld+%ldio %ldpf+%ldw",
-	    (long long)usrtime.tv_sec, (long)(usrtime.tv_usec / 1000),
-	    (long long)systime.tv_sec, (long)(systime.tv_usec / 1000),
+	syslog(LOG_INFO, LLF ".%.03ldu " LLF ".%.03lds %ld+%ldio %ldpf+%ldw",
+	    (LLT)usrtime.tv_sec, (long)(usrtime.tv_usec / 1000),
+	    (LLT)systime.tv_sec, (long)(systime.tv_usec / 1000),
 	    rusage_after->ru_inblock - rusage_before->ru_inblock,
 	    rusage_after->ru_oublock - rusage_before->ru_oublock,
 	    rusage_after->ru_majflt - rusage_before->ru_majflt,
