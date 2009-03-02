@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.25 2009/02/17 22:00:14 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.26 2009/03/02 21:17:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.25 2009/02/17 22:00:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.26 2009/03/02 21:17:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,8 +100,12 @@ static void	sched_balance(void *);
  * Preemption control.
  */
 int		sched_upreempt_pri = PRI_KERNEL;
-#if defined(__HAVE_PREEMPTION)
+#ifdef __HAVE_PREEMPTION
+# ifdef DEBUG
+int		sched_kpreempt_pri = 0;
+# else
 int		sched_kpreempt_pri = PRI_USER_RT;
+# endif
 #else
 int		sched_kpreempt_pri = 1000;
 #endif
