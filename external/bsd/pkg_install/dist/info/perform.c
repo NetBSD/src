@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.4 2009/02/25 21:21:44 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.5 2009/03/02 22:31:21 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.4 2009/02/25 21:21:44 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.5 2009/03/02 22:31:21 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -234,6 +234,7 @@ has_entry:
 	}
 
 	archive_read_finish(archive);
+	meta->is_installed = 0;
 
 	return meta;
 }
@@ -279,7 +280,48 @@ read_meta_data_from_pkgdb(const char *pkg)
 		close(fd);
 	}
 
+	meta->is_installed = 1;
+
 	return meta;
+}
+
+static void
+build_full_reqby(lpkg_head_t *reqby, struct pkg_meta *meta)
+{
+	char *iter, *eol, *next;
+	lpkg_t *lpp;
+	struct pkg_meta *meta_dep;
+
+	if (meta->is_installed == 0 || meta->meta_required_by == NULL)
+		return;
+
+	for (iter = meta->meta_required_by; *iter != '\0'; iter = next) {
+		eol = iter + strcspn(iter, "\n");
+		if (*eol == '\n')
+			next = eol + 1;
+		else
+			next = eol;
+		if (iter == eol)
+			continue;
+		TAILQ_FOREACH(lpp, reqby, lp_link) {
+			if (strlen(lpp->lp_name) != eol - iter)
+				continue;
+			if (memcmp(lpp->lp_name, iter, eol - iter) == 0)
+				break;
+		}
+		if (lpp != NULL)
+			continue;
+		*eol = '\0';
+		lpp = alloc_lpkg(iter);
+		if (next != eol)
+			*eol = '\n';
+		TAILQ_INSERT_TAIL(reqby, lpp, lp_link);
+		meta_dep = read_meta_data_from_pkgdb(lpp->lp_name);
+		if (meta_dep == NULL)
+			continue;
+		build_full_reqby(reqby, meta_dep);
+		free_pkg_meta(meta_dep);
+	}
 }
 
 static lfile_head_t files;
@@ -395,6 +437,12 @@ pkg_do(const char *pkg)
 		}
 		if ((Flags & SHOW_REQBY) && meta->meta_required_by) {
 			show_file(meta->meta_required_by, "Required by:\n", TRUE);
+		}
+		if ((Flags & SHOW_FULL_REQBY) && meta->is_installed) {
+			lpkg_head_t reqby;
+			TAILQ_INIT(&reqby);
+			build_full_reqby(&reqby, meta);
+			show_list(&reqby, "Full required by list:\n");
 		}
 		if (Flags & SHOW_DESC) {
 			show_file(meta->meta_desc, "Description:\n", TRUE);
@@ -587,7 +635,7 @@ pkg_perform(lpkg_head_t *pkghead)
 		desired_meta_data |= LOAD_SIZE_ALL;
 	if (Flags & (SHOW_SUMMARY | SHOW_DESC))
 		desired_meta_data |= LOAD_DESC;
-	if (Flags & SHOW_REQBY)
+	if (Flags & (SHOW_REQBY | SHOW_FULL_REQBY))
 		desired_meta_data |= LOAD_REQUIRED_BY;
 	if (Flags & SHOW_DISPLAY)
 		desired_meta_data |= LOAD_DISPLAY;
