@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.7 2009/03/02 10:16:49 tsutsui Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.7 2009/03/02 10:16:49 tsutsui Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'D':
 			inodesize = (uint16_t)strtol(optarg, &s1, 0);
-			if (*s1 || inodesize != 128 || inodesize != 256)
+			if (*s1 || (inodesize != 128 && inodesize != 256))
 				errx(1, "Bad inode size %d "
 				    "(only 128 and 256 supported)", inodesize);
 			break;
