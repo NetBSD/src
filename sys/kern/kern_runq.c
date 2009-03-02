@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.22.4.2 2009/02/02 03:18:32 snj Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.22.4.3 2009/03/02 19:51:01 snj Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.22.4.2 2009/02/02 03:18:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.22.4.3 2009/03/02 19:51:01 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -193,7 +193,7 @@ sched_cpuattach(struct cpu_info *ci)
  * Control of the runqueue.
  */
 
-static void *
+static inline void *
 sched_getrq(runqueue_t *ci_rq, const pri_t prio)
 {
 
