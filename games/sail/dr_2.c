@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.19 2003/08/07 09:37:41 agc Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.20 2009/03/02 06:43:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.19 2003/08/07 09:37:41 agc Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.20 2009/03/02 06:43:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,12 +70,12 @@ thinkofgrapples(void)
 					continue;
 				if (range(sp, sq) != 1)
 					continue;
-				if (grappled2(sp, sq))
+				if (grappled2(sp, sq)) {
 					if (is_toughmelee(sp, sq, 0, 0))
 						ungrap(sp, sq);
 					else
 						grap(sp, sq);
-				else if (couldwin(sp, sq)) {
+				} else if (couldwin(sp, sq)) {
 					grap(sp, sq);
 					sp->file->loadwith = L_GRAPE;
 				}
