@@ -1,6 +1,6 @@
-/*	$NetBSD: version.h,v 1.70 2008/09/16 12:30:38 lukem Exp $	*/
+/*	$NetBSD: version.h,v 1.71 2009/03/02 03:48:43 lukem Exp $	*/
 /*-
- * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,5 +29,5 @@
  */
 
 #ifndef FTPD_VERSION
-#define	FTPD_VERSION	"NetBSD-ftpd 20080916"
+#define	FTPD_VERSION	"NetBSD-ftpd 20090302"
 #endif
