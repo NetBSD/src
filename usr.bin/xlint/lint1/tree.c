@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.54 2008/11/16 07:06:37 dholland Exp $	*/
+/*	$NetBSD: tree.c,v 1.55 2009/03/02 20:53:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.54 2008/11/16 07:06:37 dholland Exp $");
+__RCSID("$NetBSD: tree.c,v 1.55 2009/03/02 20:53:11 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1105,6 +1105,8 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		}
 
 		if (rt == PTR && lt == PTR) {
+			if (eqptrtype(lstp, rstp, 1))
+				break;
 			if (!eqtype(lstp, rstp, 1, 0, NULL))
 				illptrc(mp, ltp, rtp);
 			break;
