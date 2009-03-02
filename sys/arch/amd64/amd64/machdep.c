@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.4.8 2009/02/02 21:39:57 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.4.9 2009/03/02 20:00:20 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.8 2009/02/02 21:39:57 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.9 2009/03/02 20:00:20 snj Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -712,6 +712,10 @@ haltsys:
 #endif
 
 	if (howto & RB_HALT) {
+#if NACPI > 0
+		AcpiDisable();
+#endif
+
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
