@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.10 2009/03/01 19:21:09 christos Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.11 2009/03/02 10:15:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -106,7 +106,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.10 2009/03/01 19:21:09 christos Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.11 2009/03/02 10:15:59 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,12 +243,17 @@ mke2fs(const char *fsys, int fi, int fo)
 		    bsize, fsize);
 	}
 
+	/* variable inodesize is REV1 feature */
+	if (Oflag == 0 && inodesize != EXT2_REV0_DINODE_SIZE) {
+		errx(EXIT_FAILURE, "GOOD_OLD_REV file system format"
+		    " doesn't support %d byte inode\n", inodesize);
+	}
+
 	sblock.e2fs.e2fs_log_bsize = ilog2(bsize) - LOG_MINBSIZE;
 	/* Umm, why not e2fs_log_fsize? */
 	sblock.e2fs.e2fs_fsize = ilog2(fsize) - LOG_MINBSIZE;
 
 	sblock.e2fs_bsize = bsize;
-	sblock.e2fs.e2fs_inode_size = inodesize;
 	sblock.e2fs_bshift = sblock.e2fs.e2fs_log_bsize + LOG_MINBSIZE;
 	sblock.e2fs_qbmask = sblock.e2fs_bsize - 1;
 	sblock.e2fs_bmask = ~sblock.e2fs_qbmask;
@@ -405,6 +410,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs.e2fs_rgid = getegid();
 
 	sblock.e2fs.e2fs_first_ino = EXT2_FIRSTINO;
+	sblock.e2fs.e2fs_inode_size = inodesize;
 
 	/* e2fs_block_group_nr is set on writing superblock to each group */
 
@@ -754,11 +760,11 @@ initcg(uint cylno)
 	 *       to override these generated numbers.
 	 */
 	memset(buf, 0, sblock.e2fs_bsize);
-	dp = (struct ext2fs_dinode *)buf;
 	for (i = 0; i < sblock.e2fs_itpg; i++) {
 		for (j = 0; j < sblock.e2fs_ipb; j++) {
+			dp = (struct ext2fs_dinode *)(buf + inodesize * j);
 			/* h2fs32() just for consistency */
-			dp[j].e2di_gen = h2fs32(arc4random());
+			dp->e2di_gen = h2fs32(arc4random());
 		}
 		wtfs(fsbtodb(&sblock, gd[cylno].ext2bgd_i_tables + i),
 		    sblock.e2fs_bsize, buf);
