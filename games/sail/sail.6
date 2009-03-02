@@ -1,4 +1,4 @@
-.\"	$NetBSD: sail.6,v 1.16 2009/03/02 09:39:10 wiz Exp $
+.\"	$NetBSD: sail.6,v 1.17 2009/03/02 10:14:41 dholland Exp $
 .\"
 .\" Copyright (c) 1988, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sail.6	8.3 (Berkeley) 6/1/94
 .\"
-.Dd June 1, 1994
+.Dd March 2, 2009
 .Dt SAIL 6
 .Os
 .Sh NAME
@@ -79,41 +79,41 @@ Play the first available ship instead of prompting for a choice.
 .El
 .Sh IMPLEMENTATION
 .Nm
-is really two programs in one.
-Each player starts up a process which runs his own ship.
-In addition, a
-.Em driver
-process is forked
-.Pq by the first player
-to run the computer ships
-and take care of global bookkeeping.
+is a multiplayer game.
+Each player runs
+.Nm
+to either connect to an existing game or start a new one.
+The game server (or
+.Dq driver )
+is an extra fork of the
+.Nm
+program created when a game is started.
+The driver coordinates the game and runs the computer ships.
+.\" .Pp
+.\" Because the
+.\" driver
+.\" must calculate moves for each ship it controls, the
+.\" more ships the computer is playing, the slower the game will appear.
 .Pp
-Because the
-driver
-must calculate moves for each ship it controls, the
-more ships the computer is playing, the slower the game will appear.
-.Pp
-If a player joins a game in progress, he will synchronize
-with the other players
+If a player joins a game in progress, a synchronization process occurs
 .Pq a rather slow process for everyone ,
-and
-then he may play along with the rest.
+and then the game continues.
 .Pp
+Note that while each scenario can be running independently with
+different players, each scenario can also only be running once at any
+given time.
+.Ss COMMUNICATION
 To implement a multi-user game in Version 7 UNIX, which was the operating
 system
 .Nm
 was first written under, the communicating processes must use a common
 temporary file as a place to read and write messages.
+For e.g. scenario 21, this file is
+.Pa /var/games/sail/#sailsink.21 .
+Corresponding file names are used for the other scenarios.
+.Pp
 In addition, a locking mechanism must be provided to ensure exclusive
 access to the shared file.
-For example,
-.Nm
-uses a temporary file named
-.Pa /tmp/#sailsink.21
-for scenario 21, and
-corresponding file names for the other scenarios.
-To provide exclusive
-access to the temporary file,
 .Nm
 uses a technique stolen from an old game called
 .Dq pubcaves
@@ -124,21 +124,12 @@ for (n = 0; link(sync_file, sync_lock) \*[Lt] 0 \*[Am]\*[Am] n \*[Lt] 30; n++)
         sleep(2);
 
 .Ed
-until they are able to create a link to a file named
-.Pa /tmp/#saillock.?? .
-The
-.Dq ??
-corresponds to the scenario number of the game.
-Since UNIX
-guarantees that a link will point to only one file, the process that succeeds
-in linking will have exclusive access to the temporary file.
-.Pp
-Whether or not this really works is open to speculation.
-When ucbmiro was rebooted after a crash, the file system check program
-found 3 links between the
-.Nm
-temporary file and its link file.
-.Sh CONSEQUENCES OF SEPARATE PLAYER AND DRIVER PROCESSES
+until they are able to create a hard link named e.g.
+.Pa /var/games/sail/#saillock.21 .
+where 21 is again the scenario number.
+Since creating a hard link is atomic, a process where this succeeds
+will have exclusive access to the temporary file.
+.Ss CONSEQUENCES OF SEPARATE PLAYER AND DRIVER PROCESSES
 When players do something of global interest, such as moving or firing,
 the driver must coordinate the action with the other ships in the game.
 For example, if a player wants to move in a certain direction, he writes a
@@ -179,43 +170,52 @@ sail around quite quickly.
 .Pp
 If the player types several movement commands between two 7-second updates,
 only the last movement command typed will be seen by the driver.
-Movement commands within the same update "overwrite" each other, in a sense.
-.Sh THE HISTORY OF SAIL
-I wrote the first version of
+Movement commands within the same update
+.Dq overwrite
+each other, in a sense.
+.Ss DEFECTS OF THIS SYSTEM IN THE MODERN WORLD
+Quite a few.
+.Pp
+It should be thrown out and replaced with something socket-based.
+.Sh HISTORY
+Dave Riggle wrote the first version of
 .Nm
 on a PDP\-11/70 in the fall of 1980.
 Needless to say, the code was horrendous,
 not portable in any sense of the word, and didn't work.
 The program was not
 very modular and had
-.Fn fseek
+.Xr fseek 3
 and
-.Fn fwrite
+.Xr fwrite 3
 calls every few lines.
 After a tremendous rewrite from the top down,
-I got the first working version up by 1981.
+the first working version was up and running by 1981.
 There were several annoying bugs concerning firing broadsides and
 finding angles.
-.Nm
-uses no floating point, by the way, so the direction routines are rather
-tricky.
-Ed Wang rewrote my
+.\" No longer true...
+.\" .Nm
+.\" uses no floating point, by the way, so the direction routines are rather
+.\" tricky.
+Ed Wang rewrote the
 .Fn angle
-routine in 1981 to be more correct (although
-it still doesn't work perfectly), and he added code to let a player select
-which ship he wanted at the start of the game (instead of the first one
-available).
+routine in 1981 to be more correct.
+He also added code to let a player select
+which ship he wanted at the start of the game, instead of always
+taking the first one available.
 .Pp
 Captain Happy (Craig Leres) is responsible for making
 .Nm
 portable for the first time.
-This was no easy task, by the way.
+This was no easy task.
 Constants like 2 and 10 were very frequent in the code.
-I also became famous for using "Riggle Memorial Structures" in
-.Nm .
-Many of my structure references are so long that they run off the line
+The
+.Nm
+code was also notorious for the use of
+.Dq Riggle Memorial Structures .
+Many structure references were so long that they ran off the line
 printer page.
-Here is an example, if you promise not to laugh.
+Here is an example, if you promise not to laugh:
 .Bd -literal -offset indent
 specs[scene[flog.fgamenum].ship[flog.fshipnum].shipnum].pts
 .Ed
@@ -228,15 +228,20 @@ almost from scratch.
 Although he introduced many new bugs, the final result was very much
 cleaner and (?) faster.
 He added window movement commands and find ship commands.
+.Pp
+At some currently unknown time,
+.Nm
+was imported into
+.Bx .
 .Sh HISTORICAL INFO
-Old Square Riggers were very maneuverable ships capable of intricate
+Old square-riggers were very maneuverable ships capable of intricate
 sailing.
 Their only disadvantage was an inability to sail very close to the wind.
-The design of a wooden ship allowed only for the
-guns to bear to the left and right sides.
+The design of a wooden ship allowed for the guns to bear only to the
+left and right sides.
 A few guns of small
 aspect (usually 6 or 9 pounders) could point forward, but their
-effect was small compared to a 68 gun broadside of 24 or 32 pounders.
+effect was small compared to a 68 gun broadside of 24- or 32-pounders.
 The guns bear approximately like so:
 .Bd -literal -offset indent
 
@@ -251,10 +256,11 @@ The guns bear approximately like so:
              \\
 
 .Ed
-An interesting phenomenon occurred when a broadside was fired
-down the length of an enemy ship.
-The shot tended to bounce along the deck and did several times more damage.
-This phenomenon was called a rake.
+Firing a broadside into a ship lengthwise, from bow to stern or stern
+to bow, is called
+.Em raking .
+This did a great deal more damage, because the shot tended to bounce
+along the deck.
 Because the bows of a ship are very strong and present a smaller
 target than the stern, a stern rake (firing from the stern to the bow) causes
 more damage than a bow rake.
@@ -265,8 +271,9 @@ more damage than a bow rake.
                          a
 
 .Ed
-Most ships were equipped with carronades, which were very large, close
-range cannons.
+Most ships were equipped with
+.Em carronades ,
+which were very large, close range cannons.
 American ships from the revolution until the War of 1812
 were almost entirely armed with carronades.
 .Pp
@@ -274,63 +281,69 @@ The period of history covered in
 .Nm
 is approximately from the 1770's until the end of Napoleonic France in 1815.
 There are many excellent books about the age of sail.
-My favorite author is Captain Frederick Marryat.
-More contemporary authors include C.S. Forester and Alexander Kent.
+.Pq See Sx REFERENCES .
 .Pp
 Fighting ships came in several sizes classed by armament.
 The mainstays of
 any fleet were its
-.Em Ships of the Line ,
+.Em ships of the line ,
 or
-.Em Line of Battle Ships .
-They were so named because these ships fought together in great lines.
-They were
-close enough for mutual support, yet every ship could fire both its broadsides.
-We get the modern words
+.Em line of battle ships .
+These were so named because in fleet actions they would sail in lines
+so as to present all broadsides to the enemy at once.
+.\" ... to sail close enough for mutual support.
+The modern terms
 .Dq ocean liner ,
-or
-.Dq liner ,
 and
 .Dq battleship
-from
+are derived from
 .Dq ship of the line .
-The most common size was the 74 gun two-decked ship of the line.
-The two gun decks usually mounted 18 and 24 pounder guns.
 .Pp
-The pride of the fleet were the first rates.
+The pride of the fleet were the
+.Dq first-rates .
 These were huge three decked ships of the line mounting 80 to 136 guns.
 The guns in the three tiers
 were usually 18, 24, and 32 pounders in that order from top to bottom.
 .Pp
-Various other ships came next.
-They were almost all
-.Dq razees ,
-or ships of the line with one deck sawed off.
-They mounted 40-64 guns and were
+Lesser ships were known as
+.Dq second-rates ,
+.Dq third-rates ,
+and even
+.Dq fourth-rates .
+The most common size was the 74 gun two-decked ship of the line.
+The two gun decks usually mounted 18 and 24 pounder guns.
+.Pp
+.Em Razees
+were ships of the line with one deck sawed off.
+These mounted 40-64 guns and were
 a poor cross between a frigate and a line of battle ship.
 They neither had the speed of the former nor the firepower of the latter.
 .Pp
-Next came the
-.Dq eyes of the fleet .
-Frigates came in many sizes mounting anywhere from 32 to 44 guns.
-They were very handy vessels.
+The next class was the
+.Em frigate .
+Often called the
+.Dq eyes of the fleet ,
+frigates came in many sizes mounting anywhere from 32 to 44 guns.
+These were very handy vessels.
 They could outsail anything bigger and outshoot anything smaller.
-Frigates didn't fight in lines of battle as the much bigger 74's did.
-Instead, they harassed the enemy's rear or captured crippled ships.
-They were much more useful in missions away from the fleet,
-such as cutting out expeditions or boat actions.
+Frigates did not generally fight in lines of battle as the much bigger
+74s did.
+Instead, they were sent on individual missions or in small groups to
+harass the enemy's rear or capture crippled ships.
+.\" cutting out expeditions or boat actions.
+They were much more useful this way, in missions away from the fleet.
 They could hit hard and get away fast.
 .Pp
 Lastly, there were the corvettes, sloops, and brigs.
 These were smaller ships mounting typically fewer than 20 guns.
 A corvette was only slightly
 smaller than a frigate, so one might have up to 30 guns.
-Sloops were used for carrying dispatches or passengers.
-Brigs were something you built for land-locked lakes.
+Sloops were used for carrying despatches or passengers.
+Brigs were small vessels typically built for land-locked lakes.
 .Sh SAIL PARTICULARS
 Ships in
 .Nm
-are represented by two characters.
+are represented on the screen by two characters.
 One character represents the bow of
 the ship, and the other represents the stern.
 Ships have nationalities and numbers.
@@ -343,17 +356,20 @@ The second Brit would be
 and the fifth Don would be
 .Dq s4 .
 .Pp
-Ships can set normal sails, called Battle Sails, or bend on extra canvas
-called Full Sails.
+Ships can set normal sails, called
+.Em Battle Sails ,
+or bend on extra canvas called
+.Em Full Sails .
 A ship under full sail is a beautiful sight indeed,
-and it can move much faster than a ship under Battle Sails.
+and it can move much faster than a ship under battle sails.
 The only trouble is, with full sails set, there is so much tension on sail and
 rigging that a well aimed round shot can burst a sail into ribbons where
 it would only cause a little hole in a loose sail.
 For this reason, rigging damage is doubled on a ship with full sails set.
-Don't let that discourage you from using full sails.
-I like to keep them up right into the heat of battle.
-A ship with full sails set has a capital letter for its nationality.
+This does not mean that full sails should never be used; the author
+recommends keeping them up right into the heat of battle.
+When a ship has full sails set, the letter for its nationality is
+capitalized.
 E.g., a Frog,
 .Dq f0 ,
 with full sails set would be printed as
@@ -369,8 +385,7 @@ The nationality character of a surrendered ship is printed as
 E.g., the Frog of our last example would soon be
 .Dq !0 .
 .Pp
-A ship has a random chance of catching fire or sinking when it reaches the
-stage of listing hulk.
+A ship that reaches this point has a chance of catching fire or sinking.
 A sinking ship has a
 .Sq ~
 printed for its nationality,
@@ -378,9 +393,11 @@ and a ship on fire and about to explode has a
 .Sq #
 printed.
 .Pp
-Captured ships become the nationality of the prize crew.
+Ships that have struck can be captured;
+captured ships become the nationality of the prize crew.
 Therefore, if
-an American ship captures a British ship, the British ship will have an
+an American ship captures a British ship, the British ship will
+thenceforth have an
 .Sq a
 printed for its nationality.
 In addition, the ship number is changed
@@ -388,8 +405,10 @@ to one of the characters
 .So
 \*[Am]'()*+
 .Sc
-depending upon the original number,
-be it 0,1,2,3,4, or 5.
+corresponding to its original number
+.So
+012345
+.Sc .
 E.g., the
 .Dq b0
 captured by an American becomes the
@@ -464,11 +483,11 @@ Movement Error;
 Helm: l1l
 
 .Ed
-Moreover, whenever you make a turn, your movement allowance drops to
-min
-.Pq what's left, what you would have at the new attitude .
-In short, if you turn closer to the wind, you most likely won't be able
-to sail the full allowance printed in the
+Moreover, upon making a turn, the movement allowance drops to the
+lesser of what remains this turn and what would be available when
+going in the new direction.
+Thus, any turn closer to the wind will generally preclude sailing the
+full distance printed in the
 .Dq move
 prompt.
 .Pp
@@ -507,11 +526,11 @@ If the wind is off your beam,
 .Dq 3(6) .
 If the wind is off your bow, then you can only move
 .Dq 1(2) .
-Facing into the wind, you can't move at all.
-Ships facing into the wind were said to be
-.Dq in irons .
+Facing into the wind, you cannot move at all.
+Ships facing into the wind are said to be
+.Em in irons .
 .Sh WINDSPEED AND DIRECTION
-The windspeed and direction is displayed as a little weather vane on the
+The windspeed and direction is displayed as a weather vane on the
 side of the screen.
 The number in the middle of the vane indicates the wind
 speed, and the + to - indicates the wind direction.
@@ -523,13 +542,30 @@ E.g.,
                                 +
 .Ed
 .Pp
-The wind speeds are 0 = becalmed, 1 = light breeze, 2 = moderate breeze,
-3 = fresh breeze, 4 = strong breeze, 5 = gale, 6 = full gale, 7 = hurricane.
+The wind speeds are:
+.Bl -tag -width 012 -compact -offset indent
+.It 0
+becalmed
+.It 1
+light breeze
+.It 2
+moderate breeze
+.It 3
+fresh breeze
+.It 4
+strong breeze
+.It 5
+gale
+.It 6
+full gale
+.It 7
+hurricane
+.El
 If a hurricane shows up, all ships are destroyed.
 .Sh GRAPPLING AND FOULING
 If two ships collide, they run the risk of becoming tangled together.
 This is called
-.Dq fouling .
+.Em fouling .
 Fouled ships are stuck together, and neither can move.
 They can unfoul each other if they want to.
 Boarding parties can only be
@@ -686,7 +722,8 @@ As a consolation, the computer ships can fire double shot every turn.
 That fluke is a good reason to keep your distance.
 The driver figures out the moves of the computer ships.
 It computes them with a typical A.I. distance
-function and a depth first search to find the maximum "score."
+function and a depth first search to find the maximum
+.Dq score .
 It seems to work fairly well, although I'll be the first to admit it isn't
 perfect.
 .Sh HOW TO PLAY
@@ -1056,10 +1093,17 @@ and many valiant others...
 .Re
 .Pp
 .Rs
+.%B Master and Commander
+.%O and 20 more volumes
+.%A Patrick O'Brian
+.Re
+.Pp
+.Rs
 .%B Captain Horatio Hornblower Novels
 .%O "(13 of them)"
 .%A "C.S. Forester"
 .Re
+.Pp
 .Rs
 .%B Captain Richard Bolitho Novels
 .%O "(12 of them)"
@@ -1086,6 +1130,6 @@ Of these, consider especially
 .It
 .%B Frank Mildmay, or The Naval Officer
 .El
-.Sh BUGS
-Probably a few, and please report them to "riggle@ernie.berkeley.edu" and
-"edward@ucbarpa.berkeley.edu".
+.\" .Sh BUGS
+.\" Probably a few, and please report them to "riggle@ernie.berkeley.edu" and
+.\" "edward@ucbarpa.berkeley.edu".
