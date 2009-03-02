@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.7 2009/02/27 16:45:17 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.8 2009/03/02 10:17:58 nonaka Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.7 2009/02/27 16:45:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.8 2009/03/02 10:17:58 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,14 +392,6 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 
 		/* GPIO pin for interrupt */
 		so->irqpin = sc->sc_irqpin[s[i]];
-
-		if (kthread_create(PRI_NONE, 0, NULL, pxapcic_event_thread,
-		    so, &so->event_thread, "%s,%d", device_xname(sc->sc_dev),
-		    so->socket)) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to create event thread for %d\n",
-			    so->socket);
-		}
 	}
 
 	config_interrupts(sc->sc_dev, pxapcic_doattach);
@@ -427,10 +419,20 @@ pxapcic_doattach(struct device *self)
 	for (i = 0; i < sc->sc_nslots; i++) {
 		sock = &sc->sc_socket[s[i]];
 
+		config_pending_incr();
+
 		/* If there's a card there, attach it. */
 		cs = (*sock->pcictag->read)(sock, PXAPCIC_CARD_STATUS);
 		if (cs == PXAPCIC_CARD_VALID)
 			pxapcic_attach_card(sock);
+
+		if (kthread_create(PRI_NONE, 0, NULL, pxapcic_event_thread,
+		    sock, &sock->event_thread, "%s,%d",
+		    device_xname(sc->sc_dev), sock->socket)) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create event thread for %d\n",
+			    sock->socket);
+		}
 	}
 }
 
@@ -454,6 +456,8 @@ pxapcic_event_thread(void *arg)
 	struct pxapcic_socket *sock = (struct pxapcic_socket *)arg;
 	u_int cs;
 	int present;
+
+	config_pending_decr();
 
 	while (sock->sc->sc_shutdown == 0) {
 		(void) tsleep(sock, PWAIT, "pxapcicev", 0);
