@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.27 2008/11/24 17:41:29 tsutsui Exp $	*/
+/*	$NetBSD: inode.c,v 1.28 2009/03/02 11:31:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.27 2008/11/24 17:41:29 tsutsui Exp $");
+__RCSID("$NetBSD: inode.c,v 1.28 2009/03/02 11:31:59 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -371,6 +371,7 @@ struct ext2fs_dinode *
 ginode(ino_t inumber)
 {
 	daddr_t iblk;
+	struct ext2fs_dinode *dp;
 
 	if ((inumber < EXT2_FIRSTINO &&
 	     inumber != EXT2_ROOTINO &&
@@ -385,9 +386,13 @@ ginode(ino_t inumber)
 		if (pbp != 0)
 			pbp->b_flags &= ~B_INUSE;
 		pbp = getdatablk(iblk, sblock.e2fs_bsize);
-		startinum = ((inumber -1) / sblock.e2fs_ipb) * sblock.e2fs_ipb + 1;
+		startinum =
+		    ((inumber - 1) / sblock.e2fs_ipb) * sblock.e2fs_ipb + 1;
 	}
-	return (&pbp->b_un.b_dinode[(inumber-1) % sblock.e2fs_ipb]);
+	dp = (struct ext2fs_dinode *)(pbp->b_un.b_buf +
+	    EXT2_DINODE_SIZE(&sblock) * ino_to_fsbo(&sblock, inumber));
+
+	return dp;
 }
 
 /*
@@ -396,14 +401,15 @@ ginode(ino_t inumber)
  */
 ino_t nextino, lastinum;
 long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
-struct ext2fs_dinode *inodebuf;
+char *inodebuf;
 
 struct ext2fs_dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
 	daddr_t dblk;
-	static struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
+	static char *bp;
 
 	if (inumber != nextino++ || inumber > maxino)
 		errexit("bad inode number %llu to nextinode",
@@ -418,10 +424,13 @@ getnextinode(ino_t inumber)
 			size = inobufsize;
 			lastinum += fullcnt;
 		}
-		(void)bread(fsreadfd, (char *)inodebuf, dblk, size);
-		dp = inodebuf;
+		(void)bread(fsreadfd, inodebuf, dblk, size);
+		bp = inodebuf;
 	}
-	return (dp++);
+	dp = (struct ext2fs_dinode *)bp;
+	bp += EXT2_DINODE_SIZE(&sblock);
+
+	return dp;
 }
 
 void
@@ -433,10 +442,10 @@ resetinodebuf(void)
 	lastinum = 1;
 	readcnt = 0;
 	inobufsize = blkroundup(&sblock, INOBUFSIZE);
-	fullcnt = inobufsize / sizeof(struct ext2fs_dinode);
+	fullcnt = inobufsize / EXT2_DINODE_SIZE(&sblock);
 	readpercg = sblock.e2fs.e2fs_ipg / fullcnt;
 	partialcnt = sblock.e2fs.e2fs_ipg % fullcnt;
-	partialsize = partialcnt * sizeof(struct ext2fs_dinode);
+	partialsize = partialcnt * EXT2_DINODE_SIZE(&sblock);
 	if (partialcnt != 0) {
 		readpercg++;
 	} else {
