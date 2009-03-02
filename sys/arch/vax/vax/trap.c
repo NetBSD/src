@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116.4.2 2009/02/24 03:03:05 snj Exp $     */
+/*	$NetBSD: trap.c,v 1.116.4.3 2009/03/02 20:04:57 snj Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116.4.2 2009/02/24 03:03:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116.4.3 2009/03/02 20:04:57 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -303,6 +303,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	case T_ASTFLT|T_USER:
 		mtpr(AST_NO,PR_ASTLVL);
 		trapsig = false;
+		if (curcpu()->ci_want_resched)
+			preempt();
 		break;
 
 #ifdef DDB
