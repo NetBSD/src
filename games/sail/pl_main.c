@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.17 2006/04/20 10:57:26 drochner Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.18 2009/03/02 07:21:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.17 2006/04/20 10:57:26 drochner Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.18 2009/03/02 07:21:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,8 +205,9 @@ reprint:
 	else {
 		printf("Your name, Captain? ");
 		fflush(stdout);
-		fgets(captain, sizeof captain, stdin);
-		if (!*captain)
+		if (fgets(captain, sizeof captain, stdin) == NULL)
+			strcpy(captain, "no name");
+		else if (*captain == '\0' || *captain == '\n')
 			strcpy(captain, "no name");
 		else
 		    captain[strlen(captain) - 1] = '\0';
