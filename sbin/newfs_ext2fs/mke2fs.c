@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.11 2009/03/02 10:15:59 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.12 2009/03/02 10:57:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -106,7 +106,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.11 2009/03/02 10:15:59 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.12 2009/03/02 10:57:03 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -1358,8 +1358,8 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
 	rdfs(d, sblock.e2fs_bsize, bp);
 
-	dp = (struct ext2fs_dinode *)bp;
-	dp += ino_to_fsbo(&sblock, ino);
+	dp = (struct ext2fs_dinode *)(bp +
+	    inodesize * ino_to_fsbo(&sblock, ino));
 	e2fs_isave(ip, dp);
 	/* e2fs_i_bswap() doesn't swap e2di_blocks addrs */
 	if ((ip->e2di_mode & EXT2_IFMT) != EXT2_IFLNK) {
