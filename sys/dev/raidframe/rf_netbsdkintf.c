@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.2 2009/02/08 20:02:52 snj Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.3 2009/03/02 20:58:27 snj Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.2 2009/02/08 20:02:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.3 2009/03/02 20:58:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2111,8 +2111,16 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 			(int) (req->numSector <<
 			    queue->raidPtr->logBytesPerSector),
 			(int) queue->raidPtr->logBytesPerSector));
-		bdev_strategy(bp);
 
+		/*
+		 * XXX: drop lock here since this can block at 
+		 * least with backing SCSI devices.  Retake it
+		 * to minimize fuss with calling interfaces.
+		 */
+
+		RF_UNLOCK_QUEUE_MUTEX(queue, "unusedparam");
+		bdev_strategy(bp);
+		RF_LOCK_QUEUE_MUTEX(queue, "unusedparam");
 		break;
 
 	default:
