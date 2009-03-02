@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.6 2009/03/01 19:37:16 christos Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.7 2009/03/02 10:25:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -189,8 +189,9 @@ read_inode(ino32_t inumber, struct open_file *f)
 	if (rsize != fs->e2fs_bsize)
 		return EIO;
 
-	dip = (struct ext2fs_dinode *)buf;
-	e2fs_iload(&dip[ino_to_fsbo(fs, inumber)], &fp->f_di);
+	dip = (struct ext2fs_dinode *)(buf +
+	    EXT2_DINODE_SIZE(fs) * ino_to_fsbo(fs, inumber));
+	e2fs_iload(dip, &fp->f_di);
 
 	/*
 	 * Clear out the old buffers
