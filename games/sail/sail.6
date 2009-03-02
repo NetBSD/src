@@ -1,4 +1,4 @@
-.\"	$NetBSD: sail.6,v 1.15 2009/03/02 09:23:57 dholland Exp $
+.\"	$NetBSD: sail.6,v 1.16 2009/03/02 09:39:10 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,9 +37,8 @@
 .Nd multi-user wooden ships and iron men
 .Sh SYNOPSIS
 .Nm
+.Op Fl bx
 .Op Fl s Op Fl l
-.Op Fl x
-.Op Fl b
 .Op Ar num
 .Sh DESCRIPTION
 .Nm
@@ -67,16 +66,16 @@ age of sail was decided by the ability of one captain to hold the
 .Pp
 The flags are:
 .Bl -tag -width flag -compact
-.It Fl s
-Print the names and ships of the top ten sailors.
+.It Fl b
+No bells.
 .It Fl l
 Show the login name.
 Only effective with
 .Fl s .
+.It Fl s
+Print the names and ships of the top ten sailors.
 .It Fl x
 Play the first available ship instead of prompting for a choice.
-.It Fl b
-No bells.
 .El
 .Sh IMPLEMENTATION
 .Nm
@@ -1089,4 +1088,4 @@ Of these, consider especially
 .El
 .Sh BUGS
 Probably a few, and please report them to "riggle@ernie.berkeley.edu" and
-"edward@ucbarpa.berkeley.edu"
+"edward@ucbarpa.berkeley.edu".
