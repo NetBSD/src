@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.21.12.1 2009/01/19 13:18:25 skrll Exp $ */
+/*	$NetBSD: if_dge.c,v 1.21.12.2 2009/03/03 18:31:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21.12.1 2009/01/19 13:18:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21.12.2 2009/03/03 18:31:07 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1306,8 +1306,8 @@ dge_start(struct ifnet *ifp)
 			DPRINTF(DGE_DEBUG_TX,
 			    ("%s: TX: desc %d: low 0x%08lx, len 0x%04lx\n",
 			    device_xname(&sc->sc_dev), nexttx,
-			    le32toh(dmamap->dm_segs[seg].ds_addr),
-			    le32toh(dmamap->dm_segs[seg].ds_len)));
+			    (unsigned long)le32toh(dmamap->dm_segs[seg].ds_addr),
+			    (unsigned long)le32toh(dmamap->dm_segs[seg].ds_len)));
 		}
 
 		KASSERT(lasttx != -1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.113.2.1 2009/01/19 13:20:12 skrll Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.113.2.2 2009/03/03 18:33:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.113.2.1 2009/01/19 13:20:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.113.2.2 2009/03/03 18:33:38 skrll Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -109,9 +109,9 @@ static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
 static int sysctl_dumpentry(struct rtentry *, void *);
 static int sysctl_iflist(int, struct rt_walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
-static inline void rt_adjustcount(int, int);
+static void rt_adjustcount(int, int);
 
-static inline void
+static void
 rt_adjustcount(int af, int cnt)
 {
 	route_cb.any_count += cnt;
@@ -135,7 +135,8 @@ rt_adjustcount(int af, int cnt)
 		return;
 	}
 }
-static inline void
+
+static void
 cvtmetrics(struct rt_metrics *ortm, const struct nrt_metrics *rtm)
 {
 	ortm->rmx_locks = rtm->rmx_locks;
@@ -530,7 +531,7 @@ rt_setmetrics(u_long which, const struct rt_metrics *in, struct nrt_metrics *out
 	metric(RTV_RTTVAR, rmx_rttvar);
 	metric(RTV_HOPCOUNT, rmx_hopcount);
 	metric(RTV_MTU, rmx_mtu);
-	/* XXX time_t: Will not work after 2038 */
+	/* XXX time_t: Will not work after February 2145 (u_long time) */
 	metric(RTV_EXPIRE, rmx_expire);
 #undef metric
 }

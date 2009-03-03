@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.51.2.1 2009/01/19 13:19:37 skrll Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.51.2.2 2009/03/03 18:32:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.51.2.1 2009/01/19 13:19:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.51.2.2 2009/03/03 18:32:35 skrll Exp $");
 #endif /* not lint */
 
 
@@ -648,6 +648,12 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 			 * is enough space to open/close new session
 			 */
 		}
+		/* double check if we're not mounting a pervious session RW */
+		if (args->sessionnr != 0) {
+			printf("UDF mount: updating a previous session "
+				"not yet allowed\n");
+			return EROFS;
+		}
 	}
 
 	/* initialise bootstrap disc strategy */
@@ -668,7 +674,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		return error;
 	}
 
-	/* close down (direct) disc strategy */
+	/* close down bootstrap disc strategy */
 	udf_discstrat_finish(ump);
 
 	/* check consistency and completeness */

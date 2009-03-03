@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.10.64.1 2009/01/19 13:16:15 skrll Exp $
+# $NetBSD: XEN3_DOMU,v 1.10.64.2 2009/03/03 18:28:59 skrll Exp $
 
 include "arch/i386/conf/XEN2_DOMU"
 
@@ -15,3 +15,8 @@ vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
 xennet*		at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
+
+# PCI pass-through support: 
+#xpci* at xenbus ?			#Xen3 PCI front end driver
+#pci* at xpci ?
+# you then need to add your PCI devices drivers below.

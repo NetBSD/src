@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.6.4.2 2009/01/19 13:20:25 skrll Exp $	*/
+/*	$NetBSD: rump.h,v 1.6.4.3 2009/03/03 18:34:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -127,8 +127,6 @@ int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void	rump_vfs_syncwait(struct mount *);
 
-void	rump_bioops_sync(void);
-
 struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
 struct lwp	*rump_get_curlwp(void);
 void		rump_clear_curlwp(void);
@@ -136,12 +134,10 @@ void		rump_clear_curlwp(void);
 void		rump_rcvp_set(struct vnode *, struct vnode *);
 struct vnode 	*rump_cdir_get(void);
 
-void	rump_intr_enter(void);
-void	rump_intr_exit(void);
-int	rump_splfoo(void);
-void	rump_splx(int);
-
 /* I picked the wrong header to stop sniffin' glue */
 int rump_syspuffs_glueinit(int, int *);
+
+typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
+int		rump_sysproxy_set(rump_sysproxy_t, void *);
 
 #endif /* _RUMP_RUMP_H_ */

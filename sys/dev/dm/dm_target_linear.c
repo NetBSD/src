@@ -1,4 +1,5 @@
-/*        $NetBSD: dm_target_linear.c,v 1.3.4.2 2009/01/19 13:17:53 skrll Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.3.4.3 2009/03/03 18:30:44 skrll Exp $      */
+>>>>>>> 1.4
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,7 +69,7 @@ dm_target_linear_init(dm_dev_t *dmv, void **target_config, char *params)
 	 * Parse a string, containing tokens delimited by white space,
 	 * into an argument vector
 	 */
-	for (ap = argv; ap < &argv[9] &&
+	for (ap = argv; ap < &argv[2] &&
 		 (*ap = strsep(&params, " \t")) != NULL;) {
 		if (**ap != '\0')
 			ap++;

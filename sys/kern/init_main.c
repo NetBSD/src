@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.370.2.1 2009/01/19 13:19:37 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.370.2.2 2009/03/03 18:32:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,10 +97,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.370.2.1 2009/01/19 13:19:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.370.2.2 2009/03/03 18:32:55 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
+#include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"
@@ -253,52 +254,6 @@ int	start_init_exec;		/* semaphore for start_init() */
 static void check_console(struct lwp *l);
 static void start_init(void *);
 void main(void);
-void ssp_init(void);
-
-#if defined(__SSP__) || defined(__SSP_ALL__)
-long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-void __stack_chk_fail(void);
-
-void
-__stack_chk_fail(void)
-{
-	panic("stack overflow detected; terminated");
-}
-
-void
-ssp_init(void)
-{
-	int s;
-
-#ifdef DIAGNOSTIC
-	printf("Initializing SSP:");
-#endif
-	/*
-	 * We initialize ssp here carefully:
-	 *	1. after we got some entropy
-	 *	2. without calling a function
-	 */
-	size_t i;
-	long guard[__arraycount(__stack_chk_guard)];
-
-	arc4randbytes(guard, sizeof(guard));
-	s = splhigh();
-	for (i = 0; i < __arraycount(guard); i++)
-		__stack_chk_guard[i] = guard[i];
-	splx(s);
-#ifdef DIAGNOSTIC
-	for (i = 0; i < __arraycount(guard); i++)
-		printf("%lx ", guard[i]);
-	printf("\n");
-#endif
-}
-#else
-void
-ssp_init(void)
-{
-
-}
-#endif
 
 void __secmodel_none(void);
 __weak_alias(secmodel_start,__secmodel_none);
@@ -512,6 +467,10 @@ main(void)
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
+
+	ssp_init();
+
+	configure2();
 
 	ubc_init();		/* must be after autoconfig */
 

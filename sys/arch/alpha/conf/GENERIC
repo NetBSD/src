@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.325.2.1 2009/01/19 13:15:53 skrll Exp $
+# $NetBSD: GENERIC,v 1.325.2.2 2009/03/03 18:28:49 skrll Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.325.2.1 $"
+ident		"GENERIC-$Revision: 1.325.2.2 $"
 
 maxusers 32
 
@@ -148,6 +148,7 @@ options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1

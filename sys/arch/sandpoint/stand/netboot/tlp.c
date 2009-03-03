@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.19.6.1 2009/01/19 13:16:39 skrll Exp $ */
+/* $NetBSD: tlp.c,v 1.19.6.2 2009/03/03 18:29:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
  * - no vtophys() translation, vaddr_t == paddr_t. 
  * - PIPT writeback cache aware.
  */
-#define CSR_WRITE(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ(l, r)		in32rb((l)->csr+(r))
+#define CSR_WRITE(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define VTOPHYS(va) 		(uint32_t)(va)
 #define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))

@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.23.8.1 2009/01/19 13:18:15 skrll Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.23.8.2 2009/03/03 18:31:06 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.23.8.1 2009/01/19 13:18:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.23.8.2 2009/03/03 18:31:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ urlphy_match(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	/*
-	 * RTL8150 reports OUT == 0, MODEL == 0
+	 * RTL8150 reports OUI == 0, MODEL == 0
 	 */
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 &&
 	    MII_MODEL(ma->mii_id2) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.149.2.1 2009/01/19 13:19:37 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.149.2.2 2009/03/03 18:32:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.2.1 2009/01/19 13:19:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.2.2 2009/03/03 18:32:55 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_netbsd.h"
+#include "opt_modular.h"
 #include "opt_sa.h"
 #include "opt_posix.h"
 #include "pty.h"

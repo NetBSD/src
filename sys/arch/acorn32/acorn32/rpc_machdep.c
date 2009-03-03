@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.71.8.1 2009/01/19 13:15:51 skrll Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.71.8.2 2009/03/03 18:28:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -48,13 +48,14 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 #include "vidcvideo.h"
 #include "podulebus.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.71.8.1 2009/01/19 13:15:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.71.8.2 2009/03/03 18:28:49 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

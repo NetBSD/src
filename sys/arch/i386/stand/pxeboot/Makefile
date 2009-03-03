@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/10/20 03:02:07 christos Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2009/03/03 18:29:00 skrll Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -25,7 +25,7 @@ PIE_LDFLAGS=
 
 .include <bsd.own.mk>
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
 AFLAGS+=	-m32
 LIBKERN_ARCH=	i386

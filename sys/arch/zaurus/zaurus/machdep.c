@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9.8.1 2009/01/19 13:17:13 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.8.2 2009/03/03 18:30:07 skrll Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,10 +107,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.8.1 2009/01/19 13:17:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.8.2 2009/03/03 18:30:07 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"
@@ -239,12 +240,13 @@ struct user *proc0paddr;
 const char *console = "glass";
 int glass_console = 0;
 
-char bootargs[MAX_BOOT_STRING];
+struct bootinfo _bootinfo;
+struct bootinfo *bootinfo;
+struct btinfo_howto *bi_howto;
 
 /* Prototypes */
 void	consinit(void);
 void	dumpsys(void);
-void	process_kernel_args(char *);
 #ifdef KGDB
 void	kgdb_port_init(void);
 #endif
@@ -555,6 +557,7 @@ initarm(void *arg)
 	paddr_t memstart;
 	psize_t memsize;
 	struct pxa2x0_gpioconf **zaurus_gpioconf;
+	u_int *magicaddr;
 
 	/* Get ready for zaurus_restart() */
 	pxa2x0_memctl_bootstrap(PXA2X0_MEMCTL_BASE);
@@ -583,12 +586,25 @@ initarm(void *arg)
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
-	/* XXX should really be done after setting up the console, but we
-	 * XXX need to parse the console selection flags right now. */
-	process_kernel_args((char *)0xa0200000 - MAX_BOOT_STRING - 1);
+	magicaddr = (void *)(0xa0200000 - BOOTARGS_BUFSIZ);
+	if (*magicaddr == BOOTARGS_MAGIC) {
+		bootinfo = &_bootinfo;
+		memcpy(bootinfo,
+		  (char *)0xa0200000 - BOOTINFO_MAXSIZE, BOOTINFO_MAXSIZE);
+		bi_howto = lookup_bootinfo(BTINFO_HOWTO);
+		if (bi_howto)
+			boothowto = bi_howto->howto;
+	} else {
+		boothowto = RB_AUTOBOOT;
+	}
+	*magicaddr = 0xdeadbeef;
 #ifdef RAMDISK_HOOKS
         boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */
+	if (boothowto & RB_MD1) {
+		/* serial console */
+		console = "ffuart";
+	}
 
 	/*
 	 * This test will work for now but has to be revised when support
@@ -612,8 +628,10 @@ initarm(void *arg)
 	kgdb_port_init();
 #endif
 
+#ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
 	printf("\nNetBSD/zaurus booting ...\n");
+#endif
 
 	{
 		/* XXX - all Zaurus have this for now, fix memory sizing */
@@ -971,12 +989,13 @@ initarm(void *arg)
 	}
 #endif
 
-#ifdef DDB
-	db_machine_init();
-
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* Firmware doesn't load symbols. */
 	ddb_init(0, NULL, NULL);
+#endif
 
+#ifdef DDB
+	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -985,86 +1004,23 @@ initarm(void *arg)
 	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
-void
-process_kernel_args(char *args)
+void *
+lookup_bootinfo(int type)
 {
-	char *cp = args;
+	struct btinfo_common *help;
+	int n;
 
-	if (cp == NULL || *(u_int *)cp != BOOTARGS_MAGIC) {
-		boothowto = RB_AUTOBOOT;
-		return;
+	if (bootinfo == NULL)
+		return (NULL);
+
+	n = bootinfo->nentries;
+	help = (struct btinfo_common *)(bootinfo->info);
+	while (n--) {
+		if (help->type == type)
+			return (help);
+		help = (struct btinfo_common *)((char *)help + help->len);
 	}
-
-	/* Eat the cookie */
-	*(u_int *)cp = 0;
-	cp += sizeof(u_int);
-
-	boothowto = 0;
-
-	/* Make a local copy of the bootargs */
-	strncpy(bootargs, cp, MAX_BOOT_STRING - sizeof(u_int));
-
-	cp = bootargs;
-	boot_file = bootargs;
-
-	for (;;) {
-		/* Skip white-space */
-		while (*cp == ' ')
-			++cp;
-
-		if (*cp == '\0')
-			break;
-
-		if (*cp != '-') {
-			/* kernel image filename */
-			if (boot_file == NULL)
-				boot_file = cp;
-
-			/* Skip the kernel image filename */
-			while (*cp != ' ' && *cp != '\0')
-				++cp;
-			if (*cp == '\0')
-				break;
-
-			*cp++ = '\0';
-			continue;
-		}
-
-		/* options */
-		if (*++cp != '\0') {
-			int fl = 0;
-
-			switch (*cp) {
-			case 'a':
-				fl |= RB_ASKNAME;
-				break;
-			case 'c':
-				fl |= RB_USERCONF;
-				break;
-			case 'd':
-				fl |= RB_KDB;
-				break;
-			case 's':
-				fl |= RB_SINGLE;
-				break;
-			/* XXX undocumented console switching flags */
-			case '0':
-				console = "ffuart";
-				break;
-			case '1':
-				console = "btuart";
-				break;
-			case '2':
-				console = "stuart";
-				break;
-			default:
-				printf("unknown option `%c'\n", *cp);
-				break;
-			}
-			boothowto |= fl;
-		}
-		++cp;
-	}
+	return (NULL);
 }
 
 /*

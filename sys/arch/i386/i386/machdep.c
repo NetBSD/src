@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644.2.1 2009/01/19 13:16:15 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.2.2 2009/03/03 18:28:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.2.1 2009/01/19 13:16:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.2.2 2009/03/03 18:28:59 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.2.1 2009/01/19 13:16:15 skrll Exp 
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
 #include "opt_mtrr.h"
+#include "opt_modular.h"
+#include "opt_multiboot.h"
 #include "opt_multiprocessor.h"
 #include "opt_physmem.h"
 #include "opt_realmem.h"
@@ -289,7 +291,7 @@ void (*initclock_func)(void) = i8254_initclocks;
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt;
+int	mem_cluster_cnt = 0;
 
 void	init386(paddr_t);
 void	initgdt(union descriptor *);
@@ -506,7 +508,7 @@ cpu_startup()
 	printf("avail memory = %s\n", pbuf);
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
-#if !defined(XEN) || defined(DOM0OPS)
+#if NISA > 0 || NPCI > 0
 	x86_bus_space_mallocok();
 #endif
 
@@ -573,21 +575,20 @@ i386_switch_context(lwp_t *l)
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
-	if (xendomain_is_privileged()) {
-		int iopl = pcb->pcb_iopl;
 #ifdef XEN3
-	        struct physdev_op physop;
-		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = iopl;
-		HYPERVISOR_physdev_op(&physop);
+	struct physdev_op physop;
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
 #else
+	if (xendomain_is_privileged()) {
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = iopl;
+		op.u.iopl.iopl = pcb->pcb_iopl;
 		HYPERVISOR_dom0_op(&op);
-#endif
 	}
+#endif
 }
 #endif /* XEN */
 
@@ -906,10 +907,6 @@ haltsys:
 		splhigh();
 	}
 
-#ifdef MULTIPROCESSOR
-	x86_broadcast_ipi(X86_IPI_HALT);
-#endif
-
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifdef XEN
 		HYPERVISOR_shutdown();
@@ -944,7 +941,15 @@ haltsys:
 #endif
 	}
 
+#ifdef MULTIPROCESSOR
+	x86_broadcast_ipi(X86_IPI_HALT);
+#endif
+
 	if (howto & RB_HALT) {
+#if NACPI > 0
+		AcpiDisable();
+#endif
+
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -1669,15 +1674,7 @@ cpu_reset()
 		outl(0xcfc, 0xf);
 	}
 
-	/*
-	 * The keyboard controller has 4 random output pins, one of which is
-	 * connected to the RESET pin on the CPU in many PCs.  We tell the
-	 * keyboard controller to pulse this line a couple of times.
-	 */
-	outb(IO_KBD + KBCMDP, KBC_PULSE0);
-	delay(100000);
-	outb(IO_KBD + KBCMDP, KBC_PULSE0);
-	delay(100000);
+	x86_reset();
 
 	/*
 	 * Try to cause a triple fault and watchdog reset by making the IDT

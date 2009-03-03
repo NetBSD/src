@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.15.6.1 2009/01/19 13:16:39 skrll Exp $ */
+/* $NetBSD: nvt.c,v 1.15.6.2 2009/03/03 18:29:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -175,21 +175,16 @@ nvt_init(unsigned tag, void *data)
 	struct desc *txd, *rxd;
 	uint8_t *en;
 
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_DEVICE(0x1106, 0x3053) != val
-	    && PCI_DEVICE(0x1106, 0x3065) != val)
-		return NULL;
-
 	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
-	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
+	l->csr = ~01 & DEVTOV(pcicfgread(tag, 0x10)); /* use IO space */
 
 	val = CTL1_RESET;
 	CSR_WRITE_1(l, VR_CTL1, val);
 	do {
 		val = CSR_READ_1(l, VR_CTL1);
 	} while (val & CTL1_RESET);
-
+	/* PHY number is loaded from EEPROM */
 	l->phy = CSR_READ_1(l, VR_MIICFG) & 0x1f;
 
 	en = data;

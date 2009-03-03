@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.24.2.1 2009/01/19 13:19:39 skrll Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.24.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.24.2.1 2009/01/19 13:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.24.2.2 2009/03/03 18:32:56 skrll Exp $");
+#include "opt_modular.h"
 
 #define	ELFSIZE		ARCH_ELFSIZE
 

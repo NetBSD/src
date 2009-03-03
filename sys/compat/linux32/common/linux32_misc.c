@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.12.4.1 2009/01/19 13:17:31 skrll Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.12.4.2 2009/03/03 18:30:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.12.4.1 2009/01/19 13:17:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.12.4.2 2009/03/03 18:30:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -146,4 +146,24 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 			ptr++;
 
 	return EIO;
+}
+
+int
+linux32_sys_personality(struct lwp *l, const struct linux32_sys_personality_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) per;
+	} */
+
+	switch (SCARG(uap, per)) {
+	case LINUX_PER_LINUX:
+	case LINUX_PER_LINUX32:
+	case LINUX_PER_QUERY:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	retval[0] = LINUX_PER_LINUX;
+	return 0;
 }

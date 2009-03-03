@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.230.2.1 2009/01/19 13:20:11 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.230.2.2 2009/03/03 18:33:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230.2.1 2009/01/19 13:20:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230.2.2 2009/03/03 18:33:38 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1633,6 +1633,9 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		return ENXIO;
 
 	switch (cmd) {
+	case SIOCALIFADDR:
+	case SIOCDLIFADDR:
+	case SIOCSIFADDRPREF:
 	case SIOCSIFFLAGS:
 	case SIOCSIFCAP:
 	case SIOCSIFMETRIC:

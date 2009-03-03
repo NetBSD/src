@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120.2.1 2009/01/19 13:15:55 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.120.2.2 2009/03/03 18:28:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120.2.1 2009/01/19 13:15:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120.2.2 2009/03/03 18:28:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -658,16 +658,10 @@ trap(fp, type, code, v)
 	case T_FPERR|T_USER:
 		/*
 		 * We pass along the 68881 status register which locore
-		 * stashed in code for us.  Note that there is a
-		 * possibility that the bit pattern of this register
-		 * will conflict with one of the FPE_* codes defined
-		 * in signal.h.  Fortunately for us, the only such
-		 * codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so
-		 * there is no clash.
+		 * stashed in code for us.
 		 */
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)code;
+		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 	/*
 	 * Kernel coprocessor violation

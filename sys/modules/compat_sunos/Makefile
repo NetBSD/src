@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.2 2009/01/19 13:20:08 skrll Exp $
+#	$NetBSD: Makefile,v 1.2.4.3 2009/03/03 18:33:37 skrll Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -12,12 +12,12 @@ CPPFLAGS+=	-DEXEC_AOUT
 SRCS+=	sunos_exec.c sunos_ioctl.c sunos_mod.c sunos_sysent.c
 SRCS+=	sunos_exec_aout.c sunos_misc.c sunos_syscalls.c
 
-.if ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "sparc64"
 .PATH:	${S}/arch/sparc64/sparc64
 SRCS+=	sunos_machdep.c
 .endif
 
-.if ${MACHINE} == "sparc"
+.if ${MACHINE_ARCH} == "sparc"
 .PATH:	${S}/arch/sparc/sparc
 SRCS+=	sunos_machdep.c
 .endif

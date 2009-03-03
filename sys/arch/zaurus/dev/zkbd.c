@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.7 2007/10/17 19:58:34 garbled Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.7.28.1 2009/03/03 18:29:49 skrll Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.7 2007/10/17 19:58:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.7.28.1 2009/03/03 18:29:49 skrll Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"
@@ -83,7 +83,7 @@ static const int stuck_keys[] = {
 #define REP_DELAYN 100
 
 struct zkbd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	const int *sc_sense_array;
 	const int *sc_strobe_array;
@@ -116,15 +116,14 @@ struct zkbd_softc {
 	char sc_rep[MAXKEYS];
 	int sc_nrep;
 #endif
-	void *sc_powerhook;
 };
 
 static struct zkbd_softc *zkbd_sc;
 
-static int	zkbd_match(struct device *, struct cfdata *, void *);
-static void	zkbd_attach(struct device *, struct device *, void *);
+static int	zkbd_match(device_t, cfdata_t, void *);
+static void	zkbd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zkbd, sizeof(struct zkbd_softc),
+CFATTACH_DECL_NEW(zkbd, sizeof(struct zkbd_softc),
 	zkbd_match, zkbd_attach, NULL, NULL);
 
 static int	zkbd_irq(void *v);
@@ -132,7 +131,7 @@ static void	zkbd_poll(void *v);
 static int	zkbd_on(void *v);
 static int	zkbd_sync(void *v);
 static int	zkbd_hinge(void *v);
-static void	zkbd_power(int why, void *arg);
+static bool	zkbd_resume(device_t dv PMF_FN_ARGS);
 
 int zkbd_modstate;
 
@@ -163,7 +162,7 @@ static struct wskbd_mapdata zkbd_keymapdata = {
 };
 
 static int
-zkbd_match(struct device *parent, struct cfdata *cf, void *aux)
+zkbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (zkbd_sc)
@@ -173,15 +172,17 @@ zkbd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-zkbd_attach(struct device *parent, struct device *self, void *aux)
+zkbd_attach(device_t parent, device_t self, void *aux)
 {
-	struct zkbd_softc *sc = (struct zkbd_softc *)self;
+	struct zkbd_softc *sc = device_private(self);
 	struct wskbddev_attach_args a;
 	int pin, i;
 
+	sc->sc_dev = self;
 	zkbd_sc = sc;
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	sc->sc_polling = 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -213,13 +214,9 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    zkbd_power, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf("%s: unable to establish powerhook\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
+	if (!pmf_device_register(sc->sc_dev, NULL, zkbd_resume))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	sc->sc_okeystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
 	    M_DEVBUF, M_NOWAIT);
@@ -596,9 +593,12 @@ zkbd_cnpollc(void *v, int on)
 {
 }
 
-static void
-zkbd_power(int why, void *arg)
+static bool
+zkbd_resume(device_t dv PMF_FN_ARGS)
 {
+	struct zkbd_softc *sc = device_private(dv);
 
-	zkbd_hinge(arg);
+	zkbd_hinge(sc);
+
+	return true;
 }

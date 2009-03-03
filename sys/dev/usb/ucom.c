@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.77.6.1 2009/01/19 13:19:09 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.77.6.2 2009/03/03 18:31:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.77.6.1 2009/01/19 13:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.77.6.2 2009/03/03 18:31:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,7 +496,7 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
-	DPRINTF(("ucomclose: unit=%"PRId64"\n", UCOMUNIT(dev)));
+	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 

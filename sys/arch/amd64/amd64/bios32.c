@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.13.8.1 2009/01/19 13:15:54 skrll Exp $	*/
+/*	$NetBSD: bios32.c,v 1.13.8.2 2009/03/03 18:28:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.13.8.1 2009/01/19 13:15:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.13.8.2 2009/03/03 18:28:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ bios32_init()
 #endif
 		pmap_update(pmap_kernel());
 
-		aprint_normal("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		aprint_debug("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
 			    sh->majrev, sh->minrev, (u_long)sh->addr,
 			    sh->count);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.2.1 2009/01/19 13:15:54 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.2.2 2009/03/03 18:28:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,10 +112,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.2.1 2009/01/19 13:15:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.2.2 2009/03/03 18:28:50 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
+#include "opt_modular.h"
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.2.1 2009/01/19 13:15:54 skrll Exp 
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
+#include "isa.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +267,6 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 #ifdef XEN
-extern  vaddr_t first_bt_vaddr;
 extern  paddr_t pmap_pa_start, pmap_pa_end;
 #endif
 
@@ -306,6 +308,12 @@ cpu_startup(void)
 	vaddr_t minaddr, maxaddr;
 	psize_t sz;
 	char pbuf[9];
+
+	/*
+	 * For console drivers that require uvm and pmap to be initialized,
+	 * we'll give them one more chance here...
+	 */
+	consinit();
 
 	/*
 	 * Initialize error message buffer (et end of core).
@@ -358,7 +366,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-#if !defined(XEN) || defined(DOM0OPS)
+#if NISA > 0 || NPCI > 0
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
 #endif
@@ -384,12 +392,10 @@ x86_64_switch_context(struct pcb *new)
 	struct cpu_info *ci;
 	ci = curcpu();
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
-	if (xendomain_is_privileged()) {
-		struct physdev_op physop;
-		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = new->pcb_iopl;
-		HYPERVISOR_physdev_op(&physop);
-	}
+	struct physdev_op physop;
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = new->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
 	if (new->pcb_fpcpu != ci) {
 		HYPERVISOR_fpu_taskswitch(1);
 	}
@@ -422,10 +428,16 @@ x86_64_proc0_tss_ldt_init(void)
 #if !defined(XEN)
 	lldt(pcb->pcb_ldt_sel);
 #else
+	{
+	struct physdev_op physop;
 	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
 	HYPERVISOR_fpu_taskswitch(1);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
+	}
 #endif /* XEN */
 }
 
@@ -703,6 +715,10 @@ haltsys:
 	x86_broadcast_ipi(X86_IPI_HALT);
 
 	if (howto & RB_HALT) {
+#if NACPI > 0
+		AcpiDisable();
+#endif
+
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -895,11 +911,11 @@ dodumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0 || dumpsize == 0) {
-		printf("\ndump to dev %lu,%lu not possible\n", major(dumpdev),
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %lu,%lu offset %ld\n", major(dumpdev),
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
@@ -1253,8 +1269,6 @@ init_x86_64(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
-	first_bt_vaddr = (vaddr_t) (first_avail + KERNBASE + PAGE_SIZE * 2);
-	__PRINTK(("first_bt_vaddr 0x%lx\n", first_bt_vaddr));
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
@@ -1268,7 +1282,7 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
 #endif
 
-#if !defined(XEN) || defined(DOM0OPS)
+#if NISA > 0 || NPCI > 0
 	x86_bus_space_init();
 #endif
 
@@ -1538,22 +1552,13 @@ init_x86_64(paddr_t first_avail)
 void
 cpu_reset(void)
 {
-
 	x86_disable_intr();
 
 #ifdef XEN
 	HYPERVISOR_reboot();
 #else
 
-	/*
-	 * The keyboard controller has 4 random output pins, one of which is
-	 * connected to the RESET pin on the CPU in many PCs.  We tell the
-	 * keyboard controller to pulse this line a couple of times.
-	 */
-	outb(IO_KBD + KBCMDP, KBC_PULSE0);
-	delay(100000);
-	outb(IO_KBD + KBCMDP, KBC_PULSE0);
-	delay(100000);
+	x86_reset();
 
 	/*
 	 * Try to cause a triple fault and watchdog reset by making the IDT

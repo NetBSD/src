@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.177.2.1 2009/01/19 13:20:31 skrll Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.177.2.2 2009/03/03 18:34:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -687,9 +687,12 @@ struct kinfo_lwp {
 /*
  * KERN_SYSVIPC_INFO subtypes
  */
-#define	KERN_SYSVIPC_MSG_INFO		1	/* msginfo and msqid_ds */
-#define	KERN_SYSVIPC_SEM_INFO		2	/* seminfo and semid_ds */
-#define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
+/* KERN_SYSVIPC_OMSG_INFO		1	*/
+/* KERN_SYSVIPC_OSEM_INFO		2	*/
+/* KERN_SYSVIPC_OSHM_INFO		3	*/
+#define	KERN_SYSVIPC_MSG_INFO		4	/* msginfo and msqid_ds */
+#define	KERN_SYSVIPC_SEM_INFO		5	/* seminfo and semid_ds */
+#define	KERN_SYSVIPC_SHM_INFO		6	/* shminfo and shmid_ds */
 
 /*
  * tty counter sysctl variables
@@ -713,8 +716,8 @@ struct kinfo_lwp {
  */
 
 struct kinfo_drivers {
-	int32_t		d_cmajor;
-	int32_t		d_bmajor;
+	devmajor_t	d_cmajor;
+	devmajor_t	d_bmajor;
 	char		d_name[24];
 };
 

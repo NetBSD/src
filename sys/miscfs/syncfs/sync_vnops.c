@@ -1,4 +1,33 @@
-/*	$NetBSD: sync_vnops.c,v 1.25 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.25.8.1 2009/03/03 18:33:36 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.25 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.25.8.1 2009/03/03 18:33:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,6 +92,18 @@ const struct vnodeopv_desc sync_vnodeop_opv_desc =
 	{ &sync_vnodeop_p, sync_vnodeop_entries };
 
 /*
+ * Return delay factor appropriate for the given file system.   For
+ * WAPBL we use the sync vnode to burst out metadata updates: sync
+ * those file systems more frequently.
+ */
+static inline int
+sync_delay(struct mount *mp)
+{
+
+	return mp->mnt_wapbl != NULL ? metadelay : syncdelay;
+}
+
+/*
  * Create a new filesystem syncer vnode for the specified mount point.
  */
 int
@@ -70,8 +111,8 @@ vfs_allocate_syncvnode(mp)
 	struct mount *mp;
 {
 	struct vnode *vp;
-	static long start, incr, next;
-	int error;
+	static int start, incr, next;
+	int error, vdelay;
 
 	/* Allocate a new vnode */
 	if ((error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, &vp)) != 0)
@@ -98,7 +139,8 @@ vfs_allocate_syncvnode(mp)
 		next = start;
 	}
 	mutex_enter(&vp->v_interlock);
-	vn_syncer_add_to_worklist(vp, syncdelay > 0 ? next % syncdelay : 0);
+	vdelay = sync_delay(mp);
+	vn_syncer_add_to_worklist(vp, vdelay > 0 ? next % vdelay : 0);
 	mutex_exit(&vp->v_interlock);
 	mp->mnt_syncer = vp;
 	return (0);
@@ -149,7 +191,7 @@ sync_fsync(v)
 	 * Move ourselves to the back of the sync list.
 	 */
 	mutex_enter(&syncvp->v_interlock);
-	vn_syncer_add_to_worklist(syncvp, syncdelay);
+	vn_syncer_add_to_worklist(syncvp, sync_delay(mp));
 	mutex_exit(&syncvp->v_interlock);
 
 	/*

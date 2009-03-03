@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.4.92.1 2009/01/19 13:17:44 skrll Exp $	*/
+/*	$NetBSD: shm.h,v 1.4.92.2 2009/03/03 18:30:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -67,6 +67,22 @@ struct shmid_ds13 {
 	 * implementation of this interface.
 	 */
 	void		*_shm_internal;
+};
+
+/* Warning: 64-bit structure padding is needed here */
+struct shmid_ds_sysctl50 {
+	struct		ipc_perm_sysctl shm_perm;
+	uint64_t	shm_segsz;
+	pid_t		shm_lpid;
+	pid_t		shm_cpid;
+	int32_t		shm_atime;
+	int32_t		shm_dtime;
+	int32_t		shm_ctime;
+	uint32_t	shm_nattch;
+};
+struct shm_sysctl_info50 {
+	struct	shminfo shminfo;
+	struct	shmid_ds_sysctl50 shmids[1];
 };
 
 __BEGIN_DECLS

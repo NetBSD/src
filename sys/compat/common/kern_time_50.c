@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.4.2.2 2009/01/19 13:17:17 skrll Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.4.2.3 2009/03/03 18:30:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.4.2.2 2009/01/19 13:17:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.4.2.3 2009/03/03 18:30:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -806,8 +806,7 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 		    args->olddelta ? &oldatv : NULL, l->l_proc);
 		if (args->olddelta) {
 			timeval_to_timeval50(&oldatv, &atv50);
-			error = copyout(&atv50, args->olddelta,
-			    sizeof(args->olddelta));
+			error = copyout(&atv50, args->olddelta, sizeof(atv50));
 		}
 		break;
 	}

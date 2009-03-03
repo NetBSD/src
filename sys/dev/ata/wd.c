@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.363.6.1 2009/01/19 13:17:52 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.363.6.2 2009/03/03 18:30:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.363.6.1 2009/01/19 13:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.363.6.2 2009/03/03 18:30:43 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -1945,8 +1945,12 @@ wd_flushcache(struct wd_softc *wd, int flags)
 bool
 wd_shutdown(device_t dev, int how)
 {
-
 	struct wd_softc *wd = device_private(dev);
+
+	/* the adapter needs to be enabled */
+	if (wd->atabus->ata_addref(wd->drvp))
+		return true; /* no need to complain */
+
 	wd_flushcache(wd, AT_POLL);
 	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
 		wd_standby(wd, AT_POLL);

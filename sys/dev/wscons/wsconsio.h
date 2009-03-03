@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.88.34.1 2009/01/19 13:19:18 skrll Exp $ */
+/* $NetBSD: wsconsio.h,v 1.88.34.2 2009/03/03 18:32:34 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -76,7 +76,7 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_DELTA_W	14	/* W delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_W	15	/* W location */
 
-#define WSCONS_EVENT_ASCII			13	/* data is an ASCII code */
+
 /*
  * Keyboard ioctls (0 - 31)
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.8.18.1 2009/01/19 13:20:31 skrll Exp $	*/
+/*	$NetBSD: vmem.h,v 1.8.18.2 2009/03/03 18:34:32 skrll Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -59,6 +59,7 @@ bool vmem_reap(vmem_t *);
 void vmem_rehash_start(void);
 void vmem_whatis(uintptr_t, void (*)(const char *, ...));
 void vmem_print(uintptr_t, const char *, void (*)(const char *, ...));
+void vmem_printall(const char *, void (*)(const char *, ...));
 
 /* vm_flag_t */
 #define	VM_SLEEP	0x00000001

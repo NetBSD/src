@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.11.4.2 2009/01/19 13:20:27 skrll Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.11.4.3 2009/03/03 18:34:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -511,14 +511,6 @@ rump_vfs_syncwait(struct mount *mp)
 }
 
 void
-rump_bioops_sync()
-{
-
-	if (bioopsp)
-		bioopsp->io_sync(NULL);
-}
-
-void
 rump_biodone(void *arg, size_t count, int error)
 {
 	struct buf *bp = arg;
@@ -527,9 +519,7 @@ rump_biodone(void *arg, size_t count, int error)
 	KASSERT(bp->b_resid >= 0);
 	bp->b_error = error;
 
-	rump_intr_enter();
 	biodone(bp);
-	rump_intr_exit();
 }
 
 static void

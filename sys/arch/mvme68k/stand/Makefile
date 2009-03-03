@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2002/05/28 19:34:15 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.5.120.1 2009/03/03 18:29:04 skrll Exp $
 
 SUBDIR= libbug libsa .WAIT sboot netboot bootxx bootsd bootst \
 	installboot
 
-.ifmake !(install)
+.ifmake !install
 SUBDIR+= wrtvid
 .endif
 

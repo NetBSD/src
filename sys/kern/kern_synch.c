@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_synch.c,v 1.252.2.1 2009/01/19 13:19:38 skrll Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.252.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
+ *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.252.2.1 2009/01/19 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.252.2.2 2009/03/03 18:32:56 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1148,6 +1149,7 @@ void
 sched_pstats(void *arg)
 {
 	const int clkhz = (stathz != 0 ? stathz : hz);
+	static bool backwards;
 	struct rlimit *rlim;
 	struct lwp *l;
 	struct proc *p;
@@ -1207,8 +1209,16 @@ sched_pstats(void *arg)
 			}
 		}
 		mutex_exit(p->p_lock);
-		if (__predict_false(sig))
+		if (__predict_false(runtm < 0)) {
+			if (!backwards) {
+				backwards = true;
+				printf("WARNING: negative runtime; "
+				    "monotonic clock has gone backwards\n");
+			}
+		} else if (__predict_false(sig)) {
+			KASSERT((p->p_flag & PK_SYSTEM) == 0);
 			psignal(p, sig);
+		}
 	}
 	mutex_exit(proc_lock);
 	uvm_meter();

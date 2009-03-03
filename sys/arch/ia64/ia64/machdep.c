@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10.2.1 2009/01/19 13:16:22 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.2.2 2009/03/03 18:29:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -86,6 +86,8 @@
 
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/ia64/ia64/machdep.c,v 1.203 2005/10/14 12:43:45 davidxu Exp $"); */
+
+#include "opt_modular.h"
 
 #include <sys/param.h> 
 #include <sys/cpu.h>

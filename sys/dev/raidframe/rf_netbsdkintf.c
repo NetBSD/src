@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.2.1 2009/01/19 13:19:02 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.2.2 2009/03/03 18:31:51 skrll Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.2.1 2009/01/19 13:19:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.2.2 2009/03/03 18:31:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2074,15 +2074,6 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 	struct buf *bp;
 
 	req->queue = queue;
-
-#if DIAGNOSTIC
-	if (queue->raidPtr->raidid >= numraid) {
-		printf("Invalid unit number: %d %d\n", queue->raidPtr->raidid,
-		    numraid);
-		panic("Invalid Unit number in rf_DispatchKernelIO");
-	}
-#endif
-
 	bp = req->bp;
 
 	switch (req->type) {
@@ -2130,8 +2121,16 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 			(int) (req->numSector <<
 			    queue->raidPtr->logBytesPerSector),
 			(int) queue->raidPtr->logBytesPerSector));
-		bdev_strategy(bp);
 
+		/*
+		 * XXX: drop lock here since this can block at 
+		 * least with backing SCSI devices.  Retake it
+		 * to minimize fuss with calling interfaces.
+		 */
+
+		RF_UNLOCK_QUEUE_MUTEX(queue, "unusedparam");
+		bdev_strategy(bp);
+		RF_LOCK_QUEUE_MUTEX(queue, "unusedparam");
 		break;
 
 	default:
@@ -3683,8 +3682,9 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 			e = VOP_IOCTL(raidPtr->raid_cinfo[c].ci_vp, DIOCCACHESYNC, 
 					  &force, FWRITE, NOCRED);
 			if (e) {
-				printf("raid%d: cache flush to component %s failed.\n",
-				       raidPtr->raidid, raidPtr->Disks[c].devname);
+				if (e != ENODEV)
+					printf("raid%d: cache flush to component %s failed.\n",
+					       raidPtr->raidid, raidPtr->Disks[c].devname);
 				if (error == 0) {
 					error = e;
 				}
@@ -3699,8 +3699,9 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 			e = VOP_IOCTL(raidPtr->raid_cinfo[sparecol].ci_vp,
 					  DIOCCACHESYNC, &force, FWRITE, NOCRED);
 			if (e) {
-				printf("raid%d: cache flush to component %s failed.\n",
-				       raidPtr->raidid, raidPtr->Disks[sparecol].devname);
+				if (e != ENODEV)
+					printf("raid%d: cache flush to component %s failed.\n",
+					       raidPtr->raidid, raidPtr->Disks[sparecol].devname);
 				if (error == 0) {
 					error = e;
 				}

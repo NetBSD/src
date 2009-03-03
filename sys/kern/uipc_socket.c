@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.177.2.1 2009/01/19 13:19:40 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.177.2.2 2009/03/03 18:32:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177.2.1 2009/01/19 13:19:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177.2.2 2009/03/03 18:32:57 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -680,7 +680,7 @@ soclose(struct socket *so)
 			if ((so->so_state & SS_ISDISCONNECTING) && so->so_nbio)
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
-				error = sowait(so, so->so_linger * hz);
+				error = sowait(so, true, so->so_linger * hz);
 				if (error)
 					break;
 			}
@@ -1692,8 +1692,10 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	case SO_ORCVTIMEO: {
 		struct timeval50 otv;
 		error = sockopt_get(sopt, &otv, sizeof(otv));
-		if (error)
+		if (error) {
+			solock(so);
 			break;
+		}
 		timeval50_to_timeval(&otv, &tv);
 		opt = opt == SO_OSNDTIMEO ? SO_SNDTIMEO : SO_RCVTIMEO;
 		error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150.4.1 2009/01/19 13:17:08 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.4.2 2009/03/03 18:29:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.4.1 2009/01/19 13:17:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.4.2 2009/03/03 18:29:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.4.1 2009/01/19 13:17:08 skrll Exp 
 #include "opt_m680x0.h"
 #include "opt_fpu_emulate.h"
 #include "opt_m060sp.h"
+#include "opt_modular.h"
 #include "opt_panicbutton.h"
 #include "opt_extmem.h"
 
@@ -717,14 +718,14 @@ dumpsys(void)
 			return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %" PRIu64 ",%" PRIu64 " not possible\n",
+		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
 	}
 	dump = bdev->d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev %" PRIu64 ",%" PRIu64 " offset %ld\n",
+	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
 	printf("dump ");

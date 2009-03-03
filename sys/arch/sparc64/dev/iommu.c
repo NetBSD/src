@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.85 2008/10/18 03:31:10 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.85.2.1 2009/03/03 18:29:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.85 2008/10/18 03:31:10 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.85.2.1 2009/03/03 18:29:26 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -397,7 +397,7 @@ iommu_strbuf_flush_done(struct strbuf_ctl *sb)
 	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
 
 	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flush = %lx "
-		"at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n",
+		"at va = %lx pa = %lx now=%"PRIx64":%"PRIx32" until = %"PRIx64":%"PRIx32"\n",
 		(long)*sb->sb_flush, (long)sb->sb_flush, (long)sb->sb_flushpa,
 		cur.tv_sec, cur.tv_usec,
 		flushtimeout.tv_sec, flushtimeout.tv_usec));

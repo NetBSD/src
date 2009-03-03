@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.924.2.1 2009/01/19 13:17:45 skrll Exp $
+#	$NetBSD: files,v 1.924.2.2 2009/03/03 18:30:30 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20081219
+version 	20090214
 
 #
 # device classes
@@ -23,6 +23,7 @@ defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
 defflag				COREDUMP
+defflag				MODULAR
 
 defparam			DEFCORENAME
 defparam			HZ
@@ -193,6 +194,9 @@ obsolete defflag		LLC		# obsolete
 obsolete defflag opt_ns.h	NS NSIP		# obsolete
 obsolete defflag		IPX		# obsolete
 obsolete defflag opt_iso.h	TPCONS
+obsolete defparam opt_md.h	MEMORY_RBFLAGS	# superseded by
+						# MEMORY_DISK_RBFLAGS
+
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
@@ -209,7 +213,6 @@ defparam			SB_MAX
 
 # file system options
 #
-defflag				SOFTDEP			# XXX files.ufs?
 defflag				QUOTA			# XXX files.ufs?
 defflag				VNODE_LOCKDEBUG
 defflag				MAGICLINKS
@@ -253,7 +256,7 @@ defflag	opt_kstack.h		KSTACK_CHECK_MAGIC
 defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER=1 MEMORY_DISK_ROOT_SIZE
-				MEMORY_RBFLAGS
+				MEMORY_DISK_RBFLAGS
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
@@ -1420,6 +1423,7 @@ file	kern/kern_rwlock.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
 file	kern/kern_softint.c
+file	kern/kern_ssp.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
 file	kern/kern_synch.c

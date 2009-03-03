@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.41.12.1 2009/01/19 13:18:26 skrll Exp $ */
+/* $NetBSD: if_vge.c,v 1.41.12.2 2009/03/03 18:31:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41.12.1 2009/01/19 13:18:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41.12.2 2009/03/03 18:31:07 skrll Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1485,7 +1485,7 @@ vge_intr(void *arg)
 	for (;;) {
 
 		status = CSR_READ_4(sc, VGE_ISR);
-		/* If the card has gone away the read returns 0xffff. */
+		/* If the card has gone away the read returns 0xffffffff. */
 		if (status == 0xFFFFFFFF)
 			break;
 

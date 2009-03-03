@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3.64.1 2009/01/19 13:16:37 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.3.64.2 2009/03/03 18:29:06 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -73,6 +73,7 @@
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #include "opt_ppcparam.h"

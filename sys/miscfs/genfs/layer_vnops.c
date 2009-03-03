@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.35.18.1 2009/01/19 13:20:06 skrll Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.35.18.2 2009/03/03 18:33:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.35.18.1 2009/01/19 13:20:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.35.18.2 2009/03/03 18:33:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,6 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.35.18.1 2009/01/19 13:20:06 skrll 
  *    The 10-Apr-92 version was optimized for speed, throwing away some
  * safety checks.  It should still always work, but it's not as
  * robust to programmer errors.
- *    Define SAFETY to include some error checking code.
  *
  * In general, we map all vnodes going down and unmap them on the way back.
  *
@@ -300,7 +299,7 @@ layer_bypass(v)
 	struct vnodeop_desc *descp = ap->a_desc;
 	int reles, i, flags;
 
-#ifdef SAFETY
+#ifdef DIAGNOSTIC
 	/*
 	 * We require at least one vp.
 	 */

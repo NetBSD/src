@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.23.2.1 2009/01/19 13:17:51 skrll Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.23.2.2 2009/03/03 18:30:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@ void		db_show_mqueue_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_module.c */
 void		db_show_module_cmd(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/subr_vmem.c */
+void		db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
 
 /*
  * This is used in several places to determine which printf format

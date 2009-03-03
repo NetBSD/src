@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.31.18.1 2009/01/19 13:19:39 skrll Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.31.18.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.31.18.1 2009/01/19 13:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.31.18.2 2009/03/03 18:32:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,11 +343,12 @@ scan_iso_vrs(mbr_args_t *a)
 		/* try start of disc */
 		sector = 0;
 		scan_iso_vrs_session(a, sector, &is_iso9660, &is_udf);
-		strncpy(a->lp->d_typename, "iso partition", 16);
 	}
 
 	if ((is_iso9660 < 0) && (is_udf < 0))
 		return SCAN_CONTINUE;
+
+	strncpy(a->lp->d_typename, "iso partition", 16);
 
 	/* add iso9660 partition if found */
 	if (is_iso9660 >= 0) {

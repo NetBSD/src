@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.6.4.2 2009/01/19 13:17:53 skrll Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.6.4.3 2009/03/03 18:30:44 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,9 +62,10 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if ((dmt = dm_target_lookup("zero")) != NULL)
+		if ((dmt = dm_target_lookup("zero")) != NULL){
+			dm_target_unbusy(dmt);
 			return EEXIST;
-
+		}
 		dmt = dm_target_alloc("zero");
 		
 		dmt->version[0] = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16.8.1 2009/01/19 13:17:09 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.8.2 2009/03/03 18:29:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -77,11 +77,11 @@
 /*
  * Bus address and size types
  */
-typedef u_long bus_addr_t;
-typedef u_long bus_size_t;
+typedef paddr_t bus_addr_t;
+typedef size_t bus_size_t;
 
 typedef	int bus_space_tag_t;
-typedef	u_long bus_space_handle_t;
+typedef	vaddr_t bus_space_handle_t;
 
 int	_x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
 	    bus_size_t size, int flags, bus_space_handle_t *bshp);

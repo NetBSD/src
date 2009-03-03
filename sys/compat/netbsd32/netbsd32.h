@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.77.2.1 2009/01/19 13:17:36 skrll Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.77.2.2 2009/03/03 18:30:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -169,7 +169,7 @@ struct netbsd32_iovec {
 /* from <sys/time.h> */
 typedef int32_t netbsd32_timer_t;
 typedef	int32_t netbsd32_time50_t;
-typedef	int64_t netbsd32_time_t;
+typedef	netbsd32_int64 netbsd32_time_t;
 typedef netbsd32_pointer_t netbsd32_timerp_t;
 
 typedef netbsd32_pointer_t netbsd32_timespec50p_t;

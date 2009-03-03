@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.39.4.1 2009/01/19 13:15:52 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.39.4.2 2009/03/03 18:28:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.39.4.1 2009/01/19 13:15:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.39.4.2 2009/03/03 18:28:49 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1564,7 +1564,7 @@ load_memory_disc_from_floppy(md, dev)
 
 	bp->b_dev = dev;
 
-	s = spl0();
+	s = splbio();
 
 	if (fdopen(bp->b_dev, 0, 0, curlwp) != 0) {
 		brelse(bp, 0);		

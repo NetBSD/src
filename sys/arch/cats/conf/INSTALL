@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.67.2.1 2009/01/19 13:16:02 skrll Exp $
+#	$NetBSD: INSTALL,v 1.67.2.2 2009/03/03 18:28:53 skrll Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -107,9 +107,10 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=4400	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4200	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -193,8 +194,8 @@ scsibus* at ahc?
 #scsibus* at bha?
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 scsibus* at iha?
-isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
-scsibus* at isp?
+#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+#scsibus* at isp?
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI

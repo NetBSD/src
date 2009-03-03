@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.62.6.1 2009/01/19 13:19:09 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.62.6.2 2009/03/03 18:31:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.62.6.1 2009/01/19 13:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.62.6.2 2009/03/03 18:31:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,7 @@ uscannerclose(dev_t dev, int flag, int mode,
 
 	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
 
-	DPRINTFN(5, ("uscannerclose: flag=%d, mode=%d, unit=%"PRId64"\n",
+	DPRINTFN(5, ("uscannerclose: flag=%d, mode=%d, unit=%"PRId32"\n",
 		     flag, mode, USCANNERUNIT(dev)));
 
 #ifdef DIAGNOSTIC

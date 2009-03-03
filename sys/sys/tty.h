@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.82.6.1 2009/01/19 13:20:31 skrll Exp $	*/
+/*	$NetBSD: tty.h,v 1.82.6.2 2009/03/03 18:34:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -233,11 +233,8 @@ struct speedtab {
 TAILQ_HEAD(ttylist_head, tty);		/* the ttylist is a TAILQ */
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
 
 extern kmutex_t	tty_lock;
-
-MALLOC_DECLARE(M_TTYS);
 
 extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
@@ -274,6 +271,7 @@ void	 ttyflush(struct tty *, int);
 void	 ttygetinfo(struct tty *, int, char *, size_t);
 void	 ttyputinfo(struct tty *, char *);
 int	 ttyinput(int, struct tty *);
+int	 ttyinput_wlock(int, struct tty *); /* XXX see wsdisplay.c */
 int	 ttylclose(struct tty *, int);
 int	 ttylopen(dev_t, struct tty *);
 int	 ttykqfilter(dev_t, struct knote *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.4.4.1 2009/01/19 13:20:29 skrll Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.4.4.2 2009/03/03 18:34:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.4.4.1 2009/01/19 13:20:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.4.4.2 2009/03/03 18:34:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -64,7 +64,7 @@ static void	virtif_start(struct ifnet *);
 static void	virtif_stop(struct ifnet *, int);
 
 struct virtif_sc {
-	struct ifnet sc_if;
+	struct ethercom sc_ec;
 	char sc_tapname[IFNAMSIZ];
 	int sc_tapfd;
 };
@@ -132,7 +132,7 @@ virtif_create(struct ifaliasreq *ia, struct ifnet **ifpp)
 	strlcpy(sc->sc_tapname, ifr.ifr_name, IFNAMSIZ);
 	sc->sc_tapfd = fd;
 
-	ifp = &sc->sc_if;
+	ifp = &sc->sc_ec.ec_if;
 	mynum = nunits++;
 	sprintf(ifp->if_xname, "%s%d", VIRTIF_BASE, mynum);
 	ifp->if_softc = sc;
@@ -190,7 +190,7 @@ static void
 virtif_start(struct ifnet *ifp)
 {
 	struct virtif_sc *sc = ifp->if_softc;
-	struct iovec io[16];
+	struct rumpuser_iovec io[16];
 	struct mbuf *m, *m0;
 	int s, i, error;
 

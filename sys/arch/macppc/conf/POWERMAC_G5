@@ -195,3 +195,4 @@ pseudo-device	nsmb			# SMB requester
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
 options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

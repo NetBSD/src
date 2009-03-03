@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.33.2.1 2009/01/19 13:16:04 skrll Exp $
+#	$NetBSD: TS7200,v 1.33.2.2 2009/03/03 18:28:53 skrll Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -176,6 +176,16 @@ isa0		at tspld?
 wdc0		at tspld?
 # TS-5620 battery-backed real-time clock
 tsrtc*		at tspld?
+# On-board GPIO ports.  Note that only 20 total GPIO pins are available
+# across all ports
+epgpio0		at epsoc? addr 0x80840000 size 0xcc intr 59
+gpio*		at epgpio?
+options		EPGPIO_PORT_C_MASK=0x00
+options		EPGPIO_PORT_D_MASK=0x00
+options		EPGPIO_PORT_E_MASK=0x00
+options		EPGPIO_PORT_F_MASK=0x02
+options		EPGPIO_PORT_G_MASK=0x00
+options		EPGPIO_PORT_H_MASK=0x38
 
 # HD44780 LCD on LCD header
 #tslcd*		at tspld?

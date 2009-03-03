@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.9 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.9.8.1 2009/03/03 18:30:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #define	IOC_LOCKSTAT_GVERSION	_IOR('L', 0, int)
 
-#define	LS_VERSION	4
+#define	LS_VERSION	5
 
 /*
  * Enable request.  We can limit tracing by the call site and by

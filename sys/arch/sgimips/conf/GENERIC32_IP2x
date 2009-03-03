@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.75.2.1 2009/01/19 13:16:42 skrll Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.75.2.2 2009/03/03 18:29:13 skrll Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.75.2.1 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.75.2.2 $"
 
 maxusers	32
 
@@ -83,6 +83,7 @@ options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_IRIX	# binary compatibility with IRIX
@@ -210,7 +211,12 @@ gio0		at pic0
 imc0 		at mainbus0 addr 0x1fa00000
 gio0 		at imc0
 eisa0 		at imc0
+
 int0		at mainbus0		# Interrupt controller
+
+# Some clocks actually in HPC space, but not all
+dpclock0	at mainbus0 addr 0x1fb80e00	# IP12 / IP20
+dsclock0	at mainbus0 addr 0x1fbe0000	# IP22 / 24
 
 hpc0 		at gio? addr 0x1fb80000
 hpc1 		at gio? addr 0x1fb00000
@@ -240,8 +246,6 @@ tlphy*		at mii? phy ?		 # ThunderLAN PHY (unused)
 # HPC devices
 sq* 		at hpc? offset ?	# On-board ethernet / E++ adapter
 wdsc* 		at hpc? offset ?	# On-board SCSI / GIO32 SCSI adapter
-dpclock*	at hpc0 offset ?	# IP12 / IP20
-dsclock*	at hpc0 offset ?	# IP22 / 24
 haltwo*         at hpc0 offset ?	# IP22 / 24
 pckbc*		at hpc0 offset ?
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.9.34.1 2009/01/19 13:17:45 skrll Exp $	*/
+/*	$NetBSD: socket.h,v 1.9.34.2 2009/03/03 18:30:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -40,6 +40,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_ultrix.h"
 #include "opt_compat_43.h"
+#include "opt_modular.h"
 
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || \
     defined(COMPAT_ULTRIX) || defined(MODULAR)

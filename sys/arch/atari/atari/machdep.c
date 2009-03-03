@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150.4.1 2009/01/19 13:16:00 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.4.2 2009/03/03 18:28:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,11 +77,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.4.1 2009/01/19 13:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.4.2 2009/03/03 18:28:51 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_mbtype.h"
+#include "opt_modular.h"
 #include "opt_panicbutton.h"
 
 #include <sys/param.h>
@@ -181,9 +182,8 @@ consinit(void)
 	 * and initialize it now.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
@@ -530,11 +530,11 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %" PRIu64" ,%" PRIu64 " not possible\n",
+		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %" PRIu64" ,%" PRIu64 " offset %ld\n",
+	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
 #if defined(DDB) || defined(PANICWAIT)

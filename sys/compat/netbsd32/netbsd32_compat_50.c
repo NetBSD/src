@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.2.4.2 2009/01/19 13:17:36 skrll Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.2.4.3 2009/03/03 18:30:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.2.4.2 2009/01/19 13:17:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.2.4.3 2009/03/03 18:30:08 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -798,16 +798,11 @@ compat_50_netbsd32___fstat30(struct lwp *l,
 		syscallarg(int) fd;
 		syscallarg(netbsd32_stat50p_t) sb;
 	} */
-	int fd = SCARG(uap, fd);
-	file_t *fp;
 	struct netbsd32_stat50 sb32;
 	struct stat ub;
-	int error = 0;
+	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-	error = (*fp->f_ops->fo_stat)(fp, &ub);
-	fd_putfile(fd);
+	error = do_sys_fstat(SCARG(uap, fd), &ub);
 	if (error == 0) {
 		netbsd32_from___stat50(&ub, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));

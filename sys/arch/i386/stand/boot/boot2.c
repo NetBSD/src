@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.38.2.1 2009/01/19 13:16:21 skrll Exp $	*/
+/*	$NetBSD: boot2.c,v 1.38.2.2 2009/03/03 18:29:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include <libi386.h>
 #include <bootmod.h>
 #include <bootmenu.h>
+#include <vbe.h>
 #include "devopen.h"
 
 #ifdef SUPPORT_PS2
@@ -133,6 +134,7 @@ const struct bootblk_command commands[] = {
 	{ "modules",	command_modules },
 	{ "load",	module_add },
 	{ "multiboot",	command_multiboot },
+	{ "vesa",	command_vesa },
 	{ NULL,		NULL },
 };
 
@@ -285,6 +287,8 @@ boot2(int biosdev, u_int biossector)
 	if (boot_params.bp_flags & X86_BP_FLAGS_RESET_VIDEO)
 		biosvideomode();
 
+	vbe_init();
+
 	/* need to remember these */
 	boot_biosdev = biosdev;
 	boot_biossector = biossector;
@@ -314,6 +318,7 @@ boot2(int biosdev, u_int biossector)
 		/* Does not return */
 		doboottypemenu();
 	}
+
 #else
 	twiddle_toggle = 0;
 	print_banner();
@@ -359,6 +364,7 @@ command_help(char *arg)
 	       "ls [path]\n"
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "vesa {enabled|disabled|list|modenum}\n"
 	       "modules {enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"

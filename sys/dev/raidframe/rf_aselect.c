@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.25 2007/03/04 06:02:36 christos Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.25.50.1 2009/03/03 18:31:51 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.25 2007/03/04 06:02:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.25.50.1 2009/03/03 18:31:51 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -99,8 +99,6 @@ InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr, RF_RaidAccessDesc_t *desc)
  *                         data dependencies)
  *   third-pass optimizer to eliminate dead code (need true data dependencies)
  *****************************************************************************/
-
-#define MAXNSTRIPES 50
 
 int
 rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)

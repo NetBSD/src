@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.180.2.1 2009/01/19 13:18:26 skrll Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.180.2.2 2009/03/03 18:31:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.180.2.1 2009/01/19 13:18:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.180.2.2 2009/03/03 18:31:07 skrll Exp $");
 
 /*
 #define CBB_DEBUG
@@ -150,7 +150,7 @@ STATIC int pccbb_pcmcia_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 STATIC void pccbb_pcmcia_mem_free(pcmcia_chipset_handle_t,
     struct pcmcia_mem_handle *);
 STATIC int pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
-    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
 STATIC void pccbb_pcmcia_mem_unmap(pcmcia_chipset_handle_t, int);
 STATIC int pccbb_pcmcia_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
     bus_size_t, bus_size_t, struct pcmcia_io_handle *);
@@ -1045,6 +1045,17 @@ pccbbintr(void *arg)
 		    sockevent);
 	}
 
+	/* XXX sockevent == CB_SOCKET_EVENT_CSTS|CB_SOCKET_EVENT_POWER
+	 * does occur in the wild.  Check for a _POWER event before
+	 * possibly exiting because of an _CSTS event.
+	 */
+	if (sockevent & CB_SOCKET_EVENT_POWER) {
+		DPRINTF(("Powercycling because of socket event\n"));
+		/* XXX: Does not happen when attaching a 16-bit card */
+		sc->sc_pwrcycle++;
+		wakeup(&sc->sc_pwrcycle);
+	}
+
 	/* Sometimes a change of CSTSCHG# accompanies the first
 	 * interrupt from an Atheros WLAN.  That generates a
 	 * CB_SOCKET_EVENT_CSTS event on the bridge.  The event
@@ -1102,14 +1113,6 @@ pccbbintr(void *arg)
 			callout_schedule(&sc->sc_insert_ch, hz / 5);
 			sc->sc_flags |= CBB_INSERTING;
 		}
-	}
-
-	/* XXX sockevent == 9 does occur in the wild.  handle it. */
-	if (sockevent & CB_SOCKET_EVENT_POWER) {
-		DPRINTF(("Powercycling because of socket event\n"));
-		/* XXX: Does not happen when attaching a 16-bit card */
-		sc->sc_pwrcycle++;
-		wakeup(&sc->sc_pwrcycle);
 	}
 
 	return (1);
@@ -2684,7 +2687,7 @@ pccbb_pcmcia_do_mem_map(struct pccbb_softc *sc, int win)
 STATIC int
 pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t pch, int kind,
     bus_addr_t card_addr, bus_size_t size, struct pcmcia_mem_handle *pcmhp,
-    bus_addr_t *offsetp, int *windowp)
+    bus_size_t *offsetp, int *windowp)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)pch;
 	struct pcic_handle *ph = &sc->sc_pcmcia_h;

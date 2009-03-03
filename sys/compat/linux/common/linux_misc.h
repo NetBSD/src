@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.17.6.1 2009/01/19 13:17:31 skrll Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.17.6.2 2009/03/03 18:30:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,6 +121,11 @@ struct linux_mnttypes {
 };
 extern const struct linux_mnttypes linux_fstypes[];
 extern const int linux_fstypes_cnt;
+
+/* Personality types. */
+#define LINUX_PER_LINUX		0x00000000
+#define LINUX_PER_LINUX32	0x00000008
+#define LINUX_PER_QUERY		0xffffffff
 
 #ifdef _KERNEL
 __BEGIN_DECLS

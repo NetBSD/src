@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthreevar.h,v 1.5.8.1 2009/01/19 13:19:03 skrll Exp $ */
+/*	$NetBSD: cgthreevar.h,v 1.5.8.2 2009/03/03 18:31:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "wsdisplay.h"
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 /*
  * color display (cgthree) driver.

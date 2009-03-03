@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.120.2.1 2009/01/19 13:17:51 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.120.2.2 2009/03/03 18:30:30 skrll Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.120.2.1 2009/01/19 13:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.120.2.2 2009/03/03 18:30:30 skrll Exp $");
 
 #include "opt_aio.h"
 #include "opt_ddb.h"
@@ -220,7 +220,6 @@ static void	db_uvmhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
-static void	db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
 	/*added from all sub cmds*/
@@ -825,7 +824,7 @@ static void
 db_command(const struct db_command **last_cmdp)
 {
 	const struct db_command *command;
-	static db_expr_t last_count;
+	static db_expr_t last_count = 0;
 	db_expr_t	addr, count;
 	char		modif[TOK_STRING_SIZE];
 	
@@ -833,7 +832,6 @@ db_command(const struct db_command **last_cmdp)
 	bool		have_addr = false;
 
 	command = NULL;
-	last_count = 0;
 	
 	t = db_read_token();
 	if ((t == tEOL) || (t == tCOMMA)) {
@@ -1108,15 +1106,8 @@ static void
 db_vmem_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	vmem_print((uintptr_t) addr, modif, db_printf);
-}
 
-/*ARGSUSED*/
-static void
-db_show_all_vmems(db_expr_t addr, bool have_addr,
-    db_expr_t count, const char *modif)
-{
-	vmem_print((uintptr_t)addr, "a", db_printf);
+	vmem_print((uintptr_t) addr, modif, db_printf);
 }
 
 static void

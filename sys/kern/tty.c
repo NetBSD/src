@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.227.2.1 2009/01/19 13:19:40 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.227.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.227.2.1 2009/01/19 13:19:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.227.2.2 2009/03/03 18:32:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.227.2.1 2009/01/19 13:19:40 skrll Exp $");
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
@@ -375,7 +374,7 @@ ttyclose(struct tty *tp)
  * ttyinput() helper.
  * Call with the tty lock held.
  */
-static int
+/* XXX static */ int
 ttyinput_wlock(int c, struct tty *tp)
 {
 	int	iflag, lflag, i, error;

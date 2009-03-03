@@ -1,8 +1,11 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.376.2.1 2009/01/19 13:19:40 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.376.2.2 2009/03/03 18:32:57 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.2.1 2009/01/19 13:19:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.2.2 2009/03/03 18:32:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -710,10 +713,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 
 	/*
 	 * XXX Syncer must be frozen when we get here.  This should really
-	 * be done on a per-mountpoint basis, but especially the softdep
-	 * code possibly called from the syncer doesn't exactly work on a
-	 * per-mountpoint basis, so the softdep code would become a maze
-	 * of vfs_busy() calls.
+	 * be done on a per-mountpoint basis, but the syncer doesn't work
+	 * like that.
 	 *
 	 * The caller of dounmount() must acquire syncer_mutex because
 	 * the syncer itself acquires locks in syncer_mutex -> vfs_busy
@@ -882,25 +883,25 @@ done:
 			return error;
 		}
 		len = strlen(bp);
-		/*
-		 * for mount points that are below our root, we can see
-		 * them, so we fix up the pathname and return them. The
-		 * rest we cannot see, so we don't allow viewing the
-		 * data.
-		 */
-		if (strncmp(bp, sp->f_mntonname, len) == 0 &&
-		    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
-			(void)strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
-			    sizeof(sp->f_mntonname));
-			if (sp->f_mntonname[0] == '\0')
-				(void)strlcpy(sp->f_mntonname, "/",
+		if (len != 1) {
+			/*
+			 * for mount points that are below our root, we can see
+			 * them, so we fix up the pathname and return them. The
+			 * rest we cannot see, so we don't allow viewing the
+			 * data.
+			 */
+			if (strncmp(bp, sp->f_mntonname, len) == 0 &&
+			    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
+				(void)strlcpy(sp->f_mntonname,
+				    c == '\0' ? "/" : &sp->f_mntonname[len],
 				    sizeof(sp->f_mntonname));
-		} else {
-			if (root)
-				(void)strlcpy(sp->f_mntonname, "/",
-				    sizeof(sp->f_mntonname));
-			else
-				error = EPERM;
+			} else {
+				if (root)
+					(void)strlcpy(sp->f_mntonname, "/",
+					    sizeof(sp->f_mntonname));
+				else
+					error = EPERM;
+			}
 		}
 		PNBUF_PUT(path);
 	}
@@ -3139,9 +3140,6 @@ sys_fsync(struct lwp *l, const struct sys_fsync_args *uap, register_t *retval)
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0);
-	if (error == 0 && bioopsp != NULL &&
-	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioopsp->io_fsync)(vp, 0);
 	VOP_UNLOCK(vp, 0);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -3210,11 +3208,6 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e);
-
-	if (error == 0 && bioopsp != NULL &&
-	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioopsp->io_fsync)(vp, nflags);
-
 	VOP_UNLOCK(vp, 0);
 out:
 	fd_putfile(SCARG(uap, fd));
@@ -3612,7 +3605,7 @@ dorevoke(struct vnode *vp, kauth_cred_t cred)
 
 	if ((error = VOP_GETATTR(vp, &vattr, cred)) != 0)
 		return error;
-	if (kauth_cred_geteuid(cred) != vattr.va_uid &&
+	if (kauth_cred_geteuid(cred) == vattr.va_uid ||
 	    (error = kauth_authorize_generic(cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) == 0)
 		VOP_REVOKE(vp, REVOKEALL);

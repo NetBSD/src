@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.1.90.1 2009/01/19 13:17:44 skrll Exp $	*/
+/*	$NetBSD: ipc.h,v 1.1.90.2 2009/03/03 18:30:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -95,6 +95,14 @@ __native_to_ipc_perm14(const struct ipc_perm *perm, struct ipc_perm14 *operm)
 	operm->seq = perm->_seq;
 	operm->key = perm->_key;
 }
+
+#if defined(_KERNEL) && defined(SYSCTLFN_ARGS)
+int sysctl_kern_sysvipc50(SYSCTLFN_ARGS);
+#define	KERN_SYSVIPC_OMSG_INFO		1	/* msginfo and msqid_ds50 */
+#define	KERN_SYSVIPC_OSEM_INFO		2	/* seminfo and semid_ds50 */
+#define	KERN_SYSVIPC_OSHM_INFO		3	/* shminfo and shmid_ds50 */
+#endif
+
 __END_DECLS
 
 #endif /* !_COMPAT_SYS_IPC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.54.2.1 2009/01/19 13:18:26 skrll Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.54.2.2 2009/03/03 18:31:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.54.2.1 2009/01/19 13:18:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.54.2.2 2009/03/03 18:31:07 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1210,6 +1210,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	bus_dmamap_t dmamap;
 	void *kva;
 	int i, rseg;
+	int mii_flags = 0;
 
 	aprint_naive("\n");
 
@@ -1423,6 +1424,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 		sc_if->sk_mii.mii_readreg = sk_marv_miibus_readreg;
 		sc_if->sk_mii.mii_writereg = sk_marv_miibus_writereg;
 		sc_if->sk_mii.mii_statchg = sk_marv_miibus_statchg;
+		mii_flags = MIIF_DOPAUSE;
 		break;
 	}
 
@@ -1430,7 +1432,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    sk_ifmedia_upd, ether_mediastatus);
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, mii_flags);
 	if (LIST_EMPTY(&sc_if->sk_mii.mii_phys)) {
 		aprint_error_dev(sc_if->sk_dev, "no PHY found!\n");
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
@@ -1578,7 +1580,8 @@ skc_attach(device_t parent, device_t self, void *aux)
                 return;
 	}
 
-	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase, iosize));
+	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase,
+	    (u_long)iosize));
 #endif
 	sc->sc_dmatag = pa->pa_dmat;
 

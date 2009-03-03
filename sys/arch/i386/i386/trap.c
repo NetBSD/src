@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.241.2.1 2009/03/03 18:28:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.2.1 2009/03/03 18:28:59 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -78,11 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $");
 #include "opt_kvm86.h"
 #include "opt_kstack_dr0.h"
 #include "opt_xen.h"
-#if !defined(XEN)
-#include "tprof.h"
-#else /* defined(XEN) */
-#define	NTPROF	0
-#endif /* defined(XEN) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,10 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#if NTPROF > 0
-#include <x86/tprof.h>
-#endif /* NTPROF > 0 */
-
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -119,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2008/10/15 06:51:17 wrstuden Exp $");
 #if NMCA > 0
 #include <machine/mca_machdep.h>
 #endif
+
+#include <x86/nmi.h>
 
 #include "isa.h"
 
@@ -768,12 +761,8 @@ copyfault:
 		break;
 
 	case T_NMI:
-#if NTPROF > 0
-		if (tprof_pmi_nmi(frame))
-			return;
-#endif /* NTPROF > 0 */
 #if !defined(XEN)
-		if (nmi_dispatch())
+		if (nmi_dispatch(frame))
 			return;
 #if (NISA > 0 || NMCA > 0)
 #if defined(KGDB) || defined(DDB)
