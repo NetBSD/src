@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.14 2008/10/13 15:10:51 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.15 2009/03/03 06:05:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.14 2008/10/13 15:10:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.15 2009/03/03 06:05:28 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -542,6 +542,8 @@ error:
 /*
  * Linux driver says that SpeedStep on older chipsets cause
  * lockups on Dell Inspiron 8000 and 8100.
+ * It should also not be enabled on systems with the 82855GM
+ * Hub, which typically have an EST-enabled CPU.
  */
 static int
 speedstep_bad_hb_check(struct pci_attach_args *pa)
@@ -549,6 +551,9 @@ speedstep_bad_hb_check(struct pci_attach_args *pa)
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82815_FULL_HUB &&
 	    PCI_REVISION(pa->pa_class) < 5)
+		return 1;
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82855GM_MCH)
 		return 1;
 
 	return 0;
