@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.8 2009/01/11 02:46:28 christos Exp $	*/
+/*	$NetBSD: iconv.c,v 1.9 2009/03/03 14:39:06 explorer Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.8 2009/01/11 02:46:28 christos Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.9 2009/03/03 14:39:06 explorer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,6 +47,8 @@ __weak_alias(iconv_close, _iconv_close)
 
 #ifdef HAVE_CITRUS
 #include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
 #include "citrus_types.h"
 #include "citrus_module.h"
 #include "citrus_esdb.h"
@@ -55,14 +57,29 @@ __weak_alias(iconv_close, _iconv_close)
 
 #define ISBADF(_h_)	(!(_h_) || (_h_) == (iconv_t)-1)
 
-
 iconv_t
 iconv_open(const char *out, const char *in)
 {
 	int ret;
 	struct _citrus_iconv *handle;
+	char *out_truncated;
+	char *p;
 
-	ret = _citrus_iconv_open(&handle, _PATH_ICONV, in, out);
+	/*
+	 * Remove anything following a //, as these are options (like
+	 * //ignore, //translate, etc) and we just don't handle them.
+	 * This is for compatibilty wiht software that uses thees
+	 * blindly.
+	 */
+	out_truncated = strdup(out);
+	p = out_truncated;
+	while (*p != '/' && *p != 0)
+		p++;
+	if (p[0] == '/' && p[1] == '/')
+		p[0] = 0;
+
+	ret = _citrus_iconv_open(&handle, _PATH_ICONV, in, out_truncated);
+	free(out_truncated);
 	if (ret) {
 		errno = ret == ENOENT? EINVAL : ret;
 		return ((iconv_t)-1);
