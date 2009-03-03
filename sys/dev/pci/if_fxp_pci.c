@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.62 2009/02/20 05:49:34 mrg Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.63 2009/03/03 06:06:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.62 2009/02/20 05:49:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.63 2009/03/03 06:06:40 mrg Exp $");
 
 #include "rnd.h"
 
@@ -382,7 +382,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 		if (sc->sc_rev >= FXP_REV_82558_A4)
 			sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
-		if (sc->sc_rev == FXP_REV_82550 || sc->sc_rev == FXP_REV_82550_C)
+		if (sc->sc_rev >= FXP_REV_82550)
 			sc->sc_flags |= FXPF_EXT_RFA;
 
 		break;
