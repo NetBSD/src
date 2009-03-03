@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.23 2009/02/23 13:39:41 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.24 2009/03/03 22:26:41 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.23 2009/02/23 13:39:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.24 2009/03/03 22:26:41 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2287,30 +2287,30 @@ age_rxfilter(struct age_softc *sc)
 
 	rxcfg = CSR_READ_4(sc, AGE_MAC_CFG);
 	rxcfg &= ~(MAC_CFG_ALLMULTI | MAC_CFG_BCAST | MAC_CFG_PROMISC);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_BROADCAST)
-		rxcfg |= MAC_CFG_BCAST;
-	if (ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) {
+	/*
+	 * Always accept broadcast frames.
+	 */
+	rxcfg |= MAC_CFG_BCAST;
+ 
+	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			rxcfg |= MAC_CFG_PROMISC;
-		if (ifp->if_flags & IFF_ALLMULTI)
+		else
 			rxcfg |= MAC_CFG_ALLMULTI;
-		CSR_WRITE_4(sc, AGE_MAR0, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, AGE_MAR1, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, AGE_MAC_CFG, rxcfg);
-		return;
-	}
+		mchash[0] = mchash[1] = 0xFFFFFFFF;
+	} else {
+		/* Program new filter. */
+		memset(mchash, 0, sizeof(mchash));
 
-	/* Program new filter. */
-	memset(mchash, 0, sizeof(mchash));
-
-	ETHER_FIRST_MULTI(step, ec, enm);
-	while (enm != NULL) {
-		crc = ether_crc32_le(LLADDR((struct sockaddr_dl *)
-		    enm->enm_addrlo), ETHER_ADDR_LEN);
-
-		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
-		ETHER_NEXT_MULTI(step, enm);	
+		ETHER_FIRST_MULTI(step, ec, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+			ETHER_NEXT_MULTI(step, enm);	
+		}
 	}
 
 	CSR_WRITE_4(sc, AGE_MAR0, mchash[0]);
