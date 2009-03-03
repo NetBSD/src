@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.797 2009/02/18 10:51:17 hira Exp $
+# $NetBSD: mi,v 1.798 2009/03/03 06:01:56 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4951,6 +4951,7 @@
 ./var/db/obsolete/text				base-sys-root
 ./var/db/postfix				base-postfix-root
 ./var/db/xdm					base-sys-root
+./var/db/xkb					base-sys-root
 ./var/empty					base-obsolete		obsolete
 ./var/games					base-games-root
 ./var/games/hackdir				base-games-root

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.392 2009/02/20 21:45:09 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.393 2009/03/03 06:01:56 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1477,6 +1477,7 @@
 ./var/db/obsolete
 ./var/db/postfix		uname=postfix gname=postfix mode=0755
 ./var/db/xdm
+./var/db/xkb
 ./var/games			uname=games gname=games mode=0775
 ./var/games/hackdir		uname=games gname=games mode=0775
 ./var/games/hackdir/save	uname=games gname=games mode=0770
