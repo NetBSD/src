@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.10 2009/03/03 15:42:43 explorer Exp $	*/
+/*	$NetBSD: iconv.c,v 1.11 2009/03/03 16:22:33 explorer Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.10 2009/03/03 15:42:43 explorer Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.11 2009/03/03 16:22:33 explorer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -78,10 +78,13 @@ iconv_open(const char *out, const char *in)
 	}
 		
 	p = out_truncated;
-	while (*p != '/' && *p != 0)
-		p++;
-	if (p[0] == '/' && p[1] == '/')
-		p[0] = 0;
+        while (*p != 0) {
+                if (p[0] == '/' && p[1] == '/') {
+                        *p = '\0';
+                        break;
+                }
+                p++;
+        }
 
 	ret = _citrus_iconv_open(&handle, _PATH_ICONV, in, out_truncated);
 	free(out_truncated);
