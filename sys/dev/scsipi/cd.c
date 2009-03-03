@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.283.2.1 2009/01/19 13:19:03 skrll Exp $	*/
+/*	$NetBSD: cd.c,v 1.283.2.2 2009/03/03 18:31:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283.2.1 2009/01/19 13:19:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283.2.2 2009/03/03 18:31:52 skrll Exp $");
 
 #include "rnd.h"
 
@@ -389,7 +389,7 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	part = CDPART(dev);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("cdopen: dev=0x%"PRIx64" (unit %"PRId64" (of %d), partition %"PRId64")\n", dev,
+	    ("cdopen: dev=0x%"PRIu64" (unit %"PRIu32" (of %d), partition %"PRId32")\n",dev,
 	    CDUNIT(dev), cd_cd.cd_ndevs, CDPART(dev)));
 
 	/*

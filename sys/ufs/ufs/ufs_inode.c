@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.76 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.76.2.1 2009/03/03 18:34:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76.2.1 2009/03/03 18:34:40 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -98,9 +98,6 @@ ufs_inactive(void *v)
 	 */
 	if (ip->i_mode == 0)
 		goto out;
-	if (ip->i_ffs_effnlink == 0 && DOINGSOFTDEP(vp))
-		softdep_releasefile(ip);
-
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
@@ -143,12 +140,6 @@ ufs_inactive(void *v)
 			if (!error)
 				error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
-		/*
-		 * Setting the mode to zero needs to wait for the inode
-		 * to be written just as does a change to the link count.
-		 * So, rather than creating a new entry point to do the
-		 * same thing, we just use softdep_change_linkcnt().
-		 */
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
@@ -157,8 +148,6 @@ ufs_inactive(void *v)
 		mutex_enter(&vp->v_interlock);
 		vp->v_iflag |= VI_FREEING;
 		mutex_exit(&vp->v_interlock);
-		if (DOINGSOFTDEP(vp))
-			softdep_change_linkcnt(ip);
 		UFS_VFREE(vp, ip->i_number, mode);
 	}
 
@@ -267,6 +256,15 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	pgssize = npages * sizeof(struct vm_page *);
 	pgs = kmem_zalloc(pgssize, KM_SLEEP);
 
+	/*
+	 * adjust off to be block-aligned.
+	 */
+
+	delta = off & (bsize - 1);
+	off -= delta;
+	len += delta;
+
+ retry:
 	mutex_enter(&uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_WRITE, 0,
@@ -286,18 +284,28 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	mutex_exit(&uobj->vmobjlock);
 
 	/*
-	 * adjust off to be block-aligned.
-	 */
-
-	delta = off & (bsize - 1);
-	off -= delta;
-	len += delta;
-
-	/*
 	 * now allocate the range.
 	 */
 
-	genfs_node_wrlock(vp);
+	/*
+	 * XXX: Hack around deadlock with pagebusy and genfs node lock.
+	 *      This should be properly fixed.  PR kern/40389
+	 */
+	{
+	struct genfs_node *gp = VTOG(vp); /* XXX */
+
+	if (!rw_tryenter(&gp->g_glock, RW_WRITER)) {
+		mutex_enter(&uobj->vmobjlock);
+		for (i = 0; i < npages; i++)
+			pgs[i]->flags |= PG_RELEASED | PG_CLEAN;
+		mutex_enter(&uvm_pageqlock);
+		uvm_page_unbusy(pgs, npages);
+		mutex_exit(&uvm_pageqlock);
+		mutex_exit(&uobj->vmobjlock);
+		kpause("uballo", false, 1, NULL);
+		goto retry;
+	}}
+
 	error = GOP_ALLOC(vp, off, len, flags, cred);
 	genfs_node_unlock(vp);
 

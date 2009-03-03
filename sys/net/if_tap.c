@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.47.2.1 2009/01/19 13:20:12 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.47.2.2 2009/03/03 18:33:38 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.47.2.1 2009/01/19 13:20:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.47.2.2 2009/03/03 18:33:38 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -885,7 +885,6 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	s = splnet();
 	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
 		ifp->if_flags &= ~IFF_OACTIVE;
-		splx(s);
 		/*
 		 * We must release the lock before sleeping, and re-acquire it
 		 * after.
@@ -895,6 +894,8 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 			error = EWOULDBLOCK;
 		else
 			error = tsleep(sc, PSOCK|PCATCH, "tap", 0);
+		splx(s);
+
 		if (error != 0)
 			return (error);
 		/* The device might have been downed */

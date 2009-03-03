@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.43 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.43.54.1 2009/03/03 18:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.43 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.43.54.1 2009/03/03 18:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.43 2006/12/09 16:11:52 chs Exp $");
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/layer_extern.h>
+
+/*
+ * Note: If the LAYERFS_MBYPASSDEBUG flag is set, it is possible
+ * that the debug printing will bomb out, because kauth routines
+ * do not handle NOCRED or FSCRED like other credentials and end
+ * up dereferencing an inappropriate pointer.
+ *
+ * That should be fixed in kauth rather than here.
+ */
 
 int	umap_lookup(void *);
 int	umap_getattr(void *);
@@ -124,7 +133,7 @@ umap_bypass(v)
 	int reles, i, flags;
 	struct componentname **compnamepp = 0;
 
-#ifdef SAFETY
+#ifdef DIAGNOSTIC
 	/*
 	 * We require at least one vp.
 	 */
@@ -188,7 +197,7 @@ umap_bypass(v)
 		/* Save old values */
 
 		savecredp = *credpp;
-		if (savecredp != NOCRED)
+		if (savecredp != NOCRED && savecredp != FSCRED)
 			*credpp = kauth_cred_dup(savecredp);
 		credp = *credpp;
 
@@ -217,7 +226,7 @@ umap_bypass(v)
 		    descp->vdesc_componentname_offset, ap);
 
 		savecompcredp = (*compnamepp)->cn_cred;
-		if (savecompcredp != NOCRED)
+		if (savecompcredp != NOCRED && savecompcredp != FSCRED)
 			(*compnamepp)->cn_cred = kauth_cred_dup(savecompcredp);
 		compcredp = (*compnamepp)->cn_cred;
 
@@ -303,7 +312,7 @@ umap_bypass(v)
 			printf("umap_bypass: returning-user was %d\n",
 			    kauth_cred_geteuid(credp));
 
-		if (savecredp != NOCRED && credpp) {
+		if (savecredp != NOCRED && savecredp != FSCRED && credpp) {
 			kauth_cred_free(credp);
 			*credpp = savecredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && credpp &&
@@ -319,7 +328,7 @@ umap_bypass(v)
 			printf("umap_bypass: returning-component-user was %d\n",
 			    kauth_cred_geteuid(compcredp));
 
-		if (savecompcredp != NOCRED) {
+		if (savecompcredp != NOCRED && savecompcredp != FSCRED) {
 			kauth_cred_free(compcredp);
 			(*compnamepp)->cn_cred = savecompcredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
@@ -422,7 +431,7 @@ umap_lookup(v)
 		printf("umap_lookup: returning-component-user was %d\n",
 			    kauth_cred_geteuid(compcredp));
 
-	if (savecompcredp != NOCRED) {
+	if (savecompcredp != NOCRED && savecompcredp != FSCRED) {
 		if (compcredp)
 			kauth_cred_free(compcredp);
 		cnp->cn_cred = savecompcredp;

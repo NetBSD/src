@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.7.4.2 2009/01/19 13:17:53 skrll Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.7.4.3 2009/03/03 18:30:44 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -103,14 +103,22 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 {
 	dm_target_t *dmt, *dmt1;
 	int r;
+
 	dmt = NULL;
+	dmt1 = NULL;
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if (((dmt = dm_target_lookup("snapshot")) != NULL) ||
-		    (((dmt = dm_target_lookup("snapshot-origin")) != NULL)))
+		if (((dmt = dm_target_lookup("snapshot")) != NULL)) {
+			dm_target_unbusy(dmt);
 			return EEXIST;
-		
+		}
+				
+		if (((dmt = dm_target_lookup("snapshot-origin")) != NULL)){
+			dm_target_unbusy(dmt);
+			return EEXIST;
+		}
+	
 		dmt = dm_target_alloc("snapshot");
 		dmt1 = dm_target_alloc("snapshot-origin");
 

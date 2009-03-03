@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.45.8.1 2009/01/19 13:20:30 skrll Exp $	*/
+/*	$NetBSD: shm.h,v 1.45.8.2 2009/03/03 18:34:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -176,6 +176,18 @@ void	shminit(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
 int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
+
+#define SYSCTL_FILL_SHM(src, dst) do { \
+	SYSCTL_FILL_PERM((src).shm_perm, (dst).shm_perm); \
+	(dst).shm_segsz = (src).shm_segsz; \
+	(dst).shm_lpid = (src).shm_lpid; \
+	(dst).shm_cpid = (src).shm_cpid; \
+	(dst).shm_atime = (src).shm_atime; \
+	(dst).shm_dtime = (src).shm_dtime; \
+	(dst).shm_ctime = (src).shm_ctime; \
+	(dst).shm_nattch = (src).shm_nattch; \
+} while (/*CONSTCOND*/ 0)
+
 #else /* !_KERNEL */
 
 __BEGIN_DECLS

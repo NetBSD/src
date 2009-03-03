@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.35 2008/05/31 22:37:00 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.35.6.1 2009/03/03 18:28:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.35 2008/05/31 22:37:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.35.6.1 2009/03/03 18:28:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.35 2008/05/31 22:37:00 dyoung Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+
+#include <x86/nmi.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -73,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.35 2008/05/31 22:37:00 dyoung Exp $");
 
 struct elansc_softc {
 	device_t sc_dev;
+	device_t sc_gpio;
 	device_t sc_par;
 	device_t sc_pex;
 	device_t sc_pci;
@@ -421,6 +424,13 @@ elanpar_intr(void *arg)
 }
 
 static int
+elanpar_nmi(const struct trapframe *tf, void *arg)
+{
+
+	return elanpar_intr(arg);
+}
+
+static int
 elanpex_intr(void *arg)
 {
 	static struct {
@@ -518,6 +528,13 @@ elanpex_intr(void *arg)
 		    mstack);
 	}
 	return fatal ? 0 : (handled ? 1 : 0);
+}
+
+static int
+elanpex_nmi(const struct trapframe *tf, void *arg)
+{
+
+	return elanpex_intr(arg);
 }
 
 #define	elansc_print_1(__dev, __sc, __reg)				\
@@ -897,6 +914,10 @@ elansc_detach(device_t self, int flags)
 	/* ...and clear it. */
 	elansc_wdogctl_reset(sc);
 
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_PICICR, sc->sc_picicr);
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_MPICMODE,
+	    sc->sc_mpicmode);
+
 	mutex_exit(&sc->sc_mtx);
 	mutex_destroy(&sc->sc_mtx);
 
@@ -999,7 +1020,7 @@ elanpex_intr_establish(device_t self, struct elansc_softc *sc)
 	tgtirq |= MMCR_HBTGTIRQCTL_T_DPER_IRQ_ENB;
 
 	if (elansc_pcinmi) {
-		sc->sc_eih = nmi_establish(elanpex_intr, sc);
+		sc->sc_eih = nmi_establish(elanpex_nmi, sc);
 
 		/* Activate NMI instead of maskable interrupts for
 		 * all PCI exceptions:
@@ -1129,7 +1150,7 @@ elanpar_intr_establish(device_t self, struct elansc_softc *sc)
 
 	/* establish interrupt */
 	if (elansc_wpvnmi)
-		sc->sc_pih = nmi_establish(elanpar_intr, sc);
+		sc->sc_pih = nmi_establish(elanpar_nmi, sc);
 	else
 		sc->sc_pih = elansc_intr_establish(self, elanpar_intr, sc);
 
@@ -1368,7 +1389,8 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_par = config_found_ia(sc->sc_dev, "elanparbus", NULL, NULL);
 	sc->sc_pex = config_found_ia(sc->sc_dev, "elanpexbus", NULL, NULL);
 	/* Attach GPIO framework */
-	config_found_ia(sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+	sc->sc_gpio = config_found_ia(sc->sc_dev, "gpiobus", &gba,
+	    gpiobus_print);
 #endif /* NGPIO */
 
 	/*
@@ -1388,7 +1410,7 @@ elansc_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-elanpex_match(device_t parent, struct cfdata *match, void *aux)
+elanpex_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct elansc_softc *sc = device_private(parent);
 
@@ -1396,11 +1418,50 @@ elanpex_match(device_t parent, struct cfdata *match, void *aux)
 }
 
 static int
-elanpar_match(device_t parent, struct cfdata *match, void *aux)
+elanpar_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct elansc_softc *sc = device_private(parent);
 
 	return sc->sc_par == NULL;
+}
+
+static bool
+ifattr_match(const char *snull, const char *t)
+{
+	return (snull == NULL) || strcmp(snull, t) == 0;
+}
+
+/* scan for new children */
+static int
+elansc_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct elansc_softc *sc = device_private(self);
+
+	if (ifattr_match(ifattr, "gpiobus") && sc->sc_gpio == NULL) {
+#if NGPIO > 0
+		struct gpiobus_attach_args gba;
+
+		gba.gba_gc = &sc->sc_gpio_gc;
+		gba.gba_pins = sc->sc_gpio_pins;
+		gba.gba_npins = ELANSC_PIO_NPINS;
+		sc->sc_gpio = config_found_ia(sc->sc_dev, "gpiobus", &gba,
+		    gpiobus_print);
+#endif
+	}
+
+	if (ifattr_match(ifattr, "elanparbus") && sc->sc_par == NULL)
+		sc->sc_par = config_found_ia(sc->sc_dev, ifattr, NULL, NULL);
+
+	if (ifattr_match(ifattr, "elanpexbus") && sc->sc_pex == NULL)
+		sc->sc_pex = config_found_ia(sc->sc_dev, ifattr, NULL, NULL);
+
+	if (ifattr_match(ifattr, "pcibus") && sc->sc_pci == NULL) {
+#if 0
+		/* TBD */
+		sc->sc_pci = config_found_ia(self, "pcibus", pba, pcibusprint);
+#endif
+	}
+	return 0;
 }
 
 CFATTACH_DECL_NEW(elanpar, 0,
@@ -1410,7 +1471,7 @@ CFATTACH_DECL_NEW(elanpex, 0,
     elanpex_match, elanpex_attach, elanpex_detach, NULL);
 
 CFATTACH_DECL2_NEW(elansc, sizeof(struct elansc_softc),
-    elansc_match, elansc_attach, elansc_detach, NULL, NULL,
+    elansc_match, elansc_attach, elansc_detach, NULL, elansc_rescan,
     elansc_childdetached);
 
 #if NGPIO > 0

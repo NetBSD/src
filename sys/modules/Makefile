@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 2009/01/19 13:20:07 skrll Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 2009/03/03 18:33:37 skrll Exp $
 
 # For all platforms
 
@@ -45,6 +45,7 @@ SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
+SUBDIR+=	vnd
 .if (defined(NOTYET))
 SUBDIR+=	unionfs
 .endif
@@ -60,7 +61,7 @@ SUBDIR+=	exec_elf32
 SUBDIR+=	exec_elf64
 .endif
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	azalia
 SUBDIR+=	compat_linux
 SUBDIR+=	compat_linux32
@@ -69,7 +70,7 @@ SUBDIR+=	drm
 SUBDIR+=	i915drm
 .endif
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 SUBDIR+=	azalia
 SUBDIR+=	compat_freebsd
 SUBDIR+=	compat_ibcs2

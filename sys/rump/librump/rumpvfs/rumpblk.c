@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.1.4.2 2009/01/19 13:20:27 skrll Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.1.4.3 2009/03/03 18:34:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.1.4.2 2009/01/19 13:20:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.1.4.3 2009/03/03 18:34:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,6 +66,7 @@ dev_type_read(rumpblk_read);
 dev_type_write(rumpblk_write);
 dev_type_ioctl(rumpblk_ioctl);
 dev_type_strategy(rumpblk_strategy);
+dev_type_strategy(rumpblk_strategy_fail);
 dev_type_dump(rumpblk_dump);
 dev_type_size(rumpblk_size);
 
@@ -74,20 +75,53 @@ static const struct bdevsw rumpblk_bdevsw = {
 	nodump, nosize, D_DISK
 };
 
+static const struct bdevsw rumpblk_bdevsw_fail = {
+	rumpblk_open, rumpblk_close, rumpblk_strategy_fail, rumpblk_ioctl,
+	nodump, nosize, D_DISK
+};
+
 static const struct cdevsw rumpblk_cdevsw = {
 	rumpblk_open, rumpblk_close, rumpblk_read, rumpblk_write,
 	rumpblk_ioctl, nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-/* XXX: not mpsafe */
+/* fail every n out of BLKFAIL_MAX */
+#define BLKFAIL_MAX 10000
+static int blkfail;
+static unsigned randstate;
 
 int
 rumpblk_init()
 {
+	char buf[64];
 	int rumpblk = RUMPBLK;
+	int error;
 
-	return devsw_attach("rumpblk", &rumpblk_bdevsw, &rumpblk,
-	    &rumpblk_cdevsw, &rumpblk);
+	if (rumpuser_getenv("RUMP_BLKFAIL", buf, sizeof(buf), &error) == 0) {
+		blkfail = strtoul(buf, NULL, 10);
+		/* fail everything */
+		if (blkfail > BLKFAIL_MAX)
+			blkfail = BLKFAIL_MAX;
+		if (rumpuser_getenv("RUMP_BLKFAIL_SEED", buf, sizeof(buf),
+		    &error) == 0) {
+			randstate = strtoul(buf, NULL, 10);
+		} else {
+			randstate = arc4random(); /* XXX: not enough entropy */
+		}
+		printf("rumpblk: FAULT INJECTION ACTIVE!  every %d out of"
+		    " %d I/O will fail.  key %u\n", blkfail, BLKFAIL_MAX,
+		    randstate);
+	} else {
+		blkfail = 0;
+	}
+
+	if (blkfail) {
+		return devsw_attach("rumpblk", &rumpblk_bdevsw_fail, &rumpblk,
+		    &rumpblk_cdevsw, &rumpblk);
+	} else {
+		return devsw_attach("rumpblk", &rumpblk_bdevsw, &rumpblk,
+		    &rumpblk_cdevsw, &rumpblk);
+	}
 }
 
 int
@@ -117,7 +151,8 @@ int
 rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rblkdev *rblk = &minors[minor(dev)];
-	struct stat sb;
+	uint64_t fsize;
+	int ft;
 	int error, fd;
 
 	KASSERT(rblk->rblk_fd == -1);
@@ -140,13 +175,14 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 		memset(&rblk->rblk_dl, 0, sizeof(rblk->rblk_dl));
 
-		if (rumpuser_stat(rblk->rblk_path, &sb, &error) == -1) {
+		if (rumpuser_getfileinfo(rblk->rblk_path, &fsize,
+		    &ft, &error) == -1) {
 			int dummy;
 
 			rumpuser_close(fd, &dummy);
 			return error;
 		}
-		rblk->rblk_pi.p_size = sb.st_size >> DEV_BSHIFT;
+		rblk->rblk_pi.p_size = fsize >> DEV_BSHIFT;
 		rblk->rblk_dl.d_secsize = DEV_BSIZE;
 		rblk->rblk_curpi = &rblk->rblk_pi;
 	}
@@ -203,8 +239,8 @@ rumpblk_write(dev_t dev, struct uio *uio, int flags)
 	panic("%s: unimplemented", __func__);
 }
 
-void
-rumpblk_strategy(struct buf *bp)
+static void
+dostrategy(struct buf *bp)
 {
 	struct rblkdev *rblk = &minors[minor(bp->b_dev)];
 	off_t off;
@@ -233,7 +269,19 @@ rumpblk_strategy(struct buf *bp)
 	if (async && rump_threads) {
 		struct rumpuser_aio *rua;
 
-		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
+		rumpuser_mutex_enter(&rumpuser_aio_mtx);
+		/*
+		 * Check if our buffer is full.  Doing it this way
+		 * throttles the I/O a bit if we have a massive
+		 * async I/O burst.
+		 */
+		if ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail) {
+			rumpuser_mutex_exit(&rumpuser_aio_mtx);
+			goto syncfallback;
+		}
+
+		rua = &rumpuser_aios[rumpuser_aio_head];
+		KASSERT(rua->rua_bp == NULL);
 		rua->rua_fd = rblk->rblk_fd;
 		rua->rua_data = bp->b_data;
 		rua->rua_dlen = bp->b_bcount;
@@ -241,26 +289,8 @@ rumpblk_strategy(struct buf *bp)
 		rua->rua_bp = bp;
 		rua->rua_op = BUF_ISREAD(bp);
 
-		rumpuser_mutex_enter(&rumpuser_aio_mtx);
-
-		/*
-		 * Check if our buffer is full.  Doing it this way
-		 * throttles the I/O a bit if we have a massive
-		 * async I/O burst.
-		 *
-		 * XXX: this actually leads to deadlocks with spl()
-		 * (caller maybe be at splbio() legally for async I/O),
-		 * so for now set N_AIOS high and FIXXXME some day.
-		 */
-		if ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail) {
-			kmem_free(rua, sizeof(*rua));
-			rumpuser_mutex_exit(&rumpuser_aio_mtx);
-			goto syncfallback;
-		}
-
 		/* insert into queue & signal */
-		rumpuser_aios[rumpuser_aio_head] = rua;
-		rumpuser_aio_head = (rumpuser_aio_head+1) % (N_AIOS-1);
+		rumpuser_aio_head = (rumpuser_aio_head+1) % N_AIOS;
 		rumpuser_cv_signal(&rumpuser_aio_cv);
 		rumpuser_mutex_exit(&rumpuser_aio_mtx);
 	} else {
@@ -278,5 +308,45 @@ rumpblk_strategy(struct buf *bp)
 			if (BUF_ISWRITE(bp))
 				rumpuser_fsync(rblk->rblk_fd, &error);
 		}
+	}
+}
+
+void
+rumpblk_strategy(struct buf *bp)
+{
+
+	dostrategy(bp);
+}
+
+/*
+ * Simple random number generator.  This is private so that we can
+ * very repeatedly control which blocks will fail.
+ *
+ * <mlelstv> pooka, rand()
+ * <mlelstv> [paste]
+ */
+static unsigned
+gimmerand(void)
+{
+
+	return (randstate = randstate * 1103515245 + 12345) % (0x80000000L);
+}
+
+/*
+ * Block device with very simple fault injection.  Fails every
+ * n out of BLKFAIL_MAX I/O with EIO.  n is determined by the env
+ * variable RUMP_BLKFAIL.
+ */
+void
+rumpblk_strategy_fail(struct buf *bp)
+{
+
+	if (gimmerand() % BLKFAIL_MAX >= blkfail) {
+		dostrategy(bp);
+	} else { 
+		printf("block fault injection: failing I/O on block %lld\n",
+		    (long long)bp->b_blkno);
+		bp->b_error = EIO;
+		biodone(bp);
 	}
 }

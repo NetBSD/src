@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.19.4.1 2009/01/19 13:17:53 skrll Exp $ */
+/* $NetBSD: drm_drv.c,v 1.19.4.2 2009/03/03 18:30:44 skrll Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.19.4.1 2009/01/19 13:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.19.4.2 2009/03/03 18:30:44 skrll Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -413,7 +413,7 @@ static int drm_lastclose(drm_device_t *dev)
 
 	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
 		if (dev->pci_map_data[i].mapped > 1) {
-			bus_space_unmap(dev->pci_map_data[i].maptype,
+			bus_space_unmap(dev->pa.pa_memt,
 					dev->pci_map_data[i].bsh,
 					dev->pci_map_data[i].size);
 			dev->pci_map_data[i].mapped = 0;
@@ -820,7 +820,7 @@ static int
 drm_modcmd(modcmd_t cmd, void *arg)
 {
 #ifdef _MODULE
-	int bmajor = -1, cmajor = -1;
+	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

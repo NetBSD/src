@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.115.2.1 2009/01/19 13:17:55 skrll Exp $	*/
+/*	$NetBSD: i82557.c,v 1.115.2.2 2009/03/03 18:30:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.115.2.1 2009/01/19 13:17:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.115.2.2 2009/03/03 18:30:45 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -268,7 +268,7 @@ fxp_attach(struct fxp_softc *sc)
 	 * too, but that's already enabled by the code above.
 	 * Be careful to do this only on the right devices.
 	 */
-	if (sc->sc_flags & FXPF_IPCB)
+	if (sc->sc_flags & FXPF_EXT_TXCB)
 		sc->sc_txcmd = htole16(FXP_CB_COMMAND_IPCBXMIT);
 	else
 		sc->sc_txcmd = htole16(FXP_CB_COMMAND_XMIT);
@@ -324,7 +324,7 @@ fxp_attach(struct fxp_softc *sc)
 	 */
 	for (i = 0; i < FXP_NTXCB; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    (sc->sc_flags & FXPF_IPCB) ? FXP_IPCB_NTXSEG : FXP_NTXSEG,
+		    (sc->sc_flags & FXPF_EXT_TXCB) ? FXP_IPCB_NTXSEG : FXP_NTXSEG,
 		    MCLBYTES, 0, 0, &FXP_DSTX(sc, i)->txs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to create tx DMA map %d, error = %d\n",
@@ -374,7 +374,7 @@ fxp_attach(struct fxp_softc *sc)
 	ifp->if_stop = fxp_stop;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if (sc->sc_flags & FXPF_IPCB) {
+	if (sc->sc_flags & FXPF_EXT_TXCB) {
 		KASSERT(sc->sc_flags & FXPF_EXT_RFA); /* we have both or none */
 		/*
 		 * IFCAP_CSUM_IPv4_Tx seems to have a problem,
@@ -896,7 +896,7 @@ fxp_start(struct ifnet *ifp)
 		tbdp = txd->txd_tbd;
 		len = m0->m_pkthdr.len;
 		nsegs = dmamap->dm_nsegs;
-		if (sc->sc_flags & FXPF_IPCB)
+		if (sc->sc_flags & FXPF_EXT_TXCB)
 			tbdp++;
 		for (seg = 0; seg < nsegs; seg++) {
 			tbdp[seg].tb_addr =
@@ -940,7 +940,7 @@ fxp_start(struct ifnet *ifp)
 		txd->txd_txcb.tbd_number = nsegs;
 
 		KASSERT((csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) == 0);
-		if (sc->sc_flags & FXPF_IPCB) {
+		if (sc->sc_flags & FXPF_EXT_TXCB) {
 			struct m_tag *vtag;
 			struct fxp_ipcb *ipcb;
 			/*

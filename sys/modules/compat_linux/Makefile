@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.2 2009/01/19 13:20:07 skrll Exp $
+#	$NetBSD: Makefile,v 1.3.4.3 2009/03/03 18:33:37 skrll Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -20,7 +20,7 @@ CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_AOUT
 .PATH:	${S}/compat/linux/arch/i386
 .PATH:	${S}/arch/x86/x86
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c linux_commons.c
-SRCS+=	linux_ptrace.c linux_exec_machdep.c linux_support.S linux_exec_elf32.c
+SRCS+=	linux_ptrace.c linux_exec_machdep.c linux_exec_elf32.c
 SRCS+=	linux_exec_aout.c linux_sigcode.S linux_syscall.c linux_trap.c
 SRCS+=	linux_uselib.c
 .endif
@@ -31,7 +31,7 @@ CPPFLAGS+=	-DEXEC_ELF64
 .PATH:	${S}/arch/amd64/amd64
 .PATH:	${S}/arch/x86/x86
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c linux_commons.c
-SRCS+=	linux_exec_machdep.c linux_support.S linux_exec_elf64.c
+SRCS+=	linux_exec_machdep.c linux_exec_elf64.c
 SRCS+=	linux_sigcode.S linux_syscall.c linux_trap.c
 .endif
 

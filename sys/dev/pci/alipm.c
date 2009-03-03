@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.1.10.2 2009/01/19 13:18:24 skrll Exp $ */
+/*	$NetBSD: alipm.c,v 1.1.10.3 2009/03/03 18:31:07 skrll Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.1.10.2 2009/01/19 13:18:24 skrll Exp $");
+<<<<<<< alipm.c
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.1.10.3 2009/03/03 18:31:07 skrll Exp $");
+=======
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.1.10.3 2009/03/03 18:31:07 skrll Exp $");
+>>>>>>> 1.2
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -306,9 +310,12 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	/* Set SMBus command */
-	if (len == 0)
-		ctl = ALIPM_SMB_HC_CMD_BYTE;
-	else if (len == 1)
+	if (len == 0) {
+		if (cmdlen == 0)
+			ctl = ALIPM_SMB_HC_CMD_QUICK;
+		else
+			ctl = ALIPM_SMB_HC_CMD_BYTE;
+	} else if (len == 1)
 		ctl = ALIPM_SMB_HC_CMD_BDATA;
 	else
 		ctl = ALIPM_SMB_HC_CMD_WDATA;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.1.4.1 2009/01/19 13:20:26 skrll Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.1.4.2 2009/03/03 18:34:29 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -7,7 +7,8 @@ LIB=		rumpnet
 
 .PATH:	${RUMPTOP}/librump/rumpnet				\
 	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
-	${RUMPTOP}/../net
+	${RUMPTOP}/../net					\
+	${RUMPTOP}/../compat/common
 
 SRCS=	net_stub.c netisr.c rump_net.c
 
@@ -20,6 +21,9 @@ SRCS+=	radix.c
 
 # src/lib/libkern
 SRCS+=	intoa.c
+
+# compat
+SRCS+=	rtsock_50.c
 
 # automatically in sync src/lib
 SHLIB_MAJOR=    0

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.20.8.1 2009/01/19 13:17:55 skrll Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.20.8.2 2009/03/03 18:30:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -370,7 +370,7 @@ struct fxp_tbd {
 #define FXP_CB_STATUS_C		0x8000
 
 /* commands */
-#define FXP_CB_COMMAND_CMD	0x0007	/* XXX how about FXPF_IPCB case? */
+#define FXP_CB_COMMAND_CMD	0x0007
 #define FXP_CB_COMMAND_NOP	0x0
 #define FXP_CB_COMMAND_IAS	0x1
 #define FXP_CB_COMMAND_CONFIG	0x2

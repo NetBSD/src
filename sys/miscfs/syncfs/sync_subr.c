@@ -1,4 +1,33 @@
-/*	$NetBSD: sync_subr.c,v 1.34.18.1 2009/01/19 13:20:07 skrll Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.34.18.2 2009/03/03 18:33:36 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.34.18.1 2009/01/19 13:20:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.34.18.2 2009/03/03 18:33:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +88,7 @@ time_t syncdelay = 30;			/* max time to delay syncing data */
 time_t filedelay = 30;			/* time to delay syncing files */
 time_t dirdelay  = 15;			/* time to delay syncing directories */
 time_t metadelay = 10;			/* time to delay syncing metadata */
+time_t lockdelay = 1;			/* time to delay if locking fails */
 
 kmutex_t syncer_mutex;			/* used to freeze syncer, long term */
 static kmutex_t syncer_data_lock;	/* short term lock on data structures */
@@ -196,6 +226,7 @@ sched_sync(void *v)
 	struct synclist *slp;
 	struct vnode *vp;
 	long starttime;
+	bool synced;
 
 	updateproc = curlwp;
 
@@ -206,8 +237,7 @@ sched_sync(void *v)
 		starttime = time_second;
 
 		/*
-		 * Push files whose dirty time has expired. Be careful
-		 * of interrupt race on slp queue.
+		 * Push files whose dirty time has expired.
 		 */
 		slp = &syncer_workitem_pending[syncer_delayno];
 		syncer_delayno += 1;
@@ -216,10 +246,12 @@ sched_sync(void *v)
 
 		while ((vp = TAILQ_FIRST(slp)) != NULL) {
 			/* We are locking in the wrong direction. */
+			synced = false;
 			if (mutex_tryenter(&vp->v_interlock)) {
 				mutex_exit(&syncer_data_lock);
 				if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT |
 				    LK_INTERLOCK) == 0) {
+					synced = true;
 					(void) VOP_FSYNC(vp, curlwp->l_cred,
 					    FSYNC_LAZY, 0, 0);
 					vput(vp);
@@ -227,29 +259,43 @@ sched_sync(void *v)
 				mutex_enter(&syncer_data_lock);
 			}
 
-			/* XXXAD The vnode may have been recycled. */
+			/*
+			 * XXX The vnode may have been recycled, in which
+			 * case it may have a new identity.
+			 */
 			if (TAILQ_FIRST(slp) == vp) {
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
 				 * position and then add us back in at a later
 				 * position.
+				 *
+				 * Try again sooner rather than later if
+				 * we were unable to lock the vnode.  Lock
+				 * failure should not prevent us from doing
+				 * the sync "soon".
+				 *
+				 * If we locked it yet arrive here, it's
+				 * likely that lazy sync is in progress and
+				 * so the vnode still has dirty metadata. 
+				 * syncdelay is mainly to get this vnode out
+				 * of the way so we do not consider it again
+				 * "soon" in this loop, so the delay time is
+				 * not critical as long as it is not "soon". 
+				 * While write-back strategy is the file
+				 * system's domain, we expect write-back to
+				 * occur no later than syncdelay seconds
+				 * into the future.
 				 */
-				vn_syncer_add1(vp, syncdelay);
+				vn_syncer_add1(vp,
+				    synced ? syncdelay : lockdelay);
 			}
 		}
-
-		mutex_exit(&syncer_data_lock);
-
-		/*
-		 * Do soft update processing.
-		 */
-		if (bioopsp != NULL)
-			(*bioopsp->io_sync)(NULL);
-
 		mutex_exit(&syncer_mutex);
 
-		mutex_enter(&syncer_data_lock);
+		/*
+		 * Wait until there are more workitems to process.
+		 */
 		if (rushjob > 0) {
 			/*
 			 * The variable rushjob allows the kernel to speed

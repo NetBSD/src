@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280.2.1 2009/01/19 13:19:38 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280.2.2 2009/03/03 18:32:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,9 +59,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.2.1 2009/01/19 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.2.2 2009/03/03 18:32:55 skrll Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_modular.h"
 #include "opt_syscall_debug.h"
 #include "veriexec.h"
 #include "opt_pax.h"

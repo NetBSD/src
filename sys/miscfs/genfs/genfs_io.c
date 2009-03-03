@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.13.2.1 2009/01/19 13:20:06 skrll Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.13.2.2 2009/03/03 18:33:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.13.2.1 2009/01/19 13:20:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.13.2.2 2009/03/03 18:33:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +573,8 @@ loopdone:
 	if (bp != NULL) {
 		error = biowait(mbp);
 	}
-	putiobuf(mbp);
+
+	/* Remove the mapping (make KVA available as soon as possible) */
 	uvm_pagermapout(kva, npages);
 
 	/*
@@ -615,6 +616,9 @@ loopdone:
 		}
 	}
 	rw_exit(&gp->g_glock);
+
+	putiobuf(mbp);
+
 	mutex_enter(&uobj->vmobjlock);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.64.4.1 2009/01/19 13:18:24 skrll Exp $	*/
+/*	$NetBSD: azalia.c,v 1.64.4.2 2009/03/03 18:31:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.64.4.1 2009/01/19 13:18:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.64.4.2 2009/03/03 18:31:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2074,6 +2074,7 @@ azalia_stream_halt(stream_t *this)
 
 	if (this->bdlist.addr == NULL)
 		return EINVAL;
+	this->intr = this->intr_arg = NULL;
 	ctl = STR_READ_2(this, CTL);
 	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
 	STR_WRITE_2(this, CTL, ctl);

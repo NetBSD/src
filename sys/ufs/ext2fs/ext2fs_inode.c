@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.66.6.1 2009/01/19 13:20:31 skrll Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.66.6.2 2009/03/03 18:34:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.66.6.1 2009/01/19 13:20:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.66.6.2 2009/03/03 18:34:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	cp = (char *)bp->b_data +
-	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
+	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE(fs));
 	e2fs_isave(ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
 	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
 	    (flags & IN_MODIFIED) != 0 &&

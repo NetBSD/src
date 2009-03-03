@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.282.2.1 2009/01/19 13:16:46 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.282.2.2 2009/03/03 18:29:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,11 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282.2.1 2009/01/19 13:16:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282.2.2 2009/03/03 18:29:25 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_sparc_arch.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -1008,11 +1009,11 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
-		printf("\ndump to dev %"PRIu64",%"PRIu64" not possible\n",
+		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
 	}
-	printf("\ndumping to dev %"PRIu64",%"PRIu64" offset %ld\n",
+	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);

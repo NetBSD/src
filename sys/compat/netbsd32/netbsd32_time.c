@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.34.2.1 2009/01/19 13:17:37 skrll Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.34.2.2 2009/03/03 18:30:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.34.2.1 2009/01/19 13:17:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.34.2.2 2009/03/03 18:30:08 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -176,29 +176,6 @@ netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap,
 		*retval = ntp_timestatus();
 	}
 	return error;
-}
-#else /* !NTP */
-int
-netbsd32___ntp_gettime50(struct lwp *l, const struct netbsd32___ntp_gettime50_args *uap, register_t *retval)
-{
-
-	return (ENOSYS);
-}
-
-#ifdef COMPAT_30
-int
-compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_ntp_gettime_args *uap, register_t *retval)
-{
-
-	return (ENOSYS);
-}
-#endif
-
-int
-netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap, register_t *retval)
-{
-
-	return (ENOSYS);
 }
 #endif /* NTP */
 

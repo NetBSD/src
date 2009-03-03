@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.4.4.1 2009/01/19 13:20:26 skrll Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.4.4.2 2009/03/03 18:34:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.4.4.1 2009/01/19 13:20:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.4.4.2 2009/03/03 18:34:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -52,6 +52,9 @@ __weak_alias(rtrequest,__rumpnet_stub);
 __weak_alias(ifioctl,__rumpnet_stub);
 __weak_alias(ifunit,__rumpnet_stub);
 __weak_alias(ifreq_setaddr,__rumpnet_stub);
+__weak_alias(rt_msg1,__rumpnet_stub);
+__weak_alias(route_enqueue,__rumpnet_stub);
+__weak_alias(route_cb,__rumpnet_stub);
 
 struct ifnet_head ifnet;
 

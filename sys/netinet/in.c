@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.127.2.1 2009/01/19 13:20:13 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.127.2.2 2009/03/03 18:33:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.127.2.1 2009/01/19 13:20:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.127.2.2 2009/03/03 18:33:38 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -322,13 +322,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
 	case SIOCSIFADDRPREF:
-		if (l == NULL)
-			return (EPERM);
-		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
-		    NULL) != 0)
-			return (EPERM);
-		/*FALLTHROUGH*/
 	case SIOCGIFADDRPREF:
 	case SIOCGLIFADDR:
 		if (ifp == NULL)

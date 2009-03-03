@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.48 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.48.10.1 2009/03/03 18:34:06 skrll Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -101,8 +101,8 @@ struct secpolicy {
 	 * "lifetime" is passed by sadb_lifetime.sadb_lifetime_addtime.
 	 * "validtime" is passed by sadb_lifetime.sadb_lifetime_usetime.
 	 */
-	long created;		/* time created the policy */
-	long lastused;		/* updated every when kernel sends a packet */
+	time_t created;		/* time created the policy */
+	time_t lastused;	/* updated every when kernel sends a packet */
 	long lifetime;		/* duration of the lifetime of this policy */
 	long validtime;		/* duration this policy is valid without use */
 };

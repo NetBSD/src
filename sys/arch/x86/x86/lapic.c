@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.42 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: lapic.c,v 1.42.4.1 2009/03/03 18:29:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.42 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.42.4.1 2009/03/03 18:29:37 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -342,7 +342,7 @@ lapic_initclocks(void)
 }
 
 extern unsigned int gettick(void);	/* XXX put in header file */
-extern int rtclock_tval; /* XXX put in header file */
+extern u_long rtclock_tval; /* XXX put in header file */
 extern void (*initclock_func)(void); /* XXX put in header file */
 
 /*

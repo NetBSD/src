@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.22.2.1 2009/01/19 13:15:50 skrll Exp $
+# $NetBSD: INSTALL,v 1.22.2.2 2009/03/03 18:28:48 skrll Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -113,6 +113,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096 # size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # WS console uses DUMB, SUN or VT100 terminal emulation
 options 	WSEMUL_NODUMB
@@ -137,10 +138,8 @@ iic0		at iociic0
 pcfrtc0		at iic0 addr 0x50	# Real-time clock
 
 arckbd0 	at ioc0 bank 0 offset 0x04 # System keyboard
-arcwskbd0	at arckbd0		# Logical devices...
-wskbd0		at arcwskbd0
-#arcwsmouse0	at arckbd0
-#wsmouse0	at arcwsmouse0
+wskbd0		at arckbd0
+#wsmouse0	at arckbd0
 
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
 latches0	at ioc0 bank 5		# Printer/FDC control latches (Arc)

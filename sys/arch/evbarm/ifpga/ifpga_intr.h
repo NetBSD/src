@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.8 2008/04/27 18:58:46 matt Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.8.8.1 2009/03/03 18:28:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,6 +42,7 @@
 
 #ifndef _LOCORE
 
+#include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 

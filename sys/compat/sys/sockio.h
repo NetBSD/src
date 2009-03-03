@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.4.36.1 2009/01/19 13:17:45 skrll Exp $	*/
+/*	$NetBSD: sockio.h,v 1.4.36.2 2009/03/03 18:30:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -35,6 +35,7 @@
 #ifdef _KERNEL_OPT
 
 #include "opt_compat_netbsd.h"
+#include "opt_modular.h"
 
 #if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
     defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \

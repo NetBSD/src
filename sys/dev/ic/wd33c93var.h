@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.7 2007/05/21 19:25:55 rumble Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.7.42.1 2009/03/03 18:30:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,7 +118,7 @@ struct wd33c93_tinfo {
 #define TINFO_LUN(t, l) 	((t)->lun[(l)])
 
 struct wd33c93_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	struct scsipi_channel sc_channel; /* proto for sub devices */
 	struct scsipi_adapter sc_adapter;
@@ -131,7 +131,8 @@ struct wd33c93_softc {
 
 	/* WD33c93 registers */
 	bus_space_tag_t 	sc_regt;
-	bus_space_handle_t 	sc_regh;
+	bus_space_handle_t 	sc_asr_regh;
+	bus_space_handle_t 	sc_data_regh;
 
 
 	/* Data about the current nexus (updated for every cmd switch) */

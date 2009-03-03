@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.6.4.2 2009/01/19 13:17:53 skrll Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.6.4.3 2009/03/03 18:30:44 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -719,7 +719,8 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 	
-	aprint_debug("Loading table to device: %s--%d\n",name,dmv->table_head.cur_active_table);
+	aprint_debug("Loading table to device: %s--%d\n", name,
+	    dmv->table_head.cur_active_table);
 	
 	/*
 	 * I have to check if this table slot is not used by another table list.
@@ -739,17 +740,23 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 
 		prop_dictionary_get_cstring_nocopy(target_dict,
 		    DM_TABLE_TYPE, &type);
-
 		/*
 		 * If we want to deny table with 2 or more different
 		 * target we should do it here
 		 */
-		if ((target = dm_target_lookup(type)) == NULL)
+		if (((target = dm_target_lookup(type)) == NULL) &&
+		    ((target = dm_target_autoload(type)) == NULL)) {
+			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
+			dm_dev_unbusy(dmv);
 			return ENOENT;
+		}
 		
 		if ((table_en = kmem_alloc(sizeof(dm_table_entry_t),
-			    KM_NOSLEEP)) == NULL)
+			    KM_NOSLEEP)) == NULL) {
+			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
+			dm_dev_unbusy(dmv);
 			return ENOMEM;
+		}
 		
 		prop_dictionary_get_uint64(target_dict, DM_TABLE_START,
 		    &table_en->start);
@@ -792,9 +799,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			dm_dev_unbusy(dmv);
 			return ret;
 		}
-		
 		last_table = table_en;
-
 		free(str, M_TEMP);
 	}
 	prop_object_iterator_release(iter);

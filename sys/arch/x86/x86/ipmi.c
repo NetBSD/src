@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.20.2.1 2009/01/19 13:17:09 skrll Exp $ */
+/*	$NetBSD: ipmi.c,v 1.20.2.2 2009/03/03 18:29:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.20.2.1 2009/01/19 13:17:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.20.2.2 2009/03/03 18:29:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -531,7 +531,7 @@ smic_wait(struct ipmi_softc *sc, uint8_t mask, uint8_t val,
 
 	/* Return current status */
 	v = bmc_read(sc, _SMIC_CTRL_REG);
-	dbg_printf(99, "smic_wait = %.2x\n", v);
+	dbg_printf(99, "smic_wait(%s) = %.2x\n", lbl, v);
 	return (v);
 }
 
@@ -579,11 +579,11 @@ smic_sendmsg(struct ipmi_softc *sc, int len, const uint8_t *data)
 	int sts, idx;
 
 	sts = smic_write_cmd_data(sc, SMS_CC_START_TRANSFER, &data[0]);
-	ErrStat(sts != SMS_SC_WRITE_START, "wstart");
+	ErrStat(sts != SMS_SC_WRITE_START, "smic_sendmsg: wstart");
 	for (idx = 1; idx < len - 1; idx++) {
 		sts = smic_write_cmd_data(sc, SMS_CC_NEXT_TRANSFER,
 		    &data[idx]);
-		ErrStat(sts != SMS_SC_WRITE_NEXT, "write");
+		ErrStat(sts != SMS_SC_WRITE_NEXT, "smic_sendmsg: write");
 	}
 	sts = smic_write_cmd_data(sc, SMS_CC_END_TRANSFER, &data[idx]);
 	if (sts != SMS_SC_WRITE_END) {
@@ -605,14 +605,14 @@ smic_recvmsg(struct ipmi_softc *sc, int maxlen, int *len, uint8_t *data)
 		return (-1);
 
 	sts = smic_write_cmd_data(sc, SMS_CC_START_RECEIVE, NULL);
-	ErrStat(sts != SMS_SC_READ_START, "rstart");
+	ErrStat(sts != SMS_SC_READ_START, "smic_recvmsg: rstart");
 	for (idx = 0;; ) {
 		sts = smic_read_data(sc, &data[idx++]);
 		if (sts != SMS_SC_READ_START && sts != SMS_SC_READ_NEXT)
 			break;
 		smic_write_cmd_data(sc, SMS_CC_NEXT_RECEIVE, NULL);
 	}
-	ErrStat(sts != SMS_SC_READ_END, "rend");
+	ErrStat(sts != SMS_SC_READ_END, "smic_recvmsg: rend");
 
 	*len = idx;
 
