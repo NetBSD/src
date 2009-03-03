@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.33 2009/02/08 19:05:50 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.34 2009/03/03 19:04:41 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33 2009/02/08 19:05:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.34 2009/03/03 19:04:41 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -377,6 +377,11 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_softintr == NULL)
 		panic("%s: can't establish soft interrupt",
 			device_xname(self));
+
+#if NRND > 0
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
+	    RND_TYPE_NET, 0);
+#endif
 
 	/* initialise shared structures and tell backend that we are ready */
 	xennet_xenbus_resume(sc);
@@ -808,6 +813,9 @@ xennet_handler(void *arg)
 
 	xennet_tx_complete(sc);
 
+#if NRND > 0
+	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
+#endif
 again:
 	DPRINTFN(XEDB_EVENT, ("xennet_handler prod %d cons %d\n",
 	    sc->sc_rx_ring.sring->rsp_prod, sc->sc_rx_ring.rsp_cons));
