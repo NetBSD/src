@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.8.52.1 2009/01/19 13:15:50 skrll Exp $ */
+/* $NetBSD: start.c,v 1.8.52.2 2009/03/03 18:28:48 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,9 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8.52.1 2009/01/19 13:15:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8.52.2 2009/03/03 18:28:48 skrll Exp $");
+
+#include "opt_modular.h"
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>

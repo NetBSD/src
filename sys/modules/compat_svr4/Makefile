@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.2 2009/01/19 13:20:08 skrll Exp $
+#	$NetBSD: Makefile,v 1.2.4.3 2009/03/03 18:33:38 skrll Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -16,7 +16,7 @@ SRCS+=	svr4_socket.c svr4_sockio.c svr4_stat.c svr4_stream.c
 SRCS+=	svr4_syscalls.c  svr4_sysent.c svr4_termios.c svr4_ttold.c
 SRCS+=	svr4_mod.c
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DEXEC_ELF32
 SRCS+=	svr4_exec_elf32.c
 .PATH:	${S}/arch/i386/i386

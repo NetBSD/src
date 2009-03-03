@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.12.8.1 2009/01/19 13:20:30 skrll Exp $ */
+/* $NetBSD: pmf.h,v 1.12.8.2 2009/03/03 18:34:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -97,6 +97,7 @@ bool		pmf_device_resume_self(device_t);
 
 bool		pmf_device_recursive_suspend(device_t PMF_FN_PROTO);
 bool		pmf_device_recursive_resume(device_t PMF_FN_PROTO);
+bool		pmf_device_resume_descendants(device_t PMF_FN_PROTO);
 bool		pmf_device_resume_subtree(device_t PMF_FN_PROTO);
 
 struct ifnet;

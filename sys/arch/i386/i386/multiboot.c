@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.17.2.1 2009/01/19 13:16:16 skrll Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.17.2.2 2009/03/03 18:28:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.17.2.1 2009/01/19 13:16:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.17.2.2 2009/03/03 18:28:59 skrll Exp $");
 
 #include "opt_multiboot.h"
 
@@ -685,7 +685,7 @@ setup_memory(struct multiboot_info *mi)
  * passed in by Multiboot; false otherwise.
  */
 bool
-multiboot_ksyms_init(void)
+multiboot_ksyms_addsyms_elf(void)
 {
 	struct multiboot_info *mi = &Multiboot_Info;
 	struct multiboot_symbols *ms = &Multiboot_Symbols;

@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.5 2008/04/05 21:44:50 cegger Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.5.12.1 2009/03/03 18:30:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.5 2008/04/05 21:44:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.5.12.1 2009/03/03 18:30:31 skrll Exp $");
 
 #include "mpu_ym.h"
 
@@ -89,9 +89,6 @@ ym_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_drq *playdrq, *recdrq;
 	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
 	ACPI_STATUS rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	/* Parse our resources */
 	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,

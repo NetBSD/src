@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.8.4.2 2009/01/19 13:17:52 skrll Exp $      */
+/*        $NetBSD: dm.h,v 1.8.4.3 2009/03/03 18:30:44 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -163,6 +163,14 @@ typedef struct target_linear_config {
 	uint64_t offset;
 } dm_target_linear_config_t;
 
+/* for stripe : */
+typedef struct target_stripe_config {
+#define MAX_STRIPES 2
+	struct target_linear_config stripe_devs[MAX_STRIPES];
+	uint8_t stripe_num;
+	uint64_t stripe_chunksize;
+	size_t params_len;
+} dm_target_stripe_config_t;
 
 /* for mirror : */
 typedef struct target_mirror_config {
@@ -255,6 +263,7 @@ int dm_table_status_ioctl(prop_dictionary_t);
 
 /* dm_target.c */
 dm_target_t* dm_target_alloc(const char *);
+dm_target_t* dm_target_autoload(const char *);
 int dm_target_destroy(void);
 int dm_target_insert(dm_target_t *);
 prop_array_t dm_target_prop_list(void);

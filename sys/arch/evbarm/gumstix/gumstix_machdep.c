@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.9.8.1 2009/01/19 13:16:04 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.9.8.2 2009/03/03 18:28:54 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -141,6 +141,7 @@
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
+#include "opt_modular.h"
 #include "opt_com.h"
 #include "md.h"
 

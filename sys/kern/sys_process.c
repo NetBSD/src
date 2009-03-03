@@ -1,8 +1,11 @@
-/*	$NetBSD: sys_process.c,v 1.143.2.1 2009/01/19 13:19:39 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.143.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.143.2.1 2009/01/19 13:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.143.2.2 2009/03/03 18:32:56 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -128,7 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.143.2.1 2009/01/19 13:19:39 skrll 
 #include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/ras.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -162,6 +165,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	int signo;
 	ksiginfo_t ksi;
 	char *path;
+	int len;
 
 	error = 0;
 	req = SCARG(uap, req);
@@ -336,10 +340,16 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		break;
 	}
 
-	if (error == 0)
+	if (error == 0) {
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_PTRACE, t, KAUTH_ARG(req),
 		    NULL, NULL);
+	}
+	if (error == 0) {
+		lt = lwp_find_first(t);
+		if (lt == NULL)
+			error = ESRCH;
+	}
 
 	if (error != 0) {
 		mutex_exit(proc_lock);
@@ -350,16 +360,6 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 
 	/* Do single-step fixup if needed. */
 	FIX_SSTEP(t);
-
-	/*
-	 * XXX NJWLWP
-	 *
-	 * The entire ptrace interface needs work to be useful to a
-	 * process with multiple LWPs. For the moment, we'll kluge
-	 * this; memory access will be fine, but register access will
-	 * be weird.
-	 */
-	lt = LIST_FIRST(&t->p_lwps);
 	KASSERT(lt != NULL);
 	lwp_addref(lt);
 
@@ -474,14 +474,15 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	case  PT_DUMPCORE:
 		if ((path = SCARG(uap, addr)) != NULL) {
 			char *dst;
-			int len = SCARG(uap, data);
+			len = SCARG(uap, data);
+
 			if (len < 0 || len >= MAXPATHLEN) {
 				error = EINVAL;
 				break;
 			}
-			dst = malloc(len + 1, M_TEMP, M_WAITOK);
+			dst = kmem_alloc(len + 1, KM_SLEEP);
 			if ((error = copyin(path, dst, len)) != 0) {
-				free(dst, M_TEMP);
+				kmem_free(dst, len + 1);
 				break;
 			}
 			path = dst;
@@ -489,7 +490,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		}
 		error = (*coredump_vec)(lt, path);
 		if (path)
-			free(path, M_TEMP);
+			kmem_free(path, len + 1);
 		break;
 
 #ifdef PT_STEP
@@ -639,7 +640,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		lwp_delref(lt);
 		mutex_enter(t->p_lock);
 		if (tmp == 0)
-			lt = LIST_FIRST(&t->p_lwps);
+			lt = lwp_find_first(t);
 		else {
 			lt = lwp_find(t, tmp);
 			if (lt == NULL) {
@@ -649,7 +650,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			}
 			lt = LIST_NEXT(lt, l_sibling);
 		}
-		while (lt != NULL && lt->l_stat == LSZOMB)
+		while (lt != NULL && !lwp_alive(lt))
 			lt = LIST_NEXT(lt, l_sibling);
 		pl.pl_lwpid = 0;
 		pl.pl_event = 0;

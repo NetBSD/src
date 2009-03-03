@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.26.8.1 2009/01/19 13:17:53 skrll Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.26.8.2 2009/03/03 18:30:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.26.8.1 2009/01/19 13:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.26.8.2 2009/03/03 18:30:44 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -159,6 +159,12 @@ cs4231_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 		do {
 			if (strcmp(compat, AUDIOCS_PROM_NAME) == 0)
 				return 1;
+#ifdef __sparc__
+			/* on KRUPS compatible lists: "cs4231", "ad1848",
+			 * "mwave", and "pnpPNP,b007" */
+			if (strcmp(compat, "cs4231") == 0)
+				return 1;
+#endif
 			len = strlen(compat) + 1;
 			total_size -= len;
 			compat += len;

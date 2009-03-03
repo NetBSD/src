@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_net.c,v 1.3.4.1 2009/01/19 13:20:27 skrll Exp $	*/
+/*	$NetBSD: rumpuser_net.c,v 1.3.4.2 2009/03/03 18:34:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_net.c,v 1.3.4.1 2009/01/19 13:20:27 skrll Exp $");
+__RCSID("$NetBSD: rumpuser_net.c,v 1.3.4.2 2009/03/03 18:34:30 skrll Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -86,4 +86,25 @@ rumpuser_net_listen(int s, int backlog, int *error)
 {
 
 	DOCALL_KLOCK(int, (listen(s, backlog)));
+}
+
+int
+rumpuser_net_getname(int s, struct sockaddr *so, int *lenp,
+	enum rumpuser_getnametype which, int *error)
+{
+	socklen_t slen = *lenp;
+	int rv;
+
+	if (which == RUMPUSER_SOCKNAME)
+		rv = getsockname(s, so, &slen);
+	else
+		rv = getpeername(s, so, &slen);
+
+	*lenp = slen;
+	if (rv == -1)
+		*error = errno;
+	else
+		*error = 0;
+
+	return rv;
 }

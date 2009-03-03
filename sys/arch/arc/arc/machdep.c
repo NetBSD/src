@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.1 2009/01/19 13:15:56 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.4.2 2009/03/03 18:28:51 skrll Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,12 +78,13 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.4.1 2009/01/19 13:15:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.4.2 2009/03/03 18:28:51 skrll Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_md.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

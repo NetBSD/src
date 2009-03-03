@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.289.2.1 2009/01/19 13:19:38 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.289.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289.2.1 2009/01/19 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289.2.2 2009/03/03 18:32:56 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289.2.1 2009/01/19 13:19:38 skrll Exp
 #include <sys/syslog.h>
 #include <sys/filedesc.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/ucontext.h>
 #include <sys/sa.h>

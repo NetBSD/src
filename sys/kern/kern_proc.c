@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.144.2.1 2009/01/19 13:19:38 skrll Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.144.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.144.2.1 2009/01/19 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.144.2.2 2009/03/03 18:32:56 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.144.2.1 2009/01/19 13:19:38 skrll Ex
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/pset.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -200,6 +201,7 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_priority = PRI_USER + NPRI_USER - 1,
 	.l_inheritedprio = -1,
 	.l_class = SCHED_OTHER,
+	.l_psid = PS_NONE,
 	.l_pi_lenders = SLIST_HEAD_INITIALIZER(&lwp0.l_pi_lenders),
 	.l_name = __UNCONST("swapper"),
 };

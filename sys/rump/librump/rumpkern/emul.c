@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.53.2.1 2009/01/19 13:20:25 skrll Exp $	*/
+/*	$NetBSD: emul.c,v 1.53.2.2 2009/03/03 18:34:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.53.2.1 2009/01/19 13:20:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.53.2.2 2009/03/03 18:34:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -232,9 +232,13 @@ device_class(device_t dev)
 void
 getmicrouptime(struct timeval *tvp)
 {
+	uint64_t sec, nsec;
 	int error;
 
-	rumpuser_gettimeofday(tvp, &error);
+	/* XXX: this is wrong, does not report *uptime* */
+	rumpuser_gettime(&sec, &nsec, &error);
+	tvp->tv_sec = sec;
+	tvp->tv_usec = nsec / 1000;
 }
 
 void
@@ -277,14 +281,26 @@ kern_free(void *ptr, struct malloc_type *type)
 	rumpuser_free(ptr);
 }
 
+static void
+gettime(struct timespec *ts)
+{
+	uint64_t sec, nsec;
+	int error;
+
+	rumpuser_gettime(&sec, &nsec, &error);
+	ts->tv_sec = sec;
+	ts->tv_nsec = nsec;
+}
+
 void
 nanotime(struct timespec *ts)
 {
-	struct timeval tv;
-	int error;
 
-	rumpuser_gettimeofday(&tv, &error);
-	TIMEVAL_TO_TIMESPEC(&tv, ts);
+	if (rump_threads) {
+		rump_gettime(ts);
+	} else {
+		gettime(ts);
+	}
 }
 
 /* hooray for mick, so what if I do */
@@ -298,17 +314,22 @@ getnanotime(struct timespec *ts)
 void
 microtime(struct timeval *tv)
 {
-	int error;
+	struct timespec ts;
 
-	rumpuser_gettimeofday(tv, &error);
+	if (rump_threads) {
+		rump_gettime(&ts);
+		TIMESPEC_TO_TIMEVAL(tv, &ts);
+	} else {
+		gettime(&ts);
+		TIMESPEC_TO_TIMEVAL(tv, &ts);
+	}
 }
 
 void
 getmicrotime(struct timeval *tv)
 {
-	int error;
 
-	rumpuser_gettimeofday(tv, &error);
+	microtime(tv);
 }
 
 struct kthdesc {
@@ -491,15 +512,14 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
 	int rv, error;
-	struct timespec time;
+	uint64_t sec, nsec;
 	
 	if (mtx)
 		mutex_exit(mtx);
 
-	time.tv_sec = timeo / hz;
-	time.tv_nsec = (timeo % hz) * (1000000000 / hz);
-
-	rv = rumpuser_nanosleep(&time, NULL, &error);
+	sec = timeo / hz;
+	nsec = (timeo % hz) * (1000000000 / hz);
+	rv = rumpuser_nanosleep(&sec, &nsec, &error);
 	
 	if (mtx)
 		mutex_enter(mtx);
@@ -612,16 +632,16 @@ module_init_md()
 static void
 rump_delay(unsigned int us)
 {
-	struct timespec ts;
+	uint64_t sec, nsec;
 	int error;
 
-	ts.tv_sec = us / 1000000;
-	ts.tv_nsec = (us % 1000000) * 1000;
+	sec = us / 1000000;
+	nsec = (us % 1000000) * 1000;
 
-	if (__predict_false(ts.tv_sec != 0))
+	if (__predict_false(sec != 0))
 		printf("WARNING: over 1s delay\n");
 
-	rumpuser_nanosleep(&ts, NULL, &error);
+	rumpuser_nanosleep(&sec, &nsec, &error);
 }
 void (*delay_func)(unsigned int) = rump_delay;
 

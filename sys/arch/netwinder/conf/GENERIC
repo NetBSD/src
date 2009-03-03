@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93.2.1 2009/01/19 13:16:32 skrll Exp $
+# $NetBSD: GENERIC,v 1.93.2.2 2009/03/03 18:29:04 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -120,6 +120,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.

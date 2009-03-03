@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.11 2008/06/12 22:46:10 cegger Exp $ */
+/* $NetBSD: sec.c,v 1.11.4.1 2009/03/03 18:31:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.11 2008/06/12 22:46:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.11.4.1 2009/03/03 18:31:51 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -91,8 +91,8 @@ struct sec_softc {
 #define SEC_DMAMODE	MODE_TMODE_DMD
 
 /* autoconfiguration glue */
-static int sec_match(struct device *, struct cfdata *, void *);
-static void sec_attach(struct device *, struct device *, void *);
+static int sec_match(device_t, cfdata_t, void *);
+static void sec_attach(device_t, device_t, void *);
 
 /* shutdown hook */
 static void sec_shutdown(void *);
@@ -109,7 +109,7 @@ static int sec_dmatc(struct sec_softc *sc);
 
 void sec_dumpdma(void *arg);
 
-CFATTACH_DECL(sec, sizeof(struct sec_softc),
+CFATTACH_DECL_NEW(sec, sizeof(struct sec_softc),
     sec_match, sec_attach, NULL, NULL);
 
 static inline void
@@ -144,7 +144,7 @@ dmac_read(struct sec_softc *sc, int reg)
 }
 
 static int
-sec_match(struct device *parent, struct cfdata *cf, void *aux)
+sec_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -163,12 +163,13 @@ sec_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sec_attach(struct device *parent, struct device *self, void *aux)
+sec_attach(device_t parent, device_t self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	struct sec_softc *sc = device_private(self);
 	int i;
 
+	sc->sc_sbic.sc_dev = self;
 	/* Set up bus spaces */
 	sc->sc_pod_t = pa->pa_fast_t;
 	bus_space_map(pa->pa_fast_t, pa->pa_fast_base, 0x1000, 0,
@@ -178,8 +179,10 @@ sec_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_mod_h);
 
 	sc->sc_sbic.sc_regt = sc->sc_mod_t;
-	bus_space_subregion(sc->sc_mod_t, sc->sc_mod_h, SEC_SBIC,
-	    0x1000 - SEC_SBIC, &sc->sc_sbic.sc_regh);
+	bus_space_subregion(sc->sc_mod_t, sc->sc_mod_h, SEC_SBIC + 0, 1,
+	    &sc->sc_sbic.sc_asr_regh);
+	bus_space_subregion(sc->sc_mod_t, sc->sc_mod_h, SEC_SBIC + 1, 1,
+	    &sc->sc_sbic.sc_data_regh);
 
 	sc->sc_sbic.sc_id = 7;
 	sc->sc_sbic.sc_clkfreq = SEC_CLKFREQ;
@@ -494,7 +497,7 @@ sec_dumpdma(void *arg)
 
 	dmac_write(sc, NEC71071_CHANNEL, 0);
 	printf("%s: DMA state: cur count %02x%02x cur addr %02x%02x%02x ",
-	    device_xname(&sc->sc_sbic.sc_dev),
+	    device_xname(sc->sc_sbic.sc_dev),
 	    dmac_read(sc, NEC71071_COUNTHI), dmac_read(sc, NEC71071_COUNTLO),
 	    dmac_read(sc, NEC71071_ADDRHI), dmac_read(sc, NEC71071_ADDRMID),
 	    dmac_read(sc, NEC71071_ADDRLO));
@@ -505,11 +508,12 @@ sec_dumpdma(void *arg)
 	    dmac_read(sc, NEC71071_ADDRLO));
 	printf("%s: DMA state: dctrl %1x%02x mode %02x status %02x req %02x "
 	    "mask %02x\n",
-	    device_xname(&sc->sc_sbic.sc_dev), dmac_read(sc, NEC71071_DCTRL2),
+	    device_xname(sc->sc_sbic.sc_dev), dmac_read(sc, NEC71071_DCTRL2),
 	    dmac_read(sc, NEC71071_DCTRL1), dmac_read(sc, NEC71071_MODE),
 	    dmac_read(sc, NEC71071_STATUS), dmac_read(sc, NEC71071_REQUEST),
 	    dmac_read(sc, NEC71071_MASK));
-	printf("%s: soft DMA state: %zd@%p%s%d\n", device_xname(&sc->sc_sbic.sc_dev),
+	printf("%s: soft DMA state: %zd@%p%s%d\n",
+	    device_xname(sc->sc_sbic.sc_dev),
 	    sc->sc_dmalen, sc->sc_dmaaddr, sc->sc_dmain ? "<-" : "->",
 	    sc->sc_dmaoff);
 }

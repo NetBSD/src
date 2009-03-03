@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.3.4.1 2009/01/19 13:20:29 skrll Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.3.4.2 2009/03/03 18:34:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -83,7 +83,7 @@ configure_interface(void)
 	} m_rtmsg;
 #define rtm m_rtmsg.m_rtm
 	uint8_t *bp = &m_rtmsg.m_space;
-	int s, rv, error;
+	int s, rv;
 
 	if ((rv = rump_virtif_create(NULL, NULL)) != 0) {
 		printf("could not configure interface %d\n", rv);
@@ -91,9 +91,9 @@ configure_interface(void)
 	}
 
 	/* get a socket for configuring the interface */
-	s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0, &error);
+	s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0);
 	if (s == -1)
-		errx(1, "configuration socket %d (%s)", error, strerror(error));
+		err(1, "configuration socket");
 
 	/* fill out struct ifaliasreq */
 	memset(&ia, 0, sizeof(ia));
@@ -114,15 +114,15 @@ configure_interface(void)
 	sin->sin_addr.s_addr = inet_addr(MYMASK);
 
 	/* toss to the configuration socket and see what it thinks */
-	rv = rump_sys_ioctl(s, SIOCAIFADDR, &ia, &error);
+	rv = rump_sys_ioctl(s, SIOCAIFADDR, &ia);
 	if (rv)
-		errx(1, "SIOCAIFADDR %d (%s)", error, strerror(error));
-	rump_sys_close(s, &error);
+		err(1, "SIOCAIFADDR");
+	rump_sys_close(s);
 
 	/* open routing socket and configure our default router */
-	s = rump_sys_socket(PF_ROUTE, SOCK_RAW, 0, &error);
+	s = rump_sys_socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s == -1)
-		errx(1, "routing socket %d (%s)", error, strerror(error));
+		err(1, "routing socket");
 
 	/* create routing message */
         memset(&m_rtmsg, 0, sizeof(m_rtmsg));
@@ -158,9 +158,9 @@ configure_interface(void)
         rtm.rtm_msglen = len;
 
 	/* stuff that to the routing socket and wait for happy days */
-	if (rump_sys_write(s, &m_rtmsg, len, &error) != len)
-		errx(1, "routing incomplete %d (%s)", error, strerror(error));
-	rump_sys_close(s, &error);
+	if (rump_sys_write(s, &m_rtmsg, len) != len)
+		err(1, "routing incomplete");
+	rump_sys_close(s);
 }
 #endif /* FULL_NETWORK_STACK */
 
@@ -169,22 +169,10 @@ main(int argc, char *argv[])
 {
 	char buf[65536];
 	struct sockaddr_in sin;
+	struct timeval tv;
 	ssize_t n;
 	size_t off;
-	int s, error;
-
-	/*
-	 * The following demonstrates in a less-than-amusing way how
-	 * the current binary interfaces are somewhat unflexible.
-	 * If we happen to have old userland and are calling a new
-	 * rumpkernel, timeval passed by this program is too small.
-	 * ... sigh
-	 */
-#ifdef TEH_HACK
-	struct { uint64_t tv_sec; long tv_usec; } tv;
-#else
-	struct timeval tv;
-#endif
+	int s;
 
 	if (rump_init())
 		errx(1, "rump_init failed");
@@ -193,37 +181,36 @@ main(int argc, char *argv[])
 	configure_interface();
 #endif
 
-	s = rump_sys_socket(PF_INET, SOCK_STREAM, 0, &error);
+	s = rump_sys_socket(PF_INET, SOCK_STREAM, 0);
 	if (s == -1)
-		errx(1, "can't open socket: %d (%s)", error, strerror(error));
+		err(1, "can't open socket");
 
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
 	if (rump_sys_setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,
-	    &tv, sizeof(tv), &error) == -1)
-		errx(1, "setsockopt %d (%s)", error, strerror(error));
+	    &tv, sizeof(tv)) == -1)
+		err(1, "setsockopt");
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(DEST_PORT);
 	sin.sin_addr.s_addr = inet_addr(DEST_ADDR);
 
-	if (rump_sys_connect(s, (struct sockaddr *)&sin, sizeof(sin),
-	    &error) == -1) {
-		errx(1, "connect failed: %d (%s)", error, strerror(error));
+	if (rump_sys_connect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
+		err(1, "connect failed");
 	}
 
 	printf("connected\n");
 
 	strcpy(buf, "GET / HTTP/1.0\n\n");
-	n = rump_sys_write(s, buf, strlen(buf), &error);
+	n = rump_sys_write(s, buf, strlen(buf));
 	if (n != strlen(buf))
-		errx(1, "wrote only %zd vs. %zu (%s)\n",
-		    n, strlen(buf), strerror(error));
+		err(1, "wrote only %zd vs. %zu\n",
+		    n, strlen(buf));
 	
 	memset(buf, 0, sizeof(buf));
 	for (off = 0; off < sizeof(buf) && n > 0;) {
-		n = rump_sys_read(s, buf+off, sizeof(buf)-off, &error);
+		n = rump_sys_read(s, buf+off, sizeof(buf)-off);
 		if (n > 0)
 			off += n;
 	}

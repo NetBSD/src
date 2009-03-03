@@ -1,9 +1,7 @@
-#	$NetBSD: files.amd64,v 1.60.6.1 2009/01/19 13:15:54 skrll Exp $
+#	$NetBSD: files.amd64,v 1.60.6.2 2009/03/03 18:28:50 skrll Exp $
 #
 # new style config file for amd64 architecture
 #
-
-version 20071109
 
 ifndef xen
 

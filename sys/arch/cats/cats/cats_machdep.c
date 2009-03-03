@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.60.8.1 2009/01/19 13:16:02 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.60.8.2 2009/03/03 18:28:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,9 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.60.8.1 2009/01/19 13:16:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.60.8.2 2009/03/03 18:28:52 skrll Exp $");
 
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_pmap_debug.h"
 
 #include "isadma.h"

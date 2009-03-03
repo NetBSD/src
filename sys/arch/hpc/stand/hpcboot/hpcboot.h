@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.h,v 1.11 2008/04/28 20:23:20 martin Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.11.8.1 2009/03/03 18:28:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ enum ArchitectureOps {
 #ifdef ARM
 	ARCHITECTURE_ARM_SA1100	= PLATID_CPU_ARM_STRONGARM_SA1100,
 	ARCHITECTURE_ARM_PXA250 = PLATID_CPU_ARM_XSCALE_PXA250,
+	ARCHITECTURE_ARM_PXA270 = PLATID_CPU_ARM_XSCALE_PXA270,
 #endif
 #ifdef SHx
 	ARCHITECTURE_SH3_7707	= PLATID_CPU_SH_3_7707,

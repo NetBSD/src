@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78.2.1 2009/01/19 13:16:51 skrll Exp $ */
+/*	$NetBSD: cpu.c,v 1.78.2.2 2009/03/03 18:29:26 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.2.1 2009/01/19 13:16:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.2.2 2009/03/03 18:29:26 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.2.1 2009/01/19 13:16:51 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -377,6 +378,12 @@ cpu_boot_secondary_processors()
 	struct cpu_info *ci;
 
 	sparc64_ipi_init();
+
+	if (boothowto & RB_MD1) {
+		cpus[0].ci_next = NULL;
+		sparc_ncpus = ncpu = ncpuonline = 1;
+		return;
+	}
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_cpuid == CPU_UPAID)

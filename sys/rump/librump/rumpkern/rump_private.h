@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.13.2.1 2009/01/19 13:20:25 skrll Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.13.2.2 2009/03/03 18:34:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 
 #include <uvm/uvm.h>
@@ -66,6 +67,8 @@ struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
 void		rumpvm_flushva(struct uvm_object *);
 
+void		rump_gettime(struct timespec *);
+
 lwpid_t		rump_nextlid(void);
 
 typedef void	(*rump_proc_vfs_init_fn)(struct proc *);
@@ -74,5 +77,9 @@ rump_proc_vfs_init_fn rump_proc_vfs_init;
 rump_proc_vfs_release_fn rump_proc_vfs_release;
 
 extern struct cpu_info rump_cpu;
+
+extern struct sysent rump_sysent[];
+extern rump_sysproxy_t rump_sysproxy;
+extern void *rump_sysproxy_arg;
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

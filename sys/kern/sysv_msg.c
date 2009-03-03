@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.58.2.1 2009/01/19 13:19:39 skrll Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.58.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.58.2.1 2009/01/19 13:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.58.2.2 2009/03/03 18:32:56 skrll Exp $");
 
 #define SYSVMSG
 
@@ -653,6 +653,10 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
 	    (long long)msgsz, msgflg));
+
+	if ((ssize_t)msgsz < 0)
+		return EINVAL;
+
 restart:
 	msqid = IPCID_TO_IX(msqidr);
 
@@ -959,6 +963,10 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
 	    user_msgp, (long long)msgsz, msgtyp, msgflg));
+
+	if ((ssize_t)msgsz < 0)
+		return EINVAL;
+
 restart:
 	msqid = IPCID_TO_IX(msqidr);
 
@@ -1167,7 +1175,7 @@ restart:
 		else
 			tlen = msgsz - len;
 		mutex_exit(&msgmutex);
-		error = (*put_type)(&msgpool[next * msginfo.msgssz],
+		error = copyout(&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
 		mutex_enter(&msgmutex);
 		if (error != 0) {

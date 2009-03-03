@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.2.1 2009/01/19 13:18:27 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.2.2 2009/03/03 18:31:08 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.972 2009/01/07 00:40:09 jnemeth Exp
+ *	NetBSD: pcidevs,v 1.978 2009/02/19 17:25:46 sborrill Exp
  */
 
 /*
@@ -51,6 +51,10 @@
  * 2.) Commit "src/sys/dev/pci/pcidevs".
  * 3.) Execute "make -f Makefile.pcidevs" in "src/sys/dev/pci".
  * 4.) Commit "src/sys/dev/pci/pcidevs.h" and "src/sys/dev/pci/pcidevs_data.h".
+ */
+
+/*
+ * Use "make -f Makefile.pcidevs" to regenerate pcidevs.h and pcidevs_data.h
  */
 
 /*
@@ -1066,6 +1070,7 @@
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
 
 /* Attansic Technology Corp. */
+#define	PCI_PRODUCT_ATTANSIC_ETHERNET_L1E	0x1026		/* L1E Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA	0x1048		/* L1 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
 
@@ -2116,6 +2121,7 @@
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* PCI-WDT50x Watchdog Timer */
 
 /* Initio products */
+#define	PCI_PRODUCT_INITIO_1622	0x1622		/* INIC-1622 SATA */
 #define	PCI_PRODUCT_INITIO_I920	0x0002		/* INIC-920 SCSI */
 #define	PCI_PRODUCT_INITIO_I850	0x0850		/* INIC-850 SCSI */
 #define	PCI_PRODUCT_INITIO_I1060	0x1060		/* INIC-1060 SCSI */
@@ -2246,6 +2252,8 @@
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN Controller */
+#define	PCI_PRODUCT_INTEL_82574L	0x10d3		/* i82574L 1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82567LM_3	0x10de		/* i82567LM-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I Mobile (AMT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
@@ -2538,6 +2546,8 @@
 #define	PCI_PRODUCT_INTEL_82801I_SATA_3	0x2926		/* 82801I SATA Controller w/ 2 ports */
 #define	PCI_PRODUCT_INTEL_82801I_SATA_4	0x2928		/* 82801I Mobile AHCI SATA Controller with 2 ports */
 #define	PCI_PRODUCT_INTEL_82801I_SATA_5	0x2929		/* 82801I Mobile AHCI SATA Controller with 4 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_6	0x292d		/* 82801I Mobile AHCI SATA Controller with 2 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_7	0x292e		/* 82801I Mobile AHCI SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801I_SMB	0x2930		/* 82801I SMBus Controller */
 #define	PCI_PRODUCT_INTEL_82801I_THERMAL	0x2932		/* 82801I Thermal Controller */
 #define	PCI_PRODUCT_INTEL_82801I_USB_1	0x2934		/* 82801I USB UHCI Controller */
@@ -3844,6 +3854,11 @@
 #define	PCI_PRODUCT_TI_PCI72111FM	0x8033		/* PCI7x21/7x11 Integrated FlashMedia Controller */
 #define	PCI_PRODUCT_TI_PCI6515A	0x8036		/* PCI6515A Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI6515ASM	0x8038		/* PCI6515A Cardbus Controller (Smart Card mode) */
+#define	PCI_PRODUCT_TI_PCIXX12CB	0x8039		/* PCIXX12 Cardbus Controller */
+#define	PCI_PRODUCT_TI_PCIXX12FW	0x803a		/* PCIXX12 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_TI_PCIXX12FM	0x803b		/* PCIXX12 Integrated FlashMedia Controller */
+#define	PCI_PRODUCT_TI_PCIXX12SD	0x803c		/* PCIXX12 Secure Digital Host Controller */
+#define	PCI_PRODUCT_TI_PCIXX12SM	0x803d		/* PCIXX12 Smart Card */
 #define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A 802.11b */
 #define	PCI_PRODUCT_TI_ACX100B	0x8401		/* ACX100B 802.11b */
 #define	PCI_PRODUCT_TI_ACX111	0x9066		/* ACX111 802.11b/g */

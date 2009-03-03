@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.5.4.1 2009/01/19 13:17:53 skrll Exp $ */
+/*	$NetBSD: dbcool.c,v 1.5.4.2 2009/03/03 18:30:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5.4.1 2009/01/19 13:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5.4.2 2009/03/03 18:30:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -591,6 +591,7 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	struct dbcool_softc sc;
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_addr = ia->ia_addr;
+	sc.sc_chip = NULL;
 	sc.sc_readreg = dbcool_readreg;
 	sc.sc_writereg = dbcool_writereg;
 
@@ -615,6 +616,7 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_readreg = dbcool_readreg;
 	sc->sc_writereg = dbcool_writereg;
+	sc->sc_chip = NULL;
 	(void)dbcool_chip_ident(sc);
 
 	aprint_naive("\n");
@@ -699,14 +701,17 @@ dbcool_readreg(struct dbcool_softc *sc, uint8_t reg)
 	uint8_t data = 0;
 
 	if (iic_acquire_bus(sc->sc_tag, 0) != 0)
-		goto bad;
+		return data;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		     sc->sc_addr, NULL, 0, &reg, 1, 0) != 0)
-		goto bad;
+	if ( sc->sc_chip == NULL || sc->sc_chip->flags & DBCFLAG_ADM1027) {
+		/* ADM1027 doesn't support i2c read_byte protocol */
+		if (iic_smbus_send_byte(sc->sc_tag, sc->sc_addr, reg, 0) != 0)
+			goto bad;
+		(void)iic_smbus_receive_byte(sc->sc_tag, sc->sc_addr, &data, 0);
+	} else
+		(void)iic_smbus_read_byte(sc->sc_tag, sc->sc_addr, reg, &data,
+					  0);
 
-	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		 sc->sc_addr, NULL, 0, &data, 1, 0);
 bad:
 	iic_release_bus(sc->sc_tag, 0);
 	return data;
@@ -715,14 +720,13 @@ bad:
 void 
 dbcool_writereg(struct dbcool_softc *sc, uint8_t reg, uint8_t val)
 {
-        if (iic_acquire_bus(sc->sc_tag, 0) != 0)
-                return;
+	if (iic_acquire_bus(sc->sc_tag, 0) != 0)
+		return;
         
-        iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-                 sc->sc_addr, &reg, 1, &val, 1, 0);
+	(void)iic_smbus_write_byte(sc->sc_tag, sc->sc_addr, reg, val, 0);
 
-        iic_release_bus(sc->sc_tag, 0);
-        return;
+	iic_release_bus(sc->sc_tag, 0);
+	return;
 }       
 
 static bool

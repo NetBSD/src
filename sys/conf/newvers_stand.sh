@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $NetBSD: newvers_stand.sh,v 1.6 2008/07/15 20:10:06 perry Exp $
+# $NetBSD: newvers_stand.sh,v 1.6.2.1 2009/03/03 18:30:30 skrll Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,7 +69,7 @@ if [ $add_name = yes ]; then
 fi
 
 if [ $add_date = yes ]; then
-	t=`date`
+	t=`LC_ALL=C date`
 	echo "const char bootprog_date[] = \"${t}\";" >> vers.c
 fi
 

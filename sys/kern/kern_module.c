@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.24.2.1 2009/01/19 13:19:38 skrll Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.24.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.24.2.1 2009/01/19 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.24.2.2 2009/03/03 18:32:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #endif
 
 #include <sys/param.h>
@@ -81,8 +82,10 @@ static module_t	*module_lookup(const char *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
 		    module_t **, modclass_t class, bool);
 static int	module_do_unload(const char *);
-static void	module_error(const char *, ...);
-static void	module_print(const char *, ...);
+static void	module_error(const char *, ...)
+			__attribute__((__format__(__printf__,1,2)));
+static void	module_print(const char *, ...)
+			__attribute__((__format__(__printf__,1,2)));
 static int	module_do_builtin(const char *, module_t **);
 static int	module_fetch_info(module_t *);
 static void	module_thread(void *);

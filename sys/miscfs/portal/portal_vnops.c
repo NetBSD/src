@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.79.10.1 2009/01/19 13:20:06 skrll Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.79.10.2 2009/03/03 18:33:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.79.10.1 2009/01/19 13:20:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.79.10.2 2009/03/03 18:33:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,7 @@ portal_open(v)
 			sounlock(so);
 			goto bad;
 		}
-		sowait(so, 5 * hz);
+		sowait(so, false, 5 * hz);
 	}
 	if (so->so_error) {
 		error = so->so_error;

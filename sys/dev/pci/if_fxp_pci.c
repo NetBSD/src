@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.60.2.1 2009/01/19 13:18:25 skrll Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.60.2.2 2009/03/03 18:31:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.60.2.1 2009/01/19 13:18:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.60.2.2 2009/03/03 18:31:07 skrll Exp $");
 
 #include "rnd.h"
 
@@ -348,7 +348,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 			chipname = "i82559S Ethernet";
 		if (sc->sc_rev >= FXP_REV_82550) {
 			chipname = "i82550 Ethernet";
-			sc->sc_flags |= FXPF_EXT_RFA|FXPF_IPCB;
+			sc->sc_flags |= FXPF_EXT_RFA;
 		}
 
 		/*
@@ -372,17 +372,19 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_1:
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
-		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 		/*
 		 * The ICH-2 and ICH-3 have the "resume bug".
 		 */
 		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
-		break;
+		/* FALLTHROUGH */
 
 	default:
 		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
-		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB|FXPF_EXT_RFA|FXPF_IPCB;
+		if (sc->sc_rev >= FXP_REV_82558_A4)
+			sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
+		if (sc->sc_rev >= FXP_REV_82550)
+			sc->sc_flags |= FXPF_EXT_RFA;
+
 		break;
 	}
 

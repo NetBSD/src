@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55.2.1 2009/01/19 13:15:50 skrll Exp $
+# $NetBSD: GENERIC,v 1.55.2.2 2009/03/03 18:28:48 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -167,10 +167,8 @@ iic0		at iociic0
 pcfrtc0		at iic0 addr 0x50	# Real-time clock
 
 arckbd0 	at ioc0 bank 0 offset 0x04 # System keyboard
-arcwskbd0	at arckbd0		# Logical devices...
-wskbd0		at arcwskbd0
-arcwsmouse0	at arckbd0
-wsmouse0	at arcwsmouse0
+wskbd0		at arckbd0
+wsmouse0	at arckbd0
 
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
 latches0	at ioc0 bank 5		# Printer/FDC control latches (Arc)

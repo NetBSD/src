@@ -1,4 +1,4 @@
-/*	$NetBSD: zusb.c,v 1.1 2008/03/31 23:32:43 chris Exp $	*/
+/*	$NetBSD: zusb.c,v 1.1.14.1 2009/03/03 18:29:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Christopher Gilbert
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.1 2008/03/31 23:32:43 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.1.14.1 2009/03/03 18:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,18 +43,28 @@ __KERNEL_RCSID(0, "$NetBSD: zusb.c,v 1.1 2008/03/31 23:32:43 chris Exp $");
 #include <zaurus/zaurus/zaurus_reg.h>
 #include <zaurus/zaurus/zaurus_var.h>
 
+
+#ifdef ZUSB_DEBUG
+#define	DPRINTF(s)	printf s
+#else
+#define	DPRINTF(s)
+#endif
+
+
 struct zusb_softc {
-	struct device	 sc_dev;
-	void		*sc_client_ih;
-	void		*sc_host_ih;
+	device_t sc_dev;
+
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+
+	void *sc_client_ih;
+	void *sc_host_ih;
 };
 
-static int	zusb_match(struct device *, struct cfdata *, void *);
-static void	zusb_attach(struct device *, struct device *, void *);
+static int	zusb_match(device_t, cfdata_t, void *);
+static void	zusb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zusb, sizeof(struct zusb_softc), 
+CFATTACH_DECL_NEW(zusb, sizeof(struct zusb_softc), 
     zusb_match, zusb_attach, NULL, NULL);
 
 static int	zusb_client_intr(void *);
@@ -62,7 +72,7 @@ static int	zusb_host_intr(void *);
 static void	zusb_test_and_enabled_host_port(struct zusb_softc *);
 
 static int
-zusb_match(struct device *parent, struct cfdata *cf, void *aux)
+zusb_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (ZAURUS_ISC3000)
@@ -71,17 +81,21 @@ zusb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-zusb_attach(struct device *parent, struct device *self, void *aux)
+zusb_attach(device_t parent, device_t self, void *aux)
 {
-	struct zusb_softc *sc = (struct zusb_softc *)self;
+	struct zusb_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
 
+	aprint_normal(": USB Mode detection\n");
+	aprint_naive("\n");
+
+	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;
-	
+
 	/* Map I/O space */
 	if (bus_space_map(sc->sc_iot, PXA2X0_USBDC_BASE, PXA270_USBDC_SIZE, 0,
 				&sc->sc_ioh)) {
-		aprint_error(": couldn't map memory space\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map memory space\n");
 		return;
 	}
 
@@ -99,15 +113,14 @@ zusb_attach(struct device *parent, struct device *self, void *aux)
 			USBDC_UP2OCR_DPPDE | USBDC_UP2OCR_DMPDE);
 
 	zusb_test_and_enabled_host_port(sc);
-
-	printf(": USB Mode detection\n");
 }
 
 static int
 zusb_client_intr(void *v)
 {
 	struct zusb_softc *sc = v;
-	printf("USB client cable changed\n");
+
+	DPRINTF(("%s: USB client cable changed\n", device_xname(sc->sc_dev)));
 	zusb_test_and_enabled_host_port(sc);
 
 	return 1;
@@ -118,7 +131,7 @@ zusb_host_intr(void *v)
 {
 	struct zusb_softc *sc = v;
 
-	printf("USB host cable changed\n");
+	DPRINTF(("%s: USB host cable changed\n", device_xname(sc->sc_dev)));
 	zusb_test_and_enabled_host_port(sc);
 
 	return 1;
@@ -128,15 +141,22 @@ static void
 zusb_test_and_enabled_host_port(struct zusb_softc *sc)
 {
 	int host_cable = pxa2x0_gpio_get_bit(C3000_USB_HOST_PIN);
+#ifdef ZUSB_DEBUG
 	int client_cable = pxa2x0_gpio_get_bit(C3000_USB_DEVICE_PIN);
+#endif
 
-	printf("USB cable: host %d, client %d\n", host_cable, client_cable);
+	DPRINTF(("%s: USB cable: host %d, client %d\n",
+	    device_xname(sc->sc_dev), host_cable, client_cable));
+
 	if (!host_cable) {
-		pxa2x0_gpio_set_function(C3000_USB_HOST_POWER_PIN, GPIO_OUT | GPIO_SET);
-		printf("USB host power enabled\n");
+		pxa2x0_gpio_set_function(C3000_USB_HOST_POWER_PIN,
+		    GPIO_OUT | GPIO_SET);
+		DPRINTF(("%s: USB host power enabled\n",
+		    device_xname(sc->sc_dev)));
 	} else {
-		pxa2x0_gpio_set_function(C3000_USB_HOST_POWER_PIN, GPIO_OUT | GPIO_CLR);
-		printf("USB host power disabled\n");
+		pxa2x0_gpio_set_function(C3000_USB_HOST_POWER_PIN,
+		    GPIO_OUT | GPIO_CLR);
+		DPRINTF(("%s: USB host power disabled\n",
+		    device_xname(sc->sc_dev)));
 	}
 }
-

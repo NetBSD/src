@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.201.4.1 2009/01/19 13:17:31 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.201.4.2 2009/03/03 18:30:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.201.4.1 2009/01/19 13:17:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.201.4.2 2009/03/03 18:30:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -940,9 +940,15 @@ linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *ua
 		syscallarg(int) per;
 	} */
 
-	if (SCARG(uap, per) != 0)
+	switch (SCARG(uap, per)) {
+	case LINUX_PER_LINUX:
+	case LINUX_PER_QUERY:
+		break;
+	default:
 		return EINVAL;
-	retval[0] = 0;
+	}
+
+	retval[0] = LINUX_PER_LINUX;
 	return 0;
 }
 

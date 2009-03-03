@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.6.4.2 2009/01/19 13:20:27 skrll Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.6.4.3 2009/03/03 18:34:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6.4.2 2009/01/19 13:20:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6.4.3 2009/03/03 18:34:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -139,31 +139,6 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
 	return rv;
 }
 
-/* from libpuffs, but let's decouple this from that */
-static enum vtype
-mode2vt(mode_t mode)
-{
-
-	switch (mode & S_IFMT) {
-	case S_IFIFO:
-		return VFIFO;
-	case S_IFCHR:
-		return VCHR;
-	case S_IFDIR:
-		return VDIR;
-	case S_IFBLK:
-		return VBLK;
-	case S_IFREG:
-		return VREG;
-	case S_IFLNK:
-		return VLNK;
-	case S_IFSOCK:
-		return VSOCK;
-	default:
-		return VBAD; /* XXX: not really true, but ... */
-	}
-}
-
 /*
  * Simple lookup for faking lookup of device entry for rump file systems 
  */
@@ -176,23 +151,35 @@ rump_vop_lookup(void *v)
 		struct componentname *a_cnp;
 	}; */ *ap = v;
 	struct componentname *cnp = ap->a_cnp;
-	struct stat sb_node;
-	int rv, error;
+	uint64_t fsize;
+	enum vtype vt;
+	int rv, error, ft;
 
 	/* we handle only some "non-special" cases */
 	KASSERT(cnp->cn_nameiop == LOOKUP);
+	KASSERT(cnp->cn_flags & FOLLOW);
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
 	KASSERT(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.');
 
-	if (cnp->cn_flags & FOLLOW)
-		rv = rumpuser_stat(cnp->cn_pnbuf, &sb_node, &error);
-	else
-		rv = rumpuser_lstat(cnp->cn_pnbuf, &sb_node, &error);
+	rv = rumpuser_getfileinfo(cnp->cn_pnbuf, &fsize, &ft, &error);
 	if (rv)
 		return error;
+	switch (ft) {
+	case RUMPUSER_FT_DIR:
+		vt = VDIR;
+		break;
+	case RUMPUSER_FT_REG:
+		vt = VREG;
+		break;
+	case RUMPUSER_FT_BLK:
+		vt = VBLK;
+		break;
+	default:
+		vt = VBAD;
+		break;
+	}
 
-	error = rump_makevnode(cnp->cn_pnbuf, sb_node.st_size,
-	    mode2vt(sb_node.st_mode), ap->a_vpp);
+	error = rump_makevnode(cnp->cn_pnbuf, fsize, vt, ap->a_vpp);
 	if (error)
 		return error;
 

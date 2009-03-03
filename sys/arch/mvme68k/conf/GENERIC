@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76.2.1 2009/01/19 13:16:31 skrll Exp $
+# $NetBSD: GENERIC,v 1.76.2.2 2009/03/03 18:29:03 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.76.2.1 $"
+#ident 		"GENERIC-$Revision: 1.76.2.2 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -111,6 +111,7 @@ options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries

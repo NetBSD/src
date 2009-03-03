@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.124.2.1 2009/01/19 13:19:39 skrll Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.124.2.2 2009/03/03 18:32:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.124.2.1 2009/01/19 13:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.124.2.2 2009/03/03 18:32:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -224,7 +224,7 @@ panic(const char *fmt, ...)
 	if (oci != NULL && oci != ci) {
 		/* Give interrupts a chance to try and prevent deadlock. */
 		for (;;) {
-#ifndef _RUMPKERNEL /* XXXpooka: temporary build fix */
+#ifndef _RUMPKERNEL /* XXXpooka: temporary build fix, see kern/40505 */
 			DELAY(10);
 #endif /* _RUMPKERNEL */
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8.2.1 2009/01/19 13:20:25 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.8.2.2 2009/03/03 18:34:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.2.1 2009/01/19 13:20:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.2.2 2009/03/03 18:34:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.2.1 2009/01/19 13:20:25 skrll Exp $");
  * Interrupt simulator.  It executes hardclock() and softintrs.
  */
 
-time_t time_uptime = 1;
+time_t time_uptime = 0;
 
 struct softint {
 	void (*si_func)(void *);
@@ -73,8 +73,8 @@ makeworker(bool bootstrap)
 		    INTRTHREAD_MAX);
 		return;
 	}
-	rv = kthread_create(PRI_NONE, 0, NULL, sithread,
-	    NULL, NULL, "rumpsi");
+	rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_INTR, NULL,
+	    sithread, NULL, NULL, "rumpsi");
 	if (rv) {
 		if (bootstrap)
 			panic("intr thread creation failed %d", rv);
@@ -86,24 +86,58 @@ makeworker(bool bootstrap)
 	}
 }
 
+/* rumpuser structures since we call rumpuser interfaces directly */
+static struct rumpuser_cv *clockcv;
+static struct rumpuser_mtx *clockmtx;
+static struct timespec rump_clock;
+
+void
+rump_gettime(struct timespec *ts)
+{
+	struct timespec attempt;
+
+	/* XXX: this is completely bogus */
+	do {
+		attempt = rump_clock;
+	} while (memcmp(&attempt, &rump_clock, sizeof(struct timespec)) != 0);
+
+	*ts = attempt;
+}
+
 /*
  * clock "interrupt"
  */
 static void
 doclock(void *noarg)
 {
+	struct timespec tick;
+	uint64_t sec, nsec;
 	static int ticks = 0;
 	extern int hz;
+	int error;
+
+	rumpuser_gettime(&sec, &nsec, &error);
+	rump_clock.tv_sec = sec;
+	rump_clock.tv_nsec = nsec;
+	tick.tv_sec = 0;
+	tick.tv_nsec = 1000000000/hz;
+
+	rumpuser_mutex_enter(clockmtx);
+	rumpuser_cv_signal(clockcv);
 
 	for (;;) {
 		callout_hardclock();
 
-		/* XXX: will drift */
 		if (++ticks == hz) {
 			time_uptime++;
 			ticks = 0;
 		}
-		kpause("tickw8", false, 1, NULL);
+
+		/* wait until the next tick */
+		while (rumpuser_cv_timedwait(clockcv, clockmtx,
+		    &rump_clock) != EWOULDBLOCK)
+			continue;
+		timespecadd(&rump_clock, &tick, &rump_clock);
 	}
 }
 
@@ -156,9 +190,13 @@ softint_init(struct cpu_info *ci)
 	mutex_init(&si_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&si_cv, "intrw8"); /* cv of temporary w8ness */
 
+	rumpuser_cv_init(&clockcv);
+	rumpuser_mutex_init(&clockmtx);
+
 	/* XXX: should have separate "wanttimer" control */
 	if (rump_threads) {
-		rv = kthread_create(PRI_NONE, 0, NULL, doclock,
+		rumpuser_mutex_enter(clockmtx);
+		rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, doclock,
 		    NULL, NULL, "rumpclk");
 		if (rv)
 			panic("clock thread creation failed: %d", rv);
@@ -167,6 +205,10 @@ softint_init(struct cpu_info *ci)
 			makeworker(true);
 		}
 		mutex_exit(&si_mtx);
+
+		/* make sure we have a clocktime before returning */
+		rumpuser_cv_wait(clockcv, clockmtx);
+		rumpuser_mutex_exit(clockmtx);
 	}
 }
 

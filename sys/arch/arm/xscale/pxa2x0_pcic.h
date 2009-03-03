@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.h,v 1.3 2007/10/17 19:53:44 garbled Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.h,v 1.3.28.1 2009/03/03 18:28:51 skrll Exp $	*/
 /*	$OpenBSD: pxapcicvar.h,v 1.7 2005/12/14 15:08:51 uwe Exp $ */
 
 /*
@@ -68,7 +68,7 @@ struct pxapcic_tag {
 #define PXAPCIC_NSLOT	2
 
 struct pxapcic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct pxapcic_socket sc_socket[PXAPCIC_NSLOT];
 
 	bus_space_tag_t sc_iot;

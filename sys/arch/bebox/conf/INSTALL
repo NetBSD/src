@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.44 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: INSTALL,v 1.44.2.1 2009/03/03 18:28:52 skrll Exp $
 #
 # First try for BEBOX config file
 #
@@ -12,10 +12,11 @@ maxusers	32
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
 # Enable the hooks used for initializing the root memory-disk.
-options 		MEMORY_DISK_HOOKS
-options 		MEMORY_DISK_IS_ROOT	# force root on memory disk
-options 		MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 		MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
