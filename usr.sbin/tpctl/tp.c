@@ -1,4 +1,4 @@
-/*	$NetBSD: tp.c,v 1.7 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: tp.c,v 1.8 2009/03/03 18:43:15 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 TAKEMRUA Shin
@@ -43,7 +43,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tp.c,v 1.7 2008/05/10 15:31:05 martin Exp $");
+__RCSID("$NetBSD: tp.c,v 1.8 2009/03/03 18:43:15 nonaka Exp $");
 #endif /* not lint */
 
 int
@@ -52,6 +52,13 @@ tp_init(struct tp *tp, int fd)
 	u_int flags;
 	struct wsmouse_calibcoords calibcoords;
 	struct wsmouse_id id;
+#ifdef WSMOUSEIO_SETVERSION
+	int version = WSMOUSE_EVENT_VERSION;
+
+	if (ioctl(fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+	    return (-1);
+	}
+#endif
 
 	tp->fd = fd;
 
