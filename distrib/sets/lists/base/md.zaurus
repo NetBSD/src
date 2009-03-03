@@ -1,5 +1,5 @@
-# $NetBSD: md.zaurus,v 1.6 2009/03/02 09:59:10 nonaka Exp $
-./usr/mdec/zboot.o				base-sysutil-bin
+# $NetBSD: md.zaurus,v 1.7 2009/03/03 08:02:41 nonaka Exp $
+./usr/mdec/zboot				base-sysutil-bin
 ./usr/mdec/zbsdmod.o				base-sysutil-bin
 ./usr/sbin/apm					base-sysutil-bin
 ./usr/sbin/apmd					base-sysutil-bin
