@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.10 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.11 2009/03/04 18:11:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.10 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.11 2009/03/04 18:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,6 +674,8 @@ sys___posix_fadvise50(struct lwp *l,
 		syscallarg(int) advice;
 	} */
 
-	return do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
+	*retval = do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
 	    SCARG(uap, len), SCARG(uap, advice));
+
+	return 0;
 }
