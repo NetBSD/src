@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.35 2008/11/24 11:41:07 ad Exp $
+# $NetBSD: XEN3_DOM0,v 1.36 2009/03/04 07:31:33 nisimura Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -135,7 +135,8 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
 #options 	NFS_BOOTSTATIC_GWIP="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
