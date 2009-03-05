@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_qmgr.c,v 1.4 2007/10/17 19:53:44 garbled Exp $	*/
+/*	$NetBSD: ixp425_qmgr.c,v 1.5 2009/03/05 01:38:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -60,7 +60,7 @@
 */
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_qmgr.c,v 1.1 2006/11/19 23:55:23 sam Exp $");*/
-__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.4 2007/10/17 19:53:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.5 2009/03/05 01:38:12 msaitoh Exp $");
 
 /*
  * Intel XScale Queue Manager support.
@@ -386,7 +386,7 @@ ixpqmgr_qconfig(int qId, int qEntries, int ne, int nf, int srcSel,
 	 */
 	sc->aqmFreeSramAddress += (qi->qSizeInWords * sizeof(uint32_t));
 
-	/* Set the interupt source if this queue is in the range 0-31 */
+	/* Set the interrupt source if this queue is in the range 0-31 */
 	if (qId < IX_QMGR_MIN_QUEUPP_QID)
 	    aqm_srcsel_write(sc, qId, srcSel);
 
