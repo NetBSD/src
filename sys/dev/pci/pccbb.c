@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.183 2009/02/13 22:39:37 bouyer Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.184 2009/03/05 01:38:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.183 2009/02/13 22:39:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.184 2009/03/05 01:38:12 msaitoh Exp $");
 
 /*
 #define CBB_DEBUG
@@ -946,7 +946,7 @@ pccbb_intrinit(struct pccbb_softc *sc)
 
 	/*
 	 * XXX pccbbintr should be called under the priority lower
-	 * than any other hard interupts.
+	 * than any other hard interrupts.
 	 */
 	KASSERT(sc->sc_ih == NULL);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
