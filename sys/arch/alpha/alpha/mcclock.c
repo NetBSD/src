@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.15 2009/03/05 01:38:12 msaitoh Exp $ */
+/* $NetBSD: mcclock.c,v 1.16 2009/03/05 01:48:58 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.15 2009/03/05 01:38:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.16 2009/03/05 01:48:58 msaitoh Exp $");
 
 #include "opt_clock_compat_osf1.h"
 
@@ -112,7 +112,7 @@ mcclock_set_pcc_freq(struct mc146818_softc *sc)
 			;
 		pcc_start = cpu_counter32();
 
-		/* wait till the periodic interupt flag is set again */
+		/* wait till the periodic interrupt flag is set again */
 		while (((*sc->sc_mcread)(sc, MC_REGC) & MC_REGC_PF) == 0)
 			;
 		pcc_end = cpu_counter32();
