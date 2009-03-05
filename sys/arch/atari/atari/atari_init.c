@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.73 2009/01/17 07:17:35 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.74 2009/03/05 13:21:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.73 2009/01/17 07:17:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.74 2009/03/05 13:21:44 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -78,18 +78,16 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.73 2009/01/17 07:17:35 tsutsui Exp 
 
 #include "pci.h"
 
-void start_c __P((int, u_int, u_int, u_int, char *));
-static void atari_hwinit __P((void));
-static void cpu_init_kcorehdr __P((paddr_t, paddr_t));
-static void initcpu __P((void));
-static void mmu030_setup __P((paddr_t, u_int, paddr_t, psize_t, paddr_t,
-			      paddr_t));
-static void map_io_areas __P((paddr_t, psize_t, u_int));
-static void set_machtype __P((void));
+void start_c(int, u_int, u_int, u_int, char *);
+static void atari_hwinit(void);
+static void cpu_init_kcorehdr(paddr_t, paddr_t);
+static void initcpu(void);
+static void mmu030_setup(paddr_t, u_int, paddr_t, psize_t, paddr_t, paddr_t);
+static void map_io_areas(paddr_t, psize_t, u_int);
+static void set_machtype(void);
 
 #if defined(M68040) || defined(M68060)
-static void mmu040_setup __P((paddr_t, u_int, paddr_t, psize_t, paddr_t,
-			      paddr_t));
+static void mmu040_setup(paddr_t, u_int, paddr_t, psize_t, paddr_t, paddr_t);
 #endif
 
 /*
@@ -183,7 +181,7 @@ u_int	stphysize;		/* Size of ST-ram	 		*/
 char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 {
 	extern char	end[];
-	extern void	etext __P((void));
+	extern void	etext(void);
 	extern u_long	protorp[2];
 	paddr_t		pstart;		/* Next available physical address */
 	vaddr_t		vstart;		/* Next available virtual address */
@@ -725,7 +723,7 @@ map_io_areas(ptpa, ptsize, ptextra)
 	psize_t		ptsize;		/* Size of 'pt' in bytes	*/
 	u_int		ptextra;	/* #of additional I/O pte's	*/
 {
-	extern void	bootm_init __P((vaddr_t, pt_entry_t *, u_long));
+	extern void	bootm_init(vaddr_t, pt_entry_t *, u_long);
 	vaddr_t		ioaddr;
 	pt_entry_t	*pt, *pg, *epg;
 	pt_entry_t	pg_proto;
@@ -1082,7 +1080,7 @@ int m68060_pcr_init = 0x21;	/* make this patchable */
 static void
 initcpu()
 {
-	typedef void trapfun __P((void));
+	typedef void trapfun(void);
 
 	switch (cputype) {
 
@@ -1162,9 +1160,9 @@ initcpu()
 }
 
 #ifdef DEBUG
-void dump_segtable __P((u_int *));
-void dump_pagetable __P((u_int *, u_int, u_int));
-u_int vmtophys __P((u_int *, u_int));
+void dump_segtable(u_int *);
+void dump_pagetable(u_int *, u_int, u_int);
+u_int vmtophys(u_int *, u_int);
 
 void
 dump_segtable(stp)
