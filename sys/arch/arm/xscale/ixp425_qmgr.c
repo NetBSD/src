@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_qmgr.c,v 1.5 2009/03/05 01:38:12 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_qmgr.c,v 1.6 2009/03/05 01:48:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -60,7 +60,7 @@
 */
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_qmgr.c,v 1.1 2006/11/19 23:55:23 sam Exp $");*/
-__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.5 2009/03/05 01:38:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.6 2009/03/05 01:48:58 msaitoh Exp $");
 
 /*
  * Intel XScale Queue Manager support.
@@ -649,7 +649,7 @@ ixpqmgr_notify_enable(int qId, int srcSel)
 	/* Calculate the checkMask and checkValue for this q */
 	aqm_calc_statuscheck(sc, qId, srcSel);
 #endif
-	/* Set the interupt source if this queue is in the range 0-31 */
+	/* Set the interrupt source if this queue is in the range 0-31 */
 	if (qId < IX_QMGR_MIN_QUEUPP_QID)
 	    aqm_srcsel_write(sc, qId, srcSel);
 
