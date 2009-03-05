@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lvm,v 1.2 2009/01/20 00:40:59 haad Exp $
+# $NetBSD: lvm,v 1.3 2009/03/05 10:35:43 haad Exp $
 #
 
 # PROVIDE: disks
@@ -32,7 +32,7 @@ lvm_start()
 	
 		# Activate all LV's and create apropriate nodes in /dev
 		/sbin/lvm vgchange --ignorelockingfailure -a y >/dev/null
-		$LV_LIST = $(/sbin/lvm vgdisplay -C -o vg_name --noheadings 2>/dev/null)
+		LV_LIST=$(/sbin/lvm vgdisplay -C -o vg_name --noheadings 2>/dev/null)
 		echo " Activated Volume Groups:" $LV_LIST
 	fi
 }
