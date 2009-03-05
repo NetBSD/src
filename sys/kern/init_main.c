@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.382 2009/02/13 22:41:04 apb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.383 2009/03/05 06:37:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.382 2009/02/13 22:41:04 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.383 2009/03/05 06:37:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -358,6 +358,9 @@ main(void)
 	/* Create process 0 (the swapper). */
 	proc0_init();
 
+	/* Disable preemption during boot. */
+	kpreempt_disable();
+
 	/* Initialize the UID hash table. */
 	uid_init();
 
@@ -471,6 +474,9 @@ main(void)
 	ssp_init();
 
 	configure2();
+
+	/* Now timer is working.  Enable preemption. */
+	kpreempt_enable();
 
 	ubc_init();		/* must be after autoconfig */
 
