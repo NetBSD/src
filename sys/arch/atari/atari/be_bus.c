@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.10 2008/12/27 16:14:12 tsutsui Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.11 2009/03/05 13:21:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.10 2008/12/27 16:14:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.11 2009/03/05 13:21:44 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,118 +45,118 @@ __KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.10 2008/12/27 16:14:12 tsutsui Exp $");
  */
 
 	/* Autoconf detection stuff */
-static int		beb_bus_space_peek_1 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t));
-static int		beb_bus_space_peek_2 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t));
-static int		beb_bus_space_peek_4 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t));
-static int		beb_bus_space_peek_8 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t));
+static int		beb_bus_space_peek_1(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t);
+static int		beb_bus_space_peek_2(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t);
+static int		beb_bus_space_peek_4(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t);
+static int		beb_bus_space_peek_8(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t);
 
 	/* read (single) */
-static u_int8_t		beb_bus_space_read_1 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t));
-static u_int16_t	beb_bus_space_read_2 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t));
-static u_int32_t	beb_bus_space_read_4 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t));
-static u_int64_t	beb_bus_space_read_8 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t));
+static u_int8_t		beb_bus_space_read_1(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t);
+static u_int16_t	beb_bus_space_read_2(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t);
+static u_int32_t	beb_bus_space_read_4(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t);
+static u_int64_t	beb_bus_space_read_8(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t);
 
 	/* write (single) */
-static void		beb_bus_space_write_1 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t, u_int8_t));
-static void		beb_bus_space_write_2 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t, u_int16_t));
-static void		beb_bus_space_write_4 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t, u_int32_t));
-static void		beb_bus_space_write_8 __P((bus_space_tag_t,
-				bus_space_handle_t, bus_size_t, u_int64_t));
+static void		beb_bus_space_write_1(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t, u_int8_t);
+static void		beb_bus_space_write_2(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t, u_int16_t);
+static void		beb_bus_space_write_4(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t, u_int32_t);
+static void		beb_bus_space_write_8(bus_space_tag_t,
+				bus_space_handle_t, bus_size_t, u_int64_t);
 
 	/* read multiple */
-static void		beb_bus_space_read_multi_1 __P((bus_space_tag_t,
+static void		beb_bus_space_read_multi_1(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int8_t *,
-				bus_size_t));
-static void		beb_bus_space_read_multi_2 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_read_multi_2(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int16_t *,
-				bus_size_t));
-static void		beb_bus_space_read_multi_4 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_read_multi_4(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int32_t *,
-				bus_size_t));
-static void		beb_bus_space_read_multi_8 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_read_multi_8(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int64_t *,
-				bus_size_t));
+				bus_size_t);
 
 	/* write multiple */
-static void		beb_bus_space_write_multi_1 __P((bus_space_tag_t,
+static void		beb_bus_space_write_multi_1(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
-				const u_int8_t *, bus_size_t));
-static void		beb_bus_space_write_multi_2 __P((bus_space_tag_t,
+				const u_int8_t *, bus_size_t);
+static void		beb_bus_space_write_multi_2(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
-				const u_int16_t *, bus_size_t));
-static void		beb_bus_space_write_multi_4 __P((bus_space_tag_t,
+				const u_int16_t *, bus_size_t);
+static void		beb_bus_space_write_multi_4(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
-				const u_int32_t *, bus_size_t));
-static void		beb_bus_space_write_multi_8 __P((bus_space_tag_t,
+				const u_int32_t *, bus_size_t);
+static void		beb_bus_space_write_multi_8(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
-				const u_int64_t *, bus_size_t));
+				const u_int64_t *, bus_size_t);
 
 	/* read region */
-static void		beb_bus_space_read_region_1 __P((bus_space_tag_t,
+static void		beb_bus_space_read_region_1(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int8_t *,
-				bus_size_t));
-static void		beb_bus_space_read_region_2 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_read_region_2(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int16_t *,
-				bus_size_t));
-static void		beb_bus_space_read_region_4 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_read_region_4(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int32_t *,
-				bus_size_t));
-static void		beb_bus_space_read_region_8 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_read_region_8(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int64_t *,
-				bus_size_t));
+				bus_size_t);
 
 	/* read region */
-static void		beb_bus_space_write_region_1 __P((bus_space_tag_t,
+static void		beb_bus_space_write_region_1(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
-				const u_int8_t *, bus_size_t));
-static void		beb_bus_space_write_region_2 __P((bus_space_tag_t,
+				const u_int8_t *, bus_size_t);
+static void		beb_bus_space_write_region_2(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
-				const u_int16_t *, bus_size_t));
-static void		beb_bus_space_write_region_4 __P((bus_space_tag_t,
+				const u_int16_t *, bus_size_t);
+static void		beb_bus_space_write_region_4(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
-				const u_int32_t *, bus_size_t));
-static void		beb_bus_space_write_region_8 __P((bus_space_tag_t,
+				const u_int32_t *, bus_size_t);
+static void		beb_bus_space_write_region_8(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
-				const u_int64_t *, bus_size_t));
+				const u_int64_t *, bus_size_t);
 
 	/* set multi */
-static void		beb_bus_space_set_multi_1 __P((bus_space_tag_t,
+static void		beb_bus_space_set_multi_1(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int8_t,
-				bus_size_t));
-static void		beb_bus_space_set_multi_2 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_set_multi_2(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int16_t,
-				bus_size_t));
-static void		beb_bus_space_set_multi_4 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_set_multi_4(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int32_t,
-				bus_size_t));
-static void		beb_bus_space_set_multi_8 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_set_multi_8(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int64_t,
-				bus_size_t));
+				bus_size_t);
 
 	/* set region */
-static void		beb_bus_space_set_region_1 __P((bus_space_tag_t,
+static void		beb_bus_space_set_region_1(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int8_t,
-				bus_size_t));
-static void		beb_bus_space_set_region_2 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_set_region_2(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int16_t,
-				bus_size_t));
-static void		beb_bus_space_set_region_4 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_set_region_4(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int32_t,
-				bus_size_t));
-static void		beb_bus_space_set_region_8 __P((bus_space_tag_t,
+				bus_size_t);
+static void		beb_bus_space_set_region_8(bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int64_t,
-				bus_size_t));
+				bus_size_t);
 
 /*
  * Don't force a function call overhead on these primitives...
@@ -259,8 +259,8 @@ bus_space_tag_t	storage;
  */
 
 /*
- *	int bus_space_peek_N __P((bus_space_tag_t tag,
- *		bus_space_handle_t sh, bus_size_t offset));
+ *	int bus_space_peek_N(bus_space_tag_t tag,
+ *		bus_space_handle_t sh, bus_size_t offset);
  *
  * Check if the address is suitable for reading N-byte quantities.
  */
@@ -301,8 +301,8 @@ beb_bus_space_peek_8(t, h, o)
 }
 
 /*
- *	u_intX_t bus_space_read_N __P((bus_space_tag_t tag,
- *		bus_space_handle_t bsh, bus_size_t offset));
+ *	u_intX_t bus_space_read_N(bus_space_tag_t tag,
+ *		bus_space_handle_t bsh, bus_size_t offset);
  *
  * Return an 1, 2, 4, or 8 byte value read from the bus_space described
  * by tag/handle at `offset'. The value is converted to host-endian.
@@ -344,8 +344,8 @@ beb_bus_space_read_8(t, h, o)
 }
 
 /*
- *	u_intX_t bus_space_write_N __P((bus_space_tag_t tag,
- *		bus_space_handle_t bsh, bus_size_t offset, u_intX_t val));
+ *	u_intX_t bus_space_write_N(bus_space_tag_t tag,
+ *		bus_space_handle_t bsh, bus_size_t offset, u_intX_t val);
  *
  * Write an 1, 2, 4, or 8 byte value to the bus_space described by tag/handle
  * at `offset'. The value `val' is converted from host to bus endianness
@@ -392,9 +392,9 @@ beb_bus_space_write_8(t, h, o, v)
 }
 
 /*
- *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset, u_intX_t *address,
- *	 	bus_size_t count));
+ *	 	bus_size_t count);
  *
  * Read 'count' 1, 2, 4, or 8 byte values from the bus_space described by
  * tag/handle at `offset' and store them in the address range starting at
@@ -445,9 +445,9 @@ beb_bus_space_read_multi_8(t, h, o, a, c)
 }
 
 /*
- *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset,
- *		const u_intX_t *address, bus_size_t count));
+ *		const u_intX_t *address, bus_size_t count);
  *
  * Write 'count' 1, 2, 4, or 8 byte values from the address range starting
  * at 'address' to the bus_space described by tag/handle at `offset'.
@@ -499,9 +499,9 @@ beb_bus_space_write_multi_8(t, h, o, a, c)
 }
 
 /*
- *	void bus_space_read_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_region_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset,
- *		u_intN_t *addr, bus_size_t count));
+ *		u_intN_t *addr, bus_size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
@@ -552,9 +552,9 @@ beb_bus_space_read_region_8(t, h, o, a, c)
 }
 
 /*
- *	void bus_space_write_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_region_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset,
- *		u_intN_t *addr, bus_size_t count));
+ *		u_intN_t *addr, bus_size_t count);
  *
  * Copy `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * into the bus space described by tag/handle and starting at `offset'.
@@ -604,9 +604,9 @@ beb_bus_space_write_region_8(t, h, o, a, c)
 }
 
 /*
- *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_multi_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *		bus_size_t count));
+ *		bus_size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle/offset `count' times.
@@ -657,9 +657,9 @@ beb_bus_space_set_multi_8(t, h, o, v, c)
 }
 
 /*
- *	void bus_space_set_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_region_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *		bus_size_t count));
+ *		bus_size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.54 2007/12/03 15:33:21 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55 2009/03/05 13:21:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54 2007/12/03 15:33:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2009/03/05 13:21:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,10 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54 2007/12/03 15:33:21 ad Exp $");
 #include <machine/cpu.h>
 #include <atari/atari/device.h>
 
-static void findroot __P((void));
-void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, const char *));
-int mbmatch __P((struct device *, struct cfdata *, void *));
+static void findroot(void);
+void mbattach(struct device *, struct device *, void *);
+int mbprint(void *, const char *);
+int mbmatch(struct device *, struct cfdata *, void *);
 
 int atari_realconfig;
 #include <sys/kernel.h>

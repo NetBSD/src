@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.47 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: bus.c,v 1.48 2009/03/05 13:21:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.47 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.48 2009/03/05 13:21:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,15 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.47 2008/06/04 12:41:40 ad Exp $");
 #define	_ATARI_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-int  bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+int  bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 		bus_size_t alignment, bus_size_t boundary,
 		bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-		paddr_t low, paddr_t high));
-static int  _bus_dmamap_load_buffer __P((bus_dma_tag_t tag, bus_dmamap_t,
+		paddr_t low, paddr_t high);
+static int  _bus_dmamap_load_buffer(bus_dma_tag_t tag, bus_dmamap_t,
 		void *, bus_size_t, struct vmspace *, int, paddr_t *,
-		int *, int));
-static int  bus_mem_add_mapping __P((bus_space_tag_t t, bus_addr_t bpa,
-		bus_size_t size, int flags, bus_space_handle_t *bsph));
+		int *, int);
+static int  bus_mem_add_mapping(bus_space_tag_t t, bus_addr_t bpa,
+		bus_size_t size, int flags, bus_space_handle_t *bsph);
 
 extern struct extent *iomem_ex;
 extern int iomem_malloc_safe;

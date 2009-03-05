@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.35 2008/01/02 11:48:23 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.36 2009/03/05 13:21:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.35 2008/01/02 11:48:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.36 2009/03/05 13:21:44 tsutsui Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -56,14 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.35 2008/01/02 11:48:23 ad Exp $");
 #error BBSIZE smaller than BBMINSIZE
 #endif
 
-static void  ck_label __P((struct disklabel *, struct cpu_disklabel *));
-static int   bsd_label __P((dev_t, void (*)(struct buf *),
-			struct disklabel *, u_int, u_int *));
-static int   ahdi_label __P((dev_t, void (*)(struct buf *),
-			struct disklabel *, struct cpu_disklabel *));
-static void  ahdi_to_bsd __P((struct disklabel *, struct ahdi_ptbl *));
-static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
-					u_int, u_int, struct ahdi_ptbl *));
+static void  ck_label(struct disklabel *, struct cpu_disklabel *);
+static int   bsd_label(dev_t, void (*)(struct buf *),
+			struct disklabel *, u_int, u_int *);
+static int   ahdi_label(dev_t, void (*)(struct buf *),
+			struct disklabel *, struct cpu_disklabel *);
+static void  ahdi_to_bsd(struct disklabel *, struct ahdi_ptbl *);
+static u_int ahdi_getparts(dev_t, void (*)(struct buf *), u_int,
+					u_int, u_int, struct ahdi_ptbl *);
 
 /*
  * Attempt to read a disk label from a device using the

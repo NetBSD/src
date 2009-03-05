@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2009/01/27 20:30:13 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.100 2009/03/05 13:21:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2009/01/27 20:30:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2009/03/05 13:21:44 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -127,13 +127,13 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2009/01/27 20:30:13 martin Exp $");
 extern struct emul emul_sunos;
 #endif
 
-void trap __P((struct frame *, int, u_int, u_int));
+void trap(struct frame *, int, u_int, u_int);
 
-static void panictrap __P((int, u_int, u_int, struct frame *));
-static void trapcpfault __P((struct lwp *, struct frame *));
-static void userret __P((struct lwp *, struct frame *fp, u_quad_t, u_int,int));
+static void panictrap(int, u_int, u_int, struct frame *);
+static void trapcpfault(struct lwp *, struct frame *);
+static void userret(struct lwp *, struct frame *fp, u_quad_t, u_int, int);
 #ifdef M68040
-static int  writeback __P((struct frame *, int));
+static int  writeback(struct frame *, int);
 #endif /* M68040 */
 
 const char *trap_type[] = {
@@ -749,8 +749,8 @@ const char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
 const char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 
-static void dumpwb __P((int, u_short, u_int, u_int));
-static void dumpssw __P((u_short));
+static void dumpwb(int, u_short, u_int, u_int);
+static void dumpssw(u_short);
 #endif /* DEBUG */
 
 static int
