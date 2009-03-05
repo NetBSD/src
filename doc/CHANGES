@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1194 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1195 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -153,3 +153,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		systems. [ad 20090222]
 	sgimips: build Xorg by default [macallan 20080223]
 	dhcpcd(8): Import dhcpcd-4.0.12. [roy 20090226]
+	xen: Add PCI pass-through support for Xen3.  domain0 kernel gets a
+		pciback PCI drivers, to which device specified in the
+		pciback.hide boot parameter will attach.
+		DomU kernels gets a xpci device, to which pci busses
+		will attach.  [bouyer 20090305]
