@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.74 2009/03/05 13:21:44 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.75 2009/03/05 13:42:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.74 2009/03/05 13:21:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.75 2009/03/05 13:42:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -175,10 +175,10 @@ int kernel_copyback = 1;
 
 void
 start_c(id, ttphystart, ttphysize, stphysize, esym_addr)
-int	id;			/* Machine id				*/
-u_int	ttphystart, ttphysize;	/* Start address and size of TT-ram	*/
-u_int	stphysize;		/* Size of ST-ram	 		*/
-char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
+	int	id;			/* Machine id			*/
+	u_int	ttphystart, ttphysize;	/* Start address and size of TT-ram */
+	u_int	stphysize;		/* Size of ST-ram 		*/
+	char	*esym_addr;		/* Address of kernel '_esym' symbol */
 {
 	extern char	end[];
 	extern void	etext(void);
@@ -233,7 +233,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/* 
 	 * the kernel ends at end() or esym.
 	 */
-	if(esym == NULL)
+	if (esym == NULL)
 		end_loaded = (vaddr_t)&end;
 	else
 		end_loaded = (vaddr_t)esym;
@@ -242,7 +242,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * If we have enough fast-memory to put the kernel in and the
 	 * RELOC_KERNEL option is set, do it!
 	 */
-	if((reloc_kernel != 0) && (ttphysize >= end_loaded))
+	if ((reloc_kernel != 0) && (ttphysize >= end_loaded))
 		kbase = ttphystart;
 	else
 		kbase = 0;
@@ -434,7 +434,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	pg           = &pg[vstart / PAGE_SIZE];
 	pg_proto     = st_pool_phys | PG_RW | PG_CI | PG_V;
 	vstart      += st_pool_size;
-	while(pg_proto < (st_pool_phys + st_pool_size)) {
+	while (pg_proto < (st_pool_phys + st_pool_size)) {
 		*pg++     = pg_proto;
 		pg_proto += PAGE_SIZE;
 	}
@@ -474,7 +474,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	usable_segs[1].end   = ttphystart + ttphysize;
 	usable_segs[2].start = usable_segs[2].end = 0; /* End of segments! */
 
-	if(kbase) {
+	if (kbase) {
 		/*
 		 * First page of ST-ram is unusable, reserve the space
 		 * for the kernel in the TT-ram segment.
@@ -483,8 +483,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 */
 		usable_segs[0].start  = PAGE_SIZE;
 		usable_segs[1].start += pstart;
-	}
-	else
+	} else
 		usable_segs[0].start += pstart;
 
 	/*
@@ -520,7 +519,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * to fastram.  DONT use bcopy(), this beast is much larger 
 	 * than 128k !
 	 */
-	if(kbase) {
+	if (kbase) {
 		register paddr_t *lp, *le, *fp;
 
 		lp = (paddr_t *)0;
@@ -605,10 +604,10 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	for (i = 0; boot_segs[i].end != 0; i++) {
 		if (extent_alloc_region(iomem_ex, boot_segs[i].start,
-			  boot_segs[i].end - boot_segs[i].start, EX_NOWAIT)) {
+		    boot_segs[i].end - boot_segs[i].start, EX_NOWAIT)) {
 			/* XXX: Ahum, should not happen ;-) */
 			printf("Warning: Cannot allocate boot memory from"
-			       " extent map!?\n");
+			    " extent map!?\n");
 		}
 	}
 
@@ -623,33 +622,36 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
  * Note: This module runs *before* the io-mapping is setup!
  */
 static void
-set_machtype()
+set_machtype(void)
 {
+
 #ifdef _MILANHW_
 	machineid |= ATARI_MILAN;
 
 #else
 	stio_addr = 0xff8000;	/* XXX: For TT & Falcon only */
-	if(badbaddr((void *)__UNVOLATILE(&MFP2->mf_gpip), sizeof(char))) {
+	if (badbaddr((void *)__UNVOLATILE(&MFP2->mf_gpip), sizeof(char))) {
 		/*
 		 * Watch out! We can also have a Hades with < 16Mb
 		 * RAM here...
 		 */
-		if(!badbaddr((void *)__UNVOLATILE(&MFP->mf_gpip),
-		     sizeof(char))) {
+		if (!badbaddr((void *)__UNVOLATILE(&MFP->mf_gpip),
+		    sizeof(char))) {
 			machineid |= ATARI_FALCON;
 			return;
 		}
 	}
-	if(!badbaddr((void *)(PCI_CONFB_PHYS + PCI_CONFM_PHYS), sizeof(char)))
+	if (!badbaddr((void *)(PCI_CONFB_PHYS + PCI_CONFM_PHYS), sizeof(char)))
 		machineid |= ATARI_HADES;
-	else machineid |= ATARI_TT;
+	else
+		machineid |= ATARI_TT;
 #endif /* _MILANHW_ */
 }
 
 static void
-atari_hwinit()
+atari_hwinit(void)
 {
+
 #if defined(_ATARIHW_)
 	/*
 	 * Initialize the sound chip
@@ -677,14 +679,14 @@ atari_hwinit()
 	MFP->mf_vr    = 0x40;
 
 #if defined(_ATARIHW_)
-	if(machineid & (ATARI_TT|ATARI_HADES)) {
+	if (machineid & (ATARI_TT|ATARI_HADES)) {
 		MFP2->mf_iera = MFP2->mf_ierb = 0;
 		MFP2->mf_imra = MFP2->mf_imrb = 0;
 		MFP2->mf_aer  = 0x80;
 		MFP2->mf_vr   = 0x50;
 	}
 
-	if(machineid & ATARI_TT) {
+	if (machineid & ATARI_TT) {
 		/*
 		 * Initialize the SCU, to enable interrupts on the SCC (ipl5),
 		 * MFP (ipl6) and softints (ipl1).
@@ -702,7 +704,7 @@ atari_hwinit()
 #endif /* defined(_ATARIHW_) */
 
 #if NPCI > 0
-	if(machineid & (ATARI_HADES|ATARI_MILAN)) {
+	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
 		/*
 		 * Configure PCI-bus
 		 */
@@ -768,10 +770,10 @@ map_io_areas(ptpa, ptsize, ptextra)
 		epg           = &pg[btoc(PCI_CONF_SIZE)];
 		mask          = PCI_CONFM_PHYS;
 		pg_proto      = PCI_CONFB_PHYS | PG_RW | PG_CI | PG_V;
-		for(; pg < epg; mask <<= 1)
+		for (; pg < epg; mask <<= 1)
 			*pg++ = pg_proto | mask;
-	}
-	else pci_conf_addr = 0; /* XXX: should crash */
+	} else
+		pci_conf_addr = 0; /* XXX: should crash */
 
 	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
 		pci_io_addr   = ioaddr;
@@ -779,7 +781,7 @@ map_io_areas(ptpa, ptsize, ptextra)
 		pg	      = &pt[pci_io_addr / PAGE_SIZE];
 		epg           = &pg[btoc(PCI_IO_SIZE)];
 		pg_proto      = PCI_IO_PHYS | PG_RW | PG_CI | PG_V;
-		while(pg < epg) {
+		while (pg < epg) {
 			*pg++     = pg_proto;
 			pg_proto += PAGE_SIZE;
 		}
@@ -790,7 +792,7 @@ map_io_areas(ptpa, ptsize, ptextra)
 		ioaddr       += PCI_MEM_SIZE;
 		epg           = &pg[btoc(PCI_MEM_SIZE)];
 		pg_proto      = PCI_VGA_PHYS | PG_RW | PG_CI | PG_V;
-		while(pg < epg) {
+		while (pg < epg) {
 			*pg++     = pg_proto;
 			pg_proto += PAGE_SIZE;
 		}
@@ -812,7 +814,7 @@ map_io_areas(ptpa, ptsize, ptextra)
 #define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
 
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 
 	return btodb(MDHDRSIZE);
@@ -1078,7 +1080,7 @@ int m68060_pcr_init = 0x21;	/* make this patchable */
 #endif
 
 static void
-initcpu()
+initcpu(void)
 {
 	typedef void trapfun(void);
 
@@ -1204,9 +1206,10 @@ u_int
 vmtophys(ste, vm)
 	u_int *ste, vm;
 {
-	ste = (u_int *) (*(ste + (vm >> SEGSHIFT)) & SG_FRAME);
-		ste += (vm & SG_PMASK) >> PGSHIFT;
-	return((*ste & -PAGE_SIZE) | (vm & (PAGE_SIZE - 1)));
+
+	ste = (u_int *)(*(ste + (vm >> SEGSHIFT)) & SG_FRAME);
+	ste += (vm & SG_PMASK) >> PGSHIFT;
+	return (*ste & -PAGE_SIZE) | (vm & (PAGE_SIZE - 1));
 }
 
 #endif
