@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2009/02/14 13:56:41 abs Exp $
+#	$NetBSD: Makefile,v 1.28 2009/03/05 01:29:32 yamt Exp $
 
 # For all platforms
 
@@ -86,7 +86,7 @@ SUBDIR+=	radeondrm
 
 # we need our device mapper for LVM
 .if (${MKLVM} != "no")
-SUBDIR+= dm
+SUBDIR+= 	dm
 .endif
 
 .include <bsd.subdir.mk>
