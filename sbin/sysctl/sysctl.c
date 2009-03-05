@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.125 2008/12/28 20:20:37 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.126 2009/03/05 15:35:59 njoly Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.125 2008/12/28 20:20:37 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.126 2009/03/05 15:35:59 njoly Exp $");
 #endif
 #endif /* not lint */
 
@@ -2482,6 +2482,7 @@ machdep_diskinfo(HANDLER_ARGS)
 			       bi[ni->ni_biosmatches[b]].bi_dev);
 	}
 	printf("\n");
+	free(dl);
 }
 #endif /* CPU_DISKINFO */
 
