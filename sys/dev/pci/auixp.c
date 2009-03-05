@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.28 2008/04/10 19:13:36 cegger Exp $ */
+/* $NetBSD: auixp.c,v 1.29 2009/03/05 01:38:12 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.29 2009/03/05 01:38:12 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -948,7 +948,7 @@ auixp_intr(void *softc)
 		detected_codecs = status & CODEC_CHECK_BITS;
 		sc->sc_codec_not_ready_bits |= detected_codecs;
 
-		/* disable detected interupt sources */
+		/* disable detected interrupt sources */
 		enable  = bus_space_read_4(iot, ioh, ATI_REG_IER);
 		enable &= ~detected_codecs;
 		bus_space_write_4(iot, ioh, ATI_REG_IER, enable);
