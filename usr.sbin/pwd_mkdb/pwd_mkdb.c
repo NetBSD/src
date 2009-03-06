@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.38 2009/02/24 22:25:24 sketch Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.39 2009/03/06 19:05:11 apb Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.38 2009/02/24 22:25:24 sketch Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.39 2009/03/06 19:05:11 apb Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -102,6 +102,11 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.38 2009/02/24 22:25:24 sketch Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+
+#ifndef HAVE_NBTOOL_CONFIG_H
+#include <machine/bswap.h>
+#endif
 
 #include <db.h>
 #include <err.h>
@@ -168,34 +173,10 @@ void	checkversion(DB *);
 uint32_t getversion(void);
 void	setversion(DB *);
 
-static __inline uint16_t swap16(uint16_t sw)
-{
-	return ((sw & 0x00ff) << 8) |
-	       ((sw & 0xff00) >> 8);
-}
-
-static __inline uint32_t swap32(uint32_t sw) {
-	return ((sw & 0x000000ff) << 24) |
-	       ((sw & 0x0000ff00) << 8) |
-	       ((sw & 0x00ff0000) >> 8) |
-	       ((sw & 0xff000000) >> 24);
-}
-
-static __inline uint64_t swap64(uint64_t sw) {
-	return ((sw & 0x00000000000000ffULL) << 56) |
-	       ((sw & 0x000000000000ff00ULL) << 40) |
-	       ((sw & 0x0000000000ff0000ULL) >> 24) |
-	       ((sw & 0x00000000ff000000ULL) << 8) |
-	       ((sw & 0x000000ff00000000ULL) >> 8) |
-	       ((sw & 0x0000ff0000000000ULL) >> 24) |
-	       ((sw & 0x00ff000000000000ULL) >> 40) |
-	       ((sw & 0xff00000000000000ULL) >> 56);
-}
-
 #define SWAP(sw) \
-    ((sizeof(sw) == 2 ? (typeof(sw))swap16((uint16_t)sw) : \
-    (sizeof(sw) == 4 ? (typeof(sw))swap32((uint32_t)sw) : \
-    (sizeof(sw) == 8 ? (typeof(sw))swap64((uint64_t)sw) : (abort(), 0)))))
+    ((sizeof(sw) == 2 ? (typeof(sw))bswap16((uint16_t)sw) : \
+    (sizeof(sw) == 4 ? (typeof(sw))bswap32((uint32_t)sw) : \
+    (sizeof(sw) == 8 ? (typeof(sw))bswap64((uint64_t)sw) : (abort(), 0)))))
 
 int
 main(int argc, char *argv[])
