@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.37 2009/03/05 19:51:49 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.38 2009/03/06 09:58:15 cegger Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -349,6 +349,7 @@ xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 # MII/PHY support
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+atphy*	at mii? phy ?			# Attansic/Atheros PHYs
 bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs

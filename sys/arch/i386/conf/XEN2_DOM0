@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.56 2009/03/04 07:31:33 nisimura Exp $
+# $NetBSD: XEN2_DOM0,v 1.57 2009/03/06 09:58:14 cegger Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -269,6 +269,7 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 
 
 # PCI network interfaces
+age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
@@ -321,6 +322,7 @@ xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 # MII/PHY support
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+atphy*	at mii? phy ?			# Attansic/Atheros PHYs
 bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
