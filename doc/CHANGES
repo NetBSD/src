@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1197 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1198 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -101,17 +101,17 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	rgephy(4): Support for RTL8211C(L) phy. From FreeBSD. [cegger 20090109]
 	rgephy(4): Support for flow control. From OpenBSD. [cegger 20090109]
 	makefs(8): Add support for encoding RISC OS metadata into
-		ISO 9660 filesystems. [bjh21 20090110]
+		ISO 9660 file systems. [bjh21 20090110]
 	time_t, dev_t: Change time_t and dev_t to be 64 bit quantities. Fixed
 		POSIX issues in timeval and timespec. [christos 20090110]
 	make(1): Changes to the way .for loops are processed. [dsl 20090111]
 	openpgpsdk: Initial import of openpgpsdk v0.9. [agc 20090112]
-	age(4):	Add a driver for Attensic/Atheros L1 gigabit ethernet.
+	age(4):	Add a driver for Attensic/Atheros L1 Gigabit Ethernet.
 		From FreeBSD via OpenBSD. [cegger 20090116]
 	atphy(4): Add a driver for Attensic/Atheros F1 PHY.
 		From FreeBSD via OpenBSD. [cegger 20090116]
 	atf(7): Import 0.6.  [jmmv 20090119]
-	msdosfs: The default behaviour when mounting empty filesystems has
+	msdosfs: The default behavior when mounting empty file systems has
 		been changed. Previously, msdosfs would assume the -s flag
 		(short filenames) in this case; now msdosfs will assume the
 		-l flag (long filenames). [jmcneill 20090122]
@@ -146,7 +146,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-4.0.11. [roy 20090221]
 	softdep: The soft dependences / soft updates feature of the fast
 		file system (FFS) has been supplanted by meta data
-		journalling (logging).  Logging provides better reliability
+		journaling (logging).  Logging provides better reliability
 		and better performance for most applications.  Soft
 		dependencies will no longer be available from NetBSD 6.0
 		onwards.  We encourage users to enable logging on FFS file
@@ -156,9 +156,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	xen: Add PCI pass-through support for Xen3.  domain0 kernel gets a
 		pciback PCI drivers, to which device specified in the
 		pciback.hide boot parameter will attach.
-		DomU kernels gets a xpci device, to which pci busses
+		DomU kernels gets a xpci device, to which PCI buses
 		will attach.  [bouyer 20090305]
 	xen: Add XEN3PAE_DOM0, a i386 domain0 kernel with PAE support.
 		requires a i386PAE or x86_64 hypervisor.  [bouyer 20090305]
 	kernel: Compute kern.ipc.shmmaxpgs on startup based on physical
-		memory. Default can be overriden via sysctl. [joerg 20090306]
+		memory. Default can be overridden via sysctl. [joerg 20090306]
