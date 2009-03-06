@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.50 2008/11/12 12:35:55 ad Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.51 2009/03/06 20:31:46 joerg Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -100,7 +100,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 

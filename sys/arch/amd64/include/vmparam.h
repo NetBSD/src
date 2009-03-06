@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20 2008/12/13 14:07:10 pooka Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21 2009/03/06 20:31:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,13 +102,6 @@
 #endif
 #ifndef	MAXSSIZ32
 #define	MAXSSIZ32	(64*1024*1024)		/* max stack size */
-#endif
-
-/*
- * Size of shared memory map
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS	2048
 #endif
 
 /*
