@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1196 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1197 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -160,3 +160,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		will attach.  [bouyer 20090305]
 	xen: Add XEN3PAE_DOM0, a i386 domain0 kernel with PAE support.
 		requires a i386PAE or x86_64 hypervisor.  [bouyer 20090305]
+	kernel: Compute kern.ipc.shmmaxpgs on startup based on physical
+		memory. Default can be overriden via sysctl. [joerg 20090306]
