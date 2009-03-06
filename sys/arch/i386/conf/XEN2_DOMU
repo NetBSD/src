@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.22 2009/03/04 07:31:33 nisimura Exp $
+# $NetBSD: XEN2_DOMU,v 1.23 2009/03/06 20:31:49 joerg Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -38,7 +38,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 
