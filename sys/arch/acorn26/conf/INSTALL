@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.26 2009/02/14 10:20:55 bjh21 Exp $
+# $NetBSD: INSTALL,v 1.27 2009/03/06 20:31:46 joerg Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -88,7 +88,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)

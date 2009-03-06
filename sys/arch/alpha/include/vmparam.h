@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.32 2008/03/10 13:36:22 ad Exp $ */
+/* $NetBSD: vmparam.h,v 1.33 2009/03/06 20:31:46 joerg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,14 +126,6 @@
  */
 #ifndef USRIOSIZE
 #define USRIOSIZE	64
-#endif
-
-/*
- * PTEs for system V style shared memory.
- * This is basically slop for kmempt which we actually allocate (malloc) from.
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS	1024		/* 8mb */
 #endif
 
 /*

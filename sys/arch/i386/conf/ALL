@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.194 2009/02/27 23:37:20 dyoung Exp $
+# $NetBSD: ALL,v 1.195 2009/03/06 20:31:49 joerg Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.194 $"
+#ident 		"ALL-$Revision: 1.195 $"
 
 maxusers	32		# estimated number of users
 
@@ -84,7 +84,6 @@ options 	SEMMNS=60	# number of semaphores in system
 options 	SEMUME=10	# max number of undo entries per process
 options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	MODULAR		# new modules framework
