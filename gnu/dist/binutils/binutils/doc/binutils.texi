@@ -394,6 +394,15 @@ created if it did not exist, when you request an update.  But a warning is
 issued unless you specify in advance that you expect to create it, by
 using this modifier.
 
+@item D
+@cindex deterministic archives
+Operate in @emph{deterministic} mode.  When adding files and the archive
+index use zero for UIDs, GIDs, timestamps, and use consistent file modes
+for all files.  When this option is used, if @command{ar} is used with
+identical options and identical input files, multiple runs will create
+identical output files regardless of the input files' owners, groups,
+file modes, or modification times.
+
 @item f
 Truncate names in the archive.  @sc{gnu} @command{ar} will normally permit file
 names of any length.  This will cause it to create archives which are
