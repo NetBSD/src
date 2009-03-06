@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.103 2008/12/16 22:35:31 christos Exp $	*/
+/*	$NetBSD: i82365.c,v 1.104 2009/03/06 17:10:41 hauke Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.103 2008/12/16 22:35:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.104 2009/03/06 17:10:41 hauke Exp $");
 
 #define	PCICDEBUG
 
@@ -1328,7 +1328,11 @@ pcic_delay(h, timo, wmesg)
 #endif
 	DPRINTF(("pcic_delay: \"%s\" %p, sleep %d ms\n",
 	    wmesg, h->event_thread, timo));
-	tsleep(pcic_delay, PWAIT, wmesg, roundup(timo * hz, 1000) / 1000);
+	if (doing_shutdown)
+		delay(timo * 1000);
+	else
+		tsleep(pcic_delay, PWAIT, wmesg,
+		    roundup(timo * hz, 1000) / 1000);
 }
 
 void
