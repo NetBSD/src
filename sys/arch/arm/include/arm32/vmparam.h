@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 2008/08/06 19:13:45 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 2009/03/06 20:31:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -67,13 +67,6 @@
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(8*1024*1024)		/* max stack size */
-#endif
-
-/*
- * Size of SysV shared memory map
- */
-#ifndef SHMMAXPGS
-#define	SHMMAXPGS	1024
 #endif
 
 /*

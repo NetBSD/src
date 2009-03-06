@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.66 2009/02/08 13:05:51 jdc Exp $
+#	$NetBSD: INSTALL,v 1.67 2009/03/06 20:31:52 joerg Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -79,7 +79,6 @@ config		netbsd	root on ? type ?
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
 
