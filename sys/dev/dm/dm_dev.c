@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.2 2008/12/19 15:24:03 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.3 2009/03/06 16:17:29 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
@@ -89,7 +90,7 @@ dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
 		}
 	
 	if (dm_dev_uuid != NULL)
-		if ((dmv = dm_dev_lookup_name(dm_dev_uuid)) != NULL){
+		if ((dmv = dm_dev_lookup_uuid(dm_dev_uuid)) != NULL){
 			dm_dev_busy(dmv);
 			mutex_exit(&dm_dev_mutex);
 			return dmv;
@@ -304,8 +305,10 @@ dm_dev_alloc()
 	dm_dev_t *dmv;
 	
 	dmv = kmem_zalloc(sizeof(dm_dev_t), KM_NOSLEEP);
-	dmv->dk_label = kmem_zalloc(sizeof(struct disklabel), KM_NOSLEEP);
-
+	
+	if(dmv != NULL)
+		dmv->diskp = kmem_zalloc(sizeof(struct disk), KM_NOSLEEP);
+		
 	return dmv;
 }
 
@@ -316,9 +319,9 @@ int
 dm_dev_free(dm_dev_t *dmv)
 {
 	KASSERT(dmv != NULL);
-	
-	if (dmv->dk_label != NULL)
-		(void)kmem_free(dmv->dk_label, sizeof(struct disklabel));
+
+	if(dmv->diskp != NULL)
+		(void)kmem_free(dmv->diskp, sizeof(struct disk));
 	
 	(void)kmem_free(dmv, sizeof(dm_dev_t));
 	
