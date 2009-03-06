@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.557 2009/02/25 20:36:45 sketch Exp $
+#	$NetBSD: bsd.own.mk,v 1.558 2009/03/06 16:29:41 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -125,10 +125,16 @@ USETOOLS?=	no
 .if !defined(HOST_OSTYPE)
 _HOST_OSNAME!=	uname -s
 _HOST_OSREL!=	uname -r
-_HOST_ARCH!=	uname -p 2>/dev/null || uname -m
+# For _HOST_ARCH, if uname -p fails, or prints "unknown", or prints
+# something that does not look like an identifier, then use uname -m.
+_HOST_ARCH!=	uname -p 2>/dev/null
+_HOST_ARCH:=	${HOST_ARCH:tW:C/.*[^a-z0-9].*//:S/unknown//}
+.if empty(_HOST_ARCH)
+_HOST_ARCH!=	uname -m
+.endif
 HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL:C/\([^\)]*\)//g:[*]:C/ /_/g}-${_HOST_ARCH:C/\([^\)]*\)//g:[*]:C/ /_/g}
 .MAKEOVERRIDES+= HOST_OSTYPE
-.endif
+.endif # !defined(HOST_OSTYPE)
 
 .if ${USETOOLS} == "yes"						# {
 
