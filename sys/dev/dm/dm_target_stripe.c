@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.3 2009/03/01 23:15:56 haad Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.4 2009/03/07 22:17:18 reinoud Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -188,12 +188,56 @@ dm_target_stripe_status(void *target_config)
 int
 dm_target_stripe_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
-	
-	bp->b_error = EIO;
-	bp->b_resid = 0;
+	dm_target_stripe_config_t *tsc;
+	struct buf *nestbuf;
+	uint64_t blkno, blkoff;
+	uint64_t stripe, stripe_blknr;
+	uint32_t stripe_off, stripe_rest, num_blks, issue_blks;
+	int stripe_devnr;
 
-	biodone(bp);
-	
+	tsc = table_en->target_config;
+	if (tsc == NULL)
+		return 0;
+
+/*	printf("Stripe target read function called %" PRIu64 "!!\n",
+	tlc->offset);*/
+
+	/* calculate extent of request */
+	KASSERT(bp->b_resid % DEV_BSIZE == 0);
+
+	blkno  = bp->b_blkno;
+	blkoff = 0;
+	num_blks = bp->b_resid / DEV_BSIZE;
+	for (;;) {
+		/* blockno to strip piece nr */
+		stripe     = blkno / tsc->stripe_chunksize;
+		stripe_off = blkno % tsc->stripe_chunksize;
+
+		/* where we are inside the strip */
+		stripe_devnr = stripe % tsc->stripe_num;
+		stripe_blknr = stripe / tsc->stripe_num;
+
+		/* how much is left before we hit a boundary */
+		stripe_rest = tsc->stripe_chunksize - stripe_off;
+
+		/* issue this piece on stripe `stripe' */
+		issue_blks = MIN(stripe_rest, num_blks);
+		nestbuf = getiobuf(NULL, true);
+
+		nestiobuf_setup(bp, nestbuf, blkoff, issue_blks * DEV_BSIZE);
+		nestbuf->b_blkno = stripe_blknr * tsc->stripe_chunksize + stripe_off;
+		nestbuf->b_blkno += tsc->stripe_devs[stripe_devnr].offset;
+
+		VOP_STRATEGY(tsc->stripe_devs[stripe_devnr].pdev->pdev_vnode, nestbuf);
+
+		blkno    += issue_blks;
+		blkoff   += issue_blks * DEV_BSIZE;
+		num_blks -= issue_blks;
+
+		if (num_blks <= 0)
+			break;
+	}
+
 	return 0;
 }
 
