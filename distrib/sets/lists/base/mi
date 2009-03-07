@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.798 2009/03/03 06:01:56 mrg Exp $
+# $NetBSD: mi,v 1.799 2009/03/07 22:08:07 ad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1349,6 +1349,7 @@
 ./usr/sbin/chrtbl				base-sysutil-bin
 ./usr/sbin/cnwctl				base-netutil-bin
 ./usr/sbin/cpuctl				base-sysutil-bin
+./usr/sbin/crash				base-sysutil-bin
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-isdn-bin
 ./usr/sbin/dbsym				base-sysutil-bin	bfd
