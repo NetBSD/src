@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.15 2008/06/29 12:49:08 jmcneill Exp $ */
+/* $NetBSD: drm_vm.c,v 1.16 2009/03/07 05:46:09 mrg Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.15 2008/06/29 12:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.16 2009/03/07 05:46:09 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -63,6 +63,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			unsigned long page = offset >> PAGE_SHIFT;
 			unsigned long pphys = dma->pagelist[page];
 
+			DRM_SPINUNLOCK(&dev->dma_lock);
 #ifdef macppc
 			return pphys;
 #else
@@ -72,7 +73,6 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			DRM_SPINUNLOCK(&dev->dma_lock);
 			return -1;
 		}
-		DRM_SPINUNLOCK(&dev->dma_lock);
 	}
 
 				/* A sequential search of a linked list is
