@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.65 2008/10/07 09:48:27 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.66 2009/03/07 21:59:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ __END_DECLS
 #define	CP_IDLE		4
 #define	CPUSTATES	5
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/mutex.h>
 #include <sys/time.h>
@@ -192,7 +192,7 @@ struct schedstate_percpu {
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) || defined(_KMEMUSER) */
 
 /*
  * Flags passed to the Linux-compatible __clone(2) system call.

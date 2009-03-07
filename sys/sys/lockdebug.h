@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.10 2008/05/31 13:15:21 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.11 2009/03/07 21:59:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_lockdebug.h"
 #endif
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_KMEMUSER)
 #error "Sorry, nothing of interest to user level programs here."
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 2008/12/29 19:59:09 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 2009/03/07 21:59:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #ifndef _X86_CPU_H_
 #define _X86_CPU_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
 #ifdef i386
@@ -59,8 +59,6 @@
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
-
-#include <lib/libkern/libkern.h>	/* offsetof */
 
 struct intrsource;
 struct pmap;
@@ -400,7 +398,7 @@ void x86_bus_space_mallocok(void);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
-#endif /* _KERNEL */
+#endif /* _KERNEL || __KMEMUSER */
 
 /*
  * CTL_MACHDEP definitions.

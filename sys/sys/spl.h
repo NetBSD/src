@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.8 2007/12/03 15:34:34 ad Exp $	*/
+/*	$NetBSD: spl.h,v 1.9 2009/03/07 21:59:25 ad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -34,9 +34,9 @@
  * splxxx() functions, rather than using this header.
  */
 
-#if !defined(_KERNEL)
+#if !defined(_KERNEL) && !defined(_KMEMUSER)
 #error not supposed to be exposed to userland.
-#endif /* !defined(_KERNEL) */
+#endif /* !defined(_KERNEL) && !defined(_KMEMUSER) */
 
 #define	_SPL_DECL(x, X)	\
 	static __inline int \
