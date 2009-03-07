@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.33 2008/11/16 19:34:29 pooka Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.34 2009/03/07 22:02:17 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,22 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.33 2008/11/16 19:34:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.34 2009/03/07 22:02:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 
-#include <machine/db_machdep.h>		/* type definitions */
-
-#include <ddb/db_lex.h>
-#include <ddb/db_output.h>
-#include <ddb/db_command.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_access.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_interface.h>
+#include <ddb/ddb.h>
 
 static char	db_examine_format[TOK_STRING_SIZE] = "x";
 

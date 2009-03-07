@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.37 2007/12/30 13:28:20 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.38 2009/03/07 22:02:16 ad Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.37 2007/12/30 13:28:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.38 2009/03/07 22:02:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1114,6 +1114,8 @@ db_disasm(
 	int	imm2;
 	int	len;
 	struct i_addr	address;
+
+#ifdef _KERNEL
 	pt_entry_t *pte, *pde;
 
 	/*
@@ -1131,6 +1133,7 @@ db_disasm(
 		db_printf("invalid address\n");
 		return (loc);
 	}
+#endif
 
 	get_value_inc(inst, loc, 1, false);
 	short_addr = false;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.29 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: db_output.c,v 1.30 2009/03/07 22:02:17 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.29 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.30 2009/03/07 22:02:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,13 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.29 2005/12/11 12:20:53 christos Exp 
 
 #include <dev/cons.h>
 
-#include <machine/db_machdep.h>
-
-#include <ddb/db_command.h>
-#include <ddb/db_output.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
+#include <ddb/ddb.h>
 
 /*
  *	Character output - tracks position in line.
