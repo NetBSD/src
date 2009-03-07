@@ -1,4 +1,4 @@
-/*	$NetBSD: via_padlock.h,v 1.2 2008/04/16 16:06:51 cegger Exp $	*/
+/*	$NetBSD: via_padlock.h,v 1.3 2009/03/07 21:59:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -21,7 +21,7 @@
 #ifndef _X86_VIA_PADLOCK_H_
 #define _X86_VIA_PADLOCK_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <crypto/rijndael/rijndael.h>
 
@@ -73,5 +73,5 @@ struct via_padlock {
 
 void	via_padlock_attach(void);
 
-#endif /* _KERNEL */
+#endif /* _KERNEL || _KMEMUSER */
 #endif /* _X86_VIA_PADLOCK_H_ */
