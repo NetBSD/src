@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1237 2009/03/02 19:22:15 christos Exp $
+#	$NetBSD: mi,v 1.1238 2009/03/07 22:08:07 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3280,6 +3280,7 @@
 ./usr/libdata/debug/usr/sbin/chrtbl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cnwctl.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cpuctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/crash.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/sbin/daicctl.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	bfd,debug
