@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.124 2009/03/04 10:15:08 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.125 2009/03/07 15:03:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.124 2009/03/04 10:15:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.125 2009/03/07 15:03:25 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -95,6 +95,12 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.124 2009/03/04 10:15:08 tsutsui Exp $")
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -183,7 +189,8 @@ void	fxp_stop(struct ifnet *, int);
 void	fxp_txintr(struct fxp_softc *);
 int	fxp_rxintr(struct fxp_softc *);
 
-int	fxp_rx_hwcksum(struct mbuf *, const struct fxp_rfa *);
+void	fxp_rx_hwcksum(struct fxp_softc *,struct mbuf *,
+	    const struct fxp_rfa *, u_int);
 
 void	fxp_rxdrain(struct fxp_softc *);
 int	fxp_add_rfabuf(struct fxp_softc *, bus_dmamap_t, int);
@@ -392,6 +399,10 @@ fxp_attach(struct fxp_softc *sc)
 		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+	} else if (sc->sc_flags & FXPF_82559_RXCSUM) {
+		ifp->if_capabilities =
+		    IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Rx;
 	}
 
 	/*
@@ -1205,56 +1216,122 @@ fxp_txintr(struct fxp_softc *sc)
  * fxp_rx_hwcksum: check status of H/W offloading for received packets.
  */
 
-int
-fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
+void
+fxp_rx_hwcksum(struct fxp_softc *sc, struct mbuf *m, const struct fxp_rfa *rfa,
+    u_int len)
 {
-	u_int8_t rxparsestat;
-	u_int8_t csum_stat;
-	u_int32_t csum_data;
+	uint32_t csum_data;
 	int csum_flags;
-
-	/*
-	 * check VLAN tag stripping.
-	 */
-
-	if (rfa->rfa_status & htole16(FXP_RFA_STATUS_VLAN)) {
-		struct m_tag *vtag;
-
-		vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
-		if (vtag == NULL)
-			return ENOMEM;
-		*(u_int *)(vtag + 1) = be16toh(rfa->vlan_id);
-		m_tag_prepend(m, vtag);
-	}
 
 	/*
 	 * check H/W Checksumming.
 	 */
 
-	csum_stat = rfa->cksum_stat;
-	rxparsestat = rfa->rx_parse_stat;
-	if (!(rfa->rfa_status & htole16(FXP_RFA_STATUS_PARSE)))
-		return 0;
-
 	csum_flags = 0;
 	csum_data = 0;
 
-	if (csum_stat & FXP_RFDX_CS_IP_CSUM_BIT_VALID) {
-		csum_flags = M_CSUM_IPv4;
-		if (!(csum_stat & FXP_RFDX_CS_IP_CSUM_VALID))
-			csum_flags |= M_CSUM_IPv4_BAD;
-	}
+	if ((sc->sc_flags & FXPF_EXT_RFA) != 0) {
+		uint8_t rxparsestat;
+		uint8_t csum_stat;
 
-	if (csum_stat & FXP_RFDX_CS_TCPUDP_CSUM_BIT_VALID) {
-		csum_flags |= (M_CSUM_TCPv4|M_CSUM_UDPv4); /* XXX */
-		if (!(csum_stat & FXP_RFDX_CS_TCPUDP_CSUM_VALID))
-			csum_flags |= M_CSUM_TCP_UDP_BAD;
-	}
+		csum_stat = rfa->cksum_stat;
+		rxparsestat = rfa->rx_parse_stat;
+		if ((rfa->rfa_status & htole16(FXP_RFA_STATUS_PARSE)) == 0)
+			goto out;
 
+		if (csum_stat & FXP_RFDX_CS_IP_CSUM_BIT_VALID) {
+			csum_flags = M_CSUM_IPv4;
+			if ((csum_stat & FXP_RFDX_CS_IP_CSUM_VALID) == 0)
+				csum_flags |= M_CSUM_IPv4_BAD;
+		}
+
+		if (csum_stat & FXP_RFDX_CS_TCPUDP_CSUM_BIT_VALID) {
+			csum_flags |= (M_CSUM_TCPv4|M_CSUM_UDPv4); /* XXX */
+			if ((csum_stat & FXP_RFDX_CS_TCPUDP_CSUM_VALID) == 0)
+				csum_flags |= M_CSUM_TCP_UDP_BAD;
+		}
+
+	} else if ((sc->sc_flags & FXPF_82559_RXCSUM) != 0) {
+		struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+		struct ether_header *eh;
+		struct ip *ip;
+		struct udphdr *uh;
+		u_int hlen, pktlen;
+		uint32_t optsum, optlen;
+		uint16_t *opts;
+
+		if (len < ETHER_HDR_LEN + sizeof(struct ip))
+			goto out;
+		pktlen = len - ETHER_HDR_LEN;
+		eh = mtod(m, struct ether_header *);
+		if (ntohs(eh->ether_type) != ETHERTYPE_IP)
+			goto out;
+		ip = (struct ip *)((uint8_t *)eh + ETHER_HDR_LEN);
+		if (ip->ip_v != IPVERSION)
+			goto out;
+
+		hlen = ip->ip_hl << 2;
+		if (hlen < sizeof(struct ip))
+			goto out;
+
+		/*
+		 * Bail if too short, has random trailing garbage, truncated,
+		 * fragment, or has ethernet pad.
+		 */
+		if (ntohs(ip->ip_len) < hlen ||
+		    ntohs(ip->ip_len) != pktlen ||
+		    (ntohs(ip->ip_off) & (IP_MF | IP_OFFMASK)) != 0)
+			goto out;
+
+		switch (ip->ip_p) {
+		case IPPROTO_TCP:
+			if ((ifp->if_csum_flags_rx & M_CSUM_TCPv4) == 0 ||
+			    pktlen < (hlen + sizeof(struct tcphdr)))
+				goto out;
+			csum_flags =
+			    M_CSUM_TCPv4 | M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
+			break;
+		case IPPROTO_UDP:
+			if ((ifp->if_csum_flags_rx & M_CSUM_UDPv4) == 0 ||
+			    pktlen < (hlen + sizeof(struct udphdr)))
+				goto out;
+			uh = (struct udphdr *)((uint8_t *)ip + hlen);
+			if (uh->uh_sum == 0)
+				goto out;	/* no checksum */
+			csum_flags =
+			    M_CSUM_UDPv4 | M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
+			break;
+		default:
+			goto out;
+		}
+
+		/* Extract computed checksum. */
+		csum_data = be16dec(mtod(m, uint8_t *) + len);
+
+		/* If the packet had IP options, we have to deduct them. */
+		optlen = hlen - sizeof(struct ip);
+		if (optlen > 0) {
+			optsum = 0;
+			opts = (uint16_t *)((uint8_t *)ip + sizeof(struct ip));
+
+			while (optlen > 1) {
+				optsum += ntohs(*opts++);
+				optlen -= sizeof(uint16_t);
+			}
+			while (optsum >> 16)
+				optsum = (optsum >> 16) + (optsum & 0xffff);
+
+			/* Deduct the IP opts sum from the hwsum (RFC 1624). */
+			csum_data = ~(~csum_data - ~optsum);
+
+			while (csum_data >> 16)
+				csum_data =
+				    (csum_data >> 16) + (csum_data & 0xffff);
+		}
+	}
+ out:
 	m->m_pkthdr.csum_flags = csum_flags;
 	m->m_pkthdr.csum_data = csum_data;
-
-	return 0;
 }
 
 /*
@@ -1301,6 +1378,10 @@ fxp_rxintr(struct fxp_softc *sc)
 
 		len = le16toh(rfa->actual_size) &
 		    (m->m_ext.ext_size - 1);
+		if ((sc->sc_flags & FXPF_82559_RXCSUM) != 0) {
+			/* Adjust for appended checksum bytes. */
+			len -= sizeof(uint16_t);
+		}
 
 		if (len < sizeof(struct ether_header)) {
 			/*
@@ -1325,11 +1406,24 @@ fxp_rxintr(struct fxp_softc *sc)
 			continue;
 		}
 
-		/* Do checksum checking. */
-		m->m_pkthdr.csum_flags = 0;
-		if (sc->sc_flags & FXPF_EXT_RFA)
-			if (fxp_rx_hwcksum(m, rfa))
+		/*
+		 * check VLAN tag stripping.
+		 */
+		if ((sc->sc_flags & FXPF_EXT_RFA) != 0 &&
+		    (rfa->rfa_status & htole16(FXP_RFA_STATUS_VLAN)) != 0) {
+			struct m_tag *vtag;
+
+			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
+			    M_NOWAIT);
+			if (vtag == NULL)
 				goto dropit;
+			*(u_int *)(vtag + 1) = be16toh(rfa->vlan_id);
+			m_tag_prepend(m, vtag);
+		}
+
+		/* Do checksum checking. */
+		if ((ifp->if_csum_flags_rx & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0)
+			fxp_rx_hwcksum(sc, m, rfa, len);
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1720,7 +1814,8 @@ fxp_init(struct ifnet *ifp)
 					/* interface mode */
 	cbp->mediatype =	(sc->sc_flags & FXPF_MII) ? 1 : 0;
 	cbp->csma_dis =		0;	/* (don't) disable link */
-	cbp->tcp_udp_cksum =	0;	/* (don't) enable checksum */
+	cbp->tcp_udp_cksum =	(sc->sc_flags & FXPF_82559_RXCSUM) ? 1 : 0;
+					/* (don't) enable RX checksum */
 	cbp->vlan_tco =		0;	/* (don't) enable vlan wakeup */
 	cbp->link_wake_en =	0;	/* (don't) assert PME# on link change */
 	cbp->arp_wake_en =	0;	/* (don't) assert PME# on arp */
