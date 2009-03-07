@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.135 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.136 2009/03/07 00:56:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.135 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.136 2009/03/07 00:56:04 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2844,15 +2844,17 @@ sipcom_stop(struct ifnet *ifp, int disable)
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
 
-	/*
-	 * Disable interrupts.
-	 */
-	bus_space_write_4(st, sh, SIP_IER, 0);
+	if (device_is_active(&sc->sc_dev)) {
+		/*
+		 * Disable interrupts.
+		 */
+		bus_space_write_4(st, sh, SIP_IER, 0);
 
-	/*
-	 * Stop receiver and transmitter.
-	 */
-	bus_space_write_4(st, sh, SIP_CR, CR_RXD | CR_TXD);
+		/*
+		 * Stop receiver and transmitter.
+		 */
+		bus_space_write_4(st, sh, SIP_CR, CR_RXD | CR_TXD);
+	}
 
 	/*
 	 * Release any queued transmit buffers.
