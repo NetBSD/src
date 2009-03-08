@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_group.c,v 1.11 2009/02/11 18:38:56 christos Exp $	*/
+/*	$NetBSD: pam_group.c,v 1.12 2009/03/08 19:38:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_group/pam_group.c,v 1.4 2003/12/11 13:55:15 des Exp $");
 #else
-__RCSID("$NetBSD: pam_group.c,v 1.11 2009/02/11 18:38:56 christos Exp $");
+__RCSID("$NetBSD: pam_group.c,v 1.12 2009/03/08 19:38:03 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: pam_group.c,v 1.11 2009/02/11 18:38:56 christos Exp $");
 
 static int authenticate(pam_handle_t *, struct passwd *, int);
 
-#define PASSWORD_PROMPT         "%s's Password:"
+#define PASSWORD_PROMPT         "%s's password:"
 
 PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
