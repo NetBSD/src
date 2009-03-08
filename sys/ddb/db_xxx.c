@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.57 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.58 2009/03/08 11:40:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,14 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.57 2009/03/07 22:02:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.58 2009/03/08 11:40:00 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
 #include "opt_aio.h"
 #endif
-
-#include <ddb/db_user.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.57 2009/03/07 22:02:17 ad Exp $");
 #include <sys/vmem.h>
 
 #include <ddb/ddb.h>
+#include <ddb/db_user.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
