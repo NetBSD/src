@@ -59,7 +59,7 @@ NetBSD_DISABLED_addr2line.1:
 
 ar.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
-NetBSD_DISABLED_as.1:
+NetBSD_DISABLED_ar.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dar < $(binutils_TEXI) > ar.pod
 	-($(POD2MAN) ar.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
