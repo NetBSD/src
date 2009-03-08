@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.6 2009/03/08 16:26:03 ad Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $
+ * $Id: m_netbsd.c,v 1.6 2009/03/08 16:26:03 ad Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.6 2009/03/08 16:26:03 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1009,7 +1009,7 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 
 static int sorted_state[] = {
 	0,	/*  (not used)	  ?	*/
-	6,	/* "start"	SIDL	*/
+	1,	/* "start"	SIDL	*/
 	4,	/* "run"	SRUN	*/
 	3,	/* "sleep"	SSLEEP	*/
 	3,	/* "stop"	SSTOP	*/
