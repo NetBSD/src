@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.30.4.2 2009/01/22 20:42:46 snj Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.30.4.3 2009/03/08 03:15:36 snj Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.30.4.2 2009/01/22 20:42:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.30.4.3 2009/03/08 03:15:36 snj Exp $");
 
 #include <sys/param.h>
 
@@ -372,7 +372,7 @@ sys__sched_setaffinity(struct lwp *l,
 			goto out;
 		}
 		/* Empty set */
-		kcpuset_unuse(cpuset, NULL);
+		kcpuset_unuse(cpuset, &cpulst);
 		cpuset = NULL; 
 	}
 
