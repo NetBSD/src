@@ -74,7 +74,7 @@ int     unix_recv_fd(int fd)
 
     memset((char *) &msg, 0, sizeof(msg));	/* Fix 200512 */
     msg.msg_control = control_un.control;
-    msg.msg_controllen = CMSG_LEN(sizeof(newfd));	/* Fix 200506 */
+    msg.msg_controllen = sizeof(control_un.control);	/* Fix 200506 */
 #else
     msg.msg_accrights = (char *) &newfd;
     msg.msg_accrightslen = sizeof(newfd);
