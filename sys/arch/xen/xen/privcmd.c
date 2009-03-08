@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.33 2008/10/21 15:46:32 cegger Exp $ */
+/* $NetBSD: privcmd.c,v 1.33.4.1 2009/03/08 03:19:50 snj Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.33 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.33.4.1 2009/03/08 03:19:50 snj Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -535,8 +535,13 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			continue;
 		if (pps[i] == PGO_DONTCARE)
 			continue;
-		if (pobj->maddr[maddr_i] == INVALID_PAGE)
-			continue; /* this has already been flagged as error */
+		if (pobj->maddr[maddr_i] == INVALID_PAGE) {
+			/* this has already been flagged as error */
+			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
+			    uobj, NULL);
+			pmap_update(ufi->orig_map->pmap);
+			return EFAULT;
+		}
 		error = pmap_enter_ma(ufi->orig_map->pmap, vaddr,
 		    pobj->maddr[maddr_i], 0, ufi->entry->protection,
 		    PMAP_CANFAIL | ufi->entry->protection,
