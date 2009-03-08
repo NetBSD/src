@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.6.2.1 2009/02/02 02:32:57 snj Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.6.2.2 2009/03/08 03:03:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.6.2.1 2009/02/02 02:32:57 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.6.2.2 2009/03/08 03:03:25 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ sa_freevp(struct proc *p, struct sadata *sa, struct sadata_vp *vp)
 /*
  *
  */
-int sa_system_disabled = 0;
+int sa_system_disabled = 1;
 
 /*
  * sys_sa_register
