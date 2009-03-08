@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.107 2009/03/02 21:08:22 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.108 2009/03/08 03:32:24 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4896,4 +4896,44 @@ doc/CHANGES					patch
 	Note that mount(2) and unmount(2) use kauth(9) for security
 	policy.
 	[apb, ticket #477]
+
+sys/compat/sa/compat_sa.c			1.8
+
+	Disable SA. It can be re-enabled with sysctl -w kern.no_sa_support=0.
+	[ad, ticket #544]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.34
+sys/arch/xen/xen/xbd_xenbus.c			1.39
+
+	Fix rnd(4) support for Xen3 xennet.  Add rnd(4) support to Xen3 xbd.
+	Addresses port-xen/40739.
+	[bouyer, ticket #545]
+
+sys/kern/kern_lwp.c				1.128
+sys/kern/sys_pset.c				1.12
+sys/kern/sys_sched.c				1.33
+
+	lwp_create: fix the locking bugs on affinity ingerition path.
+	pset_assign: traverse the list of LWPs safely.
+	sched_setaffinity: free cpuset (unused path) outside the lock.
+	[rmind, ticket #546]
+
+sys/arch/xen/xen/privcmd.c			1.36
+
+	Do not continue silently on a page fault for an INVALID_PAGE, and
+	instead report an EFAULT like Xen does.
+
+	This avoids bad situations where a domain calls privpgop_fault() in
+	a loop by trying to map an invalid MFN.
+	[jym, ticket #547]
+
+sys/compat/sa/compat_sa.c			1.9
+
+	Disable PTHREAD_CONCURRENCY in SA until the bugs are fixed.
+	[christos, ticket #550]
+
+xsrc/external/mit/xorg-cf-files/dist/NetBSD.cf	1.3
+
+	Unconditionally include xorg.cf.  Fixes PR# xsrc/40970.
+	[jmcneill, ticket #552]
 
