@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.4 2009/02/28 19:33:43 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.5 2009/03/08 14:51:38 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -315,9 +315,8 @@ int	recursive_remove(const char *, int);
 struct archive;
 struct archive_entry;
 
-struct archive *open_archive(const char *, void **);
-void	close_archive(void *);
-struct archive *find_archive(const char *, void **, int);
+struct archive *open_archive(const char *);
+struct archive *find_archive(const char *, int);
 void	process_pkg_path(void);
 
 /* Packing list */
@@ -376,10 +375,8 @@ void pkg_install_config(void);
 void pkg_install_show_variable(const char *);
 
 /* Package signature creation and validation */
-int pkg_verify_signature(struct archive **, struct archive_entry **, char **,
-    void **);
+int pkg_verify_signature(struct archive **, struct archive_entry **, char **);
 int pkg_full_signature_check(struct archive **);
-void pkg_free_signature(void *);
 #ifdef HAVE_SSL
 void pkg_sign_x509(const char *, const char *, const char *, const char *);
 #endif
