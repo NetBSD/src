@@ -1956,8 +1956,6 @@ bsd_write_armap (bfd *arch,
 
   memset (&hdr, 0, sizeof (struct ar_hdr));
   sprintf (hdr.ar_name, RANLIBMAG);
-  /* Remember the timestamp, to keep it holy.  But fudge it a little.  */
-  bfd_ardata (arch)->armap_timestamp = statbuf.st_mtime + ARMAP_TIME_OFFSET;
   bfd_ardata (arch)->armap_datepos = (SARMAG
 				      + offsetof (struct ar_hdr, ar_date[0]));
   sprintf (hdr.ar_date, "%ld", bfd_ardata (arch)->armap_timestamp);
