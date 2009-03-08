@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.5 2009/03/02 22:31:21 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.6 2009/03/08 14:51:37 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.5 2009/03/02 22:31:21 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.6 2009/03/08 14:51:37 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -339,27 +339,23 @@ pkg_do(const char *pkg)
 		errx(2, "Binary packages not supported during bootstrap");
 #else
 		struct archive *archive;
-		void *archive_cookie;
-		void *signature_cookie;
 		struct archive_entry *entry;
 		char *pkgname;
 
-		archive = open_archive(pkg, &archive_cookie);
+		archive = open_archive(pkg);
 		if (archive == NULL) {
 			warnx("can't find package `%s', skipped", pkg);
 			return -1;
 		}
 		pkgname = NULL;
 		entry = NULL;
-		pkg_verify_signature(&archive, &entry, &pkgname,
-		    &signature_cookie);
+		pkg_verify_signature(&archive, &entry, &pkgname);
 		if (archive == NULL)
 			return -1;
 		free(pkgname);
 
 		meta = read_meta_data_from_archive(archive, entry);
-		close_archive(archive_cookie);
-		pkg_free_signature(signature_cookie);
+		archive_read_finish(archive);
 		if (!IS_URL(pkg))
 			binpkgfile = pkg;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.5 2009/03/02 22:31:13 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.6 2009/03/08 14:51:34 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.5 2009/03/02 22:31:13 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.6 2009/03/08 14:51:34 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -1154,7 +1154,7 @@ static int check_input(const char *line, size_t len)
 }
 
 static int
-check_signature(struct pkg_task *pkg, void *signature_cookie, int invalid_sig)
+check_signature(struct pkg_task *pkg, int invalid_sig)
 {
 	char *line;
 	size_t len;
@@ -1244,22 +1244,20 @@ static int
 pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 {
 	int status, invalid_sig;
-	void *archive_cookie;
-	void *signature_cookie;
 	struct pkg_task *pkg;
 
 	pkg = xcalloc(1, sizeof(*pkg));
 
 	status = -1;
 
-	pkg->archive = find_archive(pkgpath, &archive_cookie, top_level);
+	pkg->archive = find_archive(pkgpath, top_level);
 	if (pkg->archive == NULL) {
 		warnx("no pkg found for '%s', sorry.", pkgpath);
 		goto clean_find_archive;
 	}
 
 	invalid_sig = pkg_verify_signature(&pkg->archive, &pkg->entry,
-	    &pkg->pkgname, &signature_cookie);
+	    &pkg->pkgname);
 
 	if (pkg->archive == NULL)
 		goto clean_memory;
@@ -1271,7 +1269,7 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 	if (pkg_parse_plist(pkg))
 		goto clean_memory;
 
-	if (check_signature(pkg, &signature_cookie, invalid_sig))
+	if (check_signature(pkg, invalid_sig))
 		goto clean_memory;
 
 	if (check_vulnerable(pkg))
@@ -1415,13 +1413,10 @@ clean_memory:
 	free_buildinfo(pkg);
 	free_plist(&pkg->plist);
 	free_meta_data(pkg);
-	if (pkg->archive) {
-		archive_read_close(pkg->archive);
-		close_archive(archive_cookie);
-	}
+	if (pkg->archive)
+		archive_read_finish(pkg->archive);
 	free(pkg->other_version);
 	free(pkg->pkgname);
-	pkg_free_signature(signature_cookie);
 clean_find_archive:
 	free(pkg);
 	return status;
