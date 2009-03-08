@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.91 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.92 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9061,7 +9061,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	compat_linux32: Add missing chown's syscalls family members.
 		This makes chown(1)/chgrp(1) works under compat linux32.
 		[njoly 20071027]
-	pcc(1): Import pcc-071127. [ragge 20071127]
+	pcc(1): Import pcc-071027. [ragge 20071027]
 	shark: Removed pccons(4), obsoleted by wscons(4). [jmmv 20071028]
 	coretemp(4): Driver for Intel Core's on-die thermal sensor,
 		available on Core or newer CPUs. Ported from FreeBSD.
