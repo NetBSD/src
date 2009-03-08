@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.111 2008/12/28 23:02:28 christos Exp $	*/
+/*	$NetBSD: pstat.c,v 1.112 2009/03/08 12:52:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.111 2008/12/28 23:02:28 christos Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.112 2009/03/08 12:52:08 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -882,7 +882,7 @@ filemode(void)
 		PRWORD(ovflw, " %*d", 5, 1, fp->f_count);
 		PRWORD(ovflw, " %*d", 5, 1, fp->f_msgcount);
 		PRWORD(ovflw, "  %*lx", PTRSTRWIDTH + 1, 2, (long)fp->f_data);
-		PRWORD(ovflw, " %*x", 5, 1, fp->f_iflags);
+		PRWORD(ovflw, " %*x", 5, 1, 0);
 		if (fp->f_offset < 0)
 			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
 			    (long long)fp->f_offset);
