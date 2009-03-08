@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42 2008/07/07 13:01:16 gmcgarry Exp $	*/
+/*	$NetBSD: vector.S,v 1.43 2009/03/08 16:03:31 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42 2008/07/07 13:01:16 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.43 2009/03/08 16:03:31 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -967,7 +967,7 @@ trap0e_checkast:
 	jne	3f
 	INTRFASTEXIT
 3:	pushl	$4f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 #ifdef DDB
 	movl	CPUVAR(ILEVEL), %eax
@@ -975,7 +975,7 @@ trap0e_checkast:
 #endif /* DDB */
 	movl	%ebx,CPUVAR(ILEVEL)
 	jmp	trap0e_checkast		/* re-check ASTs */
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
+4:	.asciz	";SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 9:	STI(%eax)
 	call	_C_LABEL(pmap_load)
@@ -1146,13 +1146,13 @@ calltrap:
 	INTRFASTEXIT
 3:	STI(%eax)
 	pushl	$4f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 	pushl	%ebx
 	call	_C_LABEL(spllower)
 	addl	$4,%esp
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
+4:	.asciz	"SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 9:	STI(%eax)
 	call	_C_LABEL(pmap_load)
