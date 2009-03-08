@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.1.1.3 2009/02/28 19:33:49 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.1.1.4 2009/03/08 14:51:39 joerg Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.1.1.3 2009/02/28 19:33:49 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.1.1.4 2009/03/08 14:51:39 joerg Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -93,11 +93,12 @@ fetch_archive_close(struct archive *a, void *client_data)
 
 	if (f->fetch != NULL)
 		fetchIO_close(f->fetch);
+	free(f);
 	return 0;
 }
 
 static struct archive *
-open_archive_by_url(struct url *url, void **cookie)
+open_archive_by_url(struct url *url)
 {
 	struct fetch_archive *f;
 	struct archive *a;
@@ -115,12 +116,11 @@ open_archive_by_url(struct url *url, void **cookie)
 		return NULL;
 	}
 
-	*cookie = f;
 	return a;
 }
 
 struct archive *
-open_archive(const char *url, void **cookie)
+open_archive(const char *url)
 {
 	struct url *u;
 	struct archive *a;
@@ -133,23 +133,16 @@ open_archive(const char *url, void **cookie)
 			archive_read_close(a);
 			return NULL;
 		}
-		*cookie = NULL;
 		return a;
 	}
 
 	if ((u = fetchParseURL(url)) == NULL)
 		return NULL;
 
-	a = open_archive_by_url(u, cookie);
+	a = open_archive_by_url(u);
 
 	fetchFreeURL(u);
 	return a;
-}
-
-void
-close_archive(void *cookie)
-{
-	free(cookie);
 }
 
 static int
@@ -269,7 +262,7 @@ process_pkg_path(void)
 }
 
 struct archive *
-find_archive(const char *fname, void **cookie, int top_level)
+find_archive(const char *fname, int top_level)
 {
 	struct archive *a;
 	struct pkg_path *pl;
@@ -294,7 +287,7 @@ find_archive(const char *fname, void **cookie, int top_level)
 		*last_slash = '/';
 	}
 
-	a = open_archive(full_fname, cookie);
+	a = open_archive(full_fname);
 	if (a != NULL) {
 		free(full_fname);
 		return a;
@@ -334,7 +327,7 @@ find_archive(const char *fname, void **cookie, int top_level)
 
 	if (best_match == NULL)
 		return NULL;
-	a = open_archive_by_url(best_match, cookie);
+	a = open_archive_by_url(best_match);
 	fetchFreeURL(best_match);
 	return a;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.1.1.3 2009/03/02 22:31:17 joerg Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.1.1.4 2009/03/08 14:51:39 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.3 2009/03/02 22:31:17 joerg Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.4 2009/03/08 14:51:39 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -154,16 +154,14 @@ free_signature_int(struct signature_archive *state)
 	free(state);
 }
 
-void
-pkg_free_signature(void *cookie)
+static int
+verify_signature_close_cb(struct archive *archive, void *cookie)
 {
 	struct signature_archive *state = cookie;
 
-	if (state == NULL)
-		return;
-
 	archive_read_finish(state->archive);
 	free_signature_int(state);
+	return 0;
 }
 
 static int
@@ -311,7 +309,7 @@ cleanup:
 
 int
 pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
-    char **pkgname, void **cookie)
+    char **pkgname)
 {
 	struct signature_archive *state;
 	struct archive_entry *my_entry;
@@ -321,7 +319,6 @@ pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
 	int r, has_sig;
 
 	*pkgname = NULL;
-	*cookie = NULL;
 
 	state = xmalloc(sizeof(*state));
 	state->sign_blocks = NULL;
@@ -403,15 +400,14 @@ pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
 	a = archive_read_new();
 	archive_read_support_compression_all(a);
 	archive_read_support_format_all(a);
-	if (archive_read_open(a, state, NULL, verify_signature_read_cb, NULL)) {
+	if (archive_read_open(a, state, NULL, verify_signature_read_cb,
+	    verify_signature_close_cb)) {
 		warnx("Can't open signed package file");
 		archive_read_finish(a);
-		free_signature_int(state);
 		goto no_valid_signature;
 	}
 	*archive = a;
 	*entry = NULL;
-	*cookie = state;
 
 	return has_sig ? 0 : -1;
 
@@ -424,10 +420,9 @@ pkg_full_signature_check(struct archive **archive)
 {
 	struct archive_entry *entry = NULL;
 	char *pkgname;
-	void *cookie;
 	int r;
 
-	if (pkg_verify_signature(archive, &entry, &pkgname, &cookie))
+	if (pkg_verify_signature(archive, &entry, &pkgname))
 		return -1;
 	if (pkgname == NULL)
 		return 0;
@@ -436,7 +431,6 @@ pkg_full_signature_check(struct archive **archive)
 	while ((r = archive_read_next_header(*archive, &entry)) == ARCHIVE_OK)
 		archive_read_data_skip(*archive);
 
-	pkg_free_signature(cookie);
 	free(pkgname);
 	return r == ARCHIVE_EOF ? 0 : -1;
 }
