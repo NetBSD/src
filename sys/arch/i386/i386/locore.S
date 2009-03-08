@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.83 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: locore.S,v 1.84 2009/03/08 16:03:31 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -71,11 +71,11 @@
 
 
 /*-
- * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2006, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.83 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.84 2009/03/08 16:03:31 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1100,7 +1100,7 @@ syscall1:
 	testl	%ebx,%ebx
 	jz	1f
 	pushl	$5f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 #ifdef DDB
 	int	$3
@@ -1151,14 +1151,14 @@ syscall1:
 	INTRFASTEXIT
 3:	STI(%eax)
 	pushl	$4f
-	call	_C_LABEL(printf)
+	call	_C_LABEL(panic)
 	addl	$4,%esp
 	pushl	$IPL_NONE
 	call	_C_LABEL(spllower)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
+4:	.asciz	"SPL NOT LOWERED ON SYSCALL EXIT\n"
+5:	.asciz	"SPL NOT ZERO ON SYSCALL ENTRY\n"
 #endif /* DIAGNOSTIC */
 9:
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
