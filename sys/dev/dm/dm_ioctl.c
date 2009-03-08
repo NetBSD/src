@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.8 2009/02/20 11:12:30 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.9 2009/03/08 02:07:38 agc Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -541,7 +541,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 		
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
 
-	dmgetdisklabel(dmv->dk_label, &dmv->table_head);
+	dmgetdisklabel(dmv->diskp->dk_label, &dmv->table_head);
 
 	disk_attach(dmv->diskp);
 	dmgetdisklabel(dmv->diskp->dk_label, &dmv->table_head);
