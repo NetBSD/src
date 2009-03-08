@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.4 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.5 2009/03/08 12:08:19 he Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
 	.text
 
 ENTRY(_atomic_swap_64)
-1:	ldarx	r10,0,r3
-	stdcx.	r4,0,r3
+1:	ldarx	%r10,0,%r3
+	stdcx.	%r4,0,%r3
 	bne-	1b
-	mr	r3,r10
+	mr	%r3,%r10
 	blr
 ATOMIC_OP_ALIAS(atomic_swap_64,_atomic_swap_64)
 ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_64)
