@@ -1,4 +1,4 @@
-/*	$NetBSD: db_cpu.c,v 1.1 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_cpu.c,v 1.2 2009/03/08 11:40:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.1 2009/03/07 22:02:17 ad Exp $");
-
-#include <ddb/ddb.h>
+__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.2 2009/03/08 11:40:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/proc.h>
+
+#include <ddb/ddb.h>
 
 static struct cpu_info	*head;
 
