@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.195 2009/01/08 01:42:48 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.196 2009/03/09 08:42:36 nonaka Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195 2009/01/08 01:42:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2009/03/09 08:42:36 nonaka Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -695,8 +695,8 @@ vaddr_t virtual_avail;
 vaddr_t virtual_end;
 vaddr_t pmap_curmaxkvaddr;
 
-vaddr_t avail_start;
-vaddr_t avail_end;
+paddr_t avail_start;
+paddr_t avail_end;
 
 pv_addrqh_t pmap_boot_freeq = SLIST_HEAD_INITIALIZER(&pmap_boot_freeq);
 pv_addr_t kernelpages;
@@ -5340,7 +5340,6 @@ pmap_alloc_specials(vaddr_t *availp, int pages, vaddr_t *vap, pt_entry_t **ptep)
 void
 pmap_init(void)
 {
-	extern int physmem;
 
 	/*
 	 * Set the available memory vars - These do not map to real memory
@@ -5349,8 +5348,8 @@ pmap_init(void)
 	 * One could argue whether this should be the entire memory or just
 	 * the memory that is useable in a user process.
 	 */
-	avail_start = 0;
-	avail_end = physmem * PAGE_SIZE;
+	avail_start = ptoa(vm_physmem[0].start);
+	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 
 	/*
 	 * Now we need to free enough pv_entry structures to allow us to get
