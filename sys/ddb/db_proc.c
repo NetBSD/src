@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.2 2009/03/08 11:40:00 mrg Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.3 2009/03/09 06:07:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,12 +61,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.2 2009/03/08 11:40:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.3 2009/03/09 06:07:05 mrg Exp $");
+
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/proc.h>
+#ifdef _KERNEL	/* XXX */
 #include <sys/kauth.h>
+#endif
 
 #include <ddb/ddb.h>
 
