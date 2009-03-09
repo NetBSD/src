@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lwp.c,v 1.3 2009/03/08 11:41:47 mrg Exp $	*/
+/*	$NetBSD: db_lwp.c,v 1.4 2009/03/09 06:07:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lwp.c,v 1.3 2009/03/08 11:41:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lwp.c,v 1.4 2009/03/09 06:07:05 mrg Exp $");
+
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
 
 #include <sys/param.h>
 #include <sys/cpu.h>

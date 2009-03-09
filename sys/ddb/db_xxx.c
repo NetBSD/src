@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.58 2009/03/08 11:40:00 mrg Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.59 2009/03/09 06:07:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,11 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.58 2009/03/08 11:40:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.59 2009/03/09 06:07:05 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
 #include "opt_aio.h"
+#endif
+
+#ifndef _KERNEL
+#include <stdbool.h>
 #endif
 
 #include <sys/param.h>
