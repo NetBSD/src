@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.28 2009/02/18 00:27:21 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.29 2009/03/09 15:59:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.28 2009/02/18 00:27:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.29 2009/03/09 15:59:33 uebayasi Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.28 2009/02/18 00:27:21 jmcneill Exp $")
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
-#include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>
