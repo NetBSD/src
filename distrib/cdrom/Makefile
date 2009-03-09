@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.39 2009/01/28 17:11:54 tsutsui Exp $
+# $NetBSD: Makefile,v 1.40 2009/03/09 11:34:37 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
 ##############################################################################
 
-.include <bsd.own.mk>
+all:	cdimages
 
-all:
+.include <bsd.own.mk>
 
 .if exists(site.conf)
 .include "site.conf"
@@ -224,7 +224,7 @@ INTDIRS.${image}?=
 ADDFILES.${image}?=
 
 # For a source only cd just ignore the shared/ALL directory
-.if ${ports} != "source"
+.if ${ports} != "source" && exists(${DISTRIBDIR}/shared/ALL)
 bports=			shared/ALL
 .endif
 .for port in ${ports}					# {
@@ -235,7 +235,8 @@ ADDFILES.${image}+=	${ADDFILES.${port}}
 MKISOFS_ARGS.${image}+=	${MKISOFS_ARGS.${port}}
 # add shared/ALL and shared/${MACHINE_ARCH} to BASE_PORTS.${image}
 bports+=		${port}
-.if defined(MACHINE_ARCH.${port})
+.if defined(MACHINE_ARCH.${port}) &&	\
+    exists(${DISTRIBDIR}/shared/${MACHINE_ARCH.${port}})
 bports+=		shared/${MACHINE_ARCH.${port}}
 .endif
 .endfor							# }
@@ -363,7 +364,7 @@ USE-FILE: .USE
 ##### Makefile rules #####
 
 .for image in ${CD_IMAGES}			# {
-all: ${IMAGEDIR}/${image}.iso
+cdimages: ${IMAGEDIR}/${image}.iso
 
 stage-${image}:
 	mkdir -p ${STAGEDIR}/${image} ${EXTFILEDIR}
