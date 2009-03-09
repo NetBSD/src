@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.558 2009/03/06 16:29:41 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.559 2009/03/09 06:25:51 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -128,7 +128,7 @@ _HOST_OSREL!=	uname -r
 # For _HOST_ARCH, if uname -p fails, or prints "unknown", or prints
 # something that does not look like an identifier, then use uname -m.
 _HOST_ARCH!=	uname -p 2>/dev/null
-_HOST_ARCH:=	${HOST_ARCH:tW:C/.*[^a-z0-9].*//:S/unknown//}
+_HOST_ARCH:=	${HOST_ARCH:tW:C/.*[^-_A-Za-z0-9].*//:S/unknown//}
 .if empty(_HOST_ARCH)
 _HOST_ARCH!=	uname -m
 .endif
