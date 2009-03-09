@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.125 2009/03/07 15:03:25 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.126 2009/03/09 10:33:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.125 2009/03/07 15:03:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.126 2009/03/09 10:33:33 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1257,8 +1257,6 @@ fxp_rx_hwcksum(struct fxp_softc *sc, struct mbuf *m, const struct fxp_rfa *rfa,
 		struct ip *ip;
 		struct udphdr *uh;
 		u_int hlen, pktlen;
-		uint32_t optsum, optlen;
-		uint16_t *opts;
 
 		if (len < ETHER_HDR_LEN + sizeof(struct ip))
 			goto out;
@@ -1308,26 +1306,36 @@ fxp_rx_hwcksum(struct fxp_softc *sc, struct mbuf *m, const struct fxp_rfa *rfa,
 		/* Extract computed checksum. */
 		csum_data = be16dec(mtod(m, uint8_t *) + len);
 
-		/* If the packet had IP options, we have to deduct them. */
-		optlen = hlen - sizeof(struct ip);
-		if (optlen > 0) {
-			optsum = 0;
-			opts = (uint16_t *)((uint8_t *)ip + sizeof(struct ip));
+		/*
+		 * The computed checksum includes IP headers,
+		 * so we have to deduct them.
+		 */
+#if 0
+		/*
+		 * But in TCP/UDP layer we can assume the IP header is valid,
+		 * i.e. a sum of the whole IP header should be 0xffff,
+		 * so we don't have to bother to deduct it.
+		 */
+		if (hlen > 0) {
+			uint32_t hsum;
+			const uint16_t *iphdr;
+			hsum = 0;
+			iphdr = (uint16_t *)ip;
 
-			while (optlen > 1) {
-				optsum += ntohs(*opts++);
-				optlen -= sizeof(uint16_t);
+			while (hlen > 1) {
+				hsum += ntohs(*iphdr++);
+				hlen -= sizeof(uint16_t);
 			}
-			while (optsum >> 16)
-				optsum = (optsum >> 16) + (optsum & 0xffff);
+			while (hsum >> 16)
+				hsum = (hsum >> 16) + (hsum & 0xffff);
 
-			/* Deduct the IP opts sum from the hwsum (RFC 1624). */
-			csum_data = ~(~csum_data - ~optsum);
+			csum_data = ~(~csum_data - ~hsum);
 
 			while (csum_data >> 16)
 				csum_data =
 				    (csum_data >> 16) + (csum_data & 0xffff);
 		}
+#endif
 	}
  out:
 	m->m_pkthdr.csum_flags = csum_flags;
