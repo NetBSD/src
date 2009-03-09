@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.43 2009/03/09 07:00:26 nonaka Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.44 2009/03/09 09:53:55 reinoud Exp $	*/
 #define	PGALLOC_VERBOSE
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.43 2009/03/09 07:00:26 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.44 2009/03/09 09:53:55 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,9 +260,9 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 						    alignment, boundary, rlist);
 			if (num == 0) {
 #ifdef PGALLOC_VERBOSE
-				printf("pgalloc: %lx-%lx\n",
-				       VM_PAGE_TO_PHYS(TAILQ_FIRST(rlist)),
-				       VM_PAGE_TO_PHYS(TAILQ_LAST(rlist, pglist)));
+				printf("pgalloc: %"PRIxMAX"-%"PRIxMAX"\n",
+				       (uintmax_t) VM_PAGE_TO_PHYS(TAILQ_FIRST(rlist)),
+				       (uintmax_t) VM_PAGE_TO_PHYS(TAILQ_LAST(rlist, pglist)));
 #endif
 				error = 0;
 				goto out;
@@ -386,9 +386,9 @@ out:
 	}
 #ifdef PGALLOC_VERBOSE
 	if (!error)
-		printf("pgalloc: %lx..%lx\n",
-		       VM_PAGE_TO_PHYS(TAILQ_FIRST(rlist)),
-		       VM_PAGE_TO_PHYS(TAILQ_LAST(rlist, pglist)));
+		printf("pgalloc: %"PRIxMAX"..%"PRIxMAX"\n",
+		       (uintmax_t) VM_PAGE_TO_PHYS(TAILQ_FIRST(rlist)),
+		       (uintmax_t) VM_PAGE_TO_PHYS(TAILQ_LAST(rlist, pglist)));
 #endif
 	return (error);
 }
