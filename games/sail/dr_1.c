@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.23 2008/01/28 01:58:01 dholland Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.24 2009/03/09 04:38:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.23 2008/01/28 01:58:01 dholland Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.24 2009/03/09 04:38:39 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,8 @@ fightitout(struct ship *from, struct ship *to, int key)
 		subtract(from, fromcap, totalfrom, crewfrom, pcfrom);
 		subtract(to, tocap, totalto, crewto, pcto);
 		makemsg(from, "boarders from %s repelled", to->shipname);
-		sprintf(message, "killed in melee: %d.  %s: %d",
+		snprintf(message, sizeof(message),
+			"killed in melee: %d.  %s: %d",
 			totalto, from->shipname, totalfrom);
 		Writestr(W_SIGNAL, to, message);
 		if (key)
@@ -222,9 +223,11 @@ fightitout(struct ship *from, struct ship *to, int key)
 				subtract(to, tocap, mento, crewto, pcto);
 				subtract(from, to, - mento, crewfrom, 0);
 			}
-			sprintf(message, "captured by the %s!", to->shipname);
+			snprintf(message, sizeof(message),
+				"captured by the %s!", to->shipname);
 			Writestr(W_SIGNAL, from, message);
-			sprintf(message, "killed in melee: %d.  %s: %d",
+			snprintf(message, sizeof(message),
+				"killed in melee: %d.  %s: %d",
 				totalto, from->shipname, totalfrom);
 			Writestr(W_SIGNAL, to, message);
 			mento = 0;
