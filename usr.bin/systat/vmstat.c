@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.71 2008/07/13 20:07:48 dholland Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.72 2009/03/09 19:48:02 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.71 2008/07/13 20:07:48 dholland Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.72 2009/03/09 19:48:02 njoly Exp $");
 #endif /* not lint */
 
 /*
@@ -325,7 +325,7 @@ labelvmstat_top(void)
 
 	mvprintw(STATROW, STATCOL + 4, "users    Load");
 
-	mvprintw(GENSTATROW, GENSTATCOL, "   Csw    Trp    Sys   Int   Sof    Flt");
+	mvprintw(GENSTATROW, GENSTATCOL, "   Csw    Trp    Sys   Int    Sof    Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
 		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
@@ -452,8 +452,8 @@ show_vmstat_top(vmtotal_t *Total, uvmexp_sysctl_t *uvm, uvmexp_sysctl_t *uvm1)
 	PUTRATE(us, us1, uvmexp->traps, GENSTATROW + 1, GENSTATCOL + 7, 6);
 	PUTRATE(us, us1, uvmexp->syscalls, GENSTATROW + 1, GENSTATCOL + 14, 6);
 	PUTRATE(us, us1, uvmexp->intrs, GENSTATROW + 1, GENSTATCOL + 21, 5);
-	PUTRATE(us, us1, uvmexp->softs, GENSTATROW + 1, GENSTATCOL + 27, 5);
-	PUTRATE(us, us1, uvmexp->faults, GENSTATROW + 1, GENSTATCOL + 33, 6);
+	PUTRATE(us, us1, uvmexp->softs, GENSTATROW + 1, GENSTATCOL + 27, 6);
+	PUTRATE(us, us1, uvmexp->faults, GENSTATROW + 1, GENSTATCOL + 34, 6);
 
 	/* Last CPU state not calculated yet. */
 	for (f2 = 0.0, psiz = 0, c = 0; c < CPUSTATES; c++) {
