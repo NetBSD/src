@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2009/03/05 01:29:32 yamt Exp $
+#	$NetBSD: Makefile,v 1.29 2009/03/10 14:56:30 yamt Exp $
 
 # For all platforms
 
@@ -46,6 +46,7 @@ SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
 SUBDIR+=	vnd
+SUBDIR+=	tprof
 .if (defined(NOTYET))
 SUBDIR+=	unionfs
 .endif
@@ -59,6 +60,11 @@ SUBDIR+=	exec_elf32
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	exec_elf64
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	tprof_pmi
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
