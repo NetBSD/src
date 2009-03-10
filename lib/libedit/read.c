@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.48 2009/02/21 23:35:10 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.49 2009/03/10 20:46:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.48 2009/02/21 23:35:10 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.49 2009/03/10 20:46:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -240,7 +240,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 	el->el_errno = 0;
 	do {
 		if ((num = el_getc(el, ch)) != 1) {	/* if EOF or error */
-			el->el_errno = errno;
+			el->el_errno = num == 0 ? 0 : errno;
 			return (num);
 		}
 
@@ -414,9 +414,13 @@ el_gets(EditLine *el, int *nread)
 	int num;		/* how many chars we have read at NL */
 	char ch;
 	int crlf = 0;
+	int nrb;
 #ifdef FIONREAD
 	c_macro_t *ma = &el->el_chared.c_macro;
 #endif /* FIONREAD */
+
+	if (nread == NULL)
+		nread = &nrb;
 
 	if (el->el_flags & NO_TTY) {
 		char *cp = el->el_line.buffer;
@@ -436,14 +440,16 @@ el_gets(EditLine *el, int *nread)
 			if (cp[-1] == '\r' || cp[-1] == '\n')
 				break;
 		}
-		if (num == -1 && errno == EINTR)
-			cp = el->el_line.buffer;
+		if (num == -1) {
+			if (errno == EINTR)
+				cp = el->el_line.buffer;
+			el->el_errno = errno;
+		}
 
 		el->el_line.cursor = el->el_line.lastchar = cp;
 		*cp = '\0';
-		if (nread)
-			*nread = (int)(el->el_line.cursor - el->el_line.buffer);
-		return (*nread ? el->el_line.buffer : NULL);
+		*nread = (int)(el->el_line.cursor - el->el_line.buffer);
+		goto done;
 	}
 
 
@@ -454,8 +460,8 @@ el_gets(EditLine *el, int *nread)
 		(void) ioctl(el->el_infd, FIONREAD, (ioctl_t) & chrs);
 		if (chrs == 0) {
 			if (tty_rawmode(el) < 0) {
-				if (nread)
-					*nread = 0;
+				errno = 0;
+				*nread = 0;
 				return (NULL);
 			}
 		}
@@ -491,14 +497,16 @@ el_gets(EditLine *el, int *nread)
 			if (crlf)
 				break;
 		}
-		if (num == -1 && errno == EINTR)
-			cp = el->el_line.buffer;
+
+		if (num == -1) {
+			if (errno == EINTR)
+				cp = el->el_line.buffer;
+			el->el_errno = errno;
+		}
 
 		el->el_line.cursor = el->el_line.lastchar = cp;
 		*cp = '\0';
-		if (nread)
-			*nread = (int)(el->el_line.cursor - el->el_line.buffer);
-		return (*nread ? el->el_line.buffer : NULL);
+		goto done;
 	}
 
 	for (num = OKCMD; num == OKCMD;) {	/* while still editing this
@@ -518,7 +526,6 @@ el_gets(EditLine *el, int *nread)
 			el->el_line.buffer[0] = '\0';
 			el->el_line.lastchar =
 			    el->el_line.cursor = el->el_line.buffer;
-			num = 0;
 			break;
 		}
 		if ((unsigned int)cmdnum >= (unsigned int)el->el_map.nfunc) {	/* BUG CHECK command */
@@ -638,12 +645,17 @@ el_gets(EditLine *el, int *nread)
 	/* make sure the tty is set up correctly */
 	if ((el->el_flags & UNBUFFERED) == 0) {
 		read_finish(el);
-		if (nread)
-			*nread = num;
+		*nread = num != -1 ? num : 0;
 	} else {
-		if (nread)
-			*nread =
-			    (int)(el->el_line.lastchar - el->el_line.buffer);
+		*nread = (int)(el->el_line.lastchar - el->el_line.buffer);
 	}
-	return (num ? el->el_line.buffer : NULL);
+done:
+	if (*nread == 0) {
+		if (num == -1) {
+			*nread = -1;
+			errno = el->el_errno;
+		}
+		return NULL;
+	} else
+		return el->el_line.buffer;
 }
