@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.980 2009/02/26 19:17:01 mjf Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.981 2009/03/10 03:31:36 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.978 2009/02/19 17:25:46 sborrill Exp
+ *	NetBSD: pcidevs,v 1.981 2009/03/10 03:30:55 msaitoh Exp
  */
 
 /*
@@ -2254,6 +2254,7 @@
 #define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN Controller */
 #define	PCI_PRODUCT_INTEL_82574L	0x10d3		/* i82574L 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82567LM_3	0x10de		/* i82567LM-3 LAN Controller */
+#define	PCI_PRODUCT_INTEL_82567LF_3	0x10df		/* i82567LF-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I Mobile (AMT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
@@ -2797,7 +2798,7 @@
 #define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* ORCA FPGA w/ 32-bit PCI ASIC Core */
 #define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* ORCA FPGA w/ 64-bit PCI ASIC Core */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
-#define	PCI_PRODUCT_LUCENT_EVDO	0x5802		/* Sierra Wireless AirCard 580 */
+#define	PCI_PRODUCT_LUCENT_USBHC2	0x5802		/* 2-port USB Host Controller */
 #define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_LUCENT_ET1310	0xed00		/* ET1310 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_LUCENT_ET1301	0xed01		/* ET1301 10/100 Ethernet */
