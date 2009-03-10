@@ -1,5 +1,5 @@
-/*	$NetBSD: uvm_pglist.c,v 1.44 2009/03/09 09:53:55 reinoud Exp $	*/
-#define	PGALLOC_VERBOSE
+/*	$NetBSD: uvm_pglist.c,v 1.45 2009/03/10 03:27:24 nonaka Exp $	*/
+
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.44 2009/03/09 09:53:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.45 2009/03/10 03:27:24 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
