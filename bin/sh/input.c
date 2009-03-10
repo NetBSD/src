@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.41 2008/10/16 14:36:40 dholland Exp $	*/
+/*	$NetBSD: input.c,v 1.42 2009/03/10 21:21:11 roy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.41 2008/10/16 14:36:40 dholland Exp $");
+__RCSID("$NetBSD: input.c,v 1.42 2009/03/10 21:21:11 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ retry:
 		if (rl_cp == NULL)
 			rl_cp = el_gets(el, &el_len);
 		if (rl_cp == NULL)
-			nr = 0;
+			nr = el_len == 0 ? 0 : -1;
 		else {
 			nr = el_len;
 			if (nr > BUFSIZ - 8)
