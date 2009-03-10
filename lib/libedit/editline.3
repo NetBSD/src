@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.63 2009/03/10 20:46:15 christos Exp $
+.\"	$NetBSD: editline.3,v 1.64 2009/03/10 22:55:14 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -159,9 +159,7 @@ Returns the line read if successful, or
 if no characters were read or if an error occurred.
 If an error occurred,
 .Fa count
-is set to 
-.Dv -1
-and
+is set to \-1 and
 .Dv errno
 contains the error code that caused it.
 .It Fn el_getc
