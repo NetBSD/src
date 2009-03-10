@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.9 2008/04/27 18:58:45 matt Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.10 2009/03/10 14:42:31 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.9 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.10 2009/03/10 14:42:31 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -319,6 +319,9 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	ifp->if_stop = npestop;
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/* VLAN capable */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 }
@@ -389,7 +392,7 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 	void *hwbuf;
 	size_t size;
 
-	memset(dma, 0, sizeof(dma));
+	memset(dma, 0, sizeof(*dma));
 
 	dma->name = name;
 	dma->nbuf = nbuf;
@@ -455,7 +458,7 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 		npe->ix_neaddr = dma->buf_phys +
 			((uintptr_t)hw - (uintptr_t)dma->hwbuf);
 		KASSERT((npe->ix_neaddr & 0x1f) == 0);
-		error = bus_dmamap_create(sc->sc_dt, MCLBYTES, 1,
+		error = bus_dmamap_create(sc->sc_dt, MCLBYTES, maxseg,
 		    MCLBYTES, 0, 0, &npe->ix_map);
 		if (error != 0) {
 			printf("%s: unable to create dmamap for %s buffer %u, "
@@ -919,6 +922,13 @@ npe_rxdone(int qid, void *arg)
 			mrx->m_flags |= M_HASFCS;
 
 			ifp->if_ipackets++;
+#if NBPFILTER > 0
+			/*
+			 * Tap off here if there is a bpf listener.
+			 */
+			if (__predict_false(ifp->if_bpf))
+				bpf_mtap(ifp->if_bpf, mrx);
+#endif
 			ifp->if_input(ifp, mrx);
 		} else {
 			/* discard frame and re-use mbuf */
