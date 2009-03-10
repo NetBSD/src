@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.80 2009/03/02 21:32:38 pgoyette Exp $
+#	 $NetBSD: mi,v 1.81 2009/03/10 04:55:00 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -543,11 +543,11 @@
 ./usr/X11R6/lib/libFS_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libFS_p.a				-unknown-	profile,x11
 ./usr/X11R6/lib/libGL.a					-unknown-	x11
-./usr/X11R6/lib/libGL_g.a				-unknown-	debuglib,x11
-./usr/X11R6/lib/libGL_p.a				-unknown-	profile,x11
 ./usr/X11R6/lib/libGLU.a				-unknown-	x11
 ./usr/X11R6/lib/libGLU_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libGLU_p.a				-unknown-	profile,x11
+./usr/X11R6/lib/libGL_g.a				-unknown-	debuglib,x11
+./usr/X11R6/lib/libGL_p.a				-unknown-	profile,x11
 ./usr/X11R6/lib/libGLw.a				-unknown-	x11
 ./usr/X11R6/lib/libGLw_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libGLw_p.a				-unknown-	profile,x11
@@ -627,11 +627,11 @@
 ./usr/X11R6/lib/libXtst_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libXtst_p.a				-unknown-	profile,x11
 ./usr/X11R6/lib/libXv.a					-unknown-	x11
-./usr/X11R6/lib/libXv_g.a				-unknown-	debuglib,x11
-./usr/X11R6/lib/libXv_p.a				-unknown-	profile,x11
 ./usr/X11R6/lib/libXvMC.a				-unknown-	x11
 ./usr/X11R6/lib/libXvMC_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libXvMC_p.a				-unknown-	profile,x11
+./usr/X11R6/lib/libXv_g.a				-unknown-	debuglib,x11
+./usr/X11R6/lib/libXv_p.a				-unknown-	profile,x11
 ./usr/X11R6/lib/libXxf86dga.a				-unknown-	x11
 ./usr/X11R6/lib/libXxf86dga_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libXxf86dga_p.a				-unknown-	profile,x11
@@ -6565,6 +6565,7 @@
 ./usr/X11R7/man/cat3/XGetDeviceKeyMapping.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetDeviceModifierMapping.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetDeviceMotionEvents.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XGetDeviceProperty.0		-unknown-	.man,xorg
 ./usr/X11R7/man/cat3/XGetExtensionVersion.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetFeedbackControl.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetSelectedExtensionEvents.0	-unknown-	.cat,xorg
@@ -6590,6 +6591,7 @@
 ./usr/X11R7/man/cat3/XInternAtom.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XIntersectRegion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XKeymapEvent.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XListDeviceProperties.0		-unknown-	.man,xorg
 ./usr/X11R7/man/cat3/XListFonts.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XListInputDevices.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XLoadFont.0			-unknown-	.cat,xorg
@@ -7466,6 +7468,7 @@
 ./usr/X11R7/man/html3/XGetDeviceKeyMapping.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetDeviceModifierMapping.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetDeviceMotionEvents.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XGetDeviceProperty.html		-unknown-	.man,xorg
 ./usr/X11R7/man/html3/XGetExtensionVersion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetFeedbackControl.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetSelectedExtensionEvents.html	-unknown-	html,xorg
@@ -7491,6 +7494,7 @@
 ./usr/X11R7/man/html3/XInternAtom.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XIntersectRegion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XKeymapEvent.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XListDeviceProperties.html	-unknown-	.man,xorg
 ./usr/X11R7/man/html3/XListFonts.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XListInputDevices.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XLoadFont.html			-unknown-	html,xorg
@@ -8366,6 +8370,7 @@
 ./usr/X11R7/man/man3/XGetDeviceKeyMapping.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetDeviceModifierMapping.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetDeviceMotionEvents.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XGetDeviceProperty.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetExtensionVersion.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetFeedbackControl.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetSelectedExtensionEvents.3	-unknown-	.man,xorg
@@ -8391,6 +8396,7 @@
 ./usr/X11R7/man/man3/XInternAtom.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XIntersectRegion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XKeymapEvent.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XListDeviceProperties.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XListFonts.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XListInputDevices.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XLoadFont.3			-unknown-	.man,xorg
