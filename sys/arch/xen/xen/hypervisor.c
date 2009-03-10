@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.44 2009/02/13 21:03:59 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.45 2009/03/10 17:17:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.44 2009/02/13 21:03:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.45 2009/03/10 17:17:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,17 +240,17 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
+#ifdef DOM0OPS
+	if (xendomain_is_privileged()) {
+		xenkernfs_init();
+	}
+#endif
 #ifdef XEN3
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
 	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
 	       xen_version & 0x0000ffff);
 
 	xengnt_init();
-#ifdef DOM0OPS
-	if (xendomain_is_privileged()) {
-		xenkernfs_init();
-	}
-#endif
 
 	memset(&hac.hac_vcaa, 0, sizeof(hac.hac_vcaa));
 	hac.hac_vcaa.vcaa_name = "vcpu";
