@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $	*/
+/*	$NetBSD: common.h,v 1.1.1.3 2009/03/10 00:44:15 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
