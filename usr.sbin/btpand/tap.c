@@ -1,4 +1,4 @@
-/*	$NetBSD: tap.c,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: tap.c,v 1.2 2009/03/10 22:12:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tap.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
+__RCSID("$NetBSD: tap.c,v 1.2 2009/03/10 22:12:17 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -48,7 +48,7 @@ tap_init(void)
 {
 	channel_t *chan;
 	struct sockaddr_dl *sdl;
-	struct ifaliasreq ifra;
+	struct if_laddrreq iflr;
 	struct ifreq ifr;
 	int fd, s;
 
@@ -70,17 +70,18 @@ tap_init(void)
 		exit(EXIT_FAILURE);
 	}
 
-	memset(&ifra, 0, sizeof(ifra));
-	memcpy(ifra.ifra_name, ifr.ifr_name, IFNAMSIZ);
+	memset(&iflr, 0, sizeof(iflr));
+	memcpy(iflr.iflr_name, ifr.ifr_name, IFNAMSIZ);
+	iflr.flags = IFLR_ACTIVE;
 
-	sdl = satosdl(&ifra.ifra_addr);
+	sdl = satosdl(sstosa(&iflr.addr));
 	sdl->sdl_family = AF_LINK;
 	sdl->sdl_len = sizeof(struct sockaddr_dl);
 	sdl->sdl_alen = ETHER_ADDR_LEN;
 	b2eaddr(LLADDR(sdl), &local_bdaddr);
 
-	if (ioctl(s, SIOCSIFPHYADDR, &ifra) == -1) {
-		log_err("Could not set %s physical address: %m", ifra.ifra_name);
+	if (ioctl(s, SIOCALIFADDR, &iflr) == -1) {
+		log_err("Could not add %s link address: %m", iflr.iflr_name);
 		exit(EXIT_FAILURE);
 	}
 
