@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.3 2009/02/14 19:37:02 joerg Exp $	*/
+/*	$NetBSD: http.c,v 1.1.1.4 2009/03/10 00:44:23 joerg Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
