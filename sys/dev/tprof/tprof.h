@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof.h,v 1.1 2008/01/01 21:28:38 yamt Exp $	*/
+/*	$NetBSD: tprof.h,v 1.2 2009/03/10 14:45:02 yamt Exp $	*/
 
 /*-
- * Copyright (c)2008 YAMAMOTO Takashi,
+ * Copyright (c)2008,2009 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,19 @@
 #ifndef _DEV_TPROF_TPROF_H_
 #define _DEV_TPROF_TPROF_H_
 
-uint64_t tprof_backend_estimate_freq(void);
-int tprof_backend_start(void);
-void tprof_backend_stop(void);
+typedef struct tprof_backend_cookie tprof_backend_cookie_t;
+
+typedef struct tprof_backend_ops {
+	uint64_t (*tbo_estimate_freq)(void);
+	int (*tbo_start)(tprof_backend_cookie_t *);
+	void (*tbo_stop)(tprof_backend_cookie_t *);
+} tprof_backend_ops_t;
+
+#define	TPROF_BACKEND_VERSION	1
+int tprof_backend_register(const char *, const tprof_backend_ops_t *, int);
+int tprof_backend_unregister(const char *);
 
 struct trapframe;
-void tprof_sample(const struct trapframe *);
+void tprof_sample(tprof_backend_cookie_t *, const struct trapframe *);
 
 #endif /* _DEV_TPROF_TPROF_H_ */
