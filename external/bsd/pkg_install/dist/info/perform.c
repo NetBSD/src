@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.6 2009/03/08 14:51:37 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.7 2009/03/10 00:48:44 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.6 2009/03/08 14:51:37 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.7 2009/03/10 00:48:44 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -233,7 +233,6 @@ has_entry:
 		meta = NULL;
 	}
 
-	archive_read_finish(archive);
 	meta->is_installed = 0;
 
 	return meta;

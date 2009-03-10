@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.1.1.4 2009/03/08 14:51:39 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.1.1.5 2009/03/10 00:48:50 joerg Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.1.1.4 2009/03/08 14:51:39 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.1.1.5 2009/03/10 00:48:50 joerg Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -111,8 +111,7 @@ open_archive_by_url(struct url *url)
 	archive_read_support_format_all(a);
 	if (archive_read_open(a, f, fetch_archive_open, fetch_archive_read,
 	    fetch_archive_close)) {
-		archive_read_close(a);
-		free(f);
+		archive_read_finish(a);
 		return NULL;
 	}
 
