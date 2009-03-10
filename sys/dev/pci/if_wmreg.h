@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.24 2007/12/25 18:33:41 perry Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.25 2009/03/10 03:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -731,3 +731,6 @@ struct livengood_tcpip_ctxdesc {
 #define ICH_FLASH_SECTOR_SIZE      4096
 #define ICH_GFPREG_BASE_MASK       0x1FFF
 #define ICH_FLASH_LINEAR_ADDR_MASK 0x00FFFFFF
+
+#define ICH_NVM_SIG_WORD	0x13
+#define ICH_NVM_SIG_MASK	0xc000
