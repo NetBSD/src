@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.130 2009/01/30 21:16:51 pooka Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.131 2009/03/10 10:48:09 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.130 2009/01/30 21:16:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.131 2009/03/10 10:48:09 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -213,31 +213,33 @@ panic(const char *fmt, ...)
 	int bootopt;
 	va_list ap;
 
-	/*
-	 * Disable preemption.  If already panicing on another CPU, sit
-	 * here and spin until the system is rebooted.  Allow the CPU that
-	 * first paniced to panic again.
-	 */
-	kpreempt_disable();
-	ci = curcpu();
-	oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
-	if (oci != NULL && oci != ci) {
-		/* Give interrupts a chance to try and prevent deadlock. */
-		for (;;) {
+	if (lwp0.l_cpu && curlwp) {
+		/*
+		 * Disable preemption.  If already panicing on another CPU, sit
+		 * here and spin until the system is rebooted.  Allow the CPU that
+		 * first paniced to panic again.
+		 */
+		kpreempt_disable();
+		ci = curcpu();
+		oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
+		if (oci != NULL && oci != ci) {
+			/* Give interrupts a chance to try and prevent deadlock. */
+			for (;;) {
 #ifndef _RUMPKERNEL /* XXXpooka: temporary build fix, see kern/40505 */
-			DELAY(10);
+				DELAY(10);
 #endif /* _RUMPKERNEL */
+			}
 		}
-	}
 
-	/*
-	 * Convert the current thread to a bound thread and prevent all
-	 * CPUs from scheduling unbound jobs.  Do so without taking any
-	 * locks.
-	 */
-	curlwp->l_pflag |= LP_BOUND;
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		ci->ci_schedstate.spc_flags |= SPCF_OFFLINE;
+		/*
+		 * Convert the current thread to a bound thread and prevent all
+		 * CPUs from scheduling unbound jobs.  Do so without taking any
+		 * locks.
+		 */
+		curlwp->l_pflag |= LP_BOUND;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			ci->ci_schedstate.spc_flags |= SPCF_OFFLINE;
+		}
 	}
 
 	bootopt = RB_AUTOBOOT | RB_NOSYNC;
