@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.10 2009/03/10 14:42:31 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.11 2009/03/10 17:09:48 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.10 2009/03/10 14:42:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.11 2009/03/10 17:09:48 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.10 2009/03/10 14:42:31 msaitoh E
 #include <sys/socket.h>
 #include <sys/endian.h>
 #include <sys/ioctl.h>
+#include <sys/syslog.h>
 
 #include <machine/bus.h>
 
@@ -102,6 +103,7 @@ struct npedma {
 struct npe_softc {
 	struct device	sc_dev;
 	struct ethercom	sc_ethercom;
+	uint8_t		sc_enaddr[ETHER_ADDR_LEN];
 	struct mii_data	sc_mii;
 	bus_space_tag_t	sc_iot;		
 	bus_dma_tag_t	sc_dt;
@@ -193,7 +195,7 @@ static void	npe_deactivate(struct npe_softc *);
 static int	npe_ifmedia_change(struct ifnet *ifp);
 static void	npe_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr);
 static void	npe_setmac(struct npe_softc *sc, const u_char *eaddr);
-static void	npe_getmac(struct npe_softc *sc, u_char *eaddr);
+static void	npe_getmac(struct npe_softc *sc);
 static void	npe_txdone(int qid, void *arg);
 static int	npe_rxbuf_init(struct npe_softc *, struct npebuf *,
 			struct mbuf *);
@@ -232,8 +234,17 @@ static int	npe_debug;
 #define	ETHER_ALIGN	2	/* XXX: Ditch this */
 #endif
 
+#define MAC2UINT64(addr)	(((uint64_t)addr[0] << 40)	\
+				    + ((uint64_t)addr[1] << 32)	\
+				    + ((uint64_t)addr[2] << 24)	\
+				    + ((uint64_t)addr[3] << 16)	\
+				    + ((uint64_t)addr[4] << 8)	\
+				    + (uint64_t)addr[5])
+
 /* NB: all tx done processing goes through one queue */
 static int tx_doneqid = -1;
+
+void (*npe_getmac_md)(int, uint8_t *);
 
 static int npe_match(struct device *, struct cfdata *, void *);
 static void npe_attach(struct device *, struct device *, void *);
@@ -255,7 +266,6 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	struct npe_softc *sc = (void *)self;
 	struct ixpnpe_attach_args *na = arg;
 	struct ifnet *ifp;
-	u_char eaddr[6];
 
 	aprint_naive("\n");
 	aprint_normal(": Ethernet co-processor\n");
@@ -282,10 +292,10 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	 * XXXSCW: Ethernet yet. We must check for a property set by
 	 * XXXSCW: board-specific code.
 	 */
-	npe_getmac(sc, eaddr);
+	npe_getmac(sc);
 
 	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(eaddr));
+	    ether_sprintf(sc->sc_enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, npe_ifmedia_change,
@@ -323,7 +333,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
-	ether_ifattach(ifp, eaddr);
+	ether_ifattach(ifp, sc->sc_enaddr);
 }
 
 /*
@@ -334,7 +344,12 @@ npe_setmcast(struct npe_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint8_t mask[ETHER_ADDR_LEN], addr[ETHER_ADDR_LEN];
+	uint32_t reg;
 	int i;
+
+	/* Always use filter. Is here a correct position? */
+	reg = RD4(sc, NPE_MAC_RX_CNTRL1);
+	WR4(sc, NPE_MAC_RX_CNTRL1, reg | NPE_RX_CNTRL1_ADDR_FLTR_EN);
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		memset(mask, 0, ETHER_ADDR_LEN);
@@ -738,25 +753,34 @@ npe_tick(void *xsc)
 static void
 npe_setmac(struct npe_softc *sc, const u_char *eaddr)
 {
+
 	WR4(sc, NPE_MAC_UNI_ADDR_1, eaddr[0]);
 	WR4(sc, NPE_MAC_UNI_ADDR_2, eaddr[1]);
 	WR4(sc, NPE_MAC_UNI_ADDR_3, eaddr[2]);
 	WR4(sc, NPE_MAC_UNI_ADDR_4, eaddr[3]);
 	WR4(sc, NPE_MAC_UNI_ADDR_5, eaddr[4]);
 	WR4(sc, NPE_MAC_UNI_ADDR_6, eaddr[5]);
-
 }
 
 static void
-npe_getmac(struct npe_softc *sc, u_char *eaddr)
+npe_getmac(struct npe_softc *sc)
 {
-	/* NB: the unicast address appears to be loaded from EEPROM on reset */
-	eaddr[0] = RD4(sc, NPE_MAC_UNI_ADDR_1) & 0xff;
-	eaddr[1] = RD4(sc, NPE_MAC_UNI_ADDR_2) & 0xff;
-	eaddr[2] = RD4(sc, NPE_MAC_UNI_ADDR_3) & 0xff;
-	eaddr[3] = RD4(sc, NPE_MAC_UNI_ADDR_4) & 0xff;
-	eaddr[4] = RD4(sc, NPE_MAC_UNI_ADDR_5) & 0xff;
-	eaddr[5] = RD4(sc, NPE_MAC_UNI_ADDR_6) & 0xff;
+	uint8_t *eaddr = sc->sc_enaddr;
+
+	if (npe_getmac_md != NULL) {
+		(*npe_getmac_md)(sc->sc_dev.dv_unit, eaddr);
+	} else {
+		/*
+		 * Some system's unicast address appears to be loaded from
+		 * EEPROM on reset
+		 */
+		eaddr[0] = RD4(sc, NPE_MAC_UNI_ADDR_1) & 0xff;
+		eaddr[1] = RD4(sc, NPE_MAC_UNI_ADDR_2) & 0xff;
+		eaddr[2] = RD4(sc, NPE_MAC_UNI_ADDR_3) & 0xff;
+		eaddr[3] = RD4(sc, NPE_MAC_UNI_ADDR_4) & 0xff;
+		eaddr[4] = RD4(sc, NPE_MAC_UNI_ADDR_5) & 0xff;
+		eaddr[5] = RD4(sc, NPE_MAC_UNI_ADDR_6) & 0xff;
+	}
 }
 
 struct txdone {
@@ -853,10 +877,11 @@ npe_rxbuf_init(struct npe_softc *sc, struct npebuf *npe, struct mbuf *m)
 		if (m == NULL)
 			return ENOBUFS;
 	}
-	KASSERT(m->m_ext.ext_size >= (1536 + ETHER_ALIGN));
-	m->m_pkthdr.len = m->m_len = 1536;
+	KASSERT(m->m_ext.ext_size >= (NPE_FRAME_SIZE_DEFAULT + ETHER_ALIGN));
+	m->m_pkthdr.len = m->m_len = NPE_FRAME_SIZE_DEFAULT;
 	/* backload payload and align ip hdr */
-	m->m_data = m->m_ext.ext_buf + (m->m_ext.ext_size - (1536+ETHER_ALIGN));
+	m->m_data = m->m_ext.ext_buf + (m->m_ext.ext_size
+	    - (NPE_FRAME_SIZE_DEFAULT + ETHER_ALIGN));
 	error = bus_dmamap_load_mbuf(sc->sc_dt, npe->ix_map, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error != 0) {
@@ -919,7 +944,101 @@ npe_rxdone(int qid, void *arg)
 			mrx->m_len = be32toh(hw->ix_ne[0].len) & 0xffff;
 			mrx->m_pkthdr.len = mrx->m_len;
 			mrx->m_pkthdr.rcvif = ifp;
-			mrx->m_flags |= M_HASFCS;
+			/* Don't add M_HASFCS. See below */
+
+#if 1
+			if (mrx->m_pkthdr.len < sizeof(struct ether_header)) {
+				log(LOG_INFO, "%s: too short frame (len=%d)\n",
+				    sc->sc_dev.dv_xname, mrx->m_pkthdr.len);
+				/* Back out "newly allocated" mbuf. */
+				m_freem(m);
+				ifp->if_ierrors++;
+				goto fail;
+			}
+			if ((ifp->if_flags & IFF_PROMISC) == 0) {
+				struct ether_header *eh;
+
+				/*
+				 * Workaround for "Non-Intel XScale Technology
+				 * Eratta" No. 29. AA:BB:CC:DD:EE:xF's packet
+				 * matches the filter (both unicast and
+				 * multicast).
+				 */
+				eh = mtod(mrx, struct ether_header *);
+				if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0) {
+					/* unicast */
+
+					if (sc->sc_enaddr[5] != eh->ether_dhost[5]) {
+						/* discard it */
+#if 0
+						printf("discard it\n");
+#endif
+						/*
+						 * Back out "newly allocated"
+						 * mbuf.
+						 */
+						m_freem(m);
+						goto fail;
+					}
+				} else if (memcmp(eh->ether_dhost,
+					etherbroadcastaddr, 6) == 0) {
+					/* Always accept broadcast packet*/
+				} else {
+					struct ethercom *ec = &sc->sc_ethercom;
+					struct ether_multi *enm;
+					struct ether_multistep step;
+					int match = 0;
+
+					/* multicast */
+
+					ETHER_FIRST_MULTI(step, ec, enm);
+					while (enm != NULL) {
+						uint64_t lowint, highint, dest;
+
+						lowint = MAC2UINT64(enm->enm_addrlo);
+						highint = MAC2UINT64(enm->enm_addrhi);
+						dest = MAC2UINT64(eh->ether_dhost);
+#if 0
+						printf("%llx\n", lowint);
+						printf("%llx\n", dest);
+						printf("%llx\n", highint);
+#endif
+						if ((lowint <= dest) && (dest <= highint)) {
+							match = 1;
+							break;
+						}
+						ETHER_NEXT_MULTI(step, enm);
+					}
+					if (match == 0) {
+						/* discard it */
+#if 0
+						printf("discard it(M)\n");
+#endif
+						/*
+						 * Back out "newly allocated"
+						 * mbuf.
+						 */
+						m_freem(m);
+						goto fail;
+					}
+				}
+			}
+			if (mrx->m_pkthdr.len > NPE_FRAME_SIZE_DEFAULT) {
+				log(LOG_INFO, "%s: oversized frame (len=%d)\n",
+				    sc->sc_dev.dv_xname, mrx->m_pkthdr.len);
+				/* Back out "newly allocated" mbuf. */
+				m_freem(m);
+				ifp->if_ierrors++;
+				goto fail;
+			}
+#endif
+
+			/*
+			 * Trim FCS!
+			 * NPE always adds the FCS by this driver's setting,
+			 * so we always trim it here and not add M_HASFCS.
+			 */
+			m_adj(mrx, -ETHER_CRC_LEN);
 
 			ifp->if_ipackets++;
 #if NBPFILTER > 0
@@ -931,6 +1050,7 @@ npe_rxdone(int qid, void *arg)
 #endif
 			ifp->if_input(ifp, mrx);
 		} else {
+fail:
 			/* discard frame and re-use mbuf */
 			m = npe->ix_m;
 		}
