@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npevar.h,v 1.1 2006/12/10 10:01:49 scw Exp $	*/
+/*	$NetBSD: ixp425_npevar.h,v 1.2 2009/03/10 17:09:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -102,5 +102,7 @@ struct ixpnpe_attach_args {
 	bus_space_tag_t na_iot;
 	bus_dma_tag_t na_dt;
 };
+
+extern void (*npe_getmac_md)(int, uint8_t *);
 
 #endif /* _IXP425_NPEVAR_H_ */
