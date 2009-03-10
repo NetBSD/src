@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof.c,v 1.3 2009/01/20 15:13:54 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.4 2009/03/10 14:45:02 yamt Exp $	*/
 
 /*-
- * Copyright (c)2008 YAMAMOTO Takashi,
+ * Copyright (c)2008,2009 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.3 2009/01/20 15:13:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.4 2009/03/10 14:45:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.3 2009/01/20 15:13:54 yamt Exp $");
 #include <sys/conf.h>
 #include <sys/callout.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/workqueue.h>
 #include <sys/queue.h>
 
@@ -44,6 +45,19 @@ __KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.3 2009/01/20 15:13:54 yamt Exp $");
 #include <dev/tprof/tprof_ioctl.h>
 
 #include <machine/db_machdep.h> /* PC_REGS */
+
+/*
+ * locking order:
+ *	tprof_reader_lock -> tprof_lock
+ *	tprof_startstop_lock -> tprof_lock
+ */
+
+/*
+ * protected by:
+ *	L: tprof_lock
+ *	R: tprof_reader_lock
+ *	S: tprof_startstop_lock
+ */
 
 typedef struct {
 	uintptr_t s_pc;	/* program counter */
@@ -69,30 +83,35 @@ typedef struct {
 	callout_t c_callout;
 } __aligned(CACHE_LINE_SIZE) tprof_cpu_t;
 
-/*
- * locking order:
- *	tprof_reader_lock -> tprof_lock
- *	tprof_startstop_lock -> tprof_lock
- */
+typedef struct tprof_backend {
+	const char *tb_name;
+	const tprof_backend_ops_t *tb_ops;
+	LIST_ENTRY(tprof_backend) tb_list;
+	int tb_usecount;	/* S: */
+} tprof_backend_t;
 
 static kmutex_t tprof_lock;
 static bool tprof_running;
-static u_int tprof_nworker;
+static u_int tprof_nworker;		/* L: # of running worker LWPs */
 static lwp_t *tprof_owner;
-static STAILQ_HEAD(, tprof_buf) tprof_list;
-static u_int tprof_nbuf_on_list;
+static STAILQ_HEAD(, tprof_buf) tprof_list; /* L: global buffer list */
+static u_int tprof_nbuf_on_list;	/* L: # of buffers on tprof_list */
 static struct workqueue *tprof_wq;
 static tprof_cpu_t tprof_cpus[MAXCPUS] __aligned(CACHE_LINE_SIZE);
 static u_int tprof_samples_per_buf;
 
+static tprof_backend_t *tprof_backend;	/* S: */
+static LIST_HEAD(, tprof_backend) tprof_backends =
+    LIST_HEAD_INITIALIZER(tprof_backend); /* S: */
+
 static kmutex_t tprof_reader_lock;
-static kcondvar_t tprof_reader_cv;
-static off_t tprof_reader_offset;
+static kcondvar_t tprof_reader_cv;	/* L: */
+static off_t tprof_reader_offset;	/* R: */
 
 static kmutex_t tprof_startstop_lock;
-static kcondvar_t tprof_cv;
+static kcondvar_t tprof_cv;		/* L: */
 
-static struct tprof_stat tprof_stat;
+static struct tprof_stat tprof_stat;	/* L: */
 
 static tprof_cpu_t *
 tprof_cpu(struct cpu_info *ci)
@@ -234,6 +253,7 @@ tprof_start(const struct tprof_param *param)
 	struct cpu_info *ci;
 	int error;
 	uint64_t freq;
+	tprof_backend_t *tb;
 
 	KASSERT(mutex_owned(&tprof_startstop_lock));
 	if (tprof_running) {
@@ -241,7 +261,18 @@ tprof_start(const struct tprof_param *param)
 		goto done;
 	}
 
-	freq = tprof_backend_estimate_freq();
+	tb = tprof_backend;
+	if (tb == NULL) {
+		error = ENOENT;
+		goto done;
+	}
+	if (tb->tb_usecount > 0) {
+		error = EBUSY;
+		goto done;
+	}
+
+	tb->tb_usecount++;
+	freq = tb->tb_ops->tbo_estimate_freq();
 	tprof_samples_per_buf = MIN(freq * 2, TPROF_MAX_SAMPLES_PER_BUF);
 
 	error = workqueue_create(&tprof_wq, "tprofmv", tprof_worker, NULL,
@@ -264,7 +295,7 @@ tprof_start(const struct tprof_param *param)
 		callout_setfunc(&c->c_callout, tprof_kick, ci);
 	}
 
-	error = tprof_backend_start();
+	error = tb->tb_ops->tbo_start(NULL);
 	if (error != 0) {
 		tprof_stop1();
 		goto done;
@@ -290,13 +321,17 @@ tprof_stop(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+	tprof_backend_t *tb;
 
 	KASSERT(mutex_owned(&tprof_startstop_lock));
 	if (!tprof_running) {
 		goto done;
 	}
 
-	tprof_backend_stop();
+	tb = tprof_backend;
+	KASSERT(tb->tb_usecount > 0);
+	tb->tb_ops->tbo_stop(NULL);
+	tb->tb_usecount--;
 
 	mutex_enter(&tprof_lock);
 	tprof_running = false;
@@ -315,6 +350,10 @@ tprof_stop(void)
 done:
 	;
 }
+
+/*
+ * tprof_clear: drain unread samples.
+ */
 
 static void
 tprof_clear(void)
@@ -341,6 +380,21 @@ tprof_clear(void)
 	memset(&tprof_stat, 0, sizeof(tprof_stat));
 }
 
+static tprof_backend_t *
+tprof_backend_lookup(const char *name)
+{
+	tprof_backend_t *tb;
+
+	KASSERT(mutex_owned(&tprof_startstop_lock));
+
+	LIST_FOREACH(tb, &tprof_backends, tb_list) {
+		if (!strcmp(tb->tb_name, name)) {
+			return tb;
+		}
+	}
+	return NULL;
+}
+
 /* -------------------- backend interfaces */
 
 /*
@@ -351,7 +405,7 @@ tprof_clear(void)
  */
 
 void
-tprof_sample(const struct trapframe *tf)
+tprof_sample(tprof_backend_cookie_t *cookie, const struct trapframe *tf)
 {
 	tprof_cpu_t * const c = tprof_curcpu();
 	tprof_buf_t * const buf = c->c_buf;
@@ -365,6 +419,81 @@ tprof_sample(const struct trapframe *tf)
 	}
 	buf->b_data[idx].s_pc = pc;
 	buf->b_used = idx + 1;
+}
+
+/*
+ * tprof_backend_register: 
+ */
+
+int
+tprof_backend_register(const char *name, const tprof_backend_ops_t *ops,
+    int vers)
+{
+	tprof_backend_t *tb;
+
+	if (vers != TPROF_BACKEND_VERSION) {
+		return EINVAL;
+	}
+
+	mutex_enter(&tprof_startstop_lock);
+	tb = tprof_backend_lookup(name);
+	if (tb != NULL) {
+		mutex_exit(&tprof_startstop_lock);
+		return EEXIST;
+	}
+#if 1 /* XXX for now */
+	if (!LIST_EMPTY(&tprof_backends)) {
+		mutex_exit(&tprof_startstop_lock);
+		return ENOTSUP;
+	}
+#endif
+	tb = kmem_alloc(sizeof(*tb), KM_SLEEP);
+	tb->tb_name = name;
+	tb->tb_ops = ops;
+	tb->tb_usecount = 0;
+	LIST_INSERT_HEAD(&tprof_backends, tb, tb_list);
+#if 1 /* XXX for now */
+	if (tprof_backend == NULL) {
+		tprof_backend = tb;
+	}
+#endif
+	mutex_exit(&tprof_startstop_lock);
+
+	return 0;
+}
+
+/*
+ * tprof_backend_unregister: 
+ */
+
+int
+tprof_backend_unregister(const char *name)
+{
+	tprof_backend_t *tb;
+
+	mutex_enter(&tprof_startstop_lock);
+	tb = tprof_backend_lookup(name);
+#if defined(DIAGNOSTIC)
+	if (tb == NULL) {
+		mutex_exit(&tprof_startstop_lock);
+		panic("%s: not found '%s'", __func__, name);
+	}
+#endif /* defined(DIAGNOSTIC) */
+	if (tb->tb_usecount > 0) {
+		mutex_exit(&tprof_startstop_lock);
+		return EBUSY;
+	}
+#if 1 /* XXX for now */
+	if (tprof_backend == tb) {
+		tprof_backend = NULL;
+	}
+#endif
+	LIST_REMOVE(tb, tb_list);
+	mutex_exit(&tprof_startstop_lock);
+
+	kmem_free(tb, sizeof(*tb));
+
+	return 0;
 }
 
 /* -------------------- cdevsw interfaces */
@@ -526,10 +655,71 @@ void
 tprofattach(int nunits)
 {
 
+	/* nothing */
+}
+
+MODULE(MODULE_CLASS_DRIVER, tprof, NULL);
+
+static void
+tprof_driver_init(void)
+{
+
 	mutex_init(&tprof_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&tprof_reader_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&tprof_startstop_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&tprof_cv, "tprof");
 	cv_init(&tprof_reader_cv, "tprofread");
 	STAILQ_INIT(&tprof_list);
+}
+
+static void
+tprof_driver_fini(void)
+{
+
+	mutex_destroy(&tprof_lock);
+	mutex_destroy(&tprof_reader_lock);
+	mutex_destroy(&tprof_startstop_lock);
+	cv_destroy(&tprof_cv);
+	cv_destroy(&tprof_reader_cv);
+}
+
+static int
+tprof_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		tprof_driver_init();
+#if defined(_MODULE)
+		{
+			devmajor_t bmajor = NODEVMAJOR;
+			devmajor_t cmajor = NODEVMAJOR;
+			int error;
+
+			error = devsw_attach("tprof", NULL, &bmajor,
+			    &tprof_cdevsw, &cmajor);
+			if (error) {
+				tprof_driver_fini();
+				return error;
+			}
+		}
+#endif /* defined(_MODULE) */
+		return 0;
+
+	case MODULE_CMD_FINI:
+#if defined(_MODULE)
+		{
+			int error;
+			error = devsw_detach(NULL, &tprof_cdevsw);
+			if (error) {
+				return error;
+			}
+		}
+#endif /* defined(_MODULE) */
+		tprof_driver_fini();
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
 }
