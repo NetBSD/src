@@ -1,4 +1,4 @@
-# $NetBSD: module.i386,v 1.1 2008/11/29 17:57:34 tsutsui Exp $
+# $NetBSD: module.i386,v 1.2 2009/03/10 14:59:19 yamt Exp $
 ./@MODULEDIR@/azalia				base-kernel-modules
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules
 ./@MODULEDIR@/compat_freebsd			base-kernel-modules
@@ -19,3 +19,5 @@
 ./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules
 ./@MODULEDIR@/radeondrm				base-kernel-modules
 ./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules
+./@MODULEDIR@/tprof_pmi				base-kernel-modules
+./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules
