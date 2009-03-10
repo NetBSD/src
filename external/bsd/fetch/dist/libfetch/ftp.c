@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.1.1.4 2009/02/14 19:37:00 joerg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.1.1.5 2009/03/10 00:44:21 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>

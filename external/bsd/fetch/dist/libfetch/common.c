@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.3 2009/02/14 19:36:51 joerg Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.4 2009/03/10 00:44:15 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
