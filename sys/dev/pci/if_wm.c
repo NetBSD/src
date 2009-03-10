@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.166 2009/02/28 15:06:43 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.167 2009/03/10 03:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.166 2009/02/28 15:06:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.167 2009/03/10 03:41:50 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -254,6 +254,7 @@ typedef enum {
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
+	WM_T_ICH10,			/* ICH10 LAN */
 } wm_chip_type;
 
 /*
@@ -554,6 +555,9 @@ static void	wm_gmii_i82544_writereg(device_t, int, int, int);
 static int	wm_gmii_i80003_readreg(device_t, int, int);
 static void	wm_gmii_i80003_writereg(device_t, int, int, int);
 
+static int	wm_gmii_bm_readreg(device_t, int, int);
+static void	wm_gmii_bm_writereg(device_t, int, int, int);
+
 static void	wm_gmii_statchg(device_t);
 
 static void	wm_gmii_mediainit(struct wm_softc *);
@@ -580,6 +584,7 @@ static int32_t	wm_ich8_cycle_init(struct wm_softc *);
 static int32_t	wm_ich8_flash_cycle(struct wm_softc *, uint32_t);
 static int32_t	wm_read_ich8_data(struct wm_softc *, uint32_t,
 		     uint32_t, uint16_t *);
+static int32_t	wm_read_ich8_byte(struct wm_softc *sc, uint32_t, uint8_t *);
 static int32_t	wm_read_ich8_word(struct wm_softc *sc, uint32_t, uint16_t *);
 
 CFATTACH_DECL_NEW(wm, sizeof(struct wm_softc),
@@ -864,7 +869,10 @@ static const struct wm_product {
 	  WM_T_ICH9,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82567LM_3,
 	  "82567LM-3 LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH10,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82567LF_3,
+	  "82567LF-3 LAN Controller",
+	  WM_T_ICH10,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -1100,7 +1108,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 	} else if (sc->sc_type >= WM_T_82571) {
 		sc->sc_flags |= WM_F_PCIE;
-		if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9))
+		if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
+			&& (sc->sc_type != WM_T_ICH10))
 			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 		aprint_verbose_dev(sc->sc_dev, "PCI-Express bus\n");
 	} else {
@@ -1272,7 +1281,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Get some information about the EEPROM.
 	 */
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10)) {
 		uint32_t flash_size;
 		sc->sc_flags |= WM_F_SWFWHW_SYNC | WM_F_EEPROM_FLASH;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
@@ -1490,7 +1500,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * media structures accordingly.
 	 */
 	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_ICH9
-	    || sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574) {
+	    || sc->sc_type == WM_T_ICH10 || sc->sc_type == WM_T_82573
+	    || sc->sc_type == WM_T_82574) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
 		wm_gmii_mediainit(sc);
 	} else if (sc->sc_type < WM_T_82543 ||
@@ -2885,6 +2896,7 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_PBS, PBA_16K);
 		break;
 	case WM_T_ICH9:
+	case WM_T_ICH10:
 		sc->sc_pba = PBA_10K;
 		break;
 	default:
@@ -2953,6 +2965,7 @@ wm_reset(struct wm_softc *sc)
 
 	case WM_T_ICH8:
 	case WM_T_ICH9:
+	case WM_T_ICH10:
 		wm_get_swfwhw_semaphore(sc);
 		CSR_WRITE(sc, WMREG_CTRL, CTRL_RST | CTRL_PHY_RESET);
 		delay(10000);
@@ -3421,6 +3434,7 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
+	case WM_T_ICH10:
 		for (i = 10; i > 0; i--) {
 			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
 				break;
@@ -3736,7 +3750,8 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	if (wm_acquire_eeprom(sc))
 		return 1;
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10))
 		rv = wm_read_eeprom_ich8(sc, word, wordcnt, data);
 	else if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
 		rv = wm_read_eeprom_eerd(sc, word, wordcnt, data);
@@ -3882,7 +3897,8 @@ wm_mchash(struct wm_softc *sc, const uint8_t *enaddr)
 	static const int ich8_hi_shift[4] = { 2, 3, 4, 6 };
 	uint32_t hash;
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10)) {
 		hash = (enaddr[4] >> ich8_lo_shift[sc->sc_mchash_type]) |
 		    (((uint16_t) enaddr[5]) << ich8_hi_shift[sc->sc_mchash_type]);
 		return (hash & 0x3ff);
@@ -3927,7 +3943,8 @@ wm_set_filter(struct wm_softc *sc)
 	 * Set the station address in the first RAL slot, and
 	 * clear the remaining slots.
 	 */
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+		 || (sc->sc_type == WM_T_ICH10))
 		size = WM_ICH8_RAL_TABSIZE;
 	else
 		size = WM_RAL_TABSIZE;
@@ -3935,7 +3952,8 @@ wm_set_filter(struct wm_softc *sc)
 	for (i = 1; i < size; i++)
 		wm_set_ral(sc, NULL, i);
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10))
 		size = WM_ICH8_MC_TABSIZE;
 	else
 		size = WM_MC_TABSIZE;
@@ -3960,7 +3978,8 @@ wm_set_filter(struct wm_softc *sc)
 		hash = wm_mchash(sc, enm->enm_addrlo);
 
 		reg = (hash >> 5);
-		if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+		if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+		    || (sc->sc_type == WM_T_ICH10))
 			reg &= 0x1f;
 		else
 			reg &= 0x7f;
@@ -4262,7 +4281,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	uint32_t reg;
 	int func = 0; /* XXX gcc */
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10)) {
 		if (wm_get_swfwhw_semaphore(sc))
 			return;
 	}
@@ -4306,7 +4326,8 @@ wm_gmii_reset(struct wm_softc *sc)
 		sc->sc_ctrl_ext = reg | CTRL_EXT_SWDPIN(4);
 #endif
 	}
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10))
 		wm_put_swfwhw_semaphore(sc);
 	if (sc->sc_type == WM_T_80003)
 		wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
@@ -4342,7 +4363,10 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	/* Initialize our media structures and probe the GMII. */
 	sc->sc_mii.mii_ifp = ifp;
 
-	if (sc->sc_type >= WM_T_80003) {
+	if (sc->sc_type == WM_T_ICH10) {
+		sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
+	} else if (sc->sc_type >= WM_T_80003) {
 		sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
 		sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
 	} else if (sc->sc_type >= WM_T_82544) {
@@ -4673,6 +4697,68 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 }
 
 /*
+ * wm_gmii_bm_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the kumeran
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static int
+wm_gmii_bm_readreg(device_t self, int phy, int reg)
+{
+	struct wm_softc *sc = device_private(self);
+	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
+	int rv;
+
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+		return 0;
+
+	if (reg > GG82563_MAX_REG_ADDRESS) {
+		if (phy == 1)
+			wm_gmii_i82544_writereg(self, phy, 0x1f,
+			    reg);
+		else
+			wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+			    reg >> GG82563_PAGE_SHIFT);
+
+	}
+
+	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+	return (rv);
+}
+
+/*
+ * wm_gmii_bm_writereg:	[mii interface function]
+ *
+ *	Write a PHY register on the kumeran.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static void
+wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
+{
+	struct wm_softc *sc = device_private(self);
+	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
+
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+		return;
+
+	if (reg > GG82563_MAX_REG_ADDRESS) {
+		if (phy == 1)
+			wm_gmii_i82544_writereg(self, phy, 0x1f,
+			    reg);
+		else
+			wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+			    reg >> GG82563_PAGE_SHIFT);
+
+	}
+
+	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
+	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+}
+
+/*
  * wm_gmii_statchg:	[mii interface function]
  *
  *	Callback from MII layer when media changes.
@@ -4932,14 +5018,37 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
     uint32_t bank_offset = 0;
     uint16_t word = 0;
     uint16_t i = 0;
+    uint8_t  bank_high_byte;
 
     /* We need to know which is the valid flash bank.  In the event
      * that we didn't allocate eeprom_shadow_ram, we may not be
      * managing flash_bank.  So it cannot be trusted and needs
      * to be updated with each read.
      */
-    /* Value of bit 22 corresponds to the flash bank we're on. */
-    flash_bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
+    if (sc->sc_type != WM_T_ICH10) {
+	    /* Value of bit 22 corresponds to the flash bank we're on. */
+	    flash_bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
+    } else {
+	    uint32_t bank1_offset = sc->sc_ich8_flash_bank_size
+		* sizeof(uint16_t);
+
+	    act_offset = ICH_NVM_SIG_WORD * 2 + 1;
+	    wm_read_ich8_byte(sc, act_offset, &bank_high_byte);
+	    if ((bank_high_byte & (ICH_NVM_SIG_MASK >> 8)) == 0x80) {
+		    flash_bank = 0;
+	    } else {
+		    wm_read_ich8_byte(sc, act_offset + bank1_offset,
+			&bank_high_byte);
+		    if ((bank_high_byte & (ICH_NVM_SIG_MASK >> 8)) == 0x80) {
+			    flash_bank = 1;
+		    } else {
+			    printf("%s: ERROR: EEPROM not present\n",
+				device_xname(sc->sc_dev));
+			    return -1;
+		    }
+	    }
+	    
+    }
 
     /* Adjust offset appropriately if we're on bank 1 - adjust for word size */
     bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
@@ -5131,7 +5240,6 @@ wm_read_ich8_data(struct wm_softc *sc, uint32_t index,
     return error;
 }
 
-#if 0
 /******************************************************************************
  * Reads a single byte from the NVM using the ICH8 flash access registers.
  *
@@ -5152,7 +5260,6 @@ wm_read_ich8_byte(struct wm_softc *sc, uint32_t index, uint8_t* data)
 
     return status;
 }
-#endif
 
 /******************************************************************************
  * Reads a word from the NVM using the ICH8 flash access registers.
