@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.11 2009/03/10 17:09:48 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.12 2009/03/11 11:36:33 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.11 2009/03/10 17:09:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.12 2009/03/11 11:36:33 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1134,13 +1134,14 @@ if (ifp->if_flags & IFF_RUNNING) return;/*XXX*/
 	/* thresholds determined by NPE firmware FS */
 	WR4(sc, NPE_MAC_THRESH_P_EMPTY,	0x12);
 	WR4(sc, NPE_MAC_THRESH_P_FULL,	0x30);
-	WR4(sc, NPE_MAC_BUF_SIZE_TX,	0x8);	/* tx fifo threshold (bytes) */
+	WR4(sc, NPE_MAC_BUF_SIZE_TX, NPE_MAC_BUF_SIZE_TX_DEFAULT);
+						/* tx fifo threshold (bytes) */
 	WR4(sc, NPE_MAC_TX_DEFER,	0x15);	/* for single deferral */
 	WR4(sc, NPE_MAC_RX_DEFER,	0x16);	/* deferral on inter-frame gap*/
 	WR4(sc, NPE_MAC_TX_TWO_DEFER_1,	0x8);	/* for 2-part deferral */
 	WR4(sc, NPE_MAC_TX_TWO_DEFER_2,	0x7);	/* for 2-part deferral */
-	WR4(sc, NPE_MAC_SLOT_TIME,	0x80);	/* assumes MII mode */
-
+	WR4(sc, NPE_MAC_SLOT_TIME, NPE_MAC_SLOT_TIME_MII_DEFAULT);
+						/* assumes MII mode */
 	WR4(sc, NPE_MAC_TX_CNTRL1,
 		  NPE_TX_CNTRL1_RETRY		/* retry failed xmits */
 		| NPE_TX_CNTRL1_FCS_EN		/* append FCS */
