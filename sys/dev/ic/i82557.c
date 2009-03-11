@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.126 2009/03/09 10:33:33 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.127 2009/03/11 13:12:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.126 2009/03/09 10:33:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.127 2009/03/11 13:12:41 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -135,7 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.126 2009/03/09 10:33:33 tsutsui Exp $")
  *
  * See the definition of struct fxp_cb_config for the bit definitions.
  */
-const u_int8_t fxp_cb_config_template[] = {
+const uint8_t fxp_cb_config_template[] = {
 	0x0, 0x0,		/* cb_status */
 	0x0, 0x0,		/* cb_command */
 	0x0, 0x0, 0x0, 0x0,	/* link_addr */
@@ -198,10 +198,10 @@ int	fxp_mdi_read(device_t, int, int);
 void	fxp_statchg(device_t);
 void	fxp_mdi_write(device_t, int, int, int);
 void	fxp_autosize_eeprom(struct fxp_softc*);
-void	fxp_read_eeprom(struct fxp_softc *, u_int16_t *, int, int);
-void	fxp_write_eeprom(struct fxp_softc *, u_int16_t *, int, int);
+void	fxp_read_eeprom(struct fxp_softc *, uint16_t *, int, int);
+void	fxp_write_eeprom(struct fxp_softc *, uint16_t *, int, int);
 void	fxp_eeprom_update_cksum(struct fxp_softc *);
-void	fxp_get_info(struct fxp_softc *, u_int8_t *);
+void	fxp_get_info(struct fxp_softc *, uint8_t *);
 void	fxp_tick(void *);
 void	fxp_mc_setup(struct fxp_softc *);
 void	fxp_load_ucode(struct fxp_softc *);
@@ -249,7 +249,7 @@ fxp_scb_wait(struct fxp_softc *sc)
  * Submit a command to the i82557.
  */
 static inline void
-fxp_scb_cmd(struct fxp_softc *sc, u_int8_t cmd)
+fxp_scb_cmd(struct fxp_softc *sc, uint8_t cmd)
 {
 
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, cmd);
@@ -261,7 +261,7 @@ fxp_scb_cmd(struct fxp_softc *sc, u_int8_t cmd)
 void
 fxp_attach(struct fxp_softc *sc)
 {
-	u_int8_t enaddr[ETHER_ADDR_LEN];
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp;
 	bus_dma_segment_t seg;
 	int rseg, i, error;
@@ -520,9 +520,9 @@ fxp_80c24_initmedia(struct fxp_softc *sc)
  * Initialize the interface media.
  */
 void
-fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
+fxp_get_info(struct fxp_softc *sc, uint8_t *enaddr)
 {
-	u_int16_t data, myea[ETHER_ADDR_LEN / 2];
+	uint16_t data, myea[ETHER_ADDR_LEN / 2];
 
 	/*
 	 * Reset to a stable state.
@@ -698,9 +698,9 @@ fxp_autosize_eeprom(struct fxp_softc *sc)
  * every 16 bits of data.
  */
 void
-fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
+fxp_read_eeprom(struct fxp_softc *sc, uint16_t *data, int offset, int words)
 {
-	u_int16_t reg;
+	uint16_t reg;
 	int i, x;
 
 	for (i = 0; i < words; i++) {
@@ -735,7 +735,7 @@ fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
  * Write data to the serial EEPROM.
  */
 void
-fxp_write_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
+fxp_write_eeprom(struct fxp_softc *sc, uint16_t *data, int offset, int words)
 {
 	int i, j;
 
@@ -1084,7 +1084,7 @@ fxp_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_dmamap_t rxmap;
 	int claimed = 0, rnr;
-	u_int8_t statack;
+	uint8_t statack;
 
 	if (!device_is_active(sc->sc_dev) || sc->sc_enabled == 0)
 		return (0);
@@ -1172,7 +1172,7 @@ fxp_txintr(struct fxp_softc *sc)
 	struct fxp_txdesc *txd;
 	struct fxp_txsoft *txs;
 	int i;
-	u_int16_t txstat;
+	uint16_t txstat;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	for (i = sc->sc_txdirty; sc->sc_txpending != 0;
@@ -1354,7 +1354,7 @@ fxp_rxintr(struct fxp_softc *sc)
 	bus_dmamap_t rxmap;
 	struct fxp_rfa *rfa;
 	int rnr;
-	u_int16_t len, rxstat;
+	uint16_t len, rxstat;
 
 	rnr = 0;
 
