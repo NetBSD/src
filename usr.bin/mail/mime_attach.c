@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.10 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.11 2009/03/11 01:10:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.10 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.11 2009/03/11 01:10:05 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -364,16 +364,16 @@ content_type_by_name(char *filename)
 	}
 	magic = magic_open(MAGIC_MIME);
 	if (magic == NULL) {
-		warn("magic_open: %s", magic_error(magic));
+		warnx("magic_open: %s", magic_error(magic));
 		return NULL;
 	}
 	if (magic_load(magic, NULL) != 0) {
-		warn("magic_load: %s", magic_error(magic));
+		warnx("magic_load: %s", magic_error(magic));
 		return NULL;
 	}
 	cp = magic_file(magic, filename);
 	if (cp == NULL) {
-		warn("magic_load: %s", magic_error(magic));
+		warnx("magic_file: %s", magic_error(magic));
 		return NULL;
 	}
 	if (filename &&
