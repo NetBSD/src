@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.7 2009/01/29 16:00:33 nonaka Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.8 2009/03/11 09:04:50 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.8 2009/03/11 09:04:50 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
