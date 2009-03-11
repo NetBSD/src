@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.5 2009/03/10 14:45:02 yamt Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.6 2009/03/11 13:48:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.5 2009/03/10 14:45:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.6 2009/03/11 13:48:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,9 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.5 2009/03/10 14:45:02 yamt Exp $");
 #include <x86/tprof.h>
 #include <x86/nmi.h>
 
-#include <machine/db_machdep.h>	/* PC_REGS */
-#include <machine/cpuvar.h>	/* cpu_vendor */
+#include <machine/cpufunc.h>
 #include <machine/cputypes.h>	/* CPUVENDER_* */
+#include <machine/cpuvar.h>	/* cpu_vendor */
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
@@ -163,6 +163,7 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 	const struct msrs *msr;
 	uint32_t pcint;
 	uint64_t cccr;
+	tprof_frame_info_t tfi;
 
 	KASSERT(dummy == NULL);
 
@@ -180,7 +181,12 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 	}
 
 	/* record a sample */
-	tprof_sample(tprof_cookie, tf);
+#if defined(amd64)
+	tfi.tfi_pc = tf->tf_rip;
+#else /* defined(amd64) */
+	tfi.tfi_pc = tf->tf_eip;
+#endif /* defined(amd64) */
+	tprof_sample(tprof_cookie, &tfi);
 
 	/* reset counter */
 	wrmsr(msr->msr_counter, counter_reset_val);
