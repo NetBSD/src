@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.129 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.130 2009/03/11 13:29:44 nakayama Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.129 2009/03/07 22:02:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.130 2009/03/11 13:29:44 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -972,7 +972,7 @@ db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		full = true;
 
 	if (have_addr == false)
-		addr = (db_expr_t)db_read_ptr("kernel_map");
+		addr = (db_expr_t)(uintptr_t)db_read_ptr("kernel_map");
 
 #ifdef _KERNEL
 	uvm_map_printit((struct vm_map *)(uintptr_t) addr, full, db_printf);
