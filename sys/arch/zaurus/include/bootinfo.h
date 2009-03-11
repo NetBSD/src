@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.h,v 1.3 2009/03/02 09:33:01 nonaka Exp $	*/
+/*      $NetBSD: bootinfo.h,v 1.4 2009/03/11 09:02:04 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -34,10 +34,11 @@
 
 #define BOOTINFO_MAXSIZE (BOOTARGS_BUFSIZ - sizeof(uint32_t)) /* uint32_t for magic */
 
-#define	BTINFO_BOOTDISK	0
-#define	BTINFO_HOWTO	1
-#define	BTINFO_CONSDEV	2
-#define	BTINFO_MAX	3
+#define BTINFO_BOOTDISK		0
+#define BTINFO_HOWTO		1
+#define BTINFO_CONSDEV		2
+#define BTINFO_ROOTDEVICE	3
+#define BTINFO_MAX		4
 
 #ifndef	_LOCORE
 
@@ -67,6 +68,11 @@ struct btinfo_console {
 	char devname[16];
 	int addr;
 	int speed;
+};
+
+struct btinfo_rootdevice {
+	struct btinfo_common common;
+	char devname[16];
 };
 
 struct bootinfo {

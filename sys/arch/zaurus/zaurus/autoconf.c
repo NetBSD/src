@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2009/03/11 09:02:05 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2009/03/02 09:33:02 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2009/03/11 09:02:05 nonaka Exp $");
 
 #include "opt_md.h"
 
@@ -145,11 +145,31 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 static void
 findroot(void)
 {
+	struct btinfo_rootdevice *biv;
 	struct btinfo_bootdisk *bid;
 	device_t dv;
 
 	if (booted_device)
 		return;
+
+	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			cfdata_t cd;
+			size_t len;
+
+			if (device_class(dv) != DV_DISK)
+				continue;
+
+			cd = device_cfdata(dv);
+			len = strlen(cd->cf_name);
+
+			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
+			    biv->devname[len] - '0' == cd->cf_unit) {
+				handle_wedges(dv, biv->devname[len + 1] - 'a');
+				return;
+			}
+		}
+	}
 
 	if ((bid = lookup_bootinfo(BTINFO_BOOTDISK)) != NULL) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2009/03/11 09:02:05 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2009/03/02 09:33:02 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2009/03/11 09:02:05 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -118,6 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2009/03/02 09:33:02 nonaka Exp $");
 #include "md.h"
 #include "ksyms.h"
 
+#include "opt_kloader.h"
+#ifndef KLOADER_KERNEL_PATH
+#define KLOADER_KERNEL_PATH	"/netbsd"
+#endif
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -127,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2009/03/02 09:33:02 nonaka Exp $");
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -146,6 +152,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2009/03/02 09:33:02 nonaka Exp $");
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#ifdef KLOADER
+#include <machine/kloader.h>
+#endif
 
 #include <arm/undefined.h>
 #include <arm/arm32/machdep.h>
@@ -235,20 +244,34 @@ extern int pmap_debug_level;
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
-struct user *proc0paddr;
+extern struct user *proc0paddr;
 
 const char *console = "glass";
 int glass_console = 0;
 
+#ifdef KLOADER
+pv_addr_t bootinfo_pt;
+pv_addr_t bootinfo_pg;
+struct kloader_bootinfo kbootinfo;
+int kloader_howto = 0;
+#else
 struct bootinfo _bootinfo;
+#endif
 struct bootinfo *bootinfo;
 struct btinfo_howto *bi_howto;
+
+#define	BOOTINFO_PAGE	(0xa0200000UL - PAGE_SIZE)
 
 /* Prototypes */
 void	consinit(void);
 void	dumpsys(void);
 #ifdef KGDB
 void	kgdb_port_init(void);
+#endif
+#ifdef KLOADER
+static int parseboot(char *arg, char **filename, int *howto);
+static char *gettrailer(char *arg);
+static int parseopts(const char *opts, int *howto);
 #endif
 
 #if defined(CPU_XSCALE_PXA250)
@@ -331,6 +354,27 @@ cpu_reboot(int howto, char *bootstr)
 
 	boothowto = howto;
 
+#ifdef KLOADER
+	if ((howto & RB_HALT) == 0) {
+		char *filename = NULL;
+
+		if ((howto & RB_STRING) && (bootstr != NULL)) {
+			if (parseboot(bootstr, &filename, &kloader_howto) == 0){
+				filename = NULL;
+				kloader_howto = 0;
+			}
+		}
+		if (kloader_howto != 0) {
+			printf("howto: 0x%x\n", kloader_howto);
+		}
+		if (filename != NULL) {
+			kloader_reboot_setup(filename);
+		} else {
+			kloader_reboot_setup(KLOADER_KERNEL_PATH);
+		}
+	}
+#endif
+
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
 	 * Note: Unless cold is set to 1 here, syslogd will die during the
@@ -377,6 +421,16 @@ haltsys:
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	}
+#ifdef KLOADER
+	else {
+		delay(1 * 1000 * 1000);
+		kloader_reboot();
+		printf("\n");
+		printf("Failed to load a new kernel.\n");
+		printf("Please press any key to reboot.\n\n");
+		cngetc();
+	}
+#endif
 
 	printf("rebooting...\n");
 	delay(1 * 1000 * 1000);
@@ -588,12 +642,15 @@ initarm(void *arg)
 	 */
 	magicaddr = (void *)(0xa0200000 - BOOTARGS_BUFSIZ);
 	if (*magicaddr == BOOTARGS_MAGIC) {
+#ifdef KLOADER
+		bootinfo = &kbootinfo.bootinfo;
+#else
 		bootinfo = &_bootinfo;
+#endif
 		memcpy(bootinfo,
 		  (char *)0xa0200000 - BOOTINFO_MAXSIZE, BOOTINFO_MAXSIZE);
 		bi_howto = lookup_bootinfo(BTINFO_HOWTO);
-		if (bi_howto)
-			boothowto = bi_howto->howto;
+		boothowto = (bi_howto != NULL) ? bi_howto->howto : RB_AUTOBOOT;
 	} else {
 		boothowto = RB_AUTOBOOT;
 	}
@@ -639,6 +696,11 @@ initarm(void *arg)
 		memsize =  0x04000000; /* 64MB */
 	}
 
+#ifdef KLOADER
+	/* copy boot parameter for kloader */
+	kloader_bootinfo_set(&kbootinfo, 0, NULL, NULL, true);
+#endif
+
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
@@ -665,7 +727,7 @@ initarm(void *arg)
 	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
 
 	physical_freestart = 0xa0009000UL;
-	physical_freeend = 0xa0200000UL;
+	physical_freeend = BOOTINFO_PAGE;
 
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
@@ -729,6 +791,9 @@ initarm(void *arg)
 			++loop1;
 		}
 	}
+#ifdef KLOADER
+	valloc_pages(bootinfo_pt, L2_TABLE_SIZE / PAGE_SIZE);
+#endif
 
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
@@ -751,6 +816,11 @@ initarm(void *arg)
 	KASSERT(xscale_minidata_clean_size <= PAGE_SIZE);
 	valloc_pages(minidataclean, 1);
 
+#ifdef KLOADER
+	bootinfo_pg.pv_pa = BOOTINFO_PAGE;
+	bootinfo_pg.pv_va = KERNEL_BASE + bootinfo_pg.pv_pa - physical_start;
+#endif
+
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
 	    irqstack.pv_va); 
@@ -763,6 +833,10 @@ initarm(void *arg)
 	printf("minidataclean: p0x%08lx v0x%08lx, size = %ld\n",
 	    minidataclean.pv_pa, minidataclean.pv_va,
 	    xscale_minidata_clean_size);
+#ifdef KLOADER
+	printf("bootinfo_pg: p0x%08lx v0x%08lx\n", bootinfo_pg.pv_pa,
+	    bootinfo_pg.pv_va);
+#endif
 #endif
 
 	/*
@@ -796,6 +870,9 @@ initarm(void *arg)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+#ifdef KLOADER
+	pmap_link_l2pt(l1pagetable, 0xa0000000, &bootinfo_pt);
+#endif
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
@@ -848,6 +925,13 @@ initarm(void *arg)
 		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 	}
+
+#ifdef KLOADER
+	pmap_map_chunk(l1pagetable, bootinfo_pt.pv_va, bootinfo_pt.pv_pa,
+	    L2_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+	pmap_map_chunk(l1pagetable, bootinfo_pg.pv_va, bootinfo_pg.pv_pa,
+	    PAGE_SIZE, VM_PROT_ALL, PTE_CACHE);
+#endif
 
 	/* Map the Mini-Data cache clean area. */
 	xscale_setup_minidata(l1pagetable, minidataclean.pv_va,
@@ -978,8 +1062,17 @@ initarm(void *arg)
 #endif
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
+#ifdef VERBOSE_INIT_ARM
+	printf("\n");
+#endif
+
 #ifdef __HAVE_MEMORY_DISK__
 	md_root_setconf(memory_disk, sizeof memory_disk);
+#endif
+
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	/* Firmware doesn't load symbols. */
+	ddb_init(0, NULL, NULL);
 #endif
 
 #ifdef KGDB
@@ -987,11 +1080,6 @@ initarm(void *arg)
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
 	}
-#endif
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* Firmware doesn't load symbols. */
-	ddb_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB
@@ -1022,6 +1110,89 @@ lookup_bootinfo(int type)
 	}
 	return (NULL);
 }
+
+#ifdef KLOADER
+static int
+parseboot(char *arg, char **filename, int *howto)
+{
+	char *opts = NULL;
+
+	*filename = NULL;
+	*howto = 0;
+
+	/* if there were no arguments */
+	if (arg == NULL || *arg == '\0')
+		return 1;
+
+	/* format is... */
+	/* [[xxNx:]filename] [-adqsv] */
+
+	/* check for just args */
+	if (arg[0] == '-') {
+		opts = arg;
+	} else {
+		/* there's a file name */
+		*filename = arg;
+
+		opts = gettrailer(arg);
+		if (opts == NULL || *opts == '\0') {
+			opts = NULL;
+		} else if (*opts != '-') {
+			printf("invalid arguments\n");
+			return 0;
+		}
+	}
+
+	/* at this point, we have dealt with filenames. */
+
+	/* now, deal with options */
+	if (opts) {
+		if (parseopts(opts, howto) == 0) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static char *
+gettrailer(char *arg)
+{
+	static char nullstr[] = "";
+	char *options;
+
+	if ((options = strchr(arg, ' ')) == NULL)
+		return nullstr;
+	else
+		*options++ = '\0';
+
+	/* trim leading blanks */
+	while (*options && *options == ' ')
+		options++;
+
+	return options;
+}
+
+static int
+parseopts(const char *opts, int *howto)
+{
+	int r, tmpopt = *howto;
+
+	opts++; 	/* skip - */
+	while (*opts && *opts != ' ') {
+		r = 0;
+		BOOT_FLAG(*opts, r);
+		if (r == 0) {
+			printf("-%c: unknown flag\n", *opts);
+			return 0;
+		}
+		tmpopt |= r;
+		opts++;
+	}
+
+	*howto = tmpopt;
+	return 1;
+}
+#endif
 
 /*
  * Console
