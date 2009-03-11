@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.187 2009/03/08 12:52:08 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.188 2009/03/11 06:05:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.187 2009/03/08 12:52:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.188 2009/03/11 06:05:29 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -995,6 +995,8 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 
 	fp = pool_cache_get(file_cache, PR_WAITOK);
 	KASSERT(fp->f_count == 0);
+	KASSERT(fp->f_msgcount == 0);
+	KASSERT(fp->f_unpcount == 0);
 	fp->f_cred = kauth_cred_get();
 	kauth_cred_hold(fp->f_cred);
 
@@ -1002,6 +1004,15 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 		fd_abort(p, fp, *resultfd);
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
 		return ENFILE;
+	}
+
+	/*
+	 * Don't allow recycled files to be scanned.
+	 */
+	if ((fp->f_flag & FSCAN) != 0) {
+		mutex_enter(&fp->f_lock);
+		atomic_and_uint(&fp->f_flag, ~FSCAN);
+		mutex_exit(&fp->f_lock);
 	}
 
 	fp->f_advice = 0;
