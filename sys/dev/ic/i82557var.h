@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.44 2009/03/07 15:03:25 tsutsui Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.45 2009/03/11 13:12:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ struct fxp_softc {
 	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS]; /* free receive buffer DMA maps */
 	int	sc_rxfree;		/* free map index */
 	int	sc_rxidle;		/* # of seconds RX has been idle */
-	u_int16_t sc_txcmd;		/* transmit command (LITTLE ENDIAN) */
+	uint16_t sc_txcmd;		/* transmit command (LITTLE ENDIAN) */
 
 	/*
 	 * Control data structures.
@@ -308,7 +308,7 @@ do {									\
 	bus_dmamap_t __rxmap = M_GETCTX((m), bus_dmamap_t);		\
 	struct mbuf *__p_m;						\
 	struct fxp_rfa *__rfa, *__p_rfa;				\
-	u_int32_t __v;							\
+	uint32_t __v;							\
 									\
 	(m)->m_data = (m)->m_ext.ext_buf + (sc)->sc_rfa_size +		\
 	    RFA_ALIGNMENT_FUDGE;					\
