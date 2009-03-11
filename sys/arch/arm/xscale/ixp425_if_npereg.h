@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npereg.h,v 1.2 2009/03/11 11:36:33 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_if_npereg.h,v 1.3 2009/03/11 16:30:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -124,6 +124,9 @@ struct npehwbuf {
 #define	NPE_SETRXQOSENTRY	0x0b	/* map user pri -> QoS class+rx qid */
 #define	NPE_SETFIREWALLMODE	0x0e	/* config firewall services */
 #define	NPE_SETLOOPBACK		0x12	/* enable/disable loopback */
+#define	NPE_ADDRESSFILTERCONFIG	0x14	/* update multicast filter */
+#define	NPE_NOTIFYMACRECOVERYDONE 0x16	/* MAC has been recovered */
+#define	NPE_MACRECOVERYSTART	0x17	/* message from NPE to recover MAC*/
 /* ... XXX more */
 
 #define	NPE_MAC_MSGID_SHL	24

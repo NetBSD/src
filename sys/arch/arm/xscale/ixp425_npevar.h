@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npevar.h,v 1.2 2009/03/10 17:09:48 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_npevar.h,v 1.3 2009/03/11 16:30:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -81,7 +81,28 @@
 #define	IXP425_NPE_B_IMAGEID	0x01000201
 #define	IXP425_NPE_C_IMAGEID	0x02000201
 
-struct ixpnpe_softc;
+struct ixpnpe_softc {
+	struct device	sc_dev;
+	bus_dma_tag_t	sc_dt;
+	bus_space_tag_t	sc_iot;
+	bus_space_handle_t sc_ioh;
+	bus_size_t	sc_size;	/* size of mapped register window */
+	int		sc_unit;
+	void		*sc_ih;		/* interrupt handler */
+	struct simplelock sc_lock;	/* mailbox lock */
+	uint32_t	sc_msg[2];	/* reply msg collected in ixpnpe_intr */
+	int		sc_msgwaiting;	/* sc_msg holds valid data */
+
+	int		validImage;	/* valid ucode image loaded */
+	int		started;	/* NPE is started */
+	uint8_t		functionalityId;/* ucode functionality ID */
+	int		insMemSize;	/* size of instruction memory */
+	int		dataMemSize;	/* size of data memory */
+	uint32_t	savedExecCount;
+	uint32_t	savedEcsDbgCtxtReg2;
+	void		(*macresetcbfunc)(void *);
+	void		*macresetcbarg;
+};
 
 int	ixpnpe_stopandreset(struct ixpnpe_softc *);
 int	ixpnpe_start(struct ixpnpe_softc *);
