@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.65 2009/03/07 15:03:25 tsutsui Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.66 2009/03/11 13:12:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.65 2009/03/07 15:03:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.66 2009/03/11 13:12:41 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -98,7 +98,7 @@ CFATTACH_DECL_NEW(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, NULL, NULL);
 
 static const struct fxp_pci_product {
-	u_int32_t	fpp_prodid;	/* PCI product ID */
+	uint32_t	fpp_prodid;	/* PCI product ID */
 	const char	*fpp_name;	/* device name */
 } fxp_pci_products[] = {
 	{ PCI_PRODUCT_INTEL_82557,
