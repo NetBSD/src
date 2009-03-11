@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npereg.h,v 1.1 2006/12/10 10:01:49 scw Exp $	*/
+/*	$NetBSD: ixp425_if_npereg.h,v 1.2 2009/03/11 11:36:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -250,8 +250,12 @@ struct npestats {
 
 #define NPE_MAC_RESET_DELAY    1
 
-/* This value applies to RMII */
+/* Slot time */
+#define NPE_MAC_SLOT_TIME_MII_DEFAULT	0x80
 #define NPE_MAC_SLOT_TIME_RMII_DEFAULT  0xFF
+
+/* TX fifo threshold */
+#define NPE_MAC_BUF_SIZE_TX_DEFAULT	0x18	/* CSR 2 or higher */
 
 /*
  * MII definitions - these have been verified against the LXT971 and LXT972 PHYs
