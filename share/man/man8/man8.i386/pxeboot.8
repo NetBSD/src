@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.12 2009/03/09 19:24:31 joerg Exp $
+.\"	$NetBSD: pxeboot.8,v 1.13 2009/03/11 19:26:09 joerg Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -190,11 +190,7 @@ The commands accepted in interactive mode are:
 .\" and in other i386-specific *boot.8 files;
 .\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
-.It Xo Ic boot
-.Op Va device : Ns
-.Op Va filename
-.Op Fl 1234abcdmqsvxz
-.Xc
+.It Ic boot Oo Va device : Ns Oc Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
 Boot
 .Nx .
 See
