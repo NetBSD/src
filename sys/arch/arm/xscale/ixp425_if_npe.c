@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.12 2009/03/11 11:36:33 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.13 2009/03/11 12:16:12 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.12 2009/03/11 11:36:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.13 2009/03/11 12:16:12 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -123,6 +123,7 @@ struct npe_softc {
 	struct npestats	*sc_stats;
 	bus_dmamap_t	sc_stats_map;
 	bus_addr_t	sc_stats_phys;	/* phys addr of sc_stats */
+	int		sc_if_flags;	/* keep last if_flags */
 };
 
 /*
@@ -200,7 +201,9 @@ static void	npe_txdone(int qid, void *arg);
 static int	npe_rxbuf_init(struct npe_softc *, struct npebuf *,
 			struct mbuf *);
 static void	npe_rxdone(int qid, void *arg);
+static void	npeinit_macreg(struct npe_softc *);
 static int	npeinit(struct ifnet *);
+static void	npeinit_locked(void *);
 static void	npestart(struct ifnet *);
 static void	npestop(struct ifnet *, int);
 static void	npewatchdog(struct ifnet *);
@@ -287,6 +290,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 		return;
 	}
 
+	npeinit_macreg(sc);
 	/*
 	 * XXXSCW: This is bogus - the NPE may not have been configured for
 	 * XXXSCW: Ethernet yet. We must check for a property set by
@@ -1100,16 +1104,9 @@ npe_startrecv(struct npe_softc *sc)
 	}
 }
 
-/*
- * Reset and initialize the chip
- */
 static void
-npeinit_locked(void *xsc)
+npeinit_macreg(struct npe_softc *sc)
 {
-	struct npe_softc *sc = xsc;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-
-if (ifp->if_flags & IFF_RUNNING) return;/*XXX*/
 
 	/*
 	 * Reset MAC core.
@@ -1152,8 +1149,24 @@ if (ifp->if_flags & IFF_RUNNING) return;/*XXX*/
 		  NPE_RX_CNTRL1_CRC_EN		/* include CRC/FCS */
 		| NPE_RX_CNTRL1_PAUSE_EN);	/* ena pause frame handling */
 	WR4(sc, NPE_MAC_RX_CNTRL2, 0);
+}
 
+/*
+ * Reset and initialize the chip
+ */
+static void
+npeinit_locked(void *xsc)
+{
+	struct npe_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	/* Cancel any pending I/O. */
+	npestop(ifp, 0);
+
+	/* Reset the chip to a known state. */
+	npeinit_macreg(sc);
 	npe_setmac(sc, CLLADDR(ifp->if_sadl));
+	npe_ifmedia_change(ifp);
 	npe_setmcast(sc);
 
 	npe_startxmit(sc);
@@ -1230,17 +1243,13 @@ npestart(struct ifnet *ifp)
 	int nseg, len, error, i;
 	uint32_t next;
 
-	/* XXX can this happen? */
-	if (ifp->if_flags & IFF_OACTIVE)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	while (sc->tx_free != NULL) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL) {
-			/* XXX? */
-			ifp->if_flags &= ~IFF_OACTIVE;
-			return;
-		}
+		if (m == NULL)
+			break;
 		npe = sc->tx_free;
 		error = bus_dmamap_load_mbuf(sc->sc_dt, npe->ix_map, m,
 		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -1355,9 +1364,6 @@ npestop(struct ifnet *ifp, int disable)
  	WR4(sc, NPE_MAC_TX_CNTRL1,
 	    RD4(sc, NPE_MAC_TX_CNTRL1) &~ NPE_TX_CNTRL1_TX_EN);
 
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
 	callout_stop(&sc->sc_tick_ch);
 
 	npe_stopxmit(sc);
@@ -1374,6 +1380,9 @@ npestop(struct ifnet *ifp, int disable)
 	DELAY(NPE_MAC_RESET_DELAY);
 	WR4(sc, NPE_MAC_INT_CLK_THRESH, NPE_MAC_INT_CLK_THRESH_DEFAULT);
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_MDC_EN);
+
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 void
@@ -1393,21 +1402,79 @@ static int
 npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct npe_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error = 0;
 
 	s = splnet();
 
-	error = ether_ioctl(ifp, cmd, data);
-	if (error == ENETRESET) {
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    ifp->if_flags & IFF_RUNNING) {
-			ifp->if_flags &= ~IFF_RUNNING;
-			npestop(&sc->sc_ethercom.ec_if, 0);
-		} else {
-			/* reinitialize card on any parameter change */
-			npeinit_locked(sc);
+	switch (cmd) {
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+#if 0 /* not yet */
+		/* Flow control requires full-duplex mode. */
+		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
+		    (ifr->ifr_media & IFM_FDX) == 0)
+			ifr->ifr_media &= ~IFM_ETH_FMASK;
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if ((ifr->ifr_media & IFM_ETH_FMASK) == IFM_FLOW) {
+				/* We can do both TXPAUSE and RXPAUSE. */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		error = 0;
+#endif
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
+		break;
+	case SIOCSIFFLAGS:
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+			/*
+			 * If interface is marked down and it is running,
+			 * then stop and disable it.
+			 */
+			(*ifp->if_stop)(ifp, 1);
+		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
+			error = (*ifp->if_init)(ifp);
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			int diff;
+
+			/* Up (AND RUNNING). */
+
+			diff = (ifp->if_flags ^ sc->sc_if_flags)
+			    & (IFF_PROMISC|IFF_ALLMULTI);
+			if ((diff & (IFF_PROMISC|IFF_ALLMULTI)) != 0) {
+				/*
+				 * If the difference bettween last flag and
+				 * new flag only IFF_PROMISC or IFF_ALLMULTI,
+				 * set multicast filter only (don't reset to
+				 * prevent link down).
+				 */
+				npe_setmcast(sc);
+			} else {
+				/*
+				 * Reset the interface to pick up changes in
+				 * any other flags that affect the hardware
+				 * state.
+				 */
+				error = (*ifp->if_init)(ifp);
+			}
+		}
+		sc->sc_if_flags = ifp->if_flags;
+		break;
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			npe_setmcast(sc);
+			error = 0;
+		}
 	}
 
 	npestart(ifp);
