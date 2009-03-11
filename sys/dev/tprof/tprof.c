@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.4 2009/03/10 14:45:02 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.5 2009/03/11 13:48:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.4 2009/03/10 14:45:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.5 2009/03/11 13:48:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.4 2009/03/10 14:45:02 yamt Exp $");
 
 #include <dev/tprof/tprof.h>
 #include <dev/tprof/tprof_ioctl.h>
-
-#include <machine/db_machdep.h> /* PC_REGS */
 
 /*
  * locking order:
@@ -405,11 +403,11 @@ tprof_backend_lookup(const char *name)
  */
 
 void
-tprof_sample(tprof_backend_cookie_t *cookie, const struct trapframe *tf)
+tprof_sample(tprof_backend_cookie_t *cookie, const tprof_frame_info_t *tfi)
 {
 	tprof_cpu_t * const c = tprof_curcpu();
 	tprof_buf_t * const buf = c->c_buf;
-	const uintptr_t pc = PC_REGS(tf);
+	const uintptr_t pc = tfi->tfi_pc;
 	u_int idx;
 
 	idx = buf->b_used;
