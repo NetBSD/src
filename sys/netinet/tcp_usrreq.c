@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.151 2009/02/18 13:18:32 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.152 2009/03/11 05:55:22 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.151 2009/02/18 13:18:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.152 2009/03/11 05:55:22 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1560,11 +1560,9 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 			dp += elem_size;
 			len -= elem_size;
 		}
-		if (elem_count > 0) {
-			needed += elem_size;
-			if (elem_count != INT_MAX)
-				elem_count--;
-		}
+		needed += elem_size;
+		if (elem_count > 0 && elem_count != INT_MAX)
+			elem_count--;
 	}
 
 	*oldlenp = needed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.77 2008/12/07 20:58:46 pooka Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.78 2009/03/11 05:55:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.77 2008/12/07 20:58:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.78 2009/03/11 05:55:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -460,11 +460,9 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 			dp += elem_size;
 			len -= elem_size;
 		}
-		if (elem_count > 0) {
-			needed += elem_size;
-			if (elem_count != INT_MAX)
-				elem_count--;
-		}
+		needed += elem_size;
+		if (elem_count > 0 && elem_count != INT_MAX)
+			elem_count--;
 	}
 	mutex_exit(&filelist_lock);
 	fputdummy(dfp);
