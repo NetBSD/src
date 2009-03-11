@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.14 2009/03/11 13:20:30 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.15 2009/03/11 14:51:19 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.14 2009/03/11 13:20:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.15 2009/03/11 14:51:19 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -193,7 +193,6 @@ static int	npe_activate(struct npe_softc *);
 #if 0
 static void	npe_deactivate(struct npe_softc *);
 #endif
-static int	npe_ifmedia_change(struct ifnet *ifp);
 static void	npe_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr);
 static void	npe_setmac(struct npe_softc *sc, const u_char *eaddr);
 static void	npe_getmac(struct npe_softc *sc);
@@ -297,26 +296,22 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	    ether_sprintf(sc->sc_enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, npe_ifmedia_change,
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = npe_miibus_readreg;
+	sc->sc_mii.mii_writereg = npe_miibus_writereg;
+	sc->sc_mii.mii_statchg = npe_miibus_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
 	    npe_ifmedia_status);
 
-	if (sc->sc_phy != IXPNPECF_PHY_DEFAULT) {
-		sc->sc_mii.mii_ifp = ifp;
-		sc->sc_mii.mii_readreg = npe_miibus_readreg;
-		sc->sc_mii.mii_writereg = npe_miibus_writereg;
-		sc->sc_mii.mii_statchg = npe_miibus_statchg;
-		sc->sc_ethercom.ec_mii = &sc->sc_mii;
-
-		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
-		    (sc->sc_phy > IXPNPECF_PHY_DEFAULT) ?
-		      sc->sc_phy : MII_PHY_ANY,
-		    MII_OFFSET_ANY, MIIF_NOISOLATE);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
-	} else {
-		/* Assume direct connection to a 100mbit switch */
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_100_TX, 0,0);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_100_TX);
-	}
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY, MIIF_DOPAUSE);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	ifp->if_softc = sc;
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -671,19 +666,6 @@ npe_deactivate(struct npe_softc *sc);
 #endif
 
 /*
- * Change media according to request.
- */
-static int
-npe_ifmedia_change(struct ifnet *ifp)
-{
-	struct npe_softc *sc = ifp->if_softc;
-
-	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT)
-		return ether_mediachange(ifp);
-	return 0;
-}
-
-/*
  * Notify the world which media we're using.
  */
 static void
@@ -691,8 +673,7 @@ npe_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct npe_softc *sc = ifp->if_softc;
 
-	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT)
-		mii_pollstat(&sc->sc_mii);
+	mii_pollstat(&sc->sc_mii);
 
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
@@ -1161,7 +1142,7 @@ npeinit_locked(void *xsc)
 	/* Reset the chip to a known state. */
 	npeinit_macreg(sc);
 	npe_setmac(sc, CLLADDR(ifp->if_sadl));
-	npe_ifmedia_change(ifp);
+	ether_mediachange(ifp);
 	npe_setmcast(sc);
 
 	npe_startxmit(sc);
@@ -1487,7 +1468,8 @@ npe_setrxqosentry(struct npe_softc *sc, int classix, int trafclass, int qid)
 	int npeid = npeconfig[sc->sc_unit].npeid;
 	uint32_t msg[2];
 
-	msg[0] = (NPE_SETRXQOSENTRY << 24) | (npeid << 20) | classix;
+	msg[0] = (NPE_SETRXQOSENTRY << NPE_MAC_MSGID_SHL) | (npeid << 20)
+	    | classix;
 	msg[1] = (trafclass << 24) | (1 << 23) | (qid << 16) | (qid << 4);
 	return ixpnpe_sendandrecvmsg(sc->sc_npe, msg, msg);
 }
