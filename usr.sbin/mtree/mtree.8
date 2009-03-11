@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.47 2009/02/02 03:27:37 wiz Exp $
+.\"	$NetBSD: mtree.8,v 1.48 2009/03/11 18:10:05 joerg Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -315,13 +315,7 @@ file types.
 The argument must be one of the following forms:
 .Pp
 .Bl -tag -width 4n
-.It Xo
-.Sm off
-.Ar format ,
-.Ar major ,
-.Ar minor
-.Sm on
-.Xc
+.It Ar format , Ns Ar major , Ns Ar minor
 A device with
 .Ar major
 and
@@ -329,14 +323,7 @@ and
 fields, for an operating system specified with
 .Ar format .
 See below for valid formats.
-.It Xo
-.Sm off
-.Ar format ,
-.Ar major ,
-.Ar unit ,
-.Ar subunit
-.Sm on
-.Xc
+.It Ar format , Ns Ar major , Ns Ar unit , Ns Ar subunit
 A device with
 .Ar major ,
 .Ar unit ,
