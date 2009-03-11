@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.13 2009/03/11 12:16:12 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.14 2009/03/11 13:20:30 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.13 2009/03/11 12:16:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.14 2009/03/11 13:20:30 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -290,13 +290,8 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 		return;
 	}
 
-	npeinit_macreg(sc);
-	/*
-	 * XXXSCW: This is bogus - the NPE may not have been configured for
-	 * XXXSCW: Ethernet yet. We must check for a property set by
-	 * XXXSCW: board-specific code.
-	 */
 	npe_getmac(sc);
+	npeinit_macreg(sc);
 
 	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
