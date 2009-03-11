@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.40 2009/03/11 06:51:53 mrg Exp $
+.\"	$NetBSD: queue.3,v 1.41 2009/03/11 08:29:56 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd October 7, 2008
+.Dd March 11, 2009
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -949,7 +949,8 @@ returns the first element of the tail queue
 The macros
 .Nm TAILQ_FOREACH ,
 .Nm TAILQ_FOREACH_REVERSE ,
-.Nm TAILQ_FOREACH_SAFE and
+.Nm TAILQ_FOREACH_SAFE ,
+and
 .Nm TAILQ_FOREACH_REVERSE_SAFE
 traverse the tail queue referenced by
 .Fa head
