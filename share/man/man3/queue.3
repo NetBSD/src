@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.39 2008/10/07 13:03:50 apb Exp $
+.\"	$NetBSD: queue.3,v 1.40 2009/03/11 06:51:53 mrg Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,6 +79,7 @@
 .Nm SIMPLEQ_REMOVE_HEAD ,
 .Nm SIMPLEQ_REMOVE ,
 .Nm SIMPLEQ_FOREACH ,
+.Nm SIMPLEQ_FOREACH_SAFE ,
 .Nm SIMPLEQ_EMPTY ,
 .Nm SIMPLEQ_FIRST ,
 .Nm SIMPLEQ_NEXT ,
@@ -118,7 +119,9 @@
 .Nm TAILQ_INSERT_BEFORE ,
 .Nm TAILQ_REMOVE ,
 .Nm TAILQ_FOREACH ,
+.Nm TAILQ_FOREACH_SAFE ,
 .Nm TAILQ_FOREACH_REVERSE ,
+.Nm TAILQ_FOREACH_REVERSE_SAFE ,
 .Nm TAILQ_EMPTY ,
 .Nm TAILQ_FIRST ,
 .Nm TAILQ_NEXT ,
@@ -173,6 +176,7 @@
 .Fn SIMPLEQ_REMOVE_HEAD "SIMPLEQ_HEAD *head" "SIMPLEQ_ENTRY NAME"
 .Fn SIMPLEQ_REMOVE "SIMPLEQ_HEAD *head" "TYPE *elm" "TYPE" "SIMPLEQ_ENTRY NAME"
 .Fn SIMPLEQ_FOREACH "TYPE *var" "SIMPLEQ_HEAD *head" "SIMPLEQ_ENTRY NAME"
+.Fn SIMPLEQ_FOREACH_SAFE "TYPE *var" "SIMPLEQ_HEAD *head" "SIMPLEQ_ENTRY NAME" "TYPE *tmp"
 .Ft int
 .Fn SIMPLEQ_EMPTY "SIMPLEQ_HEAD *head"
 .Ft TYPE *
@@ -224,7 +228,9 @@
 .Fn TAILQ_INSERT_BEFORE "TYPE *listelm" "TYPE *elm" "TAILQ_ENTRY NAME"
 .Fn TAILQ_REMOVE "TAILQ_HEAD *head" "TYPE *elm" "TAILQ_ENTRY NAME"
 .Fn TAILQ_FOREACH "TYPE *var" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME"
+.Fn TAILQ_FOREACH_SAFE "TYPE *var" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME" "TYPE *tmp"
 .Fn TAILQ_FOREACH_REVERSE "TYPE *var" "TAILQ_HEAD *head" "HEADNAME" "TAILQ_ENTRY NAME"
+.Fn TAILQ_FOREACH_REVERSE_SAFE "TYPE *var" "TAILQ_HEAD *head" "HEADNAME" "TAILQ_ENTRY NAME" "TYPE *tmp"
 .Ft int
 .Fn TAILQ_EMPTY "TAILQ_HEAD *head"
 .Ft TYPE *
@@ -645,13 +651,21 @@ The macro
 returns the first element of the simple queue
 .Fa head .
 .Pp
-The macro
+The macros
 .Nm SIMPLEQ_FOREACH
-traverses the tail queue referenced by
+and
+.Nm SIMPLEQ_FOREACH_SAFE
+traverse the tail queue referenced by
 .Fa head
 in the forward direction, assigning each element
 in turn to
 .Fa var .
+.Pp
+The SAFE versions uses
+.Fa tmp
+to hold the next element, so
+.Fa var
+may be freed or removed from the list.
 .Pp
 The macro
 .Nm SIMPLEQ_NEXT
@@ -932,19 +946,21 @@ The macro
 returns the first element of the tail queue
 .Fa head .
 .Pp
-The macro
-.Nm TAILQ_FOREACH
-traverses the tail queue referenced by
+The macros
+.Nm TAILQ_FOREACH ,
+.Nm TAILQ_FOREACH_REVERSE ,
+.Nm TAILQ_FOREACH_SAFE and
+.Nm TAILQ_FOREACH_REVERSE_SAFE
+traverse the tail queue referenced by
 .Fa head
-in the forward direction, assigning each element in turn to
+in the forward or reverse direction direction, assigning each element in turn to
 .Fa var .
 .Pp
-The macro
-.Nm TAILQ_FOREACH_REVERSE
-traverses the tail queue referenced by
-.Fa head
-in the reverse direction, assigning each element in turn to
-.Fa var .
+The SAFE versions uses
+.Fa tmp
+to hold the next element, so
+.Fa var
+may be freed or removed from the list.
 .Pp
 The macro
 .Nm TAILQ_NEXT
