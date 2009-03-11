@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.49 2009/02/14 11:08:17 wiz Exp $
+.\"	$NetBSD: netstat.1,v 1.50 2009/03/11 13:54:29 joerg Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -312,20 +312,20 @@ and
 manual pages.
 The mapping between letters and flags is:
 .Bl -column XXXX RTF_BLACKHOLE
-1	RTF_PROTO1	Protocol specific routing flag #1
-2	RTF_PROTO2	Protocol specific routing flag #2
-B	RTF_BLACKHOLE	Just discard pkts (during updates)
-C	RTF_CLONING	Generate new routes on use
-c	RTF_CLONED	Cloned routes (generated from RTF_CLONING)
-D	RTF_DYNAMIC	Created dynamically (by redirect)
-G	RTF_GATEWAY	Destination requires forwarding by intermediary
-H	RTF_HOST	Host entry (net otherwise)
-L	RTF_LLINFO	Valid protocol to link address translation.
-M	RTF_MODIFIED	Modified dynamically (by redirect)
-R	RTF_REJECT	Host or net unreachable
-S	RTF_STATIC	Manually added
-U	RTF_UP	Route usable
-X	RTF_XRESOLVE	External daemon translates proto to link address
+.It 1	RTF_PROTO1	Protocol specific routing flag #1
+.It 2	RTF_PROTO2	Protocol specific routing flag #2
+.It B	RTF_BLACKHOLE	Just discard pkts (during updates)
+.It C	RTF_CLONING	Generate new routes on use
+.It c	RTF_CLONED	Cloned routes (generated from RTF_CLONING)
+.It D	RTF_DYNAMIC	Created dynamically (by redirect)
+.It G	RTF_GATEWAY	Destination requires forwarding by intermediary
+.It H	RTF_HOST	Host entry (net otherwise)
+.It L	RTF_LLINFO	Valid protocol to link address translation.
+.It M	RTF_MODIFIED	Modified dynamically (by redirect)
+.It R	RTF_REJECT	Host or net unreachable
+.It S	RTF_STATIC	Manually added
+.It U	RTF_UP	Route usable
+.It X	RTF_XRESOLVE	External daemon translates proto to link address
 .El
 .Pp
 Direct routes are created for each
