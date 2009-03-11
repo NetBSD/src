@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.157 2009/03/08 12:52:08 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.158 2009/03/11 01:30:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.157 2009/03/08 12:52:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.158 2009/03/11 01:30:27 mrg Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2039,8 +2039,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			} else {
 				mutex_exit(&fp->f_lock);
 			}
+			needed += elem_size;
 			if (elem_count > 0) {
-				needed += elem_size;
 				if (elem_count != INT_MAX)
 					elem_count--;
 			}
@@ -2115,8 +2115,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				} else {
 					mutex_exit(&ff->ff_lock);
 				}
+				needed += elem_size;
 				if (elem_count > 0) {
-					needed += elem_size;
 					if (elem_count != INT_MAX)
 						elem_count--;
 				}
