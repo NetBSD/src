@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.123 2009/02/20 10:54:57 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.124 2009/03/11 09:26:27 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.123 2009/02/20 10:54:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.124 2009/03/11 09:26:27 roy Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -222,9 +222,9 @@ route_output(struct mbuf *m, ...)
 	struct rtentry *rt = NULL;
 	struct rtentry *saved_nrt = NULL;
 	struct rt_addrinfo info;
-	int len, error = 0, ifa_route = 0;
+	int len, error = 0;
 	struct ifnet *ifp = NULL;
-	struct ifaddr *ifa = NULL, *oifa;
+	struct ifaddr *ifa = NULL;
 	struct socket *so;
 	va_list ap;
 	sa_family_t family;
@@ -301,12 +301,6 @@ route_output(struct mbuf *m, ...)
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			(rt = saved_nrt)->rt_refcnt++;
-			ifa = rt_get_ifa(rt);
-			/*
-			 * If deleting an automatic route, scrub the flag.
-			 */
-			if (ifa->ifa_flags & IFA_ROUTE)
-				ifa->ifa_flags &= ~IFA_ROUTE;
 			goto report;
 		}
 		break;
@@ -424,28 +418,13 @@ route_output(struct mbuf *m, ...)
 			    rt_getkey(rt), info.rti_info[RTAX_GATEWAY])))) {
 				ifp = ifa->ifa_ifp;
 			}
-			oifa = rt->rt_ifa;
-			if (oifa && oifa->ifa_flags & IFA_ROUTE) {
-				/*
-				 * If changing an automatically added route,
-				 * remove the flag and store the fact.
-				 */
-				oifa->ifa_flags &= ~IFA_ROUTE;
-				ifa_route = 1;
-			}
 			if (ifa) {
+				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
 					if (oifa && oifa->ifa_rtrequest) {
 						oifa->ifa_rtrequest(RTM_DELETE,
 						    rt, &info);
 					}
-					/*
-					 * If changing an automatically added
-					 * route, store this if not static.
-					 */
-					if (ifa_route &&
-					    !(rt->rt_flags & RTF_STATIC))
-						ifa->ifa_flags |= IFA_ROUTE;
 					rt_replace_ifa(rt, ifa);
 					rt->rt_ifp = ifp;
 				}
