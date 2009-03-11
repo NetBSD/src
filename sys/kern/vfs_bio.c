@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.217 2009/02/23 20:33:30 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.218 2009/03/11 05:55:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.217 2009/02/23 20:33:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.218 2009/03/11 05:55:22 mrg Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1748,11 +1748,9 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 				dp += elem_size;
 				len -= elem_size;
 			}
-			if (elem_count > 0) {
-				needed += elem_size;
-				if (elem_count != INT_MAX)
-					elem_count--;
-			}
+			needed += elem_size;
+			if (elem_count > 0 && elem_count != INT_MAX)
+				elem_count--;
 		}
 		if (error != 0)
 			break;
