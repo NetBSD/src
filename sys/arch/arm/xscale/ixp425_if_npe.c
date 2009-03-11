@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.15 2009/03/11 14:51:19 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.16 2009/03/11 16:30:20 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.15 2009/03/11 14:51:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.16 2009/03/11 16:30:20 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -140,6 +140,7 @@ struct npe_softc {
 static const struct {
 	const char	*desc;		/* device description */
 	int		npeid;		/* NPE assignment */
+	int		macport;	/* Port number of the MAC */
 	uint32_t	imageid;	/* NPE firmware image id */
 	uint32_t	regbase;
 	int		regsize;
@@ -152,6 +153,7 @@ static const struct {
 } npeconfig[NPE_PORTS_MAX] = {
 	{ .desc		= "IXP NPE-B",
 	  .npeid	= NPE_B,
+	  .macport	= 0x10,
 	  .imageid	= IXP425_NPE_B_IMAGEID,
 	  .regbase	= IXP425_MAC_A_HWBASE,
 	  .regsize	= IXP425_MAC_A_SIZE,
@@ -164,6 +166,7 @@ static const struct {
 	},
 	{ .desc		= "IXP NPE-C",
 	  .npeid	= NPE_C,
+	  .macport	= 0x20,
 	  .imageid	= IXP425_NPE_C_IMAGEID,
 	  .regbase	= IXP425_MAC_B_HWBASE,
 	  .regsize	= IXP425_MAC_B_SIZE,
@@ -202,6 +205,7 @@ static int	npe_rxbuf_init(struct npe_softc *, struct npebuf *,
 static void	npe_rxdone(int qid, void *arg);
 static void	npeinit_macreg(struct npe_softc *);
 static int	npeinit(struct ifnet *);
+static void	npeinit_resetcb(void *);
 static void	npeinit_locked(void *);
 static void	npestart(struct ifnet *);
 static void	npestop(struct ifnet *, int);
@@ -267,6 +271,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 {
 	struct npe_softc *sc = (void *)self;
 	struct ixpnpe_attach_args *na = arg;
+	struct ixpnpe_softc *isc = (struct ixpnpe_softc *)parent;
 	struct ifnet *ifp;
 
 	aprint_naive("\n");
@@ -328,6 +333,10 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
+
+	/* callback function to reset MAC */
+	isc->macresetcbfunc = npeinit_resetcb;
+	isc->macresetcbarg = sc;
 }
 
 /*
@@ -339,6 +348,7 @@ npe_setmcast(struct npe_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint8_t mask[ETHER_ADDR_LEN], addr[ETHER_ADDR_LEN];
 	uint32_t reg;
+	uint32_t msg[2];
 	int i;
 
 	/* Always use filter. Is here a correct position? */
@@ -390,6 +400,13 @@ npe_setmcast(struct npe_softc *sc)
 		WR4(sc, NPE_MAC_ADDR_MASK(i), mask[i]);
 		WR4(sc, NPE_MAC_ADDR(i), addr[i]);
 	}
+
+	msg[0] = NPE_ADDRESSFILTERCONFIG << NPE_MAC_MSGID_SHL
+	    | (npeconfig[sc->sc_unit].macport << NPE_MAC_PORTID_SHL);
+	msg[1] = ((ifp->if_flags & IFF_PROMISC) ? 1 : 0) << 24
+	    | ((RD4(sc, NPE_MAC_UNI_ADDR_6) & 0xff) << 16)
+	    | (addr[5] << 8) | mask[5];
+	ixpnpe_sendandrecvmsg(sc->sc_npe, msg, msg);
 }
 
 static int
@@ -1127,6 +1144,22 @@ npeinit_macreg(struct npe_softc *sc)
 	WR4(sc, NPE_MAC_RX_CNTRL2, 0);
 }
 
+static void
+npeinit_resetcb(void *xsc)
+{
+	struct npe_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	uint32_t msg[2];
+
+	ifp->if_oerrors++;
+	npeinit_locked(sc);
+
+	msg[0] = NPE_NOTIFYMACRECOVERYDONE << NPE_MAC_MSGID_SHL
+	    | (npeconfig[sc->sc_unit].macport << NPE_MAC_PORTID_SHL);
+	msg[1] = 0;
+	ixpnpe_sendandrecvmsg(sc->sc_npe, msg, msg);
+}
+
 /*
  * Reset and initialize the chip
  */
@@ -1618,14 +1651,22 @@ npe_miibus_statchg(struct device *self)
 {
 	struct npe_softc *sc = (void *)self;
 	uint32_t tx1, rx1;
+	uint32_t randoff;
 
 	/* sync MAC duplex state */
 	tx1 = RD4(sc, NPE_MAC_TX_CNTRL1);
 	rx1 = RD4(sc, NPE_MAC_RX_CNTRL1);
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {
+		WR4(sc, NPE_MAC_SLOT_TIME, NPE_MAC_SLOT_TIME_MII_DEFAULT);
 		tx1 &= ~NPE_TX_CNTRL1_DUPLEX;
 		rx1 |= NPE_RX_CNTRL1_PAUSE_EN;
 	} else {
+		struct timeval now;
+		getmicrotime(&now);
+		randoff = (RD4(sc, NPE_MAC_UNI_ADDR_6) ^ now.tv_usec)
+		    & 0x7f;
+		WR4(sc, NPE_MAC_SLOT_TIME, NPE_MAC_SLOT_TIME_MII_DEFAULT
+		    + randoff);
 		tx1 |= NPE_TX_CNTRL1_DUPLEX;
 		rx1 &= ~NPE_RX_CNTRL1_PAUSE_EN;
 	}
