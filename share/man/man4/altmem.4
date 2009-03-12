@@ -1,4 +1,4 @@
-.\"	$NetBSD: altmem.4,v 1.1 2009/03/12 00:16:16 jmcneill Exp $
+.\"	$NetBSD: altmem.4,v 1.2 2009/03/12 08:55:14 wiz Exp $
 .\"
 .\" Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .Dt ALTMEM 4
 .Os
 .Sh NAME
-.Nm altmem 
+.Nm altmem
 .Nd Alternative memory disk driver
 .Sh SYNOPSIS
 .Cd "altmem* at altmemdev?"
@@ -41,10 +41,11 @@ machine-dependent
 as a swap device.
 .Pp
 When an alternative memory disk device is present, this device is generally
-preferred to hard disk-based swap space. See the
+preferred to hard disk-based swap space.
+See the
 .Xr swapctl 8
 and
-.Xr fstab 4
+.Xr fstab 5
 man pages for instructions on how to assign priorities to swap devices.
 .Sh FILES
 .Bl -tag -width /dev/raltmemXX -compact
@@ -54,8 +55,8 @@ block mode alternative memory disk devices.
 raw mode alternative memory disk devices.
 .El
 .Sh SEE ALSO
-.Xr fstab 5 ,
 .Xr md 4 ,
+.Xr fstab 5 ,
 .Xr swapctl 8
 .Sh HISTORY
 The
