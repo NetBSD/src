@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.13 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.14 2009/03/12 23:05:27 he Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -165,7 +165,7 @@ rmconf_match_etype_and_approval(rmconf, etype, approval)
 {
 	struct isakmpsa *p;
 
-	if (check_etypeok(rmconf, (void *) etype) == 0)
+	if (check_etypeok(rmconf, (void *) (intptr_t) etype) == 0)
 		return ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 
 	if (approval == NULL)
@@ -728,7 +728,7 @@ check_etypeok(rmconf, ctx)
 	struct remoteconf *rmconf;
 	void *ctx;
 {
-	u_int8_t etype = (u_int8_t) (unsigned) ctx;
+	u_int8_t etype = (u_int8_t) (intptr_t) ctx;
 	struct etypes *e;
 
 	for (e = rmconf->etypes; e != NULL; e = e->next) {
