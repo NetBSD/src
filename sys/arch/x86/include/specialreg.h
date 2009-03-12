@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.32 2009/03/12 09:07:29 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.33 2009/03/12 09:08:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -180,6 +180,14 @@
 				    "\6LZCNT\7SSE4A\10MISALIGNSSE" \
 				    "\0113DNOWPREFETCH\12OSVW\13IBS" \
 				    "\14SSE5\15SKINIT\16WDT"
+
+/* AMD Fn8000000a %edx features (SVM features) */
+#define	CPUID_AMD_SVM_NP		0x00000001
+#define	CPUID_AMD_SVM_LbrVirt		0x00000002
+#define	CPUID_AMD_SVM_SVML		0x00000004
+#define	CPUID_AMD_SVM_NRIPS		0x00000008
+#define	CPUID_AMD_SVM_Ssse3Sse5Dis	0x00000200
+#define	CPUID_AMD_SVM_FLAGS	 "\20\1NP\2LbrVirt\3SVML\4NRIPS\12Ssse3Sse5Dis"
 
 /*
  * AMD Advanced Power Management
