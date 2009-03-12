@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.6 2009/03/11 13:48:47 yamt Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.7 2009/03/12 01:42:35 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.6 2009/03/11 13:48:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.7 2009/03/12 01:42:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,11 +181,11 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 	}
 
 	/* record a sample */
-#if defined(amd64)
+#if defined(__amd64__)
 	tfi.tfi_pc = tf->tf_rip;
-#else /* defined(amd64) */
+#else /* defined(__amd64__) */
 	tfi.tfi_pc = tf->tf_eip;
-#endif /* defined(amd64) */
+#endif /* defined(__amd64__) */
 	tprof_sample(tprof_cookie, &tfi);
 
 	/* reset counter */
