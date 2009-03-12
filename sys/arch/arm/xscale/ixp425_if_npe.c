@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.16 2009/03/11 16:30:20 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.17 2009/03/12 13:15:13 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.16 2009/03/11 16:30:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.17 2009/03/12 13:15:13 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.16 2009/03/11 16:30:20 msaitoh E
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.16 2009/03/11 16:30:20 msaitoh E
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #include <arm/xscale/ixp425reg.h>
@@ -124,6 +129,9 @@ struct npe_softc {
 	bus_dmamap_t	sc_stats_map;
 	bus_addr_t	sc_stats_phys;	/* phys addr of sc_stats */
 	int		sc_if_flags;	/* keep last if_flags */
+#if NRND > 0
+	rndsource_element_t rnd_source; /* random source */
+#endif
 };
 
 /*
@@ -333,6 +341,10 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 	/* callback function to reset MAC */
 	isc->macresetcbfunc = npeinit_resetcb;
@@ -829,6 +841,10 @@ npe_txdone(int qid, void *arg)
 		sc = npes[NPE_QM_Q_NPE(entry)];
 		DPRINTF(sc, "%s: entry 0x%x NPE %u port %u\n",
 		    __func__, entry, NPE_QM_Q_NPE(entry), NPE_QM_Q_PORT(entry));
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, entry);
+#endif
 
 		npe = P2V(NPE_QM_Q_ADDR(entry), &sc->txdma);
 		m_freem(npe->ix_m);
@@ -918,6 +934,10 @@ npe_rxdone(int qid, void *arg)
 
 		DPRINTF(sc, "%s: entry 0x%x neaddr 0x%x ne_len 0x%x\n",
 		    __func__, entry, npe->ix_neaddr, npe->ix_hw->ix_ne[0].len);
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, entry);
+#endif
 		/*
 		 * Allocate a new mbuf to replenish the rx buffer.
 		 * If doing so fails we drop the rx'd frame so we
