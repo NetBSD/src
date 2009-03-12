@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.96 2009/03/12 12:55:16 abs Exp $
+.\"	$NetBSD: uvm.9,v 1.97 2009/03/12 13:13:16 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -760,7 +760,8 @@ The arguments describe the
 and
 .Fa end
 of the physical addresses of the segment, and the available start and end
-addresses of pages not already in use. If a system has memory banks of
+addresses of pages not already in use.
+If a system has memory banks of
 different speeds the slower memory should be given a higher
 .Fa free_list
 value.
