@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.38 2009/03/01 09:23:27 isaki Exp $
+# $NetBSD: Makefile.boot,v 1.39 2009/03/12 17:16:59 abs Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -41,7 +41,7 @@ CPPFLAGS+= -I ${.OBJDIR}
 COPTS=  -Os
 
 .if defined(HAVE_GCC)
-.if ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
 CPUFLAGS=  -m32
