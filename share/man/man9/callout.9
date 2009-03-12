@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.20 2009/01/04 19:32:16 jdc Exp $
+.\"	$NetBSD: callout.9,v 1.21 2009/03/12 12:48:26 joerg Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -166,7 +166,7 @@ status for the callout handle is cleared.
 It is safe to call
 .Fn callout_stop
 on a callout handle that is not pending, so long as it is initialized.
-. Fn callout_stop
+.Fn callout_stop
 will return a non-zero value if the callout was
 .Em EXPIRED .
 .Pp
