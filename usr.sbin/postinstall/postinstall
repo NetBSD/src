@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.6 2009/02/09 03:14:35 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.7 2009/03/12 23:11:32 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -838,6 +838,35 @@ do_named()
 	compare_dir "${op}" "${SRC_DIR}/etc/namedb" "${DEST_DIR}/etc/namedb" \
 		644 \
 		root.cache
+}
+
+#
+#	nosa
+#
+additem nosa "verify scheduler activation support is configured in sysctl.conf"
+do_nosa()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_nosa  fix|check"
+
+	if grep -E '^[[:space:]]*kern\.no_sa_support[[:space:]]*=[[:space:]]*[[:digit:]]+' \
+		"${DEST_DIR}/etc/sysctl.conf" >/dev/null 2>&1
+	then
+		result=0
+	else
+		if [ "$1" = check ]; then
+			msg \
+    "SA support is not explicitly specified in /etc/sysctl.conf"
+			result=1
+		else
+			echo >> "${DEST_DIR}/etc/sysctl.conf"
+			sed < "${SRC_DIR}/etc/sysctl.conf" \
+			   -e '/^kern\.no_sa_support/q' | \
+			       sed -e '1,/^$/d' >> \
+			    "${DEST_DIR}/etc/sysctl.conf"
+			result=$?
+		fi
+	fi
+	return ${result}
 }
 
 #
