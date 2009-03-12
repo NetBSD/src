@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.13 2009/02/11 15:18:59 vanhu Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.14 2009/03/12 10:57:26 tteras Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -107,6 +107,8 @@ cmpsaddrwop(addr1, addr2)
 #endif /* __linux__ */
 
 	switch (addr1->sa_family) {
+	case AF_UNSPEC:
+		break;
 	case AF_INET:
 		sa1 = (caddr_t)&((struct sockaddr_in *)addr1)->sin_addr;
 		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;
@@ -161,6 +163,8 @@ cmpsaddrwild(addr1, addr2)
 #endif /* __linux__ */
 
 	switch (addr1->sa_family) {
+	case AF_UNSPEC:
+		break;
 	case AF_INET:
 		sa1 = (caddr_t)&((struct sockaddr_in *)addr1)->sin_addr;
 		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;
@@ -227,6 +231,8 @@ cmpsaddrmagic(addr1, addr2)
 #endif /* __linux__ */
 
 	switch (addr1->sa_family) {
+	case AF_UNSPEC:
+		break;
 	case AF_INET:
 		sa1 = (caddr_t)&((struct sockaddr_in *)addr1)->sin_addr;
 		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;

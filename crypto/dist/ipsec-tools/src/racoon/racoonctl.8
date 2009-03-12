@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.20 2009/01/24 10:43:38 wiz Exp $
+.\"	$NetBSD: racoonctl.8,v 1.21 2009/03/12 10:57:26 tteras Exp $
 .\"
 .\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
@@ -65,6 +65,7 @@ delete-sa
 .Op opts
 establish-sa
 .Op Fl u Ar identity
+.Op Fl n Ar remoteconf
 .Op Fl w
 .Ar saopts
 .Nm
@@ -141,6 +142,8 @@ either ISAKMP SAs, IPsec ESP SAs, IPsec AH SAs, or all IPsec SAs.
 .It Xo establish-sa
 .Oo Fl u Ar username
 .Oc
+.Oo Fl n Ar remoteconf
+.Oc
 .Oo Fl w
 .Oc Ar saopts
 .Xc
@@ -148,6 +151,8 @@ Establish an SA, either an ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
 The optional
 .Fl u Ar username
 can be used when establishing an ISAKMP SA while hybrid auth is in use.
+The exact remote block to use can be specified with
+.Fl n Ar remoteconf .
 .Nm
 will prompt you for the password associated with
 .Ar username

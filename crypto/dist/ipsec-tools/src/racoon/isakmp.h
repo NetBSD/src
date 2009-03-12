@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp.h,v 1.5 2009/03/12 10:57:26 tteras Exp $	*/
 
 /* Id: isakmp.h,v 1.11 2005/04/25 22:19:39 manubsd Exp */
 
@@ -36,8 +36,8 @@
 
 /* refer to RFC 2408 */
 
-/* must include <netinet/in.h> first. */
-/* must include "isakmp_var.h" first. */
+#include <netinet/in.h>
+#include "isakmp_var.h"
 
 #define INITIATOR	0	/* synonym sender */
 #define RESPONDER	1	/* synonym receiver */
@@ -269,11 +269,6 @@ struct isakmp_pl_cert {
 #define ISAKMP_CERT_SPKI	9
 #define ISAKMP_CERT_X509ATTR	10
 #define ISAKMP_CERT_PLAINRSA	11
-
-/* the method to get peers certificate */
-#define ISAKMP_GETCERT_PAYLOAD		1
-#define ISAKMP_GETCERT_LOCALFILE	2
-#define ISAKMP_GETCERT_DNS		3
 
 /* 3.10 Certificate Request Payload */
 struct isakmp_pl_cr {

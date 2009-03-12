@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.51 2009/02/11 15:18:59 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.52 2009/03/12 10:57:26 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -186,6 +186,9 @@ static int isakmp_ph2begin_i __P((struct ph1handle *, struct ph2handle *));
 static int isakmp_ph2begin_r __P((struct ph1handle *, vchar_t *));
 static int etypesw1 __P((int));
 static int etypesw2 __P((int));
+static int isakmp_ph1resend __P((struct ph1handle *));
+static int isakmp_ph2resend __P((struct ph2handle *));
+
 #ifdef ENABLE_FRAG
 static int frag_handler(struct ph1handle *, 
     vchar_t *, struct sockaddr *, struct sockaddr *);
@@ -1140,27 +1143,19 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 	u_int8_t etype;
 {
 	struct isakmp *isakmp = (struct isakmp *)msg->v;
-	struct remoteconf *rmconf;
 	struct ph1handle *iph1;
-	struct etypes *etypeok;
+	struct rmconfselector rmsel;
 #ifdef ENABLE_STATS
 	struct timeval start, end;
 #endif
 
-	/* look for my configuration */
-	rmconf = getrmconf(remote);
-	if (rmconf == NULL) {
+	/* check if this etype is allowed */
+	memset(&rmsel, 0, sizeof(rmsel));
+	rmsel.remote = remote;
+	if (enumrmconf(&rmsel, check_etypeok, (void *) (unsigned) etype) == 0) {
 		plog(LLV_ERROR, LOCATION, remote,
-			"couldn't find "
-			"configuration.\n");
-		return -1;
-	}
-
-	/* check to be acceptable exchange type */
-	etypeok = check_etypeok(rmconf, etype);
-	if (etypeok == NULL) {
-		plog(LLV_ERROR, LOCATION, remote,
-			"not acceptable %s mode\n", s_isakmp_etype(etype));
+		     "exchange %s not allowed in any applicable rmconf.\n",
+		     s_isakmp_etype(etype));
 		return -1;
 	}
 
@@ -1171,10 +1166,9 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 
 	memcpy(&iph1->index.i_ck, &isakmp->i_ck, sizeof(iph1->index.i_ck));
 	iph1->status = PHASE1ST_START;
-	iph1->rmconf = rmconf;
 	iph1->flags = 0;
 	iph1->side = RESPONDER;
-	iph1->etype = etypeok->type;
+	iph1->etype = etype;
 	iph1->version = isakmp->v;
 	iph1->msgid = 0;
 #ifdef HAVE_GSSAPI
@@ -1201,8 +1195,9 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 		iph1->natt_flags |= (NAT_PORTS_CHANGED);
 #endif
 
-	/* copy remote address */
-	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
+	/* copy remote address; remote and local always contain
+	 * port numbers so rmconf is not needed */
+	if (copy_ph1addresses(iph1, NULL, remote, local) < 0) {
 		delph1(iph1);
 		return -1;
 	}
@@ -1832,7 +1827,7 @@ isakmp_send(iph1, sbuf)
 }
 
 /* called from scheduler */
-void
+static void
 isakmp_ph1resend_stub(p)
 	struct sched *p;
 {
@@ -1844,7 +1839,7 @@ isakmp_ph1resend_stub(p)
 	}
 }
 
-int
+static int
 isakmp_ph1resend(iph1)
 	struct ph1handle *iph1;
 {
@@ -1873,14 +1868,22 @@ isakmp_ph1resend(iph1)
 
 	iph1->retry_counter--;
 
-	sched_schedule(&iph1->scr, iph1->rmconf->retry_interval,
+	sched_schedule(&iph1->scr, lcconf->retry_interval,
 		       isakmp_ph1resend_stub);
 
 	return 0;
 }
 
+int
+isakmp_ph1send(iph1)
+	struct ph1handle *iph1;
+{
+	iph1->retry_counter = lcconf->retry_counter;
+	return isakmp_ph1resend(iph1);
+}
+
 /* called from scheduler */
-void
+static void
 isakmp_ph2resend_stub(p)
 	struct sched *p;
 {
@@ -1892,7 +1895,7 @@ isakmp_ph2resend_stub(p)
 	}
 }
 
-int
+static int
 isakmp_ph2resend(iph2)
 	struct ph2handle *iph2;
 {
@@ -1928,10 +1931,18 @@ isakmp_ph2resend(iph2)
 
 	iph2->retry_counter--;
 
-	sched_schedule(&iph2->scr, iph2->ph1->rmconf->retry_interval,
+	sched_schedule(&iph2->scr, lcconf->retry_interval,
 		       isakmp_ph2resend_stub);
 
 	return 0;
+}
+
+int
+isakmp_ph2send(iph2)
+	struct ph2handle *iph2;
+{
+	iph2->retry_counter = lcconf->retry_counter;
+	return isakmp_ph2resend(iph2);
 }
 
 /* called from scheduler */
@@ -1958,27 +1969,21 @@ isakmp_ph1dying(iph1)
 	iph1->status = PHASE1ST_DYING;
 
 	/* Any fresh phase1s? */
-	new_iph1 = getph1byaddr(iph1->local, iph1->remote, 1);
+	new_iph1 = getph1(iph1->rmconf, iph1->local, iph1->remote, 1);
 	if (new_iph1 == NULL) {
 		LIST_FOREACH(p, &iph1->ph2tree, ph1bind) {
 			if (p->status != PHASE2ST_ESTABLISHED)
 				continue;
 
-			rmconf = getrmconf(iph1->remote);
-			if (rmconf == NULL) {
-				plog(LLV_ERROR, LOCATION, NULL,
-				     "no configuration found "
-				     "for %s\n", saddrwop2str(iph1->remote));
-			} else {
-				plog(LLV_INFO, LOCATION, NULL,
-				     "renegotiating phase1 to %s due to "
-				      "active phase2\n",
-					saddrwop2str(iph1->remote));
+			plog(LLV_INFO, LOCATION, NULL,
+			     "renegotiating phase1 to %s due to "
+			     "active phase2\n",
+			     saddrwop2str(iph1->remote));
 
-				if (iph1->side == INITIATOR)
-					isakmp_ph1begin_i(rmconf, iph1->remote,
-							  iph1->local);
-			}
+			if (iph1->side == INITIATOR)
+				isakmp_ph1begin_i(iph1->rmconf, iph1->remote,
+						  iph1->local);
+
 			break;
 		}
 	} else {
@@ -2164,7 +2169,7 @@ isakmp_post_acquire(iph2)
 	 * address of a mobile node (not a CoA provided by MIGRATE/KMADDRESS
 	 * as iph2->dst hint). This scenario would require additional changes,
 	 * so no need to bother yet. --arno */
-	rmconf = getrmconf(iph2->dst);
+	rmconf = getrmconf(iph2->dst, GETRMCONF_F_NO_PASSIVE);
 	if (rmconf == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"no configuration found for %s.\n",
@@ -2247,7 +2252,8 @@ isakmp_get_sainfo(iph2, sp_out, sp_in)
 	struct ph2handle *iph2;
 	struct secpolicy *sp_out, *sp_in;
 {
-	int remoteid=0;
+	struct remoteconf *conf;
+	int remoteid = 0;
 
 	plog(LLV_DEBUG, LOCATION, NULL,
 		"new acquire %s\n", spidx2str(&sp_out->spidx));
@@ -2273,16 +2279,13 @@ isakmp_get_sainfo(iph2, sp_out, sp_in)
 			vfree(idsrc);
 			return -1;
 		}
-		{
-			struct remoteconf *conf;
-			conf = getrmconf(iph2->dst);
-			if (conf != NULL)
-				remoteid=conf->ph1id;
-			else{
-				plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
-				remoteid=0;
-			}
-		}
+
+		conf = getrmconf(iph2->dst, 0);
+		if (conf != NULL)
+			remoteid = conf->ph1id;
+		else
+			plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
+
 		iph2->sainfo = getsainfo(idsrc, iddst, NULL, NULL, remoteid);
 		vfree(idsrc);
 		vfree(iddst);
@@ -2947,7 +2950,9 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 	 * respect content of "remote".
 	 */
 	if (extract_port(iph1->remote) == 0) {
-		port = extract_port(rmconf->remote);
+		port = 0;
+		if (rmconf != NULL)
+			port = extract_port(rmconf->remote);
 		if (port == 0)
 			port = PORT_ISAKMP;
 		set_port(iph1->remote, port);
@@ -2960,8 +2965,12 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 	if (iph1->local == NULL)
 		return -1;
 
-	if (extract_port(iph1->local) == 0)
+	if (extract_port(iph1->local) == 0) {
+		port = myaddr_getsport(iph1->local);
+		if (port == 0)
+			port = PORT_ISAKMP;
 		set_port(iph1->local, PORT_ISAKMP);
+	}
 
 #ifdef ENABLE_NATT
 	if (extract_port(iph1->local) == lcconf->port_isakmp_natt) {
