@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.52 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.53 2009/03/12 23:05:27 he Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1152,7 +1152,7 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 	/* check if this etype is allowed */
 	memset(&rmsel, 0, sizeof(rmsel));
 	rmsel.remote = remote;
-	if (enumrmconf(&rmsel, check_etypeok, (void *) (unsigned) etype) == 0) {
+	if (enumrmconf(&rmsel, check_etypeok, (void *) (intptr_t) etype) == 0) {
 		plog(LLV_ERROR, LOCATION, remote,
 		     "exchange %s not allowed in any applicable rmconf.\n",
 		     s_isakmp_etype(etype));
