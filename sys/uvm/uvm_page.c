@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.144 2009/02/27 23:29:08 drochner Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.145 2009/03/12 12:55:16 abs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.144 2009/02/27 23:29:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.145 2009/03/12 12:55:16 abs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1137,7 +1137,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
  again:
 	switch (strat) {
 	case UVM_PGA_STRAT_NORMAL:
-		/* Check all freelists in descending priority order. */
+		/* Check freelists: descending priority (ascending id) order */
 		for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
 			pg = uvm_pagealloc_pgfl(ucpu, lcv,
 			    try1, try2, &color);
