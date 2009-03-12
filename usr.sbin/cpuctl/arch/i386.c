@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.14 2008/12/16 22:44:51 christos Exp $	*/
+/*	$NetBSD: i386.c,v 1.15 2009/03/12 09:10:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.14 2008/12/16 22:44:51 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.15 2009/03/12 09:10:15 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1426,6 +1426,18 @@ identifycpu(const char *cpuname)
 
 	if (cpu_vendor == CPUVENDOR_AMD) {
 		powernow_probe(ci);
+
+		if ((ci->ci_feature3_flags & CPUID_SVM) != 0) {
+			uint32_t data[4];
+
+			x86_cpuid(0x8000000a, data);
+			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
+			    data[0] & 0xf);
+			aprint_verbose("%s: SVM NASID %d\n", cpuname, data[1]);
+			snprintb(buf, sizeof(buf), CPUID_AMD_SVM_FLAGS,
+			    data[3]);
+			aprint_verbose("%s: SVM features %s\n", cpuname, buf);
+		}
 	}
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
