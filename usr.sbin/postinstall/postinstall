@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.7 2009/03/12 23:11:32 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.8 2009/03/12 23:26:22 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -650,6 +650,35 @@ do_bluetooth()
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
+}
+
+#
+#	ddbonpanic
+#
+additem ddbonpanic "verify ddb.onpanic is configured in sysctl.conf"
+do_ddbonpanic()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_ddbonpanic  fix|check"
+
+	if ${GREP} -E '^[[:space:]]*ddb\.onpanic[[:space:]]*=[[:space:]]*[[:digit:]]+' \
+		"${DEST_DIR}/etc/sysctl.conf" >/dev/null 2>&1
+	then
+		result=0
+	else
+		if [ "$1" = check ]; then
+			msg \
+    "The ddb.onpanic behaviour is not explicitly specified in /etc/sysctl.conf"
+			result=1
+		else
+			echo >> "${DEST_DIR}/etc/sysctl.conf"
+			sed < "${SRC_DIR}/etc/sysctl.conf" \
+			   -e '/^ddb\.onpanic/q' | \
+			       sed -e '1,/^$/d' >> \
+			    "${DEST_DIR}/etc/sysctl.conf"
+			result=$?
+		fi
+	fi
+	return ${result}
 }
 
 #
