@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.5 2009/02/16 03:18:33 snj Exp $
+# $NetBSD: mi,v 1.780.2.6 2009/03/12 23:44:48 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3239,7 +3239,7 @@
 ./usr/share/locale/sk/LC_MESSAGES		base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2		base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2/LC_CTYPE	base-locale-sk		nls
-./usr/share/locale/sk_SK.ISO8859-2/LC_MESSAGES	base-locale-sk		nls
+./usr/share/locale/sk_SK.ISO8859-2/LC_MESSAGES	base-locale-sk
 ./usr/share/locale/sk_SK.ISO8859-2/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sk	nls
 ./usr/share/locale/sk_SK.ISO8859-2/LC_MONETARY	base-locale-sk		nls
 ./usr/share/locale/sk_SK.ISO8859-2/LC_NUMERIC	base-locale-sk		nls
