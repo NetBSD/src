@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.82 2009/03/12 07:57:43 nakayama Exp $
+#	 $NetBSD: mi,v 1.83 2009/03/12 08:04:49 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7468,7 +7468,7 @@
 ./usr/X11R7/man/html3/XGetDeviceKeyMapping.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetDeviceModifierMapping.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetDeviceMotionEvents.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/XGetDeviceProperty.html		-unknown-	.man,xorg
+./usr/X11R7/man/html3/XGetDeviceProperty.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetExtensionVersion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetFeedbackControl.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetSelectedExtensionEvents.html	-unknown-	html,xorg
@@ -7494,7 +7494,7 @@
 ./usr/X11R7/man/html3/XInternAtom.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XIntersectRegion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XKeymapEvent.html			-unknown-	html,xorg
-./usr/X11R7/man/html3/XListDeviceProperties.html	-unknown-	.man,xorg
+./usr/X11R7/man/html3/XListDeviceProperties.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XListFonts.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XListInputDevices.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XLoadFont.html			-unknown-	html,xorg
