@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.21 2009/02/25 20:50:16 ad Exp $
+.\"	$NetBSD: kqueue.2,v 1.22 2009/03/12 10:16:37 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -80,14 +80,12 @@ on a file descriptor will remove any kevents that reference the descriptor.
 creates a new kernel event queue and returns a descriptor.
 The queue is not inherited by a child created with
 .Xr fork 2 .
-.ig
-However, if
-.Xr rfork 2
-is called without the
-.Dv RFFDG
-flag, then the descriptor table is shared,
-which will allow sharing of the kqueue between two processes.
-..
+.\" However, if
+.\" .Xr rfork 2
+.\" is called without the
+.\" .Dv RFFDG
+.\" flag, then the descriptor table is shared,
+.\" which will allow sharing of the kqueue between two processes.
 .Pp
 .Fn kevent
 is used to register events with the queue, and return any pending
@@ -485,12 +483,12 @@ The
 .Fn kqueue
 function fails if:
 .Bl -tag -width Er
-.It Bq Er ENOMEM
-The kernel failed to allocate enough memory for the kernel queue.
 .It Bq Er EMFILE
 The per-process descriptor table is full.
 .It Bq Er ENFILE
 The system file table is full.
+.It Bq Er ENOMEM
+The kernel failed to allocate enough memory for the kernel queue.
 .El
 .Pp
 The
@@ -499,12 +497,12 @@ function fails if:
 .Bl -tag -width Er
 .It Bq Er EACCES
 The process does not have permission to register a filter.
+.It Bq Er EBADF
+The specified descriptor is invalid.
 .It Bq Er EFAULT
 There was an error reading or writing the
 .Va kevent
 structure.
-.It Bq Er EBADF
-The specified descriptor is invalid.
 .It Bq Er EINTR
 A signal was delivered before the timeout expired and before any
 events were placed on the kqueue for return.
