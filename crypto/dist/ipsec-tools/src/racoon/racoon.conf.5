@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.53 2009/01/10 21:58:38 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.54 2009/03/12 10:57:26 tteras Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 10, 2009
+.Dd March 12, 2009
 .Dt RACOON.CONF 5
 .Os
 .\"
@@ -376,19 +376,46 @@ This problem is known to be fixed in Linux 2.6.25 and later.
 .Ss Remote Nodes Specifications
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic remote ( Ar address | Ic anonymous )
-.Bq Bq Ar port
-.Bq Ic inherit Ar parent
+.Ic remote Ar name
+.Bq Ic inherit Ar parent_name
 .Ic { Ar statements Ic }
 .Xc
 Specifies the IKE phase 1 parameters for each remote node.
-The default port is 500.
-If
-.Ic anonymous
-is specified, the statements will apply to any peer that does not match a
-more specific
-.Ic remote
-directive.
+.Pp
+If connection is initiated using racoonctl, a unique match using the
+remote IP must be found or the remote block name has to be given. For
+received acquires (kernel notices traffic requiring a new SA) the
+remote IP and remoteid from matching sainfo block are used to decide
+the remoteblock. If no uniquely matching remoteblock is found using
+these criteria, no connection attempt is done.
+.Pp
+When acting as responder, racoon picks the first proposal that has one
+or more acceptable remote configurations. When determining if a remote
+specification is matching the following information is checked:
+.Bl -bullet -tag -width Ds -compact
+.It
+The remote IP is checked against
+.Ic remote_address .
+.It
+ISAKMP exchange type is checked against
+.Ic exchange_mode .
+.It
+ISAKMP SA attributes must match a
+.Ic proposal
+block.
+.It
+The remote identity is matched against
+.Ic peers_identifier
+if
+.Ic verify_identifier
+is on.
+.It
+If a certificate request was received, it must match the issuer of
+.Ic "certificate_type x509" certificate.
+If certificate request without issuer name was sent, the
+.Ic match_empty_cr
+parameter specifies whether or not remote block matches.
+.El
 .Pp
 Sections with
 .Ic inherit Ar parent
@@ -405,6 +432,9 @@ In these sections it is enough to redefine only the changed parameters.
 The following are valid statements.
 .Pp
 .Bl -tag -width Ds -compact
+.\"
+.It Ic remote_address Ar address ;
+Defines the IP address of the peer.
 .\"
 .It Ic exchange_mode ( main | aggressive | base ) ;
 Defines the exchange mode for phase 1 when racoon is the initiator.
@@ -637,6 +667,11 @@ The default is on.
 .\"
 .It Ic send_cr (on | off) ;
 If you do not want to send a certificate request, set this to off.
+The default is on.
+.\"
+.It Ic match_empty_cr (on | off) ;
+Specifies whether this remote block is a valid match when a non-specific
+certificate request is received.
 The default is on.
 .\"
 .It Ic verify_cert (on | off) ;
@@ -926,6 +961,23 @@ is used, where hostname is the value returned by the
 command.
 .El
 .El
+.Pp
+.It Xo
+.Ic remote ( Ar address | Ic anonymous )
+.Bq Bq Ar port
+.Bq Ic inherit Ar parent
+.Ic { Ar statements Ic }
+.Xc
+Deprecated format of specifying a remote block. This will be removed
+in future. It is a remnant from time when remote block was decided
+solely based on the peers IP address.
+
+This is equivalent to:
+.Bd -literal -offset
+remote "address" [inherit "parent-address"] {
+	remote_address address;
+}
+.Ed
 .El
 .\"
 .Ss Sainfo Specifications

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.13 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.14 2009/03/12 10:57:26 tteras Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -73,10 +73,8 @@ extern int isakmp_open __P((struct sockaddr *, int));
 extern void isakmp_close __P((int fd));
 extern int isakmp_send __P((struct ph1handle *, vchar_t *));
 
-extern void isakmp_ph1resend_stub __P((struct sched *));
-extern int isakmp_ph1resend __P((struct ph1handle *));
-extern void isakmp_ph2resend_stub __P((struct sched *));
-extern int isakmp_ph2resend __P((struct ph2handle *));
+extern int isakmp_ph1send __P((struct ph1handle *));
+extern int isakmp_ph2send __P((struct ph2handle *));
 extern void isakmp_ph1dying_stub __P((struct sched *));
 extern void isakmp_ph1dying __P((struct ph1handle *));
 extern void isakmp_ph1expire_stub __P((struct sched *));
@@ -131,4 +129,5 @@ void delete_spd __P((struct ph2handle *, u_int64_t));
 #ifdef INET6
 u_int32_t setscopeid __P((struct sockaddr *, struct sockaddr *));
 #endif
+
 #endif /* _ISAKMP_VAR_H */
