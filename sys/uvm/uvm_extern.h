@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.151 2009/02/18 13:16:58 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.152 2009/03/12 12:55:16 abs Exp $	*/
 
 /*
  *
@@ -176,7 +176,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 /*
  * the following defines the strategies for uvm_pagealloc_strat()
  */
-#define	UVM_PGA_STRAT_NORMAL	0	/* high -> low free list walk */
+#define	UVM_PGA_STRAT_NORMAL	0	/* priority (low id to high) walk */
 #define	UVM_PGA_STRAT_ONLY	1	/* only specified free list */
 #define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
 
