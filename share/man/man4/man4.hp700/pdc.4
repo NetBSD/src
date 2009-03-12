@@ -1,4 +1,4 @@
-.\" $NetBSD: pdc.4,v 1.2 2009/02/20 15:08:49 wiz Exp $
+.\" $NetBSD: pdc.4,v 1.3 2009/03/12 12:46:49 joerg Exp $
 .\"
 .\" $OpenBSD: pdc.4,v 1.6 2007/06/01 19:54:10 aanriot Exp $
 .\"
@@ -79,18 +79,7 @@ variable sized entries in the block TLB.
 Fixed entries have size of power of two and are aligned to the size
 where variable entries can have any size and base address both
 aligned to a page.
-.It Xo
-.Fo pdc
-.Fa PDC_BLOCK_TLB
-.Fa PDC_BTLB_INSERT
-.Fa sp
-.Fa va
-.Fa pa
-.Fa len
-.Fa acc
-.Fa slot
-.Fc
-.Xc
+.It Fn pdc PDC_BLOCK_TLB PDC_BTLB_INSERT sp va pa len acc slot
 Insert block TLB entry specified by the space ID
 .Ar sp ,
 virtual address
