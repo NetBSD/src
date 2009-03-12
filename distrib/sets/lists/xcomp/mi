@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.81 2009/03/10 04:55:00 mrg Exp $
+#	 $NetBSD: mi,v 1.82 2009/03/12 07:57:43 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6565,7 +6565,7 @@
 ./usr/X11R7/man/cat3/XGetDeviceKeyMapping.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetDeviceModifierMapping.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetDeviceMotionEvents.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XGetDeviceProperty.0		-unknown-	.man,xorg
+./usr/X11R7/man/cat3/XGetDeviceProperty.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetExtensionVersion.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetFeedbackControl.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetSelectedExtensionEvents.0	-unknown-	.cat,xorg
@@ -6591,7 +6591,7 @@
 ./usr/X11R7/man/cat3/XInternAtom.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XIntersectRegion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XKeymapEvent.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XListDeviceProperties.0		-unknown-	.man,xorg
+./usr/X11R7/man/cat3/XListDeviceProperties.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XListFonts.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XListInputDevices.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XLoadFont.0			-unknown-	.cat,xorg
