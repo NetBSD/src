@@ -1,11 +1,11 @@
 #
-# $NetBSD: ATARITT,v 1.86.4.3 2009/01/26 03:15:29 snj Exp $
+# $NetBSD: ATARITT,v 1.86.4.4 2009/03/12 23:33:48 snj Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.73.4.4 2009/01/26 03:07:52 snj Exp $
+#		NetBSD: GENERIC.in,v 1.73.4.5 2009/03/12 23:32:35 snj Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -15,7 +15,6 @@ options M68030 # support for 030
 options FPU_EMULATE # Support for MC68881/MC68882 emulator
 options INET # IP + ICMP + TCP + UDP
 options INET6 # IPV6
-options NETATALK # AppleTalk networking protocols
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
@@ -36,16 +35,14 @@ file-system UNION # union file system
 file-system UMAPFS # null file system (with uid & gid remapping)
 file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
-file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
 options WAPBL # File system journaling support - Experimental
-options QUOTA # Disk quotas for local disks
 options SOFTDEP # FFS soft updates support.
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
 options DDB_HISTORY_SIZE=100 # Enable history editing in DDB
-options COMPAT_43 # 4.3 BSD compatible system calls (required)
+options COMPAT_43 # 4.3 BSD compatible system calls
 options COMPAT_10 # Compatibility with NetBSD 1.0
 options COMPAT_11 # Compatibility with NetBSD 1.1
 options COMPAT_12 # Compatibility with NetBSD 1.2
@@ -83,19 +80,14 @@ pseudo-device ppp # ppp
 pseudo-device pppoe # PPP over Ethernet (RFC 2516)
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device md 3 # Boot memory disk
+pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device bpfilter # berkeley packet filters
 pseudo-device tun # network tunnel
 pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
-pseudo-device vlan # IEEE 802.1q encapsulation
-pseudo-device bridge # simple inter-network bridging
-pseudo-device agr # IEEE 802.3ad link aggregation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device raid 8 # RAIDframe disk driver
-options RAID_AUTOCONFIG # auto-configuration of RAID components
 pseudo-device fss 4 # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
@@ -103,7 +95,6 @@ pseudo-device clockctl # user control of clock subsystem
 pseudo-device view 4 # View (graphics mapping)
 pseudo-device mouse 1 # mouse
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
-scsibus0 at ncrscsi0 # SCSI bus
 zs0 at mainbus0 # Serial support through 8530
 grfbus0 at mainbus0 # bitmapped display's
 grfcc0 at grfbus0 # graphics driver
@@ -120,9 +111,10 @@ vme0 at avmebus0
 le0 at vme0 irq 5 # Lance ethernet (Riebl/PAM).
 le0 at vme0 irq 4 # Lance ethernet (BVME410).
 et0 at vme0 # Crazy Dots II
+scsibus* at scsi? # SCSI bus
 sd* at scsibus? target ? lun ? # SCSI disk drives
-st* at scsibus? target ? lun ? # SCSI tape drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
+st* at scsibus? target ? lun ? # SCSI tape drives
 ch* at scsibus? target ? lun ? # SCSI autochangers
 ss* at scsibus? target ? lun ? # SCSI scanners
 se* at scsibus? target ? lun ? # SCSI ethernet
