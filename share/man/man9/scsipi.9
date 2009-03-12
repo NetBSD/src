@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.20 2009/02/27 12:55:15 mjf Exp $
+.\"	$NetBSD: scsipi.9,v 1.21 2009/03/12 12:41:01 joerg Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -444,9 +444,9 @@ Argument is a
 .Va struct scsipi_xfer_mode
 properly filled in.
 An
-.Fa Dv ASYNC_EVENT_XFER_MODE
+.Dv ASYNC_EVENT_XFER_MODE
 call with
-.Fa Dv PERIPH_CAP_TQING
+.Dv PERIPH_CAP_TQING
 set in
 .Va xm_mode
 is mandatory to activate tagged queuing.
