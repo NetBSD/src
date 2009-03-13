@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.269 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.270 2009/03/13 15:01:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.269 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.270 2009/03/13 15:01:29 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -827,9 +827,8 @@ nfs_lookup(v)
 	np = VTONFS(dvp);
 
 	/*
-	 * Before tediously performing a linear scan of the directory,
-	 * check the name cache to see if the directory/name pair
-	 * we are looking for is known already.
+	 * Before performing an RPC, check the name cache to see if
+	 * the directory/name pair we are looking for is known already.
 	 * If the directory/name pair is found in the name cache,
 	 * we have to ensure the directory has not changed from
 	 * the time the cache entry has been created. If it has,
