@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.10 2009/02/20 05:20:25 cube Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.11 2009/03/13 18:24:41 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,7 @@ static void emitload(FILE *);
 static void emitincludes(FILE *);
 static void emitappmkoptions(FILE *);
 static void emitsubs(FILE *, const char *, const char *, int);
+static int  selectopt(const char *, void *);
 
 int
 mkmakefile(void)
@@ -543,21 +544,6 @@ emitincludes(FILE *fp)
 	}
 }
 
-static int
-print_condmkopts(const char *name, void *value, void *arg)
-{
-	struct nvlist *nv;
-	FILE *fp = arg;
-
-	if (ht_lookup(selecttab, name) == 0)
-		return (0);
-
-	for (nv = value; nv != NULL; nv = nv->nv_next)
-		fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
-
-	return (0);
-}
-
 /*
  * Emit appending makeoptions.
  */
@@ -569,5 +555,18 @@ emitappmkoptions(FILE *fp)
 	for (nv = appmkoptions; nv != NULL; nv = nv->nv_next)
 		fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
 
-	ht_enumerate(condmkopttab, print_condmkopts, fp);
+	for (nv = condmkopttab; nv != NULL; nv = nv->nv_next)
+	{
+		if (expr_eval(nv->nv_ptr, selectopt, NULL))
+			fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
+		expr_free(nv->nv_ptr);
+	}
+}
+
+static int
+/*ARGSUSED*/
+selectopt(const char *name, void *context)
+{
+
+	return (ht_lookup(selecttab, strtolower(name)) != NULL);
 }
