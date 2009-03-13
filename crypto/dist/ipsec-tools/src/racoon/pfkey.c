@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.45 2009/01/23 08:32:58 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.46 2009/03/13 04:49:16 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.45 2009/01/23 08:32:58 tteras Exp $ */
+/* $Id: pfkey.c,v 1.46 2009/03/13 04:49:16 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2871,7 +2871,7 @@ migrate_ph1_ike_addresses(iph1, arg)
 
 		/* If we are not acting as initiator, let's just leave and
 		 * let the remote peer handle the restart */
-		rmconf = getrmconf(ma->remote);
+		rmconf = getrmconf(ma->remote, 0);
 		if (rmconf == NULL || !rmconf->passive) {
 			iph1->status = PHASE1ST_EXPIRED;
 			sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
@@ -3042,7 +3042,7 @@ migrate_ph2_sa_addresses(iph2, args)
 		if (iph2->ph1 && iph2->ph1->rmconf)
 			rmconf = iph2->ph1->rmconf;
 		else
-			rmconf = getrmconf(iph2->dst);
+			rmconf = getrmconf(iph2->dst, 0);
 
 		if (rmconf && !rmconf->passive) {
 			plog(LLV_WARNING, LOCATION, iph2->dst, "MIGRATE received "
