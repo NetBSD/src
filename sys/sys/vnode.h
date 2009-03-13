@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.201 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.202 2009/03/13 11:04:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ typedef struct vnode vnode_t;
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
     "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
-    "\28INACTNOW\31DIROP" 
+    "\30INACTNOW\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
