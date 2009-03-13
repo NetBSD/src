@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.1 2009/03/12 12:08:17 yamt Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.2 2009/03/13 11:10:20 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.1 2009/03/12 12:08:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.2 2009/03/13 11:10:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ tprof_amdpmi_start_cpu(void *arg1, void *arg2)
 	pesr = PESR_OS | PESR_INT |
 	    __SHIFTIN(event_lo, PESR_EVENT_MASK_LO) |
 	    __SHIFTIN(event_hi, PESR_EVENT_MASK_HI) |
-	    __SHIFTIN(1, PESR_COUNTER_MASK) |
+	    __SHIFTIN(0, PESR_COUNTER_MASK) |
 	    __SHIFTIN(unit, PESR_UNIT_MASK);
 
 	wrmsr(PERFCTR(ctrno), counter_reset_val);
