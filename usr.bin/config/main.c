@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2009/03/13 18:24:41 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2009/03/13 20:44:59 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -264,7 +264,6 @@ main(int argc, char **argv)
 	needcnttab = ht_new();
 	opttab = ht_new();
 	mkopttab = ht_new();
-	condmkopttab = ht_new();
 	fsopttab = ht_new();
 	deffstab = ht_new();
 	defopttab = ht_new();
@@ -280,7 +279,7 @@ main(int argc, char **argv)
 	nextopt = &options;
 	nextmkopt = &mkoptions;
 	nextappmkopt = &appmkoptions;
-	nextcndmkopt = &condmkopttab;
+	nextcndmkopt = &condmkoptions;
 	nextfsopt = &fsoptions;
 
 	/*
