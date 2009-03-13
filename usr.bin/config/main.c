@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2009/02/14 21:28:58 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2009/03/13 18:24:41 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,6 +95,7 @@ static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
 static struct nvlist **nextmkopt;
 static struct nvlist **nextappmkopt;
+static struct nvlist **nextcndmkopt;
 static struct nvlist **nextfsopt;
 
 static	void	usage(void) __dead;
@@ -118,7 +119,6 @@ static	void	do_kill_orphans(struct devbase *, struct attr *,
     struct devbase *, int);
 static	int	kill_orphans_cb(const char *, void *, void *);
 static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
-static	const char *strtolower(const char *);
 void	defopt(struct hashtab *ht, const char *fname,
 	     struct nvlist *opts, struct nvlist *deps, int obs);
 
@@ -280,6 +280,7 @@ main(int argc, char **argv)
 	nextopt = &options;
 	nextmkopt = &mkoptions;
 	nextappmkopt = &appmkoptions;
+	nextcndmkopt = &condmkopttab;
 	nextfsopt = &fsoptions;
 
 	/*
@@ -947,21 +948,13 @@ appendmkoption(const char *name, const char *value)
  * Add a conditional appending "make" option.
  */
 void
-appendcondmkoption(const char *selname, const char *name, const char *value)
+appendcondmkoption(struct nvlist *cnd, const char *name, const char *value)
 {
-	struct nvlist *nv, *lnv;
-	const char *n;
+	struct nvlist *nv;
 
-	n = strtolower(selname);
-	nv = newnv(name, value, NULL, 0, NULL);
-	if (ht_insert(condmkopttab, n, nv) == 0)
-		return;
-
-	if ((lnv = ht_lookup(condmkopttab, n)) == NULL)
-		panic("appendcondmkoption");
-	for (; lnv->nv_next != NULL; lnv = lnv->nv_next)
-		/* search for the last list element */;
-	lnv->nv_next = nv;
+	nv = newnv(name, value, cnd, 0, NULL);
+	*nextcndmkopt = nv;
+	nextcndmkopt = &nv->nv_next;
 }
 
 /*
@@ -1399,7 +1392,7 @@ logconfig_end(void)
 	fclose(cfg);
 }
 
-static const char *
+const char *
 strtolower(const char *name)
 {
 	const char *n;
