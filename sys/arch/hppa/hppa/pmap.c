@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.35 2009/03/13 12:05:27 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.36 2009/03/13 12:07:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.35 2009/03/13 12:05:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.36 2009/03/13 12:07:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -951,10 +951,6 @@ pmap_bootstrap(vaddr_t vstart)
 		kerw =
 		    btlb_entry_start[btlb_j - 1] + btlb_entry_size[btlb_j - 1];
 	}
-
-	printf("%s: ksrx = %08x kerx = %08x\n", __func__, (int)ksrx, (int)kerx);
-	printf("%s: ksro = %08x kero = %08x\n", __func__, (int)ksro, (int)kero);
-	printf("%s: ksrw = %08x kerw = %08x\n", __func__, (int)ksrw, (int)kerw);
 
 	/*
 	 * We now know the exact beginning of managed kernel virtual space.
