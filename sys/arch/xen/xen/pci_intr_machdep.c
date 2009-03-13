@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.9 2009/03/10 17:21:57 bouyer Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.10 2009/03/13 20:19:56 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.9 2009/03/10 17:21:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.10 2009/03/13 20:19:56 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,8 +109,12 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
-			/* make sure a new IRQ will be allocated */
-			ihp->pirq &= ~0xff;
+			if (ihp->pirq & APIC_INT_VIA_APIC) {
+				/* make sure a new IRQ will be allocated */
+				ihp->pirq &= ~0xff;
+			} else {
+				ihp->pirq |= line;
+			}
 			goto end;
 		}
 		/*
