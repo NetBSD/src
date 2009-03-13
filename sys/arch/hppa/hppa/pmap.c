@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.33 2009/03/08 11:33:09 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.34 2009/03/13 12:02:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.33 2009/03/08 11:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.34 2009/03/13 12:02:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1687,6 +1687,8 @@ pmap_zero_page(paddr_t pa)
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_zero_page(%x)\n", (int)pa));
 
+	KASSERT(pg->mdpage.pvh_list == NULL);
+
 	pmap_flush_page(pg, true);
 	memset((void *)pa, 0, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
@@ -1708,6 +1710,8 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_copy_page(%x, %x)\n", (int)spa,
 	    (int)dpa));
+
+	KASSERT(dstpg->mdpage.pvh_list == NULL);
 
 	pmap_flush_page(srcpg, false);
 	pmap_flush_page(dstpg, true);
