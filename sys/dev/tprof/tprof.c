@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.5 2009/03/11 13:48:47 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.6 2009/03/13 11:06:26 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.5 2009/03/11 13:48:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.6 2009/03/13 11:06:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,7 @@ tprof_stop1(void)
 	struct cpu_info *ci;
 
 	KASSERT(mutex_owned(&tprof_startstop_lock));
+	KASSERT(tprof_nworker == 0);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		tprof_cpu_t * const c = tprof_cpu(ci);
