@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.9 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.10 2009/03/13 04:49:16 tteras Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -43,6 +43,7 @@
 #include "isakmp_xauth.h"
 #endif
 
+struct ph1handle;
 struct secprotospec;
 
 struct etypes {
