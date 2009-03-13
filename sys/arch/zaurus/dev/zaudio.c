@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.8 2009/03/11 09:04:50 nonaka Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.9 2009/03/13 13:55:18 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.8 2009/03/11 09:04:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.9 2009/03/13 13:55:18 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,33 +148,34 @@ static paddr_t zaudio_mappage(void *, void *, off_t, int);
 static int zaudio_get_props(void *);
 
 struct audio_hw_if wm8750_hw_if = {
-	zaudio_open,
-	zaudio_close,
-	NULL,
-	zaudio_query_encoding,
-	zaudio_set_params,
-	zaudio_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	zaudio_start_output,
-	zaudio_start_input,
-	zaudio_halt_output,
-	zaudio_halt_input,
-	NULL,
-	zaudio_getdev,
-	NULL,
-	zaudio_set_port,
-	zaudio_get_port,
-	zaudio_query_devinfo,
-	zaudio_allocm,
-	zaudio_freem,
-	zaudio_round_buffersize,
-	zaudio_mappage,
-	zaudio_get_props,
-	NULL,
-	NULL,
-	NULL,
+	.open			= zaudio_open,
+	.close			= zaudio_close,
+	.drain			= NULL,
+	.query_encoding		= zaudio_query_encoding,
+	.set_params		= zaudio_set_params,
+	.round_blocksize	= zaudio_round_blocksize,
+	.commit_settings	= NULL,
+	.init_output		= NULL,
+	.init_input		= NULL,
+	.start_output		= zaudio_start_output,
+	.start_input		= zaudio_start_input,
+	.halt_output		= zaudio_halt_output,
+	.halt_input		= zaudio_halt_input,
+	.speaker_ctl		= NULL,
+	.getdev			= zaudio_getdev,
+	.setfd			= NULL,
+	.set_port		= zaudio_set_port,
+	.get_port		= zaudio_get_port,
+	.query_devinfo		= zaudio_query_devinfo,
+	.allocm			= zaudio_allocm,
+	.freem			= zaudio_freem,
+	.round_buffersize	= zaudio_round_buffersize,
+	.mappage		= zaudio_mappage,
+	.get_props		= zaudio_get_props,
+	.trigger_output		= NULL,
+	.trigger_input		= NULL,
+	.dev_ioctl		= NULL,
+	.powerstate		= NULL,
 };
 
 static const uint16_t playback_registers[][2] = {
