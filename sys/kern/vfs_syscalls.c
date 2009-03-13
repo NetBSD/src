@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.390 2009/02/23 20:33:30 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.391 2009/03/13 11:05:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.390 2009/02/23 20:33:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.391 2009/03/13 11:05:26 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2119,7 +2119,6 @@ do_sys_unlink(const char *arg, enum uio_seg seg)
 	struct vnode *vp;
 	int error;
 	struct nameidata nd;
-	kauth_cred_t cred;
 	char *path;
 	const char *cpath;
 
@@ -2157,7 +2156,6 @@ do_sys_unlink(const char *arg, enum uio_seg seg)
 	}
 #endif /* NVERIEXEC > 0 */
 	
-	cred = kauth_cred_get();
 #ifdef FILEASSOC
 	(void)fileassoc_file_delete(vp);
 #endif /* FILEASSOC */
