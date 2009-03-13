@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.75 2009/03/05 13:42:59 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.76 2009/03/13 19:08:20 abs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.75 2009/03/05 13:42:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.76 2009/03/13 19:08:20 abs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -470,8 +470,10 @@ start_c(id, ttphystart, ttphysize, stphysize, esym_addr)
 	 */
 	usable_segs[0].start = 0;
 	usable_segs[0].end   = stphysize;
+	usable_segs[0].free_list = VM_FREELIST_STRAM;
 	usable_segs[1].start = ttphystart;
 	usable_segs[1].end   = ttphystart + ttphysize;
+	usable_segs[1].free_list = VM_FREELIST_TTRAM;
 	usable_segs[2].start = usable_segs[2].end = 0; /* End of segments! */
 
 	if (kbase) {
