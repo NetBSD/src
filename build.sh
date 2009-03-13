@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.205 2009/03/09 06:25:51 apb Exp $
+#	$NetBSD: build.sh,v 1.206 2009/03/13 16:23:31 perry Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -270,6 +270,10 @@ initdefaults()
 	# Set the BUILDSEED to NetBSD-"N"
 	#
 	setmakeenv BUILDSEED "NetBSD-$(${HOST_SH} ${TOP}/sys/conf/osrelease.sh -m)"
+
+	# Set MKARZERO to "yes"
+	#
+	setmakeenv MKARZERO "yes"
 
 	# Set various environment variables to known defaults,
 	# to minimize (cross-)build problems observed "in the field".
@@ -1213,7 +1217,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.205 2009/03/09 06:25:51 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.206 2009/03/13 16:23:31 perry Exp $
 # with these arguments: ${_args}
 #
 

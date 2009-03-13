@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.295 2009/01/17 12:09:58 he Exp $
+#	$NetBSD: bsd.lib.mk,v 1.296 2009/03/13 16:23:31 perry Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -438,21 +438,30 @@ _YLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
+MKARZERO?=no
+
+.if ${MKARZERO} == "yes"
+_ARFL=crsD
+_INSTRANLIB=
+.else
+_ARFL=crs
+_INSTRANLIB=${empty(PRESERVE):?-a "${RANLIB} -t":}
+.endif
+
 # If you change this, please consider reflecting the change in
 # the override in sys/rump/Makefile.rump.
 .if !target(__archivebuild)
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
-	${RANLIB} ${.TARGET}
+	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
 
 .if !target(__archiveinstall)
 __archiveinstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    ${empty(PRESERVE):?-a "${RANLIB} -t":} ${.ALLSRC} ${.TARGET}
+	    ${_INSTRANLIB} ${.ALLSRC} ${.TARGET}
 .endif
 
 __archivesymlinkpic: .USE
