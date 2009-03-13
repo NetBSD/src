@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1200 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1201 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -129,17 +129,12 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		gzip, libcrypto, m4, make and sdiff tests to ATF.  Initial
 		work from the GSoC 2008 project by Lukasz Strzygowski.
 		[jmmv 20090213]
-	newport(4): Imported and adapted to NetBSD Xorg's xf86-video-newport
-		0.2.1 driver for SGI's NG1 / Newport graphics boards found
-		mostly in Indys. [macallan 20090213]
 	openssh: Import 5.1. [christos 20090216]
 	amd64, i386: The bootloader has been enhanced to support framebuffer
 		consoles using VESA BIOS extensions. These changes allow the
 		x86 ports to work with the genfb(4) driver, and obsoletes
 		the i386-only vesafb(4) driver. [jmcneill 20090216]
 	i386: The vesafb(4) driver has been retired. [jmcneill 20090218]
-	crime(4): add an Xorg driver for the CRIME rendering engine found in
-		SGI's O2 workstations. [macallan 20090219]
 	tests: Converted some of the kernel tests, including kqueue and ipf,
 		to ATF.  Initial work from the GSoC 2008 project by Lukasz
 		Strzygowski.  [jmmv 20090220]
@@ -151,7 +146,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		dependencies will no longer be available from NetBSD 6.0
 		onwards.  We encourage users to enable logging on FFS file
 		systems. [ad 20090222]
-	sgimips: build Xorg by default [macallan 20080223]
 	dhcpcd(8): Import dhcpcd-4.0.12. [roy 20090226]
 	xen: Add PCI pass-through support for Xen3.  domain0 kernel gets a
 		pciback PCI drivers, to which device specified in the

@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.92 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.93 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9875,3 +9875,11 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	dhcpcd(8): Import 4.0.10. [roy 20090204]
 	atari: Add support for installation from GEMDOS partition.
 		[abs 20090206]
+	newport(4): Imported and adapted to NetBSD Xorg's xf86-video-newport
+		0.2.1 driver for SGI's NG1 / Newport graphics boards found
+		mostly in Indys. [macallan 20090213]
+	crime(4): add an Xorg driver for the CRIME rendering engine found in
+		SGI's O2 workstations. [macallan 20090219]
+	mount_procfs(8): Default to -o linux. [pooka 20090223]
+	sgimips: build Xorg by default [macallan 20090223]
+	azalia(4): Add proper Realtek ALC268 support. [jmcneill 20090228]
