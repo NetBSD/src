@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.247 2009/02/25 20:36:45 sketch Exp $
+#	$NetBSD: bsd.README,v 1.248 2009/03/13 16:23:31 perry Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -937,6 +937,15 @@ It sets/uses the following variables:
 LIB		The name of the library to build.
 
 LIBDIR		Target directory for libraries.
+
+MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
+		permissions in files inside its archives to those of
+		the file it was fed. This leads to non-reproduceable
+		builds. If MKARZERO is set to "yes" (default is "no")
+		then the "D" flag is passed to ar, causing the
+		timestamp, uid and gid to be zeroed and the file
+		permissions to be set to 644. This allows .a files
+		from different builds to be bit identical.
 
 SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
 		is not "no".
