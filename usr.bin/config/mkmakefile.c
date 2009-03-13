@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.11 2009/03/13 18:24:41 cube Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.12 2009/03/13 20:44:59 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -555,7 +555,7 @@ emitappmkoptions(FILE *fp)
 	for (nv = appmkoptions; nv != NULL; nv = nv->nv_next)
 		fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
 
-	for (nv = condmkopttab; nv != NULL; nv = nv->nv_next)
+	for (nv = condmkoptions; nv != NULL; nv = nv->nv_next)
 	{
 		if (expr_eval(nv->nv_ptr, selectopt, NULL))
 			fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
