@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.34 2009/03/13 12:02:57 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.35 2009/03/13 12:05:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.34 2009/03/13 12:02:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.35 2009/03/13 12:05:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,7 +587,8 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 				__changebit(pg, 0, PVF_UNCACHEABLE);
 
 				DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-				    ("%s: page re-marked cacheable\n", __func__));
+				    ("%s: page re-marked cacheable\n",
+				    __func__));
 			}
 		}
 	}
@@ -1185,8 +1186,10 @@ pmap_destroy(pmap_t pmap)
 					pmap_remove(pmap, haggis->pv_va,
 					    haggis->pv_va + PAGE_SIZE);
 
-					/* exploit the sacred knowledge
-					   of lambeous ozzmosis */
+					/*
+					 * exploit the sacred knowledge of
+					 * lambeous ozzmosis
+					 */
 					haggis = sheep->mdpage.pvh_list;
 				} else
 					haggis = haggis->pv_next;
