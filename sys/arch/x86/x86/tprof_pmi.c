@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.8 2009/03/12 01:55:50 yamt Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.9 2009/03/13 11:07:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.8 2009/03/12 01:55:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.9 2009/03/13 11:07:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ tprof_pmi_start_cpu(void *arg1, void *arg2)
 	msr = &msrs[ci->ci_smtid];
 	escr = __SHIFTIN(escr_event_mask, ESCR_EVENT_MASK) |
 	    __SHIFTIN(escr_event_select, ESCR_EVENT_SELECT);
-	cccr = CCCR_ENABLE | __SHIFTIN(cccr_escr_select, __BITS(13, 15)) |
+	cccr = CCCR_ENABLE | __SHIFTIN(cccr_escr_select, CCCR_ESCR_SELECT) |
 	    CCCR_MUST_BE_SET;
 	if (ci->ci_smtid == 0) {
 		escr |= ESCR_T0_OS;
