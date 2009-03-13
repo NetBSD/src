@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.29 2009/03/13 18:24:41 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.30 2009/03/13 20:44:59 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -402,7 +402,7 @@ struct	nvlist *options;	/* options */
 struct	nvlist *fsoptions;	/* filesystems */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	nvlist *appmkoptions;	/* appending mkoptions */
-struct	nvlist *condmkopttab;	/* conditional makeoption table */
+struct	nvlist *condmkoptions;	/* conditional makeoption table */
 struct	hashtab *devbasetab;	/* devbase lookup */
 struct	hashtab *devroottab;	/* attach at root lookup */
 struct	hashtab *devatab;	/* devbase attachment lookup */
