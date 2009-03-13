@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.181 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.182 2009/03/13 15:00:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.181 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.182 2009/03/13 15:00:34 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -293,10 +293,10 @@ diragain:
 		if (dp >= edp || (struct dirent *)_DIRENT_NEXT(dp) > edp ||
 		    (en > 0 && NFS_GETCOOKIE(pdp) != ndp->dc_cookie)) {
 #ifdef DEBUG
-		    	printf("invalid cache: %p %p %p off %lx %lx\n",
+		    	printf("invalid cache: %p %p %p off %jx %jx\n",
 				pdp, dp, edp,
-				(unsigned long)uio->uio_offset,
-				(unsigned long)NFS_GETCOOKIE(pdp));
+				(uintmax_t)uio->uio_offset,
+				(uintmax_t)NFS_GETCOOKIE(pdp));
 #endif
 			nfs_putdircache(np, ndp);
 			brelse(bp, 0);
