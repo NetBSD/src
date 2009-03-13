@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22 2009/03/11 09:02:04 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.23 2009/03/13 13:55:18 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -208,11 +208,11 @@ lcd0 at pxaip?
 wsdisplay* at lcd? console ?
 
 # Audio
-#zaudio0 at pxaip?
-#audio* at zaudio?
+zaudio0 at pxaip?
+audio* at zaudio?
 
 # Audio support
-#audio* at audiobus?
+audio* at audiobus?
 
 # integrated 16550 UARTs
 options 	COM_PXA2X0
