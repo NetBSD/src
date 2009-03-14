@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.31 2009/03/14 19:57:14 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.32 2009/03/14 22:52:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.31 2009/03/14 19:57:14 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.32 2009/03/14 22:52:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ newturn(int n __unused)
 			mf->readyR = R_LOADED;
 	}
 	if (!hasdriver)
-		Write(W_DDEAD, SHIP(0), 0, 0, 0, 0);
+		send_ddead();
 
 	if (sc_hasprompt) {
 		wmove(scroll_w, sc_line, 0);
@@ -147,11 +147,11 @@ newturn(int n __unused)
 		wprintw(scroll_w, "%s%s", sc_prompt, sc_buf);
 
 	if (turn % 50 == 0)
-		Write(W_ALIVE, SHIP(0), 0, 0, 0, 0);
+		send_alive();
 	if (mf->FS && (!mc->rig1 || windspeed == 6))
-		Write(W_FS, ms, 0, 0, 0, 0);
+		send_fs(ms, 0);
 	if (mf->FS == 1)
-		Write(W_FS, ms, 2, 0, 0, 0);
+		send_fs(ms, 2);
 
 	if (mf->struck)
 		leave(LEAVE_QUIT);
