@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.16 2009/03/14 18:32:47 dholland Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.17 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.16 2009/03/14 18:32:47 dholland Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.17 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,10 +43,10 @@ __RCSID("$NetBSD: dr_3.c,v 1.16 2009/03/14 18:32:47 dholland Exp $");
 #include "extern.h"
 #include "driver.h"
 
-static int	stillmoving(int);
-static int	is_isolated(struct ship *);
-static int	push(struct ship *, struct ship *);
-static void	step(struct ship *, int,  char *);
+static int stillmoving(int);
+static int is_isolated(struct ship *);
+static int push(struct ship *, struct ship *);
+static void step(struct ship *, int, char *);
 
 /* move all comp ships */
 void
@@ -258,8 +258,9 @@ step(struct ship *sp, int com, char *moved)
 				sp->file->row -= dr[winddir];
 				sp->file->col -= dc[winddir];
 			}
-		} else
+		} else {
 			sp->file->drift = 0;
+		}
 		break;
 	}
 }
@@ -328,7 +329,7 @@ void
 checksails(void)
 {
 	struct ship *sp;
-	int rig, full; 
+	int rig, full;
 	struct ship *close;
 
 	foreachship(sp) {
@@ -344,10 +345,12 @@ checksails(void)
 					full = 1;
 				else
 					full = 0;
-			} else 
+			} else {
 				full = 0;
-		} else
+			}
+		} else {
 			full = 0;
+		}
 		if ((sp->file->FS != 0) != full)
 			Write(W_FS, sp, full, 0, 0, 0);
 	}

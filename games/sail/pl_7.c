@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.29 2009/03/02 07:17:24 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.30 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.29 2009/03/02 07:17:24 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.30 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,9 +50,9 @@ __RCSID("$NetBSD: pl_7.c,v 1.29 2009/03/02 07:17:24 dholland Exp $");
 #include "player.h"
 #include "display.h"
 
-static void	Scroll(void);
-static void	endprompt(int);
-static void	adjustview(void);
+static void Scroll(void);
+static void endprompt(int);
+static void adjustview(void);
 
 /*
  * Display interface
