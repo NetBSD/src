@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.13 2008/06/13 08:50:12 cegger Exp $	*/
+/*	$NetBSD: leo.c,v 1.14 2009/03/14 14:45:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.13 2008/06/13 08:50:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.14 2009/03/14 14:45:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,13 +88,13 @@ struct leo_softc {
 
 #define LEO_SC_FLAGS_INUSE 1
 
-static int leo_match __P((struct device *, struct cfdata *, void *));
-static void leo_attach __P((struct device *, struct device *, void *));
-static int leo_probe __P((bus_space_tag_t *, bus_space_tag_t *,
+static int leo_match(struct device *, struct cfdata *, void *);
+static void leo_attach(struct device *, struct device *, void *);
+static int leo_probe(bus_space_tag_t *, bus_space_tag_t *,
 			  bus_space_handle_t *, bus_space_handle_t *,
-			  u_int, u_int));
-static int leo_init __P((struct leo_softc *, int));
-static int leo_scroll __P((struct leo_softc *, int));
+			  u_int, u_int);
+static int leo_init(struct leo_softc *, int);
+static int leo_scroll(struct leo_softc *, int);
 
 CFATTACH_DECL(leo, sizeof(struct leo_softc),
     leo_match, leo_attach, NULL, NULL);

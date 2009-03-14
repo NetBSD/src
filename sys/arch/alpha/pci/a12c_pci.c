@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_pci.c,v 1.3 2000/06/29 08:58:45 mrg Exp $ */
+/* $NetBSD: a12c_pci.c,v 1.4 2009/03/14 14:45:53 dsl Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.3 2000/06/29 08:58:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.4 2009/03/14 14:45:53 dsl Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -58,14 +58,14 @@ __KERNEL_COPYRIGHT(0,
 
 #define	A12C_PCI()	/* Generate ctags(1) key */
 
-void		a12c_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		a12c_bus_maxdevs __P((void *, int));
-pcitag_t	a12c_make_tag __P((void *, int, int, int));
-void		a12c_decompose_tag __P((void *, pcitag_t, int *, int *,
-		    int *));
-pcireg_t	a12c_conf_read __P((void *, pcitag_t, int));
-void		a12c_conf_write __P((void *, pcitag_t, int, pcireg_t));
+void		a12c_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		a12c_bus_maxdevs(void *, int);
+pcitag_t	a12c_make_tag(void *, int, int, int);
+void		a12c_decompose_tag(void *, pcitag_t, int *, int *,
+		    int *);
+pcireg_t	a12c_conf_read(void *, pcitag_t, int);
+void		a12c_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
 a12c_pci_init(pc, v)

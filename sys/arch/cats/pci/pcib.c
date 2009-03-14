@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.9 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: pcib.c,v 1.10 2009/03/14 14:45:58 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.9 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.10 2009/03/14 14:45:58 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,13 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.9 2008/04/28 20:23:15 martin Exp $");
 
 #include "isadma.h"
 
-int	pcibmatch __P((struct device *, struct cfdata *, void *));
-void	pcibattach __P((struct device *, struct device *, void *));
+int	pcibmatch(struct device *, struct cfdata *, void *);
+void	pcibattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcib, sizeof(struct device),
     pcibmatch, pcibattach, NULL, NULL);
 
-void	pcib_callback __P((struct device *));
+void	pcib_callback(struct device *);
 
 int
 pcibmatch(parent, match, aux)

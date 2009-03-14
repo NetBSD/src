@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.39 2008/06/11 14:35:53 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.40 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.39 2008/06/11 14:35:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.40 2009/03/14 14:45:56 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -207,41 +207,41 @@ struct ser_softc {
  */
 #define	SER_HW_CONSOLE	0x01
 
-void	ser_break __P((struct ser_softc *, int));
-void	ser_hwiflow __P((struct ser_softc *, int));
-void	ser_iflush __P((struct ser_softc *));
-void	ser_loadchannelregs __P((struct ser_softc *));
-void	ser_modem __P((struct ser_softc *, int));
-void	serdiag __P((void *));
-int	serhwiflow __P((struct tty *, int));
-void	serinit __P((int));
-void	serinitcons __P((int));
-int	sermintr __P((void *));
-int	sertrintr __P((void *));
-int	serparam __P((struct tty *, struct termios *));
-void	serstart __P((struct tty *));
+void	ser_break(struct ser_softc *, int);
+void	ser_hwiflow(struct ser_softc *, int);
+void	ser_iflush(struct ser_softc *);
+void	ser_loadchannelregs(struct ser_softc *);
+void	ser_modem(struct ser_softc *, int);
+void	serdiag(void *);
+int	serhwiflow(struct tty *, int);
+void	serinit(int);
+void	serinitcons(int);
+int	sermintr(void *);
+int	sertrintr(void *);
+int	serparam(struct tty *, struct termios *);
+void	serstart(struct tty *);
 
 struct consdev;
-void	sercnprobe	__P((struct consdev *));
-void	sercninit	__P((struct consdev *));
-int	sercngetc	__P((dev_t));
-void	sercnputc	__P((dev_t, int));
-void	sercnpollc	__P((dev_t, int));
+void	sercnprobe(struct consdev *);
+void	sercninit(struct consdev *);
+int	sercngetc(dev_t);
+void	sercnputc(dev_t, int);
+void	sercnpollc(dev_t, int);
 
-static void sermsrint __P((struct ser_softc *, struct tty*));
-static void serrxint __P((struct ser_softc *, struct tty*));
-static void ser_shutdown __P((struct ser_softc *));
-static int serspeed __P((long));
-static void sersoft __P((void *));
-static void sertxint __P((struct ser_softc *, struct tty*));
+static void sermsrint(struct ser_softc *, struct tty*);
+static void serrxint(struct ser_softc *, struct tty*);
+static void ser_shutdown(struct ser_softc *);
+static int serspeed(long);
+static void sersoft(void *);
+static void sertxint(struct ser_softc *, struct tty*);
 
 static volatile int ser_softintr_scheduled = 0;
 
 /*
  * Autoconfig stuff
  */
-static void serattach __P((struct device *, struct device *, void *));
-static int  sermatch __P((struct device *, struct cfdata *, void *));
+static void serattach(struct device *, struct device *, void *);
+static int  sermatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(ser, sizeof(struct ser_softc),
     sermatch, serattach, NULL, NULL);
@@ -332,7 +332,7 @@ void	*auxp;
 }
 
 #ifdef SER_DEBUG
-void serstatus __P((struct ser_softc *, char *));
+void serstatus(struct ser_softc *, char *);
 void
 serstatus(sc, str)
 	struct ser_softc *sc;

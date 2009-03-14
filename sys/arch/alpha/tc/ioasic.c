@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.39 2008/06/13 05:36:50 cegger Exp $ */
+/* $NetBSD: ioasic.c,v 1.40 2009/03/14 14:45:54 dsl Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.39 2008/06/13 05:36:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.40 2009/03/14 14:45:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,14 +79,14 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.39 2008/06/13 05:36:50 cegger Exp $");
 #include <dev/tc/ioasicvar.h>
 
 /* Definition of the driver for autoconfig. */
-int	ioasicmatch __P((struct device *, struct cfdata *, void *));
-void	ioasicattach __P((struct device *, struct device *, void *));
+int	ioasicmatch(struct device *, struct cfdata *, void *);
+void	ioasicattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ioasic, sizeof(struct ioasic_softc),
     ioasicmatch, ioasicattach, NULL, NULL);
 
-int	ioasic_intr __P((void *));
-int	ioasic_intrnull __P((void *));
+int	ioasic_intr(void *);
+int	ioasic_intrnull(void *);
 
 #define	C(x)	((void *)(x))
 
@@ -114,7 +114,7 @@ struct ioasic_dev ioasic_devs[] = {
 int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
 
 struct ioasicintr {
-	int	(*iai_func) __P((void *));
+	int	(*iai_func)(void *);
 	void	*iai_arg;
 	struct evcnt iai_evcnt;
 } ioasicintrs[IOASIC_NCOOKIES];

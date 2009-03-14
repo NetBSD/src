@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.16 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: keysock.c,v 1.17 2009/03/14 14:46:10 dsl Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.16 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.17 2009/03/14 14:46:10 dsl Exp $");
 
 #include "opt_ipsec.h"
 
@@ -83,7 +83,7 @@ static struct sockaddr key_src = {
 };
 
 
-static int key_sendup0 __P((struct rawcb *, struct mbuf *, int, int));
+static int key_sendup0(struct rawcb *, struct mbuf *, int, int);
 
 int key_registered_sb_max = (NMBCLUSTERS * MHLEN); /* XXX arbitrary */
 

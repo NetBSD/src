@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.63 2009/01/13 13:35:51 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.64 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63 2009/01/13 13:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ static short	def_type = 0;		/* Reflects config-switches	*/
 #define	FLP_DEFTYPE	1		/* 720Kb, reasonable default	*/
 #define	FLP_TYPE(dev)	( DISKPART(dev) == 0 ? def_type : DISKPART(dev) - 1 )
 
-typedef void	(*FPV) __P((void *));
+typedef void	(*FPV)(void *);
 
 dev_type_open(fdopen);
 dev_type_close(fdclose);
@@ -206,24 +206,24 @@ dev_type_strategy(fdstrategy);
 /*
  * Private drive functions....
  */
-static void	fdstart __P((struct fd_softc *));
-static void	fddone __P((struct fd_softc *));
-static void	fdstatus __P((struct fd_softc *));
-static void	fd_xfer __P((struct fd_softc *));
-static void	fdcint __P((struct fd_softc *));
-static int	fd_xfer_ok __P((struct fd_softc *));
-static void	fdmotoroff __P((struct fd_softc *));
-static void	fdminphys __P((struct buf *));
-static void	fdtestdrv __P((struct fd_softc *));
-static void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *,
-		    int));
-static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
-static int	fdselect __P((int, int, int));
-static void	fddeselect __P((void));
-static void	fdmoff __P((struct fd_softc *));
-       u_char	read_fdreg __P((u_short));
-       void	write_fdreg __P((u_short, u_short));
-       u_char	read_dmastat __P((void));
+static void	fdstart(struct fd_softc *);
+static void	fddone(struct fd_softc *);
+static void	fdstatus(struct fd_softc *);
+static void	fd_xfer(struct fd_softc *);
+static void	fdcint(struct fd_softc *);
+static int	fd_xfer_ok(struct fd_softc *);
+static void	fdmotoroff(struct fd_softc *);
+static void	fdminphys(struct buf *);
+static void	fdtestdrv(struct fd_softc *);
+static void	fdgetdefaultlabel(struct fd_softc *, struct disklabel *,
+		    int);
+static int	fdgetdisklabel(struct fd_softc *, dev_t);
+static int	fdselect(int, int, int);
+static void	fddeselect(void);
+static void	fdmoff(struct fd_softc *);
+       u_char	read_fdreg(u_short);
+       void	write_fdreg(u_short, u_short);
+       u_char	read_dmastat(void);
 
 extern inline u_char read_fdreg(u_short regno)
 {
@@ -250,7 +250,7 @@ extern inline u_char read_dmastat(void)
  * Note: This location _must_ be read as an u_short. Failure to do so
  *       will return garbage!
  */
-static u_short rd_cfg_switch __P((void));
+static u_short rd_cfg_switch(void);
 static u_short rd_cfg_switch(void)
 {
 	return(*((u_short*)AD_CFG_SWITCH));
@@ -267,9 +267,9 @@ static u_short rd_cfg_switch(void)
  */
 extern struct cfdriver fd_cd;
 
-static int	fdcmatch __P((struct device *, struct cfdata *, void *));
-static int	fdcprint __P((void *, const char *));
-static void	fdcattach __P((struct device *, struct device *, void *));
+static int	fdcmatch(struct device *, struct cfdata *, void *);
+static int	fdcprint(void *, const char *);
+static void	fdcattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(fdc, sizeof(struct device),
     fdcmatch, fdcattach, NULL, NULL);
@@ -359,8 +359,8 @@ const char	*pnp;
 	return(UNCONF);
 }
 
-static int	fdmatch __P((struct device *, struct cfdata *, void *));
-static void	fdattach __P((struct device *, struct device *, void *));
+static int	fdmatch(struct device *, struct cfdata *, void *);
+static void	fdattach(struct device *, struct device *, void *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 

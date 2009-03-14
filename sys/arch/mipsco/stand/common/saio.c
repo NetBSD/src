@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.9 2006/09/20 13:03:49 he Exp $	*/
+/*	$NetBSD: saio.c,v 1.10 2009/03/14 14:46:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,10 +66,10 @@ struct io_arg {
 struct device_table {
 	char *dt_string;	/* device name */
 	int (*dt_init) (int);	/* device init routine */
-	int (*dt_open) __P((int));	/* device open routine */
-	int (*dt_strategy) __P((int));	/* device strategy routine, returns cnt */
-	int (*dt_close) __P((int));	/* device close routine */
-	int (*dt_ioctl) __P((int));	/* device ioctl routine */
+	int (*dt_open)(int);	/* device open routine */
+	int (*dt_strategy)(int);	/* device strategy routine, returns cnt */
+	int (*dt_close)(int);	/* device close routine */
+	int (*dt_ioctl)(int);	/* device ioctl routine */
 	int dt_type;		/* device "type" */
 	int dt_fs;		/* file system type */
 	char *dt_desc;		/* device description */

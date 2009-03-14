@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.46 2008/10/21 19:01:00 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.47 2009/03/14 14:45:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2008/10/21 19:01:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.47 2009/03/14 14:45:55 dsl Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2008/10/21 19:01:00 matt Exp $")
 
 extern pv_addr_t systempage;
 
-int process_read_regs	__P((struct proc *p, struct reg *regs));
-int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
+int process_read_regs(struct proc *p, struct reg *regs);
+int process_read_fpregs(struct proc *p, struct fpreg *regs);
 
 void lwp_trampoline(void);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.2 2003/03/19 17:21:42 drochner Exp $ */
+/* $NetBSD: dev_net.c,v 1.3 2009/03/14 14:46:06 dsl Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -66,7 +66,7 @@
 #include <lib/libsa/dev_net.h>
 
 #ifndef SUN_BOOTPARAMS
-void bootp      __P((int));
+void bootp(int);
 #endif
 
 extern int debug;
@@ -95,7 +95,7 @@ char hostname[FNAME_SIZE];
 static int netdev_sock = -1;
 static int netdev_opens;
 
-int net_getparams __P((int));
+int net_getparams(int);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.

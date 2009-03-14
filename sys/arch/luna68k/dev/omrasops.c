@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.6 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: omrasops.c,v 1.7 2009/03/14 14:46:00 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.6 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.7 2009/03/14 14:46:00 dsl Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -51,17 +51,17 @@ __KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.6 2008/04/28 20:23:26 martin Exp $");
 #include <dev/wscons/wscons_rfont.h>
 #include <dev/wscons/wsdisplayvar.h>
 
-void rcons_init __P((struct rcons *, int, int));
+void rcons_init(struct rcons *, int, int);
 
 /* wscons emulator operations */
-static void	om_cursor __P((void *, int, int, int));
-static int	om_mapchar __P((void *, int, unsigned int *));
-static void	om_putchar __P((void *, int, int, u_int, long));
-static void	om_copycols __P((void *, int, int, int, int));
-static void	om_copyrows __P((void *, int, int, int num));
-static void	om_erasecols __P((void *, int, int, int, long));
-static void	om_eraserows __P((void *, int, int, long));
-static int	om_allocattr __P((void *, int, int, int, long *));
+static void	om_cursor(void *, int, int, int);
+static int	om_mapchar(void *, int, unsigned int *);
+static void	om_putchar(void *, int, int, u_int, long);
+static void	om_copycols(void *, int, int, int, int);
+static void	om_copyrows(void *, int, int, int num);
+static void	om_erasecols(void *, int, int, int, long);
+static void	om_eraserows(void *, int, int, long);
+static int	om_allocattr(void *, int, int, int, long *);
 
 struct wsdisplay_emulops omfb_emulops = {
 	om_cursor,

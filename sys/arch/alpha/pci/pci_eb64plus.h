@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.h,v 1.2 2000/06/05 21:47:26 thorpej Exp $ */
+/* $NetBSD: pci_eb64plus.h,v 1.3 2009/03/14 14:45:53 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,4 +27,4 @@
  * rights to redistribute these changes.
  */
 
-void	pci_eb64plus_pickintr __P((struct apecs_config *));
+void	pci_eb64plus_pickintr(struct apecs_config *);

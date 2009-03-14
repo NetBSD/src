@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.20 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.21 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.20 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.21 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,25 +79,25 @@ static u_char etconscolors[3][3] = {	/* background, foreground, hilite */
 extern font_info	font_info_8x8;
 extern font_info	font_info_8x16;
 
-static void grfet_iteinit __P((struct grf_softc *));
-static void view_init __P((struct ite_softc *));
-static void view_deinit __P((struct ite_softc *));
-static int  iteet_ioctl __P((struct ite_softc *, u_long, void *, int,
-							struct lwp *));
-static int  ite_newsize __P((struct ite_softc *, struct itewinsize *));
-static void et_inittextmode __P((struct ite_softc *, et_sv_reg_t *, int));
-void et_cursor __P((struct ite_softc *ip, int flag));
-void et_clear __P((struct ite_softc *ip, int sy, int sx, int h, int w));
-void et_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
-void et_scroll __P((struct ite_softc *ip, int sy, int sx, int count,
-    int dir));
+static void grfet_iteinit(struct grf_softc *);
+static void view_init(struct ite_softc *);
+static void view_deinit(struct ite_softc *);
+static int  iteet_ioctl(struct ite_softc *, u_long, void *, int,
+							struct lwp *);
+static int  ite_newsize(struct ite_softc *, struct itewinsize *);
+static void et_inittextmode(struct ite_softc *, et_sv_reg_t *, int);
+void et_cursor(struct ite_softc *ip, int flag);
+void et_clear(struct ite_softc *ip, int sy, int sx, int h, int w);
+void et_putc(struct ite_softc *ip, int c, int dy, int dx, int mode);
+void et_scroll(struct ite_softc *ip, int sy, int sx, int count,
+    int dir);
 
 /*
  * grfet config stuff
  */
-void grfetattach __P((struct device *, struct device *, void *));
-int  grfetmatch __P((struct device *, struct cfdata *, void *));
-int  grfetprint __P((void *, const char *));
+void grfetattach(struct device *, struct device *, void *);
+int  grfetmatch(struct device *, struct cfdata *, void *);
+int  grfetprint(void *, const char *);
 
 CFATTACH_DECL(grfet, sizeof(struct grf_softc),
     grfetmatch, grfetattach, NULL, NULL);

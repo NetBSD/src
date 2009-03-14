@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.143 2008/11/28 06:47:08 pooka Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.144 2009/03/14 14:46:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.143 2008/11/28 06:47:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.144 2009/03/14 14:46:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.143 2008/11/28 06:47:08 pooka Exp
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
-extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
+extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 						struct nfssvc_sock *,
-						struct lwp *, struct mbuf **));
+						struct lwp *, struct mbuf **);
 extern int nfsrvw_procrastinate;
 extern int nuidhash_max;
 
@@ -96,9 +96,9 @@ int nfsd_head_flag;
 struct nfssvc_sock *nfs_udpsock;
 struct nfssvc_sock *nfs_udp6sock;
 
-static struct nfssvc_sock *nfsrv_sockalloc __P((void));
-static void nfsrv_sockfree __P((struct nfssvc_sock *));
-static void nfsd_rt __P((int, struct nfsrv_descript *, int));
+static struct nfssvc_sock *nfsrv_sockalloc(void);
+static void nfsrv_sockfree(struct nfssvc_sock *);
+static void nfsd_rt(int, struct nfsrv_descript *, int);
 
 /*
  * NFS server system calls

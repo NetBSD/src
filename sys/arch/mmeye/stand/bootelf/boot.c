@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2006/04/03 06:15:00 uebayasi Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2009/03/14 14:46:03 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -42,7 +42,7 @@
 # define DPRINTF while (0) printf
 #endif
 
-void LoadAndReset __P((void *));
+void LoadAndReset(void *);
 
 char *netbsd = "/netbsd";
 

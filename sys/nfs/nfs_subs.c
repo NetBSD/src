@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.212 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.213 2009/03/14 14:46:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.212 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.213 2009/03/14 14:46:11 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -564,7 +564,7 @@ extern struct nfsrtt nfsrtt;
 
 u_long nfsdirhashmask;
 
-int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
+int nfs_webnamei(struct nameidata *, struct vnode *, struct proc *);
 
 /*
  * Create the header for an rpc request packet
@@ -1234,9 +1234,9 @@ nfs_initdirxlatecookie(vp)
 
 static const struct nfsdircache dzero;
 
-static void nfs_unlinkdircache __P((struct nfsnode *np, struct nfsdircache *));
-static void nfs_putdircache_unlocked __P((struct nfsnode *,
-    struct nfsdircache *));
+static void nfs_unlinkdircache(struct nfsnode *np, struct nfsdircache *);
+static void nfs_putdircache_unlocked(struct nfsnode *,
+    struct nfsdircache *);
 
 static void
 nfs_unlinkdircache(np, ndp)
@@ -1654,7 +1654,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	struct timespec ctime;
 	int32_t rdev;
 	struct nfsnode *np;
-	extern int (**spec_nfsv2nodeop_p) __P((void *));
+	extern int (**spec_nfsv2nodeop_p)(void *);
 	uid_t uid;
 	gid_t gid;
 
@@ -1696,7 +1696,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	if (vp->v_type == VNON) {
 		vp->v_type = vtyp;
 		if (vp->v_type == VFIFO) {
-			extern int (**fifo_nfsv2nodeop_p) __P((void *));
+			extern int (**fifo_nfsv2nodeop_p)(void *);
 			vp->v_op = fifo_nfsv2nodeop_p;
 		} else if (vp->v_type == VREG) {
 			mutex_init(&np->n_commitlock, MUTEX_DEFAULT, IPL_NONE);

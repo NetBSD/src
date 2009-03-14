@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb66.c,v 1.22 2007/03/04 15:18:10 yamt Exp $ */
+/* $NetBSD: dec_eb66.c,v 1.23 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb66.c,v 1.22 2007/03/04 15:18:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb66.c,v 1.23 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb66.c,v 1.22 2007/03/04 15:18:10 yamt Exp $");
 #endif
 static int comcnrate = CONSPEED;
 
-void dec_eb66_init __P((void));
-static void dec_eb66_cons_init __P((void));
-static void dec_eb66_device_register __P((struct device *, void *));
+void dec_eb66_init(void);
+static void dec_eb66_cons_init(void);
+static void dec_eb66_device_register(struct device *, void *);
 
 #ifdef KGDB
 #include <machine/db_machdep.h>

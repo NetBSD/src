@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.10 2008/06/22 16:34:15 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.11 2009/03/14 14:45:58 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.10 2008/06/22 16:34:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.11 2009/03/14 14:45:58 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ isrinit()
  */
 void *
 isrlink(func, arg, ipl, priority)
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	int ipl;
 	int priority;

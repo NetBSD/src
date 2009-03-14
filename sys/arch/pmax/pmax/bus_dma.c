@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.49 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.50 2009/03/14 14:46:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.50 2009/03/14 14:46:04 dsl Exp $");
 
 #include "opt_cputype.h"
 
@@ -47,11 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2008/06/04 12:41:41 ad Exp $");
 
 #include <mips/cache.h>
 
-static int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
+static int	_bus_dmamap_load_buffer(bus_dmamap_t,
 		    void *, bus_size_t, struct vmspace *, int, vaddr_t *,
-		    int *, int));
+		    int *, int);
 
-paddr_t	kvtophys __P((vaddr_t));	/* XXX */
+paddr_t	kvtophys(vaddr_t);	/* XXX */
 
 /*
  * The default DMA tag for all busses on the DECstation.

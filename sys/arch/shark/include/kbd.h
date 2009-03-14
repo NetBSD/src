@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.1 2002/02/10 01:57:25 thorpej Exp $	*/
+/*	$NetBSD: kbd.h,v 1.2 2009/03/14 14:46:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -59,8 +59,8 @@ struct kbd_autorepeat {
 #define KBD_LED_CAPS_LOCK	0x04
 
 #ifdef _KERNEL
-void	kbdsetstate __P((int /*state*/));
-int	kbdgetstate __P((void));
+void	kbdsetstate(int /*state*/);
+int	kbdgetstate(void);
 #endif
 
 /* End of kbd.h */

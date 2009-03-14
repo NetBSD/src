@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.53 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.54 2009/03/14 14:46:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.53 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.54 2009/03/14 14:46:09 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -67,8 +67,8 @@ VFS_PROTOS(adosfs);
 
 static struct sysctllog *adosfs_sysctl_log;
 
-int adosfs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
-int adosfs_loadbitmap __P((struct adosfsmount *));
+int adosfs_mountfs(struct vnode *, struct mount *, struct lwp *);
+int adosfs_loadbitmap(struct adosfsmount *);
 
 struct simplelock adosfs_hashlock;
 
@@ -82,7 +82,7 @@ static const struct genfs_ops adosfs_genfsops = {
 	.gop_size = genfs_size,
 };
 
-int (**adosfs_vnodeop_p) __P((void *));
+int (**adosfs_vnodeop_p)(void *);
 
 int
 adosfs_mount(mp, path, data, data_len)

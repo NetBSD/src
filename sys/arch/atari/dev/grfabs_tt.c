@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.15 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.16 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.15 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.16 2009/03/14 14:45:56 dsl Exp $");
 
 #ifdef TT_VIDEO
 /*
@@ -56,16 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.15 2005/12/11 12:16:54 christos Exp 
 /*
  * Function decls
  */
-static void       init_view __P((view_t *, bmap_t *, dmode_t *, box_t *));
-static bmap_t	  *alloc_bitmap __P((u_long, u_long, u_char));
-static colormap_t *alloc_colormap __P((dmode_t *));
-static void 	  free_bitmap __P((bmap_t *));
-static void	  tt_display_view __P((view_t *));
-static view_t	  *tt_alloc_view __P((dmode_t *, dimen_t *, u_char));
-static void	  tt_free_view __P((view_t *));
-static void	  tt_remove_view __P((view_t *));
-static void	  tt_save_view __P((view_t *));
-static int	  tt_use_colormap __P((view_t *, colormap_t *));
+static void       init_view(view_t *, bmap_t *, dmode_t *, box_t *);
+static bmap_t	  *alloc_bitmap(u_long, u_long, u_char);
+static colormap_t *alloc_colormap(dmode_t *);
+static void 	  free_bitmap(bmap_t *);
+static void	  tt_display_view(view_t *);
+static view_t	  *tt_alloc_view(dmode_t *, dimen_t *, u_char);
+static void	  tt_free_view(view_t *);
+static void	  tt_remove_view(view_t *);
+static void	  tt_save_view(view_t *);
+static int	  tt_use_colormap(view_t *, colormap_t *);
 
 /*
  * Our function switch table

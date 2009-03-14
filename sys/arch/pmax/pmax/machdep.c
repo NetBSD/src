@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.228 2009/03/14 14:46:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2009/03/14 14:46:04 dsl Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -160,16 +160,16 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
-void	mach_init __P((int, char *[], int, int, u_int, char *)); /* XXX */
+void	mach_init(int, char *[], int, int, u_int, char *); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
-static void	unimpl_bus_reset __P((void));
-static void	unimpl_cons_init __P((void));
-static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
-static void	unimpl_intr_establish __P((struct device *, void *, int,
-		    int (*)(void *), void *));
-static int	unimpl_memsize __P((void *));
-static unsigned	nullwork __P((void));
+static void	unimpl_bus_reset(void);
+static void	unimpl_cons_init(void);
+static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
+static void	unimpl_intr_establish(struct device *, void *, int,
+		    int (*)(void *), void *);
+static int	unimpl_memsize(void *);
+static unsigned	nullwork(void);
 
 struct platform platform = {
 	"iobus not set",
@@ -680,7 +680,7 @@ unimpl_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	panic("sysconf.init didn't set intr_establish");

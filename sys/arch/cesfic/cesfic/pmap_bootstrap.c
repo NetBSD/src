@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.14 2009/01/17 07:17:35 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.15 2009/03/14 14:45:58 dsl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.14 2009/01/17 07:17:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.15 2009/03/14 14:45:58 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/msgbuf.h>
@@ -58,7 +58,7 @@ extern paddr_t avail_start, avail_end;
 
 extern int physmem;
 
-void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+void	pmap_bootstrap(vm_offset_t, vm_offset_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping

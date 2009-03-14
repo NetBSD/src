@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.33 2007/11/07 19:47:00 garbled Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.34 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.33 2007/11/07 19:47:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.34 2009/03/14 14:46:01 dsl Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -171,23 +171,23 @@ signed char pm_receive_cmd_type[] = {
 
 /* for debugging */
 #ifdef ADB_DEBUG
-void	pm_printerr __P((const char *, int, int, const char *));
+void	pm_printerr(const char *, int, int, const char *);
 #endif
 
-int	pm_wait_busy __P((int));
-int	pm_wait_free __P((int));
+int	pm_wait_busy(int);
+int	pm_wait_free(int);
 
-static int	pm_receive __P((u_char *));
-static int	pm_send __P((u_char));
+static int	pm_receive(u_char *);
+static int	pm_send(u_char);
 
 /* these functions are called from adb_direct.c */
-void	pm_setup_adb __P((void));
-void	pm_check_adb_devices __P((int));
-int	pm_adb_op __P((u_char *, adbComp *, volatile int *, int));
+void	pm_setup_adb(void);
+void	pm_check_adb_devices(int);
+int	pm_adb_op(u_char *, adbComp *, volatile int *, int);
 
 /* these functions also use the variables of adb_direct.c */
-void	pm_adb_get_TALK_result __P((PMData *));
-void	pm_adb_get_ADB_data __P((PMData *));
+void	pm_adb_get_TALK_result(PMData *);
+void	pm_adb_get_ADB_data(PMData *);
 
 
 /*
@@ -212,13 +212,13 @@ struct adbCommand {
 	u_int	unsol;		/* 1 if packet was unsolicited */
 	u_int	ack_only;	/* 1 for no special processing */
 };
-extern	void	adb_pass_up __P((struct adbCommand *));
+extern	void	adb_pass_up(struct adbCommand *);
 
 #if 0
 /*
  * Define the external functions
  */
-extern int	zshard __P((int));		/* from zs.c */
+extern int	zshard(int);		/* from zs.c */
 #endif
 
 #ifdef ADB_DEBUG

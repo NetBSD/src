@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 2008/11/04 16:43:47 abs Exp $	*/
+/*	$NetBSD: clock.c,v 1.43 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2008/11/04 16:43:47 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -149,8 +149,8 @@ dev_type_close(rtcclose);
 dev_type_read(rtcread);
 dev_type_write(rtcwrite);
 
-static void	clockattach __P((struct device *, struct device *, void *));
-static int	clockmatch __P((struct device *, struct cfdata *, void *));
+static void	clockattach(struct device *, struct device *, void *);
+static int	clockmatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
@@ -162,9 +162,9 @@ const struct cdevsw rtc_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-void statintr __P((struct clockframe));
+void statintr(struct clockframe);
 
-static int	twodigits __P((char *, int));
+static int	twodigits(char *, int);
 
 static int	divisor;	/* Systemclock divisor	*/
 

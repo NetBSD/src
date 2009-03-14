@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.5 1999/11/19 03:54:08 itohy Exp $
+ *	$NetBSD: aout2hux.c,v 1.6 2009/03/14 14:46:07 dsl Exp $
  */
 
 #include <sys/types.h>
@@ -67,8 +67,8 @@ void put_uint16 PROTO((be_uint16_t *be, unsigned v));
 void put_uint32 PROTO((be_uint32_t *be, u_int32_t v));
 void *do_realloc PROTO((void *p, size_t s));
 
-static int open_aout __P((const char *fn, struct aout_m68k *hdr,
-		struct exec_info *inf));
+static int open_aout(const char *fn, struct aout_m68k *hdr,
+		struct exec_info *inf);
 static int open_elf PROTO((const char *fn, FILE *fp, struct elf_m68k_hdr *hdr,
 		struct exec_info *inf));
 FILE *open_exec PROTO((const char *fn, struct exec_info *inf));

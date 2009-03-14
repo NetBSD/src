@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.18 2006/03/08 23:46:22 lukem Exp $	*/
+/*	$NetBSD: esc.c,v 1.19 2009/03/14 14:45:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.18 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.19 2009/03/14 14:45:51 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,21 +108,21 @@ __KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.18 2006/03/08 23:46:22 lukem Exp $");
 #include <acorn32/podulebus/escreg.h>
 #include <acorn32/podulebus/escvar.h>
 
-void escinitialize __P((struct esc_softc *));
-void esc_minphys   __P((struct buf *bp));
-void esc_scsi_request __P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
-void esc_donextcmd __P((struct esc_softc *dev, struct esc_pending *pendp));
-void esc_scsidone  __P((struct esc_softc *dev, struct scsipi_xfer *xs,
-			 int stat));
-void escintr	    __P((struct esc_softc *dev));
-void esciwait	    __P((struct esc_softc *dev));
-void escreset	    __P((struct esc_softc *dev, int how));
-int  escselect	    __P((struct esc_softc *dev, struct esc_pending *pendp,
+void escinitialize(struct esc_softc *);
+void esc_minphys(struct buf *bp);
+void esc_scsi_request(struct scsipi_channel *,
+				scsipi_adapter_req_t, void *);
+void esc_donextcmd(struct esc_softc *dev, struct esc_pending *pendp);
+void esc_scsidone(struct esc_softc *dev, struct scsipi_xfer *xs,
+			 int stat);
+void escintr(struct esc_softc *dev);
+void esciwait(struct esc_softc *dev);
+void escreset(struct esc_softc *dev, int how);
+int  escselect(struct esc_softc *dev, struct esc_pending *pendp,
 			 unsigned char *cbuf, int clen,
-			 unsigned char *buf, int len, int mode));
-void escicmd	    __P((struct esc_softc *dev, struct esc_pending *pendp));
-int escgo         __P((struct esc_softc *dev, struct esc_pending *pendp));
+			 unsigned char *buf, int len, int mode);
+void escicmd(struct esc_softc *dev, struct esc_pending *pendp);
+int escgo(struct esc_softc *dev, struct esc_pending *pendp);
 
 void esc_init_nexus(struct esc_softc *, struct nexus *);
 void esc_save_pointers(struct esc_softc *);

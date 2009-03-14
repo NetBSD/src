@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.27 2007/03/06 14:40:25 tsutsui Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.28 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.27 2007/03/06 14:40:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.28 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -92,15 +92,15 @@ __KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.27 2007/03/06 14:40:25 tsutsui Exp $
 /*
  * Function decls
  */
-static void       init_view __P((view_t *, bmap_t *, dmode_t *, box_t *));
-static colormap_t *alloc_colormap __P((dmode_t *));
-static void	  et_display_view __P((view_t *));
-static view_t	  *et_alloc_view __P((dmode_t *, dimen_t *, u_char));
-static void	  et_free_view __P((view_t *));
-static void	  et_loadmode __P((struct grfvideo_mode *, et_sv_reg_t *));
-static void	  et_remove_view __P((view_t *));
-static void	  et_save_view __P((view_t *));
-static int	  et_use_colormap __P((view_t *, colormap_t *));
+static void       init_view(view_t *, bmap_t *, dmode_t *, box_t *);
+static colormap_t *alloc_colormap(dmode_t *);
+static void	  et_display_view(view_t *);
+static view_t	  *et_alloc_view(dmode_t *, dimen_t *, u_char);
+static void	  et_free_view(view_t *);
+static void	  et_loadmode(struct grfvideo_mode *, et_sv_reg_t *);
+static void	  et_remove_view(view_t *);
+static void	  et_save_view(view_t *);
+static int	  et_use_colormap(view_t *, colormap_t *);
 
 /*
  * Our function switch table

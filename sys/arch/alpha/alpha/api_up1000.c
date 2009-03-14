@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.23 2007/03/04 15:18:09 yamt Exp $ */
+/* $NetBSD: api_up1000.c,v 1.24 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.23 2007/03/04 15:18:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.24 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +76,9 @@ static int comcnrate = CONSPEED;
 
 #define	DPRINTF(x)	if (bootdev_debug) printf x
 
-void api_up1000_init __P((void));
-static void api_up1000_cons_init __P((void));
-static void api_up1000_device_register __P((struct device *, void *));
+void api_up1000_init(void);
+static void api_up1000_cons_init(void);
+static void api_up1000_device_register(struct device *, void *);
 
 #ifdef KGDB
 #include <machine/db_machdep.h>

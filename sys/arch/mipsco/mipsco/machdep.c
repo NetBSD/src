@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2009/03/14 14:46:02 dsl Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -152,26 +152,26 @@ char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void to_monitor __P((int)) __attribute__((__noreturn__));
-void prom_halt __P((int)) __attribute__((__noreturn__));
+void to_monitor(int) __attribute__((__noreturn__));
+void prom_halt(int) __attribute__((__noreturn__));
 
 #ifdef	KGDB
-void zs_kgdb_init __P((void));
-void kgdb_connect __P((int));
+void zs_kgdb_init(void);
+void kgdb_connect(int);
 #endif
 
 /*
  *  Local functions.
  */
-int initcpu __P((void));
-void configure __P((void));
+int initcpu(void);
+void configure(void);
 
-void mach_init __P((int, char *[], char*[], u_int, char *));
-int  memsize_scan __P((void *));
+void mach_init(int, char *[], char*[], u_int, char *);
+int  memsize_scan(void *);
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
+extern void stacktrace(void); /*XXX*/
 #endif
 
 /*
@@ -184,15 +184,15 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 extern struct user *proc0paddr;
 
 /* locore callback-vector setup */
-extern void mips_vector_init  __P((void));
-extern void prom_init  __P((void));
-extern void pizazz_init __P((void));
+extern void mips_vector_init(void);
+extern void prom_init(void);
+extern void pizazz_init(void);
 
 /* platform-specific initialization vector */
-static void	unimpl_cons_init __P((void));
-static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
-static int	unimpl_memsize __P((void *));
-static void	unimpl_intr_establish __P((int, int (*)__P((void *)), void *));
+static void	unimpl_cons_init(void);
+static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
+static int	unimpl_memsize(void *);
+static void	unimpl_intr_establish(int, int (*)(void *), void *);
 
 struct platform platform = {
 	.iobus = "iobus not set",
@@ -207,11 +207,11 @@ struct consdev *cn_tab = NULL;
 extern struct consdev consdev_prom;
 extern struct consdev consdev_zs;
 
-static void null_cnprobe __P((struct consdev *));
-static void prom_cninit __P((struct consdev *));
-static int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-static void null_cnpollc __P((dev_t, int));
+static void null_cnprobe(struct consdev *);
+static void prom_cninit(struct consdev *);
+static int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
+static void null_cnpollc(dev_t, int);
 
 struct consdev consdev_prom = {
         null_cnprobe,
@@ -575,7 +575,7 @@ void *first;
 void
 unimpl_intr_establish(level, func, arg)
 	int level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	panic("sysconf.init didn't init intr_establish");

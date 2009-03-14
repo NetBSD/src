@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.57 2008/11/15 21:35:31 abs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.58 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.57 2008/11/15 21:35:31 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.58 2009/03/14 14:45:56 dsl Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -80,10 +80,10 @@ static volatile int	main_running = 0;
  */
 static u_char	busy;
 
-static void	ncr5380_minphys __P((struct buf *bp));
-static void	ncr5380_scsi_request __P((struct scsipi_channel *,
-					scsipi_adapter_req_t, void *));
-static void	ncr5380_show_scsi_cmd __P((struct scsipi_xfer *xs));
+static void	ncr5380_minphys(struct buf *bp);
+static void	ncr5380_scsi_request(struct scsipi_channel *,
+					scsipi_adapter_req_t, void *);
+static void	ncr5380_show_scsi_cmd(struct scsipi_xfer *xs);
 
 static SC_REQ	req_queue[NREQ];
 static SC_REQ	*free_head = NULL;	/* Free request structures	*/
@@ -169,8 +169,8 @@ extern inline void finish_req(SC_REQ *reqp)
 /*
  * Auto config stuff....
  */
-void	ncr_attach __P((struct device *, struct device *, void *));
-int	ncr_match __P((struct device *, struct cfdata *, void *));
+void	ncr_attach(struct device *, struct device *, void *);
+int	ncr_match(struct device *, struct cfdata *, void *);
 
 /*
  * Tricks to make driver-name configurable

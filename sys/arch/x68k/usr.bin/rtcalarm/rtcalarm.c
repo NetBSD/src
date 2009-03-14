@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.6 2008/12/20 13:20:59 isaki Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.7 2009/03/14 14:46:08 dsl Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -46,17 +46,17 @@
 
 char           *prog;
 
-static void usage __P((void)) __attribute__((__noreturn__));
-static void myperror __P((const char *, int)) __attribute__((__noreturn__));
+static void usage(void) __attribute__((__noreturn__));
+static void myperror(const char *, int) __attribute__((__noreturn__));
 
-static void showinfo __P((void));
-static char    *numstr __P((unsigned int));
-static void showontime __P((unsigned int));
+static void showinfo(void);
+static char    *numstr(unsigned int);
+static void showontime(unsigned int);
 
-static void disablealarm __P((void));
+static void disablealarm(void);
 
-static void setinfo __P((int, char **));
-static int strnum __P((const char *, int));
+static void setinfo(int, char **);
+static int strnum(const char *, int);
 
 int
 main(argc, argv)

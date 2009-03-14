@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.36 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.37 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -123,13 +123,13 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36 2007/03/04 05:59:40 christos Exp $");
 #define ite_reinit(d)
 #endif
 
-int grfon __P((dev_t));
-int grfoff __P((dev_t));
-int grfsinfo __P((dev_t, struct grfdyninfo *));
+int grfon(dev_t);
+int grfoff(dev_t);
+int grfsinfo(dev_t, struct grfdyninfo *);
 
-int grfbusprint __P((void *auxp, const char *));
-int grfbusmatch __P((struct device *, struct cfdata *, void *));
-void grfbusattach __P((struct device *, struct device *, void *));
+int grfbusprint(void *auxp, const char *);
+int grfbusmatch(struct device *, struct cfdata *, void *);
+void grfbusattach(struct device *, struct device *, void *);
 
 /*
  * pointers to grf drivers device structs 
