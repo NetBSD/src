@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.17 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.18 2009/03/14 20:04:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.17 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.18 2009/03/14 20:04:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ moveall(void)
 	foreachship(sp) {
 		struct ship *closest;
 		int ma, ta;
-		char af;
+		bool af;
 
 		if (sp->file->captain[0] || sp->file->dir == 0)
 			continue;
