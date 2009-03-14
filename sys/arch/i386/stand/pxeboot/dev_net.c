@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.7 2008/05/11 11:42:02 chris Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.8 2009/03/14 14:46:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 static int netdev_sock = -1;
 static int netdev_opens;
 
-static int net_getparams __P((int sock));
+static int net_getparams(int sock);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -161,7 +161,7 @@ net_strategy(devdata, rw, blk, size, buf, rsize)
  * server IP address, and our root path on the server.
  */
 #ifdef	SUPPORT_BOOTP
-int bootp __P((int sock));
+int bootp(int sock);
 #endif
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.15 2002/10/02 04:06:38 thorpej Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.16 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2002/10/02 04:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2002/10/02 04:06:38 thorpej Exp
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-int isabeepmatch __P((struct device *, struct cfdata *, void *));
-void isabeepattach __P((struct device *, struct device *, void *));
+int isabeepmatch(struct device *, struct cfdata *, void *);
+void isabeepattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(isabeep, sizeof(struct device),
     isabeepmatch, isabeepattach, NULL, NULL);

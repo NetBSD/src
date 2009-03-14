@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.21 2009/01/17 05:23:28 tsutsui Exp $	*/
+/*	$NetBSD: ms.c,v 1.22 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21 2009/01/17 05:23:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.22 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21 2009/01/17 05:23:28 tsutsui Exp $");
 #define NMOUSE 1
 #endif
 
-typedef void	(*FPV) __P((void *));
+typedef void	(*FPV)(void *);
 
 static struct ms_softc	ms_softc[NMOUSE];
 
@@ -95,7 +95,7 @@ const struct cdevsw ms_cdevsw = {
 	nostop, notty, mspoll, nommap, mskqfilter,
 };
 
-static	void	ms_3b_delay __P((struct ms_softc *));
+static	void	ms_3b_delay(struct ms_softc *);
 
 int
 mouseattach(cnt)

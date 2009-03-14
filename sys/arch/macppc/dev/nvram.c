@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.12 2008/06/13 11:54:31 cegger Exp $	*/
+/*	$NetBSD: nvram.c,v 1.13 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.12 2008/06/13 11:54:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.13 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.12 2008/06/13 11:54:31 cegger Exp $");
 
 #define NVRAM_SIZE 0x2000
 
-static void nvram_attach __P((struct device *, struct device *, void *));
-static int nvram_match __P((struct device *, struct cfdata *, void *));
+static void nvram_attach(struct device *, struct device *, void *);
+static int nvram_match(struct device *, struct cfdata *, void *);
 
 struct nvram_softc {
 	struct device sc_dev;

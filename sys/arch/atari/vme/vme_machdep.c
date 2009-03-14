@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.15 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.16 2009/03/14 14:45:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.15 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.16 2009/03/14 14:45:57 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.15 2008/04/28 20:23:15 martin Exp 
 #include <atari/atari/device.h>
 #include <atari/vme/vmevar.h>
 
-static int	vmebusprint __P((void *auxp, const char *));
-static int	vmebusmatch __P((struct device *, struct cfdata *, void *));
-static void	vmebusattach __P((struct device *, struct device *, void *));
+static int	vmebusprint(void *auxp, const char *);
+static int	vmebusmatch(struct device *, struct cfdata *, void *);
+static void	vmebusattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(avmebus, sizeof(struct device),
     vmebusmatch, vmebusattach, NULL, NULL);

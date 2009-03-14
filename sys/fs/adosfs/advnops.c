@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.31 2008/12/16 16:18:25 pooka Exp $	*/
+/*	$NetBSD: advnops.c,v 1.32 2009/03/14 14:46:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.31 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.32 2009/03/14 14:46:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,24 +58,24 @@ __KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.31 2008/12/16 16:18:25 pooka Exp $");
 extern struct vnodeops adosfs_vnodeops;
 
 #define	adosfs_open	genfs_nullop
-int	adosfs_getattr	__P((void *));
-int	adosfs_read	__P((void *));
-int	adosfs_write	__P((void *));
+int	adosfs_getattr(void *);
+int	adosfs_read(void *);
+int	adosfs_write(void *);
 #define	adosfs_fcntl	genfs_fcntl
 #define	adosfs_ioctl	genfs_enoioctl
 #define	adosfs_poll	genfs_poll
-int	adosfs_strategy	__P((void *));
-int	adosfs_link	__P((void *));
-int	adosfs_symlink	__P((void *));
+int	adosfs_strategy(void *);
+int	adosfs_link(void *);
+int	adosfs_symlink(void *);
 #define	adosfs_abortop	genfs_abortop
-int	adosfs_bmap	__P((void *));
-int	adosfs_print	__P((void *));
-int	adosfs_readdir	__P((void *));
-int	adosfs_access	__P((void *));
-int	adosfs_readlink	__P((void *));
-int	adosfs_inactive	__P((void *));
-int	adosfs_reclaim	__P((void *));
-int	adosfs_pathconf	__P((void *));
+int	adosfs_bmap(void *);
+int	adosfs_print(void *);
+int	adosfs_readdir(void *);
+int	adosfs_access(void *);
+int	adosfs_readlink(void *);
+int	adosfs_inactive(void *);
+int	adosfs_reclaim(void *);
+int	adosfs_pathconf(void *);
 
 #define adosfs_close 	genfs_nullop
 #define adosfs_fsync 	genfs_nullop

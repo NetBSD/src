@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.20 2008/11/07 00:20:01 dyoung Exp $ */
+/* $NetBSD: if_ie.c,v 1.21 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.20 2008/11/07 00:20:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.21 2009/03/14 14:45:52 dsl Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -159,25 +159,25 @@ struct ie_softc {
 
 /* Function and data prototypes */
 
-static void host2ie  __P(( struct ie_softc *sc, void *src, u_long dest, int size ));
-static void ie2host  __P(( struct ie_softc *sc, u_long src, void *dest, int size ));
-static void iezero   __P(( struct ie_softc *sc, u_long p, int size ));
-void        iereset  __P(( struct ie_softc *sc ));
-void        iewatchdog __P(( struct ifnet *ifp ));
-int         ieioctl  __P(( struct ifnet *ifp, u_long cmd, void *data ));
-void        iestart  __P(( struct ifnet *ifp ));
-int 	    iestop   __P(( struct ie_softc *sc ));
-int         ieinit   __P(( struct ie_softc *sc ));
-int 	    ieintr   __P(( void *arg ));
-void 	    ietint   __P(( struct ie_softc *sc ));
+static void host2ie( struct ie_softc *sc, void *src, u_long dest, int size );
+static void ie2host( struct ie_softc *sc, u_long src, void *dest, int size );
+static void iezero( struct ie_softc *sc, u_long p, int size );
+void        iereset( struct ie_softc *sc );
+void        iewatchdog( struct ifnet *ifp );
+int         ieioctl( struct ifnet *ifp, u_long cmd, void *data );
+void        iestart( struct ifnet *ifp );
+int 	    iestop( struct ie_softc *sc );
+int         ieinit( struct ie_softc *sc );
+int 	    ieintr( void *arg );
+void 	    ietint( struct ie_softc *sc );
 
 /* A whopper of a function */
-static int command_and_wait __P(( struct ie_softc *sc, u_short cmd,
+static int command_and_wait( struct ie_softc *sc, u_short cmd,
 			      struct ie_sys_ctl_block *pscb,
-			      void *pcmd, int ocmd, int scmd, int mask ));
+			      void *pcmd, int ocmd, int scmd, int mask );
 
-int ieprobe __P((struct device *, struct cfdata *, void *));
-void ieattach __P((struct device *, struct device *, void *));
+int ieprobe(struct device *, struct cfdata *, void *);
+void ieattach(struct device *, struct device *, void *);
 
 static inline void ie_cli(struct ie_softc *);
 static inline void ieattn(struct ie_softc *);

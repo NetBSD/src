@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.36 2005/12/11 12:18:39 christos Exp $ */
+/* $NetBSD: mainbus.c,v 1.37 2009/03/14 14:46:04 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.36 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.37 2009/03/14 14:46:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.36 2005/12/11 12:18:39 christos Exp $"
 #include <machine/autoconf.h>
 
 /* Definition of the mainbus driver. */
-static int	mbmatch __P((struct device *, struct cfdata *, void *));
-static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, const char *));
+static int	mbmatch(struct device *, struct cfdata *, void *);
+static void	mbattach(struct device *, struct device *, void *);
+static int	mbprint(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mbmatch, mbattach, NULL, NULL);

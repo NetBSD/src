@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.15 2008/06/13 09:58:06 cegger Exp $ */
+/* $NetBSD: lunaws.c,v 1.16 2009/03/14 14:46:00 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.15 2008/06/13 09:58:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.16 2009/03/14 14:46:00 dsl Exp $");
 
 #include "wsmouse.h"
 
@@ -70,11 +70,11 @@ struct ws_softc {
 #endif
 };
 
-static void omkbd_input __P((void *, int));
-static int  omkbd_decode __P((void *, int, u_int *, int *));
-static int  omkbd_enable __P((void *, int));
-static void omkbd_set_leds __P((void *, int));
-static int  omkbd_ioctl __P((void *, u_long, void *, int, struct lwp *));
+static void omkbd_input(void *, int);
+static int  omkbd_decode(void *, int, u_int *, int *);
+static int  omkbd_enable(void *, int);
+static void omkbd_set_leds(void *, int);
+static int  omkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 struct wscons_keydesc omkbd_keydesctab[];
 
@@ -88,18 +88,18 @@ static const struct wskbd_accessops omkbd_accessops = {
 	omkbd_ioctl,
 };
 
-void	ws_cnattach __P((void));
-static void ws_cngetc __P((void *, u_int *, int *));
-static void ws_cnpollc __P((void *, int));
+void	ws_cnattach(void);
+static void ws_cngetc(void *, u_int *, int *);
+static void ws_cnpollc(void *, int);
 static const struct wskbd_consops ws_consops = {
 	ws_cngetc,
 	ws_cnpollc,
 };
 
 #if NWSMOUSE > 0
-static int  omms_enable __P((void *));
-static int  omms_ioctl __P((void *, u_long, void *, int, struct lwp *));
-static void omms_disable __P((void *));
+static int  omms_enable(void *);
+static int  omms_ioctl(void *, u_long, void *, int, struct lwp *);
+static void omms_disable(void *);
 
 static const struct wsmouse_accessops omms_accessops = {
 	omms_enable,
@@ -108,17 +108,17 @@ static const struct wsmouse_accessops omms_accessops = {
 };
 #endif
 
-static void wsintr __P((int));
+static void wsintr(int);
 
-static int  wsmatch __P((struct device *, struct cfdata *, void *));
-static void wsattach __P((struct device *, struct device *, void *));
+static int  wsmatch(struct device *, struct cfdata *, void *);
+static void wsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ws, sizeof(struct ws_softc),
     wsmatch, wsattach, NULL, NULL);
 extern struct cfdriver ws_cd;
 
-extern int  syscngetc __P((dev_t));
-extern void syscnputc __P((dev_t, int));
+extern int  syscngetc(dev_t);
+extern void syscnputc(dev_t, int);
 
 static int
 wsmatch(parent, match, aux)

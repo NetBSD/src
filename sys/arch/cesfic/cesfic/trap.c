@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 2009/01/27 20:30:13 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.44 2009/03/14 14:45:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2009/01/27 20:30:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2009/03/14 14:45:58 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -122,18 +122,18 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2009/01/27 20:30:13 martin Exp $");
 extern struct emul emul_sunos;
 #endif
 
-int	writeback __P((struct frame *fp, int docachepush));
-void	trap __P((struct frame *fp, int type, u_int code, u_int v));
-void	syscall __P((register_t code, struct frame frame));
-void	trap_kdebug __P((int, struct trapframe));
+int	writeback(struct frame *fp, int docachepush);
+void	trap(struct frame *fp, int type, u_int code, u_int v);
+void	syscall(register_t code, struct frame frame);
+void	trap_kdebug(int, struct trapframe);
 
 #ifdef DEBUG
-void	dumpssw __P((u_short));
-void	dumpwb __P((int, u_short, u_int, u_int));
+void	dumpssw(u_short);
+void	dumpwb(int, u_short, u_int, u_int);
 #endif
 
-static inline void userret __P((struct lwp *l, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+static inline void userret(struct lwp *l, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap);
 
 int astpending;
 

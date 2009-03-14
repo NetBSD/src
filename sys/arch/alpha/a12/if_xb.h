@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.h,v 1.1 1998/09/23 21:14:58 ross Exp $ */
+/* $NetBSD: if_xb.h,v 1.2 2009/03/14 14:45:52 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -70,13 +70,13 @@ struct a12c_softc {
 	struct	a12c_config *sc_ccp;
 };
 
-void	a12c_init __P((struct a12c_config *, int));
-void	a12c_pci_init __P((pci_chipset_tag_t, void *));
-void	a12c_dma_init __P((struct a12c_config *));
+void	a12c_init(struct a12c_config *, int);
+void	a12c_pci_init(pci_chipset_tag_t, void *);
+void	a12c_dma_init(struct a12c_config *);
 
-bus_space_tag_t	a12c_bus_io_init __P((void *));
-bus_space_tag_t	a12c_bus_mem_init __P((void *));
+bus_space_tag_t	a12c_bus_io_init(void *);
+bus_space_tag_t	a12c_bus_mem_init(void *);
 
-void	a12_xbar_intr __P((void));
+void	a12_xbar_intr(void);
 
 #endif

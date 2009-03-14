@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.28 2008/12/28 23:00:39 tsutsui Exp $	*/
+/*	$NetBSD: md_root.c,v 1.29 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.28 2008/12/28 23:00:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.29 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,12 +100,12 @@ struct read_info {
 };
 
 
-static int  loaddisk __P((struct  md_conf *, dev_t ld_dev, struct lwp *));
-static int  ramd_norm_read __P((struct read_info *));
+static int  loaddisk(struct  md_conf *, dev_t ld_dev, struct lwp *);
+static int  ramd_norm_read(struct read_info *);
 
 #ifdef support_compression
-static int  cpy_uncompressed __P((void *, int, struct read_info *));
-static int  md_compressed __P((void *, int, struct read_info *));
+static int  cpy_uncompressed(void *, int, struct read_info *);
+static int  md_compressed(void *, int, struct read_info *);
 #endif
 
 /*

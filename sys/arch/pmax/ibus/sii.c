@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.4 2007/10/17 19:56:15 garbled Exp $	*/
+/*	$NetBSD: sii.c,v 1.5 2009/03/14 14:46:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.4 2007/10/17 19:56:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.5 2009/03/14 14:46:04 dsl Exp $");
 
 #include "sii.h"
 /*
@@ -132,18 +132,18 @@ static u_char	sii_buf[256];	/* used for extended messages */
  * Forward references
  */
 
-static void	sii_Reset __P((struct siisoftc *sc, int resetbus));
-static void	sii_StartCmd __P((struct siisoftc *sc, int target));
-static void	sii_CmdDone __P((struct siisoftc *sc, int target, int error));
-static void	sii_DoIntr __P((struct siisoftc *sc, u_int dstat));
-static void	sii_StateChg __P((struct siisoftc *sc, u_int cstat));
-static int	sii_GetByte __P((SIIRegs *regs, int phase, int ack));
-static void	sii_DoSync __P((SIIRegs *regs, State *state));
-static void	sii_StartDMA __P((SIIRegs *regs, int phase, u_short *dmaAddr,
-				  int size));
+static void	sii_Reset(struct siisoftc *sc, int resetbus);
+static void	sii_StartCmd(struct siisoftc *sc, int target);
+static void	sii_CmdDone(struct siisoftc *sc, int target, int error);
+static void	sii_DoIntr(struct siisoftc *sc, u_int dstat);
+static void	sii_StateChg(struct siisoftc *sc, u_int cstat);
+static int	sii_GetByte(SIIRegs *regs, int phase, int ack);
+static void	sii_DoSync(SIIRegs *regs, State *state);
+static void	sii_StartDMA(SIIRegs *regs, int phase, u_short *dmaAddr,
+				  int size);
 
 #ifdef DEBUG
-static void	sii_DumpLog __P((void));
+static void	sii_DumpLog(void);
 #endif
 
 

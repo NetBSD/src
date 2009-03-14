@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.17 2008/11/08 10:18:10 he Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.18 2009/03/14 14:46:06 dsl Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.17 2008/11/08 10:18:10 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.18 2009/03/14 14:46:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,8 +58,8 @@ struct ofrom_softc {
 	paddr_t		size;
 };
 
-int ofromprobe __P((struct device *, struct cfdata *, void *));
-void ofromattach __P((struct device *, struct device *, void *));
+int ofromprobe(struct device *, struct cfdata *, void *);
+void ofromattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ofrom, sizeof(struct ofrom_softc),
     ofromprobe, ofromattach, NULL, NULL);

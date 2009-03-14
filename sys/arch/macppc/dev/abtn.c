@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.14 2008/06/13 11:54:31 cegger Exp $	*/
+/*	$NetBSD: abtn.c,v 1.15 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.14 2008/06/13 11:54:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.15 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,9 +61,9 @@ struct abtn_softc {
 	int volume;		/* speaker volume (not yet) */
 };
 
-static int abtn_match __P((struct device *, struct cfdata *, void *));
-static void abtn_attach __P((struct device *, struct device *, void *));
-static void abtn_adbcomplete __P((uint8_t *, uint8_t *, int));
+static int abtn_match(struct device *, struct cfdata *, void *);
+static void abtn_attach(struct device *, struct device *, void *);
+static void abtn_adbcomplete(uint8_t *, uint8_t *, int);
 
 CFATTACH_DECL(abtn, sizeof(struct abtn_softc),
     abtn_match, abtn_attach, NULL, NULL);

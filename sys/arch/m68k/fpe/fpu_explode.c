@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.7 2005/12/11 12:17:52 christos Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.8 2009/03/14 14:46:01 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.7 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.8 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.7 2005/12/11 12:17:52 christos Exp
 
 
 /* Conversion to internal format -- note asymmetry. */
-static int	fpu_itof __P((struct fpn *fp, u_int i));
-static int	fpu_stof __P((struct fpn *fp, u_int i));
-static int	fpu_dtof __P((struct fpn *fp, u_int i, u_int j));
-static int	fpu_xtof __P((struct fpn *fp, u_int i, u_int j, u_int k));
+static int	fpu_itof(struct fpn *fp, u_int i);
+static int	fpu_stof(struct fpn *fp, u_int i);
+static int	fpu_dtof(struct fpn *fp, u_int i, u_int j);
+static int	fpu_xtof(struct fpn *fp, u_int i, u_int j, u_int k);
 
 /*
  * N.B.: in all of the following, we assume the FP format is

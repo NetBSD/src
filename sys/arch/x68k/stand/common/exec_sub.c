@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sub.c,v 1.3 2005/12/24 20:07:41 perry Exp $ */
+/*	$NetBSD: exec_sub.c,v 1.4 2009/03/14 14:46:07 dsl Exp $ */
 
 #include <sys/cdefs.h>
 
@@ -7,16 +7,16 @@
 #include <sys/param.h>
 
 #ifdef BOOT
-void B_PRINT __P((const unsigned char *p));
+void B_PRINT(const unsigned char *p);
 #endif
 
-static inline void bzero4 __P((void *ptr, size_t siz));
-static void xk_aout __P((struct execkern_arg *xarg, struct exec *hdr));
-static void xk_elf __P((struct execkern_arg *xarg, Elf32_Ehdr *hdr));
+static inline void bzero4(void *ptr, size_t siz);
+static void xk_aout(struct execkern_arg *xarg, struct exec *hdr);
+static void xk_elf(struct execkern_arg *xarg, Elf32_Ehdr *hdr);
 
 #ifdef LOADBSD
-static void DPRINT_SEC __P((const char *ident,
-			    const struct execkern_section *sec));
+static void DPRINT_SEC(const char *ident,
+			    const struct execkern_section *sec);
 extern int opt_v;
 extern const char *kernel_fn;
 

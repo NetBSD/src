@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.14 2007/10/17 19:55:34 garbled Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.15 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.14 2007/10/17 19:55:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.15 2009/03/14 14:46:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.14 2007/10/17 19:55:34 garbled Ex
 #include <dev/cardbus/rbus.h>
 #include <dev/ofw/openfirm.h>
 
-static void macppc_cardbus_init __P((pci_chipset_tag_t, pcitag_t));
+static void macppc_cardbus_init(pci_chipset_tag_t, pcitag_t);
 
 #ifdef DEBUG_ALLOC
 # define DPRINTF printf

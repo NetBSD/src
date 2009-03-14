@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.34 2007/03/04 15:18:10 yamt Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.35 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.34 2007/03/04 15:18:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.35 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,11 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.34 2007/03/04 15:18:10 yamt Exp $");
 #endif
 static int comcnrate = CONSPEED;
 
-void dec_kn300_init __P((void));
-void dec_kn300_cons_init __P((void));
-static void dec_kn300_device_register __P((struct device *, void *));
+void dec_kn300_init(void);
+void dec_kn300_cons_init(void);
+static void dec_kn300_device_register(struct device *, void *);
 static void dec_kn300_mcheck_handler
-	__P((unsigned long, struct trapframe *, unsigned long, unsigned long));
+(unsigned long, struct trapframe *, unsigned long, unsigned long);
 
 #ifdef KGDB
 #include <machine/db_machdep.h>
@@ -353,11 +353,11 @@ dec_kn300_device_register(dev, aux)
 /*
  * KN300 Machine Check Handlers.
  */
-static void kn300_softerr __P((unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
+static void kn300_softerr(unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
 
-static void kn300_mcheck __P((unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
+static void kn300_mcheck(unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
 
 /*
  * "soft" error structure in system area for KN300 processor.

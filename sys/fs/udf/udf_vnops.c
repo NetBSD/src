@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.36 2009/02/11 13:08:08 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.37 2009/03/14 14:46:09 dsl Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.36 2009/02/11 13:08:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.37 2009/03/14 14:46:09 dsl Exp $");
 #endif /* not lint */
 
 
@@ -2202,7 +2202,7 @@ udf_advlock(void *v)
 
 
 /* Global vfs vnode data structures for udfs */
-int (**udf_vnodeop_p) __P((void *));
+int (**udf_vnodeop_p)(void *);
 
 const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },

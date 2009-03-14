@@ -1,4 +1,4 @@
-/*	$NetBSD: bootpref.c,v 1.3 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: bootpref.c,v 1.4 2009/03/14 14:45:57 dsl Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,27 +38,27 @@
 #include <sys/mman.h>
 #include "bootpref.h"
 
-static void	usage __P ((void));
-static int	openNVRAM __P ((void));
-static void	closeNVRAM __P ((int));
-static u_char	readNVRAM __P ((int, int));
-static void	writeNVRAM __P ((int, int, u_char));
-static void	getNVpref __P ((int, u_char[]));
-static void	setNVpref __P ((int, u_char[], int, int));
-static void	showOS __P ((u_char));
-static void	showLang __P ((u_char));
-static void	showKbdLang __P ((u_char));
-static void	showDateFmt __P ((u_char));
-static void	showDateSep __P ((u_char));
-static void	showVideo2 __P ((u_char));
-static void	showVideo1 __P ((u_char, u_char));
-static int	checkOS __P ((u_char *, char *));
-static int	checkLang __P ((u_char *, char *));
-static int	checkKbdLang __P ((u_char *, char *));
-static int	checkInt __P ((u_char *, char *, int, int));
-static int 	checkDateFmt __P ((u_char *, char *));
-static void 	checkDateSep __P ((u_char *, char *));
-static int 	checkColours __P ((u_char *, char *));
+static void	usage(void);
+static int	openNVRAM(void);
+static void	closeNVRAM(int);
+static u_char	readNVRAM(int, int);
+static void	writeNVRAM(int, int, u_char);
+static void	getNVpref(int, u_char[]);
+static void	setNVpref(int, u_char[], int, int);
+static void	showOS(u_char);
+static void	showLang(u_char);
+static void	showKbdLang(u_char);
+static void	showDateFmt(u_char);
+static void	showDateSep(u_char);
+static void	showVideo2(u_char);
+static void	showVideo1(u_char, u_char);
+static int	checkOS(u_char *, char *);
+static int	checkLang(u_char *, char *);
+static int	checkKbdLang(u_char *, char *);
+static int	checkInt(u_char *, char *, int, int);
+static int 	checkDateFmt(u_char *, char *);
+static void 	checkDateSep(u_char *, char *);
+static int 	checkColours(u_char *, char *);
 
 #define SET_OS		0x001
 #define SET_LANG	0x002

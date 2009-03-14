@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.33 2008/07/02 17:28:54 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.34 2009/03/14 14:45:54 dsl Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2008/07/02 17:28:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2009/03/14 14:45:54 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -554,7 +554,7 @@ remove_isr(isr)
  */
 struct si_callback {
 	struct si_callback *next;
-	void (*function) __P((void *rock1, void *rock2));
+	void (*function)(void *rock1, void *rock2);
 	void *rock1, *rock2;
 };
 static struct si_callback *si_callbacks;

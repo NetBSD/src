@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2008/02/14 00:25:39 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2009/03/14 14:45:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2008/02/14 00:25:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2009/03/14 14:45:51 dsl Exp $");
 
 #include "opt_md.h"
 
@@ -65,12 +65,12 @@ extern char *booted_kernel;
 
 extern dev_t dumpdev;
 
-void dumpconf __P((void));
-void isa_intr_init __P((void));
+void dumpconf(void);
+void isa_intr_init(void);
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device __P((char *name));
-static void set_root_device __P((void));
+static void get_device(char *name);
+static void set_root_device(void);
 #endif
 
 #ifndef MEMORY_DISK_IS_ROOT

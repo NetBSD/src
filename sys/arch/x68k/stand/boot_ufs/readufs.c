@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.c,v 1.9 2009/01/12 07:56:31 tsutsui Exp $	*/
+/*	$NetBSD: readufs.c,v 1.10 2009/03/14 14:46:07 dsl Exp $	*/
 /*	from Id: readufs.c,v 1.8 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -15,13 +15,13 @@
 
 #define fs	ufs_info
 
-static void raw_read_queue __P((void *buf, daddr_t blkpos, size_t bytelen));
-static int ufs_read_indirect __P((daddr_t blk, int level, uint8_t **buf,
-		unsigned *poff, size_t count));
+static void raw_read_queue(void *buf, daddr_t blkpos, size_t bytelen);
+static int ufs_read_indirect(daddr_t blk, int level, uint8_t **buf,
+		unsigned *poff, size_t count);
 
 #ifdef DEBUG_WITH_STDIO
-void ufs_list_dir __P((ino32_t dirino));
-int main __P((int argc, char *argv[]));
+void ufs_list_dir(ino32_t dirino);
+int main(int argc, char *argv[]);
 #endif
 
 #ifdef DEBUG_WITH_STDIO

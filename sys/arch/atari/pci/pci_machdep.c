@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.43 2005/12/11 12:16:59 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.44 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43 2005/12/11 12:16:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.44 2009/03/14 14:45:56 dsl Exp $");
 
 #include "opt_mbtype.h"
 
@@ -101,8 +101,8 @@ typedef LIST_HEAD(pci_memreg_head, pci_memreg) PCI_MEMREG;
 /*
  * Entry points for PCI DMA.  Use only the 'standard' functions.
  */
-int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *));
+int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
 struct atari_bus_dma_tag pci_bus_dma_tag = {
 	0,
 #if defined(_ATARIHW_)
@@ -120,14 +120,14 @@ struct atari_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamap_sync,
 };
 
-int	ataripcibusprint __P((void *auxp, const char *));
-int	pcibusmatch __P((struct device *, struct cfdata *, void *));
-void	pcibusattach __P((struct device *, struct device *, void *));
+int	ataripcibusprint(void *auxp, const char *);
+int	pcibusmatch(struct device *, struct cfdata *, void *);
+void	pcibusattach(struct device *, struct device *, void *);
 
-static void enable_pci_devices __P((void));
-static void insert_into_list __P((PCI_MEMREG *head, struct pci_memreg *elem));
-static int overlap_pci_areas __P((struct pci_memreg *p,
-	struct pci_memreg *self, u_int addr, u_int size, u_int what));
+static void enable_pci_devices(void);
+static void insert_into_list(PCI_MEMREG *head, struct pci_memreg *elem);
+static int overlap_pci_areas(struct pci_memreg *p,
+	struct pci_memreg *self, u_int addr, u_int size, u_int what);
 
 CFATTACH_DECL(pcib, sizeof(struct device),
     pcibusmatch, pcibusattach, NULL, NULL);

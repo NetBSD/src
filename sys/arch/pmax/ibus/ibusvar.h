@@ -1,4 +1,4 @@
-/*	$NetBSD: ibusvar.h,v 1.17 2007/03/04 06:00:33 christos Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.18 2009/03/14 14:46:04 dsl Exp $	*/
 
 #ifndef _PMAX_IBUS_IBUSVAR_H_
 #define _PMAX_IBUS_IBUSVAR_H_
@@ -32,9 +32,9 @@ struct ibus_attach_args {
 	int	ia_basz;		/* badaddr() size */
 };
 
-void	ibusattach __P((struct device *, struct device *, void *));
-int	ibusprint __P((void *, const char *));
-void	ibus_intr_establish __P((struct device *, void *cookie, int level,
-	    int (*handler)(void *), void *arg));
+void	ibusattach(struct device *, struct device *, void *);
+int	ibusprint(void *, const char *);
+void	ibus_intr_establish(struct device *, void *cookie, int level,
+	    int (*handler)(void *), void *arg);
 
 #endif	/* !_PMAX_IBUS_IBUSVAR_H_ */

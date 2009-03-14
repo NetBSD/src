@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.8 2008/01/30 09:50:19 ad Exp $	*/
+/*	$NetBSD: adutil.c,v 1.9 2009/03/14 14:46:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.8 2008/01/30 09:50:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.9 2009/03/14 14:46:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.8 2008/01/30 09:50:19 ad Exp $");
  * look for anode in the mount's hash table, return locked.
  */
 #define AHASH(an) ((an) & (ANODEHASHSZ - 1))
-static int CapitalChar __P((int, int));
+static int CapitalChar(int, int);
 
 extern struct simplelock adosfs_hashlock;
 

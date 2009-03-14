@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.43 2007/03/04 15:18:10 yamt Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.44 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.43 2007/03/04 15:18:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.44 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.43 2007/03/04 15:18:10 yamt Exp $
 
 #include "wsdisplay.h"
 
-void dec_3000_300_init __P((void));
-static void dec_3000_300_cons_init __P((void));
-static void dec_3000_300_device_register __P((struct device *, void *));
+void dec_3000_300_init(void);
+static void dec_3000_300_cons_init(void);
+static void dec_3000_300_device_register(struct device *, void *);
 
 const struct alpha_variation_table dec_3000_300_variations[] = {
 	{ SV_ST_PELICAN, "DEC 3000/300 (\"Pelican\")" },

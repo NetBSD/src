@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.21 2008/03/01 14:16:49 rmind Exp $	*/
+/*	$NetBSD: aed.c,v 1.22 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.21 2008/03/01 14:16:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.22 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,13 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.21 2008/03/01 14:16:49 rmind Exp $");
 /*
  * Function declarations.
  */
-static int	aedmatch __P((struct device *, struct cfdata *, void *));
-static void	aedattach __P((struct device *, struct device *, void *));
-static void	aed_emulate_mouse __P((adb_event_t *event));
-static void	aed_kbdrpt __P((void *kstate));
-static void	aed_dokeyupdown __P((adb_event_t *event));
-static void	aed_handoff __P((adb_event_t *event));
-static void	aed_enqevent __P((adb_event_t *event));
+static int	aedmatch(struct device *, struct cfdata *, void *);
+static void	aedattach(struct device *, struct device *, void *);
+static void	aed_emulate_mouse(adb_event_t *event);
+static void	aed_kbdrpt(void *kstate);
+static void	aed_dokeyupdown(adb_event_t *event);
+static void	aed_handoff(adb_event_t *event);
+static void	aed_enqevent(adb_event_t *event);
 
 /*
  * Global variables.

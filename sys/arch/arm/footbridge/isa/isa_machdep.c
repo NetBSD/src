@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.8 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.9 2009/03/14 14:45:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 2009/03/14 14:45:55 dsl Exp $");
 
 #include "opt_irqstats.h"
 
@@ -98,15 +98,15 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2008/04/28 20:23:14 martin Exp $
 #include "isadma.h"
 
 /* prototypes */
-static void isa_icu_init __P((void));
+static void isa_icu_init(void);
 
 struct arm32_isa_chipset isa_chipset_tag;
 
-void isa_strayintr __P((int));
-void intr_calculatemasks __P((void));
-int fakeintr __P((void *));
+void isa_strayintr(int);
+void intr_calculatemasks(void);
+int fakeintr(void *);
 
-int isa_irqdispatch __P((void *arg));
+int isa_irqdispatch(void *arg);
 
 u_int imask[NIPL];
 unsigned imen;
@@ -346,7 +346,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int irq;
 	int type;
 	int level;
-	int (*ih_fun) __P((void *));
+	int (*ih_fun)(void *);
 	void *ih_arg;
 {
     	struct intrq *iq;

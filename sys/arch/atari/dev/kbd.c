@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.32 2009/01/17 05:23:28 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.33 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.32 2009/01/17 05:23:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33 2009/03/14 14:45:56 dsl Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -115,16 +115,16 @@ dev_type_poll(kbdpoll);
 dev_type_kqfilter(kbdkqfilter);
 
 /* Interrupt handler */
-void	kbdintr __P((int));
+void	kbdintr(int);
 
-static void kbdsoft __P((void *, void *));
-static void kbdattach __P((struct device *, struct device *, void *));
-static int  kbdmatch __P((struct device *, struct cfdata *, void *));
+static void kbdsoft(void *, void *);
+static void kbdattach(struct device *, struct device *, void *);
+static int  kbdmatch(struct device *, struct cfdata *, void *);
 #if NITE>0
-static int  kbd_do_modifier __P((u_char));
+static int  kbd_do_modifier(u_char);
 #endif
-static int  kbd_write_poll __P((u_char *, int));
-static void kbd_pkg_start __P((struct kbd_softc *, u_char));
+static int  kbd_write_poll(u_char *, int);
+static void kbd_pkg_start(struct kbd_softc *, u_char);
 
 CFATTACH_DECL(kbd, sizeof(struct device),
     kbdmatch, kbdattach, NULL, NULL);

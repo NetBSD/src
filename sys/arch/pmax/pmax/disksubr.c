@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.49 2008/11/15 11:19:07 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.50 2009/03/14 14:46:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.49 2008/11/15 11:19:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.50 2009/03/14 14:46:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.49 2008/11/15 11:19:07 ad Exp $");
 #include <ufs/ufs/dinode.h>		/* XXX for fs.h */
 #include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
-const char *compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-	struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
+const char *compat_label(dev_t dev, void (*strat)(struct buf *bp),
+	struct disklabel *lp, struct cpu_disklabel *osdep);	/* XXX */
 
 /*
  * Attempt to read a disk label from a device
@@ -58,7 +58,7 @@ const char *compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 const char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *bp));
+	void (*strat)(struct buf *bp);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -121,7 +121,7 @@ readdisklabel(dev, strat, lp, osdep)
 const char *
 compat_label(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *bp));
+	void (*strat)(struct buf *bp);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -241,7 +241,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *bp));
+	void (*strat)(struct buf *bp);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {

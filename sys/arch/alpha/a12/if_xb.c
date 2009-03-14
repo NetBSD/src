@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.19 2008/11/07 00:20:01 dyoung Exp $ */
+/* $NetBSD: if_xb.c,v 1.20 2009/03/14 14:45:52 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.19 2008/11/07 00:20:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.20 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,12 +129,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.19 2008/11/07 00:20:01 dyoung Exp $");
 
 #define	FIFO_WORDCOUNT 60
 
-static int  xb_put_blk __P((struct mbuf *));
-static int  xb_put __P((struct mbuf *));
+static int  xb_put_blk(struct mbuf *);
+static int  xb_put(struct mbuf *);
 static long xb_fifo_empty(void);
 
-int	xbmatch __P((struct device *, struct cfdata *, void *));
-void	xbattach __P((struct device *, struct device *, void *));
+int	xbmatch(struct device *, struct cfdata *, void *);
+void	xbattach(struct device *, struct device *, void *);
 
 struct xb_softc {
 	struct	device d;
@@ -190,20 +190,20 @@ Static struct ifnet xbi;
 Static int frame_len;
 static int xb_debug;
 
-Static void xb_start __P((struct ifnet *));
-Static void xb_mcrp_write __P((long *, int, int));
-static inline void xb_onefree __P((void));
+Static void xb_start(struct ifnet *);
+Static void xb_mcrp_write(long *, int, int);
+static inline void xb_onefree(void);
 static long set_interrupt_on_fifo_empty(void);
 static void xb_init(struct ifnet *);
-static int  xb_intr __P((void *));
-static void xb_intr_rcv __P((void));
-Static void quickload __P((volatile long *, long *));
-static void xb_init_config __P((struct xb_config *, int));
-static int  xb_output __P((struct ifnet *, struct mbuf *,
-			const struct sockaddr *, struct rtentry *));
-static int  xb_ioctl __P((struct ifnet *, u_long, void *));
-static void xb_stop __P((void));
-static void a12_xbar_setup __P((void));
+static int  xb_intr(void *);
+static void xb_intr_rcv(void);
+Static void quickload(volatile long *, long *);
+static void xb_init_config(struct xb_config *, int);
+static int  xb_output(struct ifnet *, struct mbuf *,
+			const struct sockaddr *, struct rtentry *);
+static int  xb_ioctl(struct ifnet *, u_long, void *);
+static void xb_stop(void);
+static void a12_xbar_setup(void);
 
 /* There Can Be Only One */
 
@@ -231,7 +231,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.19 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.20 $", xbi.if_mtu);
 }
 
 static void

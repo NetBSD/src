@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.44 2008/11/11 06:46:44 dyoung Exp $	*/
+/*	$NetBSD: ofw.c,v 1.45 2009/03/14 14:46:06 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.44 2008/11/11 06:46:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.45 2009/03/14 14:46:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,9 +111,9 @@ extern int ofw_handleticks;
 /*
  *  Imported routines
  */
-extern void dump_spl_masks  __P((void));
-extern void dumpsys	    __P((void));
-extern void dotickgrovelling __P((vaddr_t));
+extern void dump_spl_masks(void);
+extern void dumpsys(void);
+extern void dotickgrovelling(vaddr_t);
 
 #define WriteWord(a, b) \
 *((volatile unsigned int *)(a)) = (b)
@@ -221,25 +221,25 @@ static struct dma_range *OFdmaranges;
 static ofw_handle_t ofw_client_services_handle;
 
 
-static void ofw_callbackhandler __P((void *));
-static void ofw_construct_proc0_addrspace __P((void));
-static void ofw_getphysmeminfo __P((void));
-static void ofw_getvirttranslations __P((void));
+static void ofw_callbackhandler(void *);
+static void ofw_construct_proc0_addrspace(void);
+static void ofw_getphysmeminfo(void);
+static void ofw_getvirttranslations(void);
 static void *ofw_malloc(vsize_t size);
-static void ofw_claimpages __P((vaddr_t *, pv_addr_t *, vsize_t));
-static void ofw_discardmappings __P ((vaddr_t, vaddr_t, vsize_t));
-static int ofw_mem_ihandle  __P((void));
-static int ofw_mmu_ihandle  __P((void));
-static paddr_t ofw_claimphys __P((paddr_t, psize_t, paddr_t));
+static void ofw_claimpages(vaddr_t *, pv_addr_t *, vsize_t);
+static void ofw_discardmappings(vaddr_t, vaddr_t, vsize_t);
+static int ofw_mem_ihandle(void);
+static int ofw_mmu_ihandle(void);
+static paddr_t ofw_claimphys(paddr_t, psize_t, paddr_t);
 #if 0
-static paddr_t ofw_releasephys __P((paddr_t, psize_t));
+static paddr_t ofw_releasephys(paddr_t, psize_t);
 #endif
-static vaddr_t ofw_claimvirt __P((vaddr_t, vsize_t, vaddr_t));
-static void ofw_settranslation __P ((vaddr_t, paddr_t, vsize_t, int));
-static void ofw_initallocator __P((void));
-static void ofw_configisaonly __P((paddr_t *, paddr_t *));
-static void ofw_configvl __P((int, paddr_t *, paddr_t *));
-static vaddr_t ofw_valloc __P((vsize_t, vaddr_t));
+static vaddr_t ofw_claimvirt(vaddr_t, vsize_t, vaddr_t);
+static void ofw_settranslation(vaddr_t, paddr_t, vsize_t, int);
+static void ofw_initallocator(void);
+static void ofw_configisaonly(paddr_t *, paddr_t *);
+static void ofw_configvl(int, paddr_t *, paddr_t *);
+static vaddr_t ofw_valloc(vsize_t, vaddr_t);
 
 
 /*
@@ -428,7 +428,7 @@ ofw_exit:
 
 #if	BOOT_FW_DHCP
 
-extern	char	*ip2dotted	__P((struct in_addr));
+extern	char	*ip2dotted(struct in_addr);
 
 /*
  * Get DHCP data from OFW

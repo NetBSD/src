@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.13 2008/06/13 08:50:12 cegger Exp $	*/
+/*	$NetBSD: nvram.c,v 1.14 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.13 2008/06/13 08:50:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.14 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,15 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.13 2008/06/13 08:50:12 cegger Exp $");
 #define	MC_NVRAM_CSUM	(MC_NVRAM_START + MC_NVRAM_SIZE - 2)
 
 #if NNVR > 0
-static void	nvram_set_csum __P((u_char csum));
-static int	nvram_csum_valid __P((u_char csum));
-static u_char	nvram_csum __P((void));
+static void	nvram_set_csum(u_char csum);
+static int	nvram_csum_valid(u_char csum);
+static u_char	nvram_csum(void);
 
 /*
  * Auto config stuff....
  */
-static void	nvr_attach __P((struct device *, struct device *, void *));
-static int	nvr_match __P((struct device *, struct cfdata *, void *));
+static void	nvr_attach(struct device *, struct device *, void *);
+static int	nvr_match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(nvr, sizeof(struct nvr_softc),
     nvr_match, nvr_attach, NULL, NULL);

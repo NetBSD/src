@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.206 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.207 2009/03/14 14:46:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.206 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.207 2009/03/14 14:46:11 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -133,8 +133,8 @@ extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
 static struct sysctllog *nfs_clog;
 
-static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
-    struct mount **, struct vnode **, struct lwp *));
+static int nfs_mount_diskless(struct nfs_dlmount *, const char *,
+    struct mount **, struct vnode **, struct lwp *);
 static void nfs_sysctl_init(void);
 static void nfs_sysctl_fini(void);
 

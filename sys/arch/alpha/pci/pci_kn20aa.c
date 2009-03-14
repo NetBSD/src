@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.47 2007/12/03 15:33:08 ad Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.48 2009/03/14 14:45:53 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.47 2007/12/03 15:33:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.48 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,13 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.47 2007/12/03 15:33:08 ad Exp $");
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_kn20aa_intr_map __P((struct pci_attach_args *,
-	    pci_intr_handle_t *));
-const char *dec_kn20aa_intr_string __P((void *, pci_intr_handle_t));
-const struct evcnt *dec_kn20aa_intr_evcnt __P((void *, pci_intr_handle_t));
-void	*dec_kn20aa_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *));
-void	dec_kn20aa_intr_disestablish __P((void *, void *));
+int	dec_kn20aa_intr_map(struct pci_attach_args *,
+	    pci_intr_handle_t *);
+const char *dec_kn20aa_intr_string(void *, pci_intr_handle_t);
+const struct evcnt *dec_kn20aa_intr_evcnt(void *, pci_intr_handle_t);
+void	*dec_kn20aa_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *);
+void	dec_kn20aa_intr_disestablish(void *, void *);
 
 #define	KN20AA_PCEB_IRQ	31
 #define	KN20AA_MAX_IRQ	32
@@ -71,9 +71,9 @@ void	dec_kn20aa_intr_disestablish __P((void *, void *));
 
 struct alpha_shared_intr *kn20aa_pci_intr;
 
-void	kn20aa_iointr __P((void *arg, unsigned long vec));
-void	kn20aa_enable_intr __P((int irq));
-void	kn20aa_disable_intr __P((int irq));
+void	kn20aa_iointr(void *arg, unsigned long vec);
+void	kn20aa_enable_intr(int irq);
+void	kn20aa_disable_intr(int irq);
 
 void
 pci_kn20aa_pickintr(ccp)
@@ -216,7 +216,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
         void *ccv, *arg;
         pci_intr_handle_t ih;
         int level;
-        int (*func) __P((void *));
+        int (*func)(void *);
 {           
 #if 0
         struct cia_config *ccp = ccv;

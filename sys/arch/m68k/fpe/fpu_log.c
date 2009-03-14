@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.9 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.10 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.9 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.10 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ static struct sfpn {
     { 0x3FFE - 0x3fff, 0xB07197A2U, 0x3C46C654U },
 };
 
-static struct fpn *__fpu_logn __P((struct fpemu *fe));
+static struct fpn *__fpu_logn(struct fpemu *fe);
 
 /*
  * natural log - algorithm taken from Motorola FPSP,

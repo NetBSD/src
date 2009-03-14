@@ -1,4 +1,4 @@
-/*	$NetBSD: viewvar.h,v 1.6 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: viewvar.h,v 1.7 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -61,7 +61,7 @@ enum view_unit_flags {
 };
 
 #ifdef _KERNEL
-view_t	*viewview __P((dev_t));
-int	viewprobe __P((void));
+view_t	*viewview(dev_t);
+int	viewprobe(void);
 
 #endif /* _KERNEL */

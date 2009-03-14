@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.28 2009/01/20 14:57:21 tsutsui Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.29 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.28 2009/01/20 14:57:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.29 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,13 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.28 2009/01/20 14:57:21 tsutsui Exp
 	    return -1;					\
     } while (/*CONSTCOND*/0)
 
-static int fpu_emul_fmovmcr __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_fmovm __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_arith __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_type1 __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_brcc __P((struct fpemu *fe, struct instruction *insn));
-static int test_cc __P((struct fpemu *fe, int pred));
-static struct fpn *fpu_cmp __P((struct fpemu *fe));
+static int fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_arith(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_type1(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_brcc(struct fpemu *fe, struct instruction *insn);
+static int test_cc(struct fpemu *fe, int pred);
+static struct fpn *fpu_cmp(struct fpemu *fe);
 
 #if DEBUG_FPE
 #  define DUMP_INSN(insn)						\

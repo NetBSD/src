@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxxx.c,v 1.4 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: bootxxx.c,v 1.5 2009/03/14 14:45:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Leo Weppelman.
@@ -44,7 +44,7 @@
 #include <tosdefs.h>
 
 int	bootxxx(void *, void *, osdsc_t *);
-void	boot_BSD __P((struct kparamb *)__attribute__((noreturn)));
+void	boot_BSD(struct kparamb *)__attribute__((noreturn));
 
 int
 bootxxx(readsector, disklabel, od)
@@ -61,7 +61,7 @@ bootxxx(readsector, disklabel, od)
 	/* XXX: Limit should be 16MB */
 	setheap(end, (void*)0x1000000);
 	printf("\033v\nNetBSD/Atari tertiary bootloader "
-					"($Revision: 1.4 $)\n\n");
+					"($Revision: 1.5 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, od->rootfs))
 		return(-1);

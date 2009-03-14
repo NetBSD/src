@@ -1,4 +1,4 @@
-/*	$NetBSD: intoa.c,v 1.1 1999/05/07 14:49:52 drochner Exp $	*/
+/*	$NetBSD: intoa.c,v 1.2 2009/03/14 14:46:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -44,7 +44,7 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <lib/libkern/libkern.h>
 #else
-char *intoa __P((u_int32_t)); /* XXX */
+char *intoa(u_int32_t); /* XXX */
 #endif
 
 /* Similar to inet_ntoa() */

@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.19 2007/11/19 18:51:36 ad Exp $ */
+/* $NetBSD: a12dc.c,v 1.20 2009/03/14 14:45:52 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.19 2007/11/19 18:51:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.20 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,8 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.19 2007/11/19 18:51:36 ad Exp $");
 
 #define	MAX_MODULES 1
 
-int	a12dcmatch __P((struct device *, struct cfdata *, void *));
-void	a12dcattach __P((struct device *, struct device *, void *));
+int	a12dcmatch(struct device *, struct cfdata *, void *);
+void	a12dcattach(struct device *, struct device *, void *);
 
 struct a12dc_softc {
 	struct  device sc_dev;
@@ -127,17 +127,17 @@ struct	a12dc_config { int im_not_used; } a12dc_configuration;
 
 static	struct tty *a12dc_tty[1];
 
-void a12dcstart __P((struct tty *));
-void a12dctimeout __P((void *));
-int a12dcparam __P((struct tty *, struct termios *));
+void a12dcstart(struct tty *);
+void a12dctimeout(void *);
+int a12dcparam(struct tty *, struct termios *);
 void a12dc_init(struct a12dc_config *, int);
-static void a12cdrputc __P((int));
+static void a12cdrputc(int);
 int a12dccngetc(dev_t);
 void a12dccnputc(dev_t, int);
 void a12dccnpollc(dev_t, int);
 /* static int get_bc_char(int mn, int chan); */
 /* static int get_bc_any(int,int *,int *); */
-int a12dcintr __P((void *));
+int a12dcintr(void *);
 static void a12_worry(int worry_number);
 static void A12InitBackDriver(int);
 
@@ -164,7 +164,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.19 $");
+	printf(": driver %s\n", "$Revision: 1.20 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -209,8 +209,8 @@ a12dc_init(ccp, mallocsafe)
 
 #endif
 
-static int msgetput __P((register mstate_type *, int, int));
-static void checkinit __P((void));
+static int msgetput(register mstate_type *, int, int);
+static void checkinit(void);
 
 static void
 A12InitBackDriver(int m)

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.32 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.33 2009/03/14 14:46:10 dsl Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.32 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.33 2009/03/14 14:46:10 dsl Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -79,8 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.32 2008/04/23 06:09:05 thorpej Exp 
 
 #include <net/net_osdep.h>
 
-static int esp_output __P((struct mbuf *, u_char *, struct mbuf *,
-	struct ipsecrequest *, int));
+static int esp_output(struct mbuf *, u_char *, struct mbuf *,
+	struct ipsecrequest *, int);
 
 /*
  * compute ESP header size.

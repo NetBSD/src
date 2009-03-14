@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.19 2008/04/24 11:38:37 ad Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.20 2009/03/14 14:46:10 dsl Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.19 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.20 2009/03/14 14:46:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.19 2008/04/24 11:38:37 ad Exp $");
 int             ddp_forward = 1;
 int             ddp_firewall = 0;
 extern int      ddp_cksum;
-void            ddp_input __P((struct mbuf *, struct ifnet *,
-    struct elaphdr *, int));
+void            ddp_input(struct mbuf *, struct ifnet *,
+    struct elaphdr *, int);
 
 /*
  * Could probably merge these two code segments a little better...

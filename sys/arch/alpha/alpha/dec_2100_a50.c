@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.61 2007/03/04 15:18:10 yamt Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.62 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.61 2007/03/04 15:18:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.62 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,15 +74,15 @@ __KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.61 2007/03/04 15:18:10 yamt Exp $
 #endif
 static int comcnrate = CONSPEED;
 
-void dec_2100_a50_init __P((void));
-static void dec_2100_a50_cons_init __P((void));
-static void dec_2100_a50_device_register __P((struct device *, void *));
+void dec_2100_a50_init(void);
+static void dec_2100_a50_cons_init(void);
+static void dec_2100_a50_device_register(struct device *, void *);
 
 static void dec_2100_a50_mcheck_handler
-	__P((unsigned long, struct trapframe *, unsigned long, unsigned long));
+(unsigned long, struct trapframe *, unsigned long, unsigned long);
 
-static void dec_2100_a50_mcheck __P((unsigned long, unsigned long,
-				     unsigned long, struct trapframe *));
+static void dec_2100_a50_mcheck(unsigned long, unsigned long,
+				     unsigned long, struct trapframe *);
 
 
 #ifdef KGDB

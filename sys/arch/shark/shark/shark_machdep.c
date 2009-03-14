@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.35 2009/02/13 22:41:03 apb Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.36 2009/03/14 14:46:07 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.35 2009/02/13 22:41:03 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.36 2009/03/14 14:46:07 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -109,12 +109,12 @@ extern u_int undefined_handler_address;
 /*
  *  Imported routines
  */
-extern void data_abort_handler		__P((trapframe_t *frame));
-extern void prefetch_abort_handler	__P((trapframe_t *frame));
-extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
-extern void consinit		__P((void));
-int	ofbus_match __P((struct device *, struct cfdata *, void *));
-void	ofbus_attach __P((struct device *, struct device *, void *));
+extern void data_abort_handler(trapframe_t *frame);
+extern void prefetch_abort_handler(trapframe_t *frame);
+extern void undefinedinstruction_bounce(trapframe_t *frame);
+extern void consinit(void);
+int	ofbus_match(struct device *, struct cfdata *, void *);
+void	ofbus_attach(struct device *, struct device *, void *);
 
 
 paddr_t isa_io_physaddr, isa_mem_physaddr;
@@ -150,11 +150,11 @@ CFATTACH_DECL(ofbus_root, sizeof(struct device),
  *  Exported routines
  */
 /* Move to header file? */
-extern void cpu_reboot		__P((int, char *));
-extern void ofrootfound		__P((void));
+extern void cpu_reboot(int, char *);
+extern void ofrootfound(void);
 
 /* Local routines */
-static void process_kernel_args	__P((void));
+static void process_kernel_args(void);
 void ofw_device_register(struct device *, void *);
 
 /* Kernel text starts at the base of the kernel address space. */

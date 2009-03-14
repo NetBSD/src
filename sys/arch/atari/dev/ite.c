@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.59 2008/06/11 14:35:53 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.60 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59 2008/06/11 14:35:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60 2009/03/14 14:45:56 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -142,38 +142,38 @@ u_char	cons_tabs[MAX_TABS];
 struct ite_softc *kbd_ite;
 int kbd_init;
 
-static inline int  atoi __P((const char *));
-static inline int  ite_argnum __P((struct ite_softc *));
-static inline int  ite_zargnum __P((struct ite_softc *));
-static inline void ite_cr __P((struct ite_softc *));
-static inline void ite_crlf __P((struct ite_softc *));
-static inline void ite_clrline __P((struct ite_softc *));
-static inline void ite_clrscreen __P((struct ite_softc *));
-static inline void ite_clrtobos __P((struct ite_softc *));
-static inline void ite_clrtobol __P((struct ite_softc *));
-static inline void ite_clrtoeol __P((struct ite_softc *));
-static inline void ite_clrtoeos __P((struct ite_softc *));
-static inline void ite_dnchar __P((struct ite_softc *, int));
-static inline void ite_inchar __P((struct ite_softc *, int));
-static inline void ite_inline __P((struct ite_softc *, int));
-static inline void ite_lf __P((struct ite_softc *));
-static inline void ite_dnline __P((struct ite_softc *, int));
-static inline void ite_rlf __P((struct ite_softc *));
-static inline void ite_sendstr __P((const char *));
-static inline void snap_cury __P((struct ite_softc *));
+static inline int  atoi(const char *);
+static inline int  ite_argnum(struct ite_softc *);
+static inline int  ite_zargnum(struct ite_softc *);
+static inline void ite_cr(struct ite_softc *);
+static inline void ite_crlf(struct ite_softc *);
+static inline void ite_clrline(struct ite_softc *);
+static inline void ite_clrscreen(struct ite_softc *);
+static inline void ite_clrtobos(struct ite_softc *);
+static inline void ite_clrtobol(struct ite_softc *);
+static inline void ite_clrtoeol(struct ite_softc *);
+static inline void ite_clrtoeos(struct ite_softc *);
+static inline void ite_dnchar(struct ite_softc *, int);
+static inline void ite_inchar(struct ite_softc *, int);
+static inline void ite_inline(struct ite_softc *, int);
+static inline void ite_lf(struct ite_softc *);
+static inline void ite_dnline(struct ite_softc *, int);
+static inline void ite_rlf(struct ite_softc *);
+static inline void ite_sendstr(const char *);
+static inline void snap_cury(struct ite_softc *);
 
-static void	alignment_display __P((struct ite_softc *));
-static struct ite_softc *getitesp __P((dev_t));
-static void	itecheckwrap __P((struct ite_softc *));
-static void	iteprecheckwrap __P((struct ite_softc *));
-static void	itestart __P((struct tty *));
-static void	ite_switch __P((int));
-static void	repeat_handler __P((void *));
+static void	alignment_display(struct ite_softc *);
+static struct ite_softc *getitesp(dev_t);
+static void	itecheckwrap(struct ite_softc *);
+static void	iteprecheckwrap(struct ite_softc *);
+static void	itestart(struct tty *);
+static void	ite_switch(int);
+static void	repeat_handler(void *);
 
-void iteputchar __P((int c, struct ite_softc *ip));
-void ite_putstr __P((const u_char * s, int len, dev_t dev));
-void iteattach __P((struct device *, struct device *, void *));
-int  itematch __P((struct device *, struct cfdata *, void *));
+void iteputchar(int c, struct ite_softc *ip);
+void ite_putstr(const u_char * s, int len, dev_t dev);
+void iteattach(struct device *, struct device *, void *);
+int  itematch(struct device *, struct cfdata *, void *);
 
 /*
  * Console specific types.

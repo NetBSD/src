@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.23 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 2009/03/14 14:46:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2008/06/04 12:41:41 ad Exp $");
 
 #include <mips/cache.h>
 
-paddr_t	kvtophys __P((vaddr_t));	/* XXX */
+paddr_t	kvtophys(vaddr_t);	/* XXX */
 
-static int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t,
+static int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t,
 		    void *, bus_size_t, struct vmspace *, int, paddr_t *,
-		    int *, int));
+		    int *, int);
 
 extern paddr_t avail_start, avail_end;	/* from pmap.c */
 

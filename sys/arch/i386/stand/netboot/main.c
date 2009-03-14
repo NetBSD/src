@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2008/12/13 23:30:54 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.14 2009/03/14 14:46:00 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -49,9 +49,9 @@ extern char	bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 #define TIMEOUT 5
 
-void	command_help __P((char *));
-void	command_quit __P((char *));
-void	command_boot __P((char *));
+void	command_help(char *);
+void	command_quit(char *);
+void	command_boot(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },

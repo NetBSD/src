@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.33 2008/04/24 11:38:39 ad Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.34 2009/03/14 14:46:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.33 2008/04/24 11:38:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.34 2009/03/14 14:46:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ struct rpc_reply {
 
 #define MIN_REPLY_HDR 16	/* xid, dir, astat, errno */
 
-static int krpccheck __P((struct mbuf*, void*));
+static int krpccheck(struct mbuf*, void*);
 
 /*
  * Call portmap to lookup a port number for a particular rpc program

@@ -1,4 +1,4 @@
-/* $NetBSD: a12dcreg.h,v 1.1 1998/09/23 21:14:02 ross Exp $ */
+/* $NetBSD: a12dcreg.h,v 1.2 2009/03/14 14:45:52 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -141,4 +141,4 @@ mstate_type a12_mstate[MAX_MODULES];
 
 int a12console_last_unexpected_error;
 
-int a12dccnattach __P((void));
+int a12dccnattach(void);

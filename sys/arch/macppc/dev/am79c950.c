@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.24 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.25 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.24 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.25 2009/03/14 14:46:01 dsl Exp $");
 
 #include "opt_inet.h"
 
@@ -76,21 +76,21 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.24 2008/11/07 00:20:02 dyoung Exp $")
 #include <macppc/dev/am79c950reg.h>
 #include <macppc/dev/if_mcvar.h>
 
-hide void	mcwatchdog __P((struct ifnet *));
-hide int	mcinit __P((struct mc_softc *sc));
-hide int	mcstop __P((struct mc_softc *sc));
-hide int	mcioctl __P((struct ifnet *ifp, u_long cmd, void *data));
-hide void	mcstart __P((struct ifnet *ifp));
-hide void	mcreset __P((struct mc_softc *sc));
+hide void	mcwatchdog(struct ifnet *);
+hide int	mcinit(struct mc_softc *sc);
+hide int	mcstop(struct mc_softc *sc);
+hide int	mcioctl(struct ifnet *ifp, u_long cmd, void *data);
+hide void	mcstart(struct ifnet *ifp);
+hide void	mcreset(struct mc_softc *sc);
 
-integrate u_int	maceput __P((struct mc_softc *sc, struct mbuf *m0));
-integrate void	mc_tint __P((struct mc_softc *sc));
-integrate void	mace_read __P((struct mc_softc *, uint8_t *, int));
-integrate struct mbuf *mace_get __P((struct mc_softc *, uint8_t *, int));
-static void mace_calcladrf __P((struct ethercom *ac, u_int8_t *af));
-static inline u_int16_t ether_cmp __P((void *, void *));
-static int mc_mediachange __P((struct ifnet *));
-static void mc_mediastatus __P((struct ifnet *, struct ifmediareq *));
+integrate u_int	maceput(struct mc_softc *sc, struct mbuf *m0);
+integrate void	mc_tint(struct mc_softc *sc);
+integrate void	mace_read(struct mc_softc *, uint8_t *, int);
+integrate struct mbuf *mace_get(struct mc_softc *, uint8_t *, int);
+static void mace_calcladrf(struct ethercom *ac, u_int8_t *af);
+static inline u_int16_t ether_cmp(void *, void *);
+static int mc_mediachange(struct ifnet *);
+static void mc_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and

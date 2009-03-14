@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.46 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: apecs.c,v 1.47 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.46 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.47 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,16 +97,16 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.46 2008/04/28 20:23:11 martin Exp $");
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	apecsmatch __P((struct device *, struct cfdata *, void *));
-void	apecsattach __P((struct device *, struct device *, void *));
+int	apecsmatch(struct device *, struct cfdata *, void *);
+void	apecsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(apecs, sizeof(struct apecs_softc),
     apecsmatch, apecsattach, NULL, NULL);
 
 extern struct cfdriver apecs_cd;
 
-int	apecs_bus_get_window __P((int, int,
-	    struct alpha_bus_space_translation *));
+int	apecs_bus_get_window(int, int,
+	    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
 int apecsfound;

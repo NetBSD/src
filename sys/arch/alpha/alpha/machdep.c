@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.315 2009/02/13 22:41:00 apb Exp $ */
+/* $NetBSD: machdep.c,v 1.316 2009/03/14 14:45:52 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.315 2009/02/13 22:41:00 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.316 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,12 +201,12 @@ int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];	/* low size bits overloaded */
 int	mem_cluster_cnt;
 
-int	cpu_dump __P((void));
-int	cpu_dumpsize __P((void));
-u_long	cpu_dump_mempagecnt __P((void));
-void	dumpsys __P((void));
-void	identifycpu __P((void));
-void	printregs __P((struct reg *));
+int	cpu_dump(void);
+int	cpu_dumpsize(void);
+u_long	cpu_dump_mempagecnt(void);
+void	dumpsys(void);
+void	identifycpu(void);
+void	printregs(struct reg *);
 
 void
 alpha_init(pfn, ptb, bim, bip, biv)
@@ -1099,7 +1099,7 @@ cpu_dump_mempagecnt()
 int
 cpu_dump()
 {
-	int (*dump) __P((dev_t, daddr_t, void *, size_t));
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -1202,7 +1202,7 @@ dumpsys()
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, void *, size_t));
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	/* Save registers. */

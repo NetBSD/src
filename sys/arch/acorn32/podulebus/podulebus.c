@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.20 2005/12/11 12:16:05 christos Exp $ */
+/* $NetBSD: podulebus.c,v 1.21 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.20 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.21 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -72,7 +72,7 @@ extern struct bus_space podulebus_bs_tag;
 
 /* Declare prototypes */
 
-u_int poduleread __P((u_int, int));
+u_int poduleread(u_int, int);
 int podulebusmatch(struct device *, struct cfdata *, void *);
 void podulebusattach(struct device *, struct device *, void *);
 int podulebusprint(void *, const char *);
@@ -562,7 +562,7 @@ void *
 podulebus_irq_establish(ih, ipl, func, arg, ev)
 	podulebus_intr_handle_t ih;
 	int ipl;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	struct evcnt *ev;
 {

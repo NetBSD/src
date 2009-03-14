@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2009/01/30 14:09:44 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2009/03/14 14:46:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -58,9 +58,9 @@ extern char	bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 int	main(void);
 
-void	command_help __P((char *));
-void	command_quit __P((char *));
-void	command_boot __P((char *));
+void	command_help(char *);
+void	command_quit(char *);
+void	command_boot(char *);
 void	command_consdev(char *);
 void	command_modules(char *);
 

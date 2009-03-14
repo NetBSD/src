@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.42 2009/02/14 18:00:26 cegger Exp $	*/
+/*	$NetBSD: fd.c,v 1.43 2009/03/14 14:45:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.42 2009/02/14 18:00:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.43 2009/03/14 14:45:51 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -174,9 +174,9 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int fdcprobe __P((struct device *, struct cfdata *, void *));
-int fdprint __P((void *, const char *));
-void fdcattach __P((struct device *, struct device *, void *));
+int fdcprobe(struct device *, struct cfdata *, void *);
+int fdprint(void *, const char *);
+void fdcattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
     fdcprobe, fdcattach, NULL, NULL);
@@ -249,8 +249,8 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int fdprobe __P((struct device *, struct cfdata *, void *));
-void fdattach __P((struct device *, struct device *, void *));
+int fdprobe(struct device *, struct cfdata *, void *);
+void fdattach(struct device *, struct device *, void *);
 
 extern char floppy_read_fiq[], floppy_read_fiq_end[];
 extern char floppy_write_fiq[], floppy_write_fiq_end[];
@@ -276,27 +276,27 @@ const struct cdevsw fd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-void fdgetdisklabel __P((struct fd_softc *));
-int fd_get_parms __P((struct fd_softc *));
-void fdstart __P((struct fd_softc *));
+void fdgetdisklabel(struct fd_softc *);
+int fd_get_parms(struct fd_softc *);
+void fdstart(struct fd_softc *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct fd_type *fd_nvtotype __P((char *, int, int));
-void fd_set_motor __P((struct fdc_softc *fdc, int reset));
-void fd_motor_off __P((void *arg));
-void fd_motor_on __P((void *arg));
-int fdcresult __P((struct fdc_softc *fdc));
-int out_fdc __P((bus_space_tag_t iot, bus_space_handle_t ioh, u_char x));
-void fdcstart __P((struct fdc_softc *fdc));
-void fdcstatus __P((struct device *dv, int n, const char *s));
-void fdctimeout __P((void *arg));
-void fdcpseudointr __P((void *arg));
-int fdcintr __P((void *));
-void fdcretry __P((struct fdc_softc *fdc));
-void fdfinish __P((struct fd_softc *fd, struct buf *bp));
-inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
-int fdformat __P((dev_t, struct ne7_fd_formb *, struct lwp *));
+struct fd_type *fd_nvtotype(char *, int, int);
+void fd_set_motor(struct fdc_softc *fdc, int reset);
+void fd_motor_off(void *arg);
+void fd_motor_on(void *arg);
+int fdcresult(struct fdc_softc *fdc);
+int out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x);
+void fdcstart(struct fdc_softc *fdc);
+void fdcstatus(struct device *dv, int n, const char *s);
+void fdctimeout(void *arg);
+void fdcpseudointr(void *arg);
+int fdcintr(void *);
+void fdcretry(struct fdc_softc *fdc);
+void fdfinish(struct fd_softc *fd, struct buf *bp);
+inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 
 int
 fdcprobe(parent, cf, aux)
@@ -1524,7 +1524,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 
 #include <dev/md.h>
 
-int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
+int load_memory_disc_from_floppy(struct md_conf *md, dev_t dev);
 
 int
 load_memory_disc_from_floppy(md, dev)

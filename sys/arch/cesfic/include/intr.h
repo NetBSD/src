@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2008/06/22 16:34:15 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2009/03/14 14:45:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -106,7 +106,7 @@
 /* watch out for side effects */
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 
-int	spl0 __P((void));
+int	spl0(void);
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1

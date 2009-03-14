@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.18 2007/03/09 16:33:27 tsutsui Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.19 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.18 2007/03/09 16:33:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.19 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -45,13 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.18 2007/03/09 16:33:27 tsutsui Exp 
 /*
  * Prototypes of static functions
  */
-static int decode_ea6 __P((struct frame *frame, struct instruction *insn,
-			   struct insn_ea *ea, int modreg));
-static int fetch_immed __P((struct frame *frame, struct instruction *insn,
-			    int *dst));
-static int fetch_disp __P((struct frame *frame, struct instruction *insn,
-			   int size, int *res));
-static int calc_ea __P((struct insn_ea *ea, char *ptr, char **eaddr));
+static int decode_ea6(struct frame *frame, struct instruction *insn,
+			   struct insn_ea *ea, int modreg);
+static int fetch_immed(struct frame *frame, struct instruction *insn,
+			    int *dst);
+static int fetch_disp(struct frame *frame, struct instruction *insn,
+			   int size, int *res);
+static int calc_ea(struct insn_ea *ea, char *ptr, char **eaddr);
 
 /*
  * Helper routines for dealing with "effective address" values.

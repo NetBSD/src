@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.36 2008/01/02 11:48:21 ad Exp $ */
+/* $NetBSD: disksubr.c,v 1.37 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.36 2008/01/02 11:48:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ extern struct device *bootdv;
 const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -208,7 +208,7 @@ setdisklabel(olp, nlp, openmask, clp)
 int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {

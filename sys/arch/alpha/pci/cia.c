@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.66 2008/12/16 22:35:22 christos Exp $ */
+/* $NetBSD: cia.c,v 1.67 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.66 2008/12/16 22:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.67 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,16 +104,16 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.66 2008/12/16 22:35:22 christos Exp $");
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	ciamatch __P((struct device *, struct cfdata *, void *));
-void	ciaattach __P((struct device *, struct device *, void *));
+int	ciamatch(struct device *, struct cfdata *, void *);
+void	ciaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cia, sizeof(struct cia_softc),
     ciamatch, ciaattach, NULL, NULL);
 
 extern struct cfdriver cia_cd;
 
-int	cia_bus_get_window __P((int, int,
-	    struct alpha_bus_space_translation *));
+int	cia_bus_get_window(int, int,
+	    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
 int ciafound;

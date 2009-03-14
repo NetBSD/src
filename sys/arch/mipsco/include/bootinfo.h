@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.4 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000
@@ -66,7 +66,7 @@ struct btinfo_symtab {
 };
 
 #ifdef _KERNEL
-void	*lookup_bootinfo __P((int));
+void	*lookup_bootinfo(int);
 #endif
 
 #endif	/* !_MIPSCO_BOOTINFO_H_ */

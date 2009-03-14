@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.54 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.55 2009/03/14 14:46:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -317,12 +317,12 @@ int	ether_nonstatic_aton(u_char *, char *);
  */
 #include <sys/cdefs.h>
 __BEGIN_DECLS
-char *	ether_ntoa __P((const struct ether_addr *));
+char *	ether_ntoa(const struct ether_addr *);
 struct ether_addr *
-	ether_aton __P((const char *));
-int	ether_ntohost __P((char *, const struct ether_addr *));
-int	ether_hostton __P((const char *, struct ether_addr *));
-int	ether_line __P((const char *, struct ether_addr *, char *));
+	ether_aton(const char *);
+int	ether_ntohost(char *, const struct ether_addr *);
+int	ether_hostton(const char *, struct ether_addr *);
+int	ether_line(const char *, struct ether_addr *, char *);
 __END_DECLS
 #endif
 

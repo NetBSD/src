@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.19 2007/10/19 12:16:47 ad Exp $
+ *	$Id: i4b_ctl.c,v 1.20 2009/03/14 14:46:10 dsl Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.19 2007/10/19 12:16:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.20 2009/03/14 14:46:10 dsl Exp $");
 
 #include "isdnctl.h"
 
@@ -146,10 +146,10 @@ static void *devfs_token;
 
 #ifndef __FreeBSD__
 #define PDEVSTATIC	/* */
-void isdnctlattach __P((void));
-int isdnctlopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
-int isdnctlclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
-int isdnctlioctl __P((dev_t dev, u_long cmd, void *data, int flag, struct lwp *l));
+void isdnctlattach(void);
+int isdnctlopen(dev_t dev, int flag, int fmt, struct lwp *l);
+int isdnctlclose(dev_t dev, int flag, int fmt, struct lwp *l);
+int isdnctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l);
 #endif	/* !FreeBSD */
 
 #ifdef __NetBSD__

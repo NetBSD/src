@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.58 2009/01/28 19:55:51 tjam Exp $	*/
+/*	$NetBSD: zs.c,v 1.59 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.58 2009/01/28 19:55:51 tjam Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.59 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,8 +217,8 @@ static u_long zs_freqs_generic[] = {
 static u_long *zs_frequencies;
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch __P((struct device *, struct cfdata *, void *));
-static void	zsattach __P((struct device *, struct device *, void *));
+static int	zsmatch(struct device *, struct cfdata *, void *);
+static void	zsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(zs, sizeof(struct zs_softc),
     zsmatch, zsattach, NULL, NULL);
@@ -241,24 +241,24 @@ const struct cdevsw zs_cdevsw = {
 };
 
 /* Interrupt handlers. */
-int		zshard __P((long));
-static int	zssoft __P((long));
-static int	zsrint __P((struct zs_chanstate *, volatile struct zschan *));
-static int	zsxint __P((struct zs_chanstate *, volatile struct zschan *));
-static int	zssint __P((struct zs_chanstate *, volatile struct zschan *));
+int		zshard(long);
+static int	zssoft(long);
+static int	zsrint(struct zs_chanstate *, volatile struct zschan *);
+static int	zsxint(struct zs_chanstate *, volatile struct zschan *);
+static int	zssint(struct zs_chanstate *, volatile struct zschan *);
 
 static struct zs_chanstate *zslist;
 
 /* Routines called from other code. */
-static void	zsstart __P((struct tty *));
+static void	zsstart(struct tty *);
 
 /* Routines purely local to this driver. */
-static void	zsoverrun __P((int, long *, const char *));
-static int	zsparam __P((struct tty *, struct termios *));
-static int	zsbaudrate __P((int, int, int *, int *, int *, int *));
-static int	zs_modem __P((struct zs_chanstate *, int, int));
-static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
-static void	zs_shutdown __P((struct zs_chanstate *));
+static void	zsoverrun(int, long *, const char *);
+static int	zsparam(struct tty *, struct termios *);
+static int	zsbaudrate(int, int, int *, int *, int *, int *);
+static int	zs_modem(struct zs_chanstate *, int, int);
+static void	zs_loadchannelregs(volatile struct zschan *, u_char *);
+static void	zs_shutdown(struct zs_chanstate *);
 
 static int
 zsmatch(pdp, cfp, auxp)

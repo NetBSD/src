@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.9 2008/05/30 19:26:35 ad Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.10 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.9 2008/05/30 19:26:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.10 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +111,7 @@ pci_intr_establish(pc, ih, level, ih_fun, ih_arg)
 	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	ih;
 	int			level;
-	int			(*ih_fun) __P((void *));
+	int			(*ih_fun)(void *);
 	void			*ih_arg;
 {
 	if (ih == 0 || ih >= 16 || ih == 2)

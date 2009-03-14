@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.39 2008/06/13 11:54:31 cegger Exp $	*/
+/*	$NetBSD: akbd.c,v 1.40 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.39 2008/06/13 11:54:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.40 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,13 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.39 2008/06/13 11:54:31 cegger Exp $");
 /*
  * Function declarations.
  */
-static int	akbdmatch __P((struct device *, struct cfdata *, void *));
-static void	akbdattach __P((struct device *, struct device *, void *));
-static void	kbd_processevent __P((adb_event_t *event, struct akbd_softc *));
+static int	akbdmatch(struct device *, struct cfdata *, void *);
+static void	akbdattach(struct device *, struct device *, void *);
+static void	kbd_processevent(adb_event_t *event, struct akbd_softc *);
 #ifdef notyet
-static u_char	getleds __P((int));
-static int	setleds __P((struct akbd_softc *, u_char));
-static void	blinkleds __P((struct akbd_softc *));
+static u_char	getleds(int);
+static int	setleds(struct akbd_softc *, u_char);
+static void	blinkleds(struct akbd_softc *);
 #endif
 
 /* Driver definition. */
@@ -79,9 +79,9 @@ CFATTACH_DECL(akbd, sizeof(struct akbd_softc),
 
 extern struct cfdriver akbd_cd;
 
-int akbd_enable __P((void *, int));
-void akbd_set_leds __P((void *, int));
-int akbd_ioctl __P((void *, u_long, void *, int, struct lwp *));
+int akbd_enable(void *, int);
+void akbd_set_leds(void *, int);
+int akbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -89,8 +89,8 @@ struct wskbd_accessops akbd_accessops = {
 	akbd_ioctl,
 };
 
-void akbd_cngetc __P((void *, u_int *, int *));
-void akbd_cnpollc __P((void *, int));
+void akbd_cngetc(void *, u_int *, int *);
+void akbd_cnpollc(void *, int);
 
 struct wskbd_consops akbd_consops = {
 	akbd_cngetc,

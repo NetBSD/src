@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.8 2008/01/02 11:48:23 ad Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.9 2009/03/14 14:45:54 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,14 +97,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.8 2008/01/02 11:48:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.9 2009/03/14 14:45:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 
-static int filecore_checksum __P((u_char *));
+static int filecore_checksum(u_char *);
 
 /*
  * static int filecore_checksum(u_char *bootblock)
@@ -179,7 +179,7 @@ filecore_checksum(bootblock)
 int
 filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	const char **msgp;
@@ -314,7 +314,7 @@ out:
 int
 filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int *cylp, *netbsd_label_offp;

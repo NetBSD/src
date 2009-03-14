@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2008/01/02 11:48:26 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2008/01/02 11:48:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2009/03/14 14:46:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2008/01/02 11:48:26 ad Exp $");
 
 #define	b_cylin	b_resid
 
-static const char *disklabel_mips_to_bsd __P((struct mips_volheader *,
-					  struct disklabel *));
-static int disklabel_bsd_to_mips __P((struct disklabel *,
-					struct mips_volheader *));
-static int mipsvh_cksum __P((struct mips_volheader *)); 
+static const char *disklabel_mips_to_bsd(struct mips_volheader *,
+					  struct disklabel *);
+static int disklabel_bsd_to_mips(struct disklabel *,
+					struct mips_volheader *);
+static int mipsvh_cksum(struct mips_volheader *); 
 
 #define LABELSIZE(lp)	((char *)&lp->d_partitions[lp->d_npartitions] -	\
 			 (char *)lp)
@@ -66,7 +66,7 @@ static int mipsvh_cksum __P((struct mips_volheader *));
 const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat) __P((struct buf *bp));
+	void (*strat)(struct buf *bp);
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -194,7 +194,7 @@ setdisklabel(olp, nlp, openmask, clp)
 int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat) __P((struct buf *bp));
+	void (*strat)(struct buf *bp);
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {

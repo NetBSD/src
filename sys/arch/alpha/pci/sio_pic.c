@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.36 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: sio_pic.c,v 1.37 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.36 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.37 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,20 +118,20 @@ u_int8_t initial_ocw1[2];
 u_int8_t initial_elcr[2];
 #endif
 
-void		sio_setirqstat __P((int, int, int));
+void		sio_setirqstat(int, int, int);
 
-u_int8_t	(*sio_read_elcr) __P((int));
-void		(*sio_write_elcr) __P((int, u_int8_t));
-static void	specific_eoi __P((int));
+u_int8_t	(*sio_read_elcr)(int);
+void		(*sio_write_elcr)(int, u_int8_t);
+static void	specific_eoi(int);
 #ifdef BROKEN_PROM_CONSOLE
-void		sio_intr_shutdown __P((void *));
+void		sio_intr_shutdown(void *);
 #endif
 
 /******************** i82378 SIO ELCR functions ********************/
 
-int		i82378_setup_elcr __P((void));
-u_int8_t	i82378_read_elcr __P((int));
-void		i82378_write_elcr __P((int, u_int8_t));
+int		i82378_setup_elcr(void);
+u_int8_t	i82378_read_elcr(int);
+void		i82378_write_elcr(int, u_int8_t);
 
 bus_space_handle_t sio_ioh_elcr;
 
@@ -175,9 +175,9 @@ i82378_write_elcr(elcr, val)
 
 /******************** Cypress CY82C693 ELCR functions ********************/
 
-int		cy82c693_setup_elcr __P((void));
-u_int8_t	cy82c693_read_elcr __P((int));
-void		cy82c693_write_elcr __P((int, u_int8_t));
+int		cy82c693_setup_elcr(void);
+u_int8_t	cy82c693_read_elcr(int);
+void		cy82c693_write_elcr(int, u_int8_t);
 
 const struct cy82c693_handle *sio_cy82c693_handle;
 
@@ -265,7 +265,7 @@ cy82c693_write_elcr(elcr, val)
  * they should panic.
  */
 
-int (*sio_elcr_setup_funcs[]) __P((void)) = {
+int (*sio_elcr_setup_funcs[])(void) = {
 	cy82c693_setup_elcr,
 	i82378_setup_elcr,
 	NULL,

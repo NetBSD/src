@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.13 2008/07/10 16:14:16 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.14 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.13 2008/07/10 16:14:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2009/03/14 14:46:01 dsl Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -53,11 +53,11 @@ int	idepth;
 volatile int	ssir;
 
 extern	int intrcnt[];		/* from locore.s */
-extern	void (*vectab[]) __P((void));
-extern	void badtrap __P((void));
-extern	void intrhand_vectored __P((void));
+extern	void (*vectab[])(void);
+extern	void badtrap(void);
+extern	void intrhand_vectored(void);
 
-extern	int getsr __P((void));	/* in locore.s */
+extern	int getsr(void);	/* in locore.s */
 
 void
 isrinit()
@@ -76,7 +76,7 @@ isrinit()
  */
 void
 isrlink_autovec(func, arg, ipl, priority)
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	int ipl;
 	int priority;
@@ -151,7 +151,7 @@ isrlink_autovec(func, arg, ipl, priority)
  */
 void
 isrlink_vectored(func, arg, ipl, vec)
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	int ipl, vec;
 {

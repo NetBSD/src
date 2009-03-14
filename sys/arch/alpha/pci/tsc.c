@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.13 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: tsc.c,v 1.14 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.13 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.14 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.13 2005/12/11 12:16:17 christos Exp $");
 
 #define tsc() { Generate ctags(1) key. }
 
-int	tscmatch __P((struct device *, struct cfdata *, void *));
-void	tscattach __P((struct device *, struct device *, void *));
+int	tscmatch(struct device *, struct cfdata *, void *);
+void	tscattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tsc, sizeof(struct tsc_softc),
     tscmatch, tscattach, NULL, NULL);
@@ -69,18 +69,18 @@ extern struct cfdriver tsc_cd;
 
 struct tsp_config tsp_configuration[2];
 
-static int tscprint __P((void *, const char *pnp));
+static int tscprint(void *, const char *pnp);
 
-int	tspmatch __P((struct device *, struct cfdata *, void *));
-void	tspattach __P((struct device *, struct device *, void *));
+int	tspmatch(struct device *, struct cfdata *, void *);
+void	tspattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tsp, sizeof(struct tsp_softc),
     tspmatch, tspattach, NULL, NULL);
 
 extern struct cfdriver tsp_cd;
 
-static int tsp_bus_get_window __P((int, int,
-	struct alpha_bus_space_translation *));
+static int tsp_bus_get_window(int, int,
+	struct alpha_bus_space_translation *);
 
 /* There can be only one */
 static int tscfound;

@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.22 2008/06/12 12:09:23 dogcow Exp $ */
+/* $NetBSD: mcpcia.c,v 1.23 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.22 2008/06/12 12:09:23 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.23 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,12 +96,12 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.22 2008/06/12 12:09:23 dogcow Exp $");
 	 (MCBUS_IOSPACE) | MCPCIA_PCI_BRIDGE | _MCPCIA_PCI_REV)), \
 	sizeof(u_int32_t))
 
-static int	mcpciamatch __P((struct device *, struct cfdata *, void *));
-static void	mcpciaattach __P((struct device *, struct device *, void *));
+static int	mcpciamatch(struct device *, struct cfdata *, void *);
+static void	mcpciaattach(struct device *, struct device *, void *);
 CFATTACH_DECL(mcpcia, sizeof(struct mcpcia_softc),
     mcpciamatch, mcpciaattach, NULL, NULL);
 
-void	mcpcia_init0 __P((struct mcpcia_config *, int));
+void	mcpcia_init0(struct mcpcia_config *, int);
 
 /*
  * We have one statically-allocated mcpcia_config structure; this is
@@ -110,8 +110,8 @@ void	mcpcia_init0 __P((struct mcpcia_config *, int));
  */
 struct mcpcia_config mcpcia_console_configuration;
 
-int	mcpcia_bus_get_window __P((int, int,
-	    struct alpha_bus_space_translation *abst));
+int	mcpcia_bus_get_window(int, int,
+	    struct alpha_bus_space_translation *abst);
 
 static int
 mcpciamatch(parent, cf, aux)

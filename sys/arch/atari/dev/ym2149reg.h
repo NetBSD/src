@@ -1,4 +1,4 @@
-/*	$NetBSD: ym2149reg.h,v 1.5 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: ym2149reg.h,v 1.6 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -165,7 +165,7 @@ extern u_char	ym2149_ioa;	/* Soft-copy of port-A			*/
 /*
  * Prototypes
  */
-void ym2149_init __P((void));
+void ym2149_init(void);
 #endif
 
 #endif /*  _YM2149REG_H */

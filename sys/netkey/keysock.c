@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.48 2008/04/28 15:18:43 ad Exp $	*/
+/*	$NetBSD: keysock.c,v 1.49 2009/03/14 14:46:11 dsl Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.48 2008/04/28 15:18:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.49 2009/03/14 14:46:11 dsl Exp $");
 
 #include "opt_inet.h"
 
@@ -65,10 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.48 2008/04/28 15:18:43 ad Exp $");
 struct sockaddr key_dst = { .sa_len = 2, .sa_family = PF_KEY, };
 struct sockaddr key_src = { .sa_len = 2, .sa_family = PF_KEY, };
 
-static int key_receive __P((struct socket *, struct mbuf **, struct uio *,
-	struct mbuf **, struct mbuf **, int *));
+static int key_receive(struct socket *, struct mbuf **, struct uio *,
+	struct mbuf **, struct mbuf **, int *);
 
-static int key_sendup0 __P((struct rawcb *, struct mbuf *, int, int));
+static int key_sendup0(struct rawcb *, struct mbuf *, int, int);
 
 static int
 key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,

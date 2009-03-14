@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2007/12/03 15:33:57 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2007/12/03 15:33:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2009/03/14 14:46:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2007/12/03 15:33:57 ad Exp $");
  */
 int	cpuspeed = 25;	/* approx # instr per usec. */
 
-extern int initcpu __P((void));		/*XXX*/
+extern int initcpu(void);		/*XXX*/
 
-void	findroot __P((struct device **, int *));
+void	findroot(struct device **, int *);
 
 struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
 

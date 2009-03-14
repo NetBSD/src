@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa_machdep.c,v 1.4 2005/12/11 12:19:04 christos Exp $	*/
+/*	$NetBSD: lpt_ofisa_machdep.c,v 1.5 2009/03/14 14:46:06 dsl Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.4 2005/12/11 12:19:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.5 2009/03/14 14:46:06 dsl Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.4 2005/12/11 12:19:04 christ
 
 #ifdef COMPAT_OLD_OFW
 
-extern int i87307PrinterConfig __P((bus_space_tag_t, u_int));	/* XXX */
+extern int i87307PrinterConfig(bus_space_tag_t, u_int);	/* XXX */
 
 int
 lpt_ofisa_md_match(parent, cf, aux)

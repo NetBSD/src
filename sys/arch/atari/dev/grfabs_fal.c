@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.18 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.19 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.18 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.19 2009/03/14 14:45:56 dsl Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -57,18 +57,18 @@ __KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.18 2005/12/11 12:16:54 christos Exp
 /*
  * Function decls
  */
-static void       init_view __P((view_t *, bmap_t *, dmode_t *, box_t *));
-static bmap_t	  *alloc_bitmap __P((u_long, u_long, u_char));
-static colormap_t *alloc_colormap __P((dmode_t *));
-static void 	  free_bitmap __P((bmap_t *));
-static void	  falcon_display_view __P((view_t *));
-static view_t	  *falcon_alloc_view __P((dmode_t *, dimen_t *, u_char));
-static void	  falcon_free_view __P((view_t *));
-static void	  falcon_remove_view __P((view_t *));
-static void	  falcon_save_view __P((view_t *));
-static int	  falcon_use_colormap __P((view_t *, colormap_t *));
-static void	  falcon_detect __P((dmode_t *));
-static struct videl *falcon_getreg __P((u_short));
+static void       init_view(view_t *, bmap_t *, dmode_t *, box_t *);
+static bmap_t	  *alloc_bitmap(u_long, u_long, u_char);
+static colormap_t *alloc_colormap(dmode_t *);
+static void 	  free_bitmap(bmap_t *);
+static void	  falcon_display_view(view_t *);
+static view_t	  *falcon_alloc_view(dmode_t *, dimen_t *, u_char);
+static void	  falcon_free_view(view_t *);
+static void	  falcon_remove_view(view_t *);
+static void	  falcon_save_view(view_t *);
+static int	  falcon_use_colormap(view_t *, colormap_t *);
+static void	  falcon_detect(dmode_t *);
+static struct videl *falcon_getreg(u_short);
 
 /*
  * Our function switch table
@@ -307,7 +307,7 @@ dmode_t *dm;
 }
 
 u_long	falcon_needs_vbl;
-void falcon_display_switch __P((void));
+void falcon_display_switch(void);
 
 static void
 falcon_display_view(v)

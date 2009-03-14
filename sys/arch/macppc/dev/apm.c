@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.20 2008/06/13 11:54:31 cegger Exp $	*/
+/*	$NetBSD: apm.c,v 1.21 2009/03/14 14:46:01 dsl Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.20 2008/06/13 11:54:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.21 2009/03/14 14:46:01 dsl Exp $");
 
 #include "apm.h"
 
@@ -107,7 +107,7 @@ void apmattach(struct device *, struct device *, void *);
 
 #ifdef __NetBSD__
 #if 0
-static int	apm_record_event __P((struct apm_softc *, u_int));
+static int	apm_record_event(struct apm_softc *, u_int);
 #endif
 #endif
 

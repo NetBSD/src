@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.55 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.56 2009/03/14 14:46:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.55 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.56 2009/03/14 14:46:09 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -191,8 +191,8 @@ filecorefs_modcmd(modcmd_t cmd, void *arg)
  * Name is updated by mount(8) after booting.
  */
 
-static int filecore_mountfs __P((struct vnode *devvp, struct mount *mp,
-		struct lwp *l, struct filecore_args *argp));
+static int filecore_mountfs(struct vnode *devvp, struct mount *mp,
+		struct lwp *l, struct filecore_args *argp);
 
 #if 0
 int

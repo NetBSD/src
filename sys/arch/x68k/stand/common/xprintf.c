@@ -4,7 +4,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: xprintf.c,v 1.1 1998/09/01 19:51:57 itohy Exp $
+ *	$NetBSD: xprintf.c,v 1.2 2009/03/14 14:46:07 dsl Exp $
  */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@
 
 extern const char *const __progname;
 
-static char * numstr __P((char *buf, long val, int base, int sign));
+static char * numstr(char *buf, long val, int base, int sign);
 
 /*
  * convert number to string

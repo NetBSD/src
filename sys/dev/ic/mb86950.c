@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.12 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.13 2009/03/14 14:46:08 dsl Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.12 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.13 2009/03/14 14:46:08 dsl Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -167,26 +167,26 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.12 2008/11/07 00:20:02 dyoung Exp $");
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /* Standard driver entry points.  These can be static. */
-int		mb86950_ioctl	__P((struct ifnet *, u_long, void *));
-void	mb86950_init	__P((struct mb86950_softc *));
-void	mb86950_start	__P((struct ifnet *));
-void	mb86950_watchdog __P((struct ifnet *));
-void	mb86950_reset	__P((struct mb86950_softc *));
+int		mb86950_ioctl(struct ifnet *, u_long, void *);
+void	mb86950_init(struct mb86950_softc *);
+void	mb86950_start(struct ifnet *);
+void	mb86950_watchdog(struct ifnet *);
+void	mb86950_reset(struct mb86950_softc *);
 
 /* Local functions. */
-void	mb86950_stop __P((struct mb86950_softc *));
-void	mb86950_tint __P((struct mb86950_softc *, u_int8_t));
-void	mb86950_rint __P((struct mb86950_softc *, u_int8_t));
-int		mb86950_get_fifo __P((struct mb86950_softc *, u_int));
-ushort	mb86950_put_fifo __P((struct mb86950_softc *, struct mbuf *));
-void	mb86950_drain_fifo __P((struct mb86950_softc *));
+void	mb86950_stop(struct mb86950_softc *);
+void	mb86950_tint(struct mb86950_softc *, u_int8_t);
+void	mb86950_rint(struct mb86950_softc *, u_int8_t);
+int		mb86950_get_fifo(struct mb86950_softc *, u_int);
+ushort	mb86950_put_fifo(struct mb86950_softc *, struct mbuf *);
+void	mb86950_drain_fifo(struct mb86950_softc *);
 
-int		mb86950_mediachange __P((struct ifnet *));
-void	mb86950_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int		mb86950_mediachange(struct ifnet *);
+void	mb86950_mediastatus(struct ifnet *, struct ifmediareq *);
 
 
 #if ESTAR_DEBUG >= 1
-void	mb86950_dump __P((int, struct mb86950_softc *));
+void	mb86950_dump(int, struct mb86950_softc *);
 #endif
 
 /********************************************************************/

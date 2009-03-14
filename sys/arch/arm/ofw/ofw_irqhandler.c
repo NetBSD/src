@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.13 2008/01/06 03:45:27 matt Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.14 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.13 2008/01/06 03:45:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.14 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ extern char *_intrnames;
 
 /* Prototypes */
 
-int podule_irqhandler		__P((void));
-extern void set_spl_masks	__P((void));
+int podule_irqhandler(void);
+extern void set_spl_masks(void);
 
 /*
  * void irq_init(void)
@@ -302,7 +302,7 @@ void *
 intr_claim(irq, level, ih_func, ih_arg, group, name)
 	int irq;
 	int level;
-	int (*ih_func) __P((void *));
+	int (*ih_func)(void *);
 	void *ih_arg;
 	const char *group;
 	const char *name;

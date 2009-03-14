@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 2000/01/16 03:07:24 takemura Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4 2009/03/14 14:45:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -41,8 +41,8 @@
 #include <winfs.h>
 #include <lib/libsa/ufs.h>
 
-extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
-                              unsigned int*, const char**));
+extern int parsebootfile(const char *, char**, char**, unsigned int*,
+                              unsigned int*, const char**);
 
 struct devsw devsw[] = {
 	{"winblk", winblkstrategy, winblkopen, winblkclose, winblkioctl },

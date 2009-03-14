@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $	*/
+/*	$NetBSD: zlib.c,v 1.31 2009/03/14 14:46:10 dsl Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $
+ * $Id: zlib.c,v 1.31 2009/03/14 14:46:10 dsl Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.31 2009/03/14 14:46:10 dsl Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.31 2009/03/14 14:46:10 dsl Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -213,7 +213,7 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
          /* functions */
 
 #ifdef HAVE_STRERROR
-   extern char *strerror __P((int));
+   extern char *strerror(int);
 #  define zstrerror(errnum) strerror(errnum)
 #else
 #  define zstrerror(errnum) ""
@@ -243,16 +243,16 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #    define zmemzero(dest, len) memset(dest, 0, len)
 #  endif
 #else
-   extern void zmemcpy  __P((Bytef* dest, const Bytef* source, uInt len));
-   extern int  zmemcmp  __P((const Bytef* s1, const Bytef* s2, uInt len));
-   extern void zmemzero __P((Bytef* dest, uInt len));
+   extern void zmemcpy(Bytef* dest, const Bytef* source, uInt len);
+   extern int  zmemcmp(const Bytef* s1, const Bytef* s2, uInt len);
+   extern void zmemzero(Bytef* dest, uInt len);
 #endif
 
 /* Diagnostic functions */
 #if defined(DEBUG_ZLIB) && !defined(_KERNEL) && !defined(_STANDALONE)
 #  include <stdio.h>
    extern int z_verbose;
-   extern void z_error    __P((char *m));
+   extern void z_error(char *m);
 #  define Assert(cond,msg) {if(!(cond)) z_error(msg);}
 #  define Trace(x) {if (z_verbose>=0) fprintf x ;}
 #  define Tracev(x) {if (z_verbose>0) fprintf x ;}
@@ -269,10 +269,10 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #endif
 
 
-typedef uLong (ZEXPORT *check_func) __P((uLong check, const Bytef *buf,
-				       uInt len));
-voidpf zcalloc __P((voidpf opaque, unsigned items, unsigned size));
-void   zcfree  __P((voidpf opaque, voidpf ptr));
+typedef uLong (ZEXPORT *check_func)(uLong check, const Bytef *buf,
+				       uInt len);
+voidpf zcalloc(voidpf opaque, unsigned items, unsigned size);
+void   zcfree(voidpf opaque, voidpf ptr);
 
 #define ZALLOC(strm, items, size) \
            (*((strm)->zalloc))((strm)->opaque, (items), (size))
@@ -294,7 +294,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.31 2009/03/14 14:46:10 dsl Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -552,14 +552,14 @@ typedef struct deflate_state {
  */
 
         /* in trees.c */
-void _tr_init         __P((deflate_state *s));
-int  _tr_tally        __P((deflate_state *s, unsigned dist, unsigned lc));
-void _tr_flush_block  __P((deflate_state *s, charf *buf, ulg stored_len,
-			  int eof));
-void _tr_align        __P((deflate_state *s));
-void _tr_stored_block __P((deflate_state *s, charf *buf, ulg stored_len,
-                          int eof));
-void _tr_stored_type_only __P((deflate_state *));
+void _tr_init(deflate_state *s);
+int  _tr_tally(deflate_state *s, unsigned dist, unsigned lc);
+void _tr_flush_block(deflate_state *s, charf *buf, ulg stored_len,
+			  int eof);
+void _tr_align(deflate_state *s);
+void _tr_stored_block(deflate_state *s, charf *buf, ulg stored_len,
+                          int eof);
+void _tr_stored_type_only(deflate_state *);
 
 #define d_code(dist) \
    ((dist) < 256 ? _dist_code[dist] : _dist_code[256+((dist)>>7)])
@@ -656,7 +656,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.31 2009/03/14 14:46:10 dsl Exp $ */
 
 /* #include "deflate.h" */
 
@@ -679,27 +679,27 @@ typedef enum {
     finish_done     /* finish done, accept no more input or output */
 } block_state;
 
-typedef block_state (*compress_func) __P((deflate_state *s, int flush));
+typedef block_state (*compress_func)(deflate_state *s, int flush);
 /* Compression function. Returns the block state after the call. */
 
-local void fill_window    __P((deflate_state *s));
-local block_state deflate_stored __P((deflate_state *s, int flush));
-local block_state deflate_fast   __P((deflate_state *s, int flush));
-local block_state deflate_slow   __P((deflate_state *s, int flush));
-local void lm_init        __P((deflate_state *s));
-local void putShortMSB    __P((deflate_state *s, uInt b));
-local void flush_pending  __P((z_streamp strm));
-local int read_buf        __P((z_streamp strm, Bytef *buf, unsigned size));
+local void fill_window(deflate_state *s);
+local block_state deflate_stored(deflate_state *s, int flush);
+local block_state deflate_fast(deflate_state *s, int flush);
+local block_state deflate_slow(deflate_state *s, int flush);
+local void lm_init(deflate_state *s);
+local void putShortMSB(deflate_state *s, uInt b);
+local void flush_pending(z_streamp strm);
+local int read_buf(z_streamp strm, Bytef *buf, unsigned size);
 #ifdef ASMV
-      void match_init __P((void)); /* asm code initialization */
-      uInt longest_match  __P((deflate_state *s, IPos cur_match));
+      void match_init(void); /* asm code initialization */
+      uInt longest_match(deflate_state *s, IPos cur_match);
 #else
-local uInt longest_match  __P((deflate_state *s, IPos cur_match));
+local uInt longest_match(deflate_state *s, IPos cur_match);
 #endif
 
 #ifdef DEBUG_ZLIB
-local  void check_match __P((deflate_state *s, IPos start, IPos match,
-                            int length));
+local  void check_match(deflate_state *s, IPos start, IPos match,
+                            int length);
 #endif
 
 /* ===========================================================================
@@ -2030,7 +2030,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.31 2009/03/14 14:46:10 dsl Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -2270,28 +2270,28 @@ local static_tree_desc  static_bl_desc =
  * Local (static) routines in this file.
  */
 
-local void tr_static_init __P((void));
-local void init_block     __P((deflate_state *s));
-local void pqdownheap     __P((deflate_state *s, ct_data *tree, int k));
-local void gen_bitlen     __P((deflate_state *s, tree_desc *desc));
-local void gen_codes      __P((ct_data *tree, int max_code, ushf *bl_count));
-local void build_tree     __P((deflate_state *s, tree_desc *desc));
-local void scan_tree      __P((deflate_state *s, ct_data *tree, int max_code));
-local void send_tree      __P((deflate_state *s, ct_data *tree, int max_code));
-local int  build_bl_tree  __P((deflate_state *s));
-local void send_all_trees __P((deflate_state *s, int lcodes, int dcodes,
-                              int blcodes));
-local void compress_block __P((deflate_state *s, const ct_data *ltree,
-                              const ct_data *dtree));
-local void set_data_type  __P((deflate_state *s));
-local unsigned bi_reverse __P((unsigned value, int length));
-local void bi_windup      __P((deflate_state *s));
-local void bi_flush       __P((deflate_state *s));
-local void copy_block     __P((deflate_state *s, charf *buf, unsigned len,
-                              int header));
+local void tr_static_init(void);
+local void init_block(deflate_state *s);
+local void pqdownheap(deflate_state *s, ct_data *tree, int k);
+local void gen_bitlen(deflate_state *s, tree_desc *desc);
+local void gen_codes(ct_data *tree, int max_code, ushf *bl_count);
+local void build_tree(deflate_state *s, tree_desc *desc);
+local void scan_tree(deflate_state *s, ct_data *tree, int max_code);
+local void send_tree(deflate_state *s, ct_data *tree, int max_code);
+local int  build_bl_tree(deflate_state *s);
+local void send_all_trees(deflate_state *s, int lcodes, int dcodes,
+                              int blcodes);
+local void compress_block(deflate_state *s, const ct_data *ltree,
+                              const ct_data *dtree);
+local void set_data_type(deflate_state *s);
+local unsigned bi_reverse(unsigned value, int length);
+local void bi_windup(deflate_state *s);
+local void bi_flush(deflate_state *s);
+local void copy_block(deflate_state *s, charf *buf, unsigned len,
+                              int header);
 
 #ifdef GEN_TREES_H
-local void gen_trees_header __P((void));
+local void gen_trees_header(void);
 #endif
 
 #ifndef DEBUG_ZLIB
@@ -2318,7 +2318,7 @@ local void gen_trees_header __P((void));
  * IN assertion: length <= 16 and value fits in length bits.
  */
 #ifdef DEBUG_ZLIB
-local void send_bits      __P((deflate_state *s, int value, int length));
+local void send_bits(deflate_state *s, int value, int length);
 
 local void send_bits(s, value, length)
     deflate_state *s;
@@ -3380,38 +3380,38 @@ local void copy_block(s, buf, len, header)
 struct inflate_blocks_state;
 typedef struct inflate_blocks_state FAR inflate_blocks_statef;
 
-extern inflate_blocks_statef * inflate_blocks_new __P((
+extern inflate_blocks_statef * inflate_blocks_new(
     z_streamp z,
     check_func c,               /* check function */
-    uInt w));                   /* window size */
+    uInt w);                   /* window size */
 
-extern int inflate_blocks __P((
+extern int inflate_blocks(
     inflate_blocks_statef *,
     z_streamp ,
-    int));                      /* initial return code */
+    int);                      /* initial return code */
 
-extern void inflate_blocks_reset __P((
+extern void inflate_blocks_reset(
     inflate_blocks_statef *,
     z_streamp ,
-    uLongf *));                  /* check value on output */
+    uLongf *);                  /* check value on output */
 
-extern int inflate_blocks_free __P((
+extern int inflate_blocks_free(
     inflate_blocks_statef *,
-    z_streamp));
+    z_streamp);
 
-extern void inflate_set_dictionary __P((
+extern void inflate_set_dictionary(
     inflate_blocks_statef *s,
     const Bytef *d,  /* dictionary */
-    uInt  n));       /* dictionary length */
+    uInt  n);       /* dictionary length */
 
-extern int inflate_blocks_sync_point __P((
-    inflate_blocks_statef *s));
-extern int inflate_addhistory __P((
+extern int inflate_blocks_sync_point(
+    inflate_blocks_statef *s);
+extern int inflate_addhistory(
     inflate_blocks_statef *,
-    z_streamp));
+    z_streamp);
 
-extern int inflate_packet_flush __P((
-    inflate_blocks_statef *));
+extern int inflate_packet_flush(
+    inflate_blocks_statef *);
 
 /* --- infblock.h */
 
@@ -3857,14 +3857,14 @@ struct inflate_huft_s {
    value below is more than safe. */
 #define MANY 1440
 
-extern int inflate_trees_bits __P((
+extern int inflate_trees_bits(
     uIntf *,                    /* 19 code lengths */
     uIntf *,                    /* bits tree desired/actual depth */
     inflate_huft * FAR *,       /* bits tree result */
     inflate_huft *,             /* space for trees */
-    z_streamp));                /* for messages */
+    z_streamp);                /* for messages */
 
-extern int inflate_trees_dynamic __P((
+extern int inflate_trees_dynamic(
     uInt,                       /* number of literal/length codes */
     uInt,                       /* number of distance codes */
     uIntf *,                    /* that many (total) code lengths */
@@ -3873,14 +3873,14 @@ extern int inflate_trees_dynamic __P((
     inflate_huft * FAR *,       /* literal/length tree result */
     inflate_huft * FAR *,       /* distance tree result */
     inflate_huft *,             /* space for trees */
-    z_streamp));                /* for messages */
+    z_streamp);                /* for messages */
 
-extern int inflate_trees_fixed __P((
+extern int inflate_trees_fixed(
     uIntf *,                    /* literal desired/actual bit depth */
     uIntf *,                    /* distance desired/actual bit depth */
     inflate_huft * FAR *,       /* literal/length tree result */
     inflate_huft * FAR *,       /* distance tree result */
-    z_streamp));                /* for memory allocation */
+    z_streamp);                /* for memory allocation */
 /* --- inftrees.h */
 
 /* +++ infcodes.h */
@@ -3898,19 +3898,19 @@ extern int inflate_trees_fixed __P((
 struct inflate_codes_state;
 typedef struct inflate_codes_state FAR inflate_codes_statef;
 
-extern inflate_codes_statef *inflate_codes_new __P((
+extern inflate_codes_statef *inflate_codes_new(
     uInt, uInt,
     inflate_huft *, inflate_huft *,
-    z_streamp ));
+    z_streamp );
 
-extern int inflate_codes __P((
+extern int inflate_codes(
     inflate_blocks_statef *,
     z_streamp ,
-    int));
+    int);
 
-extern void inflate_codes_free __P((
+extern void inflate_codes_free(
     inflate_codes_statef *,
-    z_streamp ));
+    z_streamp );
 
 /* --- infcodes.h */
 
@@ -4006,10 +4006,10 @@ struct inflate_blocks_state {
 extern uInt inflate_mask[17];
 
 /* copy as much as possible from the sliding window to the output area */
-extern int inflate_flush __P((
+extern int inflate_flush(
     inflate_blocks_statef *,
     z_streamp ,
-    int));
+    int);
 
 #ifndef NO_DUMMY_DECL
 struct internal_state      {int dummy;}; /* for buggy compilers */
@@ -4517,7 +4517,7 @@ struct internal_state  {int dummy;}; /* for buggy compilers */
 #define bits word.what.Bits
 
 
-local int huft_build __P((
+local int huft_build(
     uIntf *,            /* code lengths in bits */
     uInt,               /* number of codes */
     uInt,               /* number of "simple" codes */
@@ -4527,7 +4527,7 @@ local int huft_build __P((
     uIntf *,            /* maximum lookup bits (returns actual) */
     inflate_huft *,     /* space for trees */
     uInt *,             /* hufts used in space */
-    uIntf * ));         /* space for values */
+    uIntf * );         /* space for values */
 
 /* Tables for deflate from PKZIP's appnote.txt. */
 local const uInt cplens[31] = { /* Copy lengths for literal codes 257..285 */
@@ -5128,13 +5128,13 @@ z_streamp z)    /* for memory allocation */
    subject to change. Applications should only use zlib.h.
  */
 
-extern int inflate_fast __P((
+extern int inflate_fast(
     uInt,
     uInt,
     inflate_huft *,
     inflate_huft *,
     inflate_blocks_statef *,
-    z_streamp ));
+    z_streamp );
 /* --- inffast.h */
 
 /* simplify the use of the inflate_huft type with some defines */
@@ -5684,7 +5684,7 @@ struct internal_state      {int dummy;}; /* for buggy compilers */
 #endif
 
 #ifndef STDC
-extern void exit __P((int));
+extern void exit(int);
 #endif
 
 const char *z_errmsg[10] = {
@@ -5879,8 +5879,8 @@ void  zcfree (voidpf opaque, voidpf ptr)
 #ifndef MY_ZCALLOC /* Any system without a special alloc function */
 
 #ifndef STDC
-extern voidp  calloc __P((uInt items, uInt size));
-extern void   free   __P((voidpf ptr));
+extern voidp  calloc(uInt items, uInt size);
+extern void   free(voidpf ptr);
 #endif
 
 voidpf zcalloc (opaque, items, size)
@@ -5909,7 +5909,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.31 2009/03/14 14:46:10 dsl Exp $ */
 
 /* #include "zlib.h" */
 

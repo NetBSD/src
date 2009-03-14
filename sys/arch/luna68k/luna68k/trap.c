@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.55 2009/01/27 20:30:13 martin Exp $ */
+/* $NetBSD: trap.c,v 1.56 2009/03/14 14:46:01 dsl Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2009/01/27 20:30:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2009/03/14 14:46:01 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -109,18 +109,18 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2009/01/27 20:30:13 martin Exp $");
 
 #include <dev/cons.h>
 
-int   writeback __P((struct frame *fp, int docachepush));
-void  trap __P((struct frame *fp, int type, u_int code, u_int v));
+int   writeback(struct frame *fp, int docachepush);
+void  trap(struct frame *fp, int type, u_int code, u_int v);
 
 #if defined(M68040)
 #ifdef DEBUG
-static void dumpssw __P((u_short));
-static void dumpwb __P((int, u_short, u_int, u_int));
+static void dumpssw(u_short);
+static void dumpwb(int, u_short, u_int, u_int);
 #endif
 #endif
 
-static inline void userret __P((struct lwp *l, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+static inline void userret(struct lwp *l, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap);
 
 int	astpending;
 

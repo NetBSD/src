@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.43 2008/01/02 11:48:26 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.44 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43 2008/01/02 11:48:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.44 2009/03/14 14:46:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,18 +127,18 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43 2008/01/02 11:48:26 ad Exp $");
 #define HFS_PART 4
 #define SCRATCH_PART 5
 
-static int getFreeLabelEntry __P((struct disklabel *));
-static int whichType __P((struct part_map_entry *, u_int8_t *, int *));
-static void setpartition __P((struct part_map_entry *,
-		struct partition *, int));
-static int getNamedType __P((struct part_map_entry *, int,
-		struct disklabel *, int, int, int *));
-static const char *read_mac_label __P((dev_t, void (*)(struct buf *),
-		struct disklabel *, struct cpu_disklabel *));
-static const char *read_dos_label __P((dev_t, void (*)(struct buf *),
-		struct disklabel *, struct cpu_disklabel *));
-static int get_netbsd_label __P((dev_t, void (*)(struct buf *),
-		struct disklabel *, struct cpu_disklabel *));
+static int getFreeLabelEntry(struct disklabel *);
+static int whichType(struct part_map_entry *, u_int8_t *, int *);
+static void setpartition(struct part_map_entry *,
+		struct partition *, int);
+static int getNamedType(struct part_map_entry *, int,
+		struct disklabel *, int, int, int *);
+static const char *read_mac_label(dev_t, void (*)(struct buf *),
+		struct disklabel *, struct cpu_disklabel *);
+static const char *read_dos_label(dev_t, void (*)(struct buf *),
+		struct disklabel *, struct cpu_disklabel *);
+static int get_netbsd_label(dev_t, void (*)(struct buf *),
+		struct disklabel *, struct cpu_disklabel *);
 
 /*
  * Find an entry in the disk label that is unused and return it

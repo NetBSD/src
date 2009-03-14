@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.9 2007/03/04 05:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.10 2009/03/14 14:46:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,20 +75,20 @@ struct vrdsiu_softc {
 
 static int asimOld = 0;
 
-static int vrdsiu_match __P((struct device *, struct cfdata *, void *));
-static void vrdsiu_attach __P((struct device *, struct device *, void *));
+static int vrdsiu_match(struct device *, struct cfdata *, void *);
+static void vrdsiu_attach(struct device *, struct device *, void *);
 
-static void vrdsiu_write __P((struct vrdsiu_softc *, int, unsigned short));
-static unsigned short vrdsiu_read __P((struct vrdsiu_softc *, int));
+static void vrdsiu_write(struct vrdsiu_softc *, int, unsigned short);
+static unsigned short vrdsiu_read(struct vrdsiu_softc *, int);
 
 /* Interrupt handlers */
-static int vrdsiu_intr __P((void *));
-static void vrdsiu_mouse_intr __P((struct vrdsiu_softc *));
+static int vrdsiu_intr(void *);
+static void vrdsiu_mouse_intr(struct vrdsiu_softc *);
 
 /* Enable/disable DSIU handling */
-static int vrdsiu_mouse_enable __P((void *));
-static int vrdsiu_mouse_ioctl __P((void *, u_long, void *, int, struct lwp *));
-static void vrdsiu_mouse_disable __P((void *));
+static int vrdsiu_mouse_enable(void *);
+static int vrdsiu_mouse_ioctl(void *, u_long, void *, int, struct lwp *);
+static void vrdsiu_mouse_disable(void *);
 
 /* wsmouse access ops */
 const struct wsmouse_accessops vrdsiu_accessops = {

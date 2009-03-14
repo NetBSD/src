@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.21 2008/06/13 13:09:55 cegger Exp $        */
+/*      $NetBSD: opms.c,v 1.22 2009/03/14 14:46:07 dsl Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.21 2008/06/13 13:09:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.22 2009/03/14 14:46:07 dsl Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -182,13 +182,13 @@ struct opms_softc
 /*
 ** Forward routine declarations
 */
-int                  opmsprobe       __P((struct device *, 
+int                  opmsprobe(struct device *, 
                                          struct cfdata *, 
-                                         void *));
-void                 opmsattach      __P((struct device *, 
+                                         void *);
+void                 opmsattach(struct device *, 
                                          struct device *, 
-                                         void *));
-int                  opmsintr         __P((void *));
+                                         void *);
+int                  opmsintr(void *);
 
 /* 
 ** Global variables 

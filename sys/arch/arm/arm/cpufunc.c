@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.90 2008/12/12 18:13:55 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.91 2009/03/14 14:45:54 dsl Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.90 2008/12/12 18:13:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.91 2009/03/14 14:45:54 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1246,7 +1246,7 @@ struct cachetab cachetab[] = {
     { 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-static void get_cachetype_table __P((void));
+static void get_cachetype_table(void);
 
 static void
 get_cachetype_table()
@@ -2016,7 +2016,7 @@ struct cpu_option {
 	int	co_value;
 };
 
-static u_int parse_cpu_options __P((char *, struct cpu_option *, u_int));
+static u_int parse_cpu_options(char *, struct cpu_option *, u_int);
 
 static u_int
 parse_cpu_options(args, optlist, cpuctrl)

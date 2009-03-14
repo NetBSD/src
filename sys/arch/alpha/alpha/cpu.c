@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.83 2008/12/16 22:35:22 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.84 2009/03/14 14:45:52 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2008/12/16 22:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2009/03/14 14:45:52 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -98,7 +98,7 @@ volatile u_long cpus_booted;
 volatile u_long cpus_running;
 volatile u_long cpus_paused;
 
-void	cpu_boot_secondary __P((struct cpu_info *));
+void	cpu_boot_secondary(struct cpu_info *);
 #endif /* MULTIPROCESSOR */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.18 2007/12/03 15:34:13 ad Exp $	*/
+/*	$NetBSD: extintr.c,v 1.19 2009/03/14 14:46:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.18 2007/12/03 15:34:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.19 2009/03/14 14:46:05 dsl Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -285,7 +285,7 @@ intr_establish(
 	int irq,
 	int type,
 	int level,
-	int (*ih_fun) __P((void *)),
+	int (*ih_fun)(void *),
 	void *ih_arg)
 {
 	struct intrsource *is = &intr_sources[irq];

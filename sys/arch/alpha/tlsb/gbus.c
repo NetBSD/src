@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.19 2007/03/04 05:59:12 christos Exp $ */
+/* $NetBSD: gbus.c,v 1.20 2009/03/14 14:45:54 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.19 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.20 2009/03/14 14:45:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,13 +61,13 @@ struct gbus_softc {
 	int		sc_tlsbnode;	/* node on the TurboLaser */
 };
 
-static int	gbusmatch __P((struct device *, struct cfdata *, void *));
-static void	gbusattach __P((struct device *, struct device *, void *));
+static int	gbusmatch(struct device *, struct cfdata *, void *);
+static void	gbusattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gbus, sizeof(struct gbus_softc),
     gbusmatch, gbusattach, NULL, NULL);
 
-static int	gbusprint __P((void *, const char *));
+static int	gbusprint(void *, const char *);
 
 struct gbus_attach_args gbus_children[] = {
 	{ "zsc",	GBUS_DUART0_OFFSET },

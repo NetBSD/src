@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.270 2009/03/13 15:01:29 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.271 2009/03/14 14:46:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.270 2009/03/13 15:01:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.271 2009/03/14 14:46:11 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.270 2009/03/13 15:01:29 yamt Exp $")
 /*
  * Global vfs data structures for nfs
  */
-int (**nfsv2_vnodeop_p) __P((void *));
+int (**nfsv2_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, nfs_lookup },		/* lookup */
@@ -144,7 +144,7 @@ const struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 /*
  * Special device vnode ops
  */
-int (**spec_nfsv2nodeop_p) __P((void *));
+int (**spec_nfsv2nodeop_p)(void *);
 const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -192,7 +192,7 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
 	{ &spec_nfsv2nodeop_p, spec_nfsv2nodeop_entries };
 
-int (**fifo_nfsv2nodeop_p) __P((void *));
+int (**fifo_nfsv2nodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.8 2009/03/11 04:16:43 yamt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9 2009/03/14 14:45:54 dsl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -97,8 +97,8 @@ extern db_regs_t *ddb_regp;
 	 ((user) && (addr) < VM_MAX_ADDRESS))
 
 #if 0
-bool	 	db_check_access __P((vaddr_t, int, task_t));
-bool		db_phys_eq __P((task_t, vaddr_t, task_t, vaddr_t));
+bool	 	db_check_access(vaddr_t, int, task_t);
+bool		db_phys_eq(task_t, vaddr_t, task_t, vaddr_t);
 #endif
 
 /* macros for printing OS server dependent task name */
@@ -123,7 +123,7 @@ void		db_task_name(/* task_t */);
 
 #define db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
-int kdb_trap __P((int, int, db_regs_t *));
+int kdb_trap(int, int, db_regs_t *);
 
 /*
  * We define some of our own commands
@@ -133,8 +133,8 @@ int kdb_trap __P((int, int, db_regs_t *));
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	64
 
-extern void db_machine_init __P((void));
+extern void db_machine_init(void);
 
-extern void cpu_debug_dump __P((void));
+extern void cpu_debug_dump(void);
 
 #endif	/* _X86_64_DB_MACHDEP_H_ */

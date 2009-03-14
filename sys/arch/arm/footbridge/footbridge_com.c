@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.28 2008/06/13 08:49:15 cegger Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.29 2009/03/14 14:45:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.28 2008/06/13 08:49:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.29 2009/03/14 14:45:55 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -100,19 +100,19 @@ struct fcom_softc {
 
 #define RX_BUFFER_SIZE	0x100
 
-static int  fcom_probe   __P((struct device *, struct cfdata *, void *));
-static void fcom_attach  __P((struct device *, struct device *, void *));
-static void fcom_softintr __P((void *));
+static int  fcom_probe(struct device *, struct cfdata *, void *);
+static void fcom_attach(struct device *, struct device *, void *);
+static void fcom_softintr(void *);
 
-static int fcom_rxintr __P((void *));
-/*static int fcom_txintr __P((void *));*/
+static int fcom_rxintr(void *);
+/*static int fcom_txintr(void *);*/
 
 /*struct consdev;*/
-/*void	fcomcnprobe	__P((struct consdev *));
-void	fcomcninit	__P((struct consdev *));*/
-int	fcomcngetc	__P((dev_t));
-void	fcomcnputc	__P((dev_t, int));
-void	fcomcnpollc	__P((dev_t, int));
+/*void	fcomcnprobe(struct consdev *);
+void	fcomcninit(struct consdev *);*/
+int	fcomcngetc(dev_t);
+void	fcomcnputc(dev_t, int);
+void	fcomcnpollc(dev_t, int);
 
 CFATTACH_DECL(fcom, sizeof(struct fcom_softc),
     fcom_probe, fcom_attach, NULL, NULL);
@@ -132,8 +132,8 @@ const struct cdevsw fcom_cdevsw = {
 	nostop, fcomtty, fcompoll, nommap, ttykqfilter, D_TTY
 };
 
-void fcominit	 	__P((bus_space_tag_t, bus_space_handle_t, int, int));
-void fcominitcons 	__P((bus_space_tag_t, bus_space_handle_t));
+void fcominit(bus_space_tag_t, bus_space_handle_t, int, int);
+void fcominitcons(bus_space_tag_t, bus_space_handle_t);
 
 bus_space_tag_t fcomconstag;
 bus_space_handle_t fcomconsioh;
@@ -218,8 +218,8 @@ fcom_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 }
 
-static void fcomstart __P((struct tty *));
-static int fcomparam __P((struct tty *, struct termios *));
+static void fcomstart(struct tty *);
+static int fcomparam(struct tty *, struct termios *);
 
 int
 fcomopen(dev_t dev, int flag, int mode, struct lwp *l)

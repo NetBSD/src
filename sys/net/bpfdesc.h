@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.28 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.29 2009/03/14 14:46:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -133,7 +133,7 @@ struct bpf_if {
 };
 
 #ifdef _KERNEL
-int	 bpf_setf __P((struct bpf_d *, struct bpf_program *));
+int	 bpf_setf(struct bpf_d *, struct bpf_program *);
 #endif
 
 #endif /* !_NET_BPFDESC_H_ */

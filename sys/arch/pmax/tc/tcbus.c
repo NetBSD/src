@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.21 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.22 2009/03/14 14:46:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.21 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.22 2009/03/14 14:46:05 dsl Exp $");
 
 /*
  * Which system models were configured?
@@ -53,19 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.21 2008/05/26 10:31:22 nisimura Exp $");
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
 
-static const struct evcnt *tc_ds_intr_evcnt __P((struct device *, void *));
-static void	tc_ds_intr_establish __P((struct device *, void *,
-				int, int (*)(void *), void *));
-static void	tc_ds_intr_disestablish __P((struct device *, void *));
-static bus_dma_tag_t tc_ds_get_dma_tag __P((int));
+static const struct evcnt *tc_ds_intr_evcnt(struct device *, void *);
+static void	tc_ds_intr_establish(struct device *, void *,
+				int, int (*)(void *), void *);
+static void	tc_ds_intr_disestablish(struct device *, void *);
+static bus_dma_tag_t tc_ds_get_dma_tag(int);
 
 extern struct tcbus_attach_args kn02_tc_desc[];	/* XXX */
 extern struct tcbus_attach_args kmin_tc_desc[];	/* XXX */
 extern struct tcbus_attach_args xine_tc_desc[];	/* XXX */
 extern struct tcbus_attach_args kn03_tc_desc[];	/* XXX */
 
-static int	tcbus_match __P((struct device *, struct cfdata *, void *));
-static void	tcbus_attach __P((struct device *, struct device *, void *));
+static int	tcbus_match(struct device *, struct cfdata *, void *);
+static void	tcbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tcbus, sizeof(struct tc_softc),
     tcbus_match, tcbus_attach, NULL, NULL);
@@ -147,7 +147,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 	struct device *dev;
 	void *cookie;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *val;
 {
 
@@ -192,7 +192,7 @@ tc_ds_get_dma_tag(slot)
 #include <pmax/pmax/cons.h>
 #include <machine/dec_prom.h>
 
-int	tc_checkslot __P((tc_addr_t, char *));
+int	tc_checkslot(tc_addr_t, char *);
 
 struct cnboards {
 	const char	*cb_tcname;

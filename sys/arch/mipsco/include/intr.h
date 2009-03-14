@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2007/12/03 15:33:56 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.17 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -110,7 +110,7 @@ splraiseipl(ipl_cookie_t icookie)
 struct mipsco_intrhand {
 	LIST_ENTRY(mipsco_intrhand)
 		ih_q;
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	 *ih_arg;
 	struct	mipsco_intr *ih_intrhead;
 	int	ih_pending;

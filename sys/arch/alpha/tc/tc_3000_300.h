@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.h,v 1.4 1998/10/22 01:03:09 briggs Exp $ */
+/* $NetBSD: tc_3000_300.h,v 1.5 2009/03/14 14:45:54 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,4 +60,4 @@
 
 #define	TC_3000_300_NCOOKIES	5
 
-extern int	tc_3000_300_fb_cnattach __P((u_int64_t));
+extern int	tc_3000_300_fb_cnattach(u_int64_t);

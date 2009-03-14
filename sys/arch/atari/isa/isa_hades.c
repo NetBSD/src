@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_hades.c,v 1.5 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: isa_hades.c,v 1.6 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.5 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.6 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ isa_bus_init()
 
 static isa_intr_info_t iinfo[2] = { { -1 }, { -1 } };
 
-static int	iifun __P((int, int));
+static int	iifun(int, int);
 
 static int
 iifun(slot, sr)
@@ -158,7 +158,7 @@ void *
 isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	isa_chipset_tag_t ic;
 	int		  irq, type, level;
-	int		  (*ih_fun) __P((void *));
+	int		  (*ih_fun)(void *);
 	void		  *ih_arg;
 {
 	isa_intr_info_t *iinfo_p;

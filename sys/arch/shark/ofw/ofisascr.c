@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisascr.c,v 1.6 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: ofisascr.c,v 1.7 2009/03/14 14:46:06 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.6 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.7 2009/03/14 14:46:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.6 2005/12/11 12:19:05 christos Exp $"
 #include <dev/isa/isavar.h>
 #include <shark/shark/sequoia.h>
 
-int ofisascrprobe __P((struct device *, struct cfdata *, void *));
-void ofisascrattach __P((struct device *, struct device *, void *));
+int ofisascrprobe(struct device *, struct cfdata *, void *);
+void ofisascrattach(struct device *, struct device *, void *);
 
 
 CFATTACH_DECL(ofisascr, sizeof(struct device),

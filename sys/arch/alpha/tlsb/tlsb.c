@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.32 2007/03/04 05:59:12 christos Exp $ */
+/* $NetBSD: tlsb.c,v 1.33 2009/03/14 14:45:54 dsl Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.32 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.33 2009/03/14 14:45:54 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,16 +62,16 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.32 2007/03/04 05:59:12 christos Exp $");
 
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static int	tlsbmatch __P((struct device *, struct cfdata *, void *));
-static void	tlsbattach __P((struct device *, struct device *, void *));
+static int	tlsbmatch(struct device *, struct cfdata *, void *);
+static void	tlsbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tlsb, sizeof (struct device),
     tlsbmatch, tlsbattach, NULL, NULL);
 
 extern struct cfdriver tlsb_cd;
 
-static int	tlsbprint __P((void *, const char *));
-static const char *tlsb_node_type_str __P((u_int32_t));
+static int	tlsbprint(void *, const char *);
+static const char *tlsb_node_type_str(u_int32_t);
 
 /*
  * There can be only one TurboLaser, and we'll overload it

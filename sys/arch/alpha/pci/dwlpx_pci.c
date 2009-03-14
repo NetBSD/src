@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.12 2007/03/04 05:59:11 christos Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.13 2009/03/14 14:45:53 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.12 2007/03/04 05:59:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.13 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,14 +49,14 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.12 2007/03/04 05:59:11 christos Exp 
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-void		dwlpx_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		dwlpx_bus_maxdevs __P((void *, int));
-pcitag_t	dwlpx_make_tag __P((void *, int, int, int));
-void		dwlpx_decompose_tag __P((void *, pcitag_t, int *, int *,
-		    int *));
-pcireg_t	dwlpx_conf_read __P((void *, pcitag_t, int));
-void		dwlpx_conf_write __P((void *, pcitag_t, int, pcireg_t));
+void		dwlpx_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		dwlpx_bus_maxdevs(void *, int);
+pcitag_t	dwlpx_make_tag(void *, int, int, int);
+void		dwlpx_decompose_tag(void *, pcitag_t, int *, int *,
+		    int *);
+pcireg_t	dwlpx_conf_read(void *, pcitag_t, int);
+void		dwlpx_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
 dwlpx_pci_init(pc, v)

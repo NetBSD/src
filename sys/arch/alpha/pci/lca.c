@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.44 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: lca.c,v 1.45 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.44 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.45 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,16 +93,16 @@ __KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.44 2008/04/28 20:23:11 martin Exp $");
 #include <alpha/pci/pci_eb66.h>
 #endif
 
-int	lcamatch __P((struct device *, struct cfdata *, void *));
-void	lcaattach __P((struct device *, struct device *, void *));
+int	lcamatch(struct device *, struct cfdata *, void *);
+void	lcaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lca, sizeof(struct lca_softc),
     lcamatch, lcaattach, NULL, NULL);
 
 extern struct cfdriver lca_cd;
 
-int	lca_bus_get_window __P((int, int,
-	    struct alpha_bus_space_translation *));
+int	lca_bus_get_window(int, int,
+	    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
 int lcafound;

@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.23 2007/10/17 19:55:04 garbled Exp $ */
+/* $NetBSD: disksubr.c,v 1.24 2009/03/14 14:46:01 dsl Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2007/10/17 19:55:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,8 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2007/10/17 19:55:04 garbled Exp $"
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
 
-static const char *disklabel_om_to_bsd __P((char *, struct disklabel *));
-static int disklabel_bsd_to_om __P((struct disklabel *, char *));
+static const char *disklabel_om_to_bsd(char *, struct disklabel *);
+static int disklabel_bsd_to_om(struct disklabel *, char *);
 
 /*
  * Attempt to read a disk label from a device
@@ -176,7 +176,7 @@ static int disklabel_bsd_to_om __P((struct disklabel *, char *));
 const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -288,7 +288,7 @@ setdisklabel(olp, nlp, openmask, clp)
 int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {

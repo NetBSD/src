@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.8 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.9 2009/03/14 14:46:06 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.8 2007/03/08 20:48:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.9 2009/03/14 14:46:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int irq;
 	int type;
 	int level;
-	int (*ih_fun) __P((void *));
+	int (*ih_fun)(void *);
 	void *ih_arg;
 {
 	irqhandler_t *ih;

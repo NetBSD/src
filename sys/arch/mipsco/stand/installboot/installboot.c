@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: installboot.c,v 1.5 2009/03/14 14:46:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,15 +51,15 @@
 #define	BOOTBLOCK_OFFSET	BOOTBLOCK_NUMBER*DEV_BSIZE
 #define	DEFAULT_BOOTFILE	"boot"
 
-static void	usage __P((void));
-static void	do_list __P((const char *));
-static void	do_remove __P((const char *, const char *));
-static void	do_install __P((const char *, const char *, const char *));
-static int	mipsvh_cksum __P((struct mips_volheader *));
-static void	read_volheader __P((const char *, struct mips_volheader *));
-static void	write_volheader __P((const char *, struct mips_volheader *));
-static struct mips_voldir *voldir_findfile __P((struct mips_volheader *, 
-						const char *, int));
+static void	usage(void);
+static void	do_list(const char *);
+static void	do_remove(const char *, const char *);
+static void	do_install(const char *, const char *, const char *);
+static int	mipsvh_cksum(struct mips_volheader *);
+static void	read_volheader(const char *, struct mips_volheader *);
+static void	write_volheader(const char *, struct mips_volheader *);
+static struct mips_voldir *voldir_findfile(struct mips_volheader *, 
+						const char *, int);
 
 int verbose, nowrite;
 

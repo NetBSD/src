@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.44 2007/12/03 15:34:09 ad Exp $ */
+/* $NetBSD: dec_3100.c,v 1.45 2009/03/14 14:46:04 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.44 2007/12/03 15:34:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.45 2009/03/14 14:46:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,14 +131,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.44 2007/12/03 15:34:09 ad Exp $");
 
 #include "pm.h"
 
-void		dec_3100_init __P((void));		/* XXX */
-static void	dec_3100_bus_reset __P((void));
+void		dec_3100_init(void);		/* XXX */
+static void	dec_3100_bus_reset(void);
 
-static void	dec_3100_cons_init __P((void));
-static void	dec_3100_errintr __P((void));
-static void	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_3100_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
+static void	dec_3100_cons_init(void);
+static void	dec_3100_errintr(void);
+static void	dec_3100_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_3100_intr_establish(struct device *, void *,
+		    int, int (*)(void *), void *);
 
 #define	kn01_wbflush()	mips1_wbflush() /* XXX to be corrected XXX */
 
@@ -266,7 +266,7 @@ dec_3100_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 

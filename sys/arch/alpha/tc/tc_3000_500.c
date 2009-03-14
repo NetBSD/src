@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.25 2002/09/27 15:35:39 provos Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.26 2009/03/14 14:45:54 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.25 2002/09/27 15:35:39 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.26 2009/03/14 14:45:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,17 +48,17 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.25 2002/09/27 15:35:39 provos Exp 
 #include "sfb.h"
 
 #if NSFB > 0
-extern int	sfb_cnattach __P((tc_addr_t));
+extern int	sfb_cnattach(tc_addr_t);
 #endif
 
-void	tc_3000_500_intr_setup __P((void));
-void	tc_3000_500_intr_establish __P((struct device *, void *,
-	    tc_intrlevel_t, int (*)(void *), void *));
-void	tc_3000_500_intr_disestablish __P((struct device *, void *));
-void	tc_3000_500_iointr __P((void *, unsigned long));
+void	tc_3000_500_intr_setup(void);
+void	tc_3000_500_intr_establish(struct device *, void *,
+	    tc_intrlevel_t, int (*)(void *), void *);
+void	tc_3000_500_intr_disestablish(struct device *, void *);
+void	tc_3000_500_iointr(void *, unsigned long);
 
-int	tc_3000_500_intrnull __P((void *));
-int	tc_3000_500_fb_cnattach __P((u_int64_t));
+int	tc_3000_500_intrnull(void *);
+int	tc_3000_500_fb_cnattach(u_int64_t);
 
 #define C(x)	((void *)(u_long)x)
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
@@ -104,7 +104,7 @@ u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 };
 
 struct tcintr {
-	int	(*tci_func) __P((void *));
+	int	(*tci_func)(void *);
 	void	*tci_arg;
 	struct evcnt tci_evcnt;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
@@ -162,7 +162,7 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 	struct device *tcadev;
 	void *cookie, *arg;
 	tc_intrlevel_t level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 {
 	u_long dev = (u_long)cookie;
 

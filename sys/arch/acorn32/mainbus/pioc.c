@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.12 2005/12/11 12:16:05 christos Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.13 2009/03/14 14:45:51 dsl Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.12 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.13 2009/03/14 14:45:51 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,16 +91,16 @@ bus_space_tag_t comconstag = &mainbus_bs_tag;
 
 /* Prototypes for functions */
 
-static int  piocmatch	 __P((struct device *, struct cfdata *, void *));
-static void piocattach	 __P((struct device *, struct device *, void *));
-static int  piocprint	 __P((void *aux, const char *name));
+static int  piocmatch(struct device *, struct cfdata *, void *);
+static void piocattach(struct device *, struct device *, void *);
+static int  piocprint(void *aux, const char *name);
 #if 0
-static int  piocsearch	 __P((struct device *, struct cfdata *, void *));
+static int  piocsearch(struct device *, struct cfdata *, void *);
 #endif
-static int  piocsubmatch __P((struct device *, struct cfdata *,
-			      const int *, void *));
-static void piocgetid	 __P((bus_space_tag_t iot, bus_space_handle_t ioh,
-			      int config_entry, int *id, int *revision));
+static int  piocsubmatch(struct device *, struct cfdata *,
+			      const int *, void *);
+static void piocgetid(bus_space_tag_t iot, bus_space_handle_t ioh,
+			      int config_entry, int *id, int *revision);
 
 /* device attach and driver structure */
 

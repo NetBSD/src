@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.24 2007/11/07 19:47:00 garbled Exp $	*/
+/*	$NetBSD: adb.c,v 1.25 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.24 2007/11/07 19:47:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.25 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.24 2007/11/07 19:47:00 garbled Exp $");
 /*
  * Function declarations.
  */
-static int	adbmatch __P((struct device *, struct cfdata *, void *));
-static void	adbattach __P((struct device *, struct device *, void *));
-static int	adbprint __P((void *, const char *));
+static int	adbmatch(struct device *, struct cfdata *, void *);
+static void	adbattach(struct device *, struct device *, void *);
+static int	adbprint(void *, const char *);
 static void	adb_todr_init(void);
 
 /*

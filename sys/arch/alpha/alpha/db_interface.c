@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.27 2007/10/17 19:52:55 garbled Exp $ */
+/* $NetBSD: db_interface.c,v 1.28 2009/03/14 14:45:52 dsl Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.27 2007/10/17 19:52:55 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.28 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -89,7 +89,7 @@ int	db_active = 0;
 db_regs_t *ddb_regp;
 
 #if defined(MULTIPROCESSOR)
-void	db_mach_cpu __P((db_expr_t, bool, db_expr_t, const char *));
+void	db_mach_cpu(db_expr_t, bool, db_expr_t, const char *);
 #endif
 
 const struct db_command db_machine_command_table[] = {
@@ -99,7 +99,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) },
 };
 
-static int db_alpha_regop __P((const struct db_variable *, db_expr_t *, int));
+static int db_alpha_regop(const struct db_variable *, db_expr_t *, int);
 
 #define	dbreg(xx)	((long *)(xx))
 

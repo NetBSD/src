@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.15 2008/08/28 04:05:50 jmcneill Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.16 2009/03/14 14:46:01 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.15 2008/08/28 04:05:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.16 2009/03/14 14:46:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,12 +64,12 @@ static const char *mediabay_keylargo[] = {
 	NULL
 };
 
-void mediabay_attach __P((struct device *, struct device *, void *));
-int mediabay_match __P((struct device *, struct cfdata *, void *));
-int mediabay_print __P((void *, const char *));
-void mediabay_attach_content __P((struct mediabay_softc *));
-int mediabay_intr __P((void *));
-void mediabay_kthread __P((void *));
+void mediabay_attach(struct device *, struct device *, void *);
+int mediabay_match(struct device *, struct cfdata *, void *);
+int mediabay_print(void *, const char *);
+void mediabay_attach_content(struct mediabay_softc *);
+int mediabay_intr(void *);
+void mediabay_kthread(void *);
 
 CFATTACH_DECL(mediabay, sizeof(struct mediabay_softc),
     mediabay_match, mediabay_attach, NULL, NULL);

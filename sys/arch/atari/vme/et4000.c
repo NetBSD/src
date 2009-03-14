@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.15 2008/06/11 14:35:53 tsutsui Exp $	*/
+/*	$NetBSD: et4000.c,v 1.16 2009/03/14 14:45:57 dsl Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.15 2008/06/11 14:35:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.16 2009/03/14 14:45:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -76,18 +76,18 @@ __KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.15 2008/06/11 14:35:53 tsutsui Exp $");
 #define VGA_MAPPABLE	(128 * 1024)		/* 0x20000 */
 #define VGA_BASE	0xa0000
 
-static int	et_vme_match __P((struct device *, struct cfdata *, void *));
-static void	et_vme_attach __P((struct device *, struct device *, void *));
-static int	et_probe_addresses __P((struct vme_attach_args *));
-static void	et_start __P((bus_space_tag_t *, bus_space_handle_t *, int *,
-		    u_char *));
-static void	et_stop __P((bus_space_tag_t *, bus_space_handle_t *, int *,
-		    u_char *));
-static int	et_detect __P((bus_space_tag_t *, bus_space_tag_t *,
-		    bus_space_handle_t *, bus_space_handle_t *, u_int));
+static int	et_vme_match(struct device *, struct cfdata *, void *);
+static void	et_vme_attach(struct device *, struct device *, void *);
+static int	et_probe_addresses(struct vme_attach_args *);
+static void	et_start(bus_space_tag_t *, bus_space_handle_t *, int *,
+		    u_char *);
+static void	et_stop(bus_space_tag_t *, bus_space_handle_t *, int *,
+		    u_char *);
+static int	et_detect(bus_space_tag_t *, bus_space_tag_t *,
+		    bus_space_handle_t *, bus_space_handle_t *, u_int);
 
-int		eton __P((dev_t));
-int		etoff __P((dev_t));
+int		eton(dev_t);
+int		etoff(dev_t);
 
 /* Register and screen memory addresses for ET4000 based VME cards */
 static struct et_addresses {
