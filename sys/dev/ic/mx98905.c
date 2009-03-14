@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.14 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.15 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.14 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.15 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -98,9 +98,7 @@ mx98905_attach(struct dp8390_softc *sc)
 }
 
 static inline void
-mx98905_write_setup(sc, len, buf)
-	struct dp8390_softc *sc;
-	int len, buf;
+mx98905_write_setup(struct dp8390_softc *sc, int len, int buf)
 {
 	bus_space_tag_t nict = sc->sc_regt;
 	bus_space_handle_t nich = sc->sc_regh;

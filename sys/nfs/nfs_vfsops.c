@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.208 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.209 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.208 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.209 2009/03/14 21:04:25 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -407,12 +407,8 @@ out:
  * (once for root and once for swap)
  */
 static int
-nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
-	struct nfs_dlmount *ndmntp;
-	const char *mntname;	/* mount point name */
-	struct mount **mpp;
-	struct vnode **vpp;
-	struct lwp *l;
+nfs_mount_diskless(struct nfs_dlmount *ndmntp, const char *mntname, struct mount **mpp, struct vnode **vpp, struct lwp *l)
+	/* mntname:	 mount point name */
 {
 	struct mount *mp;
 	struct mbuf *m;
@@ -695,13 +691,7 @@ free_nfh:
  * Common code for mount and mountroot
  */
 int
-mountnfs(argp, mp, nam, pth, hst, vpp, l)
-	struct nfs_args *argp;
-	struct mount *mp;
-	struct mbuf *nam;
-	const char *pth, *hst;
-	struct vnode **vpp;
-	struct lwp *l;
+mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *pth, const char *hst, struct vnode **vpp, struct lwp *l)
 {
 	struct nfsmount *nmp;
 	struct nfsnode *np;

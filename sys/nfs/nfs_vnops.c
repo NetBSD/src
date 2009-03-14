@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.272 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.273 2009/03/14 21:04:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.272 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.273 2009/03/14 21:04:26 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2904,10 +2904,7 @@ nfsmout:
  * nfs_rename() completes, but...
  */
 int
-nfs_sillyrename(dvp, vp, cnp, dolink)
-	struct vnode *dvp, *vp;
-	struct componentname *cnp;
-	bool dolink;
+nfs_sillyrename(struct vnode *dvp, struct vnode *vp, struct componentname *cnp, bool dolink)
 {
 	struct sillyrename *sp;
 	struct nfsnode *np;

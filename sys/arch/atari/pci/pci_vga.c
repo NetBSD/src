@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.12 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.13 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.12 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.13 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -76,8 +76,7 @@ static int		tags_valid = 0;
  * bus0 for VGA cards. The first card found is used.
  */
 int
-check_for_vga(iot, memt)
-	bus_space_tag_t iot, memt;
+check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	pci_chipset_tag_t	pc = NULL; /* XXX */
 	bus_space_handle_t	ioh_regs, memh_fb;
@@ -238,9 +237,9 @@ vgacninit(struct consdev *cp)
  * place the card into textmode.
  */
 static void
-loadfont(ba, fb)
-	volatile u_char *ba;	/* Register area KVA */
-	u_char		*fb;	/* Frame buffer	KVA  */
+loadfont(volatile u_char *ba, u_char *fb)
+	/* ba:	 Register area KVA */
+	/* fb:	 Frame buffer	KVA  */
 {
 	font_info	*fd;
 	u_char		*c, *f, tmp;

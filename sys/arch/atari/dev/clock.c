@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: clock.c,v 1.45 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -497,10 +497,7 @@ atari_rtc_set(todr_chip_handle_t todr, struct clock_ymdhms *dtp)
  *                   RTC-device support				       *
  ***********************************************************************/
 int
-rtcopen(dev, flag, mode, l)
-	dev_t		dev;
-	int		flag, mode;
-	struct lwp	*l;
+rtcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int			unit = minor(dev);
 	struct clock_softc	*sc;

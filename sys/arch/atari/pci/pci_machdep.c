@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.45 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.46 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.45 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.46 2009/03/14 21:04:06 dsl Exp $");
 
 #include "opt_mbtype.h"
 
@@ -162,9 +162,7 @@ pcibusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-pcibusattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+pcibusattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct pcibus_attach_args	pba;
 
@@ -212,9 +210,7 @@ ataripcibusprint(void *auxp, const char *name)
 }
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
@@ -276,9 +272,7 @@ insert_into_list(PCI_MEMREG *head, struct pci_memreg *elem)
  * pci area.
  */
 static int
-overlap_pci_areas(p, self, addr, size, what)
-    struct pci_memreg *p, *self;
-    u_int addr, size, what;
+overlap_pci_areas(struct pci_memreg *p, struct pci_memreg *self, u_int addr, u_int size, u_int what)
 {
     struct pci_memreg *q;
 
@@ -602,18 +596,13 @@ enable_pci_devices()
 }
 
 pcitag_t
-pci_make_tag(pc, bus, device, function)
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	return ((bus << 16) | (device << 11) | (function << 8));
 }
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)

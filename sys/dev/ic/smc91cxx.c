@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.72 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.73 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.72 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.73 2009/03/14 21:04:20 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -201,8 +201,7 @@ int	smc91cxx_ioctl(struct ifnet *, u_long, void *);
 
 static inline int ether_cmp(const void *, const void *);
 static inline int
-ether_cmp(va, vb)
-	const void *va, *vb;
+ether_cmp(const void *va, const void *vb)
 {
 	const u_int8_t *a = va;
 	const u_int8_t *b = vb;
@@ -1574,9 +1573,7 @@ smc91cxx_mii_bitbang_write(struct device *self, u_int32_t val)
 }
 
 int
-smc91cxx_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+smc91cxx_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 	int val;
@@ -1591,9 +1588,7 @@ smc91cxx_mii_readreg(self, phy, reg)
 }
 
 void
-smc91cxx_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+smc91cxx_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct smc91cxx_softc *sc = (void *) self;
 

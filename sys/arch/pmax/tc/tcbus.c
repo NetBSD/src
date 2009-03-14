@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.23 2009/03/14 15:36:12 dsl Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.24 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.23 2009/03/14 15:36:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.24 2009/03/14 21:04:14 dsl Exp $");
 
 /*
  * Which system models were configured?
@@ -84,9 +84,7 @@ tcbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 static void
-tcbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tcbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcbus_attach_args *tba;
 

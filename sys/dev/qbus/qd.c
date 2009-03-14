@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.45 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: qd.c,v 1.46 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.45 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.46 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -3194,8 +3194,7 @@ LOOP:
  *  led_control()... twiddle LK-201 LED's
  */
 void
-led_control(unit, cmd, led_mask)
-	int unit, cmd, led_mask;
+led_control(int unit, int cmd, int led_mask)
 {
 	int i;
 	volatile struct duart *duart;

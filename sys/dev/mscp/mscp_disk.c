@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.64 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.65 2009/03/14 21:04:21 dsl Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.64 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.65 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -222,10 +222,7 @@ ra_putonline(struct ra_softc *ra)
  */
 /*ARGSUSED*/
 int
-raopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct	lwp *l;
+raopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct ra_softc *ra;
 	int error, part, unit, mask;
@@ -301,10 +298,7 @@ raopen(dev, flag, fmt, l)
 
 /* ARGSUSED */
 int
-raclose(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct	lwp *l;
+raclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra = device_lookup_private(&ra_cd, unit);
@@ -644,9 +638,7 @@ rxmatch(struct device *parent, struct cfdata *cf, void *aux)
  * the first time.
  */
 void
-rxattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+rxattach(struct device *parent, struct device *self, void *aux)
 {
 	struct	rx_softc *rx = device_private(self);
 	struct	drive_attach_args *da = aux;
@@ -731,10 +723,7 @@ rx_putonline(struct rx_softc *rx)
  */
 /*ARGSUSED*/
 int
-rxopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct	lwp *l;
+rxopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rx_softc *rx;
 	int unit;

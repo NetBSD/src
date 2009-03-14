@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.15 2009/03/14 15:36:19 dsl Exp $ */
+/* $NetBSD: btvmeii.c,v 1.16 2009/03/14 21:04:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.15 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.16 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,9 +179,7 @@ b3_2706_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-b3_2706_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+b3_2706_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct b3_2706_softc *sc = (struct b3_2706_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -429,10 +427,7 @@ b3_2706_vme_probe(vsc, addr, len, am, datasize, callback, cbarg)
 }
 
 int
-b3_2706_map_vmeint(vsc, level, vector, handlep)
-	void *vsc;
-	int level, vector;
-	vme_intr_handle_t *handlep;
+b3_2706_map_vmeint(void *vsc, int level, int vector, vme_intr_handle_t *handlep)
 {
 
 	*handlep = (void *)(long)((level << 8) | vector); /* XXX */
@@ -491,9 +486,7 @@ b3_2706_disestablish_vmeint(void *vsc, void *cookie)
 }
 
 void
-b3_2706_vmeint(vsc, level, vector)
-	void *vsc;
-	int level, vector;
+b3_2706_vmeint(void *vsc, int level, int vector)
 {
 	struct b3_2706_vmeintrhand *ih;
 	int found;

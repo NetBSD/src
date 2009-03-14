@@ -1,4 +1,4 @@
-/*	$NetBSD: loadkmap.c,v 1.6 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: loadkmap.c,v 1.7 2009/03/14 21:04:07 dsl Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,9 +13,7 @@ int load_kmap(const char *, int);
 int dump_kmap(); 
 
 int
-main(argc, argv)
-     int argc;
-     char *argv[];
+main(int argc, char *argv[])
 {
 	int	set_sysmap = 0;
 	char	*mapfile;

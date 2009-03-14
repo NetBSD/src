@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_network_subr.c,v 1.6 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: ofw_network_subr.c,v 1.7 2009/03/14 21:04:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.6 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.7 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,7 @@ int	of_network_parse_network_type(const char *);
  *	None.
  */
 int *
-of_network_decode_media(phandle, nmediap, defmediap)
-	int phandle, *nmediap, *defmediap;
+of_network_decode_media(int phandle, int *nmediap, int *defmediap)
 {
 	int i, len, count, med, *rv = NULL;
 	char *buf = NULL, *cp, *ncp;

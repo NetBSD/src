@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.8 2009/03/14 15:36:07 dsl Exp $	*/
+/*	$NetBSD: winblk.c,v 1.9 2009/03/14 21:04:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -307,10 +307,7 @@ winblkioctl(struct open_file *f, u_long cmd, void *arg)
 }
 
 static int
-rawread(ctx, start, nsecs, buf)
-	struct winblk *ctx;
-	int start, nsecs;
-	char *buf;
+rawread(struct winblk *ctx, int start, int nsecs, char *buf)
 {
 	SG_REQ req;
 	DWORD res;

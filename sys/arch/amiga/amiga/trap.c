@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.124 2009/03/14 21:04:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2009/03/14 21:04:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,10 +268,7 @@ machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 }
 
 void
-panictrap(type, code, v, fp)
-	int type;
-	u_int code, v;
-	struct frame *fp;
+panictrap(int type, u_int code, u_int v, struct frame *fp)
 {
 	static int panicking = 0;
 	if (panicking++ == 0) {
@@ -308,12 +305,7 @@ trapcpfault(struct lwp *l, struct frame *fp)
 int donomore = 0;
 
 void
-trapmmufault(type, code, v, fp, l, sticks)
-	int type;
-	u_int code, v;
-	struct frame *fp;
-	struct lwp *l;
-	u_quad_t sticks;
+trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_quad_t sticks)
 {
 #if defined(DEBUG) && defined(M68060)
 	static u_int oldcode=0, oldv=0;
@@ -542,10 +534,7 @@ nogo:
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame *fp;
-	int type;
-	u_int code, v;
+trap(struct frame *fp, int type, u_int code, u_int v)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -771,12 +760,11 @@ trap(fp, type, code, v)
  * Process a pending write back
  */
 int
-_write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
-	u_int wb;	/* writeback type: 1, 2, or 3 */
-	u_int wb_sts;	/* writeback status information */
-	u_int wb_data;	/* data to writeback */
-	u_int wb_addr;	/* address to writeback to */
-	struct vm_map *wb_map;
+_write_back (u_int wb, u_int wb_sts, u_int wb_data, u_int wb_addr, struct vm_map *wb_map)
+	/* wb:	 writeback type: 1, 2, or 3 */
+	/* wb_sts:	 writeback status information */
+	/* wb_data:	 data to writeback */
+	/* wb_addr:	 address to writeback to */
 {
 	u_int wb_extra_page = 0;
 	u_int wb_rc, mmusr;

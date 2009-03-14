@@ -1,4 +1,4 @@
-/* $NetBSD: tx39xx.c,v 1.7 2009/03/14 14:45:59 dsl Exp $ */
+/* $NetBSD: tx39xx.c,v 1.8 2009/03/14 21:04:09 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura, UCHIYAMA Yasushi
@@ -48,18 +48,13 @@ typedef int tx_chipset_tag_t;
 u_int32_t __tx39conf_addr;
 
 u_int32_t
-tx_conf_read(t, reg)
-	tx_chipset_tag_t t;
-	int reg;
+tx_conf_read(tx_chipset_tag_t t, int reg)
 {
 	return *((u_int32_t*)(__tx39conf_addr + reg));
 }
 
 void
-tx_conf_write(t, reg, val)
-	tx_chipset_tag_t t;
-	int reg;
-	u_int32_t val;
+tx_conf_write(tx_chipset_tag_t t, int reg, u_int32_t val)
 {
 	u_int32_t addr = (u_int32_t)t;
 	*((u_int32_t*)(__tx39conf_addr +reg)) = val;

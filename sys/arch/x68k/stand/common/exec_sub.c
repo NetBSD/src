@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sub.c,v 1.5 2009/03/14 15:36:15 dsl Exp $ */
+/*	$NetBSD: exec_sub.c,v 1.6 2009/03/14 21:04:17 dsl Exp $ */
 
 #include <sys/cdefs.h>
 
@@ -245,10 +245,8 @@ xk_elf(struct execkern_arg *xarg, Elf32_Ehdr *hdr)
 
 
 int
-xk_load(xarg, buf, loadaddr)
-	struct execkern_arg *xarg;
-	void *buf;
-	u_long loadaddr;	/* for a.out */
+xk_load(struct execkern_arg *xarg, void *buf, u_long loadaddr)
+	/* loadaddr:	 for a.out */
 {
 	struct exec *ahdr;
 	Elf32_Ehdr *ehdr;

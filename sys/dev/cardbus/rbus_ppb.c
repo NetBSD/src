@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.27 2009/03/14 15:36:16 dsl Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.28 2009/03/14 21:04:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.27 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.28 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,13 +477,7 @@ rbus_pci_phys_countspace(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 
 
 int
-rbus_do_phys_countspace(pc, tag, mapreg, ctx, type, addr, size)
-	pci_chipset_tag_t pc;
-	pcitag_t     tag;
-	void        *ctx;
-	int mapreg, type;
-	bus_addr_t *addr;
-	bus_size_t size;
+rbus_do_phys_countspace(pci_chipset_tag_t pc, pcitag_t tag, int mapreg, void *ctx, int type, bus_addr_t *addr, bus_size_t size)
 {
 	struct  rbus_pci_addr_fixup_context *rct =
 	  (struct  rbus_pci_addr_fixup_context *)ctx;
@@ -531,13 +525,7 @@ rbus_pci_phys_allocate(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 }
 
 int
-rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
-	pci_chipset_tag_t pc;
-	pcitag_t     tag;
-	void        *ctx;
-	int mapreg, type;
-	bus_addr_t *addr;
-	bus_size_t size;
+rbus_do_phys_allocate(pci_chipset_tag_t pc, pcitag_t tag, int mapreg, void *ctx, int type, bus_addr_t *addr, bus_size_t size)
 {
 	struct  rbus_pci_addr_fixup_context *rct =
 	  (struct  rbus_pci_addr_fixup_context *)ctx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.149 2009/03/14 21:04:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2009/03/14 21:04:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,9 +756,7 @@ pmap_reference(pmap_t pmap)
  *	rounded to the page size.
  */
 void
-pmap_remove(pmap, sva, eva)
-	pmap_t pmap;
-	vaddr_t sva, eva;
+pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	paddr_t pa;
 	vaddr_t va;
@@ -848,10 +846,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	specified range of this map as requested.
  */
 void
-pmap_protect(pmap, sva, eva, prot)
-	pmap_t pmap;
-	vaddr_t	sva, eva;
-	vm_prot_t prot;
+pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	u_int *pte;
 	vaddr_t va;
@@ -1475,9 +1470,7 @@ pmap_collect(pmap_t pmap)
  *		garbage-collection of range of physical addresses.
  */
 void
-pmap_collect1(pmap, startpa, endpa)
-    pmap_t	pmap;
-    paddr_t	startpa, endpa;
+pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 {
 	paddr_t pa;
 	struct pv_entry *pv;
@@ -1662,8 +1655,7 @@ pmap_zero_page(paddr_t phys)
  *	      support multiple processors, this is sufficient.)
  */
 void
-pmap_copy_page(src, dst)
-	paddr_t	src, dst;
+pmap_copy_page(paddr_t src, paddr_t dst)
 {
 	int	s;
 	int	src_pte = PG_RO | PG_V;
@@ -2529,8 +2521,7 @@ pmap_check_wiring(const char *str, vaddr_t va)
  *		vm_bootstrap_steal_memory().
  */
 void
-pmap_virtual_space(vstartp, vendp)
-	vaddr_t     *vstartp, *vendp;
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
 	*vstartp = virtual_avail;

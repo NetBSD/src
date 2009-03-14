@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2009/03/14 21:04:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2009/03/14 21:04:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,10 +404,7 @@ readdisklabel(dev, strat, lp, osdep)
  * Check new disk label for sensibility before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;

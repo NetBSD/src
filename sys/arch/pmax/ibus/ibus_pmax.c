@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_pmax.c,v 1.20 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: ibus_pmax.c,v 1.21 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.20 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.21 2009/03/14 21:04:14 dsl Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -110,9 +110,7 @@ ibus_pmax_match(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 static void
-ibus_pmax_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+ibus_pmax_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ibus_dev_attach_args ida;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.88 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: siop.c,v 1.89 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.88 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.89 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1840,9 +1840,7 @@ siop_add_reselsw(struct siop_softc *sc, int target)
 }
 
 void
-siop_update_scntl3(sc, _siop_target)
-	struct siop_softc *sc;
-	struct siop_common_target *_siop_target;
+siop_update_scntl3(struct siop_softc *sc, struct siop_common_target *_siop_target)
 {
 	struct siop_target *siop_target = (struct siop_target *)_siop_target;
 	/* MOVE target->id >> 24 TO SCNTL3 */

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.27 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.28 2009/03/14 21:04:03 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.27 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.28 2009/03/14 21:04:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,9 +324,7 @@ tc_3000_500_fb_cnattach(u_int64_t turbo_slot)
  *	Set the PBS bits for devices on the TC.
  */
 void
-tc_3000_500_ioslot(slot, flags, set)
-	u_int32_t slot, flags;
-	int set;
+tc_3000_500_ioslot(u_int32_t slot, u_int32_t flags, int set)
 {
 	volatile u_int32_t *iosp;
 	u_int32_t ios;

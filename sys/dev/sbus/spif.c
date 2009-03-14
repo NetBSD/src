@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.20 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: spif.c,v 1.21 2009/03/14 21:04:23 dsl Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.20 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.21 2009/03/14 21:04:23 dsl Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -154,9 +154,7 @@ spif_match(struct device *parent, struct cfdata *vcf, void *aux)
 }
 
 void
-spif_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+spif_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spif_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
@@ -279,9 +277,7 @@ stty_match(struct device *parent, struct cfdata *vcf, void *aux)
 }
 
 void
-stty_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+stty_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct spif_softc *sc = device_private(parent);
 	struct stty_softc *ssc = device_private(dev);
@@ -486,9 +482,7 @@ stty_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 }
 
 int
-stty_modem_control(sp, bits, how)
-	struct stty_port *sp;
-	int bits, how;
+stty_modem_control(struct stty_port *sp, int bits, int how)
 {
 	struct spif_softc *csc = sp->sp_sc;
 	struct tty *tp = sp->sp_tty;
@@ -961,10 +955,7 @@ stty_write_ccr(struct spif_softc *sc, u_int8_t val)
 }
 
 int
-stty_compute_baud(speed, clock, bprlp, bprhp)
-	speed_t speed;
-	int clock;
-	u_int8_t *bprlp, *bprhp;
+stty_compute_baud(speed_t speed, int clock, u_int8_t *bprlp, u_int8_t *bprhp)
 {
 	u_int32_t rate;
 
@@ -991,9 +982,7 @@ sbpp_match(struct device *parent, struct cfdata *vcf, void *aux)
 }
 
 void
-sbpp_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+sbpp_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct spif_softc *sc = device_private(parent);
 	struct sbpp_softc *psc = device_private(dev);

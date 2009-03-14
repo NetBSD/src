@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.43 2009/03/14 15:36:01 dsl Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.44 2009/03/14 21:04:04 dsl Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.43 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.44 2009/03/14 21:04:04 dsl Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -490,9 +490,7 @@ grfulmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * attach to the grfbus (zbus)
  */
 void
-grfulattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+grfulattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	static struct grf_ul_softc congrf;
 	struct zbus_args *zap;
@@ -561,9 +559,7 @@ grfulprint(void *auxp, const char *pnp)
 }
 
 static int
-ul_getvmode (gp, vm)
-	struct grf_softc *gp;
-	struct grfvideo_mode *vm;
+ul_getvmode (struct grf_softc *gp, struct grfvideo_mode *vm)
 {
 	struct grfvideo_mode *md;
 
@@ -599,9 +595,7 @@ ul_getvmode (gp, vm)
 
 
 static int
-ul_setvmode (gp, mode)
-	struct grf_softc *gp;
-	unsigned mode;
+ul_setvmode (struct grf_softc *gp, unsigned mode)
 {
 	struct grf_ul_softc *gup;
 	volatile struct gspregs *ba;
@@ -704,11 +698,7 @@ ul_mode(struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3)
 }
 
 int
-ul_ioctl (gp, cmd, data, dev)
-	register struct grf_softc *gp;
-	u_long cmd;
-	void *data;
-	dev_t dev;
+ul_ioctl (register struct grf_softc *gp, u_long cmd, void *data, dev_t dev)
 {
 	switch (cmd) {
 #if 0
@@ -751,10 +741,7 @@ ul_ioctl (gp, cmd, data, dev)
 }
 
 int
-ul_getcmap (gp, cmap, dev)
-	struct grf_softc *gp;
-	struct grf_colormap *cmap;
-	dev_t dev;
+ul_getcmap (struct grf_softc *gp, struct grf_colormap *cmap, dev_t dev)
 {
 	struct grf_ul_softc *gup;
 	u_int8_t *mymap;
@@ -792,10 +779,7 @@ ul_getcmap (gp, cmap, dev)
 }
 
 int
-ul_putcmap (gp, cmap, dev)
-	struct grf_softc *gp;
-	struct grf_colormap *cmap;
-	dev_t dev;
+ul_putcmap (struct grf_softc *gp, struct grf_colormap *cmap, dev_t dev)
 {
 	struct grf_ul_softc *gup;
 	volatile struct gspregs *ba;
@@ -897,10 +881,7 @@ int ul_BltOpMap[16] = {
 };
 
 int
-ul_bitblt (gp, bb, dev)
-	struct grf_softc *gp;
-	struct grf_bitblt *bb;
-	dev_t dev;
+ul_bitblt (struct grf_softc *gp, struct grf_bitblt *bb, dev_t dev)
 {
 	/* XXX not yet implemented, but pretty trivial */
 	return EPASSTHROUGH;

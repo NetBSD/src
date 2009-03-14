@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.13 2009/03/14 14:46:00 dsl Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.14 2009/03/14 21:04:10 dsl Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -148,8 +148,7 @@ bad:
 }
 
 int
-net_close(f)
-	struct open_file *f;
+net_close(struct open_file *f)
 {
 #ifdef NET_DEBUG
 	if (netdev_sock == -1)
@@ -165,22 +164,13 @@ net_close(f)
 }
 
 int
-net_ioctl(f, c, d)
-	struct open_file *f;
-	u_long          c;
-	void           *d;
+net_ioctl(struct open_file *f, u_long c, void *d)
 {
 	return EIO;
 }
 
 int
-net_strategy(d, f, b, s, buf, r)
-	void           *d;
-	int             f;
-	daddr_t         b;
-	size_t          s;
-	void           *buf;
-	size_t         *r;
+net_strategy(void *d, int f, daddr_t b, size_t s, void *buf, size_t *r)
 {
 	return EIO;
 }

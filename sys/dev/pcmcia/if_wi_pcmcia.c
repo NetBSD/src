@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.81 2009/03/14 15:36:20 dsl Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.82 2009/03/14 21:04:22 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.81 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.82 2009/03/14 21:04:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,10 +422,7 @@ wi_pcmcia_detach(struct device *self, int flags)
 
 #if WI_PCMCIA_SPECTRUM24T_FW
 static int
-wi_pcmcia_load_firm(sc, primsym, primlen, secsym, seclen)
-	struct wi_softc *sc;
-	const void *primsym, *secsym;
-	int primlen, seclen;
+wi_pcmcia_load_firm(struct wi_softc *sc, const void *primsym, int primlen, const void *secsym, int seclen)
 {
 	u_int8_t ebuf[256];
 	int i;
@@ -472,10 +469,7 @@ wi_pcmcia_load_firm(sc, primsym, primlen, secsym, seclen)
 }
 
 static int
-wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
-	struct wi_softc *sc;
-	const void *buf, *ebuf;
-	int buflen, ebuflen;
+wi_pcmcia_write_firm(struct wi_softc *sc, const void *buf, int buflen, const void *ebuf, int ebuflen)
 {
 	const u_int8_t *p, *ep, *q, *eq;
 	char *endp;

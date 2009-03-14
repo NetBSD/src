@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.35 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.36 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.35 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.36 2009/03/14 21:04:11 dsl Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -146,9 +146,7 @@ gmac_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-gmac_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gmac_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gmac_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
@@ -861,9 +859,7 @@ gmac_watchdog(struct ifnet *ifp)
 }
 
 int
-gmac_mii_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+gmac_mii_readreg(struct device *dev, int phy, int reg)
 {
 	struct gmac_softc *sc = (void *)dev;
 	int i;
@@ -885,9 +881,7 @@ gmac_mii_readreg(dev, phy, reg)
 }
 
 void
-gmac_mii_writereg(dev, phy, reg, val)
-	struct device *dev;
-	int phy, reg, val;
+gmac_mii_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct gmac_softc *sc = (void *)dev;
 	int i;

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.15 2008/12/10 11:10:18 pooka Exp $ */
+/* $NetBSD: pmap.c,v 1.16 2009/03/14 21:04:10 dsl Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2008/12/10 11:10:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2009/03/14 21:04:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -817,8 +817,7 @@ pmap_init(void)
  */
 
 paddr_t
-vtophys(va)
-	vaddr_t va;
+vtophys(vaddr_t va)
 {
 	paddr_t pa;
 

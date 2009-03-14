@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.79 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: xd.c,v 1.80 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.79 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.80 2009/03/14 21:04:23 dsl Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -917,10 +917,7 @@ done:
  * xdclose: close device
  */
 int
-xdclose(dev, flag, fmt, l)
-	dev_t   dev;
-	int     flag, fmt;
-	struct lwp *l;
+xdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xd_softc *xd = device_lookup_private(&xd_cd, DISKUNIT(dev));
 	int     part = DISKPART(dev);
@@ -1147,10 +1144,7 @@ xdioctl(dev, command, addr, flag, l)
  */
 
 int
-xdopen(dev, flag, fmt, l)
-	dev_t   dev;
-	int     flag, fmt;
-	struct lwp *l;
+xdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int     unit, part;
 	struct xd_softc *xd;

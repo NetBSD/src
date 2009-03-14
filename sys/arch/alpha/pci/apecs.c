@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.48 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: apecs.c,v 1.49 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.48 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.49 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,9 +164,7 @@ apecs_init(struct apecs_config *acp, int mallocsafe)
 }
 
 void
-apecsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apecsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apecs_softc *sc = (struct apecs_softc *)self;
 	struct apecs_config *acp;
@@ -240,9 +238,7 @@ apecsattach(parent, self, aux)
 }
 
 int
-apecs_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+apecs_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct apecs_config *acp = &apecs_configuration;
 	bus_space_tag_t st;

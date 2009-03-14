@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.26 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: adb.c,v 1.27 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.26 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.27 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,9 +101,7 @@ adbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-adbattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+adbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct adb_softc *sc = (struct adb_softc *)self;
 	struct confargs *ca = aux;

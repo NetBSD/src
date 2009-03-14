@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.5 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: deq.c,v 1.6 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.5 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.6 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,7 @@ deq_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 void
-deq_attach(parent, self, aux)
-	device_t parent, self;
-	void *aux;
+deq_attach(device_t parent, device_t self, void *aux)
 {
 	struct deq_softc *sc = device_private(self);
 	struct ki2c_confargs *ka = aux;

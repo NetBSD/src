@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.12 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.13 2009/03/14 21:04:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.12 2009/03/14 15:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.13 2009/03/14 21:04:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,10 +401,7 @@ L3_sendbyte(struct uda1341_softc *sc, uint8_t data, int mode)
 }
 
 static int
-L3_read(sc, addr, data, len)
-	struct uda1341_softc *sc;
-	uint8_t addr, *data;
-        int len;
+L3_read(struct uda1341_softc *sc, uint8_t addr, uint8_t *data, int len)
 {
 	int cr, mode;
 	mode = 0;
@@ -424,10 +421,7 @@ L3_read(sc, addr, data, len)
 }
 
 static int
-L3_write(sc, addr, data, len)
-	struct uda1341_softc *sc;
-	uint8_t addr, *data;
-	int len;
+L3_write(struct uda1341_softc *sc, uint8_t addr, uint8_t *data, int len)
 {
 	int mode = 0;
 

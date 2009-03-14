@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.19 2009/03/14 15:36:13 dsl Exp $ */
+/* $NetBSD: main.c,v 1.20 2009/03/14 21:04:15 dsl Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -173,9 +173,7 @@ bi_init(void *addr)
 }
 
 void
-bi_add(new, type, size)
-	void *new;
-	int type, size;
+bi_add(void *new, int type, int size)
 {
 	struct btinfo_common *bi;
 

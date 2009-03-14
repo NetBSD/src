@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisascr.c,v 1.8 2009/03/14 15:36:13 dsl Exp $	*/
+/*	$NetBSD: ofisascr.c,v 1.9 2009/03/14 21:04:16 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.8 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.9 2009/03/14 21:04:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,9 +80,7 @@ ofisascrprobe(struct device *parent, struct cfdata *cf, void *aux)
 
 
 void
-ofisascrattach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+ofisascrattach(struct device *parent, struct device *dev, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	struct isa_attach_args ia;

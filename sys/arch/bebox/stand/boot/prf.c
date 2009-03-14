@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.6 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: prf.c,v 1.7 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,8 +33,7 @@
 #include "boot.h"
 
 void
-putchar(c)
-	unsigned char c;
+putchar(unsigned char c)
 {
 	cnputc(c);
 }

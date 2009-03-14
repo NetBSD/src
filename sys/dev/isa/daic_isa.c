@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.16 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.17 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -120,9 +120,7 @@ bad:
 }
 
 static void
-daic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+daic_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct daic_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

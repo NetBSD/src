@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.60 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: zs.c,v 1.61 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.60 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.61 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1145,8 +1145,7 @@ zsparam(register struct tty *tp, register struct termios *t)
  * search for the best matching baudrate
  */
 static int
-zsbaudrate(unit, wanted, divisor, clockmode, brgenmode, timeconst)
-int	unit, wanted, *divisor, *clockmode, *brgenmode, *timeconst;
+zsbaudrate(int unit, int wanted, int *divisor, int *clockmode, int *brgenmode, int *timeconst)
 {
 	int	bestdiff, bestbps, source;
 
@@ -1224,9 +1223,7 @@ int	unit, wanted, *divisor, *clockmode, *brgenmode, *timeconst;
  * in transmission, the change is deferred.
  */
 static int
-zs_modem(cs, bits, how)
-struct zs_chanstate	*cs;
-int			bits, how;
+zs_modem(struct zs_chanstate *cs, int bits, int how)
 {
 	int s, mbits;
 
