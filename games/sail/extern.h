@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.31 2009/03/14 20:04:43 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.32 2009/03/14 22:52:52 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -100,46 +100,6 @@ extern gid_t egid;
 
 #define HULL		0
 #define RIGGING		1
-
-#define W_CAPTAIN	1
-#define W_CAPTURED	2
-#define W_CLASS		3
-#define W_CREW		4
-#define W_DBP		5
-#define W_DRIFT		6
-#define W_EXPLODE	7
-#define W_FILE		8
-#define W_FOUL		9
-#define W_GUNL		10
-#define W_GUNR		11
-#define W_HULL		12
-#define W_MOVE		13
-#define W_OBP		14
-#define W_PCREW		15
-#define W_UNFOUL	16
-#define W_POINTS	17
-#define W_QUAL		18
-#define W_UNGRAP	19
-#define W_RIGG		20
-#define W_COL		21
-#define W_DIR		22
-#define W_ROW		23
-#define W_SIGNAL	24
-#define W_SINK		25
-#define W_STRUCK	26
-#define W_TA		27
-#define W_ALIVE		28
-#define W_TURN		29
-#define W_WIND		30
-#define W_FS		31
-#define W_GRAP		32
-#define W_RIG1		33
-#define W_RIG2		34
-#define W_RIG3		35
-#define W_RIG4		36
-#define W_BEGIN		37
-#define W_END		38
-#define W_DDEAD		39
 
 #define NLOG 10
 struct logs {
@@ -410,6 +370,44 @@ void makemsg(struct ship *, const char *, ...)
 int sync_exists(int);
 int sync_open(void);
 void sync_close(int);
-void Write(int, struct ship *, long, long, long, long);
-void Writestr(int, struct ship *, const char *);
 int Sync(void);
+
+void send_captain(struct ship *ship, const char *astr);
+void send_captured(struct ship *ship, long a);
+void send_class(struct ship *ship, long a);
+void send_crew(struct ship *ship, long a, long b, long c);
+void send_dbp(struct ship *ship, long a, long b, long c, long d);
+void send_drift(struct ship *ship, long a);
+void send_explode(struct ship *ship, long a);
+void send_file(void);
+void send_foul(struct ship *ship, long a);
+void send_gunl(struct ship *ship, long a, long b);
+void send_gunr(struct ship *ship, long a, long b);
+void send_hull(struct ship *ship, long a);
+void send_move(struct ship *ship, const char *astr);
+void send_obp(struct ship *ship, long a, long b, long c, long d);
+void send_pcrew(struct ship *ship, long a);
+void send_unfoul(struct ship *ship, long a, long b);
+void send_points(struct ship *ship, long a);
+void send_qual(struct ship *ship, long a);
+void send_ungrap(struct ship *ship, long a, long b);
+void send_rigg(struct ship *ship, long a, long b, long c, long d);
+void send_col(struct ship *ship, long a);
+void send_dir(struct ship *ship, long a);
+void send_row(struct ship *ship, long a);
+void send_signal(struct ship *ship, const char *astr);
+void send_sink(struct ship *ship, long a);
+void send_struck(struct ship *ship, long a);
+void send_ta(struct ship *ship, long a);
+void send_alive(void);
+void send_turn(long a);
+void send_wind(long a, long b);
+void send_fs(struct ship *ship, long a);
+void send_grap(struct ship *ship, long a);
+void send_rig1(struct ship *ship, long a);
+void send_rig2(struct ship *ship, long a);
+void send_rig3(struct ship *ship, long a);
+void send_rig4(struct ship *ship, long a);
+void send_begin(struct ship *ship);
+void send_end(struct ship *ship);
+void send_ddead(void);
