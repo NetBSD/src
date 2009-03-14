@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.20 2009/03/14 18:32:47 dholland Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.21 2009/03/14 18:41:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.20 2009/03/14 18:32:47 dholland Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.21 2009/03/14 18:41:21 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ reprint:
 		if (sp >= ls) {
 			puts("All ships taken in that scenario.");
 			foreachship(sp)
-				free((char *)sp->file);
+				free(sp->file);
 			sync_close(0);
 			people = 0;
 			goto reprint;
@@ -202,7 +202,7 @@ reprint:
 	printf("Your ship is the %s, a %d gun %s (%s crew).\n",
 		ms->shipname, mc->guns, classname[mc->class],
 		qualname[mc->qual]);
-	if ((nameptr = (char *) getenv("SAILNAME")) && *nameptr)
+	if ((nameptr = getenv("SAILNAME")) && *nameptr)
 		strlcpy(captain, nameptr, sizeof captain);
 	else {
 		printf("Your name, Captain? ");
