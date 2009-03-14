@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.3 2005/12/11 12:18:51 christos Exp $ */
+/* $NetBSD: devopen.c,v 1.4 2009/03/14 21:04:15 dsl Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,10 +41,8 @@
  * file name if any.
  */
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;	/* out */
+devopen(struct open_file *f, const char *fname, char **file)
+	/* file:	 out */
 {
 	register char *cp;
 	register char *ncp;

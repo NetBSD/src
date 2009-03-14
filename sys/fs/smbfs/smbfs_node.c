@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.39 2008/06/24 17:04:11 cegger Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.40 2009/03/14 21:04:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.39 2008/06/24 17:04:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.40 2009/03/14 21:04:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,8 +276,7 @@ smbfs_reclaim(void *v)
 }
 
 int
-smbfs_inactive(v)
-     void *v;
+smbfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;

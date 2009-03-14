@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.11 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: rambo.c,v 1.12 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.11 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.12 2009/03/14 21:04:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,9 +77,7 @@ rambo_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-rambo_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rambo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct rambo_softc *sc = (void *)self;

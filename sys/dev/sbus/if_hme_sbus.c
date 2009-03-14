@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.25 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.26 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.25 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.26 2009/03/14 21:04:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,7 @@ hmematch_sbus(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-hmeattach_sbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+hmeattach_sbus(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct hmesbus_softc *hsc = (void *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.23 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.24 2009/03/14 21:04:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.23 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.24 2009/03/14 21:04:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -270,10 +270,7 @@ vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg, evcnt)
 }
 
 void
-vme_pcc_intr_disestablish(csc, level, vector, last, evcnt)
-	void *csc;
-	int level, vector, last;
-	struct evcnt *evcnt;
+vme_pcc_intr_disestablish(void *csc, int level, int vector, int last, struct evcnt *evcnt)
 {
 	struct vme_pcc_softc *sc = csc;
 

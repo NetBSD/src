@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.47 2008/04/06 20:28:36 cegger Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.48 2009/03/14 21:04:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.47 2008/04/06 20:28:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.48 2009/03/14 21:04:19 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -897,9 +897,7 @@ hpcfb_cursor(void *cookie, int on, int row, int col)
 }
 
 void
-hpcfb_cursor_raw(cookie, on, row, col)
-	void *cookie;
-	int on, row, col;
+hpcfb_cursor_raw(void *cookie, int on, int row, int col)
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct hpcfb_softc *sc = dc->dc_sc;
@@ -1226,10 +1224,7 @@ hpcfb_tv_copyrows(struct hpcfb_devconfig *dc, int src, int dst, int num)
 }
 
 void
-hpcfb_redraw(cookie, row, num, all)
-	void *cookie;
-	int row, num;
-	int all;
+hpcfb_redraw(void *cookie, int row, int num, int all)
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct rasops_info *ri = &dc->dc_rinfo;

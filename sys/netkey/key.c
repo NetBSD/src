@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.167 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: key.c,v 1.168 2009/03/14 21:04:25 dsl Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.167 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.168 2009/03/14 21:04:25 dsl Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2468,10 +2468,7 @@ key_setspddump(int *errorp)
 }
 
 struct mbuf *
-key_setdumpsp(sp, type, seq, pid)
-	struct secpolicy *sp;
-	u_int8_t type;
-	u_int32_t seq, pid;
+key_setdumpsp(struct secpolicy *sp, u_int8_t type, u_int32_t seq, u_int32_t pid)
 {
 	struct mbuf *result = NULL, *m;
 
@@ -3485,10 +3482,7 @@ key_mature(struct secasvar *sav)
  * subroutine for SADB_GET and SADB_DUMP.
  */
 static struct mbuf *
-key_setdumpsa(sav, type, satype, seq, pid)
-	struct secasvar *sav;
-	u_int8_t type, satype;
-	u_int32_t seq, pid;
+key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype, u_int32_t seq, u_int32_t pid)
 {
 	struct mbuf *result = NULL, *tres = NULL, *m;
 	int l = 0;
@@ -3663,12 +3657,7 @@ fail:
  * set data into sadb_msg.
  */
 static struct mbuf *
-key_setsadbmsg(type, tlen, satype, seq, pid, reserved)
-	u_int8_t type, satype;
-	u_int16_t tlen;
-	u_int32_t seq;
-	pid_t pid;
-	u_int16_t reserved;
+key_setsadbmsg(u_int8_t type, u_int16_t tlen, u_int8_t satype, u_int32_t seq, pid_t pid, u_int16_t reserved)
 {
 	struct mbuf *m;
 	struct sadb_msg *p;
@@ -3789,11 +3778,7 @@ key_setsadbaddr(u_int16_t exttype, struct sockaddr *saddr, u_int8_t prefixlen, u
  * set data into sadb_ident.
  */
 static struct mbuf *
-key_setsadbident(exttype, idtype, string, stringlen, id)
-	u_int16_t exttype, idtype;
-	void *string;
-	int stringlen;
-	u_int64_t id;
+key_setsadbident(u_int16_t exttype, u_int16_t idtype, void *string, int stringlen, u_int64_t id)
 {
 	struct mbuf *m;
 	struct sadb_ident *p;
@@ -4038,10 +4023,7 @@ key_checksalen(const struct sockaddr *saddr)
  * set data into sadb_lifetime
  */
 static struct mbuf *
-key_setsadblifetime(type, alloc, bytes, addtime, usetime)
-	u_int16_t type;
-	u_int32_t alloc;
-	u_int64_t bytes, addtime, usetime;
+key_setsadblifetime(u_int16_t type, u_int32_t alloc, u_int64_t bytes, u_int64_t addtime, u_int64_t usetime)
 {
 	struct mbuf *m;
 	struct sadb_lifetime *p;
@@ -4212,8 +4194,7 @@ key_ismyaddr6(struct sockaddr_in6 *sin6)
  *	0 : not equal
  */
 static int
-key_cmpsaidx_exactly(saidx0, saidx1)
-	struct secasindex *saidx0, *saidx1;
+key_cmpsaidx_exactly(struct secasindex *saidx0, struct secasindex *saidx1)
 {
 	/* sanity */
 	if (saidx0 == NULL && saidx1 == NULL)
@@ -4244,8 +4225,7 @@ key_cmpsaidx_exactly(saidx0, saidx1)
  *	0 : not equal
  */
 static int
-key_cmpsaidx_withmode(saidx0, saidx1)
-	struct secasindex *saidx0, *saidx1;
+key_cmpsaidx_withmode(struct secasindex *saidx0, struct secasindex *saidx1)
 {
 	int chkport = 0;
 
@@ -4301,8 +4281,7 @@ key_cmpsaidx_withmode(saidx0, saidx1)
  *	0 : not equal
  */
 static int
-key_cmpsaidx_withoutmode(saidx0, saidx1)
-	struct secasindex *saidx0, *saidx1;
+key_cmpsaidx_withoutmode(struct secasindex *saidx0, struct secasindex *saidx1)
 {
 #ifdef IPSEC_NAT_T
 	int chkport = 1;
@@ -4342,8 +4321,7 @@ key_cmpsaidx_withoutmode(saidx0, saidx1)
  *	0 : not equal
  */
 int
-key_cmpspidx_exactly(spidx0, spidx1)
-	struct secpolicyindex *spidx0, *spidx1;
+key_cmpspidx_exactly(struct secpolicyindex *spidx0, struct secpolicyindex *spidx1)
 {
 	/* sanity */
 	if (spidx0 == NULL && spidx1 == NULL)
@@ -4378,8 +4356,7 @@ key_cmpspidx_exactly(spidx0, spidx1)
  *	0 : not equal
  */
 int
-key_cmpspidx_withmask(spidx0, spidx1)
-	struct secpolicyindex *spidx0, *spidx1;
+key_cmpspidx_withmask(struct secpolicyindex *spidx0, struct secpolicyindex *spidx1)
 {
 	/* sanity */
 	if (spidx0 == NULL && spidx1 == NULL)
@@ -4528,9 +4505,7 @@ key_sockaddrcmp(struct sockaddr *sa1, struct sockaddr *sa2, int port)
  *	0 : not equal
  */
 static int
-key_bbcmp(p1v, p2v, bits)
-	void *p1v, *p2v;
-	u_int bits;
+key_bbcmp(void *p1v, void *p2v, u_int bits)
 {
 	char *p1 = p1v;
 	char *p2 = p2v;

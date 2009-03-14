@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.17 2005/11/24 13:08:32 yamt Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.18 2009/03/14 21:04:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.17 2005/11/24 13:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.18 2009/03/14 21:04:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,12 +134,7 @@ struct bus_space mainbus_bs_tag = {
 /* bus space functions */
 
 int
-mainbus_bs_map(t, bpa, size, flags, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+mainbus_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
@@ -191,10 +186,7 @@ mainbus_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 
 
 void
-mainbus_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+mainbus_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/*
 	 * Temporary implementation
@@ -202,10 +194,7 @@ mainbus_bs_unmap(t, bsh, size)
 }
 
 void    
-mainbus_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+mainbus_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	panic("mainbus_bs_free(): Help!");
@@ -214,11 +203,7 @@ mainbus_bs_free(t, bsh, size)
 }
 
 int
-mainbus_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+mainbus_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + (offset << 2);
@@ -226,12 +211,7 @@ mainbus_bs_subregion(t, bsh, offset, size, nbshp)
 }
 
 paddr_t
-mainbus_bs_mmap(t, paddr, offset, prot, flags)
-	void *t;
-	bus_addr_t paddr;
-	off_t offset;
-	int prot;
-	int flags;
+mainbus_bs_mmap(void *t, bus_addr_t paddr, off_t offset, int prot, int flags)
 {
 	/*
 	 * mmap from address `paddr+offset' for one page
@@ -240,11 +220,7 @@ mainbus_bs_mmap(t, paddr, offset, prot, flags)
 }
 
 void
-mainbus_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+mainbus_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 }	
 

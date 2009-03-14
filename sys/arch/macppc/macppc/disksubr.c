@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.45 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.46 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.46 2009/03/14 21:04:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,12 +258,7 @@ setpartition(struct part_map_entry *part, struct partition *pp, int fstype)
 }
 
 static int
-getNamedType(part, num_parts, lp, type, alt, maxslot)
-	struct part_map_entry *part;
-	int num_parts;
-	struct disklabel *lp;
-	int type, alt;
-	int *maxslot;
+getNamedType(struct part_map_entry *part, int num_parts, struct disklabel *lp, int type, int alt, int *maxslot)
 {
 	struct blockzeroblock *bzb;
 	int i = 0, clust;
@@ -632,10 +627,7 @@ done:
  * Check new disk label for sensibility before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *osdep)
 {
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0

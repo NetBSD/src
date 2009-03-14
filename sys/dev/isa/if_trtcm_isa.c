@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.16 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.17 2009/03/14 21:04:20 dsl Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.16 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.17 2009/03/14 21:04:20 dsl Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -108,10 +108,7 @@ static struct tcmcard {
 static int ntcmcards = 0;
 
 static void
-tcmaddcard(bus, iobase, irq, maddr, msiz, model, pnpmode)
-	int bus, iobase, irq, maddr;
-	u_int msiz;
-	int model, pnpmode;
+tcmaddcard(int bus, int iobase, int irq, int maddr, u_int msiz, int model, int pnpmode)
 {
 
 	if (ntcmcards >= MAXTCMCARDS)

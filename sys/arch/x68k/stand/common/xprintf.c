@@ -4,7 +4,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: xprintf.c,v 1.3 2009/03/14 15:36:15 dsl Exp $
+ *	$NetBSD: xprintf.c,v 1.4 2009/03/14 21:04:17 dsl Exp $
  */
 
 #include <sys/types.h>
@@ -59,10 +59,7 @@ static char * numstr(char *buf, long val, int base, int sign);
  * buf must have enough space
  */
 static char *
-numstr(buf, val, base, sign)
-	char *buf;
-	long val;
-	int base, sign;
+numstr(char *buf, long val, int base, int sign)
 {
 	unsigned long v;
 	char rev[32];

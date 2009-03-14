@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.23 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: ms.c,v 1.24 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.23 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.24 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -119,9 +119,7 @@ ms_3b_delay(struct ms_softc *ms)
  * Note that we are called from the keyboard software interrupt!
  */
 void
-mouse_soft(rel_ms, size, type)
-REL_MOUSE	*rel_ms;
-int		size, type;
+mouse_soft(REL_MOUSE *rel_ms, int size, int type)
 {
 	struct ms_softc		*ms = &ms_softc[0];
 	struct firm_event	*fe, *fe2;
@@ -304,10 +302,7 @@ out:
 }
 
 int
-msopen(dev, flags, mode, l)
-dev_t		dev;
-int		flags, mode;
-struct lwp	*l;
+msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	u_char		report_ms_joy[] = { 0x14, 0x08 };
 	struct ms_softc	*ms;
@@ -337,10 +332,7 @@ struct lwp	*l;
 }
 
 int
-msclose(dev, flags, mode, l)
-dev_t		dev;
-int		flags, mode;
-struct lwp	*l;
+msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	u_char		disable_ms_joy[] = { 0x12, 0x1a };
 	int		unit;

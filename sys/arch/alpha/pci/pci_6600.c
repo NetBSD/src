@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.17 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_6600.c,v 1.18 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.17 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.18 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,8 +245,7 @@ dec_6600_intr_establish(acv, ih, level, func, arg)
 }
 
 void
-dec_6600_intr_disestablish(acv, cookie)
-        void *acv, *cookie;
+dec_6600_intr_disestablish(void *acv, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;

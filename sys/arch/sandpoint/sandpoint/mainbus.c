@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2009/03/14 15:36:13 dsl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 2009/03/14 21:04:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2009/03/14 21:04:15 dsl Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -75,9 +75,7 @@ mainbus_match(struct device *parent, struct cfdata *match, void *aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct conf_args ca;
 	struct pcibus_attach_args pba;

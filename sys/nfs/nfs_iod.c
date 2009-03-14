@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.2 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.3 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.2 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.3 2009/03/14 21:04:25 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,15 +261,8 @@ nfs_set_niothreads(int newval)
  * on this mount point porpous out of the kernel and do it.
  */
 int
-nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
-	struct nfsmount *nmp;
-	struct nfsreq *rep;
-	kauth_cred_t cred;
-	char **auth_str;
-	int *auth_len;
-	char *verf_str;
-	int *verf_len;
-	NFSKERBKEY_T key;		/* return session key */
+nfs_getauth(struct nfsmount *nmp, struct nfsreq *rep, kauth_cred_t cred, char **auth_str, int *auth_len, char *verf_str, int *verf_len, NFSKERBKEY_T key)
+	/* key:		 return session key */
 {
 	int error = 0;
 

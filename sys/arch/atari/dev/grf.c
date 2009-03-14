@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.38 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: grf.c,v 1.39 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.38 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -168,9 +168,7 @@ grfbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-grfbusattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+grfbusattach(struct device *pdp, struct device *dp, void *auxp)
 {
     grf_auxp_t	grf_auxp;
 
@@ -195,10 +193,7 @@ grfbusprint(void *auxp, const char *name)
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, devtype, l)
-	dev_t dev;
-	int flags, devtype;
-	struct lwp *l;
+grfopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct grf_softc *gp;
 
@@ -446,10 +441,7 @@ grf_viewsync(struct grf_softc *gp)
  */
 /*ARGSUSED*/
 int
-grf_mode(gp, cmd, arg, a2, a3)
-struct grf_softc	*gp;
-int			cmd, a2, a3;
-void			*arg;
+grf_mode(struct grf_softc *gp, int cmd, void *arg, int a2, int a3)
 {
 	extern const struct cdevsw view_cdevsw;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.6 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.7 2009/03/14 21:04:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -308,10 +308,8 @@ mipsvh_cksum(struct mips_volheader *vhp)
  * empty slot is returned, otherwise return NULL 
  */
 static struct mips_voldir *
-voldir_findfile(vhp, file, create)
-	struct mips_volheader *vhp;
-	const char *file;
-	int create;		/* return unused entry if not found */
+voldir_findfile(struct mips_volheader *vhp, const char *file, int create)
+	/* create:		 return unused entry if not found */
 {
 	struct mips_voldir *vdp = vhp->vh_voldir;
 	int i;

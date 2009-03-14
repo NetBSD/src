@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.45 2009/01/13 13:35:52 yamt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.46 2009/03/14 21:04:16 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.45 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.46 2009/03/14 21:04:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,8 +603,7 @@ rd_readgeom(struct hdcsoftc *sc, struct rdsoftc *rd)
  * display the contents of the on-disk geometry structure
  */
 void
-hdc_printgeom(p)
-	struct rdgeom *p;
+hdc_printgeom(struct rdgeom *p)
 {
 	printf ("**DiskData**	 XBNs: %ld, DBNs: %ld, LBNs: %ld, RBNs: %ld\n",
 		p->xbn_count, p->dbn_count, p->lbn_count, p->rbn_count);

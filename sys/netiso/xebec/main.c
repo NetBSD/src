@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * TODO:
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.15 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.16 2009/03/14 21:04:25 dsl Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -174,9 +174,7 @@ putincludes()
 }
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char *argv[])
 {
 	register int i = 2;
 	extern char *strcpy();

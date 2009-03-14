@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.70 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: wds.c,v 1.71 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*
  * XXX
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.70 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.71 2009/03/14 21:04:20 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -212,11 +212,7 @@ int wds_debug = 0;
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 integrate void
-wds_wait(iot, ioh, port, mask, val)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int port;
-	int mask, val;
+wds_wait(bus_space_tag_t iot, bus_space_handle_t ioh, int port, int mask, int val)
 {
 
 	while ((bus_space_read_1(iot, ioh, port) & mask) != val)

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.14 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.15 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.14 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.15 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,7 @@ dwlpx_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-dwlpx_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+dwlpx_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 #if	0
 	struct dwlpx_config *ccp = pba->pba_pc->pc_conf_v;
@@ -88,9 +86,7 @@ dwlpx_bus_maxdevs(void *cpv, int busno)
 }
 
 pcitag_t
-dwlpx_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+dwlpx_make_tag(void *cpv, int b, int d, int f)
 {
 	pcitag_t tag;
 	int hpcdev, pci_idsel;
@@ -102,10 +98,7 @@ dwlpx_make_tag(cpv, b, d, f)
 }
 
 void
-dwlpx_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+dwlpx_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)

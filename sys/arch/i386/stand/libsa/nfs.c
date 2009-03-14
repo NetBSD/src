@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.16 2009/03/14 15:36:08 dsl Exp $	*/
+/*	$NetBSD: nfs.c,v 1.17 2009/03/14 21:04:10 dsl Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -531,11 +531,8 @@ nfs_close(struct open_file *f)
  * read a portion of a file
  */
 int
-nfs_read(f, buf, size, resid)
-	struct open_file *f;
-	void *buf;
-	size_t size;
-	size_t *resid;	/* out */
+nfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
+	/* resid:	 out */
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 	ssize_t cc;
@@ -581,11 +578,8 @@ ret:
  * Not implemented.
  */
 int
-nfs_write(f, buf, size, resid)
-	struct open_file *f;
-	void *buf;
-	size_t size;
-	size_t *resid;	/* out */
+nfs_write(struct open_file *f, void *buf, size_t size, size_t *resid)
+	/* resid:	 out */
 {
 
 	return (EROFS);

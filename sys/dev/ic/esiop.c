@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.43 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: esiop.c,v 1.44 2009/03/14 21:04:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.43 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.44 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2063,9 +2063,7 @@ bad3:
 }
 
 void
-esiop_update_scntl3(sc, _siop_target)
-	struct esiop_softc *sc;
-	struct siop_common_target *_siop_target;
+esiop_update_scntl3(struct esiop_softc *sc, struct siop_common_target *_siop_target)
 {
 	struct esiop_target *esiop_target = (struct esiop_target *)_siop_target;
 	esiop_script_write(sc, esiop_target->lun_table_offset,

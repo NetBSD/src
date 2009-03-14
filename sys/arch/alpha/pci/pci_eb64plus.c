@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.18 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.19 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.18 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.19 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -232,8 +232,7 @@ dec_eb64plus_intr_establish(acv, ih, level, func, arg)
 }
 
 void
-dec_eb64plus_intr_disestablish(acv, cookie)
-        void *acv, *cookie;
+dec_eb64plus_intr_disestablish(void *acv, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;

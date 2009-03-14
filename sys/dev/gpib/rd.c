@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.23 2009/03/14 15:36:17 dsl Exp $ */
+/*	$NetBSD: rd.c,v 1.24 2009/03/14 21:04:19 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.23 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.24 2009/03/14 21:04:19 dsl Exp $");
 
 #include "rnd.h"
 
@@ -335,9 +335,7 @@ rdmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-rdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct rd_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;

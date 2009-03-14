@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.23 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.24 2009/03/14 21:04:24 dsl Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.23 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.24 2009/03/14 21:04:24 dsl Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -141,9 +141,7 @@ ipkdbzero(void *d, int n)
 }
 
 int
-ipkdbcmp(s, d, n)
-	void *s, *d;
-	int n;
+ipkdbcmp(void *s, void *d, int n)
 {
 	char *sp = s, *dp = d;
 
@@ -556,11 +554,7 @@ inpkt(struct ipkdb_if *ifp, char *ibuf, int poll)
 static short ipkdb_ipid = 0;
 
 static void
-outpkt(ifp, in, l, srcport, dstport)
-	struct ipkdb_if *ifp;
-	char *in;
-	int l;
-	int srcport, dstport;
+outpkt(struct ipkdb_if *ifp, char *in, int l, int srcport, int dstport)
 {
 	struct ether_header *eh;
 	struct ip *ip;
@@ -1114,11 +1108,7 @@ check_ipkdb(struct ipkdb_if *ifp, struct in_addr *shost, char *p, int l)
  * Should check whether packet came across the correct interface.	XXX
  */
 int
-checkipkdb(shost, sport, dport, m, off, len)
-	struct in_addr *shost;
-	u_short sport, dport;
-	struct mbuf *m;
-	int off, len;
+checkipkdb(struct in_addr *shost, u_short sport, u_short dport, struct mbuf *m, int off, int len)
 {
 	char *p;
 	int l;

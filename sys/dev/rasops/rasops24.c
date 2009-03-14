@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.26 2009/03/14 15:36:20 dsl Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.27 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.26 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.27 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_rasops.h"
 
@@ -117,11 +117,7 @@ rasops24_init(struct rasops_info *ri)
  * XXX this bites - we should use masks.
  */
 static void
-rasops24_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int fb, width, height, cnt, clr[2];
 	struct rasops_info *ri;
@@ -242,11 +238,7 @@ rasops24_makestamp(struct rasops_info *ri, long attr)
  * Put a single character. This is for 8-pixel wide fonts.
  */
 static void
-rasops24_putchar8(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -323,11 +315,7 @@ rasops24_putchar8(cookie, row, col, uc, attr)
  * Put a single character. This is for 12-pixel wide fonts.
  */
 static void
-rasops24_putchar12(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -411,11 +399,7 @@ rasops24_putchar12(cookie, row, col, uc, attr)
  * Put a single character. This is for 16-pixel wide fonts.
  */
 static void
-rasops24_putchar16(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops24_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -507,10 +491,7 @@ rasops24_putchar16(cookie, row, col, uc, attr)
  * Erase rows. This is nice and easy due to alignment.
  */
 static void
-rasops24_eraserows(cookie, row, num, attr)
-	void *cookie;
-	int row, num;
-	long attr;
+rasops24_eraserows(void *cookie, int row, int num, long attr)
 {
 	int n9, n3, n1, cnt, stride, delta;
 	u_int32_t *dp, clr, xstamp[3];
@@ -611,10 +592,7 @@ rasops24_eraserows(cookie, row, num, attr)
  * Erase columns.
  */
 static void
-rasops24_erasecols(cookie, row, col, num, attr)
-	void *cookie;
-	int row, col, num;
-	long attr;
+rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	int n12, n4, height, cnt, slop, clr, xstamp[3];
 	struct rasops_info *ri;

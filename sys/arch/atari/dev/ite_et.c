@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.22 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.23 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.22 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.23 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,9 +174,7 @@ grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * note  : dp is NULL during early console init.
  */
 void
-grfetattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+grfetattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	static struct grf_softc		congrf;
 	static int			first_attach = 1;

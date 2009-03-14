@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.17 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.18 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.17 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.18 2009/03/14 21:04:23 dsl Exp $");
 
 /*
  * kernel include files.
@@ -163,12 +163,11 @@ fatblock(struct msdosfsmount *pmp, u_long ofs, u_long *bnp, u_long *sizep, u_lon
  *  If cnp is null, nothing is returned.
  */
 int
-pcbmap(dep, findcn, bnp, cnp, sp)
-	struct denode *dep;
-	u_long findcn;		/* file relative cluster to get		 */
-	daddr_t *bnp;		/* returned filesys rel sector number	 */
-	u_long *cnp;		/* returned cluster number		 */
-	int *sp;		/* returned block size			 */
+pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
+	/* findcn:		 file relative cluster to get		 */
+	/* bnp:		 returned filesys rel sector number	 */
+	/* cnp:		 returned cluster number		 */
+	/* sp:		 returned block size			 */
 {
 	int error;
 	u_long i;

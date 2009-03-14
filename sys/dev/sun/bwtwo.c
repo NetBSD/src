@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.23 2009/03/14 15:36:21 dsl Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.24 2009/03/14 21:04:23 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.23 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.24 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,10 +320,7 @@ bwtwoattach(struct bwtwo_softc *sc, const char *name, int isconsole)
 }
 
 int
-bwtwoopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+bwtwoopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 

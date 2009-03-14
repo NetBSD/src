@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.17 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: et4000.c,v 1.18 2009/03/14 21:04:08 dsl Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.17 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.18 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -243,10 +243,7 @@ et_stop(bus_space_tag_t *iot, bus_space_handle_t *ioh, int *vgabase, u_char *sav
 }
 
 static int
-et_detect(iot, memt, ioh, memh, memsize)
-	bus_space_tag_t *iot, *memt;
-	bus_space_handle_t *ioh, *memh;
-	u_int memsize;
+et_detect(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, bus_space_handle_t *memh, u_int memsize)
 {
 	u_char orig, new, saved;
 	int vgabase;
@@ -332,9 +329,7 @@ et_detect(iot, memt, ioh, memh, memsize)
 }
 
 static void
-et_vme_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+et_vme_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct et_softc *sc = (struct et_softc *)self;
 	struct vme_attach_args *va = aux;
@@ -365,10 +360,7 @@ et_vme_attach(parent, self, aux)
 }
 
 int
-etopen(dev, flags, devtype, l)
-	dev_t dev;
-	int flags, devtype;
-	struct lwp *l;
+etopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct et_softc *sc;
 
@@ -382,10 +374,7 @@ etopen(dev, flags, devtype, l)
 }
 
 int
-etclose(dev, flags, devtype, l)
-	dev_t dev;
-	int flags, devtype;
-	struct lwp *l;
+etclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct et_softc *sc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.41 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: ser.c,v 1.42 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.41 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.42 2009/03/14 21:04:06 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -278,9 +278,7 @@ sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 
 /*ARGSUSED*/
 static void
-serattach(pdp, dp, auxp)
-struct	device *pdp, *dp;
-void	*auxp;
+serattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct ser_softc *sc = device_private(dp);
 
@@ -354,10 +352,7 @@ serstatus(struct ser_softc *sc, char *str)
 #endif /* SER_DEBUG */
 
 int
-seropen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+seropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SERUNIT(dev);
 	struct ser_softc *sc;
@@ -476,10 +471,7 @@ bad:
 }
  
 int
-serclose(dev, flag, mode, l)
-	dev_t		dev;
-	int		flag, mode;
-	struct lwp	*l;
+serclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SERUNIT(dev);
 	struct ser_softc *sc = device_lookup_private(&ser_cd, unit);

@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.29 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: db_interface.c,v 1.30 2009/03/14 21:04:02 dsl Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,9 +174,7 @@ db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
  * ddb_trap - field a kernel trap
  */
 int
-ddb_trap(a0, a1, a2, entry, regs)
-	unsigned long a0, a1, a2, entry;
-	db_regs_t *regs;
+ddb_trap(unsigned long a0, unsigned long a1, unsigned long a2, unsigned long entry, db_regs_t *regs)
 {
 	struct cpu_info *ci = curcpu();
 	int s;
@@ -448,8 +446,7 @@ db_inst_unconditional_flow_transfer(int ins)
 
 #if 0
 bool
-db_inst_spill(ins, regn)
-	int ins, regn;
+db_inst_spill(int ins, int regn)
 {
 	alpha_instruction insn;
 

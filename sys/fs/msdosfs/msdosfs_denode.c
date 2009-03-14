@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.34 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.35 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.34 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.35 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,11 +218,11 @@ msdosfs_hashrem(struct denode *dep)
  * depp	     - returns the address of the gotten denode.
  */
 int
-deget(pmp, dirclust, diroffset, depp)
-	struct msdosfsmount *pmp;	/* so we know the maj/min number */
-	u_long dirclust;		/* cluster this dir entry came from */
-	u_long diroffset;		/* index of entry within the cluster */
-	struct denode **depp;		/* returns the addr of the gotten denode */
+deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode **depp)
+	/* pmp:	 so we know the maj/min number */
+	/* dirclust:		 cluster this dir entry came from */
+	/* diroffset:		 index of entry within the cluster */
+	/* depp:		 returns the addr of the gotten denode */
 {
 	int error;
 	extern int (**msdosfs_vnodeop_p)(void *);

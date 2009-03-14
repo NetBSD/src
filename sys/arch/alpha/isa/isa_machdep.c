@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.17 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.18 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.17 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.18 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,8 +68,7 @@ static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
 int
-isa_display_console(iot, memt)
-	bus_space_tag_t iot, memt;
+isa_display_console(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	int res = ENXIO;
 #if NVGA_ISA
@@ -88,9 +87,7 @@ isabeepmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-isabeepattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isabeepattach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 
@@ -100,8 +97,7 @@ isabeepattach(parent, self, aux)
 #endif
 
 void
-isabeep(pitch, period)
-	int pitch, period;
+isabeep(int pitch, int period)
 {
 #if (NPCPPI > 0)
 	if (ppi_attached)

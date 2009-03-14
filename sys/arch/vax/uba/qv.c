@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.21 2009/03/14 15:36:14 dsl Exp $	*/
+/*	$NetBSD: qv.c,v 1.22 2009/03/14 21:04:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.21 2009/03/14 15:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.22 2009/03/14 21:04:16 dsl Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -366,10 +366,7 @@ qvattach(struct uba_device *ui)
 
 /*ARGSUSED*/
 int
-qvopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+qvopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	register struct tty *tp;
 	register int unit, qv;
@@ -436,10 +433,7 @@ qvopen(dev, flag, mode, p)
  */
 /*ARGSUSED*/
 int
-qvclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+qvclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	register struct tty *tp;
 	register unit;

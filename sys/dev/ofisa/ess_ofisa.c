@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.21 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.22 2009/03/14 21:04:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.21 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.22 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,7 @@ ess_ofisa_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ess_ofisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ess_ofisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ess_softc *sc = device_private(self);
 	struct ofisa_attach_args *aa = aux;

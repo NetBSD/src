@@ -1,4 +1,4 @@
-/* $NetBSD: lca_pci.c,v 1.17 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: lca_pci.c,v 1.18 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.17 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.18 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,7 @@ lca_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-lca_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+lca_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
@@ -83,19 +81,14 @@ lca_bus_maxdevs(void *cpv, int busno)
 }
 
 pcitag_t
-lca_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+lca_make_tag(void *cpv, int b, int d, int f)
 {
 
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
 void
-lca_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+lca_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)

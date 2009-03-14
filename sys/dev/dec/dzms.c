@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.18 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: dzms.c,v 1.19 2009/03/14 21:04:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.18 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.19 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,9 +116,7 @@ dzms_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-dzms_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dzms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dz_softc *dz = device_private(parent);
 	struct dzms_softc *dzms = device_private(self);

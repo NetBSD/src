@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.15 2009/03/14 15:36:08 dsl Exp $	*/
+/*	$NetBSD: isr.c,v 1.16 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.15 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.16 2009/03/14 21:04:11 dsl Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -198,8 +198,8 @@ isrunlink_vectored(int vec)
  * assembly language autovectored interrupt routine.
  */
 void
-isrdispatch_autovec(evec)
-	int evec;		/* format | vector offset */
+isrdispatch_autovec(int evec)
+	/* evec:		 format | vector offset */
 {
 	struct isr_autovec *isr;
 	isr_autovec_list_t *list;
@@ -242,9 +242,7 @@ isrdispatch_autovec(evec)
  * assembly language vectored interrupt routine.
  */
 void
-isrdispatch_vectored(pc, evec, frame)
-	int pc, evec;
-	void *frame;
+isrdispatch_vectored(int pc, int evec, void *frame)
 {
 	struct isr_vectored *isr;
 	int ipl, vec;

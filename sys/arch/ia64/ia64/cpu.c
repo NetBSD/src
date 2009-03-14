@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2009/03/14 15:36:08 dsl Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 2009/03/14 21:04:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2009/03/14 21:04:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,9 +53,7 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
 
 void
-cpu_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	return;
 }

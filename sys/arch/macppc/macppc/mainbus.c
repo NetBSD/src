@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2009/03/14 21:04:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,9 +63,7 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofbus_attach_args oba;
 	struct confargs ca;

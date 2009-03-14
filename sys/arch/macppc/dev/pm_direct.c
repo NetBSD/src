@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.35 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.36 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.35 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.36 2009/03/14 21:04:11 dsl Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -1081,8 +1081,7 @@ pm_read_nvram(int addr)
 }
 
 void
-pm_write_nvram(addr, val)
-	int addr, val;
+pm_write_nvram(int addr, int val)
 {
 	PMData p;
 

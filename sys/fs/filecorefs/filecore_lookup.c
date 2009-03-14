@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.10 2007/11/26 19:01:44 pooka Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.11 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.10 2007/11/26 19:01:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.11 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -118,8 +118,7 @@ struct	nchstats filecore_nchstats;
  * NOTE: (LOOKUP | LOCKPARENT) currently returns the parent inode unlocked.
  */
 int
-filecore_lookup(v)
-	void *v;
+filecore_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;

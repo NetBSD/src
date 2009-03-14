@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.25 2009/03/14 15:36:18 dsl Exp $ */
+/* $NetBSD: ega.c,v 1.26 2009/03/14 21:04:20 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.25 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.26 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,8 +231,7 @@ const struct wsdisplay_accessops ega_accessops = {
 };
 
 static int
-ega_probe_col(iot, memt)
-	bus_space_tag_t iot, memt;
+ega_probe_col(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	bus_space_handle_t memh, ioh_6845;
 	u_int16_t oldval, val;
@@ -255,8 +254,7 @@ ega_probe_col(iot, memt)
 }
 
 static int
-ega_probe_mono(iot, memt)
-	bus_space_tag_t iot, memt;
+ega_probe_mono(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	bus_space_handle_t memh, ioh_6845;
 	u_int16_t oldval, val;
@@ -286,10 +284,8 @@ ega_probe_mono(iot, memt)
 	f->encoding == WSDISPLAY_FONTENC_ISO)
 
 int
-ega_selectfont(vc, scr, name1, name2)
-	struct ega_config *vc;
-	struct egascreen *scr;
-	char *name1, *name2; /* NULL: take first found */
+ega_selectfont(struct ega_config *vc, struct egascreen *scr, char *name1, char *name2)
+	/* name1, *name2:  NULL: take first found */
 {
 	const struct wsscreen_descr *type = scr->pcs.type;
 	struct egafont *f1, *f2;
@@ -395,10 +391,7 @@ ega_init_screen(struct ega_config *vc, struct egascreen *scr, const struct wsscr
 }
 
 static void
-ega_init(vc, iot, memt, mono)
-	struct ega_config *vc;
-	bus_space_tag_t iot, memt;
-	int mono;
+ega_init(struct ega_config *vc, bus_space_tag_t iot, bus_space_tag_t memt, int mono)
 {
 	struct vga_handle *vh = &vc->hdl;
 	int i;
@@ -491,9 +484,7 @@ ega_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ega_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ega_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct ega_softc *sc = (struct ega_softc *)self;
@@ -535,8 +526,7 @@ ega_attach(parent, self, aux)
 
 
 int
-ega_cnattach(iot, memt)
-	bus_space_tag_t iot, memt;
+ega_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	int mono;
 	long defattr;
@@ -591,12 +581,7 @@ ega_mmap(void *v, void *vs, off_t offset, int prot)
 }
 
 static int
-ega_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *defattrp;
+ega_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep, int *curxp, int *curyp, long *defattrp)
 {
 	struct ega_config *vc = v;
 	struct egascreen *scr;
@@ -815,11 +800,7 @@ ega_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 }
 
 static int
-ega_allocattr(id, fg, bg, flags, attrp)
-	void *id;
-	int fg, bg;
-	int flags;
-	long *attrp;
+ega_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	struct egascreen *scr = id;
 	struct ega_config *vc = scr->cfg;
@@ -855,9 +836,7 @@ ega_allocattr(id, fg, bg, flags, attrp)
 }
 
 void
-ega_copyrows(id, srcrow, dstrow, nrows)
-	void *id;
-	int srcrow, dstrow, nrows;
+ega_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct egascreen *scr = id;
 	bus_space_tag_t memt = scr->pcs.hdl->ph_memt;

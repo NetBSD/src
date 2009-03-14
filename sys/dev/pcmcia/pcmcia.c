@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.88 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.89 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.88 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.89 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -257,9 +257,8 @@ pcmcia_rescan(struct device *self, const char *ifattr,
 }
 
 void
-pcmcia_card_detach(dev, flags)
-	struct device *dev;
-	int flags;		/* DETACH_* flags */
+pcmcia_card_detach(struct device *dev, int flags)
+	/* flags:		 DETACH_* flags */
 {
 	struct pcmcia_softc *sc = device_private(dev);
 	struct pcmcia_function *pf;

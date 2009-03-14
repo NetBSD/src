@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.30 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.31 2009/03/14 21:04:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.30 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.31 2009/03/14 21:04:05 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -177,9 +177,7 @@ fcom_probe(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 static void
-fcom_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fcom_attach(struct device *parent, struct device *self, void *aux)
 {
 	union footbridge_attach_args *fba = aux;
 	struct fcom_softc *sc = (struct fcom_softc *)self;

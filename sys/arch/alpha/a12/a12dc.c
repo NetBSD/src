@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.21 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: a12dc.c,v 1.22 2009/03/14 21:04:01 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.21 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.22 2009/03/14 21:04:01 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,9 +151,7 @@ a12dcmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-a12dcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+a12dcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tty *tp;
 	struct a12dc_config *ccp;
@@ -161,7 +159,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.21 $");
+	printf(": driver %s\n", "$Revision: 1.22 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -257,10 +255,7 @@ static int did_init;
 }
 
 int
-a12dcopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+a12dcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -308,10 +303,7 @@ a12dcopen(dev, flag, mode, l)
 }
  
 int
-a12dcclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+a12dcclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp = a12dc_tty[unit];

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.46 2009/02/14 17:29:11 plunky Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.47 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.46 2009/02/14 17:29:11 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.47 2009/03/14 21:04:25 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,7 @@ const struct vnodeopv_desc umapfs_vnodeop_opv_desc =
  * See layer_vnops.c:layer_bypass for more details.
  */
 int
-umap_bypass(v)
-	void *v;
+umap_bypass(void *v)
 {
 	struct vop_generic_args /* {
 		struct vnodeop_desc *a_desc;
@@ -346,8 +345,7 @@ umap_bypass(v)
  * See layer_vnops.c:layer_bypass for more details.
  */
 int
-umap_lookup(v)
-	void *v;
+umap_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnodeop_desc *a_desc;
@@ -448,8 +446,7 @@ umap_lookup(v)
  *  We handle getattr to change the fsid.
  */
 int
-umap_getattr(v)
-	void *v;
+umap_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -523,8 +520,7 @@ umap_getattr(v)
 }
 
 int
-umap_print(v)
-	void *v;
+umap_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
@@ -536,8 +532,7 @@ umap_print(v)
 }
 
 int
-umap_rename(v)
-	void *v;
+umap_rename(void *v)
 {
 	struct vop_rename_args  /* {
 		struct vnode *a_fdvp;

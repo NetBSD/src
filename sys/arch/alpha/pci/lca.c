@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.46 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: lca.c,v 1.47 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.46 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.47 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,9 +184,7 @@ lca_init(struct lca_config *lcp, int mallocsafe)
 }
 
 void
-lcaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lcaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct lca_softc *sc = (struct lca_softc *)self;
 	struct lca_config *lcp;
@@ -244,9 +242,7 @@ lcaattach(parent, self, aux)
 }
 
 int
-lca_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+lca_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct lca_config *lcp = &lca_configuration;
 	bus_space_tag_t st;

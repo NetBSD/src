@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.32 2009/03/14 14:46:09 dsl Exp $	*/
+/*	$NetBSD: advnops.c,v 1.33 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.32 2009/03/14 14:46:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.33 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,8 +142,7 @@ const struct vnodeopv_desc adosfs_vnodeop_opv_desc =
 	{ &adosfs_vnodeop_p, adosfs_vnodeop_entries };
 
 int
-adosfs_getattr(v)
-	void *v;
+adosfs_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -208,8 +207,7 @@ adosfs_getattr(v)
  * deleted or changed (data block pointer blocks moving about.)
  */
 int
-adosfs_read(v)
-	void *v;
+adosfs_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -341,8 +339,7 @@ reterr:
 }
 
 int
-adosfs_write(v)
-	void *v;
+adosfs_write(void *v)
 {
 #ifdef ADOSFS_DIAGNOSTIC
 	struct vop_write_args /* {
@@ -361,8 +358,7 @@ adosfs_write(v)
  * Just call the device strategy routine
  */
 int
-adosfs_strategy(v)
-	void *v;
+adosfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -408,8 +404,7 @@ reterr:
 }
 
 int
-adosfs_link(v)
-	void *v;
+adosfs_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -423,8 +418,7 @@ adosfs_link(v)
 }
 
 int
-adosfs_symlink(v)
-	void *v;
+adosfs_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -443,8 +437,7 @@ adosfs_symlink(v)
  * Wait until the vnode has finished changing state.
  */
 int
-adosfs_bmap(v)
-	void *v;
+adosfs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -574,8 +567,7 @@ reterr:
  */
 /* ARGSUSED */
 int
-adosfs_print(v)
-	void *v;
+adosfs_print(void *v)
 {
 #if 0
 	struct vop_print_args /* {
@@ -586,8 +578,7 @@ adosfs_print(v)
 }
 
 int
-adosfs_readdir(v)
-	void *v;
+adosfs_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -758,8 +749,7 @@ reterr:
 
 
 int
-adosfs_access(v)
-	void *v;
+adosfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -805,8 +795,7 @@ adosfs_access(v)
 }
 
 int
-adosfs_readlink(v)
-	void *v;
+adosfs_readlink(void *v)
 {
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
@@ -829,8 +818,7 @@ adosfs_readlink(v)
 
 /*ARGSUSED*/
 int
-adosfs_inactive(v)
-	void *v;
+adosfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -855,8 +843,7 @@ adosfs_inactive(v)
  * no lock needed we are being called from vclean()
  */
 int
-adosfs_reclaim(v)
-	void *v;
+adosfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -887,8 +874,7 @@ adosfs_reclaim(v)
  * not valid currently
  */
 int
-adosfs_pathconf(v)
-	void *v;
+adosfs_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;

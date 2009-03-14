@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -184,8 +184,7 @@ fail:
  * strip out device name and kernel name
  */
 static char *
-devsplit(fname, devname)
-	char *fname, *devname;
+devsplit(char *fname, char *devname)
 {
 	char *src, *dst;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.22 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: podulebus.c,v 1.23 2009/03/14 21:04:01 dsl Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.22 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.23 2009/03/14 21:04:01 dsl Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -552,9 +552,7 @@ podulebus_irq_establish(ih, ipl, func, arg, ev)
  * Generate a bus_space_tag_t with the specified address-bus shift.
  */
 void
-podulebus_shift_tag(tag, shift, tagp)
-	bus_space_tag_t tag, *tagp;
-	u_int shift;
+podulebus_shift_tag(bus_space_tag_t tag, u_int shift, bus_space_tag_t *tagp)
 {
 
 	/*

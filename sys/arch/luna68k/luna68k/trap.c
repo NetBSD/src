@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.57 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: trap.c,v 1.58 2009/03/14 21:04:11 dsl Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2009/03/14 21:04:11 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -902,10 +902,7 @@ dumpssw(u_short ssw)
 }
 
 static void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	struct proc *p = curproc;
 	paddr_t pa;

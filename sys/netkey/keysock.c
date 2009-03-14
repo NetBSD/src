@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.50 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: keysock.c,v 1.51 2009/03/14 21:04:25 dsl Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.50 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.51 2009/03/14 21:04:25 dsl Exp $");
 
 #include "opt_inet.h"
 
@@ -107,11 +107,7 @@ key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,
  * derived from net/rtsock.c:route_usrreq()
  */
 int
-key_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+key_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);

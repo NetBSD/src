@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.39 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.40 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.39 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.40 2009/03/14 21:04:11 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -858,17 +858,13 @@ chipit:
 }
 
 int
-bmac_mii_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+bmac_mii_readreg(struct device *dev, int phy, int reg)
 {
 	return mii_bitbang_readreg(dev, &bmac_mbo, phy, reg);
 }
 
 void
-bmac_mii_writereg(dev, phy, reg, val)
-	struct device *dev;
-	int phy, reg, val;
+bmac_mii_writereg(struct device *dev, int phy, int reg, int val)
 {
 	mii_bitbang_writereg(dev, &bmac_mbo, phy, reg, val);
 }

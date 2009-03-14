@@ -19,13 +19,13 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.11 2009/03/14 15:36:15 dsl Exp $
+ *	$NetBSD: loadbsd.c,v 1.12 2009/03/14 21:04:17 dsl Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.11 2009/03/14 15:36:15 dsl Exp $");
-#define VERSION	"$Revision: 1.11 $ $Date: 2009/03/14 15:36:15 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.12 2009/03/14 21:04:17 dsl Exp $");
+#define VERSION	"$Revision: 1.12 $ $Date: 2009/03/14 21:04:17 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -74,9 +74,7 @@ const struct hatbl {
  * return the next position
  */
 static const char *
-lookupif(name, pif, punit)
-	const char *name;
-	unsigned *pif, *punit;
+lookupif(const char *name, unsigned *pif, unsigned *punit)
 {
 	unsigned u, unit;
 	const char *p;
@@ -113,8 +111,7 @@ found:
  * if the SCSI interface is not specified, use the current one
  */
 static void
-get_current_scsi_interface(pif, punit)
-	unsigned *pif, *punit;
+get_current_scsi_interface(unsigned *pif, unsigned *punit)
 {
 	unsigned binf;
 	char *bootrom;
@@ -445,9 +442,7 @@ kernel options:\n\
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *rootdevname = 0;
 	int rootdev;

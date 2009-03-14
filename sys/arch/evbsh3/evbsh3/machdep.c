@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2009/03/14 21:04:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2009/03/14 15:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2009/03/14 21:04:09 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -297,12 +297,7 @@ consinit()
 }
 
 int
-bus_space_map (t, addr, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+bus_space_map (bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 
 	*bshp = (bus_space_handle_t)addr;
@@ -311,11 +306,7 @@ bus_space_map (t, addr, size, flags, bshp)
 }
 
 int
-sh_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+sh_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -509,11 +500,7 @@ shpcmcia_memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 }
 
 int
-shpcmcia_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+shpcmcia_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;

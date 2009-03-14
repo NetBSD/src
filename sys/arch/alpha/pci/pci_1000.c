@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.20 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_1000.c,v 1.21 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.20 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.21 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,10 +107,7 @@ static void pci_1000_imi(void);
 static pci_chipset_tag_t pc_tag;
 
 void
-pci_1000_pickintr(core, iot, memt, pc)
-	void *core;
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
+pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc)
 {
 	char *cp;
 	int i;
@@ -228,8 +225,7 @@ dec_1000_intr_establish(ccv, ih, level, func, arg)
 }
 
 void    
-dec_1000_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+dec_1000_intr_disestablish(void *ccv, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;

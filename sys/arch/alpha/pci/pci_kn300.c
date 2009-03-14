@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.31 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.32 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.31 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.32 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -222,8 +222,7 @@ dec_kn300_intr_establish(ccv, ih, level, func, arg)
 }
 
 void    
-dec_kn300_intr_disestablish(ccv, cookie)
-	void *ccv, *cookie;
+dec_kn300_intr_disestablish(void *ccv, void *cookie)
 {
 	panic("dec_kn300_intr_disestablish not implemented");
 }

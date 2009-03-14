@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.32 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.33 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.32 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.33 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,9 +109,7 @@ isabusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-isabusattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+isabusattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct isabus_softc *sc = (struct isabus_softc *)dp;
 	struct isabus_attach_args	iba;
@@ -152,9 +150,7 @@ atariisabusprint(void *auxp, const char *name)
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device		  *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
 {
 }
 

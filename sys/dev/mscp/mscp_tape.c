@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.35 2009/03/14 15:36:19 dsl Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.36 2009/03/14 21:04:21 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.35 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.36 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -154,9 +154,7 @@ mtmatch(struct device *parent, struct cfdata *cf, void *aux)
  * The attach routine only checks and prints drive type.
  */
 void
-mtattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+mtattach(struct device *parent, struct device *self, void *aux)
 {
 	struct	mt_softc *mt = device_private(self);
 	struct	drive_attach_args *da = aux;
@@ -203,10 +201,7 @@ mt_putonline(struct mt_softc *mt)
  */
 /*ARGSUSED*/
 int
-mtopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct	lwp *l;
+mtopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mt_softc *mt;
 	int unit;
@@ -233,10 +228,7 @@ mtopen(dev, flag, fmt, l)
 
 /* ARGSUSED */
 int
-mtclose(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct	lwp *l;
+mtclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = mtunit(dev);
 	struct mt_softc *mt = device_lookup_private(&mt_cd, unit);
@@ -452,9 +444,7 @@ mtdump(dev_t dev, daddr_t blkno, void *va, size_t size)
  * It sure would be nice if my manual stated this... /ragge
  */
 int
-mtcmd(mt, cmd, count, complete)
-	struct mt_softc *mt;
-	int cmd, count, complete;
+mtcmd(struct mt_softc *mt, int cmd, int count, int complete)
 {
 	struct mscp *mp;
 	struct mscp_softc *mi = (void *)device_parent(&mt->mt_dev);

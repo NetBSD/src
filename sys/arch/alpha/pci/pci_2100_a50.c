@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.34 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.35 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.34 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.35 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -251,8 +251,7 @@ dec_2100_a50_intr_establish(acv, ih, level, func, arg)
 }
 
 void
-dec_2100_a50_intr_disestablish(acv, cookie)
-	void *acv, *cookie;
+dec_2100_a50_intr_disestablish(void *acv, void *cookie)
 {
 #if 0
 	struct apecs_config *acp = acv;

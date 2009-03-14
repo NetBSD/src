@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.22 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: apm.c,v 1.23 2009/03/14 21:04:11 dsl Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.22 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.23 2009/03/14 21:04:11 dsl Exp $");
 
 #include "apm.h"
 
@@ -175,9 +175,7 @@ apmmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-apmattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apm_softc *sc = (struct apm_softc *) self;
 	struct pmu_battery_info info;

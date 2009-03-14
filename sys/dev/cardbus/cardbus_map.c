@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.28 2009/03/14 15:36:16 dsl Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.29 2009/03/14 21:04:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.28 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.29 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,14 +232,7 @@ cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf, cardbustag
  *   written on the BAR.
  */
 int
-cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
-	struct cardbus_softc *sc;
-	int func, reg, busflags;
-	cardbusreg_t type;
-	bus_space_tag_t *tagp;
-	bus_space_handle_t *handlep;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
+cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, cardbusreg_t type, int busflags, bus_space_tag_t *tagp, bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
 {
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
@@ -340,12 +333,7 @@ cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
  *   int reg; the offset of BAR register.
  */
 int
-cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
-	struct cardbus_softc *sc;
-	int func, reg;
-	bus_space_tag_t tag;
-	bus_space_handle_t handle;
-	bus_size_t size;
+cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
 {
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;

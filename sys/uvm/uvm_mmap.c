@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.126 2008/06/03 21:48:27 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.127 2009/03/14 21:04:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.126 2008/06/03 21:48:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.127 2009/03/14 21:04:26 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1055,15 +1055,7 @@ sys_munlockall(struct lwp *l, const void *v, register_t *retval)
  */
 
 int
-uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
-	struct vm_map *map;
-	vaddr_t *addr;
-	vsize_t size;
-	vm_prot_t prot, maxprot;
-	int flags;
-	void *handle;
-	voff_t foff;
-	vsize_t locklimit;
+uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot, vm_prot_t maxprot, int flags, void *handle, voff_t foff, vsize_t locklimit)
 {
 	struct uvm_object *uobj;
 	struct vnode *vp;

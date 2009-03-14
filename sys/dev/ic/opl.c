@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.35 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: opl.c,v 1.36 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.35 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.36 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,10 +190,7 @@ opl_detach(struct opl_softc *sc, int flags)
 }
 
 static void
-opl_command(sc, offs, addr, data)
-	struct opl_softc *sc;
-	int offs;
-	int addr, data;
+opl_command(struct opl_softc *sc, int offs, int addr, int data)
 {
 	DPRINTFN(4, ("opl_command: sc=%p, offs=%d addr=0x%02x data=0x%02x\n",
 		     sc, offs, addr, data));

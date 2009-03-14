@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.3 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.4 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.3 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.4 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,7 @@ uni_n_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-uni_n_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+uni_n_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uni_n_softc *sc = (struct uni_n_softc *)self;
 	struct confargs *our_ca = aux;

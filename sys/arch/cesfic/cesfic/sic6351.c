@@ -1,4 +1,4 @@
-/* $NetBSD: sic6351.c,v 1.5 2009/03/14 15:36:04 dsl Exp $ */
+/* $NetBSD: sic6351.c,v 1.6 2009/03/14 21:04:08 dsl Exp $ */
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sic6351.c,v 1.5 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sic6351.c,v 1.6 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,7 @@ act2icr(int act)
 }
 
 void
-sic_enable_int(nr, type, icod, level, vector)
-	int nr, type, icod, level, vector;
+sic_enable_int(int nr, int type, int icod, int level, int vector)
 {
 
 	if (icod == 0)

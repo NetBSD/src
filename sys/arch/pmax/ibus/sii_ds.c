@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.5 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.6 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.5 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.6 2009/03/14 21:04:14 dsl Exp $");
 
 #include "sii.h"
 
@@ -162,10 +162,8 @@ kn230_copytobuf(u_short *src, volatile u_short *dst, int len)
  * currently safe on sii driver, but API and casts should be changed.
  */
 static void
-kn230_copyfrombuf(src, dst, len)
-	volatile u_short *src;
-	char *dst;		/* XXX assume 32-bit aligned? */
-	int len;
+kn230_copyfrombuf(volatile u_short *src, char *dst, int len)
+	/* dst:		 XXX assume 32-bit aligned? */
 {
 	volatile u_int *wsrc = (volatile u_int *)src;
 	u_int *wdst = (u_int *)dst;
@@ -218,10 +216,8 @@ kn01_copytobuf(u_short *src, volatile u_short *dst, int len)
 }
 
 static void
-kn01_copyfrombuf(src, dst, len)
-	volatile u_short *src;
-	char *dst;		/* XXX assume 32-bit aligned? */
-	int len;
+kn01_copyfrombuf(volatile u_short *src, char *dst, int len)
+	/* dst:		 XXX assume 32-bit aligned? */
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 	if ((u_int)(src) & 0x3) {

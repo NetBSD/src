@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.29 2009/03/14 15:36:19 dsl Exp $ */
+/* $NetBSD: if_txp.c,v 1.30 2009/03/14 21:04:21 dsl Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.29 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.30 2009/03/14 21:04:21 dsl Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1553,11 +1553,7 @@ oactive1:
  * Handle simple commands sent to the typhoon
  */
 int
-txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
-	struct txp_softc *sc;
-	u_int16_t id, in1, *out1;
-	u_int32_t in2, in3, *out2, *out3;
-	int wait;
+txp_command(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2, u_int32_t in3, u_int16_t *out1, u_int32_t *out2, u_int32_t *out3, int wait)
 {
 	struct txp_rsp_desc *rsp = NULL;
 
@@ -1578,14 +1574,7 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 }
 
 int
-txp_command2(sc, id, in1, in2, in3, in_extp, in_extn, rspp, wait)
-	struct txp_softc *sc;
-	u_int16_t id, in1;
-	u_int32_t in2, in3;
-	struct txp_ext_desc *in_extp;
-	u_int8_t in_extn;
-	struct txp_rsp_desc **rspp;
-	int wait;
+txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2, u_int32_t in3, struct txp_ext_desc *in_extp, u_int8_t in_extn, struct txp_rsp_desc **rspp, int wait)
 {
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_cmd_desc *cmd;
@@ -1705,9 +1694,7 @@ txp_response(struct txp_softc *sc, u_int32_t ridx, u_int16_t id, u_int16_t seq, 
 }
 
 void
-txp_rsp_fixup(sc, rsp, dst)
-	struct txp_softc *sc;
-	struct txp_rsp_desc *rsp, *dst;
+txp_rsp_fixup(struct txp_softc *sc, struct txp_rsp_desc *rsp, struct txp_rsp_desc *dst)
 {
 	struct txp_rsp_desc *src = rsp;
 	struct txp_hostvar *hv = sc->sc_hostvar;

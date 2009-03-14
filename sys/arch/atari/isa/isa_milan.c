@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.11 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.12 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.11 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.12 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,8 +130,7 @@ isa_callback(int vector)
 
 void milan_isa_intr(int, int);
 void
-milan_isa_intr(vector, sr)
-	int	vector, sr;
+milan_isa_intr(int vector, int sr)
 {
 	isa_intr_info_t *iinfo_p;
 	int		s;

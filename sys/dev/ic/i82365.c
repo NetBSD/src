@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.105 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: i82365.c,v 1.106 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.105 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.106 2009/03/14 21:04:20 dsl Exp $");
 
 #define	PCICDEBUG
 
@@ -757,9 +757,8 @@ pcic_attach_card(struct pcic_handle *h)
 }
 
 void
-pcic_detach_card(h, flags)
-	struct pcic_handle *h;
-	int flags;		/* DETACH_* */
+pcic_detach_card(struct pcic_handle *h, int flags)
+	/* flags:		 DETACH_* */
 {
 
 	if (h->flags & PCIC_FLAG_CARDP) {
@@ -1260,10 +1259,8 @@ pcic_wait_ready(struct pcic_handle *h)
  * Perform long (msec order) delay.
  */
 static void
-pcic_delay(h, timo, wmesg)
-	struct pcic_handle *h;
-	int timo;			/* in ms.  must not be zero */
-	const char *wmesg;
+pcic_delay(struct pcic_handle *h, int timo, const char *wmesg)
+	/* timo:			 in ms.  must not be zero */
 {
 
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.29 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.30 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.29 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.30 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,11 +133,7 @@ ai_atten(struct ie_softc *sc, int why)
 }
 
 static void
-ai_copyin (sc, dst, offset, size)
-        struct ie_softc *sc;
-        void *dst;
-        int offset;
-        size_t size;
+ai_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int dribble;
 	u_int8_t* bptr = dst;
@@ -162,11 +158,7 @@ ai_copyin (sc, dst, offset, size)
 }
 
 static void
-ai_copyout (sc, src, offset, size)
-        struct ie_softc *sc;
-        const void *src;
-        int offset;
-        size_t size;
+ai_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int dribble;
 	int osize = size;
@@ -192,28 +184,21 @@ ai_copyout (sc, src, offset, size)
 }
 
 static u_int16_t
-ai_read_16 (sc, offset)
-        struct ie_softc *sc;
-        int offset;
+ai_read_16 (struct ie_softc *sc, int offset)
 {
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
         return bus_space_read_2(sc->bt, sc->bh, offset);
 }
 
 static void
-ai_write_16 (sc, offset, value)
-        struct ie_softc *sc;
-        int offset;
-        u_int16_t value;
+ai_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 {
         bus_space_write_2(sc->bt, sc->bh, offset, value);
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
-ai_write_24 (sc, offset, addr)
-        struct ie_softc *sc;
-        int offset, addr;
+ai_write_24 (struct ie_softc *sc, int offset, int addr)
 {
         bus_space_write_4(sc->bt, sc->bh, offset, addr +
                                 (u_long) sc->sc_maddr - (u_long) sc->sc_iobase);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.24 2009/03/14 15:36:12 dsl Exp $	*/
+/*	$NetBSD: rz.c,v 1.25 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,13 +57,8 @@ struct	rz_softc {
 };
 
 int
-rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
-	void *devdata;
-	int rw;
-	daddr_t bn;
-	size_t reqcnt;
-	void *addr;
-	size_t *cnt;	/* out: number of bytes transfered */
+rzstrategy(void *devdata, int rw, daddr_t bn, size_t reqcnt, void *addr, size_t *cnt)
+	/* cnt:	 out: number of bytes transfered */
 {
 	struct rz_softc *sc = (struct rz_softc *)devdata;
 	int part = sc->sc_part;

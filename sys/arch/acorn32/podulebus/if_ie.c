@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.22 2009/03/14 15:35:58 dsl Exp $ */
+/* $NetBSD: if_ie.c,v 1.23 2009/03/14 21:04:01 dsl Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.22 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.23 2009/03/14 21:04:01 dsl Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -973,12 +973,7 @@ iestop(struct ie_softc *sc)
 /*CAW*/
 
 static int
-command_and_wait(sc, cmd, pscb, pcmd, ocmd, scmd, mask)
-	struct ie_softc *sc;
-	u_short cmd;
-	struct ie_sys_ctl_block *pscb;
-	void *pcmd;
-	int ocmd, scmd, mask;
+command_and_wait(struct ie_softc *sc, u_short cmd, struct ie_sys_ctl_block *pscb, void *pcmd, int ocmd, int scmd, int mask)
 {
     int i=0;
 

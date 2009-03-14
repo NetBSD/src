@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.10 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11 2009/03/14 21:04:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 2009/03/14 21:04:05 dsl Exp $");
 
 #include "opt_irqstats.h"
 
@@ -475,8 +475,7 @@ struct arm32_dma_range machdep_isa_dma_ranges[1];
 #endif
 
 void
-isa_footbridge_init(iobase, membase)
-	u_int iobase, membase;
+isa_footbridge_init(u_int iobase, u_int membase)
 {
 #if NISADMA > 0
 	extern struct arm32_dma_range *footbridge_isa_dma_ranges;
@@ -494,9 +493,7 @@ isa_footbridge_init(iobase, membase)
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
 {
 	/*
 	 * Since we can only have one ISA bus, we just use a single

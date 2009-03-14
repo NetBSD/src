@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.205 2009/01/19 13:31:40 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.206 2009/03/14 21:04:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.205 2009/01/19 13:31:40 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.206 2009/03/14 21:04:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -852,12 +852,7 @@ linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, registe
  * 2) select never returns ERESTART on Linux, always return EINTR
  */
 int
-linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
-	struct lwp *l;
-	register_t *retval;
-	int nfds;
-	fd_set *readfds, *writefds, *exceptfds;
-	struct linux_timeval *timeout;
+linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct linux_timeval *timeout)
 {
 	struct timeval tv0, tv1, utv, *tv = NULL;
 	struct linux_timeval ltv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.214 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.215 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.214 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.215 2009/03/14 21:04:25 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -2248,9 +2248,7 @@ nfs_merge_commit_ranges(struct vnode *vp)
 }
 
 int
-nfs_in_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_in_committed_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2264,9 +2262,7 @@ nfs_in_committed_range(vp, off, len)
 }
 
 int
-nfs_in_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_in_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2280,9 +2276,7 @@ nfs_in_tobecommitted_range(vp, off, len)
 }
 
 void
-nfs_add_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_add_committed_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2307,9 +2301,7 @@ nfs_add_committed_range(vp, off, len)
 }
 
 void
-nfs_del_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_del_committed_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2344,9 +2336,7 @@ nfs_del_committed_range(vp, off, len)
 }
 
 void
-nfs_add_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_add_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -2371,9 +2361,7 @@ nfs_add_tobecommitted_range(vp, off, len)
 }
 
 void
-nfs_del_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
+nfs_del_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;

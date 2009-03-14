@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.19 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.20 2009/03/14 21:04:21 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.19 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.20 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,9 +94,7 @@ ofisamatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ofisaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofisaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	struct isabus_attach_args iba;

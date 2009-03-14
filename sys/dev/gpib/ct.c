@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.18 2009/03/14 15:36:17 dsl Exp $ */
+/*	$NetBSD: ct.c,v 1.19 2009/03/14 21:04:19 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.18 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.19 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,9 +274,7 @@ ctmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ctattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ctattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ct_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;

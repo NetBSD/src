@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.9 2009/03/14 15:36:10 dsl Exp $ 	*/
+/*	$NetBSD: bus_space.c,v 1.10 2009/03/14 21:04:12 dsl Exp $ 	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.9 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2009/03/14 21:04:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,8 @@ mipsco_bus_space_init_extent(bus_space_tag_t bst, void *storage, size_t storages
 }
 
 void
-mipsco_bus_space_set_aligned_stride(bst, shift)
-	bus_space_tag_t bst;
-	unsigned int shift;		/* log2(alignment) */
+mipsco_bus_space_set_aligned_stride(bus_space_tag_t bst, unsigned int shift)
+	/* shift:		 log2(alignment) */
 {
 	bst->bs_stride = shift;
 

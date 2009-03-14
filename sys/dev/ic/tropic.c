@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.36 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: tropic.c,v 1.37 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.36 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.37 2009/03/14 21:04:20 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1578,10 +1578,10 @@ tr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  *	      adapter receive buffers.
  */
 void
-tr_bcopy(sc, dest, len)
-struct tr_softc *sc;	/* pointer to softc struct for this adapter */
-u_char *dest;		/* destination address */
-int len;		/* number of bytes to copy */
+tr_bcopy(struct tr_softc *sc, u_char *dest, int len)
+	/* sc:	 pointer to softc struct for this adapter */
+	/* dest:		 destination address */
+	/* len:		 number of bytes to copy */
 {
 	struct rbcb *rbc = &sc->rbc;	/* pointer to rec buf ctl blk */
 

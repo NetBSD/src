@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.6 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: diskio.c,v 1.7 2009/03/14 21:04:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -51,9 +51,7 @@ static bdevd_t	bootdev;
  * Initialise boot device info.
  */
 int
-init_dskio (func, label, root)
-	void	*func, *label;
-	int	root;
+init_dskio (void *func, void *label, int root)
 {
 	struct disklabel *dl = label;
 	struct partition *pd = &dl->d_partitions[root];
@@ -81,10 +79,7 @@ init_dskio (func, label, root)
  * same device as the bootstrap.
  */
 int
-devopen (f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen (struct open_file *f, const char *fname, char **file)
 {
 	f->f_devdata = &bootdev;
 	f->f_dev = &devsw[0];
@@ -93,13 +88,7 @@ devopen (f, fname, file)
 }
 
 static int
-rootstrategy (devd, flag, dblk, size, buf, rsize)
-	void	*devd;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+rootstrategy (void *devd, int flag, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	bdevd_t	*dd = devd;
 	daddr_t stb = dd->rst + dblk;
@@ -116,24 +105,19 @@ rootstrategy (devd, flag, dblk, size, buf, rsize)
 }
 
 static int
-rootopen (f)
-	struct open_file *f;
+rootopen (struct open_file *f)
 {
 	return(0);
 }
 
 static int
-rootclose (f)
-	struct open_file *f;
+rootclose (struct open_file *f)
 {
 	return(EIO);
 }
 
 static int
-rootioctl (f, cmd, data)
-	struct open_file *f;
-	u_long	cmd;
-	void	*data;
+rootioctl (struct open_file *f, u_long cmd, void *data)
 {
 	return(EIO);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.61 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: ite.c,v 1.62 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.61 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.62 2009/03/14 21:04:06 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -225,9 +225,7 @@ itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-iteattach(pdp, dp, auxp)
-	struct device	*pdp, *dp;
-	void		*auxp;
+iteattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct grf_softc	*gp;
 	struct ite_softc	*ip;
@@ -405,10 +403,7 @@ iteinit(dev_t dev)
 }
 
 int
-iteopen(dev, mode, devtype, l)
-	dev_t dev;
-	int mode, devtype;
-	struct lwp *l;
+iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 {
 	struct ite_softc *ip;
 	struct tty *tp;
@@ -478,10 +473,7 @@ bad:
 }
 
 int
-iteclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 
@@ -1275,8 +1267,7 @@ ite_inline(struct ite_softc *ip, int n)
 }
 
 static inline void
-ite_lf (ip)
-     struct ite_softc *ip;
+ite_lf (struct ite_softc *ip)
 {
   ++ip->cury;
   if ((ip->cury == ip->bottom_margin+1) || (ip->cury == ip->rows))
@@ -1290,16 +1281,14 @@ ite_lf (ip)
 }
 
 static inline void
-ite_crlf (ip)
-     struct ite_softc *ip;
+ite_crlf (struct ite_softc *ip)
 {
   ip->curx = 0;
   ite_lf (ip);
 }
 
 static inline void
-ite_cr (ip)
-     struct ite_softc *ip;
+ite_cr (struct ite_softc *ip)
 {
   if (ip->curx)
     {
@@ -1309,8 +1298,7 @@ ite_cr (ip)
 }
 
 static inline void
-ite_rlf (ip)
-     struct ite_softc *ip;
+ite_rlf (struct ite_softc *ip)
 {
   ip->cury--;
   if ((ip->cury < 0) || (ip->cury == ip->top_margin - 1))
@@ -1324,8 +1312,7 @@ ite_rlf (ip)
 }
 
 static inline int
-atoi (cp)
-    const char *cp;
+atoi (const char *cp)
 {
   int n;
 
@@ -1336,8 +1323,7 @@ atoi (cp)
 }
 
 static inline int
-ite_argnum (ip)
-    struct ite_softc *ip;
+ite_argnum (struct ite_softc *ip)
 {
   char ch;
   int n;
@@ -1354,8 +1340,7 @@ ite_argnum (ip)
 }
 
 static inline int
-ite_zargnum (ip)
-    struct ite_softc *ip;
+ite_zargnum (struct ite_softc *ip)
 {
   char ch;
   int n;

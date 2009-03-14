@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.19 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: cc.c,v 1.20 2009/03/14 21:04:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.19 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.20 2009/03/14 21:04:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,16 +201,14 @@ do_blit(u_short size)
 }
 
 void
-set_blitter_control(con0, con1)
-	u_short con0, con1;
+set_blitter_control(u_short con0, u_short con1)
 {
 	custom.bltcon0 = con0;
 	custom.bltcon1 = con1;
 }
 
 void
-set_blitter_mods(a, b, c, d)
-	u_short a, b, c, d;
+set_blitter_mods(u_short a, u_short b, u_short c, u_short d)
 {
 	custom.bltamod = a;
 	custom.bltbmod = b;
@@ -219,16 +217,14 @@ set_blitter_mods(a, b, c, d)
 }
 
 void
-set_blitter_masks(fm, lm)
-	u_short fm, lm;
+set_blitter_masks(u_short fm, u_short lm)
 {
 	custom.bltafwm = fm;
 	custom.bltalwm = lm;
 }
 
 void
-set_blitter_data(da, db, dc)
-	u_short da, db, dc;
+set_blitter_data(u_short da, u_short db, u_short dc)
 {
 	custom.bltadat = da;
 	custom.bltbdat = db;
@@ -236,8 +232,7 @@ set_blitter_data(da, db, dc)
 }
 
 void
-set_blitter_pointers(a, b, c, d)
-	void *a, *b, *c, *d;
+set_blitter_pointers(void *a, void *b, void *c, void *d)
 {
 	custom.bltapt = a;
 	custom.bltbpt = b;
@@ -425,9 +420,7 @@ out:
 }
 
 void
-play_sample(len, data, period, volume, channels, count)
-	u_short len, *data, period, volume, channels;
-	u_long count;
+play_sample(u_short len, u_short *data, u_short period, u_short volume, u_short channels, u_long count)
 {
 	u_short dmabits, ch;
 	register int i;

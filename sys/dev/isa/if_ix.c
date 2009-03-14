@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.30 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.31 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.30 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.31 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,10 +156,7 @@ ix_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int location)
 }
 
 static void
-ix_eeprom_outbits(iot, ioh, edata, count)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int edata, count;
+ix_eeprom_outbits(bus_space_tag_t iot, bus_space_handle_t ioh, int edata, int count)
 {
 	int ectrl, i;
 
@@ -237,11 +234,7 @@ ix_intrhook(struct ie_softc *sc, int where)
 
 
 static void
-ix_copyin (sc, dst, offset, size)
-        struct ie_softc *sc;
-        void *dst;
-        int offset;
-        size_t size;
+ix_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int i, dribble;
 	u_int8_t* bptr = dst;
@@ -293,11 +286,7 @@ ix_copyin (sc, dst, offset, size)
 }
 
 static void
-ix_copyout (sc, src, offset, size)
-        struct ie_softc *sc;
-        const void *src;
-        int offset;
-        size_t size;
+ix_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int i, dribble;
 	int osize = size;
@@ -353,9 +342,7 @@ ix_copyout (sc, src, offset, size)
 }
 
 static void
-ix_bus_barrier(sc, offset, length, flags)
-        struct ie_softc *sc;
-        int offset, length, flags;
+ix_bus_barrier(struct ie_softc *sc, int offset, int length, int flags)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -366,9 +353,7 @@ ix_bus_barrier(sc, offset, length, flags)
 }
 
 static u_int16_t
-ix_read_16 (sc, offset)
-        struct ie_softc *sc;
-        int offset;
+ix_read_16 (struct ie_softc *sc, int offset)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -390,10 +375,7 @@ ix_read_16 (sc, offset)
 }
 
 static void
-ix_write_16 (sc, offset, value)
-        struct ie_softc *sc;
-        int offset;
-        u_int16_t value;
+ix_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -414,9 +396,7 @@ ix_write_16 (sc, offset, value)
 }
 
 static void
-ix_write_24 (sc, offset, addr)
-        struct ie_softc *sc;
-        int offset, addr;
+ix_write_24 (struct ie_softc *sc, int offset, int addr)
 {
 	char* ptr;
 	struct ix_softc* isc = (struct ix_softc *) sc;
@@ -443,9 +423,7 @@ ix_write_24 (sc, offset, addr)
 }
 
 static void
-ix_zeromem(sc, offset, count)
-        struct ie_softc *sc;
-        int offset, count;
+ix_zeromem(struct ie_softc *sc, int offset, int count)
 {
 	int i;
 	int dribble;

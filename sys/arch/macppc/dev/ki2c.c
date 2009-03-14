@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.14 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.15 2009/03/14 21:04:11 dsl Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -323,10 +323,7 @@ ki2c_poll(struct ki2c_softc *sc, int timo)
 }
 
 int
-ki2c_start(sc, addr, subaddr, data, len)
-	struct ki2c_softc *sc;
-	int addr, subaddr, len;
-	void *data;
+ki2c_start(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	int rw = (sc->sc_flags & I2C_READING) ? 1 : 0;
 	int timo, x;
@@ -359,10 +356,7 @@ ki2c_start(sc, addr, subaddr, data, len)
 }
 
 int
-ki2c_read(sc, addr, subaddr, data, len)
-	struct ki2c_softc *sc;
-	int addr, subaddr, len;
-	void *data;
+ki2c_read(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	sc->sc_flags = I2C_READING;
 	#ifdef KI2C_DEBUG
@@ -372,10 +366,7 @@ ki2c_read(sc, addr, subaddr, data, len)
 }
 
 int
-ki2c_write(sc, addr, subaddr, data, len)
-	struct ki2c_softc *sc;
-	int addr, subaddr, len;
-	void *data;
+ki2c_write(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	sc->sc_flags = 0;
 	#ifdef KI2C_DEBUG

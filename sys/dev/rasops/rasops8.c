@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.25 2009/03/14 15:36:20 dsl Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.26 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.25 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.26 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_rasops.h"
 
@@ -97,11 +97,7 @@ rasops8_init(struct rasops_info *ri)
  * Put a single character.
  */
 static void
-rasops8_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int width, height, cnt, fs, fb;
 	u_char *dp, *rp, *hp, *hrp, *fr, clr[2];
@@ -228,11 +224,7 @@ rasops8_makestamp(struct rasops_info *ri, long attr)
  * Put a single character. This is for 8-pixel wide fonts.
  */
 static void
-rasops8_putchar8(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops8_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs;
@@ -324,11 +316,7 @@ rasops8_putchar8(cookie, row, col, uc, attr)
  * Put a single character. This is for 12-pixel wide fonts.
  */
 static void
-rasops8_putchar12(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops8_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs;
@@ -424,11 +412,7 @@ rasops8_putchar12(cookie, row, col, uc, attr)
  * Put a single character. This is for 16-pixel wide fonts.
  */
 static void
-rasops8_putchar16(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops8_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	int height, fs;

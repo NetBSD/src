@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.17 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.18 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.17 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.18 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,9 +66,7 @@ vmebusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-vmebusattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+vmebusattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct vmebus_attach_args	vba;
 

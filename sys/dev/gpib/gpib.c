@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.14 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: gpib.c,v 1.15 2009/03/14 21:04:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.14 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.15 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,7 @@ gpibmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-gpibattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gpibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gpib_softc *sc = device_private(self);
 	struct cfdata *cf = device_cfdata(&sc->sc_dev);
@@ -215,12 +213,7 @@ gpibintr(void *v)
  * Create a callback handle.
  */
 int
-_gpibregister(sc, slave, callback, arg, hdl)
-	struct gpib_softc *sc;
-	int slave;
-	gpib_callback_t callback;
-	void *arg;
-	gpib_handle_t *hdl;
+_gpibregister(struct gpib_softc *sc, int slave, gpib_callback_t callback, void *arg, gpib_handle_t *hdl)
 {
 
 	MALLOC(*hdl, gpib_handle_t, sizeof(struct gpibqueue),
@@ -241,9 +234,7 @@ _gpibregister(sc, slave, callback, arg, hdl)
  * Request exclusive access to the GPIB bus.
  */
 int
-_gpibrequest(sc, hdl)
-	struct gpib_softc *sc;
-	gpib_handle_t hdl;
+_gpibrequest(struct gpib_softc *sc, gpib_handle_t hdl)
 {
 
 	DPRINTF(DBG_FOLLOW, ("_gpibrequest: sc=%p hdl=%p\n", sc, hdl));
@@ -259,9 +250,7 @@ _gpibrequest(sc, hdl)
  * Release exclusive access to the GPIB bus.
  */
 void
-_gpibrelease(sc, hdl)
-	struct gpib_softc *sc;
-	gpib_handle_t hdl;
+_gpibrelease(struct gpib_softc *sc, gpib_handle_t hdl)
 {
 
 	DPRINTF(DBG_FOLLOW, ("_gpibrelease: sc=%p hdl=%p\n", sc, hdl));
@@ -276,8 +265,7 @@ _gpibrelease(sc, hdl)
  * Asynchronous wait.
  */
 void
-_gpibawait(sc)
-	struct gpib_softc *sc;
+_gpibawait(struct gpib_softc *sc)
 {
 	int slave;
 
@@ -291,9 +279,7 @@ _gpibawait(sc)
  * Synchronous (spin) wait.
  */
 int
-_gpibswait(sc, slave)
-	struct gpib_softc *sc;
-	int slave;
+_gpibswait(struct gpib_softc *sc, int slave)
 {
 	int timo = gpibtimeout;
 	int (*pptest)(void *, int);
@@ -370,12 +356,7 @@ gpib_dealloc(struct gpib_softc *sc, u_int8_t address)
 }
 
 int
-_gpibsend(sc, slave, sec, ptr, origcnt)
-	struct gpib_softc *sc;
-	int slave;
-	int sec;
-	void *ptr;
-	int origcnt;
+_gpibsend(struct gpib_softc *sc, int slave, int sec, void *ptr, int origcnt)
 {
 	int rv;
 	int cnt = 0;
@@ -428,12 +409,7 @@ senderror:
 }
 
 int
-_gpibrecv(sc, slave, sec, ptr, origcnt)
-	struct gpib_softc *sc;
-	int slave;
-	int sec;
-	void *ptr;
-	int origcnt;
+_gpibrecv(struct gpib_softc *sc, int slave, int sec, void *ptr, int origcnt)
 {
 	int rv;
 	u_int8_t cmds[4];

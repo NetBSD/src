@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.20 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.21 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.20 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.21 2009/03/14 21:04:06 dsl Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -549,9 +549,7 @@ init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 /* bitmap functions */
 
 static bmap_t *
-alloc_bitmap(width, height, depth)
-u_long	width, height;
-u_char	depth;
+alloc_bitmap(u_long width, u_long height, u_char depth)
 {
 	u_long  total_size, bm_size;
 	void	*hw_address;

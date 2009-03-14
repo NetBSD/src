@@ -1,4 +1,4 @@
-/*	$NetBSD: imax.c,v 1.5 2005/12/11 12:24:37 christos Exp $	*/
+/*	$NetBSD: imax.c,v 1.6 2009/03/14 21:04:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
@@ -35,8 +35,7 @@
 #include <lib/libkern/libkern.h>
 
 int
-imax(a, b)
-	int a, b;
+imax(int a, int b)
 {
 	return (a > b ? a : b);
 }

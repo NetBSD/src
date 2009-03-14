@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.65 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: i82586.c,v 1.66 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.65 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.66 2009/03/14 21:04:20 dsl Exp $");
 
 #include "bpfilter.h"
 
@@ -234,11 +234,7 @@ static char* padbuf = NULL;
  *
  */
 void
-i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
-	struct ie_softc *sc;
-	const char *name;
-	u_int8_t *etheraddr;
-        int *media, nmedia, defmedia;
+i82586_attach(struct ie_softc *sc, const char *name, u_int8_t *etheraddr, int *media, int nmedia, int defmedia)
 {
 	int i;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -392,9 +388,8 @@ i82586_start_cmd(struct ie_softc *sc, int cmd, int iecmdbuf, int mask, int async
  * Interrupt Acknowledge.
  */
 static inline void
-ie_ack(sc, mask)
-	struct ie_softc *sc;
-	u_int mask;	/* in native byte-order */
+ie_ack(struct ie_softc *sc, u_int mask)
+	/* mask:	 in native byte-order */
 {
 	u_int status;
 
@@ -1509,10 +1504,7 @@ i82586_setup_bufs(struct ie_softc *sc)
 }
 
 static int
-ie_cfg_setup(sc, cmd, promiscuous, manchester)
-	struct ie_softc *sc;
-	int cmd;
-	int promiscuous, manchester;
+ie_cfg_setup(struct ie_softc *sc, int cmd, int promiscuous, int manchester)
 {
 	int cmdresult, status;
 	u_int8_t buf[IE_CMD_CFG_SZ]; /* XXX malloc? */

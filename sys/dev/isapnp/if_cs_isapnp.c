@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.12 2009/03/14 15:36:18 dsl Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.13 2009/03/14 21:04:20 dsl Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.12 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.13 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,7 @@ cs_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-cs_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cs_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;

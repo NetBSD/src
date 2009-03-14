@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.6 2009/03/14 15:36:05 dsl Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.7 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.6 2009/03/14 15:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.7 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,11 +296,7 @@ isa_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 }
 
 int
-isa_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+isa_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 	*nbshp = bsh + offset;
 	return(0);
@@ -358,11 +354,7 @@ isa_bs_vaddr(void *t, bus_space_handle_t bsh)
 }
 
 void
-isa_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+isa_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 	/* just return */
 }	

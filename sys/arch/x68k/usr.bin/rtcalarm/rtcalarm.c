@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.8 2009/03/14 15:36:15 dsl Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.9 2009/03/14 21:04:17 dsl Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -59,9 +59,7 @@ static void setinfo(int, char **);
 static int strnum(const char *, int);
 
 int
-main(argc, argv)
-	int             argc;
-	char           *argv[];
+main(int argc, char *argv[])
 {
 	prog = argv[0];
 

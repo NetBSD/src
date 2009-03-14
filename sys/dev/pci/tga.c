@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.70 2009/03/14 15:36:19 dsl Exp $ */
+/* $NetBSD: tga.c,v 1.71 2009/03/14 21:04:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.70 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.71 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,10 +158,7 @@ static void	tga_blank(struct tga_devconfig *);
 static void	tga_unblank(struct tga_devconfig *);
 
 int
-tga_cnmatch(iot, memt, pc, tag)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+tga_cnmatch(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	return tga_matchcommon(memt, pc, tag);
 }
@@ -383,9 +380,7 @@ tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag, struct tga_de
 }
 
 void
-tgaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tgaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct tga_softc *sc = (struct tga_softc *)self;
@@ -512,8 +507,7 @@ tgaattach(parent, self, aux)
 }
 
 static void
-tga_config_interrupts (d)
-	struct device *d;
+tga_config_interrupts (struct device *d)
 {
 	struct tga_softc *sc = (struct tga_softc *)d;
 	sc->sc_dc->dc_intrenabled = 1;
@@ -670,12 +664,7 @@ tga_mmap(void *v, void *vs, off_t offset, int prot)
 }
 
 static int
-tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+tga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct tga_softc *sc = v;
 	long defattr;
@@ -717,10 +706,7 @@ tga_show_screen(v, cookie, waitok, cb, cbarg)
 }
 
 int
-tga_cnattach(iot, memt, pc, bus, device, function)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+tga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	struct tga_devconfig *dcp = &tga_console_dc;
 	long defattr;
@@ -906,9 +892,7 @@ tga_builtin_get_curmax(struct tga_devconfig *dc, struct wsdisplay_curpos *curpos
  * Copy columns (characters) in a row (line).
  */
 static void
-tga_copycols(id, row, srccol, dstcol, ncols)
-	void *id;
-	int row, srccol, dstcol, ncols;
+tga_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 {
 	struct rasops_info *ri = id;
 	int y, srcx, dstx, nx;
@@ -927,9 +911,7 @@ tga_copycols(id, row, srccol, dstcol, ncols)
  * Copy rows (lines).
  */
 static void
-tga_copyrows(id, srcrow, dstrow, nrows)
-	void *id;
-	int srcrow, dstrow, nrows;
+tga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = id;
 	int srcy, dsty, ny;
@@ -957,11 +939,7 @@ static int map_rop[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6,
  *   clips the sizes and all of that.
  */
 static int
-tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
-	struct rasops_info *dst;
-	int dx, dy, w, h, rop;
-	struct rasops_info *src;
-	int sx, sy;
+tga_rop(struct rasops_info *dst, int dx, int dy, int w, int h, int rop, struct rasops_info *src, int sx, int sy)
 {
 	if (!dst)
 		return -1;
@@ -1019,11 +997,7 @@ tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
  * that are on the card.
  */
 static int
-tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
-	struct rasops_info *dst;
-	int dx, dy, w, h, rop;
-	struct rasops_info *src;
-	int sx, sy;
+tga_rop_vtov(struct rasops_info *dst, int dx, int dy, int w, int h, int rop, struct rasops_info *src, int sx, int sy)
 {
 	struct tga_devconfig *dc = (struct tga_devconfig *)dst->ri_hw;
 	int srcb, dstb, tga_srcb, tga_dstb;
@@ -1248,10 +1222,7 @@ void tga_putchar (c, row, col, uc, attr)
 }
 
 static void
-tga_eraserows(c, row, num, attr)
-	void *c;
-	int row, num;
-	long attr;
+tga_eraserows(void *c, int row, int num, long attr)
 {
 	struct rasops_info *ri = c;
 	struct tga_devconfig *dc = ri->ri_hw;
@@ -1302,10 +1273,7 @@ tga_eraserows(c, row, num, attr)
 }
 
 static void
-tga_erasecols (c, row, col, num, attr)
-void *c;
-int row, col, num;
-long attr;
+tga_erasecols (void *c, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = c;
 	struct tga_devconfig *dc = ri->ri_hw;

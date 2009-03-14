@@ -1,4 +1,4 @@
-/* $NetBSD: toasterlcd.c,v 1.7 2009/03/14 15:36:18 dsl Exp $ */
+/* $NetBSD: toasterlcd.c,v 1.8 2009/03/14 21:04:20 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.7 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.8 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,10 +146,7 @@ toasterlcd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-toasterlcd_writereg(hd, en, rs, cmd)
-	struct hd44780_chip *hd;
-	u_int32_t en, rs;
-	u_int8_t cmd;
+toasterlcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_t cmd)
 {
 	struct toasterlcd_softc *sc = (struct toasterlcd_softc *)hd->sc_dev;
 	u_int8_t ctrl;
@@ -197,9 +194,7 @@ toasterlcd_writereg(hd, en, rs, cmd)
 }
 
 static u_int8_t
-toasterlcd_readreg(hd, en, rs)
-	struct hd44780_chip *hd;
-	u_int32_t en, rs;
+toasterlcd_readreg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs)
 {
 	struct toasterlcd_softc *sc = (struct toasterlcd_softc *)hd->sc_dev;
 	u_int8_t ret, ctrl;

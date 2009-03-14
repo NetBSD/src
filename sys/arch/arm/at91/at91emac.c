@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.3 2009/03/14 15:36:01 dsl Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.3 2009/03/14 15:36:01 dsl Exp $	*/
+/*	$Id: at91emac.c,v 1.4 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.4 2009/03/14 21:04:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.3 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.4 2009/03/14 21:04:05 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -535,9 +535,7 @@ emac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 
 int
-emac_mii_readreg(self, phy, reg)
-	device_t self;
-	int phy, reg;
+emac_mii_readreg(device_t self, int phy, int reg)
 {
 	struct emac_softc *sc;
 
@@ -551,9 +549,7 @@ emac_mii_readreg(self, phy, reg)
 }
 
 void
-emac_mii_writereg(self, phy, reg, val)
-	device_t self;
-	int phy, reg, val;
+emac_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct emac_softc *sc;
 	sc = (struct emac_softc *)self;

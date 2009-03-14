@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.16 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: ibus.c,v 1.17 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.16 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.17 2009/03/14 21:04:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.16 2009/03/14 15:36:11 dsl Exp $");
 #include "locators.h"
 
 void
-ibusattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ibusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ibus_dev_attach_args *ida = aux;
 	struct ibus_attach_args *ia;

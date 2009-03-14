@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2009/03/14 21:04:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -175,10 +175,10 @@ hexstr(char *buf, unsigned val)
 }
 
 void
-ipl_main(interactive, sptop, psw)
-	unsigned interactive;		/* parameters from PDC */
-	unsigned sptop;			/* value of sp on function entry */
-	unsigned psw;			/* PSW on startup */
+ipl_main(unsigned interactive, unsigned sptop, unsigned psw)
+	/* interactive:		 parameters from PDC */
+	/* sptop:			 value of sp on function entry */
+	/* psw:			 PSW on startup */
 {
 	char buf[32];
 	int part = 0;		/* default partition "a" */
@@ -294,10 +294,7 @@ ipl_main(interactive, sptop, psw)
 }
 
 void
-load_file(path, loadadr, interactive, part)
-	const char *path;
-	unsigned loadadr, interactive;
-	int part;
+load_file(const char *path, unsigned loadadr, unsigned interactive, int part)
 {
 
 	/* look-up the file */
@@ -308,11 +305,8 @@ load_file(path, loadadr, interactive, part)
 }
 
 void
-load_file_ino(ino, fn, loadadr, interactive, part)
-	ino32_t ino;
-	const char *fn;		/* for message only */
-	unsigned loadadr, interactive;
-	int part;
+load_file_ino(ino32_t ino, const char *fn, unsigned loadadr, unsigned interactive, int part)
+	/* fn:		 for message only */
 {
 	union ufs_dinode dinode;
 	size_t sz;

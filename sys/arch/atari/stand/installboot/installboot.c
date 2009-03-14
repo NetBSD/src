@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.23 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.24 2009/03/14 21:04:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -92,9 +92,7 @@ usage ()
 }
 
 int
-main (argc, argv)
-	int	argc;
-	char	*argv[];
+main (int argc, char *argv[])
 {
 	struct disklabel dl;
 	char		 *dn;
@@ -209,9 +207,7 @@ oscheck ()
 }
 
 static void
-install_fd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_fd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxboot, *bootxx;
@@ -265,9 +261,7 @@ install_fd (devnm, label)
 }
 
 static void
-install_sd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_sd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
@@ -339,9 +333,7 @@ install_sd (devnm, label)
 }
 
 static void
-install_wd (devnm, label)
-	char		 *devnm;
-	struct disklabel *label;
+install_wd (char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
@@ -512,9 +504,7 @@ mkbootblock (bb, xxb, bxx, label, magic)
 }
 
 static void
-setIDEpar (start, size)
-	u_int8_t	*start;
-	size_t		size;
+setIDEpar (u_int8_t *start, size_t size)
 {
 	static const u_int8_t	mark[] = { 'N', 'e', 't', 'B', 'S', 'D' };
 
@@ -578,8 +568,7 @@ setNVpref ()
 }
 
 static u_int
-abcksum (bs)
-	void	*bs;
+abcksum (void *bs)
 {
 	u_int16_t sum  = 0,
 		  *st  = (u_int16_t *)bs,

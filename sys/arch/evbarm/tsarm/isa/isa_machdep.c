@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6 2009/03/14 15:36:05 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.7 2009/03/14 21:04:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2009/03/14 15:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.7 2009/03/14 21:04:09 dsl Exp $");
 
 #include "opt_irqstats.h"
 
@@ -173,8 +173,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 }
 
 void
-isa_tsarm_init(iobase16, membase16)
-        u_int iobase16, membase16;
+isa_tsarm_init(u_int iobase16, u_int membase16)
 {
         isa_io_init(iobase16, membase16);
 }
@@ -191,9 +190,7 @@ isa_intr_init(void)
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
 {
 	/*
 	 * Since we can only have one ISA bus, we just use a single

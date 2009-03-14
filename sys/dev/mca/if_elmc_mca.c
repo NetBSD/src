@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.26 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.27 2009/03/14 21:04:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.26 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.27 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,11 +272,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-elmc_mca_copyin (sc, dst, offset, size)
-        struct ie_softc *sc;
-        void *dst;
-        int offset;
-        size_t size;
+elmc_mca_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int dribble;
 	u_int8_t* bptr = dst;
@@ -301,11 +297,7 @@ elmc_mca_copyin (sc, dst, offset, size)
 }
 
 static void
-elmc_mca_copyout (sc, src, offset, size)
-        struct ie_softc *sc;
-        const void *src;
-        int offset;
-        size_t size;
+elmc_mca_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int dribble;
 	int osize = size;
@@ -331,28 +323,21 @@ elmc_mca_copyout (sc, src, offset, size)
 }
 
 static u_int16_t
-elmc_mca_read_16 (sc, offset)
-        struct ie_softc *sc;
-        int offset;
+elmc_mca_read_16 (struct ie_softc *sc, int offset)
 {
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
         return bus_space_read_2(sc->bt, sc->bh, offset);
 }
 
 static void
-elmc_mca_write_16 (sc, offset, value)
-        struct ie_softc *sc;
-        int offset;
-        u_int16_t value;
+elmc_mca_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 {
         bus_space_write_2(sc->bt, sc->bh, offset, value);
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
-elmc_mca_write_24 (sc, offset, addr)
-        struct ie_softc *sc;
-        int offset, addr;
+elmc_mca_write_24 (struct ie_softc *sc, int offset, int addr)
 {
         bus_space_write_4(sc->bt, sc->bh, offset, addr +
                                 (u_long) sc->sc_maddr - (u_long) sc->sc_iobase);

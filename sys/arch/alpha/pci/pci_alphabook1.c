@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.c,v 1.11 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_alphabook1.c,v 1.12 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.11 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.12 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -210,8 +210,7 @@ dec_alphabook1_intr_establish(lcv, ih, level, func, arg)
 }
 
 void
-dec_alphabook1_intr_disestablish(lcv, cookie)
-	void *lcv, *cookie;
+dec_alphabook1_intr_disestablish(void *lcv, void *cookie)
 {
 #if 0
 	struct lca_config *lcp = lcv;

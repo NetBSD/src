@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.81 2009/03/14 15:36:17 dsl Exp $ */
+/*	$NetBSD: gem.c,v 1.82 2009/03/14 21:04:19 dsl Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.81 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.82 2009/03/14 21:04:19 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2220,9 +2220,7 @@ gem_mifinit(struct gem_softc *sc)
  *
  */
 static int
-gem_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+gem_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -2252,9 +2250,7 @@ gem_mii_readreg(self, phy, reg)
 }
 
 static void
-gem_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+gem_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;

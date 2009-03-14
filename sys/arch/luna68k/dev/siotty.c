@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.25 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: siotty.c,v 1.26 2009/03/14 21:04:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.25 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.26 2009/03/14 21:04:11 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -118,9 +118,7 @@ siotty_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void 
-siotty_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+siotty_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sio_softc *scp = (void *)parent;
 	struct siotty_softc *sc = (void *)self;
@@ -292,9 +290,7 @@ sioparam(struct tty *tp, struct termios *t)
 }
 
 static int
-siomctl(sc, control, op)
-	struct siotty_softc *sc;
-	int control, op;
+siomctl(struct siotty_softc *sc, int control, int op)
 {
 	int val, s, wr5, rr;
 

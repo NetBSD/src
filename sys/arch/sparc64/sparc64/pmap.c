@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.232 2009/03/14 15:36:14 dsl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.233 2009/03/14 21:04:16 dsl Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.232 2009/03/14 15:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.233 2009/03/14 21:04:16 dsl Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1279,8 +1279,7 @@ pmap_init()
  */
 static vaddr_t kbreak; /* End of kernel VA */
 void
-pmap_virtual_space(start, end)
-	vaddr_t *start, *end;
+pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 
 	/*
@@ -1417,10 +1416,7 @@ pmap_destroy(struct pmap *pm)
  * This routine is only advisory and need not do anything.
  */
 void
-pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	struct pmap *dst_pmap, *src_pmap;
-	vaddr_t dst_addr, src_addr;
-	vsize_t len;
+pmap_copy(struct pmap *dst_pmap, struct pmap *src_pmap, vaddr_t dst_addr, vsize_t len, vaddr_t src_addr)
 {
 
 	DPRINTF(PDB_CREATE, ("pmap_copy(%p, %p, %p, %lx, %p)\n",
@@ -1979,9 +1975,7 @@ pmap_remove_all(struct pmap *pm)
  * Remove the given range of mapping entries.
  */
 void
-pmap_remove(pm, va, endva)
-	struct pmap *pm;
-	vaddr_t va, endva;
+pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 {
 	int64_t data;
 	paddr_t pa;
@@ -2086,10 +2080,7 @@ pmap_remove(pm, va, endva)
  * Change the protection on the specified range of this pmap.
  */
 void
-pmap_protect(pm, sva, eva, prot)
-	struct pmap *pm;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	paddr_t pa;
 	int64_t data;

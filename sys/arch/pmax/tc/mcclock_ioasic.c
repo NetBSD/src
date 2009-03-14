@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ioasic.c,v 1.21 2009/03/14 15:36:12 dsl Exp $ */
+/*	$NetBSD: mcclock_ioasic.c,v 1.22 2009/03/14 21:04:14 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.21 2009/03/14 15:36:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.22 2009/03/14 21:04:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,9 +64,7 @@ mcclock_ioasic_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mcclock_ioasic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mcclock_ioasic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioasicdev_attach_args *ioasicdev = aux;
 	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)self;

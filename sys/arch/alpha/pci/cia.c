@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.68 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: cia.c,v 1.69 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.68 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.69 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,9 +264,7 @@ cia_init(struct cia_config *ccp, int mallocsafe)
 }
 
 void
-ciaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ciaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cia_softc *sc = (struct cia_softc *)self;
 	struct cia_config *ccp;
@@ -412,9 +410,7 @@ ciaattach(parent, self, aux)
 }
 
 int
-cia_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+cia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct cia_config *ccp = &cia_configuration;
 	bus_space_tag_t st;
@@ -436,8 +432,7 @@ cia_bus_get_window(type, window, abst)
 }
 
 void
-cia_pyxis_intr_enable(irq, onoff)
-	int irq, onoff;
+cia_pyxis_intr_enable(int irq, int onoff)
 {
 	u_int64_t imask;
 	int s;

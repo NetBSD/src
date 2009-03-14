@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2009/03/14 15:36:07 dsl Exp $	 */
+/*	$NetBSD: main.c,v 1.27 2009/03/14 21:04:10 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -83,12 +83,11 @@ const struct bootblk_command commands[] = {
 };
 
 int
-parsebootfile(fname, fsmode, devname, unit, partition, file)
-	const char     *fname;
-	char          **fsmode; /* out */
-	char          **devname; /* out */
-	int            *unit, *partition; /* out */
-	const char    **file; /* out */
+parsebootfile(const char *fname, char **fsmode, char **devname, int *unit, int *partition, const char **file)
+	/* fsmode:  out */
+	/* devname:  out */
+	/* unit, *partition:  out */
+	/* file:  out */
 {
 	const char     *col, *help;
 
@@ -176,9 +175,7 @@ bad:
 }
 
 static void
-bootit(filename, howto, tell)
-	const char     *filename;
-	int             howto, tell;
+bootit(const char *filename, int howto, int tell)
 {
 	int floppy = strncmp(default_devname, "fd", 2) == 0;
 	if (tell) {

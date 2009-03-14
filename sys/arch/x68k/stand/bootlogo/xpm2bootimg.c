@@ -1,4 +1,4 @@
-/*	$NetBSD: xpm2bootimg.c,v 1.2 2009/03/14 15:36:15 dsl Exp $	*/
+/*	$NetBSD: xpm2bootimg.c,v 1.3 2009/03/14 21:04:17 dsl Exp $	*/
 
 /*
  *	convert XPM format image to boot title format
@@ -96,8 +96,7 @@ initdot()
 static int put;
 
 static void
-putrun(val, len)
-	int val, len;
+putrun(int val, int len)
 {
 
 /*	fprintf(stderr, "val %d, len %d\n", val, len);*/
@@ -171,8 +170,8 @@ rgb16b(int rgb)
 }
 
 static char *
-destring(str)
-	char *str;	/* must be writable */
+destring(char *str)
+	/* str:	 must be writable */
 {
 	size_t len;
 	char *p;
@@ -242,9 +241,7 @@ unsigned col1, col2;
 enum col bitmap[IMGHEIGHT][IMGWIDTH];
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *p;
 	unsigned u, colors, xcol, x;

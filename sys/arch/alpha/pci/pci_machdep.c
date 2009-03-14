@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.16 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.17 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,10 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2009/03/14 14:45:53 dsl Exp $")
 #endif
 
 void
-pci_display_console(iot, memt, pc, bus, device, function)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_display_console(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 	pcireg_t id, class;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.15 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: vme.c,v 1.16 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.15 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,7 @@ vmematch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-vmeattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vmeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vme_softc *sc = (struct vme_softc *)self;
 	struct vmebus_attach_args *vba = aux;

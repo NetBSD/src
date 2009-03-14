@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.26 2009/03/14 15:36:16 dsl Exp $	*/
+/*	$NetBSD: rbus.c,v 1.27 2009/03/14 21:04:19 dsl Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.26 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.27 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,14 +61,7 @@ static rbus_tag_t rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent,
 
 
 int
-rbus_space_alloc(rbt, addr, size, mask, align, flags, addrp, bshp)
-	rbus_tag_t rbt;
-	bus_addr_t addr;
-	bus_size_t size;
-	bus_addr_t mask, align;
-	int flags;
-	bus_addr_t *addrp;
-	bus_space_handle_t *bshp;
+rbus_space_alloc(rbus_tag_t rbt, bus_addr_t addr, bus_size_t size, bus_addr_t mask, bus_addr_t align, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 	return rbus_space_alloc_subregion(rbt, rbt->rb_start, rbt->rb_end,
 	    addr, size, mask, align, flags, addrp, bshp);
@@ -78,16 +71,7 @@ rbus_space_alloc(rbt, addr, size, mask, align, flags, addrp, bshp)
 
 
 int
-rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags, addrp, bshp)
-	rbus_tag_t rbt;
-	bus_addr_t addr;
-	bus_addr_t substart;
-	bus_addr_t subend;
-	bus_size_t size;
-	bus_addr_t mask, align;
-	int flags;
-	bus_addr_t *addrp;
-	bus_space_handle_t *bshp;
+rbus_space_alloc_subregion(rbus_tag_t rbt, bus_addr_t substart, bus_addr_t subend, bus_addr_t addr, bus_size_t size, bus_addr_t mask, bus_addr_t align, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 	bus_addr_t decodesize = mask + 1;
 	bus_addr_t boundary, search_addr;
@@ -221,12 +205,7 @@ rbus_space_free(rbus_tag_t rbt, bus_space_handle_t bsh, bus_size_t size, bus_add
  *
  */
 static rbus_tag_t
-rbus_new_body(bt, parent, ex, start, end, offset, flags)
-	bus_space_tag_t bt;
-	rbus_tag_t parent;
-	struct extent *ex;
-	bus_addr_t start, end, offset;
-	int flags;
+rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent, struct extent *ex, bus_addr_t start, bus_addr_t end, bus_addr_t offset, int flags)
 {
 	rbus_tag_t rb;
 

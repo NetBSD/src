@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.c,v 1.7 2009/03/14 15:36:13 dsl Exp $	*/
+/*	$NetBSD: ofisa_machdep.c,v 1.8 2009/03/14 21:04:16 dsl Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa_machdep.c,v 1.7 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa_machdep.c,v 1.8 2009/03/14 21:04:16 dsl Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -65,8 +65,7 @@ ofisa_get_isabus_data(int phandle, struct isabus_attach_args *iba)
 }
 
 int
-ofisa_ignore_child(pphandle, cphandle)
-	int pphandle, cphandle;
+ofisa_ignore_child(int pphandle, int cphandle)
 {
 	
 	return (0);

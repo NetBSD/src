@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.7 2009/03/14 15:36:15 dsl Exp $
+ *	$NetBSD: aout2hux.c,v 1.8 2009/03/14 21:04:17 dsl Exp $
  */
 
 #include <sys/types.h>
@@ -439,8 +439,7 @@ out:	fclose(fp);
  * compare two executables and check if they are compatible
  */
 int
-check_2_exec_inf(inf1, inf2)
-	struct exec_info *inf1, *inf2;
+check_2_exec_inf(struct exec_info *inf1, struct exec_info *inf2)
 {
 
 	if (inf1->text_size != inf2->text_size ||
@@ -538,9 +537,7 @@ check_2_exec_inf(inf1, inf2)
 	}
 
 int
-aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
-	const char *fn1, *fn2, *fnx;
-	u_int32_t loadadr1, loadadr2;
+aout2hux(const char *fn1, const char *fn2, u_int32_t loadadr1, u_int32_t loadadr2, const char *fnx)
 {
 	int status = 1;			/* the default is "failed" */
 	FILE *fpa1 = NULL, *fpa2 = NULL;
@@ -827,9 +824,7 @@ The default output filename is \"%s\".\n" ,name, DEFAULT_OUTPUT_FILE);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const char *outfile = DEFAULT_OUTPUT_FILE;
 	u_int32_t adr1, adr2;

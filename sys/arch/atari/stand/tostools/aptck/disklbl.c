@@ -1,4 +1,4 @@
-/*	$NetBSD: disklbl.c,v 1.5 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: disklbl.c,v 1.6 2009/03/14 21:04:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -187,8 +187,7 @@ ahdi_label(disk_t *dd)
 }
 
 static int
-root_cmp(x1, x2)
-	const void	*x1, *x2;
+root_cmp(const void *x1, const void *x2)
 {
 	const u_int	*r1 = x1,
 			*r2 = x2;
@@ -201,8 +200,7 @@ root_cmp(x1, x2)
 }
 
 static int
-part_cmp(x1, x2)
-	const void	*x1, *x2;
+part_cmp(const void *x1, const void *x2)
 {
 	const part_t	*p1 = x1,
 			*p2 = x2;

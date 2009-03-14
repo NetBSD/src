@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.22 2009/03/14 15:36:20 dsl Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.23 2009/03/14 21:04:22 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.22 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.23 2009/03/14 21:04:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,9 +134,7 @@ bwtwomatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-bwtwoattach_sbus(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+bwtwoattach_sbus(struct device *parent, struct device *self, void *args)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	struct sbusdev *sd = &((struct bwtwo_sbus_softc *)self)->bss_sd;

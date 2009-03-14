@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.6 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: cread.c,v 1.7 2009/03/14 21:04:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -98,18 +98,13 @@ void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
  */
 
 void *
-zcalloc (opaque, items, size)
-	void *opaque;
-	unsigned items;
-	unsigned size;
+zcalloc (void *opaque, unsigned items, unsigned size)
 {
 	return(malloc(items * size));
 }
 
 void
-zcfree (opaque, ptr)
-	void *opaque;
-	void *ptr;
+zcfree (void *opaque, void *ptr)
 {
 	free(ptr);
 }
@@ -144,8 +139,7 @@ get_byte(struct sd *s)
 }
 
 static unsigned long
-getLong (s)
-    struct sd *s;
+getLong (struct sd *s)
 {
 	unsigned long x = (unsigned long)get_byte(s);
 	int c;

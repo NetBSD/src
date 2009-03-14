@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,7 @@ mainbusmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-mainbusattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbusattach(struct device *parent, struct device *self, void *aux)
 {
 
 	printf("\n");

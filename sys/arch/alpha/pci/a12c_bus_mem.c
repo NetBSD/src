@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_bus_mem.c,v 1.6 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: a12c_bus_mem.c,v 1.7 2009/03/14 21:04:02 dsl Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -46,7 +46,7 @@
 
 #define	A12C_BUS_MEM()	/* Generate ctags(1) key */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.6 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.7 2009/03/14 21:04:02 dsl Exp $");
 
 /* Memory barrier */
 void		pci_a12c_mem_barrier(void *, bus_space_handle_t,
@@ -237,8 +237,7 @@ static struct alpha_bus_space pci_a12c_mem_space = {
 };
 
 bus_space_tag_t
-a12c_bus_mem_init(v)
-	void *v;
+a12c_bus_mem_init(void *v)
 {
         bus_space_tag_t t;
 
@@ -248,13 +247,7 @@ a12c_bus_mem_init(v)
 }
 
 int
-pci_a12c_mem_map(v, memaddr, memsize, flags, memhp, acct)
-	void *v;
-	bus_addr_t memaddr;
-	bus_size_t memsize;
-	int flags;
-	bus_space_handle_t *memhp;
-	int acct;
+pci_a12c_mem_map(void *v, bus_addr_t memaddr, bus_size_t memsize, int flags, bus_space_handle_t *memhp, int acct)
 {
 	if(flags & BUS_SPACE_MAP_LINEAR)
 		printf("warning, linear a12 pci map requested\n");
@@ -265,19 +258,12 @@ pci_a12c_mem_map(v, memaddr, memsize, flags, memhp, acct)
 }
 
 void
-pci_a12c_mem_unmap(v, memh, memsize, acct)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t memsize;
-	int acct;
+pci_a12c_mem_unmap(void *v, bus_space_handle_t memh, bus_size_t memsize, int acct)
 {
 }
 
 int
-pci_a12c_mem_subregion(v, memh, offset, size, nmemh)
-	void *v;
-	bus_space_handle_t memh, *nmemh;
-	bus_size_t offset, size;
+pci_a12c_mem_subregion(void *v, bus_space_handle_t memh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nmemh)
 {
 	*nmemh = memh + offset;
 	return 0;
@@ -296,28 +282,19 @@ pci_a12c_mem_alloc(v, rstart, rend, size, align, boundary, flags,
 }
 
 void
-pci_a12c_mem_free(v, bsh, size)
-	void *v;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+pci_a12c_mem_free(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
 }
 
 void *
-pci_a12c_mem_vaddr(v, bsh)
-	void *v;
-	bus_space_handle_t bsh;
+pci_a12c_mem_vaddr(void *v, bus_space_handle_t bsh)
 {
 	/* not supported (could panic() if pci_a12c_mem_map() caught it) */
 	return (0);
 }
 
 void
-pci_a12c_mem_barrier(v, h, o, l, f)
-	void *v;
-	bus_space_handle_t h;
-	bus_size_t o, l;
-	int f;
+pci_a12c_mem_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int f)
 {
 	/* optimize for wmb-only case but fall back to the more general mb */
 

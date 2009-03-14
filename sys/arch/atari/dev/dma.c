@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.20 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: dma.c,v 1.21 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.20 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.21 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,9 +211,8 @@ st_dmawanted()
 }
 
 int
-cdmaint(unused, sr)
-void	*unused;
-int	sr;	/* sr at time of interrupt */
+cdmaint(void *unused, int sr)
+	/* sr:	 sr at time of interrupt */
 {
 	dma_farg	int_func;
 	void		*softc;
@@ -271,8 +270,7 @@ st_dmaaddr_get()
  * The DMA_WRBIT trick flushes the FIFO before doing DMA.
  */
 void
-st_dmacomm(mode, nblk)
-int	mode, nblk;
+st_dmacomm(int mode, int nblk)
 {
 	DMA->dma_mode = mode;
 	DMA->dma_mode = mode ^ DMA_WRBIT;

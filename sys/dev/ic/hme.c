@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.71 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: hme.c,v 1.72 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.71 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.72 2009/03/14 21:04:20 dsl Exp $");
 
 /* #define HMEDEBUG */
 
@@ -640,10 +640,8 @@ hme_init(struct hme_softc *sc)
  * Returns the amount of data copied.
  */
 int
-hme_put(sc, ri, m)
-	struct hme_softc *sc;
-	int ri;			/* Ring index */
-	struct mbuf *m;
+hme_put(struct hme_softc *sc, int ri, struct mbuf *m)
+	/* ri:			 Ring index */
 {
 	struct mbuf *n;
 	int len, tlen = 0;
@@ -1152,9 +1150,7 @@ hme_mifinit(struct hme_softc *sc)
  * MII interface
  */
 static int
-hme_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+hme_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1225,9 +1221,7 @@ out:
 }
 
 static void
-hme_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+hme_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1588,10 +1582,7 @@ chipit:
  */
 
 void
-hme_copytobuf_contig(sc, from, ri, len)
-	struct hme_softc *sc;
-	void *from;
-	int ri, len;
+hme_copytobuf_contig(struct hme_softc *sc, void *from, int ri, int len)
 {
 	volatile void *buf = sc->sc_rb.rb_txbuf + (ri * _HME_BUFSZ);
 
@@ -1602,10 +1593,7 @@ hme_copytobuf_contig(sc, from, ri, len)
 }
 
 void
-hme_copyfrombuf_contig(sc, to, boff, len)
-	struct hme_softc *sc;
-	void *to;
-	int boff, len;
+hme_copyfrombuf_contig(struct hme_softc *sc, void *to, int boff, int len)
 {
 	volatile void *buf = sc->sc_rb.rb_rxbuf + (ri * _HME_BUFSZ);
 

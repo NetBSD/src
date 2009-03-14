@@ -1,4 +1,4 @@
-/*	$NetBSD: max.c,v 1.5 2005/12/11 12:24:37 christos Exp $	*/
+/*	$NetBSD: max.c,v 1.6 2009/03/14 21:04:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
@@ -35,8 +35,7 @@
 #include <lib/libkern/libkern.h>
 
 unsigned int
-max(a, b)
-	unsigned int a, b;
+max(unsigned int a, unsigned int b)
 {
 	return (a > b ? a : b);
 }

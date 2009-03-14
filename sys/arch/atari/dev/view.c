@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.27 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: view.c,v 1.28 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.27 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.28 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,7 @@ viewprobe()
  */
 
 static void
-view_display (vu)
-	struct view_softc *vu;
+view_display (struct view_softc *vu)
 {
 	int s, i;
 
@@ -238,9 +237,7 @@ view_setsize(struct view_softc *vu, struct view_size *vs)
 }
 
 static int
-view_get_colormap (vu, ucm)
-struct view_softc	*vu;
-colormap_t		*ucm;
+view_get_colormap (struct view_softc *vu, colormap_t *ucm)
 {
 	int	error;
 	long	*cme;
@@ -327,11 +324,7 @@ viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 /*ARGSUSED*/
 int
-viewclose (dev, flags, mode, l)
-	dev_t		dev;
-	int 		flags;
-	int		mode;
-	struct lwp	*l;
+viewclose (dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct view_softc *vu;
 
@@ -349,12 +342,7 @@ viewclose (dev, flags, mode, l)
 
 /*ARGSUSED*/
 int
-viewioctl (dev, cmd, data, flag, l)
-dev_t		dev;
-u_long		cmd;
-void *		data;
-int		flag;
-struct lwp	*l;
+viewioctl (dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 	struct view_softc	*vu;
 	bmap_t			*bm;

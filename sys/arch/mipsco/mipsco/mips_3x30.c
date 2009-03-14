@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.11 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.12 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.11 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.12 2009/03/14 21:04:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,11 +78,10 @@ pizazz_init(void)
 	} while (0)
 
 void
-pizazz_intr(status, cause, pc, ipending)
-	u_int status;	/* status register at time of the exception */
-	u_int cause;	/* cause register at time of exception */
-	u_int pc;	/* program counter where to continue */
-	u_int ipending;
+pizazz_intr(u_int status, u_int cause, u_int pc, u_int ipending)
+	/* status:	 status register at time of the exception */
+	/* cause:	 cause register at time of exception */
+	/* pc:	 program counter where to continue */
 {
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_2) {	        /* Timer Interrupt */

@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.59 2009/03/14 15:36:20 dsl Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.60 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.59 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.60 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -152,9 +152,7 @@ struct rotatedfont {
  * Initialize a 'rasops_info' descriptor.
  */
 int
-rasops_init(ri, wantrows, wantcols)
-	struct rasops_info *ri;
-	int wantrows, wantcols;
+rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 {
 
 #ifdef _KERNEL
@@ -218,9 +216,7 @@ rasops_init(ri, wantrows, wantcols)
  * Reconfigure (because parameters have changed in some way).
  */
 int
-rasops_reconfig(ri, wantrows, wantcols)
-	struct rasops_info *ri;
-	int wantrows, wantcols;
+rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 {
 	int bpp, s;
 
@@ -501,9 +497,7 @@ rasops_allocattr_mono(void *cookie, int fg, int bg, int flg,
  * Copy rows.
  */
 static void
-rasops_copyrows(cookie, src, dst, num)
-	void *cookie;
-	int src, dst, num;
+rasops_copyrows(void *cookie, int src, int dst, int num)
 {
 	int32_t *sp, *dp, *hp, *srp, *drp, *hrp;
 	struct rasops_info *ri;
@@ -613,9 +607,7 @@ rasops_copyrows(cookie, src, dst, num)
  * these cases anyway.
  */
 void
-rasops_copycols(cookie, row, src, dst, num)
-	void *cookie;
-	int row, src, dst, num;
+rasops_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri;
 	u_char *sp, *dp, *hp;
@@ -676,9 +668,7 @@ rasops_copycols(cookie, row, src, dst, num)
  * Turn cursor off/on.
  */
 static void
-rasops_cursor(cookie, on, row, col)
-	void *cookie;
-	int on, row, col;
+rasops_cursor(void *cookie, int on, int row, int col)
 {
 	struct rasops_info *ri;
 
@@ -787,9 +777,7 @@ rasops_init_devcmap(struct rasops_info *ri)
  * Unpack a rasops attribute
  */
 void
-rasops_unpack_attr(attr, fg, bg, underline)
-	long attr;
-	int *fg, *bg, *underline;
+rasops_unpack_attr(long attr, int *fg, int *bg, int *underline)
 {
 
 	*fg = ((u_int)attr >> 24) & 0xf;
@@ -802,10 +790,7 @@ rasops_unpack_attr(attr, fg, bg, underline)
  * Erase rows. This isn't static, since 24-bpp uses it in special cases.
  */
 void
-rasops_eraserows(cookie, row, num, attr)
-	void *cookie;
-	int row, num;
-	long attr;
+rasops_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri;
 	int np, nw, cnt, delta;
@@ -998,10 +983,7 @@ rasops_do_cursor(struct rasops_info *ri)
  * Erase columns.
  */
 void
-rasops_erasecols(cookie, row, col, num, attr)
-	void *cookie;
-	int row, col, num;
-	long attr;
+rasops_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	int n8, height, cnt, slop1, slop2, clr;
 	struct rasops_info *ri;
@@ -1213,9 +1195,7 @@ rasops_rotate_font(int *cookie)
 }
 
 static void
-rasops_copychar(cookie, srcrow, dstrow, srccol, dstcol)
-	void *cookie;
-	int srcrow, dstrow, srccol, dstcol;
+rasops_copychar(void *cookie, int srcrow, int dstrow, int srccol, int dstcol)
 {
 	struct rasops_info *ri;
 	u_char *sp, *dp;
@@ -1244,11 +1224,7 @@ rasops_copychar(cookie, srcrow, dstrow, srccol, dstcol)
 }
 
 static void
-rasops_putchar_rotated(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
+rasops_putchar_rotated(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
 	u_char *rp;
@@ -1285,10 +1261,7 @@ rasops_putchar_rotated(cookie, row, col, uc, attr)
 }
 
 static void
-rasops_erasecols_rotated(cookie, row, col, num, attr)
-	void *cookie;
-	int row, col, num;
-	long attr;
+rasops_erasecols_rotated(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri;
 	int i;
@@ -1301,9 +1274,7 @@ rasops_erasecols_rotated(cookie, row, col, num, attr)
 
 /* XXX: these could likely be optimised somewhat. */
 static void
-rasops_copyrows_rotated(cookie, src, dst, num)
-	void *cookie;
-	int src, dst, num;
+rasops_copyrows_rotated(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	int col, roff;
@@ -1321,9 +1292,7 @@ rasops_copyrows_rotated(cookie, src, dst, num)
 }
 
 static void
-rasops_copycols_rotated(cookie, row, src, dst, num)
-	void *cookie;
-	int row, src, dst, num;
+rasops_copycols_rotated(void *cookie, int row, int src, int dst, int num)
 {
 	int coff;
 
@@ -1336,10 +1305,7 @@ rasops_copycols_rotated(cookie, row, src, dst, num)
 }
 
 static void
-rasops_eraserows_rotated(cookie, row, num, attr)
-	void *cookie;
-	int row, num;
-	long attr;
+rasops_eraserows_rotated(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri;
 	int col, rn;

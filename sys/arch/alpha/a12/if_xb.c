@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.21 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: if_xb.c,v 1.22 2009/03/14 21:04:01 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.21 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.22 2009/03/14 21:04:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,9 +218,7 @@ xbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-xbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct xb_config *ccp;
 
@@ -228,7 +226,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.21 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.22 $", xbi.if_mtu);
 }
 
 static void

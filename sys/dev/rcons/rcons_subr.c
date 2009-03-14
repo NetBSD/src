@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.17 2009/03/14 15:36:20 dsl Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.18 2009/03/14 21:04:22 dsl Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.17 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.18 2009/03/14 21:04:22 dsl Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -475,9 +475,7 @@ rcons_doesc(struct rconsole *rc, int c)
 
 /* Set ANSI colors */
 void
-rcons_setcolor(rc, fg, bg)
-	struct rconsole *rc;
-	int fg, bg;
+rcons_setcolor(struct rconsole *rc, int fg, int bg)
 {
 	int flg;
 

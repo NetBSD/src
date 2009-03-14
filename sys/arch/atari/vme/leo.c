@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.15 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: leo.c,v 1.16 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.15 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.16 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,10 +175,7 @@ leo_match(struct device *parent, struct cfdata *cfp, void *aux)
 }
 
 static int
-leo_probe(iot, memt, ioh, memh, iosize, msize)
-	bus_space_tag_t *iot, *memt;
-	bus_space_handle_t *ioh, *memh;
-	u_int iosize, msize;
+leo_probe(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, bus_space_handle_t *memh, u_int iosize, u_int msize)
 {
 
 	/* Test that our highest register is within the io range. */
@@ -208,9 +205,7 @@ leo_probe(iot, memt, ioh, memh, iosize, msize)
 }
 
 static void
-leo_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct leo_softc *sc = (struct leo_softc *)self;
 	struct vme_attach_args *va = aux;

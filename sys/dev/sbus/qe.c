@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.48 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: qe.c,v 1.49 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.48 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.49 2009/03/14 21:04:22 dsl Exp $");
 
 #define QEDEBUG
 
@@ -185,9 +185,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-qeattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *qec = (struct qec_softc *)parent;
@@ -329,9 +327,7 @@ qeattach(parent, self, aux)
  * we copy into clusters.
  */
 static inline struct mbuf *
-qe_get(sc, idx, totlen)
-	struct qe_softc *sc;
-	int idx, totlen;
+qe_get(struct qe_softc *sc, int idx, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -408,9 +404,7 @@ qe_put(struct qe_softc *sc, int idx, struct mbuf *m)
  * Pass a packet to the higher levels.
  */
 inline void
-qe_read(sc, idx, len)
-	struct qe_softc *sc;
-	int idx, len;
+qe_read(struct qe_softc *sc, int idx, int len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.12 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.13 2009/03/14 21:04:03 dsl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2009/03/14 21:04:03 dsl Exp $");
 
 #ifndef _KERNEL
 #include "stubs.h"
@@ -964,12 +964,8 @@ db_addr_t db_disasm_esc(db_addr_t, int, u_int, int, int, const char *);
  * Read address at location and return updated location.
  */
 db_addr_t
-db_read_address(loc, rex, short_addr, regmodrm, addrp)
-	db_addr_t	loc;
-	u_int		rex;
-	int		short_addr;
-	int		regmodrm;
-	struct i_addr	*addrp;		/* out */
+db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm, struct i_addr *addrp)
+	/* addrp:		 out */
 {
 	int		mod, rm, sib, index, disp, ext;
 

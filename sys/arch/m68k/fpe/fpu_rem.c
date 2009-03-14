@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.8 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.9 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.8 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.9 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -88,9 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.8 2009/03/14 15:36:09 dsl Exp $");
 static struct fpn * __fpu_modrem(struct fpemu *fe, int modrem);
 
 static struct fpn *
-__fpu_modrem(fe, modrem)
-     struct fpemu *fe;
-     int modrem;
+__fpu_modrem(struct fpemu *fe, int modrem)
 {
     static struct fpn X, Y;
     struct fpn *x, *y, *r;

@@ -1,4 +1,4 @@
-/*	$NetBSD: llscan.c,v 1.12 2007/01/18 12:43:38 cbiere Exp $	*/
+/*	$NetBSD: llscan.c,v 1.13 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.12 2007/01/18 12:43:38 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.13 2009/03/14 21:04:25 dsl Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -89,8 +89,7 @@ skip()
 }
 
 void
-llaccept(t)
-	LLtoken *t;
+llaccept(LLtoken *t)
 {
 	switch(t->llstate) {
 	case NORMAL:
@@ -285,8 +284,7 @@ getch()
 }
 
 void
-llscan(t)
-	LLtoken *t;
+llscan(LLtoken *t)
 {
 	char c;
 

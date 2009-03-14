@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.32 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.33 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.32 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.33 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,9 +660,8 @@ tcic_attach_card(struct tcic_handle *h)
 }
 
 void
-tcic_detach_card(h, flags)
-	struct tcic_handle *h;
-	int flags;		/* DETACH_* */
+tcic_detach_card(struct tcic_handle *h, int flags)
+	/* flags:		 DETACH_* */
 {
 	DPRINTF(("tcic_detach_card\n"));
 

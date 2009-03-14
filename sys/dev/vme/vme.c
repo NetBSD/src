@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.20 2009/03/14 15:36:21 dsl Exp $ */
+/* $NetBSD: vme.c,v 1.21 2009/03/14 21:04:23 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.20 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.21 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,9 +167,7 @@ vmematch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-vmeattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vmeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc *)self;
 
@@ -277,11 +275,7 @@ vme_select_map(struct vmebus_softc *sc, vme_am_t ams)
 }
 
 int
-_vme_space_alloc(sc, addr, len, ams)
-	struct vmebus_softc *sc;
-	vme_addr_t addr;
-	vme_size_t len;
-	vme_am_t ams;
+_vme_space_alloc(struct vmebus_softc *sc, vme_addr_t addr, vme_size_t len, vme_am_t ams)
 {
 	struct extent *ex;
 
@@ -293,11 +287,7 @@ _vme_space_alloc(sc, addr, len, ams)
 }
 
 void
-_vme_space_free(sc, addr, len, ams)
-	struct vmebus_softc *sc;
-	vme_addr_t addr;
-	vme_size_t len;
-	vme_am_t ams;
+_vme_space_free(struct vmebus_softc *sc, vme_addr_t addr, vme_size_t len, vme_am_t ams)
 {
 	struct extent *ex;
 
@@ -311,12 +301,7 @@ _vme_space_free(sc, addr, len, ams)
 }
 
 int
-_vme_space_get(sc, len, ams, align, addr)
-	struct vmebus_softc *sc;
-	vme_size_t len;
-	vme_am_t ams;
-	u_long align;
-	vme_addr_t *addr;
+_vme_space_get(struct vmebus_softc *sc, vme_size_t len, vme_am_t ams, u_long align, vme_addr_t *addr)
 {
 	struct extent *ex;
 	u_long help;

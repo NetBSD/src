@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.c,v 1.9 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_a12.c,v 1.10 2009/03/14 21:04:02 dsl Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.9 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.10 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -177,8 +177,7 @@ avalon_a12_intr_establish(ccv, ih, level, func, arg)
 }
 
 void
-avalon_a12_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+avalon_a12_intr_disestablish(void *ccv, void *cookie)
 {
 	if(cookie == a12_intr_pci.f) {
 		alpha_wmb();

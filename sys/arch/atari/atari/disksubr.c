@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.38 2009/03/14 21:04:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38 2009/03/14 21:04:05 dsl Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -145,10 +145,7 @@ readdisklabel(dev, strat, lp, clp)
  * Check new disk label for sensibility before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel	*olp, *nlp;
-	u_long			openmask;
-	struct cpu_disklabel	*clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *clp)
 {
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {

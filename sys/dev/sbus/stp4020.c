@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.57 2009/03/14 15:36:21 dsl Exp $ */
+/*	$NetBSD: stp4020.c,v 1.58 2009/03/14 21:04:23 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.57 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.58 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,9 +323,7 @@ stp4020match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-stp4020attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+stp4020attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct stp4020_softc *sc = (void *)self;
@@ -602,9 +600,7 @@ stp4020_event_thread(void *arg)
 }
 
 void
-stp4020_queue_event(sc, sock, event)
-	struct stp4020_softc *sc;
-	int sock, event;
+stp4020_queue_event(struct stp4020_softc *sc, int sock, int event)
 {
 	struct stp4020_event *e;
 	int s;

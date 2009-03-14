@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.13 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.14 2009/03/14 21:04:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.13 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.14 2009/03/14 21:04:21 dsl Exp $");
 
 #include "vmetwo.h"
 
@@ -351,10 +351,7 @@ vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg, evcnt)
 }
 
 void
-vmetwo_intr_disestablish(csc, lvl, vec, last, evcnt)
-	void *csc;
-	int lvl, vec, last;
-	struct evcnt *evcnt;
+vmetwo_intr_disestablish(void *csc, int lvl, int vec, int last, struct evcnt *evcnt)
 {
 	struct vmetwo_softc *sc = csc;
 	u_int32_t reg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.100 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.101 2009/03/14 21:04:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.101 2009/03/14 21:04:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,7 @@ simple_devprint(void *auxp, const char *pnp)
 }
 
 int
-matchname(fp, sp)
-	const char *fp, *sp;
+matchname(const char *fp, const char *sp)
 {
 	int len;
 
@@ -252,9 +251,7 @@ mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * "find" all the things that should be there.
  */
 void
-mbattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+mbattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	printf("\n");
 	config_found(dp, __UNCONST("clock"), simple_devprint);

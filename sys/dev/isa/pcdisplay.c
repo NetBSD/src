@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.35 2009/03/14 15:36:18 dsl Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.36 2009/03/14 21:04:20 dsl Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.35 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.36 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,7 @@ const struct wsdisplay_accessops pcdisplay_accessops = {
 };
 
 static int
-pcdisplay_probe_col(iot, memt)
-	bus_space_tag_t iot, memt;
+pcdisplay_probe_col(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	bus_space_handle_t memh, ioh_6845;
 	u_int16_t oldval, val;
@@ -158,8 +157,7 @@ pcdisplay_probe_col(iot, memt)
 }
 
 static int
-pcdisplay_probe_mono(iot, memt)
-	bus_space_tag_t iot, memt;
+pcdisplay_probe_mono(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	bus_space_handle_t memh, ioh_6845;
 	u_int16_t oldval, val;
@@ -182,10 +180,7 @@ pcdisplay_probe_mono(iot, memt)
 }
 
 static void
-pcdisplay_init(dc, iot, memt, mono)
-	struct pcdisplay_config *dc;
-	bus_space_tag_t iot, memt;
-	int mono;
+pcdisplay_init(struct pcdisplay_config *dc, bus_space_tag_t iot, bus_space_tag_t memt, int mono)
 {
 	struct pcdisplay_handle *ph = &dc->dc_ph;
 	int cpos;
@@ -340,8 +335,7 @@ pcdisplay_attach(struct device *parent, struct device *self, void *aux)
 
 
 int
-pcdisplay_cnattach(iot, memt)
-	bus_space_tag_t iot, memt;
+pcdisplay_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	int mono;
 

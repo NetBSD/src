@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa_machdep.c,v 1.5 2009/03/14 15:36:13 dsl Exp $	*/
+/*	$NetBSD: wdc_ofisa_machdep.c,v 1.6 2009/03/14 21:04:16 dsl Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa_machdep.c,v 1.5 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa_machdep.c,v 1.6 2009/03/14 21:04:16 dsl Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -73,11 +73,7 @@ wdc_ofisa_md_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 int
-wdc_ofisa_md_intr_fixup(parent, self, aux, descp, ndescs, ndescsfilled)
-	struct device *parent, *self;
-	void *aux;
-	struct ofisa_intr_desc *descp;
-	int ndescs, ndescsfilled;
+wdc_ofisa_md_intr_fixup(struct device *parent, struct device *self, void *aux, struct ofisa_intr_desc *descp, int ndescs, int ndescsfilled)
 {
 
 	if (1)			/* XXX old firmware compat enabled */

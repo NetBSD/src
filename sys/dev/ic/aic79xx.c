@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.39 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.40 2009/03/14 21:04:19 dsl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.39 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.40 2009/03/14 21:04:19 dsl Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -9711,16 +9711,7 @@ ahd_handle_target_cmd(struct ahd_softc *ahd, struct target_cmd *cmd)
 #endif
 
 static int
-ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
-	bus_dma_tag_t tag;
-	int size;
-	int flags;
-	bus_dmamap_t *mapp;
-	void **vaddr;
-	bus_addr_t *baddr;
-	bus_dma_segment_t *seg;
-	int *nseg;
-	const char *myname, *what;
+ahd_createdmamem(bus_dma_tag_t tag, int size, int flags, bus_dmamap_t *mapp, void **vaddr, bus_addr_t *baddr, bus_dma_segment_t *seg, int *nseg, const char *myname, const char *what)
 {
 	int error, level = 0;
 

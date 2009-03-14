@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.31 2009/03/14 15:36:19 dsl Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.32 2009/03/14 21:04:21 dsl Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.31 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.32 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,9 +157,7 @@ isserdes(u_int8_t* buf)
 }
 
 void
-gem_attach_pci(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gem_attach_pci(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = (void *)self;

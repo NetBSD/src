@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.9 2009/03/14 15:36:09 dsl Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.10 2009/03/14 21:04:11 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.9 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.10 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -161,9 +161,7 @@ fpu_stof(register struct fpn *fp, register u_int i)
  * We assume this uses at most (96-FP_LG) bits.
  */
 static int
-fpu_dtof(fp, i, j)
-	register struct fpn *fp;
-	register u_int i, j;
+fpu_dtof(register struct fpn *fp, register u_int i, register u_int j)
 {
 	register int exp;
 	register u_int frac, f0, f1, f2;
@@ -182,9 +180,7 @@ fpu_dtof(fp, i, j)
  * 96-bit extended -> fpn.
  */
 static int
-fpu_xtof(fp, i, j, k)
-	register struct fpn *fp;
-	register u_int i, j, k;
+fpu_xtof(register struct fpn *fp, register u_int i, register u_int j, register u_int k)
 {
 	register int exp;
 	register u_int frac, f0, f1, f2;

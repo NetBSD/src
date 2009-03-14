@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.84 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: xy.c,v 1.85 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.84 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.85 2009/03/14 21:04:23 dsl Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1067,10 +1067,7 @@ xyioctl(dev, command, addr, flag, l)
  */
 
 int
-xyopen(dev, flag, fmt, l)
-	dev_t   dev;
-	int     flag, fmt;
-	struct lwp *l;
+xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int     unit, part;
 	struct xy_softc *xy;

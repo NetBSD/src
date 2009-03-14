@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.15 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.16 2009/03/14 21:04:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.15 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.16 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -357,10 +357,7 @@ mvmebus_probe(vsc, vmeaddr, len, am, datasize, callback, arg)
 
 /* ARGSUSED */
 int
-mvmebus_intmap(vsc, level, vector, handlep)
-	void *vsc;
-	int level, vector;
-	vme_intr_handle_t *handlep;
+mvmebus_intmap(void *vsc, int level, int vector, vme_intr_handle_t *handlep)
 {
 
 	if (level < 1 || level > 7 || vector < 0x80 || vector > 0xff)

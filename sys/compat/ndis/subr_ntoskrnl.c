@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.14 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.15 2009/03/14 21:04:18 dsl Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -1553,81 +1553,61 @@ WRITE_REGISTER_UCHAR(uint8_t *reg, uint8_t val)
 }
 
 __stdcall static int64_t
-_allmul(a, b)
-	int64_t			a;
-	int64_t			b;
+_allmul(int64_t a, int64_t b)
 {
 	return (a * b);
 }
 
 __stdcall static int64_t
-_alldiv(a, b)
-	int64_t			a;
-	int64_t			b;
+_alldiv(int64_t a, int64_t b)
 {
 	return (a / b);
 }
 
 __stdcall static int64_t
-_allrem(a, b)
-	int64_t			a;
-	int64_t			b;
+_allrem(int64_t a, int64_t b)
 {
 	return (a % b);
 }
 
 __stdcall static uint64_t
-_aullmul(a, b)
-	uint64_t		a;
-	uint64_t		b;
+_aullmul(uint64_t a, uint64_t b)
 {
 	return (a * b);
 }
 
 __stdcall static uint64_t
-_aulldiv(a, b)
-	uint64_t		a;
-	uint64_t		b;
+_aulldiv(uint64_t a, uint64_t b)
 {
 	return (a / b);
 }
 
 __stdcall static uint64_t
-_aullrem(a, b)
-	uint64_t		a;
-	uint64_t		b;
+_aullrem(uint64_t a, uint64_t b)
 {
 	return (a % b);
 }
 
 __regparm static int64_t
-_allshl(a, b)
-	int64_t			a;
-	uint8_t			b;
+_allshl(int64_t a, uint8_t b)
 {
 	return (a << b);
 }
 
 __regparm static uint64_t
-_aullshl(a, b)
-	uint64_t		a;
-	uint8_t			b;
+_aullshl(uint64_t a, uint8_t b)
 {
 	return (a << b);
 }
 
 __regparm static int64_t
-_allshr(a, b)
-	int64_t			a;
-	uint8_t			b;
+_allshr(int64_t a, uint8_t b)
 {
 	return (a >> b);
 }
 
 __regparm static uint64_t
-_aullshr(a, b)
-	uint64_t		a;
-	uint8_t			b;
+_aullshr(uint64_t a, uint8_t b)
 {
 	return (a >> b);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.29 2009/03/14 15:36:21 dsl Exp $ */
+/*	$NetBSD: fb.c,v 1.30 2009/03/14 21:04:23 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.29 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.30 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,10 +204,7 @@ fb_attach(struct fbdevice *fb, int isconsole)
 }
 
 int
-fbopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+fbopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -224,10 +221,7 @@ fbopen(dev, flags, mode, l)
 }
 
 int
-fbclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -314,9 +308,7 @@ fbmmap(dev_t dev, off_t off, int prot)
 }
 
 void
-fb_setsize_obp(fb, depth, def_width, def_height, node)
-	struct fbdevice *fb;
-	int depth, def_width, def_height, node;
+fb_setsize_obp(struct fbdevice *fb, int depth, int def_width, int def_height, int node)
 {
 	fb->fb_type.fb_width = prom_getpropint(node, "width", def_width);
 	fb->fb_type.fb_height = prom_getpropint(node, "height", def_height);
@@ -325,9 +317,7 @@ fb_setsize_obp(fb, depth, def_width, def_height, node)
 }
 
 void
-fb_setsize_eeprom(fb, depth, def_width, def_height)
-	struct fbdevice *fb;
-	int depth, def_width, def_height;
+fb_setsize_eeprom(struct fbdevice *fb, int depth, int def_width, int def_height)
 {
 #if !defined(SUN4U)
 	struct eeprom *eep = (struct eeprom *)eeprom_va;

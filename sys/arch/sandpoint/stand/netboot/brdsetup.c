@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.4 2009/01/12 11:32:44 tsutsui Exp $ */
+/* $NetBSD: brdsetup.c,v 1.5 2009/03/14 21:04:15 dsl Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -100,8 +100,7 @@ brdsetup()
 }
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
 	unsigned timo, lsr;
 
@@ -146,8 +145,7 @@ getsecs()
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	u_int n;
+delay(u_int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
@@ -160,8 +158,7 @@ delay(n)
 }
 
 void
-_wb(adr, siz)
-	uint32_t adr, siz;
+_wb(uint32_t adr, uint32_t siz)
 {
 	uint32_t bnd;
 
@@ -172,8 +169,7 @@ _wb(adr, siz)
 }
 
 void
-_wbinv(adr, siz)
-	uint32_t adr, siz;
+_wbinv(uint32_t adr, uint32_t siz)
 {
 	uint32_t bnd;
 
@@ -184,8 +180,7 @@ _wbinv(adr, siz)
 }
 
 void
-_inv(adr, siz)
-	uint32_t adr, siz;
+_inv(uint32_t adr, uint32_t siz)
 {
 	uint32_t off, bnd;
 

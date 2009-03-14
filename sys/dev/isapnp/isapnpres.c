@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.20 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.21 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.20 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.21 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,9 +216,7 @@ isapnp_flatten(struct isapnp_attach_args *card)
  *	Process a resource tag
  */
 static int
-isapnp_process_tag(tag, len, buf, card, dev, conf)
-	u_char tag, len, *buf;
-	struct isapnp_attach_args **card, **dev, **conf;
+isapnp_process_tag(u_char tag, u_char len, u_char *buf, struct isapnp_attach_args **card, struct isapnp_attach_args **dev, struct isapnp_attach_args **conf)
 {
 	char str[64];
 	struct isapnp_region *r;

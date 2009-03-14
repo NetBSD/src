@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.24 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: mcpcia.c,v 1.25 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.24 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.25 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,9 +332,7 @@ mcpcia_config_cleanup()
 }
 
 int
-mcpcia_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+mcpcia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct mcpcia_config *ccp = &mcpcia_console_configuration;
 	bus_space_tag_t st;
