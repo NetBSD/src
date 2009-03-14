@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_3.c,v 1.17 2003/08/07 09:37:43 agc Exp $	*/
+/*	$NetBSD: pl_3.c,v 1.18 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_3.c,v 1.17 2003/08/07 09:37:43 agc Exp $");
+__RCSID("$NetBSD: pl_3.c,v 1.18 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,8 @@ acceptcombat(void)
 			guns = mc->gunL;
 			car = mc->carL;
 		}
-		if ((!guns && !car) || load == L_EMPTY || (ready & R_LOADED) == 0)
+		if ((!guns && !car) || load == L_EMPTY ||
+		    (ready & R_LOADED) == 0)
 			goto cant;
 		if (mf->struck || !crew[2])
 			goto cant;

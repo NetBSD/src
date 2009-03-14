@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.17 2009/03/14 18:41:21 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.18 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.17 2009/03/14 18:41:21 dholland Exp $");
+__RCSID("$NetBSD: misc.c,v 1.18 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,9 +46,10 @@ __RCSID("$NetBSD: misc.c,v 1.17 2009/03/14 18:41:21 dholland Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-#define distance(x,y) (abs(x) >= abs(y) ? abs(x) + abs(y)/2 : abs(y) + abs(x)/2)
+#define distance(x,y) \
+	(abs(x) >= abs(y) ? abs(x) + abs(y)/2 : abs(y) + abs(x)/2)
 
-static int	angle(int, int);
+static int angle(int, int);
 
 /* XXX */
 int

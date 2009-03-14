@@ -1,4 +1,4 @@
-/*	$NetBSD: game.c,v 1.11 2003/08/07 09:37:42 agc Exp $	*/
+/*	$NetBSD: game.c,v 1.12 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)game.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: game.c,v 1.11 2003/08/07 09:37:42 agc Exp $");
+__RCSID("$NetBSD: game.c,v 1.12 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,13 +76,15 @@ maxmove(struct ship *ship, int dir, int fs)
 	}
 	if (dir == winddir)
 		Move -= 1 + WET[windspeed][ship->specs->class-1].B;
-	else if (dir == winddir + 2 || dir == winddir - 2 || dir == winddir - 6 || dir == winddir + 6)
+	else if (dir == winddir + 2 || dir == winddir - 2 ||
+		 dir == winddir - 6 || dir == winddir + 6)
 		Move -= 1 + WET[windspeed][ship->specs->class-1].C;
-	else if (dir == winddir + 3 || dir == winddir - 3 || dir == winddir - 5 || dir == winddir + 5)
+	else if (dir == winddir + 3 || dir == winddir - 3 ||
+		 dir == winddir - 5 || dir == winddir + 5)
 		Move = (flank ? 2 : 1) - WET[windspeed][ship->specs->class-1].D;
 	else if (dir == winddir + 4 || dir == winddir - 4)
 		Move = 0;
-	else 
+	else
 		Move -= WET[windspeed][ship->specs->class-1].A;
 	Move -= riggone;
 	Move = Move < 0 ? 0 : Move;

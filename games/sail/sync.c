@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.27 2009/03/14 18:41:21 dholland Exp $	*/
+/*	$NetBSD: sync.c,v 1.28 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.27 2009/03/14 18:41:21 dholland Exp $");
+__RCSID("$NetBSD: sync.c,v 1.28 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,8 @@ __RCSID("$NetBSD: sync.c,v 1.27 2009/03/14 18:41:21 dholland Exp $");
 
 #define BUFSIZE 4096
 
-static int	sync_update(int, struct ship *, const char *, long, long, long, long);
+static int sync_update(int, struct ship *, const char *,
+		       long, long, long, long);
 
 static const char SF[] = _PATH_SYNC;
 static const char LF[] = _PATH_LOCK;
@@ -278,7 +279,8 @@ Sync(void)
 			astr = p;
 			a = b = c = d = 0;
 		} else {
-			if (fscanf(sync_fp, "%ld%ld%ld%ld", &a, &b, &c, &d) != 4)
+			if (fscanf(sync_fp, "%ld%ld%ld%ld", &a, &b, &c, &d)
+			    != 4)
 				goto bad;
 			astr = NULL;
 		}
@@ -309,7 +311,8 @@ out:
 }
 
 static int
-sync_update(int type, struct ship *ship, const char *astr, long a, long b, long c, long d)
+sync_update(int type, struct ship *ship, const char *astr,
+	    long a, long b, long c, long d)
 {
 	switch (type) {
 	case W_DBP: {

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 2009/03/14 18:32:47 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.30 2009/03/14 19:35:13 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -62,15 +62,17 @@ extern gid_t egid;
 #define fouled2(a, b)	((a)->file->foul[(b)->file->index].sn_count)
 #define snagged2(a, b)	(grappled2(a, b) + fouled2(a, b))
 
-#define Xgrappled2(a, b) ((a)->file->grap[(b)->file->index].sn_turn < turn-1 ? grappled2(a, b) : 0)
-#define Xfouled2(a, b)	((a)->file->foul[(b)->file->index].sn_turn < turn-1 ? fouled2(a, b) : 0)
+#define Xgrappled2(a, b) ((a)->file->grap[(b)->file->index].sn_turn < turn-1 \
+			  ? grappled2(a, b) : 0)
+#define Xfouled2(a, b)	((a)->file->foul[(b)->file->index].sn_turn < turn-1 \
+			 ? fouled2(a, b) : 0)
 #define Xsnagged2(a, b)	(Xgrappled2(a, b) + Xfouled2(a, b))
 
 #define cleangrapple(a, b, c)	Cleansnag(a, b, c, 1)
 #define cleanfoul(a, b, c)	Cleansnag(a, b, c, 2)
 #define cleansnag(a, b, c)	Cleansnag(a, b, c, 3)
 
-#define sterncolour(sp)	((sp)->file->stern+'0'-((sp)->file->captured?10:0))
+#define sterncolour(sp)	((sp)->file->stern+'0'-((sp)->file->captured ? 10 : 0))
 #define sternrow(sp)	((sp)->file->row + dr[(sp)->file->dir])
 #define sterncol(sp)	((sp)->file->col + dc[(sp)->file->dir])
 
@@ -290,124 +292,123 @@ extern int people;
 extern int hasdriver;
 
 /* assorted.c */
-void table (struct ship *, struct ship *, int, int, int, int);
-void Cleansnag (struct ship *, struct ship *, int, int);
+void table(struct ship *, struct ship *, int, int, int, int);
+void Cleansnag(struct ship *, struct ship *, int, int);
 
 /* dr_1.c */
-void unfoul (void);
-void boardcomp (void);
-void resolve (void);
-void compcombat (void);
-int next (void);
+void unfoul(void);
+void boardcomp(void);
+void resolve(void);
+void compcombat(void);
+int next(void);
 
 /* dr_2.c */
-void thinkofgrapples (void);
-void checkup (void);
-void prizecheck (void);
-void closeon (struct ship *, struct ship *, char *, size_t, int, int, int);
+void thinkofgrapples(void);
+void checkup(void);
+void prizecheck(void);
+void closeon(struct ship *, struct ship *, char *, size_t, int, int, int);
 
 /* dr_3.c */
-void moveall (void);
-void sendbp (struct ship *, struct ship *, int, int);
-int is_toughmelee (struct ship *, struct ship *, int, int);
-void reload (void);
-void checksails (void);
+void moveall(void);
+void sendbp(struct ship *, struct ship *, int, int);
+int is_toughmelee(struct ship *, struct ship *, int, int);
+void reload(void);
+void checksails(void);
 
 /* dr_4.c */
-void ungrap (struct ship *, struct ship *);
-void grap (struct ship *, struct ship *);
+void ungrap(struct ship *, struct ship *);
+void grap(struct ship *, struct ship *);
 
 /* dr_5.c */
-void subtract (struct ship *, struct ship *, int, int [3], int);
-int mensent (struct ship *, struct ship *, int[3], struct ship **, int *,
-    int);
+void subtract(struct ship *, struct ship *, int, int [3], int);
+int mensent(struct ship *, struct ship *, int[3], struct ship **, int *, int);
 
 /* dr_main.c */
-int dr_main (void);
+int dr_main(void);
 
 /* game.c */
-int maxturns (struct ship *, char *);
-int maxmove (struct ship *, int, int);
+int maxturns(struct ship *, char *);
+int maxmove(struct ship *, int, int);
 
 /* lo_main.c */
-int lo_main (void);
+int lo_main(void);
 
 /* misc.c */
-int range (struct ship *, struct ship *);
-struct ship *closestenemy (struct ship *, int, int);
-int gunsbear (struct ship *, struct ship *);
-int portside (struct ship *, struct ship *, int);
-int colours (struct ship *);
-void logger (struct ship *);
+int range(struct ship *, struct ship *);
+struct ship *closestenemy(struct ship *, int, int);
+int gunsbear(struct ship *, struct ship *);
+int portside(struct ship *, struct ship *, int);
+int colours(struct ship *);
+void logger(struct ship *);
 
 /* parties.c */
-int meleeing (struct ship *, struct ship *);
-int boarding (struct ship *, int);
-void unboard (struct ship *, struct ship *, int);
+int meleeing(struct ship *, struct ship *);
+int boarding(struct ship *, int);
+void unboard(struct ship *, struct ship *, int);
 
 /* pl_1.c */
-void leave (int) __attribute__((__noreturn__));
-void choke (int) __attribute__((__noreturn__));
-void child (int);
+void leave(int) __attribute__((__noreturn__));
+void choke(int) __attribute__((__noreturn__));
+void child(int);
 
 /* pl_2.c */
-void play (void) __attribute__((__noreturn__));
+void play(void) __attribute__((__noreturn__));
 
 /* pl_3.c */
-void acceptcombat (void);
-void grapungrap (void);
-void unfoulplayer (void);
+void acceptcombat(void);
+void grapungrap(void);
+void unfoulplayer(void);
 
 /* pl_4.c */
-void changesail (void);
-void acceptsignal (void);
-void lookout (void);
-const char *saywhat (struct ship *, int);
-void eyeball (struct ship *);
+void changesail(void);
+void acceptsignal(void);
+void lookout(void);
+const char *saywhat(struct ship *, int);
+void eyeball(struct ship *);
 
 /* pl_5.c */
-void acceptmove (void);
-void acceptboard (void);
+void acceptmove(void);
+void acceptboard(void);
 
 /* pl_6.c */
-void repair (void);
-void loadplayer (void);
+void repair(void);
+void loadplayer(void);
 
 /* pl_7.c */
-void initscreen (void);
-void cleanupscreen (void);
-void newturn (int);
-void Signal (const char *, struct ship *, ...)
+void initscreen(void);
+void cleanupscreen(void);
+void newturn(int);
+void Signal(const char *, struct ship *, ...)
 	 __attribute__((__format__(__printf__,1,3)));
-void Msg (const char *, ...)
+void Msg(const char *, ...)
 	 __attribute__((__format__(__printf__,1,2)));
-void prompt (const char *, struct ship *);
-int sgetch (const char *, struct ship *, int);
-void sgetstr (const char *, char *, int);
-void draw_screen (void);
-void draw_view (void);
-void draw_turn (void);
-void draw_stat (void);
-void draw_slot (void);
-void draw_board (void);
-void centerview (void);
-void upview (void);
-void downview (void);
-void leftview (void);
-void rightview (void);
+void prompt(const char *, struct ship *);
+int sgetch(const char *, struct ship *, int);
+void sgetstr(const char *, char *, int);
+void draw_screen(void);
+void draw_view(void);
+void draw_turn(void);
+void draw_stat(void);
+void draw_slot(void);
+void draw_board(void);
+void centerview(void);
+void upview(void);
+void downview(void);
+void leftview(void);
+void rightview(void);
 
 /* pl_main.c */
-int pl_main (void);
+int pl_main(void);
 
 /* sync.c */
-void fmtship (char *, size_t, const char *, struct ship *);
-void makesignal (struct ship *, const char *, struct ship *, ...)
+void fmtship(char *, size_t, const char *, struct ship *);
+void makesignal(struct ship *, const char *, struct ship *, ...)
 	 __attribute__((__format__(__printf__,2,4)));
-void makemsg (struct ship *, const char *, ...)
+void makemsg(struct ship *, const char *, ...)
 	 __attribute__((__format__(__printf__,2,3)));
-int sync_exists (int);
-int sync_open (void);
-void sync_close (int);
-void Write (int, struct ship *, long, long, long, long);
-void Writestr (int, struct ship *, const char *);
-int Sync (void);
+int sync_exists(int);
+int sync_open(void);
+void sync_close(int);
+void Write(int, struct ship *, long, long, long, long);
+void Writestr(int, struct ship *, const char *);
+int Sync(void);

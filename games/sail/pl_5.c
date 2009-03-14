@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.20 2009/03/14 18:32:47 dholland Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.21 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.20 2009/03/14 18:32:47 dholland Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.21 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: pl_5.c,v 1.20 2009/03/14 18:32:47 dholland Exp $");
 
 #define turnfirst(x) (*x == 'r' || *x == 'l')
 
-static void	parties(struct ship *, int *, int, int);
+static void parties(struct ship *, int *, int, int);
 
 void
 acceptmove(void)
@@ -192,7 +192,8 @@ acceptboard(void)
 				sp, 1);
 			parties(sp, crew, 0, c);
 		} else if ((fouled2(ms, sp) || grappled2(ms, sp)) && crew[2]) {
-			c = sgetch("Crew sections to board the $$ (3 max) ?", sp, 1);
+			c = sgetch("Crew sections to board the $$ (3 max) ?",
+				   sp, 1);
 			parties(sp, crew, 0, c);
 		}
 	}
@@ -209,14 +210,14 @@ acceptboard(void)
 static void
 parties(struct ship *to, int *crew, int isdefense, int buf)
 {
-	int k, j, men; 
+	int k, j, men;
 	struct BP *ptr;
 	int temp[3];
 
 	for (k = 0; k < 3; k++)
 		temp[k] = crew[k];
 	if (isdigit(buf)) {
-		ptr = isdefense ? to->file->DBP : to->file->OBP; 
+		ptr = isdefense ? to->file->DBP : to->file->OBP;
 		for (j = 0; j < NBP && ptr[j].turnsent; j++)
 			;
 		if (j < NBP && !ptr[j].turnsent && buf > '0') {
