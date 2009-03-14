@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.11 2008/05/11 22:16:45 ad Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.12 2009/03/14 13:56:41 jmcneill Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.11 2008/05/11 22:16:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.12 2009/03/14 13:56:41 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -9,6 +9,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.11 2008/05/11 22:16:45 ad Exp $");
 #include <sys/timetc.h>
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpi_timer.h>
+#include <machine/acpi_machdep.h>
 
 static int acpitimer_test(void);
 static uint32_t acpitimer_delta(uint32_t, uint32_t);
@@ -108,7 +109,7 @@ acpitimer_test()
 	minl = 10000000;
 	maxl = 0;
 
-	x86_disable_intr();
+	acpi_md_OsDisableInterrupt();
 	AcpiGetTimer(&last);
 	for (n = 0; n < N; n++) {
 		AcpiGetTimer(&this);
@@ -119,7 +120,7 @@ acpitimer_test()
 			minl = delta;
 		last = this;
 	}
-	x86_enable_intr();
+	acpi_md_OsEnableInterrupt();
 
 	if (maxl - minl > 2 )
 		n = 0;
