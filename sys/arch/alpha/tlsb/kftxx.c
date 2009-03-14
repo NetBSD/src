@@ -1,4 +1,4 @@
-/* $NetBSD: kftxx.c,v 1.13 2007/03/04 05:59:12 christos Exp $ */
+/* $NetBSD: kftxx.c,v 1.14 2009/03/14 14:45:54 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.13 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.14 2009/03/14 14:45:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,12 +64,12 @@ struct kft_softc {
 
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static int	kftmatch __P((struct device *, struct cfdata *, void *));
-static void	kftattach __P((struct device *, struct device *, void *));
+static int	kftmatch(struct device *, struct cfdata *, void *);
+static void	kftattach(struct device *, struct device *, void *);
 CFATTACH_DECL(kft, sizeof(struct kft_softc),
     kftmatch, kftattach, NULL, NULL);
 
-static int	kftprint __P((void *, const char *));
+static int	kftprint(void *, const char *);
 
 static int
 kftprint(aux, pnp)

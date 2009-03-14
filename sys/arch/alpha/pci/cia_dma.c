@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.22 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: cia_dma.c,v 1.23 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.22 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.23 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,24 +50,24 @@ __KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.22 2008/04/28 20:23:11 martin Exp $");
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-bus_dma_tag_t cia_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
+bus_dma_tag_t cia_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	cia_bus_dmamap_create_direct __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+int	cia_bus_dmamap_create_direct(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
-int	cia_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+int	cia_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
 
-int	cia_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+int	cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
 
-int	cia_bus_dmamap_load_uio_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+int	cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
 
-int	cia_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+int	cia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	cia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+void	cia_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Direct-mapped window: 1G at 1G
@@ -84,10 +84,10 @@ void	cia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 /* ALCOR/ALGOR2/PYXIS have a 256-byte out-bound DMA prefetch threshold. */
 #define	CIA_SGMAP_PFTHRESH	256
 
-void	cia_tlb_invalidate __P((void));
-void	cia_broken_pyxis_tlb_invalidate __P((void));
+void	cia_tlb_invalidate(void);
+void	cia_broken_pyxis_tlb_invalidate(void);
 
-void	(*cia_tlb_invalidate_fn) __P((void));
+void	(*cia_tlb_invalidate_fn)(void);
 
 #define	CIA_TLB_INVALIDATE()	(*cia_tlb_invalidate_fn)()
 

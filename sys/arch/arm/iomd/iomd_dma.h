@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_dma.h,v 1.2 2002/02/18 11:41:18 bjh21 Exp $	*/
+/*	$NetBSD: iomd_dma.h,v 1.3 2009/03/14 14:45:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Scott Stevens
@@ -71,10 +71,10 @@ struct dma_ctrl {
 #define DMA_END_LAST	0x40000000
 
 /* Prototypes */
-struct dma_ctrl *dma_init __P((int, int, int, int));
-void dma_go	__P((struct dma_ctrl *));
-int dma_reset	__P((struct dma_ctrl *));
-int dma_setup	__P((struct dma_ctrl *, u_char *, int, int));
-int dma_isactive __P((struct dma_ctrl *));
-int dma_isintr	__P((struct dma_ctrl *));
-int dma_intr	__P((void *));
+struct dma_ctrl *dma_init(int, int, int, int);
+void dma_go(struct dma_ctrl *);
+int dma_reset(struct dma_ctrl *);
+int dma_setup(struct dma_ctrl *, u_char *, int, int);
+int dma_isactive(struct dma_ctrl *);
+int dma_isintr(struct dma_ctrl *);
+int dma_intr(void *);

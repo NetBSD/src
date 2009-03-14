@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.28 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.29 2009/03/14 14:46:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.28 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.29 2009/03/14 14:46:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ filecore_pathconf(v)
 /*
  * Global vfs data structures for filecore
  */
-int (**filecore_vnodeop_p) __P((void *));
+int (**filecore_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, filecore_lookup },		/* lookup */

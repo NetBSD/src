@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.18 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: dma.c,v 1.19 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.18 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.19 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,9 @@ static  TAILQ_HEAD(acthead, dma_entry)	dma_active;
 
 static	int	must_init = 1;		/* Must initialize		*/
 
-int	cdmaint __P((void *, int));
+int	cdmaint(void *, int);
 
-static	void	st_dma_init __P((void));
+static	void	st_dma_init(void);
 
 static void
 st_dma_init()

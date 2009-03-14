@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.27 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.28 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.27 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.28 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -90,24 +90,24 @@ static ipriv_t	con_ipriv;
 extern font_info	font_info_8x8;
 extern font_info	font_info_8x16;
 
-static void view_init __P((struct ite_softc *));
-static void view_deinit __P((struct ite_softc *));
-static int  itecc_ioctl __P((struct ite_softc *, u_long, void *, int,
-							struct lwp *));
-static int  ite_newsize __P((struct ite_softc *, struct itewinsize *));
-static void cursor32 __P((struct ite_softc *, int));
-static void putc8 __P((struct ite_softc *, int, int, int, int));
-static void clear8 __P((struct ite_softc *, int, int, int, int));
-static void scroll8 __P((struct ite_softc *, int, int, int, int));
-static void scrollbmap __P((bmap_t *, u_short, u_short, u_short, u_short,
-							short, short));
+static void view_init(struct ite_softc *);
+static void view_deinit(struct ite_softc *);
+static int  itecc_ioctl(struct ite_softc *, u_long, void *, int,
+							struct lwp *);
+static int  ite_newsize(struct ite_softc *, struct itewinsize *);
+static void cursor32(struct ite_softc *, int);
+static void putc8(struct ite_softc *, int, int, int, int);
+static void clear8(struct ite_softc *, int, int, int, int);
+static void scroll8(struct ite_softc *, int, int, int, int);
+static void scrollbmap(bmap_t *, u_short, u_short, u_short, u_short,
+							short, short);
 
 /*
  * grfcc config stuff
  */
-void grfccattach __P((struct device *, struct device *, void *));
-int  grfccmatch __P((struct device *, struct cfdata *, void *));
-int  grfccprint __P((void *, const char *));
+void grfccattach(struct device *, struct device *, void *);
+int  grfccmatch(struct device *, struct cfdata *, void *);
+int  grfccprint(void *, const char *);
 
 CFATTACH_DECL(grfcc, sizeof(struct grf_softc),
     grfccmatch, grfccattach, NULL, NULL);
@@ -121,10 +121,10 @@ static struct cfdata *cfdata_grf   = NULL;
  * Probe functions we can use:
  */
 #ifdef TT_VIDEO
-void	tt_probe_video __P((MODES *));
+void	tt_probe_video(MODES *);
 #endif /* TT_VIDEO */
 #ifdef FALCON_VIDEO
-void	falcon_probe_video __P((MODES *));
+void	falcon_probe_video(MODES *);
 #endif /* FALCON_VIDEO */
 
 int

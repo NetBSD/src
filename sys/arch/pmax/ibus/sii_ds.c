@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.3 2007/03/04 06:00:33 christos Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.4 2009/03/14 14:46:04 dsl Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.3 2007/03/04 06:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.4 2009/03/14 14:46:04 dsl Exp $");
 
 #include "sii.h"
 
@@ -42,23 +42,23 @@ __KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.3 2007/03/04 06:00:33 christos Exp $");
 #include <pmax/pmax/pmaxtype.h>
 
 
-static void	kn230_copytobuf __P((u_short *src, 	/* NB: must be short aligned */
-		    volatile u_short *dst, int length));
-static void	kn230_copyfrombuf __P((volatile u_short *src, char *dst,
-		    int length));
+static void	kn230_copytobuf(u_short *src, 	/* NB: must be short aligned */
+		    volatile u_short *dst, int length);
+static void	kn230_copyfrombuf(volatile u_short *src, char *dst,
+		    int length);
 
-static void	kn01_copytobuf __P((u_short *src, 	/* NB: must be short aligned */
-		    volatile u_short *dst, int length));
-static void	kn01_copyfrombuf __P((volatile u_short *src, char *dst,
-		    int length));
+static void	kn01_copytobuf(u_short *src, 	/* NB: must be short aligned */
+		    volatile u_short *dst, int length);
+static void	kn01_copyfrombuf(volatile u_short *src, char *dst,
+		    int length);
 
 /*
  * Autoconfig definition of driver front-end
  */
-static int	sii_ds_match __P((struct device* parent, struct cfdata *match,
-		    void *aux));
-static void	sii_ds_attach __P((struct device *parent, struct device *self,
-		    void *aux));
+static int	sii_ds_match(struct device* parent, struct cfdata *match,
+		    void *aux);
+static void	sii_ds_attach(struct device *parent, struct device *self,
+		    void *aux);
 
 CFATTACH_DECL(sii_ds, sizeof(struct siisoftc),
     sii_ds_match, sii_ds_attach, NULL, NULL);

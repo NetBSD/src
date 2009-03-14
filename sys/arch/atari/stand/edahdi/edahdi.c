@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.5 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.6 2009/03/14 14:45:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -99,18 +99,18 @@ typedef struct {
  */
 char	*Clr_screen = "";
 
-void	ahdi_cksum __P((void *));
-u_int	ahdi_getparts __P((int, ptable_t *, u_int, u_int));
-int	bsd_label __P((int, u_int));
-int	dkcksum __P((struct disklabel *));
-int	edit_parts __P((int, ptable_t *));
-void   *disk_read __P((int, u_int, u_int));
-void	disk_write __P((int, u_int, u_int, void  *));
-char   *get_id __P((void));
-void	get_termcap __P((void));
-int	lex __P((int *));
-int	show_parts __P((ptable_t *, int));
-void	update_disk __P((ptable_t *, int, int));
+void	ahdi_cksum(void *);
+u_int	ahdi_getparts(int, ptable_t *, u_int, u_int);
+int	bsd_label(int, u_int);
+int	dkcksum(struct disklabel *);
+int	edit_parts(int, ptable_t *);
+void   *disk_read(int, u_int, u_int);
+void	disk_write(int, u_int, u_int, void  *);
+char   *get_id(void);
+void	get_termcap(void);
+int	lex(int *);
+int	show_parts(ptable_t *, int);
+void	update_disk(ptable_t *, int, int);
 
 int
 main(argc, argv)

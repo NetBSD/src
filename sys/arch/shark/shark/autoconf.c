@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2008/06/11 23:31:35 rafal Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2009/03/14 14:46:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2008/06/11 23:31:35 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2009/03/14 14:46:07 dsl Exp $");
 
 #include "opt_md.h"
 
@@ -64,9 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2008/06/11 23:31:35 rafal Exp $");
 
 #ifdef SHARK
 #include <shark/shark/sequoia.h>
-extern void	ofrootfound __P((void));
-extern void	ofw_device_register __P((struct device *, void *aux));
-extern void	startrtclock __P((void));
+extern void	ofrootfound(void);
+extern void	ofw_device_register(struct device *, void *aux);
+extern void	startrtclock(void);
 #endif
 
 #if defined(OFWGENCFG) || defined(SHARK)
@@ -77,12 +77,12 @@ extern void ofw_device_register(struct device *dev, void *aux);
 
 extern dev_t dumpdev;
 
-void dumpconf __P((void));
-void isa_intr_init __P((void));
+void dumpconf(void);
+void isa_intr_init(void);
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device __P((char *name));
-static void set_root_device __P((void));
+static void get_device(char *name);
+static void set_root_device(void);
 #endif
 
 #ifndef MEMORY_DISK_IS_ROOT

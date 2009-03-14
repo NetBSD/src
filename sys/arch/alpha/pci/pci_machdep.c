@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.15 2001/07/16 00:55:17 elric Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.16 2009/03/14 14:45:53 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15 2001/07/16 00:55:17 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,8 +70,8 @@ pci_display_console(iot, memt, pc, bus, device, function)
 	pcitag_t tag;
 	pcireg_t id, class;
 	int match, nmatch;
-	int (*fn) __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
-	    int, int, int));
+	int (*fn)(bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+	    int, int, int);
 
 	tag = pci_make_tag(pc, bus, device, function);
 	id = pci_conf_read(pc, tag, PCI_ID_REG);

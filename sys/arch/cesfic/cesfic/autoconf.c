@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2008/06/22 16:34:15 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2009/03/14 14:45:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2008/06/22 16:34:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2009/03/14 14:45:58 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +57,10 @@ u_int	bootdev;
 
 struct evcnt evcnt_fpsp_unimp, evcnt_fpsp_unsupp;
 
-int	mainbusmatch __P((struct device *, struct cfdata *, void *));
-void	mainbusattach __P((struct device *, struct device *, void *));
-int	mainbussearch __P((struct device *, struct cfdata *,
-			   const int *, void *));
+int	mainbusmatch(struct device *, struct cfdata *, void *);
+void	mainbusattach(struct device *, struct device *, void *);
+int	mainbussearch(struct device *, struct cfdata *,
+			   const int *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbusmatch, mainbusattach, NULL, NULL);

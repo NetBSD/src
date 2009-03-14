@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.15 2002/10/02 04:15:10 thorpej Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.16 2009/03/14 14:46:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.15 2002/10/02 04:15:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.16 2009/03/14 14:46:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ static int kn03_builtin_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs) - 3;
 static int kn03_ioasic_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs);
 #endif
 
-static int	ioasicmatch __P((struct device *, struct cfdata *, void *));
-static void	ioasicattach __P((struct device *, struct device *, void *));
+static int	ioasicmatch(struct device *, struct cfdata *, void *);
+static void	ioasicattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ioasic, sizeof(struct ioasic_softc),
     ioasicmatch, ioasicattach, NULL, NULL);
@@ -206,7 +206,7 @@ ioasic_intr_establish(dev, cookie, level, handler, val)
 	struct device *dev;
 	void *cookie;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *val;
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, val);

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.16 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.17 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.16 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.17 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,13 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.16 2008/04/28 20:23:11 martin Exp
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_eb64plus_intr_map __P((struct pci_attach_args *,
-	    pci_intr_handle_t *));
-const char *dec_eb64plus_intr_string __P((void *, pci_intr_handle_t));
-const struct evcnt *dec_eb64plus_intr_evcnt __P((void *, pci_intr_handle_t));
-void	*dec_eb64plus_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *));
-void	dec_eb64plus_intr_disestablish __P((void *, void *));
+int	dec_eb64plus_intr_map(struct pci_attach_args *,
+	    pci_intr_handle_t *);
+const char *dec_eb64plus_intr_string(void *, pci_intr_handle_t);
+const struct evcnt *dec_eb64plus_intr_evcnt(void *, pci_intr_handle_t);
+void	*dec_eb64plus_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *);
+void	dec_eb64plus_intr_disestablish(void *, void *);
 
 #define	EB64PLUS_MAX_IRQ	32
 #define	PCI_STRAY_MAX		5
@@ -103,9 +103,9 @@ struct alpha_shared_intr *eb64plus_pci_intr;
 bus_space_tag_t eb64plus_intrgate_iot;
 bus_space_handle_t eb64plus_intrgate_ioh;
 
-void	eb64plus_iointr __P((void *arg, unsigned long vec));
-extern void	eb64plus_intr_enable __P((int irq));  /* pci_eb64plus_intr.S */
-extern void	eb64plus_intr_disable __P((int irq)); /* pci_eb64plus_intr.S */
+void	eb64plus_iointr(void *arg, unsigned long vec);
+extern void	eb64plus_intr_enable(int irq);  /* pci_eb64plus_intr.S */
+extern void	eb64plus_intr_disable(int irq); /* pci_eb64plus_intr.S */
 
 void
 pci_eb64plus_pickintr(acp)
@@ -218,7 +218,7 @@ dec_eb64plus_intr_establish(acv, ih, level, func, arg)
         void *acv, *arg;
         pci_intr_handle_t ih;
         int level;
-        int (*func) __P((void *));
+        int (*func)(void *);
 {
 	void *cookie;
 

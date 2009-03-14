@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.58 2008/01/03 23:02:24 joerg Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.59 2009/03/14 14:46:04 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.58 2008/01/03 23:02:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.59 2009/03/14 14:46:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,15 +132,15 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.58 2008/01/03 23:02:24 joerg Exp 
 #include <pmax/pmax/cons.h>
 #include "wsdisplay.h"
 
-void		dec_3maxplus_init __P((void));		/* XXX */
-static void	dec_3maxplus_bus_reset __P((void));
-static void	dec_3maxplus_cons_init __P((void));
-static void 	dec_3maxplus_errintr __P((void));
-static void	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_3maxplus_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
+void		dec_3maxplus_init(void);		/* XXX */
+static void	dec_3maxplus_bus_reset(void);
+static void	dec_3maxplus_cons_init(void);
+static void 	dec_3maxplus_errintr(void);
+static void	dec_3maxplus_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_3maxplus_intr_establish(struct device *, void *,
+		    int, int (*)(void *), void *);
 
-static void	kn03_wbflush __P((void));
+static void	kn03_wbflush(void);
 
 static void	dec_3maxplus_tc_init(void);
 
@@ -267,7 +267,7 @@ dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	unsigned mask;

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.25 2008/03/23 15:50:51 cube Exp $	*/
+/*	$NetBSD: view.c,v 1.26 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25 2008/03/23 15:50:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.26 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25 2008/03/23 15:50:51 cube Exp $");
 #include <atari/dev/viewvar.h>
 #include "view.h"
 
-static void view_display __P((struct view_softc *));
-static void view_remove __P((struct view_softc *));
-static int  view_setsize __P((struct view_softc *, struct view_size *));
-static int  view_get_colormap __P((struct view_softc *, colormap_t *));
-static int  view_set_colormap __P((struct view_softc *, colormap_t *));
+static void view_display(struct view_softc *);
+static void view_remove(struct view_softc *);
+static int  view_setsize(struct view_softc *, struct view_size *);
+static int  view_get_colormap(struct view_softc *, colormap_t *);
+static int  view_set_colormap(struct view_softc *, colormap_t *);
 
 struct view_softc views[NVIEW];
 static int view_inited;
@@ -83,7 +83,7 @@ const struct cdevsw view_cdevsw = {
 /* 
  *  functions for probeing.
  */
-void	viewattach __P((int));
+void	viewattach(int);
 
 void
 viewattach(cnt)

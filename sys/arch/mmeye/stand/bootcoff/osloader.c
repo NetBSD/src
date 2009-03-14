@@ -43,11 +43,11 @@ char *netbsd = "/netbsd";
 struct coff_filehdr FileHdr;
 struct coff_aouthdr AoutHdr;
 
-static int coff_find_section __P((FILE *, struct coff_filehdr *,
-			     struct coff_scnhdr *, int));
+static int coff_find_section(FILE *, struct coff_filehdr *,
+			     struct coff_scnhdr *, int);
 
-void	LoadAndReset __P((char *));
-int	main __P((int, char **));
+void	LoadAndReset(char *);
+int	main(int, char **);
 
 static int
 coff_find_section(fd, fp, sh, s_type)

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.h,v 1.1 1998/06/27 10:10:51 thorpej Exp $ */
+/* $NetBSD: pci_eb66.h,v 1.2 2009/03/14 14:45:53 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,4 +27,4 @@
  * rights to redistribute these changes.
  */
 
-void	pci_eb66_pickintr __P((struct lca_config *));
+void	pci_eb66_pickintr(struct lca_config *);

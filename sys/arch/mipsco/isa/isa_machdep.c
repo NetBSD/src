@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.8 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.9 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 2009/03/14 14:46:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2008/04/28 20:23:28 martin Exp $
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
-static int	mipscoisabusprint __P((void *auxp, const char *));
-static int	isabusmatch __P((struct device *, struct cfdata *, void *));
-static void	isabusattach __P((struct device *, struct device *, void *));
+static int	mipscoisabusprint(void *auxp, const char *);
+static int	isabusmatch(struct device *, struct cfdata *, void *);
+static void	isabusattach(struct device *, struct device *, void *);
 
 struct isabus_softc {
 	struct device		sc_dev;
@@ -63,9 +63,9 @@ extern struct cfdriver isabus_cd;
 static struct mipsco_bus_space	isa_io_bst, isa_mem_bst, isa_ctl_bst;
 static struct mipsco_bus_dma_tag isa_dmatag;
 
-static void isa_bus_space_init __P((struct mipsco_bus_space *, const char *,
-				     paddr_t, size_t));
-int    isa_intr __P((void *));
+static void isa_bus_space_init(struct mipsco_bus_space *, const char *,
+				     paddr_t, size_t);
+int    isa_intr(void *);
 
 
 int
@@ -187,7 +187,7 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	int intr;
 	int type;  /* XXX not yet */
 	int level;  /* XXX not yet */
-	int (*ih_fun) __P((void*));
+	int (*ih_fun)(void*);
 	void *ih_arg;
 {
 	struct mipsco_intrhand *ih;

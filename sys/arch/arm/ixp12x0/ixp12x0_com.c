@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.34 2008/06/11 22:37:21 cegger Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.35 2009/03/14 14:45:55 dsl Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.34 2008/06/11 22:37:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.35 2009/03/14 14:45:55 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -933,7 +933,7 @@ ixpcom_rxsoft(sc, tp)
 	struct ixpcom_softc *sc;
 	struct tty *tp;
 {
-	int (*rint) __P((int, struct tty *)) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char lsr;

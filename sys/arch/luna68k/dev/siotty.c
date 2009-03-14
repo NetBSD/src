@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.23 2008/06/13 09:58:06 cegger Exp $ */
+/* $NetBSD: siotty.c,v 1.24 2009/03/14 14:46:00 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.23 2008/06/13 09:58:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.24 2009/03/14 14:46:00 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,13 +81,13 @@ struct siotty_softc {
 };
 
 #include "siotty.h"
-static void siostart __P((struct tty *));
-static int  sioparam __P((struct tty *, struct termios *));
-static void siottyintr __P((int));
-static int  siomctl __P((struct siotty_softc *, int, int));
+static void siostart(struct tty *);
+static int  sioparam(struct tty *, struct termios *);
+static void siottyintr(int);
+static int  siomctl(struct siotty_softc *, int, int);
 
-static int  siotty_match __P((struct device *, struct cfdata *, void *));
-static void siotty_attach __P((struct device *, struct device *, void *));
+static int  siotty_match(struct device *, struct cfdata *, void *);
+static void siotty_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(siotty, sizeof(struct siotty_softc),
     siotty_match, siotty_attach, NULL, NULL);
@@ -534,9 +534,9 @@ getsiocsr(struct sioreg *sio)
 
 /*---------------------  console interface ----------------------*/
 
-void syscnattach __P((int));
-int  syscngetc __P((dev_t));
-void syscnputc __P((dev_t, int));
+void syscnattach(int);
+int  syscngetc(dev_t);
+void syscnputc(dev_t, int);
 
 struct consdev syscons = {
 	NULL,

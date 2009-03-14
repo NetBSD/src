@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.12 2009/02/08 01:13:39 pgoyette Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.13 2009/03/14 14:46:01 dsl Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -51,7 +51,7 @@ int ki2c_poll(struct ki2c_softc *, int);
 int ki2c_start(struct ki2c_softc *, int, int, void *, int);
 int ki2c_read(struct ki2c_softc *, int, int, void *, int);
 int ki2c_write(struct ki2c_softc *, int, int, void *, int);
-int ki2c_print __P((void *, const char *));
+int ki2c_print(void *, const char *);
 
 /* I2C glue */
 static int ki2c_i2c_acquire_bus(void *, int);

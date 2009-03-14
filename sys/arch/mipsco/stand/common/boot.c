@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2009/03/14 14:46:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,8 +92,8 @@ char *kernelnames[] = {
 };
 
 
-static char *devsplit __P((char *, char *));
-int main __P((int, char **));
+static char *devsplit(char *, char *);
+int main(int, char **);
 
 /*
  * This gets arguments from the first stage boot lader, calls PROM routines
@@ -111,8 +111,8 @@ main(argc, argv)
 	u_long marks[MARK_MAX];
 	struct btinfo_symtab bi_syms;
 	struct btinfo_bootpath bi_bpath;
-	extern void prom_init __P((void));
-	void (*entry) __P((int, char **, char **, u_int, char *));
+	extern void prom_init(void);
+	void (*entry)(int, char **, char **, u_int, char *);
 
 	prom_init();
 

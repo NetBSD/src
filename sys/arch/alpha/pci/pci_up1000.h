@@ -1,4 +1,4 @@
-/* $NetBSD: pci_up1000.h,v 1.2 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_up1000.h,v 1.3 2009/03/14 14:45:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,4 +29,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	pci_up1000_pickintr __P((struct irongate_config *));
+void	pci_up1000_pickintr(struct irongate_config *);

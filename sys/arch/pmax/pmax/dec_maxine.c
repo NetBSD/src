@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.53 2009/03/14 14:46:04 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.53 2009/03/14 14:46:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,16 +131,16 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $"
 #include "wsdisplay.h"
 #include "xcfb.h"
 
-void		dec_maxine_init __P((void));		/* XXX */
-static void	dec_maxine_bus_reset __P((void));
-static void	dec_maxine_cons_init __P((void));
-static void	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_maxine_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
+void		dec_maxine_init(void);		/* XXX */
+static void	dec_maxine_bus_reset(void);
+static void	dec_maxine_cons_init(void);
+static void	dec_maxine_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_maxine_intr_establish(struct device *, void *,
+		    int, int (*)(void *), void *);
 
 static void	dec_maxine_tc_init(void);
 
-static void	kn02ca_wbflush __P((void));
+static void	kn02ca_wbflush(void);
 
 /*
  * local declarations
@@ -260,7 +260,7 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	unsigned mask;

@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.5 2006/08/04 01:50:30 mhitch Exp $	*/
+/*	$NetBSD: diskio.c,v 1.6 2009/03/14 14:45:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -34,13 +34,13 @@
 #include "atari_stand.h"
 #include <sys/disklabel.h>
 
-typedef int (*rdsec_f)__P((void *buffer, u_int offset, u_int count));
+typedef int (*rdsec_f)(void *buffer, u_int offset, u_int count);
 typedef	struct { rdsec_f rds; u_int rst; u_int rend; } bdevd_t;
 
-static int rootstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-static int rootopen __P((struct open_file *, ...));
-static int rootclose __P((struct open_file *));
-static int rootioctl __P((struct open_file *, u_long, void *));
+static int rootstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+static int rootopen(struct open_file *, ...);
+static int rootclose(struct open_file *);
+static int rootioctl(struct open_file *, u_long, void *);
 
 struct devsw devsw[] = {
 	{ "root", rootstrategy, rootopen, rootclose, rootioctl }

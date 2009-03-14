@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.h,v 1.4 1997/04/07 01:59:59 cgd Exp $ */
+/* $NetBSD: pci_2100_a50.h,v 1.5 2009/03/14 14:45:53 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,4 +27,4 @@
  * rights to redistribute these changes.
  */
 
-void	pci_2100_a50_pickintr __P((struct apecs_config *));
+void	pci_2100_a50_pickintr(struct apecs_config *);

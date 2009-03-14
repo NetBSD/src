@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.5 2009/01/12 11:32:44 tsutsui Exp $ */
+/*      $NetBSD: if_prom.c,v 1.6 2009/03/14 14:46:04 dsl Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@
 #include <stand/common/common.h>
 
 #ifdef NET_DEBUG
-void dump_packet_info __P((void *, int));
+void dump_packet_info(void *, int);
 #endif
 
 /*
@@ -63,16 +63,16 @@ struct arp_list {
 };
 extern struct arp_list arp_list[8];
 extern int arp_num;
-void fill_arpcache __P((void *, int));
+void fill_arpcache(void *, int);
 #endif
 
 /* forward declarations */
-int prom_probe __P((struct netif *, void *));
-int prom_match __P((struct netif *, void *));
-void prom_init __P((struct iodesc *, void *));
-int prom_get __P((struct iodesc *, void *, size_t, saseconds_t));
-int prom_put __P((struct iodesc *, void *, size_t));
-void prom_end __P((struct netif *));
+int prom_probe(struct netif *, void *);
+int prom_match(struct netif *, void *);
+void prom_init(struct iodesc *, void *);
+int prom_get(struct iodesc *, void *, size_t, saseconds_t);
+int prom_put(struct iodesc *, void *, size_t);
+void prom_end(struct netif *);
 
 extern struct netif_stats       prom_stats[];
 struct netif_dif prom_ifs[] = {

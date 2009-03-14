@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbmem.c,v 1.8 2002/10/02 04:06:40 thorpej Exp $ */
+/* $NetBSD: tlsbmem.c,v 1.9 2009/03/14 14:45:54 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsbmem.c,v 1.8 2002/10/02 04:06:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsbmem.c,v 1.9 2009/03/14 14:45:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ struct tlsbmem_softc {
 	u_int16_t	sc_dtype;	/* device type */
 };
 
-static int	tlsbmemmatch __P((struct device *, struct cfdata *, void *));
-static void	tlsbmemattach __P((struct device *, struct device *, void *));
+static int	tlsbmemmatch(struct device *, struct cfdata *, void *);
+static void	tlsbmemattach(struct device *, struct device *, void *);
 CFATTACH_DECL(tlsbmem, sizeof (struct tlsbmem_softc),
     tlsbmemmatch, tlsbmemattach, NULL, NULL);
 

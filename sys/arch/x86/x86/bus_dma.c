@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.48 2009/02/20 05:54:40 cegger Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.49 2009/03/14 14:46:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.48 2009/02/20 05:54:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2009/03/14 14:46:08 dsl Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.48 2009/02/20 05:54:40 cegger Exp $");
 extern	paddr_t avail_end;
 
 #define	IDTVEC(name)	__CONCAT(X,name)
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector *IDTVEC(intr)[];
 
 #define	BUSDMA_BOUNCESTATS

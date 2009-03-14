@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisapc.c,v 1.7 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: ofisapc.c,v 1.8 2009/03/14 14:46:06 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisapc.c,v 1.7 2007/03/08 20:48:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisapc.c,v 1.8 2009/03/14 14:46:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofisapc.c,v 1.7 2007/03/08 20:48:39 matt Exp $");
 #include <shark/shark/ns87307reg.h>
 
 
-int ofisapcprobe __P((struct device *, struct cfdata *, void *));
-void ofisapcattach __P((struct device *, struct device *, void *));
+int ofisapcprobe(struct device *, struct cfdata *, void *);
+void ofisapcattach(struct device *, struct device *, void *);
 
 
 CFATTACH_DECL(ofisapc, sizeof(struct device),

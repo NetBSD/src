@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.21 2002/05/15 16:57:43 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.22 2009/03/14 14:45:53 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.21 2002/05/15 16:57:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.22 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,18 +54,18 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.21 2002/05/15 16:57:43 thorpej Exp $
 #include <alpha/pci/dwlpxvar.h>
 #include <alpha/pci/pci_kn8ae.h>
 
-int	dec_kn8ae_intr_map __P((struct pci_attach_args *,
-	    pci_intr_handle_t *));
-const char *dec_kn8ae_intr_string __P((void *, pci_intr_handle_t));
-const struct evcnt *dec_kn8ae_intr_evcnt __P((void *, pci_intr_handle_t));
-void	*dec_kn8ae_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *));
-void	dec_kn8ae_intr_disestablish __P((void *, void *));
+int	dec_kn8ae_intr_map(struct pci_attach_args *,
+	    pci_intr_handle_t *);
+const char *dec_kn8ae_intr_string(void *, pci_intr_handle_t);
+const struct evcnt *dec_kn8ae_intr_evcnt(void *, pci_intr_handle_t);
+void	*dec_kn8ae_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *);
+void	dec_kn8ae_intr_disestablish(void *, void *);
 
 static u_int32_t imaskcache[DWLPX_NIONODE][DWLPX_NHOSE][NHPC];
 
-void	kn8ae_spurious __P((void *, u_long));
-void	kn8ae_enadis_intr __P((struct dwlpx_config *, pci_intr_handle_t, int));
+void	kn8ae_spurious(void *, u_long);
+void	kn8ae_enadis_intr(struct dwlpx_config *, pci_intr_handle_t, int);
 
 void
 pci_kn8ae_pickintr(ccp, first)
@@ -165,7 +165,7 @@ dec_kn8ae_intr_establish(ccv, ih, level, func, arg)
         void *ccv;
         pci_intr_handle_t ih;
         int level;
-        int (*func) __P((void *));
+        int (*func)(void *);
 	void *arg;
 {           
 	struct dwlpx_config *ccp = ccv;

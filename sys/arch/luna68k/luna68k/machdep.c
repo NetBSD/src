@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.63 2009/02/13 22:41:02 apb Exp $ */
+/* $NetBSD: machdep.c,v 1.64 2009/03/14 14:46:01 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/03/14 14:46:01 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,16 +106,16 @@ int	physmem;		/* set by locore */
  */
 int	safepri = PSL_LOWIPL;
 
-void luna68k_init __P((void));
-void identifycpu __P((void));
-void dumpsys __P((void));
+void luna68k_init(void);
+void identifycpu(void);
+void dumpsys(void);
 
-void straytrap __P((int, u_short));
-void nmihand __P((struct frame));
+void straytrap(int, u_short);
+void nmihand(struct frame);
 
-int  cpu_dumpsize __P((void));
-int  cpu_dump __P((int (*)(dev_t, daddr_t, void *, size_t), daddr_t *));
-void cpu_init_kcore_hdr __P((void));
+int  cpu_dumpsize(void);
+int  cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
+void cpu_init_kcore_hdr(void);
 
 /*
  * Machine-independent crash dump header info.
@@ -126,9 +126,9 @@ int	machtype;	/* model: 1 for LUNA-1, 2 for LUNA-2 */
 int	sysconsole;	/* console: 0 for ttya, 1 for video */
 
 extern struct consdev syscons;
-extern void omfb_cnattach __P((void));
-extern void ws_cnattach __P((void));
-extern void syscnattach __P((int));
+extern void omfb_cnattach(void);
+extern void ws_cnattach(void);
+extern void syscnattach(int);
 
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
@@ -237,7 +237,7 @@ cpu_startup()
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	extern void greeting __P((void));
+	extern void greeting(void);
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
@@ -371,7 +371,7 @@ cpu_reboot(howto, bootstr)
 	volatile int howto; /* XXX to shutup GCC XXX */
 	char *bootstr;
 {
-	extern void doboot __P((void));
+	extern void doboot(void);
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp->l_addr)
@@ -513,7 +513,7 @@ cpu_dumpsize()
  */
 int
 cpu_dump(dump, blknop)
-	int (*dump) __P((dev_t, daddr_t, void *, size_t)); 
+	int (*dump)(dev_t, daddr_t, void *, size_t); 
 	daddr_t *blknop;
 {
 	int buf[MDHDRSIZE / sizeof(int)]; 
@@ -595,7 +595,7 @@ dumpsys()
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, void *, size_t));
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -728,7 +728,7 @@ badaddr(addr, nbytes)
 	return (0);
 }
 
-void luna68k_abort __P((const char *));
+void luna68k_abort(const char *);
 
 static int innmihand;	/* simple mutex */
 
@@ -786,7 +786,7 @@ cpu_exec_aout_makecmds(l, epp)
 	int error = ENOEXEC;
 #ifdef COMPAT_SUNOS
 	extern sunos_exec_aout_makecmds
-	__P((struct proc *, struct exec_package *));
+(struct proc *, struct exec_package *);
 	if ((error = sunos_exec_aout_makecmds(l->l_proc, epp)) == 0)
 		return 0;
 #endif
@@ -802,8 +802,8 @@ struct consdev *cn_tab = &syscons;
 /*
  * romcons is useful until m68k TC register is initialized.
  */
-int  romcngetc __P((dev_t));
-void romcnputc __P((dev_t, int));
+int  romcngetc(dev_t);
+void romcnputc(dev_t, int);
 
 struct consdev romcons = {
 	NULL,

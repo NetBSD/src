@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.44 2007/05/23 17:15:00 christos Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.45 2009/03/14 14:46:10 dsl Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.44 2007/05/23 17:15:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.45 2009/03/14 14:46:10 dsl Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -86,66 +86,66 @@ __KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.44 2007/05/23 17:15:00 christos Exp $"
 
 #include <net/net_osdep.h>
 
-static int ah_sumsiz_1216 __P((struct secasvar *));
-static int ah_sumsiz_zero __P((struct secasvar *));
-static int ah_common_mature __P((struct secasvar *));
-static int ah_none_mature __P((struct secasvar *));
-static int ah_none_init __P((struct ah_algorithm_state *, struct secasvar *));
-static void ah_none_loop __P((struct ah_algorithm_state *, u_int8_t *, size_t));
-static void ah_none_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_keyed_md5_mature __P((struct secasvar *));
-static int ah_keyed_md5_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_keyed_md5_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_keyed_md5_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_keyed_sha1_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_keyed_sha1_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_keyed_sha1_result __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static int ah_hmac_md5_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_md5_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_md5_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_sha1_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_sha1_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_sha1_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_sha2_256_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_sha2_256_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_sha2_256_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_sha2_384_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_sha2_384_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_sha2_384_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_sha2_512_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_sha2_512_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_sha2_512_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
-static int ah_hmac_ripemd160_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
-static void ah_hmac_ripemd160_loop __P((struct ah_algorithm_state *, u_int8_t *,
-	size_t));
-static void ah_hmac_ripemd160_result __P((struct ah_algorithm_state *,
-	u_int8_t *, size_t));
+static int ah_sumsiz_1216(struct secasvar *);
+static int ah_sumsiz_zero(struct secasvar *);
+static int ah_common_mature(struct secasvar *);
+static int ah_none_mature(struct secasvar *);
+static int ah_none_init(struct ah_algorithm_state *, struct secasvar *);
+static void ah_none_loop(struct ah_algorithm_state *, u_int8_t *, size_t);
+static void ah_none_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_keyed_md5_mature(struct secasvar *);
+static int ah_keyed_md5_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_keyed_md5_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_keyed_md5_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_keyed_sha1_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_keyed_sha1_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_keyed_sha1_result(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static int ah_hmac_md5_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_md5_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_md5_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_sha1_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_sha1_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_sha1_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_sha2_256_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_sha2_256_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_sha2_256_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_sha2_384_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_sha2_384_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_sha2_384_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_sha2_512_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_sha2_512_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_sha2_512_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
+static int ah_hmac_ripemd160_init(struct ah_algorithm_state *,
+	struct secasvar *);
+static void ah_hmac_ripemd160_loop(struct ah_algorithm_state *, u_int8_t *,
+	size_t);
+static void ah_hmac_ripemd160_result(struct ah_algorithm_state *,
+	u_int8_t *, size_t);
 
-static void ah_update_mbuf __P((struct mbuf *, int, int,
-	const struct ah_algorithm *, struct ah_algorithm_state *));
+static void ah_update_mbuf(struct mbuf *, int, int,
+	const struct ah_algorithm *, struct ah_algorithm_state *);
 
 /* checksum algorithms */
 static const struct ah_algorithm ah_algorithms[] = {

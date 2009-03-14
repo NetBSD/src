@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2009/03/14 14:46:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2009/03/14 14:46:03 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -104,11 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2009/02/13 22:41:02 apb Exp $");
 char machine[] = MACHINE;		/* mmeye */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb */
 
-void initSH3 __P((void *));
-void LoadAndReset __P((const char *));
-void XLoadAndReset __P((char *));
-void consinit __P((void));
-void sh3_cache_on __P((void));
+void initSH3(void *);
+void LoadAndReset(const char *);
+void XLoadAndReset(char *);
+void consinit(void);
+void sh3_cache_on(void);
 void InitializeBsc(void);
 
 struct mmeye_intrhand {

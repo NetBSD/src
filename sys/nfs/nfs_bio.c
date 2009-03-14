@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.182 2009/03/13 15:00:34 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.183 2009/03/14 14:46:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.182 2009/03/13 15:00:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.183 2009/03/14 14:46:11 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -69,9 +69,9 @@ extern int nfs_numasync;
 extern int nfs_commitsize;
 extern struct nfsstats nfsstats;
 
-static int nfs_doio_read __P((struct buf *, struct uio *));
-static int nfs_doio_write __P((struct buf *, struct uio *));
-static int nfs_doio_phys __P((struct buf *, struct uio *));
+static int nfs_doio_read(struct buf *, struct uio *);
+static int nfs_doio_write(struct buf *, struct uio *);
+static int nfs_doio_phys(struct buf *, struct uio *);
 
 /*
  * Vnode op for read using bio
