@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.24 2009/03/09 04:38:39 dholland Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.25 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.24 2009/03/09 04:38:39 dholland Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.25 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: dr_1.c,v 1.24 2009/03/09 04:38:39 dholland Exp $");
 #include "extern.h"
 #include "driver.h"
 
-static int	fightitout(struct ship *, struct ship *, int);
+static int fightitout(struct ship *, struct ship *, int);
 
 void
 unfoul(void)
@@ -102,7 +102,7 @@ boardcomp(void)
 					/* OBP */
 					sendbp(sp, sq, crew[0]*100, 0);
 					crew[0] = 0;
-				} else if (crew[1]){
+				} else if (crew[1]) {
 					/* OBP */
 					sendbp(sp, sq, crew[1]*10, 0);
 					crew[1] = 0;
@@ -247,7 +247,8 @@ resolve(void)
 		if (sp->file->dir == 0)
 			continue;
 		for (sq = sp + 1; sq < ls; sq++)
-			if (sq->file->dir && meleeing(sp, sq) && meleeing(sq, sp))
+			if (sq->file->dir && meleeing(sp, sq) &&
+			    meleeing(sq, sp))
 				fightitout(sp, sq, 0);
 		thwart = 2;
 		foreachship(sq) {
@@ -293,7 +294,7 @@ compcombat(void)
 			if (sp->file->DBP[n].turnsent)
 				men += sp->file->DBP[n].mensent;
 		}
-		if (men){
+		if (men) {
 			crew[0] = men/100 ? 0 : crew[0] != 0;
 			crew[1] = (men%100)/10 ? 0 : crew[1] != 0;
 			crew[2] = men%10 ? 0 : crew[2] != 0;
@@ -319,7 +320,8 @@ compcombat(void)
 			closest = closestenemy(sp, r ? 'r' : 'l', 0);
 			if (closest == 0)
 				continue;
-			if (range(closest, sp) > range(sp, closestenemy(sp, r ? 'r' : 'l', 1)))
+			if (range(closest, sp) >
+			    range(sp, closestenemy(sp, r ? 'r' : 'l', 1)))
 				continue;
 			if (closest->file->struck)
 				continue;
@@ -360,13 +362,14 @@ compcombat(void)
 			if (rakehim && sternrake)
 				hit++;
 			hit += QUAL[indx][capship(sp)->specs->qual - 1];
-			for (n = 0; n < 3 && sp->file->captured == 0; n++)
+			for (n = 0; n < 3 && sp->file->captured == 0; n++) {
 				if (!crew[n]) {
 					if (indx <= 5)
 						hit--;
 					else
 						hit -= 2;
 				}
+			}
 			if (ready & R_INITIAL) {
 				if (!r)
 					sp->file->readyL &= ~R_INITIAL;
@@ -394,7 +397,8 @@ compcombat(void)
 			if (hit >= 0) {
 				if (load != L_GRAPE)
 					hit = hit > 10 ? 10 : hit;
-				table(sp, closest, shootat, load, hit, dieroll());
+				table(sp, closest, shootat, load, hit,
+				      dieroll());
 			}
 		}
 	}

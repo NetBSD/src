@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.15 2003/08/07 09:37:41 agc Exp $	*/
+/*	$NetBSD: assorted.c,v 1.16 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: assorted.c,v 1.15 2003/08/07 09:37:41 agc Exp $");
+__RCSID("$NetBSD: assorted.c,v 1.16 2009/03/14 19:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,10 +42,11 @@ __RCSID("$NetBSD: assorted.c,v 1.15 2003/08/07 09:37:41 agc Exp $");
 #include <err.h>
 #include "extern.h"
 
-static void	strike (struct ship *, struct ship *);
+static void strike(struct ship *, struct ship *);
 
 void
-table(struct ship *from, struct ship *on, int rig, int shot, int hittable, int roll)
+table(struct ship *from, struct ship *on,
+      int rig, int shot, int hittable, int roll)
 {
 	int hhits = 0, chits = 0, ghits = 0, rhits = 0;
 	int Ghit = 0, Hhit = 0, Rhit = 0, Chit = 0;
@@ -65,9 +66,9 @@ table(struct ship *from, struct ship *on, int rig, int shot, int hittable, int r
 	rigg[1] = on->specs->rig2;
 	rigg[2] = on->specs->rig3;
 	rigg[3] = on->specs->rig4;
-	if (shot == L_GRAPE)
+	if (shot == L_GRAPE) {
 		Chit = chits = hittable;
-	else {
+	} else {
 		tp = &(rig ? RigTable : HullTable)[hittable][roll-1];
 		Chit = chits = tp->C;
 		Rhit = rhits = tp->R;
@@ -84,7 +85,7 @@ table(struct ship *from, struct ship *on, int rig, int shot, int hittable, int r
 		pc -= (chits + 1) / 2;
 		chits /= 2;
 	}
-	for (n = 0; n < 3; n++)
+	for (n = 0; n < 3; n++) {
 		if (chits > crew[n]) {
 			chits -= crew[n];
 			crew[n] = 0;
@@ -92,14 +93,16 @@ table(struct ship *from, struct ship *on, int rig, int shot, int hittable, int r
 			crew[n] -= chits;
 			chits = 0;
 		}
-	for (n = 0; n < 3; n++)
-		if (rhits > rigg[n]){
+	}
+	for (n = 0; n < 3; n++) {
+		if (rhits > rigg[n]) {
 			rhits -= rigg[n];
 			rigg[n] = 0;
 		} else {
 			rigg[n] -= rhits;
 			rhits = 0;
 		}
+	}
 	if (rigg[3] != -1 && rhits > rigg[3]) {
 		rhits -= rigg[3];
 		rigg[3] = 0;
@@ -122,7 +125,7 @@ table(struct ship *from, struct ship *on, int rig, int shot, int hittable, int r
 		car -= ghits;
 		ghits = 0;
 	}
-	if (ghits > guns){
+	if (ghits > guns) {
 		ghits -= guns;
 		guns = 0;
 	} else {
@@ -221,14 +224,16 @@ table(struct ship *from, struct ship *on, int rig, int shot, int hittable, int r
 		makemsg(on, message);
 	}
 	/*
-	if (Chit > 1 && on->file->readyL&R_INITIAL && on->file->readyR&R_INITIAL) {
+	if (Chit > 1 && on->file->readyL & R_INITIAL &&
+	    on->file->readyR & R_INITIAL) {
 		on->specs->qual--;
 		if (on->specs->qual <= 0) {
 			makemsg(on, "crew mutinying!");
 			on->specs->qual = 5;
 			Write(W_CAPTURED, on, on->file->index, 0, 0, 0);
-		} else 
+		} else {
 			makemsg(on, "crew demoralized");
+		}
 		Write(W_QUAL, on, on->specs->qual, 0, 0, 0);
 	}
 	*/
