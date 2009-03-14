@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2009/03/02 06:54:01 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2009/03/14 23:47:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2009/03/02 06:54:01 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2009/03/14 23:47:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: main.c,v 1.23 2009/03/02 06:54:01 dholland Exp $");
 #include <time.h>
 #include <unistd.h>
 #include "extern.h"
+#include "pathnames.h"
 #include "restart.h"
 
 int
@@ -69,6 +70,10 @@ main(int argc, char **argv)
 	if (fd < 3)
 		exit(1);
 	close(fd);
+
+	if (chdir(_PATH_SAILDIR) < 0) {
+		err(1, "%s", _PATH_SAILDIR);
+	}
 
 	srandom((u_long)time(NULL));
 
