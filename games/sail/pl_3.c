@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_3.c,v 1.18 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: pl_3.c,v 1.19 2009/03/14 22:52:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_3.c,v 1.18 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: pl_3.c,v 1.19 2009/03/14 22:52:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,8 +233,8 @@ grapungrap(void)
 		case 'g':
 			if (dieroll() < 3
 			    || ms->nationality == capship(sp)->nationality) {
-				Write(W_GRAP, ms, sp->file->index, 0, 0, 0);
-				Write(W_GRAP, sp, player, 0, 0, 0);
+				send_grap(ms, sp->file->index);
+				send_grap(sp, player);
 				Msg("Attempt succeeds!");
 				makesignal(ms, "grappled with $$", sp);
 			} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_6.c,v 1.12 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: pl_6.c,v 1.13 2009/03/14 22:52:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_6.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_6.c,v 1.12 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: pl_6.c,v 1.13 2009/03/14 22:52:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ repair(void)
 			int max = ptr->guns/4;
 			if (ptr->hull < max) {
 				FIX(hull, max);
-				Write(W_HULL, ms, ptr->hull, 0, 0, 0);
+				send_hull(ms, ptr->hull);
 			}
 			break;
 			}
@@ -90,15 +90,13 @@ repair(void)
 				int max = ptr->guns/5 - ptr->carL;
 				if (ptr->gunL < max) {
 					FIX(gunL, max);
-					Write(W_GUNL, ms, ptr->gunL,
-						ptr->carL, 0, 0);
+					send_gunl(ms, ptr->gunL, ptr->carL);
 				}
 			} else {
 				int max = ptr->guns/5 - ptr->carR;
 				if (ptr->gunR < max) {
 					FIX(gunR, max);
-					Write(W_GUNR, ms, ptr->gunR,
-						ptr->carR, 0, 0);
+					send_gunr(ms, ptr->gunR, ptr->carR);
 				}
 			}
 			break;
@@ -106,19 +104,19 @@ repair(void)
 #define X 2
 			if (ptr->rig4 >= 0 && ptr->rig4 < X) {
 				FIX(rig4, X);
-				Write(W_RIG4, ms, ptr->rig4, 0, 0, 0);
+				send_rig4(ms, ptr->rig4);
 			}
 			if (count && ptr->rig3 < X) {
 				FIX(rig3, X);
-				Write(W_RIG3, ms, ptr->rig3, 0, 0, 0);
+				send_rig3(ms, ptr->rig3);
 			}
 			if (count && ptr->rig2 < X) {
 				FIX(rig2, X);
-				Write(W_RIG2, ms, ptr->rig2, 0, 0, 0);
+				send_rig2(ms, ptr->rig2);
 			}
 			if (count && ptr->rig1 < X) {
 				FIX(rig1, X);
-				Write(W_RIG1, ms, ptr->rig1, 0, 0, 0);
+				send_rig1(ms, ptr->rig1);
 			}
 			break;
 		}

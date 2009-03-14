@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.24 2009/03/14 20:04:43 dholland Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.25 2009/03/14 22:52:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.24 2009/03/14 20:04:43 dholland Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.25 2009/03/14 22:52:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,8 +105,12 @@ checkup(void)
 			continue;
 		if (dieroll() < 5)
 			continue;
-		Write(sink == 1 ? W_SINK : W_EXPLODE, sp, 2, 0, 0, 0);
-		Write(W_DIR, sp, 0, 0, 0, 0);
+		if (sink == 1) {
+			send_sink(sp, 2);
+		} else {
+			send_explode(sp, 2);
+		}
+		send_dir(sp, 0);
 		if (snagged(sp))
 			foreachship(sq)
 				cleansnag(sp, sq, 1);
@@ -136,12 +140,11 @@ prizecheck(void)
 			continue;
 		if (sp->specs->crew1 + sp->specs->crew2 + sp->specs->crew3 >
 		    sp->file->pcrew * 6) {
-			Writestr(W_SIGNAL, sp, "prize crew overthrown");
-			Write(W_POINTS, sp->file->captured,
+			send_signal(sp, "prize crew overthrown");
+			send_points(sp->file->captured,
 			      sp->file->captured->file->points
-			        - 2 * sp->specs->pts,
-			      0, 0, 0);
-			Write(W_CAPTURED, sp, -1, 0, 0, 0);
+				- 2 * sp->specs->pts);
+			send_captured(sp, -1);
 		}
 	}
 }

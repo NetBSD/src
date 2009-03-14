@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.16 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: assorted.c,v 1.17 2009/03/14 22:52:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: assorted.c,v 1.16 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: assorted.c,v 1.17 2009/03/14 22:52:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,19 +133,23 @@ table(struct ship *from, struct ship *on,
 		ghits = 0;
 	}
 	hull -= ghits;
-	if (Ghit)
-		Write(portside(from, on, 0) ? W_GUNR : W_GUNL,
-			on, guns, car, 0, 0);
+	if (Ghit) {
+		if (portside(from, on, 0)) {
+			send_gunr(on, guns, car);
+		} else {
+			send_gunl(on, guns, car);
+		}
+	}
 	hull -= hhits;
 	hull = hull < 0 ? 0 : hull;
 	if (on->file->captured != 0 && Chit)
-		Write(W_PCREW, on, pc, 0, 0, 0);
+		send_pcrew(on, pc);
 	if (Hhit)
-		Write(W_HULL, on, hull, 0, 0, 0);
+		send_hull(on, hull);
 	if (Chit)
-		Write(W_CREW, on, crew[0], crew[1], crew[2], 0);
+		send_crew(on, crew[0], crew[1], crew[2]);
 	if (Rhit)
-		Write(W_RIGG, on, rigg[0], rigg[1], rigg[2], rigg[3]);
+		send_rigg(on, rigg[0], rigg[1], rigg[2], rigg[3]);
 	switch (shot) {
 	case L_ROUND:
 		message = "firing round shot on $$";
@@ -213,7 +217,7 @@ table(struct ship *from, struct ship *on,
 			break;
 		case 5:
 			message = "rudder cables shot through";
-			Write(W_TA, on, 0, 0, 0, 0);
+			send_ta(on, 0);
 			break;
 		case 6:
 			message = "shot holes below the water line";
@@ -245,12 +249,12 @@ void
 Cleansnag(struct ship *from, struct ship *to, int all, int flag)
 {
 	if (flag & 1) {
-		Write(W_UNGRAP, from, to->file->index, all, 0, 0);
-		Write(W_UNGRAP, to, from->file->index, all, 0, 0);
+		send_ungrap(from, to->file->index, all);
+		send_ungrap(to, from->file->index, all);
 	}
 	if (flag & 2) {
-		Write(W_UNFOUL, from, to->file->index, all, 0, 0);
-		Write(W_UNFOUL, to, from->file->index, all, 0, 0);
+		send_unfoul(from, to->file->index, all);
+		send_unfoul(to, from->file->index, all);
 	}
 	if (!snagged2(from, to)) {
 		if (!snagged(from)) {
@@ -273,20 +277,20 @@ strike(struct ship *ship, struct ship *from)
 
 	if (ship->file->struck)
 		return;
-	Write(W_STRUCK, ship, 1, 0, 0, 0);
+	send_struck(ship, 1);
 	points = ship->specs->pts + from->file->points;
-	Write(W_POINTS, from, points, 0, 0, 0);
+	send_points(from, points);
 	unboard(ship, ship, 0);		/* all offense */
 	unboard(ship, ship, 1);		/* all defense */
 	switch (dieroll()) {
 	case 3:
 	case 4:		/* ship may sink */
-		Write(W_SINK, ship, 1, 0, 0, 0);
+		send_sink(ship, 1);
 		break;
 	case 5:
 	case 6:		/* ship may explode */
-		Write(W_EXPLODE, ship, 1, 0, 0, 0);
+		send_explode(ship, 1);
 		break;
 	}
-	Writestr(W_SIGNAL, ship, "striking her colours!");
+	send_signal(ship, "striking her colours!");
 }

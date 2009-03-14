@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.26 2009/03/14 19:55:16 dholland Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.27 2009/03/14 22:52:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.26 2009/03/14 19:55:16 dholland Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.27 2009/03/14 22:52:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ fightitout(struct ship *from, struct ship *to, int key)
 		snprintf(message, sizeof(message),
 			"killed in melee: %d.  %s: %d",
 			totalto, from->shipname, totalfrom);
-		Writestr(W_SIGNAL, to, message);
+		send_signal(to, message);
 		if (key)
 			return 1;
 	} else if (strengthto >= fromstrength * 3) {
@@ -202,18 +202,17 @@ fightitout(struct ship *from, struct ship *to, int key)
 		subtract(to, tocap, totalto, crewto, pcto);
 		if (key) {
 			if (fromcap != from)
-				Write(W_POINTS, fromcap,
+				send_points(fromcap,
 					fromcap->file->points -
 						from->file->struck
 						? from->specs->pts
-						: 2 * from->specs->pts,
-					0, 0, 0);
+						: 2 * from->specs->pts);
 
-			Write(W_CAPTURED, from, to->file->index, 0, 0, 0);
+			send_captured(from, to->file->index);
 			topoints = 2 * from->specs->pts + to->file->points;
 			if (from->file->struck)
 				topoints -= from->specs->pts;
-			Write(W_POINTS, to, topoints, 0, 0, 0);
+			send_points(to, topoints);
 			mento = crewto[0] ? crewto[0] : crewto[1];
 			if (mento) {
 				subtract(to, tocap, mento, crewto, pcto);
@@ -221,11 +220,11 @@ fightitout(struct ship *from, struct ship *to, int key)
 			}
 			snprintf(message, sizeof(message),
 				"captured by the %s!", to->shipname);
-			Writestr(W_SIGNAL, from, message);
+			send_signal(from, message);
 			snprintf(message, sizeof(message),
 				"killed in melee: %d.  %s: %d",
 				totalto, from->shipname, totalfrom);
-			Writestr(W_SIGNAL, to, message);
+			send_signal(to, message);
 			mento = 0;
 			return 0;
 		}
@@ -437,7 +436,7 @@ next(void)
 		}
 		return -1;
 	}
-	Write(W_TURN, SHIP(0), turn, 0, 0, 0);
+	send_turn(turn);
 	if (turn % 7 == 0 && (dieroll() >= cc->windchange || !windspeed)) {
 		switch (dieroll()) {
 		case 1:
@@ -475,7 +474,7 @@ next(void)
 			}
 		else
 			windspeed++;
-		Write(W_WIND, SHIP(0), winddir, windspeed, 0, 0);
+		send_wind( winddir, windspeed);
 	}
 	return 0;
 }

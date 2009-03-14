@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.24 2009/03/14 20:14:56 dholland Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.25 2009/03/14 22:52:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.24 2009/03/14 20:14:56 dholland Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.25 2009/03/14 22:52:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ reprint:
 	mf = ms->file;
 	mc = ms->specs;
 
-	Write(W_BEGIN, ms, 0, 0, 0, 0);
+	send_begin(ms);
 	if (Sync() < 0)
 		leave(LEAVE_SYNC);
 
@@ -213,7 +213,7 @@ reprint:
 		else
 		    captain[strlen(captain) - 1] = '\0';
 	}
-	Writestr(W_CAPTAIN, ms, captain);
+	send_captain(ms, captain);
 	for (n = 0; n < 2; n++) {
 		char buf[10];
 
@@ -252,6 +252,6 @@ reprint:
 	draw_board();
 	snprintf(message, sizeof message, "Captain %s assuming command",
 			captain);
-	Writestr(W_SIGNAL, ms, message);
+	send_signal(ms, message);
 	newturn(0);
 }
