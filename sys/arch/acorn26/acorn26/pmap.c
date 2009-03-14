@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.23 2009/03/14 15:35:58 dsl Exp $ */
+/* $NetBSD: pmap.c,v 1.24 2009/03/14 21:04:01 dsl Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2009/03/14 21:04:01 dsl Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -492,10 +492,7 @@ pmap_collect(pmap_t pmap)
 }
 
 void
-pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	pmap_t dst_pmap, src_pmap;
-	vaddr_t dst_addr, src_addr;
-	vsize_t len;
+pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len, vaddr_t src_addr)
 {
 	UVMHIST_FUNC("pmap_copy");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.78 2008/11/22 01:53:41 uwe Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.79 2009/03/14 21:04:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.78 2008/11/22 01:53:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.79 2009/03/14 21:04:15 dsl Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -411,10 +411,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -455,10 +452,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;

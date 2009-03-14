@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.17 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.18 2009/03/14 21:04:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.17 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.18 2009/03/14 21:04:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,9 +137,7 @@ pci_intr(void *arg)
 
 
 void
-footbridge_pci_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+footbridge_pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_attach_hook()\n");
@@ -161,9 +159,7 @@ footbridge_pci_bus_maxdevs(void *pcv, int busno)
 }
 
 pcitag_t
-footbridge_pci_make_tag(pcv, bus, device, function)
-	void *pcv;
-	int bus, device, function;
+footbridge_pci_make_tag(void *pcv, int bus, int device, int function)
 {
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_make_tag(pcv=%p, bus=%d, device=%d, function=%d)\n",
@@ -173,10 +169,7 @@ footbridge_pci_make_tag(pcv, bus, device, function)
 }
 
 void
-footbridge_pci_decompose_tag(pcv, tag, busp, devicep, functionp)
-	void *pcv;
-	pcitag_t tag;
-	int *busp, *devicep, *functionp;
+footbridge_pci_decompose_tag(void *pcv, pcitag_t tag, int *busp, int *devicep, int *functionp)
 {
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_decompose_tag(pcv=%p, tag=0x%08x, bp=%p, dp=%p, fp=%p)\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.16 2009/03/14 15:36:16 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.17 2009/03/14 21:04:17 dsl Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.17 2009/03/14 21:04:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,9 +204,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
 {
 	extern struct x86_isa_chipset x86_isa_chipset;
 	extern int isa_has_been_seen;
@@ -228,13 +226,7 @@ isa_attach_hook(parent, self, iba)
 }
 
 int
-isa_mem_alloc(t, size, align, boundary, flags, addrp, bshp)
-	bus_space_tag_t t;
-	bus_size_t size, align;
-	bus_addr_t boundary;
-	int flags;
-	bus_addr_t *addrp;
-	bus_space_handle_t *bshp;
+isa_mem_alloc(bus_space_tag_t t, bus_size_t size, bus_size_t align, bus_addr_t boundary, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 
 	/*

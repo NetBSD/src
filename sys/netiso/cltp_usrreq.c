@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.35 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.36 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.35 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.36 2009/03/14 21:04:25 dsl Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -282,11 +282,7 @@ u_long          cltp_recvspace = 40 * (1024 + sizeof(struct sockaddr_iso));
 
 /* ARGSUSED */
 int
-cltp_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+cltp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
 	struct isopcb *isop;
 	int s;

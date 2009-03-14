@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.8 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.9 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -113,8 +113,7 @@ main(int argc, char **argv)
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
 entrypt
-loadfile(path, name)
-	char *path, *name;
+loadfile(char *path, char *name)
 {
 	int fd, i;
 	char *src, *dst, bootfname[64];

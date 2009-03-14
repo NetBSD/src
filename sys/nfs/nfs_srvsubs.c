@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.1 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.2 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.1 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.2 2009/03/14 21:04:25 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -116,17 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.1 2008/11/19 18:36:09 ad Exp $");
  * it is not.
  */
 int
-nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
-	struct nameidata *ndp;
-	nfsrvfh_t *nsfh;
-	uint32_t len;
-	struct nfssvc_sock *slp;
-	struct mbuf *nam;
-	struct mbuf **mdp;
-	char **dposp;
-	struct vnode **retdirp;
-	struct lwp *l;
-	int kerbflag, pubflag;
+nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_sock *slp, struct mbuf *nam, struct mbuf **mdp, char **dposp, struct vnode **retdirp, struct lwp *l, int kerbflag, int pubflag)
 {
 	int i, rem;
 	struct mbuf *md;

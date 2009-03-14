@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.35 2009/03/14 15:36:01 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.36 2009/03/14 21:04:04 dsl Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2009/03/14 21:04:04 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -96,8 +96,7 @@ static struct mem_region PPCmem[PPCMEMREGIONS + 1], PPCavail[PPCMEMREGIONS + 3];
 void show_me_regs(void);
 
 void
-initppc(startkernel, endkernel)
-        u_int startkernel, endkernel;
+initppc(u_int startkernel, u_int endkernel)
 {
 	extern void cpu_fail(void);
 	extern adamint, adamintsize;
@@ -421,8 +420,7 @@ void show_me_regs()
  * to provide space for two additional entry beyond the terminating one.
  */
 void
-mem_regions(memp, availp)
-	struct mem_region **memp, **availp;
+mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	*memp = PPCmem;
 	*availp = PPCavail;

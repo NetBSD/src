@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.29 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.30 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.29 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.30 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -195,9 +195,7 @@ grfccmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * note  : dp is NULL during early console init.
  */
 void
-grfccattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+grfccattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	static struct grf_softc		congrf;
 	static int			first_attach = 1;
@@ -642,10 +640,7 @@ clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 
 /* Note: sx is only relevant for SCROLL_LEFT or SCROLL_RIGHT.  */
 static void
-scroll8(ip, sy, sx, count, dir)
-register struct ite_softc	*ip;
-register int			sy;
-int				dir, sx, count;
+scroll8(register struct ite_softc *ip, register int sy, int sx, int count, int dir)
 {
 	bmap_t *bm = viewview(ip->grf->g_viewdev)->bitmap;
 	u_char *pl = ((ipriv_t *)ip->priv)->row_ptr[sy];

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.7 2006/06/08 07:03:11 he Exp $	*/
+/*	$NetBSD: mfm.c,v 1.8 2009/03/14 21:04:16 dsl Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -340,8 +340,7 @@ volatile struct mfm_xbn {
 } mfm_xbn;
 
 #ifdef verbose
-display_xbn(p)
-	struct mfm_xbn *p;
+display_xbn(struct mfm_xbn *p)
 {
 	printf("**DiskData**	XBNs: %d, DBNs: %d, LBNs: %d, RBNs: %d\n",
 	    p->xbn_count, p->dbn_count, p->lbn_count, p->rbn_count);
@@ -360,9 +359,7 @@ display_xbn(p)
 #endif
 
 int
-mfmopen(f, adapt, ctlr, unit, part)
-	struct open_file *f;
-	int    ctlr, unit, part;
+mfmopen(struct open_file *f, adapt, int ctlr, int unit, int part)
 {
 	char *msg;
 	struct disklabel *lp = &mfmlabel;
@@ -638,12 +635,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 }
 
 int
-mfmstrategy(f, func, dblk, size, buf, rsize)
-	void *f;
-	int	func;
-	daddr_t	dblk;
-	void    *buf;
-	size_t	size, *rsize;
+mfmstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct mfm_softc *msc = f;
 	int	res = -1;

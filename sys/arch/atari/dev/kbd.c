@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.34 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: kbd.c,v 1.35 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.34 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.35 2009/03/14 21:04:06 dsl Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -175,9 +175,7 @@ kbdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 
 /*ARGSUSED*/
 static void
-kbdattach(pdp, dp, auxp)
-struct	device *pdp, *dp;
-void	*auxp;
+kbdattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	int	timeout;
 	u_char	kbd_rst[]  = { 0x80, 0x01 };
@@ -371,8 +369,8 @@ kbdkqfilter(dev_t dev, struct knote *kn)
  * Keyboard interrupt handler called straight from MFP at spl6.
  */
 void
-kbdintr(sr)
-int sr;	/* sr at time of interrupt	*/
+kbdintr(int sr)
+	/* sr:	 sr at time of interrupt	*/
 {
 	int	code;
 	int	got_char = 0;
@@ -425,8 +423,7 @@ int sr;	/* sr at time of interrupt	*/
  * Keyboard soft interrupt handler
  */
 void
-kbdsoft(junk1, junk2)
-void	*junk1, *junk2;
+kbdsoft(void *junk1, void *junk2)
 {
 	int			s;
 	u_char			code;
@@ -568,8 +565,7 @@ kbdbell()
 #define KBDBELLDURATION	128	/* 256 / 2MHz */
 
 void
-kbd_bell_gparms(volume, pitch, duration)
-	u_int	*volume, *pitch, *duration;
+kbd_bell_gparms(u_int *volume, u_int *pitch, u_int *duration)
 {
 	u_int	tmp;
 
@@ -583,8 +579,7 @@ kbd_bell_gparms(volume, pitch, duration)
 }
 
 void
-kbd_bell_sparms(volume, pitch, duration)
-	u_int	volume, pitch, duration;
+kbd_bell_sparms(u_int volume, u_int pitch, u_int duration)
 {
 	u_int	f, t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.10 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: cia.c,v 1.11 2009/03/14 21:04:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.10 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.11 2009/03/14 21:04:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <amiga/amiga/cia.h>
@@ -125,7 +125,6 @@ ciab_intr()
 
 
 static void
-not_used (mask)
-     int mask;
+not_used (int mask)
 {
 }

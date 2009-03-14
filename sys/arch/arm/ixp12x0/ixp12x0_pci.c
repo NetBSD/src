@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.9 2009/03/14 15:36:02 dsl Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.10 2009/03/14 21:04:05 dsl Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.9 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.10 2009/03/14 21:04:05 dsl Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
@@ -111,9 +111,7 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 }
 
 void
-pci_conf_interrupt(pc, a, b, c, d, p)
-	pci_chipset_tag_t pc;
-	int a, b, c, d, *p;
+pci_conf_interrupt(pci_chipset_tag_t pc, int a, int b, int c, int d, int *p)
 {
 	/* Nothing */
 }
@@ -131,9 +129,7 @@ ixp12x0_pci_bus_maxdevs(void *v, int busno)
 }
 
 pcitag_t
-ixp12x0_pci_make_tag(v, bus, device, function)
-	void *v;
-	int bus, device, function;
+ixp12x0_pci_make_tag(void *v, int bus, int device, int function)
 {
 #ifdef PCI_DEBUG
 	printf("ixp12x0_pci_make_tag(v=%p, bus=%d, device=%d, function=%d)\n",
@@ -143,10 +139,7 @@ ixp12x0_pci_make_tag(v, bus, device, function)
 }
 
 void
-ixp12x0_pci_decompose_tag(v, tag, busp, devicep, functionp)
-	void *v;
-	pcitag_t tag;
-	int *busp, *devicep, *functionp;
+ixp12x0_pci_decompose_tag(void *v, pcitag_t tag, int *busp, int *devicep, int *functionp)
 {
 #ifdef PCI_DEBUG
 	printf("ixp12x0_pci_decompose_tag(v=%p, tag=0x%08lx, bp=%x, dp=%x, fp=%x)\n",

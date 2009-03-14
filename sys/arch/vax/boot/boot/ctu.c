@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.5 2009/03/14 15:36:14 dsl Exp $ */
+/*	$NetBSD: ctu.c,v 1.6 2009/03/14 21:04:16 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,9 +66,7 @@ void	ctutintr(void);
 void	cturintr(void);
 
 int
-ctuopen(f, adapt, ctlr, unit, part)
-	struct open_file *f;
-	int ctlr, unit, part;
+ctuopen(struct open_file *f, adapt, int ctlr, int unit, int part)
 {
 
 	tu_sc.sc_state = SC_INIT;
@@ -81,12 +79,7 @@ ctuopen(f, adapt, ctlr, unit, part)
 }
 
 int
-ctustrategy(f, func, dblk, size, buf, rsize)
-        void *f;
-        int func;
-        daddr_t dblk;
-        void *buf;
-        size_t size, *rsize;
+ctustrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 

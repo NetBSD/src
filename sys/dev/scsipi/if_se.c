@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.75 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: if_se.c,v 1.76 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.75 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.76 2009/03/14 21:04:23 dsl Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -264,8 +264,7 @@ const struct scsipi_inquiry_pattern se_patterns[] = {
  * Note: use this like memcmp()
  */
 static inline u_int16_t
-ether_cmp(one, two)
-	void *one, *two;
+ether_cmp(void *one, void *two)
 {
 	u_int16_t *a = (u_int16_t *) one;
 	u_int16_t *b = (u_int16_t *) two;
@@ -295,9 +294,7 @@ sematch(struct device *parent, struct cfdata *match, void *aux)
  * a device suitable for this driver.
  */
 static void
-seattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+seattach(struct device *parent, struct device *self, void *aux)
 {
 	struct se_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -1093,10 +1090,7 @@ se_disable(struct se_softc *sc)
  * open the device.
  */
 int
-seopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+seopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit, error;
 	struct se_softc *sc;
@@ -1129,10 +1123,7 @@ seopen(dev, flag, fmt, l)
  * occurence of an open device
  */
 int
-seclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+seclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct se_softc *sc = device_lookup_private(&se_cd, SEUNIT(dev));
 	struct scsipi_periph *periph = sc->sc_periph;

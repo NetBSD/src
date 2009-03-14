@@ -1,4 +1,4 @@
-/*	$NetBSD: bootpref.c,v 1.4 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: bootpref.c,v 1.5 2009/03/14 21:04:07 dsl Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -83,9 +83,7 @@ static int 	checkColours(u_char *, char *);
 static const char	nvrdev[] = PATH_NVRAM;
 
 int
-main (argc, argv)
-	int	argc;
-	char	*argv[];
+main (int argc, char *argv[])
 {
 	int	c, set = 0, verbose = 0;
 	int	fd;
@@ -315,8 +313,7 @@ openNVRAM ()
 }
 
 static void
-closeNVRAM (fd)
-	int fd;
+closeNVRAM (int fd)
 {
 	if (close (fd) < 0) {
 		err (EXIT_FAILURE, "%s", nvrdev);
@@ -324,8 +321,7 @@ closeNVRAM (fd)
 }
 
 static u_char
-readNVRAM (fd, pos)
-	int fd, pos;
+readNVRAM (int fd, int pos)
 {
 	u_char val;
 
@@ -339,9 +335,7 @@ readNVRAM (fd, pos)
 }
 
 static void
-writeNVRAM (fd, pos, val)
-	int fd, pos;
-	u_char val;
+writeNVRAM (int fd, int pos, u_char val)
 {
 	if (lseek(fd, (off_t)pos, SEEK_SET) != pos) {
 		err(EXIT_FAILURE, "%s", nvrdev);
@@ -352,9 +346,7 @@ writeNVRAM (fd, pos, val)
 }
 
 static void
-getNVpref (fd, bootpref)
-	int fd;
-	u_char bootpref[];
+getNVpref (int fd, u_char bootpref[])
 {
 	/* Boot OS */
 	printf ("Boot OS is ");
@@ -387,10 +379,7 @@ getNVpref (fd, bootpref)
 }
 
 static void
-setNVpref (fd, bootpref, set, verbose)
-	int fd;
-	u_char bootpref[];
-	int verbose;
+setNVpref (int fd, u_char bootpref[], set, int verbose)
 {
 	/* Boot OS */
 	if (set & SET_OS) {
@@ -470,8 +459,7 @@ setNVpref (fd, bootpref, set, verbose)
 }
 
 static void
-showOS (bootos)
-	u_char bootos;
+showOS (u_char bootos)
 {
 	switch (bootos) {
 	case BOOTPREF_NETBSD:
@@ -500,8 +488,7 @@ showOS (bootos)
 }
 
 static void
-showLang (lang)
-	u_char lang;
+showLang (u_char lang)
 {
 	switch (lang) {
 	case LANG_USA:
@@ -528,8 +515,7 @@ showLang (lang)
 }
 
 static void
-showKbdLang (lang)
-	u_char lang;
+showKbdLang (u_char lang)
 {
 	switch (lang) {
 	case KBDLANG_USA:
@@ -564,8 +550,7 @@ showKbdLang (lang)
 }
 
 static void
-showDateFmt (fmt)
-	u_char fmt;
+showDateFmt (u_char fmt)
 {
 	if (fmt & DATIME_24H) {
 		printf ("24 hour clock, ");
@@ -593,8 +578,7 @@ showDateFmt (fmt)
 }
 
 static void
-showDateSep (sep)
-	u_char sep;
+showDateSep (u_char sep)
 {
 	if (sep) {
 		if (sep >= 0x20) {
@@ -607,8 +591,7 @@ showDateSep (sep)
 }
 
 static void
-showVideo2 (vid2)
-	u_char vid2;
+showVideo2 (u_char vid2)
 {
 	u_char colours;
 
@@ -664,8 +647,7 @@ showVideo2 (vid2)
 }
 
 static void
-showVideo1 (vid1, vid2)
-	u_char vid1, vid2;
+showVideo1 (u_char vid1, u_char vid2)
 {
 	if (vid2 & VID2_VGA) {
 		printf ("\tDouble line ");
@@ -686,9 +668,7 @@ showVideo1 (vid1, vid2)
 }
 
 static int
-checkOS (val, str)
-	u_char *val;
-	char *str;
+checkOS (u_char *val, char *str)
 {
 	if (!strncasecmp (str, "ne", 2)) {
 		*val = BOOTPREF_NETBSD;
@@ -718,9 +698,7 @@ checkOS (val, str)
 }
 
 static int
-checkLang (val, str)
-	u_char *val;
-	char *str;
+checkLang (u_char *val, char *str)
 {
 	if (!strncasecmp (str, "e", 1)) {
 		*val = LANG_GB;
@@ -746,9 +724,7 @@ checkLang (val, str)
 }
 
 static int
-checkKbdLang (val, str)
-	u_char *val;
-	char *str;
+checkKbdLang (u_char *val, char *str)
 {
 	if (!strncasecmp (str, "a", 1)) {
 		*val = KBDLANG_USA;
@@ -786,10 +762,7 @@ checkKbdLang (val, str)
 }
 
 static int
-checkInt (val, str, min, max)
-	u_char *val;
-	char *str;
-	int min, max;
+checkInt (u_char *val, char *str, int min, int max)
 {
 	int num;
 	if (1 == sscanf (str, "%d", &num) && num >= min && num <= max) {
@@ -800,9 +773,7 @@ checkInt (val, str, min, max)
 }
 
 static int
-checkDateFmt (val, str)
-	u_char *val;
-	char *str;
+checkDateFmt (u_char *val, char *str)
 {
 	if (!strncasecmp (str, "m", 1)) {
 		*val |= DATIME_MMDDYY;
@@ -824,9 +795,7 @@ checkDateFmt (val, str)
 }
 
 static void
-checkDateSep (val, str)
-	u_char *val;
-	char *str;
+checkDateSep (u_char *val, char *str)
 {
 	if (str[0] == '/') {
 		*val = 0;
@@ -836,9 +805,7 @@ checkDateSep (val, str)
 }
 	
 static int
-checkColours (val, str)
-	u_char *val;
-	char *str;
+checkColours (u_char *val, char *str)
 {
 	*val &= ~0x07;
 	if (!strncasecmp (str, "6", 1)) {

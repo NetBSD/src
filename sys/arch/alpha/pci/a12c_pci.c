@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_pci.c,v 1.5 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: a12c_pci.c,v 1.6 2009/03/14 21:04:02 dsl Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.5 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.6 2009/03/14 21:04:02 dsl Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -81,9 +81,7 @@ a12c_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-a12c_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+a12c_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
@@ -94,19 +92,14 @@ a12c_bus_maxdevs(void *cpv, int busno)
 }
 
 pcitag_t
-a12c_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+a12c_make_tag(void *cpv, int b, int d, int f)
 {
 
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
 void
-a12c_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+a12c_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)

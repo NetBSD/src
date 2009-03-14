@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.65 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: fd.c,v 1.66 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.65 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66 2009/03/14 21:04:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,9 +296,7 @@ fdcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 static void
-fdcattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+fdcattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct fd_softc	fdsoftc;
 	int		i, nfound, first_found;
@@ -371,9 +369,7 @@ fdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 static void
-fdattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+fdattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct fd_softc	*sc;
 	struct fd_types *type;
@@ -449,10 +445,7 @@ fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
  *	partition 1: 780Kb
  */
 int
-fdopen(dev, flags, devtype, l)
-dev_t		dev;
-int		flags, devtype;
-struct lwp	*l;
+fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc	*sc;
 	int		sps;
@@ -551,10 +544,7 @@ struct lwp	*l;
 }
 
 int
-fdclose(dev, flags, devtype, l)
-dev_t		dev;
-int		flags, devtype;
-struct lwp	*l;
+fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc	*sc;
 
@@ -758,8 +748,7 @@ fddone(register struct fd_softc *sc)
 }
 
 static int
-fdselect(drive, head, dense)
-int	drive, head, dense;
+fdselect(int drive, int head, int dense)
 {
 	int	i, spinning;
 #ifdef FLP_DEBUG

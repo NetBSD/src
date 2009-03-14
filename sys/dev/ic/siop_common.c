@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.47 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.48 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.47 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.48 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,10 +657,7 @@ end:
 }
 
 void
-siop_sdtr_msg(siop_cmd, offset, ssync, soff)
-	struct siop_common_cmd *siop_cmd;
-	int offset;
-	int ssync, soff;
+siop_sdtr_msg(struct siop_common_cmd *siop_cmd, int offset, int ssync, int soff)
 {
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_SDTR_LEN;
@@ -683,10 +680,7 @@ siop_wdtr_msg(struct siop_common_cmd *siop_cmd, int offset, int wide)
 }
 
 void
-siop_ppr_msg(siop_cmd, offset, ssync, soff)
-	struct siop_common_cmd *siop_cmd;
-	int offset;
-	int ssync, soff;
+siop_ppr_msg(struct siop_common_cmd *siop_cmd, int offset, int ssync, int soff)
 {
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_PPR_LEN;

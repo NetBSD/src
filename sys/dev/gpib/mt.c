@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.17 2009/03/14 15:36:17 dsl Exp $ */
+/*	$NetBSD: mt.c,v 1.18 2009/03/14 21:04:19 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.17 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.18 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,9 +246,7 @@ mtmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-mtattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mtattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mt_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;

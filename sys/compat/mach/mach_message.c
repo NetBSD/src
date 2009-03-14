@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.57 2008/07/02 19:49:58 rmind Exp $ */
+/*	$NetBSD: mach_message.c,v 1.58 2009/03/14 21:04:18 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.57 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.58 2009/03/14 21:04:18 dsl Exp $");
 
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 #include "opt_compat_darwin.h"
@@ -726,11 +726,11 @@ mach_drop_rights(struct mach_right *mr, int bits)
  * namespace.
  */
 static inline void
-mach_trade_rights(ll, rl, mnp, bits)
-	struct lwp *ll;		/* local lwp (receiver, current lwp) */
-	struct lwp *rl;		/* remote lwp (sender) */
-	mach_port_t *mnp;	/* pointer to the port name */
-	int bits;		/* right bits */
+mach_trade_rights(struct lwp *ll, struct lwp *rl, mach_port_t *mnp, int bits)
+	/* ll:		 local lwp (receiver, current lwp) */
+	/* rl:		 remote lwp (sender) */
+	/* mnp:	 pointer to the port name */
+	/* bits:		 right bits */
 {
 	int lr;			/* local right type (to be added) */
 	int rr;			/* remote right type */

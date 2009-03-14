@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.26 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.27 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.26 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.27 2009/03/14 21:04:11 dsl Exp $");
 
 #include "opt_inet.h"
 
@@ -107,8 +107,7 @@ static void mc_mediastatus(struct ifnet *, struct ifmediareq *);
  * assembly code generated before and after your tweaks!
  */
 static inline u_int16_t
-ether_cmp(one, two)
-	void *one, *two;
+ether_cmp(void *one, void *two)
 {
 	register u_int16_t *a = (u_short *) one;
 	register u_int16_t *b = (u_short *) two;

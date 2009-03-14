@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.20 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.21 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.20 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.21 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -672,10 +672,7 @@ fetch_immed(struct frame *frame, struct instruction *insn, int *dst)
  * fetch_disp: fetch displacement in full extension words
  */
 static int
-fetch_disp(frame, insn, size, res)
-     struct frame *frame;
-     struct instruction *insn;
-     int size, *res;
+fetch_disp(struct frame *frame, struct instruction *insn, int size, int *res)
 {
     int disp, word;
 
@@ -716,10 +713,9 @@ fetch_disp(frame, insn, size, res)
  * Returns a signal value (0 == no error).
  */
 static int
-calc_ea(ea, ptr, eaddr)
-     struct insn_ea *ea;
-     char *ptr;		/* base address (usually a register content) */
-     char **eaddr;	/* pointer to result pointer */
+calc_ea(struct insn_ea *ea, char *ptr, char **eaddr)
+	/* ptr:		 base address (usually a register content) */
+	/* eaddr:	 pointer to result pointer */
 {
     int data, word;
 

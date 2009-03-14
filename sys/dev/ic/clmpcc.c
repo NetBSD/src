@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.41 2009/03/14 15:36:17 dsl Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.42 2009/03/14 21:04:19 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.41 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.42 2009/03/14 21:04:19 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -244,10 +244,7 @@ clmpcc_enable_transmitter(struct clmpcc_chan *ch)
 }
 
 static int
-clmpcc_speed(sc, speed, cor, bpr)
-	struct clmpcc_softc *sc;
-	speed_t speed;
-	int *cor, *bpr;
+clmpcc_speed(struct clmpcc_softc *sc, speed_t speed, int *cor, int *bpr)
 {
 	int c, co, br;
 

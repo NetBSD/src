@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.17 2009/03/14 15:36:17 dsl Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.18 2009/03/14 21:04:20 dsl Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.17 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.18 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,7 @@ const struct wsdisplay_accessops hlcd_accessops = {
 };
 
 static void
-hlcd_cursor(id, on, row, col)
-	void *id;
-	int on, row, col;
+hlcd_cursor(void *id, int on, int row, int col)
 {
 	struct hlcd_screen *hdscr = id;
 
@@ -129,11 +127,7 @@ hlcd_mapchar(void *id, int uni, unsigned int *index)
 }
 
 static void
-hlcd_putchar(id, row, col, c, attr)
-	void *id;
-	int row, col;
-	u_int c;
-	long attr;
+hlcd_putchar(void *id, int row, int col, u_int c, long attr)
 {
 	struct hlcd_screen *hdscr = id;
 
@@ -148,9 +142,7 @@ hlcd_putchar(id, row, col, c, attr)
  * copies columns inside a row.
  */
 static void
-hlcd_copycols(id, row, srccol, dstcol, ncols)
-	void *id;
-	int row, srccol, dstcol, ncols;
+hlcd_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 {
 	struct hlcd_screen *hdscr = id;
 
@@ -170,10 +162,7 @@ hlcd_copycols(id, row, srccol, dstcol, ncols)
  * Erases a bunch of chars inside one row.
  */
 static void
-hlcd_erasecols(id, row, startcol, ncols, fillattr)
-	void *id;
-	int row, startcol, ncols;
-	long fillattr;
+hlcd_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
 {
 	struct hlcd_screen *hdscr = id;
 
@@ -189,9 +178,7 @@ hlcd_erasecols(id, row, startcol, ncols, fillattr)
 
 
 static void
-hlcd_copyrows(id, srcrow, dstrow, nrows)
-	void *id;
-	int srcrow, dstrow, nrows;
+hlcd_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct hlcd_screen *hdscr = id;
 	int ncols = hdscr->hlcd_sc->sc_cols;
@@ -203,10 +190,7 @@ hlcd_copyrows(id, srcrow, dstrow, nrows)
 }
 
 static void
-hlcd_eraserows(id, startrow, nrows, fillattr)
-	void *id;
-	int startrow, nrows;
-	long fillattr;
+hlcd_eraserows(void *id, int startrow, int nrows, long fillattr)
 {
 	struct hlcd_screen *hdscr = id;
 	int ncols = hdscr->hlcd_sc->sc_cols;
@@ -216,10 +200,7 @@ hlcd_eraserows(id, startrow, nrows, fillattr)
 
 
 static int
-hlcd_allocattr(id, fg, bg, flags, attrp)
-	void *id;
-	int fg, bg, flags;
-	long *attrp;
+hlcd_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
         *attrp = flags;
         return 0;
@@ -254,12 +235,7 @@ hlcd_mmap(void *v, void *vs, off_t offset, int prot)
 }
 
 static int
-hlcd_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *defattrp;
+hlcd_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep, int *curxp, int *curyp, long *defattrp)
 {
 	struct hlcd_screen *hdscr = v, *new;
 
@@ -273,8 +249,7 @@ hlcd_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 }
 
 static void
-hlcd_free_screen(v, cookie)
-	void *v, *cookie;
+hlcd_free_screen(void *v, void *cookie)
 {
 }
 
@@ -292,9 +267,7 @@ hlcd_show_screen(v, cookie, waitok, cb, cbarg)
 }
 
 static void
-hlcd_updatechar(sc, daddr, c)
-	struct hd44780_chip *sc;
-	int daddr, c;
+hlcd_updatechar(struct hd44780_chip *sc, int daddr, int c)
 {
 	int curdaddr, en, chipdaddr;
 
@@ -707,10 +680,7 @@ hd44780_busy_wait(struct hd44780_chip *sc, u_int32_t en)
  * Standard 8-bit version of 'sc_writereg' (8-bit port, 8-bit access)
  */
 void
-hd44780_writereg(sc, en, reg, cmd)
-	struct hd44780_chip *sc;
-	u_int32_t en, reg;
-	u_int8_t cmd;
+hd44780_writereg(struct hd44780_chip *sc, u_int32_t en, u_int32_t reg, u_int8_t cmd)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
@@ -731,9 +701,7 @@ hd44780_writereg(sc, en, reg, cmd)
  * Standard 8-bit version of 'sc_readreg' (8-bit port, 8-bit access)
  */
 u_int8_t
-hd44780_readreg(sc, en, reg)
-	struct hd44780_chip *sc;
-	u_int32_t en, reg;
+hd44780_readreg(struct hd44780_chip *sc, u_int32_t en, u_int32_t reg)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
@@ -754,10 +722,7 @@ hd44780_readreg(sc, en, reg)
  * Standard 4-bit version of 'sc_writereg' (4-bit port, 8-bit access)
  */
 void
-hd44780_writereg(sc, en, reg, cmd)
-	struct hd44780_chip *sc;
-	u_int32_t en, reg;
-	u_int8_t cmd;
+hd44780_writereg(struct hd44780_chip *sc, u_int32_t en, u_int32_t reg, u_int8_t cmd)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
@@ -780,9 +745,7 @@ hd44780_writereg(sc, en, reg, cmd)
  * Standard 4-bit version of 'sc_readreg' (4-bit port, 8-bit access)
  */
 u_int8_t
-hd44780_readreg(sc, en, reg)
-	struct hd44780_chip *sc;
-	u_int32_t en, reg;
+hd44780_readreg(struct hd44780_chip *sc, u_int32_t en, u_int32_t reg)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;

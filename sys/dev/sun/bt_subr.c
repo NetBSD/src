@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.10 2009/03/14 15:36:21 dsl Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.11 2009/03/14 21:04:23 dsl Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.10 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.11 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,10 +202,7 @@ bt_initcmap(union bt_cmap *cm, int cmsize)
 
 #if notyet
 static void
-bt_loadcmap_packed256(fb, bt, start, ncolors)
-	struct fbdevice	*fb;
-	volatile struct bt_regs *bt;
-	int start, ncolors;
+bt_loadcmap_packed256(struct fbdevice *fb, volatile struct bt_regs *bt, int start, int ncolors)
 {
 	u_int v;
 	int count, i;

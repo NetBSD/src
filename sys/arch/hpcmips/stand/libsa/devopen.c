@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2009/03/14 15:36:07 dsl Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6 2009/03/14 21:04:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -63,12 +63,11 @@ struct fs_ops   file_system[] = {
 int nfsys = 1;
 
 int
-parsebootfile(fnamexx, fsmode, devname, unit, partition, file)
-        const char     *fnamexx;
-        char          **fsmode; /* out */
-        char          **devname; /* out */
-        unsigned int   *unit, *partition; /* out */
-        const char    **file; /* out */
+parsebootfile(const char *fnamexx, char **fsmode, char **devname, unsigned int *unit, unsigned int *partition, const char **file)
+	/* fsmode:  out */
+	/* devname:  out */
+	/* unit, *partition:  out */
+	/* file:  out */
 {
 	TCHAR *fname = (TCHAR*)fnamexx;
 

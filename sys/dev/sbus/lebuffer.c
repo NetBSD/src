@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.29 2009/03/14 15:36:20 dsl Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.30 2009/03/14 21:04:22 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.29 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.30 2009/03/14 21:04:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,7 @@ lebufmatch(struct device *parent, struct cfdata *cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-lebufattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lebufattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct lebuf_softc *sc = (void *)self;

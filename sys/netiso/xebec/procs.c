@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.13 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: procs.c,v 1.14 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.13 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.14 2009/03/14 21:04:25 dsl Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -146,10 +146,7 @@ acttable(FILE *f,char *actstring)
 static int Npred=0, Ndefpred=0, Ntrans=0, Ndefevent=0, Nnulla=0;
 
 void
-statetable(string, oldstate, newstate, action, event)
-	char *string;
-	int action;
-	struct Object *oldstate, *newstate, *event;
+statetable(char *string, struct Object *oldstate, struct Object *newstate, int action, struct Object *event)
 {
 	register int different;
 
@@ -175,9 +172,7 @@ statetable(string, oldstate, newstate, action, event)
 }
 
 void
-stateentry(idx, oldstate, newstate, action)
-	int idx, action;
-	int oldstate, newstate;
+stateentry(int idx, int oldstate, int newstate, int action)
 {
 	extern FILE *statevalfile;
 
@@ -191,10 +186,7 @@ stateentry(idx, oldstate, newstate, action)
 }
 
 int
-predtable(os, oe, str, action, newstate)
-	struct Object *os, *oe;
-	char *str;
-	int action, newstate;
+predtable(struct Object *os, struct Object *oe, char *str, int action, int newstate)
 {
 	register struct Predicate *p, **q;
 	register int event, state;
@@ -427,8 +419,7 @@ stash(char *buf)
 }
 
 #ifdef notdef
-dump_pentry(event,state)
-int event,state;
+dump_pentry(int event,int state)
 {
 	register struct Predicate *p, **q;
 

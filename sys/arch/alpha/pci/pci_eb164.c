@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.38 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.39 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.38 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.39 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -287,8 +287,7 @@ dec_eb164_intr_establish(ccv, ih, level, func, arg)
 }
 
 void
-dec_eb164_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+dec_eb164_intr_disestablish(void *ccv, void *cookie)
 {
 #if 0
 	struct cia_config *ccp = ccv;

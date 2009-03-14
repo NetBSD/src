@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.59 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.60 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.59 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.60 2009/03/14 21:04:06 dsl Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -192,9 +192,7 @@ ncr_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-ncr_attach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+ncr_attach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct ncr_softc	*sc;
 	int			i;
@@ -1988,8 +1986,7 @@ static const char *sig_names[] = {
 };
 
 static void
-show_signals(dmstat, idstat)
-u_char	dmstat, idstat;
+show_signals(u_char dmstat, u_char idstat)
 {
 	u_short	tmp, mask;
 	int	j, need_pipe;

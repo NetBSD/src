@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.12 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: prom.c,v 1.13 2009/03/14 21:04:03 dsl Exp $ */
 
 /*  
  * Mach Operating System
@@ -120,9 +120,7 @@ putchar(int c)
 }
 
 int
-prom_getenv(id, buf, len)
-	int id, len;
-	char *buf;
+prom_getenv(int id, char *buf, int len)
 {
 	/* 
 	 * On at least some systems, the GETENV call requires a

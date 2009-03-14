@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.9 2009/03/14 15:36:14 dsl Exp $ */
+/*	$NetBSD: power.c,v 1.10 2009/03/14 21:04:16 dsl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.9 2009/03/14 15:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.10 2009/03/14 21:04:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,9 +80,7 @@ powermatch(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 static void
-powerattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+powerattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;

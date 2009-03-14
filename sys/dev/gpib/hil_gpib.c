@@ -1,7 +1,7 @@
-/*	$NetBSD: hil_gpib.c,v 1.8 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: hil_gpib.c,v 1.9 2009/03/14 21:04:19 dsl Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.8 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.9 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,7 @@ hilmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-hilattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+hilattach(struct device *parent, struct device *self, void *aux)
 {
 	struct hil_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;

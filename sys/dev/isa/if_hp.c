@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.46 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.47 2009/03/14 21:04:20 dsl Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.46 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.47 2009/03/14 21:04:20 dsl Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -375,8 +375,7 @@ hpput(struct hp_softc *ns, void *up, ad, len)
 /*
  * Reset of interface.
  */
-hpreset(unit, uban)
-	int     unit, uban;
+hpreset(int unit, int uban)
 {
 	struct hp_softc *ns = &hp_softc[unit];
 	int	hpc = ns->ns_port;
@@ -883,10 +882,7 @@ hpread(struct hp_softc *ns, char *buf, int len)
  * we copy into clusters.
  */
 struct mbuf *
-hpget(buf, totlen, off0, ifp)
-	void *buf;
-	int     totlen, off0;
-	struct ifnet *ifp;
+hpget(void *buf, int totlen, int off0, struct ifnet *ifp)
 {
 	struct mbuf *top, **mp, *m, *p;
 	int     off = off0, len;

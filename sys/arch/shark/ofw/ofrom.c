@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.19 2009/03/14 15:36:13 dsl Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.20 2009/03/14 21:04:16 dsl Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.19 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.20 2009/03/14 21:04:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,9 +87,7 @@ ofromprobe(struct device *parent, struct cfdata *cf, void *aux)
 
 
 void
-ofromattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofromattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofrom_softc *sc = (struct ofrom_softc *)self;
 	struct ofbus_attach_args *oba = aux;

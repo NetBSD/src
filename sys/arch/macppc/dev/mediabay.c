@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.17 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.18 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.17 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.18 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -118,9 +118,7 @@ mediabay_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-mediabay_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mediabay_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mediabay_softc *sc = (struct mediabay_softc *)self;
 	struct confargs *ca = aux;

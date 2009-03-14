@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.21 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.22 2009/03/14 21:04:21 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.21 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.22 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,7 @@ ofbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ofbus_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+ofbus_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	struct ofbus_attach_args oba2;

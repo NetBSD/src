@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.49 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.50 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.49 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.50 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,8 +233,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
 }
 
 void    
-dec_kn20aa_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+dec_kn20aa_intr_disestablish(void *ccv, void *cookie)
 {
 #if 0
 	struct cia_config *ccp = ccv;

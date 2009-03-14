@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.12 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: isr.c,v 1.13 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.12 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.13 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,8 +163,8 @@ isrunlink(void *arg)
 static unsigned int idepth;
  
 void
-isrdispatch(evec)
-	int evec;		/* format | vector offset */
+isrdispatch(int evec)
+	/* evec:		 format | vector offset */
 {
 	struct isr *isr;
 	isr_list_t *list;

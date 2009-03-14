@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.72 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.73 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.72 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.73 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1644,10 +1644,7 @@ ray_find_free_tx_ccs(struct ray_softc *sc, u_int hint)
  * page and the current chain values
  */
 static bus_size_t
-ray_fill_in_tx_ccs(sc, pktlen, i, pi)
-	struct ray_softc *sc;
-	size_t pktlen;
-	u_int i, pi;
+ray_fill_in_tx_ccs(struct ray_softc *sc, size_t pktlen, u_int i, u_int pi)
 {
 	bus_size_t ccs, bufp;
 
@@ -2104,10 +2101,7 @@ ray_free_ccs(struct ray_softc *sc, bus_size_t ccs)
  * this routine is only used for commands
  */
 static int
-ray_alloc_ccs(sc, ccsp, cmd, track)
-	struct ray_softc *sc;
-	bus_size_t *ccsp;
-	u_int cmd, track;
+ray_alloc_ccs(struct ray_softc *sc, bus_size_t *ccsp, u_int cmd, u_int track)
 {
 	bus_size_t ccs;
 	u_int i;
@@ -2299,9 +2293,7 @@ ray_issue_cmd(struct ray_softc *sc, bus_size_t ccs, u_int track)
  * send a simple command if we can
  */
 static int
-ray_simple_cmd(sc, cmd, track)
-	struct ray_softc *sc;
-	u_int cmd, track;
+ray_simple_cmd(struct ray_softc *sc, u_int cmd, u_int track)
 {
 	bus_size_t ccs;
 

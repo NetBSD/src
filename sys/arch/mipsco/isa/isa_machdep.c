@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.10 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 2009/03/14 21:04:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,7 @@ isa_bus_space_init(struct mipsco_bus_space *bst, const char *type, paddr_t paddr
 
 
 void
-isabusattach(pdp, dp, aux)
-struct device	*pdp, *dp;
-void		*aux;
+isabusattach(struct device *pdp, struct device *dp, void *aux)
 {
 	struct isabus_softc *sc = (struct isabus_softc *)dp;
 	struct mipsco_isa_chipset *ic = &sc->sc_isa_ic;
@@ -159,9 +157,7 @@ mipscoisabusprint(void *auxp, const char *name)
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
 {
 }
 

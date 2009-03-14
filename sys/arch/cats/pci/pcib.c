@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.11 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: pcib.c,v 1.12 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.12 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,7 @@ pcibmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pcibattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];

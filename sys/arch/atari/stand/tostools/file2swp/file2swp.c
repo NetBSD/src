@@ -1,4 +1,4 @@
-/*	$NetBSD: file2swp.c,v 1.4 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: file2swp.c,v 1.5 2009/03/14 21:04:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "cread.h"
 
 char		*Infile = "minifs.gz";
-const char	version[] = "$Revision: 1.4 $";
+const char	version[] = "$Revision: 1.5 $";
 
 extern const char	*program_name;
 
@@ -150,9 +150,7 @@ main(int argc, char **argv)
 }
 
 static int
-check_bsdlabel(dd, offset, start, end)
-	disk_t	*dd;
-	u_int32_t	offset, *start, *end;
+check_bsdlabel(disk_t *dd, u_int32_t offset, u_int32_t *start, u_int32_t *end)
 {
 	struct disklabel	dl;
 	int					err;
@@ -176,9 +174,7 @@ check_bsdlabel(dd, offset, start, end)
 }
 
 static int
-readdisklabel(dd, start, end)
-	disk_t		*dd;
-	u_int32_t	*start, *end;
+readdisklabel(disk_t *dd, u_int32_t *start, u_int32_t *end)
 {
 	ptable_t		pt;
 	int				err, i;

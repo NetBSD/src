@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2009/03/14 21:04:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2009/03/14 21:04:13 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -622,11 +622,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags, bu
 }
 
 int
-sh_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+sh_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.10 2009/03/14 15:36:15 dsl Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.11 2009/03/14 21:04:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -76,9 +76,9 @@ void bootufs (void) __attribute__ ((__noreturn__));
 
 #ifdef BOOT_DEBUG
 void
-print_hex(x, l)
-	unsigned int x;	/* 表示する数字 */
-	int l;		/* 表示する桁数 */
+print_hex(unsigned int x, int l)
+	/* x:	 表示する数字 */
+	/* l:		 表示する桁数 */
 {
 
 	if (l > 0) {
@@ -207,11 +207,8 @@ load_file(const char *path, unsigned int addr, struct exec *header)
 }
 
 static int
-load_file_ino(ino, fn, addr, header)
-	ino32_t ino;
-	const char *fn;		/* for message only */
-	unsigned int addr;
-	struct exec *header;
+load_file_ino(ino32_t ino, const char *fn, unsigned int addr, struct exec *header)
+	/* fn:		 for message only */
 {
 	union ufs_dinode dinode;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.26 2009/03/14 15:36:21 dsl Exp $ */
+/*	$NetBSD: tcx.c,v 1.27 2009/03/14 21:04:23 dsl Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.26 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.27 2009/03/14 21:04:23 dsl Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -164,9 +164,7 @@ tcxmatch(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a display.
  */
 void
-tcxattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+tcxattach(struct device *parent, struct device *self, void *args)
 {
 	struct tcx_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
@@ -338,10 +336,7 @@ static int tcx_opens = 0;
 #endif
 
 int
-tcxopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+tcxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 #ifdef TCX_CG8
 	int unit = minor(dev);
@@ -374,10 +369,7 @@ tcxopen(dev, flags, mode, l)
 }
 
 int
-tcxclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+tcxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 #ifdef TCX_CG8
@@ -505,9 +497,7 @@ tcx_reset(struct tcx_softc *sc)
  * Load a subset of the current (new) colormap into the color DAC.
  */
 static void
-tcx_loadcmap(sc, start, ncolors)
-	struct tcx_softc *sc;
-	int start, ncolors;
+tcx_loadcmap(struct tcx_softc *sc, int start, int ncolors)
 {
 	volatile struct bt_regs *bt;
 	u_int *ip, i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.229 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2009/03/14 21:04:14 dsl Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -191,12 +191,7 @@ extern struct consdev promcd;		/* XXX */
  * are built on temporary stack by our boot loader.
  */
 void
-mach_init(argc, argv, code, cv, bim, bip)
-	int argc;
-	char *argv[];
-	int code, cv;
-	u_int bim;
-	char *bip;
+mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 {
 	char *cp;
 	const char *bootinfo_msg;
@@ -496,9 +491,8 @@ lookup_bootinfo(int type)
 }
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto;	/* XXX volatile to keep gcc happy */
-	char *bootstr;
+cpu_reboot(volatile int howto, char *bootstr)
+	/* howto:	 XXX volatile to keep gcc happy */
 {
 
 	/* take a snap shot before clobbering any registers */

@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.15 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: tsc.c,v 1.16 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.15 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.16 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,9 +158,7 @@ tspmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-tspattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tspattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcibus_attach_args pba;
 	struct tsp_attach_args *t = aux;
@@ -194,9 +192,8 @@ tspattach(parent, self, aux)
 }
 
 struct tsp_config *
-tsp_init(mallocsafe, n)
-	int mallocsafe;
-	int n;	/* Pchip number */
+tsp_init(int mallocsafe, int n)
+	/* n:	 Pchip number */
 {
 	struct tsp_config *pcp;
 
@@ -221,9 +218,7 @@ tsp_init(mallocsafe, n)
 }
 
 static int
-tsp_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
+tsp_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct tsp_config *tsp = &tsp_configuration[tsp_console_hose];
 	bus_space_tag_t st;

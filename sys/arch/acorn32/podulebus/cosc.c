@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.14 2009/03/14 15:35:58 dsl Exp $	*/
+/*	$NetBSD: cosc.c,v 1.15 2009/03/14 21:04:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.14 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.15 2009/03/14 21:04:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,7 @@ coscmatch(struct device *pdp, struct cfdata *cf, void *auxp)
 static int dummy[6];
 
 void
-coscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+coscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct cosc_softc *sc = (struct cosc_softc *)dp;
 	struct podule_attach_args *pa;

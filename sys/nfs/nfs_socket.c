@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.179 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.180 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.179 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.180 2009/03/14 21:04:25 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -2148,9 +2148,7 @@ errout:
 }
 
 int
-nfs_msg(l, server, msg)
-	struct lwp *l;
-	const char *server, *msg;
+nfs_msg(struct lwp *l, const char *server, const char *msg)
 {
 	tpr_t tpr;
 

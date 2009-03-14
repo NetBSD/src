@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.7 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: sio.c,v 1.8 2009/03/14 21:04:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.7 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.8 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,7 @@ sio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sio_softc *sc = (void *)self;
 	struct mainbus_attach_args *ma = aux;

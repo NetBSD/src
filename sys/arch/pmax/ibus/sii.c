@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.6 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: sii.c,v 1.7 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.6 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.7 2009/03/14 21:04:14 dsl Exp $");
 
 #include "sii.h"
 /*
@@ -289,9 +289,8 @@ siiintr(void *xxxsc)
  * since a SCSI bus reset will set UNIT_ATTENTION.
  */
 static void
-sii_Reset(sc, reset)
-	struct siisoftc* sc;
-	int reset;				/* TRUE => reset SCSI bus */
+sii_Reset(struct siisoftc* sc, int reset)
+	/* reset:				 TRUE => reset SCSI bus */
 {
 	SIIRegs *regs = sc->sc_regs;
 
@@ -355,9 +354,9 @@ sii_Reset(sc, reset)
  * NOTE: we should be called with interrupts disabled.
  */
 static void
-sii_StartCmd(sc, target)
-	struct siisoftc *sc;	/* which SII to use */
-	int target;		/* which command to start */
+sii_StartCmd(struct siisoftc *sc, int target)
+	/* sc:	 which SII to use */
+	/* target:		 which command to start */
 {
 	SIIRegs *regs;
 	ScsiCmd *scsicmd;
@@ -1538,9 +1537,7 @@ sii_StateChg(struct siisoftc *sc, u_int cstat)
  * If 'ack' is true, acknowledge the byte.
  */
 static int
-sii_GetByte(regs, phase, ack)
-	SIIRegs *regs;
-	int phase, ack;
+sii_GetByte(SIIRegs *regs, int phase, int ack)
 {
 	u_int dstat;
 	u_int state;
@@ -1710,11 +1707,11 @@ sii_DoSync(SIIRegs *regs, State *state)
  * NOTE: the data buffer should be word-aligned for DMA out.
  */
 static void
-sii_StartDMA(regs, phase, dmaAddr, size)
-	SIIRegs *regs;	/* which SII to use */
-	int phase;		/* phase to send/receive data */
-	u_short *dmaAddr;	/* DMA buffer address */
-	int size;		/* # of bytes to transfer */
+sii_StartDMA(SIIRegs *regs, int phase, u_short *dmaAddr, int size)
+	/* regs:	 which SII to use */
+	/* phase:		 phase to send/receive data */
+	/* dmaAddr:	 DMA buffer address */
+	/* size:		 # of bytes to transfer */
 {
 
 	if (regs->dstat & SII_DNE) { /* XXX */
@@ -1746,10 +1743,10 @@ sii_StartDMA(regs, phase, dmaAddr, size)
  * before allowing the same device to start another command.
  */
 static void
-sii_CmdDone(sc, target, error)
-	struct siisoftc *sc;	/* which SII to use */
-	int target;			/* which device is done */
-	int error;			/* error code if any errors */
+sii_CmdDone(struct siisoftc *sc, int target, int error)
+	/* sc:	 which SII to use */
+	/* target:			 which device is done */
+	/* error:			 error code if any errors */
 {
 	ScsiCmd *scsicmd;
 	int i;

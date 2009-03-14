@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.102 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2009/03/14 21:04:06 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -288,10 +288,7 @@ machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 }
 
 static void
-panictrap(type, code, v, fp)
-	int type;
-	u_int code, v;
-	struct frame *fp;
+panictrap(int type, u_int code, u_int v, struct frame *fp)
 {
 	int	s;
 
@@ -360,10 +357,7 @@ trapcpfault(struct lwp *l, struct frame *fp)
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame	*fp;
-	int		type;
-	u_int		code, v;
+trap(struct frame *fp, int type, u_int code, u_int v)
 {
 	struct lwp	*l;
 	struct proc	*p;
@@ -1006,10 +1000,7 @@ dumpssw(register u_short ssw)
 }
 
 static void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	register struct proc *p = curproc;
 	paddr_t pa;

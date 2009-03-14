@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.18 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.19 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.18 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.19 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -935,11 +935,7 @@ out:
  * directory entry within the block.
  */
 int
-readep(pmp, dirclust, diroffset, bpp, epp)
-	struct msdosfsmount *pmp;
-	u_long dirclust, diroffset;
-	struct buf **bpp;
-	struct direntry **epp;
+readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct buf **bpp, struct direntry **epp)
 {
 	int error;
 	daddr_t bn;
@@ -982,9 +978,9 @@ readde(struct denode *dep, struct buf **bpp, struct direntry **epp)
  * msdosfs_reclaim() which will remove the denode from the denode cache.
  */
 int
-removede(pdep, dep)
-	struct denode *pdep;	/* directory where the entry is removed */
-	struct denode *dep;	/* file to be removed */
+removede(struct denode *pdep, struct denode *dep)
+	/* pdep:	 directory where the entry is removed */
+	/* dep:	 file to be removed */
 {
 	int error;
 	struct direntry *ep;

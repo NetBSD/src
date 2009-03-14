@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.20 2009/03/14 15:36:19 dsl Exp $ */
+/* $NetBSD: btvmei.c,v 1.21 2009/03/14 21:04:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.20 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.21 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,7 @@ b3_617_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-b3_617_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+b3_617_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct b3_617_softc *sc = (struct b3_617_softc*)self;
 	struct pci_attach_args *pa = aux;
@@ -541,10 +539,7 @@ b3_617_vme_probe(vsc, addr, len, am, datasize, callback, cbarg)
 }
 
 int
-b3_617_map_vmeint(vsc, level, vector, handlep)
-	void *vsc;
-	int level, vector;
-	vme_intr_handle_t *handlep;
+b3_617_map_vmeint(void *vsc, int level, int vector, vme_intr_handle_t *handlep)
 {
 	if (!sc->sc_ih) {
 		printf("%s: b3_617_map_vmeint: no IRQ\n",
