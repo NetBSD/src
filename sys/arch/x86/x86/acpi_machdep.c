@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.23 2008/12/18 12:18:20 cegger Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.24 2009/03/14 13:54:28 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.23 2008/12/18 12:18:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.24 2009/03/14 13:54:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,6 +274,12 @@ void
 acpi_md_OsDisableInterrupt(void)
 {
 	x86_disable_intr();
+}
+
+void
+acpi_md_OsEnableInterrupt(void)
+{
+	x86_enable_intr();
 }
 
 void
