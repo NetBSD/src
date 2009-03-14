@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.30 2009/03/14 22:52:53 dholland Exp $	*/
+/*	$NetBSD: sync.c,v 1.31 2009/03/14 22:54:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.30 2009/03/14 22:52:53 dholland Exp $");
+__RCSID("$NetBSD: sync.c,v 1.31 2009/03/14 22:54:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: sync.c,v 1.30 2009/03/14 22:52:53 dholland Exp $");
 #define W_DBP		5
 #define W_DRIFT		6
 #define W_EXPLODE	7
-#define W_FILE		8
+/*      W_FILE		8   not used */
 #define W_FOUL		9
 #define W_GUNL		10
 #define W_GUNR		11
@@ -103,7 +103,6 @@ static void recv_crew(struct ship *ship, long a, long b, long c);
 static void recv_dbp(struct ship *ship, long a, long b, long c, long d);
 static void recv_drift(struct ship *ship, long a);
 static void recv_explode(struct ship *ship, long a);
-static void recv_file(void);
 static void recv_foul(struct ship *ship, long a);
 static void recv_gunl(struct ship *ship, long a, long b);
 static void recv_gunr(struct ship *ship, long a, long b);
@@ -409,7 +408,6 @@ sync_update(int type, struct ship *ship, const char *astr,
 	case W_DBP:      recv_dbp(ship, a, b, c, d);  break;
 	case W_DRIFT:    recv_drift(ship, a);         break;
 	case W_EXPLODE:  recv_explode(ship, a);       break;
-	case W_FILE:     recv_file();                 break;
 	case W_FOUL:     recv_foul(ship, a);          break;
 	case W_GUNL:     recv_gunl(ship, a, b);       break;
 	case W_GUNR:     recv_gunr(ship, a, b);       break;
@@ -492,12 +490,6 @@ void
 send_explode(struct ship *ship, long a)
 {
 	Write(W_EXPLODE, ship, a, 0, 0, 0);
-}
-
-void
-send_file(void)
-{
-	Write(W_FILE, NULL, 0, 0, 0, 0);
 }
 
 void
@@ -743,12 +735,6 @@ recv_explode(struct ship *ship, long a)
 {
 	if ((ship->file->explode = a) == 2)
 		ship->file->dir = 0;
-}
-
-// XXX why does this exist?
-static void
-recv_file(void)
-{
 }
 
 static void

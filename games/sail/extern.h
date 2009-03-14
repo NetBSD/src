@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32 2009/03/14 22:52:52 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.33 2009/03/14 22:54:05 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -379,7 +379,6 @@ void send_crew(struct ship *ship, long a, long b, long c);
 void send_dbp(struct ship *ship, long a, long b, long c, long d);
 void send_drift(struct ship *ship, long a);
 void send_explode(struct ship *ship, long a);
-void send_file(void);
 void send_foul(struct ship *ship, long a);
 void send_gunl(struct ship *ship, long a, long b);
 void send_gunr(struct ship *ship, long a, long b);
