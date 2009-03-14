@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.40 2009/03/14 15:36:21 dsl Exp $ */
+/*	$NetBSD: qec.c,v 1.41 2009/03/14 21:04:23 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.40 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.41 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +95,7 @@ qecmatch(struct device *parent, struct cfdata *cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-qecattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qecattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *sc = (void *)self;
@@ -215,13 +213,8 @@ qecattach(parent, self, aux)
 }
 
 int
-qec_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	bus_size_t size;
-	int	flags;
-	vaddr_t va;	/* Ignored */
-	bus_space_handle_t *hp;
+qec_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags, vaddr_t va, bus_space_handle_t *hp)
+	/* va:	 Ignored */
 {
 	int error;
 

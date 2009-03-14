@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.26 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: xirc.c,v 1.27 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.26 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.27 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -168,9 +168,7 @@ xirc_match(struct device *parent, struct cfdata *match,
 }
 
 void
-xirc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xirc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xirc_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -474,9 +472,7 @@ xirc_intr(void *arg)
 }
 
 int
-xirc_enable(sc, flag, media)
-	struct xirc_softc *sc;
-	int flag, media;
+xirc_enable(struct xirc_softc *sc, int flag, int media)
 {
 	int error;
 
@@ -524,9 +520,7 @@ xirc_enable(sc, flag, media)
 }
 
 void
-xirc_disable(sc, flag, media)
-	struct xirc_softc *sc;
-	int flag, media;
+xirc_disable(struct xirc_softc *sc, int flag, int media)
 {
 
 	if ((sc->sc_flags & flag) == 0) {

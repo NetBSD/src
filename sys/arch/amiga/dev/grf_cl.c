@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.42 2009/03/14 15:36:00 dsl Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.43 2009/03/14 21:04:04 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.42 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.43 2009/03/14 21:04:04 dsl Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -333,9 +333,7 @@ grfclmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-grfclattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void   *auxp;
+grfclattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	static struct grf_softc congrf;
 	struct zbus_args *zap;
@@ -1164,9 +1162,8 @@ cl_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 
 
 int
-cl_toggle(gp, wopp)
-	struct grf_softc *gp;
-	unsigned short wopp;	/* don't need that one yet, ill */
+cl_toggle(struct grf_softc *gp, unsigned short wopp)
+	/* wopp:	 don't need that one yet, ill */
 {
 	volatile void *ba;
 

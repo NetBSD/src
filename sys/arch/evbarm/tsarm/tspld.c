@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.18 2009/03/14 15:36:05 dsl Exp $	*/
+/*	$NetBSD: tspld.c,v 1.19 2009/03/14 21:04:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.18 2009/03/14 15:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.19 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -153,9 +153,7 @@ boardtemp_poll(void *arg)
 }
 
 void
-tspldattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tspldattach(struct device *parent, struct device *self, void *aux)
 {
 	int	i, rev, features, jp, model;
 	struct tspld_softc *sc = (struct tspld_softc *)self;

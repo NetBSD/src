@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.39 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.40 2009/03/14 21:04:21 dsl Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.39 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.40 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -196,11 +196,7 @@ pciide_chipen(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 void
-pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
-	struct pci_attach_args *pa;
-	struct pciide_channel *cp;
-	int compatchan;
-	bus_size_t *cmdsizep, *ctlsizep;
+pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp, int compatchan, bus_size_t *cmdsizep, bus_size_t *ctlsizep)
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
@@ -524,9 +520,7 @@ pciide_channel_dma_setup(struct pciide_channel *cp)
 	(MAXPHYS/(min((sc)->sc_dma_maxsegsz, PAGE_SIZE)) + 1)
 
 int
-pciide_dma_table_setup(sc, channel, drive)
-	struct pciide_softc *sc;
-	int channel, drive;
+pciide_dma_table_setup(struct pciide_softc *sc, int channel, int drive)
 {
 	bus_dma_segment_t seg;
 	int error, rseg;
@@ -595,12 +589,7 @@ pciide_dma_table_setup(sc, channel, drive)
 }
 
 int
-pciide_dma_dmamap_setup(sc, channel, drive, databuf, datalen, flags)
-	struct pciide_softc *sc;
-	int channel, drive;
-	void *databuf;
-	size_t datalen;
-	int flags;
+pciide_dma_dmamap_setup(struct pciide_softc *sc, int channel, int drive, void *databuf, size_t datalen, int flags)
 {
 	int error, seg;
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
@@ -669,12 +658,7 @@ pciide_dma_dmamap_setup(sc, channel, drive, databuf, datalen, flags)
 }
 
 int
-pciide_dma_init(v, channel, drive, databuf, datalen, flags)
-	void *v;
-	int channel, drive;
-	void *databuf;
-	size_t datalen;
-	int flags;
+pciide_dma_init(void *v, int channel, int drive, void *databuf, size_t datalen, int flags)
 {
 	struct pciide_softc *sc = v;
 	int error;
@@ -710,10 +694,7 @@ pciide_dma_start(void *v, int channel, int drive)
 }
 
 int
-pciide_dma_finish(v, channel, drive, force)
-	void *v;
-	int channel, drive;
-	int force;
+pciide_dma_finish(void *v, int channel, int drive, int force)
 {
 	struct pciide_softc *sc = v;
 	u_int8_t status;

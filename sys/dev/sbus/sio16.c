@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.18 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: sio16.c,v 1.19 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.18 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.19 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -123,9 +123,7 @@ sio16_match(struct device *parent, struct cfdata *cf, void *aux)
  * device attach routine:  go attach all sub devices.
  */
 void
-sio16_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sio16_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct sio16_softc *sc = (struct sio16_softc *)self;
@@ -285,9 +283,7 @@ clcd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-clcd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cd18xx_softc *sc = (struct cd18xx_softc *)self;
 	struct sio16_attach_args *args = aux;

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.29 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.30 2009/03/14 21:04:03 dsl Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.29 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.30 2009/03/14 21:04:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,10 +296,7 @@ tc_mem_unmap(void *v, bus_space_handle_t memh, bus_size_t memsize, int acct)
 }
 
 int
-tc_mem_subregion(v, memh, offset, size, nmemh)
-	void *v;
-	bus_space_handle_t memh, *nmemh;
-	bus_size_t offset, size;
+tc_mem_subregion(void *v, bus_space_handle_t memh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nmemh)
 {
 
 	/* Disallow subregioning that would make the handle unaligned. */
@@ -315,12 +312,7 @@ tc_mem_subregion(v, memh, offset, size, nmemh)
 }
 
 int
-tc_mem_alloc(v, rstart, rend, size, align, boundary, flags, addrp, bshp)
-	void *v;
-	bus_addr_t rstart, rend, *addrp;
-	bus_size_t size, align, boundary;
-	int flags;
-	bus_space_handle_t *bshp;
+tc_mem_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size, bus_size_t align, bus_size_t boundary, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 
 	/* XXX XXX XXX XXX XXX XXX */
@@ -365,11 +357,7 @@ tc_mem_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 }
 
 inline void
-tc_mem_barrier(v, h, o, l, f)
-	void *v;
-	bus_space_handle_t h;
-	bus_size_t o, l;
-	int f;
+tc_mem_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int f)
 {
 
 	if ((f & BUS_SPACE_BARRIER_READ) != 0)

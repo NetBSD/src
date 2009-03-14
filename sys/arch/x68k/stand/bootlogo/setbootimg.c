@@ -1,4 +1,4 @@
-/*	$NetBSD: setbootimg.c,v 1.2 2009/03/14 15:36:15 dsl Exp $	*/
+/*	$NetBSD: setbootimg.c,v 1.3 2009/03/14 21:04:17 dsl Exp $	*/
 
 /*
  *	set boot title image (converted by xpm2bootimg)
@@ -129,9 +129,7 @@ static const char boottop[] = {
 };
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *imgfile, *bootfile;
 	char img[SIZE_BOOTBLK], boot[SIZE_BOOTBLK];

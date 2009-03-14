@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.29 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: mesh.c,v 1.30 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.29 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.30 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -200,9 +200,7 @@ mesh_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-mesh_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mesh_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mesh_softc *sc = (void *)self;
 	struct confargs *ca = aux;
@@ -283,9 +281,7 @@ mesh_read_reg(struct mesh_softc *sc, int reg)
 }
 
 void
-mesh_set_reg(sc, reg, val)
-	struct mesh_softc *sc;
-	int reg, val;
+mesh_set_reg(struct mesh_softc *sc, int reg, int val)
 {
 	out8(sc->sc_reg + reg, val);
 }
@@ -445,10 +441,7 @@ mesh_intr(void *arg)
 }
 
 void
-mesh_error(sc, scb, error, exception)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
-	int error, exception;
+mesh_error(struct mesh_softc *sc, struct mesh_scb *scb, int error, int exception)
 {
 	if (error & MESH_ERR_SCSI_RESET) {
 		printf("%s: SCSI RESET\n", sc->sc_dev.dv_xname);

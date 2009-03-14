@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.44 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.45 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.44 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.45 2009/03/14 21:04:20 dsl Exp $");
 
 #include "rnd.h"
 
@@ -135,9 +135,7 @@ ed_mca_probe(struct device *parent, struct cfdata *cf,
 }
 
 static void
-ed_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ed_mca_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ed_softc *ed = device_private(self);
 	struct edc_mca_softc *sc = device_private(parent);

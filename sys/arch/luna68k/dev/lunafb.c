@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.18 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: lunafb.c,v 1.19 2009/03/14 21:04:10 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.18 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.19 2009/03/14 21:04:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,9 +175,7 @@ omfbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-omfbattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+omfbattach(struct device *parent, struct device *self, void *args)
 {
 	struct omfb_softc *sc = (struct omfb_softc *)self;
 	struct wsemuldisplaydev_attach_args waa;
@@ -434,12 +432,7 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 }
 
 static int
-omfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+omfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct omfb_softc *sc = v;
 	long defattr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.14 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: nvram.c,v 1.15 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.14 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.15 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,9 +91,7 @@ nvram_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-nvram_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+nvram_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nvram_softc *sc = (struct nvram_softc *)self;
 	struct confargs *ca = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.17 2009/03/14 15:36:12 dsl Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.18 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.17 2009/03/14 15:36:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.18 2009/03/14 21:04:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,7 @@ ioasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 static void
-ioasicattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ioasicattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;

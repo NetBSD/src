@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.16 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: abtn.c,v 1.17 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.16 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.17 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,9 +81,7 @@ abtn_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-abtn_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+abtn_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct abtn_softc *sc = (struct abtn_softc *)self;
 	struct adb_attach_args *aa = aux;
@@ -110,9 +108,7 @@ abtn_attach(parent, self, aux)
 extern struct cfdriver akbd_cd;
 
 void
-abtn_adbcomplete(buffer, data, adb_command)
-	uint8_t *buffer, *data;
-	int adb_command;
+abtn_adbcomplete(uint8_t *buffer, uint8_t *data, int adb_command)
 {
 	struct abtn_softc *sc = (struct abtn_softc *)data;
 	u_int cmd;

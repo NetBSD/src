@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.8 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: omrasops.c,v 1.9 2009/03/14 21:04:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.8 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.9 2009/03/14 21:04:11 dsl Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -87,11 +87,7 @@ struct wsdisplay_emulops omfb_emulops = {
  * Blit a character at the specified co-ordinates.
  */
 static void
-om_putchar(cookie, row, startcol, uc, attr)
-	void *cookie;
-	int row, startcol;
-	u_int uc;
-	long attr;
+om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 {
 	struct rcons *rc = cookie;
 	struct raster *rap = rc->rc_sp;
@@ -143,10 +139,7 @@ om_putchar(cookie, row, startcol, uc, attr)
 }
 
 static void
-om_erasecols(cookie, row, startcol, ncols, attr)
-	void *cookie;
-	int row, startcol, ncols;
-	long attr;
+om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 {
         struct rcons *rc = cookie;
         struct raster *rap = rc->rc_sp;
@@ -196,10 +189,7 @@ om_erasecols(cookie, row, startcol, ncols, attr)
 }
 
 static void
-om_eraserows(cookie, startrow, nrows, attr)
-	void *cookie;
-	int startrow, nrows;
-	long attr;
+om_eraserows(void *cookie, int startrow, int nrows, long attr)
 {
 	struct rcons *rc = cookie;
 	struct raster *rap = rc->rc_sp;
@@ -235,9 +225,7 @@ om_eraserows(cookie, startrow, nrows, attr)
 }
 
 static void
-om_copyrows(cookie, srcrow, dstrow, nrows)
-	void *cookie;
-	int srcrow, dstrow, nrows;
+om_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 {
         struct rcons *rc = cookie;
         struct raster *rap = rc->rc_sp;
@@ -278,9 +266,7 @@ om_copyrows(cookie, srcrow, dstrow, nrows)
 }
 
 static void
-om_copycols(cookie, startrow, srccol, dstcol, ncols)
-	void *cookie;
-	int startrow, srccol, dstcol, ncols;
+om_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 {
 	struct rcons *rc = cookie;
 	struct raster *rap = rc->rc_sp;
@@ -392,9 +378,7 @@ om_mapchar(void *cookie, int c, u_int *cp)
  * Position|{enable|disable} the cursor at the specified location.
  */
 static void
-om_cursor(cookie, on, row, col)
-	void *cookie;
-	int on, row, col;
+om_cursor(void *cookie, int on, int row, int col)
 {
 	struct rcons *rc = cookie;
 	struct raster *rap = rc->rc_sp;
@@ -455,10 +439,7 @@ om_cursor(cookie, on, row, col)
  * Allocate attribute. We just pack these into an integer.
  */
 static int
-om_allocattr(id, fg, bg, flags, attrp)
-	void *id;
-	int fg, bg, flags;
-	long *attrp;
+om_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	if (flags & (WSATTR_HILIT | WSATTR_BLINK |
 		     WSATTR_UNDERLINE | WSATTR_WSCOLORS))
@@ -471,9 +452,7 @@ om_allocattr(id, fg, bg, flags, attrp)
 }
 
 void
-rcons_init(rc, mrow, mcol)
-	struct rcons *rc;
-	int mrow, mcol;
+rcons_init(struct rcons *rc, int mrow, int mcol)
 {
 	struct raster *rp = rc->rc_sp;
 	int i;

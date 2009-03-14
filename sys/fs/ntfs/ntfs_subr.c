@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.39 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.40 2009/03/14 21:04:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.39 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.40 2009/03/14 21:04:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,14 +113,7 @@ ntfs_ntvattrrele(struct ntvattr * vap)
  * find the attribute in the ntnode
  */
 static int
-ntfs_findvattr(ntmp, ip, lvapp, vapp, type, name, namelen, vcn)
-	struct ntfsmount *ntmp;
-	struct ntnode *ip;
-	struct ntvattr **lvapp, **vapp;
-	u_int32_t type;
-	const char *name;
-	size_t namelen;
-	cn_t vcn;
+ntfs_findvattr(struct ntfsmount *ntmp, struct ntnode *ip, struct ntvattr **lvapp, struct ntvattr **vapp, u_int32_t type, const char *name, size_t namelen, cn_t vcn)
 {
 	int error;
 	struct ntvattr *vap;

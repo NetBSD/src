@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.7 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.8 2009/03/14 21:04:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.7 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.8 2009/03/14 21:04:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,7 @@ tsdio_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-tsdio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tsdio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tsdio_softc *sc = (struct tsdio_softc *) self;
 	struct isa_attach_args *ia = aux;

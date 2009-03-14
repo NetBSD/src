@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.62 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: be.c,v 1.63 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.62 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.63 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -217,9 +217,7 @@ bematch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-beattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+beattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *qec = (struct qec_softc *)parent;
@@ -505,9 +503,7 @@ be_put(struct be_softc *sc, int idx, struct mbuf *m)
  * we copy into clusters.
  */
 static inline struct mbuf *
-be_get(sc, idx, totlen)
-	struct be_softc *sc;
-	int idx, totlen;
+be_get(struct be_softc *sc, int idx, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -558,9 +554,7 @@ be_get(sc, idx, totlen)
  * Pass a packet to the higher levels.
  */
 static inline void
-be_read(sc, idx, len)
-	struct be_softc *sc;
-	int idx, len;
+be_read(struct be_softc *sc, int idx, int len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -1325,9 +1319,7 @@ be_mii_sendbits(struct be_softc *sc, int phy, u_int32_t data, int nbits)
 }
 
 static int
-be_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+be_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int val = 0, i;
@@ -1355,9 +1347,7 @@ be_mii_readreg(self, phy, reg)
 }
 
 void
-be_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+be_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int i;

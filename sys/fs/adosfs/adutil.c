@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.10 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: adutil.c,v 1.11 2009/03/14 21:04:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.10 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.11 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -166,8 +166,7 @@ adunixprot(int adprot)
 }
 
 static int
-CapitalChar(ch, inter)
-	int ch, inter;
+CapitalChar(int ch, int inter)
 {
 	if ((ch >= 'a' && ch <= 'z') ||
 	    (inter && ch >= 0xe0 && ch <= 0xfe && ch != 0xf7))
@@ -189,9 +188,7 @@ adoscksum(struct buf *bp, int n)
 }
 
 int
-adoscaseequ(name1, name2, len, inter)
-	const u_char *name1, *name2;
-	int len, inter;
+adoscaseequ(const u_char *name1, const u_char *name2, int len, int inter)
 {
 	while (len-- > 0)
 		if (CapitalChar(*name1++, inter) !=
@@ -202,9 +199,7 @@ adoscaseequ(name1, name2, len, inter)
 }
 
 int
-adoshash(nam, namlen, nelt, inter)
-	const u_char *nam;
-	int namlen, nelt, inter;
+adoshash(const u_char *nam, int namlen, int nelt, int inter)
 {
 	int val;
 

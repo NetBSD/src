@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.49 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: cpu.c,v 1.50 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.49 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2009/03/14 21:04:12 dsl Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -156,9 +156,7 @@ cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
 }
 
 void
-cpuattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpuattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_info *ci;
 	struct confargs *ca = aux;

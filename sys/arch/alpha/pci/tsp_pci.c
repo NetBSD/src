@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.5 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.6 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.5 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.6 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,7 @@ tsp_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-tsp_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+tsp_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
@@ -88,18 +86,13 @@ tsp_bus_maxdevs(void *cpv, int busno)
 }
 
 pcitag_t
-tsp_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+tsp_make_tag(void *cpv, int b, int d, int f)
 {
 	return b << 16 | d << 11 | f << 8;
 }
 
 void
-tsp_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+tsp_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 	if (bp != NULL)
 		*bp = (tag >> 16) & 0xff;

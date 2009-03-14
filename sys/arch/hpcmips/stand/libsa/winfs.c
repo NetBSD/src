@@ -1,4 +1,4 @@
-/*	$NetBSD: winfs.c,v 1.4 2009/03/14 15:36:07 dsl Exp $	*/
+/*	$NetBSD: winfs.c,v 1.5 2009/03/14 21:04:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -90,11 +90,8 @@ win_close(struct open_file *f)
 
 
 int 
-win_read(f, addr, size, resid)
-	struct open_file *f;
-	void           *addr;
-	size_t         size;
-	size_t         *resid;	/* out */
+win_read(struct open_file *f, void *addr, size_t size, size_t *resid)
+	/* resid:	 out */
 {
 	struct winfs *fsdata = (struct winfs *) f->f_fsdata;
 	DWORD read_len;
@@ -119,11 +116,8 @@ win_read(f, addr, size, resid)
 }
 
 int 
-win_write(f, start, size, resid)
-	struct open_file *f;
-	void           *start;
-	size_t          size;
-	size_t         *resid;	/* out */
+win_write(struct open_file *f, void *start, size_t size, size_t *resid)
+	/* resid:	 out */
 {
 	return (EROFS);	/* XXX */
 }

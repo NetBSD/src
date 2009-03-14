@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.7 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.8 2009/03/14 21:04:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.7 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.8 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,7 @@ mcpcia_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 static void
-mcpcia_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+mcpcia_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
 }
 
@@ -87,9 +85,7 @@ mcpcia_bus_maxdevs(void *cpv, int busno)
 }
 
 static pcitag_t
-mcpcia_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+mcpcia_make_tag(void *cpv, int b, int d, int f)
 {
 	pcitag_t tag;
 	tag = (b << 21) | (d << 16) | (f << 13);
@@ -97,10 +93,7 @@ mcpcia_make_tag(cpv, b, d, f)
 }
 
 static void
-mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+mcpcia_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 	if (bp != NULL)
 		*bp = (tag >> 21) & 0xff;

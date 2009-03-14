@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2009/03/14 21:04:13 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -47,9 +47,7 @@ void LoadAndReset(void *);
 char *netbsd = "/netbsd";
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	u_long marks[MARK_MAX];
 	u_long start, entry;

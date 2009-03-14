@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.67 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.68 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.67 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.68 2009/03/14 21:04:06 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -396,9 +396,7 @@ fdprint(void *aux, const char *fdc)
 }
 
 void
-fdcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc	*fdc = (void *)self;
 	struct fdc_attach_args	fa;
@@ -507,9 +505,7 @@ fdprobe(struct device *parent, struct cfdata *cfp, void *aux)
  * Controller is working, and drive responded.  Attach it.
  */
 void
-fdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc	*fdc  = (void *)parent;
 	struct fd_softc		*fd   = (void *)self;

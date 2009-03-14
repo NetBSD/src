@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.7 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.8 2009/03/14 21:04:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -113,9 +113,7 @@ int	show_parts(ptable_t *, int);
 void	update_disk(ptable_t *, int, int);
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
 	int		fd;
 	ptable_t	ptable;
@@ -482,9 +480,7 @@ disk_read(fd, start, count)
 }
 
 void
-update_disk(ptable, fd, pno)
-	ptable_t	*ptable;
-	int		fd, pno;
+update_disk(ptable_t *ptable, int fd, int pno)
 {
 	struct ahdi_root	*root;
 	struct ahdi_part	*apart;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_3max.c,v 1.12 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: ibus_3max.c,v 1.13 2009/03/14 21:04:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.12 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.13 2009/03/14 21:04:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,7 @@ kn02sys_match(parent, cfdata, aux)
 }
 
 static void
-kn02sys_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+kn02sys_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ibus_dev_attach_args ida;
 

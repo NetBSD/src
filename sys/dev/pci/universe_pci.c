@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.8 2007/10/19 12:00:56 ad Exp $ */
+/* $NetBSD: universe_pci.c,v 1.9 2009/03/14 21:04:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.8 2007/10/19 12:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.9 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,14 +170,7 @@ univ_pci_attach(d, pa, name, inthdl, intcookie)
 }
 
 int
-univ_pci_mapvme(d, wnd, vmebase, len, am, datawidth, pcibase)
-	struct univ_pci_data *d;
-	int wnd;
-	vme_addr_t vmebase;
-	u_int32_t len;
-	vme_am_t am;
-	vme_datasize_t datawidth;
-	u_int32_t pcibase;
+univ_pci_mapvme(struct univ_pci_data *d, int wnd, vme_addr_t vmebase, u_int32_t len, vme_am_t am, vme_datasize_t datawidth, u_int32_t pcibase)
 {
 	u_int32_t ctl = 0x80000000;
 
@@ -217,9 +210,7 @@ univ_pci_mapvme(d, wnd, vmebase, len, am, datawidth, pcibase)
 }
 
 void
-univ_pci_unmapvme(d, wnd)
-	struct univ_pci_data *d;
-	int wnd;
+univ_pci_unmapvme(struct univ_pci_data *d, int wnd)
 {
 #ifdef UNIV_DEBUG
 	printf("%s: unmap VME wnd %d\n", d->devname, wnd);
@@ -229,13 +220,7 @@ univ_pci_unmapvme(d, wnd)
 
 
 int
-univ_pci_mappci(d, wnd, pcibase, len, vmebase, am)
-	struct univ_pci_data *d;
-	int wnd;
-	u_int32_t pcibase;
-	u_int32_t len;
-	vme_addr_t vmebase;
-	vme_am_t am;
+univ_pci_mappci(struct univ_pci_data *d, int wnd, u_int32_t pcibase, u_int32_t len, vme_addr_t vmebase, vme_am_t am)
 {
 	u_int32_t ctl = 0x80000000;
 
@@ -273,9 +258,7 @@ univ_pci_mappci(d, wnd, pcibase, len, vmebase, am)
 }
 
 void
-univ_pci_unmappci(d, wnd)
-	struct univ_pci_data *d;
-	int wnd;
+univ_pci_unmappci(struct univ_pci_data *d, int wnd)
 {
 #ifdef UNIV_DEBUG
 	printf("%s: unmap PCI wnd %d\n", d->devname, wnd);
@@ -284,9 +267,7 @@ univ_pci_unmappci(d, wnd)
 }
 
 int
-univ_pci_vmebuserr(d, clear)
-	struct univ_pci_data *d;
-	int clear;
+univ_pci_vmebuserr(struct univ_pci_data *d, int clear)
 {
 	u_int32_t pcicsr;
 
@@ -297,8 +278,7 @@ univ_pci_vmebuserr(d, clear)
 }
 
 int
-univ_pci_intr(v)
-	void *v;
+univ_pci_intr(void *v)
 {
 	struct univ_pci_data *d = v;
 	u_int32_t intcsr;

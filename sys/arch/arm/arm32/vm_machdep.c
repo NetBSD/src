@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 2009/03/14 15:36:01 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 2009/03/14 21:04:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49 2009/03/14 21:04:05 dsl Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -89,8 +89,7 @@ void lwp_trampoline(void);
  */
 
 void
-cpu_proc_fork(p1, p2)
-	struct proc *p1, *p2;
+cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 
 #if defined(PERFCTRS)

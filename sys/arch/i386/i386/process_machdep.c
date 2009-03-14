@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.69 2009/03/14 15:36:07 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.70 2009/03/14 21:04:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.69 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.70 2009/03/14 21:04:10 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -505,10 +505,9 @@ ptrace_machdep_dorequest(
  */
 
 int
-process_machdep_doxmmregs(curl, l, uio)
-	struct lwp *curl;		/* tracer */
-	struct lwp *l;			/* traced */
-	struct uio *uio;
+process_machdep_doxmmregs(struct lwp *curl, struct lwp *l, struct uio *uio)
+	/* curl:		 tracer */
+	/* l:			 traced */
 {
 	int error;
 	struct xmmregs r;

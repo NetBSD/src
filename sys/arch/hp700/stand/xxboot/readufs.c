@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.c,v 1.6 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: readufs.c,v 1.7 2009/03/14 21:04:09 dsl Exp $	*/
 /*	from Id: readufs.c,v 1.9 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -45,10 +45,8 @@ struct ufs_info fs;
 static size_t rq_len;
 
 static void
-raw_read_queue(buf, blkpos, bytelen)
-	void *buf;
-	daddr_t blkpos;
-	size_t bytelen;		/* must be DEV_BSIZE aligned */
+raw_read_queue(void *buf, daddr_t blkpos, size_t bytelen)
+	/* bytelen:		 must be DEV_BSIZE aligned */
 {
 	static daddr_t rq_start;
 	static char *rq_buf;
@@ -81,11 +79,8 @@ raw_read_queue(buf, blkpos, bytelen)
  * No support for holes or (short) symbolic links.
  */
 size_t
-ufs_read(di, buf, off, count)
-	union ufs_dinode *di;
-	void *buf;
-	unsigned off;	/* position in block */
-	size_t count;
+ufs_read(union ufs_dinode *di, void *buf, unsigned off, size_t count)
+	/* off:	 position in block */
 {
 	struct ufs_info *ufsinfo = &fs;
 	size_t bsize = ufsinfo->bsize;
@@ -151,12 +146,8 @@ ufs_read(di, buf, off, count)
 }
 
 static int
-ufs_read_indirect(blk, level, buf, poff, count)
-	daddr_t blk;
-	int level;
-	void **buf;
-	unsigned *poff;	/* position in block */
-	size_t count;
+ufs_read_indirect(daddr_t blk, int level, void **buf, unsigned *poff, size_t count)
+	/* poff:	 position in block */
 {
 	struct ufs_info *ufsinfo = &fs;
 	size_t bsize = ufsinfo->bsize;

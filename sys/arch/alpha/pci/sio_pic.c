@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.38 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: sio_pic.c,v 1.39 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.38 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.39 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,9 +268,7 @@ int (*sio_elcr_setup_funcs[])(void) = {
 /******************** Shared SIO/Cypress functions ********************/
 
 void
-sio_setirqstat(irq, enabled, type)
-	int irq, enabled;
-	int type;
+sio_setirqstat(int irq, int enabled, int type)
 {
 	u_int8_t ocw1[2], elcr[2];
 	int icu, bit;

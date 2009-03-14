@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.47 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.48 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.47 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.48 2009/03/14 21:04:22 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -291,9 +291,7 @@ read16(struct cnw_softc *sc, int offset)
  * Send a command to the card by writing it to the command buffer.
  */
 int
-cnw_cmd(sc, cmd, count, arg1, arg2)
-	struct cnw_softc *sc;
-	int cmd, count, arg1, arg2;
+cnw_cmd(struct cnw_softc *sc, int cmd, int count, int arg1, int arg2)
 {
 	int ptr = sc->sc_memoff + CNW_EREG_CB;
 

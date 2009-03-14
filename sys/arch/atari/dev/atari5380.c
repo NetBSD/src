@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.49 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.50 2009/03/14 21:04:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.49 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.50 2009/03/14 21:04:06 dsl Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -708,8 +708,7 @@ get_falcon_5380_reg(u_short rnum)
 }
 
 static void
-set_falcon_5380_reg(rnum, val)
-u_short	rnum, val;
+set_falcon_5380_reg(u_short rnum, u_short val)
 {
 	DMA->dma_mode = DMA_SCSI + rnum;
 	DMA->dma_data = val;
@@ -819,9 +818,7 @@ falcon_reconsider_dma()
 }
 
 static void
-fal1_dma(dir, nsects, reqp)
-u_int	dir, nsects;
-SC_REQ	*reqp;
+fal1_dma(u_int dir, u_int nsects, SC_REQ *reqp)
 {
 	dir <<= 8;
 	st_dmaaddr_set((void *)reqp->dm_cur->dm_addr);

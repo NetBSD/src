@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.12 2009/03/14 15:36:05 dsl Exp $ */
+/* $NetBSD: tslcd.c,v 1.13 2009/03/14 21:04:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.12 2009/03/14 15:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.13 2009/03/14 21:04:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,10 +160,7 @@ tslcd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-tslcd_writereg(hd, en, rs, cmd)
-	struct hd44780_chip *hd;
-	u_int32_t en, rs;
-	u_int8_t cmd;
+tslcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_t cmd)
 {
 	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
 	u_int8_t ctrl;
@@ -209,9 +206,7 @@ tslcd_writereg(hd, en, rs, cmd)
 }
 
 static u_int8_t
-tslcd_readreg(hd, en, rs)
-	struct hd44780_chip *hd;
-	u_int32_t en, rs;
+tslcd_readreg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs)
 {
 	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
 	u_int8_t ret, ctrl;

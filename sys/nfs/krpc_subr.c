@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.35 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.36 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.35 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.36 2009/03/14 21:04:25 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,11 +131,10 @@ static int krpccheck(struct mbuf*, void*);
  * Returns non-zero error on failure.
  */
 int
-krpc_portmap(sin,  prog, vers, proto, portp, l)
-	struct sockaddr_in *sin;		/* server address */
-	u_int prog, vers, proto;	/* host order */
-	u_int16_t *portp;	/* network order */
-	struct lwp *l;
+krpc_portmap(struct sockaddr_in *sin, u_int prog, u_int vers, u_int proto, u_int16_t *portp, struct lwp *l)
+	/* sin:		 server address */
+	/* prog, vers, proto:	 host order */
+	/* portp:	 network order */
 {
 	struct sdata {
 		u_int32_t prog;		/* call program */
@@ -216,12 +215,9 @@ void *context;
  * the address from whence the response came is saved there.
  */
 int
-krpc_call(sa, prog, vers, func, data, from_p, l)
-	struct sockaddr_in *sa;
-	u_int prog, vers, func;
-	struct mbuf **data;	/* input/output */
-	struct mbuf **from_p;	/* output */
-	struct lwp *l;
+krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func, struct mbuf **data, struct mbuf **from_p, struct lwp *l)
+	/* data:	 input/output */
+	/* from_p:	 output */
 {
 	struct socket *so;
 	struct sockaddr_in *sin;
@@ -439,10 +435,8 @@ xdr_string_encode(char *str, int len)
 }
 
 struct mbuf *
-xdr_string_decode(m, str, len_p)
-	struct mbuf *m;
-	char *str;
-	int *len_p;		/* bufsize - 1 */
+xdr_string_decode(struct mbuf *m, char *str, int *len_p)
+	/* len_p:		 bufsize - 1 */
 {
 	struct xdr_string *xs;
 	int mlen;	/* message length */
@@ -479,8 +473,8 @@ struct xdr_inaddr {
 };
 
 struct mbuf *
-xdr_inaddr_encode(ia)
-	struct in_addr *ia;		/* already in network order */
+xdr_inaddr_encode(struct in_addr *ia)
+	/* ia:		 already in network order */
 {
 	struct mbuf *m;
 	struct xdr_inaddr *xi;
@@ -502,9 +496,8 @@ xdr_inaddr_encode(ia)
 }
 
 struct mbuf *
-xdr_inaddr_decode(m, ia)
-	struct mbuf *m;
-	struct in_addr *ia;		/* already in network order */
+xdr_inaddr_decode(struct mbuf *m, struct in_addr *ia)
+	/* ia:		 already in network order */
 {
 	struct xdr_inaddr *xi;
 	u_int8_t *cp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.20 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.21 2009/03/14 21:04:20 dsl Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.20 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.21 2009/03/14 21:04:20 dsl Exp $");
 
 #undef TRISADEBUG
 
@@ -82,9 +82,7 @@ CFATTACH_DECL(tr_isa, sizeof(struct tr_softc),
     tr_isa_probe, tr_isa_attach, NULL, NULL);
 
 int
-tr_isa_map_io(ia, pioh, mmioh)
-struct isa_attach_args *ia;
-bus_space_handle_t *pioh, *mmioh;
+tr_isa_map_io(struct isa_attach_args *ia, bus_space_handle_t *pioh, bus_space_handle_t *mmioh)
 {
 	bus_size_t mmio;
 	u_int8_t s;
@@ -115,9 +113,7 @@ bus_space_handle_t *pioh, *mmioh;
 }
 
 void
-tr_isa_unmap_io(ia, pioh, mmioh)
-struct isa_attach_args *ia;
-bus_space_handle_t pioh, mmioh;
+tr_isa_unmap_io(struct isa_attach_args *ia, bus_space_handle_t pioh, bus_space_handle_t mmioh)
 {
 	bus_space_unmap(ia->ia_memt, mmioh, TR_MMIO_SIZE);
 	bus_space_unmap(ia->ia_iot, pioh, ia->ia_io[0].ir_size);

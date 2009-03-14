@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.21 2009/03/14 15:36:21 dsl Exp $ */
+/*	$NetBSD: cgthree.c,v 1.22 2009/03/14 21:04:23 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.21 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.22 2009/03/14 21:04:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,10 +268,7 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 
 
 int
-cgthreeopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+cgthreeopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -366,9 +363,7 @@ cgthree_get_video(struct cgthree_softc *sc)
  * Load a subset of the current (new) colormap into the Brooktree DAC.
  */
 static void
-cgthreeloadcmap(sc, start, ncolors)
-	struct cgthree_softc *sc;
-	int start, ncolors;
+cgthreeloadcmap(struct cgthree_softc *sc, int start, int ncolors)
 {
 	volatile struct bt_regs *bt;
 	u_int *ip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2009/03/14 21:04:12 dsl Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -228,12 +228,7 @@ struct consdev consdev_prom = {
  * Return the first page address following the system.
  */
 void
-mach_init(argc, argv, envp, bim, bip)
-	int    argc;
-	char   *argv[];
-	char   *envp[];
-	u_int  bim;
-	char   *bip;
+mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 {
 	u_long first, last;
 	char *kernend, *v;

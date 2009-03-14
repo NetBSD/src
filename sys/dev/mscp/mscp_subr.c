@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.38 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.39 2009/03/14 21:04:21 dsl Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.38 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.39 2009/03/14 21:04:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,9 +136,7 @@ mscp_free_workitems(struct mscp_softc *mi)
 
 #define DELAYTEN 1000
 int
-mscp_waitstep(mi, mask, result)
-	struct mscp_softc *mi;
-	int mask, result;
+mscp_waitstep(struct mscp_softc *mi, int mask, int result)
 {
 	int	status = 1;
 
@@ -173,9 +171,7 @@ mscp_match(struct device *parent, struct cfdata *match, void *aux)
 };
 
 void
-mscp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mscp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct	mscp_attach_args *ma = aux;
 	struct	mscp_softc *mi = device_private(self);

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.65 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.66 2009/03/14 21:04:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2009/03/14 21:04:11 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -364,9 +364,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto; /* XXX to shutup GCC XXX */
-	char *bootstr;
+cpu_reboot(volatile int howto, char *bootstr)
+	/* howto:  XXX to shutup GCC XXX */
 {
 	extern void doboot(void);
 

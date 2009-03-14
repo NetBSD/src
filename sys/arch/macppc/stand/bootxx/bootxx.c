@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.17 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.18 2009/03/14 21:04:12 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -255,9 +255,7 @@ putstrn(const char *s, size_t n)
 
 
 void
-startup(arg1, arg2, openfirm)
-	int arg1, arg2;
-	void *openfirm;
+startup(int arg1, int arg2, void *openfirm)
 {
 	int fd, blk, chosen, options, j;
 	size_t i;

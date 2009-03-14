@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.11 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.12 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.11 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.12 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -194,8 +194,7 @@ static struct fpn *__fpu_logn(struct fpemu *fe);
  * except this doesn't bother to check for invalid input.
  */
 static struct fpn *
-__fpu_logn(fe)
-     struct fpemu *fe;
+__fpu_logn(struct fpemu *fe)
 {
     static struct fpn X, F, U, V, W, KLOG2;
     struct fpn *d;

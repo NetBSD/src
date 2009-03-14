@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.50 2007/10/17 19:53:16 garbled Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.51 2009/03/14 21:04:04 dsl Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.50 2007/10/17 19:53:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.51 2009/03/14 21:04:04 dsl Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -1891,9 +1891,7 @@ rh_getspritepos(struct grf_softc *gp, struct grf_position *pos)
 }
 
 int
-rh_setspritepos (gp, pos)
-	struct grf_softc *gp;
-	struct grf_position *pos;
+rh_setspritepos (struct grf_softc *gp, struct grf_position *pos)
 {
 	RZ3SetHWCloc (gp, pos->x, pos->y);
 	return(0);

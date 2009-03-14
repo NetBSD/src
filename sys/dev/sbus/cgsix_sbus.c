@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.26 2009/03/14 15:36:20 dsl Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.27 2009/03/14 21:04:22 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.26 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.27 2009/03/14 21:04:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,9 +92,7 @@ cgsixmatch(device_t parent, struct cfdata *cf, void *aux)
  * Attach a cgsix.
  */
 void
-cgsixattach(parent, self, aux)
-	device_t parent, self;
-	void *aux;
+cgsixattach(device_t parent, device_t self, void *aux)
 {
 	struct cgsix_sbus_softc *ssc = device_private(self);
 	struct cgsix_softc *sc = &ssc->bss_softc;

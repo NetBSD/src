@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.44 2009/03/14 15:35:58 dsl Exp $	*/
+/*	$NetBSD: fd.c,v 1.45 2009/03/14 21:04:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.44 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45 2009/03/14 21:04:01 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -361,9 +361,7 @@ fdprint(void *aux, const char *fdc)
 }
 
 void
-fdcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc *fdc = (void *)self;
 	bus_space_tag_t iot;
@@ -474,9 +472,7 @@ fdprobe(struct device *parent, struct cfdata *cf, void *aux)
  * Controller is working, and drive responded.  Attach it.
  */
 void
-fdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc *fdc = (void *)parent;
 	struct fd_softc *fd = (void *)self;
@@ -516,9 +512,7 @@ fdattach(parent, self, aux)
  * none/unknown/unusable.
  */
 struct fd_type *
-fd_nvtotype(fdc, nvraminfo, drive)
-	char *fdc;
-	int nvraminfo, drive;
+fd_nvtotype(char *fdc, int nvraminfo, int drive)
 {
 	int type;
 

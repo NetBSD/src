@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.41 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: akbd.c,v 1.42 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.41 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.42 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,9 +122,7 @@ akbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-akbdattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+akbdattach(struct device *parent, struct device *self, void *aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct akbd_softc *sc = (struct akbd_softc *)self;

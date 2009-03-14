@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.317 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.318 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.317 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.318 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,12 +209,12 @@ void	identifycpu(void);
 void	printregs(struct reg *);
 
 void
-alpha_init(pfn, ptb, bim, bip, biv)
-	u_long pfn;		/* first free PFN number */
-	u_long ptb;		/* PFN of current level 1 page table */
-	u_long bim;		/* bootinfo magic */
-	u_long bip;		/* bootinfo pointer */
-	u_long biv;		/* bootinfo version */
+alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
+	/* pfn:		 first free PFN number */
+	/* ptb:		 PFN of current level 1 page table */
+	/* bim:		 bootinfo magic */
+	/* bip:		 bootinfo pointer */
+	/* biv:		 bootinfo version */
 {
 	extern char kernel_text[], _end[];
 	struct mddt *mddtp;

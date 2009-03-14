@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.23 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: aed.c,v 1.24 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.23 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.24 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,9 +108,7 @@ aedmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-aedattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+aedattach(struct device *parent, struct device *self, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	struct aed_softc *sc = (struct aed_softc *)self;
@@ -413,10 +411,7 @@ aed_enqevent(adb_event_t *event)
 }
 
 int 
-aedopen(dev, flag, mode, l)
-    dev_t dev;
-    int flag, mode;
-    struct lwp *l;
+aedopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
 	int error = 0;
@@ -443,10 +438,7 @@ aedopen(dev, flag, mode, l)
 
 
 int 
-aedclose(dev, flag, mode, l)
-    dev_t dev;
-    int flag, mode;
-    struct lwp *l;
+aedclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int s = spladb();
 

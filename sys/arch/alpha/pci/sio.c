@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.45 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: sio.c,v 1.46 2009/03/14 21:04:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.45 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.46 2009/03/14 21:04:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,9 +175,7 @@ pcebmatch(struct device *parent, struct cfdata *match, void *aux)
 #endif
 
 void
-sioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -287,9 +285,7 @@ sio_bridge_callback(struct device *self)
 }
 
 void
-sio_isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+sio_isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
 {
 
 	/* Nothing to do. */
@@ -298,9 +294,7 @@ sio_isa_attach_hook(parent, self, iba)
 #if NPCEB > 0
 
 void
-sio_eisa_attach_hook(parent, self, eba)
-	struct device *parent, *self;
-	struct eisabus_attach_args *eba;
+sio_eisa_attach_hook(struct device *parent, struct device *self, struct eisabus_attach_args *eba)
 {
 
 #if NEISA > 0

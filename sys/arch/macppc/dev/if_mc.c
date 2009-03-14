@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.16 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.17 2009/03/14 21:04:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.16 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.17 2009/03/14 21:04:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,9 +104,7 @@ mc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 hide void
-mc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct mc_softc *sc = (struct mc_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.49 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: magma.c,v 1.50 2009/03/14 21:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.49 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.50 2009/03/14 21:04:22 dsl Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -219,10 +219,7 @@ const struct cdevsw mbpp_cdevsw = {
  * returns 0 for success, 1 for failure
  */
 int
-cd1400_compute_baud(speed, clock, cor, bpr)
-	speed_t speed;
-	int clock;
-	int *cor, *bpr;
+cd1400_compute_baud(speed_t speed, int clock, int *cor, int *bpr)
 {
 	int c, co, br;
 

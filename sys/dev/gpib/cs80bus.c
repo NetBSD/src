@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.11 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.12 2009/03/14 21:04:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.11 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.12 2009/03/14 21:04:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,7 @@ cs80busmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-cs80busattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cs80busattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs80bus_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;
@@ -200,9 +198,7 @@ cs80busprint(void *aux, const char *pnp)
 }
 
 static int
-cs80bus_alloc(sc, slave, punit)
-	struct cs80bus_softc *sc;
-	int slave, punit;
+cs80bus_alloc(struct cs80bus_softc *sc, int slave, int punit)
 {
 
 	DPRINTF(DBG_FOLLOW, ("cs80bus_alloc: sc=%p\n", sc));

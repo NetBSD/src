@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.15 2009/03/14 15:35:58 dsl Exp $	*/
+/*	$NetBSD: amps.c,v 1.16 2009/03/14 21:04:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.15 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.16 2009/03/14 21:04:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,9 +146,7 @@ amps_probe(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 void
-amps_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+amps_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct amps_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;

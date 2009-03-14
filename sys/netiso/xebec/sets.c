@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.12 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: sets.c,v 1.13 2009/03/14 21:04:25 dsl Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.12 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.13 2009/03/14 21:04:25 dsl Exp $");
 
 #include "main.h"
 #include "malloc.h"
@@ -38,8 +38,7 @@ void dumptree();
 void defineitem();
 
 void
-initsets(f,s)
-	FILE *f, *s;
+initsets(FILE *f,FILE *s)
 {
 	static char errorstring[20];
 	extern struct Object *SameState;
