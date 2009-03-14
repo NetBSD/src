@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.32 2009/03/14 23:12:20 dholland Exp $	*/
+/*	$NetBSD: sync.c,v 1.33 2009/03/14 23:47:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.32 2009/03/14 23:12:20 dholland Exp $");
+__RCSID("$NetBSD: sync.c,v 1.33 2009/03/14 23:47:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: sync.c,v 1.32 2009/03/14 23:12:20 dholland Exp $");
 
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -141,14 +142,28 @@ static void Writestr(int, struct ship *, const char *);
 static int sync_update(int, struct ship *, const char *,
 		       long, long, long, long);
 
-static const char SF[] = _PATH_SYNC;
-static const char LF[] = _PATH_LOCK;
 static char sync_buf[BUFSIZE];
 static char *sync_bp = sync_buf;
-static char sync_lock[sizeof LF+2];
-static char sync_file[sizeof SF+2];
 static long sync_seek;
 static FILE *sync_fp;
+
+static const char *
+get_sync_file(int scenario_number)
+{
+	static char sync_file[NAME_MAX];
+
+	snprintf(sync_file, sizeof(sync_file), _FILE_SYNC, scenario_number);
+	return sync_file;
+}
+
+static const char *
+get_lock_file(int scenario_number)
+{
+	static char sync_lock[NAME_MAX];
+
+	snprintf(sync_lock, sizeof(sync_lock), _FILE_LOCK, scenario_number);
+	return sync_lock;
+}
 
 void
 fmtship(char *buf, size_t len, const char *fmt, struct ship *ship)
@@ -205,21 +220,21 @@ makemsg(struct ship *from, const char *fmt, ...)
 int
 sync_exists(int gamenum)
 {
-	char buf[sizeof sync_file];
+	const char *path;
 	struct stat s;
 	time_t t;
 
-	snprintf(buf, sizeof(buf), SF, gamenum);
+	path = get_sync_file(gamenum);
 	time(&t);
 	setegid(egid);
-	if (stat(buf, &s) < 0) {
+	if (stat(path, &s) < 0) {
 		setegid(gid);
 		return 0;
 	}
 	if (s.st_mtime < t - 60*60*2) {		/* 2 hours */
-		unlink(buf);
-		snprintf(buf, sizeof(buf), LF, gamenum);
-		unlink(buf);
+		unlink(path);
+		path = get_lock_file(gamenum);
+		unlink(path);
 		setegid(gid);
 		return 0;
 	} else {
@@ -231,11 +246,14 @@ sync_exists(int gamenum)
 int
 sync_open(void)
 {
+	const char *sync_file;
+	const char *sync_lock;
 	struct stat tmp;
+
 	if (sync_fp != NULL)
 		fclose(sync_fp);
-	snprintf(sync_lock, sizeof(sync_lock), LF, game);
-	snprintf(sync_file, sizeof(sync_file), SF, game);
+	sync_file = get_sync_file(game);
+	sync_lock = get_lock_file(game);
 	setegid(egid);
 	if (stat(sync_file, &tmp) < 0) {
 		mode_t omask = umask(002);
@@ -253,9 +271,12 @@ sync_open(void)
 void
 sync_close(int doremove)
 {
+	const char *sync_file;
+
 	if (sync_fp != 0)
 		fclose(sync_fp);
 	if (doremove) {
+		sync_file = get_sync_file(game);
 		setegid(egid);
 		unlink(sync_file);
 		setegid(gid);
@@ -303,6 +324,10 @@ Sync(void)
 	long a, b, c, d;
 	char buf[80];
 	char erred = 0;
+#ifndef LOCK_EX
+	const char *sync_file;
+	const char *sync_lock;
+#endif
 
 	sighup = signal(SIGHUP, SIG_IGN);
 	sigint = signal(SIGINT, SIG_IGN);
@@ -313,6 +338,8 @@ Sync(void)
 		if (errno != EWOULDBLOCK)
 			return -1;
 #else
+		sync_file = get_sync_file(game);
+		sync_lock = get_lock_file(game);
 		setegid(egid);
 		if (link(sync_file, sync_lock) >= 0) {
 			setegid(gid);
