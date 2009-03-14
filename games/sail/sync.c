@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.28 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: sync.c,v 1.29 2009/03/14 19:57:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.28 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: sync.c,v 1.29 2009/03/14 19:57:14 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -378,7 +378,7 @@ sync_update(int type, struct ship *ship, const char *astr,
 			if (nobells)
 				Signal("$$: %s", ship, astr);
 			else
-				Signal("\7$$: %s", ship, astr);
+				Signal("\a$$: %s", ship, astr);
 		}
 		break;
 	case W_CREW: {

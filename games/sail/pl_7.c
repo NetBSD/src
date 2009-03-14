@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.30 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.31 2009/03/14 19:57:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.30 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.31 2009/03/14 19:57:14 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ Signal(const char *fmt, struct ship *ship, ...)
 	if (!done_curses)
 		return;
 	va_start(ap, ship);
-	if (*fmt == '\7')
+	if (*fmt == '\a')
 		putchar(*fmt++);
 	fmtship(format, sizeof(format), fmt, ship);
 	vwprintw(scroll_w, format, ap);
@@ -194,7 +194,7 @@ Msg(const char *fmt, ...)
 	if (!done_curses)
 		return;
 	va_start(ap, fmt);
-	if (*fmt == '\7')
+	if (*fmt == '\a')
 		putchar(*fmt++);
 	vwprintw(scroll_w, fmt, ap);
 	va_end(ap);
