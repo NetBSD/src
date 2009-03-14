@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.47 2009/01/24 02:02:38 tsutsui Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.48 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.47 2009/01/24 02:02:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.48 2009/03/14 14:45:56 dsl Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -104,12 +104,12 @@ __KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.47 2009/01/24 02:02:38 tsutsui Exp $
 				/*    fails on older atari's		*/
 #define	ENABLE_NCR5380(sc)	cur_softc = sc;
 
-static u_char	*alloc_bounceb __P((u_long));
-static void	free_bounceb __P((u_char *));
-static int	machine_match __P((struct device *, void *, void *,
-							struct cfdriver *));
-       void	scsi_ctrl __P((int));
-       void	scsi_dma __P((int));
+static u_char	*alloc_bounceb(u_long);
+static void	free_bounceb(u_char *);
+static int	machine_match(struct device *, void *, void *,
+							struct cfdriver *);
+       void	scsi_ctrl(int);
+       void	scsi_dma(int);
 
 /*
  * Functions that do nothing on the atari
@@ -118,7 +118,7 @@ static int	machine_match __P((struct device *, void *, void *,
 
 #if defined(TT_SCSI)
 
-void	ncr5380_drq_intr __P((int));
+void	ncr5380_drq_intr(int);
 
 /*
  * Define all the things we need of the DMA-controller
@@ -224,18 +224,18 @@ static struct ncr_softc	*cur_softc;
  * Prototype functions defined below 
  */
 #ifdef NO_TTRAM_DMA
-static int tt_wrong_dma_range __P((SC_REQ *, struct dma_chain *));
+static int tt_wrong_dma_range(SC_REQ *, struct dma_chain *);
 #endif
-static void	scsi_tt_init __P((struct ncr_softc *));
-static u_char	get_tt_5380_reg __P((u_short));
-static void	set_tt_5380_reg __P((u_short, u_short));
-static void	scsi_tt_dmasetup __P((SC_REQ *, u_int, u_char));
-static int	tt_poll_edma __P((SC_REQ *));
-static u_char	*ptov __P((SC_REQ *, u_long*));
-static int	tt_get_dma_result __P((SC_REQ *, u_long *));
-       void	scsi_tt_ienable __P((void));
-       void	scsi_tt_idisable __P((void));
-       void	scsi_tt_clr_ipend __P((void));
+static void	scsi_tt_init(struct ncr_softc *);
+static u_char	get_tt_5380_reg(u_short);
+static void	set_tt_5380_reg(u_short, u_short);
+static void	scsi_tt_dmasetup(SC_REQ *, u_int, u_char);
+static int	tt_poll_edma(SC_REQ *);
+static u_char	*ptov(SC_REQ *, u_long*);
+static int	tt_get_dma_result(SC_REQ *, u_long *);
+       void	scsi_tt_ienable(void);
+       void	scsi_tt_idisable(void);
+       void	scsi_tt_clr_ipend(void);
 
 /*
  * Define these too, so we can use them locally...
@@ -676,21 +676,21 @@ extern	int			*nofault;
 /*
  * Prototype functions defined below 
  */
-static void	scsi_falcon_init __P((struct ncr_softc *));
-static u_char	get_falcon_5380_reg __P((u_short));
-static void	set_falcon_5380_reg __P((u_short, u_short));
-static int	falcon_wrong_dma_range __P((SC_REQ *, struct dma_chain *));
-static void	fal1_dma __P((u_int, u_int, SC_REQ *));
-static void	scsi_falcon_dmasetup __P((SC_REQ  *, u_int, u_char));
-static int	falcon_poll_edma __P((SC_REQ  *));
-static int	falcon_get_dma_result __P((SC_REQ  *, u_long *));
-       int	falcon_can_access_5380 __P((void));
-       void	scsi_falcon_clr_ipend __P((void));
-       void	scsi_falcon_idisable __P((void));
-       void	scsi_falcon_ienable __P((void));
-       int	scsi_falcon_ipending __P((void));
-       int	falcon_claimed_dma __P((void));
-       void	falcon_reconsider_dma __P((void));
+static void	scsi_falcon_init(struct ncr_softc *);
+static u_char	get_falcon_5380_reg(u_short);
+static void	set_falcon_5380_reg(u_short, u_short);
+static int	falcon_wrong_dma_range(SC_REQ *, struct dma_chain *);
+static void	fal1_dma(u_int, u_int, SC_REQ *);
+static void	scsi_falcon_dmasetup(SC_REQ  *, u_int, u_char);
+static int	falcon_poll_edma(SC_REQ  *);
+static int	falcon_get_dma_result(SC_REQ  *, u_long *);
+       int	falcon_can_access_5380(void);
+       void	scsi_falcon_clr_ipend(void);
+       void	scsi_falcon_idisable(void);
+       void	scsi_falcon_ienable(void);
+       int	scsi_falcon_ipending(void);
+       int	falcon_claimed_dma(void);
+       void	falcon_reconsider_dma(void);
 
 static void
 scsi_falcon_init(sc)
@@ -958,22 +958,22 @@ falcon_can_access_5380()
 /*
  * The prototypes first...
  */
-static void	scsi_mach_init __P((struct ncr_softc *));
-       void	scsi_ienable __P((void));
-       void	scsi_idisable __P((void));
-       void	scsi_clr_ipend __P((void));
-       int	scsi_ipending __P((void));
-       void	scsi_dma_setup __P((SC_REQ *, u_int, u_char));
-       int	wrong_dma_range __P((SC_REQ *, struct dma_chain *));
-       int	poll_edma __P((SC_REQ *));
-       int	get_dma_result __P((SC_REQ *, u_long *));
-       int	can_access_5380 __P((void));
+static void	scsi_mach_init(struct ncr_softc *);
+       void	scsi_ienable(void);
+       void	scsi_idisable(void);
+       void	scsi_clr_ipend(void);
+       int	scsi_ipending(void);
+       void	scsi_dma_setup(SC_REQ *, u_int, u_char);
+       int	wrong_dma_range(SC_REQ *, struct dma_chain *);
+       int	poll_edma(SC_REQ *);
+       int	get_dma_result(SC_REQ *, u_long *);
+       int	can_access_5380(void);
 
 /*
  * Register access will be done through the following 2 function pointers.
  */
-static u_char	(*get_5380_reg) __P((u_short));
-static void	(*set_5380_reg) __P((u_short, u_short));
+static u_char	(*get_5380_reg)(u_short);
+static void	(*set_5380_reg)(u_short, u_short);
 
 #define	GET_5380_REG	(*get_5380_reg)
 #define	SET_5380_REG	(*set_5380_reg)

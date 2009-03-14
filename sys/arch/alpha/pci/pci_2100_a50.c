@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.32 2002/09/27 15:35:37 provos Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.33 2009/03/14 14:45:53 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.32 2002/09/27 15:35:37 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.33 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,12 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.32 2002/09/27 15:35:37 provos Exp
 
 #include "sio.h"
 
-int	dec_2100_a50_intr_map __P((struct pci_attach_args *, pci_intr_handle_t *));
-const char *dec_2100_a50_intr_string __P((void *, pci_intr_handle_t));
-const struct evcnt *dec_2100_a50_intr_evcnt __P((void *, pci_intr_handle_t));
-void    *dec_2100_a50_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *));
-void    dec_2100_a50_intr_disestablish __P((void *, void *));
+int	dec_2100_a50_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+const char *dec_2100_a50_intr_string(void *, pci_intr_handle_t);
+const struct evcnt *dec_2100_a50_intr_evcnt(void *, pci_intr_handle_t);
+void    *dec_2100_a50_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *);
+void    dec_2100_a50_intr_disestablish(void *, void *);
 
 #define	APECS_SIO_DEVICE	7	/* XXX */
 
@@ -247,7 +247,7 @@ dec_2100_a50_intr_establish(acv, ih, level, func, arg)
 	void *acv, *arg;
 	pci_intr_handle_t ih;
 	int level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 {
 #if 0
 	struct apecs_config *acp = acv;

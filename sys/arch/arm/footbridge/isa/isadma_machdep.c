@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.10 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.11 2009/03/14 14:45:55 dsl Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.10 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.11 2009/03/14 14:45:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,27 +65,27 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.10 2008/04/28 20:23:14 martin E
 struct arm32_dma_range *footbridge_isa_dma_ranges;
 int footbridge_isa_dma_nranges;
 
-int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-void	_isa_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	_isa_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	_isa_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	_isa_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	_isa_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-void	_isa_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_isa_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_addr_t, bus_size_t, int));
+int	_isa_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void	_isa_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	_isa_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	_isa_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	_isa_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	_isa_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	_isa_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_isa_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+	    bus_addr_t, bus_size_t, int);
 
-int	_isa_bus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-	    bus_size_t, bus_dma_segment_t *, int, int *, int));
+int	_isa_bus_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int);
 
-int	_isa_dma_alloc_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_size_t, int));
-void	_isa_dma_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
+int	_isa_dma_alloc_bouncebuf(bus_dma_tag_t, bus_dmamap_t,
+	    bus_size_t, int);
+void	_isa_dma_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Entry points for ISA DMA.  These are mostly wrappers around

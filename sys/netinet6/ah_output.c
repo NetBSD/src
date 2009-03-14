@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.31 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.32 2009/03/14 14:46:10 dsl Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.31 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.32 2009/03/14 14:46:10 dsl Exp $");
 
 #include "opt_inet.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.31 2008/04/23 06:09:05 thorpej Exp $
 #include <net/net_osdep.h>
 
 #ifdef INET
-static struct in_addr *ah4_finaldst __P((struct mbuf *));
+static struct in_addr *ah4_finaldst(struct mbuf *);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2009/03/14 14:45:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/03/14 14:45:59 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,9 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2008/11/30 18:21:34 martin Exp $");
 char machine[] = MACHINE;		/* evbsh3 */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb or sh3el */
 
-void initSH3 __P((void *));
-void LoadAndReset __P((const char *));
-void XLoadAndReset __P((char *));
+void initSH3(void *);
+void LoadAndReset(const char *);
+void XLoadAndReset(char *);
 
 /*
  * Machine-dependent startup code
@@ -550,7 +550,7 @@ shpcmcia_memio_subregion(t, bsh, offset, size, nbshp)
  * InitializeBsc
  * : BSC(Bus State Controller)
  */
-void InitializeBsc __P((void));
+void InitializeBsc(void);
 
 void
 InitializeBsc()

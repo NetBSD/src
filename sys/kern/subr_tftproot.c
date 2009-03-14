@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.5 2008/04/24 11:38:36 ad Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.6 2009/03/14 14:46:09 dsl Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.5 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.6 2009/03/14 14:46:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -117,7 +117,7 @@ struct tftproot_handle {
 int tftproot_dhcpboot(struct device *);
 
 static int tftproot_getfile(struct tftproot_handle *, struct lwp *);
-static int tftproot_recv __P((struct mbuf*, void*));
+static int tftproot_recv(struct mbuf*, void*);
 
 int
 tftproot_dhcpboot(bootdv)

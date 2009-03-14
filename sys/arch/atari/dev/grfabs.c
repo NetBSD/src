@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.13 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.14 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.13 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.14 2009/03/14 14:45:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.13 2005/12/11 12:16:54 christos Exp $")
 /*
  * Function decls
  */
-static dmode_t    *get_best_display_mode __P((dimen_t *, int, dmode_t *));
+static dmode_t    *get_best_display_mode(dimen_t *, int, dmode_t *);
 
 /*
  * List of available graphic modes

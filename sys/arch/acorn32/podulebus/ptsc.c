@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.13 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.14 2009/03/14 14:45:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.13 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.14 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.13 2005/12/11 12:16:05 christos Exp $");
 #include <dev/podulebus/podules.h>
 #include <dev/podulebus/powerromreg.h>
 
-int  ptscmatch  __P((struct device *, struct cfdata *, void *));
-void ptscattach __P((struct device *, struct device *, void *));
+int  ptscmatch(struct device *, struct cfdata *, void *);
+void ptscattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ptsc, sizeof(struct ptsc_softc),
     ptscmatch, ptscattach, NULL, NULL);

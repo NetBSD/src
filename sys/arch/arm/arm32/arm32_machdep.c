@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.62 2009/01/17 14:14:56 bjh21 Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.63 2009/03/14 14:45:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.62 2009/01/17 14:14:56 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.63 2009/03/14 14:45:55 dsl Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -94,9 +94,9 @@ char *booted_kernel;
 
 /* Prototypes */
 
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-extern void configure		__P((void));
+void data_abort_handler(trapframe_t *frame);
+void prefetch_abort_handler(trapframe_t *frame);
+extern void configure(void);
 
 /*
  * arm32_vector_init:

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.22 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.23 2009/03/14 14:45:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -53,18 +53,18 @@
 
 #include "installboot.h"
 
-static void	usage __P((void));
-static void	oscheck __P((void));
-static u_int	abcksum __P((void *));
-static void	setNVpref __P((void));
-static void	setIDEpar __P((u_int8_t *, size_t));
-static void	mkahdiboot __P((struct ahdi_root *, char *,
-						char *, u_int32_t));
-static void	mkbootblock __P((struct bootblock *, char *,
-				char *, struct disklabel *, u_int));
-static void	install_fd __P((char *, struct disklabel *));
-static void	install_sd __P((char *, struct disklabel *));
-static void	install_wd __P((char *, struct disklabel *));
+static void	usage(void);
+static void	oscheck(void);
+static u_int	abcksum(void *);
+static void	setNVpref(void);
+static void	setIDEpar(u_int8_t *, size_t);
+static void	mkahdiboot(struct ahdi_root *, char *,
+						char *, u_int32_t);
+static void	mkbootblock(struct bootblock *, char *,
+				char *, struct disklabel *, u_int);
+static void	install_fd(char *, struct disklabel *);
+static void	install_sd(char *, struct disklabel *);
+static void	install_wd(char *, struct disklabel *);
 
 static struct bootblock	bootarea;
 static struct ahdi_root ahdiboot;

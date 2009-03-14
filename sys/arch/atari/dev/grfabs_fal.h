@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.h,v 1.3 1996/09/16 06:43:34 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.h,v 1.4 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -79,5 +79,5 @@ struct videl {
      ((((0x00000070 & (v)) * 0xff / 0x7) << 4) & 0x0000ff00) |\
         (0x00000007 & (v)) * 0xff / 0x7)
 
-void falcon_probe_video __P((MODES *));
+void falcon_probe_video(MODES *);
 #endif /*  _GRFABS_FAL_H */

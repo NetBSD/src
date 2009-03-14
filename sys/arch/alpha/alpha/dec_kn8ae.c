@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.37 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.38 2009/03/14 14:45:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.37 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.38 2009/03/14 14:45:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.37 2007/03/04 05:59:10 christos Exp 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 
-void dec_kn8ae_init __P((void));
-void dec_kn8ae_cons_init __P((void));
-static void dec_kn8ae_device_register __P((struct device *, void *));
+void dec_kn8ae_init(void);
+void dec_kn8ae_cons_init(void);
+static void dec_kn8ae_device_register(struct device *, void *);
 
 static void dec_kn8ae_mcheck_handler
-    __P((unsigned long, struct trapframe *, unsigned long, unsigned long));
+(unsigned long, struct trapframe *, unsigned long, unsigned long);
 
 const struct alpha_variation_table dec_kn8ae_variations[] = {
 	{ 0, "AlphaServer 8400" },
@@ -249,19 +249,19 @@ dec_kn8ae_device_register(dev, aux)
 /*
  * KN8AE Machine Check Handlers.
  */
-void kn8ae_harderr __P((unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
+void kn8ae_harderr(unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
 
-static void kn8ae_softerr __P((unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
+static void kn8ae_softerr(unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
 
-void kn8ae_mcheck __P((unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
+void kn8ae_mcheck(unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
 
 /*
  * Support routine for clearing errors
  */
-static void clear_tlsb_ebits __P((int));
+static void clear_tlsb_ebits(int);
 
 static void
 clear_tlsb_ebits(cpuonly)

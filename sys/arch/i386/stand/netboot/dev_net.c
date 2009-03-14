@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.12 2002/02/24 01:51:04 thorpej Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.13 2009/03/14 14:46:00 dsl Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -55,7 +55,7 @@
 #include "dev_net.h"
 
 #ifdef SUPPORT_BOOTP
-void bootp      __P((int));
+void bootp(int);
 #endif
 
 static int      netdev_sock = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.12 2006/09/09 08:27:13 tsutsui Exp $	*/
+/*	$NetBSD: promcall.c,v 1.13 2009/03/14 14:46:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.12 2006/09/09 08:27:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.13 2009/03/14 14:46:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -90,8 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.12 2006/09/09 08:27:13 tsutsui Exp $"
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>
 
-static int  romgetc __P((dev_t));
-static void romputc __P((dev_t, int));
+static int  romgetc(dev_t);
+static void romputc(dev_t, int);
 
 #define DEFAULT_SCSIID	7    /* XXX - this should really live somewhere else */
 
@@ -242,7 +242,7 @@ prom_halt(howto, bootstr)
 	if (callv != &callvec)
 		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
 	else {
-		void __attribute__((__noreturn__)) (*f) __P((void));
+		void __attribute__((__noreturn__)) (*f)(void);
 
 		f = (howto & RB_HALT)
 			? (void *)DEC_PROM_REINIT

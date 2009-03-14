@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.4 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: cread.c,v 1.5 2009/03/14 14:45:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -83,14 +83,14 @@ static struct sd {
 	int		compressed;	/* 1 if input file is a .gz file */
 } *ss[SOPEN_MAX];
 
-static int		get_byte __P((struct sd *));
-static unsigned long	getLong __P((struct sd *));
-static void		check_header __P((struct sd *));
+static int		get_byte(struct sd *);
+static unsigned long	getLong(struct sd *);
+static void		check_header(struct sd *);
 
 /* XXX - find suitable headerf ile for these: */
-void	*zcalloc __P((void *, unsigned int, unsigned int));
-void	zcfree __P((void *, void *));
-void	zmemcpy __P((unsigned char *, unsigned char *, unsigned int));
+void	*zcalloc(void *, unsigned int, unsigned int);
+void	zcfree(void *, void *);
+void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
 
 
 /*

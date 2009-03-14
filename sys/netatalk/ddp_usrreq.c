@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.34 2008/12/17 20:51:37 cegger Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.35 2009/03/14 14:46:10 dsl Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.34 2008/12/17 20:51:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.35 2009/03/14 14:46:10 dsl Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -56,12 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.34 2008/12/17 20:51:37 cegger Exp $
 #include <netatalk/aarp.h>
 #include <netatalk/at_extern.h>
 
-static void at_pcbdisconnect __P((struct ddpcb *));
-static void at_sockaddr __P((struct ddpcb *, struct mbuf *));
-static int at_pcbsetaddr __P((struct ddpcb *, struct mbuf *, struct lwp *));
-static int at_pcbconnect __P((struct ddpcb *, struct mbuf *, struct lwp *));
-static void at_pcbdetach __P((struct socket *, struct ddpcb *));
-static int at_pcballoc __P((struct socket *));
+static void at_pcbdisconnect(struct ddpcb *);
+static void at_sockaddr(struct ddpcb *, struct mbuf *);
+static int at_pcbsetaddr(struct ddpcb *, struct mbuf *, struct lwp *);
+static int at_pcbconnect(struct ddpcb *, struct mbuf *, struct lwp *);
+static void at_pcbdetach(struct socket *, struct ddpcb *);
+static int at_pcballoc(struct socket *);
 
 struct ifqueue atintrq1, atintrq2;
 struct ddpcb   *ddp_ports[ATPORT_LAST];

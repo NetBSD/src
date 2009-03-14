@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.6 2007/10/17 19:54:08 garbled Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.7 2009/03/14 14:45:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000-2004
@@ -75,7 +75,7 @@ struct btinfo_howto {
 };
 
 #ifdef _KERNEL
-void	*lookup_bootinfo __P((int));
+void	*lookup_bootinfo(int);
 #endif
 
 #endif	/* !_COBALT_BOOTINFO_H_ */

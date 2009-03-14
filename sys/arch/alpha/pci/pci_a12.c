@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.c,v 1.7 2000/06/29 08:58:48 mrg Exp $ */
+/* $NetBSD: pci_a12.c,v 1.8 2009/03/14 14:45:53 dsl Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.7 2000/06/29 08:58:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.8 2009/03/14 14:45:53 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,12 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.7 2000/06/29 08:58:48 mrg Exp $");
 
 #define	LOADGSR() (REGVAL(A12_GSR) & 0x7fc0)
 
-static int pci_serr __P((void *));
-static int a12_xbar_flag __P((void *));
+static int pci_serr(void *);
+static int a12_xbar_flag(void *);
 
 struct a12_intr_vect_t {
 	int	on;
-	int	(*f) __P((void *));
+	int	(*f)(void *);
 	void	 *a;
 } 	a12_intr_pci	= { 0 },
 	a12_intr_serr	= { 1, pci_serr },
@@ -101,18 +101,18 @@ static struct gintcall {
 
 struct evcnt a12_intr_evcnt;
 
-int	avalon_a12_intr_map __P((void *, pcitag_t, int, int,
-	    pci_intr_handle_t *));
-const char *avalon_a12_intr_string __P((void *, pci_intr_handle_t));
-const struct evcnt *avalon_a12_intr_evcnt __P((void *, pci_intr_handle_t));
-void	*avalon_a12_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *));
-void	avalon_a12_intr_disestablish __P((void *, void *));
+int	avalon_a12_intr_map(void *, pcitag_t, int, int,
+	    pci_intr_handle_t *);
+const char *avalon_a12_intr_string(void *, pci_intr_handle_t);
+const struct evcnt *avalon_a12_intr_evcnt(void *, pci_intr_handle_t);
+void	*avalon_a12_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *);
+void	avalon_a12_intr_disestablish(void *, void *);
 
-static void clear_gsr_interrupt __P((long));
+static void clear_gsr_interrupt(long);
 static void a12_GInt(void);
 
-void	a12_iointr __P((void *framep, unsigned long vec));
+void	a12_iointr(void *framep, unsigned long vec);
 
 void
 pci_a12_pickintr(ccp)
@@ -170,7 +170,7 @@ avalon_a12_intr_establish(ccv, ih, level, func, arg)
         void *ccv, *arg;
         pci_intr_handle_t ih;
         int level;
-        int (*func) __P((void *));
+        int (*func)(void *);
 {
 	a12_intr_pci.f = func;
 	a12_intr_pci.a = arg;
@@ -195,14 +195,14 @@ avalon_a12_intr_disestablish(ccv, cookie)
 }
 
 void a12_intr_register_xb(f)
-	int (*f) __P((void *));
+	int (*f)(void *);
 {
 	a12_intr_xb.f  = f;
 	a12_intr_xb.on = 1;
 }
 
 void a12_intr_register_icw(f)
-	int (*f) __P((void *));
+	int (*f)(void *);
 {
 	long	t;
 

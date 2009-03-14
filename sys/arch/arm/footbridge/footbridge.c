@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.18 2007/12/14 11:08:03 chris Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.19 2009/03/14 14:45:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.18 2007/12/14 11:08:03 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.19 2009/03/14 14:45:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,12 +68,12 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.18 2007/12/14 11:08:03 chris Exp $"
 
 /* Declare prototypes */
 
-static int footbridge_match	__P((struct device *parent, struct cfdata *cf,
-	                             void *aux));
-static void footbridge_attach	__P((struct device *parent, struct device *self,
-        	                     void *aux));
-static int footbridge_print	__P((void *aux, const char *pnp));
-static int footbridge_intr	__P((void *arg));
+static int footbridge_match(struct device *parent, struct cfdata *cf,
+	                             void *aux);
+static void footbridge_attach(struct device *parent, struct device *self,
+        	                     void *aux);
+static int footbridge_print(void *aux, const char *pnp);
+static int footbridge_intr(void *arg);
 
 /* Driver and attach structures */
 CFATTACH_DECL(footbridge, sizeof(struct footbridge_softc),

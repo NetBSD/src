@@ -1,4 +1,4 @@
-/* $NetBSD: tx39xx.c,v 1.6 2007/03/04 05:59:53 christos Exp $ */
+/* $NetBSD: tx39xx.c,v 1.7 2009/03/14 14:45:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura, UCHIYAMA Yasushi
@@ -40,7 +40,7 @@
 
 extern void tx39xx_asm_code();
 extern void tx39xx_asm_code_end();
-void tx39xx_asm_code_holder __P((void));
+void tx39xx_asm_code_holder(void);
 
 #define TX39_SYSADDR_CONFIG_REG		0x10C00000
 #define TX39_SYSADDR_CONFIG_REG_LEN	0x00200000

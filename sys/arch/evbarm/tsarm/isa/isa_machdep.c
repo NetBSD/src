@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 2009/03/14 14:45:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.5 2009/03/14 14:45:59 dsl Exp $");
 
 #include "opt_irqstats.h"
 
@@ -152,7 +152,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int irq;
 	int type;
 	int level;
-	int (*ih_fun) __P((void *));
+	int (*ih_fun)(void *);
 	void *ih_arg;
 {
 	int epirq = -1, i;

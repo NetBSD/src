@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.13 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: obio.c,v 1.14 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.13 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.14 2009/03/14 14:46:02 dsl Exp $");
 
 #include "locators.h"
 
@@ -43,13 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.13 2008/04/28 20:23:28 martin Exp $");
 #include <machine/bus.h>
 #include <machine/sysconf.h>
 
-static int	obio_match __P((struct device *, struct cfdata *, void *));
-static void	obio_attach __P((struct device *, struct device *, void *));
-static int	obio_search __P((struct device *, struct cfdata *,
-				 const int *, void *));
-static int	obio_print __P((void *, const char *));
-static void	obio_intr_establish  __P((bus_space_tag_t, int, int, int,
-					  int (*)(void *), void *));
+static int	obio_match(struct device *, struct cfdata *, void *);
+static void	obio_attach(struct device *, struct device *, void *);
+static int	obio_search(struct device *, struct cfdata *,
+				 const int *, void *);
+static int	obio_print(void *, const char *);
+static void	obio_intr_establish(bus_space_tag_t, int, int, int,
+					  int (*)(void *), void *);
 
 CFATTACH_DECL(obio, sizeof(struct device),
     obio_match, obio_attach, NULL, NULL);
@@ -140,7 +140,7 @@ obio_intr_establish(bst, level, pri, flags, func, arg)
 	int level;
 	int pri;
 	int flags;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	(*platform.intr_establish)(level, func, arg);

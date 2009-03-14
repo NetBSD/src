@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.17 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.18 2009/03/14 14:46:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2009/03/14 14:46:05 dsl Exp $");
 
 #define DEBUG 1
 
@@ -125,8 +125,8 @@ storedcache(vaddr_t va, bus_size_t sz)
 	__asm volatile("sync;");
 }
 
-int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int));
+int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int);
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific

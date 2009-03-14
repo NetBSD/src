@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.h,v 1.1 2001/02/23 21:23:50 reinoud Exp $	*/
+/*	$NetBSD: rtc.h,v 1.2 2009/03/14 14:45:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -76,8 +76,8 @@ typedef struct {
 #define RTC_ADDR_CENT     	0xc1
 
 #ifdef _KERNEL
-int cmos_read __P((int));
-int cmos_write __P((int, int));
+int cmos_read(int);
+int cmos_write(int, int);
 #endif /* _KERNEL */
 
 /* End of rtc.h */

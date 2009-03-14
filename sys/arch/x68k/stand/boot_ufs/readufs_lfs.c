@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_lfs.c,v 1.8 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.9 2009/03/14 14:46:07 dsl Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.7 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
@@ -20,7 +20,7 @@
  #error LFS currently requires USE_UFS1
 #endif
 
-static int get_lfs_inode __P((ino32_t ino, union ufs_dinode *dibuf));
+static int get_lfs_inode(ino32_t ino, union ufs_dinode *dibuf);
 
 static struct ufs1_dinode	ifile_dinode;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2007/10/17 19:55:33 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2009/03/14 14:46:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2007/10/17 19:55:33 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2009/03/14 14:46:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2007/10/17 19:55:33 garbled Exp $")
 
 #include <powerpc/pic/picvar.h>
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);

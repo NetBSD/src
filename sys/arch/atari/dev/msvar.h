@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.2 2000/03/23 06:36:04 thorpej Exp $	*/
+/*	$NetBSD: msvar.h,v 1.3 2009/03/14 14:45:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -58,8 +58,8 @@ struct ms_softc {
 };
 
 #ifdef _KERNEL
-void	mouse_soft __P((REL_MOUSE *, int, int));
-int	mouseattach __P((int));
+void	mouse_soft(REL_MOUSE *, int, int);
+int	mouseattach(int);
 #endif /* _KERNEL */
 
 #endif /* _MSVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2009/01/17 07:17:35 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2009/03/14 14:45:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2009/01/17 07:17:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2009/03/14 14:45:58 dsl Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -163,21 +163,21 @@ int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 
-void fic_init __P((void));
+void fic_init(void);
 
 /* prototypes for local functions */
-void    identifycpu __P((void));
-void	dumpmem __P((int *, int, int));
-char	*hexstr __P((int, int));
+void    identifycpu(void);
+void	dumpmem(int *, int, int);
+char	*hexstr(int, int);
 
 /* functions called from locore.s */
-void    dumpsys __P((void));
-void    straytrap __P((int, u_short));
-void	nmihand __P((struct frame));
+void    dumpsys(void);
+void    straytrap(int, u_short);
+void	nmihand(struct frame);
 
 int	delay_divisor;		/* delay constant */
 
-extern void sicinit __P((void*));
+extern void sicinit(void*);
 
 void fic_init()
 {
@@ -228,14 +228,14 @@ zs_check_kgdb(cs, dev)
 	return (0);
 }
 
-void zs_kgdb_cnputc __P((dev_t, int));
+void zs_kgdb_cnputc(dev_t, int);
 void zs_kgdb_cnputc(dev, c)
 dev_t dev;
 int c;
 {
 	zscnputc(dev, c);
 }
-int zs_kgdb_cngetc __P((dev_t));
+int zs_kgdb_cngetc(dev_t);
 int zs_kgdb_cngetc(dev)
 dev_t dev;
 {
@@ -247,7 +247,7 @@ dev_t dev;
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
-extern void sic_enable_int __P((int, int, int, int, int));
+extern void sic_enable_int(int, int, int, int, int);
 void
 consinit()
 {
@@ -513,7 +513,7 @@ dumpsys()
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, void *, size_t));
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int pg;			/* page being dumped */
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -640,7 +640,7 @@ badbaddr(addr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int candbdiv = 2;	/* give em half a second (hz / candbdiv) */
 
-void	candbtimer __P((void *));
+void	candbtimer(void *);
 
 int crashandburn;
 
