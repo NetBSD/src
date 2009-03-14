@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2009/03/14 23:47:18 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2009/03/14 23:51:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2009/03/14 23:47:18 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2009/03/14 23:51:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(int argc, char **argv)
 			nobells++;
 			break;
 		default:
-			errx(1, "Unknown flag %s", p);
+			errx(1, "Usage: %s [-bdlsx] [scenario-number]", p);
 		}
 
 	argc -= optind;
