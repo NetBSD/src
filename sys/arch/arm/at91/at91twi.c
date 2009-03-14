@@ -1,5 +1,5 @@
-/*	$Id: at91twi.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91twi.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91twi.c,v 1.3 2009/03/14 15:36:01 dsl Exp $	*/
+/*	$NetBSD: at91twi.c,v 1.3 2009/03/14 15:36:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.3 2009/03/14 15:36:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -139,18 +139,13 @@ found_ckdiv:
 }
 
 u_int
-at91twi_readreg(sc, reg)
-	struct at91twi_softc *sc;
-	int reg;
+at91twi_readreg(struct at91twi_softc *sc, int reg)
 {
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
 }
 
 void
-at91twi_writereg(sc, reg, val)
-	struct at91twi_softc *sc;
-	int reg;
-	u_int val;
+at91twi_writereg(struct at91twi_softc *sc, int reg, u_int val)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, val);
 }

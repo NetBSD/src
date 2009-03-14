@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.12 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.13 2009/03/14 15:36:20 dsl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.12 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.13 2009/03/14 15:36:20 dsl Exp $");
 
 #include "rf_archs.h"
 
@@ -99,8 +99,7 @@ rf_ConfigureRAID5_RS(
 }
 
 RF_ReconUnitCount_t
-rf_GetNumSpareRUsRAID5_RS(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_GetNumSpareRUsRAID5_RS(RF_Raid_t *raidPtr)
 {
 	return (raidPtr->Layout.stripeUnitsPerDisk / raidPtr->numCol);
 }

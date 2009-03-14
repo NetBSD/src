@@ -1,4 +1,4 @@
-/*	$NetBSD: setbootimg.c,v 1.1 2002/01/27 01:47:59 minoura Exp $	*/
+/*	$NetBSD: setbootimg.c,v 1.2 2009/03/14 15:36:15 dsl Exp $	*/
 
 /*
  *	set boot title image (converted by xpm2bootimg)
@@ -104,8 +104,7 @@ errx(eval, fmt, va_alist)
 #endif
 
 static unsigned
-get_uint16(p)
-	void *p;
+get_uint16(void *p)
 {
 	unsigned char *q = p;
 
@@ -113,8 +112,7 @@ get_uint16(p)
 }
 
 static unsigned
-get_uint32(p)
-	void *p;
+get_uint32(void *p)
 {
 	unsigned char *q = p;
 

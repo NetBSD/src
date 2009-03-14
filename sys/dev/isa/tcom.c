@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.17 2008/09/28 15:39:40 martin Exp $	*/
+/*	$NetBSD: tcom.c,v 1.18 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.17 2008/09/28 15:39:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.18 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,7 @@ tcomattach(struct device *parent, device_t self, void *aux)
 }
 
 int
-tcomintr(arg)
-	void *arg;
+tcomintr(void *arg)
 {
 	struct tcom_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.61 2008/05/30 10:59:42 martin Exp $	*/
+/*	$NetBSD: ast.c,v 1.62 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.61 2008/05/30 10:59:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.62 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,8 +191,7 @@ astattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-astintr(arg)
-	void *arg;
+astintr(void *arg)
 {
 	struct ast_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

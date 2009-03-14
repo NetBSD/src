@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.16 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.17 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.17 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,10 +82,7 @@ isa_display_console(iot, memt)
 
 #if (NPCPPI > 0)
 int
-isabeepmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+isabeepmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (!ppi_attached);
 }

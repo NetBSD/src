@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.34 2009/03/14 14:45:54 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.35 2009/03/14 15:36:01 dsl Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2009/03/14 14:45:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2009/03/14 15:36:01 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -259,8 +259,7 @@ initppc(startkernel, endkernel)
 
 /* XXX: for a while here, from intr.h */
 volatile int
-splraise(ncpl)
-	int ncpl;
+splraise(int ncpl)
 {
 	int ocpl;
 	volatile unsigned char *p5_ipl = (void *)0xf60030;
@@ -286,8 +285,7 @@ splraise(ncpl)
 }
 
 volatile void
-splx(ncpl)
-	int ncpl;
+splx(int ncpl)
 {
 	volatile unsigned char *p5_ipl = (void *)0xf60030;
 
@@ -310,8 +308,7 @@ splx(ncpl)
 }
 
 volatile int
-spllower(ncpl)
-	int ncpl;
+spllower(int ncpl)
 {
 	int ocpl;
 	volatile unsigned char *p5_ipl = (void *)0xf60030;
@@ -342,8 +339,7 @@ spllower(ncpl)
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
 volatile void
-softintr(ipl)
-	int ipl;
+softintr(int ipl)
 {
 	int msrsave;
 
@@ -499,8 +495,7 @@ struct isr *isr_ports;
 struct isr *isr_exter;
 
 void
-add_isr(isr)
-	struct isr *isr;
+add_isr(struct isr *isr)
 {
 	struct isr **p, *q;
 
@@ -517,8 +512,7 @@ add_isr(isr)
 }
 
 void
-remove_isr(isr)
-	struct isr *isr;
+remove_isr(struct isr *isr)
 {
 	struct isr **p, *q;
 
@@ -752,9 +746,7 @@ consinit()
  * Halt or reboot the machine after syncing/dumping according to howto
  */
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 	static char str[256];
@@ -763,8 +755,7 @@ cpu_reboot(howto, what)
 }
 
 int
-lcsplx(ipl)
-	int ipl;
+lcsplx(int ipl)
 {
 	return spllower(ipl);   /* XXX */
 }
@@ -773,8 +764,7 @@ lcsplx(ipl)
  * Convert kernel VA to physical address
  */
 int
-kvtop(addr)
-	void *addr;
+kvtop(void *addr)
 {
 	vaddr_t va;
 	paddr_t pa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.49 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.49 2009/03/14 15:36:09 dsl Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -98,10 +98,7 @@ extern void openpic_set_priority(int, int);
 #endif
 
 int
-cpumatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int *reg = ca->ca_reg;

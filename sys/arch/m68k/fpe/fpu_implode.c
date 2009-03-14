@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.10 2009/03/14 14:46:01 dsl Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.11 2009/03/14 15:36:09 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.10 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.11 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -187,9 +187,7 @@ toinf(struct fpemu *fe, int sign)
  * of the SPARC instruction set).
  */
 static u_int
-fpu_ftoi(fe, fp)
-	struct fpemu *fe;
-	register struct fpn *fp;
+fpu_ftoi(struct fpemu *fe, register struct fpn *fp)
 {
 	register u_int i;
 	register int sign, exp;
@@ -236,9 +234,7 @@ fpu_ftoi(fe, fp)
  * We assume <= 29 bits in a single-precision fraction (1.f part).
  */
 static u_int
-fpu_ftos(fe, fp)
-	struct fpemu *fe;
-	register struct fpn *fp;
+fpu_ftos(struct fpemu *fe, register struct fpn *fp)
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
@@ -321,10 +317,7 @@ done:
  * This code mimics fpu_ftos; see it for comments.
  */
 static u_int
-fpu_ftod(fe, fp, res)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	u_int *res;
+fpu_ftod(struct fpemu *fe, register struct fpn *fp, u_int *res)
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
@@ -385,10 +378,7 @@ done:
  * This code mimics fpu_ftos; see it for comments.
  */
 static u_int
-fpu_ftox(fe, fp, res)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	u_int *res;
+fpu_ftox(struct fpemu *fe, register struct fpn *fp, u_int *res)
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
@@ -456,11 +446,7 @@ done:
  * Implode an fpn, writing the result into the given space.
  */
 void
-fpu_implode(fe, fp, type, space)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	int type;
-	register u_int *space;
+fpu_implode(struct fpemu *fe, register struct fpn *fp, int type, register u_int *space)
 {
 	/* XXX Dont delete exceptions set here: fe->fe_fpsr &= ~FPSR_EXCP; */
 

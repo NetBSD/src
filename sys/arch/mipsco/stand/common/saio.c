@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.10 2009/03/14 14:46:03 dsl Exp $	*/
+/*	$NetBSD: saio.c,v 1.11 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -220,8 +220,7 @@ saioopen(struct open_file *f, ...)
 
 #ifndef LIBSA_NO_DEV_CLOSE
 int
-saioclose(f)
-	struct open_file *f;
+saioclose(struct open_file *f)
 {
 
 	prom_close(((struct saio_softc *)f->f_devdata)->sc_fd);

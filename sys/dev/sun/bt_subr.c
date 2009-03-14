@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.9 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.10 2009/03/14 15:36:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.9 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.10 2009/03/14 15:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,11 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.9 2005/12/11 12:23:56 christos Exp $")
  * Implement an FBIOGETCMAP-like ioctl.
  */
 int
-bt_getcmap(p, cm, cmsize, uspace)
-	struct fbcmap *p;
-	union bt_cmap *cm;
-	int cmsize;
-	int uspace;
+bt_getcmap(struct fbcmap *p, union bt_cmap *cm, int cmsize, int uspace)
 {
 	u_int i, start, count;
 	int error = 0;
@@ -125,11 +121,7 @@ out:
  * Implement the software portion of an FBIOPUTCMAP-like ioctl.
  */
 int
-bt_putcmap(p, cm, cmsize, uspace)
-	struct fbcmap *p;
-	union bt_cmap *cm;
-	int cmsize;
-	int uspace;
+bt_putcmap(struct fbcmap *p, union bt_cmap *cm, int cmsize, int uspace)
 {
 	u_int i, start, count;
 	int error = 0;
@@ -184,9 +176,7 @@ out:
  *	- all other entries are black	(PROM uses entry 255 for foreground)
  */
 void
-bt_initcmap(cm, cmsize)
-	union bt_cmap *cm;
-	int cmsize;
+bt_initcmap(union bt_cmap *cm, int cmsize)
 {
 	int i;
 	u_char *cp;

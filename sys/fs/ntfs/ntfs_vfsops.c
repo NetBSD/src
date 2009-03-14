@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.74 2008/12/19 18:49:38 cegger Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.75 2009/03/14 15:36:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.74 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.75 2009/03/14 15:36:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,11 +304,7 @@ fail:
  * Common code for mount and mountroot
  */
 int
-ntfs_mountfs(devvp, mp, argsp, l)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct ntfs_args *argsp;
-	struct lwp *l;
+ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, struct lwp *l)
 {
 	struct buf *bp;
 	struct ntfsmount *ntmp;

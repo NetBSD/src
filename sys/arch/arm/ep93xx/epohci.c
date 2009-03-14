@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.3 2008/04/03 15:08:58 drochner Exp $ */
+/*	$NetBSD: epohci.c,v 1.4 2009/03/14 15:36:01 dsl Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.3 2008/04/03 15:08:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.4 2009/03/14 15:36:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,7 @@ epohci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-epohci_callback(self)
-        struct device *self;
+epohci_callback(struct device *self)
 {
 	struct epohci_softc *sc = device_private(self);
 	usbd_status r;

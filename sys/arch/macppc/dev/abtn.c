@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.15 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: abtn.c,v 1.16 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.15 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.16 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,10 +69,7 @@ CFATTACH_DECL(abtn, sizeof(struct abtn_softc),
     abtn_match, abtn_attach, NULL, NULL);
 
 int
-abtn_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+abtn_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct adb_attach_args *aa = aux;
 

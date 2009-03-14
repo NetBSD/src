@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.24 2009/03/14 14:46:00 dsl Exp $ */
+/* $NetBSD: siotty.c,v 1.25 2009/03/14 15:36:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.24 2009/03/14 14:46:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.25 2009/03/14 15:36:08 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -108,10 +108,7 @@ const struct cdevsw siotty_cdevsw = {
 };
 
 static int 
-siotty_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+siotty_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sio_attach_args *args = aux;
 
@@ -222,9 +219,7 @@ out:
 }
 
 void
-siostop(tp, flag)
-	struct tty *tp;
-	int flag;
+siostop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -552,8 +547,7 @@ struct consdev syscons = {
 };
 
 /* EXPORT */ void
-syscnattach(channel)
-	int channel;
+syscnattach(int channel)
 {
 /*
  * Channel A is immediately initialized with 9600N1 right after cold
@@ -577,8 +571,7 @@ syscnattach(channel)
 }
 
 /* EXPORT */ int
-syscngetc(dev)
-	dev_t dev;
+syscngetc(dev_t dev)
 {
 	struct sioreg *sio;
 	int s, c;
@@ -594,9 +587,7 @@ syscngetc(dev)
 }
 
 /* EXPORT */ void
-syscnputc(dev, c)
-	dev_t dev;
-	int c;
+syscnputc(dev_t dev, int c)
 {
 	struct sioreg *sio;
 	int s;

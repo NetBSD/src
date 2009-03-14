@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.22 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: bios32.c,v 1.23 2009/03/14 15:36:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.22 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.23 2009/03/14 15:36:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,10 +214,7 @@ bios32_init()
  * in the entry point information.
  */
 int
-bios32_service(service, e, ei)
-	uint32_t service;
-	bios32_entry_t e;
-	bios32_entry_info_t ei;
+bios32_service(uint32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 {
 	uint32_t eax, ebx, ecx, edx;
 	paddr_t entry;

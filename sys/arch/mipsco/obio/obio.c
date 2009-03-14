@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.14 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: obio.c,v 1.15 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.14 2009/03/14 14:46:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2009/03/14 15:36:10 dsl Exp $");
 
 #include "locators.h"
 
@@ -60,10 +60,7 @@ struct mipsco_bus_space obio_bustag;
 struct mipsco_bus_dma_tag obio_dmatag;
  
 static int
-obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -74,10 +71,7 @@ obio_match(parent, cf, aux)
 }
 
 static void
-obio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -97,11 +91,7 @@ obio_attach(parent, self, aux)
 }
 
 static int
-obio_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+obio_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -119,9 +109,7 @@ obio_search(parent, cf, ldesc, aux)
  * when there was no match found by config_found().
  */
 static int
-obio_print(args, name)
-	void *args;
-	const char *name;
+obio_print(void *args, const char *name)
 {
 	struct confargs *ca = args;
 

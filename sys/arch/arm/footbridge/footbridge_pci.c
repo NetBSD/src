@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.16 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.17 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.16 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.17 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,9 +152,7 @@ footbridge_pci_attach_hook(parent, self, pba)
 }
 
 int
-footbridge_pci_bus_maxdevs(pcv, busno)
-	void *pcv;
-	int busno;
+footbridge_pci_bus_maxdevs(void *pcv, int busno)
 {
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_bus_maxdevs(pcv=%p, busno=%d)\n", pcv, busno);
@@ -194,10 +192,7 @@ footbridge_pci_decompose_tag(pcv, tag, busp, devicep, functionp)
 }
 
 pcireg_t
-footbridge_pci_conf_read(pcv, tag, reg)
-	void *pcv;
-	pcitag_t tag;
-	int reg;
+footbridge_pci_conf_read(void *pcv, pcitag_t tag, int reg)
 {
 	int bus, device, function;
 	u_int address;
@@ -222,11 +217,7 @@ footbridge_pci_conf_read(pcv, tag, reg)
 }
 
 void
-footbridge_pci_conf_write(pcv, tag, reg, data)
-	void *pcv;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+footbridge_pci_conf_write(void *pcv, pcitag_t tag, int reg, pcireg_t data)
 {
 	int bus, device, function;
 	u_int address;
@@ -249,9 +240,7 @@ footbridge_pci_conf_write(pcv, tag, reg, data)
 }
 
 int
-footbridge_pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+footbridge_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin, line = pa->pa_intrline;
 	int intr = -1;
@@ -335,9 +324,7 @@ footbridge_pci_intr_map(pa, ihp)
 }
 
 const char *
-footbridge_pci_intr_string(pcv, ih)
-	void *pcv;
-	pci_intr_handle_t ih;
+footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih)
 {
 	static char irqstr[7+2+3]; /* "isairq dd" + NULL + sanity */
 
@@ -396,9 +383,7 @@ footbridge_pci_intr_establish(pcv, ih, level, func, arg)
 }
 
 void
-footbridge_pci_intr_disestablish(pcv, cookie)
-	void *pcv;
-	void *cookie;
+footbridge_pci_intr_disestablish(void *pcv, void *cookie)
 {
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_intr_disestablish(pcv=%p, cookie=0x%p)\n",

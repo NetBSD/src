@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.5 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.6 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -80,8 +80,7 @@ const u_char keycode[] = {
 };
 
 int
-kbd(noblock)
-	int noblock;
+kbd(int noblock)
 {
 	u_char dt, brk, act;
 	int first = 1;

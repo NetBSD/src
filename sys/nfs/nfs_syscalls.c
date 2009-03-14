@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.144 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.145 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.144 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.145 2009/03/14 15:36:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,9 +332,7 @@ nfsrv_sockfree(struct nfssvc_sock *slp)
  * Adds a socket to the list for servicing by nfsds.
  */
 int
-nfssvc_addsock(fp, mynam)
-	file_t *fp;
-	struct mbuf *mynam;
+nfssvc_addsock(file_t *fp, struct mbuf *mynam)
 {
 	int siz;
 	struct nfssvc_sock *slp;
@@ -423,10 +421,7 @@ nfssvc_addsock(fp, mynam)
  * until it is killed by a signal.
  */
 int
-nfssvc_nfsd(nsd, argp, l)
-	struct nfsd_srvargs *nsd;
-	void *argp;
-	struct lwp *l;
+nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 {
 	struct timeval tv;
 	struct mbuf *m;
@@ -727,8 +722,7 @@ done:
  * called at splsoftnet.
  */
 void
-nfsrv_zapsock(slp)
-	struct nfssvc_sock *slp;
+nfsrv_zapsock(struct nfssvc_sock *slp)
 {
 	struct nfsuid *nuidp, *nnuidp;
 	struct nfsrv_descript *nwp;
@@ -789,8 +783,7 @@ nfsrv_zapsock(slp)
  * is no longer valid, you can throw it away.
  */
 void
-nfsrv_slpderef(slp)
-	struct nfssvc_sock *slp;
+nfsrv_slpderef(struct nfssvc_sock *slp)
 {
 	uint32_t ref;
 
@@ -826,8 +819,7 @@ nfsrv_slpderef(slp)
  * corruption.
  */
 void
-nfsrv_init(terminating)
-	int terminating;
+nfsrv_init(int terminating)
 {
 	struct nfssvc_sock *slp;
 
@@ -889,10 +881,7 @@ nfsrv_fini(void)
  * Add entries to the server monitor log.
  */
 static void
-nfsd_rt(sotype, nd, cacherep)
-	int sotype;
-	struct nfsrv_descript *nd;
-	int cacherep;
+nfsd_rt(int sotype, struct nfsrv_descript *nd, int cacherep)
 {
 	struct timeval tv;
 	struct drt *rt;

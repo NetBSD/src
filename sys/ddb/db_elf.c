@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.26 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.27 2009/03/14 15:36:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.26 2009/03/07 22:02:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.27 2009/03/14 15:36:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,12 +363,7 @@ db_elf_symbol_values(db_symtab_t *symtab, db_sym_t sym, const char **namep,
  * if we can find the appropriate debugging symbol.
  */
 static bool
-db_elf_line_at_pc(symtab, cursym, filename, linenum, off)
-	db_symtab_t *symtab;
-	db_sym_t cursym;
-	char **filename;
-	int *linenum;
-	db_expr_t off;
+db_elf_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename, int *linenum, db_expr_t off)
 {
 
 	/*

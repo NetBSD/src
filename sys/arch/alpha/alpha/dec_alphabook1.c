@@ -1,4 +1,4 @@
-/* $NetBSD: dec_alphabook1.c,v 1.22 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: dec_alphabook1.c,v 1.23 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_alphabook1.c,v 1.22 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_alphabook1.c,v 1.23 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,9 +174,7 @@ dec_alphabook1_cons_init()
 }
 
 static void
-dec_alphabook1_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_alphabook1_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

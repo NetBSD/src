@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.53 2009/03/14 14:46:04 dsl Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.54 2009/03/14 15:36:11 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.53 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.54 2009/03/14 15:36:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,11 +317,7 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static void
-dec_maxine_intr(status, cause, pc, ipending)
-	unsigned ipending;
-	unsigned pc;
-	unsigned status;
-	unsigned cause;
+dec_maxine_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 {
 	if (ipending & MIPS_INT_MASK_4)
 		prom_haltbutton();

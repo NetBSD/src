@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.5 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: sii.c,v 1.6 2009/03/14 15:36:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.5 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.6 2009/03/14 15:36:11 dsl Exp $");
 
 #include "sii.h"
 /*
@@ -151,8 +151,7 @@ static void	sii_DumpLog(void);
  * Match driver based on name
  */
 void
-siiattach(sc)
-	struct siisoftc *sc;
+siiattach(struct siisoftc *sc)
 {
 	int i;
 
@@ -202,10 +201,7 @@ siiattach(sc)
  */
 
 void
-sii_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+sii_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -270,8 +266,7 @@ sii_scsi_request(chan, req, arg)
  * and process as appropriate.
  */
 int
-siiintr(xxxsc)
-	void *xxxsc;
+siiintr(void *xxxsc)
 {
 	struct siisoftc *sc = xxxsc;
 	u_int dstat;
@@ -568,9 +563,7 @@ sii_StartCmd(sc, target)
  * Process interrupt conditions.
  */
 static void
-sii_DoIntr(sc, dstat)
-	struct siisoftc *sc;
-	u_int dstat;
+sii_DoIntr(struct siisoftc *sc, u_int dstat)
 {
 	SIIRegs *regs = sc->sc_regs;
 	State *state;
@@ -1440,9 +1433,7 @@ abort:
 }
 
 static void
-sii_StateChg(sc, cstat)
-	struct siisoftc *sc;
-	u_int cstat;
+sii_StateChg(struct siisoftc *sc, u_int cstat)
 {
 	SIIRegs *regs = sc->sc_regs;
 	State *state;
@@ -1612,9 +1603,7 @@ sii_GetByte(regs, phase, ack)
  * Exchange messages to initiate synchronous data transfers.
  */
 static void
-sii_DoSync(regs, state)
-	SIIRegs *regs;
-	State *state;
+sii_DoSync(SIIRegs *regs, State *state)
 {
 	u_int dstat, comm;
 	int i, j;

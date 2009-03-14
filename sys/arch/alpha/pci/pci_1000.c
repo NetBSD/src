@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.19 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_1000.c,v 1.20 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.19 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.20 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,9 +149,7 @@ pci_1000_pickintr(core, iot, memt, pc)
 }
 
 int     
-dec_1000_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_1000_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
@@ -183,9 +181,7 @@ bad:	printf("dec_1000_intr_map: can't map dev %d pin %d\n", device, buspin);
 }
 
 const char *
-dec_1000_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_1000_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 	static const char irqmsg_fmt[] = "dec_1000 irq %ld";
         static char irqstr[sizeof irqmsg_fmt];
@@ -198,9 +194,7 @@ dec_1000_intr_string(ccv, ih)
 }
 
 const struct evcnt *
-dec_1000_intr_evcnt(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_1000_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 {
 
 	if (ih >= PCI_NIRQ)
@@ -256,9 +250,7 @@ dec_1000_intr_disestablish(ccv, cookie)
 }
 
 static void
-dec_1000_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+dec_1000_iointr(void *arg, unsigned long vec)
 {
 	int irq;
 
@@ -288,15 +280,13 @@ dec_1000_iointr(arg, vec)
  */
 
 static void
-dec_1000_enable_intr(irq)
-	int irq;
+dec_1000_enable_intr(int irq)
 {
 	IW(IR() | 1 << irq);
 }
 
 static void
-dec_1000_disable_intr(irq)
-	int irq;
+dec_1000_disable_intr(int irq)
 {
 	IW(IR() & ~(1 << irq));
 }

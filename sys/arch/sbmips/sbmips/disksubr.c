@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.17 2008/01/02 11:48:28 ad Exp $ */
+/* $NetBSD: disksubr.c,v 1.18 2009/03/14 15:36:13 dsl Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2008/01/02 11:48:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2009/03/14 15:36:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,7 @@ mbr_findslice(struct mbr_partition* dp, struct buf *bp);
  */
 static
 struct mbr_partition *
-mbr_findslice(dp, bp)
-	struct mbr_partition *dp;
-	struct buf *bp;
+mbr_findslice(struct mbr_partition *dp, struct buf *bp)
 {
 	struct mbr_partition *ourdp = NULL;
 	uint16_t *mbrmagicp;

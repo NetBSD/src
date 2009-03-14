@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.15 2009/03/14 14:45:58 dsl Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.16 2009/03/14 15:36:04 dsl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.15 2009/03/14 14:45:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.16 2009/03/14 15:36:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/msgbuf.h>
@@ -84,9 +84,7 @@ void *msgbufaddr;
  * XXX a PIC compiler would make this much easier.
  */
 void
-pmap_bootstrap(nextpa, firstpa)
-	vm_offset_t nextpa;
-	vm_offset_t firstpa;
+pmap_bootstrap(vm_offset_t nextpa, vm_offset_t firstpa)
 {
 	vm_offset_t kstpa, kptpa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;

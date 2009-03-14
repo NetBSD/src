@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.13 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.14 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.13 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.14 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ pcireg_t	dwlpx_conf_read(void *, pcitag_t, int);
 void		dwlpx_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-dwlpx_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+dwlpx_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
 	pc->pc_attach_hook = dwlpx_attach_hook;
@@ -84,9 +82,7 @@ dwlpx_attach_hook(parent, self, pba)
 }
 
 int
-dwlpx_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+dwlpx_bus_maxdevs(void *cpv, int busno)
 {
 	return DWLPX_MAXDEV;
 }
@@ -129,10 +125,7 @@ dwlpx_decompose_tag(cpv, tag, bp, dp, fp)
 }
 
 pcireg_t
-dwlpx_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+dwlpx_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct dwlpx_config *ccp = cpv;
 	struct dwlpx_softc *sc;
@@ -198,11 +191,7 @@ dwlpx_conf_read(cpv, tag, offset)
 }
 
 void
-dwlpx_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+dwlpx_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct dwlpx_config *ccp = cpv;
 	struct dwlpx_softc *sc;

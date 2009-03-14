@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.17 2009/03/14 14:46:00 dsl Exp $ */
+/* $NetBSD: lunafb.c,v 1.18 2009/03/14 15:36:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.17 2009/03/14 14:46:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.18 2009/03/14 15:36:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,10 +158,7 @@ static int omfb_console;
 int  omfb_cnattach(void);
 
 static int
-omfbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+omfbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -224,13 +221,7 @@ omfb_cnattach()
 }
 
 static int
-omfbioctl(v, vs, cmd, data, flag, l)
-	void *v;
-	void *vs;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+omfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct omfb_softc *sc = v;
 	struct om_hwdevconfig *dc = sc->sc_dc;
@@ -272,11 +263,7 @@ omfbioctl(v, vs, cmd, data, flag, l)
  * offset, allowing for the given protection, or return -1 for error.
  */
 static paddr_t
-omfbmmap(v, vs, offset, prot)
-	void *v;
-	void *vs;
-	off_t offset;
-	int prot;
+omfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct omfb_softc *sc = v;
 
@@ -286,9 +273,7 @@ omfbmmap(v, vs, offset, prot)
 }
 
 static int
-omgetcmap(sc, p)
-	struct omfb_softc *sc;
-	struct wsdisplay_cmap *p;
+omgetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
 	int cmsize, error;
@@ -308,9 +293,7 @@ omgetcmap(sc, p)
 }
 
 static int
-omsetcmap(sc, p)
-	struct omfb_softc *sc;
-	struct wsdisplay_cmap *p;
+omsetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap cmap;
 	u_int index = p->index, count = p->count;
@@ -355,9 +338,7 @@ omsetcmap(sc, p)
 }
 
 static void
-omfb_getdevconfig(paddr, dc)
-	paddr_t paddr;
-	struct om_hwdevconfig *dc;
+omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 {
 	int bpp, i;
 	struct raster *rap;
@@ -476,9 +457,7 @@ omfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-omfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+omfb_free_screen(void *v, void *cookie)
 {
 	struct omfb_softc *sc = v;
 

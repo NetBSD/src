@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.24 2007/10/19 12:00:16 ad Exp $ */
+/* $NetBSD: ega.c,v 1.25 2009/03/14 15:36:18 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.24 2007/10/19 12:00:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.25 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,12 +338,7 @@ ega_selectfont(vc, scr, name1, name2)
 }
 
 void
-ega_init_screen(vc, scr, type, existing, attrp)
-	struct ega_config *vc;
-	struct egascreen *scr;
-	const struct wsscreen_descr *type;
-	int existing;
-	long *attrp;
+ega_init_screen(struct ega_config *vc, struct egascreen *scr, const struct wsscreen_descr *type, int existing, long *attrp)
 {
 	int cpos;
 	int res;
@@ -441,10 +436,7 @@ ega_init(vc, iot, memt, mono)
 }
 
 int
-ega_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ega_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int mono;
@@ -574,8 +566,7 @@ ega_cnattach(iot, memt)
 }
 
 static int
-ega_is_console(iot)
-	bus_space_tag_t iot;
+ega_is_console(bus_space_tag_t iot)
 {
 	if (egaconsole &&
 	    !ega_console_attached &&
@@ -585,13 +576,7 @@ ega_is_console(iot)
 }
 
 static int
-ega_ioctl(v, vs, cmd, data, flag, p)
-	void *v;
-	void *vs;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct proc *p;
+ega_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct proc *p)
 {
 	/*
 	 * XXX "do something!"
@@ -600,11 +585,7 @@ ega_ioctl(v, vs, cmd, data, flag, p)
 }
 
 static paddr_t
-ega_mmap(v, vs, offset, prot)
-	void *v;
-	void *vs;
-	off_t offset;
-	int prot;
+ega_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	return (-1);
 }
@@ -650,9 +631,7 @@ ega_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 }
 
 static void
-ega_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+ega_free_screen(void *v, void *cookie)
 {
 	struct egascreen *vs = cookie;
 	struct ega_config *vc = vs->cfg;
@@ -668,9 +647,7 @@ ega_free_screen(v, cookie)
 }
 
 static void
-ega_setfont(vc, scr)
-	struct ega_config *vc;
-	struct egascreen *scr;
+ega_setfont(struct ega_config *vc, struct egascreen *scr)
 {
 	int fontslot1, fontslot2;
 
@@ -714,8 +691,7 @@ ega_show_screen(v, cookie, waitok, cb, cbarg)
 }
 
 void
-ega_doswitch(vc)
-	struct ega_config *vc;
+ega_doswitch(struct ega_config *vc)
 {
 	struct egascreen *scr, *oldscr;
 	struct vga_handle *vh = &vc->hdl;
@@ -784,10 +760,7 @@ ega_doswitch(vc)
 }
 
 static int
-ega_load_font(v, cookie, data)
-	void *v;
-	void *cookie;
-	struct wsdisplay_font *data;
+ega_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 {
 	struct ega_config *vc = v;
 	struct egascreen *scr = cookie;

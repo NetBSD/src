@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.31 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.32 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.31 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.32 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,10 +86,7 @@ CFATTACH_DECL(isab, sizeof(struct isabus_softc),
 static struct atari_bus_space	bs_storage[2];	/* 1 iot, 1 memt */
 
 int
-isabusmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+isabusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int	nmatched = 0;
 
@@ -147,9 +144,7 @@ void		*auxp;
 }
 
 int
-atariisabusprint(auxp, name)
-void		*auxp;
-const char	*name;
+atariisabusprint(void *auxp, const char *name)
 {
 	if(name == NULL)
 		return(UNCONF);

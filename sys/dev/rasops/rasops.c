@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.58 2008/04/28 20:23:56 martin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.59 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.58 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.59 2009/03/14 15:36:20 dsl Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -385,10 +385,7 @@ rasops_reconfig(ri, wantrows, wantcols)
  * Map a character.
  */
 static int
-rasops_mapchar(cookie, c, cp)
-	void *cookie;
-	int c;
-	u_int *cp;
+rasops_mapchar(void *cookie, int c, u_int *cp)
 {
 	struct rasops_info *ri;
 
@@ -720,8 +717,7 @@ rasops_cursor(cookie, on, row, col)
  * Make the device colormap
  */
 static void
-rasops_init_devcmap(ri)
-	struct rasops_info *ri;
+rasops_init_devcmap(struct rasops_info *ri)
 {
 	const u_char *p;
 	int i, c;
@@ -891,8 +887,7 @@ rasops_eraserows(cookie, row, num, attr)
  * rasops_cursor().
  */
 static void
-rasops_do_cursor(ri)
-	struct rasops_info *ri;
+rasops_do_cursor(struct rasops_info *ri)
 {
 	int full1, height, cnt, slop1, slop2, row, col;
 	u_char *dp, *rp, *hrp, *hp;

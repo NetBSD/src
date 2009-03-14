@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.11 2008/05/05 13:41:30 ad Exp $ */
+/*	$NetBSD: deflate.c,v 1.12 2009/03/14 15:36:24 dsl Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.11 2008/05/05 13:41:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.12 2009/03/14 15:36:24 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -70,11 +70,7 @@ ocf_zfree(void *nil, void *ptr)
 }
 
 u_int32_t
-deflate_global(data, size, decomp, out)
-	u_int8_t *data;
-	u_int32_t size;
-	int decomp;
-	u_int8_t **out;
+deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 {
 	/* decomp indicates whether we compress (0) or decompress (1) */
 

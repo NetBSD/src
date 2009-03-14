@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_pmax.c,v 1.19 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: ibus_pmax.c,v 1.20 2009/03/14 15:36:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.19 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.20 2009/03/14 15:36:11 dsl Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -95,10 +95,7 @@ static const int ibus_mipsmate_ndevs =
 static int ibus_attached;
 
 static int
-ibus_pmax_match(parent, cfdata, aux)
-        struct device *parent;
-        struct cfdata *cfdata;
-	void *aux;
+ibus_pmax_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 

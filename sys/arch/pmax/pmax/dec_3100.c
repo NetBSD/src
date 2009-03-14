@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.45 2009/03/14 14:46:04 dsl Exp $ */
+/* $NetBSD: dec_3100.c,v 1.46 2009/03/14 15:36:11 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.45 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.46 2009/03/14 15:36:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,11 +225,7 @@ dec_3100_cons_init()
     } while (0)
 
 static void
-dec_3100_intr(status, cause, pc, ipending)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
-	unsigned ipending;
+dec_3100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 {
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_3) {

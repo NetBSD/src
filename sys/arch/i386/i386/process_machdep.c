@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.68 2008/11/19 18:35:59 ad Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.69 2009/03/14 15:36:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.68 2008/11/19 18:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.69 2009/03/14 15:36:07 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -545,8 +545,7 @@ process_machdep_doxmmregs(curl, l, uio)
 }
 
 int
-process_machdep_validxmmregs(p)
-	struct proc *p;
+process_machdep_validxmmregs(struct proc *p)
 {
 
 	if (p->p_flag & PK_SYSTEM)

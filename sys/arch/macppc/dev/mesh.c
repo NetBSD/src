@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.28 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: mesh.c,v 1.29 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.28 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.29 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -183,10 +183,7 @@ CFATTACH_DECL(mesh, sizeof(struct mesh_softc),
     mesh_match, mesh_attach, NULL, NULL);
 
 int
-mesh_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mesh_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -280,9 +277,7 @@ mesh_attach(parent, self, aux)
 			   mesh_read_reg(sc, MESH_XFER_COUNT0))
 
 int
-mesh_read_reg(sc, reg)
-	struct mesh_softc *sc;
-	int reg;
+mesh_read_reg(struct mesh_softc *sc, int reg)
 {
 	return in8(sc->sc_reg + reg);
 }
@@ -296,8 +291,7 @@ mesh_set_reg(sc, reg, val)
 }
 
 void
-mesh_shutdownhook(arg)
-	void *arg;
+mesh_shutdownhook(void *arg)
 {
 	struct mesh_softc *sc = arg;
 
@@ -320,8 +314,7 @@ static char scsi_phase[][8] = {
 #endif
 
 int
-mesh_intr(arg)
-	void *arg;
+mesh_intr(void *arg)
 {
 	struct mesh_softc *sc = arg;
 	struct mesh_scb *scb;
@@ -486,9 +479,7 @@ mesh_error(sc, scb, error, exception)
 }
 
 void
-mesh_select(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_select(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	struct mesh_tinfo *ti = &sc->sc_tinfo[scb->target];
 	int timeout;
@@ -528,9 +519,7 @@ mesh_select(sc, scb)
 }
 
 void
-mesh_identify(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_identify(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	struct mesh_tinfo *ti = &sc->sc_tinfo[scb->target];
 
@@ -549,9 +538,7 @@ mesh_identify(sc, scb)
 }
 
 void
-mesh_command(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_command(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	int i;
 	char *cmdp;
@@ -579,9 +566,7 @@ mesh_command(sc, scb)
 }
 
 void
-mesh_dma_setup(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_dma_setup(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	int datain = scb->flags & MESH_READ;
 	dbdma_command_t *cmdp;
@@ -634,9 +619,7 @@ mesh_dma_setup(sc, scb)
 }
 
 void
-mesh_dataio(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_dataio(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	DPRINTF("mesh_dataio len = %ld (%s)\n", scb->dlen,
 		scb->flags & MESH_READ ? "read" : "write");
@@ -658,9 +641,7 @@ mesh_dataio(sc, scb)
 }
 
 void
-mesh_status(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_status(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	if (mesh_read_reg(sc, MESH_FIFO_COUNT) == 0) {	/* XXX cheat */
 		DPRINTF("mesh_status(0)\n");
@@ -683,9 +664,7 @@ mesh_status(sc, scb)
 }
 
 void
-mesh_msgin(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_msgin(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	DPRINTF("mesh_msgin\n");
 
@@ -796,9 +775,7 @@ done:
 }
 
 void
-mesh_msgout(sc, msg)
-	struct mesh_softc *sc;
-	int msg;
+mesh_msgout(struct mesh_softc *sc, int msg)
 {
 	struct mesh_scb *scb = sc->sc_nexus;
 	struct mesh_tinfo *ti;
@@ -849,8 +826,7 @@ mesh_msgout(sc, msg)
 }
 
 void
-mesh_bus_reset(sc)
-	struct mesh_softc *sc;
+mesh_bus_reset(struct mesh_softc *sc)
 {
 	DPRINTF("mesh_bus_reset\n");
 
@@ -866,8 +842,7 @@ mesh_bus_reset(sc)
 }
 
 void
-mesh_reset(sc)
-	struct mesh_softc *sc;
+mesh_reset(struct mesh_softc *sc)
 {
 	int i;
 
@@ -915,9 +890,7 @@ mesh_reset(sc)
 }
 
 int
-mesh_stp(sc, v)
-	struct mesh_softc *sc;
-	int v;
+mesh_stp(struct mesh_softc *sc, int v)
 {
 	/*
 	 * stp(v) = 5 * clock_period         (v == 0)
@@ -931,9 +904,7 @@ mesh_stp(sc, v)
 }
 
 void
-mesh_setsync(sc, ti)
-	struct mesh_softc *sc;
-	struct mesh_tinfo *ti;
+mesh_setsync(struct mesh_softc *sc, struct mesh_tinfo *ti)
 {
 	int period = ti->period;
 	int offset = ti->offset;
@@ -958,8 +929,7 @@ mesh_setsync(sc, ti)
 }
 
 struct mesh_scb *
-mesh_get_scb(sc)
-	struct mesh_softc *sc;
+mesh_get_scb(struct mesh_softc *sc)
 {
 	struct mesh_scb *scb;
 	int s;
@@ -973,9 +943,7 @@ mesh_get_scb(sc)
 }
 
 void
-mesh_free_scb(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_free_scb(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	int s;
 
@@ -985,10 +953,7 @@ mesh_free_scb(sc, scb)
 }
 
 void
-mesh_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+mesh_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -1071,8 +1036,7 @@ mesh_scsi_request(chan, req, arg)
 }
 
 void
-mesh_sched(sc)
-	struct mesh_softc *sc;
+mesh_sched(struct mesh_softc *sc)
 {
 	struct scsipi_xfer *xs;
 	struct mesh_scb *scb;
@@ -1096,9 +1060,7 @@ start:
 }
 
 int
-mesh_poll(sc, xs)
-	struct mesh_softc *sc;
-	struct scsipi_xfer *xs;
+mesh_poll(struct mesh_softc *sc, struct scsipi_xfer *xs)
 {
 	int count = xs->timeout;
 
@@ -1115,9 +1077,7 @@ mesh_poll(sc, xs)
 }
 
 void
-mesh_done(sc, scb)
-	struct mesh_softc *sc;
-	struct mesh_scb *scb;
+mesh_done(struct mesh_softc *sc, struct mesh_scb *scb)
 {
 	struct scsipi_xfer *xs = scb->xs;
 
@@ -1149,8 +1109,7 @@ mesh_done(sc, scb)
 }
 
 void
-mesh_timeout(arg)
-	void *arg;
+mesh_timeout(void *arg)
 {
 	struct mesh_scb *scb = arg;
 	struct mesh_softc *sc =
@@ -1186,8 +1145,7 @@ mesh_timeout(arg)
 }
 
 void
-mesh_minphys(bp)
-	struct buf *bp;
+mesh_minphys(struct buf *bp)
 {
 	if (bp->b_bcount > 64*1024)
 		bp->b_bcount = 64*1024;

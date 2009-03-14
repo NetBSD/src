@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.1 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.2 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.1 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.2 2009/03/14 15:36:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,14 +388,7 @@ nfs_getnickauth(struct nfsmount *nmp, kauth_cred_t cred, char **auth_str,
  * Save the current nickname in a hash list entry on the mount point.
  */
 int
-nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
-	struct nfsmount *nmp;
-	kauth_cred_t cred;
-	int len;
-	NFSKERBKEY_T key;
-	struct mbuf **mdp;
-	char **dposp;
-	struct mbuf *mrep;
+nfs_savenickauth(struct nfsmount *nmp, kauth_cred_t cred, int len, NFSKERBKEY_T key, struct mbuf **mdp, char **dposp, struct mbuf *mrep)
 {
 	struct nfsuid *nuidp;
 	u_int32_t *tl;

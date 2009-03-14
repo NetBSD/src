@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2009/03/14 14:46:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/03/14 15:36:10 dsl Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -437,8 +437,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -464,8 +463,7 @@ int	waittime = -1;
  * call PROM to halt or reboot.
  */
 void
-prom_halt(howto)
-	int howto;
+prom_halt(int howto)
 {
 	if (howto & RB_HALT)
 		MIPS_PROM(reinit)();
@@ -474,9 +472,7 @@ prom_halt(howto)
 }
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto;
-	char *bootstr;
+cpu_reboot(volatile int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
@@ -554,19 +550,14 @@ unimpl_cons_init()
 }
 
 static void
-unimpl_iointr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
+unimpl_iointr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
 {
 
 	panic("sysconf.init didn't set intr");
 }
 
 static int
-unimpl_memsize(first)
-void *first;
+unimpl_memsize(void *first)
 {
 
 	panic("sysconf.init didn't set memsize");
@@ -582,8 +573,7 @@ unimpl_intr_establish(level, func, arg)
 }
 
 void
-delay(n)
-	int n;
+delay(int n)
 {
 	DELAY(n);
 }
@@ -593,8 +583,7 @@ delay(n)
  * Be careful to save and restore the original contents for msgbuf.
  */
 int
-memsize_scan(first)
-	void *first;
+memsize_scan(void *first)
 {
 	volatile int *vp, *vp0;
 	int mem, tmp, tmp0;
@@ -639,14 +628,12 @@ memsize_scan(first)
  */
 
 static void
-null_cnprobe(cn)
-     struct consdev *cn;
+null_cnprobe(struct consdev *cn)
 {
 }
 
 static void
-prom_cninit(cn)
-	struct consdev *cn;
+prom_cninit(struct consdev *cn)
 {
 	extern const struct cdevsw cons_cdevsw;
 
@@ -655,24 +642,19 @@ prom_cninit(cn)
 }
 
 static int
-prom_cngetc(dev)
-	dev_t dev;
+prom_cngetc(dev_t dev)
 {
 	return MIPS_PROM(getchar)();
 }
 
 static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
+prom_cnputc(dev_t dev, int c)
 {
 	MIPS_PROM(putchar)(c);
 }
 
 static void
-null_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+null_cnpollc(dev_t dev, int on)
 {
 }
 

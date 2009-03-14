@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2009/03/14 14:45:59 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2009/03/14 15:36:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/03/14 14:45:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2009/03/14 15:36:06 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -168,9 +168,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	static int waittime = -1;
 
@@ -340,19 +338,13 @@ sh_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 }
 
 void
-sh_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+sh_memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 }
 
 void
-sh_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+sh_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	return;
 }
@@ -360,12 +352,7 @@ sh_memio_unmap(t, bsh, size)
 #ifdef SH4_PCMCIA
 
 int
-shpcmcia_memio_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+shpcmcia_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	int error;
 	struct extent *ex;
@@ -413,11 +400,7 @@ shpcmcia_memio_map(t, bpa, size, flags, bshp)
 }
 
 int
-shpcmcia_mem_add_mapping(bpa, size, type, bshp)
-	bus_addr_t bpa;
-	bus_size_t size;
-	int type;
-	bus_space_handle_t *bshp;
+shpcmcia_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int type, bus_space_handle_t *bshp)
 {
 	u_long pa, endpa;
 	vaddr_t va;
@@ -474,10 +457,7 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 }
 
 void
-shpcmcia_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+shpcmcia_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	struct extent *ex;
 	u_long va, endva;
@@ -521,10 +501,7 @@ shpcmcia_memio_unmap(t, bsh, size)
 }
 
 void    
-shpcmcia_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+shpcmcia_memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* sh3_pcmcia_memio_unmap() does all that we need to do. */
@@ -690,8 +667,7 @@ InitializeBsc()
 #define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
 
 void
-LoadAndReset(osimage)
-	const char *osimage;
+LoadAndReset(const char *osimage)
 {
 	void *buf_addr;
 	u_long size;

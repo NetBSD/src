@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.14 2008/04/10 19:13:36 cegger Exp $ */
+/* $NetBSD: btvmeii.c,v 1.15 2009/03/14 15:36:19 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.14 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.15 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,10 +134,7 @@ CFATTACH_DECL(btvmeii, sizeof(struct b3_2706_softc),
  */
 
 static int
-b3_2706_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+b3_2706_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -288,16 +285,7 @@ b3_2706_attach(parent, self, aux)
 #define sc ((struct b3_2706_softc*)vsc)
 
 int
-b3_2706_map_vme(vsc, vmeaddr, len, am, datasizes, swap, tag, handle, resc)
-	void *vsc;
-	vme_addr_t vmeaddr;
-	vme_size_t len;
-	vme_am_t am;
-	vme_datasize_t datasizes;
-	vme_swap_t swap;
-	bus_space_tag_t *tag;
-	bus_space_handle_t *handle;
-	vme_mapresc_t *resc;
+b3_2706_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_datasize_t datasizes, vme_swap_t swap, bus_space_tag_t *tag, bus_space_handle_t *handle, vme_mapresc_t *resc)
 {
 	int idx, i, wnd, res;
 	unsigned long boundary, maplen, pcibase;
@@ -367,9 +355,7 @@ b3_2706_map_vme(vsc, vmeaddr, len, am, datasizes, swap, tag, handle, resc)
 }
 
 void
-b3_2706_unmap_vme(vsc, resc)
-	void *vsc;
-	vme_mapresc_t resc;
+b3_2706_unmap_vme(void *vsc, vme_mapresc_t resc)
 {
 	struct b3_2706_vmemaprescs *r = resc;
 
@@ -487,9 +473,7 @@ b3_2706_establish_vmeint(vsc, handle, prior, func, arg)
 }
 
 void
-b3_2706_disestablish_vmeint(vsc, cookie)
-	void *vsc;
-	void *cookie;
+b3_2706_disestablish_vmeint(void *vsc, void *cookie)
 {
 	struct b3_2706_vmeintrhand *ih = cookie;
 	int s;
@@ -563,32 +547,18 @@ b3_2706_dmamap_create(vsc, len, am, datasize, swap,
 }
 
 void
-b3_2706_dmamap_destroy(vsc, map)
-	void *vsc;
-	bus_dmamap_t map;
+b3_2706_dmamap_destroy(void *vsc, bus_dmamap_t map)
 {
 }
 
 int
-b3_2706_dmamem_alloc(vsc, len, am, datasizes, swap, segs, nsegs, rsegs, flags)
-	void *vsc;
-	vme_size_t len;
-	vme_am_t am;
-	vme_datasize_t datasizes;
-	vme_swap_t swap;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+b3_2706_dmamem_alloc(void *vsc, vme_size_t len, vme_am_t am, vme_datasize_t datasizes, vme_swap_t swap, bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags)
 {
 	return (EINVAL);
 }
 
 void
-b3_2706_dmamem_free(vsc, segs, nsegs)
-	void *vsc;
-	bus_dma_segment_t *segs;
-	int nsegs;
+b3_2706_dmamem_free(void *vsc, bus_dma_segment_t *segs, int nsegs)
 {
 }
 

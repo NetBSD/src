@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.34 2008/06/11 17:32:30 drochner Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.35 2009/03/14 15:36:19 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.34 2008/06/11 17:32:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.35 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -137,10 +137,7 @@ const struct cdevsw mt_cdevsw = {
  */
 
 int
-mtmatch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+mtmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
@@ -177,8 +174,7 @@ mtattach(parent, self, aux)
  * drive is opened, or if it has fallen offline.
  */
 int
-mt_putonline(mt)
-	struct mt_softc *mt;
+mt_putonline(struct mt_softc *mt)
 {
 	struct	mscp *mp;
 	struct	mscp_softc *mi =
@@ -263,8 +259,7 @@ mtclose(dev, flags, fmt, l)
 }
 
 void
-mtstrategy(bp)
-	struct buf *bp;
+mtstrategy(struct buf *bp)
 {
 	int unit;
 	struct mt_softc *mt;
@@ -285,29 +280,21 @@ mtstrategy(bp)
 }
 
 int
-mtread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+mtread(dev_t dev, struct uio *uio, int flag)
 {
 
 	return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-mtwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+mtwrite(dev_t dev, struct uio *uio, int flag)
 {
 
 	return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 void
-mtiodone(usc, bp)
-	struct device *usc;
-	struct buf *bp;
+mtiodone(struct device *usc, struct buf *bp)
 {
 
 	biodone(bp);
@@ -317,9 +304,7 @@ mtiodone(usc, bp)
  * Fill in drive addresses in a mscp packet waiting for transfer.
  */
 void
-mtfillin(bp, mp)
-	struct buf *bp;
-	struct mscp *mp;
+mtfillin(struct buf *bp, struct mscp *mp)
 {
 	int unit = mtunit(bp->b_dev);
 	struct mt_softc *mt = device_lookup_private(&mt_cd, unit);
@@ -338,10 +323,7 @@ mtfillin(bp, mp)
  * Handle an error datagram.
  */
 void
-mtdgram(usc, mp, mi)
-	struct device *usc;
-	struct mscp *mp;
-	struct mscp_softc *mi;
+mtdgram(struct device *usc, struct mscp *mp, struct mscp_softc *mi)
 {
 	if (mscp_decodeerror(usc == NULL?"unconf mt" : device_xname(usc), mp, mi))
 		return;
@@ -352,9 +334,7 @@ mtdgram(usc, mp, mi)
  * trying to use it.
  */
 int
-mtonline(usc, mp)
-	struct device *usc;
-	struct mscp *mp;
+mtonline(struct device *usc, struct mscp *mp)
 {
 	struct mt_softc *mt = (void *)usc;
 
@@ -369,9 +349,7 @@ mtonline(usc, mp)
  * We got some (configured) unit's status.  Return DONE.
  */
 int
-mtgotstatus(usc, mp)
-	struct device *usc;
-	struct mscp *mp;
+mtgotstatus(struct device *usc, struct mscp *mp)
 {
 	return (MSCP_DONE);
 }
@@ -401,10 +379,7 @@ static const char *mt_ioerrs[] = {
  */
 /*ARGSUSED*/
 int
-mtioerror(usc, mp, bp)
-	struct device *usc;
-	struct mscp *mp;
-	struct buf *bp;
+mtioerror(struct device *usc, struct mscp *mp, struct buf *bp)
 {
 	struct mt_softc *mt = (void *)usc;
 	int st = mp->mscp_status & M_ST_MASK;
@@ -429,12 +404,7 @@ mtioerror(usc, mp, bp)
  * I/O controls.
  */
 int
-mtioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+mtioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = mtunit(dev);
 	struct mt_softc *mt = device_lookup_private(&mt_cd, unit);
@@ -468,11 +438,7 @@ mtioctl(dev, cmd, data, flag, l)
  * No crash dump support...
  */
 int
-mtdump(dev, blkno, va, size)
-	dev_t	dev;
-	daddr_t blkno;
-	void *va;
-	size_t	size;
+mtdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	return -1;
 }
@@ -560,9 +526,7 @@ mtcmd(mt, cmd, count, complete)
  * Called from bus routines whenever a non-data transfer is finished.
  */
 void
-mtcmddone(usc, mp)
-	struct device *usc;
-	struct mscp *mp;
+mtcmddone(struct device *usc, struct mscp *mp)
 {
 	struct mt_softc *mt = (void *)usc;
 

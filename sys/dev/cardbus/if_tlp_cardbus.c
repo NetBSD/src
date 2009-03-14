@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.59 2008/06/24 19:44:52 drochner Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.60 2009/03/14 15:36:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.59 2008/06/24 19:44:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.60 2009/03/14 15:36:16 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -189,8 +189,7 @@ void tlp_cardbus_get_quirks(struct tulip_cardbus_softc *,
     const u_int8_t *, const struct tlp_cardbus_quirks *);
 
 const struct tulip_cardbus_product *
-tlp_cardbus_lookup(ca)
-	const struct cardbus_attach_args *ca;
+tlp_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct tulip_cardbus_product *tcp;
 
@@ -205,10 +204,7 @@ tlp_cardbus_lookup(ca)
 }
 
 void
-tlp_cardbus_get_quirks(csc, enaddr, tpq)
-	struct tulip_cardbus_softc *csc;
-	const u_int8_t *enaddr;
-	const struct tlp_cardbus_quirks *tpq;
+tlp_cardbus_get_quirks(struct tulip_cardbus_softc *csc, const u_int8_t *enaddr, const struct tlp_cardbus_quirks *tpq)
 {
 
 	for (; tpq->tpq_func != NULL; tpq++) {
@@ -497,8 +493,7 @@ tlp_cardbus_detach(struct device *self, int flags)
 }
 
 int
-tlp_cardbus_enable(sc)
-	struct tulip_softc *sc;
+tlp_cardbus_enable(struct tulip_softc *sc)
 {
 	struct tulip_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -530,8 +525,7 @@ tlp_cardbus_enable(sc)
 }
 
 void
-tlp_cardbus_disable(sc)
-	struct tulip_softc *sc;
+tlp_cardbus_disable(struct tulip_softc *sc)
 {
 	struct tulip_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -547,9 +541,7 @@ tlp_cardbus_disable(sc)
 }
 
 void
-tlp_cardbus_power(sc, why)
-	struct tulip_softc *sc;
-	int why;
+tlp_cardbus_power(struct tulip_softc *sc, int why)
 {
 
 	switch (why) {
@@ -563,8 +555,7 @@ tlp_cardbus_power(sc, why)
 }
 
 void
-tlp_cardbus_setup(csc)
-	struct tulip_cardbus_softc *csc;
+tlp_cardbus_setup(struct tulip_cardbus_softc *csc)
 {
 	struct tulip_softc *sc = &csc->sc_tulip;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -623,8 +614,7 @@ tlp_cardbus_setup(csc)
 }
 
 void
-tlp_cardbus_x3201_reset(sc)
-	struct tulip_softc *sc;
+tlp_cardbus_x3201_reset(struct tulip_softc *sc)
 {
 	u_int32_t reg;
 

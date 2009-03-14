@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.40 2008/04/28 20:23:56 martin Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.41 2009/03/14 15:36:20 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.40 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.41 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,7 @@ static const size_t awi_pcmcia_nproducts =
     sizeof(awi_pcmcia_products) / sizeof(awi_pcmcia_products[0]);
 
 static int
-awi_pcmcia_enable(sc)
-	struct awi_softc *sc;
+awi_pcmcia_enable(struct awi_softc *sc)
 {
 	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
@@ -140,8 +139,7 @@ awi_pcmcia_enable(sc)
 }
 
 static void
-awi_pcmcia_disable(sc)
-	struct awi_softc *sc;
+awi_pcmcia_disable(struct awi_softc *sc)
 {
 	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
@@ -164,8 +162,7 @@ awi_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 static int
-awi_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+awi_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace < 1 ||

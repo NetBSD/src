@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.26 2009/03/14 14:45:54 dsl Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.27 2009/03/14 15:36:00 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.26 2009/03/14 14:45:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.27 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,9 +144,7 @@ tc_3000_500_intr_setup()
 }
 
 const struct evcnt *
-tc_3000_500_intr_evcnt(tcadev, cookie)
-	struct device *tcadev;
-	void *cookie;
+tc_3000_500_intr_evcnt(struct device *tcadev, void *cookie)
 {
 	u_long dev = (u_long)cookie;
 
@@ -182,9 +180,7 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 }
 
 void
-tc_3000_500_intr_disestablish(tcadev, cookie)
-	struct device *tcadev;
-	void *cookie;
+tc_3000_500_intr_disestablish(struct device *tcadev, void *cookie)
 {
 	u_long dev = (u_long)cookie;
 
@@ -205,8 +201,7 @@ tc_3000_500_intr_disestablish(tcadev, cookie)
 }
 
 int
-tc_3000_500_intrnull(val)
-	void *val;
+tc_3000_500_intrnull(void *val)
 {
 
 	panic("tc_3000_500_intrnull: uncaught TC intr for cookie %ld",
@@ -214,9 +209,7 @@ tc_3000_500_intrnull(val)
 }
 
 void
-tc_3000_500_iointr(arg, vec)
-        void *arg;
-        unsigned long vec;
+tc_3000_500_iointr(void *arg, unsigned long vec)
 {
         u_int32_t ir;
 	int ifound;
@@ -292,8 +285,7 @@ tc_3000_500_iointr(arg, vec)
  * framebuffer as the output side of the console.
  */
 int
-tc_3000_500_fb_cnattach(turbo_slot)
-	u_int64_t turbo_slot;
+tc_3000_500_fb_cnattach(u_int64_t turbo_slot)
 {
 	u_int32_t output_slot;
 

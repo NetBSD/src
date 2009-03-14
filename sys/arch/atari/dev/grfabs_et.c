@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.28 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.29 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.28 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.29 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -173,8 +173,7 @@ struct grfabs_et_priv {
  * Initialize list of posible video modes.
  */
 void
-et_probe_video(modelp)
-MODES	*modelp;
+et_probe_video(MODES *modelp)
 {
 	dmode_t	*dm;
 	int	i;
@@ -185,8 +184,7 @@ MODES	*modelp;
 }
 
 static void
-et_display_view(v)
-view_t *v;
+et_display_view(view_t *v)
 {
 	dmode_t		*dm = v->mode;
 	bmap_t		*bm = v->bitmap;
@@ -226,8 +224,7 @@ view_t *v;
 }
 
 void
-et_remove_view(v)
-view_t *v;
+et_remove_view(view_t *v)
 {
 	dmode_t *mode = v->mode;
 
@@ -242,8 +239,7 @@ view_t *v;
 }
 
 void
-et_save_view(v)
-view_t *v;
+et_save_view(view_t *v)
 {
 	bmap_t		*bm = v->bitmap;
 	u_char		font_height;
@@ -288,8 +284,7 @@ view_t *v;
 }
 
 void
-et_free_view(v)
-view_t *v;
+et_free_view(view_t *v)
 {
 	if(v) {
 		et_remove_view(v);
@@ -305,18 +300,13 @@ view_t *v;
 }
 
 static int
-et_use_colormap(v, cm)
-view_t		*v;
-colormap_t	*cm;
+et_use_colormap(view_t *v, colormap_t *cm)
 {
 	return (0); /* XXX: Nothing here for now... */
 }
 
 static view_t *
-et_alloc_view(mode, dim, depth)
-dmode_t	*mode;
-dimen_t	*dim;
-u_char   depth;
+et_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 {
 	view_t		*v;
 	bmap_t		*bm;
@@ -380,11 +370,7 @@ u_char   depth;
 }
 
 static void
-init_view(v, bm, mode, dbox)
-view_t	*v;
-bmap_t	*bm;
-dmode_t	*mode;
-box_t	*dbox;
+init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 {
 	v->bitmap    = bm;
 	v->mode      = mode;
@@ -394,8 +380,7 @@ box_t	*dbox;
 
 /* XXX: No more than a stub... */
 static colormap_t *
-alloc_colormap(dm)
-dmode_t		*dm;
+alloc_colormap(dmode_t *dm)
 {
 	colormap_t	*cm;
 	int		i;
@@ -490,9 +475,7 @@ et_probe_card()
 }
 
 static void
-et_loadmode(mode, regs)
-struct grfvideo_mode	*mode;
-et_sv_reg_t		*regs;
+et_loadmode(struct grfvideo_mode *mode, et_sv_reg_t *regs)
 {
 	unsigned short	HDE, VDE;
 	int	    	lace, dblscan;
@@ -658,8 +641,7 @@ et_sv_reg_t		*regs;
 }
 
 void
-et_hwsave(et_regs)
-et_sv_reg_t	*et_regs;
+et_hwsave(et_sv_reg_t *et_regs)
 {
 	volatile u_char *ba;
 	int		i, s;
@@ -696,8 +678,7 @@ et_sv_reg_t	*et_regs;
 }
 
 void
-et_hwrest(et_regs)
-et_sv_reg_t	*et_regs;
+et_hwrest(et_sv_reg_t *et_regs)
 {
 	volatile u_char *ba;
 	int		i, s;

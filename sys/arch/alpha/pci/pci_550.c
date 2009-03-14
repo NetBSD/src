@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.29 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_550.c,v 1.30 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.29 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.30 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,8 +126,7 @@ void	dec_550_intr_enable(int irq);
 void	dec_550_intr_disable(int irq);
 
 void
-pci_550_pickintr(ccp)
-	struct cia_config *ccp;
+pci_550_pickintr(struct cia_config *ccp)
 {
 	bus_space_tag_t iot = &ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
@@ -171,9 +170,7 @@ pci_550_pickintr(ccp)
 }
 
 int     
-dec_550_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_550_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
@@ -252,9 +249,7 @@ dec_550_intr_map(pa, ihp)
 }
 
 const char *
-dec_550_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_550_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -274,9 +269,7 @@ dec_550_intr_string(ccv, ih)
 }
 
 const struct evcnt *
-dec_550_intr_evcnt(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_550_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -397,9 +390,7 @@ dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 }
 
 void
-dec_550_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+dec_550_iointr(void *arg, unsigned long vec)
 {
 	int irq; 
 
@@ -418,16 +409,14 @@ dec_550_iointr(arg, vec)
 }
 
 void
-dec_550_intr_enable(irq)
-	int irq;
+dec_550_intr_enable(int irq)
 {
 
 	cia_pyxis_intr_enable(irq + DEC_550_PCI_IRQ_BEGIN, 1);
 }
 
 void
-dec_550_intr_disable(irq)
-	int irq;
+dec_550_intr_disable(int irq)
 {
 
 	cia_pyxis_intr_enable(irq + DEC_550_PCI_IRQ_BEGIN, 0);

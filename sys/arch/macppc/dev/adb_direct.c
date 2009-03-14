@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.40 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.41 2009/03/14 15:36:09 dsl Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.40 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.41 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,7 @@ int	setsoftadb(void);
  * is in [0].
  */
 void
-print_single(str)
-	u_char *str;
+print_single(u_char *str)
 {
 	int x;
 

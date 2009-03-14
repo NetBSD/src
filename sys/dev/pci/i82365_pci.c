@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.26 2008/06/26 12:33:17 drochner Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.27 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.26 2008/06/26 12:33:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.27 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,8 +213,7 @@ pcic_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-pcic_pci_callback(self)
-	struct device *self;
+pcic_pci_callback(struct device *self)
 {
 	struct pcic_softc *sc = (void *) self;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_isa.c,v 1.7 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: sysbeep_isa.c,v 1.8 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysbeep_isa.c,v 1.7 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysbeep_isa.c,v 1.8 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,7 @@ static int ppi_attached;
 static pcppi_tag_t ppicookie;
 
 int
-sysbeep_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sysbeep_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (!ppi_attached);
 }

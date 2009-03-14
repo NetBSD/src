@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85 2008/11/19 18:36:01 ad Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.86 2009/03/14 15:36:14 dsl Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85 2008/11/19 18:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86 2009/03/14 15:36:14 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -76,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85 2008/11/19 18:36:01 ad Exp $");
  * do not need to pass an access_type to pmap_enter().   
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap, *kpmap;
 	vaddr_t uva;	/* User VA (map from) */
@@ -115,9 +113,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
 	vsize_t off;

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.45 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: autoconf.c,v 1.46 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,8 +164,7 @@ parse_prom_bootdev()
 }
 
 int
-atoi(s)
-	char *s;
+atoi(char *s)
 {
 	int n, neg;
 
@@ -189,9 +188,7 @@ atoi(s)
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	if (bootdev_data == NULL) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: satlink.c,v 1.40 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.40 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,10 +298,7 @@ satlinkclose(dev_t dev, int flags, int fmt,
 }
 
 int
-satlinkread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+satlinkread(dev_t dev, struct uio *uio, int flags)
 {
 	struct satlink_softc *sc;
 	int error, s, count, sptr;
@@ -400,10 +397,7 @@ satlinkioctl(dev_t dev, u_long cmd, void *data, int flags,
 }
 
 int
-satlinkpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+satlinkpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct satlink_softc *sc;
 	int s, revents;
@@ -494,8 +488,7 @@ satlinkkqfilter(dev_t dev, struct knote *kn)
 }
 
 void
-satlinktimeout(arg)
-	void *arg;
+satlinktimeout(void *arg)
 {
 	struct satlink_softc *sc = arg;
 	bus_size_t resid;

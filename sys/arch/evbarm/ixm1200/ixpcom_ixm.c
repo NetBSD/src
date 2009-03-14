@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.6 2003/03/25 06:53:16 igy Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.7 2009/03/14 15:36:05 dsl Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.6 2003/03/25 06:53:16 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.7 2009/03/14 15:36:05 dsl Exp $");
 
 /* Front-end of ixpcom */
 
@@ -63,10 +63,7 @@ CFATTACH_DECL(ixpcom_ixm, sizeof(struct ixpcom_softc),
     ixpcom_ixm_match, ixpcom_ixm_attach, NULL, NULL);
 
 static int
-ixpcom_ixm_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ixpcom_ixm_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	if (strcmp(match->cf_name, "ixpcom") == 0)
 		return 1;

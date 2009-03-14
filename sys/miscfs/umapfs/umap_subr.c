@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.26 2009/02/13 22:29:00 plunky Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.27 2009/03/14 15:36:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.26 2009/02/13 22:29:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.27 2009/03/14 15:36:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,9 +138,7 @@ umap_reverse_findid(id, map, nentries)
 /* umap_mapids maps all of the ids in a credential, both user and group. */
 
 void
-umap_mapids(v_mount, credp)
-	struct mount *v_mount;
-	kauth_cred_t credp;
+umap_mapids(struct mount *v_mount, kauth_cred_t credp)
 {
 	int i, unentries, gnentries;
 	uid_t uid;

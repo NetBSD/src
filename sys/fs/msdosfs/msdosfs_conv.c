@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.5 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.6 2009/03/14 15:36:21 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.5 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.6 2009/03/14 15:36:21 dsl Exp $");
 
 /*
  * System include files.
@@ -96,12 +96,7 @@ u_short lastdtime;
  * file timestamps. The passed in unix time is assumed to be in GMT.
  */
 void
-unix2dostime(tsp, gmtoff, ddp, dtp, dhp)
-	const struct timespec *tsp;
-	int gmtoff;
-	u_int16_t *ddp;
-	u_int16_t *dtp;
-	u_int8_t *dhp;
+unix2dostime(const struct timespec *tsp, int gmtoff, u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp)
 {
 	u_long t;
 	u_long days;
@@ -177,12 +172,7 @@ u_long lastseconds;
  * not be too efficient.
  */
 void
-dos2unixtime(dd, dt, dh, gmtoff, tsp)
-	u_int dd;
-	u_int dt;
-	u_int dh;
-	int gmtoff;
-	struct timespec *tsp;
+dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff, struct timespec *tsp)
 {
 	u_long seconds;
 	u_long m, month;
@@ -577,12 +567,7 @@ unix2dosfn(un, dn, unlen, gen)
  *	 i.e. doesn't consist solely of blanks and dots
  */
 int
-unix2winfn(un, unlen, wep, cnt, chksum)
-	const u_char *un;
-	int unlen;
-	struct winentry *wep;
-	int cnt;
-	int chksum;
+unix2winfn(const u_char *un, int unlen, struct winentry *wep, int cnt, int chksum)
 {
 	const u_int8_t *cp;
 	u_int8_t *wcp;
@@ -643,11 +628,7 @@ done:
  * Returns the checksum or -1 if no match
  */
 int
-winChkName(un, unlen, wep, chksum)
-	const u_char *un;
-	int unlen;
-	struct winentry *wep;
-	int chksum;
+winChkName(const u_char *un, int unlen, struct winentry *wep, int chksum)
 {
 	u_int8_t *cp;
 	int i;
@@ -723,10 +704,7 @@ winChkName(un, unlen, wep, chksum)
  * Returns the checksum or -1 if impossible
  */
 int
-win2unixfn(wep, dp, chksum)
-	struct winentry *wep;
-	struct dirent *dp;
-	int chksum;
+win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 {
 	u_int8_t *cp;
 	u_int8_t *np, *ep = dp->d_name + WIN_MAXLEN;
@@ -829,8 +807,7 @@ win2unixfn(wep, dp, chksum)
  * Compute the checksum of a DOS filename for Win95 use
  */
 u_int8_t
-winChksum(name)
-	u_int8_t *name;
+winChksum(u_int8_t *name)
 {
 	int i;
 	u_int8_t s;
@@ -844,9 +821,7 @@ winChksum(name)
  * Determine the number of slots necessary for Win95 names
  */
 int
-winSlotCnt(un, unlen)
-	const u_char *un;
-	int unlen;
+winSlotCnt(const u_char *un, int unlen)
 {
 	for (un += unlen; unlen > 0; unlen--)
 		if (*--un != ' ' && *un != '.')

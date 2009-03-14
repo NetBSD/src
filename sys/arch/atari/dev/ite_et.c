@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.21 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.22 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.21 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.22 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,10 +108,7 @@ CFATTACH_DECL(grfet, sizeof(struct grf_softc),
 static struct cfdata *cfdata_grf   = NULL;
 
 int
-grfetmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int	card_probed  = -1;
 	static int	did_consinit = 0;
@@ -259,9 +256,7 @@ void		*auxp;
 }
 
 int
-grfetprint(auxp, pnp)
-void *auxp;
-const char *pnp;
+grfetprint(void *auxp, const char *pnp)
 {
 	if(pnp) /* XXX */
 		aprint_normal("ite at %s", pnp);
@@ -272,8 +267,7 @@ const char *pnp;
  * Init ite portion of grf_softc struct
  */
 static void
-grfet_iteinit(gp)
-struct grf_softc *gp;
+grfet_iteinit(struct grf_softc *gp)
 {
 
 	gp->g_itecursor = et_cursor;
@@ -285,15 +279,13 @@ struct grf_softc *gp;
 }
 
 static void
-view_deinit(ip)
-struct ite_softc	*ip;
+view_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
 
 static void
-view_init(ip)
-register struct ite_softc *ip;
+view_init(register struct ite_softc *ip)
 {
 	struct itewinsize	wsz;
 	ipriv_t			*cci;
@@ -352,9 +344,7 @@ register struct ite_softc *ip;
 }
 
 static int
-ite_newsize(ip, winsz)
-struct ite_softc	*ip;
-struct itewinsize	*winsz;
+ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 {
 	struct view_size	vs;
 	int			error = 0;
@@ -401,12 +391,7 @@ struct itewinsize	*winsz;
 }
 
 int
-iteet_ioctl(ip, cmd, addr, flag, l)
-struct ite_softc	*ip;
-u_long			cmd;
-void *			addr;
-int			flag;
-struct lwp		*l;
+iteet_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct winsize		ws;
 	struct itewinsize	*is;
@@ -454,9 +439,7 @@ struct lwp		*l;
 }
 
 void
-et_cursor(ip, flag)
-	struct ite_softc *ip;
-	int flag;
+et_cursor(struct ite_softc *ip, int flag)
 {
 	volatile u_char	*ba;
 		 view_t	*v;
@@ -495,12 +478,7 @@ et_cursor(ip, flag)
 }
 
 void
-et_putc(ip, c, dy, dx, mode)
-	struct ite_softc *ip;
-	int c;
-	int dy;
-	int dx;
-	int mode;
+et_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	view_t	*v   = viewview(ip->grf->g_viewdev);
 	u_char	attr;
@@ -516,12 +494,7 @@ et_putc(ip, c, dy, dx, mode)
 }
 
 void
-et_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
-	int sy;
-	int sx;
-	int h;
-	int w;
+et_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
 	/* et_clear and et_scroll both rely on ite passing arguments
 	 * which describe continuous regions.  For a VT200 terminal,
@@ -537,12 +510,7 @@ et_clear(ip, sy, sx, h, w)
 }
 
 void
-et_scroll(ip, sy, sx, count, dir)
-	struct ite_softc *ip;
-	int	sy;
-	int	sx;
-	int	count;
-	int	dir;
+et_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 	view_t	*v   = viewview(ip->grf->g_viewdev);
 	u_short	*fb;
@@ -587,10 +555,7 @@ et_scroll(ip, sy, sx, count, dir)
 }
 
 static void
-et_inittextmode(ip, etregs, loadfont)
-	struct ite_softc *ip;
-	et_sv_reg_t	 *etregs;
-	int		 loadfont;
+et_inittextmode(struct ite_softc *ip, et_sv_reg_t *etregs, int loadfont)
 {
 	volatile u_char *ba;
 	font_info	*fd;

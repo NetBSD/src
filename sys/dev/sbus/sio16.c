@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.17 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: sio16.c,v 1.18 2009/03/14 15:36:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.17 2008/05/29 14:51:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.18 2009/03/14 15:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -108,10 +108,7 @@ struct sio16_attach_args {
  */
 #define	SIO16_ROM_NAME	"sio16"
 int
-sio16_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+sio16_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -246,9 +243,7 @@ sio16_attach(parent, self, aux)
  * in clcd_attach() below, or the various service match routines.
  */
 u_char
-sio16_ackfunc(v, who)
-	void *v;
-	int who;
+sio16_ackfunc(void *v, int who)
 {
 	struct sio16_softc *sc = v;
 	bus_size_t addr;
@@ -282,10 +277,7 @@ CFATTACH_DECL(clcd, sizeof(struct cd18xx_softc),
     clcd_match, clcd_attach, NULL, NULL);
 
 static int
-clcd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clcd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* XXX */

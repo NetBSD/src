@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.18 2003/05/03 18:10:42 wiz Exp $	*/
+/*	$NetBSD: cc.c,v 1.19 2009/03/14 15:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.18 2003/05/03 18:10:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.19 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,8 +68,7 @@ custom_chips_init()
 LIST_HEAD(vbllist, vbl_node) vbl_list;
 
 void
-turn_vbl_function_off(n)
-	struct vbl_node *n;
+turn_vbl_function_off(struct vbl_node *n)
 {
 	if (n->flags & VBLNF_OFF)
 		return;
@@ -81,17 +80,13 @@ turn_vbl_function_off(n)
 
 /* allow function to be called on next vbl interrupt. */
 void
-turn_vbl_function_on(n)
-	struct vbl_node *n;
+turn_vbl_function_on(struct vbl_node *n)
 {
 	n->flags &= (short) ~(VBLNF_OFF);
 }
 
 void
-add_vbl_function(add, priority, data)
-	struct vbl_node *add;
-	short priority;
-	void *data;
+add_vbl_function(struct vbl_node *add, short priority, void *data)
 {
 	int s;
 	struct vbl_node *n, *prev;
@@ -122,8 +117,7 @@ add_vbl_function(add, priority, data)
 }
 
 void
-remove_vbl_function(n)
-	struct vbl_node *n;
+remove_vbl_function(struct vbl_node *n)
 {
 	int s;
 
@@ -201,8 +195,7 @@ blitter_handler()
 
 
 void
-do_blit(size)
-	u_short size;
+do_blit(u_short size)
 {
 	custom.bltsize = size;
 }
@@ -287,9 +280,7 @@ wait_tof()
 }
 
 cop_t *
-find_copper_inst(l, inst)
-	cop_t *l;
-	u_short inst;
+find_copper_inst(cop_t *l, u_short inst)
 {
 	cop_t *r = NULL;
 	while ((l->cp.data & 0xff01ff01) != 0xff01ff00) {
@@ -303,8 +294,7 @@ find_copper_inst(l, inst)
 }
 
 void
-install_copper_list(l)
-	cop_t *l;
+install_copper_list(cop_t *l)
 {
 	wait_tof();
 	wait_tof();
@@ -503,8 +493,7 @@ cc_init_chipmem()
 }
 
 void *
-alloc_chipmem(size)
-	u_long size;
+alloc_chipmem(u_long size)
 {
 	int s;
 	struct mem_node *mn, *new;
@@ -561,8 +550,7 @@ alloc_chipmem(size)
 }
 
 void
-free_chipmem(mem)
-	void *mem;
+free_chipmem(void *mem)
 {
 	struct mem_node *mn, *next, *prev;
 	int s;
@@ -640,8 +628,7 @@ free_chipmem(mem)
 }
 
 u_long
-sizeof_chipmem(mem)
-	void *mem;
+sizeof_chipmem(void *mem)
 {
 	struct mem_node *mn;
 
@@ -653,8 +640,7 @@ sizeof_chipmem(mem)
 }
 
 u_long
-avail_chipmem(largest)
-	int largest;
+avail_chipmem(int largest)
 {
 	struct mem_node *mn;
 	u_long val;

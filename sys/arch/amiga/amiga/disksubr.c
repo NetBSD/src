@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.56 2008/01/02 11:48:22 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.57 2009/03/14 15:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.56 2008/01/02 11:48:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.57 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,8 +593,7 @@ done:
 }
 
 u_long
-rdbchksum(bdata)
-	void *bdata;
+rdbchksum(void *bdata)
 {
 	u_long *blp, cnt, val;
 
@@ -608,8 +607,7 @@ rdbchksum(bdata)
 }
 
 struct adostype
-getadostype(dostype)
-	u_long dostype;
+getadostype(u_long dostype)
 {
 	struct adostype adt;
 	u_long t3, b1;

@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.45 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: lca.c,v 1.46 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.45 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.46 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,10 +109,7 @@ int lcafound;
 struct lca_config lca_configuration;
 
 int
-lcamatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lcamatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -130,9 +127,7 @@ lcamatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-lca_init(lcp, mallocsafe)
-	struct lca_config *lcp;
-	int mallocsafe;
+lca_init(struct lca_config *lcp, int mallocsafe)
 {
 
 	/*

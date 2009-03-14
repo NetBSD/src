@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2009/03/14 14:46:03 dsl Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2009/03/14 15:36:11 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -108,8 +108,7 @@ main(argc, argv)
 }
 
 void
-LoadAndReset(image)
-	void *image;
+LoadAndReset(void *image)
 {
 	int mib[2];
 	u_long val;

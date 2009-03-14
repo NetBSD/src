@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.22 2008/12/17 20:51:31 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.23 2009/03/14 15:35:58 dsl Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2008/12/17 20:51:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2009/03/14 15:35:58 dsl Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -483,8 +483,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 }
 
 void
-pmap_collect(pmap)
-	pmap_t pmap;
+pmap_collect(pmap_t pmap)
 {
 	UVMHIST_FUNC("pmap_collect");
 
@@ -769,8 +768,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 }
 
 inline bool
-pmap_is_modified(page)
-	struct vm_page *page;
+pmap_is_modified(struct vm_page *page)
 {
 	int ppn;
 	bool rv;
@@ -803,8 +801,7 @@ pmap_is_modified(page)
 }
 
 inline bool
-pmap_is_referenced(page)
-	struct vm_page *page;
+pmap_is_referenced(struct vm_page *page)
 {
 	int ppn;
 	UVMHIST_FUNC("pmap_is_referenced");
@@ -977,8 +974,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 }
 
 paddr_t
-pmap_phys_address(ppn)
-	paddr_t ppn;
+pmap_phys_address(paddr_t ppn)
 {
 	panic("pmap_phys_address not implemented");
 }

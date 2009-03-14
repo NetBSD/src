@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.15 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.16 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.15 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.16 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +90,7 @@ cons_decl(clmpcc);
  * Is the CD2401 chip present?
  */
 int
-clmpcc_pcctwo_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clmpcc_pcctwo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcctwo_attach_args *pa;
 
@@ -111,10 +108,7 @@ clmpcc_pcctwo_match(parent, cf, aux)
  * Attach a found CD2401.
  */
 void
-clmpcc_pcctwo_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+clmpcc_pcctwo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct clmpcc_softc *sc;
 	struct pcctwo_attach_args *pa = aux;
@@ -147,9 +141,7 @@ clmpcc_pcctwo_attach(parent, self, aux)
 }
 
 void
-clmpcc_pcctwo_iackhook(sc, which)
-	struct clmpcc_softc *sc;
-	int which;
+clmpcc_pcctwo_iackhook(struct clmpcc_softc *sc, int which)
 {
 	bus_size_t offset;
 	volatile u_char foo;
@@ -181,9 +173,7 @@ clmpcc_pcctwo_iackhook(sc, which)
  * This routine is only used prior to clmpcc_attach() being called
  */
 void
-clmpcc_pcctwo_consiackhook(sc, which)
-	struct clmpcc_softc *sc;
-	int which;
+clmpcc_pcctwo_consiackhook(struct clmpcc_softc *sc, int which)
 {
 	bus_space_handle_t bush;
 	bus_size_t offset;
@@ -233,8 +223,7 @@ clmpcc_pcctwo_consiackhook(sc, which)
  * Check for CD2401 console.
  */
 void
-clmpcccnprobe(cp)
-	struct consdev *cp;
+clmpcccnprobe(struct consdev *cp)
 {
 	int maj;
 
@@ -259,8 +248,7 @@ clmpcccnprobe(cp)
 }
 
 void
-clmpcccninit(cp)
-	struct consdev *cp;
+clmpcccninit(struct consdev *cp)
 {
 	static struct clmpcc_softc cons_sc;
 

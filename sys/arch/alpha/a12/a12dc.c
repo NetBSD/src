@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.20 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: a12dc.c,v 1.21 2009/03/14 15:35:59 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.20 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.21 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,10 +142,7 @@ static void a12_worry(int worry_number);
 static void A12InitBackDriver(int);
 
 int
-a12dcmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+a12dcmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -164,7 +161,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.20 $");
+	printf(": driver %s\n", "$Revision: 1.21 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -176,9 +173,7 @@ a12dcattach(parent, self, aux)
 }
 
 void
-a12dc_init(ccp, mallocsafe)
-	struct a12dc_config *ccp;
-	int mallocsafe;
+a12dc_init(struct a12dc_config *ccp, int mallocsafe)
 {
 }
 
@@ -327,10 +322,7 @@ a12dcclose(dev, flag, mode, p)
 }
  
 int
-a12dcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+a12dcread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = a12dc_tty[minor(dev)];
 
@@ -338,10 +330,7 @@ a12dcread(dev, uio, flag)
 }
  
 int
-a12dcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+a12dcwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = a12dc_tty[minor(dev)];
  
@@ -349,10 +338,7 @@ a12dcwrite(dev, uio, flag)
 }
 
 int
-a12dcpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+a12dcpoll(dev_t dev, int events, struct proc *p)
 {
 	struct tty *tp = a12dc_tty[minor(dev)];
  
@@ -360,12 +346,7 @@ a12dcpoll(dev, events, p)
 }
  
 int
-a12dcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct proc *p;
+a12dcioctl(dev_t dev, u_long cmd, void *data, int flag, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp = a12dc_tty[unit];
@@ -378,16 +359,13 @@ a12dcioctl(dev, cmd, data, flag, p)
 }
 
 int
-a12dcparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+a12dcparam(struct tty *tp, struct termios *t)
 {
 	return 0;
 }
 
 void
-a12dcstart(tp)
-	struct tty *tp;
+a12dcstart(struct tty *tp)
 {
 	int s;
 
@@ -407,8 +385,7 @@ out:
  * Stop output on a line.
  */
 void
-a12dcstop(tp, flag)
-	struct tty *tp;
+a12dcstop(struct tty *tp, flag)
 {
 	int s;
 
@@ -420,8 +397,7 @@ a12dcstop(tp, flag)
 }
 
 int
-a12dcintr(v)
-	void *v;
+a12dcintr(void *v)
 {
 #if 1
 	DIE();
@@ -437,8 +413,7 @@ a12dcintr(v)
 }
 
 struct tty *
-a12dctty(dev)
-	dev_t dev;
+a12dctty(dev_t dev)
 {
 
 	if (minor(dev) != 0)
@@ -462,25 +437,20 @@ a12dccnattach()
 }
 
 int
-a12dccngetc(dev)
-	dev_t dev;
+a12dccngetc(dev_t dev)
 {
 	for(;;)
 		continue;
 }
 
 void
-a12dccnputc(dev, c)
-	dev_t dev;
-	int c;
+a12dccnputc(dev_t dev, int c)
 {
 	a12cdrputc(c);
 }
 
 void
-a12dccnpollc(dev, on)
-	dev_t dev;
-	int on;
+a12dccnpollc(dev_t dev, int on)
 {
 }
 

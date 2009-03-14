@@ -1,4 +1,4 @@
-/*	$NetBSD: xpm2bootimg.c,v 1.1 2002/01/27 01:48:00 minoura Exp $	*/
+/*	$NetBSD: xpm2bootimg.c,v 1.2 2009/03/14 15:36:15 dsl Exp $	*/
 
 /*
  *	convert XPM format image to boot title format
@@ -50,8 +50,7 @@ static int curlen;
 static int obytes;
 
 static void
-putbyte(c)
-	int c;
+putbyte(int c)
 {
 	static unsigned char wbuf;
 
@@ -116,8 +115,7 @@ putrun(val, len)
 }
 
 static void
-adddot(val)
-	int val;
+adddot(int val)
 {
 
 	if (curval != val) {
@@ -155,8 +153,7 @@ flushdot()
  * convert r8g8b8 to g5r5b5i1
  */
 static unsigned
-rgb16b(rgb)
-	int rgb;
+rgb16b(int rgb)
 {
 	unsigned r = rgb >> 16, g = (rgb >> 8) & 0xff, b = rgb & 0xff;
 	unsigned rgb16;
@@ -224,8 +221,7 @@ getline()
 }
 
 static void
-error(msg)
-	char *msg;
+error(char *msg)
 {
 	if (!msg)
 		msg = "format error";

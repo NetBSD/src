@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.43 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: clock.c,v 1.44 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -184,10 +184,7 @@ static int	clk2min;	/* current, from above choices		*/
 #endif
 
 int
-clockmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if (!atari_realconfig) {
 	    /*
@@ -281,8 +278,7 @@ void cpu_initclocks()
 }
 
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 #ifdef STATCLOCK
 	if (newhz == stathz)
@@ -293,8 +289,7 @@ setstatclockrate(newhz)
 
 #ifdef STATCLOCK
 void
-statintr(frame)
-	struct clockframe frame;
+statintr(struct clockframe frame)
 {
 	register int	var, r;
 
@@ -383,9 +378,7 @@ delay(unsigned int n)
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
  */
-profclock(pc, ps)
-	void *pc;
-	int ps;
+profclock(void *pc, int ps)
 {
 	/*
 	 * Came from user mode.
@@ -523,11 +516,7 @@ rtcopen(dev, flag, mode, l)
 }
 
 int
-rtcclose(dev, flag, mode, l)
-	dev_t		dev;
-	int		flag;
-	int		mode;
-	struct lwp	*l;
+rtcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int			unit = minor(dev);
 	struct clock_softc	*sc = device_lookup_private(&clock_cd, unit);
@@ -537,10 +526,7 @@ rtcclose(dev, flag, mode, l)
 }
 
 int
-rtcread(dev, uio, flags)
-	dev_t		dev;
-	struct uio	*uio;
-	int		flags;
+rtcread(dev_t dev, struct uio *uio, int flags)
 {
 	struct clock_softc	*sc;
 	mc_todregs		clkregs;
@@ -569,9 +555,7 @@ rtcread(dev, uio, flags)
 }
 
 static int
-twodigits(buffer, pos)
-	char *buffer;
-	int pos;
+twodigits(char *buffer, int pos)
 {
 	int result = 0;
 
@@ -583,10 +567,7 @@ twodigits(buffer, pos)
 }
 
 int
-rtcwrite(dev, uio, flags)
-	dev_t		dev;
-	struct uio	*uio;
-	int		flags;
+rtcwrite(dev_t dev, struct uio *uio, int flags)
 {
 	mc_todregs		clkregs;
 	int			s, length, error;

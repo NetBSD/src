@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2008/11/11 06:46:40 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2008/11/11 06:46:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2009/03/14 15:36:04 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -218,8 +218,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	struct btinfo_common *help = (struct btinfo_common *)bootinfo;

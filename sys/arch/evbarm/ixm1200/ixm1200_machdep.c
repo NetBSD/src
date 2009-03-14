@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.39 2009/03/14 14:45:59 dsl Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.40 2009/03/14 15:36:05 dsl Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.39 2009/03/14 14:45:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.40 2009/03/14 15:36:05 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -231,9 +231,7 @@ void ixdp_ixp12x0_cc_setup(void);
  */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	/*
 	 * If we are still cold then hit the air brakes

@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.18 2008/05/10 15:31:04 martin Exp $	*/
+/*	$NetBSD: epe.c,v 1.19 2009/03/14 15:36:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.18 2008/05/10 15:31:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.19 2009/03/14 15:36:01 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -462,8 +462,7 @@ epe_init(struct epe_softc *sc)
 }
 
 static int
-epe_mediachange(ifp)
-	struct ifnet *ifp;
+epe_mediachange(struct ifnet *ifp)
 {
 	if (ifp->if_flags & IFF_UP)
 		epe_ifinit(ifp);
@@ -507,8 +506,7 @@ epe_mii_writereg(self, phy, reg, val)
 
 	
 void
-epe_statchg(self)
-        struct device *self;
+epe_statchg(struct device *self)
 {
         struct epe_softc *sc = (struct epe_softc *)self;
         u_int32_t reg;
@@ -526,8 +524,7 @@ epe_statchg(self)
 }
 
 void
-epe_tick(arg)
-	void *arg;
+epe_tick(void *arg)
 {
 	struct epe_softc* sc = (struct epe_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
@@ -552,10 +549,7 @@ epe_tick(arg)
 
 
 static int
-epe_ifioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+epe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int s, error;
 
@@ -571,8 +565,7 @@ epe_ifioctl(ifp, cmd, data)
 }
 
 static void
-epe_ifstart(ifp)
-	struct ifnet *ifp;
+epe_ifstart(struct ifnet *ifp)
 {
 	struct epe_softc *sc = (struct epe_softc *)ifp->if_softc;
 	struct mbuf *m;
@@ -686,8 +679,7 @@ stop:
 }
 
 static void
-epe_ifwatchdog(ifp)
-	struct ifnet *ifp;
+epe_ifwatchdog(struct ifnet *ifp)
 {
 	struct epe_softc *sc = (struct epe_softc *)ifp->if_softc;
 
@@ -698,8 +690,7 @@ epe_ifwatchdog(ifp)
 }
 
 static int
-epe_ifinit(ifp)
-	struct ifnet *ifp;
+epe_ifinit(struct ifnet *ifp)
 {
 	struct epe_softc *sc = ifp->if_softc;
 	int rc, s = splnet();
@@ -722,9 +713,7 @@ out:
 }
 
 static void
-epe_ifstop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+epe_ifstop(struct ifnet *ifp, int disable)
 {
 	struct epe_softc *sc = ifp->if_softc;
 
@@ -743,8 +732,7 @@ epe_ifstop(ifp, disable)
 }
 
 static void
-epe_setaddr(ifp)
-	struct ifnet *ifp;
+epe_setaddr(struct ifnet *ifp)
 {
 	struct epe_softc *sc = ifp->if_softc;
 	struct ethercom *ac = &sc->sc_ec;

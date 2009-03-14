@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.20 2008/04/05 21:31:23 cegger Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.21 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.20 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.21 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,8 +211,7 @@ fail1:
 }
 
 static int
-tr_pcmcia_enable(sc)
-	struct tr_softc *sc;
+tr_pcmcia_enable(struct tr_softc *sc)
 {
 	struct tr_pcmcia_softc *psc = (struct tr_pcmcia_softc *) sc;
 	int ret;
@@ -238,8 +237,7 @@ tr_pcmcia_enable(sc)
 }
 
 static void
-tr_pcmcia_disable(sc)
-	struct tr_softc *sc;
+tr_pcmcia_disable(struct tr_softc *sc)
 {
 	struct tr_pcmcia_softc *psc = (struct tr_pcmcia_softc *) sc;
 
@@ -248,8 +246,7 @@ tr_pcmcia_disable(sc)
 }
 
 static int
-tr_pcmcia_mediachange(sc)
-	struct tr_softc *sc;
+tr_pcmcia_mediachange(struct tr_softc *sc)
 {
 	int setspeed = 0;
 
@@ -287,9 +284,7 @@ tr_pcmcia_mediachange(sc)
  * XXX Copy of tropic_mediastatus()
  */
 static void
-tr_pcmcia_mediastatus(sc, ifmr)
-	struct tr_softc *sc;
-	struct ifmediareq *ifmr;
+tr_pcmcia_mediastatus(struct tr_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifmedia	*ifm = &sc->sc_media;
 
@@ -297,9 +292,7 @@ tr_pcmcia_mediastatus(sc, ifmr)
 }
 
 int
-tr_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+tr_pcmcia_detach(struct device *self, int flags)
 {
 	struct tr_pcmcia_softc *psc = (struct tr_pcmcia_softc *)self;
 	int rv;
@@ -319,8 +312,7 @@ tr_pcmcia_detach(self, flags)
 }
 
 static void
-tr_pcmcia_setup(sc)
-	struct tr_softc *sc;
+tr_pcmcia_setup(struct tr_softc *sc)
 {
 	int s;
 

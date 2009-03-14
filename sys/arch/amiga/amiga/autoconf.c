@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.99 2008/06/13 08:17:24 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.100 2009/03/14 15:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99 2008/06/13 08:17:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,9 +129,7 @@ cpu_rootconf()
 
 /*ARGSUSED*/
 int
-simple_devprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+simple_devprint(void *auxp, const char *pnp)
 {
 	return(QUIET);
 }
@@ -157,11 +155,7 @@ matchname(fp, sp)
  * by checking for NULL.
  */
 int
-amiga_config_found(pcfp, pdp, auxp, pfn)
-	struct cfdata *pcfp;
-	struct device *pdp;
-	void *auxp;
-	cfprint_t pfn;
+amiga_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp, cfprint_t pfn)
 {
 	struct device temp;
 	struct cfdata *cf;
@@ -237,10 +231,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
     mbmatch, mbattach, NULL, NULL);
 
 int
-mbmatch(pdp, cfp, auxp)
-	struct device	*pdp;
-	struct cfdata	*cfp;
-	void		*auxp;
+mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 #if 0	/*
 	 * XXX is this right? but we need to be found twice
@@ -312,9 +303,7 @@ mbattach(pdp, dp, auxp)
 }
 
 int
-mbprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+mbprint(void *auxp, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("%s at %s", (char *)auxp, pnp);

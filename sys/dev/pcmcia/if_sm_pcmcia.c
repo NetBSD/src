@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.51 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.52 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.51 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.52 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,7 @@ sm_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 int
-sm_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+sm_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_memspace != 0 ||
@@ -186,9 +185,7 @@ fail:
 }
 
 int
-sm_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+sm_pcmcia_detach(struct device *self, int flags)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
 	int error;
@@ -206,9 +203,7 @@ sm_pcmcia_detach(self, flags)
 }
 
 int
-sm_pcmcia_ascii_enaddr(cisstr, myla)
-	const char *cisstr;
-	u_int8_t *myla;
+sm_pcmcia_ascii_enaddr(const char *cisstr, u_int8_t *myla)
 {
 	u_int8_t digit;
 	int i;
@@ -243,8 +238,7 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 }
 
 int
-sm_pcmcia_enable(sc)
-	struct smc91cxx_softc *sc;
+sm_pcmcia_enable(struct smc91cxx_softc *sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 	int error;
@@ -265,8 +259,7 @@ sm_pcmcia_enable(sc)
 }
 
 void
-sm_pcmcia_disable(sc)
-	struct smc91cxx_softc *sc;
+sm_pcmcia_disable(struct smc91cxx_softc *sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 

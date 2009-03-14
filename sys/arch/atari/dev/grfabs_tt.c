@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.16 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.17 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.16 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.17 2009/03/14 15:36:03 dsl Exp $");
 
 #ifdef TT_VIDEO
 /*
@@ -113,8 +113,7 @@ static dmode_t vid_modes[] = {
  */
 
 void
-tt_probe_video(modelp)
-MODES	*modelp;
+tt_probe_video(MODES *modelp)
 {
 	dmode_t	*dm;
 	int	i;
@@ -142,8 +141,7 @@ MODES	*modelp;
 }
 
 static void
-tt_display_view(v)
-view_t *v;
+tt_display_view(view_t *v)
 {
 	dmode_t	*dm = v->mode;
 	bmap_t	*bm = v->bitmap;
@@ -167,8 +165,7 @@ view_t *v;
 }
 
 void
-tt_remove_view(v)
-view_t *v;
+tt_remove_view(view_t *v)
 {
 	dmode_t *mode = v->mode;
 
@@ -183,14 +180,12 @@ view_t *v;
 }
 
 void
-tt_save_view(v)
-view_t *v;
+tt_save_view(view_t *v)
 {
 }
 
 void
-tt_free_view(v)
-view_t *v;
+tt_free_view(view_t *v)
 {
 	if(v) {
 		tt_remove_view(v);
@@ -203,9 +198,7 @@ view_t *v;
 }
 
 static int
-tt_use_colormap(v, cm)
-view_t		*v;
-colormap_t	*cm;
+tt_use_colormap(view_t *v, colormap_t *cm)
 {
 	dmode_t			*dm;
 	volatile u_short	*creg;
@@ -287,10 +280,7 @@ colormap_t	*cm;
 }
 
 static view_t *
-tt_alloc_view(mode, dim, depth)
-dmode_t	*mode;
-dimen_t	*dim;
-u_char   depth;
+tt_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 {
 	view_t *v;
 	bmap_t *bm;
@@ -319,11 +309,7 @@ u_char   depth;
 }
 
 static void
-init_view(v, bm, mode, dbox)
-view_t	*v;
-bmap_t	*bm;
-dmode_t	*mode;
-box_t	*dbox;
+init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 {
 	v->bitmap = bm;
 	v->mode   = mode;
@@ -381,16 +367,14 @@ u_char	depth;
 }
 
 static void
-free_bitmap(bm)
-bmap_t *bm;
+free_bitmap(bmap_t *bm)
 {
 	if (bm)
 		free_stmem(bm);
 }
 
 static colormap_t *
-alloc_colormap(dm)
-dmode_t		*dm;
+alloc_colormap(dmode_t *dm)
 {
 	int		nentries, i;
 	colormap_t	*cm;

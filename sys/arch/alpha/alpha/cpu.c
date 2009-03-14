@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.84 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: cpu.c,v 1.85 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.85 2009/03/14 15:35:59 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -177,10 +177,7 @@ struct cputable_struct {
  */
 
 static int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -195,10 +192,7 @@ cpumatch(parent, cfdata, aux)
 }
 
 static void
-cpuattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpuattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_softc *sc = (void *) self;
 	struct mainbus_attach_args *ma = aux;

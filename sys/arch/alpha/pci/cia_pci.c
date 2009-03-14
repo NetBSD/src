@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.27 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: cia_pci.c,v 1.28 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.27 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.28 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,7 @@ pcireg_t	cia_conf_read(void *, pcitag_t, int);
 void		cia_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-cia_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+cia_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
@@ -75,9 +73,7 @@ cia_attach_hook(parent, self, pba)
 }
 
 int
-cia_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+cia_bus_maxdevs(void *cpv, int busno)
 {
 
 	return 32;
@@ -108,10 +104,7 @@ cia_decompose_tag(cpv, tag, bp, dp, fp)
 }
 
 pcireg_t
-cia_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+cia_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap, data;
@@ -206,11 +199,7 @@ cia_conf_read(cpv, tag, offset)
 }
 
 void
-cia_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+cia_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap;

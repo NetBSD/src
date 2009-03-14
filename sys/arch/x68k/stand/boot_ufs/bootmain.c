@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.9 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.10 2009/03/14 15:36:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -200,10 +200,7 @@ get_scsi_host_adapter(void)
 }
 
 static int
-load_file(path, addr, header)
-	const char *path;
-	unsigned int addr;
-	struct exec *header;
+load_file(const char *path, unsigned int addr, struct exec *header)
 {
 
 	return load_file_ino(ufs_lookup_path(path), path, addr, header);

@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.6 2009/03/14 14:46:07 dsl Exp $
+ *	$NetBSD: aout2hux.c,v 1.7 2009/03/14 15:36:15 dsl Exp $
  */
 
 #include <sys/types.h>
@@ -88,25 +88,21 @@ int main PROTO((int argc, char *argv[]));
  */
 
 unsigned
-get_uint16(be)
-	be_uint16_t *be;
+get_uint16(be_uint16_t *be)
 {
 
 	return be->val[0] << 8 | be->val[1];
 }
 
 u_int32_t
-get_uint32(be)
-	be_uint32_t *be;
+get_uint32(be_uint32_t *be)
 {
 
 	return be->val[0]<<24 | be->val[1]<<16 | be->val[2]<<8 | be->val[3];
 }
 
 void
-put_uint16(be, v)
-	be_uint16_t *be;
-	unsigned v;
+put_uint16(be_uint16_t *be, unsigned v)
 {
 
 	be->val[0] = (u_int8_t) (v >> 8);
@@ -114,9 +110,7 @@ put_uint16(be, v)
 }
 
 void
-put_uint32(be, v)
-	be_uint32_t *be;
-	u_int32_t v;
+put_uint32(be_uint32_t *be, u_int32_t v)
 {
 
 	be->val[0] = (u_int8_t) (v >> 24);
@@ -126,9 +120,7 @@ put_uint32(be, v)
 }
 
 void *
-do_realloc(p, s)
-	void *p;
-	size_t s;
+do_realloc(void *p, size_t s)
 {
 
 	p = p ? realloc(p, s) : malloc(s);	/* for portability */
@@ -145,10 +137,7 @@ do_realloc(p, s)
  * check a.out header
  */
 static int
-open_aout(fn, hdr, inf)
-	const char *fn;
-	struct aout_m68k *hdr;
-	struct exec_info *inf;
+open_aout(const char *fn, struct aout_m68k *hdr, struct exec_info *inf)
 {
 	int i;
 
@@ -185,11 +174,7 @@ open_aout(fn, hdr, inf)
  * digest ELF structure
  */
 static int
-open_elf(fn, fp, hdr, inf)
-	const char *fn;
-	FILE *fp;
-	struct elf_m68k_hdr *hdr;
-	struct exec_info *inf;
+open_elf(const char *fn, FILE *fp, struct elf_m68k_hdr *hdr, struct exec_info *inf)
 {
 	int i;
 	size_t nphdr;
@@ -379,9 +364,7 @@ data_found:;
  * open an executable
  */
 FILE *
-open_exec(fn, inf)
-	const char *fn;
-	struct exec_info *inf;
+open_exec(const char *fn, struct exec_info *inf)
 {
 	FILE *fp;
 	int i;
@@ -779,9 +762,7 @@ bist()
 #endif
 
 int
-gethex(pval, str)
-	u_int32_t *pval;
-	const char *str;
+gethex(u_int32_t *pval, const char *str)
 {
 	const unsigned char *p = (const unsigned char *) str;
 	u_int32_t val;
@@ -831,8 +812,7 @@ bad:
 }
 
 void
-usage(name)
-	const char *name;
+usage(const char *name)
 {
 
 	fprintf(stderr, "\

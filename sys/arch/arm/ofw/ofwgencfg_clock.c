@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.8 2008/01/20 16:28:23 joerg Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.9 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.8 2008/01/20 16:28:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.9 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,8 +79,7 @@ clockhandler(struct clockframe *frame)
  */
 
 int
-statclockhandler(frame)
-	struct clockframe *frame;
+statclockhandler(struct clockframe *frame)
 {
 
 	statclock(frame);
@@ -146,8 +145,7 @@ cpu_initclocks()
 int delaycount = 50;
 
 void
-delay(n)
-	u_int n;
+delay(u_int n)
 {
 	u_int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48 2009/03/14 15:36:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.47 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 2009/03/14 15:36:01 dsl Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -246,8 +246,7 @@ cpu_lwp_free2(struct lwp *l)
 }
 
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 #if 0
 	struct proc *p = l->l_proc;
@@ -270,8 +269,7 @@ cpu_swapin(l)
 
 
 void
-cpu_swapout(l)
-	struct lwp *l;
+cpu_swapout(struct lwp *l)
 {
 #ifdef FPU_VFP
 	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
@@ -306,9 +304,7 @@ cpu_swapout(l)
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -350,9 +346,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

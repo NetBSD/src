@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.c,v 1.12 2007/02/22 06:16:03 thorpej Exp $	*/
+/*	$NetBSD: llparse.c,v 1.13 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.12 2007/02/22 06:16:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.13 2009/03/14 15:36:24 dsl Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -171,8 +171,7 @@ llpushprod(prod) 	/* recognize production prod - push rhs on stack */
 }
 
 int
-llepsilonok(term)
-	int term;
+llepsilonok(int term)
 {
 	register int	ptr;
 	register int	sym;
@@ -225,9 +224,7 @@ llepsilonok(term)
 
 
 short
-llfindaction(sym, term)
-	int sym;
-	int term;
+llfindaction(int sym, int term)
 {
 	register int	index;
 
@@ -246,8 +243,7 @@ llfindaction(sym, term)
 }
 
 void
-llparsererror(token)
-LLtoken *token;
+llparsererror(LLtoken *token)
 {
 	IFDEBUG(L)
 		fprintf(stderr,"llparsererror() enter\n");
@@ -261,8 +257,7 @@ LLtoken *token;
 }
 
 void
-llgettoken(token)
-	LLtoken *token;
+llgettoken(LLtoken *token)
 {
 	llscan(token);
 	token->llstate = NORMAL;
@@ -296,8 +291,7 @@ struct llattr	llattrdesc[LLMAXDESC];
 int	lldescindex = 1;
 
 void
-llsetattr(n)
-	int n;
+llsetattr(int n)
 {
 	register struct llattr *ptr;
 
@@ -320,8 +314,7 @@ llsetattr(n)
 }
 
 void
-llpushattr(attr)
-	LLattrib attr;
+llpushattr(LLattrib attr)
 {
 	struct llattr *a;
 
@@ -369,8 +362,7 @@ dump_parse_stack()
 #endif /* !LINT */
 
 void
-prt_token(t)
-	LLtoken *t;
+prt_token(LLtoken *t)
 {
 	fprintf(stdout, "t at %p\n", t);
 	fprintf(stdout, "t->llterm=0x%x\n", t->llterm); (void) fflush(stdout);

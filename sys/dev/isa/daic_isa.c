@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.15 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.16 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -148,8 +148,7 @@ daic_isa_attach(parent, self, aux)
  * Controller interrupt.
  */
 static int
-daic_isa_intr(arg)
-	void *arg;
+daic_isa_intr(void *arg)
 {
 	struct daic_isa_softc *sc = arg;
 	return daic_intr(&sc->sc_daic);

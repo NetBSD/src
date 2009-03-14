@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.15 2008/11/13 12:09:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.16 2009/03/14 15:36:16 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -334,8 +334,7 @@ int num_swi		 = 0;
 int num_tq		 = 0;
 
 static void
-ndis_runq(arg)
-	void			*arg;
+ndis_runq(void *arg)
 {
 	struct ndis_req		*r = NULL, *die = NULL;
 	struct ndisproc		*p;
@@ -548,8 +547,7 @@ ndis_destroy_kthreads()
 }
 
 static void
-ndis_stop_thread(t)
-	int			t;
+ndis_stop_thread(int t)
 {
 	struct ndis_req		*r;
 	struct ndisqhead	*q;
@@ -617,8 +615,7 @@ ndis_stop_thread(t)
 }
 
 static int
-ndis_enlarge_thrqueue(cnt)
-	int			cnt;
+ndis_enlarge_thrqueue(int cnt)
 {
 	struct ndis_req		*r;
 	int			i;
@@ -648,8 +645,7 @@ ndis_enlarge_thrqueue(cnt)
 }
 
 static int
-ndis_shrink_thrqueue(cnt)
-	int			cnt;
+ndis_shrink_thrqueue(int cnt)
 {
 	struct ndis_req		*r;
 	int			i;
@@ -916,8 +912,7 @@ ndis_thsuspend(p, m, timo)
 }
 
 void
-ndis_thresume(p)
-	struct proc		*p;
+ndis_thresume(struct proc *p)
 {
 	wakeup(&p->p_sigpend.sp_set);
 	
@@ -957,8 +952,7 @@ ndis_status_func(ndis_handle adapter, ndis_status status, void *sbuf,
 }
 
 __stdcall static void
-ndis_statusdone_func(adapter)
-	ndis_handle		adapter;
+ndis_statusdone_func(ndis_handle adapter)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -983,9 +977,7 @@ ndis_statusdone_func(adapter)
 }
 
 __stdcall static void
-ndis_setdone_func(adapter, status)
-	ndis_handle		adapter;
-	ndis_status		status;
+ndis_setdone_func(ndis_handle adapter, ndis_status status)
 {
 	ndis_miniport_block	*block;
 	block = adapter;
@@ -996,9 +988,7 @@ ndis_setdone_func(adapter, status)
 }
 
 __stdcall static void
-ndis_getdone_func(adapter, status)
-	ndis_handle		adapter;
-	ndis_status		status;
+ndis_getdone_func(ndis_handle adapter, ndis_status status)
 {
 	ndis_miniport_block	*block;
 	block = adapter;
@@ -1039,8 +1029,7 @@ ndis_resetdone_func(ndis_handle adapter, ndis_status status,
 #ifdef __FreeBSD__
 /* FreeBSD version of ndis_create_sysctls() */
 int
-ndis_create_sysctls(arg)
-	void			*arg;
+ndis_create_sysctls(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_cfg		*vals;
@@ -1146,8 +1135,7 @@ ndis_create_sysctls(arg)
 #ifdef __NetBSD__
 /* NetBSD version of ndis_create_sysctls() */
 int
-ndis_create_sysctls(arg)
-	void			*arg;
+ndis_create_sysctls(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_cfg		*vals;
@@ -1256,12 +1244,7 @@ char *ndis_strdup(const char *src)
 }
 
 int
-ndis_add_sysctl(arg, key, desc, val, flag)
-	void			*arg;
-	const char		*key;
-	const char		*desc;
-	const char		*val;
-	int			flag;
+ndis_add_sysctl(void *arg, const char *key, const char *desc, const char *val, int flag)
 {
 	struct ndis_softc	*sc;
 	struct ndis_cfglist	*cfg;
@@ -1320,8 +1303,7 @@ ndis_add_sysctl(arg, key, desc, val, flag)
 }
 
 int
-ndis_flush_sysctls(arg)
-	void			*arg;
+ndis_flush_sysctls(void *arg)
 {
 	struct ndis_softc	*sc;
 	struct ndis_cfglist	*cfg;
@@ -1342,8 +1324,7 @@ ndis_flush_sysctls(arg)
 }
 
 static void
-ndis_return(arg)
-	void			*arg;
+ndis_return(void *arg)
 {
 	struct ndis_softc	*sc;
 	__stdcall ndis_return_handler	returnfunc;
@@ -1398,8 +1379,7 @@ ndis_return_packet(struct mbuf *m, void *buf,
 }
 
 void
-ndis_free_bufs(b0)
-	ndis_buffer		*b0;
+ndis_free_bufs(ndis_buffer *b0)
 {
 	ndis_buffer		*next;
 
@@ -1416,8 +1396,7 @@ ndis_free_bufs(b0)
 }
 int in_reset = 0;
 void
-ndis_free_packet(p)
-	ndis_packet		*p;
+ndis_free_packet(ndis_packet *p)
 {
 	if (p == NULL)
 		return;
@@ -1429,8 +1408,7 @@ ndis_free_packet(p)
 
 #ifdef __FreeBSD__
 int
-ndis_convert_res(arg)
-	void			*arg;
+ndis_convert_res(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_resource_list	*rl = NULL;
@@ -1563,9 +1541,7 @@ bad:
  */ 
 
 int
-ndis_ptom(m0, p)
-	struct mbuf		**m0;
-	ndis_packet		*p;
+ndis_ptom(struct mbuf **m0, ndis_packet *p)
 {
 	struct mbuf		*m, *prev = NULL;
 	ndis_buffer		*buf;
@@ -1628,9 +1604,7 @@ ndis_ptom(m0, p)
  */
 
 int
-ndis_mtop(m0, p)
-	struct mbuf		*m0;
-	ndis_packet		**p;
+ndis_mtop(struct mbuf *m0, ndis_packet **p)
 {
 	struct mbuf		*m;
 	ndis_buffer		*buf = NULL, *prev = NULL;
@@ -1665,10 +1639,7 @@ ndis_mtop(m0, p)
 }
 
 int
-ndis_get_supported_oids(arg, oids, oidcnt)
-	void			*arg;
-	ndis_oid		**oids;
-	int			*oidcnt;
+ndis_get_supported_oids(void *arg, ndis_oid **oids, int *oidcnt)
 {
 	int			len, rval;
 	ndis_oid		*o;
@@ -1696,11 +1667,7 @@ ndis_get_supported_oids(arg, oids, oidcnt)
 }
 
 int
-ndis_set_info(arg, oid, buf, buflen)
-	void			*arg;
-	ndis_oid		oid;
-	void			*buf;
-	int			*buflen;
+ndis_set_info(void *arg, ndis_oid oid, void *buf, int *buflen)
 {
 	struct ndis_softc	*sc;
 	ndis_status		rval;
@@ -1794,10 +1761,7 @@ ndis_set_info(arg, oid, buf, buflen)
 typedef void (*ndis_senddone_func)(ndis_handle, ndis_packet *, ndis_status);
 
 int
-ndis_send_packets(arg, packets, cnt)
-	void			*arg;
-	ndis_packet		**packets;
-	int			cnt;
+ndis_send_packets(void *arg, ndis_packet **packets, int cnt)
 {
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
@@ -1839,9 +1803,7 @@ ndis_send_packets(arg, packets, cnt)
 }
 
 int
-ndis_send_packet(arg, packet)
-	void			*arg;
-	ndis_packet		*packet;
+ndis_send_packet(void *arg, ndis_packet *packet)
 {
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
@@ -1877,8 +1839,7 @@ ndis_send_packet(arg, packet)
 }
 
 int
-ndis_init_dma(arg)
-	void			*arg;
+ndis_init_dma(void *arg)
 {
 	struct ndis_softc	*sc;
 	int			i, error = 0;
@@ -1915,8 +1876,7 @@ ndis_init_dma(arg)
 }
 
 int
-ndis_destroy_dma(arg)
-	void			*arg;
+ndis_destroy_dma(void *arg)
 {
 	struct ndis_softc	*sc;
 	struct mbuf		*m;
@@ -1946,8 +1906,7 @@ ndis_destroy_dma(arg)
 }
 
 int
-ndis_reset_nic(arg)
-	void			*arg;
+ndis_reset_nic(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
@@ -1992,8 +1951,7 @@ ndis_reset_nic(arg)
 }
 
 int
-ndis_halt_nic(arg)
-	void			*arg;
+ndis_halt_nic(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
@@ -2040,8 +1998,7 @@ ndis_halt_nic(arg)
 }
 
 int
-ndis_shutdown_nic(arg)
-	void			*arg;
+ndis_shutdown_nic(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
@@ -2074,8 +2031,7 @@ ndis_shutdown_nic(arg)
 }
 
 int
-ndis_init_nic(arg)
-	void			*arg;
+ndis_init_nic(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_miniport_block	*block;
@@ -2130,8 +2086,7 @@ ndis_init_nic(arg)
 }
 
 void
-ndis_enable_intr(arg)
-	void			*arg;
+ndis_enable_intr(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
@@ -2148,8 +2103,7 @@ ndis_enable_intr(arg)
 }
 
 void
-ndis_disable_intr(arg)
-	void			*arg;
+ndis_disable_intr(void *arg)
 {
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
@@ -2167,10 +2121,7 @@ ndis_disable_intr(arg)
 }
 
 int
-ndis_isr(arg, ourintr, callhandler)
-	void			*arg;
-	int			*ourintr;
-	int			*callhandler;
+ndis_isr(void *arg, int *ourintr, int *callhandler)
 {
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
@@ -2225,11 +2176,7 @@ ndis_intrhand(kdpc *dpc, device_object *dobj,
 }
 
 int
-ndis_get_info(arg, oid, buf, buflen)
-	void			*arg;
-	ndis_oid		oid;
-	void			*buf;
-	int			*buflen;
+ndis_get_info(void *arg, ndis_oid oid, void *buf, int *buflen)
 {
 	struct ndis_softc	*sc;
 	ndis_status		rval;
@@ -2306,9 +2253,7 @@ ndis_get_info(arg, oid, buf, buflen)
 }
 
 __stdcall uint32_t
-NdisAddDevice(drv, pdo)
-	driver_object		*drv;
-	device_object		*pdo;
+NdisAddDevice(driver_object *drv, device_object *pdo)
 {
 	device_object		*fdo;
 	ndis_miniport_block	*block;
@@ -2368,8 +2313,7 @@ NdisAddDevice(drv, pdo)
 }
 
 int
-ndis_unload_driver(arg)
-	void			*arg;
+ndis_unload_driver(void *arg)
 {
 	struct ndis_softc	*sc;
 	device_object		*fdo;

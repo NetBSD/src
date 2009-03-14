@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.242 2009/02/24 06:03:54 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.243 2009/03/14 15:36:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.242 2009/02/24 06:03:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.243 2009/03/14 15:36:07 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -262,8 +262,7 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe *frame;
+trap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p;
@@ -822,8 +821,7 @@ upcallret(struct lwp *l)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;

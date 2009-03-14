@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.41 2009/03/14 14:45:54 dsl Exp $ */
+/* $NetBSD: tcasic.c,v 1.42 2009/03/14 15:36:00 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.41 2009/03/14 14:45:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.42 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,7 @@ int	tcasicprint(void *, const char *);
 int	tcasicfound;
 
 int
-tcasicmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+tcasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -82,10 +79,7 @@ tcasicmatch(parent, cfdata, aux)
 }
 
 void
-tcasicattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tcasicattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcbus_attach_args tba;
 	void (*intr_setup)(void);
@@ -157,9 +151,7 @@ tcasicattach(parent, self, aux)
 }
 
 int
-tcasicprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+tcasicprint(void *aux, const char *pnp)
 {
 
 	/* only TCs can attach to tcasics; easy. */
@@ -226,8 +218,7 @@ struct cnboards {
  * output console.
  */
 int
-tc_fb_cnattach(tcaddr)
-	tc_addr_t tcaddr;
+tc_fb_cnattach(tc_addr_t tcaddr)
 {
 	char tcname[TC_ROM_LLEN];
 	int i;

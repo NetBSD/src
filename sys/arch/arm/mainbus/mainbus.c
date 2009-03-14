@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.15 2009/03/14 14:45:56 dsl Exp $ */
+/* $NetBSD: mainbus.c,v 1.16 2009/03/14 15:36:02 dsl Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,10 +86,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
  */
 
 static int
-mainbusmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return (1);
 }
@@ -101,9 +98,7 @@ mainbusmatch(parent, cf, aux)
  */
 
 static int
-mainbusprint(aux, mainbus)
-	void *aux;
-	const char *mainbus;
+mainbusprint(void *aux, const char *mainbus)
 {
 	struct mainbus_attach_args *mb = aux;
 
@@ -127,11 +122,7 @@ mainbusprint(aux, mainbus)
  */
 
 static int
-mainbussearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args mb;
 	int tryagain;
@@ -170,10 +161,7 @@ mainbussearch(parent, cf, ldesc, aux)
  */
 
 static void
-mainbusattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbusattach(struct device *parent, struct device *self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");

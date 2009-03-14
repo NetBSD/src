@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.17 2009/01/23 12:46:23 jmcneill Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.18 2009/03/14 15:36:21 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.17 2009/01/23 12:46:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.18 2009/03/14 15:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.17 2009/01/23 12:46:23 jmcneill
  * memory denode's will be in synch.
  */
 int
-msdosfs_lookup(v)
-	void *v;
+msdosfs_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
@@ -572,11 +571,7 @@ foundroot:
  * cnp  - componentname needed for Win95 long filenames
  */
 int
-createde(dep, ddep, depp, cnp)
-	struct denode *dep;
-	struct denode *ddep;
-	struct denode **depp;
-	struct componentname *cnp;
+createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct componentname *cnp)
 {
 	int error, rberror;
 	u_long dirclust, clusoffset;
@@ -775,8 +770,7 @@ createde(dep, ddep, depp, cnp)
  * return 0 if not empty or error.
  */
 int
-dosdirempty(dep)
-	struct denode *dep;
+dosdirempty(struct denode *dep)
 {
 	int blsize;
 	int error;
@@ -854,9 +848,7 @@ dosdirempty(dep)
  * The target inode is always unlocked on return.
  */
 int
-doscheckpath(source, target)
-	struct denode *source;
-	struct denode *target;
+doscheckpath(struct denode *source, struct denode *target)
 {
 	u_long scn;
 	struct msdosfsmount *pmp;
@@ -975,10 +967,7 @@ readep(pmp, dirclust, diroffset, bpp, epp)
  * entry within the block.
  */
 int
-readde(dep, bpp, epp)
-	struct denode *dep;
-	struct buf **bpp;
-	struct direntry **epp;
+readde(struct denode *dep, struct buf **bpp, struct direntry **epp)
 {
 	return (readep(dep->de_pmp, dep->de_dirclust, dep->de_diroffset,
 			bpp, epp));
@@ -1064,10 +1053,7 @@ removede(pdep, dep)
  * Create a unique DOS name in dvp
  */
 int
-uniqdosname(dep, cnp, cp)
-	struct denode *dep;
-	struct componentname *cnp;
-	u_char *cp;
+uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;
@@ -1130,8 +1116,7 @@ uniqdosname(dep, cnp, cp)
  * Find any Win'95 long filename entry in directory dep
  */
 int
-findwin95(dep)
-	struct denode *dep;
+findwin95(struct denode *dep)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;

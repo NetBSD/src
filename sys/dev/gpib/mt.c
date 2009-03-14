@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.16 2009/01/13 13:35:53 yamt Exp $ */
+/*	$NetBSD: mt.c,v 1.17 2009/03/14 15:36:17 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.16 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.17 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,10 +224,7 @@ int	nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
 
 int
-mtlookup(id, slave, punit)
-	int id;
-	int slave;
-	int punit;
+mtlookup(int id, int slave, int punit)
 {
 	int i;
 
@@ -240,10 +237,7 @@ mtlookup(id, slave, punit)
 }
 
 int
-mtmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mtmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 
@@ -289,9 +283,7 @@ mtattach(parent, self, aux)
  * and -2 on "temporary" failure.
  */
 int
-mtreaddsj(sc, ecmd)
-	struct mt_softc *sc;
-	int ecmd;
+mtreaddsj(struct mt_softc *sc, int ecmd)
 {
 	int retval;
 
@@ -582,8 +574,7 @@ mtstrategy(struct buf *bp)
 }
 
 void
-mtustart(sc)
-	struct mt_softc *sc;
+mtustart(struct mt_softc *sc)
 {
 
 	DPRINTF(MDB_ANY, ("%s ustart", device_xname(&sc->sc_dev)));
@@ -592,9 +583,7 @@ mtustart(sc)
 }
 
 void
-mtcallback(v, action)
-	void *v;
-	int action;
+mtcallback(void *v, int action)
 {
 	struct mt_softc *sc = v;
 
@@ -616,8 +605,7 @@ mtcallback(v, action)
 }
 
 void
-mtintr_callout(arg)
-	void *arg;
+mtintr_callout(void *arg)
 {
 	struct mt_softc *sc = arg;
 	int s = splbio();
@@ -628,8 +616,7 @@ mtintr_callout(arg)
 }
 
 void
-mtstart_callout(arg)
-	void *arg;
+mtstart_callout(void *arg)
 {
 	int s = splbio();
 
@@ -638,8 +625,7 @@ mtstart_callout(arg)
 }
 
 void
-mtstart(sc)
-	struct mt_softc *sc;
+mtstart(struct mt_softc *sc)
 {
 	struct buf *bp;
 	short	cmdcount = 1;
@@ -836,8 +822,7 @@ done:
 }
 
 void
-mtintr(sc)
-	struct mt_softc *sc;
+mtintr(struct mt_softc *sc)
 {
 	struct buf *bp;
 	int slave, dir, i;
@@ -1022,12 +1007,7 @@ mtwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-mtioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+mtioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;

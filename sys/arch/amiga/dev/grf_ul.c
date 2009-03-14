@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.42 2008/04/28 20:23:12 martin Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.43 2009/03/14 15:36:01 dsl Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.42 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.43 2009/03/14 15:36:01 dsl Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -162,8 +162,7 @@ static struct grfvideo_mode *current_mon;
  */
 
 static int
-ulisr(arg)
-	void *arg;
+ulisr(void *arg)
 {
 	struct grf_softc *gp = arg;
 	volatile struct gspregs *ba;
@@ -192,8 +191,7 @@ ulisr(arg)
  * for the moment, a NOP.
  */
 int
-ulowell_alive(mdp)
-	struct grfvideo_mode *mdp;
+ulowell_alive(struct grfvideo_mode *mdp)
 {
 	return 1;
 }
@@ -202,8 +200,7 @@ ulowell_alive(mdp)
  * Load the (mostly) ite support code and the default colormaps.
  */
 static void
-ul_load_code(gp)
-	struct grf_softc *gp;
+ul_load_code(struct grf_softc *gp)
 {
 	struct grf_ul_softc *gup;
 	volatile struct gspregs *ba;
@@ -360,9 +357,7 @@ ul_load_code(gp)
 }
 
 static int
-ul_load_mon(gp, md)
-	struct grf_softc *gp;
-	struct grfvideo_mode *md;
+ul_load_mon(struct grf_softc *gp, struct grfvideo_mode *md)
 {
 	struct grf_ul_softc *gup;
 	struct grfinfo *gi;
@@ -451,10 +446,7 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int
-grfulmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+grfulmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 #ifdef ULOWELLCONSOLE
 	static int ulconunit = -1;
@@ -560,9 +552,7 @@ grfulattach(pdp, dp, auxp)
 }
 
 int
-grfulprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+grfulprint(void *auxp, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
@@ -635,9 +625,7 @@ ul_setvmode (gp, mode)
  */
 
 static inline void
-ul_setfb(gp, cmd)
-	struct grf_softc *gp;
-	u_long cmd;
+ul_setfb(struct grf_softc *gp, u_long cmd)
 {
 	struct grf_ul_softc *gup;
 	volatile struct gspregs *ba;
@@ -673,12 +661,7 @@ ul_setfb(gp, cmd)
  * Return a UNIX error number or 0 for success.
  */
 int
-ul_mode(gp, cmd, arg, a2, a3)
-	struct grf_softc *gp;
-	u_long cmd;
-	void *arg;
-	u_long a2;
-	int a3;
+ul_mode(struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3)
 {
 	int i;
 	struct grfdyninfo *gd;
@@ -890,10 +873,7 @@ ul_putcmap (gp, cmap, dev)
 }
 
 int
-ul_blank(gp, onoff, dev)
-	struct grf_softc *gp;
-	int *onoff;
-	dev_t dev;
+ul_blank(struct grf_softc *gp, int *onoff, dev_t dev)
 {
 	volatile struct gspregs *gsp;
 
@@ -927,10 +907,7 @@ ul_bitblt (gp, bb, dev)
 }
 
 void
-gsp_write(gsp, ptr, size)
-	volatile struct gspregs *gsp;
-	u_short *ptr;
-	size_t size;
+gsp_write(volatile struct gspregs *gsp, u_short *ptr, size_t size)
 {
 	u_short put, new_put, next, oc;
 	u_long put_hi, oa;

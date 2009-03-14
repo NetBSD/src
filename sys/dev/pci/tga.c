@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.69 2009/01/07 01:31:01 ahoka Exp $ */
+/* $NetBSD: tga.c,v 1.70 2009/03/14 15:36:19 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.69 2009/01/07 01:31:01 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.70 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,10 +167,7 @@ tga_cnmatch(iot, memt, pc, tag)
 }
 
 int
-tgamatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tgamatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -198,10 +195,7 @@ tgamatch(parent, match, aux)
 }
 
 static int
-tga_matchcommon(memt, pc, tag)
-	bus_space_tag_t memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+tga_matchcommon(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	struct tga_devconfig tmp_dc;
 	struct tga_devconfig *dc = &tmp_dc;
@@ -218,12 +212,7 @@ tga_matchcommon(memt, pc, tag)
 }
 
 static void
-tga_mapaddrs(memt, pc, tag, pcisize, dc)
-	bus_space_tag_t memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	bus_size_t *pcisize;
-	struct tga_devconfig *dc;
+tga_mapaddrs(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag, bus_size_t *pcisize, struct tga_devconfig *dc)
 {
 	int flags;
 
@@ -249,11 +238,7 @@ tga_mapaddrs(memt, pc, tag, pcisize, dc)
 }
 
 static void
-tga_init(memt, pc, tag, dc)
-	bus_space_tag_t memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	struct tga_devconfig *dc;
+tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag, struct tga_devconfig *dc)
 {
 	const struct tga_conf *tgac;
 	struct rasops_info *rip;
@@ -535,13 +520,7 @@ tga_config_interrupts (d)
 }
 
 int
-tga_ioctl(v, vs, cmd, data, flag, l)
-	void *v;
-	void *vs;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+tga_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct tga_softc *sc = v;
 	struct tga_devconfig *dc = sc->sc_dc;
@@ -645,8 +624,7 @@ tga_sched_update(v, f)
 }
 
 static int
-tga_intr(v)
-	void *v;
+tga_intr(void *v)
 {
 	struct tga_devconfig *dc = v;
 	struct ramdac_cookie *dcrc= dc->dc_ramdac_cookie;
@@ -680,11 +658,7 @@ tga_intr(v)
 }
 
 paddr_t
-tga_mmap(v, vs, offset, prot)
-	void *v;
-	void *vs;
-	off_t offset;
-	int prot;
+tga_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct tga_softc *sc = v;
 
@@ -720,9 +694,7 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-tga_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+tga_free_screen(void *v, void *cookie)
 {
 	struct tga_softc *sc = v;
 
@@ -794,8 +766,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
  * Functions to blank and unblank the display.
  */
 static void
-tga_blank(dc)
-	struct tga_devconfig *dc;
+tga_blank(struct tga_devconfig *dc)
 {
 
 	if (!dc->dc_blanked) {
@@ -806,8 +777,7 @@ tga_blank(dc)
 }
 
 static void
-tga_unblank(dc)
-	struct tga_devconfig *dc;
+tga_unblank(struct tga_devconfig *dc)
 {
 
 	if (dc->dc_blanked) {
@@ -821,9 +791,7 @@ tga_unblank(dc)
  * Functions to manipulate the built-in cursor handing hardware.
  */
 int
-tga_builtin_set_cursor(dc, cursorp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_cursor *cursorp;
+tga_builtin_set_cursor(struct tga_devconfig *dc, struct wsdisplay_cursor *cursorp)
 {
 	struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
 	struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
@@ -881,9 +849,7 @@ tga_builtin_set_cursor(dc, cursorp)
 }
 
 int
-tga_builtin_get_cursor(dc, cursorp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_cursor *cursorp;
+tga_builtin_get_cursor(struct tga_devconfig *dc, struct wsdisplay_cursor *cursorp)
 {
 	struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
 	struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
@@ -911,9 +877,7 @@ tga_builtin_get_cursor(dc, cursorp)
 }
 
 int
-tga_builtin_set_curpos(dc, curposp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_curpos *curposp;
+tga_builtin_set_curpos(struct tga_devconfig *dc, struct wsdisplay_curpos *curposp)
 {
 
 	TGAWREG(dc, TGA_REG_CXYR,
@@ -922,9 +886,7 @@ tga_builtin_set_curpos(dc, curposp)
 }
 
 int
-tga_builtin_get_curpos(dc, curposp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_curpos *curposp;
+tga_builtin_get_curpos(struct tga_devconfig *dc, struct wsdisplay_curpos *curposp)
 {
 
 	curposp->x = TGARREG(dc, TGA_REG_CXYR) & 0xfff;
@@ -933,9 +895,7 @@ tga_builtin_get_curpos(dc, curposp)
 }
 
 int
-tga_builtin_get_curmax(dc, curposp)
-	struct tga_devconfig *dc;
-	struct wsdisplay_curpos *curposp;
+tga_builtin_get_curmax(struct tga_devconfig *dc, struct wsdisplay_curpos *curposp)
 {
 
 	curposp->x = curposp->y = 64;
@@ -1396,10 +1356,7 @@ long attr;
 
 
 static void
-tga_ramdac_wr(v, btreg, val)
-	void *v;
-	u_int btreg;
-	u_int8_t val;
+tga_ramdac_wr(void *v, u_int btreg, u_int8_t val)
 {
 	struct tga_devconfig *dc = v;
 
@@ -1411,10 +1368,7 @@ tga_ramdac_wr(v, btreg, val)
 }
 
 static void
-tga2_ramdac_wr(v, btreg, val)
-	void *v;
-	u_int btreg;
-	u_int8_t val;
+tga2_ramdac_wr(void *v, u_int btreg, u_int8_t val)
 {
 	struct tga_devconfig *dc = v;
 	bus_space_handle_t ramdac;
@@ -1429,9 +1383,7 @@ tga2_ramdac_wr(v, btreg, val)
 }
 
 static u_int8_t
-tga_bt463_rd(v, btreg)
-	void *v;
-	u_int btreg;
+tga_bt463_rd(void *v, u_int btreg)
 {
 	struct tga_devconfig *dc = v;
 	tga_reg_t rdval;
@@ -1456,10 +1408,7 @@ tga_bt463_rd(v, btreg)
 }
 
 static void
-tga_bt463_wr(v, btreg, val)
-	void *v;
-	u_int btreg;
-	u_int8_t val;
+tga_bt463_wr(void *v, u_int btreg, u_int8_t val)
 {
 	struct tga_devconfig *dc = v;
 
@@ -1483,9 +1432,7 @@ tga_bt463_wr(v, btreg, val)
 }
 
 static u_int8_t
-tga_ramdac_rd(v, btreg)
-	void *v;
-	u_int btreg;
+tga_ramdac_rd(void *v, u_int btreg)
 {
 	struct tga_devconfig *dc = v;
 	tga_reg_t rdval;
@@ -1501,9 +1448,7 @@ tga_ramdac_rd(v, btreg)
 }
 
 static u_int8_t
-tga2_ramdac_rd(v, btreg)
-	void *v;
-	u_int btreg;
+tga2_ramdac_rd(void *v, u_int btreg)
 {
 	struct tga_devconfig *dc = v;
 	bus_space_handle_t ramdac;
@@ -1525,8 +1470,7 @@ void tga2_ics9110_wr(struct tga_devconfig *dc, int dotclock);
 struct monitor *tga_getmonitor(struct tga_devconfig *dc);
 
 void
-tga2_init(dc)
-	struct tga_devconfig *dc;
+tga2_init(struct tga_devconfig *dc)
 {
 	struct	monitor *m = tga_getmonitor(dc);
 
@@ -1571,9 +1515,7 @@ tga2_init(dc)
 }
 
 void
-tga2_ics9110_wr(dc, dotclock)
-	struct tga_devconfig *dc;
-	int dotclock;
+tga2_ics9110_wr(struct tga_devconfig *dc, int dotclock)
 {
 	bus_space_handle_t clock;
 	u_int32_t valU;
@@ -1645,15 +1587,13 @@ tga2_ics9110_wr(dc, dotclock)
 }
 
 struct monitor *
-tga_getmonitor(dc)
-	struct tga_devconfig *dc;
+tga_getmonitor(struct tga_devconfig *dc)
 {
 	return &decmonitors[(~TGARREG(dc, TGA_REG_GREV) >> 16) & 0x0f];
 }
 
 unsigned
-tga_getdotclock(dc)
-	struct tga_devconfig *dc;
+tga_getdotclock(struct tga_devconfig *dc)
 {
 	return tga_getmonitor(dc)->dotclock;
 }

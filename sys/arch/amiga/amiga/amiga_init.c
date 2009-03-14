@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.106 2009/01/17 07:17:35 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.107 2009/03/14 15:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.106 2009/01/17 07:17:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.107 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,8 +156,7 @@ chipmem_steal(long amount)
  * XXX
  */
 void *
-alloc_z2mem(amount)
-	long amount;
+alloc_z2mem(long amount)
 {
 	if (use_z2_mem && z2mem_end && (z2mem_end - amount) >= z2mem_start) {
 		z2mem_end -= amount;
@@ -906,8 +905,7 @@ start_c_finish()
 }
 
 void
-rollcolor(color)
-	int color;
+rollcolor(int color)
 {
 	int s, i;
 
@@ -953,8 +951,7 @@ kernel_image_magic_size()
 
 /* This actually copies the magic information.  */
 static void
-kernel_image_magic_copy(dest)
-	u_char *dest;
+kernel_image_magic_copy(u_char *dest)
 {
 	*((int*)dest) = ncfdev;
 	dest += 4;
@@ -966,8 +963,7 @@ kernel_image_magic_copy(dest)
 #define AOUT_LDPGSZ 8192 /* XXX ??? */
 
 int
-kernel_reload_write(uio)
-	struct uio *uio;
+kernel_reload_write(struct uio *uio)
 {
 	extern int eclockfreq;
 	struct iovec *iov;

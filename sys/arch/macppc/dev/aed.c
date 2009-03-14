@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.22 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: aed.c,v 1.23 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.22 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.23 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,10 +94,7 @@ const struct cdevsw aed_cdevsw = {
 };
 
 static int
-aedmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+aedmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	static int aed_matched = 0;
@@ -155,8 +152,7 @@ aedattach(parent, self, aux)
  * the handoff function.
  */
 void
-aed_input(event)
-        adb_event_t *event;
+aed_input(adb_event_t *event)
 {
         adb_event_t new_event = *event;
 
@@ -187,8 +183,7 @@ aed_input(event)
  * the corresponding mouse button event.
  */
 static void 
-aed_emulate_mouse(event)
-	adb_event_t *event;
+aed_emulate_mouse(adb_event_t *event)
 {
 	static int emulmodkey_down = 0;
 	adb_event_t new_event;
@@ -324,8 +319,7 @@ aed_emulate_mouse(event)
  * ticks in the future.
  */
 static void 
-aed_kbdrpt(kstate)
-	void *kstate;
+aed_kbdrpt(void *kstate)
 {
 	struct aed_softc *sc = (struct aed_softc *)kstate;
 
@@ -350,8 +344,7 @@ aed_kbdrpt(kstate)
  * appropriate subsystem.
  */
 static void 
-aed_dokeyupdown(event)
-	adb_event_t *event;
+aed_dokeyupdown(adb_event_t *event)
 {
 	int     kbd_key;
 
@@ -380,8 +373,7 @@ aed_dokeyupdown(event)
  * and we are not polling.
  */
 static void
-aed_handoff(event)
-	adb_event_t *event;
+aed_handoff(adb_event_t *event)
 {
 	if (aed_sc->sc_open && !adb_polling)
 		aed_enqevent(event);
@@ -391,8 +383,7 @@ aed_handoff(event)
  * Place the event in the event queue and wakeup any waiting processes.
  */
 static void 
-aed_enqevent(event)
-    adb_event_t *event;
+aed_enqevent(adb_event_t *event)
 {
 	int     s;
 
@@ -468,10 +459,7 @@ aedclose(dev, flag, mode, l)
 
 
 int 
-aedread(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
+aedread(dev_t dev, struct uio *uio, int flag)
 {
 	int s, error;
 	int willfit;
@@ -516,12 +504,7 @@ aedread(dev, uio, flag)
 }
 
 int 
-aedioctl(dev, cmd, data, flag, l)
-    dev_t dev;
-    u_long cmd;
-    void *data;
-    int flag;
-    struct lwp *l;
+aedioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case ADBIOCDEVSINFO: {
@@ -585,10 +568,7 @@ aedioctl(dev, cmd, data, flag, l)
 
 
 int 
-aedpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+aedpoll(dev_t dev, int events, struct lwp *l)
 {
 	int s, revents;
 

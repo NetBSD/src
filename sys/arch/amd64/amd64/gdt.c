@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.19 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.20 2009/03/14 15:36:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.19 2008/05/11 15:32:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.20 2009/03/14 15:36:00 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -397,8 +397,7 @@ ldt_free(struct pmap *pmap)
 
 #ifdef XEN
 void
-lgdt(desc)
-	struct region_descriptor *desc;
+lgdt(struct region_descriptor *desc)
 {
 	paddr_t frames[16];
 	int i;

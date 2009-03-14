@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.69 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: wds.c,v 1.70 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  * XXX
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.69 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.70 2009/03/14 15:36:18 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -227,11 +227,7 @@ wds_wait(iot, ioh, port, mask, val)
  * Write a command to the board's I/O ports.
  */
 int
-wds_cmd(iot, ioh, ibuf, icnt)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_char *ibuf;
-	int icnt;
+wds_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, u_char *ibuf, int icnt)
 {
 	u_char c;
 
@@ -371,9 +367,7 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-wds_attach(sc, wpd)
-	struct wds_softc *sc;
-	struct wds_probe_data *wpd;
+wds_attach(struct wds_softc *sc, struct wds_probe_data *wpd)
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
@@ -416,8 +410,7 @@ wds_attach(sc, wpd)
 }
 
 integrate void
-wds_finish_scbs(sc)
-	struct wds_softc *sc;
+wds_finish_scbs(struct wds_softc *sc)
 {
 	struct wds_mbx_in *wmbi;
 	struct wds_scb *scb;
@@ -476,8 +469,7 @@ AGAIN:
  * Process an interrupt.
  */
 int
-wdsintr(arg)
-	void *arg;
+wdsintr(void *arg)
 {
 	struct wds_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -522,9 +514,7 @@ wds_reset_scb(struct wds_softc *sc, struct wds_scb *scb)
  * Free the command structure, the outgoing mailbox and the data buffer.
  */
 void
-wds_free_scb(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_free_scb(struct wds_softc *sc, struct wds_scb *scb)
 {
 	int s;
 
@@ -535,9 +525,7 @@ wds_free_scb(sc, scb)
 }
 
 integrate int
-wds_init_scb(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_init_scb(struct wds_softc *sc, struct wds_scb *scb)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum, error;
@@ -595,10 +583,7 @@ wds_init_scb(sc, scb)
  * Create a set of scbs and add them to the free list.
  */
 int
-wds_create_scbs(sc, mem, size)
-	struct wds_softc *sc;
-	void *mem;
-	size_t size;
+wds_create_scbs(struct wds_softc *sc, void *mem, size_t size)
 {
 	bus_dma_segment_t seg;
 	struct wds_scb *scb;
@@ -651,8 +636,7 @@ wds_create_scbs(sc, mem, size)
  * the hash table too otherwise either return an error or sleep.
  */
 struct wds_scb *
-wds_get_scb(sc)
-	struct wds_softc *sc;
+wds_get_scb(struct wds_softc *sc)
 {
 	struct wds_scb *scb;
 	int s;
@@ -668,9 +652,7 @@ wds_get_scb(sc)
 }
 
 struct wds_scb *
-wds_scb_phys_kv(sc, scb_phys)
-	struct wds_softc *sc;
-	u_long scb_phys;
+wds_scb_phys_kv(struct wds_softc *sc, u_long scb_phys)
 {
 	int hashnum = SCB_HASH(scb_phys);
 	struct wds_scb *scb = sc->sc_scbhash[hashnum];
@@ -690,9 +672,7 @@ wds_scb_phys_kv(sc, scb_phys)
  * Queue a SCB to be sent to the controller, and send it if possible.
  */
 void
-wds_queue_scb(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_queue_scb(struct wds_softc *sc, struct wds_scb *scb)
 {
 
 	TAILQ_INSERT_TAIL(&sc->sc_waiting_scb, scb, chain);
@@ -703,8 +683,7 @@ wds_queue_scb(sc, scb)
  * Garbage collect mailboxes that are no longer in use.
  */
 void
-wds_collect_mbo(sc)
-	struct wds_softc *sc;
+wds_collect_mbo(struct wds_softc *sc)
 {
 	struct wds_mbx_out *wmbo;	/* Mail Box Out pointer */
 #ifdef WDSDIAG
@@ -733,8 +712,7 @@ wds_collect_mbo(sc)
  * Send as many SCBs as we have empty mailboxes for.
  */
 void
-wds_start_scbs(sc)
-	struct wds_softc *sc;
+wds_start_scbs(struct wds_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -784,10 +762,7 @@ wds_start_scbs(sc)
  * Process the result of a SCSI command.
  */
 void
-wds_done(sc, scb, stat)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
-	u_char stat;
+wds_done(struct wds_softc *sc, struct wds_scb *scb, u_char stat)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsipi_xfer *xs = scb->xs;
@@ -895,10 +870,7 @@ wds_done(sc, scb, stat)
 }
 
 int
-wds_find(iot, ioh, sc)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct wds_probe_data *sc;
+wds_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct wds_probe_data *sc)
 {
 	int i;
 
@@ -952,9 +924,7 @@ wds_find(iot, ioh, sc)
  * Initialise the board and driver.
  */
 void
-wds_init(sc, isreset)
-	struct wds_softc *sc;
-	int isreset;
+wds_init(struct wds_softc *sc, int isreset)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1024,8 +994,7 @@ wds_init(sc, isreset)
  * Read the board's firmware revision information.
  */
 void
-wds_inquire_setup_information(sc)
-	struct wds_softc *sc;
+wds_inquire_setup_information(struct wds_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1084,8 +1053,7 @@ out:
 }
 
 void
-wdsminphys(bp)
-	struct buf *bp;
+wdsminphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > WDS_MAXXFER)
@@ -1097,10 +1065,7 @@ wdsminphys(bp)
  * Send a SCSI command.
  */
 void
-wds_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+wds_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -1303,10 +1268,7 @@ wds_scsipi_request(chan, req, arg)
  * Poll a particular unit, looking for a particular scb
  */
 int
-wds_poll(sc, xs, count)
-	struct wds_softc *sc;
-	struct scsipi_xfer *xs;
-	int count;
+wds_poll(struct wds_softc *sc, struct scsipi_xfer *xs, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1331,10 +1293,7 @@ wds_poll(sc, xs, count)
  * Poll a particular unit, looking for a particular scb
  */
 int
-wds_ipoll(sc, scb, count)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
-	int count;
+wds_ipoll(struct wds_softc *sc, struct wds_scb *scb, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1356,8 +1315,7 @@ wds_ipoll(sc, scb, count)
 }
 
 void
-wds_timeout(arg)
-	void *arg;
+wds_timeout(void *arg)
 {
 	struct wds_scb *scb = arg;
 	struct scsipi_xfer *xs = scb->xs;

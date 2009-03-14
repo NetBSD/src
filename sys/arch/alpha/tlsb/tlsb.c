@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.33 2009/03/14 14:45:54 dsl Exp $ */
+/* $NetBSD: tlsb.c,v 1.34 2009/03/14 15:36:00 dsl Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.33 2009/03/14 14:45:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.34 2009/03/14 15:36:00 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -85,9 +85,7 @@ static const char *tlsb_node_type_str(u_int32_t);
 int	tlsb_found;
 
 static int
-tlsbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+tlsbprint(void *aux, const char *pnp)
 {
 	struct tlsb_dev_attach_args *tap = aux;
 
@@ -102,10 +100,7 @@ tlsbprint(aux, pnp)
 }
 
 static int
-tlsbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tlsbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -125,10 +120,7 @@ tlsbmatch(parent, cf, aux)
 }
 
 static void
-tlsbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tlsbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tlsb_dev_attach_args ta;
 	u_int32_t tldev;
@@ -241,8 +233,7 @@ tlsbattach(parent, self, aux)
 }
 
 static const char *
-tlsb_node_type_str(dtype)
-	u_int32_t dtype;
+tlsb_node_type_str(u_int32_t dtype)
 {
 	static char	tlsb_line[64];
 

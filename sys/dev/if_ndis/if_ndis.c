@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.20 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.21 2009/03/14 15:36:18 dsl Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -309,8 +309,7 @@ if_ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
  * Program the 64-bit multicast hash filter.
  */
 static void
-ndis_setmulti(sc)
-	struct ndis_softc	*sc;
+ndis_setmulti(struct ndis_softc *sc)
 {
 	struct ifnet		*ifp;
 #ifdef __FreeBSD__	
@@ -414,8 +413,7 @@ out:
 }
 
 static int
-ndis_set_offload(sc)
-	struct ndis_softc	*sc;
+ndis_set_offload(struct ndis_softc *sc)
 {
 	ndis_task_offload	*nto;
 	ndis_task_offload_hdr	*ntoh;
@@ -476,8 +474,7 @@ ndis_set_offload(sc)
 }
 
 static int
-ndis_probe_offload(sc)
-	struct ndis_softc	*sc;
+ndis_probe_offload(struct ndis_softc *sc)
 {
 	ndis_task_offload	*nto;
 	ndis_task_offload_hdr	*ntoh;
@@ -1191,8 +1188,7 @@ ndis_detach (dev, flags)
 
 #ifdef __FreeBSD__
 int
-ndis_suspend(dev)
-	device_t		dev;
+ndis_suspend(device_t dev)
 {
 	struct ndis_softc	*sc;
 	struct ifnet		*ifp;
@@ -1213,8 +1209,7 @@ ndis_suspend(dev)
 
 #ifdef __FreeBSD__
 int
-ndis_resume(dev)
-	device_t		dev;
+ndis_resume(device_t dev)
 {
 	struct ndis_softc	*sc;
 	struct ifnet		*ifp;
@@ -1251,10 +1246,7 @@ ndis_resume(dev)
  * packet.
  */
 __stdcall /*static*/ void
-ndis_rxeof(adapter, packets, pktcnt)
-	ndis_handle		adapter;
-	ndis_packet		**packets;
-	uint32_t		pktcnt;
+ndis_rxeof(ndis_handle adapter, ndis_packet **packets, uint32_t pktcnt)
 {
 	struct ndis_softc	*sc;
 	ndis_miniport_block	*block;
@@ -1422,11 +1414,7 @@ ndis_txeof(adapter, packet, status)
 }
 
 __stdcall /*static*/ void
-ndis_linksts(adapter, status, sbuf, slen)
-	ndis_handle		adapter;
-	ndis_status		status;
-	void			*sbuf;
-	uint32_t		slen;
+ndis_linksts(ndis_handle adapter, ndis_status status, void *sbuf, uint32_t slen)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -1445,8 +1433,7 @@ ndis_linksts(adapter, status, sbuf, slen)
 }
 
 __stdcall /*static*/ void
-ndis_linksts_done(adapter)
-	ndis_handle		adapter;
+ndis_linksts_done(ndis_handle adapter)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -1556,8 +1543,7 @@ extern struct ndisproc ndis_iproc;
 #endif
 
 static void
-ndis_tick(xsc)
-	void			*xsc;
+ndis_tick(void *xsc)
 {
 	struct ndis_softc	*sc;
 
@@ -1587,8 +1573,7 @@ ndis_tick(xsc)
 }
 
 static void
-ndis_ticktask(xsc)
-	void			*xsc;
+ndis_ticktask(void *xsc)
 {
 	struct ndis_softc	*sc;
 	__stdcall ndis_checkforhang_handler hangfunc;
@@ -1675,8 +1660,7 @@ ndis_map_sclist(arg, segs, nseg, mapsize, error)
 }
 
 static void
-ndis_starttask(arg)
-	void			*arg;
+ndis_starttask(void *arg)
 {
 	struct ifnet		*ifp;
 
@@ -1703,8 +1687,7 @@ ndis_starttask(arg)
  * will do the mapping themselves on a buffer by buffer basis.
  */
 static void
-ndis_start(ifp)
-	struct ifnet		*ifp;
+ndis_start(struct ifnet *ifp)
 {
 	struct ndis_softc	*sc;
 	struct mbuf		*m = NULL;
@@ -1985,8 +1968,7 @@ ndis_init(xsc)
  * Set media options.
  */
 static int
-ndis_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+ndis_ifmedia_upd(struct ifnet *ifp)
 {
 	struct ndis_softc		*sc;
 
@@ -2006,9 +1988,7 @@ ndis_ifmedia_upd(ifp)
  * Report current media status.
  */
 static void
-ndis_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+ndis_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ndis_softc	*sc;
 	uint32_t		media_info;
@@ -2055,8 +2035,7 @@ ndis_ifmedia_sts(ifp, ifmr)
 /* TODO: Perhaps raise the IPL while in these wireless functions ? */
 
 static void
-ndis_setstate_80211(sc)
-	struct ndis_softc	*sc;
+ndis_setstate_80211(struct ndis_softc *sc)
 {
 	struct ieee80211com	*ic;
 	ndis_80211_ssid		ssid;
@@ -2326,9 +2305,7 @@ ndis_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 static int
-ndis_get_assoc(sc, assoc)
-	struct ndis_softc	*sc;
-	ndis_wlan_bssid_ex	**assoc;
+ndis_get_assoc(struct ndis_softc *sc, ndis_wlan_bssid_ex **assoc)
 {
 	ndis_80211_bssid_list_ex	*bl;
 	ndis_wlan_bssid_ex	*bs;
@@ -2379,8 +2356,7 @@ ndis_get_assoc(sc, assoc)
 }
 
 static void
-ndis_getstate_80211(sc)
-	struct ndis_softc	*sc;
+ndis_getstate_80211(struct ndis_softc *sc)
 {
 	struct ieee80211com	*ic;
 	ndis_80211_ssid		ssid;
@@ -2635,10 +2611,7 @@ ndis_ioctl(struct ifnet *ifp, u_long command, void *data)
 }
 
 static int
-ndis_wi_ioctl_get(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	void *			data;
+ndis_wi_ioctl_get(struct ifnet *ifp, u_long command, void * data)
 {
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
@@ -2716,10 +2689,7 @@ ndis_wi_ioctl_get(ifp, command, data)
 }
 
 static int
-ndis_wi_ioctl_set(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	void *			data;
+ndis_wi_ioctl_set(struct ifnet *ifp, u_long command, void * data)
 {
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
@@ -2757,8 +2727,7 @@ ndis_wi_ioctl_set(ifp, command, data)
 }
 
 static void
-ndis_watchdog(ifp)
-	struct ifnet		*ifp;
+ndis_watchdog(struct ifnet *ifp)
 {
 	struct ndis_softc		*sc;
 #ifdef __NetBSD__
@@ -2785,8 +2754,7 @@ ndis_watchdog(ifp)
  * RX and TX lists.
  */
 static void
-ndis_stop(sc)
-	struct ndis_softc		*sc;
+ndis_stop(struct ndis_softc *sc)
 {
 	struct ifnet		*ifp;
 #ifdef __NetBSD__
@@ -2820,8 +2788,7 @@ ndis_stop(sc)
 /* TODO: remove this #ifdef once ndis_shutdown_nic() is working on NetBSD */
 #ifdef __FreeBSD__
 void
-ndis_shutdown(dev)
-	device_t		dev;
+ndis_shutdown(device_t dev)
 {
 	struct ndis_softc		*sc;
 

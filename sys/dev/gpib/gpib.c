@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.13 2008/06/11 18:46:24 cegger Exp $	*/
+/*	$NetBSD: gpib.c,v 1.14 2009/03/14 15:36:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.13 2008/06/11 18:46:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.14 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,7 @@ extern struct cfdriver gpib_cd;
 int gpibtimeout = 100000;	/* # of status tests before we give up */
 
 int
-gpibmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+gpibmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
@@ -143,11 +140,7 @@ gpibattach(parent, self, aux)
 }
 
 int
-gpibsubmatch1(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+gpibsubmatch1(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct gpib_softc *sc = (struct gpib_softc *)parent;
 	struct gpib_attach_args *ga = aux;
@@ -168,11 +161,7 @@ gpibsubmatch1(parent, cf, ldesc, aux)
 }
 
 int
-gpibsubmatch2(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+gpibsubmatch2(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct gpib_attach_args *ga = aux;
 
@@ -188,9 +177,7 @@ gpibsubmatch2(parent, cf, ldesc, aux)
 }
 
 int
-gpibprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+gpibprint(void *aux, const char *pnp)
 {
 	struct gpib_attach_args *ga = aux;
 
@@ -200,9 +187,7 @@ gpibprint(aux, pnp)
 }
 
 int
-gpibdevprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+gpibdevprint(void *aux, const char *pnp)
 {
 
 	if (pnp != NULL)
@@ -214,8 +199,7 @@ gpibdevprint(aux, pnp)
  * Called by hardware driver, pass to device driver.
  */
 int
-gpibintr(v)
-	void *v;
+gpibintr(void *v)
 {
 	struct gpib_softc *sc = v;
 	gpib_handle_t hdl;
@@ -331,9 +315,7 @@ _gpibswait(sc, slave)
  * claimed and allocated.
  */
 int
-gpib_isalloc(sc, address)
-	struct gpib_softc *sc;
-	u_int8_t address;
+gpib_isalloc(struct gpib_softc *sc, u_int8_t address)
 {
 
 	DPRINTF(DBG_FOLLOW, ("gpib_isalloc: sc=%p address=%d\n", sc, address));
@@ -350,9 +332,7 @@ gpib_isalloc(sc, address)
  * Resource accounting: allocate the address.
  */
 int
-gpib_alloc(sc, address)
-	struct gpib_softc *sc;
-	u_int8_t address;
+gpib_alloc(struct gpib_softc *sc, u_int8_t address)
 {
 
 	DPRINTF(DBG_FOLLOW, ("gpib_alloc: sc=%p address=%d\n", sc, address));
@@ -373,9 +353,7 @@ gpib_alloc(sc, address)
  * Resource accounting: deallocate the address.
  */
 void
-gpib_dealloc(sc, address)
-	struct gpib_softc *sc;
-	u_int8_t address;
+gpib_dealloc(struct gpib_softc *sc, u_int8_t address)
 {
 
 	DPRINTF(DBG_FOLLOW, ("gpib_free: sc=%p address=%d\n", sc, address));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.42 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.43 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.42 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.43 2009/03/14 15:36:19 dsl Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -273,8 +273,7 @@ ofnet_read(struct ofnet_softc *of)
 }
 
 static void
-ofnet_timer(arg)
-	void *arg;
+ofnet_timer(void *arg)
 {
 	struct ofnet_softc *of = arg;
 

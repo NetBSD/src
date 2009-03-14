@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 2009/03/14 14:45:59 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6 2009/03/14 15:36:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.5 2009/03/14 14:45:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2009/03/14 15:36:05 dsl Exp $");
 
 #include "opt_irqstats.h"
 
@@ -103,11 +103,7 @@ static unsigned int isairq[3] = { 5, 6, 7 };
 static unsigned int isairq_nhandlers[3] = { 0, 0, 0 };
 
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	int i, bestirq, count;
 
@@ -171,9 +167,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	ep93xx_intr_disestablish(arg);
 }

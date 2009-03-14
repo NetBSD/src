@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.11 2009/03/14 14:46:09 dsl Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.12 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.11 2009/03/14 14:46:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.12 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,7 @@ static const struct tiara_mca_product {
 static const struct tiara_mca_product *tiara_mca_lookup(u_int32_t);
 
 static const struct tiara_mca_product *
-tiara_mca_lookup(id)
-	u_int32_t id;
+tiara_mca_lookup(u_int32_t id)
 {
 	const struct tiara_mca_product *tra_p;
 

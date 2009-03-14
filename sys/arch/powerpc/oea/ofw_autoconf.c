@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.8 2008/09/25 14:44:51 macallan Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.9 2009/03/14 15:36:12 dsl Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.8 2008/09/25 14:44:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.9 2009/03/14 15:36:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -193,9 +193,7 @@ canonicalize_bootpath(void)
  * known OF boot device.
  */
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	static struct device *parent;
 	static char *bp = bootpath + 1, *cp = cbootpath;

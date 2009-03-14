@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.6 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.7 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.6 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.7 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,7 @@ static void
 mcpcia_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-mcpcia_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+mcpcia_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
 	pc->pc_attach_hook = mcpcia_attach_hook;
@@ -83,9 +81,7 @@ mcpcia_attach_hook(parent, self, pba)
 }
 
 static int
-mcpcia_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+mcpcia_bus_maxdevs(void *cpv, int busno)
 {
 	return (MCPCIA_MAXDEV);
 }
@@ -115,10 +111,7 @@ mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
 }
 
 static pcireg_t
-mcpcia_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+mcpcia_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct mcpcia_config *ccp = cpv;
 	pcireg_t *dp, data = (pcireg_t) -1;
@@ -146,11 +139,7 @@ mcpcia_conf_read(cpv, tag, offset)
 }
 
 static void
-mcpcia_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+mcpcia_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct mcpcia_config *ccp = cpv;
 	pcireg_t *dp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.28 2008/04/05 16:46:15 cegger Exp $ */
+/*	$NetBSD: fb.c,v 1.29 2009/03/14 15:36:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.28 2008/04/05 16:46:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.29 2009/03/14 15:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,7 @@ fb_unblank()
  * other sources of configuration information (e.g. EEPROM entries).
  */
 int
-fb_is_console(node)
-	int node;
+fb_is_console(int node)
 {
 #if !defined(SUN4U)
 	int fbnode;
@@ -147,9 +146,7 @@ fb_is_console(node)
 }
 
 void
-fb_attach(fb, isconsole)
-	struct fbdevice *fb;
-	int isconsole;
+fb_attach(struct fbdevice *fb, int isconsole)
 {
 	static int seen_force = 0;
 	int nfb = 0;
@@ -247,12 +244,7 @@ fbclose(dev, flags, mode, l)
 }
 
 int
-fbioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -269,10 +261,7 @@ fbioctl(dev, cmd, data, flags, l)
 }
 
 int
-fbpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+fbpoll(dev_t dev, int events, struct lwp *l)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -289,9 +278,7 @@ fbpoll(dev, events, l)
 }
 
 int
-fbkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+fbkqfilter(dev_t dev, struct knote *kn)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -307,10 +294,7 @@ fbkqfilter(dev, kn)
 }
 
 paddr_t
-fbmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+fbmmap(dev_t dev, off_t off, int prot)
 {
 	int unit, nunit;
 	struct fbdevlist *fbl = &fblist;
@@ -403,8 +387,7 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 static void fb_bell(int);
 
 static void
-fb_bell(on)
-	int on;
+fb_bell(int on)
 {
 #if NKBD > 0
 	kbd_bell(on);
@@ -412,8 +395,7 @@ fb_bell(on)
 }
 
 void
-fbrcons_init(fb)
-	struct fbdevice *fb;
+fbrcons_init(struct fbdevice *fb)
 {
 	struct rconsole	*rc = &fb->fb_rcons;
 	struct rasops_info *ri = &fb->fb_rinfo;

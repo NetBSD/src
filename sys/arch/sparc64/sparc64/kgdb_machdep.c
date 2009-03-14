@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.12 2009/01/11 23:20:38 cegger Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.13 2009/03/14 15:36:14 dsl Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2009/01/11 23:20:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.13 2009/03/14 15:36:14 dsl Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -269,8 +269,7 @@ kgdb_panic(void)
  * XXX should this be done at the other end?
  */
 int
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	int sigval;
 
@@ -340,9 +339,7 @@ kgdb_signal(type)
  * understood by gdb.
  */
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	struct trapframe64 *tf = &regs->db_tf;
 
@@ -365,9 +362,7 @@ kgdb_getregs(regs, gdb_regs)
  * Reverse the above.
  */
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	struct trapframe64 *tf = &regs->db_tf;
 
@@ -381,9 +376,7 @@ kgdb_setregs(regs, gdb_regs)
  * Determine if memory at [va..(va+len)] is valid.
  */
 int
-kgdb_acc(va, len)
-	vaddr_t va;
-	size_t len;
+kgdb_acc(vaddr_t va, size_t len)
 {
 	int64_t data;
 	vaddr_t eva;

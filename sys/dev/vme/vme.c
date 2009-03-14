@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.19 2007/10/19 12:01:23 ad Exp $ */
+/* $NetBSD: vme.c,v 1.20 2009/03/14 15:36:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.19 2007/10/19 12:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.20 2009/03/14 15:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,7 @@ const struct cfattach vme_slv_ca = {
 };
 
 static void
-vme_extractlocators(loc, aa)
-	int *loc;
-	struct vme_attach_args *aa;
+vme_extractlocators(int *loc, struct vme_attach_args *aa)
 {
 	int i = 0;
 
@@ -88,9 +86,7 @@ vme_extractlocators(loc, aa)
 }
 
 static int
-vmeprint(v, dummy)
-	struct vme_attach_args *v;
-	char *dummy;
+vmeprint(struct vme_attach_args *v, char *dummy)
 {
 	int i;
 
@@ -127,11 +123,7 @@ vmeprint(v, dummy)
  * devices are attached.
  */
 static int
-vmesubmatch1(bus, dev, ldesc, aux)
-	struct device *bus;
-	struct cfdata *dev;
-	const int *ldesc;
-	void *aux;
+vmesubmatch1(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
@@ -148,11 +140,7 @@ vmesubmatch1(bus, dev, ldesc, aux)
 }
 
 static int
-vmesubmatch(bus, dev, ldesc, aux)
-	struct device *bus;
-	struct cfdata *dev;
-	const int *ldesc;
-	void *aux;
+vmesubmatch(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
@@ -173,10 +161,7 @@ vmesubmatch(bus, dev, ldesc, aux)
 }
 
 int
-vmematch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vmematch(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (1);
 }
@@ -244,8 +229,7 @@ vmeattach(parent, self, aux)
 
 #ifdef notyet
 int
-vmedetach(dev)
-	struct device *dev;
+vmedetach(struct device *dev)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)dev;
 
@@ -280,9 +264,7 @@ vmedetach(dev)
 #endif
 
 static struct extent *
-vme_select_map(sc, ams)
-	struct vmebus_softc *sc;
-	vme_am_t ams;
+vme_select_map(struct vmebus_softc *sc, vme_am_t ams)
 {
 	if ((ams & VME_AM_ADRSIZEMASK) == VME_AM_A32)
 		return (sc->vme32ext);

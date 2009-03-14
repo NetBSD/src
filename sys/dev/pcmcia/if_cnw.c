@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.46 2009/02/13 23:31:23 bouyer Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.47 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.46 2009/02/13 23:31:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.47 2009/03/14 15:36:20 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -245,9 +245,7 @@ static int cnw_cmd(struct cnw_softc *, int, int, int, int);
  * ASR (Adapter Status Register) is asserted.
  */
 static int
-wait_WOC(sc, line)
-	struct cnw_softc *sc;
-	int line;
+wait_WOC(struct cnw_softc *sc, int line)
 {
 	int i, asr;
 
@@ -273,9 +271,7 @@ wait_WOC(sc, line)
  * Read a 16 bit value from the card.
  */
 static int
-read16(sc, offset)
-	struct cnw_softc *sc;
-	int offset;
+read16(struct cnw_softc *sc, int offset)
 {
 	int hi, lo;
 	int offs = sc->sc_memoff + offset;
@@ -336,8 +332,7 @@ cnw_cmd(sc, cmd, count, arg1, arg2)
  * Reset the hardware.
  */
 void
-cnw_reset(sc)
-	struct cnw_softc *sc;
+cnw_reset(struct cnw_softc *sc)
 {
 #ifdef CNW_DEBUG
 	if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
@@ -365,8 +360,7 @@ cnw_reset(sc)
  * Initialize the card.
  */
 void
-cnw_init(sc)
-	struct cnw_softc *sc;
+cnw_init(struct cnw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const u_int8_t rxmode =
@@ -422,8 +416,7 @@ cnw_init(sc)
  * Enable and initialize the card.
  */
 int
-cnw_enable(sc)
-	struct cnw_softc *sc;
+cnw_enable(struct cnw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -451,8 +444,7 @@ cnw_enable(sc)
  * Stop and disable the card.
  */
 void
-cnw_disable(sc)
-	struct cnw_softc *sc;
+cnw_disable(struct cnw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -600,8 +592,7 @@ fail:
  * Start outputting on the interface.
  */
 void
-cnw_start(ifp)
-	struct ifnet *ifp;
+cnw_start(struct ifnet *ifp)
 {
 	struct cnw_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
@@ -702,9 +693,7 @@ cnw_start(ifp)
  * Transmit a packet.
  */
 void
-cnw_transmit(sc, m0)
-	struct cnw_softc *sc;
-	struct mbuf *m0;
+cnw_transmit(struct cnw_softc *sc, struct mbuf *m0)
 {
 	int buffer, bufsize, bufoffset, bufptr, bufspace, len, mbytes, n;
 	struct mbuf *m;
@@ -760,8 +749,7 @@ cnw_transmit(sc, m0)
  * Pull a packet from the card into an mbuf chain.
  */
 struct mbuf *
-cnw_read(sc)
-	struct cnw_softc *sc;
+cnw_read(struct cnw_softc *sc)
 {
 	struct mbuf *m, *top, **mp;
 	int totbytes, buffer, bufbytes, bufptr, mbytes, n;
@@ -847,8 +835,7 @@ cnw_read(sc)
  * Handle received packets.
  */
 void
-cnw_recv(sc)
-	struct cnw_softc *sc;
+cnw_recv(struct cnw_softc *sc)
 {
 	int rser;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -889,8 +876,7 @@ cnw_recv(sc)
  * Interrupt handler.
  */
 int
-cnw_intr(arg)
-	void *arg;
+cnw_intr(void *arg)
 {
 	struct cnw_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1141,8 +1127,7 @@ cnw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  * generate an interrupt after a transmit has been started on it.
  */
 void
-cnw_watchdog(ifp)
-	struct ifnet *ifp;
+cnw_watchdog(struct ifnet *ifp)
 {
 	struct cnw_softc *sc = ifp->if_softc;
 
@@ -1152,9 +1137,7 @@ cnw_watchdog(ifp)
 }
 
 int
-cnw_setdomain(sc, domain)
-	struct cnw_softc *sc;
-	int domain;
+cnw_setdomain(struct cnw_softc *sc, int domain)
 {
 	int s;
 
@@ -1170,9 +1153,7 @@ cnw_setdomain(sc, domain)
 }
 
 int
-cnw_setkey(sc, key)
-	struct cnw_softc *sc;
-	int key;
+cnw_setkey(struct cnw_softc *sc, int key)
 {
 	int s;
 
@@ -1188,9 +1169,7 @@ cnw_setkey(sc, key)
 }
 
 int
-cnw_activate(self, act)
-	struct device *self;
-	enum devact act;
+cnw_activate(struct device *self, enum devact act)
 {
 	struct cnw_softc *sc = (struct cnw_softc *)self;
 	int rv = 0, s;

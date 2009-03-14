@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.10 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2009/03/14 15:36:02 dsl Exp $");
 
 #include "opt_irqstats.h"
 
@@ -154,8 +154,7 @@ isa_icu_init(void)
  * Caught a stray interrupt, notify
  */
 void
-isa_strayintr(irq)
-	int irq;
+isa_strayintr(int irq)
 {
 	static u_long strays;
 
@@ -246,8 +245,7 @@ intr_calculatemasks()
 }
 
 int
-fakeintr(arg)
-	void *arg;
+fakeintr(void *arg)
 {
 
 	return 0;
@@ -256,11 +254,7 @@ fakeintr(arg)
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
 
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	int i, tmp, bestirq, count;
 	struct intrq *iq;
@@ -414,9 +408,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	struct intrhand *ih = arg;
 	struct intrq *iq = &isa_intrq[ih->ih_irq];
@@ -518,8 +510,7 @@ isa_attach_hook(parent, self, iba)
 }
 
 int
-isa_irqdispatch(arg)
-	void *arg;
+isa_irqdispatch(void *arg)
 {
 	struct clockframe *frame = arg;
 	int irq;
@@ -547,10 +538,7 @@ isa_irqdispatch(arg)
 
 
 void
-isa_fillw(val, addr, len)
-	u_int val;
-	void *addr;
-	size_t len;
+isa_fillw(u_int val, void *addr, size_t len)
 {
 	if ((u_int)addr >= isa_mem_data_vaddr()
 	    && (u_int)addr < isa_mem_data_vaddr() + 0x100000) {

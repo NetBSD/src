@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215 2009/02/13 22:41:01 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.216 2009/03/14 15:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.216 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,10 +337,7 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -496,9 +493,7 @@ bootsync(void)
 
 
 void
-cpu_reboot(howto, bootstr)
-	register int howto;
-	char *bootstr;
+cpu_reboot(register int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curlwp->l_addr)
@@ -633,8 +628,7 @@ cpu_dumpconf()
 static vm_offset_t dumpspace;
 
 vm_offset_t
-reserve_dumppages(p)
-	vm_offset_t p;
+reserve_dumppages(vm_offset_t p)
 {
 	dumpspace = p;
 	return (p + BYTES_PER_DUMP);
@@ -887,9 +881,7 @@ initcpu()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
 	printf("unexpected trap format %x (vector offset %x) from %x\n",
 	       evec>>12, evec & 0xFFF, pc);
@@ -899,8 +891,7 @@ straytrap(pc, evec)
 int	*nofault;
 
 int
-badaddr(addr)
-	register void *addr;
+badaddr(register void *addr)
 {
 	register int i;
 	label_t	faultbuf;
@@ -919,8 +910,7 @@ badaddr(addr)
 }
 
 int
-badbaddr(addr)
-	register void *addr;
+badbaddr(register void *addr)
 {
 	register int i;
 	label_t	faultbuf;
@@ -1104,8 +1094,7 @@ struct isr *isr_supio;
 struct isr *isr_exter;
 
 void
-add_isr(isr)
-	struct isr *isr;
+add_isr(struct isr *isr)
 {
 	struct isr **p, *q;
 
@@ -1152,8 +1141,7 @@ add_isr(isr)
 }
 
 void
-remove_isr(isr)
-	struct isr *isr;
+remove_isr(struct isr *isr)
 {
 	struct isr **p, *q;
 
@@ -1226,8 +1214,7 @@ remove_isr(isr)
 static int idepth;
 
 void
-intrhand(sr)
-	int sr;
+intrhand(int sr)
 {
 	register unsigned int ipl;
 	register unsigned short ireq;
@@ -1407,8 +1394,7 @@ candbtimer()
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
-nmihand(frame)
-	struct frame frame;
+nmihand(struct frame frame)
 {
 	if (kbdnmi()) {
 #ifdef PANICBUTTON
@@ -1450,9 +1436,7 @@ nmihand(frame)
  * MID and proceed to new zmagic code ;-)
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 #ifdef COMPAT_NOMID

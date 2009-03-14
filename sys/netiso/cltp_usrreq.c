@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.34 2008/04/28 13:24:38 ad Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.35 2009/03/14 15:36:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.34 2008/04/28 13:24:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.35 2009/03/14 15:36:23 dsl Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -175,8 +175,7 @@ bad:
  * just wake up so that he can collect error status.
  */
 void
-cltp_notify(isop)
-	struct isopcb *isop;
+cltp_notify(struct isopcb *isop)
 {
 
 	sorwakeup(isop->isop_socket);

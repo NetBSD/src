@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.11 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.12 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.11 2005/12/11 12:17:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.12 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -217,16 +217,14 @@ void vgacnprobe(struct consdev *);
 void vgacninit(struct consdev *);
 
 void
-vgacnprobe(cp)
-	struct consdev *cp;
+vgacnprobe(struct consdev *cp)
 {
 	if (tags_valid)
 		cp->cn_pri = CN_NORMAL;
 }
 
 void
-vgacninit(cp)
-	struct consdev *cp;
+vgacninit(struct consdev *cp)
 {
 	if (tags_valid) {
 		/* XXX: Are those arguments correct? Leo */

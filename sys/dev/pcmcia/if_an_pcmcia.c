@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.36 2008/07/03 18:10:08 drochner Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.36 2008/07/03 18:10:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,7 @@ an_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 static int
-an_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+an_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace < 1)
@@ -195,8 +194,7 @@ an_pcmcia_detach(struct device *self, int flags)
 }
 
 static int
-an_pcmcia_enable(sc)
-	struct an_softc *sc;
+an_pcmcia_enable(struct an_softc *sc)
 {
 	struct an_pcmcia_softc *psc = (void *)sc;
 	int error;
@@ -216,8 +214,7 @@ an_pcmcia_enable(sc)
 }
 
 static void
-an_pcmcia_disable(sc)
-	struct an_softc *sc;
+an_pcmcia_disable(struct an_softc *sc)
 {
 	struct an_pcmcia_softc *psc = (void *)sc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsocket.c,v 1.2 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: nfs_srvsocket.c,v 1.3 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.2 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.3 2009/03/14 15:36:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,9 +275,7 @@ done:
  * can sleep.
  */
 int
-nfsrv_getstream(slp, waitflag)
-	struct nfssvc_sock *slp;
-	int waitflag;
+nfsrv_getstream(struct nfssvc_sock *slp, int waitflag)
 {
 	struct mbuf *m, **mpp;
 	struct mbuf *recm;

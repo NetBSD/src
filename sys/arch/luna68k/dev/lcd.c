@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.4 2009/03/14 14:46:00 dsl Exp $ */
+/* $NetBSD: lcd.c,v 1.5 2009/03/14 15:36:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.4 2009/03/14 14:46:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.5 2009/03/14 15:36:08 dsl Exp $");
 
 /*
  * XXX
@@ -101,8 +101,7 @@ lcdbusywait()
 }	
 
 void
-lcdput(cc)
-	int cc;
+lcdput(int cc)
 {
 	struct pio *p1 = (struct pio *)0x4D000000;
 	int s;
@@ -119,8 +118,7 @@ lcdput(cc)
 }
 
 void
-lcdctrl(cc)
-	int cc;
+lcdctrl(int cc)
 {
 	struct pio *p1 = (struct pio *)0x4D000000;
 	int s;
@@ -137,8 +135,7 @@ lcdctrl(cc)
 }
 
 void
-lcdshow(s)
-	char *s;
+lcdshow(char *s)
 {
 	int cc;
 

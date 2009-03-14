@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.14 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: ls.c,v 1.15 2009/03/14 15:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.14 2009/03/14 14:46:11 dsl Exp $");
+__RCSID("$NetBSD: ls.c,v 1.15 2009/03/14 15:36:25 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,8 +83,7 @@ main()
 
 typedef struct dirent	DP;
 static void
-ls(fd)
-	register int fd;
+ls(register int fd)
 {
 	register int size;
 	register char *dp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2009/01/27 20:30:12 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.123 2009/03/14 15:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2009/01/27 20:30:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,10 +237,7 @@ void _wb_fault(void);
 
 
 static void
-userret(l, pc, oticks)
-	struct lwp *l;
-	int pc;
-	u_quad_t oticks;
+userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
@@ -264,10 +261,7 @@ userret(l, pc, oticks)
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f->f_pc, t);
@@ -298,9 +292,7 @@ panictrap(type, code, v, fp)
  * return to fault handler
  */
 void
-trapcpfault(l, fp)
-	struct lwp *l;
-	struct frame *fp;
+trapcpfault(struct lwp *l, struct frame *fp)
 {
 	/*
 	 * We have arranged to catch this fault in one of the

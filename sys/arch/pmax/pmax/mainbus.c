@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.37 2009/03/14 14:46:04 dsl Exp $ */
+/* $NetBSD: mainbus.c,v 1.38 2009/03/14 15:36:11 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.37 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.38 2009/03/14 15:36:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,10 +49,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 static int mainbus_found;
 
 static int
-mbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	if (mainbus_found)
@@ -64,10 +61,7 @@ mbmatch(parent, cf, aux)
 int ncpus = 0;	/* only support uniprocessors, for now */
 
 static void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args ma;
 
@@ -92,9 +86,7 @@ mbattach(parent, self, aux)
 }
 
 static int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mbprint(void *aux, const char *pnp)
 {
 
 	if (pnp)

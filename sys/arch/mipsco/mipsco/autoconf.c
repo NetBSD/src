@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2009/03/14 14:46:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2009/03/14 15:36:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,7 @@ int	boot_id, boot_lun, boot_part;
  * Attempt to find the device from which we were booted.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(struct device **devpp, int *partp)
 {
 	struct device *dv;
 
@@ -179,8 +177,7 @@ findroot(devpp, partp)
 }
 
 void
-makebootdev(cp)
-	char *cp;
+makebootdev(char *cp)
 {
 	boot_class = -1;
 	boot_id = boot_lun = boot_part = 0;

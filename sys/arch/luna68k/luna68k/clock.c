@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.5 2006/09/14 15:04:07 gdamore Exp $ */
+/* $NetBSD: clock.c,v 1.6 2009/03/14 15:36:08 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2006/09/14 15:04:07 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2009/03/14 15:36:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,8 +133,7 @@ cpu_initclocks()
  * but that would be a drag.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing we can do */
 }

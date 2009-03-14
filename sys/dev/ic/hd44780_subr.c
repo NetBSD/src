@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.16 2008/12/19 18:49:38 cegger Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.17 2009/03/14 15:36:17 dsl Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.16 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.17 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,7 @@ hlcd_cursor(id, on, row, col)
 }
 
 static int
-hlcd_mapchar(id, uni, index)
-	void *id;
-	int uni;
-	unsigned int *index;
+hlcd_mapchar(void *id, int uni, unsigned int *index)
 {
 	if (uni < 256) {
 		*index = uni;
@@ -229,13 +226,7 @@ hlcd_allocattr(id, fg, bg, flags, attrp)
 }
 
 static int
-hlcd_ioctl(v, vs, cmd, data, flag, l)
-	void *v;
-	void *vs;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+hlcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {
@@ -257,11 +248,7 @@ hlcd_ioctl(v, vs, cmd, data, flag, l)
 }
 
 static paddr_t
-hlcd_mmap(v, vs, offset, prot)
-	void *v;
-	void *vs;
-	off_t offset;
-	int prot;
+hlcd_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	return -1;
 }
@@ -326,8 +313,7 @@ hlcd_updatechar(sc, daddr, c)
 }
 
 static void
-hlcd_redraw(arg)
-	void *arg;
+hlcd_redraw(void *arg)
 {
 	struct hd44780_chip *sc = arg;
 	int len, crsridx, startidx, x, y;
@@ -402,8 +388,7 @@ hlcd_redraw(arg)
  * initialized prior to this call.
  */
 void
-hd44780_attach_subr(sc)
-	struct hd44780_chip *sc;
+hd44780_attach_subr(struct hd44780_chip *sc)
 {
 	int err = 0;
 	/* Putc/getc are supposed to be set by platform-dependent code. */
@@ -448,9 +433,7 @@ int hd44780_init(sc)
  * Initialize 4-bit or 8-bit connected device.
  */
 int
-hd44780_chipinit(sc, en)
-	struct hd44780_chip *sc;
-	u_int32_t en;
+hd44780_chipinit(struct hd44780_chip *sc, u_int32_t en)
 {
 	u_int8_t cmd, dat;
 
@@ -505,10 +488,7 @@ hd44780_chipinit(sc, en)
  * Standard hd44780 ioctl() functions.
  */
 int
-hd44780_ioctl_subr(sc, cmd, data)
-	struct hd44780_chip *sc;
-	u_long cmd;
-	void *data;
+hd44780_ioctl_subr(struct hd44780_chip *sc, u_long cmd, void *data)
 {
 	u_int8_t tmp;
 	int error = 0;
@@ -647,11 +627,7 @@ hd44780_ioctl_subr(sc, cmd, data)
  * Read/write particular area of the LCD screen.
  */
 int
-hd44780_ddram_io(sc, en, io, dir)
-	struct hd44780_chip *sc;
-	u_int32_t en;
-	struct hd44780_io *io;
-	u_char dir;
+hd44780_ddram_io(struct hd44780_chip *sc, u_int32_t en, struct hd44780_io *io, u_char dir)
 {
 	u_int8_t hi;
 	u_int8_t addr;
@@ -695,10 +671,7 @@ hd44780_ddram_io(sc, en, io, dir)
  * Write to the visible area of the display.
  */
 void
-hd44780_ddram_redraw(sc, en, io)
-	struct hd44780_chip *sc;
-	u_int32_t en;
-	struct hd44780_io *io;
+hd44780_ddram_redraw(struct hd44780_chip *sc, u_int32_t en, struct hd44780_io *io)
 {
 	u_int8_t i;
 
@@ -714,9 +687,7 @@ hd44780_ddram_redraw(sc, en, io)
 }
 
 void
-hd44780_busy_wait(sc, en)
-	struct hd44780_chip *sc;
-	u_int32_t en;
+hd44780_busy_wait(struct hd44780_chip *sc, u_int32_t en)
 {
 	int nloops = 100;
 

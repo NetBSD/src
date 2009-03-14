@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.28 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.29 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.28 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.29 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -128,10 +128,7 @@ void	falcon_probe_video(MODES *);
 #endif /* FALCON_VIDEO */
 
 int
-grfccmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+grfccmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int	did_consinit = 0;
 	static int	must_probe = 1;
@@ -281,9 +278,7 @@ void		*auxp;
 }
 
 int
-grfccprint(auxp, pnp)
-void		*auxp;
-const char	*pnp;
+grfccprint(void *auxp, const char *pnp)
 {
 	if(pnp)
 		aprint_normal("ite at %s", pnp);
@@ -303,8 +298,7 @@ grfcc_cnprobe()
  * grf_softc struct
  */
 void
-grfcc_iteinit(gp)
-struct grf_softc *gp;
+grfcc_iteinit(struct grf_softc *gp)
 {
 
 	gp->g_itecursor = cursor32;
@@ -316,15 +310,13 @@ struct grf_softc *gp;
 }
 
 static void
-view_deinit(ip)
-struct ite_softc	*ip;
+view_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED;
 }
 
 static void
-view_init(ip)
-register struct ite_softc *ip;
+view_init(register struct ite_softc *ip)
 {
 	struct itewinsize	wsz;
 	ipriv_t			*cci;
@@ -371,9 +363,7 @@ register struct ite_softc *ip;
 }
 
 static int
-ite_newsize(ip, winsz)
-struct ite_softc	*ip;
-struct itewinsize	*winsz;
+ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 {
 	struct view_size	vs;
 	ipriv_t			*cci = ip->priv;    
@@ -457,12 +447,7 @@ struct itewinsize	*winsz;
 }
 
 int
-itecc_ioctl(ip, cmd, addr, flag, l)
-struct ite_softc	*ip;
-u_long			cmd;
-void *			addr;
-int			flag;
-struct lwp		*l;
+itecc_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct winsize		ws;
 	struct itewinsize	*is;

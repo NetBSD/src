@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.12 2008/12/21 18:01:42 he Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.13 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.12 2008/12/21 18:01:42 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.13 2009/03/14 15:36:19 dsl Exp $");
 
 #include "vmetwo.h"
 
@@ -217,8 +217,7 @@ vmetwo_intr_init(struct vmetwo_softc *sc)
 }
 
 static int
-vmetwo_local_isr_trampoline(arg)
-	void *arg;
+vmetwo_local_isr_trampoline(void *arg)
 {
 	struct vme_two_handler *isr;
 	int vec;

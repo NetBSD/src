@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.87 2008/12/17 20:51:36 cegger Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.88 2009/03/14 15:36:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.87 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.88 2009/03/14 15:36:22 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -188,9 +188,7 @@ kernfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-kernfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+kernfs_root(struct mount *mp, struct vnode **vpp)
 {
 
 	/* setup "." */

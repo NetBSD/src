@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.13 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.14 2009/03/14 15:36:09 dsl Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -64,10 +64,7 @@ CFATTACH_DECL(ki2c, sizeof(struct ki2c_softc), ki2c_match, ki2c_attach,
 	NULL, NULL);
 
 int
-ki2c_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ki2c_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -78,10 +75,7 @@ ki2c_match(parent, match, aux)
 }
 
 void
-ki2c_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ki2c_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ki2c_softc *sc = (struct ki2c_softc *)self;
 	struct confargs *ca = aux;
@@ -181,9 +175,7 @@ ki2c_attach(parent, self, aux)
 }
 
 int
-ki2c_print(aux, ki2c)
-	void *aux;
-	const char *ki2c;
+ki2c_print(void *aux, const char *ki2c)
 {
 	struct ki2c_confargs *ka = aux;
 
@@ -195,9 +187,7 @@ ki2c_print(aux, ki2c)
 }
 
 u_int
-ki2c_readreg(sc, reg)
-	struct ki2c_softc *sc;
-	int reg;
+ki2c_readreg(struct ki2c_softc *sc, int reg)
 {
 	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
 
@@ -205,10 +195,7 @@ ki2c_readreg(sc, reg)
 }
 
 void
-ki2c_writereg(sc, reg, val)
-	struct ki2c_softc *sc;
-	int reg;
-	u_int val;
+ki2c_writereg(struct ki2c_softc *sc, int reg, u_int val)
 {
 	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
 
@@ -218,16 +205,13 @@ ki2c_writereg(sc, reg, val)
 }
 
 u_int
-ki2c_getmode(sc)
-	struct ki2c_softc *sc;
+ki2c_getmode(struct ki2c_softc *sc)
 {
 	return ki2c_readreg(sc, MODE) & I2C_MODE;
 }
 
 void
-ki2c_setmode(sc, mode)
-	struct ki2c_softc *sc;
-	u_int mode;
+ki2c_setmode(struct ki2c_softc *sc, u_int mode)
 {
 	u_int x;
 
@@ -239,16 +223,13 @@ ki2c_setmode(sc, mode)
 }
 
 u_int
-ki2c_getspeed(sc)
-	struct ki2c_softc *sc;
+ki2c_getspeed(struct ki2c_softc *sc)
 {
 	return ki2c_readreg(sc, MODE) & I2C_SPEED;
 }
 
 void
-ki2c_setspeed(sc, speed)
-	struct ki2c_softc *sc;
-	u_int speed;
+ki2c_setspeed(struct ki2c_softc *sc, u_int speed)
 {
 	u_int x;
 
@@ -260,8 +241,7 @@ ki2c_setspeed(sc, speed)
 }
 
 int
-ki2c_intr(sc)
-	struct ki2c_softc *sc;
+ki2c_intr(struct ki2c_softc *sc)
 {
 	u_int isr, x;
 
@@ -327,9 +307,7 @@ out:
 }
 
 int
-ki2c_poll(sc, timo)
-	struct ki2c_softc *sc;
-	int timo;
+ki2c_poll(struct ki2c_softc *sc, int timo)
 {
 	while (sc->sc_flags & I2C_BUSY) {
 		if (ki2c_readreg(sc, ISR))

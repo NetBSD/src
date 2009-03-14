@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.10 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.11 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.10 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.11 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,8 +113,7 @@ new_imask()
 }
 
 static void
-isa_callback(vector)
-	int	vector;
+isa_callback(int vector)
 {
 	isa_intr_info_t	*iinfo_p;
 	int		s;
@@ -175,11 +174,7 @@ milan_isa_intr(vector, sr)
 #define	MILAN_AVAIL_ISA_INTS	0x1720
 
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	int	i;
 
@@ -228,9 +223,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 }
 
 void
-isa_intr_disestablish(ic, handler)
-	isa_chipset_tag_t	ic;
-	void			*handler;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *handler)
 {
 	isa_intr_info_t *iinfo_p = (isa_intr_info_t *)handler;
 

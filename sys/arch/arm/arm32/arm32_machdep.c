@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.63 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.64 2009/03/14 15:36:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.63 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.64 2009/03/14 15:36:01 dsl Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -353,8 +353,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 void
-parse_mi_bootargs(args)
-	char *args;
+parse_mi_bootargs(char *args)
 {
 	int integer;
 

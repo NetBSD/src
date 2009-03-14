@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.17 2009/01/13 13:35:53 yamt Exp $ */
+/*	$NetBSD: ct.c,v 1.18 2009/03/14 15:36:17 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.17 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.18 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,10 +249,7 @@ int	nctinfo = sizeof(ctinfo) / sizeof(ctinfo[0]);
 #define	CTUNIT(x)	(minor(x) & 0x03)
 
 int
-ctlookup(id, slave, punit)
-	int id;
-	int slave;
-	int punit;
+ctlookup(int id, int slave, int punit)
 {
 	int i;
 
@@ -265,10 +262,7 @@ ctlookup(id, slave, punit)
 }
 
 int
-ctmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ctmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 	int i;
@@ -509,8 +503,7 @@ ctstrategy(struct buf *bp)
 }
 
 void
-ctustart(sc)
-	struct ct_softc *sc;
+ctustart(struct ct_softc *sc)
 {
 	struct buf *bp;
 
@@ -522,8 +515,7 @@ ctustart(sc)
 }
 
 void
-ctstart(sc)
-	struct ct_softc *sc;
+ctstart(struct ct_softc *sc)
 {
 	struct buf *bp;
 	struct ct_ulcmd ul;
@@ -633,9 +625,7 @@ mustio:
  * Hideous grue to handle EOF/EOT (mostly for reads)
  */
 void
-cteof(sc, bp)
-	struct ct_softc *sc;
-	struct buf *bp;
+cteof(struct ct_softc *sc, struct buf *bp)
 {
 	long blks;
 
@@ -700,9 +690,7 @@ cteof(sc, bp)
 
 
 void
-ctcallback(v, action)
-	void *v;
-	int action;
+ctcallback(void *v, int action)
 {
 	struct ct_softc *sc = v;
 
@@ -724,8 +712,7 @@ ctcallback(v, action)
 }
 
 void
-ctintr(sc)
-	struct ct_softc *sc;
+ctintr(struct ct_softc *sc)
 {
 	struct buf *bp;
 	u_int8_t stat;
@@ -858,9 +845,7 @@ done:
 }
 
 void
-ctdone(sc, bp)
-	struct ct_softc *sc;
-	struct buf *bp;
+ctdone(struct ct_softc *sc, struct buf *bp)
 {
 
 	(void)bufq_get(sc->sc_tab);
@@ -874,19 +859,13 @@ ctdone(sc, bp)
 }
 
 int
-ctread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ctread(dev_t dev, struct uio *uio, int flags)
 {
 	return (physio(ctstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-ctwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ctwrite(dev_t dev, struct uio *uio, int flags)
 {
 	/* XXX: check for hardware write-protect? */
 	return (physio(ctstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -894,12 +873,7 @@ ctwrite(dev, uio, flags)
 
 /*ARGSUSED*/
 int
-ctioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	int flag;
-	void *data;
-	struct lwp *l;
+ctioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;
@@ -939,8 +913,7 @@ ctioctl(dev, cmd, data, flag, l)
 }
 
 void
-ctaddeof(sc)
-	struct ct_softc *sc;
+ctaddeof(struct ct_softc *sc)
 {
 
 	if (sc->sc_eofp == EOFS - 1)

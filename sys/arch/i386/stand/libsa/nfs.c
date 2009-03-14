@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.15 2009/03/14 14:46:00 dsl Exp $	*/
+/*	$NetBSD: nfs.c,v 1.16 2009/03/14 15:36:08 dsl Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -113,10 +113,7 @@ ssize_t	nfs_readdata(struct nfs_iodesc *, off_t, void *, size_t);
  * Return zero or error number.
  */
 int
-nfs_getrootfh(d, path, fhp)
-	struct iodesc *d;
-	char *path;
-	u_char *fhp;
+nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
 {
 	size_t len;
 	struct args {
@@ -172,11 +169,7 @@ nfs_getrootfh(d, path, fhp)
  * Return zero or error number.
  */
 int
-nfs_lookupfh(d, name, len, newfd)
-	struct nfs_iodesc *d;
-	const char *name;
-	int len;
-	struct nfs_iodesc *newfd;
+nfs_lookupfh(struct nfs_iodesc *d, const char *name, int len, struct nfs_iodesc *newfd)
 {
 	int rlen;
 	struct args {
@@ -238,9 +231,7 @@ nfs_lookupfh(d, name, len, newfd)
  * Get the destination of a symbolic link.
  */
 int
-nfs_readlink(d, buf)
-	struct nfs_iodesc *d;
-	char *buf;
+nfs_readlink(struct nfs_iodesc *d, char *buf)
 {
 	struct {
 		n_long	h[RPC_HEADER_WORDS];
@@ -285,11 +276,7 @@ nfs_readlink(d, buf)
  * Return transfer count or -1 (and set errno)
  */
 ssize_t
-nfs_readdata(d, off, addr, len)
-	struct nfs_iodesc *d;
-	off_t off;
-	void *addr;
-	size_t len;
+nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 {
 	struct nfs_read_args *args;
 	struct nfs_read_repl *repl;
@@ -347,9 +334,7 @@ nfs_readdata(d, off, addr, len)
  * return zero or error number
  */
 int
-nfs_open(path, f)
-	const char *path;
-	struct open_file *f;
+nfs_open(const char *path, struct open_file *f)
 {
 	static struct nfs_iodesc nfs_root_node;
 	struct iodesc *desc;
@@ -526,8 +511,7 @@ out:
 }
 
 int
-nfs_close(f)
-	struct open_file *f;
+nfs_close(struct open_file *f)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 
@@ -608,10 +592,7 @@ nfs_write(f, buf, size, resid)
 }
 
 off_t
-nfs_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+nfs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct nfs_iodesc *d = (struct nfs_iodesc *)f->f_fsdata;
 	n_long size = ntohl(d->fa.fa_size);
@@ -638,9 +619,7 @@ const int nfs_stat_types[8] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK, 0 };
 
 int
-nfs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+nfs_stat(struct open_file *f, struct stat *sb)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 	n_long ftype, mode;

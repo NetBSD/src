@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.8 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.9 2009/03/14 15:36:00 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.8 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.9 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,7 @@ void	tsp_tlb_invalidate(struct tsp_config *);
 #define	TSP_SGMAP_PFTHRESH	256
 
 void
-tsp_dma_init(pcp)
-	struct tsp_config *pcp;
+tsp_dma_init(struct tsp_config *pcp)
 {
 	int i;
 	bus_dma_tag_t t;
@@ -240,9 +239,7 @@ tsp_dma_init(pcp)
  * INTERNAL USE ONLY!
  */
 bus_dma_tag_t
-tsp_dma_get_tag(t, bustype)
-	bus_dma_tag_t t;
-	alpha_bus_t bustype;
+tsp_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct tsp_config *pcp = t->_cookie;
 
@@ -273,13 +270,7 @@ tsp_dma_get_tag(t, bustype)
  * Load a TSP SGMAP-mapped DMA map with a linear buffer.
  */
 int
-tsp_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+tsp_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 
@@ -295,11 +286,7 @@ tsp_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
  * Load a TSP SGMAP-mapped DMA map with an mbuf chain.
  */
 int
-tsp_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+tsp_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m, int flags)
 {
 	int error;
 
@@ -314,11 +301,7 @@ tsp_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
  * Load a TSP SGMAP-mapped DMA map with a uio.
  */
 int
-tsp_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+tsp_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
 {
 	int error;
 
@@ -333,13 +316,7 @@ tsp_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
  * Load a TSP SGMAP-mapped DMA map with raw memory.
  */
 int
-tsp_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+tsp_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 
@@ -355,9 +332,7 @@ tsp_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
  * Unload a TSP DMA map.
  */
 void
-tsp_bus_dmamap_unload_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+tsp_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	/*
@@ -377,8 +352,7 @@ tsp_bus_dmamap_unload_sgmap(t, map)
  * Flush the TSP scatter/gather TLB.
  */
 void
-tsp_tlb_invalidate(pcp)
-	struct tsp_config *pcp;
+tsp_tlb_invalidate(struct tsp_config *pcp)
 {
 
 	alpha_mb();

@@ -1,4 +1,4 @@
-/* $NetBSD: toasterlcd.c,v 1.6 2008/04/28 20:23:52 martin Exp $ */
+/* $NetBSD: toasterlcd.c,v 1.7 2009/03/14 15:36:18 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.6 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.7 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,7 @@ static const struct wsscreen_list toasterlcd_screenlist = {
 };
 
 static int
-toasterlcd_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+toasterlcd_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
@@ -113,10 +110,7 @@ toasterlcd_match(parent, match, aux)
 	(TSDIO_ ## x), TSDIO_GET(x) & (~(y)))
 
 static void
-toasterlcd_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+toasterlcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct toasterlcd_softc *sc = (void *)self;
 	struct tsdio_attach_args *taa = aux;

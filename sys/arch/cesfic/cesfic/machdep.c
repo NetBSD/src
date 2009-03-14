@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2009/03/14 14:45:58 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2009/03/14 14:45:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2009/03/14 15:36:04 dsl Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -218,9 +218,7 @@ void fic_init()
 }
 
 int
-zs_check_kgdb(cs, dev)
-	struct zs_chanstate *cs;
-	int dev;
+zs_check_kgdb(struct zs_chanstate *cs, int dev)
 {
 	
 	if((boothowto & RB_KDB) && (dev == makedev(10, 0)))
@@ -329,10 +327,7 @@ cpu_startup()
  * but would break init; should be fixed soon.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -395,9 +390,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
@@ -587,9 +580,7 @@ dumpsys()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
@@ -600,8 +591,7 @@ straytrap(pc, evec)
 int	*nofault;
 
 int
-badaddr(addr)
-	void *addr;
+badaddr(void *addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -617,8 +607,7 @@ badaddr(addr)
 }
 
 int
-badbaddr(addr)
-	void *addr;
+badbaddr(void *addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -645,8 +634,7 @@ void	candbtimer(void *);
 int crashandburn;
 
 void
-candbtimer(arg)
-	void *arg;
+candbtimer(void *arg)
 {
 
 	crashandburn = 0;
@@ -659,8 +647,7 @@ static int innmihand;	/* simple mutex */
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
 void
-nmihand(frame)
-	struct frame frame;
+nmihand(struct frame frame)
 {
 
 	/* Prevent unwanted recursion. */
@@ -690,9 +677,7 @@ nmihand(frame)
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
 	u_long midmag, magic;

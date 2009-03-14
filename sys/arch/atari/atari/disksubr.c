@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.36 2009/03/05 13:21:44 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.36 2009/03/05 13:21:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37 2009/03/14 15:36:02 dsl Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -321,9 +321,7 @@ bsd_label(dev, strat, label, blkno, offsetp)
  * partitions.
  */
 static void
-ck_label(dl, cdl)
-	struct disklabel	*dl;
-	struct cpu_disklabel	*cdl;
+ck_label(struct disklabel *dl, struct cpu_disklabel *cdl)
 {
 	u_int			*rp, i;
 
@@ -479,9 +477,7 @@ ahdi_label(dev, strat, dl, cdl)
  * be recognized as such. The others are mapped as user partitions.
  */
 static void
-ahdi_to_bsd(dl, apt)
-	struct disklabel	*dl;
-	struct ahdi_ptbl	*apt;
+ahdi_to_bsd(struct disklabel *dl, struct ahdi_ptbl *apt)
 {
 	int		i, have_root, user_part;
 

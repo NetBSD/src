@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.26 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.27 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.26 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.27 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,9 +166,7 @@ ef_card_add(
  * 3C507 support routines
  */
 static void
-ef_reset(sc, why)
-	struct ie_softc *sc;
-	int why;
+ef_reset(struct ie_softc *sc, int why)
 {
 	struct ef_softc* esc = (struct ef_softc *) sc;
 
@@ -200,17 +198,14 @@ ef_atten(struct ie_softc *sc, int why)
 }
 
 static void
-ef_hwinit(sc)
-	struct ie_softc *sc;
+ef_hwinit(struct ie_softc *sc)
 {
 	struct ef_softc* esc = (struct ef_softc *) sc;
 	bus_space_write_1(esc->sc_regt, esc->sc_regh, EF_ICTRL, 1);
 }
 
 static int
-ef_intrhook(sc, where)
-	struct ie_softc *sc;
-	int where;
+ef_intrhook(struct ie_softc *sc, int where)
 {
 	unsigned char cr;
 	struct ef_softc* esc = (struct ef_softc *) sc;
@@ -329,9 +324,7 @@ ef_write_24 (sc, offset, addr)
 }
 
 static void
-ef_mediastatus(sc, ifmr)
-        struct ie_softc *sc;
-        struct ifmediareq *ifmr;
+ef_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 {
         struct ifmedia *ifm = &sc->sc_media;
 
@@ -492,10 +485,7 @@ ef_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ef_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void   *aux;
+ef_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ef_softc *esc = (void *)self;
 	struct ie_softc *sc = &esc->sc_ie;
@@ -674,9 +664,7 @@ ef_attach(parent, self, aux)
 }
 
 static int
-ef_port_check(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ef_port_check(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i;
         u_char ch;

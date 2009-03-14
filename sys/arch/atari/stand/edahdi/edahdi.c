@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.6 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.7 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -159,9 +159,7 @@ char	*argv[];
 }
 
 int
-edit_parts(fd, ptable)
-	int		fd;
-	ptable_t	*ptable;
+edit_parts(int fd, ptable_t *ptable)
 {
 	int	scr_base = 0;
 	int	value;
@@ -248,9 +246,7 @@ edit_parts(fd, ptable)
 }
 
 int
-show_parts(ptable, nr)
-	ptable_t	*ptable;
-	int		nr;
+show_parts(ptable_t *ptable, int nr)
 {
 	int	i;
 	part_t	*p;
@@ -273,8 +269,7 @@ show_parts(ptable, nr)
 }
 
 int
-lex(value)
-	int	*value;
+lex(int *value)
 {
 	char	c[1];
 	int	rv, nch;
@@ -343,9 +338,7 @@ get_id()
 }
 
 int
-bsd_label(fd, offset)
-	int		fd;
-	u_int		offset;
+bsd_label(int fd, u_int offset)
 {
 	u_char		*bblk;
 	u_int		nsec;
@@ -381,8 +374,7 @@ bsd_label(fd, offset)
 }
 
 int
-dkcksum(dl)
-	struct disklabel *dl;
+dkcksum(struct disklabel *dl)
 {
 	u_short	*start, *end, sum = 0;
 
@@ -394,8 +386,7 @@ dkcksum(dl)
 }
 
 void
-ahdi_cksum(buf)
-void	*buf;
+ahdi_cksum(void *buf)
 {
 	unsigned short	*p = (unsigned short *)buf;
 	unsigned short	csum = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.8 2009/03/14 14:46:00 dsl Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.9 2009/03/14 15:36:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,8 +105,7 @@ net_open(struct open_file *f, ...)
 }
 
 int
-net_close(f)
-	struct open_file *f;
+net_close(struct open_file *f)
 {
 
 #ifdef	NETIF_DEBUG
@@ -135,22 +134,13 @@ net_close(f)
 }
 
 int
-net_ioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+net_ioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return EIO;
 }
 
 int
-net_strategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+net_strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf, size_t *rsize)
 {
 	return EIO;
 }
@@ -165,8 +155,7 @@ int bootp(int sock);
 #endif
 
 static int
-net_getparams(sock)
-	int sock;
+net_getparams(int sock)
 {
 
 #ifdef	SUPPORT_BOOTP

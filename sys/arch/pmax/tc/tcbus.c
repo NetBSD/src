@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.22 2009/03/14 14:46:05 dsl Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.23 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.22 2009/03/14 14:46:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.23 2009/03/14 15:36:12 dsl Exp $");
 
 /*
  * Which system models were configured?
@@ -73,10 +73,7 @@ CFATTACH_DECL(tcbus, sizeof(struct tc_softc),
 static int tcbus_found;
 
 static int
-tcbus_match(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+tcbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -130,9 +127,7 @@ tcbus_attach(parent, self, aux)
  * Dispatch to model specific interrupt line evcnt fetch rontine
  */
 static const struct evcnt *
-tc_ds_intr_evcnt(dev, cookie)
-	struct device *dev;
-	void *cookie;
+tc_ds_intr_evcnt(struct device *dev, void *cookie)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -155,9 +150,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 }
 
 static void
-tc_ds_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
+tc_ds_intr_disestablish(struct device *dev, void *arg)
 {
 
 	printf("cannot disestablish TC interrupts\n");
@@ -167,8 +160,7 @@ tc_ds_intr_disestablish(dev, arg)
  * Return the DMA tag for use by the specified TURBOchannel slot.
  */
 static bus_dma_tag_t
-tc_ds_get_dma_tag(slot)
-	int slot;
+tc_ds_get_dma_tag(int slot)
 {
 	/*
 	 * All DECstations use the default DMA tag.
@@ -229,8 +221,7 @@ struct cnboards {
 };
 
 int
-tcfb_cnattach(slotno)
-	int slotno;
+tcfb_cnattach(int slotno)
 {
 	paddr_t tcaddr;
 	char tcname[TC_ROM_LLEN];

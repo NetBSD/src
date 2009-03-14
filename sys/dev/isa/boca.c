@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.50 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: boca.c,v 1.51 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.50 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.51 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,8 +191,7 @@ bocaattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-bocaintr(arg)
-	void *arg;
+bocaintr(void *arg)
 {
 	struct boca_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -229,8 +228,7 @@ bocaintr(arg)
 }
 
 void
-boca_fixup(v)
-	void *v;
+boca_fixup(void *v)
 {
 	struct boca_softc *sc = v;
 	int alive = sc->sc_alive;

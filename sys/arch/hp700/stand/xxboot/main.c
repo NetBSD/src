@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2008/04/09 19:18:25 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2009/03/14 15:36:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -99,10 +99,7 @@ extern char diskbuf[2048];
 #define MASK_BLK_PER_READ	(BLK_PER_READ - 1)
 
 void
-RAW_READ(buf, blkpos, bytelen)
-	void *buf;
-	daddr_t blkpos;
-	size_t bytelen;
+RAW_READ(void *buf, daddr_t blkpos, size_t bytelen)
 {
 	char *b = buf;
 	size_t off, readlen;
@@ -156,9 +153,7 @@ RAW_READ(buf, blkpos, bytelen)
  * buf must have enough space
  */
 static char *
-hexstr(buf, val)
-	char *buf;
-	unsigned val;
+hexstr(char *buf, unsigned val)
 {
 	unsigned v;
 	char rev[16];
@@ -355,9 +350,7 @@ load_file_ino(ino, fn, loadadr, interactive, part)
  * fill in loading information from an ELF executable
  */
 static inline void
-xi_elf32(inf, hdr)
-	struct loadinfo *inf;
-	Elf32_Ehdr *hdr;
+xi_elf32(struct loadinfo *inf, Elf32_Ehdr *hdr)
 {
 	char *top = (void *) hdr;
 	Elf32_Phdr *ph;
@@ -374,9 +367,7 @@ xi_elf32(inf, hdr)
 }
 
 static inline void
-xi_elf64(inf, hdr)
-	struct loadinfo *inf;
-	Elf64_Ehdr *hdr;
+xi_elf64(struct loadinfo *inf, Elf64_Ehdr *hdr)
 {
 	char *top = (void *) hdr;
 	Elf64_Phdr *ph;
@@ -397,9 +388,7 @@ xi_elf64(inf, hdr)
 }
 
 int
-xi_load(inf, buf)
-	struct loadinfo *inf;
-	void *buf;
+xi_load(struct loadinfo *inf, void *buf)
 {
 	Elf32_Ehdr *e32hdr = buf;
 	Elf64_Ehdr *e64hdr = buf;

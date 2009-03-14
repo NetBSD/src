@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.57 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.58 2009/03/14 15:36:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.57 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.58 2009/03/14 15:36:07 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_sa.h"
@@ -60,8 +60,7 @@ void syscall_vm86(struct trapframe *);
 #endif
 
 void
-syscall_intern(p)
-	struct proc *p;
+syscall_intern(struct proc *p)
 {
 
 	p->p_md.md_syscall = syscall;
@@ -149,8 +148,7 @@ syscall(struct trapframe *frame)
 
 #ifdef VM86
 void
-syscall_vm86(frame)
-	struct trapframe *frame;
+syscall_vm86(struct trapframe *frame)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -178,8 +176,7 @@ syscall_vm86(frame)
 #endif
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;

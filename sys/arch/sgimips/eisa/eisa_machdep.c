@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.4 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.5 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.4 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.5 2009/03/14 15:36:13 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,8 +86,7 @@ eisa_attach_hook(parent, self, eba)
 }
 
 int
-eisa_maxslots(ec)
-	eisa_chipset_tag_t ec;
+eisa_maxslots(eisa_chipset_tag_t ec)
 {
 
 	/*

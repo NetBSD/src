@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.6 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.7 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.6 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.7 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,7 @@ CFATTACH_DECL(tsdio, sizeof(struct tsdio_softc),
     tsdio_probe, tsdio_attach, NULL, NULL);
 
 int
-tsdio_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tsdio_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -131,11 +128,7 @@ tsdio_attach(parent, self, aux)
 }
 
 int
-tsdio_search(parent, cf, l, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *l;
-	void *aux;
+tsdio_search(struct device *parent, struct cfdata *cf, const int *l, void *aux)
 {
 	struct tsdio_softc *sc = (struct tsdio_softc *)parent;
 	struct tsdio_attach_args sa;
@@ -150,9 +143,7 @@ tsdio_search(parent, cf, l, aux)
 }
 
 int
-tsdio_print(aux, name)
-	void *aux;
-	const char *name;
+tsdio_print(void *aux, const char *name)
 {
 
 	return (UNCONF);

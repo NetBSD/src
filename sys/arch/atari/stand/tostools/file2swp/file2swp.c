@@ -1,4 +1,4 @@
-/*	$NetBSD: file2swp.c,v 1.3 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: file2swp.c,v 1.4 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "cread.h"
 
 char		*Infile = "minifs.gz";
-const char	version[] = "$Revision: 1.3 $";
+const char	version[] = "$Revision: 1.4 $";
 
 extern const char	*program_name;
 
@@ -70,9 +70,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int		argc;
-	char		**argv;
+main(int argc, char **argv)
 {
 	extern int	optind;
 	extern char	*optarg;

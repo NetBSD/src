@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.108 2009/01/02 12:57:29 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.109 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.108 2009/01/02 12:57:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.109 2009/03/14 15:36:24 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -158,12 +158,7 @@ nfs_rbtinit(struct nfsmount *nmp)
  * nfsnode structure is returned.
  */
 int
-nfs_nget1(mntp, fhp, fhsize, npp, lkflags)
-	struct mount *mntp;
-	nfsfh_t *fhp;
-	int fhsize;
-	struct nfsnode **npp;
-	int lkflags;
+nfs_nget1(struct mount *mntp, nfsfh_t *fhp, int fhsize, struct nfsnode **npp, int lkflags)
 {
 	struct nfsnode *np;
 	struct vnode *vp;
@@ -247,8 +242,7 @@ loop:
 }
 
 int
-nfs_inactive(v)
-	void *v;
+nfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -287,8 +281,7 @@ nfs_inactive(v)
  * Reclaim an nfsnode so that it can be used for other purposes.
  */
 int
-nfs_reclaim(v)
-	void *v;
+nfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;

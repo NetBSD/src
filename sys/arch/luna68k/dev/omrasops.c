@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.7 2009/03/14 14:46:00 dsl Exp $ */
+/* $NetBSD: omrasops.c,v 1.8 2009/03/14 15:36:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.7 2009/03/14 14:46:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.8 2009/03/14 15:36:08 dsl Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -378,10 +378,7 @@ om_copycols(cookie, startrow, srccol, dstcol, ncols)
  * Map a character.
  */
 static int
-om_mapchar(cookie, c, cp)
-	void *cookie;
-	int c;
-	u_int *cp;
+om_mapchar(void *cookie, int c, u_int *cp)
 {
 	if (c < 128) {
 		*cp = c;

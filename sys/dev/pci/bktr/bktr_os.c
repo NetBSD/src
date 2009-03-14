@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.53 2008/06/24 10:22:03 gmcgarry Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.54 2009/03/14 15:36:19 dsl Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.53 2008/06/24 10:22:03 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.54 2009/03/14 15:36:19 dsl Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1550,10 +1550,7 @@ vaddr_t
 #else
 vm_offset_t
 #endif
-get_bktr_mem(bktr, dmapp, size)
-        bktr_ptr_t bktr;
-        bus_dmamap_t *dmapp;
-        unsigned int size;
+get_bktr_mem(bktr_ptr_t bktr, bus_dmamap_t *dmapp, unsigned int size)
 {
         bus_dma_tag_t dmat = bktr->dmat;
         bus_dma_segment_t seg;

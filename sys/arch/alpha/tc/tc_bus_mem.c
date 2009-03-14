@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.28 2009/03/14 14:45:54 dsl Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.29 2009/03/14 15:36:00 dsl Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.28 2009/03/14 14:45:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.29 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,8 +243,7 @@ static struct alpha_bus_space tc_mem_space = {
 };
 
 bus_space_tag_t
-tc_bus_mem_init(memv)
-	void *memv;
+tc_bus_mem_init(void *memv)
 {
 	bus_space_tag_t h = &tc_mem_space;
 
@@ -254,12 +253,7 @@ tc_bus_mem_init(memv)
 
 /* ARGSUSED */
 int
-tc_mem_translate(v, memaddr, memlen, flags, abst)
-	void *v;
-	bus_addr_t memaddr;
-	bus_size_t memlen;
-	int flags;
-	struct alpha_bus_space_translation *abst;
+tc_mem_translate(void *v, bus_addr_t memaddr, bus_size_t memlen, int flags, struct alpha_bus_space_translation *abst)
 {
 
 	return (EOPNOTSUPP);
@@ -267,10 +261,7 @@ tc_mem_translate(v, memaddr, memlen, flags, abst)
 
 /* ARGSUSED */
 int
-tc_mem_get_window(v, window, abst)
-	void *v;
-	int window;
-	struct alpha_bus_space_translation *abst;
+tc_mem_get_window(void *v, int window, struct alpha_bus_space_translation *abst)
 {
 
 	return (EOPNOTSUPP);
@@ -278,13 +269,7 @@ tc_mem_get_window(v, window, abst)
 
 /* ARGSUSED */
 int
-tc_mem_map(v, memaddr, memsize, flags, memhp, acct)
-	void *v;
-	bus_addr_t memaddr;
-	bus_size_t memsize;
-	int flags;
-	bus_space_handle_t *memhp;
-	int acct;
+tc_mem_map(void *v, bus_addr_t memaddr, bus_size_t memsize, int flags, bus_space_handle_t *memhp, int acct)
 {
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
@@ -304,11 +289,7 @@ tc_mem_map(v, memaddr, memsize, flags, memhp, acct)
 
 /* ARGSUSED */
 void
-tc_mem_unmap(v, memh, memsize, acct)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t memsize;
-	int acct;
+tc_mem_unmap(void *v, bus_space_handle_t memh, bus_size_t memsize, int acct)
 {
 
 	/* XXX XX XXX nothing to do. */
@@ -347,10 +328,7 @@ tc_mem_alloc(v, rstart, rend, size, align, boundary, flags, addrp, bshp)
 }
 
 void
-tc_mem_free(v, bsh, size)
-	void *v;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+tc_mem_free(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* XXX XXX XXX XXX XXX XXX */
@@ -358,9 +336,7 @@ tc_mem_free(v, bsh, size)
 }
 
 void *
-tc_mem_vaddr(v, bsh)
-	void *v;
-	bus_space_handle_t bsh;
+tc_mem_vaddr(void *v, bus_space_handle_t bsh)
 {
 #ifdef DIAGNOSTIC
 	if ((bsh & TC_SPACE_SPARSE) != 0) {
@@ -375,12 +351,7 @@ tc_mem_vaddr(v, bsh)
 }
 
 paddr_t
-tc_mem_mmap(v, addr, off, prot, flags)
-	void *v;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+tc_mem_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 {
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	bus_addr_t rv;
@@ -408,10 +379,7 @@ tc_mem_barrier(v, h, o, l, f)
 }
 
 inline u_int8_t
-tc_mem_read_1(v, memh, off)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
+tc_mem_read_1(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	volatile u_int8_t *p;
 
@@ -425,10 +393,7 @@ tc_mem_read_1(v, memh, off)
 }
 
 inline u_int16_t
-tc_mem_read_2(v, memh, off)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
+tc_mem_read_2(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	volatile u_int16_t *p;
 
@@ -442,10 +407,7 @@ tc_mem_read_2(v, memh, off)
 }
 
 inline u_int32_t
-tc_mem_read_4(v, memh, off)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
+tc_mem_read_4(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	volatile u_int32_t *p;
 
@@ -460,10 +422,7 @@ tc_mem_read_4(v, memh, off)
 }
 
 inline u_int64_t
-tc_mem_read_8(v, memh, off)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
+tc_mem_read_8(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	volatile u_int64_t *p;
 
@@ -515,11 +474,7 @@ tc_mem_read_region_N(4,u_int32_t)
 tc_mem_read_region_N(8,u_int64_t)
 
 inline void
-tc_mem_write_1(v, memh, off, val)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
-	u_int8_t val;
+tc_mem_write_1(void *v, bus_space_handle_t memh, bus_size_t off, u_int8_t val)
 {
 
 	if ((memh & TC_SPACE_SPARSE) != 0) {
@@ -545,11 +500,7 @@ tc_mem_write_1(v, memh, off, val)
 }
 
 inline void
-tc_mem_write_2(v, memh, off, val)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
-	u_int16_t val;
+tc_mem_write_2(void *v, bus_space_handle_t memh, bus_size_t off, u_int16_t val)
 {
 
 	if ((memh & TC_SPACE_SPARSE) != 0) {
@@ -575,11 +526,7 @@ tc_mem_write_2(v, memh, off, val)
 }
 
 inline void
-tc_mem_write_4(v, memh, off, val)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
-	u_int32_t val;
+tc_mem_write_4(void *v, bus_space_handle_t memh, bus_size_t off, u_int32_t val)
 {
 	volatile u_int32_t *p;
 
@@ -593,11 +540,7 @@ tc_mem_write_4(v, memh, off, val)
 }
 
 inline void
-tc_mem_write_8(v, memh, off, val)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
-	u_int64_t val;
+tc_mem_write_8(void *v, bus_space_handle_t memh, bus_size_t off, u_int64_t val)
 {
 	volatile u_int64_t *p;
 

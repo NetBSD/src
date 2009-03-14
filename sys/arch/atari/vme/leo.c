@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.14 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: leo.c,v 1.15 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.14 2009/03/14 14:45:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.15 2009/03/14 15:36:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,7 @@ const struct cdevsw leo_cdevsw = {
 };
 
 static int
-leo_match(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+leo_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	struct vme_attach_args *va = aux;
 	int i;
@@ -268,9 +265,7 @@ leoopen(dev_t dev, int flags, int devtype, struct proc *p)
 }
 
 static int
-leo_init(sc, ysize)
-	struct leo_softc *sc;
-	int ysize;
+leo_init(struct leo_softc *sc, int ysize)
 {
 
 	if ((ysize != 256) && (ysize != 384) && (ysize != 512))
@@ -325,9 +320,7 @@ leo_init(sc, ysize)
 }
 
 static int
-leo_scroll(sc, scroll)
-	struct leo_softc *sc;
-	int scroll;
+leo_scroll(struct leo_softc *sc, int scroll)
 {
 
 	if ((scroll < 0) || (scroll > 255))

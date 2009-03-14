@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.33 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: kbd.c,v 1.34 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.34 2009/03/14 15:36:03 dsl Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -166,10 +166,7 @@ static struct wskbd_mapdata kbd_mapdata = {
 
 /*ARGSUSED*/
 static	int
-kbdmatch(pdp, cfp, auxp)
-struct	device	*pdp;
-struct	cfdata	*cfp;
-void		*auxp;
+kbdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if (!strcmp((char *)auxp, "kbd"))
 		return (1);
@@ -653,9 +650,7 @@ kbdgetcn()
  * Write a command to the keyboard in 'polled' mode.
  */
 static int
-kbd_write_poll(cmd, len)
-u_char	*cmd;
-int	len;
+kbd_write_poll(u_char *cmd, int len)
 {
 	int	timeout;
 
@@ -673,9 +668,7 @@ int	len;
  * Write a command to the keyboard. Return when command is send.
  */
 void
-kbd_write(cmd, len)
-u_char	*cmd;
-int	len;
+kbd_write(u_char *cmd, int len)
 {
 	struct kbd_softc	*k = &kbd_softc;
 	int			sps;
@@ -721,9 +714,7 @@ int	len;
  * Setup softc-fields to assemble a keyboard package.
  */
 static void
-kbd_pkg_start(kp, msg_start)
-struct kbd_softc *kp;
-u_char		 msg_start;
+kbd_pkg_start(struct kbd_softc *kp, u_char msg_start)
 {
 	kp->k_pkg_idx    = 1;
 	kp->k_package[0] = msg_start;
@@ -766,8 +757,7 @@ u_char		 msg_start;
  * Modifier processing
  */
 static int
-kbd_do_modifier(code)
-u_char	code;
+kbd_do_modifier(u_char code)
 {
 	u_char	up, mask;
 

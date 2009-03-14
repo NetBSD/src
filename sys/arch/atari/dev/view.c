@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.26 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: view.c,v 1.27 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.26 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.27 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,7 @@ const struct cdevsw view_cdevsw = {
 void	viewattach(int);
 
 void
-viewattach(cnt)
-	int cnt;
+viewattach(int cnt)
 {
 	viewprobe();
 	printf("%d view%s configured\n", NVIEW, NVIEW > 1 ? "s" : "");
@@ -164,8 +163,7 @@ view_display (vu)
  * switch to a new display.
  */
 static void
-view_remove(vu)
-	struct view_softc *vu;
+view_remove(struct view_softc *vu)
 {
 	int i;
 
@@ -186,9 +184,7 @@ view_remove(vu)
 }
 
 static int
-view_setsize(vu, vs)
-	struct view_softc *vu;
-	struct view_size *vs;
+view_setsize(struct view_softc *vu, struct view_size *vs)
 {
 	view_t	*new, *old;
 	dmode_t	*dmode;
@@ -270,9 +266,7 @@ colormap_t		*ucm;
 }
 
 static int
-view_set_colormap(vu, ucm)
-struct view_softc	*vu;
-colormap_t		*ucm;
+view_set_colormap(struct view_softc *vu, colormap_t *ucm)
 {
 	colormap_t	*cm;
 	int		error = 0;
@@ -301,11 +295,7 @@ colormap_t		*ucm;
 
 /*ARGSUSED*/
 int
-viewopen(dev, flags, mode, l)
-dev_t		dev;
-int		flags;
-int		mode;
-struct lwp	*l;
+viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	dimen_t			size;
 	struct view_softc	*vu;
@@ -411,10 +401,7 @@ struct lwp	*l;
 
 /*ARGSUSED*/
 paddr_t
-viewmmap(dev, off, prot)
-	dev_t	dev;
-	off_t	off;
-	int	prot;
+viewmmap(dev_t dev, off_t off, int prot)
 {
 	struct view_softc	*vu;
 	bmap_t			*bm;
@@ -449,8 +436,7 @@ viewmmap(dev, off, prot)
 }
 
 view_t	*
-viewview(dev)
-dev_t	dev;
+viewview(dev_t dev)
 {
 	return(views[minor(dev)].view);
 }

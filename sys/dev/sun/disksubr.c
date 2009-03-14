@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2007/10/08 20:12:05 ad Exp $ */
+/*	$NetBSD: disksubr.c,v 1.10 2009/03/14 15:36:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.9 2007/10/08 20:12:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.10 2009/03/14 15:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,9 +286,7 @@ sun_fstypes[8] = {
  * The BSD label is cleared out before this is called.
  */
 static const char *
-disklabel_sun_to_bsd(cp, lp)
-	char *cp;
-	struct disklabel *lp;
+disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -364,9 +362,7 @@ disklabel_sun_to_bsd(cp, lp)
  * Returns zero or error code.
  */
 static int
-disklabel_bsd_to_sun(lp, cp)
-	struct disklabel *lp;
-	char *cp;
+disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;

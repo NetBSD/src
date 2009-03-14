@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.18 2008/04/28 20:23:56 martin Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.19 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.18 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.19 2009/03/14 15:36:20 dsl Exp $");
 
 #include "opt_rasops.h"
 
@@ -57,8 +57,7 @@ static void	rasops1_putchar16(void *, int, int col, u_int, long);
  * Initialize rasops_info struct for this colordepth.
  */
 void
-rasops1_init(ri)
-	struct rasops_info *ri;
+rasops1_init(struct rasops_info *ri)
 {
 
 	switch (ri->ri_font->fontwidth) {

@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.16 2009/03/14 14:46:00 dsl Exp $ */
+/* $NetBSD: lunaws.c,v 1.17 2009/03/14 15:36:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.16 2009/03/14 14:46:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.17 2009/03/14 15:36:08 dsl Exp $");
 
 #include "wsmouse.h"
 
@@ -121,10 +121,7 @@ extern int  syscngetc(dev_t);
 extern void syscnputc(dev_t, int);
 
 static int
-wsmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wsmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct sio_attach_args *args = aux;
 
@@ -134,10 +131,7 @@ wsmatch(parent, match, aux)
 }
 
 static void
-wsattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+wsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ws_softc *sc = (struct ws_softc *)self;
 	struct sio_softc *scp = (struct sio_softc *)parent;
@@ -241,9 +235,7 @@ wsintr(int chan)
 }
 
 static void
-omkbd_input(v, data)
-	void *v;
-	int data;
+omkbd_input(void *v, int data)
 {
 	struct ws_softc *sc = v;
 	u_int type;
@@ -254,11 +246,7 @@ omkbd_input(v, data)
 }
 
 static int
-omkbd_decode(v, datain, type, dataout)
-	void *v;
-	int datain;
-	u_int *type;
-	int *dataout;
+omkbd_decode(void *v, int datain, u_int *type, int *dataout)
 {
 	*type = (datain & 0x80) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*dataout = datain & 0x7f;
@@ -382,10 +370,7 @@ struct wscons_keydesc omkbd_keydesctab[] = {
 };
 
 static void
-ws_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+ws_cngetc(void *v, u_int *type, int *data)
 {
 	int code;
 
@@ -395,9 +380,7 @@ ws_cngetc(v, type, data)
 }
 
 static void
-ws_cnpollc(v, on)
-	void *v;
-        int on;
+ws_cnpollc(void *v, int on)
 {
 }
 
@@ -412,17 +395,13 @@ ws_cnattach()
 }
 
 static int
-omkbd_enable(v, on)
-	void *v;
-	int on;
+omkbd_enable(void *v, int on)
 {
 	return 0;
 }
 
 static void
-omkbd_set_leds(v, leds)
-	void *v;
-	int leds;
+omkbd_set_leds(void *v, int leds)
 {
 #if 0
 	syscnputc((dev_t)1, 0x10); /* kana LED on */
@@ -433,12 +412,7 @@ omkbd_set_leds(v, leds)
 }
 
 static int
-omkbd_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+omkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
@@ -455,8 +429,7 @@ omkbd_ioctl(v, cmd, data, flag, l)
 #if NWSMOUSE > 0
 
 static int
-omms_enable(v)
-	void *v;
+omms_enable(void *v)
 {
 	struct ws_softc *sc = v;
 
@@ -467,12 +440,7 @@ omms_enable(v)
 
 /*ARGUSED*/
 static int
-omms_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+omms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	if (cmd == WSMOUSEIO_GTYPE) {
 		*(u_int *)data = 0x19991005; /* XXX */
@@ -482,8 +450,7 @@ omms_ioctl(v, cmd, data, flag, l)
 }
 
 static void
-omms_disable(v)
-	void *v;
+omms_disable(void *v)
 {
 	struct ws_softc *sc = v;
 

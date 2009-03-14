@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.12 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: todclock.c,v 1.13 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.12 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.13 2009/03/14 15:36:02 dsl Exp $");
 
 /* Include header files */
 
@@ -108,10 +108,7 @@ CFATTACH_DECL(todclock, sizeof(struct todclock_softc),
  */
 
 int
-todclockmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+todclockmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct todclock_attach_args *ta = aux;
 
@@ -133,10 +130,7 @@ todclockmatch(parent, cf, aux)
  */
 
 void
-todclockattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+todclockattach(struct device *parent, struct device *self, void *aux)
 {
 	static struct todr_chip_handle	tch;
 

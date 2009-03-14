@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa_machdep.c,v 1.5 2009/03/14 14:46:06 dsl Exp $	*/
+/*	$NetBSD: lpt_ofisa_machdep.c,v 1.6 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.5 2009/03/14 14:46:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.6 2009/03/14 15:36:13 dsl Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -53,10 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.5 2009/03/14 14:46:06 dsl Ex
 extern int i87307PrinterConfig(bus_space_tag_t, u_int);	/* XXX */
 
 int
-lpt_ofisa_md_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+lpt_ofisa_md_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	char type[9];

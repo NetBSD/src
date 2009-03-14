@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.14 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: isr.c,v 1.15 2009/03/14 15:36:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.15 2009/03/14 15:36:08 dsl Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -180,8 +180,7 @@ isrlink_vectored(func, arg, ipl, vec)
  * Unhook a vectored interrupt.
  */
 void
-isrunlink_vectored(vec)
-	int vec;
+isrunlink_vectored(int vec)
 {
 
 	if ((vec < ISRVECTORED) || (vec >= ISRVECTORED + NISRVECTORED))

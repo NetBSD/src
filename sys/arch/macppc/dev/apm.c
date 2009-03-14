@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.21 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: apm.c,v 1.22 2009/03/14 15:36:09 dsl Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.21 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.22 2009/03/14 15:36:09 dsl Exp $");
 
 #include "apm.h"
 
@@ -160,10 +160,7 @@ int	apm_evindex;
 
 
 int
-apmmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+apmmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct adb_attach_args *aa = (void *)aux;		
 	if (aa->origaddr != ADBADDR_APM ||

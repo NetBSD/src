@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.45 2008/06/13 09:41:44 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.46 2009/03/14 15:36:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45 2008/06/13 09:41:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.46 2009/03/14 15:36:06 dsl Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1465,10 +1465,7 @@ const struct hppa_bus_dma_tag hppa_dmatag = {
 };
 
 int
-mbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* there will be only one */

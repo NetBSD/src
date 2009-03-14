@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.28 2007/03/05 20:53:34 christos Exp $ */
+/* $NetBSD: bootxx.c,v 1.29 2009/03/14 15:36:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -202,9 +202,7 @@ int tar_open(char *path, struct open_file *f);
 ssize_t tar_read(struct open_file *f, void *buf, size_t size, size_t *resid);
 
 int
-tar_open(path, f)
-	char *path;
-	struct open_file *f;
+tar_open(char *path, struct open_file *f)
 {
 	char *buf = alloc(512);
 
@@ -216,11 +214,7 @@ tar_open(path, f)
 }
 
 ssize_t
-tar_read(f, buf, size, resid)
-	struct open_file *f;
-	void *buf;
-	size_t size;
-	size_t *resid;
+tar_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	romstrategy(0, 0, (8192+512), size, buf, 0);
 	*resid = size;
@@ -230,10 +224,7 @@ tar_read(f, buf, size, resid)
 
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char    *fname;
-	char          **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	*file = (char *)fname;
 
@@ -268,13 +259,7 @@ devopen(f, fname, file)
 extern struct disklabel romlabel;
 
 int
-romstrategy(sc, func, dblk, size, buf, rsize)
-	void    *sc;
-	int     func;
-	daddr_t dblk;
-	size_t	size;
-	void    *buf;
-	size_t	*rsize;
+romstrategy(void *sc, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	int	block = dblk;
 	int     nsize = size;
@@ -373,8 +358,7 @@ extern char end[];
 static char *top = (char*)end;
 
 void *
-alloc(size)
-        size_t size;
+alloc(size_t size)
 {
 	void *ut = top;
 	top += size;
@@ -382,15 +366,12 @@ alloc(size)
 }
 
 void
-dealloc(ptr, size)
-        void *ptr;
-        size_t size;
+dealloc(void *ptr, size_t size)
 {
 }
 
 int
-romclose(f)
-	struct open_file *f;
+romclose(struct open_file *f)
 {
 	return 0;
 }

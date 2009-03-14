@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.37 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: sio_pic.c,v 1.38 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.37 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.38 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,17 +157,14 @@ i82378_setup_elcr()
 }
 
 u_int8_t
-i82378_read_elcr(elcr)
-	int elcr;
+i82378_read_elcr(int elcr)
 {
 
 	return (bus_space_read_1(sio_iot, sio_ioh_elcr, elcr));
 }
 
 void
-i82378_write_elcr(elcr, val)
-	int elcr;
-	u_int8_t val;
+i82378_write_elcr(int elcr, u_int8_t val)
 {
 
 	bus_space_write_1(sio_iot, sio_ioh_elcr, elcr, val);
@@ -240,17 +237,14 @@ cy82c693_setup_elcr()
 }
 
 u_int8_t
-cy82c693_read_elcr(elcr)
-	int elcr;
+cy82c693_read_elcr(int elcr)
 {
 
 	return (cy82c693_read(sio_cy82c693_handle, CONFIG_ELCR1 + elcr));
 }
 
 void
-cy82c693_write_elcr(elcr, val)
-	int elcr;
-	u_int8_t val;
+cy82c693_write_elcr(int elcr, u_int8_t val)
 {
 
 	cy82c693_write(sio_cy82c693_handle, CONFIG_ELCR1 + elcr, val);
@@ -324,9 +318,7 @@ sio_setirqstat(irq, enabled, type)
 }
 
 void
-sio_intr_setup(pc, iot)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
+sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 {
 	char *cp;
 	int i;
@@ -409,8 +401,7 @@ sio_intr_setup(pc, iot)
 
 #ifdef BROKEN_PROM_CONSOLE
 void
-sio_intr_shutdown(arg)
-	void *arg;
+sio_intr_shutdown(void *arg)
 {
 	/*
 	 * Restore the initial values, to make the PROM happy.
@@ -423,9 +414,7 @@ sio_intr_shutdown(arg)
 #endif
 
 const char *
-sio_intr_string(v, irq)
-	void *v;
-	int irq;
+sio_intr_string(void *v, int irq)
 {
 	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
 
@@ -437,9 +426,7 @@ sio_intr_string(v, irq)
 }
 
 const struct evcnt *
-sio_intr_evcnt(v, irq)
-	void *v;
-	int irq;
+sio_intr_evcnt(void *v, int irq)
 {
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
@@ -476,9 +463,7 @@ sio_intr_establish(v, irq, type, level, fn, arg)
 }
 
 void
-sio_intr_disestablish(v, cookie)
-	void *v;
-	void *cookie;
+sio_intr_disestablish(void *v, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	int s, ist, irq = ih->ih_num;
@@ -527,9 +512,7 @@ sio_intr_disestablish(v, cookie)
 }
 
 void
-sio_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+sio_iointr(void *arg, unsigned long vec)
 {
 	int irq;
 
@@ -557,11 +540,7 @@ sio_iointr(arg, vec)
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
 
 int
-sio_intr_alloc(v, mask, type, irq)
-	void *v;
-	int mask;
-	int type;
-	int *irq;
+sio_intr_alloc(void *v, int mask, int type, int *irq)
 {
 	int i, tmp, bestirq, count;
 	struct alpha_shared_intrhand **p, *q;
@@ -630,8 +609,7 @@ sio_intr_alloc(v, mask, type, irq)
 }
 
 static void
-specific_eoi(irq)
-	int irq;
+specific_eoi(int irq)
 {
 	if (irq > 7)
 		bus_space_write_1(sio_iot,

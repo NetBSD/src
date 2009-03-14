@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.20 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.21 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.20 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.21 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,7 @@ CFATTACH_DECL(ess_ofisa, sizeof(struct ess_softc),
     ess_ofisa_match, ess_ofisa_attach, NULL, NULL);
 
 int
-ess_ofisa_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ess_ofisa_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = {

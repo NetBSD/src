@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.2 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.3 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.2 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.3 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,10 +55,7 @@ CFATTACH_DECL(uni_n, sizeof(struct uni_n_softc),
     uni_n_match, uni_n_attach, NULL, NULL);
 
 int
-uni_n_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+uni_n_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -119,9 +116,7 @@ uni_n_attach(parent, self, aux)
 }
 
 int
-uni_n_print(aux, uni_n)
-	void *aux;
-	const char *uni_n;
+uni_n_print(void *aux, const char *uni_n)
 {
 	struct confargs *ca = aux;
 	if (uni_n)

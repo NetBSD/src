@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.17 2009/03/14 14:45:59 dsl Exp $	*/
+/*	$NetBSD: tspld.c,v 1.18 2009/03/14 15:36:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.17 2009/03/14 14:45:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.18 2009/03/14 15:36:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -123,18 +123,14 @@ void	tspld_callback(struct device *);
 	(EP93XX_SSP_ ## x), SSP_GET(x) & (~(y)))
 
 int
-tspldmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tspldmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
 }
 
 void
-boardtemp_poll(arg)
-	void *arg;
+boardtemp_poll(void *arg)
 {
 	struct tspld_softc *sc = arg;
 	u_int16_t val;
@@ -457,11 +453,7 @@ tspldattach(parent, self, aux)
 }
 
 int
-tspld_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+tspld_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct tspld_softc *sc = (struct tspld_softc *)parent;
 	struct tspld_attach_args sa;
@@ -475,17 +467,14 @@ tspld_search(parent, cf, ldesc, aux)
 }
 
 int
-tspld_print(aux, name)
-	void *aux;
-	const char *name;
+tspld_print(void *aux, const char *name)
 {
 
 	return (UNCONF);
 }
 
 void
-tspld_callback(self)
-	struct device *self;
+tspld_callback(struct device *self)
 {
 #if NISA > 0
 	extern void isa_bs_mallocok(void);
@@ -508,8 +497,7 @@ tspld_callback(self)
 }
 
 static int
-tspld_wdog_tickle(smw)
-	struct sysmon_wdog *smw;
+tspld_wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct tspld_softc *sc = (struct tspld_softc *)smw->smw_cookie;
 
@@ -518,8 +506,7 @@ tspld_wdog_tickle(smw)
 }
 
 static int
-tspld_wdog_setmode(smw)
-	struct sysmon_wdog *smw;
+tspld_wdog_setmode(struct sysmon_wdog *smw)
 {
 	int i, ret = 0;
 	struct tspld_softc *sc = (struct tspld_softc *)smw->smw_cookie;

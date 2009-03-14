@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2009/03/14 14:46:03 dsl Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,9 +101,7 @@ int main(int, char **);
  * that new program.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *name, **namep, *dev, *kernel;
 	char bootname[PATH_MAX], bootpath[PATH_MAX];

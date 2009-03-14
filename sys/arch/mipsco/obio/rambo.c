@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.10 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: rambo.c,v 1.11 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.10 2009/03/14 14:46:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.11 2009/03/14 15:36:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,10 +71,7 @@ CFATTACH_DECL(rambo, sizeof(struct rambo_softc),
     rambo_match, rambo_attach, NULL, NULL);
 
 static int
-rambo_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+rambo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return 1;
 }
@@ -114,8 +111,7 @@ rambo_attach(parent, self, aux)
 }
 
 void
-rambo_clkintr(cf)
-	struct clockframe *cf;
+rambo_clkintr(struct clockframe *cf)
 {
 	register u_int32_t tbreak, tcount;
 	register int delta;

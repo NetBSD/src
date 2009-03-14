@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.76 2009/03/13 19:08:20 abs Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.77 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.76 2009/03/13 19:08:20 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.77 2009/03/14 15:36:02 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -859,9 +859,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *p_blkno)
  * Initialize the cpu_kcore_header.
  */
 static void
-cpu_init_kcorehdr(kbase, sysseg_pa)
-	paddr_t	kbase;
-	paddr_t sysseg_pa;
+cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -1169,8 +1167,7 @@ void dump_pagetable(u_int *, u_int, u_int);
 u_int vmtophys(u_int *, u_int);
 
 void
-dump_segtable(stp)
-	u_int *stp;
+dump_segtable(u_int *stp)
 {
 	u_int *s, *es;
 	int shift, i;

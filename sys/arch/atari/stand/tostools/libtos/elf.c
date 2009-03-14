@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.9 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: elf.c,v 1.10 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,11 +65,7 @@
 				(ELFMAG2 << 8) | ELFMAG3)
 
 int
-elf_load(fd, od, errp, loadsyms)
-int	fd;
-osdsc_t	*od;
-char	**errp;
-int	loadsyms;
+elf_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 {
 	int		i,j;
 	int		err;

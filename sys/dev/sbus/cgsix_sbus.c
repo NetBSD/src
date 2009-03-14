@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.25 2008/12/12 18:46:41 macallan Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.26 2009/03/14 15:36:20 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.25 2008/12/12 18:46:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.26 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,7 @@ CFATTACH_DECL_NEW(cgsix_sbus, sizeof(struct cgsix_sbus_softc),
  * Match a cgsix.
  */
 int
-cgsixmatch(parent, cf, aux)
-	device_t parent;
-	struct cfdata *cf;
-	void *aux;
+cgsixmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 

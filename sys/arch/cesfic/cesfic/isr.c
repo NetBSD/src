@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.11 2009/03/14 14:45:58 dsl Exp $	*/
+/*	$NetBSD: isr.c,v 1.12 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.11 2009/03/14 14:45:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.12 2009/03/14 15:36:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,7 @@ isrlink(func, arg, ipl, priority)
  * Disestablish an interrupt handler.
  */
 void
-isrunlink(arg)
-	void *arg;
+isrunlink(void *arg)
 {
 	struct isr *isr = arg;
 

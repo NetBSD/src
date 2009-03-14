@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2009/03/14 14:46:00 dsl Exp $	 */
+/*	$NetBSD: main.c,v 1.15 2009/03/14 15:36:08 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -62,9 +62,7 @@ const struct bootblk_command commands[] = {
 };
 
 int 
-bootit(filename, howto)
-	const char     *filename;
-	int             howto;
+bootit(const char *filename, int howto)
 {
 	if (exec_netbsd(filename, 0, howto, 0) < 0)
 		printf("boot: %s\n", strerror(errno));
@@ -111,8 +109,7 @@ main()
 
 /* ARGSUSED */
 void
-command_help(arg)
-	char *arg;
+command_help(char *arg)
 {
 	printf("commands are:\n"
 	       "boot [filename] [-acdqsv]\n"
@@ -123,16 +120,14 @@ command_help(arg)
 
 /* ARGSUSED */
 void
-command_quit(arg)
-	char *arg;
+command_quit(char *arg)
 {
 	printf("Exiting... goodbye...\n");
 	exit(0);
 }
 
 void
-command_boot(arg)
-	char *arg;
+command_boot(char *arg)
 {
 	char *filename;
 	int howto;

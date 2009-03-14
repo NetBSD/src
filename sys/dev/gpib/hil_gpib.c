@@ -1,7 +1,7 @@
-/*	$NetBSD: hil_gpib.c,v 1.7 2008/04/08 07:38:35 cegger Exp $	*/
+/*	$NetBSD: hil_gpib.c,v 1.8 2009/03/14 15:36:17 dsl Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.7 2008/04/08 07:38:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.8 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,10 +50,7 @@ void	hilcallback(void *, int);
 void	hilstart(void *);
 
 int
-hilmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+hilmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct gpib_attach_args *ga = aux;
 	u_int8_t *cmd = "SE;";
@@ -90,9 +87,7 @@ hilattach(parent, self, aux)
 }
 
 void
-hilcallback(v, action)
-	void *v;
-	int action;
+hilcallback(void *v, int action)
 {
 	struct hil_softc *sc = v;
 
@@ -114,8 +109,7 @@ hilcallback(v, action)
 }
 
 void
-hilstart(v)
-	void *v;
+hilstart(void *v)
 {
 	struct hil_softc *sc = v;
 

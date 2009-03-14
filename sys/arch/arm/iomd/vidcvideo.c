@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.35 2008/04/29 17:09:47 matt Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.36 2009/03/14 15:36:02 dsl Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.35 2008/04/29 17:09:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.36 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,10 +200,7 @@ static void vv_putchar(void *c, int row, int col, u_int uc, long attr);
 
 
 static int
-vidcvideo_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vidcvideo_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	/* Can't probe AFAIK ; how ? */

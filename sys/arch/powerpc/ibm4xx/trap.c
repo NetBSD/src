@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 2009/03/14 14:46:05 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.50 2009/03/14 14:46:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2009/03/14 15:36:12 dsl Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -706,8 +706,7 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
@@ -728,8 +727,7 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(l)
-	struct lwp *l;
+upcallret(struct lwp *l)
 {
 
 	/* Invoke MI userret code */

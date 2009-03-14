@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.6 2009/03/14 14:46:04 dsl Exp $ */
+/*      $NetBSD: if_prom.c,v 1.7 2009/03/14 15:36:12 dsl Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -97,9 +97,7 @@ struct netif_driver prom_netif_driver = {
 static int sc_fd;				/* PROM file id */
 
 int
-prom_match(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+prom_match(struct netif *nif, void *machdep_hint)
 {
 
 #ifdef NET_DEBUG
@@ -110,9 +108,7 @@ prom_match(nif, machdep_hint)
 
 
 int
-prom_probe(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+prom_probe(struct netif *nif, void *machdep_hint)
 {
 
 #ifdef NET_DEBUG
@@ -123,9 +119,7 @@ prom_probe(nif, machdep_hint)
 
 
 void
-prom_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void *machdep_hint;
+prom_init(struct iodesc *desc, void *machdep_hint)
 {
 	char *device =
 		((struct netif *)desc->io_netif)->nif_driver->netif_bname;
@@ -176,10 +170,7 @@ prom_init(desc, machdep_hint)
 
 
 int
-prom_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+prom_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	int s;
 
@@ -205,11 +196,7 @@ prom_put(desc, pkt, len)
 
 
 int
-prom_get(desc, pkt, len, timeout)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
-	saseconds_t timeout;
+prom_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
 	int s;
 	satime_t t;
@@ -238,8 +225,7 @@ prom_get(desc, pkt, len, timeout)
 
 
 void
-prom_end(nif)
-	struct netif *nif;
+prom_end(struct netif *nif)
 {
 
 #ifdef NET_DEBUG

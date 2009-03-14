@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.29 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.30 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.29 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.30 2009/03/14 15:36:02 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -161,10 +161,7 @@ extern struct bus_space fcomcons_bs_tag;
  */
 
 static int
-fcom_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+fcom_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union footbridge_attach_args *fba = aux;
 
@@ -519,8 +516,7 @@ fcomparam(struct tty *tp, struct termios *t)
 static int softint_scheduled = 0;
 
 static void
-fcom_softintr(arg)
-	void *arg;
+fcom_softintr(void *arg)
 {
 	struct fcom_softc *sc = arg;
 	struct tty *tp = sc->sc_tty;
@@ -544,8 +540,7 @@ fcom_softintr(arg)
 
 #if 0
 static int
-fcom_txintr(arg)
-	void *arg;
+fcom_txintr(void *arg)
 {
 /*	struct fcom_softc *sc = arg;*/
 
@@ -555,8 +550,7 @@ fcom_txintr(arg)
 #endif
 
 static int
-fcom_rxintr(arg)
-	void *arg;
+fcom_rxintr(void *arg)
 {
 	struct fcom_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -593,8 +587,7 @@ fcom_rxintr(arg)
 
 #if 0
 void
-fcom_iflush(sc)
-	struct fcom_softc *sc;
+fcom_iflush(struct fcom_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -611,8 +604,7 @@ fcom_iflush(sc)
 
 #if 0
 void
-fcomcnprobe(cp)
-	struct consdev *cp;
+fcomcnprobe(struct consdev *cp)
 {
 	int major;
 
@@ -627,8 +619,7 @@ fcomcnprobe(cp)
 }
 
 void
-fcomcninit(cp)
-	struct consdev *cp;
+fcomcninit(struct consdev *cp)
 {
 	fcomconstag = &fcomcons_bs_tag;
 
@@ -640,10 +631,7 @@ fcomcninit(cp)
 #endif
 
 int
-fcomcnattach(iobase, rate, cflag)
-	u_int iobase;
-	int rate;
-	tcflag_t cflag;
+fcomcnattach(u_int iobase, int rate, tcflag_t cflag)
 {
 	static struct consdev fcomcons = {
 		NULL, NULL, fcomcngetc, fcomcnputc, fcomcnpollc, NULL,
@@ -678,11 +666,7 @@ fcomcndetach(void)
  * Initialize UART to known state.
  */
 void
-fcominit(iot, ioh, rate, mode)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int rate;
-	int mode;
+fcominit(bus_space_tag_t iot, bus_space_handle_t ioh, int rate, int mode)
 {
 	int baudrate;
 	int h_ubrlcr;
@@ -741,9 +725,7 @@ fcominit(iot, ioh, rate, mode)
  * Set UART for console use. Do normal init, then enable interrupts.
  */
 void
-fcominitcons(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+fcominitcons(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int s = splserial();
 
@@ -756,8 +738,7 @@ fcominitcons(iot, ioh)
 #endif
 
 int
-fcomcngetc(dev)
-	dev_t dev;
+fcomcngetc(dev_t dev)
 {
 	int s = splserial();
 	bus_space_tag_t iot = fcomconstag;
@@ -784,9 +765,7 @@ fcomcngetc(dev)
  * Console kernel output character routine.
  */
 void
-fcomcnputc(dev, c)
-	dev_t dev;
-	int c;
+fcomcnputc(dev_t dev, int c)
 {
 	int s = splserial();
 	bus_space_tag_t iot = fcomconstag;
@@ -808,8 +787,6 @@ fcomcnputc(dev, c)
 }
 
 void
-fcomcnpollc(dev, on)
-	dev_t dev;
-	int on;
+fcomcnpollc(dev_t dev, int on)
 {
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.10 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 2009/03/14 14:46:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2009/03/14 15:36:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +69,7 @@ int    isa_intr(void *);
 
 
 int
-isabusmatch(pdp, cfp, aux)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*aux;
+isabusmatch(struct device *pdp, struct cfdata *cfp, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -82,11 +79,7 @@ void		*aux;
 }
 
 static void
-isa_bus_space_init(bst, type, paddr, len)
-    struct mipsco_bus_space *bst;
-    const char *type;
-    paddr_t paddr;
-    size_t len;
+isa_bus_space_init(struct mipsco_bus_space *bst, const char *type, paddr_t paddr, size_t len)
 {
 	vaddr_t vaddr = MIPS_PHYS_TO_KSEG1(paddr); /* XXX */
 
@@ -158,9 +151,7 @@ void		*aux;
 }
 
 int
-mipscoisabusprint(auxp, name)
-void		*auxp;
-const char	*name;
+mipscoisabusprint(void *auxp, const char *name)
 {
 	if(name == NULL)
 		return(UNCONF);
@@ -203,9 +194,7 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 }
 
 void
-isa_intr_disestablish(ic, cookie)
-	isa_chipset_tag_t ic;
-	void *cookie;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *cookie)
 {
 	struct mipsco_intrhand *ih = cookie;
 
@@ -214,18 +203,13 @@ isa_intr_disestablish(ic, cookie)
 }
 
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	return 0;
 }
 
 int
-isa_intr(arg)
-	void *arg;
+isa_intr(void *arg)
 {
 	struct mipsco_isa_chipset *ic = (struct mipsco_isa_chipset *)arg;
 	struct mipsco_intrhand *ih;

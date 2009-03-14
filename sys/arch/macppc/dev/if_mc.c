@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.15 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.16 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.15 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.16 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,10 +85,7 @@ CFATTACH_DECL(mc, sizeof(struct mc_softc),
     mc_match, mc_attach, NULL, NULL);
 
 hide int
-mc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -201,17 +198,14 @@ mc_attach(parent, self, aux)
 
 /* Bus-specific initialization */
 hide void
-mc_init(sc)
-	struct mc_softc *sc;
+mc_init(struct mc_softc *sc)
 {
 	mc_reset_rxdma(sc);
 	mc_reset_txdma(sc);
 }
 
 hide void
-mc_putpacket(sc, len)
-	struct mc_softc *sc;
-	u_int len;
+mc_putpacket(struct mc_softc *sc, u_int len)
 {
 	dbdma_command_t *cmd = sc->sc_txdmacmd;
 
@@ -225,8 +219,7 @@ mc_putpacket(sc, len)
  * Interrupt handler for the MACE DMA completion interrupts
  */
 int
-mc_dmaintr(arg)
-	void *arg;
+mc_dmaintr(void *arg)
 {
 	struct mc_softc *sc = arg;
 	int status, offset, statoff;
@@ -296,8 +289,7 @@ next:
 }
 
 hide void
-mc_reset_rxdma(sc)
-	struct mc_softc *sc;
+mc_reset_rxdma(struct mc_softc *sc)
 {
 	dbdma_command_t *cmd = sc->sc_rxdmacmd;
 	dbdma_regmap_t *dmareg = sc->sc_rxdma;
@@ -331,8 +323,7 @@ mc_reset_rxdma(sc)
 }
 
 hide void
-mc_reset_txdma(sc)
-	struct mc_softc *sc;
+mc_reset_txdma(struct mc_softc *sc)
 {
 	dbdma_command_t *cmd = sc->sc_txdmacmd;
 	dbdma_regmap_t *dmareg = sc->sc_txdma;
@@ -358,22 +349,19 @@ mc_reset_txdma(sc)
 }
 
 void
-mc_select_utp(sc)
-	struct mc_softc *sc;
+mc_select_utp(struct mc_softc *sc)
 {
 	sc->sc_plscc = PORTSEL_GPSI | ENPLSIO;
 }
 
 void
-mc_select_aui(sc)
-	struct mc_softc *sc;
+mc_select_aui(struct mc_softc *sc)
 {
 	sc->sc_plscc = PORTSEL_AUI;
 }
 
 int
-mc_mediachange(sc)
-	struct mc_softc *sc;
+mc_mediachange(struct mc_softc *sc)
 {
 	struct ifmedia *ifm = &sc->sc_media;
 
@@ -398,9 +386,7 @@ mc_mediachange(sc)
 }
 
 void
-mc_mediastatus(sc, ifmr)
-	struct mc_softc *sc;
-	struct ifmediareq *ifmr;
+mc_mediastatus(struct mc_softc *sc, struct ifmediareq *ifmr)
 {
 	if (sc->sc_plscc == PORTSEL_AUI)
 		ifmr->ifm_active = IFM_ETHER | IFM_10_5;

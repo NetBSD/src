@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.37 2008/04/05 21:31:23 cegger Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.38 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.37 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.38 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,7 @@ aic_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 int
-aic_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+aic_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_memspace != 0 ||
@@ -156,9 +155,7 @@ fail:
 }
 
 int
-aic_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+aic_pcmcia_detach(struct device *self, int flags)
 {
 	struct aic_pcmcia_softc *sc = (void *)self;
 	int error;
@@ -176,9 +173,7 @@ aic_pcmcia_detach(self, flags)
 }
 
 int
-aic_pcmcia_enable(self, onoff)
-	struct device *self;
-	int onoff;
+aic_pcmcia_enable(struct device *self, int onoff)
 {
 	struct aic_pcmcia_softc *sc = (void *)self;
 	int error;

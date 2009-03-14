@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2009/03/14 14:46:03 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2009/03/14 14:46:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2009/03/14 15:36:10 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -176,9 +176,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	if (cold) {
 		howto |= RB_HALT;
@@ -440,8 +438,7 @@ sh3_cache_on(void)
 #define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
 
 void
-LoadAndReset(osimage)
-	const char *osimage;
+LoadAndReset(const char *osimage)
 {
 	void *buf_addr;
 	u_long size;
@@ -617,12 +614,7 @@ mmeye_intr_disestablish(void *ih)
 }
 
 int
-bus_space_map(t, addr, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+bus_space_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	*bshp = (bus_space_handle_t)addr;
 

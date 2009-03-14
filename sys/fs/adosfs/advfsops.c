@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.54 2009/03/14 14:46:09 dsl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.55 2009/03/14 15:36:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.54 2009/03/14 14:46:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.55 2009/03/14 15:36:21 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -85,11 +85,7 @@ static const struct genfs_ops adosfs_genfsops = {
 int (**adosfs_vnodeop_p)(void *);
 
 int
-adosfs_mount(mp, path, data, data_len)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	size_t *data_len;
+adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;
@@ -167,10 +163,7 @@ adosfs_mount(mp, path, data, data_len)
 }
 
 int
-adosfs_mountfs(devvp, mp, l)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct lwp *l;
+adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
 	struct disklabel dl;
 	struct partition *parp;
@@ -283,18 +276,14 @@ fail:
 }
 
 int
-adosfs_start(mp, flags)
-	struct mount *mp;
-	int flags;
+adosfs_start(struct mount *mp, int flags)
 {
 
 	return (0);
 }
 
 int
-adosfs_unmount(mp, mntflags)
-	struct mount *mp;
-	int mntflags;
+adosfs_unmount(struct mount *mp, int mntflags)
 {
 	struct adosfsmount *amp;
 	int error, flags;
@@ -319,9 +308,7 @@ adosfs_unmount(mp, mntflags)
 }
 
 int
-adosfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+adosfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
@@ -334,9 +321,7 @@ adosfs_root(mp, vpp)
 }
 
 int
-adosfs_statvfs(mp, sbp)
-	struct mount *mp;
-	struct statvfs *sbp;
+adosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct adosfsmount *amp;
 
@@ -361,10 +346,7 @@ adosfs_statvfs(mp, sbp)
  * return locked and referenced al la vget(vp, 1);
  */
 int
-adosfs_vget(mp, an, vpp)
-	struct mount *mp;
-	ino_t an;
-	struct vnode **vpp;
+adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 {
 	struct adosfsmount *amp;
 	struct vnode *vp;
@@ -590,8 +572,7 @@ adosfs_vget(mp, an, vpp)
  * only needed to find the free space.
  */
 int
-adosfs_loadbitmap(amp)
-	struct adosfsmount *amp;
+adosfs_loadbitmap(struct adosfsmount *amp)
 {
 	struct buf *bp, *mapbp;
 	u_long bn;
@@ -682,10 +663,7 @@ struct ifid {
 };
 
 int
-adosfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+adosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ifid ifh;
 #if 0
@@ -720,10 +698,7 @@ adosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-adosfs_vptofh(vp, fhp, fh_size)
-	struct vnode *vp;
-	struct fid *fhp;
-	size_t *fh_size;
+adosfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct anode *ap = VTOA(vp);
 	struct ifid ifh;
@@ -747,10 +722,7 @@ adosfs_vptofh(vp, fhp, fh_size)
 }
 
 int
-adosfs_sync(mp, waitfor, uc)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t uc;
+adosfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc)
 {
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("ad_sync(%x, %x)\n", mp, waitfor);

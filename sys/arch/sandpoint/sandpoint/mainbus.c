@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19 2007/10/17 19:57:00 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2007/10/17 19:57:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2009/03/14 15:36:13 dsl Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -65,10 +65,7 @@ struct powerpc_isa_chipset genppc_ict;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
@@ -156,9 +153,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	struct conf_args *ca = aux;
 

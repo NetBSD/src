@@ -1,4 +1,4 @@
-/*	$NetBSD: netslot.c,v 1.7 2009/03/14 14:45:52 dsl Exp $	*/
+/*	$NetBSD: netslot.c,v 1.8 2009/03/14 15:35:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.7 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.8 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -55,9 +55,7 @@ __KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.7 2009/03/14 14:45:52 dsl Exp $");
 u_int netslotread(u_int, int);
 
 u_int
-netslotread(address, offset)
-	u_int address;
-	int offset;
+netslotread(u_int address, int offset)
 {
 	static int netslotoffset = -1;
 
@@ -75,8 +73,7 @@ netslotread(address, offset)
 }
 
 void
-netslotscan(dev)
-	struct device *dev;
+netslotscan(struct device *dev)
 {
 	podule_t *podule;
 	volatile u_char *address;
@@ -146,8 +143,7 @@ netslotscan(dev)
 }
 
 void
-netslot_ea(buffer)
-	u_int8_t *buffer;
+netslot_ea(u_int8_t *buffer)
 {
 	/* Build station address from machine ID */
 	buffer[0] = 0x00;

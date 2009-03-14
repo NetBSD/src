@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.27 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.28 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.27 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.28 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,9 +244,7 @@ dec_1000a_cons_init()
 }
 
 static void
-dec_1000a_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_1000a_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 2009/03/14 14:46:03 dsl Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.8 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,9 +79,7 @@ entrypt loadfile(char *path, char *name);
  * execution to that program.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	entrypt entry;
 	char *cp;

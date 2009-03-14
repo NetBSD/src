@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.24 2008/04/28 20:23:56 martin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.25 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.24 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.25 2009/03/14 15:36:20 dsl Exp $");
 
 #include "opt_rasops.h"
 
@@ -72,8 +72,7 @@ static int	stamp_mutex;	/* XXX see note in README */
  * Initialize a 'rasops_info' descriptor for this depth.
  */
 void
-rasops8_init(ri)
-	struct rasops_info *ri;
+rasops8_init(struct rasops_info *ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
@@ -194,9 +193,7 @@ rasops8_putchar(cookie, row, col, uc, attr)
  * Recompute the 4x1 blitting stamp.
  */
 static void
-rasops8_makestamp(ri, attr)
-	struct rasops_info *ri;
-	long attr;
+rasops8_makestamp(struct rasops_info *ri, long attr)
 {
 	int32_t fg, bg;
 	int i;

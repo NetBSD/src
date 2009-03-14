@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.9 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.10 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.9 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.10 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +85,7 @@ static u_char zs_kgdb_regs[16] = {
  * This replaces "zs_reset()" in the sparc driver.
  */
 static void
-zs_setparam(cs, iena, rate)
-	struct zs_chanstate *cs;
-	int iena;
-	int rate;
+zs_setparam(struct zs_chanstate *cs, int iena, int rate)
 {
 	int s, tconst;
 
@@ -184,9 +181,7 @@ zs_kgdb_init()
  * Set the speed to kgdb_rate, CS8, etc.
  */
 int
-zs_check_kgdb(cs, dev)
-	struct zs_chanstate *cs;
-	int dev;
+zs_check_kgdb(struct zs_chanstate *cs, int dev)
 {
 
 	if (dev != kgdb_dev)
@@ -209,8 +204,7 @@ zs_check_kgdb(cs, dev)
  * should time out after a few seconds to avoid hanging on spurious input.
  */
 static void
-zskgdb(cs)
-	struct zs_chanstate *cs;
+zskgdb(struct zs_chanstate *cs)
 {
 	int unit = minor(kgdb_dev);
 
@@ -232,8 +226,7 @@ static void zs_kgdb_softint(struct zs_chanstate *);
 int kgdb_input_lost;
 
 static void
-zs_kgdb_rxint(cs)
-	struct zs_chanstate *cs;
+zs_kgdb_rxint(struct zs_chanstate *cs)
 {
 	register u_char c, rr1;
 
@@ -257,8 +250,7 @@ zs_kgdb_rxint(cs)
 }
 
 static void
-zs_kgdb_txint(cs)
-	register struct zs_chanstate *cs;
+zs_kgdb_txint(register struct zs_chanstate *cs)
 {
 	register int rr0;
 
@@ -267,9 +259,7 @@ zs_kgdb_txint(cs)
 }
 
 static void
-zs_kgdb_stint(cs, force)
-	register struct zs_chanstate *cs;
-	int force;
+zs_kgdb_stint(register struct zs_chanstate *cs, int force)
 {
 	register int rr0;
 
@@ -286,8 +276,7 @@ zs_kgdb_stint(cs, force)
 }
 
 static void
-zs_kgdb_softint(cs)
-	struct zs_chanstate *cs;
+zs_kgdb_softint(struct zs_chanstate *cs)
 {
 	printf("zs_kgdb_softint?\n");
 }

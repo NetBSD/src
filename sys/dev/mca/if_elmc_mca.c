@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.25 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.26 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.25 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.26 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,9 +363,7 @@ elmc_mca_write_24 (sc, offset, addr)
  * Channel attention hook.
  */
 static void
-elmc_mca_attn(sc, why)
-	struct ie_softc *sc;
-	int why;
+elmc_mca_attn(struct ie_softc *sc, int why)
 {
     struct elmc_mca_softc* asc = (struct elmc_mca_softc *) sc;
     int intr = 0;
@@ -390,9 +388,7 @@ elmc_mca_attn(sc, why)
  * Do full card hardware reset.
  */
 static void
-elmc_mca_hwreset(sc, why)
-	struct ie_softc *sc;
-	int why;
+elmc_mca_hwreset(struct ie_softc *sc, int why)
 {
     struct elmc_mca_softc* asc = (struct elmc_mca_softc *) sc;
 
@@ -410,9 +406,7 @@ elmc_mca_hwreset(sc, why)
  * Interrupt hook.
  */
 static int
-elmc_mca_intrhook(sc, why)
-	struct ie_softc *sc;
-	int why;
+elmc_mca_intrhook(struct ie_softc *sc, int why)
 {
 	switch (why) {
 	case INTR_ACK:

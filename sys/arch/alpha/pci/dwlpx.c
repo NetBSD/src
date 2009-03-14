@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.33 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: dwlpx.c,v 1.34 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.33 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.34 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,7 @@ extern struct cfdriver dwlpx_cd;
 void	dwlpx_errintr(void *, u_long vec);
 
 static int
-dwlpxmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dwlpxmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct kft_dev_attach_args *ka = aux;
 	unsigned long ls;
@@ -107,10 +104,7 @@ dwlpxmatch(parent, cf, aux)
 }
 
 static void
-dwlpxattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+dwlpxattach(struct device *parent, struct device *self, void *aux)
 {
 	static int once = 0;
 	struct dwlpx_softc *sc = (struct dwlpx_softc *)self;
@@ -189,8 +183,7 @@ dwlpxattach(parent, self, aux)
 }
 
 void
-dwlpx_init(sc)
-	struct dwlpx_softc *sc;
+dwlpx_init(struct dwlpx_softc *sc)
 {
 	u_int32_t ctl;
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
@@ -310,9 +303,7 @@ dwlpx_init(sc)
 }
 
 void
-dwlpx_errintr(arg, vec)
-	void *arg;
-	unsigned long vec;
+dwlpx_errintr(void *arg, unsigned long vec)
 {
 	struct dwlpx_softc *sc = arg;
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;

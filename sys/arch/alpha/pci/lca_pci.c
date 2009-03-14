@@ -1,4 +1,4 @@
-/* $NetBSD: lca_pci.c,v 1.16 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: lca_pci.c,v 1.17 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.16 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.17 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,7 @@ pcireg_t	lca_conf_read(void *, pcitag_t, int);
 void		lca_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-lca_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+lca_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
@@ -75,9 +73,7 @@ lca_attach_hook(parent, self, pba)
 }
 
 int
-lca_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+lca_bus_maxdevs(void *cpv, int busno)
 {
 
 	if (busno == 0)
@@ -111,10 +107,7 @@ lca_decompose_tag(cpv, tag, bp, dp, fp)
 }
 
 pcireg_t
-lca_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+lca_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap, data;
@@ -164,11 +157,7 @@ lca_conf_read(cpv, tag, offset)
 }
 
 void
-lca_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+lca_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap;

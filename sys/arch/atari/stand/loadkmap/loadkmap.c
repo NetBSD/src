@@ -1,4 +1,4 @@
-/*	$NetBSD: loadkmap.c,v 1.5 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: loadkmap.c,v 1.6 2009/03/14 15:36:03 dsl Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -42,9 +42,7 @@ main(argc, argv)
 
 
 int
-load_kmap(file, set_sysmap)
-const char	*file;
-int		set_sysmap;
+load_kmap(const char *file, int set_sysmap)
 {
 	int	fd;
 	char	buf[sizeof (struct kbdmap)];

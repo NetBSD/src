@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.14 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: vme.c,v 1.15 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.14 2009/03/14 14:45:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.15 2009/03/14 15:36:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,7 @@ int	vmesearch(struct device *, struct cfdata *,
 		       const int *, void *);
 
 int
-vmematch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vmematch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vmebus_attach_args *vba = aux;
 
@@ -82,9 +79,7 @@ vmeattach(parent, self, aux)
 }
 
 int
-vmeprint(aux, vme)
-	void *aux;
-	const char *vme;
+vmeprint(void *aux, const char *vme)
 {
 	struct vme_attach_args *va = aux;
 
@@ -102,11 +97,7 @@ vmeprint(aux, vme)
 }
 
 int
-vmesearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+vmesearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct vme_softc *sc = (struct vme_softc *)parent;
 	struct vme_attach_args va;

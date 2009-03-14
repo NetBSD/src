@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.62 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.63 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.62 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.63 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,9 +194,7 @@ dec_2100_a50_cons_init()
 }
 
 static void
-dec_2100_a50_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_2100_a50_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;
@@ -291,11 +289,7 @@ dec_2100_a50_device_register(dev, aux)
 
 
 static void
-dec_2100_a50_mcheck(mces, type, logout, framep)
-	unsigned long mces;
-	unsigned long type;
-	unsigned long logout;
-	struct trapframe *framep;
+dec_2100_a50_mcheck(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
 {
 	struct mchkinfo *mcp;
 	static const char *fmt1 = "        %-25s = 0x%016lx\n";
@@ -577,11 +571,7 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 }
 
 static void
-dec_2100_a50_mcheck_handler(mces, framep, vector, param)
-	unsigned long mces;
-	struct trapframe *framep;
-	unsigned long vector;
-	unsigned long param;
+dec_2100_a50_mcheck_handler(unsigned long mces, struct trapframe *framep, unsigned long vector, unsigned long param)
 {
 	switch (vector) {
 	case ALPHA_SYS_MCHECK:

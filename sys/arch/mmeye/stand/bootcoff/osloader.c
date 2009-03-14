@@ -50,11 +50,7 @@ void	LoadAndReset(char *);
 int	main(int, char **);
 
 static int
-coff_find_section(fd, fp, sh, s_type)
-	FILE *fd;
-	struct coff_filehdr *fp;
-	struct coff_scnhdr *sh;
-	int s_type;
+coff_find_section(FILE *fd, struct coff_filehdr *fp, struct coff_scnhdr *sh, int s_type)
 {
 	int i, pos, siz;
 	
@@ -73,8 +69,7 @@ coff_find_section(fd, fp, sh, s_type)
 }
 
 void
-LoadAndReset(osimage)
-	char *osimage;
+LoadAndReset(char *osimage)
 {
 	int mib[2];
 	u_long val;

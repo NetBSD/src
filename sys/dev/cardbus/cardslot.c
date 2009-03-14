@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.45 2008/07/03 18:57:52 drochner Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.46 2009/03/14 15:36:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.45 2008/07/03 18:57:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.46 2009/03/14 15:36:16 dsl Exp $");
 
 #include "opt_cardslot.h"
 
@@ -276,8 +276,7 @@ cardslot_event_throw(struct cardslot_softc *sc, int ev)
  *
  */
 static void
-cardslot_event_thread(arg)
-	void *arg;
+cardslot_event_thread(void *arg)
 {
 	struct cardslot_softc *sc = arg;
 	struct cardslot_event *ce;

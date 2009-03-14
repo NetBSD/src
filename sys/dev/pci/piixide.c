@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.49 2009/03/09 13:13:25 christos Exp $	*/
+/*	$NetBSD: piixide.c,v 1.50 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.49 2009/03/09 13:13:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.50 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -771,10 +771,7 @@ pio:		/* use PIO mode */
 
 /* setup ISP and RTC fields, based on mode */
 static u_int32_t
-piix_setup_idetim_timings(mode, dma, channel)
-	u_int8_t mode;
-	u_int8_t dma;
-	u_int8_t channel;
+piix_setup_idetim_timings(u_int8_t mode, u_int8_t dma, u_int8_t channel)
 {
 
 	if (dma)
@@ -791,8 +788,7 @@ piix_setup_idetim_timings(mode, dma, channel)
 
 /* setup DTE, PPE, IE and TIME field based on PIO mode */
 static u_int32_t
-piix_setup_idetim_drvs(drvp)
-	struct ata_drive_datas *drvp;
+piix_setup_idetim_drvs(struct ata_drive_datas *drvp)
 {
 	u_int32_t ret = 0;
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -847,10 +843,7 @@ piix_setup_idetim_drvs(drvp)
 
 /* setup values in SIDETIM registers, based on mode */
 static u_int32_t
-piix_setup_sidetim_timings(mode, dma, channel)
-	u_int8_t mode;
-	u_int8_t dma;
-	u_int8_t channel;
+piix_setup_sidetim_timings(u_int8_t mode, u_int8_t dma, u_int8_t channel)
 {
 	if (dma)
 		return PIIX_SIDETIM_ISP_SET(piix_isp_dma[mode], channel) |

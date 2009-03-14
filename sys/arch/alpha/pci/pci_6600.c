@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.16 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_6600.c,v 1.17 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.16 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.17 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,7 @@ extern void dec_6600_intr_enable(int irq);
 extern void dec_6600_intr_disable(int irq);
 
 void
-pci_6600_pickintr(pcp)
-	struct tsp_config *pcp;
+pci_6600_pickintr(struct tsp_config *pcp)
 {
 	bus_space_tag_t iot = &pcp->pc_iot;
 	pci_chipset_tag_t pc = &pcp->pc_pc;
@@ -140,9 +139,7 @@ pci_6600_pickintr(pcp)
 }
 
 int     
-dec_6600_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_6600_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
@@ -187,9 +184,7 @@ dec_6600_intr_map(pa, ihp)
 }
 
 const char *
-dec_6600_intr_string(acv, ih)
-	void *acv;
-	pci_intr_handle_t ih;
+dec_6600_intr_string(void *acv, pci_intr_handle_t ih)
 {
 
 	static const char irqfmt[] = "dec 6600 irq %ld";
@@ -206,9 +201,7 @@ dec_6600_intr_string(acv, ih)
 }
 
 const struct evcnt *
-dec_6600_intr_evcnt(acv, ih)
-	void *acv;
-	pci_intr_handle_t ih;
+dec_6600_intr_evcnt(void *acv, pci_intr_handle_t ih)
 {
 
 #if NSIO
@@ -286,9 +279,7 @@ dec_6600_intr_disestablish(acv, cookie)
 }
 
 void
-dec_6600_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+dec_6600_iointr(void *arg, unsigned long vec)
 {
 	int irq; 
 
@@ -307,8 +298,7 @@ dec_6600_iointr(arg, vec)
 }
 
 void
-dec_6600_intr_enable(irq)
-	int irq;
+dec_6600_intr_enable(int irq)
 {
 	alpha_mb();
 	STQP(TS_C_DIM0) |= 1UL << irq;
@@ -316,8 +306,7 @@ dec_6600_intr_enable(irq)
 }
 
 void
-dec_6600_intr_disable(irq)
-	int irq;
+dec_6600_intr_disable(int irq)
 {
 	alpha_mb();
 	STQP(TS_C_DIM0) &= ~(1UL << irq);

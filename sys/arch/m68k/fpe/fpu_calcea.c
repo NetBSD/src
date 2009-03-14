@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.19 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.20 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.19 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.20 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -62,11 +62,7 @@ static int calc_ea(struct insn_ea *ea, char *ptr, char **eaddr);
  * Returns zero on success, else signal number.
  */
 int
-fpu_decode_ea(frame, insn, ea, modreg)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     int modreg;
+fpu_decode_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea, int modreg)
 {
     int sig;
 
@@ -219,11 +215,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
  * Decode Mode=6 address modes
  */
 static int
-decode_ea6(frame, insn, ea, modreg)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     int modreg;
+decode_ea6(struct frame *frame, struct instruction *insn, struct insn_ea *ea, int modreg)
 {
     int extword, idx;
     int basedisp, outerdisp;
@@ -319,11 +311,7 @@ decode_ea6(frame, insn, ea, modreg)
  * Returns zero on success, else signal number.
  */
 int
-fpu_load_ea(frame, insn, ea, dst)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     char *dst;
+fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea, char *dst)
 {
     int *reg;
     char *src;
@@ -484,11 +472,7 @@ fpu_load_ea(frame, insn, ea, dst)
  * Returns zero on success, else signal number.
  */
 int
-fpu_store_ea(frame, insn, ea, src)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     char *src;
+fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea, char *src)
 {
     int *reg;
     char *dst;
@@ -618,10 +602,7 @@ fpu_store_ea(frame, insn, ea, src)
  * fetch_immed: fetch immediate operand
  */
 static int
-fetch_immed(frame, insn, dst)
-     struct frame *frame;
-     struct instruction *insn;
-     int *dst;
+fetch_immed(struct frame *frame, struct instruction *insn, int *dst)
 {
     int data, ext_bytes;
 

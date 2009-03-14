@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.51 2009/01/12 03:18:26 mhitch Exp $ */
+/*	$NetBSD: kbd.c,v 1.52 2009/03/14 15:36:01 dsl Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.51 2009/01/12 03:18:26 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.52 2009/03/14 15:36:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,9 +527,7 @@ kbdpoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-kbdkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+kbdkqfilter(dev_t dev, struct knote *kn)
 {
 
 	return (ev_kqfilter(&kbd_softc.k_events, kn));

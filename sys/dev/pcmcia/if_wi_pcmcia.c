@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.80 2008/11/12 12:36:16 ad Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.81 2009/03/14 15:36:20 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.80 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.81 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,8 +263,7 @@ wi_pcmcia_match(struct device *parent, struct cfdata *match,
 }
 
 static int
-wi_pcmcia_enable(sc)
-	struct wi_softc *sc;
+wi_pcmcia_enable(struct wi_softc *sc)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
@@ -302,8 +301,7 @@ wi_pcmcia_enable(sc)
 }
 
 static void
-wi_pcmcia_disable(sc)
-	struct wi_softc *sc;
+wi_pcmcia_disable(struct wi_softc *sc)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)sc;
 
@@ -313,8 +311,7 @@ wi_pcmcia_disable(sc)
 }
 
 static int
-wi_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+wi_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace != 1 ||
@@ -539,9 +536,7 @@ wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
 }
 
 static int
-wi_pcmcia_set_hcr(sc, mode)
-	struct wi_softc *sc;
-	int mode;
+wi_pcmcia_set_hcr(struct wi_softc *sc, int mode)
 {
 	u_int16_t hcr;
 
