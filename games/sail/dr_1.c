@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.25 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.26 2009/03/14 19:55:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.25 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.26 2009/03/14 19:55:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,10 +208,6 @@ fightitout(struct ship *from, struct ship *to, int key)
 						? from->specs->pts
 						: 2 * from->specs->pts,
 					0, 0, 0);
-
-/* ptr1 points to the shipspec for the ship that was just unboarded.
-   I guess that what is going on here is that the pointer is multiplied
-   or something. */
 
 			Write(W_CAPTURED, from, to->file->index, 0, 0, 0);
 			topoints = 2 * from->specs->pts + to->file->points;
