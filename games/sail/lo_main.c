@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.15 2009/03/14 18:41:21 dholland Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.16 2009/03/14 20:14:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.15 2009/03/14 18:41:21 dholland Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.16 2009/03/14 20:14:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: lo_main.c,v 1.15 2009/03/14 18:41:21 dholland Exp $");
  * -l force a long listing (print out real usernames)
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pwd.h>
@@ -67,8 +68,7 @@ lo_main(void)
 	struct ship *ship;
 
 	if ((fp = fopen(_PATH_LOGFILE, "r")) == 0) {
-		perror(_PATH_LOGFILE);
-		exit(1);
+		err(1, "%s", _PATH_LOGFILE);
 	}
 	switch (fread(&npeople, sizeof npeople, 1, fp)) {
 	case 0:
@@ -77,8 +77,7 @@ lo_main(void)
 	case 1:
 		break;
 	default:
-		perror(_PATH_LOGFILE);
-		exit(1);
+		err(1, "%s", _PATH_LOGFILE);
 	}
 	while (fread(&log, sizeof log, 1, fp) == 1 &&
 	       log.l_name[0] != '\0') {
