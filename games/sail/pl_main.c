@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.22 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.23 2009/03/14 19:36:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.22 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.23 2009/03/14 19:36:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ reprint:
 		nat[n] = 0;
 	foreachship(sp) {
 		if (sp->file == NULL &&
-		    (sp->file = (struct File *)calloc(1, sizeof (struct File))) == NULL) {
+		    (sp->file = calloc(1, sizeof (struct File))) == NULL) {
 			err(1, "calloc");
 		}
 		sp->file->index = sp - SHIP(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_main.c,v 1.13 2009/03/02 06:44:22 dholland Exp $	*/
+/*	$NetBSD: dr_main.c,v 1.14 2009/03/14 19:36:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: dr_main.c,v 1.13 2009/03/02 06:44:22 dholland Exp $");
+__RCSID("$NetBSD: dr_main.c,v 1.14 2009/03/14 19:36:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ dr_main(void)
 		nat[n] = 0;
 	foreachship(sp) {
 		if (sp->file == NULL &&
-		    (sp->file = (struct File *)calloc(1, sizeof (struct File))) == NULL) {
+		    (sp->file = calloc(1, sizeof (struct File))) == NULL) {
 			fprintf(stderr, "DRIVER: Out of memory.\n");
 			exit(1);
 		}
