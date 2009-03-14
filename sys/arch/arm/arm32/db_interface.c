@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.46 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.47 2009/03/14 15:36:01 dsl Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.46 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2009/03/14 15:36:01 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -193,10 +193,7 @@ db_validate_address(vaddr_t addr)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t	addr;
-	size_t	size;
-	char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*src = (char *)addr;
 

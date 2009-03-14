@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.20 2009/02/23 22:44:27 jdc Exp $ */
+/*	$NetBSD: cgthree.c,v 1.21 2009/03/14 15:36:21 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.20 2009/02/23 22:44:27 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.21 2009/03/14 15:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,10 +155,7 @@ static struct vcons_screen cg3_console_screen;
 #endif /* NWSDISPLAY > 0 */
 
 void
-cgthreeattach(sc, name, isconsole)
-	struct cgthree_softc *sc;
-	const char *name;
-	int isconsole;
+cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 {
 	int i;
 	struct fbdevice *fb = &sc->sc_fb;
@@ -284,12 +281,7 @@ cgthreeopen(dev, flags, mode, l)
 }
 
 int
-cgthreeioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+cgthreeioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cgthree_softc *sc = device_lookup_private(&cgthree_cd,
 							 minor(dev));
@@ -347,17 +339,14 @@ cgthreeioctl(dev, cmd, data, flags, l)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgthreeunblank(dev)
-	struct device *dev;
+cgthreeunblank(struct device *dev)
 {
 
 	cgthree_set_video(device_private(dev), 1);
 }
 
 static void
-cgthree_set_video(sc, enable)
-	struct cgthree_softc *sc;
-	int enable;
+cgthree_set_video(struct cgthree_softc *sc, int enable)
 {
 
 	if (enable)
@@ -367,8 +356,7 @@ cgthree_set_video(sc, enable)
 }
 
 static int
-cgthree_get_video(sc)
-	struct cgthree_softc *sc;
+cgthree_get_video(struct cgthree_softc *sc)
 {
 
 	return ((sc->sc_fbc->fbc_ctrl & FBC_VENAB) != 0);
@@ -409,10 +397,7 @@ cgthreeloadcmap(sc, start, ncolors)
  * mapped in flat mode without the cg4 emulation.
  */
 paddr_t
-cgthreemmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+cgthreemmap(dev_t dev, off_t off, int prot)
 {
 	struct cgthree_softc *sc = device_lookup_private(&cgthree_cd,
 							 minor(dev));

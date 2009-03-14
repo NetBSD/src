@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.14 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14 2009/03/14 15:36:03 dsl Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -64,8 +64,7 @@ static const char *fpu_descr[] = {
 	"??? " };
 
 const char *
-fpu_describe(type)
-int	type;
+fpu_describe(int type)
 {
 	int	maxtype = sizeof(fpu_descr)/sizeof(fpu_descr[0]) - 1;
 

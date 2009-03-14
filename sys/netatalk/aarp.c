@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.27 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: aarp.c,v 1.28 2009/03/14 15:36:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.27 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.28 2009/03/14 15:36:23 dsl Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -129,9 +129,7 @@ aarptimer(void *ignored)
  * network.. remember to take netranges into consideration.
  */
 struct ifaddr *
-at_ifawithnet(sat, ifp)
-	const struct sockaddr_at *sat;
-	struct ifnet *ifp;
+at_ifawithnet(const struct sockaddr_at *sat, struct ifnet *ifp)
 {
 	struct ifaddr  *ifa;
 	struct sockaddr_at *sat2;
@@ -155,9 +153,7 @@ at_ifawithnet(sat, ifp)
 }
 
 static void
-aarpwhohas(ifp, sat)
-	struct ifnet *ifp;
-	const struct sockaddr_at *sat;
+aarpwhohas(struct ifnet *ifp, const struct sockaddr_at *sat)
 {
 	struct mbuf    *m;
 	struct ether_header *eh;
@@ -292,9 +288,7 @@ aarpresolve(struct ifnet *ifp, struct mbuf *m,
 }
 
 void
-aarpinput(ifp, m)
-	struct ifnet   *ifp;
-	struct mbuf    *m;
+aarpinput(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arphdr  *ar;
 
@@ -325,9 +319,7 @@ out:
 }
 
 static void
-at_aarpinput(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+at_aarpinput(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_aarp *ea;
 	struct at_ifaddr *aa;
@@ -487,8 +479,7 @@ at_aarpinput(ifp, m)
 }
 
 static void
-aarptfree(aat)
-	struct aarptab *aat;
+aarptfree(struct aarptab *aat)
 {
 
 	if (aat->aat_hold)
@@ -536,8 +527,7 @@ out:
 
 
 void
-aarpprobe(arp)
-	void *arp;
+aarpprobe(void *arp)
 {
 	struct mbuf    *m;
 	struct ether_header *eh;

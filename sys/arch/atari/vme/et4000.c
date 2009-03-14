@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.16 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: et4000.c,v 1.17 2009/03/14 15:36:04 dsl Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.16 2009/03/14 14:45:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.17 2009/03/14 15:36:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -147,10 +147,7 @@ const struct cdevsw et_cdevsw = {
  * match Spektrum cards too (untested).
  */
 int 
-et_vme_match(pdp, cfp, auxp)
-	struct device	*pdp;
-	struct cfdata	*cfp;
-	void		*auxp;
+et_vme_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct vme_attach_args *va = auxp;
 
@@ -158,8 +155,7 @@ et_vme_match(pdp, cfp, auxp)
 }
 
 static int
-et_probe_addresses(va)
-	struct vme_attach_args *va;
+et_probe_addresses(struct vme_attach_args *va)
 {
 	int i, found = 0;
 	bus_space_tag_t iot;
@@ -211,11 +207,7 @@ et_probe_addresses(va)
 }
 
 static void
-et_start(iot, ioh, vgabase, saved)
-	bus_space_tag_t *iot;
-	bus_space_handle_t *ioh;
-	int *vgabase;
-	u_char *saved;
+et_start(bus_space_tag_t *iot, bus_space_handle_t *ioh, int *vgabase, u_char *saved)
 {
 	/* Enable VGA */
 	bus_space_write_1(*iot, *ioh, GREG_VIDEOSYSENABLE, 0x01);
@@ -238,11 +230,7 @@ et_start(iot, ioh, vgabase, saved)
 }
 
 static void
-et_stop(iot, ioh, vgabase, saved)
-	bus_space_tag_t *iot;
-	bus_space_handle_t *ioh;
-	int *vgabase;
-	u_char *saved;
+et_stop(bus_space_tag_t *iot, bus_space_handle_t *ioh, int *vgabase, u_char *saved)
 {
 	/* Restore writes to CRTC[0..7] */
 	bus_space_write_1(*iot, *ioh, *vgabase + 0x04, 0x11);
@@ -410,30 +398,19 @@ etclose(dev, flags, devtype, l)
 }
 
 int
-etread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+etread(dev_t dev, struct uio *uio, int flags)
 {
 	return(EINVAL);
 }
 
 int
-etwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+etwrite(dev_t dev, struct uio *uio, int flags)
 {
 	return(EINVAL);
 }
 
 int
-etioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+etioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct grfinfo g_display;
 	struct et_softc *sc;
@@ -482,10 +459,7 @@ etioctl(dev, cmd, data, flags, l)
 }
 
 paddr_t
-etmmap(dev, offset, prot)
-	dev_t dev;
-	off_t offset;
-	int prot;
+etmmap(dev_t dev, off_t offset, int prot)
 {
 	struct et_softc *sc;
 
@@ -516,8 +490,7 @@ etmmap(dev, offset, prot)
 }
 
 int 
-eton(dev)
-	dev_t dev;
+eton(dev_t dev)
 {
 	struct et_softc *sc;
 
@@ -530,8 +503,7 @@ eton(dev)
 }
 
 int 
-etoff(dev)
-	dev_t dev;
+etoff(dev_t dev)
 {
 	return(0);
 }

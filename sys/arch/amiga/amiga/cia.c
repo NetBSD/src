@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.9 2002/04/25 09:20:27 aymeric Exp $	*/
+/*	$NetBSD: cia.c,v 1.10 2009/03/14 15:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.9 2002/04/25 09:20:27 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.10 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/types.h>
 #include <amiga/amiga/cia.h>
@@ -94,9 +94,7 @@ static struct cia_intr_dispatch ciab_ints[] = {
 
 
 void
-dispatch_cia_ints(which, mask)
-	int which;
-	int mask;
+dispatch_cia_ints(int which, int mask)
 {
 	struct cia_intr_dispatch *disp;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.35 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.36 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.35 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.36 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,9 +218,7 @@ dec_kn300_cons_init()
 
 /* #define	BDEBUG	1 */
 static void
-dec_kn300_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_kn300_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *primarydev, *pcidev, *ctrlrdev;
@@ -393,11 +391,7 @@ typedef struct {
 #define	CAP_ERR_CRDX	204
 
 static void
-kn300_softerr(mces, type, logout, framep)
-	unsigned long mces;
-	unsigned long type;
-	unsigned long logout;
-	struct trapframe *framep;
+kn300_softerr(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
 {
 	static const char *sys = "system";
 	static const char *proc = "processor";
@@ -458,11 +452,7 @@ kn300_softerr(mces, type, logout, framep)
  */
 
 static void
-kn300_mcheck(mces, type, logout, framep)
-	unsigned long mces;
-	unsigned long type;
-	unsigned long logout;
-	struct trapframe *framep;
+kn300_mcheck(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
 {
 	struct mchkinfo *mcp;
 	static const char *fmt1 = "        %-25s = 0x%l016x\n";
@@ -525,11 +515,7 @@ kn300_mcheck(mces, type, logout, framep)
 }
 
 static void
-dec_kn300_mcheck_handler(mces, framep, vector, param)
-	unsigned long mces;
-	struct trapframe *framep;
-	unsigned long vector;
-	unsigned long param;
+dec_kn300_mcheck_handler(unsigned long mces, struct trapframe *framep, unsigned long vector, unsigned long param)
 {
 	switch (vector) {
 	case ALPHA_SYS_ERROR:

@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.20 2009/02/17 12:46:01 jmcneill Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.21 2009/03/14 15:36:16 dsl Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.20 2009/02/17 12:46:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.21 2009/03/14 15:36:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,7 @@ static struct wss_acpi_hint wss_acpi_hints[] = {
 static int wss_acpi_hints_index (const char *);
 
 static int
-wss_acpi_hints_index(idstr)
-	const char *idstr;
+wss_acpi_hints_index(const char *idstr)
 {
 	int idx = 0;
 

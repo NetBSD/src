@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.60 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: ite.c,v 1.61 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.61 2009/03/14 15:36:03 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -208,10 +208,7 @@ const struct cdevsw ite_cdevsw = {
 static int		cons_ite = -1;
 
 int
-itematch(pdp, cfp, auxp)
-	struct device	*pdp;
-	struct cfdata	*cfp;
-	void		*auxp;
+itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	
 	/*
@@ -281,8 +278,7 @@ iteattach(pdp, dp, auxp)
 }
 
 static struct ite_softc *
-getitesp(dev)
-	dev_t dev;
+getitesp(dev_t dev)
 {
 	if(atari_realconfig && (con_itesoftc.grf == NULL))
 		return(device_lookup_private(&ite_cd, ITEUNIT(dev)));
@@ -301,8 +297,7 @@ getitesp(dev)
  * is called before any devices have been probed.
  */
 void
-itecnprobe(cd)
-	struct consdev *cd;
+itecnprobe(struct consdev *cd)
 {
 	/* 
 	 * return priority of the best ite (already picked from attach)
@@ -317,8 +312,7 @@ itecnprobe(cd)
 }
 
 void
-itecninit(cd)
-	struct consdev *cd;
+itecninit(struct consdev *cd)
 {
 	struct ite_softc *ip;
 
@@ -334,8 +328,7 @@ itecninit(cd)
  * up this ite now that the system is more functional.
  */
 void
-ite_cnfinish(ip)
-	struct ite_softc *ip;
+ite_cnfinish(struct ite_softc *ip)
 {
 	static int done;
 
@@ -345,8 +338,7 @@ ite_cnfinish(ip)
 }
 
 int
-itecngetc(dev)
-	dev_t dev;
+itecngetc(dev_t dev)
 {
 	int c;
 
@@ -358,9 +350,7 @@ itecngetc(dev)
 }
 
 void
-itecnputc(dev, c)
-	dev_t dev;
-	int c;
+itecnputc(dev_t dev, int c)
 {
 	static int paniced;
 	struct ite_softc *ip;
@@ -389,8 +379,7 @@ itecnputc(dev, c)
  *
  */
 void
-iteinit(dev)
-	dev_t dev;
+iteinit(dev_t dev)
 {
 	struct ite_softc	*ip;
 
@@ -506,10 +495,7 @@ iteclose(dev, flag, mode, l)
 }
 
 int
-iteread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+iteread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
 
@@ -520,10 +506,7 @@ iteread(dev, uio, flag)
 }
 
 int
-itewrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+itewrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
 
@@ -534,10 +517,7 @@ itewrite(dev, uio, flag)
 }
 
 int
-itepoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+itepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp;
 
@@ -548,19 +528,13 @@ itepoll(dev, events, l)
 }
 
 struct tty *
-itetty(dev)
-	dev_t	dev;
+itetty(dev_t dev)
 {
 	return(getitesp(dev)->tp);
 }
 
 int
-iteioctl(dev, cmd, addr, flag, l)
-	dev_t		dev;
-	u_long		cmd;
-	int		flag;
-	void *		addr;
-	struct lwp	*l;
+iteioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct iterepeat	*irp;
 	struct ite_softc	*ip;
@@ -649,8 +623,7 @@ iteioctl(dev, cmd, addr, flag, l)
 }
 
 void
-itestart(tp)
-	struct tty *tp;
+itestart(struct tty *tp)
 {
 	struct clist *rbp;
 	struct ite_softc *ip;
@@ -686,9 +659,7 @@ itestart(tp)
 }
 
 void
-ite_on(dev, flag)
-	dev_t dev;
-	int flag;
+ite_on(dev_t dev, int flag)
 {
 	struct ite_softc *ip;
 	int unit;
@@ -714,9 +685,7 @@ ite_on(dev, flag)
 }
 
 void
-ite_off(dev, flag)
-dev_t	dev;
-int	flag;
+ite_off(dev_t dev, int flag)
 {
 	struct ite_softc *ip;
 
@@ -733,8 +702,7 @@ int	flag;
 }
 
 static void
-ite_switch(unit)
-int	unit;
+ite_switch(int unit)
 {
 	struct ite_softc	*ip;
 	extern const struct cdevsw view_cdevsw;
@@ -764,8 +732,7 @@ int	unit;
 /* XXX called after changes made in underlying grf layer. */
 /* I want to nuke this */
 void
-ite_reinit(dev)
-	dev_t dev;
+ite_reinit(dev_t dev)
 {
 	struct ite_softc *ip;
 
@@ -775,9 +742,7 @@ ite_reinit(dev)
 }
 
 int
-ite_param(tp, t)
-	struct tty *tp;
-	struct termios *t;
+ite_param(struct tty *tp, struct termios *t)
 {
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
@@ -786,8 +751,7 @@ ite_param(tp, t)
 }
 
 void
-ite_reset(ip)
-	struct ite_softc *ip;
+ite_reset(struct ite_softc *ip)
 {
 	int i;
 
@@ -823,9 +787,7 @@ static u_char last_dead;
  * Used in console at startup only and for DDB.
  */
 int
-ite_cnfilter(c, caller)
-u_int		c;
-enum caller	caller;
+ite_cnfilter(u_int c, enum caller caller)
 {
 	struct key	key;
 	struct kbdmap	*kbdmap;
@@ -915,8 +877,7 @@ static callout_t repeat_ch;
 
 /*ARGSUSED*/
 static void
-repeat_handler(arg)
-void *arg;
+repeat_handler(void *arg)
 {
 	tout_pending = 0;
 	if(last_char) 
@@ -925,9 +886,7 @@ void *arg;
 }
 
 void
-ite_filter(c, caller)
-u_int		c;
-enum caller	caller;
+ite_filter(u_int c, enum caller caller)
 {
 	struct tty	*kbd_tty;
 	struct kbdmap	*kbdmap;
@@ -1143,8 +1102,7 @@ enum caller	caller;
 
 /* helper functions, makes the code below more readable */
 static inline void
-ite_sendstr(str)
-	const char *str;
+ite_sendstr(const char *str)
 {
 	struct tty *kbd_tty;
 
@@ -1155,8 +1113,7 @@ ite_sendstr(str)
 }
 
 static void
-alignment_display(ip)
-	struct ite_softc *ip;
+alignment_display(struct ite_softc *ip)
 {
   int i, j;
 
@@ -1168,8 +1125,7 @@ alignment_display(ip)
 }
 
 static inline void
-snap_cury(ip)
-	struct ite_softc *ip;
+snap_cury(struct ite_softc *ip)
 {
   if (ip->inside_margins)
     {
@@ -1181,9 +1137,7 @@ snap_cury(ip)
 }
 
 static inline void
-ite_dnchar(ip, n)
-     struct ite_softc *ip;
-     int n;
+ite_dnchar(struct ite_softc *ip, int n)
 {
   n = min(n, ip->cols - ip->curx);
   if (n < ip->cols - ip->curx)
@@ -1199,9 +1153,7 @@ ite_dnchar(ip, n)
 }
 
 static inline void
-ite_inchar(ip, n)
-     struct ite_softc *ip;
-     int n;
+ite_inchar(struct ite_softc *ip, int n)
 {
   n = min(n, ip->cols - ip->curx);
   if (n < ip->cols - ip->curx)
@@ -1217,8 +1169,7 @@ ite_inchar(ip, n)
 }
 
 static inline void
-ite_clrtoeol(ip)
-     struct ite_softc *ip;
+ite_clrtoeol(struct ite_softc *ip)
 {
   int y = ip->cury, x = ip->curx;
   if (ip->cols - x > 0)
@@ -1230,8 +1181,7 @@ ite_clrtoeol(ip)
 }
 
 static inline void
-ite_clrtobol(ip)
-     struct ite_softc *ip;
+ite_clrtobol(struct ite_softc *ip)
 {
   int y = ip->cury, x = min(ip->curx + 1, ip->cols);
   SUBR_CLEAR(ip, y, 0, 1, x);
@@ -1240,8 +1190,7 @@ ite_clrtobol(ip)
 }
 
 static inline void
-ite_clrline(ip)
-     struct ite_softc *ip;
+ite_clrline(struct ite_softc *ip)
 {
   int y = ip->cury;
   SUBR_CLEAR(ip, y, 0, 1, ip->cols);
@@ -1252,8 +1201,7 @@ ite_clrline(ip)
 
 
 static inline void
-ite_clrtoeos(ip)
-     struct ite_softc *ip;
+ite_clrtoeos(struct ite_softc *ip)
 {
   ite_clrtoeol(ip);
   if (ip->cury < ip->rows - 1)
@@ -1265,8 +1213,7 @@ ite_clrtoeos(ip)
 }
 
 static inline void
-ite_clrtobos(ip)
-     struct ite_softc *ip;
+ite_clrtobos(struct ite_softc *ip)
 {
   ite_clrtobol(ip);
   if (ip->cury > 0)
@@ -1278,8 +1225,7 @@ ite_clrtobos(ip)
 }
 
 static inline void
-ite_clrscreen(ip)
-     struct ite_softc *ip;
+ite_clrscreen(struct ite_softc *ip)
 {
   SUBR_CLEAR(ip, 0, 0, ip->rows, ip->cols);
   attrclr(ip, 0, 0, ip->rows, ip->cols);
@@ -1289,9 +1235,7 @@ ite_clrscreen(ip)
 
 
 static inline void
-ite_dnline(ip, n)
-     struct ite_softc *ip;
-     int n;
+ite_dnline(struct ite_softc *ip, int n)
 {
   /* interesting.. if the cursor is outside the scrolling
      region, this command is simply ignored.. */
@@ -1311,9 +1255,7 @@ ite_dnline(ip, n)
 }
 
 static inline void
-ite_inline(ip, n)
-     struct ite_softc *ip;
-     int n;
+ite_inline(struct ite_softc *ip, int n)
 {
   /* interesting.. if the cursor is outside the scrolling
      region, this command is simply ignored.. */
@@ -1430,10 +1372,7 @@ ite_zargnum (ip)
 }
 
 void
-ite_putstr(s, len, dev)
-	const u_char *s;
-	int len;
-	dev_t dev;
+ite_putstr(const u_char *s, int len, dev_t dev)
 {
 	struct ite_softc *ip;
 	int i;
@@ -1453,9 +1392,7 @@ ite_putstr(s, len, dev)
 
 
 void
-iteputchar(c, ip)
-	register int c;
-	struct ite_softc *ip;
+iteputchar(register int c, struct ite_softc *ip)
 {
 	struct tty *kbd_tty;
 	int n, x, y;
@@ -2373,8 +2310,7 @@ iteputchar(c, ip)
 }
 
 static void
-iteprecheckwrap(ip)
-	struct ite_softc *ip;
+iteprecheckwrap(struct ite_softc *ip)
 {
 	if (ip->auto_wrap && ip->curx == ip->cols) {
 		ip->curx = 0;
@@ -2390,8 +2326,7 @@ iteprecheckwrap(ip)
 }
 
 static void
-itecheckwrap(ip)
-	struct ite_softc *ip;
+itecheckwrap(struct ite_softc *ip)
 {
 	if (ip->curx < ip->cols) {
 		ip->curx++;

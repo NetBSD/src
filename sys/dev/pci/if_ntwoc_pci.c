@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.21 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.22 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.21 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.22 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,8 +723,7 @@ ntwoc_pci_setup_dma(struct sca_softc *sc)
 
 #if __NetBSD_Version__ >= 104160000
 static void
-ntwoc_pci_config_interrupts(self)
-	struct device *self;
+ntwoc_pci_config_interrupts(struct device *self)
 {
 	struct ntwoc_pci_softc *sc;
 

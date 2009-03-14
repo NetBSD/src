@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.40 2009/03/14 14:45:54 dsl Exp $ */
+/* $NetBSD: ioasic.c,v 1.41 2009/03/14 15:36:00 dsl Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.40 2009/03/14 14:45:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.41 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,10 +125,7 @@ tc_addr_t ioasic_base;		/* XXX XXX XXX */
 int ioasicfound;
 
 int
-ioasicmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+ioasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -274,8 +271,7 @@ ioasic_intr_disestablish(device_t ioa, void *cookie)
 }
 
 int
-ioasic_intrnull(val)
-	void *val;
+ioasic_intrnull(void *val)
 {
 
 	panic("ioasic_intrnull: uncaught IOASIC intr for cookie %ld",
@@ -286,8 +282,7 @@ ioasic_intrnull(val)
  * ASIC interrupt handler.
  */
 int
-ioasic_intr(val)
-	void *val;
+ioasic_intr(void *val)
 {
 	register struct ioasic_softc *sc = val;
 	register int ifound;

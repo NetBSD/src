@@ -1,4 +1,4 @@
-/*	$NetBSD: xexit.c,v 1.1.1.1 1996/01/07 21:50:50 leo Exp $	*/
+/*	$NetBSD: xexit.c,v 1.2 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -52,8 +52,7 @@ press_any_key()
 }
 
 void
-xexit(status)
-	int	status;
+xexit(int status)
 {
 	press_any_key();
 	exit(status);

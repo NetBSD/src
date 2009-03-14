@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.21 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.22 2009/03/14 15:36:23 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.21 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.22 2009/03/14 15:36:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -899,11 +899,7 @@ troll_random()
  *			troll control structure (Troll).
  */
 int
-troll_output(ifp, m, dst, rt)
-	struct ifnet   *ifp;
-	struct mbuf    *m;
-	const struct sockaddr *dst;
-	struct rtentry *rt;
+troll_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst, struct rtentry *rt)
 {
 	int             err = 0;
 	troll_cnt++;

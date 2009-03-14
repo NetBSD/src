@@ -1,4 +1,4 @@
-/*	$NetBSD: strdup.c,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: strdup.c,v 1.2 2009/03/14 15:36:08 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,8 +46,7 @@ static char sccsid[] = "@(#)strdup.c	8.1 (Berkeley) 6/4/93";
 
 
 char *
-strdup(str)
-	const char *str;
+strdup(const char *str)
 {
 	size_t len;
 	char *copy = NULL;

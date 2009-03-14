@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.10 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.11 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.10 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.11 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,9 +77,7 @@ init_stmem()
 }
 
 void *
-alloc_stmem(size, phys_addr)
-u_long	size;
-void	**phys_addr;
+alloc_stmem(u_long size, void **phys_addr)
 {
 	struct mem_node *mn, *new, *bfit;
 	int		s;
@@ -149,8 +147,7 @@ void	**phys_addr;
 }
 
 void
-free_stmem(mem)
-void *mem;
+free_stmem(void *mem)
 {
 	struct mem_node *mn, *next, *prev;
 	int		s;

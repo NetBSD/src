@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.7 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.8 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.7 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.8 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -220,15 +220,13 @@ __fpu_modrem(fe, modrem)
 }
 
 struct fpn *
-fpu_rem(fe)
-     struct fpemu *fe;
+fpu_rem(struct fpemu *fe)
 {
   return __fpu_modrem(fe, 1);
 }
 
 struct fpn *
-fpu_mod(fe)
-     struct fpemu *fe;
+fpu_mod(struct fpemu *fe)
 {
   return __fpu_modrem(fe, 0);
 }

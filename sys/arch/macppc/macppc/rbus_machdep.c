@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.15 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.16 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.15 2009/03/14 14:46:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.16 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,8 +74,7 @@ md_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
 }
 
 rbus_tag_t
-rbus_pccbb_parent_mem(pa)
-	struct pci_attach_args *pa;
+rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 {
 	bus_addr_t start;
 	bus_size_t size;
@@ -102,8 +101,7 @@ rbus_pccbb_parent_mem(pa)
 }
 
 rbus_tag_t
-rbus_pccbb_parent_io(pa)
-	struct pci_attach_args *pa;
+rbus_pccbb_parent_io(struct pci_attach_args *pa)
 {
 	bus_addr_t start = 0x2000;
 	bus_size_t size  = 0x0800;
@@ -115,9 +113,7 @@ rbus_pccbb_parent_io(pa)
 }
 
 void
-macppc_cardbus_init(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+macppc_cardbus_init(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	u_int x;
 	static int initted = 0;

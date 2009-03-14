@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.30 2006/10/28 17:39:59 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.31 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.30 2006/10/28 17:39:59 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.31 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -528,8 +528,7 @@ vidcvideo_setmode(struct vidc_mode *mode)
 #if 0
 /* not used for now */
 void
-vidcvideo_set_display_base(base)
-	u_int base;
+vidcvideo_set_display_base(u_int base)
 {
 	dispstart = dispstart-dispbase + base;
 	dispbase = vmem_base = base;

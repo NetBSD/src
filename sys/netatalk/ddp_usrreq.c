@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.35 2009/03/14 14:46:10 dsl Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.36 2009/03/14 15:36:23 dsl Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.35 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.36 2009/03/14 15:36:23 dsl Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -78,13 +78,7 @@ struct mowner atalk_tx_mowner = MOWNER_INIT("atalk", "tx");
 
 /* ARGSUSED */
 int
-ddp_usrreq(so, req, m, addr, rights, l)
-	struct socket  *so;
-	int             req;
-	struct mbuf    *m;
-	struct mbuf    *addr;
-	struct mbuf    *rights;
-	struct lwp *l;
+ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr, struct mbuf *rights, struct lwp *l)
 {
 	struct ddpcb   *ddp;
 	int             error = 0;
@@ -229,9 +223,7 @@ release:
 }
 
 static void
-at_sockaddr(ddp, addr)
-	struct ddpcb   *ddp;
-	struct mbuf    *addr;
+at_sockaddr(struct ddpcb *ddp, struct mbuf *addr)
 {
 	struct sockaddr_at *sat;
 
@@ -241,10 +233,7 @@ at_sockaddr(ddp, addr)
 }
 
 static int
-at_pcbsetaddr(ddp, addr, l)
-	struct ddpcb   *ddp;
-	struct mbuf    *addr;
-	struct lwp	*l;
+at_pcbsetaddr(struct ddpcb *ddp, struct mbuf *addr, struct lwp *l)
 {
 	struct sockaddr_at lsat, *sat;
 	struct at_ifaddr *aa;
@@ -336,10 +325,7 @@ at_pcbsetaddr(ddp, addr, l)
 }
 
 static int
-at_pcbconnect(ddp, addr, l)
-	struct ddpcb   *ddp;
-	struct mbuf    *addr;
-	struct lwp     *l;
+at_pcbconnect(struct ddpcb *ddp, struct mbuf *addr, struct lwp *l)
 {
 	struct rtentry *rt;
 	const struct sockaddr_at *cdst;
@@ -430,8 +416,7 @@ at_pcbconnect(ddp, addr, l)
 }
 
 static void
-at_pcbdisconnect(ddp)
-	struct ddpcb   *ddp;
+at_pcbdisconnect(struct ddpcb *ddp)
 {
 	ddp->ddp_fsat.sat_addr.s_net = ATADDR_ANYNET;
 	ddp->ddp_fsat.sat_addr.s_node = ATADDR_ANYNODE;
@@ -439,8 +424,7 @@ at_pcbdisconnect(ddp)
 }
 
 static int
-at_pcballoc(so)
-	struct socket  *so;
+at_pcballoc(struct socket *so)
 {
 	struct ddpcb   *ddp;
 
@@ -468,9 +452,7 @@ at_pcballoc(so)
 }
 
 static void
-at_pcbdetach(so, ddp)
-	struct socket  *so;
-	struct ddpcb   *ddp;
+at_pcbdetach(struct socket *so, struct ddpcb *ddp)
 {
 	soisdisconnected(so);
 	so->so_pcb = 0;

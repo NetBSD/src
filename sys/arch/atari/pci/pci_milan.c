@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.10 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.11 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.10 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.11 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,9 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.10 2009/03/14 14:45:56 dsl Exp $");
 #include <atari/dev/grf_etreg.h>
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 	return (6);
 }
@@ -65,10 +63,7 @@ void		milan_pci_confwrite(u_long, pcireg_t);
 u_long		plx_status;
 
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	u_long		data;
 
@@ -84,11 +79,7 @@ pci_conf_read(pc, tag, reg)
 
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	milan_pci_confwrite(tag | reg, bswap32(data));
 }
@@ -120,9 +111,7 @@ pci_intr_establish(pc, ih, level, ih_fun, ih_arg)
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 	isa_intr_disestablish(NULL, cookie);
 }
@@ -149,12 +138,7 @@ static u_char crt_tab[] = {
 #define PCI_LINMEMBASE  0x0e000000
 
 void
-milan_vga_init(pc, tag, id, ba, fb)
-	pci_chipset_tag_t	pc;
-	pcitag_t		tag;
-	int			id;
-	volatile u_char		*ba;
-	u_char			*fb;
+milan_vga_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile u_char *ba, u_char *fb)
 {
 	int			i, csr;
 

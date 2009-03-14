@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.25 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: adb.c,v 1.26 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.25 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.26 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,10 +81,7 @@ CFATTACH_DECL(adb, sizeof(struct adb_softc),
     adbmatch, adbattach, NULL, NULL);
 
 static int
-adbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+adbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -204,9 +201,7 @@ adbattach(parent, self, aux)
 }
 
 int
-adbprint(args, name)
-	void *args;
-	const char *name;
+adbprint(void *args, const char *name)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)args;
 	int rv = UNCONF;

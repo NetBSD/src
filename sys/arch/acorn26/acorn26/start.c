@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.12 2009/02/13 22:41:00 apb Exp $ */
+/* $NetBSD: start.c,v 1.13 2009/03/14 15:35:58 dsl Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.12 2009/02/13 22:41:00 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.13 2009/03/14 15:35:58 dsl Exp $");
 
 #include "opt_modular.h"
 
@@ -92,8 +92,7 @@ extern char __bss_start__[], __bss_end__[];
  * assembler to get things going.
  */
 void
-start(initbootconfig)
-	struct bootconfig *initbootconfig;
+start(struct bootconfig *initbootconfig)
 {
 	int onstack;
 

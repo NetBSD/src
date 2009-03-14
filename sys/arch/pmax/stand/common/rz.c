@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.23 2009/01/12 07:29:23 tsutsui Exp $	*/
+/*	$NetBSD: rz.c,v 1.24 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -182,8 +182,7 @@ rzopen(struct open_file *f, ...)
 
 #ifndef LIBSA_NO_DEV_CLOSE
 int
-rzclose(f)
-	struct open_file *f;
+rzclose(struct open_file *f)
 {
 	if (callv == &callvec)
 		prom_close(((struct rz_softc *)f->f_devdata)->sc_fd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.34 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.35 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.34 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.35 2009/03/14 15:36:18 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -192,10 +192,7 @@ uha_isa_attach(struct device *parent, struct device *self, void *aux)
  * Start the board, ready for normal operation
  */
 int
-u14_find(iot, ioh, sc)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct uha_probe_data *sc;
+u14_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct uha_probe_data *sc)
 {
 	u_int16_t model, config;
 	int irq, drq;
@@ -281,9 +278,7 @@ u14_find(iot, ioh, sc)
  * Function to send a command out through a mailbox
  */
 void
-u14_start_mbox(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+u14_start_mbox(struct uha_softc *sc, struct uha_mscp *mscp)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -317,10 +312,7 @@ u14_start_mbox(sc, mscp)
  *	wait = timeout in msec
  */
 int
-u14_poll(sc, xs, count)
-	struct uha_softc *sc;
-	struct scsipi_xfer *xs;
-	int count;
+u14_poll(struct uha_softc *sc, struct scsipi_xfer *xs, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -344,8 +336,7 @@ u14_poll(sc, xs, count)
  * Catch an interrupt from the adaptor
  */
 int
-u14_intr(arg)
-	void *arg;
+u14_intr(void *arg)
 {
 	struct uha_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -394,8 +385,7 @@ u14_intr(arg)
 }
 
 void
-u14_init(sc)
-	struct uha_softc *sc;
+u14_init(struct uha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;

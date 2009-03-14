@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.7 2008/05/05 17:11:16 ad Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.8 2009/03/14 15:36:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.7 2008/05/05 17:11:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.8 2009/03/14 15:36:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,7 @@ ntfs_nthashdone()
  * to it. If it is in core, return it, even if it is locked.
  */
 struct ntnode *
-ntfs_nthashlookup(dev, inum)
-	dev_t dev;
-	ino_t inum;
+ntfs_nthashlookup(dev_t dev, ino_t inum)
 {
 	struct ntnode *ip;
 	struct nthashhead *ipp;
@@ -136,8 +134,7 @@ ntfs_nthashlookup(dev, inum)
  * Insert the ntnode into the hash table.
  */
 void
-ntfs_nthashins(ip)
-	struct ntnode *ip;
+ntfs_nthashins(struct ntnode *ip)
 {
 	struct nthashhead *ipp;
 
@@ -152,8 +149,7 @@ ntfs_nthashins(ip)
  * Remove the inode from the hash table.
  */
 void
-ntfs_nthashrem(ip)
-	struct ntnode *ip;
+ntfs_nthashrem(struct ntnode *ip)
 {
 	mutex_enter(&ntfs_nthash_lock);
 	if (ip->i_flag & IN_HASHED) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.34 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.35 2009/03/14 15:36:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.34 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.35 2009/03/14 15:36:06 dsl Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -259,9 +259,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int intr, int type, int level,
 }
 
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	struct vrisab_softc *sc = ic->ic_sc;
 	/* Call Vr routine */

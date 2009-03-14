@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.45 2009/03/14 14:46:06 dsl Exp $	*/
+/*	$NetBSD: ofw.c,v 1.46 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.45 2009/03/14 14:46:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.46 2009/03/14 15:36:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,8 +278,7 @@ static vaddr_t ofw_valloc(vsize_t, vaddr_t);
 
 
 int
-openfirmware(args)
-	void *args;
+openfirmware(void *args)
 {
 	int ofw_result;
 	u_int saved_irq_state;
@@ -294,8 +293,7 @@ openfirmware(args)
 
 
 void
-ofw_init(ofw_handle)
-	ofw_handle_t ofw_handle;
+ofw_init(ofw_handle_t ofw_handle)
 {
 	ofw_client_services_handle = ofw_handle;
 
@@ -324,9 +322,7 @@ ofw_init(ofw_handle)
 
 
 void
-ofw_boot(howto, bootstr)
-	int howto;
-	char *bootstr;
+ofw_boot(int howto, char *bootstr)
 {
 
 #ifdef DIAGNOSTIC
@@ -435,8 +431,7 @@ extern	char	*ip2dotted(struct in_addr);
  */
 
 void
-get_fw_dhcp_data(bdp)
-	struct bootdata *bdp;
+get_fw_dhcp_data(struct bootdata *bdp)
 {
 	int chosen;
 	int dhcplen;
@@ -523,9 +518,7 @@ get_fw_dhcp_data(bdp)
 #endif	/* BOOT_FW_DHCP */
 
 void
-ofw_getbootinfo(bp_pp, ba_pp)
-	char **bp_pp;
-	char **ba_pp;
+ofw_getbootinfo(char **bp_pp, char **ba_pp)
 {
 	int chosen;
 	int bp_len;
@@ -588,9 +581,7 @@ ofw_getcleaninfo(void)
 }
 
 void
-ofw_configisa(pio, pmem)
-	paddr_t *pio;
-	paddr_t *pmem;
+ofw_configisa(paddr_t *pio, paddr_t *pmem)
 {
 	int vl;
 
@@ -601,9 +592,7 @@ ofw_configisa(pio, pmem)
 }
 
 static void
-ofw_configisaonly(pio, pmem)
-	paddr_t *pio;
-	paddr_t *pmem;
+ofw_configisaonly(paddr_t *pio, paddr_t *pmem)
 {
 	int isa;
 	int rangeidx;
@@ -640,10 +629,7 @@ ofw_configisaonly(pio, pmem)
 }
 
 static void
-ofw_configvl(vl, pio, pmem)
-	int vl;
-	paddr_t *pio;
-	paddr_t *pmem;
+ofw_configvl(int vl, paddr_t *pio, paddr_t *pmem)
 {
 	int isa;
 	int ir, vr;
@@ -699,8 +685,7 @@ int shark_isa_dma_nranges;
 #endif
 
 void
-ofw_configisadma(pdma)
-	paddr_t *pdma;
+ofw_configisadma(paddr_t *pdma)
 {
 	int root;
 	int rangeidx;
@@ -986,8 +971,7 @@ ofw_configmem(void)
 
 /* N.B.  Not supposed to call printf in callback-handler!  Could deadlock! */
 static void
-ofw_callbackhandler(v)
-	void *v;
+ofw_callbackhandler(void *v)
 {
 	struct ofw_cbargs *args = v;
 	char *name = args->name;
@@ -1618,9 +1602,7 @@ static VFREE vfinitial = { NULL, IO_VIRT_BASE, IO_VIRT_SIZE };
 static PVFREE vflist = &vfinitial;
 
 static vaddr_t
-ofw_valloc(size, align)
-	vsize_t size;
-	vaddr_t align;
+ofw_valloc(vsize_t size, vaddr_t align)
 {
 	PVFREE        *ppvf;
 	PVFREE        pNew;
@@ -1669,10 +1651,7 @@ ofw_valloc(size, align)
 }
 
 vaddr_t
-ofw_map(pa, size, cb_bits)
-	paddr_t pa;
-	vsize_t size;
-	int cb_bits;
+ofw_map(paddr_t pa, vsize_t size, int cb_bits)
 {
 	vaddr_t va;
 
@@ -1726,10 +1705,7 @@ ofw_mmu_ihandle(void)
 
 /* Return -1 on failure. */
 static paddr_t
-ofw_claimphys(pa, size, align)
-	paddr_t pa;
-	psize_t size;
-	paddr_t align;
+ofw_claimphys(paddr_t pa, psize_t size, paddr_t align)
 {
 	int mem_ihandle = ofw_mem_ihandle();
 
@@ -1750,9 +1726,7 @@ ofw_claimphys(pa, size, align)
 #if 0
 /* Return -1 on failure. */
 static paddr_t
-ofw_releasephys(pa, size)
-	paddr_t pa;
-	psize_t size;
+ofw_releasephys(paddr_t pa, psize_t size)
 {
 	int mem_ihandle = ofw_mem_ihandle();
 
@@ -1764,10 +1738,7 @@ ofw_releasephys(pa, size)
 
 /* Return -1 on failure. */
 static vaddr_t
-ofw_claimvirt(va, size, align)
-	vaddr_t va;
-	vsize_t size;
-	vaddr_t align;
+ofw_claimvirt(vaddr_t va, vsize_t size, vaddr_t align)
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
 
@@ -1786,8 +1757,7 @@ ofw_claimvirt(va, size, align)
 
 /* Return -1 if no mapping. */
 paddr_t
-ofw_gettranslation(va)
-	vaddr_t va;
+ofw_gettranslation(vaddr_t va)
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
 	paddr_t pa;
@@ -1810,11 +1780,7 @@ ofw_gettranslation(va)
 
 
 static void
-ofw_settranslation(va, pa, size, mode)
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t size;
-	int mode;
+ofw_settranslation(vaddr_t va, paddr_t pa, vsize_t size, int mode)
 {
 	int mmu_ihandle = ofw_mmu_ihandle();
 
@@ -1847,8 +1813,7 @@ typedef struct _leftover {
 static PLEFTOVER leftovers = NULL;
 
 static void *
-ofw_malloc(size)
-	vsize_t size;
+ofw_malloc(vsize_t size)
 {
 	PLEFTOVER   *ppLeftover;
 	PLEFTOVER   pLeft;
@@ -1901,9 +1866,7 @@ ofw_malloc(size)
  */
 #if 0
 static void
-ofw_free(addr, size)
-	vaddr_t addr;
-	vsize_t size;
+ofw_free(vaddr_t addr, vsize_t size)
 {
 	PLEFTOVER pLeftover = (PLEFTOVER)addr;
 
@@ -1926,10 +1889,7 @@ ofw_free(addr, size)
  *  memory.
  */
 static void
-ofw_claimpages(free_pp, pv_p, size)
-	vaddr_t *free_pp;
-	pv_addr_t *pv_p;
-	vsize_t size;
+ofw_claimpages(vaddr_t *free_pp, pv_addr_t *pv_p, vsize_t size)
 {
 	/* round-up to page boundary */
 	vsize_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
@@ -1967,10 +1927,7 @@ ofw_claimpages(free_pp, pv_p, size)
 
 
 static void
-ofw_discardmappings(L2pagetable, va, size)
-	vaddr_t L2pagetable;
-	vaddr_t va;
-	vsize_t size;
+ofw_discardmappings(vaddr_t L2pagetable, vaddr_t va, vsize_t size)
 {
 	/* round-up to page boundary */
 	vsize_t alloc_size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);

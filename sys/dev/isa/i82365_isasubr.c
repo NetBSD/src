@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.40 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.41 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.40 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.41 2009/03/14 15:36:18 dsl Exp $");
 
 #define	PCICISADEBUG
 
@@ -130,8 +130,7 @@ void pcic_isa_probe_interrupts(struct pcic_softc *, struct pcic_handle *);
 static int pcic_isa_count_intr(void *);
 
 static int
-pcic_isa_count_intr(arg)
-	void *arg;
+pcic_isa_count_intr(void *arg)
 {
 	struct pcic_softc *sc;
 	struct pcic_isa_softc *isc;
@@ -177,9 +176,7 @@ pcic_isa_count_intr(arg)
  * for this controller
  */
 void
-pcic_isa_probe_interrupts(sc, h)
-	struct pcic_softc *sc;
-	struct pcic_handle *h;
+pcic_isa_probe_interrupts(struct pcic_softc *sc, struct pcic_handle *h)
 {
 	struct pcic_isa_softc *isc = (void *) sc;
 	isa_chipset_tag_t ic;
@@ -272,8 +269,7 @@ pcic_isa_probe_interrupts(sc, h)
  * which irq lines are actually hooked up to our pcic
  */
 void
-pcic_isa_config_interrupts(self)
-	struct device *self;
+pcic_isa_config_interrupts(struct device *self)
 {
 	struct pcic_softc *sc;
 	struct pcic_isa_softc *isc;
@@ -506,9 +502,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 }
 
 void
-pcic_isa_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	struct pcic_isa_softc *isc = (struct pcic_isa_softc *)(h->ph_parent);

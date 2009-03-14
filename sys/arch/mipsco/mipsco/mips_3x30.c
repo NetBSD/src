@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.10 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.11 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.10 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.11 2009/03/14 15:36:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,7 @@ pizazz_intr(status, cause, pc, ipending)
  * A secondary interrupt status register shows the real interrupt source
  */
 int
-pizazz_level0_intr(arg)
-	void *arg;
+pizazz_level0_intr(void *arg)
 {
 	register int stat;
 
@@ -155,10 +154,7 @@ pizazz_level0_intr(arg)
  * Motherboard Parity Error
  */
 void
-pizazz_level5_intr(pc, cause, status)
-	int pc;
-	int cause;
-	int status;
+pizazz_level5_intr(int pc, int cause, int status)
 {
 	u_int32_t ereg;
 

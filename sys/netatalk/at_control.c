@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.27 2008/11/07 00:20:18 dyoung Exp $	 */
+/*	$NetBSD: at_control.c,v 1.28 2009/03/14 15:36:23 dsl Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.27 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.28 2009/03/14 15:36:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,11 +72,7 @@ static void aa_clean(void);
 			 (a)->sat_addr.s_node == (b)->sat_addr.s_node )
 
 int
-at_control(cmd, data, ifp, l)
-	u_long          cmd;
-	void *        data;
-	struct ifnet   *ifp;
-	struct lwp     *l;
+at_control(u_long cmd, void * data, struct ifnet *ifp, struct lwp *l)
 {
 	struct ifreq   *ifr = (struct ifreq *) data;
 	const struct sockaddr_at *csat;
@@ -355,9 +351,7 @@ at_purgeif(struct ifnet *ifp)
  * aa->at_ifaddr.ifa_ifp should be the same.
  */
 static int
-at_scrub(ifp, aa)
-	struct ifnet   *ifp;
-	struct at_ifaddr *aa;
+at_scrub(struct ifnet *ifp, struct at_ifaddr *aa)
 {
 	int error = 0;
 
@@ -383,10 +377,7 @@ at_scrub(ifp, aa)
  * bang them all together at high speed and see what happens
  */
 static int
-at_ifinit(ifp, aa, sat)
-	struct ifnet   *ifp;
-	struct at_ifaddr *aa;
-	const struct sockaddr_at *sat;
+at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat)
 {
 	struct netrange nr, onr;
 	struct sockaddr_at oldaddr;
@@ -714,11 +705,7 @@ at_broadcast(const struct sockaddr_at *sat)
  */
 
 static int
-aa_dorangeroute(ifa, bot, top, cmd)
-	struct ifaddr *ifa;
-	u_int bot;
-	u_int top;
-	int cmd;
+aa_dorangeroute(struct ifaddr *ifa, u_int bot, u_int top, int cmd)
 {
 	u_int           mask1;
 	struct at_addr  addr;
@@ -763,10 +750,7 @@ aa_dorangeroute(ifa, bot, top, cmd)
 }
 
 static int
-aa_addsingleroute(ifa, addr, mask)
-	struct ifaddr *ifa;
-	struct at_addr *addr;
-	struct at_addr *mask;
+aa_addsingleroute(struct ifaddr *ifa, struct at_addr *addr, struct at_addr *mask)
 {
 	int error;
 
@@ -785,10 +769,7 @@ aa_addsingleroute(ifa, addr, mask)
 }
 
 static int
-aa_delsingleroute(ifa, addr, mask)
-	struct ifaddr *ifa;
-	struct at_addr *addr;
-	struct at_addr *mask;
+aa_delsingleroute(struct ifaddr *ifa, struct at_addr *addr, struct at_addr *mask)
 {
 	int error;
 
@@ -807,12 +788,7 @@ aa_delsingleroute(ifa, addr, mask)
 }
 
 static int
-aa_dosingleroute(ifa, at_addr, at_mask, cmd, flags)
-	struct ifaddr *ifa;
-	struct at_addr *at_addr;
-	struct at_addr *at_mask;
-	int cmd;
-	int flags;
+aa_dosingleroute(struct ifaddr *ifa, struct at_addr *at_addr, struct at_addr *at_mask, int cmd, int flags)
 {
 	struct sockaddr_at addr, mask, *gate;
 

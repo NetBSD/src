@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.16 2008/04/04 22:18:05 cegger Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.17 2009/03/14 15:36:07 dsl Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16 2008/04/04 22:18:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.17 2009/03/14 15:36:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,7 @@ struct wss_pnpbios_hint wss_pnpbios_hints[] = {
 
 
 int
-wss_pnpbios_hints_index(idstr)
-	const char *idstr;
+wss_pnpbios_hints_index(const char *idstr)
 {
 	int idx = 0;
 

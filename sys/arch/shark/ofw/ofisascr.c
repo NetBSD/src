@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisascr.c,v 1.7 2009/03/14 14:46:06 dsl Exp $	*/
+/*	$NetBSD: ofisascr.c,v 1.8 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.7 2009/03/14 14:46:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisascr.c,v 1.8 2009/03/14 15:36:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,10 +61,7 @@ extern struct cfdriver ofisascr_cd;
 
 
 int
-ofisascrprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ofisascrprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[64];

@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.8 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: vga.c,v 1.9 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -419,8 +419,7 @@ video_off()
 }
 
 void
-vga_init(ISA_mem)
-	u_char *ISA_mem;
+vga_init(u_char *ISA_mem)
 {
 	struct screen *d = &screen;
 

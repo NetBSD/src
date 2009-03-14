@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.44 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.45 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.44 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.45 2009/03/14 15:36:03 dsl Exp $");
 
 #include "opt_mbtype.h"
 
@@ -139,10 +139,7 @@ CFATTACH_DECL(pcib, sizeof(struct device),
 static struct atari_bus_space	bs_storage[2];	/* 1 iot, 1 memt */
 
 int
-pcibusmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+pcibusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int	nmatched = 0;
 
@@ -207,9 +204,7 @@ void		*auxp;
 }
 
 int
-ataripcibusprint(auxp, name)
-void		*auxp;
-const char	*name;
+ataripcibusprint(void *auxp, const char *name)
 {
 	if(name == NULL)
 		return(UNCONF);
@@ -260,9 +255,7 @@ init_pci_bus()
  * pci_memreg) are sorted.
  */
 static void
-insert_into_list(head, elem)
-    PCI_MEMREG *head;
-    struct pci_memreg *elem;
+insert_into_list(PCI_MEMREG *head, struct pci_memreg *elem)
 {
     struct pci_memreg *p, *q;
 
@@ -632,9 +625,7 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 }
 
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int line = pa->pa_intrline;
 
@@ -691,9 +682,7 @@ bad:
 }
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
@@ -706,9 +695,7 @@ pci_intr_string(pc, ih)
 }
 
 const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.21 2008/06/26 12:33:17 drochner Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.22 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.21 2008/06/26 12:33:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.22 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,9 +374,7 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 }
 
 void
-tcic_isa_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+tcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int val, reg;

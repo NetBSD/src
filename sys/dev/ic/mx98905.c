@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.13 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.14 2009/03/14 15:36:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.13 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.14 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -132,8 +132,7 @@ mx98905_write_setup(sc, len, buf)
 
 
 static inline void
-mx98905_write_wait(sc)
-	struct dp8390_softc *sc;
+mx98905_write_wait(struct dp8390_softc *sc)
 {
 	int maxwait = 100;	/* about 120us */
 	bus_space_tag_t nict = sc->sc_regt;
@@ -167,10 +166,7 @@ mx98905_write_wait(sc)
  * I/O.
  */
 int
-mx98905_write_mbuf(sc, m, buf)
-	struct dp8390_softc *sc;
-	struct mbuf *m;
-	int buf;
+mx98905_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 {
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;
 	bus_space_tag_t nict = sc->sc_regt;
@@ -293,11 +289,7 @@ mx98905_write_mbuf(sc, m, buf)
  * ring-wrap.
  */
 int
-mx98905_ring_copy(sc, src, vdst, amount)
-	struct dp8390_softc *sc;
-	int src;
-	void *vdst;
-	u_short amount;
+mx98905_ring_copy(struct dp8390_softc *sc, int src, void *vdst, u_short amount)
 {
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;
 	uint8_t *dst = vdst;
@@ -327,10 +319,7 @@ mx98905_ring_copy(sc, src, vdst, amount)
 }
 
 void
-mx98905_read_hdr(sc, buf, hdr)
-	struct dp8390_softc *sc;
-	int buf;
-	struct dp8390_ring *hdr;
+mx98905_read_hdr(struct dp8390_softc *sc, int buf, struct dp8390_ring *hdr)
 {
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;
 
@@ -375,15 +364,7 @@ mx98905_read_setup(bus_space_tag_t nict, bus_space_handle_t nich,
  * rounded up to a word - ok as long as mbufs are word sized.
  */
 void
-mx98905_readmem(nict, nich, asict, asich, src, dst, amount, useword)
-	bus_space_tag_t nict;
-	bus_space_handle_t nich;
-	bus_space_tag_t asict;
-	bus_space_handle_t asich;
-	int src;
-	u_int8_t *dst;
-	size_t amount;
-	int useword;
+mx98905_readmem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asict, bus_space_handle_t asich, int src, u_int8_t *dst, size_t amount, int useword)
 {
 	int len, resid;
 

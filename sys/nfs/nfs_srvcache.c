@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.43 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.44 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.43 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.44 2009/03/14 15:36:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -183,8 +183,7 @@ nfsrv_finicache()
  * Lookup a cache and lock it
  */
 static struct nfsrvcache *
-nfsrv_lookupcache(nd)
-	struct nfsrv_descript *nd;
+nfsrv_lookupcache(struct nfsrv_descript *nd)
 {
 	struct nfsrvcache *rp;
 
@@ -211,8 +210,7 @@ loop:
  * Unlock a cache
  */
 static void
-nfsrv_unlockcache(rp)
-	struct nfsrvcache *rp;
+nfsrv_unlockcache(struct nfsrvcache *rp)
 {
 
 	KASSERT(mutex_owned(&nfsrv_reqcache_lock));
@@ -237,10 +235,7 @@ nfsrv_unlockcache(rp)
  * Update/add new request at end of lru list
  */
 int
-nfsrv_getcache(nd, slp, repp)
-	struct nfsrv_descript *nd;
-	struct nfssvc_sock *slp;
-	struct mbuf **repp;
+nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp, struct mbuf **repp)
 {
 	struct nfsrvcache *rp, *rpdup;
 	struct mbuf *mb;
@@ -347,10 +342,7 @@ found:
  * Update a request cache entry after the rpc has been done
  */
 void
-nfsrv_updatecache(nd, repvalid, repmbuf)
-	struct nfsrv_descript *nd;
-	int repvalid;
-	struct mbuf *repmbuf;
+nfsrv_updatecache(struct nfsrv_descript *nd, int repvalid, struct mbuf *repmbuf)
 {
 	struct nfsrvcache *rp;
 

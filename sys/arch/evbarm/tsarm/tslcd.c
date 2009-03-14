@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.11 2008/06/11 23:24:43 cegger Exp $ */
+/* $NetBSD: tslcd.c,v 1.12 2009/03/14 15:36:05 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.11 2008/06/11 23:24:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.12 2009/03/14 15:36:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,7 @@ static const struct wsscreen_list tslcd_screenlist = {
 };
 
 static int
-tslcd_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tslcd_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
@@ -127,10 +124,7 @@ tslcd_match(parent, match, aux)
 	(EP93XX_GPIO_ ## x), GPIO_GET(x) & (~(y)))
 
 static void
-tslcd_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tslcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tslcd_softc *sc = (void *)self;
 	struct tspld_attach_args *taa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.4 2009/03/14 14:46:07 dsl Exp $ */
+/*	$NetBSD: ctu.c,v 1.5 2009/03/14 15:36:14 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -170,9 +170,7 @@ ctutintr()
 }
 
 short
-ctu_cksum(buf, words)
-	unsigned short *buf;
-	int words;
+ctu_cksum(unsigned short *buf, int words)
 {
 	int i, cksum;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.9 2009/03/14 14:45:51 dsl Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.10 2009/03/14 15:35:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.9 2009/03/14 14:45:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.10 2009/03/14 15:35:58 dsl Exp $");
 
 #include "opt_md.h"
 
@@ -62,9 +62,7 @@ extern int load_memory_disc_from_floppy(struct md_conf *md, dev_t dev);
 #endif	/* MEMORY_DISK_ROOT_SIZE */
 
 void
-md_attach_hook(unit, md)
-	int unit;
-	struct md_conf *md;
+md_attach_hook(int unit, struct md_conf *md)
 {
 	if (unit == 0) {
 #ifdef MEMORY_DISK_ROOT_SIZE
@@ -95,9 +93,7 @@ md_attach_hook(unit, md)
  */
 
 void
-md_open_hook(unit, md)
-	int unit;
-	struct md_conf *md;
+md_open_hook(int unit, struct md_conf *md)
 {
 	if (unit == 0) {
 		/* The root memory disk only works single-user. */

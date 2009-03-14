@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.87 2008/07/03 19:07:43 drochner Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.88 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.87 2008/07/03 19:07:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.88 2009/03/14 15:36:20 dsl Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -92,9 +92,7 @@ CFATTACH_DECL2_NEW(pcmcia, sizeof(struct pcmcia_softc),
     pcmcia_rescan, pcmcia_childdetached);
 
 int
-pcmcia_ccr_read(pf, ccr)
-	struct pcmcia_function *pf;
-	int ccr;
+pcmcia_ccr_read(struct pcmcia_function *pf, int ccr)
 {
 
 	return (bus_space_read_1(pf->pf_ccrt, pf->pf_ccrh,
@@ -102,10 +100,7 @@ pcmcia_ccr_read(pf, ccr)
 }
 
 void
-pcmcia_ccr_write(pf, ccr, val)
-	struct pcmcia_function *pf;
-	int ccr;
-	int val;
+pcmcia_ccr_write(struct pcmcia_function *pf, int ccr, int val)
 {
 
 	if (pf->ccr_mask & (1 << ccr)) {
@@ -160,8 +155,7 @@ pcmcia_detach(device_t self, int flags)
 }
 
 int
-pcmcia_card_attach(dev)
-	struct device *dev;
+pcmcia_card_attach(struct device *dev)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 	struct pcmcia_function *pf;
@@ -321,8 +315,7 @@ pcmcia_childdetached(struct device *self, struct device *child)
 }
 
 void
-pcmcia_card_deactivate(dev)
-	struct device *dev;
+pcmcia_card_deactivate(struct device *dev)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 	struct pcmcia_function *pf;
@@ -344,9 +337,7 @@ pcmcia_card_deactivate(dev)
 }
 
 int
-pcmcia_print(arg, pnp)
-	void *arg;
-	const char *pnp;
+pcmcia_print(void *arg, const char *pnp)
 {
 	struct pcmcia_attach_args *pa = arg;
 	struct pcmcia_softc *sc = pa->pf->sc;
@@ -364,11 +355,7 @@ pcmcia_print(arg, pnp)
 }
 
 void
-pcmcia_devinfo(card, showhex, cp, cplen)
-	struct pcmcia_card *card;
-	int showhex;
-	char *cp;
-	size_t cplen;
+pcmcia_devinfo(struct pcmcia_card *card, int showhex, char *cp, size_t cplen)
 {
 	int i, n;
 
@@ -399,12 +386,7 @@ pcmcia_devinfo(card, showhex, cp, cplen)
 }
 
 const void *
-pcmcia_product_lookup(pa, tab, nent, ent_size, matchfn)
-	struct pcmcia_attach_args *pa;
-	const void *tab;
-	size_t nent;
-	size_t ent_size;
-	pcmcia_product_match_fn matchfn;
+pcmcia_product_lookup(struct pcmcia_attach_args *pa, const void *tab, size_t nent, size_t ent_size, pcmcia_product_match_fn matchfn)
 {
         const struct pcmcia_product *pp;
 	int n;
@@ -446,9 +428,7 @@ pcmcia_product_lookup(pa, tab, nent, ent_size, matchfn)
 }
 
 void
-pcmcia_socket_settype(dev, type)
-	struct device *dev;
-	int type;
+pcmcia_socket_settype(struct device *dev, int type)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 
@@ -460,9 +440,7 @@ pcmcia_socket_settype(dev, type)
  * disabled.
  */
 void
-pcmcia_function_init(pf, cfe)
-	struct pcmcia_function *pf;
-	struct pcmcia_config_entry *cfe;
+pcmcia_function_init(struct pcmcia_function *pf, struct pcmcia_config_entry *cfe)
 {
 	if (pf->pf_flags & PFF_ENABLED)
 		panic("pcmcia_function_init: function is enabled");
@@ -472,8 +450,7 @@ pcmcia_function_init(pf, cfe)
 }
 
 void
-pcmcia_socket_enable(dev)
-	struct device *dev;
+pcmcia_socket_enable(struct device *dev)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 
@@ -484,8 +461,7 @@ pcmcia_socket_enable(dev)
 }
 
 void
-pcmcia_socket_disable(dev)
-	struct device *dev;
+pcmcia_socket_disable(struct device *dev)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 
@@ -497,8 +473,7 @@ pcmcia_socket_disable(dev)
 
 /* Enable a PCMCIA function */
 int
-pcmcia_function_enable(pf)
-	struct pcmcia_function *pf;
+pcmcia_function_enable(struct pcmcia_function *pf)
 {
 	struct pcmcia_softc *sc = pf->sc;
 	struct pcmcia_function *tmp;
@@ -638,8 +613,7 @@ bad:
 
 /* Disable PCMCIA function. */
 void
-pcmcia_function_disable(pf)
-	struct pcmcia_function *pf;
+pcmcia_function_disable(struct pcmcia_function *pf)
 {
 	struct pcmcia_softc *sc = pf->sc;
 	struct pcmcia_function *tmp;
@@ -694,11 +668,7 @@ out:
 }
 
 int
-pcmcia_io_map(pf, width, pcihp, windowp)
-	struct pcmcia_function *pf;
-	int width;
-	struct pcmcia_io_handle *pcihp;
-	int *windowp;
+pcmcia_io_map(struct pcmcia_function *pf, int width, struct pcmcia_io_handle *pcihp, int *windowp)
 {
 	struct pcmcia_softc *sc = pf->sc;
 	int error;
@@ -740,9 +710,7 @@ pcmcia_io_map(pf, width, pcihp, windowp)
 }
 
 void
-pcmcia_io_unmap(pf, window)
-	struct pcmcia_function *pf;
-	int window;
+pcmcia_io_unmap(struct pcmcia_function *pf, int window)
 {
 	struct pcmcia_softc *sc = pf->sc;
 
@@ -773,9 +741,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 }
 
 void
-pcmcia_intr_disestablish(pf, ih)
-	struct pcmcia_function *pf;
-	void *ih;
+pcmcia_intr_disestablish(struct pcmcia_function *pf, void *ih)
 {
 
 	if (pf->pf_flags & PFF_ENABLED)
@@ -788,9 +754,7 @@ pcmcia_intr_disestablish(pf, ih)
 }
 
 int
-pcmcia_config_alloc(pf, cfe)
-	struct pcmcia_function *pf;
-	struct pcmcia_config_entry *cfe;
+pcmcia_config_alloc(struct pcmcia_function *pf, struct pcmcia_config_entry *cfe)
 {
 	int error = 0;
 	int n, m;
@@ -845,8 +809,7 @@ pcmcia_config_alloc(pf, cfe)
 }
 
 void
-pcmcia_config_free(pf)
-	struct pcmcia_function *pf;
+pcmcia_config_free(struct pcmcia_function *pf)
 {
 	struct pcmcia_config_entry *cfe = pf->cfe;
 	int m;
@@ -858,8 +821,7 @@ pcmcia_config_free(pf)
 }
 
 int
-pcmcia_config_map(pf)
-	struct pcmcia_function *pf;
+pcmcia_config_map(struct pcmcia_function *pf)
 {
 	struct pcmcia_config_entry *cfe = pf->cfe;
 	int error = 0;
@@ -911,8 +873,7 @@ pcmcia_config_map(pf)
 }
 
 void
-pcmcia_config_unmap(pf)
-	struct pcmcia_function *pf;
+pcmcia_config_unmap(struct pcmcia_function *pf)
 {
 	struct pcmcia_config_entry *cfe = pf->cfe;
 	int m;
@@ -959,8 +920,7 @@ pcmcia_function_configure(pf, validator)
 }
 
 void
-pcmcia_function_unconfigure(pf)
-	struct pcmcia_function *pf;
+pcmcia_function_unconfigure(struct pcmcia_function *pf)
 {
 
 	pcmcia_config_unmap(pf);

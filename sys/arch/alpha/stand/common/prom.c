@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.11 2002/07/30 20:36:42 nathanw Exp $ */
+/* $NetBSD: prom.c,v 1.12 2009/03/14 15:36:00 dsl Exp $ */
 
 /*  
  * Mach Operating System
@@ -63,8 +63,7 @@ init_prom_calls()
 
 #if !defined(NO_GETCHAR) || !defined(NO_PUTCHAR_HALT)
 static int
-test_getchar(xc)
-	int *xc;
+test_getchar(int *xc)
 {
 	prom_return_t ret;
 
@@ -91,8 +90,7 @@ getchar()
 #endif
 
 static void
-putonechar(c)
-	int c;
+putonechar(int c)
 {
 	prom_return_t ret;
 	char cbuf = c;
@@ -103,8 +101,7 @@ putonechar(c)
 }
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
 #if !defined(NO_PUTCHAR_HALT)
 	int typed_c;

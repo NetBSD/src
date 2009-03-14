@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_lfs.c,v 1.9 2009/03/14 14:46:07 dsl Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.10 2009/03/14 15:36:15 dsl Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.7 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
@@ -155,9 +155,7 @@ try_lfs()
  * Get inode from disk.
  */
 static int
-get_lfs_inode(ino, dibuf)
-	ino32_t ino;
-	union ufs_dinode *dibuf;
+get_lfs_inode(ino32_t ino, union ufs_dinode *dibuf)
 {
 	struct ufs_info *ufsinfo = &ufs_info;
 	daddr_t daddr;

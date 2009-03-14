@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.11 2009/03/14 14:46:06 dsl Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.12 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.11 2009/03/14 14:46:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.12 2009/03/14 15:36:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,7 @@ void	sysbeep(int, int);
 static int beeping;
 
 void
-sysbeepstop(arg)
-	void *arg;
+sysbeepstop(void *arg)
 {
 	/* disable counter 2 */
 	disable_intr();

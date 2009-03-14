@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.11 2007/01/18 12:43:38 cbiere Exp $	*/
+/*	$NetBSD: sets.c,v 1.12 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.11 2007/01/18 12:43:38 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.12 2009/03/14 15:36:24 dsl Exp $");
 
 #include "main.h"
 #include "malloc.h"
@@ -112,8 +112,7 @@ char *name;
 static int states_done  = 0;
 
 void
-end_states(f)
-	FILE *f;
+end_states(FILE *f)
 {
 	register unsigned n = Nstates;
 	register int i;
@@ -140,8 +139,7 @@ end_states(f)
 int FirstEventAttribute = 1;
 
 static void
-insert(o)
-	struct Object *o;
+insert(struct Object *o)
 {
 	struct Object *p = Objtree;
 	struct Object **q = &Objtree;
@@ -230,8 +228,7 @@ insert(o)
 }
 
 void
-delete(o)
-	struct Object *o;
+delete(struct Object *o)
 {
 	register struct Object *p = o->obj_right;
 	register struct Object *q;
@@ -287,10 +284,7 @@ delete(o)
 }
 
 struct Object *
-defineset(type, adr, keep)
-unsigned char type;
-char *adr;
-int keep;
+defineset(unsigned char type, char *adr, int keep)
 {
 	struct Object *onew;
 	IFDEBUG(o)
@@ -313,9 +307,7 @@ int keep;
 }
 
 void
-dumpit(o, s)
-	char *o;
-	char *s;
+dumpit(char *o, char *s)
 {
 	register unsigned i;
 
@@ -329,10 +321,7 @@ ENDDEBUG
 }
 
 void
-defineitem(type, adr, struc)
-	unsigned char type;
-	char *adr;
-	char *struc;
+defineitem(unsigned char type, char *adr, char *struc)
 {
 	struct Object *onew;
 	IFDEBUG(o)
@@ -359,9 +348,7 @@ defineitem(type, adr, struc)
 }
 
 void
-member(o, adr)
-	struct Object *o;
-	char *adr;
+member(struct Object *o, char *adr)
 {
 	struct Object *onew, *oold;
 	IFDEBUG(o)
@@ -411,8 +398,7 @@ char *name;
 }
 
 void
-AddCurrentEventName(x)
-	register char **x;
+AddCurrentEventName(register char **x)
 {
 	register char *n = EV_PREFIX; ;
 
@@ -437,9 +423,7 @@ AddCurrentEventName(x)
 }
 
 void
-dumptree(o,i)
-	register struct Object *o;
-	int i;
+dumptree(register struct Object *o,int i)
 {
 	register int j;
 
@@ -457,9 +441,7 @@ dumptree(o,i)
 }
 
 void
-dump(c,a)
-	int c;
-	int a;
+dump(int c,int a)
 {
 	fprintf(stderr, "dump: c 0x%x, a 0x%x\n",c,a);
 

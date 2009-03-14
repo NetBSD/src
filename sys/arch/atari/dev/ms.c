@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.22 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: ms.c,v 1.23 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.22 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.23 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -98,8 +98,7 @@ const struct cdevsw ms_cdevsw = {
 static	void	ms_3b_delay(struct ms_softc *);
 
 int
-mouseattach(cnt)
-	int cnt;
+mouseattach(int cnt)
 {
 	printf("1 mouse configured\n");
 	ms_softc[0].ms_emul3b = 1;
@@ -108,8 +107,7 @@ mouseattach(cnt)
 }
 
 static void
-ms_3b_delay(ms)
-struct ms_softc	*ms;
+ms_3b_delay(struct ms_softc *ms)
 {
 	REL_MOUSE	rel_ms;
 
@@ -361,10 +359,7 @@ struct lwp	*l;
 }
 
 int
-msread(dev, uio, flags)
-dev_t		dev;
-struct uio	*uio;
-int		flags;
+msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_softc *ms;
 
@@ -373,12 +368,7 @@ int		flags;
 }
 
 int
-msioctl(dev, cmd, data, flag, l)
-dev_t			dev;
-u_long			cmd;
-register void *	data;
-int			flag;
-struct lwp		*l;
+msioctl(dev_t dev, u_long cmd, register void * data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
 	int		unit;
@@ -419,10 +409,7 @@ struct lwp		*l;
 }
 
 int
-mspoll(dev, events, l)
-dev_t		dev;
-int		events;
-struct lwp	*l;
+mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_softc *ms;
 

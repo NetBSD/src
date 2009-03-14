@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.31 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.32 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,9 +86,7 @@ extern int clear_cache(char *addr, int len);
  * The argument "-a" means netbsd should do an automatic reboot.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *cp;
 	entrypt entry;

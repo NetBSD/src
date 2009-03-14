@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.19 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.20 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.19 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.20 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,7 @@ footbridge_pci_bs_tag_init(void)
  */
 
 static int
-footbridge_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+footbridge_print(void *aux, const char *pnp)
 {
 	union footbridge_attach_args *fba = aux;
 
@@ -133,10 +131,7 @@ footbridge_print(aux, pnp)
  */ 
  
 static int
-footbridge_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+footbridge_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (footbridge_found)
 		return(0);
@@ -150,10 +145,7 @@ footbridge_match(parent, cf, aux)
  */
   
 static void
-footbridge_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+footbridge_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct footbridge_softc *sc = (struct footbridge_softc *)self;
 	union footbridge_attach_args fba;
@@ -275,8 +267,7 @@ footbridge_attach(parent, self, aux)
 /* Generic footbridge interrupt handler */
 
 int
-footbridge_intr(arg)
-	void *arg;
+footbridge_intr(void *arg)
 {
 	struct footbridge_softc *sc = arg;
 	u_int ctrl, intr;

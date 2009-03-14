@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.20 2008/05/18 13:18:19 mlelstv Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.21 2009/03/14 15:36:14 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,13 +127,7 @@ filename(char *str, char *ppart)
 }
 
 static int
-strategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf, size_t *rsize)
 {
 	struct of_dev *dev = devdata;
 	u_quad_t pos;

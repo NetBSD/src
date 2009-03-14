@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.9 2009/03/14 14:46:06 dsl Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.10 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.9 2009/03/14 14:46:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.10 2009/03/14 15:36:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,9 +202,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	panic("isa_intr_disestablish");
 }

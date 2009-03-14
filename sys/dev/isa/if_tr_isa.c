@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.19 2009/02/13 22:39:10 bouyer Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.20 2009/03/14 15:36:18 dsl Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.19 2009/02/13 22:39:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.20 2009/03/14 15:36:18 dsl Exp $");
 
 #undef TRISADEBUG
 
@@ -132,10 +132,7 @@ static u_char tr_isa_id[] = {
  */
 
 int
-tr_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tr_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int	i;
@@ -255,9 +252,7 @@ tr_isa_attach(struct device *parent, struct device *self, void	*aux)
  * Dump the adapters AIP
  */
 void
-tr_isa_dumpaip(memt, mmioh)
-	bus_space_tag_t memt;
-	bus_space_handle_t mmioh;
+tr_isa_dumpaip(bus_space_tag_t memt, bus_space_handle_t mmioh)
 {
 	unsigned int off, val;
 	printf("AIP contents:");

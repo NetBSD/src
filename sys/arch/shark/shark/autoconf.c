@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2009/03/14 14:46:07 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2009/03/14 14:46:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2009/03/14 15:36:13 dsl Exp $");
 
 #include "opt_md.h"
 
@@ -89,8 +89,7 @@ static void set_root_device(void);
 /* Decode a device name to a major and minor number */
 
 static void
-get_device(name)
-	char *name;
+get_device(char *name)
 {
 	int unit, part;
 	char devname[16], *cp;

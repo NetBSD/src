@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.65 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: seagate.c,v 1.66 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.65 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.66 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,8 +304,7 @@ extern struct cfdriver sea_cd;
 
 #ifdef SEA_DEBUGQUEUE
 void
-sea_queue_length(sea)
-	struct sea_softc *sea;
+sea_queue_length(struct sea_softc *sea)
 {
 	struct sea_scb *scb;
 	int connected, issued, disconnected;
@@ -478,8 +477,7 @@ seaattach(struct device *parent, struct device *self, void *aux)
  * Catch an interrupt from the adaptor
  */
 int
-seaintr(arg)
-	void *arg;
+seaintr(void *arg)
 {
 	struct sea_softc *sea = arg;
 
@@ -514,8 +512,7 @@ loop:
  * Setup data structures, and reset the board and the SCSI bus.
  */
 void
-sea_init(sea)
-	struct sea_softc *sea;
+sea_init(struct sea_softc *sea)
 {
 	int i;
 
@@ -557,10 +554,7 @@ sea_init(sea)
  * the unit, target and lu.
  */
 void
-sea_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+sea_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -683,9 +677,7 @@ sea_get_scb(struct sea_softc *sea, int flags)
  * to the end of the queue. ?? Not correct ??
  */
 void
-sea_send_scb(sea, scb)
-	struct sea_softc *sea;
-	struct sea_scb *scb;
+sea_send_scb(struct sea_softc *sea, struct sea_scb *scb)
 {
 
 	TAILQ_INSERT_TAIL(&sea->ready_list, scb, chain);
@@ -802,8 +794,7 @@ loop:
  * We are called at splbio.
  */
 void
-sea_grow_scb(sea)
-	struct sea_softc *sea;
+sea_grow_scb(struct sea_softc *sea)
 {
 	struct sea_scb *scb;
 
@@ -832,8 +823,7 @@ sea_free_scb(struct sea_softc *sea, struct sea_scb *scb, int flags)
 }
 
 void
-sea_timeout(arg)
-	void *arg;
+sea_timeout(void *arg)
 {
 	struct sea_scb *scb = arg;
 	struct scsipi_xfer *xs = scb->xs;
@@ -873,8 +863,7 @@ sea_timeout(arg)
 }
 
 void
-sea_reselect(sea)
-	struct sea_softc *sea;
+sea_reselect(struct sea_softc *sea)
 {
 	u_char target_mask;
 	int i;
@@ -970,11 +959,7 @@ sea_reselect(sea)
  * Transfer data in given phase using polled I/O.
  */
 int
-sea_transfer_pio(sea, phase, count, data)
-	struct sea_softc *sea;
-	u_char *phase;
-	int *count;
-	u_char **data;
+sea_transfer_pio(struct sea_softc *sea, u_char *phase, int *count, u_char **data)
 {
 	u_char p = *phase, tmp;
 	int c = *count;
@@ -1056,9 +1041,7 @@ sea_transfer_pio(sea, phase, count, data)
  * selection succeded or failed because the target did not respond.
  */
 int
-sea_select(sea, scb)
-	struct sea_softc *sea;
-	struct sea_scb *scb;
+sea_select(struct sea_softc *sea, struct sea_scb *scb)
 {
 	u_char msg[3], phase;
 	u_char *data;
@@ -1154,9 +1137,7 @@ sea_select(sea, scb)
  * Send an abort to the target.  Return 1 success, 0 on failure.
  */
 int
-sea_abort(sea, scb)
-	struct sea_softc *sea;
-	struct sea_scb *scb;
+sea_abort(struct sea_softc *sea, struct sea_scb *scb)
 {
 	struct sea_scb *tmp;
 	u_char msg, phase, *msgptr;
@@ -1215,9 +1196,7 @@ sea_abort(sea, scb)
 }
 
 void
-sea_done(sea, scb)
-	struct sea_softc *sea;
-	struct sea_scb *scb;
+sea_done(struct sea_softc *sea, struct sea_scb *scb)
 {
 	struct scsipi_xfer *xs = scb->xs;
 
@@ -1265,8 +1244,7 @@ sea_poll(struct sea_softc *sea, struct scsipi_xfer *xs, int count)
  * sea_done() when task accomplished.  Dialog controlled by the target.
  */
 void
-sea_information_transfer(sea)
-	struct sea_softc *sea;
+sea_information_transfer(struct sea_softc *sea)
 {
 	int timeout;
 	u_char msgout = MSG_NOOP;

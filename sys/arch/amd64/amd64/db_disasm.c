@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 2008/01/01 21:24:17 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12 2009/03/14 15:36:00 dsl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11 2008/01/01 21:24:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2009/03/14 15:36:00 dsl Exp $");
 
 #ifndef _KERNEL
 #include "stubs.h"
@@ -1059,11 +1059,7 @@ db_read_address(loc, rex, short_addr, regmodrm, addrp)
 }
 
 void
-db_print_address(seg, rex, size, addrp)
-	const char *	seg;
-	u_int		rex;
-	int		size;
-	struct i_addr	*addrp;
+db_print_address(const char * seg, u_int rex, int size, struct i_addr *addrp)
 {
 	if (addrp->is_reg) {
 		int ext = ((rex & REX_b) != 0);
@@ -1091,13 +1087,7 @@ db_print_address(seg, rex, size, addrp)
  * and return updated location.
  */
 db_addr_t
-db_disasm_esc(loc, inst, rex, short_addr, size, seg)
-	db_addr_t	loc;
-	int		inst;
-	u_int		rex;
-	int		short_addr;
-	int		size;
-	const char *	seg;
+db_disasm_esc(db_addr_t loc, int inst, u_int rex, int short_addr, int size, const char * seg)
 {
 	int		regmodrm;
 	const struct finst	*fp;
@@ -1177,9 +1167,7 @@ db_disasm_esc(loc, inst, rex, short_addr, size, seg)
  * next instruction.
  */
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t	loc;
-	bool		altfmt;
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	int	inst;
 	int	size;

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.48 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.49 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.48 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.49 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,8 +76,7 @@ void	kn20aa_enable_intr(int irq);
 void	kn20aa_disable_intr(int irq);
 
 void
-pci_kn20aa_pickintr(ccp)
-	struct cia_config *ccp;
+pci_kn20aa_pickintr(struct cia_config *ccp)
 {
 	int i;
 #if NSIO > 0 || NPCEB > 0
@@ -115,9 +114,7 @@ pci_kn20aa_pickintr(ccp)
 }
 
 int     
-dec_kn20aa_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_kn20aa_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
@@ -180,9 +177,7 @@ dec_kn20aa_intr_map(pa, ihp)
 }
 
 const char *
-dec_kn20aa_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_kn20aa_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -198,9 +193,7 @@ dec_kn20aa_intr_string(ccv, ih)
 }
 
 const struct evcnt *
-dec_kn20aa_intr_evcnt(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_kn20aa_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -265,9 +258,7 @@ dec_kn20aa_intr_disestablish(ccv, cookie)
 }
 
 void
-kn20aa_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+kn20aa_iointr(void *arg, unsigned long vec)
 {
 	int irq;
 
@@ -283,8 +274,7 @@ kn20aa_iointr(arg, vec)
 }
 
 void
-kn20aa_enable_intr(irq)
-	int irq;
+kn20aa_enable_intr(int irq)
 {
 
 	/*
@@ -299,8 +289,7 @@ kn20aa_enable_intr(irq)
 }
 
 void
-kn20aa_disable_intr(irq)
-	int irq;
+kn20aa_disable_intr(int irq)
 {
 
 	alpha_mb();

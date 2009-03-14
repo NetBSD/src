@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2009/03/14 14:45:59 dsl Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5 2009/03/14 15:36:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -101,10 +101,7 @@ parsebootfile(fnamexx, fsmode, devname, unit, partition, file)
 
 
 int
-devopen(f, fname, file)
-        struct open_file *f;
-        const char     *fname;
-        char          **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
         char           *devname;
         char           *fsmode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.25 2008/06/24 19:44:52 drochner Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.26 2009/03/14 15:36:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.25 2008/06/24 19:44:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.26 2009/03/14 15:36:16 dsl Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -257,9 +257,7 @@ ahc_cardbus_attach(struct device *parent, struct device *self,
 }
 
 int
-ahc_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+ahc_cardbus_detach(struct device *self, int flags)
 {
 	struct ahc_cardbus_softc *csc = device_private(self);
 	struct ahc_softc *ahc = &csc->sc_ahc;

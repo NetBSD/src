@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.16 2009/03/14 14:46:05 dsl Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.17 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.16 2009/03/14 14:46:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.17 2009/03/14 15:36:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,10 +107,7 @@ tc_addr_t ioasic_base;	/* XXX XXX XXX */
 int ioasicfound;
 
 static int
-ioasicmatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+ioasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -192,9 +189,7 @@ ioasicattach(parent, self, aux)
 }
 
 const struct evcnt *
-ioasic_intr_evcnt(dev, cookie)
-	struct device *dev;
-	void *cookie;
+ioasic_intr_evcnt(struct device *dev, void *cookie)
 {
 
 	/* XXX for now, no evcnt parent reported */

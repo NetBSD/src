@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: boot.c,v 1.18 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -108,9 +108,7 @@ int main(int, char **);
  * The argument "-a" means netbsd should do an automatic reboot.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *name, **namep, *dev, *kernel;
 	char bootname[PATH_MAX], bootpath[PATH_MAX];
@@ -198,8 +196,7 @@ fail:
  *        without a trailing slash.
  */
 static char *
-devname(fname)
-	char *fname;
+devname(char *fname)
 {
 	char c;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.16 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.17 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.16 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.17 2009/03/14 15:36:02 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -121,9 +121,7 @@ CFATTACH_DECL(ofbus_root, sizeof(struct device),
  */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	/* Just call OFW common routine. */
 	ofw_boot(howto, bootstr);

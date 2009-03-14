@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.316 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.317 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.316 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.317 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -898,9 +898,7 @@ alpha_dsr_sysname()
  * returning the model string on match.
  */
 const char *
-alpha_variation_name(variation, avtp)
-	u_int64_t variation;
-	const struct alpha_variation_table *avtp;
+alpha_variation_name(u_int64_t variation, const struct alpha_variation_table *avtp)
 {
 	int i;
 
@@ -959,9 +957,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 #if defined(MULTIPROCESSOR)
 	u_long cpu_id = cpu_number();
@@ -1308,9 +1304,7 @@ err:
 }
 
 void
-frametoreg(framep, regp)
-	const struct trapframe *framep;
-	struct reg *regp;
+frametoreg(const struct trapframe *framep, struct reg *regp)
 {
 
 	regp->r_regs[R_V0] = framep->tf_regs[FRAME_V0];
@@ -1348,9 +1342,7 @@ frametoreg(framep, regp)
 }
 
 void
-regtoframe(regp, framep)
-	const struct reg *regp;
-	struct trapframe *framep;
+regtoframe(const struct reg *regp, struct trapframe *framep)
 {
 
 	framep->tf_regs[FRAME_V0] = regp->r_regs[R_V0];
@@ -1388,8 +1380,7 @@ regtoframe(regp, framep)
 }
 
 void
-printregs(regp)
-	struct reg *regp;
+printregs(struct reg *regp)
 {
 	int i;
 
@@ -1399,8 +1390,7 @@ printregs(regp)
 }
 
 void
-regdump(framep)
-	struct trapframe *framep;
+regdump(struct trapframe *framep)
 {
 	struct reg reg;
 
@@ -1601,10 +1591,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	register struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tfp = l->l_md.md_tf;
 #ifdef DEBUG
@@ -1749,8 +1736,7 @@ fpusave_proc(struct lwp *l, int save)
  * Wait "n" microseconds.
  */
 void
-delay(n)
-	unsigned long n;
+delay(unsigned long n)
 {
 	unsigned long pcc0, pcc1, curcycle, cycles, usec;
 
@@ -1789,10 +1775,7 @@ delay(n)
 
 #ifdef EXEC_ECOFF
 void
-cpu_exec_ecoff_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
@@ -1807,9 +1790,7 @@ cpu_exec_ecoff_setregs(l, epp, stack)
  *
  */
 int
-cpu_exec_ecoff_probe(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	int error;
@@ -1824,8 +1805,7 @@ cpu_exec_ecoff_probe(l, epp)
 #endif /* EXEC_ECOFF */
 
 int
-alpha_pa_access(pa)
-	u_long pa;
+alpha_pa_access(u_long pa)
 {
 	int i;
 
@@ -1862,8 +1842,7 @@ alpha_XXX_dmamap(v)						/* XXX */
 /* XXX XXX END XXX XXX */
 
 char *
-dot_conv(x)
-	unsigned long x;
+dot_conv(unsigned long x)
 {
 	int i;
 	char *xc;
@@ -1884,10 +1863,7 @@ dot_conv(x)
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct trapframe *frame = l->l_md.md_tf;
 	__greg_t *gr = mcp->__gregs;
@@ -1927,10 +1903,7 @@ cpu_getmcontext(l, mcp, flags)
 
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *frame = l->l_md.md_tf;
 	const __greg_t *gr = mcp->__gregs;

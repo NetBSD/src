@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.8 2009/03/14 14:46:01 dsl Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.9 2009/03/14 15:36:09 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.8 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.9 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -87,9 +87,7 @@ static int	fpu_xtof(struct fpn *fp, u_int i, u_int j, u_int k);
  * int -> fpn.
  */
 static int
-fpu_itof(fp, i)
-	register struct fpn *fp;
-	register u_int i;
+fpu_itof(register struct fpn *fp, register u_int i)
 {
 
 	if (i == 0)
@@ -145,9 +143,7 @@ fpu_itof(fp, i)
  * format: i.e., needs at most fp_mant[0] and fp_mant[1].
  */
 static int
-fpu_stof(fp, i)
-	register struct fpn *fp;
-	register u_int i;
+fpu_stof(register struct fpn *fp, register u_int i)
 {
 	register int exp;
 	register u_int frac, f0, f1;
@@ -230,11 +226,7 @@ fpu_xtof(fp, i, j, k)
  * Explode the contents of a memory operand.
  */
 void
-fpu_explode(fe, fp, type, space)
-	register struct fpemu *fe;
-	register struct fpn *fp;
-	int type;
-	register u_int *space;
+fpu_explode(register struct fpemu *fe, register struct fpn *fp, int type, register u_int *space)
 {
 	register u_int s;
 

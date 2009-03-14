@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.6 2009/03/14 14:46:09 dsl Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.7 2009/03/14 15:36:22 dsl Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.6 2009/03/14 14:46:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.7 2009/03/14 15:36:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -120,8 +120,7 @@ static int tftproot_getfile(struct tftproot_handle *, struct lwp *);
 static int tftproot_recv(struct mbuf*, void*);
 
 int
-tftproot_dhcpboot(bootdv)
-	struct device *bootdv;
+tftproot_dhcpboot(struct device *bootdv)
 {
 	struct nfs_diskless *nd = NULL;
 	struct ifnet *ifp = NULL;
@@ -199,9 +198,7 @@ out:
 }
 
 static int 
-tftproot_getfile(trh, l)
-	struct tftproot_handle *trh;
-	struct lwp *l;
+tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 {
 	struct socket *so = NULL;
 	struct mbuf *m_serv = NULL;
@@ -350,9 +347,7 @@ out:
 }
 
 static int
-tftproot_recv(m, ctx)
-	struct mbuf *m;
-	void *ctx;
+tftproot_recv(struct mbuf *m, void *ctx)
 {
 	struct tftproot_handle *trh = ctx;
 	struct tftphdr *tftp;

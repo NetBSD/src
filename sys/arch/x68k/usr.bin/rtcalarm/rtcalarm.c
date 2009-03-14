@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.7 2009/03/14 14:46:08 dsl Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.8 2009/03/14 15:36:15 dsl Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -85,9 +85,7 @@ usage(void)
 }
 
 static void
-myperror(str, fd)
-	const char     *str;
-	int             fd;
+myperror(const char *str, int fd)
 {
 	fprintf(stderr, "%s: %s: %s\n", prog, str, strerror(errno));
 
@@ -135,8 +133,7 @@ showinfo(void)
 }
 
 static char    *
-numstr(num)
-	unsigned int    num;
+numstr(unsigned int num)
 {
 	static char     buffer[4];
 
@@ -167,8 +164,7 @@ const char     *weekname[] =
 };
 
 static void
-showontime(ontime)
-	unsigned int    ontime;
+showontime(unsigned int ontime)
 {
 	printf("At %s:", numstr((ontime & 0x0000ff00) >> 8));
 	printf("%s ", numstr(ontime & 0x000000ff));
@@ -210,9 +206,7 @@ disablealarm(void)
 
 
 static void
-setinfo(argc, argv)
-	int             argc;
-	char          **argv;
+setinfo(int argc, char **argv)
 {
 	int             ch;
 	int             week = 0x0f;
@@ -273,9 +267,7 @@ setinfo(argc, argv)
 }
 
 static int
-strnum(str, wid)
-	const char     *str;
-	int             wid;
+strnum(const char *str, int wid)
 {
 	int             r;
 

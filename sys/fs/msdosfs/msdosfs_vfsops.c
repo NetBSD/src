@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.71 2009/02/05 18:39:15 abs Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.72 2009/03/14 15:36:21 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.71 2009/02/05 18:39:15 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.72 2009/03/14 15:36:21 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -187,9 +187,7 @@ msdosfs_modcmd(modcmd_t cmd, void *arg)
 }
 
 static int
-update_mp(mp, argp)
-	struct mount *mp;
-	struct msdosfs_args *argp;
+update_mp(struct mount *mp, struct msdosfs_args *argp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error;
@@ -284,11 +282,7 @@ msdosfs_mountroot()
  * special file to treat as a filesystem.
  */
 int
-msdosfs_mount(mp, path, data, data_len)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	size_t *data_len;
+msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;
@@ -463,11 +457,7 @@ fail:
 }
 
 int
-msdosfs_mountfs(devvp, mp, l, argp)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct lwp *l;
-	struct msdosfs_args *argp;
+msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msdosfs_args *argp)
 {
 	struct msdosfsmount *pmp;
 	struct buf *bp;
@@ -878,9 +868,7 @@ msdosfs_start(struct mount *mp, int flags)
  * Unmount the filesystem described by mp.
  */
 int
-msdosfs_unmount(mp, mntflags)
-	struct mount *mp;
-	int mntflags;
+msdosfs_unmount(struct mount *mp, int mntflags)
 {
 	struct msdosfsmount *pmp;
 	int error, flags;
@@ -928,9 +916,7 @@ msdosfs_unmount(mp, mntflags)
 }
 
 int
-msdosfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+msdosfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct denode *ndep;
@@ -967,10 +953,7 @@ msdosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 }
 
 int
-msdosfs_sync(mp, waitfor, cred)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t cred;
+msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp, *mvp;
 	struct denode *dep;
@@ -1039,10 +1022,7 @@ loop:
 }
 
 int
-msdosfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid defh;
@@ -1067,10 +1047,7 @@ msdosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-msdosfs_vptofh(vp, fhp, fh_size)
-	struct vnode *vp;
-	struct fid *fhp;
-	size_t *fh_size;
+msdosfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct denode *dep;
 	struct defid defh;
