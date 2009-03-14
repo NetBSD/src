@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.37 2009/03/14 10:59:13 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.38 2009/03/14 12:23:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.37 2009/03/14 10:59:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.38 2009/03/14 12:23:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1810,6 +1810,12 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	    ("pmap_kremove(%x, %x)\n", (int)va, (int)size));
 #ifdef PMAPDEBUG
 
+	/*
+	 * Don't allow the VA == PA mappings, apart from
+	 * page zero, to be removed. Page zero is special
+	 * so that we get TLB faults when the kernel tries
+	 * to de-reference NULL.
+	 */
 	if (va != 0 && va < ptoa(physmem)) {
 		DPRINTF(PDB_FOLLOW|PDB_REMOVE,
 		    ("pmap_kremove(%x, %x): unmapping physmem\n", (int)va,
