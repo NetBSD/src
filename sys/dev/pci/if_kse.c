@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.15 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.16 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.15 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.16 2009/03/14 15:36:19 dsl Exp $");
 
 #include "bpfilter.h"
 
@@ -1395,8 +1395,7 @@ ifmedia2_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 #ifdef KSE_EVENT_COUNTERS
 static void
-stat_tick(arg)
-	void *arg;
+stat_tick(void *arg)
 {
 	struct kse_softc *sc = arg;
 	struct ksext *ee = &sc->sc_ext;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.46 2009/03/14 14:46:04 dsl Exp $ */
+/* $NetBSD: dec_3max.c,v 1.47 2009/03/14 15:36:11 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.46 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.47 2009/03/14 15:36:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,11 +282,7 @@ found:
 	} while (0)
 
 static void
-dec_3max_intr(status, cause, pc, ipending)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
-	unsigned ipending;
+dec_3max_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 {
 	static int warned = 0;
 	u_int32_t csr;

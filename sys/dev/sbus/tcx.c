@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.25 2008/06/11 21:25:31 drochner Exp $ */
+/*	$NetBSD: tcx.c,v 1.26 2009/03/14 15:36:21 dsl Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.25 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.26 2009/03/14 15:36:21 dsl Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -153,10 +153,7 @@ static void tcx_loadcmap(struct tcx_softc *, int, int);
  * Match a tcx.
  */
 int
-tcxmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tcxmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -415,12 +412,7 @@ tcxclose(dev, flags, mode, l)
 }
 
 int
-tcxioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 	int error;
@@ -499,8 +491,7 @@ tcxioctl(dev, cmd, data, flags, l)
  * Clean up hardware state (e.g., after bootup or after X crashes).
  */
 static void
-tcx_reset(sc)
-	struct tcx_softc *sc;
+tcx_reset(struct tcx_softc *sc)
 {
 	volatile struct bt_regs *bt;
 
@@ -537,8 +528,7 @@ tcx_loadcmap(sc, start, ncolors)
 }
 
 static void
-tcx_unblank(dev)
-	struct device *dev;
+tcx_unblank(struct device *dev)
 {
 	struct tcx_softc *sc = device_private(dev);
 
@@ -583,10 +573,7 @@ struct mmo {
  * XXX	needs testing against `demanding' applications (e.g., aviator)
  */
 paddr_t
-tcxmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+tcxmmap(dev_t dev, off_t off, int prot)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 	struct openprom_addr *rr = sc->sc_physadr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.15 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: ibus.c,v 1.16 2009/03/14 15:36:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.15 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.16 2009/03/14 15:36:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,7 @@ ibusattach(parent, self, aux)
 }
 
 int
-ibusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ibusprint(void *aux, const char *pnp)
 {
 	struct ibus_attach_args *ia = aux;
 

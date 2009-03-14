@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.83 2009/01/13 13:35:54 yamt Exp $	*/
+/*	$NetBSD: xy.c,v 1.84 2009/03/14 15:36:21 dsl Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.83 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.84 2009/03/14 15:36:21 dsl Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -241,8 +241,7 @@ struct dkdriver xydkdriver = { xystrategy };
 static void *xy_labeldata;
 
 static void
-xydummystrat(bp)
-	struct buf *bp;
+xydummystrat(struct buf *bp)
 {
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
@@ -252,9 +251,7 @@ xydummystrat(bp)
 }
 
 int
-xygetdisklabel(xy, b)
-	struct xy_softc *xy;
-	void *b;
+xygetdisklabel(struct xy_softc *xy, void *b)
 {
 	const char *err;
 #if defined(__sparc__) || defined(sun3)
@@ -309,14 +306,7 @@ xygetdisklabel(xy, b)
  * Shorthand for allocating, mapping and loading a DMA buffer
  */
 int
-xy_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
-	bus_dma_tag_t		tag;
-	bus_dmamap_t		map;
-	bus_dma_segment_t	*seg;
-	int			*nsegp;
-	bus_size_t		len;
-	void *			*kvap;
-	bus_addr_t		*dmap;
+xy_dmamem_alloc(bus_dma_tag_t tag, bus_dmamap_t map, bus_dma_segment_t *seg, int *nsegp, bus_size_t len, void * *kvap, bus_addr_t *dmap)
 {
 	int nseg;
 	int error;
@@ -346,13 +336,7 @@ xy_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
 }
 
 void
-xy_dmamem_free(tag, map, seg, nseg, len, kva)
-	bus_dma_tag_t		tag;
-	bus_dmamap_t		map;
-	bus_dma_segment_t	*seg;
-	int			nseg;
-	bus_size_t		len;
-	void *			kva;
+xy_dmamem_free(bus_dma_tag_t tag, bus_dmamap_t map, bus_dma_segment_t *seg, int nseg, bus_size_t len, void * kva)
 {
 
 	bus_dmamap_unload(tag, map);
@@ -370,10 +354,7 @@ xy_dmamem_free(tag, map, seg, nseg, len, kva)
  * soft reset to detect the xyc.
  */
 int
-xyc_probe(arg, tag, handle)
-	void *arg;
-	bus_space_tag_t tag;
-	bus_space_handle_t handle;
+xyc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 {
 	struct xyc *xyc = (void *)handle; /* XXX */
 
@@ -598,10 +579,7 @@ xycattach(parent, self, aux)
  * call xyattach!).
  */
 int
-xymatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+xymatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct xyc_attach_args *xa = aux;
 
@@ -880,11 +858,7 @@ xyclose(dev, flag, fmt, l)
  * xydump: crash dump system
  */
 int
-xydump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	void *va;
-	size_t size;
+xydump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	int     unit, part;
 	struct xy_softc *xy;
@@ -1144,20 +1118,14 @@ xyopen(dev, flag, fmt, l)
 }
 
 int
-xyread(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+xyread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xystrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-xywrite(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+xywrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xystrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -1331,15 +1299,7 @@ xycintr(v)
  */
 
 inline void
-xyc_rqinit(rq, xyc, xy, md, blk, cnt, db, bp)
-	struct xy_iorq *rq;
-	struct xyc_softc *xyc;
-	struct xy_softc *xy;
-	int     md;
-	u_long  blk;
-	int     cnt;
-	void *db;
-	struct buf *bp;
+xyc_rqinit(struct xy_iorq *rq, struct xyc_softc *xyc, struct xy_softc *xy, int md, u_long blk, int cnt, void *db, struct buf *bp)
 {
 	rq->xyc = xyc;
 	rq->xy = xy;
@@ -2332,8 +2292,7 @@ done:
  * xyc_e2str: convert error code number into an error string
  */
 const char *
-xyc_e2str(no)
-	int     no;
+xyc_e2str(int no)
 {
 	switch (no) {
 	case XY_ERR_FAIL:

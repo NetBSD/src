@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.3 2009/03/14 14:46:06 dsl Exp $ */
+/* $NetBSD: dev_net.c,v 1.4 2009/03/14 15:36:13 dsl Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -158,8 +158,7 @@ net_open(struct open_file *f, ...)
 }
 
 int
-net_close(f)
-	struct open_file *f;
+net_close(struct open_file *f)
 {
 
 #ifdef	NETIF_DEBUG
@@ -199,8 +198,7 @@ net_strategy(void *a, int b, daddr_t c, size_t d, void *e, size_t *f)
 }
 
 int
-net_getparams(sock)
-	int sock;
+net_getparams(int sock)
 {
 	/*
 	 * Get info for NFS boot: our IP address, our hostname,

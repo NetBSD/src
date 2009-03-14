@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.17 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.18 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.17 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.18 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,7 @@ ioat66attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ioat66intr(arg)
-	void *arg;
+ioat66intr(void *arg)
 {
 	struct ioat66_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

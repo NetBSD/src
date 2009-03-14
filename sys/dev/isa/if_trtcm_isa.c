@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.15 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.16 2009/03/14 15:36:18 dsl Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.15 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.16 2009/03/14 15:36:18 dsl Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -144,10 +144,7 @@ tcmaddcard(bus, iobase, irq, maddr, msiz, model, pnpmode)
  * NOTE: the caller must provide an i/o handle for ELINK_ID_PORT!
  */
 u_int16_t
-tcmreadeeprom(iot, ioh, offset)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int offset;
+tcmreadeeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int offset)
 {
 	u_int16_t data = 0;
 	int i;
@@ -164,9 +161,7 @@ tcmreadeeprom(iot, ioh, offset)
  * Dump the contents of the EEPROM to the console.
  */
 void
-tcmdumpeeprom(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+tcmdumpeeprom(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	unsigned int off, val;
 
@@ -188,9 +183,7 @@ trtcm_isa_mediachange(struct tr_softc *sc)
 }
 
 void
-trtcm_isa_mediastatus(sc, ifmr)
-	struct tr_softc *sc;
-	struct ifmediareq *ifmr;
+trtcm_isa_mediastatus(struct tr_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifmedia	*ifm = &sc->sc_media;
 

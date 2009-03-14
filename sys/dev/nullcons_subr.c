@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.7 2009/02/28 00:40:47 tsutsui Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.8 2009/03/14 15:36:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.7 2009/02/28 00:40:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.8 2009/03/14 15:36:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,22 +67,14 @@ const struct cdevsw nullcn_devsw = {
  * invocation.
  */
 int
-nullcndev_read(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+nullcndev_read(dev_t dev, struct uio *uio, int flag)
 {
 
 	return EIO;
 }
 
 int
-nullcndev_ioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+nullcndev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 
@@ -98,8 +90,7 @@ nullcndev_ioctl(dev, cmd, data, flag, l)
 }
 
 struct tty*
-nullcndev_tty(dev)
-	dev_t dev;
+nullcndev_tty(dev_t dev)
 {
 
 	return nulltty;
@@ -110,8 +101,7 @@ nullcndev_tty(dev)
  * to nullconsattach().
  */
 void
-nullcnprobe(cn)
-	struct consdev *cn;
+nullcnprobe(struct consdev *cn)
 {
 
 	cn->cn_pri = CN_NULL;
@@ -123,8 +113,7 @@ nullcnprobe(cn)
  * a new tty.
  */
 void
-nullcninit(cn)
-	struct consdev *cn;
+nullcninit(struct consdev *cn)
 {
 	static struct consdev nullcn = cons_init(null);
 
@@ -136,8 +125,7 @@ nullcninit(cn)
  * Dumb getc() implementation. Simply blocks on call.
  */
 int
-nullcngetc(dev)
-	dev_t dev;
+nullcngetc(dev_t dev)
 {
 
 	for(;;);
@@ -148,9 +136,7 @@ nullcngetc(dev)
  * Dumb putc() implementation.
  */
 void
-nullcnputc(dev, c)
-	dev_t dev;
-	int c;
+nullcnputc(dev_t dev, int c)
 {
 
 }
@@ -159,8 +145,7 @@ nullcnputc(dev, c)
  * Allocate a new console device and a tty to handle console ioctls.
  */
 int
-nullcons_newdev(cn)
-	struct consdev *cn;
+nullcons_newdev(struct consdev *cn)
 {
 	int error;
 	int bmajor = -1, cmajor = -1;
@@ -191,8 +176,7 @@ nullcons_newdev(cn)
  * initialization.
  */
 void
-nullconsattach(pdev_count)
-	int pdev_count;
+nullconsattach(int pdev_count)
 {
 
 	nullcons_newdev(cn_tab);

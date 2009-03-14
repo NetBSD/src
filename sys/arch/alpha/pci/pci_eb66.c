@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.17 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.18 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.17 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.18 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,8 +108,7 @@ extern void	eb66_intr_enable(int irq);  /* pci_eb66_intr.S */
 extern void	eb66_intr_disable(int irq); /* pci_eb66_intr.S */
 
 void
-pci_eb66_pickintr(lcp)
-	struct lca_config *lcp;
+pci_eb66_pickintr(struct lca_config *lcp)
 {
 	bus_space_tag_t iot = &lcp->lc_iot;
 	pci_chipset_tag_t pc = &lcp->lc_pc;
@@ -151,9 +150,7 @@ pci_eb66_pickintr(lcp)
 }
 
 int     
-dec_eb66_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_eb66_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
@@ -190,9 +187,7 @@ dec_eb66_intr_map(pa, ihp)
 }
 
 const char *
-dec_eb66_intr_string(lcv, ih)
-	void *lcv;
-	pci_intr_handle_t ih;
+dec_eb66_intr_string(void *lcv, pci_intr_handle_t ih)
 {
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
@@ -203,9 +198,7 @@ dec_eb66_intr_string(lcv, ih)
 }
 
 const struct evcnt *
-dec_eb66_intr_evcnt(lcv, ih)
-	void *lcv;
-	pci_intr_handle_t ih;
+dec_eb66_intr_evcnt(void *lcv, pci_intr_handle_t ih)
 {
 
 	if (ih >= EB66_MAX_IRQ)
@@ -260,9 +253,7 @@ dec_eb66_intr_disestablish(lcv, cookie)
 }
 
 void
-eb66_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+eb66_iointr(void *arg, unsigned long vec)
 {
 	int irq; 
 
@@ -281,8 +272,7 @@ eb66_iointr(arg, vec)
 u_int8_t eb66_intr_mask[3] = { 0xff, 0xff, 0xff };
 
 void
-eb66_intr_enable(irq)
-	int irq;
+eb66_intr_enable(int irq)
 {
 	int byte = (irq / 8), bit = (irq % 8);
 
@@ -296,8 +286,7 @@ eb66_intr_enable(irq)
 }
 
 void
-eb66_intr_disable(irq)
-	int irq;
+eb66_intr_disable(int irq)
 {
 	int byte = (irq / 8), bit = (irq % 8);
 

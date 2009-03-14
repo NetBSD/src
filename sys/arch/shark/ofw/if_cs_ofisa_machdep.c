@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.5 2005/12/11 12:19:04 christos Exp $	*/
+/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.6 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.5 2005/12/11 12:19:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.6 2009/03/14 15:36:13 dsl Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -65,10 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.5 2005/12/11 12:19:04 chri
 #ifdef COMPAT_OLD_OFW
 
 int
-cs_ofisa_md_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cs_ofisa_md_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	char type[64];

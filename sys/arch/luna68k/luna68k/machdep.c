@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.64 2009/03/14 14:46:01 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.65 2009/03/14 15:36:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2009/03/14 15:36:08 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -284,10 +284,7 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	extern int fputype;
@@ -680,9 +677,7 @@ dumpsys()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
@@ -691,9 +686,7 @@ straytrap(pc, evec)
 int	*nofault;
 
 int
-badaddr(addr, nbytes)
-	register void *addr;
-	int nbytes;
+badaddr(register void *addr, int nbytes)
 {
 	register int i;
 	label_t faultbuf;
@@ -740,8 +733,7 @@ static int innmihand;	/* simple mutex */
  * panic'ing on ABORT with the kernel option "PANICBUTTON".
  */
 void
-nmihand(frame)
-	struct frame frame;
+nmihand(struct frame frame)
 {
 	/* Prevent unwanted recursion */
 	if (innmihand)
@@ -756,8 +748,7 @@ nmihand(frame)
  * serial lines, etc.
  */
 void
-luna68k_abort(cp)
-	const char *cp;
+luna68k_abort(const char *cp)
 {
 #ifdef DDB
 	printf("%s\n", cp);
@@ -779,9 +770,7 @@ luna68k_abort(cp)
  * understand and, if so, set up the vmcmds for it.
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 #ifdef COMPAT_SUNOS
@@ -854,9 +843,7 @@ struct consdev *cn_tab = &romcons;
 })
 
 void
-romcnputc(dev, c)
-	dev_t dev;
-	int c;
+romcnputc(dev_t dev, int c)
 {
 	int s;
 
@@ -866,8 +853,7 @@ romcnputc(dev, c)
 }
 
 int
-romcngetc(dev)
-	dev_t dev;
+romcngetc(dev_t dev)
 {
 	int s, c;
 

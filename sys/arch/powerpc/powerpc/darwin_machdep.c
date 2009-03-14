@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.26 2009/03/14 15:36:12 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.26 2009/03/14 15:36:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.25 2008/04/28 20:23:32 martin E
  * Send a signal to a Darwin process.
  */
 void
-darwin_sendsig(ksi, mask)
-	const ksiginfo_t *ksi;
-	const sigset_t *mask;
+darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

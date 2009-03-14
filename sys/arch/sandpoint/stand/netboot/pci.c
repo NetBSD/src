@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.7 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: pci.c,v 1.8 2009/03/14 15:36:13 dsl Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -129,9 +129,7 @@ pcidecomposetag(tag, b, d, f)
 }
 
 unsigned
-pcicfgread(tag, off)
-	unsigned tag;
-	int off;
+pcicfgread(unsigned tag, int off)
 {
 	unsigned cfg;
 	
@@ -141,10 +139,7 @@ pcicfgread(tag, off)
 }
 
 void
-pcicfgwrite(tag, off, val)
-	unsigned tag;
-	int off;
-	unsigned val;
+pcicfgwrite(unsigned tag, int off, unsigned val)
 {
 	unsigned cfg;
 

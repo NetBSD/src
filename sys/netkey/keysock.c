@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.49 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: keysock.c,v 1.50 2009/03/14 15:36:24 dsl Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.49 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.50 2009/03/14 15:36:24 dsl Exp $");
 
 #include "opt_inet.h"
 
@@ -240,11 +240,7 @@ end:
  * send message to the socket.
  */
 static int
-key_sendup0(rp, m, promisc, canwait)
-	struct rawcb *rp;
-	struct mbuf *m;
-	int promisc;
-	int canwait;
+key_sendup0(struct rawcb *rp, struct mbuf *m, int promisc, int canwait)
 {
 	struct keycb *kp = (struct keycb *)rp;
 	struct mbuf *n;
@@ -338,10 +334,7 @@ recovery:
 
 /* so can be NULL if target != KEY_SENDUP_ONE */
 int
-key_sendup_mbuf(so, m, target)
-	struct socket *so;
-	struct mbuf *m;
-	int target;
+key_sendup_mbuf(struct socket *so, struct mbuf *m, int target)
 {
 	struct mbuf *n;
 	struct keycb *kp;

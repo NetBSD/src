@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91emac.c,v 1.3 2009/03/14 15:36:01 dsl Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.3 2009/03/14 15:36:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.2 2008/07/03 01:15:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.3 2009/03/14 15:36:01 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -516,8 +516,7 @@ emac_init(struct emac_softc *sc)
 }
 
 static int
-emac_mediachange(ifp)
-	struct ifnet *ifp;
+emac_mediachange(struct ifnet *ifp)
 {
 	if (ifp->if_flags & IFF_UP)
 		emac_ifinit(ifp);
@@ -525,9 +524,7 @@ emac_mediachange(ifp)
 }
 
 static void
-emac_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+emac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct emac_softc *sc = ifp->if_softc;
 
@@ -570,8 +567,7 @@ emac_mii_writereg(self, phy, reg, val)
 
 	
 void
-emac_statchg(self)
-        device_t self;
+emac_statchg(device_t self)
 {
         struct emac_softc *sc = (struct emac_softc *)self;
         u_int32_t reg;
@@ -589,8 +585,7 @@ emac_statchg(self)
 }
 
 void
-emac_tick(arg)
-	void *arg;
+emac_tick(void *arg)
 {
 	struct emac_softc* sc = (struct emac_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
@@ -640,8 +635,7 @@ emac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 static void
-emac_ifstart(ifp)
-	struct ifnet *ifp;
+emac_ifstart(struct ifnet *ifp)
 {
 	struct emac_softc *sc = (struct emac_softc *)ifp->if_softc;
 	struct mbuf *m;
@@ -735,8 +729,7 @@ stop:
 }
 
 static void
-emac_ifwatchdog(ifp)
-	struct ifnet *ifp;
+emac_ifwatchdog(struct ifnet *ifp)
 {
 	struct emac_softc *sc = (struct emac_softc *)ifp->if_softc;
 
@@ -747,8 +740,7 @@ emac_ifwatchdog(ifp)
 }
 
 static int
-emac_ifinit(ifp)
-	struct ifnet *ifp;
+emac_ifinit(struct ifnet *ifp)
 {
 	struct emac_softc *sc = ifp->if_softc;
 	int s = splnet();
@@ -772,9 +764,7 @@ emac_ifinit(ifp)
 }
 
 static void
-emac_ifstop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+emac_ifstop(struct ifnet *ifp, int disable)
 {
 //	u_int32_t u;
 	struct emac_softc *sc = ifp->if_softc;
@@ -804,8 +794,7 @@ emac_ifstop(ifp, disable)
 }
 
 static void
-emac_setaddr(ifp)
-	struct ifnet *ifp;
+emac_setaddr(struct ifnet *ifp)
 {
 	struct emac_softc *sc = ifp->if_softc;
 	struct ethercom *ac = &sc->sc_ec;

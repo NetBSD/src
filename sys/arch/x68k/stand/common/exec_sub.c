@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sub.c,v 1.4 2009/03/14 14:46:07 dsl Exp $ */
+/*	$NetBSD: exec_sub.c,v 1.5 2009/03/14 15:36:15 dsl Exp $ */
 
 #include <sys/cdefs.h>
 
@@ -21,9 +21,7 @@ extern int opt_v;
 extern const char *kernel_fn;
 
 static void
-DPRINT_SEC(ident, sec)
-	const char *ident;
-	const struct execkern_section *sec;
+DPRINT_SEC(const char *ident, const struct execkern_section *sec)
 {
 
 	if (opt_v)
@@ -61,9 +59,7 @@ DPRINT_SEC(ident, sec)
 		SECTION(sec, (ident), (image), (size), 0)
 
 static inline void
-bzero4(ptr, siz)
-	void *ptr;
-	size_t siz;
+bzero4(void *ptr, size_t siz)
 {
 	u_long *p;
 	u_short s;
@@ -79,9 +75,7 @@ bzero4(ptr, siz)
  * fill in loading information from an a.out executable
  */
 static void
-xk_aout(xarg, hdr)
-	struct execkern_arg *xarg;
-	struct exec *hdr;
+xk_aout(struct execkern_arg *xarg, struct exec *hdr)
 {
 	unsigned u;
 	char *s;
@@ -120,9 +114,7 @@ xk_aout(xarg, hdr)
  * fill in loading information from an ELF executable
  */
 static void
-xk_elf(xarg, hdr)
-	struct execkern_arg *xarg;
-	Elf32_Ehdr *hdr;
+xk_elf(struct execkern_arg *xarg, Elf32_Ehdr *hdr)
 {
 	char *top = (void *) hdr;
 	struct execkern_section *sec;

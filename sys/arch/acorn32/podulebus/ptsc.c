@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.14 2009/03/14 14:45:52 dsl Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.15 2009/03/14 15:35:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.14 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.15 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,7 @@ void ptsc_set_dma_mode(struct sfas_softc *, int);
  * if we are a Power-tec SCSI-2 card
  */
 int
-ptscmatch(pdp, cf, auxp)
-	struct device	*pdp;
-	struct cfdata	*cf;
-	void		*auxp;
+ptscmatch(struct device *pdp, struct cfdata *cf, void *auxp)
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
@@ -141,10 +138,7 @@ ptscmatch(pdp, cf, auxp)
 }
 
 void
-ptscattach(pdp, dp, auxp)
-	struct device	*pdp;
-	struct device	*dp;
-	void		*auxp;
+ptscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct ptsc_softc *sc = (struct ptsc_softc *)dp;
 	struct podule_attach_args  *pa;
@@ -249,8 +243,7 @@ ptscattach(pdp, dp, auxp)
 
 
 int
-ptsc_intr(arg)
-	void *arg;
+ptsc_intr(void *arg)
 {
 	struct sfas_softc *dev = arg;
 	ptsc_regmap_p	      rp;
@@ -280,9 +273,7 @@ ptsc_intr(arg)
 
 /* Load transfer address into DMA register */
 void
-ptsc_set_dma_adr(sc, ptr)
-	struct sfas_softc *sc;
-	void		 *ptr;
+ptsc_set_dma_adr(struct sfas_softc *sc, void *ptr)
 {
 #if 0
 	ptsc_regmap_p	rp;
@@ -306,9 +297,7 @@ ptsc_set_dma_adr(sc, ptr)
 
 /* Set DMA transfer counter */
 void
-ptsc_set_dma_tc(sc, len)
-	struct sfas_softc *sc;
-	unsigned int	  len;
+ptsc_set_dma_tc(struct sfas_softc *sc, unsigned int len)
 {
 	printf("ptsc_set_dma_tc(sc, len = 0x%08x)", len);
 
@@ -319,9 +308,7 @@ ptsc_set_dma_tc(sc, len)
 
 /* Set DMA mode */
 void
-ptsc_set_dma_mode(sc, mode)
-	struct sfas_softc *sc;
-	int		  mode;
+ptsc_set_dma_mode(struct sfas_softc *sc, int mode)
 {
 #if 0
 	struct csc_specific *spec;
@@ -335,11 +322,7 @@ ptsc_set_dma_mode(sc, mode)
 
 /* Initialize DMA for transfer */
 int
-ptsc_setup_dma(v, ptr, len, mode)
-	void	*v;
-	void	*ptr;
-	int	len;
-	int	mode;
+ptsc_setup_dma(void *v, void *ptr, int len, int mode)
 {
 	return(0);
 
@@ -382,10 +365,7 @@ ptsc_setup_dma(v, ptr, len, mode)
 
 /* Check if address and len is ok for DMA transfer */
 int
-ptsc_need_bump(v, ptr, len)
-	void	*v;
-	void	*ptr;
-	int	len;
+ptsc_need_bump(void *v, void *ptr, int len)
 {
 	int	p;
 

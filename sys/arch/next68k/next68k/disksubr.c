@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 2007/10/17 19:56:04 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23 2009/03/14 15:36:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22 2007/10/17 19:56:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2009/03/14 15:36:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ static const char *parse_nextstep_label(struct next68k_disklabel *,
 static int build_nextstep_label(struct next68k_disklabel *, struct disklabel *);
 
 static unsigned short
-nextstep_checksum(buf, limit)
-	unsigned char *buf;
-	unsigned char *limit;
+nextstep_checksum(unsigned char *buf, unsigned char *limit)
 {
 	int sum = 0;
 
@@ -74,10 +72,7 @@ nextstep_checksum(buf, limit)
 }
 
 static const char *
-parse_nextstep_label(ondisk, lp, osdep)
-	struct next68k_disklabel *ondisk;
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+parse_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	int i, t, nbp;
 	unsigned short *checksum;
@@ -169,9 +164,7 @@ parse_nextstep_label(ondisk, lp, osdep)
 }
 
 static int
-build_nextstep_label(ondisk, lp)
-	struct next68k_disklabel *ondisk;
-	struct disklabel *lp;
+build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 {
 	int i, t, nbp;
 	int front_porch = NEXT68K_LABEL_DEFAULTFRONTPORCH;

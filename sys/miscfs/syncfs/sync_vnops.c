@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.26 2009/02/22 20:10:25 ad Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.27 2009/03/14 15:36:23 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.26 2009/02/22 20:10:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.27 2009/03/14 15:36:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -107,8 +107,7 @@ sync_delay(struct mount *mp)
  * Create a new filesystem syncer vnode for the specified mount point.
  */
 int
-vfs_allocate_syncvnode(mp)
-	struct mount *mp;
+vfs_allocate_syncvnode(struct mount *mp)
 {
 	struct vnode *vp;
 	static int start, incr, next;
@@ -150,8 +149,7 @@ vfs_allocate_syncvnode(mp)
  * Destroy the filesystem syncer vnode for the specified mount point.
  */
 void
-vfs_deallocate_syncvnode(mp)
-	struct mount *mp;
+vfs_deallocate_syncvnode(struct mount *mp)
 {
 	struct vnode *vp;
 
@@ -168,8 +166,7 @@ vfs_deallocate_syncvnode(mp)
  * Do a lazy sync of the filesystem.
  */
 int
-sync_fsync(v)
-	void *v;
+sync_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -209,8 +206,7 @@ sync_fsync(v)
  * The syncer vnode is no longer needed and is being decommissioned.
  */
 int
-sync_inactive(v)
-	void *v;
+sync_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -233,8 +229,7 @@ sync_reclaim(void *v)
  * Print out a syncer vnode.
  */
 int
-sync_print(v)
-	void *v;
+sync_print(void *v)
 {
 
 	printf("syncer vnode\n");

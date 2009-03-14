@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.3 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.4 2009/03/14 15:36:06 dsl Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.8 2004/06/12 04:26:39 itohy Exp	*/
 
 /*
@@ -121,9 +121,7 @@ try_ffs()
  * Get inode from disk.
  */
 int
-get_ffs_inode(ino, dibuf)
-	ino32_t ino;
-	union ufs_dinode *dibuf;
+get_ffs_inode(ino32_t ino, union ufs_dinode *dibuf)
 {
 	struct ufs_info *ufsinfo = &ufs_info;
 	union ufs_dinode *buf = alloca((size_t) fsi.bsize);

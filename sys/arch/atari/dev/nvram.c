@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.14 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: nvram.c,v 1.15 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.14 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.15 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -74,10 +74,7 @@ extern struct cfdriver nvr_cd;
 
 /*ARGSUSED*/
 static	int
-nvr_match(pdp, cfp, auxp)
-struct	device	*pdp;
-struct	cfdata	*cfp;
-void		*auxp;
+nvr_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if (!strcmp((char *)auxp, "nvr"))
 		return (1);
@@ -188,8 +185,7 @@ nvram_csum()
 }
 
 static int
-nvram_csum_valid(csum)
-u_char	csum;
+nvram_csum_valid(u_char csum)
 {
 	if (((~csum & 0xff) != mc146818_read(RTC, MC_NVRAM_CSUM))
 		|| (csum != mc146818_read(RTC, MC_NVRAM_CSUM + 1)))
@@ -198,8 +194,7 @@ u_char	csum;
 }
 
 static void
-nvram_set_csum(csum)
-u_char	csum;
+nvram_set_csum(u_char csum)
 {
 	mc146818_write(RTC, MC_NVRAM_CSUM,    ~csum);
 	mc146818_write(RTC, MC_NVRAM_CSUM + 1, csum);

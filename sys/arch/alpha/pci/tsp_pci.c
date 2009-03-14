@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.4 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.5 2009/03/14 15:36:00 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.4 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.5 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,7 @@ pcireg_t	tsp_conf_read(void *, pcitag_t, int);
 void		tsp_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-tsp_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+tsp_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
 	pc->pc_attach_hook = tsp_attach_hook;
@@ -84,9 +82,7 @@ tsp_attach_hook(parent, self, pba)
 }
 
 int
-tsp_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+tsp_bus_maxdevs(void *cpv, int busno)
 {
 	return 32;
 }
@@ -118,10 +114,7 @@ tsp_decompose_tag(cpv, tag, bp, dp, fp)
  * no errors on unanswered probes.
  */
 pcireg_t
-tsp_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+tsp_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	pcireg_t *datap, data;
 	struct tsp_config *pcp = cpv;
@@ -134,11 +127,7 @@ tsp_conf_read(cpv, tag, offset)
 }
 
 void
-tsp_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+tsp_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	pcireg_t *datap;
 	struct tsp_config *pcp = cpv;

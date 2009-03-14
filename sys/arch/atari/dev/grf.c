@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.37 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: grf.c,v 1.38 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.38 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -157,10 +157,7 @@ const struct cdevsw grf_cdevsw = {
 static struct cfdata *cfdata_gbus  = NULL;
 
 int
-grfbusmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+grfbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if(strcmp(auxp, grfbus_cd.cd_name))
 		return(0);
@@ -189,9 +186,7 @@ void		*auxp;
 }
 
 int
-grfbusprint(auxp, name)
-void		*auxp;
-const char	*name;
+grfbusprint(void *auxp, const char *name)
 {
 	if(name == NULL)
 		return(UNCONF);
@@ -226,11 +221,7 @@ grfopen(dev, flags, devtype, l)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, l)
-	dev_t		dev;
-	int		flags;
-	int		mode;
-	struct lwp	*l;
+grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct grf_softc *gp;
 
@@ -242,12 +233,7 @@ grfclose(dev, flags, mode, l)
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, l)
-dev_t		dev;
-u_long		cmd;
-int		flag;
-void *		data;
-struct lwp	*l;
+grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 	struct grf_softc	*gp;
 	int			error;
@@ -312,10 +298,7 @@ struct lwp	*l;
  * memory space.
  */
 paddr_t
-grfmmap(dev, off, prot)
-	dev_t	dev;
-	off_t	off;
-	int	prot;
+grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc	*gp;
 	struct grfinfo		*gi;
@@ -348,8 +331,7 @@ grfmmap(dev, off, prot)
 }
 
 int
-grfon(dev)
-	dev_t dev;
+grfon(dev_t dev)
 {
 	struct grf_softc *gp;
 
@@ -367,8 +349,7 @@ grfon(dev)
 }
 
 int
-grfoff(dev)
-	dev_t dev;
+grfoff(dev_t dev)
 {
 	struct grf_softc *gp;
 	int error;
@@ -392,9 +373,7 @@ grfoff(dev)
 }
 
 int
-grfsinfo(dev, dyninfo)
-	dev_t dev;
-	struct grfdyninfo *dyninfo;
+grfsinfo(dev_t dev, struct grfdyninfo *dyninfo)
 {
 	struct grf_softc *gp;
 	int error;
@@ -414,8 +393,7 @@ grfsinfo(dev, dyninfo)
  * Get the grf-info in sync with underlying view.
  */
 void
-grf_viewsync(gp)
-struct grf_softc *gp;
+grf_viewsync(struct grf_softc *gp)
 {
 	struct view_size	vs;
 	bmap_t			bm;

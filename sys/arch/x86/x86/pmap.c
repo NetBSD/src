@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2009/02/17 00:09:50 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2009/03/14 15:36:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2009/02/17 00:09:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2009/03/14 15:36:15 dsl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2889,10 +2889,7 @@ vtophys(vaddr_t va)
  */
 
 bool
-pmap_extract_ma(pmap, va, pap)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t *pap;
+pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes, pte;
 	pd_entry_t pde;

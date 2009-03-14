@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.44 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: sio.c,v 1.45 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.44 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.45 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,10 +135,7 @@ int	sio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
 void	sio_bridge_callback(struct device *);
 
 int
-siomatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+siomatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -165,10 +162,7 @@ siomatch(parent, match, aux)
 
 #if NPCEB > 0
 int
-pcebmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcebmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -208,8 +202,7 @@ sioattach(parent, self, aux)
 }
 
 void
-sio_bridge_callback(self)
-	struct device *self;
+sio_bridge_callback(struct device *self)
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
 	union sio_attach_args sa;
@@ -316,18 +309,14 @@ sio_eisa_attach_hook(parent, self, eba)
 }
 
 int
-sio_eisa_maxslots(v)
-	void *v;
+sio_eisa_maxslots(void *v)
 {
 
 	return 16;		/* as good a number as any.  only 8, maybe? */
 }
 
 int
-sio_eisa_intr_map(v, irq, ihp)
-	void *v;
-	u_int irq;
-	eisa_intr_handle_t *ihp;
+sio_eisa_intr_map(void *v, u_int irq, eisa_intr_handle_t *ihp)
 {
 
 #define	ICU_LEN		16	/* number of ISA IRQs (XXX) */

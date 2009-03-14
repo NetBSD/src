@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.13 2009/03/14 14:45:51 dsl Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.14 2009/03/14 15:35:58 dsl Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.13 2009/03/14 14:45:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.14 2009/03/14 15:35:58 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,12 +115,7 @@ CFATTACH_DECL(pioc, sizeof(struct pioc_softc),
  */
 
 static void
-piocgetid(iot, ioh, config_entry, id, revision)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int config_entry;
-	int *id;
-	int *revision;
+piocgetid(bus_space_tag_t iot, bus_space_handle_t ioh, int config_entry, int *id, int *revision)
 {
 	/*
 	 * Put the chip info configuration mode and read the ID and revision
@@ -146,10 +141,7 @@ piocgetid(iot, ioh, config_entry, id, revision)
  */ 
  
 static int
-piocmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+piocmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *mb = aux;
 	bus_space_tag_t iot;
@@ -189,9 +181,7 @@ out:
  */
 
 static int
-piocprint(aux, name)
-	void *aux;
-	const char *name;
+piocprint(void *aux, const char *name)
 {
 	struct pioc_attach_args *pa = aux;
 
@@ -222,11 +212,7 @@ piocprint(aux, name)
  */
 
 static int
-piocsearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+piocsearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct pioc_softc *sc = (struct pioc_softc *)parent;
 	struct pioc_attach_args pa;
@@ -268,11 +254,7 @@ piocsearch(parent, cf, ldesc, aux)
  */
 
 static int
-piocsubmatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+piocsubmatch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct pioc_attach_args *pa = aux;
 	int tryagain;
@@ -302,10 +284,7 @@ piocsubmatch(parent, cf, ldesc, aux)
  */
   
 static void
-piocattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+piocattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *mb = aux;
 	struct pioc_softc *sc = (struct pioc_softc *)self;

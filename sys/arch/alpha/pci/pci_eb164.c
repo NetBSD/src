@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.37 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.38 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.37 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.38 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -114,8 +114,7 @@ extern void	eb164_intr_enable(int irq);	/* pci_eb164_intr.S */
 extern void	eb164_intr_disable(int irq);	/* pci_eb164_intr.S */
 
 void
-pci_eb164_pickintr(ccp)
-	struct cia_config *ccp;
+pci_eb164_pickintr(struct cia_config *ccp)
 {
 	bus_space_tag_t iot = &ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
@@ -163,9 +162,7 @@ pci_eb164_pickintr(ccp)
 }
 
 int     
-dec_eb164_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_eb164_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
         pcitag_t bustag = pa->pa_intrtag; 
         int buspin = pa->pa_intrpin, line = pa->pa_intrline;
@@ -237,9 +234,7 @@ dec_eb164_intr_map(pa, ihp)
 }
 
 const char *
-dec_eb164_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_eb164_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -253,9 +248,7 @@ dec_eb164_intr_string(ccv, ih)
 }
 
 const struct evcnt *
-dec_eb164_intr_evcnt(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_eb164_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -352,9 +345,7 @@ dec_eb164_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 }
 
 void
-eb164_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+eb164_iointr(void *arg, unsigned long vec)
 {
 	int irq; 
 
@@ -373,8 +364,7 @@ eb164_iointr(arg, vec)
 u_int8_t eb164_intr_mask[3] = { 0xff, 0xff, 0xff };
 
 void
-eb164_intr_enable(irq)
-	int irq;
+eb164_intr_enable(int irq)
 {
 	int byte = (irq / 8), bit = (irq % 8);
 
@@ -388,8 +378,7 @@ eb164_intr_enable(irq)
 }
 
 void
-eb164_intr_disable(irq)
-	int irq;
+eb164_intr_disable(int irq)
 {
 	int byte = (irq / 8), bit = (irq % 8);
 

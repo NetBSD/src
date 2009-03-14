@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.80 2009/02/19 00:54:08 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.81 2009/03/14 15:36:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.80 2009/02/19 00:54:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.81 2009/03/14 15:36:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,9 +373,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	union mainbus_attach_args *mba = aux;
 

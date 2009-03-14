@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.19 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.20 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.19 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.20 2009/03/14 15:36:03 dsl Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -185,8 +185,7 @@ static u_short mon_type;
  * Initialize list of possible video modes.
  */
 void
-falcon_probe_video(modelp)
-MODES	*modelp;
+falcon_probe_video(MODES *modelp)
 {
 	dmode_t	*dm;
 	struct videl *vregs;
@@ -222,8 +221,7 @@ MODES	*modelp;
 }
 
 static struct videl *
-falcon_getreg(mode)
-u_short mode;
+falcon_getreg(u_short mode)
 {
 	int i;
 	struct videl *vregs;
@@ -236,8 +234,7 @@ u_short mode;
 }
 
 static void
-falcon_detect(dm)
-dmode_t *dm;
+falcon_detect(dmode_t *dm)
 {
 	u_short	falshift, stshift;
 	struct videl *vregs = vm_regs(dm);
@@ -310,8 +307,7 @@ u_long	falcon_needs_vbl;
 void falcon_display_switch(void);
 
 static void
-falcon_display_view(v)
-view_t *v;
+falcon_display_view(view_t *v)
 {
 	dmode_t	*dm = v->mode;
 	bmap_t		*bm;
@@ -408,8 +404,7 @@ falcon_display_switch()
 }
 
 static void
-falcon_remove_view(v)
-view_t *v;
+falcon_remove_view(view_t *v)
 {
 	dmode_t *mode = v->mode;
 
@@ -424,14 +419,12 @@ view_t *v;
 }
 
 void
-falcon_save_view(v)
-view_t *v;
+falcon_save_view(view_t *v)
 {
 }
 
 static void
-falcon_free_view(v)
-view_t *v;
+falcon_free_view(view_t *v)
 {
 	if (v) {
 		falcon_remove_view(v);
@@ -444,9 +437,7 @@ view_t *v;
 }
 
 static int
-falcon_use_colormap(v, cm)
-view_t		*v;
-colormap_t	*cm;
+falcon_use_colormap(view_t *v, colormap_t *cm)
 {
 	dmode_t			*dm;
 	volatile u_short	*creg;
@@ -518,10 +509,7 @@ colormap_t	*cm;
 }
 
 static view_t *
-falcon_alloc_view(mode, dim, depth)
-dmode_t	*mode;
-dimen_t	*dim;
-u_char   depth;
+falcon_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 {
 	view_t *v;
 	bmap_t *bm;
@@ -550,11 +538,7 @@ u_char   depth;
 }
 
 static void
-init_view(v, bm, mode, dbox)
-view_t	*v;
-bmap_t	*bm;
-dmode_t	*mode;
-box_t	*dbox;
+init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 {
 	v->bitmap = bm;
 	v->mode   = mode;
@@ -612,16 +596,14 @@ u_char	depth;
 }
 
 static void
-free_bitmap(bm)
-bmap_t *bm;
+free_bitmap(bmap_t *bm)
 {
 	if (bm)
 		free_stmem(bm);
 }
 
 static colormap_t *
-alloc_colormap(dm)
-dmode_t		*dm;
+alloc_colormap(dmode_t *dm)
 {
 	int		nentries, i;
 	colormap_t	*cm;

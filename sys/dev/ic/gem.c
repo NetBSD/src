@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.80 2008/12/16 22:35:30 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.81 2009/03/14 15:36:17 dsl Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.80 2008/12/16 22:35:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.81 2009/03/14 15:36:17 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,9 +152,7 @@ static void gem_txsoft_print(const struct gem_softc *, int, int);
  *	Attach a Gem interface to the system.
  */
 void
-gem_attach(sc, enaddr)
-	struct gem_softc *sc;
-	const uint8_t *enaddr;
+gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
@@ -543,8 +541,7 @@ gem_attach(sc, enaddr)
 
 
 void
-gem_tick(arg)
-	void *arg;
+gem_tick(void *arg)
 {
 	struct gem_softc *sc = arg;
 	int s;
@@ -565,12 +562,7 @@ gem_tick(arg)
 }
 
 static int
-gem_bitwait(sc, h, r, clr, set)
-	struct gem_softc *sc;
-	bus_space_handle_t h;
-	int r;
-	u_int32_t clr;
-	u_int32_t set;
+gem_bitwait(struct gem_softc *sc, bus_space_handle_t h, int r, u_int32_t clr, u_int32_t set)
 {
 	int i;
 	u_int32_t reg;
@@ -584,8 +576,7 @@ gem_bitwait(sc, h, r, clr, set)
 }
 
 void
-gem_reset(sc)
-	struct gem_softc *sc;
+gem_reset(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h2;
@@ -1284,8 +1275,7 @@ gem_txsoft_print(const struct gem_softc *sc, int firstdesc, int lastdesc)
 #endif
 
 static void
-gem_start(ifp)
-	struct ifnet *ifp;
+gem_start(struct ifnet *ifp)
 {
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -1554,8 +1544,7 @@ gem_start(ifp)
  * Transmit interrupt.
  */
 int
-gem_tint(sc)
-	struct gem_softc *sc;
+gem_tint(struct gem_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1678,8 +1667,7 @@ gem_tint(sc)
  * Receive interrupt.
  */
 int
-gem_rint(sc)
-	struct gem_softc *sc;
+gem_rint(struct gem_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -2097,8 +2085,7 @@ gem_pint(struct gem_softc *sc)
 
 
 int
-gem_intr(v)
-	void *v;
+gem_intr(void *v)
 {
 	struct gem_softc *sc = (struct gem_softc *)v;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2186,8 +2173,7 @@ gem_intr(v)
 
 
 void
-gem_watchdog(ifp)
-	struct ifnet *ifp;
+gem_watchdog(struct ifnet *ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
 
@@ -2208,8 +2194,7 @@ gem_watchdog(ifp)
  * Initialize the MII Management Interface
  */
 void
-gem_mifinit(sc)
-	struct gem_softc *sc;
+gem_mifinit(struct gem_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_h1;
@@ -2301,8 +2286,7 @@ gem_mii_writereg(self, phy, reg, val)
 }
 
 static void
-gem_mii_statchg(dev)
-	struct device *dev;
+gem_mii_statchg(struct device *dev)
 {
 	struct gem_softc *sc = (void *)dev;
 #ifdef GEM_DEBUG
@@ -2525,8 +2509,7 @@ gem_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 
 
 void
-gem_shutdown(arg)
-	void *arg;
+gem_shutdown(void *arg)
 {
 	struct gem_softc *sc = (struct gem_softc *)arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2538,8 +2521,7 @@ gem_shutdown(arg)
  * Set up the logical address filter.
  */
 void
-gem_setladrf(sc)
-	struct gem_softc *sc;
+gem_setladrf(struct gem_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &ec->ec_if;
@@ -2633,9 +2615,7 @@ chipit:
  *	Power management (suspend/resume) hook.
  */
 void
-gem_power(why, arg)
-	int why;
-	void *arg;
+gem_power(int why, void *arg)
 {
 	struct gem_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

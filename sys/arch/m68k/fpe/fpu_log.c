@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.10 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.11 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.10 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.11 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -470,8 +470,7 @@ __fpu_logn(fe)
 }
 
 struct fpn *
-fpu_log10(fe)
-     struct fpemu *fe;
+fpu_log10(struct fpemu *fe)
 {
     struct fpn *fp = &fe->fe_f2;
     u_int fpsr;
@@ -508,8 +507,7 @@ fpu_log10(fe)
 }
 
 struct fpn *
-fpu_log2(fe)
-     struct fpemu *fe;
+fpu_log2(struct fpemu *fe)
 {
     struct fpn *fp = &fe->fe_f2;
     u_int fpsr;
@@ -552,8 +550,7 @@ fpu_log2(fe)
 }
 
 struct fpn *
-fpu_logn(fe)
-     struct fpemu *fe;
+fpu_logn(struct fpemu *fe)
 {
     struct fpn *fp = &fe->fe_f2;
     u_int fpsr;
@@ -586,8 +583,7 @@ fpu_logn(fe)
 }
 
 struct fpn *
-fpu_lognp1(fe)
-     struct fpemu *fe;
+fpu_lognp1(struct fpemu *fe)
 {
     struct fpn *fp;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.41 2009/03/14 14:46:04 dsl Exp $ */
+/* $NetBSD: dec_5100.c,v 1.42 2009/03/14 15:36:11 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.41 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.42 2009/03/14 15:36:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,11 +148,7 @@ dec_5100_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static void
-dec_5100_intr(status, cause, pc, ipending)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
-	unsigned ipending;
+dec_5100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 {
 	u_int32_t icsr;
 

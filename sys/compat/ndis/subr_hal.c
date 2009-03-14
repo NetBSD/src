@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_hal.c,v 1.13.2.3 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.5 2008/11/13 12:09:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.6 2009/03/14 15:36:16 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -125,45 +125,35 @@ hal_libfini()
 }
 
 __stdcall static void
-KeStallExecutionProcessor(usecs)
-	uint32_t		usecs;
+KeStallExecutionProcessor(uint32_t usecs)
 {
 	DELAY(usecs);
 	return;
 }
 
 __stdcall static void
-WRITE_PORT_ULONG(port, val)
-	uint32_t		*port;
-	uint32_t		val;
+WRITE_PORT_ULONG(uint32_t *port, uint32_t val)
 {
 	bus_space_write_4(NDIS_BUS_SPACE_IO, 0x0, (bus_size_t)port, val);
 	return;
 }
 
 __stdcall static void
-WRITE_PORT_USHORT(port, val)
-	uint16_t		*port;
-	uint16_t		val;
+WRITE_PORT_USHORT(uint16_t *port, uint16_t val)
 {
 	bus_space_write_2(NDIS_BUS_SPACE_IO, 0x0, (bus_size_t)port, val);
 	return;
 }
 
 __stdcall static void
-WRITE_PORT_UCHAR(port, val)
-	uint8_t			*port;
-	uint8_t			val;
+WRITE_PORT_UCHAR(uint8_t *port, uint8_t val)
 {
 	bus_space_write_1(NDIS_BUS_SPACE_IO, 0x0, (bus_size_t)port, val);
 	return;
 }
 
 __stdcall static void
-WRITE_PORT_BUFFER_ULONG(port, val, cnt)
-	uint32_t		*port;
-	uint32_t		*val;
-	uint32_t		cnt;
+WRITE_PORT_BUFFER_ULONG(uint32_t *port, uint32_t *val, uint32_t cnt)
 {
 	bus_space_write_multi_4(NDIS_BUS_SPACE_IO, 0x0,
 	    (bus_size_t)port, val, cnt);
@@ -171,10 +161,7 @@ WRITE_PORT_BUFFER_ULONG(port, val, cnt)
 }
 
 __stdcall static void
-WRITE_PORT_BUFFER_USHORT(port, val, cnt)
-	uint16_t		*port;
-	uint16_t		*val;
-	uint32_t		cnt;
+WRITE_PORT_BUFFER_USHORT(uint16_t *port, uint16_t *val, uint32_t cnt)
 {
 	bus_space_write_multi_2(NDIS_BUS_SPACE_IO, 0x0,
 	    (bus_size_t)port, val, cnt);
@@ -182,10 +169,7 @@ WRITE_PORT_BUFFER_USHORT(port, val, cnt)
 }
 
 __stdcall static void
-WRITE_PORT_BUFFER_UCHAR(port, val, cnt)
-	uint8_t			*port;
-	uint8_t			*val;
-	uint32_t		cnt;
+WRITE_PORT_BUFFER_UCHAR(uint8_t *port, uint8_t *val, uint32_t cnt)
 {
 	bus_space_write_multi_1(NDIS_BUS_SPACE_IO, 0x0,
 	    (bus_size_t)port, val, cnt);
@@ -193,31 +177,25 @@ WRITE_PORT_BUFFER_UCHAR(port, val, cnt)
 }
 
 __stdcall static uint16_t
-READ_PORT_USHORT(port)
-	uint16_t		*port;
+READ_PORT_USHORT(uint16_t *port)
 {
 	return(bus_space_read_2(NDIS_BUS_SPACE_IO, 0x0, (bus_size_t)port));
 }
 
 __stdcall static uint32_t
-READ_PORT_ULONG(port)
-	uint32_t		*port;
+READ_PORT_ULONG(uint32_t *port)
 {
 	return(bus_space_read_4(NDIS_BUS_SPACE_IO, 0x0, (bus_size_t)port));
 }
 
 __stdcall static uint8_t
-READ_PORT_UCHAR(port)
-	uint8_t			*port;
+READ_PORT_UCHAR(uint8_t *port)
 {
 	return(bus_space_read_1(NDIS_BUS_SPACE_IO, 0x0, (bus_size_t)port));
 }
 
 __stdcall static void
-READ_PORT_BUFFER_ULONG(port, val, cnt)
-	uint32_t		*port;
-	uint32_t		*val;
-	uint32_t		cnt;
+READ_PORT_BUFFER_ULONG(uint32_t *port, uint32_t *val, uint32_t cnt)
 {
 	bus_space_read_multi_4(NDIS_BUS_SPACE_IO, 0x0,
 	    (bus_size_t)port, val, cnt);
@@ -225,10 +203,7 @@ READ_PORT_BUFFER_ULONG(port, val, cnt)
 }
 
 __stdcall static void
-READ_PORT_BUFFER_USHORT(port, val, cnt)
-	uint16_t		*port;
-	uint16_t		*val;
-	uint32_t		cnt;
+READ_PORT_BUFFER_USHORT(uint16_t *port, uint16_t *val, uint32_t cnt)
 {
 	bus_space_read_multi_2(NDIS_BUS_SPACE_IO, 0x0,
 	    (bus_size_t)port, val, cnt);
@@ -236,10 +211,7 @@ READ_PORT_BUFFER_USHORT(port, val, cnt)
 }
 
 __stdcall static void
-READ_PORT_BUFFER_UCHAR(port, val, cnt)
-	uint8_t			*port;
-	uint8_t			*val;
-	uint32_t		cnt;
+READ_PORT_BUFFER_UCHAR(uint8_t *port, uint8_t *val, uint32_t cnt)
 {
 	bus_space_read_multi_1(NDIS_BUS_SPACE_IO, 0x0,
 	    (bus_size_t)port, val, cnt);
@@ -332,8 +304,7 @@ KeGetCurrentIrql(void)
 }
 
 __stdcall static uint64_t
-KeQueryPerformanceCounter(freq)
-	uint64_t		*freq;
+KeQueryPerformanceCounter(uint64_t *freq)
 {
 	if (freq != NULL)
 		*freq = hz;

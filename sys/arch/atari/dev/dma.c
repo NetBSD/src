@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.19 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: dma.c,v 1.20 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.19 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.20 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,12 +108,7 @@ st_dma_init()
 }
 
 int
-st_dmagrab(int_func, call_func, softc, lock_stat, rcaller)
-dma_farg	int_func;
-dma_farg 	call_func;
-void		*softc;
-int		*lock_stat;
-int		rcaller;
+st_dmagrab(dma_farg int_func, dma_farg call_func, void *softc, int *lock_stat, int rcaller)
 {
 	int		sps;
 	DMA_ENTRY	*req;
@@ -170,9 +165,7 @@ int		rcaller;
 }
 
 void
-st_dmafree(softc, lock_stat)
-void	*softc;
-int	*lock_stat;
+st_dmafree(void *softc, int *lock_stat)
 {
 	int		sps;
 	DMA_ENTRY	*req;
@@ -250,8 +243,7 @@ int	sr;	/* sr at time of interrupt */
  * Note: The order _is_ important!
  */
 void
-st_dmaaddr_set(address)
-void *	address;
+st_dmaaddr_set(void * address)
 {
 	register u_long ad = (u_long)address;
 

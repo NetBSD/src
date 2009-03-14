@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2007/01/18 12:43:38 cbiere Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * TODO:
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.14 2007/01/18 12:43:38 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.15 2009/03/14 15:36:24 dsl Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -56,8 +56,7 @@ extern void dump_predtable();
 extern void printprotoerrs();
 
 void
-usage(a)
-	char *a;
+usage(char *a)
 {
 	fprintf(stderr,
 	"usage: %s <transition file> {-D<debug options>} <other options>\n",
@@ -83,8 +82,7 @@ usage(a)
 }
 
 void
-openfiles(proto)
-	register char *proto;
+openfiles(register char *proto)
 {
 	register char *junk;
 	register int lenp = strlen(proto);
@@ -138,9 +136,7 @@ openfiles(proto)
 }
 
 void
-includecode(file, f)
-	FILE *file;
-	register char *f;
+includecode(FILE *file, register char *f)
 {
 	register int count=1;
 	static char o='{';
@@ -395,8 +391,7 @@ char *argv[];
 int transno = 0;
 
 void
-Exit(n)
-	int n;
+Exit(int n)
 {
 	fprintf(stderr, "Error at line %d\n",lineno);
 	if(transno) fprintf(stderr, "Transition number %d\n",transno);
@@ -422,10 +417,7 @@ syntax()
 #endif
 
 void
-FakeFilename(outfile, name, l)
-	FILE *outfile;
-	char *name;
-	int l;
+FakeFilename(FILE *outfile, char *name, int l)
 {
 #if 0
 	doesn't work

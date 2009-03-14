@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.44 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.45 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.44 2009/03/14 14:46:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,8 +145,7 @@ static int get_netbsd_label(dev_t, void (*)(struct buf *),
  * or -1 if no entry
  */
 static int
-getFreeLabelEntry(lp)
-	struct disklabel *lp;
+getFreeLabelEntry(struct disklabel *lp)
 {
 	int i = 0;
 

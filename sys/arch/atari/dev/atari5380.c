@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.48 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.49 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.48 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.49 2009/03/14 15:36:03 dsl Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -245,9 +245,7 @@ static int	tt_get_dma_result(SC_REQ *, u_long *);
 
 #ifdef NO_TTRAM_DMA
 static int
-tt_wrong_dma_range(reqp, dm)
-SC_REQ			*reqp;
-struct dma_chain	*dm;
+tt_wrong_dma_range(SC_REQ *reqp, struct dma_chain *dm)
 {
 	if (dm->dm_addr & 0xff000000) {
 		reqp->dr_flag |= DRIVER_BOUNCING;
@@ -497,8 +495,7 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 
 static u_char *dma_ptr;
 void
-ncr5380_drq_intr(poll)
-int poll;
+ncr5380_drq_intr(int poll)
 {
 extern	int			*nofault;
 	label_t			faultbuf;
@@ -693,8 +690,7 @@ static int	falcon_get_dma_result(SC_REQ  *, u_long *);
        void	falcon_reconsider_dma(void);
 
 static void
-scsi_falcon_init(sc)
-struct ncr_softc	*sc;
+scsi_falcon_init(struct ncr_softc *sc)
 {
 	/*
 	 * Enable disk related interrupts
@@ -705,8 +701,7 @@ struct ncr_softc	*sc;
 }
 
 static u_char
-get_falcon_5380_reg(rnum)
-u_short	rnum;
+get_falcon_5380_reg(u_short rnum)
 {
 	DMA->dma_mode = DMA_SCSI + rnum;
 	return(DMA->dma_data);
@@ -762,9 +757,7 @@ scsi_falcon_ipending()
 }
 
 static int
-falcon_wrong_dma_range(reqp, dm)
-SC_REQ			*reqp;
-struct dma_chain	*dm;
+falcon_wrong_dma_range(SC_REQ *reqp, struct dma_chain *dm)
 {
 	/*
 	 * Do not allow chains yet! See also comment with
@@ -841,10 +834,7 @@ SC_REQ	*reqp;
 }
 
 static void
-scsi_falcon_dmasetup(reqp, phase, mode)
-SC_REQ	*reqp;
-u_int	phase;
-u_char	mode;
+scsi_falcon_dmasetup(SC_REQ *reqp, u_int phase, u_char mode)
 {
 	int	nsects = reqp->dm_cur->dm_count / 512; /* XXX */
 
@@ -867,8 +857,7 @@ u_char	mode;
 }
 
 static int
-falcon_poll_edma(reqp)
-SC_REQ	*reqp;
+falcon_poll_edma(SC_REQ *reqp)
 {
 	int	timeout = 9000; /* XXX */
 
@@ -894,9 +883,7 @@ SC_REQ	*reqp;
 }
 
 static int
-falcon_get_dma_result(reqp, bytes_left)
-SC_REQ	*reqp;
-u_long	*bytes_left;
+falcon_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 {
 	int	rv = 0;
 	int	st_dmastat;
@@ -979,8 +966,7 @@ static void	(*set_5380_reg)(u_short, u_short);
 #define	SET_5380_REG	(*set_5380_reg)
 
 static void
-scsi_mach_init(sc)
-struct ncr_softc	*sc;
+scsi_mach_init(struct ncr_softc *sc)
 {
 	if (machineid & ATARI_FALCON) {
 		get_5380_reg = get_falcon_5380_reg;
@@ -1027,10 +1013,7 @@ scsi_ipending()
 }
 
 extern inline void
-scsi_dma_setup(reqp, phase, mbase)
-SC_REQ	*reqp;
-u_int	phase;
-u_char	mbase;
+scsi_dma_setup(SC_REQ *reqp, u_int phase, u_char mbase)
 {
 	if (machineid & ATARI_FALCON)
 		scsi_falcon_dmasetup(reqp, phase, mbase);
@@ -1038,9 +1021,7 @@ u_char	mbase;
 }
 
 extern inline int
-wrong_dma_range(reqp, dm)
-SC_REQ			*reqp;
-struct dma_chain	*dm;
+wrong_dma_range(SC_REQ *reqp, struct dma_chain *dm)
 {
 	if (machineid & ATARI_FALCON)
 		return(falcon_wrong_dma_range(reqp, dm));
@@ -1048,8 +1029,7 @@ struct dma_chain	*dm;
 }
 
 extern inline int
-poll_edma(reqp)
-SC_REQ	*reqp;
+poll_edma(SC_REQ *reqp)
 {
 	if (machineid & ATARI_FALCON)
 		return(falcon_poll_edma(reqp));
@@ -1057,9 +1037,7 @@ SC_REQ	*reqp;
 }
 
 extern inline int
-get_dma_result(reqp, bytes_left)
-SC_REQ	*reqp;
-u_long	*bytes_left;
+get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 {
 	if (machineid & ATARI_FALCON)
 		return(falcon_get_dma_result(reqp, bytes_left));

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2009/03/14 14:45:58 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2009/03/14 14:45:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2009/03/14 15:36:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbusmatch, mainbusattach, NULL, NULL);
 
 int
-mainbusmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbusmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	static int mainbus_matched = 0;
 
@@ -99,11 +96,7 @@ mainbusattach(parent, self, aux)
 }
 
 int
-mainbussearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)
@@ -112,11 +105,7 @@ mainbussearch(parent, cf, ldesc, aux)
 }
 
 int
-mainbus_map(physaddr, size, cacheable, virtaddr)
-	u_long physaddr;
-	int size;
-	int cacheable;
-	void ** virtaddr;
+mainbus_map(u_long physaddr, int size, int cacheable, void ** virtaddr)
 {
 
 	u_long pa, endpa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smallnet.c,v 1.6 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: smallnet.c,v 1.7 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,9 +68,7 @@ char kernel_image[KERNELSIZE] = "|This is the kernel image!\n";
  * The argument "-a" means netbsd should do an automatic reboot.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ret;
 	char *name;

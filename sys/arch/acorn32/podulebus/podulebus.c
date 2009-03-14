@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.21 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: podulebus.c,v 1.22 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.21 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.22 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -89,10 +89,7 @@ void podulescan(struct device *);
  */
  
 int
-podulebusmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+podulebusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	switch (IOMD_ID) {
 	case RPC600_IOMD_ID:
@@ -105,9 +102,7 @@ podulebusmatch(parent, cf, aux)
 
 
 int
-podulebusprint(aux, name)
-	void *aux;
-	const char *name;
+podulebusprint(void *aux, const char *name)
 {
 	struct podule_attach_args *pa = aux;
 
@@ -128,11 +123,7 @@ podulebusprint(aux, name)
 
 
 int
-podulebussubmatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+podulebussubmatch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct podule_attach_args *pa = aux;
 
@@ -153,8 +144,7 @@ podulebussubmatch(parent, cf, ldesc, aux)
 
 #if 0
 void
-dump_podule(podule)
-	podule_t *podule;
+dump_podule(podule_t *podule)
 {
 	printf("podule%d: ", podule->podulenum);
 	printf("flags0=%02x ", podule->flags0);
@@ -182,8 +172,7 @@ dump_podule(podule)
 #endif
 
 void
-podulechunkdirectory(podule)
-	podule_t *podule;
+podulechunkdirectory(podule_t *podule)
 {
 	u_int address;
 	u_int id;
@@ -237,10 +226,7 @@ podulechunkdirectory(podule)
 
 
 void
-poduleexamine(podule, dev, slottype)
-	podule_t *podule;
-	struct device *dev;
-	int slottype;
+poduleexamine(podule_t *podule, struct device *dev, int slottype)
 {
 	struct manufacturer_description *man_desc;
 	struct podule_description *pod_desc;
@@ -307,17 +293,14 @@ poduleexamine(podule, dev, slottype)
 
 
 u_int
-poduleread(address, offset)
-	u_int address;
-	int offset;
+poduleread(u_int address, int offset)
 {
 
 	return(ReadByte(address + offset));
 }
 
 void
-podulescan(dev)
-	struct device *dev;
+podulescan(struct device *dev)
 {
 	int loop;
 	podule_t *podule;
@@ -418,10 +401,7 @@ podulescan(dev)
  */
   
 void
-podulebusattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+podulebusattach(struct device *parent, struct device *self, void *aux)
 {
 	int loop;
 	struct podule_attach_args pa;
@@ -543,11 +523,7 @@ CFATTACH_DECL(podulebus, sizeof(struct device),
  */
 
 int
-matchpodule(pa, manufacturer, product, required_slot)
-	struct podule_attach_args *pa;
-	int manufacturer;
-	int product;
-	int required_slot;
+matchpodule(struct podule_attach_args *pa, int manufacturer, int product, int required_slot)
 {
 	if (pa->pa_podule->attached)
 		panic("podulebus: Podule already attached");

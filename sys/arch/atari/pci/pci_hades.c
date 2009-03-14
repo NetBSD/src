@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.9 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.10 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.9 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.10 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,9 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.9 2009/03/14 14:45:56 dsl Exp $");
 #include <atari/dev/grf_etreg.h>
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 	return (4);
 }
@@ -78,10 +76,7 @@ pcitag_t	tag;
 }
 
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	u_long	data;
 
@@ -90,11 +85,7 @@ pci_conf_read(pc, tag, reg)
 }
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	*((u_long *)(pci_conf_addr + pci_config_offset(tag) + reg))
 		= bswap32(data);
@@ -111,9 +102,7 @@ static pci_intr_info_t iinfo[4] = { { -1 }, { -1 }, { -1 }, { -1 } };
 static int	iifun(int, int);
 
 static int
-iifun(slot, sr)
-int	slot;
-int	sr;
+iifun(int slot, int sr)
 {
 	pci_intr_info_t *iinfo_p;
 	int		s;
@@ -195,9 +184,7 @@ pci_intr_establish(pc, ih, level, ih_fun, ih_arg)
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 	pci_intr_info_t *iinfo_p = (pci_intr_info_t *)cookie;
 
@@ -231,12 +218,7 @@ static u_char gdc_tab[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00, 0xff };
 
 void
-ati_vga_init(pc, tag, id, ba, fb)
-	pci_chipset_tag_t	pc;
-	pcitag_t		tag;
-	int			id;
-	volatile u_char		*ba;
-	u_char			*fb;
+ati_vga_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile u_char *ba, u_char *fb)
 {
 	int			i, csr;
 

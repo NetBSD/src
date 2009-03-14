@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.47 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: apecs.c,v 1.48 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.47 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.48 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,7 @@ int apecsfound;
 struct apecs_config apecs_configuration;
 
 int
-apecsmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+apecsmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -134,9 +131,7 @@ apecsmatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-apecs_init(acp, mallocsafe)
-	struct apecs_config *acp;
-	int mallocsafe;
+apecs_init(struct apecs_config *acp, int mallocsafe)
 {
 	acp->ac_comanche_pass2 =
 	    (REGVAL(COMANCHE_ED) & COMANCHE_ED_PASS2) != 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2009/03/14 15:36:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2009/03/14 14:46:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2009/03/14 15:36:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,9 +287,7 @@ struct partitionmap partition_map[] = {
  * Returns NULL on success, otherwise an error string
  */
 static const char *
-disklabel_mips_to_bsd(vh, lp)
-	struct mips_volheader *vh;
-	struct disklabel *lp;
+disklabel_mips_to_bsd(struct mips_volheader *vh, struct disklabel *lp)
 {
 	int  i, bp, mp;
 	struct partition *lpp;
@@ -335,9 +333,7 @@ disklabel_mips_to_bsd(vh, lp)
  * Returns NULL on success, otherwise an error string
  */
 static int
-disklabel_bsd_to_mips(lp, vh)
-	struct disklabel *lp;
-	struct mips_volheader *vh;
+disklabel_bsd_to_mips(struct disklabel *lp, struct mips_volheader *vh)
 {
 	int  i, bp, mp;
 	struct partition *lpp;
@@ -392,8 +388,7 @@ disklabel_bsd_to_mips(lp, vh)
  * of the entire volume header structure
  */
 int
-mipsvh_cksum(vhp)
-	struct mips_volheader *vhp;
+mipsvh_cksum(struct mips_volheader *vhp)
 {
 	int i, *ptr;
 	int cksum = 0;

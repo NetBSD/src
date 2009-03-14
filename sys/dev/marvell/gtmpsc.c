@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.31 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.32 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.31 2008/09/08 23:36:54 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.32 2009/03/14 15:36:18 dsl Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1739,8 +1739,7 @@ gtmpsc_poll(void *arg)
 #ifdef KGDB
 /* ARGSUSED */
 STATIC int
-gtmpsc_kgdb_getc(arg)
-	void *arg;
+gtmpsc_kgdb_getc(void *arg)
 {
 
 	return (gtmpsc_common_getc(comkgdbport));
@@ -1748,9 +1747,7 @@ gtmpsc_kgdb_getc(arg)
 
 /* ARGSUSED */
 STATIC void
-gtmpsc_kgdb_putc(arg, c)
-	void *arg;
-	int c;
+gtmpsc_kgdb_putc(void *arg, int c)
 {
 
 	return (gtmpsc_common_putc(comkgdbport, c));

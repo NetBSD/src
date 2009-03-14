@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.20 2009/03/14 14:46:10 dsl Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.21 2009/03/14 15:36:23 dsl Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.20 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.21 2009/03/14 15:36:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,11 +134,7 @@ atintr()
 struct route    forwro;
 
 void
-ddp_input(m, ifp, elh, phase)
-	struct mbuf    *m;
-	struct ifnet   *ifp;
-	struct elaphdr *elh;
-	int             phase;
+ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 {
 	struct rtentry *rt;
 	struct sockaddr_at from, to;
@@ -339,9 +335,7 @@ ddp_input(m, ifp, elh, phase)
 #include <ctype.h>
 
 static void
-bprint(data, len)
-	char *data;
-	int len;
+bprint(char *data, int len)
 {
 	char            xout[BPXLEN], aout[BPALEN];
 	int             i = 0;
@@ -383,8 +377,7 @@ bprint(data, len)
 }
 
 static void
-m_printm(m)
-	struct mbuf *m;
+m_printm(struct mbuf *m)
 {
 	for (; m; m = m->m_next)
 		bprint(mtod(m, char *), m->m_len);

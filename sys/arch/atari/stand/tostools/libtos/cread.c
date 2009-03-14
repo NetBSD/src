@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.5 2009/03/14 14:45:57 dsl Exp $	*/
+/*	$NetBSD: cread.c,v 1.6 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -115,17 +115,13 @@ zcfree (opaque, ptr)
 }
 
 void
-zmemcpy(dest, source, len)
-	unsigned char *dest;
-	unsigned char *source;
-	unsigned int len;
+zmemcpy(unsigned char *dest, unsigned char *source, unsigned int len)
 {
 	bcopy(source, dest, len);
 }
 
 static int
-get_byte(s)
-	struct sd *s;
+get_byte(struct sd *s)
 {
 	if (s->z_eof)
 		return (EOF);
@@ -164,8 +160,7 @@ getLong (s)
 }
 
 static void
-check_header(s)
-	struct sd *s;
+check_header(struct sd *s)
 {
 	int method; /* method byte */
 	int flags;  /* flags byte */
@@ -234,9 +229,7 @@ check_header(s)
  */
 
 int
-copen(fname, mode)
-	const char *fname;
-	int mode;
+copen(const char *fname, int mode)
 {
 	int fd;
 	struct sd *s = 0;
@@ -271,8 +264,7 @@ errout:
 }
 
 int
-cclose(fd)
-	int fd;
+cclose(int fd)
 {
 	struct sd *s;
 
@@ -287,10 +279,7 @@ cclose(fd)
 }
 
 size_t
-cread(fd, buf, len)
-	int fd;
-	void *buf;
-	size_t len;
+cread(int fd, void *buf, size_t len)
 {
 	struct sd *s;
 	unsigned char *start = buf; /* starting point for crc computation */
@@ -378,10 +367,7 @@ cread(fd, buf, len)
 }
 
 off_t
-clseek(fd, offset, where)
-	int fd;
-	off_t offset;
-	int where;
+clseek(int fd, off_t offset, int where)
 {
 	struct sd *s;
 

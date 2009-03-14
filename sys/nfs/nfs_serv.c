@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.142 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.143 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.142 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.143 2009/03/14 15:36:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,11 +145,7 @@ nfsserver_modcmd(modcmd_t cmd, void *arg)
  * nfs v3 access service
  */
 int
-nfsrv3_access(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv3_access(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -212,11 +208,7 @@ nfsrv3_access(nfsd, slp, lwp, mrq)
  * nfs getattr service
  */
 int
-nfsrv_getattr(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_getattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -256,11 +248,7 @@ nfsrv_getattr(nfsd, slp, lwp, mrq)
  * nfs setattr service
  */
 int
-nfsrv_setattr(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_setattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -387,11 +375,7 @@ out:
  * nfs lookup rpc
  */
 int
-nfsrv_lookup(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -505,11 +489,7 @@ nfsrv_lookup(nfsd, slp, lwp, mrq)
  * nfs readlink service
  */
 int
-nfsrv_readlink(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_readlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -604,11 +584,7 @@ out:
  * nfs read service
  */
 int
-nfsrv_read(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -831,11 +807,7 @@ read_error:
  * nfs write service
  */
 int
-nfsrv_write(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -1048,11 +1020,7 @@ nfsrv_nwdelayhash(struct nfssvc_sock *slp, const nfsrvfh_t *nsfh)
  * Jan. 1994.
  */
 int
-nfsrv_writegather(ndp, slp, lwp, mrq)
-	struct nfsrv_descript **ndp;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_writegather(struct nfsrv_descript **ndp, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct timeval now;
 	struct iovec *ivp;
@@ -1364,9 +1332,7 @@ loop1:
  * NB: Must be called at splsoftclock().
  */
 void
-nfsrvw_coalesce(owp, nfsd)
-        struct nfsrv_descript *owp;
-        struct nfsrv_descript *nfsd;
+nfsrvw_coalesce(struct nfsrv_descript *owp, struct nfsrv_descript *nfsd)
 {
         int overlap;
         struct mbuf *mp;
@@ -1411,11 +1377,7 @@ nfsrvw_coalesce(owp, nfsd)
  * now does a truncate to 0 length via. setattr if it already exists
  */
 int
-nfsrv_create(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -1630,11 +1592,7 @@ nfsmout:
  * nfs v3 mknod service
  */
 int
-nfsrv_mknod(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -1768,11 +1726,7 @@ nfsmout:
  * nfs remove service
  */
 int
-nfsrv_remove(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -1848,11 +1802,7 @@ out:
  * nfs rename service
  */
 int
-nfsrv_rename(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -2106,11 +2056,7 @@ nfsmout:
  * nfs link service
  */
 int
-nfsrv_link(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -2199,11 +2145,7 @@ out1:
  * nfs symbolic link service
  */
 int
-nfsrv_symlink(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -2332,11 +2274,7 @@ nfsmout:
  * nfs mkdir service
  */
 int
-nfsrv_mkdir(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -2441,11 +2379,7 @@ nfsmout:
  * nfs rmdir service
  */
 int
-nfsrv_rmdir(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -2569,11 +2503,7 @@ struct flrep {
 };
 
 int
-nfsrv_readdir(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -2831,11 +2761,7 @@ again:
 }
 
 int
-nfsrv_readdirplus(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -3159,11 +3085,7 @@ invalid:
  * nfs commit service
  */
 int
-nfsrv_commit(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -3219,11 +3141,7 @@ nfsrv_commit(nfsd, slp, lwp, mrq)
  * nfs statfs service
  */
 int
-nfsrv_statfs(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_statfs(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -3293,11 +3211,7 @@ nfsmout:
  * nfs fsinfo service
  */
 int
-nfsrv_fsinfo(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_fsinfo(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -3367,11 +3281,7 @@ nfsrv_fsinfo(nfsd, slp, lwp, mrq)
  * nfs pathconf service
  */
 int
-nfsrv_pathconf(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_pathconf(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -3483,13 +3393,7 @@ nfsrv_noop(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
  * will return EPERM instead of EACCESS. EPERM is always an error.
  */
 int
-nfsrv_access(vp, flags, cred, rdonly, lwp, override)
-	struct vnode *vp;
-	int flags;
-	kauth_cred_t cred;
-	int rdonly;
-	struct lwp *lwp;
-	int override;
+nfsrv_access(struct vnode *vp, int flags, kauth_cred_t cred, int rdonly, struct lwp *lwp, int override)
 {
 	struct vattr vattr;
 	int error;

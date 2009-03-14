@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.48 2009/03/05 13:21:44 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.49 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.48 2009/03/05 13:21:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.49 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,7 @@ static vaddr_t	bootm_alloc(paddr_t pa, u_long size, int flags);
 static int	bootm_free(vaddr_t va, u_long size);
 
 void
-bootm_init(va, ptep, size)
-vaddr_t		va;
-pt_entry_t	*ptep;
-u_long		size;
+bootm_init(vaddr_t va, pt_entry_t *ptep, u_long size)
 {
 	bootm_ex = extent_create("bootmem", va, va + size, M_DEVBUF,
 	    (void *)bootm_ex_storage, sizeof(bootm_ex_storage),
@@ -94,10 +91,7 @@ u_long		size;
 }
 
 vaddr_t
-bootm_alloc(pa, size, flags)
-paddr_t	pa;
-u_long	size;
-int	flags;
+bootm_alloc(paddr_t pa, u_long size, int flags)
 {
 	pt_entry_t	*pg, *epg;
 	pt_entry_t	pg_proto;
@@ -132,9 +126,7 @@ int	flags;
 }
 
 int
-bootm_free(va, size)
-vaddr_t	va;
-u_long	size;
+bootm_free(vaddr_t va, u_long size)
 {
 	if ((va < bootm_ex->ex_start) || ((va + size) > bootm_ex->ex_end))
 		return 0; /* Not for us! */
@@ -143,12 +135,7 @@ u_long	size;
 }
 
 int
-bus_space_map(t, bpa, size, flags, mhp)
-bus_space_tag_t		t;
-bus_addr_t		bpa;
-bus_size_t		size;
-int			flags;
-bus_space_handle_t	*mhp;
+bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_handle_t *mhp)
 {
 	int	error;
 
@@ -226,12 +213,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags, bpap, bshp)
 }
 
 static int
-bus_mem_add_mapping(t, bpa, size, flags, bshp)
-bus_space_tag_t		t;
-bus_addr_t		bpa;
-bus_size_t		size;
-int			flags;
-bus_space_handle_t	*bshp;
+bus_mem_add_mapping(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	vaddr_t	va;
 	paddr_t	pa, endpa;
@@ -285,10 +267,7 @@ bus_space_handle_t	*bshp;
 }
 
 void
-bus_space_unmap(t, bsh, size)
-bus_space_tag_t		t;
-bus_space_handle_t	bsh;
-bus_size_t		size;
+bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	vaddr_t	va, endva;
 	paddr_t bpa;
@@ -336,12 +315,7 @@ bus_space_handle_t	*mhp;
 }
 
 paddr_t
-bus_space_mmap(t, addr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot, int flags)
 {
 
 	/*
@@ -667,10 +641,7 @@ bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
  * bus-specific DMA memory free functions.
  */
 void
-bus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	struct vm_page *m;
 	bus_addr_t addr, offset;
@@ -700,13 +671,7 @@ bus_dmamem_free(t, segs, nsegs)
  * bus-specific DMA memory map functions.
  */
 int
-bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	void **kvap;
-	int flags;
+bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr, offset;
@@ -746,10 +711,7 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
  * bus-specific DMA memory unmapping functions.
  */
 void
-bus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	void *kva;
-	size_t size;
+bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC

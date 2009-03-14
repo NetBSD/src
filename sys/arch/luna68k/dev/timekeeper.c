@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.6 2009/03/14 14:46:00 dsl Exp $ */
+/* $NetBSD: timekeeper.c,v 1.7 2009/03/14 15:36:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.6 2009/03/14 14:46:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.7 2009/03/14 15:36:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,10 +67,7 @@ static int dsclock_get(todr_chip_handle_t, struct clock_ymdhms *);
 static int dsclock_set(todr_chip_handle_t, struct clock_ymdhms *);
 
 static int
-clock_match(parent, match, aux)
-        struct device *parent;
-        struct cfdata *match;
-        void *aux;
+clock_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 

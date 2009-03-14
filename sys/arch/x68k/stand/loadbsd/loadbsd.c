@@ -19,13 +19,13 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.10 2009/03/14 14:46:07 dsl Exp $
+ *	$NetBSD: loadbsd.c,v 1.11 2009/03/14 15:36:15 dsl Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.10 2009/03/14 14:46:07 dsl Exp $");
-#define VERSION	"$Revision: 1.10 $ $Date: 2009/03/14 14:46:07 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.11 2009/03/14 15:36:15 dsl Exp $");
+#define VERSION	"$Revision: 1.11 $ $Date: 2009/03/14 15:36:15 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -166,8 +166,7 @@ const struct devtbl {
 };
 
 static int
-bootdev(devstr)
-	const char *devstr;
+bootdev(const char *devstr)
 {
 	unsigned u;
 	unsigned major, unit, lun, partition;
@@ -299,8 +298,7 @@ found:	major = devtable[u].major;
  *	|----------------------|
  */
 static struct tramparg *
-read_kernel(fn)
-	const char *fn;
+read_kernel(const char *fn)
 {
 	int fd;
 	union dos_fcb *fcb;
@@ -413,9 +411,7 @@ chkmpu()
 }
 
 static __dead void
-usage(status, msg)
-	int status;
-	const char *msg;
+usage(int status, const char *msg)
 {
 	extern const char *const __progname;
 

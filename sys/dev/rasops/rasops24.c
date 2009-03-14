@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.25 2008/04/28 20:23:56 martin Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.26 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.25 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.26 2009/03/14 15:36:20 dsl Exp $");
 
 #include "opt_rasops.h"
 
@@ -79,8 +79,7 @@ static int	stamp_mutex;	/* XXX see note in readme */
  * Initialize rasops_info struct for this colordepth.
  */
 void
-rasops24_init(ri)
-	struct rasops_info *ri;
+rasops24_init(struct rasops_info *ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
@@ -202,9 +201,7 @@ rasops24_putchar(cookie, row, col, uc, attr)
  * Recompute the blitting stamp.
  */
 static void
-rasops24_makestamp(ri, attr)
-	struct rasops_info *ri;
-	long attr;
+rasops24_makestamp(struct rasops_info *ri, long attr)
 {
 	u_int fg, bg, c1, c2, c3, c4;
 	int i;

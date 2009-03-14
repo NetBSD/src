@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.12 2007/01/18 12:43:38 cbiere Exp $	*/
+/*	$NetBSD: procs.c,v 1.13 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.12 2007/01/18 12:43:38 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.13 2009/03/14 15:36:24 dsl Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -88,9 +88,7 @@ end_events()
 }
 
 int
-acttable(f,actstring)
-	char *actstring;
-	FILE *f;
+acttable(FILE *f,char *actstring)
 {
 	static int Actindex = 0;
 	extern FILE *astringfile;
@@ -300,8 +298,7 @@ printprotoerrs()
 
 #ifndef LINT
 void
-dump_predtable(f)
-	FILE *f;
+dump_predtable(FILE *f)
 {
 	struct Predicate *p;
 	register int e,s, hadapred;
@@ -410,8 +407,7 @@ dump_predtable(f)
 #endif /* LINT */
 
 char *
-stash(buf)
-char *buf;
+stash(char *buf)
 {
 	register int len;
 	register char *c;

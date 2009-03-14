@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.34 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.35 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.34 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.35 2009/03/14 15:36:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,9 +410,7 @@ struct xdr_string {
 };
 
 struct mbuf *
-xdr_string_encode(str, len)
-	char *str;
-	int len;
+xdr_string_encode(char *str, int len)
 {
 	struct mbuf *m;
 	struct xdr_string *xs;

@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.23 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: mcpcia.c,v 1.24 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.23 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.24 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +114,7 @@ int	mcpcia_bus_get_window(int, int,
 	    struct alpha_bus_space_translation *abst);
 
 static int
-mcpciamatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mcpciamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mcbus_dev_attach_args *ma = aux;
 	if (ma->ma_type == MCBUS_TYPE_PCI)
@@ -126,10 +123,7 @@ mcpciamatch(parent, cf, aux)
 }
 
 static void
-mcpciaattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mcpciaattach(struct device *parent, struct device *self, void *aux)
 {
 	static int first = 1;
 	struct mcbus_dev_attach_args *ma = aux;
@@ -247,9 +241,7 @@ mcpcia_init()
 }
 
 void
-mcpcia_init0(ccp, mallocsafe)
-	struct mcpcia_config *ccp;
-	int mallocsafe;
+mcpcia_init0(struct mcpcia_config *ccp, int mallocsafe)
 {
 	u_int32_t ctl;
 
@@ -296,8 +288,7 @@ mcpcia_init0(ccp, mallocsafe)
 
 #ifdef TEST_PROBE_DEATH
 static void
-die_heathen_dog(arg)
-	void *arg;
+die_heathen_dog(void *arg)
 {
 	struct mcpcia_config *ccp = arg;
 

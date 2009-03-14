@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.14 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.15 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.14 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.15 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,7 @@ u_long gra_def_color16[16] = {
  * Initialize list of possible video modes.
  */
 int
-grfabs_probe(probe_fun)
-grf_probe_t	probe_fun;
+grfabs_probe(grf_probe_t probe_fun)
 {
 	static int	inited = 0;
 
@@ -115,10 +114,7 @@ grf_probe_t	probe_fun;
 }
 
 view_t *
-grf_alloc_view(d, dim, depth)
-dmode_t	*d;
-dimen_t	*dim;
-u_char	depth;
+grf_alloc_view(dmode_t *d, dimen_t *dim, u_char depth)
 {
 	if (!d)
 		d = get_best_display_mode(dim, depth, NULL);
@@ -128,9 +124,7 @@ u_char	depth;
 }
 
 dmode_t	*
-grf_get_best_mode(dim, depth)
-dimen_t	*dim;
-u_char	depth;
+grf_get_best_mode(dimen_t *dim, u_char depth)
 {
 	return (get_best_display_mode(dim, depth, NULL));
 }
@@ -160,9 +154,7 @@ view_t *v;
 }
 
 int
-grf_get_colormap(v, cm)
-view_t		*v;
-colormap_t	*cm;
+grf_get_colormap(view_t *v, colormap_t *cm)
 {
 	colormap_t	*gcm;
 	int		i, n;
@@ -188,18 +180,13 @@ colormap_t	*cm;
 }
 
 int
-grf_use_colormap(v, cm)
-view_t		*v;
-colormap_t	*cm;
+grf_use_colormap(view_t *v, colormap_t *cm)
 {
 	return (v->mode->grfabs_funcs->use_colormap)(v, cm);
 }
 
 static dmode_t *
-get_best_display_mode(dim, depth, curr_mode)
-int	depth;
-dimen_t	*dim;
-dmode_t	*curr_mode;
+get_best_display_mode(dimen_t *dim, int depth, dmode_t *curr_mode)
 {
 	dmode_t		*save;
 	dmode_t		*dm;

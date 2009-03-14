@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 2009/03/05 13:21:44 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.101 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2009/03/05 13:21:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2009/03/14 15:36:03 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -220,12 +220,7 @@ extern struct pcb *curpcb;
  * to user mode.
  */
 static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr, int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -286,10 +281,7 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
@@ -348,9 +340,7 @@ kgdb_cont:
  * return to fault handler
  */
 static void
-trapcpfault(l, fp)
-	struct lwp *l;
-	struct frame *fp;
+trapcpfault(struct lwp *l, struct frame *fp)
 {
 	/*
 	 * We have arranged to catch this fault in one of the
@@ -754,9 +744,7 @@ static void dumpssw(u_short);
 #endif /* DEBUG */
 
 static int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -992,8 +980,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 static void
-dumpssw(ssw)
-	register u_short ssw;
+dumpssw(register u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)

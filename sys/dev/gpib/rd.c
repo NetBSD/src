@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.22 2009/01/13 13:35:53 yamt Exp $ */
+/*	$NetBSD: rd.c,v 1.23 2009/03/14 15:36:17 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.22 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.23 2009/03/14 15:36:17 dsl Exp $");
 
 #include "rnd.h"
 
@@ -311,10 +311,7 @@ const struct cdevsw rd_cdevsw = {
 extern struct cfdriver rd_cd;
 
 int
-rdlookup(id, slave, punit)
-	int id;
-	int slave;
-	int punit;
+rdlookup(int id, int slave, int punit)
 {
 	int i;
 
@@ -328,10 +325,7 @@ rdlookup(id, slave, punit)
 }
 
 int
-rdmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+rdmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cs80bus_attach_args *ca = aux;
 
@@ -472,8 +466,7 @@ rdattach(parent, self, aux)
  * Read or construct a disklabel
  */
 int
-rdgetinfo(sc)
-	struct rd_softc *sc;
+rdgetinfo(struct rd_softc *sc)
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
 	struct partition *pi;
@@ -665,8 +658,7 @@ done:
  * callout from timeouts
  */
 void
-rdrestart(arg)
-	void *arg;
+rdrestart(void *arg)
 {
 	int s = splbio();
 	rdustart((struct rd_softc *)arg);
@@ -678,8 +670,7 @@ rdrestart(arg)
 /* called by rdrestart() when handingly timeouts */
 /* called by rdintr() */
 void
-rdustart(sc)
-	struct rd_softc *sc;
+rdustart(struct rd_softc *sc)
 {
 	struct buf *bp;
 
@@ -691,9 +682,7 @@ rdustart(sc)
 }
 
 struct buf *
-rdfinish(sc, bp)
-	struct rd_softc *sc;
-	struct buf *bp;
+rdfinish(struct rd_softc *sc, struct buf *bp)
 {
 
 	sc->sc_errcnt = 0;
@@ -712,9 +701,7 @@ rdfinish(sc, bp)
 }
 
 void
-rdcallback(v, action)
-	void *v;
-	int action;
+rdcallback(void *v, int action)
 {
 	struct rd_softc *sc = v;
 
@@ -740,8 +727,7 @@ rdcallback(v, action)
 /* called from rdustart() to start a transfer */
 /* called from gpib interface as the initiator */
 void
-rdstart(sc)
-	struct rd_softc *sc;
+rdstart(struct rd_softc *sc)
 {
 	struct buf *bp = bufq_peek(sc->sc_tab);
 	int part, slave, punit;
@@ -804,8 +790,7 @@ again:
 }
 
 void
-rdintr(sc)
-	struct rd_softc *sc;
+rdintr(struct rd_softc *sc)
 {
 	struct buf *bp;
 	u_int8_t stat = 13;	/* in case gpibrecv fails */
@@ -865,8 +850,7 @@ rdintr(sc)
  * 0 if we should just quietly give up.
  */
 int
-rderror(sc)
-	struct rd_softc *sc;
+rderror(struct rd_softc *sc)
 {
 	struct cs80_stat css;
 	struct buf *bp;
@@ -995,20 +979,14 @@ rderror(sc)
 }
 
 int
-rdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+rdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-rdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+rdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -1078,9 +1056,7 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 void
-rdgetdefaultlabel(sc, lp)
-	struct rd_softc *sc;
-	struct disklabel *lp;
+rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 {
 	int type = sc->sc_type;
 
