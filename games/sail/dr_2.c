@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.23 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.24 2009/03/14 20:04:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.23 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.24 2009/03/14 20:04:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static void move_ship(struct ship *, const char *, unsigned char *,
 		      short *, short *, int *);
 static void try(struct ship *f, struct ship *t,
 		char *command, size_t commandmax, char *temp, size_t tempmax,
-		int ma, int ta, int af, int vma, int dir, int *high,
+		int ma, int ta, bool af, int vma, int dir, int *high,
 		int rakeme);
 static void rmend(char *);
 
@@ -158,7 +158,7 @@ str_end(const char *str)
 
 void
 closeon(struct ship *from, struct ship *to, char *command, size_t commandmax,
-	int ta, int ma, int af)
+	int ta, int ma, bool af)
 {
 	int high;
 	char temp[10];
@@ -246,7 +246,7 @@ static void
 try(struct ship *f, struct ship *t,
     char *command, size_t commandmax,
     char *temp, size_t tempmax,
-    int ma, int ta, int af, int vma, int dir, int *high, int rakeme)
+    int ma, int ta, bool af, int vma, int dir, int *high, int rakeme)
 {
 	int new, n;
 	char st[4];

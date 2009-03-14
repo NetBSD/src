@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.21 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.22 2009/03/14 20:04:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.21 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.22 2009/03/14 20:04:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,8 @@ acceptmove(void)
 {
 	int ta;
 	int ma;
-	char af;
-	int moved = 0;
+	bool af;
+	bool moved = false;
 	int vma, dir;
 	char promptstr[60];
 	char buf[60], last = '\0';
@@ -116,7 +116,7 @@ acceptmove(void)
 				*p-- = '\0';
 			}
 			last = '0';
-			moved = 1;
+			moved = true;
 			ma -= *p - '0';
 			vma -= *p - '0';
 			if ((ta < 0 && moved) || (vma < 0 && moved))

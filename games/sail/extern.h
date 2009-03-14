@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.30 2009/03/14 19:35:13 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.31 2009/03/14 20:04:43 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -32,6 +32,7 @@
  */
 
 #include <sys/types.h>
+#include <stdbool.h>
 
 #include "machdep.h"
 
@@ -306,7 +307,7 @@ int next(void);
 void thinkofgrapples(void);
 void checkup(void);
 void prizecheck(void);
-void closeon(struct ship *, struct ship *, char *, size_t, int, int, int);
+void closeon(struct ship *, struct ship *, char *, size_t, int, int, bool);
 
 /* dr_3.c */
 void moveall(void);
@@ -327,7 +328,7 @@ int mensent(struct ship *, struct ship *, int[3], struct ship **, int *, int);
 int dr_main(void);
 
 /* game.c */
-int maxturns(struct ship *, char *);
+int maxturns(struct ship *, bool *);
 int maxmove(struct ship *, int, int);
 
 /* lo_main.c */
