@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2006/03/18 01:43:52 abs Exp $ */
+/*	$NetBSD: extern.h,v 1.29 2009/03/14 18:32:47 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -304,7 +304,7 @@ int next (void);
 void thinkofgrapples (void);
 void checkup (void);
 void prizecheck (void);
-void closeon (struct ship *, struct ship *, char *, int, int, int);
+void closeon (struct ship *, struct ship *, char *, size_t, int, int, int);
 
 /* dr_3.c */
 void moveall (void);
