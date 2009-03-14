@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.20 2009/03/02 06:43:53 dholland Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.21 2009/03/14 17:10:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.20 2009/03/02 06:43:53 dholland Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.21 2009/03/14 17:10:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +49,7 @@ __RCSID("$NetBSD: dr_2.c,v 1.20 2009/03/02 06:43:53 dholland Exp $");
 
 static int	str_end(const char *);
 static int	score(struct ship *, struct ship *, char *, int);
-static void	move_ship(struct ship *, const char *, unsigned char *, short *, short *, char *);
+static void	move_ship(struct ship *, const char *, unsigned char *, short *, short *, int *);
 static void	try(struct ship *, struct ship *, char *, char *, int, int, int, int, int, int *, int);
 static void	rmend(char *);
 
@@ -58,7 +59,7 @@ void
 thinkofgrapples(void)
 {
 	struct ship *sp, *sq;
-	char friendly;
+	bool friendly;
 
 	foreachship(sp) {
 		if (sp->file->captain[0] || sp->file->dir == 0)
@@ -158,7 +159,7 @@ closeon(struct ship *from, struct ship *to, char *command, int ta, int ma, int a
 static int
 score(struct ship *ship, struct ship *to, char *movement, int onlytemp)
 {
-	char drift;
+	int drift;
 	int row, col, dir, total, ran;
 	struct File *fp = ship->file;
 
@@ -187,7 +188,7 @@ score(struct ship *ship, struct ship *to, char *movement, int onlytemp)
 }
 
 static void
-move_ship(struct ship *ship, const char *p, unsigned char *dir, short *row, short *col, char *drift)
+move_ship(struct ship *ship, const char *p, unsigned char *dir, short *row, short *col, int *drift)
 {
 	int dist;
 	char moved = 0;
