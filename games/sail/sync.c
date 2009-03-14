@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.29 2009/03/14 19:57:14 dholland Exp $	*/
+/*	$NetBSD: sync.c,v 1.30 2009/03/14 22:52:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.29 2009/03/14 19:57:14 dholland Exp $");
+__RCSID("$NetBSD: sync.c,v 1.30 2009/03/14 22:52:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,91 @@ __RCSID("$NetBSD: sync.c,v 1.29 2009/03/14 19:57:14 dholland Exp $");
 #include "pathnames.h"
 
 #define BUFSIZE 4096
+
+/* Message types */
+#define W_CAPTAIN	1
+#define W_CAPTURED	2
+#define W_CLASS		3
+#define W_CREW		4
+#define W_DBP		5
+#define W_DRIFT		6
+#define W_EXPLODE	7
+#define W_FILE		8
+#define W_FOUL		9
+#define W_GUNL		10
+#define W_GUNR		11
+#define W_HULL		12
+#define W_MOVE		13
+#define W_OBP		14
+#define W_PCREW		15
+#define W_UNFOUL	16
+#define W_POINTS	17
+#define W_QUAL		18
+#define W_UNGRAP	19
+#define W_RIGG		20
+#define W_COL		21
+#define W_DIR		22
+#define W_ROW		23
+#define W_SIGNAL	24
+#define W_SINK		25
+#define W_STRUCK	26
+#define W_TA		27
+#define W_ALIVE		28
+#define W_TURN		29
+#define W_WIND		30
+#define W_FS		31
+#define W_GRAP		32
+#define W_RIG1		33
+#define W_RIG2		34
+#define W_RIG3		35
+#define W_RIG4		36
+#define W_BEGIN		37
+#define W_END		38
+#define W_DDEAD		39
+
+
+static void recv_captain(struct ship *ship, const char *astr);
+static void recv_captured(struct ship *ship, long a);
+static void recv_class(struct ship *ship, long a);
+static void recv_crew(struct ship *ship, long a, long b, long c);
+static void recv_dbp(struct ship *ship, long a, long b, long c, long d);
+static void recv_drift(struct ship *ship, long a);
+static void recv_explode(struct ship *ship, long a);
+static void recv_file(void);
+static void recv_foul(struct ship *ship, long a);
+static void recv_gunl(struct ship *ship, long a, long b);
+static void recv_gunr(struct ship *ship, long a, long b);
+static void recv_hull(struct ship *ship, long a);
+static void recv_move(struct ship *ship, const char *astr);
+static void recv_obp(struct ship *ship, long a, long b, long c, long d);
+static void recv_pcrew(struct ship *ship, long a);
+static void recv_unfoul(struct ship *ship, long a, long b);
+static void recv_points(struct ship *ship, long a);
+static void recv_qual(struct ship *ship, long a);
+static void recv_ungrap(struct ship *ship, long a, long b);
+static void recv_rigg(struct ship *ship, long a, long b, long c, long d);
+static void recv_col(struct ship *ship, long a);
+static void recv_dir(struct ship *ship, long a);
+static void recv_row(struct ship *ship, long a);
+static void recv_signal(struct ship *ship, const char *astr);
+static void recv_sink(struct ship *ship, long a);
+static void recv_struck(struct ship *ship, long a);
+static void recv_ta(struct ship *ship, long a);
+static void recv_alive(void);
+static void recv_turn(long a);
+static void recv_wind(long a, long b);
+static void recv_fs(struct ship *ship, long a);
+static void recv_grap(struct ship *ship, long a);
+static void recv_rig1(struct ship *ship, long a);
+static void recv_rig2(struct ship *ship, long a);
+static void recv_rig3(struct ship *ship, long a);
+static void recv_rig4(struct ship *ship, long a);
+static void recv_begin(struct ship *ship);
+static void recv_end(struct ship *ship);
+static void recv_ddead(void);
+
+static void Write(int, struct ship *, long, long, long, long);
+static void Writestr(int, struct ship *, const char *);
 
 static int sync_update(int, struct ship *, const char *,
 		       long, long, long, long);
@@ -102,7 +187,7 @@ makesignal(struct ship *from, const char *fmt, struct ship *ship, ...)
 	fmtship(format, sizeof(format), fmt, ship);
 	vsnprintf(message, sizeof(message), format, ap);
 	va_end(ap);
-	Writestr(W_SIGNAL, from, message);
+	send_signal(from, message);
 }
 
 /*VARARGS2*/
@@ -115,7 +200,7 @@ makemsg(struct ship *from, const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(message, sizeof(message), fmt, ap);
 	va_end(ap);
-	Writestr(W_SIGNAL, from, message);
+	send_signal(from, message);
 }
 
 int
@@ -178,13 +263,14 @@ sync_close(int doremove)
 	}
 }
 
-void
+static void
 Write(int type, struct ship *ship, long a, long b, long c, long d)
 {
 	size_t max = sizeof(sync_buf) - (sync_bp - sync_buf);
+	int shipindex = (ship == NULL) ? 0 : ship->file->index;
 
 	snprintf(sync_bp, max, "%d %d 0 %ld %ld %ld %ld\n",
-		       type, ship->file->index, a, b, c, d);
+		       type, shipindex, a, b, c, d);
 	while (*sync_bp++)
 		;
 	sync_bp--;
@@ -193,12 +279,13 @@ Write(int type, struct ship *ship, long a, long b, long c, long d)
 	sync_update(type, ship, NULL, a, b, c, d);
 }
 
-void
+static void
 Writestr(int type, struct ship *ship, const char *a)
 {
 	size_t max = sizeof(sync_buf) - (sync_bp - sync_buf);
+	int shipindex = (ship == NULL) ? 0 : ship->file->index;
 
-	snprintf(sync_bp, max, "%d %d 1 %s\n", type, ship->file->index, a);
+	snprintf(sync_bp, max, "%d %d 1 %s\n", type, shipindex, a);
 	while (*sync_bp++)
 		;
 	sync_bp--;
@@ -315,194 +402,594 @@ sync_update(int type, struct ship *ship, const char *astr,
 	    long a, long b, long c, long d)
 {
 	switch (type) {
-	case W_DBP: {
-		struct BP *p = &ship->file->DBP[a];
-		p->turnsent = b;
-		p->toship = SHIP(c);
-		p->mensent = d;
-		break;
-		}
-	case W_OBP: {
-		struct BP *p = &ship->file->OBP[a];
-		p->turnsent = b;
-		p->toship = SHIP(c);
-		p->mensent = d;
-		break;
-		}
-	case W_FOUL: {
-		struct snag *p = &ship->file->foul[a];
-		if (SHIP(a)->file->dir == 0)
-			break;
-		if (p->sn_count++ == 0)
-			p->sn_turn = turn;
-		ship->file->nfoul++;
-		break;
-		}
-	case W_GRAP: {
-		struct snag *p = &ship->file->grap[a];
-		if (SHIP(a)->file->dir == 0)
-			break;
-		if (p->sn_count++ == 0)
-			p->sn_turn = turn;
-		ship->file->ngrap++;
-		break;
-		}
-	case W_UNFOUL: {
-		struct snag *p = &ship->file->foul[a];
-		if (p->sn_count > 0) {
-			if (b) {
-				ship->file->nfoul -= p->sn_count;
-				p->sn_count = 0;
-			} else {
-				ship->file->nfoul--;
-				p->sn_count--;
-			}
-		}
-		break;
-		}
-	case W_UNGRAP: {
-		struct snag *p = &ship->file->grap[a];
-		if (p->sn_count > 0) {
-			if (b) {
-				ship->file->ngrap -= p->sn_count;
-				p->sn_count = 0;
-			} else {
-				ship->file->ngrap--;
-				p->sn_count--;
-			}
-		}
-		break;
-		}
-	case W_SIGNAL:
-		if (mode == MODE_PLAYER) {
-			if (nobells)
-				Signal("$$: %s", ship, astr);
-			else
-				Signal("\a$$: %s", ship, astr);
-		}
-		break;
-	case W_CREW: {
-		struct shipspecs *s = ship->specs;
-		s->crew1 = a;
-		s->crew2 = b;
-		s->crew3 = c;
-		break;
-		}
-	case W_CAPTAIN:
-		strlcpy(ship->file->captain, astr,
-			sizeof ship->file->captain);
-		break;
-	case W_CAPTURED:
-		if (a < 0)
-			ship->file->captured = 0;
-		else
-			ship->file->captured = SHIP(a);
-		break;
-	case W_CLASS:
-		ship->specs->class = a;
-		break;
-	case W_DRIFT:
-		ship->file->drift = a;
-		break;
-	case W_EXPLODE:
-		if ((ship->file->explode = a) == 2)
-			ship->file->dir = 0;
-		break;
-	case W_FS:
-		ship->file->FS = a;
-		break;
-	case W_GUNL: {
-		struct shipspecs *s = ship->specs;
-		s->gunL = a;
-		s->carL = b;
-		break;
-		}
-	case W_GUNR: {
-		struct shipspecs *s = ship->specs;
-		s->gunR = a;
-		s->carR = b;
-		break;
-		}
-	case W_HULL:
-		ship->specs->hull = a;
-		break;
-	case W_MOVE:
-		strlcpy(ship->file->movebuf, astr,
-			sizeof ship->file->movebuf);
-		break;
-	case W_PCREW:
-		ship->file->pcrew = a;
-		break;
-	case W_POINTS:
-		ship->file->points = a;
-		break;
-	case W_QUAL:
-		ship->specs->qual = a;
-		break;
-	case W_RIGG: {
-		struct shipspecs *s = ship->specs;
-		s->rig1 = a;
-		s->rig2 = b;
-		s->rig3 = c;
-		s->rig4 = d;
-		break;
-		}
-	case W_RIG1:
-		ship->specs->rig1 = a;
-		break;
-	case W_RIG2:
-		ship->specs->rig2 = a;
-		break;
-	case W_RIG3:
-		ship->specs->rig3 = a;
-		break;
-	case W_RIG4:
-		ship->specs->rig4 = a;
-		break;
-	case W_COL:
-		ship->file->col = a;
-		break;
-	case W_DIR:
-		ship->file->dir = a;
-		break;
-	case W_ROW:
-		ship->file->row = a;
-		break;
-	case W_SINK:
-		if ((ship->file->sink = a) == 2)
-			ship->file->dir = 0;
-		break;
-	case W_STRUCK:
-		ship->file->struck = a;
-		break;
-	case W_TA:
-		ship->specs->ta = a;
-		break;
-	case W_ALIVE:
-		alive = 1;
-		break;
-	case W_TURN:
-		turn = a;
-		break;
-	case W_WIND:
-		winddir = a;
-		windspeed = b;
-		break;
-	case W_BEGIN:
-		strcpy(ship->file->captain, "begin");
-		people++;
-		break;
-	case W_END:
-		*ship->file->captain = 0;
-		ship->file->points = 0;
-		people--;
-		break;
-	case W_DDEAD:
-		hasdriver = 0;
-		break;
+	case W_CAPTAIN:  recv_captain(ship, astr);    break;
+	case W_CAPTURED: recv_captured(ship, a);      break;
+	case W_CLASS:    recv_class(ship, a);         break;
+	case W_CREW:     recv_crew(ship, a, b, c);    break;
+	case W_DBP:      recv_dbp(ship, a, b, c, d);  break;
+	case W_DRIFT:    recv_drift(ship, a);         break;
+	case W_EXPLODE:  recv_explode(ship, a);       break;
+	case W_FILE:     recv_file();                 break;
+	case W_FOUL:     recv_foul(ship, a);          break;
+	case W_GUNL:     recv_gunl(ship, a, b);       break;
+	case W_GUNR:     recv_gunr(ship, a, b);       break;
+	case W_HULL:     recv_hull(ship, a);          break;
+	case W_MOVE:     recv_move(ship, astr);       break;
+	case W_OBP:      recv_obp(ship, a, b, c, d);  break;
+	case W_PCREW:    recv_pcrew(ship, a);         break;
+	case W_UNFOUL:   recv_unfoul(ship, a, b);     break;
+	case W_POINTS:   recv_points(ship, a);        break;
+	case W_QUAL:     recv_qual(ship, a);          break;
+	case W_UNGRAP:   recv_ungrap(ship, a, b);     break;
+	case W_RIGG:     recv_rigg(ship, a, b, c, d); break;
+	case W_COL:      recv_col(ship, a);           break;
+	case W_DIR:      recv_dir(ship, a);           break;
+	case W_ROW:      recv_row(ship, a);           break;
+	case W_SIGNAL:   recv_signal(ship, astr);     break;
+	case W_SINK:     recv_sink(ship, a);          break;
+	case W_STRUCK:   recv_struck(ship, a);        break;
+	case W_TA:       recv_ta(ship, a);            break;
+	case W_ALIVE:    recv_alive();                break;
+	case W_TURN:     recv_turn(a);                break;
+	case W_WIND:     recv_wind(a, b);             break;
+	case W_FS:       recv_fs(ship, a);            break;
+	case W_GRAP:     recv_grap(ship, a);          break;
+	case W_RIG1:     recv_rig1(ship, a);          break;
+	case W_RIG2:     recv_rig2(ship, a);          break;
+	case W_RIG3:     recv_rig3(ship, a);          break;
+	case W_RIG4:     recv_rig4(ship, a);          break;
+	case W_BEGIN:    recv_begin(ship);            break;
+	case W_END:      recv_end(ship);              break;
+	case W_DDEAD:    recv_ddead();                break;
 	default:
 		fprintf(stderr, "sync_update: unknown type %d\r\n", type);
 		return -1;
 	}
 	return 0;
+}
+
+/*
+ * Messages to send
+ */
+
+void
+send_captain(struct ship *ship, const char *astr)
+{
+	Writestr(W_CAPTAIN, ship, astr);
+}
+
+void
+send_captured(struct ship *ship, long a)
+{
+	Write(W_CAPTURED, ship, a, 0, 0, 0);
+}
+
+void
+send_class(struct ship *ship, long a)
+{
+	Write(W_CLASS, ship, a, 0, 0, 0);
+}
+
+void
+send_crew(struct ship *ship, long a, long b, long c)
+{
+	Write(W_CREW, ship, a, b, c, 0);
+}
+
+void
+send_dbp(struct ship *ship, long a, long b, long c, long d)
+{
+	Write(W_DBP, ship, a, b, c, d);
+}
+
+void
+send_drift(struct ship *ship, long a)
+{
+	Write(W_DRIFT, ship, a, 0, 0, 0);
+}
+
+void
+send_explode(struct ship *ship, long a)
+{
+	Write(W_EXPLODE, ship, a, 0, 0, 0);
+}
+
+void
+send_file(void)
+{
+	Write(W_FILE, NULL, 0, 0, 0, 0);
+}
+
+void
+send_foul(struct ship *ship, long a)
+{
+	Write(W_FOUL, ship, a, 0, 0, 0);
+}
+
+void
+send_gunl(struct ship *ship, long a, long b)
+{
+	Write(W_GUNL, ship, a, b, 0, 0);
+}
+
+void
+send_gunr(struct ship *ship, long a, long b)
+{
+	Write(W_GUNR, ship, a, b, 0, 0);
+}
+
+void
+send_hull(struct ship *ship, long a)
+{
+	Write(W_HULL, ship, a, 0, 0, 0);
+}
+
+void
+send_move(struct ship *ship, const char *astr)
+{
+	Writestr(W_MOVE, ship, astr);
+}
+
+void
+send_obp(struct ship *ship, long a, long b, long c, long d)
+{
+	Write(W_OBP, ship, a, b, c, d);
+}
+
+void
+send_pcrew(struct ship *ship, long a)
+{
+	Write(W_PCREW, ship, a, 0, 0, 0);
+}
+
+void
+send_unfoul(struct ship *ship, long a, long b)
+{
+	Write(W_UNFOUL, ship, a, b, 0, 0);
+}
+
+void
+send_points(struct ship *ship, long a)
+{
+	Write(W_POINTS, ship, a, 0, 0, 0);
+}
+
+void
+send_qual(struct ship *ship, long a)
+{
+	Write(W_QUAL, ship, a, 0, 0, 0);
+}
+
+void
+send_ungrap(struct ship *ship, long a, long b)
+{
+	Write(W_UNGRAP, ship, a, b, 0, 0);
+}
+
+void
+send_rigg(struct ship *ship, long a, long b, long c, long d)
+{
+	Write(W_RIGG, ship, a, b, c, d);
+}
+
+void
+send_col(struct ship *ship, long a)
+{
+	Write(W_COL, ship, a, 0, 0, 0);
+}
+
+void
+send_dir(struct ship *ship, long a)
+{
+	Write(W_DIR, ship, a, 0, 0, 0);
+}
+
+void
+send_row(struct ship *ship, long a)
+{
+	Write(W_ROW, ship, a, 0, 0, 0);
+}
+
+void
+send_signal(struct ship *ship, const char *astr)
+{
+	Writestr(W_SIGNAL, ship, astr);
+}
+
+void
+send_sink(struct ship *ship, long a)
+{
+	Write(W_SINK, ship, a, 0, 0, 0);
+}
+
+void
+send_struck(struct ship *ship, long a)
+{
+	Write(W_STRUCK, ship, a, 0, 0, 0);
+}
+
+void
+send_ta(struct ship *ship, long a)
+{
+	Write(W_TA, ship, a, 0, 0, 0);
+}
+
+void
+send_alive(void)
+{
+	Write(W_ALIVE, NULL, 0, 0, 0, 0);
+}
+
+void
+send_turn(long a)
+{
+	Write(W_TURN, NULL, a, 0, 0, 0);
+}
+
+void
+send_wind(long a, long b)
+{
+	Write(W_WIND, NULL, a, b, 0, 0);
+}
+
+void
+send_fs(struct ship *ship, long a)
+{
+	Write(W_FS, ship, a, 0, 0, 0);
+}
+
+void
+send_grap(struct ship *ship, long a)
+{
+	Write(W_GRAP, ship, a, 0, 0, 0);
+}
+
+void
+send_rig1(struct ship *ship, long a)
+{
+	Write(W_RIG1, ship, a, 0, 0, 0);
+}
+
+void
+send_rig2(struct ship *ship, long a)
+{
+	Write(W_RIG2, ship, a, 0, 0, 0);
+}
+
+void
+send_rig3(struct ship *ship, long a)
+{
+	Write(W_RIG3, ship, a, 0, 0, 0);
+}
+
+void
+send_rig4(struct ship *ship, long a)
+{
+	Write(W_RIG4, ship, a, 0, 0, 0);
+}
+
+void
+send_begin(struct ship *ship)
+{
+	Write(W_BEGIN, ship, 0, 0, 0, 0);
+}
+
+void
+send_end(struct ship *ship)
+{
+	Write(W_END, ship, 0, 0, 0, 0);
+}
+
+void
+send_ddead(void)
+{
+	Write(W_DDEAD, NULL, 0, 0, 0, 0);
+}
+
+
+/*
+ * Actions upon message receipt
+ */
+
+static void
+recv_captain(struct ship *ship, const char *astr)
+{
+	strlcpy(ship->file->captain, astr, sizeof ship->file->captain);
+}
+
+static void
+recv_captured(struct ship *ship, long a)
+{
+	if (a < 0)
+		ship->file->captured = 0;
+	else
+		ship->file->captured = SHIP(a);
+}
+
+static void
+recv_class(struct ship *ship, long a)
+{
+	ship->specs->class = a;
+}
+
+static void
+recv_crew(struct ship *ship, long a, long b, long c)
+{
+	struct shipspecs *s = ship->specs;
+
+	s->crew1 = a;
+	s->crew2 = b;
+	s->crew3 = c;
+}
+
+static void
+recv_dbp(struct ship *ship, long a, long b, long c, long d)
+{
+	struct BP *p = &ship->file->DBP[a];
+
+	p->turnsent = b;
+	p->toship = SHIP(c);
+	p->mensent = d;
+}
+
+static void
+recv_drift(struct ship *ship, long a)
+{
+	ship->file->drift = a;
+}
+
+static void
+recv_explode(struct ship *ship, long a)
+{
+	if ((ship->file->explode = a) == 2)
+		ship->file->dir = 0;
+}
+
+// XXX why does this exist?
+static void
+recv_file(void)
+{
+}
+
+static void
+recv_foul(struct ship *ship, long a)
+{
+	struct snag *p = &ship->file->foul[a];
+
+	if (SHIP(a)->file->dir == 0)
+		return;
+	if (p->sn_count++ == 0)
+		p->sn_turn = turn;
+	ship->file->nfoul++;
+}
+
+static void
+recv_gunl(struct ship *ship, long a, long b)
+{
+	struct shipspecs *s = ship->specs;
+
+	s->gunL = a;
+	s->carL = b;
+}
+
+static void
+recv_gunr(struct ship *ship, long a, long b)
+{
+	struct shipspecs *s = ship->specs;
+
+	s->gunR = a;
+	s->carR = b;
+}
+
+static void
+recv_hull(struct ship *ship, long a)
+{
+	ship->specs->hull = a;
+}
+
+static void
+recv_move(struct ship *ship, const char *astr)
+{
+	strlcpy(ship->file->movebuf, astr, sizeof ship->file->movebuf);
+}
+
+static void
+recv_obp(struct ship *ship, long a, long b, long c, long d)
+{
+	struct BP *p = &ship->file->OBP[a];
+
+	p->turnsent = b;
+	p->toship = SHIP(c);
+	p->mensent = d;
+}
+
+static void
+recv_pcrew(struct ship *ship, long a)
+{
+	ship->file->pcrew = a;
+}
+
+static void
+recv_unfoul(struct ship *ship, long a, long b)
+{
+	struct snag *p = &ship->file->foul[a];
+
+	if (p->sn_count > 0) {
+		if (b) {
+			ship->file->nfoul -= p->sn_count;
+			p->sn_count = 0;
+		} else {
+			ship->file->nfoul--;
+			p->sn_count--;
+		}
+	}
+}
+
+static void
+recv_points(struct ship *ship, long a)
+{
+	ship->file->points = a;
+}
+
+static void
+recv_qual(struct ship *ship, long a)
+{
+	ship->specs->qual = a;
+}
+
+static void
+recv_ungrap(struct ship *ship, long a, long b)
+{
+	struct snag *p = &ship->file->grap[a];
+
+	if (p->sn_count > 0) {
+		if (b) {
+			ship->file->ngrap -= p->sn_count;
+			p->sn_count = 0;
+		} else {
+			ship->file->ngrap--;
+			p->sn_count--;
+		}
+	}
+}
+
+static void
+recv_rigg(struct ship *ship, long a, long b, long c, long d)
+{
+	struct shipspecs *s = ship->specs;
+
+	s->rig1 = a;
+	s->rig2 = b;
+	s->rig3 = c;
+	s->rig4 = d;
+}
+
+static void
+recv_col(struct ship *ship, long a)
+{
+	ship->file->col = a;
+}
+
+static void
+recv_dir(struct ship *ship, long a)
+{
+	ship->file->dir = a;
+}
+
+static void
+recv_row(struct ship *ship, long a)
+{
+	ship->file->row = a;
+}
+
+static void
+recv_signal(struct ship *ship, const char *astr)
+{
+	if (mode == MODE_PLAYER) {
+		if (nobells)
+			Signal("$$: %s", ship, astr);
+		else
+			Signal("\a$$: %s", ship, astr);
+	}
+}
+
+static void
+recv_sink(struct ship *ship, long a)
+{
+	if ((ship->file->sink = a) == 2)
+		ship->file->dir = 0;
+}
+
+static void
+recv_struck(struct ship *ship, long a)
+{
+	ship->file->struck = a;
+}
+
+static void
+recv_ta(struct ship *ship, long a)
+{
+	ship->specs->ta = a;
+}
+
+static void
+recv_alive(void)
+{
+	alive = 1;
+}
+
+static void
+recv_turn(long a)
+{
+	turn = a;
+}
+
+static void
+recv_wind(long a, long b)
+{
+	winddir = a;
+	windspeed = b;
+}
+
+static void
+recv_fs(struct ship *ship, long a)
+{
+	ship->file->FS = a;
+}
+
+static void
+recv_grap(struct ship *ship, long a)
+{
+	struct snag *p = &ship->file->grap[a];
+
+	if (SHIP(a)->file->dir == 0)
+		return;
+	if (p->sn_count++ == 0)
+		p->sn_turn = turn;
+	ship->file->ngrap++;
+}
+
+static void
+recv_rig1(struct ship *ship, long a)
+{
+	ship->specs->rig1 = a;
+}
+
+static void
+recv_rig2(struct ship *ship, long a)
+{
+	ship->specs->rig2 = a;
+}
+
+static void
+recv_rig3(struct ship *ship, long a)
+{
+	ship->specs->rig3 = a;
+}
+
+static void
+recv_rig4(struct ship *ship, long a)
+{
+	ship->specs->rig4 = a;
+}
+
+static void
+recv_begin(struct ship *ship)
+{
+	strcpy(ship->file->captain, "begin");
+	people++;
+}
+
+static void
+recv_end(struct ship *ship)
+{
+	*ship->file->captain = 0;
+	ship->file->points = 0;
+	people--;
+}
+
+static void
+recv_ddead(void)
+{
+	hasdriver = 0;
 }

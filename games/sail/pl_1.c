@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.20 2009/03/14 20:14:56 dholland Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.21 2009/03/14 22:52:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.20 2009/03/14 20:14:56 dholland Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.21 2009/03/14 22:52:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ leave(int conditions)
 		if (conditions != LEAVE_SYNC) {
 			makemsg(ms, "Captain %s relinquishing.",
 				mf->captain);
-			Write(W_END, ms, 0, 0, 0, 0);
+			send_end(ms);
 			Sync();
 		}
 	}
