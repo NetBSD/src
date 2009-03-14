@@ -1,11 +1,11 @@
-/*	$NetBSD: display.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: display.h,v 1.4 2009/03/14 19:35:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,9 @@
  */
 
 #ifdef SIGTSTP
-#define SCREENTEST()	(initscr() != NULL && signal(SIGTSTP, SIG_DFL) != SIG_ERR && STAT_R < COLS && SCROLL_Y > 0)
+#define SCREENTEST()	(initscr() != NULL && \
+			 signal(SIGTSTP, SIG_DFL) != SIG_ERR && \
+			 STAT_R < COLS && SCROLL_Y > 0)
 #else
 #define SCREENTEST()	(initscr() != NULL && STAT_R < COLS && SCROLL_Y > 0)
 #endif
