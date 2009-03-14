@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.19 2009/03/02 07:33:30 dholland Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.20 2009/03/14 18:32:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.19 2009/03/02 07:33:30 dholland Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.20 2009/03/14 18:32:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ reprint:
 		ms->shipname, mc->guns, classname[mc->class],
 		qualname[mc->qual]);
 	if ((nameptr = (char *) getenv("SAILNAME")) && *nameptr)
-		strncpy(captain, nameptr, sizeof captain);
+		strlcpy(captain, nameptr, sizeof captain);
 	else {
 		printf("Your name, Captain? ");
 		fflush(stdout);
@@ -214,7 +214,6 @@ reprint:
 		else
 		    captain[strlen(captain) - 1] = '\0';
 	}
-	captain[sizeof captain - 1] = '\0';
 	Writestr(W_CAPTAIN, ms, captain);
 	for (n = 0; n < 2; n++) {
 		char buf[10];

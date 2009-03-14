@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.15 2003/08/07 09:37:42 agc Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.16 2009/03/14 18:32:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.15 2003/08/07 09:37:42 agc Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.16 2009/03/14 18:32:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ moveall(void)
 				*sp->file->movebuf = '\0';
 			else
 				closeon(sp, closest, sp->file->movebuf,
+					sizeof(sp->file->movebuf),
 					ta, ma, af);
 		} else
 			*sp->file->movebuf = '\0';

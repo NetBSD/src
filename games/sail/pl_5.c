@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.19 2008/01/28 01:58:01 dholland Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.20 2009/03/14 18:32:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.19 2008/01/28 01:58:01 dholland Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.20 2009/03/14 18:32:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,9 +146,9 @@ acceptmove(void)
 		}
 	}
 	if (*buf)
-		strcpy(movebuf, buf);
+		strlcpy(movebuf, buf, sizeof(movebuf));
 	else
-		strcpy(movebuf, "d");
+		strlcpy(movebuf, "d", sizeof(movebuf));
 	Writestr(W_MOVE, ms, movebuf);
 	Msg("Helm: %s.", movebuf);
 }
