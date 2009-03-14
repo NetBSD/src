@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.31 2009/03/14 22:54:05 dholland Exp $	*/
+/*	$NetBSD: sync.c,v 1.32 2009/03/14 23:12:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.31 2009/03/14 22:54:05 dholland Exp $");
+__RCSID("$NetBSD: sync.c,v 1.32 2009/03/14 23:12:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,8 +145,8 @@ static const char SF[] = _PATH_SYNC;
 static const char LF[] = _PATH_LOCK;
 static char sync_buf[BUFSIZE];
 static char *sync_bp = sync_buf;
-static char sync_lock[sizeof SF];
-static char sync_file[sizeof LF];
+static char sync_lock[sizeof LF+2];
+static char sync_file[sizeof SF+2];
 static long sync_seek;
 static FILE *sync_fp;
 
