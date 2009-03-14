@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.14 2009/03/14 18:32:47 dholland Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.15 2009/03/14 18:41:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.14 2009/03/14 18:32:47 dholland Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.15 2009/03/14 18:41:21 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ lo_main(void)
 		perror(_PATH_LOGFILE);
 		exit(1);
 	}
-	switch (fread((char *)&npeople, sizeof npeople, 1, fp)) {
+	switch (fread(&npeople, sizeof npeople, 1, fp)) {
 	case 0:
 		printf("Nobody has sailed yet.\n");
 		exit(0);
@@ -80,7 +80,7 @@ lo_main(void)
 		perror(_PATH_LOGFILE);
 		exit(1);
 	}
-	while (fread((char *)&log, sizeof log, 1, fp) == 1 &&
+	while (fread(&log, sizeof log, 1, fp) == 1 &&
 	       log.l_name[0] != '\0') {
 		if (longfmt && (pass = getpwuid(log.l_uid)) != NULL)
 			snprintf(sbuf, sizeof(sbuf),

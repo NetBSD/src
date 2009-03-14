@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.26 2009/03/14 18:32:47 dholland Exp $	*/
+/*	$NetBSD: sync.c,v 1.27 2009/03/14 18:41:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.26 2009/03/14 18:32:47 dholland Exp $");
+__RCSID("$NetBSD: sync.c,v 1.27 2009/03/14 18:41:21 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -259,7 +259,7 @@ Sync(void)
 
 			for (p = buf;;) {
 				ch = getc(sync_fp);
-				*p++ = (char)ch;
+				*p++ = ch;
 				switch (ch) {
 				case '\n':
 					p--;
