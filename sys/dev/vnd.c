@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.194 2009/03/14 16:33:25 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.195 2009/03/14 18:00:37 apb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.194 2009/03/14 16:33:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.195 2009/03/14 18:00:37 apb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1443,10 +1443,11 @@ unlock_and_exit:
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
+
 	case DIOCCACHESYNC:
 		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_FSYNC(vnd->sc_vp, vnd->sc_cred,
-		    FSYNC_WAIT|FSYNC_DATAONLY, 0, 0);
+		    FSYNC_WAIT | FSYNC_DATAONLY | FSYNC_CACHE, 0, 0);
 		VOP_UNLOCK(vnd->sc_vp, 0);
 		return error;
 
