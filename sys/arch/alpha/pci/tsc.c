@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.14 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: tsc.c,v 1.15 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.14 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.15 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,7 @@ static int tscfound;
 int tsp_console_hose;
 
 int
-tscmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tscmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -140,9 +137,7 @@ void tscattach(parent, self, aux)
 }
 
 static int
-tscprint(aux, p)
-	void *aux;
-	const char *p;
+tscprint(void *aux, const char *p)
 {
 	register struct tsp_attach_args *tsp = aux;
 
@@ -154,10 +149,7 @@ tscprint(aux, p)
 #define tsp() { Generate ctags(1) key. }
 
 int
-tspmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tspmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tsp_attach_args *t = aux;
 

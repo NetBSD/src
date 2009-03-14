@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetimage.c,v 1.7 2009/03/14 14:46:05 dsl Exp $	*/
+/*	$NetBSD: setnetimage.c,v 1.8 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,9 +74,7 @@ struct seglist {
 int main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ifd, ofd, i, nsegs;
 	size_t offsets[X_NSYMS];

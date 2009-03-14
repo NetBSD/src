@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_pad32.c,v 1.14 2008/01/03 23:02:25 joerg Exp $	*/
+/*	$NetBSD: mcclock_pad32.c,v 1.15 2009/03/14 15:36:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.14 2008/01/03 23:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.15 2009/03/14 15:36:17 dsl Exp $");
 
 
 /*
@@ -77,9 +77,7 @@ mcclock_pad32_write(dev, reg, datum)
 }
 
 u_int
-mcclock_pad32_read(dev, reg)
-	struct mcclock_softc *dev;
-	u_int reg;
+mcclock_pad32_read(struct mcclock_softc *dev, u_int reg)
 {
 	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)dev;
 

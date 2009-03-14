@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.97 2008/05/18 22:40:14 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.98 2009/03/14 15:36:14 dsl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.97 2008/05/18 22:40:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.98 2009/03/14 15:36:14 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -474,8 +474,7 @@ cpu_initclocks()
  */
 /* ARGSUSED */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing */
 }
@@ -548,8 +547,7 @@ tickintr(void *cap)
  * Level 14 (stat clock) interrupt handler.
  */
 int
-statintr(cap)
-	void *cap;
+statintr(void *cap)
 {
 	register u_long newint, r, var;
 	struct cpu_info *ci = curcpu();

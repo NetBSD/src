@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_pci.c,v 1.20 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: apecs_pci.c,v 1.21 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.20 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.21 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,7 @@ pcireg_t	apecs_conf_read(void *, pcitag_t, int);
 void		apecs_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-apecs_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+apecs_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
@@ -75,9 +73,7 @@ apecs_attach_hook(parent, self, pba)
 }
 
 int
-apecs_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+apecs_bus_maxdevs(void *cpv, int busno)
 {
 
 	return 32;
@@ -108,10 +104,7 @@ apecs_decompose_tag(cpv, tag, bp, dp, fp)
 }
 
 pcireg_t
-apecs_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+apecs_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct apecs_config *acp = cpv;
 	pcireg_t *datap, data;
@@ -156,11 +149,7 @@ apecs_conf_read(cpv, tag, offset)
 }
 
 void
-apecs_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+apecs_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct apecs_config *acp = cpv;
 	pcireg_t *datap;

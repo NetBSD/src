@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.38 2008/03/21 08:17:30 dyoung Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.39 2009/03/14 15:36:17 dsl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.38 2008/03/21 08:17:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.39 2009/03/14 15:36:17 dsl Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -9779,13 +9779,7 @@ out:
 }
 
 static void
-ahd_freedmamem(tag, size, map, vaddr, seg, nseg)
-	bus_dma_tag_t tag;
-	int size;
-	bus_dmamap_t map;
-	void *vaddr;
-	bus_dma_segment_t *seg;
-	int nseg;
+ahd_freedmamem(bus_dma_tag_t tag, int size, bus_dmamap_t map, void *vaddr, bus_dma_segment_t *seg, int nseg)
 {
 
 	bus_dmamap_unload(tag, map);

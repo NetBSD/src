@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.12 2009/01/12 11:32:44 tsutsui Exp $	*/
+/*	$NetBSD: pxe.c,v 1.13 2009/03/14 15:36:08 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -234,8 +234,7 @@ pxe_netif_open()
 }
 
 void
-pxe_netif_close(sock)
-	int sock;
+pxe_netif_close(int sock)
 {
 	t_PXENV_UDP_CLOSE *uc = (void *) pxe_command_buf;
 
@@ -261,8 +260,7 @@ pxe_netif_shutdown()
 }
 
 struct iodesc *
-socktodesc(sock)
-	int sock;
+socktodesc(int sock)
 {
 
 #ifdef NETIF_DEBUG

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.30 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.31 2009/03/14 15:35:59 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.30 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.31 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,8 +66,7 @@ void    dec_axppci_33_intr_disestablish(void *, void *);
 #define	LCA_SIO_DEVICE	7	/* XXX */
 
 void
-pci_axppci_33_pickintr(lcp)
-	struct lca_config *lcp;
+pci_axppci_33_pickintr(struct lca_config *lcp)
 {
 	bus_space_tag_t iot = &lcp->lc_iot;
 	pci_chipset_tag_t pc = &lcp->lc_pc;
@@ -100,9 +99,7 @@ pci_axppci_33_pickintr(lcp)
 }
 
 int
-dec_axppci_33_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+dec_axppci_33_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
@@ -219,9 +216,7 @@ dec_axppci_33_intr_map(pa, ihp)
 }
 
 const char *
-dec_axppci_33_intr_string(lcv, ih)
-	void *lcv;
-	pci_intr_handle_t ih;
+dec_axppci_33_intr_string(void *lcv, pci_intr_handle_t ih)
 {
 #if 0
 	struct lca_config *lcp = lcv;
@@ -231,9 +226,7 @@ dec_axppci_33_intr_string(lcv, ih)
 }
 
 const struct evcnt *
-dec_axppci_33_intr_evcnt(lcv, ih)
-	void *lcv;
-	pci_intr_handle_t ih;
+dec_axppci_33_intr_evcnt(void *lcv, pci_intr_handle_t ih)
 {
 #if 0
 	struct lca_config *lcp = lcv;

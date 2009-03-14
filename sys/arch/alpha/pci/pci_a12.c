@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.c,v 1.8 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_a12.c,v 1.9 2009/03/14 15:35:59 dsl Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.8 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.9 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,8 +115,7 @@ static void a12_GInt(void);
 void	a12_iointr(void *framep, unsigned long vec);
 
 void
-pci_a12_pickintr(ccp)
-	struct a12c_config *ccp;
+pci_a12_pickintr(struct a12c_config *ccp)
 {
 	pci_chipset_tag_t pc = &ccp->ac_pc;
 
@@ -149,17 +148,13 @@ avalon_a12_intr_map(ccv, bustag, buspin, line, ihp)
 }
 
 const char *
-avalon_a12_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+avalon_a12_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 	return "a12 pci irq";	/* see "only one" note above */
 }
 
 const struct evcnt *
-avalon_a12_intr_evcnt(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+avalon_a12_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 {
 
 	return (&a12_intr_evcnt);
@@ -218,8 +213,7 @@ void a12_intr_register_icw(f)
 long	a12_nothing;
 
 static void
-clear_gsr_interrupt(write_1_to_clear)
-	long	write_1_to_clear;
+clear_gsr_interrupt(long write_1_to_clear)
 {
 	REGVAL(A12_GSR) = write_1_to_clear;
 	alpha_mb();
@@ -227,15 +221,13 @@ clear_gsr_interrupt(write_1_to_clear)
 }
 
 static int
-pci_serr(p)
-	void *p;
+pci_serr(void *p)
 {
 	panic("pci_serr");
 }
 
 static int
-a12_xbar_flag(p)
-	void *p;
+a12_xbar_flag(void *p)
 {
 	panic("a12_xbar_flag: %s", p);
 }
@@ -280,9 +272,7 @@ void	*s;
  */
 
 void
-a12_iointr(framep, vec)
-	void *framep;
-	unsigned long vec;
+a12_iointr(void *framep, unsigned long vec)
 {
 	unsigned irq = (vec-0x900) >> 4;  /* this is the f(vector) above */
 

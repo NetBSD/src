@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.70 2009/03/07 16:46:25 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.71 2009/03/14 15:36:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.70 2009/03/07 16:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.71 2009/03/14 15:36:17 dsl Exp $");
 
 /* #define HMEDEBUG */
 
@@ -118,8 +118,7 @@ void	hme_zerobuf_contig(struct hme_softc *, int, int);
 
 
 void
-hme_config(sc)
-	struct hme_softc *sc;
+hme_config(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
@@ -318,8 +317,7 @@ hme_config(sc)
 }
 
 void
-hme_tick(arg)
-	void *arg;
+hme_tick(void *arg)
 {
 	struct hme_softc *sc = arg;
 	int s;
@@ -332,8 +330,7 @@ hme_tick(arg)
 }
 
 void
-hme_reset(sc)
-	struct hme_softc *sc;
+hme_reset(struct hme_softc *sc)
 {
 	int s;
 
@@ -372,8 +369,7 @@ hme_stop(struct hme_softc *sc, bool chip_only)
 }
 
 void
-hme_meminit(sc)
-	struct hme_softc *sc;
+hme_meminit(struct hme_softc *sc)
 {
 	bus_addr_t txbufdma, rxbufdma;
 	bus_addr_t dma;
@@ -453,8 +449,7 @@ hme_meminit(sc)
  * and transmit/receive descriptor rings.
  */
 int
-hme_init(sc)
-	struct hme_softc *sc;
+hme_init(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -676,10 +671,7 @@ hme_put(sc, ri, m)
  * we copy into clusters.
  */
 struct mbuf *
-hme_get(sc, ri, flags)
-	struct hme_softc *sc;
-	int ri;
-	u_int32_t flags;
+hme_get(struct hme_softc *sc, int ri, u_int32_t flags)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m, *m0, *newm;
@@ -834,10 +826,7 @@ bad:
  * Pass a packet to the higher levels.
  */
 void
-hme_read(sc, ix, flags)
-	struct hme_softc *sc;
-	int ix;
-	u_int32_t flags;
+hme_read(struct hme_softc *sc, int ix, u_int32_t flags)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -879,8 +868,7 @@ hme_read(sc, ix, flags)
 }
 
 void
-hme_start(ifp)
-	struct ifnet *ifp;
+hme_start(struct ifnet *ifp)
 {
 	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
 	void *txd = sc->sc_rb.rb_txd;
@@ -970,8 +958,7 @@ hme_start(ifp)
  * Transmit interrupt.
  */
 int
-hme_tint(sc)
-	struct hme_softc *sc;
+hme_tint(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1031,8 +1018,7 @@ hme_tint(sc)
  * Receive interrupt.
  */
 int
-hme_rint(sc)
-	struct hme_softc *sc;
+hme_rint(struct hme_softc *sc)
 {
 	void *xdr = sc->sc_rb.rb_rxd;
 	unsigned int nrbuf = sc->sc_rb.rb_nrbuf;
@@ -1069,9 +1055,7 @@ hme_rint(sc)
 }
 
 int
-hme_eint(sc, status)
-	struct hme_softc *sc;
-	u_int status;
+hme_eint(struct hme_softc *sc, u_int status)
 {
 	char bits[128];
 
@@ -1093,8 +1077,7 @@ hme_eint(sc, status)
 }
 
 int
-hme_intr(v)
-	void *v;
+hme_intr(void *v)
 {
 	struct hme_softc *sc = (struct hme_softc *)v;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1122,8 +1105,7 @@ hme_intr(v)
 
 
 void
-hme_watchdog(ifp)
-	struct ifnet *ifp;
+hme_watchdog(struct ifnet *ifp)
 {
 	struct hme_softc *sc = ifp->if_softc;
 
@@ -1137,8 +1119,7 @@ hme_watchdog(ifp)
  * Initialize the MII Management Interface
  */
 void
-hme_mifinit(sc)
-	struct hme_softc *sc;
+hme_mifinit(struct hme_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
@@ -1313,8 +1294,7 @@ out:
 }
 
 static void
-hme_mii_statchg(dev)
-	struct device *dev;
+hme_mii_statchg(struct device *dev)
 {
 	struct hme_softc *sc = (void *)dev;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1342,8 +1322,7 @@ hme_mii_statchg(dev)
 }
 
 int
-hme_mediachange(ifp)
-	struct ifnet *ifp;
+hme_mediachange(struct ifnet *ifp)
 {
 	struct hme_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1488,8 +1467,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 }
 
 void
-hme_shutdown(arg)
-	void *arg;
+hme_shutdown(void *arg)
 {
 
 	hme_stop((struct hme_softc *)arg, false);
@@ -1499,8 +1477,7 @@ hme_shutdown(arg)
  * Set up the logical address filter.
  */
 void
-hme_setladrf(sc)
-	struct hme_softc *sc;
+hme_setladrf(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;

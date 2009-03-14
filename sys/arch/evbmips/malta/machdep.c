@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2009/02/13 22:41:01 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2009/03/14 15:36:05 dsl Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2009/03/14 15:36:05 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -388,9 +388,7 @@ cpu_startup()
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */

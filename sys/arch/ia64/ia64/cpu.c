@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2009/03/14 15:36:08 dsl Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2009/03/14 15:36:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,10 +62,7 @@ cpu_attach(parent, self, aux)
 
 
 int
-cpu_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cpu_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }

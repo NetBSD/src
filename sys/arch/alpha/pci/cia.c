@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.67 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: cia.c,v 1.68 2009/03/14 15:35:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.67 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.68 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,10 +151,7 @@ int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
 int	cia_pyxis_force_bwx = CIA_PYXIS_FORCE_BWX;
 
 int
-ciamatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ciamatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -172,9 +169,7 @@ ciamatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-cia_init(ccp, mallocsafe)
-	struct cia_config *ccp;
-	int mallocsafe;
+cia_init(struct cia_config *ccp, int mallocsafe)
 {
 	int pci_use_bwx = cia_pci_use_bwx;
 	int bus_use_bwx = cia_bus_use_bwx;

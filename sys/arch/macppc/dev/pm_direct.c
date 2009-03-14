@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.34 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.35 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.34 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.35 2009/03/14 15:36:09 dsl Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -226,11 +226,7 @@ extern int	zshard(int);		/* from zs.c */
  * This function dumps contents of the PMData
  */
 void
-pm_printerr(ttl, rval, num, data)
-	const char *ttl;
-	int rval;
-	int num;
-	const char *data;
+pm_printerr(const char *ttl, int rval, int num, const char *data)
 {
 	int i;
 
@@ -340,8 +336,7 @@ pm_init(void)
  * Check the existent ADB devices
  */
 void
-pm_check_adb_devices(id)
-	int id;
+pm_check_adb_devices(int id)
 {
 	u_short ed = 0x1;
 
@@ -354,8 +349,7 @@ pm_check_adb_devices(id)
  * Wait until PM IC is busy
  */
 int
-pm_wait_busy(delaycycles)
-	int delaycycles;
+pm_wait_busy(int delaycycles)
 {
 	while (PM_IS_ON) {
 #ifdef PM_GRAB_SI
@@ -376,8 +370,7 @@ pm_wait_busy(delaycycles)
  * Wait until PM IC is free
  */
 int
-pm_wait_free(delaycycles)
-	int delaycycles;
+pm_wait_free(int delaycycles)
 {
 	while (PM_IS_OFF) {
 #ifdef PM_GRAB_SI
@@ -399,8 +392,7 @@ pm_wait_free(delaycycles)
  * Receive data from PMU
  */
 static int
-pm_receive(data)
-	u_char *data;
+pm_receive(u_char *data)
 {
 	int i;
 	int rval;
@@ -441,8 +433,7 @@ pm_receive(data)
  * Send data to PMU
  */
 static int
-pm_send(data)
-	u_char data;
+pm_send(u_char data)
 {
 	int rval;
 
@@ -476,8 +467,7 @@ pm_send(data)
  * The PMgrOp routine
  */
 int
-pmgrop(pmdata)
-	PMData *pmdata;
+pmgrop(PMData *pmdata)
 {
 	int i;
 	int s;
@@ -654,11 +644,7 @@ pm_intr(void *arg)
  * Synchronous ADBOp routine for the Power Manager
  */
 int
-pm_adb_op(buffer, compRout, data, command)
-	u_char *buffer;
-	adbComp *compRout;
-	volatile int *data;
-	int command;
+pm_adb_op(u_char *buffer, adbComp *compRout, volatile int *data, int command)
 {
 	int i;
 	int s;
@@ -780,8 +766,7 @@ pm_adb_op(buffer, compRout, data, command)
 
 
 void
-pm_adb_get_TALK_result(pmdata)
-	PMData *pmdata;
+pm_adb_get_TALK_result(PMData *pmdata)
 {
 	int i;
 	struct adbCommand packet;
@@ -809,8 +794,7 @@ pm_adb_get_TALK_result(pmdata)
 
 
 void
-pm_adb_get_ADB_data(pmdata)
-	PMData *pmdata;
+pm_adb_get_ADB_data(PMData *pmdata)
 {
 	int i;
 	struct adbCommand packet;
@@ -862,8 +846,7 @@ pm_adb_poweroff()
 }
 
 void
-pm_read_date_time(t)
-	u_long *t;
+pm_read_date_time(u_long *t)
 {
 	PMData p;
 
@@ -877,8 +860,7 @@ pm_read_date_time(t)
 }
 
 void
-pm_set_date_time(t)
-	u_long t;
+pm_set_date_time(u_long t)
 {
 	PMData p;
 
@@ -904,8 +886,7 @@ pm_read_brightness()
 }
 
 void
-pm_set_brightness(val)
-	int val;
+pm_set_brightness(int val)
 {
 	PMData p;
 
@@ -932,8 +913,7 @@ pm_init_brightness()
 }
 
 void
-pm_eject_pcmcia(slot)
-	int slot;
+pm_eject_pcmcia(int slot)
 {
 	PMData p;
 
@@ -1086,8 +1066,7 @@ pm_battery_info(int battery, struct pmu_battery_info *info)
 }
 
 int
-pm_read_nvram(addr)
-	int addr;
+pm_read_nvram(int addr)
 {
 	PMData p;
 

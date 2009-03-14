@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.78 2009/01/13 13:35:54 yamt Exp $	*/
+/*	$NetBSD: xd.c,v 1.79 2009/03/14 15:36:21 dsl Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.78 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.79 2009/03/14 15:36:21 dsl Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -325,8 +325,7 @@ struct dkdriver xddkdriver = {xdstrategy};
 static void *xd_labeldata;
 
 static void
-xddummystrat(bp)
-	struct buf *bp;
+xddummystrat(struct buf *bp)
 {
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
@@ -336,9 +335,7 @@ xddummystrat(bp)
 }
 
 int
-xdgetdisklabel(xd, b)
-	struct xd_softc *xd;
-	void *b;
+xdgetdisklabel(struct xd_softc *xd, void *b)
 {
 	const char *err;
 #if defined(__sparc__) || defined(sun3)
@@ -393,14 +390,7 @@ xdgetdisklabel(xd, b)
  * Shorthand for allocating, mapping and loading a DMA buffer
  */
 int
-xd_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
-	bus_dma_tag_t		tag;
-	bus_dmamap_t		map;
-	bus_dma_segment_t	*seg;
-	int			*nsegp;
-	bus_size_t		len;
-	void *			*kvap;
-	bus_addr_t		*dmap;
+xd_dmamem_alloc(bus_dma_tag_t tag, bus_dmamap_t map, bus_dma_segment_t *seg, int *nsegp, bus_size_t len, void * *kvap, bus_addr_t *dmap)
 {
 	int nseg;
 	int error;
@@ -431,13 +421,7 @@ xd_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
 }
 
 void
-xd_dmamem_free(tag, map, seg, nseg, len, kva)
-	bus_dma_tag_t		tag;
-	bus_dmamap_t		map;
-	bus_dma_segment_t	*seg;
-	int			nseg;
-	bus_size_t		len;
-	void *			kva;
+xd_dmamem_free(bus_dma_tag_t tag, bus_dmamap_t map, bus_dma_segment_t *seg, int nseg, bus_size_t len, void * kva)
 {
 
 	bus_dmamap_unload(tag, map);
@@ -456,10 +440,7 @@ xd_dmamem_free(tag, map, seg, nseg, len, kva)
  */
 
 int
-xdc_probe(arg, tag, handle)
-	void *arg;
-	bus_space_tag_t tag;
-	bus_space_handle_t handle;
+xdc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 {
 	struct xdc *xdc = (void *)handle; /* XXX */
 	int del = 0;
@@ -700,10 +681,7 @@ xdcattach(parent, self, aux)
  * call xdattach!).
  */
 int
-xdmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+xdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct xdc_attach_args *xa = aux;
 
@@ -966,11 +944,7 @@ xdclose(dev, flag, fmt, l)
  * xddump: crash dump system
  */
 int
-xddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	void *va;
-	size_t size;
+xddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	int     unit, part;
 	struct xd_softc *xd;
@@ -1223,20 +1197,14 @@ xdopen(dev, flag, fmt, l)
 }
 
 int
-xdread(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+xdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-xdwrite(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+xdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -1421,15 +1389,7 @@ xdcintr(v)
  */
 
 inline void
-xdc_rqinit(rq, xdc, xd, md, blk, cnt, db, bp)
-	struct xd_iorq *rq;
-	struct xdc_softc *xdc;
-	struct xd_softc *xd;
-	int     md;
-	u_long  blk;
-	int     cnt;
-	void *db;
-	struct buf *bp;
+xdc_rqinit(struct xd_iorq *rq, struct xdc_softc *xdc, struct xd_softc *xd, int md, u_long blk, int cnt, void *db, struct buf *bp)
 {
 	rq->xdc = xdc;
 	rq->xd = xd;
@@ -2561,8 +2521,7 @@ done:
  * xdc_e2str: convert error code number into an error string
  */
 const char *
-xdc_e2str(no)
-	int     no;
+xdc_e2str(int no)
 {
 	switch (no) {
 	case XD_ERR_FAIL:

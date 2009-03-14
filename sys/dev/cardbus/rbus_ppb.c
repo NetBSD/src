@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.26 2008/07/21 09:51:46 drochner Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.27 2009/03/14 15:36:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.26 2008/07/21 09:51:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.27 2009/03/14 15:36:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,10 +116,7 @@ int rbus_ppb_debug = 0;   /* hack with kdb */
 #endif
 
 static int
-ppb_cardbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void   *aux;
+ppb_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -138,9 +135,7 @@ ppb_cardbus_match(parent, match, aux)
 
 
 int
-rppbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+rppbprint(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -163,10 +158,7 @@ rbus_intr_fixup(pci_chipset_tag_t pc,
 }
 
 void
-rbus_do_header_fixup(pc, tag, context)
-     	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	void *context;
+rbus_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
   int pin, irq;
   int bus, device, function;
@@ -467,10 +459,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 }
 
 static void
-rbus_pci_phys_countspace(pc, tag, context)
-        pci_chipset_tag_t pc;
-	pcitag_t          tag;
-	void             *context;
+rbus_pci_phys_countspace(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
         int bus, device, function;
 	struct  rbus_pci_addr_fixup_context *rct =
@@ -518,10 +507,7 @@ rbus_do_phys_countspace(pc, tag, mapreg, ctx, type, addr, size)
 }
 
 static void
-rbus_pci_phys_allocate(pc, tag, context)
-        pci_chipset_tag_t pc;
-	pcitag_t          tag;
-	void             *context;
+rbus_pci_phys_allocate(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
         int bus, device, function, command;
 	struct rbus_pci_addr_fixup_context *rct =
@@ -840,9 +826,7 @@ ppb_cardbus_disable(struct ppb_softc * sc)
 }
 
 static int
-ppb_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+ppb_cardbus_detach(struct device *self, int flags)
 {
   /* struct ppb_softc *sc = device_private(self);*/
 	struct ppb_cardbus_softc *csc = device_private(self);
@@ -881,9 +865,7 @@ ppb_cardbus_detach(self, flags)
 }
 
 int
-ppb_activate(self, act)
-	struct device *self;
-	enum devact act;
+ppb_activate(struct device *self, enum devact act)
 {
   printf("ppb_activate called\n");
   return 0;

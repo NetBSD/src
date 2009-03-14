@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.85 2008/12/17 20:51:34 cegger Exp $	*/
+/*	$NetBSD: midway.c,v 1.86 2009/03/14 15:36:17 dsl Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.85 2008/12/17 20:51:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.86 2009/03/14 15:36:17 dsl Exp $");
 
 #include "opt_natm.h"
 
@@ -3698,9 +3698,7 @@ static void rrp_delete(sc, ifp)
 #endif
 
 static struct ifnet *
-en_vci2ifp(sc, vci)
-	struct en_softc *sc;
-	int vci;
+en_vci2ifp(struct en_softc *sc, int vci)
 {
 	struct pvcsif *pvcsif;
 
@@ -3716,8 +3714,7 @@ en_vci2ifp(sc, vci)
  * (currently detach is not supported)
  */
 static struct ifnet *
-en_pvcattach(ifp)
-	struct ifnet *ifp;
+en_pvcattach(struct ifnet *ifp)
 {
 	struct en_softc *sc = (struct en_softc *) ifp->if_softc;
 	struct ifnet *pvc_ifp;

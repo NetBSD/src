@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.207 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.208 2009/03/14 15:36:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.207 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.208 2009/03/14 15:36:24 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -165,9 +165,7 @@ nfs_modcmd(modcmd_t cmd, void *arg)
  * nfs statvfs call
  */
 int
-nfs_statvfs(mp, sbp)
-	struct mount *mp;
-	struct statvfs *sbp;
+nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct lwp *l = curlwp;
 	struct vnode *vp;
@@ -259,11 +257,7 @@ nfs_statvfs(mp, sbp)
  * nfs version 3 fsinfo rpc call
  */
 int
-nfs_fsinfo(nmp, vp, cred, l)
-	struct nfsmount *nmp;
-	struct vnode *vp;
-	kauth_cred_t cred;
-	struct lwp *l;
+nfs_fsinfo(struct nfsmount *nmp, struct vnode *vp, kauth_cred_t cred, struct lwp *l)
 {
 	struct nfsv3_fsinfo *fsp;
 	char *cp;
@@ -456,10 +450,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
 }
 
 void
-nfs_decode_args(nmp, argp, l)
-	struct nfsmount *nmp;
-	struct nfs_args *argp;
-	struct lwp *l;
+nfs_decode_args(struct nfsmount *nmp, struct nfs_args *argp, struct lwp *l)
 {
 	int s;
 	int adjsock;
@@ -938,9 +929,7 @@ nfs_unmount(struct mount *mp, int mntflags)
  * Return root of a filesystem
  */
 int
-nfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+nfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *vp;
 	struct nfsmount *nmp;
@@ -962,10 +951,7 @@ extern int syncprt;
  */
 /* ARGSUSED */
 int
-nfs_sync(mp, waitfor, cred)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t cred;
+nfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp, *mvp;
 	int error, allerror = 0;

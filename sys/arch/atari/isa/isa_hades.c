@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_hades.c,v 1.6 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: isa_hades.c,v 1.7 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.6 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.7 2009/03/14 15:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,9 +68,7 @@ static isa_intr_info_t iinfo[2] = { { -1 }, { -1 } };
 static int	iifun(int, int);
 
 static int
-iifun(slot, sr)
-int	slot;
-int	sr;
+iifun(int slot, int sr)
 {
 	isa_intr_info_t *iinfo_p;
 	int		s;
@@ -121,11 +119,7 @@ int	sr;
  * XXXX to only generate interrupts for the slot the card is in...
  */
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	isa_intr_info_t *iinfo_p;
 	int		slot, i;
@@ -203,9 +197,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 }
 
 void
-isa_intr_disestablish(ic, handler)
-	isa_chipset_tag_t	ic;
-	void			*handler;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *handler)
 {
 	isa_intr_info_t *iinfo_p = (isa_intr_info_t *)handler;
 

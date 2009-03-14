@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.18 2009/01/12 09:41:59 tsutsui Exp $ */
+/* $NetBSD: main.c,v 1.19 2009/03/14 15:36:13 dsl Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -160,8 +160,7 @@ main()
 }
 
 void
-bi_init(addr)
-	void *addr;
+bi_init(void *addr)
 {
 	struct btinfo_magic bi_magic;
 
@@ -197,9 +196,7 @@ static const char *cmdln[] = {
 };
 
 void
-mkatagparams(addr, kcmd)
-	unsigned addr;
-	char *kcmd;
+mkatagparams(unsigned addr, char *kcmd)
 {
 	struct tag {
 		unsigned siz;

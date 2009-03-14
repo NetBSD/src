@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.9 2008/06/24 16:30:09 ad Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.10 2009/03/14 15:36:07 dsl Exp $	*/
 
 /*
  * Copyright (C) 2000 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.9 2008/06/24 16:30:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.10 2009/03/14 15:36:07 dsl Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -76,8 +76,7 @@ ipkdb_trap()
 }
 
 int
-ipkdb_trap_glue(frame)
-	struct trapframe frame;
+ipkdb_trap_glue(struct trapframe frame)
 {
 	if (ISPL(frame.tf_cs) != SEL_KPL)
 		return 0;
@@ -132,8 +131,7 @@ ipkdb_trap_glue(frame)
 }
 
 int
-ipkdbif_init(kip)
-	struct ipkdb_if *kip;
+ipkdbif_init(struct ipkdb_if *kip)
 {
 #ifdef IPKDB_NE_PCI
 	pci_mode_detect();	/* XXX */

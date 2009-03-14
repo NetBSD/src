@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.36 2008/06/01 23:34:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.37 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -139,8 +139,7 @@ static const struct isic_pcmcia_card_entry card_list[] = {
 #define	NUM_MATCH_ENTRIES	(sizeof(card_list)/sizeof(card_list[0]))
 
 static const struct isic_pcmcia_card_entry *
-find_matching_card(pa)
-	struct pcmcia_attach_args *pa;
+find_matching_card(struct pcmcia_attach_args *pa)
 {
 	int i, j;
 

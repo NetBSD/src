@@ -1,4 +1,4 @@
-/* $NetBSD: avalon_a12.c,v 1.14 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.15 2009/03/14 15:35:59 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.14 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.15 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,7 @@ avalon_a12_init()
  * call.
  */
 static int
-a12env(code)
-	int    code;
+a12env(int code)
 {
 	int	q;
 	char	string[16];
@@ -146,9 +145,7 @@ avalon_a12_cons_init()
 }
 
 void
-avalon_a12_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+avalon_a12_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

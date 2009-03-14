@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.29 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.30 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.29 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.30 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,7 @@ void ix_attach(struct device *, struct device *, void *);
  * EtherExpress/16 support routines
  */
 static void
-ix_reset(sc, why)
-	struct ie_softc *sc;
-	int why;
+ix_reset(struct ie_softc *sc, int why)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -137,10 +135,7 @@ ix_atten(struct ie_softc *sc, int why)
 }
 
 static u_int16_t
-ix_read_eeprom(iot, ioh, location)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int location;
+ix_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int location)
 {
 	int ectrl, edata;
 
@@ -186,9 +181,7 @@ ix_eeprom_outbits(iot, ioh, edata, count)
 }
 
 static int
-ix_eeprom_inbits(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ix_eeprom_inbits(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int ectrl, edata, i;
 
@@ -207,10 +200,7 @@ ix_eeprom_inbits(iot, ioh)
 }
 
 static void
-ix_eeprom_clock(iot, ioh, state)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int state;
+ix_eeprom_clock(bus_space_tag_t iot, bus_space_handle_t ioh, int state)
 {
 	int ectrl;
 
@@ -224,9 +214,7 @@ ix_eeprom_clock(iot, ioh, state)
 }
 
 static int
-ix_intrhook(sc, where)
-	struct ie_softc *sc;
-	int where;
+ix_intrhook(struct ie_softc *sc, int where)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 
@@ -491,9 +479,7 @@ ix_zeromem(sc, offset, count)
 }
 
 static void
-ix_mediastatus(sc, ifmr)
-        struct ie_softc *sc;
-        struct ifmediareq *ifmr;
+ix_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 {
         struct ifmedia *ifm = &sc->sc_media;
 

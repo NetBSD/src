@@ -1,4 +1,4 @@
-/*	$NetBSD: intoa.c,v 1.2 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: intoa.c,v 1.3 2009/03/14 15:36:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -49,8 +49,7 @@ char *intoa(u_int32_t); /* XXX */
 
 /* Similar to inet_ntoa() */
 char *
-intoa(addr)
-	u_int32_t addr;
+intoa(u_int32_t addr)
 {
 	char *cp;
 	u_int byte;

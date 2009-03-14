@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.30 2009/01/19 19:15:07 mjf Exp $	*/
+/*	$NetBSD: mscp.c,v 1.31 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.30 2009/01/19 19:15:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.31 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -101,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.30 2009/01/19 19:15:07 mjf Exp $");
  * we cannot wait.
  */
 struct mscp *
-mscp_getcp(mi, canwait)
-	struct mscp_softc *mi;
-	int canwait;
+mscp_getcp(struct mscp_softc *mi, int canwait)
 {
 #define mri	(&mi->mi_cmd)
 	struct mscp *mp;
@@ -165,8 +163,7 @@ int	mscp_aeb_xor = 0x8000bb80;
  * Handle a response ring transition.
  */
 void
-mscp_dorsp(mi)
-	struct mscp_softc *mi;
+mscp_dorsp(struct mscp_softc *mi)
 {
 	struct device *drive;
 	struct mscp_device *me = mi->mi_me;
@@ -476,8 +473,7 @@ done:
  * info pending.
  */
 void
-mscp_requeue(mi)
-	struct mscp_softc *mi;
+mscp_requeue(struct mscp_softc *mi)
 {
 	panic("mscp_requeue");
 }

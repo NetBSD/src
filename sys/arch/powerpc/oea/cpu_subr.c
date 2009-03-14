@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.51 2008/12/16 22:35:25 christos Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.52 2009/03/14 15:36:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.51 2008/12/16 22:35:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.52 2009/03/14 15:36:12 dsl Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -436,9 +436,7 @@ cpu_attach_common(struct device *self, int id)
 }
 
 void
-cpu_setup(self, ci)
-	struct device *self;
-	struct cpu_info *ci;
+cpu_setup(struct device *self, struct cpu_info *ci)
 {
 	u_int hid0, hid0_save, pvr, vers;
 	const char *bitmask;

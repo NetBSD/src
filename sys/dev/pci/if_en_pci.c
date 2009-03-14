@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.27 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.28 2009/03/14 15:36:19 dsl Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.27 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.28 2009/03/14 15:36:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,9 +317,7 @@ adp_get_macaddr(struct en_pci_softc *scp, struct pci_attach_args *pa)
 #define EN_ESI         64
 
 static void
-eni_get_macaddr(scp, pa)
-  struct en_pci_softc *scp;
-  struct pci_attach_args *pa;
+eni_get_macaddr(struct en_pci_softc *scp, struct pci_attach_args *pa)
 {
   struct en_softc *sc = (struct en_softc *)scp;
   pci_chipset_tag_t id = scp->en_pc;

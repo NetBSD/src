@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.3 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.4 2009/03/14 15:36:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -37,12 +37,7 @@
 #define KERNEL_NAME "netbsd"
 
 void
-parse_args(astart, aend, filep, flagp, partp)
-	char *astart;
-	const char *aend;
-	const char **filep;
-	int *flagp;
-	int *partp;
+parse_args(char *astart, const char *aend, const char **filep, int *flagp, int *partp)
 {
 	const char *name = KERNEL_NAME;
 	char *ptr;

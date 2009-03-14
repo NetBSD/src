@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.19 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: a12c.c,v 1.20 2009/03/14 15:35:59 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.19 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.20 2009/03/14 15:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +88,7 @@ int a12cfound;
 struct a12c_config a12c_configuration;
 
 int
-a12cmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+a12cmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -101,9 +98,7 @@ a12cmatch(parent, match, aux)
 }
 
 void
-a12c_init(ccp, mallocsafe)
-	struct a12c_config *ccp;
-	int mallocsafe;
+a12c_init(struct a12c_config *ccp, int mallocsafe)
 {
 	if (!ccp->ac_initted) {
 		/* someday these may allocate memory, do once only */
@@ -141,7 +136,7 @@ a12cattach(parent, self, aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.19 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.20 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);

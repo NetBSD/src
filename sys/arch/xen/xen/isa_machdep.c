@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.15 2009/03/14 14:46:08 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.16 2009/03/14 15:36:16 dsl Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2009/03/14 14:46:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16 2009/03/14 15:36:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,9 +198,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	//XXX intr_disestablish(ih);
 }
@@ -247,10 +245,7 @@ isa_mem_alloc(t, size, align, boundary, flags, addrp, bshp)
 }
 
 void
-isa_mem_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+isa_mem_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	bus_space_free(t, bsh, size);

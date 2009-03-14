@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.40 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: ser.c,v 1.41 2009/03/14 15:36:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.40 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.41 2009/03/14 15:36:03 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -264,10 +264,7 @@ const struct cdevsw ser_cdevsw = {
 
 /*ARGSUSED*/
 static	int
-sermatch(pdp, cfp, auxp)
-struct	device	*pdp;
-struct	cfdata	*cfp;
-void		*auxp;
+sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int	ser_matched = 0;
 
@@ -334,9 +331,7 @@ void	*auxp;
 #ifdef SER_DEBUG
 void serstatus(struct ser_softc *, char *);
 void
-serstatus(sc, str)
-	struct ser_softc *sc;
-	char *str;
+serstatus(struct ser_softc *sc, char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
@@ -510,10 +505,7 @@ serclose(dev, flag, mode, l)
 }
 
 int
-serread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+serread(dev_t dev, struct uio *uio, int flag)
 {
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -522,10 +514,7 @@ serread(dev, uio, flag)
 }
  
 int
-serwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+serwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -534,10 +523,7 @@ serwrite(dev, uio, flag)
 }
 
 int
-serpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+serpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -546,8 +532,7 @@ serpoll(dev, events, l)
 }
 
 struct tty *
-sertty(dev)
-	dev_t dev;
+sertty(dev_t dev)
 {
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -556,12 +541,7 @@ sertty(dev)
 }
 
 int
-serioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+serioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = SERUNIT(dev);
 	struct ser_softc *sc = device_lookup_private(&ser_cd, unit);
@@ -621,9 +601,7 @@ serioctl(dev, cmd, data, flag, l)
 }
 
 void
-ser_break(sc, onoff)
-	struct ser_softc *sc;
-	int onoff;
+ser_break(struct ser_softc *sc, int onoff)
 {
 	int s;
 
@@ -645,9 +623,7 @@ ser_break(sc, onoff)
 }
 
 void
-ser_modem(sc, onoff)
-	struct ser_softc *sc;
-	int onoff;
+ser_modem(struct ser_softc *sc, int onoff)
 {
 	int s;
 
@@ -669,9 +645,7 @@ ser_modem(sc, onoff)
 }
 
 int
-serparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+serparam(struct tty *tp, struct termios *t)
 {
 	struct ser_softc *sc =
 	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
@@ -829,8 +803,7 @@ serparam(tp, t)
 }
 
 void
-ser_iflush(sc)
-	struct ser_softc *sc;
+ser_iflush(struct ser_softc *sc)
 {
 	u_char	tmp;
 
@@ -840,8 +813,7 @@ ser_iflush(sc)
 }
 
 void
-ser_loadchannelregs(sc)
-	struct ser_softc *sc;
+ser_loadchannelregs(struct ser_softc *sc)
 {
 	/* XXXXX necessary? */
 	ser_iflush(sc);
@@ -885,9 +857,7 @@ printf("loadchannelregs: mf_imrb: %x sc_imrb: %x\n", (u_int)MFP->mf_imrb,
 }
 
 int
-serhwiflow(tp, block)
-	struct tty *tp;
-	int block;
+serhwiflow(struct tty *tp, int block)
 {
 	struct ser_softc *sc =
 	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
@@ -922,9 +892,7 @@ out:
  * (un)block input via hw flowcontrol
  */
 void
-ser_hwiflow(sc, block)
-	struct ser_softc *sc;
-	int block;
+ser_hwiflow(struct ser_softc *sc, int block)
 {
 	if (sc->sc_mcr_rts == 0)
 		return;
@@ -946,8 +914,7 @@ ser_hwiflow(sc, block)
 }
 
 void
-serstart(tp)
-	struct tty *tp;
+serstart(struct tty *tp)
 {
 	struct ser_softc *sc =
 	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
@@ -1010,9 +977,7 @@ out:
  * Stop output on a line.
  */
 void
-serstop(tp, flag)
-	struct tty *tp;
-	int flag;
+serstop(struct tty *tp, int flag)
 {
 	struct ser_softc *sc =
 	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
@@ -1030,8 +995,7 @@ serstop(tp, flag)
 }
 
 void
-serdiag(arg)
-	void *arg;
+serdiag(void *arg)
 {
 	struct ser_softc *sc = arg;
 	int overflows, floods;
@@ -1087,9 +1051,7 @@ void ser_shutdown(sc)
 }
 
 static void
-serrxint(sc, tp)
-	struct ser_softc	*sc;
-	struct tty		*tp;
+serrxint(struct ser_softc *sc, struct tty *tp)
 {
 	u_int	get, cc, scc;
 	int	code;
@@ -1146,9 +1108,7 @@ serrxint(sc, tp)
 }
 
 static void
-sertxint(sc, tp)
-	struct ser_softc	*sc;
-	struct tty		*tp;
+sertxint(struct ser_softc *sc, struct tty *tp)
 {
 
 	CLR(tp->t_state, TS_BUSY);
@@ -1160,9 +1120,7 @@ sertxint(sc, tp)
 }
 
 static void
-sermsrint(sc, tp)
-	struct ser_softc	*sc;
-	struct tty		*tp;
+sermsrint(struct ser_softc *sc, struct tty *tp)
 {
 	u_char msr, delta;
 	int s;
@@ -1197,8 +1155,7 @@ sermsrint(sc, tp)
 }
 
 void
-sersoft(arg)
-	void *arg;
+sersoft(void *arg)
 {
 	struct ser_softc *sc = arg;
 	struct tty	*tp;
@@ -1229,8 +1186,7 @@ sersoft(arg)
 }
 
 int
-sermintr(arg)
-void	*arg;
+sermintr(void *arg)
 {
 	struct ser_softc *sc = arg;
 	u_char	msr, delta;
@@ -1263,8 +1219,7 @@ void	*arg;
 }
 
 int
-sertrintr(arg)
-	void	*arg;
+sertrintr(void *arg)
 {
 	struct ser_softc *sc = arg;
 	u_int	put, cc;
@@ -1346,8 +1301,7 @@ sertrintr(arg)
 }
 
 static int
-serspeed(speed)
-	long speed;
+serspeed(long speed)
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -1402,8 +1356,7 @@ serspeed(speed)
 #include <dev/cons.h>
 
 void
-sercnprobe(cp)
-	struct consdev *cp;
+sercnprobe(struct consdev *cp)
 {
 	/*
 	 * Activate serial console when DCD present...
@@ -1424,8 +1377,7 @@ sercnprobe(cp)
 }
 
 void
-sercninit(cp)
-	struct consdev *cp;
+sercninit(struct consdev *cp)
 {
 	serinitcons(CONSBAUD);
 }
@@ -1434,8 +1386,7 @@ sercninit(cp)
  * Initialize UART to known state.
  */
 void
-serinit(baud)
-int	baud;
+serinit(int baud)
 {
 	int ospeed = serspeed(baud);
 
@@ -1452,8 +1403,7 @@ int	baud;
  * Set UART for console use. Do normal init, then enable interrupts.
  */
 void
-serinitcons(baud)
-int	baud;
+serinitcons(int baud)
 {
 	serinit(baud);
 
@@ -1465,8 +1415,7 @@ int	baud;
 }
 
 int
-sercngetc(dev)
-	dev_t dev;
+sercngetc(dev_t dev)
 {
 	u_char	stat, c;
 	int	s;
@@ -1486,9 +1435,7 @@ sercngetc(dev)
 u_int s_imra;
 u_int s_stat1, s_stat2, s_stat3;
 void
-sercnputc(dev, c)
-	dev_t dev;
-	int c;
+sercnputc(dev_t dev, int c)
 {
 	int	timo;
 	u_char	stat, imra;
@@ -1517,9 +1464,7 @@ s_stat3 = MFP->mf_tsr;
 }
 
 void
-sercnpollc(dev, on)
-	dev_t dev;
-	int on;
+sercnpollc(dev_t dev, int on)
 {
 
 }

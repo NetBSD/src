@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.34 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.35 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.34 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.35 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,7 @@ pcmcom_match(struct device *parent, struct cfdata *cf,
 }
 
 int
-pcmcom_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+pcmcom_validate_config(struct pcmcia_config_entry *cfe)
 {
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace < 1 || cfe->num_iospace > NSLAVES)
@@ -189,9 +188,7 @@ fail:
 }
 
 int
-pcmcom_detach(self, flags)
-	struct device *self;
-	int flags;
+pcmcom_detach(struct device *self, int flags)
 {
 	struct pcmcom_softc *sc = (void *)self;
 	int slave, error;
@@ -215,9 +212,7 @@ pcmcom_detach(self, flags)
 }
 
 int
-pcmcom_activate(self, act)
-	struct device *self;
-	enum devact act;
+pcmcom_activate(struct device *self, enum devact act)
 {
 	struct pcmcom_softc *sc = (void *)self;
 	int slave, error = 0, s;
@@ -248,9 +243,7 @@ pcmcom_activate(self, act)
 }
 
 int
-pcmcom_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+pcmcom_print(void *aux, const char *pnp)
 {
 	struct pcmcom_attach_args *pca = aux;
 
@@ -264,8 +257,7 @@ pcmcom_print(aux, pnp)
 }
 
 int
-pcmcom_intr(arg)
-	void *arg;
+pcmcom_intr(void *arg)
 {
 #if NCOM > 0
 	struct pcmcom_softc *sc = arg;
@@ -286,8 +278,7 @@ pcmcom_intr(arg)
 }
 
 int
-pcmcom_enable(sc)
-	struct pcmcom_softc *sc;
+pcmcom_enable(struct pcmcom_softc *sc)
 {
 	int error;
 
@@ -310,8 +301,7 @@ pcmcom_enable(sc)
 }
 
 void
-pcmcom_disable(sc)
-	struct pcmcom_softc *sc;
+pcmcom_disable(struct pcmcom_softc *sc)
 {
 
 	if (--sc->sc_enabled_count != 0)
@@ -371,8 +361,7 @@ com_pcmcom_enable(struct com_softc *sc)
 }
 
 void
-com_pcmcom_disable(sc)
-	struct com_softc *sc;
+com_pcmcom_disable(struct com_softc *sc)
 {
 
 	pcmcom_disable(device_private(device_parent(sc->sc_dev)));

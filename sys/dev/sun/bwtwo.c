@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.22 2009/02/23 22:44:27 jdc Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.23 2009/03/14 15:36:21 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.22 2009/02/23 22:44:27 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.23 2009/03/14 15:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,9 +172,7 @@ static struct vcons_screen bw2_console_screen;
 #endif /* NWSDISPLAY > 0 */
 
 int
-bwtwo_pfour_probe(vaddr, arg)
-	void *vaddr;
-	void *arg;
+bwtwo_pfour_probe(void *vaddr, void *arg)
 {
 	struct cfdata *cf = arg;
 
@@ -192,10 +190,7 @@ bwtwo_pfour_probe(vaddr, arg)
 }
 
 void
-bwtwoattach(sc, name, isconsole)
-	struct	bwtwo_softc *sc;
-	const char *name;
-	int	isconsole;
+bwtwoattach(struct bwtwo_softc *sc, const char *name, int isconsole)
 {
 	struct fbdevice *fb = &sc->sc_fb;
 	int isoverlay;
@@ -339,12 +334,7 @@ bwtwoopen(dev, flags, mode, l)
 }
 
 int
-bwtwoioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+bwtwoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct bwtwo_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 
@@ -369,8 +359,7 @@ bwtwoioctl(dev, cmd, data, flags, l)
 }
 
 static void
-bwtwounblank(dev)
-	struct device *dev;
+bwtwounblank(struct device *dev)
 {
 	struct bwtwo_softc *sc = device_private(dev);
 
@@ -382,10 +371,7 @@ bwtwounblank(dev)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-bwtwommap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+bwtwommap(dev_t dev, off_t off, int prot)
 {
 	struct bwtwo_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 

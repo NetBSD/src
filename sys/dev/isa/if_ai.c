@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.28 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.29 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.28 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.29 2009/03/14 15:36:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,7 @@ void ai_attach(struct device *, struct device *, void *);
  * AT&T StarLan support routines
  */
 static void
-ai_reset(sc, why)
-	struct ie_softc *sc;
-	int why;
+ai_reset(struct ie_softc *sc, int why)
 {
 	struct ai_softc* asc = (struct ai_softc *) sc;
 
@@ -430,10 +428,7 @@ ai_attach(struct device *parent, struct device *self, void *aux)
  * Better hope there's nothing important hiding just below the card...
  */
 static int
-ai_find_mem_size(asc, memt, maddr)
-	struct ai_softc* asc;
-	bus_space_tag_t memt;
-	bus_size_t maddr;
+ai_find_mem_size(struct ai_softc* asc, bus_space_tag_t memt, bus_size_t maddr)
 {
 	int size;
 	bus_space_handle_t memh;
@@ -456,11 +451,7 @@ ai_find_mem_size(asc, memt, maddr)
  * Check to see if there's an 82586 out there.
  */
 static int
-check_ie_present(sc, memt, memh, size)
-	struct ie_softc* sc;
-	bus_space_tag_t memt;
-	bus_space_handle_t memh;
-	bus_size_t size;
+check_ie_present(struct ie_softc* sc, bus_space_tag_t memt, bus_space_handle_t memh, bus_size_t size)
 {
 	sc->hwreset = ai_reset;
 	sc->chan_attn = ai_atten;

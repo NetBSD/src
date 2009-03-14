@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.18 2009/03/14 14:46:06 dsl Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.19 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.18 2009/03/14 14:46:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.19 2009/03/14 15:36:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,10 +76,7 @@ const struct cdevsw ofrom_cdevsw = {
 };
 
 int
-ofromprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ofromprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	static const char *const compatible_strings[] = { "rom", NULL };

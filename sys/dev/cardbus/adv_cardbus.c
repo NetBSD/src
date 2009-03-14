@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.19 2008/06/24 19:44:52 drochner Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.20 2009/03/14 15:36:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.19 2008/06/24 19:44:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.20 2009/03/14 15:36:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,9 +239,7 @@ adv_cardbus_attach(struct device *parent, struct device *self,
 }
 
 int
-adv_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+adv_cardbus_detach(struct device *self, int flags)
 {
 	struct adv_cardbus_softc *csc = device_private(self);
 	struct asc_softc *sc = &csc->sc_adv;

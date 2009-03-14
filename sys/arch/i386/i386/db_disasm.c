@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.38 2009/03/07 22:02:16 ad Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.39 2009/03/14 15:36:07 dsl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.38 2009/03/07 22:02:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.39 2009/03/14 15:36:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -980,10 +980,7 @@ db_read_address(loc, short_addr, regmodrm, addrp)
 }
 
 void
-db_print_address(seg, size, addrp)
-	const char *	seg;
-	int		size;
-	struct i_addr	*addrp;
+db_print_address(const char * seg, int size, struct i_addr *addrp)
 {
 	if (addrp->is_reg) {
 		db_printf("%s", db_reg[size][addrp->disp]);

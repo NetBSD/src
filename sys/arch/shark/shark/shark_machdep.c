@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.36 2009/03/14 14:46:07 dsl Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.37 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.36 2009/03/14 14:46:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.37 2009/03/14 15:36:13 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -172,9 +172,7 @@ void ofw_device_register(struct device *, void *);
  */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	/* Just call OFW common routine. */
 	ofw_boot(howto, bootstr);

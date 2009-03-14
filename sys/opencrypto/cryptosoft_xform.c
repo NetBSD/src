@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.9 2008/12/17 20:51:38 cegger Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.10 2009/03/14 15:36:24 dsl Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.9 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.10 2009/03/14 15:36:24 dsl Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -628,19 +628,13 @@ SHA512Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
  */
 
 static u_int32_t
-deflate_compress(data, size, out)
-	u_int8_t *data;
-	u_int32_t size;
-	u_int8_t **out;
+deflate_compress(u_int8_t *data, u_int32_t size, u_int8_t **out)
 {
 	return deflate_global(data, size, 0, out);
 }
 
 static u_int32_t
-deflate_decompress(data, size, out)
-	u_int8_t *data;
-	u_int32_t size;
-	u_int8_t **out;
+deflate_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out)
 {
 	return deflate_global(data, size, 1, out);
 }

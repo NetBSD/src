@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.38 2008/12/17 20:51:35 cegger Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.39 2009/03/14 15:36:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.38 2008/12/17 20:51:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.39 2009/03/14 15:36:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,7 @@ static signed int ntfs_toupper_usecount;
  *
  */
 int
-ntfs_ntvattrrele(vap)
-	struct ntvattr * vap;
+ntfs_ntvattrrele(struct ntvattr * vap)
 {
 	dprintf(("ntfs_ntvattrrele: ino: %llu, type: 0x%x\n",
 	    (unsigned long long)vap->va_ip->i_number, vap->va_type));
@@ -376,8 +375,7 @@ out:
  * ntfs_ntput().
  */
 int
-ntfs_ntget(ip)
-	struct ntnode *ip;
+ntfs_ntget(struct ntnode *ip)
 {
 	dprintf(("ntfs_ntget: get ntnode %llu: %p, usecount: %d\n",
 	    (unsigned long long)ip->i_number, ip, ip->i_usecount));
@@ -466,8 +464,7 @@ ntfs_ntlookup(
  * ntnode should be locked on entry, and unlocked on return.
  */
 void
-ntfs_ntput(ip)
-	struct ntnode *ip;
+ntfs_ntput(struct ntnode *ip)
 {
 	struct ntvattr *vap;
 
@@ -512,8 +509,7 @@ ntfs_ntput(ip)
  * increment usecount of ntnode
  */
 void
-ntfs_ntref(ip)
-	struct ntnode *ip;
+ntfs_ntref(struct ntnode *ip)
 {
 	mutex_enter(&ip->i_interlock);
 	ip->i_usecount++;
@@ -528,8 +524,7 @@ ntfs_ntref(ip)
  * Decrement usecount of ntnode.
  */
 void
-ntfs_ntrele(ip)
-	struct ntnode *ip;
+ntfs_ntrele(struct ntnode *ip)
 {
 	dprintf(("ntfs_ntrele: rele ntnode %llu: %p, usecount: %d\n",
 	    (unsigned long long)ip->i_number, ip, ip->i_usecount));
@@ -547,8 +542,7 @@ ntfs_ntrele(ip)
  * Deallocate all memory allocated for ntvattr
  */
 void
-ntfs_freentvattr(vap)
-	struct ntvattr * vap;
+ntfs_freentvattr(struct ntvattr * vap)
 {
 	if (vap->va_flag & NTFS_AF_INRUN) {
 		if (vap->va_vruncn)
@@ -697,12 +691,7 @@ ntfs_runtovrun(
  * Compare unicode and ascii string case insens.
  */
 static int
-ntfs_uastricmp(ntmp, ustr, ustrlen, astr, astrlen)
-	struct ntfsmount *ntmp;
-	const wchar *ustr;
-	size_t ustrlen;
-	const char *astr;
-	size_t astrlen;
+ntfs_uastricmp(struct ntfsmount *ntmp, const wchar *ustr, size_t ustrlen, const char *astr, size_t astrlen)
 {
 	size_t  i;
 	int res;
@@ -726,12 +715,7 @@ ntfs_uastricmp(ntmp, ustr, ustrlen, astr, astrlen)
  * Compare unicode and ascii string case sens.
  */
 static int
-ntfs_uastrcmp(ntmp, ustr, ustrlen, astr, astrlen)
-	struct ntfsmount *ntmp;
-	const wchar *ustr;
-	size_t ustrlen;
-	const char *astr;
-	size_t astrlen;
+ntfs_uastrcmp(struct ntfsmount *ntmp, const wchar *ustr, size_t ustrlen, const char *astr, size_t astrlen)
 {
 	size_t i;
 	int res;
@@ -2046,9 +2030,7 @@ ntfs_toupper_init()
  * otherwise read the data from the filesystem we are currently mounting
  */
 int
-ntfs_toupper_use(mp, ntmp)
-	struct mount *mp;
-	struct ntfsmount *ntmp;
+ntfs_toupper_use(struct mount *mp, struct ntfsmount *ntmp)
 {
 	int error = 0;
 	struct vnode *vp;

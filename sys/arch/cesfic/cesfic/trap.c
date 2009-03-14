@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 2009/03/14 14:45:58 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.45 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2009/03/14 14:45:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 2009/03/14 15:36:04 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -219,12 +219,7 @@ int mmupid = -1;
  * to user mode.
  */
 static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr, int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -285,10 +280,7 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
@@ -301,11 +293,7 @@ machine_userret(l, f, t)
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame *fp;
-	int type;
-	unsigned code;
-	unsigned v;
+trap(struct frame *fp, int type, unsigned code, unsigned v)
 {
 	extern char fubail[], subail[];
 	struct lwp *l;
@@ -698,9 +686,7 @@ const char wberrstr[] =
 #endif
 
 int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -936,8 +922,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 void
-dumpssw(ssw)
-	u_short ssw;
+dumpssw(u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -994,9 +979,7 @@ dumpwb(num, s, a, d)
  * because KGDB will just return 0 if not connected.
  */
 void
-trap_kdebug(type, tf)
-	int type;
-	struct trapframe tf;
+trap_kdebug(int type, struct trapframe tf)
 {
 #ifdef	KGDB
 	/* Let KGDB handle it (if connected) */

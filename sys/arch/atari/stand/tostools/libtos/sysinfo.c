@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.8 2009/01/06 13:35:30 tsutsui Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.9 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,8 +47,7 @@
  * Extract memory and CPU/FPU info from system.
  */
 void
-sys_info(od)
-osdsc_t	*od;
+sys_info(osdsc_t *od)
 {
 	long	*jar;
 	OSH	*oshdr;

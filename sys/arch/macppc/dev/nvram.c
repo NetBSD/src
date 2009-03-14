@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.13 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: nvram.c,v 1.14 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.13 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.14 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,10 +77,7 @@ const struct cdevsw nvram_cdevsw = {
 };
 
 int
-nvram_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+nvram_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -183,19 +180,13 @@ out:
 }
 
 int
-nvramwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+nvramwrite(dev_t dev, struct uio *uio, int flag)
 {
 	return ENXIO;
 }
 
 paddr_t
-nvrammmap(dev, off, prot)
-        dev_t dev;
-        off_t off;
-	int prot;
+nvrammmap(dev_t dev, off_t off, int prot)
 {
 	return -1;
 }

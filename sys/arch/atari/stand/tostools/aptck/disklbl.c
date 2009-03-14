@@ -1,4 +1,4 @@
-/*	$NetBSD: disklbl.c,v 1.4 2001/07/26 23:07:57 wiz Exp $	*/
+/*	$NetBSD: disklbl.c,v 1.5 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -45,8 +45,7 @@ static int	ahdi_display PROTO((disk_t *));
 static u_int	ahdi_getparts PROTO((disk_t *, u_int, u_int));
 
 int
-readdisklabel(dd)
-	disk_t	*dd;
+readdisklabel(disk_t *dd)
 {
 	int	e;
 
@@ -86,9 +85,7 @@ readdisklabel(dd)
 }
 
 static int
-bsd_label(dd, offset)
-	disk_t		*dd;
-	u_int		offset;
+bsd_label(disk_t *dd, u_int offset)
 {
 	u_char		*bblk;
 	u_int		nsec;
@@ -126,8 +123,7 @@ bsd_label(dd, offset)
 }
 
 static int
-dkcksum(dl)
-	struct disklabel *dl;
+dkcksum(struct disklabel *dl)
 {
 	u_short	*start, *end, sum = 0;
 
@@ -139,8 +135,7 @@ dkcksum(dl)
 }
 
 int
-ahdi_label(dd)
-	disk_t	*dd;
+ahdi_label(disk_t *dd)
 {
 	u_int	i;
 	int	e;
@@ -232,8 +227,7 @@ part_cmp(x1, x2)
 }
 
 static int
-ahdi_display(dd)
-	disk_t	*dd;
+ahdi_display(disk_t *dd)
 {
 	int	i, j, rv = 0;
 

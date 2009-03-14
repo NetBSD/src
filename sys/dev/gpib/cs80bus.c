@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.10 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.11 2009/03/14 15:36:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.10 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.11 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +91,7 @@ static int	cs80busprint(void *, const char *);
  */
 
 int
-cs80busmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cs80busmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
@@ -140,11 +137,7 @@ cs80busattach(parent, self, aux)
 }
 
 int
-cs80bussearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+cs80bussearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct cs80bus_softc *sc = (struct cs80bus_softc *)parent;
 	struct cs80bus_attach_args *ca = aux;
@@ -198,9 +191,7 @@ out:
 }
 
 int
-cs80busprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+cs80busprint(void *aux, const char *pnp)
 {
 	struct cs80bus_attach_args *ca = aux;
 
@@ -235,11 +226,7 @@ cs80bus_alloc(sc, slave, punit)
  */
 
 int
-cs80describe(v, slave, punit, csd)
-	void *v;
-	int slave;
-	int punit;
-	struct cs80_description *csd;
+cs80describe(void *v, int slave, int punit, struct cs80_description *csd)
 {
 	struct cs80bus_softc *sc = v;
 	struct cs80_describecmd desc;
@@ -277,10 +264,7 @@ cs80describe(v, slave, punit, csd)
 }
 
 int
-cs80reset(v, slave, punit)
-	void *v;
-	int slave;
-	int punit;
+cs80reset(void *v, int slave, int punit)
 {
 	struct cs80bus_softc *sc = v;
 	struct cs80_clearcmd clear;
@@ -321,11 +305,7 @@ cs80reset(v, slave, punit)
 }
 
 int
-cs80status(v, slave, punit, css)
-	void *v;
-	int slave;
-	int punit;
-	struct cs80_stat *css;
+cs80status(void *v, int slave, int punit, struct cs80_stat *css)
 {
 	struct cs80bus_softc *sc = v;
 	struct cs80_statuscmd rs;
@@ -353,11 +333,7 @@ cs80status(v, slave, punit, css)
 }
 
 int
-cs80setoptions(v, slave, punit, options)
-	void *v;
-	int slave;
-	int punit;
-	u_int8_t options;
+cs80setoptions(void *v, int slave, int punit, u_int8_t options)
 {
 	struct cs80bus_softc *sc = v;
 	struct cs80_soptcmd opt;
@@ -375,13 +351,7 @@ cs80setoptions(v, slave, punit, options)
 }
 
 int
-cs80send(v, slave, punit, cmd, ptr, cnt)
-	void *v;
-	int slave;
-	int punit;
-	int cmd;
-	void *ptr;
-	int cnt;
+cs80send(void *v, int slave, int punit, int cmd, void *ptr, int cnt)
 {
 	struct cs80bus_softc *sc = v;
 	u_int8_t *buf = ptr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.13 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: promcall.c,v 1.14 2009/03/14 15:36:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.13 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.14 2009/03/14 15:36:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,8 +114,7 @@ struct consdev promcd = {
  * Get character from PROM console.
  */
 static int
-romgetc(dev)
-	dev_t dev;
+romgetc(dev_t dev)
 {
 	int chr, s;
 
@@ -129,9 +128,7 @@ romgetc(dev)
  * Print a character on PROM console.
  */
 static void
-romputc(dev, c)
-	dev_t dev;
-	int c;
+romputc(dev_t dev, int c)
 {
 	int s;
 
@@ -146,10 +143,7 @@ romputc(dev, c)
  * Encoding is idiosyncratic; see DECstation Owners Guide.
  */
 void
-prom_findcons(kbdslot, crtslot, prom_using_screen)
-	int *kbdslot;
-	int *crtslot;
-	int *prom_using_screen;
+prom_findcons(int *kbdslot, int *crtslot, int *prom_using_screen)
 {
 	char *oscon = 0;	/* PROM osconsole string */
 
@@ -198,8 +192,7 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
  * Get a prom environment variable.
  */
 char *
-prom_getenv(name)
-	const char *name;
+prom_getenv(const char *name)
 {
 	return (*callv->_getenv)(name);
 }
@@ -235,9 +228,7 @@ prom_haltbutton()
  * Halt/reboot machine.
  */
 void __attribute__((__noreturn__))
-prom_halt(howto, bootstr)
-	int howto;
-	char *bootstr;
+prom_halt(int howto, char *bootstr)
 {
 	if (callv != &callvec)
 		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
@@ -258,8 +249,7 @@ prom_halt(howto, bootstr)
  * Get the host SCSI ID from the PROM.
  */
 int
-prom_scsiid(cnum)
-	int cnum;
+prom_scsiid(int cnum)
 {
 	char scsiid_var[8];	/* strlen("scsiidX") + NULL */
 	char *cp;
@@ -273,8 +263,7 @@ prom_scsiid(cnum)
  * Get the memory bitmap from the PROM if we can
  */
 int
-prom_getbitmap(map)
-	struct memmap *map;
+prom_getbitmap(struct memmap *map)
 {
 	char *cp;
 	int len;

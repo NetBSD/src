@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2008/12/13 23:30:54 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.26 2009/03/14 15:36:07 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -154,8 +154,7 @@ parsebootfile(fname, fsmode, devname, unit, partition, file)
 }
 
 char *
-sprint_bootsel(filename)
-	const char *filename;
+sprint_bootsel(const char *filename)
 {
 	char *fsname, *devname;
 	int unit, partition;
@@ -248,9 +247,7 @@ usage()
 }
 
 int 
-main(argc, argv)
-	int             argc;
-	char          **argv;
+main(int argc, char **argv)
 {
 	int             ch;
 	int             interactive = 0;
@@ -313,8 +310,7 @@ main(argc, argv)
 
 /* ARGSUSED */
 void
-command_help(arg)
-	char *arg;
+command_help(char *arg)
 {
 	printf("commands are:\n"
 	       "boot [xdNx:][filename] [-acdqsv]\n"
@@ -327,8 +323,7 @@ command_help(arg)
 }
 
 void
-command_ls(arg)
-	char *arg;
+command_ls(char *arg)
 {
 	char *help = default_filename;
 	if (strcmp(current_fsmode, "ufs")) {
@@ -342,16 +337,14 @@ command_ls(arg)
 
 /* ARGSUSED */
 void
-command_quit(arg)
-	char *arg;
+command_quit(char *arg)
 {
 	printf("Exiting... goodbye...\n");
 	exit(0);
 }
 
 void
-command_boot(arg)
-	char *arg;
+command_boot(char *arg)
 {
 	char *filename;
 	int howto;
@@ -361,8 +354,7 @@ command_boot(arg)
 }
 
 void
-command_mode(arg)
-	char *arg;
+command_mode(char *arg)
 {
 	if (!strcmp("dos", arg))
 		current_fsmode = "dos";
@@ -373,8 +365,7 @@ command_mode(arg)
 }
 
 void
-command_dev(arg)
-	char *arg;
+command_dev(char *arg)
 {
 	static char savedevname[MAXDEVNAME + 1];
 	char *fsname, *devname;

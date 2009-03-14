@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.228 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.229 2009/03/14 15:36:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2009/03/14 15:36:11 dsl Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -475,8 +475,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -564,8 +563,7 @@ haltsys:
  * Be careful to save and restore the original contents for msgbuf.
  */
 int
-memsize_scan(first)
-	void *first;
+memsize_scan(void *first)
 {
 	int i, mem;
 	char *cp;
@@ -610,8 +608,7 @@ memsize_scan(first)
  * Find out how much memory is available by using the PROM bitmap.
  */
 int
-memsize_bitmap(first)
-	void *first;
+memsize_bitmap(void *first)
 {
 	memmap *prom_memmap = (memmap *)first;
 	int i, mapbytes;
@@ -665,11 +662,7 @@ unimpl_cons_init()
 }
 
 static void
-unimpl_iointr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
+unimpl_iointr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
 {
 
 	panic("sysconf.init didn't set intr");
@@ -687,8 +680,7 @@ unimpl_intr_establish(dev, cookie, level, handler, arg)
 }
 
 static int
-unimpl_memsize(first)
-void *first;
+unimpl_memsize(void *first)
 {
 
 	panic("sysconf.init didn't set memsize");
@@ -705,8 +697,7 @@ nullwork()
  * Wait "n" microseconds. (scsi code needs this).
  */
 void
-delay(n)
-        int n;
+delay(int n)
 {
 
         DELAY(n);

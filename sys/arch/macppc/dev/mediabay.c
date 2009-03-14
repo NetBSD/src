@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.16 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.17 2009/03/14 15:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.16 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.17 2009/03/14 15:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,10 +104,7 @@ CFATTACH_DECL(mediabay, sizeof(struct mediabay_softc),
 #define MEDIABAY_ID_NONE	7
 
 int
-mediabay_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mediabay_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -163,8 +160,7 @@ mediabay_attach(parent, self, aux)
 }
 
 void
-mediabay_attach_content(sc)
-	struct mediabay_softc *sc;
+mediabay_attach_content(struct mediabay_softc *sc)
 {
 	int child;
 	u_int fcr = 0;
@@ -265,9 +261,7 @@ mediabay_attach_content(sc)
 }
 
 int
-mediabay_print(aux, mediabay)
-	void *aux;
-	const char *mediabay;
+mediabay_print(void *aux, const char *mediabay)
 {
 	struct confargs *ca = aux;
 
@@ -278,8 +272,7 @@ mediabay_print(aux, mediabay)
 }
 
 int
-mediabay_intr(v)
-	void *v;
+mediabay_intr(void *v)
 {
 	struct mediabay_softc *sc = v;
 
@@ -289,8 +282,7 @@ mediabay_intr(v)
 }
 
 void
-mediabay_kthread(v)
-	void *v;
+mediabay_kthread(void *v)
 {
 	struct mediabay_softc *sc = v;
 	u_int x, fcr;

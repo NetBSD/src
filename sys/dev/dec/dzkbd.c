@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.20 2007/12/03 15:34:31 ad Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.21 2009/03/14 15:36:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.20 2007/12/03 15:34:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.21 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,8 +196,7 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-dzkbd_cnattach(ls)
-	struct dz_linestate *ls;
+dzkbd_cnattach(struct dz_linestate *ls)
 {
 
 	dzkbd_console_internal.dzi_ks.attmt.sendchar = dzkbd_sendchar;
@@ -212,9 +211,7 @@ dzkbd_cnattach(ls)
 }
 
 static int
-dzkbd_enable(v, on)
-	void *v;
-	int on;
+dzkbd_enable(void *v, int on)
 {
 	struct dzkbd_softc *sc = v;
 
@@ -223,9 +220,7 @@ dzkbd_enable(v, on)
 }
 
 static int
-dzkbd_sendchar(v, c)
-	void *v;
-	u_char c;
+dzkbd_sendchar(void *v, u_char c)
 {
 	struct dz_linestate *ls = v;
 	int s;
@@ -237,10 +232,7 @@ dzkbd_sendchar(v, c)
 }
 
 static void
-dzkbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+dzkbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct dzkbd_internal *dzi = v;
 	int c;
@@ -251,9 +243,7 @@ dzkbd_cngetc(v, type, data)
 }
 
 static void
-dzkbd_cnpollc(v, on)
-	void *v;
-        int on;
+dzkbd_cnpollc(void *v, int on)
 {
 #if 0
 	struct dzkbd_internal *dzi = v;
@@ -261,9 +251,7 @@ dzkbd_cnpollc(v, on)
 }
 
 static void
-dzkbd_set_leds(v, leds)
-	void *v;
-	int leds;
+dzkbd_set_leds(void *v, int leds)
 {
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 
@@ -272,12 +260,7 @@ dzkbd_set_leds(v, leds)
 }
 
 static int
-dzkbd_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+dzkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 
@@ -308,9 +291,7 @@ dzkbd_ioctl(v, cmd, data, flag, l)
 }
 
 static int
-dzkbd_input(v, data)
-	void *v;
-	int data;
+dzkbd_input(void *v, int data)
 {
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 	u_int type;

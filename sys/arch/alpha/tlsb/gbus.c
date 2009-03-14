@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.20 2009/03/14 14:45:54 dsl Exp $ */
+/* $NetBSD: gbus.c,v 1.21 2009/03/14 15:36:00 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.20 2009/03/14 14:45:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.21 2009/03/14 15:36:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,7 @@ struct gbus_attach_args gbus_children[] = {
 };
 
 static int
-gbusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+gbusprint(void *aux, const char *pnp)
 {
 	struct gbus_attach_args *ga = aux;
 
@@ -90,10 +88,7 @@ gbusprint(aux, pnp)
 }
 
 static int
-gbusmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+gbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct tlsb_dev_attach_args *ta = aux;
 
@@ -113,10 +108,7 @@ gbusmatch(parent, cf, aux)
 }
 
 static void
-gbusattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gbusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gbus_softc *sc = (struct gbus_softc *)self;
 	struct tlsb_dev_attach_args *ta = aux;

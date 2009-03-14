@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.c,v 1.5 2008/04/09 19:18:25 skrll Exp $	*/
+/*	$NetBSD: readufs.c,v 1.6 2009/03/14 15:36:06 dsl Exp $	*/
 /*	from Id: readufs.c,v 1.9 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -28,10 +28,7 @@ int main((int argc, char *argv[]);
 int fd;
 
 void
-RAW_READ(buf, blkpos, bytelen)
-	void *buf;
-	daddr_t blkpos;
-	size_t bytelen;
+RAW_READ(void *buf, daddr_t blkpos, size_t bytelen)
 {
 
 	if (pread(fd, buf, bytelen, (off_t)dbtob(blkpos)) != (ssize_t) bytelen)
@@ -233,9 +230,7 @@ ufs_read_indirect(blk, level, buf, poff, count)
  * look-up fn in directory dirino
  */
 ino32_t
-ufs_lookup(dirino, fn)
-	ino32_t dirino;
-	const char *fn;
+ufs_lookup(ino32_t dirino, const char *fn)
 {
 	union ufs_dinode dirdi;
 	struct direct *pdir;
@@ -264,8 +259,7 @@ ufs_lookup(dirino, fn)
  * look-up a file in absolute pathname from the root directory
  */
 ino32_t
-ufs_lookup_path(path)
-	const char *path;
+ufs_lookup_path(const char *path)
 {
 	char fn[FFS_MAXNAMLEN + 1];
 	char *p;
@@ -285,10 +279,7 @@ ufs_lookup_path(path)
 
 #if 0
 size_t
-ufs_load_file(buf, dirino, fn)
-	void *buf;
-	ino32_t dirino;
-	const char *fn;
+ufs_load_file(void *buf, ino32_t dirino, const char *fn)
 {
 	size_t cnt, disize;
 	union ufs_dinode dinode;
@@ -317,8 +308,7 @@ ufs_init()
 
 #ifdef DEBUG_WITH_STDIO
 void
-ufs_list_dir(dirino)
-	ino32_t dirino;
+ufs_list_dir(ino32_t dirino)
 {
 	union ufs_dinode dirdi;
 	struct direct *pdir;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.21 2008/04/27 18:58:47 matt Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.22 2009/03/14 15:36:13 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.21 2008/04/27 18:58:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.22 2009/03/14 15:36:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,11 +145,7 @@ irq_init()
  */
 
 int
-irq_claim(irq, handler, group, name)
-	int irq;
-	irqhandler_t *handler;
-	const char *group;
-	const char *name;
+irq_claim(int irq, irqhandler_t *handler, const char *group, const char *name)
 {
 
 #ifdef DIAGNOSTIC
@@ -211,9 +207,7 @@ irq_claim(irq, handler, group, name)
  */
 
 int
-irq_release(irq, handler)
-	int irq;
-	irqhandler_t *handler;
+irq_release(int irq, irqhandler_t *handler)
 {
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
@@ -340,8 +334,7 @@ intr_claim(irq, level, ih_func, ih_arg, group, name)
 }
 
 int
-intr_release(arg)
-	void *arg;
+intr_release(void *arg)
 {
 	irqhandler_t *ih = (irqhandler_t *)arg;
 
@@ -360,8 +353,7 @@ intr_release(arg)
  */
 
 void
-disable_irq(irq)
-	int irq;
+disable_irq(int irq)
 {
 	u_int oldirqstate; 
 
@@ -381,8 +373,7 @@ disable_irq(irq)
  */
 
 void
-enable_irq(irq)
-	int irq;
+enable_irq(int irq)
 {
 	u_int oldirqstate; 
 
@@ -401,8 +392,7 @@ enable_irq(irq)
  */
 
 void
-stray_irqhandler(mask)
-	u_int mask;
+stray_irqhandler(u_int mask)
 {
 	static u_int stray_irqs = 0;
 

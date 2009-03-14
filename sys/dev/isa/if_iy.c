@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.83 2008/12/17 15:41:24 cegger Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.84 2009/03/14 15:36:18 dsl Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.83 2008/12/17 15:41:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.84 2009/03/14 15:36:18 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -381,8 +381,7 @@ iyattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-iystop(sc)
-struct iy_softc *sc;
+iystop(struct iy_softc *sc)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -436,8 +435,7 @@ struct iy_softc *sc;
 }
 
 void
-iyreset(sc)
-struct iy_softc *sc;
+iyreset(struct iy_softc *sc)
 {
 	int s;
 	s = splnet();
@@ -447,8 +445,7 @@ struct iy_softc *sc;
 }
 
 void
-iyinit(sc)
-struct iy_softc *sc;
+iyinit(struct iy_softc *sc)
 {
 	int i;
 	unsigned temp;
@@ -634,8 +631,7 @@ struct iy_softc *sc;
 }
 
 void
-iystart(ifp)
-struct ifnet *ifp;
+iystart(struct ifnet *ifp)
 {
 	struct iy_softc *sc;
 
@@ -867,10 +863,7 @@ struct ifnet *ifp;
 
 
 static inline void
-eepromwritebit(iot, ioh, what)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int what;
+eepromwritebit(bus_space_tag_t iot, bus_space_handle_t ioh, int what)
 {
 	bus_space_write_1(iot, ioh, EEPROM_REG, what);
 	delay(1);
@@ -881,9 +874,7 @@ eepromwritebit(iot, ioh, what)
 }
 
 static inline int
-eepromreadbit(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+eepromreadbit(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int b;
 
@@ -897,10 +888,7 @@ eepromreadbit(iot, ioh)
 }
 
 static u_int16_t
-eepromread(iot, ioh, offset)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int offset;
+eepromread(bus_space_tag_t iot, bus_space_handle_t ioh, int offset)
 {
 	volatile int i;
 	volatile int j;
@@ -941,8 +929,7 @@ eepromread(iot, ioh, offset)
  * an interrupt after a transmit has been started on it.
  */
 void
-iywatchdog(ifp)
-	struct ifnet *ifp;
+iywatchdog(struct ifnet *ifp)
 {
 	struct iy_softc *sc = ifp->if_softc;
 
@@ -955,8 +942,7 @@ iywatchdog(ifp)
  * What to do upon receipt of an interrupt.
  */
 int
-iyintr(arg)
-	void *arg;
+iyintr(void *arg)
 {
 	struct iy_softc *sc;
 	struct ifnet *ifp;
@@ -1011,11 +997,7 @@ iyintr(arg)
 }
 
 void
-iyget(sc, iot, ioh, rxlen)
-	struct iy_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int rxlen;
+iyget(struct iy_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh, int rxlen)
 {
 	struct mbuf *m, *top, **mp;
 	struct ifnet *ifp;
@@ -1092,8 +1074,7 @@ dropped:
 }
 
 void
-iy_intr_rx(sc)
-struct iy_softc *sc;
+iy_intr_rx(struct iy_softc *sc)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -1142,8 +1123,7 @@ struct iy_softc *sc;
 }
 
 void
-iy_intr_tx(sc)
-struct iy_softc *sc;
+iy_intr_tx(struct iy_softc *sc)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -1299,8 +1279,7 @@ iyioctl(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 int
-iy_mediachange(ifp)
-	struct ifnet *ifp;
+iy_mediachange(struct ifnet *ifp)
 {
 	struct iy_softc *sc = ifp->if_softc;
 
@@ -1320,9 +1299,7 @@ iy_mediachange(ifp)
 }
 
 void
-iy_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+iy_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct iy_softc *sc = ifp->if_softc;
 
@@ -1332,8 +1309,7 @@ iy_mediastatus(ifp, ifmr)
 
 
 static void
-iy_mc_setup(sc)
-	struct iy_softc *sc;
+iy_mc_setup(struct iy_softc *sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1421,8 +1397,7 @@ iy_mc_setup(sc)
 }
 
 static void
-iy_mc_reset(sc)
-	struct iy_softc *sc;
+iy_mc_reset(struct iy_softc *sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1487,8 +1462,7 @@ setupmulti:
 
 #ifdef IYDEBUGX
 void
-print_rbd(rbd)
-	volatile struct ie_recv_buf_desc *rbd;
+print_rbd(volatile struct ie_recv_buf_desc *rbd)
 {
 	printf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
 	    "length %04x, mbz %04x\n", (u_long)rbd, rbd->ie_rbd_actual,
@@ -1498,8 +1472,7 @@ print_rbd(rbd)
 #endif
 
 void
-iyprobemem(sc)
-	struct iy_softc *sc;
+iyprobemem(struct iy_softc *sc)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -1577,11 +1550,7 @@ iyprobemem(sc)
 }
 
 static int
-eepromreadall(iot, ioh, wordp, maxi)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int16_t *wordp;
-	int maxi;
+eepromreadall(bus_space_tag_t iot, bus_space_handle_t ioh, u_int16_t *wordp, int maxi)
 {
 	int i;
 	u_int16_t checksum, tmp;

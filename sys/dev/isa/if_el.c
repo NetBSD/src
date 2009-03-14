@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.81 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_el.c,v 1.82 2009/03/14 15:36:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.81 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.82 2009/03/14 15:36:18 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -273,8 +273,7 @@ elattach(struct device *parent, struct device *self, void *aux)
  * Reset interface.
  */
 void
-elreset(sc)
-	struct el_softc *sc;
+elreset(struct el_softc *sc)
 {
 	int s;
 
@@ -289,8 +288,7 @@ elreset(sc)
  * Stop interface.
  */
 void
-elstop(sc)
-	struct el_softc *sc;
+elstop(struct el_softc *sc)
 {
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EL_AC, 0);
@@ -301,8 +299,7 @@ elstop(sc)
  * case the board forgets.
  */
 static inline void
-el_hardreset(sc)
-	struct el_softc *sc;
+el_hardreset(struct el_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -321,8 +318,7 @@ el_hardreset(sc)
  * Initialize interface.
  */
 void
-elinit(sc)
-	struct el_softc *sc;
+elinit(struct el_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -365,8 +361,7 @@ elinit(sc)
  * interrupt level!
  */
 void
-elstart(ifp)
-	struct ifnet *ifp;
+elstart(struct ifnet *ifp)
 {
 	struct el_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -484,8 +479,7 @@ elstart(ifp)
  * success, non-0 on failure.
  */
 static int
-el_xmit(sc)
-	struct el_softc *sc;
+el_xmit(struct el_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -514,8 +508,7 @@ el_xmit(sc)
  * Controller interrupt.
  */
 int
-elintr(arg)
-	void *arg;
+elintr(void *arg)
 {
 	struct el_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -584,9 +577,7 @@ elintr(arg)
  * Pass a packet to the higher levels.
  */
 void
-elread(sc, len)
-	struct el_softc *sc;
-	int len;
+elread(struct el_softc *sc, int len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
@@ -626,9 +617,7 @@ elread(sc, len)
  * units are present we copy into clusters.
  */
 struct mbuf *
-elget(sc, totlen)
-	struct el_softc *sc;
-	int totlen;
+elget(struct el_softc *sc, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -750,8 +739,7 @@ elioctl(struct ifnet *ifp, u_long cmd, void *data)
  * Device timeout routine.
  */
 void
-elwatchdog(ifp)
-	struct ifnet *ifp;
+elwatchdog(struct ifnet *ifp)
 {
 	struct el_softc *sc = ifp->if_softc;
 

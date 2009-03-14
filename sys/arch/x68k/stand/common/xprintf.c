@@ -4,7 +4,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: xprintf.c,v 1.2 2009/03/14 14:46:07 dsl Exp $
+ *	$NetBSD: xprintf.c,v 1.3 2009/03/14 15:36:15 dsl Exp $
  */
 
 #include <sys/types.h>
@@ -97,11 +97,7 @@ numstr(buf, val, base, sign)
  * XXX argument/parameter types are not strictly handled
  */
 size_t
-xvsnprintf(buf, len, fmt, ap)
-	char *buf;
-	size_t len;
-	const char *fmt;
-	va_list ap;
+xvsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
 {
 	char *b = buf;
 	const char *s;
@@ -226,10 +222,7 @@ xsnprintf(buf, len, fmt, va_alist)
 }
 
 size_t
-xvfdprintf(fd, fmt, ap)
-	int fd;
-	const char *fmt;
-	va_list ap;
+xvfdprintf(int fd, const char *fmt, va_list ap)
 {
 	char buf[PRINTF_BUFSZ];
 	size_t ret;

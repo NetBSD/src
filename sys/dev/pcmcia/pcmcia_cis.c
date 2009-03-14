@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.52 2008/07/03 19:07:43 drochner Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.53 2009/03/14 15:36:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.52 2008/07/03 19:07:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.53 2009/03/14 15:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,7 @@ pcmcia_free_pf(struct pcmcia_function_head *pfhead)
 }
 
 void
-pcmcia_read_cis(sc)
-	struct pcmcia_softc *sc;
+pcmcia_read_cis(struct pcmcia_softc *sc)
 {
 	struct cis_state state;
 
@@ -536,8 +535,7 @@ done:
 /* XXX this is incredibly verbose.  Not sure what trt is */
 
 void
-pcmcia_print_cis(sc)
-	struct pcmcia_softc *sc;
+pcmcia_print_cis(struct pcmcia_softc *sc)
 {
 	struct pcmcia_card *card = &sc->card;
 	struct pcmcia_function *pf;
@@ -707,9 +705,7 @@ pcmcia_print_cis(sc)
 }
 
 int
-pcmcia_parse_cis_tuple(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
+pcmcia_parse_cis_tuple(struct pcmcia_tuple *tuple, void *arg)
 {
 	struct cis_state *state = arg;
 

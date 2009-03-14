@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.14 2008/04/28 20:23:24 martin Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.15 2009/03/14 15:36:07 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.14 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.15 2009/03/14 15:36:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,7 @@ darwin_sys_sigreturn(struct lwp *l, const struct darwin_sys_sigreturn_args *uap,
  * works that way).
  */
 void
-darwin_fork_child_return(arg)
-	void *arg;
+darwin_fork_child_return(void *arg)
 {
 #ifdef notyet
 	struct proc * const p = arg;

@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_pci.c,v 1.4 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: a12c_pci.c,v 1.5 2009/03/14 15:35:59 dsl Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.4 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.5 2009/03/14 15:35:59 dsl Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -68,9 +68,7 @@ pcireg_t	a12c_conf_read(void *, pcitag_t, int);
 void		a12c_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-a12c_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+a12c_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
@@ -90,9 +88,7 @@ a12c_attach_hook(parent, self, pba)
 }
 
 int
-a12c_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+a12c_bus_maxdevs(void *cpv, int busno)
 {
 	return 1;
 }
@@ -161,10 +157,7 @@ a12_reset_pci_config_cycle(void)
 }
 
 pcireg_t
-a12c_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+a12c_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	pcireg_t *datap, data;
 	int s, ba;
@@ -201,11 +194,7 @@ a12c_conf_read(cpv, tag, offset)
 
 
 void
-a12c_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+a12c_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	pcireg_t *datap;
 	int s;

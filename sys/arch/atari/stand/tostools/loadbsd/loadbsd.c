@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.18 2001/10/11 07:07:43 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.19 2009/03/14 15:36:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -53,7 +53,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.18 $";
+const char version[] = "$Revision: 1.19 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -68,9 +68,7 @@ void get_sys_info PROTO((osdsc_t *));
 void start_kernel PROTO((osdsc_t *));
 
 int
-main(argc, argv)
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	/*
 	 * Option parsing
@@ -196,8 +194,7 @@ char	**argv;
 }
 
 void
-get_sys_info(od)
-osdsc_t	*od;
+get_sys_info(osdsc_t *od)
 {
 	long	stck;
 
@@ -250,8 +247,7 @@ usage()
 }
 
 void
-start_kernel(od)
-osdsc_t	*od;
+start_kernel(osdsc_t *od)
 {
 	long	stck;
 

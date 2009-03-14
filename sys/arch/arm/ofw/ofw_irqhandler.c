@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.14 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.15 2009/03/14 15:36:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.14 2009/03/14 14:45:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.15 2009/03/14 15:36:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,11 +112,7 @@ irq_init()
  */
 
 int
-irq_claim(irq, handler, group, name)
-	int irq;
-	irqhandler_t *handler;
-	const char *group;
-	const char *name;
+irq_claim(int irq, irqhandler_t *handler, const char *group, const char *name)
 {
 	int level;
 
@@ -213,9 +209,7 @@ irq_claim(irq, handler, group, name)
  */
 
 int
-irq_release(irq, handler)
-	int irq;
-	irqhandler_t *handler;
+irq_release(int irq, irqhandler_t *handler)
 {
 	int level;
 	irqhandler_t *irqhand;
@@ -325,8 +319,7 @@ intr_claim(irq, level, ih_func, ih_arg, group, name)
 
 
 int
-intr_release(arg)
-	void *arg;
+intr_release(void *arg)
 {
 	irqhandler_t *ih = (irqhandler_t *)arg;
 
@@ -345,8 +338,7 @@ intr_release(arg)
  */
 
 void
-disable_irq(irq)
-	int irq;
+disable_irq(int irq)
 {
 	register int oldirqstate; 
 
@@ -366,8 +358,7 @@ disable_irq(irq)
  */
 
 void
-enable_irq(irq)
-	int irq;
+enable_irq(int irq)
 {
 	register u_int oldirqstate; 
 
@@ -388,8 +379,7 @@ enable_irq(irq)
 void	stray_irqhandler(u_int);	/* called from assembly */
 
 void
-stray_irqhandler(mask)
-	u_int mask;
+stray_irqhandler(u_int mask)
 {
 	static u_int stray_irqs = 0;
 
