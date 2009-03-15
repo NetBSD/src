@@ -1,5 +1,7 @@
-#	$NetBSD: bsd.klinks.mk,v 1.4 2009/03/15 05:48:02 tsutsui Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.5 2009/03/15 05:57:54 tsutsui Exp $
 #
+
+.include <bsd.own.mk>
 
 ##### Default values
 .if !defined(S)
