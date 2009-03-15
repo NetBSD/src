@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.149.4.2 2009/03/15 20:20:02 snj Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.149.4.3 2009/03/15 20:23:26 snj Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.4.2 2009/03/15 20:20:02 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.4.3 2009/03/15 20:23:26 snj Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2118,7 +2118,7 @@ fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 
 	kp->ki_fileaddr =	PTRTOUINT64(fp);
 	kp->ki_flag =		fp->f_flag;
-	kp->ki_iflags =		fp->f_iflags;
+	kp->ki_iflags =		0;
 	kp->ki_ftype =		fp->f_type;
 	kp->ki_count =		fp->f_count;
 	kp->ki_msgcount =	fp->f_msgcount;
