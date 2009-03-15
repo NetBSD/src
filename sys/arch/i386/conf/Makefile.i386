@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.164 2009/02/15 01:58:01 cube Exp $
+#	$NetBSD: Makefile.i386,v 1.165 2009/03/15 05:45:32 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -93,11 +93,7 @@ acpi_wakeup_low.o busfunc.o kvm86call.o: assym.h
 ## (7) misc settings
 ##
 
-# define .MAIN _before_ the make() check, so that implicit target
-# would be defined
-.MAIN: all
-
-.if make(depend) || make(all) || make(dependall)
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@rm -f i386 && \
 		ln -s $S/arch/i386/include i386
