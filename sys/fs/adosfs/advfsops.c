@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.55 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.56 2009/03/15 17:15:57 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.55 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.56 2009/03/15 17:15:57 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -731,7 +731,7 @@ adosfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc)
 }
 
 void
-adosfs_init()
+adosfs_init(void)
 {
 
 	malloc_type_attach(M_ADOSFSMNT);
@@ -743,7 +743,7 @@ adosfs_init()
 }
 
 void
-adosfs_done()
+adosfs_done(void)
 {
 
 	pool_destroy(&adosfs_node_pool);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.39 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.40 2009/03/15 17:22:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.39 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.40 2009/03/15 17:22:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ static struct synclist *syncer_workitem_pending;
 struct lwp *updateproc = NULL;
 
 void
-vn_initialize_syncerd()
+vn_initialize_syncerd(void)
 {
 	int i;
 
@@ -328,7 +328,7 @@ sched_sync(void *v)
  * normal turn time, otherwise it could take over the CPU.
  */
 int
-speedup_syncer()
+speedup_syncer(void)
 {
 
 	mutex_enter(&syncer_data_lock);

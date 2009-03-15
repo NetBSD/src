@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.120 2008/12/20 17:04:51 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.121 2009/03/15 17:17:23 cegger Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.120 2008/12/20 17:04:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.121 2009/03/15 17:17:23 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -155,7 +155,7 @@ static void rf_FreeEmergBuffers(RF_Raid_t *);
 
 /* called at system boot time */
 int
-rf_BootRaidframe()
+rf_BootRaidframe(void)
 {
 
 	if (raidframe_booted)
@@ -172,7 +172,7 @@ rf_BootRaidframe()
  * Called whenever an array is shutdown
  */
 static void
-rf_UnconfigureArray()
+rf_UnconfigureArray(void)
 {
 
 	RF_LOCK_LKMGR_MUTEX(configureMutex);

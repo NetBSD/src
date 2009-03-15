@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.19 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.20 2009/03/15 17:22:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.19 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.20 2009/03/15 17:22:38 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -254,7 +254,7 @@ kernfs_freevp(struct vnode *vp)
  * Initialize kfsnode hash table.
  */
 void
-kernfs_hashinit()
+kernfs_hashinit(void)
 {
 
 	mutex_init(&kfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
@@ -263,7 +263,7 @@ kernfs_hashinit()
 }
 
 void
-kernfs_hashreinit()
+kernfs_hashreinit(void)
 {
 	struct kernfs_node *pp;
 	struct kfs_hashhead *oldhash, *hash;
@@ -291,7 +291,7 @@ kernfs_hashreinit()
  * Free kfsnode hash table.
  */
 void
-kernfs_hashdone()
+kernfs_hashdone(void)
 {
 
 	hashdone(kfs_hashtbl, HASH_LIST, kfs_ihash);

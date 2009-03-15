@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.40 2009/03/14 21:04:24 dsl Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.41 2009/03/15 17:15:58 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.40 2009/03/14 21:04:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.41 2009/03/15 17:15:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2011,7 +2011,7 @@ ntfs_runtocn(
  * later work
  */
 void
-ntfs_toupper_init()
+ntfs_toupper_init(void)
 {
 	ntfs_toupper_tab = (wchar *) NULL;
 	mutex_init(&ntfs_toupper_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -2062,7 +2062,7 @@ ntfs_toupper_use(struct mount *mp, struct ntfsmount *ntmp)
  * tied by toupper table
  */
 void
-ntfs_toupper_unuse()
+ntfs_toupper_unuse(void)
 {
 	/* get exclusive access */
 	mutex_enter(&ntfs_toupper_lock);

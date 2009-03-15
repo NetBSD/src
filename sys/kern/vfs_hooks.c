@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_hooks.c,v 1.5 2008/11/19 18:36:07 ad Exp $	*/
+/*	$NetBSD: vfs_hooks.c,v 1.6 2009/03/15 17:14:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.5 2008/11/19 18:36:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.6 2009/03/15 17:14:40 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -47,7 +47,7 @@ LIST_HEAD(vfs_hooks_head, vfs_hooks) vfs_hooks_head =
 kmutex_t vfs_hooks_lock;
 
 void
-vfs_hooks_init()
+vfs_hooks_init(void)
 {
 
 	mutex_init(&vfs_hooks_lock, MUTEX_DEFAULT, IPL_NONE);

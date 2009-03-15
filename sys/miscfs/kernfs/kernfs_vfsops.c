@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.88 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.89 2009/03/15 17:22:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.88 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.89 2009/03/15 17:22:38 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -76,7 +76,7 @@ void	kernfs_get_rrootdev(void);
 static struct sysctllog *kernfs_sysctl_log;
 
 void
-kernfs_init()
+kernfs_init(void)
 {
 
 	malloc_type_attach(M_KERNFSMNT);
@@ -84,13 +84,13 @@ kernfs_init()
 }
 
 void
-kernfs_reinit()
+kernfs_reinit(void)
 {
 	kernfs_hashreinit();
 }
 
 void
-kernfs_done()
+kernfs_done(void)
 {
 
 	kernfs_hashdone();
@@ -98,7 +98,7 @@ kernfs_done()
 }
 
 void
-kernfs_get_rrootdev()
+kernfs_get_rrootdev(void)
 {
 	static int tried = 0;
 

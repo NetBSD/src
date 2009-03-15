@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.131 2009/03/10 10:48:09 mlelstv Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.132 2009/03/15 17:14:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.131 2009/03/10 10:48:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.132 2009/03/15 17:14:40 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -152,7 +152,7 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
  * since nothing can preempt us before interrupts are enabled.
  */
 void
-kprintf_init()
+kprintf_init(void)
 {
 
 	KASSERT(!kprintf_inited && cold); /* not foolproof, but ... */
@@ -161,7 +161,7 @@ kprintf_init()
 }
 
 void
-kprintf_lock()
+kprintf_lock(void)
 {
 
 	if (__predict_true(kprintf_inited))
@@ -169,7 +169,7 @@ kprintf_lock()
 }
 
 void
-kprintf_unlock()
+kprintf_unlock(void)
 {
 
 	if (__predict_true(kprintf_inited)) {

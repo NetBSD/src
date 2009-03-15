@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.109 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.110 2009/03/15 17:20:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.109 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110 2009/03/15 17:20:10 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -81,7 +81,7 @@ static const struct genfs_ops nfs_genfsops = {
  * Reinitialize inode hash table.
  */
 void
-nfs_node_init()
+nfs_node_init(void)
 {
 
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
@@ -98,7 +98,7 @@ nfs_node_init()
  * Free resources previously allocated in nfs_node_reinit().
  */
 void
-nfs_node_done()
+nfs_node_done(void)
 {
 
 	pool_destroy(&nfs_node_pool);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.72 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.73 2009/03/15 17:15:57 cegger Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.72 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73 2009/03/15 17:15:57 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -232,7 +232,7 @@ update_mp(struct mount *mp, struct msdosfs_args *argp)
 }
 
 int
-msdosfs_mountroot()
+msdosfs_mountroot(void)
 {
 	struct mount *mp;
 	struct lwp *l = curlwp;	/* XXX */

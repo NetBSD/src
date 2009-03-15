@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.6 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.7 2009/03/15 17:15:57 cegger Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.6 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.7 2009/03/15 17:15:57 cegger Exp $");
 
 /*
  * System include files.
@@ -344,10 +344,7 @@ u2l[256] = {
  * null.
  */
 int
-dos2unixfn(dn, un, lower)
-	u_char dn[11];
-	u_char *un;
-	int lower;
+dos2unixfn(u_char dn[11], u_char *un, int lower)
 {
 	int i, j;
 	int thislong = 1;
@@ -410,11 +407,7 @@ dos2unixfn(dn, un, lower)
  *	3 if conversion was successful and generation number was inserted
  */
 int
-unix2dosfn(un, dn, unlen, gen)
-	const u_char *un;
-	u_char dn[12];
-	int unlen;
-	u_int gen;
+unix2dosfn(const u_char *un, u_char dn[12], int unlen, u_int gen)
 {
 	int i, j, l;
 	int conv = 1;

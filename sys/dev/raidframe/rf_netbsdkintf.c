@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.258 2009/03/14 11:08:28 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.259 2009/03/15 17:17:23 cegger Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.258 2009/03/14 11:08:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.259 2009/03/15 17:17:23 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2843,7 +2843,7 @@ oomem:
 }
 
 RF_AutoConfig_t *
-rf_find_raid_components()
+rf_find_raid_components(void)
 {
 	struct vnode *vp;
 	struct disklabel label;

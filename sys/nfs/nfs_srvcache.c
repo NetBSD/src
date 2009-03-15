@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.44 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.45 2009/03/15 17:20:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.44 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.45 2009/03/15 17:20:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -155,7 +155,7 @@ cleanentry(struct nfsrvcache *rp)
  * Initialize the server request cache list
  */
 void
-nfsrv_initcache()
+nfsrv_initcache(void)
 {
 
 	mutex_init(&nfsrv_reqcache_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -168,7 +168,7 @@ nfsrv_initcache()
 }
 
 void
-nfsrv_finicache()
+nfsrv_finicache(void)
 {
 
 	nfsrv_cleancache();
@@ -378,7 +378,7 @@ nfsrv_updatecache(struct nfsrv_descript *nd, int repvalid, struct mbuf *repmbuf)
  * Clean out the cache. Called when the last nfsd terminates.
  */
 void
-nfsrv_cleancache()
+nfsrv_cleancache(void)
 {
 	struct nfsrvcache *rp;
 

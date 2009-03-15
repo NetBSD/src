@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_once.c,v 1.5 2008/10/09 12:14:06 pooka Exp $	*/
+/*	$NetBSD: subr_once.c,v 1.6 2009/03/15 17:14:40 cegger Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.5 2008/10/09 12:14:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.6 2009/03/15 17:14:40 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ static kmutex_t oncemtx;
 static kcondvar_t oncecv;
 
 void
-once_init()
+once_init(void)
 {
 
 	mutex_init(&oncemtx, MUTEX_DEFAULT, IPL_NONE);

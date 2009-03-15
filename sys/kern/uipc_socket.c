@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.186 2009/01/23 15:40:19 pooka Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.187 2009/03/15 17:14:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.186 2009/01/23 15:40:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.187 2009/03/15 17:14:40 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -2310,7 +2310,7 @@ sysctl_kern_somaxkva(SYSCTLFN_ARGS)
 }
 
 static void
-sysctl_kern_somaxkva_setup()
+sysctl_kern_somaxkva_setup(void)
 {
 
 	KASSERT(socket_sysctllog == NULL);
