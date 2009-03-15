@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.14 2008/11/20 09:26:06 ad Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.15 2009/03/15 15:55:51 cegger Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.14 2008/11/20 09:26:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.15 2009/03/15 15:55:51 cegger Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -124,12 +124,8 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 }
 
 int
-ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
+	struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	struct linux_extra_stack_data64 *esdp, esd;
 	struct elf_args *ap;
