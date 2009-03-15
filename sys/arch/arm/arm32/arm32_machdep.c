@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.64 2009/03/14 15:36:01 dsl Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.65 2009/03/15 22:20:09 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.64 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.65 2009/03/15 22:20:09 cegger Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -159,7 +159,7 @@ arm32_vector_init(vaddr_t va, int which)
  */
 
 void
-halt()
+halt(void)
 {
 	while (1)
 		cpu_sleep(0);

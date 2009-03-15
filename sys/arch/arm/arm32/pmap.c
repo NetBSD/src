@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196 2009/03/09 08:42:36 nonaka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.197 2009/03/15 22:20:10 cegger Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2009/03/09 08:42:36 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2009/03/15 22:20:10 cegger Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -6240,7 +6240,7 @@ pmap_uarea(vaddr_t va)
 /*
  * return the PA of the current L1 table, for use when handling a crash dump
  */
-uint32_t pmap_kernel_L1_addr()
+uint32_t pmap_kernel_L1_addr(void)
 {
 	return pmap_kernel()->pm_l1->l1_physaddr;
 }
