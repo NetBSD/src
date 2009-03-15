@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.33 2009/03/15 00:35:42 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.34 2009/03/15 00:50:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.33 2009/03/15 00:35:42 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.34 2009/03/15 00:50:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: pl_7.c,v 1.33 2009/03/15 00:35:42 dholland Exp $");
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include "extern.h"
 #include "player.h"
@@ -52,7 +51,6 @@ __RCSID("$NetBSD: pl_7.c,v 1.33 2009/03/15 00:35:42 dholland Exp $");
 
 static void Scroll(void);
 static void endprompt(int);
-static void adjustview(void);
 
 /*
  * Display interface
@@ -130,61 +128,6 @@ cleanupscreen(void)
 	}
 }
 
-/*ARGSUSED*/
-void
-newturn(int n __unused)
-{
-	repaired = loaded = fired = changed = 0;
-	movebuf[0] = '\0';
-
-	alarm(0);
-	if (mf->readyL & R_LOADING) {
-		if (mf->readyL & R_DOUBLE)
-			mf->readyL = R_LOADING;
-		else
-			mf->readyL = R_LOADED;
-	}
-	if (mf->readyR & R_LOADING) {
-		if (mf->readyR & R_DOUBLE)
-			mf->readyR = R_LOADING;
-		else
-			mf->readyR = R_LOADED;
-	}
-	if (!hasdriver)
-		send_ddead();
-
-	if (sc_hasprompt) {
-		wmove(scroll_w, sc_line, 0);
-		wclrtoeol(scroll_w);
-	}
-	if (Sync() < 0)
-		leave(LEAVE_SYNC);
-	if (!hasdriver)
-		leave(LEAVE_DRIVER);
-	if (sc_hasprompt)
-		wprintw(scroll_w, "%s%s", sc_prompt, sc_buf);
-
-	if (turn % 50 == 0)
-		send_alive();
-	if (mf->FS && (!mc->rig1 || windspeed == 6))
-		send_fs(ms, 0);
-	if (mf->FS == 1)
-		send_fs(ms, 2);
-
-	if (mf->struck)
-		leave(LEAVE_QUIT);
-	if (mf->captured != 0)
-		leave(LEAVE_CAPTURED);
-	if (windspeed == 7)
-		leave(LEAVE_HURRICAN);
-
-	adjustview();
-	draw_screen();
-
-	signal(SIGALRM, newturn);
-	alarm(7);
-}
-
 /*VARARGS2*/
 void
 Signal(const char *fmt, struct ship *ship, ...)
@@ -247,6 +190,28 @@ endprompt(int flag)
 	if (flag)
 		Scroll();
 }
+
+/*
+ * Next two functions called from newturn() to poke display. Shouldn't
+ * exist... XXX
+ */
+
+void
+display_hide_prompt(void)
+{
+	if (sc_hasprompt) {
+		wmove(scroll_w, sc_line, 0);
+		wclrtoeol(scroll_w);
+	}
+}
+
+void
+display_reshow_prompt(void)
+{
+	if (sc_hasprompt)
+		wprintw(scroll_w, "%s%s", sc_prompt, sc_buf);
+}
+
 
 int
 sgetch(const char *p, struct ship *ship, int flag)
@@ -551,8 +516,9 @@ rightview(void)
 	viewcol += VIEW_X / 5;
 }
 
-static void
-adjustview(void)
+/* Called from newturn()... rename? */
+void
+display_adjust_view(void)
 {
 	if (dont_adjust)
 		return;
