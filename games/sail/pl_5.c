@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.24 2009/03/15 00:35:42 dholland Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.25 2009/03/15 03:33:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.24 2009/03/15 00:35:42 dholland Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.25 2009/03/15 03:33:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,9 +201,6 @@ acceptboard(void)
 			(struct ship *)0, 1);
 		parties(ms, crew, 1, c);
 	}
-	blockalarm();
-	draw_slot();
-	unblockalarm();
 }
 
 static void
@@ -237,16 +234,15 @@ parties(struct ship *to, int *crew, int isdefense, int buf)
 			}
 			if (isdefense) {
 				for (k=0; k < NBP; k++)
-					display_show_dbp(k,
+					display_set_dbp(k,
 							 temp[k] && !crew[k]);
 				makemsg(ms, "repelling boarders");
 			} else {
 				for (k=0; k < NBP; k++)
-					display_show_obp(k,
+					display_set_obp(k,
 							 temp[k] && !crew[k]);
 				makesignal(ms, "boarding the $$", to);
 			}
-			display_refresh_slot_w();
 		} else
 			Msg("Sending no crew sections.");
 	}

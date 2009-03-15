@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.25 2009/03/14 22:52:53 dholland Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.26 2009/03/15 03:33:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.25 2009/03/14 22:52:53 dholland Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.26 2009/03/15 03:33:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: pl_main.c,v 1.25 2009/03/14 22:52:53 dholland Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "display.h"
 #include "extern.h"
 #include "player.h"
 #include "restart.h"
@@ -249,7 +250,7 @@ reprint:
 	printf("\n");
 	fflush(stdout);
 	initscreen();
-	draw_board();
+	display_redraw();
 	snprintf(message, sizeof message, "Captain %s assuming command",
 			captain);
 	send_signal(ms, message);
