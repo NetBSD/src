@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.27 2008/07/16 13:44:51 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.28 2009/03/15 06:10:03 tsutsui Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -62,7 +62,7 @@ DRIVERSOURCE=		apci.c ct.c dca.c dcm.c dnkbd.c fhpib.c hil.c \
 			nhpib.c rd.c scsi.c sd.c
 
 .include <bsd.own.mk>
-
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 ### find out what to use for libkern
