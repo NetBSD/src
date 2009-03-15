@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.127 2009/03/11 13:12:41 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.128 2009/03/15 14:48:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.127 2009/03/11 13:12:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.128 2009/03/15 14:48:11 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -270,18 +270,17 @@ fxp_attach(struct fxp_softc *sc)
 	callout_init(&sc->sc_callout, 0);
 
         /*
-	 * Enable use of extended RFDs and TCBs for 82550
-	 * and later chips. Note: we need extended TXCB support
-	 * too, but that's already enabled by the code above.
-	 * Be careful to do this only on the right devices.
+	 * Enable use of extended RFDs and IPCBs for 82550 and later chips.
+	 * Note: to use IPCB we need extended TXCB support too, and
+	 *       these feature flags should be set in each bus attachment.
 	 */
-	if (sc->sc_flags & FXPF_EXT_RFA)
+	if (sc->sc_flags & FXPF_EXT_RFA) {
 		sc->sc_txcmd = htole16(FXP_CB_COMMAND_IPCBXMIT);
-	else
+		sc->sc_rfa_size = RFA_EXT_SIZE;
+	} else {
 		sc->sc_txcmd = htole16(FXP_CB_COMMAND_XMIT);
-
-	sc->sc_rfa_size =
-	    (sc->sc_flags & FXPF_EXT_RFA) ? RFA_EXT_SIZE : RFA_SIZE;
+		sc->sc_rfa_size = RFA_SIZE;
+	}
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -384,6 +383,8 @@ fxp_attach(struct fxp_softc *sc)
 
 	if (sc->sc_flags & FXPF_EXT_RFA) {
 		/*
+		 * Enable hardware cksum support by EXT_RFA and IPCB.
+		 *
 		 * IFCAP_CSUM_IPv4_Tx seems to have a problem,
 		 * at least, on i82550 rev.12.
 		 * specifically, it doesn't set ipv4 checksum properly
