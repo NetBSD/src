@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.18 2009/02/19 01:14:43 jmcneill Exp $	*/
+/*	$NetBSD: consinit.c,v 1.19 2009/03/15 21:32:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.18 2009/02/19 01:14:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.19 2009/03/15 21:32:36 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -146,7 +146,7 @@ int comkgdbmode = KGDB_DEVMODE;
  * it shouldn't be called from init386 either.
  */
 void
-consinit()
+consinit(void)
 {
 	const struct btinfo_console *consinfo;
 	const struct btinfo_framebuffer *fbinfo;
