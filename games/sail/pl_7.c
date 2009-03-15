@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.36 2009/03/15 20:11:24 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.37 2009/03/15 22:19:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.36 2009/03/15 20:11:24 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.37 2009/03/15 22:19:23 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,6 +216,7 @@ draw_scroll(void)
 
 	werase(scroll_w);
 
+	/* XXX: SCROLL_Y and whatnot should be unsigned too */
 	visible_lines = SCROLL_Y - 1;
 
 	total_lines = stringarray_num(sc_lines);
@@ -230,8 +231,7 @@ draw_scroll(void)
 		index_of_top -= sc_scrollup;
 	}
 
-	/* XXX: SCROLL_Y and whatnot should be unsigned too */
-	for (y = 0; y < (unsigned) (SCROLL_Y - 1); y++) {
+	for (y = 0; y < visible_lines; y++) {
 		index_of_y = index_of_top + y;
 		if (index_of_y >= total_lines) {
 			break;
