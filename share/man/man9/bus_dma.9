@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.47 2009/02/20 00:13:57 dyoung Exp $
+.\" $NetBSD: bus_dma.9,v 1.48 2009/03/15 13:46:19 joerg Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,7 +119,7 @@ A structure with at least the following members:
 	bus_addr_t	ds_addr;
 	bus_size_t	ds_len;
 .Ed
-.sp
+.Pp
 The structure may have machine-dependent members and arbitrary layout.
 The values in
 .Fa ds_addr
@@ -135,7 +135,7 @@ A pointer to a structure with at least the following members:
 	int		dm_nsegs;
 	bus_dma_segment_t *dm_segs;
 .Ed
-.sp
+.Pp
 The structure may have machine-dependent members and arbitrary layout.
 The
 .Fa  dm_maxsegsz
