@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.20 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.21 2009/03/15 15:52:12 cegger Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -297,7 +297,7 @@ ahc_done_unlock(struct ahc_softc *ahc, unsigned long *flags)
 
 /* Lock held during ahc_list manipulation and ahc softc frees */
 static __inline void
-ahc_list_lockinit()
+ahc_list_lockinit(void)
 {
 }
 
