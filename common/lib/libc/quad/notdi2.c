@@ -1,4 +1,4 @@
-/*	$NetBSD: notdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: notdi2.c,v 1.2 2009/03/15 22:31:12 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)notdi2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: notdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: notdi2.c,v 1.2 2009/03/15 22:31:12 cegger Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: notdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
  * than `not'.
  */
 quad_t
-__one_cmpldi2(a)
-	quad_t a;
+__one_cmpldi2(quad_t a)
 {
 	union uu aa;
 

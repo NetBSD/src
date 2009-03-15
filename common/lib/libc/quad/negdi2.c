@@ -1,4 +1,4 @@
-/*	$NetBSD: negdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: negdi2.c,v 1.2 2009/03/15 22:31:12 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)negdi2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: negdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: negdi2.c,v 1.2 2009/03/15 22:31:12 cegger Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,7 @@ __RCSID("$NetBSD: negdi2.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
  * Return -a (or, equivalently, 0 - a), in quad.  See subdi3.c.
  */
 quad_t
-__negdi2(a)
-	quad_t a;
+__negdi2(quad_t a)
 {
 	union uu aa, res;
 
