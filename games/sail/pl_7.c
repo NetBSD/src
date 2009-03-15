@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.32 2009/03/14 22:52:53 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.33 2009/03/15 00:35:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.32 2009/03/14 22:52:53 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.33 2009/03/15 00:35:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,11 +63,11 @@ static const char *sc_prompt;
 static const char *sc_buf;
 static int sc_line;
 
-WINDOW *view_w;
-WINDOW *slot_w;
-WINDOW *scroll_w;
-WINDOW *stat_w;
-WINDOW *turn_w;
+static WINDOW *view_w;
+static WINDOW *slot_w;
+static WINDOW *scroll_w;
+static WINDOW *stat_w;
+static WINDOW *turn_w;
 
 int done_curses;
 int loaded, fired, changed, repaired;
@@ -82,22 +82,40 @@ struct shipspecs *mc;		/* ms->specs */
 void
 initscreen(void)
 {
-	if (!SCREENTEST()) {
+	if (signal(SIGTSTP, SIG_DFL) == SIG_ERR) {
+		err(1, "signal(SIGTSTP)");
+	}
+
+	if (initscr() == NULL) {
 		errx(1, "Can't sail on this terminal.");
 	}
-	/* initscr() already done in SCREENTEST() */
+	if (STAT_R >= COLS || SCROLL_Y <= 0) {
+		errx(1, "Window/terminal not large enough.");
+	}
+
 	view_w = newwin(VIEW_Y, VIEW_X, VIEW_T, VIEW_L);
 	slot_w = newwin(SLOT_Y, SLOT_X, SLOT_T, SLOT_L);
 	scroll_w = newwin(SCROLL_Y, SCROLL_X, SCROLL_T, SCROLL_L);
 	stat_w = newwin(STAT_Y, STAT_X, STAT_T, STAT_L);
 	turn_w = newwin(TURN_Y, TURN_X, TURN_T, TURN_L);
-	done_curses++;
+
+	if (view_w == NULL ||
+	    slot_w == NULL ||
+	    scroll_w == NULL ||
+	    stat_w == NULL ||
+	    turn_w == NULL) {
+		endwin();
+		errx(1, "Curses initialization failed.");
+	}
+
 	leaveok(view_w, 1);
 	leaveok(slot_w, 1);
 	leaveok(stat_w, 1);
 	leaveok(turn_w, 1);
 	noecho();
 	cbreak();
+
+	done_curses++;
 }
 
 void
@@ -475,6 +493,31 @@ draw_board(void)
 		colours(ms),
 		sterncolour(ms));
 	refresh();
+}
+
+/* Called after show_[od]bp. Shouldn't really exist... XXX */
+void
+display_refresh_slot_w(void)
+{
+	blockalarm();
+	wrefresh(slot_w);
+	unblockalarm();
+}
+
+void
+display_show_obp(int which, bool show)
+{
+	wmove(slot_w, 0, which);
+	waddch(slot_w, show ? '1' + which : ' ');
+	mvwaddstr(slot_w, 1, 0, "OBP");
+}
+
+void
+display_show_dbp(int which, bool show)
+{
+	wmove(slot_w, 2, which);
+	waddch(slot_w, show ? '1' + which : ' ');
+	mvwaddstr(slot_w, 3, 0, "DBP");
 }
 
 void
