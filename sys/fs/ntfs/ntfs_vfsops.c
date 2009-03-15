@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.75 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.76 2009/03/15 17:15:58 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.75 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.76 2009/03/15 17:15:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static const struct genfs_ops ntfs_genfsops = {
 static struct sysctllog *ntfs_sysctl_log;
 
 static int
-ntfs_mountroot()
+ntfs_mountroot(void)
 {
 	struct mount *mp;
 	struct lwp *l = curlwp;	/* XXX */
@@ -127,7 +127,7 @@ ntfs_mountroot()
 }
 
 static void
-ntfs_init()
+ntfs_init(void)
 {
 
 	malloc_type_attach(M_NTFSMNT);
@@ -143,13 +143,13 @@ ntfs_init()
 }
 
 static void
-ntfs_reinit()
+ntfs_reinit(void)
 {
 	ntfs_nthashreinit();
 }
 
 static void
-ntfs_done()
+ntfs_done(void)
 {
 	ntfs_nthashdone();
 	malloc_type_detach(M_NTFSMNT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.82 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.83 2009/03/15 17:22:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.82 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.83 2009/03/15 17:22:38 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -252,19 +252,19 @@ procfs_vget(struct mount *mp, ino_t ino,
 }
 
 void
-procfs_init()
+procfs_init(void)
 {
 	procfs_hashinit();
 }
 
 void
-procfs_reinit()
+procfs_reinit(void)
 {
 	procfs_hashreinit();
 }
 
 void
-procfs_done()
+procfs_done(void)
 {
 	procfs_hashdone();
 }

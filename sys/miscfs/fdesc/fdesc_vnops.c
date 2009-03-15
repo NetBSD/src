@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.105 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.106 2009/03/15 17:22:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.105 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.106 2009/03/15 17:22:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ extern const struct cdevsw ctty_cdevsw;
  * Initialise cache headers
  */
 void
-fdesc_init()
+fdesc_init(void)
 {
 	int cttymajor;
 
@@ -196,7 +196,7 @@ fdesc_init()
  * Free hash table.
  */
 void
-fdesc_done()
+fdesc_done(void)
 {
 	hashdone(fdhashtbl, HASH_LIST, fdhash);
 }

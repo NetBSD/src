@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.36 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.37 2009/03/15 17:20:09 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.36 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.37 2009/03/15 17:20:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,9 +183,7 @@ krpc_portmap(struct sockaddr_in *sin, u_int prog, u_int vers, u_int proto, u_int
 	return 0;
 }
 
-static int krpccheck(m, context)
-struct mbuf *m;
-void *context;
+static int krpccheck(struct mbuf *m, void *context)
 {
 	struct rpc_reply *reply;
 
