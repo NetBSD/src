@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.29 2009/03/14 21:04:19 dsl Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.30 2009/03/15 15:45:01 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.29 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.30 2009/03/15 15:45:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,8 +378,7 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_
  *   This function saves the Base Address Registers at the CardBus
  *   function denoted by the argument.
  */
-int cardbus_save_bar(ct)
-	cardbus_devfunc_t ct;
+int cardbus_save_bar(cardbus_devfunc_t ct)
 {
 	cardbustag_t tag = Cardbus_make_tag(ct);
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -407,8 +406,7 @@ int cardbus_save_bar(ct)
  *   This function saves the Base Address Registers at the CardBus
  *   function denoted by the argument.
  */
-int cardbus_restore_bar(ct)
-	cardbus_devfunc_t ct;
+int cardbus_restore_bar(cardbus_devfunc_t ct)
 {
 	cardbustag_t tag = Cardbus_make_tag(ct);
 	cardbus_chipset_tag_t cc = ct->ct_cc;

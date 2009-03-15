@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.36 2008/01/04 00:27:27 joerg Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.37 2009/03/15 15:48:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -177,10 +177,7 @@ static inline void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
 					   int, u_int8_t);
 
 static inline u_int8_t
-pciide_pci_read(pc, pa, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t pa;
-	int reg;
+pciide_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
 {
 
 	return (pci_conf_read(pc, pa, (reg & ~0x03)) >>
@@ -188,11 +185,7 @@ pciide_pci_read(pc, pa, reg)
 }
 
 static inline void
-pciide_pci_write(pc, pa, reg, val)
-	pci_chipset_tag_t pc;
-	pcitag_t pa;
-	int reg;
-	u_int8_t val;
+pciide_pci_write(pci_chipset_tag_t pc, pcitag_t pa, int reg, uint8_t val)
 {
 	pcireg_t pcival;
 

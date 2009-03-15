@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.14 2009/01/11 02:45:51 christos Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.15 2009/03/15 15:43:40 cegger Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.14 2009/01/11 02:45:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.15 2009/03/15 15:43:40 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -998,7 +998,7 @@ bcsp_send_ack_command(struct bcsp_softc *sc)
 }
 
 static __inline struct mbuf *
-bcsp_create_ackpkt()
+bcsp_create_ackpkt(void)
 {
 	struct mbuf *m;
 	bcsp_hdr_t *hdrp;
