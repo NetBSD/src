@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.21 2009/03/14 15:36:23 dsl Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.22 2009/03/15 21:24:24 cegger Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.21 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.22 2009/03/15 21:24:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ void            ddp_input(struct mbuf *, struct ifnet *,
  * Could probably merge these two code segments a little better...
  */
 void
-atintr()
+atintr(void)
 {
 	struct elaphdr *elhp, elh;
 	struct ifnet   *ifp;
