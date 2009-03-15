@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.72 2008/11/12 12:35:54 ad Exp $
+.\" $NetBSD: kauth.9,v 1.73 2009/03/15 14:11:08 joerg Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -52,7 +52,7 @@ developers in this document.
 Some
 .Nm
 types include the following:
-.Bl -tag
+.Bl -tag -width kauth_listener_t
 .It kauth_cred_t
 Representing credentials that can be associated with an object.
 Includes user- and group-ids (real, effective, and save) as well as group
@@ -135,7 +135,7 @@ The authorization wrapper for this scope is declared as
 "void *arg0"
 .Pp
 The following operations are available for this scope:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_GENERIC_ISSUSER
 Checks whether the credentials belong to the super-user.
 .Pp
@@ -166,13 +166,13 @@ The authorization wrapper for this scope is declared as
 "void *arg3"
 .Pp
 The following requests are available for this scope:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_SYSTEM_ACCOUNTING
 Check if enabling/disabling accounting allowed.
 .It Dv KAUTH_SYSTEM_CHROOT
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_CHROOT_CHROOT
 Check if calling
 .Xr chroot 2
@@ -187,7 +187,7 @@ Check CPU-manipulation access.
 .Pp
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_CPU_SETSTATE
 Set CPU state, including setting it online or offline.
 .El
@@ -195,7 +195,7 @@ Set CPU state, including setting it online or offline.
 This request concentrates several debugging-related operations.
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_DEBUG_IPKDB
 Check if using
 .Xr ipkdb 4
@@ -215,7 +215,7 @@ Check if mount-related operations are allowed.
 .Pp
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_MOUNT_GET
 Check if retrieving information about a mount is allowed.
 .Ar arg1
@@ -269,7 +269,7 @@ Check processor-set manipulation.
 .Pp
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_PSET_ASSIGN
 Change processor-set processor assignment.
 .It Dv KAUTH_REQ_SYSTEM_PSET_BIND
@@ -292,7 +292,7 @@ This requests operations related to
 .Xr sysctl 9 .
 .Ar req
 indicates the specific request and can be one of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_SYSCTL_ADD
 Check if adding a
 .Xr sysctl 9
@@ -314,7 +314,7 @@ nodes is allowed.
 This request groups time-related operations.
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_TIME_ADJTIME
 Check if changing the time using
 .Xr adjtime 2
@@ -360,7 +360,7 @@ The authorization wrapper for this scope is declared as
 "void *arg3"
 .Pp
 The following operations are available for this scope:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_PROCESS_KTRACE
 Checks whether an object with one set of credentials can
 .Xr ktrace 1
@@ -515,14 +515,14 @@ The authorization wrapper for this scope is declared as
 "enum kauth_network_req req" "void *arg1" "void *arg2" "void *arg3"
 .Pp
 The following operations are available for this scope:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_NETWORK_ALTQ
 Checks if an ALTQ operation is allowed.
 .Pp
 .Ar req
 indicates the ALTQ subsystem in question, and can be one of the following:
 .Pp
-.Bl -tag -compact
+.Bl -tag -compact -width compact
 .It Dv KAUTH_REQ_NETWORK_ALTQ_AFMAP
 .It Dv KAUTH_REQ_NETWORK_ALTQ_BLUE
 .It Dv KAUTH_REQ_NETWORK_ALTQ_CBQ
@@ -545,7 +545,7 @@ request is allowed.
 allows to indicate the type of the request to structure listeners and callers
 easier.
 Supported request types:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_BIND_PRIVPORT
 Checks if binding to a privileged/reserved port is allowed.
 .El
@@ -554,7 +554,7 @@ Checks if firewall-related operations are allowed.
 .Pp
 .Ar req
 indicates the sub-action, and can be one of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_FIREWALL_FW
 Modification of packet filtering rules.
 .It Dv KAUTH_REQ_NETWORK_FIREWALL_NAT
@@ -575,7 +575,7 @@ describing the interface-specific operation.
 is (optionally) a pointer to the interface-specific request structure.
 .Ar req
 indicates the sub-action, and can be one of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_GET
 Check if retrieving information from the device is allowed.
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_GETPRIV
@@ -601,7 +601,7 @@ Check is an NFS related operation is allowed.
 .Pp
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_NFS_EXPORT
 Check if modifying the NFS export table is allowed.
 .It Dv KAUTH_REQ_NETWORK_NFS_SVC
@@ -623,7 +623,7 @@ Checks if a socket related operation is allowed.
 allows to indicate the type of the request to structure listeners and callers
 easier.
 Supported request types:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_SOCKET_RAWSOCK
 Checks if opening a raw socket is allowed.
 .It Dv KAUTH_REQ_NETWORK_SOCKET_OPEN
@@ -658,7 +658,7 @@ The actions on this scope provide a set that may or may not affect all
 platforms.
 Below is a list of available actions, along with which platforms are affected
 by each.
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_MACHDEP_IOPERM_GET
 Request to get the I/O permission level.
 Affects
@@ -743,7 +743,7 @@ It is passed to the listener as
 The second argument,
 .Ar op ,
 is the action and can be one of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_DEVICE_TTY_OPEN
 Open the terminal device pointed to by
 .Ar tty .
@@ -812,7 +812,7 @@ passed as
 to the listener, is a generic representation of the access mode requested.
 It can be one or more (binary-OR'd) of the following:
 .Pp
-.Bl -tag -offset indent -compact
+.Bl -tag -width compact -offset indent -compact
 .It KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ
 .It KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF
 .It KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITE
@@ -846,7 +846,7 @@ Notifications are made using the following function, which is internal to
 "void *arg0" "void *arg1"
 .Pp
 With the following actions:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_CRED_COPY
 The credentials are being copied.
 .Ar cred
@@ -894,7 +894,7 @@ objects.
 The following routines can be used to access and modify the user- and
 group-ids in a
 .Ft kauth_cred_t :
-.Bl -tag
+.Bl -tag -width compact
 .It Ft uid_t Fn kauth_cred_getuid "kauth_cred_t cred"
 Returns the real user-id from
 .Ar cred .
@@ -951,7 +951,7 @@ Return the reference count for
 The following routines can be used to access and modify the group
 list in a
 .Ft kauth_cred_t :
-.Bl -tag
+.Bl -tag -width compact
 .It Ft int Fn kauth_cred_ismember_gid "kauth_cred_t cred" "gid_t gid" \
 "int *resultp"
 Checks if the group-id
@@ -1034,7 +1034,7 @@ as a unique identifier, distinguishing various sets of private data that
 may be associated with the credentials.
 Registering, and deregistering, a key is done by using these routines:
 .Pp
-.Bl -tag
+.Bl -tag -width compact
 .It Ft int Fn kauth_register_key "const char *name" "kauth_key_t *keyp"
 Register new key for private data for
 .Ar name
@@ -1051,7 +1051,7 @@ Deregister private data key
 .El
 .Pp
 Once registered, private data may be manipulated by the following routines:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn kauth_cred_setdata "kauth_cred_t cred" "kauth_key_t key" \
 "void *data"
 Set private data for
@@ -1087,7 +1087,7 @@ LWPs, files, etc.) reference it.
 .Pp
 The following routines are available for managing credentials reference
 counting:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn kauth_cred_hold "kauth_cred_t cred"
 Increases reference count to
 .Ar cred
@@ -1122,7 +1122,7 @@ subsystem.
 The
 .Ft kauth_cred_t
 objects have their own memory management routines:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft kauth_cred_t Fn kauth_cred_alloc "void"
 Allocates a new
 .Ft kauth_cred_t ,
@@ -1136,7 +1136,7 @@ to userland's view of credentials, a
 or vice versa.
 .Pp
 The following routines are available for these cases:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn kauth_uucred_to_cred "kauth_cred_t cred" "const struct uucred *uucred"
 Convert userland's view of credentials to a
 .Ft kauth_cred_t .
@@ -1174,7 +1174,7 @@ the group list.
 Other routines provided by
 .Nm
 are:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn kauth_cred_clone "kauth_cred_t cred1" "kauth_cred_t cred2"
 Clone credentials from
 .Ar cred1
@@ -1221,7 +1221,7 @@ Note that the built-in scopes, the
 scope and the
 .Dq process
 scope, can't be deleted.
-.Bl -tag
+.Bl -tag -width compact
 .It Ft kauth_scope_t Fn kauth_register_scope "const char *id" \
 "kauth_scope_callback_t cb" "void *cookie"
 Register a new scope on the system.
@@ -1260,7 +1260,7 @@ and in a case where all listeners defer the request -- leaving the decision
 for other listeners -- the request is denied.
 .Pp
 The following KPI is provided for the management of listeners:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft kauth_listener_t Fn kauth_listen_scope "const char *id" \
 "kauth_scope_callback_t cb" "void *cookie"
 Create a new listener on the scope with the id
