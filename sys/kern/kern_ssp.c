@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ssp.c,v 1.2.4.2 2009/03/15 19:43:48 snj Exp $	*/
+/*	$NetBSD: kern_ssp.c,v 1.2.4.3 2009/03/15 19:49:34 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.2.4.2 2009/03/15 19:43:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.2.4.3 2009/03/15 19:49:34 snj Exp $");
 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/intr.h>
 
