@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.270 2009/02/22 20:28:07 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.271 2009/03/15 21:30:57 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.270 2009/02/22 20:28:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.271 2009/03/15 21:30:57 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -468,7 +468,7 @@ lfs_writerd(void *arg)
  * Initialize the filesystem, most work done by ufs_init.
  */
 void
-lfs_init()
+lfs_init(void)
 {
 
 	malloc_type_attach(M_SEGMENT);
@@ -491,13 +491,13 @@ lfs_init()
 }
 
 void
-lfs_reinit()
+lfs_reinit(void)
 {
 	ufs_reinit();
 }
 
 void
-lfs_done()
+lfs_done(void)
 {
 	ufs_done();
 	mutex_destroy(&lfs_lock);
@@ -514,7 +514,7 @@ lfs_done()
  * Called by main() when ufs is going to be mounted as root.
  */
 int
-lfs_mountroot()
+lfs_mountroot(void)
 {
 	extern struct vnode *rootvp;
 	struct mount *mp;
