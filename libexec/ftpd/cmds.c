@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.29 2009/03/02 03:47:44 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.30 2009/03/15 07:48:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.29 2009/03/02 03:47:44 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.30 2009/03/15 07:48:36 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,7 +193,7 @@ delete(const char *name)
 void
 feat(void)
 {
-	int i;
+	size_t i;
 
 	reply(-211, "Features supported");
 	cprintf(stdout, " MDTM\r\n");
@@ -339,7 +339,7 @@ opts(const char *command)
 			/* special case: MLST */
 	if (strcasecmp(command, "MLST") == 0) {
 		int	 enabled[FACTTABSIZE];
-		int	 i, onedone;
+		size_t	 i, onedone;
 		size_t	 len;
 		char	*p;
 
@@ -505,9 +505,9 @@ statfilecmd(const char *filename)
 	FILE *fin;
 	int c;
 	int atstart;
-	char *argv[] = { INTERNAL_LS, "-lgA", "", NULL };
+	const char *argv[] = { INTERNAL_LS, "-lgA", "", NULL };
 
-	argv[2] = (char *)filename;
+	argv[2] = filename;
 	fin = ftpd_popen(argv, "r", STDOUT_FILENO);
 	reply(-211, "status of %s:", filename);
 /* XXX: use fgetln() or fparseln() here? */
@@ -801,7 +801,8 @@ static void
 mlsname(FILE *fp, factelem *fe)
 {
 	char realfile[MAXPATHLEN];
-	int i, userf = 0;
+	int userf = 0;
+	size_t i;
 
 	for (i = 0; i < FACTTABSIZE; i++) {
 		if (facttab[i].enabled)
