@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.37 2008/12/23 09:11:59 stacktic Exp $
+.\"     $NetBSD: vfsops.9,v 1.38 2009/03/15 14:40:30 joerg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,28 +97,26 @@ specific file system type.
 The following table lists the elements of the vfsops vector, the
 corresponding invocation macro, and a description of the element.
 .Pp
-.nf
-.ta \w'int (*vfs_mountroot)()'u+2n +\w'VFS_QUOTACTL'u+2n +\w'Get the file system root vnode'u
-\fIVector element\fP	\fIMacro\fP	\fIDescription\fP
-.ta \w'int (*vfs_mountroot)()'u+2n +\w'VFS_QUOTACTL'u+2n +\w'Get the file system root vnode'u+6nC
-.sp 5p
-int  (*vfs_mount)()	VFS_MOUNT	Mount a file system
-int  (*vfs_start)()	VFS_START	Make operational
-int  (*vfs_unmount)()	VFS_UNMOUNT	Unmount a file system
-int  (*vfs_root)()	VFS_ROOT	Get the file system root vnode
-int  (*vfs_quotactl)()	VFS_QUOTACTL	Query/modify space quotas
-int  (*vfs_statvfs)()	VFS_STATVFS	Get file system statistics
-int  (*vfs_sync)()	VFS_SYNC	Flush file system buffers
-int  (*vfs_vget)()	VFS_VGET	Get vnode from file id
-int  (*vfs_fhtovp)()	VFS_FHTOVP	NFS file handle to vnode lookup
-int  (*vfs_vptofh)()	VFS_VPTOFH	Vnode to NFS file handle lookup
-void (*vfs_init)()	-	Initialize file system
-void (*vfs_reinit)()	-	Reinitialize file system
-void (*vfs_done)()	-	Cleanup unmounted file system
-int  (*vfs_mountroot)()	-	Mount the root file system
-int  (*vfs_snapshot)()	VFS_SNAPSHOT	Take a snapshot
-int  (*vfs_suspendctl)()	VFS_SUSPENDCTL	Suspend or resume
-.fi
+.Bl -column "void (*vfs_suspendctl)()" "VFS_SUSPENDCTL" \
+"NFS file handle to vnode lookup" -compact
+.It Sy Vector element Ta Sy Macro Ta Sy Description
+.It int  (*vfs_mount)() Ta VFS_MOUNT Ta Mount a file system
+.It int  (*vfs_start)() Ta VFS_START Ta Make operational
+.It int  (*vfs_unmount)() Ta VFS_UNMOUNT Ta Unmount a file system
+.It int  (*vfs_root)() Ta VFS_ROOT Ta Get the file system root vnode
+.It int  (*vfs_quotactl)() Ta VFS_QUOTACTL Ta Query/modify space quotas
+.It int  (*vfs_statvfs)() Ta VFS_STATVFS Ta Get file system statistics
+.It int  (*vfs_sync)() Ta VFS_SYNC Ta Flush file system buffers
+.It int  (*vfs_vget)() Ta VFS_VGET Ta Get vnode from file id
+.It int  (*vfs_fhtovp)() Ta VFS_FHTOVP Ta NFS file handle to vnode lookup
+.It int  (*vfs_vptofh)() Ta VFS_VPTOFH Ta Vnode to NFS file handle lookup
+.It void (*vfs_init)() Ta - Ta Initialize file system
+.It void (*vfs_reinit)() Ta - Ta Reinitialize file system
+.It void (*vfs_done)() Ta - Ta Cleanup unmounted file system
+.It int  (*vfs_mountroot)() Ta - Ta Mount the root file system
+.It int  (*vfs_snapshot)() Ta VFS_SNAPSHOT Ta Take a snapshot
+.It int  (*vfs_suspendctl)() Ta VFS_SUSPENDCTL Ta Suspend or resume
+.El
 .Pp
 Some additional non-function members of the vfsops structure are the
 file system name
