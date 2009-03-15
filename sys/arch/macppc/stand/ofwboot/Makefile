@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2009/01/12 07:05:22 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.48 2009/03/15 14:54:24 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -48,21 +48,12 @@ RELOC=		E00000
 ENTRY=		_start
 
 CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
-CLEANFILES+=	machine powerpc
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 
 CLEANFILES+= ${XCOFFXTRAOBJ}
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
-.NOPATH: machine powerpc
-.endif
-CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -97,6 +88,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O binary ${PROG}.el1 ${PROG}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 ${PROG}.elf: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
