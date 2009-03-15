@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 2009/03/14 22:54:05 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.34 2009/03/15 03:33:56 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -313,6 +313,7 @@ void choke(int) __attribute__((__noreturn__));
 void child(int);
 
 /* pl_2.c */
+void newturn(int);
 void play(void) __attribute__((__noreturn__));
 
 /* pl_3.c */
@@ -338,7 +339,6 @@ void loadplayer(void);
 /* pl_7.c */
 void initscreen(void);
 void cleanupscreen(void);
-void newturn(int);
 void Signal(const char *, struct ship *, ...)
 	 __attribute__((__format__(__printf__,1,3)));
 void Msg(const char *, ...)
@@ -346,12 +346,6 @@ void Msg(const char *, ...)
 void prompt(const char *, struct ship *);
 int sgetch(const char *, struct ship *, int);
 void sgetstr(const char *, char *, int);
-void draw_screen(void);
-void draw_view(void);
-void draw_turn(void);
-void draw_stat(void);
-void draw_slot(void);
-void draw_board(void);
 void centerview(void);
 void upview(void);
 void downview(void);

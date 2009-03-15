@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_2.c,v 1.12 2009/03/15 00:50:47 dholland Exp $	*/
+/*	$NetBSD: pl_2.c,v 1.13 2009/03/15 03:33:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_2.c,v 1.12 2009/03/15 00:50:47 dholland Exp $");
+__RCSID("$NetBSD: pl_2.c,v 1.13 2009/03/15 03:33:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ newturn(int n __unused)
 		leave(LEAVE_HURRICAN);
 
 	display_adjust_view();
-	draw_screen();
+	display_redraw();
 
 	signal(SIGALRM, newturn);
 	alarm(7);
@@ -101,7 +101,17 @@ play(void)
 	struct ship *sp;
 
 	for (;;) {
-		switch (sgetch("~\b", (struct ship *)0, 0)) {
+		blockalarm();
+		display_redraw();
+		unblockalarm();
+
+		switch (sgetch("~ ", (struct ship *)0, 0)) {
+		case 14: /* ^N */
+			display_scroll_pagedown();
+			break;
+		case 16: /* ^P */
+			display_scroll_pageup();
+			break;
 		case 'm':
 			acceptmove();
 			break;
@@ -139,10 +149,7 @@ play(void)
 			break;
 		case '\f':
 			centerview();
-			blockalarm();
-			draw_board();
-			draw_screen();
-			unblockalarm();
+			display_force_full_redraw();
 			break;
 		case 'L':
 			mf->loadL = L_EMPTY;
@@ -170,43 +177,25 @@ play(void)
 			break;
 		case 'C':
 			centerview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'U':
 			upview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'D':
 		case 'N':
 			downview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'H':
 			leftview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'J':
 			rightview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'F':
 			lookout();
 			break;
 		case 'S':
 			dont_adjust = !dont_adjust;
-			blockalarm();
-			draw_turn();
-			unblockalarm();
 			break;
 		}
 	}

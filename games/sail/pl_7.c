@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.34 2009/03/15 00:50:47 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.35 2009/03/15 03:33:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,38 +34,54 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.34 2009/03/15 00:50:47 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.35 2009/03/15 03:33:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
 #include <err.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "array.h"
 #include "extern.h"
 #include "player.h"
 #include "display.h"
 
-static void Scroll(void);
-static void endprompt(int);
+/*
+ * Use values above KEY_MAX for custom keycodes. (blymn@ says this is ok)
+ */
+#define KEY_ESC(ch) (KEY_MAX+10+ch)
+
 
 /*
  * Display interface
  */
 
-static char sc_hasprompt;
+static void draw_view(void);
+static void draw_turn(void);
+static void draw_stat(void);
+static void draw_slot(void);
+static void draw_board(void);
+
+static struct stringarray *sc_lines;
+static unsigned sc_scrollup;
+static bool sc_hasprompt;
+static bool sc_hideprompt;
 static const char *sc_prompt;
 static const char *sc_buf;
-static int sc_line;
 
 static WINDOW *view_w;
+static WINDOW *turn_w;
+static WINDOW *stat_w;
 static WINDOW *slot_w;
 static WINDOW *scroll_w;
-static WINDOW *stat_w;
-static WINDOW *turn_w;
+
+static bool obp[3];
+static bool dbp[3];
 
 int done_curses;
 int loaded, fired, changed, repaired;
@@ -77,9 +93,28 @@ struct ship *ms;		/* memorial structure, &cc->ship[player] */
 struct File *mf;		/* ms->file */
 struct shipspecs *mc;		/* ms->specs */
 
+////////////////////////////////////////////////////////////
+// overall initialization
+
+static
+void
+define_esc_key(int ch)
+{
+	char seq[3] = { '\x1b', ch, 0 };
+
+	define_key(seq, KEY_ESC(ch));
+}
+
 void
 initscreen(void)
 {
+	int ch;
+
+	sc_lines = stringarray_create();
+	if (sc_lines == NULL) {
+		err(1, "malloc");
+	}
+
 	if (signal(SIGTSTP, SIG_DFL) == SIG_ERR) {
 		err(1, "signal(SIGTSTP)");
 	}
@@ -113,6 +148,13 @@ initscreen(void)
 	noecho();
 	cbreak();
 
+	/*
+	 * Define esc-x keys
+	 */
+	for (ch = 0; ch < 127; ch++) {
+		define_esc_key(ch);
+	}
+
 	done_curses++;
 }
 
@@ -123,8 +165,88 @@ cleanupscreen(void)
 	if (done_curses) {
 		wmove(scroll_w, SCROLL_Y - 1, 0);
 		wclrtoeol(scroll_w);
-		draw_screen();
+		display_redraw();
 		endwin();
+	}
+}
+
+////////////////////////////////////////////////////////////
+// scrolling message area
+
+static void
+scrollarea_add(const char *text)
+{
+	char *copy;
+	int errsave;
+
+	copy = strdup(text);
+	if (copy == NULL) {
+		goto nomem;
+	}
+	if (stringarray_add(sc_lines, copy, NULL)) {
+		goto nomem;
+	}
+	return;
+
+nomem:
+	/*
+	 * XXX this should use leave(), but that won't
+	 * currently work right.
+	 */
+	errsave = errno;
+#if 0
+	leave(LEAVE_MALLOC);
+#else
+	cleanupscreen();
+	sync_close(!hasdriver);
+	errno = errsave;
+	err(1, "malloc");
+#endif
+}
+
+static void
+draw_scroll(void)
+{
+	unsigned total_lines;
+	unsigned visible_lines;
+	unsigned index_of_top;
+	unsigned index_of_y;
+	unsigned y;
+	unsigned cursorx;
+
+	werase(scroll_w);
+
+	visible_lines = SCROLL_Y - 1;
+
+	total_lines = stringarray_num(sc_lines);
+	if (total_lines > visible_lines) {
+		index_of_top = total_lines - visible_lines;
+	} else {
+		index_of_top = 0;
+	}
+	if (index_of_top < sc_scrollup) {
+		index_of_top = 0;
+	} else {
+		index_of_top -= sc_scrollup;
+	}
+
+	for (y = 0; y < SCROLL_Y - 1; y++) {
+		index_of_y = index_of_top + y;
+		if (index_of_y >= total_lines) {
+			break;
+		}
+		wmove(scroll_w, y, 0);
+		waddstr(scroll_w, stringarray_get(sc_lines, index_of_y));
+	}
+	if (sc_hasprompt && !sc_hideprompt) {
+		wmove(scroll_w, SCROLL_Y-1, 0);
+		waddstr(scroll_w, sc_prompt);
+		waddstr(scroll_w, sc_buf);
+		cursorx = strlen(sc_prompt) + strlen(sc_buf);
+		wmove(scroll_w, SCROLL_Y-1, cursorx);
+	}
+	else {
+		wmove(scroll_w, SCROLL_Y-1, 0);
 	}
 }
 
@@ -134,16 +256,19 @@ Signal(const char *fmt, struct ship *ship, ...)
 {
 	va_list ap;
 	char format[BUFSIZ];
+	char buf[BUFSIZ];
 
 	if (!done_curses)
 		return;
 	va_start(ap, ship);
-	if (*fmt == '\a')
-		putchar(*fmt++);
+	if (*fmt == '\a') {
+		beep();
+		fmt++;
+	}
 	fmtship(format, sizeof(format), fmt, ship);
-	vwprintw(scroll_w, format, ap);
+	vsnprintf(buf, sizeof(buf), format, ap);
 	va_end(ap);
-	Scroll();
+	scrollarea_add(buf);
 }
 
 /*VARARGS2*/
@@ -151,24 +276,18 @@ void
 Msg(const char *fmt, ...)
 {
 	va_list ap;
+	char buf[BUFSIZ];
 
 	if (!done_curses)
 		return;
 	va_start(ap, fmt);
-	if (*fmt == '\a')
-		putchar(*fmt++);
-	vwprintw(scroll_w, fmt, ap);
+	if (*fmt == '\a') {
+		beep();
+		fmt++;
+	}
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	Scroll();
-}
-
-static void
-Scroll(void)
-{
-	if (++sc_line >= SCROLL_Y)
-		sc_line = 0;
-	wmove(scroll_w, sc_line, 0);
-	wclrtoeol(scroll_w);
+	scrollarea_add(buf);
 }
 
 void
@@ -179,16 +298,15 @@ prompt(const char *p, struct ship *ship)
 	fmtship(buf, sizeof(buf), p, ship);
 	sc_prompt = buf;
 	sc_buf = "";
-	sc_hasprompt = 1;
-	waddstr(scroll_w, buf);
+	sc_hasprompt = true;
 }
 
 static void
-endprompt(int flag)
+endprompt(void)
 {
-	sc_hasprompt = 0;
-	if (flag)
-		Scroll();
+	sc_prompt = NULL;
+	sc_buf = NULL;
+	sc_hasprompt = false;
 }
 
 /*
@@ -199,17 +317,17 @@ endprompt(int flag)
 void
 display_hide_prompt(void)
 {
-	if (sc_hasprompt) {
-		wmove(scroll_w, sc_line, 0);
-		wclrtoeol(scroll_w);
-	}
+	sc_hideprompt = true;
+	draw_scroll();
+	wrefresh(scroll_w);
 }
 
 void
 display_reshow_prompt(void)
 {
-	if (sc_hasprompt)
-		wprintw(scroll_w, "%s%s", sc_prompt, sc_buf);
+	sc_hideprompt = false;
+	draw_scroll();
+	wrefresh(scroll_w);
 }
 
 
@@ -217,15 +335,28 @@ int
 sgetch(const char *p, struct ship *ship, int flag)
 {
 	int c;
+	char input[2];
+
 	prompt(p, ship);
+	input[0] = '\0';
+	input[1] = '\0';
+	sc_buf = input;
 	blockalarm();
+	draw_scroll();
 	wrefresh(scroll_w);
+	fflush(stdout);
 	unblockalarm();
 	while ((c = wgetch(scroll_w)) == EOF)
 		;
-	if (flag && c >= ' ' && c < 0x7f)
-		waddch(scroll_w, c);
-	endprompt(flag);
+	if (flag && c >= ' ' && c < 0x7f) {
+		blockalarm();
+		input[0] = c;
+		draw_scroll();
+		wrefresh(scroll_w);
+		fflush(stdout);
+		unblockalarm();
+	}
+	endprompt();
 	return c;
 }
 
@@ -240,42 +371,58 @@ sgetstr(const char *pr, char *buf, int n)
 	for (;;) {
 		*p = 0;
 		blockalarm();
+		draw_scroll();
 		wrefresh(scroll_w);
+		fflush(stdout);
 		unblockalarm();
 		while ((c = wgetch(scroll_w)) == EOF)
 			;
 		switch (c) {
 		case '\n':
 		case '\r':
-			endprompt(1);
+			endprompt();
 			return;
 		case '\b':
 			if (p > buf) {
-				waddstr(scroll_w, "\b \b");
+				/*waddstr(scroll_w, "\b \b");*/
 				p--;
 			}
 			break;
 		default:
 			if (c >= ' ' && c < 0x7f && p < buf + n - 1) {
 				*p++ = c;
-				waddch(scroll_w, c);
+				/*waddch(scroll_w, c);*/
 			} else
-				putchar('\a');
+				beep();
 		}
 	}
 }
 
+////////////////////////////////////////////////////////////
+// drawing of other panes
+
 void
-draw_screen(void)
+display_force_full_redraw(void)
 {
+	clear();
+}
+
+void
+display_redraw(void)
+{
+	draw_board();
 	draw_view();
 	draw_turn();
 	draw_stat();
 	draw_slot();
-	wrefresh(scroll_w);		/* move the cursor */
+	draw_scroll();
+	/* move the cursor */
+	wrefresh(scroll_w);
+	/* paranoia */
+	fflush(stdout);
 }
 
-void
+static void
 draw_view(void)
 {
 	struct ship *sp;
@@ -299,7 +446,7 @@ draw_view(void)
 	wrefresh(view_w);
 }
 
-void
+static void
 draw_turn(void)
 {
 	wmove(turn_w, 0, 0);
@@ -307,7 +454,7 @@ draw_turn(void)
 	wrefresh(turn_w);
 }
 
-void
+static void
 draw_stat(void)
 {
 	wmove(stat_w, STAT_1, 0);
@@ -351,16 +498,28 @@ draw_stat(void)
 void
 draw_slot(void)
 {
+	int i;
+
 	if (!boarding(ms, 0)) {
 		mvwaddstr(slot_w, 0, 0, "   ");
 		mvwaddstr(slot_w, 1, 0, "   ");
-	} else
+	} else {
+		wmove(slot_w, 0, 0);
+		for (i = 0; i < 3; i++) {
+			waddch(slot_w, obp[i] ? '1'+i : ' ');
+		}
 		mvwaddstr(slot_w, 1, 0, "OBP");
+	}
 	if (!boarding(ms, 1)) {
 		mvwaddstr(slot_w, 2, 0, "   ");
 		mvwaddstr(slot_w, 3, 0, "   ");
-	} else
+	} else {
+		wmove(slot_w, 2, 0);
+		for (i = 0; i < 3; i++) {
+			waddch(slot_w, dbp[i] ? '1'+i : ' ');
+		}
 		mvwaddstr(slot_w, 3, 0, "DBP");
+	}
 
 	wmove(slot_w, SLOT_Y-4, 0);
 	if (mf->RH)
@@ -417,14 +576,12 @@ draw_board(void)
 {
 	int n;
 
-	clear();
+	erase();
 	werase(view_w);
 	werase(slot_w);
 	werase(scroll_w);
 	werase(stat_w);
 	werase(turn_w);
-
-	sc_line = 0;
 
 	move(BOX_T, BOX_L);
 	for (n = 0; n < BOX_X; n++)
@@ -442,12 +599,14 @@ draw_board(void)
 	mvaddch(BOX_B, BOX_R, '+');
 	refresh();
 
+#if 0
 #define WSaIM "Wooden Ships & Iron Men"
 	wmove(view_w, 2, (VIEW_X - sizeof WSaIM - 1) / 2);
 	waddstr(view_w, WSaIM);
 	wmove(view_w, 4, (VIEW_X - strlen(cc->name)) / 2);
 	waddstr(view_w, cc->name);
 	wrefresh(view_w);
+#endif
 
 	move(LINE_T, LINE_L);
 	printw("Class %d %s (%d guns) '%s' (%c%c)",
@@ -460,29 +619,47 @@ draw_board(void)
 	refresh();
 }
 
-/* Called after show_[od]bp. Shouldn't really exist... XXX */
 void
-display_refresh_slot_w(void)
+display_set_obp(int which, bool show)
 {
-	blockalarm();
-	wrefresh(slot_w);
-	unblockalarm();
+	obp[which] = show;
 }
 
 void
-display_show_obp(int which, bool show)
+display_set_dbp(int which, bool show)
 {
-	wmove(slot_w, 0, which);
-	waddch(slot_w, show ? '1' + which : ' ');
-	mvwaddstr(slot_w, 1, 0, "OBP");
+	dbp[which] = show;
+}
+
+////////////////////////////////////////////////////////////
+// external actions on the display
+
+void
+display_scroll_pageup(void)
+{
+	unsigned total_lines, visible_lines, limit;
+	unsigned pagesize = SCROLL_Y - 2;
+
+	total_lines = stringarray_num(sc_lines);
+	visible_lines = SCROLL_Y - 1;
+	limit = total_lines - visible_lines;
+
+	sc_scrollup += pagesize;
+	if (sc_scrollup > limit) {
+		sc_scrollup = limit;
+	}
 }
 
 void
-display_show_dbp(int which, bool show)
+display_scroll_pagedown(void)
 {
-	wmove(slot_w, 2, which);
-	waddch(slot_w, show ? '1' + which : ' ');
-	mvwaddstr(slot_w, 3, 0, "DBP");
+	unsigned pagesize = SCROLL_Y - 2;
+
+	if (sc_scrollup < pagesize) {
+		sc_scrollup = 0;
+	} else {
+		sc_scrollup -= pagesize;
+	}
 }
 
 void
