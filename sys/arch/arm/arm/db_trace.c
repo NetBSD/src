@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.18 2009/03/14 14:45:54 dsl Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19 2009/03/15 22:23:16 cegger Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.18 2009/03/14 14:45:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19 2009/03/15 22:23:16 cegger Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -80,12 +80,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.18 2009/03/14 14:45:54 dsl Exp $");
 #define FR_RFP	(-3)
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t       addr;
-	bool             have_addr;
-	db_expr_t       count;
-	const char      *modif;
-	void		(*pr)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, bool have_addr,
+		db_expr_t count, const char *modif,
+		void (*pr)(const char *, ...))
 {
 	u_int32_t	*frame, *lastframe;
 	const char	*cp = modif;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.31 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.32 2009/03/15 22:24:57 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.31 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.32 2009/03/15 22:24:57 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -571,7 +571,7 @@ vidcvideo_init(void)
 
 /* reinitialise the vidcvideo */
 void
-vidcvideo_reinit()
+vidcvideo_reinit(void)
 {
 
 	vidcvideo_coldinit();
@@ -670,7 +670,7 @@ vidcvideo_enablecursor(int on)
 
 
 void
-vidcvideo_stdpalette()
+vidcvideo_stdpalette(void)
 {
 	int i;
 

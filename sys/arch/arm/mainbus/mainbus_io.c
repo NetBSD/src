@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.18 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.19 2009/03/15 22:25:46 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.18 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.19 2009/03/15 22:25:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,14 +172,10 @@ mainbus_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_ha
 }
 
 int
-mainbus_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+mainbus_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+    int cacheable,
+    bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	panic("mainbus_bs_alloc(): Help!");
 }
