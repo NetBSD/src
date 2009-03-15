@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.klinks.mk,v 1.3 2008/12/08 22:47:55 pooka Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.4 2009/03/15 05:48:02 tsutsui Exp $
 #
 
 ##### Default values
@@ -36,7 +36,7 @@ CLEANFILES+=	x86
 
 # XXX.  This should be done a better way.  It's @'d to reduce visual spew.
 # XXX   .BEGIN is used to make sure the links are done before anything else.
-.if make(depend) || make(all) || make(dependall)
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@rm -f machine && \
 	    ln -s $S/arch/${MACHINE}/include machine
