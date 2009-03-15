@@ -1,4 +1,4 @@
-/*	$NetBSD: __main.c,v 1.5 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: __main.c,v 1.6 2009/03/15 21:33:51 cegger Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -35,6 +35,6 @@
 void __main(void);
 
 void
-__main()
+__main(void)
 {
 }
