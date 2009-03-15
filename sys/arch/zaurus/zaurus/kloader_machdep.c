@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.2 2009/03/11 13:05:05 nonaka Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.3 2009/03/15 02:23:52 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.2 2009/03/11 13:05:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.3 2009/03/15 02:23:52 nonaka Exp $");
 
 #include "debug_kloader.h"
 
@@ -140,7 +140,7 @@ kloader_phystov(paddr_t pa)
 	int error;
 
 	va = KERNEL_BASE + pa - 0xa0000000UL;
-	error = pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, PMAP_WIRED);
+	error = pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
 	if (error) {
 		printf("%s: map failed: pa=0x%lx, va=0x%lx, error=%d\n",
 		    __func__, pa, va, error);
