@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/07/16 14:45:17 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.9 2009/03/15 06:17:03 tsutsui Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -12,6 +12,12 @@ LIBSADIR	= ${S}/lib/libsa
 SYSVBFSDIR	= ${S}/fs/sysvbfs
 EWS4800MIPSDIR	= ${.CURDIR}/../../ews4800mips
 DEVDIR		= ${.CURDIR}/../../dev
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PATH:		${COMMON} ${LIBSADIR} ${SYSVBFSDIR}	\
 		${EWS4800MIPSDIR} ${SBDDIR} ${DEVDIR}
@@ -77,7 +83,6 @@ CLEANFILES	+= ${PROG} ${PROG}.elf ${PROG}.coff ${PROG}.tmp ${PROG}.dis
 CLEANFILES	+= ${COFFHDRFIX}
 CLEANFILES	+= ${BOOT_KERNEL} ${BOOT_KERNEL}.elf ${BOOT_KERNEL}.tmp
 CLEANFILES	+= ${BOOT_KERNEL}.gz ${BOOT_KERNEL}.gz.tmp
-CLEANFILES	+= machine mips
 
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
@@ -94,13 +99,6 @@ LIBS		= ${LIBSA} ${LIBZ} ${LIBKERN}
 # fixup GNU binutils file offset error.
 coffhdrfix:	${COMMON}/coffhdrfix.c
 	${HOST_CC} -o ${COFFHDRFIX} ${COMMON}/coffhdrfix.c
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s $S/arch/${MACHINE}/include machine
-	@[ -h mips ] || ln -s $S/arch/mips/include mips
-.NOPATH: machine mips
-.endif
 
 clean cleandir distclean: cleanlibdir
 
@@ -127,6 +125,7 @@ ${PROG}: ${BINKERNEL_DUMMY_O} ${OBJS} ${LIBS}
 	mv ${PROG}.elf ${PROG}
 	ls -al ${PROG}
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
 ${PROG}.coff:	${PROG}
