@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.63 2009/03/14 21:04:10 dsl Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64 2009/03/15 15:40:34 cegger Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.63 2009/03/14 21:04:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64 2009/03/15 15:40:34 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -99,7 +99,7 @@ typedef void (vector)(void);
 extern vector Xintrddbipi;
 
 void
-db_machine_init()
+db_machine_init(void)
 {
 
 #ifdef MULTIPROCESSOR
@@ -261,7 +261,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 }
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 	breakpoint();
 }

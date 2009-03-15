@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.12 2009/03/14 13:56:41 jmcneill Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.13 2009/03/15 15:42:55 cegger Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.12 2009/03/14 13:56:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.13 2009/03/15 15:42:55 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -28,7 +28,7 @@ static struct timecounter acpi_timecounter = {
 };
 
 int
-acpitimer_init()
+acpitimer_init(void)
 {
 	uint32_t bits;
 	int i, j;
@@ -101,7 +101,7 @@ acpitimer_delta(uint32_t end, uint32_t start)
 
 #define N 2000
 static int
-acpitimer_test()
+acpitimer_test(void)
 {
 	uint32_t last, this, delta;
 	int minl, maxl, n;

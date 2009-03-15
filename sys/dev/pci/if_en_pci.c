@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.28 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.29 2009/03/15 15:48:14 cegger Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.28 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.29 2009/03/15 15:48:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,10 +137,7 @@ static void adp_busreset(void *);
  * bus specific reset function [ADP only!]
  */
 
-static void adp_busreset(v)
-
-void *v;
-
+static void adp_busreset(void *v)
 {
   struct en_softc *sc = (struct en_softc *) v;
   u_int32_t dummy;
