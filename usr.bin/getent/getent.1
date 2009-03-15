@@ -1,4 +1,4 @@
-.\"	$NetBSD: getent.1,v 1.18 2009/03/11 13:53:09 joerg Exp $
+.\"	$NetBSD: getent.1,v 1.19 2009/03/15 15:19:57 joerg Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ file format for that database.
 .Pp
 .Ar database
 may be one of:
-.Bl -column "protocols" -offset indent -compact
+.Bl -column "protocols" "user:passwd:uid:gid:gecos:home_dir:shell" -offset indent -compact
 .It Sy Database Ta Sy Display format
 .It disktab Ta entry
 .It ethers Ta address name
