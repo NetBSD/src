@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.23 2009/03/14 15:36:07 dsl Exp $	*/
+/*	$NetBSD: bios32.c,v 1.24 2009/03/15 15:40:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.23 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.24 2009/03/15 15:40:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ struct smbios_entry smbios_entry;
  * Initialize the BIOS32 interface.
  */
 void
-bios32_init()
+bios32_init(void)
 {
 	paddr_t entry = 0;
 	char *p;
