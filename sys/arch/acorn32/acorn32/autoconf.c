@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2009/03/14 14:45:51 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2009/03/15 22:18:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2009/03/14 14:45:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2009/03/15 22:18:35 cegger Exp $");
 
 #include "opt_md.h"
 
@@ -113,7 +113,7 @@ get_device(char *name)
 /* Set the rootdev variable from the root specifier in the boot args */
 
 static void
-set_root_device()
+set_root_device(void)
 {
 	char *ptr;
             
@@ -129,7 +129,7 @@ set_root_device()
  * Set up the root device from the boot args
  */
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 #ifndef MEMORY_DISK_IS_ROOT
 	set_root_device();
@@ -149,7 +149,7 @@ cpu_rootconf()
  */
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 	/*
 	 * Configure all the roots.
