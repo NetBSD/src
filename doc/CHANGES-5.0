@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.109 2009/03/13 00:04:42 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.110 2009/03/15 20:35:59 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -4990,4 +4990,108 @@ distrib/i386/floppies/common/boot.cfg		1.2
 
 	Fix typo.
 	[dholland, ticket #557]
+
+sys/arch/arm/footbridge/footbridge_intr.h	1.14
+sys/arch/evbarm/ifpga/ifpga_intr.h		1.9
+sys/arch/evbarm/iq80310/iq80310_intr.h		1.8
+sys/conf/Makefile.kern.inc			1.121
+sys/conf/files					1.940
+sys/kern/init_main.c				1.381
+sys/kern/kern_ssp.c				1.1, 1.2
+sys/kern/subr_autoconf.c			1.168
+sys/sys/device.h				1.116
+sys/sys/systm.h					1.233
+
+	Unbreak ssp kernels. The issue here that when the ssp_init()
+	call was deferred, it caused the return from the enclosing
+	function to break, as well as the ssp return on i386. To fix
+	both issues, split configure in two pieces the one before
+	calling ssp_init and the one after, and move the ssp_init()
+	call back in main. Put ssp_init() in its own file, and
+	compile this new file with -fno-stack-protector.
+	[christos, ticket #458]
+
+sys/kern/subr_xcall.c				1.10
+
+	xc_lowpri: don't truncate `where' from uint64_t to u_int.
+	[uebayasi, ticket #549]
+
+gnu/dist/postfix/src/util/unix_recv_fd.c	1.2
+gnu/dist/postfix/src/util/unix_send_fd.c	1.2
+
+	Use larger buffer for sending and receiving a file descriptor
+	over a UNIX domain socket.  This fixes support for using milters
+	(Sendmail Mail Filters) with Postfix under at least NetBSD/amd64.
+	[tron, ticket #555]
+
+usr.bin/awk/awk.1				1.18
+
+	Fix markup (.I is an unknown macro in this context).
+	[joerg, ticket #558]
+
+share/man/man7/mdoc.samples.7			1.43
+
+	Examples should be correct, so fix the order of the preamble to
+	follow the rules set in mdoc(7).
+	[joerg, ticket #559]
+
+sys/net/rtsock.c				1.124
+
+	Revert r1.119 as the implementation is broken.  This backs out
+	part of ticket 239.
+	[roy, ticket #560]
+
+usr.bin/nbsvtool/nbsvtool.1			1.5
+
+	Fix markup.
+	[joerg, ticket #561]
+
+usr.sbin/user/user.c				1.121
+
+	Use getpwnam_r to avoid trashing result of previous call to
+	getpwnam().  Fixes PR bin/40994.
+	[mlelstv, ticket #562]
+
+share/man/man9/fsetown.9			1.9
+
+	Consistently use .Dv for SA_SIGINFO, .Sv doesn't exist.
+	[joerg, ticket #567]
+
+usr.bin/shuffle/shuffle.1			1.7
+
+	Remove BUGS section.  shuffle(1) was changed to use arc4random
+	a while ago.
+	[yamt, ticket #568]
+
+sys/kern/init_sysctl.c				1.158
+
+	Always calculate "needed" for KERN_FILE2 calls.  This allows a
+	caller to get an estimate of the needed space, as intended.
+	[mrg, ticket #565]
+
+sys/kern/init_sysctl.c				1.157
+sys/kern/kern_descrip.c				1.187
+usr.sbin/pstat/pstat.c				1.112, 1.113
+
+	Don't bother with file_t::f_iflags any more, as it's not used.
+	Convert getfiles() to use KERN_FILE2 sysctl.  Now it can survive
+	"struct file" changing, as is upcoming.
+	[mrg, ticket #566]
+
+distrib/sets/lists/xetc/mi			1.13
+external/mit/xorg/bin/xdm/config/Makefile	1.7
+xsrc/external/mit/xdm/dist/config/Xreset.cpp	1.2
+xsrc/external/mit/xdm/dist/config/Xstartup.cpp	1.2
+
+	cpp does not find tokens inside quotes, so remove the quotes so
+	that the search/replace can happen properly.
+	--
+	Add the xdm config files Xstartup and Xreset to the build.
+	[plunky, ticket #574]
+
+sys/dev/video.c					1.20
+
+	video_set_format() requires hw->set_format to be set, not
+	get_format.  Fixes PR kern/41008.
+	[jmcneill, ticket #576]
 
