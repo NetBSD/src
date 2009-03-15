@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.23 2009/03/14 22:52:52 dholland Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.24 2009/03/15 00:35:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,12 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.23 2009/03/14 22:52:52 dholland Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.24 2009/03/15 00:35:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
-#include <curses.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -237,27 +236,17 @@ parties(struct ship *to, int *crew, int isdefense, int buf)
 				send_obp(ms, j, turn, to->file->index, men);
 			}
 			if (isdefense) {
-				wmove(slot_w, 2, 0);
 				for (k=0; k < NBP; k++)
-					if (temp[k] && !crew[k])
-						waddch(slot_w, k + '1');
-					else
-						wmove(slot_w, 2, 1 + k);
-				mvwaddstr(slot_w, 3, 0, "DBP");
+					display_show_dbp(k,
+							 temp[k] && !crew[k]);
 				makemsg(ms, "repelling boarders");
 			} else {
-				wmove(slot_w, 0, 0);
 				for (k=0; k < NBP; k++)
-					if (temp[k] && !crew[k])
-						waddch(slot_w, k + '1');
-					else
-						wmove(slot_w, 0, 1 + k);
-				mvwaddstr(slot_w, 1, 0, "OBP");
+					display_show_obp(k,
+							 temp[k] && !crew[k]);
 				makesignal(ms, "boarding the $$", to);
 			}
-			blockalarm();
-			wrefresh(slot_w);
-			unblockalarm();
+			display_refresh_slot_w();
 		} else
 			Msg("Sending no crew sections.");
 	}

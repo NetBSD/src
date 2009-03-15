@@ -1,4 +1,4 @@
-/*	$NetBSD: display.h,v 1.4 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: display.h,v 1.5 2009/03/15 00:35:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,17 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef SIGTSTP
-#define SCREENTEST()	(initscr() != NULL && \
-			 signal(SIGTSTP, SIG_DFL) != SIG_ERR && \
-			 STAT_R < COLS && SCROLL_Y > 0)
-#else
-#define SCREENTEST()	(initscr() != NULL && STAT_R < COLS && SCROLL_Y > 0)
-#endif
-
-extern WINDOW *view_w;
-extern WINDOW *slot_w;
-extern WINDOW *scroll_w;
-extern WINDOW *stat_w;
-extern WINDOW *turn_w;
-
+void display_show_obp(int which, bool show);
+void display_show_dbp(int which, bool show);
+void display_refresh_slot_w(void);
