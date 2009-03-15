@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.13 2009/02/14 19:23:18 christos Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.14 2009/03/15 20:08:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _STANDALONE
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.13 2009/02/14 19:23:18 christos Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.14 2009/03/15 20:08:43 rmind Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -86,13 +86,15 @@ size_t
 /*ARGSUSED*/
 _cpuset_size(const cpuset_t *c)
 {
+
 	return cpuset_size;
 }
 
 void
 _cpuset_zero(cpuset_t *c)
 {
-	(void)memset(c->bits, 0, cpuset_nentries * sizeof(c->bits[0]));
+
+	memset(c->bits, 0, cpuset_nentries * sizeof(c->bits[0]));
 }
 
 int
@@ -136,6 +138,7 @@ _cpuset_clr(cpuid_t i, cpuset_t *c)
 cpuset_t *
 _cpuset_create(void)
 {
+
 	if (cpuset_size == 0) {
 		static int mib[2] = { CTL_HW, HW_NCPU };
 		size_t len;
@@ -153,6 +156,7 @@ _cpuset_create(void)
 void
 _cpuset_destroy(cpuset_t *c)
 {
+
 	free(c);
 }
 
@@ -162,6 +166,7 @@ kcpuset_t *
 kcpuset_create(void)
 {
 	kcpuset_t *c;
+
 	if (cpuset_size == 0) {
 		cpuset_nentries = CPUSET_NENTRIES(MAXCPUS);
 		cpuset_size = KCPUSET_SIZE(cpuset_nentries);
@@ -176,6 +181,7 @@ void
 kcpuset_destroy(kcpuset_t *c)
 {
 	kcpuset_t *nc;
+
 	while (c) {
 		KASSERT(c->nused == 0);
 		nc = c->next;
@@ -187,19 +193,22 @@ kcpuset_destroy(kcpuset_t *c)
 void
 kcpuset_copy(kcpuset_t *d, const kcpuset_t *s)
 {
+
 	KASSERT(d->nused == 1);
-	(void)memcpy(d->bits, s->bits, cpuset_nentries * sizeof(s->bits[0]));
+	memcpy(d->bits, s->bits, cpuset_nentries * sizeof(s->bits[0]));
 }
 
 void
 kcpuset_use(kcpuset_t *c)
 {
+
 	atomic_inc_uint(&c->nused);
 }
 
 void
 kcpuset_unuse(kcpuset_t *c, kcpuset_t **lst)
 {
+
 	if (atomic_dec_uint_nv(&c->nused) != 0)
 		return;
 	KASSERT(c->nused == 0);
@@ -215,6 +224,7 @@ kcpuset_unuse(kcpuset_t *c, kcpuset_t **lst)
 int
 kcpuset_copyin(const cpuset_t *u, kcpuset_t *k, size_t len)
 {
+
 	KASSERT(k->nused > 0);
 	KASSERT(k->next == NULL);
 	if (len != CPUSET_SIZE(cpuset_nentries))
@@ -225,6 +235,7 @@ kcpuset_copyin(const cpuset_t *u, kcpuset_t *k, size_t len)
 int
 kcpuset_copyout(const kcpuset_t *k, cpuset_t *u, size_t len)
 {
+
 	KASSERT(k->nused > 0);
 	KASSERT(k->next == NULL);
 	if (len != CPUSET_SIZE(cpuset_nentries))
@@ -235,9 +246,29 @@ kcpuset_copyout(const kcpuset_t *k, cpuset_t *u, size_t len)
 void
 kcpuset_zero(kcpuset_t *c)
 {
+
 	KASSERT(c->nused > 0);
 	KASSERT(c->next == NULL);
-	(void)memset(c->bits, 0, cpuset_nentries * sizeof(c->bits[0]));
+	memset(c->bits, 0, cpuset_nentries * sizeof(c->bits[0]));
+}
+
+void
+kcpuset_fill(kcpuset_t *c)
+{
+
+	KASSERT(c->nused > 0);
+	KASSERT(c->next == NULL);
+	memset(c->bits, ~0, cpuset_nentries * sizeof(c->bits[0]));
+}
+
+void
+kcpuset_set(cpuid_t i, kcpuset_t *c)
+{
+	const unsigned long j = i >> CPUSET_SHIFT;
+
+	KASSERT(c->next == NULL);
+	KASSERT(j < cpuset_nentries);
+	c->bits[j] |= 1 << (i & CPUSET_MASK);
 }
 
 int
@@ -250,6 +281,17 @@ kcpuset_isset(cpuid_t i, const kcpuset_t *c)
 	KASSERT(c->next == NULL);
 	KASSERT(j < cpuset_nentries);
 	return ((1 << (i & CPUSET_MASK)) & c->bits[j]) != 0;
+}
+
+bool
+kcpuset_match(const kcpuset_t *c1, const kcpuset_t *c2)
+{
+	unsigned long j;
+
+	for (j = 0; j < cpuset_nentries; j++)
+		if ((c1->bits[0] & c2->bits[0]) != c2->bits[0])
+			return false;
+	return true;
 }
 
 #endif
