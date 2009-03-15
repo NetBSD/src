@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.30 2009/01/16 13:10:47 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.31 2009/03/15 15:56:50 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.30 2009/01/16 13:10:47 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.31 2009/03/15 15:56:50 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,12 +143,9 @@ linux32_sys_oldselect(struct lwp *l, const struct linux32_sys_oldselect_args *ua
 }
 
 static int
-linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
-        struct lwp *l;
-        register_t *retval;
-        int nfds;
-        fd_set *readfds, *writefds, *exceptfds;
-        struct timeval *timeout;
+linux32_select1(struct lwp *l, register_t *retval, int nfds,
+		fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+		struct timeval *timeout)
 {   
 	struct timeval tv0, tv1, utv, *tv = NULL;
 	struct netbsd32_timeval50 utv32;
