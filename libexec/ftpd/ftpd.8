@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.82 2008/09/21 06:20:46 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.83 2009/03/15 08:07:22 joerg Exp $
 .\"
 .\" Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -313,7 +313,7 @@ server currently supports the following
 .Tn FTP
 requests.
 The case of the requests is ignored.
-.Bl -column "Request" -offset indent
+.Bl -column "Request" "Description" -offset indent
 .It Sy Request Ta Sy Description
 .It ABOR Ta "abort previous command"
 .It ACCT Ta "specify account (ignored)"
@@ -367,7 +367,7 @@ The following non-standard or
 .Ux
 specific commands are supported by the SITE request.
 .Pp
-.Bl -column Request -offset indent
+.Bl -column Request Description -offset indent
 .It Sy Request Ta Sy Description
 .It CHMOD Ta "change mode of a file, e.g. ``SITE CHMOD 755 filename''"
 .It HELP Ta "give help information."
