@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.228.4.1 2009/02/26 20:38:00 snj Exp $	*/
+/*	$NetBSD: systm.h,v 1.228.4.2 2009/03/15 19:43:48 snj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -290,6 +290,8 @@ void	hardpps(struct timespec *, long);
 #else
 void	ntp_init(void);	/* also provides adjtime() functionality */
 #endif /* NTP */
+
+void	ssp_init(void);
 
 void	initclocks(void);
 void	inittodr(time_t);

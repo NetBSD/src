@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.163.4.1 2009/02/02 02:38:32 snj Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.163.4.2 2009/03/15 19:43:48 snj Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163.4.1 2009/02/02 02:38:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163.4.2 2009/03/15 19:43:48 snj Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -411,11 +411,6 @@ config_interrupts_thread(void *cookie)
 void
 configure(void)
 {
-	extern void ssp_init(void);
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	int i, s;
-
 	/* Initialize data structures. */
 	config_init();
 	pmf_init();
@@ -440,9 +435,14 @@ configure(void)
 	 * to be enabled.
 	 */
 	cpu_configure();
+}
 
-	/* Initialize SSP. */
-	ssp_init();
+void
+configure2(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int i, s;
 
 	/*
 	 * Now that we've found all the hardware, start the real time
