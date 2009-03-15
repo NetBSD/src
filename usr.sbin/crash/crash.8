@@ -1,4 +1,4 @@
-.\"	$NetBSD: crash.8,v 1.1 2009/03/07 22:08:08 ad Exp $
+.\"	$NetBSD: crash.8,v 1.2 2009/03/15 21:43:28 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,13 +77,13 @@ However, by using the pipe symbol, output may be sent to commands available
 from the shell.
 For example:
 .Bd -literal -offset abcd
-crash> ps | more
-crash> ps | grep ioflush
+crash\*[Gt] ps | more
+crash\*[Gt] ps | grep ioflush
 .Ed
 .Sh SEE ALSO
-.Xr ddb 4 ,
 .Xr ps 1 ,
 .Xr vmstat 1 ,
+.Xr ddb 4 ,
 .Xr pstat 8
 .Sh HISTORY
 The
