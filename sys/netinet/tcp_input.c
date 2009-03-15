@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.292 2009/01/29 20:38:22 pooka Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.293 2009/03/15 21:25:32 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.292 2009/01/29 20:38:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.293 2009/03/15 21:25:32 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -407,7 +407,7 @@ struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
 static struct pool tcpipqent_pool;
 
 void
-tcpipqent_init()
+tcpipqent_init(void)
 {
 
 	pool_init(&tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",

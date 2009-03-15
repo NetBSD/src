@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.28 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: aarp.c,v 1.29 2009/03/15 21:24:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.28 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.29 2009/03/15 21:24:24 cegger Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -632,7 +632,7 @@ aarpprobe(void *arp)
 }
 
 void
-aarp_clean()
+aarp_clean(void)
 {
 	struct aarptab *aat;
 	int             i;

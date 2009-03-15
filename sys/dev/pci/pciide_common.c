@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.40 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.41 2009/03/15 21:28:09 cegger Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.40 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.41 2009/03/15 21:28:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -245,11 +245,9 @@ bad:
 }
 
 void
-pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
-	struct pci_attach_args * pa;
-	struct pciide_channel *cp;
-	bus_size_t *cmdsizep, *ctlsizep;
-	int (*pci_intr)(void *);
+pciide_mapregs_native(struct pci_attach_args *pa,
+	struct pciide_channel *cp, bus_size_t *cmdsizep,
+	bus_size_t *ctlsizep, int (*pci_intr)(void *))
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
@@ -784,12 +782,10 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 
 /* some common code used by several chip channel_map */
 void
-pciide_mapchan(pa, cp, interface, cmdsizep, ctlsizep, pci_intr)
-	struct pci_attach_args *pa;
-	struct pciide_channel *cp;
-	pcireg_t interface;
-	bus_size_t *cmdsizep, *ctlsizep;
-	int (*pci_intr)(void *);
+pciide_mapchan(struct pci_attach_args *pa,
+	struct pciide_channel *cp,
+	pcireg_t interface, bus_size_t *cmdsizep,
+	bus_size_t *ctlsizep, int (*pci_intr)(void *))
 {
 	struct ata_channel *wdc_cp = &cp->ata_channel;
 
