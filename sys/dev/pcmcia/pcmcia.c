@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.89 2009/03/14 21:04:22 dsl Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.90 2009/03/15 20:30:57 cegger Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.89 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.90 2009/03/15 20:30:57 cegger Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -720,11 +720,8 @@ pcmcia_io_unmap(struct pcmcia_function *pf, int window)
 }
 
 void *
-pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*ih_fct)(void *);
-	void *ih_arg;
+pcmcia_intr_establish(struct pcmcia_function *pf, int ipl,
+	int (*ih_fct)(void *), void *ih_arg)
 {
 
 	if (pf->pf_flags & PFF_ENABLED)
@@ -884,9 +881,8 @@ pcmcia_config_unmap(struct pcmcia_function *pf)
 }
 
 int
-pcmcia_function_configure(pf, validator)
-	struct pcmcia_function *pf;
-	int (*validator)(struct pcmcia_config_entry *);
+pcmcia_function_configure(struct pcmcia_function *pf,
+	int (*validator)(struct pcmcia_config_entry *))
 {
 	struct pcmcia_config_entry *cfe;
 	int error = ENOENT;
