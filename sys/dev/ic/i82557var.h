@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.45 2009/03/11 13:12:41 tsutsui Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.46 2009/03/15 14:18:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -219,12 +219,12 @@ struct fxp_softc {
 #define	FXPF_MWI		0x0010	/* enable PCI MWI */
 #define	FXPF_READ_ALIGN		0x0020	/* align read access w/ cacheline */
 #define	FXPF_WRITE_ALIGN	0x0040	/* end write on cacheline */
-#define	FXPF_EXT_TXCB		0x0080	/* enable extended TxCB */
+#define	FXPF_EXT_TXCB		0x0080	/* has extended TxCB */
 #define	FXPF_UCODE_LOADED	0x0100	/* microcode is loaded */
-#define	FXPF_EXT_RFA		0x0200	/* enable extended RFD */
+#define	FXPF_EXT_RFA		0x0200	/* has extended RFD and IPCB (82550) */
 #define	FXPF_RECV_WORKAROUND	0x0800	/* receiver lock-up workaround */
 #define	FXPF_FC			0x1000	/* has flow control */
-#define	FXPF_82559_RXCSUM	0x2000	/* enable 82559 compat RX checksum */
+#define	FXPF_82559_RXCSUM	0x2000	/* has 82559 compat RX checksum */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */
