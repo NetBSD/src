@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_3.c,v 1.19 2009/03/14 22:52:52 dholland Exp $	*/
+/*	$NetBSD: pl_3.c,v 1.20 2009/03/15 03:33:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_3.c,v 1.19 2009/03/14 22:52:52 dholland Exp $");
+__RCSID("$NetBSD: pl_3.c,v 1.20 2009/03/15 03:33:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,9 +212,6 @@ acceptcombat(void)
 	cant:
 		Msg("Unable to fire %s broadside", r ? "right" : "left");
 	}
-	blockalarm();
-	draw_stat();
-	unblockalarm();
 }
 
 void

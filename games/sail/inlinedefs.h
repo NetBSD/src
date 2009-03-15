@@ -1,11 +1,9 @@
-/*	$NetBSD: display.h,v 1.7 2009/03/15 03:33:56 dholland Exp $	*/
-
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by
+ * by David A. Holland.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,16 +27,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdbool.h>
-
-void display_set_obp(int which, bool show);
-void display_set_dbp(int which, bool show);
-
-void display_scroll_pageup(void);
-void display_scroll_pagedown(void);
-void display_adjust_view(void);
-
-void display_hide_prompt(void);
-void display_reshow_prompt(void);
-void display_force_full_redraw(void);
-void display_redraw(void);
+#if defined(__GNUC__) && !defined(__GNUC_STDC_INLINE__)
+/* gcc's non-C99 inline semantics */
+#define INLINE extern inline
+#elif defined(__STDC__) && __STDC_VERSION__ >= 199901L
+/* C99 */
+#define INLINE inline
+#else
+/* something else; static inline is safest */
+#define INLINE static inline
+#endif

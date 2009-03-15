@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_6.c,v 1.13 2009/03/14 22:52:53 dholland Exp $	*/
+/*	$NetBSD: pl_6.c,v 1.14 2009/03/15 03:33:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_6.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_6.c,v 1.13 2009/03/14 22:52:53 dholland Exp $");
+__RCSID("$NetBSD: pl_6.c,v 1.14 2009/03/15 03:33:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,14 +125,8 @@ repair(void)
 			*repairs = 2;
 		} else {
 			*repairs = 0;
-			blockalarm();
-			draw_stat();
-			unblockalarm();
 		}
 	}
-	blockalarm();
-	draw_slot();
-	unblockalarm();
 	repaired = 1;
 }
 
