@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.15 2008/05/16 09:21:59 hannken Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.16 2009/03/15 23:56:24 lukem Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -116,12 +116,12 @@ dlog(char *fmt, ...)
  * become unmounted or other error condition.
  */
 void
-handle_error(struct clfs **fsp, int n)
+handle_error(struct clfs **cfsp, int n)
 {
-	syslog(LOG_NOTICE, "%s: detaching cleaner", fsp[n]->lfs_fsmnt);
-	free(fsp[n]);
+	syslog(LOG_NOTICE, "%s: detaching cleaner", cfsp[n]->lfs_fsmnt);
+	free(cfsp[n]);
 	if (n != nfss - 1)
-		fsp[n] = fsp[nfss - 1];
+		cfsp[n] = cfsp[nfss - 1];
 	--nfss;
 }
 
