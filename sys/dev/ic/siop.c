@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.89 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: siop.c,v 1.90 2009/03/15 17:24:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.89 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.90 2009/03/15 17:24:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1987,7 +1987,7 @@ siop_del_dev(struct siop_softc *sc, int target, int lun)
 
 #ifdef SIOP_STATS
 void
-siop_printstats()
+siop_printstats(void)
 {
 	printf("siop_stat_intr %d\n", siop_stat_intr);
 	printf("siop_stat_intr_shortxfer %d\n", siop_stat_intr_shortxfer);
