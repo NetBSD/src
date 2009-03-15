@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.41 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: radix.c,v 1.42 2009/03/15 20:30:05 cegger Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.41 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.42 2009/03/15 20:30:05 cegger Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -1042,7 +1042,7 @@ rn_inithead0(struct radix_node_head *rnh, int off)
 }
 
 void
-rn_init()
+rn_init(void)
 {
 	char *cp, *cplim;
 #ifdef _KERNEL
