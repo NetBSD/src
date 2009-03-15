@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.209 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.210 2009/03/15 17:20:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.209 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.210 2009/03/15 17:20:10 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -327,7 +327,7 @@ nfs_fsinfo(struct nfsmount *nmp, struct vnode *vp, kauth_cred_t cred, struct lwp
  * - build the rootfs mount point and call mountnfs() to do the rest.
  */
 int
-nfs_mountroot()
+nfs_mountroot(void)
 {
 	struct timespec ts;
 	struct nfs_diskless *nd;

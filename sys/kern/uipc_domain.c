@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.78 2009/03/11 05:55:22 mrg Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.79 2009/03/15 17:14:40 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.78 2009/03/11 05:55:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.79 2009/03/15 17:14:40 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -475,7 +475,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 }
 
 static void
-sysctl_net_setup()
+sysctl_net_setup(void)
 {
 
 	KASSERT(domain_sysctllog == NULL);

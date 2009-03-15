@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.94 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.95 2009/03/15 17:22:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.94 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.95 2009/03/15 17:22:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,7 +539,7 @@ vfs_findname(const vfs_namemap_t *nm, const char *bf, int buflen)
  * Initialize pfsnode hash table.
  */
 void
-procfs_hashinit()
+procfs_hashinit(void)
 {
 	mutex_init(&pfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -547,7 +547,7 @@ procfs_hashinit()
 }
 
 void
-procfs_hashreinit()
+procfs_hashreinit(void)
 {
 	struct pfsnode *pp;
 	struct pfs_hashhead *oldhash, *hash;
@@ -575,7 +575,7 @@ procfs_hashreinit()
  * Free pfsnode hash table.
  */
 void
-procfs_hashdone()
+procfs_hashdone(void)
 {
 	hashdone(pfs_hashtbl, HASH_LIST, pfs_ihash);
 	mutex_destroy(&pfs_hashlock);

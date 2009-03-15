@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.215 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.216 2009/03/15 17:20:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.215 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.216 2009/03/15 17:20:10 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -596,20 +596,10 @@ nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, char **bposp)
  * Returns the head of the mbuf list.
  */
 struct mbuf *
-nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
-	verf_str, mrest, mrest_len, mbp, xidp)
-	kauth_cred_t cr;
-	int nmflag;
-	int procid;
-	int auth_type;
-	int auth_len;
-	char *auth_str;
-	int verf_len;
-	char *verf_str;
-	struct mbuf *mrest;
-	int mrest_len;
-	struct mbuf **mbp;
-	u_int32_t *xidp;
+nfsm_rpchead(kauth_cred_t cr, int nmflag, int procid,
+	int auth_type, int auth_len, char *auth_str, int verf_len,
+	char *verf_str, struct mbuf *mrest, int mrest_len,
+	struct mbuf **mbp, uint32_t *xidp)
 {
 	struct mbuf *mb;
 	u_int32_t *tl;
@@ -1551,7 +1541,7 @@ nfs_fini(void)
  * Called once at VFS init to initialize client-specific data structures.
  */
 void
-nfs_vfs_init()
+nfs_vfs_init(void)
 {
 
 	/* Initialize NFS server / client shared data. */
@@ -1562,7 +1552,7 @@ nfs_vfs_init()
 }
 
 void
-nfs_vfs_done()
+nfs_vfs_done(void)
 {
 
 	nfs_node_done();
@@ -2424,7 +2414,7 @@ nfsrv_errmap(struct nfsrv_descript *nd, int err)
 }
 
 u_int32_t
-nfs_getxid()
+nfs_getxid(void)
 {
 	u_int32_t newxid;
 

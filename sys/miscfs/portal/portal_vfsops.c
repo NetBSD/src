@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.78 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.79 2009/03/15 17:22:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.78 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.79 2009/03/15 17:22:38 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -78,12 +78,12 @@ VFS_PROTOS(portal);
 static struct sysctllog *portal_sysctl_log;
 
 void
-portal_init()
+portal_init(void)
 {
 }
 
 void
-portal_done()
+portal_done(void)
 {
 }
 
