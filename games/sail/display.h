@@ -1,4 +1,4 @@
-/*	$NetBSD: display.h,v 1.5 2009/03/15 00:35:42 dholland Exp $	*/
+/*	$NetBSD: display.h,v 1.6 2009/03/15 00:50:47 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,6 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdbool.h>
+
 void display_show_obp(int which, bool show);
 void display_show_dbp(int which, bool show);
 void display_refresh_slot_w(void);
+
+void display_hide_prompt(void);
+void display_reshow_prompt(void);
+void display_adjust_view(void);
