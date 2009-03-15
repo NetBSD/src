@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.23 2009/03/14 21:04:01 dsl Exp $ */
+/* $NetBSD: podulebus.c,v 1.24 2009/03/15 22:18:35 cegger Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.23 2009/03/14 21:04:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.24 2009/03/15 22:18:35 cegger Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -535,12 +535,8 @@ matchpodule(struct podule_attach_args *pa, int manufacturer, int product, int re
 }
 
 void *
-podulebus_irq_establish(ih, ipl, func, arg, ev)
-	podulebus_intr_handle_t ih;
-	int ipl;
-	int (*func)(void *);
-	void *arg;
-	struct evcnt *ev;
+podulebus_irq_establish(podulebus_intr_handle_t ih,
+	int ipl, int (*func)(void *), void *arg, struct evcnt *ev)
 {
 
 	/* XXX We don't actually use the evcnt supplied, just its name. */
