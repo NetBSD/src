@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.18 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.19 2009/03/15 22:16:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.18 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.19 2009/03/15 22:16:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ extern int prtactive;	/* 1 => print out reclaim of active vnodes */
  * Initialize hash links for inodes and dnodes.
  */
 void
-filecore_init()
+filecore_init(void)
 {
 
 	malloc_type_attach(M_FILECOREMNT);
@@ -120,7 +120,7 @@ filecore_init()
  * Reinitialize inode hash table.
  */
 void
-filecore_reinit()
+filecore_reinit(void)
 {
 	struct filecore_node *ip;
 	struct ihashhead *oldhash, *hash;
@@ -149,7 +149,7 @@ filecore_reinit()
  * Destroy node pool and hash table.
  */
 void
-filecore_done()
+filecore_done(void)
 {
 	hashdone(filecorehashtbl, HASH_LIST, filecorehash);
 	pool_destroy(&filecore_node_pool);
