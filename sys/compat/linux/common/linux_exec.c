@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.111 2009/03/14 21:04:18 dsl Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.112 2009/03/15 15:55:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.111 2009/03/14 21:04:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.112 2009/03/15 15:55:51 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,10 +371,7 @@ linux_nptl_proc_exit(struct proc *p)
 }
 
 void
-linux_nptl_proc_fork(p, parent, luserret)
-	struct proc *p;
-	struct proc *parent;
-	void (*luserret)(void);
+linux_nptl_proc_fork(struct proc *p, struct proc *parent, void (*luserret)(void))
 {
 	struct linux_emuldata *e = p->p_emuldata;
 
