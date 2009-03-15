@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.182.6.2 2009/03/02 20:56:14 snj Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.182.6.3 2009/03/15 20:23:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182.6.2 2009/03/02 20:56:14 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182.6.3 2009/03/15 20:23:26 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1016,7 +1016,6 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 	fp->f_advice = 0;
 	fp->f_msgcount = 0;
 	fp->f_offset = 0;
-	fp->f_iflags = 0;
 	*resultfp = fp;
 
 	return 0;
