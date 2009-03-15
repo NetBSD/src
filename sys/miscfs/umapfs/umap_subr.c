@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.27 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.28 2009/03/15 17:22:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.27 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.28 2009/03/15 17:22:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,7 @@ int umap_node_alloc(struct mount *, struct vnode *,
  * find a user or group id in a map.
  */
 u_long
-umap_findid(id, map, nentries)
-	u_long id;
-	u_long map[][2];
-	int nentries;
+umap_findid(u_long id, u_long map[][2], int nentries)
 {
 	int i;
 
@@ -116,10 +113,7 @@ umap_findid(id, map, nentries)
  * find a user or group id in a map, in reverse.
  */
 u_long
-umap_reverse_findid(id, map, nentries)
-	u_long id;
-	u_long map[][2];
-	int nentries;
+umap_reverse_findid(u_long id, u_long map[][2], int nentries)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.145 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.146 2009/03/15 17:20:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.145 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.146 2009/03/15 17:20:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 }
 
 static struct nfssvc_sock *
-nfsrv_sockalloc()
+nfsrv_sockalloc(void)
 {
 	struct nfssvc_sock *slp;
 

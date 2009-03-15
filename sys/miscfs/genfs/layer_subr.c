@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.26 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.27 2009/03/15 17:22:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.26 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.27 2009/03/15 17:22:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ int layerfs_debug = 1;
  * Initialise cache headers
  */
 void
-layerfs_init()
+layerfs_init(void)
 {
 #ifdef LAYERFS_DIAGNOSTIC
 	if (layerfs_debug)
@@ -114,7 +114,7 @@ layerfs_init()
  * Free global resources of layerfs.
  */
 void
-layerfs_done()
+layerfs_done(void)
 {
 #ifdef LAYERFS_DIAGNOSTIC
 	if (layerfs_debug)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.130 2008/12/16 22:35:37 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.131 2009/03/15 17:14:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.130 2008/12/16 22:35:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.131 2009/03/15 17:14:40 cegger Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -366,7 +366,7 @@ sysctl_kern_mbuf_stats(SYSCTLFN_ARGS)
 }
 
 static void
-sysctl_kern_mbuf_setup()
+sysctl_kern_mbuf_setup(void)
 {
 
 	KASSERT(mbuf_sysctllog == NULL);

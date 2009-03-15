@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.8 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.9 2009/03/15 17:15:58 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.8 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.9 2009/03/15 17:15:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ kmutex_t ntfs_hashlock;
  * Initialize inode hash table.
  */
 void
-ntfs_nthashinit()
+ntfs_nthashinit(void)
 {
 	mutex_init(&ntfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ntfs_nthash_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -72,7 +72,7 @@ ntfs_nthashinit()
  */
 
 void
-ntfs_nthashreinit()
+ntfs_nthashreinit(void)
 {
 	struct ntnode *ip;
 	struct nthashhead *oldhash, *hash;
@@ -102,7 +102,7 @@ ntfs_nthashreinit()
  * on NetBSD.
  */
 void
-ntfs_nthashdone()
+ntfs_nthashdone(void)
 {
 	hashdone(ntfs_nthashtbl, HASH_LIST, ntfs_nthash);
 	mutex_destroy(&ntfs_hashlock);

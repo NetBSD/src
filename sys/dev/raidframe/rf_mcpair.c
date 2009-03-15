@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.21 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.22 2009/03/15 17:17:23 cegger Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.21 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.22 2009/03/15 17:17:23 cegger Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -70,7 +70,7 @@ rf_ConfigureMCPair(RF_ShutdownList_t **listp)
 }
 
 RF_MCPair_t *
-rf_AllocMCPair()
+rf_AllocMCPair(void)
 {
 	RF_MCPair_t *t;
 
