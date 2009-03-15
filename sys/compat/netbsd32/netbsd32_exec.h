@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.28 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.29 2009/03/15 15:54:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -78,12 +78,8 @@ extern char netbsd32_esigcode[], netbsd32_sigcode[];
  * We need to copy out all pointers as 32-bit values.
  */
 static __inline int
-netbsd32_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+netbsd32_copyargs(struct lwp *l, struct exec_package *pack,
+		struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	u_int32_t *cpp = (u_int32_t *)*stackp;
 	netbsd32_pointer_t dp;
