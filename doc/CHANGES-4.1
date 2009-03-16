@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.133 2009/02/26 08:33:47 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.134 2009/03/16 06:20:49 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2785,4 +2785,16 @@ bin/sh/redir.c					1.30
 	Conform to XCU Section 2.8.2 (Exit Status for Commands) reported
 	by Oki.  Fixes PR#36822.
 	[msaitoh, ticket #1281]
+
+sys/net/if_pppoe.c				1.94 via patch
+
+	PR/40690: Jordan Gordeev: pppoe(4) doesn't work when PPPoE relays
+	are present. Add support for sending the session id tag back.
+	[christos, ticket #1279]
+
+usr.sbin/user/user.c				1.121
+
+	Use getpwnam_r to avoid trashing result of previous call to
+	getpwnam().  Fixes PR bin/40994.
+	[mlelstv, ticket #1286]
 
