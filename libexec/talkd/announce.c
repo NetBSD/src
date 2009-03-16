@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.23 2008/03/04 02:57:33 dholland Exp $	*/
+/*	$NetBSD: announce.c,v 1.24 2009/03/16 01:04:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.23 2008/03/04 02:57:33 dholland Exp $");
+__RCSID("$NetBSD: announce.c,v 1.24 2009/03/16 01:04:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,9 +68,7 @@ extern char hostname[];
  * a talk is requested.
  */
 int
-announce(request, remote_machine)
-	CTL_MSG *request;
-	char *remote_machine;
+announce(CTL_MSG *request, char *remote_machine)
 {
 	char full_tty[32];
 	struct stat stbuf;
@@ -93,10 +91,7 @@ announce(request, remote_machine)
  * is in vi at the time.
  */
 int
-print_mesg(tty, request, remote_machine)
-	char *tty;
-	CTL_MSG *request;
-	char *remote_machine;
+print_mesg(char *tty, CTL_MSG *request, char *remote_machine)
 {
 	struct timeval clock;
 	time_t clocktime;
