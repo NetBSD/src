@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.8 2008/03/04 03:05:00 dholland Exp $	*/
+/*	$NetBSD: table.c,v 1.9 2009/03/16 01:04:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.8 2008/03/04 03:05:00 dholland Exp $");
+__RCSID("$NetBSD: table.c,v 1.9 2009/03/16 01:04:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,15 +74,14 @@ struct table_entry {
 
 TABLE_ENTRY *table = NIL;
 
-static void delete __P((TABLE_ENTRY *));
+static void delete(TABLE_ENTRY *);
 
 /*
  * Look in the table for an invitation that matches the current
  * request looking for an invitation
  */
 CTL_MSG *
-find_match(request)
-	CTL_MSG *request;
+find_match(CTL_MSG *request)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -115,8 +114,7 @@ find_match(request)
  * one as find_match does 
  */
 CTL_MSG *
-find_request(request)
-	CTL_MSG *request;
+find_request(CTL_MSG *request)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -153,9 +151,7 @@ find_request(request)
 }
 
 void
-insert_table(request, response)
-	CTL_MSG *request;
-	CTL_RESPONSE *response;
+insert_table(CTL_MSG *request, CTL_RESPONSE *response)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -183,7 +179,7 @@ insert_table(request, response)
  * Generate a unique non-zero sequence number
  */
 int
-new_id()
+new_id(void)
 {
 	static int current_id = 0;
 
@@ -198,8 +194,7 @@ new_id()
  * Delete the invitation with id 'id_num'
  */
 int
-delete_invite(id_num)
-	int id_num;
+delete_invite(int id_num)
 {
 	TABLE_ENTRY *ptr;
 
@@ -223,8 +218,7 @@ delete_invite(id_num)
  * Classic delete from a double-linked list
  */
 static void
-delete(ptr)
-	TABLE_ENTRY *ptr;
+delete(TABLE_ENTRY *ptr)
 {
 
 	if (debug)
