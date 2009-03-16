@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.128 2009/03/15 14:48:11 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.129 2009/03/16 12:13:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.128 2009/03/15 14:48:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.129 2009/03/16 12:13:04 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1330,7 +1330,7 @@ fxp_rx_hwcksum(struct fxp_softc *sc, struct mbuf *m, const struct fxp_rfa *rfa,
 			while (hsum >> 16)
 				hsum = (hsum >> 16) + (hsum & 0xffff);
 
-			csum_data = ~(~csum_data - ~hsum);
+			csum_data += (uint16_t)~hsum;
 
 			while (csum_data >> 16)
 				csum_data =
