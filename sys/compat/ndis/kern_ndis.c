@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.16 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.17 2009/03/16 23:11:15 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -683,10 +683,7 @@ ndis_shrink_thrqueue(int cnt)
 }
 
 int
-ndis_unsched(func, arg, t)
-	void			(*func)(void *);
-	void			*arg;
-	int			t;
+ndis_unsched(void (*func)(void *), void *arg, int t)
 {
 	struct ndis_req		*r;
 	struct ndisqhead	*q;
@@ -734,10 +731,7 @@ struct ndis_req *ls_tq_req = NULL;
 struct ndis_req *ls_swi_req = NULL;
 
 int
-ndis_sched(func, arg, t)
-	void			(*func)(void *);
-	void			*arg;
-	int			t;
+ndis_sched(void (*func)(void *), void *arg, int t)
 {
 	struct ndis_req		*r;
 	struct ndisqhead	*q;
@@ -857,10 +851,7 @@ ndis_sched(func, arg, t)
   */
  /*
  int
-ndis_sched(func, arg, t)
-	void			(*func)(void *);
-	void			*arg;
-	int			t;
+ndis_sched(void (*func)(void *), void *arg, int t)
 {
 	if(func != NULL) {
 		(*func)(arg);

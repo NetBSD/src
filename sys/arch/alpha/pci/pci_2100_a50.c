@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.35 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.36 2009/03/16 23:11:09 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.35 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.36 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -236,11 +236,7 @@ dec_2100_a50_intr_evcnt(void *acv, pci_intr_handle_t ih)
 }
 
 void *
-dec_2100_a50_intr_establish(acv, ih, level, func, arg)
-	void *acv, *arg;
-	pci_intr_handle_t ih;
-	int level;
-	int (*func)(void *);
+dec_2100_a50_intr_establish(void *acv, pci_intr_handle_t ih, int level, int (*func)(void *), void *arg)
 {
 #if 0
 	struct apecs_config *acp = acv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.58 2009/03/14 21:04:23 dsl Exp $ */
+/*	$NetBSD: stp4020.c,v 1.59 2009/03/16 23:11:16 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.58 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.59 2009/03/16 23:11:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1035,12 +1035,7 @@ stp4020_chip_socket_disable(pcmcia_chipset_handle_t pch)
 }
 
 void *
-stp4020_chip_intr_establish(pch, pf, ipl, handler, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*handler)(void *);
-	void *arg;
+stp4020_chip_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf, int ipl, int (*handler)(void *), void *arg)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 

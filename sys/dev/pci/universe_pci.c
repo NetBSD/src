@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.9 2009/03/14 21:04:21 dsl Exp $ */
+/* $NetBSD: universe_pci.c,v 1.10 2009/03/16 23:11:16 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.9 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.10 2009/03/16 23:11:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,12 +87,7 @@ static int vmeslvoffsets[8] = {
    vmeslvoffsets[idx] + offsetof(struct universe_vmeslvimg, reg), val)
 
 int
-univ_pci_attach(d, pa, name, inthdl, intcookie)
-	struct univ_pci_data *d;
-	struct pci_attach_args *pa;
-	const char *name;
-	void (*inthdl)(void *, int, int);
-	void *intcookie;
+univ_pci_attach(struct univ_pci_data *d, struct pci_attach_args *pa, const char *name, void (*inthdl)(void *, int, int), void *intcookie)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;

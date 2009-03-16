@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.71 2009/03/14 21:04:21 dsl Exp $ */
+/* $NetBSD: tga.c,v 1.72 2009/03/16 23:11:16 dsl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.71 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.72 2009/03/16 23:11:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,9 +593,7 @@ tga_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 static int
-tga_sched_update(v, f)
-	void	*v;
-	void	(*f)(void *);
+tga_sched_update(void *v, void (*f)(void *))
 {
 	struct tga_devconfig *dc = v;
 
@@ -694,12 +692,7 @@ tga_free_screen(void *v, void *cookie)
 }
 
 static int
-tga_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+tga_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);

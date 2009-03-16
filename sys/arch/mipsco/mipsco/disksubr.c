@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 2009/03/16 23:11:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27 2009/03/16 23:11:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,7 @@ static int mipsvh_cksum(struct mips_volheader *);
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *bp);
-	register struct disklabel *lp;
-	struct cpu_disklabel *clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *bp), register struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	register struct buf *bp;
 	struct disklabel *dlp;
@@ -189,11 +185,7 @@ setdisklabel(register struct disklabel *olp, register struct disklabel *nlp, u_l
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *bp);
-	register struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *bp), register struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	int labelpart;

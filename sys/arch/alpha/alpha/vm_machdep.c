@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.98 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.99 2009/03/16 23:11:09 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.98 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,10 +155,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 }
 
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func)(void *);
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct user *up = l->l_addr;
 

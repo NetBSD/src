@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.51 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.52 2009/03/16 23:11:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.51 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.52 2009/03/16 23:11:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,7 @@ const char *compat_label(dev_t dev, void (*strat)(struct buf *bp),
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *bp);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -119,11 +115,7 @@ readdisklabel(dev, strat, lp, osdep)
  * putting the partition info into a native NetBSD label
  */
 const char *
-compat_label(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *bp);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+compat_label(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	dec_disklabel *dlp;
 	struct buf *bp = NULL;
@@ -236,11 +228,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *bp);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;

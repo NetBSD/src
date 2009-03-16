@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.31 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: pci_550.c,v 1.32 2009/03/16 23:11:09 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.31 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.32 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -288,11 +288,7 @@ dec_550_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 }
 
 void *
-dec_550_intr_establish(ccv, ih, level, func, arg)
-	void *ccv, *arg;
-	pci_intr_handle_t ih;
-	int level;
-	int (*func)(void *);
+dec_550_intr_establish(void *ccv, pci_intr_handle_t ih, int level, int (*func)(void *), void *arg)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -356,13 +352,7 @@ dec_550_intr_disestablish(void *ccv, void *cookie)
 }
 
 void *
-dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
-	void *v;
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func)(void *);
-	void *arg;
+dec_550_pciide_compat_intr_establish(void *v, struct device *dev, struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie = NULL;

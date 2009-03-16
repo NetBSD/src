@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.c,v 1.10 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: pci_a12.c,v 1.11 2009/03/16 23:11:09 dsl Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.10 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.11 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -161,11 +161,7 @@ avalon_a12_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 }
 
 void *
-avalon_a12_intr_establish(ccv, ih, level, func, arg)
-        void *ccv, *arg;
-        pci_intr_handle_t ih;
-        int level;
-        int (*func)(void *);
+avalon_a12_intr_establish(void *ccv, pci_intr_handle_t ih, int level, int (*func)(void *), void *arg)
 {
 	a12_intr_pci.f = func;
 	a12_intr_pci.a = arg;

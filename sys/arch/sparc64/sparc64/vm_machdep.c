@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86 2009/03/14 15:36:14 dsl Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.87 2009/03/16 23:11:15 dsl Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86 2009/03/14 15:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.87 2009/03/16 23:11:15 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -191,12 +191,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	register struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_lwp_fork(register struct lwp *l1, register struct lwp *l2, void *stack, size_t stacksize, void (*func)(void *), void *arg)
 {
 	struct pcb *opcb = &l1->l_addr->u_pcb;
 	struct pcb *npcb = &l2->l_addr->u_pcb;

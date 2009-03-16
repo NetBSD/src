@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_hades.c,v 1.7 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: isa_hades.c,v 1.8 2009/03/16 23:11:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.7 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.8 2009/03/16 23:11:10 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,11 +149,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	return (1);
 }
 void *
-isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int		  irq, type, level;
-	int		  (*ih_fun)(void *);
-	void		  *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg)
 {
 	isa_intr_info_t *iinfo_p;
 	struct intrhand	*ihand;

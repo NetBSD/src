@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.209 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.210 2009/03/16 23:11:12 dsl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.209 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.210 2009/03/16 23:11:12 dsl Exp $");
 
 #include "opt_cputype.h"
 
@@ -973,8 +973,7 @@ mips_vector_init(void)
 }
 
 void
-mips_set_wbflush(flush_fn)
-	void (*flush_fn)(void);
+mips_set_wbflush(void (*flush_fn)(void))
 {
 #undef wbflush
 	mips_locore_jumpvec.wbflush = flush_fn;

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.21 2009/03/14 21:04:21 dsl Exp $ */
+/* $NetBSD: btvmei.c,v 1.22 2009/03/16 23:11:16 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.21 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.22 2009/03/16 23:11:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,14 +476,7 @@ b3_617_unmap_vme(void *vsc, vme_mapresc_t resc)
 }
 
 int
-b3_617_vme_probe(vsc, addr, len, am, datasize, callback, cbarg)
-	void *vsc;
-	vme_addr_t addr;
-	vme_size_t len;
-	vme_am_t am;
-	vme_datasize_t datasize;
-	int (*callback)(void *, bus_space_tag_t, bus_space_handle_t);
-	void *cbarg;
+b3_617_vme_probe(void *vsc, vme_addr_t addr, vme_size_t len, vme_am_t am, vme_datasize_t datasize, int (*callback)(void *, bus_space_tag_t, bus_space_handle_t), void *cbarg)
 {
 	bus_space_tag_t tag;
 	bus_space_handle_t handle;
@@ -555,12 +548,7 @@ b3_617_map_vmeint(void *vsc, int level, int vector, vme_intr_handle_t *handlep)
 }
 
 void *
-b3_617_establish_vmeint(vsc, handle, prior, func, arg)
-	void *vsc;
-	vme_intr_handle_t handle;
-	int prior;
-	int (*func)(void *);
-	void *arg;
+b3_617_establish_vmeint(void *vsc, vme_intr_handle_t handle, int prior, int (*func)(void *), void *arg)
 {
 	struct b3_617_vmeintrhand *ih;
 	long lv;

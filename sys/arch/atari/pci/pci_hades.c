@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.10 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.11 2009/03/16 23:11:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.10 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.11 2009/03/16 23:11:10 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,12 +147,7 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 }
 
 void *
-pci_intr_establish(pc, ih, level, ih_fun, ih_arg)
-	pci_chipset_tag_t	pc;
-	pci_intr_handle_t	ih;
-	int			level;
-	int			(*ih_fun)(void *);
-	void			*ih_arg;
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level, int (*ih_fun)(void *), void *ih_arg)
 {
 	pci_intr_info_t *iinfo_p;
 	struct intrhand	*ihand;

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.28 2009/03/14 21:04:03 dsl Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.29 2009/03/16 23:11:09 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.28 2009/03/14 21:04:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.29 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,11 +156,7 @@ tc_3000_500_intr_evcnt(struct device *tcadev, void *cookie)
 }
 
 void
-tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
-	struct device *tcadev;
-	void *cookie, *arg;
-	tc_intrlevel_t level;
-	int (*func)(void *);
+tc_3000_500_intr_establish(struct device *tcadev, void *cookie, tc_intrlevel_t level, int (*func)(void *), void *arg)
 {
 	u_long dev = (u_long)cookie;
 

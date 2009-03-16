@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.22 2009/03/14 15:36:13 dsl Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.23 2009/03/16 23:11:15 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.22 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.23 2009/03/16 23:11:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,13 +308,7 @@ irq_calculatemasks()
 
 
 void *
-intr_claim(irq, level, ih_func, ih_arg, group, name)
-	int irq;
-	int level;
-	int (*ih_func)(void *);
-	void *ih_arg;
-	const char *group;
-	const char *name;
+intr_claim(int irq, int level, int (*ih_func)(void *), void *ih_arg, const char *group, const char *name)
 {
 	irqhandler_t *ih;
 

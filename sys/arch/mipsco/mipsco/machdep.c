@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2009/03/16 23:11:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2009/03/16 23:11:12 dsl Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -559,10 +559,7 @@ unimpl_memsize(void *first)
 }
 
 void
-unimpl_intr_establish(level, func, arg)
-	int level;
-	int (*func)(void *);
-	void *arg;
+unimpl_intr_establish(int level, int (*func)(void *), void *arg)
 {
 	panic("sysconf.init didn't init intr_establish");
 }

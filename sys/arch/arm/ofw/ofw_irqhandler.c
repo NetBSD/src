@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.15 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.16 2009/03/16 23:11:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.15 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.16 2009/03/16 23:11:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,13 +293,7 @@ irq_release(int irq, irqhandler_t *handler)
 
 
 void *
-intr_claim(irq, level, ih_func, ih_arg, group, name)
-	int irq;
-	int level;
-	int (*ih_func)(void *);
-	void *ih_arg;
-	const char *group;
-	const char *name;
+intr_claim(int irq, int level, int (*ih_func)(void *), void *ih_arg, const char *group, const char *name)
 {
 	irqhandler_t *ih;
 

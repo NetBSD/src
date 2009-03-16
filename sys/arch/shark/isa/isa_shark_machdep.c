@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.11 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.12 2009/03/16 23:11:15 dsl Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.11 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.12 2009/03/16 23:11:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,13 +163,7 @@ static const char * const isa_intr_names[16] = {
 };
 
 void *
-isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg)
 {
 	irqhandler_t *ih;
 

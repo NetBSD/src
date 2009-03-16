@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.18 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.19 2009/03/16 23:11:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.18 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.19 2009/03/16 23:11:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,12 +195,7 @@ ioasic_intr_evcnt(struct device *dev, void *cookie)
 }
 
 void
-ioasic_intr_establish(dev, cookie, level, handler, val)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler)(void *);
-	void *val;
+ioasic_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *val)
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, val);
 }

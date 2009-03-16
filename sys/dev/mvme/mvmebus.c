@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.16 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.17 2009/03/16 23:11:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.16 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.17 2009/03/16 23:11:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -307,14 +307,7 @@ mvmebus_unmap(void *vsc, vme_mapresc_t resc)
 }
 
 int
-mvmebus_probe(vsc, vmeaddr, len, am, datasize, callback, arg)
-	void *vsc;
-	vme_addr_t vmeaddr;
-	vme_size_t len;
-	vme_am_t am;
-	vme_datasize_t datasize;
-	int (*callback)(void *, bus_space_tag_t, bus_space_handle_t);
-	void *arg;
+mvmebus_probe(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_datasize_t datasize, int (*callback)(void *, bus_space_tag_t, bus_space_handle_t), void *arg)
 {
 	bus_space_tag_t tag;
 	bus_space_handle_t handle;
@@ -378,12 +371,7 @@ mvmebus_intr_evcnt(void *vsc, vme_intr_handle_t handle)
 }
 
 void *
-mvmebus_intr_establish(vsc, handle, prior, func, arg)
-	void *vsc;
-	vme_intr_handle_t handle;
-	int prior;
-	int (*func)(void *);
-	void *arg;
+mvmebus_intr_establish(void *vsc, vme_intr_handle_t handle, int prior, int (*func)(void *), void *arg)
 {
 	struct mvmebus_softc *sc;
 	int level, vector, first;

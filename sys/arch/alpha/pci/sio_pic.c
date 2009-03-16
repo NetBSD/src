@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.39 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: sio_pic.c,v 1.40 2009/03/16 23:11:09 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.39 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.40 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,12 +434,7 @@ sio_intr_evcnt(void *v, int irq)
 }
 
 void *
-sio_intr_establish(v, irq, type, level, fn, arg)
-	void *v, *arg;
-        int irq;
-        int type;
-        int level;
-        int (*fn)(void *);
+sio_intr_establish(void *v, int irq, int type, int level, int (*fn)(void *), void *arg)
 {
 	void *cookie;
 
