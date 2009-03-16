@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1201 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1202 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -160,3 +160,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		later chips. [tsutsui 20090307]
 	crash(8): Add a new utility to diagnose kernel crashes. Based upon
 		the in-kernel debugger (ddb). [ad 20090307]
+	sgimips: Add TCPv4/UDPv4 RX hardware checksum support for mec(4)
+		Ethernet on O2. [tsutsui 20090316]
