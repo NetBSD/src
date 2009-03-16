@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2009/03/14 14:46:00 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2009/03/16 23:11:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -70,10 +70,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 }
 
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func)(void *);
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	return;
 }

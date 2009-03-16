@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.7 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.8 2009/03/16 23:11:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.7 2009/03/14 21:04:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2009/03/16 23:11:11 dsl Exp $");
 
 #include "opt_irqstats.h"
 
@@ -143,13 +143,7 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
  * Set up an interrupt handler to start being called.
  */
 void *
-isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg)
 {
 	int epirq = -1, i;
 	/* Find real EP93XX irq number */

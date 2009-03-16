@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.24 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.25 2009/03/16 23:11:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.24 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.25 2009/03/16 23:11:14 dsl Exp $");
 
 /*
  * Which system models were configured?
@@ -136,12 +136,7 @@ tc_ds_intr_evcnt(struct device *dev, void *cookie)
  * Dispatch to model specific interrupt establishing routine
  */
 static void
-tc_ds_intr_establish(dev, cookie, level, handler, val)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler)(void *);
-	void *val;
+tc_ds_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *val)
 {
 
 	(*platform.intr_establish)(dev, cookie, level, handler, val);

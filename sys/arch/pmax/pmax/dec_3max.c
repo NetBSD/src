@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.47 2009/03/14 15:36:11 dsl Exp $ */
+/* $NetBSD: dec_3max.c,v 1.48 2009/03/16 23:11:14 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.47 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.48 2009/03/16 23:11:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,12 +248,7 @@ static const struct {
 };
 
 static void
-dec_3max_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler)(void *);
-	void *arg;
+dec_3max_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 	int i;
 	u_int32_t csr;

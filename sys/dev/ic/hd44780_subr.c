@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.18 2009/03/14 21:04:20 dsl Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.19 2009/03/16 23:11:15 dsl Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.18 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.19 2009/03/16 23:11:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,10 +254,7 @@ hlcd_free_screen(void *v, void *cookie)
 }
 
 static int
-hlcd_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v, *cookie, *cbarg;
-	int waitok;
-	void (*cb)(void *, int, int);
+hlcd_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int), void *cbarg)
 {
 	struct hlcd_screen *hdscr = v;
 

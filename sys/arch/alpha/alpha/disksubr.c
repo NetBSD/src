@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.38 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:09 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,7 @@ extern struct device *bootdv;
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -203,11 +199,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
  * label.  Hope the user was careful.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp; 
 	struct disklabel *dlp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.24 2009/03/14 21:04:13 dsl Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.25 2009/03/16 23:11:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.24 2009/03/14 21:04:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.25 2009/03/16 23:11:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -241,12 +241,7 @@ vme_pcc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg, evcnt)
-	void *csc;
-	int prior, level, vector, first;
-	int (*func)(void *);
-	void *arg;
-	struct evcnt *evcnt;
+vme_pcc_intr_establish(void *csc, int prior, int level, int vector, int first, int (*func)(void *), void *arg, struct evcnt *evcnt)
 {
 	struct vme_pcc_softc *sc = csc;
 

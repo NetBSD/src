@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.14 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.15 2009/03/16 23:11:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.14 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.15 2009/03/16 23:11:16 dsl Exp $");
 
 #include "vmetwo.h"
 
@@ -238,11 +238,7 @@ vmetwo_local_isr_trampoline(void *arg)
 }
 
 void
-vmetwo_local_intr_establish(pri, vec, hand, arg, evcnt)
-	int pri, vec;
-	int (*hand)(void *);
-	void *arg;
-	struct evcnt *evcnt;
+vmetwo_local_intr_establish(int pri, int vec, int (*hand)(void *), void *arg, struct evcnt *evcnt)
 {
 
 	vmetwo_intr_establish(vmetwo_sc, pri, pri, vec, 1, hand, arg, evcnt);
@@ -250,12 +246,7 @@ vmetwo_local_intr_establish(pri, vec, hand, arg, evcnt)
 
 /* ARGSUSED */
 void
-vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg, evcnt)
-	void *csc;
-	int prior, lvl, vec, first;
-	int (*hand)(void *);
-	void *arg;
-	struct evcnt *evcnt;
+vmetwo_intr_establish(void *csc, int prior, int lvl, int vec, int first, int (*hand)(void *), void *arg, struct evcnt *evcnt)
 {
 	struct vmetwo_softc *sc = csc;
 	u_int32_t reg;

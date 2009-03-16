@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: obio.c,v 1.16 2009/03/16 23:11:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.16 2009/03/16 23:11:13 dsl Exp $");
 
 #include "locators.h"
 
@@ -123,13 +123,7 @@ obio_print(void *args, const char *name)
 }
 
 void
-obio_intr_establish(bst, level, pri, flags, func, arg)
-	bus_space_tag_t bst;
-	int level;
-	int pri;
-	int flags;
-	int (*func)(void *);
-	void *arg;
+obio_intr_establish(bus_space_tag_t bst, int level, int pri, int flags, int (*func)(void *), void *arg)
 {
 	(*platform.intr_establish)(level, func, arg);
 }

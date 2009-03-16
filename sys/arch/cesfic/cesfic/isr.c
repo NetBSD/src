@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.13 2009/03/14 21:04:08 dsl Exp $	*/
+/*	$NetBSD: isr.c,v 1.14 2009/03/16 23:11:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.13 2009/03/14 21:04:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2009/03/16 23:11:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,11 +68,7 @@ isrinit()
  * Called by driver attach functions.
  */
 void *
-isrlink(func, arg, ipl, priority)
-	int (*func)(void *);
-	void *arg;
-	int ipl;
-	int priority;
+isrlink(int (*func)(void *), void *arg, int ipl, int priority)
 {
 	struct isr *newisr, *curisr;
 	isr_list_t *list;
