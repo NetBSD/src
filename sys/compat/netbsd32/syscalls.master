@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.78 2009/02/26 21:08:48 christos Exp $
+	$NetBSD: syscalls.master,v 1.79 2009/03/16 20:48:13 njoly Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -984,6 +984,6 @@
 			    netbsd32_intp status, \
 			    int options, netbsd32_rusagep_t rusage); }
 450	STD 		{ int|netbsd32|50|mknod(const netbsd32_charp path, \
-			    mode_t mode, dev_t dev); }
+			    mode_t mode, netbsd32_dev_t dev); }
 451	STD	 	{ int|netbsd32|50|fhstat(const netbsd32_voidp fhp, \
 			    netbsd32_size_t fh_size, netbsd32_statp_t sb); }
