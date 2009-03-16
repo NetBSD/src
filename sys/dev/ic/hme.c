@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.72 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: hme.c,v 1.73 2009/03/16 12:02:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.72 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.73 2009/03/16 12:02:00 tsutsui Exp $");
 
 /* #define HMEDEBUG */
 
@@ -797,9 +797,8 @@ hme_get(struct hme_softc *sc, int ri, u_int32_t flags)
 			while (optsum >> 16)
 				optsum = (optsum >> 16) + (optsum & 0xffff);
 
-			/* Deduct the ip opts sum from the hwsum (rfc 1624). */
-			m0->m_pkthdr.csum_data = ~((~m0->m_pkthdr.csum_data) -
-						   ~optsum);
+			/* Deduct the ip opts sum from the hwsum. */
+			m0->m_pkthdr.csum_data += (uint16_t)~optsum;
 
 			while (m0->m_pkthdr.csum_data >> 16)
 				m0->m_pkthdr.csum_data =
