@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.23 2006/05/09 20:18:07 mrg Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.24 2009/03/16 00:43:33 lukem Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.23 2006/05/09 20:18:07 mrg Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.24 2009/03/16 00:43:33 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@ struct fs_stat {
 } fs_stat;
 struct fs_stat *fs_begin = NULL;
 
-char *qfextension[] = INITQFNAMES;
+const char *qfextension[] = INITQFNAMES;
 int from_inetd = 1;
 
 void 
