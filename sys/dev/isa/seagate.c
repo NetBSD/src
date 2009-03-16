@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.66 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: seagate.c,v 1.67 2009/03/16 09:34:17 cegger Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.66 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.67 2009/03/16 09:34:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,7 @@ sea_send_scb(struct sea_softc *sea, struct sea_scb *scb)
  */
 
 void
-sea_main()
+sea_main(void)
 {
 	struct sea_softc *sea;
 	struct sea_scb *scb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.22 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.23 2009/03/16 09:34:17 cegger Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.22 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.23 2009/03/16 09:34:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,12 +336,8 @@ tcic_isa_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void *
-tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
+tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
+	int ipl, int (*fct)(void *), void *arg)
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int irq, ist;

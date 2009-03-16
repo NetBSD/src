@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.41 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.42 2009/03/16 09:34:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.41 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.42 2009/03/16 09:34:17 cegger Exp $");
 
 #define	PCICISADEBUG
 
@@ -372,12 +372,9 @@ pcic_isa_config_interrupts(struct device *self)
  * and then within those limits allocate a sparse map, where the
  * each sub region is offset by 0x400.
  */
-void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
-	struct pcic_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t base;
-	u_int32_t length;
+void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
+				bus_space_handle_t ioh,
+				bus_addr_t base, uint32_t length)
 {
 	bus_space_handle_t ioh_high;
 	int i, iobuswidth, tmp1, tmp2;
@@ -451,12 +448,8 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 }
 
 void *
-pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
+pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch,
+	struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);

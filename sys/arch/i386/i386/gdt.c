@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.45 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: gdt.c,v 1.46 2009/03/16 09:37:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.45 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.46 2009/03/16 09:37:35 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -77,14 +77,14 @@ void gdt_put_slot1(int, int);
  * reclaim it.
  */
 static inline void
-gdt_lock()
+gdt_lock(void)
 {
 
 	mutex_enter(&gdt_lock_store);
 }
 
 static inline void
-gdt_unlock()
+gdt_unlock(void)
 {
 
 	mutex_exit(&gdt_lock_store);
@@ -133,7 +133,7 @@ setgdt(int sel, const void *base, size_t limit,
  * Initialize the GDT subsystem.  Called from autoconf().
  */
 void
-gdt_init()
+gdt_init(void)
 {
 	size_t max_len, min_len;
 	union descriptor *old_gdt;
@@ -323,7 +323,7 @@ gdt_grow(int which)
  */
 
 int
-gdt_get_slot()
+gdt_get_slot(void)
 {
 	return gdt_get_slot1(0);
 }

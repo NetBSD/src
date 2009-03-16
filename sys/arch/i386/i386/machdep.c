@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.664 2009/02/26 15:07:33 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.665 2009/03/16 09:37:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.664 2009/02/26 15:07:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.665 2009/03/16 09:37:35 cegger Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -431,7 +431,7 @@ native_loader(int bl_boothowto, int bl_bootdev,
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	int x, y;
 	vaddr_t minaddr, maxaddr;
@@ -527,7 +527,7 @@ cpu_startup()
  * Set up proc0's TSS and LDT.
  */
 void
-i386_proc0_tss_ldt_init()
+i386_proc0_tss_ldt_init(void)
 {
 	struct lwp *l;
 	struct pcb *pcb;
@@ -1120,7 +1120,7 @@ int xen_idt_idx;
 #endif
 
 #ifndef XEN
-void cpu_init_idt()
+void cpu_init_idt(void)
 {
 	struct region_descriptor region;
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
@@ -1631,7 +1631,7 @@ init386(paddr_t first_avail)
 #include <i386/isa/nvram.h>		/* for NVRAM POST */
 
 void
-cpu_reset()
+cpu_reset(void)
 {
 #ifdef XEN
 	HYPERVISOR_reboot();
@@ -1875,7 +1875,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	(*initclock_func)();
