@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.6 2008/01/27 01:38:33 dyoung Exp $ */
+/* $NetBSD: drvctl.c,v 1.7 2009/03/16 13:35:37 lukem Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -149,7 +149,7 @@ main(int argc, char **argv)
 		if (laa.l_children > children)
 			err(6, "DRVLISTDEV: number of children grew");
 
-		for (i = 0; i < laa.l_children; i++)
+		for (i = 0; i < (int)laa.l_children; i++)
 			printf("%s %s\n", laa.l_devname, laa.l_childname[i]);
 		break;
 	case 'r':

@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.11 2006/03/20 01:06:07 christos Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.12 2009/03/16 12:56:19 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.11 2006/03/20 01:06:07 christos Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.12 2009/03/16 12:56:19 lukem Exp $");
 #endif
 
 
@@ -421,7 +421,7 @@ show_interfaces(int sock, const char *bridge, const char *prefix)
 	struct ifbifconf bifc;
 	struct ifbreq *req;
 	char *inbuf = NULL, *ninbuf;
-	int i, len = 8192;
+	uint32_t i, len = 8192;
 
 	for (;;) {
 		ninbuf = realloc(inbuf, len);
@@ -465,7 +465,7 @@ show_addresses(int sock, const char *bridge, const char *prefix)
 	struct ifbaconf ifbac;
 	struct ifbareq *ifba;
 	char *inbuf = NULL, *ninbuf;
-	int i, len = 8192;
+	uint32_t i, len = 8192;
 	struct ether_addr ea;
 
 	for (;;) {
