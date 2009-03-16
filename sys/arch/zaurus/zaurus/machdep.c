@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2009/03/11 09:02:05 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2009/03/16 12:54:52 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2009/03/11 09:02:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2009/03/16 12:54:52 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -355,7 +355,7 @@ cpu_reboot(int howto, char *bootstr)
 	boothowto = howto;
 
 #ifdef KLOADER
-	if ((howto & RB_HALT) == 0) {
+	if ((howto & RB_HALT) == 0 && panicstr == NULL) {
 		char *filename = NULL;
 
 		if ((howto & RB_STRING) && (bootstr != NULL)) {
@@ -422,7 +422,7 @@ haltsys:
 		cngetc();
 	}
 #ifdef KLOADER
-	else {
+	else if (panicstr == NULL) {
 		delay(1 * 1000 * 1000);
 		kloader_reboot();
 		printf("\n");
