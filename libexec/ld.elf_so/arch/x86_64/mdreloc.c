@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.33 2009/03/15 23:53:03 lukem Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.34 2009/03/16 02:44:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.33 2009/03/15 23:53:03 lukem Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.34 2009/03/16 02:44:47 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	 * Assume only 64-bit relocations here, which should always
 	 * be true for the dynamic linker.
 	 */
-	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	relalim = (const Elf_Rela *)((const uint8_t *)rela + relasz);
 	for (; rela < relalim; rela++) {
 		where = (Elf_Addr *)(relocbase + rela->r_offset);
 		*where = (Elf_Addr)(relocbase + rela->r_addend);
