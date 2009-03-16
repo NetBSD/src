@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.16 2009/03/15 23:56:24 lukem Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.17 2009/03/16 00:08:10 lukem Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ void pwarn(const char *unused, ...) { /* Does nothing */ };
  * Log a message if debugging is turned on.
  */
 void
-dlog(char *fmt, ...)
+dlog(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -599,7 +599,7 @@ log_segment_read(struct clfs *fs, int sn)
 
         fp = fopen(copylog_filename, "ab");
         if (fp != NULL) {
-                if (fwrite(cp, (size_t)fs->lfs_ssize, 1, fp) < 0) {
+                if (fwrite(cp, (size_t)fs->lfs_ssize, 1, fp) != 1) {
                         perror("writing segment to copy log");
                 }
         }
@@ -684,7 +684,7 @@ calc_cb(struct clfs *fs, int sn, struct clfs_seguse *t)
 		return;
 	}
 
-	if (t->nbytes < 0 || t->nbytes > fs->lfs_ssize) {
+	if (t->nbytes > fs->lfs_ssize) {
 		/* Another type of error */
 		syslog(LOG_WARNING, "segment %d: bad seguse count %d",
 		       sn, t->nbytes);
@@ -725,10 +725,10 @@ calc_cb(struct clfs *fs, int sn, struct clfs_seguse *t)
 static int
 bi_comparator(const void *va, const void *vb)
 {
-	BLOCK_INFO *a, *b;
+	const BLOCK_INFO *a, *b;
 
-	a = (BLOCK_INFO *)va;
-	b = (BLOCK_INFO *)vb;
+	a = (const BLOCK_INFO *)va;
+	b = (const BLOCK_INFO *)vb;
 
 	/* Check for out-of-place block */
 	if (a->bi_segcreate == a->bi_daddr &&
@@ -765,10 +765,10 @@ bi_comparator(const void *va, const void *vb)
 static int
 cb_comparator(const void *va, const void *vb)
 {
-	struct clfs_seguse *a, *b;
+	const struct clfs_seguse *a, *b;
 
-	a = *(struct clfs_seguse **)va;
-	b = *(struct clfs_seguse **)vb;
+	a = *(const struct clfs_seguse * const *)va;
+	b = *(const struct clfs_seguse * const *)vb;
 	return a->priority > b->priority ? -1 : 1;
 }
 
