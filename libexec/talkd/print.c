@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.8 2006/03/17 02:12:15 elad Exp $	*/
+/*	$NetBSD: print.c,v 1.9 2009/03/16 01:04:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.8 2006/03/17 02:12:15 elad Exp $");
+__RCSID("$NetBSD: print.c,v 1.9 2009/03/16 01:04:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,9 +69,7 @@ static	char *answers[] = {
 #define	NANSWERS	(sizeof (answers) / sizeof (answers[0]))
 
 void
-print_request(cp, mp)
-	char *cp;
-	CTL_MSG *mp;
+print_request(char *cp, CTL_MSG *mp)
 {
 	char tbuf[80], *tp;
 	
@@ -86,9 +84,7 @@ print_request(cp, mp)
 }
 
 void
-print_response(cp, rp)
-	char *cp;
-	CTL_RESPONSE *rp;
+print_response(char *cp, CTL_RESPONSE *rp)
 {
 	char tbuf[80], *tp, abuf[80], *ap;
 	
