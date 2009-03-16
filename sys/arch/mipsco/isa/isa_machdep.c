@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.11 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.12 2009/03/16 23:11:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12 2009/03/16 23:11:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,13 +169,9 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 }
 
 void *
-isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int intr;
-	int type;  /* XXX not yet */
-	int level;  /* XXX not yet */
-	int (*ih_fun)(void*);
-	void *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int intr, int type, int level, int (*ih_fun)(void*), void *ih_arg)
+	/* type:   XXX not yet */
+	/* level:   XXX not yet */
 {
 	struct mipsco_intrhand *ih;
 

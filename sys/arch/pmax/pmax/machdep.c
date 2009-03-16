@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.231 2009/03/16 23:11:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2009/03/16 23:11:14 dsl Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -663,12 +663,7 @@ unimpl_iointr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
 }
 
 static void
-unimpl_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler)(void *);
-	void *arg;
+unimpl_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 	panic("sysconf.init didn't set intr_establish");
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.17 2009/03/14 15:36:10 dsl Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.18 2009/03/16 23:11:12 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.17 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.18 2009/03/16 23:11:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,7 @@ mc_cpuspeed(vaddr_t mcclock_addr, int cpuintmask)
  * before the clock is attached, so we can't use the normal clock driver.
  */
 unsigned
-mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
-	void *mcclock_addr;
-	int clockmask;
-	int (*tickpollfn)(void *mcclock_addr, int clockmask);
+mips_mc_cpuspeed(void *mcclock_addr, int clockmask, int (*tickpollfn)(void *mcclock_addr, int clockmask))
 {
 	int s;
 	int iters = 0;

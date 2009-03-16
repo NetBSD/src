@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.216 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.217 2009/03/16 23:11:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.216 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2009/03/16 23:11:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -976,9 +976,7 @@ alloc_sicallback()
 }
 
 void
-add_sicallback (function, rock1, rock2)
-	void (*function)(void *rock1, void *rock2);
-	void *rock1, *rock2;
+add_sicallback (void (*function)(void *rock1, void *rock2), void *rock1, void *rock2)
 {
 	struct si_callback *si;
 	int s;
@@ -1022,8 +1020,7 @@ add_sicallback (function, rock1, rock2)
 
 
 void
-rem_sicallback(function)
-	void (*function)(void *rock1, void *rock2);
+rem_sicallback(void (*function)(void *rock1, void *rock2))
 {
 	struct si_callback *si, *psi, *nsi;
 	int s;

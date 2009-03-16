@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.26 2009/03/14 21:04:20 dsl Exp $ */
+/* $NetBSD: ega.c,v 1.27 2009/03/16 23:11:15 dsl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.26 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.27 2009/03/16 23:11:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -647,12 +647,7 @@ ega_setfont(struct ega_config *vc, struct egascreen *scr)
 }
 
 static int
-ega_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+ega_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int), void *cbarg)
 {
 	struct egascreen *scr = cookie, *oldscr;
 	struct ega_config *vc = scr->cfg;

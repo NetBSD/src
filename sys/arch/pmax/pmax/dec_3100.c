@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.46 2009/03/14 15:36:11 dsl Exp $ */
+/* $NetBSD: dec_3100.c,v 1.47 2009/03/16 23:11:14 dsl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.46 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.47 2009/03/16 23:11:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,12 +258,7 @@ dec_3100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 
 
 static void
-dec_3100_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler)(void *);
-	void *arg;
+dec_3100_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 
 	intrtab[(int)cookie].ih_func = handler;

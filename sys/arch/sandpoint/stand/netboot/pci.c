@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.9 2009/03/14 21:04:15 dsl Exp $ */
+/* $NetBSD: pci.c,v 1.10 2009/03/16 23:11:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -166,10 +166,7 @@ cfgwrite(int b, int d, int f, int off, unsigned val)
 }
 
 static void
-_buswalk(bus, proc, data)
-	int bus;
-	int (*proc)(int, int, int, unsigned long);
-	unsigned long data;
+_buswalk(int bus, int (*proc)(int, int, int, unsigned long), unsigned long data)
 {
 	int device, function, nfunctions;
 	unsigned pciid, bhlcr;
@@ -347,12 +344,8 @@ clsmatch(int bus, int dev, int func, unsigned long data)
 }
 
 static int
-_pcilookup(bus, match, data, list, index, limit)
-	int bus;
-	int (*match)(int, int, int, unsigned long);
-	unsigned long data;
-	unsigned list[][2];
-	int index, limit;
+_pcilookup(int bus, int (*match)(int, int, int, unsigned long), unsigned long data, list, int index, int limit)
+unsigned list[][2];
 {
 	int device, function, nfuncs;
 	unsigned pciid, bhlcr, class;

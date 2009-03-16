@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2009/03/14 21:04:13 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2009/03/16 23:11:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2009/03/14 21:04:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2009/03/16 23:11:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,11 +310,7 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
  * string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -442,11 +438,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 #if 0

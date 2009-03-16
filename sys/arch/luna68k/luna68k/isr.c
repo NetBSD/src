@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.16 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: isr.c,v 1.17 2009/03/16 23:11:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.16 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17 2009/03/16 23:11:12 dsl Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -75,11 +75,7 @@ isrinit()
  * Called by driver attach functions.
  */
 void
-isrlink_autovec(func, arg, ipl, priority)
-	int (*func)(void *);
-	void *arg;
-	int ipl;
-	int priority;
+isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority)
 {
 	struct isr_autovec *newisr, *curisr;
 	isr_autovec_list_t *list;
@@ -150,10 +146,7 @@ isrlink_autovec(func, arg, ipl, priority)
  * Called by bus interrupt establish functions.
  */
 void
-isrlink_vectored(func, arg, ipl, vec)
-	int (*func)(void *);
-	void *arg;
-	int ipl, vec;
+isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec)
 {
 	struct isr_vectored *isr;
 

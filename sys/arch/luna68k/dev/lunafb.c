@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.19 2009/03/14 21:04:10 dsl Exp $ */
+/* $NetBSD: lunafb.c,v 1.20 2009/03/16 23:11:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.19 2009/03/14 21:04:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.20 2009/03/16 23:11:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,12 +461,7 @@ omfb_free_screen(void *v, void *cookie)
 }
 
 static int
-omfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+omfb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int), void *cbarg)
 {
 	return 0;
 }
