@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.110 2009/03/15 20:35:59 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.111 2009/03/16 01:24:09 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5094,4 +5094,12 @@ sys/dev/video.c					1.20
 	video_set_format() requires hw->set_format to be set, not
 	get_format.  Fixes PR kern/41008.
 	[jmcneill, ticket #576]
+
+sys/compat/linux/common/linux_futex.c		1.24 via patch
+sys/netiso/tp_param.h				1.19 via patch
+
+	linux_futex: Fix robust_list pointer mess.
+	tp_param: Negative lengths should not be allowed. Make it
+	unsigned.
+	[adrianp, ticket #582]
 
