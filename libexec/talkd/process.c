@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.13 2009/03/16 01:04:32 lukem Exp $	*/
+/*	$NetBSD: process.c,v 1.14 2009/03/16 01:13:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: process.c,v 1.13 2009/03/16 01:04:32 lukem Exp $");
+__RCSID("$NetBSD: process.c,v 1.14 2009/03/16 01:13:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ do_announce(CTL_MSG *mp, CTL_RESPONSE *rp)
  * Search utmp for the local user
  */
 int
-find_user(char *name, char *tty, size_t ttysize)
+find_user(const char *name, char *tty, size_t ttysize)
 {
 	int status;
 	struct stat statb;

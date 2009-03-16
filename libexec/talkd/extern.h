@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2009/03/16 01:04:32 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2009/03/16 01:13:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,24 +30,24 @@
  */
 
 /* announce.c */
-int announce(CTL_MSG *, char *);
-int print_mesg(char *, CTL_MSG *, char *);
+int announce(CTL_MSG *, const char *);
+int print_mesg(const char *, CTL_MSG *, const char *);
 
 /* print.c */
-void print_request(char *, CTL_MSG *);
-void print_response(char *, CTL_RESPONSE *);
+void print_request(const char *, CTL_MSG *);
+void print_response(const char *, CTL_RESPONSE *);
 
 /* process.c */
 void process_request(CTL_MSG *, CTL_RESPONSE *);
 void do_announce(CTL_MSG *, CTL_RESPONSE *);
-int find_user(char *, char *, size_t);
+int find_user(const char *, char *, size_t);
 
 /* table.c */
 CTL_MSG *find_match(CTL_MSG *);
 CTL_MSG *find_request(CTL_MSG *);
 void insert_table(CTL_MSG *, CTL_RESPONSE *);
-int new_id(void);
-int delete_invite(int);
+uint32_t new_id(void);
+u_char delete_invite(uint32_t);
 
 /* talkd.c */
 extern int debug;

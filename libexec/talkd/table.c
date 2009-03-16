@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.9 2009/03/16 01:04:32 lukem Exp $	*/
+/*	$NetBSD: table.c,v 1.10 2009/03/16 01:13:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.9 2009/03/16 01:04:32 lukem Exp $");
+__RCSID("$NetBSD: table.c,v 1.10 2009/03/16 01:13:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: table.c,v 1.9 2009/03/16 01:04:32 lukem Exp $");
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <protocols/talkd.h>
+#include <inttypes.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -178,10 +179,10 @@ insert_table(CTL_MSG *request, CTL_RESPONSE *response)
 /*
  * Generate a unique non-zero sequence number
  */
-int
+uint32_t
 new_id(void)
 {
-	static int current_id = 0;
+	static uint32_t current_id = 0;
 
 	current_id = (current_id + 1) % MAX_ID;
 	/* 0 is reserved, helps to pick up bugs */
@@ -193,14 +194,14 @@ new_id(void)
 /*
  * Delete the invitation with id 'id_num'
  */
-int
-delete_invite(int id_num)
+u_char
+delete_invite(uint32_t id_num)
 {
 	TABLE_ENTRY *ptr;
 
 	ptr = table;
 	if (debug)
-		syslog(LOG_DEBUG, "delete_invite(%d)", id_num);
+		syslog(LOG_DEBUG, "delete_invite(%"PRIu32")", id_num);
 	for (ptr = table; ptr != NIL; ptr = ptr->next) {
 		if (ptr->request.id_num == id_num)
 			break;
