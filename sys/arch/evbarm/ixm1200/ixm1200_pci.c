@@ -1,4 +1,4 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.5 2009/03/14 15:36:05 dsl Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.6 2009/03/16 23:11:11 dsl Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2002, 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.5 2009/03/14 15:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.6 2009/03/16 23:11:11 dsl Exp $");
 
 /*
  * IXM1200 PCI interrupt support.
@@ -111,12 +111,7 @@ ixm1200_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 }
 
 void *
-ixm1200_pci_intr_establish(v, ih, ipl, func, arg)
-	void *v;
-	pci_intr_handle_t ih;
-	int ipl;
-	int (*func)(void *);
-	void *arg;
+ixm1200_pci_intr_establish(void *v, pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg)
 {
 #ifdef PCI_DEBUG
 	printf("ixm1200_pci_intr_establish(v=%p, irq=%d, ipl=%d, func=%p, arg=%p)\n",

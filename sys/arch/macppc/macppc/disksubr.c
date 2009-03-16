@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.46 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.47 2009/03/16 23:11:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.46 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.47 2009/03/16 23:11:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,11 +323,7 @@ getNamedType(struct part_map_entry *part, int num_parts, struct disklabel *lp, i
  *	disk.  This whole algorithm should probably be changed in the future.
  */
 static const char *
-read_mac_label(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+read_mac_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct part_map_entry *part;
 	struct partition *pp;
@@ -400,11 +396,7 @@ done:
  * this should suffice to mount_msdos Zip and other removable media.
  */
 static const char *
-read_dos_label(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+read_dos_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct mbr_partition *dp;
 	struct buf *bp;
@@ -504,11 +496,7 @@ read_dos_label(dev, strat, lp, osdep)
  * Get real NetBSD disk label
  */
 static int
-get_netbsd_label(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+get_netbsd_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -561,11 +549,7 @@ done:
  * then we assume that it's a real disklabel and return it.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	const char *msg = NULL;
@@ -654,11 +638,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	int error;

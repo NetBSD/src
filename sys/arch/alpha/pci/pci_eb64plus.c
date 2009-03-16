@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.19 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.20 2009/03/16 23:11:09 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.19 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.20 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -207,11 +207,7 @@ dec_eb64plus_intr_evcnt(void *acv, pci_intr_handle_t ih)
 }
 
 void *
-dec_eb64plus_intr_establish(acv, ih, level, func, arg)
-        void *acv, *arg;
-        pci_intr_handle_t ih;
-        int level;
-        int (*func)(void *);
+dec_eb64plus_intr_establish(void *acv, pci_intr_handle_t ih, int level, int (*func)(void *), void *arg)
 {
 	void *cookie;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.18 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: pci_6600.c,v 1.19 2009/03/16 23:11:09 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.18 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.19 2009/03/16 23:11:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,11 +214,7 @@ dec_6600_intr_evcnt(void *acv, pci_intr_handle_t ih)
 }
 
 void *
-dec_6600_intr_establish(acv, ih, level, func, arg)
-        void *acv, *arg;
-        pci_intr_handle_t ih;
-        int level;
-        int (*func)(void *);
+dec_6600_intr_establish(void *acv, pci_intr_handle_t ih, int level, int (*func)(void *), void *arg)
 {
 	void *cookie;
 
@@ -313,13 +309,7 @@ dec_6600_intr_disable(int irq)
 }
 
 void *
-dec_6600_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
-	void *v;
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func)(void *);
-	void *arg;
+dec_6600_pciide_compat_intr_establish(void *v, struct device *dev, struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie = NULL;

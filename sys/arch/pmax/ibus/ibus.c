@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.17 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: ibus.c,v 1.18 2009/03/16 23:11:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.17 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.18 2009/03/16 23:11:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,12 +84,7 @@ ibusprint(void *aux, const char *pnp)
 }
 
 void
-ibus_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler)(void *);
-	void *arg;
+ibus_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, arg);
 }

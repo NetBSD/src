@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:10 dsl Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -74,11 +74,7 @@ static u_int ahdi_getparts(dev_t, void (*)(struct buf *), u_int,
  * Returns NULL on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t			dev;
-	void			(*strat)(struct buf *);
-	struct disklabel	*lp;
-	struct cpu_disklabel	*clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int			e;
 
@@ -195,11 +191,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t			dev;
-	void			(*strat)(struct buf *);
-	struct disklabel	*lp;
-	struct cpu_disklabel	*clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf		*bp;
 	u_int			blk;
@@ -353,11 +345,7 @@ ck_label(struct disklabel *dl, struct cpu_disklabel *cdl)
  *          +1 if no valid AHDI label was found.
  */
 int
-ahdi_label(dev, strat, dl, cdl)
-	dev_t			dev;
-	void			(*strat)(struct buf *);
-	struct disklabel	*dl;
-	struct cpu_disklabel	*cdl;
+ahdi_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *dl, struct cpu_disklabel *cdl)
 {
 	struct ahdi_ptbl	apt;
 	u_int			i;
