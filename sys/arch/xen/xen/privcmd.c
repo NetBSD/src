@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.36 2009/03/04 10:32:36 jym Exp $ */
+/* $NetBSD: privcmd.c,v 1.37 2009/03/16 06:18:32 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.36 2009/03/04 10:32:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.37 2009/03/16 06:18:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -618,7 +618,7 @@ static const struct kernfs_fileop privcmd_fileops[] = {
 };
 
 void
-xenprivcmd_init()
+xenprivcmd_init(void)
 {
 	kernfs_entry_t *dkt;
 	kfstype kfst;
