@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.68 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.69 2009/03/17 10:16:55 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.68 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.69 2009/03/17 10:16:55 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -151,7 +151,7 @@ void	fddma_intr(void);
 void *	fddmaaddr  = NULL;
 int	fddmalen   = 0;
 
-extern void	mfp_hdfd_nf(void)), mfp_hdfd_fifo(void);
+extern void	mfp_hdfd_nf(void), mfp_hdfd_fifo(void);
 
 /*
  * Argument to fdcintr.....
@@ -334,7 +334,7 @@ fdcprobe(struct device *parent, struct cfdata *cfp, void *aux)
 	if (!atari_realconfig)
 		return 0;
 
-	if ((mb_tag = mb_alloc_bus_space_tag() == NULL)
+	if ((mb_tag = mb_alloc_bus_space_tag()) == NULL)
 		return 0;
 
 	if (bus_space_map(mb_tag, FD_IOBASE, FD_IOSIZE, 0, &handle)) {
