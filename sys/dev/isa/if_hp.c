@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.47 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.48 2009/03/17 18:19:15 dsl Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.47 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.48 2009/03/17 18:19:15 dsl Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -243,7 +243,7 @@ hpprobe(struct isa_device *dvp)
 /*
  * Fetch from onboard ROM/RAM
  */
-hpfetch(struct hp_softc *ns, void *up, ad, len)
+hpfetch(struct hp_softc *ns, void *up, int ad, int len)
 {
 	u_char  cmd;
 	int	hpc = ns->ns_port;
@@ -303,7 +303,7 @@ hpfetch(struct hp_softc *ns, void *up, ad, len)
 /*
  * Put to onboard RAM
  */
-hpput(struct hp_softc *ns, void *up, ad, len)
+hpput(struct hp_softc *ns, void *up, int ad, int len)
 {
 	u_char  cmd;
 	int	hpc = ns->ns_port;

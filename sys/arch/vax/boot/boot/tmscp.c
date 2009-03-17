@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.7 2009/03/14 21:04:16 dsl Exp $ */
+/*	$NetBSD: tmscp.c,v 1.8 2009/03/17 18:19:15 dsl Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -77,7 +77,7 @@ static struct ra_softc ra_softc;
 static int curblock;
 
 
-tmscpopen(struct open_file *f, adapt, int ctlr, int unit, int part)
+tmscpopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	char *msg;
 	extern u_int tmsaddr;

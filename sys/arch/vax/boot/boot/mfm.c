@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.8 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: mfm.c,v 1.9 2009/03/17 18:19:15 dsl Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -359,7 +359,7 @@ display_xbn(struct mfm_xbn *p)
 #endif
 
 int
-mfmopen(struct open_file *f, adapt, int ctlr, int unit, int part)
+mfmopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	char *msg;
 	struct disklabel *lp = &mfmlabel;

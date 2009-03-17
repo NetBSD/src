@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.22 2009/03/14 21:04:01 dsl Exp $ */
+/* $NetBSD: if_xb.c,v 1.23 2009/03/17 18:19:15 dsl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.22 2009/03/14 21:04:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.23 2009/03/17 18:19:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ xbattach(struct device *parent, struct device *self, void *aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.22 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.23 $", xbi.if_mtu);
 }
 
 static void
@@ -705,7 +705,7 @@ set_interrupt_on_fifo_empty(void)
  * Write an aligned block of switch words to the FIFO
  */
 Static void
-xb_mcrp_write(long *d, n, islast)
+xb_mcrp_write(long *d, int n, int islast)
 {
 	volatile long *xb_fifo = islast ? REGADDR(A12_FIFO_LWE) 
 					: REGADDR(A12_FIFO);
