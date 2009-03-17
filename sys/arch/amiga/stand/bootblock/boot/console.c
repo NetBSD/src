@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.9 2009/03/14 21:04:04 dsl Exp $ */
+/* $NetBSD: console.c,v 1.10 2009/03/17 00:13:43 he Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ consclose()
 #endif
 
 void
-putchar(char c)
+putchar(int c)
 {
 	struct Console *mc = ConsoleBase;
 
