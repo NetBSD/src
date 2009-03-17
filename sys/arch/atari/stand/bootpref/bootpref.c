@@ -1,4 +1,4 @@
-/*	$NetBSD: bootpref.c,v 1.5 2009/03/14 21:04:07 dsl Exp $	*/
+/*	$NetBSD: bootpref.c,v 1.6 2009/03/17 00:18:40 he Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -379,7 +379,7 @@ getNVpref (int fd, u_char bootpref[])
 }
 
 static void
-setNVpref (int fd, u_char bootpref[], set, int verbose)
+setNVpref (int fd, u_char bootpref[], int set, int verbose)
 {
 	/* Boot OS */
 	if (set & SET_OS) {

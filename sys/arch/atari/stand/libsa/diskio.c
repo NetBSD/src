@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.7 2009/03/14 21:04:07 dsl Exp $	*/
+/*	$NetBSD: diskio.c,v 1.8 2009/03/17 00:18:40 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -105,7 +105,7 @@ rootstrategy (void *devd, int flag, daddr_t dblk, size_t size, void *buf, size_t
 }
 
 static int
-rootopen (struct open_file *f)
+rootopen (struct open_file *f, ...)
 {
 	return(0);
 }
