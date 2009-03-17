@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.40 2009/03/16 17:30:33 uwe Exp $
+.\"     $NetBSD: vfsops.9,v 1.41 2009/03/17 00:10:37 joerg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,7 @@ specific file system type.
 The following table lists the elements of the vfsops vector, the
 corresponding invocation macro, and a description of the element.
 .Pp
-.Bl -column "void (*vfs_suspendctl)()" "VFS_SUSPENDCTL" -compact
+.Bl -column "int (*vfs_suspendctl)()" "VFS_SUSPENDCTL" -compact
 .It Sy Vector element Ta Sy Macro Ta Sy Description
 .\"
 .It int (*vfs_mount)() \
