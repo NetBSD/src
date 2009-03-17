@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.6 2009/03/14 21:04:16 dsl Exp $ */
+/*	$NetBSD: ctu.c,v 1.7 2009/03/17 18:19:15 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,7 +66,7 @@ void	ctutintr(void);
 void	cturintr(void);
 
 int
-ctuopen(struct open_file *f, adapt, int ctlr, int unit, int part)
+ctuopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 
 	tu_sc.sc_state = SC_INIT;
