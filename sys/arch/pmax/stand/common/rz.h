@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.h,v 1.3 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: rz.h,v 1.4 2009/03/17 00:45:46 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,5 +34,9 @@
 
 int rzstrategy(void*, int, daddr_t, size_t, void*, size_t*);
 int rzopen(struct open_file*, ...);
+#if !defined(LIBSA_NO_DEV_CLOSE)
 int rzclose(struct open_file*);
+#endif
+#if !defined(LIBSA_NO_DEV_IOCTL)
 int rzioctl(struct open_file*, u_long, void*);
+#endif
