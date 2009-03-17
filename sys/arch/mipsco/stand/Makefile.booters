@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.13 2009/01/12 07:12:17 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.14 2009/03/17 00:35:08 he Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -66,6 +66,7 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 		-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_WRITE \
 		-DLIBSA_NO_FS_CLOSE \
 		-DLIBSA_NO_DEV_CLOSE \
+		-DLIBSA_NO_DEV_IOCTL \
 		-DLIBSA_SINGLE_DEVICE=saio \
 		-D"saioioctl(x,y,z)=EINVAL" -D"saioclose(f)=0" \
 		-DLIBSA_NO_TWIDDLE \

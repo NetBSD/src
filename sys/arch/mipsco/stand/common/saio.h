@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.h,v 1.3 2009/03/14 14:46:03 dsl Exp $	*/
+/*	$NetBSD: saio.h,v 1.4 2009/03/17 00:35:08 he Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,6 +30,10 @@
  */
 
 int saioopen(struct open_file*, ...);
+#if !defined(LIBSA_NO_DEV_CLOSE)
 int saioclose(struct open_file*);
+#endif
+#if !defined(LIBSA_NO_DEV_IOCTL)
 int saioioctl(struct open_file*, u_long, void*);
+#endif
 int saiostrategy(void*, int, daddr_t, size_t, void*, size_t*);
