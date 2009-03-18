@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.29 2009/03/14 15:36:14 dsl Exp $ */
+/* $NetBSD: bootxx.c,v 1.30 2009/03/18 10:22:37 cegger Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -92,7 +92,7 @@ extern int from;
  * VS3100/??, VS4000 and VAX6000/???, and only when booting from disk.
  */
 void
-Xmain()
+Xmain(void)
 {
 	union {
 		struct exec aout;

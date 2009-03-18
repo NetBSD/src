@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.10 2009/03/14 15:36:07 dsl Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.11 2009/03/18 10:22:30 cegger Exp $	*/
 
 /*
  * Copyright (C) 2000 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.10 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.11 2009/03/18 10:22:30 cegger Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -57,19 +57,19 @@ int ne_pci_ipkdb_attach(struct ipkdb_if *, bus_space_tag_t,		/* XXX */
 static char ipkdb_mode = IPKDB_CMD_EXIT;
 
 void
-ipkdbinit()
+ipkdbinit(void)
 {
 }
 
 int
-ipkdb_poll()
+ipkdb_poll(void)
 {
 	/* For now */
 	return 0;
 }
 
 void
-ipkdb_trap()
+ipkdb_trap(void)
 {
 	ipkdb_mode = IPKDB_CMD_STEP;
 	x86_write_eflags(x86_read_eflags() | PSL_T));

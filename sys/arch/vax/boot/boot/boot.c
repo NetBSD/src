@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.27 2009/01/12 11:32:45 tsutsui Exp $ */
+/*	$NetBSD: boot.c,v 1.28 2009/03/18 10:22:37 cegger Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -265,7 +265,7 @@ load:
 
 
 void
-loadpcs()
+loadpcs(void)
 {
 	static int pcsdone = 0;
 	int mid = mfpr(PR_SID);

@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.17 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: lunaws.c,v 1.18 2009/03/18 10:22:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.17 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.18 2009/03/18 10:22:31 cegger Exp $");
 
 #include "wsmouse.h"
 
@@ -385,7 +385,7 @@ ws_cnpollc(void *v, int on)
 }
 
 /* EXPORT */ void
-ws_cnattach()
+ws_cnattach(void)
 {
 	static int voidfill;
 

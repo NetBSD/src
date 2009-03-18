@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.19 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: putter.c,v 1.20 2009/03/18 10:22:41 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.19 2009/01/20 18:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.20 2009/03/18 10:22:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ static kmutex_t pi_mtx;
 void putterattach(void);
 
 void
-putterattach()
+putterattach(void)
 {
 
 	mutex_init(&pi_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -155,7 +155,7 @@ putterattach()
 
 #if 0
 void
-putter_destroy()
+putter_destroy(void)
 {
 
 	mutex_destroy(&pi_mtx);

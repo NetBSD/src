@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_hal.c,v 1.13.2.3 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.6 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.7 2009/03/18 10:22:39 cegger Exp $");
 #endif
 
 #include <sys/param.h>
@@ -96,7 +96,7 @@ __stdcall static void dummy (void);
 extern struct mtx_pool *ndis_mtxpool;
 
 int
-hal_libinit()
+hal_libinit(void)
 {
 	image_patch_table	*patch;
 
@@ -111,7 +111,7 @@ hal_libinit()
 }
 
 int
-hal_libfini()
+hal_libfini(void)
 {
 	image_patch_table	*patch;
 
@@ -386,7 +386,7 @@ KfLowerIrql(REGARGS1(uint8_t oldirql))
 }
 
 __stdcall
-static void dummy()
+static void dummy(void)
 {
 	printf ("hal dummy called...\n");
 	return;

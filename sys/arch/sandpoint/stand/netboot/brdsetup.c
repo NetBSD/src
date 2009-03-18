@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.5 2009/03/14 21:04:15 dsl Exp $ */
+/* $NetBSD: brdsetup.c,v 1.6 2009/03/18 10:22:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ unsigned uartbase;
 #define UART_WRITE(r, v)	*(volatile char *)(uartbase + (r)) = (v)
 
 void
-brdsetup()
+brdsetup(void)
 {
 	unsigned pchb, pcib, div;
 
@@ -116,14 +116,14 @@ putchar(int c)
 }
 
 void
-_rtt()
+_rtt(void)
 {
 	run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
 	/* NOTREACHED */
 }
 
 static inline u_quad_t
-mftb()
+mftb(void)
 {
 	u_long scratch;
 	u_quad_t tb;
@@ -134,7 +134,7 @@ mftb()
 }
 
 satime_t
-getsecs()
+getsecs(void)
 {
 	u_quad_t tb = mftb();
 
@@ -350,7 +350,7 @@ setup_83C553F()
 }
 
 void
-pcifixup()
+pcifixup(void)
 {
 	unsigned pcib, ide, nic, val, steer, irq;
 	int line;

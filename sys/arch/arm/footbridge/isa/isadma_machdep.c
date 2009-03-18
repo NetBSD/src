@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.12 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.13 2009/03/18 10:22:23 cegger Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.12 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.13 2009/03/18 10:22:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ struct arm32_bus_dma_tag isa_bus_dma_tag = {
  * Initialize ISA DMA.
  */
 void
-isa_dma_init()
+isa_dma_init(void)
 {
 
 	isa_bus_dma_tag._ranges = footbridge_isa_dma_ranges;

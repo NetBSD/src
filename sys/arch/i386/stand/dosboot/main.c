@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2009/03/14 21:04:10 dsl Exp $	 */
+/*	$NetBSD: main.c,v 1.28 2009/03/18 10:22:30 cegger Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -238,7 +238,7 @@ print_banner(void)
 }
 
 void 
-usage()
+usage(void)
 {
 	printf("dosboot [-u] [-c <commands>] [-i] [filename [-bootopts]]\n");
 }

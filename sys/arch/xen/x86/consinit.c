@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.12 2009/03/16 06:17:20 cegger Exp $	*/
+/*	$NetBSD: consinit.c,v 1.13 2009/03/18 10:22:39 cegger Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.12 2009/03/16 06:17:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.13 2009/03/18 10:22:39 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -189,7 +189,7 @@ consinit(void)
 
 #ifdef KGDB
 void
-kgdb_port_init()
+kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {

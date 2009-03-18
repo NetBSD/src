@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.134 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.135 2009/03/18 10:22:43 cegger Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.134 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.135 2009/03/18 10:22:43 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -377,7 +377,7 @@ ipsec_pcbdisconn(struct inpcbpolicy *pcbsp)
 }
 
 void
-ipsec_invalpcbcacheall()
+ipsec_invalpcbcacheall(void)
 {
 
 	if (ipsec_spdgen == UINT_MAX)
@@ -1174,7 +1174,7 @@ ipsec6_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 #endif
 
 static struct inpcbpolicy *
-ipsec_newpcbpolicy()
+ipsec_newpcbpolicy(void)
 {
 	struct inpcbpolicy *p;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.25 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: mcpcia.c,v 1.26 2009/03/18 10:22:22 cegger Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.25 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.26 2009/03/18 10:22:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ mcpciaattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-mcpcia_init()
+mcpcia_init(void)
 {
 	struct mcpcia_config *ccp = &mcpcia_console_configuration;
 	int i;
@@ -298,7 +298,7 @@ die_heathen_dog(void *arg)
 #endif
 
 void
-mcpcia_config_cleanup()
+mcpcia_config_cleanup(void)
 {
 	volatile u_int32_t ctl;
 	struct mcpcia_softc *mcp;

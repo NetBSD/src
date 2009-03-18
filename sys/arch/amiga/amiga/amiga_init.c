@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.107 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.108 2009/03/18 10:22:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.107 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.108 2009/03/18 10:22:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,7 +765,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 }
 
 void
-start_c_finish()
+start_c_finish(void)
 {
 #ifdef	P5PPC68KBOARD
         struct cfdev *cdp, *ecdp;
@@ -939,7 +939,7 @@ static u_long kernel_symbol_size, kernel_symbol_esym;
  * will be needed after a kernel image to be reloaded.
  */
 static int
-kernel_image_magic_size()
+kernel_image_magic_size(void)
 {
 	int sz;
 

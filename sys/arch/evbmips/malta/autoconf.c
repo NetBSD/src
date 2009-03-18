@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2009/03/14 15:36:05 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2009/03/18 10:22:27 cegger Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2009/03/14 15:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2009/03/18 10:22:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2009/03/14 15:36:05 dsl Exp $");
 static void	findroot(void);
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	intr_init();
@@ -67,7 +67,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 

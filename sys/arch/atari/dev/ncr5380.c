@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.60 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.61 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.60 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.61 2009/03/18 10:22:24 cegger Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -123,7 +123,7 @@ extern inline int wait_req_false(void)
 	return (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ));
 }
 
-extern inline void ack_message()
+extern inline void ack_message(void)
 {
 	SET_5380_REG(NCR5380_ICOM, 0);
 }
@@ -1466,7 +1466,7 @@ again:
  * Check results of a DMA data-transfer.
  */
 static int
-dma_ready()
+dma_ready(void)
 {
 	SC_REQ	*reqp = connected;
 	int	dmstat, is_edma;
@@ -1684,7 +1684,7 @@ reach_msg_out(struct ncr_softc *sc, u_long len)
 }
 
 void
-scsi_reset()
+scsi_reset(void)
 {
 	SC_REQ	*tmp, *next;
 	int	sps;
@@ -2006,7 +2006,7 @@ show_signals(u_char dmstat, u_char idstat)
 }
 
 void
-scsi_show()
+scsi_show(void)
 {
 	SC_REQ	*tmp;
 	int	sps = splhigh();

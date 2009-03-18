@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2009/03/18 10:22:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2009/03/18 10:22:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ static void findroot(void);
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -73,7 +73,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 

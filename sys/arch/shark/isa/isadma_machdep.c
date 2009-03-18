@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.13 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.14 2009/03/18 10:22:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.13 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.14 2009/03/18 10:22:36 cegger Exp $");
 
 #define ISA_DMA_STATS
 
@@ -114,7 +114,7 @@ struct arm32_bus_dma_tag isa_bus_dma_tag = {
  * Initialize ISA DMA.
  */
 void
-isa_dma_init()
+isa_dma_init(void)
 {
 
 	isa_bus_dma_tag._ranges = shark_isa_dma_ranges;

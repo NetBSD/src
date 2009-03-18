@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsu.c,v 1.9 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vrdsu.c,v 1.10 2009/03/18 10:22:29 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsu.c,v 1.9 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsu.c,v 1.10 2009/03/18 10:22:29 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ vrdsuattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-vrdsu_reset()
+vrdsu_reset(void)
 {
 
 	if (the_dsu_sc) {

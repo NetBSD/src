@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.50 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.51 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.50 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.51 2009/03/18 10:22:24 cegger Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -715,19 +715,19 @@ set_falcon_5380_reg(u_short rnum, u_short val)
 }
 
 extern inline void
-scsi_falcon_ienable()
+scsi_falcon_ienable(void)
 {
 	single_inst_bset_b(MFP->mf_imrb, IB_DINT);
 }
 
 extern inline void
-scsi_falcon_idisable()
+scsi_falcon_idisable(void)
 {
 	single_inst_bclr_b(MFP->mf_imrb, IB_DINT);
 }
 
 extern inline void
-scsi_falcon_clr_ipend()
+scsi_falcon_clr_ipend(void)
 {
 	int	tmp;
 
@@ -736,7 +736,7 @@ scsi_falcon_clr_ipend()
 }
 
 extern inline int
-scsi_falcon_ipending()
+scsi_falcon_ipending(void)
 {
 	if (connected && (connected->dr_flag & DRIVER_IN_DMA)) {
 		/*
@@ -779,7 +779,7 @@ falcon_wrong_dma_range(SC_REQ *reqp, struct dma_chain *dm)
 static	int falcon_lock = 0;
 
 extern inline int
-falcon_claimed_dma()
+falcon_claimed_dma(void)
 {
 	if (falcon_lock != DMA_LOCK_GRANT) {
 		if (falcon_lock == DMA_LOCK_REQ) {
@@ -796,7 +796,7 @@ falcon_claimed_dma()
 }
 
 extern inline void
-falcon_reconsider_dma()
+falcon_reconsider_dma(void)
 {
 	if (falcon_lock && (connected == NULL) && (discon_q == NULL)) {
 		/*
@@ -978,7 +978,7 @@ scsi_mach_init(struct ncr_softc *sc)
 }
 
 extern inline void
-scsi_ienable()
+scsi_ienable(void)
 {
 	if (machineid & ATARI_FALCON)
 		scsi_falcon_ienable();
@@ -986,7 +986,7 @@ scsi_ienable()
 }
 
 extern inline void
-scsi_idisable()
+scsi_idisable(void)
 {
 	if (machineid & ATARI_FALCON)
 		scsi_falcon_idisable();
@@ -994,7 +994,7 @@ scsi_idisable()
 }
 
 extern inline void
-scsi_clr_ipend()
+scsi_clr_ipend(void)
 {
 	if (machineid & ATARI_FALCON)
 		scsi_falcon_clr_ipend();
@@ -1002,7 +1002,7 @@ scsi_clr_ipend()
 }
 
 extern inline int
-scsi_ipending()
+scsi_ipending(void)
 {
 	if (machineid & ATARI_FALCON)
 		return(scsi_falcon_ipending());

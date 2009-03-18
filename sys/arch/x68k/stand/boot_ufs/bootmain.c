@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.11 2009/03/14 21:04:17 dsl Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.12 2009/03/18 10:22:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -102,7 +102,7 @@ print_hex(unsigned int x, int l)
 const unsigned char partition_conv[MAXPART + 1] = { 0, 1, 3, 4, 5, 6, 7 };
 
 static int
-get_scsi_part()
+get_scsi_part(void)
 {
 	struct {
 		u_int32_t	magic;		/* 0x5836384B ("X68K") */

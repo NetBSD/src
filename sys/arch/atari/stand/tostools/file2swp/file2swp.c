@@ -1,4 +1,4 @@
-/*	$NetBSD: file2swp.c,v 1.5 2009/03/14 21:04:07 dsl Exp $	*/
+/*	$NetBSD: file2swp.c,v 1.6 2009/03/18 10:22:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "cread.h"
 
 char		*Infile = "minifs.gz";
-const char	version[] = "$Revision: 1.5 $";
+const char	version[] = "$Revision: 1.6 $";
 
 extern const char	*program_name;
 
@@ -48,7 +48,7 @@ static int	readdisklabel PROTO((disk_t *, u_int32_t *, u_int32_t *));
 static void	usage PROTO((void)) NORETURN;
 
 static void
-usage()
+usage(void)
 {
 	eprintf("Usage: %s [OPTIONS] DISK\n"
 		"where OPTIONS are:\n"

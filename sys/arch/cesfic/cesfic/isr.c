@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.14 2009/03/16 23:11:11 dsl Exp $	*/
+/*	$NetBSD: isr.c,v 1.15 2009/03/18 10:22:27 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2009/03/16 23:11:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.15 2009/03/18 10:22:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ isr_list_t isr_list[NISR];
 extern	int intrcnt[];		/* from locore.s */
 
 void
-isrinit()
+isrinit(void)
 {
 	int i;
 

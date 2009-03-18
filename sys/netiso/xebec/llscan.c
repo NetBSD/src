@@ -1,4 +1,4 @@
-/*	$NetBSD: llscan.c,v 1.13 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: llscan.c,v 1.14 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.13 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.14 2009/03/18 10:22:44 cegger Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -81,7 +81,7 @@ int getch();
 extern void AddCurrentEventName();
 
 void
-skip()
+skip(void)
 {
 	while((chtype[ch] == IGNORE) ) {
 		ch = getch();
@@ -106,7 +106,7 @@ llaccept(LLtoken *t)
 #define	TVAL	(t->llattrib)
 
 void
-dump_buffer()
+dump_buffer(void)
 {
 	register int i;
 	for(i=0; i<20; i++)
@@ -263,7 +263,7 @@ char o,c;
 }
 
 int
-getch()
+getch(void)
 {
 	int c;
 	extern FILE *infile;

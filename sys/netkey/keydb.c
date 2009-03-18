@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.18 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: keydb.c,v 1.19 2009/03/18 10:22:44 cegger Exp $	*/
 /*	$KAME: keydb.c,v 1.81 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.18 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.19 2009/03/18 10:22:44 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -63,7 +63,7 @@ MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
  * secpolicy management
  */
 struct secpolicy *
-keydb_newsecpolicy()
+keydb_newsecpolicy(void)
 {
 	struct secpolicy *p;
 
@@ -132,7 +132,7 @@ keydb_setsecpolicyindex(struct secpolicy *p, struct secpolicyindex *idx)
  * secashead management
  */
 struct secashead *
-keydb_newsecashead()
+keydb_newsecashead(void)
 {
 	struct secashead *p;
 	int i;
@@ -156,7 +156,7 @@ keydb_delsecashead(struct secashead *p)
  * secasvar management (reference counted)
  */
 struct secasvar *
-keydb_newsecasvar()
+keydb_newsecasvar(void)
 {
 	struct secasvar *p, *q;
 	static u_int32_t said = 0;
@@ -235,7 +235,7 @@ keydb_delsecreplay(struct secreplay *p)
  * secreg management
  */
 struct secreg *
-keydb_newsecreg()
+keydb_newsecreg(void)
 {
 	struct secreg *p;
 

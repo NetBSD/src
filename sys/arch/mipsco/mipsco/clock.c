@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2009/03/18 10:22:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2009/03/18 10:22:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -122,7 +122,7 @@ setstatclockrate(int newhz)
  * no alternative timer is available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	if (platform.clkinit)
 		(*platform.clkinit)();

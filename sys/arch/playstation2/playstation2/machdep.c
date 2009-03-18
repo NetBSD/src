@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2009/03/18 10:22:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2009/03/18 10:22:33 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -88,7 +88,7 @@ void mach_init(void);
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init()
+mach_init(void)
 {
 	extern char kernel_text[], edata[], end[];
 	extern struct user *proc0paddr;
@@ -168,7 +168,7 @@ mach_init()
  * Allocate memory for variable-sized tables,
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -271,7 +271,7 @@ cpu_reboot(int howto, char *bootstr)
 
 #ifdef DEBUG
 void
-bootinfo_dump()
+bootinfo_dump(void)
 {
 	printf("devconf=%#x, option=%#x, rtc=%#x, pcmcia_type=%#x,"
 	    "sysconf=%#x\n",

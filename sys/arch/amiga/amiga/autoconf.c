@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.101 2009/03/14 21:04:03 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.102 2009/03/18 10:22:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.101 2009/03/14 21:04:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.102 2009/03/18 10:22:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ int amiga_realconfig;
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	int s;
 #ifdef DEBUG_KERNEL_START
@@ -115,7 +115,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 #ifdef DEBUG_KERNEL_START
@@ -190,7 +190,7 @@ amiga_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp, cfprint_
  * the console. Kinda hacky but it works.
  */
 void
-config_console()
+config_console(void)
 {
 	struct cfdata *cf;
 

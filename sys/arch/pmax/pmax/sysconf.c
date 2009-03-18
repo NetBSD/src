@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.11 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.12 2009/03/18 10:22:34 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.11 2009/03/14 14:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.12 2009/03/18 10:22:34 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ int nsysinit = (sizeof(sysinit) / sizeof(sysinit[0]));
 
 
 void
-platform_not_configured()
+platform_not_configured(void)
 {
 	printf("\n");
 	printf("Support for system type %d is not present in this kernel.\n",
@@ -137,7 +137,7 @@ platform_not_configured()
 }
 
 void
-platform_not_supported()
+platform_not_supported(void)
 {
 	const char *typestr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.7 2009/02/26 00:32:49 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.8 2009/03/18 10:22:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.7 2009/02/26 00:32:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.8 2009/03/18 10:22:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -191,7 +191,7 @@ rump_vop_lookup(void *v)
 }
 
 void
-rumpfs_init()
+rumpfs_init(void)
 {
 	int rv;
 

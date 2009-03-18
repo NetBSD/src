@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.24 2009/03/14 21:04:01 dsl Exp $ */
+/* $NetBSD: pmap.c,v 1.25 2009/03/18 10:22:21 cegger Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2009/03/14 21:04:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2009/03/18 10:22:21 cegger Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -319,7 +319,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
  * use the pool allocator.  malloc is still taboo.
  */
 void
-pmap_init()
+pmap_init(void)
 {
 	UVMHIST_FUNC("pmap_init");
 
@@ -368,7 +368,7 @@ pmap_init2()
 }
 
 struct pmap *
-pmap_create()
+pmap_create(void)
 {
 	struct pmap *pmap;
 	UVMHIST_FUNC("pmap_create");

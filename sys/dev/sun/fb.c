@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.30 2009/03/14 21:04:23 dsl Exp $ */
+/*	$NetBSD: fb.c,v 1.31 2009/03/18 10:22:41 cegger Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.30 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.31 2009/03/18 10:22:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ const struct cdevsw fb_cdevsw = {
 };
 
 void
-fb_unblank()
+fb_unblank(void)
 {
 
 	struct fbdevlist *fbl = &fblist;
@@ -501,14 +501,14 @@ fbrcons_init(struct fbdevice *fb)
 }
 
 int
-fbrcons_rows()
+fbrcons_rows(void)
 {
 	return ((fblist.fb_dev != NULL) ?
 	    fblist.fb_dev->fb_rcons.rc_maxrow : 0);
 }
 
 int
-fbrcons_cols()
+fbrcons_cols(void)
 {
 	return ((fblist.fb_dev != NULL) ?
 	    fblist.fb_dev->fb_rcons.rc_maxcol : 0);

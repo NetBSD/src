@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.52 2009/03/14 15:36:12 dsl Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.53 2009/03/18 10:22:34 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.52 2009/03/14 15:36:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.53 2009/03/18 10:22:34 cegger Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -1266,7 +1266,7 @@ cpu_hatch(void)
 }
 
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	start_secondary_cpu = 1;
 	__asm volatile ("sync");

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 2007/12/15 14:23:14 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 2009/03/18 10:22:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 2007/12/15 14:23:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 2009/03/18 10:22:35 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -62,7 +62,7 @@ static const char	*booted_protocol = NULL;
 extern struct platform platform;
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 	int s;
 
@@ -158,7 +158,7 @@ makebootdev(const char *cp)
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	printf("boot device: %s\n",
 		booted_device ? booted_device->dv_xname : "<unknown>");

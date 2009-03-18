@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.23 2008/12/17 20:51:39 cegger Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.24 2009/03/18 10:22:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.23 2008/12/17 20:51:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.24 2009/03/18 10:22:46 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1294,14 +1294,14 @@ ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l)
 }
 
 void
-ufs_extattr_init()
+ufs_extattr_init(void)
 {
 
 	malloc_type_attach(M_UFS_EXTATTR);
 }
 
 void
-ufs_extattr_done()
+ufs_extattr_done(void)
 {
 
 	malloc_type_detach(M_UFS_EXTATTR);

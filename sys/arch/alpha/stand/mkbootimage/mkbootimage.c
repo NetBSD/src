@@ -1,4 +1,4 @@
-/* $NetBSD: mkbootimage.c,v 1.6 2002/05/14 06:34:20 lukem Exp $ */
+/* $NetBSD: mkbootimage.c,v 1.7 2009/03/18 10:22:22 cegger Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -45,7 +45,7 @@
 static void usage(void);
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	    "usage: %s [-n] [-v] inputfile [outputfile]\n", getprogname());

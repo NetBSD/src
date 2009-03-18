@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2009/03/18 10:22:29 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2009/03/18 10:22:29 cegger Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -542,7 +542,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
  * allocate memory for variable-sized tables, initialize CPU.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -672,7 +672,7 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 void
-consinit()
+consinit(void)
 {
 	/* platform.cons_init() do it */
 }

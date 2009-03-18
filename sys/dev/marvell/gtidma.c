@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.15 2009/01/03 03:43:22 yamt Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.16 2009/03/18 10:22:40 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.15 2009/01/03 03:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.16 2009/03/18 10:22:40 cegger Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -126,7 +126,7 @@ unsigned char idmalock[CACHELINESIZE]
 			|IDMA_CTLLO_DESCMODE)
 
 static inline u_int64_t
-_mftb()
+_mftb(void)
 {
         u_long scratch;
         u_int64_t tb;

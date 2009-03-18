@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.28 2009/03/14 15:36:23 dsl Exp $	 */
+/*	$NetBSD: at_control.c,v 1.29 2009/03/18 10:22:43 cegger Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.28 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.29 2009/03/18 10:22:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,7 +820,7 @@ aa_dosingleroute(struct ifaddr *ifa, struct at_addr *at_addr, struct at_addr *at
 
 #if 0
 static void
-aa_clean()
+aa_clean(void)
 {
 	struct at_ifaddr *aa;
 	struct ifaddr  *ifa;

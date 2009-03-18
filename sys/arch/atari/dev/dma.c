@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.21 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: dma.c,v 1.22 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.21 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.22 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ int	cdmaint(void *, int);
 static	void	st_dma_init(void);
 
 static void
-st_dma_init()
+st_dma_init(void)
 {
 	int	i;
 
@@ -205,7 +205,7 @@ st_dmafree(void *softc, int *lock_stat)
 }
 
 int
-st_dmawanted()
+st_dmawanted(void)
 {
 	return(dma_active.tqh_first->entries.tqe_next != NULL);
 }
@@ -255,7 +255,7 @@ st_dmaaddr_set(void * address)
  * Get address from DMA unit.
  */
 u_long
-st_dmaaddr_get()
+st_dmaaddr_get(void)
 {
 	register u_long ad = 0;
 

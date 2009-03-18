@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.14 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: procs.c,v 1.15 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.14 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.15 2009/03/18 10:22:44 cegger Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -43,7 +43,7 @@ extern FILE *astringfile;
 int predtable();
 
 void
-end_events()
+end_events(void)
 {
 	int size, part;
 	char *addr;
@@ -273,7 +273,7 @@ predtable(struct Object *os, struct Object *oe, char *str, int action, int newst
 }
 
 void
-printprotoerrs()
+printprotoerrs(void)
 {
 	register int e,s;
 

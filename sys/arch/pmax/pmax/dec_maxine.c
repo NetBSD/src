@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.55 2009/03/16 23:11:14 dsl Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.56 2009/03/18 10:22:33 cegger Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.55 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.56 2009/03/18 10:22:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ static const int dec_maxine_ipl2spl_table[] = {
 };
 
 void
-dec_maxine_init()
+dec_maxine_init(void)
 {
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_maxine_bus_reset;
@@ -206,7 +206,7 @@ dec_maxine_init()
  * Initialize the memory system and I/O buses.
  */
 static void
-dec_maxine_bus_reset()
+dec_maxine_bus_reset(void)
 {
 	/*
 	 * Reset interrupts, clear any errors from newconf probes
@@ -221,7 +221,7 @@ dec_maxine_bus_reset()
 
 
 static void
-dec_maxine_cons_init()
+dec_maxine_cons_init(void)
 {
 	int kbd, crt, screen;
 

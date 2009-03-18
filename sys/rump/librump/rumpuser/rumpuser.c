@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.35 2009/02/28 15:49:12 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.36 2009/03/18 10:22:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.35 2009/02/28 15:49:12 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.36 2009/03/18 10:22:45 cegger Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -430,7 +430,7 @@ rumpuser_putchar(int c, int *error)
 }
 
 void
-rumpuser_panic()
+rumpuser_panic(void)
 {
 
 	abort();
