@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.30 2009/03/18 16:00:22 cegger Exp $	 */
+/*	$NetBSD: at_control.c,v 1.31 2009/03/18 17:06:51 cegger Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.30 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.31 2009/03/18 17:06:51 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,8 +398,8 @@ at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat
          * those parts of the at_ifaddr that need special processing
          */
 	memset(AA_SAT(aa), 0, sizeof(struct sockaddr_at));
-	bcopy(sat->sat_zero, &nr, sizeof(struct netrange));
-	bcopy(sat->sat_zero, AA_SAT(aa)->sat_zero, sizeof(struct netrange));
+	memcpy( &nr, sat->sat_zero, sizeof(struct netrange));
+	memcpy( AA_SAT(aa)->sat_zero, sat->sat_zero, sizeof(struct netrange));
 	nnets = ntohs(nr.nr_lastnet) - ntohs(nr.nr_firstnet) + 1;
 	aa->aa_firstnet = nr.nr_firstnet;
 	aa->aa_lastnet = nr.nr_lastnet;

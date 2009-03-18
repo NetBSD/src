@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.124 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.125 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.124 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.125 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -960,7 +960,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 				return (-1);
 			}
 			optlen = IP6OPT_RTALERT_LEN;
-			bcopy((void *)(opt + 2), (void *)&rtalert_val, 2);
+			memcpy( (void *)&rtalert_val, (void *)(opt + 2), 2);
 			*rtalertp = ntohs(rtalert_val);
 			break;
 		case IP6OPT_JUMBO:
@@ -995,7 +995,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 			 * We may see jumbolen in unaligned location, so
 			 * we'd need to perform bcopy().
 			 */
-			bcopy(opt + 2, &jumboplen, sizeof(jumboplen));
+			memcpy( &jumboplen, opt + 2, sizeof(jumboplen));
 			jumboplen = (u_int32_t)htonl(jumboplen);
 
 #if 1
@@ -1138,7 +1138,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;
 
-		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
+		memcpy( &pi6.ipi6_addr, &ip6->ip6_dst, sizeof(struct in6_addr));
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
 		pi6.ipi6_ifindex = m->m_pkthdr.rcvif ?
 		    m->m_pkthdr.rcvif->if_index : 0;

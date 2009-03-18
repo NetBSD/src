@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.44 2009/03/18 15:14:31 cegger Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.45 2009/03/18 17:06:51 cegger Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.44 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.45 2009/03/18 17:06:51 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -187,7 +187,7 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			 * assuming dst contains 12 bytes (atm pseudo
 			 * header (4) + LLC/SNAP (8))
 			 */
-			bcopy(dst->sa_data, &atmdst, sizeof(atmdst));
+			memcpy( &atmdst, dst->sa_data, sizeof(atmdst));
 			break;
 
 		default:
@@ -214,7 +214,7 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		*ad = atmdst;
 		if (atm_flags & ATM_PH_LLCSNAP) {
 			atmllc = (struct atmllc *)(ad + 1);
-			bcopy(ATMLLC_HDR, atmllc->llchdr,
+			memcpy( atmllc->llchdr, ATMLLC_HDR,
 						sizeof(atmllc->llchdr));
 			ATM_LLC_SETTYPE(atmllc, etype);
 		}

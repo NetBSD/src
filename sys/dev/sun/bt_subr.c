@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.11 2009/03/14 21:04:23 dsl Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.12 2009/03/18 17:06:50 cegger Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.11 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.12 2009/03/18 17:06:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ bt_initcmap(union bt_cmap *cm, int cmsize)
 		 * be replaced by more general colormap handling)
 		 */
 		extern u_char rasops_cmap[];
-		bcopy(rasops_cmap, &cm->cm_map[1][0], 3*16);
+		memcpy( &cm->cm_map[1][0], rasops_cmap, 3*16);
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.21 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.22 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.21 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.22 2009/03/18 17:06:52 cegger Exp $");
 
 /*
  * IPsec input processing.
@@ -434,7 +434,7 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		}
 
 		tdbi = (struct tdb_ident *)(mtag + 1);
-		bcopy(&saidx->dst, &tdbi->dst, saidx->dst.sa.sa_len);
+		memcpy( &tdbi->dst, &saidx->dst, saidx->dst.sa.sa_len);
 		tdbi->proto = sproto;
 		tdbi->spi = sav->spi;
 
@@ -749,7 +749,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		}
 
 		tdbi = (struct tdb_ident *)(mtag + 1);
-		bcopy(&saidx->dst, &tdbi->dst, sizeof(union sockaddr_union));
+		memcpy( &tdbi->dst, &saidx->dst, sizeof(union sockaddr_union));
 		tdbi->proto = sproto;
 		tdbi->spi = sav->spi;
 

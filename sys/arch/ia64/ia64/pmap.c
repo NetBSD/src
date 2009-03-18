@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.18 2009/03/18 16:00:12 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.19 2009/03/18 17:06:44 cegger Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2009/03/18 16:00:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2009/03/18 17:06:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -946,7 +946,7 @@ pmap_copy_page(paddr_t psrc, paddr_t pdst)
 {
 	vaddr_t vsrc = IA64_PHYS_TO_RR7(psrc);
 	vaddr_t vdst = IA64_PHYS_TO_RR7(pdst);
-	bcopy((void *) vsrc, (void *) vdst, PAGE_SIZE);
+	memcpy( (void *) vdst, (void *) vsrc, PAGE_SIZE);
 }
 
 

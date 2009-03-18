@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.36 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.37 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.36 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.37 2009/03/18 17:06:53 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -545,7 +545,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 	case TPOPT_MY_TSEL:
 		if (cmd == PRCO_GETOPT) {
 			ASSERT(tpcb->tp_lsuffixlen <= MAX_TSAP_SEL_LEN);
-			bcopy((void *) tpcb->tp_lsuffix, value, tpcb->tp_lsuffixlen);
+			memcpy( value, (void *) tpcb->tp_lsuffix, tpcb->tp_lsuffixlen);
 			(*mp)->m_len = tpcb->tp_lsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
@@ -553,7 +553,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 				    val_len, (*mp));
 				error = EINVAL;
 			} else {
-				bcopy(value, (void *) tpcb->tp_lsuffix, val_len);
+				memcpy( (void *) tpcb->tp_lsuffix, value, val_len);
 				tpcb->tp_lsuffixlen = val_len;
 			}
 		}
@@ -562,7 +562,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 	case TPOPT_PEER_TSEL:
 		if (cmd == PRCO_GETOPT) {
 			ASSERT(tpcb->tp_fsuffixlen <= MAX_TSAP_SEL_LEN);
-			bcopy((void *) tpcb->tp_fsuffix, value, tpcb->tp_fsuffixlen);
+			memcpy( value, (void *) tpcb->tp_fsuffix, tpcb->tp_fsuffixlen);
 			(*mp)->m_len = tpcb->tp_fsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
@@ -570,7 +570,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 				    val_len, (*mp));
 				error = EINVAL;
 			} else {
-				bcopy(value, (void *) tpcb->tp_fsuffix, val_len);
+				memcpy( (void *) tpcb->tp_fsuffix, value, val_len);
 				tpcb->tp_fsuffixlen = val_len;
 			}
 		}
@@ -645,7 +645,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 				error = ENOBUFS; goto done;
 			}
 			(*mp)->m_len = sizeof(struct tp_pmeas);
-			bcopy(tpcb->tp_p_meas, mtod(*mp), sizeof(struct tp_pmeas));
+			memcpy( mtod(*mp), tpcb->tp_p_meas, sizeof(struct tp_pmeas));
 		}
 		else {
 			error = EINVAL;

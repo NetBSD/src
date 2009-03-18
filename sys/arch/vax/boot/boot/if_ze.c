@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.15 2009/03/18 16:00:15 cegger Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.16 2009/03/18 17:06:47 cegger Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -161,7 +161,7 @@ zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	ze_setup_tdes_list[0].ze_bufaddr = alloc(SETUP_FRAME_LEN);
 	memset(ze_setup_tdes_list[0].ze_bufaddr, 0,SETUP_FRAME_LEN);
 	for (i=0; i < 16; i++)
-		bcopy(ze_myaddr,ze_setup_tdes_list[0].ze_bufaddr+(8*i),
+		memcpy(ze_setup_tdes_list[0].ze_bufaddr+(8*i), ze_myaddr,
 			ETHER_ADDR_LEN);
 	ze_setup_tdes_list[1].ze_tdes1 = ZE_TDES1_CA;
 	ze_setup_tdes_list[1].ze_bufaddr = (u_char *)ze_setup_tdes_list;
@@ -251,7 +251,7 @@ ze_put(struct iodesc *desc, void *pkt, size_t len)
 		;
 
 	/* Copy the packet to the buffer we allocated. */
-	bcopy(pkt, (void *)ze_tdes_list[0].ze_bufaddr, len);
+	memcpy( (void *)ze_tdes_list[0].ze_bufaddr, pkt, len);
 
 	/* Set the packet length in the descriptor, increasing it to the
 		minimum size if needed. */

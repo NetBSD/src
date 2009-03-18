@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.54 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: iso.c,v 1.55 2009/03/18 17:06:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.54 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.55 2009/03/18 17:06:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ iso_netof(
 		len = 0;
 	}
 
-	bcopy((void *) isoa, buf, len);
+	memcpy( buf, (void *) isoa, len);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
 		printf("iso_netof: isoa ");

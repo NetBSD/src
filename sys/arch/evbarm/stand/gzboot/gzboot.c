@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.12 2009/03/18 16:00:11 cegger Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.13 2009/03/18 17:06:44 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -175,7 +175,7 @@ readbuf(struct state *s, void *buf, size_t len)
 
 	if ((s->spinny++ & 7) == 0)
 		twiddle();
-	bcopy(s->srcbuf + s->srcoff, buf, len);
+	memcpy( buf, s->srcbuf + s->srcoff, len);
 	s->srcoff += len;
 
 	return (len);
@@ -243,7 +243,7 @@ void
 zmemcpy(unsigned char *dst, unsigned char *src, unsigned int len)
 {
 
-	bcopy(src, dst, len);
+	memcpy( dst, src, len);
 }
 
 /* gzip utility routines */

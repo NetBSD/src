@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.16 2008/06/13 08:51:11 cegger Exp $	*/
+/*	$NetBSD: zs.c,v 1.17 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.16 2008/06/13 08:51:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.17 2009/03/18 17:06:43 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -443,7 +443,7 @@ zs_cninit(void *base)
 	cs->cs_reg_data = (uint8_t *)base + 15;
 
 	/* Initialize the pending registers. */
-	bcopy(zs_init_reg, cs->cs_preg, 16);
+	memcpy( cs->cs_preg, zs_init_reg, 16);
 	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
 
 	/* XXX: Preserve BAUD rate from boot loader. */

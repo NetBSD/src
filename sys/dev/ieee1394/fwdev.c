@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.15 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.16 2009/03/18 17:06:49 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.15 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.16 2009/03/18 17:06:49 cegger Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -479,7 +479,7 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	    PAGE_SIZE/*XXX*/)) == NULL)
 		return (ENOMEM);
 
-	bcopy(&pkt, &xfer->send.hdr, sizeof(struct fw_pkt));
+	memcpy( &xfer->send.hdr, &pkt, sizeof(struct fw_pkt));
 	xfer->send.pay_len = uio->uio_resid;
 	if (uio->uio_resid > 0) {
 		if ((err = uiomove((void *)&xfer->send.payload[0],
@@ -690,7 +690,7 @@ FW_IOCTL(fw)
 			err = EINVAL;
 		break;
 	case FW_SSTBUF:
-		bcopy(ibufreq, &d->bufreq, sizeof(d->bufreq));
+		memcpy( &d->bufreq, ibufreq, sizeof(d->bufreq));
 		break;
 	case FW_GSTBUF:
 		memset(&ibufreq->rx, 0, sizeof(ibufreq->rx));
@@ -742,7 +742,7 @@ FW_IOCTL(fw)
 			break;
 		}
 
-		bcopy(fp, (void *)&xfer->send.hdr, tinfo->hdr_len);
+		memcpy( (void *)&xfer->send.hdr, fp, tinfo->hdr_len);
 		if (pay_len > 0)
 			bcopy((char *)fp + tinfo->hdr_len,
 			    (void *)xfer->send.payload, pay_len);
@@ -775,8 +775,8 @@ FW_IOCTL(fw)
 		} else {
 			pay_len = 0;
 		}
-		bcopy(&xfer->recv.hdr, fp, tinfo->hdr_len);
-		bcopy(xfer->recv.payload, (char *)fp + tinfo->hdr_len, pay_len);
+		memcpy( fp, &xfer->recv.hdr, tinfo->hdr_len);
+		memcpy( (char *)fp + tinfo->hdr_len, xfer->recv.payload, pay_len);
 out:
 		fw_xfer_free_buf(xfer);
 		break;
@@ -847,7 +847,7 @@ out:
 		fwdevlst->info_len = len;
 		break;
 	case FW_GTPMAP:
-		bcopy(fc->topology_map, data,
+		memcpy( data, fc->topology_map,
 				(fc->topology_map->crc_len + 1) * 4);
 		break;
 	case FW_GCROM:

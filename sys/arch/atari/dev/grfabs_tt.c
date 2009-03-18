@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.19 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.20 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.19 2009/03/18 16:00:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.20 2009/03/18 17:06:43 cegger Exp $");
 
 #ifdef TT_VIDEO
 /*
@@ -314,7 +314,7 @@ init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 	v->bitmap = bm;
 	v->mode   = mode;
 	v->flags  = 0;
-	bcopy(dbox, &v->display, sizeof(box_t));
+	memcpy( &v->display, dbox, sizeof(box_t));
 }
 
 /* bitmap functions */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.234 2009/03/18 10:22:37 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.235 2009/03/18 17:06:47 cegger Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.234 2009/03/18 10:22:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235 2009/03/18 17:06:47 cegger Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -486,7 +486,7 @@ pmap_mp_init(void)
 		panic("pmap_mp_init: Cannot claim a page.");
 	}
 
-	bcopy(mp_tramp_code, v, mp_tramp_code_len);
+	memcpy( v, mp_tramp_code, mp_tramp_code_len);
 	*(u_long *)(v + mp_tramp_tlb_slots) = kernel_tlb_slots;
 	*(u_long *)(v + mp_tramp_func) = (u_long)cpu_mp_startup;
 	*(u_long *)(v + mp_tramp_ci) = (u_long)cpu_args;

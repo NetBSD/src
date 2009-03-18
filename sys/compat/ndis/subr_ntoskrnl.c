@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.17 2009/03/18 16:00:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.18 2009/03/18 17:06:48 cegger Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -631,7 +631,7 @@ IoBuildAsynchronousFsdRequest(uint32_t func, device_object *dobj, void *buf, uin
 			IoFreeIrp(ip);
 			return(NULL);
 		}
-		bcopy(buf, ip->irp_assoc.irp_sysbuf, len);
+		memcpy( ip->irp_assoc.irp_sysbuf, buf, len);
 	}
 
 	if (dobj->do_flags & DO_DIRECT_IO) {
@@ -717,7 +717,7 @@ IoBuildDeviceIoControlRequest(iocode, dobj, ibuf, ilen, obuf, olen,
 			}
 		}
 		if (ilen && ibuf != NULL) {
-			bcopy(ibuf, ip->irp_assoc.irp_sysbuf, ilen);
+			memcpy( ip->irp_assoc.irp_sysbuf, ibuf, ilen);
 			memset((char *)ip->irp_assoc.irp_sysbuf + ilen, 0,
 			    buflen - ilen);
 		} else
@@ -733,7 +733,7 @@ IoBuildDeviceIoControlRequest(iocode, dobj, ibuf, ilen, obuf, olen,
 				IoFreeIrp(ip);
 				return(NULL);
 			}
-			bcopy(ibuf, ip->irp_assoc.irp_sysbuf, ilen);
+			memcpy( ip->irp_assoc.irp_sysbuf, ibuf, ilen);
 		}
 		if (olen && obuf != NULL) {
 			ip->irp_mdl = IoAllocateMdl(obuf, olen,

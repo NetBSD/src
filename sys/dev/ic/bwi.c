@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.6 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: bwi.c,v 1.7 2009/03/18 17:06:49 cegger Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.6 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.7 2009/03/18 17:06:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1749,10 +1749,10 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 		struct bwi_tpctl tpctl;
 
 		/* Backup original TX power control variables */
-		bcopy(&mac->mac_tpctl, &tpctl_orig, sizeof(tpctl_orig));
+		memcpy( &tpctl_orig, &mac->mac_tpctl, sizeof(tpctl_orig));
 		restore_tpctl = 1;
 
-		bcopy(&mac->mac_tpctl, &tpctl, sizeof(tpctl));
+		memcpy( &tpctl, &mac->mac_tpctl, sizeof(tpctl));
 		tpctl.bbp_atten = 11;
 		tpctl.tp_ctrl1 = 0;
 #ifdef notyet
@@ -2728,7 +2728,7 @@ bwi_mac_adjust_tpctl(struct bwi_mac *mac, int rf_atten_adj, int bbp_atten_adj)
 	struct bwi_tpctl tpctl;
 	int bbp_atten, rf_atten, tp_ctrl1;
 
-	bcopy(&mac->mac_tpctl, &tpctl, sizeof(tpctl));
+	memcpy( &tpctl, &mac->mac_tpctl, sizeof(tpctl));
 
 	/* NOTE: Use signed value to do calulation */
 	bbp_atten = tpctl.bbp_atten;
@@ -4834,7 +4834,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	if (sc->sc_bbp_id == BWI_BBPID_BCM4301 &&
 	    rf->rf_type != BWI_RF_T_BCM2050) {
 		rf->rf_idle_tssi0 = BWI_DEFAULT_IDLE_TSSI;
-		bcopy(bwi_txpower_map_11b, rf->rf_txpower_map0,
+		memcpy( rf->rf_txpower_map0, bwi_txpower_map_11b,
 		      sizeof(rf->rf_txpower_map0));
 		goto back;
 	}
@@ -4880,7 +4880,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			}
 
 			rf->rf_idle_tssi0 = BWI_DEFAULT_IDLE_TSSI;
-			bcopy(txpower_map, rf->rf_txpower_map0,
+			memcpy( rf->rf_txpower_map0, txpower_map,
 			      sizeof(rf->rf_txpower_map0));
 			goto back;
 		}
@@ -5172,11 +5172,11 @@ _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 				} else if (init_rf_atten < 0) {
 					lo = bwi_get_rf_lo(mac,
 					    rf_atten, 2 * bbp_atten);
-					bcopy(lo, &lo_save, sizeof(lo_save));
+					memcpy( &lo_save, lo, sizeof(lo_save));
 				} else {
 					lo = bwi_get_rf_lo(mac,
 					    init_rf_atten, 0);
-					bcopy(lo, &lo_save, sizeof(lo_save));
+					memcpy( &lo_save, lo, sizeof(lo_save));
 				}
 
 				devi_ctrl = 0;
@@ -5203,7 +5203,7 @@ _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 					rf_atten, 2 * bbp_atten);
 				if (!bwi_rf_lo_isused(mac, lo))
 					continue;
-				bcopy(lo, &lo_save, sizeof(lo_save));
+				memcpy( &lo_save, lo, sizeof(lo_save));
 
 				devi_ctrl = 3;
 				adj_rf7a = 0;
@@ -5260,7 +5260,7 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 	uint32_t devi_min;
 	int found, loop_count, adjust_state;
 
-	bcopy(src_lo, &lo_min, sizeof(lo_min));
+	memcpy( &lo_min, src_lo, sizeof(lo_min));
 	RF_LO_WRITE(mac, &lo_min);
 	devi_min = bwi_rf_lo_devi_measure(mac, devi_ctrl);
 
@@ -5290,7 +5290,7 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 			fin -= LO_ADJUST_MAX;
 		KASSERT(fin <= LO_ADJUST_MAX && fin >= LO_ADJUST_MIN);
 
-		bcopy(&lo_min, &lo_base, sizeof(lo_base));
+		memcpy( &lo_base, &lo_min, sizeof(lo_base));
 		for (;;) {
 			struct bwi_rf_lo lo;
 
@@ -5308,7 +5308,7 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 					devi_min = devi;
 					adjust_state = i;
 					found = 1;
-					bcopy(&lo, &lo_min, sizeof(lo_min));
+					memcpy( &lo_min, &lo, sizeof(lo_min));
 				}
 			}
 			if (i == fin)
@@ -5320,7 +5320,7 @@ bwi_rf_lo_measure_11g(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
 		}
 	} while (loop_count-- && found);
 
-	bcopy(&lo_min, dst_lo, sizeof(*dst_lo));
+	memcpy( dst_lo, &lo_min, sizeof(*dst_lo));
 
 #undef LO_ADJUST_MIN
 #undef LO_ADJUST_MAX
@@ -5949,7 +5949,7 @@ bwi_rf_clear_state(struct bwi_rf *rf)
 	rf->rf_lo_gain = 0;
 	rf->rf_rx_gain = 0;
 
-	bcopy(rf->rf_txpower_map0, rf->rf_txpower_map,
+	memcpy( rf->rf_txpower_map, rf->rf_txpower_map0,
 	      sizeof(rf->rf_txpower_map));
 	rf->rf_idle_tssi = rf->rf_idle_tssi0;
 }
@@ -9137,8 +9137,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 
 	memset(hdr, 0, sizeof(*hdr));
 
-	bcopy(wh->i_fc, hdr->txh_fc, sizeof(hdr->txh_fc));
-	bcopy(wh->i_addr1, hdr->txh_addr1, sizeof(hdr->txh_addr1));
+	memcpy( hdr->txh_fc, wh->i_fc, sizeof(hdr->txh_fc));
+	memcpy( hdr->txh_addr1, wh->i_addr1, sizeof(hdr->txh_addr1));
 
 	if (!mcast_pkt) {
 		uint16_t dur;
@@ -9668,8 +9668,8 @@ bwi_set_bssid(struct bwi_softc *sc, const uint8_t *bssid)
 
 	bwi_set_addr_filter(sc, BWI_ADDR_FILTER_BSSID, bssid);
 
-	bcopy(ic->ic_myaddr, buf.myaddr, sizeof(buf.myaddr));
-	bcopy(bssid, buf.bssid, sizeof(buf.bssid));
+	memcpy( buf.myaddr, ic->ic_myaddr, sizeof(buf.myaddr));
+	memcpy( buf.bssid, bssid, sizeof(buf.bssid));
 
 	n = sizeof(buf) / sizeof(val);
 	p = (const uint8_t *)&buf;

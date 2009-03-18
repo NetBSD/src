@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.16 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: ciss.c,v 1.17 2009/03/18 17:06:49 cegger Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.16 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.17 2009/03/18 17:06:49 cegger Exp $");
 
 #include "bio.h"
 
@@ -667,7 +667,7 @@ ciss_error(struct ciss_ccb *ccb)
 			switch (err->scsi_stat) {
 			case SCSI_CHECK:
 				xs->error = XS_SENSE;
-				bcopy(&err->sense[0], &xs->sense,
+				memcpy( &xs->sense, &err->sense[0],
 				    sizeof(xs->sense));
 				CISS_DPRINTF(CISS_D_CMD, (" sense=%02x %02x %02x %02x ",
 					     err->sense[0], err->sense[1], err->sense[2], err->sense[3]));
@@ -918,7 +918,7 @@ ciss_pdscan(struct ciss_softc *sc, int ld)
 	memset(&ldp->bling, 0, sizeof(ldp->bling));
 	ldp->ndrives = k;
 	ldp->xname[0] = 0;
-	bcopy(buf, ldp->tgts, k);
+	memcpy( ldp->tgts, buf, k);
 	return ldp;
 }
 
@@ -969,7 +969,7 @@ ciss_scsi_raw_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			cmd->flags |= CISS_CDB_OUT;
 		cmd->tmo = xs->timeout < 1000? 1 : xs->timeout / 1000;
 		memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
-		bcopy(xs->cmd, &cmd->cdb[0], CISS_MAX_CDB);
+		memcpy( &cmd->cdb[0], xs->cmd, CISS_MAX_CDB);
 
 		if (ciss_cmd(ccb, BUS_DMA_WAITOK,
 		    xs->xs_control & (XS_CTL_POLL|XS_CTL_NOSLEEP))) {
@@ -1048,7 +1048,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			cmd->flags |= CISS_CDB_OUT;
 		cmd->tmo = xs->timeout < 1000? 1 : xs->timeout / 1000;
 		memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
-		bcopy(xs->cmd, &cmd->cdb[0], CISS_MAX_CDB);
+		memcpy( &cmd->cdb[0], xs->cmd, CISS_MAX_CDB);
 		CISS_DPRINTF(CISS_D_CMD, ("cmd=%02x %02x %02x %02x %02x %02x ",
 			     cmd->cdb[0], cmd->cdb[1], cmd->cdb[2],
 			     cmd->cdb[3], cmd->cdb[4], cmd->cdb[5]));
@@ -1370,7 +1370,7 @@ ciss_blink(struct ciss_softc *sc, int ld, int pd, int stat,
 
 	ldp->bling.pdtab[ldp->tgts[pd]] = stat == BIOC_SBUNBLINK? 0 :
 	    CISS_BLINK_ALL;
-	bcopy(&ldp->bling, blink, sizeof(*blink));
+	memcpy( blink, &ldp->bling, sizeof(*blink));
 
 	ccb = ciss_get_ccb(sc);
 	if (ccb == NULL)
