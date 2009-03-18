@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.36 2009/03/18 10:22:45 cegger Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.37 2009/03/18 15:32:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.36 2009/03/18 10:22:45 cegger Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.37 2009/03/18 15:32:27 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -182,22 +182,27 @@ rumpuser_unmap(void *addr, size_t len)
 }
 
 void *
-rumpuser_filemmap(int fd, off_t offset, size_t len, int shared,
-	int dotruncate, int *error)
+rumpuser_filemmap(int fd, off_t offset, size_t len, int flags, int *error)
 {
 	void *rv;
-	int flags;
+	int mmflags, prot;
 
-	if (dotruncate)
+	if (flags & RUMPUSER_FILEMMAP_TRUNCATE)
 		ftruncate(fd, offset + len);
 
-	flags = MAP_FILE;
-	if (shared)
-		flags |= MAP_SHARED;
+	mmflags = MAP_FILE;
+	if (flags & RUMPUSER_FILEMMAP_SHARED)
+		mmflags |= MAP_SHARED;
 	else
-		flags |= MAP_PRIVATE;
+		mmflags |= MAP_PRIVATE;
 
-	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, flags, fd, offset);
+	prot = 0;
+	if (flags & RUMPUSER_FILEMMAP_READ)
+		prot |= PROT_READ;
+	if (flags & RUMPUSER_FILEMMAP_WRITE)
+		prot |= PROT_WRITE;
+
+	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, mmflags, fd, offset);
 	if (rv == MAP_FAILED) {
 		*error = errno;
 		return NULL;
@@ -205,6 +210,13 @@ rumpuser_filemmap(int fd, off_t offset, size_t len, int shared,
 
 	*error = 0;
 	return rv;
+}
+
+int
+rumpuser_memsync(void *addr, size_t len, int *error)
+{
+
+	DOCALL_KLOCK(int, (msync(addr, len, MS_SYNC)));
 }
 
 int
