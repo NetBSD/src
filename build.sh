@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.198.2.2 2009/03/18 05:37:59 snj Exp $
+#	$NetBSD: build.sh,v 1.198.2.3 2009/03/18 05:39:06 snj Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -178,7 +178,7 @@ initdefaults()
 	uname_m=$(uname -m 2>/dev/null)
 	uname_p=$(uname -p 2>/dev/null || echo "unknown")
 	case "${uname_p}" in
-	''|unknown|*[^a-z0-9]*) uname_p="${uname_m}" ;;
+	''|unknown|*[^-_A-Za-z0-9]*) uname_p="${uname_m}" ;;
 	esac
 
 	# If $PWD is a valid name of the current directory, POSIX mandates
@@ -1209,7 +1209,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.198.2.2 2009/03/18 05:37:59 snj Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.198.2.3 2009/03/18 05:39:06 snj Exp $
 # with these arguments: ${_args}
 #
 
