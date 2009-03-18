@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.50 2008/12/02 20:48:24 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.51 2009/03/18 02:49:34 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.50 2008/12/02 20:48:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.51 2009/03/18 02:49:34 uwe Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -223,6 +223,8 @@ hd64461video_attach(device_t parent, device_t self, void *aux)
 
 	/* update chip status */
 	hd64461video_update_videochip_status(&hd64461video_chip);
+
+	hd64461video_display_onoff(&hd64461video_chip, true);
 //	hd64461video_set_display_mode(&hd64461video_chip);
 
 	if (hd64461video_chip.console)
