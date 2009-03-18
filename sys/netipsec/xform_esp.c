@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.18 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.19 2009/03/18 15:14:32 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.18 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.19 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -353,7 +353,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		if (tdbi->proto == sav->sah->saidx.proto &&
 		    tdbi->spi == sav->spi &&
-		    !bcmp(&tdbi->dst, &sav->sah->saidx.dst,
+		    !memcmp(&tdbi->dst, &sav->sah->saidx.dst,
 			  sizeof(union sockaddr_union)))
 			break;
 	}
@@ -561,7 +561,7 @@ esp_input_cb(struct cryptop *crp)
 			ptr = (tc + 1);
 
 			/* Verify authenticator */
-			if (bcmp(ptr, aalg, esph->authsize) != 0) {
+			if (memcmp(ptr, aalg, esph->authsize) != 0) {
 				DPRINTF(("esp_input_cb: "
 		    "authentication hash mismatch for packet in SA %s/%08lx\n",
 				    ipsec_address(&saidx->dst),

@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.9 2008/11/07 00:20:13 dyoung Exp $ */
+/* $NetBSD: if_srt.c,v 1.10 2009/03/18 15:14:31 cegger Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.9 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.10 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -114,7 +114,7 @@ static RT *find_rt(SOFTC *sc, int af, ...)
 	  if ((ia.s_addr & ipv4_masks[r->srcmask]) == r->srcmatch.v4.s_addr) return(r);
 	  break;
        case AF_INET6:
-	  if ((r->srcmask >= 8) && bcmp(&ia6,&r->srcmatch.v6,r->srcmask/8)) continue;
+	  if ((r->srcmask >= 8) && memcmp(&ia6,&r->srcmatch.v6,r->srcmask/8)) continue;
 	  if ( (r->srcmask % 8) &&
 	       ( ( ia6.s6_addr[r->srcmask/8] ^
 		   r->srcmatch.v6.s6_addr[r->srcmask/8] ) &

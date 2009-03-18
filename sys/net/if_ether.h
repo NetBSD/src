@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.55 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.56 2009/03/18 15:14:31 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -230,8 +230,8 @@ struct ether_multistep {
 {									\
 	for ((enm) = LIST_FIRST(&(ec)->ec_multiaddrs);			\
 	    (enm) != NULL &&						\
-	    (bcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
-	     bcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
+	    (memcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
+	     memcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
 		(enm) = LIST_NEXT((enm), enm_list));			\
 }
 

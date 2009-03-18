@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.84 2008/06/11 12:59:10 tsutsui Exp $ */
+/*	$NetBSD: ite.c,v 1.85 2009/03/18 15:14:29 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.84 2008/06/11 12:59:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.85 2009/03/18 15:14:29 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1026,7 +1026,7 @@ ite_filter(u_char c, enum caller caller)
 		 * to the above table. This is *nasty* !
 		 */
 		if (c >= 0x4c && c <= 0x4f && kbd_ite->cursor_appmode
-		    && !bcmp(str, "\x03\x1b[", 3) &&
+		    && !memcmp(str, "\x03\x1b[", 3) &&
 		    strchr("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 

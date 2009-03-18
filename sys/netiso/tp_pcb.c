@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.37 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.38 2009/03/18 15:14:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.37 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.38 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -897,7 +897,7 @@ tp_tselinuse(int tlen, const char *tsel, struct sockaddr_iso *siso,
 			l = t->tp_nextlisten;
 		} else
 			break;
-		if (tlen == t->tp_lsuffixlen && bcmp(tsel, t->tp_lsuffix, tlen) == 0) {
+		if (tlen == t->tp_lsuffixlen && memcmp(tsel, t->tp_lsuffix, tlen) == 0) {
 			if (t->tp_flags & TPF_GENERAL_ADDR) {
 				if (siso == 0 || reuseaddr == 0)
 					return 1;

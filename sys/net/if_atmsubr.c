@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.43 2008/12/17 20:51:36 cegger Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.44 2009/03/18 15:14:31 cegger Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.43 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.44 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -269,7 +269,7 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 	    if (m->m_len < sizeof(*alc) && (m = m_pullup(m, sizeof(*alc))) == 0)
 		  return; /* failed */
 	    alc = mtod(m, struct atmllc *);
-	    if (bcmp(alc, ATMLLC_HDR, 6)) {
+	    if (memcmp(alc, ATMLLC_HDR, 6)) {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	      printf("%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
 		  ifp->if_xname, ATM_PH_VPI(ah), ATM_PH_VCI(ah));

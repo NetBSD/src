@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.32 2007/12/20 19:53:35 dyoung Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.33 2009/03/18 15:14:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.32 2007/12/20 19:53:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.33 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -282,9 +282,9 @@ iso_cmpnetaddr(void *v, struct sockaddr *nm, int which)
 		dump_isoaddr(siso);
 	}
 #endif
-	if (name->siso_tlen && bcmp(TSEL(name), TSEL(siso), name->siso_tlen))
+	if (name->siso_tlen && memcmp(TSEL(name), TSEL(siso), name->siso_tlen))
 		return (0);
-	return (bcmp((void *) name->siso_data,
+	return (memcmp((void *) name->siso_data,
 		     (void *) siso->siso_data, name->siso_nlen) == 0);
 }
 

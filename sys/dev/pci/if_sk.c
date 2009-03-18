@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.57 2009/02/13 23:31:23 bouyer Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.58 2009/03/18 15:14:31 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.57 2009/02/13 23:31:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.58 2009/03/18 15:14:31 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -631,7 +631,7 @@ allmulti:
 		/* First find the tail of the list. */
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 				 ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto allmulti;
