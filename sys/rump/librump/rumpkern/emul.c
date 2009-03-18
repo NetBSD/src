@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.80 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: emul.c,v 1.81 2009/03/18 17:56:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.80 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.81 2009/03/18 17:56:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -101,6 +101,7 @@ const char *domainname;
 int domainnamelen;
 
 const struct filterops seltrue_filtops;
+const struct filterops sig_filtops;
 
 #define DEVSW_SIZE 255
 const struct bdevsw *bdevsw0[DEVSW_SIZE]; /* XXX storage size */
@@ -150,6 +151,16 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	strlcpy(kaddr, uaddr, len);
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
+	return 0;
+}
+
+int
+copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
+{
+
+	strlcpy(uaddr, kaddr, len);
+	if (done)
+		*done = strlen(uaddr)+1; /* includes termination */
 	return 0;
 }
 
@@ -493,20 +504,6 @@ sigpending1(struct lwp *l, sigset_t *ss)
 	panic("%s: not implemented", __func__);
 }
 
-void
-knote_fdclose(int fd)
-{
-
-	/* since we don't add knotes, we don't have to remove them */
-}
-
-int
-seltrue_kqfilter(dev_t dev, struct knote *kn)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
 int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
@@ -710,3 +707,36 @@ cpu_reboot(int howto, char *bootstr)
 #undef curlwp
 struct lwp *curlwp = &lwp0;
 #endif
+
+/*
+ * XXX: from sys_select.c, see that file for license.
+ * (these will go away really soon in favour of the real sys_select.c)
+ * ((really, the select code just needs cleanup))
+ * (((seriously)))
+ */
+int
+inittimeleft(struct timeval *tv, struct timeval *sleeptv)
+{
+	if (itimerfix(tv))
+		return -1;
+	getmicrouptime(sleeptv);
+	return 0;
+}
+
+int
+gettimeleft(struct timeval *tv, struct timeval *sleeptv)
+{
+	/*
+	 * We have to recalculate the timeout on every retry.
+	 */
+	struct timeval slepttv;
+	/*
+	 * reduce tv by elapsed time
+	 * based on monotonic time scale
+	 */
+	getmicrouptime(&slepttv);
+	timeradd(tv, sleeptv, tv);
+	timersub(tv, &slepttv, tv);
+	*sleeptv = slepttv;
+	return tvtohz(tv);
+}

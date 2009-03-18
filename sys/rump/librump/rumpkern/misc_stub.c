@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.18 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.19 2009/03/18 17:56:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.18 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.19 2009/03/18 17:56:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -64,13 +64,6 @@ preempt(void)
 {
 
 	/* see yield */
-	return;
-}
-
-void
-knote(struct klist *list, long hint)
-{
-
 	return;
 }
 
