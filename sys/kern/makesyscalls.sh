@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.83 2009/02/20 17:56:36 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.84 2009/03/18 17:27:04 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -616,12 +616,12 @@ function putent(type, compatwrap) {
 	argarg = "NULL"
 	argsize = 0;
 	if (argc) {
-		argarg = "&arg"
-		argsize = "sizeof(arg)"
-		printf("\tstruct %s%s_args arg;\n\n", compatwrap_, funcname) \
+		argarg = "&callarg"
+		argsize = "sizeof(callarg)"
+		printf("\tstruct %s%s_args callarg;\n\n",compatwrap_,funcname) \
 		    > rumpcalls
 		for (i = 1; i <= argc; i++) {
-			printf("\tSPARG(&arg, %s) = %s;\n", \
+			printf("\tSPARG(&callarg, %s) = %s;\n", \
 			    argname[i], argname[i]) > rumpcalls
 		}
 		printf("\n") > rumpcalls
