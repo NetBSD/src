@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.6 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: clock.c,v 1.7 2009/03/18 10:22:31 cegger Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2009/03/18 10:22:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ int clock_enable;		/* XXX to be removed XXX */
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int s;
 

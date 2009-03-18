@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.13 2009/02/13 22:41:01 apb Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.14 2009/03/18 10:22:27 cegger Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -877,7 +877,7 @@ initarm(void *arg)
 }
 
 static void
-read_system_serial()
+read_system_serial(void)
 {
 #define GUMSTIX_SYSTEM_SERIAL_ADDR	0
 #define GUMSTIX_SYSTEM_SERIAL_SIZE	8

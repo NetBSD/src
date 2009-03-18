@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10 2009/03/14 21:04:12 dsl Exp $ 	*/
+/*	$NetBSD: bus_space.c,v 1.11 2009/03/18 10:22:32 cegger Exp $ 	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2009/03/18 10:22:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,13 +96,13 @@ mipsco_bus_space_set_aligned_stride(bus_space_tag_t bst, unsigned int shift)
 static int malloc_safe = 0;
 
 void
-mipsco_bus_space_malloc_set_safe()
+mipsco_bus_space_malloc_set_safe(void)
 {
 	malloc_safe = EX_MALLOCOK;
 }
 
 int
-mipsco_bus_space_extent_malloc_flag()
+mipsco_bus_space_extent_malloc_flag(void)
 {
 	return (malloc_safe);
 }

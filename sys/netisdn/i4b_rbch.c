@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.24 2009/03/14 14:46:11 dsl Exp $
+ *	$Id: i4b_rbch.c,v 1.25 2009/03/18 10:22:43 cegger Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.24 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.25 2009/03/18 10:22:43 cegger Exp $");
 
 #include "isdnbchan.h"
 
@@ -320,7 +320,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 isdnbchanattach(void *dummy)
 #else
-isdnbchanattach()
+isdnbchanattach(void)
 #endif
 {
 	int i;

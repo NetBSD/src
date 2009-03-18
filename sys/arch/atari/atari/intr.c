@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: intr.c,v 1.18 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ int idepth;
 volatile int ssir;
 
 void
-intr_init()
+intr_init(void)
 {
 	int i;
 

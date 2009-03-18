@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: efinet.c,v 1.3 2009/03/18 10:22:31 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -205,7 +205,7 @@ efinet_init(struct iodesc *desc, void *machdep_hint)
 }
 
 void
-efinet_init_driver()
+efinet_init_driver(void)
 {
 	EFI_STATUS	status;
 	UINTN		sz;

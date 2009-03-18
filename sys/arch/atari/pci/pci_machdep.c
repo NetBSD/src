@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.46 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.47 2009/03/18 10:22:25 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.46 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47 2009/03/18 10:22:25 cegger Exp $");
 
 #include "opt_mbtype.h"
 
@@ -220,7 +220,7 @@ pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach
  * later at pcibusattach.
  */
 void
-init_pci_bus()
+init_pci_bus(void)
 {
 	pci_chipset_tag_t	pc = NULL; /* XXX */
 	pcitag_t		tag;
@@ -312,7 +312,7 @@ overlap_pci_areas(struct pci_memreg *p, struct pci_memreg *self, u_int addr, u_i
  * in such a way that they are placed as closed as possible together.
  */
 static void
-enable_pci_devices()
+enable_pci_devices(void)
 {
     PCI_MEMREG memlist;
     PCI_MEMREG iolist;

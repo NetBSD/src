@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.20 2009/03/14 21:04:03 dsl Exp $	*/
+/*	$NetBSD: cc.c,v 1.21 2009/03/18 10:22:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.20 2009/03/14 21:04:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.21 2009/03/18 10:22:23 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +53,7 @@ vaddr_t CUSTOMADDR, CUSTOMbase;
 
 /* init all the "custom chips" */
 void
-custom_chips_init()
+custom_chips_init(void)
 {
 	cc_init_chipmem();
 	cc_init_vbl();
@@ -128,7 +128,7 @@ remove_vbl_function(struct vbl_node *n)
 
 /* Level 3 hardware interrupt */
 void
-vbl_handler()
+vbl_handler(void)
 {
 	struct vbl_node *n;
 
@@ -146,7 +146,7 @@ vbl_handler()
 }
 
 void
-cc_init_vbl()
+cc_init_vbl(void)
 {
 	LIST_INIT(&vbl_list);
 	/*
@@ -161,13 +161,13 @@ cc_init_vbl()
  */
 
 void
-cc_init_blitter()
+cc_init_blitter(void)
 {
 }
 
 /* test twice to cover blitter bugs if BLTDONE (BUSY) is set it is not done. */
 int
-is_blitter_busy()
+is_blitter_busy(void)
 {
 	u_short bb;
 
@@ -178,7 +178,7 @@ is_blitter_busy()
 }
 
 void
-wait_blit()
+wait_blit(void)
 {
 	/*
 	 * V40 state this covers all blitter bugs.
@@ -188,7 +188,7 @@ wait_blit()
 }
 
 void
-blitter_handler()
+blitter_handler(void)
 {
 	custom.intreq = INTF_BLIT;
 }
@@ -250,7 +250,7 @@ set_blitter_pointers(void *a, void *b, void *c, void *d)
  * sleep/wakeup system newly introduced in the vbl manager
  */
 void
-wait_tof()
+wait_tof(void)
 {
 	/*
 	 * wait until bottom of frame.
@@ -298,7 +298,7 @@ install_copper_list(cop_t *l)
 
 
 void
-cc_init_copper()
+cc_init_copper(void)
 {
 }
 
@@ -306,7 +306,7 @@ cc_init_copper()
  * level 3 interrupt
  */
 void
-copper_handler()
+copper_handler(void)
 {
 	custom.intreq = INTF_COPER;
 }
@@ -324,7 +324,7 @@ struct audio_channel channel[4];
 struct vbl_node audio_vbl_node;
 
 void
-cc_init_audio()
+cc_init_audio(void)
 {
 	int i;
 
@@ -348,7 +348,7 @@ cc_init_audio()
  * Audio Interrupt Handler
  */
 void
-audio_handler()
+audio_handler(void)
 {
 	u_short audio_dma, disable_dma, flag, ir;
 	int i;
@@ -466,7 +466,7 @@ static u_long   chip_total;		/* total free. */
 static u_long   chip_size;		/* size of it all. */
 
 void
-cc_init_chipmem()
+cc_init_chipmem(void)
 {
 	int s = splhigh ();
 	struct mem_node *mem;

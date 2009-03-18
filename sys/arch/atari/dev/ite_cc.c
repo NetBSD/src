@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.30 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.31 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.30 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.31 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -287,7 +287,7 @@ grfccprint(void *auxp, const char *pnp)
  * called from grf_cc to return console priority
  */
 int
-grfcc_cnprobe()
+grfcc_cnprobe(void)
 {
 	return(CN_INTERNAL);
 }

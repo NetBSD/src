@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.3 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: exec.c,v 1.4 2009/03/18 10:22:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ static int	elf64_exec(struct preloaded_file *amp);
 struct file_format ia64_elf = { elf64_loadfile, elf64_exec };
 
 static __inline u_int64_t
-disable_ic()
+disable_ic(void)
 {
 	u_int64_t psr;
 	__asm __volatile("mov %0=psr;;" : "=r" (psr));

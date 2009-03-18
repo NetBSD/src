@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.35 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: kbd.c,v 1.36 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.35 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.36 2009/03/18 10:22:24 cegger Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -243,7 +243,7 @@ kbdattach(struct device *pdp, struct device *dp, void *auxp)
 }
 
 void
-kbdenable()
+kbdenable(void)
 {
 	int	s, code;
 
@@ -544,7 +544,7 @@ static	u_char sound[] = {
 };
 
 void
-kbdbell()
+kbdbell(void)
 {
 	register int	i, sps;
 
@@ -607,7 +607,7 @@ kbd_bell_sparms(u_int volume, u_int pitch, u_int duration)
 }
 
 int
-kbdgetcn()
+kbdgetcn(void)
 {
 	u_char	code;
 	int	s = spltty();

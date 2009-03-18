@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2009/03/14 15:36:08 dsl Exp $	 */
+/*	$NetBSD: main.c,v 1.16 2009/03/18 10:22:30 cegger Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -86,7 +86,7 @@ print_banner(void)
 }
 
 int
-main()
+main(void)
 {
         char c;
 

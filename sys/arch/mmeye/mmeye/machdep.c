@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2009/03/14 21:04:13 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2009/03/18 10:22:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2009/03/14 21:04:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2009/03/18 10:22:32 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -122,7 +122,7 @@ struct mmeye_intrhand {
  * This is called from main() in kern/main.c.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 
 	sh_startup();
@@ -275,7 +275,7 @@ initSH3(void *pc)	/* XXX return address */
  * initialize the system console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted;
 
@@ -291,7 +291,7 @@ consinit()
  * : BSC(Bus State Controller)
  */
 void
-InitializeBsc()
+InitializeBsc(void)
 {
 #ifdef NOPCMCIA
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.7 2009/03/17 18:19:15 dsl Exp $ */
+/*	$NetBSD: ctu.c,v 1.8 2009/03/18 10:22:37 cegger Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -106,7 +106,7 @@ ctustrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsi
 }
 
 void
-cturintr()
+cturintr(void)
 {
 	int	status;
 
@@ -147,7 +147,7 @@ cturintr()
 }
 
 void
-ctutintr()
+ctutintr(void)
 {
 	int	c;
 

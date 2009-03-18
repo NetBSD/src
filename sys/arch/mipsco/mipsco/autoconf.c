@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2009/03/18 10:22:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2009/03/18 10:22:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
  * for attached scsi devices.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
   	int s;
 
@@ -137,7 +137,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot(&booted_device, &booted_partition);
 

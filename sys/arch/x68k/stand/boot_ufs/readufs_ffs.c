@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.11 2009/03/14 15:36:15 dsl Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.12 2009/03/18 10:22:38 cegger Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -25,7 +25,7 @@ static int get_ffs_inode(ino32_t ino, union ufs_dinode *dibuf);
  * If it is an FFS, save information from the superblock.
  */
 int
-try_ffs()
+try_ffs(void)
 {
 	union {
 		struct fs	sblk;

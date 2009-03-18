@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.14 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.15 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.15 2009/03/18 10:22:24 cegger Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -74,7 +74,7 @@ fpu_describe(int type)
 }
 
 int
-fpu_probe()
+fpu_probe(void)
 {
 	/*
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.

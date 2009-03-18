@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.22 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.23 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.22 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.23 2009/03/18 10:22:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -873,7 +873,7 @@ static int      troll_cnt;
  * NOTES:		This is based on the clock.
  */
 float
-troll_random()
+troll_random(void)
 {
 	extern struct timeval time;
 	long            t = time.tv_usec % 100;

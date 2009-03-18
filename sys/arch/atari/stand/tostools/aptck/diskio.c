@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.4 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: diskio.c,v 1.5 2009/03/18 10:22:26 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -136,7 +136,7 @@ disk_write(dd, start, count, buffer)
 }
 
 static int
-ahdi_compatible()
+ahdi_compatible(void)
 {
 	static int	ahdi_compat;
 

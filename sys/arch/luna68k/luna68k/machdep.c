@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.66 2009/03/14 21:04:11 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.67 2009/03/18 10:22:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:31 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -206,7 +206,7 @@ luna68k_init()
  * Console initialization: called early on from main,
  */
 void
-consinit()
+consinit(void)
 {
 	if (sysconsole == 0)
 		syscnattach(0);
@@ -233,7 +233,7 @@ consinit()
  * cpu_startup: allocate memory for variable-sized tables.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -315,7 +315,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 }
 
 void
-identifycpu()
+identifycpu(void)
 {
 	extern int cputype;
 	const char *cpu;
@@ -429,7 +429,7 @@ haltsys:
  * Initialize the kernel crash dump header.
  */
 void
-cpu_init_kcore_hdr()
+cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -498,7 +498,7 @@ cpu_init_kcore_hdr()
 #define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
 
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 
 	return btodb(MDHDRSIZE);
@@ -546,7 +546,7 @@ long	dumplo = 0;		/* blocks */
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
@@ -586,7 +586,7 @@ cpu_dumpconf()
  * Dump physical memory onto the dump device.  Called by cpu_reboot().
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */

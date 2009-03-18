@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.13 2009/03/14 15:36:08 dsl Exp $	*/
+/*	$NetBSD: pxe.c,v 1.14 2009/03/18 10:22:30 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -199,7 +199,7 @@ static int pxe_inited;
 static struct iodesc desc;
 
 int
-pxe_netif_open()
+pxe_netif_open(void)
 {
 	t_PXENV_UDP_OPEN *uo = (void *) pxe_command_buf;
 
@@ -253,7 +253,7 @@ pxe_netif_close(int sock)
 }
 
 void
-pxe_netif_shutdown()
+pxe_netif_shutdown(void)
 {
 
 	pxe_fini();

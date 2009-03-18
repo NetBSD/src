@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.13 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.14 2009/03/18 10:22:25 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.13 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.14 2009/03/18 10:22:25 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ static u_int16_t imask_enable = 0xffff;
 static isa_intr_info_t milan_isa_iinfo[MILAN_MAX_ISA_INTS];
 
 void
-isa_bus_init()
+isa_bus_init(void)
 {
 	volatile u_int8_t	*icu;
 
@@ -96,7 +96,7 @@ isa_bus_init()
  * array for enabled interrupts.
  */
 static void
-new_imask()
+new_imask(void)
 {
 	int		irq;
 	u_int16_t	nmask = 0;

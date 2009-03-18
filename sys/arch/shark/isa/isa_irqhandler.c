@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.23 2009/03/16 23:11:15 dsl Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.24 2009/03/18 10:22:36 cegger Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.23 2009/03/16 23:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.24 2009/03/18 10:22:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ void stray_irqhandler(u_int);
  */
 
 void
-irq_init()
+irq_init(void)
 {
 	int loop;
 
@@ -269,7 +269,7 @@ irq_release(int irq, irqhandler_t *handler)
  * happen very much anyway.
  */
 void
-irq_calculatemasks()
+irq_calculatemasks(void)
 {
 	int          irq, level;
 	irqhandler_t *ptr;

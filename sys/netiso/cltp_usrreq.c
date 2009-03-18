@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.36 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.37 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.36 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.37 2009/03/18 10:22:44 cegger Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.36 2009/03/14 21:04:25 dsl Exp $")
  * Per ISO 8602, December, 1987.
  */
 void
-cltp_init()
+cltp_init(void)
 {
 
 	cltb.isop_next = cltb.isop_prev = &cltb;

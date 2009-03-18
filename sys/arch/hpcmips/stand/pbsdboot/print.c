@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 2000/08/29 15:10:20 takemura Exp $	*/
+/*	$NetBSD: print.c,v 1.6 2009/03/18 10:22:29 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -144,7 +144,7 @@ set_debug_log(TCHAR* filename)
 }
 
 void
-close_debug_log()
+close_debug_log(void)
 {
 	if (debug_log != INVALID_HANDLE_VALUE) {
 		CloseHandle(debug_log);

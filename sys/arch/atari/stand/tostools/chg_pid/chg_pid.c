@@ -1,4 +1,4 @@
-/*	$NetBSD: chg_pid.c,v 1.5 2009/03/14 21:04:07 dsl Exp $	*/
+/*	$NetBSD: chg_pid.c,v 1.6 2009/03/18 10:22:26 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -95,7 +95,7 @@ int	read_block	PROTO((void *, int, int));
 int	write_block	PROTO((void *, int, int));
 void	set_csum	PROTO((char *));
 
-const char version[] = "$Revision: 1.5 $";
+const char version[] = "$Revision: 1.6 $";
 
 char	*Progname = NULL;		/* What are we called		*/
 int	t_flag    = 0;			/* Test -- don't actually do it	*/
@@ -313,7 +313,7 @@ char	*buf;
 	*--p = (0x1234 - csum) & 0xffff;
 }
 
-void usage()
+void usage(void)
 {
 	eprintf("Usage: %s [-hVwt] [ -o <output file>] <driveno> <partno> "
 		    "<newid>\r\n", Progname);
@@ -321,7 +321,7 @@ void usage()
 }
 
 void
-help()
+help(void)
 {
 	eprintf("\r
 Change partition identifiers\r

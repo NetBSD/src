@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.41 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.42 2009/03/18 10:22:31 cegger Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.41 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.42 2009/03/18 10:22:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1613,14 +1613,14 @@ ADBOp(Ptr buffer, adbComp *compRout, Ptr data, short commandNum)
 #endif
 
 int
-setsoftadb()
+setsoftadb(void)
 {
 	callout_reset(&adb_soft_intr_ch, 1, (void *)adb_soft_intr, NULL);
 	return 0;
 }
 
 void
-adb_cuda_autopoll()
+adb_cuda_autopoll(void)
 {
 	volatile int flag = 0;
 	int result;

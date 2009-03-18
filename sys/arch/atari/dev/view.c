@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.28 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: view.c,v 1.29 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.28 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.29 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ viewattach(int cnt)
 
 /* this function is called early to set up a display. */
 int
-viewprobe()
+viewprobe(void)
 {
     	int i;
 	

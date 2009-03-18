@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.10 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: cat.c,v 1.11 2009/03/18 10:22:45 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,11 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)cat.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: cat.c,v 1.10 2005/12/11 12:25:20 christos Exp $");
+__RCSID("$NetBSD: cat.c,v 1.11 2009/03/18 10:22:45 cegger Exp $");
 #endif
 #endif /* not lint */
 
-main()
+main(void)
 {
 	register int fd;
 	char c;

@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.c,v 1.13 2009/03/14 15:36:24 dsl Exp $	*/
+/*	$NetBSD: llparse.c,v 1.14 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.13 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.14 2009/03/18 10:22:44 cegger Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -31,7 +31,7 @@ LLtoken		lltoken;
 void		prt_token();
 
 int
-llparse()
+llparse(void)
 {
 	register int		havetoken = false;
 	register int		sym;
@@ -331,7 +331,7 @@ llpushattr(LLattrib attr)
 }
 
 void
-llfinprod()
+llfinprod(void)
 {
 	IFDEBUG(L)
 		printf("llfinprod() enter\n");
@@ -346,7 +346,7 @@ llfinprod()
 #ifndef LINT
 #ifdef DEBUG
 void
-dump_parse_stack()
+dump_parse_stack(void)
 {
 	int ind;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.233 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.234 2009/03/18 10:22:37 cegger Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.233 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.234 2009/03/18 10:22:37 cegger Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1223,7 +1223,7 @@ cpu_pmap_init(struct cpu_info *ci)
  * Called during vm_init().
  */
 void
-pmap_init()
+pmap_init(void)
 {
 	struct vm_page *pg;
 	struct pglist pglist;
@@ -1338,7 +1338,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
  * Create and return a physical map.
  */
 struct pmap *
-pmap_create()
+pmap_create(void)
 {
 	struct pmap *pm;
 
@@ -2268,7 +2268,7 @@ pmap_kprotect(vaddr_t va, vm_prot_t prot)
  * Return the number bytes that pmap_dumpmmu() will dump.
  */
 int
-pmap_dumpsize()
+pmap_dumpsize(void)
 {
 	int	sz;
 
@@ -3483,7 +3483,7 @@ db_dump_pv(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
  * Test ref/modify handling.  */
 void pmap_testout(void);
 void
-pmap_testout()
+pmap_testout(void)
 {
 	vaddr_t va;
 	volatile int *loc;

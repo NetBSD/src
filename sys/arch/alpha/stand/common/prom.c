@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.13 2009/03/14 21:04:03 dsl Exp $ */
+/* $NetBSD: prom.c,v 1.14 2009/03/18 10:22:22 cegger Exp $ */
 
 /*  
  * Mach Operating System
@@ -43,7 +43,7 @@ static int test_getchar(int *);
 static void putonechar(int c);
 
 void
-init_prom_calls()
+init_prom_calls(void)
 {
 	extern struct prom_vec prom_dispatch_v;
 	struct rpb *r;
@@ -75,7 +75,7 @@ test_getchar(int *xc)
 
 #if !defined(NO_GETCHAR)
 int
-getchar()
+getchar(void)
 {
 	int c;
 

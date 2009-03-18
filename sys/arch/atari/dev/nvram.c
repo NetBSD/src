@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.15 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: nvram.c,v 1.16 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.15 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.16 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -174,7 +174,7 @@ nvram_uio(struct uio *uio)
 }
 
 static u_char
-nvram_csum()
+nvram_csum(void)
 {
 	u_char	csum;
 	int	nreg;

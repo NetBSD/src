@@ -1,4 +1,4 @@
-/*	$NetBSD: rawwrite.c,v 1.9 2009/03/14 21:04:08 dsl Exp $	*/
+/*	$NetBSD: rawwrite.c,v 1.10 2009/03/18 10:22:26 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -53,7 +53,7 @@ int	v_flag = 0;	/* Verbose (a dot for each track copied)	*/
 int	V_flag = 0;	/* Show version					*/
 char	*progname;
 
-const char version[] = "$Revision: 1.9 $";
+const char version[] = "$Revision: 1.10 $";
 
 int
 main(int argc, char *argv[])
@@ -151,14 +151,14 @@ brwrite(char *buf, int trk, int spt)
 	}
 }
 static void
-usage()
+usage(void)
 {
 	eprintf("Usage: %s [-hvVw] [-o <log-file>] <infile>\r\n", progname);
 	xexit(1);
 }
 
 static void
-help()
+help(void)
 {
 	eprintf("\r
 write a raw floppy-image to disk\r

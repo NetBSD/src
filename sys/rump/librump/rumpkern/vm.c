@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.52 2009/02/06 18:29:19 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.53 2009/03/18 10:22:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.52 2009/02/06 18:29:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.53 2009/03/18 10:22:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -249,7 +249,7 @@ uao_detach(struct uvm_object *uobj)
 static kmutex_t cachepgmtx;
 
 void
-rumpvm_init()
+rumpvm_init(void)
 {
 
 	uvmexp.free = 1024*1024; /* XXX */
