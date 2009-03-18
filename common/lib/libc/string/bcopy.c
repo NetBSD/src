@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.8 2008/03/26 06:19:36 apb Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.9 2009/03/18 12:25:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.8 2008/03/26 06:19:36 apb Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.9 2009/03/18 12:25:06 tsutsui Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: bcopy.c,v 1.8 2008/03/26 06:19:36 apb Exp $");
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#if !defined(MEMCOPY) && defined(_STANDALONE)
+#include <lib/libsa/stand.h>
+#endif
 #endif
 
 #ifdef _FORTIFY_SOURCE
