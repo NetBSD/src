@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.223 2009/02/13 22:41:04 apb Exp $
+	$NetBSD: syscalls.master,v 1.224 2009/03/18 17:51:17 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -651,7 +651,7 @@
 341	STD		{ int|sys||pmc_get_info(int ctr, int op, void *args); }
 342	STD		{ int|sys||pmc_control(int ctr, int op, void *args); }
 343	STD 		{ int|sys||rasctl(void *addr, size_t len, int op); }
-344	STD 		{ int|sys||kqueue(void); }
+344	STD	RUMP	{ int|sys||kqueue(void); }
 345	COMPAT_50 MODULAR { int|sys||kevent(int fd, \
 			    const struct kevent *changelist, size_t nchanges, \
 			    struct kevent *eventlist, size_t nevents, \
@@ -842,7 +842,7 @@
 434	STD 		{ int|sys|50|_lwp_park(const struct timespec *ts, \
 				lwpid_t unpark, const void *hint, \
 				const void *unparkhint); }
-435	STD 		{ int|sys|50|kevent(int fd, \
+435	STD  RUMP	{ int|sys|50|kevent(int fd, \
 			    const struct kevent *changelist, size_t nchanges, \
 			    struct kevent *eventlist, size_t nevents, \
 			    const struct timespec *timeout); }
