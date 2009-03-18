@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.32 2009/03/18 17:06:53 cegger Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.33 2009/03/18 22:08:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.32 2009/03/18 17:06:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.33 2009/03/18 22:08:57 he Exp $");
 
 #include "opt_iso.h"
 
@@ -355,7 +355,7 @@ tp_newsocket(
 			 * pcb_connect, which expects the name/addr in an mbuf as well.
 			 * sigh.
 			 */
-			memcpy( void *), (void *) fname, mtod(m, fname->sa_len);
+			memcpy(mtod(m, void *), (void *) fname, fname->sa_len);
 			m->m_len = fname->sa_len;
 
 			/*
@@ -1509,9 +1509,9 @@ again:
 			}
 			if (hdr->tpdu_type == DR_TPDU_type) {
 				datalen += sizeof(x) - sizeof(c_hdr);
-				memcpy( void *), (void *) & x, mtod(n, n->m_len = sizeof(x));
+				memcpy(mtod(n, void *), (void *) &x, n->m_len = sizeof(x));
 			} else
-				memcpy( void *), (void *) & c_hdr, mtod(n,
+				memcpy(mtod(n, void *), (void *) &c_hdr,
 				      n->m_len = sizeof(c_hdr));
 			n->m_next = m;
 			m = n;
