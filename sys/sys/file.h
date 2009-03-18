@@ -1,4 +1,33 @@
-/*	$NetBSD: file.h,v 1.65 2008/06/24 10:26:27 gmcgarry Exp $	*/
+/*	$NetBSD: file.h,v 1.65.6.1 2009/03/18 05:33:23 snj Exp $	*/
+
+/*-
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -53,6 +82,9 @@ struct knote;
 /*
  * Kernel file descriptor.  One entry for each open kernel vnode and
  * socket.
+ *
+ * This structure is exported via the KERN_FILE and KERN_FILE2 sysctl
+ * calls.  Only add members to the end, do not delete them.
  */
 struct file {
 	off_t		f_offset;	/* first, is 64-bit */
@@ -73,7 +105,7 @@ struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	kmutex_t	f_lock;		/* lock on structure */
 	int		f_flag;		/* see fcntl.h */
-	u_int		f_iflags;	/* internal flags; FIF_* */
+	u_int		f_unused1;	/* unused; was internal flags; FIF_* */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
@@ -87,6 +119,8 @@ struct file {
 	u_int		f_advice;	/* access pattern hint; UVM_ADV_* */
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
+	u_int		f_unpcount;	/* deferred close: see uipc_usrreq.c */
+	SLIST_ENTRY(file) f_unplist;	/* deferred close: see uipc_usrreq.c */
 };
 
 #define FILE_LOCK(fp)	mutex_enter(&(fp)->f_lock)
