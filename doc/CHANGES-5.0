@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.111 2009/03/16 01:24:09 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.112 2009/03/18 05:59:45 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5102,4 +5102,81 @@ sys/netiso/tp_param.h				1.19 via patch
 	tp_param: Negative lengths should not be allowed. Make it
 	unsigned.
 	[adrianp, ticket #582]
+
+sys/fs/udf/udf_strat_direct.c			patch
+sys/fs/udf/udf_strat_sequential.c 		patch
+sys/fs/udf/udf_vnops.c 				patch
+
+	Sequential writing goes before normal write. It's not likely
+	to ever go wrong but there could be a race otherwise.
+	--
+	Remove dead code and double check if it's allowed to write out
+	non-sequential there.
+	--
+	Add simplistic UBC async flushing as other FS's seem to do. It's
+	a clutch and needs to be addressed in UBC properly.
+	Improve write throttling by doing it on page-size basis. The
+	"standard" solution would cut up files unnessisary during
+	allocation.
+	[reinoud, ticket #569]
+
+usr.sbin/btpand/tap.c				1.2
+
+	Use the generic SIOCALIFADDR to add an active link layer address
+	instead of the (soon to be) deprecated SIOCSIFPHYADDR
+	[plunky, ticket #570]
+
+share/man/man4/tap.4				1.9, 1.10
+
+	ifreqalias (non existent) -> ifaliasreq (the real deal).
+	Note the new method of changing link layer addresses using a
+	PF_LINK socket ioctl.
+	[plunky, ticket #571]
+
+sys/net/if_tap.c				1.53 via patch
+
+	Repair the SIOCSIFPHYADDR ioctl handler to be compatible with
+	previous versions which used a "struct sockaddr"
+	[plunky, ticket #572]
+
+sys/net/if_tap.c				1.54
+
+	Deprecate the SIOCSIFPHYADDR ioctl and the sysctl node in favour
+	of the generic SIOCALIFADDR.
+	[plunky, ticket #575]
+
+sys/kern/kern_descrip.c				1.188
+sys/kern/uipc_usrreq.c				1.121
+sys/sys/fcntl.h					1.35
+sys/sys/file.h					1.66
+sys/sys/param.h					patch
+sys/sys/un.h					1.45
+
+	Completely rework the way that orphaned sockets that are
+	being fdpassed via SCM_RIGHTS messages are dealt with.
+	[mrg, ticket #577]
+
+build.sh					1.204, 1.205
+share/mk/bsd.own.mk				1.558, 1.559
+
+	In build.sh and bsd.own.mk, if uname -p fails, or prints
+	"unknown", or prints something that does not look like an
+	identifier, then use uname -m instead.  (Cygwin prints
+	"unknown", and OpenBSD prints a long string containing
+	several spaces; this code should handle both.)
+	[apb, ticket #578]
+
+sys/dev/pci/if_wm.c				1.166
+
+	Fix the multicast hash bug on ICH9's wm.
+	Now we can catch ff02::9 on ICH9's wm.  Fixes PR#37976.
+	[msaitoh, ticket #583]
+
+xsrc/external/mit/xorg-server/dist/Xext/sync.c	1.2
+
+	xsync: Fix wakeup storm in idletime counter
+
+	Wakeup scheduling only considered the threshold values, and
+	not whether the trigger was edge or level.
+	[jmcneill, ticket #584]
 
