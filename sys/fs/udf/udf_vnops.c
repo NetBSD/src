@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.30.4.4 2009/03/18 05:08:38 snj Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.30.4.5 2009/03/18 21:13:01 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.4 2009/03/18 05:08:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.5 2009/03/18 21:13:01 snj Exp $");
 #endif /* not lint */
 
 
@@ -279,8 +279,9 @@ udf_write(void *v)
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
 	void *win;
-	uint64_t file_size, old_size;
+	uint64_t file_size, old_size, old_offset;
 	vsize_t len;
+	int async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	int error;
 	int flags, resid, extended;
 
@@ -342,6 +343,7 @@ udf_write(void *v)
 	error = 0;
 
 	uvm_vnp_setwritesize(vp, file_size);
+	old_offset = uio->uio_offset;
 	while (uio->uio_resid > 0) {
 		/* maximise length to file extremity */
 		len = MIN(file_size - uio->uio_offset, uio->uio_resid);
