@@ -74,7 +74,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.33 2008/11/25 18:28:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.34 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -514,12 +514,12 @@ encap_attach(int af, int proto,
 			panic("null pointers in encaptab");
 #endif
 		if (ep->src->sa_len != sp->sa_len ||
-		    bcmp(ep->src, sp, sp->sa_len) != 0 ||
-		    bcmp(ep->srcmask, sm, sp->sa_len) != 0)
+		    memcmp(ep->src, sp, sp->sa_len) != 0 ||
+		    memcmp(ep->srcmask, sm, sp->sa_len) != 0)
 			continue;
 		if (ep->dst->sa_len != dp->sa_len ||
-		    bcmp(ep->dst, dp, dp->sa_len) != 0 ||
-		    bcmp(ep->dstmask, dm, dp->sa_len) != 0)
+		    memcmp(ep->dst, dp, dp->sa_len) != 0 ||
+		    memcmp(ep->dstmask, dm, dp->sa_len) != 0)
 			continue;
 
 		error = EEXIST;
@@ -846,8 +846,8 @@ mask_match(const struct encaptab *ep,
 	d.ss_len = dp->sa_len;
 	d.ss_family = dp->sa_family;
 
-	if (bcmp(&s, ep->src, ep->src->sa_len) == 0 &&
-	    bcmp(&d, ep->dst, ep->dst->sa_len) == 0) {
+	if (memcmp(&s, ep->src, ep->src->sa_len) == 0 &&
+	    memcmp(&d, ep->dst, ep->dst->sa_len) == 0) {
 		return matchlen;
 	} else
 		return 0;

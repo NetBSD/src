@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.52 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: iso.c,v 1.53 2009/03/18 15:14:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.52 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.53 2009/03/18 15:14:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ iso_addrmatch1(const struct iso_addr *isoaa, const struct iso_addr *isoab)
 		return (1);
 	}
 #endif
-	return (!bcmp(isoaa->isoa_genaddr, isoab->isoa_genaddr, compare_len));
+	return (!memcmp(isoaa->isoa_genaddr, isoab->isoa_genaddr, compare_len));
 }
 
 /*
@@ -238,7 +238,7 @@ iso_netmatch(const struct sockaddr_iso *sisoa,
 	}
 #endif
 
-	return ((lena == lenb) && (!bcmp(bufa, bufb, lena)));
+	return ((lena == lenb) && (!memcmp(bufa, bufb, lena)));
 }
 #endif /* notdef */
 
@@ -802,7 +802,7 @@ iso_eqtype(
 		if (isoaa->isoa_afi == AFI_37)
 			return (1);
 		else
-			return (!bcmp(&isoaa->isoa_u, &isoab->isoa_u, 2));
+			return (!memcmp(&isoaa->isoa_u, &isoab->isoa_u, 2));
 	}
 	return (0);
 }

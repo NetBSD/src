@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.22 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: firewire.c,v 1.23 2009/03/18 15:14:30 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.22 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.23 2009/03/18 15:14:30 cegger Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -861,7 +861,7 @@ fw_busreset(struct firewire_comm *fc, uint32_t new_status)
 	newrom = malloc(CROMSIZE, M_FW, M_NOWAIT | M_ZERO);
 	src = &fc->crom_src_buf->src;
 	crom_load(src, (uint32_t *)newrom, CROMSIZE);
-	if (bcmp(newrom, fc->config_rom, CROMSIZE) != 0) {
+	if (memcmp(newrom, fc->config_rom, CROMSIZE) != 0) {
 		/* bump generation and reload */
 		src->businfo.generation ++;
 		/* generation must be between 0x2 and 0xF */
@@ -1681,7 +1681,7 @@ fw_explore_node(struct fw_device *dfwdev)
 	fwdev->speed = spd;
 
 	/* unchanged ? */
-	if (bcmp(&csr[0], &fwdev->csrrom[0], sizeof(uint32_t) * 5) == 0) {
+	if (memcmp(&csr[0], &fwdev->csrrom[0], sizeof(uint32_t) * 5) == 0) {
 		if (firewire_debug)
 			printf("node%d: crom unchanged\n", node);
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.62 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: ite.c,v 1.63 2009/03/18 15:14:29 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.62 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.63 2009/03/18 15:14:29 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -1072,7 +1072,7 @@ ite_filter(u_int c, enum caller caller)
 		 */
 		if(((c == 0x48) || (c == 0x4b) || (c == 0x4d) || (c == 0x50))
 			&& kbd_ite->cursor_appmode
-		    && !bcmp(str, "\x03\x1b[", 3) &&
+		    && !memcmp(str, "\x03\x1b[", 3) &&
 		    strchr("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 

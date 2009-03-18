@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.30 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.31 2009/03/18 15:14:31 cegger Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.30 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.31 2009/03/18 15:14:31 cegger Exp $");
 
 /*
  * TODO:
@@ -338,7 +338,7 @@ carp_hmac_verify(struct carp_softc *sc, u_int32_t counter[2],
 
 	carp_hmac_generate(sc, counter, md2);
 
-	return (bcmp(md, md2, sizeof(md2)));
+	return (memcmp(md, md2, sizeof(md2)));
 }
 
 void
@@ -1322,7 +1322,7 @@ carp_ourether(void *v, struct ether_header *eh, u_char iftype, int src)
 	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list)
 		if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING) && vh->sc_state == MASTER &&
-		    !bcmp(ena, CLLADDR(vh->sc_if.if_sadl),
+		    !memcmp(ena, CLLADDR(vh->sc_if.if_sadl),
 		    ETHER_ADDR_LEN)) {
 			return (&vh->sc_if);
 		    }

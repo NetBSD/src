@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.169 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: key.c,v 1.170 2009/03/18 15:14:32 cegger Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.169 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.170 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4207,8 +4207,8 @@ key_cmpsaidx_exactly(struct secasindex *saidx0, struct secasindex *saidx1)
 	    saidx0->reqid != saidx1->reqid)
 		return 0;
 
-	if (bcmp(&saidx0->src, &saidx1->src, saidx0->src.ss_len) != 0 ||
-	    bcmp(&saidx0->dst, &saidx1->dst, saidx0->dst.ss_len) != 0)
+	if (memcmp(&saidx0->src, &saidx1->src, saidx0->src.ss_len) != 0 ||
+	    memcmp(&saidx0->dst, &saidx1->dst, saidx0->dst.ss_len) != 0)
 		return 0;
 
 	return 1;
@@ -4406,7 +4406,7 @@ key_cmpspidx_withmask(struct secpolicyindex *spidx0, struct secpolicyindex *spid
 		break;
 	default:
 		/* XXX */
-		if (bcmp(&spidx0->src, &spidx1->src, spidx0->src.ss_len) != 0)
+		if (memcmp(&spidx0->src, &spidx1->src, spidx0->src.ss_len) != 0)
 			return 0;
 		break;
 	}
@@ -4441,7 +4441,7 @@ key_cmpspidx_withmask(struct secpolicyindex *spidx0, struct secpolicyindex *spid
 		break;
 	default:
 		/* XXX */
-		if (bcmp(&spidx0->dst, &spidx1->dst, spidx0->dst.ss_len) != 0)
+		if (memcmp(&spidx0->dst, &spidx1->dst, spidx0->dst.ss_len) != 0)
 			return 0;
 		break;
 	}
@@ -4486,7 +4486,7 @@ key_sockaddrcmp(struct sockaddr *sa1, struct sockaddr *sa2, int port)
 		}
 		break;
 	default:
-		if (bcmp(sa1, sa2, sa1->sa_len) != 0)
+		if (memcmp(sa1, sa2, sa1->sa_len) != 0)
 			return 1;
 		break;
 	}

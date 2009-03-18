@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.30 2009/03/14 21:04:21 dsl Exp $ */
+/* $NetBSD: if_txp.c,v 1.31 2009/03/18 15:14:31 cegger Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.30 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.31 2009/03/18 15:14:31 cegger Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -449,7 +449,7 @@ txp_download_fw(struct txp_softc *sc)
 	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
 	fileheader = (const struct txp_fw_file_header *)tc990image;
-	if (bcmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
+	if (memcmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
 		printf(": fw invalid magic\n");
 		return (-1);
 	}
@@ -1933,7 +1933,7 @@ again:
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 				/*
 				 * We must listen to a range of multicast
 				 * addresses.  For now, just accept all

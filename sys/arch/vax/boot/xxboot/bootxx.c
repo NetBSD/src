@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.30 2009/03/18 10:22:37 cegger Exp $ */
+/* $NetBSD: bootxx.c,v 1.31 2009/03/18 15:14:30 cegger Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -208,7 +208,7 @@ tar_open(char *path, struct open_file *f)
 
 	bzero(buf, 512);
 	romstrategy(0, 0, 8192, 512, buf, 0);
-	if (bcmp(buf, "boot", 5) || bcmp(&buf[257], "ustar", 5))
+	if (memcmp(buf, "boot", 5) || memcmp(&buf[257], "ustar", 5))
 		return EINVAL; /* Not a ustarfs with "boot" first */
 	return 0;
 }

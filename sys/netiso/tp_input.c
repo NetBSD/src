@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.30 2008/04/23 09:57:59 plunky Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.31 2009/03/18 15:14:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.30 2008/04/23 09:57:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.31 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -1266,13 +1266,13 @@ again:
 			 */
 				if (fsufxlen) {
 				CHECK(((tpcb->tp_fsuffixlen != fsufxlen) ||
-				bcmp(fsufxloc, tpcb->tp_fsuffix, fsufxlen)),
+				memcmp(fsufxloc, tpcb->tp_fsuffix, fsufxlen)),
 				      E_TP_INV_PVAL, ts_inv_sufx, respond,
 				      (1 + (char *)fsufxloc - (char *)hdr))
 			}
 			if (lsufxlen) {
 				CHECK(((tpcb->tp_lsuffixlen != lsufxlen) ||
-				bcmp(lsufxloc, tpcb->tp_lsuffix, lsufxlen)),
+				memcmp(lsufxloc, tpcb->tp_lsuffix, lsufxlen)),
 				      E_TP_INV_PVAL, ts_inv_sufx, respond,
 				      (1 + (char *)lsufxloc - (char *)hdr))
 			}

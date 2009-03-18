@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.135 2009/03/18 10:22:43 cegger Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.136 2009/03/18 15:14:31 cegger Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.135 2009/03/18 10:22:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.136 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -259,7 +259,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
          * have matched the packet. 
          */
 
-		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx, sizeof(spidx))) 
+		if (memcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx, sizeof(spidx))) 
 			return NULL;
 		
 	} else {
@@ -3263,7 +3263,7 @@ ipsec4_tunnel_validate(struct ip *ip, u_int nxt0,
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
 	case AF_INET:
 		sin = (struct sockaddr_in *)&sav->sah->saidx.dst;
-		if (bcmp(&ip->ip_dst, &sin->sin_addr, sizeof(ip->ip_dst)) != 0)
+		if (memcmp(&ip->ip_dst, &sin->sin_addr, sizeof(ip->ip_dst)) != 0)
 			return 0;
 		break;
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.52 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: vr.c,v 1.53 2009/03/18 15:14:29 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.52 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.53 2009/03/18 15:14:29 cegger Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -348,7 +348,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 			goto bad;
 
 		/* stop memory probing at first memory image */
-		if (bcmp(page, (void *)MIPS_PHYS_TO_KSEG0(0), 128) == 0)
+		if (memcmp(page, (void *)MIPS_PHYS_TO_KSEG0(0), 128) == 0)
 			return;
 
 		*(volatile int *)(page+0) = 0xa5a5a5a5;

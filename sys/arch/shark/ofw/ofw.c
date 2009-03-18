@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.47 2009/03/18 10:22:36 cegger Exp $	*/
+/*	$NetBSD: ofw.c,v 1.48 2009/03/18 15:14:29 cegger Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.47 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.48 2009/03/18 15:14:29 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,7 +458,7 @@ get_fw_dhcp_data(struct bootdata *bdp)
 		 */
 		bdp->ip_address = bdp->dhcp_packet.yiaddr;
 		ip = ip2dotted(bdp->ip_address);
-		if (bcmp(bdp->dhcp_packet.options, DHCP_OPTIONS_COOKIE, 4) == 0)
+		if (memcmp(bdp->dhcp_packet.options, DHCP_OPTIONS_COOKIE, 4) == 0)
 			parse_dhcp_options(&bdp->dhcp_packet,
 			    bdp->dhcp_packet.options + 4,
 			    &bdp->dhcp_packet.options[dhcplen

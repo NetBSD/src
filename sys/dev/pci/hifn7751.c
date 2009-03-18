@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.37 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.38 2009/03/18 15:14:30 cegger Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.37 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.38 2009/03/18 15:14:30 cegger Exp $");
 
 #include "rnd.h"
 
@@ -1051,7 +1051,7 @@ hifn_ramtype(struct hifn_softc *sc)
 		return (-1);
 	if (hifn_readramaddr(sc, 0, data))
 		return (-1);
-	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
+	if (memcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
 		return (0);
 	}
@@ -1062,7 +1062,7 @@ hifn_ramtype(struct hifn_softc *sc)
 		return (-1);
 	if (hifn_readramaddr(sc, 0, data))
 		return (-1);
-	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
+	if (memcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
 		return (0);
 	}
@@ -1096,7 +1096,7 @@ hifn_sramsize(struct hifn_softc *sc)
 		bcopy(&i, dataexpect, sizeof(i));
 		if (hifn_readramaddr(sc, a, data) < 0)
 			return (0);
-		if (bcmp(data, dataexpect, sizeof(data)) != 0)
+		if (memcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
 		sc->sc_ramsize = a + HIFN_SRAM_STEP_SIZE;
 	}

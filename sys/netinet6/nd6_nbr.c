@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.90 2008/07/31 18:24:07 matt Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.91 2009/03/18 15:14:31 cegger Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.90 2008/07/31 18:24:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.91 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -709,7 +709,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			llchange = 0;
 		else {
 			if (sdl->sdl_alen) {
-				if (bcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
+				if (memcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
 					llchange = 1;
 				else
 					llchange = 0;

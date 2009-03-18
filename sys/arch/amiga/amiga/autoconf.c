@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.102 2009/03/18 10:22:23 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.103 2009/03/18 15:14:29 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.102 2009/03/18 10:22:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2009/03/18 15:14:29 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ matchname(const char *fp, const char *sp)
 	len = strlen(fp);
 	if (strlen(sp) != len)
 		return(0);
-	if (bcmp(fp, sp, len) == 0)
+	if (memcmp(fp, sp, len) == 0)
 		return(1);
 	return(0);
 }

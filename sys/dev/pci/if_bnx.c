@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.21 2009/01/27 21:15:38 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.22 2009/03/18 15:14:30 cegger Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.21 2009/01/27 21:15:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.22 2009/03/18 15:14:30 cegger Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4577,7 +4577,7 @@ allmulti:
 
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto allmulti;

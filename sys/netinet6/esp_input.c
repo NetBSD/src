@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.47 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.48 2009/03/18 15:14:31 cegger Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.47 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.48 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -256,7 +256,7 @@ esp4_input(m, va_alist)
 		goto bad;
 	}
 
-	if (bcmp(sum0, sum, siz) != 0) {
+	if (memcmp(sum0, sum, siz) != 0) {
 		ipseclog((LOG_WARNING, "auth fail in IPv4 ESP input: %s %s\n",
 		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
 		IPSEC_STATINC(IPSEC_STAT_IN_ESPAUTHFAIL);
@@ -672,7 +672,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 		goto bad;
 	}
 
-	if (bcmp(sum0, sum, siz) != 0) {
+	if (memcmp(sum0, sum, siz) != 0) {
 		ipseclog((LOG_WARNING, "auth fail in IPv6 ESP input: %s %s\n",
 		    ipsec6_logpacketstr(ip6, spi), ipsec_logsastr(sav)));
 		IPSEC6_STATINC(IPSEC_STAT_IN_ESPAUTHFAIL);

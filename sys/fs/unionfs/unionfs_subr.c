@@ -877,7 +877,7 @@ unionfs_check_rmdir(struct vnode *vp, kauth_cred_t cred)
 		     dp = (struct dirent*)((char *)dp + dp->d_reclen)) {
 			if (dp->d_type == DT_WHT ||
 			    (dp->d_namlen == 1 && dp->d_name[0] == '.') ||
-			    (dp->d_namlen == 2 && !bcmp(dp->d_name, "..", 2)))
+			    (dp->d_namlen == 2 && !memcmp(dp->d_name, "..", 2)))
 				continue;
 
 			cn.cn_namelen = dp->d_namlen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.68 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.69 2009/03/18 15:14:31 cegger Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.68 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.69 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -275,7 +275,7 @@ stf_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	 * local 6to4 address.
 	 * success on: dst = 10.1.1.1, ia6->ia_addr = 2002:0a01:0101:...
 	 */
-	if (bcmp(GET_V4(&ia6->ia_addr.sin6_addr), &ip.ip_dst,
+	if (memcmp(GET_V4(&ia6->ia_addr.sin6_addr), &ip.ip_dst,
 	    sizeof(ip.ip_dst)) != 0)
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.43 2009/03/01 13:44:54 cegger Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.44 2009/03/18 15:14:30 cegger Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.43 2009/03/01 13:44:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.44 2009/03/18 15:14:30 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1847,7 +1847,7 @@ nfe_setmulti(struct nfe_softc *sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			memset(addr, 0, ETHER_ADDR_LEN);
 			memset(mask, 0, ETHER_ADDR_LEN);

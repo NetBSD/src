@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.35 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.36 2009/03/18 15:14:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.35 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.36 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -526,7 +526,7 @@ tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 #endif
 #ifdef ISO
 					case AF_ISO:
-						if (bcmp(ISOA(t).isoa_genaddr, ISOA(tpcb).isoa_genaddr,
+						if (memcmp(ISOA(t).isoa_genaddr, ISOA(tpcb).isoa_genaddr,
 						     ISOA(t).isoa_len) == 0)
 							goto done;
 						continue;
