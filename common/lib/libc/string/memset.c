@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.7 2009/03/17 23:42:45 he Exp $	*/
+/*	$NetBSD: memset.c,v 1.8 2009/03/18 12:25:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.7 2009/03/17 23:42:45 he Exp $");
+__RCSID("$NetBSD: memset.c,v 1.8 2009/03/18 12:25:06 tsutsui Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,9 @@ __RCSID("$NetBSD: memset.c,v 1.7 2009/03/17 23:42:45 he Exp $");
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#if defined(BZERO) && defined(_STANDALONE)
+#include <lib/libsa/stand.h>
+#endif
 #include <machine/limits.h>
 #endif 
 
@@ -65,8 +68,6 @@ __RCSID("$NetBSD: memset.c,v 1.7 2009/03/17 23:42:45 he Exp $");
 #define	RETURN	return
 #define	VAL	0
 #define	WIDEVAL	0
-
-void bzero(void *, size_t);
 
 void
 bzero(void *dst0, size_t length)

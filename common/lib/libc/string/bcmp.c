@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.3 2009/03/17 23:42:45 he Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.4 2009/03/18 12:25:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,19 +34,21 @@
 #if 0
 static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcmp.c,v 1.3 2009/03/17 23:42:45 he Exp $");
+__RCSID("$NetBSD: bcmp.c,v 1.4 2009/03/18 12:25:06 tsutsui Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(_KERNEL)
+#include <lib/libkern/libkern.h>
+#else
+#if defined(_STANDALONE)
+#include <lib/libsa/stand.h>
+#else
 #include <assert.h>
 #include <string.h>
-#else
-#include <lib/libkern/libkern.h>
 #endif
-
-int bcmp(const void *, const void *, size_t);
+#endif
 
 /*
  * bcmp -- vax cmpc3 instruction
