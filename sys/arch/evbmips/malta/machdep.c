@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2009/03/14 15:36:05 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2009/03/18 10:22:27 cegger Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2009/03/14 15:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2009/03/18 10:22:27 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -350,7 +350,7 @@ consinit(void)
  * Allocate memory for variable-sized tables,
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];

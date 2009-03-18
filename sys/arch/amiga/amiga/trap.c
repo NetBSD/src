@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124 2009/03/14 21:04:03 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.125 2009/03/18 10:22:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2009/03/14 21:04:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2009/03/18 10:22:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -887,7 +887,7 @@ _write_back (u_int wb, u_int wb_sts, u_int wb_data, u_int wb_addr, struct vm_map
  * fault handler for write back
  */
 void
-_wb_fault()
+_wb_fault(void)
 {
 #ifdef DEBUG
 	printf ("trap: writeback fault\n");

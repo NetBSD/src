@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.36 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.37 2009/03/18 10:22:32 cegger Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.36 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.37 2009/03/18 10:22:32 cegger Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -243,7 +243,7 @@ pm_printerr(const char *ttl, int rval, int num, const char *data)
  * Check the hardware type of the Power Manager
  */
 void
-pm_setup_adb()
+pm_setup_adb(void)
 {
 }
 
@@ -821,7 +821,7 @@ pm_adb_get_ADB_data(PMData *pmdata)
 
 
 void
-pm_adb_restart()
+pm_adb_restart(void)
 {
 	PMData p;
 
@@ -833,7 +833,7 @@ pm_adb_restart()
 }
 
 void
-pm_adb_poweroff()
+pm_adb_poweroff(void)
 {
 	PMData p;
 
@@ -872,7 +872,7 @@ pm_set_date_time(u_long t)
 }
 
 int
-pm_read_brightness()
+pm_read_brightness(void)
 {
 	PMData p;
 
@@ -904,7 +904,7 @@ pm_set_brightness(int val)
 }
 
 void
-pm_init_brightness()
+pm_init_brightness(void)
 {
 	int val;
 

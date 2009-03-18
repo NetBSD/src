@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218 2009/03/18 10:22:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2009/03/18 10:22:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ volatile struct drioct *draco_ioct;
  * to choose and initialize a console.
  */
 void
-consinit()
+consinit(void)
 {
 	/* initialize custom chip interface */
 #ifdef DRACO
@@ -250,7 +250,7 @@ consinit()
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	char pbuf[9];
 	u_int i;
@@ -381,7 +381,7 @@ int m68060_pcr_init = 0x21;	/* make this patchable */
 
 
 void
-identifycpu()
+identifycpu(void)
 {
         /* there's alot of XXX in here... */
 	const char *mach, *mmu, *fpu;
@@ -533,7 +533,7 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 #define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -635,7 +635,7 @@ reserve_dumppages(vm_offset_t p)
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	unsigned bytes, i, n, seg;
 	int     maddr, psize;
@@ -753,7 +753,7 @@ dumpsys()
 }
 
 void
-initcpu()
+initcpu(void)
 {
 	typedef void trapfun(void);
 
@@ -958,7 +958,7 @@ static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
 void
-alloc_sicallback()
+alloc_sicallback(void)
 {
 	struct si_callback *si;
 	int s;
@@ -1047,7 +1047,7 @@ rem_sicallback(void (*function)(void *rock1, void *rock2))
 
 /* purge the list */
 static void
-call_sicallbacks()
+call_sicallbacks(void)
 {
 	struct si_callback *si;
 	int s;
@@ -1381,7 +1381,7 @@ void candbtimer(void);
 callout_t candbtimer_ch;
 
 void
-candbtimer()
+candbtimer(void)
 {
 	crashandburn = 0;
 }

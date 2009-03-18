@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.35 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.36 2009/03/18 10:22:29 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.35 2009/03/14 15:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.36 2009/03/18 10:22:29 cegger Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -344,7 +344,7 @@ probe_com(u_int32_t port_addr)
 }
 
 static void
-__find_comport()
+__find_comport(void)
 {
 	int found;
 	u_int32_t port, step;

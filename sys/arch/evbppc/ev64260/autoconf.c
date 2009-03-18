@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2009/03/14 14:45:59 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2009/03/18 10:22:28 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2009/03/14 14:45:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2009/03/18 10:22:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ void findroot(void);
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
         extern void init_interrupt(void);
 
@@ -86,7 +86,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 

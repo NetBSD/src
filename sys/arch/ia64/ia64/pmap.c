@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.16 2009/03/14 21:04:10 dsl Exp $ */
+/* $NetBSD: pmap.c,v 1.17 2009/03/18 10:22:30 cegger Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2009/03/14 21:04:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2009/03/18 10:22:30 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,7 +527,7 @@ pmap_steal_vhpt_memory(vsize_t size)
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_bootstrap()
+pmap_bootstrap(void)
 {
 	struct ia64_pal_result res;
 	vaddr_t base, limit;

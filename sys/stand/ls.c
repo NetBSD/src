@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.15 2009/03/14 15:36:25 dsl Exp $	*/
+/*	$NetBSD: ls.c,v 1.16 2009/03/18 10:22:45 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.15 2009/03/14 15:36:25 dsl Exp $");
+__RCSID("$NetBSD: ls.c,v 1.16 2009/03/18 10:22:45 cegger Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ int main(void);
 static void ls(int);
 
 int
-main()
+main(void)
 {
 	struct stat st;
 	int fd;

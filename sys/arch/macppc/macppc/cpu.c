@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.50 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: cpu.c,v 1.51 2009/03/18 10:22:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2009/03/18 10:22:32 cegger Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -186,7 +186,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 #define CACHE_REG 0xf8000000
 
 void
-ohare_init()
+ohare_init(void)
 {
 	volatile uint32_t *cache_reg, x;
 

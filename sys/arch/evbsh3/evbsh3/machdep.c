@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:28 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2009/03/14 21:04:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:28 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -116,7 +116,7 @@ void XLoadAndReset(char *);
  * This is called from main() in kern/main.c.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 
 	sh_startup();
@@ -285,7 +285,7 @@ initSH3(void *pc)	/* XXX return address */
  * it shouldn't be called from init386 either.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted;
 
@@ -517,7 +517,7 @@ shpcmcia_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t o
 void InitializeBsc(void);
 
 void
-InitializeBsc()
+InitializeBsc(void)
 {
 
 	/*

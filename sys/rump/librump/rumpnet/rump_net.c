@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.6 2008/12/29 23:18:35 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.7 2009/03/18 10:22:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.6 2008/12/29 23:18:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.7 2009/03/18 10:22:45 cegger Exp $");
 
 #include <sys/param.h>
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.6 2008/12/29 23:18:35 pooka Exp $");
 #include "rump_net_private.h"
 
 void
-rump_net_init()
+rump_net_init(void)
 {
 
 	mbinit();

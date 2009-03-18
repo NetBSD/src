@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.57 2008/04/28 20:23:35 martin Exp $ */
+/*	$NetBSD: scif.c,v 1.58 2009/03/18 10:22:36 cegger Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.57 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.58 2009/03/18 10:22:36 cegger Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -1454,7 +1454,7 @@ scifcnputc(dev_t dev, int c)
 
 #ifdef KGDB
 int
-scif_kgdb_init()
+scif_kgdb_init(void)
 {
 
 	if (strcmp(kgdb_devname, "scif") != 0)

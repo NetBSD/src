@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.12 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.13 2009/03/18 10:22:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.13 2009/03/18 10:22:23 cegger Exp $");
 
 #include "opt_irqstats.h"
 
@@ -178,7 +178,7 @@ static struct intrq isa_intrq[ICU_LEN];
  * happen very much anyway.
  */
 void
-intr_calculatemasks()
+intr_calculatemasks(void)
 {
 	int irq, level;
 	struct intrq *iq;

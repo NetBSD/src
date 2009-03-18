@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.15 2009/03/14 21:04:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.16 2009/03/18 10:22:39 cegger Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -232,7 +232,7 @@ static struct pool mdl_pool;
 #endif
 
 int
-ntoskrnl_libinit()
+ntoskrnl_libinit(void)
 {
 	image_patch_table	*patch;
 #ifdef __FreeBSD__
@@ -277,7 +277,7 @@ ntoskrnl_libinit()
 }
 
 int
-ntoskrnl_libfini()
+ntoskrnl_libfini(void)
 {
 	image_patch_table	*patch;
 
@@ -2912,7 +2912,7 @@ KeReadStateTimer(ktimer *timer)
 }
 
 __stdcall static void
-dummy()
+dummy(void)
 {
 	printf ("ntoskrnl dummy called...\n");
 	return;

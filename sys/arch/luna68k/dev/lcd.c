@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.5 2009/03/14 15:36:08 dsl Exp $ */
+/* $NetBSD: lcd.c,v 1.6 2009/03/18 10:22:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.5 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.6 2009/03/18 10:22:31 cegger Exp $");
 
 /*
  * XXX
@@ -80,7 +80,7 @@ static char lcd_boot_message1[] = " NetBSD/luna68k ";
 static char lcd_boot_message2[] = "   SX-9100/DT   ";
 
 void
-lcdbusywait()
+lcdbusywait(void)
 {
 	struct pio *p1 = (struct pio *)0x4D000000;
 	int msb, s;
@@ -144,7 +144,7 @@ lcdshow(char *s)
 }
 
 void
-greeting()
+greeting(void)
 {
 	lcdctrl(LCD_INIT);
 	lcdctrl(LCD_ENTRY);

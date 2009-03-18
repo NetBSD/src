@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.35 2009/03/14 14:46:10 dsl Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.36 2009/03/18 10:22:43 cegger Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.35 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.36 2009/03/18 10:22:43 cegger Exp $");
 
 #include "isdn.h"
 
@@ -238,7 +238,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 isdnattach(void *dummy)
 #else
-isdnattach()
+isdnattach(void)
 #endif
 {
 	i4b_rdqueue.ifq_maxlen = IFQ_MAXLEN;

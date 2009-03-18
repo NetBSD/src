@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.c,v 1.12 2009/03/14 21:04:17 dsl Exp $	*/
+/*	$NetBSD: readufs.c,v 1.13 2009/03/18 10:22:38 cegger Exp $	*/
 /*	from Id: readufs.c,v 1.8 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -289,7 +289,7 @@ ufs_load_file(void *buf, ino32_t dirino, const char *fn)
 #endif
 
 int
-ufs_init()
+ufs_init(void)
 {
 	return 1
 #ifdef USE_FFS

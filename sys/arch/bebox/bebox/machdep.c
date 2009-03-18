@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2009/03/18 10:22:26 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2009/03/18 10:22:26 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -170,7 +170,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	/*
 	 * BeBox Mother Board's Register Mapping
@@ -254,7 +254,7 @@ disable_device(const char *name)
  * Initialize system console.
  */
 void
-consinit()
+consinit(void)
 {
 	struct btinfo_console *consinfo;
 	static int initted;

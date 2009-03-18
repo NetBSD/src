@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.11 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: malloc.c,v 1.12 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.11 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.12 2009/03/18 10:22:44 cegger Exp $");
 
 #include <stdio.h>
 #include "malloc.h"
@@ -26,7 +26,7 @@ int bytesmalloced=0;
 int byteswasted = 0;
 
 void
-init_alloc()
+init_alloc(void)
 {
 #ifdef LINT
 	hiwat = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.41 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.42 2009/03/18 10:22:43 cegger Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.41 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.42 2009/03/18 10:22:43 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -174,7 +174,7 @@ esp_algorithm_lookup(int idx)
 }
 
 int
-esp_max_padbound()
+esp_max_padbound(void)
 {
 	int idx;
 	static int padbound = 0;
@@ -191,7 +191,7 @@ esp_max_padbound()
 }
 
 int
-esp_max_ivlen()
+esp_max_ivlen(void)
 {
 	int idx;
 	static int ivlen = 0;

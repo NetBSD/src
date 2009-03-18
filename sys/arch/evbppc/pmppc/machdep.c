@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2008/11/30 18:21:33 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2009/03/18 10:22:28 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2008/11/30 18:21:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2009/03/18 10:22:28 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -272,7 +272,7 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 
 	oea_startup(NULL);

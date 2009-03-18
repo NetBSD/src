@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.24 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: cia_dma.c,v 1.25 2009/03/18 10:22:22 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.24 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.25 2009/03/18 10:22:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ cia_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
  * Flush the CIA scatter/gather TLB.
  */
 void
-cia_tlb_invalidate()
+cia_tlb_invalidate(void)
 {
 
 	alpha_mb();
@@ -425,7 +425,7 @@ cia_tlb_invalidate()
  * Flush the scatter/gather TLB on broken Pyxis chips.
  */
 void
-cia_broken_pyxis_tlb_invalidate()
+cia_broken_pyxis_tlb_invalidate(void)
 {
 	volatile u_int64_t dummy;
 	u_int32_t ctrl;

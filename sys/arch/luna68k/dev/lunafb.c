@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.20 2009/03/16 23:11:11 dsl Exp $ */
+/* $NetBSD: lunafb.c,v 1.21 2009/03/18 10:22:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.20 2009/03/16 23:11:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.21 2009/03/18 10:22:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ omfbattach(struct device *parent, struct device *self, void *args)
 }
 
 /* EXPORT */ int
-omfb_cnattach()
+omfb_cnattach(void)
 {
 	struct om_hwdevconfig *dc = &omfb_console_dc;
 	long defattr;

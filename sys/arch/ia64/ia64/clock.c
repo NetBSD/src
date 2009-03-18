@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2009/03/14 15:36:08 dsl Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2009/03/18 10:22:30 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/kernel.h>
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 }
 

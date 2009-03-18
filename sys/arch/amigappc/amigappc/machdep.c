@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.36 2009/03/14 21:04:04 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.37 2009/03/18 10:22:23 cegger Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2009/03/14 21:04:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2009/03/18 10:22:23 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -351,7 +351,7 @@ softintr(int ipl)
 
 
 /* show PPC registers */
-void show_me_regs()
+void show_me_regs(void)
 {
 	register u_long	scr0, scr1, scr2, scr3;
 
@@ -438,7 +438,7 @@ do_pending_int(void)
  * Interrupt handler
  */
 void
-intrhand()
+intrhand(void)
 {
 	register unsigned short ireq;
 
@@ -557,7 +557,7 @@ static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
 void
-alloc_sicallback()
+alloc_sicallback(void)
 {
 	struct si_callback *si;
 	int s;
@@ -578,13 +578,13 @@ alloc_sicallback()
 
 /*
 int
-sys_sysarch()
+sys_sysarch(void)
 {
 return 0;
 }*/
 
 void
-identifycpu()
+identifycpu(void)
 {
 	register int pvr, hid1;
 	char *mach, *pup, *cpu;
@@ -691,7 +691,7 @@ identifycpu()
  * Machine dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	void *	v;
 	vaddr_t minaddr, maxaddr;
@@ -731,7 +731,7 @@ cpu_startup()
  * Initialize system console.
  */
 void
-consinit()
+consinit(void)
 {
 	custom_chips_init();
 	/*

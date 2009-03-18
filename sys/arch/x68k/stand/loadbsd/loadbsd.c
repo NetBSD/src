@@ -19,13 +19,13 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.12 2009/03/14 21:04:17 dsl Exp $
+ *	$NetBSD: loadbsd.c,v 1.13 2009/03/18 10:22:38 cegger Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.12 2009/03/14 21:04:17 dsl Exp $");
-#define VERSION	"$Revision: 1.12 $ $Date: 2009/03/14 21:04:17 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.13 2009/03/18 10:22:38 cegger Exp $");
+#define VERSION	"$Revision: 1.13 $ $Date: 2009/03/18 10:22:38 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -390,7 +390,7 @@ read_kernel(const char *fn)
  * MC68020 and later	-> return nonzero
  */
 static int
-chkmpu()
+chkmpu(void)
 {
 	register int ret __asm("%d0");
 

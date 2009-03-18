@@ -1,8 +1,8 @@
-/* $NetBSD: udf_osta.c,v 1.8 2009/03/14 21:04:24 dsl Exp $ */
+/* $NetBSD: udf_osta.c,v 1.9 2009/03/18 10:22:42 cegger Exp $ */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.8 2009/03/14 21:04:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.9 2009/03/18 10:22:42 cegger Exp $");
 #endif /* not lint */
 
 /*
@@ -224,7 +224,7 @@ uint16_t udf_ea_cksum(uint8_t *data) {
 #ifdef MAIN
 unsigned char bytes[] = { 0x70, 0x6A, 0x77 };
 
-main()
+main(void)
 {
 	unsigned short x;
 	x = cksum(bytes, sizeof bytes);

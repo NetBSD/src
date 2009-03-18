@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.36 2009/03/14 15:36:11 dsl Exp $ */
+/* $NetBSD: clock.c,v 1.37 2009/03/18 10:22:33 cegger Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2009/03/18 10:22:33 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,7 +130,7 @@ clockattach(struct device *dev, const struct clockfns *fns)
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	if (clockfns == NULL)

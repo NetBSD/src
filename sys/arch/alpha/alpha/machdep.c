@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.318 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.319 2009/03/18 10:22:22 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.318 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.319 2009/03/18 10:22:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -792,7 +792,7 @@ nobootinfo:
 }
 
 void
-consinit()
+consinit(void)
 {
 
 	/*
@@ -806,7 +806,7 @@ consinit()
 }
 
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -876,7 +876,7 @@ cpu_startup()
  * Retrieve the platform name from the DSR.
  */
 const char *
-alpha_dsr_sysname()
+alpha_dsr_sysname(void)
 {
 	struct dsrdb *dsr;
 	const char *sysname;
@@ -912,7 +912,7 @@ alpha_variation_name(u_int64_t variation, const struct alpha_variation_table *av
  * Generate a default platform name based for unknown system variations.
  */
 const char *
-alpha_unknown_sysname()
+alpha_unknown_sysname(void)
 {
 	static char s[128];		/* safe size */
 
@@ -922,7 +922,7 @@ alpha_unknown_sysname()
 }
 
 void
-identifycpu()
+identifycpu(void)
 {
 	char *s;
 	int i;
@@ -1063,7 +1063,7 @@ long	dumplo = 0; 		/* blocks */
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -1079,7 +1079,7 @@ cpu_dumpsize()
  * cpu_dump_mempagecnt: calculate size of RAM (in pages) to be dumped.
  */
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	u_long i, n;
 
@@ -1093,7 +1093,7 @@ cpu_dump_mempagecnt()
  * cpu_dump: dump machine-dependent kernel core dump headers.
  */
 int
-cpu_dump()
+cpu_dump(void)
 {
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char buf[dbtob(1)];
@@ -1146,7 +1146,7 @@ cpu_dump()
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
@@ -1191,7 +1191,7 @@ bad:
 #define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memcl;

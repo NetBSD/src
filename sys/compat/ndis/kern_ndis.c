@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.17 2009/03/16 23:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.18 2009/03/18 10:22:39 cegger Exp $");
 #endif
 
 #include <sys/param.h>
@@ -456,7 +456,7 @@ ndis_runq(void *arg)
 }
 
 /*static*/ int
-ndis_create_kthreads()
+ndis_create_kthreads(void)
 {
 	struct ndis_req		*r;
 	int			i, error = 0;
@@ -522,7 +522,7 @@ ndis_create_kthreads()
 }
 
 static void
-ndis_destroy_kthreads()
+ndis_destroy_kthreads(void)
 {
 	struct ndis_req		*r;
 

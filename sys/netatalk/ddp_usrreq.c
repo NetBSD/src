@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.36 2009/03/14 15:36:23 dsl Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.37 2009/03/18 10:22:43 cegger Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.36 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.37 2009/03/18 10:22:43 cegger Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -555,7 +555,7 @@ ddp_init(void)
 
 #if 0
 static void
-ddp_clean()
+ddp_clean(void)
 {
 	struct ddpcb   *ddp;
 

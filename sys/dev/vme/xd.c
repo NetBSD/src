@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.80 2009/03/14 21:04:23 dsl Exp $	*/
+/*	$NetBSD: xd.c,v 1.81 2009/03/18 10:22:42 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.80 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.81 2009/03/18 10:22:42 cegger Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -257,7 +257,7 @@ int	XDC_DELAY;
 #if defined(__sparc__)
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
-void xdc_md_setup()
+void xdc_md_setup(void)
 {
 	if (CPU_ISSUN4 && cpuinfo.cpu_type == CPUTYP_4_300)
 		XDC_DELAY = XDC_DELAY_4_300;
@@ -265,12 +265,12 @@ void xdc_md_setup()
 		XDC_DELAY = XDC_DELAY_SPARC;
 }
 #elif defined(sun3)
-void xdc_md_setup()
+void xdc_md_setup(void)
 {
 	XDC_DELAY = XDC_DELAY_SUN3;
 }
 #else
-void xdc_md_setup()
+void xdc_md_setup(void)
 {
 	XDC_DELAY = 0;
 }

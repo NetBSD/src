@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.10 2009/03/14 21:04:16 dsl Exp $ */
+/*	$NetBSD: power.c,v 1.11 2009/03/18 10:22:37 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.10 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.11 2009/03/18 10:22:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ powerattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-powerdown()
+powerdown(void)
 {
 	*POWER_REG |= POWER_OFF;
 }

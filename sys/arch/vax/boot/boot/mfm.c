@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.9 2009/03/17 18:19:15 dsl Exp $	*/
+/*	$NetBSD: mfm.c,v 1.10 2009/03/18 10:22:37 cegger Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -100,7 +100,7 @@ static int mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *bu
  * instruction. Thus the loop-overhead will be enough...
  */
 static void
-sreg_read()
+sreg_read(void)
 {
 	int	i;
 	char    *p;
@@ -112,7 +112,7 @@ sreg_read()
 }
 
 static void
-creg_write()
+creg_write(void)
 {
 	int	i;
 	char    *p;
@@ -132,7 +132,7 @@ creg_write()
  * ready...
  */
 int
-mfm_rxprepare()
+mfm_rxprepare(void)
 {
 	int	error;
 

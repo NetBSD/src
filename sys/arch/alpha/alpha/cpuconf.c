@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.32 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: cpuconf.c,v 1.33 2009/03/18 10:22:22 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.32 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.33 2009/03/18 10:22:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -260,7 +260,7 @@ platform_lookup(int systype)
 }
 
 void
-platform_not_configured()
+platform_not_configured(void)
 {
 	const struct cpuinit *c = platform_lookup(cputype);
 
@@ -274,7 +274,7 @@ platform_not_configured()
 }
 
 void
-platform_not_supported()
+platform_not_supported(void)
 {
 	const struct cpuinit *c = platform_lookup(cputype);
 

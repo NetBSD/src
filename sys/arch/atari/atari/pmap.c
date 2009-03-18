@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.116 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ pa_to_attribute(paddr_t pa)
  *	system needs to map virtual memory.
  */
 void
-pmap_init()
+pmap_init(void)
 {
 	vaddr_t		addr, addr2;
 	vsize_t		s;
@@ -545,7 +545,7 @@ pmap_init()
 }
 
 struct pv_entry *
-pmap_alloc_pv()
+pmap_alloc_pv(void)
 {
 	struct pv_page *pvp;
 	struct pv_entry *pv;
@@ -638,7 +638,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, int prot)
  *	is bounded by that size.
  */
 pmap_t
-pmap_create()
+pmap_create(void)
 {
 	pmap_t pmap;
 

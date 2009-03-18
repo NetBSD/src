@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.168 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: key.c,v 1.169 2009/03/18 10:22:44 cegger Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.168 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.169 2009/03/18 10:22:44 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1396,7 +1396,7 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 }
 
 static u_int16_t
-key_newreqid()
+key_newreqid(void)
 {
 	static u_int16_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
 
@@ -4819,7 +4819,7 @@ key_timehandler(void *arg)
  * to initialize a seed for random()
  */
 static u_long
-key_random()
+key_random(void)
 {
 	u_long value;
 
@@ -6023,7 +6023,7 @@ key_getcomb_setlifetime(struct sadb_comb *comb)
  * XXX no idea if the user wants ESP authentication or not
  */
 static struct mbuf *
-key_getcomb_esp()
+key_getcomb_esp(void)
 {
 	struct sadb_comb *comb;
 	const struct esp_algorithm *algo;
@@ -6105,7 +6105,7 @@ key_getcomb_esp()
  * XXX reorder combinations by preference
  */
 static struct mbuf *
-key_getcomb_ah()
+key_getcomb_ah(void)
 {
 	struct sadb_comb *comb;
 	const struct ah_algorithm *algo;
@@ -6164,7 +6164,7 @@ key_getcomb_ah()
  * XXX reorder combinations by preference
  */
 static struct mbuf *
-key_getcomb_ipcomp()
+key_getcomb_ipcomp(void)
 {
 	struct sadb_comb *comb;
 	const struct ipcomp_algorithm *algo;
@@ -7950,7 +7950,7 @@ key_checktunnelsanity(struct secasvar *sav, u_int family,
  * domain name, returns nothing.
  */
 static const char *
-key_getfqdn()
+key_getfqdn(void)
 {
 	int i;
 	int hasdot;
@@ -7979,7 +7979,7 @@ key_getfqdn()
  * get username@FQDN for the host/user.
  */
 static const char *
-key_getuserfqdn()
+key_getuserfqdn(void)
 {
 	const char *host;
 	static char userfqdn[MAXHOSTNAMELEN + MAXLOGNAME + 2];

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.46 2009/03/14 21:04:22 dsl Exp $	*/
+/*	$NetBSD: qd.c,v 1.47 2009/03/18 10:22:41 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.46 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.47 2009/03/18 10:22:41 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -402,7 +402,7 @@ int qd0cninited = 0, qd0iscons = 0;
  * any memory for it in bootstrap.
  */
 void
-qdearly()
+qdearly(void)
 {
 	extern vaddr_t virtual_avail;
 	int tmp;

@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.22 2009/03/14 21:04:01 dsl Exp $ */
+/* $NetBSD: a12dc.c,v 1.23 2009/03/18 10:22:22 cegger Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.22 2009/03/14 21:04:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.23 2009/03/18 10:22:22 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,7 +159,7 @@ a12dcattach(struct device *parent, struct device *self, void *aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.22 $");
+	printf(": driver %s\n", "$Revision: 1.23 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -244,7 +244,7 @@ A12InitBackDriver(int m)
 }
 
 static void
-checkinit()
+checkinit(void)
 {
 static int did_init;
 
@@ -462,7 +462,7 @@ a12cdrputc(int c)
 
 #if 0
 static void
-check_cdr()
+check_cdr(void)
 {
 	int   bpchar,cnumber;
 	static int srom_word_address,

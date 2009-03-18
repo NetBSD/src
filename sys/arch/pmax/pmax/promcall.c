@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.14 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: promcall.c,v 1.15 2009/03/18 10:22:34 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.14 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.15 2009/03/18 10:22:34 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -205,7 +205,7 @@ prom_getenv(const char *name)
  *	hardware revision.	u_int8_t [0]
  */
 int
-prom_systype()
+prom_systype(void)
 {
 	char *cp;
 
@@ -219,7 +219,7 @@ prom_systype()
  * Reset machine by haltbutton.
  */
 void
-prom_haltbutton()
+prom_haltbutton(void)
 {
 	(*callv->_halt)((int *)0, 0);
 }

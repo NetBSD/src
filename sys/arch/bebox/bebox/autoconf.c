@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2008/06/11 02:14:29 kiyohara Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 2009/03/18 10:22:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2008/06/11 02:14:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2009/03/18 10:22:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static void findroot(void);
  */
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -83,7 +83,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 

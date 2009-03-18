@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.17 2009/03/16 23:11:12 dsl Exp $	*/
+/*	$NetBSD: isr.c,v 1.18 2009/03/18 10:22:31 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17 2009/03/16 23:11:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.18 2009/03/18 10:22:31 cegger Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -60,7 +60,7 @@ extern	void intrhand_vectored(void);
 extern	int getsr(void);	/* in locore.s */
 
 void
-isrinit()
+isrinit(void)
 {
 	int i;
 

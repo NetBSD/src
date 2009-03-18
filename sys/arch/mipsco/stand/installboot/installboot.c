@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.7 2009/03/14 21:04:13 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.8 2009/03/18 10:22:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ static struct mips_voldir *voldir_findfile(struct mips_volheader *,
 int verbose, nowrite;
 
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage:\n");

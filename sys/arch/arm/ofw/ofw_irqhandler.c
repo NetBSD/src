@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.16 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.17 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.16 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.17 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ extern void set_spl_masks(void);
  */
 
 void
-irq_init()
+irq_init(void)
 {
 	int loop;
 

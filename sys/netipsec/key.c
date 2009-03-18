@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.60 2009/02/14 20:53:58 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.61 2009/03/18 10:22:43 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.60 2009/02/14 20:53:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.61 2009/03/18 10:22:43 cegger Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1610,7 +1610,7 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 }
 
 static u_int16_t
-key_newreqid()
+key_newreqid(void)
 {
 	static u_int16_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
 
@@ -2014,7 +2014,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
  *	others: success.
  */
 static u_int32_t
-key_getnewspid()
+key_getnewspid(void)
 {
 	u_int32_t newid = 0;
 	int count = key_spi_trycnt;	/* XXX */
@@ -4727,13 +4727,13 @@ void srandom(int arg) {return;}
  * to initialize a seed for random()
  */
 static void
-key_srandom()
+key_srandom(void)
 {
 	srandom(time_second);
 }
 
 u_long
-key_random()
+key_random(void)
 {
 	u_long value;
 
@@ -5886,7 +5886,7 @@ key_getcomb_setlifetime(struct sadb_comb *comb)
  * XXX no idea if the user wants ESP authentication or not
  */
 static struct mbuf *
-key_getcomb_esp()
+key_getcomb_esp(void)
 {
 	struct sadb_comb *comb;
 	struct enc_xform *algo;
@@ -5987,7 +5987,7 @@ key_getsizes_ah(const struct auth_hash *ah, int alg,
  * XXX reorder combinations by preference
  */
 static struct mbuf *
-key_getcomb_ah()
+key_getcomb_ah(void)
 {
 	struct sadb_comb *comb;
 	struct auth_hash *algo;
@@ -6042,7 +6042,7 @@ key_getcomb_ah()
  * XXX reorder combinations by preference
  */
 static struct mbuf *
-key_getcomb_ipcomp()
+key_getcomb_ipcomp(void)
 {
 	struct sadb_comb *comb;
 	struct comp_algo *algo;
@@ -7723,7 +7723,7 @@ key_checktunnelsanity(
  * domain name, returns nothing.
  */
 static const char *
-key_getfqdn()
+key_getfqdn(void)
 {
 	int i;
 	int hasdot;
@@ -7752,7 +7752,7 @@ key_getfqdn()
  * get username@FQDN for the host/user.
  */
 static const char *
-key_getuserfqdn()
+key_getuserfqdn(void)
 {
 	const char *host;
 	static char userfqdn[MAXHOSTNAMELEN + MAXLOGNAME + 2];

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.21 2008/03/28 17:14:45 drochner Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.22 2009/03/18 10:22:40 cegger Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.21 2008/03/28 17:14:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.22 2009/03/18 10:22:40 cegger Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -3632,7 +3632,7 @@ slhci_print_intr(void)
 
 #if 0
 void
-slhci_log_sc()
+slhci_log_sc(void)
 {
 	struct slhci_transfers *t;
 	int i;

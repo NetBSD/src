@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.33 2009/03/14 15:36:14 dsl Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.34 2009/03/18 10:22:37 cegger Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.33 2009/03/14 15:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.34 2009/03/18 10:22:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -68,7 +68,7 @@ static u_int get_mmu_handle(void);
 static u_int get_memory_handle(void);
 
 static u_int 
-get_mmu_handle()
+get_mmu_handle(void)
 {
 	u_int chosen;
 
@@ -84,7 +84,7 @@ get_mmu_handle()
 }
 
 static u_int 
-get_memory_handle()
+get_memory_handle(void)
 {
 	u_int chosen;
 

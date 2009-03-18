@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.37 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.38 2009/03/18 10:22:41 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.37 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.38 2009/03/18 10:22:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -255,7 +255,7 @@ ofcons_pollin(void *aux)
 }
 
 static int
-ofcons_probe()
+ofcons_probe(void)
 {
 	int chosen;
 	char stdinbuf[4], stdoutbuf[4];

@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.8 2009/03/17 19:41:32 he Exp $	*/
+/*	$NetBSD: prf.c,v 1.9 2009/03/18 10:22:27 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ putchar(int c)
 }
 
 int
-getchar()
+getchar(void)
 {
 	return (cngetc());
 }

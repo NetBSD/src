@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.15 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.16 2009/03/18 10:22:39 cegger Exp $");
 #endif
 
 /*
@@ -332,7 +332,7 @@ __stdcall static void dummy(void);
 #define NDIS_POOL_EXTRA		16
 
 int
-ndis_libinit()
+ndis_libinit(void)
 {
 	image_patch_table	*patch;
 
@@ -349,7 +349,7 @@ ndis_libinit()
 }
 
 int
-ndis_libfini()
+ndis_libfini(void)
 {
 	image_patch_table	*patch;
 
@@ -3302,7 +3302,7 @@ NdisCloseFile(ndis_handle filehandle)
 }
 #endif /* __FreeBSD__ */
 __stdcall static uint8_t
-NdisSystemProcessorCount()
+NdisSystemProcessorCount(void)
 {
 #ifdef __FreeBSD__
 	return(mp_ncpus);
@@ -3507,7 +3507,7 @@ NdisMRegisterUnloadHandler(
 }
 
 __stdcall static void
-dummy()
+dummy(void)
 {
 	printf ("NDIS dummy called...\n");
 	return;

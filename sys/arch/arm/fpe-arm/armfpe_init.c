@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.14 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.15 2009/03/18 10:22:23 cegger Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.14 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.15 2009/03/18 10:22:23 cegger Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -88,7 +88,7 @@ static const char *exception_errors[] = {
  */
 
 int
-initialise_arm_fpe()
+initialise_arm_fpe(void)
 {
 	int error;
 
@@ -111,7 +111,7 @@ initialise_arm_fpe()
  */
 
 int
-arm_fpe_boot()
+arm_fpe_boot(void)
 {
 	u_int workspace;
 	int id;

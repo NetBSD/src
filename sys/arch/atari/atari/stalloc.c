@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.11 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.12 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.11 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.12 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,7 +58,7 @@ static CIRCLEQ_HEAD(freelist, mem_node) free_list;
 u_long   stmem_total;		/* total free.		*/
 
 void
-init_stmem()
+init_stmem(void)
 {
 	int s = splhigh ();
 	struct mem_node *mem;

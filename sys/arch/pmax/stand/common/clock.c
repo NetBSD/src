@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.3 2009/01/12 11:32:44 tsutsui Exp $ */
+/*      $NetBSD: clock.c,v 1.4 2009/03/18 10:22:34 cegger Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #include <lib/libsa/net.h>
 
 satime_t
-getsecs()
+getsecs(void)
 {
 	long ticks;
 	ticks = (*callv->_time)((long *)0);

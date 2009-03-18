@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.10 2009/03/16 23:11:14 dsl Exp $ */
+/* $NetBSD: pci.c,v 1.11 2009/03/18 10:22:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ unsigned iostart, iolimit;
 unsigned maxbus;
 
 void
-pcisetup()
+pcisetup(void)
 {
 
 	memstart = PCI_MEMBASE;

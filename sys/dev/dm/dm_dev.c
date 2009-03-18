@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.3 2009/03/06 16:17:29 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.4 2009/03/18 10:22:39 cegger Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -300,7 +300,7 @@ dm_dev_destroy(void)
  * Allocate new device entry.
  */
 dm_dev_t*
-dm_dev_alloc()
+dm_dev_alloc(void)
 {
 	dm_dev_t *dmv;
 	
@@ -379,7 +379,7 @@ dm_dev_prop_list(void)
  * Initialize global device mutex.
  */
 int
-dm_dev_init()
+dm_dev_init(void)
 {
 	TAILQ_INIT(&dm_dev_list); /* initialize global dev list */
 	mutex_init(&dm_dev_mutex, MUTEX_DEFAULT, IPL_NONE);

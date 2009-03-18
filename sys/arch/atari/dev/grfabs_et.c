@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.29 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.30 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.29 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.30 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -402,7 +402,7 @@ alloc_colormap(dmode_t *dm)
  * bus0 for et4000/et6000 cards. The first card found is used.
  */
 int
-et_probe_card()
+et_probe_card(void)
 {
 	pci_chipset_tag_t	pc = NULL; /* XXX */
 	pcitag_t		tag;

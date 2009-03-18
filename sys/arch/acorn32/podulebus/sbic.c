@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.13 2007/10/17 19:52:54 garbled Exp $ */
+/* $NetBSD: sbic.c,v 1.14 2009/03/18 10:22:22 cegger Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -114,7 +114,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.13 2007/10/17 19:52:54 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.14 2009/03/18 10:22:22 cegger Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -2355,7 +2355,7 @@ sbicfromscsiperiod(struct sbic_softc *dev, sbic_regmap_p regs, int p)
 #ifdef DEBUG
 
 void
-sbicdumpstate()
+sbicdumpstate(void)
 {
 	u_char csr, asr;
 

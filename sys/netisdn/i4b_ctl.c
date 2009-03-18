@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.20 2009/03/14 14:46:10 dsl Exp $
+ *	$Id: i4b_ctl.c,v 1.21 2009/03/18 10:22:43 cegger Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.20 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.21 2009/03/18 10:22:43 cegger Exp $");
 
 #include "isdnctl.h"
 
@@ -213,7 +213,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 isdnctlattach(void *dummy)
 #else
-isdnctlattach()
+isdnctlattach(void)
 #endif
 {
 

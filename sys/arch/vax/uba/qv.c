@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.22 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: qv.c,v 1.23 2009/03/18 10:22:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.22 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.23 2009/03/18 10:22:38 cegger Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -750,10 +750,10 @@ qv_init(struct qvdevice *qvaddr)
 	qvkbdreset();
 }
 
-qvreset()
+qvreset(void)
 {
 }
-qvkbdreset()
+qvkbdreset(void)
 {
 	register int i;
 	qv_key_out(LK_DEFAULTS);
@@ -1135,7 +1135,7 @@ register int x,y;
  * The only drawback is that the scanline map must be reset when the user 
  * wants to do graphics.
  */
-qvscroll()
+qvscroll(void)
 {
 	short tmpscanlines[15];
 	register char *b_row;
@@ -1200,7 +1200,7 @@ qv_key_out(u_short c)
  * In this case it must map the q-bus and device areas and initialize the qvss 
  * screen.
  */
-qvcons_init()
+qvcons_init(void)
 {
         struct percpu *pcpu;            /* pointer to percpu structure  */
 	register struct qbus *qb;

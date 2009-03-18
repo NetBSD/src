@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.36 2007/12/04 10:31:14 dyoung Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.37 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.36 2007/12/04 10:31:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.37 2009/03/18 10:22:44 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -160,7 +160,7 @@ clnp_init(void)
  * NOTES:
  */
 void
-clnlintr()
+clnlintr(void)
 {
 	struct mbuf *m;/* ptr to first mbuf of pkt */
 	struct clnl_fixed *clnl;	/* ptr to fixed part of clnl

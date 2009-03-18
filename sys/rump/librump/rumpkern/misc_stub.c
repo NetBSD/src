@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.17 2009/01/01 19:07:43 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.18 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.17 2009/01/01 19:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.18 2009/03/18 10:22:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -60,7 +60,7 @@ yield(void)
 }
 
 void
-preempt()
+preempt(void)
 {
 
 	/* see yield */

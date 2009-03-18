@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.9 2009/03/14 15:36:12 dsl Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.10 2009/03/18 10:22:34 cegger Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.9 2009/03/14 15:36:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.10 2009/03/18 10:22:34 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -358,7 +358,7 @@ device_register(struct device *dev, void *aux)
  * Configure swap area.
  */
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");

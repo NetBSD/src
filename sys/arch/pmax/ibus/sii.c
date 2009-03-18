@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.7 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: sii.c,v 1.8 2009/03/18 10:22:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.7 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.8 2009/03/18 10:22:33 cegger Exp $");
 
 #include "sii.h"
 /*
@@ -1800,7 +1800,7 @@ sii_CmdDone(struct siisoftc *sc, int target, int error)
 
 #ifdef DEBUG
 static void
-sii_DumpLog()
+sii_DumpLog(void)
 {
 	struct sii_log *lp;
 

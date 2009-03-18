@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.7 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.8 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright 1997
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.7 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.8 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 
@@ -631,7 +631,7 @@ OF_release(void *virt, u_int size)
 }
 
 int
-OF_milliseconds()
+OF_milliseconds(void)
 {
         static struct {
                 const char *name;
@@ -668,7 +668,7 @@ OF_boot(const char *bootspec)
 }
 
 void
-OF_enter()
+OF_enter(void)
 {
 	static struct {
 		const char *name;
@@ -684,7 +684,7 @@ OF_enter()
 }
 
 void
-OF_exit()
+OF_exit(void)
 {
 	static struct {
 		const char *name;

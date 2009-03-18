@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.30 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: db_interface.c,v 1.31 2009/03/18 10:22:22 cegger Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.31 2009/03/18 10:22:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -249,7 +249,7 @@ db_write_bytes(vaddr_t addr, register size_t size, register const char *data)
 }
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 
 	__asm volatile("call_pal 0x81");		/* bugchk */

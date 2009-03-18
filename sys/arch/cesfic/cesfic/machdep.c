@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2009/03/18 10:22:27 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2009/03/18 10:22:27 cegger Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -179,7 +179,7 @@ int	delay_divisor;		/* delay constant */
 
 extern void sicinit(void*);
 
-void fic_init()
+void fic_init(void)
 {
 	int i;
 
@@ -247,7 +247,7 @@ dev_t dev;
  */
 extern void sic_enable_int(int, int, int, int, int);
 void
-consinit()
+consinit(void)
 {
 
 	/*
@@ -280,7 +280,7 @@ consinit()
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 #ifdef DEBUG
@@ -362,7 +362,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 char	cpu_model[] = "FIC8234";
 
 void
-identifycpu()
+identifycpu(void)
 {
 	printf("%s\n", cpu_model);
 	printf("delay constant: %d\n", delay_divisor);
@@ -462,7 +462,7 @@ long	dumplo = 0;		/* blocks */
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks;	/* size of dump area */
@@ -501,7 +501,7 @@ cpu_dumpconf()
  * in locore.s or by cpu_reboot() here in machdep.c
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */

@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.42 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: akbd.c,v 1.43 2009/03/18 10:22:31 cegger Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.42 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.43 2009/03/18 10:22:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -562,7 +562,7 @@ kbd_intr(void *arg)
 }
 
 int
-akbd_cnattach()
+akbd_cnattach(void)
 {
 
 	akbd_is_console = 1;

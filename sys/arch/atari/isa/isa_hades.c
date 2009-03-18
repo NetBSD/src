@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_hades.c,v 1.8 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: isa_hades.c,v 1.9 2009/03/18 10:22:25 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.8 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.9 2009/03/18 10:22:25 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.8 2009/03/16 23:11:10 dsl Exp $");
 void	isa_bus_init(void);
 
 void
-isa_bus_init()
+isa_bus_init(void)
 {
 }
 

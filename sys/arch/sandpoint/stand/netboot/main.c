@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.20 2009/03/14 21:04:15 dsl Exp $ */
+/* $NetBSD: main.c,v 1.21 2009/03/18 10:22:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ extern char bootprog_rev[], bootprog_maker[], bootprog_date[];
 int brdtype;
 
 void
-main()
+main(void)
 {
 	int n, b, d, f, howto;
 	unsigned memsize, tag;

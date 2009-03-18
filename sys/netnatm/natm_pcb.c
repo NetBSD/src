@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.11 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.12 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.11 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.12 2009/03/18 10:22:44 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -179,7 +179,7 @@ done:
 
 int npcb_dump(void);
 
-int npcb_dump()
+int npcb_dump(void)
 
 {
   struct natmpcb *cpcb;

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.26 2009/01/17 16:08:02 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.27 2009/03/18 10:22:21 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2009/01/17 16:08:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2009/03/18 10:22:21 cegger Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -145,7 +145,7 @@ cpu_undef_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 }
 
 static register_t
-cpu_identify()
+cpu_identify(void)
 {
 	register_t dummy;
 	volatile register_t id;

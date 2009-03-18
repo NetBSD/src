@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.45 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: clock.c,v 1.46 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -262,7 +262,7 @@ void		*auxp;
 
 }
 
-void cpu_initclocks()
+void cpu_initclocks(void)
 {
 	MFP->mf_tacr  = T_Q200;		/* Start timer			*/
 	MFP->mf_ipra  = (u_int8_t)~IA_TIMA;/* Clear pending interrupts	*/

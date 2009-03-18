@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.96 2009/02/20 18:08:12 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.97 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.96 2009/02/20 18:08:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.97 2009/03/18 10:22:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -325,7 +325,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 }
 
 void
-rump_clear_curlwp()
+rump_clear_curlwp(void)
 {
 	struct lwp *l;
 
@@ -341,7 +341,7 @@ rump_clear_curlwp()
 }
 
 struct lwp *
-rump_get_curlwp()
+rump_get_curlwp(void)
 {
 	struct lwp *l;
 
@@ -381,7 +381,7 @@ rump_cred_destroy(kauth_cred_t cred)
 }
 
 kauth_cred_t
-rump_cred_suserget()
+rump_cred_suserget(void)
 {
 
 	kauth_cred_hold(rump_susercred);
@@ -392,7 +392,7 @@ rump_cred_suserget()
  * Return the next system lwpid
  */
 lwpid_t
-rump_nextlid()
+rump_nextlid(void)
 {
 	lwpid_t retid;
 

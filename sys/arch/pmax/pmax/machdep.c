@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.231 2009/03/16 23:11:14 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.232 2009/03/18 10:22:33 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2009/03/18 10:22:33 cegger Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -415,7 +415,7 @@ mips_machdep_cache_config(void)
 }
 
 void
-consinit()
+consinit(void)
 {
 
 	(*platform.cons_init)();
@@ -426,7 +426,7 @@ consinit()
  * tables.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -642,14 +642,14 @@ memsize_bitmap(void *first)
  *  Ensure all platform vectors are always initialized.
  */
 static void
-unimpl_bus_reset()
+unimpl_bus_reset(void)
 {
 
 	panic("sysconf.init didn't set bus_reset");
 }
 
 static void
-unimpl_cons_init()
+unimpl_cons_init(void)
 {
 
 	panic("sysconf.init didn't set cons_init");
@@ -676,7 +676,7 @@ unimpl_memsize(void *first)
 }
 
 static unsigned
-nullwork()
+nullwork(void)
 {
 
 	return (0);

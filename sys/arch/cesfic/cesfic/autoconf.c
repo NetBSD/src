@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2009/03/14 21:04:08 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2009/03/18 10:22:27 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2009/03/14 21:04:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2009/03/18 10:22:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ mainbus_map(u_long physaddr, int size, int cacheable, void ** virtaddr)
 }
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	isrinit();
@@ -150,7 +150,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	setroot(0, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_test.c,v 1.2 2001/09/24 14:29:31 takemura Exp $	*/
+/*	$NetBSD: platid_test.c,v 1.3 2009/03/18 10:22:28 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -38,7 +38,7 @@
 #define PLATID_DEFINE_MASK_NICKNAME
 #include <machine/platid_mask.h>
 
-platid_bit_test()
+platid_bit_test(void)
 {
 	platid_t pid;
 	int err_count = 0;
@@ -122,7 +122,7 @@ platid_bit_test()
 }
 
 void
-platid_search_data_test()
+platid_search_data_test(void)
 {
 	char *mcr700str = "MC-R700";
 	char *mcr500str = "MC-R500";
@@ -166,7 +166,7 @@ platid_search_data_test()
 }
 
 void
-platid_search_test()
+platid_search_test(void)
 {
 	struct platid_name *res;
 	struct platid_name tab[] = {
@@ -217,7 +217,7 @@ platid_search_test()
 
 
 void
-platid_name_test()
+platid_name_test(void)
 {
 	int i, err;
 
@@ -238,7 +238,7 @@ platid_name_test()
 #define __PP(p)	PLATID_DEREFP(p)
 
 void
-main()
+main(void)
 {
 	platid_t pid = platid_unknown;
 

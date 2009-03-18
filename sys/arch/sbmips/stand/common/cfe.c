@@ -1,4 +1,4 @@
-/* $NetBSD: cfe.c,v 1.2 2003/02/07 17:52:08 cgd Exp $ */
+/* $NetBSD: cfe.c,v 1.3 2009/03/18 10:22:35 cegger Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -40,7 +40,7 @@
 
 static int conhandle = -1;
 
-int getchar()
+int getchar(void)
 {
     char ch;
     int res;

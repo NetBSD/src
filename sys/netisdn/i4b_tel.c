@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.23 2009/03/14 14:46:11 dsl Exp $
+ *	$Id: i4b_tel.c,v 1.24 2009/03/18 10:22:43 cegger Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.23 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.24 2009/03/18 10:22:43 cegger Exp $");
 
 #include "isdntel.h"
 
@@ -327,7 +327,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 isdntelattach(void *dummy)
 #else
-isdntelattach()
+isdntelattach(void)
 #endif
 {
 	int i, j;

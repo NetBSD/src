@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.46 2009/03/14 15:36:13 dsl Exp $	*/
+/*	$NetBSD: ofw.c,v 1.47 2009/03/18 10:22:36 cegger Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.46 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.47 2009/03/18 10:22:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1465,7 +1465,7 @@ ofw_construct_proc0_addrspace(void)
 
 
 static void
-ofw_getphysmeminfo()
+ofw_getphysmeminfo(void)
 {
 	int phandle;
 	int mem_len;
@@ -1956,7 +1956,7 @@ ofw_initallocator(void)
 
 #if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 static void
-reset_screen()
+reset_screen(void)
 {
 
 	if ((console_ihandle == 0) || (console_ihandle == -1))

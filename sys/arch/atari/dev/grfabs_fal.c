@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.21 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.22 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.21 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.22 2009/03/18 10:22:24 cegger Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -352,7 +352,7 @@ falcon_display_view(view_t *v)
 }
 
 void
-falcon_display_switch()
+falcon_display_switch(void)
 {
 	view_t		*v;
 	struct videl	*vregs;

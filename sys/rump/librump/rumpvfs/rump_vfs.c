@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.13 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.14 2009/03/18 10:22:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -76,7 +76,7 @@ pvfs_rele(struct proc *p)
 }
 
 void
-rump_vfs_init()
+rump_vfs_init(void)
 {
 	char buf[64];
 	int error;
@@ -347,7 +347,7 @@ rump_vfs_getopsbyname(const char *name)
 }
 
 struct vattr*
-rump_vattr_init()
+rump_vattr_init(void)
 {
 	struct vattr *vap;
 
@@ -550,7 +550,7 @@ rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
 }
 
 struct vnode *
-rump_cdir_get()
+rump_cdir_get(void)
 {
 	struct vnode *vp;
 	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;

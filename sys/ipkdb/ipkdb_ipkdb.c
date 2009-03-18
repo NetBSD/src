@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.24 2009/03/14 21:04:24 dsl Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.25 2009/03/18 10:22:42 cegger Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.24 2009/03/14 21:04:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.25 2009/03/18 10:22:42 cegger Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -90,7 +90,7 @@ static int connectipkdb(struct ipkdb_if *, char *, int);
 static int hmac_init(void);
 
 void
-ipkdb_init()
+ipkdb_init(void)
 {
 	ipkdbinit();
 	if (   ipkdbifinit(&ipkdb_if) < 0
@@ -112,7 +112,7 @@ ipkdb_connect(int when)
 }
 
 void
-ipkdb_panic()
+ipkdb_panic(void)
 {
 	ipkdbpanic = 1;
 	ipkdb_trap();
@@ -152,7 +152,7 @@ ipkdbcmp(void *s, void *d, int n)
 }
 
 int
-ipkdbcmds()
+ipkdbcmds(void)
 {
 	static char buf[512];
 	char *cp;
@@ -930,7 +930,7 @@ ipkdb_MD5Final(struct ipkdb_MD5Context *ctx)
  * optimized as suggested in this same paper.
  */
 static int
-hmac_init()
+hmac_init(void)
 {
 	char pad[64];
 	char tk[16];

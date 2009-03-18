@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * TODO:
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.16 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.17 2009/03/18 10:22:44 cegger Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -161,7 +161,7 @@ includecode(FILE *file, register char *f)
 }
 
 void
-putincludes()
+putincludes(void)
 {
 	FakeFilename(actfile, Transfilename, lineno);
 	fprintf(actfile, "\n#include \"%s%s\"\n", kerneldirname, eventfile_h_name);
@@ -401,7 +401,7 @@ Exit(int n)
 }
 
 #if 0
-syntax()
+syntax(void)
 {
 	static char *synt[] = {
 		"*PROTOCOL <string>\n",

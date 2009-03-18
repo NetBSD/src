@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.79 2009/02/27 15:15:19 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.80 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.79 2009/02/27 15:15:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.80 2009/03/18 10:22:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -531,7 +531,7 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 }
 
 void
-suspendsched()
+suspendsched(void)
 {
 
 	panic("%s: not implemented", __func__);
@@ -605,7 +605,7 @@ tc_setclock(const struct timespec *ts)
 }
 
 void
-proc_crmod_enter()
+proc_crmod_enter(void)
 {
 
 	panic("%s: not implemented", __func__);
@@ -619,7 +619,7 @@ proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
 }
 
 void
-module_init_md()
+module_init_md(void)
 {
 
 	/*
@@ -646,7 +646,7 @@ rump_delay(unsigned int us)
 void (*delay_func)(unsigned int) = rump_delay;
 
 void
-kpreempt_disable()
+kpreempt_disable(void)
 {
 
 	/* XXX: see below */
@@ -654,7 +654,7 @@ kpreempt_disable()
 }
 
 void
-kpreempt_enable()
+kpreempt_enable(void)
 {
 
 	/* try to make sure kpreempt_disable() is only used from panic() */
@@ -684,7 +684,7 @@ cnputc(int c)
 }
 
 void
-cnflush()
+cnflush(void)
 {
 
 	/* done */

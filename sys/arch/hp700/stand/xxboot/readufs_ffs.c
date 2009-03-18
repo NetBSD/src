@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.4 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.5 2009/03/18 10:22:28 cegger Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.8 2004/06/12 04:26:39 itohy Exp	*/
 
 /*
@@ -23,7 +23,7 @@
  * If it is an FFS, save information from the superblock.
  */
 int
-try_ffs()
+try_ffs(void)
 {
 	union {
 		struct fs	sblk;

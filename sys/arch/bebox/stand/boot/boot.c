@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: boot.c,v 1.18 2009/03/18 10:22:26 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,7 +63,7 @@ void main(void);
 void exec_kernel(char *, void *);
 
 void
-main()
+main(void)
 {
 	int n = 0;
 	int addr, speed;

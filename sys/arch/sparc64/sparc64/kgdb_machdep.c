@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.13 2009/03/14 15:36:14 dsl Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.14 2009/03/18 10:22:37 cegger Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.13 2009/03/14 15:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.14 2009/03/18 10:22:37 cegger Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -213,7 +213,7 @@ kgdb_resume_others(void)
 }
 
 static void
-kgdb_suspend()
+kgdb_suspend(void)
 {
 
 	sparc64_ipi_pause_thiscpu(NULL);
