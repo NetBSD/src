@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.29 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: mq200.c,v 1.30 2009/03/18 16:00:11 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.29 2009/03/14 21:04:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.30 2009/03/18 16:00:11 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -338,7 +338,7 @@ mq200_fbinit(struct hpcfb_fbconf *fb)
 	}
 
 	/* zero fill */
-	bzero(fb, sizeof(*fb));
+	memset(fb, 0, sizeof(*fb));
 
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/

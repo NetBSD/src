@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.16 2009/01/03 03:43:23 yamt Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.17 2009/03/18 16:00:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.16 2009/01/03 03:43:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.17 2009/03/18 16:00:20 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -593,7 +593,7 @@ zyd_alloc_tx_list(struct zyd_softc *sc)
 		}
 
 		/* clear Tx descriptor */
-		bzero(data->buf, sizeof (struct zyd_tx_desc));
+		memset(data->buf, 0, sizeof (struct zyd_tx_desc));
 	}
 	return 0;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.36 2009/03/14 15:36:02 dsl Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.37 2009/03/18 16:00:09 cegger Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.36 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.37 2009/03/18 16:00:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ vidcvideo_getdevconfig(vaddr_t dense_addr, u_int mem_size,
 	vidcvideo_colourmap_and_cursor_init(dc);
 
 	/* blank the memory */
-	bzero((void*)dc->dc_vaddr, dc->dc_size);
+	memset((void*)dc->dc_vaddr, 0, dc->dc_size);
 
 	/* intitialise miscelanious */
 	dc->dc_writeback_delay = 0;

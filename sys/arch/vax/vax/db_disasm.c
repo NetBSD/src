@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.18 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.19 2009/03/18 16:00:16 cegger Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.18 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2009/03/18 16:00:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -152,7 +152,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 
 	inst_buffer	ib;
 
-	bzero(&ib, sizeof(ib));
+	memset(&ib, 0, sizeof(ib));
 	ib.ppc = (void *) loc;
 	ib.curp = ib.dasm;
 

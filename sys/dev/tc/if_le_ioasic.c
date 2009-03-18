@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.30 2008/04/04 12:25:07 tsutsui Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.31 2009/03/18 16:00:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.30 2008/04/04 12:25:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.31 2009/03/18 16:00:20 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -413,7 +413,7 @@ le_ioasic_zerobuf_gap16(struct lance_softc *sc, int boff, int len)
 	boff &= 0xf;
 	xfer = min(len, 16 - boff);
 	while (len > 0) {
-		bzero(bptr + boff, xfer);
+		memset(bptr + boff, 0, xfer);
 		bptr += 32;
 		boff = 0;
 		len -= xfer;

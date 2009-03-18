@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.129 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.130 2009/03/18 16:00:22 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.129 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.130 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -197,7 +197,7 @@ in_pcballoc(struct socket *so, void *v)
 	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
-	bzero((void *)inp, sizeof(*inp));
+	memset((void *)inp, 0, sizeof(*inp));
 	inp->inp_af = AF_INET;
 	inp->inp_table = table;
 	inp->inp_socket = so;

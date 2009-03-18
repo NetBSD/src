@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.12 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.13 2009/03/18 16:00:24 cegger Exp $	*/
 
 /*
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.12 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.13 2009/03/18 16:00:24 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -77,7 +77,7 @@ int wait;
 #endif
 
   if (npcb) {
-    bzero(npcb, sizeof(*npcb));
+    memset(npcb, 0, sizeof(*npcb));
     npcb->npcb_flags = NPCB_FREE;
   }
   return(npcb);

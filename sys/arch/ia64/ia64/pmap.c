@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.17 2009/03/18 10:22:30 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.18 2009/03/18 16:00:12 cegger Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2009/03/18 10:22:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2009/03/18 16:00:12 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -929,7 +929,7 @@ void
 pmap_zero_page(paddr_t phys)
 {
 	vaddr_t va = IA64_PHYS_TO_RR7(phys);
-	bzero((void *) va, PAGE_SIZE);
+	memset((void *) va, 0, PAGE_SIZE);
 }
 
 /*

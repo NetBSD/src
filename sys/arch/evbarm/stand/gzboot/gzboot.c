@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.11 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.12 2009/03/18 16:00:11 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -355,7 +355,7 @@ gzcopy(void *dst, const void *src, size_t srclen)
 	unsigned char *cp = dst;
 	ssize_t len;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	state.z_err = Z_OK;
 	state.srcbuf = src;

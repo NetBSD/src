@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.23 2009/03/18 15:14:30 cegger Exp $	*/
+/*	$NetBSD: firewire.c,v 1.24 2009/03/18 16:00:18 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.23 2009/03/18 15:14:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.24 2009/03/18 16:00:18 cegger Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -782,7 +782,7 @@ fw_init_crom(struct firewire_comm *fc)
 		return;
 
 	src = &fc->crom_src_buf->src;
-	bzero(src, sizeof(struct crom_src));
+	memset(src, 0, sizeof(struct crom_src));
 
 	/* BUS info sample */
 	src->hdr.info_len = 4;
@@ -825,7 +825,7 @@ fw_reset_crom(struct firewire_comm *fc)
 
 	STAILQ_INIT(&src->chunk_list);
 
-	bzero(root, sizeof(struct crom_chunk));
+	memset(root, 0, sizeof(struct crom_chunk));
 	crom_add_chunk(src, NULL, root, 0);
 	crom_add_entry(root, CSRKEY_NCAP, 0x0083c0); /* XXX */
 	/* private company_id */
@@ -1687,7 +1687,7 @@ fw_explore_node(struct fw_device *dfwdev)
 		return (0);
 	}
 
-	bzero(&fwdev->csrrom[0], CROMSIZE);
+	memset(&fwdev->csrrom[0], 0, CROMSIZE);
 
 	/* copy first quad and bus info block */
 	bcopy(&csr[0], &fwdev->csrrom[0], sizeof(uint32_t) * 5);
@@ -2349,7 +2349,7 @@ fw_bmr(struct firewire_comm *fc)
 	if (cmstr == fc->nodeid || cmstr == -1)
 		return 0;
 	/* Bus probe has not finished, make dummy fwdev for cmstr */
-	bzero(&fwdev, sizeof(fwdev));
+	memset(&fwdev, 0, sizeof(fwdev));
 	fwdev.fc = fc;
 	fwdev.dst = cmstr;
 	fwdev.speed = 0;

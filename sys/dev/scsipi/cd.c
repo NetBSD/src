@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.289 2009/03/17 21:25:47 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.290 2009/03/18 16:00:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.289 2009/03/17 21:25:47 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.290 2009/03/18 16:00:20 cegger Exp $");
 
 #include "rnd.h"
 
@@ -2873,7 +2873,7 @@ mmc_getdiscinfo_cdrom(struct scsipi_periph *periph,
 
 	/* get number of sessions and first tracknr in last session */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	memset(&gtoc_cmd, 0, sizeof(gtoc_cmd));
 	gtoc_cmd.opcode      = READ_TOC;
 	gtoc_cmd.addr_mode   = CD_MSF;		/* not relevant        */
 	gtoc_cmd.resp_format = CD_TOC_MSINFO;	/* multisession info   */
@@ -2938,7 +2938,7 @@ mmc_getdiscinfo_dvdrom(struct scsipi_periph *periph,
 
 	/* get number of sessions and first tracknr in last session */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	memset(&gtoc_cmd, 0, sizeof(gtoc_cmd));
 	gtoc_cmd.opcode      = READ_TOC;
 	gtoc_cmd.addr_mode   = 0;		/* LBA                 */
 	gtoc_cmd.resp_format = CD_TOC_FORM;	/* multisession info   */
@@ -3200,7 +3200,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 
 	/* get raw toc to process, first header to check size */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	memset(&gtoc_cmd, 0, sizeof(gtoc_cmd));
 	gtoc_cmd.opcode      = READ_TOC;
 	gtoc_cmd.addr_mode   = CD_MSF;		/* not relevant     */
 	gtoc_cmd.resp_format = CD_TOC_RAW;	/* raw toc          */
@@ -3371,7 +3371,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 
 	/* get formatted toc to process, first header to check size */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
+	memset(&gtoc_cmd, 0, sizeof(gtoc_cmd));
 	gtoc_cmd.opcode      = READ_TOC;
 	gtoc_cmd.addr_mode   = 0;		/* lba's please     */
 	gtoc_cmd.resp_format = CD_TOC_FORM;	/* formatted toc    */

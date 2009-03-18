@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.49 2009/03/14 21:04:18 dsl Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.50 2009/03/18 16:00:16 cegger Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.49 2009/03/14 21:04:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.50 2009/03/18 16:00:16 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -284,7 +284,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the signal frame
 	 */
-	bzero(&sf, sizeof(sf));
+	memset(&sf, 0, sizeof(sf));
 	if (SIGACTION(p, ksi->ksi_signo).sa_flags & SA_SIGINFO) {
 		irix_set_ucontext(&sf.isf_ctx.iss.iuc, mask, ksi->ksi_trap, l);
 		irix_signal_siginfo(&sf.isf_ctx.iss.iis, ksi->ksi_signo,

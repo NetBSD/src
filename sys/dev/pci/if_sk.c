@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.58 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.59 2009/03/18 16:00:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.58 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.59 2009/03/18 16:00:19 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -693,7 +693,7 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
 	int			i;
 
-	bzero((char *)rd->sk_rx_ring,
+	memset((char *)rd->sk_rx_ring, 0,
 	    sizeof(struct sk_rx_desc) * SK_RX_RING_CNT);
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
@@ -1368,7 +1368,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	}
 
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
-	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
+	memset(sc_if->sk_rdata, 0, sizeof(struct sk_ring_data));
 
 	ifp = &sc_if->sk_ethercom.ec_if;
 	/* Try to allocate memory for jumbo buffers. */

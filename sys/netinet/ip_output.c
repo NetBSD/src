@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.200 2008/10/12 11:15:54 plunky Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.201 2009/03/18 16:00:22 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200 2008/10/12 11:15:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.201 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -575,7 +575,7 @@ sendit:
 
     {
 	struct ipsec_output_state state;
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 	state.m = m;
 	if (flags & IP_ROUTETOIF) {
 		state.ro = &iproute;

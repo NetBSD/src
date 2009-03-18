@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.21 2008/12/17 20:51:38 cegger Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.22 2009/03/18 16:00:24 cegger Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.21 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.22 2009/03/18 16:00:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -625,7 +625,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			return ENOBUFS;
 		}
 
-		bzero(swd, swcr_sesnum * sizeof(struct swcr_data *));
+		memset(swd, 0, swcr_sesnum * sizeof(struct swcr_data *));
 
 		/* Copy existing sessions */
 		if (swcr_sessions) {
@@ -646,7 +646,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			swcr_freesession(NULL, i);
 			return ENOBUFS;
 		}
-		bzero(*swd, sizeof(struct swcr_data));
+		memset(*swd, 0, sizeof(struct swcr_data));
 
 		switch (cri->cri_alg) {
 		case CRYPTO_DES_CBC:
@@ -864,11 +864,11 @@ swcr_freesession(void *arg, u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				bzero(swd->sw_ictx, axf->auth_hash->ctxsize);
+				memset(swd->sw_ictx, 0, axf->auth_hash->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
-				bzero(swd->sw_octx, axf->auth_hash->ctxsize);
+				memset(swd->sw_octx, 0, axf->auth_hash->ctxsize);
 				free(swd->sw_octx, M_CRYPTO_DATA);
 			}
 			break;
@@ -878,11 +878,11 @@ swcr_freesession(void *arg, u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				bzero(swd->sw_ictx, axf->auth_hash->ctxsize);
+				memset(swd->sw_ictx, 0, axf->auth_hash->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
-				bzero(swd->sw_octx, swd->sw_klen);
+				memset(swd->sw_octx, 0, swd->sw_klen);
 				free(swd->sw_octx, M_CRYPTO_DATA);
 			}
 			break;

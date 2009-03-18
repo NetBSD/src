@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.16 2009/03/18 10:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.17 2009/03/18 16:00:17 cegger Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -485,7 +485,7 @@ IoCreateDevice(
 			return(STATUS_INSUFFICIENT_RESOURCES);
 		}
 
-		bzero(dev->do_devext, devextlen);
+		memset(dev->do_devext, 0, devextlen);
 	} else
 		dev->do_devext = NULL;
 
@@ -718,10 +718,10 @@ IoBuildDeviceIoControlRequest(iocode, dobj, ibuf, ilen, obuf, olen,
 		}
 		if (ilen && ibuf != NULL) {
 			bcopy(ibuf, ip->irp_assoc.irp_sysbuf, ilen);
-			bzero((char *)ip->irp_assoc.irp_sysbuf + ilen,
+			memset((char *)ip->irp_assoc.irp_sysbuf + ilen, 0,
 			    buflen - ilen);
 		} else
-			bzero(ip->irp_assoc.irp_sysbuf, ilen);
+			memset(ip->irp_assoc.irp_sysbuf, 0, ilen);
 		ip->irp_userbuf = obuf;
 		break;
 	case METHOD_IN_DIRECT:
@@ -819,7 +819,7 @@ IoFreeIrp(irp *ip)
 __stdcall static void
 IoInitializeIrp(irp *io, uint16_t psize, uint8_t ssize)
 {
-	bzero((char *)io, IoSizeOfIrp(ssize));
+	memset((char *)io, 0, IoSizeOfIrp(ssize));
 	io->irp_size = psize;
 	io->irp_stackcnt = ssize;
 	io->irp_currentstackloc = ssize;
@@ -1677,7 +1677,7 @@ ExInitializePagedLookasideList(
 	uint32_t		tag,
 	uint16_t		depth)
 {
-	bzero((char *)lookaside, sizeof(paged_lookaside_list));
+	memset((char *)lookaside, 0, sizeof(paged_lookaside_list));
 
 	if (size < sizeof(slist_entry))
 		lookaside->nll_l.gl_size = sizeof(slist_entry);
@@ -1730,7 +1730,7 @@ ExInitializeNPagedLookasideList(
 	uint32_t		tag,
 	uint16_t		depth)
 {
-	bzero((char *)lookaside, sizeof(npaged_lookaside_list));
+	memset((char *)lookaside, 0, sizeof(npaged_lookaside_list));
 
 	if (size < sizeof(slist_entry))
 		lookaside->nll_l.gl_size = sizeof(slist_entry);
@@ -2174,7 +2174,7 @@ RtlUnicodeStringToInteger(ndis_unicode_string *ustr, uint32_t base, uint32_t *va
 
 	uchr = ustr->us_buf;
 	len = ustr->us_len;
-	bzero(abuf, sizeof(abuf));
+	memset(abuf, 0, sizeof(abuf));
 
 	if ((char)((*uchr) & 0xFF) == '-') {
 		neg = 1;

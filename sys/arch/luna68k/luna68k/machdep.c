@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.67 2009/03/18 10:22:31 cegger Exp $ */
+/* $NetBSD: machdep.c,v 1.68 2009/03/18 16:00:13 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2009/03/18 16:00:13 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -320,7 +320,7 @@ identifycpu(void)
 	extern int cputype;
 	const char *cpu;
 
-	bzero(cpu_model, sizeof(cpu_model));
+	memset(cpu_model, 0, sizeof(cpu_model));
 	switch (cputype) {
 	case CPU_68030:
 		cpu = "MC68030 CPU+MMU, MC68882 FPU";
@@ -435,7 +435,7 @@ cpu_init_kcore_hdr(void)
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	extern char end[];
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr)); 
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr)); 
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.

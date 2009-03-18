@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.10 2009/03/18 15:14:31 cegger Exp $ */
+/* $NetBSD: if_srt.c,v 1.11 2009/03/18 16:00:22 cegger Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.10 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.11 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -234,7 +234,7 @@ static int srt_clone_create(struct if_clone *cl, int unit)
  if ((unit < 0) || (unit > SRT_MAXUNIT)) return(ENXIO);
  if (softcv[unit]) return(EBUSY);
  sc = malloc(sizeof(SOFTC),M_DEVBUF,M_WAIT);
- bzero(&sc->intf,sizeof(sc->intf)); /* XXX */
+ memset(&sc->intf, 0,sizeof(sc->intf)); /* XXX */
  sc->unit = unit;
  sc->nrt = 0;
  sc->rts = 0;

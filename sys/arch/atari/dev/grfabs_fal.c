@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.22 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.23 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.22 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.23 2009/03/18 16:00:10 cegger Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -589,7 +589,7 @@ alloc_bitmap(u_long width, u_long height, u_char depth)
 	bm->lin_base      = 0;
 	bm->vga_base      = 0;
 
-	bzero(bm->plane, bm_size);
+	memset(bm->plane, 0, bm_size);
 	return (bm);
 }
 

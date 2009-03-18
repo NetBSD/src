@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.33 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.34 2009/03/18 16:00:22 cegger Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.33 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.34 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -509,7 +509,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		key_randomfill(extend, extendsiz);
 		break;
 	case SADB_X_EXT_PZERO:
-		bzero(extend, extendsiz);
+		memset(extend, 0, extendsiz);
 		break;
 	case SADB_X_EXT_PSEQ:
 		for (i = 0; i < extendsiz; i++)

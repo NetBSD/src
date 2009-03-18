@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.19 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: natm.c,v 1.20 2009/03/18 16:00:24 cegger Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.19 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.20 2009/03/18 16:00:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ struct proc *p;
 
     case PRU_PEERADDR:			/* fetch peer's address */
       snatm = mtod(nam, struct sockaddr_natm *);
-      bzero(snatm, sizeof(*snatm));
+      memset(snatm, 0, sizeof(*snatm));
       nam->m_len = snatm->snatm_len = sizeof(*snatm);
       snatm->snatm_family = AF_NATM;
 #if defined(__NetBSD__) || defined(__OpenBSD__)

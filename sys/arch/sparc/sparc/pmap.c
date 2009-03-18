@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.325 2009/03/10 23:58:20 martin Exp $ */
+/*	$NetBSD: pmap.c,v 1.326 2009/03/18 16:00:14 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.325 2009/03/10 23:58:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.326 2009/03/18 16:00:14 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3096,11 +3096,11 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 #if defined(SUN4_MMU3L)
 	mmuregions = mmureg = (struct mmuentry *)p;
 	p += nregion * sizeof(struct mmuentry);
-	bzero(mmuregions, nregion * sizeof(struct mmuentry));
+	memset(mmuregions, 0, nregion * sizeof(struct mmuentry));
 #endif
 	mmusegments = mmuseg = (struct mmuentry *)p;
 	p += nsegment * sizeof(struct mmuentry);
-	bzero(mmusegments, nsegment * sizeof(struct mmuentry));
+	memset(mmusegments, 0, nsegment * sizeof(struct mmuentry));
 
 	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
 	p += nctx * sizeof *ci;
@@ -3133,7 +3133,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	 */
 	kptes = (int *)p;
 	p += NKREG * NSEGRG * NPTESG * sizeof(int);
-	bzero(kptes, NKREG * NSEGRG * NPTESG * sizeof(int));
+	memset(kptes, 0, NKREG * NSEGRG * NPTESG * sizeof(int));
 
 	/*
 	 * Set up pm_regmap for kernel to point NUREG *below* the beginning
@@ -3514,8 +3514,8 @@ pmap_bootstrap4m(void *top)
 	 * user regions in the same way.
 	 */
 	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
-	bzero(kernel_regmap_store, NKREG * sizeof(struct regmap));
-	bzero(kernel_segmap_store, NKREG * NSEGRG * sizeof(struct segmap));
+	memset(kernel_regmap_store, 0, NKREG * sizeof(struct regmap));
+	memset(kernel_segmap_store, 0, NKREG * NSEGRG * sizeof(struct segmap));
 	for (i = NKREG; --i >= 0;) {
 		kernel_regmap_store[i].rg_segmap =
 			&kernel_segmap_store[i * NSEGRG];
@@ -3527,16 +3527,16 @@ pmap_bootstrap4m(void *top)
 	/* Allocate kernel region pointer tables */
 	pmap_kernel()->pm_reg_ptps = (int **)(q = p);
 	p += sparc_ncpus * sizeof(int **);
-	bzero((void *)q, (u_int)p - (u_int)q);
+	memset((void *)q, 0, (u_int)p - (u_int)q);
 
 	pmap_kernel()->pm_reg_ptps_pa = (int *)(q = p);
 	p += sparc_ncpus * sizeof(int *);
-	bzero((void *)q, (u_int)p - (u_int)q);
+	memset((void *)q, 0, (u_int)p - (u_int)q);
 
 	/* Allocate context administration */
 	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
 	p += ncontext * sizeof *ci;
-	bzero((void *)ci, (u_int)p - (u_int)ci);
+	memset((void *)ci, 0, (u_int)p - (u_int)ci);
 
 	/*
 	 * Set up the `constants' for the call to vm_init()
@@ -4177,7 +4177,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 	struct pmap *pm = object;
 	u_long addr;
 
-	bzero(pm, sizeof *pm);
+	memset(pm, 0, sizeof *pm);
 
 	/*
 	 * `pmap_pool' entries include space for the per-CPU

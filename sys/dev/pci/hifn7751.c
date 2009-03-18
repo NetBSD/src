@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.38 2009/03/18 15:14:30 cegger Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.39 2009/03/18 16:00:19 cegger Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.38 2009/03/18 15:14:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.39 2009/03/18 16:00:19 cegger Exp $");
 
 #include "rnd.h"
 
@@ -325,7 +325,7 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_dmamap = dmamap;
 	sc->sc_dma = (struct hifn_dma *)kva;
-	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
+	memset(sc->sc_dma, 0, sizeof(*sc->sc_dma));
 
 	hifn_reset_board(sc, 0);
 
@@ -732,7 +732,7 @@ hifn_reset_board(struct hifn_softc *sc, int full)
 		hifn_reset_puc(sc);
 	}
 
-	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
+	memset(sc->sc_dma, 0, sizeof(*sc->sc_dma));
 
 	/* Bring dma unit out of reset */
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
@@ -1194,7 +1194,7 @@ hifn_writeramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
 	/* build write command */
-	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
+	memset(dma->command_bufs[cmdi], 0, HIFN_MAX_COMMAND);
 	*(struct hifn_base_command *)dma->command_bufs[cmdi] = wc;
 	bcopy(data, &dma->test_src, sizeof(dma->test_src));
 
@@ -1258,7 +1258,7 @@ hifn_readramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
 	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
-	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
+	memset(dma->command_bufs[cmdi], 0, HIFN_MAX_COMMAND);
 	*(struct hifn_base_command *)dma->command_bufs[cmdi] = rc;
 
 	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
@@ -1439,7 +1439,7 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 				len -= clen;
 				buf_pos += clen;
 			} while (len > 0);
-			bzero(buf_pos, 4);
+			memset(buf_pos, 0, 4);
 			buf_pos += 4;
 			break;
 		case HIFN_CRYPT_CMD_ALG_AES:
@@ -1468,7 +1468,7 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 
 	if ((cmd->base_masks & (HIFN_BASE_CMD_MAC | HIFN_BASE_CMD_CRYPT |
 	    HIFN_BASE_CMD_COMP)) == 0) {
-		bzero(buf_pos, 8);
+		memset(buf_pos, 0, 8);
 		buf_pos += 8;
 	}
 
@@ -2143,7 +2143,7 @@ hifn_freesession(void *arg, u_int64_t tid)
 	if (session >= sc->sc_maxses)
 		return (EINVAL);
 
-	bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
+	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
 	return (0);
 }
 
@@ -2371,7 +2371,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		    sc->sc_sessions[session].hs_state == HS_STATE_USED) {
 			cmd->mac_masks |= HIFN_MAC_CMD_NEW_KEY;
 			bcopy(maccrd->crd_key, cmd->mac, maccrd->crd_klen >> 3);
-			bzero(cmd->mac + (maccrd->crd_klen >> 3),
+			memset(cmd->mac + (maccrd->crd_klen >> 3), 0,
 			    HIFN_MAC_KEY_LENGTH - (maccrd->crd_klen >> 3));
 		}
 	}

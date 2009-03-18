@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2008/12/10 11:10:19 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2009/03/18 16:00:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2008/12/10 11:10:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2009/03/18 16:00:15 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2510,7 +2510,7 @@ pmap_zero_page(paddr_t dstpa)
 	/* The comments in pmap_copy_page() above apply here also. */
 	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE);
 
-	/* Hand-optimized version of bzero(ptr, PAGE_SIZE) */
+	/* Hand-optimized version of memset(ptr, 0, PAGE_SIZE) */
 	zeropage((char *)dstva);
 
 	pmap_kremove(dstva, PAGE_SIZE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.26 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.27 2009/03/18 16:00:11 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.26 2009/03/14 21:04:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.27 2009/03/18 16:00:11 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -519,7 +519,7 @@ ite8181_fbinit(struct hpcfb_fbconf *fb)
 	}
 
 	/* zero fill */
-	bzero(fb, sizeof(*fb));
+	memset(fb, 0, sizeof(*fb));
 
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.8 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.9 2009/03/18 16:00:22 cegger Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.8 2007/12/25 18:33:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.9 2009/03/18 16:00:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,8 +273,8 @@ esp_aesctr_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 	scut->m_next = d0;
 
 	/* just in case */
-	bzero(&cblock, sizeof(cblock));
-	bzero(keystream, sizeof(keystream));
+	memset(&cblock, 0, sizeof(cblock));
+	memset(keystream, 0, sizeof(keystream));
 
 	return 0;
 
@@ -450,8 +450,8 @@ esp_aesctr_encrypt(
 	scut->m_next = d0;
 
 	/* just in case */
-	bzero(&cblock, sizeof(cblock));
-	bzero(keystream, sizeof(keystream));
+	memset(&cblock, 0, sizeof(cblock));
+	memset(keystream, 0, sizeof(keystream));
 
 	key_sa_stir_iv(sav);
 

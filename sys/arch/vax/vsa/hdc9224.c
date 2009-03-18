@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.46 2009/03/14 21:04:16 dsl Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.47 2009/03/18 16:00:16 cegger Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.46 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.47 2009/03/18 16:00:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 
 	cn++; /* first cylinder is reserved */
 
-	bzero(p, sizeof(struct hdc9224_UDCreg));
+	memset(p, 0, sizeof(struct hdc9224_UDCreg));
 
 	/*
 	 * Tricky thing: the controller do itself only increase the sector

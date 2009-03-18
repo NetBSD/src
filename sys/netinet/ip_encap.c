@@ -74,7 +74,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.34 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.35 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -192,7 +192,7 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 #endif
 	ip = mtod(m, struct ip *);
 
-	bzero(&pack, sizeof(pack));
+	memset(&pack, 0, sizeof(pack));
 	pack.p.sp_len = sizeof(pack);
 	pack.mine.sin_family = pack.yours.sin_family = AF_INET;
 	pack.mine.sin_len = pack.yours.sin_len = sizeof(struct sockaddr_in);
@@ -316,7 +316,7 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 #endif
 	ip6 = mtod(m, struct ip6_hdr *);
 
-	bzero(&pack, sizeof(pack));
+	memset(&pack, 0, sizeof(pack));
 	pack.p.sp_len = sizeof(pack);
 	pack.mine.sin6_family = pack.yours.sin6_family = AF_INET6;
 	pack.mine.sin6_len = pack.yours.sin6_len = sizeof(struct sockaddr_in6);
@@ -633,7 +633,7 @@ encap_attach_func(int af, int proto,
 		error = ENOBUFS;
 		goto fail;
 	}
-	bzero(ep, sizeof(*ep));
+	memset(ep, 0, sizeof(*ep));
 
 	ep->af = af;
 	ep->proto = proto;

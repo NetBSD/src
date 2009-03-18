@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.22 2009/03/15 21:24:24 cegger Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.23 2009/03/18 16:00:22 cegger Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.22 2009/03/15 21:24:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.23 2009/03/18 16:00:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 		struct sockaddr_at	dsta;
 	} u;
 
-	bzero((void *) & from, sizeof(struct sockaddr_at));
+	memset((void *) & from, 0, sizeof(struct sockaddr_at));
 	if (elh) {
 		DDP_STATINC(DDP_STAT_SHORT);
 
@@ -340,8 +340,8 @@ bprint(char *data, int len)
 	char            xout[BPXLEN], aout[BPALEN];
 	int             i = 0;
 
-	bzero(xout, BPXLEN);
-	bzero(aout, BPALEN);
+	memset(xout, 0, BPXLEN);
+	memset(aout, 0, BPALEN);
 
 	for (;;) {
 		if (len < 1) {
@@ -368,8 +368,8 @@ bprint(char *data, int len)
 
 		if (i > BPALEN - 2) {
 			printf("%s\t%s\n", xout, aout);
-			bzero(xout, BPXLEN);
-			bzero(aout, BPALEN);
+			memset(xout, 0, BPXLEN);
+			memset(aout, 0, BPALEN);
 			i = 0;
 			continue;
 		}

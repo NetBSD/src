@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.10 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: elf.c,v 1.11 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ elf_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 		if (read(fd, p, php->p_filesz) != php->p_filesz)
 		    goto error;
 		if (php->p_memsz > php->p_filesz)
-		    bzero(p + php->p_filesz, php->p_memsz - php->p_filesz);
+		    memset(p + php->p_filesz, 0, php->p_memsz - php->p_filesz);
 	    }
 	}
 

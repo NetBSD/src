@@ -1,4 +1,4 @@
-/*	$NetBSD: skifs.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: skifs.c,v 1.3 2009/03/18 16:00:12 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -118,7 +118,7 @@ skifs_seek(struct open_file *f, off_t offset, int where)
 int
 skifs_stat(struct open_file *f, struct stat *sb)
 {
-	bzero(sb, sizeof(*sb));
+	memset(sb, 0, sizeof(*sb));
 	sb->st_mode = S_IFREG | S_IRUSR;
 	return 0;
 }

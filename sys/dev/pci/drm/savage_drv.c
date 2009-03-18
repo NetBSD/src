@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $	*/
+/*	$NetBSD: savage_drv.c,v 1.6 2009/03/18 16:00:19 cegger Exp $	*/
 
 /* savage_drv.c -- Savage DRI driver
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.6 2009/03/18 16:00:19 cegger Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_drv.c,v 1.3 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -83,7 +83,7 @@ savage_attach(device_t nbdev)
 {
 	drm_device_t *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	memset(dev, 0, sizeof(drm_device_t));
 	savage_configure(dev);
 	return drm_attach(nbdev, savage_pciidlist);
 }

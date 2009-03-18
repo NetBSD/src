@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.24 2009/03/18 10:22:46 cegger Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.25 2009/03/18 16:00:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.24 2009/03/18 10:22:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.25 2009/03/18 16:00:24 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -604,7 +604,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	strncpy(attribute->uele_attrname, attrname,
 	    UFS_EXTATTR_MAXEXTATTRNAME);
 	attribute->uele_attrnamespace = attrnamespace;
-	bzero(&attribute->uele_fileheader,
+	memset(&attribute->uele_fileheader, 0,
 	    sizeof(struct ufs_extattr_fileheader));
 	
 	attribute->uele_backing_vnode = backing_vnode;

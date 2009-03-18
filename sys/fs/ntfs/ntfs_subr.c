@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.41 2009/03/15 17:15:58 cegger Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.42 2009/03/18 16:00:21 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.41 2009/03/15 17:15:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.42 2009/03/18 16:00:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1693,7 +1693,7 @@ ntfs_readntvattr_plain(
 					for(; remains; remains--)
 						uiomove(vbuf, 1, uio);
 				} else
-					bzero(data, tocopy);
+					memset(data, 0, tocopy);
 				data = (char *)data + tocopy;
 			}
 			cnt++;
@@ -1844,7 +1844,7 @@ ntfs_readattr(
 						uiomove(vbuf, 1, uio);
 				}
 				else
-					bzero(data, tocopy);
+					memset(data, 0, tocopy);
 			} else {
 				error = ntfs_uncompunit(ntmp, uup, cup);
 				if (error)

@@ -61,7 +61,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.2 2009/03/18 16:00:20 cegger Exp $";
 /*****************************************************************************/
 /** @file n8_memory_bsd.c
  *  @brief NetOctaveMemory Services - FreeBSD-specific support routines.
@@ -313,7 +313,7 @@ n8_GetLargeAllocation(N8_MemoryType_t bankIndex,
 		return 0;
 	}
 	if (kva) {
-	    /* bzero(kva, size) */
+	    /* memset(kva, 0, size) */
 	    BasePointer_g[bankIndex]    = kva;
 	    MemSize_g[bankIndex]        = size;
 	    Seg_g[bankIndex]            = seg;

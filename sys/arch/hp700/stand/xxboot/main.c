@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2009/03/18 16:00:11 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -428,7 +428,7 @@ xi_load(struct loadinfo *inf, void *buf)
 	memmove(buf, inf->sec_image, inf->sec_size);
 
 #if 0	/* XXX bss clear is done by the secondary boot itself */
-	bzero((char *) buf + inf->sec_size, inf->sec_pad);
+	memset((char *) buf + inf->sec_size, 0, inf->sec_pad);
 #endif
 
 	return 0;

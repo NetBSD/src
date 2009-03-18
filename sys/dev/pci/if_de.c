@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.129 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_de.c,v 1.130 2009/03/18 16:00:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.129 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.130 2009/03/18 16:00:19 cegger Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5689,7 +5689,7 @@ tulip_pci_attach(
     sc = (tulip_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
     if (sc == NULL)
 	return;
-    bzero(sc, sizeof(*sc));				/* Zero out the softc*/
+    memset(sc, 0, sizeof(*sc));				/* Zero out the softc*/
 #endif
 
     PCI_GETBUSDEVINFO(sc);

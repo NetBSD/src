@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.49 2008/12/19 18:49:38 cegger Exp $ */
+/*	$NetBSD: smg.c,v 1.50 2009/03/18 16:00:16 cegger Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.49 2008/12/19 18:49:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.50 2009/03/18 16:00:16 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -347,12 +347,12 @@ smg_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
 	struct smg_screen * const ss = id;
 	int i;
 
-	bzero(&ss->ss_image[row][startcol], ncols);
-	bzero(&ss->ss_attr[row][startcol], ncols);
+	memset(&ss->ss_image[row][startcol], 0, ncols);
+	memset(&ss->ss_attr[row][startcol], 0, ncols);
 	if (ss != curscr)
 		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
-		bzero(&SM_ADDR(row, startcol, i), ncols);
+		memset(&SM_ADDR(row, startcol, i), 0, ncols);
 }
 
 static void
@@ -395,17 +395,17 @@ smg_eraserows(void *id, int startrow, int nrows, long fillattr)
 	struct smg_screen * const ss = id;
 	int frows;
 
-	bzero(&ss->ss_image[startrow][0], nrows * SM_COLS);
-	bzero(&ss->ss_attr[startrow][0], nrows * SM_COLS);
+	memset(&ss->ss_image[startrow][0], 0, nrows * SM_COLS);
+	memset(&ss->ss_attr[startrow][0], 0, nrows * SM_COLS);
 	if (ss != curscr)
 		return;
 	if (nrows > 25) {
 		frows = nrows >> 1;
-		bzero(&sm_addr[(startrow * SM_NEXTROW)], frows * SM_NEXTROW);
-		bzero(&sm_addr[((startrow + frows) * SM_NEXTROW)],
+		memset(&sm_addr[(startrow * SM_NEXTROW)], 0, frows * SM_NEXTROW);
+		memset(&sm_addr[((startrow + frows) * SM_NEXTROW)], 0,
 		    (nrows - frows) * SM_NEXTROW);
 	} else
-		bzero(&sm_addr[(startrow * SM_NEXTROW)], nrows * SM_NEXTROW);
+		memset(&sm_addr[(startrow * SM_NEXTROW)], 0, nrows * SM_NEXTROW);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: tdfx_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $	*/
+/*	$NetBSD: tdfx_drv.c,v 1.6 2009/03/18 16:00:19 cegger Exp $	*/
 
 /* tdfx_drv.c -- tdfx driver -*- linux-c -*-
  * Created: Thu Oct  7 10:38:32 1999 by faith@precisioninsight.com
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.6 2009/03/18 16:00:19 cegger Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/tdfx_drv.c,v 1.10 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -77,7 +77,7 @@ tdfx_attach(device_t nbdev)
 {
 	drm_device_t *dev = device_get_softc(nbdev);
 
-	bzero(dev, sizeof(drm_device_t));
+	memset(dev, 0, sizeof(drm_device_t));
 	tdfx_configure(dev);
 	return drm_attach(nbdev, tdfx_pciidlist);
 }

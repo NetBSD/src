@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.7 2009/03/14 15:36:22 dsl Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.8 2009/03/18 16:00:21 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.7 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.8 2009/03/18 16:00:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -178,7 +178,7 @@ tftproot_dhcpboot(struct device *bootdv)
 
 	printf("tftproot: bootfile=%s\n", nd->nd_bootfile);
 
-	bzero(&trh, sizeof(trh));
+	memset(&trh, 0, sizeof(trh));
 	trh.trh_nd = nd;
 	trh.trh_block = 1;
 

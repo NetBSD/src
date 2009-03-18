@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.20 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: epe.c,v 1.21 2009/03/18 16:00:09 cegger Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.20 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.21 2009/03/18 16:00:09 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -350,7 +350,7 @@ epe_init(struct epe_softc *sc)
 		panic("%s: Cannot get DMA memory", sc->sc_dev.dv_xname);
 	}
 	sc->ctrlpage_dsaddr = sc->ctrlpage_dmamap->dm_segs[0].ds_addr;
-	bzero(sc->ctrlpage, PAGE_SIZE);
+	memset(sc->ctrlpage, 0, PAGE_SIZE);
 	
 	/* Set up pointers to start of each queue in kernel addr space.
 	 * Each descriptor queue or status queue entry uses 2 words

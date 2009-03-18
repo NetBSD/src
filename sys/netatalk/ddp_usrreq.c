@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.37 2009/03/18 10:22:43 cegger Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.38 2009/03/18 16:00:22 cegger Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.37 2009/03/18 10:22:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.38 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -273,7 +273,7 @@ at_pcbsetaddr(struct ddpcb *ddp, struct mbuf *addr, struct lwp *l)
 				return (EACCES);
 		}
 	} else {
-		bzero((void *) & lsat, sizeof(struct sockaddr_at));
+		memset((void *) & lsat, 0, sizeof(struct sockaddr_at));
 		lsat.sat_len = sizeof(struct sockaddr_at);
 		lsat.sat_addr.s_node = ATADDR_ANYNODE;
 		lsat.sat_addr.s_net = ATADDR_ANYNET;

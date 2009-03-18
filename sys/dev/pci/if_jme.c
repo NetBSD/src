@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.6 2009/01/31 13:57:03 bouyer Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.7 2009/03/18 16:00:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.6 2009/01/31 13:57:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.7 2009/03/18 16:00:19 cegger Exp $");
 
 
 #include <sys/param.h>
@@ -1859,7 +1859,7 @@ jme_set_filter(jme_softc_t *sc)
 	 * select the bit within the register.
 	 */
 	rxcfg |= RXMAC_MULTICAST;
-	bzero(hash, sizeof(hash));
+	memset(hash, 0, sizeof(hash));
 
 	ETHER_FIRST_MULTI(step, &sc->jme_ec, enm);
 	while (enm != NULL) {

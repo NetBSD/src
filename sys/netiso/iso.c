@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.53 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: iso.c,v 1.54 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.53 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.54 2009/03/18 16:00:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,7 @@ iso_hash(
 	int    bufsize;
 
 
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 
 	bufsize = iso_netof(&siso->siso_addr, buf);
 	hp->afh_nethash = iso_hashchar((void *) buf, bufsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.13 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: sets.c,v 1.14 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.13 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.14 2009/03/18 16:00:23 cegger Exp $");
 
 #include "main.h"
 #include "malloc.h"
@@ -291,7 +291,7 @@ defineset(unsigned char type, char *adr, int keep)
 	ENDDEBUG
 
 	onew = (struct Object *)Malloc(sizeof (struct Object));
-	bzero(onew, sizeof(struct Object));
+	memset(onew, 0, sizeof(struct Object));
 	onew->obj_name = adr;
 	onew->obj_kind = OBJ_SET;
 	onew->obj_type = type;
@@ -334,7 +334,7 @@ defineitem(unsigned char type, char *adr, char *struc)
 		exit(1);
 	} else {
 		onew = (struct Object *)Malloc(sizeof (struct Object));
-		bzero(onew, sizeof(struct Object));
+		memset(onew, 0, sizeof(struct Object));
 		onew->obj_name = stash(adr);
 		onew->obj_kind = OBJ_ITEM;
 		onew->obj_type =  type;
@@ -364,7 +364,7 @@ member(struct Object *o, char *adr)
 		"Warning at line %d: set definition of %s causes definition of\n",
 			lineno, OBJ_NAME(o));
 		fprintf(stderr, "\t (previously undefined) member %s\n", adr);
-		bzero(onew, sizeof(struct Object));
+		memset(onew, 0, sizeof(struct Object));
 		onew->obj_name = stash(adr);
 		onew->obj_kind = OBJ_ITEM;
 		onew->obj_type = o->obj_type;

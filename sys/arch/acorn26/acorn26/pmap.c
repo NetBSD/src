@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.25 2009/03/18 10:22:21 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.26 2009/03/18 16:00:08 cegger Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2009/03/18 10:22:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2009/03/18 16:00:08 cegger Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -256,7 +256,7 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	pv_table_size = round_page(physmem * sizeof(struct pv_entry));
 	pv_table =
 	    (struct pv_entry *)uvm_pageboot_alloc(pv_table_size);
-	bzero(pv_table, pv_table_size);
+	memset(pv_table, 0, pv_table_size);
 #ifdef PMAP_DEBUG_MODIFIED
 	for (i = 0; i < physmem; i++)
 		pv_table[i].pv_pflags |= PV_MODIFIED;
@@ -264,11 +264,11 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 
 	/* Set up the kernel's pmap */
 	pmap = pmap_kernel();
-	bzero(pmap, sizeof(*pmap));
+	memset(pmap, 0, sizeof(*pmap));
 	pmap->pm_count = 1;
 	pmap->pm_flags = PM_ACTIVE; /* Kernel pmap always is */
 	pmap->pm_entries = kernel_pmap_entries;
-	bzero(pmap->pm_entries, sizeof(struct pv_entry *) * PM_NENTRIES);
+	memset(pmap->pm_entries, 0, sizeof(struct pv_entry *) * PM_NENTRIES);
 	/* pmap_pinit(pmap); */
 	/* Clear the MEMC's page table */
 	/* XXX Maybe we should leave zero page alone? */
@@ -377,7 +377,7 @@ pmap_create(void)
 	if (!pmap_initialised) 
 		pmap_init2();
 	pmap = pool_get(&pmap_pool, PR_WAITOK);
-	bzero(pmap, sizeof(*pmap));
+	memset(pmap, 0, sizeof(*pmap));
 	pmap->pm_entries = (struct pv_entry **)malloc(
 		sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP,
 		M_WAITOK | M_ZERO);
@@ -1061,7 +1061,7 @@ pmap_zero_page(paddr_t pa)
 	UVMHIST_FUNC("pmap_zero_page");
 
 	UVMHIST_CALLED(pmaphist);
-	bzero(pmap_find(pa), PAGE_SIZE);
+	memset(pmap_find(pa), 0, PAGE_SIZE);
 }
 
 void

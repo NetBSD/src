@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.69 2009/03/17 10:16:55 he Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.70 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.69 2009/03/17 10:16:55 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.70 2009/03/18 16:00:10 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -1417,7 +1417,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		fd_formb->fd_formb_gaplen = fd->sc_type->gap2;
 		fd_formb->fd_formb_fillbyte = fd->sc_type->fillbyte;
 
-		bzero(il,sizeof il);
+		memset(il, 0,sizeof il);
 		for (j = 0, i = 1; i <= fd_formb->fd_formb_nsecs; i++) {
 			while (il[(j%fd_formb->fd_formb_nsecs)+1])
 				j++;
@@ -1465,7 +1465,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 	bp = getiobuf(NULL, false);
 	if(bp == 0)
 		return ENOBUFS;
-	bzero((void *)bp, sizeof(struct buf));
+	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_PHYS | B_FORMAT;
 	bp->b_cflags |= BC_BUSY;
 	bp->b_proc = p;
@@ -1524,8 +1524,8 @@ fdgetdisklabel(struct fd_softc *fd, dev_t dev)
 
 	lp   = fd->sc_dk.dk_label;
 
-	bzero(lp, sizeof(*lp));
-	bzero(&cpulab, sizeof(cpulab));
+	memset(lp, 0, sizeof(*lp));
+	memset(&cpulab, 0, sizeof(cpulab));
 
 	lp->d_secpercyl  = fd->sc_type->seccyl;
 	lp->d_type       = DTYPE_FLOPPY;
@@ -1560,7 +1560,7 @@ fdgetdisklabel(struct fd_softc *fd, dev_t dev)
 static void
 fdgetdefaultlabel(struct fd_softc *fd, struct disklabel *lp, int part)
 {
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize     = 128 * (1 << fd->sc_type->secsize);
 	lp->d_ntracks     = fd->sc_type->heads;

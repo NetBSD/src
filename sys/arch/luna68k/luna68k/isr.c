@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.18 2009/03/18 10:22:31 cegger Exp $	*/
+/*	$NetBSD: isr.c,v 1.19 2009/03/18 16:00:13 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.18 2009/03/18 10:22:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.19 2009/03/18 16:00:13 cegger Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -183,7 +183,7 @@ isrunlink_vectored(int vec)
 		panic("isrunlink_vectored: not vectored interrupt");
 
 	vectab[vec] = badtrap;
-	bzero(&isr_vectored[vec - ISRVECTORED], sizeof(struct isr_vectored));
+	memset(&isr_vectored[vec - ISRVECTORED], 0, sizeof(struct isr_vectored));
 }
 
 /*

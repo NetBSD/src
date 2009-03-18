@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.2 2009/02/03 16:27:13 pgoyette Exp $ */
+/*	$NetBSD: alipm.c,v 1.3 2009/03/18 16:00:19 cegger Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.2 2009/02/03 16:27:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.3 2009/03/18 16:00:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -208,7 +208,7 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_smb_tag.ic_release_bus = alipm_smb_release_bus;
 	sc->sc_smb_tag.ic_exec = alipm_smb_exec;
 
-	bzero(&iba, sizeof iba);
+	memset(&iba, 0, sizeof iba);
 	iba.iba_tag = &sc->sc_smb_tag;
 	(void)config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 

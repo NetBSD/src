@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.10 2009/01/20 20:47:33 christos Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.11 2009/03/18 16:00:17 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.10 2009/01/20 20:47:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.11 2009/03/18 16:00:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -187,7 +187,7 @@ linux32_old_to_native_sigset(sigset_t *bss, const linux32_old_sigset_t *lss)
 {
 	linux32_sigset_t ls;
 
-	bzero(&ls, sizeof(ls));
+	memset(&ls, 0, sizeof(ls));
 	ls.sig[0] = *lss;
 	
 	linux32_to_native_sigset(bss, &ls);

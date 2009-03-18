@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.4 2008/12/14 18:46:33 christos Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.5 2009/03/18 16:00:12 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ parsebootconf(const char *conf)
 	char *key, *value, *v2;
 
 	/* Clear bootconf structure */
-	bzero((void *)&bootconf, sizeof(bootconf));
+	memset((void *)&bootconf, 0, sizeof(bootconf));
 
 	/* Set timeout to configured */
 	bootconf.timeout = boot_params.bp_timeout;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.32 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.33 2009/03/18 16:00:18 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.32 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.33 2009/03/18 16:00:18 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1057,7 +1057,7 @@ gtmpsc_hackinit(struct gtmpsc_softc *sc, bus_space_tag_t memt,
 
 	DPRINTF(("hackinit\n"));
 
-	bzero(sc, sizeof(struct gtmpsc_softc));
+	memset(sc, 0, sizeof(struct gtmpsc_softc));
 	sc->gtmpsc_memt = memt;
 	sc->gtmpsc_memh = memh;
 	sc->gtmpsc_unit = unit;
@@ -1809,7 +1809,7 @@ gtmpsc_mem_printf(const char *fmt, ...)
 	static unsigned char *p = gtmpsc_print_buf;
 
 	if (p >= &gtmpsc_print_buf[GTMPSC_PRINT_BUF_SIZE - 128]) {
-		bzero(gtmpsc_print_buf, GTMPSC_PRINT_BUF_SIZE);
+		memset(gtmpsc_print_buf, 0, GTMPSC_PRINT_BUF_SIZE);
 		p = gtmpsc_print_buf;
 	}
 	va_start(ap, fmt);

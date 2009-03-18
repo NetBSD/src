@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.30 2008/11/18 12:59:58 darran Exp $ */
+/*	$NetBSD: crypto.c,v 1.31 2009/03/18 16:00:24 cegger Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.30 2008/11/18 12:59:58 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.31 2009/03/18 16:00:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -411,7 +411,7 @@ crypto_freesession(u_int64_t sid)
 	 */
 	if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) &&
 	    crypto_drivers[hid].cc_sessions == 0)
-		bzero(&crypto_drivers[hid], sizeof(struct cryptocap));
+		memset(&crypto_drivers[hid], 0, sizeof(struct cryptocap));
 
 done:
 	return err;
@@ -610,7 +610,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 
 		if (i == CRYPTO_ALGORITHM_MAX + 1) {
 			ses = cap->cc_sessions;
-			bzero(cap, sizeof(struct cryptocap));
+			memset(cap, 0, sizeof(struct cryptocap));
 			if (ses != 0) {
 				/*
 				 * If there are pending sessions, just mark as invalid.
@@ -653,7 +653,7 @@ crypto_unregister_all(u_int32_t driverid)
 			cap->cc_max_op_len[i] = 0;
 		}
 		ses = cap->cc_sessions;
-		bzero(cap, sizeof(struct cryptocap));
+		memset(cap, 0, sizeof(struct cryptocap));
 		if (ses != 0) {
 			/*
 			 * If there are pending sessions, just mark as invalid.
@@ -989,7 +989,7 @@ crypto_getreq(int num)
 	if (crp == NULL) {
 		return NULL;
 	}
-	bzero(crp, sizeof(struct cryptop));
+	memset(crp, 0, sizeof(struct cryptop));
 	cv_init(&crp->crp_cv, "crydev");
 
 	while (num--) {
@@ -999,7 +999,7 @@ crypto_getreq(int num)
 			return NULL;
 		}
 
-		bzero(crd, sizeof(struct cryptodesc));
+		memset(crd, 0, sizeof(struct cryptodesc));
 		crd->crd_next = crp->crp_desc;
 		crp->crp_desc = crd;
 	}

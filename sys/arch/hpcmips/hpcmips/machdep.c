@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2009/03/18 16:00:12 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2009/03/18 16:00:12 cegger Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -292,7 +292,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		}
 		esym = (char*)esym + symbolsz;
 		kernend = (void *)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	{

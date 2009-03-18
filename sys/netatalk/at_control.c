@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.29 2009/03/18 10:22:43 cegger Exp $	 */
+/*	$NetBSD: at_control.c,v 1.30 2009/03/18 16:00:22 cegger Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.29 2009/03/18 10:22:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.30 2009/03/18 16:00:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,7 @@ at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat
          * at_ifnet (also given). Remember ing to update
          * those parts of the at_ifaddr that need special processing
          */
-	bzero(AA_SAT(aa), sizeof(struct sockaddr_at));
+	memset(AA_SAT(aa), 0, sizeof(struct sockaddr_at));
 	bcopy(sat->sat_zero, &nr, sizeof(struct netrange));
 	bcopy(sat->sat_zero, AA_SAT(aa)->sat_zero, sizeof(struct netrange));
 	nnets = ntohs(nr.nr_lastnet) - ntohs(nr.nr_firstnet) + 1;
@@ -591,7 +591,7 @@ at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat
 	 * pointer in the ifaddr to it. probably pointless, but what the
 	 * heck.. XXX
 	 */
-	bzero(&aa->aa_netmask, sizeof(aa->aa_netmask));
+	memset(&aa->aa_netmask, 0, sizeof(aa->aa_netmask));
 	aa->aa_netmask.sat_len = sizeof(struct sockaddr_at);
 	aa->aa_netmask.sat_family = AF_APPLETALK;
 	aa->aa_netmask.sat_addr.s_net = 0xffff;
@@ -603,7 +603,7 @@ at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat
 	/*
          * Initialize broadcast (or remote p2p) address
          */
-	bzero(&aa->aa_broadaddr, sizeof(aa->aa_broadaddr));
+	memset(&aa->aa_broadaddr, 0, sizeof(aa->aa_broadaddr));
 	aa->aa_broadaddr.sat_len = sizeof(struct sockaddr_at);
 	aa->aa_broadaddr.sat_family = AF_APPLETALK;
 
@@ -619,16 +619,16 @@ at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat
 	} else if (ifp->if_flags & IFF_POINTOPOINT) {
 		struct at_addr  rtaddr, rtmask;
 
-		bzero(&rtaddr, sizeof(rtaddr));
-		bzero(&rtmask, sizeof(rtmask));
+		memset(&rtaddr, 0, sizeof(rtaddr));
+		memset(&rtmask, 0, sizeof(rtmask));
 		/* fill in the far end if we know it here XXX */
 		aa->aa_ifa.ifa_dstaddr = (struct sockaddr *) & aa->aa_dstaddr;
 		error = aa_addsingleroute(&aa->aa_ifa, &rtaddr, &rtmask);
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
 		struct at_addr  rtaddr, rtmask;
 
-		bzero(&rtaddr, sizeof(rtaddr));
-		bzero(&rtmask, sizeof(rtmask));
+		memset(&rtaddr, 0, sizeof(rtaddr));
+		memset(&rtmask, 0, sizeof(rtmask));
 		rtaddr.s_net = AA_SAT(aa)->sat_addr.s_net;
 		rtaddr.s_node = AA_SAT(aa)->sat_addr.s_node;
 		rtmask.s_net = 0xffff;
@@ -792,8 +792,8 @@ aa_dosingleroute(struct ifaddr *ifa, struct at_addr *at_addr, struct at_addr *at
 {
 	struct sockaddr_at addr, mask, *gate;
 
-	bzero(&addr, sizeof(addr));
-	bzero(&mask, sizeof(mask));
+	memset(&addr, 0, sizeof(addr));
+	memset(&mask, 0, sizeof(mask));
 	addr.sat_family = AF_APPLETALK;
 	addr.sat_len = sizeof(struct sockaddr_at);
 	addr.sat_addr.s_net = at_addr->s_net;

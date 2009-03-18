@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.28 2009/03/14 21:04:19 dsl Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.29 2009/03/18 16:00:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.28 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.29 2009/03/18 16:00:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,8 +254,8 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	rct.iobustags = alloca(maxbus * sizeof(rbus_tag_t));
 	rct.membustags = alloca(maxbus * sizeof(rbus_tag_t));
 
-	bzero(rct.bussize_ioreqs, size);
-	bzero(rct.bussize_memreqs, size);
+	memset(rct.bussize_ioreqs, 0, size);
+	memset(rct.bussize_memreqs, 0, size);
 
 	printf("%s: sizing buses %d-%d\n",
 	       device_xname(rct.csc->sc_dev),

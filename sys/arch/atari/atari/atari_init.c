@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.78 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.79 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.78 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.79 2009/03/18 16:00:10 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -572,7 +572,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize, char *esym_a
 	 * Must initialize p_addr before autoconfig or the
 	 * fault handler will get a NULL reference.
 	 */
-	bzero((u_char *)proc0paddr, USPACE);
+	memset((u_char *)proc0paddr, 0, USPACE);
 	lwp0.l_addr = (struct user *)proc0paddr;
 	curlwp = &lwp0;
 	curpcb  = &((struct user *)proc0paddr)->u_pcb;
@@ -865,7 +865,7 @@ cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 	extern char end[];
 	int	i;
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.

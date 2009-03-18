@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.22 2009/03/18 15:14:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.23 2009/03/18 16:00:18 cegger Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -878,7 +878,7 @@ ndis_attach(dev)
 		free(ntl, M_DEVBUF);
 nonettypes:
 		len = sizeof(rates);
-		bzero((char *)&rates, len);
+		memset((char *)&rates, 0, len);
 		r = ndis_get_info(sc, OID_802_11_SUPPORTED_RATES,
 		    (void *)rates, &len);
 		if (r)
@@ -2088,7 +2088,7 @@ ic = &sc->ic;
 #endif /* __NetBSD__ */
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {		
 			if (ic->ic_nw_keys[i].wk_len) {
-				bzero((char *)&wep, sizeof(wep));
+				memset((char *)&wep, 0, sizeof(wep));
 				wep.nw_keylen = ic->ic_nw_keys[i].wk_len;
 #ifdef notdef
 				/* 5 and 13 are the only valid key lengths */
@@ -2185,7 +2185,7 @@ ic = &sc->ic;
 #endif
 
 	len = sizeof(config);
-	bzero((char *)&config, len);
+	memset((char *)&config, 0, len);
 	config.nc_length = len;
 	config.nc_fhconfig.ncf_length = sizeof(ndis_80211_config_fh);
 	rval = ndis_get_info(sc, OID_802_11_CONFIGURATION, &config, &len); 
@@ -2230,7 +2230,7 @@ ic = &sc->ic;
 	/* Set SSID -- always do this last. */
 
 	len = sizeof(ssid);
-	bzero((char *)&ssid, len);
+	memset((char *)&ssid, 0, len);
 	ssid.ns_ssidlen = ic->ic_des_esslen;
 	if (ssid.ns_ssidlen == 0) {
 		ssid.ns_ssidlen = 1;
@@ -2408,7 +2408,7 @@ ndis_getstate_80211(struct ndis_softc *sc)
 		return;
 
 	len = sizeof(ssid);
-	bzero((char *)&ssid, len);
+	memset((char *)&ssid, 0, len);
 	rval = ndis_get_info(sc, OID_802_11_SSID, &ssid, &len);
 
 	if (rval)
@@ -2461,7 +2461,7 @@ ndis_getstate_80211(struct ndis_softc *sc)
 	}
 
 	len = sizeof(config);
-	bzero((char *)&config, len);
+	memset((char *)&config, 0, len);
 	config.nc_length = len;
 	config.nc_fhconfig.ncf_length = sizeof(ndis_80211_config_fh);
 	rval = ndis_get_info(sc, OID_802_11_CONFIGURATION, &config, &len);   
@@ -2651,7 +2651,7 @@ ndis_wi_ioctl_get(struct ifnet *ifp, u_long command, void * data)
 		api = (struct wi_apinfo *)&((int *)&wreq.wi_val)[1];
 		wb = bl->nblx_bssid;
 		while (maxaps--) {
-			bzero(api, sizeof(*api));
+			memset(api, 0, sizeof(*api));
 			bcopy(&wb->nwbx_macaddr, &api->bssid,
 			    sizeof(api->bssid));
 			api->namelen = wb->nwbx_ssid.ns_ssidlen;

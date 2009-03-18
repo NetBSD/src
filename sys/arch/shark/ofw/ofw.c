@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.48 2009/03/18 15:14:29 cegger Exp $	*/
+/*	$NetBSD: ofw.c,v 1.49 2009/03/18 16:00:14 cegger Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.48 2009/03/18 15:14:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.49 2009/03/18 16:00:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,7 +436,7 @@ get_fw_dhcp_data(struct bootdata *bdp)
 	int chosen;
 	int dhcplen;
 
-	bzero((char *)bdp, sizeof(*bdp));
+	memset((char *)bdp, 0, sizeof(*bdp));
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		panic("no /chosen from OFW");
 	if ((dhcplen = OF_getproplen(chosen, "bootp-response")) > 0) {
@@ -1313,7 +1313,7 @@ ofw_construct_proc0_addrspace(void)
 		    PAGE_SIZE, -1);	/* XXX - mode? -JJK */
 
 		/* Zero the memory. */
-		bzero((char *)systempage.pv_va, PAGE_SIZE);
+		memset((char *)systempage.pv_va, 0, PAGE_SIZE);
 	}
 
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
@@ -1917,7 +1917,7 @@ ofw_claimpages(vaddr_t *free_pp, pv_addr_t *pv_p, vsize_t size)
 	ofw_settranslation(va, pa, alloc_size, -1);
 
 	/* The memory's mapped-in now, so we can zero it. */
-	bzero((char *)va, alloc_size);
+	memset((char *)va, 0, alloc_size);
 
 	/* Set OUT parameters. */
 	*free_pp = va;

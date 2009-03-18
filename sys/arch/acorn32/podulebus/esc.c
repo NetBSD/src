@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.20 2009/03/14 15:35:58 dsl Exp $	*/
+/*	$NetBSD: esc.c,v 1.21 2009/03/18 16:00:08 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.20 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.21 2009/03/18 16:00:08 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ esc_minphys(struct buf *bp)
 void
 esc_init_nexus(struct esc_softc *dev, struct nexus *nexus)
 {
-	bzero(nexus, sizeof(struct nexus));
+	memset(nexus, 0, sizeof(struct nexus));
 
 	nexus->state	= ESC_NS_IDLE;
 	nexus->period	= 200;

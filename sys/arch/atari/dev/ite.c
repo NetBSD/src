@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.63 2009/03/18 15:14:29 cegger Exp $	*/
+/*	$NetBSD: ite.c,v 1.64 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.63 2009/03/18 15:14:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64 2009/03/18 16:00:10 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -765,7 +765,7 @@ ite_reset(struct ite_softc *ip)
 	ip->keypad_appmode = 0;
 	ip->imode = 0;
 	ip->key_repeat = 1;
-	bzero(ip->tabs, ip->cols);
+	memset(ip->tabs, 0, ip->cols);
 	for (i = 0; i < ip->cols; i++)
 		ip->tabs[i] = ((i & 7) == 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2009/03/18 16:00:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2270,7 +2270,7 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 				panic("enter_pt: out of address space");
 			pmap->pm_stfree &= ~l2tobm(ix);
 			addr = (void *)&pmap->pm_stab[ix * SG4_LEV2SIZE];
-			bzero(addr, SG4_LEV2SIZE * sizeof(st_entry_t));
+			memset(addr, 0, SG4_LEV2SIZE * sizeof(st_entry_t));
 			addr = (void *)&pmap->pm_stpa[ix * SG4_LEV2SIZE];
 			*ste = (u_int) addr | SG_RW | SG_U | SG_V;
 #ifdef DEBUG
@@ -2328,7 +2328,7 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
-		bzero((char *)kpt->kpt_va, PAGE_SIZE);
+		memset((char *)kpt->kpt_va, 0, PAGE_SIZE);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		pmap_update(pmap);

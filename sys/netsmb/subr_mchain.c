@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.15 2008/06/24 10:37:19 gmcgarry Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.16 2009/03/18 16:00:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.15 2008/06/24 10:37:19 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.16 2009/03/18 16:00:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ mb_init(struct mbchain *mbp)
 void
 mb_initm(struct mbchain *mbp, struct mbuf *m)
 {
-	bzero(mbp, sizeof(*mbp));
+	memset(mbp, 0, sizeof(*mbp));
 	mbp->mb_top = mbp->mb_cur = m;
 	mbp->mb_mleft = M_TRAILINGSPACE(m);
 }
@@ -290,7 +290,7 @@ mb_put_mem(struct mbchain *mbp, const char *source, int size, int type)
 				return error;
 			break;
 		    case MB_MZERO:
-			bzero(dst, cplen);
+			memset(dst, 0, cplen);
 			break;
 		}
 		size -= cplen;
@@ -373,7 +373,7 @@ md_init(struct mdchain *mdp)
 void
 md_initm(struct mdchain *mdp, struct mbuf *m)
 {
-	bzero(mdp, sizeof(*mdp));
+	memset(mdp, 0, sizeof(*mdp));
 	mdp->md_top = mdp->md_cur = m;
 	mdp->md_pos = mtod(m, u_char*);
 }

@@ -416,7 +416,7 @@ nsp_attach(struct device *parent, struct device *self, void *aux)
 
 	/* setup card */
 
-	bzero(nip, sizeof (*nip));
+	memset(nip, 0, sizeof (*nip));
 
 	sc->nip = nip;
 	nip->dev = sc;

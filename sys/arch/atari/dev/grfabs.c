@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.15 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.16 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.15 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.16 2009/03/18 16:00:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ grf_get_colormap(view_t *v, colormap_t *cm)
 	/*
 	 * Copy the colors
 	 */
-	bzero(cm->entry, cm->size * sizeof(long));
+	memset(cm->entry, 0, cm->size * sizeof(long));
 	for (i = 0; i < n; i++)
 		cm->entry[i] = gcm->entry[i];
 	return (0);
