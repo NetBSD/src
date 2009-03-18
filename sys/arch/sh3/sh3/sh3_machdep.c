@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.79 2009/03/14 21:04:15 dsl Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.80 2009/03/18 10:22:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.79 2009/03/14 21:04:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.80 2009/03/18 10:22:36 cegger Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -242,7 +242,7 @@ sh_proc0_init()
 }
 
 void
-sh_startup()
+sh_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -290,12 +290,12 @@ sh_startup()
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 }
 
@@ -547,7 +547,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  * Jump to reset vector.
  */
 void
-cpu_reset()
+cpu_reset(void)
 {
 
 	_cpu_exception_suspend();

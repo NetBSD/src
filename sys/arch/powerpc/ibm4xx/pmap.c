@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2009/03/14 14:46:05 dsl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2009/03/18 10:22:34 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2009/03/14 14:46:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2009/03/18 10:22:34 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1638,7 +1638,7 @@ ctx_free(struct pmap *pm)
  */
 void pmap_testout(void);
 void
-pmap_testout()
+pmap_testout(void)
 {
 	vaddr_t va;
 	volatile int *loc;

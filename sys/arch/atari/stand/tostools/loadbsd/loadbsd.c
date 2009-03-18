@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.19 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.20 2009/03/18 10:22:26 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -53,7 +53,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.19 $";
+const char version[] = "$Revision: 1.20 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -211,7 +211,7 @@ get_sys_info(osdsc_t *od)
 }
 
 void
-help()
+help(void)
 {
 	eprintf("\r
 NetBSD loader for the Atari-TT\r
@@ -239,7 +239,7 @@ Description of options:\r
 }
 
 void
-usage()
+usage(void)
 {
 	eprintf("Usage: %s [-abdhstVD] [-S <stram-size>] "
 		"[-T <ttram-size>] [kernel]\r\n", Progname);

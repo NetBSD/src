@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.63 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.64 2009/03/18 10:22:22 cegger Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.63 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.64 2009/03/18 10:22:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ const struct alpha_variation_table dec_axppci_33_variations[] = {
 static struct lca_config *lca_preinit(void);
 
 static struct lca_config *
-lca_preinit()
+lca_preinit(void)
 {
 	extern struct lca_config lca_configuration;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.19 2009/03/15 21:32:36 cegger Exp $	*/
+/*	$NetBSD: consinit.c,v 1.20 2009/03/18 10:22:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.19 2009/03/15 21:32:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.20 2009/03/18 10:22:38 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -241,7 +241,7 @@ dokbd:
 
 #ifdef KGDB
 void
-kgdb_port_init()
+kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2009/03/18 10:22:34 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2009/03/18 10:22:34 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -426,7 +426,7 @@ setup_ivr(PPC_DEVICE *dev)
  */
 
 static void
-prep_init()
+prep_init(void)
 {
 	PPC_DEVICE *ppc_dev;
 	int i, foundmpic;

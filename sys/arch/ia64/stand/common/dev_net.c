@@ -1,5 +1,5 @@
 /*	
- * $NetBSD: dev_net.c,v 1.4 2009/03/14 15:36:08 dsl Exp $
+ * $NetBSD: dev_net.c,v 1.5 2009/03/18 10:22:31 cegger Exp $
  */
 
 /*-
@@ -173,7 +173,7 @@ net_close(struct open_file *f)
 }
 
 int
-net_strategy()
+net_strategy(void)
 {
     return EIO;
 }

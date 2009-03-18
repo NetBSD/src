@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.66 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: fd.c,v 1.67 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.67 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -776,7 +776,7 @@ fdselect(int drive, int head, int dense)
 }
 
 static void
-fddeselect()
+fddeselect(void)
 {
 	ym2149_fd_select(PA_FDSEL);
 	motoron = selected = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 2009/03/18 10:22:27 cegger Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
@@ -445,7 +445,7 @@ fdc_in(int ctlr, u_char *data)
  *                              fdc_intr_wait                                *
  *===========================================================================*/
 int
-fdc_intr_wait()
+fdc_intr_wait(void)
 {
 
 	return (irq_polling(FDC_IRQ, INT_TIMEOUT));	/* wait interrupt */
@@ -653,7 +653,7 @@ u_int INT2_MASK;
  *                             irq initialize                                *
  *===========================================================================*/
 void
-irq_init()
+irq_init(void)
 {
 	outb(INT_CTL0, ICW1_AT);		/* ICW1 */
 	outb(INT_CTL1, 0);			/* ICW2 for master */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.57 2009/03/14 15:36:21 dsl Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.58 2009/03/18 10:22:42 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.57 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.58 2009/03/18 10:22:42 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -196,7 +196,7 @@ static int filecore_mountfs(struct vnode *devvp, struct mount *mp,
 
 #if 0
 int
-filecore_mountroot()
+filecore_mountroot(void)
 {
 	struct mount *mp;
 	extern struct vnode *rootvp;

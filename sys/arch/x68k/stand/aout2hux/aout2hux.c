@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.8 2009/03/14 21:04:17 dsl Exp $
+ *	$NetBSD: aout2hux.c,v 1.9 2009/03/18 10:22:38 cegger Exp $
  */
 
 #include <sys/types.h>
@@ -730,7 +730,7 @@ void bist PROTO((void));
  * built-in self test
  */
 void
-bist()
+bist(void)
 {
 	be_uint16_t be16;
 	be_uint32_t be32;

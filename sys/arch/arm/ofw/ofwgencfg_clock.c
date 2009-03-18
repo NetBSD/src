@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.9 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.10 2009/03/18 10:22:24 cegger Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.9 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.10 2009/03/18 10:22:24 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,7 +112,7 @@ setstatclockrate(int arg)
  */
  
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	/*
 	 * Load timer 0 with count down value

@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.8 2009/03/14 21:04:07 dsl Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.9 2009/03/18 10:22:25 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -319,7 +319,7 @@ out:
 }
 
 char *
-get_id()
+get_id(void)
 {
 	static char	buf[5];
 	       int	n;
@@ -534,7 +534,7 @@ disk_write(fd, start, count, buf)
 }
 
 void
-get_termcap()
+get_termcap(void)
 {
 	char	*term, tbuf[1024], buf[1024], *p;
 

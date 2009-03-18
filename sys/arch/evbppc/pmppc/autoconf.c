@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2009/03/18 10:22:28 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2008/02/12 17:30:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2009/03/18 10:22:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ void enable_intr(void);
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -74,7 +74,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 

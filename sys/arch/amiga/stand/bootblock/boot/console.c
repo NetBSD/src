@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.10 2009/03/17 00:13:43 he Exp $ */
+/* $NetBSD: console.c,v 1.11 2009/03/18 10:22:23 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ err:
 
 #ifdef _PRIMARY_BOOT
 int
-consclose()
+consclose(void)
 {
 	struct Console *mc = ConsoleBase;
 
@@ -197,7 +197,7 @@ puts(char *s)
 }
 
 int
-getchar()
+getchar(void)
 {
 	struct AmigaIO *ior;
 	char c = -1;

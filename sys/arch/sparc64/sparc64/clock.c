@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.98 2009/03/14 15:36:14 dsl Exp $ */
+/*	$NetBSD: clock.c,v 1.99 2009/03/18 10:22:37 cegger Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.98 2009/03/14 15:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.99 2009/03/18 10:22:37 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -343,7 +343,7 @@ tickintr_establish(int pil, int (*fun)(void *))
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 #ifndef MULTIPROCESSOR
 	int statint, minint;

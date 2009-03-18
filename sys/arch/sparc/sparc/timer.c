@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.23 2007/12/03 15:34:22 ad Exp $ */
+/*	$NetBSD: timer.c,v 1.24 2009/03/18 10:22:36 cegger Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.23 2007/12/03 15:34:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.24 2009/03/18 10:22:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,7 +139,7 @@ timer_get_timecount(struct timecounter *tc)
 }
 
 void
-tickle_tc()
+tickle_tc(void)
 {
 	if (timecounter->tc_get_timecount == timer_get_timecount) {
 		cntr.offset += cntr.limit;

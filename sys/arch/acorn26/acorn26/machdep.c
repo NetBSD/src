@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.29 2009/03/14 15:35:58 dsl Exp $ */
+/* $NetBSD: machdep.c,v 1.30 2009/03/18 10:22:21 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2009/03/18 10:22:21 cegger Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -139,7 +139,7 @@ haltsys:
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];

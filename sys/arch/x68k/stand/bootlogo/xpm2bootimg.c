@@ -1,4 +1,4 @@
-/*	$NetBSD: xpm2bootimg.c,v 1.3 2009/03/14 21:04:17 dsl Exp $	*/
+/*	$NetBSD: xpm2bootimg.c,v 1.4 2009/03/18 10:22:38 cegger Exp $	*/
 
 /*
  *	convert XPM format image to boot title format
@@ -87,7 +87,7 @@ putbyte(int c)
 }
 
 static void
-initdot()
+initdot(void)
 {
 
 	outbuf = bufbits = curval = curlen = obytes = 0;
@@ -131,7 +131,7 @@ adddot(int val)
 }
 
 static void
-flushdot()
+flushdot(void)
 {
 
 	if (curlen) {
@@ -197,7 +197,7 @@ static FILE *infp;
 static unsigned lineno;
 
 static char *
-getline()
+getline(void)
 {
 	static char buf[256];
 	char *p;

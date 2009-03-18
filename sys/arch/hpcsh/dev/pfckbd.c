@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.25 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.26 2009/03/18 10:22:30 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.25 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.26 2009/03/18 10:22:30 cegger Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -101,7 +101,7 @@ static const struct {
 
 
 void
-pfckbd_cnattach()
+pfckbd_cnattach(void)
 {
 	struct pfckbd_core *pc = &pfckbd_core;
 
@@ -435,7 +435,7 @@ pfckbd_callout_hitachi(void *arg)
 }
 
 void
-pfckbd_poll_hitachi_power()
+pfckbd_poll_hitachi_power(void)
 {
 	static const struct {
 		uint16_t cc, dc, ec; uint8_t c, d, e;

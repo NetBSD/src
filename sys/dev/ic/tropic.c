@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.37 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: tropic.c,v 1.38 2009/03/18 10:22:40 cegger Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.37 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.38 2009/03/18 10:22:40 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1128,11 +1128,11 @@ tr_intr(void *arg)
 }
 
 #ifdef notyet
-int asb_reply_rcv()
+int asb_reply_rcv(void)
 {
 }
 
-int asb_reply_xmit()
+int asb_reply_xmit(void)
 {
 }
 

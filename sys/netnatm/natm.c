@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.18 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: natm.c,v 1.19 2009/03/18 10:22:44 cegger Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.18 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.19 2009/03/18 10:22:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ done:
  */
 
 void
-natmintr()
+natmintr(void)
 
 {
   int s;

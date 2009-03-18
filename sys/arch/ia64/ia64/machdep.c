@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2009/03/18 10:22:30 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -241,7 +241,7 @@ identifycpu(void)
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	
@@ -324,7 +324,7 @@ cpu_switchto(lwp_t *cur, lwp_t *new, bool b)
 }
 
 bool
-cpu_intr_p()
+cpu_intr_p(void)
 {
 	return 0;
 }
@@ -337,19 +337,19 @@ cpu_intr_p()
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	return;
 }
 
 void
-consinit()
+consinit(void)
 {
 	cninit();
 }
 
 void
-map_pal_code()
+map_pal_code(void)
 {
 	pt_entry_t pte;
 	u_int64_t psr;
@@ -378,7 +378,7 @@ map_pal_code()
 }
 
 void
-map_gateway_page()
+map_gateway_page(void)
 {
 	pt_entry_t pte;
 	u_int64_t psr;

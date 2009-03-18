@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.19 2009/03/14 14:46:11 dsl Exp $
+ *	$Id: i4b_trace.c,v 1.20 2009/03/18 10:22:44 cegger Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.19 2009/03/14 14:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.20 2009/03/18 10:22:44 cegger Exp $");
 
 #include "isdntrc.h"
 
@@ -101,7 +101,7 @@ PDEVSTATIC void
 #ifdef __FreeBSD__
 isdntrcattach(void *dummy)
 #else
-isdntrcattach()
+isdntrcattach(void)
 #endif
 {
 	int i;

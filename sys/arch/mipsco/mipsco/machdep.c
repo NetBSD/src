@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2009/03/16 23:11:12 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2009/03/16 23:11:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:32 cegger Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -389,7 +389,7 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -531,14 +531,14 @@ haltsys:
 }
 
 int
-initcpu()
+initcpu(void)
 {
 	spl0();		/* safe to turn interrupts on now */
 	return 0;
 }
 
 static void
-unimpl_cons_init()
+unimpl_cons_init(void)
 {
 
 	panic("sysconf.init didn't set cons_init");
@@ -651,7 +651,7 @@ null_cnpollc(dev_t dev, int on)
 }
 
 void
-consinit()
+consinit(void)
 {
 	int zs_unit;
 

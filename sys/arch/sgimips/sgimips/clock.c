@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 2009/02/12 06:33:57 rumble Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 2009/03/18 10:22:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2009/02/12 06:33:57 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2009/03/18 10:22:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,7 +121,7 @@ setstatclockrate(int newhz)
  * no alternative timer is available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	switch (mach_type) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.6 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: kbd.c,v 1.7 2009/03/18 10:22:27 cegger Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -168,7 +168,7 @@ loop:
 }
 
 void
-kbdreset()
+kbdreset(void)
 {
 	u_char c;
 	int i;
@@ -197,7 +197,7 @@ kbdreset()
 }
 
 int
-kbd_getc()
+kbd_getc(void)
 {
 	int c;
 	while ((c = kbd(0)) == 0)
@@ -206,7 +206,7 @@ kbd_getc()
 }
 
 int
-kbd_test()
+kbd_test(void)
 {
 	return ((inb(KBSTATP) & KBINRDY) != 0);
 }

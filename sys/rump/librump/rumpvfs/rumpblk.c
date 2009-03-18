@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.7 2009/02/26 15:25:52 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.8 2009/03/18 10:22:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.7 2009/02/26 15:25:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.8 2009/03/18 10:22:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -91,7 +91,7 @@ static int blkfail;
 static unsigned randstate;
 
 int
-rumpblk_init()
+rumpblk_init(void)
 {
 	char buf[64];
 	int rumpblk = RUMPBLK;

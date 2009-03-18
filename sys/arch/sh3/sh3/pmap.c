@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2009/01/23 16:46:51 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2009/03/18 10:22:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2009/01/23 16:46:51 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2009/03/18 10:22:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ STATIC bool __pmap_map_change(pmap_t, vaddr_t, paddr_t, vm_prot_t,
     pt_entry_t);
 
 void
-pmap_bootstrap()
+pmap_bootstrap(void)
 {
 
 	/* Steal msgbuf area */
@@ -210,7 +210,7 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 }
 
 void
-pmap_init()
+pmap_init(void)
 {
 
 	/* Initialize pmap module */
@@ -239,7 +239,7 @@ pmap_init()
 }
 
 pmap_t
-pmap_create()
+pmap_create(void)
 {
 	pmap_t pmap;
 
@@ -1045,7 +1045,7 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
  *	Allocate new ASID. if all ASID is used, steal from other process.
  */
 int
-__pmap_asid_alloc()
+__pmap_asid_alloc(void)
 {
 	struct proc *p;
 	int i, j, k, n, map, asid;
