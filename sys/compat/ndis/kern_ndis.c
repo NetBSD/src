@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.18 2009/03/18 10:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.19 2009/03/18 17:06:48 cegger Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1458,7 +1458,7 @@ ndis_convert_res(void *arg)
 				error = ENOMEM;
 				goto bad;
 			}
-			bcopy((char *)brle, (char *)n,
+			memcpy( (char *)n, (char *)brle,
 			    sizeof(struct resource_list_entry));
 			SLIST_INSERT_HEAD(&brl_rev, n, link);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.43 2008/11/07 00:20:01 dyoung Exp $ */
+/*	$NetBSD: if_es.c,v 1.44 2009/03/18 17:06:42 cegger Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.43 2008/11/07 00:20:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.44 2009/03/18 17:06:42 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -184,7 +184,7 @@ esattach(struct device *parent, struct device *self, void *aux)
 	myaddr[5] = (ser      ) & 0xff;
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
@@ -699,7 +699,7 @@ esrint(struct es_softc *sc)
 		}
 		m->m_len = len = min(pktlen, len);
 #ifdef USEPKTBUF
-		bcopy((void *)b, mtod(m, void *), len);
+		memcpy( void *), (void *)b, mtod(m, len);
 		b += len;
 #else	/* USEPKTBUF */
 		buf = mtod(m, u_short *);
@@ -848,7 +848,7 @@ esstart(struct ifnet *ifp)
 #ifdef USEPKTBUF
 		i = 0;
 		for (m0 = m; m; m = m->m_next) {
-			bcopy(mtod(m, void *), (char *)pktbuf + i, m->m_len);
+			memcpy( (char *)pktbuf + i, mtod(m, void *), m->m_len);
 			i += m->m_len;
 		}
 

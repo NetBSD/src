@@ -1,4 +1,4 @@
-/* $NetBSD: eeprom.c,v 1.4 2009/03/14 15:36:04 dsl Exp $ */
+/* $NetBSD: eeprom.c,v 1.5 2009/03/18 17:06:43 cegger Exp $ */
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.4 2009/03/14 15:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.5 2009/03/18 17:06:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,6 @@ cesfic_getetheraddr(unsigned char *buf)
 		}
 		eeprom_read = 1;
 	}
-	bcopy(eeprom.EtherAddr, buf, 6);
+	memcpy( buf, eeprom.EtherAddr, 6);
 	return (0);
 }

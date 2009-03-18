@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.30 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.31 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.30 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.31 2009/03/18 17:06:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -375,7 +375,7 @@ init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 	v->bitmap    = bm;
 	v->mode      = mode;
 	v->flags     = 0;
-	bcopy(dbox, &v->display, sizeof(box_t));
+	memcpy( &v->display, dbox, sizeof(box_t));
 }
 
 /* XXX: No more than a stub... */

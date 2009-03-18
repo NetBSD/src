@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.26 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.27 2009/03/18 17:06:52 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.26 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.27 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -141,7 +141,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 		case 4:
 			if (m->m_len < sizeof(td->td_ti))
 				break;
-			bcopy(mtod(m, void *), &td->td_ti, sizeof(td->td_ti));
+			memcpy( &td->td_ti, mtod(m, void *), sizeof(td->td_ti));
 			th = (struct tcphdr *)((char *)&td->td_ti + 
 			    sizeof(struct ip));
 			break;
@@ -149,7 +149,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 		case 6:
 			if (m->m_len < sizeof(td->td_ti6))
 				break;
-			bcopy(mtod(m, void *), &td->td_ti6,
+			memcpy( &td->td_ti6, mtod(m, void *),
 				sizeof(td->td_ti6));
 			th = (struct tcphdr *)((char *)&td->td_ti6 + 
 			    sizeof(struct ip6_hdr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: itecons.c,v 1.5 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: itecons.c,v 1.6 2009/03/18 17:06:44 cegger Exp $	*/
 
 /*	$OpenBSD: itecons.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -133,7 +133,7 @@ ite_init(struct consdev *cn)
 	} else {
 		kyiodc = cniodc;
 
-		bcopy((char *)&PAGE0->mem_cons, (char *)&PAGE0->mem_kbd,
+		memcpy( (char *)&PAGE0->mem_kbd, (char *)&PAGE0->mem_cons,
 		      sizeof(struct pz_device));
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.23 2009/03/18 16:00:22 cegger Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.24 2009/03/18 17:06:52 cegger Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.23 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.24 2009/03/18 17:06:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ atintr(void)
 		if (elhp->el_type == ELAP_DDPEXTEND) {
 			ddp_input(m, ifp, (struct elaphdr *) NULL, 1);
 		} else {
-			bcopy((void *) elhp, (void *) & elh, SZ_ELAPHDR);
+			memcpy( (void *) & elh, (void *) elhp, SZ_ELAPHDR);
 			ddp_input(m, ifp, &elh, 1);
 		}
 	}
@@ -159,7 +159,7 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 			return;
 		}
 		dsh = mtod(m, struct ddpshdr *);
-		bcopy((void *) dsh, (void *) & ddps, sizeof(struct ddpshdr));
+		memcpy( (void *) & ddps, (void *) dsh, sizeof(struct ddpshdr));
 		ddps.dsh_bytes = ntohl(ddps.dsh_bytes);
 		dlen = ddps.dsh_len;
 
@@ -191,7 +191,7 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 			return;
 		}
 		deh = mtod(m, struct ddpehdr *);
-		bcopy((void *) deh, (void *) & ddpe, sizeof(struct ddpehdr));
+		memcpy( (void *) & ddpe, (void *) deh, sizeof(struct ddpehdr));
 		ddpe.deh_bytes = ntohl(ddpe.deh_bytes);
 		dlen = ddpe.deh_len;
 
@@ -289,7 +289,7 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 		}
 		ddpe.deh_hops++;
 		ddpe.deh_bytes = htonl(ddpe.deh_bytes);
-		bcopy((void *) & ddpe, (void *) deh, sizeof(u_short));/*XXX*/
+		memcpy( (void *) deh, (void *) & ddpe, sizeof(u_short));/*XXX*/
 		if (ddp_route(m, &forwro)) {
 			DDP_STATINC(DDP_STAT_CANTFORWARD);
 		} else {

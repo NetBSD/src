@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.32 2008/11/07 00:20:01 dyoung Exp $ */
+/*	$NetBSD: if_qn.c,v 1.33 2009/03/18 17:06:42 cegger Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.32 2008/11/07 00:20:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.33 2009/03/18 17:06:42 cegger Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -238,7 +238,7 @@ qnattach(struct device *parent, struct device *self, void *aux)
 	/* set interface to stopped condition (reset) */
 	qnstop(sc);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = qnioctl;
 	ifp->if_watchdog = qnwatchdog;

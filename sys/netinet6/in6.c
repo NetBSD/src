@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.148 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: in6.c,v 1.149 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.148 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.149 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1558,9 +1558,9 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 
 		/* copy args to in6_aliasreq, perform ioctl(SIOCAIFADDR_IN6). */
 		memset(&ifra, 0, sizeof(ifra));
-		bcopy(iflr->iflr_name, ifra.ifra_name, sizeof(ifra.ifra_name));
+		memcpy( ifra.ifra_name, iflr->iflr_name, sizeof(ifra.ifra_name));
 
-		bcopy(&iflr->addr, &ifra.ifra_addr,
+		memcpy( &ifra.ifra_addr, &iflr->addr,
 		    ((struct sockaddr *)&iflr->addr)->sa_len);
 		if (xhostid) {
 			/* fill in hostid part */
@@ -1571,7 +1571,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		}
 
 		if (((struct sockaddr *)&iflr->dstaddr)->sa_family) { /* XXX */
-			bcopy(&iflr->dstaddr, &ifra.ifra_dstaddr,
+			memcpy( &ifra.ifra_dstaddr, &iflr->dstaddr,
 			    ((struct sockaddr *)&iflr->dstaddr)->sa_len);
 			if (xhostid) {
 				ifra.ifra_dstaddr.sin6_addr.s6_addr32[2] =
@@ -1602,7 +1602,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			in6_prefixlen2mask(&mask, iflr->prefixlen);
 
 			sin6 = (struct sockaddr_in6 *)&iflr->addr;
-			bcopy(&sin6->sin6_addr, &match, sizeof(match));
+			memcpy( &match, &sin6->sin6_addr, sizeof(match));
 			match.s6_addr32[0] &= mask.s6_addr32[0];
 			match.s6_addr32[1] &= mask.s6_addr32[1];
 			match.s6_addr32[2] &= mask.s6_addr32[2];
@@ -1621,7 +1621,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 				/* on deleting an address, do exact match */
 				in6_prefixlen2mask(&mask, 128);
 				sin6 = (struct sockaddr_in6 *)&iflr->addr;
-				bcopy(&sin6->sin6_addr, &match, sizeof(match));
+				memcpy( &match, &sin6->sin6_addr, sizeof(match));
 
 				cmp = 1;
 			}
@@ -1638,7 +1638,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			 * a user to specify fe80::/64 (not /10) for a
 			 * link-local address.
 			 */
-			bcopy(IFA_IN6(ifa), &candidate, sizeof(candidate));
+			memcpy( &candidate, IFA_IN6(ifa), sizeof(candidate));
 			in6_clearscope(&candidate);
 			candidate.s6_addr32[0] &= mask.s6_addr32[0];
 			candidate.s6_addr32[1] &= mask.s6_addr32[1];
@@ -1655,14 +1655,14 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			int error;
 
 			/* fill in the if_laddrreq structure */
-			bcopy(&ia->ia_addr, &iflr->addr, ia->ia_addr.sin6_len);
+			memcpy( &iflr->addr, &ia->ia_addr, ia->ia_addr.sin6_len);
 			error = sa6_recoverscope(
 			    (struct sockaddr_in6 *)&iflr->addr);
 			if (error != 0)
 				return error;
 
 			if ((ifp->if_flags & IFF_POINTOPOINT) != 0) {
-				bcopy(&ia->ia_dstaddr, &iflr->dstaddr,
+				memcpy( &iflr->dstaddr, &ia->ia_dstaddr,
 				    ia->ia_dstaddr.sin6_len);
 				error = sa6_recoverscope(
 				    (struct sockaddr_in6 *)&iflr->dstaddr);
@@ -1682,19 +1682,19 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 
 			/* fill in6_aliasreq and do ioctl(SIOCDIFADDR_IN6) */
 			memset(&ifra, 0, sizeof(ifra));
-			bcopy(iflr->iflr_name, ifra.ifra_name,
+			memcpy( ifra.ifra_name, iflr->iflr_name,
 			    sizeof(ifra.ifra_name));
 
-			bcopy(&ia->ia_addr, &ifra.ifra_addr,
+			memcpy( &ifra.ifra_addr, &ia->ia_addr,
 			    ia->ia_addr.sin6_len);
 			if ((ifp->if_flags & IFF_POINTOPOINT) != 0) {
-				bcopy(&ia->ia_dstaddr, &ifra.ifra_dstaddr,
+				memcpy( &ifra.ifra_dstaddr, &ia->ia_dstaddr,
 				    ia->ia_dstaddr.sin6_len);
 			} else {
 				memset(&ifra.ifra_dstaddr, 0,
 				    sizeof(ifra.ifra_dstaddr));
 			}
-			bcopy(&ia->ia_prefixmask, &ifra.ifra_dstaddr,
+			memcpy( &ifra.ifra_dstaddr, &ia->ia_prefixmask,
 			    ia->ia_prefixmask.sin6_len);
 
 			ifra.ifra_flags = ia->ia6_flags;

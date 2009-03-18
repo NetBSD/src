@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.137 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.138 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.137 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.138 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1064,14 +1064,14 @@ ipsec4_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 	memset(sin, 0, sizeof(*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_src, &sin->sin_addr, sizeof(ip->ip_src));
+	memcpy( &sin->sin_addr, &ip->ip_src, sizeof(ip->ip_src));
 	spidx->prefs = sizeof(struct in_addr) << 3;
 
 	sin = (struct sockaddr_in *)&spidx->dst;
 	memset(sin, 0, sizeof(*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_dst, &sin->sin_addr, sizeof(ip->ip_dst));
+	memcpy( &sin->sin_addr, &ip->ip_dst, sizeof(ip->ip_dst));
 	spidx->prefd = sizeof(struct in_addr) << 3;
 	return 0;
 }
@@ -1336,8 +1336,8 @@ ipsec_deepcopy_policy(struct secpolicy *src)
 		(*q)->level = p->level;
 		(*q)->saidx.reqid = p->saidx.reqid;
 
-		bcopy(&p->saidx.src, &(*q)->saidx.src, sizeof((*q)->saidx.src));
-		bcopy(&p->saidx.dst, &(*q)->saidx.dst, sizeof((*q)->saidx.dst));
+		memcpy( &(*q)->saidx.src, &p->saidx.src, sizeof((*q)->saidx.src));
+		memcpy( &(*q)->saidx.dst, &p->saidx.dst, sizeof((*q)->saidx.dst));
 
 		(*q)->sav = NULL;
 		(*q)->sp = dst;
@@ -2559,7 +2559,7 @@ ipsec4_checksa(struct ipsecrequest *isr,
 
 	/* make SA index for search proper SA */
 	ip = mtod(state->m, struct ip *);
-	bcopy(&isr->saidx, &saidx, sizeof(saidx));
+	memcpy( &saidx, &isr->saidx, sizeof(saidx));
 	saidx.mode = isr->saidx.mode;
 	saidx.reqid = isr->saidx.reqid;
 	sin = (struct sockaddr_in *)&saidx.src;
@@ -2568,7 +2568,7 @@ ipsec4_checksa(struct ipsecrequest *isr,
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = IPSEC_PORT_ANY;
-		bcopy(&ip->ip_src, &sin->sin_addr, sizeof(sin->sin_addr));
+		memcpy( &sin->sin_addr, &ip->ip_src, sizeof(sin->sin_addr));
 	}
 	sin = (struct sockaddr_in *)&saidx.dst;
 	if (sin->sin_len == 0) {
@@ -2576,7 +2576,7 @@ ipsec4_checksa(struct ipsecrequest *isr,
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = IPSEC_PORT_ANY;
-		bcopy(&ip->ip_dst, &sin->sin_addr, sizeof(sin->sin_addr));
+		memcpy( &sin->sin_addr, &ip->ip_dst, sizeof(sin->sin_addr));
 	}
 
 	return key_checkrequest(isr, &saidx);
@@ -2811,7 +2811,7 @@ ipsec6_checksa(struct ipsecrequest *isr,
 		memset(&saidx, 0, sizeof(saidx));
 		saidx.proto = isr->saidx.proto;
 	} else
-		bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		memcpy( &saidx, &isr->saidx, sizeof(saidx));
 	saidx.mode = isr->saidx.mode;
 	saidx.reqid = isr->saidx.reqid;
 	sin6 = (struct sockaddr_in6 *)&saidx.src;
@@ -3198,7 +3198,7 @@ ipsec4_splithdr(struct mbuf *m)
 		mh->m_next = m;
 		m = mh;
 		m->m_len = hlen;
-		bcopy((void *)ip, mtod(m, void *), hlen);
+		memcpy( void *), (void *)ip, mtod(m, hlen);
 	} else if (m->m_len < hlen) {
 		m = m_pullup(m, hlen);
 		if (!m)
@@ -3233,7 +3233,7 @@ ipsec6_splithdr(struct mbuf *m)
 		mh->m_next = m;
 		m = mh;
 		m->m_len = hlen;
-		bcopy((void *)ip6, mtod(m, void *), hlen);
+		memcpy( void *), (void *)ip6, mtod(m, hlen);
 	} else if (m->m_len < hlen) {
 		m = m_pullup(m, hlen);
 		if (!m)
@@ -3384,7 +3384,7 @@ ipsec_copypkt(struct mbuf *m)
 							remain : MCLBYTES;
 					}
 
-					bcopy(n->m_data + copied, mm->m_data,
+					memcpy( mm->m_data, n->m_data + copied,
 					      len);
 
 					copied += len;

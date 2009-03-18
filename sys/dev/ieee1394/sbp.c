@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.25 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: sbp.c,v 1.26 2009/03/18 17:06:49 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.25 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.26 2009/03/18 17:06:49 cegger Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -1716,7 +1716,7 @@ END_DEBUG
 		if(sbp_cmd_status->ill_len)
 			sense->flags |= SSD_ILI;
 
-		bcopy(&sbp_cmd_status->info, &sense->information[0], 4);
+		memcpy( &sense->information[0], &sbp_cmd_status->info, 4);
 
 		if (sbp_status->len <= 1)
 			/* XXX not scsi status. shouldn't be happened */ 
@@ -1728,13 +1728,13 @@ END_DEBUG
 			/* fru, sense_key_spec */
 			sense->asl = 10;
 
-		bcopy(&sbp_cmd_status->cdb, &sense->csi[0], 4);
+		memcpy( &sense->csi[0], &sbp_cmd_status->cdb, 4);
 
 		sense->asc = sbp_cmd_status->s_code;
 		sense->ascq = sbp_cmd_status->s_qlfr;
 		sense->fruc = sbp_cmd_status->fru;
 
-		bcopy(&sbp_cmd_status->s_keydep[0], &sense->sks[0], 3);
+		memcpy( &sense->sks[0], &sbp_cmd_status->s_keydep[0], 3);
 		SCSI_XFER_ERROR(ocb->sxfer) = XS_SENSE;
 		SCSI_XFER_STATUS(ocb->sxfer) = sbp_cmd_status->status;
 /*
@@ -1789,9 +1789,9 @@ END_DEBUG
 		 * Some devices sometimes return strange strings.
 		 */
 #if 1
-		bcopy(sdev->vendor, inq->vendor, sizeof(inq->vendor));
-		bcopy(sdev->product, inq->product, sizeof(inq->product));
-		bcopy(sdev->revision+2, inq->revision, sizeof(inq->revision));
+		memcpy( inq->vendor, sdev->vendor, sizeof(inq->vendor));
+		memcpy( inq->product, sdev->product, sizeof(inq->product));
+		memcpy( inq->revision, sdev->revision+2, sizeof(inq->revision));
 #endif
 		break;
 	}
@@ -2654,7 +2654,7 @@ END_DEBUG
 			printf("sbp: CAM_DATA_PHYS\n");
 
 		cdb = SCSI_XFER_CMD(sxfer);
-		bcopy(cdb, (void *)&ocb->orb[5], SCSI_XFER_CMDLEN(sxfer));
+		memcpy( (void *)&ocb->orb[5], cdb, SCSI_XFER_CMDLEN(sxfer));
 /*
 printf("ORB %08x %08x %08x %08x\n", ntohl(ocb->orb[0]), ntohl(ocb->orb[1]), ntohl(ocb->orb[2]), ntohl(ocb->orb[3]));
 printf("ORB %08x %08x %08x %08x\n", ntohl(ocb->orb[4]), ntohl(ocb->orb[5]), ntohl(ocb->orb[6]), ntohl(ocb->orb[7]));
@@ -3139,7 +3139,7 @@ sbp_abort_all_ocbs(struct sbp_dev *sdev, int status)
 
 	s = splfw();
 
-	bcopy(&sdev->ocbs, &temp, sizeof(temp));
+	memcpy( &temp, &sdev->ocbs, sizeof(temp));
 	STAILQ_INIT(&sdev->ocbs);
 	for (ocb = STAILQ_FIRST(&temp); ocb != NULL; ocb = next) {
 		next = STAILQ_NEXT(ocb, ocb);

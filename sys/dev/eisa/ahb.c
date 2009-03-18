@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.52 2009/03/18 16:00:17 cegger Exp $	*/
+/*	$NetBSD: ahb.c,v 1.53 2009/03/18 17:06:48 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.52 2009/03/18 16:00:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.53 2009/03/18 17:06:48 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -844,7 +844,7 @@ ahb_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		ecb->opcode = ECB_SCSI_OP;
 		ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
 		ecb->opt2 = periph->periph_lun | ECB_NRB;
-		bcopy(xs->cmd, &ecb->scsi_cmd,
+		memcpy( &ecb->scsi_cmd, xs->cmd,
 		    ecb->scsi_cmd_length = xs->cmdlen);
 		ecb->sense_ptr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
 		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_sense);

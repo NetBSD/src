@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.92 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.93 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.92 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.93 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -515,7 +515,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		memset((void *)nd_opt, 0, optlen);
 		nd_opt->nd_opt_type = ND_OPT_SOURCE_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
-		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
+		memcpy( (void *)(nd_opt + 1), mac, ifp->if_addrlen);
 	}
 
 	ip6->ip6_plen = htons((u_int16_t)icmp6len);
@@ -974,7 +974,7 @@ nd6_na_output(
 		memset((void *)nd_opt, 0, optlen);
 		nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
-		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
+		memcpy( (void *)(nd_opt + 1), mac, ifp->if_addrlen);
 	} else
 		flags &= ~ND_NA_FLAG_OVERRIDE;
 

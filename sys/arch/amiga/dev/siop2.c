@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.34 2009/03/18 16:00:09 cegger Exp $ */
+/*	$NetBSD: siop2.c,v 1.35 2009/03/18 17:06:42 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.34 2009/03/18 16:00:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.35 2009/03/18 17:06:42 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ siopng_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 #endif
 		acb->flags = ACB_ACTIVE;
 		acb->xs = xs;
-		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+		memcpy( &acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->daddr = xs->data;
 		acb->dleft = xs->datalen;

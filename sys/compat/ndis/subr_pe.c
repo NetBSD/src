@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_pe.c,v 1.7.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.5 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.6 2009/03/18 17:06:48 cegger Exp $");
 #endif
 
 
@@ -333,7 +333,7 @@ pe_get_section(vm_offset_t imgbase, image_section_header *hdr, const char *name)
 
 	for (i = 0; i < sections; i++) {
 		if (!strcmp ((char *)&sect_hdr->ish_name, name)) {
-			bcopy((char *)sect_hdr, (char *)hdr,
+			memcpy( (char *)hdr, (char *)sect_hdr,
 			    sizeof(image_section_header));
 			return(0);
 		} else
@@ -448,7 +448,7 @@ pe_get_import_descriptor(imgbase, desc, module)
 		modname = (char *)pe_translate_addr(imgbase,
 		    imp_desc->iid_nameaddr);
 		if (!strncasecmp(module, modname, strlen(module))) {
-			bcopy((char *)imp_desc, (char *)desc,
+			memcpy( (char *)desc, (char *)imp_desc,
 			    sizeof(image_import_descriptor));
 			return(0);
 		}
