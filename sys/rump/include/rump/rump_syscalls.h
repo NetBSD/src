@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.9 2009/02/20 17:57:46 pooka Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.10 2009/03/18 17:52:19 pooka Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -54,11 +54,13 @@ int rump_sys___sysctl(const int *, u_int, void *, size_t *, const void *, size_t
 int rump_sys_lchmod(const char *, mode_t);
 int rump_sys_lchown(const char *, uid_t, gid_t);
 int rump_sys_lchflags(const char *, u_long);
+int rump_sys_kqueue(void);
 int rump_sys_statvfs1(const char *, struct statvfs *, int);
 int rump_sys_socket(int, int, int) __RENAME(rump_sys___socket30);
 int rump_sys_getfh(const char *, void *, size_t *) __RENAME(rump_sys___getfh30);
 int rump_sys_utimes(const char *, const struct timeval *) __RENAME(rump_sys___utimes50);
 int rump_sys_lutimes(const char *, const struct timeval *) __RENAME(rump_sys___lutimes50);
+int rump_sys_kevent(int, const struct kevent *, size_t, struct kevent *, size_t, const struct timespec *) __RENAME(rump_sys___kevent50);
 int rump_sys_stat(const char *, struct stat *) __RENAME(rump_sys___stat50);
 int rump_sys_lstat(const char *, struct stat *) __RENAME(rump_sys___lstat50);
 int rump_sys_mknod(const char *, mode_t, dev_t) __RENAME(rump_sys___mknod50);
