@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.86 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: libkern.h,v 1.87 2009/03/18 12:25:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -252,12 +252,6 @@ struct mtprng_state {
 	uint32_t mt_count;
 	uint32_t mt_sparse[3];
 };
-
-#ifdef _STANDALONE
-int	 bcmp(const void *, const void *, size_t);
-void 	 bcopy(const void *, void *, size_t);
-void	 bzero(void *, size_t);
-#endif
 
 /* Prototypes for which GCC built-ins exist. */
 void	*memcpy(void *, const void *, size_t);
