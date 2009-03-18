@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.116 2009/03/18 10:22:40 cegger Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.117 2009/03/18 10:41:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.116 2009/03/18 10:22:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.117 2009/03/18 10:41:46 cegger Exp $");
 
 #define ATRQ_CH 0
 #define ATRS_CH 1
@@ -880,7 +880,7 @@ fwohci_cyctimer(struct firewire_comm *fc)
 	return(OREAD(sc, OHCI_CYCLETIMER));
 }
 
-FWOHCI_DETACH(void)
+FWOHCI_DETACH()
 {
 	int i;
 
