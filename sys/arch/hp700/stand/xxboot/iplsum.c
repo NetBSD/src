@@ -1,4 +1,4 @@
-/*	$NetBSD: iplsum.c,v 1.3 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: iplsum.c,v 1.4 2009/03/18 13:24:38 tsutsui Exp $	*/
 
 /*
  * Calculate 32bit checksum of IPL and store in a certain location
@@ -9,6 +9,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 #include <netinet/in.h>
 
 #ifndef __BIT_TYPES_DEFINED__
