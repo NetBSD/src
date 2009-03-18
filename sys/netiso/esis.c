@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.53 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: esis.c,v 1.54 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.53 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.54 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -396,7 +396,7 @@ esis_rdoutput(
 		esis_stat.es_nomem++;
 		return;
 	}
-	bzero(mtod(m, void *), MHLEN);
+	memset(mtod(m, void *), 0, MHLEN);
 
 	pdu = mtod(m, struct esis_fixed *);
 	cp = (void *) (pdu + 1);	/* pointer arith.; 1st byte after
@@ -495,7 +495,7 @@ esis_rdoutput(
 	pdu->esis_hdr_len = m0->m_pkthdr.len = len;
 	iso_gen_csum(m0, ESIS_CKSUM_OFF, (int) pdu->esis_hdr_len);
 
-	bzero((void *) & siso, sizeof(siso));
+	memset((void *) & siso, 0, sizeof(siso));
 	siso.siso_family = AF_ISO;
 	siso.siso_data[0] = AFI_SNA;
 	siso.siso_nlen = 6 + 1;	/* should be taken from snpa_hdr */
@@ -922,7 +922,7 @@ esis_shoutput(
 		esis_stat.es_nomem++;
 		return;
 	}
-	bzero(mtod(m, void *), MHLEN);
+	memset(mtod(m, void *), 0, MHLEN);
 
 	pdu = mtod(m, struct esis_fixed *);
 	naddrp = cp = (char *) (pdu + 1);
@@ -1014,7 +1014,7 @@ esis_shoutput(
 	pdu->esis_hdr_len = len;
 	iso_gen_csum(m0, ESIS_CKSUM_OFF, (int) pdu->esis_hdr_len);
 
-	bzero((void *) & siso, sizeof(siso));
+	memset((void *) & siso, 0, sizeof(siso));
 	siso.siso_family = AF_ISO;
 	siso.siso_data[0] = AFI_SNA;
 	siso.siso_nlen = sn_len + 1;
@@ -1146,7 +1146,7 @@ isis_output(struct mbuf *m, ...)
 		printf("\n");
 	}
 #endif
-	bzero((void *) & siso, sizeof(siso));
+	memset((void *) & siso, 0, sizeof(siso));
 	siso.siso_family = AF_ISO;	/* This convention may be useful for
 					 * X.25 */
 	if (sn_len == 0)

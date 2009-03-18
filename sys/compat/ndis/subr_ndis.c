@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.17 2009/03/18 15:14:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.18 2009/03/18 16:00:17 cegger Exp $");
 #endif
 
 /*
@@ -496,7 +496,7 @@ NdisMRegisterMiniport(ndis_handle handle, ndis_miniport_characteristics *charact
 		return(NDIS_STATUS_RESOURCES);
    pch = (ndis_miniport_characteristics *)ch;
 
-	bzero((char *)pch, sizeof(ndis_miniport_characteristics));
+	memset((char *)pch, 0, sizeof(ndis_miniport_characteristics));
 
 #ifdef __FreeBSD__
 	bcopy((char *)characteristics, (char *)pch, len);
@@ -780,7 +780,7 @@ NdisReadConfiguration(ndis_status *status, ndis_config_parm **parm, ndis_handle 
 
 	ndis_unicode_to_ascii(key->us_buf, key->us_len, &keystr);
 	*parm = &block->nmb_replyparm;
-	bzero((char *)&block->nmb_replyparm, sizeof(ndis_config_parm));
+	memset((char *)&block->nmb_replyparm, 0, sizeof(ndis_config_parm));
 	unicode = (uint16_t *)&block->nmb_dummybuf;
 	
 #ifdef __NetBSD__	
@@ -940,7 +940,7 @@ NdisWriteConfiguration(
 	ndis_unicode_to_ascii(key->us_buf, key->us_len, &keystr);
 
 	/* Decode the parameter into a string. */
-	bzero(val, sizeof(val));
+	memset(val, 0, sizeof(val));
 	*status = ndis_decode_parm(block, parm, val);
 	if (*status != NDIS_STATUS_SUCCESS) {
 		free(keystr, M_DEVBUF);
@@ -3039,7 +3039,7 @@ ndis_find_sym(linker_file_t lf, char *filename, char *suffix, void * *sym)
 	if (fullsym == NULL)
 		return(ENOMEM);
 
-	bzero(fullsym, MAXPATHLEN);
+	memset(fullsym, 0, MAXPATHLEN);
 	strncpy(fullsym, filename, MAXPATHLEN);
 	if (strlen(filename) < 4) {
 		ExFreePool(fullsym);

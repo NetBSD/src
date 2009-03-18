@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.31 2009/03/18 15:14:30 cegger Exp $ */
+/* $NetBSD: bootxx.c,v 1.32 2009/03/18 16:00:15 cegger Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -114,7 +114,7 @@ Xmain(void)
 		bcopy ((void *)bootregs[11], rpb, sizeof(struct rpb));
 		bcopy ((void*)rpb->iovec, bqo, rpb->iovecsz);
 	} else {
-		bzero(rpb, sizeof(struct rpb));
+		memset(rpb, 0, sizeof(struct rpb));
 		rpb->devtyp = bootregs[0];
 		rpb->unit = bootregs[3];
 		rpb->rpb_bootr5 = bootregs[5];
@@ -206,7 +206,7 @@ tar_open(char *path, struct open_file *f)
 {
 	char *buf = alloc(512);
 
-	bzero(buf, 512);
+	memset(buf, 0, 512);
 	romstrategy(0, 0, 8192, 512, buf, 0);
 	if (memcmp(buf, "boot", 5) || memcmp(&buf[257], "ustar", 5))
 		return EINVAL; /* Not a ustarfs with "boot" first */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.36 2007/12/20 19:53:35 dyoung Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.37 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.36 2007/12/20 19:53:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.37 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -283,7 +283,7 @@ in_getnetaddr(void *v, struct mbuf *name, int which)
 {
 	struct inpcb   *inp = v;
 	struct sockaddr_in *sin = mtod(name, struct sockaddr_in *);
-	bzero((void *) sin, sizeof(*sin));
+	memset((void *) sin, 0, sizeof(*sin));
 	switch (which) {
 	case TP_LOCAL:
 		sin->sin_addr = inp->inp_laddr;
@@ -428,7 +428,7 @@ tpip_output_dg(struct mbuf *m0, ...)
 	m->m_len = sizeof(struct ip);
 
 	ip = mtod(m, struct ip *);
-	bzero((void *) ip, sizeof *ip);
+	memset((void *) ip, 0, sizeof *ip);
 
 	ip->ip_p = IPPROTO_TP;
 	if (sizeof(struct ip) + datalen > IP_MAXPACKET) {

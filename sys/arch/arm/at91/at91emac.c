@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.4 2009/03/14 21:04:05 dsl Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.4 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$Id: at91emac.c,v 1.5 2009/03/18 16:00:09 cegger Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.5 2009/03/18 16:00:09 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.4 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.5 2009/03/18 16:00:09 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -418,7 +418,7 @@ emac_init(struct emac_softc *sc)
 	}
 	sc->rbqpage_dsaddr = sc->rbqpage_dmamap->dm_segs[0].ds_addr;
 
-	bzero(sc->rbqpage, sc->rbqlen);
+	memset(sc->rbqpage, 0, sc->rbqlen);
 
 	/* Set up pointers to start of each queue in kernel addr space.
 	 * Each descriptor queue or status queue entry uses 2 words

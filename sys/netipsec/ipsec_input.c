@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.20 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.21 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.20 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.21 2009/03/18 16:00:23 cegger Exp $");
 
 /*
  * IPsec input processing.
@@ -187,7 +187,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	 * kernel crypto routine. The resulting mbuf chain is a valid
 	 * IP packet ready to go through input processing.
 	 */
-	bzero(&dst_address, sizeof (dst_address));
+	memset(&dst_address, 0, sizeof (dst_address));
 	dst_address.sa.sa_family = af;
 	switch (af) {
 #ifdef INET
@@ -548,7 +548,7 @@ esp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 		 * no possibility of an infinite loop of function calls,
 		 * because we don't pass the inner IPv6 header.
 		 */
-		bzero(&ip6cp1, sizeof(ip6cp1));
+		memset(&ip6cp1, 0, sizeof(ip6cp1));
 		ip6cp1.ip6c_src = ip6cp->ip6c_src;
 		pfctlinput2(cmd, sa, &ip6cp1);
 

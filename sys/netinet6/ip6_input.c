@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.123 2009/01/19 02:27:57 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.124 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.123 2009/01/19 02:27:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.124 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1578,7 +1578,7 @@ ip6_addaux(struct mbuf *m)
 		    M_NOWAIT);
 		if (mtag) {
 			m_tag_prepend(m, mtag);
-			bzero(mtag + 1, sizeof(struct ip6aux));
+			memset(mtag + 1, 0, sizeof(struct ip6aux));
 		}
 	}
 	return mtag;

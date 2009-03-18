@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.23 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.24 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.23 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.24 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -214,7 +214,7 @@ ah_init0(struct secasvar *sav, struct xformsw *xsp, struct cryptoini *cria)
 	sav->tdb_authalgxform = thash;
 
 	/* Initialize crypto session. */
-	bzero(cria, sizeof (*cria));
+	memset(cria, 0, sizeof (*cria));
 	cria->cri_alg = sav->tdb_authalgxform->type;
 	cria->cri_klen = _KEYBITS(sav->key_auth);
 	cria->cri_key = _KEYBUF(sav->key_auth);
@@ -252,7 +252,7 @@ ah_zeroize(struct secasvar *sav)
 	int err;
 
 	if (sav->key_auth)
-		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
+		memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
 
 	mutex_spin_enter(&crypto_mtx);
 	err = crypto_freesession(sav->tdb_cryptoid);
@@ -877,7 +877,7 @@ ah_input_cb(struct cryptop *crp)
 	authsize = AUTHSIZE(sav);
 
 	if (ipsec_debug)
-	  bzero(calc, sizeof(calc));
+	  memset(calc, 0, sizeof(calc));
 
 	/* Copy authenticator off the packet. */
 	m_copydata(m, skip + rplen, authsize, calc);

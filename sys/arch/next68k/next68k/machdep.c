@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2009/03/18 16:00:13 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2009/03/18 16:00:13 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -589,7 +589,7 @@ cpu_init_kcore_hdr(void)
 	int i;
 	extern char end[];
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.

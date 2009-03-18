@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.16 2009/03/14 15:36:21 dsl Exp $ */
+/*	$NetBSD: xbox.c,v 1.17 2009/03/18 16:00:20 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.16 2009/03/14 15:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.17 2009/03/18 16:00:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -144,7 +144,7 @@ xbox_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Now pretend to be another Sbus.
 	 */
-	bzero(&xa, sizeof xa);
+	memset(&xa, 0, sizeof xa);
 	xa.xa_name = "sbus";
 	xa.xa_node = node;
 	xa.xa_bustag = sa->sa_bustag;

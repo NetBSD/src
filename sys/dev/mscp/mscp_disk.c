@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.65 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.66 2009/03/18 16:00:18 cegger Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.65 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.66 2009/03/18 16:00:18 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -489,7 +489,7 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #else
 		tp = (struct disklabel *)data;
 #endif
-		bzero(tp, sizeof(struct disklabel));
+		memset(tp, 0, sizeof(struct disklabel));
 		tp->d_secsize = lp->d_secsize;
 		tp->d_nsectors = lp->d_nsectors;
 		tp->d_ntracks = lp->d_ntracks;

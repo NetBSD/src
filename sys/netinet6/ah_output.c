@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.32 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.33 2009/03/18 16:00:22 cegger Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.32 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.33 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -235,7 +235,7 @@ ah4_output(struct mbuf *m, struct ipsecrequest *isr)
 		ahdr->ah_nxt = ip->ip_p;
 		ahdr->ah_reserve = htons(0);
 		ahdr->ah_spi = spi;
-		bzero(ahdr + 1, plen);
+		memset(ahdr + 1, 0, plen);
 	} else {
 		struct newah *ahdr;
 
@@ -262,7 +262,7 @@ ah4_output(struct mbuf *m, struct ipsecrequest *isr)
 		 * installed by IKE daemon.
 		 */
 		ahdr->ah_seq = htonl(sav->replay->count & 0xffffffff);
-		bzero(ahdr + 1, plen);
+		memset(ahdr + 1, 0, plen);
 	}
 
 	/*
@@ -443,7 +443,7 @@ ah6_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		ahdr->ah_len = plen >> 2;
 		ahdr->ah_reserve = htons(0);
 		ahdr->ah_spi = spi;
-		bzero(ahdr + 1, plen);
+		memset(ahdr + 1, 0, plen);
 	} else {
 		struct newah *ahdr = mtod(mah, struct newah *);
 
@@ -471,7 +471,7 @@ ah6_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		 * installed by IKE daemon.
 		 */
 		ahdr->ah_seq = htonl(sav->replay->count);
-		bzero(ahdr + 1, plen);
+		memset(ahdr + 1, 0, plen);
 	}
 
 	/*

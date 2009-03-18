@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.30 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: aarp.c,v 1.31 2009/03/18 16:00:22 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.30 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.31 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -171,7 +171,7 @@ aarpwhohas(struct ifnet *ifp, const struct sockaddr_at *sat)
 	MH_ALIGN(m, sizeof(*ea));
 
 	ea = mtod(m, struct ether_aarp *);
-	bzero(ea, sizeof(*ea));
+	memset(ea, 0, sizeof(*ea));
 
 	ea->aarp_hrd = htons(AARPHRD_ETHER);
 	ea->aarp_pro = htons(ETHERTYPE_ATALK);
@@ -578,7 +578,7 @@ aarpprobe(void *arp)
 	MH_ALIGN(m, sizeof(*ea));
 
 	ea = mtod(m, struct ether_aarp *);
-	bzero(ea, sizeof(*ea));
+	memset(ea, 0, sizeof(*ea));
 
 	ea->aarp_hrd = htons(AARPHRD_ETHER);
 	ea->aarp_pro = htons(ETHERTYPE_ATALK);

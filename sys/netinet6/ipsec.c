@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.136 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.137 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.136 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.137 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -352,7 +352,7 @@ ipsec_invalpcbcache(struct inpcbpolicy *pcbsp, int dir)
 		pcbsp->sp_cache[i].cachesp = NULL;
 		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_MAYBE;
 		pcbsp->sp_cache[i].cachegen = 0;
-		bzero(&pcbsp->sp_cache[i].cacheidx,
+		memset(&pcbsp->sp_cache[i].cacheidx, 0,
 		      sizeof(pcbsp->sp_cache[i].cacheidx));
 	}
 	return 0;
@@ -590,7 +590,7 @@ ipsec4_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
     {
 	struct secpolicyindex spidx;
 
-	bzero(&spidx, sizeof(spidx));
+	memset(&spidx, 0, sizeof(spidx));
 
 	/* make an index to look for a policy */
 	*error = ipsec_setspidx_mbuf(&spidx, AF_INET, m,
@@ -815,7 +815,7 @@ ipsec6_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
     {
 	struct secpolicyindex spidx;
 
-	bzero(&spidx, sizeof(spidx));
+	memset(&spidx, 0, sizeof(spidx));
 
 	/* make an index to look for a policy */
 	*error = ipsec_setspidx_mbuf(&spidx, AF_INET6, m,
@@ -870,7 +870,7 @@ ipsec_setspidx_mbuf(struct secpolicyindex *spidx, int family,
 	if (spidx == NULL || m == NULL)
 		panic("ipsec_setspidx_mbuf: NULL pointer was passed.");
 
-	bzero(spidx, sizeof(*spidx));
+	memset(spidx, 0, sizeof(*spidx));
 
 	error = ipsec_setspidx(m, spidx, needport);
 	if (error)
@@ -880,7 +880,7 @@ ipsec_setspidx_mbuf(struct secpolicyindex *spidx, int family,
 
     bad:
 	/* XXX initialize */
-	bzero(spidx, sizeof(*spidx));
+	memset(spidx, 0, sizeof(*spidx));
 	return EINVAL;
 }
 
@@ -902,7 +902,7 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	if (m == NULL)
 		panic("ipsec_setspidx: m == 0 passed.");
 
-	bzero(spidx, sizeof(*spidx));
+	memset(spidx, 0, sizeof(*spidx));
 
 	/*
 	 * validate m->m_pkthdr.len.  we see incorrect length if we
@@ -1061,14 +1061,14 @@ ipsec4_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 	}
 
 	sin = (struct sockaddr_in *)&spidx->src;
-	bzero(sin, sizeof(*sin));
+	memset(sin, 0, sizeof(*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(struct sockaddr_in);
 	bcopy(&ip->ip_src, &sin->sin_addr, sizeof(ip->ip_src));
 	spidx->prefs = sizeof(struct in_addr) << 3;
 
 	sin = (struct sockaddr_in *)&spidx->dst;
-	bzero(sin, sizeof(*sin));
+	memset(sin, 0, sizeof(*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(struct sockaddr_in);
 	bcopy(&ip->ip_dst, &sin->sin_addr, sizeof(ip->ip_dst));
@@ -1156,14 +1156,14 @@ ipsec6_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 	}
 
 	sin6 = (struct sockaddr_in6 *)&spidx->src;
-	bzero(sin6, sizeof(*sin6));
+	memset(sin6, 0, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_addr = ip6->ip6_src;
 	spidx->prefs = sizeof(struct in6_addr) << 3;
 
 	sin6 = (struct sockaddr_in6 *)&spidx->dst;
-	bzero(sin6, sizeof(*sin6));
+	memset(sin6, 0, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_addr = ip6->ip6_dst;
@@ -1232,7 +1232,7 @@ ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **pcb_sp)
 		ipseclog((LOG_DEBUG, "ipsec_init_pcbpolicy: No more memory.\n"));
 		return ENOBUFS;
 	}
-	bzero(new, sizeof(*new));
+	memset(new, 0, sizeof(*new));
 
 	if (so->so_uidinfo->ui_uid == 0)	/* XXX */
 		new->priv = 1;
@@ -1328,7 +1328,7 @@ ipsec_deepcopy_policy(struct secpolicy *src)
 			M_SECA, M_NOWAIT);
 		if (*q == NULL)
 			goto fail;
-		bzero(*q, sizeof(**q));
+		memset(*q, 0, sizeof(**q));
 		(*q)->next = NULL;
 
 		(*q)->saidx.proto = p->saidx.proto;
@@ -2342,7 +2342,7 @@ ipsec_updatereplay(u_int32_t seq, struct secasvar *sav)
 	/* first time */
 	if (replay->count == 0) {
 		replay->lastseq = seq;
-		bzero(replay->bitmap, replay->wsize);
+		memset(replay->bitmap, 0, replay->wsize);
 		replay->bitmap[frlast] = 1;
 		goto ok;
 	}
@@ -2359,7 +2359,7 @@ ipsec_updatereplay(u_int32_t seq, struct secasvar *sav)
 			replay->bitmap[frlast] |= 1;
 		} else {
 			/* this packet has a "way larger" */
-			bzero(replay->bitmap, replay->wsize);
+			memset(replay->bitmap, 0, replay->wsize);
 			replay->bitmap[frlast] = 1;
 		}
 		replay->lastseq = seq;
@@ -2564,7 +2564,7 @@ ipsec4_checksa(struct ipsecrequest *isr,
 	saidx.reqid = isr->saidx.reqid;
 	sin = (struct sockaddr_in *)&saidx.src;
 	if (sin->sin_len == 0) {
-		bzero(sin, sizeof(*sin));
+		memset(sin, 0, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = IPSEC_PORT_ANY;
@@ -2572,7 +2572,7 @@ ipsec4_checksa(struct ipsecrequest *isr,
 	}
 	sin = (struct sockaddr_in *)&saidx.dst;
 	if (sin->sin_len == 0) {
-		bzero(sin, sizeof(*sin));
+		memset(sin, 0, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = IPSEC_PORT_ANY;
@@ -2808,7 +2808,7 @@ ipsec6_checksa(struct ipsecrequest *isr,
 	/* make SA index for search proper SA */
 	ip6 = mtod(state->m, struct ip6_hdr *);
 	if (tunnel) {
-		bzero(&saidx, sizeof(saidx));
+		memset(&saidx, 0, sizeof(saidx));
 		saidx.proto = isr->saidx.proto;
 	} else
 		bcopy(&isr->saidx, &saidx, sizeof(saidx));
@@ -2816,7 +2816,7 @@ ipsec6_checksa(struct ipsecrequest *isr,
 	saidx.reqid = isr->saidx.reqid;
 	sin6 = (struct sockaddr_in6 *)&saidx.src;
 	if (sin6->sin6_len == 0 || tunnel) {
-		bzero(sin6, sizeof(*sin6));
+		memset(sin6, 0, sizeof(*sin6));
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = IPSEC_PORT_ANY;
@@ -2824,7 +2824,7 @@ ipsec6_checksa(struct ipsecrequest *isr,
 	}
 	sin6 = (struct sockaddr_in6 *)&saidx.dst;
 	if (sin6->sin6_len == 0 || tunnel) {
-		bzero(sin6, sizeof(*sin6));
+		memset(sin6, 0, sizeof(*sin6));
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = IPSEC_PORT_ANY;
@@ -3437,7 +3437,7 @@ ipsec_addaux(struct mbuf *m)
 	if (mtag == NULL)
 		return NULL;	/* ENOBUFS */
 	/* XXX is this necessary? */
-	bzero((void *)(mtag + 1), sizeof(struct ipsecaux));
+	memset((void *)(mtag + 1), 0, sizeof(struct ipsecaux));
 	return mtag;
 }
 

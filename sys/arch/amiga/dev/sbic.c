@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.62 2007/10/17 19:53:17 garbled Exp $ */
+/*	$NetBSD: sbic.c,v 1.63 2009/03/18 16:00:09 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.62 2007/10/17 19:53:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.63 2009/03/18 16:00:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -814,12 +814,12 @@ sbicinit(struct sbic_softc *dev)
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
-		bzero(acb, sizeof(dev->sc_acb));
+		memset(acb, 0, sizeof(dev->sc_acb));
 		for (i = 0; i < sizeof(dev->sc_acb) / sizeof(*acb); i++) {
 			TAILQ_INSERT_TAIL(&dev->free_list, acb, chain);
 			acb++;
 		}
-		bzero(dev->sc_tinfo, sizeof(dev->sc_tinfo));
+		memset(dev->sc_tinfo, 0, sizeof(dev->sc_tinfo));
 #ifdef DEBUG
 		/* make sure timeout is really not needed */
 		callout_reset(&dev->sc_timo_ch, 30 * hz,
@@ -918,12 +918,12 @@ sbicreset(struct sbic_softc *dev)
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
-		bzero(acb, sizeof(dev->sc_acb));
+		memset(acb, 0, sizeof(dev->sc_acb));
 		for (i = 0; i < sizeof(dev->sc_acb) / sizeof(*acb); i++) {
 			TAILQ_INSERT_TAIL(&dev->free_list, acb, chain);
 			acb++;
 		}
-		bzero(dev->sc_tinfo, sizeof(dev->sc_tinfo));
+		memset(dev->sc_tinfo, 0, sizeof(dev->sc_tinfo));
 	} else {
 		if (dev->sc_nexus != NULL) {
 			dev->sc_nexus->xs->error = XS_DRIVER_STUFFUP;

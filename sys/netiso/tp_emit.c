@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.27 2008/04/23 09:57:59 plunky Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.28 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.27 2008/04/23 09:57:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.28 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -191,7 +191,7 @@ tp_emit(
 			m->m_nextpkt = NULL;
 			m->m_data = m->m_pktdat;
 			m->m_flags = M_PKTHDR;
-			bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+			memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 		}
 	} else {
 		MGETHDR(m, M_DONTWAIT, TPMT_TPHDR);
@@ -207,7 +207,7 @@ tp_emit(
 	m->m_nextpkt = NULL;
 
 	hdr = mtod(m, struct tpdu *);
-	bzero((void *) hdr, sizeof(struct tpdu));
+	memset((void *) hdr, 0, sizeof(struct tpdu));
 
 	{
 		hdr->tpdu_type = dutype;

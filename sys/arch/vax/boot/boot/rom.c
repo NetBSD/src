@@ -1,4 +1,4 @@
-/*	$NetBSD: rom.c,v 1.8 2009/03/14 21:04:16 dsl Exp $ */
+/*	$NetBSD: rom.c,v 1.9 2009/03/18 16:00:15 cegger Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -68,7 +68,7 @@ romopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 
 	bqo = (void *)bootrpb.iovec;
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 	dunit = unit;
 	dpart = part;
 

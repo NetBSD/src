@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.30 2008/06/24 10:12:42 gmcgarry Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.31 2009/03/18 16:00:18 cegger Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -401,7 +401,7 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 #define SBP_ATTACH_START          		\
         struct cam_devq *devq;			\
 						\
-        bzero(sbp, sizeof(struct sbp_softc));	\
+        memset(sbp, 0, sizeof(struct sbp_softc));	\
 	sbp->fd.dev = dev
 #define SBP_SCSIBUS_ATTACH						    \
 	do {								    \

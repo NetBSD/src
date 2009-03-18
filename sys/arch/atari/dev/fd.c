@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.67 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: fd.c,v 1.68 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.67 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68 2009/03/18 16:00:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1263,7 +1263,7 @@ static void
 fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 {
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize     = SECTOR_SIZE;
 	lp->d_ntracks     = sc->nheads;

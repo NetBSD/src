@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.92 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.93 2009/03/18 16:00:24 cegger Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.92 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.93 2009/03/18 16:00:24 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1023,7 +1023,7 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		dip1->di_blocks = 0;
 		dip1->di_flags =
 		    ufs_rw32(ufs_rw32(dip1->di_flags, ns) & ~SF_SNAPSHOT, ns);
-		bzero(&dip1->di_db[0], (NDADDR + NIADDR) * sizeof(int32_t));
+		memset(&dip1->di_db[0], 0, (NDADDR + NIADDR) * sizeof(int32_t));
 	} else {
 		dip2 = (struct ufs2_dinode *)bp->b_data +
 		    ino_to_fsbo(fs, cancelip->i_number);
@@ -1033,7 +1033,7 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		dip2->di_blocks = 0;
 		dip2->di_flags =
 		    ufs_rw32(ufs_rw32(dip2->di_flags, ns) & ~SF_SNAPSHOT, ns);
-		bzero(&dip2->di_db[0], (NDADDR + NIADDR) * sizeof(int64_t));
+		memset(&dip2->di_db[0], 0, (NDADDR + NIADDR) * sizeof(int64_t));
 	}
 	bdwrite(bp);
 	/*

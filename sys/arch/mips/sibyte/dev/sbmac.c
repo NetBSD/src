@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.30 2008/11/13 19:44:02 dyoung Exp $ */
+/* $NetBSD: sbmac.c,v 1.31 2009/03/18 16:00:13 cegger Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.30 2008/11/13 19:44:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.31 2009/03/18 16:00:13 cegger Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -421,7 +421,7 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *s, int chan, int txrx,
 	d->sbdma_dscrtable = (sbdmadscr_t *)
 	    KMALLOC(d->sbdma_maxdescr * sizeof(sbdmadscr_t));
 
-	bzero(d->sbdma_dscrtable, d->sbdma_maxdescr*sizeof(sbdmadscr_t));
+	memset(d->sbdma_dscrtable, 0, d->sbdma_maxdescr*sizeof(sbdmadscr_t));
 
 	d->sbdma_dscrtable_phys = KVTOPHYS(d->sbdma_dscrtable);
 
@@ -432,7 +432,7 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *s, int chan, int txrx,
 	d->sbdma_ctxtable = (struct mbuf **)
 	    KMALLOC(d->sbdma_maxdescr*sizeof(struct mbuf *));
 
-	bzero(d->sbdma_ctxtable, d->sbdma_maxdescr*sizeof(struct mbuf *));
+	memset(d->sbdma_ctxtable, 0, d->sbdma_maxdescr*sizeof(struct mbuf *));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.35 2009/03/14 21:04:01 dsl Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.36 2009/03/18 16:00:09 cegger Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.35 2009/03/14 21:04:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.36 2009/03/18 16:00:09 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -5101,7 +5101,7 @@ tulip_pci_attach(
     sc = (tulip_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
     if (sc == NULL)
 	return;
-    bzero(sc, sizeof(*sc));				/* Zero out the softc*/
+    memset(sc, 0, sizeof(*sc));				/* Zero out the softc*/
 #endif
 
     PCI_GETBUSDEVINFO(sc);

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37 2009/03/18 10:22:23 cegger Exp $ */
+/* $NetBSD: machdep.c,v 1.38 2009/03/18 16:00:09 cegger Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2009/03/18 10:22:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2009/03/18 16:00:09 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -177,7 +177,7 @@ initppc(u_int startkernel, u_int endkernel)
 		"r"(battable[3].batl), "r"(battable[3].batu));
 
 	proc0.p_addr = proc0paddr;
-	bzero(proc0.p_addr, sizeof *proc0.p_addr);
+	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
 	curpcb = &proc0paddr->u_pcb;
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.38 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.39 2009/03/18 16:00:16 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39 2009/03/18 16:00:16 cegger Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -140,7 +140,7 @@ setup_linux_sigframe(struct frame *frame, int sig, const sigset_t *mask, void *u
 	kf.sf_c.c_sc.sc_a1 = frame->f_regs[A1];
 
 	/* Clear for security (and initialize ss_format). */
-	bzero(&kf.sf_c.c_sc.sc_ss, sizeof kf.sf_c.c_sc.sc_ss);
+	memset(&kf.sf_c.c_sc.sc_ss, 0, sizeof kf.sf_c.c_sc.sc_ss);
 
 	if (ft >= FMT4) {
 #ifdef DEBUG
@@ -291,7 +291,7 @@ setup_linux_rt_sigframe(struct frame *frame, int sig, const sigset_t *mask, void
 	kf.sf_sigtramp[1] = LINUX_RT_SF_SIGTRAMP1;
 
 	/* clear for security (and initialize uc_flags, ss_format, etc.). */
-	bzero(&kf.sf_uc, sizeof(struct linux_ucontext));
+	memset(&kf.sf_uc, 0, sizeof(struct linux_ucontext));
 
 	/*
 	 * Save necessary hardware state.  Currently this includes:
@@ -389,7 +389,7 @@ setup_linux_rt_sigframe(struct frame *frame, int sig, const sigset_t *mask, void
 	 * XXX Or we do the emuldata thing.
 	 * XXX -erh
 	 */
-	bzero(&kf.sf_info, sizeof(struct linux_siginfo));
+	memset(&kf.sf_info, 0, sizeof(struct linux_siginfo));
 	kf.sf_info.lsi_signo = sig;
 	kf.sf_info.lsi_code = LINUX_SI_USER;
 	kf.sf_info.lsi_pid = p->p_pid;

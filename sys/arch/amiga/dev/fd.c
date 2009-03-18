@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.80 2009/01/13 13:35:51 yamt Exp $ */
+/*	$NetBSD: fd.c,v 1.81 2009/03/18 16:00:09 cegger Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80 2009/01/13 13:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.81 2009/03/18 16:00:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -728,7 +728,7 @@ fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 /* (variable part) XXX ick */
 {
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 	lp->d_secsize = FDSECSIZE;
 	lp->d_ntracks = FDNHEADS;
 	lp->d_ncylinders = sc->type->ncylinders;
@@ -772,8 +772,8 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 	part = FDPART(dev);
 	lp = sc->dkdev.dk_label;
 	clp =  sc->dkdev.dk_cpulabel;
-	bzero(lp, sizeof(struct disklabel));
-	bzero(clp, sizeof(struct cpu_disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
+	memset(clp, 0, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = FDSECSIZE;
 	lp->d_ntracks = FDNHEADS;

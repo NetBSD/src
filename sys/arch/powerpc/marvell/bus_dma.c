@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20 2009/03/18 16:00:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2009/03/18 16:00:14 cegger Exp $");
 
 #define DEBUG 1
 
@@ -157,7 +157,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments, bus_size_t m
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct powerpc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;

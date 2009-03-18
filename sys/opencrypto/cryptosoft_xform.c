@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.10 2009/03/14 15:36:24 dsl Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.11 2009/03/18 16:00:24 cegger Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.10 2009/03/14 15:36:24 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.11 2009/03/18 16:00:24 cegger Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -339,7 +339,7 @@ des1_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 static void
 des1_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof (des_key_schedule));
+	memset(*sched, 0, sizeof (des_key_schedule));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -384,7 +384,7 @@ des3_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 static void
 des3_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, 3*sizeof (des_key_schedule));
+	memset(*sched, 0, 3*sizeof (des_key_schedule));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -421,7 +421,7 @@ blf_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 static void
 blf_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(BF_KEY));
+	memset(*sched, 0, sizeof(BF_KEY));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -456,7 +456,7 @@ cast5_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 static void
 cast5_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(cast128_key));
+	memset(*sched, 0, sizeof(cast128_key));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -505,7 +505,7 @@ skipjack_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 static void
 skipjack_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, 10 * (sizeof(u_int8_t *) + 0x100));
+	memset(*sched, 0, 10 * (sizeof(u_int8_t *) + 0x100));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -541,7 +541,7 @@ rijndael128_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 static void
 rijndael128_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(rijndael_ctx));
+	memset(*sched, 0, sizeof(rijndael_ctx));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -566,7 +566,7 @@ static void
 null_final(u_int8_t *buf, void *ctx)
 {
 	if (buf != (u_int8_t *) 0)
-		bzero(buf, 12);
+		memset(buf, 0, 12);
 }
 
 static int

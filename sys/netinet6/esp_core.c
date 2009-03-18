@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.42 2009/03/18 10:22:43 cegger Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.43 2009/03/18 16:00:22 cegger Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.42 2009/03/18 10:22:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.43 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -240,7 +240,7 @@ esp_schedule(const struct esp_algorithm *algo, struct secasvar *sav)
 	if (error) {
 		ipseclog((LOG_ERR, "esp_schedule %s: error %d\n",
 		    algo->name, error));
-		bzero(sav->sched, sav->schedlen);
+		memset(sav->sched, 0, sav->schedlen);
 		free(sav->sched, M_SECA);
 		sav->sched = NULL;
 		sav->schedlen = 0;
@@ -769,8 +769,8 @@ esp_cbc_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 	scut->m_next = d0;
 
 	/* just in case */
-	bzero(iv, sizeof(iv));
-	bzero(sbuf, sizeof(sbuf));
+	memset(iv, 0, sizeof(iv));
+	memset(sbuf, 0, sizeof(sbuf));
 
 	return 0;
 }
@@ -976,8 +976,8 @@ esp_cbc_encrypt(
 	scut->m_next = d0;
 
 	/* just in case */
-	bzero(iv, sizeof(iv));
-	bzero(sbuf, sizeof(sbuf));
+	memset(iv, 0, sizeof(iv));
+	memset(sbuf, 0, sizeof(sbuf));
 
 	key_sa_stir_iv(sav);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.91 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.92 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.91 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.92 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -480,7 +480,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		 * above), but we do so here explicitly to make the intention
 		 * clearer.
 		 */
-		bzero(&src_in, sizeof(src_in));
+		memset(&src_in, 0, sizeof(src_in));
 		src = &src_in;
 	}
 	ip6->ip6_src = *src;
@@ -512,7 +512,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
-		bzero((void *)nd_opt, optlen);
+		memset((void *)nd_opt, 0, optlen);
 		nd_opt->nd_opt_type = ND_OPT_SOURCE_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
 		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
@@ -971,7 +971,7 @@ nd6_na_output(
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
-		bzero((void *)nd_opt, optlen);
+		memset((void *)nd_opt, 0, optlen);
 		nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
 		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
@@ -1114,7 +1114,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
-	bzero(dp, sizeof(*dp));
+	memset(dp, 0, sizeof(*dp));
 	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 

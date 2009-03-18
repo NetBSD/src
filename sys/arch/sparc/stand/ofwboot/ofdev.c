@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.21 2009/03/14 15:36:14 dsl Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.22 2009/03/18 16:00:15 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -358,7 +358,7 @@ search_label(struct of_dev *devp, u_long off, char *buf,
 		return (disklabel_sun_to_bsd(buf, lp));
 
 
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 	return ("no disk label");
 }
 
@@ -462,7 +462,7 @@ open_again:
 		return ENXIO;
 	}
 	DPRINTF(("devopen: %s is now open\n", fname));
-	bzero(&ofdev, sizeof ofdev);
+	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
 	if (!strcmp(b.buf, "block")) {
 		ofdev.type = OFDEV_DISK;

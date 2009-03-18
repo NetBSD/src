@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.151 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.152 2009/03/18 16:00:22 cegger Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.151 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.152 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -733,7 +733,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 			nicmp6 = (struct icmp6_hdr *)(nip6 + 1);
 			bcopy(icmp6, nicmp6, sizeof(struct icmp6_hdr));
 			p = (u_char *)(nicmp6 + 1);
-			bzero(p, 4);
+			memset(p, 0, 4);
 			bcopy(hostname, p + 4, maxhlen); /* meaningless TTL */
 			noff = sizeof(struct ip6_hdr);
 			M_COPY_PKTHDR(n, m); /* just for rcvif */
@@ -1116,7 +1116,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 			return;
 	}
 
-	bzero(&sin6, sizeof(sin6));
+	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = PF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *dst;
@@ -2291,9 +2291,9 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			 */
 		}
 
-		bzero(&sdst, sizeof(sdst));
-		bzero(&sgw, sizeof(sgw));
-		bzero(&ssrc, sizeof(ssrc));
+		memset(&sdst, 0, sizeof(sdst));
+		memset(&sgw, 0, sizeof(sgw));
+		memset(&ssrc, 0, sizeof(ssrc));
 		sdst.sin6_family = sgw.sin6_family = ssrc.sin6_family = AF_INET6;
 		sdst.sin6_len = sgw.sin6_len = ssrc.sin6_len =
 			sizeof(struct sockaddr_in6);
@@ -2536,7 +2536,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		}
 
 		nd_opt_rh = (struct nd_opt_rd_hdr *)p;
-		bzero(nd_opt_rh, sizeof(*nd_opt_rh));
+		memset(nd_opt_rh, 0, sizeof(*nd_opt_rh));
 		nd_opt_rh->nd_opt_rh_type = ND_OPT_REDIRECTED_HEADER;
 		nd_opt_rh->nd_opt_rh_len = len >> 3;
 		p += sizeof(*nd_opt_rh);

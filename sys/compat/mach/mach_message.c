@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.58 2009/03/14 21:04:18 dsl Exp $ */
+/*	$NetBSD: mach_message.c,v 1.59 2009/03/18 16:00:17 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.58 2009/03/14 21:04:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.59 2009/03/18 16:00:17 cegger Exp $");
 
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 #include "opt_compat_darwin.h"
@@ -1115,7 +1115,7 @@ mach_message_get(mach_msg_header_t *msgh, size_t size, struct mach_port *mp, str
 	struct mach_message *mm;
 
 	mm = (struct mach_message *)pool_get(&mach_message_pool, PR_WAITOK);
-	bzero(mm, sizeof(*mm));
+	memset(mm, 0, sizeof(*mm));
 	mm->mm_msg = msgh;
 	mm->mm_size = size;
 	mm->mm_port = mp;

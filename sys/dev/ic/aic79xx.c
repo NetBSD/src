@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.40 2009/03/14 21:04:19 dsl Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.41 2009/03/18 16:00:18 cegger Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.40 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.41 2009/03/18 16:00:18 cegger Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5799,7 +5799,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (sg_map == NULL)
 			return (0);
 
-		bzero(sg_map, sizeof(*sg_map));
+		memset(sg_map, 0, sizeof(*sg_map));
 
 		/* Allocate the next batch of S/G lists */
 		if (ahd_createdmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd), ahd->sc_dmaflags,
@@ -5839,7 +5839,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (sense_map == NULL)
 			return (0);
 
-		bzero(sense_map, sizeof(*sense_map));
+		memset(sense_map, 0, sizeof(*sense_map));
 
 		/* Allocate the next batch of sense buffers */
 		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,

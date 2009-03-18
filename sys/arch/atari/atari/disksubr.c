@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.40 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40 2009/03/18 16:00:10 cegger Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -79,7 +79,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	int			e;
 
 	if (clp != NULL)
-		bzero(clp, sizeof *clp);
+		memset(clp, 0, sizeof *clp);
 	else printf("Warning: clp == NULL\n");
 
 	/*
@@ -99,7 +99,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	 * 'if 0'
 	 */
 #if 0
-	bzero(lp->d_partitions, sizeof lp->d_partitions);
+	memset(lp->d_partitions, 0, sizeof lp->d_partitions);
 #endif
 
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
@@ -218,7 +218,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 		 */
 		if (clp->cd_label != LABELOFFSET) {
 			clp->cd_label = LABELOFFSET;
-			bzero(bb, sizeof(*bb));
+			memset(bb, 0, sizeof(*bb));
 		}
 		bb->bb_magic = (blk == 0) ? NBDAMAGIC : AHDIMAGIC;
 		BBSETLABEL(bb, lp);
