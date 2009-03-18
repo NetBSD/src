@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.8 2009/03/18 10:22:45 cegger Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.9 2009/03/18 15:39:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.8 2009/03/18 10:22:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.9 2009/03/18 15:39:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.8 2009/03/18 10:22:45 cegger Exp $");
 static struct rblkdev {
 	char *rblk_path;
 	int rblk_fd;
+	uint8_t *rblk_mem;
+	size_t rblk_size;
 
 	struct partition *rblk_curpi;
 	struct partition rblk_pi;
@@ -151,8 +153,9 @@ int
 rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rblkdev *rblk = &minors[minor(dev)];
+	uint8_t *mem = NULL;
 	uint64_t fsize;
-	int ft;
+	int ft, dummy;
 	int error, fd;
 
 	KASSERT(rblk->rblk_fd == -1);
@@ -160,33 +163,45 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (error)
 		return error;
 
-	/*
-	 * Setup partition info.  First try the usual. */
-	if (rumpuser_ioctl(fd, DIOCGDINFO, &rblk->rblk_dl, &error) != -1) {
+	if (rumpuser_getfileinfo(rblk->rblk_path, &fsize, &ft, &error) == -1) {
+		rumpuser_close(fd, &dummy);
+		return error;
+	}
+
+	if (ft == RUMPUSER_FT_REG) {
 		/*
-		 * If that works, use it.  We still need to guess
-		 * which partition we are on.
+		 * Try to mmap the file if it's size is max. half of
+		 * the address space.  If mmap fails due to e.g. limits,
+		 * we fall back to the read/write path.  This test is only
+		 * to prevent size_t vs. off_t wraparounds.
 		 */
-		rblk->rblk_curpi = &rblk->rblk_dl.d_partitions[0];
-	} else {
-		/*
-		 * If that didn't work, assume were a regular file
-		 * and just try to fake the info the best we can.
-		 */
+		if (fsize < 1<<(sizeof(void *)*8 - 1)) {
+			int mmflags;
+
+			mmflags = 0;
+			if (flag & FREAD)
+				mmflags |= RUMPUSER_FILEMMAP_READ;
+			if (flag & FWRITE)
+				mmflags |= RUMPUSER_FILEMMAP_WRITE;
+			mem = rumpuser_filemmap(fd, 0, fsize, mmflags, &error);
+		}
+
 		memset(&rblk->rblk_dl, 0, sizeof(rblk->rblk_dl));
 
-		if (rumpuser_getfileinfo(rblk->rblk_path, &fsize,
-		    &ft, &error) == -1) {
-			int dummy;
-
-			rumpuser_close(fd, &dummy);
-			return error;
-		}
+		rblk->rblk_size = fsize;
 		rblk->rblk_pi.p_size = fsize >> DEV_BSHIFT;
 		rblk->rblk_dl.d_secsize = DEV_BSIZE;
 		rblk->rblk_curpi = &rblk->rblk_pi;
+	} else {
+		if (rumpuser_ioctl(fd,DIOCGDINFO, &rblk->rblk_dl, &error)!=-1) {
+			rumpuser_close(fd, &dummy);
+			return error;
+		}
+
+		rblk->rblk_curpi = &rblk->rblk_dl.d_partitions[0];
 	}
 	rblk->rblk_fd = fd;
+	rblk->rblk_mem = mem;
 
 	return 0;
 }
@@ -197,6 +212,12 @@ rumpblk_close(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct rblkdev *rblk = &minors[minor(dev)];
 	int dummy;
 
+	if (rblk->rblk_mem) {
+		KASSERT(rblk->rblk_size);
+		rumpuser_memsync(rblk->rblk_mem, rblk->rblk_size, &dummy);
+		rumpuser_unmap(rblk->rblk_mem, rblk->rblk_size);
+		rblk->rblk_mem = NULL;
+	}
 	rumpuser_close(rblk->rblk_fd, &dummy);
 	rblk->rblk_fd = -1;
 
@@ -244,13 +265,32 @@ dostrategy(struct buf *bp)
 {
 	struct rblkdev *rblk = &minors[minor(bp->b_dev)];
 	off_t off;
-	int async;
+	int async, error;
 
 	off = bp->b_blkno << DEV_BSHIFT;
+	async = bp->b_flags & B_ASYNC;
 	DPRINTF(("rumpblk_strategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64")\n",
 	    bp->b_bcount, BUF_ISREAD(bp) "READ" : "WRITE",
 	    off, off, (off + bp->b_bcount)));
+
+	/* mem optimization?  handle here and return */
+	if (rblk->rblk_mem) {
+		uint8_t *ioaddr = rblk->rblk_mem + off;
+		if (BUF_ISREAD(bp)) {
+			memcpy(bp->b_data, ioaddr, bp->b_bcount);
+		} else {
+			memcpy(ioaddr, bp->b_data, bp->b_bcount);
+		}
+
+		/* synchronous write, sync necessary bits back to disk */
+		if (BUF_ISWRITE(bp) && !async) {
+			rumpuser_memsync(ioaddr, bp->b_bcount, &error);
+		}
+		rump_biodone(bp, bp->b_bcount, 0);
+
+		return;
+	}
 
 	/*
 	 * Do I/O.  We have different paths for async and sync I/O.
@@ -265,7 +305,6 @@ dostrategy(struct buf *bp)
 	 * Synchronous I/O is done directly in the context mainly to
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
-	async = bp->b_flags & B_ASYNC;
 	if (async && rump_threads) {
 		struct rumpuser_aio *rua;
 
@@ -303,8 +342,6 @@ dostrategy(struct buf *bp)
 			    bp->b_bcount, off, rump_biodone, bp);
 		}
 		if (!async) {
-			int error;
-
 			if (BUF_ISWRITE(bp))
 				rumpuser_fsync(rblk->rblk_fd, &error);
 		}
