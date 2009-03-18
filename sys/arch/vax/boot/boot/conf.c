@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: conf.c,v 1.15 2009/03/18 16:00:15 cegger Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -101,6 +101,6 @@ nostrategy(void *f, int func, daddr_t dblk,
     size_t size, void *buf, size_t *rsize)
 {
 	*rsize = size;
-	bzero(buf, size);
+	memset(buf, 0, size);
 	return 0;
 }

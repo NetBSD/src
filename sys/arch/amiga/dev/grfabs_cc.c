@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.30 2007/10/17 19:53:16 garbled Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.31 2009/03/18 16:00:09 cegger Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.30 2007/10/17 19:53:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.31 2009/03/18 16:00:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ alloc_bitmap(u_short width, u_short height, u_short depth, u_short flags)
 	bm = alloc_chipmem(total_size);
 	if (bm) {
 		if (flags & BMF_CLEAR) {
-			bzero(bm, total_size);
+			memset(bm, 0, total_size);
 		}
 		bm->bytes_per_row = bpr;
 		bm->rows = height;
@@ -839,8 +839,8 @@ cc_init_ntsc_hires(void)
 
 		h_this = &hires_mode;
 		h_this_data = &hires_mode_data;
-		bzero(h_this, sizeof(dmode_t));
-		bzero(h_this_data, sizeof(dmdata_t));
+		memset(h_this, 0, sizeof(dmode_t));
+		memset(h_this_data, 0, sizeof(dmdata_t));
 
 		h_this->name = "ntsc: hires";
 		h_this->nominal_size.width = 640;
@@ -1021,8 +1021,8 @@ cc_init_ntsc_hires_lace(void)
 
 		hl_this = &hires_lace_mode;
 		hl_this_data = &hires_lace_mode_data;
-		bzero(hl_this, sizeof(dmode_t));
-		bzero(hl_this_data, sizeof(dmdata_t));
+		memset(hl_this, 0, sizeof(dmode_t));
+		memset(hl_this_data, 0, sizeof(dmdata_t));
 
 		hl_this->name = "ntsc: hires interlace";
 		hl_this->nominal_size.width = 640;
@@ -1247,8 +1247,8 @@ cc_init_ntsc_hires_dlace(void)
 
 		hdl_this = &hires_dlace_mode;
 		hdl_this_data = &hires_dlace_mode_data;
-		bzero(hdl_this, sizeof(dmode_t));
-		bzero(hdl_this_data, sizeof(dmdata_t));
+		memset(hdl_this, 0, sizeof(dmode_t));
+		memset(hdl_this_data, 0, sizeof(dmdata_t));
 
 		hdl_this->name = "ntsc: hires double interlace";
 		hdl_this->nominal_size.width = 640;
@@ -1503,8 +1503,8 @@ cc_init_ntsc_a2024(void)
 
 		a24_this = &a2024_mode;
 		a24_this_data = &a2024_mode_data;
-		bzero(a24_this, sizeof(dmode_t));
-		bzero(a24_this_data, sizeof(dmdata_t));
+		memset(a24_this, 0, sizeof(dmode_t));
+		memset(a24_this_data, 0, sizeof(dmdata_t));
 
 		a24_this->name = "ntsc: A2024 15 kHz";
 		a24_this->nominal_size.width = 1024;
@@ -1792,8 +1792,8 @@ cc_init_ntsc_aga(void)
 
 		aga_this = &aga_mode;
 		aga_this_data = &aga_mode_data;
-		bzero(aga_this, sizeof(dmode_t));
-		bzero(aga_this_data, sizeof(dmdata_t));
+		memset(aga_this, 0, sizeof(dmode_t));
+		memset(aga_this_data, 0, sizeof(dmdata_t));
 
 		aga_this->name = "ntsc: AGA dbl";
 		aga_this->nominal_size.width = 640;
@@ -2101,8 +2101,8 @@ cc_init_super72(void)
 
 		super72_this = &super72_mode;
 		super72_this_data = &super72_mode_data;
-		bzero(super72_this, sizeof(dmode_t));
-		bzero(super72_this_data, sizeof(dmdata_t));
+		memset(super72_this, 0, sizeof(dmode_t));
+		memset(super72_this_data, 0, sizeof(dmdata_t));
 
 		super72_this->name = "super72: superhires interlace";
 		super72_this->nominal_size.width = 800;
@@ -2393,8 +2393,8 @@ cc_init_pal_hires(void)
 
 		ph_this = &pal_hires_mode;
 		ph_this_data = &pal_hires_mode_data;
-		bzero(ph_this, sizeof(dmode_t));
-		bzero(ph_this_data, sizeof(dmdata_t));
+		memset(ph_this, 0, sizeof(dmode_t));
+		memset(ph_this_data, 0, sizeof(dmdata_t));
 
 		ph_this->name = "pal: hires";
 		ph_this->nominal_size.width = 640;
@@ -2562,8 +2562,8 @@ cc_init_pal_hires_lace(void)
 
 		phl_this = &pal_hires_lace_mode;
 		phl_this_data = &pal_hires_lace_mode_data;
-		bzero(phl_this, sizeof(dmode_t));
-		bzero(phl_this_data, sizeof(dmdata_t));
+		memset(phl_this, 0, sizeof(dmode_t));
+		memset(phl_this_data, 0, sizeof(dmdata_t));
 
 		phl_this->name = "pal: hires interlace";
 		phl_this->nominal_size.width = 640;
@@ -2762,8 +2762,8 @@ cc_init_pal_hires_dlace(void)
 
 		phdl_this = &pal_hires_dlace_mode;
 		phdl_this_data = &pal_hires_dlace_mode_data;
-		bzero(phdl_this, sizeof(dmode_t));
-		bzero(phdl_this_data, sizeof(dmdata_t));
+		memset(phdl_this, 0, sizeof(dmode_t));
+		memset(phdl_this_data, 0, sizeof(dmdata_t));
 
 		phdl_this->name = "pal: hires double interlace";
 		phdl_this->nominal_size.width = 640;
@@ -2981,8 +2981,8 @@ cc_init_pal_a2024(void)
 
 		p24_this = &pal_a2024_mode;
 		p24_this_data = &pal_a2024_mode_data;
-		bzero(p24_this, sizeof(dmode_t));
-		bzero(p24_this_data, sizeof(dmdata_t));
+		memset(p24_this, 0, sizeof(dmode_t));
+		memset(p24_this_data, 0, sizeof(dmdata_t));
 
 		p24_this->name = "pal: A2024 15 kHz";
 		p24_this->nominal_size.width = 1024;
@@ -3217,8 +3217,8 @@ cc_init_pal_aga(void)
 
 		paga_this = &paga_mode;
 		paga_this_data = &paga_mode_data;
-		bzero(paga_this, sizeof(dmode_t));
-		bzero(paga_this_data, sizeof(dmdata_t));
+		memset(paga_this, 0, sizeof(dmode_t));
+		memset(paga_this_data, 0, sizeof(dmdata_t));
 
 		paga_this->name = "pal: AGA dbl";
 		paga_this->nominal_size.width = 640;

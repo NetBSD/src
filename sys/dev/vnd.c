@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.195 2009/03/14 18:00:37 apb Exp $	*/
+/*	$NetBSD: vnd.c,v 1.196 2009/03/18 16:00:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.195 2009/03/14 18:00:37 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.196 2009/03/18 16:00:17 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1126,7 +1126,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			vnd->sc_comp_buffblk = -1;
  
 			/* Initialize decompress stream */
-			bzero(&vnd->sc_comp_stream, sizeof(z_stream));
+			memset(&vnd->sc_comp_stream, 0, sizeof(z_stream));
 			vnd->sc_comp_stream.zalloc = vnd_alloc;
 			vnd->sc_comp_stream.zfree = vnd_free;
 			error = inflateInit2(&vnd->sc_comp_stream, MAX_WBITS);

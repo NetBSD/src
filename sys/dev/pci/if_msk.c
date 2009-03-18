@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.23 2009/03/18 15:14:30 cegger Exp $ */
+/* $NetBSD: if_msk.c,v 1.24 2009/03/18 16:00:19 cegger Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.23 2009/03/18 15:14:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.24 2009/03/18 16:00:19 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -414,7 +414,7 @@ msk_init_rx_ring(struct sk_if_softc *sc_if)
 	struct msk_ring_data	*rd = sc_if->sk_rdata;
 	int			i, nexti;
 
-	bzero((char *)rd->sk_rx_ring,
+	memset((char *)rd->sk_rx_ring, 0,
 	    sizeof(struct msk_rx_desc) * MSK_RX_RING_CNT);
 
 	for (i = 0; i < MSK_RX_RING_CNT; i++) {
@@ -450,7 +450,7 @@ msk_init_tx_ring(struct sk_if_softc *sc_if)
 	struct sk_txmap_entry	*entry;
 	int			i, nexti;
 
-	bzero((char *)sc_if->sk_rdata->sk_tx_ring,
+	memset((char *)sc_if->sk_rdata->sk_tx_ring, 0,
 	    sizeof(struct msk_tx_desc) * MSK_TX_RING_CNT);
 
 	SIMPLEQ_INIT(&sc_if->sk_txmap_head);
@@ -903,7 +903,7 @@ void msk_reset(struct sk_softc *sc)
 	}
 
 	/* Reset status ring. */
-	bzero((char *)sc->sk_status_ring,
+	memset((char *)sc->sk_status_ring, 0,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
 	bus_dmamap_sync(sc->sc_dmatag, sc->sk_status_map, 0,
 	    sc->sk_status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1061,7 +1061,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_3;
 	}
         sc_if->sk_rdata = (struct msk_ring_data *)kva;
-	bzero(sc_if->sk_rdata, sizeof(struct msk_ring_data));
+	memset(sc_if->sk_rdata, 0, sizeof(struct msk_ring_data));
 
 	ifp = &sc_if->sk_ethercom.ec_if;
 	/* Try to allocate memory for jumbo buffers. */

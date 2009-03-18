@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.26 2009/03/14 15:36:12 dsl Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.27 2009/03/18 16:00:14 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.26 2009/03/14 15:36:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.27 2009/03/18 16:00:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sfp = (struct darwin_sigframe *)((u_long)(sfp - 1) & ~0xfUL);
 
 	/* Prepare the signal frame */
-	bzero(&sf, sizeof(sf));
+	memset(&sf, 0, sizeof(sf));
 	sf.dmc.es.dar = tf->dar;
 	sf.dmc.es.dsisr = tf->dsisr;
 	sf.dmc.es.exception = tf->exc;

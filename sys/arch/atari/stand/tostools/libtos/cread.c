@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.7 2009/03/14 21:04:07 dsl Exp $	*/
+/*	$NetBSD: cread.c,v 1.8 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -235,7 +235,7 @@ copen(const char *fname, int mode)
 	ss[fd] = s = malloc(sizeof(struct sd));
 	if (s == 0)
 		goto errout;
-	bzero(s, sizeof(struct sd));
+	memset(s, 0, sizeof(struct sd));
 
 	if (inflateInit2(&(s->stream), -15) != Z_OK)
 		goto errout;
@@ -393,7 +393,7 @@ clseek(int fd, off_t offset, int where)
 			inflateEnd(&(s->stream));
 
 			sav_inbuf = s->inbuf; /* don't allocate again */
-			bzero(s, sizeof(struct sd)); /* this resets total_out to 0! */
+			memset(s, 0, sizeof(struct sd)); /* this resets total_out to 0! */
 
 			inflateInit2(&(s->stream), -15);
 			s->stream.next_in = s->inbuf = sav_inbuf;

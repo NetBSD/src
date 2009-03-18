@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.25 2007/03/04 06:03:21 christos Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.26 2009/03/18 16:00:22 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.25 2007/03/04 06:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.26 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -127,11 +127,11 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 	if (tp)
 		td->td_cb = *tp;
 	else
-		bzero((void *)&td->td_cb, sizeof (*tp));
+		memset((void *)&td->td_cb, 0, sizeof (*tp));
 	td->td_family = tp->t_family;
-	bzero((void *)&td->td_ti, sizeof (td->td_ti));
+	memset((void *)&td->td_ti, 0, sizeof (td->td_ti));
 #ifdef INET6
-	bzero((void *)&td->td_ti6, sizeof (td->td_ti6));
+	memset((void *)&td->td_ti6, 0, sizeof (td->td_ti6));
 #endif
 	th = NULL;
 	if (m) {

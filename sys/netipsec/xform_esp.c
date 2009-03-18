@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.19 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.20 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.19 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.20 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -227,7 +227,7 @@ esp_init(struct secasvar *sav, struct xformsw *xsp)
 	sav->tdb_encalgxform = txform;
 
 	/* Initialize crypto session. */
-	bzero(&crie, sizeof (crie));
+	memset(&crie, 0, sizeof (crie));
 	crie.cri_alg = sav->tdb_encalgxform->type;
 	crie.cri_klen = _KEYBITS(sav->key_enc);
 	crie.cri_key = _KEYBUF(sav->key_enc);
@@ -264,7 +264,7 @@ esp_zeroize(struct secasvar *sav)
 	int error = ah_zeroize(sav);
 
 	if (sav->key_enc)
-		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
+		memset(_KEYBUF(sav->key_enc), 0, _KEYLEN(sav->key_enc));
 	/* NB: sav->iv is freed elsewhere, even though we malloc it! */
 	sav->tdb_encalgxform = NULL;
 	sav->tdb_xform = NULL;
@@ -831,7 +831,7 @@ esp_output(
 		(void) read_random(pad, padding - 2);
 		break;
 	case SADB_X_EXT_PZERO:
-		bzero(pad, padding - 2);
+		memset(pad, 0, padding - 2);
 		break;
 	case SADB_X_EXT_PSEQ:
 		for (i = 0; i < padding - 2; i++)

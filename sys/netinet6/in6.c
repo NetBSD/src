@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.147 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: in6.c,v 1.148 2009/03/18 16:00:22 cegger Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.147 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.148 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -559,7 +559,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCGIFSTAT_IN6:
 		if (ifp == NULL)
 			return EINVAL;
-		bzero(&ifr->ifr_ifru.ifru_stat,
+		memset(&ifr->ifr_ifru.ifru_stat, 0,
 		    sizeof(ifr->ifr_ifru.ifru_stat));
 		ifr->ifr_ifru.ifru_stat =
 		    *((struct in6_ifextra *)ifp->if_afdata[AF_INET6])->in6_ifstat;
@@ -568,7 +568,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCGIFSTAT_ICMP6:
 		if (ifp == NULL)
 			return EINVAL;
-		bzero(&ifr->ifr_ifru.ifru_icmp6stat,
+		memset(&ifr->ifr_ifru.ifru_icmp6stat, 0,
 		    sizeof(ifr->ifr_ifru.ifru_icmp6stat));
 		ifr->ifr_ifru.ifru_icmp6stat =
 		    *((struct in6_ifextra *)ifp->if_afdata[AF_INET6])->icmp6_ifstat;
@@ -666,7 +666,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		 * convert mask to prefix length (prefixmask has already
 		 * been validated in in6_update_ifa().
 		 */
-		bzero(&pr0, sizeof(pr0));
+		memset(&pr0, 0, sizeof(pr0));
 		pr0.ndpr_ifp = ifp;
 		pr0.ndpr_plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr,
 		    NULL);
@@ -945,7 +945,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    M_NOWAIT);
 		if (ia == NULL)
 			return ENOBUFS;
-		bzero((void *)ia, sizeof(*ia));
+		memset((void *)ia, 0, sizeof(*ia));
 		LIST_INIT(&ia->ia6_memberships);
 		/* Initialize the address and masks, and put time stamp */
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
@@ -1078,7 +1078,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		struct in6_addr llsol;
 
 		/* join solicited multicast addr for new host id */
-		bzero(&llsol, sizeof(struct in6_addr));
+		memset(&llsol, 0, sizeof(struct in6_addr));
 		llsol.s6_addr16[0] = htons(0xff02);
 		llsol.s6_addr32[1] = 0;
 		llsol.s6_addr32[2] = htonl(1);
@@ -1154,7 +1154,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!rt) {
 			struct rt_addrinfo info;
 
-			bzero(&info, sizeof(info));
+			memset(&info, 0, sizeof(info));
 			info.rti_info[RTAX_DST] = (struct sockaddr *)&mltaddr;
 			info.rti_info[RTAX_GATEWAY] =
 			    (struct sockaddr *)&ia->ia_addr;
@@ -1239,7 +1239,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!rt) {
 			struct rt_addrinfo info;
 
-			bzero(&info, sizeof(info));
+			memset(&info, 0, sizeof(info));
 			info.rti_info[RTAX_DST] = (struct sockaddr *)&mltaddr;
 			info.rti_info[RTAX_GATEWAY] =
 			    (struct sockaddr *)&ia->ia_addr;
@@ -1557,7 +1557,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			prefixlen = iflr->prefixlen;
 
 		/* copy args to in6_aliasreq, perform ioctl(SIOCAIFADDR_IN6). */
-		bzero(&ifra, sizeof(ifra));
+		memset(&ifra, 0, sizeof(ifra));
 		bcopy(iflr->iflr_name, ifra.ifra_name, sizeof(ifra.ifra_name));
 
 		bcopy(&iflr->addr, &ifra.ifra_addr,
@@ -1596,7 +1596,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		struct sockaddr_in6 *sin6;
 		int cmp;
 
-		bzero(&mask, sizeof(mask));
+		memset(&mask, 0, sizeof(mask));
 		if (iflr->flags & IFLR_PREFIX) {
 			/* lookup a prefix rather than address. */
 			in6_prefixlen2mask(&mask, iflr->prefixlen);
@@ -1669,7 +1669,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 				if (error != 0)
 					return error;
 			} else
-				bzero(&iflr->dstaddr, sizeof(iflr->dstaddr));
+				memset(&iflr->dstaddr, 0, sizeof(iflr->dstaddr));
 
 			iflr->prefixlen =
 			    in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL);
@@ -1681,7 +1681,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			struct in6_aliasreq ifra;
 
 			/* fill in6_aliasreq and do ioctl(SIOCDIFADDR_IN6) */
-			bzero(&ifra, sizeof(ifra));
+			memset(&ifra, 0, sizeof(ifra));
 			bcopy(iflr->iflr_name, ifra.ifra_name,
 			    sizeof(ifra.ifra_name));
 
@@ -1691,7 +1691,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 				bcopy(&ia->ia_dstaddr, &ifra.ifra_dstaddr,
 				    ia->ia_dstaddr.sin6_len);
 			} else {
-				bzero(&ifra.ifra_dstaddr,
+				memset(&ifra.ifra_dstaddr, 0,
 				    sizeof(ifra.ifra_dstaddr));
 			}
 			bcopy(&ia->ia_prefixmask, &ifra.ifra_dstaddr,
@@ -1995,7 +1995,7 @@ in6_prefixlen2mask(struct in6_addr *maskp, int len)
 		return;
 	}
 
-	bzero(maskp, sizeof(*maskp));
+	memset(maskp, 0, sizeof(*maskp));
 	bytelen = len / NBBY;
 	bitlen = len % NBBY;
 	for (i = 0; i < bytelen; i++)
@@ -2250,7 +2250,7 @@ in6_domifdetach(struct ifnet *ifp, void *aux)
 void
 in6_sin6_2_sin(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
 {
-	bzero(sin, sizeof(*sin));
+	memset(sin, 0, sizeof(*sin));
 	sin->sin_len = sizeof(struct sockaddr_in);
 	sin->sin_family = AF_INET;
 	sin->sin_port = sin6->sin6_port;
@@ -2261,7 +2261,7 @@ in6_sin6_2_sin(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
 void
 in6_sin_2_v4mapsin6(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
 {
-	bzero(sin6, sizeof(*sin6));
+	memset(sin6, 0, sizeof(*sin6));
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_port = sin->sin_port;

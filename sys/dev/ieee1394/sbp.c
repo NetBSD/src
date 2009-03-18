@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.24 2009/01/11 02:45:51 christos Exp $	*/
+/*	$NetBSD: sbp.c,v 1.25 2009/03/18 16:00:18 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.24 2009/01/11 02:45:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.25 2009/03/18 16:00:18 cegger Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -685,7 +685,7 @@ END_DEBUG
 		 * realloc() doesn't allocate new buffer.
 		 */
 		if (maxlun > target->num_lun)
-			bzero(&newluns[target->num_lun],
+			memset(&newluns[target->num_lun], 0,
 			    sizeof(struct sbp_dev *) *
 			    (maxlun - target->num_lun));
 
@@ -742,7 +742,7 @@ END_DEBUG
 		sdev->login = (struct sbp_login_res *) sdev->dma.v_addr;
 		sdev->ocb = (struct sbp_ocb *)
 				((char *)sdev->dma.v_addr + SBP_LOGIN_SIZE);
-		bzero((char *)sdev->ocb,
+		memset((char *)sdev->ocb, 0,
 			sizeof (struct sbp_ocb) * SBP_QUEUE_LEN);
 
 		STAILQ_INIT(&sdev->free_ocbs);
@@ -822,8 +822,8 @@ sbp_probe_lun(struct sbp_dev *sdev)
 	struct crom_context c, *cc = &c;
 	struct csrreg *reg;
 
-	bzero(sdev->vendor, sizeof(sdev->vendor));
-	bzero(sdev->product, sizeof(sdev->product));
+	memset(sdev->vendor, 0, sizeof(sdev->vendor));
+	memset(sdev->product, 0, sizeof(sdev->product));
 
 	fwdev = sdev->target->fwdev;
 	crom_init_context(cc, fwdev->csrrom);
@@ -1584,7 +1584,7 @@ sbp_mgm_orb(struct sbp_dev *sdev, int func, struct sbp_ocb *aocb)
 	ocb->flags = OCB_ACT_MGM;
 	ocb->sdev = sdev;
 
-	bzero((void *)ocb->orb, sizeof(ocb->orb));
+	memset((void *)ocb->orb, 0, sizeof(ocb->orb));
 	ocb->orb[6] = htonl((nid << 16) | SBP_BIND_HI);
 	ocb->orb[7] = htonl(SBP_DEV2ADDR(dv_unit, sdev->lun_id));
 

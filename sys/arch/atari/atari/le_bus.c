@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.16 2009/03/08 05:25:31 tsutsui Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.17 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.16 2009/03/08 05:25:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.17 2009/03/18 16:00:10 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -270,7 +270,7 @@ leb_alloc_bus_space_tag(bus_space_tag_t storage)
 		if ((leb_t = malloc(sizeof(*leb_t), M_TEMP, M_NOWAIT)) == NULL)
 		return NULL;
 	}
-	bzero(leb_t, sizeof(*leb_t));
+	memset(leb_t, 0, sizeof(*leb_t));
 	
 	leb_t->abs_p_1   = leb_bus_space_peek_1;
 	leb_t->abs_p_2   = leb_bus_space_peek_2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.40 2009/01/21 06:59:29 yamt Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.41 2009/03/18 16:00:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.40 2009/01/21 06:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.41 2009/03/18 16:00:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,7 +393,7 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 		while (resid > 0) {
 			tm = NULL;
 			rcvflg = MSG_WAITALL;
-			bzero(&auio, sizeof(auio));
+			memset(&auio, 0, sizeof(auio));
 			auio.uio_resid = min(resid, NB_SORECEIVE_CHUNK);
 			/* not need to setup uio_vmspace */
 			resid -= auio.uio_resid;

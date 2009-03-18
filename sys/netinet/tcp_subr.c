@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.235 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.236 2009/03/18 16:00:22 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.235 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.236 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -490,7 +490,7 @@ tcp_template(struct tcpcb *tp)
 		m->m_pkthdr.len = m->m_len = hlen + sizeof(struct tcphdr);
 	}
 
-	bzero(mtod(m, void *), m->m_len);
+	memset(mtod(m, void *), 0, m->m_len);
 
 	n = (struct tcphdr *)(mtod(m, char *) + hlen);
 
@@ -822,7 +822,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 	case AF_INET:
 	    {
 		struct ipovly *ipov = (struct ipovly *)ip;
-		bzero(ipov->ih_x1, sizeof ipov->ih_x1);
+		memset(ipov->ih_x1, 0, sizeof ipov->ih_x1);
 		ipov->ih_len = htons((u_int16_t)tlen);
 
 		th->th_sum = 0;
@@ -1455,7 +1455,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			return NULL;
 		}
 
-		bzero(&th, sizeof(th));
+		memset(&th, 0, sizeof(th));
 		m_copydata(m, off, sizeof(th), (void *)&th);
 
 		if (cmd == PRC_MSGSIZE) {
@@ -1641,7 +1641,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		    inetctlerrmap[cmd] == ENETUNREACH ||
 		    inetctlerrmap[cmd] == EHOSTDOWN)) {
 			struct sockaddr_in sin;
-			bzero(&sin, sizeof(sin));
+			memset(&sin, 0, sizeof(sin));
 			sin.sin_len = sizeof(sin);
 			sin.sin_family = AF_INET;
 			sin.sin_port = th->th_sport;
@@ -1760,7 +1760,7 @@ tcp6_mtudisc_callback(struct in6_addr *faddr)
 {
 	struct sockaddr_in6 sin6;
 
-	bzero(&sin6, sizeof(sin6));
+	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;

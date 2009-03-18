@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.117 2009/03/18 10:41:46 cegger Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.118 2009/03/18 16:00:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.117 2009/03/18 10:41:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.118 2009/03/18 16:00:18 cegger Exp $");
 
 #define ATRQ_CH 0
 #define ATRS_CH 1
@@ -777,7 +777,7 @@ fwohci_init(struct fwohci_softc *sc, device_t dev)
 	}
 
 #if 0
-	bzero(&sc->fc.config_rom[0], CROMSIZE);
+	memset(&sc->fc.config_rom[0], 0, CROMSIZE);
 	sc->fc.config_rom[1] = 0x31333934;
 	sc->fc.config_rom[2] = 0xf000a002;
 	sc->fc.config_rom[3] = OREAD(sc, OHCI_EUID_HI);
@@ -2696,7 +2696,7 @@ fwohci_add_tx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 	FWOHCI_DMA_WRITE(db[0].db.desc.cmd,
 		OHCI_OUTPUT_MORE | OHCI_KEY_ST2 | 8);
 	FWOHCI_DMA_WRITE(db[0].db.desc.addr, 0);
-	bzero((void *)&db[1].db.immed[0], sizeof(db[1].db.immed));
+	memset((void *)&db[1].db.immed[0], 0, sizeof(db[1].db.immed));
 	FWOHCI_DMA_WRITE(db[2].db.desc.addr,
 	    fwdma_bus_addr(it->buf, poffset) + sizeof(uint32_t));
 

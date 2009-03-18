@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.23 2009/03/18 10:22:38 cegger Exp $	*/
+/*	$NetBSD: qv.c,v 1.24 2009/03/18 16:00:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.23 2009/03/18 10:22:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.24 2009/03/18 16:00:15 cegger Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -724,7 +724,7 @@ qv_init(struct qvdevice *qvaddr)
 	 * Clear the bit map
 	 */
 	for( i=0 , ptr = qp->bitmap ; i<240 ; i += 2 , ptr += 2048)
-		bzero( ptr, 2048 );
+		memset( ptr, 0, 2048 );
 	/*
 	 * Reinitialize the scanmap
 	 */
@@ -1162,7 +1162,7 @@ qvscroll(void)
 	 */
         scanline = qp->scanmap;
         b_row = qp->bitmap+(*scanline&0x3ff)*128;
-	bzero( b_row, 1920 );
+	memset( b_row, 0, 1920 );
 
 	/*
 	 * Now move the scanlines down 

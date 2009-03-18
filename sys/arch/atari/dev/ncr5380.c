@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.61 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.62 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.61 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.62 2009/03/18 16:00:10 cegger Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -1609,7 +1609,7 @@ check_autosense(SC_REQ *reqp, int linked)
 			else reqp->xcmd.bytes[sizeof(sense_cmd)-2] |= 1;
 
 #ifdef DBG_REQ
-			bzero(reqp->xdata_ptr, reqp->xdata_len);
+			memset(reqp->xdata_ptr, 0, reqp->xdata_len);
 			if (dbg_target_mask & (1 << reqp->targ_id))
 				show_request(reqp, "AUTO-SENSE");
 #endif

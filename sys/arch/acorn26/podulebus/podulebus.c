@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.17 2009/01/18 22:43:04 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.18 2009/03/18 16:00:08 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.17 2009/01/18 22:43:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.18 2009/03/18 16:00:08 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,7 +112,7 @@ podulebus_probe_podule(device_t self, int slotnum)
 	u_int8_t extecid[EXTECID_SIZE];
 	struct podulebus_attach_args pa;
 
-	bzero(&pa, sizeof(pa));
+	memset(&pa, 0, sizeof(pa));
 	id_bst = sc->sc_ioc.ioc_sync_t;
 	bus_space_subregion(id_bst, sc->sc_ioc.ioc_sync_h,
 			    slotnum * PODULE_GAP, PODULE_GAP, &id_bsh);

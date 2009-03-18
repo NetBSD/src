@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.51 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: keysock.c,v 1.52 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.51 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.52 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -255,7 +255,7 @@ key_sendup0(struct rawcb *rp, struct mbuf *m, int promisc, int canwait)
 		m->m_pkthdr.len += sizeof(*pmsg);
 
 		pmsg = mtod(m, struct sadb_msg *);
-		bzero(pmsg, sizeof(*pmsg));
+		memset(pmsg, 0, sizeof(*pmsg));
 		pmsg->sadb_msg_version = PF_KEY_V2;
 		pmsg->sadb_msg_type = SADB_X_PROMISC;
 		pmsg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);

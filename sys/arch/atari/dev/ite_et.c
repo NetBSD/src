@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.23 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.24 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.23 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.24 2009/03/18 16:00:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ view_init(register struct ite_softc *ip)
 	else ip->priv = cci = (ipriv_t*)malloc(sizeof(*cci), M_DEVBUF,M_WAITOK);
 	if(cci == NULL)
 		panic("No memory for ite-view");
-	bzero(cci, sizeof(*cci));
+	memset(cci, 0, sizeof(*cci));
 
 	wsz.x      = ite_default_x;
 	wsz.y      = ite_default_y;

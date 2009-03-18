@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.18 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.19 2009/03/18 16:00:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.18 2008/04/28 20:23:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.19 2009/03/18 16:00:14 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -153,7 +153,7 @@ zs_kgdb_init(void)
 		   'a' + (kgdb_dev & 3), kgdb_rate);
 
 	/* Setup temporary chanstate. */
-	bzero((void *)&cs, sizeof(cs));
+	memset((void *)&cs, 0, sizeof(cs));
 	zsd = findzs(promzs_unit);
 	if (zsd == NULL) {
 		printf("zs_kgdb_init: zs not mapped.\n");

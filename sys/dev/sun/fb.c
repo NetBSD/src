@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.31 2009/03/18 10:22:41 cegger Exp $ */
+/*	$NetBSD: fb.c,v 1.32 2009/03/18 16:00:20 cegger Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.31 2009/03/18 10:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.32 2009/03/18 16:00:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,7 +395,7 @@ fbrcons_init(struct fbdevice *fb)
 #endif
 
 	/* Set up what rasops needs to know about */
-	bzero(ri, sizeof *ri);
+	memset(ri, 0, sizeof *ri);
 	ri->ri_stride = fb->fb_linebytes;
 	ri->ri_bits = (void *)fb->fb_pixels;
 	ri->ri_depth = fb->fb_type.fb_depth;

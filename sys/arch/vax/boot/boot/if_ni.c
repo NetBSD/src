@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.5 2009/01/12 11:32:45 tsutsui Exp $ */
+/*	$NetBSD: if_ni.c,v 1.6 2009/03/18 16:00:15 cegger Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -413,7 +413,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	msg->nm_len = 18;
 	msg->nm_opcode2 = NI_STPTDB;
 	ptdb = (struct ni_ptdb *)&msg->nm_text[0];
-	bzero(ptdb, sizeof(struct ni_ptdb));
+	memset(ptdb, 0, sizeof(struct ni_ptdb));
 	ptdb->np_index = 1;
 	ptdb->np_fque = 1;
 
@@ -426,7 +426,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 #endif
 	msg = REMQHI(&fqb->nf_mforw);
 	ptdb = (struct ni_ptdb *)&msg->nm_text[0];
-	bzero(ptdb, sizeof(struct ni_ptdb));
+	memset(ptdb, 0, sizeof(struct ni_ptdb));
 	msg->nm_opcode = BVP_MSG;
 	msg->nm_len = 18;
 	ptdb->np_index = 2;

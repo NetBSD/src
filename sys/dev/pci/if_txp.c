@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.31 2009/03/18 15:14:31 cegger Exp $ */
+/* $NetBSD: if_txp.c,v 1.32 2009/03/18 16:00:19 cegger Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.31 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.32 2009/03/18 16:00:19 cegger Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -939,7 +939,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		return (-1);
 	}
 	boot = (struct txp_boot_record *)sc->sc_boot_dma.dma_vaddr;
-	bzero(boot, sizeof(*boot));
+	memset(boot, 0, sizeof(*boot));
 	sc->sc_boot = boot;
 
 	/* host variables */
@@ -948,7 +948,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate host ring\n");
 		goto bail_boot;
 	}
-	bzero(sc->sc_host_dma.dma_vaddr, sizeof(struct txp_hostvar));
+	memset(sc->sc_host_dma.dma_vaddr, 0, sizeof(struct txp_hostvar));
 	boot->br_hostvar_lo = htole32(sc->sc_host_dma.dma_paddr & 0xffffffff);
 	boot->br_hostvar_hi = htole32(sc->sc_host_dma.dma_paddr >> 32);
 	sc->sc_hostvar = (struct txp_hostvar *)sc->sc_host_dma.dma_vaddr;
@@ -959,7 +959,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate high tx ring\n");
 		goto bail_host;
 	}
-	bzero(sc->sc_txhiring_dma.dma_vaddr, sizeof(struct txp_tx_desc) * TX_ENTRIES);
+	memset(sc->sc_txhiring_dma.dma_vaddr, 0, sizeof(struct txp_tx_desc) * TX_ENTRIES);
 	boot->br_txhipri_lo = htole32(sc->sc_txhiring_dma.dma_paddr & 0xffffffff);
 	boot->br_txhipri_hi = htole32(sc->sc_txhiring_dma.dma_paddr >> 32);
 	boot->br_txhipri_siz = htole32(TX_ENTRIES * sizeof(struct txp_tx_desc));
@@ -986,7 +986,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate low tx ring\n");
 		goto bail_txhiring;
 	}
-	bzero(sc->sc_txloring_dma.dma_vaddr, sizeof(struct txp_tx_desc) * TX_ENTRIES);
+	memset(sc->sc_txloring_dma.dma_vaddr, 0, sizeof(struct txp_tx_desc) * TX_ENTRIES);
 	boot->br_txlopri_lo = htole32(sc->sc_txloring_dma.dma_paddr & 0xffffffff);
 	boot->br_txlopri_hi = htole32(sc->sc_txloring_dma.dma_paddr >> 32);
 	boot->br_txlopri_siz = htole32(TX_ENTRIES * sizeof(struct txp_tx_desc));
@@ -1001,7 +1001,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate high rx ring\n");
 		goto bail_txloring;
 	}
-	bzero(sc->sc_rxhiring_dma.dma_vaddr, sizeof(struct txp_rx_desc) * RX_ENTRIES);
+	memset(sc->sc_rxhiring_dma.dma_vaddr, 0, sizeof(struct txp_rx_desc) * RX_ENTRIES);
 	boot->br_rxhipri_lo = htole32(sc->sc_rxhiring_dma.dma_paddr & 0xffffffff);
 	boot->br_rxhipri_hi = htole32(sc->sc_rxhiring_dma.dma_paddr >> 32);
 	boot->br_rxhipri_siz = htole32(RX_ENTRIES * sizeof(struct txp_rx_desc));
@@ -1018,7 +1018,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate low rx ring\n");
 		goto bail_rxhiring;
 	}
-	bzero(sc->sc_rxloring_dma.dma_vaddr, sizeof(struct txp_rx_desc) * RX_ENTRIES);
+	memset(sc->sc_rxloring_dma.dma_vaddr, 0, sizeof(struct txp_rx_desc) * RX_ENTRIES);
 	boot->br_rxlopri_lo = htole32(sc->sc_rxloring_dma.dma_paddr & 0xffffffff);
 	boot->br_rxlopri_hi = htole32(sc->sc_rxloring_dma.dma_paddr >> 32);
 	boot->br_rxlopri_siz = htole32(RX_ENTRIES * sizeof(struct txp_rx_desc));
@@ -1035,7 +1035,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate command ring\n");
 		goto bail_rxloring;
 	}
-	bzero(sc->sc_cmdring_dma.dma_vaddr, sizeof(struct txp_cmd_desc) * CMD_ENTRIES);
+	memset(sc->sc_cmdring_dma.dma_vaddr, 0, sizeof(struct txp_cmd_desc) * CMD_ENTRIES);
 	boot->br_cmd_lo = htole32(sc->sc_cmdring_dma.dma_paddr & 0xffffffff);
 	boot->br_cmd_hi = htole32(sc->sc_cmdring_dma.dma_paddr >> 32);
 	boot->br_cmd_siz = htole32(CMD_ENTRIES * sizeof(struct txp_cmd_desc));
@@ -1049,7 +1049,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate response ring\n");
 		goto bail_cmdring;
 	}
-	bzero(sc->sc_rspring_dma.dma_vaddr, sizeof(struct txp_rsp_desc) * RSP_ENTRIES);
+	memset(sc->sc_rspring_dma.dma_vaddr, 0, sizeof(struct txp_rsp_desc) * RSP_ENTRIES);
 	boot->br_resp_lo = htole32(sc->sc_rspring_dma.dma_paddr & 0xffffffff);
 	boot->br_resp_hi = htole32(sc->sc_rspring_dma.dma_paddr >> 32);
 	boot->br_resp_siz = htole32(CMD_ENTRIES * sizeof(struct txp_rsp_desc));
@@ -1063,7 +1063,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate rx buffer ring\n");
 		goto bail_rspring;
 	}
-	bzero(sc->sc_rxbufring_dma.dma_vaddr, sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES);
+	memset(sc->sc_rxbufring_dma.dma_vaddr, 0, sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES);
 	boot->br_rxbuf_lo = htole32(sc->sc_rxbufring_dma.dma_paddr & 0xffffffff);
 	boot->br_rxbuf_hi = htole32(sc->sc_rxbufring_dma.dma_paddr >> 32);
 	boot->br_rxbuf_siz = htole32(RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc));
@@ -1117,7 +1117,7 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate response ring\n");
 		goto bail_rxbufring;
 	}
-	bzero(sc->sc_zero_dma.dma_vaddr, sizeof(u_int32_t));
+	memset(sc->sc_zero_dma.dma_vaddr, 0, sizeof(u_int32_t));
 	boot->br_zero_lo = htole32(sc->sc_zero_dma.dma_paddr & 0xffffffff);
 	boot->br_zero_hi = htole32(sc->sc_zero_dma.dma_paddr >> 32);
 
@@ -1589,7 +1589,7 @@ txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2, u
 
 	idx = sc->sc_cmdring.lastwrite;
 	cmd = (struct txp_cmd_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
-	bzero(cmd, sizeof(*cmd));
+	memset(cmd, 0, sizeof(*cmd));
 
 	cmd->cmd_numdesc = in_extn;
 	seq = sc->sc_seq++;

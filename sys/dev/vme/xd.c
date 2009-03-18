@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.81 2009/03/18 10:22:42 cegger Exp $	*/
+/*	$NetBSD: xd.c,v 1.82 2009/03/18 16:00:21 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.81 2009/03/18 10:22:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.82 2009/03/18 16:00:21 cegger Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -573,7 +573,7 @@ xdcattach(parent, self, aux)
 	}
 	xdc->dvmaiopb = (struct xd_iopb *)(u_long)BUS_ADDR_PADDR(busaddr);
 
-	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
+	memset(xdc->iopbase, 0, XDC_MAXIOPB * sizeof(struct xd_iopb));
 
 	xdc->reqs = (struct xd_iorq *)
 	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq),
@@ -721,7 +721,7 @@ xdattach(parent, self, aux)
 	 * Always re-initialize the disk structure.  We want statistics
 	 * to start with a clean slate.
 	 */
-	bzero(&xd->sc_dk, sizeof(xd->sc_dk));
+	memset(&xd->sc_dk, 0, sizeof(xd->sc_dk));
 
 	/* if booting, init the xd_softc */
 
@@ -1852,7 +1852,7 @@ xdc_xdreset(xdcsc, xdsc)
 	u_long  addr;
 	int     del;
 	bcopy(xdcsc->iopbase, &tmpiopb, sizeof(tmpiopb));
-	bzero(xdcsc->iopbase, sizeof(tmpiopb));
+	memset(xdcsc->iopbase, 0, sizeof(tmpiopb));
 	xdcsc->iopbase->comm = XDCMD_RST;
 	xdcsc->iopbase->unit = xdsc->xd_drive;
 	addr = (u_long) xdcsc->dvmaiopb;
@@ -2300,7 +2300,7 @@ xdc_tick(arg)
 		printf("%s: diag: IOPB miscount (got w/f/r/d %d/%d/%d/%d, wanted %d)\n",
 		    device_xname(&xdcsc->sc_dev), nwait, nfree, nrun, ndone,
 		    XDC_MAXIOPB);
-		bzero(mark, sizeof(mark));
+		memset(mark, 0, sizeof(mark));
 		printf("FREE: ");
 		for (lcv = nfree; lcv > 0; lcv--) {
 			printf("%d ", fqc[lcv - 1]);

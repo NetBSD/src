@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.38 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.39 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.38 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.39 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -333,7 +333,7 @@ tp_init(void)
 	tp_start_win = 2;
 
 	tp_timerinit();
-	bzero((void *) & tp_stat, sizeof(struct tp_stat));
+	memset((void *) & tp_stat, 0, sizeof(struct tp_stat));
 }
 
 /*
@@ -538,7 +538,7 @@ tp_getref(struct tp_pcb *tpcb)
 	memcpy(r, obase, size);
 	free(obase, M_PCB);
 	r = (struct tp_ref *)(size + (char *)r);
-	bzero((void *) r, size);
+	memset((void *) r, 0, size);
 
 got_one:
 	r->tpr_pcb = tpcb;
