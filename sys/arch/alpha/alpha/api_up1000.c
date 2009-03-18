@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.25 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: api_up1000.c,v 1.26 2009/03/18 07:42:36 cegger Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.25 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.26 2009/03/18 07:42:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ static const char *kgdb_devlist[] = {
 #endif /* KGDB */
 
 void
-api_up1000_init()
+api_up1000_init(void)
 {
 
 	platform.family = "Alpha Processor, Inc. UP1000";
@@ -106,7 +106,7 @@ api_up1000_init()
 }
 
 static void
-api_up1000_cons_init()
+api_up1000_cons_init(void)
 {
 	struct ctb *ctb;
 	struct irongate_config *icp;

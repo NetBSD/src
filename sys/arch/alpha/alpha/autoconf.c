@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.46 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: autoconf.c,v 1.47 2009/03/18 07:42:36 cegger Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2009/03/18 07:42:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ int	atoi(char *);
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	parse_prom_bootdev();
@@ -94,7 +94,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	if (booted_device == NULL)
@@ -104,7 +104,7 @@ cpu_rootconf()
 }
 
 void
-parse_prom_bootdev()
+parse_prom_bootdev(void)
 {
 	static char hacked_boot_dev[128];
 	static struct bootdev_data bd;

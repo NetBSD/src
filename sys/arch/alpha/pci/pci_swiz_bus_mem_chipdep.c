@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.42 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.43 2009/03/18 07:41:54 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.42 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.43 2009/03/18 07:41:54 cegger Exp $");
 
 #include <sys/extent.h>
 
@@ -237,9 +237,7 @@ static long
 #endif
 
 void
-__C(CHIP,_bus_mem_init)(t, v)
-	bus_space_tag_t t;
-	void *v;
+__C(CHIP,_bus_mem_init)(bus_space_tag_t t, void *v)
 {
 #ifdef CHIP_D_MEM_W1_SYS_START
 	struct extent *dex;
@@ -421,10 +419,8 @@ static int	__C(CHIP,_xlate_sparse_handle_to_addr)(void *,
 
 #ifdef CHIP_D_MEM_W1_SYS_START
 static int
-__C(CHIP,_xlate_addr_to_dense_handle)(v, memaddr, memhp)
-	void *v;
-	bus_addr_t memaddr;
-	bus_space_handle_t *memhp;
+__C(CHIP,_xlate_addr_to_dense_handle)(void *v, bus_addr_t memaddr,
+   bus_space_handle_t *memhp)
 {
 #ifdef CHIP_D_MEM_W1_BUS_START
 	if (memaddr >= CHIP_D_MEM_W1_BUS_START(v) &&
@@ -440,10 +436,8 @@ __C(CHIP,_xlate_addr_to_dense_handle)(v, memaddr, memhp)
 }
 
 static int
-__C(CHIP,_xlate_dense_handle_to_addr)(v, memh, memaddrp)
-	void *v;
-	bus_space_handle_t memh;
-	bus_addr_t *memaddrp;
+__C(CHIP,_xlate_dense_handle_to_addr)(void *v, bus_space_handle_t memh,
+    bus_addr_t *memaddrp)
 {
 
 	memh = ALPHA_K0SEG_TO_PHYS(memh);
@@ -461,10 +455,8 @@ __C(CHIP,_xlate_dense_handle_to_addr)(v, memh, memaddrp)
 #endif /* CHIP_D_MEM_W1_SYS_START */
 
 static int
-__C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, memhp)
-	void *v;
-	bus_addr_t memaddr;
-	bus_space_handle_t *memhp;
+__C(CHIP,_xlate_addr_to_sparse_handle)(void *v, bus_addr_t memaddr,
+    bus_space_handle_t *memhp)
 {
 
 #ifdef CHIP_S_MEM_W1_BUS_START
@@ -504,10 +496,8 @@ __C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, memhp)
 }
 
 static int
-__C(CHIP,_xlate_sparse_handle_to_addr)(v, memh, memaddrp)
-	void *v;
-	bus_space_handle_t memh;
-	bus_addr_t *memaddrp;
+__C(CHIP,_xlate_sparse_handle_to_addr)(void *v, bus_space_handle_t memh,
+    bus_addr_t *memaddrp)
 {
 
 	memh = ALPHA_K0SEG_TO_PHYS(memh << CHIP_ADDR_SHIFT) >> CHIP_ADDR_SHIFT;
@@ -540,12 +530,8 @@ __C(CHIP,_xlate_sparse_handle_to_addr)(v, memh, memaddrp)
 }
 
 int
-__C(CHIP,_mem_translate)(v, memaddr, memlen, flags, abst)
-	void *v;
-	bus_addr_t memaddr;
-	bus_size_t memlen;
-	int flags;
-	struct alpha_bus_space_translation *abst;
+__C(CHIP,_mem_translate)(void *v, bus_addr_t memaddr, bus_size_t memlen,
+    int flags, struct alpha_bus_space_translation *abst)
 {
 
 	/* XXX */
@@ -553,10 +539,8 @@ __C(CHIP,_mem_translate)(v, memaddr, memlen, flags, abst)
 }
 
 int
-__C(CHIP,_mem_get_window)(v, window, abst)
-	void *v;
-	int window;
-	struct alpha_bus_space_translation *abst;
+__C(CHIP,_mem_get_window)(void *v, int window,
+    struct alpha_bus_space_translation *abst)
 {
 
 #ifdef CHIP_D_MEM_W1_BUS_START
@@ -621,13 +605,8 @@ __C(CHIP,_mem_get_window)(v, window, abst)
 }
 
 int
-__C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
-	void *v;
-	bus_addr_t memaddr;
-	bus_size_t memsize;
-	int flags;
-	bus_space_handle_t *memhp;
-	int acct;
+__C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize,
+    int flags, bus_space_handle_t *memhp, int acct)
 {
 	bus_space_handle_t dh = 0, sh = 0;	/* XXX -Wuninitialized */
 	int didd, dids, errord, errors, mustd, musts;
@@ -792,11 +771,8 @@ bad:
 }
 
 void
-__C(CHIP,_mem_unmap)(v, memh, memsize, acct)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t memsize;
-	int acct;
+__C(CHIP,_mem_unmap)(void *v, bus_space_handle_t memh,
+    bus_size_t memsize, int acct)
 {
 	bus_addr_t memaddr;
 #ifdef CHIP_D_MEM_W1_SYS_START
@@ -870,10 +846,8 @@ __C(CHIP,_mem_unmap)(v, memh, memsize, acct)
 }
 
 int
-__C(CHIP,_mem_subregion)(v, memh, offset, size, nmemh)
-	void *v;
-	bus_space_handle_t memh, *nmemh;
-	bus_size_t offset, size;
+__C(CHIP,_mem_subregion)(void *v, bus_space_handle_t memh,
+   bus_size_t offset, bus_size_t size, bus_space_handle_t *nmemh)
 {
 
 	*nmemh = memh + offset;
@@ -881,13 +855,9 @@ __C(CHIP,_mem_subregion)(v, memh, offset, size, nmemh)
 }
 
 int
-__C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
-    addrp, bshp)
-	void *v;
-	bus_addr_t rstart, rend, *addrp;
-	bus_size_t size, align, boundary;
-	int flags;
-	bus_space_handle_t *bshp;
+__C(CHIP,_mem_alloc)(void *v, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t align, bus_size_t boundary, int flags,
+    bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 
 	/* XXX XXX XXX XXX XXX XXX */
@@ -895,10 +865,7 @@ __C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
 }
 
 void
-__C(CHIP,_mem_free)(v, bsh, size)
-	void *v;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+__C(CHIP,_mem_free)(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* XXX XXX XXX XXX XXX XXX */
@@ -906,9 +873,7 @@ __C(CHIP,_mem_free)(v, bsh, size)
 }
 
 void *
-__C(CHIP,_mem_vaddr)(v, bsh)
-	void *v;
-	bus_space_handle_t bsh;
+__C(CHIP,_mem_vaddr)(void *v, bus_space_handle_t bsh)
 {
 #ifdef CHIP_D_MEM_W1_SYS_START
 	/*
@@ -922,12 +887,7 @@ __C(CHIP,_mem_vaddr)(v, bsh)
 }
 
 paddr_t
-__C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
-	void *v;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+__C(CHIP,_mem_mmap)(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 {
 	bus_space_handle_t dh = 0, sh = 0;	/* XXX -Wuninitialized */
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
@@ -956,11 +916,8 @@ __C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
 }
 
 inline void
-__C(CHIP,_mem_barrier)(v, h, o, l, f)
-	void *v;
-	bus_space_handle_t h;
-	bus_size_t o, l;
-	int f;
+__C(CHIP,_mem_barrier)(void *v, bus_space_handle_t h,
+    bus_size_t o, bus_size_t l, int f)
 {
 
 	if ((f & BUS_SPACE_BARRIER_READ) != 0)
@@ -970,10 +927,7 @@ __C(CHIP,_mem_barrier)(v, h, o, l, f)
 }
 
 inline u_int8_t
-__C(CHIP,_mem_read_1)(v, memh, off)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
+__C(CHIP,_mem_read_1)(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	register bus_space_handle_t tmpmemh;
 	register u_int32_t *port, val;
@@ -998,10 +952,7 @@ __C(CHIP,_mem_read_1)(v, memh, off)
 }
 
 inline u_int16_t
-__C(CHIP,_mem_read_2)(v, memh, off)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
+__C(CHIP,_mem_read_2)(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	register bus_space_handle_t tmpmemh;
 	register u_int32_t *port, val;
@@ -1026,10 +977,7 @@ __C(CHIP,_mem_read_2)(v, memh, off)
 }
 
 inline u_int32_t
-__C(CHIP,_mem_read_4)(v, memh, off)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
+__C(CHIP,_mem_read_4)(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	register bus_space_handle_t tmpmemh;
 	register u_int32_t *port, val;
@@ -1058,10 +1006,7 @@ __C(CHIP,_mem_read_4)(v, memh, off)
 }
 
 inline u_int64_t
-__C(CHIP,_mem_read_8)(v, memh, off)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
+__C(CHIP,_mem_read_8)(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 
 	alpha_mb();
@@ -1077,11 +1022,7 @@ __C(CHIP,_mem_read_8)(v, memh, off)
 
 #define CHIP_mem_read_multi_N(BYTES,TYPE)				\
 void									\
-__C(__C(CHIP,_mem_read_multi_),BYTES)(v, h, o, a, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	bus_size_t o, c;						\
-	TYPE *a;							\
+__C(__C(CHIP,_mem_read_multi_),BYTES)(void *v, bus_space_handle_t h, bus_size_t o, TYPE *a, bus_size_t c)			\
 {									\
 									\
 	while (c-- > 0) {						\
@@ -1097,11 +1038,7 @@ CHIP_mem_read_multi_N(8,u_int64_t)
 
 #define CHIP_mem_read_region_N(BYTES,TYPE)				\
 void									\
-__C(__C(CHIP,_mem_read_region_),BYTES)(v, h, o, a, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	bus_size_t o, c;						\
-	TYPE *a;							\
+__C(__C(CHIP,_mem_read_region_),BYTES)(void *v, bus_space_handle_t h, bus_size_t o, TYPE *a, bus_size_t c)			\
 {									\
 									\
 	while (c-- > 0) {						\
@@ -1115,11 +1052,7 @@ CHIP_mem_read_region_N(4,u_int32_t)
 CHIP_mem_read_region_N(8,u_int64_t)
 
 inline void
-__C(CHIP,_mem_write_1)(v, memh, off, val)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
-	u_int8_t val;
+__C(CHIP,_mem_write_1)(void *v, bus_space_handle_t memh, bus_size_t off, uint8_t val)
 {
 	register bus_space_handle_t tmpmemh;
 	register u_int32_t *port, nval;
@@ -1142,11 +1075,7 @@ __C(CHIP,_mem_write_1)(v, memh, off, val)
 }
 
 inline void
-__C(CHIP,_mem_write_2)(v, memh, off, val)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
-	u_int16_t val;
+__C(CHIP,_mem_write_2)(void *v, bus_space_handle_t memh, bus_size_t off, uint16_t val)
 {
 	register bus_space_handle_t tmpmemh;
 	register u_int32_t *port, nval;
@@ -1169,11 +1098,7 @@ __C(CHIP,_mem_write_2)(v, memh, off, val)
 }
 
 inline void
-__C(CHIP,_mem_write_4)(v, memh, off, val)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
-	u_int32_t val;
+__C(CHIP,_mem_write_4)(void *v, bus_space_handle_t memh, bus_size_t off, uint32_t val)
 {
 	register bus_space_handle_t tmpmemh;
 	register u_int32_t *port, nval;
@@ -1196,11 +1121,7 @@ __C(CHIP,_mem_write_4)(v, memh, off, val)
 }
 
 inline void
-__C(CHIP,_mem_write_8)(v, memh, off, val)
-	void *v;
-	bus_space_handle_t memh;
-	bus_size_t off;
-	u_int64_t val;
+__C(CHIP,_mem_write_8)(void *v, bus_space_handle_t memh, bus_size_t off, uint64_t val)
 {
 
 #ifdef CHIP_D_MEM_W1_SYS_START
@@ -1218,11 +1139,7 @@ __C(CHIP,_mem_write_8)(v, memh, off, val)
 
 #define CHIP_mem_write_multi_N(BYTES,TYPE)				\
 void									\
-__C(__C(CHIP,_mem_write_multi_),BYTES)(v, h, o, a, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	bus_size_t o, c;						\
-	const TYPE *a;							\
+__C(__C(CHIP,_mem_write_multi_),BYTES)(void *v, bus_space_handle_t h, bus_size_t o, const TYPE *a, bus_size_t c)			\
 {									\
 									\
 	while (c-- > 0) {						\
@@ -1238,11 +1155,7 @@ CHIP_mem_write_multi_N(8,u_int64_t)
 
 #define CHIP_mem_write_region_N(BYTES,TYPE)				\
 void									\
-__C(__C(CHIP,_mem_write_region_),BYTES)(v, h, o, a, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	bus_size_t o, c;						\
-	const TYPE *a;							\
+__C(__C(CHIP,_mem_write_region_),BYTES)(void *v, bus_space_handle_t h, bus_size_t o, const TYPE *a, bus_size_t c)			\
 {									\
 									\
 	while (c-- > 0) {						\
@@ -1257,11 +1170,7 @@ CHIP_mem_write_region_N(8,u_int64_t)
 
 #define CHIP_mem_set_multi_N(BYTES,TYPE)				\
 void									\
-__C(__C(CHIP,_mem_set_multi_),BYTES)(v, h, o, val, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	bus_size_t o, c;						\
-	TYPE val;							\
+__C(__C(CHIP,_mem_set_multi_),BYTES)(void *v, bus_space_handle_t h, bus_size_t o, TYPE val, bus_size_t c)			\
 {									\
 									\
 	while (c-- > 0) {						\
@@ -1277,11 +1186,7 @@ CHIP_mem_set_multi_N(8,u_int64_t)
 
 #define CHIP_mem_set_region_N(BYTES,TYPE)				\
 void									\
-__C(__C(CHIP,_mem_set_region_),BYTES)(v, h, o, val, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	bus_size_t o, c;						\
-	TYPE val;							\
+__C(__C(CHIP,_mem_set_region_),BYTES)(void *v, bus_space_handle_t h, bus_size_t o, TYPE val, bus_size_t c)			\
 {									\
 									\
 	while (c-- > 0) {						\
@@ -1296,10 +1201,7 @@ CHIP_mem_set_region_N(8,u_int64_t)
 
 #define	CHIP_mem_copy_region_N(BYTES)					\
 void									\
-__C(__C(CHIP,_mem_copy_region_),BYTES)(v, h1, o1, h2, o2, c)		\
-	void *v;							\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
+__C(__C(CHIP,_mem_copy_region_),BYTES)(void *v, bus_space_handle_t h1, bus_size_t o1, bus_space_handle_t h2, bus_size_t o2, bus_size_t c)		\
 {									\
 	bus_size_t o;							\
 									\
