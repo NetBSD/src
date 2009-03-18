@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.4 2009/03/01 20:50:04 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.5 2009/03/18 15:32:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.4 2009/03/01 20:50:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.5 2009/03/18 15:32:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -197,7 +197,8 @@ rump_shmif_create(const char *path, int *ifnum)
 	if (sc->sc_memfd == -1)
 		goto fail;
 	sc->sc_busmem = rumpuser_filemmap(sc->sc_memfd, 0, BUSMEM_SIZE,
-	    1, 1, &error);
+	    RUMPUSER_FILEMMAP_TRUNCATE | RUMPUSER_FILEMMAP_SHARED
+	    | RUMPUSER_FILEMMAP_READ | RUMPUSER_FILEMMAP_WRITE, &error);
 	if (error)
 		goto fail;
 
