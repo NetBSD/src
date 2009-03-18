@@ -1,4 +1,4 @@
-/* $NetBSD: if_cfe.c,v 1.4 2009/03/14 15:36:13 dsl Exp $ */
+/* $NetBSD: if_cfe.c,v 1.5 2009/03/18 17:06:46 cegger Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -131,7 +131,7 @@ cfenet_init(struct iodesc *desc, void *machdep_hint)
 	    goto punt;
 	    }
 
-	bcopy(eaddr,desc->myea,6);
+	memcpy(desc->myea, eaddr,6);
 
 	printf("boot: ethernet address: %s\n", ether_sprintf(desc->myea));
 	return;

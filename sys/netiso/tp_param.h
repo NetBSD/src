@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.19 2009/03/14 19:03:41 christos Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.20 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -284,7 +284,7 @@ struct tp_vbp {
 #define vblen(x) (vbptr(x)->tpv_len)
 
 #define vb_putval(dst,type,src)\
-	bcopy((void *)&(src),(void *)&(((struct tp_vbp *)(dst))->tpv_val),\
+	memcpy((void *)&(((struct tp_vbp *)(dst))->tpv_val), (void *)&(src),\
 	sizeof(type))
 
 #define vb_getval(src,type,dst)\

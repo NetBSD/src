@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.82 2009/03/18 16:00:21 cegger Exp $	*/
+/*	$NetBSD: xd.c,v 1.83 2009/03/18 17:06:51 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.82 2009/03/18 16:00:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.83 2009/03/18 17:06:51 cegger Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -329,7 +329,7 @@ xddummystrat(struct buf *bp)
 {
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
-	bcopy(xd_labeldata, bp->b_data, XDFM_BPS);
+	memcpy( bp->b_data, xd_labeldata, XDFM_BPS);
 	bp->b_oflags |= BO_DONE;
 	bp->b_cflags &= ~BC_BUSY;
 }
@@ -889,7 +889,7 @@ xdattach(parent, self, aux)
 	if (lcv != 126) {
 		aprint_error_dev(&xd->sc_dev, "warning: invalid bad144 sector!\n");
 	} else {
-		bcopy(buf, &xd->dkb, XDFM_BPS);
+		memcpy( &xd->dkb, buf, XDFM_BPS);
 	}
 
 done:
@@ -1040,12 +1040,12 @@ xdioctl(dev, command, addr, flag, l)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		s = splbio();
-		bcopy(addr, &xd->dkb, sizeof(xd->dkb));
+		memcpy( &xd->dkb, addr, sizeof(xd->dkb));
 		splx(s);
 		return 0;
 
 	case DIOCGDINFO:	/* get disk label */
-		bcopy(xd->sc_dk.dk_label, addr, sizeof(struct disklabel));
+		memcpy( addr, xd->sc_dk.dk_label, sizeof(struct disklabel));
 		return 0;
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
@@ -1851,7 +1851,7 @@ xdc_xdreset(xdcsc, xdsc)
 	struct xd_iopb tmpiopb;
 	u_long  addr;
 	int     del;
-	bcopy(xdcsc->iopbase, &tmpiopb, sizeof(tmpiopb));
+	memcpy( &tmpiopb, xdcsc->iopbase, sizeof(tmpiopb));
 	memset(xdcsc->iopbase, 0, sizeof(tmpiopb));
 	xdcsc->iopbase->comm = XDCMD_RST;
 	xdcsc->iopbase->unit = xdsc->xd_drive;
@@ -1868,7 +1868,7 @@ xdc_xdreset(xdcsc, xdsc)
 	} else {
 		xdcsc->xdc->xdc_csr = XDC_CLRRIO;	/* clear RIO */
 	}
-	bcopy(&tmpiopb, xdcsc->iopbase, sizeof(tmpiopb));
+	memcpy( xdcsc->iopbase, &tmpiopb, sizeof(tmpiopb));
 }
 
 
@@ -2293,8 +2293,8 @@ xdc_tick(arg)
 	nrun = xdcsc->nrun;
 	nfree = xdcsc->nfree;
 	ndone = xdcsc->ndone;
-	bcopy(xdcsc->waitq, wqc, sizeof(wqc));
-	bcopy(xdcsc->freereq, fqc, sizeof(fqc));
+	memcpy( wqc, xdcsc->waitq, sizeof(wqc));
+	memcpy( fqc, xdcsc->freereq, sizeof(fqc));
 	splx(s);
 	if (nwait + nrun + nfree + ndone != XDC_MAXIOPB) {
 		printf("%s: diag: IOPB miscount (got w/f/r/d %d/%d/%d/%d, wanted %d)\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.11 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: mpt.c,v 1.12 2009/03/18 17:06:49 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.11 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.12 2009/03/18 17:06:49 cegger Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -540,7 +540,7 @@ mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,
 		mpt_free_reply(mpt, (req->sequence << 1));
 		return (-1);
 	}
-	bcopy(&reply->Header, rslt, sizeof (fCONFIG_PAGE_HEADER));
+	memcpy( rslt, &reply->Header, sizeof (fCONFIG_PAGE_HEADER));
 	mpt_free_reply(mpt, (req->sequence << 1));
 	mpt_free_request(mpt, req);
 	return (0);

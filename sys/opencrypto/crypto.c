@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.31 2009/03/18 16:00:24 cegger Exp $ */
+/*	$NetBSD: crypto.c,v 1.32 2009/03/18 17:06:53 cegger Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.31 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.32 2009/03/18 17:06:53 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -453,7 +453,7 @@ crypto_get_driverid(u_int32_t flags)
 			return -1;
 		}
 
-		bcopy(crypto_drivers, newdrv,
+		memcpy( newdrv, crypto_drivers,
 		    crypto_drivers_num * sizeof(struct cryptocap));
 
 		crypto_drivers_num *= 2;

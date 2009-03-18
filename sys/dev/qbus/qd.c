@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.47 2009/03/18 10:22:41 cegger Exp $	*/
+/*	$NetBSD: qd.c,v 1.48 2009/03/18 17:06:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.47 2009/03/18 10:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.48 2009/03/18 17:06:50 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -1107,7 +1107,7 @@ qdioctl(dev_t dev, u_long cmd, void *datap, int flags, struct proc *p)
 		s = spl5();
 		GETEND(eq_header[unit]);
 		splx(s);
-		bcopy((void *)event, datap, sizeof(struct _vs_event));
+		memcpy( datap, (void *)event, sizeof(struct _vs_event));
 		break;
 
 	case QD_RESET:
@@ -1226,7 +1226,7 @@ qdioctl(dev_t dev, u_long cmd, void *datap, int flags, struct proc *p)
 		/*
 		 * stuff qdmap structure in return buffer
 		 */
-		bcopy((void *)qd, datap, sizeof(struct qdmap));
+		memcpy( datap, (void *)qd, sizeof(struct qdmap));
 
 		break;
 

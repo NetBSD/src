@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.68 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: fd.c,v 1.69 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68 2009/03/18 16:00:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.69 2009/03/18 17:06:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -893,7 +893,7 @@ fd_xfer(struct fd_softc *sc)
 		 */
 		phys_addr = (u_long)kvtop(sc->bounceb);
 		if(sc->io_dir == B_WRITE)
-			bcopy(sc->io_data, sc->bounceb, SECTOR_SIZE);
+			memcpy( sc->bounceb, sc->io_data, SECTOR_SIZE);
 		sc->flags |= FLPF_BOUNCE;
 	}
 	st_dmaaddr_set((void *)phys_addr);	/* DMA address setup */
@@ -994,7 +994,7 @@ fdcint(struct fd_softc *sc)
 			}
 
 			if((sc->flags & FLPF_BOUNCE) && (sc->io_dir == B_READ))
-				bcopy(sc->bounceb, sc->io_data, SECTOR_SIZE);
+				memcpy( sc->io_data, sc->bounceb, SECTOR_SIZE);
 			sc->flags &= ~FLPF_BOUNCE;
 
 			sc->sector++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.31 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.32 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.31 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.32 2009/03/18 17:06:53 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -149,7 +149,7 @@ tp_inputprep(struct mbuf *m)
 		void *        ocp = m->m_data;
 
 		m->m_data = (void *) (((long) m->m_data) & ~0x3);
-		bcopy(ocp, m->m_data, (unsigned) m->m_len);
+		memcpy( m->m_data, ocp, (unsigned) m->m_len);
 	}
 	CHANGE_MTYPE(m, TPMT_DATA);
 
@@ -315,7 +315,7 @@ tp_newsocket(
 	newtpcb->tp_lcredit = tpcb->tp_lcredit;
 	newtpcb->tp_l_tpdusize = tpcb->tp_l_tpdusize;
 	newtpcb->tp_lsuffixlen = tpcb->tp_lsuffixlen;
-	bcopy(tpcb->tp_lsuffix, newtpcb->tp_lsuffix, newtpcb->tp_lsuffixlen);
+	memcpy( newtpcb->tp_lsuffix, tpcb->tp_lsuffix, newtpcb->tp_lsuffixlen);
 
 	if ( /* old */ tpcb->tp_ucddata) {
 		/*
@@ -355,7 +355,7 @@ tp_newsocket(
 			 * pcb_connect, which expects the name/addr in an mbuf as well.
 			 * sigh.
 			 */
-			bcopy((void *) fname, mtod(m, void *), fname->sa_len);
+			memcpy( void *), (void *) fname, mtod(m, fname->sa_len);
 			m->m_len = fname->sa_len;
 
 			/*
@@ -911,7 +911,7 @@ again:
 
 			/* stash the f suffix in the new tpcb */
 			if ((tpcb->tp_fsuffixlen = fsufxlen) != 0) {
-				bcopy(fsufxloc, tpcb->tp_fsuffix, fsufxlen);
+				memcpy( tpcb->tp_fsuffix, fsufxloc, fsufxlen);
 				(tpcb->tp_nlproto->nlp_putsufx)
 					(tpcb->tp_npcb, fsufxloc, fsufxlen, TP_FOREIGN);
 			}
@@ -1509,9 +1509,9 @@ again:
 			}
 			if (hdr->tpdu_type == DR_TPDU_type) {
 				datalen += sizeof(x) - sizeof(c_hdr);
-				bcopy((void *) & x, mtod(n, void *), n->m_len = sizeof(x));
+				memcpy( void *), (void *) & x, mtod(n, n->m_len = sizeof(x));
 			} else
-				bcopy((void *) & c_hdr, mtod(n, void *),
+				memcpy( void *), (void *) & c_hdr, mtod(n,
 				      n->m_len = sizeof(c_hdr));
 			n->m_next = m;
 			m = n;

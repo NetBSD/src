@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.39 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.40 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.39 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.40 2009/03/18 17:06:53 cegger Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -446,7 +446,7 @@ copyQOSparms(const struct tp_conn_param *src, struct tp_conn_params *dst)
 	/* copy all but the bits stuff at the end */
 #define COPYSIZE (12 * sizeof(short))
 
-	bcopy((void *) src, (void *) dst, COPYSIZE);
+	memcpy( (void *) dst, (void *) src, COPYSIZE);
 	dst->p_tpdusize = src->p_tpdusize;
 	dst->p_ack_strat = src->p_ack_strat;
 	dst->p_rx_strat = src->p_rx_strat;

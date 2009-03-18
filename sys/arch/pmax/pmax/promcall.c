@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.15 2009/03/18 10:22:34 cegger Exp $	*/
+/*	$NetBSD: promcall.c,v 1.16 2009/03/18 17:06:46 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.15 2009/03/18 10:22:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.16 2009/03/18 17:06:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -280,7 +280,7 @@ prom_getbitmap(struct memmap *map)
 	cp = prom_getenv("bitmap");
 	if (cp == NULL)
 		return (0);
-	bcopy((char *)strtoul(cp, NULL, 0), &map->bitmap, len);
+	memcpy( &map->bitmap, (char *)strtoul(cp, NULL, 0), len);
 	map->pagesize = 4096;
 	return (len);
 }

@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.23 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.24 2009/03/18 17:06:49 cegger Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -378,7 +378,7 @@ ndis_setmulti(struct ndis_softc *sc)
  * But for right now I'm assuming there is only a single address.
  *****************************************************************************
  */
-		bcopy(ifma->enm_addrlo, mclist + (ETHER_ADDR_LEN * len),
+		memcpy( mclist + (ETHER_ADDR_LEN * len), ifma->enm_addrlo,
 			ETHER_ADDR_LEN);
 #endif		    
 		len++;
@@ -735,7 +735,7 @@ ndis_attach(dev)
 	ndis_get_info(sc, OID_802_3_CURRENT_ADDRESS, &eaddr, &len);
 
 #ifdef __FreeBSD__
-	bcopy(eaddr, (char *)&sc->arpcom.ec_if.ac_enaddr, ETHER_ADDR_LEN);
+	memcpy( (char *)&sc->arpcom.ec_if.ac_enaddr, eaddr, ETHER_ADDR_LEN);
 #endif
 	/*
 	 * Figure out if we're allowed to use multipacket sends
@@ -1004,7 +1004,7 @@ nonettypes:
 		r = ndis_get_info(sc, OID_802_11_POWER_MODE, &arg, &j);
 		if (r == 0)
 			ic->ic_caps |= IEEE80211_C_PMGT;
-		bcopy(eaddr, &ic->ic_myaddr, sizeof(eaddr));
+		memcpy( &ic->ic_myaddr, eaddr, sizeof(eaddr));
 #ifdef __FreeBSD__		
 		ieee80211_ifattach(ifp);
 		ieee80211_media_init(ifp, ieee80211_media_change,
@@ -2235,7 +2235,7 @@ ic = &sc->ic;
 	if (ssid.ns_ssidlen == 0) {
 		ssid.ns_ssidlen = 1;
 	} else
-		bcopy(ic->ic_des_essid, ssid.ns_ssid, ssid.ns_ssidlen);
+		memcpy( ssid.ns_ssid, ic->ic_des_essid, ssid.ns_ssidlen);
 	rval = ndis_set_info(sc, OID_802_11_SSID, &ssid, &len);
 
 	if (rval)
@@ -2344,7 +2344,7 @@ ndis_get_assoc(struct ndis_softc *sc, ndis_wlan_bssid_ex **assoc)
 				free(bl, M_TEMP);
 				return(ENOMEM);
 			}
-			bcopy((char *)bs, (char *)*assoc, bs->nwbx_len);
+			memcpy( (char *)*assoc, (char *)bs, bs->nwbx_len);
 			free(bl, M_TEMP);
 			return(0);
 		}	
@@ -2413,7 +2413,7 @@ ndis_getstate_80211(struct ndis_softc *sc)
 
 	if (rval)
 		aprint_error_dev(sc->ndis_dev, "get ssid failed: %d\n", rval);
-	bcopy(ssid.ns_ssid, ic->ic_bss->ni_essid, ssid.ns_ssidlen);
+	memcpy( ic->ic_bss->ni_essid, ssid.ns_ssid, ssid.ns_ssidlen);
 	ic->ic_bss->ni_esslen = ssid.ns_ssidlen;
 
 	len = sizeof(arg);
@@ -2652,10 +2652,10 @@ ndis_wi_ioctl_get(struct ifnet *ifp, u_long command, void * data)
 		wb = bl->nblx_bssid;
 		while (maxaps--) {
 			memset(api, 0, sizeof(*api));
-			bcopy(&wb->nwbx_macaddr, &api->bssid,
+			memcpy( &api->bssid, &wb->nwbx_macaddr,
 			    sizeof(api->bssid));
 			api->namelen = wb->nwbx_ssid.ns_ssidlen;
-			bcopy(&wb->nwbx_ssid.ns_ssid, &api->name, api->namelen);
+			memcpy( &api->name, &wb->nwbx_ssid.ns_ssid, api->namelen);
 			if (wb->nwbx_privacy)
 				api->capinfo |= IEEE80211_CAPINFO_PRIVACY;
 			/* XXX Where can we get noise information? */

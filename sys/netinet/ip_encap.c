@@ -74,7 +74,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.35 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.36 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -581,10 +581,10 @@ encap_attach(int af, int proto,
 #endif
 	}
 
-	bcopy(sp, ep->src, sp->sa_len);
-	bcopy(sm, ep->srcmask, sp->sa_len);
-	bcopy(dp, ep->dst, dp->sa_len);
-	bcopy(dm, ep->dstmask, dp->sa_len);
+	memcpy( ep->src, sp, sp->sa_len);
+	memcpy( ep->srcmask, sm, sp->sa_len);
+	memcpy( ep->dst, dp, dp->sa_len);
+	memcpy( ep->dstmask, dm, dp->sa_len);
 	ep->psw = psw;
 	ep->arg = arg;
 

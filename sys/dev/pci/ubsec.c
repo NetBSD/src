@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.18 2009/03/18 16:00:19 cegger Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.19 2009/03/18 17:06:50 cegger Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.18 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.19 2009/03/18 17:06:50 cegger Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -680,7 +680,7 @@ ubsec_feed(struct ubsec_softc *sc)
 		v = ((void *)&q2->q_dma->d_dma->d_mcr);
 		v = (char*)v + (sizeof(struct ubsec_mcr) -
 				 sizeof(struct ubsec_mcr_add));
-		bcopy(v, &q->q_dma->d_dma->d_mcradd[i], sizeof(struct ubsec_mcr_add));
+		memcpy( &q->q_dma->d_dma->d_mcradd[i], v, sizeof(struct ubsec_mcr_add));
 		q->q_stacked_mcr[i] = q2;
 	}
 	q->q_dma->d_dma->d_mcr.mcr_pkts = htole16(npkts);
@@ -795,7 +795,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    sizeof(struct ubsec_session), M_DEVBUF, M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);
-			bcopy(sc->sc_sessions, ses, sesn *
+			memcpy( ses, sc->sc_sessions, sesn *
 			    sizeof(struct ubsec_session));
 			memset(sc->sc_sessions, 0, sesn *
 			    sizeof(struct ubsec_session));
@@ -819,11 +819,11 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 
 		/* Go ahead and compute key in ubsec's byte order */
 		if (encini->cri_alg == CRYPTO_DES_CBC) {
-			bcopy(encini->cri_key, &ses->ses_deskey[0], 8);
-			bcopy(encini->cri_key, &ses->ses_deskey[2], 8);
-			bcopy(encini->cri_key, &ses->ses_deskey[4], 8);
+			memcpy( &ses->ses_deskey[0], encini->cri_key, 8);
+			memcpy( &ses->ses_deskey[2], encini->cri_key, 8);
+			memcpy( &ses->ses_deskey[4], encini->cri_key, 8);
 		} else
-			bcopy(encini->cri_key, ses->ses_deskey, 24);
+			memcpy( ses->ses_deskey, encini->cri_key, 24);
 
 		SWAP32(ses->ses_deskey[0]);
 		SWAP32(ses->ses_deskey[1]);
@@ -843,7 +843,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    macini->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer,
 			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
-			bcopy(md5ctx.state, ses->ses_hminner,
+			memcpy( ses->ses_hminner, md5ctx.state,
 			    sizeof(md5ctx.state));
 		} else {
 			SHA1Init(&sha1ctx);
@@ -851,7 +851,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    macini->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer,
 			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
-			bcopy(sha1ctx.state, ses->ses_hminner,
+			memcpy( ses->ses_hminner, sha1ctx.state,
 			    sizeof(sha1ctx.state));
 		}
 
@@ -864,7 +864,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    macini->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_opad_buffer,
 			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
-			bcopy(md5ctx.state, ses->ses_hmouter,
+			memcpy( ses->ses_hmouter, md5ctx.state,
 			    sizeof(md5ctx.state));
 		} else {
 			SHA1Init(&sha1ctx);
@@ -872,7 +872,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			    macini->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_opad_buffer,
 			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
-			bcopy(sha1ctx.state, ses->ses_hmouter,
+			memcpy( ses->ses_hmouter, sha1ctx.state,
 			    sizeof(sha1ctx.state));
 		}
 
@@ -920,7 +920,7 @@ ubsec_op_cb(void *arg, bus_dma_segment_t *seg, int nsegs, bus_size_t mapsize, in
 #endif
 	op->mapsize = mapsize;
 	op->nsegs = nsegs;
-	bcopy(seg, op->segs, nsegs * sizeof (seg[0]));
+	memcpy( op->segs, seg, nsegs * sizeof (seg[0]));
 }
 #endif
 
@@ -1047,7 +1047,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			q->q_flags |= UBSEC_QFLAGS_COPYOUTIV;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
+				memcpy( ctx.pc_iv, enccrd->crd_iv, 8);
 			else {
 				ctx.pc_iv[0] = ses->ses_iv[0];
 				ctx.pc_iv[1] = ses->ses_iv[1];
@@ -1067,7 +1067,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			ctx.pc_flags |= htole16(UBS_PKTCTX_INBOUND);
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
+				memcpy( ctx.pc_iv, enccrd->crd_iv, 8);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(q->q_src_m, enccrd->crd_inject,
 				    8, (void *)ctx.pc_iv);
@@ -2436,7 +2436,7 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
 	memset(ctx, 0, sizeof(*ctx));
-	bcopy(krp->krp_param[UBS_MODEXP_PAR_N].crp_p, ctx->me_N,
+	memcpy( ctx->me_N, krp->krp_param[UBS_MODEXP_PAR_N].crp_p,
 	    (nbits + 7) / 8);
 	ctx->me_len = htole16((normbits / 8) + (4 * sizeof(u_int16_t)));
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);

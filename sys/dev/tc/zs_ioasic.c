@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.37 2008/04/28 20:23:58 martin Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.38 2009/03/18 17:06:50 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.37 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.38 2009/03/18 17:06:50 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -734,7 +734,7 @@ zs_ioasic_cninit(tc_addr_t ioasic_addr, tc_offset_t zs_offset, int channel)
 	cs->cs_brg_clk = PCLK / 16;
 
 	/* Initialize the pending registers. */
-	bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
+	memcpy( cs->cs_preg, zs_ioasic_init_reg, 16);
 	/* cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS); */
 
 	/*

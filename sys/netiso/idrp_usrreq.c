@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.21 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.22 2009/03/18 17:06:52 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.21 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.22 2009/03/18 17:06:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -114,10 +114,10 @@ bad:		m_freem(m);
 		return;
 	}
 	memset(idrp_addrs[0].siso_data, 0, sizeof(idrp_addrs[0].siso_data));
-	bcopy((void *) & (src->siso_addr), (void *) & idrp_addrs[0].siso_addr,
+	memcpy( (void *) & idrp_addrs[0].siso_addr, (void *) & (src->siso_addr),
 	      1 + src->siso_nlen);
 	memset(idrp_addrs[1].siso_data, 0, sizeof(idrp_addrs[1].siso_data));
-	bcopy((void *) & (dst->siso_addr), (void *) & idrp_addrs[1].siso_addr,
+	memcpy( (void *) & idrp_addrs[1].siso_addr, (void *) & (dst->siso_addr),
 	      1 + dst->siso_nlen);
 	if (sbappendaddr(&idrp_isop.isop_socket->so_rcv,
 			 sisotosa(idrp_addrs), m, (struct mbuf *) 0) == 0)

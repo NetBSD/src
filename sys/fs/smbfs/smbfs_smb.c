@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.38 2009/03/18 16:00:21 cegger Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.39 2009/03/18 17:06:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.38 2009/03/18 16:00:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.39 2009/03/18 17:06:51 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1200,7 +1200,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 			ctx->f_rname = malloc(nmlen + 1, M_SMBFSDATA, M_WAITOK);
 			ctx->f_rnamelen = nmlen;
 		}
-		bcopy(ctx->f_name, ctx->f_rname, nmlen);
+		memcpy( ctx->f_rname, ctx->f_name, nmlen);
 		ctx->f_rname[nmlen] = 0;
 		ctx->f_flags |= SMBFS_RDD_GOTRNAME;
 	}

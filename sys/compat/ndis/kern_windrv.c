@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_windrv.c,v 1.3.2.2 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.7 2009/03/18 15:14:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.8 2009/03/18 17:06:48 cegger Exp $");
 #endif
 
 #include <sys/param.h>
@@ -493,7 +493,7 @@ windrv_wrap(funcptr func, funcptr *wrap)
 
 	/* Copy over the code. */
 
-	bcopy((char *)wrapstart, p, (wrapend - wrapstart));
+	memcpy( p, (char *)wrapstart, (wrapend - wrapstart));
 
 	/* Insert the function address into the new wrapper instance. */
 

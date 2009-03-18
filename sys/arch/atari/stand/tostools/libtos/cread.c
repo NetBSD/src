@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.8 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: cread.c,v 1.9 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -112,7 +112,7 @@ zcfree (void *opaque, void *ptr)
 void
 zmemcpy(unsigned char *dest, unsigned char *source, unsigned int len)
 {
-	bcopy(source, dest, len);
+	memcpy( dest, source, len);
 }
 
 static int

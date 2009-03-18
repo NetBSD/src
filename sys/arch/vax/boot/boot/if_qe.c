@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.7 2009/03/18 16:00:15 cegger Exp $ */
+/*	$NetBSD: if_qe.c,v 1.8 2009/03/18 17:06:47 cegger Exp $ */
 
 /*
  * Copyright (c) 1998 Roar Thronæs.  All rights reserved.
@@ -201,7 +201,7 @@ retry:
 	if (len == 0)
 		goto retry;
 
-	bcopy((void*)sc->qein,pkt,len);
+	memcpy(pkt, (void*)sc->qein,len);
 
 
 end:
@@ -222,7 +222,7 @@ int
 qe_put(struct iodesc *desc, void *pkt, size_t len) {
 	int j;
 
-	bcopy(pkt, (char *)sc->qeout, len);
+	memcpy( (char *)sc->qeout, pkt, len);
 	sc->tring[0].qe_buf_len=-len/2;
 	sc->tring[0].qe_flag=sc->tring[0].qe_status1=QE_NOTYET;
 	sc->tring[1].qe_flag=sc->tring[1].qe_status1=QE_NOTYET;

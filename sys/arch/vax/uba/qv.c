@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.24 2009/03/18 16:00:15 cegger Exp $	*/
+/*	$NetBSD: qv.c,v 1.25 2009/03/18 17:06:47 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.24 2009/03/18 16:00:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.25 2009/03/18 17:06:47 cegger Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -673,7 +673,7 @@ qvioctl(dev_t dev, u_long cmd, register void *data, int flag, struct proc *p)
 	 */
 	switch( cmd ) {
 	case QIOCGINFO:					/* return screen info */
-		bcopy((void *)qp, data, sizeof (struct qv_info));
+		memcpy( data, (void *)qp, sizeof (struct qv_info));
 		break;
 
 	case QIOCSMSTATE:				/* set mouse state */
@@ -1154,7 +1154,7 @@ qvscroll(void)
 	 * Save the first 15 scanlines so that we can put them at
 	 * the bottom when done.
 	 */
-	bcopy((void *)qp->scanmap, (void *)tmpscanlines, sizeof tmpscanlines);
+	memcpy( (void *)tmpscanlines, (void *)qp->scanmap, sizeof tmpscanlines);
 
 	/*
 	 * Clear the wrapping line so that it won't flash on the bottom
@@ -1167,13 +1167,13 @@ qvscroll(void)
 	/*
 	 * Now move the scanlines down 
 	 */
-	bcopy((void *)(qp->scanmap+15), (void *)qp->scanmap,
+	memcpy( (void *)qp->scanmap, (void *)(qp->scanmap+15),
 	      (qp->row * 15) * sizeof (short) );
 
 	/*
 	 * Now put the other lines back
 	 */
-	bcopy((void *)tmpscanlines, (void *)(qp->scanmap+(qp->row * 15)),
+	memcpy( (void *)(qp->scanmap+(qp->row * 15)), (void *)tmpscanlines,
 	      sizeof (tmpscanlines) );
 
 }

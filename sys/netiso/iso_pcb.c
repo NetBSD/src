@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.46 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.47 2009/03/18 17:06:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.46 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.47 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -213,14 +213,14 @@ iso_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		isop->isop_mladdr = nam;
 		isop->isop_laddr = mtod(nam, struct sockaddr_iso *);
 	}
-	bcopy((void *) siso, (void *) isop->isop_laddr, siso->siso_len);
+	memcpy( (void *) isop->isop_laddr, (void *) siso, siso->siso_len);
 	if (siso->siso_tlen == 0)
 		goto noname;
 	if ((isop->isop_socket->so_options & SO_REUSEADDR) == 0 &&
 	    iso_pcblookup(head, 0, (void *) 0, isop->isop_laddr))
 		return EADDRINUSE;
 	if (siso->siso_tlen <= 2) {
-		bcopy(TSEL(siso), suf.data, sizeof(suf.data));
+		memcpy( suf.data, TSEL(siso), sizeof(suf.data));
 		suf.s = ntohs(suf.s);
 		if (suf.s < ISO_PORT_RESERVED &&
 		    (l == NULL || kauth_authorize_generic(l->l_cred,
@@ -375,7 +375,7 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		siso->siso_nlen = ia->ia_addr.siso_nlen;
 		newtsel = WRITABLE_TSEL(siso);
 		memmove(newtsel, oldtsel, tlen);
-		bcopy(ia->ia_addr.siso_data, siso->siso_data, nlen);
+		memcpy( siso->siso_data, ia->ia_addr.siso_data, nlen);
 		siso->siso_tlen = tlen;
 		siso->siso_family = AF_ISO;
 		siso->siso_len = totlen;
@@ -406,7 +406,7 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			isop->isop_faddr = mtod(m, struct sockaddr_iso *);
 		}
 	}
-	bcopy((void *) siso, (void *) isop->isop_faddr, siso->siso_len);
+	memcpy( (void *) isop->isop_faddr, (void *) siso, siso->siso_len);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
 		printf("in iso_pcbconnect after bcopy isop %p isop->sock %p\n",

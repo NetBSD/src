@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.43 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.44 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.43 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.44 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -363,7 +363,7 @@ esp_des_blockdecrypt( const struct esp_algorithm *algo,
 {
 
 	/* assumption: d has a good alignment */
-	bcopy(s, d, sizeof(DES_LONG) * 2);
+	memcpy( d, s, sizeof(DES_LONG) * 2);
 	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d,
 	    *(des_key_schedule *)sav->sched, DES_DECRYPT);
 	return 0;
@@ -375,7 +375,7 @@ esp_des_blockencrypt(const struct esp_algorithm *algo,
 {
 
 	/* assumption: d has a good alignment */
-	bcopy(s, d, sizeof(DES_LONG) * 2);
+	memcpy( d, s, sizeof(DES_LONG) * 2);
 	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d,
 	    *(des_key_schedule *)sav->sched, DES_ENCRYPT);
 	return 0;
@@ -550,7 +550,7 @@ esp_3des_blockdecrypt(const struct esp_algorithm *algo,
 
 	/* assumption: d has a good alignment */
 	p = (des_key_schedule *)sav->sched;
-	bcopy(s, d, sizeof(DES_LONG) * 2);
+	memcpy( d, s, sizeof(DES_LONG) * 2);
 	des_ecb3_encrypt((des_cblock *)d, (des_cblock *)d,
 			 p[0], p[1], p[2], DES_DECRYPT);
 	return 0;
@@ -564,7 +564,7 @@ esp_3des_blockencrypt(const struct esp_algorithm *algo,
 
 	/* assumption: d has a good alignment */
 	p = (des_key_schedule *)sav->sched;
-	bcopy(s, d, sizeof(DES_LONG) * 2);
+	memcpy( d, s, sizeof(DES_LONG) * 2);
 	des_ecb3_encrypt((des_cblock *)d, (des_cblock *)d,
 			 p[0], p[1], p[2], DES_ENCRYPT);
 	return 0;
@@ -643,7 +643,7 @@ esp_cbc_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 	if (ivlen == blocklen)
 		;
 	else if (ivlen == 4 && blocklen == 8) {
-		bcopy(&iv[0], &iv[4], 4);
+		memcpy( &iv[4], &iv[0], 4);
 		iv[4] ^= 0xff;
 		iv[5] ^= 0xff;
 		iv[6] ^= 0xff;
@@ -744,7 +744,7 @@ esp_cbc_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 
 		/* next iv */
 		if (sp == sbuf) {
-			bcopy(sbuf, iv, blocklen);
+			memcpy( iv, sbuf, blocklen);
 			ivp = NULL;
 		} else
 			ivp = sp;
@@ -845,7 +845,7 @@ esp_cbc_encrypt(
 	if (derived)
 		m_copydata(m, ivoff, ivlen, (void *)iv);
 	else {
-		bcopy(sav->iv, iv, ivlen);
+		memcpy( iv, sav->iv, ivlen);
 		/* maybe it is better to overwrite dest, not source */
 		m_copyback(m, ivoff, ivlen, (void *)iv);
 	}
@@ -854,7 +854,7 @@ esp_cbc_encrypt(
 	if (ivlen == blocklen)
 		;
 	else if (ivlen == 4 && blocklen == 8) {
-		bcopy(&iv[0], &iv[4], 4);
+		memcpy( &iv[4], &iv[0], 4);
 		iv[4] ^= 0xff;
 		iv[5] ^= 0xff;
 		iv[6] ^= 0xff;
@@ -1078,7 +1078,7 @@ esp_auth(struct mbuf *m0, size_t skip, size_t length,
 		}
 	}
 	(*algo->result)(&s, sumbuf, sizeof(sumbuf));
-	bcopy(sumbuf, sum, siz);	/* XXX */
+	memcpy( sum, sumbuf, siz);	/* XXX */
 
 	return 0;
 }

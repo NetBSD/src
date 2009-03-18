@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.43 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.44 2009/03/18 17:06:49 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.43 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.44 2009/03/18 17:06:49 cegger Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -253,7 +253,7 @@ ofnet_read(struct ofnet_softc *of)
 			}
 
 			m->m_len = l = min(len, l);
-			bcopy(bufp, mtod(m, char *), l);
+			memcpy( char *), bufp, mtod(m, l);
 			bufp += l;
 			len -= l;
 			*mp = m;
@@ -340,7 +340,7 @@ ofnet_start(struct ifnet *ifp)
 		}
 
 		for (bufp = buf; (m = m0) != NULL;) {
-			bcopy(mtod(m, char *), bufp, m->m_len);
+			memcpy( bufp, mtod(m, char *), m->m_len);
 			bufp += m->m_len;
 			MFREE(m, m0);
 		}

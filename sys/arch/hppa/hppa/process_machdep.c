@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.9 2008/01/10 21:08:40 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10 2009/03/18 17:06:44 cegger Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 2008/01/10 21:08:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10 2009/03/18 17:06:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ int
 process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 {
 	hppa_fpu_flush(l);
-	bcopy(l->l_addr->u_pcb.pcb_fpregs, fpregs, sizeof(*fpregs));
+	memcpy( fpregs, l->l_addr->u_pcb.pcb_fpregs, sizeof(*fpregs));
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l->l_addr->u_pcb.pcb_fpregs,
 		sizeof(*fpregs));
 	return 0;
@@ -176,7 +176,7 @@ int
 process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 {
 	hppa_fpu_flush(l);
-	bcopy(fpregs, l->l_addr->u_pcb.pcb_fpregs, sizeof(*fpregs));
+	memcpy( l->l_addr->u_pcb.pcb_fpregs, fpregs, sizeof(*fpregs));
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l->l_addr->u_pcb.pcb_fpregs,
 		sizeof(*fpregs));
 	return 0;

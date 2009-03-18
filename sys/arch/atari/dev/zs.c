@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.61 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: zs.c,v 1.62 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.61 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.62 2009/03/18 17:06:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1133,7 +1133,7 @@ zsparam(register struct tty *tp, register struct termios *t)
 			cs->cs_tbc = 0;
 			cs->cs_heldchange = 1;
 		} else {
-			bcopy((void *)cs->cs_preg, (void *)cs->cs_creg, 16);
+			memcpy( (void *)cs->cs_creg, (void *)cs->cs_preg, 16);
 			zs_loadchannelregs(cs->cs_zc, cs->cs_creg);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.38 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.39 2009/03/18 17:06:52 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.38 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.39 2009/03/18 17:06:52 cegger Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -118,7 +118,7 @@ cltp_input(struct mbuf *m0, ...)
 					goto bad;
 				m_src->m_len = src->siso_len;
 				src = mtod(m_src, struct sockaddr_iso *);
-				bcopy((void *) srcsa, (void *) src, srcsa->sa_len);
+				memcpy( (void *) src, (void *) srcsa, srcsa->sa_len);
 			}
 			memcpy(WRITABLE_TSEL(src), (char *)up + 2, up[1]);
 			up += 2 + src->siso_tlen;
@@ -253,12 +253,12 @@ cltp_output(struct mbuf *m, ...)
 	up[2] = CLTPOVAL_SRC;
 	up[3] = (siso = isop->isop_laddr)->siso_tlen;
 	up += 4;
-	bcopy(TSEL(siso), (void *) up, siso->siso_tlen);
+	memcpy( (void *) up, TSEL(siso), siso->siso_tlen);
 	up += siso->siso_tlen;
 	up[0] = CLTPOVAL_DST;
 	up[1] = (siso = isop->isop_faddr)->siso_tlen;
 	up += 2;
-	bcopy(TSEL(siso), (void *) up, siso->siso_tlen);
+	memcpy( (void *) up, TSEL(siso), siso->siso_tlen);
 	/*
 	 * Stuff checksum and output datagram.
 	 */

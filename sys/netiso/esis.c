@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.54 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: esis.c,v 1.55 2009/03/18 17:06:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.54 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.55 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -416,7 +416,7 @@ esis_rdoutput(
 
 	/* Insert the snpa of better next hop */
 	*cp++ = sdl->sdl_alen;
-	bcopy(CLLADDR(sdl), cp, sdl->sdl_alen);
+	memcpy( cp, CLLADDR(sdl), sdl->sdl_alen);
 	cp += sdl->sdl_alen;
 	len += (sdl->sdl_alen + 1);
 
@@ -500,7 +500,7 @@ esis_rdoutput(
 	siso.siso_data[0] = AFI_SNA;
 	siso.siso_nlen = 6 + 1;	/* should be taken from snpa_hdr */
 	/* +1 is for AFI */
-	bcopy(inbound_shp->snh_shost, siso.siso_data + 1, 6);
+	memcpy( siso.siso_data + 1, inbound_shp->snh_shost, 6);
 	(ifp->if_output) (ifp, m0, sisotosa(&siso), 0);
 }
 
@@ -1018,7 +1018,7 @@ esis_shoutput(
 	siso.siso_family = AF_ISO;
 	siso.siso_data[0] = AFI_SNA;
 	siso.siso_nlen = sn_len + 1;
-	bcopy(sn_addr, siso.siso_data + 1, (unsigned) sn_len);
+	memcpy( siso.siso_data + 1, sn_addr, (unsigned) sn_len);
 	(ifp->if_output) (ifp, m0, sisotosa(&siso), 0);
 }
 
@@ -1065,7 +1065,7 @@ isis_input(struct mbuf *m0, ...)
 #endif
 	esis_dl.sdl_alen = ifp->if_addrlen;
 	esis_dl.sdl_index = ifp->if_index;
-	bcopy(shp->snh_shost, (void *) esis_dl.sdl_data, esis_dl.sdl_alen);
+	memcpy( (void *) esis_dl.sdl_data, shp->snh_shost, esis_dl.sdl_alen);
 	for (rp = esis_pcb.lh_first; rp != 0; rp = rp->rcb_list.le_next) {
 		if (first_rp == 0) {
 			first_rp = rp;
@@ -1154,7 +1154,7 @@ isis_output(struct mbuf *m, ...)
 	else {
 		siso.siso_data[0] = AFI_SNA;
 		siso.siso_nlen = sn_len + 1;
-		bcopy(CLLADDR(sdl), siso.siso_data + 1, sn_len);
+		memcpy( siso.siso_data + 1, CLLADDR(sdl), sn_len);
 	}
 	error = (ifp->if_output) (ifp, m, sisotosa(&siso), 0);
 	if (error) {

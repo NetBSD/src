@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.31 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: mscp.c,v 1.32 2009/03/18 17:06:49 cegger Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.31 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.32 2009/03/18 17:06:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -288,7 +288,7 @@ loop:
 		 * status.
 		 */
 		if (cold)
-			bcopy(mp, &slavereply, sizeof(struct mscp));
+			memcpy( &slavereply, mp, sizeof(struct mscp));
 
 		if (mp->mscp_status == (M_ST_OFFLINE|M_OFFLINE_UNKNOWN))
 			break;

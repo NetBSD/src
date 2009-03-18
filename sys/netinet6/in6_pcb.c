@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.100 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.101 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.100 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.101 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -400,7 +400,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		memset(&sin, 0, sizeof(sin));
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
-		bcopy(&sin6->sin6_addr.s6_addr32[3], &sin.sin_addr,
+		memcpy( &sin.sin_addr, &sin6->sin6_addr.s6_addr32[3],
 			sizeof(sin.sin_addr));
 		sinp = in_selectsrc(&sin, &in6p->in6p_route,
 			in6p->in6p_socket->so_options, NULL, &error);
@@ -411,7 +411,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		}
 		memset(&mapped, 0, sizeof(mapped));
 		mapped.s6_addr16[5] = htons(0xffff);
-		bcopy(&sinp->sin_addr, &mapped.s6_addr32[3], sizeof(sinp->sin_addr));
+		memcpy( &mapped.s6_addr32[3], &sinp->sin_addr, sizeof(sinp->sin_addr));
 		in6a = &mapped;
 #else
 		return EADDRNOTAVAIL;

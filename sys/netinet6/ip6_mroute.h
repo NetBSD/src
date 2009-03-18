@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.16 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.17 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ typedef	struct if_set {
 #define	IF_SET(n, p)	((p)->ifs_bits[(n)/NIFBITS] |= (1 << ((n) % NIFBITS)))
 #define	IF_CLR(n, p)	((p)->ifs_bits[(n)/NIFBITS] &= ~(1 << ((n) % NIFBITS)))
 #define	IF_ISSET(n, p)	((p)->ifs_bits[(n)/NIFBITS] & (1 << ((n) % NIFBITS)))
-#define	IF_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
+#define	IF_COPY(f, t)	memcpy( t, f, sizeof(*(f)))
 #define	IF_ZERO(p)	memset(p, 0, sizeof(*(p)))
 
 /*

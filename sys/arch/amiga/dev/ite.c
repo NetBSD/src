@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.86 2009/03/18 16:00:09 cegger Exp $ */
+/*	$NetBSD: ite.c,v 1.87 2009/03/18 17:06:42 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.86 2009/03/18 16:00:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.87 2009/03/18 17:06:42 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -240,7 +240,7 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 			 * console reinit copy params over.
 			 * and console always gets keyboard
 			 */
-			bcopy(&con_itesoftc.grf, &ip->grf,
+			memcpy( &ip->grf, &con_itesoftc.grf,
 			    (char *)&ip[1] - (char *)&ip->grf);
 			con_itesoftc.grf = NULL;
 			kbd_ite = ip;
@@ -318,7 +318,7 @@ init_bell(void)
 	if (bsamplep == NULL)
 		panic("no chipmem for ite_bell");
 
-	bcopy(sample, bsamplep, 20);
+	memcpy( bsamplep, sample, 20);
 }
 
 void
@@ -427,7 +427,7 @@ iteinit(dev_t dev)
 	if (ip->flags & ITE_INITED)
 		return;
 	if (kbdmap_loaded == 0) {
-		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+		memcpy( &kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 		kbdmap_loaded = 1;
 	}
 
@@ -599,12 +599,12 @@ iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case ITEIOCSKMAP:
 		if (addr == 0)
 			return(EFAULT);
-		bcopy(addr, &kbdmap, sizeof(struct kbdmap));
+		memcpy( &kbdmap, addr, sizeof(struct kbdmap));
 		return(0);
 	case ITEIOCGKMAP:
 		if (addr == NULL)
 			return(EFAULT);
-		bcopy(&kbdmap, addr, sizeof(struct kbdmap));
+		memcpy( addr, &kbdmap, sizeof(struct kbdmap));
 		return(0);
 	case ITEIOCGREPT:
 		irp = (struct iterepeat *)addr;
@@ -917,7 +917,7 @@ ite_filter(u_char c, enum caller caller)
 	}
 	/* Safety button, switch back to ascii keymap. */
 	if (key_mod == (KBD_MOD_LALT | KBD_MOD_LMETA) && c == 0x50) {
-		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+		memcpy( &kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 
 		splx(s);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.24 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.25 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.24 2009/03/18 16:00:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.25 2009/03/18 17:06:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 		 * We inited earlier just copy the info, take care
 		 * not to copy the device struct though.
 		 */
-		bcopy(&congrf.g_display, &gp->g_display,
+		memcpy( &gp->g_display, &congrf.g_display,
 			(char *)&gp[1] - (char *)&gp->g_display);
 	}
 	else {

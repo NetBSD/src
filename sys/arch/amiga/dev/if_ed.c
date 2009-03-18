@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.57 2009/03/18 15:14:29 cegger Exp $ */
+/*	$NetBSD: if_ed.c,v 1.58 2009/03/18 17:06:42 cegger Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.57 2009/03/18 15:14:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.58 2009/03/18 17:06:42 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -263,7 +263,7 @@ ed_zbus_attach(struct device *parent, struct device *self, void *aux)
 	ed_stop(sc);
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.11 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: elf.c,v 1.12 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ elf_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 		}
 	    }
 	    ehdr.e_shoff = sizeof(ehdr);
-	    bcopy(&ehdr, symtab, sizeof(ehdr));
+	    memcpy( symtab, &ehdr, sizeof(ehdr));
 	}
 	return 0;
 

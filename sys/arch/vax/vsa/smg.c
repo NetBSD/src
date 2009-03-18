@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.50 2009/03/18 16:00:16 cegger Exp $ */
+/*	$NetBSD: smg.c,v 1.51 2009/03/18 17:06:48 cegger Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.50 2009/03/18 16:00:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.51 2009/03/18 17:06:48 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -330,12 +330,12 @@ smg_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 	struct smg_screen * const ss = id;
 	int i;
 
-	bcopy(&ss->ss_image[row][srccol], &ss->ss_image[row][dstcol], ncols);
-	bcopy(&ss->ss_attr[row][srccol], &ss->ss_attr[row][dstcol], ncols);
+	memcpy( &ss->ss_image[row][dstcol], &ss->ss_image[row][srccol], ncols);
+	memcpy( &ss->ss_attr[row][dstcol], &ss->ss_attr[row][srccol], ncols);
 	if (ss != curscr)
 		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
-		bcopy(&SM_ADDR(row,srccol, i), &SM_ADDR(row, dstcol, i),ncols);
+		memcpy( i), &SM_ADDR(row,srccol, i), &SM_ADDR(row, dstcol,ncols);
 }
 
 /*
@@ -361,9 +361,9 @@ smg_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	struct smg_screen * const ss = id;
 	int frows;
 
-	bcopy(&ss->ss_image[srcrow][0], &ss->ss_image[dstrow][0],
+	memcpy( &ss->ss_image[dstrow][0], &ss->ss_image[srcrow][0],
 	    nrows * SM_COLS);
-	bcopy(&ss->ss_attr[srcrow][0], &ss->ss_attr[dstrow][0],
+	memcpy( &ss->ss_attr[dstrow][0], &ss->ss_attr[srcrow][0],
 	    nrows * SM_COLS);
 	if (ss != curscr)
 		return;

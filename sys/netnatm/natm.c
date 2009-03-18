@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.20 2009/03/18 16:00:24 cegger Exp $	*/
+/*	$NetBSD: natm.c,v 1.21 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.20 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.21 2009/03/18 17:06:53 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ struct proc *p;
       nam->m_len = snatm->snatm_len = sizeof(*snatm);
       snatm->snatm_family = AF_NATM;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-      bcopy(npcb->npcb_ifp->if_xname, snatm->snatm_if, sizeof(snatm->snatm_if));
+      memcpy( snatm->snatm_if, npcb->npcb_ifp->if_xname, sizeof(snatm->snatm_if));
 #elif defined(__FreeBSD__)
       snprintf(snatm->snatm_if, sizeof(snatm->snatm_if), "%s%d",
           npcb->npcb_ifp->if_name, npcb->npcb_ifp->if_unit);

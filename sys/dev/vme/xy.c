@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.86 2009/03/18 16:00:21 cegger Exp $	*/
+/*	$NetBSD: xy.c,v 1.87 2009/03/18 17:06:51 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.86 2009/03/18 16:00:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.87 2009/03/18 17:06:51 cegger Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -245,7 +245,7 @@ xydummystrat(struct buf *bp)
 {
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
-	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
+	memcpy( bp->b_data, xy_labeldata, XYFM_BPS);
 	bp->b_oflags |= BO_DONE;
 	bp->b_cflags &= ~BC_BUSY;
 }
@@ -802,7 +802,7 @@ xyattach(parent, self, aux)
 	if (lcv != 126) {
 		aprint_error_dev(&xy->sc_dev, "warning: invalid bad144 sector!\n");
 	} else {
-		bcopy(buf, &xy->dkb, XYFM_BPS);
+		memcpy( &xy->dkb, buf, XYFM_BPS);
 	}
 
 done:
@@ -963,12 +963,12 @@ xyioctl(dev, command, addr, flag, l)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		s = splbio();
-		bcopy(addr, &xy->dkb, sizeof(xy->dkb));
+		memcpy( &xy->dkb, addr, sizeof(xy->dkb));
 		splx(s);
 		return 0;
 
 	case DIOCGDINFO:	/* get disk label */
-		bcopy(xy->sc_dk.dk_label, addr, sizeof(struct disklabel));
+		memcpy( addr, xy->sc_dk.dk_label, sizeof(struct disklabel));
 		return 0;
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
@@ -1756,7 +1756,7 @@ xyc_xyreset(xycsc, xysc)
 	iopb = xycsc->ciopb;
 
 	/* Save contents */
-	bcopy(iopb, &tmpiopb, sizeof(struct xy_iopb));
+	memcpy( &tmpiopb, iopb, sizeof(struct xy_iopb));
 
 	iopb->chen = iopb->done = iopb->errs = 0;
 	iopb->ien = 0;
@@ -1784,7 +1784,7 @@ xyc_xyreset(xycsc, xysc)
 	}
 
 	/* Restore contents */
-	bcopy(&tmpiopb, iopb, sizeof(struct xy_iopb));
+	memcpy( iopb, &tmpiopb, sizeof(struct xy_iopb));
 }
 
 

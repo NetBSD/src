@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.56 2009/02/05 16:04:00 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.57 2009/03/18 17:06:46 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -271,7 +271,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 			self->dv_xname, sa->sa_nreg);
 		return;
 	}
-	bcopy(sa->sa_reg, sc->sc_physadr,
+	memcpy( sc->sc_physadr, sa->sa_reg,
 	      sa->sa_nreg * sizeof(struct sbus_reg));
 
 	sc->sc_vramsize = sc->sc_physadr[CG14_PXL_IDX].sbr_size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.20 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.21 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.20 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.21 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -793,7 +793,7 @@ esp_output(
 	}
 
 	/* Initialize ESP header. */
-	bcopy(&sav->spi, mtod(mo, char *) + roff, sizeof(u_int32_t));
+	memcpy( char *) + roff, &sav->spi, mtod(mo, sizeof(u_int32_t));
 	if (sav->replay) {
 		u_int32_t replay;
 

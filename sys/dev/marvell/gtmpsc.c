@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.33 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.34 2009/03/18 17:06:49 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.33 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.34 2009/03/18 17:06:49 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1466,7 +1466,7 @@ gtmpsc_common_pollc(unsigned int unit, char *cp, int *statp)
 			GTMPSC_CACHE_FLUSH(csrp);
 			return 0;
 		}
-		bcopy(vrxp->rxbuf, sc->gtmpsc_rxbuf, nc);
+		memcpy( sc->gtmpsc_rxbuf, vrxp->rxbuf, nc);
 		desc_write(csrp, csr);
 		GTMPSC_CACHE_FLUSH(csrp);
 	}
@@ -1540,7 +1540,7 @@ gtmpsc_common_getc(unsigned int unit)
 		nc = desc_read(&vrxp->rxdesc.sdma_cnt);
 		nc &= SDMA_RX_CNT_BCNT_MASK;
 		if (nc) {
-			bcopy(vrxp->rxbuf, sc->gtmpsc_rxbuf, nc);
+			memcpy( sc->gtmpsc_rxbuf, vrxp->rxbuf, nc);
 		} else {
 			if ((++ix) >= GTMPSC_NRXDESC)
 				ix = 0;
@@ -1598,7 +1598,7 @@ gtmpsc_common_putn(struct gtmpsc_softc *sc)
 		n = sc->sc_tbc;
 		if (n > GTMPSC_TXBUFSZ)
 			n = GTMPSC_TXBUFSZ;
-		bcopy(sc->sc_tba, vtxp->txbuf, n);
+		memcpy( vtxp->txbuf, sc->sc_tba, n);
 		csr = SDMA_CSR_TX_L | SDMA_CSR_TX_F
 					| SDMA_CSR_TX_EI | SDMA_CSR_TX_OWN;
 		desc_write(&vtxp->txdesc.sdma_cnt,
