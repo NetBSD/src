@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.22 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.23 2009/03/18 15:14:32 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.22 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.23 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -687,7 +687,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		if (tdbi->proto == sav->sah->saidx.proto &&
 		    tdbi->spi == sav->spi &&
-		    !bcmp(&tdbi->dst, &sav->sah->saidx.dst,
+		    !memcmp(&tdbi->dst, &sav->sah->saidx.dst,
 			  sizeof (union sockaddr_union)))
 			break;
 	}
@@ -890,7 +890,7 @@ ah_input_cb(struct cryptop *crp)
 		ptr = (char *) (tc + 1);
 
 		/* Verify authenticator. */
-		if (bcmp(ptr + skip + rplen, calc, authsize)) {
+		if (memcmp(ptr + skip + rplen, calc, authsize)) {
 			u_int8_t *pppp = ptr + skip+rplen;
 			DPRINTF(("ah_input: authentication hash mismatch " \
 			    "over %d bytes " \

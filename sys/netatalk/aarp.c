@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.29 2009/03/15 21:24:24 cegger Exp $	*/
+/*	$NetBSD: aarp.c,v 1.30 2009/03/18 15:14:31 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.29 2009/03/15 21:24:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.30 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -336,7 +336,7 @@ at_aarpinput(struct ifnet *ifp, struct mbuf *m)
 	ea = mtod(m, struct ether_aarp *);
 
 	/* Check to see if from my hardware address */
-	if (!bcmp(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
+	if (!memcmp(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
 		m_freem(m);
 		return;
 	}

@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_windrv.c,v 1.3.2.2 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.6 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.7 2009/03/18 15:14:30 cegger Exp $");
 #endif
 
 #include <sys/param.h>
@@ -167,7 +167,7 @@ windrv_lookup(vm_offset_t img, const char *name)
 		printf("d->windrv_object->dro_driverstart = %x\n", d->windrv_object->dro_driverstart);
 #endif		
 		if (d->windrv_object->dro_driverstart == (void *)img ||	
-		    (bcmp((char *)d->windrv_object->dro_drivername.us_buf,
+		    (memcmp((char *)d->windrv_object->dro_drivername.us_buf,
 			 (char *)us.us_buf, us.us_len) == 0 && us.us_len > 0)) {		
 			mtx_unlock(&drvdb_mtx);		
 			printf("found driver object!\n");

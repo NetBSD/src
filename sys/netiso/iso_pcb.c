@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.45 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.46 2009/03/18 15:14:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.45 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.46 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -636,10 +636,10 @@ iso_pcblookup(
 			continue;
 		if (isop->isop_laddr->siso_tlen != llen)
 			continue;
-		if (bcmp(lp, TSEL(isop->isop_laddr), llen))
+		if (memcmp(lp, TSEL(isop->isop_laddr), llen))
 			continue;
 		if (fportlen && isop->isop_faddr &&
-		    bcmp(fport, TSEL(isop->isop_faddr), (unsigned) fportlen))
+		    memcmp(fport, TSEL(isop->isop_faddr), (unsigned) fportlen))
 			continue;
 		/*
 		 * PHASE2 addrmatch1 should be iso_addrmatch(a, b, mask)
