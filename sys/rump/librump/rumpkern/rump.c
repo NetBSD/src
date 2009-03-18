@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.97 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: rump.c,v 1.98 2009/03/18 18:00:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.97 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.98 2009/03/18 18:00:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.97 2009/03/18 10:22:44 cegger Exp $");
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
+#include <sys/event.h>
 #include <sys/filedesc.h>
 #include <sys/iostat.h>
 #include <sys/kauth.h>
@@ -198,6 +199,7 @@ rump__init(int rump_version)
 	callout_startup();
 	callout_init_cpu(&rump_cpu);
 
+	kqueue_init();
 	iostat_init();
 	uid_init();
 	percpu_init();
