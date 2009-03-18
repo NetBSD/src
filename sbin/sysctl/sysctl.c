@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.126 2009/03/05 15:35:59 njoly Exp $ */
+/*	$NetBSD: sysctl.c,v 1.127 2009/03/18 01:28:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.126 2009/03/05 15:35:59 njoly Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.127 2009/03/18 01:28:25 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1927,7 +1927,7 @@ hex_dump(const unsigned char *buf, size_t len)
 			line[58] = '|';
 			line[77] = '|';
 			line[78] = 0;
-			snprintf(tmp, sizeof(tmp), "%07d", i);
+			snprintf(tmp, sizeof(tmp), "%07x", i);
 			memcpy(&line[0], tmp, 7);
 		}
 		/* copy out hex version of byte */
