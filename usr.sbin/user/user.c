@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.121 2009/03/11 14:18:03 christos Exp $ */
+/* $NetBSD: user.c,v 1.122 2009/03/18 04:59:45 mike Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.121 2009/03/11 14:18:03 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.122 2009/03/18 04:59:45 mike Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2349,6 +2349,10 @@ groupmod(int argc, char **argv)
 	}
 	if (dupgid && gid < 0) {
 		errx(EXIT_FAILURE, "Duplicate which gid?");
+	}
+	if (!dupgid && getgrgid((gid_t) gid) != NULL) {
+		errx(EXIT_FAILURE, "Can't modify group: gid %d is a duplicate",
+		    gid);
 	}
 	if ((grp = find_group_info(*argv)) == NULL) {
 		errx(EXIT_FAILURE, "Can't find group `%s' to modify", *argv);
