@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.47.4.3 2009/02/06 00:59:47 snj Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.47.4.4 2009/03/18 05:19:59 snj Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.47.4.3 2009/02/06 00:59:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.47.4.4 2009/03/18 05:19:59 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -543,12 +543,12 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static int
 tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 {
-	const struct sockaddr_dl *sdl = satosdl(&ifra->ifra_addr);
+	const struct sockaddr *sa = &ifra->ifra_addr;
 
-	if (sdl->sdl_family != AF_LINK)
+	if (sa->sa_family != AF_LINK)
 		return (EINVAL);
 
-	if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN);
+	if_set_sadl(ifp, sa->sa_data, ETHER_ADDR_LEN);
 
 	return (0);
 }
