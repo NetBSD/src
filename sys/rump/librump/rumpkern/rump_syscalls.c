@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.31 2009/03/18 17:30:25 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.32 2009/03/18 17:52:19 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.31 2009/03/18 17:30:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.32 2009/03/18 17:52:19 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -964,6 +964,23 @@ rump_sys_lchflags(const char * path, u_long flags)
 }
 __weak_alias(sys_lchflags,rump_enosys);
 
+int rump_sys_kqueue(void);
+int
+rump_sys_kqueue(void )
+{
+	register_t retval = 0;
+	int error = 0;
+
+	error = rump_sysproxy(SYS_kqueue, rump_sysproxy_arg,
+	    (uint8_t *)NULL, 0, &retval);
+	if (error) {
+		retval = -1;
+		rumpuser_seterrno(error);
+	}
+	return retval;
+}
+__weak_alias(sys_kqueue,rump_enosys);
+
 int rump_sys_statvfs1(const char *, struct statvfs *, int);
 int
 rump_sys_statvfs1(const char * path, struct statvfs * buf, int flags)
@@ -1071,6 +1088,31 @@ rump_sys___lutimes50(const char * path, const struct timeval * tptr)
 	return retval;
 }
 __weak_alias(sys___lutimes50,rump_enosys);
+
+int rump_sys___kevent50(int, const struct kevent *, size_t, struct kevent *, size_t, const struct timespec *);
+int
+rump_sys___kevent50(int fd, const struct kevent * changelist, size_t nchanges, struct kevent * eventlist, size_t nevents, const struct timespec * timeout)
+{
+	register_t retval = 0;
+	int error = 0;
+	struct sys___kevent50_args callarg;
+
+	SPARG(&callarg, fd) = fd;
+	SPARG(&callarg, changelist) = changelist;
+	SPARG(&callarg, nchanges) = nchanges;
+	SPARG(&callarg, eventlist) = eventlist;
+	SPARG(&callarg, nevents) = nevents;
+	SPARG(&callarg, timeout) = timeout;
+
+	error = rump_sysproxy(SYS___kevent50, rump_sysproxy_arg,
+	    (uint8_t *)&callarg, sizeof(callarg), &retval);
+	if (error) {
+		retval = -1;
+		rumpuser_seterrno(error);
+	}
+	return retval;
+}
+__weak_alias(sys___kevent50,rump_enosys);
 
 int rump_sys___stat50(const char *, struct stat *);
 int
@@ -1909,7 +1951,7 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, 0,
 	    (sy_call_t *)rump_enosys },			/* 343 = unrumped */
 	{ 0, 0, 0,
-	    (sy_call_t *)rump_enosys },			/* 344 = unrumped */
+	    (sy_call_t *)sys_kqueue },			/* 344 = kqueue */
 	{ 0, 0, 0,
 	    (sy_call_t *)rump_enosys },			/* 345 = unrumped */
 	{ 0, 0, 0,
@@ -2095,8 +2137,8 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)rump_enosys },			/* 433 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)rump_enosys },			/* 434 = unrumped */
-	{ 0, 0, 0,
-	    (sy_call_t *)rump_enosys },			/* 435 = unrumped */
+	{ ns(struct sys___kevent50_args), 0,
+	    (sy_call_t *)sys___kevent50 },		/* 435 = __kevent50 */
 	{ 0, 0, 0,
 	    (sy_call_t *)rump_enosys },			/* 436 = unrumped */
 	{ 0, 0, 0,
