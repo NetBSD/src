@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.146 2009/02/05 22:32:24 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.147 2009/03/18 15:14:31 cegger Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.146 2009/02/05 22:32:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.147 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1609,7 +1609,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			match.s6_addr32[3] &= mask.s6_addr32[3];
 
 			/* if you set extra bits, that's wrong */
-			if (bcmp(&match, &sin6->sin6_addr, sizeof(match)))
+			if (memcmp(&match, &sin6->sin6_addr, sizeof(match)))
 				return EINVAL;
 
 			cmp = 1;
@@ -1972,7 +1972,7 @@ in6_are_prefix_equal(struct in6_addr *p1, struct in6_addr *p2, int len)
 	bytelen = len / NBBY;
 	bitlen = len % NBBY;
 
-	if (bcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
+	if (memcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
 		return 0;
 	if (bitlen != 0 &&
 	    p1->s6_addr[bytelen] >> (NBBY - bitlen) !=

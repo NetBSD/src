@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.37 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.38 2009/03/18 15:14:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.37 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.38 2009/03/18 15:14:32 cegger Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -151,7 +151,7 @@ cltp_input(struct mbuf *m0, ...)
 			goto bad;
 		}
 		if (isop->isop_laddr &&
-		    bcmp(TSEL(isop->isop_laddr), dtsap, dlen) == 0)
+		    memcmp(TSEL(isop->isop_laddr), dtsap, dlen) == 0)
 			break;
 	}
 	m = m0;

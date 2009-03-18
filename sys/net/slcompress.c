@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.34 2008/06/15 16:35:35 christos Exp $   */
+/*	$NetBSD: slcompress.c,v 1.35 2009/03/18 15:14:31 cegger Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.34 2008/06/15 16:35:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.35 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 #ifdef INET
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.34 2008/06/15 16:35:35 christos Exp
 #define INCR(counter)
 #endif
 
-#define BCMP(p1, p2, n) bcmp((char *)(p1), (char *)(p2), (int)(n))
+#define BCMP(p1, p2, n) memcmp((char *)(p1), (char *)(p2), (int)(n))
 #define BCOPY(p1, p2, n) bcopy((char *)(p1), (char *)(p2), (int)(n))
 
 

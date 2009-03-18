@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.31 2008/01/14 04:17:35 dyoung Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.32 2009/03/18 15:14:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.31 2008/01/14 04:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.32 2009/03/18 15:14:32 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -221,7 +221,7 @@ clnp_ours(
 		 * We are overloading siso_tlen in the if's address, as an nsel length.
 		 */
 		if (dst->isoa_len == ia->ia_addr.siso_nlen &&
-		    bcmp((void *) ia->ia_addr.siso_addr.isoa_genaddr,
+		    memcmp((void *) ia->ia_addr.siso_addr.isoa_genaddr,
 			 (void *) dst->isoa_genaddr,
 			 ia->ia_addr.siso_nlen - ia->ia_addr.siso_tlen) == 0)
 			return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.61 2009/03/18 10:22:43 cegger Exp $	*/
+/*	$NetBSD: key.c,v 1.62 2009/03/18 15:14:32 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.61 2009/03/18 10:22:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.62 2009/03/18 15:14:32 cegger Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4406,7 +4406,7 @@ key_sockaddrcmp(
 		}
 		break;
 	default:
-		if (bcmp(sa1, sa2, sa1->sa_len) != 0)
+		if (memcmp(sa1, sa2, sa1->sa_len) != 0)
 			return 1;
 		break;
 	}

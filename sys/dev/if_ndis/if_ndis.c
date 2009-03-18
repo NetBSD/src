@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.21 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.22 2009/03/18 15:14:30 cegger Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2338,7 +2338,7 @@ ndis_get_assoc(struct ndis_softc *sc, ndis_wlan_bssid_ex **assoc)
 
 	bs = (ndis_wlan_bssid_ex *)&bl->nblx_bssid[0];
 	for (i = 0; i < bl->nblx_items; i++) {
-		if (bcmp(bs->nwbx_macaddr, bssid, sizeof(bssid)) == 0) {
+		if (memcmp(bs->nwbx_macaddr, bssid, sizeof(bssid)) == 0) {
 			*assoc = malloc(bs->nwbx_len, M_TEMP, M_NOWAIT);
 			if (*assoc == NULL) {
 				free(bl, M_TEMP);

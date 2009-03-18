@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.293 2009/03/15 21:25:32 cegger Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.294 2009/03/18 15:14:31 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.293 2009/03/15 21:25:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.294 2009/03/18 15:14:31 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3092,7 +3092,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		case TCPOPT_SIGNATURE:
 			if (optlen != TCPOLEN_SIGNATURE)
 				continue;
-			if (sigp && bcmp(sigp, cp + 2, TCP_SIGLEN))
+			if (sigp && memcmp(sigp, cp + 2, TCP_SIGLEN))
 				return (-1);
 
 			sigp = sigbuf;
@@ -3140,7 +3140,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		}
 		tcp_fields_to_host(th);
 
-		if (bcmp(sig, sigp, TCP_SIGLEN)) {
+		if (memcmp(sig, sigp, TCP_SIGLEN)) {
 			TCP_STATINC(TCP_STAT_BADSIG);
 			if (sav == NULL)
 				return (-1);
@@ -3571,8 +3571,8 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
 	     sc = TAILQ_NEXT(sc, sc_bucketq)) {
 		if (sc->sc_hash != hash)
 			continue;
-		if (!bcmp(&sc->sc_src, src, src->sa_len) &&
-		    !bcmp(&sc->sc_dst, dst, dst->sa_len)) {
+		if (!memcmp(&sc->sc_src, src, src->sa_len) &&
+		    !memcmp(&sc->sc_dst, dst, dst->sa_len)) {
 			splx(s);
 			return (sc);
 		}
