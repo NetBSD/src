@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.8 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.9 2009/03/18 17:06:49 cegger Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.8 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.9 2009/03/18 17:06:49 cegger Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwcrom.c,v 1.14 2006/02/04 21:37:39 imp Exp $");
 #endif
@@ -490,7 +490,7 @@ crom_add_simple_text(struct crom_src *src, struct crom_chunk *parent,
 	tl->spec_type = 0;
 	tl->lang_id = 0;
 	memset(&t[0], 0, roundup2(len, sizeof(uint32_t)));
-	bcopy(buf, &t[0], len);
+	memcpy( &t[0], buf, len);
 	p = (uint32_t *)&t[0];
 	for (i = 0; i < howmany(len, sizeof(uint32_t)); i ++)
 		tl->text[i] = ntohl(*p++);
@@ -504,7 +504,7 @@ crom_copy(uint32_t *src, uint32_t *dst, int *offset, int len, int maxlen)
 		printf("Config. ROM is too large for the buffer\n");
 		return(-1);
 	}
-	bcopy(src, (char *)(dst + *offset), len * sizeof(uint32_t));
+	memcpy( (char *)(dst + *offset), src, len * sizeof(uint32_t));
 	*offset += len;
 	return(0);
 }

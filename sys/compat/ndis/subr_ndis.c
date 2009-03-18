@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.18 2009/03/18 16:00:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.19 2009/03/18 17:06:48 cegger Exp $");
 #endif
 
 /*
@@ -499,7 +499,7 @@ NdisMRegisterMiniport(ndis_handle handle, ndis_miniport_characteristics *charact
 	memset((char *)pch, 0, sizeof(ndis_miniport_characteristics));
 
 #ifdef __FreeBSD__
-	bcopy((char *)characteristics, (char *)pch, len);
+	memcpy( (char *)pch, (char *)characteristics, len);
 #else /* __NetBSD__ */
 	memcpy(pch, characteristics, len);
 #endif	
@@ -895,7 +895,7 @@ ndis_decode_parm(ndis_miniport_block *block, ndis_config_parm *parm, char *val)
 	case ndis_parm_string:
 		ustr = &parm->ncp_parmdata.ncp_stringdata;
 		ndis_unicode_to_ascii(ustr->us_buf, ustr->us_len, &astr);
-		bcopy(astr, val, 254);
+		memcpy( val, astr, 254);
 		free(astr, M_DEVBUF);
 		break;
 	case ndis_parm_int:
@@ -1498,7 +1498,7 @@ NdisMQueryAdapterResources(ndis_status *status, ndis_handle adapter, ndis_resour
 	}
 
 #ifdef __FreeBSD__	
-	bcopy((char *)block->nmb_rlist, (char *)list, rsclen);
+	memcpy( (char *)list, (char *)block->nmb_rlist, rsclen);
 #else /* __NetBSD__ */
 	memcpy(list, block->nmb_rlist, rsclen);
 #endif
@@ -3414,7 +3414,7 @@ NdisCopyFromPacketToPacket(ndis_packet *dpkt, uint32_t doff, uint32_t reqlen, nd
 		if (dcnt < len)
 			len = dcnt;
 
-		bcopy(sptr, dptr, len);
+		memcpy( dptr, sptr, len);
 
 		copied += len;
 		resid -= len;

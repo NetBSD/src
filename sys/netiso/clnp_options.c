@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_options.c,v 1.18 2007/03/04 06:03:31 christos Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.19 2009/03/18 17:06:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.18 2007/03/04 06:03:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.19 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -198,7 +198,7 @@ clnp_dooptions(
 				}
 #endif
 
-				bcopy((void *) isoa, rec_start, new_addrlen);
+				memcpy( rec_start, (void *) isoa, new_addrlen);
 
 				/* update offset field */
 				*(opt + 1) += new_addrlen;

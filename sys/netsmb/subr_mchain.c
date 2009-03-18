@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.16 2009/03/18 16:00:24 cegger Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.17 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.16 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.17 2009/03/18 17:06:53 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ mb_put_mem(struct mbchain *mbp, const char *source, int size, int type)
 				*dst++ = *src++;
 			break;
 		    case MB_MSYSTEM:
-			bcopy(source, dst, cplen);
+			memcpy( dst, source, cplen);
 			break;
 		    case MB_MUSER:
 			error = copyin(source, dst, cplen);
@@ -550,7 +550,7 @@ md_get_mem(struct mdchain *mdp, void *targetv, int size, int type)
 				return error;
 			break;
 		    case MB_MSYSTEM:
-			bcopy(s, target, count);
+			memcpy( target, s, count);
 			break;
 		    case MB_MINLINE:
 			while (count--)

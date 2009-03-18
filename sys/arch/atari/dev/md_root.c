@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.30 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: md_root.c,v 1.31 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.30 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.31 2009/03/18 17:06:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ cpy_uncompressed(void * buf, int nbyte, struct read_info *rsp)
 {
 	if((rsp->bufp + nbyte) >= rsp->ebufp)
 		return(0);
-	bcopy(buf, rsp->bufp, nbyte);
+	memcpy( rsp->bufp, buf, nbyte);
 	rsp->bufp += nbyte;
 	return(0);
 }

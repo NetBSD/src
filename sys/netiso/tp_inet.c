@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.37 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.38 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.37 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.38 2009/03/18 17:06:53 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -161,7 +161,7 @@ in_putsufx(void *v, void *sufxloc, int sufxlen, int which)
 {
 	struct inpcb   *inp = v;
 	if (which == TP_FOREIGN) {
-		bcopy(sufxloc, (void *) & inp->inp_fport, sizeof(inp->inp_fport));
+		memcpy( (void *) & inp->inp_fport, sufxloc, sizeof(inp->inp_fport));
 	}
 }
 

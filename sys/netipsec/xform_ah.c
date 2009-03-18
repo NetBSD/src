@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.24 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.25 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.24 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.25 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -428,7 +428,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 				/* Zeroize all other options. */
 				count = ptr[off + 1];
-				bcopy(ipseczeroes, ptr, count);
+				memcpy( ptr, ipseczeroes, count);
 				off += count;
 				break;
 			}
@@ -537,7 +537,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 					/* If mutable option, zeroize. */
 					if (ptr[count] & IP6OPT_MUTABLE)
-						bcopy(ipseczeroes, ptr + count,
+						memcpy( ptr + count, ipseczeroes,
 						    ptr[count + 1]);
 
 					count += ad;

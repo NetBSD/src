@@ -1,4 +1,4 @@
-/*	$NetBSD: bsdlabel.c,v 1.2 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: bsdlabel.c,v 1.3 2009/03/18 17:06:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -66,7 +66,7 @@ bsd_getlabel(disk_t *dd, struct disklabel *dlp, u_int offset)
 			   && dl->d_magic  == DISKMAGIC
 			   && dkcksum(dl)  == 0
 			   )	{
-				bcopy(dl, dlp, sizeof(*dlp));
+				memcpy( dlp, dl, sizeof(*dlp));
 				rv = 0;
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.93 2009/03/18 16:00:24 cegger Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.94 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.93 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.94 2009/03/18 17:06:53 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -510,7 +510,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 	if (loc > 0)
 		memset(*sbbuf, 0, loc);
 	copyfs = (struct fs *)((char *)(*sbbuf) + loc);
-	bcopy(fs, copyfs, fs->fs_sbsize);
+	memcpy( copyfs, fs, fs->fs_sbsize);
 	size = fs->fs_bsize < SBLOCKSIZE ? fs->fs_bsize : SBLOCKSIZE;
 	if (fs->fs_sbsize < size)
 		memset((char *)(*sbbuf) + loc + fs->fs_sbsize, 0, 
@@ -520,7 +520,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 		size += fs->fs_ncg * sizeof(int32_t);
 	space = malloc(size, M_UFSMNT, M_WAITOK);
 	copyfs->fs_csp = space;
-	bcopy(fs->fs_csp, copyfs->fs_csp, fs->fs_cssize);
+	memcpy( copyfs->fs_csp, fs->fs_csp, fs->fs_cssize);
 	space = (char *)space + fs->fs_cssize;
 	loc = howmany(fs->fs_cssize, fs->fs_fsize);
 	i = fs->fs_frag - loc % fs->fs_frag;
@@ -534,7 +534,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 			*sbbuf = NULL;
 			return error;
 		}
-		bcopy(bp->b_data, space, (u_int)len);
+		memcpy( space, bp->b_data, (u_int)len);
 		space = (char *)space + len;
 		brelse(bp, BC_INVAL | BC_NOCACHE);
 	}
@@ -811,7 +811,7 @@ snapshot_writefs(struct mount *mp, struct vnode *vp, void *sbbuf)
 			brelse(bp, 0);
 			break;
 		}
-		bcopy(space, bp->b_data, fs->fs_bsize);
+		memcpy( bp->b_data, space, fs->fs_bsize);
 		space = (char *)space + fs->fs_bsize;
 		bawrite(bp);
 	}
@@ -823,7 +823,7 @@ snapshot_writefs(struct mount *mp, struct vnode *vp, void *sbbuf)
 		brelse(bp, 0);
 		goto out;
 	} else {
-		bcopy(sbbuf, bp->b_data, fs->fs_bsize);
+		memcpy( bp->b_data, sbbuf, fs->fs_bsize);
 		bawrite(bp);
 	}
 	/*
@@ -921,7 +921,7 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 	}
 	ACTIVECG_SET(fs, cg);
 
-	bcopy(bp->b_data, data, fs->fs_cgsize);
+	memcpy( data, bp->b_data, fs->fs_cgsize);
 	brelse(bp, 0);
 	if (fs->fs_cgsize < fs->fs_bsize)
 		memset((char *)data + fs->fs_cgsize, 0,
@@ -1116,7 +1116,7 @@ indiracct(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	if (last > NINDIR(fs))
 		last = NINDIR(fs);
 	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK | M_ZERO);
-	bcopy(bp->b_data, (void *)bap, fs->fs_bsize);
+	memcpy( (void *)bap, bp->b_data, fs->fs_bsize);
 	brelse(bp, 0);
 	error = (*acctfunc)(snapvp, bap, 0, last,
 	    fs, level == 0 ? rlbn : -1, expungetype);
@@ -2114,7 +2114,7 @@ wrsnapblk(struct vnode *vp, void *data, daddr_t lbn)
 	    FSCRED, (ip->i_nlink > 0 ? B_SYNC : 0), &bp);
 	if (error)
 		return error;
-	bcopy(data, bp->b_data, fs->fs_bsize);
+	memcpy( bp->b_data, data, fs->fs_bsize);
 	if (ip->i_nlink > 0)
 		error = bwrite(bp);
 	else

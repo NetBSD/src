@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.12 2009/03/18 16:00:13 cegger Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.13 2009/03/18 17:06:45 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.12 2009/03/18 16:00:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.13 2009/03/18 17:06:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ zs_setparam(struct zs_chanstate *cs, int iena, int rate)
 {
 	int s, tconst;
 
-	bcopy(zs_kgdb_regs, cs->cs_preg, 16);
+	memcpy( cs->cs_preg, zs_kgdb_regs, 16);
 
 	if (iena) {
 		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;

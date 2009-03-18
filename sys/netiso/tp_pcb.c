@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.39 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.40 2009/03/18 17:06:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.39 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.40 2009/03/18 17:06:53 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -367,9 +367,9 @@ tp_soisdisconnecting(struct socket *so)
 		u_int           fsufx, lsufx;
 		struct timeval	now;
 
-		bcopy((void *) tpcb->tp_fsuffix, (void *) &fsufx,
+		memcpy( (void *) &fsufx, (void *) tpcb->tp_fsuffix,
 		      sizeof(u_int));
-		bcopy((void *) tpcb->tp_lsuffix, (void *) &lsufx,
+		memcpy( (void *) &lsufx, (void *) tpcb->tp_lsuffix,
 		      sizeof(u_int));
 
 		getmicrotime(&now);
@@ -418,9 +418,9 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 		struct timeval	now;
 
 		/* CHOKE */
-		bcopy((void *) ttpcb->tp_fsuffix, (void *) &fsufx,
+		memcpy( (void *) &fsufx, (void *) ttpcb->tp_fsuffix,
 		      sizeof(u_int));
-		bcopy((void *) ttpcb->tp_lsuffix, (void *) &lsufx,
+		memcpy( (void *) &lsufx, (void *) ttpcb->tp_lsuffix,
 		      sizeof(u_int));
 
 		getmicrotime(&now);
@@ -980,7 +980,7 @@ tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 #endif
 				}
 		}
-		bcopy(tsel, tpcb->tp_lsuffix, (tpcb->tp_lsuffixlen = tlen));
+		memcpy( tpcb->tp_lsuffix, tsel, (tpcb->tp_lsuffixlen = tlen));
 		iso_insque(tpcb, &tp_bound_pcbs);
 	} else {
 		if (tlen || siso == 0)

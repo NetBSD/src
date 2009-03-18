@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.46 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.47 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.46 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.47 2009/03/18 17:06:52 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -381,7 +381,7 @@ ah_keyed_md5_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	}
 	MD5Final(digest, (MD5_CTX *)state->foo);
 	free(state->foo, M_TEMP);
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy( addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 }
 
 static int
@@ -469,7 +469,7 @@ ah_keyed_sha1_result(struct ah_algorithm_state *state, u_int8_t *addr,
 			(u_int)_KEYLEN(state->sav->key_auth));
 	}
 	SHA1Final((u_int8_t *)digest, ctxt);
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy( addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -512,8 +512,8 @@ ah_hmac_md5_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	memset(ipad, 0, 64);
 	memset(opad, 0, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memcpy( ipad, key, keylen);
+	memcpy( opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -560,7 +560,7 @@ ah_hmac_md5_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	MD5Update(ctxt, digest, sizeof(digest));
 	MD5Final(digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy( addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -604,8 +604,8 @@ ah_hmac_sha1_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	memset(ipad, 0, 64);
 	memset(opad, 0, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memcpy( ipad, key, keylen);
+	memcpy( opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -653,7 +653,7 @@ ah_hmac_sha1_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	SHA1Update(ctxt, (u_int8_t *)digest, sizeof(digest));
 	SHA1Final((u_int8_t *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy( addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -698,8 +698,8 @@ ah_hmac_sha2_256_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	memset(ipad, 0, 64);
 	memset(opad, 0, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memcpy( ipad, key, keylen);
+	memcpy( opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -747,7 +747,7 @@ ah_hmac_sha2_256_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	SHA256_Update(ctxt, (void *)digest, sizeof(digest));
 	SHA256_Final((void *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy( addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -793,8 +793,8 @@ ah_hmac_sha2_384_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	memset(ipad, 0, 64);
 	memset(opad, 0, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memcpy( ipad, key, keylen);
+	memcpy( opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -842,7 +842,7 @@ ah_hmac_sha2_384_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	SHA384_Update(ctxt, (void *)digest, sizeof(digest));
 	SHA384_Final((void *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy( addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -888,8 +888,8 @@ ah_hmac_sha2_512_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	memset(ipad, 0, 64);
 	memset(opad, 0, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memcpy( ipad, key, keylen);
+	memcpy( opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -937,7 +937,7 @@ ah_hmac_sha2_512_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	SHA512_Update(ctxt, (void *)digest, sizeof(digest));
 	SHA512_Final((void *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy( addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -983,8 +983,8 @@ ah_hmac_ripemd160_init(struct ah_algorithm_state *state, struct secasvar *sav)
 
 	memset(ipad, 0, 64);
 	memset(opad, 0, 64);
-	bcopy(key, ipad, keylen);
-	bcopy(key, opad, keylen);
+	memcpy( ipad, key, keylen);
+	memcpy( opad, key, keylen);
 	for (i = 0; i < 64; i++) {
 		ipad[i] ^= 0x36;
 		opad[i] ^= 0x5c;
@@ -1032,7 +1032,7 @@ ah_hmac_ripemd160_result(struct ah_algorithm_state *state, u_int8_t *addr,
 	RMD160Update(ctxt, (void *)digest, sizeof(digest));
 	RMD160Final((void *)digest, ctxt);
 
-	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
+	memcpy( addr, digest, sizeof(digest) > l ? l : sizeof(digest));
 
 	free(state->foo, M_TEMP);
 }
@@ -1302,7 +1302,7 @@ again:
 	}
 
 	(algo->result)(&algos, sumbuf, sizeof(sumbuf));
-	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sav));
+	memcpy( ahdat, &sumbuf[0], (*algo->sumsiz)(sav));
 
 	if (n)
 		m_free(n);
@@ -1530,7 +1530,7 @@ ah6_calccksum(struct mbuf *m, u_int8_t *ahdat, size_t len,
 	}
 
 	(algo->result)(&algos, sumbuf, sizeof(sumbuf));
-	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sav));
+	memcpy( ahdat, &sumbuf[0], (*algo->sumsiz)(sav));
 
 	/* just in case */
 	if (n)

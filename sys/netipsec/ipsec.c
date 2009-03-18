@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.41 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.42 2009/03/18 17:06:52 cegger Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.41 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.42 2009/03/18 17:06:52 cegger Exp $");
 
 /*
  * IPsec controller part.
@@ -1123,7 +1123,7 @@ ipsec6_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 	memset(sin6, 0, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_src, &sin6->sin6_addr, sizeof(ip6->ip6_src));
+	memcpy( &sin6->sin6_addr, &ip6->ip6_src, sizeof(ip6->ip6_src));
 	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
 		sin6->sin6_addr.s6_addr16[1] = 0;
 		sin6->sin6_scope_id = ntohs(ip6->ip6_src.s6_addr16[1]);
@@ -1134,7 +1134,7 @@ ipsec6_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 	memset(sin6, 0, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_dst, &sin6->sin6_addr, sizeof(ip6->ip6_dst));
+	memcpy( &sin6->sin6_addr, &ip6->ip6_dst, sizeof(ip6->ip6_dst));
 	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
 		sin6->sin6_addr.s6_addr16[1] = 0;
 		sin6->sin6_scope_id = ntohs(ip6->ip6_dst.s6_addr16[1]);
@@ -1252,8 +1252,8 @@ ipsec_deepcopy_policy(struct secpolicy *src)
 		(*q)->level = p->level;
 		(*q)->saidx.reqid = p->saidx.reqid;
 
-		bcopy(&p->saidx.src, &(*q)->saidx.src, sizeof((*q)->saidx.src));
-		bcopy(&p->saidx.dst, &(*q)->saidx.dst, sizeof((*q)->saidx.dst));
+		memcpy( &(*q)->saidx.src, &p->saidx.src, sizeof((*q)->saidx.src));
+		memcpy( &(*q)->saidx.dst, &p->saidx.dst, sizeof((*q)->saidx.dst));
 
 		(*q)->sav = NULL;
 		(*q)->sp = dst;
