@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.30.4.3 2008/12/18 01:08:58 snj Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.30.4.4 2009/03/18 05:08:38 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.3 2008/12/18 01:08:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.4 2009/03/18 05:08:38 snj Exp $");
 #endif /* not lint */
 
 
@@ -355,6 +355,23 @@ udf_write(void *v)
 		ubc_release(win, flags);
 		if (error)
 			break;
+
+		/*
+		 * flush what we just wrote if necessary.
+		 * XXXUBC simplistic async flushing.
+		 *
+		 * this one works on page sizes. Directories are excluded
+		 * since its file data that we want to purge.
+		 */
+		if (!async && (vp->v_type != VDIR) &&
+		  (uio->uio_offset - old_offset >= PAGE_SIZE)) {
+			mutex_enter(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp,
+				ptoa(atop(old_offset)),
+				ptoa(atop(uio->uio_offset + PAGE_SIZE-1)),
+				PGO_CLEANIT);
+			old_offset = uio->uio_offset;
+		}
 	}
 	uvm_vnp_setsize(vp, file_size);
 

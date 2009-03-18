@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.5.4.1 2009/02/18 00:51:27 snj Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.5.4.2 2009/03/18 05:08:38 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.5.4.1 2009/02/18 00:51:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.5.4.2 2009/03/18 05:08:38 snj Exp $");
 #endif /* not lint */
 
 
@@ -519,10 +519,10 @@ udf_doshedule(struct udf_mount *ump)
 
 	if (BUFQ_PEEK(priv->queues[UDF_SHED_READING]))
 		new_queue = UDF_SHED_READING;
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]))
-		new_queue = UDF_SHED_SEQWRITING;
 	if (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]))		/* only for unmount */
 		new_queue = UDF_SHED_WRITING;
+	if (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]))
+		new_queue = UDF_SHED_SEQWRITING;
 	if (priv->cur_queue == UDF_SHED_READING) {
 		if (new_queue == UDF_SHED_SEQWRITING) {
 			/* TODO use flag to signal if this is needed */
