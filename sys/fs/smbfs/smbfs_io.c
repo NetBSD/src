@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.31 2009/03/14 21:04:24 dsl Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.32 2009/03/18 16:00:21 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.31 2009/03/14 21:04:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.32 2009/03/18 16:00:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 			int left = uiop->uio_resid;
 			int nread = bp->b_bcount - left;
 			if (left > 0)
-			    bzero((char *)bp->b_data + nread, left);
+			    memset((char *)bp->b_data + nread, 0, left);
 		}
 		break;
 	    default:

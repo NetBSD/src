@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.131 2009/02/12 19:05:36 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.132 2009/03/18 16:00:22 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.131 2009/02/12 19:05:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.132 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -295,7 +295,7 @@ in_len2mask(struct in_addr *mask, u_int len)
 	u_char *p;
 
 	p = (u_char *)mask;
-	bzero(mask, sizeof(*mask));
+	memset(mask, 0, sizeof(*mask));
 	for (i = 0; i < len / NBBY; i++)
 		p[i] = 0xff;
 	if (len % NBBY)
@@ -666,7 +666,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			return EINVAL;
 
 		/* copy args to in_aliasreq, perform ioctl(SIOCAIFADDR). */
-		bzero(&ifra, sizeof(ifra));
+		memset(&ifra, 0, sizeof(ifra));
 		bcopy(iflr->iflr_name, ifra.ifra_name,
 			sizeof(ifra.ifra_name));
 
@@ -692,8 +692,8 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		struct sockaddr_in *sin;
 		int cmp;
 
-		bzero(&mask, sizeof(mask));
-		bzero(&match, sizeof(match));	/* XXX gcc */
+		memset(&mask, 0, sizeof(mask));
+		memset(&match, 0, sizeof(match));	/* XXX gcc */
 		if (iflr->flags & IFLR_PREFIX) {
 			/* lookup a prefix rather than address. */
 			in_len2mask(&mask, iflr->prefixlen);
@@ -743,7 +743,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 				bcopy(&ia->ia_dstaddr, &iflr->dstaddr,
 					ia->ia_dstaddr.sin_len);
 			} else
-				bzero(&iflr->dstaddr, sizeof(iflr->dstaddr));
+				memset(&iflr->dstaddr, 0, sizeof(iflr->dstaddr));
 
 			iflr->prefixlen =
 				in_mask2len(&ia->ia_sockmask.sin_addr);
@@ -755,7 +755,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			struct in_aliasreq ifra;
 
 			/* fill in_aliasreq and do ioctl(SIOCDIFADDR) */
-			bzero(&ifra, sizeof(ifra));
+			memset(&ifra, 0, sizeof(ifra));
 			bcopy(iflr->iflr_name, ifra.ifra_name,
 				sizeof(ifra.ifra_name));
 

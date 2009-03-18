@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.32 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.33 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.32 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.33 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -267,7 +267,7 @@ clnp_forward(
 	extern int      iso_systype;
 
 	clnp = mtod(m, struct clnp_fixed *);
-	bzero((void *) & route, sizeof(route));	/* MUST be done before
+	memset((void *) & route, 0, sizeof(route));	/* MUST be done before
 							 * "bad:" */
 
 	/*
@@ -609,7 +609,7 @@ clnp_echoreply(
 	int             ret;
 
 	/* fill in fake isopcb to pass to output function */
-	bzero(&isopcb, sizeof(isopcb));
+	memset(&isopcb, 0, sizeof(isopcb));
 	isopcb.isop_laddr = ec_dst;
 	isopcb.isop_faddr = ec_src;
 

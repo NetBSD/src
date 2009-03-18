@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.17 2009/03/14 15:35:59 dsl Exp $	*/
+/*	$NetBSD: sfas.c,v 1.18 2009/03/18 16:00:08 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.17 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.18 2009/03/18 16:00:08 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ sfas_minphys(struct buf *bp)
 void
 sfas_init_nexus(struct sfas_softc *dev, struct nexus *nexus)
 {
-	bzero(nexus, sizeof(struct nexus));
+	memset(nexus, 0, sizeof(struct nexus));
 
 	nexus->state	= SFAS_NS_IDLE;
 	nexus->period	= 200;

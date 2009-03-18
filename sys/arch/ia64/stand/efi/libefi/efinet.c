@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.3 2009/03/18 10:22:31 cegger Exp $	*/
+/*	$NetBSD: efinet.c,v 1.4 2009/03/18 16:00:12 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -234,7 +234,7 @@ efinet_init_driver(void)
 	efi_net.netif_nifs = nifs;
 	efi_net.netif_ifs = difs;
 
-	bzero(stats, sizeof(stats));
+	memset(stats, 0, sizeof(stats));
 	for (i = 0; i < nifs; i++) {
 		struct netif_dif *dif = &efi_net.netif_ifs[i];
 		dif->dif_unit = i;

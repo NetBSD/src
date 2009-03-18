@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.21 2009/02/16 18:05:19 mlelstv Exp $ */
+/* $NetBSD: mfi.c,v 1.22 2009/03/18 16:00:18 cegger Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.21 2009/02/16 18:05:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.22 2009/03/18 16:00:18 cegger Exp $");
 
 #include "bio.h"
 
@@ -1106,7 +1106,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			/* XXX check for sense in ccb->ccb_sense? */
 			printf("%s: mfi_scsipi_request poll failed\n",
 			    DEVNAME(sc));
-			bzero(&xs->sense, sizeof(xs->sense));
+			memset(&xs->sense, 0, sizeof(xs->sense));
 			xs->sense.scsi_sense.response_code =
 			    SSD_RCODE_VALID | SSD_RCODE_CURRENT;
 			xs->sense.scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
@@ -1933,7 +1933,7 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (edata->sensor >= sc->sc_ld_cnt)
 		return;
 
-	bzero(&bv, sizeof(bv));
+	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
 	s = splbio();
 	if (mfi_ioctl_vol(sc, &bv)) {

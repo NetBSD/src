@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.31 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.32 2009/03/18 16:00:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.31 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.32 2009/03/18 16:00:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -339,7 +339,7 @@ view_init(register struct ite_softc *ip)
 	else ip->priv = cci = (ipriv_t*)malloc(sizeof(*cci), M_DEVBUF,M_WAITOK);
 	if(cci == NULL)
 		panic("No memory for ite-view");
-	bzero(cci, sizeof(*cci));
+	memset(cci, 0, sizeof(*cci));
 
 	cci->cursor_opt    = 0;
 	cci->row_ptr       = NULL;
@@ -608,7 +608,7 @@ clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 			int		i;
 			u_char	*ptr = cci->row_ptr[sy]; 
 			for(i = 0; i < ip->font.height; i++) {
-				bzero(ptr, bm->bytes_per_row);
+				memset(ptr, 0, bm->bytes_per_row);
 				ptr += bm->bytes_per_row;
 			}
 			sy++;

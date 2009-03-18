@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.37 2008/06/24 10:23:48 gmcgarry Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.38 2009/03/18 16:00:21 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.37 2008/06/24 10:23:48 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.38 2009/03/18 16:00:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1301,7 +1301,7 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 	int error;
 
 	if (dnp == NULL || (dnp->n_ino == 2 && name == NULL)) {
-		bzero(fap, sizeof(*fap));
+		memset(fap, 0, sizeof(*fap));
 		fap->fa_attr = SMB_FA_DIR;
 		fap->fa_ino = 2;
 		return 0;

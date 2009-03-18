@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.14 2007/12/11 11:34:08 lukem Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.15 2009/03/18 16:00:18 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.14 2007/12/11 11:34:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.15 2009/03/18 16:00:18 cegger Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -467,7 +467,7 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	const struct tcode_info *tinfo;
 	int err;
 
-	bzero(&pkt, sizeof(struct fw_pkt));
+	memset(&pkt, 0, sizeof(struct fw_pkt));
 	if ((err = uiomove((void *)&pkt, sizeof(uint32_t), uio)))
 		return (err);
 	tinfo = &d->fc->tcode[pkt.mode.hdr.tcode];
@@ -693,13 +693,13 @@ FW_IOCTL(fw)
 		bcopy(ibufreq, &d->bufreq, sizeof(d->bufreq));
 		break;
 	case FW_GSTBUF:
-		bzero(&ibufreq->rx, sizeof(ibufreq->rx));
+		memset(&ibufreq->rx, 0, sizeof(ibufreq->rx));
 		if (ir != NULL) {
 			ibufreq->rx.nchunk = ir->bnchunk;
 			ibufreq->rx.npacket = ir->bnpacket;
 			ibufreq->rx.psize = ir->psize;
 		}
-		bzero(&ibufreq->tx, sizeof(ibufreq->tx));
+		memset(&ibufreq->tx, 0, sizeof(ibufreq->tx));
 		if (it != NULL) {
 			ibufreq->tx.nchunk = it->bnchunk;
 			ibufreq->tx.npacket = it->bnpacket;

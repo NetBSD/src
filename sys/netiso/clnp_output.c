@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.22 2008/01/14 04:17:35 dyoung Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.23 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.22 2008/01/14 04:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.23 2009/03/18 16:00:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -352,7 +352,7 @@ clnp_output(struct mbuf *m0, ...)
 			printf("clnp_output: NEW clcp %p\n", clcp);
 		}
 #endif
-		bzero((void *) clcp, sizeof(struct clnp_cache));
+		memset((void *) clcp, 0, sizeof(struct clnp_cache));
 
 		if (isop->isop_optindex)
 			oidx = mtod(isop->isop_optindex, struct clnp_optidx *);

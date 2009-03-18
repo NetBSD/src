@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218 2009/03/18 10:22:23 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.219 2009/03/18 16:00:09 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2009/03/18 10:22:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2009/03/18 16:00:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 #ifdef FPU_EMULATE
 	if (!fputype)
-		bzero(&l->l_addr->u_pcb.pcb_fpregs, sizeof(struct fpframe));
+		memset(&l->l_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpframe));
 	else
 #endif
 		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
@@ -543,7 +543,7 @@ cpu_dumpconf(void)
 	extern u_int Sysseg_pa;
 	extern int end[];
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Intitialize the `dispatcher' portion of the header.
@@ -674,7 +674,7 @@ dumpsys(void)
 	}
 	kseg_p = (kcore_seg_t *)dump_hdr;
 	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
-	bzero(dump_hdr, sizeof(dump_hdr));
+	memset(dump_hdr, 0, sizeof(dump_hdr));
 
 	/*
 	 * Generate a segment header

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.48 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.49 2009/03/18 16:00:22 cegger Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.48 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.49 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -941,7 +941,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		 * no possibility of an infinite loop of function calls,
 		 * because we don't pass the inner IPv6 header.
 		 */
-		bzero(&ip6cp1, sizeof(ip6cp1));
+		memset(&ip6cp1, 0, sizeof(ip6cp1));
 		ip6cp1.ip6c_src = ip6cp->ip6c_src;
 		pfctlinput2(cmd, sa, (void *)&ip6cp1);
 

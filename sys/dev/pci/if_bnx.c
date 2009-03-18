@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.22 2009/03/18 15:14:30 cegger Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.23 2009/03/18 16:00:19 cegger Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.22 2009/03/18 15:14:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.23 2009/03/18 16:00:19 cegger Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -2001,7 +2001,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	sc->status_block_paddr = sc->status_map->dm_segs[0].ds_addr;
-	bzero(sc->status_block, BNX_STATUS_BLK_SZ);
+	memset(sc->status_block, 0, BNX_STATUS_BLK_SZ);
 
 	/* DRC - Fix for 64 bit addresses. */
 	DBPRINT(sc, BNX_INFO, "status_block_paddr = 0x%08X\n",
@@ -2045,7 +2045,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	sc->stats_block_paddr = sc->stats_map->dm_segs[0].ds_addr;
-	bzero(sc->stats_block, BNX_STATS_BLK_SZ);
+	memset(sc->stats_block, 0, BNX_STATS_BLK_SZ);
 
 	/* DRC - Fix for 64 bit address. */
 	DBPRINT(sc,BNX_INFO, "stats_block_paddr = 0x%08X\n", 
@@ -2158,7 +2158,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 			goto bnx_dma_alloc_exit;
 		}
 
-		bzero(sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
+		memset(sc->rx_bd_chain[i], 0, BNX_RX_CHAIN_PAGE_SZ);
 		sc->rx_bd_chain_paddr[i] =
 		    sc->rx_bd_chain_map[i]->dm_segs[0].ds_addr;
 
@@ -3330,7 +3330,7 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 
 	/* Clear each TX chain page. */
 	for (i = 0; i < TX_PAGES; i++) {
-		bzero((char *)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ);
+		memset((char *)sc->tx_bd_chain[i], 0, BNX_TX_CHAIN_PAGE_SZ);
 		bus_dmamap_sync(sc->bnx_dmatag, sc->tx_bd_chain_map[i], 0,
 		    BNX_TX_CHAIN_PAGE_SZ, BUS_DMASYNC_PREWRITE);
 	}
@@ -3458,7 +3458,7 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 
 	/* Clear each RX chain page. */
 	for (i = 0; i < RX_PAGES; i++)
-		bzero((char *)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
+		memset((char *)sc->rx_bd_chain[i], 0, BNX_RX_CHAIN_PAGE_SZ);
 
 	/* Check if we lost any mbufs in the process. */
 	DBRUNIF((sc->rx_mbuf_alloc),

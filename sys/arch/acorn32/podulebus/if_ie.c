@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.23 2009/03/14 21:04:01 dsl Exp $ */
+/* $NetBSD: if_ie.c,v 1.24 2009/03/18 16:00:08 cegger Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.23 2009/03/14 21:04:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.24 2009/03/18 16:00:08 cegger Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -578,7 +578,7 @@ iezero(struct ie_softc *sc, u_long p, int size)
 		if (cnt > size)
 			cnt=size;
 		setpage(sc, p);
-		bzero((char *)sc->sc_ram + IE_COFF2POFF(p), 2*cnt);
+		memset((char *)sc->sc_ram + IE_COFF2POFF(p), 0, 2*cnt);
 		p += cnt;
 		size -= cnt;
 	}
@@ -766,7 +766,7 @@ setup_rfa(struct ie_softc *sc, u_long ptr)
     {
 	/* Receive frame descriptors */
         struct ie_recv_frame_desc rfd;
-	bzero( &rfd, sizeof rfd );
+	memset( &rfd, 0, sizeof rfd );
 	for ( i=0; i<NFRAMES; i++ )
 	{
 	    sc->rframes[i] = ptr;
@@ -786,7 +786,7 @@ setup_rfa(struct ie_softc *sc, u_long ptr)
     {
 	/* Receive frame descriptors */
 	struct ie_recv_buf_desc rbd;
-	bzero(&rbd, sizeof rbd);
+	memset(&rbd, 0, sizeof rbd);
 	for ( i=0; i<NRXBUF; i++ )
 	{
 	    sc->rbuffs[i] = ptr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.17 2009/03/14 14:46:10 dsl Exp $	*/
+/*	$NetBSD: keysock.c,v 1.18 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.17 2009/03/14 14:46:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.18 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_ipsec.h"
 
@@ -186,7 +186,7 @@ key_sendup0(
 		m->m_pkthdr.len += sizeof(*pmsg);
 
 		pmsg = mtod(m, struct sadb_msg *);
-		bzero(pmsg, sizeof(*pmsg));
+		memset(pmsg, 0, sizeof(*pmsg));
 		pmsg->sadb_msg_version = PF_KEY_V2;
 		pmsg->sadb_msg_type = SADB_X_PROMISC;
 		pmsg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
@@ -644,7 +644,7 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 		sosetlock(so);
 		so->so_pcb = kp;
 		if (so->so_pcb)
-			bzero(so->so_pcb, sizeof(*kp));
+			memset(so->so_pcb, 0, sizeof(*kp));
 	}
 	if (req == PRU_DETACH && kp) {
 		int af = kp->kp_raw.rcb_proto.sp_protocol;
@@ -717,7 +717,7 @@ struct protosw keysw[] = {
 static void
 key_init0(void)
 {
-	bzero(&key_cb, sizeof(key_cb));
+	memset(&key_cb, 0, sizeof(key_cb));
 	key_init();
 }
 

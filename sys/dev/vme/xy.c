@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.85 2009/03/14 21:04:23 dsl Exp $	*/
+/*	$NetBSD: xy.c,v 1.86 2009/03/18 16:00:21 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.85 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.86 2009/03/18 16:00:21 cegger Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -478,7 +478,7 @@ xycattach(parent, self, aux)
 	}
 	xyc->dvmaiopb = (struct xy_iopb *)(u_long)BUS_ADDR_PADDR(busaddr);
 
-	bzero(xyc->iopbase, XYC_MAXIOPB * sizeof(struct xy_iopb));
+	memset(xyc->iopbase, 0, XYC_MAXIOPB * sizeof(struct xy_iopb));
 
 	xyc->reqs = (struct xy_iorq *)
 	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq),
@@ -618,7 +618,7 @@ xyattach(parent, self, aux)
 	 * Always re-initialize the disk structure.  We want statistics
 	 * to start with a clean slate.
 	 */
-	bzero(&xy->sc_dk, sizeof(xy->sc_dk));
+	memset(&xy->sc_dk, 0, sizeof(xy->sc_dk));
 
 	/* if booting, init the xy_softc */
 
@@ -1615,7 +1615,7 @@ xyc_chain(xycsc, iorq)
 {
 	int togo, chain, hand;
 
-	bzero(xycsc->xy_chain, sizeof(xycsc->xy_chain));
+	memset(xycsc->xy_chain, 0, sizeof(xycsc->xy_chain));
 
 	/*
 	 * promote control IOPB to the top

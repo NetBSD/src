@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.9 2009/03/18 10:22:38 cegger Exp $
+ *	$NetBSD: aout2hux.c,v 1.10 2009/03/18 16:00:16 cegger Exp $
  */
 
 #include <sys/types.h>
@@ -615,7 +615,7 @@ aout2hux(const char *fn1, const char *fn2, u_int32_t loadadr1, u_int32_t loadadr
 	/*
 	 * prepare for .x header
 	 */
-	bzero((void *) &xhdr, sizeof xhdr);
+	memset((void *) &xhdr, 0, sizeof xhdr);
 	put_uint16(&xhdr.x_magic, HUXMAGIC);
 	put_uint32(&xhdr.x_entry, execoff);
 	put_uint32(&xhdr.x_text, textsize + paddingsize);

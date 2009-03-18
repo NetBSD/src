@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.20 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.21 2009/03/18 16:00:19 cegger Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.20 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.21 2009/03/18 16:00:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ ofisaattach(struct device *parent, struct device *self, void *aux)
 		if (ofisa_ignore_child(oba->oba_phandle, child))
 			continue;
 
-		bzero(&aa, sizeof aa);
+		memset(&aa, 0, sizeof aa);
 
 		aa.oba.oba_busname = "ofw";			/* XXX */
 		aa.oba.oba_phandle = child;

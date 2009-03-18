@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.170 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: key.c,v 1.171 2009/03/18 16:00:23 cegger Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.170 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.171 2009/03/18 16:00:23 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -803,7 +803,7 @@ key_allocsa(
 		/* check src address */
 		switch (family) {
 		case AF_INET:
-			bzero(&sin, sizeof(sin));
+			memset(&sin, 0, sizeof(sin));
 			sin.sin_family = AF_INET;
 			sin.sin_len = sizeof(sin);
 			bcopy(src, &sin.sin_addr,
@@ -819,7 +819,7 @@ key_allocsa(
 			break;
 #ifdef INET6
 		case AF_INET6:
-			bzero(&sin6, sizeof(sin6));
+			memset(&sin6, 0, sizeof(sin6));
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_len = sizeof(sin6);
 			bcopy(src, &sin6.sin6_addr,
@@ -846,7 +846,7 @@ key_allocsa(
 		/* check dst address */
 		switch (family) {
 		case AF_INET:
-			bzero(&sin, sizeof(sin));
+			memset(&sin, 0, sizeof(sin));
 			sin.sin_family = AF_INET;
 			sin.sin_len = sizeof(sin);
 			bcopy(dst, &sin.sin_addr,
@@ -862,7 +862,7 @@ key_allocsa(
 			break;
 #ifdef INET6
 		case AF_INET6:
-			bzero(&sin6, sizeof(sin6));
+			memset(&sin6, 0, sizeof(sin6));
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_len = sizeof(sin6);
 			bcopy(dst, &sin6.sin6_addr,
@@ -974,17 +974,17 @@ key_delsav(struct secasvar *sav)
 		LIST_REMOVE(sav, spihash);
 
 	if (sav->key_auth != NULL) {
-		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
+		memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
 		KFREE(sav->key_auth);
 		sav->key_auth = NULL;
 	}
 	if (sav->key_enc != NULL) {
-		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
+		memset(_KEYBUF(sav->key_enc), 0, _KEYLEN(sav->key_enc));
 		KFREE(sav->key_enc);
 		sav->key_enc = NULL;
 	}
 	if (sav->sched) {
-		bzero(sav->sched, sav->schedlen);
+		memset(sav->sched, 0, sav->schedlen);
 		KFREE(sav->sched);
 		sav->sched = NULL;
 	}
@@ -1247,7 +1247,7 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 				*error = ENOBUFS;
 				return NULL;
 			}
-			bzero(*p_isr, sizeof(**p_isr));
+			memset(*p_isr, 0, sizeof(**p_isr));
 
 			/* set values */
 			(*p_isr)->next = NULL;
@@ -1435,7 +1435,7 @@ key_sp2msg(struct secpolicy *sp)
 	m->m_len = tlen;
 	m->m_next = NULL;
 	xpl = mtod(m, struct sadb_x_policy *);
-	bzero(xpl, tlen);
+	memset(xpl, 0, tlen);
 
 	xpl->sadb_x_policy_len = PFKEY_UNIT64(tlen);
 	xpl->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -2614,7 +2614,7 @@ key_spdexpire(struct secpolicy *sp)
 		error = ENOBUFS;
 		goto fail;
 	}
-	bzero(mtod(m, void *), len);
+	memset(mtod(m, void *), 0, len);
 	lt = mtod(m, struct sadb_lifetime *);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
@@ -3240,17 +3240,17 @@ key_setsaval(struct secasvar *sav, struct mbuf *m, const struct sadb_msghdr *mhp
 		sav->replay = NULL;
 	}
 	if (sav->key_auth != NULL) {
-		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
+		memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
 		KFREE(sav->key_auth);
 		sav->key_auth = NULL;
 	}
 	if (sav->key_enc != NULL) {
-		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
+		memset(_KEYBUF(sav->key_enc), 0, _KEYLEN(sav->key_enc));
 		KFREE(sav->key_enc);
 		sav->key_enc = NULL;
 	}
 	if (sav->sched) {
-		bzero(sav->sched, sav->schedlen);
+		memset(sav->sched, 0, sav->schedlen);
 		KFREE(sav->sched);
 		sav->sched = NULL;
 	}
@@ -3681,7 +3681,7 @@ key_setsadbmsg(u_int8_t type, u_int16_t tlen, u_int8_t satype, u_int32_t seq, pi
 
 	p = mtod(m, struct sadb_msg *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_msg_version = PF_KEY_V2;
 	p->sadb_msg_type = type;
 	p->sadb_msg_errno = 0;
@@ -3714,7 +3714,7 @@ key_setsadbsa(struct secasvar *sav)
 
 	p = mtod(m, struct sadb_sa *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_sa_len = PFKEY_UNIT64(len);
 	p->sadb_sa_exttype = SADB_EXT_SA;
 	p->sadb_sa_spi = sav->spi;
@@ -3748,7 +3748,7 @@ key_setsadbaddr(u_int16_t exttype, struct sockaddr *saddr, u_int8_t prefixlen, u
 
 	p = mtod(m, struct sadb_address *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_address_len = PFKEY_UNIT64(len);
 	p->sadb_address_exttype = exttype;
 	p->sadb_address_proto = ul_proto;
@@ -3794,7 +3794,7 @@ key_setsadbident(u_int16_t exttype, u_int16_t idtype, void *string, int stringle
 
 	p = mtod(m, struct sadb_ident *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_ident_len = PFKEY_UNIT64(len);
 	p->sadb_ident_exttype = exttype;
 	p->sadb_ident_type = idtype;
@@ -3829,7 +3829,7 @@ key_setsadbxsa2(u_int8_t mode, u_int32_t seq, u_int16_t reqid)
 
 	p = mtod(m, struct sadb_x_sa2 *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_x_sa2_len = PFKEY_UNIT64(len);
 	p->sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	p->sadb_x_sa2_mode = mode;
@@ -3862,7 +3862,7 @@ key_setsadbxtag(u_int16_t tag)
 
 	p = mtod(m, struct sadb_x_tag *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_x_tag_len = PFKEY_UNIT64(len);
 	p->sadb_x_tag_exttype = SADB_X_EXT_TAG;
 	m_nametag_tag2tagname(tag, p->sadb_x_tag_name);
@@ -3893,7 +3893,7 @@ key_setsadbxtype(u_int16_t type)
 
 	p = mtod(m, struct sadb_x_nat_t_type *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_x_nat_t_type_len = PFKEY_UNIT64(len);
 	p->sadb_x_nat_t_type_exttype = SADB_X_EXT_NAT_T_TYPE;
 	p->sadb_x_nat_t_type_type = type;
@@ -3921,7 +3921,7 @@ key_setsadbxport(u_int16_t port, u_int16_t type)
 
 	p = mtod(m, struct sadb_x_nat_t_port *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_x_nat_t_port_len = PFKEY_UNIT64(len);
 	p->sadb_x_nat_t_port_exttype = type;
 	p->sadb_x_nat_t_port_port = port;
@@ -4039,7 +4039,7 @@ key_setsadblifetime(u_int16_t type, u_int32_t alloc, u_int64_t bytes, u_int64_t 
 
 	p = mtod(m, struct sadb_lifetime *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_lifetime_len = PFKEY_UNIT64(len);
 	p->sadb_lifetime_exttype = type;
 	p->sadb_lifetime_allocations = alloc;
@@ -4070,7 +4070,7 @@ key_setsadbxpolicy(u_int16_t type, u_int8_t dir, u_int32_t id)
 
 	p = mtod(m, struct sadb_x_policy *);
 
-	bzero(p, len);
+	memset(p, 0, len);
 	p->sadb_x_policy_len = PFKEY_UNIT64(len);
 	p->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	p->sadb_x_policy_type = type;
@@ -6058,7 +6058,7 @@ key_getcomb_esp(void)
 				M_ALIGN(m, l);
 				m->m_len = l;
 				m->m_next = NULL;
-				bzero(mtod(m, void *), m->m_len);
+				memset(mtod(m, void *), 0, m->m_len);
 			}
 		}
 		if (!m)
@@ -6079,7 +6079,7 @@ key_getcomb_esp(void)
 				goto fail;
 			}
 			comb = (struct sadb_comb *)(mtod(n, char *) + o);
-			bzero(comb, sizeof(*comb));
+			memset(comb, 0, sizeof(*comb));
 			key_getcomb_setlifetime(comb);
 			comb->sadb_comb_encrypt = i;
 			comb->sadb_comb_encrypt_minbits = encmin;
@@ -6149,7 +6149,7 @@ key_getcomb_ah(void)
 			return NULL;
 
 		comb = mtod(m, struct sadb_comb *);
-		bzero(comb, sizeof(*comb));
+		memset(comb, 0, sizeof(*comb));
 		key_getcomb_setlifetime(comb);
 		comb->sadb_comb_auth = i;
 		comb->sadb_comb_auth_minbits = xmin;
@@ -6195,7 +6195,7 @@ key_getcomb_ipcomp(void)
 			return NULL;
 
 		comb = mtod(m, struct sadb_comb *);
-		bzero(comb, sizeof(*comb));
+		memset(comb, 0, sizeof(*comb));
 		key_getcomb_setlifetime(comb);
 		comb->sadb_comb_encrypt = i;
 		/* what should we set into sadb_comb_*_{min,max}bits? */
@@ -6244,7 +6244,7 @@ key_getprop(const struct secasindex *saidx)
 		totlen += n->m_len;
 
 	prop = mtod(m, struct sadb_prop *);
-	bzero(prop, sizeof(*prop));
+	memset(prop, 0, sizeof(*prop));
 	prop->sadb_prop_len = PFKEY_UNIT64(totlen);
 	prop->sadb_prop_exttype = SADB_EXT_PROPOSAL;
 	prop->sadb_prop_replay = 32;	/* XXX */
@@ -6378,7 +6378,7 @@ key_acquire(struct secasindex *saidx, struct secpolicy *sp)
 
 		fqdnlen = strlen(fqdn) + 1;	/* +1 for terminating-NUL */
 		id = (struct sadb_ident *)p;
-		bzero(id, sizeof(*id) + PFKEY_ALIGN8(fqdnlen));
+		memset(id, 0, sizeof(*id) + PFKEY_ALIGN8(fqdnlen));
 		id->sadb_ident_len = PFKEY_UNIT64(sizeof(*id) + PFKEY_ALIGN8(fqdnlen));
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_FQDN;
@@ -6397,7 +6397,7 @@ key_acquire(struct secasindex *saidx, struct secpolicy *sp)
 		} else
 			userfqdnlen = 0;
 		id = (struct sadb_ident *)p;
-		bzero(id, sizeof(*id) + PFKEY_ALIGN8(userfqdnlen));
+		memset(id, 0, sizeof(*id) + PFKEY_ALIGN8(userfqdnlen));
 		id->sadb_ident_len = PFKEY_UNIT64(sizeof(*id) + PFKEY_ALIGN8(userfqdnlen));
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
@@ -6473,7 +6473,7 @@ key_newacq(struct secasindex *saidx)
 		ipseclog((LOG_DEBUG, "key_newacq: No more memory.\n"));
 		return NULL;
 	}
-	bzero(newacq, sizeof(*newacq));
+	memset(newacq, 0, sizeof(*newacq));
 
 	/* copy secindex */
 	bcopy(saidx, &newacq->saidx, sizeof(newacq->saidx));
@@ -6525,7 +6525,7 @@ key_newspacq(struct secpolicyindex *spidx)
 		ipseclog((LOG_DEBUG, "key_newspacq: No more memory.\n"));
 		return NULL;
 	}
-	bzero(acq, sizeof(*acq));
+	memset(acq, 0, sizeof(*acq));
 
 	/* copy secindex */
 	bcopy(spidx, &acq->spidx, sizeof(acq->spidx));
@@ -6720,7 +6720,7 @@ key_register(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 		ipseclog((LOG_DEBUG, "key_register: No more memory.\n"));
 		return key_senderror(so, m, ENOBUFS);
 	}
-	bzero((void *)newreg, sizeof(*newreg));
+	memset((void *)newreg, 0, sizeof(*newreg));
 
 	newreg->so = so;
 	((struct keycb *)sotorawcb(so))->kp_registered++;
@@ -6944,7 +6944,7 @@ key_expire(struct secasvar *sav)
 		error = ENOBUFS;
 		goto fail;
 	}
-	bzero(mtod(m, void *), len);
+	memset(mtod(m, void *), 0, len);
 	lt = mtod(m, struct sadb_lifetime *);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
@@ -7698,7 +7698,7 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 		panic("invalid mbuf passed to key_align");
 
 	/* initialize */
-	bzero(mhp, sizeof(*mhp));
+	memset(mhp, 0, sizeof(*mhp));
 
 	mhp->msg = mtod(m, struct sadb_msg *);
 	mhp->ext[0] = (struct sadb_ext *)mhp->msg;	/*XXX backward compat */
@@ -7859,7 +7859,7 @@ key_do_init(void)
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
-	bzero((void *)&key_cb, sizeof(key_cb));
+	memset((void *)&key_cb, 0, sizeof(key_cb));
 
 	callout_init(&key_timehandler_ch, 0);
 
@@ -7969,7 +7969,7 @@ key_getfqdn(void)
 		return NULL;
 
 	/* NOTE: hostname may not be NUL-terminated. */
-	bzero(fqdn, sizeof(fqdn));
+	memset(fqdn, 0, sizeof(fqdn));
 	bcopy(hostname, fqdn, hostnamelen);
 	fqdn[hostnamelen] = '\0';
 	return fqdn;
@@ -7992,7 +7992,7 @@ key_getuserfqdn(void)
 		return NULL;
 
 	/* NOTE: s_login may not be-NUL terminated. */
-	bzero(userfqdn, sizeof(userfqdn));
+	memset(userfqdn, 0, sizeof(userfqdn));
 	bcopy(p->p_pgrp->pg_session->s_login, userfqdn, MAXLOGNAME);
 	userfqdn[MAXLOGNAME] = '\0';	/* safeguard */
 	q = userfqdn + strlen(userfqdn);

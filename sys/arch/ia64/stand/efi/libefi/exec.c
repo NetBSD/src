@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.4 2009/03/18 10:22:31 cegger Exp $ */
+/* $NetBSD: exec.c,v 1.5 2009/03/18 16:00:12 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ elf64_exec(struct preloaded_file *fp)
 		return (ENOMEM);
 	}
 
-	bzero(bi, sizeof(struct bootinfo));
+	memset(bi, 0, sizeof(struct bootinfo));
 	bi_load(bi, fp, &mapkey, pages);
 
 	printf("Entering %s at 0x%lx...\n", fp->f_name, fp->marks[MARK_ENTRY]);

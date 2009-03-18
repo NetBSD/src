@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.6 2008/05/05 11:49:40 xtraeme Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.7 2009/03/18 16:00:12 cegger Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.6 2008/05/05 11:49:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.7 2009/03/18 16:00:12 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,7 @@ glxsb_crypto_newsession(void *aux, uint32_t *sidp, struct cryptoini *cri)
 			return (ENOMEM);
 		if (sesn != 0) {
 			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));
-			bzero(sc->sc_sessions, sesn * sizeof(*ses));
+			memset(sc->sc_sessions, 0, sesn * sizeof(*ses));
 			free(sc->sc_sessions, M_DEVBUF);
 		}
 		sc->sc_sessions = ses;
@@ -340,7 +340,7 @@ glxsb_crypto_newsession(void *aux, uint32_t *sidp, struct cryptoini *cri)
 		sc->sc_nsessions++;
 	}
 
-	bzero(ses, sizeof(*ses));
+	memset(ses, 0, sizeof(*ses));
 	ses->ses_used = 1;
 
 	arc4randbytes(ses->ses_iv, sizeof(ses->ses_iv));
@@ -365,7 +365,7 @@ glxsb_crypto_freesession(void *aux, uint64_t tid)
 	sesn = GLXSB_SESSION(sid);
 	if (sesn >= sc->sc_nsessions)
 		return (EINVAL);
-	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
+	memset(&sc->sc_sessions[sesn], 0, sizeof(sc->sc_sessions[sesn]));
 	return (0);
 }
 
@@ -588,7 +588,7 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 
 	/* All AES processing has now been done. */
 
-	bzero(sc->sc_dma.dma_vaddr, xlen * 2);
+	memset(sc->sc_dma.dma_vaddr, 0, xlen * 2);
 out:
 	crp->crp_etype = err;
 	crypto_done(crp);

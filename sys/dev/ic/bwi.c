@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.5 2009/02/23 00:05:44 cube Exp $	*/
+/*	$NetBSD: bwi.c,v 1.6 2009/03/18 16:00:18 cegger Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.5 2009/02/23 00:05:44 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.6 2009/03/18 16:00:18 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -2332,7 +2332,7 @@ bwi_mac_bss_param_init(struct bwi_mac *mac)
 	/*
 	 * Set short/long retry limits
 	 */
-	bzero(&lim, sizeof(lim));
+	memset(&lim, 0, sizeof(lim));
 	lim.shretry = BWI_SHRETRY;
 	lim.shretry_fb = BWI_SHRETRY_FB;
 	lim.lgretry = BWI_LGRETRY;
@@ -4963,7 +4963,7 @@ bwi_rf_lo_update_11g(struct bwi_mac *mac)
 	 * Save RF/PHY registers for later restoration
 	 */
 	orig_chan = rf->rf_curchan;
-	bzero(&regs, sizeof(regs));
+	memset(&regs, 0, sizeof(regs));
 
 	if (phy->phy_flags & BWI_PHY_F_LINKED) {
 		SAVE_PHY_REG(mac, &regs, 429);
@@ -5157,7 +5157,7 @@ _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 	uint8_t devi_ctrl = 0;
 	int idx, adj_rf7a = 0;
 
-	bzero(&lo_save, sizeof(lo_save));
+	memset(&lo_save, 0, sizeof(lo_save));
 	for (idx = 0; idx < RF_ATTEN_LISTSZ; ++idx) {
 		int init_rf_atten = rf_atten_init_list[idx];
 		int rf_atten = rf_atten_list[idx];
@@ -5168,7 +5168,7 @@ _bwi_rf_lo_update_11g(struct bwi_mac *mac, uint16_t orig_rf7a)
 
 			if ((ifp->if_flags & IFF_RUNNING) == 0) {
 				if (idx == 0) {
-					bzero(&lo_save, sizeof(lo_save));
+					memset(&lo_save, 0, sizeof(lo_save));
 				} else if (init_rf_atten < 0) {
 					lo = bwi_get_rf_lo(mac,
 					    rf_atten, 2 * bbp_atten);
@@ -5527,7 +5527,7 @@ bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 		PHY_FILT_SETBITS(mac, 0x3, 0xff9f, 0x40);
 		RF_SETBITS(mac, 0x7a, 0xf);
 
-		bzero(&gains, sizeof(gains));
+		memset(&gains, 0, sizeof(gains));
 		gains.tbl_gain1 = 3;
 		gains.tbl_gain2 = 0;
 		gains.phy_gain = 1;
@@ -5662,7 +5662,7 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 	 */
 	RF_SETBITS(mac, 0x7a, 0x70);
 
-	bzero(&gains, sizeof(gains));
+	memset(&gains, 0, sizeof(gains));
 	gains.tbl_gain1 = 0;
 	gains.tbl_gain2 = 8;
 	gains.phy_gain = 0;
@@ -5693,7 +5693,7 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 		PHY_FILT_SETBITS(mac, 0x811, 0xffcf, 0x20);
 	}
 
-	bzero(&gains, sizeof(gains));
+	memset(&gains, 0, sizeof(gains));
 	gains.tbl_gain1 = 3;
 	gains.tbl_gain2 = 0;
 	gains.phy_gain = 1;
@@ -5936,8 +5936,8 @@ bwi_rf_clear_state(struct bwi_rf *rf)
 	int i;
 
 	rf->rf_flags &= ~BWI_RF_CLEAR_FLAGS;
-	bzero(rf->rf_lo, sizeof(rf->rf_lo));
-	bzero(rf->rf_lo_used, sizeof(rf->rf_lo_used));
+	memset(rf->rf_lo, 0, sizeof(rf->rf_lo));
+	memset(rf->rf_lo_used, 0, sizeof(rf->rf_lo_used));
 
 	rf->rf_nrssi_slope = 0;
 	rf->rf_nrssi[0] = BWI_INVALID_NRSSI;
@@ -6265,7 +6265,7 @@ bwi_rf_lo_update_11b(struct bwi_mac *mac)
 
 	DPRINTF(sc, BWI_DBG_RF | BWI_DBG_INIT, "%s enter\n", __func__);
 
-	bzero(&regs, sizeof(regs));
+	memset(&regs, 0, sizeof(regs));
 	bphy_ctrl = 0;
 
 	/*
@@ -7027,7 +7027,7 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 	uint div;
 	int src;
 
-	bzero(freq, sizeof(*freq));
+	memset(freq, 0, sizeof(*freq));
 	com = &sc->sc_com_regwin;
 
 	KASSERT(BWI_REGWIN_EXIST(com));
@@ -7984,7 +7984,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
-	bzero(st->stats_ring, dma_size);
+	memset(st->stats_ring, 0, dma_size);
 	st->stats_ring_paddr = st->stats_ring_dmap->dm_segs[0].ds_addr;
 
 	/*
@@ -8024,7 +8024,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
-	bzero(st->stats, dma_size);
+	memset(st->stats, 0, dma_size);
 	st->stats_paddr = st->stats_dmap->dm_segs[0].ds_addr;
 	st->stats_ctrl_base = ctrl_base;
 
@@ -8181,7 +8181,7 @@ bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	tbd->tbd_idx = 0;
 	tbd->tbd_used = 0;
 
-	bzero(rd->rdata_desc, sizeof(struct bwi_desc32) * BWI_TX_NDESC);
+	memset(rd->rdata_desc, 0, sizeof(struct bwi_desc32) * BWI_TX_NDESC);
 	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
 	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
@@ -8254,7 +8254,7 @@ bwi_init_txstats32(struct bwi_softc *sc)
 	bus_addr_t stats_paddr;
 	int i;
 
-	bzero(st->stats, BWI_TXSTATS_NDESC * sizeof(struct bwi_txstats));
+	memset(st->stats, 0, BWI_TXSTATS_NDESC * sizeof(struct bwi_txstats));
 	bus_dmamap_sync(sc->sc_dmat, st->stats_dmap, 0,
 	    st->stats_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
@@ -8396,7 +8396,7 @@ back:
 	 * Clear RX buf header
 	 */
 	hdr = mtod(rxbuf->rb_mbuf, struct bwi_rxbuf_hdr *);
-	bzero(hdr, sizeof(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 	bus_dmamap_sync(sc->sc_dmat, rxbuf->rb_dmap, 0,
 	    rxbuf->rb_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
@@ -9064,7 +9064,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	/*
 	 * Find TX rate
 	 */
-	bzero(tb->tb_rate_idx, sizeof(tb->tb_rate_idx));
+	memset(tb->tb_rate_idx, 0, sizeof(tb->tb_rate_idx));
 	if (!mgt_pkt) {
 		if (ic->ic_fixed_rate != -1) {
 			rate = ic->ic_sup_rates[ic->ic_curmode].
@@ -9135,7 +9135,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	}
 	hdr = mtod(m, struct bwi_txbuf_hdr *);
 
-	bzero(hdr, sizeof(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 
 	bcopy(wh->i_fc, hdr->txh_fc, sizeof(hdr->txh_fc));
 	bcopy(wh->i_addr1, hdr->txh_addr1, sizeof(hdr->txh_addr1));

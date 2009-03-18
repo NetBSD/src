@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.15 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: procs.c,v 1.16 2009/03/18 16:00:23 cegger Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.15 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.16 2009/03/18 16:00:23 cegger Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -74,7 +74,7 @@ end_events(void)
 	IFDEBUG(N)
 		fprintf(OUT, "bzero addr %p part %d size %d\n",addr, part, size);
 	ENDDEBUG
-		bzero(addr, part);
+		memset(addr, 0, part);
 	IFDEBUG(N)
 		fprintf(OUT, "after bzero addr %p part %d size %d\n",addr, part, size);
 	ENDDEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.99 2008/08/20 18:35:20 matt Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.100 2009/03/18 16:00:22 cegger Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.99 2008/08/20 18:35:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.100 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -155,7 +155,7 @@ in6_pcballoc(struct socket *so, void *v)
 	splx(s);
 	if (in6p == NULL)
 		return (ENOBUFS);
-	bzero((void *)in6p, sizeof(*in6p));
+	memset((void *)in6p, 0, sizeof(*in6p));
 	in6p->in6p_af = AF_INET6;
 	in6p->in6p_table = table;
 	in6p->in6p_socket = so;
@@ -240,7 +240,7 @@ in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 			if (sin6->sin6_addr.s6_addr32[3]) {
 				struct sockaddr_in sin;
 
-				bzero(&sin, sizeof(sin));
+				memset(&sin, 0, sizeof(sin));
 				sin.sin_len = sizeof(sin);
 				sin.sin_family = AF_INET;
 				bcopy(&sin6->sin6_addr.s6_addr32[3],
@@ -397,7 +397,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 #ifdef INET
 		struct sockaddr_in sin, *sinp;
 
-		bzero(&sin, sizeof(sin));
+		memset(&sin, 0, sizeof(sin));
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		bcopy(&sin6->sin6_addr.s6_addr32[3], &sin.sin_addr,
@@ -409,7 +409,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 				error = EADDRNOTAVAIL;
 			return (error);
 		}
-		bzero(&mapped, sizeof(mapped));
+		memset(&mapped, 0, sizeof(mapped));
 		mapped.s6_addr16[5] = htons(0xffff);
 		bcopy(&sinp->sin_addr, &mapped.s6_addr32[3], sizeof(sinp->sin_addr));
 		in6a = &mapped;
@@ -475,7 +475,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 void
 in6_pcbdisconnect(struct in6pcb *in6p)
 {
-	bzero((void *)&in6p->in6p_faddr, sizeof(in6p->in6p_faddr));
+	memset((void *)&in6p->in6p_faddr, 0, sizeof(in6p->in6p_faddr));
 	in6p->in6p_fport = 0;
 	in6_pcbstate(in6p, IN6P_BOUND);
 	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
@@ -598,7 +598,7 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 	if (PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) {
 		fport = 0;
 		lport = 0;
-		bzero((void *)&sa6_src.sin6_addr, sizeof(sa6_src.sin6_addr));
+		memset((void *)&sa6_src.sin6_addr, 0, sizeof(sa6_src.sin6_addr));
 
 		if (cmd != PRC_HOSTDEAD)
 			notify = in6_rtchange;

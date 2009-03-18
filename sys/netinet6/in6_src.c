@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.45 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.46 2009/03/18 16:00:22 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -237,7 +237,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 * the interface must be specified; otherwise, ifa_ifwithaddr()
 		 * will fail matching the address.
 		 */
-		bzero(&srcsock, sizeof(srcsock));
+		memset(&srcsock, 0, sizeof(srcsock));
 		srcsock.sin6_family = AF_INET6;
 		srcsock.sin6_len = sizeof(srcsock);
 		srcsock.sin6_addr = pi->ipi6_addr;
@@ -888,7 +888,7 @@ addrsel_policy_init(void)
 	init_policy_queue();
 
 	/* initialize the "last resort" policy */
-	bzero(&defaultaddrpolicy, sizeof(defaultaddrpolicy));
+	memset(&defaultaddrpolicy, 0, sizeof(defaultaddrpolicy));
 	defaultaddrpolicy.label = ADDR_LABEL_NOTAPP;
 }
 

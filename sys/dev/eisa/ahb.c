@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.51 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: ahb.c,v 1.52 2009/03/18 16:00:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.51 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.52 2009/03/18 16:00:17 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -471,7 +471,7 @@ ahb_create_ecbs(struct ahb_softc *sc, struct ahb_ecb *ecbstore, int count)
 	struct ahb_ecb *ecb;
 	int i, error;
 
-	bzero(ecbstore, sizeof(struct ahb_ecb) * count);
+	memset(ecbstore, 0, sizeof(struct ahb_ecb) * count);
 	for (i = 0; i < count; i++) {
 		ecb = &ecbstore[i];
 		if ((error = ahb_init_ecb(sc, ecb)) != 0) {
