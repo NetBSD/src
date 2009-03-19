@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.66 2009/03/11 13:12:41 tsutsui Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.67 2009/03/19 15:28:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.66 2009/03/11 13:12:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.67 2009/03/19 15:28:04 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -342,9 +342,10 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 			if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
 				sc->sc_flags |= FXPF_MWI;
 		}
-		if (sc->sc_rev >= FXP_REV_82559_A0)
+		if (sc->sc_rev >= FXP_REV_82559_A0) {
 			chipname = "i82559 Ethernet";
 			sc->sc_flags |= FXPF_82559_RXCSUM;
+		}
 		if (sc->sc_rev >= FXP_REV_82559S_A)
 			chipname = "i82559S Ethernet";
 		if (sc->sc_rev >= FXP_REV_82550) {
