@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.55 2009/03/18 17:06:48 cegger Exp $ */
+/*	$NetBSD: vsbus.c,v 1.56 2009/03/19 22:52:16 he Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.55 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.56 2009/03/19 22:52:16 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 		int cz = round_page((vaddr_t)to) - (vaddr_t)to;
 
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | (PAGE_SIZE - cz) | KERNBASE;
-		memcpy( min(cz, from, (void *)pa, len));
+		memcpy((void *)pa, from, min(cz, len));
 		from += cz;
 		to += cz;
 		len -= cz;
@@ -313,7 +313,7 @@ vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 	}
 	while (len > 0) {
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
-		memcpy( min(PAGE_SIZE, from, (void *)pa, len));
+		memcpy((void *)pa, from, min(PAGE_SIZE, len));
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -346,7 +346,7 @@ vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 		int cz = round_page((vaddr_t)from) - (vaddr_t)from;
 
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | (PAGE_SIZE - cz) | KERNBASE;
-		memcpy( min(cz, (void *)pa, to, len));
+		memcpy(to, (void *)pa, min(cz, len));
 		from += cz;
 		to += cz;
 		len -= cz;
@@ -354,7 +354,7 @@ vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 	}
 	while (len > 0) {
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
-		memcpy( min(PAGE_SIZE, (void *)pa, to, len));
+		memcpy(to,  (void *)pa, min(PAGE_SIZE, len));
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		len -= PAGE_SIZE;
