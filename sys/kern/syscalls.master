@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.224 2009/03/18 17:51:17 pooka Exp $
+	$NetBSD: syscalls.master,v 1.225 2009/03/19 09:08:35 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -781,7 +781,7 @@
 408	UNIMPL
 409	UNIMPL
 
-410	STD 		{ int|sys|50|mount(const char *type, \
+410	STD  RUMP	{ int|sys|50|mount(const char *type, \
 			    const char *path, int flags, void *data, \
 			    size_t data_len); }
 411	STD 		{ void *|sys||mremap(void *old_address, size_t old_size, \
