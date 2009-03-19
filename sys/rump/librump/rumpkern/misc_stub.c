@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.19 2009/03/18 17:56:15 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.20 2009/03/19 09:36:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.19 2009/03/18 17:56:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.20 2009/03/19 09:36:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -91,6 +91,13 @@ evcnt_detach(struct evcnt *ev)
 int
 syscall_establish(const struct emul *em, const struct syscall_package *sp)
 {
+	extern struct sysent rump_sysent[];
+	int i;
+
+	KASSERT(em == NULL || em == &emul_netbsd);
+
+	for (i = 0; sp[i].sp_call; i++)
+		rump_sysent[sp[i].sp_code].sy_call = sp[i].sp_call;
 
 	return 0;
 }
