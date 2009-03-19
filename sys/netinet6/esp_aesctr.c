@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.10 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.11 2009/03/19 08:22:29 he Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.10 2009/03/18 17:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.11 2009/03/19 08:22:29 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ esp_aesctr_decrypt(struct mbuf *m, size_t off, struct secasvar *sav,
 		ctx = (aesctr_ctx *)sav->sched;
 		rijndaelEncrypt(ctx->r_ek, ctx->r_nr, cblock.cblock, keystream);
 
-		memcpy( u_int8_t *) + dn, sp, mtod(d, blocklen);
+		memcpy(mtod(d, u_int8_t *) + dn, sp, blocklen);
 		dst = mtod(d, u_int8_t *) + dn;
 		for (i = 0; i < blocklen; i++)
 			dst[i] ^= keystream[i];
@@ -423,7 +423,7 @@ esp_aesctr_encrypt(
 		ctx = (aesctr_ctx *)sav->sched;
 		rijndaelEncrypt(ctx->r_ek, ctx->r_nr, cblock.cblock, keystream);
 
-		memcpy( u_int8_t *) + dn, sp, mtod(d, blocklen);
+		memcpy(mtod(d, u_int8_t *) + dn, sp, blocklen);
 		dst = mtod(d, u_int8_t *) + dn;
 		for (i = 0; i < blocklen; i++)
 			dst[i] ^= keystream[i];
