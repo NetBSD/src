@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.6 2009/01/13 11:37:16 pooka Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.7 2009/03/19 09:14:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.6 2009/01/13 11:37:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.7 2009/03/19 09:14:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -56,20 +56,6 @@ VFSSTUB(fifo_pathconf)
 VFSSTUB(fifo_bmap)
 VFSSTUB(fifo_read)
 VFSSTUB(fifo_write)
-
-int
-vfs_allocate_syncvnode(struct mount *mp)
-{
-
-	panic("%s: unimplemented", __func__);
-}
-
-void
-vfs_deallocate_syncvnode(struct mount *mp)
-{
-
-	panic("%s: unimplemented", __func__);
-}
 
 void
 fifo_printinfo(struct vnode *vp)
