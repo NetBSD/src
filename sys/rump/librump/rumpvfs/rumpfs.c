@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.8 2009/03/18 10:22:45 cegger Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.9 2009/03/19 09:14:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.8 2009/03/18 10:22:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.9 2009/03/19 09:14:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.8 2009/03/18 10:22:45 cegger Exp $");
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
-#include <miscfs/syncfs/syncfs.h>
 #include <miscfs/genfs/genfs.h>
 
 #include <rump/rumpuser.h>
@@ -54,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.8 2009/03/18 10:22:45 cegger Exp $");
 #include "rump_vfs_private.h"
 
 static int rump_vop_lookup(void *);
+static int rump_vop_getattr(void *);
+static int rump_vop_success(void *);
 
 int (**dead_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
@@ -62,14 +63,6 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 };
 const struct vnodeopv_desc dead_vnodeop_opv_desc =
 	{ &dead_vnodeop_p, dead_vnodeop_entries };
-
-int (**sync_vnodeop_p)(void *);
-const struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
-	{ NULL, NULL }
-};
-const struct vnodeopv_desc sync_vnodeop_opv_desc =
-	{ &sync_vnodeop_p, sync_vnodeop_entries };
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -83,6 +76,9 @@ int (**rump_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, rump_vop_lookup },
+	{ &vop_getattr_desc, rump_vop_getattr },
+	{ &vop_putpages_desc, rump_vop_success },
+	{ &vop_fsync_desc, rump_vop_success },
 	{ &vop_lock_desc, genfs_lock },
 	{ &vop_unlock_desc, genfs_unlock },
 	{ NULL, NULL }
@@ -94,7 +90,40 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 	NULL
 };
 
-static struct mount mnt_dummy;
+static struct mount rump_mnt;
+static int lastino = 1;
+
+static struct vattr *
+makevattr(enum vtype vt)
+{
+	struct vattr *va;
+	struct timespec ts;
+
+	nanotime(&ts);
+
+	va = kmem_alloc(sizeof(*va), KM_SLEEP);
+	va->va_type = vt;
+	va->va_mode = 0755;
+	va->va_nlink = 2;
+	va->va_uid = 0;
+	va->va_gid = 0;
+	va->va_fsid = 
+	va->va_fileid = atomic_inc_uint_nv(&lastino);
+	va->va_size = 512;
+	va->va_blocksize = 512;
+	va->va_atime = ts;
+	va->va_mtime = ts;
+	va->va_ctime = ts;
+	va->va_birthtime = ts;
+	va->va_gen = 0;
+	va->va_flags = 0;
+	va->va_rdev = -1;
+	va->va_bytes = 512;
+	va->va_filerev = 0;
+	va->va_vaflags = 0;
+
+	return va;
+}
 
 static int
 rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
@@ -105,9 +134,8 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
 	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
 	vp->v_size = vp->v_writesize = size;
 	vp->v_type = vt;
-	if (vp->v_type != VBLK)
-		if (rump_fakeblk_find(path))
-			vp->v_type = VBLK;
+	if (vp->v_type == VREG)
+		vp->v_type = VBLK;
 
 	if (vp->v_type != VBLK && vp->v_type != VDIR)
 		panic("rump_makevnode: only VBLK/VDIR vnodes supported");
@@ -123,9 +151,11 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
 	} else {
 		vp->v_op = rump_vnodeop_p;
 	}
-	vp->v_mount = &mnt_dummy;
+	vp->v_tag = VT_RUMP;
+	vp->v_mount = &rump_mnt;
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_usecount = 1;
+	vp->v_data = makevattr(vp->v_type);
 	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
 	memset(&vp->v_lock, 0, sizeof(vp->v_lock));
 	rw_init(&vp->v_lock.vl_lock);
@@ -186,6 +216,26 @@ rump_vop_lookup(void *v)
 	vn_lock(*ap->a_vpp, LK_RETRY | LK_EXCLUSIVE);
 	cnp->cn_consume = strlen(cnp->cn_nameptr + cnp->cn_namelen);
 	cnp->cn_flags &= ~REQUIREDIR;
+
+	return 0;
+}
+
+static int
+rump_vop_getattr(void *v)
+{
+	struct vop_getattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+
+	memcpy(ap->a_vap, ap->a_vp->v_data, sizeof(struct vattr));
+	return 0;
+}
+
+static int
+rump_vop_success(void *v)
+{
 
 	return 0;
 }
