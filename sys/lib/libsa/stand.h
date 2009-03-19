@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.67 2009/03/18 12:25:07 tsutsui Exp $	*/
+/*	$NetBSD: stand.h,v 1.68 2009/03/19 08:38:12 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -288,6 +288,7 @@ extern const char HEXDIGITS[];
 extern const char hexdigits[];
 
 /* XXX: These should be removed eventually. */
+int	bcmp(const void *, const void*, size_t);
 void	bcopy(const void *, void *, size_t);
 void	bzero(void *, size_t);
 
