@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.9 2009/03/18 15:39:27 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.10 2009/03/19 03:05:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.9 2009/03/18 15:39:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.10 2009/03/19 03:05:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -133,7 +133,7 @@ rumpblk_register(const char *path)
 	int i;
 
 	for (i = 0; i < RUMPBLK_SIZE; i++)
-		if (minors[i].rblk_path && strcmp(minors[i].rblk_path, path)==0)
+		if (minors[i].rblk_path && strcmp(minors[i].rblk_path, path) == 0)
 			return i;
 
 	for (i = 0; i < RUMPBLK_SIZE; i++)
@@ -143,7 +143,7 @@ rumpblk_register(const char *path)
 		return -1;
 
 	len = strlen(path);
-	minors[i].rblk_path = malloc(len+1, M_TEMP, M_WAITOK);
+	minors[i].rblk_path = malloc(len + 1, M_TEMP, M_WAITOK);
 	strcpy(minors[i].rblk_path, path);
 	minors[i].rblk_fd = -1;
 	return i;
@@ -175,7 +175,7 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		 * we fall back to the read/write path.  This test is only
 		 * to prevent size_t vs. off_t wraparounds.
 		 */
-		if (fsize < 1<<(sizeof(void *)*8 - 1)) {
+		if (fsize < UINT64_C(1) << (sizeof(void *) * 8 - 1)) {
 			int mmflags;
 
 			mmflags = 0;
@@ -193,7 +193,7 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		rblk->rblk_dl.d_secsize = DEV_BSIZE;
 		rblk->rblk_curpi = &rblk->rblk_pi;
 	} else {
-		if (rumpuser_ioctl(fd,DIOCGDINFO, &rblk->rblk_dl, &error)!=-1) {
+		if (rumpuser_ioctl(fd,DIOCGDINFO, &rblk->rblk_dl, &error) != -1) {
 			rumpuser_close(fd, &dummy);
 			return error;
 		}
