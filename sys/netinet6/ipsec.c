@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.138 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.139 2009/03/19 08:31:03 he Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.138 2009/03/18 17:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.139 2009/03/19 08:31:03 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3198,7 +3198,7 @@ ipsec4_splithdr(struct mbuf *m)
 		mh->m_next = m;
 		m = mh;
 		m->m_len = hlen;
-		memcpy( void *), (void *)ip, mtod(m, hlen);
+		memcpy(mtod(m, void *), (void *)ip, hlen);
 	} else if (m->m_len < hlen) {
 		m = m_pullup(m, hlen);
 		if (!m)
@@ -3233,7 +3233,7 @@ ipsec6_splithdr(struct mbuf *m)
 		mh->m_next = m;
 		m = mh;
 		m->m_len = hlen;
-		memcpy( void *), (void *)ip6, mtod(m, hlen);
+		memcpy(mtod(m, void *), (void *)ip6, hlen);
 	} else if (m->m_len < hlen) {
 		m = m_pullup(m, hlen);
 		if (!m)
