@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2009/01/12 07:00:59 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.26 2009/03/19 10:19:33 tsutsui Exp $
 
 LIB=sa
 
@@ -56,7 +56,7 @@ SRC_libc_inet= inet_addr.c
 
 SRC_libc_quad= ashldi3.c ashrdi3.c
 
-SRC_libc_string= bcmp.S bzero.S memcmp.S memset.S strcmp.S strlen.S strncmp.S
+SRC_libc_string= bzero.S memcmp.S memset.S strcmp.S strlen.S strncmp.S
 
 SRC_here= SRT1.c clock.c dev_disk.c devopen.c \
 	 gets.c idprom.c netif_sun.c panic.c \
