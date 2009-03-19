@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.21 2009/03/18 17:06:46 cegger Exp $ */
+/*	$NetBSD: bootxx.c,v 1.22 2009/03/19 14:05:24 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,14 +143,16 @@ loadboot(struct open_file *f, char *addr)
 
 /*
  * We don't need the overlap handling feature that the libkern version
- * of bcopy() provides. We DO need code compactness..
+ * of memcpy() provides. We DO need code compactness..
  */
-void
-bcopy(const void *src, void *dst, size_t n)
+void *
+memcpy(void *dst, const void *src, size_t n)
 {
 	const char *p = src;
 	char *q = dst;
 
 	while (n-- > 0)
 		*q++ = *p++;
+
+	return dst;
 }
