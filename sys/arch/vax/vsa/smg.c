@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.51 2009/03/18 17:06:48 cegger Exp $ */
+/*	$NetBSD: smg.c,v 1.52 2009/03/19 22:52:16 he Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.51 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.52 2009/03/19 22:52:16 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -335,7 +335,7 @@ smg_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 	if (ss != curscr)
 		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
-		memcpy( i), &SM_ADDR(row,srccol, i), &SM_ADDR(row, dstcol,ncols);
+		memcpy(&SM_ADDR(row, dstcol, i), &SM_ADDR(row, srccol, i), ncols);
 }
 
 /*
