@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.44 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: if_es.c,v 1.45 2009/03/19 23:09:13 he Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.44 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.45 2009/03/19 23:09:13 he Exp $");
 
 #include "bpfilter.h"
 
@@ -699,7 +699,7 @@ esrint(struct es_softc *sc)
 		}
 		m->m_len = len = min(pktlen, len);
 #ifdef USEPKTBUF
-		memcpy( void *), (void *)b, mtod(m, len);
+		memcpy(mtod(m, void *), (void *)b, len);
 		b += len;
 #else	/* USEPKTBUF */
 		buf = mtod(m, u_short *);
