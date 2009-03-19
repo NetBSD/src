@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.4 2009/03/18 12:25:06 tsutsui Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.5 2009/03/19 08:39:54 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,20 +34,19 @@
 #if 0
 static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcmp.c,v 1.4 2009/03/18 12:25:06 tsutsui Exp $");
+__RCSID("$NetBSD: bcmp.c,v 1.5 2009/03/19 08:39:54 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <lib/libkern/libkern.h>
-#else
+#endif
 #if defined(_STANDALONE)
 #include <lib/libsa/stand.h>
 #else
 #include <assert.h>
 #include <string.h>
-#endif
 #endif
 
 /*
