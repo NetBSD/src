@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.172 2009/03/18 17:06:53 cegger Exp $	*/
+/*	$NetBSD: key.c,v 1.173 2009/03/19 08:33:14 he Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.172 2009/03/18 17:06:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.173 2009/03/19 08:33:14 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3615,7 +3615,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype, u_int32_t se
 			M_PREPEND(tres, l, M_DONTWAIT);
 			if (!tres)
 				goto fail;
-			memcpy( void *), p, mtod(tres, l);
+			memcpy(mtod(tres, void *), p, l);
 			continue;
 		}
 		if (p) {
