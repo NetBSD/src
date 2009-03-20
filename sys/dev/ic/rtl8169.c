@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.107 2009/01/03 03:43:22 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.108 2009/03/20 06:31:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.107 2009/01/03 03:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.108 2009/03/20 06:31:31 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -389,10 +389,10 @@ re_reset(struct rtk_softc *sc)
 		    device_xname(sc->sc_dev));
 
 	/*
-	 * NB: Realtek-supplied Linux driver does this only for
-	 * MCFG_METHOD_2, which corresponds to sc->sc_rev == 3.
+	 * NB: Realtek-supplied FreeBSD driver does this only for MACFG_3,
+	 *     but also says "Rtl8169s sigle chip detected".
 	 */
-	if (1) /* XXX check softc flag for 8169s version */
+	if ((sc->sc_quirk & RTKQ_MACLDPS) != 0)
 		CSR_WRITE_1(sc, RTK_LDPS, 1);
 
 }
@@ -562,9 +562,6 @@ re_attach(struct rtk_softc *sc)
 	struct ifnet *ifp;
 	int error = 0, i, addr_len;
 
-	/* Reset the adapter. */
-	re_reset(sc);
-
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		uint32_t hwrev;
 
@@ -580,12 +577,15 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8169S:
 		case RTK_HWREV_8110S:
 			sc->sc_rev = 3;
+			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
 		case RTK_HWREV_8169_8110SB:
 			sc->sc_rev = 4;
+			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
 		case RTK_HWREV_8169_8110SC:
 			sc->sc_rev = 5;
+			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
 		case RTK_HWREV_8101E:
 			sc->sc_rev = 11;
@@ -626,6 +626,9 @@ re_attach(struct rtk_softc *sc)
 		sc->re_rxlenmask = RE_RDESC_STAT_FRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
 	}
+
+	/* Reset the adapter. */
+	re_reset(sc);
 
 	if (sc->sc_rev == 24 || sc->sc_rev == 25) {
 		/*
