@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.9 2009/03/19 09:14:37 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.10 2009/03/20 08:30:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.9 2009/03/19 09:14:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.10 2009/03/20 08:30:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.9 2009/03/19 09:14:37 pooka Exp $");
 #include <sys/queue.h>
 #include <sys/filedesc.h>
 #include <sys/syscallargs.h>
+#include <sys/atomic.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
