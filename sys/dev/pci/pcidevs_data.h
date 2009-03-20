@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962 2008/10/15 18:31:16 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.1 2009/03/20 13:02:17 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -7696,6 +7696,10 @@ static const struct pci_product pci_products[] = {
 	    "i82567V LAN controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82574L,
+	    "i82574L 1000baseT Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
 	    "82801I mobile (AMT) LAN controller",
 	},
@@ -14508,4 +14512,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3026;
+const int pci_nproducts = 3027;
