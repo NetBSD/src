@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.962 2008/10/15 18:30:29 bouyer Exp $
+$NetBSD: pcidevs,v 1.962.4.1 2009/03/20 13:01:35 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2210,6 +2210,7 @@ product INTEL 82801H_IFE_GT 	0x10c4	i82801H IFE (GT) LAN Controller
 product INTEL 82801H_IFE_G 	0x10c5	i82801H IFE (G) LAN Controller
 product INTEL 82801H_IGP_M_V 	0x10cb	i82801H IGP (MV) LAN Controller
 product INTEL 82567V		0x10ce	i82567V LAN controller
+product INTEL 82574L		0x10d3	i82574L 1000baseT Ethernet
 product INTEL 82801I_IGP_M_AMT	0x10f5  82801I mobile (AMT) LAN controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
