@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.134 2009/03/16 06:20:49 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.135 2009/03/20 15:42:35 msaitoh Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2798,3 +2798,21 @@ usr.sbin/user/user.c				1.121
 	getpwnam().  Fixes PR bin/40994.
 	[mlelstv, ticket #1286]
 
+sys/arch/xen/xen/if_xennet_xenbus.c		1.34
+src/sys/arch/xen/xen/xbd_xenbus.c		1.39
+
+	Fix rnd(4) support for Xen3 xennet. Add rnd(4) support to Xen3 xbd.
+	Should fix PR port-xen/40739.
+	[bouyer, ticket #1282]
+
+sys/kern/init_sysctl.c				1.158
+
+	always calculate "needed" for KERN_FILE2 calls.  this allows a caller
+	to get an estimate of the needed space, like the intention is.
+	[mrg, ticket #1287]
+
+usr.sbin/pstat/pstat.c				1.113
+
+	convert getfiles() to use KERN_FILE2 sysctl.
+	Now it can survive "struct file" changing, as is upcoming.
+	[mrg, ticket #1289]
