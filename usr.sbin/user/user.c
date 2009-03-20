@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.122 2009/03/18 04:59:45 mike Exp $ */
+/* $NetBSD: user.c,v 1.123 2009/03/20 02:53:47 mike Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.122 2009/03/18 04:59:45 mike Exp $");
+__RCSID("$NetBSD: user.c,v 1.123 2009/03/20 02:53:47 mike Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1542,7 +1542,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 		if (up->u_flags & F_GROUP) {
 			/* if -g=uid was specified, check gid is unused */
 			if (strcmp(up->u_primgrp, "=uid") == 0) {
-				if (getgrgid((gid_t)(up->u_uid)) != NULL) {
+				if (getgrgid((gid_t)(pwp->pw_uid)) != NULL) {
 					(void)close(ptmpfd);
 					(void)pw_abort();
 					errx(EXIT_FAILURE,
@@ -1550,7 +1550,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 					    "gid %d is already in use",
 					    login_name, up->u_uid);
 				}
-				pwp->pw_gid = up->u_uid;
+				pwp->pw_gid = pwp->pw_uid;
 			} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
 				pwp->pw_gid = grp->gr_gid;
 			} else if (is_number(up->u_primgrp) &&
