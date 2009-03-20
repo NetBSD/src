@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.37 2009/03/14 14:46:09 dsl Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.38 2009/03/20 23:06:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.37 2009/03/14 14:46:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.38 2009/03/20 23:06:52 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1659,13 +1659,10 @@ udf_do_symlink(struct udf_node *udf_node, char *target)
 		pathbuf, pathlen, 0,
 		UIO_SYSSPACE, IO_NODELOCKED | IO_ALTSEMANTICS,
 		FSCRED, NULL, NULL);
-	if (error) {
-		/* failed to write out symlink contents */
-		free(pathbuf, M_UDFTEMP);
-		return error;
-	}
 
-	return 0;
+	/* return status of symlink contents writeout */
+	free(pathbuf, M_UDFTEMP);
+	return error;
 }
 
 
