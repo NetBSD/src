@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.121 2009/02/12 18:24:18 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.122 2009/03/20 09:13:06 pooka Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -422,11 +422,11 @@ cscope.out: Makefile depend
 	${_MKTARGET_CREATE}
 	@${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/kern/.depend \
 	    | tr -s ' ' '\n' \
-	    | ${TOOL_SED} 's|^\([^.\\]\)|lib/kern/\1|;s|^../../||;' \
+	    | ${TOOL_SED} ';s|^../../||;' \
 	    > cscope.tmp
 	@${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/compat/.depend \
 	    | tr -s ' ' '\n' \
-	    | ${TOOL_SED} 's|^\([^.\\]\)|lib/compat/\1|;s|^../../||;' \
+	    | ${TOOL_SED} 's|^../../||;' \
 	    >> cscope.tmp
 	@echo ${SRCS} | cat - cscope.tmp | tr -s ' ' '\n' | sort -u | \
 	    ${CSCOPE} -k -i - -b `echo ${INCLUDES} | ${TOOL_SED} s/-nostdinc//`
