@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.123 2008/04/21 12:56:31 ad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.124 2009/03/20 16:28:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.123 2008/04/21 12:56:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.124 2009/03/20 16:28:57 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -439,7 +439,7 @@ zstty_attach(device_t parent, device_t self, void *aux)
 		 * but we must make sure status interrupts are turned on by
 		 * the time zsparam() reads the initial rr0 state.
 		 */
-		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE);
 
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
@@ -511,7 +511,7 @@ zs_shutdown(struct zstty_softc *zst)
 
 	/* Turn off interrupts if not the console. */
 	if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
-		CLR(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+		CLR(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE);
 		cs->cs_creg[1] = cs->cs_preg[1];
 		zs_write_reg(cs, 1, cs->cs_creg[1]);
 	}
@@ -597,7 +597,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 		 * but we must make sure status interrupts are turned on by
 		 * the time zsparam() reads the initial rr0 state.
 		 */
-		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
+		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE);
 
 		/* Clear PPS capture state on first open. */
 		mutex_spin_enter(&timecounter_lock);
@@ -914,13 +914,6 @@ zsstart(struct tty *tp)
 		return;
 	}
 #endif
-
-	/* Enable transmit completion interrupts if necessary. */
-	if (!ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
-		SET(cs->cs_preg[1], ZSWR1_TIE);
-		cs->cs_creg[1] = cs->cs_preg[1];
-		zs_write_reg(cs, 1, cs->cs_creg[1]);
-	}
 
 	/* Output the first character of the contiguous buffer. */
 	zs_write_data(cs, *zst->zst_tba);
@@ -1424,6 +1417,8 @@ zstty_txint(struct zs_chanstate *cs)
 {
 	struct zstty_softc *zst = cs->cs_private;
 
+	zs_write_csr(cs, ZSWR0_RESET_TXINT);
+
 	/*
 	 * If we've delayed a parameter change, do it now, and restart
 	 * output.
@@ -1441,12 +1436,6 @@ zstty_txint(struct zs_chanstate *cs)
 		zst->zst_tbc--;
 		zst->zst_tba++;
 	} else {
-		/* Disable transmit completion interrupts if necessary. */
-		if (ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
-			CLR(cs->cs_preg[1], ZSWR1_TIE);
-			cs->cs_creg[1] = cs->cs_preg[1];
-			zs_write_reg(cs, 1, cs->cs_creg[1]);
-		}
 		if (zst->zst_tx_busy) {
 			zst->zst_tx_busy = 0;
 			zst->zst_tx_done = 1;
