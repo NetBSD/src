@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.24.2.1 2007/08/07 18:05:30 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.24.2.2 2009/03/20 04:48:26 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -680,8 +680,8 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 /*
  * Save all of the registers except for the kernel temporaries in u_pcb.
  */
-	ADDR_L	k1, CPUVAR(CURLWP)
-	ADDR_L	k1, L_ADDR(k1)
+	PTR_L	k1, CPUVAR(CURLWP)
+	PTR_L	k1, L_ADDR(k1)
 	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
@@ -841,8 +841,8 @@ END(MIPSX(UserGenException))
 NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-	ADDR_L	k1, CPUVAR(CURLWP)
-	ADDR_L	k1, L_ADDR(k1)
+	PTR_L	k1, CPUVAR(CURLWP)
+	PTR_L	k1, L_ADDR(k1)
 	#nop					# -slip-
 	addu	k1, k1, USPACE - FRAME_SIZ
 	#REG_S	AT, FRAME_AST(k1)
@@ -853,7 +853,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	a1, FRAME_A1(k1)
 	REG_S	a2, FRAME_A2(k1)
 	REG_S	a3, FRAME_A3(k1)
-	ADDR_L	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
+	PTR_L	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
 	mfhi	v1
 	#REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
 	#REG_S	t1, FRAME_T1(k1)
@@ -1193,8 +1193,8 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
  * Save the relevant user registers into the u_pcb.
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
-	ADDR_L	k1, CPUVAR(CURLWP)
-	ADDR_L	k1, L_ADDR(k1)
+	PTR_L	k1, CPUVAR(CURLWP)
+	PTR_L	k1, L_ADDR(k1)
 	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
@@ -1421,12 +1421,12 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	bgez	k0, _C_LABEL(MIPSX(KernGenException))	# full trap processing
 	subu	k0, k0, k1
-	ADDR_L	k1, _C_LABEL(Sysmapsize)	# index within range?
+	PTR_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, outofworld		# No. Failing beyond. . .
 	nop					# - delay slot -
-	ADDR_L	k1, _C_LABEL(Sysmap)
+	PTR_L	k1, _C_LABEL(Sysmap)
 
 	sll	k0, k0, 2			# compute offset from index
 	addu	k1, k1, k0
@@ -1522,7 +1522,7 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	subu	k0, k0, k1
-	ADDR_L	k1, _C_LABEL(Sysmapsize)	# index within range?
+	PTR_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 #ifdef newsmips
@@ -1536,7 +1536,7 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	beq	k1, zero, outofworld		# No. Failing beyond. . .
 	nop					# - delay slot -
 #endif
-	ADDR_L	k1, _C_LABEL(Sysmap)
+	PTR_L	k1, _C_LABEL(Sysmap)
 	srl	k0, k0, 1
 	sll	k0, k0, 3			# compute offset from index
 	addu	k1, k1, k0
@@ -2030,7 +2030,7 @@ END(MIPSX(lwp_trampoline))
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
-	ADDR_L	v0, L_ADDR(a0)			# va = l->l_addr
+	PTR_L	v0, L_ADDR(a0)			# va = l->l_addr
 	li	s0, MIPS_KSEG2_START
 	blt	v0, s0, resume
 	nop
