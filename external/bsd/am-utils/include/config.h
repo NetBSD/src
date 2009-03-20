@@ -1462,7 +1462,7 @@
 
 /* Name of mount type to hide amd mount from df(1) */
 #define HIDE_MOUNT_TYPE "nfs"
-`
+
 #ifdef __NetBSD__
 #include <config_local.h>
 #else
