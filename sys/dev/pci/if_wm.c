@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.167 2009/03/10 03:41:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.168 2009/03/20 06:27:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.167 2009/03/10 03:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.168 2009/03/20 06:27:53 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -4659,8 +4659,11 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
 		    reg >> GG82563_PAGE_SHIFT);
 	}
-
+	/* Wait more 200us for a bug of the ready bit in the MDIC register */
+	delay(200);
 	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	delay(200);
+
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 	return (rv);
 }
@@ -4691,8 +4694,11 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
 		    reg >> GG82563_PAGE_SHIFT);
 	}
-
+	/* Wait more 200us for a bug of the ready bit in the MDIC register */
+	delay(200);
 	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
+	delay(200);
+
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 }
 
