@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.36.2.7 2006/04/07 12:31:52 tron Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.36.2.8 2009/03/20 15:08:55 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.36.2.7 2006/04/07 12:31:52 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.36.2.8 2009/03/20 15:08:55 msaitoh Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1947,8 +1947,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				dp += elem_size;
 				len -= elem_size;
 			}
+			needed += elem_size;
 			if (elem_count > 0) {
-				needed += elem_size;
 				if (elem_count != INT_MAX)
 					elem_count--;
 			}
@@ -1981,8 +1981,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 					dp += elem_size;
 					len -= elem_size;
 				}
+				needed += elem_size;
 				if (elem_count > 0) {
-					needed += elem_size;
 					if (elem_count != INT_MAX)
 						elem_count--;
 				}
