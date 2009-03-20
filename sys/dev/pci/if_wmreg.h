@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.25 2009/03/10 03:41:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.26 2009/03/20 07:29:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -334,6 +334,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_LINK_MODE_TBI	0x00C00000
 #define	CTRL_EXT_LINK_MODE_KMRN	0x00000000
 #define	CTRL_EXT_LINK_MODE_SERDES 0x00C00000
+#define	CTRL_EXT_DRV_LOAD	0x10000000
 
 
 #define	WMREG_MDIC	0x0020	/* MDI Control Register */
@@ -664,6 +665,12 @@ struct livengood_tcpip_ctxdesc {
 #define	SWSM_WMNG	0x00000004	/* Wake MNG Clock */
 #define	SWSM_DRV_LOAD	0x00000008	/* Driver Loaded Bit */
 
+#define	WMREG_FWSM	0x5b54	/* FW Semaphore */
+#define	FWSM_MODE_MASK		0xe
+#define	FWSM_MODE_SHIFT		0x1
+#define	MNG_ICH_IAMT_MODE	0x2
+#define	MNG_IAMT_MODE		0x3
+
 #define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
 #define	SWFW_EEP_SM		0x0001 /* eeprom access */
 #define	SWFW_PHY0_SM		0x0002 /* first ctrl phy access */
@@ -734,3 +741,6 @@ struct livengood_tcpip_ctxdesc {
 
 #define ICH_NVM_SIG_WORD	0x13
 #define ICH_NVM_SIG_MASK	0xc000
+
+#define	NVM_INIT_CONTROL2_REG	0x000f
+#define	NVM_INIT_CTRL2_MNGM	0x6000
