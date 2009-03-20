@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_cdfs.c,v 1.2 2009/01/02 16:00:02 christos Exp $	*/
+/*	$NetBSD: ops_cdfs.c,v 1.3 2009/03/20 20:30:52 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
