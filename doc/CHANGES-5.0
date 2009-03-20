@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.113 2009/03/18 21:16:23 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.114 2009/03/20 04:28:17 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5184,4 +5184,10 @@ sys/fs/udf/udf_vnops.c				patch
 
 	Fix fallout from ticket #569.
 	[reinoud, ticket #585]
+
+gnu/usr.bin/groff/tmac/mdoc.local               patched by hand
+sys/sys/param.h                                 patched by hand
+        
+        Welcome to 5.0_RC3!
+        [snj] 
 
