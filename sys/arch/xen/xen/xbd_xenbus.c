@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.7.2.7 2007/01/22 13:45:12 tron Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.7.2.8 2009/03/20 14:55:32 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.7.2.7 2007/01/22 13:45:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.7.2.8 2009/03/20 14:55:32 msaitoh Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -56,6 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.7.2.7 2007/01/22 13:45:12 tron Exp 
 
 #include <machine/xen3-public/io/ring.h>
 #include <machine/xen3-public/io/blkif.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <machine/granttables.h>
 #include <machine/xenbus.h>
@@ -109,6 +112,9 @@ struct xbd_xenbus_softc {
 	u_long sc_secsize; /* sector size */
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
+#if NRND > 0
+	rndsource_element_t     sc_rnd_source;
+#endif
 };
 
 #if 0
@@ -240,6 +246,11 @@ xbd_xenbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_shutdown = 1;
 	/* initialise shared structures and tell backend that we are ready */
 	xbd_xenbus_resume(sc);
+
+#if NRND > 0
+	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_DISK, RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE);
+#endif
 }
 
 static int
@@ -280,6 +291,10 @@ xbd_xenbus_detach(struct device *dev, int flags)
 
 		/* detach disk */
 		disk_detach(&sc->sc_dksc.sc_dkdev);
+#if NRND > 0
+		/* Unhook the entropy source. */
+		rnd_detach_source(&sc->sc_rnd_source);
+#endif
 	}
 
 	event_remove_handler(sc->sc_evtchn, &xbd_handler, sc);
@@ -519,6 +534,10 @@ next:
 		disk_unbusy(&sc->sc_dksc.sc_dkdev,
 		    (bp->b_bcount - bp->b_resid),
 		    (bp->b_flags & B_READ));
+#if NRND > 0
+		rnd_add_uint32(&sc->sc_rnd_source,
+		    bp->b_blkno);
+#endif
 		biodone(bp);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
