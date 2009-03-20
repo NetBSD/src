@@ -118,6 +118,7 @@ EXTRA_DIST_M4 =				\
 	m4/macros/struct_mnttab.m4			\
 	m4/macros/struct_nfs_args.m4			\
 	m4/macros/struct_nfs_fh.m4			\
+	m4/macros/struct_nfs_fh3.m4			\
 	m4/macros/struct_nfs_gfs_mount.m4		\
 	m4/macros/try_compile_anyfs.m4			\
 	m4/macros/try_compile_nfs.m4			\
@@ -126,6 +127,7 @@ EXTRA_DIST_M4 =				\
 	m4/macros/type_autofs_args.m4			\
 	m4/macros/type_cachefs_args.m4			\
 	m4/macros/type_cdfs_args.m4			\
+	m4/macros/type_udf_args.m4			\
 	m4/macros/type_efs_args.m4			\
 	m4/macros/type_lofs_args.m4			\
 	m4/macros/type_mfs_args.m4			\
