@@ -1,8 +1,8 @@
-/*	$NetBSD: fsi_lex.l,v 1.1.1.1 2008/09/19 20:07:21 christos Exp $	*/
+/*	$NetBSD: fsi_lex.l,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
 
 %{
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -113,9 +113,9 @@ static int ayylineno;
  * which automatically generates yywrap macros and symbols.  So I must
  * distinguish between them and when yywrap is actually needed.
  */
-#ifndef yywrap
+#if !defined(yywrap) || defined(yylex)
 int yywrap(void);
-#endif /* not yywrap */
+#endif /* not yywrap or yylex */
 
 int yyerror(const char *, ...);
 
@@ -270,9 +270,9 @@ current_location(void)
  * which automatically generates yywrap macros and symbols.  So I must
  * distinguish between them and when yywrap is actually needed.
  */
-#ifndef yywrap
+#if !defined(yywrap) || defined(yylex)
 int yywrap(void)
 {
   return 1;
 }
-#endif /* not yywrap */
+#endif /* not yywrap or yylex */

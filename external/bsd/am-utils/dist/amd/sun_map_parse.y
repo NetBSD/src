@@ -1,8 +1,8 @@
-/*	$NetBSD: sun_map_parse.y,v 1.1.1.1 2008/09/19 20:07:17 christos Exp $	*/
+/*	$NetBSD: sun_map_parse.y,v 1.1.1.2 2009/03/20 20:26:50 christos Exp $	*/
 
 %{
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 2005 Daniel P. Ottavio
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -76,11 +76,11 @@ static char *tmpFsType = NULL;
  * list structure.  If the structure is NULL than a new instance is
  * returned.
  */
-static struct sun_list *get_sun_opt_list();
-static struct sun_list *get_sun_host_list();
-static struct sun_list *get_sun_location_list();
-static struct sun_list *get_mountpt_list();
-static struct sun_list *get_sun_entry_list();
+static struct sun_list *get_sun_opt_list(void);
+static struct sun_list *get_sun_host_list(void);
+static struct sun_list *get_sun_location_list(void);
+static struct sun_list *get_mountpt_list(void);
+static struct sun_list *get_sun_entry_list(void);
 
 %}
 

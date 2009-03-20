@@ -2582,19 +2582,19 @@ _LT_LINKER_BOILERPLATE
 #
 # Check for any special shared library compilation flags.
 #
-_LT_AC_TAGVAR(lt_prog_cc_shlib, $1)=
+_LT_AC_TAGVAR(lt_cv_prog_cc_shlib, $1)=
 if test "$GCC" = no; then
   case $host_os in
   sco3.2v5*)
-    _LT_AC_TAGVAR(lt_prog_cc_shlib, $1)='-belf'
+    _LT_AC_TAGVAR(lt_cv_prog_cc_shlib, $1)='-belf'
     ;;
   esac
 fi
-if test -n "$_LT_AC_TAGVAR(lt_prog_cc_shlib, $1)"; then
-  AC_MSG_WARN([`$CC' requires `$_LT_AC_TAGVAR(lt_prog_cc_shlib, $1)' to build shared libraries])
-  if echo "$old_CC $old_CFLAGS " | grep "[[ 	]]$_LT_AC_TAGVAR(lt_prog_cc_shlib, $1)[[ 	]]" >/dev/null; then :
+if test -n "$_LT_AC_TAGVAR(lt_cv_prog_cc_shlib, $1)"; then
+  AC_MSG_WARN([`$CC' requires `$_LT_AC_TAGVAR(lt_cv_prog_cc_shlib, $1)' to build shared libraries])
+  if echo "$old_CC $old_CFLAGS " | grep "[[ 	]]$_LT_AC_TAGVAR(lt_cv_prog_cc_shlib, $1)[[ 	]]" >/dev/null; then :
   else
-    AC_MSG_WARN([add `$_LT_AC_TAGVAR(lt_prog_cc_shlib, $1)' to the CC or CFLAGS env variable and reconfigure])
+    AC_MSG_WARN([add `$_LT_AC_TAGVAR(lt_cv_prog_cc_shlib, $1)' to the CC or CFLAGS env variable and reconfigure])
     _LT_AC_TAGVAR(lt_cv_prog_cc_can_build_shared, $1)=no
   fi
 fi
@@ -2603,11 +2603,11 @@ fi
 #
 # Check to make sure the static flag actually works.
 #
-AC_LIBTOOL_LINKER_OPTION([if $compiler static flag $_LT_AC_TAGVAR(lt_prog_compiler_static, $1) works],
-  _LT_AC_TAGVAR(lt_prog_compiler_static_works, $1),
-  $_LT_AC_TAGVAR(lt_prog_compiler_static, $1),
+AC_LIBTOOL_LINKER_OPTION([if $compiler static flag $_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1) works],
+  _LT_AC_TAGVAR(lt_cv_prog_compiler_static_works, $1),
+  $_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1),
   [],
-  [_LT_AC_TAGVAR(lt_prog_compiler_static, $1)=])
+  [_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)=])
 
 
 ## CAVEAT EMPTOR:
@@ -2745,9 +2745,9 @@ _LT_CC_BASENAME([$compiler])
 # We don't want -fno-exception wen compiling C++ code, so set the
 # no_builtin_flag separately
 if test "$GXX" = yes; then
-  _LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)=' -fno-builtin'
+  _LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1)=' -fno-builtin'
 else
-  _LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)=
+  _LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1)=
 fi
 
 if test "$GXX" = yes; then
@@ -4007,10 +4007,10 @@ if test -f "$ltmain"; then
     _LT_AC_TAGVAR(compiler, $1) \
     _LT_AC_TAGVAR(CC, $1) \
     _LT_AC_TAGVAR(LD, $1) \
-    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1) \
-    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1) \
-    _LT_AC_TAGVAR(lt_prog_compiler_static, $1) \
-    _LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1) \
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1) \
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1) \
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1) \
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1) \
     _LT_AC_TAGVAR(export_dynamic_flag_spec, $1) \
     _LT_AC_TAGVAR(thread_safe_flag_spec, $1) \
     _LT_AC_TAGVAR(whole_archive_flag_spec, $1) \
@@ -4205,7 +4205,7 @@ reload_flag=$lt_reload_flag
 reload_cmds=$lt_reload_cmds
 
 # How to pass a linker flag through the compiler.
-wl=$lt_[]_LT_AC_TAGVAR(lt_prog_compiler_wl, $1)
+wl=$lt_[]_LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)
 
 # Object file suffix (normally "o").
 objext="$ac_objext"
@@ -4220,7 +4220,7 @@ shrext_cmds='$shrext_cmds'
 exeext="$exeext"
 
 # Additional compiler flags for building library objects.
-pic_flag=$lt_[]_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)
+pic_flag=$lt_[]_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)
 pic_mode=$pic_mode
 
 # What is the maximum length of a command?
@@ -4248,10 +4248,10 @@ dlopen_self=$enable_dlopen_self
 dlopen_self_static=$enable_dlopen_self_static
 
 # Compiler flag to prevent dynamic linking.
-link_static_flag=$lt_[]_LT_AC_TAGVAR(lt_prog_compiler_static, $1)
+link_static_flag=$lt_[]_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)
 
 # Compiler flag to turn off builtin functions.
-no_builtin_flag=$lt_[]_LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)
+no_builtin_flag=$lt_[]_LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1)
 
 # Compiler flag to allow reflexive dlopens.
 export_dynamic_flag_spec=$lt_[]_LT_AC_TAGVAR(export_dynamic_flag_spec, $1)
@@ -4471,15 +4471,15 @@ fi
 AC_DEFUN([AC_LIBTOOL_PROG_COMPILER_NO_RTTI],
 [AC_REQUIRE([_LT_AC_SYS_COMPILER])dnl
 
-_LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)=
+_LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1)=
 
 if test "$GCC" = yes; then
-  _LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)=' -fno-builtin'
+  _LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1)=' -fno-builtin'
 
   AC_LIBTOOL_COMPILER_OPTION([if $compiler supports -fno-rtti -fno-exceptions],
     lt_cv_prog_compiler_rtti_exceptions,
     [-fno-rtti -fno-exceptions], [],
-    [_LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)="$_LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1) -fno-rtti -fno-exceptions"])
+    [_LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1)="$_LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1) -fno-rtti -fno-exceptions"])
 fi
 ])# AC_LIBTOOL_PROG_COMPILER_NO_RTTI
 
@@ -4637,7 +4637,7 @@ EOF
 	  lt_save_LIBS="$LIBS"
 	  lt_save_CFLAGS="$CFLAGS"
 	  LIBS="conftstm.$ac_objext"
-	  CFLAGS="$CFLAGS$_LT_AC_TAGVAR(lt_prog_compiler_no_builtin_flag, $1)"
+	  CFLAGS="$CFLAGS$_LT_AC_TAGVAR(lt_cv_prog_compiler_no_builtin_flag, $1)"
 	  if AC_TRY_EVAL(ac_link) && test -s conftest${ac_exeext}; then
 	    pipe_works=yes
 	  fi
@@ -4680,30 +4680,30 @@ fi
 # AC_LIBTOOL_PROG_COMPILER_PIC([TAGNAME])
 # ---------------------------------------
 AC_DEFUN([AC_LIBTOOL_PROG_COMPILER_PIC],
-[_LT_AC_TAGVAR(lt_prog_compiler_wl, $1)=
-_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=
-_LT_AC_TAGVAR(lt_prog_compiler_static, $1)=
+[_LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)=
+_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=
+_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)=
 
 AC_MSG_CHECKING([for $compiler option to produce PIC])
  ifelse([$1],[CXX],[
   # C++ specific cases for pic, static, wl, etc.
   if test "$GXX" = yes; then
-    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-static'
 
     case $host_os in
     aix*)
       # All AIX code is PIC.
       if test "$host_cpu" = ia64; then
 	# AIX 5 now supports IA64 processor
-	_LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       fi
       ;;
     amigaos*)
       # FIXME: we need at least 68020 code to build shared libraries, but
       # adding the `-m68020' flag to GCC prevents building anything better,
       # like `-m68040'.
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-m68020 -resident32 -malways-restore-a4'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-m68020 -resident32 -malways-restore-a4'
       ;;
     beos* | cygwin* | irix5* | irix6* | nonstopux* | osf3* | osf4* | osf5*)
       # PIC is the default for these OSes.
@@ -4711,20 +4711,20 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
     mingw* | os2* | pw32*)
       # This hack is so that the source file can tell whether it is being
       # built for inclusion in a dll (and should export symbols for example).
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-DDLL_EXPORT'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-DDLL_EXPORT'
       ;;
     darwin* | rhapsody*)
       # PIC is the default on this platform
       # Common symbols not allowed in MH_DYLIB files
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fno-common'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fno-common'
       ;;
     *djgpp*)
       # DJGPP does not support shared libraries at all
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=
       ;;
     sysv4*MP*)
       if test -d /usr/nec; then
-	_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=-Kconform_pic
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=-Kconform_pic
       fi
       ;;
     hpux*)
@@ -4734,12 +4734,12 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
       hppa*64*|ia64*)
 	;;
       *)
-	_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fPIC'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fPIC'
 	;;
       esac
       ;;
     *)
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fPIC'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fPIC'
       ;;
     esac
   else
@@ -4748,16 +4748,16 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
 	# All AIX code is PIC.
 	if test "$host_cpu" = ia64; then
 	  # AIX 5 now supports IA64 processor
-	  _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+	  _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
 	else
-	  _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-bnso -bI:/lib/syscalls.exp'
+	  _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-bnso -bI:/lib/syscalls.exp'
 	fi
 	;;
       chorus*)
 	case $cc_basename in
 	cxch68*)
 	  # Green Hills C++ Compiler
-	  # _LT_AC_TAGVAR(lt_prog_compiler_static, $1)="--no_auto_instantiation -u __main -u __premain -u _abort -r $COOL_DIR/lib/libOrb.a $MVME_DIR/lib/CC/libC.a $MVME_DIR/lib/classix/libcx.s.a"
+	  # _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)="--no_auto_instantiation -u __main -u __premain -u _abort -r $COOL_DIR/lib/libOrb.a $MVME_DIR/lib/CC/libC.a $MVME_DIR/lib/classix/libcx.s.a"
 	  ;;
 	esac
 	;;
@@ -4766,19 +4766,19 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
          # Common symbols not allowed in MH_DYLIB files
          case $cc_basename in
            xlc*)
-           _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-qnocommon'
-           _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+           _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-qnocommon'
+           _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
            ;;
          esac
        ;;
       dgux*)
 	case $cc_basename in
 	  ec++*)
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-KPIC'
 	    ;;
 	  ghcx*)
 	    # Green Hills C++ Compiler
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-pic'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-pic'
 	    ;;
 	  *)
 	    ;;
@@ -4790,21 +4790,21 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
       hpux9* | hpux10* | hpux11*)
 	case $cc_basename in
 	  CC*)
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)="${ac_cv_prog_cc_wl}-a ${ac_cv_prog_cc_wl}archive"
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)="${ac_cv_prog_cc_wl}-a ${ac_cv_prog_cc_wl}archive"
 	    if test "$host_cpu" != ia64; then
-	      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='+Z'
+	      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='+Z'
 	    fi
 	    ;;
 	  aCC*)
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)="${ac_cv_prog_cc_wl}-a ${ac_cv_prog_cc_wl}archive"
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)="${ac_cv_prog_cc_wl}-a ${ac_cv_prog_cc_wl}archive"
 	    case $host_cpu in
 	    hppa*64*|ia64*)
 	      # +Z the default
 	      ;;
 	    *)
-	      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='+Z'
+	      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='+Z'
 	      ;;
 	    esac
 	    ;;
@@ -4815,8 +4815,8 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
       irix5* | irix6* | nonstopux*)
 	case $cc_basename in
 	  CC*)
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-non_shared'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-non_shared'
 	    # CC pic flag -KPIC is the default.
 	    ;;
 	  *)
@@ -4827,27 +4827,27 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
 	case $cc_basename in
 	  KCC*)
 	    # KAI C++ Compiler
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='--backend -Wl,'
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fPIC'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='--backend -Wl,'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fPIC'
 	    ;;
 	  icpc* | ecpc*)
 	    # Intel C++
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-KPIC'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-static'
 	    ;;
 	  pgCC*)
 	    # Portland Group C++ compiler.
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fpic'
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fpic'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
 	    ;;
 	  cxx*)
 	    # Compaq C++
 	    # Make sure the PIC flag is empty.  It appears that all Alpha
 	    # Linux and Compaq Tru64 Unix objects are PIC.
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-non_shared'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-non_shared'
 	    ;;
 	  *)
 	    ;;
@@ -4860,7 +4860,7 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
       mvs*)
 	case $cc_basename in
 	  cxx*)
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-W c,exportall'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-W c,exportall'
 	    ;;
 	  *)
 	    ;;
@@ -4871,19 +4871,19 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
       osf3* | osf4* | osf5*)
 	case $cc_basename in
 	  KCC*)
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='--backend -Wl,'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='--backend -Wl,'
 	    ;;
 	  RCC*)
 	    # Rational C++ 2.4.1
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-pic'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-pic'
 	    ;;
 	  cxx*)
 	    # Digital/Compaq C++
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
 	    # Make sure the PIC flag is empty.  It appears that all Alpha
 	    # Linux and Compaq Tru64 Unix objects are PIC.
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-non_shared'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-non_shared'
 	    ;;
 	  *)
 	    ;;
@@ -4894,7 +4894,7 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
       sco*)
 	case $cc_basename in
 	  CC*)
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fPIC'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fPIC'
 	    ;;
 	  *)
 	    ;;
@@ -4904,13 +4904,13 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
 	case $cc_basename in
 	  CC*)
 	    # Sun C++ 4.2, 5.x and Centerline C++
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
-	    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Qoption ld '
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-KPIC'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Qoption ld '
 	    ;;
 	  gcx*)
 	    # Green Hills C++ Compiler
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-PIC'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-PIC'
 	    ;;
 	  *)
 	    ;;
@@ -4920,12 +4920,12 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
 	case $cc_basename in
 	  CC*)
 	    # Sun C++ 4.x
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-pic'
-	    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-pic'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
 	    ;;
 	  lcc*)
 	    # Lucid
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-pic'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-pic'
 	    ;;
 	  *)
 	    ;;
@@ -4935,7 +4935,7 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
 	case $cc_basename in
 	  NCC*)
 	    # NonStop-UX NCC 3.20
-	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
+	    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-KPIC'
 	    ;;
 	  *)
 	    ;;
@@ -4946,22 +4946,22 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
       vxworks*)
 	;;
       *)
-	_LT_AC_TAGVAR(lt_prog_compiler_can_build_shared, $1)=no
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_can_build_shared, $1)=no
 	;;
     esac
   fi
 ],
 [
   if test "$GCC" = yes; then
-    _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-    _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-static'
 
     case $host_os in
       aix*)
       # All AIX code is PIC.
       if test "$host_cpu" = ia64; then
 	# AIX 5 now supports IA64 processor
-	_LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       fi
       ;;
 
@@ -4969,7 +4969,7 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
       # FIXME: we need at least 68020 code to build shared libraries, but
       # adding the `-m68020' flag to GCC prevents building anything better,
       # like `-m68040'.
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-m68020 -resident32 -malways-restore-a4'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-m68020 -resident32 -malways-restore-a4'
       ;;
 
     beos* | cygwin* | irix5* | irix6* | nonstopux* | osf3* | osf4* | osf5*)
@@ -4979,25 +4979,25 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
     mingw* | pw32* | os2*)
       # This hack is so that the source file can tell whether it is being
       # built for inclusion in a dll (and should export symbols for example).
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-DDLL_EXPORT'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-DDLL_EXPORT'
       ;;
 
     darwin* | rhapsody*)
       # PIC is the default on this platform
       # Common symbols not allowed in MH_DYLIB files
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fno-common'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fno-common'
       ;;
 
     msdosdjgpp*)
       # Just because we use GCC doesn't mean we suddenly get shared libraries
       # on systems that don't support them.
-      _LT_AC_TAGVAR(lt_prog_compiler_can_build_shared, $1)=no
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_can_build_shared, $1)=no
       enable_shared=no
       ;;
 
     sysv4*MP*)
       if test -d /usr/nec; then
-	_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=-Kconform_pic
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=-Kconform_pic
       fi
       ;;
 
@@ -5009,25 +5009,25 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
 	# +Z the default
 	;;
       *)
-	_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fPIC'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fPIC'
 	;;
       esac
       ;;
 
     *)
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fPIC'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fPIC'
       ;;
     esac
   else
     # PORTME Check for flag to pass linker flags through the system compiler.
     case $host_os in
     aix*)
-      _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
       if test "$host_cpu" = ia64; then
 	# AIX 5 now supports IA64 processor
-	_LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       else
-	_LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-bnso -bI:/lib/syscalls.exp'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-bnso -bI:/lib/syscalls.exp'
       fi
       ;;
       darwin*)
@@ -5035,8 +5035,8 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
         # Common symbols not allowed in MH_DYLIB files
        case $cc_basename in
          xlc*)
-         _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-qnocommon'
-         _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+         _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-qnocommon'
+         _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
          ;;
        esac
        ;;
@@ -5044,11 +5044,11 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
     mingw* | pw32* | os2*)
       # This hack is so that the source file can tell whether it is being
       # built for inclusion in a dll (and should export symbols for example).
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-DDLL_EXPORT'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-DDLL_EXPORT'
       ;;
 
     hpux9* | hpux10* | hpux11*)
-      _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
       # PIC is the default for IA64 HP-UX and 64-bit HP-UX, but
       # not for PA HP-UX.
       case $host_cpu in
@@ -5056,126 +5056,126 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
 	# +Z the default
 	;;
       *)
-	_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='+Z'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='+Z'
 	;;
       esac
-      # Is there a better lt_prog_compiler_static that works with the bundled CC?
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='${wl}-a ${wl}archive'
+      # Is there a better lt_cv_prog_compiler_static that works with the bundled CC?
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='${wl}-a ${wl}archive'
       ;;
 
     irix5* | irix6* | nonstopux*)
-      _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
       # PIC (with -KPIC) is the default.
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-non_shared'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-non_shared'
       ;;
 
     newsos6)
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-KPIC'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       ;;
 
     linux*)
       case $cc_basename in
       icc* | ecc*)
-	_LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-	_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
-	_LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-KPIC'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-static'
         ;;
       pgcc* | pgf77* | pgf90* | pgf95*)
         # Portland Group compilers (*not* the Pentium gcc compiler,
 	# which looks to be a dead project)
-	_LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-	_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-fpic'
-	_LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-fpic'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
         ;;
       ccc*)
-        _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+        _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
         # All Alpha code is PIC.
-        _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-non_shared'
+        _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-non_shared'
         ;;
       esac
       ;;
 
     osf3* | osf4* | osf5*)
-      _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
       # All OSF/1 code is PIC.
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-non_shared'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-non_shared'
       ;;
 
     sco3.2v5*)
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-Kpic'
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-dn'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-Kpic'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-dn'
       ;;
 
     solaris*)
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-KPIC'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       case $cc_basename in
       f77* | f90* | f95*)
-	_LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Qoption ld ';;
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Qoption ld ';;
       *)
-	_LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,';;
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,';;
       esac
       ;;
 
     sunos4*)
-      _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Qoption ld '
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-PIC'
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Qoption ld '
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-PIC'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       ;;
 
     sysv4 | sysv4.2uw2* | sysv4.3* | sysv5*)
-      _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-KPIC'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       ;;
 
     sysv4*MP*)
       if test -d /usr/nec ;then
-	_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-Kconform_pic'
-	_LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-Kconform_pic'
+	_LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       fi
       ;;
 
     unicos*)
-      _LT_AC_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
-      _LT_AC_TAGVAR(lt_prog_compiler_can_build_shared, $1)=no
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)='-Wl,'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_can_build_shared, $1)=no
       ;;
 
     uts4*)
-      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-pic'
-      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)='-pic'
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_static, $1)='-Bstatic'
       ;;
 
     *)
-      _LT_AC_TAGVAR(lt_prog_compiler_can_build_shared, $1)=no
+      _LT_AC_TAGVAR(lt_cv_prog_compiler_can_build_shared, $1)=no
       ;;
     esac
   fi
 ])
-AC_MSG_RESULT([$_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)])
+AC_MSG_RESULT([$_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)])
 
 #
 # Check to make sure the PIC flag actually works.
 #
-if test -n "$_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)"; then
-  AC_LIBTOOL_COMPILER_OPTION([if $compiler PIC flag $_LT_AC_TAGVAR(lt_prog_compiler_pic, $1) works],
-    _LT_AC_TAGVAR(lt_prog_compiler_pic_works, $1),
-    [$_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)ifelse([$1],[],[ -DPIC],[ifelse([$1],[CXX],[ -DPIC],[])])], [],
-    [case $_LT_AC_TAGVAR(lt_prog_compiler_pic, $1) in
+if test -n "$_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)"; then
+  AC_LIBTOOL_COMPILER_OPTION([if $compiler PIC flag $_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1) works],
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic_works, $1),
+    [$_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)ifelse([$1],[],[ -DPIC],[ifelse([$1],[CXX],[ -DPIC],[])])], [],
+    [case $_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1) in
      "" | " "*) ;;
-     *) _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=" $_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)" ;;
+     *) _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=" $_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)" ;;
      esac],
-    [_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=
-     _LT_AC_TAGVAR(lt_prog_compiler_can_build_shared, $1)=no])
+    [_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=
+     _LT_AC_TAGVAR(lt_cv_prog_compiler_can_build_shared, $1)=no])
 fi
 case $host_os in
   # For platforms which do not support PIC, -DPIC is meaningless:
   *djgpp*)
-    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)=
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)=
     ;;
   *)
-    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)="$_LT_AC_TAGVAR(lt_prog_compiler_pic, $1)ifelse([$1],[],[ -DPIC],[ifelse([$1],[CXX],[ -DPIC],[])])"
+    _LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)="$_LT_AC_TAGVAR(lt_cv_prog_compiler_pic, $1)ifelse([$1],[],[ -DPIC],[ifelse([$1],[CXX],[ -DPIC],[])])"
     ;;
 esac
 ])
@@ -6025,7 +6025,7 @@ x|xyes)
         lib=conftest
         libobjs=conftest.$ac_objext
         deplibs=
-        wl=$_LT_AC_TAGVAR(lt_prog_compiler_wl, $1)
+        wl=$_LT_AC_TAGVAR(lt_cv_prog_compiler_wl, $1)
         compiler_flags=-v
         linker_flags=-v
         verstring=
