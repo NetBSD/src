@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2009/03/15 14:08:17 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2009/03/20 11:42:25 tsutsui Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -23,7 +23,7 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 
 SRTOBJ= ${LIBSA}/SRT0.o ${LIBSA}/SRT1.o
-SRTLIB= ${LIBSA}/libsa.a
+SRTLIB= ${LIBSA}/lib/sa/libsa.a ${LIBSA}/lib/kern/libkern.a
 
 CLEANFILES+= ${SA_PROG} ${SA_PROG}.bin
 
