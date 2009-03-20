@@ -1,7 +1,7 @@
-/*	$NetBSD: hasmntopt.c,v 1.1.1.1 2008/09/19 20:07:22 christos Exp $	*/
+/*	$NetBSD: hasmntopt.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2007 Erez Zadok
+ * Copyright (c) 1997-2009 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.

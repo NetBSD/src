@@ -176,6 +176,10 @@ struct netexport { int this_is_SO_wrong; }; /* for bsdi-2.1 */
 #ifdef HAVE_ISOFS_CD9660_CD9660_MOUNT_H
 # include <isofs/cd9660/cd9660_mount.h>
 #endif /* HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
+
+#ifdef HAVE_FS_UDF_UDF_MOUNT_H
+# include <fs/udf/udf_mount.h>
+#endif /* HAVE_FS_UDF_UDF_MOUNT_H */
 ], [$1], [$2], [$3])
 ])
 dnl ======================================================================

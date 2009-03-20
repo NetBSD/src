@@ -33,7 +33,7 @@ case "${GCONFIG}" in
 	    long=`getver /etc/redhat-release`
 	    if grep 'Red Hat Enterprise Linux' /etc/redhat-release > /dev/null 2>&1 ; then
 		echo ${GCONFIG}-rhel${long}
-	    elif grep 'Fedora Core' /etc/redhat-release > /dev/null 2>&1 ; then
+	    elif grep 'Fedora ' /etc/redhat-release > /dev/null 2>&1 ; then
 		echo ${GCONFIG}-fc${long}
 	    elif grep 'CentOS' /etc/redhat-release > /dev/null 2>&1 ; then
 		echo ${GCONFIG}-centos${long}

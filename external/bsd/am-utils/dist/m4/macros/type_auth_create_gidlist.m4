@@ -14,7 +14,8 @@ case "${host_os_name}" in
 		ac_cv_auth_create_gidlist="gid_t" ;;
 	macosx* )
 		ac_cv_auth_create_gidlist="int" ;;
-
+	netbsd* )
+		ac_cv_auth_create_gidlist="int" ;;
 	* )
 		ac_cv_auth_create_gidlist="gid_t" ;;
 esac
