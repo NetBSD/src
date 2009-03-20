@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.158 2009/02/26 08:26:58 snj Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.159 2009/03/20 15:44:18 msaitoh Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5149,3 +5149,21 @@ bin/sh/redir.c					1.30
 	by Oki.  Fixes PR#36822.
 	[msaitoh, ticket #1992]
 
+sys/arch/xen/xen/if_xennet_xenbus.c		1.34
+src/sys/arch/xen/xen/xbd_xenbus.c		1.39
+
+	Fix rnd(4) support for Xen3 xennet. Add rnd(4) support to Xen3 xbd.
+	Should fix PR port-xen/40739.
+	[bouyer, ticket #1996]
+
+sys/kern/init_sysctl.c				1.158
+
+	always calculate "needed" for KERN_FILE2 calls.  this allows a caller
+	to get an estimate of the needed space, like the intention is.
+	[mrg, ticket #1999]
+
+usr.sbin/pstat/pstat.c				1.113
+
+	convert getfiles() to use KERN_FILE2 sysctl.
+	Now it can survive "struct file" changing, as is upcoming.
+	[mrg, ticket #2000]
