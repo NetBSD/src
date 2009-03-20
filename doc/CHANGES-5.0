@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.114 2009/03/20 04:28:17 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.115 2009/03/20 13:08:03 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5191,3 +5191,10 @@ sys/sys/param.h                                 patched by hand
         Welcome to 5.0_RC3!
         [snj] 
 
+sys/dev/pci/if_wm.c				1.165
+sys/dev/pci/pcidevs				1.978
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	 Add support for 82574L (as found on Desktop CT adaptor) based on 82573
+	 [sborrill, ticket #587]
