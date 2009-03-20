@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.127 2009/03/18 01:28:25 pgoyette Exp $ */
+/*	$NetBSD: sysctl.c,v 1.128 2009/03/20 13:18:50 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.127 2009/03/18 01:28:25 pgoyette Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.128 2009/03/20 13:18:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -548,8 +548,8 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	   int add)
 {
 	struct sysctlnode *node;
-	int rc, ni;
-	size_t sz;
+	int rc;
+	size_t ni, sz;
 	char *sp, *dp, n[20];
 	const struct handlespec *p;
 
@@ -1528,8 +1528,8 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 	struct sysctlnode *node = pnode->sysctl_child;
 	struct sysctldesc *d, *p, *plim;
 	char *desc;
-	size_t sz;
-	int rc, i;
+	size_t i, sz;
+	int rc;
 
 	sz = 128 * pnode->sysctl_clen;
 	name[namelen] = CTL_DESCRIBE;
@@ -1916,7 +1916,8 @@ display_struct(const struct sysctlnode *node, const char *name,
 static void
 hex_dump(const unsigned char *buf, size_t len)
 {
-	int i, j;
+	unsigned int i;
+	int j;
 	char line[80], tmp[12];
 
 	memset(line, ' ', sizeof(line));
@@ -2477,7 +2478,7 @@ machdep_diskinfo(HANDLER_ARGS)
 		char t = ':';
 		printf(" %.*s", (int)sizeof ni->ni_devname,
 		       ni->ni_devname);
-		for (b = 0; b < ni->ni_nmatches; t = ',', b++)
+		for (b = 0; b < (unsigned int)ni->ni_nmatches; t = ',', b++)
 			printf("%c%x", t,
 			       bi[ni->ni_biosmatches[b]].bi_dev);
 	}
