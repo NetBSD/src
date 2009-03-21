@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.84 2009/03/08 16:03:31 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.85 2009/03/21 14:41:29 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.84 2009/03/08 16:03:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.85 2009/03/21 14:41:29 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1079,8 +1079,10 @@ END(savectx)
  * Old call gate entry for syscall
  */
 IDTVEC(osyscall)
+	cli			# must be first instruction
 	pushfl			# set eflags in trap frame
 	popl	8(%esp)
+	orl	$PSL_I,(%esp)	# re-enable ints on return to user
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 IDTVEC_END(osyscall)
@@ -1095,6 +1097,7 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	STI(%eax)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
@@ -1181,6 +1184,7 @@ IDTVEC(svr4_fasttrap)
 	pushl	$2		# size of instruction for restart
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	STI(%eax)
 	pushl	$RW_READER
 	pushl	$_C_LABEL(svr4_fasttrap_lock)
 	call	_C_LABEL(rw_enter)
