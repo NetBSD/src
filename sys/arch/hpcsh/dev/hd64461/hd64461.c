@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.19 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.20 2009/03/21 03:13:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.19 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.20 2009/03/21 03:13:30 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.19 2008/04/28 20:23:22 martin Exp $");
 #include <hpcsh/dev/hd64461/hd64461var.h>
 
 /* HD64461 modules. INTC, TIMER, POWER modules are included in hd64461if */
-STATIC struct hd64461_module {
+STATIC const struct hd64461_module {
 	const char *name;
 } hd64461_modules[] = {
 	[HD64461_MODULE_VIDEO]		= { "hd64461video" },
@@ -54,8 +54,6 @@ STATIC struct hd64461_module {
 	[HD64461_MODULE_UART]		= { "hd64461uart" },
 	[HD64461_MODULE_FIR]		= { "hd64461fir" },
 };
-#define HD64461_NMODULE							\
-	(sizeof hd64461_modules / sizeof(struct hd64461_module))
 
 STATIC int hd64461_match(device_t, cfdata_t, void *);
 STATIC void hd64461_attach(device_t, device_t, void *);
@@ -80,7 +78,7 @@ hd64461_match(device_t parent, cfdata_t cf, void *aux)
 		return (0);	/* HD64461 only supports SH7709 interface */
 	}
 
-	if (strcmp("hd64461if", cf->cf_name))
+	if (strcmp("hd64461if", cf->cf_name) != 0)
 		return (0);
 
 	return (1);
@@ -90,7 +88,7 @@ STATIC void
 hd64461_attach(device_t parent, device_t self, void *aux)
 {
 	struct hd64461_attach_args ha;
-	struct hd64461_module *module;
+	const struct hd64461_module *module;
 	int i;
 
 	aprint_naive("\n");
@@ -101,9 +99,9 @@ hd64461_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* Attach all sub modules */
-	for (i = 0, module = hd64461_modules; i < HD64461_NMODULE;
-	    i++, module++) {
-		if (module->name == 0)
+	for (i = 0; i < __arraycount(hd64461_modules); ++i) {
+		module = &hd64461_modules[i];
+		if (module->name == NULL)
 			continue;
 		ha.ha_module_id = i;
 		config_found(self, &ha, hd64461_print);
