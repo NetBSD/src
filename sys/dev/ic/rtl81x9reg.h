@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.33 2008/12/08 03:24:08 alc Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.34 2009/03/21 07:58:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -475,6 +475,9 @@ struct re_desc {
 
 #define RE_TDESC_VLANCTL_TAG	0x00020000	/* Insert VLAN tag */
 #define RE_TDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
+#define RE_TDESC_VLANCTL_UDPCSUM 0x80000000	/* DESCV2 UDP cksum enable */
+#define RE_TDESC_VLANCTL_TCPCSUM 0x40000000	/* DESCV2 TCP cksum enable */
+#define RE_TDESC_VLANCTL_IPCSUM	0x20000000	/* DESCV2 IP hdr cksum enable */
 
 /*
  * Error bits are valid only on the last descriptor of a frame
