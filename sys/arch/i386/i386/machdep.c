@@ -1,12 +1,14 @@
-/*	$NetBSD: machdep.c,v 1.665 2009/03/16 09:37:35 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.666 2009/03/21 14:41:29 ad Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum, by Jason R. Thorpe of the Numerical Aerospace
- * Simulation Facility, NASA Ames Research Center and by Julio M. Merino Vidal.
+ * Simulation Facility NASA Ames Research Center, by Julio M. Merino Vidal,
+ * and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.665 2009/03/16 09:37:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.666 2009/03/21 14:41:29 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -535,7 +537,7 @@ i386_proc0_tss_ldt_init(void)
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
@@ -544,7 +546,7 @@ i386_proc0_tss_ldt_init(void)
 	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 #ifndef XEN
-	lldt(pcb->pcb_ldt_sel);
+	lldt(pmap_kernel()->pm_ldt_sel);
 #else
 	HYPERVISOR_fpu_taskswitch();
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
@@ -1516,18 +1518,17 @@ init386(paddr_t first_avail)
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
 		idt_vec_reserve(x);
-		setgate(&idt[x], IDTVEC(exceptions)[x], 0,
-		    (x == 7 || x == 16) ? SDT_SYS386IGT : SDT_SYS386TGT,
+		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 	}
 
 	/* new-style interrupt gate for syscalls */
 	idt_vec_reserve(128);
-	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
+	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 	idt_vec_reserve(0xd2);
-	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
+	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386IGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
