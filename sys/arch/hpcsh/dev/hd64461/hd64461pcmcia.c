@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.44 2009/03/21 02:02:39 uwe Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.45 2009/03/21 02:23:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.44 2009/03/21 02:02:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.45 2009/03/21 02:23:03 uwe Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -315,6 +315,9 @@ hd64461pcmcia_event_thread(void *arg)
 		}
 		splx(s);
 	}
+
+	sc->sc_event_thread = NULL;
+	kthread_exit(0);
 	/* NOTREACHED */
 }
 
