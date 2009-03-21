@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.59 2009/03/09 06:07:05 mrg Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.60 2009/03/21 13:06:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.59 2009/03/09 06:07:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.60 2009/03/21 13:06:39 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -188,35 +188,39 @@ db_show_all_vmems(db_expr_t addr, bool have_addr,
 }
 
 void
-db_dmesg(db_expr_t addr, bool haddr, db_expr_t count,
-    const char *modif)
+db_dmesg(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 {
-#ifdef _KERNEL	/* XXX CRASH(8) */
-	struct kern_msgbuf *mbp;
+	struct kern_msgbuf mb, *mbp;
 	db_expr_t print;
-	int ch, newl, skip, i;
-	char *p, *bufdata;
+	int newl, skip, i;
+	char *p, *bufdata, ch;
 
-        if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+	if (!db_read_int("msgbufenabled")) {
+		db_printf("message buffer not available\n");
+		return;
+	}
+	mbp = (struct kern_msgbuf *)db_read_ptr("msgbufp");
+	db_read_bytes((db_addr_t)mbp, sizeof(mb), (char *)&mb);
+	if (mb.msg_magic != MSG_MAGIC) {
 		db_printf("message buffer not available\n");
 		return;
 	}
 
-	mbp = msgbufp;
 	bufdata = &mbp->msg_bufc[0];
 
-	if (haddr && addr < mbp->msg_bufs)
+	if (haddr && addr < mb.msg_bufs)
 		print = addr;
 	else
-		print = mbp->msg_bufs;
+		print = mb.msg_bufs;
 
-	for (newl = skip = i = 0, p = bufdata + mbp->msg_bufx;
-	    i < mbp->msg_bufs; i++, p++) {
-		if (p == bufdata + mbp->msg_bufs)
+	for (newl = skip = i = 0, p = bufdata + mb.msg_bufx;
+	    i < mb.msg_bufs; i++, p++) {
+		if (p == bufdata + mb.msg_bufs)
 			p = bufdata;
-		if (i < mbp->msg_bufs - print)
+		if (i < mb.msg_bufs - print) {
 			continue;
-		ch = *p;
+		}
+		db_read_bytes((db_addr_t)p, sizeof(ch), &ch);
 		/* Skip "\n<.*>" syslog sequences. */
 		if (skip) {
 			if (ch == '>')
@@ -234,7 +238,6 @@ db_dmesg(db_expr_t addr, bool haddr, db_expr_t count,
 	}
 	if (!newl)
 		db_printf("\n");
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.4 2005/12/11 12:24:30 christos Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.5 2009/03/21 13:06:39 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,9 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.4 2005/12/11 12:24:30 christos Exp $");
-
-#include "opt_ddb.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.5 2009/03/21 13:06:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -164,19 +162,3 @@ evcnt_detach(struct evcnt *ev)
 
 	TAILQ_REMOVE(&allevents, ev, ev_list);
 }
-
-#ifdef DDB
-void
-event_print(int full, void (*pr)(const char *, ...))
-{
-	struct evcnt *evp;
-
-	TAILQ_FOREACH(evp, &allevents, ev_list) {
-		if (evp->ev_count == 0 && !full)
-			continue;
-
-		(*pr)("evcnt type %d: %s %s = %lld\n", evp->ev_type,
-		    evp->ev_group, evp->ev_name, evp->ev_count);
-	}
-}
-#endif /* DDB */
