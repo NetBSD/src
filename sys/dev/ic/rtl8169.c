@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.108 2009/03/20 06:31:31 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.109 2009/03/21 07:58:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.108 2009/03/20 06:31:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.109 2009/03/21 07:58:30 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -592,20 +592,25 @@ re_attach(struct rtk_softc *sc)
 			break;
 		case RTK_HWREV_8168_SPIN1:
 			sc->sc_rev = 21;
+			sc->sc_quirk |= RTKQ_DESCV2;
 			break;
 		case RTK_HWREV_8168_SPIN2:
 			sc->sc_rev = 22;
+			sc->sc_quirk |= RTKQ_DESCV2;
 			break;
 		case RTK_HWREV_8168_SPIN3:
 			sc->sc_rev = 23;
+			sc->sc_quirk |= RTKQ_DESCV2;
 			break;
 		case RTK_HWREV_8168C:
 		case RTK_HWREV_8168C_SPIN2:
 			sc->sc_rev = 24;
+			sc->sc_quirk |= RTKQ_DESCV2;
 			break;
 		case RTK_HWREV_8102E:
 		case RTK_HWREV_8102EL:
 			sc->sc_rev = 25;
+			sc->sc_quirk |= RTKQ_DESCV2;
 			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
@@ -792,6 +797,15 @@ re_attach(struct rtk_softc *sc)
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_TSOv4;
+
+	/*
+	 * XXX
+	 * Still have no idea how to make TSO work on 8168C, 8168CP,
+	 * 8102E, 8111C and 8111CP.
+	 */
+	if ((sc->sc_quirk & RTKQ_DESCV2) != 0)
+		ifp->if_capabilities &= ~IFCAP_TSOv4;
+
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
 	ifp->if_snd.ifq_maxlen = RE_IFQ_MAXLEN;
@@ -1238,7 +1252,9 @@ re_rxeof(struct rtk_softc *sc)
 		/* Do RX checksumming */
 
 		/* Check IP header checksum */
-		if (rxstat & RE_RDESC_STAT_PROTOID) {
+		if ((rxstat & RE_RDESC_STAT_PROTOID) != 0 &&
+		    ((sc->sc_quirk & RTKQ_DESCV2) == 0 ||
+		     (rxvlan & RE_PROTOID_IP) != 0)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
@@ -1453,6 +1469,7 @@ re_start(struct ifnet *ifp)
 		 * chip. I'm not sure if this is a requirement or a bug.)
 		 */
 
+		vlanctl = 0;
 		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
 			uint32_t segsz = m->m_pkthdr.segsz;
 
@@ -1468,12 +1485,28 @@ re_start(struct ifnet *ifp)
 			if ((m->m_pkthdr.csum_flags &
 			    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4))
 			    != 0) {
-				re_flags |= RE_TDESC_CMD_IPCSUM;
-				if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
-					re_flags |= RE_TDESC_CMD_TCPCSUM;
-				} else if (m->m_pkthdr.csum_flags &
-				    M_CSUM_UDPv4) {
-					re_flags |= RE_TDESC_CMD_UDPCSUM;
+				if ((sc->sc_quirk & RTKQ_DESCV2) == 0) {
+					re_flags |= RE_TDESC_CMD_IPCSUM;
+					if (m->m_pkthdr.csum_flags &
+					    M_CSUM_TCPv4) {
+						re_flags |=
+						    RE_TDESC_CMD_TCPCSUM;
+					} else if (m->m_pkthdr.csum_flags &
+					    M_CSUM_UDPv4) {
+						re_flags |=
+						    RE_TDESC_CMD_UDPCSUM;
+					}
+				} else {
+					vlanctl |= RE_TDESC_VLANCTL_IPCSUM;
+					if (m->m_pkthdr.csum_flags &
+					    M_CSUM_TCPv4) {
+						vlanctl |=
+						    RE_TDESC_VLANCTL_TCPCSUM;
+					} else if (m->m_pkthdr.csum_flags &
+					    M_CSUM_UDPv4) {
+						vlanctl |=
+						    RE_TDESC_VLANCTL_UDPCSUM;
+					}
 				}
 			}
 		}
@@ -1497,7 +1530,8 @@ re_start(struct ifnet *ifp)
 		nsegs = map->dm_nsegs;
 		pad = false;
 		if (__predict_false(m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
-		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0)) {
+		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0 &&
+		    (sc->sc_quirk & RTKQ_DESCV2) == 0)) {
 			pad = true;
 			nsegs++;
 		}
@@ -1525,9 +1559,8 @@ re_start(struct ifnet *ifp)
 		 * appear in all descriptors of a multi-descriptor
 		 * transmission attempt.
 		 */
-		vlanctl = 0;
 		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL)
-			vlanctl = bswap16(VLAN_TAG_VALUE(mtag)) |
+			vlanctl |= bswap16(VLAN_TAG_VALUE(mtag)) |
 			    RE_TDESC_VLANCTL_TAG;
 
 		/*
@@ -1861,8 +1894,7 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 		/*
 		 * According to FreeBSD, 8102E/8102EL use a different DMA
 		 * descriptor format. 8168C/8111C requires touching additional
-		 * magic registers. Depending on MAC revisions some controllers
-		 * need to disable checksum offload.
+		 * magic registers.
 		 *
 		 * Disable jumbo frames for those parts.
 		 */
