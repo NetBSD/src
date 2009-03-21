@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2009/03/21 14:41:30 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2009/03/21 14:48:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2009/03/21 14:41:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2009/03/21 14:48:02 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2352,7 +2352,7 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 
  	/* Copy the LDT, if necessary. */
  	if (pmap1->pm_ldt != NULL) {
-		if (len != pmap1->pm_ldt_len * sizeof(union descriptor)) {
+		if (len != pmap1->pm_ldt_len) {
 			if (len != -1) {
 				ldt_free(sel);
 				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
