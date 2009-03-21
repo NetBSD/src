@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.44 2009/03/21 09:18:06 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.45 2009/03/21 10:05:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -191,6 +191,7 @@ struct rtk_softc {
 #define RTKQ_MACLDPS		0x00000010	/* has LDPS register */
 #define RTKQ_DESCV2		0x00000020	/* has V2 TX/RX descriptor */
 #define RTKQ_NOJUMBO		0x00000040	/* no jumbo MTU support */
+#define RTKQ_NOEECMD		0x00000080	/* unusable EEPROM command */
 
 	bus_dma_tag_t 		sc_dmat;
 
