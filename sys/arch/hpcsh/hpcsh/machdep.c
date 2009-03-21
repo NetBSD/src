@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2009/03/21 03:51:41 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2009/03/21 03:51:41 uwe Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -626,7 +626,7 @@ intc_intr(int ssr, int spc, int ssp)
 		int cause = r & hd6446x_ienable;
 		struct hd6446x_intrhand *hh = &hd6446x_intrhand[ffs(cause) - 1];
 		if (cause == 0) {
-			printf("masked HD6446x interrupt.0x%04x\n", r);
+			printf("masked HD6446x interrupt 0x%04x\n", r);
 			_reg_write_2(HD6446X_NIRR, 0x0000);
 			return;
 		}
