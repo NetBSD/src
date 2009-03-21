@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.16 2009/03/14 15:36:07 dsl Exp $ */
+/* $NetBSD: kvm86.c,v 1.17 2009/03/21 14:41:29 ad Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.16 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.17 2009/03/21 14:41:29 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -113,11 +113,13 @@ kvm86_init()
 		vmd->iomap[i] = 0;
 	tss->tss_iobase = ((char *)vmd->iomap - (char *)tss) << 16;
 
+	/* setup TSS descriptor (including our iomap) */
+	mutex_enter(&cpu_lock);
 	slot = gdt_get_slot();
 	kvm86_tss_sel = GSEL(slot, SEL_KPL);
-	/* setup TSS descriptor (including our iomap) */
 	setgdt(slot, tss, sizeof(*tss) + sizeof(vmd->iomap) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	mutex_exit(&cpu_lock);
 
 	/* prepare VM for BIOS calls */
 	kvm86_mapbios(vmd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 2009/02/26 13:56:46 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.129 2009/03/21 14:41:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2009/02/26 13:56:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2009/03/21 14:41:29 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1685,7 +1685,7 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 	if (((gr[_REG_RFLAGS] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
 
-	if (__predict_false((pmap->pm_flags & PMF_USER_LDT) != 0)) {
+	if (__predict_false(pmap->pm_ldt != NULL)) {
 		error = valid_user_selector(l, gr[_REG_ES], NULL, 0);
 		if (error != 0)
 			return error;
@@ -1777,7 +1777,7 @@ memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
 		if (ldtp != NULL) {
 			dt = ldtp;
 			len = llen;
-		} else if (pmap->pm_flags & PMF_USER_LDT) {
+		} else if (pmap->pm_ldt != NULL) {
 			len = pmap->pm_ldt_len; /* XXX broken */
 			dt = (char *)pmap->pm_ldt;
 		} else {
