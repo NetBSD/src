@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.109 2009/03/21 07:58:30 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.110 2009/03/21 09:18:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.109 2009/03/21 07:58:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.110 2009/03/21 09:18:06 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -589,33 +589,52 @@ re_attach(struct rtk_softc *sc)
 			break;
 		case RTK_HWREV_8101E:
 			sc->sc_rev = 11;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168_SPIN1:
 			sc->sc_rev = 21;
 			sc->sc_quirk |= RTKQ_DESCV2;
+			/*
+			 * From FreeBSD driver:
+			 * 
+			 * These (8168/8111) controllers support jumbo frame
+			 * but it seems that enabling it requires touching
+			 * additional magic registers. Depending on MAC
+			 * revisions some controllers need to disable
+			 * checksum offload. So disable jumbo frame until
+			 * I have better idea what it really requires to
+			 * make it support.
+			 * RTL8168C/CP : supports up to 6KB jumbo frame.
+			 * RTL8111C/CP : supports up to 9KB jumbo frame.
+			 */
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168_SPIN2:
 			sc->sc_rev = 22;
 			sc->sc_quirk |= RTKQ_DESCV2;
+			sc->sc_quirk |= RTKQ_NOJUMBO;	/* see above */
 			break;
 		case RTK_HWREV_8168_SPIN3:
 			sc->sc_rev = 23;
 			sc->sc_quirk |= RTKQ_DESCV2;
+			sc->sc_quirk |= RTKQ_NOJUMBO;	/* see above */
 			break;
 		case RTK_HWREV_8168C:
 		case RTK_HWREV_8168C_SPIN2:
 			sc->sc_rev = 24;
 			sc->sc_quirk |= RTKQ_DESCV2;
+			sc->sc_quirk |= RTKQ_NOJUMBO;	/* see above */
 			break;
 		case RTK_HWREV_8102E:
 		case RTK_HWREV_8102EL:
 			sc->sc_rev = 25;
-			sc->sc_quirk |= RTKQ_DESCV2;
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
 			/* XXX not in the Realtek driver */
 			sc->sc_rev = 0;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
@@ -627,6 +646,8 @@ re_attach(struct rtk_softc *sc)
 		sc->re_rxlenmask = RE_RDESC_STAT_GFRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8169;
 	} else {
+		sc->sc_quirk |= RTKQ_NOJUMBO;
+
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_FRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
@@ -1892,13 +1913,9 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 	switch (command) {
 	case SIOCSIFMTU:
 		/*
-		 * According to FreeBSD, 8102E/8102EL use a different DMA
-		 * descriptor format. 8168C/8111C requires touching additional
-		 * magic registers.
-		 *
-		 * Disable jumbo frames for those parts.
+		 * Disable jumbo frames if it's not supported.
 		 */
-		if ((sc->sc_rev == 24 || sc->sc_rev == 25) &&
+		if ((sc->sc_quirk & RTKQ_NOJUMBO) != 0 &&
 		    ifr->ifr_mtu > ETHERMTU) {
 			error = EINVAL;
 			break;
