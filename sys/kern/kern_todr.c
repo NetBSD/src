@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.28 2009/02/14 20:45:29 christos Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.29 2009/03/21 15:01:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.28 2009/02/14 20:45:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.29 2009/03/21 15:01:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -170,8 +170,9 @@ inittodr(time_t base)
 				    deltat / SECDAY);
 				badrtc = 1;
 			} else {
-				printf("WARNING: clock gained %d days\n",
-				    deltat / SECDAY);
+				aprint_verbose("WARNING: clock gained %d "
+				    "days\n", deltat / SECDAY);
+				goodtime = 1;
 			}
 		} else {
 			goodtime = 1;

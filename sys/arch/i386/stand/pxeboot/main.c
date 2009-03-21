@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2009/03/14 14:46:00 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2009/03/21 15:01:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -75,10 +75,18 @@ const struct bootblk_command commands[] = {
 	{ NULL,		NULL },
 };
 
+static void
+clearit(void)
+{
+
+	if (bootconf.clear)
+		clear_pc_screen();
+}
+
 static int 
 bootit(const char *filename, int howto)
 {
-	if (exec_netbsd(filename, 0, howto, 0) < 0)
+	if (exec_netbsd(filename, 0, howto, 0, clearit) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
@@ -91,9 +99,7 @@ print_banner(void)
 	int base = getbasemem();
 	int ext = getextmem();
 
-	if (bootconf.clear)
-		clear_pc_screen();
-
+	clearit();
 	printf("\n"
 	       ">> NetBSD/x86 PXE boot, Revision %s (from NetBSD %s)\n"
 	       ">> Memory: %d/%d k\n",
