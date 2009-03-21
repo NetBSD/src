@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2009/03/18 10:22:30 cegger Exp $	 */
+/*	$NetBSD: main.c,v 1.17 2009/03/21 15:01:56 ad Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -64,7 +64,7 @@ const struct bootblk_command commands[] = {
 int 
 bootit(const char *filename, int howto)
 {
-	if (exec_netbsd(filename, 0, howto, 0) < 0)
+	if (exec_netbsd(filename, 0, howto, 0, clear_pc_screen) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
