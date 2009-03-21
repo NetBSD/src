@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.15 2009/02/22 15:08:58 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2009/03/21 13:02:19 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,20 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * TODO:
- *
- * - Tracking of times for sleep locks is broken.
- * - Need better analysis and tracking of events.
- * - Shouldn't have to parse the namelist here.  We should use something like
- *   FreeBSD's libelf.
- * - The way the namelist is searched sucks, is it worth doing something
- *   better?
- */
-
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.15 2009/02/22 15:08:58 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2009/03/21 13:02:19 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -129,6 +118,13 @@ const name_t alltypes[] = {
 	{ NULL, 0 }
 };
 
+const name_t xtypes[] = {
+	{ "Spin", LB_SPIN },
+	{ "Sleep (writer)", LB_SLEEP1 },
+	{ "Sleep (reader)", LB_SLEEP2 },
+	{ NULL, 0 }
+};
+
 locklist_t	locklist;
 locklist_t	freelist;
 locklist_t	sortlist;
@@ -139,6 +135,7 @@ bool		lflag;
 bool		fflag;
 int		nbufs;
 bool		cflag;
+bool		xflag;
 int		lsfd;
 int		displayed;
 int		bin64;
@@ -183,7 +180,7 @@ main(int argc, char **argv)
 	mflag = false;
 	Mflag = false;
 
-	while ((ch = getopt(argc, argv, "E:F:L:MN:T:b:ceflmo:pst")) != -1)
+	while ((ch = getopt(argc, argv, "E:F:L:MN:T:b:ceflmo:pstx")) != -1)
 		switch (ch) {
 		case 'E':
 			eventtype = matchname(eventnames, optarg);
@@ -234,6 +231,9 @@ main(int argc, char **argv)
 			break;
 		case 't':
 			listnames(locknames);
+			break;
+		case 'x':
+			xflag = true;
 			break;
 		default:
 			usage();
@@ -370,14 +370,13 @@ main(int argc, char **argv)
 	}
 	putc('\n', outfp);
 
-	for (name = alltypes; name->name != NULL; name++) {
+	for (name = xflag ? xtypes : alltypes; name->name != NULL; name++) {
 		if (eventtype != -1 &&
 		    (name->mask & LB_EVENT_MASK) != eventtype)
 			continue;
 		if (locktype != -1 &&
 		    (name->mask & LB_LOCK_MASK) != locktype)
 			continue;
-
 		display(name->mask, name->name);
 	}
 
@@ -408,7 +407,8 @@ usage(void)
 	    "-p\t\tshow average count/time per CPU, not total\n"
 	    "-s\t\tshow average count/time per second, not total\n"
 	    "-T type\t\tdisplay only one type of lock\n"
-	    "-t\t\tlist lock types\n",
+	    "-t\t\tlist lock types\n"
+	    "-x\t\tdon't differentiate event types\n",
 	    getprogname(), getprogname());
 
 	exit(EXIT_FAILURE);
@@ -607,8 +607,9 @@ makelists(int mask, int event)
 	type = mask & LB_LOCK_MASK;
 
 	for (lb = bufs, max = bufs + nbufs; lb < max; lb++) {
-		if ((lb->lb_flags & LB_LOCK_MASK) != type ||
-		    lb->lb_counts[event] == 0)
+		if (!xflag && (lb->lb_flags & LB_LOCK_MASK) != type)
+			continue;
+		if (lb->lb_counts[event] == 0)
 			continue;
 
 		/*
