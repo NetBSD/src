@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.43 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.44 2009/03/21 02:02:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.43 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.44 2009/03/21 02:02:39 uwe Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -264,19 +264,14 @@ hd64461pcmcia_attach(device_t parent, device_t self, void *aux)
 #endif
 	/* Channel 0/1 common CSC event queue */
 	SIMPLEQ_INIT (&sc->sc_event_head);
+
 	error = kthread_create(PRI_NONE, 0, NULL,
 			       hd64461pcmcia_event_thread, sc,
 			       &sc->sc_event_thread,
 			       "%s", device_xname(self));
 	KASSERT(error == 0);
 
-#if !defined(HD64461PCMCIA_REORDER_ATTACH)
-	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
-	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
-#else
-	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
-	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
-#endif
+	config_pending_incr();
 }
 
 STATIC void
@@ -285,6 +280,15 @@ hd64461pcmcia_event_thread(void *arg)
 	struct hd64461pcmcia_softc *sc = arg;
 	struct hd64461pcmcia_event *pe;
 	int s;
+
+#if !defined(HD64461PCMCIA_REORDER_ATTACH)
+	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
+	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
+#else
+	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
+	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
+#endif
+	config_pending_decr();
 
 	while (!sc->sc_shutdown) {
 		tsleep(sc, PWAIT, "CSC wait", 0);
