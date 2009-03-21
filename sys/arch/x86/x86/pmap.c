@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2009/03/14 15:36:15 dsl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2009/03/21 14:41:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2009/03/14 15:36:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2009/03/21 14:41:30 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -173,6 +173,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2009/03/14 15:36:15 dsl Exp $");
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm.h>
 
@@ -2274,7 +2275,7 @@ pmap_destroy(struct pmap *pmap)
 	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
 
 #ifdef USER_LDT
-	if (pmap->pm_flags & PMF_USER_LDT) {
+	if (pmap->pm_ldt != NULL) {
 		/*
 		 * no need to switch the LDT; this address space is gone,
 		 * nothing is using it.
@@ -2282,9 +2283,11 @@ pmap_destroy(struct pmap *pmap)
 		 * No need to lock the pmap for ldt_free (or anything else),
 		 * we're the last one to use it.
 		 */
+		mutex_enter(&cpu_lock);
 		ldt_free(pmap->pm_ldt_sel);
+		mutex_exit(&cpu_lock);
 		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
-		    pmap->pm_ldt_len * sizeof(union descriptor), UVM_KMF_WIRED);
+		    pmap->pm_ldt_len, UVM_KMF_WIRED);
 	}
 #endif
 
@@ -2322,60 +2325,94 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 	size_t len;
 	int sel;
 
+	if (__predict_true(pmap1->pm_ldt == NULL)) {
+		return;
+	}
+
  retry:
-	if (pmap1->pm_flags & PMF_USER_LDT) {
-		len = pmap1->pm_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
-		    len, 0, UVM_KMF_WIRED);
+	if (pmap1->pm_ldt != NULL) {
+		len = pmap1->pm_ldt_len;
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len, 0,
+		    UVM_KMF_WIRED);
+		mutex_enter(&cpu_lock);
 		sel = ldt_alloc(new_ldt, len);
+		if (sel == -1) {
+			mutex_exit(&cpu_lock);
+			uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
+			    UVM_KMF_WIRED);
+			printf("WARNING: pmap_fork: unable to allocate LDT\n");
+			return;
+		}
 	} else {
 		len = -1;
 		new_ldt = NULL;
 		sel = -1;
-	}
-
-	if ((uintptr_t) pmap1 < (uintptr_t) pmap2) {
-		mutex_enter(&pmap1->pm_lock);
-		mutex_enter(&pmap2->pm_lock);
-	} else {
-		mutex_enter(&pmap2->pm_lock);
-		mutex_enter(&pmap1->pm_lock);
+		mutex_enter(&cpu_lock);
 	}
 
  	/* Copy the LDT, if necessary. */
- 	if (pmap1->pm_flags & PMF_USER_LDT) {
+ 	if (pmap1->pm_ldt != NULL) {
 		if (len != pmap1->pm_ldt_len * sizeof(union descriptor)) {
-			mutex_exit(&pmap2->pm_lock);
-			mutex_exit(&pmap1->pm_lock);
 			if (len != -1) {
 				ldt_free(sel);
 				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
 				    len, UVM_KMF_WIRED);
 			}
+			mutex_exit(&cpu_lock);
 			goto retry;
 		}
   
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
-		pmap2->pm_flags |= PMF_USER_LDT;
 		pmap2->pm_ldt_sel = sel;
 		len = -1;
 	}
-
-	mutex_exit(&pmap2->pm_lock);
-	mutex_exit(&pmap1->pm_lock);
 
 	if (len != -1) {
 		ldt_free(sel);
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
 		    UVM_KMF_WIRED);
 	}
+	mutex_exit(&cpu_lock);
 #endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
 
 #ifdef USER_LDT
+
+/*
+ * pmap_ldt_xcall: cross call used by pmap_ldt_sync.  if the named pmap
+ * is active, reload LDTR.
+ */
+static void
+pmap_ldt_xcall(void *arg1, void *arg2)
+{
+	struct pmap *pm;
+
+	kpreempt_disable();
+	pm = arg1;
+	if (curcpu()->ci_pmap == pm) {
+		lldt(pm->pm_ldt_sel);
+	}
+	kpreempt_enable();
+}
+
+/*
+ * pmap_ldt_sync: LDT selector for the named pmap is changing.  swap
+ * in the new selector on all CPUs.
+ */
+void
+pmap_ldt_sync(struct pmap *pm)
+{
+	uint64_t where;
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	where = xc_broadcast(0, pmap_ldt_xcall, pm, NULL);
+	xc_wait(where);
+}
+
 /*
  * pmap_ldt_cleanup: if the pmap has a local LDT, deallocate it, and
  * restore the default.
@@ -2384,35 +2421,28 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 void
 pmap_ldt_cleanup(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
-	union descriptor *old_ldt = NULL;
+	union descriptor *dp = NULL;
 	size_t len = 0;
 	int sel = -1;
 
-	mutex_enter(&pmap->pm_lock);
-	kpreempt_disable();
-
-	if (pmap->pm_flags & PMF_USER_LDT) {
-		sel = pmap->pm_ldt_sel;
-		pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
-		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (l == curlwp)
-			lldt(pcb->pcb_ldt_sel);
-		old_ldt = pmap->pm_ldt;
-		len = pmap->pm_ldt_len * sizeof(union descriptor);
-		pmap->pm_ldt = NULL;
-		pmap->pm_ldt_len = 0;
-		pmap->pm_flags &= ~PMF_USER_LDT;
+	if (__predict_true(pmap->pm_ldt == NULL)) {
+		return;
 	}
 
-	kpreempt_enable();
-	mutex_exit(&pmap->pm_lock);
-
-	if (sel != -1)
+	mutex_enter(&cpu_lock);
+	if (pmap->pm_ldt != NULL) {
+		sel = pmap->pm_ldt_sel;
+		dp = pmap->pm_ldt;
+		len = pmap->pm_ldt_len;
+		pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
+		pmap->pm_ldt = NULL;
+		pmap->pm_ldt_len = 0;
+		pmap_ldt_sync(pmap);
 		ldt_free(sel);
-	if (old_ldt != NULL)
-		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len, UVM_KMF_WIRED);
+		uvm_km_free(kernel_map, (vaddr_t)dp, len, UVM_KMF_WIRED);
+	}
+	mutex_exit(&cpu_lock);
 }
 #endif /* USER_LDT */
 
@@ -2460,8 +2490,6 @@ pmap_activate(struct lwp *l)
 		}
 
 		pcb = &l->l_addr->u_pcb;
-		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-
 		ci->ci_want_pmapload = 1;
 
 #if defined(__x86_64__)
@@ -2564,10 +2592,7 @@ pmap_load(void)
 	pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	KASSERT(pmap != pmap_kernel());
 	oldpmap = ci->ci_pmap;
-
 	pcb = &l->l_addr->u_pcb;
-	/* loaded by pmap_activate */
-	KASSERT(pcb->pcb_ldt_sel == pmap->pm_ldt_sel);
 
 	if (pmap == oldpmap) {
 		if (!pmap_reactivate(pmap)) {
@@ -2674,11 +2699,11 @@ pmap_load(void)
 	/* lldt() does pmap_pte_flush() */
 #else /* XEN */
 #if defined(i386)
-	ci->ci_tss.tss_ldt = pcb->pcb_ldt_sel;
+	ci->ci_tss.tss_ldt = pmap->pm_ldt_sel;
 	ci->ci_tss.tss_cr3 = pcb->pcb_cr3;
 #endif
 #endif /* XEN */
-	lldt(pcb->pcb_ldt_sel);
+	lldt(pmap->pm_ldt_sel);
 #ifdef PAE
 	{
 	paddr_t l3_pd = xpmap_ptom_masked(pmap_l3paddr);
