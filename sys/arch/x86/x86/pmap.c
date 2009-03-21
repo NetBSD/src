@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2009/03/21 14:48:02 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2009/03/21 22:55:08 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2009/03/21 14:48:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2009/03/21 22:55:08 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -357,6 +357,12 @@ static vaddr_t pmap_maxkvaddr;
 #define	PMAP_SUBOBJ_LOCK(pm, idx)	/* nothing */
 #define	PMAP_SUBOBJ_UNLOCK(pm, idx)	/* nothing */
 #endif /* defined(DIAGNOSTIC) */
+
+/*
+ * Misc. event counters.
+ */
+struct evcnt pmap_iobmp_evcnt;
+struct evcnt pmap_ldt_evcnt;
 
 /*
  * Global TLB shootdown mailbox.
@@ -1612,9 +1618,15 @@ void
 pmap_cpu_init_late(struct cpu_info *ci)
 {
 
-	if (ci == &cpu_info_primary)
+	if (ci == &cpu_info_primary) {
 		evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "global", "TLB IPI");
+		evcnt_attach_dynamic(&pmap_iobmp_evcnt, EVCNT_TYPE_MISC,
+		    NULL, "x86", "io bitmap copy");
+		evcnt_attach_dynamic(&pmap_ldt_evcnt, EVCNT_TYPE_MISC,
+		    NULL, "x86", "ldt sync");
+	}
+
 	evcnt_attach_dynamic(&ci->ci_tlb_evcnt, EVCNT_TYPE_MISC,
 	    NULL, device_xname(ci->ci_dev), "TLB IPI");
 }
@@ -2409,6 +2421,7 @@ pmap_ldt_sync(struct pmap *pm)
 
 	KASSERT(mutex_owned(&cpu_lock));
 
+	pmap_ldt_evcnt.ev_count++;
 	where = xc_broadcast(0, pmap_ldt_xcall, pm, NULL);
 	xc_wait(where);
 }

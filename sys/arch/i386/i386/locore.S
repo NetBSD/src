@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.85 2009/03/21 14:41:29 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.86 2009/03/21 22:55:08 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.85 2009/03/21 14:41:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.86 2009/03/21 22:55:08 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1047,6 +1047,7 @@ ENTRY(cpu_switchto)
 
 .Lcopy_iobitmap:
 	/* Copy I/O bitmap. */
+	incl	_C_LABEL(pmap_iobmp_evcnt)+EV_COUNT
 	movl	$(IOMAPSIZE/4),%ecx
 	pushl	%esi
 	pushl	%edi
