@@ -61,7 +61,6 @@
 
 	* fix missing/incorrect prototypes
 
->>>>>>> 1.1.1.2
 2008-09-17  Christos Zoulas <christos@zoulas.com>
 
 	* fix manual page section issues (sorting, non-existant)
