@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.38 2009/03/14 12:23:28 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.39 2009/03/21 10:48:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.38 2009/03/14 12:23:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.39 2009/03/21 10:48:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1294,7 +1294,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			ptp->wire_count++;
 	}
 
-	if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pa)))) {
+	if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(pa))) {
 		mutex_enter(&pg->mdpage.pvh_lock);
 
 		if (!pve && !(pve = pmap_pv_alloc())) {
