@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2009/03/09 11:34:37 tsutsui Exp $
+# $NetBSD: Makefile,v 1.41 2009/03/21 22:41:57 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -72,7 +72,7 @@ SUBDIR+=	macppc_mkboothfs macppc_installboot
 
 ##### Default paths for programs #####
 
-MKISOFS?=	/usr/pkg/bin/mkisofs
+MKISOFS?=	/usr/local/bin/mkisofs
 RSYNC?=		/usr/pkg/bin/rsync
 ALPHA_IBOOT?=	${TOOL_INSTALLBOOT} -m alpha -o sunsum,append
 PMAX_IBOOT?=	${TOOL_INSTALLBOOT} -m pmax -o sunsum,append
