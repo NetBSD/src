@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.51 2009/03/21 21:42:00 ad Exp $	*/
+/*	$NetBSD: segments.h,v 1.52 2009/03/21 22:17:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -320,8 +320,8 @@ void idt_vec_free(int);
 #define GTRAPTSS_SEL	18
 #define GIPITSS_SEL	19
 #define GUCODEBIG_SEL	20	/* User code with executable stack */
-#define	GUFS_SEL	21
-#define	GUGS_SEL	22
+#define	GUFS_SEL	21	/* Per-thread %fs */
+#define	GUGS_SEL	22	/* Per-thread %gs */
 #define	NGDT		23
 
 /*
