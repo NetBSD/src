@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.39 2009/03/15 16:43:55 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.40 2009/03/21 01:11:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.39 2009/03/15 16:43:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.40 2009/03/21 01:11:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +208,7 @@ ptyfs_done(void)
 	malloc_type_detach(M_PTYFSMNT);
 }
 
+#define OSIZE sizeof(struct { int f; gid_t g; mode_t m; })
 /*
  * Mount the Pseudo tty params filesystem
  */
@@ -219,7 +220,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args *args = data;
 
-	if (*data_len < sizeof *args)
+	if (*data_len != sizeof *args && *data_len != OSIZE)
 		return EINVAL;
 
 	if (UIO_MX & (UIO_MX - 1)) {
@@ -237,8 +238,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			args->flags = pmnt->pmnt_flags;
 			*data_len = sizeof *args;
 		} else {
-			*data_len = 
-			    sizeof(struct { int f; gid_t g; mode_t m; });
+			*data_len = OSIZE;
 		}
 		return 0;
 	}
@@ -250,7 +250,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
 
-	if (args->version != PTYFS_ARGSVERSION)
+	if (args->version > PTYFS_ARGSVERSION)
 		return EINVAL;
 
 	pmnt = malloc(sizeof(struct ptyfsmount), M_PTYFSMNT, M_WAITOK);
