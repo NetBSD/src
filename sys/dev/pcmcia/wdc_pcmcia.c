@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.113 2009/02/06 13:43:11 drochner Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.114 2009/03/21 12:35:17 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.113 2009/02/06 13:43:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.114 2009/03/21 12:35:17 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -352,8 +352,19 @@ wdc_pcmcia_enable(struct device *self, int onoff)
 	struct wdc_pcmcia_softc *sc = device_private(self);
 	int error;
 
+#if 1
+	/*
+	 * XXX temporary kludge: we need to allow enabling while (cold)
+	 * for some hpc* ports which attach pcmcia devices too early.
+	 * This is problematic because pcmcia code uses tsleep() in
+	 * the attach code path, but it seems to work somehow.
+	 */
+	if (doing_shutdown)
+		return (EIO);
+#else
 	if (cold || doing_shutdown)
 		return (EIO);
+#endif
 
 	if (onoff) {
 		/* Establish the interrupt handler. */
