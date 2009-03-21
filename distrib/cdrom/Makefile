@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.41 2009/03/21 22:41:57 tsutsui Exp $
+# $NetBSD: Makefile,v 1.42 2009/03/21 23:52:38 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -223,9 +223,10 @@ INTFILES.${image}?=
 INTDIRS.${image}?=
 ADDFILES.${image}?=
 
+bports=			# empty first
 # For a source only cd just ignore the shared/ALL directory
 .if ${ports} != "source" && exists(${DISTRIBDIR}/shared/ALL)
-bports=			shared/ALL
+bports+=		shared/ALL
 .endif
 .for port in ${ports}					# {
 EXTFILES+=		${EXTFILES.${port}}
