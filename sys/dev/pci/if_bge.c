@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.158 2009/03/22 18:14:59 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.159 2009/03/22 18:54:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.158 2009/03/22 18:14:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.159 2009/03/22 18:54:59 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -522,6 +522,7 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5704_A1, "BCM5704 A1" },
 	{ BGE_CHIPID_BCM5704_A2, "BCM5704 A2" },
 	{ BGE_CHIPID_BCM5704_A3, "BCM5704 A3" },
+	{ BGE_CHIPID_BCM5704_B0, "BCM5704 B0" },
 	{ BGE_CHIPID_BCM5705_A0, "BCM5705 A0" },
 	{ BGE_CHIPID_BCM5705_A1, "BCM5705 A1" },
 	{ BGE_CHIPID_BCM5705_A2, "BCM5705 A2" },
@@ -532,6 +533,12 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5752_A0, "BCM5752 A0" },
 	{ BGE_CHIPID_BCM5752_A1, "BCM5752 A1" },
 	{ BGE_CHIPID_BCM5752_A2, "BCM5752 A2" },
+	{ BGE_CHIPID_BCM5714_A0, "BCM5714 A0" },
+	{ BGE_CHIPID_BCM5714_B0, "BCM5714 B0" },
+	{ BGE_CHIPID_BCM5714_B3, "BCM5714 B3" },
+	{ BGE_CHIPID_BCM5715_A0, "BCM5715 A0" },
+	{ BGE_CHIPID_BCM5715_A1, "BCM5715 A1" },
+	{ BGE_CHIPID_BCM5715_A3, "BCM5715 A3" },
 	{ BGE_CHIPID_BCM5755_A0, "BCM5755 A0" },
 	{ BGE_CHIPID_BCM5755_A1, "BCM5755 A1" },
 	{ BGE_CHIPID_BCM5755_A2, "BCM5755 A2" },
@@ -1610,7 +1617,8 @@ bge_chipinit(struct bge_softc *sc)
 		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
 		   (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
-		if (!(BGE_IS_5705_OR_BEYOND(sc)))
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 			dma_rw_ctl |= 0x0F;
 	}
 
@@ -1693,6 +1701,15 @@ bge_chipinit(struct bge_softc *sc)
 
 	/* Set the timer prescaler (always 66MHz) */
 	CSR_WRITE_4(sc, BGE_MISC_CFG, 65 << 1/*BGE_32BITTIME_66MHZ*/);
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		DELAY(40);	/* XXX */
+
+		/* Put PHY into ready state */
+		BGE_CLRBIT(sc, BGE_MISC_CFG, BGE_MISCCFG_EPHY_IDDQ);
+		CSR_READ_4(sc, BGE_MISC_CFG); /* Flush */
+		DELAY(40);
+	}
 
 	return (0);
 }
