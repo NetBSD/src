@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2009/03/21 23:52:38 tsutsui Exp $
+# $NetBSD: Makefile,v 1.43 2009/03/22 07:35:43 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -94,6 +94,7 @@ RSYNC_HOST?=	rsync.NetBSD.org
 # extra path for rsync mirrors ("/pub", "/netbsd" etc.)
 RSYNC_PATH_PREFIX?=
 
+.if !target(.BEGIN)
 .if ${RELEASE} == "current"
 # daily date dir name
 BRANCH?=	HEAD
@@ -108,6 +109,7 @@ RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD/${RELEASENAME}${RELEASE_SUFFIX}
 #DAILY_DIR?=	yyyymmddhhmmZ
 #BRANCH?=	netbsd-4
 #RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD-daily/${BRANCH}/${DAILY_DIR}
+.endif
 .endif
 
 RSYNC_SITE?=	rsync://${RSYNC_HOST}${RSYNC_PATH}
