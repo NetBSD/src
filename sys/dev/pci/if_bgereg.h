@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.48 2008/08/25 08:15:05 cegger Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.49 2009/03/22 16:20:06 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2447,9 +2447,13 @@ struct txdmamap_pool_entry {
 /*
  * Flags for bge_flags.
  */
-#define BGE_TXRING_VALID	0x0001
-#define BGE_RXRING_VALID	0x0002
-#define BGE_JUMBO_RXRING_VALID	0x0004
+#define BGE_TXRING_VALID	0x00000001
+#define BGE_RXRING_VALID	0x00000002
+#define BGE_JUMBO_RXRING_VALID	0x00000004
+#define BGE_RX_ALIGNBUG		0x00000008
+#define BGE_PCIX		0x00000020
+#define BGE_PCIE		0x00000040
+#define BGE_PHY_FIBER_TBI	0x00000800
 
 struct bge_softc {
 	device_t		bge_dev;
@@ -2463,14 +2467,10 @@ struct bge_softc {
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
 	u_int8_t		bge_extram;	/* has external SSRAM */
-	u_int8_t		bge_tbi;
-	u_int8_t		bge_rx_alignment_bug;
-	u_int8_t		bge_pcie;	/* on a PCI Express port */
 	u_int32_t		bge_return_ring_cnt;
 	u_int32_t		bge_tx_prodidx;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;
-	u_int32_t		bge_quirks;
 	u_int32_t		bge_local_ctrl_reg;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
