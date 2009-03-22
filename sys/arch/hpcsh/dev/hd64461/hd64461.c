@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.20 2009/03/21 03:13:30 uwe Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.21 2009/03/22 02:25:11 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.20 2009/03/21 03:13:30 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.21 2009/03/22 02:25:11 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.20 2009/03/21 03:13:30 uwe Exp $");
 #include <machine/intr.h>
 #include <machine/debug.h>
 
+#include <hpcsh/dev/hd64461/hd64461reg.h>
+#include <hpcsh/dev/hd64461/hd64461intcreg.h>
 #include <hpcsh/dev/hd64461/hd64461var.h>
 
 /* HD64461 modules. INTC, TIMER, POWER modules are included in hd64461if */
@@ -49,10 +51,12 @@ STATIC const struct hd64461_module {
 } hd64461_modules[] = {
 	[HD64461_MODULE_VIDEO]		= { "hd64461video" },
 	[HD64461_MODULE_PCMCIA]		= { "hd64461pcmcia" },
+	[HD64461_MODULE_UART]		= { "hd64461uart" },
+#if 0 /* there are no drivers, so don't bother */
 	[HD64461_MODULE_GPIO]		= { "hd64461gpio" },
 	[HD64461_MODULE_AFE]		= { "hd64461afe" },
-	[HD64461_MODULE_UART]		= { "hd64461uart" },
 	[HD64461_MODULE_FIR]		= { "hd64461fir" },
+#endif
 };
 
 STATIC int hd64461_match(device_t, cfdata_t, void *);
@@ -89,6 +93,7 @@ hd64461_attach(device_t parent, device_t self, void *aux)
 {
 	struct hd64461_attach_args ha;
 	const struct hd64461_module *module;
+	uint16_t stbcr;
 	int i;
 
 	aprint_naive("\n");
@@ -97,6 +102,20 @@ hd64461_attach(device_t parent, device_t self, void *aux)
 	if (bootverbose)
 		hd64461_info();
 #endif
+
+	stbcr = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
+
+	/* we don't use TIMER */
+	stbcr |= HD64461_SYSSTBCR_STM0ST | HD64461_SYSSTBCR_STM1ST;
+
+	/* no drivers for FIR and AFE */
+	stbcr |= HD64461_SYSSTBCR_SIRST
+		| HD64461_SYSSTBCR_SAFEST
+		| HD64461_SYSSTBCR_SAFECKE_IST
+		| HD64461_SYSSTBCR_SAFECKE_OST;
+
+	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, stbcr);
+
 
 	/* Attach all sub modules */
 	for (i = 0; i < __arraycount(hd64461_modules); ++i) {
@@ -122,9 +141,6 @@ hd64461_print(void *aux, const char *pnp)
 
 
 #ifdef DEBUG
-
-#include <hpcsh/dev/hd64461/hd64461reg.h>
-#include <hpcsh/dev/hd64461/hd64461intcreg.h>
 
 STATIC void
 hd64461_info(void)
