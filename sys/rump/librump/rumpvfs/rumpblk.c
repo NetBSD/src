@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.10 2009/03/19 03:05:14 uebayasi Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.11 2009/03/22 09:51:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.10 2009/03/19 03:05:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.11 2009/03/22 09:51:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,7 +55,7 @@ static struct rblkdev {
 	char *rblk_path;
 	int rblk_fd;
 	uint8_t *rblk_mem;
-	size_t rblk_size;
+	off_t rblk_size;
 
 	struct partition *rblk_curpi;
 	struct partition rblk_pi;
@@ -268,6 +268,30 @@ dostrategy(struct buf *bp)
 	int async, error;
 
 	off = bp->b_blkno << DEV_BSHIFT;
+	/*
+	 * Do bounds checking if we're working on a file.  Otherwise
+	 * invalid file systems might attempt to read beyond EOF.  This
+	 * is bad(tm) especially on mmapped images.  This is essentially
+	 * the kernel bounds_check() routines.
+	 */
+	if (rblk->rblk_size && off + bp->b_bcount > rblk->rblk_size) {
+		int64_t sz = rblk->rblk_size - off;
+
+		/* EOF */
+		if (sz == 0) {
+			rump_biodone(bp, 0, 0);
+			return;
+		}
+		/* beyond EOF ==> error */
+		if (sz < 0) {
+			rump_biodone(bp, 0, EINVAL);
+			return;
+		}
+
+		/* truncate to device size */
+		bp->b_bcount = sz;
+	}
+
 	async = bp->b_flags & B_ASYNC;
 	DPRINTF(("rumpblk_strategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64")\n",
@@ -277,6 +301,7 @@ dostrategy(struct buf *bp)
 	/* mem optimization?  handle here and return */
 	if (rblk->rblk_mem) {
 		uint8_t *ioaddr = rblk->rblk_mem + off;
+
 		if (BUF_ISREAD(bp)) {
 			memcpy(bp->b_data, ioaddr, bp->b_bcount);
 		} else {
