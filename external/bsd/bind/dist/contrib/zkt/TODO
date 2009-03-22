@@ -1,0 +1,37 @@
+TODO list as of zkt-0.97
+
+general:
+	Renaming of the tools to zkt-* ? 
+
+dnssec-zkt:
+ feat	option to specify the key age as remaining lifetime
+	(Option -i inverse age ?) As of v0.95 the key lifetime
+	is stored at the key itself, so this could be possibly
+	implemented without big effort(?).
+
+dnssec-signer:
+ bug	Distribute_Cmd will not work properly on dynamic zones
+
+ bug	Automatic KSK rollover of dynamic zones will only work if the parent
+ 	uses the standard name for the signed zonefile (zonefile.db.signed).
+
+ bug	Phase3 of manual ksk rollover do not trigger a resigning of the zone
+ 	(Key removal is not recognized by dosigning () function )
+
+ bug	There is no online checking of the key material by design.
+ 	So the signer command checks the status of the key as they
+	are represented in the file system and not in the zone.
+	The dnssec maintainer is responsible for the lifeliness of the
+	data in the hosted domain.
+	In other words: It's highly recommended to use the
+	option -r when you use dnssec-signer on a production zone.
+	Then the time of propagation is (more or less) equal to the timestamp
+	of the zone.db.signed file.
+
+ bug	The max_TTL and Key_TTL parameter should be set to the value found
+ 	in the zone. A mechanism for setting up a dnssec.conf file for the
+	zone specific TTL values is needed.
+
+dki:
+ feat	Use dynamic memory for dname in dki_t
+

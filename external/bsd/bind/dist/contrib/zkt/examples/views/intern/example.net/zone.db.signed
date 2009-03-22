@@ -1,0 +1,114 @@
+; File written on Fri Oct  3 01:00:38 2008
+; dnssec_signzone version 9.5.1b2
+example.net.		7200	IN SOA	ns1.example.net. hostmaster.example.net. (
+					1222988438 ; serial
+					43200      ; refresh (12 hours)
+					1800       ; retry (30 minutes)
+					1209600    ; expire (2 weeks)
+					7200       ; minimum (2 hours)
+					)
+			7200	RRSIG	SOA 5 2 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					EaJUHwT7koYW6b+W6LZ/1L3zXvs/SMSW+d94
+					PjdcgdSR4b8mhJetzWj2ZO/n5uy7CUl496Hx
+					RU+QoCF8K6HkVw== )
+			7200	NS	ns1.example.net.
+			7200	NS	ns2.example.net.
+			7200	RRSIG	NS 5 2 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					b0W8xa7AgV6IWMSYtVCuix1bEHeohx2oboqs
+					HqCrVPgd0OtYdSpxgcIJhLiUv/9ux9YihjKC
+					aKsw9D8YtpOmpg== )
+			7200	NSEC	localhost.example.net. NS SOA RRSIG NSEC DNSKEY
+			7200	RRSIG	NSEC 5 2 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					mHJnc/UsTztaTRWQCTVc7vgM8bt5mgFJTIlJ
+					52+Rn74uzak2fDTfR4jHEHCqsinx9EA+iAcN
+					2na44xgRs2dCNQ== )
+			1800	DNSKEY	256 3 5 (
+					BQEAAAABsMIdQ+yt52Q/OR1s+QPj7SuBydYb
+					11l0HC5kGIDp+JPQIQHxpyCWa/LaLgcvK3IA
+					1HR8YaO3QXB2LAHEz5B/CQ==
+					) ; key id = 5972
+			1800	DNSKEY	256 3 5 (
+					BQEAAAABzbx90CiFrOSh0/BkiRQYRC4rHL0Q
+					Qv96Qwy5/zuOa/3Zy9LcTpbE13DtEAqOfVGS
+					Q79S4WgKalFJxq6lSk0xrw==
+					) ; key id = 23375
+			1800	DNSKEY	256 3 5 (
+					BQEAAAAB1g5OlYFp03w9hVcucAfvd/zwaAMg
+					H3nDnWBT3BD75hEuz/Cb6YapmxaZybxc+EE/
+					Ts8bhXGqPEwoADjxfW1UFw==
+					) ; key id = 55745
+			1800	DNSKEY	257 3 5 (
+					BQEAAAABC+JLXRgWPqqGe0cta8CR95tz7Pkk
+					gRDlXyxESD+XkpVDkJ3Wey/1Lh7083Ve1WmI
+					uUAo3N4d7HjLgrFVZxiumGGRz/aV3s01OFFS
+					5JqIwF9BTNrNPGLPzzbBaQMHErO88HIbbg4s
+					ot7e6bSrtpAEf23MhZ3qZJC9+nN+DknmsgTE
+					6EpK6ZyUrZc64/0K68EWhtk1gf95NQEzTD4Q
+					grOD6IYqLw==
+					) ; key id = 126
+			1800	RRSIG	DNSKEY 5 2 1800 20081003220038 (
+					20081002220038 126 example.net.
+					CLKVhqz7zOAEyJrQq/WAEaRsnTfNEnCwYEMj
+					KPrAgiXXF+RJy18cHN7QoXb4kc8KA/TrOU1w
+					WN8IjdESlPj9pQKqUs/uO9RLzIcv6jOlOKQP
+					oKOjjnOxAL52+WNK94TUpunlvfd53ovC8YK4
+					/nOsSjpLoqTbmL1r45vqpL/C6jqJR8bTouwy
+					rjAYEtkWRND0QZ9R6IAHfxO6onmX1GOtu5Ji
+					ew== )
+			1800	RRSIG	DNSKEY 5 2 1800 20081003220038 (
+					20081002220038 23375 example.net.
+					WXsmdMkwYcvzrf8qevByn+BMPjTE8aEcze7q
+					uzZI+3NOcbZ4MMlAdauc6jhfc9xmgSiJu52q
+					EUX5JLL8xQ7tDg== )
+localhost.example.net.	7200	IN A	127.0.0.1
+			7200	RRSIG	A 5 3 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					FoSR7rfi2wfgEz5wj+qILnVwV7mAmL4XknQA
+					b1uGLJ8Wcnkn4sqjaISgfVwG/GVxwuBOuVne
+					SqXIFVVvKQtEUg== )
+			7200	NSEC	ns1.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					iwB4+BZVreVKVnmBZdVdz/NxRy1tyYpd0JgK
+					otoiLA6dESoC29tHQL/hBx92Q7lETZI+8gSE
+					II0sRQv+1PL+JQ== )
+ns1.example.net.	7200	IN A	192.168.1.53
+			7200	RRSIG	A 5 3 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					oBiQfEsq72v6NMONwgdewLtvNyH1K/Btz1b5
+					hEYqdoX1QpaduXlQNodFPf15PdwEp4v4FwZ0
+					rOtPt7kO4EQnww== )
+			7200	AAAA	fd12:63c:cdbb::53
+			7200	RRSIG	AAAA 5 3 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					mmNK/6aWk1nr7lWhVt9m6A9vgenngt1hsOxs
+					43jwarEb7SeYRanHMnML/g101mk7czXAiRxq
+					np4Cjs3lo1M/Bg== )
+			7200	NSEC	ns2.example.net. A AAAA RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					jTnbufp39i9n9cZwasJ6IsRwqWIIeTU1Z/wy
+					ECBmyYQlfAuYmWTYmX4BPsQ9SwFZVIICg40I
+					/BYlDBm7ihxUyw== )
+ns2.example.net.	7200	IN A	10.1.2.3
+			7200	RRSIG	A 5 3 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					Rdu1WWzZdPJ5CjfMd9n31XY6Df4NiO2wPnxy
+					Wp6x3EyLrABDdM95fwf8DBgjarppJNtOaV5j
+					Lr5CujYtAoXksA== )
+			7200	NSEC	sub.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					GcxFEovqwXtJ/tYRG4G4tNKyVY7Vg9HULhbj
+					JZfi8IlaR3bloMVMj2bHWhNQvvXTFY+N59UG
+					PNWE+krE+L4yfQ== )
+sub.example.net.	7200	IN NS	ns1.example.net.
+			7200	NSEC	example.net. NS RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20081003220038 (
+					20081002220038 23375 example.net.
+					SgCqYEbpzuCcVDLi5PcyUEG8qKm+EQ0lj3mz
+					uiSDDTh6OsCKOVqW8dKs15P8v3i5LDJwM/Eu
+					OaqT7RJgB2UOkQ== )

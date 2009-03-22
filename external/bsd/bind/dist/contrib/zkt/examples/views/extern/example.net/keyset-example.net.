@@ -1,0 +1,10 @@
+$ORIGIN .
+example.net		7200	IN DNSKEY 257 3 5 (
+					BQEAAAABDEEycfY6uqWNTpQO8ygi9xms6NOF
+					YGhCjijN109fVGJ4KDnIZtLhoFrOKru9rZn+
+					pyqurlyZG4vESg0BMty6xljVDlr/TegDYFTN
+					19mQuwvlasJhZPv9pjROPqQGnqLaw3O4OKCY
+					9HgTTPdXK1hQ4Mg2rNU4SM2Tu5ki91f5AQqi
+					XF8KYMics0mwVvpj5C2YTDvE9SafLrce68JM
+					6DaiC6E1sQ==
+					) ; key id = 23553
