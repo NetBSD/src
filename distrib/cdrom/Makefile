@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2009/03/22 07:35:43 tsutsui Exp $
+# $NetBSD: Makefile,v 1.44 2009/03/22 08:22:37 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -83,6 +83,22 @@ MACPPC_MKBOOTHFSDIR!= cd ${.CURDIR}/macppc_mkboothfs && ${PRINTOBJDIR}
 .endif
 .if !empty(ALL_PORTS:Msgimips)
 SGIMIPS_SGIVOL?=	${TOOLDIR}/bin/nbsgivol
+.endif
+
+check_mkisofs:
+.if !exists(${MKISOFS})
+	@echo "Error: File does not exist: ${MKISOFS}"
+	@echo "Please build and install mkisofs(8) utility and set MKISOFS in the environment"
+	@echo "or in site.conf to create image."
+	@false
+.endif
+
+check_rsync:
+.if !exists(${RSYNC})
+	@echo "Error: File does not exist: ${RSYNC}"
+	@echo "Please build and install rsync(1) utility and set RSYNC in the environment"
+	@echo "or in site.conf to fetch release binaries."
+	@false
 .endif
 
 ##### rsync settings #####
@@ -414,7 +430,7 @@ size-${image}: all-macppc_mkboothfs all-macppc_installboot
 
 SGIVOLHDR.size= 4096
 
-size-${image}: stage-${image} extfileprep fileprep-${image}
+size-${image}: stage-${image} extfileprep fileprep-${image} check_mkisofs
 .if !empty(BASE_PORTS.${image}:Mmacppc)
 	${MACPPC_MKBOOTHFSDIR}/macppc_mkboothfs ${MACPPC_MKBOOTHFSDIR}/boothfs
 .endif
@@ -449,7 +465,7 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 
 # Actually build the image with all the bootstrap goo....
 
-${IMAGEDIR}/${image}.iso: size-${image}
+${IMAGEDIR}/${image}.iso: size-${image} check_mkisofs
 	@sort -o ${contents.${image}} ${contents.${image}}
 .if defined(LOG_MKISOFS)
 	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -v -v . >${IMAGEDIR}/${image}.iso.log 2>&1
@@ -494,7 +510,7 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 
 .endfor		# image in ${CD_IMAGES}		# }
 
-fetch:
+fetch: check_rsync
 	@mkdir -p ${DISTRIBDIR}
 	@echo Fetching distributions....
 	${RSYNC} ${RSYNC_INCLUDE} ${RSYNC_ARGS} ${RSYNC_EXCLUDE} ${RSYNC_SITE}/ ${DISTRIBDIR}/
