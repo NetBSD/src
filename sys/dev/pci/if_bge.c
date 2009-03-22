@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.155 2009/01/30 15:01:19 he Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.156 2009/03/22 16:12:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.155 2009/01/30 15:01:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.156 2009/03/22 16:12:53 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -263,7 +263,6 @@ int	bge_tso_debug = 0;
 /* Various chip quirks. */
 #define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
 #define	BGE_QUIRK_CSUM_BROKEN		0x00000002
-#define	BGE_QUIRK_ONLY_PHY_1		0x00000004
 #define	BGE_QUIRK_5700_SMALLDMA		0x00000008
 #define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
 #define	BGE_QUIRK_PRODUCER_BUG		0x00000020
@@ -584,11 +583,16 @@ bge_miibus_readreg(device_t dev, int phy, int reg)
 	int i;
 
 	/*
-	 * Several chips with builtin PHYs will incorrectly answer to
-	 * other PHY instances than the builtin PHY at id 1.
+	 * Broadcom's own driver always assumes the internal
+	 * PHY is at GMII address 1. On some chips, the PHY responds
+	 * to accesses at all addresses, which could cause us to
+	 * bogusly attach the PHY 32 times at probe type. Always
+	 * restricting the lookup to address 1 is simpler than
+	 * trying to figure out which chips revisions should be
+	 * special-cased.
 	 */
-	if (phy != 1 && (sc->bge_quirks & BGE_QUIRK_ONLY_PHY_1))
-		return(0);
+	if (phy != 1)
+		return (0);
 
 	/* Reading with autopolling on may trigger PCI errors */
 	saved_autopoll = CSR_READ_4(sc, BGE_MI_MODE);
