@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.3 2009/03/21 22:54:30 tsutsui Exp $
+$NetBSD: README,v 1.4 2009/03/22 15:02:24 tsutsui Exp $
 
 This distrib/cdrom directory was used to create bootable CD images
 in the past releases with optional rsync(1) and mkisofs(8) tool.
@@ -15,6 +15,9 @@ On the other hand, the recent version of mkisofs(8) seems to use
 iconv(3) libraries on creating the hybrid ISO9660/HFS file system,
 but the latest mkisofs(8) (at least cdrtools-2.01.01.36) from pkgsrc
 dumps core on it. cdrtools-2.01 is required to build images. (PR pkg/37643)
+
+Note you can also use compiled release binaries prepared in RELEASEDIR by
+"build.sh release" if you need only single ISO image for a specific port.
 
 
 Environment variables:
@@ -83,3 +86,9 @@ make RELEASE=5.0 TARGET_CD_IMAGE=mac68kcd \
 
 make RELEASE=5.0 TARGET_CD_IMAGE=mac68kcd all
  -> build an ISO image for mac68k from downloaded files as the above
+
+make RELEASE=5.0 TARGET_CD_IMAGE=macppccd \
+    DISTRIBDIR=/usr/obj.macppc/releasedir all
+ -> build an ISO image for macppc from release binaries
+    built by "build.sh release" in the RELEASEDIR 
+    (use appropriate RELEASEDIR on your build environment)
