@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2009/03/22 08:22:37 tsutsui Exp $
+# $NetBSD: Makefile,v 1.45 2009/03/22 08:43:54 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -132,7 +132,8 @@ RSYNC_SITE?=	rsync://${RSYNC_HOST}${RSYNC_PATH}
 RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
-DISTRIBDIR?=	${.OBJDIR}/download
+DOWNLOADDIR?=	${.OBJDIR}/download
+DISTRIBDIR?=	${DOWNLOADDIR}
 STAGEDIR?=	${.OBJDIR}/staging
 IMAGEDIR?=	${.OBJDIR}
 EXTFILEDIR?=	${.OBJDIR}/extfiles
@@ -516,7 +517,7 @@ fetch: check_rsync
 	${RSYNC} ${RSYNC_INCLUDE} ${RSYNC_ARGS} ${RSYNC_EXCLUDE} ${RSYNC_SITE}/ ${DISTRIBDIR}/
 
 clean: cleanstagedir cleanimages
-cleandir distclean: cleandistribdir
+cleandir distclean: cleandownloaddir
 
 cleanimages:
 .for image in ${CD_IMAGES}
@@ -527,5 +528,5 @@ cleanimages:
 cleanstagedir:
 	-rm -rf ${STAGEDIR} ${EXTFILEDIR}
 
-cleandistribdir:
-	-rm -rf ${DISTRIBDIR}
+cleandownloaddir:
+	-rm -rf ${DOWNLOADDIR}
