@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.11 2009/03/22 09:51:05 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.12 2009/03/23 10:26:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.11 2009/03/22 09:51:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.12 2009/03/23 10:26:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -181,8 +181,10 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 			mmflags = 0;
 			if (flag & FREAD)
 				mmflags |= RUMPUSER_FILEMMAP_READ;
-			if (flag & FWRITE)
+			if (flag & FWRITE) {
 				mmflags |= RUMPUSER_FILEMMAP_WRITE;
+				mmflags |= RUMPUSER_FILEMMAP_SHARED;
+			}
 			mem = rumpuser_filemmap(fd, 0, fsize, mmflags, &error);
 		}
 
