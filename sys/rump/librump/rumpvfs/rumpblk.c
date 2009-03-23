@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.13 2009/03/23 11:48:33 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.14 2009/03/23 11:52:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.13 2009/03/23 11:48:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.14 2009/03/23 11:52:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -332,9 +332,8 @@ dostrategy(struct buf *bp)
 	 * would produce better results, but then we'd need either
 	 * more threads or posix aio.  Maybe worth investigating
 	 * this later.
-	 *
-	 * Synchronous I/O is done directly in the context mainly to
-	 * avoid unnecessary scheduling with the I/O thread.
+	 * 
+	 * Using bufq here might be a good idea.
 	 */
 	if (rump_threads) {
 		struct rumpuser_aio *rua;
