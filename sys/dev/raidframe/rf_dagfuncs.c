@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.29 2007/03/04 06:02:36 christos Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.30 2009/03/23 18:38:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.29 2007/03/04 06:02:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.30 2009/03/23 18:38:54 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -366,7 +366,7 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 	     NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    RF_UNLOCK_DISK_QUEUE, NULL, PR_NOWAIT);
+	    0, NULL, PR_NOWAIT);
 	if (!req)
 		(node->wakeFunc) (node, ENOMEM);
 	else {
