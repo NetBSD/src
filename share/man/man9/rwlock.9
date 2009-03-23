@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwlock.9,v 1.12 2009/03/23 21:27:10 ad Exp $
+.\"	$NetBSD: rwlock.9,v 1.13 2009/03/23 22:22:40 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -193,7 +193,7 @@ The read-side hold time for the RW lock is long (in the order of thousands
 of processor clock cycles).
 .It
 Strong synchronization semantics are required: there is no scope for
-lockless, lazy or optimisitic synchronization.
+lockless, lazy or optimistic synchronization.
 .El
 .Pp
 Generally speaking, it is better to organise code paths and/or
@@ -214,8 +214,8 @@ The header file
 describes the public interface, and interfaces that machine-dependent
 code must provide to support RW locks.
 .Sh SEE ALSO
-.Xr condvar 9 ,
 .Xr lockstat 8 ,
+.Xr condvar 9 ,
 .Xr mb 9 ,
 .Xr mutex 9
 .Rs
