@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpi.4,v 1.3 2009/03/15 11:24:46 joerg Exp $
+.\"	$NetBSD: cpi.4,v 1.4 2009/03/23 16:14:01 joerg Exp $
 .\"
 .\" Copyright (c) 2008 Hauke Fath.  All rights reserved.
 .\"
@@ -49,7 +49,7 @@ The parallel port on the Hurdler CPI card is wired as follows:
 .It Sy "Signal"		SubD pin	Z8536 pin	Z8536 signal
 .It /STROBE	Strobe	1	22	PC3
 .It D0		2	33	PA0
-.It D1		3	32	PA1
+.It \&D1		3	32	PA1
 .It D2		4	31	PA2
 .It D3		5	30	PA3
 .It D4		6	29	PA4
@@ -63,7 +63,7 @@ The parallel port on the Hurdler CPI card is wired as follows:
 .It /AUTOFD	Auto Feed	14	12	PB4
 .It /FAULT		15	9	PB1
 .It /RESET		16	8	PB0
-.It /SELIN	Select In	17	10	PB2
+.It /SELIN	Select \&In	17	10	PB2
 .El
 .Pp
 The Z8536 INT line (pin 24) is wired to PB7 (pin 15).
