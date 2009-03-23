@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.34 2009/03/19 14:11:20 he Exp $ */
+/* $NetBSD: bootxx.c,v 1.35 2009/03/23 13:52:32 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -264,7 +264,6 @@ romstrategy(void *sc, int func, daddr_t dblk, size_t size, void *buf, size_t *rs
 	int	block = dblk;
 	int     nsize = size;
 	char	*cbuf;
-	char	*nullptr = NULL;
 
 	cbuf = (char *)buf;
 
@@ -285,7 +284,7 @@ romstrategy(void *sc, int func, daddr_t dblk, size_t size, void *buf, size_t *rs
 				hpread(block);
 			else
 				read750(block, (int *)bootregs);
-			memcpy(cbuf, nullptr, 512);
+			memcpy(cbuf, 0, 512);
 			size -= 512;
 			cbuf += 512;
 			block++;
