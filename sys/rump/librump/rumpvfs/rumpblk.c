@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.12 2009/03/23 10:26:49 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.13 2009/03/23 11:48:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.12 2009/03/23 10:26:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.13 2009/03/23 11:48:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -195,7 +195,8 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		rblk->rblk_dl.d_secsize = DEV_BSIZE;
 		rblk->rblk_curpi = &rblk->rblk_pi;
 	} else {
-		if (rumpuser_ioctl(fd,DIOCGDINFO, &rblk->rblk_dl, &error) != -1) {
+		if (rumpuser_ioctl(fd, DIOCGDINFO, &rblk->rblk_dl,
+		    &error) != -1) {
 			rumpuser_close(fd, &dummy);
 			return error;
 		}
@@ -204,6 +205,9 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 	}
 	rblk->rblk_fd = fd;
 	rblk->rblk_mem = mem;
+	if (rblk->rblk_mem != NULL)
+		printf("rumpblk%d: using mmio for %s\n",
+		    minor(dev), rblk->rblk_path);
 
 	return 0;
 }
@@ -332,19 +336,12 @@ dostrategy(struct buf *bp)
 	 * Synchronous I/O is done directly in the context mainly to
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
-	if (async && rump_threads) {
+	if (rump_threads) {
 		struct rumpuser_aio *rua;
 
 		rumpuser_mutex_enter(&rumpuser_aio_mtx);
-		/*
-		 * Check if our buffer is full.  Doing it this way
-		 * throttles the I/O a bit if we have a massive
-		 * async I/O burst.
-		 */
-		if ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail) {
-			rumpuser_mutex_exit(&rumpuser_aio_mtx);
-			goto syncfallback;
-		}
+		while ((rumpuser_aio_head+1) % N_AIOS == rumpuser_aio_tail)
+			rumpuser_cv_wait(&rumpuser_aio_cv, &rumpuser_aio_mtx);
 
 		rua = &rumpuser_aios[rumpuser_aio_head];
 		KASSERT(rua->rua_bp == NULL);
@@ -359,8 +356,13 @@ dostrategy(struct buf *bp)
 		rumpuser_aio_head = (rumpuser_aio_head+1) % N_AIOS;
 		rumpuser_cv_signal(&rumpuser_aio_cv);
 		rumpuser_mutex_exit(&rumpuser_aio_mtx);
+
+		/* make sure non-async writes end up on backing media */
+		if (BUF_ISWRITE(bp) && !async) {
+			biowait(bp);
+			rumpuser_fsync(rblk->rblk_fd, &error);
+		}
 	} else {
- syncfallback:
 		if (BUF_ISREAD(bp)) {
 			rumpuser_read_bio(rblk->rblk_fd, bp->b_data,
 			    bp->b_bcount, off, rump_biodone, bp);
