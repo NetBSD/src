@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.87 2009/03/18 12:25:06 tsutsui Exp $	*/
+/*	$NetBSD: libkern.h,v 1.88 2009/03/23 13:41:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -257,11 +257,12 @@ struct mtprng_state {
 void	*memcpy(void *, const void *, size_t);
 int	 memcmp(const void *, const void *, size_t);
 void	*memset(void *, int, size_t);
-#if __GNUC_PREREQ__(2, 95) && (__GNUC_PREREQ__(4, 0) || !defined(__vax__))
+#if __GNUC_PREREQ__(2, 95) && (__GNUC_PREREQ__(4, 0) || !defined(__vax__)) && \
+    !defined(_STANDALONE)
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
 #endif
-#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
+#if __GNUC_PREREQ__(2, 95) && !defined(__vax__) && !defined(_STANDALONE)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
 #endif
 
@@ -269,7 +270,7 @@ char	*strcpy(char *, const char *);
 int	 strcmp(const char *, const char *);
 size_t	 strlen(const char *);
 char	*strsep(char **, const char *);
-#if __GNUC_PREREQ__(2, 95)
+#if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
 #define	strlen(a)		__builtin_strlen(a)
