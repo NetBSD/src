@@ -1,4 +1,4 @@
-.\" $NetBSD: cmos.4,v 1.4 2009/03/09 19:24:29 joerg Exp $
+.\" $NetBSD: cmos.4,v 1.5 2009/03/23 16:04:25 joerg Exp $
 .\"
 .\" Copyright (c) 2007 David Young.  All rights reserved.
 .\"
@@ -91,7 +91,8 @@ Secondary HDD:
 .Sh ERRORS
 A program can read or write no more than 48 bytes to
 .Nm .
-.Xr read 2 /
+.Xr read 2
+/
 .Xr write 2
 will return
 .Er EINVAL
