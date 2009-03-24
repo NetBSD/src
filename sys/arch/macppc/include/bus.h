@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21.18.1 2007/03/08 18:59:18 bouyer Exp $	*/
+/*	$NetBSD: bus.h,v 1.21.18.2 2009/03/24 21:13:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -197,9 +197,7 @@ bus_space_map(t, addr, size, flags, bshp)
  * Allocate a region of bus space.
  */
 
-#if 0
-#define bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)	!!! unimplemented !!!
-#endif
+#define bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)	/* !!! unimplemented !!! */
 
 /*
  *	int bus_space_free __P((bus_space_tag_t t,
@@ -207,9 +205,7 @@ bus_space_map(t, addr, size, flags, bshp)
  *
  * Free a region of bus space.
  */
-#if 0
-#define bus_space_free(t, h, s)		!!! unimplemented !!!
-#endif
+#define bus_space_free(t, h, s)		/* !!! unimplemented !!! */
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
