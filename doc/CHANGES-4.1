@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.135 2009/03/20 15:42:35 msaitoh Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.136 2009/03/24 21:25:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2816,3 +2816,10 @@ usr.sbin/pstat/pstat.c				1.113
 	convert getfiles() to use KERN_FILE2 sysctl.
 	Now it can survive "struct file" changing, as is upcoming.
 	[mrg, ticket #1289]
+
+src/sys/arch/macppc/include/bus.h               patch
+	
+	Provide dummy bus_space_alloc() and bus_space_free(), some
+	driver needs it.
+	[martin, ticket #1283]
+
