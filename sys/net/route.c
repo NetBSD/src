@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.115 2009/02/20 10:57:19 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.116 2009/03/24 16:36:52 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.115 2009/02/20 10:57:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.116 2009/03/24 16:36:52 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -192,9 +192,50 @@ rt_set_ifa1(struct rtentry *rt, struct ifaddr *ifa)
 		rt->rt_ifa_seqno = *ifa->ifa_seqno;
 }
 
+/*
+ * Is this route the connected route for the ifa?
+ */
+static int
+rt_ifa_connected(const struct rtentry *rt, const struct ifaddr *ifa)
+{
+	const struct sockaddr *key, *dst, *odst;
+	struct sockaddr_storage maskeddst;
+
+	key = rt_getkey(rt);
+	dst = rt->rt_flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
+	if (dst == NULL ||
+	    dst->sa_family != key->sa_family ||
+	    dst->sa_len != key->sa_len)
+		return 0;
+	if ((rt->rt_flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
+		odst = dst;
+		dst = (struct sockaddr *)&maskeddst;
+		rt_maskedcopy(odst, (struct sockaddr *)&maskeddst,
+		    ifa->ifa_netmask);
+	}
+	return (memcmp(dst, key, dst->sa_len) == 0);
+}
+
 void
 rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 {
+	if (rt->rt_ifa &&
+	    rt->rt_ifa != ifa &&
+	    rt->rt_ifa->ifa_flags & IFA_ROUTE &&
+	    rt_ifa_connected(rt, rt->rt_ifa))
+	{
+		RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
+		    "replace deleted IFA_ROUTE\n",
+		    (void *)rt->_rt_key, (void *)rt->rt_ifa);
+		rt->rt_ifa->ifa_flags &= ~IFA_ROUTE;
+		if (rt_ifa_connected(rt, ifa)) {
+			RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
+			    "replace added IFA_ROUTE\n",
+			    (void *)rt->_rt_key, (void *)ifa);
+			ifa->ifa_flags |= IFA_ROUTE;
+		}
+	}
+
 	IFAREF(ifa);
 	IFAFREE(rt->rt_ifa);
 	rt_set_ifa1(rt, ifa);
@@ -672,8 +713,17 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt->rt_parent = NULL;
 		}
 		rt->rt_flags &= ~RTF_UP;
-		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(RTM_DELETE, rt, info);
+		if ((ifa = rt->rt_ifa)) {
+			if (ifa->ifa_flags & IFA_ROUTE &&
+			    rt_ifa_connected(rt, ifa)) {
+				RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
+				    "deleted IFA_ROUTE\n",
+				    (void *)rt->_rt_key, (void *)ifa);
+				ifa->ifa_flags &= ~IFA_ROUTE;
+			}
+			if (ifa->ifa_rtrequest)
+				ifa->ifa_rtrequest(RTM_DELETE, rt, info);
+		}
 		rttrash++;
 		if (ret_nrt)
 			*ret_nrt = rt;
