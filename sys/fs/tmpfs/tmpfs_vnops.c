@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.1 2009/02/16 03:29:01 snj Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.2 2009/03/24 20:22:44 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.1 2009/02/16 03:29:01 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.2 2009/03/24 20:22:44 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -270,8 +270,10 @@ tmpfs_mknod(void *v)
 	struct vattr *vap = ((struct vop_mknod_args *)v)->a_vap;
 
 	if (vap->va_type != VBLK && vap->va_type != VCHR &&
-	    vap->va_type != VFIFO)
+	    vap->va_type != VFIFO) {
+		vput(dvp);
 		return EINVAL;
+	}
 
 	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
 }
