@@ -57,3 +57,5 @@ pseudo-device	accf_http	# "httpready" accept filter
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 pseudo-device	nsmb		# experimental - SMB requester
+
+pseudo-device	putter		# for puffs and pud
