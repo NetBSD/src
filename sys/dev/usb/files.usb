@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.72.2.2 2007/09/27 22:04:26 xtraeme Exp $
+#	$NetBSD: files.usb,v 1.72.2.3 2009/03/24 21:25:04 bouyer Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -271,3 +271,8 @@ file	dev/usb/if_rum.c		rum
 device	utoppy
 attach	utoppy at usbdevif
 file	dev/usb/utoppy.c		utoppy
+
+# Zydas ZD1211
+device	zyd: ether, ifnet, arp, wlan, firmload
+attach	zyd at usbdevif
+file	dev/usb/if_zyd.c		zyd
