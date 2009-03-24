@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.76 2008/10/20 10:34:54 ad Exp $	*/
+/*	$NetBSD: savecore.c,v 1.76.2.1 2009/03/24 20:46:43 snj Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.76 2008/10/20 10:34:54 ad Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.76.2.1 2009/03/24 20:46:43 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,10 +227,6 @@ main(int argc, char *argv[])
 	gzmode[1] = level + '0';
 	if (!clear)
 		dirname = argv[0];
-
-	if (kernel == NULL) {
-		kernel = getbootfile();
-	}
 
 	(void)time(&now);
 	kmem_setup();
