@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.115 2009/03/20 13:08:03 msaitoh Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.116 2009/03/24 21:02:03 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5198,3 +5198,80 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	 Add support for 82574L (as found on Desktop CT adaptor) based on 82573
 	 [sborrill, ticket #587]
+
+sys/dev/scsipi/cd.c				1.289
+
+	Fix long standing problem with CD/DVD writing with `dd'. If
+	done this way the device will remain in a wait-for-more-stuff-to-
+	be-written state delaying other SCSI calls, especially some
+	read-size or read-layout calls, until its told there is no more
+	comming.
+
+	To fix this, on last close explicitly flush the caches releasing
+	the device from this mode and allowing other SCSI commands to reach
+	it.  This fixes PR 40528 and 40998. 
+	[reinoud, ticket #586]
+
+sys/arch/x86/acpi/acpi_wakeup.c			1.12
+
+	Sync TSC on resume (because CPUs were switched off in the
+	meantime), otherwise we get diverging timecounters leading to,
+	e.g., the monotonic clock jump backwards.
+	[drochner, ticket #589]
+
+sys/fs/tmpfs/tmpfs_vnops.c			1.54
+
+	Release dvp in mknod error branch.  Fixes PR kern/41006
+	[pooka, ticket #590]
+
+sys/arch/sh3/include/intr.h			1.26
+
+	Interrupt handling changes (revision 1.23) bumped down _IPL_N
+	to 8 for some reason.  Restore it to correct 16.
+	[uwe, ticket #591]
+
+sys/fs/udf/udf_vnops.c				1.38
+
+	Fix panic due to memory leak on symlink creation.
+	[reinoud, ticket #592]
+
+sys/dev/nullcons_subr.c				1.7
+
+	Return EIO rather than getting an infinite loop in the
+	nullcons read function so that getty(8) against nullcons
+	console fails properly.
+	[tsutsui, ticket #593]
+
+usr.sbin/cpuctl/arch/i386.c			1.16
+
+	Increase size of buffer for humanize_number(3) to print cache
+	sizes so that it can return 128KB, 256KB and 512KB properly
+	instead of truncated 0MB or rounded 1MB.
+	[tsutsui, ticket #594]
+
+sys/dev/ic/rtl8169.c				1.108
+sys/dev/ic/rtl81x9var.h				1.42
+
+	Access LDPS register in re_reset() only on 8169S single chip
+	variants.  From OpenBSD and FreeBSD drivers via PR kern/41009,
+	and Realtek-supplied FreeBSD driver.
+	[tsutsui, ticket #596]
+
+sbin/savecore/savecore.c			1.79
+
+	Fix savecore so it uses /dev/ksyms when it can (doesn't override
+	libkvm default).  Fixes misc/38425.
+	[tls, ticket #598]
+
+sys/dev/ic/ld_cac.c				1.24
+
+	Fix more device_t conversion fallout.
+	[ad, ticket #599]
+
+sys/dev/usb/ugen.c				1.102
+
+	Putting a device into the unconfigured state by an ioctl
+	seems legitimate, so check for a non-NULL configuration
+	descriptor before dereferencing.  Fix PR kern/41048.
+	[drochner, ticket #603]
+
