@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.32 2006/12/01 06:38:39 tls Exp $	 */
+/* $NetBSD: main.c,v 1.32.2.1 2009/03/24 21:33:58 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -73,7 +73,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int ret = 0;
-	const char *optstring = "b:dfi:m:npPqy";
+	const char *optstring = "b:dfi:m:npPqUy";
 
 	skipclean = 1;
 	exitonfail = 0;
@@ -121,7 +121,11 @@ main(int argc, char **argv)
 		case 'q':
 			quiet++;
 			break;
-
+#ifndef SMALL
+		case 'U':
+			Uflag++;
+			break;
+#endif
 		case 'y':
 			yflag++;
 			nflag = 0;
