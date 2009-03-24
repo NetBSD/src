@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.6 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.6.10.1 2009/03/24 20:32:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.6 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.6.10.1 2009/03/24 20:32:08 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -73,8 +73,7 @@ nullcndev_read(dev, uio, flag)
 	int flag;
 {
 
-	for(;;);
-	return (0);
+	return EIO;
 }
 
 int
