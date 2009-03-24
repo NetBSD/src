@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2005/09/23 12:10:34 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.23.4.1 2009/03/24 21:33:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2005/09/23 12:10:34 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.23.4.1 2009/03/24 21:33:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 
 	sync();
 	skipclean = 1;
-	while ((ch = getopt(argc, argv, "b:dfm:npqy")) != -1) {
+	while ((ch = getopt(argc, argv, "b:dfm:npqUy")) != -1) {
 		switch (ch) {
 		case 'b':
 			skipclean = 0;
@@ -143,6 +143,12 @@ main(int argc, char *argv[])
 
 		case 'q':		/* Quiet not implemented */
 			break;
+
+#ifndef SMALL
+		case 'U':
+			Uflag++;
+			break;
+#endif
 
 		case 'y':
 			yflag++;

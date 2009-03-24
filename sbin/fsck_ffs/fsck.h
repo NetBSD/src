@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.45 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: fsck.h,v 1.45.4.1 2009/03/24 21:33:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -251,6 +251,7 @@ long	dev_bsize;		/* computed value of DEV_BSIZE */
 long	secsize;		/* actual disk sector size */
 char	nflag;			/* assume a no response */
 char	yflag;			/* assume a yes response */
+int	Uflag;			/* resolve user names */
 int	bflag;			/* location of alternate super block */
 int	debug;			/* output debugging info */
 int	cvtlevel;		/* convert to newer file system format */
