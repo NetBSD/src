@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.283 2008/09/05 22:25:39 gmcgarry Exp $	*/
+/*	$NetBSD: cd.c,v 1.283.4.1 2009/03/24 20:16:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283 2008/09/05 22:25:39 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.283.4.1 2009/03/24 20:16:58 snj Exp $");
 
 #include "rnd.h"
 
@@ -148,6 +148,7 @@ static int	cd_read_toc(struct cd_softc *, int, int, int,
 static int	cd_get_parms(struct cd_softc *, int);
 static int	cd_load_toc(struct cd_softc *, int, struct cd_formatted_toc *, int);
 static int	cdreadmsaddr(struct cd_softc *, struct cd_formatted_toc *,int *);
+static int	cdcachesync(struct scsipi_periph *periph, int flags);
 
 static int	dvd_auth(struct cd_softc *, dvd_authinfo *);
 static int	dvd_read_physical(struct cd_softc *, dvd_struct *);
@@ -549,6 +550,10 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	    cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	if (cd->sc_dk.dk_openmask == 0) {
+		/* synchronise caches on last close */
+		cdcachesync(periph, 0);
+
+		/* drain outstanding calls */
 		scsipi_wait_drain(periph);
 
 		scsipi_prevent(periph, SPAMR_ALLOW,
