@@ -42,6 +42,7 @@ file-system 	CODA		# Coda File System; also needs vcoda (below)
 file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system 	PTYFS		# /dev/ptm support
 file-system 	TMPFS		# Efficient memory file-system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 
 options 	QUOTA		# UFS quotas
 
