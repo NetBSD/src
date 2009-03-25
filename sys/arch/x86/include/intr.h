@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.36 2009/02/24 06:03:54 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.37 2009/03/25 22:54:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #define	__HAVE_FAST_SOFTINTS
 #define	__HAVE_PREEMPTION
 
+#include <sys/evcnt.h>
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
