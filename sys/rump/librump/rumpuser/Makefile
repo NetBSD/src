@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/01/20 21:43:13 pooka Exp $
+#	$NetBSD: Makefile,v 1.15 2009/03/25 14:05:03 pooka Exp $
 #
 
 LIB=		rumpuser
@@ -6,6 +6,8 @@ WARNS=		4
 
 SRCS=		rumpuser.c rumpuser_net.c
 SRCS+=		rumpuser_pth.c
+
+CPPFLAGS+=	-D_REENTRANT
 
 # Using this instead of the above makes it possible to link rump
 # without involving pthreads.  Multithreaded operation will not
