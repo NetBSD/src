@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.88 2009/03/23 13:41:00 tsutsui Exp $	*/
+/*	$NetBSD: libkern.h,v 1.89 2009/03/25 01:26:13 darran Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -337,4 +337,5 @@ uintmax_t strtoumax(const char *, char **, int);
 int	 snprintb(char *, size_t, const char *, uint64_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
 		   void *);
+uint32_t crc32(uint32_t, const unsigned char *, unsigned);
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */
