@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.85 2009/02/25 13:52:18 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.86 2009/03/25 03:42:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.85 2009/02/25 13:52:18 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.86 2009/03/25 03:42:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ setup(const char *dev, const char *origdev)
 		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
 	}
 	if (sblock->fs_flags & FS_DOWAPBL) {
-		if (preen) {
+		if (preen && !skipclean) {
 			if (!quiet)
 				pwarn("file system is journaled; not checking\n");
 			return (-1);
