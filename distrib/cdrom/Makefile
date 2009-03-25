@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.46 2009/03/25 09:50:21 tsutsui Exp $
+# $NetBSD: Makefile,v 1.47 2009/03/25 13:53:05 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -439,8 +439,7 @@ size-${image}: stage-${image} extfileprep fileprep-${image} check_mkisofs
 		   ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} \
 			-print-size . 2>&1 \
 		   | tee /dev/stderr \
-		   | ${TOOL_SED} '/=/!d;s/^[^=]*=//'` \
-	       \* 2048)) && \
+		   | ${TOOL_SED} '/=/!d;s/^[^=]*=//'` * 2048)) && \
 	if [ "${SUN_BOOT_ARGS.${image}}" != "" ]; then \
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
 		bootfiles=`for f in ${SUN_BOOT_ARGS.${image}:N-:O}; do echo $$f; done | uniq` && \
