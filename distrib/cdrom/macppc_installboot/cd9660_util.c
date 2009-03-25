@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.1 2006/09/17 03:56:03 tsutsui Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.2 2009/03/25 15:26:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,6 +38,9 @@
 
 /* from NetBSD: cd9660_util.c,v 1.5 2004/12/28 01:12:26 jdolecek Exp */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <assert.h>
 #include <sys/param.h>
