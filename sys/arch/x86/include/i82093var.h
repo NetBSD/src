@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.10 2008/07/03 15:44:19 drochner Exp $ */
+/* $NetBSD: i82093var.h,v 1.11 2009/03/25 22:56:00 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #ifndef _X86_I82093VAR_H_
 #define _X86_I82093VAR_H_
 
+#include <sys/device.h>
 #include <machine/apicvar.h>
 
 struct ioapic_pin 
