@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.13 2009/03/14 14:46:10 dsl Exp $ */
+/* $NetBSD: zlib.h,v 1.14 2009/03/25 01:26:12 darran Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -43,7 +43,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.h,v 1.13 2009/03/14 14:46:10 dsl Exp $ */
+/* @(#) $Id: zlib.h,v 1.14 2009/03/25 01:26:12 darran Exp $ */
 
 #ifndef ZCONF_H
 #define ZCONF_H
@@ -1147,7 +1147,9 @@ ZEXTERN uLong ZEXPORT adler32(uLong, const Bytef *, uInt);
      if (adler != original_adler) error();
 */
 
+#ifdef STANDALONE
 ZEXTERN uLong ZEXPORT crc32(uLong, const Bytef *, uInt);
+#endif
 /*
      Update a running crc with the bytes buf[0..len-1] and return the updated
    crc. If buf is NULL, this function returns the required initial value
