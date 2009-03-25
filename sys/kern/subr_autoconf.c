@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.171 2009/03/25 21:43:42 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.172 2009/03/25 21:48:36 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.171 2009/03/25 21:43:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.172 2009/03/25 21:48:36 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -130,13 +130,15 @@ extern struct splash_progress *splash_progress_state;
  * Autoconfiguration subroutines.
  */
 
-typedef struct pmf_private {
+struct pmf_private {
 	int		pp_nwait;
 	int		pp_nlock;
 	lwp_t		*pp_holder;
 	kmutex_t	pp_mtx;
 	kcondvar_t	pp_cv;
-} pmf_private_t;
+};
+
+typedef struct pmf_private pmf_private_t;
 
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
