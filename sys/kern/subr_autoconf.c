@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.169 2009/03/14 11:08:28 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.170 2009/03/25 21:28:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.169 2009/03/14 11:08:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.170 2009/03/25 21:28:50 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1424,6 +1424,11 @@ config_attach_pseudo(cfdata_t cf)
 		return (NULL);
 
 	/* XXX mark busy in cfdata */
+
+	if (cf->cf_fstate != FSTATE_STAR) {
+		KASSERT(cf->cf_fstate == FSTATE_NOTFOUND);
+		cf->cf_fstate = FSTATE_FOUND;
+	}
 
 	config_devlink(dev);
 
