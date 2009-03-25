@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.c,v 1.1 2009/03/25 01:26:13 darran Exp $	*/
+/*	$NetBSD: crc32.c,v 1.2 2009/03/25 18:41:06 tls Exp $	*/
 
 /* crc32.c -- compute the CRC-32 of a data stream
  *
@@ -30,6 +30,7 @@ typedef uint32_t u4;
 /* ========================================================================
  * Tables of CRC-32s of all single-byte values, made by make_crc_table().
  */
+#include <lib/libkern/libkern.h>
 #include "crc32.h"
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -40,10 +41,7 @@ typedef uint32_t u4;
 #define DOLIT32 DOLIT4; DOLIT4; DOLIT4; DOLIT4; DOLIT4; DOLIT4; DOLIT4; DOLIT4
 
 /* ========================================================================= */
-uint32_t crc32(
-    uint32_t crc,
-    const unsigned char *buf,
-    unsigned len)
+uint32_t crc32(uint32_t crc, const uint8_t *buf, size_t len)
 {
     register u4 c;
     register const u4 *buf4;
