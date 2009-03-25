@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.83 2009/02/11 14:41:56 cegger Exp $
+$NetBSD: miidevs,v 1.84 2009/03/25 06:49:56 cegger Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -164,8 +164,11 @@ model xxBROADCOM_ALT1 BCM5906		0x0004 BCM5906 10/100baseTX media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY
+model CICADA CS8204		0x0004 Cicada CS8204 10/100/1000TX PHY
+model CICADA VSC8211		0x000b Cicada VSC8211 10/100/1000TX PHY
 model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
+model CICADA CS8244		0x002c Cicada CS8244 10/100/1000TX PHY
 model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 
 /* Davicom Semiconductor PHYs */
