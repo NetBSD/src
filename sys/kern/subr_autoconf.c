@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.170 2009/03/25 21:28:50 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.171 2009/03/25 21:43:42 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.170 2009/03/25 21:28:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.171 2009/03/25 21:43:42 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1514,6 +1514,8 @@ config_detach(device_t dev, int flags)
 			panic("config_detach: forced detach of %s failed (%d)",
 			    device_xname(dev), rv);
 	}
+
+	dev->dv_flags &= ~DVF_ACTIVE;
 
 	/*
 	 * The device has now been successfully detached.
