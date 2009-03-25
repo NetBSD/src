@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.c,v 1.2 2009/03/25 18:41:06 tls Exp $	*/
+/*	$NetBSD: crc32.c,v 1.3 2009/03/25 19:21:39 tls Exp $	*/
 
 /* crc32.c -- compute the CRC-32 of a data stream
  *
@@ -18,8 +18,6 @@
 
 #include <sys/param.h>
 #include <machine/endian.h>
-
-#define z_ptrdiff_t int32_t
 
 typedef uint32_t u4;
 
@@ -50,7 +48,7 @@ uint32_t crc32(uint32_t crc, const uint8_t *buf, size_t len)
 
     c = (u4)crc;
     c = ~c;
-    while (len && ((z_ptrdiff_t)buf & 3)) {
+    while (len && ((uintptr_t)buf & 3)) {
         c = crc_table[0][(c ^ *buf++) & 0xff] ^ (c >> 8);
         len--;
     }
@@ -94,7 +92,7 @@ uint32_t crc32(
 
     c = REV((u4)crc);
     c = ~c;
-    while (len && ((z_ptrdiff_t)buf & 3)) {
+    while (len && ((uintptr_t)buf & 3)) {
         c = crc_table[4][(c >> 24) ^ *buf++] ^ (c << 8);
         len--;
     }
