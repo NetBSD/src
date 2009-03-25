@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.11 2009/03/06 16:17:29 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.12 2009/03/25 23:35:54 dyoung Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <sys/queue.h>
 
 #include <sys/disklabel.h>
+
+#include <prop/proplib.h>
 
 #define DM_MAX_TYPE_NAME 16
 #define DM_NAME_LEN 128
