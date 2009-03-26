@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.9 2009/02/22 20:28:05 ad Exp $	*/
+/*	$NetBSD: p2k.c,v 1.10 2009/03/26 14:03:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@
 #include <errno.h>
 #include <puffs.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <rump/rump.h>
 #include <rump/p2k.h>
@@ -130,6 +131,23 @@ clearlwp(struct puffs_usermount *pu)
 	 */
 	if (__predict_false(puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED))
 		rump_clear_curlwp();
+}
+
+static void
+p2k_errcatcher(struct puffs_usermount *pu, uint8_t type, int error,
+	const char *str, puffs_cookie_t cook)
+{
+
+	fprintf(stderr, "type %d, error %d, cookie %p (%s)\n",
+	    type, error, cook, str);
+
+	/*
+	 * Trap all EINVAL responses to lookup.  It most likely means
+	 * that we supplied VNON/VBAD as the type.  The real kernel
+	 * doesn't panic from this either, but just handles it.
+	 */
+	if (type != PUFFS_VN_LOOKUP && error == EINVAL)
+		abort();
 }
 
 int
@@ -221,6 +239,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	puffs_fakecc = 1;
 
 	puffs_set_prepost(pu, makelwp, clearlwp);
+	puffs_set_errnotify(pu, p2k_errcatcher);
 
 	puffs_setspecific(pu, ukfs_getmp(ukfs));
 	if ((rv = puffs_mount(pu, mountpath, mntflags, rvp))== -1)
