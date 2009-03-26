@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.137 2009/03/24 21:50:45 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.138 2009/03/26 05:11:47 msaitoh Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2892,3 +2892,9 @@ distrib/sets/lists/man/mi			patch
 	add btpand(8), a Bluetooth PAN daemon
 	[plunky, ticket #1290]
 
+
+share/mk/bsd.sys.mk				patch
+
+	Avoid passing "-std=c99" in CFLAGS on host platforms
+	that use a compiler other than GCC.  Requested in PR 40540
+	[apb, ticket 1285]
