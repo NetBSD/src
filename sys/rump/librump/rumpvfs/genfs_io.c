@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.9 2009/03/23 11:48:33 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.10 2009/03/26 08:22:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.9 2009/03/23 11:48:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.10 2009/03/26 08:22:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -376,7 +376,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	mbp = getiobuf(vp, true);
 	mbp->b_bufsize = MAXPHYS;
 	mbp->b_data = datap;
-	mbp->b_resid = mbp->b_bcount = curoff-smallest;
+	mbp->b_resid = mbp->b_bcount = MIN(curoff,eof)-smallest;
 	mbp->b_cflags |= BC_BUSY;
 	mbp->b_flags = B_WRITE;
 	if (async) {
@@ -388,7 +388,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	mutex_exit(&vp->v_interlock);
 
 	/* then we write */
-	for (bufoff = 0; bufoff < curoff-smallest; bufoff+=xfersize) {
+	for (bufoff = 0; bufoff < MIN(curoff,eof)-smallest; bufoff+=xfersize) {
 		struct vnode *devvp;
 		daddr_t bn, lbn;
 		size_t iotodo;
@@ -418,12 +418,6 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		if (smallest + bufoff + xfersize > eof)
 			iotodo -= (smallest+bufoff+xfersize) - eof;
 		iotodo = (iotodo + DEV_BSIZE-1) & ~(DEV_BSIZE-1);
-
-		/*
-		 * Compensate for potentially smaller write.  This will
-		 * be zero except near eof.
-		 */
-		skipbytes += xfersize - iotodo;
 
 		KASSERT(iotodo > 0);
 		KASSERT(smallest >= 0);
