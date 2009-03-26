@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.72 2009/01/14 19:41:55 pooka Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.73 2009/03/26 22:16:44 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -215,7 +215,7 @@
 #define	__section(x)	__attribute__((__section__(x)))
 #elif defined(__PCC__)
 #define	__packed	_Pragma("packed")
-#define	__aligned(x)   	_Pragma("aligned " #x)
+#define	__aligned(x)   	_Pragma("aligned " __STRING(x))
 #define	__section(x)   	_Pragma("section " ## x)
 #elif defined(__lint__)
 #define	__packed	/* delete */
