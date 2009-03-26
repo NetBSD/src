@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.c,v 1.3 2009/03/25 19:21:39 tls Exp $	*/
+/*	$NetBSD: crc32.c,v 1.4 2009/03/26 22:18:14 he Exp $	*/
 
 /* crc32.c -- compute the CRC-32 of a data stream
  *
@@ -80,10 +80,7 @@ uint32_t crc32(uint32_t crc, const uint8_t *buf, size_t len)
 #define DOBIG32 DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4
 
 /* ========================================================================= */
-uint32_t crc32(
-    uint32_t crc,
-    const unsigned char *buf,
-    unsigned len)
+uint32_t crc32(uint32_t crc, const uint8_t *buf, size_t len)
 {
     register u4 c;
     register const u4 *buf4;
