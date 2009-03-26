@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.67.54.3 2009/01/08 22:47:06 snj Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.67.54.4 2009/03/26 17:28:47 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.54.3 2009/01/08 22:47:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.54.4 2009/03/26 17:28:47 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -475,8 +475,10 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	usable_segs[0].start = 0;
 	usable_segs[0].end   = stphysize;
+	usable_segs[0].free_list = VM_FREELIST_STRAM;
 	usable_segs[1].start = ttphystart;
 	usable_segs[1].end   = ttphystart + ttphysize;
+	usable_segs[1].free_list = VM_FREELIST_TTRAM;
 	usable_segs[2].start = usable_segs[2].end = 0; /* End of segments! */
 
 	if(kbase) {
