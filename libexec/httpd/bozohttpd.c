@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.7.8.2 2009/02/18 00:05:41 snj Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.7.8.3 2009/03/26 17:19:45 snj Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.142 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -1327,12 +1327,12 @@ handle_redirect(http_req *request, const char *url, int absolute)
 	int query = 0;
 
 	if (url == NULL) {
-		if (asprintf(&urlbuf, "%s/", request->hr_file) < 0)
+		if (asprintf(&urlbuf, "/%s/", request->hr_file) < 0)
 			error(1, "asprintf");
 		url = urlbuf;
 	}
 	
-	if (strlen(request->hr_query)) {
+	if (request->hr_query && strlen(request->hr_query)) {
 	  query = 1;
 	}
 
