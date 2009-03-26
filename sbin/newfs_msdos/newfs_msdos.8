@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_msdos.8,v 1.16 2009/03/26 08:39:24 pooka Exp $
+.\" $NetBSD: newfs_msdos.8,v 1.17 2009/03/26 09:56:17 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -166,11 +166,14 @@ number being written, and the total number of sectors to be written.
 .Sh NOTES
 If some parameters (e.g. size, number of sectors, etc.) are not specified
 through options or disktype, the program tries to generate them
-automatically. In particular, the size is determined as the
+automatically.
+In particular, the size is determined as the
 device or file size minus the offset specified with the
 .Fl @
-option. When the geometry is not available, it is assumed to be
-63 sectors, 255 heads. The size is then rounded to become
+option.
+When the geometry is not available, it is assumed to be
+63 sectors, 255 heads.
+The size is then rounded to become
 a multiple of the track size and avoid complaints by some filesystem code.
 .Pp
 FAT file system parameters occupy a "Boot Sector BPB (BIOS Parameter
