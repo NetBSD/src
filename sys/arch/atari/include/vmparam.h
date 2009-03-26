@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21.88.1 2009/01/08 22:45:30 snj Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21.88.2 2009/03/26 17:28:47 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -166,8 +166,10 @@
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 #define VM_PHYSSEG_NOADD
 
-#define	VM_NFREELIST		1
+#define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_TTRAM	VM_FREELIST_DEFAULT
+#define	VM_FREELIST_STRAM	1
 
 #define	__HAVE_PMAP_PHYSSEG
 
