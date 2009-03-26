@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.159 2009/03/20 15:44:18 msaitoh Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.160 2009/03/26 05:12:13 msaitoh Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5167,3 +5167,9 @@ usr.sbin/pstat/pstat.c				1.113
 	convert getfiles() to use KERN_FILE2 sysctl.
 	Now it can survive "struct file" changing, as is upcoming.
 	[mrg, ticket #2000]
+
+share/mk/bsd.sys.mk				patch
+
+	Avoid passing "-std=c99" in CFLAGS on host platforms
+	that use a compiler other than GCC.  Requested in PR 40540
+	[apb, ticket 1997]
