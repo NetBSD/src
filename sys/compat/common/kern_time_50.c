@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.5 2009/02/22 13:06:58 nakayama Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.6 2009/03/26 22:22:14 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.5 2009/02/22 13:06:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.6 2009/03/26 22:22:14 gmcgarry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -99,10 +99,10 @@ compat_50_sys_kevent(struct lwp *l, const struct compat_50_sys_kevent_args *uap,
 		syscallarg(struct timespec50) timeout;
 	} */
 	static const struct kevent_ops compat_50_kevent_ops = {
-		keo_private: NULL,
-		keo_fetch_timeout: compat_50_kevent_fetch_timeout,
-		keo_fetch_changes: kevent_fetch_changes,
-		keo_put_events: kevent_put_events,
+		.keo_private = NULL,
+		.keo_fetch_timeout = compat_50_kevent_fetch_timeout,
+		.keo_fetch_changes = kevent_fetch_changes,
+		.keo_put_events = kevent_put_events,
 	};
 
 	return kevent1(retval, SCARG(uap, fd), SCARG(uap, changelist),
