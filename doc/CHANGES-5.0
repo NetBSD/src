@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.116 2009/03/24 21:02:03 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.117 2009/03/26 17:57:01 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5274,4 +5274,65 @@ sys/dev/usb/ugen.c				1.102
 	seems legitimate, so check for a non-NULL configuration
 	descriptor before dereferencing.  Fix PR kern/41048.
 	[drochner, ticket #603]
+
+sys/dev/pcmcia/wdc_pcmcia.c			1.114
+
+	Work around a problem with PCMCIA adapter drivers (eg for hpc*)
+	which attach pcmcia devices before interrupts are enabled.
+	Fixes PR kern/40531.
+	[drochner, ticket #614]
+
+usr.bin/time/time.1				1.19
+
+	Mention -c.
+	[skrll, ticket #613]
+
+sys/dev/mvme/osiop_pcctwo.c			1.14
+
+	Fix fallout from device_t changes - initialise sc->sc_osiop.sc_dev
+	before calling osiop_attach().
+	[scw, ticket #605]
+
+usr.bin/netstat/inet.c				1.89
+usr.bin/netstat/inet6.c				1.51
+usr.bin/netstat/iso.c				1.31
+
+	Make netstat handle -a properly; that is, don't show
+	unconnected listener sockets unless -a was given.
+	Fixes PR 38093.
+	[dholland, ticket #608]
+
+sys/kern/kern_uidinfo.c				1.5
+
+	uid_init: maxproc -> maxcpus
+	[ad, ticket #601]
+
+libexec/httpd/bozohttpd.c			1.11
+
+	Fix redirection core dump as reported in PR bin/41042.
+	[reinoud, ticket #604]
+
+sys/arch/atari/atari/atari_init.c		1.76
+sys/arch/atari/atari/pmap_bootstrap.c		1.3
+sys/arch/atari/include/pmap.h			1.40
+sys/arch/atari/include/vmparam.h		1.24
+
+	Use separate free lists for TT and ST ram, and give TT a lower
+	id so all TT ram will be used before any ST ram.
+	[abs, ticket #612]
+
+sys/dev/ic/rtl8169.c				1.106
+sys/dev/ic/rtl81x9reg.h				1.33
+
+	Add support for a 8168C/8111C revision
+ 	- also disable jumbo frame on this adapter
+	- merge redundant call to aprint_error_dev
+	[tsutsui, ticket #597]
+
+etc/defaults/rc.conf				1.101
+etc/rc.d/ipfilter				1.18
+
+	Add flags to rc.d/ipfilter.  Use it from rc.conf like
+	ipfilter=YES ipfilter_flags="-T fr_statemax=18963,fr_statesize=27091"
+	[hannken, ticket #606]
 
