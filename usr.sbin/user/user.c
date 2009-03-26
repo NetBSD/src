@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.77.2.3 2005/06/29 12:18:49 tron Exp $ */
+/* $NetBSD: user.c,v 1.77.2.4 2009/03/26 20:24:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.77.2.3 2005/06/29 12:18:49 tron Exp $");
+__RCSID("$NetBSD: user.c,v 1.77.2.4 2009/03/26 20:24:27 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1250,7 +1250,7 @@ is_local(char *name, const char *file)
 static int
 moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 {
-	struct passwd  *pwp;
+	struct passwd  *pwp, pw;
 	struct group   *grp;
 	const char     *homedir;
 	size_t		colonc;
@@ -1260,6 +1260,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 	FILE	       *master;
 	char		newdir[MaxFileNameLen];
 	char	        buf[MaxEntryLen];
+	char		pwbuf[MaxEntryLen];
 	char	       *colon;
 	int		masterfd;
 	int		ptmpfd;
@@ -1268,7 +1269,8 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 	if (!valid_login(newlogin, allow_samba)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
 	}
-	if ((pwp = getpwnam(login_name)) == NULL) {
+	if (getpwnam_r(login_name, &pw, pwbuf, sizeof(pwbuf), &pwp) != 0
+	    || pwp == NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login_name);
 	}
 	if (!is_local(login_name, _PATH_MASTERPASSWD)) {
