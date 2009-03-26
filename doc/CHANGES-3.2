@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.160 2009/03/26 05:12:13 msaitoh Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.161 2009/03/26 20:27:54 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5173,3 +5173,28 @@ share/mk/bsd.sys.mk				patch
 	Avoid passing "-std=c99" in CFLAGS on host platforms
 	that use a compiler other than GCC.  Requested in PR 40540
 	[apb, ticket 1997]
+
+sys/arch/arm/arm/bcopyinout_xscale.S		1.4
+
+	Must have a nop after an add to the pc.
+	This corrects a bug affecting kcopy() to unaligned dst addresses.
+	[msaitoh, ticket #1993]
+
+dist/tcpdump/print-ppp.c			1.6
+
+	fix remote crash; from tiocsti.
+	[msaitoh, ticket #1994]
+
+usr.sbin/user/user.c			1.121 via patch
+
+	bin/40994: Michael van Elst: usermod -l change password so user
+	is unable to login. User getpwnam_r to avoid trashing result
+	of previous call to getpwnam().
+	[mlelstv, ticket #1998]
+
+sys/dev/pci/if_wm.c				1.166
+
+	Fix the multicast hash bug on ICH9's wm.
+	Now we can catch ff02::9 on ICH9's wm. Fixes PR#37976.
+	[msaitoh, ticket #2002]
+
