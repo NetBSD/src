@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1.2.2 2009/01/08 22:45:30 snj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.1.2.3 2009/03/26 17:28:47 snj Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -150,7 +150,7 @@ pmap_bootstrap(vaddr_t vstart, paddr_t sysseg_pa)
 				 atop(usable_segs[i].end),
 				 atop(usable_segs[i].start),
 				 atop(usable_segs[i].end),
-				 VM_FREELIST_DEFAULT);
+				 usable_segs[i].free_list);
 
 	avail_start = usable_segs[0].start;
 	avail_end   = usable_segs[i - 1].end;
