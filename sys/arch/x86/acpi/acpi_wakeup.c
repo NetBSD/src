@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.13 2009/03/18 17:06:48 cegger Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.14 2009/03/27 19:53:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.13 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.14 2009/03/27 19:53:19 drochner Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -309,7 +309,6 @@ acpi_cpu_sleep(struct cpu_info *ci)
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
 	tsc_sync_ap(ci);
-	tsc_sync_ap(ci);
 
 	x86_enable_intr();
 }
@@ -395,7 +394,6 @@ out:
 		while ((ci->ci_flags & CPUF_RUNNING) == 0)
 			x86_pause();
 
-		tsc_sync_bp(ci);
 		tsc_sync_bp(ci);
 	}
 #endif
