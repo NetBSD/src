@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.24 2008/06/11 21:25:31 drochner Exp $	*/
+/*	$NetBSD: zx.c,v 1.25 2009/03/27 12:25:41 tsutsui Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.24 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.25 2009/03/27 12:25:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.24 2008/06/11 21:25:31 drochner Exp $");
 #ifndef RASTERCONSOLE
 #error Sorry, this driver needs the RASTERCONSOLE option
 #endif
-
-/* Force 32-bit writes. */
-#define	SETREG(r, v)	(*((volatile u_int32_t *)&r) = (v))
 
 #define	ZX_STD_ROP	(ZX_ROP_NEW | ZX_ATTR_WE_ENABLE | \
     ZX_ATTR_OE_ENABLE | ZX_ATTR_FORCE_WID)
@@ -160,7 +157,6 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	bus_space_tag_t bt;
 	struct fbdevice *fb;
 	struct rasops_info *ri;
-	volatile struct zx_command *zc;
 	int isconsole;
 
 	sc = device_private(self);
@@ -185,36 +181,35 @@ zx_attach(struct device *parent, struct device *self, void *args)
 		aprint_error_dev(self, "can't map zc\n");
 		return;
 	}
-	sc->sc_zc = (struct zx_command *)bus_space_vaddr(bt, bh);
+	sc->sc_bhzc = bh;
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LD_SS0,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		aprint_error_dev(self, "can't map ld/ss0\n");
 		return;
 	}
-	sc->sc_zd_ss0 = (struct zx_draw *)bus_space_vaddr(bt, bh);
+	sc->sc_bhzdss0 = bh;
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LD_SS1,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		aprint_error_dev(self, "can't map ld/ss1\n");
 		return;
 	}
-	sc->sc_zd_ss1 =
-	    (struct zx_draw_ss1 *)bus_space_vaddr(bt, bh);
+	sc->sc_bhzdss1 = bh;
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LX_CROSS,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		aprint_error_dev(self, "can't map zx\n");
 		return;
 	}
-	sc->sc_zx = (struct zx_cross *)bus_space_vaddr(bt, bh);
+	sc->sc_bhzx = bh;
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LX_CURSOR,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		aprint_error_dev(self, "can't map zcu\n");
 		return;
 	}
-	sc->sc_zcu = (struct zx_cursor *)bus_space_vaddr(bt, bh);
+	sc->sc_bhzcu = bh;
 
 	fb->fb_driver = &zx_fbdriver;
 	fb->fb_device = &sc->sc_dv;
@@ -248,14 +243,13 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	 * called before we get our hooks in place.  So, we mask off access
 	 * to the framebuffer until it's done.
 	 */
-	zc = sc->sc_zc;
-	SETREG(zc->zc_fontt, 1);
-	SETREG(zc->zc_fontmsk, 0);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontt, 1);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontmsk, 0);
 
 	fbrcons_init(&sc->sc_fb);
 
-	SETREG(zc->zc_fontt, 0);
-	SETREG(zc->zc_fontmsk, 0xffffffff);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontt, 0);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontmsk, 0xffffffff);
 
 	ri->ri_hw = sc;
 	ri->ri_do_cursor = zx_do_cursor;
@@ -487,13 +481,9 @@ zx_intr(void *cookie)
 void
 zx_reset(struct zx_softc *sc)
 {
-	volatile struct zx_draw *zd;
-	volatile struct zx_command *zc;
 	struct fbtype *fbt;
 	u_int i;
 
-	zd = sc->sc_zd_ss0;
-	zc = sc->sc_zc;
 	fbt = &sc->sc_fb.fb_type;
 
 	zx_cross_loadwid(sc, ZX_WID_DBL_8, 0, 0x2c0);
@@ -501,24 +491,25 @@ zx_reset(struct zx_softc *sc)
 	zx_cross_loadwid(sc, ZX_WID_DBL_8, 2, 0x20);
 	zx_cross_loadwid(sc, ZX_WID_DBL_24, 1, 0x30);
 
-	i = sc->sc_zd_ss1->zd_misc;
+	i = bus_space_read_4(sc->sc_bt, sc->sc_bhzdss1, zd_misc);
 	i |= ZX_SS1_MISC_ENABLE;
-	SETREG(sc->sc_zd_ss1->zd_misc, i);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss1, zd_misc, i);
 
-	SETREG(zd->zd_wid, 0xffffffff);
-	SETREG(zd->zd_widclip, 0);
-	SETREG(zd->zd_wmask, 0xffff);
-	SETREG(zd->zd_vclipmin, 0);
-	SETREG(zd->zd_vclipmax,
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_wid, 0xffffffff);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_widclip, 0);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_wmask, 0xffff);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_vclipmin, 0);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_vclipmax,
 	    (fbt->fb_width - 1) | ((fbt->fb_height - 1) << 16));
-	SETREG(zd->zd_fg, 0);
-	SETREG(zd->zd_planemask, 0xff000000);
-	SETREG(zd->zd_rop, ZX_STD_ROP);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg, 0);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_planemask, 0xff000000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, ZX_STD_ROP);
 
-	SETREG(zc->zc_extent,
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent,
 	    (fbt->fb_width - 1) | ((fbt->fb_height - 1) << 11));
-	SETREG(zc->zc_addrspace, ZX_ADDRSPC_FONT_OBGR);
-	SETREG(zc->zc_fontt, 0);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_addrspace,
+	    ZX_ADDRSPC_FONT_OBGR);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontt, 0);
 
 	for (i = 0; i < 256; i++) {
 		sc->sc_cmap[i] = rasops_cmap[i * 3];
@@ -532,13 +523,11 @@ zx_reset(struct zx_softc *sc)
 int
 zx_cross_wait(struct zx_softc *sc)
 {
-	volatile struct zx_cross *zx;
 	int i;
 
-	zx = sc->sc_zx;
-
 	for (i = 300000; i != 0; i--) {
-		if ((zx->zx_csr & ZX_CROSS_CSR_PROGRESS) == 0)
+		if ((bus_space_read_4(sc->sc_bt, sc->sc_bhzx, zx_csr) &
+		    ZX_CROSS_CSR_PROGRESS) == 0)
 			break;
 		DELAY(1);
 	}
@@ -552,11 +541,9 @@ zx_cross_wait(struct zx_softc *sc)
 int
 zx_cross_loadwid(struct zx_softc *sc, u_int type, u_int index, u_int value)
 {
-	volatile struct zx_cross *zx;
 	u_int tmp = 0;
 
-	zx = sc->sc_zx;
-	SETREG(zx->zx_type, ZX_CROSS_TYPE_WID);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type, ZX_CROSS_TYPE_WID);
 
 	if (zx_cross_wait(sc))
 		return (1);
@@ -566,10 +553,11 @@ zx_cross_loadwid(struct zx_softc *sc, u_int type, u_int index, u_int value)
 	else if (type == ZX_WID_DBL_24)
 		tmp = index & 0x3f;
 
-	SETREG(zx->zx_type, 0x5800 + tmp);
-	SETREG(zx->zx_value, value);
-	SETREG(zx->zx_type, ZX_CROSS_TYPE_WID);
-	SETREG(zx->zx_csr, ZX_CROSS_CSR_UNK | ZX_CROSS_CSR_UNK2);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type, 0x5800 + tmp);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_value, value);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type, ZX_CROSS_TYPE_WID);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_csr,
+	    ZX_CROSS_CSR_UNK | ZX_CROSS_CSR_UNK2);
 
 	return (0);
 }
@@ -577,41 +565,37 @@ zx_cross_loadwid(struct zx_softc *sc, u_int type, u_int index, u_int value)
 int
 zx_cmap_put(struct zx_softc *sc)
 {
-	volatile struct zx_cross *zx;
 	const u_char *b;
 	u_int i, t;
 
-	zx = sc->sc_zx;
-
-	SETREG(zx->zx_type, ZX_CROSS_TYPE_CLUT0);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type, ZX_CROSS_TYPE_CLUT0);
 	if (zx_cross_wait(sc))
 		return (1);
 
-	SETREG(zx->zx_type, ZX_CROSS_TYPE_CLUTDATA);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type,
+	    ZX_CROSS_TYPE_CLUTDATA);
 
 	for (i = 0, b = sc->sc_cmap; i < 256; i++) {
 		t = b[i];
 		t |= b[i + 256] << 8;
 		t |= b[i + 512] << 16;
-		SETREG(zx->zx_value, t);
+		bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_value, t);
 	}
 
-	SETREG(zx->zx_type, ZX_CROSS_TYPE_CLUT0);
-	i = zx->zx_csr;
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type, ZX_CROSS_TYPE_CLUT0);
+	i = bus_space_read_4(sc->sc_bt, sc->sc_bhzx, zx_csr);
 	i = i | ZX_CROSS_CSR_UNK | ZX_CROSS_CSR_UNK2;
-	SETREG(zx->zx_csr, i);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_csr, i);
 	return (0);
 }
 
 void
 zx_cursor_move(struct zx_softc *sc)
 {
-	volatile struct zx_cursor *zcu;
 	int sx, sy, x, y;
 
 	x = sc->sc_curpos.x - sc->sc_curhot.x;
 	y = sc->sc_curpos.y - sc->sc_curhot.y;
-	zcu = sc->sc_zcu;
 
 	if (x < 0) {
 		sx = min(-x, 32);
@@ -631,85 +615,84 @@ zx_cursor_move(struct zx_softc *sc)
 		zx_cursor_set(sc);
 	}
 
-	SETREG(zcu->zcu_sxy, ((y & 0x7ff) << 11) | (x & 0x7ff));
-	SETREG(zcu->zcu_misc, zcu->zcu_misc | 0x30);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_sxy,
+	    ((y & 0x7ff) << 11) | (x & 0x7ff));
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
+	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x30);
 
 	/* XXX Necessary? */
-	SETREG(zcu->zcu_misc, zcu->zcu_misc | 0x80);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
+	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x80);
 }
 
 void
 zx_cursor_set(struct zx_softc *sc)
 {
-	volatile struct zx_cursor *zcu;
 	int i, j, data;
 
-	zcu = sc->sc_zcu;
-
 	if ((sc->sc_flags & ZX_CURSOR) != 0)
-		SETREG(zcu->zcu_misc, zcu->zcu_misc & ~0x80);
+		bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
+		    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) &
+		    ~0x80);
 
 	for (j = 0; j < 2; j++) {
-		SETREG(zcu->zcu_type, 0x20 << j);
+		bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_type, 0x20 << j);
 
 		for (i = sc->sc_shifty; i < 32; i++) {
 			data = sc->sc_curbits[j][i];
-			SETREG(zcu->zcu_data, data >> sc->sc_shiftx);
+			bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_data,
+			    data >> sc->sc_shiftx);
 		}
 		for (i = sc->sc_shifty; i != 0; i--)
-			SETREG(zcu->zcu_data, 0);
+			bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_data, 0);
 	}
 
 	if ((sc->sc_flags & ZX_CURSOR) != 0)
-		SETREG(zcu->zcu_misc, zcu->zcu_misc | 0x80);
+		bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
+		    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x80);
 }
 
 void
 zx_cursor_blank(struct zx_softc *sc)
 {
-	volatile struct zx_cursor *zcu;
 
 	sc->sc_flags &= ~ZX_CURSOR;
-	zcu = sc->sc_zcu;
-	SETREG(zcu->zcu_misc, zcu->zcu_misc & ~0x80);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
+	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) & ~0x80);
 }
 
 void
 zx_cursor_unblank(struct zx_softc *sc)
 {
-	volatile struct zx_cursor *zcu;
 
 	sc->sc_flags |= ZX_CURSOR;
-	zcu = sc->sc_zcu;
-	SETREG(zcu->zcu_misc, zcu->zcu_misc | 0x80);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
+	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x80);
 }
 
 void
 zx_cursor_color(struct zx_softc *sc)
 {
-	volatile struct zx_cursor *zcu;
 	u_int8_t tmp;
 
-	zcu = sc->sc_zcu;
-
-	SETREG(zcu->zcu_type, 0x50);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_type, 0x50);
 
 	tmp = sc->sc_curcmap[0] | (sc->sc_curcmap[2] << 8) |
 	    (sc->sc_curcmap[4] << 16);
-	SETREG(zcu->zcu_data, tmp);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_data, tmp);
 
 	tmp = sc->sc_curcmap[1] | (sc->sc_curcmap[3] << 8) |
 	    (sc->sc_curcmap[5] << 16);
-	SETREG(zcu->zcu_data, sc->sc_curcmap[1]);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_data, sc->sc_curcmap[1]);
 
-	SETREG(zcu->zcu_misc, zcu->zcu_misc | 0x03);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
+	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x03);
 }
 
 void
 zx_blank(struct device *dv)
 {
 	struct zx_softc *sc;
-	volatile struct zx_cross *zx;
 
 	sc = device_private(dv);
 
@@ -717,16 +700,16 @@ zx_blank(struct device *dv)
 		return;
 	sc->sc_flags |= ZX_BLANKED;
 
-	zx = sc->sc_zx;
-	SETREG(zx->zx_type, ZX_CROSS_TYPE_VIDEO);
-	SETREG(zx->zx_csr, zx->zx_csr & ~ZX_CROSS_CSR_ENABLE);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type, ZX_CROSS_TYPE_VIDEO);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_csr,
+	    bus_space_read_4(sc->sc_bt, sc->sc_bhzx, zx_csr) &
+	    ~ZX_CROSS_CSR_ENABLE);
 }
 
 void
 zx_unblank(struct device *dv)
 {
 	struct zx_softc *sc;
-	volatile struct zx_cross *zx;
 
 	sc = device_private(dv);
 
@@ -734,9 +717,10 @@ zx_unblank(struct device *dv)
 		return;
 	sc->sc_flags &= ~ZX_BLANKED;
 
-	zx = sc->sc_zx;
-	SETREG(zx->zx_type, ZX_CROSS_TYPE_VIDEO);
-	SETREG(zx->zx_csr, zx->zx_csr | ZX_CROSS_CSR_ENABLE);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_type, ZX_CROSS_TYPE_VIDEO);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzx, zx_csr,
+	    bus_space_read_4(sc->sc_bt, sc->sc_bhzx, zx_csr) |
+	    ZX_CROSS_CSR_ENABLE);
 }
 
 paddr_t
@@ -765,13 +749,9 @@ zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
 	    int rop)
 {
 	struct zx_softc *sc;
-	volatile struct zx_command *zc;
-	volatile struct zx_draw *zd;
 	int fg, bg;
 
 	sc = ri->ri_hw;
-	zc = sc->sc_zc;
-	zd = sc->sc_zd_ss0;
 
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
 	x = x * sc->sc_fontw + ri->ri_xorigin;
@@ -779,13 +759,16 @@ zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
 	w = sc->sc_fontw * w - 1;
 	h = sc->sc_fonth * h - 1;
 
-	while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
+	while ((bus_space_read_4(sc->sc_bt, sc->sc_bhzc, zc_csr) &
+	    ZX_CSR_BLT_BUSY) != 0)
 		;
 
-	SETREG(zd->zd_rop, rop);
-	SETREG(zd->zd_fg, (bg & 7) ? 0x00000000 : 0xff000000);
-	SETREG(zc->zc_extent, w | (h << 11));
-	SETREG(zc->zc_fill, x | (y << 11) | 0x80000000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, rop);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg,
+	    (bg & 7) ? 0x00000000 : 0xff000000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent, w | (h << 11));
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fill,
+	    x | (y << 11) | 0x80000000);
 }
 
 void
@@ -793,13 +776,9 @@ zx_copyrect(struct rasops_info *ri, int sx, int sy, int dx, int dy, int w,
 	    int h)
 {
 	struct zx_softc *sc;
-	volatile struct zx_command *zc;
-	volatile struct zx_draw *zd;
 	int dir;
 
 	sc = ri->ri_hw;
-	zc = sc->sc_zc;
-	zd = sc->sc_zd_ss0;
 
 	sx = sx * sc->sc_fontw + ri->ri_xorigin;
 	sy = sy * sc->sc_fonth + ri->ri_yorigin;
@@ -817,13 +796,15 @@ zx_copyrect(struct rasops_info *ri, int sx, int sy, int dx, int dy, int w,
 	} else
 		dir = 0;
 
-	while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
+	while ((bus_space_read_4(sc->sc_bt, sc->sc_bhzc, zc_csr) &
+	    ZX_CSR_BLT_BUSY) != 0)
 		;
 
-	SETREG(zd->zd_rop, ZX_STD_ROP);
-	SETREG(zc->zc_extent, w | (h << 11) | dir);
-	SETREG(zc->zc_src, sx | (sy << 11));
-	SETREG(zc->zc_copy, dx | (dy << 11));
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, ZX_STD_ROP);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent,
+	    w | (h << 11) | dir);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_src, sx | (sy << 11));
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_copy, dx | (dy << 11));
 }
 
 void
@@ -881,8 +862,6 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri;
 	struct zx_softc *sc;
 	struct wsdisplay_font *font;
-	volatile struct zx_command *zc;
-	volatile struct zx_draw *zd;
 	volatile u_int32_t *dp;
 	u_int8_t *fb;
 	int fs, i, fg, bg, ul;
@@ -896,8 +875,6 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	sc = (struct zx_softc *)ri->ri_hw;
 	font = ri->ri_font;
-	zc = sc->sc_zc;
-	zd = sc->sc_zd_ss0;
 
 	dp = (volatile u_int32_t *)sc->sc_pixels +
 	    ((row * sc->sc_fonth + ri->ri_yorigin) << 11) +
@@ -907,13 +884,17 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	fs = font->stride;
 	rasops_unpack_attr(attr, &fg, &bg, &ul);
 
-	while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
+	while ((bus_space_read_4(sc->sc_bt, sc->sc_bhzc, zc_csr) &
+	    ZX_CSR_BLT_BUSY) != 0)
 		;
 
-	SETREG(zd->zd_rop, ZX_STD_ROP);
-	SETREG(zd->zd_fg, (fg & 7) ? 0x00000000 : 0xff000000);
-	SETREG(zd->zd_bg, (bg & 7) ? 0x00000000 : 0xff000000);
-	SETREG(zc->zc_fontmsk, 0xffffffff << (32 - sc->sc_fontw));
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, ZX_STD_ROP);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg,
+	    (fg & 7) ? 0x00000000 : 0xff000000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_bg,
+	    (bg & 7) ? 0x00000000 : 0xff000000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fontmsk,
+	    0xffffffff << (32 - sc->sc_fontw));
 
 	if (sc->sc_fontw <= 8) {
 		for (i = sc->sc_fonth; i != 0; i--, dp += 2048) {

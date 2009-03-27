@@ -1,4 +1,4 @@
-/*	$NetBSD: zxvar.h,v 1.2 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: zxvar.h,v 1.3 2009/03/27 12:25:41 tsutsui Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -84,6 +84,12 @@ struct zx_softc {
 	struct fbdevice	sc_fb;
 	bus_space_tag_t	sc_bt;
 
+	bus_space_handle_t sc_bhzc;
+	bus_space_handle_t sc_bhzx;
+	bus_space_handle_t sc_bhzdss0;
+	bus_space_handle_t sc_bhzdss1;
+	bus_space_handle_t sc_bhzcu;
+
 	int		sc_flags;
 	int		sc_fontw;
 	int		sc_fonth;
@@ -98,12 +104,6 @@ struct zx_softc {
 	struct fbcurpos sc_cursize;
 	u_int8_t	sc_curcmap[8];
 	u_int32_t	sc_curbits[2][32];
-
-	volatile struct zx_command *sc_zc;
-	volatile struct zx_cross *sc_zx;
-	volatile struct zx_draw *sc_zd_ss0;
-	volatile struct zx_draw_ss1 *sc_zd_ss1;
-	volatile struct zx_cursor *sc_zcu;
 };
 #define	ZX_BLANKED	0x01
 #define	ZX_CURSOR	0x02
