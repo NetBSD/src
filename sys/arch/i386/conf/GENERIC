@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.929 2009/03/17 20:04:39 dyoung Exp $
+# $NetBSD: GENERIC,v 1.930 2009/03/27 21:04:35 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,12 +22,9 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.929 $"
+#ident 		"GENERIC-$Revision: 1.930 $"
 
 maxusers	64		# estimated number of users
-
-makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
-							# tune for more modern
 
 # For GENERIC, we build the exec formats as modules by default.
 no options	EXEC_AOUT       # exec a.out binaries
