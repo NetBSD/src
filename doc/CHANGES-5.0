@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.117 2009/03/26 17:57:01 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.118 2009/03/27 15:30:59 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5336,3 +5336,47 @@ etc/rc.d/ipfilter				1.18
 	ipfilter=YES ipfilter_flags="-T fr_statemax=18963,fr_statesize=27091"
 	[hannken, ticket #606]
 
+etc/Makefile					1.364
+Makefile					1.267
+usr.sbin/postinstall/postinstall		1.90
+usr.bin/hexdump/parse.c				1.25
+sys/arch/x86/acpi/genwakecode.sh		1.3
+usr.sbin/postinstall/postinstall		1.87-1.89
+sys/arch/x86/acpi/Makefile.wakecode.inc		1.4
+sys/conf/Makefile.kern.inc			1.120
+
+	Use ll instead of non-standard q as length modifier in format strings.
+	Makes this work on Solaris. OK by apb.
+	Not every grep knows -q. Ok by apb.
+	Use sed, awk and hexdump from tools to make this work on Solaris. Ok
+	by apb.
+	Use awk and grep host tools where required.  'build.sh release' now
+	works on Solaris (but only with HOST_CC=/usr/sfw/bin/gcc for now).
+	"grep -q" is not portable; use "grep >/dev/null" instead.  Also add a
+	comment saying that postinstal is invoked during a cross build.
+	In file_exists_exact(), fix an incorrect test of "1" instead of "$1",
+	and improve the comment explaining what this function does.
+	As long as we don't yet have a working TOOL_GREP, fgrep is more
+	portablethan grep -F.
+	[sketch, ticket #536]
+
+share/mk/bsd.info.mk				1.39
+gnu/dist/texinfo/makeinfo/makeinfo.h		1.2
+gnu/dist/texinfo/makeinfo/makeinfo.c		1.15-1.16
+gnu/dist/texinfo/doc/makeinfo.1			1.2
+
+	Teach makeinfo about --no-version-header to support the line
+		This is <info> producted by <version> from <source>
+	which leaks the full build prefix.
+	When processing texinfo sources, use --no-version-header to make the
+	build reproducable.
+	Escape new lines.
+	[joerg, ticket #548]
+
+gnu/dist/texinfo/Makefile.in			1.7
+
+	Don't build the infokey and info binaries during toolchain builds.
+	This patches the false branch of the Makefile as the true branch is
+	only used for cross-compiling of texinfo with the internal build
+	system. This avoids the termcap dependency as noticed in PR 40810.
+	[joerg, ticket #551]
