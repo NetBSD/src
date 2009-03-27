@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.111 2009/03/21 10:05:28 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.112 2009/03/27 12:19:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.111 2009/03/21 10:05:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.112 2009/03/27 12:19:17 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1276,7 +1276,7 @@ re_rxeof(struct rtk_softc *sc)
 		/* Check IP header checksum */
 		if ((rxstat & RE_RDESC_STAT_PROTOID) != 0 &&
 		    ((sc->sc_quirk & RTKQ_DESCV2) == 0 ||
-		     (rxvlan & RE_PROTOID_IP) != 0)) {
+		     (rxvlan & RE_RDESC_VLANCTL_IPV4) != 0)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
