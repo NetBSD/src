@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42 2008/07/07 13:01:16 gmcgarry Exp $	*/
+/*	$NetBSD: vector.S,v 1.42.6.1 2009/03/27 17:25:15 msaitoh Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42 2008/07/07 13:01:16 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.6.1 2009/03/27 17:25:15 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -863,7 +863,7 @@ IDTVEC(trap07)
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap
-	jmp	.Lalltraps_checkusr
+	jmp	_C_LABEL(trapreturn)
 #else
 #ifndef XEN
 	sti
@@ -999,7 +999,7 @@ IDTVEC(trap0f)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
-	jmp	.Lalltraps_checkusr
+	jmp	_C_LABEL(trapreturn)
 
 IDTVEC(trap10)
 #if NNPX > 0
@@ -1018,7 +1018,7 @@ IDTVEC(trap10)
 	incl	_C_LABEL(uvmexp)+V_TRAP
 	call	_C_LABEL(npxintr)
 	addl	$12,%esp
-	jmp	.Lalltraps_checkusr
+	jmp	_C_LABEL(trapreturn)
 #else
 	sti
 	ZTRAP(T_ARITHTRAP)
@@ -1092,7 +1092,7 @@ calltrap:
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-.Lalltraps_checkusr:
+_C_LABEL(trapreturn):	.globl	trapreturn
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	.Lalltraps_checkast
 #ifdef VM86
@@ -1136,7 +1136,7 @@ calltrap:
 	movl    CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp     *IS_RESUME(%eax)
 7:      movl    %ebx, CPUVAR(ILEVEL) #restore cpl
-	jmp     .Lalltraps_checkusr
+	jmp     _C_LABEL(trapreturn)
 #endif /* XEN */
 #ifndef DIAGNOSTIC
 6:	INTRFASTEXIT
@@ -1209,36 +1209,6 @@ ipkdbrestore:
 	pushl	%ecx
 	ret
 #endif /* IPKDB */
-
-
-/*
- * If an error is detected during trap, syscall, or interrupt exit, trap() will
- * change %eip to point to one of these labels.  We clean up the stack, if
- * necessary, and resume as if we were handling a general protection fault.
- * This will cause the process to get a SIGBUS.
- */
-/* LINTSTUB: Var: char resume_iret[1]; */
-NENTRY(resume_iret)
-	ZTRAP(T_PROTFLT)
-/* LINTSTUB: Var: char resume_pop_ds[1]; */
-NENTRY(resume_pop_ds)
-	movw	%es,TF_ES(%esp)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%es
-/* LINTSTUB: Var: char resume_pop_es[1]; */
-NENTRY(resume_pop_es)
-	movw	%fs,TF_FS(%esp)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%fs
-/* LINTSTUB: Var: char resume_pop_fs[1]; */
-NENTRY(resume_pop_fs)
-	movw	%gs,TF_GS(%esp)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%gs
-/* LINTSTUB: Var: char resume_pop_gs[1]; */
-NENTRY(resume_pop_gs)
-	movl	$T_PROTFLT,TF_TRAPNO(%esp)
-	jmp	calltrap
 
 #ifdef IPKDB
 /* LINTSTUB: Func: int ipkdbfbyte(u_char *c) */
