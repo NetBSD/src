@@ -1,4 +1,4 @@
-/* $NetBSD: hashhl.c,v 1.1 2005/09/28 16:31:45 christos Exp $ */
+/* $NetBSD: hashhl.c,v 1.1.26.1 2009/03/27 16:28:41 msaitoh Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -16,6 +16,10 @@
 
 #ifdef HASH_ALGORITHM
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 /*
  * Do all the name mangling before we include "namespace.h"
  */
@@ -30,7 +34,7 @@
 #define	HASH_LEN	CONCAT(HASH_ALGORITHM,_DIGEST_LENGTH)
 #define	HASH_STRLEN	CONCAT(HASH_ALGORITHM,_DIGEST_STRING_LENGTH)
 
-#if !defined(_KERNEL) && defined(__weak_alias)
+#if !defined(_KERNEL) && defined(__weak_alias) && !defined(HAVE_NBTOOL_CONFIG_H)
 #define	WA(a,b)	__weak_alias(a,b)
 WA(FNPREFIX(End),CONCAT(_,FNPREFIX(End)))
 WA(FNPREFIX(FileChunk),CONCAT(_,FNPREFIX(FileChunk)))
@@ -51,10 +55,6 @@ WA(FNPREFIX(Data),CONCAT(_,FNPREFIX(Data)))
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
 
 #ifndef MIN
 #define	MIN(x,y)	((x)<(y)?(x):(y))
