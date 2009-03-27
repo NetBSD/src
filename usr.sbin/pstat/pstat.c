@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.96 2006/10/20 18:58:13 reinoud Exp $	*/
+/*	$NetBSD: pstat.c,v 1.96.6.1 2009/03/27 03:44:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.96 2006/10/20 18:58:13 reinoud Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.96.6.1 2009/03/27 03:44:29 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -860,8 +860,7 @@ static const struct flagbit_desc filemode_flags[] = {
 void
 filemode(void)
 {
-	struct file *fp;
-	struct file *addr;
+	struct kinfo_file *ki;
 	char flags[sizeof(filemode_flags) / sizeof(filemode_flags[0])];
 	char *buf, *offset;
 	int len, maxfile, nfile, ovflw;
@@ -875,37 +874,34 @@ filemode(void)
 	if (getfiles(&buf, &len, &offset) == -1)
 		return;
 	/*
-	 * Getfiles returns in malloc'd memory a pointer to the first file
-	 * structure, and then an array of file structs (whose addresses are
-	 * derivable from the previous entry).
+	 * Getfiles returns in malloc'd memory to an array of kinfo_file2
+	 * structures.
 	 */
-	addr = ((struct filelist *)offset)->lh_first;
-	fp = (struct file *)(offset + sizeof(struct filelist));
-	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
+	nfile = len / sizeof(struct kinfo_file);
 
 	(void)printf("%d/%d open files\n", nfile, maxfile);
 	(void)printf("%*s%s%*s TYPE    FLG     CNT  MSG  %*s%s%*s USE IFLG OFFSET\n",
 	    (PTRSTRWIDTH - 4) / 2, "", " LOC", (PTRSTRWIDTH - 4) / 2, "",
 	    (PTRSTRWIDTH - 4) / 2, "", "DATA", (PTRSTRWIDTH - 4) / 2, "");
-	for (; (char *)fp < offset + len; addr = fp->f_list.le_next, fp++) {
-		if ((unsigned)fp->f_type >= sizeof(dtypes) / sizeof(dtypes[0]))
+	for (ki = (struct kinfo_file *)offset; nfile--; ki++) {
+		if ((unsigned)ki->ki_ftype >= sizeof(dtypes) / sizeof(dtypes[0]))
 			continue;
 		ovflw = 0;
-		(void)getflags(filemode_flags, flags, fp->f_flag);
-		PRWORD(ovflw, "%*lx", PTRSTRWIDTH, 0, (long)addr);
-		PRWORD(ovflw, " %-*s", 9, 1, dtypes[fp->f_type]);
+		(void)getflags(filemode_flags, flags, ki->ki_flag);
+		PRWORD(ovflw, "%*lx", PTRSTRWIDTH, 0, (long)ki->ki_fileaddr);
+		PRWORD(ovflw, " %-*s", 9, 1, dtypes[ki->ki_ftype]);
 		PRWORD(ovflw, " %*s", 6, 1, flags);
-		PRWORD(ovflw, " %*d", 5, 1, fp->f_count);
-		PRWORD(ovflw, " %*d", 5, 1, fp->f_msgcount);
-		PRWORD(ovflw, "  %*lx", PTRSTRWIDTH + 1, 2, (long)fp->f_data);
-		PRWORD(ovflw, " %*d", 5, 1, fp->f_usecount);
-		PRWORD(ovflw, " %*x", 5, 1, fp->f_iflags);
-		if (fp->f_offset < 0)
+		PRWORD(ovflw, " %*d", 5, 1, ki->ki_count);
+		PRWORD(ovflw, " %*d", 5, 1, ki->ki_msgcount);
+		PRWORD(ovflw, "  %*lx", PTRSTRWIDTH + 1, 2, (long)ki->ki_fdata);
+		PRWORD(ovflw, " %*d", 5, 1, ki->ki_usecount);
+		PRWORD(ovflw, " %*x", 5, 1, ki->ki_iflags);
+		if (ki->ki_foffset < 0)
 			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
-			    (long long)fp->f_offset);
+			    (long long)ki->ki_foffset);
 		else
 			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
-			    (long long)fp->f_offset);
+			    (long long)ki->ki_foffset);
 	}
 	free(buf);
 }
@@ -914,7 +910,7 @@ int
 getfiles(char **abuf, int *alen, char **aoffset)
 {
 	size_t len;
-	int mib[2];
+	int mib[6];
 	char *buf;
 	size_t offset;
 
@@ -926,17 +922,22 @@ getfiles(char **abuf, int *alen, char **aoffset)
 		errx(1, "files on dead kernel, not implemented");
 
 	mib[0] = CTL_KERN;
-	mib[1] = KERN_FILE;
-	if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1) {
-		warn("sysctl: KERN_FILE");
+	mib[1] = KERN_FILE2;
+	mib[2] = KERN_FILE_BYFILE;
+	mib[3] = 0;
+	mib[4] = sizeof(struct kinfo_file);
+	mib[5] = 0;
+	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
+		warn("sysctl: KERN_FILE2");
 		return (-1);
 	}
-	/* We need to align (struct file *) in the buffer. */
+	/* We need to align (struct kinfo_file *) in the buffer. */
 	offset = len % sizeof(off_t);
+	mib[5] = len / sizeof(struct kinfo_file);
 	if ((buf = malloc(len + offset)) == NULL)
 		err(1, "malloc");
-	if (sysctl(mib, 2, buf + offset, &len, NULL, 0) == -1) {
-		warn("sysctl: KERN_FILE");
+	if (sysctl(mib, 6, buf + offset, &len, NULL, 0) == -1) {
+		warn("sysctl: 2nd KERN_FILE2");
 		return (-1);
 	}
 	*abuf = buf;
