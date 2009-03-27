@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.6 2009/03/26 20:05:07 pooka Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.7 2009/03/27 06:35:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.6 2009/03/26 20:05:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.7 2009/03/27 06:35:10 pooka Exp $");
 
 #include "libhfs.h"
 
@@ -355,7 +355,7 @@ hfslib_open_volume(
 
 	/* FALLTHROUGH */
 error:	
-	if (isopen)
+	if (result != 0 && isopen)
 		hfslib_close_volume(out_vol, cbargs);
 	if(buffer!=NULL)
 		hfslib_free(buffer, cbargs);
