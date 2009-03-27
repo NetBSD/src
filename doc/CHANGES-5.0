@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.119 2009/03/27 16:34:47 msaitoh Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.120 2009/03/27 17:25:56 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5388,3 +5388,18 @@ lib/libc/md/mdXhl.c				1.8
 
 	Improve the ability to cross-build from Linux and OpenBSD hosts.
 	[apb, ticket #579]
+
+sys/ufs/ffs/ffs_vfsops.c			1.244
+
+	ffs_sync: ensure that we *do* flush atime updates periodically.
+	ffs_update() was eating the flag.
+	[ad, ticket #600]
+
+sys/arch/i386/i386/trap.c			1.244
+sys/arch/i386/i386/vector.S			1.44
+
+	remove a bunch of special casing to handle improperly set segment
+	registers.  if we faulted trying to set them, just fall into
+	"we_re_toast", and arrange for a SEGV to be delivered to the
+	userland process.  fixes kernel mode faults. from andrew doran.
+	[mrg, ticket #609]
