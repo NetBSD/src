@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.19 2009/02/14 19:53:15 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.20 2009/03/27 04:05:21 msaitoh Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -159,3 +159,14 @@ tools/compat/nbtool_config.h.in			patch
 	Fix build on netbsd-5 amd64 hosts.
 	[adrianp, ticket #1278]
 
+sys/kern/init_sysctl.c				1.158
+
+	always calculate "needed" for KERN_FILE2 calls.  this allows a caller
+	to get an estimate of the needed space, like the intention is.
+	[mrg, ticket #1287]
+
+usr.sbin/pstat/pstat.c				1.113
+
+	convert getfiles() to use KERN_FILE2 sysctl.
+	Now it can survive "struct file" changing, as is upcoming.
+	[mrg, ticket #1289]
