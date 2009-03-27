@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.295 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.296 2009/03/27 10:58:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.295 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.296 2009/03/27 10:58:38 drochner Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -549,14 +549,12 @@ out:
 /*
  * sigput:
  * 
- *	Append a new ksiginfo element to the list of pending ksiginfo's, if
- *	we need to (e.g. SA_SIGINFO was requested).
+ *	Append a new ksiginfo element to the list of pending ksiginfo's.
  */
 void
 sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 {
 	ksiginfo_t *kp;
-	struct sigaction *sa = &SIGACTION_PS(p->p_sigacts, ksi->ksi_signo);
 
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT((ksi->ksi_flags & KSI_QUEUED) == 0);
@@ -564,11 +562,9 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 	sigaddset(&sp->sp_set, ksi->ksi_signo);
 
 	/*
-	 * If there is no siginfo, or is not required (and we don't add
-	 * it for the benefit of ktrace, we are done).
+	 * If there is no siginfo, we are done.
 	 */
-	if (KSI_EMPTY_P(ksi) ||
-	    (!KTRPOINT(p, KTR_PSIG) && (sa->sa_flags & SA_SIGINFO) == 0))
+	if (KSI_EMPTY_P(ksi))
 		return;
 
 	KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
