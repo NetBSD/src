@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.94 2008/09/30 09:41:41 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.95 2009/03/27 19:33:22 reed Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd September 29, 2008
+.Dd March 27, 2009
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -262,13 +262,22 @@ or
 .Dq UTP
 would activate twisted pair.
 Refer to the interfaces' driver
-specific man page for a complete list of the available types.
+specific man page for a complete list of the available types
+and the
+.Xr ifmedia 4
+manual page for a list of media types.
+See the
+.Fl m
+flag below.
 .It Cm mediaopt Ar opts
 Set the specified media options on the interface.
 .Ar opts
 is a comma delimited list of options to apply to the interface.
 Refer to the interfaces' driver specific man page for a complete
 list of available options.
+Also see the
+.Xr ifmedia 4
+manual page for a list of media options.
 .It Fl mediaopt Ar opts
 Disable the specified media options on the interface.
 .It Cm mode Ar mode
