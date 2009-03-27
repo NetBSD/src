@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.34 2009/03/21 07:58:30 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.35 2009/03/27 12:19:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -524,6 +524,8 @@ struct re_desc {
 #define RE_RDESC_VLANCTL_TAG	0x00010000	/* VLAN tag available
 						   (re_vlandata valid)*/
 #define RE_RDESC_VLANCTL_DATA	0x0000FFFF	/* TAG data */
+#define RE_RDESC_VLANCTL_IPV6	0x80000000	/* DESCV2 IPV6 packet */
+#define RE_RDESC_VLANCTL_IPV4	0x40000000	/* DESCV2 IPV4 packet */
 
 #define RE_PROTOID_NONIP	0x00000000
 #define RE_PROTOID_TCPIP	0x00010000
