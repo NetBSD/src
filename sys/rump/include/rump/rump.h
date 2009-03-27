@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.10 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: rump.h,v 1.11 2009/03/27 13:18:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -139,5 +139,39 @@ int rump_syspuffs_glueinit(int, int *);
 
 typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 int		rump_sysproxy_set(rump_sysproxy_t, void *);
+
+/*
+ * Begin rump syscall conditionals.  Yes, something a little better
+ * is required here.
+ */
+#ifdef RUMP_SYS_NETWORKING
+#define socket(a,b,c) rump_sys_socket(a,b,c)
+#define accept(a,b,c) rump_sys_accept(a,b,c)
+#define bind(a,b,c) rump_sys_bind(a,b,c)
+#define connect(a,b,c) rump_sys_connect(a,b,c)
+#define getpeername(a,b,c) rump_sys_getpeername(a,b,c)
+#define getsockname(a,b,c) rump_sys_getsockname(a,b,c)
+#define listen(a,b) rump_sys_listen(a,b)
+#define recvfrom(a,b,c,d,e,f) rump_sys_recvfrom(a,b,c,d,e,f)
+#define sendto(a,b,c,d,e,f) rump_sys_sendto(a,b,c,d,e,f)
+#define getsockopt(a,b,c,d,e) rump_sys_getsockopt(a,b,c,d,e)
+#define setsockopt(a,b,c,d,e) rump_sys_setsockopt(a,b,c,d,e)
+#define shutdown(a,b) rump_sys_shutdown(a,b)
+#endif /* RUMP_SYS_NETWORKING */
+
+#ifdef RUMP_SYS_CLOSE
+#define close(a) rump_sys_close(a)
+#endif /* RUMP_SYS_CLOSE */
+
+#ifdef RUMP_SYS_READWRITE
+#define read(a,b,c) rump_sys_read(a,b,c)
+#define readv(a,b,c) rump_sys_readv(a,b,c)
+#define pread(a,b,c,d) rump_sys_pread(a,b,c,d)
+#define preadv(a,b,c,d) rump_sys_preadv(a,b,c,d)
+#define write(a,b,c) rump_sys_write(a,b,c)
+#define writev(a,b,c) rump_sys_writev(a,b,c)
+#define pwrite(a,b,c,d) rump_sys_pwrite(a,b,c,d)
+#define pwritev(a,b,c,d) rump_sys_pwritev(a,b,c,d)
+#endif /* RUMP_SYS_READWRITE */
 
 #endif /* _RUMP_RUMP_H_ */
