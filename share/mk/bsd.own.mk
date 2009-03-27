@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.559 2009/03/09 06:25:51 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.560 2009/03/27 19:36:55 drochner Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -536,6 +536,8 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 # GNU sources and packages sometimes see architecture names differently.
 #
 GNU_ARCH.coldfire=m68k
+GNU_ARCH.i386=i486
+GCC_CONFIG_ARCH.i386=i486
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
