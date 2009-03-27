@@ -1,4 +1,4 @@
-/*	$NetBSD: C.c,v 1.16 2009/03/27 21:48:05 christos Exp $	*/
+/*	$NetBSD: C.c,v 1.17 2009/03/27 21:48:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: C.c,v 1.16 2009/03/27 21:48:05 christos Exp $");
+__RCSID("$NetBSD: C.c,v 1.17 2009/03/27 21:48:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,6 @@ c_entries(void)
 					break;
 				*sp = EOS;
 				if (tflag) {
-printf("1. %s t_def=%d level=%d t_level=%d\n", tok, t_def, level, t_level);
 					/* no typedefs inside typedefs */
 					if (!t_def &&
 						   !memcmp(tok, "typedef",8)) {
@@ -224,7 +223,6 @@ printf("1. %s t_def=%d level=%d t_level=%d\n", tok, t_def, level, t_level);
 						t_level = level;
 						break;
 					}
-printf("2. %s t_def=%d level=%d t_level=%d\n", tok, t_def, level, t_level);
 					/* catch "typedef struct" */
 					if ((!t_def || t_level <= level)
 					    && (!memcmp(tok, "struct", 7)
