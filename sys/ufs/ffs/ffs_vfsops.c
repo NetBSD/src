@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.239.2.1 2009/02/24 04:13:35 snj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.239.2.2 2009/03/27 17:18:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.239.2.1 2009/02/24 04:13:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.239.2.2 2009/03/27 17:18:17 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1738,7 +1738,8 @@ loop:
 		if (vp->v_type == VREG && waitfor == MNT_LAZY) {
 			error = UFS_WAPBL_BEGIN(vp->v_mount);
 			if (!error) {
-				error = ffs_update(vp, NULL, NULL, 0);
+				error = ffs_update(vp, NULL, NULL,
+				    UPDATE_CLOSE);
 				UFS_WAPBL_END(vp->v_mount);
 			}
 		} else {
