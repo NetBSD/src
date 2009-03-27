@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.39 2009/03/21 10:48:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.40 2009/03/27 08:14:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.39 2009/03/21 10:48:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.40 2009/03/27 08:14:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1881,7 +1881,7 @@ pmap_hptdump(void)
 	ehpt = (struct hpt_entry *)((int)hpt + pmap_hptsize);
 	db_printf("HPT dump %p-%p:\n", hpt, ehpt);
 	for (; hpt < ehpt; hpt++)
-		if (hpt->hpt_valid || hpt->hpt_entry) {
+		if (hpt->hpt_valid) {
 			char buf[128];
 
 			snprintb(buf, sizeof(buf), TLB_BITS, hpt->hpt_tlbprot);
