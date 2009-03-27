@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29 2008/05/30 19:03:10 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.30 2009/03/27 15:47:33 dyoung Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <xen/evtchn.h>
 #include <machine/cpu.h>
 #include <machine/pic.h>
+#include <sys/evcnt.h>
 
 #include "opt_xen.h"
 
