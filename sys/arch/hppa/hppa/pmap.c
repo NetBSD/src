@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.40 2009/03/27 08:14:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.41 2009/03/27 08:23:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.40 2009/03/27 08:14:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.41 2009/03/27 08:23:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1555,7 +1555,6 @@ __changebit(struct vm_page *pg, u_int set, u_int clear)
 		volatile pt_entry_t *pde;
 		pt_entry_t opte, pte;
 
-		PMAP_LOCK(pmap);
 		if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
 			opte = pte = pmap_pte_get(pde, va);
 #ifdef PMAPDEBUG
@@ -1576,7 +1575,6 @@ __changebit(struct vm_page *pg, u_int set, u_int clear)
 				pmap_pte_set(pde, va, pte);
 			}
 		}
-		PMAP_UNLOCK(pmap);
 	}
 
 	return ((res & (clear | set)) != 0);
@@ -1595,9 +1593,7 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 	    pve = pve->pv_next) {
 		pmap_t pm = pve->pv_pmap;
 
-		PMAP_LOCK(pm);
 		pte = pmap_vp_find(pm, pve->pv_va);
-		PMAP_UNLOCK(pm);
 
 		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 	}
