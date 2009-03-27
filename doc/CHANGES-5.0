@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.118 2009/03/27 15:30:59 msaitoh Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.119 2009/03/27 16:34:47 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5380,3 +5380,11 @@ gnu/dist/texinfo/Makefile.in			1.7
 	only used for cross-compiling of texinfo with the internal build
 	system. This avoids the termcap dependency as noticed in PR 40810.
 	[joerg, ticket #551]
+
+dist/file/src/file.h				1.18
+gnu/dist/texinfo/lib/system.h			1.11
+lib/libc/hash/hashhl.c				1.3
+lib/libc/md/mdXhl.c				1.8
+
+	Improve the ability to cross-build from Linux and OpenBSD hosts.
+	[apb, ticket #579]
