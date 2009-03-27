@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.136 2009/03/07 00:56:04 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.137 2009/03/27 16:45:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.136 2009/03/07 00:56:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.137 2009/03/27 16:45:53 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3937,6 +3937,11 @@ sipcom_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct sip_softc *sc = ifp->if_softc;
 
+	if (!device_is_active(&sc->sc_dev)) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
 	ether_mediastatus(ifp, ifmr);
 	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK) |
 			   sc->sc_flowflags;
