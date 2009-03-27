@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.37 2009/03/25 22:54:56 dyoung Exp $	*/
+/*	$NetBSD: intr.h,v 1.38 2009/03/27 16:09:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,6 +34,12 @@
 
 #define	__HAVE_FAST_SOFTINTS
 #define	__HAVE_PREEMPTION
+
+#ifdef _KERNEL
+#include <sys/types.h>
+#else
+#include <stdbool.h>
+#endif
 
 #include <sys/evcnt.h>
 #include <machine/intrdefs.h>
