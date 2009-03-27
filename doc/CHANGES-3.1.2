@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.37 2009/02/26 08:23:13 snj Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.38 2009/03/27 07:12:52 msaitoh Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -1154,3 +1154,14 @@ usr.sbin/syslogd/syslogd.8			patch
 	Fix typo: LOT_NOTICE -> LOG_NOTICE.
 	[bouyer, ticket #1990]       
 
+sys/kern/init_sysctl.c				1.158
+
+	always calculate "needed" for KERN_FILE2 calls.  this allows a caller
+	to get an estimate of the needed space, like the intention is.
+	[mrg, ticket #1999]
+
+usr.sbin/pstat/pstat.c				1.113
+
+	convert getfiles() to use KERN_FILE2 sysctl.
+	Now it can survive "struct file" changing, as is upcoming.
+	[mrg, ticket #2000]
