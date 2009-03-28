@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 2009/01/29 14:20:50 joerg Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 2009/03/28 21:23:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.17 2009/01/29 14:20:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18 2009/03/28 21:23:44 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -193,11 +193,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			}
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, PMAP_WIRED|prot);
+			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
+			pmap_update(pmap_kernel());
 			mutex_exit(&mm_lock);
 			break;
 
