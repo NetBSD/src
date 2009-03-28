@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2009/03/27 16:07:37 dyoung Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 2009/03/28 21:34:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -372,7 +372,7 @@ void	npxsave_lwp(struct lwp *, bool);
 void	npxsave_cpu(bool);
 
 /* vm_machdep.c */
-int kvtop(void *);
+paddr_t	kvtop(void *);
 
 #ifdef USER_LDT
 /* sys_machdep.h */

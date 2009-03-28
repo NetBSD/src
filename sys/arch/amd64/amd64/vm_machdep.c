@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 2008/12/20 12:42:36 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.38 2009/03/28 21:34:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 2008/12/20 12:42:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 2009/03/28 21:34:17 rmind Exp $");
 
 #include "opt_user_ldt.h"
 
@@ -269,14 +269,15 @@ setredzone(struct lwp *l)
 /*
  * Convert kernel VA to physical address
  */
-int
+paddr_t
 kvtop(void *addr)
 {
 	paddr_t pa;
+	bool ret;
 
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == false)
-		panic("kvtop: zero page frame");
-	return((int)pa);
+	ret = pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa);
+	KASSERT(ret == true);
+	return pa;
 }
 
 /*
