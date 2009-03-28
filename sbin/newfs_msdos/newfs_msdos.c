@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.32 2009/03/28 15:17:16 pooka Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.33 2009/03/28 21:34:33 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.32 2009/03/28 15:17:16 pooka Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.33 2009/03/28 21:34:33 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -389,7 +389,7 @@ main(int argc, char *argv[])
     if (!S_ISCHR(sb.st_mode) && !opt_create)
 	warnx("warning, %s is not a character device", fname);
     if (opt_ofs && opt_ofs != lseek(fd, opt_ofs, SEEK_SET))
-	errx(1, "cannot seek to %lld", opt_ofs);
+	errx(1, "cannot seek to %jd", (intmax_t)opt_ofs);
     memset(&bpb, 0, sizeof(bpb));
     if (opt_f) {
 	getstdfmt(opt_f, &bpb);
