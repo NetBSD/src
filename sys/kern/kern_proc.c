@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.147 2009/01/24 22:42:32 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.148 2009/03/28 21:41:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.147 2009/01/24 22:42:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.148 2009/03/28 21:41:05 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -412,18 +412,18 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 }
 
 /*
- * Is p an inferior of q?
- *
- * Call with the proc_lock held.
+ * p_inferior: is p an inferior of q?
  */
-int
-inferior(struct proc *p, struct proc *q)
+static inline bool
+p_inferior(struct proc *p, struct proc *q)
 {
+
+	KASSERT(mutex_owned(proc_lock));
 
 	for (; p != q; p = p->p_pptr)
 		if (p->p_pid == 0)
-			return 0;
-	return 1;
+			return false;
+	return true;
 }
 
 /*
@@ -691,7 +691,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	if (pid != curp->p_pid) {
 		/* must exist and be one of our children... */
 		if ((p = p_find(pid, PFIND_LOCKED)) == NULL ||
-		    !inferior(p, curp)) {
+		    !p_inferior(p, curp)) {
 			rval = ESRCH;
 			goto done;
 		}

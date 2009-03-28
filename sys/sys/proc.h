@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.283 2008/11/19 18:36:10 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.284 2009/03/28 21:41:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -485,7 +485,6 @@ struct simplelock;
 int	enterpgrp(struct proc *, pid_t, pid_t, int);
 void	leavepgrp(struct proc *);
 void	fixjobc(struct proc *, struct pgrp *, int);
-int	inferior(struct proc *, struct proc *);
 void	sessdelete(struct session *);
 void	yield(void);
 void	pgdelete(struct pgrp *);
