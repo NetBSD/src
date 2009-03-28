@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.31 2009/03/26 08:39:24 pooka Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.32 2009/03/28 15:17:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.31 2009/03/26 08:39:24 pooka Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.32 2009/03/28 15:17:16 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -379,7 +379,7 @@ main(int argc, char *argv[])
 	    errx(1, "failed to create %s", fname);
 	pos = lseek(fd, opt_create - 1, SEEK_SET);
 	if (write(fd, "\0", 1) != 1)
-	    errx(1, "failed to initialize %lld bytes", opt_create);
+	    err(1, "failed to set file size");
 	pos = lseek(fd, 0, SEEK_SET);
     } else if ((fd = open(fname, opt_N ? O_RDONLY : O_RDWR)) == -1 ||
 	fstat(fd, &sb))
