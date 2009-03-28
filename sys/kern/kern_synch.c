@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.260 2009/02/04 21:29:54 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.261 2009/03/28 21:43:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.260 2009/02/04 21:29:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.261 2009/03/28 21:43:16 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -302,7 +302,7 @@ wakeup(wchan_t ident)
 	sleepq_t *sq;
 	kmutex_t *mp;
 
-	if (cold)
+	if (__predict_false(cold))
 		return;
 
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
@@ -321,7 +321,7 @@ wakeup_one(wchan_t ident)
 	sleepq_t *sq;
 	kmutex_t *mp;
 
-	if (cold)
+	if (__predict_false(cold))
 		return;
 
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
@@ -399,8 +399,8 @@ kpreempt(uintptr_t where)
 		}
 		if (__predict_false((l->l_flag & LW_IDLE) != 0)) {
 			/* Can't preempt idle loop, don't count as failure. */
-		    	l->l_dopreempt = 0;
-		    	return true;
+			l->l_dopreempt = 0;
+			return true;
 		}
 		if (__predict_false(l->l_nopreempt != 0)) {
 			/* LWP holds preemption disabled, explicitly. */
@@ -411,10 +411,10 @@ kpreempt(uintptr_t where)
 			break;
 		}
 		if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		    	/* Can't preempt soft interrupts yet. */
-		    	l->l_dopreempt = 0;
-		    	failed = (uintptr_t)&is_softint;
-		    	break;
+			/* Can't preempt soft interrupts yet. */
+			l->l_dopreempt = 0;
+			failed = (uintptr_t)&is_softint;
+			break;
 		}
 		s = splsched();
 		if (__predict_false(l->l_blcnt != 0 ||
@@ -478,9 +478,7 @@ kpreempt(uintptr_t where)
 bool
 kpreempt_disabled(void)
 {
-	lwp_t *l;
-
-	l = curlwp;
+	const lwp_t *l = curlwp;
 
 	return l->l_nopreempt != 0 || l->l_stat == LSZOMB ||
 	    (l->l_flag & LW_IDLE) != 0 || cpu_kpreempt_disabled();
@@ -516,7 +514,7 @@ void
 updatertime(lwp_t *l, const struct bintime *now)
 {
 
-	if ((l->l_flag & LW_IDLE) != 0)
+	if (__predict_false(l->l_flag & LW_IDLE))
 		return;
 
 	/* rtime += now - stime */
@@ -552,7 +550,7 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 		newl->l_stat = LSONPROC;
 		newl->l_pflag |= LP_RUNNING;
 	}
-	
+
 	/*
 	 * Only clear want_resched if there are no pending (slow)
 	 * software interrupts.
@@ -752,7 +750,7 @@ mi_switch(lwp_t *l)
 		 * We may need to spin-wait for if 'newl' is still
 		 * context switching on another CPU.
 		 */
-		if (newl->l_ctxswtch != 0) {
+		if (__predict_false(newl->l_ctxswtch != 0)) {
 			u_int count;
 			count = SPINLOCK_BACKOFF_MIN;
 			while (newl->l_ctxswtch)
@@ -893,7 +891,7 @@ lwp_exit_switchaway(lwp_t *l)
 	 * We may need to spin-wait for if 'newl' is still
 	 * context switching on another CPU.
 	 */
-	if (newl->l_ctxswtch != 0) {
+	if (__predict_false(newl->l_ctxswtch != 0)) {
 		u_int count;
 		count = SPINLOCK_BACKOFF_MIN;
 		while (newl->l_ctxswtch)
