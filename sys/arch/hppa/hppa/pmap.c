@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.42 2009/03/28 10:47:21 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.43 2009/03/28 11:00:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.42 2009/03/28 10:47:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.43 2009/03/28 11:00:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.42 2009/03/28 10:47:21 skrll Exp $")
 #if defined(DDB)
 #include <ddb/db_output.h>
 #endif
+
+#define PMAPDEBUG
 
 #ifdef PMAPDEBUG
 
@@ -313,7 +315,7 @@ pmap_pde_set(pmap_t pm, vaddr_t va, paddr_t ptp)
 {
 
 	DPRINTF(PDB_FOLLOW|PDB_VP,
-	    ("pmap_pde_set(%p, 0x%x, 0x%x)\n", pm, (int)va, (int)ptp));
+	    ("%s(%p, 0x%x, 0x%x)\n", __func__, pm, (int)va, (int)ptp));
 
 	KASSERT((ptp & PGOFSET) == 0);
 
@@ -327,7 +329,7 @@ pmap_pde_alloc(pmap_t pm, vaddr_t va, struct vm_page **pdep)
 	paddr_t pa;
 
 	DPRINTF(PDB_FOLLOW|PDB_VP,
-	    ("pmap_pde_alloc(%p, 0x%x, %p)\n", pm, (int)va, pdep));
+	    ("%s(%p, 0x%x, %p)\n", __func__, pm, (int)va, pdep));
 
 	KASSERT(pm != pmap_kernel());
 	KASSERT(mutex_owned(&pm->pm_lock));
@@ -339,7 +341,7 @@ pmap_pde_alloc(pmap_t pm, vaddr_t va, struct vm_page **pdep)
 
 	pa = VM_PAGE_TO_PHYS(pg);
 
-	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pde_alloc: pde %x\n", (int)pa));
+	DPRINTF(PDB_FOLLOW|PDB_VP, ("%s: pde %x\n", __func__, (int)pa));
 
 	pg->flags &= ~PG_BUSY;		/* never busy */
 	pg->wire_count = 1;		/* no mappings yet */
@@ -356,12 +358,12 @@ pmap_pde_ptp(pmap_t pm, volatile pt_entry_t *pde)
 {
 	paddr_t pa = (paddr_t)pde;
 
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pde_ptp(%p, %p)\n", pm, pde));
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s(%p, %p)\n", __func__, pm, pde));
 
 	if (pm->pm_ptphint && VM_PAGE_TO_PHYS(pm->pm_ptphint) == pa)
 		return (pm->pm_ptphint);
 
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pde_ptp: lookup 0x%x\n", (int)pa));
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s: lookup 0x%x\n", __func__, (int)pa));
 
 	return (PHYS_TO_VM_PAGE(pa));
 }
@@ -371,12 +373,12 @@ pmap_pde_release(pmap_t pmap, vaddr_t va, struct vm_page *ptp)
 {
 
 	DPRINTF(PDB_FOLLOW|PDB_PV,
-	    ("pmap_pde_release(%p, 0x%x, %p)\n", pmap, (int)va, ptp));
+	    ("%s(%p, 0x%x, %p)\n", __func__, pmap, (int)va, ptp));
 
 	KASSERT(pmap != pmap_kernel());
 	if (pmap != pmap_kernel() && --ptp->wire_count <= 1) {
 		DPRINTF(PDB_FOLLOW|PDB_PV,
-		    ("pmap_pde_release: disposing ptp %p\n", ptp));
+		    ("%s: disposing ptp %p\n", __func__, ptp));
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		if (pmap->pm_ptphint == ptp)
@@ -400,8 +402,8 @@ static inline void
 pmap_pte_set(volatile pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 {
 
-	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pte_set(%p, 0x%x, 0x%x)\n",
-	    pde, (int)va, (int)pte));
+	DPRINTF(PDB_FOLLOW|PDB_VP, ("%s(%p, 0x%x, 0x%x)\n",
+	    __func__, pde, (int)va, (int)pte));
 
 	KASSERT(pde != NULL);
 	KASSERT(((paddr_t)pde & PGOFSET) == 0);
@@ -515,8 +517,8 @@ pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
 	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
 
 	DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-	    ("%s(%p, %p, 0x%x, %p) from %p\n", __func__, pg, pve, (int)va,
-	    ptep, __builtin_return_address(0)));
+	    ("%s(%p, %p, 0x%x, %p)\n", __func__, pg, pve, (int)va,
+	    ptep));
 
 	if (ptep) {
 		/* Reset page flags with flags for new mapping */
@@ -602,11 +604,11 @@ pmap_pv_alloc(void)
 {
 	struct pv_entry *pv;
 
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pv_alloc()\n"));
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s()\n", __func__));
 
 	pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
 
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pv_alloc: %p\n", pv));
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s: %p\n", __func__, pv));
 
 	return (pv);
 }
@@ -627,7 +629,7 @@ pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
 {
 	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
 
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pv_enter(%p, %p, %p, 0x%x, %p)\n",
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s(%p, %p, %p, 0x%x, %p)\n", __func__,
 	    pg, pve, pm, (int)va, pdep));
 
 	pve->pv_pmap = pm;
@@ -682,7 +684,7 @@ pmap_bootstrap(vaddr_t vstart)
 	extern int __rodata_start, __rodata_end;
 	extern int __data_start;
 
-	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_bootstrap(0x%x)\n", (int)vstart));
+	DPRINTF(PDB_FOLLOW|PDB_INIT, ("%s(0x%x)\n", __func__, (int)vstart));
 
 	uvm_setpagesize();
 
@@ -720,7 +722,7 @@ pmap_bootstrap(vaddr_t vstart)
 	size = round_page((hppa_sid_max + 1) * 4);
 	memset((void *)addr, 0, size);
 	fdcache(HPPA_SID_KERNEL, addr, size);
-	DPRINTF(PDB_INIT, ("pmap_bootstrap: vtop 0x%x @ 0x%x\n", (int)size,
+	DPRINTF(PDB_INIT, ("%s: vtop 0x%x @ 0x%x\n", __func__, (int)size,
 	    (int)addr));
 
 	addr += size;
@@ -750,7 +752,7 @@ pmap_bootstrap(vaddr_t vstart)
 		pmap_hpt = addr;
 		addr += pmap_hptsize;
 
-		DPRINTF(PDB_INIT, ("pmap_bootstrap: hpt_table 0x%x @ 0x%x\n",
+		DPRINTF(PDB_INIT, ("%s: hpt_table 0x%x @ 0x%x\n", __func__,
 		    pmap_hptsize, (int)addr));
 
 		if ((error = (cpu_hpt_init)(pmap_hpt, pmap_hptsize)) < 0) {
@@ -759,7 +761,7 @@ pmap_bootstrap(vaddr_t vstart)
 			pmap_hpt = 0;
 		} else
 			DPRINTF(PDB_INIT,
-			    ("pmap_bootstrap: HPT installed for %ld entries @ 0x%x\n",
+			    ("%s: HPT installed for %ld entries @ 0x%x\n", __func__,
 			    pmap_hptsize / sizeof(struct hpt_entry),
 			    (int)addr));
 	}
@@ -775,7 +777,7 @@ pmap_bootstrap(vaddr_t vstart)
 	/* ... and all physmem (VA == PA) */
 	npdes = nkpdes + (physmem + atop(PDE_SIZE) - 1) / atop(PDE_SIZE);
 
-	DPRINTF(PDB_INIT, ("pmap_bootstrap: npdes %d\n", npdes));
+	DPRINTF(PDB_INIT, ("%s: npdes %d\n", __func__, npdes));
 
 	/* map the pdes */
 	for (va = 0; npdes--; va += PDE_SIZE, addr += PAGE_SIZE) {
@@ -787,7 +789,7 @@ pmap_bootstrap(vaddr_t vstart)
 		/* now map the pde for the physmem */
 		memset((void *)addr, 0, PAGE_SIZE);
 		DPRINTF(PDB_INIT|PDB_VP,
-		    ("pmap_bootstrap: pde premap 0x%08x 0x%08x\n", (int)va,
+		    ("%s: pde premap 0x%08x 0x%08x\n", __func__, (int)va,
 		    (int)addr));
 		pmap_pde_set(kpm, va, addr);
 		kpm->pm_stats.resident_count++; /* count PTP as resident */
@@ -1039,7 +1041,7 @@ pmap_init(void)
 	extern void gateway_page(void);
 	volatile pt_entry_t *pde;
 
-	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_init()\n"));
+	DPRINTF(PDB_FOLLOW|PDB_INIT, ("%s()\n", __func__));
 
 	sid_counter = HPPA_SID_KERNEL;
 
@@ -1067,7 +1069,7 @@ pmap_init(void)
 
 	pmap_initialized = true;
 
-	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_init(): done\n"));
+	DPRINTF(PDB_FOLLOW|PDB_INIT, ("%s(): done\n", __func__));
 }
 
 /* 
@@ -1144,7 +1146,7 @@ pmap_destroy(pmap_t pmap)
 #endif
 	int refs;
 
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_destroy(%p)\n", pmap));
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p)\n", __func__, pmap));
 
 	mutex_enter(&pmap->pm_lock);
 	refs = --pmap->pm_obj.uo_refs;
@@ -1162,8 +1164,8 @@ pmap_destroy(pmap_t pmap)
 		if (pg == pmap->pm_pdir_pg)
 			continue;
 
-		DPRINTF(PDB_FOLLOW, ("pmap_destroy(%p): stray ptp "
-		    "0x%lx w/ %d ents:", pmap, VM_PAGE_TO_PHYS(pg),
+		DPRINTF(PDB_FOLLOW, ("%s(%p): stray ptp "
+		    "0x%lx w/ %d ents:", __func__, pmap, VM_PAGE_TO_PHYS(pg),
 		    pg->wire_count - 1));
 
 		pde = (pt_entry_t *)VM_PAGE_TO_PHYS(pg);
@@ -1209,7 +1211,7 @@ void
 pmap_reference(pmap_t pmap)
 {
 
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_reference(%p)\n", pmap));
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p)\n", __func__, pmap));
 
 	mutex_enter(&pmap->pm_lock);
 	pmap->pm_obj.uo_refs++;
@@ -1220,7 +1222,7 @@ void
 pmap_collect(pmap_t pmap)
 {
 
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_collect(%p)\n", pmap));
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p)\n", __func__, pmap));
 	/* nothing yet */
 }
 
@@ -1242,7 +1244,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	bool wired = (flags & PMAP_WIRED) != 0;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
-	    ("pmap_enter(%p, 0x%x, 0x%x, 0x%x, 0x%x)\n",
+	    ("%s(%p, 0x%x, 0x%x, 0x%x, 0x%x)\n", __func__,
 	    pmap, (int)va, (int)pa, prot, flags));
 
 	PMAP_LOCK(pmap);
@@ -1263,7 +1265,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if ((pte = pmap_pte_get(pde, va))) {
 
 		DPRINTF(PDB_ENTER,
-		    ("pmap_enter: remapping 0x%x -> 0x%x\n", pte, (int)pa));
+		    ("%s: remapping 0x%x -> 0x%x\n", __func__, pte, (int)pa));
 
 		pmap_pte_flush(pmap, va, pte);
 		if (wired && !(pte & PTE_PROT(TLB_WIRED)))
@@ -1273,7 +1275,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 		if (PTE_PAGE(pte) == pa) {
 			DPRINTF(PDB_FOLLOW|PDB_ENTER,
-			    ("pmap_enter: same page\n"));
+			    ("%s: same page\n", __func__));
 			goto enter;
 		}
 
@@ -1283,8 +1285,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 		mutex_exit(&pg->mdpage.pvh_lock);
 	} else {
-		DPRINTF(PDB_ENTER, ("pmap_enter: new mapping 0x%x -> 0x%x\n",
-		    (int)va, (int)pa));
+		DPRINTF(PDB_ENTER, ("%s: new mapping 0x%x -> 0x%x\n",
+		    __func__, (int)va, (int)pa));
 		pte = PTE_PROT(TLB_REFTRAP);
 		pve = NULL;
 		pmap->pm_stats.resident_count++;
@@ -1321,7 +1323,7 @@ enter:
 
 	PMAP_UNLOCK(pmap);
 
-	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_enter: leaving\n"));
+	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("%s: leaving\n", __func__));
 
 	return (0);
 }
@@ -1344,7 +1346,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	int batch;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
-	    ("pmap_remove(%p, 0x%x, 0x%x)\n", pmap, (int)sva, (int)eva));
+	    ("%s(%p, 0x%x, 0x%x)\n", __func__, pmap, (int)sva, (int)eva));
 
 	PMAP_LOCK(pmap);
 
@@ -1392,7 +1394,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 	PMAP_UNLOCK(pmap);
 
-	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_remove: leaving\n"));
+	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("%s: leaving\n", __func__));
 }
 
 
@@ -1405,7 +1407,7 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	u_int pteprot, pdemask;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP,
-	    ("pmap_write_protect(%p, %x, %x, %x)\n", pmap, (int)sva, (int)eva,
+	    ("%s(%p, %x, %x, %x)\n", __func__, pmap, (int)sva, (int)eva,
 	    prot));
 
 	sva = trunc_page(sva);
@@ -1424,7 +1426,7 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if ((pte = pmap_pte_get(pde, sva))) {
 
 			DPRINTF(PDB_PMAP,
-			    ("pmap_write_protect: va=0x%x pte=0x%x\n",
+			    ("%s: va=0x%x pte=0x%x\n", __func__,
 			    (int)sva,  pte));
 			/*
 			 * Determine if mapping is changing.
@@ -1453,7 +1455,7 @@ pmap_page_remove(struct vm_page *pg)
 {
 	struct pv_entry *pve, *npve;
 
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_page_remove(%p)\n", pg));
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s(%p)\n", __func__, pg));
 
 	if (pg->mdpage.pvh_list == NULL)
 		return;
@@ -1484,7 +1486,7 @@ pmap_page_remove(struct vm_page *pg)
 	pg->mdpage.pvh_list = NULL;
 	mutex_exit(&pg->mdpage.pvh_lock);
 
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_page_remove: leaving\n"));
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s: leaving\n", __func__));
 }
 
 /*
@@ -1503,7 +1505,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	volatile pt_entry_t *pde;
 	pt_entry_t pte = 0;
 
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_unwire(%p, 0x%x)\n", pmap, (int)va));
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p, 0x%x)\n", __func__, pmap, (int)va));
 
 	PMAP_LOCK(pmap);
 	if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
@@ -1519,7 +1521,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	}
 	PMAP_UNLOCK(pmap);
 
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_unwire: leaving\n"));
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s: leaving\n", __func__));
 }
 
 bool
@@ -1528,7 +1530,7 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 	bool rv;
 
 	DPRINTF(PDB_FOLLOW|PDB_BITS,
-	    ("pmap_changebit(%p, %x, %x)\n", pg, set, clear));
+	    ("%s(%p, %x, %x)\n", __func__, pg, set, clear));
 
 	mutex_enter(&pg->mdpage.pvh_lock);
 	rv = __changebit(pg, set, clear);
@@ -1586,7 +1588,7 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 	struct pv_entry *pve;
 	pt_entry_t pte;
 
-	DPRINTF(PDB_FOLLOW|PDB_BITS, ("pmap_testbit(%p, %x)\n", pg, bit));
+	DPRINTF(PDB_FOLLOW|PDB_BITS, ("%s(%p, %x)\n", __func__, pg, bit));
 
 	mutex_enter(&pg->mdpage.pvh_lock);
 	for (pve = pg->mdpage.pvh_list; !(pg->mdpage.pvh_attrs & bit) && pve;
@@ -1614,7 +1616,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t pte;
 
-	DPRINTF(PDB_FOLLOW|PDB_EXTRACT, ("pmap_extract(%p, %x)\n", pmap,
+	DPRINTF(PDB_FOLLOW|PDB_EXTRACT, ("%s(%p, %x)\n", __func__, pmap,
 	    (int)va));
 
 	PMAP_LOCK(pmap);
@@ -1680,7 +1682,7 @@ pmap_zero_page(paddr_t pa)
 {
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 
-	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_zero_page(%x)\n", (int)pa));
+	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("%s(%x)\n", __func__, (int)pa));
 
 	KASSERT(pg->mdpage.pvh_list == NULL);
 
@@ -1703,7 +1705,7 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
 	struct vm_page *srcpg = PHYS_TO_VM_PAGE(spa);
 	struct vm_page *dstpg = PHYS_TO_VM_PAGE(dpa);
 
-	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_copy_page(%x, %x)\n", (int)spa,
+	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("%s(%x, %x)\n", __func__, (int)spa,
 	    (int)dpa));
 
 	KASSERT(dstpg->mdpage.pvh_list == NULL);
@@ -1737,7 +1739,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #endif /* PMAPDEBUG */
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
-	    ("pmap_kenter_pa(%x, %x, %x)\n", (int)va, (int)pa, prot));
+	    ("%s(%x, %x, %x)\n", __func__, (int)va, (int)pa, prot));
 
 	if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va)) &&
 	    !(pde = pmap_pde_alloc(pmap_kernel(), va, NULL)))
@@ -1773,7 +1775,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 	pmap_pte_set(pde, va, pte);
 
-	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_kenter_pa: leaving\n"));
+	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("%s: leaving\n", __func__));
 
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
@@ -1803,7 +1805,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 #endif /* PMAPDEBUG */
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
-	    ("pmap_kremove(%x, %x)\n", (int)va, (int)size));
+	    ("%s(%x, %x)\n", __func__, (int)va, (int)size));
 #ifdef PMAPDEBUG
 
 	/*
@@ -1814,7 +1816,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	 */
 	if (va != 0 && va < ptoa(physmem)) {
 		DPRINTF(PDB_FOLLOW|PDB_REMOVE,
-		    ("pmap_kremove(%x, %x): unmapping physmem\n", (int)va,
+		    ("%s(%x, %x): unmapping physmem\n", __func__, (int)va,
 		    (int)size));
 		pmapdebug = opmapdebug;
 		return;
@@ -1832,7 +1834,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		if (!(pte = pmap_pte_get(pde, va))) {
 #if 0
 			DPRINTF(PDB_FOLLOW|PDB_REMOVE,
-			    ("pmap_kremove: unmapping unmapped 0x%x\n",
+			    ("%s: unmapping unmapped 0x%x\n", __func__,
 			    (int)va));
 #endif
 			continue;
@@ -1856,7 +1858,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 				pmap_pv_free(pve);
 		}
 	}
-	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_kremove: leaving\n"));
+	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("%s: leaving\n", __func__));
 
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
