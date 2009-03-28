@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.20 2008/11/11 13:45:10 ad Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.21 2009/03/28 22:03:27 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20 2008/11/11 13:45:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.21 2009/03/28 22:03:27 rmind Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -97,6 +97,7 @@ void
 x86_64_ipi_halt(struct cpu_info *ci)
 {
 	x86_disable_intr();
+	atomic_and_32(&ci->ci_flags, ~CPUF_RUNNING);
 
 	for(;;) {
 		x86_hlt();
