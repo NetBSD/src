@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.17 2009/02/23 20:27:59 rmind Exp $	*/
+/*	$NetBSD: copy.S,v 1.18 2009/03/28 22:46:52 rmind Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.17 2009/02/23 20:27:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.18 2009/03/28 22:46:52 rmind Exp $");
 
 #include "assym.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.17 2009/02/23 20:27:59 rmind Exp $");
 
 /*
  * The following primitives are to copy regions of memory.
+ * Label must be before all copy functions.
  */
 	.text
 
@@ -749,8 +750,14 @@ NENTRY(x86_copyargs_fault)
 	ret
 	DEFERRED_SWITCH_CALL
 
+/*
+ * Label must be after all copy functions.
+ */
 x86_copyfunc_end:	.globl	x86_copyfunc_end
 
+/*
+ * Fault table of copy functions for trap().
+ */
 	.section ".rodata"
 	.globl _C_LABEL(onfault_table)
 _C_LABEL(onfault_table):
