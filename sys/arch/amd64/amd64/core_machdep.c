@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.2 2008/12/18 11:45:40 cegger Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.3 2009/03/28 21:21:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2008/12/18 11:45:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3 2009/03/28 21:21:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,11 +98,11 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2008/12/18 11:45:40 cegger Exp 
 #include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
-#include <machine/fpu.h>
 
 /*
  * Dump the machine specific segment at the start of a core dump.
- */     
+ */
+
 struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
@@ -143,6 +143,6 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_USERSPACE, &md_core,
-	    sizeof(md_core));
+	return coredump_write(iocookie, UIO_SYSSPACE,
+	    &md_core, sizeof(md_core));
 }
