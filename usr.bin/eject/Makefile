@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2009/03/23 04:00:44 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2009/03/28 12:19:51 he Exp $
 
 .include <bsd.own.mk>
 
+.if !defined(SMALLPROG)
 AMD_SUPPORT?=yes
+.endif
 
 PROG=	eject
 SRCS=	eject.c
