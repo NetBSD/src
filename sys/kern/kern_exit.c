@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.218 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.219 2009/03/28 21:38:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.218 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.219 2009/03/28 21:38:55 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -111,8 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.218 2009/01/22 14:38:35 yamt Exp $")
 #include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
-
-#define DEBUG_EXIT
 
 #ifdef DEBUG_EXIT
 int debug_exit = 0;
@@ -856,7 +854,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 static void
 proc_free(struct proc *p, struct rusage *ru)
 {
-	struct proc *parent;
+	struct proc *parent = p->p_pptr;
 	struct lwp *l;
 	ksiginfo_t ksi;
 	kauth_cred_t cred1, cred2;
@@ -876,25 +874,20 @@ proc_free(struct proc *p, struct rusage *ru)
 	 * parent the exit signal.  The rest of the cleanup
 	 * will be done when the old parent waits on the child.
 	 */
-	if ((p->p_slflag & PSL_TRACED) != 0) {
-		parent = p->p_pptr;
-		if (p->p_opptr != parent){
-			mutex_enter(p->p_lock);
-			p->p_slflag &= ~(PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
-			mutex_exit(p->p_lock);
-			parent = p->p_opptr;
-			if (parent == NULL)
-				parent = initproc;
-			proc_reparent(p, parent);
-			p->p_opptr = NULL;
-			if (p->p_exitsig != 0) {
-				exit_psignal(p, parent, &ksi);
-				kpsignal(parent, &ksi, NULL);
-			}
-			cv_broadcast(&parent->p_waitcv);
-			mutex_exit(proc_lock);
-			return;
+	if ((p->p_slflag & PSL_TRACED) != 0 && p->p_opptr != parent) {
+		mutex_enter(p->p_lock);
+		p->p_slflag &= ~(PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
+		mutex_exit(p->p_lock);
+		parent = (p->p_opptr == NULL) ? initproc : p->p_opptr;
+		proc_reparent(p, parent);
+		p->p_opptr = NULL;
+		if (p->p_exitsig != 0) {
+			exit_psignal(p, parent, &ksi);
+			kpsignal(parent, &ksi, NULL);
 		}
+		cv_broadcast(&parent->p_waitcv);
+		mutex_exit(proc_lock);
+		return;
 	}
 
 	/*
@@ -903,7 +896,6 @@ proc_free(struct proc *p, struct rusage *ru)
 	 */
 	leavepgrp(p);
 
-	parent = p->p_pptr;
 	sched_proc_exit(parent, p);
 
 	/*
@@ -934,8 +926,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	 */
 	p->p_stat = SIDL;		/* not even a zombie any more */
 	LIST_REMOVE(p, p_list);	/* off zombproc */
-	parent = p->p_pptr;
-	p->p_pptr->p_nstopchild--;
+	parent->p_nstopchild--;
 	LIST_REMOVE(p, p_sibling);
 
 	/*
