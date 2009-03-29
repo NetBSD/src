@@ -1,11 +1,11 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.244 2009/03/21 14:35:48 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.245 2009/03/29 10:29:00 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Wasabi Systems, Inc.
+ * by Wasabi Systems, Inc, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.244 2009/03/21 14:35:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.245 2009/03/29 10:29:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1533,7 +1533,7 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *mvp;
+	struct vnode *vp, *mvp, *nvp;
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
@@ -1559,16 +1559,30 @@ loop:
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
-		if (vp->v_mount != mp || vismarker(vp))
+		if (vp->v_mount != mp)
+			goto loop;
+		/*
+		 * Don't interfere with concurrent scans of this FS.
+		 */
+		if (vismarker(vp))
 			continue;
 		mutex_enter(&vp->v_interlock);
 		ip = VTOI(vp);
+
+		/*
+		 * Skip the vnode/inode if inaccessible.
+		 */
+		if (ip == NULL || (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
+		    vp->v_type == VNON) {
+			mutex_exit(&vp->v_interlock);
+			continue;
+		}
 
 		/*
 		 * We deliberately update inode times here.  This will
@@ -1579,14 +1593,16 @@ loop:
 		 * out.  Adjustment needed to allow registering vnodes for
 		 * sync when the vnode is clean, but the inode dirty.  Or
 		 * have ufs itself trickle out inode updates.
+		 *
+		 * If doing a lazy sync, we don't care about metadata or
+		 * data updates, because they are handled by each vnode's
+		 * synclist entry.  In this case we are only interested in
+		 * writing back modified inodes.
 		 */
-		if (ip == NULL || (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
-		    vp->v_type == VNON || ((ip->i_flag &
-		    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY |
-		    IN_MODIFIED | IN_ACCESSED)) == 0 &&
-		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
-		{
+		if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE |
+		    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
+		    (waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
@@ -1595,17 +1611,18 @@ loop:
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
+		vmark(mvp, vp);
 		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
+			nvp = vunmark(mvp);
 			if (error == ENOENT) {
-				(void)vunmark(mvp);
 				goto loop;
 			}
 			continue;
 		}
-		if (vp->v_type == VREG && waitfor == MNT_LAZY) {
+		if (waitfor == MNT_LAZY) {
 			error = UFS_WAPBL_BEGIN(vp->v_mount);
 			if (!error) {
 				error = ffs_update(vp, NULL, NULL,
@@ -1620,6 +1637,7 @@ loop:
 			allerror = error;
 		vput(vp);
 		mutex_enter(&mntvnode_lock);
+		nvp = vunmark(mvp);
 	}
 	mutex_exit(&mntvnode_lock);
 	/*
