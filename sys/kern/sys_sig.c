@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.21 2009/01/11 02:45:53 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.22 2009/03/29 16:23:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.21 2009/01/11 02:45:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.22 2009/03/29 16:23:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -654,7 +654,7 @@ __sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec > 0)
 			timo = 1;
 		if (timo <= 0)
-			return (EAGAIN);
+			return EINVAL;
 
 		/*
 		 * Remember current uptime, it would be used in
