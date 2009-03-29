@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.384 2009/03/21 14:41:30 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.385 2009/03/29 10:58:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.384 2009/03/21 14:41:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.385 2009/03/29 10:58:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -911,4 +911,41 @@ calc_cache_size(struct vm_map *map, int pct, int va_pct)
 		}
 	}
 	return t;
+}
+
+/*
+ * Print the system start up banner.
+ *
+ * - Print a limited banner if AB_SILENT.
+ * - Always send normal banner to the log.
+ */
+void
+banner(void)
+{
+	static char notice[] = " Notice: this software is "
+	    "protected by copyright";
+	char pbuf[80];
+	void (*pr)(const char *, ...);
+	int i;
+
+	if ((boothowto & AB_SILENT) != 0) {
+		snprintf(pbuf, sizeof(pbuf), "%s %s (%s)",
+		    ostype, osrelease, kernel_ident);
+		printf("%s", pbuf);
+		for (i = 80 - strlen(pbuf) - sizeof(notice); i != 0; i--)
+			printf(" ");
+		printf("%s\n", notice);
+		pr = aprint_normal;
+	} else {
+		pr = printf;
+	}
+
+	memset(pbuf, 0, sizeof(pbuf));
+	(*pr)("%lld physmem\n", (long long)ptoa(physmem));
+	(*pr)("%lld free\n", (long long)ptoa(uvmexp.free));
+	(*pr)("%s%s", copyright, version);
+	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)physmem));
+	(*pr)("total memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)uvmexp.free));
+	(*pr)("avail memory = %s\n", pbuf);
 }
