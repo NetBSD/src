@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.169 2009/03/20 07:29:15 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.170 2009/03/29 16:22:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.169 2009/03/20 07:29:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.170 2009/03/29 16:22:17 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2794,6 +2794,44 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 			    ("%s: LINK: LSC -> mii_tick\n",
 			    device_xname(sc->sc_dev)));
 			mii_tick(&sc->sc_mii);
+			if (sc->sc_type == WM_T_82543) {
+				int miistatus, active;
+
+				/*
+				 * With 82543, we need to force speed and
+				 * duplex on the MAC equal to what the PHY
+				 * speed and duplex configuration is.
+				 */
+				miistatus = sc->sc_mii.mii_media_status;
+
+				if (miistatus & IFM_ACTIVE) {
+					active = sc->sc_mii.mii_media_active;
+					sc->sc_ctrl &= ~(CTRL_SPEED_MASK
+					    | CTRL_FD);
+					switch (IFM_SUBTYPE(active)) {
+					case IFM_10_T:
+						sc->sc_ctrl |= CTRL_SPEED_10;
+						break;
+					case IFM_100_TX:
+						sc->sc_ctrl |= CTRL_SPEED_100;
+						break;
+					case IFM_1000_T:
+						sc->sc_ctrl |= CTRL_SPEED_1000;
+						break;
+					default:
+						/*
+						 * fiber?
+						 * Shoud not enter here.
+						 */
+						printf("unknown media (%x)\n",
+						    active);
+						break;
+					}
+					if (active & IFM_FDX)
+						sc->sc_ctrl |= CTRL_FD;
+					CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				}
+			}
 		} else if (icr & ICR_RXSEQ) {
 			DPRINTF(WM_DEBUG_LINK,
 			    ("%s: LINK Receive sequence error\n",
