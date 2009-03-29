@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.54 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.55 2009/03/29 01:02:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.54 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.55 2009/03/29 01:02:49 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -284,12 +284,12 @@ mips_elf_makecmds (struct lwp *l, struct exec_package *epp)
 	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
 	 * <stack> ep_minsaddr
 	 */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE, VMCMD_STACK);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE, VMCMD_STACK);
 
 	return 0;
 }

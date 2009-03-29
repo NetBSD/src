@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.150 2009/02/09 11:13:20 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.151 2009/03/29 01:02:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.150 2009/02/09 11:13:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.151 2009/03/29 01:02:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,6 +999,7 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 	create_proc_plimit("maxproc",		PROC_PID_LIMIT_NPROC);
 	create_proc_plimit("descriptors",	PROC_PID_LIMIT_NOFILE);
 	create_proc_plimit("sbsize",		PROC_PID_LIMIT_SBSIZE);
+	create_proc_plimit("vmemoryuse",	PROC_PID_LIMIT_AS);
 
 #undef create_proc_plimit
 

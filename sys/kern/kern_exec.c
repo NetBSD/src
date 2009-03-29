@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.287 2009/03/24 21:00:05 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.288 2009/03/29 01:02:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.287 2009/03/24 21:00:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.288 2009/03/29 01:02:50 mrg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -776,6 +776,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	vm->vm_daddr = (void*)pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
+	vm->vm_issize = 0;
 	vm->vm_maxsaddr = (void *)pack.ep_maxsaddr;
 	vm->vm_minsaddr = (void *)pack.ep_minsaddr;
 
