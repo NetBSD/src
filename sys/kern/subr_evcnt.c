@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.5 2009/03/21 13:06:39 ad Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.6 2009/03/29 18:21:06 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,14 +77,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.5 2009/03/21 13:06:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.6 2009/03/29 18:21:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/mutex.h>
 #include <sys/systm.h>
 
 /* list of all events */
 struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
+static kmutex_t evmtx;
 
 /*
  * We need a dummy object to stuff into the evcnt link set to
@@ -102,6 +104,8 @@ evcnt_init(void)
 {
 	__link_set_decl(evcnts, struct evcnt);
 	struct evcnt * const *evp;
+
+	mutex_init(&evmtx, MUTEX_DEFAULT, IPL_NONE);
 
 	__link_set_foreach(evp, evcnts) {
 		if (*evp == &dummy_static_evcnt)
@@ -133,7 +137,9 @@ evcnt_attach_static(struct evcnt *ev)
 #endif
 	ev->ev_namelen = len;
 
+	mutex_enter(&evmtx);
 	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
+	mutex_exit(&evmtx);
 }
 
 /*
@@ -160,5 +166,7 @@ void
 evcnt_detach(struct evcnt *ev)
 {
 
+	mutex_enter(&evmtx);
 	TAILQ_REMOVE(&allevents, ev, ev_list);
+	mutex_exit(&evmtx);
 }
