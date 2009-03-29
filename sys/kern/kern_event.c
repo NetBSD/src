@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.61 2009/01/11 02:45:52 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.62 2009/03/29 19:21:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.61 2009/01/11 02:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.62 2009/03/29 19:21:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1064,7 +1064,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 {
 	struct kqueue	*kq;
 	struct kevent	*kevp;
-	struct timeval	atv, sleeptv;
+	struct timespec	ats, sleepts;
 	struct knote	*kn, *marker;
 	size_t		count, nkev, nevents;
 	int		timeout, error, rv;
@@ -1080,12 +1080,11 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	}
 
 	if (tsp) {				/* timeout supplied */
-		TIMESPEC_TO_TIMEVAL(&atv, tsp);
-		if (inittimeleft(&atv, &sleeptv) == -1) {
+		if (inittimeleft(&ats, &sleepts) == -1) {
 			*retval = maxevents;
 			return EINVAL;
 		}
-		timeout = tvtohz(&atv);
+		timeout = tstohz(&ats);
 		if (timeout <= 0)
 			timeout = -1;           /* do poll */
 	} else {
@@ -1104,7 +1103,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 			    &kq->kq_lock, timeout);
 			if (error == 0) {
 				 if (tsp == NULL || (timeout =
-				     gettimeleft(&atv, &sleeptv)) > 0)
+				     gettimeleft(&ats, &sleepts)) > 0)
 					goto retry;
 			} else {
 				/* don't restart after signals... */
@@ -1125,8 +1124,8 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 					/* it's our marker, stop */
 					TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 					if (count < maxevents || (tsp != NULL &&
-					    (timeout = gettimeleft(&atv,
-					    &sleeptv)) <= 0))
+					    (timeout = gettimeleft(&ats,
+					    &sleepts)) <= 0))
 						goto done;
 					goto retry;
 				}

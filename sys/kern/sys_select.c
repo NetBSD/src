@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.13 2009/03/21 13:11:14 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.14 2009/03/29 19:21:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.13 2009/03/21 13:11:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.14 2009/03/29 19:21:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,7 @@ sys___pselect50(struct lwp *l, const struct sys___pselect50_args *uap,
 		syscallarg(const struct timespec *)	ts;
 		syscallarg(sigset_t *)			mask;
 	} */
-	struct timespec	ats;
-	struct timeval	atv, *tv = NULL;
+	struct timespec	ats, *ts = NULL;
 	sigset_t	amask, *mask = NULL;
 	int		error;
 
@@ -144,9 +143,7 @@ sys___pselect50(struct lwp *l, const struct sys___pselect50_args *uap,
 		error = copyin(SCARG(uap, ts), &ats, sizeof(ats));
 		if (error)
 			return error;
-		atv.tv_sec = ats.tv_sec;
-		atv.tv_usec = ats.tv_nsec / 1000;
-		tv = &atv;
+		ts = &ats;
 	}
 	if (SCARG(uap, mask) != NULL) {
 		error = copyin(SCARG(uap, mask), &amask, sizeof(amask));
@@ -156,34 +153,34 @@ sys___pselect50(struct lwp *l, const struct sys___pselect50_args *uap,
 	}
 
 	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
-	    SCARG(uap, ou), SCARG(uap, ex), tv, mask);
+	    SCARG(uap, ou), SCARG(uap, ex), ts, mask);
 }
 
 int
-inittimeleft(struct timeval *tv, struct timeval *sleeptv)
+inittimeleft(struct timespec *ts, struct timespec *sleepts)
 {
-	if (itimerfix(tv))
+	if (itimespecfix(ts))
 		return -1;
-	getmicrouptime(sleeptv);
+	getnanouptime(sleepts);
 	return 0;
 }
 
 int
-gettimeleft(struct timeval *tv, struct timeval *sleeptv)
+gettimeleft(struct timespec *ts, struct timespec *sleepts)
 {
 	/*
 	 * We have to recalculate the timeout on every retry.
 	 */
-	struct timeval slepttv;
+	struct timespec sleptts;
 	/*
-	 * reduce tv by elapsed time
+	 * reduce ts by elapsed time
 	 * based on monotonic time scale
 	 */
-	getmicrouptime(&slepttv);
-	timeradd(tv, sleeptv, tv);
-	timersub(tv, &slepttv, tv);
-	*sleeptv = slepttv;
-	return tvtohz(tv);
+	getnanouptime(&sleptts);
+	timespecadd(ts, sleepts, ts);
+	timespecsub(ts, &sleptts, ts);
+	*sleepts = sleptts;
+	return tstohz(ts);
 }
 
 int
@@ -197,24 +194,25 @@ sys___select50(struct lwp *l, const struct sys___select50_args *uap,
 		syscallarg(fd_set *)		ex;
 		syscallarg(struct timeval *)	tv;
 	} */
-	struct timeval atv, *tv = NULL;
+	struct timeval atv;
+	struct timespec ats, *ts = NULL;
 	int error;
 
 	if (SCARG(uap, tv)) {
-		error = copyin(SCARG(uap, tv), (void *)&atv,
-			sizeof(atv));
+		error = copyin(SCARG(uap, tv), (void *)&atv, sizeof(atv));
 		if (error)
 			return error;
-		tv = &atv;
+		TIMEVAL_TO_TIMESPEC(&atv, &ats);
+		ts = &ats;
 	}
 
 	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
-	    SCARG(uap, ou), SCARG(uap, ex), tv, NULL);
+	    SCARG(uap, ou), SCARG(uap, ex), ts, NULL);
 }
 
 int
 selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
-	  fd_set *u_ou, fd_set *u_ex, struct timeval *tv, sigset_t *mask)
+	  fd_set *u_ou, fd_set *u_ex, struct timespec *ts, sigset_t *mask)
 {
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
@@ -223,7 +221,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	int		ncoll, error, timo;
 	size_t		ni;
 	sigset_t	oldmask;
-	struct timeval  sleeptv;
+	struct timespec sleepts;
 	selcpu_t	*sc;
 	kmutex_t	*lock;
 
@@ -255,7 +253,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 #undef	getbits
 
 	timo = 0;
-	if (tv && inittimeleft(tv, &sleeptv) == -1) {
+	if (ts && inittimeleft(ts, &sleepts) == -1) {
 		error = EINVAL;
 		goto done;
 	}
@@ -290,7 +288,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 
 		if (error || *retval)
 			break;
-		if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
+		if (ts && (timo = gettimeleft(ts, &sleepts)) <= 0)
 			break;
 		mutex_spin_enter(lock);
 		if (l->l_selflag != SEL_SCANNING || sc->sc_ncoll != ncoll) {
@@ -374,16 +372,16 @@ sys_poll(struct lwp *l, const struct sys_poll_args *uap, register_t *retval)
 		syscallarg(u_int)		nfds;
 		syscallarg(int)			timeout;
 	} */
-	struct timeval	atv, *tv = NULL;
+	struct timespec	ats, *ts = NULL;
 
 	if (SCARG(uap, timeout) != INFTIM) {
-		atv.tv_sec = SCARG(uap, timeout) / 1000;
-		atv.tv_usec = (SCARG(uap, timeout) % 1000) * 1000;
-		tv = &atv;
+		ats.tv_sec = SCARG(uap, timeout) / 1000;
+		ats.tv_nsec = (SCARG(uap, timeout) % 1000) * 1000000;
+		ts = &ats;
 	}
 
 	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
-		tv, NULL);
+		ts, NULL);
 }
 
 /*
@@ -399,8 +397,7 @@ sys___pollts50(struct lwp *l, const struct sys___pollts50_args *uap,
 		syscallarg(const struct timespec *)	ts;
 		syscallarg(const sigset_t *)		mask;
 	} */
-	struct timespec	ats;
-	struct timeval	atv, *tv = NULL;
+	struct timespec	ats, *ts = NULL;
 	sigset_t	amask, *mask = NULL;
 	int		error;
 
@@ -408,9 +405,7 @@ sys___pollts50(struct lwp *l, const struct sys___pollts50_args *uap,
 		error = copyin(SCARG(uap, ts), &ats, sizeof(ats));
 		if (error)
 			return error;
-		atv.tv_sec = ats.tv_sec;
-		atv.tv_usec = ats.tv_nsec / 1000;
-		tv = &atv;
+		ts = &ats;
 	}
 	if (SCARG(uap, mask)) {
 		error = copyin(SCARG(uap, mask), &amask, sizeof(amask));
@@ -420,13 +415,12 @@ sys___pollts50(struct lwp *l, const struct sys___pollts50_args *uap,
 	}
 
 	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
-		tv, mask);
+	    ts, mask);
 }
 
 int
-pollcommon(lwp_t *l, register_t *retval,
-	struct pollfd *u_fds, u_int nfds,
-	struct timeval *tv, sigset_t *mask)
+pollcommon(lwp_t *l, register_t *retval, struct pollfd *u_fds, u_int nfds,
+    struct timespec *ts, sigset_t *mask)
 {
 	struct pollfd	smallfds[32];
 	struct pollfd	*fds;
@@ -434,7 +428,7 @@ pollcommon(lwp_t *l, register_t *retval,
 	sigset_t	oldmask;
 	int		ncoll, error, timo;
 	size_t		ni;
-	struct timeval	sleeptv;
+	struct timespec	sleepts;
 	selcpu_t	*sc;
 	kmutex_t	*lock;
 
@@ -455,7 +449,7 @@ pollcommon(lwp_t *l, register_t *retval,
 		goto done;
 
 	timo = 0;
-	if (tv && inittimeleft(tv, &sleeptv) == -1) {
+	if (ts && inittimeleft(ts, &sleepts) == -1) {
 		error = EINVAL;
 		goto done;
 	}
@@ -489,7 +483,7 @@ pollcommon(lwp_t *l, register_t *retval,
 
 		if (error || *retval)
 			break;
-		if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
+		if (ts && (timo = gettimeleft(ts, &sleepts)) <= 0)
 			break;
 		mutex_spin_enter(lock);
 		if (l->l_selflag != SEL_SCANNING || sc->sc_ncoll != ncoll) {
@@ -791,18 +785,18 @@ seldestroy(struct selinfo *sip)
 }
 
 int
-pollsock(struct socket *so, const struct timeval *tvp, int events)
+pollsock(struct socket *so, const struct timespec *tsp, int events)
 {
 	int		ncoll, error, timo;
-	struct timeval	sleeptv, tv;
+	struct timespec	sleepts, ts;
 	selcpu_t	*sc;
 	lwp_t		*l;
 	kmutex_t	*lock;
 
 	timo = 0;
-	if (tvp != NULL) {
-		tv = *tvp;
-		if (inittimeleft(&tv, &sleeptv) == -1)
+	if (tsp != NULL) {
+		ts = *tsp;
+		if (inittimeleft(&ts, &sleepts) == -1)
 			return EINVAL;
 	}
 
@@ -825,7 +819,7 @@ pollsock(struct socket *so, const struct timeval *tvp, int events)
 		l->l_selflag = SEL_SCANNING;
 		if (sopoll(so, events) != 0)
 			break;
-		if (tvp && (timo = gettimeleft(&tv, &sleeptv)) <= 0)
+		if (tsp && (timo = gettimeleft(&ts, &sleepts)) <= 0)
 			break;
 		mutex_spin_enter(lock);
 		if (l->l_selflag != SEL_SCANNING || sc->sc_ncoll != ncoll) {

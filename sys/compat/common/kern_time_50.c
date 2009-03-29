@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.6 2009/03/26 22:22:14 gmcgarry Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.7 2009/03/29 19:21:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.6 2009/03/26 22:22:14 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.7 2009/03/29 19:21:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -414,21 +414,21 @@ compat_50_sys_select(struct lwp *l, const struct compat_50_sys_select_args *uap,
 		syscallarg(fd_set *)		ex;
 		syscallarg(struct timeval50 *)	tv;
 	} */
-	struct timeval atv, *tv = NULL;
+	struct timespec ats, *ts = NULL;
 	struct timeval50 atv50;
 	int error;
 
 	if (SCARG(uap, tv)) {
-		error = copyin(SCARG(uap, tv), (void *)&atv50,
-			sizeof(atv50));
+		error = copyin(SCARG(uap, tv), (void *)&atv50, sizeof(atv50));
 		if (error)
 			return error;
-		timeval50_to_timeval(&atv50, &atv);
-		tv = &atv;
+		ats.tv_sec = atv50.tv_sec;
+		ats.tv_nsec = atv50.tv_usec * 1000;
+		ts = &ats;
 	}
 
 	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
-	    SCARG(uap, ou), SCARG(uap, ex), tv, NULL);
+	    SCARG(uap, ou), SCARG(uap, ex), ts, NULL);
 }
 
 int
@@ -444,8 +444,7 @@ compat_50_sys_pselect(struct lwp *l,
 		syscallarg(sigset_t *)			mask;
 	} */
 	struct timespec50	ats50;
-	struct timespec	ats;
-	struct timeval	atv, *tv = NULL;
+	struct timespec	ats, *ts = NULL;
 	sigset_t	amask, *mask = NULL;
 	int		error;
 
@@ -454,9 +453,7 @@ compat_50_sys_pselect(struct lwp *l,
 		if (error)
 			return error;
 		timespec50_to_timespec(&ats50, &ats);
-		atv.tv_sec = ats.tv_sec;
-		atv.tv_usec = ats.tv_nsec / 1000;
-		tv = &atv;
+		ts = &ats;
 	}
 	if (SCARG(uap, mask) != NULL) {
 		error = copyin(SCARG(uap, mask), &amask, sizeof(amask));
@@ -466,7 +463,7 @@ compat_50_sys_pselect(struct lwp *l,
 	}
 
 	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
-	    SCARG(uap, ou), SCARG(uap, ex), tv, mask);
+	    SCARG(uap, ou), SCARG(uap, ex), ts, mask);
 }
 int
 compat_50_sys_pollts(struct lwp *l, const struct compat_50_sys_pollts_args *uap,
@@ -478,8 +475,7 @@ compat_50_sys_pollts(struct lwp *l, const struct compat_50_sys_pollts_args *uap,
 		syscallarg(const struct timespec50 *)	ts;
 		syscallarg(const sigset_t *)		mask;
 	} */
-	struct timespec	ats;
-	struct timeval	atv, *tv = NULL;
+	struct timespec	ats, *ts = NULL;
 	struct timespec50 ats50;
 	sigset_t	amask, *mask = NULL;
 	int		error;
@@ -489,9 +485,7 @@ compat_50_sys_pollts(struct lwp *l, const struct compat_50_sys_pollts_args *uap,
 		if (error)
 			return error;
 		timespec50_to_timespec(&ats50, &ats);
-		atv.tv_sec = ats.tv_sec;
-		atv.tv_usec = ats.tv_nsec / 1000;
-		tv = &atv;
+		ts = &ats;
 	}
 	if (SCARG(uap, mask)) {
 		error = copyin(SCARG(uap, mask), &amask, sizeof(amask));
@@ -501,7 +495,7 @@ compat_50_sys_pollts(struct lwp *l, const struct compat_50_sys_pollts_args *uap,
 	}
 
 	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
-		tv, mask);
+	    ts, mask);
 }
 
 int

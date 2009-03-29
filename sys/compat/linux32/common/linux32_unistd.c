@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.31 2009/03/15 15:56:50 cegger Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.32 2009/03/29 19:21:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.31 2009/03/15 15:56:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.32 2009/03/29 19:21:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,11 +147,10 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 		fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		struct timeval *timeout)
 {   
-	struct timeval tv0, tv1, utv, *tv = NULL;
+	struct timespec ts0, ts1, uts, *ts = NULL;
 	struct netbsd32_timeval50 utv32;
 	int error;
 
-	timerclear(&utv); /* XXX GCC4 */
 
 	/*
 	 * Store current time for computation of the amount of
@@ -161,28 +160,30 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 		if ((error = copyin(timeout, &utv32, sizeof(utv32))))
 			return error;
 
-		netbsd32_to_timeval50(&utv32, &utv);
+		uts.tv_sec = utv32.tv_sec;
+		uts.tv_nsec = utv32.tv_usec * 1000;
 
-		if (itimerfix(&utv)) {
+		if (itimespecfix(&uts)) {
 			/*
 			 * The timeval was invalid.  Convert it to something
 			 * valid that will act as it does under Linux.
 			 */
-			utv.tv_sec += utv.tv_usec / 1000000;
-			utv.tv_usec %= 1000000;
-			if (utv.tv_usec < 0) {
-				utv.tv_sec -= 1;
-				utv.tv_usec += 1000000;
+			uts.tv_sec += uts.tv_nsec / 1000000000;
+			uts.tv_nsec %= 1000000000;
+			if (uts.tv_nsec < 0) {
+				uts.tv_sec -= 1;
+				uts.tv_nsec += 1000000000;
 			}
-			if (utv.tv_sec < 0)
-				timerclear(&utv);
+			if (uts.tv_sec < 0)
+				timespecclear(&uts);
 		}
-		microtime(&tv0);
-		tv = &utv;
-	}
+		nanotime(&ts0);
+		ts = &uts;
+	} else
+		timespecclear(&uts); /* XXX GCC4 */
 
 	error = selcommon(l, retval, nfds, 
-	    readfds, writefds, exceptfds, tv, NULL);
+	    readfds, writefds, exceptfds, ts, NULL);
 
 	if (error) {
 		/*
@@ -202,16 +203,17 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 			 * before we started the call, and subtracting
 			 * that result from the user-supplied value.
 			 */
-			microtime(&tv1);
-			timersub(&tv1, &tv0, &tv1);
-			timersub(&utv, &tv1, &utv);
-			if (utv.tv_sec < 0)
-				timerclear(&utv);
+			nanotime(&ts1);
+			timespecsub(&ts1, &ts0, &ts1);
+			timespecsub(&uts, &ts1, &uts);
+			if (uts.tv_sec < 0)
+				timespecclear(&uts);
 		} else {
-			timerclear(&utv);
+			timespecclear(&uts);
 		}
 		
-		netbsd32_from_timeval50(&utv, &utv32);
+		utv32.tv_sec = uts.tv_sec;
+		utv32.tv_usec = uts.tv_nsec / 1000;
 
 		if ((error = copyout(&utv32, timeout, sizeof(utv32))))
 			return error;
