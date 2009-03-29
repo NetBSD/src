@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.17 2009/03/21 14:41:30 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18 2009/03/29 09:24:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.17 2009/03/21 14:41:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.18 2009/03/29 09:24:52 ad Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -93,8 +93,8 @@ int x86_get_ioperm(struct lwp *, void *, register_t *);
 int x86_set_ioperm(struct lwp *, void *, register_t *);
 int x86_get_mtrr(struct lwp *, void *, register_t *);
 int x86_set_mtrr(struct lwp *, void *, register_t *);
-int x86_set_sdbase(void *arg, char which);
-int x86_get_sdbase(void *arg, char which);
+int x86_set_sdbase(void *, char, lwp_t *, bool);
+int x86_get_sdbase(void *, char);
 
 #ifdef LDT_DEBUG
 static void x86_print_ldt(int, const struct segment_descriptor *);
@@ -588,16 +588,21 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 }
 
 int
-x86_set_sdbase(void *arg, char which)
+x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 {
 #ifdef i386
 	struct segment_descriptor sd;
+	struct pcb *pcb;
 	vaddr_t base;
 	int error;
 
-	error = copyin(arg, &base, sizeof(base));
-	if (error != 0)
-		return error;
+	if (direct) {
+		base = (vaddr_t)arg;
+	} else {
+		error = copyin(arg, &base, sizeof(base));
+		if (error != 0)
+			return error;
+	}
 
 	sd.sd_lobase = base & 0xffffff;
 	sd.sd_hibase = (base >> 24) & 0xff;
@@ -611,12 +616,17 @@ x86_set_sdbase(void *arg, char which)
 	sd.sd_gran = 1;
 
 	kpreempt_disable();
+	pcb = &l->l_addr->u_pcb;
 	if (which == 'f') {
-		memcpy(&curpcb->pcb_fsd, &sd, sizeof(sd));
-		memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
+		memcpy(&pcb->pcb_fsd, &sd, sizeof(sd));
+		if (l == curlwp) {
+			memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
+		}
 	} else /* which == 'g' */ {
-		memcpy(&curpcb->pcb_gsd, &sd, sizeof(sd));
-		memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
+		memcpy(&pcb->pcb_gsd, &sd, sizeof(sd));
+		if (l == curlwp) {
+			memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
+		}
 	}
 	kpreempt_enable();
 
@@ -718,11 +728,11 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 #endif
 
 	case X86_SET_FSBASE:
-		error = x86_set_sdbase(SCARG(uap, parms), 'f');
+		error = x86_set_sdbase(SCARG(uap, parms), 'f', curlwp, false);
 		break;
 
 	case X86_SET_GSBASE:
-		error = x86_set_sdbase(SCARG(uap, parms), 'g');
+		error = x86_set_sdbase(SCARG(uap, parms), 'g', curlwp, false);
 		break;
 
 	case X86_GET_FSBASE:
@@ -738,4 +748,11 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		break;
 	}
 	return (error);
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+
+	return x86_set_sdbase(addr, 'g', l, true);
 }

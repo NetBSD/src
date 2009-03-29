@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2008/12/07 11:40:53 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2009/03/29 09:24:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -76,6 +76,7 @@ bool	cpu_softintr_p(void);
 bool	cpu_kpreempt_enter(uintptr_t, int);
 void	cpu_kpreempt_exit(uintptr_t);
 bool	cpu_kpreempt_disabled(void);
+int	cpu_lwp_setprivate(lwp_t *, void *);
 
 CIRCLEQ_HEAD(cpuqueue, cpu_info);
 
