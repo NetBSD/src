@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_alloc.9,v 1.9 2009/03/29 10:51:53 ad Exp $
+.\"	$NetBSD: kmem_alloc.9,v 1.10 2009/03/29 11:26:05 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -53,7 +53,7 @@ Specify the size of allocation in bytes.
 Either of the following:
 .Bl -tag -width KM_NOSLEEP
 .It KM_SLEEP
-If the allocation cannot be satisfied immediatley, sleep until enough
+If the allocation cannot be satisfied immediately, sleep until enough
 memory is available.
 .It KM_NOSLEEP
 Don't sleep.
@@ -149,7 +149,7 @@ When
 is called, memory backing a freed item is unmapped and the kernel VA
 space pushed onto a FIFO.
 The VA space will not be reused until another 30k items have been freed.
-Until reused the kernel will catch invalid acceses and panic with a page fault.
+Until reused the kernel will catch invalid accesses and panic with a page fault.
 Limitations:
 .Bl -bullet
 .It
@@ -165,7 +165,7 @@ facility.
 kmguard tries to catch the following types of bugs:
 .Bl -bullet
 .It
-Overflow at time of occurance, by means of a guard page.
+Overflow at time of occurrence, by means of a guard page.
 .It
 Underflow at
 .Fn kmem_free ,
