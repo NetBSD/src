@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.32 2008/07/07 00:33:23 mrg Exp $ */
+/* $NetBSD: drmP.h,v 1.33 2009/03/29 17:00:50 mrg Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -313,12 +313,20 @@ extern drm_device_t *drm_units[];
 #define DRM_DEVICE							\
 	drm_device_t *dev = (minor(kdev) < DRM_MAXUNITS) ?		\
 		drm_units[minor(kdev)] : NULL
-#ifdef __x86_64__
-#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr   & 0x7fffffffffffffff)
-#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle | 0x8000000000000000)
+/*
+ * This hack strips the top bit from amd64 addresses, which avoid
+ * udv_attach() returning NULL for "negative" offset.
+ * A better hack would be to encode the offset of some kernel data
+ * structure..
+ */
+#if defined(__x86_64__) && 1
+#define DRM_NETBSD_ADDR2HANDLE(addr)	((addr)   & 0x7fffffffffffffff)
+#define DRM_NETBSD_HANDLE2ADDR(handle)	((handle) | 0x8000000000000000)
+#define DRM_HANDLE_NEEDS_MASK(type)	((type) == _DRM_SHM || (type) == _DRM_SCATTER_GATHER)
 #else
 #define DRM_NETBSD_ADDR2HANDLE(addr)	(addr)
 #define DRM_NETBSD_HANDLE2ADDR(handle)	(handle)
+#define DRM_HANDLE_NEEDS_MASK(type)	0
 #endif
 #elif defined(__OpenBSD__)
 #define DRM_DEVICE							\
