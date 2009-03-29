@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.c,v 1.5 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: pthread_md.c,v 1.6 2009/03/29 09:30:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_md.c,v 1.5 2008/04/28 20:23:02 martin Exp $");
+__RCSID("$NetBSD: pthread_md.c,v 1.6 2009/03/29 09:30:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -72,11 +72,4 @@ pthread__i386_init(void)
 		_md_swapcontext_u = _swapcontext_u_s87;
 	}
 
-}
-
-void
-pthread__threadreg_set(pthread_t self)
-{
-
-	sysarch(I386_SET_GSBASE, &self);
 }
