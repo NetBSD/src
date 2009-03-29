@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.50 2008/06/12 22:44:47 cegger Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.51 2009/03/29 05:26:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -509,13 +509,13 @@ struct _tulip_softc_t {
 #if !defined(TULIP_BUS_DMA_NOTX)
     bus_dmamap_t tulip_setupmap;
     bus_dmamap_t tulip_txdescmap;
-    bus_dmamap_t tulip_txmaps[TULIP_TXDESCS];
-    unsigned tulip_txmaps_free;
+    bus_dmamap_t tulip_free_txmaps[TULIP_TXDESCS];
+    unsigned tulip_num_free_txmaps;
 #endif
 #if !defined(TULIP_BUS_DMA_NORX)
     bus_dmamap_t tulip_rxdescmap;
-    bus_dmamap_t tulip_rxmaps[TULIP_RXDESCS];
-    unsigned tulip_rxmaps_free;
+    bus_dmamap_t tulip_free_rxmaps[TULIP_RXDESCS];
+    unsigned tulip_num_free_rxmaps;
 #endif
 #endif
 #if !defined(__NetBSD__)
