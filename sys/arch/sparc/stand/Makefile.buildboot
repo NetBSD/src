@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.24 2009/03/23 13:47:32 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.25 2009/03/29 07:19:40 tsutsui Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
@@ -55,13 +55,7 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/sparc/include machine)
-	@([ -h sparc ] || ln -s ${S}/arch/sparc/include sparc)
-.NOPATH: machine sparc
-.endif
-CLEANFILES+= machine sparc
+.include <bsd.klinks.mk>
 
 cleandir distclean: cleanlibdir
 
