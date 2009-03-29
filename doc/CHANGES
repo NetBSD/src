@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1203 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1204 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -164,3 +164,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		Ethernet on O2. [tsutsui 20090316]
 	am-utils: Import latest from head; adds udf support amd -uu
 		[christos 20090320]
+	kmem_alloc(9): Add more extensive runtime debugging facilities.
+		[ad 20090329]
