@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.55 2009/01/01 13:41:45 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.56 2009/03/29 16:06:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.55 2009/01/01 13:41:45 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.56 2009/03/29 16:06:53 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -250,8 +250,8 @@ psshfs_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 
 		if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb,
 		    lazyopen_rresp, psn, 0) == -1) {
-			puffs_framebuf_destroy(pb);
 			rv = errno;
+			puffs_framebuf_destroy(pb);
 			goto out;
 		}
 
@@ -268,8 +268,8 @@ psshfs_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 
 		if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb2,
 		    lazyopen_wresp, psn, 0) == -1) {
-			puffs_framebuf_destroy(pb2);
 			rv = errno;
+			puffs_framebuf_destroy(pb2);
 			goto out;
 		}
 
