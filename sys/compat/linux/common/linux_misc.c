@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.206 2009/03/14 21:04:18 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.207 2009/03/29 19:21:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.206 2009/03/14 21:04:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.207 2009/03/29 19:21:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -854,7 +854,7 @@ linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, registe
 int
 linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct linux_timeval *timeout)
 {
-	struct timeval tv0, tv1, utv, *tv = NULL;
+	struct timespec ts0, ts1, uts, *ts = NULL;
 	struct linux_timeval ltv;
 	int error;
 
@@ -865,28 +865,28 @@ linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_s
 	if (timeout) {
 		if ((error = copyin(timeout, &ltv, sizeof(ltv))))
 			return error;
-		utv.tv_sec = ltv.tv_sec;
-		utv.tv_usec = ltv.tv_usec;
-		if (itimerfix(&utv)) {
+		uts.tv_sec = ltv.tv_sec;
+		uts.tv_nsec = ltv.tv_usec * 1000;
+		if (itimespecfix(&uts)) {
 			/*
 			 * The timeval was invalid.  Convert it to something
 			 * valid that will act as it does under Linux.
 			 */
-			utv.tv_sec += utv.tv_usec / 1000000;
-			utv.tv_usec %= 1000000;
-			if (utv.tv_usec < 0) {
-				utv.tv_sec -= 1;
-				utv.tv_usec += 1000000;
+			uts.tv_sec += uts.tv_nsec / 1000000000;
+			uts.tv_nsec %= 1000000000;
+			if (uts.tv_nsec < 0) {
+				uts.tv_sec -= 1;
+				uts.tv_nsec += 1000000000;
 			}
-			if (utv.tv_sec < 0)
-				timerclear(&utv);
+			if (uts.tv_sec < 0)
+				timespecclear(&uts);
 		}
-		tv = &utv;
-		microtime(&tv0);
+		ts = &uts;
+		nanotime(&ts0);
 	}
 
 	error = selcommon(l, retval, nfds, readfds, writefds, exceptfds,
-	    tv, NULL);
+	    ts, NULL);
 
 	if (error) {
 		/*
@@ -906,15 +906,15 @@ linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_s
 			 * before we started the call, and subtracting
 			 * that result from the user-supplied value.
 			 */
-			microtime(&tv1);
-			timersub(&tv1, &tv0, &tv1);
-			timersub(&utv, &tv1, &utv);
-			if (utv.tv_sec < 0)
-				timerclear(&utv);
+			nanotime(&ts1);
+			timespecsub(&ts1, &ts0, &ts1);
+			timespecsub(&uts, &ts1, &uts);
+			if (uts.tv_sec < 0)
+				timespecclear(&uts);
 		} else
-			timerclear(&utv);
-		ltv.tv_sec = utv.tv_sec;
-		ltv.tv_usec = utv.tv_usec;
+			timespecclear(&uts);
+		ltv.tv_sec = uts.tv_sec;
+		ltv.tv_usec = uts.tv_nsec / 1000;
 		if ((error = copyout(&ltv, timeout, sizeof(ltv))))
 			return error;
 	}
