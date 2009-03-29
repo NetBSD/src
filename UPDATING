@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.193 2009/02/08 11:58:25 skrll Exp $
+$NetBSD: UPDATING,v 1.194 2009/03/29 18:33:56 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20090325:
+	The i386 port was switched to i486 default toolchain.  This requires
+	cleaning your src/tools directory and $TOOLDIR and rebuilding them.
 
 20090126:
 	The __posix_fadvise50 system call changed assembly stub type. You need to
