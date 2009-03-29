@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.111 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.112 2009/03/29 10:29:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.111 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.112 2009/03/29 10:29:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -333,8 +333,8 @@ ffs_fsync(void *v)
 				fstrans_done(vp->v_mount);
 				return error;
 			}
-			error = ffs_update(vp, NULL, NULL,
-				(ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
+			error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
+			    ((ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
 			UFS_WAPBL_END(mp);
 		}
 		if (error || (ap->a_flags & FSYNC_NOLOG) != 0) {
@@ -378,9 +378,9 @@ ffs_fsync(void *v)
 		mutex_exit(&vp->v_interlock);
 	}
 
-	error = ffs_update(vp, NULL, NULL,
-	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
-	    ? UPDATE_WAIT : 0);
+	error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
+	    (((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
+	    ? UPDATE_WAIT : 0));
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
@@ -450,8 +450,8 @@ ffs_full_fsync(struct vnode *vp, int flags)
 			error = UFS_WAPBL_BEGIN(mp);
 			if (error)
 				return error;
-			error = ffs_update(vp, NULL, NULL,
-			    (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
+			error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
+			    ((flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
 			UFS_WAPBL_END(mp);
 		}
 		if (error || (flags & FSYNC_NOLOG) != 0)
@@ -556,7 +556,7 @@ loop:
 	}
 
 	waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	error = ffs_update(vp, NULL, NULL, waitfor);
+	error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE | waitfor);
 
 	if (error == 0 && (flags & FSYNC_CACHE) != 0) {
 		(void)VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
