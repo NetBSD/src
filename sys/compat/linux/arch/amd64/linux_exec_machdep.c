@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.15 2009/03/15 15:55:51 cegger Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.16 2009/03/29 01:02:50 mrg Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.15 2009/03/15 15:55:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.16 2009/03/29 01:02:50 mrg Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -113,12 +113,13 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
+		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
 	KASSERT(access_size > 0);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE,
+	    VMCMD_STACK);
 
 	return 0;
 }
