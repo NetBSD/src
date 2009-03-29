@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.12 2009/03/28 16:34:34 pooka Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.13 2009/03/29 07:56:56 pooka Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -10,6 +10,11 @@
 #ifdef _RUMPKERNEL
 #error Interface not supported inside rump kernel
 #endif /* _RUMPKERNEL */
+
+#include <sys/types.h>
+#include <sys/select.h>
+
+#include <signal.h>
 
 ssize_t rump_sys_read(int, void *, size_t);
 ssize_t rump_sys_write(int, const void *, size_t);
