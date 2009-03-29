@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.47 2009/03/25 13:53:05 tsutsui Exp $
+# $NetBSD: Makefile,v 1.48 2009/03/29 04:56:16 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -60,7 +60,7 @@ ALL_PORTS:=		${ALL_PORTS} ${BASE_PORTS.${image}}
 SUBDIR=
 
 .if !empty(ALL_PORTS:Mmacppc)
-SUBDIR+=	macppc_mkboothfs macppc_installboot
+SUBDIR+=	macppc_installboot
 .endif
 
 .if !empty(SUBDIR)
@@ -79,7 +79,6 @@ PMAX_IBOOT?=	${TOOL_INSTALLBOOT} -m pmax -o sunsum,append
 VAX_IBOOT?=	${TOOL_INSTALLBOOT} -m vax -o sunsum,append
 .if !empty(ALL_PORTS:Mmacppc)
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
-MACPPC_MKBOOTHFSDIR!= cd ${.CURDIR}/macppc_mkboothfs && ${PRINTOBJDIR}
 .endif
 .if !empty(ALL_PORTS:Msgimips)
 SGIMIPS_SGIVOL?=	${TOOLDIR}/bin/nbsgivol
@@ -290,9 +289,12 @@ MKISOFS_ARGS.${image}+= -b ${BOOTFILE.amd64} -c boot.catalog
 # Mac (mac68k, macppc)
 
 .if !empty(ports:Mmacppc)
+BOOTHFS=	boothfs
 MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
 	--macbin -map ${.CURDIR}/hfsmap.lst \
-	-boot-hfs-file ${MACPPC_MKBOOTHFSDIR}/boothfs
+	-boot-hfs-file ${.OBJDIR}/${BOOTHFS}
+UUDECODE_FILES=	${BOOTHFS}
+.include <bsd.files.mk>
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
 MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 .endif
@@ -418,6 +420,10 @@ ${STAGEDIR}/${image}/${file:C/:.*$//}: ${file:C/^.*://} USE-FILE
 ${file:C/^.*://}: .PHONY
 .endfor						# }
 
+.if !empty(BASE_PORTS.${image}:Mmacppc)
+fileprep-${image}: ${BOOTHFS}
+.endif
+
 # Size the CD image.  This is done via the following formula:
 # 1. Size the image produced by mkisofs.
 # 2. Add images added by distrib/common/sunbootcd.sh by rounding to a 320k
@@ -425,16 +431,9 @@ ${file:C/^.*://}: .PHONY
 # 3. Add bootfile sizes rounded up to 512 bytes for pmax and vax.
 # 4. Round up to a 32k boundary, then add another 32k for TAO padding.
 
-.if !empty(BASE_PORTS.${image}:Mmacppc)
-size-${image}: all-macppc_mkboothfs all-macppc_installboot
-.endif
-
 SGIVOLHDR.size= 4096
 
 size-${image}: stage-${image} extfileprep fileprep-${image} check_mkisofs
-.if !empty(BASE_PORTS.${image}:Mmacppc)
-	${MACPPC_MKBOOTHFSDIR}/macppc_mkboothfs ${MACPPC_MKBOOTHFSDIR}/boothfs
-.endif
 	@size=$$((`cd ${STAGEDIR}/${image} && \
 		   ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} \
 			-print-size . 2>&1 \
@@ -464,6 +463,10 @@ size-${image}: stage-${image} extfileprep fileprep-${image} check_mkisofs
 	if [ $$sizek -gt ${CD_SIZE} ]; then echo "Image too large for ${CD_SIZE} KB CD!"; false; fi
 
 # Actually build the image with all the bootstrap goo....
+
+.if !empty(BASE_PORTS.${image}:Mmacppc)
+${IMAGEDIR}/${image}.iso: all-macppc_installboot
+.endif
 
 ${IMAGEDIR}/${image}.iso: size-${image} check_mkisofs
 	@sort -o ${contents.${image}} ${contents.${image}}
