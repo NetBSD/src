@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:35:58 ad Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.2 2009/03/29 01:10:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,12 +80,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:35:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2009/03/29 01:10:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
@@ -99,11 +98,11 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:35:58 ad Exp $");
 #include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
-#include <machine/mtrr.h>
 
 /*
  * Dump the machine specific segment at the start of a core dump.
  */
+
 struct md_core {
 	struct reg intreg;
 	struct fpreg freg;

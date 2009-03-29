@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.58 2009/03/14 15:36:07 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.59 2009/03/29 01:10:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.58 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.59 2009/03/29 01:10:28 rmind Exp $");
 
 #include "opt_vm86.h"
 #include "opt_sa.h"
@@ -40,9 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.58 2009/03/14 15:36:07 dsl Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#include <sys/ktrace.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/ktrace.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syscall_stats.h>
@@ -53,11 +53,24 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.58 2009/03/14 15:36:07 dsl Exp $");
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-void syscall(struct trapframe *);
+static void syscall(struct trapframe *);
 int x86_copyargs(void *, void *, size_t);
 #ifdef VM86
 void syscall_vm86(struct trapframe *);
 #endif
+
+void
+child_return(void *arg)
+{
+	struct lwp *l = arg;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	tf->tf_eax = 0;
+	tf->tf_eflags &= ~PSL_C;
+
+	userret(l);
+	ktrsysret(SYS_fork, 0, 0);
+}
 
 void
 syscall_intern(struct proc *p)
@@ -71,19 +84,21 @@ syscall_intern(struct proc *p)
  *	System call request from POSIX system call gate interface to kernel.
  * Like trap(), argument is call by reference.
  */
-void
+static void
 syscall(struct trapframe *frame)
 {
 	const struct sysent *callp;
+	struct proc *p;
 	struct lwp *l;
 	int error;
 	register_t code, args[2 + SYS_MAXSYSARGS], rval[2];
 
 	l = curlwp;
-	LWP_CACHE_CREDS(l, l->l_proc);
+	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax & (SYS_NSYSENT - 1);
-	callp = l->l_proc->p_emul->e_sysent + code;
+	callp = p->p_emul->e_sysent + code;
 
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
@@ -101,7 +116,7 @@ syscall(struct trapframe *frame)
 			goto bad;
 	}
 
-	if (!__predict_false(l->l_proc->p_trace_enabled)
+	if (!__predict_false(p->p_trace_enabled)
 	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
 	    || (error = trace_enter(frame->tf_eax & (SYS_NSYSENT - 1),
 		    args, callp->sy_narg)) == 0) {
@@ -111,7 +126,7 @@ syscall(struct trapframe *frame)
 		error = sy_call(callp, l, args, rval);
 	}
 
-	if (__predict_false(l->l_proc->p_trace_enabled)
+	if (__predict_false(p->p_trace_enabled)
 	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
 		code = frame->tf_eax & (SYS_NSYSENT - 1);
 		trace_exit(code, rval, error);
@@ -174,16 +189,3 @@ syscall_vm86(struct trapframe *frame)
 	userret(l);
 }
 #endif
-
-void
-child_return(void *arg)
-{
-	struct lwp *l = arg;
-	struct trapframe *tf = l->l_md.md_regs;
-
-	tf->tf_eax = 0;
-	tf->tf_eflags &= ~PSL_C;
-
-	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
-}

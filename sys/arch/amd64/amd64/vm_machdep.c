@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 2009/03/28 21:34:17 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 2009/03/29 01:10:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,9 +80,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 2009/03/28 21:34:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2009/03/29 01:10:28 rmind Exp $");
 
-#include "opt_user_ldt.h"
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,22 +105,21 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 2009/03/28 21:34:17 rmind Exp $"
 #include <machine/mtrr.h>
 #endif
 
-extern char x86_64_doubleflt_stack[];
-
 static void setredzone(struct lwp *);
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
+
 	p2->p_md.md_flags = p1->p_md.md_flags;
 	if (p1->p_flag & PK_32)
 		p2->p_flag |= PK_32;
 }
 
 /*
- * Finish a new thread operation, with lwp l2 nearly set up.
+ * Finish a new thread operation, with LWP l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * lwp_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
@@ -137,7 +136,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
  */
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
-	     void (*func)(void *), void *arg)
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
@@ -159,11 +158,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
+	} else {
+		KASSERT(l1 == &lwp0);
 	}
-#ifdef DIAGNOSTIC
-	else if (l1 != &lwp0)
-		panic("cpu_fork: curproc");
-#endif
 	*pcb = l1->l_addr->u_pcb;
 #if defined(XEN)
 	pcb->pcb_iopl = SEL_KPL;
@@ -176,6 +173,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_astpending = 0;
 
 	pcb->pcb_rsp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16) & ~0xf;
+
+	pcb->pcb_fs = l1->l_addr->u_pcb.pcb_fs;
+	pcb->pcb_gs = l1->l_addr->u_pcb.pcb_gs;
 
 	/*
 	 * Copy the trapframe.
@@ -191,9 +191,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	if (stack != NULL)
 		tf->tf_rsp = (uint64_t)stack + stacksize;
-
-	pcb->pcb_fs = l1->l_addr->u_pcb.pcb_fs;
-	pcb->pcb_gs = l1->l_addr->u_pcb.pcb_gs;
 
 	cpu_setfunc(l2, func, arg);
 }
@@ -218,6 +215,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_swapin(struct lwp *l)
 {
+
 	setredzone(l);
 }
 
@@ -244,6 +242,10 @@ cpu_lwp_free(struct lwp *l, int proc)
 #endif
 }
 
+/*
+ * cpu_lwp_free2 is called when an LWP is being reaped.  This routine
+ * may block.
+ */
 void
 cpu_lwp_free2(struct lwp *l)
 {
@@ -283,7 +285,7 @@ kvtop(void *addr)
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(struct buf *bp, vsize_t len)
@@ -291,8 +293,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
 
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vmapbuf");
+	KASSERT((bp->b_flags & B_PHYS) != 0);
+
 	bp->b_saveaddr = bp->b_data;
 	faddr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
@@ -303,7 +305,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.
 	 * XXX: unwise to expect this in a multithreaded environment.
-	 * anything can happen to a pmap between the time we lock a 
+	 * anything can happen to a pmap between the time we lock a
 	 * region, release the pmap lock, and then relock it for
 	 * the pmap_extract().
 	 *
@@ -319,6 +321,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -329,8 +332,8 @@ vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vunmapbuf");
+	KASSERT((bp->b_flags & B_PHYS) != 0);
+
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
