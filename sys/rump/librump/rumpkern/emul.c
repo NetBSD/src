@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.81 2009/03/18 17:56:15 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.82 2009/03/29 20:59:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.81 2009/03/18 17:56:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.82 2009/03/29 20:59:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -715,28 +715,28 @@ struct lwp *curlwp = &lwp0;
  * (((seriously)))
  */
 int
-inittimeleft(struct timeval *tv, struct timeval *sleeptv)
+inittimeleft(struct timeval *ts, struct timeval *sleepts)
 {
-	if (itimerfix(tv))
+	if (itimespecfix(ts))
 		return -1;
-	getmicrouptime(sleeptv);
+	getnanouptime(sleepts);
 	return 0;
 }
 
 int
-gettimeleft(struct timeval *tv, struct timeval *sleeptv)
+gettimeleft(struct timespec *ts, struct timespec *sleepts)
 {
 	/*
 	 * We have to recalculate the timeout on every retry.
 	 */
-	struct timeval slepttv;
+	struct timespec sleptts;
 	/*
-	 * reduce tv by elapsed time
+	 * reduce ts by elapsed time
 	 * based on monotonic time scale
 	 */
-	getmicrouptime(&slepttv);
-	timeradd(tv, sleeptv, tv);
-	timersub(tv, &slepttv, tv);
-	*sleeptv = slepttv;
-	return tvtohz(tv);
+	getnanouptime(&sleptts);
+	timespecadd(ts, sleepts, ts);
+	timespecsub(ts, &sleptts, ts);
+	*sleepts = sleptts;
+	return tstohz(ts);
 }
