@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.144 2009/03/28 21:34:17 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.145 2009/03/29 01:10:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,16 +80,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.144 2009/03/28 21:34:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.145 2009/03/29 01:10:28 rmind Exp $");
 
-#include "opt_user_ldt.h"
 #include "opt_mtrr.h"
-#include "opt_execfmt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
@@ -103,11 +100,13 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.144 2009/03/28 21:34:17 rmind Exp $
 #include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+#ifdef MTRR
 #include <machine/mtrr.h>
+#endif
 
 #include "npx.h"
 
-static void setredzone(struct lwp *l);
+static void setredzone(struct lwp *);
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
@@ -155,24 +154,19 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
+	} else {
+		KASSERT(l1 == &lwp0);
 	}
-#ifdef DIAGNOSTIC
-	else if (l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
 	*pcb = l1->l_addr->u_pcb;
 #if defined(XEN)
 	pcb->pcb_iopl = SEL_KPL;
 #endif /* defined(XEN) */
 
-	/*
-	 * Fix up the ring0 esp.
-	 */
+	l2->l_md.md_astpending = 0;
+
 	pcb->pcb_esp0 = USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16;
 
 	pcb->pcb_iomap = NULL;
-
-	l2->l_md.md_astpending = 0;
 	memcpy(&pcb->pcb_fsd, curpcb->pcb_fsd, sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, curpcb->pcb_gsd, sizeof(pcb->pcb_gsd));
 
@@ -206,7 +200,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	sf->sf_eip = (int)lwp_trampoline;
 	pcb->pcb_esp = (int)sf;
 	pcb->pcb_ebp = (int)l;
-}	
+}
 
 void
 cpu_swapin(struct lwp *l)
@@ -271,7 +265,7 @@ setredzone(struct lwp *l)
 	addr = USER_TO_UAREA(l->l_addr);
 	pmap_remove(pmap_kernel(), addr, addr + PAGE_SIZE);
 	pmap_update(pmap_kernel());
-#endif	/* DIAGNOSTIC */
+#endif
 }
 
 /*
@@ -299,12 +293,13 @@ vmapbuf(struct buf *bp, vsize_t len)
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
 
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vmapbuf");
-	faddr = trunc_page((vaddr_t)(bp->b_saveaddr = bp->b_data));
+	KASSERT((bp->b_flags & B_PHYS) != 0);
+
+	bp->b_saveaddr = bp->b_data;
+	faddr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY|UVM_KMF_WAITVA);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (void *)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
@@ -337,8 +332,8 @@ vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vunmapbuf");
+	KASSERT((bp->b_flags & B_PHYS) != 0);
+
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
