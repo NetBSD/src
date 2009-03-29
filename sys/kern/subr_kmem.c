@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.26 2009/02/18 13:04:59 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.27 2009/03/29 10:51:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.26 2009/02/18 13:04:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.27 2009/03/29 10:51:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.26 2009/02/18 13:04:59 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
+#include <uvm/uvm_kmguard.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -98,10 +99,14 @@ static size_t kmem_cache_mask;
 static int kmem_cache_shift;
 
 #if defined(DEBUG)
+int kmem_guard_depth;
+size_t kmem_guard_size;
+static struct uvm_kmguard kmem_guard;
 static void *kmem_freecheck;
 #define	KMEM_POISON
 #define	KMEM_REDZONE
 #define	KMEM_SIZE
+#define	KMEM_GUARD
 #endif /* defined(DEBUG) */
 
 #if defined(KMEM_POISON)
@@ -186,7 +191,15 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 	uint8_t *p;
 
 	KASSERT(!cpu_intr_p());
-	KASSERT((curlwp->l_pflag & LP_INTR) == 0);
+	KASSERT(!cpu_softintr_p());
+	KASSERT(size > 0);
+
+#ifdef KMEM_GUARD
+	if (size <= kmem_guard_size) {
+		return uvm_kmguard_alloc(&kmem_guard, size,
+		    (kmflags & KM_SLEEP) != 0);
+	}
+#endif
 
 	size += REDZONE_SIZE + SIZE_SIZE;
 	if (size >= kmem_cache_min && size <= kmem_cache_max) {
@@ -239,11 +252,19 @@ kmem_free(void *p, size_t size)
 	kmem_cache_t *kc;
 
 	KASSERT(!cpu_intr_p());
-	KASSERT((curlwp->l_pflag & LP_INTR) == 0);
+	KASSERT(!cpu_softintr_p());
+	KASSERT(size > 0);
 
 	size += SIZE_SIZE;
 	p = (uint8_t *)p - SIZE_SIZE;
 	kmem_size_check(p, size + REDZONE_SIZE);
+
+#ifdef KMEM_GUARD
+	if (size <= kmem_guard_size) {
+		uvm_kmguard_free(&kmem_guard, size, p);
+		return;
+	}
+#endif
 
 	FREECHECK_IN(&kmem_freecheck, p);
 	LOCKDEBUG_MEM_CHECK(p, size);
@@ -267,6 +288,11 @@ kmem_init(void)
 	kmem_cache_t *kc;
 	size_t sz;
 	int i;
+
+#ifdef KMEM_GUARD
+	uvm_kmguard_init(&kmem_guard, &kmem_guard_depth, &kmem_guard_size,
+	    kernel_map);
+#endif
 
 	kmem_arena = vmem_create("kmem", 0, 0, KMEM_QUANTUM_SIZE,
 	    kmem_backend_alloc, kmem_backend_free, NULL, KMEM_QCACHE_MAX,
