@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.234 2009/02/23 20:27:59 rmind Exp $	*/
+/*	$NetBSD: systm.h,v 1.235 2009/03/29 10:58:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -216,6 +216,7 @@ int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
 int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
 void	twiddle(void);
+void	banner(void);
 #endif /* _KERNEL */
 
 void	panic(const char *, ...)
