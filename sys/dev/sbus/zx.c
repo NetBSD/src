@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.25 2009/03/27 12:25:41 tsutsui Exp $	*/
+/*	$NetBSD: zx.c,v 1.26 2009/03/29 07:24:56 tsutsui Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.25 2009/03/27 12:25:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.26 2009/03/29 07:24:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	bus_space_tag_t bt;
 	struct fbdevice *fb;
 	struct rasops_info *ri;
+	int width, height;
 	int isconsole;
 
 	sc = device_private(self);
@@ -215,9 +216,11 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	fb->fb_device = &sc->sc_dv;
 	fb->fb_flags = device_cfdata(&sc->sc_dv)->cf_flags & FB_USERMASK;
 	fb->fb_pfour = NULL;
-	fb->fb_linebytes = 8192;
+	fb->fb_linebytes = prom_getpropint(sa->sa_node, "linebytes", 8192);
 
-	fb_setsize_obp(fb, 32, 1280, 1024, sa->sa_node);
+	width = prom_getpropint(sa->sa_node, "width", 1280);
+	height = prom_getpropint(sa->sa_node, "height", 1024);
+	fb_setsize_obp(fb, 32, width, height, sa->sa_node);
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_depth = 32;
