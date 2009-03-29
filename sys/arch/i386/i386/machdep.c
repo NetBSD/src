@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.666 2009/03/21 14:41:29 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.667 2009/03/29 10:58:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.666 2009/03/21 14:41:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.667 2009/03/29 10:58:54 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -438,7 +438,6 @@ cpu_startup(void)
 	int x, y;
 	vaddr_t minaddr, maxaddr;
 	psize_t sz;
-	char pbuf[9];
 
 	/*
 	 * For console drivers that require uvm and pmap to be initialized,
@@ -471,8 +470,6 @@ cpu_startup(void)
 
 	initmsgbuf((void *)msgbuf_vaddr, sz);
 
-	printf("%s%s", copyright, version);
-
 #ifdef MULTIBOOT
 	multiboot_print_info();
 #endif
@@ -483,9 +480,6 @@ cpu_startup(void)
 	 */
 	wrmsr(MSR_DEBUGCTLMSR, 0x1);
 #endif
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
-	printf("total memory = %s\n", pbuf);
 
 #if NCARDBUS > 0
 	/* Tell RBUS how much RAM we have, so it can use heuristics. */
@@ -501,13 +495,13 @@ cpu_startup(void)
 				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
-	 * Finally, allocate mbuf cluster submap.
+	 * Allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	/* Say hello. */
+	banner();
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 #if NISA > 0 || NPCI > 0
