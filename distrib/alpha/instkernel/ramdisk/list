@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.27 2009/03/29 10:12:31 tsutsui Exp $
+#	$NetBSD: list,v 1.28 2009/03/29 12:19:43 tsutsui Exp $
 
-SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
+SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
 PROG	bin/cat		usr/bin/strings
 PROG	bin/chmod
