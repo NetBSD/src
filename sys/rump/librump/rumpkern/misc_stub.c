@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.20 2009/03/19 09:36:38 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.21 2009/03/29 18:22:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.20 2009/03/19 09:36:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.21 2009/03/29 18:22:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -73,19 +73,6 @@ cpu_lookup(u_int index)
 	extern struct cpu_info rump_cpu;
 
 	return &rump_cpu;
-}
-
-void
-evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
-    const char *group, const char *name)
-{
-
-}
-
-void
-evcnt_detach(struct evcnt *ev)
-{
-
 }
 
 int
