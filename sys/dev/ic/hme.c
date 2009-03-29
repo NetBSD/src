@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.73 2009/03/16 12:02:00 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.74 2009/03/29 07:33:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.73 2009/03/16 12:02:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.74 2009/03/29 07:33:52 tsutsui Exp $");
 
 /* #define HMEDEBUG */
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.73 2009/03/16 12:02:00 tsutsui Exp $");
 #include <net/if_media.h>
 
 #ifdef INET
+#include <net/if_vlanvar.h>
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/in_systm.h>
@@ -591,9 +592,8 @@ hme_init(struct hme_softc *sc)
 
 	/* set h/w rx checksum start offset (# of half-words) */
 #ifdef INET
-	v |= (((ETHER_HDR_LEN + sizeof(struct ip) +
-		((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
-		ETHER_VLAN_ENCAP_LEN : 0)) / 2) << HME_ERX_CFG_CSUMSHIFT) &
+	v |= (((ETHER_HDR_LEN + sizeof(struct ip)) / sizeof(uint16_t))
+		<< HME_ERX_CFG_CSUMSHIFT) &
 		HME_ERX_CFG_CSUMSTART;
 #endif
 	bus_space_write_4(t, erx, HME_ERXI_CFG, v);
@@ -721,24 +721,27 @@ hme_get(struct hme_softc *sc, int ri, u_int32_t flags)
 	/* hardware checksum */
 	if (ifp->if_csum_flags_rx & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
 		struct ether_header *eh;
+		struct ether_vlan_header *evh;
 		struct ip *ip;
 		struct udphdr *uh;
 		uint16_t *opts;
 		int32_t hlen, pktlen;
 		uint32_t temp;
 
-		if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
-			pktlen = m0->m_pkthdr.len - ETHER_HDR_LEN -
-				ETHER_VLAN_ENCAP_LEN;
-			eh = (struct ether_header *) mtod(m0, void *) +
-				ETHER_VLAN_ENCAP_LEN;
-		} else {
+		eh = mtod(m0, struct ether_header *);
+		if (ntohs(eh->ether_type) == ETHERTYPE_IP) {
+			ip = (struct ip *)((char *)eh + ETHER_HDR_LEN);
 			pktlen = m0->m_pkthdr.len - ETHER_HDR_LEN;
-			eh = mtod(m0, struct ether_header *);
-		}
-		if (ntohs(eh->ether_type) != ETHERTYPE_IP)
+		} else if (ntohs(eh->ether_type) == ETHERTYPE_VLAN) {
+			evh = (struct ether_vlan_header *)eh;
+			if (ntohs(evh->evl_proto != ETHERTYPE_IP))
+				goto swcsum;
+			ip = (struct ip *)((char *)eh + ETHER_HDR_LEN +
+			    ETHER_VLAN_ENCAP_LEN);
+			pktlen = m0->m_pkthdr.len -
+			    ETHER_HDR_LEN - ETHER_VLAN_ENCAP_LEN;
+		} else
 			goto swcsum;
-		ip = (struct ip *) ((char *)eh + ETHER_HDR_LEN);
 
 		/* IPv4 only */
 		if (ip->ip_v != IPVERSION)
@@ -782,13 +785,18 @@ hme_get(struct hme_softc *sc, int ri, u_int32_t flags)
 		/* w/ M_CSUM_NO_PSEUDOHDR, the uncomplemented sum is expected */
 		m0->m_pkthdr.csum_data = (~flags) & HME_XD_RXCKSUM;
 
-		/* if the pkt had ip options, we have to deduct them */
-		if (hlen > sizeof(struct ip)) {
+		/*
+		 * If data offset is different from RX cksum start offset,
+		 * we have to deduct them.
+		 */
+		temp = ((char *)ip + hlen) -
+		    ((char *)eh + ETHER_HDR_LEN + sizeof(struct ip));
+		if (temp > 1) {
 			uint32_t optsum;
 
 			optsum = 0;
-			temp = hlen - sizeof(struct ip);
-			opts = (uint16_t *)((char *)ip + sizeof(struct ip));
+			opts = (uint16_t *)((char *)eh +
+			    ETHER_HDR_LEN + sizeof(struct ip));
 
 			while (temp > 1) {
 				optsum += ntohs(*opts++);
