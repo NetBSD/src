@@ -1,6 +1,6 @@
-# $NetBSD: Makefile.bootxx,v 1.34 2009/03/12 17:16:59 abs Exp $
+# $NetBSD: Makefile.bootxx,v 1.35 2009/03/30 09:22:52 tsutsui Exp $
 
-S=	${.CURDIR}/../../../../../
+S=	${.CURDIR}/../../../../..
 
 PIE_CFLAGS=
 PIE_LDFLAGS=
