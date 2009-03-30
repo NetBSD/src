@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.82 2009/03/29 20:59:17 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.83 2009/03/30 00:31:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.82 2009/03/29 20:59:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.83 2009/03/30 00:31:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -715,7 +715,7 @@ struct lwp *curlwp = &lwp0;
  * (((seriously)))
  */
 int
-inittimeleft(struct timeval *ts, struct timeval *sleepts)
+inittimeleft(struct timespec *ts, struct timespec *sleepts)
 {
 	if (itimespecfix(ts))
 		return -1;
