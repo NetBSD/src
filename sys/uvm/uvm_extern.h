@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.153 2009/03/29 01:02:51 mrg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.154 2009/03/30 16:36:36 yamt Exp $	*/
 
 /*
  *
@@ -241,7 +241,6 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
-struct pool;
 struct simplelock;
 struct vm_map_entry;
 struct vm_map;
@@ -512,8 +511,6 @@ struct vmspace {
 #define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
 #ifdef _KERNEL
-
-extern struct pool *uvm_aiobuf_pool;
 
 /*
  * used to keep state while iterating over the map for a core dump.
