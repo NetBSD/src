@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.146 2009/03/30 17:48:22 dyoung Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1 2009/03/30 22:20:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.146 2009/03/30 17:48:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2009/03/30 22:20:55 rmind Exp $");
 
 #include "opt_mtrr.h"
 
@@ -104,7 +104,16 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.146 2009/03/30 17:48:22 dyoung Exp 
 #include <machine/mtrr.h>
 #endif
 
+#ifdef __x86_64__
+#include <machine/fpu.h>
+#else
 #include "npx.h"
+#if NNPX > 0
+#define fpusave_lwp(x, y)	npxsave_lwp(x, y)
+#else
+#define fpusave_lwp(x, y)
+#endif
+#endif
 
 static void setredzone(struct lwp *);
 
@@ -113,6 +122,8 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
+	if (p1->p_flag & PK_32)
+		p2->p_flag |= PK_32;
 }
 
 /*
@@ -140,13 +151,17 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
 
-#if NNPX > 0
 	/*
-	 * Save p1's npx h/w state to p1's pcb so that we can copy it.
+	 * If fpuproc != p1, then the fpu h/w state is irrelevant and the
+	 * state had better already be in the pcb.  This is true for forks
+	 * but not for dumps.
+	 *
+	 * If fpuproc == p1, then we have to save the fpu h/w state to
+	 * p1's pcb so that we can copy it.
 	 */
-	if (l1->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l1, true);
-#endif
+	if (l1->l_addr->u_pcb.pcb_fpcpu != NULL) {
+		fpusave_lwp(l1, true);
+	}
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
 
@@ -162,18 +177,31 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->pcb_iopl = SEL_KPL;
 #endif /* defined(XEN) */
 
-	l2->l_md.md_astpending = 0;
-
+#ifdef __x86_64__
+	/*
+	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
+	 * we run the new process.
+	 */
+	pcb->pcb_rsp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16) & ~0xf;
+	pcb->pcb_fs = l1->l_addr->u_pcb.pcb_fs;
+	pcb->pcb_gs = l1->l_addr->u_pcb.pcb_gs;
+#else
 	pcb->pcb_esp0 = USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16;
-
-	pcb->pcb_iomap = NULL;
 	memcpy(&pcb->pcb_fsd, curpcb->pcb_fsd, sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, curpcb->pcb_gsd, sizeof(pcb->pcb_gsd));
+	pcb->pcb_iomap = NULL;
+#endif
+	l2->l_md.md_astpending = 0;
 
 	/*
 	 * Copy the trapframe.
 	 */
-	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_esp0 - 1;
+#ifdef __x86_64__
+	tf = (struct trapframe *)pcb->pcb_rsp0 - 1;
+#else
+	tf = (struct trapframe *)pcb->pcb_esp0 - 1;
+#endif
+	l2->l_md.md_regs = tf;
 	*tf = *l1->l_md.md_regs;
 	tf->tf_trapno = T_ASTFLT;
 
@@ -182,8 +210,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/*
 	 * If specified, give the child a different stack.
 	 */
-	if (stack != NULL)
+	if (stack != NULL) {
+#ifdef __x86_64__
+		tf->tf_rsp = (uint64_t)stack + stacksize;
+#else
 		tf->tf_esp = (u_int)stack + stacksize;
+#endif
+	}
 
 	cpu_setfunc(l2, func, arg);
 }
@@ -195,11 +228,22 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
+#ifdef __x86_64__
+	sf->sf_r12 = (uint64_t)func;
+	sf->sf_r13 = (uint64_t)arg;
+	if (func == child_return && !(l->l_proc->p_flag & PK_32))
+		sf->sf_rip = (uint64_t)child_trampoline;
+	else
+		sf->sf_rip = (uint64_t)lwp_trampoline;
+	pcb->pcb_rsp = (uint64_t)sf;
+	pcb->pcb_rbp = (uint64_t)l;
+#else
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)lwp_trampoline;
 	pcb->pcb_esp = (int)sf;
 	pcb->pcb_ebp = (int)l;
+#endif
 }
 
 void
@@ -213,12 +257,10 @@ void
 cpu_swapout(struct lwp *l)
 {
 
-#if NNPX > 0
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	npxsave_lwp(l, true);
-#endif
+	fpusave_lwp(l, true);
 }
 
 /*
@@ -229,11 +271,11 @@ cpu_swapout(struct lwp *l)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-#if NNPX > 0
+
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l, false);
-#endif
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
+		fpusave_lwp(l, false);
+	}
 
 #ifdef MTRR
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
@@ -242,8 +284,8 @@ cpu_lwp_free(struct lwp *l, int proc)
 }
 
 /*
- * cpu_lwp_free2 is called when an LWP is being reaped.  This routine
- * may block.
+ * cpu_lwp_free2 is called when an LWP is being reaped.
+ * This routine may block.
  */
 void
 cpu_lwp_free2(struct lwp *l)
@@ -258,6 +300,7 @@ cpu_lwp_free2(struct lwp *l)
 static void
 setredzone(struct lwp *l)
 {
+
 #ifdef DIAGNOSTIC
 	vaddr_t addr;
 
