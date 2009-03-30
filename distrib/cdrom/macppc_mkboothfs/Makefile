@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/03/29 04:52:12 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2009/03/30 11:22:46 tsutsui Exp $
 
 HOSTPROG=	macppc_mkboothfs
 SRCS=		mkboothfs.c
@@ -21,7 +21,7 @@ boothfs: ${HOSTPROG}
 	./${HOSTPROG} boothfs
 
 boothfs.uue: boothfs
-	echo '$$NetBSD: Makefile,v 1.3 2009/03/29 04:52:12 tsutsui Exp $$' > ${.TARGET}.tmp
+	echo \$$NetBSD\$$ > ${.TARGET}.tmp
 	${UUENCODE} boothfs boothfs >> ${.TARGET}.tmp
 	cp ${.TARGET}.tmp ${NETBSDSRCDIR}/distrib/cdrom/${.TARGET}
 
