@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/28 07:49:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/03/30 02:01:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ SRCS.ATOMBIOS= \
 
 .if ${X11DRI} != "no"
 SRCS.DRI=	radeon_dri.c
+CPPFLAGS+=	${X11FLAGS.DRI}
 .endif
 
 SRCS.EXA=	radeon_exa.c
