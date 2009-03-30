@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.64 2009/03/30 22:20:55 rmind Exp $
+#	$NetBSD: files.amd64,v 1.65 2009/03/30 22:28:39 rmind Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -52,7 +52,6 @@ file	arch/amd64/amd64/lock_stubs.S
 file	dev/cons.c
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor
-file	arch/amd64/amd64/ipifuncs.c       multiprocessor
 
 #
 # Machine-independent SCSI drivers

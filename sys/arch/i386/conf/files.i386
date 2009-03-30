@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.346 2009/03/30 22:20:55 rmind Exp $
+#	$NetBSD: files.i386,v 1.347 2009/03/30 22:28:39 rmind Exp $
 #
 # new style config file for i386 architecture
 #
@@ -87,7 +87,6 @@ file	arch/i386/i386/trap.c
 file	dev/cons.c
 
 file	arch/i386/i386/mptramp.S  	multiprocessor
-file    arch/i386/i386/ipifuncs.c       multiprocessor
 
 file	arch/i386/i386/pmc.c		perfctrs
 
