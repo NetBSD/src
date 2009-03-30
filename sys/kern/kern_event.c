@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.62 2009/03/29 19:21:19 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.63 2009/03/30 22:22:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.62 2009/03/29 19:21:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.63 2009/03/30 22:22:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1080,6 +1080,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	}
 
 	if (tsp) {				/* timeout supplied */
+		ats = *tsp;
 		if (inittimeleft(&ats, &sleepts) == -1) {
 			*retval = maxevents;
 			return EINVAL;
