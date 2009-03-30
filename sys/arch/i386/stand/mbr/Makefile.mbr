@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.mbr,v 1.15 2009/03/12 17:16:59 abs Exp $
+#	$NetBSD: Makefile.mbr,v 1.16 2009/03/30 09:22:52 tsutsui Exp $
 
-S=		${.CURDIR}/../../../../../
+S=		${.CURDIR}/../../../../..
 
 NOMAN=		# defined
 

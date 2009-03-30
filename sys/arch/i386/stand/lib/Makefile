@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.27 2009/02/16 22:39:30 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.28 2009/03/30 09:22:52 tsutsui Exp $
 
-S?=	${.CURDIR}/../../../../
+S?=	${.CURDIR}/../../../..
 
 LIB= i386
 NOPIC=# defined

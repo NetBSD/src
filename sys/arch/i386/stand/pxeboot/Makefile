@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 2009/02/14 13:52:51 abs Exp $
+#	$NetBSD: Makefile,v 1.17 2009/03/30 09:22:53 tsutsui Exp $
 
-S=	${.CURDIR}/../../../../
+S=	${.CURDIR}/../../../..
 
 BASE?= pxeboot_ia32
 PROG= ${BASE}.bin

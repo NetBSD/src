@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.fat,v 1.4 2009/03/12 17:16:59 abs Exp $
+#	$NetBSD: Makefile.fat,v 1.5 2009/03/30 09:22:52 tsutsui Exp $
 
-S=		${.CURDIR}/../../../../../
+S=		${.CURDIR}/../../../../..
 
 PROG?=		fatboot
 NOMAN=		# defined
