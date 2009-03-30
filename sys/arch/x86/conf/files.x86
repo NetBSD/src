@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.46 2009/02/24 06:03:54 yamt Exp $
+#	$NetBSD: files.x86,v 1.47 2009/03/30 22:13:42 rmind Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -45,6 +45,7 @@ file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
 file	arch/x86/x86/bus_space.c
 file	arch/x86/x86/consinit.c
+file	arch/x86/x86/core_machdep.c	coredump
 file	arch/x86/x86/errata.c
 file	arch/x86/x86/genfb_machdep.c
 file	arch/x86/x86/identcpu.c
