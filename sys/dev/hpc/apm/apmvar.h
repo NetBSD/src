@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.3 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.4 2009/03/30 06:22:25 uwe Exp $	*/
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,14 +34,14 @@
 #include <dev/apm/apmio.h>
 
 struct apm_accessops {
-	void	(*disconnect)(void *);
-	void	(*enable)(void *, int);
-	int	(*set_powstate)(void *, u_int, u_int);
-	int	(*get_powstat)(void *, struct apm_power_info *);
-	int	(*get_event)(void *, u_int *, u_int *);
-	void	(*cpu_busy)(void *);
-	void	(*cpu_idle)(void *);
-	void	(*get_capabilities)(void *, u_int *, u_int *);
+	void	(*aa_disconnect)(void *);
+	void	(*aa_enable)(void *, int);
+	int	(*aa_set_powstate)(void *, u_int, u_int);
+	int	(*aa_get_powstat)(void *, struct apm_power_info *);
+	int	(*aa_get_event)(void *, u_int *, u_int *);
+	void	(*aa_cpu_busy)(void *);
+	void	(*aa_cpu_idle)(void *);
+	void	(*aa_get_capabilities)(void *, u_int *, u_int *);
 };
 
 struct apmdev_attach_args {
