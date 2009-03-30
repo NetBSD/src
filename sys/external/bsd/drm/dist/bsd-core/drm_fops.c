@@ -54,12 +54,14 @@ drm_file_t *drm_find_file_by_proc(struct drm_device *dev, DRM_STRUCTPROC *p)
 	 * NetBSD only calls drm_close once, so this frees
 	 * resources earlier.
 	 */
+#if 0	/* drm_close_pid() went away. argh */
 			if (pfind(priv->pid) == NULL) {
-				/*drm_close_pid(dev, priv, priv->pid);*/
+				drm_close_pid(dev, priv, priv->pid);
 				restart = 1;
 				break;
 			}
 			else
+#endif
 			if (priv->pid == pid && priv->uid == uid)
 				return priv;
 		}
