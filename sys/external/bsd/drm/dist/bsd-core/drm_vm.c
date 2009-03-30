@@ -45,9 +45,10 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	vm_paddr_t phys;
 #else
 	paddr_t phys;
-	uintptr_t roffset;
+	off_t roffset;
 #endif
 
+	/*DRM_DEBUG("dev %llx offset %llx prot %d\n", (long long)kdev, (long long)offset, prot);*/
 	DRM_LOCK();
 	priv = drm_find_file_by_proc(dev, DRM_CURPROC);
 	DRM_UNLOCK();
@@ -101,7 +102,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		if (roffset >= map->offset && roffset < map->offset + map->size)
 			break;
 #elif defined(__NetBSD__)
-		if (map->type == _DRM_SHM) {
+		if (DRM_HANDLE_NEEDS_MASK(map->type)) {
 			if (roffset >= (uintptr_t)map->handle && roffset < (uintptr_t)map->handle + map->size)
 				break;
 		} else {
@@ -134,12 +135,16 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		phys = vtophys((vaddr_t)((char *)map->handle + (offset - map->offset)));
 		break;
 	case _DRM_SHM:
-#ifdef __NetBSD__
-		phys = vtophys(DRM_NETBSD_HANDLE2ADDR(offset));
+#ifndef __NetBSD__
+		phys = vtophys(offset);
 		break;
 #endif
 	case _DRM_SCATTER_GATHER:
+#ifndef __NetBSD__
 		phys = vtophys(offset);
+#else
+		phys = vtophys(roffset);
+#endif
 		break;
 	default:
 		DRM_ERROR("bad map type %d\n", type);
@@ -149,8 +154,9 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500102
 	*paddr = phys;
 	return 0;
-#else
-#if defined(__NetBSD__) && defined(macppc)
+#elif defined(__NetBSD__)
+	/*DRM_DEBUG("going to return phys %lx\n", phys);*/
+#if defined(macppc)
 	return phys;
 #else
 	return atop(phys);
