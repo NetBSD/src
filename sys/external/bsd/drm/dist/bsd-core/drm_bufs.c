@@ -249,6 +249,7 @@ int drm_addmap(struct drm_device * dev, unsigned long offset,
 			return EINVAL;
 		}
 		map->offset = map->offset + dev->sg->handle;
+		map->handle = (void *)(uintptr_t)map->offset;
 		break;
 	case _DRM_CONSISTENT:
 		/* Unfortunately, we don't get any alignment specification from
@@ -317,12 +318,13 @@ int drm_addmap_ioctl(struct drm_device *dev, void *data,
 	request->mtrr   = map->mtrr;
 	request->handle = map->handle;
 
-	if (request->type != _DRM_SHM) {
-		request->handle = (void *)request->offset;
 #ifdef __NetBSD__
-	} else {
+	if (DRM_HANDLE_NEEDS_MASK(request->type)) {
 		request->handle = (void *)DRM_NETBSD_ADDR2HANDLE((uintptr_t)map->handle);
+	} else
 #endif
+	{
+		request->handle = (void *)request->offset;
 	}
 
 	return 0;
@@ -1109,6 +1111,10 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		}
 		size = round_page(map->size);
 		foff = map->offset;
+#ifdef __NetBSD__
+		if (DRM_HANDLE_NEEDS_MASK(map->type))
+			foff = DRM_NETBSD_ADDR2HANDLE(foff);
+#endif
 	} else {
 		size = round_page(dma->byte_count),
 		foff = 0;
@@ -1129,7 +1135,7 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	vaddr = curlwp->l_proc->p_emul->e_vm_default_addr(curlwp->l_proc,
 	    (vaddr_t)vms->vm_daddr, size);
 	rsize = round_page(size);
-	DRM_DEBUG("mmap %lx/%ld\n", vaddr, rsize);
+	DRM_DEBUG("mmap %#lx/%#lx foff %#llx\n", vaddr, rsize, (long long)foff);
 	retcode = uvm_mmap(&vms->vm_map, &vaddr, rsize,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
 	    &vn->v_uobj, foff, curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
