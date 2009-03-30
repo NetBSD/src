@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.369 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.370 2009/03/30 16:38:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.369 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.370 2009/03/30 16:38:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2486,7 +2486,7 @@ vattr_null(struct vattr *vap)
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 #define ARRAY_PRINT(idx, arr) \
-    ((idx) > 0 && (idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
+    ((unsigned int)(idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
 
 const char * const vnode_tags[] = { VNODE_TAGS };
 const char * const vnode_types[] = { VNODE_TYPES };
