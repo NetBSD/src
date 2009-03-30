@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.13 2007/10/19 11:59:42 ad Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.14 2009/03/30 06:17:39 uwe Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.13 2007/10/19 11:59:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.14 2009/03/30 06:17:39 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -78,7 +78,7 @@ struct apmhpc_softc {
 	void *sc_apmdev;
 	volatile unsigned int events;
 	volatile int power_state;
-	volatile int battery_state;
+	volatile int battery_flags;
 	volatile int ac_state;
 	config_hook_tag	sc_standby_hook;
 	config_hook_tag	sc_suspend_hook;
@@ -124,7 +124,7 @@ hpcapm_attach(struct device *parent,
 
 	sc->events = 0;
 	sc->power_state = APM_SYS_READY;
-	sc->battery_state = APM_BATT_FLAG_UNKNOWN;
+	sc->battery_flags = APM_BATT_FLAG_UNKNOWN;
 	sc->ac_state = APM_AC_UNKNOWN;
 	sc->battery_life = APM_BATT_LIFE_UNKNOWN;
 	sc->minutes_left = 0;
@@ -193,22 +193,22 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 		switch (message) {
 		case CONFIG_HOOK_BATT_CRITICAL:
 			DPRINTF(("hpcapm: battery state critical\n"));
-			charge = sc->battery_state & APM_BATT_FLAG_CHARGING;
-			sc->battery_state = APM_BATT_FLAG_CRITICAL;
-			sc->battery_state |= charge;
+			charge = sc->battery_flags & APM_BATT_FLAG_CHARGING;
+			sc->battery_flags = APM_BATT_FLAG_CRITICAL;
+			sc->battery_flags |= charge;
 			sc->battery_life = 0;
 			break;
 		case CONFIG_HOOK_BATT_LOW:
 			DPRINTF(("hpcapm: battery state low\n"));
-			charge = sc->battery_state & APM_BATT_FLAG_CHARGING;
-			sc->battery_state = APM_BATT_FLAG_LOW;
-			sc->battery_state |= charge;
+			charge = sc->battery_flags & APM_BATT_FLAG_CHARGING;
+			sc->battery_flags = APM_BATT_FLAG_LOW;
+			sc->battery_flags |= charge;
 			break;
 		case CONFIG_HOOK_BATT_HIGH:
 			DPRINTF(("hpcapm: battery state high\n"));
-			charge = sc->battery_state & APM_BATT_FLAG_CHARGING;
-			sc->battery_state = APM_BATT_FLAG_HIGH;
-			sc->battery_state |= charge;
+			charge = sc->battery_flags & APM_BATT_FLAG_CHARGING;
+			sc->battery_flags = APM_BATT_FLAG_HIGH;
+			sc->battery_flags |= charge;
 			break;
 		case CONFIG_HOOK_BATT_10P:
 			DPRINTF(("hpcapm: battery life 10%%\n"));
@@ -252,12 +252,12 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 			break;
 		case CONFIG_HOOK_BATT_UNKNOWN:
 			DPRINTF(("hpcapm: battery state unknown\n"));
-			sc->battery_state = APM_BATT_FLAG_UNKNOWN;
+			sc->battery_flags = APM_BATT_FLAG_UNKNOWN;
 			sc->battery_life = APM_BATT_LIFE_UNKNOWN;
 			break;
 		case CONFIG_HOOK_BATT_NO_SYSTEM_BATTERY:
 			DPRINTF(("hpcapm: battery state no system battery?\n"));
-			sc->battery_state = APM_BATT_FLAG_NO_SYSTEM_BATTERY;
+			sc->battery_flags = APM_BATT_FLAG_NO_SYSTEM_BATTERY;
 			sc->battery_life = APM_BATT_LIFE_UNKNOWN;
 			break;
 		}
@@ -266,17 +266,17 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 		switch (message) {
 		case CONFIG_HOOK_AC_OFF:
 			DPRINTF(("hpcapm: ac not connected\n"));
-			sc->battery_state &= ~APM_BATT_FLAG_CHARGING;
+			sc->battery_flags &= ~APM_BATT_FLAG_CHARGING;
 			sc->ac_state = APM_AC_OFF;
 			break;
 		case CONFIG_HOOK_AC_ON_CHARGE:
 			DPRINTF(("hpcapm: charging\n"));
-			sc->battery_state |= APM_BATT_FLAG_CHARGING;
+			sc->battery_flags |= APM_BATT_FLAG_CHARGING;
 			sc->ac_state = APM_AC_ON;
 			break;
 		case CONFIG_HOOK_AC_ON_NOCHARGE:
 			DPRINTF(("hpcapm: ac connected\n"));
-			sc->battery_state &= ~APM_BATT_FLAG_CHARGING;
+			sc->battery_flags &= ~APM_BATT_FLAG_CHARGING;
 			sc->ac_state = APM_AC_ON;
 			break;
 		case CONFIG_HOOK_AC_UNKNOWN:
@@ -374,21 +374,30 @@ hpcapm_get_powstat(void *scx, struct apm_power_info *pinfo)
 
 	sc = scx;
 
+	pinfo->nbattery = 0;
+	pinfo->batteryid = 0;
+	pinfo->minutes_valid = 0;
+	pinfo->minutes_left = 0;
+	pinfo->battery_state = APM_BATT_UNKNOWN; /* XXX: ignored */
+
 	if (config_hook_call(CONFIG_HOOK_GET,
 			     CONFIG_HOOK_ACADAPTER, &val) != -1)
 		pinfo->ac_state = val;
 	else
 		pinfo->ac_state = sc->ac_state;
+
 	if (config_hook_call(CONFIG_HOOK_GET,
 			     CONFIG_HOOK_CHARGE, &val) != -1)
-		pinfo->battery_state = val;
+		pinfo->battery_flags = val;
 	else
-		pinfo->battery_state = sc->battery_state;
+		pinfo->battery_flags = sc->battery_flags;
+
 	if (config_hook_call(CONFIG_HOOK_GET,
 			     CONFIG_HOOK_BATTERYVAL, &val) != -1)
 		pinfo->battery_life = val;
 	else
 		pinfo->battery_life = sc->battery_life;
+
 	return (0);
 }
 
