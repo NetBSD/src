@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/27 19:42:50 veego Exp $
+#	$NetBSD: Makefile,v 1.4 2009/03/30 02:01:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ SRCS.ATOMBIOS=	CD_Operations.c Decoder.c hwserv_drv.c
 .if ${X11DRI} != "no"
 SRCS.DRI=	rhd_dri.c
 CPPFLAGS+=	-DUSE_DRI
+CPPFLAGS+=	${X11FLAGS.DRI}
 .endif
 
 SRCS.EXA=	r5xx_exa.c radeon_exa_render.c
@@ -22,6 +23,7 @@ SRCS+=		rhd_monitor.c rhd_output.c rhd_pll.c rhd_tmds.c
 SRCS+=		rhd_vga.c rhd_mc.c rhd_shadow.c rhd_randr.c rhd_dig.c
 SRCS+=		rhd_ddia.c rhd_atomout.c rhd_atompll.c rhd_atomcrtc.c
 SRCS+=		rhd_biosscratch.c
+#SRCS+=		rhd_audio.c rhd_hdmi.c
 SRCS+=		rhd_cs.c r5xx_accel.c r5xx_xaa.c radeon_3d.c
 SRCS+=		rhd_video.c radeon_textured_videofuncs.c
 SRCS+=		$(SRCS.EXA) $(SRCS.DRI) rhd_atomwrapper.c $(SRCS.ATOMBIOS)
