@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.145 2009/03/29 01:10:28 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.146 2009/03/30 17:48:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.145 2009/03/29 01:10:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.146 2009/03/30 17:48:22 dyoung Exp $");
 
 #include "opt_mtrr.h"
 
@@ -229,7 +229,6 @@ cpu_swapout(struct lwp *l)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
