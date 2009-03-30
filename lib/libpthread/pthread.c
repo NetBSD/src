@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.107 2009/03/29 09:30:05 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.108 2009/03/30 21:32:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.107 2009/03/29 09:30:05 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.108 2009/03/30 21:32:51 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -68,6 +68,7 @@ static void	pthread__scrubthread(pthread_t, char *, int);
 static int	pthread__stackid_setup(void *, size_t, pthread_t *);
 static int	pthread__stackalloc(pthread_t *);
 static void	pthread__initmain(pthread_t *);
+static void	pthread__fork_callback(void);
 static void	pthread__reap(pthread_t);
 static void	pthread__child_callback(void);
 static void	pthread__start(void);
@@ -195,6 +196,10 @@ pthread__init(void)
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
 
+	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl) != 0) {
+		err(1, "_lwp_ctl");
+	}
+
 	/* Start subsystems */
 	PTHREAD_MD_INIT
 
@@ -223,15 +228,23 @@ pthread__init(void)
 
 	/* Tell libc that we're here and it should role-play accordingly. */
 	pthread__first = first;
+	pthread_atfork(NULL, NULL, pthread__fork_callback);
 	__isthreaded = 1;
+}
+
+static void
+pthread__fork_callback(void)
+{
+
+	/* lwpctl state is not copied across fork. */
+	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &pthread__first->pt_lwpctl)) {
+		err(1, "_lwp_ctl");
+	}
 }
 
 static void
 pthread__child_callback(void)
 {
-
-	/* lwpctl state is not copied across fork. */
-	pthread__first->pt_lwpctl = &pthread__dummy_lwpctl;
 
 	/*
 	 * Clean up data structures that a forked child process might
@@ -255,9 +268,6 @@ pthread__start(void)
 	 * various restrictions on fork() and threads, it's legal to
 	 * fork() before creating any threads. 
 	 */
-	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &pthread__first->pt_lwpctl)) {
-		err(1, "_lwp_ctl");
-	}
 	pthread_atfork(NULL, NULL, pthread__child_callback);
 }
 
