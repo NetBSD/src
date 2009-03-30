@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2009/03/28 21:34:17 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2009/03/30 09:51:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -400,11 +400,11 @@ void x86_bus_space_mallocok(void);
 
 #endif /* _KERNEL || __KMEMUSER */
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
 #else
 #include <stdbool.h>
-#endif /* _KERNEL */
+#endif /* _KERNEL || _STANDALONE */
 
 /*
  * CTL_MACHDEP definitions.
