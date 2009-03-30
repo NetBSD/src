@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.120 2009/03/27 17:25:56 msaitoh Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.121 2009/03/30 17:16:10 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5403,3 +5403,35 @@ sys/arch/i386/i386/vector.S			1.44
 	"we_re_toast", and arrange for a SEGV to be delivered to the
 	userland process.  fixes kernel mode faults. from andrew doran.
 	[mrg, ticket #609]
+
+crypto/dist/openssl/crypto/asn1/asn1.h		1.10
+crypto/dist/openssl/crypto/asn1/asn1_err.c	1.2
+crypto/dist/openssl/crypto/asn1/tasn_dec.c	1.9
+crypto/dist/openssl/crypto/cms/cms_smime.c	1.2
+
+	Fix 3 security problems:
+	-ASN1 printing crash (CVE-2009-0590)
+	-Incorrect Error Checking During CMS verification (CVE-2009-0591)
+	-Invalid ASN1 clearing check (CVE-2009-0789)
+	[drochner, ticket #624]
+
+common/lib/libprop/prop_object.c		1.26
+
+	Fix crash where user was able to crash proplib with trying
+	to internalize bad xml file with non-existing data type, e.g.,
+	<number>.
+	[haad, ticket #623]
+
+sys/dev/pci/ahcisata_pci.c			1.14
+
+	Add the other three PCI ids for the nvidia MCP65 SATA
+	controller to the quirk table. This way they attach as ahcisata
+	and work, instead of attaching as viaide and failing miserably.
+	Fixes PR kern/37826.
+	[dholland, ticket #616]
+
+usr.bin/fstat/misc.c				1.3
+
+	Only print warnings if vflg.  Fixes PR 40759.
+	[dholland, ticket #618]
+
