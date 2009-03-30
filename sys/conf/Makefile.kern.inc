@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.122 2009/03/20 09:13:06 pooka Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.123 2009/03/30 16:34:19 perry Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -254,11 +254,19 @@ assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 .endif
 
+MKREPRO?=no
+
+.if ${MKREPRO} == "yes"
+_NVFLAGS=-r
+.else
+_NVFLAGS=
+.endif
+
 .if !target(vers.o)
 newvers: vers.o
 vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 	${_MKMSG_CREATE} vers.c
-	${HOST_SH} $S/conf/newvers.sh
+	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
 	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 .endif
