@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.12.4.2 2008/11/30 23:50:04 snj Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.12.4.3 2009/03/31 21:13:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -633,7 +633,7 @@ match_start:
 						   poi->poi_taglen))
 			break;
 	}
-	if (poi == NULL) {
+	if ((poi == NULL) || (poi->poi_intern == NULL)) {
 		while (_prop_stack_pop(&stack, &obj, &iter, &data, NULL)) {
 			iter_func = (prop_object_internalizer_continue_t)iter;
 			(*iter_func)(&stack, &obj, ctx, data, NULL);
