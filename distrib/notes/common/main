@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.2 2009/03/31 23:27:34 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.3 2009/03/31 23:28:52 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1029,6 +1029,16 @@ and the groups
 and
 .Sq _timedc
 need to be created.
+.It
+Unprivileged use of the
+.Xr mount 8
+command now requires the
+.Ar nosuid
+and
+.Ar nodev
+options to be explicitly specified.
+Previously, these options were automatically enforced even if they
+were not explicitly specified.
 .It
 A number of things have been removed from the
 .Nx
