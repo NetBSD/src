@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.182.6.4 2009/03/18 05:33:23 snj Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.182.6.5 2009/03/31 23:38:41 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182.6.4 2009/03/18 05:33:23 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182.6.5 2009/03/31 23:38:41 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1845,11 +1845,13 @@ fgetown(pid_t pgid, u_long cmd, void *data)
 void
 fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 {
-	struct proc *p1;
-	struct pgrp *pgrp;
 	ksiginfo_t ksi;
 
 	KASSERT(!cpu_intr_p());
+
+	if (pgid == 0) {
+		return;
+	}
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
@@ -1857,10 +1859,22 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	ksi.ksi_band = band;
 
 	mutex_enter(proc_lock);
-	if (pgid > 0 && (p1 = p_find(pgid, PFIND_LOCKED)))
-		kpsignal(p1, &ksi, fdescdata);
-	else if (pgid < 0 && (pgrp = pg_find(-pgid, PFIND_LOCKED)))
-		kpgsignal(pgrp, &ksi, fdescdata, 0);
+	if (pgid > 0) {
+		struct proc *p1;
+
+		p1 = p_find(pgid, PFIND_LOCKED);
+		if (p1 != NULL) {
+			kpsignal(p1, &ksi, fdescdata);
+		}
+	} else {
+		struct pgrp *pgrp;
+
+		KASSERT(pgid < 0);
+		pgrp = pg_find(-pgid, PFIND_LOCKED);
+		if (pgrp != NULL) {
+			kpgsignal(pgrp, &ksi, fdescdata, 0);
+		}
+	}
 	mutex_exit(proc_lock);
 }
 
