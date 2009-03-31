@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.51 2009/03/31 17:38:27 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.52 2009/03/31 21:33:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.51 2009/03/31 17:38:27 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.52 2009/03/31 21:33:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -685,7 +685,7 @@ term_overwrite(EditLine *el, const char *cp, size_t n)
 	if (n == 0)
 		return;
 
-	if (n > el->el_term.t_size.h) {
+	if (n > (size_t)el->el_term.t_size.h) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
 		    "term_overwrite: n is riduculous: %d\r\n", n);
