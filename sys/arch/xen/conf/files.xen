@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.95 2009/02/19 02:49:41 jmcneill Exp $
+#	$NetBSD: files.xen,v 1.96 2009/03/31 20:12:19 rmind Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -44,20 +44,16 @@ file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
-file	arch/x86/x86/identcpu.c
 file	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
-file	arch/x86/x86/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
-file	arch/i386/i386/vm_machdep.c
 file	arch/i386/i386/lock_stubs.S
 
 file	arch/i386/i386/mptramp.S		multiprocessor
-file	arch/i386/i386/ipifuncs.c		multiprocessor
 
 file	arch/i386/i386/pmc.c			perfctrs
 
@@ -78,18 +74,14 @@ file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
-file	arch/x86/x86/identcpu.c
 file	arch/amd64/amd64/mem.c
-file	arch/x86/x86/pmap.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
 file	arch/amd64/amd64/syscall.c
 file	arch/amd64/amd64/trap.c
-file	arch/amd64/amd64/vm_machdep.c
 file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/lock_stubs.S
 file	arch/amd64/amd64/mptramp.S		multiprocessor
-file	arch/amd64/amd64/ipifuncs.c		multiprocessor
 endif
 
 file	kern/subr_disk_mbr.c		disk
@@ -127,13 +119,17 @@ include	"dev/ata/files.ata"
 file	dev/md_root.c			memory_disk_hooks
 
 file	arch/x86/x86/bus_dma.c		pci
+file	arch/x86/x86/core_machdep.c	coredump
 file	arch/xen/x86/xen_bus_dma.c	pci
 file	arch/x86/x86/bus_space.c	pci
 file	arch/xen/x86/consinit.c
+file	arch/x86/x86/identcpu.c
 file	arch/xen/x86/intr.c
 file	arch/x86/x86/ipi.c
+file	arch/x86/x86/pmap.c
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/tsc.c
+file	arch/x86/x86/vm_machdep.c
 file	arch/x86/x86/x86_machdep.c
 
 include	"arch/xen/conf/files.compat"
