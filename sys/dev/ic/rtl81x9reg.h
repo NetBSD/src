@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.25.2.3 2008/03/24 20:50:33 bouyer Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.25.2.4 2009/03/31 18:22:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -126,11 +126,13 @@
 #define RTK_GTXSTART		0x0038	/* 8 bits */
 #define RTK_TIMERINT_8169	0x0058	/* different offset than 8139 */
 #define RTK_PHYAR		0x0060
-#define RTK_TBICSR		0x0064
-#define RTK_TBI_ANAR		0x0068
+#define RTK_CSIDR		0x0064          
+#define RTK_CSIAR		0x0068          
 #define RTK_TBI_LPAR		0x006A
 #define RTK_GMEDIASTAT		0x006C	/* 8 bits */
+#define RTK_EPHYAR		0x0080
 #define RTK_LDPS		0x0082	/* Link Down Power Saving */
+#define RTK_DBG_REG		0x00D1
 #define RTK_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
 #define RTK_IM			0x00E2
 
@@ -155,12 +157,16 @@
 #define RTK_HWREV_8169S		0x04000000
 #define RTK_HWREV_8169_8110SB	0x10000000
 #define RTK_HWREV_8169_8110SC	0x18000000
+#define RTK_HWREV_8102EL	0x24800000
 #define RTK_HWREV_8168_SPIN1	0x30000000
 #define RTK_HWREV_8100E		0x30800000
 #define RTK_HWREV_8101E		0x34000000
+#define RTK_HWREV_8102E		0x34800000
 #define RTK_HWREV_8168_SPIN2	0x38000000
 #define RTK_HWREV_8168_SPIN3	0x38400000
 #define RTK_HWREV_8100E_SPIN2	0x38800000
+#define RTK_HWREV_8168C		0x3C000000
+#define RTK_HWREV_8168C_SPIN2	0x3C400000
 #define RTK_HWREV_8139		0x60000000
 #define RTK_HWREV_8139A		0x70000000
 #define RTK_HWREV_8139AG	0x70800000

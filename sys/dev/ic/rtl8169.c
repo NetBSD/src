@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.72.2.9 2008/03/24 20:50:33 bouyer Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.72.2.10 2009/03/31 18:22:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -397,10 +397,10 @@ re_reset(struct rtk_softc *sc)
 		    sc->sc_dev.dv_xname);
 
 	/*
-	 * NB: Realtek-supplied Linux driver does this only for
-	 * MCFG_METHOD_2, which corresponds to sc->sc_rev == 2.
+	 * NB: Realtek-supplied FreeBSD driver does this only for MACFG_3,
+	 *     but also says "Rtl8169s sigle chip detected".
 	 */
-	if (1) /* XXX check softc flag for 8169s version */
+	if ((sc->sc_quirk & RTKQ_MACLDPS) != 0)
 		CSR_WRITE_1(sc, RTK_LDPS, 1);
 
 	return;
@@ -531,22 +531,18 @@ re_diag(struct rtk_softc *sc)
 	if (memcmp((char *)&eh->ether_dhost, (char *)&dst, ETHER_ADDR_LEN) ||
 	    memcmp((char *)&eh->ether_shost, (char *)&src, ETHER_ADDR_LEN) ||
 	    ntohs(eh->ether_type) != ETHERTYPE_IP) {
-		aprint_error("%s: WARNING, DMA FAILURE!\n",
-		    sc->sc_dev.dv_xname);
-		aprint_error("%s: expected TX data: %s",
-		    sc->sc_dev.dv_xname, ether_sprintf(dst));
-		aprint_error("/%s/0x%x\n", ether_sprintf(src), ETHERTYPE_IP);
-		aprint_error("%s: received RX data: %s",
+		aprint_error("%s: WARNING, DMA FAILURE!\n"
+		    "expected TX data: %s/%s/0x%x\n"
+		    "received RX data: %s/%s/0x%x\n"
+		    "You may have a defective 32-bit NIC plugged "
+		    "into a 64-bit PCI slot.\n"
+		    "Please re-install the NIC in a 32-bit slot "
+		    "for proper operation.\n"
+		    "Read the re(4) man page for more details.\n" ,
 		    sc->sc_dev.dv_xname,
-		    ether_sprintf(eh->ether_dhost));
-		aprint_error("/%s/0x%x\n", ether_sprintf(eh->ether_shost),
-		    ntohs(eh->ether_type));
-		aprint_error("%s: You may have a defective 32-bit NIC plugged "
-		    "into a 64-bit PCI slot.\n", sc->sc_dev.dv_xname);
-		aprint_error("%s: Please re-install the NIC in a 32-bit slot "
-		    "for proper operation.\n", sc->sc_dev.dv_xname);
-		aprint_error("%s: Read the re(4) man page for more details.\n",
-		    sc->sc_dev.dv_xname);
+		    ether_sprintf(dst),  ether_sprintf(src), ETHERTYPE_IP,
+		    ether_sprintf(eh->ether_dhost),
+		    ether_sprintf(eh->ether_shost), ntohs(eh->ether_type));
 		error = EIO;
 	}
 
@@ -575,65 +571,118 @@ re_attach(struct rtk_softc *sc)
 	struct ifnet		*ifp;
 	int			error = 0, i, addr_len;
 
-	/* Reset the adapter. */
-	re_reset(sc);
-
-	if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
-		addr_len = RTK_EEADDR_LEN1;
-	else
-		addr_len = RTK_EEADDR_LEN0;
-
-	/*
-	 * Get station address from the EEPROM.
-	 */
-	for (i = 0; i < 3; i++) {
-		val = rtk_read_eeprom(sc, RTK_EE_EADDR0 + i, addr_len);
-		eaddr[(i * 2) + 0] = val & 0xff;
-		eaddr[(i * 2) + 1] = val >> 8;
-	}
-
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		uint32_t hwrev;
 
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
 		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
 		/* These rev numbers are taken from Realtek's driver */
-		if (       hwrev == RTK_HWREV_8100E_SPIN2) {
-			sc->sc_rev = 15;
-		} else if (hwrev == RTK_HWREV_8100E) {
-			sc->sc_rev = 14;
-		} else if (hwrev == RTK_HWREV_8101E) {
-			sc->sc_rev = 13;
-		} else if (hwrev == RTK_HWREV_8168_SPIN2 ||
-		           hwrev == RTK_HWREV_8168_SPIN3) {
-			sc->sc_rev = 12;
-		} else if (hwrev == RTK_HWREV_8168_SPIN1) {
-			sc->sc_rev = 11;
-		} else if (hwrev == RTK_HWREV_8169_8110SC) {
-			sc->sc_rev = 5;
-		} else if (hwrev == RTK_HWREV_8169_8110SB) {
-			sc->sc_rev = 4;
-		} else if (hwrev == RTK_HWREV_8169S) {
-			sc->sc_rev = 3;
-		} else if (hwrev == RTK_HWREV_8110S) {
-			sc->sc_rev = 2;
-		} else if (hwrev == RTK_HWREV_8169) {
+		switch (hwrev) {
+		case RTK_HWREV_8169:
+			/* XXX not in the Realtek driver */
 			sc->sc_rev = 1;
 			sc->sc_quirk |= RTKQ_8169NONS;
-		} else {
+			break;
+		case RTK_HWREV_8169S:
+		case RTK_HWREV_8110S:
+			sc->sc_rev = 3;
+			sc->sc_quirk |= RTKQ_MACLDPS;
+			break;
+		case RTK_HWREV_8169_8110SB:
+			sc->sc_rev = 4;
+			sc->sc_quirk |= RTKQ_MACLDPS;
+			break;
+		case RTK_HWREV_8169_8110SC:
+			sc->sc_rev = 5;
+			sc->sc_quirk |= RTKQ_MACLDPS;
+			break;
+		case RTK_HWREV_8101E:
+			sc->sc_rev = 11;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
+			break;
+		case RTK_HWREV_8168_SPIN1:
+			sc->sc_rev = 21;
+			break;
+		case RTK_HWREV_8168_SPIN2:
+			sc->sc_rev = 22;
+			break;
+		case RTK_HWREV_8168_SPIN3:
+			sc->sc_rev = 23;
+			break;
+		case RTK_HWREV_8168C:
+		case RTK_HWREV_8168C_SPIN2:
+			sc->sc_rev = 24;
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
+			/*
+			 * From FreeBSD driver:
+			 * 
+			 * These (8168/8111) controllers support jumbo frame
+			 * but it seems that enabling it requires touching
+			 * additional magic registers. Depending on MAC
+			 * revisions some controllers need to disable
+			 * checksum offload. So disable jumbo frame until
+			 * I have better idea what it really requires to
+			 * make it support.
+			 * RTL8168C/CP : supports up to 6KB jumbo frame.
+			 * RTL8111C/CP : supports up to 9KB jumbo frame.
+			 */
+			sc->sc_quirk |= RTKQ_NOJUMBO;
+			break;
+		case RTK_HWREV_8102E:
+		case RTK_HWREV_8102EL:
+			sc->sc_rev = 25;
+			sc->sc_quirk |=
+			    RTKQ_DESCV2 | RTKQ_NOEECMD | RTKQ_NOJUMBO;
+			break;
+		case RTK_HWREV_8100E:
+		case RTK_HWREV_8100E_SPIN2:
+			/* XXX not in the Realtek driver */
+			sc->sc_rev = 0;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
+			break;
+		default:
 			aprint_normal("%s: Unknown revision (0x%08x)\n",
 			    sc->sc_dev.dv_xname, hwrev);
-			/* assume the latest one */
-			sc->sc_rev = 15;
+			sc->sc_rev = 0;
 		}
 
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_GFRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8169;
 	} else {
+		sc->sc_quirk |= RTKQ_NOJUMBO;
+
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_FRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
+	}
+
+	/* Reset the adapter. */
+	re_reset(sc);
+
+	if ((sc->sc_quirk & RTKQ_NOEECMD) != 0) {
+		/*
+		 * Get station address from ID registers.
+		 */
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
+	} else {
+		/*
+		 * Get station address from the EEPROM.
+		 */
+		if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
+			addr_len = RTK_EEADDR_LEN1;
+		else
+			addr_len = RTK_EEADDR_LEN0;
+
+		/*
+		 * Get station address from the EEPROM.
+		 */
+		for (i = 0; i < ETHER_ADDR_LEN / 2; i++) {
+			val = rtk_read_eeprom(sc, RTK_EE_EADDR0 + i, addr_len);
+			eaddr[(i * 2) + 0] = val & 0xff;
+			eaddr[(i * 2) + 1] = val >> 8;
+		}
 	}
 
 	aprint_normal("%s: Ethernet address %s\n",
@@ -773,6 +822,15 @@ re_attach(struct rtk_softc *sc)
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_TSOv4;
+
+	/*
+	 * XXX
+	 * Still have no idea how to make TSO work on 8168C, 8168CP,
+	 * 8102E, 8111C and 8111CP.
+	 */
+	if ((sc->sc_quirk & RTKQ_DESCV2) != 0)
+		ifp->if_capabilities &= ~IFCAP_TSOv4;
+
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
 	ifp->if_snd.ifq_maxlen = RE_IFQ_MAXLEN;
@@ -1276,7 +1334,9 @@ re_rxeof(struct rtk_softc *sc)
 		/* Do RX checksumming */
 
 		/* Check IP header checksum */
-		if (rxstat & RE_RDESC_STAT_PROTOID) {
+		if ((rxstat & RE_RDESC_STAT_PROTOID) != 0 &&
+		    ((sc->sc_quirk & RTKQ_DESCV2) == 0 ||
+		     (rxvlan & RE_RDESC_VLANCTL_IPV4) != 0)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
@@ -1562,6 +1622,7 @@ re_start(struct ifnet *ifp)
 		 * chip. I'm not sure if this is a requirement or a bug.)
 		 */
 
+		vlanctl = 0;
 		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
 			uint32_t segsz = m->m_pkthdr.segsz;
 
@@ -1577,12 +1638,28 @@ re_start(struct ifnet *ifp)
 			if ((m->m_pkthdr.csum_flags &
 			    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4))
 			    != 0) {
-				re_flags |= RE_TDESC_CMD_IPCSUM;
-				if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
-					re_flags |= RE_TDESC_CMD_TCPCSUM;
-				} else if (m->m_pkthdr.csum_flags &
-				    M_CSUM_UDPv4) {
-					re_flags |= RE_TDESC_CMD_UDPCSUM;
+				if ((sc->sc_quirk & RTKQ_DESCV2) == 0) {
+					re_flags |= RE_TDESC_CMD_IPCSUM;
+					if (m->m_pkthdr.csum_flags &
+					    M_CSUM_TCPv4) {
+						re_flags |=
+						    RE_TDESC_CMD_TCPCSUM;
+					} else if (m->m_pkthdr.csum_flags &
+					    M_CSUM_UDPv4) {
+						re_flags |=
+						    RE_TDESC_CMD_UDPCSUM;
+					}
+				} else {
+					vlanctl |= RE_TDESC_VLANCTL_IPCSUM;
+					if (m->m_pkthdr.csum_flags &
+					    M_CSUM_TCPv4) {
+						vlanctl |=
+						    RE_TDESC_VLANCTL_TCPCSUM;
+					} else if (m->m_pkthdr.csum_flags &
+					    M_CSUM_UDPv4) {
+						vlanctl |=
+						    RE_TDESC_VLANCTL_UDPCSUM;
+					}
 				}
 			}
 		}
@@ -1606,7 +1683,8 @@ re_start(struct ifnet *ifp)
 		nsegs = map->dm_nsegs;
 		pad = FALSE;
 		if (__predict_false(m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
-		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0)) {
+		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0 &&
+		    (sc->sc_quirk & RTKQ_DESCV2) == 0)) {
 			pad = TRUE;
 			nsegs++;
 		}
@@ -1634,9 +1712,8 @@ re_start(struct ifnet *ifp)
 		 * appear in all descriptors of a multi-descriptor
 		 * transmission attempt.
 		 */
-		vlanctl = 0;
 		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL)
-			vlanctl = bswap16(VLAN_TAG_VALUE(mtag)) |
+			vlanctl |= bswap16(VLAN_TAG_VALUE(mtag)) |
 			    RE_TDESC_VLANCTL_TAG;
 
 		/*
@@ -2003,7 +2080,16 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	switch (command) {
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > RE_JUMBO_MTU)
+		/*
+		 * Disable jumbo frames if it's not supported.
+		 */
+		if ((sc->sc_quirk & RTKQ_NOJUMBO) != 0 &&
+		    ifr->ifr_mtu > ETHERMTU) {
+			error = EINVAL;
+			break;
+		}
+
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
