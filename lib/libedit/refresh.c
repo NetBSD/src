@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.29 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.30 2009/03/31 17:38:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.29 2009/02/15 21:55:23 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.30 2009/03/31 17:38:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -300,7 +300,7 @@ re_refresh(EditLine *el)
 			term_move_to_char(el, 0);
 			term_clear_EOL(el, (int) strlen(el->el_display[i]));
 #ifdef DEBUG_REFRESH
-			term_overwrite(el, "C\b", 2);
+			term_overwrite(el, "C\b", (size_t)2);
 #endif /* DEBUG_REFRESH */
 			el->el_display[i][0] = '\0';
 		}
@@ -477,6 +477,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 	char *ofd, *ols, *oe, *nfd, *nls, *ne;
 	char *osb, *ose, *nsb, *nse;
 	int fx, sx;
+	size_t len;
 
 	/*
          * find first diff
@@ -761,14 +762,14 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 		         * write (nsb-nfd) - fx chars of new starting at
 		         * (nfd + fx)
 			 */
-			term_overwrite(el, (nfd + fx),
-			    (int)((nsb - nfd) - fx));
-			re__strncopy(ofd + fx, nfd + fx,
-			    (size_t) ((nsb - nfd) - fx));
+			len = (size_t) ((nsb - nfd) - fx);
+			term_overwrite(el, (nfd + fx), len);
+			re__strncopy(ofd + fx, nfd + fx, len);
 		} else {
 			ELRE_DEBUG(1, (__F, "without anything to save\r\n"));
-			term_overwrite(el, nfd, (int)(nsb - nfd));
-			re__strncopy(ofd, nfd, (size_t) (nsb - nfd));
+			len = (size_t)(nsb - nfd);
+			term_overwrite(el, nfd, len);
+			re__strncopy(ofd, nfd, len);
 			/*
 		         * Done
 		         */
@@ -800,8 +801,9 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 			/*
 		         * write (nsb-nfd) chars of new starting at nfd
 		         */
-			term_overwrite(el, nfd, (int)(nsb - nfd));
-			re__strncopy(ofd, nfd, (size_t) (nsb - nfd));
+			len = (size_t) (nsb - nfd);
+			term_overwrite(el, nfd, len);
+			re__strncopy(ofd, nfd, len);
 
 		} else {
 			ELRE_DEBUG(1, (__F,
@@ -809,7 +811,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 			/*
 		         * write (nsb-nfd) chars of new starting at nfd
 		         */
-			term_overwrite(el, nfd, (int)(nsb - nfd));
+			term_overwrite(el, nfd, (size_t)(nsb - nfd));
 			re_clear_eol(el, fx, sx,
 			    (int)((oe - old) - (ne - new)));
 			/*
@@ -847,11 +849,11 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 			/*
 		         * write (nls-nse) chars of new starting at nse
 		         */
-			term_overwrite(el, nse, (int)(nls - nse));
+			term_overwrite(el, nse, (size_t)(nls - nse));
 		} else {
 			ELRE_DEBUG(1, (__F,
 			    "but with nothing left to save\r\n"));
-			term_overwrite(el, nse, (int)(nls - nse));
+			term_overwrite(el, nse, (size_t)(nls - nse));
 			re_clear_eol(el, fx, sx,
 			    (int)((oe - old) - (ne - new)));
 		}
@@ -889,14 +891,14 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 		         * write (nsb-nfd) - fx chars of new starting at
 		         * (nfd + fx)
 			 */
-			term_overwrite(el, (nfd + fx),
-			    (int)((nsb - nfd) - fx));
-			re__strncopy(ofd + fx, nfd + fx,
-			    (size_t) ((nsb - nfd) - fx));
+			len = (size_t) ((nsb - nfd) - fx);
+			term_overwrite(el, (nfd + fx), len);
+			re__strncopy(ofd + fx, nfd + fx, len);
 		} else {
 			ELRE_DEBUG(1, (__F, "without anything to save\r\n"));
-			term_overwrite(el, nfd, (int)(nsb - nfd));
-			re__strncopy(ofd, nfd, (size_t) (nsb - nfd));
+			len = (size_t) (nsb - nfd);
+			term_overwrite(el, nfd, len);
+			re__strncopy(ofd, nfd, len);
 		}
 	}
 	/*
@@ -919,10 +921,10 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 			 * (nse + sx)
 		         */
 			term_overwrite(el, (nse + sx),
-			    (int)((nls - nse) - sx));
+			    (size_t)((nls - nse) - sx));
 		} else {
 			ELRE_DEBUG(1, (__F, "without anything to save\r\n"));
-			term_overwrite(el, nse, (int)(nls - nse));
+			term_overwrite(el, nse, (size_t)(nls - nse));
 
 			/*
 	                 * No need to do a clear-to-end here because we were

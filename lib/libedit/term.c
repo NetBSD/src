@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.50 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.51 2009/03/31 17:38:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.50 2009/02/15 21:55:23 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.51 2009/03/31 17:38:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -559,7 +559,7 @@ term_move_to_line(EditLine *el, int where)
 				term_move_to_char(el, el->el_term.t_size.h - 1);
 				term_overwrite(el,
 				    &el->el_display[el->el_cursor.v][el->el_cursor.h],
-				    1);
+				    (size_t)1);
 				/* updates Cursor */
 				del--;
 			} else {
@@ -646,7 +646,7 @@ mc_again:
 				 */
 				term_overwrite(el,
 				    &el->el_display[el->el_cursor.v][el->el_cursor.h],
-				    where - el->el_cursor.h);
+				    (size_t)(where - el->el_cursor.h));
 
 			}
 		} else {	/* del < 0 := moving backward */
@@ -680,10 +680,10 @@ mc_again:
  *	Overstrike num characters
  */
 protected void
-term_overwrite(EditLine *el, const char *cp, int n)
+term_overwrite(EditLine *el, const char *cp, size_t n)
 {
-	if (n <= 0)
-		return;		/* catch bugs */
+	if (n == 0)
+		return;
 
 	if (n > el->el_term.t_size.h) {
 #ifdef DEBUG_SCREEN
@@ -692,6 +692,7 @@ term_overwrite(EditLine *el, const char *cp, int n)
 #endif /* DEBUG_SCREEN */
 		return;
 	}
+
 	do {
 		term__putc(el, *cp++);
 		el->el_cursor.h++;
@@ -784,7 +785,7 @@ term_insertwrite(EditLine *el, char *cp, int num)
 		if ((num > 1) || !GoodStr(T_ic)) {
 				/* if ic would be more expensive */
 			term_tputs(el, tgoto(Str(T_IC), num, num), num);
-			term_overwrite(el, cp, num);
+			term_overwrite(el, cp, (size_t)num);
 				/* this updates el_cursor.h */
 			return;
 		}
@@ -1289,9 +1290,9 @@ protected void
 term_writec(EditLine *el, int c)
 {
 	char buf[8];
-	int cnt = key__decode_char(buf, sizeof(buf), 0, c);
+	size_t cnt = key__decode_char(buf, sizeof(buf), 0, c);
 	buf[cnt] = '\0';
-	term_overwrite(el, buf, cnt);
+	term_overwrite(el, buf, (size_t)cnt);
 	term__flush(el);
 }
 

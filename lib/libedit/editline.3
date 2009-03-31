@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.64 2009/03/10 22:55:14 wiz Exp $
+.\"	$NetBSD: editline.3,v 1.65 2009/03/31 17:38:27 christos Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2009
+.Dd March 31, 2009
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -218,10 +218,22 @@ The following values for
 .Fa op
 are supported, along with the required argument list:
 .Bl -tag -width 4n
-.It Dv EL_PROMPT , Fa "char *(*f)(EditLine *)"
+.It Dv EL_PROMPT , Fa "char *(*f)(EditLine *)", Fa "char c"
 Define prompt printing function as
 .Fa f ,
 which is to return a string that contains the prompt.
+The 
+.Fa c
+argument indicates the start/stop literal prompt character.
+.Pp
+If a start/stop literal character is found in the prompt, itself
+is not printed, but characters after it are printed directly to the
+terminal without affecting the state of the current line.
+A subsequent second start/stop literal character ends this behavior.
+This is typically used to embed literal escape sequences that change the
+color/style of the terminal in the prompt.
+.Dv 0
+unsets it.
 .It Dv EL_REFRESH
 Re-display the current line on the next terminal line.
 .It Dv EL_RPROMPT , Fa "char *(*f)(EditLine *)"
@@ -437,10 +449,22 @@ The following values for
 are supported, along with actual type of
 .Fa result :
 .Bl -tag -width 4n
-.It Dv EL_PROMPT , Fa "char *(*f)(EditLine *)"
-Return a pointer to the function that displays the prompt.
-.It Dv EL_RPROMPT , Fa "char *(*f)(EditLine *)"
-Return a pointer to the function that displays the rightside prompt.
+.It Dv EL_PROMPT , Fa "char *(*f)(EditLine *)" , Fa "char *c"
+Return a pointer to the function that displays the prompt in
+.Fa f .
+If
+.Fa c
+is not
+.Dv NULL ,
+return the start/stop literal prompt character in it.
+.It Dv EL_RPROMPT , Fa "char *(*f)(EditLine *)" , Fa "char *c"
+Return a pointer to the function that displays the prompt in
+.Fa f .
+If
+.Fa c
+is not
+.Dv NULL ,
+return the start/stop literal prompt character in it.
 .It Dv EL_EDITOR , Fa "const char *"
 Return the name of the editor, which will be one of
 .Dq emacs
