@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.140 2009/03/31 18:23:57 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.141 2009/03/31 21:15:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2948,4 +2948,10 @@ sys/dev/pci/if_re_pci.c		1.35
 	Fix MAC reset issue (PR kern/41009)
 	Add/fix HW checksum support (PR kern/40955)
 	[tsutsui, ticket #1297]
+
+common/lib/libprop/prop_object.c	patch
+
+	Fix crash where user was able to crash proplib with trying to
+	internalize bad xml file with non-existing data type e.g. <number>.
+	[haad, ticket #1296]
 
