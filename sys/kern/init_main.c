@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.371.2.1 2009/03/15 19:43:48 snj Exp $	*/
+/*	$NetBSD: init_main.c,v 1.371.2.2 2009/03/31 23:23:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.1 2009/03/15 19:43:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.2 2009/03/31 23:23:15 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.1 2009/03/15 19:43:48 snj Exp 
 #include "opt_wapbl.h"
 
 #include "rnd.h"
+#include "ksyms.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
 #include "sysmon_taskq.h"
@@ -300,6 +301,10 @@ main(void)
 
 	/* Initialize lock caches. */
 	mutex_obj_init();
+
+#if NKSYMS > 0
+	ksyms_init_finalize();
+#endif
 
 	/* Initialize the extent manager. */
 	extent_init();
