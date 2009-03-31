@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.20 2009/03/27 04:05:21 msaitoh Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.21 2009/03/31 18:00:29 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -170,3 +170,9 @@ usr.sbin/pstat/pstat.c				1.113
 	convert getfiles() to use KERN_FILE2 sysctl.
 	Now it can survive "struct file" changing, as is upcoming.
 	[mrg, ticket #1289]
+share/man/man3/bits.3				1.3
+
+	PR/39381 - Taylor R Campbell
+	missing line break causing funny formatting
+	[dholland, ticket #1293]
+
