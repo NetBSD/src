@@ -1,4 +1,4 @@
-/*	$NetBSD: chg_pid.c,v 1.7 2009/03/18 17:06:43 cegger Exp $	*/
+/*	$NetBSD: chg_pid.c,v 1.8 2009/03/31 11:48:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -95,7 +95,7 @@ int	read_block	PROTO((void *, int, int));
 int	write_block	PROTO((void *, int, int));
 void	set_csum	PROTO((char *));
 
-const char version[] = "$Revision: 1.7 $";
+const char version[] = "$Revision: 1.8 $";
 
 char	*Progname = NULL;		/* What are we called		*/
 int	t_flag    = 0;			/* Test -- don't actually do it	*/
@@ -207,7 +207,7 @@ char	*newname;
      * the buffer in case of 'XGM' partitions.
      */
     g_root  = (GEM_ROOT*)buf;
-    memcpy( g_local, g_root->parts, NGEM_PARTS*sizeof(GEM_PART));
+    memcpy(g_local, g_root->parts, NGEM_PARTS*sizeof(GEM_PART));
 
     for (i = 0; i < NGEM_PARTS; i++) {
 	if (!(g_local[i].p_flg & 1)) 
