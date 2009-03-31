@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.139 2009/03/29 16:42:42 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.140 2009/03/31 18:23:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2898,3 +2898,54 @@ share/mk/bsd.sys.mk				patch
 	Avoid passing "-std=c99" in CFLAGS on host platforms
 	that use a compiler other than GCC.  Requested in PR 40540
 	[apb, ticket 1285]
+usr.bin/netstat/inet.c				1.89
+usr.bin/netstat/inet6.c				1.51
+usr.bin/netstat/iso.c				1.31
+
+	Make netstat handle -a properly; that is, don't show unconnected
+	listener sockets unless -a was given. (It was checking the local
+	address instead of the remote address for being INADDR_ANY or
+	equivalent.)
+	PR 38093 from Dieter Roelants; I adjusted the patch a little.
+	[dholland, ticket #1292]
+
+share/man/man3/bits.3				1.3
+
+	PR/39381 - Taylor R Campbell
+	missing line break causing funny formatting
+	[dholland, ticket #1293]
+
+sys/net/if_ether.h				1.52
+
+	PR/39203: Paul Ripke: PPPoE issues with broken MTU/MRU implementations
+	Allow larger frames for systems that don't negotiate MTU/MRU properly.
+	[dholland, ticket #1294]
+
+sys/dev/usb/if_ural.c				1.29 via patch
+
+	Fix type.
+	s/amrr_min_success_threshold/amrr_max_success_threshold/ in second line.
+	[msaitoh, ticket #1295]
+
+sys/dev/ic/rt2560.c				1.14 via patch
+sys/dev/ic/rt2661.c				1.20 via patch
+sys/dev/usb/if_rum.c				1.17 via patch
+sys/dev/usb/if_ural.c				1.26 via patch
+
+	Fix a number of driver which doesn't check wep flag in *_tx_mgt.
+	It is incorrect because we need to encrypt some management frame
+	in case of shared authentification.
+	[msaitoh, ticket #1298]
+
+sys/dev/ic/rtl8169.c		1.104 (via patch), 1.105 (via patch),
+				1.106 (via patch), 1.108, 1.109 (via patch),
+				1.110, 1.111, 1.112, 1.113
+sys/dev/ic/rtl81x9reg.h		1.30, 1.31, 1.32, 1.33, 1.34, 1.35
+sys/dev/ic/rtl81x9var.h		1.42, 1.43, 1.44, 1.45
+sys/dev/pci/if_re_pci.c		1.35
+
+	Add support for 8168C/8111C/8102E chips
+	Fix MAC reset issue (PR kern/41009)
+	Add/fix HW checksum support (PR kern/40955)
+	[tsutsui, ticket #1297]
+
