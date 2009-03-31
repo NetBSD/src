@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.81 2009/02/21 23:31:56 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.82 2009/03/31 17:53:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.81 2009/02/21 23:31:56 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.82 2009/03/31 17:53:03 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -225,6 +225,8 @@ _getc_function(EditLine *el, char *c)
 int
 rl_set_prompt(const char *prompt)
 {
+	char *p;
+
 	if (!prompt)
 		prompt = "";
 	if (rl_prompt != NULL && strcmp(rl_prompt, prompt) == 0) 
@@ -232,7 +234,13 @@ rl_set_prompt(const char *prompt)
 	if (rl_prompt)
 		free(rl_prompt);
 	rl_prompt = strdup(prompt);
-	return rl_prompt == NULL ? -1 : 0;
+	if (rl_prompt == NULL)
+		return -1;
+
+	while ((p = strchr(rl_prompt, RL_PROMPT_END_IGNORE)) != NULL)
+		*p = RL_PROMPT_START_IGNORE;
+
+	return 0;
 }
 
 /*
@@ -286,7 +294,7 @@ rl_initialize(void)
 		el_end(e);
 		return -1;
 	}
-	el_set(e, EL_PROMPT, _get_prompt);
+	el_set(e, EL_PROMPT, _get_prompt, RL_PROMPT_START_IGNORE);
 	el_set(e, EL_SIGNAL, rl_catch_signals);
 
 	/* set default mode to "emacs"-style and read setting afterwards */
