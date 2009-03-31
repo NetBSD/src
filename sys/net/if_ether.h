@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.43 2006/11/24 01:04:30 rpaulo Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.43.2.1 2009/03/31 18:02:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,6 +56,7 @@
  * Some Ethernet extensions.
  */
 #define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
+#define	ETHER_PPPOE_ENCAP_LEN 8	/* length of PPPoE encapsulation */
 
 /*
  * Ethernet address - 6 octets
@@ -89,7 +90,8 @@ struct	ether_header {
 #define	ETHER_MAX_FRAME(ifp, etype, hasfcs)				\
 	((ifp)->if_mtu + ETHER_HDR_LEN +				\
 	 ((hasfcs) ? ETHER_CRC_LEN : 0) +				\
-	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0))
+	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0) +	\
+	 (((etype) == ETHERTYPE_PPPOE) ? ETHER_PPPOE_ENCAP_LEN : 0))
 
 /*
  * Ethernet CRC32 polynomials (big- and little-endian verions).
