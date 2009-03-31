@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.57 2009/03/29 01:02:49 mrg Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.58 2009/03/31 06:03:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.57 2009/03/29 01:02:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.58 2009/03/31 06:03:31 cegger Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -430,7 +430,7 @@ darwin_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
 	KASSERT(access_size > 0);
-	NEW_VMCMD(2&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
 	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE,
 	    VMCMD_STACK);
 
