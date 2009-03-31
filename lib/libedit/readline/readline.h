@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.25 2009/02/12 13:39:49 sketch Exp $	*/
+/*	$NetBSD: readline.h,v 1.26 2009/03/31 17:53:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@ typedef KEYMAP_ENTRY *Keymap;
 
 #define RUBOUT		0x7f
 #define ABORT_CHAR	CTRL('G')
+#define RL_PROMPT_START_IGNORE	'\1'
+#define RL_PROMPT_END_IGNORE	'\2'
 
 /* global variables used by readline enabled applications */
 #ifdef __cplusplus
