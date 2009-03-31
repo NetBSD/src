@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.18.2.1 2007/09/29 08:53:17 xtraeme Exp $ */
+/*	$NetBSD: if_ural.c,v 1.18.2.2 2009/03/31 18:04:49 bouyer Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.2.1 2007/09/29 08:53:17 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.2.2 2009/03/31 18:04:49 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -428,7 +428,7 @@ USB_ATTACH(ural)
 	usb_init_task(&sc->sc_task, ural_task, sc);
 	callout_init(&sc->scan_ch);
 	sc->amrr.amrr_min_success_threshold = 1;
-	sc->amrr.amrr_min_success_threshold = 15;
+	sc->amrr.amrr_max_success_threshold = 15;
 	callout_init(&sc->amrr_ch);
 
 	/* retrieve RT2570 rev. no */
