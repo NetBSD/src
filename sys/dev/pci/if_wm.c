@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.171 2009/03/31 04:16:57 darran Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.172 2009/03/31 06:58:55 darran Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.171 2009/03/31 04:16:57 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.172 2009/03/31 06:58:55 darran Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1567,7 +1567,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (sc->sc_type >= WM_T_82543)
 		sc->sc_ethercom.ec_capabilities |=
-		    ETHERCAP_VLAN_MTU /* XXXJRT | ETHERCAP_VLAN_HWTAGGING */;
+		    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
 	/*
 	 * We can perform TCPv4 and UDPv4 checkums in-bound.  Only
