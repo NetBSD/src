@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.87 2008/01/08 20:03:09 seanb Exp $	*/
+/*	$NetBSD: ping.c,v 1.88 2009/03/31 19:51:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.87 2008/01/08 20:03:09 seanb Exp $");
+__RCSID("$NetBSD: ping.c,v 1.88 2009/03/31 19:51:11 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -155,6 +155,7 @@ struct tv32 {
 u_char	*packet;
 int	packlen;
 int	pingflags = 0, options;
+int	pongflags = 0;
 char	*fill_pat;
 
 int s;					/* Socket file descriptor */
@@ -1017,8 +1018,31 @@ pr_pack(u_char *buf,
 
 		if (tot_len != opack_ip->ip_len) {
 			PR_PACK_SUB();
-			(void)printf("\nwrong total length %d instead of %d",
-				     tot_len, opack_ip->ip_len);
+			switch (opack_ip->ip_len - tot_len) {
+			case MAX_IPOPTLEN:
+				if ((pongflags & F_RECORD_ROUTE) != 0)
+					break;
+				if ((pingflags & F_RECORD_ROUTE) == 0)
+					goto out;
+				pongflags |= F_RECORD_ROUTE;
+				(void)printf("\nremote host does not "
+				    "support record route");
+				break;
+			case 8:
+				if ((pongflags & F_SOURCE_ROUTE) != 0)
+					break;
+				if ((pingflags & F_SOURCE_ROUTE) == 0)
+					goto out;
+				pongflags |= F_SOURCE_ROUTE;
+				(void)printf("\nremote host does not "
+				    "support source route");
+				break;
+			default:
+			out:
+				(void)printf("\nwrong total length %d "
+				    "instead of %d", tot_len, opack_ip->ip_len);
+				break;
+			}
 		}
 
 		if (!dupflag) {
