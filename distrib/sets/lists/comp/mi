@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1238 2009/03/07 22:08:07 ad Exp $
+#	$NetBSD: mi,v 1.1239 2009/03/31 16:11:59 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8088,6 +8088,15 @@
 ./usr/share/man/cat9/bcopy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdwrite.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be16dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be16enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be16toh.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be32dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be32enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be32toh.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be64dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be64enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bintobcd.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bintime.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/binuptime.0		comp-sys-catman		.cat
@@ -8101,6 +8110,9 @@
 ./usr/share/man/cat9/breada.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/breadn.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/brelse.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bswap16.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bswap32.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bswap64.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/buffercache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bufq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_dma.0			comp-sys-catman		.cat
@@ -8161,6 +8173,7 @@
 ./usr/share/man/cat9/bus_space_write_region_4.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_space_write_region_8.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bwrite.0			comp-sys-catman		.cat
+./usr/share/man/cat9/byteorder.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bzero.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cache_enter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cache_lookup.0		comp-sys-catman		.cat
@@ -8428,6 +8441,12 @@
 ./usr/share/man/cat9/hashdone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/hashinit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/holdrele.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htobe16.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htobe32.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htobe64.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htole16.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htole32.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htole64.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/humanize_number.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bios32_service.0	comp-sys-catman		.cat
@@ -8536,6 +8555,15 @@
 ./usr/share/man/cat9/kthread_create1.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/kthread_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_exit.0		comp-sys-catman		.cat
+./usr/share/man/cat9/le16dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le16enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le16toh.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le32dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le32enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le32toh.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le64dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le64enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/linedisc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockinit.0			comp-sys-catman		.cat
@@ -13318,6 +13346,15 @@
 ./usr/share/man/html9/bcopy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bdevvp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bdwrite.html		comp-sys-htmlman	html
+./usr/share/man/html9/be16dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/be16enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/be16toh.html		comp-sys-htmlman	html
+./usr/share/man/html9/be32dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/be32enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/be32toh.html		comp-sys-htmlman	html
+./usr/share/man/html9/be64dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/be64enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/be64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bintobcd.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bintime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/binuptime.html		comp-sys-htmlman	html
@@ -13331,6 +13368,9 @@
 ./usr/share/man/html9/breada.html		comp-sys-htmlman	html
 ./usr/share/man/html9/breadn.html		comp-sys-htmlman	html
 ./usr/share/man/html9/brelse.html		comp-sys-htmlman	html
+./usr/share/man/html9/bswap16.html		comp-sys-htmlman	html
+./usr/share/man/html9/bswap32.html		comp-sys-htmlman	html
+./usr/share/man/html9/bswap64.html		comp-sys-htmlman	html
 ./usr/share/man/html9/buffercache.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bufq.html			comp-sys-htmlman	html
 ./usr/share/man/html9/bus_dma.html		comp-sys-htmlman	html
@@ -13391,6 +13431,7 @@
 ./usr/share/man/html9/bus_space_write_region_4.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bus_space_write_region_8.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bwrite.html		comp-sys-htmlman	html
+./usr/share/man/html9/byteorder.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bzero.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cache_enter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cache_lookup.html		comp-sys-htmlman	html
@@ -13636,6 +13677,12 @@
 ./usr/share/man/html9/hashdone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hashinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/holdrele.html		comp-sys-htmlman	html
+./usr/share/man/html9/htobe16.html		comp-sys-htmlman	html
+./usr/share/man/html9/htobe32.html		comp-sys-htmlman	html
+./usr/share/man/html9/htobe64.html		comp-sys-htmlman	html
+./usr/share/man/html9/htole16.html		comp-sys-htmlman	html
+./usr/share/man/html9/htole32.html		comp-sys-htmlman	html
+./usr/share/man/html9/htole64.html		comp-sys-htmlman	html
 ./usr/share/man/html9/humanize_number.html	comp-sys-htmlman	html
 ./usr/share/man/html9/hz.html			comp-sys-htmlman	html
 ./usr/share/man/html9/i386/bios32_service.html	comp-sys-htmlman	html
@@ -13741,6 +13788,15 @@
 ./usr/share/man/html9/kthread_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_exit.html		comp-sys-htmlman	html
+./usr/share/man/html9/le16dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/le16enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/le16toh.html		comp-sys-htmlman	html
+./usr/share/man/html9/le32dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/le32enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/le32toh.html		comp-sys-htmlman	html
+./usr/share/man/html9/le64dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/le64enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/le64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/linedisc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lock.html			comp-sys-htmlman	html
 ./usr/share/man/html9/lockinit.html		comp-sys-htmlman	html
@@ -18660,6 +18716,15 @@
 ./usr/share/man/man9/bcopy.9			comp-sys-man		.man
 ./usr/share/man/man9/bdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/bdwrite.9			comp-sys-man		.man
+./usr/share/man/man9/be16dec.9			comp-sys-man		.man
+./usr/share/man/man9/be16enc.9			comp-sys-man		.man
+./usr/share/man/man9/be16toh.9			comp-sys-man		.man
+./usr/share/man/man9/be32dec.9			comp-sys-man		.man
+./usr/share/man/man9/be32enc.9			comp-sys-man		.man
+./usr/share/man/man9/be32toh.9			comp-sys-man		.man
+./usr/share/man/man9/be64dec.9			comp-sys-man		.man
+./usr/share/man/man9/be64enc.9			comp-sys-man		.man
+./usr/share/man/man9/be64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/bintobcd.9			comp-sys-man		.man
 ./usr/share/man/man9/bintime.9			comp-sys-man		.man
 ./usr/share/man/man9/binuptime.9		comp-sys-man		.man
@@ -18673,6 +18738,9 @@
 ./usr/share/man/man9/breada.9			comp-sys-man		.man
 ./usr/share/man/man9/breadn.9			comp-sys-man		.man
 ./usr/share/man/man9/brelse.9			comp-sys-man		.man
+./usr/share/man/man9/bswap16.9			comp-sys-man		.man
+./usr/share/man/man9/bswap32.9			comp-sys-man		.man
+./usr/share/man/man9/bswap64.9			comp-sys-man		.man
 ./usr/share/man/man9/buffercache.9		comp-sys-man		.man
 ./usr/share/man/man9/bufq.9			comp-sys-man		.man
 ./usr/share/man/man9/bus_dma.9			comp-sys-man		.man
@@ -18733,6 +18801,7 @@
 ./usr/share/man/man9/bus_space_write_region_4.9	comp-sys-man		.man
 ./usr/share/man/man9/bus_space_write_region_8.9	comp-sys-man		.man
 ./usr/share/man/man9/bwrite.9			comp-sys-man		.man
+./usr/share/man/man9/byteorder.9		comp-sys-man		.man
 ./usr/share/man/man9/bzero.9			comp-sys-man		.man
 ./usr/share/man/man9/cache_enter.9		comp-sys-man		.man
 ./usr/share/man/man9/cache_lookup.9		comp-sys-man		.man
@@ -19000,6 +19069,12 @@
 ./usr/share/man/man9/hashdone.9			comp-sys-man		.man
 ./usr/share/man/man9/hashinit.9			comp-sys-man		.man
 ./usr/share/man/man9/holdrele.9			comp-sys-man		.man
+./usr/share/man/man9/htobe16.9			comp-sys-man		.man
+./usr/share/man/man9/htobe32.9			comp-sys-man		.man
+./usr/share/man/man9/htobe64.9			comp-sys-man		.man
+./usr/share/man/man9/htole16.9			comp-sys-man		.man
+./usr/share/man/man9/htole32.9			comp-sys-man		.man
+./usr/share/man/man9/htole64.9			comp-sys-man		.man
 ./usr/share/man/man9/humanize_number.9		comp-sys-man		.man
 ./usr/share/man/man9/hz.9			comp-sys-man		.man
 ./usr/share/man/man9/i386/bios32_service.9	comp-sys-man		.man
@@ -19108,6 +19183,15 @@
 ./usr/share/man/man9/kthread_create1.9		comp-obsolete		obsolete
 ./usr/share/man/man9/kthread_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/kthread_exit.9		comp-sys-man		.man
+./usr/share/man/man9/le16dec.9			comp-sys-man		.man
+./usr/share/man/man9/le16enc.9			comp-sys-man		.man
+./usr/share/man/man9/le16toh.9			comp-sys-man		.man
+./usr/share/man/man9/le32dec.9			comp-sys-man		.man
+./usr/share/man/man9/le32enc.9			comp-sys-man		.man
+./usr/share/man/man9/le32toh.9			comp-sys-man		.man
+./usr/share/man/man9/le64dec.9			comp-sys-man		.man
+./usr/share/man/man9/le64enc.9			comp-sys-man		.man
+./usr/share/man/man9/le64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/linedisc.9			comp-sys-man		.man
 ./usr/share/man/man9/lock.9			comp-sys-man		.man
 ./usr/share/man/man9/lockinit.9			comp-sys-man		.man
