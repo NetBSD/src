@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.26 2006/05/27 23:57:32 elad Exp $	*/
+/*	$NetBSD: iso.c,v 1.26.4.1 2009/03/31 17:56:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.26 2006/05/27 23:57:32 elad Exp $");
+__RCSID("$NetBSD: iso.c,v 1.26.4.1 2009/03/31 17:56:41 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -376,7 +376,7 @@ tp_inproto(pcb)
 	struct inpcb inpcb;
 
 	kget(tpcb.tp_npcb, inpcb);
-	if (!aflag && inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
+	if (!aflag && inet_lnaof(inpcb.inp_faddr) == INADDR_ANY)
 		return;
 	if (Aflag)
 		printf("%8lx ", pcb);
