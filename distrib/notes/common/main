@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.1 2009/01/26 01:20:58 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.2 2009/03/31 23:27:34 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -539,10 +539,16 @@ The following features are to be removed from
 .Nx
 in the future:
 .(bullet
-Support for soft dependencies.
+Support for soft dependencies, also knows as soft updates
+(see
+.Dq softdep
+in
+.Xr mount 8 )
+will be removed in the next major release.
+.Pp
 .Nx
 \*V
-includes an experimental preview of WAPBL
+includes a preview of WAPBL
 .Pq Write Ahead Physical Block Logging ,
 which will replace soft dependencies in the next major release.
 See
