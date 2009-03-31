@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.77 2006/09/22 23:21:52 elad Exp $	*/
+/*	$NetBSD: inet.c,v 1.77.2.1 2009/03/31 17:56:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.77 2006/09/22 23:21:52 elad Exp $");
+__RCSID("$NetBSD: inet.c,v 1.77.2.1 2009/03/31 17:56:41 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,6 +215,10 @@ protopr(off, name)
 			memcpy(&src, &pcblist[i].ki_s, sizeof(src));
 			memcpy(&dst, &pcblist[i].ki_d, sizeof(dst));
 
+			if (!aflag &&
+			    inet_lnaof(dst.sin_addr) == INADDR_ANY)
+				continue;
+
 			if (first) {
 				protoprhdr();
 				first = 0;
@@ -252,7 +256,7 @@ protopr(off, name)
 			continue;
 
 		if (!aflag &&
-		    inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
+		    inet_lnaof(inpcb.inp_faddr) == INADDR_ANY)
 			continue;
 		kread((u_long)inpcb.inp_socket, (char *)&sockb, sizeof (sockb));
 		if (istcp) {
