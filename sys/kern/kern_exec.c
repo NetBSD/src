@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280.4.2 2009/04/01 00:25:22 snj Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280.4.3 2009/04/01 21:03:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.2 2009/04/01 00:25:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3 2009/04/01 21:03:04 snj Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -498,6 +498,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	ksiginfoq_t		kq;
 	char			*pathbuf;
 	size_t			pathbuflen;
+	uid_t			uid;
 
 	p = l->l_proc;
 
@@ -517,9 +518,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * to call exec in order to do something useful.
 	 */
 			
-	if ((p->p_flag & PK_SUGID) &&
-	    chgproccnt(kauth_cred_getuid(l->l_cred), 0) >
-	    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
+	if ((p->p_flag & PK_SUGID) && (uid = kauth_cred_getuid(l->l_cred)) != 0
+	    && chgproccnt(uid, 0) > p->p_rlimit[RLIMIT_NPROC].rlim_cur)
 		return EAGAIN;
 
 	oldlwpflags = l->l_flag & (LW_SA | LW_SA_UPCALL);
