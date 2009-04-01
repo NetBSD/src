@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.123 2009/04/01 03:23:17 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.124 2009/04/01 22:33:20 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5571,4 +5571,72 @@ xsrc/external/mit/xf86-video-crime/dist/src/crime_accel.c 1.6
 
 	Implement pattern fills.
 	[macallan, ticket #626]
+
+sys/kern/kern_exec.c				1.286 via patch
+
+	Don't enforce maxproc resource limits for root.
+	[christos, ticket #573]
+
+sys/kern/sys_sig.c				1.22
+
+	Return EINVAL instead of EAGAIN if timeout is invalid.
+	Fixes PR/41094.
+	[rmind, ticket #632]
+
+xsrc/external/mit/xf86-video-crime/dist/src/crime_accel.c 1.7
+
+	Initialize the clipping register on init.
+	[macallan, ticket #634]
+
+sbin/sysctl/sysctl.8				1.160
+sbin/sysctl/sysctl.c				1.129
+
+	Don't print an error with sysctl -w name?=value if name does
+	not exist.
+	[christos, ticket #635]
+
+games/trek/help.c				1.9
+games/trek/kill.c				1.8
+games/trek/schedule.c				1.7
+games/trek/setup.c				1.10
+games/trek/trek.h				1.12
+
+	Avoid hardcoded "too large" constant that caused FPE on vax.
+	[christos, ticket #637]
+
+sys/kern/sys_sig.c				1.23
+
+	- use itimespecfix to detect invalid timespecs
+	- use tstohz instead of mstohz to prevent overflow.
+	[christos, ticket #638]
+
+etc/sysctl.conf					1.7
+
+	Use the new ?= operator to set the on_panic value for the
+	optional ddb hierarchy.
+	[martin, ticket #639]
+
+sys/kern/kern_sig.c				1.296 via patch
+
+	In sigput(), save the siginfo no matter whether SA_SIGINFO is
+	set or not.  There are also sigtimedwait(2) et al. to catch
+	signals without invoking a signal handler.
+	Addresses PR kern/41076.
+	[drochner, ticket #640]
+
+etc/sysctl					patch
+
+	Use ?= to set kern.no_sa_support to avoid warnings.
+	[martin, ticket #643]
+
+usr.sbin/postinstall/postinstall		patch
+
+	Make ddb.onpanic and kern.no_sa_support acceptable even if
+	commented out.
+	[martin, ticket #642]
+
+sys/sys/siginfo.h				1.18
+
+	Fix typo for POLL_HUP.
+	[rmind, ticket #631]
 
