@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.20 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.21 2009/04/01 12:19:04 reinoud Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -115,7 +115,7 @@ struct scsipi_toc_header {
 /* read TOC form 0 result entries */
 struct scsipi_toc_formatted {
 	uint8_t  unused1;
-	uint8_t  adrcontol;
+	uint8_t  adrcontrol;
 	uint8_t  tracknr;
 	uint8_t  unused2;
 	uint8_t	 msf_lba[4];		/* union msf_lba from cdio.h */
