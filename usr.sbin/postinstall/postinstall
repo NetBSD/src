@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.91 2009/03/11 23:22:57 martin Exp $
+# $NetBSD: postinstall,v 1.92 2009/04/01 16:38:46 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -670,7 +670,7 @@ do_ddbonpanic()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_ddbonpanic  fix|check"
 
-	if ${GREP} -E '^[[:space:]]*ddb\.onpanic[[:space:]]*=[[:space:]]*[[:digit:]]+' \
+	if ${GREP} -E '^#*[[:space:]]*ddb\.onpanic[[:space:]]*=[[:space:]]*[[:digit:]]+' \
 		"${DEST_DIR}/etc/sysctl.conf" >/dev/null 2>&1
 	then
 		result=0
