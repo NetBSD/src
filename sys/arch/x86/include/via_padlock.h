@@ -1,4 +1,4 @@
-/*	$NetBSD: via_padlock.h,v 1.3 2009/03/07 21:59:25 ad Exp $	*/
+/*	$NetBSD: via_padlock.h,v 1.4 2009/04/01 03:56:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -23,6 +23,8 @@
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
+#include <sys/rnd.h>
+#include <sys/callout.h>
 #include <crypto/rijndael/rijndael.h>
 
 /* VIA C3 xcrypt-* instruction context control options */
@@ -55,6 +57,10 @@ struct via_padlock_softc {
 	uint8_t	op_iv[16];	/* 128 bit aligned */
 	void		*op_buf;
 
+	int			sc_rnd_hz;
+	struct callout		sc_rnd_co;
+	rndsource_element_t	sc_rnd_source;
+
 	/* normal softc stuff */
 	int32_t		sc_cid;
 	int		sc_nsessions;
@@ -63,6 +69,8 @@ struct via_padlock_softc {
 
 #define VIAC3_SESSION(sid)	((sid) & 0x0fffffff)
 #define VIAC3_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x0fffffff))
+
+#define VIAC3_RNG_BUFSIZ	16
 
 struct cpu_info;
 
