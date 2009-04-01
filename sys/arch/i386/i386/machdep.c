@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.667 2009/03/29 10:58:54 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.668 2009/04/01 03:56:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.667 2009/03/29 10:58:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.668 2009/04/01 03:56:54 tls Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -250,6 +250,7 @@ int	physmem;
 unsigned int cpu_feature;
 unsigned int cpu_feature2;
 unsigned int cpu_feature_padlock;
+
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;

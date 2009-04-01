@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.14 2009/03/25 22:53:51 dyoung Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.15 2009/04/01 03:56:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.14 2009/03/25 22:53:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.15 2009/04/01 03:56:54 tls Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -480,7 +480,7 @@ cpu_probe_c3(struct cpu_info *ci)
 	struct x86_cache_info *cai;
 
 	if (cpu_vendor != CPUVENDOR_IDT ||
-	    CPUID2FAMILY(ci->ci_signature) != 5)
+	    CPUID2FAMILY(ci->ci_signature) < 6)
 	    	return;
 
 	family = CPUID2FAMILY(ci->ci_signature);
@@ -497,25 +497,61 @@ cpu_probe_c3(struct cpu_info *ci)
 		ci->ci_feature_flags |= descs[3];
 	}
 
-	if (model >= 0x9) {
+	if (family > 6 || model > 0x9 || (model == 0x9 && stepping >= 3)) {
 		/* Nehemiah or Esther */
 		x86_cpuid(0xc0000000, descs);
 		lfunc = descs[0];
 		if (lfunc >= 0xc0000001) {	/* has ACE, RNG */
-			x86_cpuid(0xc0000001, descs);
-			lfunc = descs[3];
-			if (model > 0x9 || stepping >= 8) {	/* ACE */
-				if (lfunc & CPUID_VIA_HAS_ACE) {
-					ci->ci_padlock_flags = lfunc;
-					if ((lfunc & CPUID_VIA_DO_ACE) == 0) {
-						msr = rdmsr(MSR_VIA_ACE);
-						wrmsr(MSR_VIA_ACE, msr |
-						    MSR_VIA_ACE_ENABLE);
-						ci->ci_padlock_flags |=
-						    CPUID_VIA_DO_ACE;
-					}
-				}
+		    int rng_enable = 0, ace_enable = 0;
+		    x86_cpuid(0xc0000001, descs);
+		    lfunc = descs[3];
+		    ci->ci_padlock_flags = lfunc;
+		    /* Check for and enable RNG */
+		    if (lfunc & CPUID_VIA_HAS_RNG) {
+		    	if (!(lfunc & CPUID_VIA_DO_RNG)) {
+			    rng_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_HAS_RNG;
 			}
+		    }
+		    /* Check for and enable ACE (AES-CBC) */
+		    if (lfunc & CPUID_VIA_HAS_ACE) {
+			if (!(lfunc & CPUID_VIA_DO_ACE)) {
+			    ace_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_DO_ACE;
+			}
+		    }
+		    /* Check for and enable SHA */
+		    if (lfunc & CPUID_VIA_HAS_PHE) {
+			if (!(lfunc & CPUID_VIA_DO_PHE)) {
+			    ace_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_DO_PHE;
+			}
+		    }
+		    /* Check for and enable ACE2 (AES-CTR) */
+		    if (lfunc & CPUID_VIA_HAS_ACE2) {
+			if (!(lfunc & CPUID_VIA_DO_ACE2)) {
+			    ace_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_DO_ACE2;
+			}
+		    }
+		    /* Check for and enable PMM (modmult engine) */
+		    if (lfunc & CPUID_VIA_HAS_PMM) {
+			if (!(lfunc & CPUID_VIA_DO_PMM)) {
+			    ace_enable++;
+			    ci->ci_padlock_flags |= CPUID_VIA_DO_PMM;
+			}
+		    }
+
+		    /* Actually do the enables. */
+		    if (rng_enable) {
+			msr = rdmsr(MSR_VIA_RNG);
+			wrmsr(MSR_VIA_RNG, msr | MSR_VIA_RNG_ENABLE);
+		    }
+		    if (ace_enable) {
+			msr = rdmsr(MSR_VIA_ACE);
+			wrmsr(MSR_VIA_ACE, msr | MSR_VIA_ACE_ENABLE);
+		    }
+			
 		}
 	}
 
@@ -543,7 +579,7 @@ cpu_probe_c3(struct cpu_info *ci)
 	cai->cai_totalsize = VIA_L1_ECX_DC_SIZE(descs[2]);
 	cai->cai_associativity = VIA_L1_ECX_DC_ASSOC(descs[2]);
 	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[2]);
-	if (model == 9 && stepping == 8) {
+	if (family == 6 && model == 9 && stepping == 8) {
 		/* Erratum: stepping 8 reports 4 when it should be 2 */
 		cai->cai_associativity = 2;
 	}
@@ -552,11 +588,11 @@ cpu_probe_c3(struct cpu_info *ci)
 	cai->cai_totalsize = VIA_L1_EDX_IC_SIZE(descs[3]);
 	cai->cai_associativity = VIA_L1_EDX_IC_ASSOC(descs[3]);
 	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[3]);
-	if (model == 9 && stepping == 8) {
+	if (family == 6 && model == 9 && stepping == 8) {
 		/* Erratum: stepping 8 reports 4 when it should be 2 */
 		cai->cai_associativity = 2;
 	}
-
+	
 	/*
 	 * Determine L2 cache/TLB info.
 	 */
@@ -568,7 +604,7 @@ cpu_probe_c3(struct cpu_info *ci)
 	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	if (model >= 9) {
+	if (family > 6 || model >= 9) {
 		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
 		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
 		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
