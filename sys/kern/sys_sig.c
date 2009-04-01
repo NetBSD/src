@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.17 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.17.4.1 2009/04/01 21:25:35 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17.4.1 2009/04/01 21:25:35 snj Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -640,7 +640,7 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec > 0)
 			timo = 1;
 		if (timo <= 0)
-			return (EAGAIN);
+			return EINVAL;
 
 		/*
 		 * Remember current uptime, it would be used in
