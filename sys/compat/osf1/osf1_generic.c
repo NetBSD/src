@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.14 2009/03/29 19:21:19 christos Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.15 2009/04/01 03:06:06 dogcow Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.14 2009/03/29 19:21:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.15 2009/04/01 03:06:06 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,9 +173,9 @@ osf1_sys_select(struct lwp *l, const struct osf1_sys_select_args *uap, register_
 
 		ats.tv_sec = otv.tv_sec;
 		ats.tv_nsec = otv.tv_usec * 1000;
-		ts = &atv;
+		ts = &ats;
 	}
 
 	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
-	    SCARG(uap, ou), SCARG(uap, ex), tsp, NULL);
+	    SCARG(uap, ou), SCARG(uap, ex), ts, NULL);
 }
