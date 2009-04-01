@@ -1,4 +1,4 @@
-/*	$NetBSD: via_padlock.h,v 1.4 2009/04/01 03:56:54 tls Exp $	*/
+/*	$NetBSD: via_padlock.h,v 1.5 2009/04/01 21:15:45 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -21,7 +21,7 @@
 #ifndef _X86_VIA_PADLOCK_H_
 #define _X86_VIA_PADLOCK_H_
 
-#if defined(_KERNEL) || defined(_KMEMUSER)
+#if defined(_KERNEL)
 
 #include <sys/rnd.h>
 #include <sys/callout.h>
@@ -72,14 +72,17 @@ struct via_padlock_softc {
 
 #define VIAC3_RNG_BUFSIZ	16
 
+void    via_padlock_attach(void);
+
+#endif /* _KERNEL */
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
 struct cpu_info;
 
 struct via_padlock {
 	struct cpu_info		*vp_ci;
 	int			vp_freq;
 };
-
-void	via_padlock_attach(void);
 
 #endif /* _KERNEL || _KMEMUSER */
 #endif /* _X86_VIA_PADLOCK_H_ */
