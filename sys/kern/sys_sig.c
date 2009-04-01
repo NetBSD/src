@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.17.4.1 2009/04/01 21:25:35 snj Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.17.4.2 2009/04/01 21:43:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17.4.1 2009/04/01 21:25:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17.4.2 2009/04/01 21:43:53 snj Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -630,17 +630,16 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 	 * Calculate timeout, if it was specified.
 	 */
 	if (SCARG(uap, timeout)) {
-		uint64_t ms;
+		error = (*fetch_timeout)(SCARG(uap, timeout), &ts, sizeof(ts));
+		if (error)
+			return error;
 
-		if ((error = (*fetch_timeout)(SCARG(uap, timeout), &ts, sizeof(ts))))
-			return (error);
+		if ((error = itimespecfix(&ts)) != 0)
+			return error;
 
-		ms = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
-		timo = mstohz(ms);
-		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec > 0)
-			timo = 1;
-		if (timo <= 0)
-			return EINVAL;
+		timo = tstohz(&ts);
+		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec != 0)
+			timo++;
 
 		/*
 		 * Remember current uptime, it would be used in
