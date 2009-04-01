@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.108 2009/03/30 21:32:51 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.109 2009/04/01 10:13:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.108 2009/03/30 21:32:51 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.109 2009/04/01 10:13:24 drochner Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1275,7 +1275,13 @@ pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
 static int
 pthread__cmp(struct __pthread_st *a, struct __pthread_st *b)
 {
-	return b - a;
+
+	if ((uintptr_t)a < (uintptr_t)b)
+		return (-1);
+	else if (a == b)
+		return 0;
+	else
+		return 1;
 }
 RB_GENERATE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
 #endif
