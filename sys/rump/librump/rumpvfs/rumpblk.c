@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.14 2009/03/23 11:52:42 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.15 2009/04/01 14:37:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.14 2009/03/23 11:52:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.15 2009/04/01 14:37:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -133,7 +133,7 @@ rumpblk_register(const char *path)
 	int i;
 
 	for (i = 0; i < RUMPBLK_SIZE; i++)
-		if (minors[i].rblk_path && strcmp(minors[i].rblk_path, path) == 0)
+		if (minors[i].rblk_path && strcmp(minors[i].rblk_path, path)==0)
 			return i;
 
 	for (i = 0; i < RUMPBLK_SIZE; i++)
@@ -205,9 +205,11 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 	}
 	rblk->rblk_fd = fd;
 	rblk->rblk_mem = mem;
+#if 0
 	if (rblk->rblk_mem != NULL)
 		printf("rumpblk%d: using mmio for %s\n",
 		    minor(dev), rblk->rblk_path);
+#endif
 
 	return 0;
 }
