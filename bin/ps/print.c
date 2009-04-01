@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.106 2008/10/19 02:39:08 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.106.2.1 2009/04/01 00:25:20 snj Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.106 2008/10/19 02:39:08 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.106.2.1 2009/04/01 00:25:20 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -977,8 +977,7 @@ vsize(void *arg, VARENT *ve, int mode)
 
 	k = arg;
 	v = ve->var;
-	intprintorsetwidth(v,
-	    pgtok(k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize), mode);
+	intprintorsetwidth(v, pgtok(k->p_vm_msize), mode);
 }
 
 void
