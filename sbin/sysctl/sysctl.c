@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.124 2008/07/20 01:20:23 lukem Exp $ */
+/*	$NetBSD: sysctl.c,v 1.124.2.1 2009/04/01 21:37:02 snj Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.124 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.124.2.1 2009/04/01 21:37:02 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -788,12 +788,18 @@ parse(char *l)
 	u_int namelen, type;
 	char *key, *value, *dot;
 	size_t sz;
+	bool optional = false;
 
 	req = 1;
 	key = l;
-	value = strchr(l, '=');
-	if (value != NULL)
+
+	if ((value = strchr(l, '=')) != NULL) {
+		if (value > l && value[-1] == '?') {
+			value[-1] = '\0';
+			optional = true;
+		}
 		*value++ = '\0';
+	}
 
 	if ((dot = strpbrk(key, "./")) == NULL)
 		sep[0] = '.';
@@ -836,6 +842,8 @@ parse(char *l)
 
 	if (sysctlgetmibinfo(key, &name[0], &namelen, gsname, &sz, &node,
 			     SYSCTL_VERSION) == -1) {
+		if (optional)
+			return;
 		sysctlparseerror(namelen, l);
 		EXIT(1);
 	}
