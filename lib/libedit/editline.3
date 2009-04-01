@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.65 2009/03/31 17:38:27 christos Exp $
+.\"	$NetBSD: editline.3,v 1.66 2009/04/01 08:58:47 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -218,15 +218,16 @@ The following values for
 .Fa op
 are supported, along with the required argument list:
 .Bl -tag -width 4n
-.It Dv EL_PROMPT , Fa "char *(*f)(EditLine *)", Fa "char c"
+.It Dv EL_PROMPT , Fa "char *(*f)(EditLine *)" , Fa "char c"
 Define prompt printing function as
 .Fa f ,
 which is to return a string that contains the prompt.
-The 
+The
 .Fa c
 argument indicates the start/stop literal prompt character.
 .Pp
-If a start/stop literal character is found in the prompt, itself
+If a start/stop literal character is found in the prompt, the
+character itself
 is not printed, but characters after it are printed directly to the
 terminal without affecting the state of the current line.
 A subsequent second start/stop literal character ends this behavior.
