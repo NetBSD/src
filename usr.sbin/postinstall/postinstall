@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.11 2009/03/28 18:57:10 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.12 2009/04/01 22:21:50 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -667,7 +667,7 @@ do_ddbonpanic()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_ddbonpanic  fix|check"
 
-	if ${GREP} -E '^[[:space:]]*ddb\.onpanic[[:space:]]*=[[:space:]]*[[:digit:]]+' \
+	if ${GREP} -E '^#*[[:space:]]*ddb\.onpanic[[:space:]]*=[[:space:]]*[[:digit:]]+' \
 		"${DEST_DIR}/etc/sysctl.conf" >/dev/null 2>&1
 	then
 		result=0
@@ -884,7 +884,7 @@ do_nosa()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_nosa  fix|check"
 
-	if ${GREP} -E '^[[:space:]]*kern\.no_sa_support[[:space:]]*=[[:space:]]*[[:digit:]]+' \
+	if ${GREP} -E '^#*[[:space:]]*kern\.no_sa_support[[:space:]]*=[[:space:]]*[[:digit:]]+' \
 		"${DEST_DIR}/etc/sysctl.conf" >/dev/null 2>&1
 	then
 		result=0
