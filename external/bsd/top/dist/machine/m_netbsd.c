@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.5.8.1 2009/04/01 00:25:21 snj Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $
+ * $Id: m_netbsd.c,v 1.5.8.1 2009/04/01 00:25:21 snj Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.5.8.1 2009/04/01 00:25:21 snj Exp $");
 #endif
 
 #include <sys/param.h>
@@ -87,8 +87,14 @@ struct handle {
 			 ((pct) / (1.0 - exp((pp)->pfx ## swtime * logcpu))))
 
 /* what we consider to be process size: */
+/* NetBSD introduced p_vm_msize with RLIMIT_AS */
+#ifdef RLIMIT_AS
 #define PROCSIZE(pp) \
-	((pp)->p_vm_tsize + (pp)->p_vm_dsize + (pp)->p_vm_ssize)
+    ((pp)->p_vm_msize)
+#else
+#define PROCSIZE(pp) \
+    ((pp)->p_vm_tsize + (pp)->p_vm_dsize + (pp)->p_vm_ssize)
+#endif
 
 
 /*

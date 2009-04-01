@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.148.4.1 2008/11/02 23:08:56 snj Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.148.4.2 2009/04/01 00:25:23 snj Exp $	*/
 
 /*
  *
@@ -501,6 +501,7 @@ struct vmspace {
 	segsz_t vm_tsize;	/* text size (pages) XXX */
 	segsz_t vm_dsize;	/* data size (pages) XXX */
 	segsz_t vm_ssize;	/* stack size (pages) */
+	segsz_t vm_issize;	/* initial unmapped stack size (pages) */
 	void *	vm_taddr;	/* user virtual address of text XXX */
 	void *	vm_daddr;	/* user virtual address of data XXX */
 	void *vm_maxsaddr;	/* user VA at max stack growth */
