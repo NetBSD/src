@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.121 2009/03/30 17:16:10 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.122 2009/04/01 00:42:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -5434,4 +5434,120 @@ usr.bin/fstat/misc.c				1.3
 
 	Only print warnings if vflg.  Fixes PR 40759.
 	[dholland, ticket #618]
+
+sys/fs/udf/udf_allocation.c			1.20 via patch
+
+	Fix possible overshoot when allocating from a space bitmap
+	when ffs(3) returns a too big offset for the bitmap.
+	[reinoud, ticket #610]
+
+sys/kern/init_main.c				patch
+sys/kern/kern_ksyms.c				patch
+sys/sys/ksyms.h					patch
+
+	ksyms_init calls mutex_init too early, which leads to failure on,
+	e.g., sparc64 LOCKDEBUG kernels.  Instead, add a new function
+	ksyms_init_finalize and call it from main.  Fixed in a more
+	intrusive and less ugly way on HEAD.
+	[martin, ticket #602]
+
+distrib/notes/common/main			1.435, 1.436
+
+	Under "Features to be removed in a later release", try to explain
+	what softdep is, as well as saying that it will be removed.  Say
+	that the WAPBL in netbsd-5 is a "preview", not an "experimental
+	preview".
+	--
+	Under "The following issues need to be resolved manually", say
+	that unprivileged use of mount(8) now needs the nosuid and nodev
+	flags.
+	[apb, ticket #581]
+
+share/man/man4/clockctl.4			1.6
+
+	Sync ioctl arguments with reality.
+	[enami, ticket #615]
+
+share/man/man5/rc.conf.5			1.128
+
+	Document ipfilter_flags.
+	[hannken, ticket #617]
+
+sys/kern/kern_descrip.c				1.189
+
+	fownsignal: pre-check for zero pgid, avoids locking of proc_lock.
+	[rmind, ticket #619]
+
+sys/kern/kern_sig.c				1.297
+
+	kpsignal2: do not start process (when it is stopped) for all
+	termination signals (i.e. SA_KILL), just if SIGKILL (or SIGCONT).
+	Improve comments.  Make some functions static, remove unused
+	sigrealloc() prototype.  Fixes PR/39814.
+	[rmind, ticket #620]
+
+bin/csh/csh.1					1.46
+bin/csh/func.c					1.37
+bin/ps/print.c					1.111
+bin/ps/ps.c					1.74
+bin/sh/miscbltin.c				1.38
+bin/sh/sh.1					1.92 via patch
+external/bsd/top/dist/machine/m_netbsd.c	1.7
+lib/libkvm/kvm_proc.c				1.82
+sys/arch/mips/mips/cpu_exec.c			1.55
+sys/compat/darwin/darwin_exec.c			1.57, 1.58
+sys/compat/ibcs2/ibcs2_exec.c			1.73
+sys/compat/irix/irix_resource.c			1.15
+sys/compat/linux/arch/amd64/linux_exec_machdep.c 1.16
+sys/compat/linux/arch/i386/linux_exec_machdep.c	1.12
+sys/compat/linux/common/linux_limit.h		1.5
+sys/compat/osf1/osf1_resource.c			1.14
+sys/compat/svr4/svr4_resource.c			1.18
+sys/compat/svr4_32/svr4_32_resource.c		1.17
+sys/kern/exec_subr.c				1.62
+sys/kern/init_sysctl.c				1.160
+sys/kern/kern_exec.c				1.288
+sys/kern/kern_resource.c			1.151
+sys/sys/param.h					patch
+sys/sys/resource.h				1.31
+sys/sys/sysctl.h				1.184
+sys/uvm/uvm_extern.h				1.153
+sys/uvm/uvm_glue.c				1.136
+sys/uvm/uvm_mmap.c				1.128
+usr.bin/systat/ps.c				1.32
+
+	- add new RLIMIT_AS (aka RLIMIT_VMEM) resource that limits the
+	total address space available to processes.  this limit exists
+	in most other modern unix variants, and like most of them, our
+	defaults are unlimited.  remove the old mmap / rlimit.datasize
+	hack.
+
+	- add the VMCMD_STACK flag to all the stack-creation vmcmd
+	callers.  it is currently unused, but was added a few years
+	ago.
+
+	- add a pair of new process size values to kinfo_proc2{}. one
+	is the total size of the process memory map, and the other is
+	the total size adjusted for unused stack space (since most
+	processes have a lot of this...)
+
+	- patch sh, and csh to notice RLIMIT_AS.  (in some cases, the
+	alias RLIMIT_VMEM was already present and used if availble.)
+
+	- patch ps, top and systat to notice the new k_vm_vsize member
+	of kinfo_proc2{}.
+
+	- update irix, svr4, svr4_32, linux and osf1 emulations to
+	support this information.
+
+	this addresses PR 7897.  it also gives correct memory usage
+	values, which have never been entirely correct (since mmap),
+	and have been very incorrect since jemalloc() was enabled.
+	[mrg, ticket #622]
+
+sys/arch/sgimips/dev/crmfbreg.h			1.10
+
+	Add a few more register definitions, needed by the latest
+	crime_drv.
+	[macallan, ticket #625]
 
