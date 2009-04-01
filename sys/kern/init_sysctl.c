@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.149.4.3 2009/03/15 20:23:26 snj Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.149.4.4 2009/04/01 00:25:22 snj Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.4.3 2009/03/15 20:23:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.4.4 2009/04/01 00:25:22 snj Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -3001,6 +3001,14 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
+		ki->p_vm_vsize = vm->vm_map.size;
+		/*
+		 * Since the stack is initially mapped mostly with
+		 * PROT_NONE and grown as needed, adjust the "mapped size"
+		 * to skip the unused stack portion.
+		 */
+		ki->p_vm_msize =
+		    atop(vm->vm_map.size) - vm->vm_issize + vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
 		l = proc_active_lwp(p);
@@ -3171,6 +3179,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
+		ep->e_vm.vm_map.size = vm->vm_map.size;
 
 		/* Pick the primary (first) LWP */
 		l = proc_active_lwp(p);

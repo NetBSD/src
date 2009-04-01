@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_limit.h,v 1.3 2008/04/28 20:23:43 martin Exp $ */
+/* 	$NetBSD: linux_limit.h,v 1.3.10.1 2009/04/01 00:25:22 snj Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ linux_to_bsd_limit(lim)
 	case LINUX_RLIMIT_MEMLOCK:
 		return RLIMIT_MEMLOCK;
 	case LINUX_RLIMIT_AS:
+		return RLIMIT_AS;
 	case LINUX_RLIMIT_LOCKS:
 		return -EOPNOTSUPP;
 	default:

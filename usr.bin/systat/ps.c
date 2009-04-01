@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.30 2007/02/17 22:49:57 pavel Exp $  */
+/*      $NetBSD: ps.c,v 1.30.18.1 2009/04/01 00:25:23 snj Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.30 2007/02/17 22:49:57 pavel Exp $");
+__RCSID("$NetBSD: ps.c,v 1.30.18.1 2009/04/01 00:25:23 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -247,7 +247,7 @@ vsz2int(struct kinfo_proc2 *kp)
 {
 	int     i;
 
-	i = pgtok(kp->p_vm_dsize + kp->p_vm_ssize + kp->p_vm_tsize);
+	i = pgtok(kp->p_vm_msize);
 
 	return ((i < 0) ? 0 : i);
 }

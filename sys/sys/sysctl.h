@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.177 2008/08/27 08:53:55 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.177.4.1 2009/04/01 00:25:22 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -585,6 +585,8 @@ struct kinfo_proc2 {
 	uint32_t p_svuid;		/* UID_T: saved user id */
 	uint32_t p_svgid;		/* GID_T: saved group id */
 	char p_ename[KI_MAXEMULLEN];	/* emulation name */
+	int64_t	p_vm_vsize;		/* SEGSZ_T: total map size (pages) */
+	int64_t	p_vm_msize;		/* SEGSZ_T: stack-adjusted map size (pages) */
 };
 
 /*
@@ -951,6 +953,7 @@ struct kinfo_file {
 #define PROC_PID_LIMIT_NPROC	(RLIMIT_NPROC+1)
 #define	PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
 #define	PROC_PID_LIMIT_SBSIZE	(RLIMIT_SBSIZE+1)
+#define	PROC_PID_LIMIT_AS	(RLIMIT_AS+1)
 #define	PROC_PID_LIMIT_MAXID 	(RLIM_NLIMITS+1)
 
 #define	PROC_PID_LIMIT_NAMES { \
@@ -965,6 +968,7 @@ struct kinfo_file {
 	{ "maxproc", CTLTYPE_NODE }, \
 	{ "descriptors", CTLTYPE_NODE }, \
 	{ "sbsize", CTLTYPE_NODE }, \
+	{ "vmemoryuse", CTLTYPE_NODE }, \
 }
 /* for each type, either hard or soft value */
 #define	PROC_PID_LIMIT_TYPE_SOFT	1
