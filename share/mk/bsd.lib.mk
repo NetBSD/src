@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.296 2009/03/13 16:23:31 perry Exp $
+#	$NetBSD: bsd.lib.mk,v 1.297 2009/04/01 17:47:39 perry Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -442,9 +442,11 @@ MKARZERO?=no
 
 .if ${MKARZERO} == "yes"
 _ARFL=crsD
+_ARRANFL=sD
 _INSTRANLIB=
 .else
 _ARFL=crs
+_ARRANFL=s
 _INSTRANLIB=${empty(PRESERVE):?-a "${RANLIB} -t":}
 .endif
 
