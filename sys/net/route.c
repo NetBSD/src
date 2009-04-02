@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.116 2009/03/24 16:36:52 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.117 2009/04/02 21:02:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.116 2009/03/24 16:36:52 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.117 2009/04/02 21:02:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -607,8 +607,6 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 	}
 	return ifa;
 }
-
-#define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 int
 rtrequest(int req, const struct sockaddr *dst, const struct sockaddr *gateway,
