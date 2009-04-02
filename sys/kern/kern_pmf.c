@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.22 2009/04/02 00:09:34 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.23 2009/04/02 22:19:48 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.22 2009/04/02 00:09:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.23 2009/04/02 22:19:48 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -296,8 +296,6 @@ pmf_system_shutdown(int how)
 {
 	static struct shutdown_state s;
 	device_t curdev;
-
-	(void)pmf_check_system_drivers();
 
 	aprint_debug("Shutting down devices:");
 	suspendsched();
