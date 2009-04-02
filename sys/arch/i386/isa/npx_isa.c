@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.19 2008/04/11 20:42:34 cegger Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.20 2009/04/02 00:09:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.19 2008/04/11 20:42:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.20 2009/04/02 00:09:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.19 2008/04/11 20:42:34 cegger Exp $");
 int npx_isa_probe(device_t, struct cfdata *, void *);
 void npx_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(npx_isa, sizeof(struct npx_softc),
-    npx_isa_probe, npx_isa_attach, npxdetach, NULL);
+CFATTACH_DECL3_NEW(npx_isa, sizeof(struct npx_softc),
+    npx_isa_probe, npx_isa_attach, npxdetach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 int
 npx_isa_probe(device_t parent, struct cfdata *match, void *aux)

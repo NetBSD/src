@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.102 2008/11/16 19:31:21 bouyer Exp $	*/
+/*	$NetBSD: ata.c,v 1.103 2009/04/02 00:09:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.102 2008/11/16 19:31:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.103 2009/04/02 00:09:32 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -617,9 +617,9 @@ atabus_childdetached(device_t self, device_t child)
 	aprint_error_dev(self, "unknown child %p", (const void *)child);
 }
 
-CFATTACH_DECL2_NEW(atabus, sizeof(struct atabus_softc),
+CFATTACH_DECL3_NEW(atabus, sizeof(struct atabus_softc),
     atabus_match, atabus_attach, atabus_detach, atabus_activate, NULL,
-    atabus_childdetached);
+    atabus_childdetached, DVF_DETACH_SHUTDOWN);
 
 /*****************************************************************************
  * Common ATA bus operations.
