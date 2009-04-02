@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.67 2009/02/25 15:46:34 jmcneill Exp $	*/
+/*	$NetBSD: azalia.c,v 1.68 2009/04/02 01:06:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.67 2009/02/25 15:46:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.68 2009/04/02 01:06:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -459,17 +459,15 @@ azalia_intr(void *v)
 	uint8_t rirbsts;
 
 	az = v;
-	ret = 0;
 
 	if (!device_has_power(az->dev))
 		return 0;
 
-	intsts = AZ_READ_4(az, INTSTS);
-	if (intsts == 0)
-		return ret;
+	if ((intsts = AZ_READ_4(az, INTSTS)) == 0)
+		return 0;
 
-	ret += azalia_stream_intr(&az->pstream, intsts);
-	ret += azalia_stream_intr(&az->rstream, intsts);
+	ret = azalia_stream_intr(&az->pstream, intsts) +
+	      azalia_stream_intr(&az->rstream, intsts);
 
 	rirbsts = AZ_READ_1(az, RIRBSTS);
 	if (rirbsts & (HDA_RIRBSTS_RIRBOIS | HDA_RIRBSTS_RINTFL)) {
