@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.16 2009/02/17 21:20:49 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.17 2009/04/02 00:19:03 enami Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.16 2009/02/17 21:20:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.17 2009/04/02 00:19:03 enami Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -83,29 +83,44 @@ extern void	*atomic_lockpatch[];
 #define	X86_DS		0x3e
 #define	X86_GROUP_0F	0x0f
 
+static void
+adjust_jumpoff(uint8_t *ptr, void *from_s, void *to_s)
+{
+
+	/* Branch hints */
+	if (ptr[0] == X86_CS || ptr[0] == X86_DS)
+		ptr++;
+	/* Conditional jumps */
+	if (ptr[0] == X86_GROUP_0F)
+		ptr++;		
+	/* 4-byte relative jump or call */
+	*(uint32_t *)(ptr + 1 - (uintptr_t)from_s + (uintptr_t)to_s) +=
+	    ((uint32_t)(uintptr_t)from_s - (uint32_t)(uintptr_t)to_s);
+}
+
 static void __unused
 patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 	  void *pcrel)
 {
-	uint8_t *ptr;
 
 	if ((uintptr_t)from_e - (uintptr_t)from_s !=
 	    (uintptr_t)to_e - (uintptr_t)to_s)
 		panic("patchfunc: sizes do not match (from=%p)", from_s);
 
 	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
-	if (pcrel != NULL) {
-		ptr = pcrel;
-		/* Branch hints */
-		if (ptr[0] == X86_CS || ptr[0] == X86_DS)
-			ptr++;
-		/* Conditional jumps */
-		if (ptr[0] == X86_GROUP_0F)
-			ptr++;		
-		/* 4-byte relative jump or call */
-		*(uint32_t *)(ptr + 1 - (uintptr_t)from_s + (uintptr_t)to_s) +=
-		    ((uint32_t)(uintptr_t)from_s - (uint32_t)(uintptr_t)to_s);
-	}
+	if (pcrel != NULL)
+		adjust_jumpoff(pcrel, from_s, to_s);
+
+#ifdef GPROF
+#ifdef i386
+#define	MCOUNT_CALL_OFFSET	3
+#endif
+#ifdef __x86_64__
+#define	MCOUNT_CALL_OFFSET	5
+#endif
+	/* Patch mcount call offset */
+	adjust_jumpoff((uint8_t *)from_s + MCOUNT_CALL_OFFSET, from_s, to_s);
+#endif
 }
 
 static inline void __unused
