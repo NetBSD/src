@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.25 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.26 2009/04/02 13:00:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.25 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.26 2009/04/02 13:00:40 tsutsui Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.25 2008/03/11 05:34:03 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/../vax/gencons.h>
+#include <vax/vax/gencons.h>
 
 #include "ioconf.h"
 
