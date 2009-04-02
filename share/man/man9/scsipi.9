@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.21 2009/03/12 12:41:01 joerg Exp $
+.\"	$NetBSD: scsipi.9,v 1.22 2009/04/02 19:02:42 mjf Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -378,7 +378,7 @@ ST 32 bit wide transfers
 .It Dv PERIPH_CAP_DT
 DT transfers
 .It Dv PERIPH_CAP_TQING
-tagged queueing
+tagged queuing
 .El
 Whenever the xfer mode changes, the driver should call
 .Fn scsipi_async_event
