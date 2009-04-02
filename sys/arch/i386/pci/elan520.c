@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.38 2009/02/24 06:03:54 yamt Exp $	*/
+/*	$NetBSD: elan520.c,v 1.39 2009/04/02 00:09:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.38 2009/02/24 06:03:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.39 2009/04/02 00:09:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1464,15 +1464,17 @@ elansc_rescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
-CFATTACH_DECL_NEW(elanpar, 0,
-    elanpar_match, elanpar_attach, elanpar_detach, NULL);
+CFATTACH_DECL3_NEW(elanpar, 0,
+    elanpar_match, elanpar_attach, elanpar_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
-CFATTACH_DECL_NEW(elanpex, 0,
-    elanpex_match, elanpex_attach, elanpex_detach, NULL);
+CFATTACH_DECL3_NEW(elanpex, 0,
+    elanpex_match, elanpex_attach, elanpex_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
-CFATTACH_DECL2_NEW(elansc, sizeof(struct elansc_softc),
+CFATTACH_DECL3_NEW(elansc, sizeof(struct elansc_softc),
     elansc_match, elansc_attach, elansc_detach, NULL, elansc_rescan,
-    elansc_childdetached);
+    elansc_childdetached, DVF_DETACH_SHUTDOWN);
 
 #if NGPIO > 0
 static int

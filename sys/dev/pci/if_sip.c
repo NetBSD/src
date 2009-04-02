@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.137 2009/03/27 16:45:53 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.138 2009/04/02 00:09:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.137 2009/03/27 16:45:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.138 2009/04/02 00:09:33 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -613,10 +613,12 @@ static bool	sipcom_suspend(device_t PMF_FN_PROTO);
 int	gsip_copy_small = 0;
 int	sip_copy_small = 0;
 
-CFATTACH_DECL(gsip, sizeof(struct sip_softc),
-    sipcom_match, sipcom_attach, sipcom_detach, NULL);
-CFATTACH_DECL(sip, sizeof(struct sip_softc),
-    sipcom_match, sipcom_attach, sipcom_detach, NULL);
+CFATTACH_DECL3(gsip, sizeof(struct sip_softc),
+    sipcom_match, sipcom_attach, sipcom_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
+CFATTACH_DECL3(sip, sizeof(struct sip_softc),
+    sipcom_match, sipcom_attach, sipcom_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 /*
  * Descriptions of the variants of the SiS900.

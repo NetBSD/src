@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.46 2009/03/14 15:36:16 dsl Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.47 2009/04/02 00:09:33 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.46 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.47 2009/04/02 00:09:33 dyoung Exp $");
 
 #include "opt_cardslot.h"
 
@@ -75,8 +75,9 @@ static int cardslot_16_print(void *, const char *);
 static int cardslot_16_submatch(struct device *, struct cfdata *,
 				     const int *, void *);
 
-CFATTACH_DECL_NEW(cardslot, sizeof(struct cardslot_softc),
-    cardslotmatch, cardslotattach, cardslotdetach, NULL);
+CFATTACH_DECL3_NEW(cardslot, sizeof(struct cardslot_softc),
+    cardslotmatch, cardslotattach, cardslotdetach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 STATIC int
 cardslotmatch(struct device *parent, struct cfdata *cf,
