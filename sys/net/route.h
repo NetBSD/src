@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.72 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.73 2009/04/02 21:02:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -256,6 +256,10 @@ struct rt_msghdr {
 #define RTAX_AUTHOR	6	/* sockaddr for author of redirect */
 #define RTAX_BRD	7	/* for NEWADDR, broadcast or p-p dest addr */
 #define RTAX_MAX	8	/* size of array to allocate */
+
+#define RT_ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
 
 struct rt_addrinfo {
 	int	rti_addrs;
