@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.10 2009/03/26 14:03:30 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.11 2009/04/02 09:30:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -133,6 +133,7 @@ clearlwp(struct puffs_usermount *pu)
 		rump_clear_curlwp();
 }
 
+/*ARGSUSED*/
 static void
 p2k_errcatcher(struct puffs_usermount *pu, uint8_t type, int error,
 	const char *str, puffs_cookie_t cook)
