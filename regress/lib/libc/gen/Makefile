@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2006/05/17 21:12:23 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2009/04/02 12:49:59 drochner Exp $
 
 SUBDIR+= humanize_number vis tfmtcheck seekdir-twice telldir-memuse
+SUBDIR+= rbtree
 
 .include <bsd.subdir.mk>
