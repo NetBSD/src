@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.386 2009/03/29 15:23:54 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.387 2009/04/02 19:43:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.386 2009/03/29 15:23:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.387 2009/04/02 19:43:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -932,7 +932,7 @@ banner(void)
 		snprintf(pbuf, sizeof(pbuf), "%s %s (%s)",
 		    ostype, osrelease, kernel_ident);
 		printf("%s", pbuf);
-		for (i = 80 - strlen(pbuf) - sizeof(notice); i != 0; i--)
+		for (i = 80 - strlen(pbuf) - sizeof(notice); i > 0; i--)
 			printf(" ");
 		printf("%s\n", notice);
 		pr = aprint_normal;
