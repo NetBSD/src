@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.16 2009/01/12 02:53:29 pooka Exp $	*/
+/*	$NetBSD: atomic.S,v 1.17 2009/04/02 00:19:02 enami Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -212,7 +212,11 @@ ENTRY(_atomic_cas_cx8)
 	popl	%ebx
 	popl	%edi
 	ret
+#ifdef GPROF
+	.space	16, 0x90
+#else
 	.space	32, 0x90
+#endif
 ENDLABEL(_atomic_cas_cx8_end)
 
 ENTRY(sse2_lfence)
